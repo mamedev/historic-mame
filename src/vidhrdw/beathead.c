@@ -5,6 +5,7 @@
 ****************************************************************************/
 
 #include "vidhrdw/generic.h"
+#include "beathead.h"
 
 
 
@@ -44,19 +45,12 @@ static UINT8 *				hsyncram;
  *
  *************************************/
 
-int beathead_vh_start(void)
+VIDEO_START( beathead )
 {
-	hsyncram = malloc(0x800);
+	hsyncram = auto_malloc(0x800);
 	if (!hsyncram)
 		return 1;
 	return 0;
-}
-
-
-void beathead_vh_stop(void)
-{
-	free(hsyncram);
-	hsyncram = 0;
 }
 
 
@@ -165,7 +159,7 @@ READ32_HANDLER( beathead_hsync_ram_r )
 {
 	/* offset 0 is probably write-only */
 	if (offset == 0)
-		logerror("%08X:Unexpected HSYNC RAM read at offset 0\n", cpu_getpreviouspc());
+		logerror("%08X:Unexpected HSYNC RAM read at offset 0\n", activecpu_get_previouspc());
 
 	/* offset 1 reads the data */
 	else
@@ -220,21 +214,21 @@ void beathead_scanline_update(int scanline)
  *
  *************************************/
 
-void beathead_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( beathead )
 {
 	int x, y;
 
 	/* generate the final screen */
-	for (y = 0; y < 240; y++)
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		offs_t src = scanline_offset[y];
+		offs_t src = scanline_offset[y] + cliprect->min_x;
 		UINT8 scanline[336];
 
 		/* unswizzle the scanline first */
-		for (x = 0; x < 336; x++)
+		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			scanline[x] = ((data8_t *)videoram32)[BYTE4_XOR_LE(src++)];
 
 		/* then draw it */
-		draw_scanline8(bitmap, 0, y, 336, scanline, &Machine->pens[scanline_palette[y] * 256], -1);
+		draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], &Machine->pens[scanline_palette[y] * 256], -1);
 	}
 }

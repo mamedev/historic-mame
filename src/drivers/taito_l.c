@@ -50,9 +50,9 @@ TODO:
 #include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"
 
-void taitol_eof_callback(void);
-int taitol_vh_start(void);
-void taitol_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_EOF( taitol );
+VIDEO_START( taitol );
+VIDEO_UPDATE( taitol );
 
 void taitol_chardef14_m(int offset);
 void taitol_chardef15_m(int offset);
@@ -125,7 +125,7 @@ static void palette_notifier(int addr)
 
 	if(addr > 0x200)
 	{
-logerror("Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
+logerror("Large palette ? %03x (%04x)\n", addr, activecpu_get_pc());
 	}
 	else
 	{
@@ -138,9 +138,9 @@ static void machine_init(void)
 {
 	int i;
 
-	taitol_rambanks = malloc(0x1000*12);
-	palette_ram = malloc(0x1000);
-	empty_ram = malloc(0x1000);
+	taitol_rambanks = auto_malloc(0x1000*12);
+	palette_ram = auto_malloc(0x1000);
+	empty_ram = auto_malloc(0x1000);
 
 	for(i=0;i<3;i++)
 		irq_adr_table[i] = 0;
@@ -167,7 +167,7 @@ static void machine_init(void)
 }
 
 
-static void fhawk_init(void)
+static MACHINE_INIT( fhawk )
 {
 	machine_init();
 	porte0_r = 0;
@@ -176,7 +176,7 @@ static void fhawk_init(void)
 	portf1_r = 0;
 }
 
-static void raimais_init(void)
+static MACHINE_INIT( raimais )
 {
 	machine_init();
 	porte0_r = 0;
@@ -185,17 +185,7 @@ static void raimais_init(void)
 	portf1_r = 0;
 }
 
-static void champwr_init(void)
-{
-	machine_init();
-	porte0_r = 0;
-	porte1_r = 0;
-	portf0_r = 0;
-	portf1_r = 0;
-}
-
-
-static void kurikint_init(void)
+static MACHINE_INIT( champwr )
 {
 	machine_init();
 	porte0_r = 0;
@@ -205,7 +195,17 @@ static void kurikint_init(void)
 }
 
 
-static void puzznic_init(void)
+static MACHINE_INIT( kurikint )
+{
+	machine_init();
+	porte0_r = 0;
+	porte1_r = 0;
+	portf0_r = 0;
+	portf1_r = 0;
+}
+
+
+static MACHINE_INIT( puzznic )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -214,7 +214,7 @@ static void puzznic_init(void)
 	portf1_r = input_port_3_r;
 }
 
-static void plotting_init(void)
+static MACHINE_INIT( plotting )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -223,7 +223,7 @@ static void plotting_init(void)
 	portf1_r = input_port_3_r;
 }
 
-static void palamed_init(void)
+static MACHINE_INIT( palamed )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -232,7 +232,7 @@ static void palamed_init(void)
 	portf1_r = 0;
 }
 
-static void cachat_init(void)
+static MACHINE_INIT( cachat )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -241,7 +241,7 @@ static void cachat_init(void)
 	portf1_r = 0;
 }
 
-static void horshoes_init(void)
+static MACHINE_INIT( horshoes )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -252,21 +252,19 @@ static void horshoes_init(void)
 
 
 
-static int vbl_interrupt(void)
+static INTERRUPT_GEN( vbl_interrupt )
 {
 	/* kludge to make plgirls boot */
-	if (cpunum_get_reg(0,Z80_IM) != 2) return ignore_interrupt();
+	if (cpunum_get_reg(0,Z80_IM) != 2) return;
 
 	// What is really generating interrupts 0 and 1 is still to be found
 
 	if (cpu_getiloops() == 1 && (irq_enable & 1))
-		return irq_adr_table[0];
-	if (cpu_getiloops() == 2 && (irq_enable & 2))
-		return irq_adr_table[1];
-	if (cpu_getiloops() == 0 && (irq_enable & 4))
-		return irq_adr_table[2];
-
-	return ignore_interrupt();
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[0]);
+	else if (cpu_getiloops() == 2 && (irq_enable & 2))
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[1]);
+	else if (cpu_getiloops() == 0 && (irq_enable & 4))
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[2]);
 }
 
 static WRITE_HANDLER( irq_adr_w )
@@ -303,7 +301,7 @@ static WRITE_HANDLER( rombankswitch_w )
 			logerror("New rom size : %x\n", (high+1)*0x2000);
 		}
 
-//		logerror("robs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+//		logerror("robs %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
 		cur_rombank = data;
 		cpu_setbank(1, memory_region(REGION_CPU1)+0x10000+0x2000*cur_rombank);
 	}
@@ -323,7 +321,7 @@ static WRITE_HANDLER( rombank2switch_w )
 			logerror("New rom2 size : %x\n", (high+1)*0x4000);
 		}
 
-//		logerror("robs2 %02x (%04x)\n", data, cpu_get_pc());
+//		logerror("robs2 %02x (%04x)\n", data, activecpu_get_pc());
 
 		cur_rombank2 = data;
 		cpu_setbank(6, memory_region(REGION_CPU3)+0x10000+0x4000*cur_rombank2);
@@ -345,7 +343,7 @@ static WRITE_HANDLER( rambankswitch_w )
 	if(cur_rambank[offset]!=data)
 	{
 		cur_rambank[offset]=data;
-//logerror("rabs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+//logerror("rabs %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
 		if(data>=0x14 && data<=0x1f)
 		{
 			data -= 0x14;
@@ -359,7 +357,7 @@ static WRITE_HANDLER( rambankswitch_w )
 		}
 		else
 		{
-logerror("unknown rambankswitch %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+logerror("unknown rambankswitch %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
 			current_notifier[offset] = 0;
 			current_base[offset] = empty_ram;
 		}
@@ -455,8 +453,8 @@ static int puzznic_mcu_reply[] = { 0x50, 0x1f, 0xb6, 0xba, 0x06, 0x03, 0x47, 0x0
 static WRITE_HANDLER( mcu_data_w )
 {
 	last_data = data;
-	last_data_adr = cpu_get_pc();
-//	logerror("mcu write %02x (%04x)\n", data, cpu_get_pc());
+	last_data_adr = activecpu_get_pc();
+//	logerror("mcu write %02x (%04x)\n", data, activecpu_get_pc());
 	switch(data)
 	{
 	case 0x43:
@@ -469,12 +467,12 @@ static WRITE_HANDLER( mcu_data_w )
 
 static WRITE_HANDLER( mcu_control_w )
 {
-//	logerror("mcu control %02x (%04x)\n", data, cpu_get_pc());
+//	logerror("mcu control %02x (%04x)\n", data, activecpu_get_pc());
 }
 
 static READ_HANDLER( mcu_data_r )
 {
-//	logerror("mcu read (%04x) [%02x, %04x]\n", cpu_get_pc(), last_data, last_data_adr);
+//	logerror("mcu read (%04x) [%02x, %04x]\n", activecpu_get_pc(), last_data, last_data_adr);
 	if(mcu_pos==mcu_reply_len)
 		return 0;
 
@@ -483,13 +481,13 @@ static READ_HANDLER( mcu_data_r )
 
 static READ_HANDLER( mcu_control_r )
 {
-//	logerror("mcu control read (%04x)\n", cpu_get_pc());
+//	logerror("mcu control read (%04x)\n", activecpu_get_pc());
 	return 0x1;
 }
 
 static WRITE_HANDLER( sound_w )
 {
-	logerror("Sound_w %02x (%04x)\n", data, cpu_get_pc());
+	logerror("Sound_w %02x (%04x)\n", data, activecpu_get_pc());
 }
 
 static READ_HANDLER( shared_r )
@@ -519,7 +517,7 @@ static READ_HANDLER( mux_r )
 	case 7:
 		return input_port_4_r(0);
 	default:
-		logerror("Mux read from unknown port %d (%04x)\n", mux_ctrl, cpu_get_pc());
+		logerror("Mux read from unknown port %d (%04x)\n", mux_ctrl, activecpu_get_pc());
 		return 0xff;
 	}
 }
@@ -532,7 +530,7 @@ static WRITE_HANDLER( mux_w )
 		control2_w(0, data);
 		break;
 	default:
-		logerror("Mux write to unknown port %d, %02x (%04x)\n", mux_ctrl, data, cpu_get_pc());
+		logerror("Mux write to unknown port %d, %02x (%04x)\n", mux_ctrl, data, activecpu_get_pc());
 	}
 }
 
@@ -1989,7 +1987,7 @@ static WRITE_HANDLER( portA_w )
 		cur_bank = data & 0x03;
 		bankaddress = 0x10000 + (cur_bank-1) * 0x4000;
 		cpu_setbank(7,&RAM[bankaddress]);
-		//logerror ("YM2203 bank change val=%02x  pc=%04x\n",cur_bank, cpu_get_pc() );
+		//logerror ("YM2203 bank change val=%02x  pc=%04x\n",cur_bank, activecpu_get_pc() );
 	}
 }
 
@@ -2054,239 +2052,186 @@ static struct YM2203interface ym2203_interface_single =
 };
 
 
-#define MCH_TRIPLE(name) \
-static const struct MachineDriver machine_driver_##name =		\
-{															\
-	{														\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _readmem, name ## _writemem, 0, 0,		\
-			vbl_interrupt,3									\
-		},													\
-		{													\
-			CPU_Z80 | CPU_AUDIO_CPU,						\
-			4000000,	/* ? xtal is 13.33056 */			\
-			name ## _3_readmem, name ## _3_writemem, 0, 0,	\
-			ignore_interrupt, 0								\
-		},													\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
-			interrupt, 1									\
-		}													\
-	},														\
-	60, DEFAULT_60HZ_VBLANK_DURATION,						\
-	100,													\
-	name ## _init,											\
-															\
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
-	gfxdecodeinfo2,											\
-	256, 0,													\
-	0,														\
-															\
-	VIDEO_TYPE_RASTER,										\
-	taitol_eof_callback,									\
-	taitol_vh_start,										\
-	0,														\
-	taitol_vh_screenrefresh,								\
-															\
-	0,0,0,0,												\
-	{														\
-		{													\
-			SOUND_YM2203,									\
-			&ym2203_interface_triple						\
-		}													\
-	}														\
-};
+static MACHINE_DRIVER_START( fhawk )
 
-#define MCH_TRIPLE_ADPCM(name) \
-static const struct MachineDriver machine_driver_##name =		\
-{															\
-	{														\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _readmem, name ## _writemem, 0, 0,		\
-			vbl_interrupt,3									\
-		},													\
-		{													\
-			CPU_Z80 | CPU_AUDIO_CPU,						\
-			4000000,	/* ? xtal is 13.33056 */			\
-			name ## _3_readmem, name ## _3_writemem, 0, 0,	\
-			ignore_interrupt, 0								\
-		},													\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
-			interrupt, 1									\
-		}													\
-	},														\
-	60, DEFAULT_60HZ_VBLANK_DURATION,						\
-	100,													\
-	name ## _init,											\
-															\
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
-	gfxdecodeinfo2,											\
-	256, 0,													\
-	0,														\
-															\
-	VIDEO_TYPE_RASTER,										\
-	taitol_eof_callback,									\
-	taitol_vh_start,										\
-	0,														\
-	taitol_vh_screenrefresh,								\
-															\
-	0,0,0,0,												\
-	{														\
-		{													\
-			SOUND_YM2203,									\
-			&ym2203_interface_triple						\
-		},													\
-		{													\
-			SOUND_ADPCM,									\
-			&adpcm_interface								\
-		}													\
-	}														\
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("cpu1", Z80, 6000000)	/* ? xtal is 13.33056 */
+	MDRV_CPU_MEMORY(fhawk_readmem,fhawk_writemem)
+	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
 
-#define MCH_TRIPLE_2610(name) \
-static const struct MachineDriver machine_driver_##name =		\
-{															\
-	{														\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _readmem, name ## _writemem, 0, 0,		\
-			vbl_interrupt,3									\
-		},													\
-		{													\
-			CPU_Z80 | CPU_AUDIO_CPU,						\
-			4000000,	/* ? xtal is 13.33056 */			\
-			name ## _3_readmem, name ## _3_writemem, 0, 0,	\
-			ignore_interrupt, 0								\
-		},													\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
-			interrupt, 1									\
-		}													\
-	},														\
-	60, DEFAULT_60HZ_VBLANK_DURATION,						\
-	100,													\
-	name ## _init,											\
-															\
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
-	gfxdecodeinfo2,											\
-	256, 0,													\
-	0,														\
-															\
-	VIDEO_TYPE_RASTER,										\
-	taitol_eof_callback,									\
-	taitol_vh_start,										\
-	0,														\
-	taitol_vh_screenrefresh,								\
-															\
-	0,0,0,0,												\
-	{														\
-		{													\
-			SOUND_YM2610,									\
-			&ym2610_interface								\
-		}													\
-	}														\
-};
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* ? xtal is 13.33056 */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(fhawk_3_readmem,fhawk_3_writemem)
 
-#define MCH_DOUBLE(name) \
-static const struct MachineDriver machine_driver_##name =		\
-{															\
-	{														\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _readmem, name ## _writemem, 0, 0,		\
-			vbl_interrupt,3									\
-		},													\
-		{													\
-			CPU_Z80,										\
-			6000000,	/* ? xtal is 13.33056 */			\
-			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
-			interrupt, 1									\
-		}													\
-	},														\
-	60, DEFAULT_60HZ_VBLANK_DURATION,						\
-	100,													\
-	name ## _init,											\
-															\
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },				\
-	gfxdecodeinfo2,											\
-	256, 0,													\
-	0,														\
-															\
-	VIDEO_TYPE_RASTER,										\
-	taitol_eof_callback,									\
-	taitol_vh_start,										\
-	0,														\
-	taitol_vh_screenrefresh,								\
-															\
-	0,0,0,0,												\
-	{														\
-		{													\
-			SOUND_YM2203,									\
-			&ym2203_interface_double						\
-		}													\
-	}														\
-};
+	MDRV_CPU_ADD_TAG("cpu2", Z80, 6000000)	/* ? xtal is 13.33056 */
+	MDRV_CPU_MEMORY(fhawk_2_readmem,fhawk_2_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-#define MCH_SINGLE(name) \
-static const struct MachineDriver machine_driver_##name =	\
-{														\
-	{													\
-		{												\
-			CPU_Z80,									\
-			6000000,	/* ? xtal is 13.33056 */		\
-			name ## _readmem, name ## _writemem, 0, 0,	\
-			vbl_interrupt,3								\
-		}												\
-	},													\
-	60, DEFAULT_60HZ_VBLANK_DURATION,					\
-	1,													\
-	name ## _init,										\
-														\
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },			\
-	gfxdecodeinfo1,										\
-	256, 0,												\
-	0,													\
-														\
-	VIDEO_TYPE_RASTER,									\
-	taitol_eof_callback,								\
-	taitol_vh_start,									\
-	0,													\
-	taitol_vh_screenrefresh,							\
-														\
-	0,0,0,0,											\
-	{													\
-		{												\
-			SOUND_YM2203,								\
-			&ym2203_interface_single					\
-		}												\
-	}													\
-};
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+	
+	MDRV_MACHINE_INIT(fhawk)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo2)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(taitol)
+	MDRV_VIDEO_EOF(taitol)
+	MDRV_VIDEO_UPDATE(taitol)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("2203", YM2203, ym2203_interface_triple)
+MACHINE_DRIVER_END
 
 
-MCH_TRIPLE_2610(raimais)
-MCH_TRIPLE(fhawk)
-MCH_TRIPLE_ADPCM(champwr)
+static MACHINE_DRIVER_START( champwr )
 
-MCH_DOUBLE(kurikint)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(fhawk)
+	MDRV_CPU_MODIFY("cpu1")
+	MDRV_CPU_MEMORY(champwr_readmem,champwr_writemem)
+	
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(champwr_3_readmem,champwr_3_writemem)
 
-MCH_SINGLE(plotting)
-MCH_SINGLE(puzznic)
-MCH_SINGLE(horshoes)
-MCH_SINGLE(palamed)
-MCH_SINGLE(cachat)
+	MDRV_CPU_MODIFY("cpu2")	
+	MDRV_CPU_MEMORY(champwr_2_readmem,champwr_2_writemem)
+	
+	MDRV_MACHINE_INIT(champwr)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
+	
+
+static MACHINE_DRIVER_START( raimais )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(fhawk)
+	MDRV_CPU_MODIFY("cpu1")
+	MDRV_CPU_MEMORY(raimais_readmem,raimais_writemem)
+	
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(raimais_3_readmem,raimais_3_writemem)
+
+	MDRV_CPU_MODIFY("cpu2")	
+	MDRV_CPU_MEMORY(raimais_2_readmem,raimais_2_writemem)
+	
+	MDRV_MACHINE_INIT(raimais)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("2203", YM2610, ym2610_interface)
+MACHINE_DRIVER_END
+	
+
+static MACHINE_DRIVER_START( kurikint )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)	/* ? xtal is 13.33056 */
+	MDRV_CPU_MEMORY(kurikint_readmem,kurikint_writemem)
+	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* ? xtal is 13.33056 */
+	MDRV_CPU_MEMORY(kurikint_2_readmem,kurikint_2_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(kurikint)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo2)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(taitol)
+	MDRV_VIDEO_EOF(taitol)
+	MDRV_VIDEO_UPDATE(taitol)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface_double)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( plotting )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 6000000)	/* ? xtal is 13.33056 */
+	MDRV_CPU_MEMORY(plotting_readmem,plotting_writemem)
+	MDRV_CPU_VBLANK_INT(vbl_interrupt,3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(plotting)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(taitol)
+	MDRV_VIDEO_EOF(taitol)
+	MDRV_VIDEO_UPDATE(taitol)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface_single)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( puzznic )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(plotting)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(puzznic_readmem,puzznic_writemem)
+
+	MDRV_MACHINE_INIT(puzznic)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( horshoes )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(plotting)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(horshoes_readmem,horshoes_writemem)
+
+	MDRV_MACHINE_INIT(horshoes)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( palamed )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(plotting)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(palamed_readmem,palamed_writemem)
+
+	MDRV_MACHINE_INIT(palamed)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cachat )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(plotting)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(cachat_readmem,cachat_writemem)
+
+	MDRV_MACHINE_INIT(cachat)
+MACHINE_DRIVER_END
 
 
 
@@ -2569,7 +2514,7 @@ ROM_END
 
 
 // bits 7..0 => bits 0..7
-static void init_plotting(void)
+static DRIVER_INIT( plotting )
 {
 	unsigned char tab[256];
 	unsigned char *p;

@@ -21,13 +21,13 @@ Loosely based on the our previous 10 Yard Fight driver.
 
 extern unsigned char *travrusa_videoram;
 
-void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int travrusa_vh_start(void);
+PALETTE_INIT( travrusa );
+VIDEO_START( travrusa );
 WRITE_HANDLER( travrusa_videoram_w );
 WRITE_HANDLER( travrusa_scroll_x_low_w );
 WRITE_HANDLER( travrusa_scroll_x_high_w );
 WRITE_HANDLER( travrusa_flipscreen_w );
-void travrusa_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( travrusa );
 
 
 
@@ -263,42 +263,33 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_travrusa =
-{
+static MACHINE_DRIVER_START( travrusa )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		IREM_AUDIO_CPU
-	},
-	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(1790)	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
 				/* talks about 55Hz and 1790ms vblank duration. */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	128+32, 16*8+16*8,
-	travrusa_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+32)
+	MDRV_COLORTABLE_LENGTH(16*8+16*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	travrusa_vh_start,
-	0,
-	travrusa_vh_screenrefresh,
+	MDRV_PALETTE_INIT(travrusa)
+	MDRV_VIDEO_START(travrusa)
+	MDRV_VIDEO_UPDATE(travrusa)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		IREM_AUDIO
-	}
-};
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -362,7 +353,7 @@ ROM_END
 
 
 
-void init_motorace(void)
+DRIVER_INIT( motorace )
 {
 	int A,j;
 	unsigned char *rom = memory_region(REGION_CPU1);

@@ -83,12 +83,11 @@ Rainbowe needs dump of its c-chip.
 
 //data16_t *rainbow_mainram;
 
-int  rainbow_vh_start(void);
-int  jumping_vh_start(void);
-void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void jumping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void rastan_vh_stop(void);
-int rainbow_interrupt(void);
+VIDEO_START( rainbow );
+VIDEO_START( jumping );
+VIDEO_UPDATE( rainbow );
+VIDEO_UPDATE( jumping );
+INTERRUPT_GEN( rainbow_interrupt );
 
 WRITE16_HANDLER( rainbow_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
@@ -106,7 +105,7 @@ static WRITE16_HANDLER( jumping_sound_w )
 	if (ACCESSING_LSB)
 	{
 		jumping_latch = data & 0xff; /*M68000 writes .b to $400007*/
-		cpu_cause_interrupt(1,Z80_IRQ_INT);
+		cpu_set_irq_line(1,0,HOLD_LINE);
 	}
 }
 
@@ -525,92 +524,62 @@ static struct YM2203interface ym2203_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static const struct MachineDriver machine_driver_rainbow =
-{
+static MACHINE_DRIVER_START( rainbow )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			rainbow_readmem,rainbow_writemem,0,0,
-			rainbow_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			rainbow_s_readmem,rainbow_s_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(rainbow_readmem,rainbow_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(rainbow_s_readmem,rainbow_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 }, /* is Y visible correct ? */
-	rainbow_gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1) /* is Y visible correct ? */
+	MDRV_GFXDECODE(rainbow_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	rainbow_vh_start,
-	rastan_vh_stop,
-	rainbow_vh_screenrefresh,
+	MDRV_VIDEO_START(rainbow)
+	MDRV_VIDEO_UPDATE(rainbow)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-  			SOUND_YM2151,
-			&ym2151_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_jumping =
-{
+static MACHINE_DRIVER_START( jumping )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			jumping_readmem,jumping_writemem,0,0,
-			rainbow_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			jumping_sound_readmem,jumping_sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough ? */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(jumping_readmem,jumping_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(jumping_sound_readmem,jumping_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough ? */
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 }, /* is Y visible correct ? */
-	jumping_gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1) /* is Y visible correct ? */
+	MDRV_GFXDECODE(jumping_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	jumping_vh_start,
-	rastan_vh_stop,
-	jumping_vh_screenrefresh,
+	MDRV_VIDEO_START(jumping)
+	MDRV_VIDEO_UPDATE(jumping)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -736,14 +705,14 @@ ROM_END
 
 
 
-static void init_rainbow(void)
+static DRIVER_INIT( rainbow )
 {
 	state_save_register_int("rainbow", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);
 	rainbow_cchip_init();
 }
 
-static void init_jumping(void)
+static DRIVER_INIT( jumping )
 {
 	/* sprite roms need all bits reversing, as colours are    */
 	/* mapped back to front from the pattern used by Rainbow! */

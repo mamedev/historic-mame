@@ -27,17 +27,17 @@ INLINE void copy_byte(int x, int y, int data, int col)
 	fore  = Machine->pens[(col >> 4) & 0x0f];
 	back  = Machine->pens[0];
 
-	plot_pixel(Machine->scrbitmap, x  , y, (data & 0x80) ? fore : back);
-	plot_pixel(Machine->scrbitmap, x+1, y, (data & 0x40) ? fore : back);
-	plot_pixel(Machine->scrbitmap, x+2, y, (data & 0x20) ? fore : back);
-	plot_pixel(Machine->scrbitmap, x+3, y, (data & 0x10) ? fore : back);
+	plot_pixel(tmpbitmap, x  , y, (data & 0x80) ? fore : back);
+	plot_pixel(tmpbitmap, x+1, y, (data & 0x40) ? fore : back);
+	plot_pixel(tmpbitmap, x+2, y, (data & 0x20) ? fore : back);
+	plot_pixel(tmpbitmap, x+3, y, (data & 0x10) ? fore : back);
 
 	fore  = Machine->pens[col & 0x0f];
 
-	plot_pixel(Machine->scrbitmap, x+4, y, (data & 0x08) ? fore : back);
-	plot_pixel(Machine->scrbitmap, x+5, y, (data & 0x04) ? fore : back);
-	plot_pixel(Machine->scrbitmap, x+6, y, (data & 0x02) ? fore : back);
-	plot_pixel(Machine->scrbitmap, x+7, y, (data & 0x01) ? fore : back);
+	plot_pixel(tmpbitmap, x+4, y, (data & 0x08) ? fore : back);
+	plot_pixel(tmpbitmap, x+5, y, (data & 0x04) ? fore : back);
+	plot_pixel(tmpbitmap, x+6, y, (data & 0x02) ? fore : back);
+	plot_pixel(tmpbitmap, x+7, y, (data & 0x01) ? fore : back);
 }
 
 
@@ -173,9 +173,9 @@ READ_HANDLER( berzerk_collision_r )
   To be used by bitmapped games not using sprites.
 
 ***************************************************************************/
-void berzerk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( berzerk )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		/* redraw bitmap */
 
@@ -186,4 +186,6 @@ void berzerk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			berzerk_videoram_w(offs, videoram[offs]);
 		}
 	}
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

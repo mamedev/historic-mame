@@ -23,23 +23,21 @@ WRITE16_HANDLER( seta_vram_2_w );
 WRITE16_HANDLER( seta_vram_3_w );
 WRITE16_HANDLER( seta_vregs_w );
 
-void blandia_vh_init_palette (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void gundhara_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void jjsquawk_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void usclssic_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void zingzip_vh_init_palette (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( blandia );
+PALETTE_INIT( gundhara );
+PALETTE_INIT( jjsquawk );
+PALETTE_INIT( usclssic );
+PALETTE_INIT( zingzip );
 
-int seta_vh_start_no_layers(void);
+VIDEO_START( seta_no_layers);
+VIDEO_START( seta_1_layer);
+VIDEO_START( seta_1_layer_offset_0x02);
+VIDEO_START( seta_2_layers);
+VIDEO_START( seta_2_layers_offset_0x02);
+VIDEO_START( oisipuzl_2_layers );
 
-int seta_vh_start_1_layer(void);
-int seta_vh_start_1_layer_offset_0x02(void);
-
-int seta_vh_start_2_layers(void);
-int seta_vh_start_2_layers_offset_0x02(void);
-int oisipuzl_vh_start_2_layers(void);
-
-void seta_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void seta_vh_screenrefresh_no_layers(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( seta );
+VIDEO_UPDATE( seta_no_layers );
 
 
 /* Variables and functions defined in vidhrdw/seta2.c */
@@ -48,8 +46,8 @@ extern data16_t *seta2_vregs;
 
 WRITE16_HANDLER( seta2_vregs_w );
 
-void seta2_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void seta2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( seta2 );
+VIDEO_UPDATE( seta2 );
 
 
 /* Variables and functions defined in sndhrdw/seta.c */
@@ -85,5 +83,5 @@ WRITE16_HANDLER( ssv_scroll_w );
 WRITE16_HANDLER( paletteram16_xrgb_swap_word_w );
 void ssv_enable_video(int enable);
 
-void ssv_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void ssv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( ssv );
+VIDEO_UPDATE( ssv );

@@ -32,10 +32,9 @@ READ16_HANDLER( volfied_video_ram_r );
 READ16_HANDLER( volfied_video_ctrl_r );
 READ16_HANDLER( volfied_cchip_r );
 
-void volfied_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_UPDATE( volfied );
 
-int volfied_vh_start(void);
-void volfied_vh_stop(void);
+VIDEO_START( volfied );
 
 void volfied_cchip_init(void);
 
@@ -221,51 +220,38 @@ static struct YM2203interface ym2203_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static void init_volfied(void)
+static DRIVER_INIT( volfied )
 {
 	volfied_cchip_init();
 }
 
-static struct MachineDriver machine_driver_volfied =
-{
+static MACHINE_DRIVER_START( volfied )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,   /* 8MHz? */
-			volfied_readmem, volfied_writemem, 0, 0,
-			m68_level4_irq, 1
-		},
-		{
-			CPU_Z80,   /* sound CPU, required to run the game  */
-			4000000,   /* 4MHz? */
-			z80_readmem, z80_writemem, 0, 0,
-			ignore_interrupt, 0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	20,
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)   /* 8MHz? */
+	MDRV_CPU_MEMORY(volfied_readmem,volfied_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	320, 256, { 0, 319, 0, 255 },
-	gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)   /* sound CPU, required to run the game  */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	volfied_vh_start,
-	volfied_vh_stop,
-	volfied_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(20)
 
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 319, 0, 255)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(volfied)
+	MDRV_VIDEO_UPDATE(volfied)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

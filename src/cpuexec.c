@@ -115,20 +115,6 @@ static int cycles_running;
 
 /*************************************
  *
- *	CPU interrupt variables
- *
- *************************************/
-
-static UINT8 interrupt_enable[MAX_CPU];
-static INT32 interrupt_vector[MAX_CPU];
-
-static UINT8 irq_line_state[MAX_CPU][MAX_IRQ_LINES];
-static INT32 irq_line_vector[MAX_CPU][MAX_IRQ_LINES];
-
-
-
-/*************************************
- *
  *	Timer variables
  *
  *************************************/
@@ -168,43 +154,11 @@ static char loadsave_schedule_id;
  *************************************/
 
 static void cpu_inittimers(void);
-static void cpu_removetimers(void);
 static void cpu_vblankreset(void);
 static void cpu_vblankcallback(int param);
 static void cpu_updatecallback(int param);
 
 static void handle_loadsave(void);
-
-
-
-/*************************************
- *
- *	IRQ acknowledge callbacks
- *
- *************************************/
-
-static int cpu_0_irq_callback(int irqline);
-static int cpu_1_irq_callback(int irqline);
-static int cpu_2_irq_callback(int irqline);
-static int cpu_3_irq_callback(int irqline);
-static int cpu_4_irq_callback(int irqline);
-static int cpu_5_irq_callback(int irqline);
-static int cpu_6_irq_callback(int irqline);
-static int cpu_7_irq_callback(int irqline);
-
-static int (*cpu_irq_callbacks[MAX_CPU])(int) =
-{
-	cpu_0_irq_callback,
-	cpu_1_irq_callback,
-	cpu_2_irq_callback,
-	cpu_3_irq_callback,
-	cpu_4_irq_callback,
-	cpu_5_irq_callback,
-	cpu_6_irq_callback,
-	cpu_7_irq_callback
-};
-
-static int (*drv_irq_callbacks[MAX_CPU])(int);
 
 
 
@@ -226,13 +180,12 @@ int cpu_init(void)
 	if (cpuintrf_init())
 		return 1;
 
-	/* count how many CPUs we have to emulate */
+	/* loop over all our CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
 		int cputype = Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK;
-		int irqline;
 
-		/* stop when we hit a dummy */
+		/* if this is a dummy, stop looking */
 		if (cputype == CPU_DUMMY)
 			break;
 
@@ -242,25 +195,15 @@ int cpu_init(void)
 		/* initialize this CPU */
 		if (cpuintrf_init_cpu(cpunum, cputype))
 			return 1;
-
-		/* reset the IRQ lines */
-		for (irqline = 0; irqline < MAX_IRQ_LINES; irqline++)
-		{
-			irq_line_state[cpunum][irqline] = CLEAR_LINE;
-			irq_line_vector[cpunum][irqline] = cpunum_default_irq_vector(cpunum);
-		}
 	}
 
 	/* save some stuff in tag 0 */
 	state_save_set_current_tag(0);
-	state_save_register_UINT8("cpu", 0, "irq enable",     interrupt_enable,  cpunum);
-	state_save_register_INT32("cpu", 0, "irq vector",     interrupt_vector,  cpunum);
-	state_save_register_UINT8("cpu", 0, "irqline state",  &irq_line_state[0][0],  cpunum * MAX_IRQ_LINES);
-	state_save_register_INT32("cpu", 0, "irqline vector", &irq_line_vector[0][0], cpunum * MAX_IRQ_LINES);
 	state_save_register_INT32("cpu", 0, "watchdog count", &watchdog_counter, 1);
 
-	/* init the timer system */
-	timer_init();
+	/* reset the IRQ lines and save those */
+	if (cpuint_init())
+		return 1;
 
 	return 0;
 }
@@ -279,7 +222,7 @@ static void cpu_pre_run(void)
 
 	logerror("Machine reset\n");
 
-	auto_malloc_start();
+	begin_resource_tracking();
 
 	/* read hi scores information from hiscore.dat */
 	hs_open(Machine->gamedrv->name);
@@ -301,13 +244,8 @@ static void cpu_pre_run(void)
 		else
 			timer_suspendcpu(cpunum, 1, SUSPEND_REASON_DISABLE);
 
-		/* start with interrupts enabled, so the generic routine will work even if */
-		/* the machine doesn't have an interrupt enable port */
-		interrupt_enable[cpunum] = 1;
-		interrupt_vector[cpunum] = 0xff;
-
-		/* reset any driver hooks into the IRQ acknowledge callbacks */
-		drv_irq_callbacks[cpunum] = NULL;
+		/* reset the interrupt state */
+		cpuint_reset_cpu(cpunum);
 
 		/* reset the total number of cycles */
 		cpu[cpunum].totalcycles = 0;
@@ -315,10 +253,10 @@ static void cpu_pre_run(void)
 
 	vblank = 0;
 
-	/* do this AFTER the above so init_machine() can use cpu_halt() to hold the */
+	/* do this AFTER the above so machine_init() can use cpu_halt() to hold the */
 	/* execution of some CPUs, or disable interrupts */
-	if (Machine->drv->init_machine)
-		(*Machine->drv->init_machine)();
+	if (Machine->drv->machine_init)
+		(*Machine->drv->machine_init)();
 
 	/* now reset each CPU */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
@@ -340,19 +278,14 @@ static void cpu_pre_run(void)
 
 static void cpu_post_run(void)
 {
-	/* remove any timers */
-	cpu_removetimers();
-
 	/* write hi scores to disk - No scores saving if cheat */
 	hs_close();
 
-#ifdef MESS
 	/* stop the machine */
-	if (Machine->drv->stop_machine)
-		(*Machine->drv->stop_machine)();
-#endif
+	if (Machine->drv->machine_stop)
+		(*Machine->drv->machine_stop)();
 
-	auto_malloc_stop();
+	end_resource_tracking();
 }
 
 
@@ -867,6 +800,30 @@ int cpu_scalebyfcount(int value)
 
 /*************************************
  *
+ *	Creates the refresh timer
+ *
+ *************************************/
+
+void cpu_init_refresh_timer(void)
+{
+	/* allocate an infinite timer to track elapsed time since the last refresh */
+	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
+	refresh_period_inv = 1.0 / refresh_period;
+	refresh_timer = timer_alloc(NULL);
+
+	/* while we're at it, compute the scanline times */
+	if (Machine->drv->vblank_duration)
+		scanline_period = (refresh_period - TIME_IN_USEC(Machine->drv->vblank_duration)) /
+				(double)(Machine->drv->default_visible_area.max_y - Machine->drv->default_visible_area.min_y + 1);
+	else
+		scanline_period = refresh_period / (double)Machine->drv->screen_height;
+	scanline_period_inv = 1.0 / scanline_period;
+}
+
+
+
+/*************************************
+ *
  *	Returns the current scanline
  *
  *************************************/
@@ -968,330 +925,6 @@ int cpu_getcurrentframe(void)
 {
 	return current_frame;
 }
-
-
-
-#if 0
-#pragma mark -
-#pragma mark INTERRUPT HANDLING
-#endif
-
-/*************************************
- *
- *	Set IRQ callback for drivers
- *
- *************************************/
-
-void cpu_set_irq_callback(int cpunum, int (*callback)(int))
-{
-	drv_irq_callbacks[cpunum] = callback;
-}
-
-
-
-/*************************************
- *
- *	Internal IRQ callbacks
- *
- *************************************/
-
-INLINE int cpu_irq_callback(int cpunum, int irqline)
-{
-	int vector = irq_line_vector[cpunum][irqline];
-
-	LOG(("cpu_%d_irq_callback(%d) $%04xn", cpunum, irqline, vector));
-
-	/* if the IRQ state is HOLD_LINE, clear it */
-	if (irq_line_state[cpunum][irqline] == HOLD_LINE)
-	{
-		LOG(("->set_irq_line(%d,%d,%d)\n", cpunum, irqline, CLEAR_LINE));
-		activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
-		irq_line_state[cpunum][irqline] = CLEAR_LINE;
-	}
-
-	/* if there's a driver callback, run it */
-	if (drv_irq_callbacks[cpunum])
-		vector = (*drv_irq_callbacks[cpunum])(irqline);
-
-	/* otherwise, just return the current vector */
-	return vector;
-}
-
-static int cpu_0_irq_callback(int irqline) { return cpu_irq_callback(0, irqline); }
-static int cpu_1_irq_callback(int irqline) { return cpu_irq_callback(1, irqline); }
-static int cpu_2_irq_callback(int irqline) { return cpu_irq_callback(2, irqline); }
-static int cpu_3_irq_callback(int irqline) { return cpu_irq_callback(3, irqline); }
-static int cpu_4_irq_callback(int irqline) { return cpu_irq_callback(4, irqline); }
-static int cpu_5_irq_callback(int irqline) { return cpu_irq_callback(5, irqline); }
-static int cpu_6_irq_callback(int irqline) { return cpu_irq_callback(6, irqline); }
-static int cpu_7_irq_callback(int irqline) { return cpu_irq_callback(7, irqline); }
-
-
-
-/*************************************
- *
- *	Set the IRQ vector for a given
- *	IRQ line on a CPU
- *
- *************************************/
-
-void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
-{
-	if (cpunum < cpu_gettotalcpu() && irqline >= 0 && irqline < MAX_IRQ_LINES)
-	{
-		LOG(("cpu_irq_line_vector_w(%d,%d,$%04x)\n",cpunum,irqline,vector));
-		irq_line_vector[cpunum][irqline] = vector;
-		return;
-	}
-	LOG(("cpu_irq_line_vector_w CPU#%d irqline %d > max irq lines\n", cpunum, irqline));
-}
-
-
-
-/*************************************
- *
- *	Generate a IRQ interrupt
- *
- *************************************/
-
-static void cpu_manualirqcallback(int param)
-{
-	int cpunum = param & 0x0f;
-	int state = (param >> 4) & 0x0f;
-	int irqline = (param >> 8) & 0x7f;
-	int set_vector = (param >> 15) & 0x01;
-	int vector = param >> 16;
-
-	LOG(("cpu_manualirqcallback %d,%d,%d\n",cpunum,irqline,state));
-
-	/* swap to the CPU's context */
-	cpuintrf_push_context(cpunum);
-
-	/* set the IRQ line state and vector */
-	if (irqline >= 0 && irqline < MAX_IRQ_LINES)
-	{
-		irq_line_state[cpunum][irqline] = state;
-		if (set_vector)
-			irq_line_vector[cpunum][irqline] = vector;
-	}
-
-	/* switch off the requested state */
-	switch (state)
-	{
-		case PULSE_LINE:
-			activecpu_set_irq_line(irqline, INTERNAL_ASSERT_LINE);
-			activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
-			break;
-
-		case HOLD_LINE:
-		case ASSERT_LINE:
-			activecpu_set_irq_line(irqline, INTERNAL_ASSERT_LINE);
-			break;
-
-		case CLEAR_LINE:
-			activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
-			break;
-
-		default:
-			logerror("cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
-	}
-	cpuintrf_pop_context();
-
-	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
-	if (state != CLEAR_LINE)
-		cpu_triggerint(cpunum);
-}
-
-
-void cpu_set_irq_line(int cpunum, int irqline, int state)
-{
-	int vector = 0xff;
-
-	/* don't trigger interrupts on suspended CPUs */
-	if (cpu_getstatus(cpunum) == 0)
-		return;
-
-	/* determine the current vector */
-	if (irqline >= 0 && irqline < MAX_IRQ_LINES)
-		vector = irq_line_vector[cpunum][irqline];
-
-	LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
-
-	/* set a timer to go off */
-	timer_set(TIME_NOW, (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8), cpu_manualirqcallback);
-}
-
-
-void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector)
-{
-	int activecpu = cpu_getactivecpu();
-	int param;
-
-	/* don't trigger interrupts on suspended CPUs */
-	if (cpu_getstatus(cpunum) == 0)
-		return;
-
-	LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
-
-	/* set a timer to go off */
-	param = (cpunum & 0x0f) | ((state & 0x0f) << 4) | ((irqline & 0x7f) << 8) | (1 << 15) | (vector << 16);
-	if (activecpu == -1 || (cpunum == activecpu && state == CLEAR_LINE))
-		cpu_manualirqcallback(param);
-	else
-		timer_set(TIME_NOW, param, cpu_manualirqcallback);
-}
-
-
-
-#if 0
-#pragma mark -
-#pragma mark OBSOLETE INTERRUPT HANDLING
-#endif
-
-/*************************************
- *
- *	Old-style interrupt generation
- *
- *************************************/
-
-void cpu_cause_interrupt(int cpunum, int type)
-{
-	/* special case for none */
-	if (type == INTERRUPT_NONE)
-		return;
-
-	/* special case for NMI type */
-	else if (type == INTERRUPT_NMI)
-		cpu_set_irq_line(cpunum, IRQ_LINE_NMI, PULSE_LINE);
-
-	/* otherwise, convert to an IRQ */
-	else
-	{
-		int vector, irqline;
-		irqline = convert_type_to_irq_line(cpunum, type, &vector);
-		cpu_set_irq_line_and_vector(cpunum, irqline, HOLD_LINE, vector);
-	}
-}
-
-
-
-/*************************************
- *
- *	Interrupt enabling
- *
- *************************************/
-
-static void cpu_clearintcallback(int cpunum)
-{
-	int irqcount = cputype_get_interface(Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK)->num_irqs;
-	int irqline;
-
-	cpuintrf_push_context(cpunum);
-
-	/* clear NMI and all IRQs */
-	activecpu_set_irq_line(IRQ_LINE_NMI, INTERNAL_CLEAR_LINE);
-	for (irqline = 0; irqline < irqcount; irqline++)
-		activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
-
-	cpuintrf_pop_context();
-}
-
-
-void cpu_interrupt_enable(int cpunum,int enabled)
-{
-	interrupt_enable[cpunum] = enabled;
-
-LOG(("CPU#%d interrupt_enable=%d\n", cpunum, enabled));
-
-	/* make sure there are no queued interrupts */
-	if (enabled == 0)
-		timer_set(TIME_NOW, cpunum, cpu_clearintcallback);
-}
-
-
-WRITE_HANDLER( interrupt_enable_w )
-{
-	VERIFY_ACTIVECPU_VOID(interrupt_enable_w);
-	cpu_interrupt_enable(activecpu, data);
-}
-
-
-
-WRITE_HANDLER( interrupt_vector_w )
-{
-	VERIFY_ACTIVECPU_VOID(interrupt_vector_w);
-	if (interrupt_vector[activecpu] != data)
-	{
-		LOG(("CPU#%d interrupt_vector_w $%02x\n", activecpu, data));
-		interrupt_vector[activecpu] = data;
-
-		/* make sure there are no queued interrupts */
-		timer_set(TIME_NOW, activecpu, cpu_clearintcallback);
-	}
-}
-
-
-
-/*************************************
- *
- *	Interrupt generation callbacks
- *
- *************************************/
-
-int interrupt(void)
-{
-	int val = 0;
-
-	VERIFY_ACTIVECPU(INTERRUPT_NONE, interrupt);
-
-	if (interrupt_enable[activecpu] == 0)
-		return INTERRUPT_NONE;
-
-	val = activecpu_default_irq_line();
-	return (val == -1000) ? interrupt_vector[activecpu] : val;
-}
-
-
-int nmi_interrupt(void)
-{
-	VERIFY_ACTIVECPU(INTERRUPT_NONE, nmi_interrupt);
-
-LOG(("nmi_interrupt: interrupt_enable[%d]=%d\n", activecpu, interrupt_enable[activecpu]));
-	if (interrupt_enable[activecpu])
-		cpu_set_nmi_line(activecpu, PULSE_LINE);
-	return INTERRUPT_NONE;
-}
-
-
-int ignore_interrupt(void)
-{
-	VERIFY_ACTIVECPU(INTERRUPT_NONE, ignore_interrupt);
-	return INTERRUPT_NONE;
-}
-
-
-#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
-
-INLINE int m68_irq(int level)
-{
-	VERIFY_ACTIVECPU(INTERRUPT_NONE, m68_irq);
-	if (interrupt_enable[activecpu])
-	{
-		cpu_irq_line_vector_w(activecpu, level, MC68000_INT_ACK_AUTOVECTOR);
-		cpu_set_irq_line(activecpu, level, HOLD_LINE);
-	}
-	return INTERRUPT_NONE;
-}
-
-int m68_level1_irq(void) { return m68_irq(1); }
-int m68_level2_irq(void) { return m68_irq(2); }
-int m68_level3_irq(void) { return m68_irq(3); }
-int m68_level4_irq(void) { return m68_irq(4); }
-int m68_level5_irq(void) { return m68_irq(5); }
-int m68_level6_irq(void) { return m68_irq(6); }
-int m68_level7_irq(void) { return m68_irq(7); }
-
-#endif
 
 
 
@@ -1499,7 +1132,7 @@ static void cpu_vblankreset(void)
 static void cpu_firstvblankcallback(int param)
 {
 	/* now that we're synced up, pulse from here on out */
-	vblank_timer = timer_pulse(vblank_period, param, cpu_vblankcallback);
+	timer_adjust(vblank_timer, vblank_period, param, vblank_period);
 
 	/* but we need to call the standard routine as well */
 	cpu_vblankcallback(param);
@@ -1533,7 +1166,7 @@ static void cpu_vblankcallback(int param)
 					if (Machine->drv->cpu[cpunum].vblank_interrupt && cpu_getstatus(cpunum))
 					{
 						cpuintrf_push_context(cpunum);
-						cpu_cause_interrupt(cpunum, (*Machine->drv->cpu[cpunum].vblank_interrupt)());
+						(*Machine->drv->cpu[cpunum].vblank_interrupt)();
 						cpuintrf_pop_context();
 					}
 
@@ -1543,13 +1176,13 @@ static void cpu_vblankcallback(int param)
 
 				/* reset the countdown and timer */
 				cpu[cpunum].vblankint_countdown = cpu[cpunum].vblankint_multiplier;
-				timer_reset(cpu[cpunum].vblankint_timer, TIME_NEVER);
+				timer_adjust(cpu[cpunum].vblankint_timer, TIME_NEVER, 0, 0);
 			}
 		}
 
 		/* else reset the VBLANK timer if this is going to be a real VBLANK */
 		else if (vblank_countdown == 1)
-			timer_reset(cpu[cpunum].vblankint_timer, TIME_NEVER);
+			timer_adjust(cpu[cpunum].vblankint_timer, TIME_NEVER, 0, 0);
 	}
 
 	/* is it a real VBLANK? */
@@ -1589,6 +1222,9 @@ static void cpu_updatecallback(int param)
 	/* update IPT_VBLANK input ports */
 	inputport_vblank_end();
 
+	/* reset partial updating */
+	reset_partial_updates();
+
 	/* check the watchdog */
 	if (watchdog_counter > 0)
 		if (--watchdog_counter == 0)
@@ -1601,7 +1237,7 @@ static void cpu_updatecallback(int param)
 	current_frame++;
 
 	/* reset the refresh timer */
-	timer_reset(refresh_timer, TIME_NEVER);
+	timer_adjust(refresh_timer, TIME_NEVER, 0, 0);
 }
 
 
@@ -1619,7 +1255,7 @@ static void cpu_timedintcallback(int param)
 	if (Machine->drv->cpu[param].timed_interrupt && cpu_getstatus(param))
 	{
 		cpuintrf_push_context(param);
-		cpu_cause_interrupt(param, (*Machine->drv->cpu[param].timed_interrupt)());
+		(*Machine->drv->cpu[param].timed_interrupt)();
 		cpuintrf_pop_context();
 	}
 }
@@ -1689,20 +1325,8 @@ static void cpu_inittimers(void)
 	if (ipf <= 0)
 		ipf = 1;
 	timeslice_period = TIME_IN_HZ(Machine->drv->frames_per_second * ipf);
-	timeslice_timer = timer_pulse(timeslice_period, 0, cpu_timeslicecallback);
-
-	/* allocate an infinite timer to track elapsed time since the last refresh */
-	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
-	refresh_period_inv = 1.0 / refresh_period;
-	refresh_timer = timer_set(TIME_NEVER, 0, NULL);
-
-	/* while we're at it, compute the scanline times */
-	if (Machine->drv->vblank_duration)
-		scanline_period = (refresh_period - TIME_IN_USEC(Machine->drv->vblank_duration)) /
-				(double)(Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
-	else
-		scanline_period = refresh_period / (double)Machine->drv->screen_height;
-	scanline_period_inv = 1.0 / scanline_period;
+	timeslice_timer = timer_alloc(cpu_timeslicecallback);
+	timer_adjust(timeslice_timer, timeslice_period, 0, timeslice_period);
 
 	/*
 	 *	The following code finds all the CPUs that are interrupting in sync with the VBLANK
@@ -1746,7 +1370,7 @@ static void cpu_inittimers(void)
 
 	/* allocate a vblank timer at the frame rate * the LCD number of interrupts per frame */
 	vblank_period = TIME_IN_HZ(Machine->drv->frames_per_second * vblank_multiplier);
-	vblank_timer = timer_pulse(vblank_period, 0, cpu_vblankcallback);
+	vblank_timer = timer_alloc(cpu_vblankcallback);
 	vblank_countdown = vblank_multiplier;
 
 	/*
@@ -1759,61 +1383,31 @@ static void cpu_inittimers(void)
 	{
 		ipf = Machine->drv->cpu[cpunum].vblank_interrupts_per_frame;
 
-		/* remove old timers */
-		if (cpu[cpunum].vblankint_timer)
-			timer_remove(cpu[cpunum].vblankint_timer);
-		if (cpu[cpunum].timedint_timer)
-			timer_remove(cpu[cpunum].timedint_timer);
-
 		/* compute the average number of cycles per interrupt */
 		if (ipf <= 0)
 			ipf = 1;
 		cpu[cpunum].vblankint_period = TIME_IN_HZ(Machine->drv->frames_per_second * ipf);
-		cpu[cpunum].vblankint_timer = timer_set(TIME_NEVER, 0, NULL);
+		cpu[cpunum].vblankint_timer = timer_alloc(NULL);
 
 		/* see if we need to allocate a CPU timer */
 		ipf = Machine->drv->cpu[cpunum].timed_interrupts_per_second;
 		if (ipf)
 		{
 			cpu[cpunum].timedint_period = cpu_computerate(ipf);
-			cpu[cpunum].timedint_timer = timer_pulse(cpu[cpunum].timedint_period, cpunum, cpu_timedintcallback);
+			cpu[cpunum].timedint_timer = timer_alloc(cpu_timedintcallback);
+			timer_adjust(cpu[cpunum].timedint_timer, cpu[cpunum].timedint_period, cpunum, cpu[cpunum].timedint_period);
 		}
 	}
 
 	/* note that since we start the first frame on the refresh, we can't pulse starting
 	   immediately; instead, we back up one VBLANK period, and inch forward until we hit
 	   positive time. That time will be the time of the first VBLANK timer callback */
-	timer_remove(vblank_timer);
-
 	first_time = -TIME_IN_USEC(Machine->drv->vblank_duration) + vblank_period;
 	while (first_time < 0)
 	{
 		cpu_vblankcallback(-1);
 		first_time += vblank_period;
 	}
-	vblank_timer = timer_set(first_time, 0, cpu_firstvblankcallback);
-}
-
-
-
-/*************************************
- *
- *	Remove all the core timers
- *
- *************************************/
-
-static void cpu_removetimers(void)
-{
-	if (timeslice_timer)
-		timer_remove(timeslice_timer);
-	timeslice_timer = NULL;
-
-	if (refresh_timer)
-		timer_remove(refresh_timer);
-	refresh_timer = NULL;
-
-	if (vblank_timer)
-		timer_remove(vblank_timer);
-	vblank_timer = NULL;
+	timer_set(first_time, 0, cpu_firstvblankcallback);
 }
 

@@ -263,7 +263,7 @@ static int I8741_status_r(int num)
 	I8741 *st = &taito8741[num];
 	taito8741_update(num);
 #if __log__
-	logerror("8741-%d ST Read %02x PC=%04x\n",num,st->status,cpu_get_pc());
+	logerror("8741-%d ST Read %02x PC=%04x\n",num,st->status,activecpu_get_pc());
 #endif
 	return st->status;
 }
@@ -275,7 +275,7 @@ static int I8741_data_r(int num)
 	int ret = st->toData;
 	st->status &= 0xfe;
 #if __log__
-	logerror("8741-%d DATA Read %02x PC=%04x\n",num,ret,cpu_get_pc());
+	logerror("8741-%d DATA Read %02x PC=%04x\n",num,ret,activecpu_get_pc());
 #endif
 	/* update chip */
 	taito8741_update(num);
@@ -294,7 +294,7 @@ static void I8741_data_w(int num, int data)
 {
 	I8741 *st = &taito8741[num];
 #if __log__
-	logerror("8741-%d DATA Write %02x PC=%04x\n",num,data,cpu_get_pc());
+	logerror("8741-%d DATA Write %02x PC=%04x\n",num,data,activecpu_get_pc());
 #endif
 	st->fromData = data;
 	st->status |= 0x02;
@@ -307,7 +307,7 @@ static void I8741_command_w(int num, int data)
 {
 	I8741 *st = &taito8741[num];
 #if __log__
-	logerror("8741-%d CMD Write %02x PC=%04x\n",num,data,cpu_get_pc());
+	logerror("8741-%d CMD Write %02x PC=%04x\n",num,data,activecpu_get_pc());
 #endif
 	st->fromCmd = data;
 	st->status |= 0x04;

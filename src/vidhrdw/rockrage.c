@@ -5,7 +5,7 @@
 static int layer_colorbase[2];
 static int rockrage_vreg;
 
-void rockrage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( rockrage )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -65,30 +65,20 @@ WRITE_HANDLER( rockrage_vreg_w ){
 
 ***************************************************************************/
 
-int rockrage_vh_start(void)
+VIDEO_START( rockrage )
 {
 	layer_colorbase[0] = 0x00;
 	layer_colorbase[1] = 0x10;
 
 	if (K007342_vh_start(0,tile_callback))
-	{
 		return 1;
-	}
 
 	if (K007420_vh_start(1,sprite_callback))
-	{
-		K007420_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
 
-void rockrage_vh_stop(void)
-{
-	K007342_vh_stop();
-	K007420_vh_stop();
-}
 
 /***************************************************************************
 
@@ -96,13 +86,13 @@ void rockrage_vh_stop(void)
 
 ***************************************************************************/
 
-void rockrage_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rockrage )
 {
 	K007342_tilemap_update();
 
-	K007342_tilemap_draw( bitmap, 0, TILEMAP_IGNORE_TRANSPARENCY ,0);
-	K007420_sprites_draw( bitmap );
-	K007342_tilemap_draw( bitmap, 0, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);
-	K007342_tilemap_draw( bitmap, 1, 0 ,0);
-	K007342_tilemap_draw( bitmap, 1, 1 ,0);
+	K007342_tilemap_draw( bitmap,cliprect, 0, TILEMAP_IGNORE_TRANSPARENCY ,0);
+	K007420_sprites_draw( bitmap,cliprect );
+	K007342_tilemap_draw( bitmap,cliprect, 0, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);
+	K007342_tilemap_draw( bitmap,cliprect, 1, 0 ,0);
+	K007342_tilemap_draw( bitmap,cliprect, 1, 1 ,0);
 }

@@ -57,6 +57,7 @@ analyzed, quickly leading to the algorithm.
 ***************************************************************************/
 
 #include "driver.h"
+#include "neogeo.h"
 
 
 const unsigned char *type0_t03;

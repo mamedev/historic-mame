@@ -61,8 +61,8 @@ WRITE_HANDLER( tecmo_fgscroll_w );
 WRITE_HANDLER( tecmo_bgscroll_w );
 WRITE_HANDLER( tecmo_flipscreen_w );
 
-int tecmo_vh_start(void);
-void tecmo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( tecmo );
+VIDEO_UPDATE( tecmo );
 
 
 
@@ -79,7 +79,7 @@ WRITE_HANDLER( tecmo_bankswitch_w )
 static WRITE_HANDLER( tecmo_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static int adpcm_pos,adpcm_end;
@@ -570,58 +570,55 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-#define MACHINE_DRIVER(NAME,CPU1_CLOCK,SOUND)					\
-static const struct MachineDriver machine_driver_##NAME =				\
-{																\
-	/* basic machine hardware */								\
-	{															\
-		{														\
-			CPU_Z80,											\
-			CPU1_CLOCK,											\
-			readmem,NAME##_writemem,0,0,						\
-			interrupt,1											\
-		},														\
-		{														\
-			CPU_Z80 | CPU_AUDIO_CPU,							\
-			4000000,	/* 4 MHz */								\
-			SOUND##_sound_readmem,SOUND##_sound_writemem,0,0,	\
-			ignore_interrupt,0	/* IRQs triggered by YM3526 */	\
-								/* NMIs triggered by main CPU */\
-		}														\
-	},															\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */	\
-	0,															\
-																\
-	/* video hardware */										\
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },					\
-	gfxdecodeinfo,												\
-	1024, 0,													\
-	0,															\
-																\
-	VIDEO_TYPE_RASTER,					\
-	0,															\
-	tecmo_vh_start,												\
-	0,															\
-	tecmo_vh_screenrefresh,										\
-																\
-	/* sound hardware */										\
-	0,0,0,0,													\
-	{															\
-		{														\
-			SOUND_YM3812,										\
-			&ym3812_interface									\
-		},														\
-		{														\
-			SOUND_MSM5205,										\
-			&msm5205_interface									\
-		},														\
-	}															\
-};
+static MACHINE_DRIVER_START( rygar )
 
-MACHINE_DRIVER( rygar,    4000000,         rygar )
-MACHINE_DRIVER( gemini,   6000000 /* ? */, tecmo )
-MACHINE_DRIVER( silkworm, 6000000 /* ? */, tecmo )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem,rygar_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(rygar_sound_readmem,rygar_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(tecmo)
+	MDRV_VIDEO_UPDATE(tecmo)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( gemini )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(rygar)
+	MDRV_CPU_REPLACE("main", Z80, 6000000)
+	MDRV_CPU_MEMORY(readmem,gemini_writemem)
+
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(tecmo_sound_readmem,tecmo_sound_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( silkworm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gemini)
+	MDRV_CPU_REPLACE("main", Z80, 6000000)
+	MDRV_CPU_MEMORY(readmem,silkworm_writemem)
+MACHINE_DRIVER_END
 
 
 
@@ -839,9 +836,9 @@ ROM_END
    video_type is used to distinguish Rygar, Silkworm and Gemini Wing.
    This is needed because there is a difference in the tile and sprite indexing.
 */
-void init_rygar(void)    { tecmo_video_type = 0; }
-void init_silkworm(void) { tecmo_video_type = 1; }
-void init_gemini(void)   { tecmo_video_type = 2; }
+DRIVER_INIT( rygar )    { tecmo_video_type = 0; }
+DRIVER_INIT( silkworm ) { tecmo_video_type = 1; }
+DRIVER_INIT( gemini )   { tecmo_video_type = 2; }
 
 
 

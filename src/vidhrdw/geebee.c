@@ -34,7 +34,7 @@ int geebee_cnt;
 #endif
 
 
-static unsigned char palette[] =
+static unsigned char geebee_palette[] =
 {
 	0x00,0x00,0x00, /* black */
 	0xff,0xff,0xff, /* white */
@@ -83,9 +83,9 @@ static const struct artwork_element geebee_overlay[]=
 	END
 };
 
-int geebee_vh_start(void)
+VIDEO_START( geebee )
 {
-	if( generic_vh_start() )
+	if( video_start_generic() )
 		return 1;
 
 	/* use an overlay only in upright mode */
@@ -98,9 +98,9 @@ int geebee_vh_start(void)
 	return 0;
 }
 
-int navalone_vh_start(void)
+VIDEO_START( navalone )
 {
-	if( generic_vh_start() )
+	if( video_start_generic() )
 		return 1;
 
     /* overlay? */
@@ -108,9 +108,9 @@ int navalone_vh_start(void)
 	return 0;
 }
 
-int sos_vh_start(void)
+VIDEO_START( sos )
 {
-	if( generic_vh_start() )
+	if( video_start_generic() )
 		return 1;
 
     /* overlay? */
@@ -118,9 +118,9 @@ int sos_vh_start(void)
 	return 0;
 }
 
-int kaitei_vh_start(void)
+VIDEO_START( kaitei )
 {
-	if( generic_vh_start() )
+	if( video_start_generic() )
 	return 1;
 
     /* overlay? */
@@ -129,24 +129,23 @@ int kaitei_vh_start(void)
 }
 
 /* Initialise the palette */
-void geebee_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( geebee )
 {
-	memcpy(sys_palette, palette, sizeof (palette));
-	memcpy(sys_colortable, geebee_colortable, sizeof (geebee_colortable));
+	memcpy(palette, geebee_palette, sizeof (geebee_palette));
+	memcpy(colortable, geebee_colortable, sizeof (geebee_colortable));
 }
 
 /* Initialise the palette */
-void navalone_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( navalone )
 {
-	memcpy(sys_palette, palette, sizeof (palette));
-	memcpy(sys_colortable, navalone_colortable, sizeof (navalone_colortable));
+	memcpy(palette, geebee_palette, sizeof (geebee_palette));
+	memcpy(colortable, navalone_colortable, sizeof (navalone_colortable));
 }
 
 
-INLINE void geebee_plot(struct mame_bitmap *bitmap, int x, int y)
+INLINE void geebee_plot(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int x, int y)
 {
-	struct rectangle r = Machine->visible_area;
-	if (x >= r.min_x && x <= r.max_x && y >= r.min_y && y <= r.max_y)
+	if (x >= cliprect->min_x && x <= cliprect->max_x && y >= cliprect->min_y && y <= cliprect->max_y)
 		plot_pixel(bitmap,x,y,Machine->pens[1]);
 }
 
@@ -173,7 +172,7 @@ INLINE void geebee_mark_dirty(int x, int y)
 	}
 }
 
-void geebee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( geebee )
 {
 	int offs;
 
@@ -181,12 +180,10 @@ void geebee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	if( geebee_cnt > 0 )
 	{
 		ui_text(Machine->scrbitmap, geebee_msg, Machine->visible_area.min_y, Machine->visible_area.max_x - 8);
-		if( --geebee_cnt == 0 )
-			full_refresh = 1;
     }
 #endif
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
         memset(dirtybuffer, 1, videoram_size);
 
 	for( offs = 0; offs < videoram_size; offs++ )
@@ -224,12 +221,13 @@ void geebee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 			code = videoram[offs];
 			color = ((geebee_bgw & 1) << 1) | ((code & 0x80) >> 7);
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					code,color,
 					geebee_inv,geebee_inv,sx,sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
 	if( geebee_ball_on )
 	{
@@ -238,6 +236,6 @@ void geebee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		geebee_mark_dirty(geebee_ball_h+5,geebee_ball_v-2);
 		for( y = 0; y < 4; y++ )
 			for( x = 0; x < 4; x++ )
-				geebee_plot(bitmap,geebee_ball_h+x+5,geebee_ball_v+y-2);
+				geebee_plot(bitmap,cliprect,geebee_ball_h+x+5,geebee_ball_v+y-2);
 	}
 }

@@ -53,15 +53,15 @@ WRITE_HANDLER( tsamurai_textbank2_w );
 
 WRITE_HANDLER( tsamurai_scrolly_w );
 WRITE_HANDLER( tsamurai_scrollx_w );
-extern void tsamurai_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+VIDEO_UPDATE( tsamurai );
 WRITE_HANDLER( tsamurai_bg_videoram_w );
 WRITE_HANDLER( tsamurai_fg_videoram_w );
 WRITE_HANDLER( tsamurai_fg_colorram_w );
-extern int tsamurai_vh_start( void );
+extern VIDEO_START( tsamurai );
 extern unsigned char *tsamurai_videoram;
 
-extern int vsgongf_vh_start( void );
-extern void vsgongf_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+extern VIDEO_START( vsgongf );
+extern VIDEO_UPDATE( vsgongf );
 
 static struct AY8910interface ay8910_interface =
 {
@@ -93,8 +93,8 @@ static WRITE_HANDLER( nmi_enable_w ){
 	nmi_enabled = data;
 }
 
-static int samurai_interrupt( void ){
-	return nmi_enabled?nmi_interrupt():ignore_interrupt();
+static INTERRUPT_GEN( samurai_interrupt ){
+	if (nmi_enabled) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 READ_HANDLER( unknown_d803_r )
@@ -125,19 +125,19 @@ READ_HANDLER( unknown_d938_r )
 static WRITE_HANDLER( sound_command1_w )
 {
 	sound_command1 = data;
-	cpu_cause_interrupt( 1, Z80_IRQ_INT );
+	cpu_set_irq_line( 1, 0, HOLD_LINE );
 }
 
 static WRITE_HANDLER( sound_command2_w )
 {
 	sound_command2 = data;
-	cpu_cause_interrupt( 2, Z80_IRQ_INT );
+	cpu_set_irq_line( 2, 0, HOLD_LINE );
 }
 
 static WRITE_HANDLER( sound_command3_w )
 {
 	sound_command3 = data;
-	cpu_cause_interrupt( 3, Z80_IRQ_INT );
+	cpu_set_irq_line( 3, 0, HOLD_LINE );
 }
 
 static WRITE_HANDLER( flip_screen_w )
@@ -371,8 +371,8 @@ static WRITE_HANDLER( vsgongf_sound_nmi_enable_w ){
 	vsgongf_sound_nmi_enabled = data;
 }
 
-static int vsgongf_sound_interrupt( void ){
-	return vsgongf_sound_nmi_enabled ? nmi_interrupt() : ignore_interrupt();
+static INTERRUPT_GEN( vsgongf_sound_interrupt ){
+	if (vsgongf_sound_nmi_enabled) cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static READ_HANDLER( vsgongf_a006_r ){
@@ -385,7 +385,7 @@ static READ_HANDLER( vsgongf_a100_r ){
 
 static WRITE_HANDLER( vsgongf_sound_command_w ){
 	soundlatch_w( offset, data );
-	cpu_cause_interrupt( 1, Z80_NMI_INT );
+	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 }
 
 static MEMORY_READ_START( readmem_vsgongf )
@@ -899,162 +899,114 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*******************************************************************************/
 
-static struct MachineDriver machine_driver_tsamurai =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,
-			readmem,writemem,z80_readport,z80_writeport,
-			samurai_interrupt,1,
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound1,writemem_sound1,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound2,writemem_sound2,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+static MACHINE_DRIVER_START( tsamurai )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(z80_readport,z80_writeport)
+	MDRV_CPU_VBLANK_INT(samurai_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound1,writemem_sound1)
+
+	MDRV_CPU_ADD(Z80, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound2,writemem_sound2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0, 255, 8, 255-8 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 255, 8, 255-8)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	tsamurai_vh_start,
-	0,
-	tsamurai_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(tsamurai)
+	MDRV_VIDEO_UPDATE(tsamurai)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_m660 =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,
-			readmem_m660,writemem_m660,z80_readport, z80_writeport_m660,
-			samurai_interrupt,1,
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound1_m660,writemem_sound1_m660,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound2_m660,writemem_sound2_m660,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound3_m660,writemem_sound3_m660,readport_sound3_m660,writeport_sound3_m660,
-			nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( m660 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_m660,writemem_m660)
+	MDRV_CPU_PORTS(z80_readport,z80_writeport_m660)
+	MDRV_CPU_VBLANK_INT(samurai_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound1_m660,writemem_sound1_m660)
+
+	MDRV_CPU_ADD(Z80, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound2_m660,writemem_sound2_m660)
+
+	MDRV_CPU_ADD(Z80, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound3_m660,writemem_sound3_m660)
+	MDRV_CPU_PORTS(readport_sound3_m660,writeport_sound3_m660)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0, 255, 8, 255-8 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 255, 8, 255-8)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	tsamurai_vh_start,
-	0,
-	tsamurai_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(tsamurai)
+	MDRV_VIDEO_UPDATE(tsamurai)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_vsgongf =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,
-			readmem_vsgongf,writemem_vsgongf,0,0,
-			samurai_interrupt,1,
-		},
-		{
-			CPU_Z80,
-			4000000,
-			readmem_sound_vsgongf,writemem_sound_vsgongf,
-			0,z80_writeport,
-			vsgongf_sound_interrupt, 3
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( vsgongf )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_vsgongf,writemem_vsgongf)
+	MDRV_CPU_VBLANK_INT(samurai_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_sound_vsgongf,writemem_sound_vsgongf)
+	MDRV_CPU_PORTS(0,z80_writeport)
+	MDRV_CPU_VBLANK_INT(vsgongf_sound_interrupt,3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0, 255, 8, 255-8 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 255, 8, 255-8)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	vsgongf_vh_start,
-	0,
-	vsgongf_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(vsgongf)
+	MDRV_VIDEO_UPDATE(vsgongf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&vsgongf_dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, vsgongf_dac_interface)
+MACHINE_DRIVER_END
 
 /*******************************************************************************/
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari Food Fight hardware
+	Atari Quantum hardware
 
 	driver by Paul Forgey, with some help from Aaron Giles
 
@@ -43,51 +43,9 @@
 
 ***************************************************************************/
 
-
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
-
-
-
-/*************************************
- *
- *	Statics
- *
- *************************************/
-
-static data16_t *nvram;
-
-
-
-/*************************************
- *
- *	NVRAM handler
- *
- *************************************/
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, 512);
-	else if (file)
-		osd_fread(file, nvram, 512);
-	else
-		memset(nvram, 0xff, 512);
-}
-
-
-
-/*************************************
- *
- *	Interrupts
- *
- *************************************/
-
-static int interrupt_gen(void)
-{
-	return 1; /* ipl0' == ivector 1 */
-}
 
 
 
@@ -199,7 +157,7 @@ MEMORY_WRITE16_START( writemem )
 	{ 0x018000, 0x01cfff, MWA16_RAM },
 	{ 0x800000, 0x801fff, MWA16_RAM, (data16_t **)&vectorram, &vectorram_size },
 	{ 0x840000, 0x84003f, pokey_word_w },
-	{ 0x900000, 0x9001ff, MWA16_RAM, &nvram },
+	{ 0x900000, 0x9001ff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ 0x950000, 0x95001f, quantum_colorram_w },
 	{ 0x958000, 0x958001, led_w },
 	{ 0x960000, 0x960001, MWA16_NOP },	/* enable NVRAM? */
@@ -296,44 +254,29 @@ static struct POKEYinterface pokey_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_quantum =
-{
+static MACHINE_DRIVER_START( quantum )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			6000000,			/* 6MHz */
-			readmem,writemem,0,0,
-			interrupt_gen,3		/* IRQ rate = 750kHz/4096 */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
+	MDRV_CPU_ADD(M68000,6000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,3)	/* IRQ rate = 750kHz/4096 */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	400, 300, { 0, 600, 0, 900 },
-	0,
-	256, 0,
-	avg_init_palette_multi,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(0, 600, 0, 900)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	avg_start_quantum,
-	avg_stop,
-	vector_vh_screenrefresh,
+	MDRV_PALETTE_INIT(avg_multi)
+	MDRV_VIDEO_START(avg_quantum)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "atetris.h"
 
 
 static struct tilemap *tilemap;
@@ -47,7 +48,7 @@ WRITE_HANDLER( atetris_videoram_w )
  *
  *************************************/
 
-int atetris_vh_start(void)
+VIDEO_START( atetris )
 {
 	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,32);
 	if (!tilemap)
@@ -63,7 +64,7 @@ int atetris_vh_start(void)
  *
  *************************************/
 
-void atetris_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( atetris )
 {
-	tilemap_draw(bitmap, tilemap, 0,0);
+	tilemap_draw(bitmap, cliprect, tilemap, 0,0);
 }

@@ -51,14 +51,13 @@ READ_HANDLER( stactics_port_2_r );
 READ_HANDLER( stactics_port_3_r );
 READ_HANDLER( stactics_vert_pos_r );
 READ_HANDLER( stactics_horiz_pos_r );
-int stactics_interrupt(void);
+INTERRUPT_GEN( stactics_interrupt );
 WRITE_HANDLER( stactics_coin_lockout_w );
 extern unsigned char *stactics_motor_on;
 
 /* Defined in vidhrdw/stactics.c */
-int stactics_vh_start(void);
-void stactics_vh_stop(void);
-void stactics_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( stactics );
+VIDEO_UPDATE( stactics );
 extern unsigned char *stactics_scroll_ram;
 extern unsigned char *stactics_videoram_b;
 extern unsigned char *stactics_chardata_b;
@@ -70,8 +69,7 @@ extern unsigned char *stactics_videoram_f;
 extern unsigned char *stactics_chardata_f;
 extern unsigned char *stactics_display_buffer;
 
-void stactics_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,
-                                    const unsigned char *color_prom);
+PALETTE_INIT( stactics );
 
 WRITE_HANDLER( stactics_palette_w );
 WRITE_HANDLER( stactics_scroll_ram_w );
@@ -258,37 +256,30 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { -1 }
 };
 
-static const struct MachineDriver machine_driver_stactics =
-{
+static MACHINE_DRIVER_START( stactics )
+
 	/* basic machine hardware */
-	{
-		{
-            CPU_8080,
-            1933560,
-			readmem,writemem,0,0,
-            stactics_interrupt,1
-		},
-	},
-    60, DEFAULT_60HZ_VBLANK_DURATION,
-    1,
-	0,
+	MDRV_CPU_ADD(8080, 1933560)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(stactics_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-    32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-    gfxdecodeinfo,
-    16, 16*4*4*2,
-    stactics_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(16*4*4*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-
-    stactics_vh_start,
-    stactics_vh_stop,
-    stactics_vh_screenrefresh,
+	MDRV_PALETTE_INIT(stactics)
+	MDRV_VIDEO_START(stactics)
+	MDRV_VIDEO_UPDATE(stactics)
 
 	/* sound hardware */
-    0,0,0,0
-};
+MACHINE_DRIVER_END
 
 
 

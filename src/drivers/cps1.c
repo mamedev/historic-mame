@@ -50,7 +50,7 @@ static WRITE_HANDLER( cps1_snd_bankswitch_w )
 	bankaddr = (data * 0x4000) & (length-1);
 	cpu_setbank(1,&RAM[0x10000 + bankaddr]);
 
-	if (data & 0xfe) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
+	if (data & 0xfe) logerror("%04x: write %02x to f004\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( cps1_sound_fade_w )
@@ -137,12 +137,12 @@ static WRITE16_HANDLER( cpsq_coinctrl2_w )
     }
 }
 
-static int cps1_interrupt(void)
+static INTERRUPT_GEN( cps1_interrupt )
 {
 	/* Strider also has a IRQ4 handler. It is input port related, but the game */
 	/* works without it (maybe it's used to multiplex controls). It is the */
 	/* *only* game to have that. */
-	return 2;
+	cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
 /********************************************************************
@@ -161,7 +161,7 @@ struct QSound_interface qsound_interface =
 
 static unsigned char *qsound_sharedram1,*qsound_sharedram2;
 
-int cps1_qsound_interrupt(void)
+INTERRUPT_GEN( cps1_qsound_interrupt )
 {
 #if 0
 I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
@@ -170,7 +170,7 @@ I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 		qsound_sharedram1[0xfff] = 0x77;
 #endif
 
-	return 2;
+	cpu_set_irq_line(cpu_getactivecpu(), 2, HOLD_LINE);
 }
 
 
@@ -181,7 +181,7 @@ READ16_HANDLER( qsound_rom_r )
 	if (rom) return rom[offset] | 0xff00;
 	else
 	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
+		usrintf_showmessage("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -253,7 +253,7 @@ static struct EEPROM_interface pang3_eeprom_interface =
 	"0111"	/* erase command */
 };
 
-static void qsound_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( qsound )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -266,7 +266,7 @@ static void qsound_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static void pang3_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( pang3 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -3494,99 +3494,83 @@ static struct OKIM6295interface okim6295_interface_7576 =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER(DRVNAME,CPU_FRQ,OKI_FREQ,NVRAM)						\
-static const struct MachineDriver machine_driver_##DRVNAME =				\
-{																			\
-	/* basic machine hardware */											\
-	{																		\
-		{																	\
-			CPU_M68000,														\
-			CPU_FRQ,														\
-			cps1_readmem,cps1_writemem,0,0,									\
-			cps1_interrupt, 1												\
-		},																	\
-		{																	\
-			CPU_Z80 | CPU_AUDIO_CPU,										\
-			4000000,  /* 4 MHz ??? TODO: find real FRQ */					\
-			sound_readmem,sound_writemem,0,0,								\
-			ignore_interrupt,0												\
-		}																	\
-	},																		\
-	60, DEFAULT_60HZ_VBLANK_DURATION,										\
-	1,																		\
-	0,																		\
-																			\
-	/* video hardware */													\
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },							\
-	gfxdecodeinfo,															\
-	4096, 0,																\
-	0,																		\
-																			\
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,	\
-	cps1_eof_callback,														\
-	cps1_vh_start,															\
-	cps1_vh_stop,															\
-	cps1_vh_screenrefresh,													\
-																			\
-	/* sound hardware */													\
-	0,0,0,0,																\
-	{ { SOUND_YM2151,  &ym2151_interface },									\
-	  { SOUND_OKIM6295,  &okim6295_interface_##OKI_FREQ }					\
-	},																		\
-	NVRAM																	\
-};
+static MACHINE_DRIVER_START( cps1 )
 
-static const struct MachineDriver machine_driver_qsound =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,	/* ??? */
-			cps1_readmem,cps1_writemem,0,0,
-			cps1_qsound_interrupt, 1  /* ??? interrupts per frame */
-		},
-		{
-			CPU_Z80,	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
-			6000000,  /* 6 MHz ??? TODO: find real FRQ */
-			qsound_readmem,qsound_writemem,0,0,
-			0,0,
-			interrupt,250	/* ?? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
+	MDRV_CPU_MEMORY(cps1_readmem,cps1_writemem)
+	MDRV_CPU_VBLANK_INT(cps1_interrupt,1)
+
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* 4 MHz ??? TODO: find real FRQ */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	cps1_eof_callback,
-	cps1_vh_start,
-	cps1_vh_stop,
-	cps1_vh_screenrefresh,
+	MDRV_VIDEO_START(cps1)
+	MDRV_VIDEO_EOF(cps1)
+	MDRV_VIDEO_UPDATE(cps1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_QSOUND,
-			&qsound_interface
-		}
-	},
-
-	qsound_nvram_handler
-};
+	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
+	MDRV_SOUND_ADD_TAG("okim", OKIM6295, okim6295_interface_7576)
+MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER( forgottn, 10000000, 6061, 0 )
-MACHINE_DRIVER( cps1,     10000000, 7576, 0 )	/* 10 MHz should be the "standard" freq */
-MACHINE_DRIVER( sf2,      12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( sf2accp2, 12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( pang3,    10000000, 7576, pang3_nvram_handler )	/* 10 MHz?? */
+static MACHINE_DRIVER_START( forgottn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+	
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("okim", OKIM6295, okim6295_interface_6061)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sf2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+	MDRV_CPU_REPLACE("main", M68000, 12000000)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pang3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+	MDRV_NVRAM_HANDLER(pang3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qsound )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(cps1_qsound_interrupt,1)  /* ??? interrupts per frame */
+	
+	MDRV_CPU_REPLACE("sound", Z80, 6000000)
+	MDRV_CPU_FLAGS(0)	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
+	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,250)	/* ?? */
+
+	MDRV_NVRAM_HANDLER(qsound)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_REPLACE("2151", QSOUND, qsound_interface)
+	MDRV_SOUND_REMOVE("okim")
+
+MACHINE_DRIVER_END
 
 
 
@@ -6445,31 +6429,31 @@ ROM_END
 
 
 
-static void init_wof(void)
+static DRIVER_INIT( wof )
 {
 	wof_decode();
 	init_cps1();
 }
 
-static void init_dino(void)
+static DRIVER_INIT( dino )
 {
 	dino_decode();
 	init_cps1();
 }
 
-static void init_punisher(void)
+static DRIVER_INIT( punisher )
 {
 	punisher_decode();
 	init_cps1();
 }
 
-static void init_slammast(void)
+static DRIVER_INIT( slammast )
 {
 	slammast_decode();
 	init_cps1();
 }
 
-static void init_pang3(void)
+static DRIVER_INIT( pang3 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	int A,src,dst;
@@ -6554,7 +6538,7 @@ GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "
 GAME( 1992, sf2rb2,   sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Rainbow set 2)" )
 GAME( 1992, sf2red,   sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Red Wave)" )
 GAME( 1992, sf2v004,  sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II! - Champion Edition (V004)" )
-GAME( 1992, sf2accp2, sf2ce,    sf2accp2, sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
+GAME( 1992, sf2accp2, sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
 GAME( 1992, varth,    0,        cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (World)" )
 GAME( 1992, varthu,   varth,    cps1,     varth,    cps1,     ROT270, "Capcom (Romstar license)", "Varth - Operation Thunderstorm (US)" )
 GAME( 1992, varthj,   varth,    cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (Japan)" )

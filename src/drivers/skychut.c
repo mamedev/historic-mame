@@ -17,14 +17,14 @@
 
 extern UINT8* iremm15_chargen;
 
-void skychut_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void iremm15_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( skychut );
+VIDEO_UPDATE( iremm15 );
 WRITE_HANDLER( skychut_colorram_w );
 WRITE_HANDLER( skychut_vh_flipscreen_w );
 
 static UINT8 *memory;
 
-static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
+static unsigned char palette_source[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
 {
 	0x00,0x00,0x00, /* BLACK */
 	0xff,0x20,0x20, /* RED */
@@ -47,20 +47,20 @@ static unsigned char spacebeam_palette[] = /* total estimation */
 	0x00,0x00,0x00 /* BLACK */
 };
 
-static unsigned short colortable[] =
+static unsigned short colortable_source[] =
 {
 	0,1,0,2,0,3,0,4,0,5,0,6
 };
 
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( skychut )
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
-static void init_greenber_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( greenber )
 {
-	memcpy(game_palette,spacebeam_palette,sizeof(spacebeam_palette));
+	memcpy(palette,spacebeam_palette,sizeof(spacebeam_palette));
 }
 
 static MEMORY_READ_START( skychut_readmem )
@@ -111,12 +111,12 @@ static MEMORY_WRITE_START( greenberet_writemem )
 MEMORY_END
 
 
-int skychut_interrupt(void)
+INTERRUPT_GEN( skychut_interrupt )
 {
 	if (readinputport(2) & 1)	/* Left Coin */
-            return nmi_interrupt();
-        else
-            return interrupt();
+        cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+    else
+    	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 INPUT_PORTS_START( skychut )
@@ -187,68 +187,54 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static const struct MachineDriver machine_driver_skychut =
-{
+static MACHINE_DRIVER_START( skychut )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			20000000/8,
-			skychut_readmem,skychut_writemem,0,0,
-			skychut_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,20000000/8)
+	MDRV_CPU_MEMORY(skychut_readmem,skychut_writemem)
+	MDRV_CPU_VBLANK_INT(skychut_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-    skychut_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
+	
+	MDRV_PALETTE_INIT(skychut)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(skychut)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_greenberet =
-{
+
+static MACHINE_DRIVER_START( greenberet )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			20000000/8,
-			greenberet_readmem,greenberet_writemem,0,0,
-			skychut_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,20000000/8)
+	MDRV_CPU_MEMORY(greenberet_readmem,greenberet_writemem)
+	MDRV_CPU_VBLANK_INT(skychut_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	0,
-	sizeof(spacebeam_palette) / sizeof(spacebeam_palette[0]) / 3,
-	0,
-	init_greenber_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_PALETTE_LENGTH(sizeof(spacebeam_palette) / sizeof(spacebeam_palette[0]) / 3)
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-    iremm15_vh_screenrefresh,
+	MDRV_PALETTE_INIT(greenber)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(iremm15)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 
 

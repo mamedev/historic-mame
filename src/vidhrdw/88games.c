@@ -54,7 +54,7 @@ static void zoom_callback(int *code,int *color)
 
 ***************************************************************************/
 
-int k88games_vh_start(void)
+VIDEO_START( 88games )
 {
 	layer_colorbase[0] = 64;
 	layer_colorbase[1] = 0;
@@ -62,29 +62,13 @@ int k88games_vh_start(void)
 	sprite_colorbase = 32;
 	zoom_colorbase = 48;
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
-	{
 		return 1;
-	}
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 	if (K051316_vh_start_0(REGION_GFX3,4,TILEMAP_TRANSPARENT,0,zoom_callback))
-	{
-		K052109_vh_stop();
-		K051960_vh_stop();
 		return 1;
-	}
 
 	return 0;
-}
-
-void k88games_vh_stop(void)
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
-	K051316_vh_stop_0();
 }
 
 
@@ -95,26 +79,26 @@ void k88games_vh_stop(void)
 
 ***************************************************************************/
 
-void k88games_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( 88games )
 {
 	K052109_tilemap_update();
 
 	if (k88games_priority)
 	{
-		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
-		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,2,0,0);
-		K052109_tilemap_draw(bitmap,1,0,0);
-		K051960_sprites_draw(bitmap,0,0);
-		K051316_zoom_draw_0(bitmap,0,0);
+		K052109_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+		K051960_sprites_draw(bitmap,cliprect,1,1);
+		K052109_tilemap_draw(bitmap,cliprect,2,0,0);
+		K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+		K051960_sprites_draw(bitmap,cliprect,0,0);
+		K051316_zoom_draw_0(bitmap,cliprect,0,0);
 	}
 	else
 	{
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
-		K051316_zoom_draw_0(bitmap,0,0);
-		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,1,0,0);
-		K051960_sprites_draw(bitmap,1,1);
-		K052109_tilemap_draw(bitmap,0,0,0);
+		K052109_tilemap_draw(bitmap,cliprect,2,TILEMAP_IGNORE_TRANSPARENCY,0);
+		K051316_zoom_draw_0(bitmap,cliprect,0,0);
+		K051960_sprites_draw(bitmap,cliprect,0,0);
+		K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+		K051960_sprites_draw(bitmap,cliprect,1,1);
+		K052109_tilemap_draw(bitmap,cliprect,0,0,0);
 	}
 }

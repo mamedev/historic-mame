@@ -70,22 +70,20 @@
 #include "vidhrdw/generic.h"
 
 /* from machine/geebee.c */
-extern int geebee_interrupt(void);
-extern int kaitei_interrupt(void);
 READ_HANDLER( geebee_in_r );
 READ_HANDLER( navalone_in_r );
 WRITE_HANDLER( geebee_out6_w );
 WRITE_HANDLER( geebee_out7_w );
 
 /* from vidhrdw/geebee.c */
-extern void geebee_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
-extern void navalone_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+extern PALETTE_INIT( geebee );
+extern PALETTE_INIT( navalone );
 
-extern int geebee_vh_start(void);
-extern int navalone_vh_start(void);
-extern int kaitei_vh_start(void);
-extern int sos_vh_start(void);
-extern void geebee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( geebee );
+extern VIDEO_START( navalone );
+extern VIDEO_START( kaitei );
+extern VIDEO_START( sos );
+extern VIDEO_UPDATE( geebee );
 
 /* from sndhrdw/geebee.c */
 WRITE_HANDLER( geebee_sound_w );
@@ -435,156 +433,116 @@ static struct CustomSound_interface custom_interface =
 	geebee_sh_update
 };
 
-static const struct MachineDriver machine_driver_geebee =
-{
+static MACHINE_DRIVER_START( geebee )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			18432000/9, 		/* 18.432 MHz / 9 */
-			readmem,writemem,readport,writeport,
-			geebee_interrupt,1	/* one interrupt per frame */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(8080,18432000/9) 		/* 18.432 MHz / 9 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)	/* one interrupt per frame */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_1k,  /* gfxdecodeinfo */
-	3+32768, 4*2,		/* extra colors for the overlay */
-    geebee_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(34*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_1k)
+	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
+	MDRV_COLORTABLE_LENGTH(4*2)		
 
-	VIDEO_TYPE_RASTER,
-	0,
-	geebee_vh_start,
-	generic_vh_stop,
-	geebee_vh_screenrefresh,
+	MDRV_PALETTE_INIT(geebee)
+	MDRV_VIDEO_START(geebee)
+	MDRV_VIDEO_UPDATE(geebee)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_navalone =
-{
+static MACHINE_DRIVER_START( navalone )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			18432000/9, 		/* 18.432 MHz / 9 */
-			readmem_navalone,writemem,readport_navalone,writeport,
-			geebee_interrupt,1	/* one interrupt per frame */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(8080,18432000/9) 		/* 18.432 MHz / 9 */
+	MDRV_CPU_MEMORY(readmem_navalone,writemem)
+	MDRV_CPU_PORTS(readport_navalone,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)	/* one interrupt per frame */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_2k,  /* gfxdecodeinfo */
-	3+32768, 4*2,		/* extra colors for the overlay */
-    navalone_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(34*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_2k)
+	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
+	MDRV_COLORTABLE_LENGTH(4*2)		
 
-	VIDEO_TYPE_RASTER,
-	0,
-	navalone_vh_start,
-	generic_vh_stop,
-	geebee_vh_screenrefresh,
+	MDRV_PALETTE_INIT(navalone)
+	MDRV_VIDEO_START(navalone)
+	MDRV_VIDEO_UPDATE(geebee)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( kaitei )
 
-static const struct MachineDriver machine_driver_kaitei =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			18432000/9, 		/* 18.432 MHz / 9 */
-			readmem_navalone,writemem,readport_navalone,writeport,
-			kaitei_interrupt,1	/* one interrupt per frame */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(8080,18432000/9) 		/* 18.432 MHz / 9 */
+	MDRV_CPU_MEMORY(readmem_navalone,writemem)
+	MDRV_CPU_PORTS(readport_navalone,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* one interrupt per frame */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_2k,  /* gfxdecodeinfo */
-	3+32768, 4*2,		/* extra colors for the overlay */
-	navalone_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(34*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_2k)
+	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
+	MDRV_COLORTABLE_LENGTH(4*2)		
 
-	VIDEO_TYPE_RASTER,
-	0,
-	kaitei_vh_start,
-	generic_vh_stop,
-	geebee_vh_screenrefresh,
+	MDRV_PALETTE_INIT(navalone)
+	MDRV_VIDEO_START(kaitei)
+	MDRV_VIDEO_UPDATE(geebee)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_sos =
-{
+
+static MACHINE_DRIVER_START( sos )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			18432000/9, 		/* 18.432 MHz / 9 */
-			readmem_navalone,writemem,readport_navalone,writeport,
-			geebee_interrupt,1	/* one interrupt per frame */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(8080,18432000/9) 		/* 18.432 MHz / 9 */
+	MDRV_CPU_MEMORY(readmem_navalone,writemem)
+	MDRV_CPU_PORTS(readport_navalone,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)	/* one interrupt per frame */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_2k,  /* gfxdecodeinfo */
-	3+32768, 4*2,		/* extra colors for the overlay */
-	navalone_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(34*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_2k)
+	MDRV_PALETTE_LENGTH(3+32768)	/* extra colors for the overlay */
+	MDRV_COLORTABLE_LENGTH(4*2)		
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sos_vh_start,
-	generic_vh_stop,
-	geebee_vh_screenrefresh,
+	MDRV_PALETTE_INIT(navalone)
+	MDRV_VIDEO_START(sos)
+	MDRV_VIDEO_UPDATE(geebee)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 

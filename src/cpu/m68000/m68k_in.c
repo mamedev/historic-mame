@@ -3412,7 +3412,7 @@ M68KMAKE_OP(chk, 16, ., .)
 
 M68KMAKE_OP(chk, 32, ., d)
 {
-	logerror("%08x: Chk 32d\n",cpu_get_pc());
+	logerror("%08x: Chk 32d\n",activecpu_get_pc());
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{
 		sint src = MAKE_INT_32(DX);
@@ -3432,7 +3432,7 @@ M68KMAKE_OP(chk, 32, ., d)
 
 M68KMAKE_OP(chk, 32, ., .)
 {
-		logerror("%08x: Chk 32\n",cpu_get_pc());
+		logerror("%08x: Chk 32\n",activecpu_get_pc());
 
 	if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
 	{

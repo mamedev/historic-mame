@@ -102,7 +102,7 @@ static int draworder[32][4];
 
 ***************************************************************************/
 
-void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( taitosj )
 {
 	int i;
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -185,7 +185,7 @@ WRITE_HANDLER( taitosj_paletteram_w )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int taitosj_vh_start(void)
+VIDEO_START( taitosj )
 {
 	int i;
 
@@ -197,87 +197,38 @@ int taitosj_vh_start(void)
 	dirtybuffer3  = dirtybuffer2 = 0;
 
 
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
-	{
-		generic_vh_stop();
+	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((dirtybuffer3 = malloc(videoram_size)) == 0)
-	{
-		generic_vh_stop();
+	if ((dirtybuffer3 = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer3,1,videoram_size);
 
-	if ((sprite_plane_collbitmap1 = bitmap_alloc(16,16)) == 0)
-	{
-		generic_vh_stop();
+	if ((sprite_plane_collbitmap1 = auto_bitmap_alloc(16,16)) == 0)
 		return 1;
-	}
 
 	for (i = 0; i < 3; i++)
 	{
-		if ((taitosj_tmpbitmap[i] = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		{
-			generic_vh_stop();
+		if ((taitosj_tmpbitmap[i] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 			return 1;
-		}
 
-		if ((sprite_plane_collbitmap2[i] = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-		{
-			generic_vh_stop();
+		if ((sprite_plane_collbitmap2[i] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 			return 1;
-		}
-
 	}
 
-	if ((sprite_sprite_collbitmap1 = bitmap_alloc(32,32)) == 0)
-	{
-		generic_vh_stop();
+	if ((sprite_sprite_collbitmap1 = auto_bitmap_alloc(32,32)) == 0)
 		return 1;
-	}
 
-	if ((sprite_sprite_collbitmap2 = bitmap_alloc(32,32)) == 0)
-	{
-		generic_vh_stop();
+	if ((sprite_sprite_collbitmap2 = auto_bitmap_alloc(32,32)) == 0)
 		return 1;
-	}
 
 	flipscreen[0] = flipscreen[1] = 0;
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void taitosj_vh_stop(void)
-{
-	int i;
-
-
-	if (sprite_sprite_collbitmap2) bitmap_free(sprite_sprite_collbitmap2);
-	if (sprite_sprite_collbitmap1) bitmap_free(sprite_sprite_collbitmap1);
-	if (sprite_plane_collbitmap1) bitmap_free(sprite_plane_collbitmap1);
-
-	for (i = 0; i < 3; i++)
-	{
-		if (taitosj_tmpbitmap[i]) bitmap_free(taitosj_tmpbitmap[i]);
-		if (sprite_plane_collbitmap2[i]) bitmap_free(sprite_plane_collbitmap2[i]);
-	}
-
-	if (dirtybuffer3) free(dirtybuffer3);
-	if (dirtybuffer2) free(dirtybuffer2);
-	generic_vh_stop();
 }
 
 
@@ -761,7 +712,7 @@ static void drawplane(int n,struct mame_bitmap *bitmap)
 }
 
 
-void taitosj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( taitosj )
 {
 	int offs,i;
 

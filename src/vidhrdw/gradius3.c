@@ -60,7 +60,7 @@ static void gradius3_sprite_callback(int *code,int *color,int *priority_mask,int
 
 ***************************************************************************/
 
-int gradius3_vh_start(void)
+VIDEO_START( gradius3 )
 {
 	int i;
 	static struct GfxLayout spritelayout =
@@ -84,34 +84,19 @@ int gradius3_vh_start(void)
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,gradius3_tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,REVERSE_PLANE_ORDER,gradius3_sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 
 	/* re-decode the sprites because the ROMs are connected to the custom IC differently
 	   from how they are connected to the CPU. */
 	for (i = 0;i < TOTAL_SPRITES;i++)
 		decodechar(Machine->gfx[1],i,memory_region(REGION_GFX2),&spritelayout);
 
-	if (!(dirtychar = malloc(TOTAL_CHARS)))
-	{
-		K052109_vh_stop();
-		K051960_vh_stop();
+	if (!(dirtychar = auto_malloc(TOTAL_CHARS)))
 		return 1;
-	}
 
 	memset(dirtychar,1,TOTAL_CHARS);
 
 	return 0;
-}
-
-void gradius3_vh_stop(void)
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
-	free(dirtychar);
-	dirtychar = 0;
 }
 
 
@@ -153,7 +138,7 @@ WRITE16_HANDLER( gradius3_gfxram_w )
 
 ***************************************************************************/
 
-void gradius3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gradius3 )
 {
 	static struct GfxLayout charlayout =
 	{
@@ -194,19 +179,19 @@ void gradius3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	K052109_tilemap_update();
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 	if (gradius3_priority == 0)
 	{
-		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,2);
-		K052109_tilemap_draw(bitmap,2,0,4);
-		K052109_tilemap_draw(bitmap,0,0,1);
+		K052109_tilemap_draw(bitmap,cliprect,1,TILEMAP_IGNORE_TRANSPARENCY,2);
+		K052109_tilemap_draw(bitmap,cliprect,2,0,4);
+		K052109_tilemap_draw(bitmap,cliprect,0,0,1);
 	}
 	else
 	{
-		K052109_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,1);
-		K052109_tilemap_draw(bitmap,1,0,2);
-		K052109_tilemap_draw(bitmap,2,0,4);
+		K052109_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,1);
+		K052109_tilemap_draw(bitmap,cliprect,1,0,2);
+		K052109_tilemap_draw(bitmap,cliprect,2,0,4);
 	}
 
-	K051960_sprites_draw(bitmap,-1,-1);
+	K051960_sprites_draw(bitmap,cliprect,-1,-1);
 }

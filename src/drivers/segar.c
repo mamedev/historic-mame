@@ -1,38 +1,48 @@
 /***************************************************************************
 
-Sega G-80 Raster drivers
+	Sega G-80 raster hardware
 
-The known G-80 Raster games are Astro Blaster, Monster Bash, 005,
-Space Odyssey, Pig Newton, and Sindbad Mystery.
+	Games supported:
+		* Astro Blaster
+		* Monster Bash
+		* 005
+		* Space Odyssey
+		* Pig Newton
+		* Sindbad Mystery
 
-See also sega.c for the Sega G-80 Vector games.
+	Known bugs:
+		* none at this time
 
-Many thanks go to Dave Fish for the fine detective work he did into the
-G-80 security chips (315-0064, 315-0070, 315-0076, 315-0082) which provided
-me with enough information to emulate those chips at runtime along with
-the 315-0062 Astro Blaster chip and the 315-0063 Space Odyssey chip.
+****************************************************************************
 
-Special note (24-MAR-1999) - Sindbad Mystery does *not* use the standard
-G-80 security chip; rather, it uses the Sega System 1 encryption.
+	See also sega.c for the Sega G-80 Vector games.
 
-Thanks also go to Paul Tonizzo, Clay Cowgill, John Bowes, and Kevin Klopp
-for all the helpful information, samples, and schematics!
+	Many thanks go to Dave Fish for the fine detective work he did into the
+	G-80 security chips (315-0064, 315-0070, 315-0076, 315-0082) which provided
+	me with enough information to emulate those chips at runtime along with
+	the 315-0062 Astro Blaster chip and the 315-0063 Space Odyssey chip.
 
-TODO:
-- locate Pig Newton cocktail mode?
-- verify Pig Newton and Sindbad Mystery DIPs
-- attempt Pig Newton, 005 sound
-- fix transparency issues (Pig Newton, Sindbad Mystery)
-- fix Space Odyssey background
-- figure out why Astro Blaster version 1 ends the game right away
+	Special note (24-MAR-1999) - Sindbad Mystery does *not* use the standard
+	G-80 security chip; rather, it uses the Sega System 1 encryption.
 
-- Mike Balfour (mab22@po.cwru.edu)
+	Thanks also go to Paul Tonizzo, Clay Cowgill, John Bowes, and Kevin Klopp
+	for all the helpful information, samples, and schematics!
+
+	TODO:
+	- locate Pig Newton cocktail mode?
+	- verify Pig Newton and Sindbad Mystery DIPs
+	- attempt Pig Newton, 005 sound
+	- fix transparency issues (Pig Newton, Sindbad Mystery)
+	- fix Space Odyssey background
+	- figure out why Astro Blaster version 1 ends the game right away
+
+	- Mike Balfour (mab22@po.cwru.edu)
 
 ***************************************************************************
 
-26/3/2000:	** Darren Hatton (UKVAC) / Adrian Purser (UKVAC) **
-			Added a 3rd Astro Blaster ROM set (ASTROB2).
-			Updated Dip Switches to be correct for the Astro Blaster sets.
+	26/3/2000:	** Darren Hatton (UKVAC) / Adrian Purser (UKVAC) **
+				Added a 3rd Astro Blaster ROM set (ASTROB2).
+				Updated Dip Switches to be correct for the Astro Blaster sets.
 
 ***************************************************************************/
 
@@ -41,89 +51,31 @@ TODO:
 #include "cpu/i8039/i8039.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
+#include "segar.h"
 
-/* sndhrdw/segar.c */
 
-WRITE_HANDLER( astrob_speech_port_w );
-WRITE_HANDLER( astrob_audio_ports_w );
-WRITE_HANDLER( spaceod_audio_ports_w );
-WRITE_HANDLER( monsterb_audio_8255_w );
- READ_HANDLER( monsterb_audio_8255_r );
 
- READ_HANDLER( monsterb_sh_rom_r );
- READ_HANDLER( monsterb_sh_t1_r );
- READ_HANDLER( monsterb_sh_command_r );
-WRITE_HANDLER( monsterb_sh_dac_w );
-WRITE_HANDLER( monsterb_sh_busy_w );
-WRITE_HANDLER( monsterb_sh_offset_a0_a3_w );
-WRITE_HANDLER( monsterb_sh_offset_a4_a7_w );
-WRITE_HANDLER( monsterb_sh_offset_a8_a11_w );
-WRITE_HANDLER( monsterb_sh_rom_select_w );
+/*************************************
+ *
+ *	Interrupt handling
+ *
+ *************************************/
 
-/* temporary speech handling through samples */
-int astrob_speech_sh_start(const struct MachineSound *msound);
-void astrob_speech_sh_update(void);
-
-/* sample names */
-extern const char *astrob_sample_names[];
-extern const char *s005_sample_names[];
-extern const char *monsterb_sample_names[];
-extern const char *spaceod_sample_names[];
-
-/* machine/segar.c */
-
-void sega_security(int chip);
-WRITE_HANDLER( segar_w );
-
-extern unsigned char *segar_mem;
-
-/* vidhrdw/segar.c */
-
-extern unsigned char *segar_characterram;
-extern unsigned char *segar_characterram2;
-extern unsigned char *segar_mem_colortable;
-extern unsigned char *segar_mem_bcolortable;
-
-WRITE_HANDLER( segar_characterram_w );
-WRITE_HANDLER( segar_characterram2_w );
-WRITE_HANDLER( segar_colortable_w );
-WRITE_HANDLER( segar_bcolortable_w );
-void segar_init_colors(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( segar_video_port_w );
-int  segar_vh_start(void);
-void segar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-WRITE_HANDLER( monsterb_back_port_w );
-int  monsterb_vh_start(void);
-void monsterb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-int  spaceod_vh_start(void);
-void spaceod_vh_stop(void);
-WRITE_HANDLER( spaceod_back_port_w );
-WRITE_HANDLER( spaceod_backshift_w );
-WRITE_HANDLER( spaceod_backshift_clear_w );
-WRITE_HANDLER( spaceod_backfill_w );
-WRITE_HANDLER( spaceod_nobackfill_w );
-void spaceod_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-WRITE_HANDLER( pignewt_back_color_w );
-WRITE_HANDLER( pignewt_back_ports_w );
-
-WRITE_HANDLER( sindbadm_back_port_w );
-void sindbadm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-/***************************************************************************
-
-  The Sega games use NMI to trigger the self test. We use a fake input port to
-  tie that event to a keypress.
-
-***************************************************************************/
-static int segar_interrupt(void)
+static INTERRUPT_GEN( segar_interrupt )
 {
 	if (readinputport(5) & 1)       /* get status of the F2 key */
-		return nmi_interrupt(); /* trigger self test */
-	else return interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);	/* trigger self test */
+	else
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
+
+
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 /***************************************************************************
 
@@ -139,7 +91,9 @@ static int segar_interrupt(void)
   MAME format:
   Port 6 - 1-1, 1-2, 1-3, 1-4, 1-5, 1-6, 1-7, 1-8
   Port 7 - 2-1, 2-2, 2-3, 2-4, 2-5, 2-6, 2-7, 2-8
+
 ***************************************************************************/
+
 static READ_HANDLER( segar_ports_r )
 {
 	int dip1, dip2;
@@ -169,18 +123,54 @@ static READ_HANDLER( segar_ports_r )
 }
 
 
-/***************************************************************************
- Main memory handlers
-***************************************************************************/
+
+/*************************************
+ *
+ *	sindbad Mystery sound handling
+ *
+ *************************************/
+
+static WRITE_HANDLER( sindbadm_soundport_w )
+{
+	soundlatch_w(0,data);
+	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	/* spin for a while to let the Z80 read the command */
+	cpu_spinuntil_time(TIME_IN_USEC(50));
+}
+
+
+/* the data lines are flipped */
+static WRITE_HANDLER( sindbadm_SN76496_0_w )
+{
+	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
+			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
+	SN76496_0_w(offset, flipped);
+}
+
+
+static WRITE_HANDLER( sindbadm_SN76496_1_w )
+{
+	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
+			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
+	SN76496_1_w(offset, flipped);
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xc7ff, MRA_ROM },
-	{ 0xc800, 0xcfff, MRA_RAM },    /* Misc RAM */
+	{ 0xc800, 0xcfff, MRA_RAM },	/* Misc RAM */
 	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe7ff, MRA_RAM },  /* Used by at least Monster Bash? */
+	{ 0xe400, 0xe7ff, MRA_RAM },	/* Used by at least Monster Bash? */
 	{ 0xe800, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf03f, MRA_RAM },     /* Dynamic color table */
-	{ 0xf040, 0xf07f, MRA_RAM },    /* Dynamic color table for background (Monster Bash)*/
+	{ 0xf000, 0xf03f, MRA_RAM },	/* Dynamic color table */
+	{ 0xf040, 0xf07f, MRA_RAM },	/* Dynamic color table for background (Monster Bash)*/
 	{ 0xf080, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
@@ -188,24 +178,13 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xffff, segar_w, &segar_mem },
-	{ 0xe000, 0xe3ff, MWA_RAM, &videoram, &videoram_size },    /* handled by */
+	{ 0xe000, 0xe3ff, MWA_RAM, &videoram, &videoram_size },	/* handled by */
 	{ 0xe800, 0xefff, MWA_RAM, &segar_characterram },    	/* the above, */
 	{ 0xf000, 0xf03f, MWA_RAM, &segar_mem_colortable },     /* here only */
 	{ 0xf040, 0xf07f, MWA_RAM, &segar_mem_bcolortable },    /* to initialize */
 	{ 0xf800, 0xffff, MWA_RAM, &segar_characterram2 },    	/* the pointers */
 MEMORY_END
 
-static MEMORY_READ_START( sindbadm_readmem )
-	{ 0x0000, 0xc7ff, MRA_ROM },
-	{ 0xc800, 0xcfff, MRA_RAM },    /* Misc RAM */
-	{ 0xe000, 0xe3ff, MRA_RAM },
-	{ 0xe400, 0xe7ff, MRA_RAM },  /* Used by at least Monster Bash? */
-	{ 0xe800, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf03f, MRA_RAM },    /* NOTE, the two color tables are flipped! */
-	{ 0xf040, 0xf07f, MRA_RAM },
-	{ 0xf080, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, MRA_RAM },
-MEMORY_END
 
 static MEMORY_WRITE_START( sindbadm_writemem )
 	{ 0x0000, 0xc7ff, MWA_ROM },
@@ -220,6 +199,13 @@ static MEMORY_WRITE_START( sindbadm_writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Main CPU port handlers
+ *
+ *************************************/
+
 static PORT_READ_START( readport )
 //{0x3f, 0x3f, MRA_NOP }, /* Pig Newton - read from 1D87 */
 	{ 0x0e, 0x0e, monsterb_audio_8255_r },
@@ -227,63 +213,10 @@ static PORT_READ_START( readport )
 	{ 0xf8, 0xfc, segar_ports_r },
 PORT_END
 
-static PORT_WRITE_START( astrob_writeport )
-	{ 0x38, 0x38, astrob_speech_port_w },
-	{ 0x3e, 0x3f, astrob_audio_ports_w },
-	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
+
+static PORT_WRITE_START( writeport )
+	{ 0xbf, 0xbf, segar_video_port_w },
 PORT_END
-
-static PORT_WRITE_START( spaceod_writeport )
-	{ 0x08, 0x08, spaceod_back_port_w },
-	{ 0x09, 0x09, spaceod_backshift_clear_w },
-	{ 0x0a, 0x0a, spaceod_backshift_w },
-	{ 0x0b, 0x0c, spaceod_nobackfill_w }, /* I'm not sure what these ports really do */
-	{ 0x0d, 0x0d, spaceod_backfill_w },
-	{ 0x0e, 0x0f, spaceod_audio_ports_w },
-	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-PORT_END
-
-static PORT_WRITE_START( writeport_005 )
-	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-PORT_END
-
-static PORT_WRITE_START( monsterb_writeport )
-	{ 0x0c, 0x0f, monsterb_audio_8255_w },
-	{ 0xbc, 0xbc, monsterb_back_port_w },
-	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-PORT_END
-
-static PORT_WRITE_START( pignewt_writeport )
-	{ 0xb4, 0xb5, pignewt_back_color_w },   /* Just guessing */
-	{ 0xb8, 0xbc, pignewt_back_ports_w },   /* Just guessing */
-	{ 0xbe, 0xbe, MWA_NOP },    		/* probably some type of music register */
-	{ 0xbf, 0xbf, segar_video_port_w }, /* bit0=cocktail flip, bit1=write to color RAM, bit2=always on? */
-PORT_END
-
-static WRITE_HANDLER( sindbadm_soundport_w )
-{
-	soundlatch_w(0,data);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
-	/* spin for a while to let the Z80 read the command (fixes hanging sound in Regulus) */
-	cpu_spinuntil_time(TIME_IN_USEC(50));
-}
-
-/* the data lines are flipped */
-static WRITE_HANDLER( sindbadm_SN76496_0_w )
-{
-	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
-			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
-
-	SN76496_0_w(offset, flipped);
-}
-
-static WRITE_HANDLER( sindbadm_SN76496_1_w )
-{
-	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
-			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
-
-	SN76496_1_w(offset, flipped);
-}
 
 
 static PORT_WRITE_START( sindbadm_writeport )
@@ -294,31 +227,39 @@ static PORT_WRITE_START( sindbadm_writeport )
 PORT_END
 
 
-/***************************************************************************
- Sound memory handlers
-***************************************************************************/
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( speech_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( speech_writemem )
 	{ 0x0000, 0x07ff, MWA_ROM },
 MEMORY_END
+
 
 static MEMORY_READ_START( monsterb_7751_readmem )
 	{ 0x0000, 0x03ff, MRA_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( monsterb_7751_writemem )
 	{ 0x0000, 0x03ff, MWA_ROM },
 MEMORY_END
+
 
 static PORT_READ_START( monsterb_7751_readport )
 	{ I8039_t1,  I8039_t1,  monsterb_sh_t1_r },
 	{ I8039_p2,  I8039_p2,  monsterb_sh_command_r },
 	{ I8039_bus, I8039_bus, monsterb_sh_rom_r },
 PORT_END
+
 
 static PORT_WRITE_START( monsterb_7751_writeport )
 	{ I8039_p1, I8039_p1, monsterb_sh_dac_w },
@@ -329,11 +270,13 @@ static PORT_WRITE_START( monsterb_7751_writeport )
 	{ I8039_p7, I8039_p7, monsterb_sh_rom_select_w },
 PORT_END
 
+
 static MEMORY_READ_START( sindbadm_sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( sindbadm_sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
@@ -343,9 +286,12 @@ static MEMORY_WRITE_START( sindbadm_sound_writemem )
 MEMORY_END
 
 
-/***************************************************************************
-Input Ports
-***************************************************************************/
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 /* This fake input port is used for DIP Switch 2
    For all games except Sindbad Mystery that has different coinage */
@@ -452,7 +398,6 @@ INPUT_PORTS_START( astrob )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	COINAGE
-
 INPUT_PORTS_END
 
 
@@ -522,7 +467,6 @@ INPUT_PORTS_START( astrob2 )
   //PORT_DIPSETTING(    0xc0, "3" )
 
 	COINAGE
-
 INPUT_PORTS_END
 
 
@@ -592,7 +536,6 @@ INPUT_PORTS_START( astrob1 )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	COINAGE
-
 INPUT_PORTS_END
 
 
@@ -664,7 +607,6 @@ INPUT_PORTS_START( 005 )
 	PORT_DIPSETTING(    0xc0, "6" )
 
 	COINAGE
-
 INPUT_PORTS_END
 
 
@@ -733,8 +675,8 @@ INPUT_PORTS_START( monsterb )
 	PORT_DIPSETTING(    0xc0, "6" )
 
 	COINAGE
-
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( spaceod )
 	PORT_START      /* IN0 */
@@ -802,7 +744,6 @@ INPUT_PORTS_START( spaceod )
 	PORT_DIPSETTING(    0xc0, "6" )
 
 	COINAGE
-
 INPUT_PORTS_END
 
 
@@ -873,7 +814,6 @@ INPUT_PORTS_START( pignewt )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	COINAGE
-
 INPUT_PORTS_END
 
 
@@ -941,9 +881,7 @@ INPUT_PORTS_START( pignewta )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	COINAGE
-
 INPUT_PORTS_END
-
 
 
 INPUT_PORTS_START( sindbadm )
@@ -1052,42 +990,49 @@ INPUT_PORTS_START( sindbadm )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
 INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-	256,    /* 256 characters? */
-	2,      /* 2 bits per pixel */
-	{ 0x1000*8, 0 },    /* separated by 0x1000 bytes */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },     /* pretty straightforward layout */
+	8,8,
+	256,
+	2,
+	{ 0x1000*8, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8     /* every char takes 8 consecutive bytes */
+	8*8
 };
+
 
 static struct GfxLayout backlayout =
 {
-	8,8,    /* 8*8 characters */
-	256,  /* 256 characters per scene, 4 scenes */
-	2,      /* 2 bits per pixel */
-	{ 0x2000*8, 0 },    /* separated by 0x2000 bytes */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },     /* pretty straightforward layout */
+	8,8,
+	256,
+	2,
+	{ 0x2000*8, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8     /* every char takes 8 consecutive bytes */
+	8*8
 };
+
 
 static struct GfxLayout spaceod_layout =
 {
-	8,8,   /* 16*8 characters */
-	256,    /* 256 characters */
-	6,      /* 6 bits per pixel */
-	{ 0, 0x1000*8, 0x2000*8, 0x3000*8, 0x4000*8, 0x5000*8 },    /* separated by 0x1000 bytes (1 EPROM per bit) */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },     /* pretty straightforward layout */
+	8,8,
+	256,
+	6,
+	{ 0, 0x1000*8, 0x2000*8, 0x3000*8, 0x4000*8, 0x5000*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8     /* every char takes 16 consecutive bytes */
+	8*8
 };
 
 
@@ -1096,6 +1041,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 },
 	{ -1 } /* end of array */
 };
+
 
 static struct GfxDecodeInfo monsterb_gfxdecodeinfo[] =
 {
@@ -1107,6 +1053,7 @@ static struct GfxDecodeInfo monsterb_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
 static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout,     0x01, 0x10 },
@@ -1117,6 +1064,12 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct Samplesinterface astrob_samples_interface =
 {
 	12,    /* 12 channels */
@@ -1124,7 +1077,8 @@ static struct Samplesinterface astrob_samples_interface =
 	astrob_sample_names
 };
 
-/* TODO: someday this will become a speech synthesis interface */
+
+/* TODO : someday this will become a speech synthesis interface */
 static struct CustomSound_interface astrob_custom_interface =
 {
 	astrob_speech_sh_start,
@@ -1132,52 +1086,6 @@ static struct CustomSound_interface astrob_custom_interface =
 	astrob_speech_sh_update
 };
 
-static const struct MachineDriver machine_driver_astrob =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,    /* 3.86712 MHz ??? */
-			readmem,writemem,readport,astrob_writeport,
-			segar_interrupt,1
-		},
-		{
-			CPU_I8035 | CPU_AUDIO_CPU,
-			3120000/15,    /* 3.12MHz crystal ??? */
-			speech_readmem,speech_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16*4+1,16*4+1,      // 16 2-bit colors + 1 transparent black
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	segar_vh_start,
-	generic_vh_stop,
-	segar_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&astrob_custom_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&astrob_samples_interface
-		}
-	}
-};
 
 static struct Samplesinterface spaceod_samples_interface =
 {
@@ -1186,42 +1094,6 @@ static struct Samplesinterface spaceod_samples_interface =
 	spaceod_sample_names
 };
 
-static const struct MachineDriver machine_driver_spaceod =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,    /* 3.86712 MHz ??? */
-			readmem,writemem,readport,spaceod_writeport,
-			segar_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	spaceod_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground, 1 6-bit color for background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	spaceod_vh_start,
-	spaceod_vh_stop,
-	spaceod_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&spaceod_samples_interface
-		}
-	}
-};
 
 static struct Samplesinterface samples_interface_005 =
 {
@@ -1230,42 +1102,6 @@ static struct Samplesinterface samples_interface_005 =
 	s005_sample_names
 };
 
-static const struct MachineDriver machine_driver_005 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,    /* 3.86712 MHz ??? */
-			readmem,writemem,readport,writeport_005,
-			segar_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16*4+1,16*4+1,      // 16 2-bit colors for foreground and background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	segar_vh_start,
-	generic_vh_stop,
-	segar_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&samples_interface_005
-		}
-	}
-};
 
 static struct Samplesinterface monsterb_samples_interface =
 {
@@ -1274,11 +1110,13 @@ static struct Samplesinterface monsterb_samples_interface =
 	monsterb_sample_names
 };
 
+
 static struct DACinterface monsterb_dac_interface =
 {
 	1,
 	{ 100 }
 };
+
 
 static struct TMS36XXinterface monsterb_tms3617_interface =
 {
@@ -1289,142 +1127,169 @@ static struct TMS36XXinterface monsterb_tms3617_interface =
 	{ {0.5,0.5,0.5,0.5,0.5,0.5} }  /* decay times of voices */
 };
 
-static const struct MachineDriver machine_driver_monsterb =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,    /* 3.86712 MHz ??? */
-			readmem,writemem,readport,monsterb_writeport,
-			segar_interrupt,1
-		},
-		{
-			CPU_N7751 | CPU_AUDIO_CPU,
-			6000000/15,    /* 6MHz crystal */
-			monsterb_7751_readmem,monsterb_7751_writemem,monsterb_7751_readport,monsterb_7751_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	monsterb_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground and background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	monsterb_vh_start,
-	generic_vh_stop,
-	monsterb_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_TMS36XX,
-			&monsterb_tms3617_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&monsterb_samples_interface
-		},
-		{
-			SOUND_DAC,
-			&monsterb_dac_interface
-		}
-	}
-};
-
-static const struct MachineDriver machine_driver_pignewt =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,    /* 3.86712 MHz ??? */
-			readmem,writemem,readport,pignewt_writeport,
-			segar_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	monsterb_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground and background
-	segar_init_colors,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	monsterb_vh_start,
-	generic_vh_stop,
-	sindbadm_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0
-};
-
 
 static struct SN76496interface sn76496_interface =
 {
-	2,          /* 2 chips */
+	2,          			/* 2 chips */
 	{ 4000000, 2000000 },    /* I'm assuming that the sound board is the same as System 1 */
 	{ 100, 100 }
 };
 
-static const struct MachineDriver machine_driver_sindbadm =
-{
+
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( segar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,    /* 3.072 MHz ? */
-			sindbadm_readmem,sindbadm_writemem,readport,sindbadm_writeport,
-			segar_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,    /* 4 MHz ? - see system1.c */
-			sindbadm_sound_readmem,sindbadm_sound_writemem,0,0,
-			interrupt,4		     /* NMIs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD_TAG("main", Z80, 3867120)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(segar_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	monsterb_gfxdecodeinfo,
-	16*4*2+1,16*4*2+1,          // 16 2-bit colors for foreground and background
-	segar_init_colors,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*4+1)
+	MDRV_COLORTABLE_LENGTH(16*4+1)
+	
+	MDRV_PALETTE_INIT(segar)
+	MDRV_VIDEO_START(segar)
+	MDRV_VIDEO_UPDATE(segar)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	monsterb_vh_start,
-	generic_vh_stop,
-	sindbadm_vh_screenrefresh,
+
+static MACHINE_DRIVER_START( astrob )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(segar)
+
+	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM,  astrob_custom_interface)
+	MDRV_SOUND_ADD(SAMPLES, astrob_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( spaceod )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(segar)
+
+	/* video hardware */
+	MDRV_GFXDECODE(spaceod_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*4*2+1)
+	MDRV_COLORTABLE_LENGTH(16*4*2+1)
+
+	MDRV_VIDEO_START(spaceod)
+	MDRV_VIDEO_UPDATE(spaceod)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, spaceod_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( 005 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(segar)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, samples_interface_005)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( monsterb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(segar)
+
+	MDRV_CPU_ADD(N7751, 6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(monsterb_7751_readmem,monsterb_7751_writemem)
+	MDRV_CPU_PORTS(monsterb_7751_readport,monsterb_7751_writeport)
+
+	/* video hardware */
+	MDRV_GFXDECODE(monsterb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*4*2+1)
+	MDRV_COLORTABLE_LENGTH(16*4*2+1)
+
+	MDRV_VIDEO_START(monsterb)
+	MDRV_VIDEO_UPDATE(monsterb)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, monsterb_samples_interface)
+	MDRV_SOUND_ADD(TMS36XX, monsterb_tms3617_interface)
+	MDRV_SOUND_ADD(DAC,     monsterb_dac_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pignewt )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(segar)
+
+	/* video hardware */
+	MDRV_GFXDECODE(monsterb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*4*2+1)
+	MDRV_COLORTABLE_LENGTH(16*4*2+1)
+
+	MDRV_VIDEO_START(monsterb)
+	MDRV_VIDEO_UPDATE(sindbadm)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sindbadm )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
+	MDRV_CPU_MEMORY(readmem,sindbadm_writemem)
+	MDRV_CPU_PORTS(readport,sindbadm_writeport)
+	MDRV_CPU_VBLANK_INT(segar_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ? - see system1.c */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sindbadm_sound_readmem,sindbadm_sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(monsterb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*4*2+1)
+	MDRV_COLORTABLE_LENGTH(16*4*2+1)
+
+	MDRV_PALETTE_INIT(segar)
+	MDRV_VIDEO_START(monsterb)
+	MDRV_VIDEO_UPDATE(sindbadm)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 
-
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( astrob )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -1457,6 +1322,7 @@ ROM_START( astrob )
 	ROM_LOAD( "812a",     0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
 ROM_END
 
+
 ROM_START( astrob2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "829b",     0x0000, 0x0800, 0x14ae953c ) /* U25 */
@@ -1488,6 +1354,7 @@ ROM_START( astrob2 )
 	ROM_LOAD( "812a",     0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
 ROM_END
 
+
 ROM_START( astrob1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "829",      0x0000, 0x0800, 0x5f66046e ) /* U25 */
@@ -1516,6 +1383,7 @@ ROM_START( astrob1 )
 	ROM_LOAD( "812a",     0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
 ROM_END
 
+
 ROM_START( 005 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "1346b.u25",    0x0000, 0x0800, 0x8e68533e ) /* U25 */
@@ -1543,6 +1411,7 @@ ROM_START( 005 )
 	ROM_REGION( 0x0800, REGION_SOUND1, 0 )      /* 2k for sound */
 	ROM_LOAD( "epr-1286.16",  0x0000, 0x0800, 0xfbe0d501 )
 ROM_END
+
 
 ROM_START( monsterb )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )     /* 64k for code + space for background */
@@ -1589,6 +1458,7 @@ ROM_START( monsterb )
 	ROM_LOAD( "1518a.bin",    0x0000, 0x2000, 0x2d5932fe ) /* ??? */
 ROM_END
 
+
 ROM_START( spaceod )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "so-959.dat",   0x0000, 0x0800, 0xbbae3cd1 ) /* U25 */
@@ -1626,6 +1496,7 @@ ROM_START( spaceod )
 	ROM_LOAD( "epr-12.dat",  0x3000, 0x1000, 0x629a4a1f )
 ROM_END
 
+
 ROM_START( pignewt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "cpu.u25",    0x0000, 0x0800, 0x00000000 ) /* U25 */
@@ -1662,6 +1533,7 @@ ROM_START( pignewt )
 
 	/* SOUND ROMS ARE PROBABLY MISSING! */
 ROM_END
+
 
 ROM_START( pignewta )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -1726,46 +1598,78 @@ ROM_START( sindbadm )
 ROM_END
 
 
-/***************************************************************************
-  Security Decode "chips"
-***************************************************************************/
 
-static void init_astrob(void)
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( astrob )
 {
 	/* This game uses the 315-0062 security chip */
 	sega_security(62);
+
+	install_port_write_handler(0, 0x38, 0x38, astrob_speech_port_w);
+	install_port_write_handler(0, 0x3e, 0x3f, astrob_audio_ports_w);
 }
 
-static void init_005(void)
+
+static DRIVER_INIT( 005 )
 {
 	/* This game uses the 315-0070 security chip */
 	sega_security(70);
 }
 
-static void init_monsterb(void)
+
+static DRIVER_INIT( monsterb )
 {
 	/* This game uses the 315-0082 security chip */
 	sega_security(82);
+
+	install_port_write_handler(0, 0x0c, 0x0f, monsterb_audio_8255_w);
+	install_port_write_handler(0, 0xbc, 0xbc, monsterb_back_port_w);
 }
 
-static void init_spaceod(void)
+
+static DRIVER_INIT( spaceod )
 {
 	/* This game uses the 315-0063 security chip */
 	sega_security(63);
+
+	install_port_write_handler(0, 0x08, 0x08, spaceod_back_port_w);
+	install_port_write_handler(0, 0x09, 0x09, spaceod_backshift_clear_w);
+	install_port_write_handler(0, 0x0a, 0x0a, spaceod_backshift_w);
+	install_port_write_handler(0, 0x0b, 0x0c, spaceod_nobackfill_w);
+	install_port_write_handler(0, 0x0d, 0x0d, spaceod_backfill_w);
+	install_port_write_handler(0, 0x0e, 0x0f, spaceod_audio_ports_w);
 }
 
-static void init_pignewt(void)
+
+static DRIVER_INIT( pignewt )
 {
 	/* This game uses the 315-0063? security chip */
 	sega_security(63);
+
+	install_port_write_handler(0, 0xb4, 0xb5, pignewt_back_color_w);  /* Just guessing */
+	install_port_write_handler(0, 0xb8, 0xbc, pignewt_back_ports_w);   /* Just guessing */
+	install_port_write_handler(0, 0xbe, 0xbe, MWA_NOP);
 }
 
-static void init_sindbadm(void)
+
+static DRIVER_INIT( sindbadm )
 {
 	/* This game uses an encrypted CPU */
 	sindbadm_decode();
 }
 
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1981, astrob,   0,       astrob,   astrob,   astrob,   ROT270, "Sega", "Astro Blaster (version 3)" )
 GAME( 1981, astrob2,  astrob,  astrob,   astrob2,  astrob,   ROT270, "Sega", "Astro Blaster (version 2)" )

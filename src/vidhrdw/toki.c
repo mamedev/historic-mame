@@ -52,7 +52,7 @@ WRITE16_HANDLER( toki_control_w )
 }
 
 /* At EOF clear the previous frames scroll registers */
-void toki_eof_callback(void)
+VIDEO_EOF( toki )
 {
 	int i;
 
@@ -118,7 +118,7 @@ static void get_fore_tile_info(int tile_index)
  *
  *************************************/
 
-int toki_vh_start (void)
+VIDEO_START( toki )
 {
 	text_layer       = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
 	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -210,7 +210,7 @@ WRITE16_HANDLER( toki_background2_videoram16_w )
 ***************************************************************************/
 
 
-void toki_draw_sprites (struct mame_bitmap *bitmap)
+void toki_draw_sprites (struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int x,y,xoffs,yoffs,tile,flipx,flipy,color,offs;
 	data16_t *sprite_word;
@@ -248,13 +248,13 @@ void toki_draw_sprites (struct mame_bitmap *bitmap)
 					color,
 					flipx,flipy,
 					x,y,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 }
 
 
-void tokib_draw_sprites (struct mame_bitmap *bitmap)
+void tokib_draw_sprites (struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int x,y,tile,flipx,color,offs;
 	data16_t *sprite_word;
@@ -287,7 +287,7 @@ void tokib_draw_sprites (struct mame_bitmap *bitmap)
 					color,
 					flipx,0,
 					x,y-1,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 }
@@ -298,7 +298,7 @@ void tokib_draw_sprites (struct mame_bitmap *bitmap)
  *
  *************************************/
 
-void toki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( toki )
 {
 	int i,background_y_scroll,foreground_y_scroll,latch1,latch2;
 
@@ -322,17 +322,17 @@ void toki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	flip_screen_set((toki_scrollram16[0x28]&0x8000)==0);
 
 	if (toki_scrollram16[0x28]&0x100) {
-		tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,foreground_layer,0,0);
+		tilemap_draw(bitmap,cliprect,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
 	} else {
-		tilemap_draw(bitmap,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,background_layer,0,0);
+		tilemap_draw(bitmap,cliprect,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	}
-	toki_draw_sprites (bitmap);
-	tilemap_draw(bitmap,text_layer,0,0);
+	toki_draw_sprites (bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }
 
-void tokib_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tokib )
 {
 	tilemap_set_scroll_rows(foreground_layer,1);
 	tilemap_set_scroll_rows(background_layer,1);
@@ -342,13 +342,13 @@ void tokib_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx( foreground_layer, 0, toki_scrollram16[3]-0x101 );
 
 	if (toki_scrollram16[3]&0x2000) {
-		tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,foreground_layer,0,0);
+		tilemap_draw(bitmap,cliprect,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
 	} else {
-		tilemap_draw(bitmap,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,background_layer,0,0);
+		tilemap_draw(bitmap,cliprect,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	}
 
-	tokib_draw_sprites (bitmap);
-	tilemap_draw(bitmap,text_layer,0,0);
+	tokib_draw_sprites (bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }

@@ -20,18 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int offtwall_vh_start(void);
-void offtwall_vh_stop(void);
-void offtwall_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+#include "offtwall.h"
 
 
 
@@ -64,7 +53,7 @@ static void update_interrupts(void)
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( offtwall )
 {
 	atarigen_eeprom_reset();
 	atarivc_reset(atarivc_eof_data);
@@ -155,11 +144,11 @@ static READ16_HANDLER( bankswitch_r )
 static READ16_HANDLER( bankrom_r )
 {
 	/* this is the banked ROM read */
-	logerror("%06X: %04X\n", cpu_getpreviouspc(), offset);
+	logerror("%06X: %04X\n", activecpu_get_previouspc(), offset);
 
 	/* if the values are $3e000 or $3e002 are being read by code just below the
 		ROM bank area, we need to return the correct value to give the proper checksum */
-	if ((offset == 0x3000 || offset == 0x3001) && cpu_getpreviouspc() > 0x37000)
+	if ((offset == 0x3000 || offset == 0x3001) && activecpu_get_previouspc() > 0x37000)
 	{
 		unsigned int checksum = (cpu_readmem24bew_word(0x3fd210)<<16)|cpu_readmem24bew_word(0x3fd212);
 		unsigned int us = 0xaaaa5555 - checksum;
@@ -196,7 +185,7 @@ static data16_t *spritecache_count;
 
 static READ16_HANDLER( spritecache_count_r )
 {
-	int prevpc = cpu_getpreviouspc();
+	int prevpc = activecpu_get_previouspc();
 
 	/* if this read is coming from $99f8 or $9992, it's in the sprite copy loop */
 	if (prevpc == 0x99f8 || prevpc == 0x9992)
@@ -251,7 +240,7 @@ static data16_t *unknown_verify_base;
 
 static READ16_HANDLER( unknown_verify_r )
 {
-	int prevpc = cpu_getpreviouspc();
+	int prevpc = activecpu_get_previouspc();
 	if (prevpc < 0x5c5e || prevpc > 0xc432)
 		return unknown_verify_base[offset];
 	else
@@ -409,39 +398,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_offtwall =
-{
+static MACHINE_DRIVER_START( offtwall )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_III_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(offtwall)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	offtwall_vh_start,
-	offtwall_vh_stop,
-	offtwall_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(offtwall)
+	MDRV_VIDEO_UPDATE(offtwall)
+	
 	/* sound hardware */
-	JSA_III_MONO_NO_SPEECH,
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_iii_mono_noadpcm)
+MACHINE_DRIVER_END
 
 
 
@@ -460,7 +441,7 @@ ROM_START( offtwall )
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "otw1014.bin", 0x000000, 0x20000, 0x4d64507e )
 	ROM_LOAD( "otw1016.bin", 0x020000, 0x20000, 0xf5454f3a )
 	ROM_LOAD( "otw1018.bin", 0x040000, 0x20000, 0x17864231 )
@@ -479,7 +460,7 @@ ROM_START( offtwalc )
 	ROM_LOAD( "otw1020.bin", 0x10000, 0x4000, 0x488112a5 )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "090-1614.rom", 0x000000, 0x20000, 0x307ed447 )
 	ROM_LOAD( "090-1616.rom", 0x020000, 0x20000, 0xa5bd3d9b )
 	ROM_LOAD( "090-1618.rom", 0x040000, 0x20000, 0xc7d9df5d )
@@ -511,12 +492,11 @@ static const data16_t default_eeprom[] =
 };
 
 
-static void init_offtwall(void)
+static DRIVER_INIT( offtwall )
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarijsa_init(1, 2, 3, 0x0040);
 	atarigen_init_6502_speedup(1, 0x41dd, 0x41f5);
-	atarigen_invert_region(REGION_GFX1);
 
 	/* install son-of-slapstic workarounds */
 	spritecache_count = install_mem_read16_handler(0, 0x3fde42, 0x3fde43, spritecache_count_r);
@@ -525,12 +505,11 @@ static void init_offtwall(void)
 }
 
 
-static void init_offtwalc(void)
+static DRIVER_INIT( offtwalc )
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarijsa_init(1, 2, 3, 0x0040);
 	atarigen_init_6502_speedup(1, 0x41dd, 0x41f5);
-	atarigen_invert_region(REGION_GFX1);
 
 	/* install son-of-slapstic workarounds */
 	spritecache_count = install_mem_read16_handler(0, 0x3fde42, 0x3fde43, spritecache_count_r);

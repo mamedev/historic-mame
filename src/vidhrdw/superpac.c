@@ -33,7 +33,7 @@ static UINT8 color15_mask[64];
 
 ***************************************************************************/
 
-void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( superpac )
 {
 	int i, j;
 
@@ -195,11 +195,11 @@ static void draw_sprites(struct mame_bitmap *bitmap, struct rectangle *clip, int
 
 ***************************************************************************/
 
-void superpac_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( superpac )
 {
 	int offs;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer, 1, videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */

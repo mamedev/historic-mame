@@ -33,7 +33,6 @@ struct atarimo_cache
 /* internal structure containing the state of the motion objects */
 struct atarimo_data
 {
-	int					timerallocated;		/* true if we've allocated the timer */
 	int					gfxchanged;			/* true if the gfx info has changed */
 	struct GfxElement	gfxelement[MAX_GFX_ELEMENTS]; /* local copy of graphics elements */
 
@@ -99,6 +98,8 @@ struct atarimo_data
 	struct atarimo_cache *endcache;			/* end of the cache */
 	struct atarimo_cache *curcache;			/* current cache entry */
 	struct atarimo_cache *prevcache;		/* previous cache entry */
+	
+	void *				update_timer;		/* update timer */
 
 	ataripf_overrender_cb overrender0;		/* overrender callback for PF 0 */
 	ataripf_overrender_cb overrender1;		/* overrender callback for PF 1 */
@@ -124,7 +125,7 @@ typedef void (*mo_callback)(struct atarimo_data *pf, const struct atarimo_entry 
 #define VERIFY(cond, msg) if (!(cond)) { logerror(msg); return; }
 
 /* verification macro for non-void functions */
-#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); atarimo_free(); return (ret); }
+#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); return (ret); }
 
 
 /* data extraction */
@@ -281,7 +282,6 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	convert_mask(&desc->absolutemask, &mo->absolutemask);
 
 	/* copy in the basic data */
-	mo->timerallocated = 0;
 	mo->gfxchanged    = 0;
 
 	mo->linked        = desc->linked;
@@ -324,18 +324,18 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->slipram       = (map == 0) ? &atarimo_0_slipram : &atarimo_1_slipram;
 
 	/* allocate the priority bitmap */
-	priority_bitmap = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	priority_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
 	VERIFYRETFREE(priority_bitmap, "atarimo_init: out of memory for priority bitmap", 0)
 
 	/* allocate the spriteram */
-	mo->spriteram = malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
+	mo->spriteram = auto_malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
 	VERIFYRETFREE(mo->spriteram, "atarimo_init: out of memory for spriteram", 0)
 
 	/* clear it to zero */
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
 
 	/* allocate the code lookup */
-	mo->codelookup = malloc(sizeof(mo->codelookup[0]) * round_to_powerof2(mo->codemask.mask));
+	mo->codelookup = auto_malloc(sizeof(mo->codelookup[0]) * round_to_powerof2(mo->codemask.mask));
 	VERIFYRETFREE(mo->codelookup, "atarimo_init: out of memory for code lookup", 0)
 
 	/* initialize it 1:1 */
@@ -343,7 +343,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 		mo->codelookup[i] = i;
 
 	/* allocate the color lookup */
-	mo->colorlookup = malloc(sizeof(mo->colorlookup[0]) * round_to_powerof2(mo->colormask.mask));
+	mo->colorlookup = auto_malloc(sizeof(mo->colorlookup[0]) * round_to_powerof2(mo->colormask.mask));
 	VERIFYRETFREE(mo->colorlookup, "atarimo_init: out of memory for color lookup", 0)
 
 	/* initialize it 1:1 */
@@ -351,7 +351,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 		mo->colorlookup[i] = i;
 
 	/* allocate the gfx lookup */
-	mo->gfxlookup = malloc(sizeof(mo->gfxlookup[0]) * round_to_powerof2(mo->gfxmask.mask));
+	mo->gfxlookup = auto_malloc(sizeof(mo->gfxlookup[0]) * round_to_powerof2(mo->gfxmask.mask));
 	VERIFYRETFREE(mo->gfxlookup, "atarimo_init: out of memory for gfx lookup", 0)
 
 	/* initialize it with the gfxindex we were passed in */
@@ -359,7 +359,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 		mo->gfxlookup[i] = desc->gfxindex;
 
 	/* allocate the cache */
-	mo->cache = malloc(mo->entrycount * Machine->drv->screen_height * sizeof(mo->cache[0]));
+	mo->cache = auto_malloc(mo->entrycount * Machine->drv->screen_height * sizeof(mo->cache[0]));
 	VERIFYRETFREE(mo->cache, "atarimo_init: out of memory for cache", 0)
 	mo->endcache = mo->cache + mo->entrycount * Machine->drv->screen_height;
 
@@ -371,6 +371,11 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->gfxelement[desc->gfxindex] = *Machine->gfx[desc->gfxindex];
 	mo->gfxelement[desc->gfxindex].colortable = &Machine->remapped_colortable[mo->palettebase];
 
+	/* set a timer to call the eof function on scanline 0 */
+	/* we need this to clear the cache, even if the mo's are not rendered */
+	mo->update_timer = timer_alloc(mo_scanline_callback);
+	timer_adjust(mo->update_timer, cpu_getscanlinetime(0), 0 | ((mo - &atarimo[0]) << 16), 0);
+
 	logerror("atarimo_init:\n");
 	logerror("  width=%d (shift=%d),  height=%d (shift=%d)\n", gfx->width, mo->tilexshift, gfx->height, mo->tileyshift);
 	logerror("  spriteram mask=%X, size=%d\n", mo->spriterammask, mo->spriteramsize);
@@ -378,57 +383,6 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	logerror("  bitmap size=%dx%d\n", mo->bitmapwidth, mo->bitmapheight);
 
 	return 1;
-}
-
-
-/*---------------------------------------------------------------
-	atarimo_free: Frees any memory allocated for motion objects.
----------------------------------------------------------------*/
-
-void atarimo_free(void)
-{
-	int i;
-
-	/* free the motion object data */
-	for (i = 0; i < ATARIMO_MAX; i++)
-	{
-		struct atarimo_data *mo = &atarimo[i];
-
-		/* free the priority bitmap */
-		if (priority_bitmap)
-			free(priority_bitmap);
-		priority_bitmap = NULL;
-
-		/* free the spriteram */
-		if (mo->spriteram)
-			free(mo->spriteram);
-		mo->spriteram = NULL;
-
-		/* free the codelookup */
-		if (mo->codelookup)
-			free(mo->codelookup);
-		mo->codelookup = NULL;
-
-		/* free the codelookup */
-		if (mo->codelookup)
-			free(mo->codelookup);
-		mo->codelookup = NULL;
-
-		/* free the colorlookup */
-		if (mo->colorlookup)
-			free(mo->colorlookup);
-		mo->colorlookup = NULL;
-
-		/* free the gfxlookup */
-		if (mo->gfxlookup)
-			free(mo->gfxlookup);
-		mo->gfxlookup = NULL;
-
-		/* free the cache */
-		if (mo->cache)
-			free(mo->cache);
-		mo->cache = NULL;
-	}
 }
 
 
@@ -483,14 +437,14 @@ UINT8 *atarimo_get_gfx_lookup(int map, int *size)
 	destination bitmap.
 ---------------------------------------------------------------*/
 
-void atarimo_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2)
+void atarimo_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect, ataripf_overrender_cb callback1, ataripf_overrender_cb callback2)
 {
 	struct atarimo_data *mo = &atarimo[map];
 
 	/* render via the standard render callback */
 	mo->overrender0 = callback1;
 	mo->overrender1 = callback2;
-	mo_process(mo, mo_render_callback, bitmap, NULL);
+	mo_process(mo, mo_render_callback, bitmap, cliprect);
 }
 
 
@@ -815,14 +769,6 @@ static void mo_update(struct atarimo_data *mo, int scanline)
 	UINT8 spritevisit[ATARIMO_MAXPERBANK];
 	int match = 0, link;
 
-	/* set a timer to call the eof function on scanline 0 */
-	/* we need this to clear the cache, even if the mo's are not rendered */
-	if (!mo->timerallocated && cpu_getcurrentframe() > 0)
-	{
-		timer_set(cpu_getscanlinetime(0), 0 | ((mo - &atarimo[0]) << 16), mo_scanline_callback);
-		mo->timerallocated = 1;
-	}
-
 	/* skip if the scanline is past the bottom of the screen */
 	if (scanline > Machine->visible_area.max_y)
 		return;
@@ -1132,5 +1078,5 @@ static void mo_scanline_callback(int param)
 	/* don't bother updating in the VBLANK area, just start back at 0 */
 	if (nextscanline > Machine->visible_area.max_y)
 		nextscanline = 0;
-	timer_set(cpu_getscanlinetime(nextscanline), nextscanline | (param & ~0xffff), mo_scanline_callback);
+	timer_adjust(mo->update_timer, cpu_getscanlinetime(nextscanline), nextscanline | (param & ~0xffff), 0);
 }

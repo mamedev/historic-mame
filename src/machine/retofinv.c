@@ -16,13 +16,13 @@ static unsigned char portA_in,portA_out,ddrA;
 
 READ_HANDLER( retofinv_68705_portA_r )
 {
-//logerror("%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
+//logerror("%04x: 68705 port A read %02x\n",activecpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
 WRITE_HANDLER( retofinv_68705_portA_w )
 {
-//logerror("%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
+//logerror("%04x: 68705 port A write %02x\n",activecpu_get_pc(),data);
 	portA_out = data;
 }
 
@@ -51,7 +51,7 @@ READ_HANDLER( retofinv_68705_portB_r )
 
 WRITE_HANDLER( retofinv_68705_portB_w )
 {
-//logerror("%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
+//logerror("%04x: 68705 port B write %02x\n",activecpu_get_pc(),data);
 
 	if ((ddrB & 0x02) && (~data & 0x02) && (portB_out & 0x02))
 	{
@@ -92,13 +92,13 @@ READ_HANDLER( retofinv_68705_portC_r )
 	portC_in = 0;
 	if (main_sent) portC_in |= 0x01;
 	if (!mcu_sent) portC_in |= 0x02;
-//logerror("%04x: 68705 port C read %02x\n",cpu_get_pc(),portC_in);
+//logerror("%04x: 68705 port C read %02x\n",activecpu_get_pc(),portC_in);
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
 WRITE_HANDLER( retofinv_68705_portC_w )
 {
-logerror("%04x: 68705 port C write %02x\n",cpu_get_pc(),data);
+logerror("%04x: 68705 port C write %02x\n",activecpu_get_pc(),data);
 	portC_out = data;
 }
 
@@ -110,7 +110,7 @@ WRITE_HANDLER( retofinv_68705_ddrC_w )
 
 WRITE_HANDLER( retofinv_mcu_w )
 {
-logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
+logerror("%04x: mcu_w %02x\n",activecpu_get_pc(),data);
 	from_main = data;
 	main_sent = 1;
 	cpu_set_irq_line(3,0,ASSERT_LINE);
@@ -118,7 +118,7 @@ logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
 
 READ_HANDLER( retofinv_mcu_r )
 {
-logerror("%04x: mcu_r %02x\n",cpu_get_pc(),from_mcu);
+logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),from_mcu);
 	mcu_sent = 0;
 	return from_mcu;
 }
@@ -129,7 +129,7 @@ READ_HANDLER( retofinv_mcu_status_r )
 
 	/* bit 4 = when 1, mcu is ready to receive data from main cpu */
 	/* bit 5 = when 1, mcu has sent data to the main cpu */
-//logerror("%04x: mcu_status_r\n",cpu_get_pc());
+//logerror("%04x: mcu_status_r\n",activecpu_get_pc());
 	if (!main_sent) res |= 0x10;
 	if (mcu_sent) res |= 0x20;
 

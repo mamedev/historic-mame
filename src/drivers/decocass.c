@@ -103,7 +103,7 @@ WRITE_HANDLER( decocass_w )
 	else if (offset >= 0xe500 && offset <= 0xe5ff) { decocass_e5xx_w(offset - 0xe500,data); return; }
 	else if (offset >= 0xf000 && offset <= 0xffff) { return; }
 
-	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
 	rom[offset] = data;
 
@@ -397,108 +397,268 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static void decocass_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( decocass )
 {
 	int i;
 	/* set up 32 colors 1:1 pens */
 	for (i = 0; i < 32; i++)
-		sys_colortable[i] = i;
+		colortable[i] = i;
 
 	/* setup straight/flipped colors for background tiles (D7 of color_center_bot ?) */
 	for (i = 0; i < 8; i++)
 	{
-		sys_colortable[32+i] = 3*8+i;
-		sys_colortable[40+i] = 3*8+((i << 1) & 0x04) + ((i >> 1) & 0x02) + (i & 0x01);
+		colortable[32+i] = 3*8+i;
+		colortable[40+i] = 3*8+((i << 1) & 0x04) + ((i >> 1) & 0x02) + (i & 0x01);
 	}
 
 	/* setup 4 colors for 1bpp object */
-	sys_colortable[48+0*2+0] = 0;
-	sys_colortable[48+0*2+1] = 25;	/* testtape red from 4th palette section? */
-	sys_colortable[48+1*2+0] = 0;
-	sys_colortable[48+1*2+1] = 28;	/* testtape blue from 4th palette section? */
-	sys_colortable[48+2*2+0] = 0;
-	sys_colortable[48+2*2+1] = 26;	/* testtape green from 4th palette section? */
-	sys_colortable[48+3*2+0] = 0;
-	sys_colortable[48+3*2+1] = 23;	/* ???? */
+	colortable[48+0*2+0] = 0;
+	colortable[48+0*2+1] = 25;	/* testtape red from 4th palette section? */
+	colortable[48+1*2+0] = 0;
+	colortable[48+1*2+1] = 28;	/* testtape blue from 4th palette section? */
+	colortable[48+2*2+0] = 0;
+	colortable[48+2*2+1] = 26;	/* testtape green from 4th palette section? */
+	colortable[48+3*2+0] = 0;
+	colortable[48+3*2+1] = 23;	/* ???? */
 }
 
-#define MACHINE_DRIVER_DECOCASS(GAMENAME)	\
-static const struct MachineDriver machine_driver_##GAMENAME = \
-{ \
-	/* basic machine hardware */ \
-	{ \
-		{ \
-			CPU_M6502, \
-			750000, \
-			decocass_readmem,decocass_writemem,0,0, \
-			ignore_interrupt,0, \
-		}, \
-		{  \
-			CPU_M6502, \
-			500000, /* 500 kHz */ \
-			decocass_sound_readmem,decocass_sound_writemem,0,0, \
-			ignore_interrupt,0, \
-		}, \
-		{ \
-			CPU_I8X41, \
-			500000, /* 500 kHz ( I doubt it is 400kHz Al! )*/ \
-			decocass_mcu_readmem,decocass_mcu_writemem, \
-			decocass_mcu_readport,decocass_mcu_writeport, \
-			ignore_interrupt,0, \
-		}, \
-	}, \
-	57, 3072,		/* frames per second, vblank duration */ \
-	7,				/* interleave CPUs */ \
-	GAMENAME##_init_machine, \
-\
-	/* video hardware */ \
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 }, \
-	decocass_gfxdecodeinfo, \
-	32,32+2*8+2*4, \
-	decocass_init_palette, \
-\
-	VIDEO_TYPE_RASTER, \
-	0, \
-	decocass_vh_start, \
-	decocass_vh_stop, \
-	decocass_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0,0,0,0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		} \
-	}, \
-}
 
-MACHINE_DRIVER_DECOCASS( decocass );	/* parent driver */
-MACHINE_DRIVER_DECOCASS( ctsttape );
-MACHINE_DRIVER_DECOCASS( clocknch );
-MACHINE_DRIVER_DECOCASS( ctisland );
-MACHINE_DRIVER_DECOCASS( csuperas );
-MACHINE_DRIVER_DECOCASS( castfant );
-MACHINE_DRIVER_DECOCASS( cluckypo );
-MACHINE_DRIVER_DECOCASS( cterrani );
-MACHINE_DRIVER_DECOCASS( cexplore );
-MACHINE_DRIVER_DECOCASS( cprogolf );
-MACHINE_DRIVER_DECOCASS( cmissnx  );
-MACHINE_DRIVER_DECOCASS( cdiscon1 );
-MACHINE_DRIVER_DECOCASS( cptennis );
-MACHINE_DRIVER_DECOCASS( ctornado );
-MACHINE_DRIVER_DECOCASS( cbnj	  );
-MACHINE_DRIVER_DECOCASS( cburnrub );
-MACHINE_DRIVER_DECOCASS( cbtime   );
-MACHINE_DRIVER_DECOCASS( cgraplop );
-MACHINE_DRIVER_DECOCASS( clapapa  );
-MACHINE_DRIVER_DECOCASS( cfghtice );
-MACHINE_DRIVER_DECOCASS( cprobowl );
-MACHINE_DRIVER_DECOCASS( cnightst );
-MACHINE_DRIVER_DECOCASS( cprosocc );
-MACHINE_DRIVER_DECOCASS( cppicf   );
-MACHINE_DRIVER_DECOCASS( cbdash   );
-MACHINE_DRIVER_DECOCASS( cscrtry );
+static MACHINE_DRIVER_START( decocass )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502,750000)
+	MDRV_CPU_MEMORY(decocass_readmem,decocass_writemem)
+
+	MDRV_CPU_ADD(M6502,500000) /* 500 kHz */
+	MDRV_CPU_MEMORY(decocass_sound_readmem,decocass_sound_writemem)
+
+	MDRV_CPU_ADD(I8X41,500000) /* 500 kHz ( I doubt it is 400kHz Al! )*/
+	MDRV_CPU_MEMORY(decocass_mcu_readmem,decocass_mcu_writemem)
+	MDRV_CPU_PORTS(decocass_mcu_readport,decocass_mcu_writeport)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3072)		/* frames per second, vblank duration */
+	MDRV_INTERLEAVE(7)				/* interleave CPUs */
+	
+	MDRV_MACHINE_INIT(decocass)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(decocass_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32+2*8+2*4)
+
+	MDRV_PALETTE_INIT(decocass)
+	MDRV_VIDEO_START(decocass)
+	MDRV_VIDEO_UPDATE(decocass)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ctsttape )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(ctsttape)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( clocknch )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(clocknch)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ctisland )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(ctisland)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( csuperas )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(csuperas)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( castfant )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(castfant)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cluckypo )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cluckypo)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cterrani )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cterrani)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cexplore )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cexplore)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cprogolf )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cprogolf)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cmissnx )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cmissnx)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cdiscon1 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cdiscon1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cptennis )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cptennis)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ctornado )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(ctornado)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cbnj )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cbnj)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cburnrub )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cburnrub)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cbtime )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cbtime)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cgraplop )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cgraplop)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( clapapa )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(clapapa)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cfghtice )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cfghtice)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cprobowl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cprobowl)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cnightst )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cnightst)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cprosocc )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cprosocc)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cppicf )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cppicf)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cbdash )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cbdash)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cscrtry )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(decocass)
+	MDRV_MACHINE_INIT(cscrtry)
+MACHINE_DRIVER_END
+
+
 
 #define DECOCASS_COMMON_ROMS	\
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */ \
@@ -910,7 +1070,7 @@ ROM_START( czeroize )
 ROM_END
 
 
-static void init_decocass(void)
+static DRIVER_INIT( decocass )
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);

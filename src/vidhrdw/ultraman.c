@@ -58,7 +58,7 @@ static void zoom_callback_2(int *code,int *color)
 
 ***************************************************************************/
 
-int ultraman_vh_start(void)
+VIDEO_START( ultraman )
 {
 	sprite_colorbase = 192;
 	zoom_colorbase[0] = 0;
@@ -66,44 +66,22 @@ int ultraman_vh_start(void)
 	zoom_colorbase[2] = 128;
 
 	if (K051960_vh_start(SPRITEROM_MEM_REGION,NORMAL_PLANE_ORDER,sprite_callback))
-	{
 		return 1;
-	}
 
 	if (K051316_vh_start_0(ZOOMROM0_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_0))
-	{
-		K051960_vh_stop();
 		return 1;
-	}
 
 	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_1))
-	{
-		K051960_vh_stop();
-		K051316_vh_stop_0();
 		return 1;
-	}
 
 	if (K051316_vh_start_2(ZOOMROM2_MEM_REGION,4,TILEMAP_OPAQUE,0,zoom_callback_2))
-	{
-		K051960_vh_stop();
-		K051316_vh_stop_0();
-		K051316_vh_stop_1();
 		return 1;
-	}
 
 	K051316_set_offset(0, 8, 0);
 	K051316_set_offset(1, 8, 0);
 	K051316_set_offset(2, 8, 0);
 
 	return 0;
-}
-
-void ultraman_vh_stop(void)
-{
-	K051960_vh_stop();
-	K051316_vh_stop_0();
-	K051316_vh_stop_1();
-	K051316_vh_stop_2();
 }
 
 
@@ -157,11 +135,11 @@ WRITE16_HANDLER( ultraman_gfxctrl_w )
 
 ***************************************************************************/
 
-void ultraman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ultraman )
 {
-	K051316_zoom_draw_2(bitmap,0,0);
-	K051316_zoom_draw_1(bitmap,0,0);
-	K051960_sprites_draw(bitmap,0,0);
-	K051316_zoom_draw_0(bitmap,0,0);
-	K051960_sprites_draw(bitmap,1,1);
+	K051316_zoom_draw_2(bitmap,cliprect,0,0);
+	K051316_zoom_draw_1(bitmap,cliprect,0,0);
+	K051960_sprites_draw(bitmap,cliprect,0,0);
+	K051316_zoom_draw_0(bitmap,cliprect,0,0);
+	K051960_sprites_draw(bitmap,cliprect,1,1);
 }

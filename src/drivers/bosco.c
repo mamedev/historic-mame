@@ -85,15 +85,15 @@ READ_HANDLER( bosco_customio_data_1_r );
 READ_HANDLER( bosco_customio_data_2_r );
 WRITE_HANDLER( bosco_customio_data_1_w );
 WRITE_HANDLER( bosco_customio_data_2_w );
-int  bosco_interrupt_1(void);
-int  bosco_interrupt_2(void);
-int  bosco_interrupt_3(void);
-void bosco_init_machine(void);
+INTERRUPT_GEN( bosco_interrupt_1 );
+INTERRUPT_GEN( bosco_interrupt_2 );
+INTERRUPT_GEN( bosco_interrupt_3 );
+MACHINE_INIT( bosco );
 
 WRITE_HANDLER( bosco_cpu_reset_w );
-int  bosco_vh_start(void);
-void bosco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_START( bosco );
+VIDEO_UPDATE( bosco );
+PALETTE_INIT( bosco );
 
 extern unsigned char *bosco_videoram2,*bosco_colorram2;
 extern unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
@@ -106,9 +106,8 @@ WRITE_HANDLER( bosco_flipscreen_w );
 WRITE_HANDLER( bosco_scrollx_w );
 WRITE_HANDLER( bosco_scrolly_w );
 WRITE_HANDLER( bosco_starcontrol_w );
-int  bosco_vh_start(void);
-void bosco_vh_stop(void);
-void bosco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( bosco );
+VIDEO_UPDATE( bosco );
 
 WRITE_HANDLER( pengo_sound_w );
 int  bosco_sh_start(const struct MachineSound *msound);
@@ -447,63 +446,44 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static const struct MachineDriver machine_driver_bosco =
-{
+static MACHINE_DRIVER_START( bosco )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3125000,	/* 3.125 MHz */
-			readmem_cpu1,writemem_cpu1,0,0,
-			bosco_interrupt_1,1
-		},
-		{
-			CPU_Z80,
-			3125000,	/* 3.125 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			bosco_interrupt_2,1
-		},
-		{
-			CPU_Z80,
-			3125000,	/* 3.125 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			bosco_interrupt_3,2
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	bosco_init_machine,
+	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(bosco_interrupt_1,1)
+
+	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(bosco_interrupt_2,1)
+
+	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(bosco_interrupt_3,2)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(bosco)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32+64,64*4+64*4+4,	/* 32 for the characters, 64 for the stars */
-	bosco_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64)
+	MDRV_COLORTABLE_LENGTH(64*4+64*4+4)	/* 32 for the characters, 64 for the stars */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bosco_vh_start,
-	bosco_vh_stop,
-	bosco_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bosco)
+	MDRV_VIDEO_START(bosco)
+	MDRV_VIDEO_UPDATE(bosco)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -41,7 +41,7 @@ static struct rectangle spritevisibleareaflipx =
 
 
 ***************************************************************************/
-void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( thepit )
 {
 	int i;
 
@@ -88,7 +88,7 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
  unknown.
 
 ***************************************************************************/
-void suprmous_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( suprmous )
 {
 	int i;
 
@@ -326,9 +326,9 @@ static void drawsprites(struct mame_bitmap *bitmap,int priority)
 }
 
 
-void thepit_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( thepit )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer, 1, videoram_size);
 	}

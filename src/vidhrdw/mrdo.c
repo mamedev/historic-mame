@@ -47,7 +47,7 @@ static int flipscreen;
   200 ohm pulldown on all three components
 
 ***************************************************************************/
-void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mrdo )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -151,7 +151,7 @@ static void get_fg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int mrdo_vh_start(void)
+VIDEO_START( mrdo )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -199,7 +199,10 @@ WRITE_HANDLER( mrdo_scrollx_w )
 
 WRITE_HANDLER( mrdo_scrolly_w )
 {
-	tilemap_set_scrolly(bg_tilemap,0,data);
+	/* This is NOT affected by flipscreen (so stop it happening) */
+
+	if (flipscreen) tilemap_set_scrolly(bg_tilemap,0,((256-data) & 0xff));
+	else tilemap_set_scrolly(bg_tilemap,0,data);
 }
 
 
@@ -220,7 +223,7 @@ WRITE_HANDLER( mrdo_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -233,15 +236,15 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					spriteram[offs],spriteram[offs + 2] & 0x0f,
 					spriteram[offs + 2] & 0x10,spriteram[offs + 2] & 0x20,
 					spriteram[offs + 3],256 - spriteram[offs + 1],
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
-void mrdo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mrdo )
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_sprites(bitmap);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

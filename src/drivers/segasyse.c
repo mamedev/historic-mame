@@ -189,9 +189,8 @@ static WRITE_HANDLER (segae_port_be_bf_w);
 
 /*- in (vidhrdw/segasyse.c) -*/
 
-int segae_vh_start(void);
-void segae_vh_stop(void);
-void segae_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( segae );
+VIDEO_UPDATE( segae );
 
 unsigned char segae_vdp_ctrl_r ( UINT8 chip );
 unsigned char segae_vdp_data_r ( UINT8 chip );
@@ -675,7 +674,7 @@ INPUT_PORTS_END
  Interrupt enable bits etc are a bit uncertain
 *******************************************************************************/
 
- int segae_interrupt(void)
+ INTERRUPT_GEN( segae_interrupt )
 {
 	int sline;
 	sline = 261 - cpu_getiloops();
@@ -696,7 +695,8 @@ INPUT_PORTS_END
 			hintpending = 1;
 
 			if  ((segae_vdp_regs[1][0] & 0x10)) {
-				return Z80_IRQ_INT;
+				cpu_set_irq_line(0, 0, HOLD_LINE);
+				return;
 			}
 
 		} else {
@@ -708,11 +708,9 @@ INPUT_PORTS_END
 		hintcount = segae_vdp_regs[1][10];
 
 		if ( (sline<0xe0) && (vintpending) ) {
-			return Z80_IRQ_INT;
+			cpu_set_irq_line(0, 0, HOLD_LINE);
 		}
-
 	}
-	return ignore_interrupt();
 }
 
 /*******************************************************************************
@@ -734,40 +732,29 @@ static struct SN76496interface sn76489_intf =
 };
 
 
-static const struct MachineDriver machine_driver_segae =
-{
+static MACHINE_DRIVER_START( segae )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			10738600/2, /* correct for hangonjr, and astroflash/transformer at least  */
-			segae_readmem, segae_writemem, segae_readport, segae_writeport,
-			segae_interrupt, 262
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,					/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80,10738600/2) /* correct for hangonjr, and astroflash/transformer at least  */
+	MDRV_CPU_MEMORY(segae_readmem,segae_writemem)
+	MDRV_CPU_PORTS(segae_readport,segae_writeport)
+	MDRV_CPU_VBLANK_INT(segae_interrupt,262)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 192, { 0, 256-1, 0, 192-1 },
-	0,
-	64, 0,
-	NULL,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 192)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 192-1)
+	MDRV_PALETTE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	segae_vh_start,
-	segae_vh_stop,
-	segae_vh_screenrefresh,
+	MDRV_VIDEO_START(segae)
+	MDRV_VIDEO_UPDATE(segae)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_SN76496, &sn76489_intf }
-	},
-	0
-};
+	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+MACHINE_DRIVER_END
 
 /*******************************************************************************
  General Init
@@ -775,7 +762,7 @@ static const struct MachineDriver machine_driver_segae =
  for Save State support
 *******************************************************************************/
 
-static void init_segasyse(void)
+static DRIVER_INIT( segasyse )
 {
 	state_save_register_UINT8 ( "SEGASYSE-MAIN", 0, "8000 Write Bank",		&segae_8000bank, 1);
 	state_save_register_UINT8 ( "SEGASYSE-MAIN", 0, "Vertical Int Pending",	&vintpending, 1);
@@ -791,7 +778,7 @@ static void init_segasyse(void)
  we need for the controls
 *******************************************************************************/
 
-static void init_hangonjr(void)
+static DRIVER_INIT( hangonjr )
 {
 	install_port_read_handler (0, 0xf8, 0xf8, segae_hangonjr_port_f8_r);
 	install_port_write_handler(0, 0xfa, 0xfa, segae_hangonjr_port_fa_w);
@@ -801,7 +788,7 @@ static void init_hangonjr(void)
 	init_segasyse();
 }
 
-static void init_ridleofp(void)
+static DRIVER_INIT( ridleofp )
 {
 	install_port_read_handler (0, 0xf8, 0xf8, segae_ridleofp_port_f8_r);
 	install_port_write_handler(0, 0xfa, 0xfa, segae_ridleofp_port_fa_w);
@@ -809,7 +796,7 @@ static void init_ridleofp(void)
 	init_segasyse();
 }
 
-static void init_astrofl(void)
+static DRIVER_INIT( astrofl )
 {
 	astrofl_decode();
 

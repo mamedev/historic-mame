@@ -105,8 +105,8 @@ $8000 - $ffff	ROM
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 
-extern void renegade_vh_screenrefresh(struct mame_bitmap *bitmap, int fullrefresh);
-extern int renegade_vh_start( void );
+extern VIDEO_UPDATE( renegade );
+extern VIDEO_START( renegade );
 WRITE_HANDLER( renegade_scroll0_w );
 WRITE_HANDLER( renegade_scroll1_w );
 WRITE_HANDLER( renegade_videoram_w );
@@ -125,7 +125,7 @@ static WRITE_HANDLER( adpcm_play_w )
 
 static WRITE_HANDLER( sound_w ){
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,M6809_INT_IRQ);
+	cpu_set_irq_line(1,M6809_IRQ_LINE,HOLD_LINE);
 }
 
 /********************************************************************************************/
@@ -152,13 +152,13 @@ static const UINT8 kuniokun_xor_table[0x2a] = {
 	0xca,0xd0,0xed,0x68,0x85,0x01,0x68,0xaa,0x68,0x60
 };
 
-void init_kuniokun( void )
+DRIVER_INIT( kuniokun )
 {
 	mcu_type = 0x85;
 	mcu_encrypt_table = kuniokun_xor_table;
 	mcu_encrypt_table_len = 0x2a;
 }
-void init_renegade( void )
+DRIVER_INIT( renegade )
 {
 	mcu_type = 0xda;
 	mcu_encrypt_table = renegade_xor_table;
@@ -354,7 +354,7 @@ static WRITE_HANDLER( bankswitch_w )
 	}
 }
 
-static int renegade_interrupt(void)
+static INTERRUPT_GEN( renegade_interrupt )
 {
 /*
 	static int coin;
@@ -362,7 +362,7 @@ static int renegade_interrupt(void)
 	if (port != 0xc0 ){
 		if (coin == 0){
 			coin = 1;
-			return interrupt();
+			return irq0_line_hold();
 		}
 	}
 	else coin = 0;
@@ -371,8 +371,9 @@ static int renegade_interrupt(void)
 	static int count;
 	count = !count;
 	if( count )
-	return nmi_interrupt();
-	return interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	else
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 static WRITE_HANDLER( renegade_coin_counter_w )
@@ -648,53 +649,34 @@ static struct ADPCMinterface adpcm_interface =
 
 
 
-static const struct MachineDriver machine_driver_renegade =
-{
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz? */
-			main_readmem,main_writemem,0,0,
-			renegade_interrupt,2
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,	/* ? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0, /* FIRQs are caused by the YM3526 */
+static MACHINE_DRIVER_START( renegade )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502, 1500000)	/* 1.5 MHz? */
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(renegade_interrupt,2)
+
+	MDRV_CPU_ADD(M6809, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* IRQs are caused by the main CPU */
-		}
-	},
-	60,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION*2)
 
-	DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	1, /* cpu slices */
-	0, /* init machine */
-
-	32*8, 32*8, { 1*8, 31*8-1, 0, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	renegade_vh_start,0,
-	renegade_vh_screenrefresh,
+	MDRV_VIDEO_START(renegade)
+	MDRV_VIDEO_UPDATE(renegade)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
 
 

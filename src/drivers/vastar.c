@@ -75,14 +75,14 @@ WRITE_HANDLER( vastar_bg2videoram_w );
 WRITE_HANDLER( vastar_fgvideoram_w );
 READ_HANDLER( vastar_bg1videoram_r );
 READ_HANDLER( vastar_bg2videoram_r );
-int vastar_vh_start(void);
-void vastar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( vastar );
+VIDEO_UPDATE( vastar );
 
 static unsigned char *vastar_sharedram;
 
 
 
-static void vastar_init_machine(void)
+static MACHINE_INIT( vastar )
 {
 	/* we must start with the second CPU halted */
 	cpu_set_reset_line(1,ASSERT_LINE);
@@ -325,49 +325,39 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_vastar =
-{
+static MACHINE_DRIVER_START( vastar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ???? */
-			readmem,writemem,0,writeport,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ???? */
-			cpu2_readmem,cpu2_writemem,cpu2_readport,cpu2_writeport,
-			interrupt,4	/* ??? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - seems enough to ensure proper */
-			/* synchronization of the CPUs */
-	vastar_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ???? */
+	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
+	MDRV_CPU_PORTS(cpu2_readport,cpu2_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - seems enough to ensure proper */
+						/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(vastar)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	vastar_vh_start,
-	0,
-	vastar_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(vastar)
+	MDRV_VIDEO_UPDATE(vastar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

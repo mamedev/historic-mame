@@ -33,14 +33,13 @@ extern unsigned char *matmania_scroll;
 extern unsigned char *matmania_pageselect;
 
 WRITE_HANDLER( matmania_paletteram_w );
-void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void matmania_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void maniach_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( matmania );
+VIDEO_UPDATE( matmania );
+VIDEO_UPDATE( maniach );
 WRITE_HANDLER( matmania_videoram3_w );
 WRITE_HANDLER( matmania_colorram3_w );
-int matmania_vh_start(void);
-void matmania_vh_stop(void);
-void matmania_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( matmania );
+VIDEO_UPDATE( matmania );
 
 READ_HANDLER( maniach_68705_portA_r );
 WRITE_HANDLER( maniach_68705_portA_w );
@@ -60,7 +59,7 @@ READ_HANDLER( maniach_mcu_status_r );
 WRITE_HANDLER( matmania_sh_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 WRITE_HANDLER( matmania_dac_w )
@@ -72,7 +71,7 @@ WRITE_HANDLER( matmania_dac_w )
 WRITE_HANDLER( maniach_sh_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,M6809_INT_IRQ);
+	cpu_set_irq_line(1,M6809_IRQ_LINE,HOLD_LINE);
 }
 
 
@@ -354,53 +353,38 @@ static struct DACinterface dac_interface =
 
 
 
-static const struct MachineDriver machine_driver_matmania =
-{
+static MACHINE_DRIVER_START( matmania )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz ???? */
-			matmania_readmem,matmania_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1200000,	/* 1.2 MHz ???? */
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,15	/* ???? */
+	MDRV_CPU_ADD(M6502, 1500000)	/* 1.5 MHz ???? */
+	MDRV_CPU_MEMORY(matmania_readmem,matmania_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6502, 1200000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.2 MHz ???? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,15)	/* ???? */
 								/* IRQs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* enough time for the audio CPU to get all commands */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	matmania_gfxdecodeinfo,
-	64+16, 64+16,
-	matmania_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(matmania_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64+16)
+	MDRV_COLORTABLE_LENGTH(64+16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	matmania_vh_start,
-	matmania_vh_stop,
-	matmania_vh_screenrefresh,
+	MDRV_PALETTE_INIT(matmania)
+	MDRV_VIDEO_START(matmania)
+	MDRV_VIDEO_UPDATE(matmania)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -408,7 +392,6 @@ static const struct MachineDriver machine_driver_matmania =
 static void irqhandler(int linestate)
 {
 	cpu_set_irq_line(1,1,linestate);
-	//cpu_cause_interrupt(1,M6809_INT_FIRQ);
 }
 
 static struct YM3526interface ym3526_interface =
@@ -420,59 +403,40 @@ static struct YM3526interface ym3526_interface =
 };
 
 
-static const struct MachineDriver machine_driver_maniach =
-{
+static MACHINE_DRIVER_START( maniach )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz ???? */
-			maniach_readmem,maniach_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,	/* 1.5 MHz ???? */
-			maniach_sound_readmem,maniach_sound_writemem,0,0,
-			ignore_interrupt,0,	/* FIRQs are caused by the YM3526 */
+	MDRV_CPU_ADD(M6502, 1500000)	/* 1.5 MHz ???? */
+	MDRV_CPU_MEMORY(maniach_readmem,maniach_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz ???? */
+	MDRV_CPU_MEMORY(maniach_sound_readmem,maniach_sound_writemem)
 								/* IRQs are caused by the main CPU */
-		},
-		{
-			CPU_M68705,
-			500000,	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slice per frame - high interleaving to sync main and mcu */
-	0,
+	MDRV_CPU_ADD(M68705, 500000)	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slice per frame - high interleaving to sync main and mcu */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	maniach_gfxdecodeinfo,
-	64+16, 64+16,
-	matmania_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(maniach_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64+16)
+	MDRV_COLORTABLE_LENGTH(64+16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	matmania_vh_start,
-	matmania_vh_stop,
-	maniach_vh_screenrefresh,
+	MDRV_PALETTE_INIT(matmania)
+	MDRV_VIDEO_START(matmania)
+	MDRV_VIDEO_UPDATE(maniach)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

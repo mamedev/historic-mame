@@ -11,6 +11,9 @@ to run on IDENTICAL hardware (they were sold by Bally-Midway as ROM swaps).
 TODO: - background is misplaced in wbmlju
 	  - sprites stick in Pitfall II
 	  - sprite priorities are probably wrong
+	  - remove patch in noboranb if possible and fully understand the
+	    ports involved in the protection
+
 
 ******************************************************************************/
 
@@ -21,7 +24,7 @@ TODO: - background is misplaced in wbmlju
 
 
 
-static void system1_init_machine(void)
+static MACHINE_INIT( system1 )
 {
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
@@ -32,7 +35,7 @@ static void system1_init_machine(void)
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
 
-static void wbml_init_machine(void)
+static MACHINE_INIT( wbml )
 {
 	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
 	/* this is not a ROM patch, the game checks a RAM location */
@@ -43,7 +46,70 @@ static void wbml_init_machine(void)
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
 }
 
+/* noboranb
 
+there seems to be some protection? involving reads / writes to ports in the 2x region
+
+*/
+
+static int inport23_step;
+
+static MACHINE_INIT( noboranb )
+{
+	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
+	inport23_step = 0;
+
+}
+
+
+static READ_HANDLER( inport16_r )
+{
+//	logerror("IN  $16 : pc = %04x - data = ??\n",activecpu_get_pc());
+
+	return(0);
+}
+
+static READ_HANDLER( inport1c_r )
+{
+//	logerror("IN  $1c : pc = %04x - data = ??\n",activecpu_get_pc());
+
+	return(0x80);	// infinite loop (at 0x0fb3) until bit 7 is set
+}
+
+static READ_HANDLER( inport22_r )
+{
+//	logerror("IN  $22 : pc = %04x - data = ??\n",activecpu_get_pc());
+
+	return (0);
+}
+
+static READ_HANDLER( inport23_r )
+{
+	int data = inport23_step;
+
+//	logerror("IN  $23 : pc = %04x - step = %02x\n",activecpu_get_pc(),inport23_step);
+
+	inport23_step = (inport23_step + 1) & 0xff;
+
+	return (data);
+}
+
+static WRITE_HANDLER( outport16_w )
+{
+//	logerror("OUT $16 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
+}
+
+static WRITE_HANDLER( outport17_w )
+{
+//	logerror("OUT $17 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
+}
+
+static WRITE_HANDLER( outport24_w )
+{
+//	logerror("OUT $24 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
+}
+
+/* end noboranb */
 
 WRITE_HANDLER( hvymetal_videomode_w )
 {
@@ -89,7 +155,7 @@ WRITE_HANDLER( chplft_videomode_w )
 WRITE_HANDLER( system1_soundport_w )
 {
 	soundlatch_w(0,data);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in Regulus) */
 	cpu_spinuntil_time(TIME_IN_USEC(50));
 }
@@ -131,6 +197,7 @@ static MEMORY_READ_START( wbml_readmem )
 	{ 0xf800, 0xfbff, MRA_RAM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( wbml_writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAMROM },
@@ -151,6 +218,30 @@ static MEMORY_WRITE_START( chplft_writemem )
 	{ 0xe800, 0xeeff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
 	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
 	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
+MEMORY_END
+
+static MEMORY_WRITE_START( nobo_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc3ff, system1_background_collisionram_w, &system1_background_collisionram },
+	{ 0xc800, 0xcbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
+	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd200, 0xd7ff, MWA_RAM },
+	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
+	{ 0xde00, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe7ff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
+	{ 0xe800, 0xeeff, MWA_RAM, &system1_videoram, &system1_videoram_size },
+	{ 0xefbd, 0xefbd, MWA_RAM, &system1_scroll_y },
+	{ 0xeffc, 0xeffd, MWA_RAM, &system1_scroll_x },
+	{ 0xf000, 0xffff, MWA_RAM },
+
+	/* These addresses are written during P.O.S.T. but don't seem to be used after */
+	{ 0xc400, 0xc7ff, MWA_RAM },
+	{ 0xcc00, 0xcfff, MWA_RAM },
+	{ 0xd200, 0xd7ff, MWA_RAM },
+	{ 0xde00, 0xdfff, MWA_RAM },
+	{ 0xef00, 0xefbc, MWA_RAM },
+	{ 0xefbf, 0xeffb, MWA_RAM },
+	{ 0xeffe, 0xefff, MWA_RAM },
 MEMORY_END
 
 static PORT_READ_START( readport )
@@ -186,6 +277,20 @@ static PORT_READ_START( wbml_readport )
 	{ 0x19, 0x19, system1_videomode_r },  /* mirror address */
 PORT_END
 
+static PORT_READ_START( nobo_readport )
+	{ 0x00, 0x00, input_port_0_r },	/* Player 1 inputs */
+	{ 0x04, 0x04, input_port_1_r },	/* Player 2 inputs */
+	{ 0x08, 0x08, input_port_2_r },	/* System inputs */
+	{ 0x0c, 0x0c, input_port_3_r },	/* DSW1 */
+	{ 0x0d, 0x0d, input_port_4_r },	/* DSW0 */
+	{ 0x15, 0x15, system1_videomode_r },
+	{ 0x16, 0x16, inport16_r },			/* Used - check code at 0x05cb */
+	{ 0x1c, 0x1c, inport1c_r },			/* Shouldn't be called ! */
+	{ 0x22, 0x22, inport22_r },			/* Used - check code at 0xb253 */
+	{ 0x23, 0x23, inport23_r },			/* Used - check code at 0xb275 and 0xb283 */
+
+PORT_END
+
 static PORT_WRITE_START( wbml_writeport )
 	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
 	{ 0x15, 0x15, chplft_videomode_w },
@@ -205,6 +310,14 @@ PORT_END
 static PORT_WRITE_START( chplft_writeport )
 	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
 	{ 0x15, 0x15, chplft_videomode_w },
+PORT_END
+
+static PORT_WRITE_START( nobo_writeport )
+	{ 0x14, 0x14, system1_soundport_w },	/* sound commands ? */
+	{ 0x15, 0x15, brain_videomode_w },	/* video control + bank switching */
+	{ 0x16, 0x16, outport16_w },			/* Used - check code at 0x05cb */
+	{ 0x17, 0x17, outport17_w },			/* Not handled in emul. of other SS1/2 games */
+	{ 0x24, 0x24, outport24_w },			/* Used - check code at 0xb24e and 0xb307 */
 PORT_END
 
 
@@ -283,6 +396,11 @@ MEMORY_END
 	PORT_DIPSETTING(	0xa0, DEF_STR( 1C_6C ) )
 /*  PORT_DIPSETTING(	0x00, "1/1" ) */
 
+/* If you don't like the description, feel free to change it */
+#define DSW0_BIT7 \
+	PORT_DIPNAME( 0x80, 0x80, "SW 0 Read From" ) \
+	PORT_DIPSETTING(	0x80, "Port $0D" ) \
+	PORT_DIPSETTING(	0x00, "Port $10" )
 
 INPUT_PORTS_START( starjack )
 	PORT_START  /* IN1 */
@@ -321,14 +439,14 @@ INPUT_PORTS_START( starjack )
 	PORT_DIPSETTING(	0x02, "5" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x38, 0x30, DEF_STR (Bonus_Life ) )
-	PORT_DIPSETTING(	0x30, "20000 50000" )
-	PORT_DIPSETTING(	0x20, "30000 70000" )
-	PORT_DIPSETTING(	0x10, "40000 90000" )
-	PORT_DIPSETTING(	0x00, "50000 110000" )
-	PORT_DIPSETTING(	0x38, "20000" )
-	PORT_DIPSETTING(	0x28, "30000" )
-	PORT_DIPSETTING(	0x18, "40000" )
-	PORT_DIPSETTING(	0x08, "50000" )
+	PORT_DIPSETTING(	0x38, "Every 20k" )
+	PORT_DIPSETTING(	0x28, "Every 30k" )
+	PORT_DIPSETTING(	0x18, "Every 40k" )
+	PORT_DIPSETTING(	0x08, "Every 50k" )
+	PORT_DIPSETTING(	0x30, "20k, then every 30k" )
+	PORT_DIPSETTING(	0x20, "30k, then every 40k" )
+	PORT_DIPSETTING(	0x10, "40k, then every 50k" )
+	PORT_DIPSETTING(	0x00, "50k, then every 60k" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0xc0, "Easy" )
 	PORT_DIPSETTING(	0x80, "Medium" )
@@ -376,10 +494,10 @@ INPUT_PORTS_START( starjacs )
 	PORT_DIPSETTING(	0x08, "Single" )
 	PORT_DIPSETTING(	0x00, "Multi" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x30, "30000 70000" )
-	PORT_DIPSETTING(	0x20, "40000 90000" )
-	PORT_DIPSETTING(	0x10, "50000 110000" )
-	PORT_DIPSETTING(	0x00, "60000 130000" )
+	PORT_DIPSETTING(	0x30, "30k, then every 40k" )
+	PORT_DIPSETTING(	0x20, "40k, then every 50k" )
+	PORT_DIPSETTING(	0x10, "50k, then every 60k" )
+	PORT_DIPSETTING(	0x00, "60k, then every 70k" )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0xc0, "Easy" )
 	PORT_DIPSETTING(	0x80, "Medium" )
@@ -418,7 +536,7 @@ INPUT_PORTS_START( regulus )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unused SW 0-1" )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -426,10 +544,10 @@ INPUT_PORTS_START( regulus )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x04, "5" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unused SW 0-4" )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unused SW 0-5" )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
@@ -438,6 +556,60 @@ INPUT_PORTS_START( regulus )
 	PORT_DIPNAME( 0x80, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(	0x80, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+/* Same as 'regulus', but no "Allow Continue" Dip Switch */
+INPUT_PORTS_START( reguluso )
+	PORT_START  /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+
+	PORT_START  /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START  /* IN0 */
+	IN0_PORT
+
+	PORT_START	  /* DSW1 */
+	DSW1_PORT
+
+	PORT_START  /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unused SW 0-1" )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x0c, "3" )
+	PORT_DIPSETTING(	0x08, "4" )
+	PORT_DIPSETTING(	0x04, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unused SW 0-4" )
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unused SW 0-5" )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x40, "Easy" )
+	PORT_DIPSETTING(	0x00, "Hard" )
+	PORT_DIPNAME( 0x80, 0x80, "Unused SW 0-7" )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( upndown )
@@ -523,7 +695,59 @@ INPUT_PORTS_START( mrviking )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x00, "Maximum Credits" )
+	PORT_DIPSETTING(	0x02, "9" )
+	PORT_DIPSETTING(	0x00, "99" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x0c, "3" )
+	PORT_DIPSETTING(	0x08, "4" )
+	PORT_DIPSETTING(	0x04, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x30, "10k, 30k then every 30k" )
+	PORT_DIPSETTING(	0x20, "20k, 40k then every 30k" )
+	PORT_DIPSETTING(	0x10, "30k, then every 30k" )
+	PORT_DIPSETTING(	0x00, "40k, then every 30k" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x40, "Easy" )
+	PORT_DIPSETTING(	0x00, "Hard" )
+	DSW0_BIT7
+INPUT_PORTS_END
+
+/* Same as 'mrviking', but no "Maximum Credits" Dip Switch and "Difficulty" Dip Switch is
+   handled by bit 7 instead of bit 6 (so bit 6 is unused) */
+INPUT_PORTS_START( mrvikngj )
+	PORT_START  /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+
+	PORT_START  /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START  /* IN0 */
+	IN0_PORT
+
+	PORT_START	  /* DSW1 */
+	DSW1_PORT
+
+	PORT_START  /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unused SW 0-1" )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
@@ -532,11 +756,11 @@ INPUT_PORTS_START( mrviking )
 	PORT_DIPSETTING(	0x04, "5" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x30, "10000 30000 60000" )
-	PORT_DIPSETTING(	0x20, "20000 40000 70000" )
-	PORT_DIPSETTING(	0x10, "30000 60000 90000" )
-	PORT_DIPSETTING(	0x00, "40000 70000 100000" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x30, "10k, 30k then every 30k" )
+	PORT_DIPSETTING(	0x20, "20k, 40k then every 30k" )
+	PORT_DIPSETTING(	0x10, "30k, then every 30k" )
+	PORT_DIPSETTING(	0x00, "40k, then every 30k" )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Difficulty ) )
@@ -589,10 +813,10 @@ INPUT_PORTS_START( swat )
 	PORT_DIPSETTING(	0x10, "80000" )
 	PORT_DIPSETTING(	0x08, "90000" )
 	PORT_DIPSETTING(	0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unused SW 0-7" )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -628,9 +852,9 @@ INPUT_PORTS_START( flicky )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, "Country" )
-	PORT_DIPSETTING(	0x02, "Japan" )
-	PORT_DIPSETTING(	0x00, "USA" )
+	PORT_DIPNAME( 0x02, 0x02, "Unused SW 0-1" )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
@@ -644,9 +868,7 @@ INPUT_PORTS_START( flicky )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x40, "Easy" )
 	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( wmatch )
@@ -695,21 +917,19 @@ INPUT_PORTS_START( wmatch )
 	PORT_DIPSETTING(	0x08, "Fast" )
 	PORT_DIPSETTING(	0x04, "Faster" )
 	PORT_DIPSETTING(	0x00, "Fastest" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unused SW 0-4" )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unused SW 0-5" )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x40, "Easy" )
 	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
-INPUT_PORTS_START( bullfgtj )
+INPUT_PORTS_START( bullfgt )
 	PORT_START  /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -753,12 +973,10 @@ INPUT_PORTS_START( bullfgtj )
 	PORT_DIPSETTING(	0x20, "50000" )
 	PORT_DIPSETTING(	0x10, "70000" )
 	PORT_DIPSETTING(	0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spatter )
@@ -792,26 +1010,23 @@ INPUT_PORTS_START( spatter )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x08, "2" )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-	PORT_DIPSETTING(	0x00, "5" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x30, "40k, 120k and 480k" )
+	PORT_DIPSETTING(	0x20, "50k and 200k" )
+	PORT_DIPSETTING(	0x10, "100k only" )
+	PORT_DIPSETTING(	0x00, "None" )
+	PORT_DIPNAME( 0x40, 0x40, "Reset Timer/Objects On Life Loss" )
+	PORT_DIPSETTING(	0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Yes ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pitfall2 )
@@ -862,7 +1077,7 @@ INPUT_PORTS_START( pitfall2 )
 	PORT_DIPNAME( 0x40, 0x40, "Time" )
 	PORT_DIPSETTING(	0x00, "2 Minutes" )
 	PORT_DIPSETTING(	0x40, "3 Minutes" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unused SW 0-7" )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -914,7 +1129,7 @@ INPUT_PORTS_START( pitfallu )
 	PORT_DIPNAME( 0x40, 0x40, "Time" )
 	PORT_DIPSETTING(	0x00, "2 Minutes" )
 	PORT_DIPSETTING(	0x40, "3 Minutes" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unused SW 0-7" )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -954,22 +1169,20 @@ INPUT_PORTS_START( seganinj )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x08, "2" )
 	PORT_DIPSETTING(	0x0c, "3" )
-	PORT_DIPSETTING(	0x08, "4" )
-	PORT_DIPSETTING(	0x04, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x04, "4" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "240", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x10, "20k 70k 120k 170k" )
-	PORT_DIPSETTING(	0x00, "60k 100k 160k 200k" )
+	PORT_DIPSETTING(	0x00, "50k 100k 150k 200k" )
 	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(	0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x40, "Easy" )
 	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( imsorry )
@@ -1016,12 +1229,10 @@ INPUT_PORTS_START( imsorry )
 	PORT_DIPSETTING(	0x20, "40000" )
 	PORT_DIPSETTING(	0x10, "50000" )
 	PORT_DIPSETTING(	0x00, "None" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( teddybb )
@@ -1062,7 +1273,7 @@ INPUT_PORTS_START( teddybb )
 	PORT_DIPSETTING(	0x08, "2" )
 	PORT_DIPSETTING(	0x0c, "3" )
 	PORT_DIPSETTING(	0x04, "4" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "252", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x30, "100k 400k" )
 	PORT_DIPSETTING(	0x20, "200k 600k" )
@@ -1071,9 +1282,7 @@ INPUT_PORTS_START( teddybb )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x40, "Easy" )
 	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hvymetal )
@@ -1175,9 +1384,58 @@ INPUT_PORTS_START( myhero )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x40, "Easy" )
 	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	DSW0_BIT7
+INPUT_PORTS_END
+
+INPUT_PORTS_START( shtngmst )
+	PORT_START  /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+
+	PORT_START  /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START  /* IN0 */
+	IN0_PORT
+
+	PORT_START  /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x0c, "3" )
+	PORT_DIPSETTING(	0x08, "4" )
+	PORT_DIPSETTING(	0x04, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x30, "100k 500k" )
+	PORT_DIPSETTING(	0x20, "150k 600k" )
+	PORT_DIPSETTING(	0x10, "200k 700k" )
+	PORT_DIPSETTING(	0x00, "300k 800k" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(  0xc0, "Easy" )
+	PORT_DIPSETTING(  0x80, "Medium" )
+	PORT_DIPSETTING(  0x40, "Hard" )
+	PORT_DIPSETTING(  0x00, "Hardest" )
+
+	PORT_START	  /* DSW0 */
+	DSW1_PORT
 INPUT_PORTS_END
 
 INPUT_PORTS_START( chplft )
@@ -1281,9 +1539,7 @@ INPUT_PORTS_START( 4dwarrio )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x40, "Easy" )
 	PORT_DIPSETTING(	0x00, "Hard" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( brain )
@@ -1379,15 +1635,14 @@ INPUT_PORTS_START( raflesia )
 	PORT_DIPSETTING(	0x04, "5" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x30, "20000" )
-	PORT_DIPSETTING(	0x20, "30000" )
-	PORT_DIPSETTING(	0x10, "40000" )
+	PORT_DIPSETTING(	0x30, "20k, 70k and 120k" )
+	PORT_DIPSETTING(	0x20, "30k, 80k and 150k" )
+	PORT_DIPSETTING(	0x10, "50k, 100k and 200k" )
 	PORT_DIPSETTING(	0x00, "None" )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0xc0, "Easy" )
-	PORT_DIPSETTING(    0x80, "Medium" )
-	PORT_DIPSETTING(    0x40, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW0_BIT7
 INPUT_PORTS_END
 
 INPUT_PORTS_START( wboy )
@@ -1573,6 +1828,51 @@ INPUT_PORTS_START( wboyu )
 	PORT_DIPSETTING(	0x00, "Endless Game" )
 INPUT_PORTS_END
 
+/* Notes about the bootleg version (as this is the only "working" one) :
+
+Coinage is almost the same as the other Sega games.
+
+However, when you set DSW1 to 00, you enter a pseudo "free play" mode :
+
+  - When you insert a coin, or press the "Service" button, you are given 2 credits
+    and this number is NEVER incremented nor decremented
+  - You are given 3 lives at start and this number is NEVER decremented
+    (it can however be incremented depending on the "Bonus Life" Dip Switch)
+
+If only one nibble is set to 0, it will give a standard 1C_1C.
+
+
+There is an ingame bug with the "Bonus Life" Dip Switch, but I don't know if it's only
+a "feature" of the bootleg :
+
+  - Check routine at 0x2366, and you'll notice that 0xc02d (player 1) and 0xc02e (player 2)
+    act like a "pointer" to the bonus life table (0x5ab6 or 0x5abb)
+  - Once you get enough points, 1 life is added, and the pointer is incremented
+  - There is however NO test to the limit of this pointer ! So, once you've got your 5th
+    extra life at 150k, the pointed value will be 3 (= extra life at 30k), and as your
+    score is over this value, you'll be given another extra life ... and so on ...
+
+
+Bits 2 and 6 of DSW0 aren't tested in the game (I can't tell about the "test mode")
+
+
+Useful addresses (to unprotect 'blockgal' ?) :
+
+  - 0xc040 : credits (0x00-0x09)
+  - 0xc019 : player 1 lives
+  - 0xc021 : player 2 lives
+  - 0xc018 : player 1 level (0x01-0x14)
+  - 0xc020 : player 2 level (0x01-0x14)
+  - 0xc02d : player 1 bonus life "pointer"
+  - 0xc02e : player 1 bonus life "pointer"
+  - 0xc01a - 0xc01c : player 1 score (BCD coded - LSB first)
+  - 0xc022 - 0xc024 : player 1 score (BCD coded - LSB first)
+
+  - 0xc050 : when == 01, "free play" mode
+  - 0xc00c : when == 01, you end the level
+
+*/
+
 INPUT_PORTS_START( blockgal )
 	PORT_START  /* IN1 */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 60, 15, 0, 0)
@@ -1583,62 +1883,39 @@ INPUT_PORTS_START( blockgal )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START  /* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unused SW 0-2" )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x08, "2" )
+	PORT_DIPSETTING(	0x00, "3" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x10, "10k 30k 60k 100k 150k" )
+	PORT_DIPSETTING(	0x00, "30k 50k 100k 200k 300k" )
+	PORT_DIPNAME( 0x20, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(	0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	  /* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	DSW1_PORT
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tokisens )
@@ -1747,7 +2024,84 @@ INPUT_PORTS_START( wbml )
 	DSW1_PORT
 INPUT_PORTS_END
 
+INPUT_PORTS_START( noboranb )
+	PORT_START  /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )				// shot
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )				// fly
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 
+	PORT_START  /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )		// shot
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )		// fly
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START  /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START  /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x30, 0x20, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x20, "Easy" )
+	PORT_DIPSETTING(	0x30, "Medium" )
+	PORT_DIPSETTING(	0x10, "Hard" )
+	PORT_DIPSETTING(	0x00, "Hardest" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+
+	PORT_START  /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x02, "2" )
+	PORT_DIPSETTING(	0x03, "3" )
+	PORT_DIPSETTING(	0x01, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "99", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x08, "40k, 80k, 120k and 160k" )
+	PORT_DIPSETTING(	0x0c, "50k, 100k and 150k" )
+	PORT_DIPSETTING(	0x04, "60k, 120k and 180k" )
+	PORT_DIPSETTING(	0x00, "None" )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 0-6" )
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unused SW 0-7" )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
@@ -1778,272 +2132,250 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_system1 =
-{
+static MACHINE_DRIVER_START( system1 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-//			4000000,    /* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
-			3600000,	/* should be 4 MHz but that value makes the Pitfall II title screen disappear */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4		 /* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-	1,        		  /* single CPU, no need for interleaving */
-	system1_init_machine,
+	MDRV_CPU_ADD(Z80, 3600000)	/* should be 4 MHz but that value makes the Pitfall II title screen disappear */
+//	MDRV_CPU_ADD(Z80, 4000000)	/* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(system1)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	1536, 1536,
-	system1_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1536)
+	MDRV_COLORTABLE_LENGTH(1536)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	system1_vh_start,
-	system1_vh_stop,
-	system1_vh_screenrefresh,
+	MDRV_PALETTE_INIT(system1)
+	MDRV_VIDEO_START(system1)
+	MDRV_VIDEO_UPDATE(system1)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 /* driver with reduced visible area for scrolling games */
-static const struct MachineDriver machine_driver_small =
-{
+static MACHINE_DRIVER_START( small )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,    /* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4		 /* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-	1,        		  /* single CPU, no need for interleaving */
-	system1_init_machine,
+	MDRV_CPU_ADD(Z80, 4000000)    /* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(system1)
 
 	/* video hardware */
-	256, 256, { 0*8+8, 32*8-1-8, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	1536, 1536,
-	system1_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8+8, 32*8-1-8, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1536)
+	MDRV_COLORTABLE_LENGTH(1536)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	system1_vh_start,
-	system1_vh_stop,
-	system1_vh_screenrefresh,
+	MDRV_PALETTE_INIT(system1)
+	MDRV_VIDEO_START(system1)
+	MDRV_VIDEO_UPDATE(system1)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_hvymetal =
-{
+static MACHINE_DRIVER_START( hvymetal )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        	/* 4 MHz ? */
-			brain_readmem,writemem,wbml_readport,hvymetal_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        	/* 4 MHz ? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4		 /* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,           /* frames per second, vblank duration */
-	1,        		  /* single CPU, no need for interleaving */
-	system1_init_machine,
+	MDRV_CPU_ADD(Z80, 4000000)        	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(brain_readmem,writemem)
+	MDRV_CPU_PORTS(wbml_readport,hvymetal_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(system1)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	1536, 1536,
-	system1_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1536)
+	MDRV_COLORTABLE_LENGTH(1536)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	system1_vh_start,
-	system1_vh_stop,
-	system1_vh_screenrefresh,
+	MDRV_PALETTE_INIT(system1)
+	MDRV_VIDEO_START(system1)
+	MDRV_VIDEO_UPDATE(system1)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_chplft =
-{
+static MACHINE_DRIVER_START( chplft )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        	/* 4 MHz ? */
-			brain_readmem,chplft_writemem,wbml_readport,chplft_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        	/* 4 MHz ? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4		 /* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,           /* frames per second, vblank duration */
-	1,        		  /* single CPU, no need for interleaving */
-	system1_init_machine,
+	MDRV_CPU_ADD(Z80, 4000000)        	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(brain_readmem,chplft_writemem)
+	MDRV_CPU_PORTS(wbml_readport,chplft_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(system1)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	1536, 1536,
-	system1_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1536)
+	MDRV_COLORTABLE_LENGTH(1536)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	system1_vh_start,
-	system1_vh_stop,
-	choplifter_vh_screenrefresh,
+	MDRV_PALETTE_INIT(system1)
+	MDRV_VIDEO_START(system1)
+	MDRV_VIDEO_UPDATE(choplifter)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_brain =
-{
+static MACHINE_DRIVER_START( brain )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,    /* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
-			brain_readmem,writemem,readport,brain_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4		 /* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-	1,        		  /* single CPU, no need for interleaving */
-	system1_init_machine,
+	MDRV_CPU_ADD(Z80, 4000000)    /* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
+	MDRV_CPU_MEMORY(brain_readmem,writemem)
+	MDRV_CPU_PORTS(readport,brain_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(system1)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	1536, 1536,
-	system1_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1536)
+	MDRV_COLORTABLE_LENGTH(1536)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	system1_vh_start,
-	system1_vh_stop,
-	system1_vh_screenrefresh,
+	MDRV_PALETTE_INIT(system1)
+	MDRV_VIDEO_START(system1)
+	MDRV_VIDEO_UPDATE(system1)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_wbml =
-{
+static MACHINE_DRIVER_START( wbml )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        	/* 4 MHz ? */
-			wbml_readmem,wbml_writemem,wbml_readport,wbml_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        	/* 4 MHz ? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4		 /* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-	1,        		  /* single CPU, no need for interleaving */
-	wbml_init_machine,
+	MDRV_CPU_ADD(Z80, 4000000)        	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(wbml_readmem,wbml_writemem)
+	MDRV_CPU_PORTS(wbml_readport,wbml_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(wbml)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	1536, 1536,
-	system1_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1536)
+	MDRV_COLORTABLE_LENGTH(1536)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	system1_vh_start,
-	system1_vh_stop,
-	wbml_vh_screenrefresh,
+	MDRV_PALETTE_INIT(system1)
+	MDRV_VIDEO_START(system1)
+	MDRV_VIDEO_UPDATE(wbml)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( noboranb )
 
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 8000000)    /* ? guess ? */
+	MDRV_CPU_MEMORY(brain_readmem,nobo_writemem)
+	MDRV_CPU_PORTS(nobo_readport,nobo_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		 /* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(noboranb)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1536)
+	MDRV_COLORTABLE_LENGTH(1536)
+
+	MDRV_PALETTE_INIT(system1)
+	MDRV_VIDEO_START(system1)
+	MDRV_VIDEO_UPDATE(system1)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -3663,27 +3995,53 @@ ROM_START( ufosensi )
 	ROM_LOAD( "pr5317.28",    0x0300, 0x0100, 0x648350b8 ) /* timing? (not used) */
 ROM_END
 
+ROM_START( noboranb )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD( "nobo-t.bin", 0x00000, 0x8000, 0x176fd168 )
+	ROM_LOAD( "nobo-r.bin", 0x10000, 0x8000, 0xd61cf3c9 )
+	ROM_LOAD( "nobo-s.bin", 0x18000, 0x8000, 0xb0e7697f )
 
-static void init_regulus(void)	{ regulus_decode(); }
-static void init_mrviking(void)	{ mrviking_decode(); }
-static void init_swat(void)		{ swat_decode(); }
-static void init_flicky(void)	{ flicky_decode(); }
-static void init_wmatch(void)	{ wmatch_decode(); }
-static void init_bullfgtj(void)	{ bullfgtj_decode(); }
-static void init_spatter(void)	{ spatter_decode(); }
-static void init_pitfall2(void)	{ pitfall2_decode(); }
-static void init_nprinces(void)	{ nprinces_decode(); }
-static void init_seganinj(void)	{ seganinj_decode(); }
-static void init_imsorry(void)	{ imsorry_decode(); }
-static void init_teddybb(void)	{ teddybb_decode(); }
-static void init_hvymetal(void)	{ hvymetal_decode(); }
-static void init_myheroj(void)	{ myheroj_decode(); }
-static void init_4dwarrio(void)	{ fdwarrio_decode(); }
-static void init_wboy(void)		{ astrofl_decode(); }
-static void init_wboy2(void)	{ wboy2_decode(); }
-static void init_gardia(void)	{ gardia_decode(); }
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "nobo-m.bin", 0x0000, 0x4000, 0x415adf76 )
 
-void init_myherok(void)
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "nobo-j.bin", 0x08000, 0x8000, 0xf12df039 )
+	ROM_LOAD( "nobo-k.bin", 0x00000, 0x8000, 0x446fbcdd )
+	ROM_LOAD( "nobo-l.bin", 0x10000, 0x8000, 0x35f396df )
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* 128k for sprites data */
+	ROM_LOAD( "nobo-q.bin", 0x00000, 0x8000, 0x2442b86d )
+	ROM_LOAD( "nobo-o.bin", 0x08000, 0x8000, 0xe33743a6 )
+	ROM_LOAD( "nobo-p.bin", 0x10000, 0x8000, 0x7fbba01d )
+	ROM_LOAD( "nobo-n.bin", 0x18000, 0x8000, 0x85e7a29f )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_LOAD( "nobo_pr.16d", 0x0000, 0x0100, 0x95010ac2 ) /* palette red component */
+	ROM_LOAD( "nobo_pr.15d", 0x0100, 0x0100, 0xc55aac0c ) /* palette green component */
+	ROM_LOAD( "nobo_pr.14d", 0x0200, 0x0100, 0xde394cee ) /* palette blue component */
+	ROM_LOAD( "nobo_pr.13a", 0x0300, 0x0100, 0x648350b8 ) /* timing? (not used) */
+ROM_END
+
+static DRIVER_INIT( regulus )	{ regulus_decode(); }
+static DRIVER_INIT( mrviking )	{ mrviking_decode(); }
+static DRIVER_INIT( swat )		{ swat_decode(); }
+static DRIVER_INIT( flicky )	{ flicky_decode(); }
+static DRIVER_INIT( wmatch )	{ wmatch_decode(); }
+static DRIVER_INIT( bullfgtj )	{ bullfgtj_decode(); }
+static DRIVER_INIT( spatter )	{ spatter_decode(); }
+static DRIVER_INIT( pitfall2 )	{ pitfall2_decode(); }
+static DRIVER_INIT( nprinces )	{ nprinces_decode(); }
+static DRIVER_INIT( seganinj )	{ seganinj_decode(); }
+static DRIVER_INIT( imsorry )	{ imsorry_decode(); }
+static DRIVER_INIT( teddybb )	{ teddybb_decode(); }
+static DRIVER_INIT( hvymetal )	{ hvymetal_decode(); }
+static DRIVER_INIT( myheroj )	{ myheroj_decode(); }
+static DRIVER_INIT( 4dwarrio )	{ fdwarrio_decode(); }
+static DRIVER_INIT( wboy )		{ astrofl_decode(); }
+static DRIVER_INIT( wboy2 )	{ wboy2_decode(); }
+static DRIVER_INIT( gardia )	{ gardia_decode(); }
+
+DRIVER_INIT( myherok )
 {
 	int A;
 	unsigned char *rom;
@@ -3727,7 +4085,7 @@ void init_myherok(void)
 	myheroj_decode();
 }
 
-static void init_bootleg(void)
+static DRIVER_INIT( bootleg )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -3735,12 +4093,31 @@ static void init_bootleg(void)
 	memory_set_opcode_base(0,rom+diff);
 }
 
+static DRIVER_INIT( noboranb )
+{
+	/* Patch to get PRG ROMS ('T', 'R' and 'S) status as "GOOD" in the "test mode" */
+	/* not really needed */
+
+	data8_t *ROM = memory_region(REGION_CPU1);
+
+//	ROM[0x3296] = 0x18;		// 'jr' instead of 'jr z' - 'T' (PRG Main ROM)
+//	ROM[0x32be] = 0x18;		// 'jr' instead of 'jr z' - 'R' (Banked ROM 1)
+//	ROM[0x32ea] = 0x18;		// 'jr' instead of 'jr z' - 'S' (Banked ROM 2)
+
+	/* Patch to avoid the internal checksum that will hang the game after an amount of time
+	   (check code at 0x3313 in 'R' (banked ROM 1)) */
+
+	ROM[0x10000 + 0 * 0x8000 + 0x3347] = 0x18;	// 'jr' instead of 'jr z'
+}
+
+
+
 
 
 GAME( 1983, starjack, 0,        small,    starjack, 0,        ROT270, "Sega", "Star Jacker (Sega)" )
 GAME( 1983, starjacs, starjack, small,    starjacs, 0,        ROT270, "Stern", "Star Jacker (Stern)" )
 GAME( 1983, regulus,  0,        system1,  regulus,  regulus,  ROT270, "Sega", "Regulus (New Ver.)" )
-GAME( 1983, reguluso, regulus,  system1,  regulus,  regulus,  ROT270, "Sega", "Regulus (Old Ver.)" )
+GAME( 1983, reguluso, regulus,  system1,  reguluso, regulus,  ROT270, "Sega", "Regulus (Old Ver.)" )
 GAME( 1983, regulusu, regulus,  system1,  regulus,  0,        ROT270, "Sega", "Regulus (not encrypted)" )
 GAME( 1983, upndown,  0,        system1,  upndown,  nprinces, ROT270, "Sega", "Up'n Down" )
 GAME( 1983, upndownu, upndown,  system1,  upndown,  0,        ROT270, "Sega", "Up'n Down (not encrypted)" )
@@ -3750,17 +4127,17 @@ GAME( 1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland 
 GAME( 1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (128k Ver.)" )
 GAME( 1984, flickyo,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (64k Ver.)" )
 GAME( 1984, wmatch,   0,        system1,  wmatch,   wmatch,   ROT270, "Sega", "Water Match" )
-GAME( 1984, bullfgt,  0,        system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "Bullfight" )
-GAME( 1984, thetogyu, bullfgt,  system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "The Togyu (Japan)" )
+GAME( 1984, bullfgt,  0,        system1,  bullfgt,  bullfgtj, ROT0,   "Sega / Coreland", "Bullfight" )
+GAME( 1984, thetogyu, bullfgt,  system1,  bullfgt,  bullfgtj, ROT0,   "Sega / Coreland", "The Togyu (Japan)" )
 GAME( 1984, spatter,  0,        small,    spatter,  spatter,  ROT0,   "Sega", "Spatter" )
 GAME( 1985, pitfall2, 0,        system1,  pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
 GAME( 1985, pitfallu, pitfall2, system1,  pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
 GAME( 1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja" )
 GAME( 1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Sega Ninja (not encrypted)" )
-GAME( 1985, nprinces, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Ninja Princess (64k Ver.)" )
+GAME( 1985, nprinces, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (64k Ver. bootleg?)" )
 GAME( 1985, nprincso, seganinj, system1,  seganinj, nprinces, ROT0,   "Sega", "Ninja Princess (128k Ver.)" )
-GAME( 1985, nprincsu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Ninja Princess (not encrypted)" )
-GAME( 1985, nprincsb, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (bootleg?)" )
+GAME( 1985, nprincsu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Ninja Princess (64k Ver. not encrypted)" )
+GAME( 1985, nprincsb, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (128k Ver. bootleg?)" )
 GAME( 1985, imsorry,  0,        system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (US)" )
 GAME( 1985, imsorryj, imsorry,  system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (Japan)" )
 GAME( 1985, teddybb,  0,        system1,  teddybb,  teddybb,  ROT0,   "Sega", "TeddyBoy Blues (New Ver.)" )
@@ -3786,6 +4163,7 @@ GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Esc
 GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe" )
 GAMEX(1986, gardia,   0,        brain,    wboy,     gardia,   ROT270, "Sega / Coreland", "Gardia", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1986, gardiab,  gardia,   brain,    wboy,     gardia,   ROT270, "bootleg", "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, noboranb, 0,        noboranb, noboranb, noboranb, ROT270, "bootleg", "Noboranka (Japan)" )
 GAMEX(1987, blockgal, 0,        system1,  blockgal, 0,        ROT90,  "Sega / Vic Tokai", "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1987, blckgalb, blockgal, system1,  blockgal, bootleg,  ROT90,  "bootleg", "Block Gal (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1987, tokisens, 0,        wbml,     tokisens, 0,        ROT90,  "Sega", "Toki no Senshi - Chrono Soldier", GAME_NO_COCKTAIL )

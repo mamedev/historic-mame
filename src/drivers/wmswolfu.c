@@ -1,38 +1,22 @@
 /*************************************************************************
 
-	Driver for Midway Wolf-unit games
+	Midway Wolf-unit system
 
-	TMS34010 processor @ 6.25MHz
-	Williams compressed digital sound board, with ADSP2105 @ 10.24MHz and a DAC
+    driver by Ernesto Corvi, Aaron Giles
+    based on Y/Z-unit driver by Alex Pasadyn, Zsolt Vasvari, Kurt Mahan 
 
+	Games supported:
+		* Mortal Kombat 3
+		* Ultimate Mortal Kombat 3
+		* NBA Hangtime
+		* NBA Maximum Hangtime
+		* 2 On 2 Open Ice Challenge
+		* WWF Wrestlemania
+		* Rampage World Tour
 
-	Created by Aaron Giles and Ernesto Corvi
-	Based on older drivers by Alex Pasadyn and Zsolt Vasvari with
-	some help from Kurt Mahan
-
-
-	Currently playable:
-	------------------
-	- Mortal Kombat 3
-	- Ultimate Mortal Kombat 3
-	- NBA Hangtime
-	- NBA Maximum Hangtime
-	- 2 On 2 Open Ice Challenge
-	- WWF Wrestlemania
-	- Rampage World Tour
-
-
-	Currently unplayable:
-	--------------------
-
-
-	Currently undumped:
-	-------------------
-
-
-	Known Bugs:
-	----------
-	- WWF has an unimplemented and not Y2K compatible real-time clock
+	Known bugs:
+		* shadows are missing on the MK3 games
+		* WWF has an unimplemented and not Y2K compatible real-time clock
 
 **************************************************************************/
 
@@ -42,24 +26,6 @@
 #include "cpu/adsp2100/adsp2100.h"
 #include "sndhrdw/williams.h"
 #include "wmswolfu.h"
-
-
-
-/*************************************
- *
- *	CMOS read/write
- *
- *************************************/
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, wms_cmos_ram, 0xc000);
-	else if (file)
-		osd_fread(file, wms_cmos_ram, 0xc000);
-	else
-		memset(wms_cmos_ram, 0, 0xc000);
-}
 
 
 
@@ -85,10 +51,11 @@ static MEMORY_READ16_START( readmem )
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
 MEMORY_END
 
+
 static MEMORY_WRITE16_START( writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_tunit_vram_w },
 	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA16_RAM, &wms_scratch_ram },
-	{ TOBYTE(0x01400000), TOBYTE(0x0145ffff), wms_wolfu_cmos_w, &wms_cmos_ram },
+	{ TOBYTE(0x01400000), TOBYTE(0x0145ffff), wms_wolfu_cmos_w, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ TOBYTE(0x01480000), TOBYTE(0x014fffff), wms_wolfu_cmos_enable_w },
 	{ TOBYTE(0x01600000), TOBYTE(0x0160001f), wms_wolfu_security_w },
 	{ TOBYTE(0x01680000), TOBYTE(0x0168001f), wms_wolfu_sound_w },
@@ -614,43 +581,29 @@ static struct tms34010_config cpu_config =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_wolfu =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
-			readmem,writemem,0,0,
-			ignore_interrupt,0,
-			0,0,&cpu_config
-		},
-		SOUND_CPU_WILLIAMS_DCS
-	},
-	MKLA5_FPS, MKLA5_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	wms_wolfu_init_machine,
-
+static MACHINE_DRIVER_START( wolfu )
+	
+	MDRV_CPU_ADD(TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	
+	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)
+	MDRV_VBLANK_DURATION(MKLA5_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(wms_wolfu)
+	MDRV_NVRAM_HANDLER(generic_0fill)
+	
 	/* video hardware */
-	512, 288, { 56, 450, 1, 253 },
-
-	0,
-	32768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	wms_wolfu_vh_start,
-	wms_tunit_vh_stop,
-	wms_tunit_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 288)
+	MDRV_VISIBLE_AREA(56, 450, 1, 253)
+	MDRV_PALETTE_LENGTH(32768)
+	
+	MDRV_VIDEO_START(wms_wolfu)
+	MDRV_VIDEO_UPDATE(wms_tunit)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SOUND_WILLIAMS_DCS
-	},
-	nvram_handler
-};
+	MDRV_IMPORT_FROM(williams_dcs_sound)
+MACHINE_DRIVER_END
 
 
 
@@ -700,6 +653,7 @@ ROM_START( mk3 )
 	ROM_LOAD( "mk3-u114.bin",  0x1300000, 0x080000, 0xa8d99922 )
 ROM_END
 
+
 ROM_START( mk3r20 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -739,6 +693,7 @@ ROM_START( mk3r20 )
 	ROM_LOAD( "mk3-u115.bin",  0x1200000, 0x080000, 0x3ee8b124 )
 	ROM_LOAD( "mk3-u114.bin",  0x1300000, 0x080000, 0xa8d99922 )
 ROM_END
+
 
 ROM_START( mk3r10 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -780,6 +735,7 @@ ROM_START( mk3r10 )
 	ROM_LOAD( "mk3-u114.bin",  0x1300000, 0x080000, 0xa8d99922 )
 ROM_END
 
+
 ROM_START( umk3 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -819,6 +775,7 @@ ROM_START( umk3 )
 	ROM_LOAD( "umk-u111.bin",  0x1600000, 0x100000, 0xa87523c8 )
 	ROM_LOAD( "umk-u110.bin",  0x1700000, 0x100000, 0x0038f205 )
 ROM_END
+
 
 ROM_START( umk3r11 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -860,6 +817,7 @@ ROM_START( umk3r11 )
 	ROM_LOAD( "umk-u110.bin",  0x1700000, 0x100000, 0x0038f205 )
 ROM_END
 
+
 ROM_START( openice )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -894,6 +852,7 @@ ROM_START( openice )
 	ROM_LOAD( "oiceu119.bin",  0x0e00000, 0x100000, 0x948b9b27 )
 	ROM_LOAD( "oiceu118.bin",  0x0f00000, 0x100000, 0x9eaaf93e )
 ROM_END
+
 
 ROM_START( nbahangt )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -935,6 +894,7 @@ ROM_START( nbahangt )
 	ROM_LOAD( "mhtu110.bin",  0x1700000, 0x100000, 0x8575aeb2 )
 ROM_END
 
+
 ROM_START( nbamaxht )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -975,6 +935,7 @@ ROM_START( nbamaxht )
 	ROM_LOAD( "mhtu110.bin",  0x1700000, 0x100000, 0x8575aeb2 )
 ROM_END
 
+
 ROM_START( rmpgwt )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1010,6 +971,7 @@ ROM_START( rmpgwt )
 	ROM_LOAD( "rwt.118",  0x0f00000, 0x100000, 0x43a6f51e )
 ROM_END
 
+
 ROM_START( rmpgwt11 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1044,6 +1006,7 @@ ROM_START( rmpgwt11 )
 	ROM_LOAD( "rwt.119",  0x0e00000, 0x100000, 0x4e49c133 )
 	ROM_LOAD( "rwt.118",  0x0f00000, 0x100000, 0x43a6f51e )
 ROM_END
+
 
 ROM_START( wwfmania )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */

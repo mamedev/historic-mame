@@ -36,7 +36,7 @@ static int nb1413m3_gfxrombank;
 static int nb1413m3_outcoin_flag;
 
 
-void nb1413m3_init_machine(void)
+MACHINE_INIT( nb1413m3 )
 {
 	nb1413m3_nmi_clock = 0;
 	nb1413m3_nmi_enable = 0;
@@ -57,26 +57,22 @@ void nb1413m3_nmi_clock_w(int data)
 	nb1413m3_nmi_clock = ((data & 0xf0) >> 4);
 }
 
-int nb1413m3_interrupt(void)
+INTERRUPT_GEN( nb1413m3_interrupt )
 {
 	if (cpu_getiloops() == 0)
 	{
 		nb1413m3_busyflag = 1;
 		nb1413m3_busyctr = 0;
-		return interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 	}
 
-	if (nb1413m3_nmi_enable)
+	else if (nb1413m3_nmi_enable)
 	{
-		return nmi_interrupt();
-	}
-	else
-	{
-		return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
 }
 
-void nb1413m3_nvram_handler(void *file, int read_or_write)
+NVRAM_HANDLER( nb1413m3 )
 {
 	if (read_or_write)
 		osd_fwrite(file, nb1413m3_nvram, nb1413m3_nvram_size);

@@ -1,8 +1,6 @@
 /*************************************************************************
 
-	Turbo - Sega - 1981
-	Subroc 3D - Sega - 1982
-	Buck Rogers: Planet of Zoom - Sega - 1982
+	Sega Z80-3D system
 
 *************************************************************************/
 
@@ -18,9 +16,9 @@ extern UINT8 subroc3d_col, subroc3d_ply, subroc3d_chofs;
 
 extern UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
 
-void turbo_init_machine(void);
-void subroc3d_init_machine(void);
-void buckrog_init_machine(void);
+MACHINE_INIT( turbo );
+MACHINE_INIT( subroc3d );
+MACHINE_INIT( buckrog );
 
 READ_HANDLER( turbo_8279_r );
 WRITE_HANDLER( turbo_8279_w );
@@ -40,21 +38,18 @@ READ_HANDLER( buckrog_port_3_r );
 extern UINT8 *sega_sprite_position;
 extern UINT8 turbo_collision;
 
-void turbo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-int turbo_vh_start(void);
-void turbo_vh_stop(void);
-void turbo_vh_eof(void);
-void turbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+PALETTE_INIT( turbo );
+VIDEO_START( turbo );
+VIDEO_EOF( turbo );
+VIDEO_UPDATE( turbo );
 
-void subroc3d_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-int subroc3d_vh_start(void);
-void subroc3d_vh_stop(void);
-void subroc3d_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+PALETTE_INIT( subroc3d );
+VIDEO_START( subroc3d );
+VIDEO_UPDATE( subroc3d );
 
-void buckrog_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-int buckrog_vh_start(void);
-void buckrog_vh_stop(void);
-void buckrog_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+PALETTE_INIT( buckrog );
+VIDEO_START( buckrog );
+VIDEO_UPDATE( buckrog );
 
 WRITE_HANDLER( buckrog_led_display_w );
 WRITE_HANDLER( buckrog_bitmap_w );

@@ -36,7 +36,7 @@ static int flipscreen;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( digdug )
 {
 	int i;
 
@@ -79,26 +79,15 @@ void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
   Start the video hardware emulation.
 
 ***************************************************************************/
-int digdug_vh_start(void)
+VIDEO_START( digdug )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	pflastindex = -1;
 	pflastcolor = -1;
 
 	return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void digdug_vh_stop(void)
-{
-	generic_vh_stop();
 }
 
 
@@ -158,7 +147,7 @@ WRITE_HANDLER( digdug_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void digdug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( digdug )
 {
 	int offs,pfindex,pfcolor;
 	unsigned char *pf;

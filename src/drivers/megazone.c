@@ -27,13 +27,12 @@ extern size_t megazone_videoram2_size;
 static int i8039_irqenable;
 static int i8039_status;
 
-int megazone_vh_start(void);
-void megazone_vh_stop(void);
+VIDEO_START( megazone );
 
 WRITE_HANDLER( megazone_flipscreen_w );
-void megazone_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( megazone );
 WRITE_HANDLER( megazone_sprite_bank_select_w );
-void megazone_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( megazone );
 
 
 
@@ -104,12 +103,14 @@ WRITE_HANDLER( megazone_sharedram_w )
 static WRITE_HANDLER( megazone_i8039_irq_w )
 {
 	if (i8039_irqenable)
-		cpu_cause_interrupt(2,I8039_EXT_INT);
+		cpu_set_irq_line(2, 0, ASSERT_LINE);
 }
 
 WRITE_HANDLER( i8039_irqen_and_status_w )
 {
 	i8039_irqenable = data & 0x80;
+	if (i8039_irqenable == 0)
+		cpu_set_irq_line(2, 0, CLEAR_LINE);
 	i8039_status = (data & 0x70) >> 4;
 }
 
@@ -335,58 +336,43 @@ static struct DACinterface dac_interface =
 
 
 
-static const struct MachineDriver machine_driver_megazone =
-{
+static MACHINE_DRIVER_START( megazone )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2048000,        /* 2 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			18432000/6,     /* Z80 Clock is derived from the H1 signal */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			interrupt,1
-		},
-		{
-			CPU_I8039 | CPU_AUDIO_CPU,
-			14318000/2/15,	/* 1/2 14MHz crystal */
-			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	15,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809, 2048000)        /* 2 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,18432000/6)     /* Z80 Clock is derived from the H1 signal */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(I8039,14318000/2/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1/2 14MHz crystal */
+	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
+	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(15)
 
 	/* video hardware */
-	36*8, 32*8, { 0*8, 36*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32,16*16+16*16,
-	megazone_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	megazone_vh_start,
-	megazone_vh_stop,
-	megazone_vh_screenrefresh,
+	MDRV_PALETTE_INIT(megazone)
+	MDRV_VIDEO_START(megazone)
+	MDRV_VIDEO_UPDATE(megazone)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -461,7 +447,7 @@ ROM_START( megaznik )
 ROM_END
 
 
-static void init_megazone(void)
+static DRIVER_INIT( megazone )
 {
 	konami1_decode();
 }

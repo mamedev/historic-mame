@@ -83,7 +83,7 @@ static void get_bg_tile_info( int tile_index )
 
 ***************************************************************************/
 
-int terraf_vh_start(void)
+VIDEO_START( terraf )
 {
 	scroll_type = 0;
 	sprite_offy = 128;
@@ -103,7 +103,7 @@ int terraf_vh_start(void)
 	return 0;
 }
 
-int cclimbr2_vh_start(void)
+VIDEO_START( cclimbr2 )
 {
 	scroll_type = 2;
 	sprite_offy = 0;
@@ -123,7 +123,7 @@ int cclimbr2_vh_start(void)
 	return 0;
 }
 
-int kodure_vh_start(void)
+VIDEO_START( kodure )
 {
 	scroll_type = 2;
 	sprite_offy = 128;
@@ -143,7 +143,7 @@ int kodure_vh_start(void)
 	return 0;
 }
 
-int armedf_vh_start(void)
+VIDEO_START( armedf )
 {
 	scroll_type = 1;
 	sprite_offy = 128;
@@ -262,7 +262,7 @@ WRITE16_HANDLER( armedf_bg_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, int priority )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
 {
 	int offs;
 
@@ -282,14 +282,14 @@ static void draw_sprites( struct mame_bitmap *bitmap, int priority )
 				color,
  				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 }
 
 
 
-void armedf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( armedf )
 {
 	int sprite_enable = armedf_vreg & 0x200;
 
@@ -323,18 +323,18 @@ void armedf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 	if( armedf_vreg & 0x0800 )
-		tilemap_draw( bitmap, bg_tilemap, 0, 0);
+		tilemap_draw( bitmap, cliprect, bg_tilemap, 0, 0);
 	else
-		fillbitmap( bitmap, Machine->pens[0], 0 ); /* disabled bg_tilemap - all black? */
+		fillbitmap( bitmap, Machine->pens[0], cliprect ); /* disabled bg_tilemap - all black? */
 
-	if( sprite_enable ) draw_sprites( bitmap, 2 );
-	tilemap_draw( bitmap, fg_tilemap, 0, 0);
-	if( sprite_enable ) draw_sprites( bitmap, 1 );
-	tilemap_draw( bitmap, tx_tilemap, 0, 0);
-	if( sprite_enable ) draw_sprites( bitmap, 0 );
+	if( sprite_enable ) draw_sprites( bitmap, cliprect, 2 );
+	tilemap_draw( bitmap, cliprect, fg_tilemap, 0, 0);
+	if( sprite_enable ) draw_sprites( bitmap, cliprect, 1 );
+	tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
+	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
 }
 
-void armedf_eof_callback(void)
+VIDEO_EOF( armedf )
 {
 	buffer_spriteram16_w(0,0,0);
 }

@@ -54,7 +54,7 @@ static void get_pf2_tile_info (int tile_index) { get_tile_info(tile_index,1,3); 
 static void get_pf2w_tile_info(int tile_index) { get_tile_info(tile_index,1,2); }
 
 
-int m90_vh_start(void)
+VIDEO_START( m90 )
 {
 	pf1_layer =      tilemap_create(get_pf1_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	pf1_wide_layer = tilemap_create(get_pf1w_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
@@ -70,7 +70,7 @@ int m90_vh_start(void)
 	return 0;
 }
 
-static void m90_drawsprites(struct mame_bitmap *bitmap)
+static void m90_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -99,13 +99,13 @@ static void m90_drawsprites(struct mame_bitmap *bitmap)
 					colour,
 					fx,fy,
 					x,y+i*16,
-					&Machine->visible_area,TRANSPARENCY_PEN,0,
+					cliprect,TRANSPARENCY_PEN,0,
 					(colour & 0x08) ? 0x00 : 0x02);
 	}
 }
 
 #if 0
-static void bootleg_drawsprites(struct mame_bitmap *bitmap)
+static void bootleg_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -131,7 +131,7 @@ static void bootleg_drawsprites(struct mame_bitmap *bitmap)
 				colour,
 				fx,fy,
 				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 #endif
@@ -161,7 +161,7 @@ WRITE_HANDLER( m90_video_w )
 	markdirty(pf2_wide_layer,m90_video_control_data[0xc] & 0x2,offset);
 }
 
-void m90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( m90 )
 {
 	static int last_pf1,last_pf2;
 	int pf1_base = m90_video_control_data[0xa] & 0x3;
@@ -229,36 +229,36 @@ void m90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( pf1_wide_layer,0, (m90_video_control_data[1]<<8)+m90_video_control_data[0] );
 	tilemap_set_scrolly( pf2_wide_layer,0, (m90_video_control_data[5]<<8)+m90_video_control_data[4] );
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (!pf2_enable)
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	if (pf2_enable)
 	{
 		if (m90_video_control_data[0xc] & 0x4)
-			tilemap_draw(bitmap,pf2_wide_layer,0,0);
+			tilemap_draw(bitmap,cliprect,pf2_wide_layer,0,0);
 		else
-			tilemap_draw(bitmap,pf2_layer,0,0);
+			tilemap_draw(bitmap,cliprect,pf2_layer,0,0);
 
 		if (m90_video_control_data[0xc] & 0x4)
-			tilemap_draw(bitmap,pf2_wide_layer,1,1);
+			tilemap_draw(bitmap,cliprect,pf2_wide_layer,1,1);
 		else
-			tilemap_draw(bitmap,pf2_layer,1,1);
+			tilemap_draw(bitmap,cliprect,pf2_layer,1,1);
 	}
 
 	if (pf1_enable)
 	{
 		if (m90_video_control_data[0xa] & 0x4)
-			tilemap_draw(bitmap,pf1_wide_layer,0,0);
+			tilemap_draw(bitmap,cliprect,pf1_wide_layer,0,0);
 		else
-			tilemap_draw(bitmap,pf1_layer,0,0);
+			tilemap_draw(bitmap,cliprect,pf1_layer,0,0);
 
 		if (m90_video_control_data[0xa] & 0x4)
-			tilemap_draw(bitmap,pf1_wide_layer,1,1);
+			tilemap_draw(bitmap,cliprect,pf1_wide_layer,1,1);
 		else
-			tilemap_draw(bitmap,pf1_layer,1,1);
+			tilemap_draw(bitmap,cliprect,pf1_layer,1,1);
 	}
 
-	m90_drawsprites(bitmap);
+	m90_drawsprites(bitmap,cliprect);
 }

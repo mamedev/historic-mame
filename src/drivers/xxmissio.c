@@ -11,7 +11,7 @@ XX Mission (c) 1986 UPL
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void xxmissio_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( xxmissio );
 
 extern UINT8 *xxmissio_fgram;
 extern size_t xxmissio_fgram_size;
@@ -65,7 +65,7 @@ WRITE_HANDLER ( xxmissio_status_m_w )
 
 		case 0x40:
 			xxmissio_status &= ~0x08;
-			cpu_cause_interrupt(1,0x10);
+			cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0x10);
 			break;
 
 		case 0x80:
@@ -88,21 +88,21 @@ WRITE_HANDLER ( xxmissio_status_s_w )
 
 		case 0x80:
 			xxmissio_status &= ~0x04;
-			cpu_cause_interrupt(0,0x10);
+			cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0x10);
 			break;
 	}
 }
 
-int xxmissio_interrupt_m(void)
+INTERRUPT_GEN( xxmissio_interrupt_m )
 {
 	xxmissio_status &= ~0x20;
-	return interrupt();
+	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-int xxmissio_interrupt_s(void)
+INTERRUPT_GEN( xxmissio_interrupt_s )
 {
 	xxmissio_status &= ~0x10;
-	return interrupt();
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 /****************************************************************************/
@@ -332,46 +332,34 @@ static struct YM2203interface ym2203_interface =
 	{ 0,xxmissio_scroll_y_w }
 };
 
-static const struct MachineDriver machine_driver_xxmissio =
-{
-	{
-		{
-			CPU_Z80,
-			12000000/4,	/* 3.0MHz */
-			readmem1,writemem1,0,0,
-			xxmissio_interrupt_m,1
-		},
-		{
-			CPU_Z80,
-			12000000/4,	/* 3.0MHz */
-			readmem2,writemem2,0,0,
-			xxmissio_interrupt_s,2
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,
-	0,
+static MACHINE_DRIVER_START( xxmissio )
 
-	64*8, 32*8, { 0*8, 64*8-1, 4*8, 28*8-1 },
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz */
+	MDRV_CPU_MEMORY(readmem1,writemem1)
+	MDRV_CPU_VBLANK_INT(xxmissio_interrupt_m,1)
 
-	gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_VBLANK_INT(xxmissio_interrupt_s,2)
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	xxmissio_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(xxmissio)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 /****************************************************************************/
 

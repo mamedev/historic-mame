@@ -40,7 +40,7 @@ static int flipscreen;
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
-void brkthru_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( brkthru )
 {
 	int i;
 
@@ -79,36 +79,17 @@ void brkthru_vh_convert_color_prom(unsigned char *obsolete,unsigned short *color
   Start the video hardware emulation.
 
 ***************************************************************************/
-int brkthru_vh_start(void)
+VIDEO_START( brkthru )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-	{
-		generic_vh_stop();
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer,1,videoram_size);
 
 	/* the background area is twice as wide as the screen */
-	if ((tmpbitmap = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void brkthru_vh_stop(void)
-{
-	bitmap_free(tmpbitmap);
-	free(dirtybuffer);
 }
 
 
@@ -155,7 +136,7 @@ WRITE_HANDLER( brkthru_1800_w )
   the main emulation engine.
 
 ***************************************************************************/
-void brkthru_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( brkthru )
 {
 	int offs;
 

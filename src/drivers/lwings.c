@@ -63,23 +63,23 @@ static WRITE_HANDLER( lwings_bankswitch_w )
 	coin_counter_w(0,data & 0x80);
 }
 
-static int lwings_interrupt(void)
+static INTERRUPT_GEN( lwings_interrupt )
 {
-	return 0x00d7; /* RST 10h */
+	if (interrupt_enable_r(0))
+		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7); /* RST 10h */
 }
 
-static int avengers_interrupt( void )
+static INTERRUPT_GEN( avengers_interrupt )
 {
 	if( cpu_getiloops()==0 )
-	{
-		return interrupt();
-	}
-	return nmi_interrupt();
+		irq0_line_hold();
+	else
+		nmi_line_pulse();
 }
 
 static WRITE_HANDLER( avengers_protection_w )
 {
-	int pc = cpu_get_pc();
+	int pc = activecpu_get_pc();
 
 	if( pc == 0x2eeb )
 	{
@@ -199,7 +199,7 @@ static READ_HANDLER( avengers_protection_r )
 	int x,y;
 	int dx,dy,dist,dir;
 
-	if( cpu_get_pc() == 0x7c7 )
+	if( activecpu_get_pc() == 0x7c7 )
 	{
 		/* palette data */
 		return avengers_fetch_paldata();
@@ -833,156 +833,111 @@ static struct MSM5205interface msm5205_interface =
 	{ 50 }
 };
 
-static const struct MachineDriver machine_driver_lwings =
-{
+static MACHINE_DRIVER_START( lwings )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			readmem,writemem,0,0,
-			lwings_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	lwings_eof_callback,
-	lwings_vh_start,
-	0,
-	lwings_vh_screenrefresh,
+	MDRV_VIDEO_START(lwings)
+	MDRV_VIDEO_EOF(lwings)
+	MDRV_VIDEO_UPDATE(lwings)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_trojan =
-{
+
+static MACHINE_DRIVER_START( trojan )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			readmem,trojan_writemem,0,0,
-			lwings_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? */
-			adpcm_readmem,adpcm_writemem,adpcm_readport,adpcm_writeport,
-			0,0,
-			interrupt,4000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,trojan_writemem)
+	MDRV_CPU_VBLANK_INT(lwings_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(adpcm_readmem,adpcm_writemem)
+	MDRV_CPU_PORTS(adpcm_readport,adpcm_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo_trojan,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_trojan)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	lwings_eof_callback,
-	trojan_vh_start,
-	0,
-	trojan_vh_screenrefresh,
+	MDRV_VIDEO_START(trojan)
+	MDRV_VIDEO_EOF(lwings)
+	MDRV_VIDEO_UPDATE(trojan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface,
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_avengers =
-{
+
+static MACHINE_DRIVER_START( avengers )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			avengers_readmem,avengers_writemem,0,0,
-			avengers_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? */
-			adpcm_readmem,adpcm_writemem,avengers_adpcm_readport,adpcm_writeport,
-			0,0,
-			interrupt,4000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(avengers_readmem,avengers_writemem)
+	MDRV_CPU_VBLANK_INT(avengers_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(adpcm_readmem,adpcm_writemem)
+	MDRV_CPU_PORTS(avengers_adpcm_readport,adpcm_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo_trojan,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_trojan)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	lwings_eof_callback,
-	avengers_vh_start,
-	0,
-	trojan_vh_screenrefresh,
+	MDRV_VIDEO_START(avengers)
+	MDRV_VIDEO_EOF(lwings)
+	MDRV_VIDEO_UPDATE(trojan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface,
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

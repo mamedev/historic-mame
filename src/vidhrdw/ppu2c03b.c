@@ -103,6 +103,9 @@ static struct ppu2c03b_interface *intf;
 static ppu2c03b_chip *chips = 0;
 
 
+static void scanline_callback( int num );
+
+
 /*************************************
  *
  *	PPU Palette Initialization
@@ -232,7 +235,7 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 	if ( intf->num <= 0 )
 		return -1;
 
-	chips = malloc( intf->num * sizeof( ppu2c03b_chip ) );
+	chips = auto_malloc( intf->num * sizeof( ppu2c03b_chip ) );
 
 	if ( chips == 0 )
 		return -1;
@@ -241,24 +244,20 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 	for( i = 0; i < intf->num; i++ )
 	{
 		/* initialize the scanline handling portion */
-		chips[i].scanline_timer = 0;
+		chips[i].scanline_timer = timer_alloc(scanline_callback);
 		chips[i].scanline = 0;
 		chips[i].scan_scale = 1;
 
 		/* allocate a screen bitmap, videoram and spriteram, a dirtychar array and the monochromatic colortable */
-		chips[i].bitmap = bitmap_alloc( VISIBLE_SCREEN_WIDTH, VISIBLE_SCREEN_HEIGHT );
-		chips[i].videoram = malloc( VIDEORAM_SIZE );
-		chips[i].spriteram = malloc( SPRITERAM_SIZE );
-		chips[i].dirtychar = malloc( CHARGEN_NUM_CHARS );
-		chips[i].colortable_mono = malloc( sizeof( default_colortable_mono ) );
+		chips[i].bitmap = auto_bitmap_alloc( VISIBLE_SCREEN_WIDTH, VISIBLE_SCREEN_HEIGHT );
+		chips[i].videoram = auto_malloc( VIDEORAM_SIZE );
+		chips[i].spriteram = auto_malloc( SPRITERAM_SIZE );
+		chips[i].dirtychar = auto_malloc( CHARGEN_NUM_CHARS );
+		chips[i].colortable_mono = auto_malloc( sizeof( default_colortable_mono ) );
 
 		/* see if it failed */
 		if ( !chips[i].bitmap || !chips[i].videoram || !chips[i].spriteram || !chips[i].dirtychar || !chips[i].colortable_mono )
-		{
-			/* if we did fail, release everything allocated so far and return */
-			ppu2c03b_dispose();
 			return -1;
-		}
 
 		/* clear videoram & spriteram */
 		memset( chips[i].videoram, 0, VIDEORAM_SIZE );
@@ -293,11 +292,7 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 			Machine->gfx[intf->gfx_layout_number[i]] = decodegfx( src, &ppu_charlayout );
 
 			if ( Machine->gfx[intf->gfx_layout_number[i]] == 0 )
-			{
-				/* failed */
-				ppu2c03b_dispose();
 				return -1;
-			}
 
 			if ( Machine->remapped_colortable )
 				Machine->gfx[intf->gfx_layout_number[i]]->colortable = &Machine->remapped_colortable[intf->color_base[i]];
@@ -311,53 +306,6 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 
 	/* success */
 	return 0;
-}
-
-void ppu2c03b_dispose( void )
-{
-	int i;
-
-	/* clean up */
-	if ( chips ) {
-
-		/* iterate through the virtual chips and free storage */
-		for( i = 0; i < intf->num; i++ )
-		{
-			/* release the bitmap(s) */
-			if ( chips[i].bitmap )
-				bitmap_free( chips[i].bitmap );
-			chips[i].bitmap = 0;
-
-			/* release the videoram */
-			if ( chips[i].videoram )
-				free( chips[i].videoram );
-			chips[i].videoram = 0;
-
-			/* release the spriteram */
-			if ( chips[i].spriteram )
-				free( chips[i].spriteram );
-			chips[i].spriteram = 0;
-
-			/* release the dirtychar array */
-			if ( chips[i].dirtychar )
-				free( chips[i].dirtychar );
-			chips[i].dirtychar = 0;
-
-			/* release the colortable_mono array */
-			if ( chips[i].colortable_mono )
-				free( chips[i].colortable_mono );
-			chips[i].colortable_mono = 0;
-
-			/* release the timer */
-			if ( chips[i].scanline_timer )
-				timer_remove( chips[i].scanline_timer );
-			chips[i].scanline_timer = 0;
-		}
-
-		/* dispose our chips states */
-		free( chips );
-		chips = 0;
-	}
 }
 
 static void draw_background( const int num, UINT8 *line_priority )
@@ -844,7 +792,7 @@ static void scanline_callback( int num )
 	}
 
 	/* setup our next stop here */
-	chips[num].scanline_timer = timer_set( cpu_getscanlinetime( chips[num].scanline * chips[num].scan_scale ), num, scanline_callback );
+	timer_adjust(chips[num].scanline_timer, cpu_getscanlinetime( chips[num].scanline * chips[num].scan_scale ), num, 0);
 }
 
 /*************************************
@@ -863,10 +811,6 @@ void ppu2c03b_reset( int num, int scan_scale )
 		return;
 	}
 
-	/* check if we have a previously allocated scanline timer */
-	if ( chips[num].scanline_timer )
-		timer_remove( chips[num].scanline_timer );
-
 	/* reset the scanline count */
 	chips[num].scanline = 0;
 
@@ -874,7 +818,7 @@ void ppu2c03b_reset( int num, int scan_scale )
 	chips[num].scan_scale = scan_scale;
 
 	/* allocate the scanline timer - start at scanline 0 */
-	chips[num].scanline_timer = timer_set( cpu_getscanlinetime(0), num, scanline_callback );
+	timer_adjust(chips[num].scanline_timer, cpu_getscanlinetime(0), num, 0);
 
 	/* reset the callbacks */
 	chips[num].scanline_callback_proc = 0;

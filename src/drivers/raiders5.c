@@ -26,7 +26,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void raiders5_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( raiders5 );
 
 extern UINT8 *raiders5_fgram;
 extern size_t raiders5_fgram_size;
@@ -253,47 +253,35 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0 },
 };
 
-static const struct MachineDriver machine_driver_raiders5 =
-{
-	{
-		{
-			CPU_Z80,
-			12000000/4,	/* 3.0MHz? */
-			readmem1,writemem1,readport1,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			12000000/4,	/* 3.0MHz? */
-			readmem2,writemem2,0,0,
-			interrupt,4
+static MACHINE_DRIVER_START( raiders5 )
 
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	400,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz? */
+	MDRV_CPU_MEMORY(readmem1,writemem1)
+	MDRV_CPU_PORTS(readport1,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
+	MDRV_CPU_ADD(Z80,12000000/4)	/* 3.0MHz? */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
-	gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(400)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	raiders5_vh_screenrefresh,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(raiders5)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /****************************************************************************/
 

@@ -93,7 +93,7 @@ WRITE_HANDLER( skyfox_vregs_w )
 
 ***************************************************************************/
 
-void skyfox_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( skyfox )
 {
 	int i;
 
@@ -285,7 +285,7 @@ void skyfox_draw_background(struct mame_bitmap *bitmap)
 ***************************************************************************/
 
 
-void skyfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( skyfox )
 {
 	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area);	// the bg is black
 	skyfox_draw_background(bitmap);

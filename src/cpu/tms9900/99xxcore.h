@@ -500,7 +500,7 @@ static void reset_decrementer(void);
 		}
 		else if (addr < 0xf0fc)
 		{
-			return READ_WORD(& I.RAM[addr - 0xf000]);
+			return *(UINT16 *)(& I.RAM[addr - 0xf000]);
 		}
 		else if (addr < 0xfffa)
 		{
@@ -513,7 +513,7 @@ static void reset_decrementer(void);
 			if (I.flag & 1)
 				/* event counter mode */
 				return I.decrementer_count;
-			else if (I.timer)
+			else if (I.decrementer_enabled && !(I.flag & 1))
 				/* timer mode, timer enabled */
 				return ceil(TIME_TO_CYCLES(cpu_getactivecpu(), timer_timeleft(I.timer)) / 16);
 			else
@@ -522,7 +522,7 @@ static void reset_decrementer(void);
 		}
 		else
 		{
-			return READ_WORD(& I.RAM[addr - 0xff00]);
+			return *(UINT16 *)(& I.RAM[addr - 0xff00]);
 		}
 	}
 
@@ -536,7 +536,7 @@ static void reset_decrementer(void);
 		}
 		else if (addr < 0xf0fc)
 		{
-			WRITE_WORD(& I.RAM[addr - 0xf000], data);
+			*(UINT16 *)(& I.RAM[addr - 0xf000]) = data;
 		}
 		else if (addr < 0xfffa)
 		{
@@ -552,7 +552,7 @@ static void reset_decrementer(void);
 		}
 		else
 		{
-			WRITE_WORD(& I.RAM[addr - 0xff00], data);
+			*(UINT16 *)(& I.RAM[addr - 0xff00]) = data;
 		}
 	}
 
@@ -580,7 +580,7 @@ static void reset_decrementer(void);
 			if (I.flag & 1)
 				/* event counter mode */
 				value = I.decrementer_count;
-			else if (I.timer)
+			else if (I.decrementer_enabled && !(I.flag & 1))
 				/* timer mode, timer enabled */
 				value = ceil(TIME_TO_CYCLES(cpu_getactivecpu(), timer_timeleft(I.timer)) / 16);
 			else
@@ -675,6 +675,10 @@ static void set_flag1(int val);
 */
 void TMS99XX_INIT(void)
 {
+#if (TMS99XX_MODEL == TMS9995_ID)
+	void decrementer_callback(int ignored);
+	I.timer = timer_alloc(decrementer_callback);
+#endif
 }
 
 void TMS99XX_RESET(void *param)
@@ -1145,7 +1149,7 @@ void tms9980a_set_irq_line(int irqline, int state)
 /*
   this call-back is called by MESS timer system when the timer reaches 0.
 */
-static void decrementer_callback(int ignored)
+void decrementer_callback(int ignored)
 {
 	/* request decrementer interrupt */
 	I.int_latch |= 0x8;
@@ -1162,11 +1166,7 @@ static void decrementer_callback(int ignored)
 */
 static void reset_decrementer(void)
 {
-	if (I.timer)
-	{
-		timer_remove(I.timer);
-		I.timer = NULL;
-	}
+	timer_adjust(I.timer, TIME_NEVER, 0, 0);
 
 	/* decrementer / timer enabled ? */
 	I.decrementer_enabled = ((I.flag & 2) && (I.decrementer_interval));
@@ -1179,8 +1179,7 @@ static void reset_decrementer(void)
 		}
 		else
 		{	/* timer */
-			I.timer = timer_pulse(TIME_IN_CYCLES(I.decrementer_interval * 16L, cpu_getactivecpu()),
-			                        0, decrementer_callback);
+			timer_adjust(I.timer, TIME_IN_CYCLES(I.decrementer_interval * 16L, cpu_getactivecpu()), 0, 0);
 		}
 	}
 }

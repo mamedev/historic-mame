@@ -228,9 +228,8 @@ WRITE_HANDLER( ninjakd2_bgvideoram_w );
 WRITE_HANDLER( ninjakd2_fgvideoram_w );
 WRITE_HANDLER( ninjakd2_sprite_overdraw_w );
 WRITE_HANDLER( ninjakd2_background_enable_w );
-int  ninjakd2_vh_start(void);
-void ninjakd2_vh_stop(void);
-void ninjakd2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( ninjakd2 );
+VIDEO_UPDATE( ninjakd2 );
 
 extern unsigned char 	*ninjakd2_scrolly_ram;
 extern unsigned char 	*ninjakd2_scrollx_ram;
@@ -253,7 +252,7 @@ int ninjakd2_init_samples(const struct MachineSound *msound)
 	int sample_info [9][2] = { {0x0000,0x0A00},{0x0A00,0x1D00},{0x2700,0x1700},
 	{0x3E00,0x1500},{0x5300,0x0B00},{0x5E00,0x0A00},{0x6800,0x0E00},{0x7600,0x1E00},{0xF000,0x0400} };
 
-	if ((Machine->samples = malloc(sizeof(struct GameSamples) + 9 * sizeof(struct GameSample *))) == NULL)
+	if ((Machine->samples = auto_malloc(sizeof(struct GameSamples) + 9 * sizeof(struct GameSample *))) == NULL)
 		return 1;
 
 	samples = Machine->samples;
@@ -261,7 +260,7 @@ int ninjakd2_init_samples(const struct MachineSound *msound)
 
 	for (i=0;i<8;i++)
 	{
-		if ((samples->sample[i] = malloc(sizeof(struct GameSample) + (sample_info[i][1]))) == NULL)
+		if ((samples->sample[i] = auto_malloc(sizeof(struct GameSample) + (sample_info[i][1]))) == NULL)
 			return 1;
 
 		samples->sample[i]->length = sample_info[i][1];
@@ -277,9 +276,9 @@ int ninjakd2_init_samples(const struct MachineSound *msound)
 }
 
 
-int ninjakd2_interrupt(void)
+INTERRUPT_GEN( ninjakd2_interrupt )
 {
-	return 0x00d7;	/* RST 10h */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
 }
 
 READ_HANDLER( ninjakd2_bankselect_r )
@@ -522,89 +521,62 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static const struct MachineDriver machine_driver_ninjakd2 =
-{
-	{
-		{
-			CPU_Z80,
-			6000000,		/* 12000000/2 ??? */
-			readmem,writemem,0,0,	/* very sensitive to these settings */
-			ninjakd2_interrupt,1
-		}
-	},
-	60, 10000,			/* frames per second, vblank duration */
-	10,				/* single CPU, no need for interleaving */
-	0,
-	32*8, 32*8,
-	{ 0*8, 32*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	768, 0,
-	0,
+static MACHINE_DRIVER_START( ninjakd2 )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ninjakd2_vh_start,
-	ninjakd2_vh_stop,
-	ninjakd2_vh_screenrefresh,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)	/* very sensitive to these settings */
+	MDRV_CPU_VBLANK_INT(ninjakd2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(10000)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_VIDEO_START(ninjakd2)
+	MDRV_VIDEO_UPDATE(ninjakd2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ninjak2a =
-{
-	{
-		{
-			CPU_Z80,
-			6000000,		/* 12000000/2 ??? */
-			readmem,writemem,0,0,	/* very sensitive to these settings */
-			ninjakd2_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,		/* 12000000/3 ??? */
-			snd_readmem,snd_writemem,0,snd_writeport,
-			ignore_interrupt,0,
-		}
-	},
-	60, 10000,	/* frames per second, vblank duration */
-	10,
-	0,
-	32*8, 32*8,
-	{ 0*8, 32*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	768, 0,
-	0,
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ninjakd2_vh_start,
-	ninjakd2_vh_stop,
-	ninjakd2_vh_screenrefresh,
+static MACHINE_DRIVER_START( ninjak2a )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)	/* very sensitive to these settings */
+	MDRV_CPU_VBLANK_INT(ninjakd2_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
+	MDRV_CPU_MEMORY(snd_readmem,snd_writemem)
+	MDRV_CPU_PORTS(0,snd_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(10000)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_VIDEO_START(ninjakd2)
+	MDRV_VIDEO_UPDATE(ninjakd2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually initializes the samples */
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -777,7 +749,7 @@ ROM_END
 
 
 
-void init_ninjak2a(void)
+DRIVER_INIT( ninjak2a )
 {
 	unsigned char *rom = memory_region(REGION_CPU2);
 	int diff = memory_region_length(REGION_CPU2) / 2;

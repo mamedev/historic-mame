@@ -27,9 +27,8 @@ extern READ16_HANDLER( namcond1_cuskey_r );
 extern WRITE16_HANDLER( namcond1_shared_ram_w );
 extern WRITE16_HANDLER( namcond1_cuskey_w );
 
-void namcond1_nvramhandler( void *f, int state );
-void namcond1_init_machine(void);
-int namcond1_vb_interrupt( void );
+NVRAM_HANDLER( namcond1 );
+MACHINE_INIT( namcond1 );
 
 /* VIDHRDW */
 

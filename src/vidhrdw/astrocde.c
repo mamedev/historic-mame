@@ -17,6 +17,9 @@
 
 #define MAX_INT_PER_FRAME 256
 
+static UINT8 interrupt_enable;
+static UINT8 interrupt_vector;
+
 unsigned char *wow_videoram;
 static int magic_expand_color, magic_control, magic_expand_count, magic_shift_leftover;
 static int collision;
@@ -48,7 +51,7 @@ void wow_update_line(struct mame_bitmap *bitmap,int line);
 
 
 
-void astrocde_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( astrocde )
 {
 	/* This routine builds a palette using a transformation from */
 	/* the YUV (Y, B-Y, R-Y) to the RGB color space */
@@ -129,16 +132,18 @@ static int CurrentScan=0;
 static int InterruptFlag=0;
 
 static int GorfDelay;				/* Gorf */
-static int Countdown=0;
+
+WRITE_HANDLER( astrocde_interrupt_vector_w )
+{
+	interrupt_vector = data;
+}
+
 
 WRITE_HANDLER( astrocde_interrupt_enable_w )
 {
 	InterruptFlag = data;
 
-	if (data & 0x01)					/* Disable Interrupts? */
-  	    interrupt_enable_w(0,0);
-	else
-  		interrupt_enable_w(0,1);
+	interrupt_enable = ~data & 0x01;
 
 	/* Gorf Special interrupt */
 
@@ -175,9 +180,9 @@ WRITE_HANDLER( astrocde_interrupt_w )
 	NextScanInt = data;
 }
 
-int wow_interrupt(void)
+static void interrupt_common(void)
 {
-	int res,i,next;
+	int i,next;
 
 	if (!osd_skip_this_frame())
 		wow_update_line(Machine->scrbitmap,CurrentScan);
@@ -190,40 +195,34 @@ int wow_interrupt(void)
 	colorsplit[next] = colorsplit[CurrentScan];
 
 	CurrentScan = next;
+}
+
+INTERRUPT_GEN( wow_interrupt )
+{
+	interrupt_common();
 
 	/* Scanline interrupt enabled ? */
 
-	res = ignore_interrupt();
-
-	if ((InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
-		res = interrupt();
-
-	return res;
+	if (interrupt_enable && (InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
 }
 
 /****************************************************************************
  * Gorf - Interrupt routine and Timer hack
  ****************************************************************************/
 
-int gorf_interrupt(void)
+INTERRUPT_GEN( gorf_interrupt )
 {
-	int res;
-
-	res = wow_interrupt();
+	interrupt_common();
 
 	/* Gorf Special Bits */
 
-	if (Countdown>0) Countdown--;
-
-	if ((InterruptFlag & 0x10) && (CurrentScan==GorfDelay))
-		res = interrupt() & 0xF0;
-
-/*	cpu_clear_pending_interrupts(0); */
-
-//	Z80_Clear_Pending_Interrupts();					/* Temporary Fix */
 	cpu_set_irq_line(0,0,CLEAR_LINE);
 
-	return res;
+	if (interrupt_enable && (InterruptFlag & 0x10) && (CurrentScan==GorfDelay))
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, interrupt_vector & 0xf0);
+	else if (interrupt_enable && (InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
 }
 
 /* ======================================================================= */
@@ -303,7 +302,7 @@ WRITE_HANDLER( wow_videoram_w )
 WRITE_HANDLER( astrocde_magic_expand_color_w )
 {
 #ifdef MAME_DEBUG
-//	logerror("%04x: magic_expand_color = %02x\n",cpu_get_pc(),data);
+//	logerror("%04x: magic_expand_color = %02x\n",activecpu_get_pc(),data);
 #endif
 
 	magic_expand_color = data;
@@ -313,7 +312,7 @@ WRITE_HANDLER( astrocde_magic_expand_color_w )
 WRITE_HANDLER( astrocde_magic_control_w )
 {
 #ifdef MAME_DEBUG
-//	logerror("%04x: magic_control = %02x\n",cpu_get_pc(),data);
+//	logerror("%04x: magic_control = %02x\n",activecpu_get_pc(),data);
 #endif
 
 	magic_control = data;
@@ -460,7 +459,7 @@ WRITE_HANDLER( astrocde_pattern_board_w )
 
 #ifdef MAME_DEBUG
 //		logerror("%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
-//			cpu_get_pc(),src,mode,skip,dest,length,loops);
+//			activecpu_get_pc(),src,mode,skip,dest,length,loops);
 #endif
 
 		/* Kludge: have to steal some cycles from the Z80 otherwise text
@@ -617,7 +616,7 @@ READ_HANDLER( gorf_io_r )
 {
 	int data;
 
-	data = (cpu_get_reg(Z80_BC) >> 8) & 0x0f;
+	data = (activecpu_get_reg(Z80_BC) >> 8) & 0x0f;
 
 	offset = (offset << 3) + (data >> 1);
 	data = ~data & 0x01;
@@ -633,7 +632,7 @@ READ_HANDLER( gorf_io_r )
 	}
 
 #ifdef MAME_DEBUG
-	logerror("%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
+	logerror("%04x: Latch IO %02x set to %d\n",activecpu_get_pc(),offset,data);
 #endif
 
 	return 0;
@@ -663,7 +662,7 @@ READ_HANDLER( wow_io_r )
 {
 	int data;
 
-	data = (cpu_get_reg(Z80_AF) >> 8) & 0x0f;
+	data = (activecpu_get_reg(Z80_AF) >> 8) & 0x0f;
 
 	offset = (offset << 3) + (data >> 1);
 	data = ~data & 0x01;
@@ -680,7 +679,7 @@ READ_HANDLER( wow_io_r )
 	}
 
 #ifdef MAME_DEBUG
-	logerror("%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
+	logerror("%04x: Latch IO %02x set to %d\n",activecpu_get_pc(),offset,data);
 #endif
 
 	return 0;
@@ -688,18 +687,10 @@ READ_HANDLER( wow_io_r )
 
 /****************************************************************************/
 
-void astrocde_vh_stop(void)
+VIDEO_START( astrocde )
 {
-	free(rng);
-	rng = 0;
-	free(star);
-	star = 0;
-}
-
-int astrocde_vh_start(void)
-{
-	rng = malloc(RNG_PERIOD * sizeof(rng[0]));
-	star = malloc(SCREEN_WIDTH * MAX_LINES * sizeof(star[0]));
+	rng = auto_malloc(RNG_PERIOD * sizeof(rng[0]));
+	star = auto_malloc(SCREEN_WIDTH * MAX_LINES * sizeof(star[0]));
 
 	if (!rng || !star)
 		return 1;
@@ -710,11 +701,11 @@ int astrocde_vh_start(void)
 	return 0;
 }
 
-int astrocde_stars_vh_start(void)
+VIDEO_START( astrocde_stars )
 {
 	int res;
 
-	res = astrocde_vh_start();
+	res = video_start_astrocde();
 
 	sparkle[0][0] = 1;	/* wow doesn't initialize this */
 	init_star_field();
@@ -734,6 +725,7 @@ void wow_update_line(struct mame_bitmap *bitmap,int line)
 	int i,x;
 	int data,color;
 	int rngoffs;
+	UINT8 scanline[80*4+3];
 
 	if (line >= MAX_LINES) return;
 
@@ -782,33 +774,31 @@ void wow_update_line(struct mame_bitmap *bitmap,int line)
 					pen = colors[line][color];
 			}
 
-			plot_pixel(bitmap,x,line,Machine->pens[pen]);
-
+			scanline[x] = pen;
 			data >>= 2;
 		}
 	}
+
+	draw_scanline8(bitmap, 0, line, 80*4+3, scanline, Machine->pens, -1);
 }
 
 
 
-void astrocde_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( astrocde )
 {
-	if (full_refresh)
-	{
-		int i;
+	int i;
 
-		for (i = 0;i < MAX_LINES;i++)
-			wow_update_line(bitmap,i);
-	}
+	for (i = 0;i < MAX_LINES;i++)
+		wow_update_line(bitmap,i);
 }
 
-void seawolf2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( seawolf2 )
 {
 	int centre;
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
-	astrocde_vh_screenrefresh(bitmap,full_refresh);
+	video_update_astrocde(bitmap,0);
 
 
 	/* Draw a sight */

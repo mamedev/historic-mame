@@ -30,7 +30,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-void simpsons_nvram_handler(void *file,int read_or_write)
+NVRAM_HANDLER( simpsons )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -101,7 +101,7 @@ WRITE_HANDLER( simpsons_coin_counter_w )
 
 READ_HANDLER( simpsons_sound_interrupt_r )
 {
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 	return 0x00;
 }
 
@@ -194,14 +194,14 @@ static void simpsons_banking( int lines )
 		break;
 
 		default:
-			logerror("PC = %04x : Unknown bank selected (%02x)\n", cpu_get_pc(), lines );
+			logerror("PC = %04x : Unknown bank selected (%02x)\n", activecpu_get_pc(), lines );
 		break;
 	}
 
 	cpu_setbank( 1, &RAM[offs] );
 }
 
-void simpsons_init_machine( void )
+MACHINE_INIT( simpsons )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

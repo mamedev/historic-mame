@@ -34,9 +34,9 @@ TODO: Emulated sound
 extern unsigned char *gotya_scroll;
 extern unsigned char *gotya_foregroundram;
 
-void gotya_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int gotya_vh_start(void);
-void gotya_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( gotya );
+VIDEO_START( gotya );
+VIDEO_UPDATE( gotya );
 WRITE_HANDLER( gotya_video_control_w );
 
 WRITE_HANDLER( gotya_soundlatch_w );
@@ -187,42 +187,31 @@ static struct Samplesinterface samples_interface =
 };
 
 
-static const struct MachineDriver machine_driver_gotya =
-{
+static MACHINE_DRIVER_START( gotya )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz ??? */
-			readmem,writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	36*8, 32*8, { 0, 36*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	8, 16*4,
-	gotya_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 36*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(16*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gotya_vh_start,
-	generic_vh_stop,
-	gotya_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gotya)
+	MDRV_VIDEO_START(gotya)
+	MDRV_VIDEO_UPDATE(gotya)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -1,17 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Night Driver hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-/* machine/nitedrvr.c */
-extern int nitedrvr_gear;
-extern int nitedrvr_track;
+#include "nitedrvr.h"
 
 /* local */
 unsigned char *nitedrvr_hvc;
@@ -49,7 +44,8 @@ static void nitedrvr_draw_block(struct mame_bitmap *bitmap, int bx, int by, int 
   the main emulation engine.
 
 ***************************************************************************/
-void nitedrvr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( nitedrvr )
 {
 	int offs,roadway;
 	char gear_buf[] =  {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */

@@ -14,7 +14,7 @@ static int sl_bank,bg_on,sky_on,sprite_color_base,bg_scrollx;
 
 
 
-void buggychl_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( buggychl )
 {
 	int i;
 
@@ -32,32 +32,15 @@ void buggychl_init_palette(unsigned char *palette, unsigned short *colortable,co
 
 
 
-void buggychl_vh_stop(void)
+VIDEO_START( buggychl )
 {
-	free(dirtybuffer);
-	dirtybuffer = NULL;
-
-	free(dirtychar);
-	dirtychar = NULL;
-
-	bitmap_free(tmpbitmap1);
-	tmpbitmap1 = NULL;
-	bitmap_free(tmpbitmap2);
-	tmpbitmap2 = NULL;
-}
-
-int buggychl_vh_start(void)
-{
-	dirtybuffer = malloc(videoram_size);
-	dirtychar = malloc(256 * sizeof(*dirtychar));
-	tmpbitmap1 = bitmap_alloc(256,256);
-	tmpbitmap2 = bitmap_alloc(256,256);
+	dirtybuffer = auto_malloc(videoram_size);
+	dirtychar = auto_malloc(256 * sizeof(*dirtychar));
+	tmpbitmap1 = auto_bitmap_alloc(256,256);
+	tmpbitmap2 = auto_bitmap_alloc(256,256);
 
 	if (!dirtybuffer || !dirtychar || !tmpbitmap1 || !tmpbitmap2)
-	{
-		buggychl_vh_stop();
 		return 1;
-	}
 
 	memset(dirtybuffer,1,videoram_size);
 	memset(dirtychar,0xff,256 * sizeof(*dirtychar));
@@ -273,7 +256,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 }
 
 
-void buggychl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( buggychl )
 {
 	int code;
 

@@ -1,6 +1,13 @@
+/***************************************************************************
+
+	Cinematronics Cosmic Chasm hardware
+
+***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "machine/z80fmly.h"
+#include "cchasm.h"
 
 #define M6840_CYCLE 1250  /* 800 kHz */
 
@@ -11,14 +18,13 @@ static int m6840_status;
 static int m6840_cr[3];
 
 
-static void cchasm_6840_irq (int state)
+static void cchasm_6840_irq(int state)
 {
-	cpu_set_irq_line (0, 4, state);
+	cpu_set_irq_line(0, 4, state);
 }
 
-static void timer_2_timeout (int dummy)
+static void timer_2_timeout(int dummy)
 {
-
 	if (m6840_cr[1] & 0x40)
 	{
 		/* set interrupt flags */

@@ -35,10 +35,10 @@ WRITE16_HANDLER( afega_vram_0_w );
 WRITE16_HANDLER( afega_vram_1_w );
 WRITE16_HANDLER( afega_palette_w );
 
-void grdnstrm_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( grdnstrm );
 
-int  afega_vh_start(void);
-void afega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( afega );
+VIDEO_UPDATE( afega );
 
 
 /***************************************************************************
@@ -394,95 +394,76 @@ static struct OKIM6295interface afega_m6295_intf =
 	{ 70 }
 };
 
-int interrupt_afega(void)
+INTERRUPT_GEN( interrupt_afega )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		return 2;
-		case 1:		return 4;
-		default:	return ignore_interrupt();
+		case 0:		irq2_line_hold();	break;
+		case 1:		irq4_line_hold();	break;
 	}
 }
 
-static const struct MachineDriver machine_driver_grdnstrm =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			afega_readmem, afega_writemem,0,0,
-			interrupt_afega, 2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ? */
-			afega_sound_readmem, afega_sound_writemem,0,0,
-			ignore_interrupt, 1	/* IRQ by YM2151, no NMI */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( grdnstrm )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(afega_readmem,afega_writemem)
+	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(afega_sound_readmem,afega_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	grdnstrm_gfxdecodeinfo,
-	768, 768 + 16*256,
-	grdnstrm_vh_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(grdnstrm_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+	MDRV_COLORTABLE_LENGTH(768 + 16*256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	afega_vh_start,
-	0,
-	afega_vh_screenrefresh,
+	MDRV_PALETTE_INIT(grdnstrm)
+	MDRV_VIDEO_START(afega)
+	MDRV_VIDEO_UPDATE(afega)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&afega_ym2151_intf	},
-		{	SOUND_OKIM6295,	&afega_m6295_intf	}
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, afega_ym2151_intf)
+	MDRV_SOUND_ADD(OKIM6295, afega_m6295_intf)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_stagger1 =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			afega_readmem, afega_writemem,0,0,
-			interrupt_afega, 2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ? */
-			afega_sound_readmem, afega_sound_writemem,0,0,
-			ignore_interrupt, 1	/* IRQ by YM2151, no NMI */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( stagger1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(afega_readmem,afega_writemem)
+	MDRV_CPU_VBLANK_INT(interrupt_afega,2)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(afega_sound_readmem,afega_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	stagger1_gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(stagger1_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	afega_vh_start,
-	0,
-	afega_vh_screenrefresh,
+	MDRV_VIDEO_START(afega)
+	MDRV_VIDEO_UPDATE(afega)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&afega_ym2151_intf	},
-		{	SOUND_OKIM6295,	&afega_m6295_intf	}
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, afega_ym2151_intf)
+	MDRV_SOUND_ADD(OKIM6295, afega_m6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -529,7 +510,7 @@ ROM_START( stagger1 )
 	ROM_CONTINUE(      0x00000, 0x40000             )
 ROM_END
 
-void init_stagger1(void)
+DRIVER_INIT( stagger1 )
 {
 	data16_t *RAM = (data16_t*)memory_region( REGION_CPU1 );
 
@@ -601,7 +582,7 @@ ROM_START( grdnstrm )
 ROM_END
 
 /* Address lines scrambling + Protection */
-void init_grdnstrm(void)
+DRIVER_INIT( grdnstrm )
 {
 	data8_t *RAM = memory_region       ( REGION_CPU1 );
 	size_t  size = memory_region_length( REGION_CPU1 );

@@ -373,6 +373,7 @@ void init_inpdir(void)
 
 void parse_cmdline (int argc, char **argv, int game_index, char *override_default_rompath)
 {
+	struct InternalMachineDriver drv;
 	static float f_beam;
 	const char *resolution, *vectorres;
 	const char *vesamode;
@@ -623,7 +624,8 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 	}
 
 	/* break up vector resolution into gfx_width and gfx_height */
-	if (drivers[game]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	expand_machine_driver(drivers[game]->drv, &drv);
+	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 		if (stricmp (vectorres, "auto") != 0)
 		{
 			char *tmp;

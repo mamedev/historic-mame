@@ -49,10 +49,9 @@ WRITE_HANDLER( mpatrol_bg2xpos_w );
 WRITE_HANDLER( mpatrol_bg2ypos_w );
 WRITE_HANDLER( mpatrol_bgcontrol_w );
 WRITE_HANDLER( mpatrol_flipscreen_w );
-int mpatrol_vh_start(void);
-void mpatrol_vh_stop(void);
-void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mpatrol_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( mpatrol );
+PALETTE_INIT( mpatrol );
+VIDEO_UPDATE( mpatrol );
 
 READ_HANDLER( mpatrol_input_port_3_r );
 
@@ -62,8 +61,8 @@ READ_HANDLER( mpatrol_input_port_3_r );
 /* if a read from this address doesn't return the value it expects. */
 READ_HANDLER( mpatrol_protection_r )
 {
-//logerror("%04x: read protection\n",cpu_get_pc());
-	return cpu_get_reg(Z80_DE) & 0xff;
+//logerror("%04x: read protection\n",activecpu_get_pc());
+	return activecpu_get_reg(Z80_DE) & 0xff;
 }
 
 
@@ -359,42 +358,34 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_mpatrol =
-{
+static MACHINE_DRIVER_START( mpatrol )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,        /* 3.072 MHz ? */
-			readmem,writemem,0,writeport,
-			interrupt,1
-		},
-		IREM_AUDIO_CPU
-	},
-	57, 1790,	/* accurate frequency, measured on a real board, is 56.75Hz. */
+	MDRV_CPU_ADD(Z80, 3072000)        /* 3.072 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(1790)	/* accurate frequency, measured on a real board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
 				/* talks about 55Hz and 1790ms vblank duration. */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 32*8-1 },
-	gfxdecodeinfo,
-	128+32+32,64*4+16*4+3*4,
-	mpatrol_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+32+32)
+	MDRV_COLORTABLE_LENGTH(64*4+16*4+3*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mpatrol_vh_start,
-	mpatrol_vh_stop,
-	mpatrol_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mpatrol)
+	MDRV_VIDEO_START(mpatrol)
+	MDRV_VIDEO_UPDATE(mpatrol)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		IREM_AUDIO
-	}
-};
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
 
 
 

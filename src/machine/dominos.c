@@ -1,13 +1,12 @@
 /***************************************************************************
 
-Atari Dominos machine
+	Atari Dominos hardware
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "dominos.h"
 
 static int dominos_attract = 0;
 
@@ -95,13 +94,13 @@ The only one of these I really understand is the VBLANK...
 ***************************************************************************/
 READ_HANDLER( dominos_sync_r )
 {
-		static int ac_line=0x00;
+	static int ac_line=0x00;
 
-		ac_line=(ac_line+1) % 3;
-		if (ac_line==0)
-				return ((input_port_4_r(0) & 0x7F) | dominos_attract | 0x80);
-		else
-				return ((input_port_4_r(0) & 0x7F) | dominos_attract );
+	ac_line=(ac_line+1) % 3;
+	if (ac_line==0)
+		return ((input_port_4_r(0) & 0x7F) | dominos_attract | 0x80);
+	else
+		return ((input_port_4_r(0) & 0x7F) | dominos_attract );
 }
 
 
@@ -135,7 +134,6 @@ Sound function
 WRITE_HANDLER( dominos_tumble_w )
 {
 	/* ??? */
-	return;
 }
 
 

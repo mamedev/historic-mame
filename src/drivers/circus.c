@@ -30,13 +30,13 @@ WRITE_HANDLER( circus_clown_x_w );
 WRITE_HANDLER( circus_clown_y_w );
 WRITE_HANDLER( circus_clown_z_w );
 
-extern int circus_vh_start(void);
+extern VIDEO_START( circus );
 
-extern void crash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void circus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void robotbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_UPDATE( crash );
+extern VIDEO_UPDATE( circus );
+extern VIDEO_UPDATE( robotbowl );
 
-extern int crash_interrupt(void);
+extern INTERRUPT_GEN( crash_interrupt );
 
 static int circus_interrupt;
 
@@ -198,7 +198,7 @@ INPUT_PORTS_START( ripcord )
 	PORT_ANALOG( 0xff, 115, IPT_PADDLE, 30, 10, 64, 167 )
 INPUT_PORTS_END
 
-static unsigned char palette[] =
+static unsigned char palette_source[] =
 {
 	0x00,0x00,0x00, /* BLACK */
 	0xff,0xff,0xff, /* WHITE */
@@ -206,9 +206,9 @@ static unsigned char palette[] =
 
 #define ARTWORK_COLORS (254 + 32768)
 
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( circus )
 {
-	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(palette,palette_source,sizeof(palette_source));
 }
 
 
@@ -267,23 +267,9 @@ static struct GfxDecodeInfo robotbowl_gfxdecodeinfo[] =
   Machine drivers
 ***************************************************************************/
 
-static void init_robotbwl(void)
-{
-	int i;
-
-	/* PROM is reversed, fix it! */
-
-	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
-		memory_region(REGION_GFX2)[i] ^= 0xFF;
-}
-
-static int ripcord_interrupt (void)
+static INTERRUPT_GEN( ripcord_interrupt )
 {
 	circus_interrupt = 0;
-	if (1)
-		return ignore_interrupt();
-	else
-		return interrupt();
 }
 
 static struct DACinterface dac_interface =
@@ -292,154 +278,110 @@ static struct DACinterface dac_interface =
 	{ 255, 255 }
 };
 
-static const struct MachineDriver machine_driver_circus =
-{
+static MACHINE_DRIVER_START( circus )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,	/* 705.562kHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		}
-	},
-	57, 3500,	/* frames per second, vblank duration (complete guess) */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,11289000/16)	/* 705.562kHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
-	init_palette,
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	circus_vh_start,
-	generic_vh_stop,
-	circus_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
+	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)	/* Leave extra colors for the overlay */
+	
+	MDRV_PALETTE_INIT(circus)
+	MDRV_VIDEO_START(circus)
+	MDRV_VIDEO_UPDATE(circus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_robotbwl =
-{
+static MACHINE_DRIVER_START( robotbwl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,	/* 705.562kHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		}
-	},
-	57, 3500,	/* frames per second, vblank duration (complete guess) */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,11289000/16)	/* 705.562kHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	robotbowl_gfxdecodeinfo,
-	2, 2,
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(robotbowl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	robotbowl_vh_screenrefresh,
+	MDRV_PALETTE_INIT(circus)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(robotbowl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_crash =
-{
+static MACHINE_DRIVER_START( crash )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,	/* 705.562kHz */
-			readmem,writemem,0,0,
-			interrupt,2
-		}
-	},
-	57, 3500,	/* frames per second, vblank duration (complete guess) */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,11289000/16)	/* 705.562kHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	2, 2,
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	crash_vh_screenrefresh,
+	MDRV_PALETTE_INIT(circus)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(crash)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ripcord =
-{
+static MACHINE_DRIVER_START( ripcord )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			705562,        /* 11.289MHz / 16 */
-			readmem,writemem,0,0,
-			ripcord_interrupt,1
-		}
-	},
-	57, 3500,	/* frames per second, vblank duration (complete guess) */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502, 705562)        /* 11.289MHz / 16 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ripcord_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3500)	/* frames per second, vblank duration (complete guess) */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	2, 2,
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	crash_vh_screenrefresh,
+	MDRV_PALETTE_INIT(circus)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(crash)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -482,7 +424,7 @@ ROM_START( robotbwl )
 	ROM_LOAD( "robotbwl.2c",  0x0400, 0x0200, 0x47b3e39c )
 	ROM_LOAD( "robotbwl.1c",  0x0600, 0x0200, 0xb2991e7e )
 
-	ROM_REGION( 0x0020, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x0020, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "robotbwl.14d", 0x0000, 0x0020, 0xa402ac06 )	/* Ball */
 ROM_END
 
@@ -532,7 +474,7 @@ ROM_END
 
 
 
-GAMEX( 1977, circus,   0, circus,   circus,   0,        ROT0, "Exidy", "Circus", GAME_IMPERFECT_SOUND )
-GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
-GAMEX( 1979, crash,    0, crash,    crash,    0,        ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
-GAMEX( 1977, ripcord,  0, ripcord,  ripcord,  0,        ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )
+GAMEX( 1977, circus,   0, circus,   circus,   0, ROT0, "Exidy", "Circus", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, 0, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
+GAMEX( 1979, crash,    0, crash,    crash,    0, ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
+GAMEX( 1977, ripcord,  0, ripcord,  ripcord,  0, ROT0, "Exidy", "Rip Cord", GAME_NOT_WORKING )

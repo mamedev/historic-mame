@@ -27,9 +27,8 @@ TODO:
 
 extern unsigned char *jackal_videoctrl;
 
-void jackal_init_machine(void);
-int jackal_vh_start(void);
-void jackal_vh_stop(void);
+MACHINE_INIT( jackal );
+VIDEO_START( jackal );
 
 READ_HANDLER( jackal_zram_r );
 READ_HANDLER( jackal_commonram_r );
@@ -44,8 +43,8 @@ WRITE_HANDLER( jackal_commonram1_w );
 WRITE_HANDLER( jackal_voram_w );
 WRITE_HANDLER( jackal_spriteram_w );
 
-void jackal_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void jackal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( jackal );
+VIDEO_UPDATE( jackal );
 
 
 
@@ -67,12 +66,10 @@ static WRITE_HANDLER( ctrl_w )
 	flip_screen_set(data & 0x08);
 }
 
-int jackal_interrupt(void)
+INTERRUPT_GEN( jackal_interrupt )
 {
 	if (irq_enable)
-		return interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -377,48 +374,38 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static const struct MachineDriver machine_driver_jackal =
-{
+static MACHINE_DRIVER_START( jackal )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2000000,	/* 2 MHz???? */
-			jackal_readmem,jackal_writemem,0,0,
-			jackal_interrupt,1
-		},
-		{
-			CPU_M6809,
-			2000000,	/* 2 MHz???? */
-			jackal_sound_readmem,jackal_sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - seems enough to keep the CPUs in sync */
-	jackal_init_machine,
+	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
+	MDRV_CPU_MEMORY(jackal_readmem,jackal_writemem)
+	MDRV_CPU_VBLANK_INT(jackal_interrupt,1)
+
+	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
+	MDRV_CPU_MEMORY(jackal_sound_readmem,jackal_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - seems enough to keep the CPUs in sync */
+
+	MDRV_MACHINE_INIT(jackal)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	jackal_gfxdecodeinfo,
-	512, 256*16+16*16+16*16,
-	jackal_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(jackal_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(256*16+16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	jackal_vh_start,
-	jackal_vh_stop,
-	jackal_vh_screenrefresh,
+	MDRV_PALETTE_INIT(jackal)
+	MDRV_VIDEO_START(jackal)
+	MDRV_VIDEO_UPDATE(jackal)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 

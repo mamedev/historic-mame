@@ -35,7 +35,7 @@ static struct tilemap *fg_tilemap, *bg_tilemap;
 
 ***************************************************************************/
 
-void mystston_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mystston )
 {
 	int i;
 
@@ -110,7 +110,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int mystston_vh_start(void)
+VIDEO_START( mystston )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,get_memory_offset,TILEMAP_TRANSPARENT, 8, 8,32,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,get_memory_offset,TILEMAP_OPAQUE,     16,16,16,32);
@@ -170,7 +170,7 @@ WRITE_HANDLER( mystston_2000_w )
 	flip_screen_set(data & 0x80);
 
 	/* other bits unused? */
-	logerror("PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
+	logerror("PC %04x: 2000 = %02x\n",activecpu_get_pc(),data);
 }
 
 
@@ -180,7 +180,7 @@ WRITE_HANDLER( mystston_2000_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -209,14 +209,14 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					(spriteram[offs] & 0x08) >> 3,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
-void mystston_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mystston )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

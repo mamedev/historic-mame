@@ -20,36 +20,28 @@ extern void tnk3_draw_status( struct mame_bitmap *bitmap, int bank, unsigned cha
 
 static int scrollx_base; /* this is the only difference in video hardware found so far */
 
-static int common_vh_start( void ){
-	dirtybuffer = malloc( 64*64 );
-	if( dirtybuffer ){
-		tmpbitmap = bitmap_alloc( 512, 512 );
-		if( tmpbitmap ){
-			memset( dirtybuffer, 1, 64*64  );
-			return 0;
-		}
-		free( dirtybuffer );
-	}
-	return 1;
+static VIDEO_START( common ){
+	dirtybuffer = auto_malloc( 64*64 );
+	if( !dirtybuffer )
+		return 1;
+	tmpbitmap = auto_bitmap_alloc( 512, 512 );
+	if( !tmpbitmap )
+		return 1;
+	memset( dirtybuffer, 1, 64*64  );
+	return 0;
 }
 
-int aso_vh_start( void ){
+VIDEO_START( aso ){
 	scrollx_base = -16;
-	return common_vh_start();
+	return video_start_common();
 }
 
-int hal21_vh_start( void ){
+VIDEO_START( hal21 ){
 	scrollx_base = 240;
-	return common_vh_start();
+	return video_start_common();
 }
 
-void aso_vh_stop( void ){
-	bitmap_free( tmpbitmap );
-	free( dirtybuffer );
-}
-
-
-void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( aso )
 {
 	int i;
 	int num_colors = 1024;
@@ -161,7 +153,7 @@ WRITE_HANDLER( hal21_vreg3_w ){ hal21_vreg[3] = data; }
 WRITE_HANDLER( hal21_vreg4_w ){ hal21_vreg[4] = data; }
 WRITE_HANDLER( hal21_vreg5_w ){ hal21_vreg[5] = data; }
 
-void aso_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ){
+VIDEO_UPDATE( aso ){
 	unsigned char *ram = memory_region(REGION_CPU1);
 	int attributes = hal21_vreg[1];
 	{
@@ -435,7 +427,7 @@ static int CPUB_latch = 0;
 
 static WRITE_HANDLER( CPUA_int_enable_w ){
 	if( CPUA_latch & SNK_NMI_PENDING ){
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		CPUA_latch = 0;
 	}
 	else {
@@ -445,7 +437,7 @@ static WRITE_HANDLER( CPUA_int_enable_w ){
 
 static READ_HANDLER( CPUA_int_trigger_r ){
 	if( CPUA_latch&SNK_NMI_ENABLE ){
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		CPUA_latch = 0;
 	}
 	else {
@@ -456,7 +448,7 @@ static READ_HANDLER( CPUA_int_trigger_r ){
 
 static WRITE_HANDLER( CPUB_int_enable_w ){
 	if( CPUB_latch & SNK_NMI_PENDING ){
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		CPUB_latch = 0;
 	}
 	else {
@@ -466,7 +458,7 @@ static WRITE_HANDLER( CPUB_int_enable_w ){
 
 static READ_HANDLER( CPUB_int_trigger_r ){
 	if( CPUB_latch&SNK_NMI_ENABLE ){
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		CPUB_latch = 0;
 	}
 	else {
@@ -477,8 +469,7 @@ static READ_HANDLER( CPUB_int_trigger_r ){
 
 static WRITE_HANDLER( snk_soundcommand_w ){
 	snk_soundcommand = data;
-	cpu_cause_interrupt( 2, Z80_IRQ_INT );
-//	cpu_cause_interrupt(2, 0xff); old ASO
+	cpu_set_irq_line( 2, 0, HOLD_LINE );
 }
 
 static READ_HANDLER( snk_soundcommand_r )
@@ -635,101 +626,75 @@ MEMORY_END
 
 /**************************************************************************/
 
-static const struct MachineDriver machine_driver_aso =
-{
-	{
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			aso_readmem_cpuA,aso_writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			aso_readmem_cpuB,aso_writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			aso_readmem_sound,aso_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( aso )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_MEMORY(aso_readmem_cpuA,aso_writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_MEMORY(aso_readmem_cpuB,aso_writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(aso_readmem_sound,aso_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* CPU slices per frame */
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
+	MDRV_GFXDECODE(aso_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	aso_gfxdecodeinfo,
-	1024, 0,
-	aso_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	aso_vh_start,
-	aso_vh_stop,
-	aso_vh_screenrefresh,
+	MDRV_PALETTE_INIT(aso)
+	MDRV_VIDEO_START(aso)
+	MDRV_VIDEO_UPDATE(aso)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-	    {
-	       SOUND_YM3526,
-	       &ym3526_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_hal21 = {
-	{
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz? */
-			hal21_readmem_CPUA,hal21_writemem_CPUA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz? */
-			hal21_readmem_CPUB,hal21_writemem_CPUB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			hal21_readmem_sound,hal21_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init_machine */
+static MACHINE_DRIVER_START( hal21 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz? */
+	MDRV_CPU_MEMORY(hal21_readmem_CPUA,hal21_writemem_CPUA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz? */
+	MDRV_CPU_MEMORY(hal21_readmem_CPUB,hal21_writemem_CPUB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(hal21_readmem_sound,hal21_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* CPU slices per frame */
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
-	aso_gfxdecodeinfo,
-	1024, 0,
-	aso_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
+	MDRV_GFXDECODE(aso_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	hal21_vh_start,
-	aso_vh_stop,
-	aso_vh_screenrefresh,
+	MDRV_PALETTE_INIT(aso)
+	MDRV_VIDEO_START(hal21)
+	MDRV_VIDEO_UPDATE(aso)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-	    {
-	       SOUND_AY8910,
-	       &ay8910_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /**************************************************************************/
 

@@ -83,7 +83,7 @@ static void get_text_tile_info(int tile_index)
 			0)
 }
 
-int raiden_vh_start(void)
+VIDEO_START( raiden )
 {
 	bg_layer = tilemap_create(get_back_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
 	fg_layer = tilemap_create(get_fore_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -99,7 +99,7 @@ int raiden_vh_start(void)
 	return 0;
 }
 
-int raidena_vh_start(void)
+VIDEO_START( raidena )
 {
 	bg_layer = tilemap_create(get_back_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
 	fg_layer = tilemap_create(get_fore_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -126,7 +126,7 @@ WRITE_HANDLER( raiden_control_w )
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,int pri_mask)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri_mask)
 {
 	int offs,fx,fy,x,y,color,sprite;
 
@@ -158,11 +158,11 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri_mask)
 		drawgfx(bitmap,Machine->gfx[3],
 				sprite,
 				color,fx,fy,x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void raiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( raiden )
 {
 	/* Setup the tilemaps, alternate version has different scroll positions */
 	if (!ALTERNATE) {
@@ -178,15 +178,15 @@ void raiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx( fg_layer,0, ((raiden_scroll_ram[0x32]&0x30)<<4)+((raiden_scroll_ram[0x34]&0x7f)<<1)+((raiden_scroll_ram[0x34]&0x80)>>7) );
 	}
 
-	tilemap_draw(bitmap,bg_layer,0,0);
+	tilemap_draw(bitmap,cliprect,bg_layer,0,0);
 
 	/* Draw sprites underneath foreground */
-	draw_sprites(bitmap,0x40);
-	tilemap_draw(bitmap,fg_layer,0,0);
+	draw_sprites(bitmap,cliprect,0x40);
+	tilemap_draw(bitmap,cliprect,fg_layer,0,0);
 
 	/* Rest of sprites */
-	draw_sprites(bitmap,0x80);
+	draw_sprites(bitmap,cliprect,0x80);
 
 	/* Text layer */
-	tilemap_draw(bitmap,tx_layer,0,0);
+	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
 }

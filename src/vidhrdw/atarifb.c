@@ -1,13 +1,12 @@
-/***************************************************************************
+/*************************************************************************
 
-  vidhrdw.c
+	Atari Football hardware
 
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "atarifb.h"
 
 /* local */
 size_t atarifb_alphap1_vram_size;
@@ -15,15 +14,7 @@ size_t atarifb_alphap2_vram_size;
 unsigned char *atarifb_alphap1_vram;
 unsigned char *atarifb_alphap2_vram;
 unsigned char *atarifb_scroll_register;
-unsigned char *alphap1_dirtybuffer;
-unsigned char *alphap2_dirtybuffer;
 
-extern int atarifb_game;
-
-WRITE_HANDLER( atarifb_alphap1_vram_w );
-WRITE_HANDLER( atarifb_alphap2_vram_w );
-WRITE_HANDLER( atarifb_scroll_w );
-void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
 struct rectangle bigfield_area = {  4*8, 34*8-1, 0*8, 32*8-1 };
 struct rectangle left_area =     {  0*8,  3*8-1, 0*8, 32*8-1 };
@@ -33,22 +24,12 @@ struct rectangle right_area =    { 34*8, 38*8-1, 0*8, 32*8-1 };
 ***************************************************************************/
 WRITE_HANDLER( atarifb_alphap1_vram_w )
 {
-	if (atarifb_alphap1_vram[offset] != data)
-	{
-		atarifb_alphap1_vram[offset] = data;
-
-		alphap1_dirtybuffer[offset] = 1;
-	}
+	atarifb_alphap1_vram[offset] = data;
 }
 
 WRITE_HANDLER( atarifb_alphap2_vram_w )
 {
-	if (atarifb_alphap2_vram[offset] != data)
-	{
-		atarifb_alphap2_vram[offset] = data;
-
-		alphap2_dirtybuffer[offset] = 1;
-	}
+	atarifb_alphap2_vram[offset] = data;
 }
 
 /***************************************************************************
@@ -65,36 +46,15 @@ WRITE_HANDLER( atarifb_scroll_w )
 /***************************************************************************
 ***************************************************************************/
 
-int atarifb_vh_start(void)
+VIDEO_START( atarifb )
 {
-	if (generic_vh_start()!=0)
+	if (video_start_generic())
 		return 1;
 
-	alphap1_dirtybuffer = malloc (atarifb_alphap1_vram_size);
-	alphap2_dirtybuffer = malloc (atarifb_alphap2_vram_size);
-	if ((!alphap1_dirtybuffer) || (!alphap2_dirtybuffer))
-	{
-		generic_vh_stop();
-		return 1;
-	}
-
-	memset(alphap1_dirtybuffer, 1, atarifb_alphap1_vram_size);
-	memset(alphap2_dirtybuffer, 1, atarifb_alphap2_vram_size);
 	memset(dirtybuffer, 1, videoram_size);
 
 	return 0;
 }
-
-/***************************************************************************
-***************************************************************************/
-
-void atarifb_vh_stop(void)
-{
-	generic_vh_stop();
-	free (alphap1_dirtybuffer);
-	free (alphap2_dirtybuffer);
-}
-
 
 /***************************************************************************
 
@@ -103,17 +63,14 @@ void atarifb_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( atarifb )
 {
 	int offs,obj;
 	int sprite_bank;
 
-	if (full_refresh)
-	{
-		memset(alphap1_dirtybuffer, 1, atarifb_alphap1_vram_size);
-		memset(alphap2_dirtybuffer, 1, atarifb_alphap2_vram_size);
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
-	}
 
 	/* Soccer uses a different graphics set for sprites */
 	if (atarifb_game == 4)
@@ -125,29 +82,24 @@ void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	/* since last time and update it accordingly. */
 	for (offs = atarifb_alphap1_vram_size - 1;offs >= 0;offs--)
 	{
-		if (alphap1_dirtybuffer[offs])
+		int charcode;
+		int flipbit;
+		int disable;
+		int sx,sy;
+
+		sx = 8 * (offs / 32) + 35*8;
+		sy = 8 * (offs % 32) + 8;
+
+		charcode = atarifb_alphap1_vram[offs] & 0x3f;
+		flipbit = (atarifb_alphap1_vram[offs] & 0x40) >> 6;
+		disable = (atarifb_alphap1_vram[offs] & 0x80) >> 7;
+
+		if (!disable)
 		{
-			int charcode;
-			int flipbit;
-			int disable;
-			int sx,sy;
-
-			alphap1_dirtybuffer[offs] = 0;
-
-			sx = 8 * (offs / 32) + 35*8;
-			sy = 8 * (offs % 32) + 8;
-
-			charcode = atarifb_alphap1_vram[offs] & 0x3f;
-			flipbit = (atarifb_alphap1_vram[offs] & 0x40) >> 6;
-			disable = (atarifb_alphap1_vram[offs] & 0x80) >> 7;
-
-			if (!disable)
-			{
-				drawgfx(bitmap,Machine->gfx[0],
-					charcode, 0,
-					flipbit,flipbit,sx,sy,
-					&right_area,TRANSPARENCY_NONE,0);
-			}
+			drawgfx(bitmap,Machine->gfx[0],
+				charcode, 0,
+				flipbit,flipbit,sx,sy,
+				&right_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -155,29 +107,24 @@ void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	/* since last time and update it accordingly. */
 	for (offs = atarifb_alphap2_vram_size - 1;offs >= 0;offs--)
 	{
-		if (alphap2_dirtybuffer[offs])
+		int charcode;
+		int flipbit;
+		int disable;
+		int sx,sy;
+
+		sx = 8 * (offs / 32);
+		sy = 8 * (offs % 32) + 8;
+
+		charcode = atarifb_alphap2_vram[offs] & 0x3f;
+		flipbit = (atarifb_alphap2_vram[offs] & 0x40) >> 6;
+		disable = (atarifb_alphap2_vram[offs] & 0x80) >> 7;
+
+		if (!disable)
 		{
-			int charcode;
-			int flipbit;
-			int disable;
-			int sx,sy;
-
-			alphap2_dirtybuffer[offs] = 0;
-
-			sx = 8 * (offs / 32);
-			sy = 8 * (offs % 32) + 8;
-
-			charcode = atarifb_alphap2_vram[offs] & 0x3f;
-			flipbit = (atarifb_alphap2_vram[offs] & 0x40) >> 6;
-			disable = (atarifb_alphap2_vram[offs] & 0x80) >> 7;
-
-			if (!disable)
-			{
-				drawgfx(bitmap,Machine->gfx[0],
-					charcode, 0,
-					flipbit,flipbit,sx,sy,
-					&left_area,TRANSPARENCY_NONE,0);
-			}
+			drawgfx(bitmap,Machine->gfx[0],
+				charcode, 0,
+				flipbit,flipbit,sx,sy,
+				&left_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -280,7 +227,6 @@ if (atarifb_game != 4)
 {
 	int x;
 	char buf1[25], buf2[25];
-extern int atarifb_lamp1, atarifb_lamp2;
 
 	switch (atarifb_game)
 	{

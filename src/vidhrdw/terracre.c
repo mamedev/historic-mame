@@ -24,7 +24,7 @@ static const unsigned char *spritepalettebank;
   Convert color prom.
 ***************************************************************************/
 
-void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( terrac )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -114,40 +114,23 @@ READ16_HANDLER( terrac_videoram2_r )
 
 
 /***************************************************************************
-  Stop the video hardware emulation.
-***************************************************************************/
-
-void terrac_vh_stop(void)
-{
-	free(dirtybuffer2);
-	bitmap_free(tmpbitmap2);
-	generic_vh_stop();
-}
-
-/***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
 
 
-int terrac_vh_start(void)
+VIDEO_START( terrac )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(terrac_videoram2_size/2)) == 0)
-	{
-		terrac_vh_stop();
+	if ((dirtybuffer2 = auto_malloc(terrac_videoram2_size/2)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer2,1,terrac_videoram2_size/2);
 
 	/* the background area is 4 x 1 (90 Rotated!) */
-	if ((tmpbitmap2 = bitmap_alloc(4*Machine->drv->screen_width,
+	if ((tmpbitmap2 = auto_bitmap_alloc(4*Machine->drv->screen_width,
 			1*Machine->drv->screen_height)) == 0)
-	{
-		terrac_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
@@ -161,7 +144,7 @@ int terrac_vh_start(void)
   the main emulation engine.
 
 ***************************************************************************/
-void terracre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( terracre )
 {
 	int offs,x,y;
 

@@ -57,7 +57,7 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int bloodbro_vh_start(void)
+VIDEO_START( bloodbro )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,16);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,16);
@@ -154,7 +154,7 @@ WRITE16_HANDLER( bloodbro_txvideoram_w )
    -------X XXXXXXXX
    -------- YYYYYYYY */
 
-static void bloodbro_draw_sprites( struct mame_bitmap *bitmap)
+static void bloodbro_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -186,7 +186,7 @@ static void bloodbro_draw_sprites( struct mame_bitmap *bitmap)
 						color,
 						flipx,flipy,
 						flipx ? (sx + 16*(width-x)) : (sx + 16*x),flipy ? (sy + 16*(height-y)) : (sy + 16*y),
-						&Machine->visible_area,TRANSPARENCY_PEN,15,
+						cliprect,TRANSPARENCY_PEN,15,
 						pri_mask);
 			}
 		}
@@ -201,7 +201,7 @@ static void bloodbro_draw_sprites( struct mame_bitmap *bitmap)
    -------X XXXXXXXX
 */
 
-static void weststry_draw_sprites( struct mame_bitmap *bitmap)
+static void weststry_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -230,57 +230,57 @@ static void weststry_draw_sprites( struct mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15,
+				cliprect,TRANSPARENCY_PEN,15,
 				pri_mask);
 	}
 }
 
 
 
-void bloodbro_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( bloodbro )
 {
 	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x10]);	/* ? */
 	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
 	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
 	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,1);
-	bloodbro_draw_sprites(bitmap);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,1);
+	bloodbro_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
-void weststry_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( weststry )
 {
 //	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x10]);	/* ? */
 //	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x11]);	/* ? */
 //	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x12]);
 //	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x13]);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,1);
-	weststry_draw_sprites(bitmap);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,1);
+	weststry_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
 
-void skysmash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( skysmash )
 {
 	tilemap_set_scrollx(bg_tilemap,0,bloodbro_scroll[0x08]);
 	tilemap_set_scrolly(bg_tilemap,0,bloodbro_scroll[0x09]);	/* ? */
 	tilemap_set_scrollx(fg_tilemap,0,bloodbro_scroll[0x0a]);
 	tilemap_set_scrolly(fg_tilemap,0,bloodbro_scroll[0x0b]);	/* ? */
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,1);
-	bloodbro_draw_sprites(bitmap);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,1);
+	bloodbro_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
 

@@ -1,8 +1,6 @@
 /*************************************************************************
 
-	Turbo - Sega - 1981
-	Subroc 3D - Sega - 1982
-	Buck Rogers: Planet of Zoom - Sega - 1982
+	Sega Z80-3D system
 
 *************************************************************************/
 
@@ -55,7 +53,7 @@ static UINT32 sprite_mask;
 
 ***************************************************************************/
 
-void turbo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( turbo )
 {
 	int i;
 
@@ -110,7 +108,7 @@ void turbo_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-void subroc3d_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( subroc3d )
 {
 	int i;
 
@@ -148,7 +146,7 @@ void subroc3d_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-void buckrog_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( buckrog )
 {
 	int i;
 
@@ -182,13 +180,13 @@ void buckrog_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 		int bit0, bit1, bit2;
 
 		/* red component */
-		bit0 =
+		bit0 = 
 		bit1 = (*color_prom >> 0) & 1;
 		bit2 = (*color_prom >> 1) & 1;
 		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
 
 		/* green component */
-		bit0 =
+		bit0 = 
 		bit1 = (*color_prom >> 2) & 1;
 		bit2 = (*color_prom >> 3) & 1;
 		*palette++ = 34 * bit0 + 68 * bit1 + 137 * bit2;
@@ -252,17 +250,14 @@ static int init_sprites(UINT32 sprite_expand[16], UINT8 sprite_enable[16], int e
 	int i, j;
 
 	/* allocate the expanded sprite data */
-	sprite_expanded_data = malloc(sprite_length * 2 * sizeof(UINT32));
+	sprite_expanded_data = auto_malloc(sprite_length * 2 * sizeof(UINT32));
 	if (!sprite_expanded_data)
 		return 1;
-
+	
 	/* allocate the expanded sprite enable array */
-	sprite_expanded_enable = malloc(sprite_length * 2 * sizeof(UINT8));
+	sprite_expanded_enable = auto_malloc(sprite_length * 2 * sizeof(UINT8));
 	if (!sprite_expanded_enable)
-	{
-		free(sprite_expanded_data);
 		return 1;
-	}
 
 	/* expand the sprite ROMs */
 	src = sprite_gfxdata;
@@ -288,21 +283,9 @@ static int init_sprites(UINT32 sprite_expand[16], UINT8 sprite_enable[16], int e
 			sprite_enable[j] <<= 1;
 		}
 	}
-
+	
 	/* success */
 	return 0;
-}
-
-
-static void free_sprites(void)
-{
-	if (sprite_expanded_enable)
-		free(sprite_expanded_enable);
-	sprite_expanded_enable = NULL;
-
-	if (sprite_expanded_data)
-		free(sprite_expanded_data);
-	sprite_expanded_data = NULL;
 }
 
 
@@ -320,9 +303,9 @@ static int init_fore(void)
 	UINT16 *dst;
 	UINT8 *src;
 	int i, j;
-
+	
 	/* allocate the expanded foreground data */
-	fore_expanded_data = malloc(fore_length);
+	fore_expanded_data = auto_malloc(fore_length);
 	if (!fore_expanded_data)
 		return 1;
 
@@ -342,16 +325,8 @@ static int init_fore(void)
 		}
 		*dst++ = newbits;
 	}
-
+	
 	return 0;
-}
-
-
-static void free_fore(void)
-{
-	if (fore_expanded_data)
-		free(fore_expanded_data);
-	fore_expanded_data = NULL;
 }
 
 
@@ -362,7 +337,7 @@ static void free_fore(void)
 
 ***************************************************************************/
 
-int turbo_vh_start(void)
+VIDEO_START( turbo )
 {
 	UINT32 sprite_expand[16];
 	UINT8 sprite_enable[16];
@@ -403,19 +378,12 @@ int turbo_vh_start(void)
 
 	/* initialize the fore data */
 	if (init_fore())
-	{
-		free_sprites();
 		return 1;
-	}
 
 	/* allocate the expanded road palette */
-	road_expanded_palette = malloc(0x40 * sizeof(UINT16));
+	road_expanded_palette = auto_malloc(0x40 * sizeof(UINT16));
 	if (!road_expanded_palette)
-	{
-		free_fore();
-		free_sprites();
 		return 1;
-	}
 
 	/* expand the road palette */
 	src = road_palette;
@@ -432,12 +400,12 @@ int turbo_vh_start(void)
 }
 
 
-int subroc3d_vh_start(void)
+VIDEO_START( subroc3d )
 {
 	UINT32 sprite_expand[16];
 	UINT8 sprite_enable[16];
 	int i;
-
+	
 	/* determine ROM/PROM addresses */
 	sprite_priority = memory_region(REGION_PROMS) + 0x0500;
 	fore_palette = memory_region(REGION_PROMS) + 0x0200;
@@ -455,19 +423,12 @@ int subroc3d_vh_start(void)
 
 	/* initialize the fore data */
 	if (init_fore())
-	{
-		free_sprites();
 		return 1;
-	}
 
 	/* allocate the expanded sprite priority map */
-	sprite_expanded_priority = malloc(1 << 12);
+	sprite_expanded_priority = auto_malloc(1 << 12);
 	if (!sprite_expanded_priority)
-	{
-		free_fore();
-		free_sprites();
 		return 1;
-	}
 
 	/* expand the sprite priority map */
 	for (i = 0; i < (1 << 12); i++)
@@ -487,12 +448,12 @@ int subroc3d_vh_start(void)
 }
 
 
-int buckrog_vh_start(void)
+VIDEO_START( buckrog )
 {
 	UINT32 sprite_expand[16];
 	UINT8 sprite_enable[16];
 	int i;
-
+	
 	/* determine ROM/PROM addresses */
 	fore_priority = memory_region(REGION_PROMS) + 0x400;
 	back_data = memory_region(REGION_GFX3);
@@ -510,19 +471,12 @@ int buckrog_vh_start(void)
 
 	/* initialize the fore data */
 	if (init_fore())
-	{
-		free_sprites();
 		return 1;
-	}
 
 	/* allocate the expanded sprite priority map */
-	sprite_expanded_priority = malloc(1 << 8);
+	sprite_expanded_priority = auto_malloc(1 << 8);
 	if (!sprite_expanded_priority)
-	{
-		free_fore();
-		free_sprites();
 		return 1;
-	}
 
 	/* expand the sprite priority map */
 	for (i = 0; i < (1 << 8); i++)
@@ -538,53 +492,17 @@ int buckrog_vh_start(void)
 		else sprite_expanded_priority[i] = 0;
 		sprite_expanded_priority[i] *= 4;
 	}
-
+	
 	/* allocate the bitmap RAM */
-	buckrog_bitmap_ram = malloc(0xe000);
+	buckrog_bitmap_ram = auto_malloc(0xe000);
 	if (!buckrog_bitmap_ram)
-	{
-		free(sprite_expanded_priority);
-		free_fore();
-		free_sprites();
-	}
+		return 1;
 
 	/* other stuff */
 	sprite_mask = 0xffff;
 
 	/* return success */
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-	Video shutdown
-
-***************************************************************************/
-
-void turbo_vh_stop(void)
-{
-	free(road_expanded_palette);
-	free_fore();
-	free_sprites();
-}
-
-
-void subroc3d_vh_stop(void)
-{
-	free(sprite_expanded_priority);
-	free_fore();
-	free_sprites();
-}
-
-
-void buckrog_vh_stop(void)
-{
-	free(buckrog_bitmap_ram);
-	free(sprite_expanded_priority);
-	free_fore();
-	free_sprites();
 }
 
 
@@ -638,7 +556,7 @@ static void subroc3d_update_sprite_info(void)
 {
 	struct sprite_params_data *data = sprite_params;
 	int i;
-
+	
 	/* first loop over all sprites and update those whose scanlines intersect ours */
 	for (i = 0; i < 16; i++, data++)
 	{
@@ -1209,7 +1127,7 @@ static void buckrog_render(struct mame_bitmap *bitmap, int xoffs)
 
 ***************************************************************************/
 
-void turbo_vh_eof(void)
+VIDEO_EOF( turbo )
 {
 	/* only do collision checking if we didn't draw */
 	if (!drew_frame)
@@ -1218,7 +1136,7 @@ void turbo_vh_eof(void)
 }
 
 
-void turbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( turbo )
 {
 	/* perform the actual drawing */
 	turbo_render(bitmap, 64);
@@ -1231,7 +1149,7 @@ void turbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 }
 
 
-void subroc3d_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( subroc3d )
 {
 	/* perform the actual drawing */
 	subroc3d_render(bitmap, 16);
@@ -1241,7 +1159,7 @@ void subroc3d_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 }
 
 
-void buckrog_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( buckrog )
 {
 	/* perform the actual drawing */
 	buckrog_render(bitmap, 7*8);

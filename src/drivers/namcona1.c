@@ -130,7 +130,7 @@ static const UINT8 ExbaniaInitData[] =
 /* would it be safe to allocate namcona1_nvmem in namcona1_vh_start? */
 static data8_t namcona1_nvmem[NA1_NVRAM_SIZE];
 
-static void namcosna1_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( namcosna1 )
 {
 	if( read_or_write )
 	{
@@ -644,7 +644,7 @@ static void namcona1_blit( void )
 	int source_bytes_per_row, src_pitch;
 
 	logerror( "0x%08x: blt(%08x,%08x,%08x);%04x %04x %04x; %04x %04x %04x; gfx=%04x\n",
-		cpu_get_pc(),
+		activecpu_get_pc(),
 		dst_baseaddr,src_baseaddr,num_bytes,
 		src0,src1,src2,
 		dst0,dst1,dst2,
@@ -755,7 +755,7 @@ static MEMORY_WRITE16_START( namcona1_writemem )
 	{ 0xfff000, 0xffffff, MWA16_RAM, &spriteram16 },
 MEMORY_END
 
-int namcona1_interrupt( void )
+INTERRUPT_GEN( namcona1_interrupt )
 {
 	if( mEnableInterrupts )
 	{
@@ -763,47 +763,50 @@ int namcona1_interrupt( void )
 		int level = cpu_getiloops(); /* 0,1,2,3,4 */
 		if( (enable&(1<<level))==0 )
 		{
-			return level+1;
+			cpu_set_irq_line(0, level+1, HOLD_LINE);
 		}
 	}
-	return ignore_interrupt();
 }
 
-#define NAMCONA1_MACHINEDRIVER( NAME, INSET ) \
-static struct MachineDriver machine_driver_##NAME = { \
-	{ \
-		{ \
-			CPU_M68000, \
-			8000000, /* 8MHz? */ \
-			namcona1_readmem,namcona1_writemem,0,0, \
-			namcona1_interrupt,5 \
- 		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	0, \
-	/* video hardware */ \
-	38*8, 32*8, { INSET, 38*8-1-INSET, 4*8, 32*8-1 }, \
-	0,/* gfxdecodeinfo */ \
-	8192, 0, \
-	0, \
-	VIDEO_TYPE_RASTER, \
-	0, \
-	namcona1_vh_start, \
-	namcona1_vh_stop, \
-	namcona1_vh_screenrefresh, \
-	/* sound hardware */ \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
-	{ \
-		{ \
-			0 /* similar to C140?  managed by MCU */ \
-		} \
-	}, \
-	namcosna1_nvram_handler \
-};
 
-NAMCONA1_MACHINEDRIVER( namcona1, 8 )	/* cropped at sides */
-NAMCONA1_MACHINEDRIVER( namcona1w, 0 )	/* full-width */
+/* cropped at sides */
+static MACHINE_DRIVER_START( namcona1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8MHz? */
+	MDRV_CPU_MEMORY(namcona1_readmem,namcona1_writemem)
+	MDRV_CPU_VBLANK_INT(namcona1_interrupt,5)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(namcosna1)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(38*8, 32*8)
+	MDRV_VISIBLE_AREA(8, 38*8-1-8, 4*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(namcona1)
+	MDRV_VIDEO_UPDATE(namcona1)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	/* similar to C140?  managed by MCU */
+MACHINE_DRIVER_END
+
+
+/* full-width */
+static MACHINE_DRIVER_START( namcona1w )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(namcona1)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 38*8-1-0, 4*8, 32*8-1)
+MACHINE_DRIVER_END
+
 
 static void init_namcona1( UINT32 program_size )
 {
@@ -822,16 +825,16 @@ static void init_namcona1( UINT32 program_size )
 	mEnableInterrupts = 0;
 }
 
-void init_bkrtmaq(  void ){ init_namcona1( 0x200000 ); mCustomKey = key_bkrtmaq; }
-void init_cgangpzl( void ){ init_namcona1( 0x100000 ); mCustomKey = key_cgangpzl; }
-void init_emeralda( void ){ init_namcona1( 0x200000 ); mCustomKey = key_emeralda; }
-void init_exbania(  void ){ init_namcona1( 0x100000 ); mCustomKey = key_exbania; }
-void init_fa(       void ){ init_namcona1( 0x200000 ); mCustomKey = key_fa; }
-void init_knckhead( void ){ init_namcona1( 0x200000 ); mCustomKey = key_knckhead; }
-void init_numanath( void ){ init_namcona1( 0x200000 ); mCustomKey = key_numanath; }
-void init_quiztou(  void ){ init_namcona1( 0x200000 ); mCustomKey = key_quiztou; }
-void init_swcourt(  void ){ init_namcona1( 0x200000 ); mCustomKey = key_swcourt; }
-void init_tinklpit( void ){ init_namcona1( 0x200000 ); mCustomKey = key_tinklpit; }
+DRIVER_INIT( bkrtmaq ){ init_namcona1( 0x200000 ); mCustomKey = key_bkrtmaq; }
+DRIVER_INIT( cgangpzl ){ init_namcona1( 0x100000 ); mCustomKey = key_cgangpzl; }
+DRIVER_INIT( emeralda ){ init_namcona1( 0x200000 ); mCustomKey = key_emeralda; }
+DRIVER_INIT( exbania ){ init_namcona1( 0x100000 ); mCustomKey = key_exbania; }
+DRIVER_INIT( fa ){ init_namcona1( 0x200000 ); mCustomKey = key_fa; }
+DRIVER_INIT( knckhead ){ init_namcona1( 0x200000 ); mCustomKey = key_knckhead; }
+DRIVER_INIT( numanath ){ init_namcona1( 0x200000 ); mCustomKey = key_numanath; }
+DRIVER_INIT( quiztou ){ init_namcona1( 0x200000 ); mCustomKey = key_quiztou; }
+DRIVER_INIT( swcourt ){ init_namcona1( 0x200000 ); mCustomKey = key_swcourt; }
+DRIVER_INIT( tinklpit ){ init_namcona1( 0x200000 ); mCustomKey = key_tinklpit; }
 
 ROM_START( bkrtmaq )
 	ROM_REGION( 0x680000, REGION_CPU1, 0 )

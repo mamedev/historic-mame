@@ -52,18 +52,18 @@ static struct artwork_element gypsyjug_artwork[] = {
 /*************************************************************/
 /* video handler start                                       */
 /*************************************************************/
-int deadeye_vh_start(void)
+VIDEO_START( deadeye )
 {
-	if( generic_vh_start() ) return 1;
+	if( video_start_generic() ) return 1;
 
 	overlay_create(deadeye_artwork, 2);
 
     return 0;
 }
 
-int gypsyjug_vh_start(void)
+VIDEO_START( gypsyjug )
 {
-	if( generic_vh_start() ) return 1;
+	if( video_start_generic() ) return 1;
 
 	overlay_create(gypsyjug_artwork, 2);
 
@@ -115,11 +115,11 @@ int     i;
 /*************************************************************/
 /* Screen refresh											 */
 /*************************************************************/
-void meadows_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( meadows )
 {
 	int 	i;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,SCR_VERT * SCR_HORZ);
 
     /* the first two rows are invisible */
@@ -133,13 +133,15 @@ void meadows_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			x = (i % SCR_HORZ) * CHR_HORZ;
 			y = (i / SCR_HORZ) * CHR_VERT;
 
-			drawgfx(bitmap, Machine->gfx[0],
+			drawgfx(tmpbitmap, Machine->gfx[0],
 				videoram[i] & 0x7f, 1, 0,0, x, y,
 				&Machine->visible_area,
 				TRANSPARENCY_NONE,0);
 			meadows_char_dirty(x,y);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+
 	/* now draw the sprites */
 	meadows_draw_sprites(bitmap);
 }

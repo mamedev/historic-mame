@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vmissile.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Missile Command hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "missile.h"
 
 unsigned char *missile_videoram;
 
@@ -17,11 +16,14 @@ unsigned char *missile_videoram;
   Start the video hardware emulation.
 
 ***************************************************************************/
-int missile_vh_start(void)
-{
 
+VIDEO_START( missile )
+{
 	/* force video ram to be $0000-$FFFF even though only $1900-$FFFF is used */
-	if ((missile_videoram = malloc (256 * 256)) == 0)
+	if ((missile_videoram = auto_malloc (256 * 256)) == 0)
+		return 1;
+
+	if ((tmpbitmap = auto_bitmap_alloc(256, 256)) == 0)
 		return 1;
 
 	memset (missile_videoram, 0, 256 * 256);
@@ -29,16 +31,6 @@ int missile_vh_start(void)
 }
 
 
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void missile_vh_stop(void)
-{
-	free (missile_videoram);
-}
 
 /********************************************************************************************/
 READ_HANDLER( missile_video_r )
@@ -64,14 +56,14 @@ static void missile_blit_w (offs_t offset)
 	/* cocktail mode */
 	if (flip_screen)
 	{
-		y = Machine->scrbitmap->height - 1 - y;
+		y = tmpbitmap->height - 1 - y;
 	}
 
 	color = (missile_videoram[offset] >> 5);
 
 	if (bottom) color &= 0x06;
 
-	plot_pixel(Machine->scrbitmap, x, y, Machine->pens[color]);
+	plot_pixel(tmpbitmap, x, y, Machine->pens[color]);
 }
 
 /********************************************************************************************/
@@ -160,13 +152,14 @@ WRITE_HANDLER( missile_video_3rd_bit_w )
 
 
 /********************************************************************************************/
-void missile_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( missile )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int offs;
 
 		for (offs = 0x1900; offs <= 0xffff; offs++)
 			missile_blit_w (offs);
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

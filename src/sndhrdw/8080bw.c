@@ -32,9 +32,8 @@
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "machine/74123.h"
-
-void invaders_flip_screen_w(int data);
-void invaders_screen_red_w(int data);
+#include "vidhrdw/generic.h"
+#include "8080bw.h"
 
 static WRITE_HANDLER( invad2ct_sh_port1_w );
 static WRITE_HANDLER( invaders_sh_port3_w );
@@ -52,16 +51,6 @@ static WRITE_HANDLER( ballbomb_sh_port5_w );
 
 static WRITE_HANDLER( boothill_sh_port3_w );
 static WRITE_HANDLER( boothill_sh_port5_w );
-READ_HANDLER( boothill_port_0_r );
-READ_HANDLER( boothill_port_1_r );
-
-READ_HANDLER( gunfight_port_0_r );
-READ_HANDLER( gunfight_port_1_r );
-
-READ_HANDLER( seawolf_port_1_r );
-
-WRITE_HANDLER( desertgu_controller_select_w );
-READ_HANDLER( desertgu_port_1_r );
 
 static WRITE_HANDLER( schaser_sh_port3_w );
 static WRITE_HANDLER( schaser_sh_port5_w );
@@ -170,7 +159,7 @@ struct Samplesinterface invad2ct_samples_interface =
 };
 
 
-void init_machine_invaders(void)
+MACHINE_INIT( invaders )
 {
 	install_port_write_handler(0, 0x03, 0x03, invaders_sh_port3_w);
 	install_port_write_handler(0, 0x05, 0x05, invaders_sh_port5_w);
@@ -183,7 +172,7 @@ void init_machine_invaders(void)
 	SN76477_vco_w(0, 1);
 }
 
-void init_machine_sstrngr2(void)
+MACHINE_INIT( sstrangr )
 {
 	install_port_write_handler(0, 0x42, 0x42, invaders_sh_port3_w);
 	install_port_write_handler(0, 0x44, 0x44, invaders_sh_port5_w);
@@ -194,17 +183,11 @@ void init_machine_sstrngr2(void)
 	SN76477_mixer_b_w(0, 0);
 	SN76477_mixer_c_w(0, 0);
 	SN76477_vco_w(0, 1);
-
-	/* patch ROM.  This is not a bad dump, because the ROM test passes
-	   with the way it is, but the game doesn't work.  Maybe there
-	   are bit inverters enabled by the ROM test DSW */
-
-//	memory_region(REGION_CPU1)[0x0010] = 0xf5;	/* push af */
 }
 
-void init_machine_invad2ct(void)
+MACHINE_INIT( invad2ct )
 {
-	init_machine_invaders();
+	machine_init_invaders();
 
 	install_port_write_handler(0, 0x01, 0x01, invad2ct_sh_port1_w);
 	install_port_write_handler(0, 0x07, 0x07, invad2ct_sh_port7_w);
@@ -249,7 +232,7 @@ static void invaders_sh_1_w(int board, int data, unsigned char *last)
 	if (data & 0x10 && ~*last & 0x10)
 		sample_start (base_channel+2, 8, 0);				/* Bonus Missle Base */
 
-	invaders_screen_red_w(data & 0x04);
+	c8080bw_screen_red_w(data & 0x04);
 
 	*last = data;
 }
@@ -276,7 +259,7 @@ static void invaders_sh_2_w(int board, int data, unsigned char *last)
 	if (data & 0x10 && ~*last & 0x10)
 		sample_start (base_channel+3, base_sample+7, 0);	/* Saucer Hit */
 
-	invaders_flip_screen_w(data & 0x20);
+	c8080bw_flip_screen_w(data & 0x20);
 
 	*last = data;
 }
@@ -317,7 +300,7 @@ static WRITE_HANDLER( invad2ct_sh_port7_w )
 /*                                                     */
 /*******************************************************/
 
-void init_machine_gunfight(void)
+MACHINE_INIT( gunfight )
 {
 	install_port_read_handler(0, 0x00, 0x00, gunfight_port_0_r);
 	install_port_read_handler(0, 0x01, 0x01, gunfight_port_1_r);
@@ -351,7 +334,7 @@ struct Samplesinterface boothill_samples_interface =
 /* HC 4/14/98 NOTE: *I* THINK there are sounds missing...
 i dont know for sure... but that is my guess....... */
 
-void init_machine_boothill(void)
+MACHINE_INIT( boothill )
 {
 	install_port_read_handler (0, 0x00, 0x00, boothill_port_0_r);
 	install_port_read_handler (0, 0x01, 0x01, boothill_port_1_r);
@@ -401,7 +384,7 @@ static WRITE_HANDLER( boothill_sh_port5_w )
 /* This only does the color swap for the explosion */
 /* We do not have correct samples so sound not done */
 
-void init_machine_ballbomb(void)
+MACHINE_INIT( ballbomb )
 {
 	install_port_write_handler(0, 0x03, 0x03, ballbomb_sh_port3_w);
 	install_port_write_handler(0, 0x05, 0x05, ballbomb_sh_port5_w);
@@ -409,12 +392,12 @@ void init_machine_ballbomb(void)
 
 static WRITE_HANDLER( ballbomb_sh_port3_w )
 {
-	invaders_screen_red_w(data & 0x04);
+	c8080bw_screen_red_w(data & 0x04);
 }
 
 static WRITE_HANDLER( ballbomb_sh_port5_w )
 {
-	invaders_flip_screen_w(data & 0x20);
+	c8080bw_flip_screen_w(data & 0x20);
 }
 
 
@@ -424,7 +407,7 @@ static WRITE_HANDLER( ballbomb_sh_port5_w )
 /*                                                     */
 /*******************************************************/
 
-void init_machine_polaris(void)
+MACHINE_INIT( polaris )
 {
 	install_port_write_handler(0, 0x06, 0x06, polaris_sh_port6_w);
 }
@@ -433,7 +416,7 @@ static WRITE_HANDLER( polaris_sh_port6_w )
 {
 	coin_lockout_global_w(data & 0x04);
 
-	invaders_flip_screen_w(data & 0x20);
+	c8080bw_flip_screen_w(data & 0x20);
 }
 
 
@@ -474,6 +457,7 @@ struct SN76477interface sheriff_sn76477_interface =
 
 static void sheriff_74123_0_output_changed_cb(void)
 {
+logerror("74123 0 triggered\n");
 	SN76477_vco_w    (0,  TTL74123_output_r(0));
 	SN76477_mixer_b_w(0, !TTL74123_output_r(0));
 
@@ -482,6 +466,7 @@ static void sheriff_74123_0_output_changed_cb(void)
 
 static void sheriff_74123_1_output_changed_cb(void)
 {
+logerror("74123 1 triggered\n");
 	SN76477_set_vco_voltage(0, !TTL74123_output_comp_r(1) ? 5.0 : 0.0);
 
 	SN76477_enable_w(0, TTL74123_output_comp_r(0) && TTL74123_output_comp_r(1));
@@ -502,7 +487,7 @@ static struct TTL74123_interface sheriff_74123_1_intf =
 };
 
 
-void init_machine_sheriff(void)
+MACHINE_INIT( sheriff )
 {
 	install_port_write_handler(0, 0x04, 0x04, sheriff_sh_port4_w);
 	install_port_write_handler(0, 0x05, 0x05, sheriff_sh_port5_w);
@@ -530,6 +515,19 @@ static int sheriff_t0,sheriff_t1,sheriff_p1,sheriff_p2;
 
 static WRITE_HANDLER( sheriff_sh_port4_w )
 {
+static int last = -1;
+	// 0 - P2.7 - GAME
+	// 1 - P2.5 - EXCEL
+	// 2 - P2.6 - IMAN BRK
+	// 3 - P2.3 - GMAN BRK
+	// 4 - P2.4 - GMAN TRIG
+	// 5 - P2.1 - BRD APR
+if ((last & 0x10) != (data & 0x10))
+{
+logerror("***Gun: %02X %04X\n", data & 0x14, activecpu_get_pc());
+last = data;
+}
+
 	sheriff_t0 = data & 1;
 
 	sheriff_p1 = (sheriff_p1 & 0x4f) |
@@ -539,16 +537,23 @@ static WRITE_HANDLER( sheriff_sh_port4_w )
 
 	soundlatch_w(0, sheriff_p1);
 
-	cpu_set_irq_line(1, I8035_EXT_INT, ((sheriff_p1 & 0x70) == 0x70) ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(1, 0, ((sheriff_p1 & 0x70) == 0x70) ? ASSERT_LINE : CLEAR_LINE);
 
 	TTL74123_trigger_w   (0, data & 0x04);
 
-	TTL74123_reset_comp_w(1, data & 0x04);
+	TTL74123_reset_comp_w(1, ~data & 0x04);
 	TTL74123_trigger_w   (1, data & 0x10);
 }
 
 static WRITE_HANDLER( sheriff_sh_port5_w )
 {
+	// 0 - P2.8  - IMAN S0
+	// 1 - P2.9  - IMAN S1
+	// 2 - P2.10 - IMAN S2
+	// 3 - P2.11 - IMAN S3
+	// 4 - P2.2  - ARROW
+	// 5 - P2.12 - BRD BRK
+
 	sheriff_t1 = (data >> 5) & 1;
 
 	sheriff_p1 = (sheriff_p1 & 0xb0) |
@@ -560,7 +565,7 @@ static WRITE_HANDLER( sheriff_sh_port5_w )
 
 	soundlatch_w(0, sheriff_p1);
 
-	cpu_set_irq_line(1, I8035_EXT_INT, ((sheriff_p1 & 0x70) == 0x70) ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(1, 0, ((sheriff_p1 & 0x70) == 0x70) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static WRITE_HANDLER( sheriff_sh_port6_w )
@@ -603,7 +608,7 @@ WRITE_HANDLER( sheriff_sh_p2_w )
 /*                                                     */
 /*******************************************************/
 
-void init_machine_helifire(void)
+MACHINE_INIT( helifire )
 {
 	install_port_write_handler(0, 0x06, 0x06, helifire_sh_port6_w);
 }
@@ -616,11 +621,23 @@ static WRITE_HANDLER( helifire_sh_port6_w )
 
 /*******************************************************/
 /*                                                     */
+/* Midway "Phantom II"		                           */
+/*                                                     */
+/*******************************************************/
+
+MACHINE_INIT( phantom2 )
+{
+	install_port_write_handler(0, 0x04, 0x04, watchdog_reset_w);
+}
+
+
+/*******************************************************/
+/*                                                     */
 /* Midway "Sea Wolf"                                   */
 /*                                                     */
 /*******************************************************/
 
-void init_machine_seawolf(void)
+MACHINE_INIT( seawolf )
 {
 	install_port_read_handler (0, 0x01, 0x01, seawolf_port_1_r);
 }
@@ -632,7 +649,7 @@ void init_machine_seawolf(void)
 /*                                                     */
 /*******************************************************/
 
-void init_machine_desertgu(void)
+MACHINE_INIT( desertgu )
 {
 	install_port_read_handler (0, 0x01, 0x01, desertgu_port_1_r);
 
@@ -706,7 +723,7 @@ static INT16 backgroundwave[32] =
    -0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,-0x8000,
 };
 
-void init_machine_schaser(void)
+MACHINE_INIT( schaser )
 {
 	install_port_write_handler(0, 0x03, 0x03, schaser_sh_port3_w);
 	install_port_write_handler(0, 0x05, 0x05, schaser_sh_port5_w);
@@ -770,7 +787,7 @@ static WRITE_HANDLER( schaser_sh_port5_w )
 
 	coin_lockout_global_w(data & 0x04);
 
-	invaders_flip_screen_w(data & 0x20);
+	c8080bw_flip_screen_w(data & 0x20);
 }
 
 static int schaser_sh_start(const struct MachineSound *msound)

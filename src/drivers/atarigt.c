@@ -22,22 +22,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int atarigt_vh_start(void);
-void atarig42_vh_stop(void);
-void atarig42_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void atarigx2_scanline_update(int param);
-
-extern UINT8 atarig42_guardian;
+#include "atarig42.h"
 
 
 
@@ -76,7 +61,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( atarigt )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -163,7 +148,7 @@ static UINT16 last_write;
 
 static WRITE32_HANDLER( tmek_protection_w )
 {
-	logerror("%06X:Protection W@%04X = %08X & %08X\n", cpu_getpreviouspc(), offset, data, ~mem_mask);
+	logerror("%06X:Protection W@%04X = %08X & %08X\n", activecpu_get_previouspc(), offset, data, ~mem_mask);
 	COMBINE_DATA(&protection_base[offset]);
 	if (ACCESSING_MSW32)
 		last_write = protection_base[offset] >> 16;
@@ -182,14 +167,14 @@ static READ32_HANDLER( tmek_protection_r )
 	if (offset == 0x1f0)
 		result = 0xffffffff;
 
-	logerror("%06X:Protection R@%04X = %08X\n", cpu_getpreviouspc(), offset, result);
+	logerror("%06X:Protection R@%04X = %08X\n", activecpu_get_previouspc(), offset, result);
 	return result;
 }
 
 
 static WRITE32_HANDLER( primrage_protection_w )
 {
-	logerror("%06X:Protection W@%04X = %08X & %08X\n", cpu_getpreviouspc(), offset, data, ~mem_mask);
+	logerror("%06X:Protection W@%04X = %08X & %08X\n", activecpu_get_previouspc(), offset, data, ~mem_mask);
 	COMBINE_DATA(&protection_base[offset]);
 	if (ACCESSING_MSW32)
 		last_write = protection_base[offset] >> 16;
@@ -209,7 +194,7 @@ static READ32_HANDLER( primrage_protection_r )
 	if (offset == 0x21f0)
 		result = last_write & 0xffff;
 
-	logerror("%06X:Protection R@%04X = %08X\n", cpu_getpreviouspc(), offset, result);
+	logerror("%06X:Protection R@%04X = %08X\n", activecpu_get_previouspc(), offset, result);
 	return result;
 }
 
@@ -228,7 +213,7 @@ WRITE_HANDLER( atarigen_888_paletteram_lo_w )
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&paletteram[offset], newword);
 
-logerror("%06X:Palette lo W=%04X\n", cpu_getpreviouspc(), data);
+logerror("%06X:Palette lo W=%04X\n", activecpu_get_previouspc(), data);
 	{
 		int r, g, b;
 
@@ -247,7 +232,7 @@ WRITE_HANDLER( atarigen_888_paletteram_hi_w )
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&paletteram_2[offset], newword);
 
-logerror("%06X:Palette hi W=%04X\n", cpu_getpreviouspc(), data);
+logerror("%06X:Palette hi W=%04X\n", activecpu_get_previouspc(), data);
 	{
 		int r, g, b;
 
@@ -393,6 +378,52 @@ INPUT_PORTS_START( tmek )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( primrage )
+	PORT_START		/* 68.SW (A1=0) */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
+
+	PORT_START		/* 68.SW (A1=1) */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+
+	PORT_START      /* 68.STATUS (A2=0) */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )	/* /A2DRDY */
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_TILT )		/* TILT */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )	/* /XIRQ23 */
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_UNUSED )	/* A2D.EOC */
+	PORT_BIT( 0x0030, IP_ACTIVE_LOW, IPT_UNUSED )	/* NC */
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )			/* SELFTEST */
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_VBLANK )	/* VBLANK */
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 68.STATUS (A2=1) */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )	/* /VBIRQ */
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )	/* /4MSIRQ */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )	/* /XIRQ0 */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )	/* /XIRQ1 */
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )	/* /SERVICER */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )	/* /SER.L */
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2 )	/* COINR */
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN1 )	/* COINL */
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -451,84 +482,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_atarigt =
-{
+static MACHINE_DRIVER_START( atarigt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68EC020,		/* verified */
-			ATARI_CLOCK_50MHz/2,
-			readmem,writemem,0,0,
-			atarigen_video_int_gen,1,
-			atarigen_scanline_int_gen,250
-		}
-		/*,
-		{
-			CPU_TMS320C31,
-			33868800/8,
-			readmem_cage,writemem_cage,0,0,
-			ignore_interrupt,0
-		}*/
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68EC020, ATARI_CLOCK_50MHz/2)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	MDRV_CPU_PERIODIC_INT(atarigen_scanline_int_gen,250)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atarigt)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	8192, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarigt_vh_start,
-	atarig42_vh_stop,
-	atarig42_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+	
+	MDRV_VIDEO_START(atarigt)
+	MDRV_VIDEO_UPDATE(atarig42)
+	
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ 0, 0 }
-	},
-
-	atarigen_nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_tmek(void)
-{
-	atarigen_eeprom_default = NULL;
-
-	atarig42_guardian = 0;
-
-	/* install protection */
-	install_mem_read32_handler(0, 0xdb8000, 0xdb87ff, tmek_protection_r);
-	install_mem_write32_handler(0, 0xdb8000, 0xdb87ff, tmek_protection_w);
-
-	protection_base = malloc(0x800);
-}
-
-
-static void init_primrage(void)
-{
-	atarigen_eeprom_default = NULL;
-
-	atarig42_guardian = 0;
-
-	/* install protection */
-	install_mem_read32_handler(0, 0xdc4000, 0xdcffff, primrage_protection_r);
-	install_mem_write32_handler(0, 0xdc4000, 0xdcffff, primrage_protection_w);
-
-	protection_base = malloc(0xc000);
-}
+MACHINE_DRIVER_END
 
 
 
@@ -729,11 +708,46 @@ ROM_END
 
 /*************************************
  *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( tmek )
+{
+	atarigen_eeprom_default = NULL;
+
+	atarig42_swapcolors = 0;
+
+	/* install protection */
+	install_mem_read32_handler(0, 0xdb8000, 0xdb87ff, tmek_protection_r);
+	install_mem_write32_handler(0, 0xdb8000, 0xdb87ff, tmek_protection_w);
+
+	protection_base = auto_malloc(0x800);
+}
+
+
+static DRIVER_INIT( primrage )
+{
+	atarigen_eeprom_default = NULL;
+
+	atarig42_swapcolors = 0;
+
+	/* install protection */
+	install_mem_read32_handler(0, 0xdc4000, 0xdcffff, primrage_protection_r);
+	install_mem_write32_handler(0, 0xdc4000, 0xdcffff, primrage_protection_w);
+
+	protection_base = auto_malloc(0xc000);
+}
+
+
+
+/*************************************
+ *
  *	Game driver(s)
  *
  *************************************/
 
 GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION )
 GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrage, 0,        atarigt,  tmek,     primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrag2, primrage, atarigt,  tmek,     primrage, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, primrage, 0,        atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, primrag2, primrage, atarigt,  primrage, primrage, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )

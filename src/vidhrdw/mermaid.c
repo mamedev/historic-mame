@@ -31,7 +31,7 @@ static struct rectangle spritevisiblearea =
   I'm not sure about the resistor value, I'm using the Galaxian ones.
 
 ***************************************************************************/
-void mermaid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mermaid )
 {
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -83,7 +83,7 @@ void mermaid_vh_convert_color_prom(unsigned char *palette, unsigned short *color
   the main emulation engine.
 
 ***************************************************************************/
-void mermaid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mermaid )
 {
 	int offs;
 

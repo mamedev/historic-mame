@@ -1,6 +1,6 @@
 /*************************************************************************
 
-	Basic Exidy sound driver
+	Exidy 6502 hardware
 
 *************************************************************************/
 
@@ -9,6 +9,7 @@
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"
 #include "sound/tms5220.h"
+#include "exidy.h"
 
 
 
@@ -368,6 +369,8 @@ static void exidy_stream_update(int param, INT16 *buffer, int length)
  *
  *************************************/
 
+static void riot_interrupt(int parm);
+
 static int common_start(void)
 {
 	int i;
@@ -390,7 +393,7 @@ static int common_start(void)
 	pia_reset();
 
 	/* Init 6532 */
-    riot_timer = 0;
+    riot_timer = timer_alloc(riot_interrupt);
     riot_irq_flag = 0;
     riot_timer_irq_enable = 0;
 	riot_porta_data = 0xff;
@@ -451,14 +454,14 @@ static void riot_interrupt(int parm)
 
 		/* now start counting clock cycles down */
 		riot_state = RIOT_POST_COUNT;
-		riot_timer = timer_set(SH6532_PERIOD * 0xff, 0, riot_interrupt);
+		timer_adjust(riot_timer, SH6532_PERIOD * 0xff, 0, 0);
 	}
 
 	/* if not, we are done counting down */
 	else
 	{
 		riot_state = RIOT_IDLE;
-		riot_timer = 0;
+		timer_adjust(riot_timer, TIME_NEVER, 0, 0);
 	}
 }
 
@@ -496,11 +499,11 @@ WRITE_HANDLER( exidy_shriot_w )
 					if (!(data & 0x01) && (riot_portb_data & 0x01))
 					{
 						riot_porta_data = tms5220_status_r(0);
-						logerror("(%f)%04X:TMS5220 status read = %02X\n", timer_get_time(), cpu_getpreviouspc(), riot_porta_data);
+						logerror("(%f)%04X:TMS5220 status read = %02X\n", timer_get_time(), activecpu_get_previouspc(), riot_porta_data);
 					}
 					if ((data & 0x02) && !(riot_portb_data & 0x02))
 					{
-						logerror("(%f)%04X:TMS5220 data write = %02X\n", timer_get_time(), cpu_getpreviouspc(), riot_porta_data);
+						logerror("(%f)%04X:TMS5220 data write = %02X\n", timer_get_time(), activecpu_get_previouspc(), riot_porta_data);
 						tms5220_data_w(0, riot_porta_data);
 					}
 				}
@@ -533,13 +536,9 @@ WRITE_HANDLER( exidy_shriot_w )
 		/* set the enable from the offset */
 		riot_timer_irq_enable = offset & 0x08;
 
-		/* remove any old timer */
-		if (riot_timer)
-			timer_remove(riot_timer);
-
 		/* set a new timer */
 		riot_interval = SH6532_PERIOD * divisors[offset & 0x03];
-		riot_timer = timer_set(riot_interval * data, 0, riot_interrupt);
+		timer_adjust(riot_timer, riot_interval * data, 0, 0);
 		riot_state = RIOT_COUNT;
 	}
 }
@@ -612,7 +611,7 @@ READ_HANDLER( exidy_shriot_r )
 		}
 	}
 
-	logerror("Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
+	logerror("Undeclared RIOT read: %x  PC:%x\n",offset,activecpu_get_pc());
 	return 0xff;
 }
 

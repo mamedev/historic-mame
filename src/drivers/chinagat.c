@@ -81,8 +81,8 @@ Input is unique but has a few similarities to DD2 (the coin inputs)
 WRITE_HANDLER( ddragon_bgvideoram_w );
 WRITE_HANDLER( ddragon_fgvideoram_w );
 
-int  chinagat_vh_start(void);
-void ddragon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( chinagat );
+VIDEO_UPDATE( ddragon );
 
 extern int technos_video_hw;
 extern int ddragon_scrollx_hi, ddragon_scrolly_hi;
@@ -104,11 +104,11 @@ static int saiyugb1_m5205_clk;
 
 
 
-static void chinagat_init_machine( void )
+static MACHINE_INIT( chinagat )
 {
 	technos_video_hw = 1;
-	sprite_irq = M6809_INT_IRQ;
-	sound_irq = Z80_NMI_INT;
+	sprite_irq = M6809_IRQ_LINE;
+	sound_irq = IRQ_LINE_NMI;
 }
 
 WRITE_HANDLER( chinagat_video_ctrl_w )
@@ -140,13 +140,13 @@ static WRITE_HANDLER( chinagat_sub_bankswitch_w )
 
 static WRITE_HANDLER( chinagat_sub_IRQ_w )
 {
-	cpu_cause_interrupt( 1, sprite_irq );
+	cpu_set_irq_line( 1, sprite_irq, (sprite_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
 
 static WRITE_HANDLER( chinagat_cpu_sound_cmd_w )
 {
 	soundlatch_w( offset, data );
-	cpu_cause_interrupt( 2, sound_irq );
+	cpu_set_irq_line( 2, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
 
 static READ_HANDLER( saiyugb1_mcu_command_r )
@@ -528,11 +528,10 @@ static struct MSM5205interface msm5205_interface =
 	{ 60 }
 };
 
-static int chinagat_interrupt(void)
+static INTERRUPT_GEN( chinagat_interrupt )
 {
 	cpu_set_irq_line(0, 1, HOLD_LINE);	/* hold the FIRQ line */
 	cpu_set_nmi_line(0, PULSE_LINE);	/* pulse the NMI line */
-	return ignore_interrupt();
 }
 
 /* This is only on the second bootleg board */
@@ -548,160 +547,110 @@ static struct YM2203interface ym2203_interface =
 	{ chinagat_irq_handler }
 };
 
-static struct MachineDriver machine_driver_chinagat =
-{
-	{
-		{
-			CPU_HD6309,
-			12000000/8,		/* 1.5 MHz (12MHz oscillator ???) */
-			readmem,writemem,0,0,
-			chinagat_interrupt,1
-		},
-		{
-			CPU_HD6309,
-			12000000/8,		/* 1.5 MHz (12MHz oscillator ???) */
-			sub_readmem,sub_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_Z80,
-			3579545,	/* 3.579545 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	56, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	100, /* heavy interleaving to sync up sprite<->main cpu's */
-	chinagat_init_machine,
+static MACHINE_DRIVER_START( chinagat )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(HD6309,12000000/8)		/* 1.5 MHz (12MHz oscillator ???) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(chinagat_interrupt,1)
+
+	MDRV_CPU_ADD(HD6309,12000000/8)		/* 1.5 MHz (12MHz oscillator ???) */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+
+	MDRV_CPU_ADD(Z80, 3579545)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(56)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* heavy interleaving to sync up sprite<->main cpu's */
+
+	MDRV_MACHINE_INIT(chinagat)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	384, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	chinagat_vh_start,
-	0,
-	ddragon_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
+
+	MDRV_VIDEO_START(chinagat)
+	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_saiyugb1 =
-{
-	{
-		{
-			CPU_M6809,		/* 68B09EP */
-			12000000/8,		/* 1.5 MHz (12MHz oscillator) */
-			readmem,writemem,0,0,
-			chinagat_interrupt,1
-		},
-		{
-			CPU_M6809,		/* 68B09EP */
-			12000000/8,		/* 1.5 MHz (12MHz oscillator) */
-			sub_readmem,sub_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_Z80,
-			3579545,		/* 3.579545 MHz oscillator */
-			saiyugb1_sound_readmem,saiyugb1_sound_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_I8048,
-			9263750/3,		/* 3.087916 MHz (9.263750 MHz oscillator) */
-			i8748_readmem,i8748_writemem,i8748_readport,i8748_writeport,
-			ignore_interrupt,0
-		}
-	},
-	56, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	100, /* heavy interleaving to sync up sprite<->main cpu's */
-	chinagat_init_machine,
+static MACHINE_DRIVER_START( saiyugb1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,12000000/8)		/* 68B09EP 1.5 MHz (12MHz oscillator) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(chinagat_interrupt,1)
+
+	MDRV_CPU_ADD(M6809,12000000/8)		/* 68B09EP 1.5 MHz (12MHz oscillator) */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+
+	MDRV_CPU_ADD(Z80, 3579545)		/* 3.579545 MHz oscillator */
+	MDRV_CPU_MEMORY(saiyugb1_sound_readmem,saiyugb1_sound_writemem)
+
+	MDRV_CPU_ADD(I8048,9263750/3)		/* 3.087916 MHz (9.263750 MHz oscillator) */
+	MDRV_CPU_MEMORY(i8748_readmem,i8748_writemem)
+	MDRV_CPU_PORTS(i8748_readport,i8748_writeport)
+
+	MDRV_FRAMES_PER_SECOND(56)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* heavy interleaving to sync up sprite<->main cpu's */
+
+	MDRV_MACHINE_INIT(chinagat)
 
 	/* video hardware */
-	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	384, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	chinagat_vh_start,
-	0,
-	ddragon_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
+
+	MDRV_VIDEO_START(chinagat)
+	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_saiyugb2 =
-{
-	{
-		{
-			CPU_M6809,
-			12000000/8,		/* 1.5 MHz (12MHz oscillator) */
-			readmem,writemem,0,0,
-			chinagat_interrupt,1
-		},
-		{
-			CPU_M6809,
-			12000000/8,		/* 1.5 MHz (12MHz oscillator) */
-			sub_readmem,sub_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_Z80,
-			3579545,		/* 3.579545 MHz oscillator */
-			ym2203c_sound_readmem,ym2203c_sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	56, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	100, /* heavy interleaving to sync up sprite<->main cpu's */
-	chinagat_init_machine,
+static MACHINE_DRIVER_START( saiyugb2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,12000000/8)		/* 1.5 MHz (12MHz oscillator) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(chinagat_interrupt,1)
+
+	MDRV_CPU_ADD(M6809,12000000/8)		/* 1.5 MHz (12MHz oscillator) */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+
+	MDRV_CPU_ADD(Z80, 3579545)		/* 3.579545 MHz oscillator */
+	MDRV_CPU_MEMORY(ym2203c_sound_readmem,ym2203c_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(56)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* heavy interleaving to sync up sprite<->main cpu's */
+
+	MDRV_MACHINE_INIT(chinagat)
 
 	/* video hardware */
-	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	384, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	chinagat_vh_start,
-	0,
-	ddragon_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
+
+	MDRV_VIDEO_START(chinagat)
+	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

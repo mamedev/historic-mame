@@ -72,7 +72,7 @@ extern READ16_HANDLER( SYS16_MRA16_WORKINGRAM2_SHARE );
 extern WRITE16_HANDLER( SYS16_MWA16_WORKINGRAM2_SHARE );
 
 extern void (*sys16_custom_irq)(void);
-extern void sys16_onetime_init_machine( void );
+extern MACHINE_INIT( sys16_onetime );
 
 #define SYS16_MRA16_SPRITERAM		MRA16_RAM
 #define SYS16_MWA16_SPRITERAM		MWA16_RAM,&sys16_spriteram
@@ -220,28 +220,25 @@ extern READ16_HANDLER( sys16_textram_r );
 extern WRITE16_HANDLER( sys16_textram_w );
 extern WRITE16_HANDLER( sys16_paletteram_w );
 
-extern void sys16_aburner_vh_stop( void );
-extern void sys16_vh_stop( void );
-
 /* "normal" video hardware */
-extern int sys16_vh_start( void );
-extern void sys16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( system16 );
+extern VIDEO_UPDATE( system16 );
 
 /* hang-on video hardware */
-extern int sys16_hangon_vh_start( void );
-extern void sys16_hangon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( hangon );
+extern VIDEO_UPDATE( hangon );
 
 /* outrun video hardware */
-extern int sys16_outrun_vh_start( void );
-extern void sys16_outrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( outrun );
+extern VIDEO_UPDATE( outrun );
 
 /* aburner video hardware */
-extern int sys16_aburner_vh_start( void );
-extern void sys16_aburner_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
+extern VIDEO_START( aburner );
+extern VIDEO_UPDATE( aburner );
 
 /* system18 video hardware */
-extern int sys18_vh_start( void );
-extern void sys18_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( system18 );
+extern VIDEO_UPDATE( system18 );
 
 /* video driver constants (vary with game) */
 extern int sys16_gr_bitmap_width;

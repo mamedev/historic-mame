@@ -55,7 +55,7 @@ static int ninjemak_dispdisable;
 
 ***************************************************************************/
 
-void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( galivan )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -190,7 +190,7 @@ static void ninjemak_get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int galivan_vh_start(void)
+VIDEO_START( galivan )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,   16,16,128,128);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -203,7 +203,7 @@ int galivan_vh_start(void)
 	return 0;
 }
 
-int ninjemak_vh_start(void)
+VIDEO_START( ninjemak )
 {
 	bg_tilemap = tilemap_create(ninjemak_get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,   16,16,512,32);
 	tx_tilemap = tilemap_create(ninjemak_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -262,7 +262,7 @@ WRITE_HANDLER( galivan_gfxbank_w )
 		cpu_setbank(1,&RAM[0x10000 + 0x2000 * bank]);
 	}
 
-/*	logerror("Address: %04X - port 40 = %02x\n",cpu_get_pc(),data); */
+/*	logerror("Address: %04X - port 40 = %02x\n",activecpu_get_pc(),data); */
 }
 
 WRITE_HANDLER( ninjemak_gfxbank_w )
@@ -283,7 +283,7 @@ WRITE_HANDLER( ninjemak_gfxbank_w )
 
 		int offs;
 
-logerror("%04x: write %02x to port 80\n",cpu_get_pc(),data);
+logerror("%04x: write %02x to port 80\n",activecpu_get_pc(),data);
 
 		for (offs = 0; offs < videoram_size; offs++)
 		{
@@ -364,7 +364,7 @@ WRITE_HANDLER( ninjemak_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -396,40 +396,40 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				color + 16 * (spritepalettebank[code >> 2] & 0x0f),
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
 
-void galivan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( galivan )
 {
 	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x07));
 	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0x07));
 
 	if (layers & 0x40)
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 	else
-		tilemap_draw(bitmap,bg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 
-	tilemap_draw(bitmap,tx_tilemap,1,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,1,0);
 }
 
-void ninjemak_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( ninjemak )
 {
 	/* (scrollx[1] & 0x40) does something */
 	tilemap_set_scrollx(bg_tilemap,0,scrollx[0] + 256 * (scrollx[1] & 0x1f));
 	tilemap_set_scrolly(bg_tilemap,0,scrolly[0] + 256 * (scrolly[1] & 0xff));
 
 	if (ninjemak_dispdisable)
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 	else
-		tilemap_draw(bitmap,bg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }

@@ -46,11 +46,10 @@ READ_HANDLER( phoenix_input_port_0_r );
 READ_HANDLER( pleiads_input_port_0_r );
 READ_HANDLER( survival_input_port_0_r );
 READ_HANDLER( survival_protection_r );
-void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  phoenix_vh_start(void);
-void phoenix_vh_stop(void);
-void phoenix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( phoenix );
+PALETTE_INIT( pleiads );
+VIDEO_START( phoenix );
+VIDEO_UPDATE( phoenix );
 
 WRITE_HANDLER( phoenix_sound_control_a_w );
 WRITE_HANDLER( phoenix_sound_control_b_w );
@@ -540,91 +539,78 @@ static struct AY8910interface survival_ay8910_interface =
 
 
 
-#define MACHINE_DRIVER(NAME, PENS)									\
-																	\
-static struct MachineDriver machine_driver_##NAME = 				\
-{																	\
-	/* basic machine hardware */									\
-	{																\
-		{															\
-			CPU_8085A,												\
-			11000000/4,	/* 2.75 MHz */								\
-			NAME##_readmem,NAME##_writemem,0,0,						\
-			ignore_interrupt,1										\
-		}															\
-	},																\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* single CPU, no need for interleaving */					\
-	0,																\
-																	\
-	/* video hardware */											\
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 26*8-1 },						\
-	NAME##_gfxdecodeinfo,											\
-	256,PENS*4+PENS*4,												\
-	NAME##_vh_convert_color_prom,									\
-																	\
-	VIDEO_TYPE_RASTER,												\
-	0,																\
-	phoenix_vh_start,												\
-	phoenix_vh_stop,												\
-	phoenix_vh_screenrefresh,										\
-																	\
-	/* sound hardware */											\
-	0,0,0,0,														\
-	{																\
-		{															\
-			SOUND_TMS36XX,											\
-			&NAME##_tms36xx_interface								\
-		},															\
-		{															\
-			SOUND_CUSTOM,											\
-			&NAME##_custom_interface								\
-		}															\
-	}																\
-};
+static MACHINE_DRIVER_START( phoenix )
 
-MACHINE_DRIVER(phoenix,16)
-MACHINE_DRIVER(pleiads,32)
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", 8085A, 11000000/4)	/* 2.75 MHz */
+	MDRV_CPU_MEMORY(phoenix_readmem,phoenix_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 26*8-1)
+	MDRV_GFXDECODE(phoenix_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*4+16*4)
+	
+	MDRV_PALETTE_INIT(phoenix)
+	MDRV_VIDEO_START(phoenix)
+	MDRV_VIDEO_UPDATE(phoenix)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("tms",  TMS36XX, phoenix_tms36xx_interface)
+	MDRV_SOUND_ADD_TAG("cust", CUSTOM, phoenix_custom_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pleiads )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(phoenix)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(pleiads_readmem,pleiads_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(pleiads_gfxdecodeinfo)
+	MDRV_COLORTABLE_LENGTH(32*4+32*4)
+	
+	MDRV_PALETTE_INIT(pleiads)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("tms",  TMS36XX, pleiads_tms36xx_interface)
+	MDRV_SOUND_REPLACE("cust", CUSTOM, pleiads_custom_interface)
+MACHINE_DRIVER_END
 
 
 /* Same as Phoenix, but uses an AY8910 and an extra visible line (column) */
 
-static const struct MachineDriver machine_driver_survival =
-{
+static MACHINE_DRIVER_START( survival )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8085A,
-			11000000/4,	/* 2.75 MHz */
-			survival_readmem,survival_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(8085A,11000000/4)	/* 2.75 MHz */
+	MDRV_CPU_MEMORY(survival_readmem,survival_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 26*8-1 },
-	phoenix_gfxdecodeinfo,
-	256,16*4+16*4,
-	phoenix_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 26*8-1)
+	MDRV_GFXDECODE(phoenix_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*4+16*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	phoenix_vh_start,
-	phoenix_vh_stop,
-	phoenix_vh_screenrefresh,
+	MDRV_PALETTE_INIT(phoenix)
+	MDRV_VIDEO_START(phoenix)
+	MDRV_VIDEO_UPDATE(phoenix)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&survival_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, survival_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -850,7 +836,7 @@ ROM_START( survival )
 ROM_END
 
 
-static void init_survival(void)
+static DRIVER_INIT( survival )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 

@@ -92,7 +92,7 @@ static void get_bg2_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int pspikes_vh_start(void)
+VIDEO_START( pspikes )
 {
 	bg1_tilemap = tilemap_create(get_pspikes_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 	/* no bg2 in this game */
@@ -105,7 +105,7 @@ int pspikes_vh_start(void)
 	return 0;
 }
 
-int karatblz_vh_start(void)
+VIDEO_START( karatblz )
 {
 	bg1_tilemap = tilemap_create(karatblz_bg1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
 	bg2_tilemap = tilemap_create(karatblz_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
@@ -122,7 +122,7 @@ int karatblz_vh_start(void)
 	return 0;
 }
 
-int spinlbrk_vh_start(void)
+VIDEO_START( spinlbrk )
 {
 	int i;
 
@@ -154,7 +154,7 @@ int spinlbrk_vh_start(void)
 	return 0;
 }
 
-int turbofrc_vh_start(void)
+VIDEO_START( turbofrc )
 {
 	bg1_tilemap = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
 	bg2_tilemap = tilemap_create(get_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
@@ -297,7 +297,7 @@ WRITE16_HANDLER( pspikes_palette_bank_w )
 
 ***************************************************************************/
 
-static void aerofgt_drawsprites(struct mame_bitmap *bitmap,int priority)
+static void aerofgt_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
 	int offs;
 
@@ -358,7 +358,7 @@ static void aerofgt_drawsprites(struct mame_bitmap *bitmap,int priority)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,15,
+							cliprect,TRANSPARENCY_PEN,15,
 							0x1000 * zoomx,0x1000 * zoomy);
 					map_start++;
 				}
@@ -369,7 +369,7 @@ static void aerofgt_drawsprites(struct mame_bitmap *bitmap,int priority)
 	}
 }
 
-static void turbofrc_drawsprites(struct mame_bitmap *bitmap,int chip)
+static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip)
 {
 	int attr_start,base,first;
 
@@ -426,7 +426,7 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,int chip)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,15,
+						cliprect,TRANSPARENCY_PEN,15,
 						0x1000 * zoomx,0x1000 * zoomy,
 						pri ? 0 : 0x2);
 				map_start++;
@@ -441,7 +441,7 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,int chip)
 }
 
 
-void pspikes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pspikes )
 {
 	int i,scrolly;
 
@@ -451,30 +451,30 @@ void pspikes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx(bg1_tilemap,(i + scrolly) & 0xff,aerofgt_rasterram[i]);
 	tilemap_set_scrolly(bg1_tilemap,0,scrolly);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg1_tilemap,0,0);
-	turbofrc_drawsprites(bitmap,0);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	turbofrc_drawsprites(bitmap,cliprect,0);
 }
 
-void karatblz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( karatblz )
 {
 	tilemap_set_scrollx(bg1_tilemap,0,bg1scrollx-8);
 	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-4);
 	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg1_tilemap,0,0);
-	tilemap_draw(bitmap,bg2_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
 
 	/* we use the priority buffer so sprites are drawn front to back */
-	turbofrc_drawsprites(bitmap,1);
-	turbofrc_drawsprites(bitmap,0);
+	turbofrc_drawsprites(bitmap,cliprect,1);
+	turbofrc_drawsprites(bitmap,cliprect,0);
 }
 
-void spinlbrk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( spinlbrk )
 {
 	int i,scrolly;
 
@@ -486,17 +486,17 @@ void spinlbrk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-4);
 //	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg1_tilemap,0,0);
-	tilemap_draw(bitmap,bg2_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
 
 	/* we use the priority buffer so sprites are drawn front to back */
-	turbofrc_drawsprites(bitmap,0);
-	turbofrc_drawsprites(bitmap,1);
+	turbofrc_drawsprites(bitmap,cliprect,0);
+	turbofrc_drawsprites(bitmap,cliprect,1);
 }
 
-void turbofrc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( turbofrc )
 {
 	int i,scrolly;
 
@@ -509,32 +509,32 @@ void turbofrc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(bg2_tilemap,0,bg2scrollx-7);
 	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly+2);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg1_tilemap,0,0);
-	tilemap_draw(bitmap,bg2_tilemap,0,1);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,1);
 
 	/* we use the priority buffer so sprites are drawn front to back */
-	turbofrc_drawsprites(bitmap,1);
-	turbofrc_drawsprites(bitmap,0);
+	turbofrc_drawsprites(bitmap,cliprect,1);
+	turbofrc_drawsprites(bitmap,cliprect,0);
 }
 
-void aerofgt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( aerofgt )
 {
 	tilemap_set_scrollx(bg1_tilemap,0,aerofgt_rasterram[0x0000]-18);
 	tilemap_set_scrolly(bg1_tilemap,0,bg1scrolly);
 	tilemap_set_scrollx(bg2_tilemap,0,aerofgt_rasterram[0x0200]-20);
 	tilemap_set_scrolly(bg2_tilemap,0,bg2scrolly);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
 
-	aerofgt_drawsprites(bitmap,0);
-	aerofgt_drawsprites(bitmap,1);
+	aerofgt_drawsprites(bitmap,cliprect,0);
+	aerofgt_drawsprites(bitmap,cliprect,1);
 
-	tilemap_draw(bitmap,bg2_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
 
-	aerofgt_drawsprites(bitmap,2);
-	aerofgt_drawsprites(bitmap,3);
+	aerofgt_drawsprites(bitmap,cliprect,2);
+	aerofgt_drawsprites(bitmap,cliprect,3);
 }

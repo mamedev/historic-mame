@@ -17,7 +17,7 @@ static int dirty_front;
 
 /******************************************************************************/
 
-void prehisle_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( prehisle )
 {
 	int offs, mx, my, color, tile;
 	int tile_base;
@@ -146,19 +146,14 @@ void prehisle_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 /******************************************************************************/
 
-int prehisle_vh_start (void)
+VIDEO_START( prehisle )
 {
-	pf1_bitmap = bitmap_alloc(256+16,512);
+	pf1_bitmap = auto_bitmap_alloc(256+16,512);
 
 	if (!pf1_bitmap)
 		return 1;
 
 	return 0;
-}
-
-void prehisle_vh_stop (void)
-{
-	bitmap_free(pf1_bitmap);
 }
 
 WRITE16_HANDLER( prehisle_video16_w )
@@ -192,7 +187,7 @@ READ16_HANDLER( prehisle_control16_r )
 		return readinputport(4);
 
 	default:
-		logerror("%06x: read unknown control %02x\n",cpu_get_pc(),offset);
+		logerror("%06x: read unknown control %02x\n",activecpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -234,7 +229,7 @@ WRITE16_HANDLER( prehisle_control16_w )
 		break;
 
 	default:
-		logerror("%06x: write unknown control %02x\n",cpu_get_pc(),offset);
+		logerror("%06x: write unknown control %02x\n",activecpu_get_pc(),offset);
 		break;
 	}
 }

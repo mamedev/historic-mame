@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Epos games
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "epos.h"
 
 
 static int current_palette;
@@ -29,10 +28,10 @@ static int current_palette;
   bit 0 -- 510 ohm resistor  -- BLUE
 
 ***************************************************************************/
-void epos_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+PALETTE_INIT( epos )
 {
 	int i;
-
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
@@ -67,8 +66,8 @@ WRITE_HANDLER( epos_videoram_w )
 	x = (offset % 136) * 2;
 	y = (offset / 136);
 
-	plot_pixel(Machine->scrbitmap, x,     y, Machine->pens[current_palette | (data & 0x0f)]);
-	plot_pixel(Machine->scrbitmap, x + 1, y, Machine->pens[current_palette | (data >> 4)]);
+	plot_pixel(tmpbitmap, x,     y, Machine->pens[current_palette | (data & 0x0f)]);
+	plot_pixel(tmpbitmap, x + 1, y, Machine->pens[current_palette | (data >> 4)]);
 }
 
 
@@ -90,7 +89,7 @@ WRITE_HANDLER( epos_port_1_w )
 	{
 		current_palette = (data & 8) << 1;
 
-		schedule_full_refresh();
+		set_vh_global_attribute(NULL,0);
 	}
 }
 
@@ -101,9 +100,9 @@ WRITE_HANDLER( epos_port_1_w )
   To be used by bitmapped games not using sprites.
 
 ***************************************************************************/
-void epos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( epos )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		/* redraw bitmap */
 
@@ -114,4 +113,5 @@ void epos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			epos_videoram_w(offs, videoram[offs]);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

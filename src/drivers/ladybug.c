@@ -41,11 +41,11 @@ Coin insertion in left slot generates a NMI, in right slot an IRQ.
 
 READ_HANDLER( ladybug_IN0_r );
 READ_HANDLER( ladybug_IN1_r );
-int ladybug_interrupt(void);
+INTERRUPT_GEN( ladybug_interrupt );
 
-void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( ladybug );
 WRITE_HANDLER( ladybug_flipscreen_w );
-void ladybug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( ladybug );
 
 
 
@@ -81,13 +81,12 @@ MEMORY_END
   slots. Left slot generates a NMI, Right slot an IRQ.
 
 ***************************************************************************/
-int ladybug_interrupt(void)
+INTERRUPT_GEN( ladybug_interrupt )
 {
 	if (readinputport(5) & 1)	/* Left Coin */
-		return nmi_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	else if (readinputport(5) & 2)	/* Right Coin */
-		return interrupt();
-	else return ignore_interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 INPUT_PORTS_START( ladybug )
@@ -416,42 +415,31 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_ladybug =
-{
+static MACHINE_DRIVER_START( ladybug )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			readmem,writemem,0,0,
-			ladybug_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ladybug_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,4*24,
-	ladybug_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*24)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	ladybug_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ladybug)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(ladybug)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 

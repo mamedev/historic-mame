@@ -50,14 +50,14 @@ WRITE_HANDLER( lastday_ctrl_w );
 WRITE_HANDLER( pollux_ctrl_w );
 WRITE_HANDLER( primella_ctrl_w );
 WRITE16_HANDLER( rshark_ctrl_w );
-void lastday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void gulfstrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void pollux_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void bluehawk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void primella_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void rshark_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void dooyong_eof_callback(void);
-void rshark_eof_callback(void);
+VIDEO_UPDATE( lastday );
+VIDEO_UPDATE( gulfstrm );
+VIDEO_UPDATE( pollux );
+VIDEO_UPDATE( bluehawk );
+VIDEO_UPDATE( primella );
+VIDEO_UPDATE( rshark );
+VIDEO_EOF( dooyong );
+VIDEO_EOF( rshark );
 
 
 
@@ -894,281 +894,184 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static const struct MachineDriver machine_driver_lastday =
-{
+static MACHINE_DRIVER_START( lastday )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000,	/* ??? */
-			lastday_readmem,lastday_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ??? */
-			lastday_sound_readmem,lastday_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 8000000)	/* ??? */
+	MDRV_CPU_MEMORY(lastday_readmem,lastday_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(lastday_sound_readmem,lastday_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	lastday_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(lastday_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	dooyong_eof_callback,
-	0,
-	0,
-	lastday_vh_screenrefresh,
+	MDRV_VIDEO_EOF(dooyong)
+	MDRV_VIDEO_UPDATE(lastday)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gulfstrm =
-{
+static MACHINE_DRIVER_START( gulfstrm )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000,	/* ??? */
-			pollux_readmem,pollux_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ??? */
-			lastday_sound_readmem,lastday_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 8000000)	/* ??? */
+	MDRV_CPU_MEMORY(pollux_readmem,pollux_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(lastday_sound_readmem,lastday_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	lastday_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(lastday_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	dooyong_eof_callback,
-	0,
-	0,
-	gulfstrm_vh_screenrefresh,
+	MDRV_VIDEO_EOF(dooyong)
+	MDRV_VIDEO_UPDATE(gulfstrm)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_pollux =
-{
+static MACHINE_DRIVER_START( pollux )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000,	/* ??? */
-			pollux_readmem,pollux_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ??? */
-			pollux_sound_readmem,pollux_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 8000000)	/* ??? */
+	MDRV_CPU_MEMORY(pollux_readmem,pollux_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(pollux_sound_readmem,pollux_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	lastday_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(lastday_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	dooyong_eof_callback,
-	0,
-	0,
-	pollux_vh_screenrefresh,
+	MDRV_VIDEO_EOF(dooyong)
+	MDRV_VIDEO_UPDATE(pollux)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bluehawk =
-{
+static MACHINE_DRIVER_START( bluehawk )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000,	/* ??? */
-			bluehawk_readmem,bluehawk_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ??? */
-			bluehawk_sound_readmem,bluehawk_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 8000000)	/* ??? */
+	MDRV_CPU_MEMORY(bluehawk_readmem,bluehawk_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(bluehawk_sound_readmem,bluehawk_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	bluehawk_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(bluehawk_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	dooyong_eof_callback,
-	0,
-	0,
-	bluehawk_vh_screenrefresh,
+	MDRV_VIDEO_EOF(dooyong)
+	MDRV_VIDEO_UPDATE(bluehawk)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&bluehawk_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, bluehawk_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_primella =
-{
+static MACHINE_DRIVER_START( primella )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000,	/* ??? */
-			primella_readmem,primella_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ??? */
-			bluehawk_sound_readmem,bluehawk_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 8000000)	/* ??? */
+	MDRV_CPU_MEMORY(primella_readmem,primella_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(bluehawk_sound_readmem,bluehawk_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
-	primella_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 0*8, 32*8-1 )
+	MDRV_GFXDECODE(primella_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	dooyong_eof_callback,
-	0,
-	0,
-	primella_vh_screenrefresh,
+	MDRV_VIDEO_EOF(dooyong)
+	MDRV_VIDEO_UPDATE(primella)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&primella_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static int rshark_interrupt(void)
+static INTERRUPT_GEN( rshark_interrupt )
 {
-	if (cpu_getiloops() == 0) return 5;
-	else return 6;
+	if (cpu_getiloops() == 0)
+		cpu_set_irq_line(0, 5, HOLD_LINE);
+	else
+		cpu_set_irq_line(0, 6, HOLD_LINE);
 }
 
-static const struct MachineDriver machine_driver_rshark =
-{
+static MACHINE_DRIVER_START( rshark )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* ??? */
-			rshark_readmem,rshark_writemem,0,0,
-			rshark_interrupt,2	/* 5 and 6 */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ??? */
-			bluehawk_sound_readmem,bluehawk_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)	/* ??? */
+	MDRV_CPU_MEMORY(rshark_readmem,rshark_writemem)
+	MDRV_CPU_VBLANK_INT(rshark_interrupt,2)	/* 5 and 6 */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(bluehawk_sound_readmem,bluehawk_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	rshark_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(rshark_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	rshark_eof_callback,
-	0,
-	0,
-	rshark_vh_screenrefresh,
+	MDRV_VIDEO_EOF(rshark)
+	MDRV_VIDEO_UPDATE(rshark)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&primella_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, primella_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -67,10 +67,10 @@ IO ports and memory map changes. Dip switches differ too.
 
 
 /* from vidhrdw */
-extern void kchamp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void kchamp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern int kchampvs_vh_start(void);
-extern int kchamp1p_vh_start(void);
+extern PALETTE_INIT( kchamp );
+extern VIDEO_UPDATE( kchamp );
+extern VIDEO_START( kchampvs );
+extern VIDEO_START( kchamp1p );
 
 
 static int nmi_enable = 0;
@@ -122,7 +122,7 @@ static WRITE_HANDLER( sound_control_w ) {
 
 static WRITE_HANDLER( sound_command_w ) {
 	soundlatch_w( 0, data );
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 }
 
 static int msm_data = 0;
@@ -384,12 +384,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static int kc_interrupt( void ) {
+static INTERRUPT_GEN( kc_interrupt ) {
 
 	if ( nmi_enable )
-		return Z80_NMI_INT;
-
-	return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static void msmint( int data ) {
@@ -405,7 +403,7 @@ static void msmint( int data ) {
 
 	if ( !( counter ^= 1 ) ) {
 		if ( sound_nmi_enable ) {
-			cpu_cause_interrupt( 1, Z80_NMI_INT );
+			cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		}
 	}
 }
@@ -434,12 +432,10 @@ static struct MSM5205interface msm_interface =
 * 1 Player Version  *
 ********************/
 
-static int sound_int( void ) {
+static INTERRUPT_GEN( sound_int ) {
 
 	if ( sound_nmi_enable )
-		return Z80_NMI_INT;
-
-	return ignore_interrupt();
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static struct DACinterface dac_interface =
@@ -449,110 +445,78 @@ static struct DACinterface dac_interface =
 };
 
 
-static const struct MachineDriver machine_driver_kchampvs =
-{
+static MACHINE_DRIVER_START( kchampvs )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,	/* 12MHz / 4 = 3.0 MHz */
-			readmem,writemem,readport,writeport,
-			kc_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 12MHz / 4 = 3.0 MHz */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt, 0
+	MDRV_CPU_ADD(Z80, 3000000)	/* 12MHz / 4 = 3.0 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(kc_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 12MHz / 4 = 3.0 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 			/* irq's triggered from main cpu */
 			/* nmi's from msm5205 */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* Interleaving forced by interrupts */
-	0,	/* init machine */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, /* number of colors */
-	256, /* color table length */
-	kchamp_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	kchampvs_vh_start,
-	generic_vh_stop,
-	kchamp_vh_screenrefresh,
+	MDRV_PALETTE_INIT(kchamp)
+	MDRV_VIDEO_START(kchampvs)
+	MDRV_VIDEO_UPDATE(kchamp)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm_interface)
+MACHINE_DRIVER_END
 
 /********************
 * 1 Player Version  *
 ********************/
 
-static const struct MachineDriver machine_driver_kchamp =
-{
+static MACHINE_DRIVER_START( kchamp )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,	/* 12MHz / 4 = 3.0 MHz */
-			kc_readmem, kc_writemem, kc_readport, kc_writeport,
-			kc_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 12MHz / 4 = 3.0 MHz */
-			kc_sound_readmem,kc_sound_writemem,kc_sound_readport,kc_sound_writeport,
-			ignore_interrupt, 0,
-			sound_int, 125 /* Hz */
+	MDRV_CPU_ADD(Z80, 3000000)	/* 12MHz / 4 = 3.0 MHz */
+	MDRV_CPU_MEMORY(kc_readmem,kc_writemem)
+	MDRV_CPU_PORTS(kc_readport,kc_writeport)
+	MDRV_CPU_VBLANK_INT(kc_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 12MHz / 4 = 3.0 MHz */
+	MDRV_CPU_MEMORY(kc_sound_readmem,kc_sound_writemem)
+	MDRV_CPU_PORTS(kc_sound_readport,kc_sound_writeport)
+	MDRV_CPU_PERIODIC_INT(sound_int, 125) /* Hz */
 			/* irq's triggered from main cpu */
 			/* nmi's from 125 Hz clock */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* Interleaving forced by interrupts */
-	0,	/* init machine */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, /* number of colors */
-	256, /* color table length */
-	kchamp_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	kchamp1p_vh_start,
-	generic_vh_stop,
-	kchamp_vh_screenrefresh,
+	MDRV_PALETTE_INIT(kchamp)
+	MDRV_VIDEO_START(kchamp1p)
+	MDRV_VIDEO_UPDATE(kchamp)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -729,7 +693,7 @@ ROM_END
 
 
 
-static void init_kchampvs( void )
+static DRIVER_INIT( kchampvs )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;

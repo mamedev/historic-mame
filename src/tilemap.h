@@ -125,12 +125,11 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
 #define TILEMAP_FLIPX 0x1
 #define TILEMAP_FLIPY 0x2
 void tilemap_set_flip( struct tilemap *tilemap, int attributes );
-void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
 void tilemap_set_enable( struct tilemap *tilemap, int enable );
 
-void tilemap_draw( struct mame_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
+void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
 
-void tilemap_draw_roz(struct mame_bitmap *dest,struct tilemap *tilemap,
+void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority );

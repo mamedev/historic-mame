@@ -102,14 +102,11 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void sailorws_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int sailorws_vh_start(void);
-void sailorws_vh_stop(void);
-int mjkoiura_vh_start(void);
-void mjkoiura_vh_stop(void);
-void mscoutm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int mscoutm_vh_start(void);
-void mscoutm_vh_stop(void);
+VIDEO_UPDATE( sailorws );
+VIDEO_START( sailorws );
+VIDEO_START( mjkoiura );
+VIDEO_UPDATE( mscoutm );
+VIDEO_START( mscoutm );
 
 READ_HANDLER( sailorws_palette_r );
 WRITE_HANDLER( sailorws_palette_w );
@@ -154,7 +151,7 @@ static unsigned char *sailorws_nvram;
 static size_t sailorws_nvram_size;
 
 
-static void sailorws_nvram_handler(void *file, int read_or_write)
+static NVRAM_HANDLER( sailorws )
 {
 	if (read_or_write)
 		osd_fwrite(file, sailorws_nvram, sailorws_nvram_size);
@@ -222,7 +219,7 @@ static void sailorws_dipswbitsel_w(int data)
 		case	0x80:
 			break;
 		case	0xc0:
-			sailorws_dipswbitsel = ((sailorws_dipswbitsel++) & 0x0f);
+			sailorws_dipswbitsel = ((sailorws_dipswbitsel + 1) & 0x0f);
 			break;
 		default:
 			break;
@@ -323,7 +320,7 @@ static int tmpz84c011_pio_r(int offset)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", cpu_get_pc(), offset);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", activecpu_get_pc(), offset);
 				portdata = 0xff;
 				break;
 		}
@@ -388,7 +385,7 @@ static int tmpz84c011_pio_r(int offset)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", cpu_get_pc(), offset);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", activecpu_get_pc(), offset);
 				portdata = 0xff;
 				break;
 		}
@@ -443,7 +440,7 @@ static void tmpz84c011_pio_w(int offset, int data)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", cpu_get_pc(), offset, data);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", activecpu_get_pc(), offset, data);
 				break;
 		}
 	}
@@ -489,7 +486,7 @@ static void tmpz84c011_pio_w(int offset, int data)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", cpu_get_pc(), offset, data);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", activecpu_get_pc(), offset, data);
 				break;
 		}
 	}
@@ -551,20 +548,19 @@ static WRITE_HANDLER( tmpz84c011_1_dir_pe_w ) { pio_dir[9] = data; }
 
 static void ctc0_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
 }
 
 static void ctc1_interrupt(int state)
 {
-	cpu_cause_interrupt(1, Z80_VECTOR(0, state));
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0, state));
 }
 
 /* CTC of main cpu, ch0 trigger is vblank */
-static int ctc0_trg1(void)
+static INTERRUPT_GEN( ctc0_trg1 )
 {
 	z80ctc_0_trg1_w(0, 1);
 	z80ctc_0_trg1_w(0, 0);
-	return ignore_interrupt();
 }
 
 static z80ctc_interface ctc_intf =
@@ -595,7 +591,7 @@ static void tmpz84c011_init(void)
 	z80ctc_init(&ctc_intf);
 }
 
-static void sailorws_init_machine(void)
+static MACHINE_INIT( sailorws )
 {
 	//
 }
@@ -615,30 +611,30 @@ static void initialize_driver(void)
 }
 
 
-static void init_mjuraden(void) { initialize_driver(); }
-static void init_koinomp(void) { initialize_driver(); }
-static void init_patimono(void) { initialize_driver(); }
-static void init_mmehyou(void) { initialize_driver(); }
-static void init_gal10ren(void) { initialize_driver(); }
-static void init_mjlaman(void) { initialize_driver(); }
-static void init_mkeibaou(void) { initialize_driver(); }
-static void init_pachiten(void) { initialize_driver(); }
-static void init_mjanbari(void) { initialize_driver(); }
-static void init_ultramhm(void) { initialize_driver(); }
-static void init_sailorws(void) { initialize_driver(); }
-static void init_sailorwr(void) { initialize_driver(); }
-static void init_psailor1(void) { initialize_driver(); }
-static void init_psailor2(void) { initialize_driver(); }
-static void init_otatidai(void) { initialize_driver(); }
-static void init_renaiclb(void) { initialize_driver(); }
-static void init_ngpgal(void) { initialize_driver(); }
-static void init_mjgottsu(void) { initialize_driver(); }
-static void init_bakuhatu(void) { initialize_driver(); }
-static void init_cmehyou(void) { initialize_driver(); }
-static void init_mjkoiura(void) { initialize_driver(); }
-static void init_mscoutm(void) { initialize_driver(); }
-static void init_imekura(void) { initialize_driver(); }
-static void init_mjegolf(void) { initialize_driver(); }
+static DRIVER_INIT( mjuraden ) { initialize_driver(); }
+static DRIVER_INIT( koinomp ) { initialize_driver(); }
+static DRIVER_INIT( patimono ) { initialize_driver(); }
+static DRIVER_INIT( mmehyou ) { initialize_driver(); }
+static DRIVER_INIT( gal10ren ) { initialize_driver(); }
+static DRIVER_INIT( mjlaman ) { initialize_driver(); }
+static DRIVER_INIT( mkeibaou ) { initialize_driver(); }
+static DRIVER_INIT( pachiten ) { initialize_driver(); }
+static DRIVER_INIT( mjanbari ) { initialize_driver(); }
+static DRIVER_INIT( ultramhm ) { initialize_driver(); }
+static DRIVER_INIT( sailorws ) { initialize_driver(); }
+static DRIVER_INIT( sailorwr ) { initialize_driver(); }
+static DRIVER_INIT( psailor1 ) { initialize_driver(); }
+static DRIVER_INIT( psailor2 ) { initialize_driver(); }
+static DRIVER_INIT( otatidai ) { initialize_driver(); }
+static DRIVER_INIT( renaiclb ) { initialize_driver(); }
+static DRIVER_INIT( ngpgal ) { initialize_driver(); }
+static DRIVER_INIT( mjgottsu ) { initialize_driver(); }
+static DRIVER_INIT( bakuhatu ) { initialize_driver(); }
+static DRIVER_INIT( cmehyou ) { initialize_driver(); }
+static DRIVER_INIT( mjkoiura ) { initialize_driver(); }
+static DRIVER_INIT( mscoutm ) { initialize_driver(); }
+static DRIVER_INIT( imekura ) { initialize_driver(); }
+static DRIVER_INIT( mjegolf ) { initialize_driver(); }
 
 
 static MEMORY_READ_START( readmem_sailorws )
@@ -3821,190 +3817,302 @@ static struct DACinterface dac_interface =
 };
 
 
-#define NBMJDRV1( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80,		/* TMPZ84C011 */ \
-		/*	12000000/4,	*/	/* 3.00 MHz */ \
-		/*	12000000/3,	*/	/* 4.00 MHz */ \
-			12000000/2,		/* 6.00 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			ctc0_trg1, 1, /* vblank is connect to ctc triggfer */ \
-			0, 0, daisy_chain_main \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU,/* TMPZ84C011 */ \
-		/*	8000000/2,	*/	/* 4.00 MHz */ \
-			8000000/1,		/* 8.00 MHz */ \
-			sound_readmem, sound_writemem, sound_readport, sound_writeport, \
-			0, 0,	/* interrupts are made by z80 daisy chain system */ \
-			0, 0, daisy_chain_sound \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	sailorws_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 640-1, 0, 240-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	sailorws_vh_start, \
-	sailorws_vh_stop, \
-	sailorws_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+static MACHINE_DRIVER_START( NBMJDRV1 )
 
-#define NBMJDRV2( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80,		/* TMPZ84C011 */ \
-		/*	12000000/4,	*/	/* 3.00 MHz */ \
-		/*	12000000/3,	*/	/* 4.00 MHz */ \
-			12000000/2,		/* 6.00 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			ctc0_trg1, 1, /* vblank is connect to ctc triggfer */ \
-			0, 0, daisy_chain_main \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU,/* TMPZ84C011 */ \
-		/*	8000000/2,	*/	/* 4.00 MHz */ \
-			8000000/1,		/* 8.00 MHz */ \
-			sound_readmem, sound_writemem, sound_readport, sound_writeport, \
-			0, 0,	/* interrupts are made by z80 daisy chain system */ \
-			0, 0, daisy_chain_sound \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	sailorws_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 640-1, 0, 240-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	mjkoiura_vh_start, \
-	mjkoiura_vh_stop, \
-	sailorws_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main",Z80,12000000/2)		/* TMPZ84C011, 6.00 MHz */
+	MDRV_CPU_CONFIG(daisy_chain_main)
+	MDRV_CPU_MEMORY(readmem_sailorws, writemem_sailorws)
+	MDRV_CPU_PORTS(readport_sailorws, writeport_sailorws)
+	MDRV_CPU_VBLANK_INT(ctc0_trg1, 1)	/* vblank is connect to ctc triggfer */
 
-#define NBMJDRV3( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80,		/* TMPZ84C011 */ \
-		/*	12000000/4,	*/	/* 3.00 MHz */ \
-		/*	12000000/3,	*/	/* 4.00 MHz */ \
-			12000000/2,		/* 6.00 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			ctc0_trg1, 1, /* vblank is connect to ctc triggfer */ \
-			0, 0, daisy_chain_main \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU,/* TMPZ84C011 */ \
-		/*	8000000/2,	*/	/* 4.00 MHz */ \
-			8000000/1,		/* 8.00 MHz */ \
-			sound_readmem, sound_writemem, sound_readport, sound_writeport, \
-			0, 0,	/* interrupts are made by z80 daisy chain system */ \
-			0, 0, daisy_chain_sound \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	sailorws_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 640-1, 0, 240-1 }, \
-	0, \
-	512, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	mscoutm_vh_start, \
-	mscoutm_vh_stop, \
-	mscoutm_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	MDRV_CPU_ADD(Z80,8000000/1)			/* TMPZ84C011, 8.00 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_CONFIG(daisy_chain_sound)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 
-//	     NAME,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1( mjuraden, mjuraden, mjuraden, mjuraden, mjuraden, 0 )
-NBMJDRV1(  koinomp,  koinomp,  koinomp,  koinomp,  koinomp, 0 )
-NBMJDRV1( patimono, sailorws, sailorws, patimono, patimono, 0 )
-NBMJDRV1( mjanbari, sailorws, sailorws, patimono, patimono, sailorws_nvram_handler )
-NBMJDRV1(  mmehyou,  koinomp,  koinomp,  mmehyou,  mmehyou, sailorws_nvram_handler )
-NBMJDRV1( ultramhm,  koinomp,  koinomp,  koinomp,  koinomp, sailorws_nvram_handler )
-NBMJDRV1( gal10ren, sailorws, sailorws, gal10ren, gal10ren, 0 )
-NBMJDRV1( renaiclb, sailorws, sailorws, renaiclb, renaiclb, 0 )
-NBMJDRV1(  mjlaman, sailorws, sailorws,  mjlaman,  mjlaman, 0 )
-NBMJDRV1( mkeibaou, sailorws, sailorws, mkeibaou, mkeibaou, 0 )
-NBMJDRV1( pachiten, sailorws, sailorws, pachiten, pachiten, sailorws_nvram_handler )
-NBMJDRV1( sailorws, sailorws, sailorws, sailorws, sailorws, 0 )
-NBMJDRV1( sailorwr, sailorws, sailorws, sailorwr, sailorwr, sailorws_nvram_handler )
-NBMJDRV1( psailor1, sailorws, sailorws, psailor1, psailor1, 0 )
-NBMJDRV1( psailor2, sailorws, sailorws, psailor2, psailor2, 0 )
-NBMJDRV1( otatidai, sailorws, sailorws, otatidai, otatidai, 0 )
-NBMJDRV2(   ngpgal,   ngpgal,   ngpgal,   ngpgal,   ngpgal, 0 )
-NBMJDRV2( mjgottsu,   ngpgal,   ngpgal, mjgottsu, mjgottsu, 0 )
-NBMJDRV2( bakuhatu,   ngpgal,   ngpgal, mjgottsu, mjgottsu, 0 )
-NBMJDRV2(  cmehyou,   ngpgal,   ngpgal,  cmehyou,  cmehyou, 0 )
-NBMJDRV2( mjkoiura, mjuraden, mjuraden, mjkoiura, mjkoiura, 0 )
-NBMJDRV3(  mscoutm,  mscoutm,  mscoutm,  mscoutm,  mscoutm, 0 )
-NBMJDRV3(  imekura,  mjegolf,  mjegolf,  imekura,  imekura, 0 )
-NBMJDRV3(  mjegolf,  mjegolf,  mjegolf,  mjegolf,  mjegolf, 0 )
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(sailorws)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 240-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(sailorws)
+	MDRV_VIDEO_UPDATE(sailorws)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_VIDEO_START(mjkoiura)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(mscoutm)
+	MDRV_VIDEO_UPDATE(mscoutm)
+MACHINE_DRIVER_END
+
+
+//-------------------------------------------------------------------------
+
+static MACHINE_DRIVER_START( mjuraden )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjuraden,writemem_mjuraden)
+	MDRV_CPU_PORTS(readport_mjuraden,writeport_mjuraden)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( koinomp )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_koinomp,writemem_koinomp)
+	MDRV_CPU_PORTS(readport_koinomp,writeport_koinomp)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( patimono )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_patimono,writeport_patimono)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjanbari )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_patimono,writeport_patimono)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mmehyou )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_koinomp,writemem_koinomp)
+	MDRV_CPU_PORTS(readport_mmehyou,writeport_mmehyou)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ultramhm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_koinomp,writemem_koinomp)
+	MDRV_CPU_PORTS(readport_koinomp,writeport_koinomp)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( gal10ren )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_gal10ren,writeport_gal10ren)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( renaiclb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_renaiclb,writeport_renaiclb)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjlaman )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_mjlaman,writeport_mjlaman)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mkeibaou )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_mkeibaou,writeport_mkeibaou)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pachiten )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_pachiten,writeport_pachiten)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sailorws )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sailorwr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_sailorwr,writeport_sailorwr)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( psailor1 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_psailor1,writeport_psailor1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( psailor2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_psailor2,writeport_psailor2)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( otatidai )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_otatidai,writeport_otatidai)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ngpgal )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_ngpgal,writeport_ngpgal)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjgottsu )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_mjgottsu,writeport_mjgottsu)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bakuhatu )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_mjgottsu,writeport_mjgottsu)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cmehyou )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_cmehyou,writeport_cmehyou)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjkoiura )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjuraden,writemem_mjuraden)
+	MDRV_CPU_PORTS(readport_mjkoiura,writeport_mjkoiura)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mscoutm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV3 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mscoutm,writemem_mscoutm)
+	MDRV_CPU_PORTS(readport_mscoutm,writeport_mscoutm)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( imekura )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV3 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjegolf,writemem_mjegolf)
+	MDRV_CPU_PORTS(readport_imekura,writeport_imekura)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjegolf )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV3 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjegolf,writemem_mjegolf)
+	MDRV_CPU_PORTS(readport_mjegolf,writeport_mjegolf)
+MACHINE_DRIVER_END
 
 
 ROM_START( mjuraden )

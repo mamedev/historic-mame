@@ -14,10 +14,10 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-int holeland_vh_start( void );
-int crzrally_vh_start( void );
-void holeland_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-void crzrally_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+VIDEO_START( holeland );
+VIDEO_START( crzrally );
+VIDEO_UPDATE( holeland );
+VIDEO_UPDATE( crzrally );
 
 WRITE_HANDLER( holeland_videoram_w );
 WRITE_HANDLER( holeland_colorram_w );
@@ -295,79 +295,58 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static struct MachineDriver machine_driver_holeland =
-{
+static MACHINE_DRIVER_START( holeland )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz ? */
-			readmem, writemem,readport, writeport,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*16, 32*16, { 0*16, 32*16-1, 2*16, 30*16-1 },
-	holeland_gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0*16, 32*16-1, 2*16, 30*16-1)
+	MDRV_GFXDECODE(holeland_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	holeland_vh_start,
-	0,
-	holeland_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(holeland)
+	MDRV_VIDEO_UPDATE(holeland)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_crzrally =
-{
+
+static MACHINE_DRIVER_START( crzrally )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz ? */
-			crzrally_readmem, crzrally_writemem,readport, writeport,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz ? */
+	MDRV_CPU_MEMORY(crzrally_readmem,crzrally_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	crzrally_gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(crzrally_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	crzrally_vh_start,
-	0,
-	crzrally_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(crzrally)
+	MDRV_VIDEO_UPDATE(crzrally)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

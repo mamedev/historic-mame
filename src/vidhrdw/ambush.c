@@ -21,7 +21,7 @@ unsigned char *ambush_colorbank;
   I'm not sure about the resistor value, I'm using the Galaxian ones.
 
 ***************************************************************************/
-void ambush_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ambush )
 {
 	int i;
 
@@ -99,7 +99,7 @@ static void draw_chars(struct mame_bitmap *bitmap, int priority)
 }
 
 
-void ambush_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ambush )
 {
 	int offs;
 

@@ -139,7 +139,7 @@ READ_HANDLER( gorf_speech_r )
 
     totalword_ptr = totalword;
 
-	data = cpu_get_reg(Z80_BC) >> 8;
+	data = activecpu_get_reg(Z80_BC) >> 8;
 
     Phoneme = data & 0x3F;
     Intonation = data >> 6;

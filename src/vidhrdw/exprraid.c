@@ -59,7 +59,7 @@ static void drawbg(struct mame_bitmap *bitmap,int priority)
 
 
 
-void exprraid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( exprraid )
 {
 	int offs;
 

@@ -51,7 +51,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int mosaic_vh_start(void)
+VIDEO_START( mosaic )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
@@ -85,8 +85,8 @@ WRITE_HANDLER( mosaic_bgvideoram_w )
 
 
 
-void mosaic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mosaic )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

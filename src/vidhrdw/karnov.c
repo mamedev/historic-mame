@@ -40,7 +40,7 @@ static int flipscreen;
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
-void karnov_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( karnov )
 {
 	int i;
 
@@ -78,7 +78,7 @@ void karnov_flipscreen_w(int data)
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
-static void draw_background(struct mame_bitmap *bitmap)
+static void draw_background(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int my,mx,offs,color,tile,fx,fy;
 	int scrollx=karnov_scroll[0];
@@ -136,10 +136,10 @@ static void draw_background(struct mame_bitmap *bitmap)
 		scrolly=scrolly+256;
 		scrollx=scrollx+256;
 	}
-	copyscrollbitmap(bitmap,bitmap_f,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,bitmap_f,1,&scrollx,1,&scrolly,cliprect,TRANSPARENCY_NONE,0);
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -185,24 +185,24 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 		drawgfx(bitmap,Machine->gfx[2],
 				sprite,
 				colour,fx,fy,x,y,
-				0,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 
     	/* 1 more sprite drawn underneath */
     	if (extra)
     		drawgfx(bitmap,Machine->gfx[2],
 				sprite2,
 				colour,fx,fy,x,y+16,
-				0,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
 /******************************************************************************/
 
-void karnov_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( karnov )
 {
-	draw_background(bitmap);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	draw_background(bitmap,cliprect);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 }
 
 /******************************************************************************/
@@ -231,21 +231,15 @@ WRITE16_HANDLER( karnov_playfield_w )
 
 /******************************************************************************/
 
-void karnov_vh_stop (void)
-{
-	if (dirty_f) free(dirty_f);
-	if (bitmap_f) bitmap_free (bitmap_f);
-}
-
-int karnov_vh_start (void)
+VIDEO_START( karnov )
 {
 	/* Allocate bitmaps */
-	if ((bitmap_f = bitmap_alloc(512,512)) == 0) {
-		karnov_vh_stop ();
+	if ((bitmap_f = auto_bitmap_alloc(512,512)) == 0)
 		return 1;
-	}
 
-	dirty_f=malloc(0x800);
+	dirty_f=auto_malloc(0x800);
+	if (!dirty_f)
+		return 1;
 	memset(dirty_f,1,0x800);
 
 	fix_tilemap=tilemap_create(get_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -256,15 +250,15 @@ int karnov_vh_start (void)
 	return 0;
 }
 
-int wndrplnt_vh_start (void)
+VIDEO_START( wndrplnt )
 {
 	/* Allocate bitmaps */
-	if ((bitmap_f = bitmap_alloc(512,512)) == 0) {
-		karnov_vh_stop ();
+	if ((bitmap_f = auto_bitmap_alloc(512,512)) == 0)
 		return 1;
-	}
 
-	dirty_f=malloc(0x800);
+	dirty_f=auto_malloc(0x800);
+	if (!dirty_f)
+		return 1;
 	memset(dirty_f,1,0x800);
 
 	fix_tilemap=tilemap_create(get_fix_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);

@@ -46,7 +46,7 @@ WRITE_HANDLER( redalert_c030_w )
 	/* Is this some type of sound command? */
 	if (data & 0x80)
 		/* Cause an NMI on the voice CPU here? */
-		cpu_cause_interrupt(2,I8085_RST75);
+		cpu_set_irq_line(2,I8085_RST75_LINE,HOLD_LINE);
 }
 
 READ_HANDLER( redalert_voicecommand_r )
@@ -61,7 +61,7 @@ WRITE_HANDLER( redalert_soundlatch_w )
 
 	/* Bit D7 is also connected to the NMI input of the CPU */
 	if ((data & 0x80)!=0x80)
-		cpu_cause_interrupt(1,M6502_INT_NMI);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 READ_HANDLER( redalert_AY8910_A_r )

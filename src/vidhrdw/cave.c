@@ -130,7 +130,7 @@ static void sprite_draw_donpachi_zbuf( int priority );
 
 ***************************************************************************/
 
-void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( dfeveron )
 {
 	int color, pen;
 
@@ -144,7 +144,7 @@ void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable
 			colortable[color * 256 + pen] = color * 16 + pen;
 }
 
-void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ddonpach )
 {
 	int color, pen;
 
@@ -158,7 +158,7 @@ void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable
 			colortable[color * 16 + pen + 0x8000] = 0x4000 + color * 256 + pen;
 }
 
-void mazinger_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mazinger )
 {
 	int color, pen;
 
@@ -174,7 +174,7 @@ void mazinger_vh_init_palette(unsigned char *palette, unsigned short *colortable
 			colortable[color * 64 + pen + 0x4400] = 0x400 + (color % (64/4)) * 64 + pen;
 }
 
-void sailormn_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( sailormn )
 {
 	int color, pen;
 
@@ -418,7 +418,7 @@ int cave_vh_start( int num )
 			return 1;
 	}
 
-	if (sprite_init_cave())	{	cave_vh_stop();	return 1;	}
+	if (sprite_init_cave())	return 1;
 
 	cave_layers_offs_x = 0x13;
 	cave_layers_offs_y = -0x12;
@@ -426,13 +426,13 @@ int cave_vh_start( int num )
 	return 0;
 }
 
-int cave_vh_start_1_layer (void)	{	return cave_vh_start(1);	}
-int cave_vh_start_2_layers(void)	{	return cave_vh_start(2);	}
-int cave_vh_start_3_layers(void)	{	return cave_vh_start(3);	}
-int cave_vh_start_4_layers(void)	{	return cave_vh_start(4);	}
+VIDEO_START( cave_1_layer )		{	return cave_vh_start(1);	}
+VIDEO_START( cave_2_layers )	{	return cave_vh_start(2);	}
+VIDEO_START( cave_3_layers )	{	return cave_vh_start(3);	}
+VIDEO_START( cave_4_layers )	{	return cave_vh_start(4);	}
 
 
-int sailormn_vh_start_3_layers(void)
+VIDEO_START( sailormn_3_layers )
 {
 	if (cave_vh_start(2))
 		return 1;
@@ -448,14 +448,6 @@ int sailormn_vh_start_3_layers(void)
 	return 0;
 }
 
-
-void cave_vh_stop(void)
-{
-	if (sprite_cave)	free(sprite_cave);
-	sprite_cave = NULL;
-	if (sprite_zbuf)	free(sprite_zbuf);
-	sprite_zbuf = NULL;
-}
 
 
 /***************************************************************************
@@ -707,7 +699,6 @@ static int sprite_init_cave(void)
 	blit.origin_y = 0;
 	blit.baseaddr = bitmap->line[0];
 	blit.line_offset = ((UINT8 *)bitmap->line[1])-((UINT8 *)bitmap->line[0]);
-	sprite_set_clip(&Machine->visible_area);
 
 	if (cave_spritetype == 0 || cave_spritetype == 2)	// most of the games
 	{
@@ -721,10 +712,11 @@ static int sprite_init_cave(void)
 	}
 
 	sprite_zbuf_size = Machine->drv->screen_width * Machine->drv->screen_height * 2;
-	if(!(sprite_zbuf = malloc(sprite_zbuf_size))) return 1;
+	if(!(sprite_zbuf = auto_malloc(sprite_zbuf_size))) return 1;
 
 	num_sprites = spriteram_size / 0x10 / 2;
-	if(!(sprite_cave = calloc( num_sprites, sizeof(struct sprite_cave) ))) return 1;
+	if(!(sprite_cave = auto_malloc( num_sprites * sizeof(struct sprite_cave) ))) return 1;
+	memset(sprite_cave, 0, num_sprites * sizeof(struct sprite_cave));
 
 	return 0;
 }
@@ -1873,7 +1865,7 @@ else
 ***************************************************************************/
 
 INLINE void cave_tilemap_draw(
-	struct mame_bitmap *bitmap,
+	struct mame_bitmap *bitmap, const struct rectangle *cliprect,
 	struct tilemap *TILEMAP, data16_t *VRAM, data16_t *VCTRL,
 	UINT32 flags, UINT32 priority, UINT32 priority2 )
 {
@@ -1922,14 +1914,14 @@ INLINE void cave_tilemap_draw(
 					become vertical) there may be graphical glitches.
 		*/
 
-		clip.min_x = Machine->visible_area.min_x;
-		clip.max_x = Machine->visible_area.max_x;
+		clip.min_x = cliprect->min_x;
+		clip.max_x = cliprect->max_x;
 
-		for(startline = Machine->visible_area.min_y; startline <= Machine->visible_area.max_y;)
+		for(startline = cliprect->min_y; startline <= cliprect->max_y;)
 		{
 			/* Find the largest slice */
 			vramdata0 = (vramdata1 = VRAM[(0x1000+((2+startline*4)&0x7ff))/2]);
-			for(endline = startline + 1; endline <= Machine->visible_area.max_y; endline++)
+			for(endline = startline + 1; endline <= cliprect->max_y; endline++)
 				if((++vramdata1) != VRAM[(0x1000+((2+endline*4)&0x7ff))/2]) break;
 
 			tilemap_set_scrolly(TILEMAP, 0, sy + vramdata0 - startline);
@@ -1956,8 +1948,7 @@ INLINE void cave_tilemap_draw(
 			clip.min_y = startline;
 			clip.max_y = endline - 1;
 
-			tilemap_set_clip(TILEMAP,&clip);
-			tilemap_draw(bitmap, TILEMAP, flags, priority);
+			tilemap_draw(bitmap, &clip, TILEMAP, flags, priority);
 
 			startline = endline;
 		}
@@ -1966,36 +1957,35 @@ INLINE void cave_tilemap_draw(
 	{
 		int line;
 		tilemap_set_scroll_rows(TILEMAP,512);
-		for(line = Machine->visible_area.min_y; line <= Machine->visible_area.max_y; line++)
+		for(line = cliprect->min_y; line <= cliprect->max_y; line++)
 			tilemap_set_scrollx(	TILEMAP,
 									(line + sy) & 511,
 									sx + VRAM[(0x1000+((line*4)&0x7ff))/2] );
 		tilemap_set_scrolly(TILEMAP, 0, sy );
-		tilemap_draw(bitmap, TILEMAP, flags, priority);
+		tilemap_draw(bitmap, cliprect, TILEMAP, flags, priority);
 	}
 	else
 	{
 		/* "Normal" scrolling */
-		tilemap_set_clip(TILEMAP,&Machine->visible_area);
 		tilemap_set_scroll_rows(TILEMAP, 1);
 		tilemap_set_scroll_cols(TILEMAP, 1);
 		tilemap_set_scrollx(TILEMAP, 0, sx );
 		tilemap_set_scrolly(TILEMAP, 0, sy );
-		tilemap_draw(bitmap, TILEMAP, flags, priority);
+		tilemap_draw(bitmap, cliprect, TILEMAP, flags, priority);
 	}
 }
 
-void cave_tilemap_0_draw( struct mame_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
-{	 cave_tilemap_draw( bitmap, tilemap_0, cave_vram_0, cave_vctrl_0, flags, priority, priority2 );	}
-void cave_tilemap_1_draw( struct mame_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
-{	 cave_tilemap_draw( bitmap, tilemap_1, cave_vram_1, cave_vctrl_1, flags, priority, priority2 );	}
-void cave_tilemap_2_draw( struct mame_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
-{	 cave_tilemap_draw( bitmap, tilemap_2, cave_vram_2, cave_vctrl_2, flags, priority, priority2 );	}
-void cave_tilemap_3_draw( struct mame_bitmap *bitmap, UINT32 flags, UINT32 priority, UINT32 priority2 )
-{	 cave_tilemap_draw( bitmap, tilemap_3, cave_vram_3, cave_vctrl_3, flags, priority, priority2 );	}
+void cave_tilemap_0_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT32 flags, UINT32 priority, UINT32 priority2 )
+{	 cave_tilemap_draw( bitmap, cliprect, tilemap_0, cave_vram_0, cave_vctrl_0, flags, priority, priority2 );	}
+void cave_tilemap_1_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT32 flags, UINT32 priority, UINT32 priority2 )
+{	 cave_tilemap_draw( bitmap, cliprect, tilemap_1, cave_vram_1, cave_vctrl_1, flags, priority, priority2 );	}
+void cave_tilemap_2_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT32 flags, UINT32 priority, UINT32 priority2 )
+{	 cave_tilemap_draw( bitmap, cliprect, tilemap_2, cave_vram_2, cave_vctrl_2, flags, priority, priority2 );	}
+void cave_tilemap_3_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT32 flags, UINT32 priority, UINT32 priority2 )
+{	 cave_tilemap_draw( bitmap, cliprect, tilemap_3, cave_vram_3, cave_vctrl_3, flags, priority, priority2 );	}
 
 
-void cave_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cave )
 {
 	int pri, pri2;
 	int layers_ctrl = -1;
@@ -2080,13 +2070,15 @@ void cave_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 #endif
 
+	sprite_set_clip(cliprect);
+
 	(*get_sprite_info)();
 
 	sprite_update_cave();
 
 	/* To be verified: the background color is the first of layer 0 */
 	background_color =	 Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	fillbitmap(bitmap,Machine->remapped_colortable[background_color],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->remapped_colortable[background_color],cliprect);
 
 	/*
 		Tiles and sprites are ordered by priority (0 back, 3 front) with
@@ -2106,10 +2098,10 @@ void cave_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		for (pri2=0;pri2<=3;pri2++)	// priority of the whole layer
 		{
-			if (layers_ctrl&(1<<(pri+ 0)))	cave_tilemap_0_draw(bitmap, pri, 0, pri2);
-			if (layers_ctrl&(1<<(pri+ 4)))	cave_tilemap_1_draw(bitmap, pri, 0, pri2);
-			if (layers_ctrl&(1<<(pri+ 8)))	cave_tilemap_2_draw(bitmap, pri, 0, pri2);
-			if (layers_ctrl&(1<<(pri+12)))	cave_tilemap_3_draw(bitmap, pri, 0, pri2);
+			if (layers_ctrl&(1<<(pri+ 0)))	cave_tilemap_0_draw(bitmap, cliprect, pri, 0, pri2);
+			if (layers_ctrl&(1<<(pri+ 4)))	cave_tilemap_1_draw(bitmap, cliprect, pri, 0, pri2);
+			if (layers_ctrl&(1<<(pri+ 8)))	cave_tilemap_2_draw(bitmap, cliprect, pri, 0, pri2);
+			if (layers_ctrl&(1<<(pri+12)))	cave_tilemap_3_draw(bitmap, cliprect, pri, 0, pri2);
 		}
 	}
 }

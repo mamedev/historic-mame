@@ -11,7 +11,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 /***************************************************************************/
 
@@ -117,9 +117,9 @@ static void set_page( int page[4], data16_t data ){
 	page[2] = data&0xf;
 }
 
-static int sys16_interrupt( void ){
+static INTERRUPT_GEN( sys16_interrupt ){
 	if(sys16_custom_irq) sys16_custom_irq();
-	return 4; /* Interrupt vector 4, used by VBlank */
+	cpu_set_irq_line(cpu_getactivecpu(), 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
 }
 
 static WRITE16_HANDLER( sound_command_nmi_w ){
@@ -182,7 +182,7 @@ static READ16_HANDLER( ho_io_highscoreentry_r ){
 }
 
 static READ16_HANDLER( hangon1_skip_r ){
-	if (cpu_get_pc()==0x17e6) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x17e6) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_extraram[0x0400/2];
 }
 
@@ -222,7 +222,7 @@ static MEMORY_WRITE16_START( hangon_writemem )
 MEMORY_END
 
 static READ16_HANDLER( hangon2_skip_r ){
-	if (cpu_get_pc()==0xf66) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0xf66) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_extraram3[0x01000/2];
 }
 
@@ -274,7 +274,7 @@ static void hangon_update_proc( void ){
 	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
 }
 
-static void hangon_init_machine( void ){
+static MACHINE_INIT( hangon ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_hangon;
 	sys16_sprxoffset = -0xc0;
@@ -307,60 +307,51 @@ static void hangon_init_machine( void ){
 	sys16_gr_colorflip[1][3]=0x02 / 2;
 }
 
-static void init_hangon( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( hangon ){
+	machine_init_sys16_onetime();
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
 
 /***************************************************************************/
 
-static const struct MachineDriver machine_driver_hangon =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			hangon_readmem,hangon_writemem,0,0,
-			sys16_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4096000,
-			hangon_sound_readmem,hangon_sound_writemem,hangon_sound_readport,hangon_sound_writeport,
-//			ignore_interrupt,1
-			interrupt,4
-		},
-		{
-			CPU_M68000,
-			10000000,
-			hangon_readmem2,hangon_writemem2,0,0,
-			sys16_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	hangon_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	sys16_hangon_vh_start,
-	sys16_vh_stop,
-	sys16_hangon_vh_screenrefresh,
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&sys16_ym2203_interface
-		},
-		{			// wrong sound chip??
-			SOUND_SEGAPCM,
-			&sys16_segapcm_interface_32k,
-		}
-	}
-};
+static MACHINE_DRIVER_START( hangon )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(hangon_readmem,hangon_writemem)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_CPU_ADD(Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(hangon_sound_readmem,hangon_sound_writemem)
+	MDRV_CPU_PORTS(hangon_sound_readport,hangon_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+	
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(hangon_readmem2,hangon_writemem2)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(hangon)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(hangon)
+	MDRV_VIDEO_UPDATE(hangon)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, sys16_ym2203_interface)
+	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_32k)
+MACHINE_DRIVER_END
 
 
 
@@ -465,7 +456,7 @@ static void harrier_update_proc( void ){
 	sys16_extraram[0x492/2] = sh_io_joy_r(0,0);
 }
 
-static void harrier_init_machine( void ){
+static MACHINE_INIT( harrier ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_sharrier;
 	sys16_sprxoffset = -0xc0;
@@ -507,62 +498,55 @@ static void harrier_init_machine( void ){
 	sys16_sh_shadowpal=0;
 }
 
-static void init_sharrier( void )
+static DRIVER_INIT( sharrier )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
 	sys16_interleave_sprite_data( 0x100000 );
 	generate_gr_screen(512,512,0,0,4,0x8000);
 }
 /***************************************************************************/
 
-static const struct MachineDriver machine_driver_sharrier =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			harrier_readmem,harrier_writemem,0,0,
-			sys16_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4096000,
-			harrier_sound_readmem,harrier_sound_writemem,harrier_sound_readport,harrier_sound_writeport,
-//			ignore_interrupt,1
-			interrupt,4
-		},
-		{
-			CPU_M68000,
-			10000000,
-			harrier_readmem2,harrier_writemem2,0,0,
-			sys16_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	harrier_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	sys16_hangon_vh_start,
-	sys16_vh_stop,
-	sys16_hangon_vh_screenrefresh,
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&sys16_ym2203_interface
-		},
-		{
-			SOUND_SEGAPCM,
-			&sys16_segapcm_interface_32k,
-		}
-	}
-};
+static MACHINE_DRIVER_START( sharrier )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(harrier_readmem,harrier_writemem)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_CPU_ADD(Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(harrier_sound_readmem,harrier_sound_writemem)
+	MDRV_CPU_PORTS(harrier_sound_readport,harrier_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+	
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(harrier_readmem2,harrier_writemem2)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(harrier)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(hangon)
+	MDRV_VIDEO_UPDATE(hangon)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, sys16_ym2203_interface)
+	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_32k)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************/
 
@@ -635,7 +619,7 @@ static MEMORY_WRITE16_START( enduror_writemem )
 MEMORY_END
 
 static READ16_HANDLER( enduro_p2_skip_r ){
-	if (cpu_get_pc()==0x4ba) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x4ba) {cpu_spinuntil_int(); return 0xffff;}
 	return shared_ram[0x2000/2];
 }
 
@@ -726,7 +710,7 @@ static void enduror_update_proc( void ){
 	sys16_bg_page[2] = data&0xf;
 }
 
-static void enduror_init_machine( void ){
+static MACHINE_INIT( enduror ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_sharrier;
 	sys16_sprxoffset = -0xc0;
@@ -812,18 +796,18 @@ static void endurob2_opcode_decode( void )
 	rom[(0x186a + diff)/2] = 0x0000;
 }
 
-static void init_enduror( void )
+static DRIVER_INIT( enduror )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
 //	sys16_MaxShadowColors=0;
 
 	enduror_sprite_decode();
 }
 
-static void init_endurobl( void )
+static DRIVER_INIT( endurobl )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
 //	sys16_MaxShadowColors=0;
 
@@ -831,9 +815,9 @@ static void init_endurobl( void )
 	endurora_opcode_decode();
 }
 
-static void init_endurob2( void )
+static DRIVER_INIT( endurob2 )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_MaxShadowColors=NumOfShadowColors / 2;
 //	sys16_MaxShadowColors=0;
 
@@ -843,99 +827,83 @@ static void init_endurob2( void )
 
 /***************************************************************************/
 
-static const struct MachineDriver machine_driver_enduror =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			enduror_readmem,enduror_writemem,0,0,
-			sys16_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4096000,
-			enduror_sound_readmem,enduror_sound_writemem,enduror_sound_readport,enduror_sound_writeport,
-			interrupt,4
-		},
-		{
-			CPU_M68000,
-			10000000,
-			enduror_readmem2,enduror_writemem2,0,0,
-			sys16_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	enduror_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	sys16_hangon_vh_start,
-	sys16_vh_stop,
-	sys16_hangon_vh_screenrefresh,
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&sys16_ym2203_interface
-		},
-		{
-			SOUND_SEGAPCM,
-			&sys16_segapcm_interface_32k,
-		}
-	}
-};
+static MACHINE_DRIVER_START( enduror )
 
-static const struct MachineDriver machine_driver_endurob2 =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			enduror_readmem,enduror_writemem,0,0,
-			sys16_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4096000,
-			enduror_b2_sound_readmem,enduror_b2_sound_writemem,enduror_b2_sound_readport,enduror_b2_sound_writeport,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,
-			enduror_readmem2,enduror_writemem2,0,0,
-			sys16_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	2,
-	enduror_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	sys16_hangon_vh_start,
-	sys16_vh_stop,
-	sys16_hangon_vh_screenrefresh,
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&sys16_3xym2203_interface
-		},
-		{
-			SOUND_SEGAPCM,
-			&sys16_segapcm_interface_15k,
-		}
-	}
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(enduror_readmem,enduror_writemem)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_CPU_ADD(Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(enduror_sound_readmem,enduror_sound_writemem)
+	MDRV_CPU_PORTS(enduror_sound_readport,enduror_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+	
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(enduror_readmem2,enduror_writemem2)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(enduror)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(hangon)
+	MDRV_VIDEO_UPDATE(hangon)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, sys16_ym2203_interface)
+	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_32k)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( endurob2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(enduror_readmem,enduror_writemem)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_CPU_ADD(Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(enduror_b2_sound_readmem,enduror_b2_sound_writemem)
+	MDRV_CPU_PORTS(enduror_b2_sound_readport,enduror_b2_sound_writeport)
+	
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(enduror_readmem2,enduror_writemem2)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(enduror)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(hangon)
+	MDRV_VIDEO_UPDATE(hangon)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, sys16_3xym2203_interface)
+	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_15k)
+MACHINE_DRIVER_END
 
 /*****************************************************************************/
 

@@ -55,7 +55,7 @@ void tmp68301_update_timer( int i );
 int seta2_irq_callback(int int_level)
 {
 	int vector = irq_vector[int_level];
-//	logerror("CPU #0 PC %06X: irq callback returns %04X for level %x\n",cpu_get_pc(),vector,int_level);
+//	logerror("CPU #0 PC %06X: irq callback returns %04X for level %x\n",activecpu_get_pc(),vector,int_level);
 	return vector;
 }
 
@@ -66,7 +66,7 @@ void tmp68301_timer_callback(int i)
 	data16_t ICR	=	tmp68301_regs[0x8e/2+i];	// Interrupt Controller Register (ICR7..9)
 	data16_t IVNR	=	tmp68301_regs[0x9a/2];		// Interrupt Vector Number Register (IVNR)
 
-//	logerror("CPU #0 PC %06X: callback timer %04X, j = %d\n",cpu_get_pc(),i,tcount);
+//	logerror("CPU #0 PC %06X: callback timer %04X, j = %d\n",activecpu_get_pc(),i,tcount);
 
 	if	(	(TCR & 0x0004) &&	// INT
 			!(IMR & (0x100<<i))
@@ -101,7 +101,7 @@ void tmp68301_update_timer( int i )
 	int max = 0;
 	double duration = 0;
 
-	timer_reset(tmp68301_timer[i],TIME_NEVER);
+	timer_adjust(tmp68301_timer[i],TIME_NEVER,i,0);
 
 	// timers 1&2 only
 	switch( (TCR & 0x0030)>>4 )						// MR2..1
@@ -128,14 +128,14 @@ void tmp68301_update_timer( int i )
 		break;
 	}
 
-//	logerror("CPU #0 PC %06X: TMP68301 Timer %d, duration %lf, max %04X\n",cpu_get_pc(),i,duration,max);
+//	logerror("CPU #0 PC %06X: TMP68301 Timer %d, duration %lf, max %04X\n",activecpu_get_pc(),i,duration,max);
 
 	if (!(TCR & 0x0002))				// CS
 	{
 		if (duration)
-			timer_reset(tmp68301_timer[i],TIME_IN_HZ(duration));
+			timer_adjust(tmp68301_timer[i],TIME_IN_HZ(duration),i,0);
 		else
-			logerror("CPU #0 PC %06X: TMP68301 error, timer %d duration is 0\n",cpu_get_pc(),i);
+			logerror("CPU #0 PC %06X: TMP68301 error, timer %d duration is 0\n",activecpu_get_pc(),i);
 	}
 }
 
@@ -143,10 +143,10 @@ void tmp68301_init(void)
 {
 	int i;
 	for (i = 0; i < 3; i++)
-		tmp68301_timer[i] = timer_set(TIME_NEVER, i, tmp68301_timer_callback);
+		tmp68301_timer[i] = timer_alloc(tmp68301_timer_callback);
 }
 
-void seta2_init_machine(void)
+MACHINE_INIT( seta2 )
 {
 	cpu_set_irq_callback(0, seta2_irq_callback);
 	tmp68301_init();
@@ -190,7 +190,7 @@ WRITE16_HANDLER( tmp68301_regs_w )
 
 	if (!ACCESSING_LSB)	return;
 
-//	logerror("CPU #0 PC %06X: TMP68301 Reg %04X<-%04X & %04X\n",cpu_get_pc(),offset*2,data,mem_mask^0xffff);
+//	logerror("CPU #0 PC %06X: TMP68301 Reg %04X<-%04X & %04X\n",activecpu_get_pc(),offset*2,data,mem_mask^0xffff);
 
 	switch( offset * 2 )
 	{
@@ -207,7 +207,7 @@ WRITE16_HANDLER( tmp68301_regs_w )
 	}
 }
 
-int seta2_interrupt(void)
+INTERRUPT_GEN( seta2_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -217,7 +217,6 @@ int seta2_interrupt(void)
 			update_irq_state();
 			break;
 	}
-	return ignore_interrupt();
 }
 
 /***************************************************************************
@@ -236,7 +235,7 @@ WRITE16_HANDLER( seta2_sound_bank_w )
 		int banks = (memory_region_length( REGION_SOUND1 ) - 0x100000) / 0x20000;
 		if (data >= banks)
 		{
-			logerror("CPU #0 PC %06X: invalid sound bank %04X\n",cpu_get_pc(),data);
+			logerror("CPU #0 PC %06X: invalid sound bank %04X\n",activecpu_get_pc(),data);
 			data %= banks;
 		}
 		memcpy(ROM + offset * 0x20000, ROM + 0x100000 + data * 0x20000, 0x20000);
@@ -764,112 +763,97 @@ static struct CustomSound_interface seta_sound_intf_16MHz =
 								Puzzle De Bowling
 ***************************************************************************/
 
-/*static*/ const struct MachineDriver machine_driver_pzlbowl =
-{
-	{
-		{
-			CPU_M68000,			/* !! TMP68301 !! */
-			32530400 / 2,
-			pzlbowl_readmem, pzlbowl_writemem,0,0,
-			seta2_interrupt, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	seta2_init_machine,
+static MACHINE_DRIVER_START( pzlbowl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,32530400 / 2)			/* !! TMP68301 !! */
+	MDRV_CPU_MEMORY(pzlbowl_readmem,pzlbowl_writemem)
+	MDRV_CPU_VBLANK_INT(seta2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(seta2)
 
 	/* video hardware */
-	0x180, 0x100, { 0, 0x180-1, 0, 0x100-16-1 },
-	seta2_gfxdecodeinfo,
-	0x8000, (0x8000/16)*16 + (0x8000/16)*256,
-	seta2_vh_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x180-1, 0, 0x100-16-1)
+	MDRV_GFXDECODE(seta2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_COLORTABLE_LENGTH((0x8000/16)*16 + (0x8000/16)*256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	seta2_vh_screenrefresh,
+	MDRV_PALETTE_INIT(seta2)
+	MDRV_VIDEO_UPDATE(seta2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 							Kosodate Quiz My Angel
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_myangel =
-{
-	{
-		{
-			CPU_M68000,			/* !! TMP68301 !! */
-			32530400 / 2,
-			myangel_readmem, myangel_writemem,0,0,
-			seta2_interrupt, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	seta2_init_machine,
+static MACHINE_DRIVER_START( myangel )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,32530400 / 2)			/* !! TMP68301 !! */
+	MDRV_CPU_MEMORY(myangel_readmem,myangel_writemem)
+	MDRV_CPU_VBLANK_INT(seta2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(seta2)
 
 	/* video hardware */
-	0x180, 0x100, { 0, 0x180-8-1, 0+16, 0x100-1 },
-	seta2_gfxdecodeinfo,
-	0x8000, (0x8000/16)*16 + (0x8000/16)*256,
-	seta2_vh_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x180-8-1, 0+16, 0x100-1)
+	MDRV_GFXDECODE(seta2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_COLORTABLE_LENGTH((0x8000/16)*16 + (0x8000/16)*256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	seta2_vh_screenrefresh,
+	MDRV_PALETTE_INIT(seta2)
+	MDRV_VIDEO_UPDATE(seta2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 							Kosodate Quiz My Angel 2
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_myangel2 =
-{
-	{
-		{
-			CPU_M68000,			/* !! TMP68301 !! */
-			32530400 / 2,
-			myangel2_readmem, myangel2_writemem,0,0,
-			seta2_interrupt, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	seta2_init_machine,
+static MACHINE_DRIVER_START( myangel2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,32530400 / 2)			/* !! TMP68301 !! */
+	MDRV_CPU_MEMORY(myangel2_readmem,myangel2_writemem)
+	MDRV_CPU_VBLANK_INT(seta2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(seta2)
 
 	/* video hardware */
-	0x180, 0x100, { 0, 0x180-8-1, 0+16, 0x100-1 },
-	seta2_gfxdecodeinfo,
-	0x8000, (0x8000/16)*16 + (0x8000/16)*256,
-	seta2_vh_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x180-8-1, 0+16, 0x100-1)
+	MDRV_GFXDECODE(seta2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_COLORTABLE_LENGTH((0x8000/16)*16 + (0x8000/16)*256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	seta2_vh_screenrefresh,
+	MDRV_PALETTE_INIT(seta2)
+	MDRV_VIDEO_UPDATE(seta2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -911,7 +895,7 @@ ROM_START( pzlbowl )
 	ROM_LOAD( "kus-u18.i00", 0x100000, 0x400000, 0xe2b1dfcf )
 ROM_END
 
-void init_pzlbowl(void)
+DRIVER_INIT( pzlbowl )
 {
 	data16_t *ROM = (data16_t *)memory_region( REGION_CPU1 );
 

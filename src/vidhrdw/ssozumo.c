@@ -19,7 +19,7 @@ unsigned char *ssozumo_scroll;
 
 /**************************************************************************/
 
-void ssozumo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( ssozumo )
 {
 	int	bit0, bit1, bit2, bit3;
 	int	i;
@@ -81,32 +81,20 @@ WRITE_HANDLER( ssozumo_paletteram_w )
 }
 
 
-int ssozumo_vh_start(void)
+VIDEO_START( ssozumo )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-	{
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width, 2 * Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, 2 * Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
 
-void ssozumo_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
-}
-
-
-void ssozumo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( ssozumo )
 {
 	int	offs;
 	int	sx, sy;

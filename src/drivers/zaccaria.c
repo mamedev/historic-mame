@@ -41,13 +41,13 @@ Notes:
 
 extern data8_t *zaccaria_videoram,*zaccaria_attributesram;
 
-void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int zaccaria_vh_start(void);
+PALETTE_INIT( zaccaria );
+VIDEO_START( zaccaria );
 WRITE_HANDLER( zaccaria_videoram_w );
 WRITE_HANDLER( zaccaria_attributes_w );
 WRITE_HANDLER( zaccaria_flip_screen_x_w );
 WRITE_HANDLER( zaccaria_flip_screen_y_w );
-void zaccaria_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( zaccaria );
 
 
 static int dsw;
@@ -69,7 +69,7 @@ static WRITE_HANDLER( zaccaria_dsw_sel_w )
 			break;
 
 		default:
-logerror("PC %04x: portsel = %02x\n",cpu_get_pc(),data);
+logerror("PC %04x: portsel = %02x\n",activecpu_get_pc(),data);
 			break;
 	}
 }
@@ -154,14 +154,12 @@ static WRITE_HANDLER( zaccaria_port0b_w )
 	last = data;
 }
 
-static int zaccaria_cb1_toggle(void)
+static INTERRUPT_GEN( zaccaria_cb1_toggle )
 {
 	static int toggle;
 
 	pia_0_cb1_w(0,toggle & 1);
 	toggle ^= 1;
-
-	return ignore_interrupt();
 }
 
 
@@ -241,7 +239,7 @@ static ppi8255_interface ppi8255_intf =
 };
 
 
-static void zaccaria_init_machine(void)
+static MACHINE_INIT( zaccaria )
 {
 	ppi8255_init(&ppi8255_intf);
 
@@ -667,63 +665,44 @@ static struct TMS5220interface tms5220_interface =
 
 
 
-static const struct MachineDriver machine_driver_zaccaria =
-{
+static MACHINE_DRIVER_START( zaccaria )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_M6802 | CPU_AUDIO_CPU,
-			3580000/4,	/* 895 kHz */
-			sound_readmem1,sound_writemem1,0,0,
-			ignore_interrupt,0,	/* IRQ and NMI triggered by the PIA */
-			zaccaria_cb1_toggle,3580000/4096
-		},
-		{
-			CPU_M6802 | CPU_AUDIO_CPU,
-			3580000/4,	/* 895 kHz */
-			sound_readmem2,sound_writemem2,0,0,
-			ignore_interrupt,0	/* IRQ triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-	1,  /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	zaccaria_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M6802,3580000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 895 kHz */
+	MDRV_CPU_MEMORY(sound_readmem1,sound_writemem1)
+	MDRV_CPU_PERIODIC_INT(zaccaria_cb1_toggle,3580000/4096)
+
+	MDRV_CPU_ADD(M6802,3580000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 895 kHz */
+	MDRV_CPU_MEMORY(sound_readmem2,sound_writemem2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zaccaria)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 32*8+32*8,
-	zaccaria_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(32*8+32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	zaccaria_vh_start,
-	0,
-	zaccaria_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaccaria)
+	MDRV_VIDEO_START(zaccaria)
+	MDRV_VIDEO_UPDATE(zaccaria)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -12,8 +12,8 @@
 
 
 
-void cheekyms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void cheekyms_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( cheekyms );
+VIDEO_UPDATE( cheekyms );
 WRITE_HANDLER( cheekyms_sprite_w );
 WRITE_HANDLER( cheekyms_port_40_w );
 WRITE_HANDLER( cheekyms_port_80_w );
@@ -44,11 +44,12 @@ static PORT_WRITE_START( writeport )
 PORT_END
 
 
-static int cheekyms_interrupt(void)
+static INTERRUPT_GEN( cheekyms_interrupt )
 {
 	if (readinputport(2) & 1)	/* Coin */
-		return nmi_interrupt();
-	else return interrupt();
+		nmi_line_pulse();
+	else
+		irq0_line_hold();
 }
 
 
@@ -137,43 +138,32 @@ static struct DACinterface dac_interface =
 };
 
 
-static const struct MachineDriver machine_driver_cheekyms =
-{
+static MACHINE_DRIVER_START( cheekyms )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000/2,  /* 2.5 MHz */
-			readmem, writemem,
-			readport, writeport,
-			cheekyms_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80,5000000/2)  /* 2.5 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(cheekyms_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	64*3,64*3,
-	cheekyms_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64*3)
+	MDRV_COLORTABLE_LENGTH(64*3)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	cheekyms_vh_screenrefresh,
+	MDRV_PALETTE_INIT(cheekyms)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(cheekyms)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 

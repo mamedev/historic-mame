@@ -28,12 +28,11 @@ a symmetrical visible area).
 
 extern data16_t *gradius3_gfxram;
 extern int gradius3_priority;
-int gradius3_vh_start(void);
-void gradius3_vh_stop(void);
+VIDEO_START( gradius3 );
 READ16_HANDLER( gradius3_gfxrom_r );
 READ16_HANDLER( gradius3_gfxram_r );
 WRITE16_HANDLER( gradius3_gfxram_w );
-void gradius3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( gradius3 );
 
 
 
@@ -50,7 +49,7 @@ static WRITE16_HANDLER( K052109_halfword_w )
 	/* is this a bug in the game or something else? */
 	if (!ACCESSING_LSB)
 		K052109_w(offset,(data >> 8) & 0xff);
-//		logerror("%06x half %04x = %04x\n",cpu_get_pc(),offset,data);
+//		logerror("%06x half %04x = %04x\n",activecpu_get_pc(),offset,data);
 }
 
 static READ16_HANDLER( K051937_halfword_r )
@@ -80,7 +79,7 @@ static WRITE16_HANDLER( K051960_halfword_w )
 static int irqAen,irqBmask;
 
 
-static void gradius3_init(void)
+static MACHINE_INIT( gradius3 )
 {
 	/* start with cpu B halted */
 	cpu_set_reset_line(1,ASSERT_LINE);
@@ -120,7 +119,7 @@ static WRITE16_HANDLER( cpuA_ctrl_w )
 		irqAen = data & 0x20;
 
 		/* other bits unknown */
-//logerror("%06x: write %04x to c0000\n",cpu_get_pc(),data);
+//logerror("%06x: write %04x to c0000\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -130,34 +129,35 @@ static WRITE16_HANDLER( cpuB_irqenable_w )
 		irqBmask = (data >> 8) & 0x07;
 }
 
-static int cpuA_interrupt(void)
+static INTERRUPT_GEN( cpuA_interrupt )
 {
-	if (irqAen) return 2;
-	return ignore_interrupt();
+	if (irqAen)
+		cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
-static int cpuB_interrupt(void)
+static INTERRUPT_GEN( cpuB_interrupt )
 {
 	if (cpu_getiloops() & 1)	/* ??? */
 	{
-		if (irqBmask & 2) return 2;
+		if (irqBmask & 2)
+			cpu_set_irq_line(1, 2, HOLD_LINE);
 	}
 	else
 	{
-		if (irqBmask & 1) return 1;
+		if (irqBmask & 1)
+			cpu_set_irq_line(1, 1, HOLD_LINE);
 	}
-	return ignore_interrupt();
 }
 
 static WRITE16_HANDLER( cpuB_irqtrigger_w )
 {
 	if (irqBmask & 4)
 	{
-logerror("%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),data);
-		cpu_cause_interrupt(1,4);
+logerror("%04x trigger cpu B irq 4 %02x\n",activecpu_get_pc(),data);
+		cpu_set_irq_line(1,4,HOLD_LINE);
 	}
 	else
-logerror("%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);
+logerror("%04x MISSED cpu B irq 4 %02x\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( sound_command_w )
@@ -168,7 +168,7 @@ static WRITE16_HANDLER( sound_command_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_cause_interrupt(2,0xff);
+	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( sound_bank_w )
@@ -386,60 +386,42 @@ static struct K007232_interface k007232_interface =
 
 
 
-static const struct MachineDriver machine_driver_gradius3 =
-{
+static MACHINE_DRIVER_START( gradius3 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz */
-			gradius3_readmem,gradius3_writemem,0,0,
-			cpuA_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz */
-			gradius3_readmem2,gradius3_writemem2,0,0,
-			cpuB_interrupt,2	/* has three interrupt vectors, 1 2 and 4 */
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
+	MDRV_CPU_MEMORY(gradius3_readmem,gradius3_writemem)
+	MDRV_CPU_VBLANK_INT(cpuA_interrupt,1)
+
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
+	MDRV_CPU_MEMORY(gradius3_readmem2,gradius3_writemem2)
+	MDRV_CPU_VBLANK_INT(cpuB_interrupt,2)	/* has three interrupt vectors, 1 2 and 4 */
 								/* 4 is triggered by cpu A, the others are unknown but */
 								/* required for the game to run. */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			gradius3_s_readmem,gradius3_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100, /* CPU slices */
-	gradius3_init,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(gradius3_s_readmem,gradius3_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(gradius3)
 
 	/* video hardware */
-	64*8, 32*8, { 12*8, (64-14)*8-1, 2*8, 30*8-1 },	/* asymmetrical! */
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(12*8, (64-14)*8-1, 2*8, 30*8-1 )	/* asymmetrical! */
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	gradius3_vh_start,
-	gradius3_vh_stop,
-	gradius3_vh_screenrefresh,
+	MDRV_VIDEO_START(gradius3)
+	MDRV_VIDEO_UPDATE(gradius3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -535,7 +517,7 @@ ROM_END
 
 
 
-static void init_gradius3(void)
+static DRIVER_INIT( gradius3 )
 {
 	konami_rom_deinterleave_2(REGION_GFX2);
 }

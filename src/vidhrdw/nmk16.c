@@ -77,22 +77,13 @@ static void bjtwin_get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-void nmk_vh_stop(void)
-{
-	free(spriteram_old);
-	free(spriteram_old2);
-	spriteram_old = NULL;
-	spriteram_old2 = NULL;
-	if (background_bitmap) bitmap_free(background_bitmap);
-}
-
-int bioship_vh_start(void)
+VIDEO_START( bioship )
 {
 	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
 	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
-	spriteram_old = malloc(spriteram_size);
-	spriteram_old2 = malloc(spriteram_size);
-	background_bitmap = bitmap_alloc(8192,512);
+	spriteram_old = auto_malloc(spriteram_size);
+	spriteram_old2 = auto_malloc(spriteram_size);
+	background_bitmap = auto_bitmap_alloc(8192,512);
 
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2 || !background_bitmap)
 		return 1;
@@ -110,13 +101,13 @@ int bioship_vh_start(void)
 	return 0;
 }
 
-int strahl_vh_start(void)
+VIDEO_START( strahl )
 {
 	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
 	fg_tilemap = tilemap_create(strahl_get_fg_tile_info, bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
 	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
-	spriteram_old = malloc(spriteram_size);
-	spriteram_old2 = malloc(spriteram_size);
+	spriteram_old = auto_malloc(spriteram_size);
+	spriteram_old2 = auto_malloc(spriteram_size);
 
 	if (!bg_tilemap || !fg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
@@ -132,12 +123,12 @@ int strahl_vh_start(void)
 	return 0;
 }
 
-int macross_vh_start(void)
+VIDEO_START( macross )
 {
 	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
 	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
-	spriteram_old = malloc(spriteram_size);
-	spriteram_old2 = malloc(spriteram_size);
+	spriteram_old = auto_malloc(spriteram_size);
+	spriteram_old2 = auto_malloc(spriteram_size);
 
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
@@ -153,12 +144,12 @@ int macross_vh_start(void)
 	return 0;
 }
 
-int gunnail_vh_start(void)
+VIDEO_START( gunnail )
 {
 	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,32);
 	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
-	spriteram_old = malloc(spriteram_size);
-	spriteram_old2 = malloc(spriteram_size);
+	spriteram_old = auto_malloc(spriteram_size);
+	spriteram_old2 = auto_malloc(spriteram_size);
 
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
@@ -176,12 +167,12 @@ int gunnail_vh_start(void)
 	return 0;
 }
 
-int macross2_vh_start(void)
+VIDEO_START( macross2 )
 {
 	bg_tilemap = tilemap_create(macross_get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,16,16,256,128);
 	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
-	spriteram_old = malloc(spriteram_size);
-	spriteram_old2 = malloc(spriteram_size);
+	spriteram_old = auto_malloc(spriteram_size);
+	spriteram_old2 = auto_malloc(spriteram_size);
 
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
@@ -197,11 +188,11 @@ int macross2_vh_start(void)
 	return 0;
 }
 
-int bjtwin_vh_start(void)
+VIDEO_START( bjtwin )
 {
 	bg_tilemap = tilemap_create(bjtwin_get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,8,8,64,32);
-	spriteram_old = malloc(spriteram_size);
-	spriteram_old2 = malloc(spriteram_size);
+	spriteram_old = auto_malloc(spriteram_size);
+	spriteram_old2 = auto_malloc(spriteram_size);
 
 	if (!bg_tilemap || !spriteram_old || !spriteram_old2)
 		return 1;
@@ -384,13 +375,13 @@ WRITE16_HANDLER( gunnail_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int priority, int pri_mask)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority, int pri_mask)
 {
 	int offs;
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		if (spriteram_old2[offs])
+		if (spriteram_old2[offs] & 0x0001)
 		{
 			int sx = (spriteram_old2[offs+4] & 0x1ff) + videoshift;
 			int sy = (spriteram_old2[offs+6] & 0x1ff);
@@ -423,7 +414,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int priority, int pri_mask)
 							color,
 							flip_screen, flip_screen,
 							((x + 16) & 0x1ff) - 16,sy & 0x1ff,
-							&Machine->visible_area,TRANSPARENCY_PEN,15);
+							cliprect,TRANSPARENCY_PEN,15);
 
 					code++;
 					x += delta;
@@ -435,16 +426,16 @@ static void draw_sprites(struct mame_bitmap *bitmap, int priority, int pri_mask)
 	}
 }
 
-void macross_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( macross )
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap,0,0);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
-void gunnail_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gunnail )
 {
 	int i;
 
@@ -452,10 +443,10 @@ void gunnail_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx(bg_tilemap,(i+gunnail_scrolly) & 0x1ff,gunnail_scrollram[0] + gunnail_scrollram[i] - videoshift);
 	tilemap_set_scrolly(bg_tilemap,0,gunnail_scrolly);
 
-	macross_vh_screenrefresh(bitmap,full_refresh);
+	video_update_macross(bitmap,cliprect);
 }
 
-void bioship_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bioship )
 {
 	data16_t *tilerom = (data16_t *)memory_region(REGION_GFX5);
 	int scrollx=-(bioship_scroll[1] + bioship_scroll[0]*256);
@@ -497,32 +488,32 @@ void bioship_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	copyscrollbitmap(bitmap,background_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-//	draw_sprites(bitmap,5,~5); /* Is this right? */
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap,0,0);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	copyscrollbitmap(bitmap,background_bitmap,1,&scrollx,1,&scrolly,cliprect,TRANSPARENCY_NONE,0);
+//	draw_sprites(bitmap,cliprect,5,~5); /* Is this right? */
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
-void strahl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( strahl )
 {
 	tilemap_set_scrollx(tx_tilemap,0,-videoshift);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_sprites(bitmap,0,0);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
-void bjtwin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bjtwin )
 {
 	tilemap_set_scrollx(bg_tilemap,0,-videoshift);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,0,0);
 }
 
-void nmk_eof_callback(void)
+VIDEO_EOF( nmk )
 {
 	/* looks like sprites are *two* frames ahead */
 	memcpy(spriteram_old2,spriteram_old,spriteram_size);

@@ -19,9 +19,9 @@ i8751 protection simluation and other fixes by Bryan McPhail, 15/10/00.
 #include "cpu/m6502/m6502.h"
 
 /* from vidhrdw */
-void sidepckt_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-int sidepckt_vh_start(void);
-void sidepckt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( sidepckt );
+VIDEO_START( sidepckt );
+VIDEO_UPDATE( sidepckt );
 
 WRITE_HANDLER( sidepckt_flipscreen_w );
 WRITE_HANDLER( sidepckt_videoram_w );
@@ -32,7 +32,7 @@ static int i8751_return;
 static WRITE_HANDLER( sound_cpu_command_w )
 {
     soundlatch_w(offset,data);
-    cpu_cause_interrupt(1,M6502_INT_NMI);
+    cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static READ_HANDLER( sidepckt_i8751_r )
@@ -47,7 +47,7 @@ static WRITE_HANDLER( sidepckt_i8751_w )
 	int table_3[]={0xbd,0x73,0x80,0xbd,0x73,0xa7,0xbd,0x73,0xe0,0x7e,0x72,0x56,0xff,0xff,0xff,0xff};
 	static int current_ptr=0,current_table=0,in_math=0,math_param;
 
-	cpu_cause_interrupt(0,M6809_INT_FIRQ); /* i8751 triggers FIRQ on main cpu */
+	cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE); /* i8751 triggers FIRQ on main cpu */
 
 	/* This function takes multiple parameters */
 	if (in_math==1) {
@@ -88,7 +88,7 @@ static WRITE_HANDLER( sidepctj_i8751_w )
 	int table_3[]={0xbd,0x71,0xc8,0xbd,0x71,0xef,0xbd,0x72,0x28,0x7e,0x70,0x9e,0xff,0xff,0xff,0xff};
 	static int current_ptr=0,current_table=0,in_math,math_param;
 
-	cpu_cause_interrupt(0,M6809_INT_FIRQ); /* i8751 triggers FIRQ on main cpu */
+	cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE); /* i8751 triggers FIRQ on main cpu */
 
 	/* This function takes multiple parameters */
 	if (in_math==1) {
@@ -304,101 +304,66 @@ static struct YM3526interface ym3526_interface =
 
 
 
-static const struct MachineDriver machine_driver_sidepckt =
-{
+static MACHINE_DRIVER_START( sidepckt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2000000,        /* 2 MHz */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,        /* 1.5 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM3526 */
+	MDRV_CPU_ADD(M6809, 2000000)        /* 2 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 1.5 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main cpu */
-		}
-	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* VERIFY:  May be 55 or 56 */
-	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)  /* VERIFY:  May be 55 or 56 */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	sidepckt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sidepckt_vh_start,
-	generic_vh_stop,
-	sidepckt_vh_screenrefresh,
+	MDRV_PALETTE_INIT(sidepckt)
+	MDRV_VIDEO_START(sidepckt)
+	MDRV_VIDEO_UPDATE(sidepckt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-	    {
-	        SOUND_YM2203,
-	        &ym2203_interface
-	    },
-	    {
-	        SOUND_YM3526,
-	        &ym3526_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_sidepctj =
-{
+
+static MACHINE_DRIVER_START( sidepctj )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2000000,        /* 2 MHz */
-			readmem,j_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,        /* 1.5 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM3526 */
+	MDRV_CPU_ADD(M6809, 2000000)        /* 2 MHz */
+	MDRV_CPU_MEMORY(readmem,j_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 1.5 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main cpu */
-		}
-	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* VERIFY:  May be 55 or 56 */
-	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)  /* VERIFY:  May be 55 or 56 */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	sidepckt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sidepckt_vh_start,
-	generic_vh_stop,
-	sidepckt_vh_screenrefresh,
+	MDRV_PALETTE_INIT(sidepckt)
+	MDRV_VIDEO_START(sidepckt)
+	MDRV_VIDEO_UPDATE(sidepckt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-	    {
-	        SOUND_YM2203,
-	        &ym2203_interface
-	    },
-	    {
-	        SOUND_YM3526,
-	        &ym3526_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

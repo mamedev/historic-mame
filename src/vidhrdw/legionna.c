@@ -120,7 +120,7 @@ static void get_text_tile_info(int tile_index)
 	SET_TILE_INFO(0,tile,color,0)
 }
 
-int legionna_vh_start(void)
+VIDEO_START( legionna )
 {
 	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	foreground_layer = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -130,7 +130,7 @@ int legionna_vh_start(void)
 	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
 		return 1;
 
-	legionna_scrollram16 = malloc(0x60);
+	legionna_scrollram16 = auto_malloc(0x60);
 
 	if (!legionna_scrollram16)	return 1;
 
@@ -140,12 +140,6 @@ int legionna_vh_start(void)
 	tilemap_set_transparent_pen(text_layer,15);
 
 	return 0;
-}
-
-void legionna_vh_stop(void)
-{
-	free (legionna_scrollram16);
-	legionna_scrollram16 = 0;
 }
 
 
@@ -172,7 +166,7 @@ void legionna_vh_stop(void)
 
 *************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay;
@@ -209,7 +203,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 					drawgfx(bitmap,Machine->gfx[3],
 					sprite++,
 					color,fx,fy,x+ax*16,y+ay*16,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 				}
 		}
 		else
@@ -220,14 +214,14 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 					drawgfx(bitmap,Machine->gfx[3],
 					sprite++,
 					color,fx,fy,x+(dx-ax-1)*16,y+ay*16,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 				}
 		}
 	}
 }
 
 
-void legionna_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( legionna )
 {
 #ifdef MAME_DEBUG
 	static int dislayer[5];	/* Layer toggles to help get the layers correct */
@@ -281,30 +275,30 @@ void legionna_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 //	if ((legionna_enable&1)!=1)
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
 
 #ifdef MAME_DEBUG
 	if (dislayer[2]==0)
 #endif
-	tilemap_draw(bitmap,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+	tilemap_draw(bitmap,cliprect,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
 
 #ifdef MAME_DEBUG
 	if (dislayer[1]==0)
 #endif
-	tilemap_draw(bitmap,midground_layer,0,0);
+	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
 
 #ifdef MAME_DEBUG
 	if (dislayer[0]==0)
 #endif
-	tilemap_draw(bitmap,background_layer,0,0);
+	tilemap_draw(bitmap,cliprect,background_layer,0,0);
 
-	draw_sprites(bitmap,2);
-	draw_sprites(bitmap,1);
-	draw_sprites(bitmap,0);
-	draw_sprites(bitmap,3);
+	draw_sprites(bitmap,cliprect,2);
+	draw_sprites(bitmap,cliprect,1);
+	draw_sprites(bitmap,cliprect,0);
+	draw_sprites(bitmap,cliprect,3);
 
 #ifdef MAME_DEBUG
 	if (dislayer[4]==0)
 #endif
-	tilemap_draw(bitmap,text_layer,0,0);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }

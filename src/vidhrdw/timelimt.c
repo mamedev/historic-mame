@@ -25,7 +25,7 @@ static int scrollx, scrolly;
 
 ***************************************************************************/
 
-void timelimt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) {
+PALETTE_INIT( timelimt ) {
 	int i;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
@@ -58,21 +58,18 @@ void timelimt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 ***************************************************************************/
 
 
-int timelimt_vh_start( void )
+VIDEO_START( timelimt )
 {
 	dirtybuffer = 0;
 	tmpbitmap = 0;
 
-	if ( ( dirtybuffer = malloc( timelimt_bg_videoram_size ) ) == 0 )
+	if ( ( dirtybuffer = auto_malloc( timelimt_bg_videoram_size ) ) == 0 )
 		return 1;
 
 	memset( dirtybuffer, 1, timelimt_bg_videoram_size );
 
-	if ( ( tmpbitmap = bitmap_alloc( 64*8, 32*8 ) ) == 0 )
-	{
-		free( dirtybuffer );
+	if ( ( tmpbitmap = auto_bitmap_alloc( 64*8, 32*8 ) ) == 0 )
 		return 1;
-	}
 
 	return 0;
 }
@@ -218,9 +215,9 @@ static void draw_foreground( struct mame_bitmap *bitmap )
 
 ***************************************************************************/
 
-void timelimt_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( timelimt )
 {
-	if ( full_refresh )
+	if ( get_vh_global_attribute_changed() )
 	{
 		memset( dirtybuffer, 1, timelimt_bg_videoram_size );
 	}

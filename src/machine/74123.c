@@ -49,6 +49,7 @@ struct TTL74123 {
 	int reset_comp;			/* pin 3/11 */
 	int output;				/* pin 13/5 */
 	void *timer;
+	int timer_active;
 };
 
 static struct TTL74123 chip[MAX_TTL74123];
@@ -58,6 +59,15 @@ static void set_output(int which, int data)
 {
 	chip[which].output = data;
 	chip[which].intf->output_changed_cb();
+}
+
+
+static void clear_callback(int which)
+{
+	struct TTL74123 *c = chip + which;
+
+    c->timer_active = 0;
+	set_output(which, 0);
 }
 
 
@@ -71,29 +81,14 @@ void TTL74123_config(int which, const struct TTL74123_interface *intf)
     chip[which].trigger = 1;
 	chip[which].trigger_comp = 1;
 	chip[which].reset_comp = 1;
+	chip[which].timer = timer_alloc(clear_callback);
 	set_output(which, 1);
 }
 
 
 void TTL74123_unconfig(void)
 {
-	int i;
-
-	for (i = 0; i < MAX_TTL74123; i++)
-	{
-		if (chip[i].timer)  timer_remove(chip[i].timer);
-	}
-
 	memset(&chip, 0, sizeof(chip));
-}
-
-
-static void clear_callback(int which)
-{
-	struct TTL74123 *c = chip + which;
-
-    c->timer = 0;
-	set_output(which, 0);
 }
 
 
@@ -102,22 +97,15 @@ static void clear_callback(int which)
 		if (COND)																\
 		{																		\
 			double duration = TIME_IN_SEC(0.68 * c->intf->res * c->intf->cap);	\
-																				\
-			if (c->timer)														\
-				timer_reset(c->timer, duration);								\
-			else																\
-			{																	\
-				set_output(which, 1);											\
-				c->timer = timer_set(duration, which, clear_callback);			\
-			}																	\
+			if (!c->timer_active) set_output(which, 1);							\
+			timer_adjust(c->timer, duration, which, 0);							\
+			c->timer_active = 1;												\
 		}																		\
 	}
 
 #define RESET																	\
-	if (c->timer)																\
-    {																			\
-		timer_reset(c->timer, TIME_NOW);										\
-    }
+	if (c->timer_active)														\
+		timer_adjust(c->timer, TIME_NOW, which, 0);								\
 
 
 void TTL74123_trigger_w(int which, int data)

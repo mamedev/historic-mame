@@ -201,10 +201,10 @@ enum {
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-extern void nb1413m3_init_machine(void);
+extern MACHINE_INIT( nb1413m3 );
 extern void nb1413m3_nmi_clock_w(int data);
-extern int nb1413m3_interrupt(void);
-extern void nb1413m3_nvram_handler(void *file, int read_or_write);
+extern INTERRUPT_GEN( nb1413m3_interrupt );
+extern NVRAM_HANDLER( nb1413m3 );
 extern int nb1413m3_sndrom_r(int offset);
 extern void nb1413m3_sndrombank1_w(int data);
 extern void nb1413m3_sndrombank2_w(int data);

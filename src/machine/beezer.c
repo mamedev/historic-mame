@@ -111,7 +111,7 @@ static WRITE_HANDLER( b_via_1_pb_w )
 {
 }
 
-void init_beezer(void)
+DRIVER_INIT( beezer )
 {
 	via_config(0, &b_via_0_interface);
 	via_config(1, &b_via_1_interface);

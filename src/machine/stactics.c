@@ -48,7 +48,7 @@ READ_HANDLER( stactics_horiz_pos_r )
     return stactics_horiz_pos+0x80;
 }
 
-int stactics_interrupt(void)
+INTERRUPT_GEN( stactics_interrupt )
 {
     /* Run the monitor motors */
 
@@ -82,7 +82,7 @@ int stactics_interrupt(void)
             stactics_vert_pos++;
     }
 
-    return interrupt();
+    cpu_set_irq_line(0,0,HOLD_LINE);
 }
 
 WRITE_HANDLER( stactics_coin_lockout_w )

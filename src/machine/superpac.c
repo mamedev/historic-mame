@@ -18,7 +18,7 @@ static int coin1, coin2, credits, start1, start2;
 static int crednum[] = { 1, 2, 3, 6, 7, 1, 3, 1 };
 static int credden[] = { 1, 1, 1, 1, 1, 2, 2, 3 };
 
-void superpac_init_machine(void)
+MACHINE_INIT( superpac )
 {
 	/* Reset all flags */
 	coin1 = coin2 = start1 = start2 = credits = 0;

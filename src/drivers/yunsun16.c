@@ -44,8 +44,8 @@ extern data16_t *yunsun16_priority;
 WRITE16_HANDLER( yunsun16_vram_0_w );
 WRITE16_HANDLER( yunsun16_vram_1_w );
 
-int  yunsun16_vh_start(void);
-void yunsun16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( yunsun16 );
+VIDEO_UPDATE( yunsun16 );
 
 
 /***************************************************************************
@@ -118,7 +118,7 @@ number 0 on each voice. That sample is 00000-00000.
 	}
 }
 
-void init_magicbub(void)
+DRIVER_INIT( magicbub )
 {
 //	remove_mem_write16_handler (0, 0x800180, 0x800181 );
 	install_mem_write16_handler(0, 0x800188, 0x800189, magicbub_sound_command_w);
@@ -414,45 +414,36 @@ static struct OKIM6295interface magicbub_okim6295_intf =
 	{ 80 }
 };
 
-static const struct MachineDriver machine_driver_magicbub =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			yunsun16_readmem, yunsun16_writemem,0,0,
-			m68_level2_irq, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ? */
-			yunsun16_sound_readmem,  yunsun16_sound_writemem,
-			yunsun16_sound_readport, yunsun16_sound_writeport,
-			ignore_interrupt, 1	/* IRQ by YM3812; NMI by main CPU */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( magicbub )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(yunsun16_readmem,yunsun16_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(yunsun16_sound_readmem,yunsun16_sound_writemem)
+	MDRV_CPU_PORTS(yunsun16_sound_readport,yunsun16_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	0x180, 0xe0, { 0+0x20, 0x180-1-0x20, 0, 0xe0-1 },
-	yunsun16_gfxdecodeinfo,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	yunsun16_vh_start,
-	0,
-	yunsun16_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0xe0)
+	MDRV_VISIBLE_AREA(0+0x20, 0x180-1-0x20, 0, 0xe0-1)
+	MDRV_GFXDECODE(yunsun16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(yunsun16)
+	MDRV_VIDEO_UPDATE(yunsun16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YM3812,   &magicbub_ym3812_intf   },
-		{ SOUND_OKIM6295, &magicbub_okim6295_intf }
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, magicbub_ym3812_intf)
+	MDRV_SOUND_ADD(OKIM6295, magicbub_okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -467,37 +458,30 @@ static struct OKIM6295interface shocking_okim6295_intf =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_shocking =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			yunsun16_readmem, yunsun16_writemem,0,0,
-			m68_level2_irq, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( shocking )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(yunsun16_readmem,yunsun16_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	0x180, 0xe0, { 0, 0x180-1-4, 0, 0xe0-1 },
-	yunsun16_gfxdecodeinfo,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	yunsun16_vh_start,
-	0,
-	yunsun16_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x180-1-4, 0, 0xe0-1)
+	MDRV_GFXDECODE(yunsun16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(yunsun16)
+	MDRV_VIDEO_UPDATE(yunsun16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_OKIM6295, &shocking_okim6295_intf }
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, shocking_okim6295_intf)
+MACHINE_DRIVER_END
 
 
 

@@ -51,9 +51,8 @@
 #include "sndhrdw/taitosnd.h"
 #include "machine/eeprom.h"
 
-int gunbustr_vh_start (void);
-void gunbustr_vh_stop (void);
-void gunbustr_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( gunbustr );
+VIDEO_UPDATE( gunbustr );
 
 static UINT16 coin_word;
 static data32_t *gunbustr_ram;
@@ -75,13 +74,13 @@ extern data32_t *f3_shared_ram;
 
 static void gunbustr_interrupt5(int x)
 {
-	cpu_cause_interrupt(0,5);
+	cpu_set_irq_line(0,5,HOLD_LINE);
 }
 
-static int gunbustr_interrupt(void)
+static INTERRUPT_GEN( gunbustr_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, gunbustr_interrupt5);
-	return 4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 static WRITE32_HANDLER( gunbustr_palette_w )
@@ -123,7 +122,7 @@ static READ32_HANDLER( gunbustr_input_r )
 			return input_port_2_word_r(0,0) | (coin_word << 16);
 		}
  	}
-logerror("CPU #0 PC %06x: read input %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: read input %06x\n",activecpu_get_pc(),offset);
 
 	return 0x0;
 }
@@ -174,7 +173,7 @@ usrintf_showmessage(t);
 				coin_counter_w(1, data & 0x04000000);
 				coin_word = (data >> 16) &0xffff;
 			}
-//logerror("CPU #0 PC %06x: write input %06x\n",cpu_get_pc(),offset);
+//logerror("CPU #0 PC %06x: write input %06x\n",activecpu_get_pc(),offset);
 		}
 	}
 }
@@ -377,7 +376,7 @@ static struct GfxDecodeInfo gunbustr_gfxdecodeinfo[] =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static void gunbustr_machine_reset(void)
+static MACHINE_INIT( gunbustr )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
@@ -423,7 +422,7 @@ static struct EEPROM_interface gunbustr_eeprom_interface =
 	"0100110000",	/* lock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( gunbustr )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -436,50 +435,37 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static struct MachineDriver machine_driver_gunbustr =
-{
-	{
-		{
-			CPU_M68EC020,
-			16000000,	/* 16 MHz */
-			gunbustr_readmem,gunbustr_writemem,0,0,
-			gunbustr_interrupt,1 /* VBL */
-		},
-		{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			16000000,	/* 16 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	gunbustr_machine_reset,
+static MACHINE_DRIVER_START( gunbustr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(gunbustr_readmem,gunbustr_writemem)
+	MDRV_CPU_VBLANK_INT(gunbustr_interrupt,1) /* VBL */
+
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(gunbustr)
+	MDRV_NVRAM_HANDLER(gunbustr)
 
 	/* video hardware */
-	40*8, 32*8, { 0, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gunbustr_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	gunbustr_gfxdecodeinfo,
-	8192, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	gunbustr_vh_start,
-	gunbustr_vh_stop,
-	gunbustr_vh_screenrefresh,
+	MDRV_VIDEO_START(gunbustr)
+	MDRV_VIDEO_UPDATE(gunbustr)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_ES5505,
-			&es5505_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ES5505, es5505_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -516,13 +502,13 @@ ROM_END
 
 static READ32_HANDLER( main_cycle_r )
 {
-	if (cpu_get_pc()==0x55a && (gunbustr_ram[0x3acc/4]&0xff000000)==0)
+	if (activecpu_get_pc()==0x55a && (gunbustr_ram[0x3acc/4]&0xff000000)==0)
 		cpu_spinuntil_int();
 
 	return gunbustr_ram[0x3acc/4];
 }
 
-static void init_gunbustr(void)
+static DRIVER_INIT( gunbustr )
 {
 	/* Speedup handler */
 	install_mem_read32_handler(0, 0x203acc, 0x203acf, main_cycle_r);

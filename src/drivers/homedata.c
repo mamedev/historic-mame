@@ -87,16 +87,16 @@ static data8_t	blitter_param[4];		/* buffers last 4 writes to 0x8006 */
 static int		homedata_visible_page;
 
 WRITE_HANDLER( reikaids_videoram_w );
-int  reikaids_vh_start(void);
-void reikaids_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pteacher_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void reikaids_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( reikaids );
+PALETTE_INIT( reikaids );
+PALETTE_INIT( pteacher );
+VIDEO_UPDATE( reikaids );
 
 /***************************************************************************
 		Reikai Doushi (aka Last Apostle Puppet Show)
 ***************************************************************************/
 
-void reikaids_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( reikaids )
 {
 	int i;
 
@@ -351,7 +351,7 @@ static void reikaids_handleblit( void )
 }
 
 
-int reikaids_vh_start(void)
+VIDEO_START( reikaids )
 {
 	int i;
 	for( i=0; i<2; i++ )
@@ -375,7 +375,7 @@ int reikaids_vh_start(void)
 	return 0;
 }
 
-void reikaids_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
+VIDEO_UPDATE( reikaids )
 {
 	int flags;
 
@@ -387,23 +387,23 @@ void reikaids_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 	}
 
 	/* background, player score/health, shadows */
-	tilemap_draw(bitmap, tilemap[homedata_visible_page][2], 0, 0);
+	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][2], 0, 0);
 
 	/* insert coin, country warning, white backdrop for title screen, boss#3 */
-	tilemap_draw(bitmap, tilemap[homedata_visible_page][0], 1, 0);
+	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][0], 1, 0);
 
 	/* player sprite, continue screen */
-	tilemap_draw(bitmap, tilemap[homedata_visible_page][3], 1, 0);
+	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][3], 1, 0);
 
 	/* enemy sprite, high scores */
-	tilemap_draw(bitmap, tilemap[homedata_visible_page][1], 1, 0);
+	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][1], 1, 0);
 }
 
 /***************************************************************************
 	Mahjong Kojinkyouju (Private Teacher)
 ***************************************************************************/
 
-void pteacher_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( pteacher )
 {
 	int i;
 
@@ -587,7 +587,7 @@ static void pteacher_get_tile_info1( int tile_index )
 	tile_info.priority = (color==0)?0:1;
 }
 
-int pteacher_vh_start(void)
+VIDEO_START( pteacher )
 {
 	int i;
 	for( i=0; i<2; i++ )
@@ -606,7 +606,7 @@ int pteacher_vh_start(void)
 	return 0;
 }
 
-void pteacher_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pteacher )
 {
 	int flags;
 
@@ -620,8 +620,8 @@ void pteacher_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
 	}
 
-	tilemap_draw(bitmap, tilemap[homedata_visible_page][0], 0, 0);
-	tilemap_draw(bitmap, tilemap[homedata_visible_page][1], 1, 0);
+	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][0], 0, 0);
+	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][1], 1, 0);
 
 	homedata_visible_page = 1;
 }
@@ -696,7 +696,7 @@ READ_HANDLER( pteacher_io_r )
 		/* 0x40: vblank
 		 * 0x80: visible page
 		 */
-		pc = cpu_get_pc();
+		pc = activecpu_get_pc();
 		switch( pc )
 		{
 		case 0xed13: /* visible page */
@@ -774,7 +774,7 @@ READ_HANDLER( reikaids_io_r )
 		break;
 
 	case 3:
-		pc = cpu_get_pc();
+		pc = activecpu_get_pc();
 
 		data = readinputport(2);
 		switch( pc )
@@ -869,11 +869,6 @@ READ_HANDLER( reikaids_io_r )
 
 /********************************************************************************/
 /* common functions */
-
-static int firq_interrupt(void)
-{
-	return M6809_INT_FIRQ;
-}
 
 static WRITE_HANDLER( blitter_param_w )
 {
@@ -1012,38 +1007,32 @@ static struct Y8950interface reikaids_y8950_interface =
 	{ 0 }   /* I/O write */
 };
 
-static struct MachineDriver machine_driver_reikaids =
-{
-	{
-		{
-			CPU_M6809,
-			4000000,	/* ? */
-			reikaids_readmem, reikaids_writemem,0,0,
-			firq_interrupt, 16
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( reikaids )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 4000000)	/* ? */
+	MDRV_CPU_MEMORY(reikaids_readmem,reikaids_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,16)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 255, 16, 255-16 },
-	reikaids_gfxdecodeinfo,
-	0x8000, 0x8000,
-	reikaids_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	reikaids_vh_start,
-	0,
-	reikaids_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 16, 255-16)
+	MDRV_GFXDECODE(reikaids_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_COLORTABLE_LENGTH(0x8000)
+
+	MDRV_PALETTE_INIT(reikaids)
+	MDRV_VIDEO_START(reikaids)
+	MDRV_VIDEO_UPDATE(reikaids)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2203, &reikaids_ym2203_interface },
-		{ SOUND_Y8950,  &reikaids_y8950_interface  }
-	}
-};
+	MDRV_SOUND_ADD(YM2203, reikaids_ym2203_interface)
+	MDRV_SOUND_ADD(Y8950, reikaids_y8950_interface)
+MACHINE_DRIVER_END
 
 
 /**************************************************************************/
@@ -1055,37 +1044,31 @@ static struct SN76496interface pteacher_sn76496_interface =
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver_pteacher =
-{
-	{
-		{
-			CPU_M6809,
-			4000000,	/* ? */
-			pteacher_readmem, pteacher_writemem,0,0,
-			firq_interrupt, 16
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( pteacher )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 4000000)	/* ? */
+	MDRV_CPU_MEMORY(pteacher_readmem,pteacher_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,16)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 256, { 0, 512-1, 16, 256-1-32 },
-	pteacher_gfxdecodeinfo,
-	0x8000, 0x8000,
-	pteacher_init_palette, /* ? */
-	VIDEO_TYPE_RASTER,
-	0,
-	pteacher_vh_start,
-	0,
-	pteacher_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 16, 256-1-32)
+	MDRV_GFXDECODE(pteacher_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_COLORTABLE_LENGTH(0x8000)
+
+	MDRV_PALETTE_INIT(pteacher)
+	MDRV_VIDEO_START(pteacher)
+	MDRV_VIDEO_UPDATE(pteacher)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_SN76496, &pteacher_sn76496_interface },	// SN76489 actually
-	}
-};
+	MDRV_SOUND_ADD(SN76496, pteacher_sn76496_interface)	// SN76489 actually
+MACHINE_DRIVER_END
 
 /**************************************************************************/
 

@@ -89,13 +89,12 @@ WRITE_HANDLER( senjyo_bg2videoram_w );
 WRITE_HANDLER( senjyo_bg3videoram_w );
 WRITE_HANDLER( senjyo_bgstripes_w );
 
-void init_starforc(void);
-void init_starfore(void);
-void init_senjyo(void);
+DRIVER_INIT( starforc );
+DRIVER_INIT( starfore );
+DRIVER_INIT( senjyo );
 
-int senjyo_vh_start(void);
-void senjyo_vh_stop(void);
-void senjyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( senjyo );
+VIDEO_UPDATE( senjyo );
 
 int senjyo_sh_start(const struct MachineSound *msound);
 void senjyo_sh_stop(void);
@@ -116,7 +115,7 @@ WRITE_HANDLER( senjyo_volume_w );
 
 static int int_delay_kludge;
 
-void senjyo_init_machine(void)
+MACHINE_INIT( senjyo )
 {
 	/* we must avoid generating interrupts for the first few frames otherwise */
 	/* Senjyo locks up. There must be an interrupt enable port somewhere, */
@@ -125,11 +124,10 @@ void senjyo_init_machine(void)
 	int_delay_kludge = 10;
 }
 
-int senjyo_interrupt(void)
+INTERRUPT_GEN( senjyo_interrupt )
 {
-	if (int_delay_kludge == 0) return interrupt();
+	if (int_delay_kludge == 0) cpu_set_irq_line(0, 0, HOLD_LINE);
 	else int_delay_kludge--;
-	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( flip_screen_w )
@@ -565,52 +563,38 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static const struct MachineDriver machine_driver_senjyo =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz? */
-			readmem,writemem,0,0,
-			senjyo_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,	/* 2 MHz? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			0,0, /* interrupts are made by z80 daisy chain system */
-			0,0,daisy_chain
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	senjyo_init_machine,
+static MACHINE_DRIVER_START( senjyo )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(senjyo_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 2000000)
+	MDRV_CPU_CONFIG(daisy_chain)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(senjyo)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	400+2, 0,	/* 400 real palette + 2 for the radar */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(400+2)	/* 400 real palette + 2 for the radar */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	senjyo_vh_start,
-	senjyo_vh_stop,
-	senjyo_vh_screenrefresh,
+	MDRV_VIDEO_START(senjyo)
+	MDRV_VIDEO_UPDATE(senjyo)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

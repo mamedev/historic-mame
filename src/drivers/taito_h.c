@@ -86,13 +86,12 @@ Recordbr: loads of unmapped IOC reads and writes.
 
 static data16_t *taitoh_68000_mainram;
 
-int		syvalion_vh_start(void);
-int		recordbr_vh_start(void);
-int		dleague_vh_start(void);
-void 		syvalion_vh_stop (void);
-void 		syvalion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void		recordbr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void		dleague_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( syvalion );
+VIDEO_START( recordbr );
+VIDEO_START( dleague );
+VIDEO_UPDATE( syvalion );
+VIDEO_UPDATE( recordbr );
+VIDEO_UPDATE( dleague );
 
 
 /***************************************************************************
@@ -589,131 +588,91 @@ static struct GfxDecodeInfo dleague_gfxdecodeinfo[] =
 };
 
 
-static const struct MachineDriver machine_driver_syvalion =
-{
-	{
-		{
-			CPU_M68000,
-			24000000 / 2,		/* 12 MHz */
-			syvalion_readmem, syvalion_writemem, 0, 0,
-			m68_level2_irq, 1
-		},
-		{
-			CPU_Z80,
-			8000000 / 2,		/* 4 MHz ??? */
-			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt, 0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+static MACHINE_DRIVER_START( syvalion )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz */
+	MDRV_CPU_MEMORY(syvalion_readmem,syvalion_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*16, 64*16, { 0*16, 32*16-1, 3*16, 28*16-1 },
-	syvalion_gfxdecodeinfo,
-	33*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*16, 64*16)
+	MDRV_VISIBLE_AREA(0*16, 32*16-1, 3*16, 28*16-1)
+	MDRV_GFXDECODE(syvalion_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(33*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	syvalion_vh_start,
-	syvalion_vh_stop,
-	syvalion_vh_screenrefresh,
+	MDRV_VIDEO_START(syvalion)
+	MDRV_VIDEO_UPDATE(syvalion)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&syvalion_ym2610_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM2610, syvalion_ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_recordbr =
-{
-	{
-		{
-			CPU_M68000,
-			24000000 / 2,		/* 12 MHz */
-			recordbr_readmem, recordbr_writemem, 0, 0,
-			m68_level2_irq, 1
-		},
-		{
-			CPU_Z80,
-			8000000 / 2,		/* 4 MHz ??? */
-			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt, 0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+
+static MACHINE_DRIVER_START( recordbr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz */
+	MDRV_CPU_MEMORY(recordbr_readmem,recordbr_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*16, 64*16, { 1*16, 21*16-1, 2*16, 17*16-1 },
-	recordbr_gfxdecodeinfo,
-	32*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*16, 64*16)
+	MDRV_VISIBLE_AREA(1*16, 21*16-1, 2*16, 17*16-1)
+	MDRV_GFXDECODE(recordbr_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	recordbr_vh_start,
-	syvalion_vh_stop,
-	recordbr_vh_screenrefresh,
+	MDRV_VIDEO_START(recordbr)
+	MDRV_VIDEO_UPDATE(recordbr)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&syvalion_ym2610_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM2610, syvalion_ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_dleague =
-{
-	{
-		{
-			CPU_M68000,
-			24000000 / 2,		/* 12 MHz */
-			dleague_readmem, dleague_writemem, 0, 0,
-			m68_level1_irq, 1
-		},
-		{
-			CPU_Z80,
-			8000000 / 2,		/* 4 MHz ??? */
-			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt, 0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+
+static MACHINE_DRIVER_START( dleague )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz */
+	MDRV_CPU_MEMORY(dleague_readmem,dleague_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*16, 64*16, { 1*16, 21*16-1, 2*16, 17*16-1 },
-	dleague_gfxdecodeinfo,
-	33*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*16, 64*16)
+	MDRV_VISIBLE_AREA(1*16, 21*16-1, 2*16, 17*16-1)
+	MDRV_GFXDECODE(dleague_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(33*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	dleague_vh_start,
-	syvalion_vh_stop,
-	dleague_vh_screenrefresh,
+	MDRV_VIDEO_START(dleague)
+	MDRV_VIDEO_UPDATE(dleague)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&dleague_ym2610_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM2610, dleague_ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -819,7 +778,7 @@ ROM_START( dleague )
 ROM_END
 
 
-static void init_taitoh(void)
+static DRIVER_INIT( taitoh )
 {
 	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);

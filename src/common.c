@@ -26,6 +26,8 @@
 // routines don't clip at boundaries of the bitmap.
 #define BITMAP_SAFETY			16
 
+#define MAX_MALLOCS				1024
+
 
 
 /***************************************************************************
@@ -52,6 +54,13 @@ struct rom_load_data
 };
 
 
+struct malloc_info
+{
+	int tag;
+	void *ptr;
+};
+
+
 
 /***************************************************************************
 
@@ -65,9 +74,18 @@ unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
 
-int flip_screen_x, flip_screen_y;
-
 int snapno;
+
+/* malloc tracking */
+static struct malloc_info malloc_list[MAX_MALLOCS];
+static int malloc_list_index = 0;
+
+/* resource tracking */
+int resource_tracking_tag = 0;
+
+/* generic NVRAM */
+size_t generic_nvram_size;
+data8_t *generic_nvram;
 
 
 
@@ -207,7 +225,7 @@ static struct GameSample *read_wav_sample(void *f)
 	}
 
 	/* allocate the game sample */
-	result = malloc(sizeof(struct GameSample) + length);
+	result = auto_malloc(sizeof(struct GameSample) + length);
 	if (result == NULL)
 		return NULL;
 
@@ -260,7 +278,7 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 
 	if (!i) return 0;
 
-	if ((samples = malloc(sizeof(struct GameSamples) + (i-1)*sizeof(struct GameSample))) == 0)
+	if ((samples = auto_malloc(sizeof(struct GameSamples) + (i-1)*sizeof(struct GameSample))) == 0)
 		return 0;
 
 	samples->total = i;
@@ -285,24 +303,6 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 	}
 
 	return samples;
-}
-
-
-/*-------------------------------------------------
-	freesamples - free allocated samples
--------------------------------------------------*/
-
-void freesamples(struct GameSamples *samples)
-{
-	int i;
-
-
-	if (samples == 0) return;
-
-	for (i = 0;i < samples->total;i++)
-		free(samples->sample[i]);
-
-	free(samples);
 }
 
 
@@ -477,100 +477,41 @@ void coin_lockout_global_w(int on)
 
 /***************************************************************************
 
-	Global video attribute handling code
+	Generic NVRAM code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	updateflip - handle global flipping
+	nvram_handler_generic_0fill - generic NVRAM
+	with a 0 fill
 -------------------------------------------------*/
 
-static void updateflip(void)
+void nvram_handler_generic_0fill(void *file, int read_or_write)
 {
-	int min_x,max_x,min_y,max_y;
-
-	tilemap_set_flip(ALL_TILEMAPS,(TILEMAP_FLIPX & flip_screen_x) | (TILEMAP_FLIPY & flip_screen_y));
-
-	min_x = Machine->drv->default_visible_area.min_x;
-	max_x = Machine->drv->default_visible_area.max_x;
-	min_y = Machine->drv->default_visible_area.min_y;
-	max_y = Machine->drv->default_visible_area.max_y;
-
-	if (flip_screen_x)
-	{
-		int temp;
-
-		temp = Machine->drv->screen_width - min_x - 1;
-		min_x = Machine->drv->screen_width - max_x - 1;
-		max_x = temp;
-	}
-	if (flip_screen_y)
-	{
-		int temp;
-
-		temp = Machine->drv->screen_height - min_y - 1;
-		min_y = Machine->drv->screen_height - max_y - 1;
-		max_y = temp;
-	}
-
-	set_visible_area(min_x,max_x,min_y,max_y);
+	if (read_or_write)
+		osd_fwrite(file, generic_nvram, generic_nvram_size);
+	else if (file)
+		osd_fread(file, generic_nvram, generic_nvram_size);
+	else
+		memset(generic_nvram, 0, generic_nvram_size);
 }
 
 
 /*-------------------------------------------------
-	flip_screen_set - set global flip
+	nvram_handler_generic_1fill - generic NVRAM
+	with a 1 fill
 -------------------------------------------------*/
 
-void flip_screen_set(int on)
+void nvram_handler_generic_1fill(void *file, int read_or_write)
 {
-	flip_screen_x_set(on);
-	flip_screen_y_set(on);
+	if (read_or_write)
+		osd_fwrite(file, generic_nvram, generic_nvram_size);
+	else if (file)
+		osd_fread(file, generic_nvram, generic_nvram_size);
+	else
+		memset(generic_nvram, 0xff, generic_nvram_size);
 }
 
-
-/*-------------------------------------------------
-	flip_screen_x_set - set global horizontal flip
--------------------------------------------------*/
-
-void flip_screen_x_set(int on)
-{
-	if (on) on = ~0;
-	if (flip_screen_x != on)
-	{
-		set_vh_global_attribute(&flip_screen_x,on);
-		updateflip();
-	}
-}
-
-
-/*-------------------------------------------------
-	flip_screen_y_set - set global vertical flip
--------------------------------------------------*/
-
-void flip_screen_y_set(int on)
-{
-	if (on) on = ~0;
-	if (flip_screen_y != on)
-	{
-		set_vh_global_attribute(&flip_screen_y,on);
-		updateflip();
-	}
-}
-
-
-/*-------------------------------------------------
-	set_vh_global_attribute - set an arbitrary
-	global video attribute
--------------------------------------------------*/
-
-void set_vh_global_attribute( int *addr, int data )
-{
-	if (*addr != data)
-	{
-		schedule_full_refresh();
-		*addr = data;
-	}
-}
 
 
 /*-------------------------------------------------
@@ -633,22 +574,10 @@ void set_visible_area(int min_x,int max_x,int min_y,int max_y)
 ***************************************************************************/
 
 /*-------------------------------------------------
-	bitmap_alloc - allocate a bitmap at the
-	current screen depth
+	bitmap_alloc_core
 -------------------------------------------------*/
 
-struct mame_bitmap *bitmap_alloc(int width,int height)
-{
-	return bitmap_alloc_depth(width,height,Machine->scrbitmap->depth);
-}
-
-
-/*-------------------------------------------------
-	bitmap_alloc_depth - allocate a bitmap for a
-	specific depth
--------------------------------------------------*/
-
-struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
+struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
 {
 	struct mame_bitmap *bitmap;
 
@@ -672,7 +601,7 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 	}
 
 	/* allocate memory for the bitmap struct */
-	bitmap = malloc(sizeof(struct mame_bitmap));
+	bitmap = use_auto ? auto_malloc(sizeof(struct mame_bitmap)) : malloc(sizeof(struct mame_bitmap));
 	if (bitmap != NULL)
 	{
 		int i, rowlen, rdwidth, bitmapsize, linearraysize, pixelsize;
@@ -704,10 +633,10 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 		linearraysize = (height + 2 * BITMAP_SAFETY) * sizeof(unsigned char *);
 
 		/* allocate the bitmap data plus an array of line pointers */
-		bitmap->line = malloc(linearraysize + bitmapsize);
+		bitmap->line = use_auto ? auto_malloc(linearraysize + bitmapsize) : malloc(linearraysize + bitmapsize);
 		if (bitmap->line == NULL)
 		{
-			free(bitmap);
+			if (!use_auto) free(bitmap);
 			return NULL;
 		}
 
@@ -722,10 +651,35 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 		/* adjust for the safety rows */
 		bitmap->line += BITMAP_SAFETY;
 		bitmap->base = bitmap->line[0];
+
+		/* set the pixel functions */
+		set_pixel_functions(bitmap);
 	}
 
 	/* return the result */
 	return bitmap;
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc - allocate a bitmap at the
+	current screen depth
+-------------------------------------------------*/
+
+struct mame_bitmap *bitmap_alloc(int width,int height)
+{
+	return bitmap_alloc_core(width,height,Machine->scrbitmap->depth,0);
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc_depth - allocate a bitmap for a
+	specific depth
+-------------------------------------------------*/
+
+struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
+{
+	return bitmap_alloc_core(width,height,depth,0);
 }
 
 
@@ -745,6 +699,108 @@ void bitmap_free(struct mame_bitmap *bitmap)
 	/* free the memory */
 	free(bitmap->line);
 	free(bitmap);
+}
+
+
+
+/***************************************************************************
+
+	Resource tracking code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	auto_malloc - allocate auto-freeing memory
+-------------------------------------------------*/
+
+void *auto_malloc(size_t size)
+{
+	void *result = malloc(size);
+	if (result)
+	{
+		struct malloc_info *info;
+
+		/* make sure we have space */
+		if (malloc_list_index >= MAX_MALLOCS)
+		{
+			fprintf(stderr, "Out of malloc tracking slots!\n");
+			return result;
+		}
+
+		/* fill in the current entry */
+		info = &malloc_list[malloc_list_index++];
+		info->tag = get_resource_tag();
+		info->ptr = result;
+	}
+	return result;
+}
+
+
+/*-------------------------------------------------
+	end_resource_tracking - stop tracking
+	resources
+-------------------------------------------------*/
+
+void auto_free(void)
+{
+	int tag = get_resource_tag();
+
+	/* start at the end and free everything on the current tag */
+	while (malloc_list_index > 0 && malloc_list[malloc_list_index - 1].tag >= tag)
+	{
+		struct malloc_info *info = &malloc_list[--malloc_list_index];
+		free(info->ptr);
+	}
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc - allocate a bitmap at the
+	current screen depth
+-------------------------------------------------*/
+
+struct mame_bitmap *auto_bitmap_alloc(int width,int height)
+{
+	return bitmap_alloc_core(width,height,Machine->scrbitmap->depth,1);
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc_depth - allocate a bitmap for a
+	specific depth
+-------------------------------------------------*/
+
+struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth)
+{
+	return bitmap_alloc_core(width,height,depth,1);
+}
+
+
+/*-------------------------------------------------
+	begin_resource_tracking - start tracking
+	resources
+-------------------------------------------------*/
+
+void begin_resource_tracking(void)
+{
+	/* increment the tag counter */
+	resource_tracking_tag++;
+}
+
+
+/*-------------------------------------------------
+	end_resource_tracking - stop tracking
+	resources
+-------------------------------------------------*/
+
+void end_resource_tracking(void)
+{
+	/* call everyone who tracks resources to let them know */
+	auto_free();
+	timer_free();
+
+	/* decrement the tag counter */
+	resource_tracking_tag--;
 }
 
 

@@ -1,9 +1,8 @@
 /***************************************************************************
 
-	Exidy 440 system
+	Exidy 440 hardware
 
     driver by Aaron Giles
-
 
 	Currently implemented:
 		* Crossbow
@@ -217,6 +216,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "exidy440.h"
 
 
 /* globals */
@@ -236,49 +236,6 @@ static UINT8 last_coins;
 static UINT8 showdown_bank_triggered;
 
 
-/* sound driver data & functions */
-extern UINT8 exidy440_sound_command;
-extern UINT8 exidy440_sound_command_ack;
-extern UINT8 *exidy440_m6844_data;
-extern UINT8 *exidy440_sound_banks;
-extern UINT8 *exidy440_sound_volume;
-
-int exidy440_sh_start(const struct MachineSound *msound);
-void exidy440_sh_stop(void);
-void exidy440_sh_update(void);
-int exidy440_sound_interrupt(void);
-
-READ_HANDLER( exidy440_m6844_r );
-WRITE_HANDLER( exidy440_m6844_w );
-READ_HANDLER( exidy440_sound_command_r );
-WRITE_HANDLER( exidy440_sound_volume_w );
-WRITE_HANDLER( exidy440_sound_interrupt_clear_w );
-
-
-/* video driver data & functions */
-extern UINT8 *spriteram;
-extern UINT8 *exidy440_imageram;
-extern UINT8 *exidy440_scanline;
-extern UINT8 exidy440_firq_vblank;
-extern UINT8 exidy440_firq_beam;
-extern UINT8 topsecex_yscroll;
-
-int exidy440_vh_start(void);
-void exidy440_vh_stop(void);
-void exidy440_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void topsecex_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int exidy440_vblank_interrupt(void);
-
-READ_HANDLER( exidy440_videoram_r );
-WRITE_HANDLER( exidy440_videoram_w );
-READ_HANDLER( exidy440_paletteram_r );
-WRITE_HANDLER( exidy440_paletteram_w );
-WRITE_HANDLER( exidy440_control_w );
-READ_HANDLER( exidy440_vertical_pos_r );
-READ_HANDLER( exidy440_horizontal_pos_r );
-WRITE_HANDLER( exidy440_interrupt_clear_w );
-
-
 
 /*************************************
  *
@@ -286,7 +243,7 @@ WRITE_HANDLER( exidy440_interrupt_clear_w );
  *
  *************************************/
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( exidy440 )
 {
 	if (read_or_write)
 		/* the EEROM lives in the uppermost 8k of the top bank */
@@ -327,15 +284,15 @@ static void handle_coins(void)
 }
 
 
-static int main_interrupt(void)
+static INTERRUPT_GEN( main_interrupt )
 {
 	/* generate coin interrupts */
 	handle_coins();
-	return exidy440_vblank_interrupt();
+	exidy440_vblank_interrupt();
 }
 
 
-static void init_machine(void)
+MACHINE_INIT( exidy440 )
 {
 	exidy440_bank = 0;
 	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
@@ -605,7 +562,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x1fff, MWA_RAM, &exidy440_imageram },
-	{ 0x2000, 0x209f, MWA_RAM, &spriteram },
+	{ 0x2000, 0x209f, exidy440_spriteram_w, &spriteram },
 	{ 0x20a0, 0x29ff, MWA_RAM },
 	{ 0x2a00, 0x2aff, exidy440_videoram_w },
 	{ 0x2b01, 0x2b01, exidy440_interrupt_clear_w },
@@ -1129,92 +1086,38 @@ static struct CustomSound_interface custom_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_exidy440 =
-{
+static MACHINE_DRIVER_START( exidy440 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			12979200/8,                     /* 12MHz/8 */
-			readmem_cpu1,writemem_cpu1,0,0,
-			main_interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			12979200/4/4,                   /* 12MHz/4 into XTAL, which is 4x clock */
-			readmem_cpu2,writemem_cpu2,0,0,
-			exidy440_sound_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M6809,12979200/8)
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(main_interrupt,1)
+
+	MDRV_CPU_ADD(M6809,12979200/4/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(exidy440)
+	MDRV_NVRAM_HANDLER(exidy440)
 
 	/* video hardware */
-	320, 240, { 0, 319, 0, 239 },
-	0,
-	256,0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	exidy440_vh_start,
-	exidy440_vh_stop,
-	exidy440_vh_screenrefresh,
+	MDRV_VIDEO_START(exidy440)
+	MDRV_VIDEO_EOF(exidy440)
+	MDRV_VIDEO_UPDATE(exidy440)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	},
-
-	nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-#define SET_PARAMS(top,p0,p2,p3,mv,mt,cpr) \
-	exidy440_topsecret 		= top;\
-	port_0_xor 				= p0;\
-	port_2_xor 				= p2;\
-	port_3_xor				= p3;\
-	mirror_vblank_bit 		= mv;\
-	mirror_trigger_bit 		= mt;\
-	copy_protection_read 	= cpr
-
-static void init_crossbow(void) { SET_PARAMS(0, 0x00, 0x00, 0x00, 0, 0, 0x00); }
-static void init_cheyenne(void) { SET_PARAMS(0, 0xff, 0x00, 0x00, 0, 0, 0x00); }
-static void init_combat  (void)   { SET_PARAMS(0, 0xff, 0xff, 0x00, 0, 0, 0x00); }
-static void init_cracksht(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void init_claypign(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x76); }
-static void init_chiller (void)  { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void init_topsecex(void) { SET_PARAMS(1, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void init_hitnmiss(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 1, 0x00); }
-static void init_whodunit(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 1, 0, 0x00); }
-static void init_showdown(void)
-{
-	SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00);
-
-	/* set up the fake PLD */
-	showdown_bank_triggered = 0;
-	install_mem_read_handler(0, 0x4055, 0x4055, showdown_pld_trigger_r);
-	install_mem_read_handler(0, 0x40ed, 0x40ed, showdown_pld_select1_r);
-	install_mem_read_handler(0, 0x5243, 0x5243, showdown_pld_select2_r);
-
-	/* ensure that we're triggered to bank "1" to start */
-	exidy440_bank = 0;
-	showdown_pld_trigger_r(0);
-	showdown_pld_select1_r(0);
-}
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1828,6 +1731,48 @@ ROM_START( showdown )
 	ROM_LOAD( "showd1s.bin",   0x1c000, 0x2000, 0x8f230881 )
 	ROM_LOAD( "showd1t.bin",   0x1e000, 0x2000, 0x70e724c7 )
 ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+#define SET_PARAMS(top,p0,p2,p3,mv,mt,cpr) \
+	exidy440_topsecret 		= top;\
+	port_0_xor 				= p0;\
+	port_2_xor 				= p2;\
+	port_3_xor				= p3;\
+	mirror_vblank_bit 		= mv;\
+	mirror_trigger_bit 		= mt;\
+	copy_protection_read 	= cpr
+
+static DRIVER_INIT( crossbow ) { SET_PARAMS(0, 0x00, 0x00, 0x00, 0, 0, 0x00); }
+static DRIVER_INIT( cheyenne ) { SET_PARAMS(0, 0xff, 0x00, 0x00, 0, 0, 0x00); }
+static DRIVER_INIT( combat )   { SET_PARAMS(0, 0xff, 0xff, 0x00, 0, 0, 0x00); }
+static DRIVER_INIT( cracksht ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static DRIVER_INIT( claypign ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x76); }
+static DRIVER_INIT( chiller )  { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static DRIVER_INIT( topsecex ) { SET_PARAMS(1, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static DRIVER_INIT( hitnmiss ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 1, 0x00); }
+static DRIVER_INIT( whodunit ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 1, 0, 0x00); }
+static DRIVER_INIT( showdown )
+{
+	SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00);
+
+	/* set up the fake PLD */
+	showdown_bank_triggered = 0;
+	install_mem_read_handler(0, 0x4055, 0x4055, showdown_pld_trigger_r);
+	install_mem_read_handler(0, 0x40ed, 0x40ed, showdown_pld_select1_r);
+	install_mem_read_handler(0, 0x5243, 0x5243, showdown_pld_select2_r);
+
+	/* ensure that we're triggered to bank "1" to start */
+	exidy440_bank = 0;
+	showdown_pld_trigger_r(0);
+	showdown_pld_select1_r(0);
+}
 
 
 

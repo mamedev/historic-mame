@@ -34,9 +34,8 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void niyanpai_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int niyanpai_vh_start(void);
-void niyanpai_vh_stop(void);
+VIDEO_UPDATE( niyanpai );
+VIDEO_START( niyanpai );
 
 READ16_HANDLER( niyanpai_palette_r );
 WRITE16_HANDLER( niyanpai_palette_w );
@@ -82,23 +81,6 @@ READ16_HANDLER( niyanpai_gfxrom_0_r );
 READ16_HANDLER( niyanpai_gfxrom_1_r );
 READ16_HANDLER( niyanpai_gfxrom_2_r );
 
-
-static data16_t *niyanpai_nvram;
-static size_t niyanpai_nvram_size;
-
-
-static void niyanpai_nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, niyanpai_nvram, niyanpai_nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file, niyanpai_nvram, niyanpai_nvram_size);
-		else
-			memset(niyanpai_nvram, 0, niyanpai_nvram_size);
-	}
-}
 
 static void niyanpai_soundbank_w(int data)
 {
@@ -149,7 +131,7 @@ static int tmpz84c011_pio_r(int offset)
 			break;
 
 		default:
-			logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", cpu_get_pc(), offset);
+			logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", activecpu_get_pc(), offset);
 			portdata = 0xff;
 			break;
 	}
@@ -185,7 +167,7 @@ static void tmpz84c011_pio_w(int offset, int data)
 			break;
 
 		default:
-			logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", cpu_get_pc(), offset, data);
+			logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", activecpu_get_pc(), offset, data);
 			break;
 	}
 }
@@ -218,7 +200,7 @@ static WRITE_HANDLER( tmpz84c011_0_dir_pe_w ) { pio_dir[4] = data; }
 
 static void ctc0_interrupt(int state)
 {
-	cpu_cause_interrupt(1, Z80_VECTOR(0, state));
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0, state));
 }
 
 static z80ctc_interface ctc_intf =
@@ -248,7 +230,7 @@ static void tmpz84c011_init(void)
 	z80ctc_init(&ctc_intf);
 }
 
-static void niyanpai_init_machine(void)
+static MACHINE_INIT( niyanpai )
 {
 	//
 }
@@ -275,7 +257,7 @@ static void initialize_driver(void)
 }
 
 
-static void init_niyanpai(void) { initialize_driver(); }
+static DRIVER_INIT( niyanpai ) { initialize_driver(); }
 
 
 static READ16_HANDLER( niyanpai_dipsw_r )
@@ -335,7 +317,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( niyanpai_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x040000, 0x040fff, MWA16_RAM, &niyanpai_nvram, &niyanpai_nvram_size },
+	{ 0x040000, 0x040fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 
 	{ 0x0a0000, 0x0a08ff, niyanpai_palette_w },
 	{ 0x0a0900, 0x0a11ff, MWA16_RAM },		// palette work ram?
@@ -503,9 +485,9 @@ INPUT_PORTS_START( niyanpai )
 INPUT_PORTS_END
 
 
-static int niyanpai_interrupt(void)
+static INTERRUPT_GEN( niyanpai_interrupt )
 {
-	return m68_level1_irq();
+	cpu_set_irq_line(0, 1, HOLD_LINE);
 }
 
 static Z80_DaisyChain daisy_chain_sound[] =
@@ -529,55 +511,38 @@ static struct DACinterface dac_interface =
 };
 
 
-static struct MachineDriver machine_driver_niyanpai =
-{
-	{
-		{
-			CPU_M68000,		/* TMP68301 */
-			12288000/2,		/* 6.144 MHz */
-		/*	12288000/1,	*/	/* 12.288 MHz */
-			niyanpai_readmem, niyanpai_writemem, 0, 0,
-			niyanpai_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,/* TMPZ84C011 */
-		/*	8000000/2,	*/	/* 4.00 MHz */ \
-			8000000/1,		/* 8.00 MHz */ \
-			sound_readmem, sound_writemem, sound_readport, sound_writeport,
-			0, 0,	/* interrupts are made by z80 daisy chain system */
-			0, 0, daisy_chain_sound
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	niyanpai_init_machine,
+static MACHINE_DRIVER_START( niyanpai )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12288000/2)		/* TMP68301, 6.144 MHz */
+	MDRV_CPU_MEMORY(niyanpai_readmem,niyanpai_writemem)
+	MDRV_CPU_VBLANK_INT(niyanpai_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 8000000/1)	/* TMPZ84C011, 8.00 MHz */
+	MDRV_CPU_CONFIG(daisy_chain_sound)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(niyanpai)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	1024, 512, { 0, 640-1, 0, 240-1 },
-	0,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 240-1)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	niyanpai_vh_start,
-	niyanpai_vh_stop,
-	niyanpai_vh_screenrefresh,
+	MDRV_VIDEO_START(niyanpai)
+	MDRV_VIDEO_UPDATE(niyanpai)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-	niyanpai_nvram_handler
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( niyanpai )

@@ -171,6 +171,8 @@ static struct tms34010_config default_config =
 };
 
 static void check_interrupt(void);
+static void vsblnk_callback(int cpunum);
+static void dpyint_callback(int cpunum);
 
 
 
@@ -836,7 +838,15 @@ static void check_interrupt(void)
 
 void tms34010_init(void)
 {
+	int i;
+
 	cpu_executing = -1;
+
+	for (i = 0; i < MAX_CPU; i++)
+	{
+		dpyint_timer[i] = timer_alloc(dpyint_callback);
+		vsblnk_timer[i] = timer_alloc(vsblnk_callback);
+	}
 }
 
 void tms34010_reset(void *param)
@@ -864,7 +874,7 @@ void tms34010_reset(void *param)
 
 void tms34020_init(void)
 {
-	cpu_executing = -1;
+	tms34010_init();
 }
 
 void tms34020_reset(void *param)
@@ -1506,7 +1516,7 @@ static void vsblnk_callback(int cpunum)
 	cpuintrf_push_context(cpunum);
 
 	/* reset timer for next frame */
-	vsblnk_timer[cpunum] = timer_set(interval, cpunum, vsblnk_callback);
+	timer_adjust(vsblnk_timer[cpunum], interval, cpunum, 0);
 	IOREG(REG_DPYADR) = IOREG(REG_DPYSTRT);
 	update_display_address(SMART_IOREG(VSBLNK));
 
@@ -1520,7 +1530,7 @@ static void dpyint_callback(int cpunum)
 	cpuintrf_push_context(cpunum);
 
 	/* reset timer for next frame */
-	dpyint_timer[cpunum] = timer_set(interval, cpunum, dpyint_callback);
+	timer_adjust(dpyint_timer[cpunum], interval, cpunum, 0);
 	timer_set(TIME_NOW, cpunum | (TMS34010_DI << 8), internal_interrupt_callback);
 
 	/* allow a callback so we can update before they are likely to do nasty things */
@@ -1537,15 +1547,9 @@ static void update_timers(void)
 	int dpyint = IOREG(REG_DPYINT);
 	int vsblnk = SMART_IOREG(VSBLNK);
 
-	/* remove any old timers */
-	if (dpyint_timer[cpunum])
-		timer_remove(dpyint_timer[cpunum]);
-	if (vsblnk_timer[cpunum])
-		timer_remove(vsblnk_timer[cpunum]);
-
 	/* set new timers */
-	dpyint_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(dpyint)), cpunum, dpyint_callback);
-	vsblnk_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(vsblnk)), cpunum, vsblnk_callback);
+	timer_adjust(dpyint_timer[cpunum], cpu_getscanlinetime(vcount_to_scanline(dpyint)), cpunum, 0);
+	timer_adjust(vsblnk_timer[cpunum], cpu_getscanlinetime(vcount_to_scanline(vsblnk)), cpunum, 0);
 }
 
 

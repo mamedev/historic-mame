@@ -9,11 +9,11 @@
 #include <stdio.h>
 
 #include "driver.h"
-#include "machine/mcr.h"
 #include "sndhrdw/mcr.h"
 #include "sndhrdw/williams.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
+#include "mcr.h"
 
 
 
@@ -268,6 +268,18 @@ MEMORY_WRITE_START( ssio_writemem )
 MEMORY_END
 
 
+/********* machine driver ***********/
+MACHINE_DRIVER_START(mcr_ssio)
+	MDRV_CPU_ADD_TAG("ssio", Z80, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(ssio_readmem,ssio_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,26)
+	
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD_TAG("ssio", AY8910, ssio_ay8910_interface)
+MACHINE_DRIVER_END
+
+
 
 /*************************************
  *
@@ -349,6 +361,16 @@ struct pia6821_interface csdeluxe_pia_intf =
 	/*outputs: A/B,CA/B2       */ csdeluxe_porta_w, csdeluxe_portb_w, 0, 0,
 	/*irqs   : A/B             */ csdeluxe_irq, csdeluxe_irq
 };
+
+
+/********* machine driver ***********/
+MACHINE_DRIVER_START(chip_squeak_deluxe)
+	MDRV_CPU_ADD_TAG("csd", M68000, 15000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(csdeluxe_readmem,csdeluxe_writemem)
+	
+	MDRV_SOUND_ADD_TAG("csd", DAC, mcr_dac_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -437,6 +459,16 @@ struct pia6821_interface soundsgood_pia_intf =
 };
 
 
+/********* machine driver ***********/
+MACHINE_DRIVER_START(sounds_good)
+	MDRV_CPU_ADD_TAG("sg", M68000, 16000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(soundsgood_readmem,soundsgood_writemem)
+	
+	MDRV_SOUND_ADD_TAG("sg", DAC, mcr_dac_interface)
+MACHINE_DRIVER_END
+
+
 
 /*************************************
  *
@@ -512,6 +544,25 @@ struct pia6821_interface turbocs_pia_intf =
 	/*outputs: A/B,CA/B2       */ turbocs_porta_w, turbocs_portb_w, 0, 0,
 	/*irqs   : A/B             */ turbocs_irq, turbocs_irq
 };
+
+
+/********* machine driver ***********/
+MACHINE_DRIVER_START(turbo_chip_squeak)
+	MDRV_CPU_ADD_TAG("tcs", M6809, 9000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(turbocs_readmem,turbocs_writemem)
+	
+	MDRV_SOUND_ADD_TAG("tcs", DAC, mcr_dac_interface)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START(turbo_chip_squeak_plus_sounds_good)
+	MDRV_IMPORT_FROM(turbo_chip_squeak)
+	MDRV_IMPORT_FROM(sounds_good)
+	
+	MDRV_SOUND_REPLACE("tcs", DAC, mcr_dual_dac_interface)
+	MDRV_SOUND_REMOVE("sg")
+MACHINE_DRIVER_END
 
 
 
@@ -626,3 +677,13 @@ struct pia6821_interface squawkntalk_pia1_intf =
 	/*outputs: A/B,CA/B2       */ squawkntalk_porta2_w, squawkntalk_portb2_w, 0, 0,
 	/*irqs   : A/B             */ squawkntalk_irq, squawkntalk_irq
 };
+
+
+/********* machine driver ***********/
+MACHINE_DRIVER_START(squawk_n_talk)
+	MDRV_CPU_ADD_TAG("snt", M6802, 3580000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(squawkntalk_readmem,squawkntalk_writemem)
+	
+	MDRV_SOUND_ADD_TAG("snt", TMS5220, squawkntalk_tms5220_interface)
+MACHINE_DRIVER_END

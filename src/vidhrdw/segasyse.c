@@ -52,31 +52,21 @@ static void segae_draw8pixsprite(UINT8 *dest, UINT8 chip, UINT16 tile, UINT8 lin
  vhstart, vhstop and vhrefresh functions
 *******************************************************************************/
 
-int segae_vh_start(void)
+VIDEO_START( segae )
 {
 	UINT8 temp;
 
 	for (temp=0;temp<CHIPS;temp++)
 		if (segae_vdp_start(temp)) return 1;
 
-	cache_bitmap = malloc( (16+256+16) * 192); /* 16 pixels either side to simplify drawing */
+	cache_bitmap = auto_malloc( (16+256+16) * 192); /* 16 pixels either side to simplify drawing */
 
 	if (!cache_bitmap) return 1;
 
 	return 0;
 }
 
-void segae_vh_stop(void)
-{
-	UINT8 temp;
-
-	for (temp=0;temp<CHIPS;temp++)
-		segae_vdp_stop(temp);
-
-	free (cache_bitmap);
-}
-
-void segae_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( segae )
 {
 	int i;
 
@@ -100,16 +90,16 @@ int	segae_vdp_start( UINT8 chip )
 
 	/*- VRAM -*/
 
-	segae_vdp_vram[chip] = malloc(0x8000); /* 32kb (2 banks) */
+	segae_vdp_vram[chip] = auto_malloc(0x8000); /* 32kb (2 banks) */
 	segae_vdp_vrambank[chip] = 0;
 
 	/*- CRAM -*/
 
-	segae_vdp_cram[chip] = malloc(0x20);
+	segae_vdp_cram[chip] = auto_malloc(0x20);
 
 	/*- VDP Registers -*/
 
-	segae_vdp_regs[chip] = malloc(0x20);
+	segae_vdp_regs[chip] = auto_malloc(0x20);
 
 	/*- Check Allocation was Successful -*/
 
@@ -151,15 +141,6 @@ int	segae_vdp_start( UINT8 chip )
 
 
 	return 0;
-}
-
-void segae_vdp_stop( UINT8 chip )
-{
-	/*- Free Allocated Memory -*/
-
-	free(segae_vdp_vram[chip]);
-	free(segae_vdp_cram[chip]);
-	free(segae_vdp_regs[chip]);
 }
 
 /*******************************************************************************

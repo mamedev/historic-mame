@@ -243,6 +243,9 @@ enum { IPT_END=1,IPT_PORT,
 	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
 	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
 
+#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
+	PORT_BITX(    mask, mask & default, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
 #define MAX_DEFSTR_LEN 20
 extern char ipdn_defaultstrings[][MAX_DEFSTR_LEN];
 

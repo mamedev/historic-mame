@@ -21,6 +21,36 @@
 //	INLINE FUNCTIONS
 //============================================================
 
+#ifdef _MSC_VER
+
+#define vec_mult _vec_mult
+INLINE int _vec_mult(int x, int y)
+{
+    int result;
+
+    __asm {
+        mov eax, x
+        imul y
+        mov result, edx
+    }
+
+    return result;
+}
+
+INLINE unsigned int osd_cycles(void)
+{
+	int result;
+
+	__asm {
+        rdtsc
+        mov result, eax
+    }
+
+    return result;
+}
+
+#else
+
 #define vec_mult _vec_mult
 INLINE int _vec_mult(int x, int y)
 {
@@ -50,5 +80,7 @@ INLINE unsigned int osd_cycles(void)
 
 	return result;
 }
+
+#endif /* _MSC_VER */
 
 #endif /* __OSINLINE__ */

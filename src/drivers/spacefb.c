@@ -127,17 +127,17 @@ red flash effect when you die.
 #include "cpu/i8039/i8039.h"
 
 
-void spacefb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_UPDATE( spacefb );
+PALETTE_INIT( spacefb );
 
 WRITE_HANDLER( spacefb_video_control_w );
 WRITE_HANDLER( spacefb_port_2_w );
 
 
-static int spacefb_interrupt(void)
+static INTERRUPT_GEN( spacefb_interrupt )
 {
-	if (cpu_getiloops() != 0) return (0x00cf);		/* RST 08h */
-	else return (0x00d7);		/* RST 10h */
+	if (cpu_getiloops() != 0) cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xcf);		/* RST 08h */
+	else cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);		/* RST 10h */
 }
 
 
@@ -145,23 +145,23 @@ unsigned char spacefb_sound_latch;
 
 static READ_HANDLER( spacefb_sh_p2_r )
 {
-    return ((spacefb_sound_latch & 0x18) << 1);
+	return ((spacefb_sound_latch & 0x18) << 1);
 }
 
 static READ_HANDLER( spacefb_sh_t0_r )
 {
-    return spacefb_sound_latch & 0x20;
+	return spacefb_sound_latch & 0x20;
 }
 
 static READ_HANDLER( spacefb_sh_t1_r )
 {
-    return spacefb_sound_latch & 0x04;
+	return spacefb_sound_latch & 0x04;
 }
 
 static WRITE_HANDLER( spacefb_port_1_w )
 {
-    spacefb_sound_latch = data;
-    if (!(data & 0x02)) cpu_cause_interrupt(1,I8039_EXT_INT);
+	spacefb_sound_latch = data;
+	cpu_set_irq_line(1, 0, (!(data & 0x02)) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -356,50 +356,39 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_spacefb =
-{
+static MACHINE_DRIVER_START( spacefb )
+
 	/* basic machine hardware */
-	{
-        {
-            CPU_Z80,
-            4000000,    /* 4 MHz? */
-            readmem,writemem,readport,writeport,
-            spacefb_interrupt,2 /* two int's per frame */
-        },
-		{
-            CPU_I8035 | CPU_AUDIO_CPU,
-            6000000/15,
-			readmem_sound,writemem_sound,readport_sound,writeport_sound,
-            ignore_interrupt,0
-        }
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-    3,
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)    /* 4 MHz? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(spacefb_interrupt,2) /* two int's per frame */
+
+	MDRV_CPU_ADD(I8035,6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(3)
 
 	/* video hardware */
 	/* there is no real character graphics, only 8*8 and 4*4 sprites */
-  	264, 256, { 0, 263, 16, 247 },
-	gfxdecodeinfo,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(264, 256)
+	MDRV_VISIBLE_AREA(0, 263, 16, 247)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32)
 
-	32,32,
-	spacefb_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	spacefb_vh_screenrefresh,
+	MDRV_PALETTE_INIT(spacefb)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(spacefb)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-            &dac_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 

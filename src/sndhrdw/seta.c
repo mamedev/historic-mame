@@ -102,7 +102,7 @@ READ_HANDLER( seta_sound_r )
 						(mixer_is_sample_playing(firstchannel + channel) ? 1 : 0 );
 			default:
 #if LOG_SOUND
-logerror("PC: %06X - X1-010 channel %X, register %X read!\n",cpu_get_pc(),channel,reg);
+logerror("PC: %06X - X1-010 channel %X, register %X read!\n",activecpu_get_pc(),channel,reg);
 #endif
 				return seta_reg[channel][reg];
 		}
@@ -166,13 +166,13 @@ logerror("X1-010 REGS: ch %X] %02X %02X %02X %02X - %02X %02X %02X %02X\n",
 
 					if (!( (start < end) && (end <= maxlen) ))
 					{
-						logerror("PC: %06X - X1-010 OUT OF RANGE SAMPLE: %06X - %06X, channel %X\n",cpu_get_pc(),start,end,channel);
+						logerror("PC: %06X - X1-010 OUT OF RANGE SAMPLE: %06X - %06X, channel %X\n",activecpu_get_pc(),start,end,channel);
 						return;
 					}
 
 #if LOG_SOUND
 /* Print some more debug info */
-logerror("PC: %06X - Play 8 bit sample %06X - %06X, channel %X\n",cpu_get_pc(),start, end, channel);
+logerror("PC: %06X - Play 8 bit sample %06X - %06X, channel %X\n",activecpu_get_pc(),start, end, channel);
 #endif
 
 					/* Left and right speaker's volume can be set indipendently.

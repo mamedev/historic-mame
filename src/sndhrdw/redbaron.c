@@ -1,3 +1,8 @@
+/*************************************************************************
+
+	Atari Red Baron hardware
+
+*************************************************************************/
 /*
 
     Red Baron sound notes:
@@ -11,6 +16,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "bzone.h"
 
 /* used in drivers/redbaron.c to select joystick pot */
 extern int rb_input_select;
@@ -164,7 +170,7 @@ int redbaron_sh_start(const struct MachineSound *msound)
 {
     int i;
 
-	vol_lookup = (INT16 *)malloc(32768 * sizeof(INT16));
+	vol_lookup = (INT16 *)auto_malloc(32768 * sizeof(INT16));
 	if( !vol_lookup )
         return 1;
 
@@ -210,9 +216,6 @@ int redbaron_sh_start(const struct MachineSound *msound)
 
 void redbaron_sh_stop(void)
 {
-	if( vol_lookup )
-		free(vol_lookup);
-	vol_lookup = NULL;
 }
 
 void redbaron_sh_update(void)

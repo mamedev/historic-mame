@@ -112,12 +112,11 @@ the prog rom. Doesn't seem to cause problems though.
 WRITE16_HANDLER( asuka_spritectrl_w );
 WRITE16_HANDLER( asuka_spriteflip_w );
 
-int rastan_s_interrupt(void);
+INTERRUPT_GEN( rastan_s_interrupt );
 
-int asuka_vh_start(void);
-int galmedes_vh_start(void);
-void asuka_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void asuka_vh_stop(void);
+VIDEO_START( asuka );
+VIDEO_START( galmedes );
+VIDEO_UPDATE( asuka );
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
@@ -133,15 +132,15 @@ READ16_HANDLER( bonzeadv_c_chip_r );
 
 void cadash_irq_handler(int irq);
 
-void cadash_interrupt5(int x)
+static void cadash_interrupt5(int param)
 {
-	cpu_cause_interrupt(0,5);
+	cpu_set_irq_line(0, 5, HOLD_LINE);
 }
 
-int cadash_interrupt(void)
+INTERRUPT_GEN( cadash_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(500,0),0, cadash_interrupt5);
-	return 4;  /* interrupt vector 4 */
+	cpu_set_irq_line(0, 4, HOLD_LINE);  /* interrupt vector 4 */
 }
 
 
@@ -1004,241 +1003,159 @@ static struct ADPCMinterface adpcm_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-void asuka_eof_callback(void)
+VIDEO_EOF( asuka )
 {
 	buffer_spriteram16_w(0,0,0);
 }
 
-static struct MachineDriver machine_driver_bonzeadv =
-{
+static MACHINE_DRIVER_START( bonzeadv )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,    /* checked on PCB */
-			bonzeadv_readmem,bonzeadv_writemem,0,0,
-			m68_level4_irq, 1
-		},
-		{
-			CPU_Z80,    /* sound CPU, also required for test mode */
-			4000000,
-			bonzeadv_z80_readmem,bonzeadv_z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)    /* checked on PCB */
+	MDRV_CPU_MEMORY(bonzeadv_readmem,bonzeadv_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,4000000)    /* sound CPU, also required for test mode */
+	MDRV_CPU_MEMORY(bonzeadv_z80_readmem,bonzeadv_z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 3*8, 31*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 3*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	asuka_eof_callback,
-	asuka_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(asuka)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_asuka =
-{
+static MACHINE_DRIVER_START( asuka )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ??? */
-			asuka_readmem,asuka_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_MEMORY(asuka_readmem,asuka_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	asuka_eof_callback,
-	asuka_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(asuka)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_cadash =
-{
+static MACHINE_DRIVER_START( cadash )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			cadash_readmem,cadash_writemem,0,0,
-			cadash_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(cadash_readmem,cadash_writemem)
+	MDRV_CPU_VBLANK_INT(cadash_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	asuka_eof_callback,
-	asuka_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(asuka)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_galmedes =
-{
+static MACHINE_DRIVER_START( galmedes )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ??? */
-			asuka_readmem,asuka_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_MEMORY(asuka_readmem,asuka_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,	/* only Mofflott uses full palette space */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)	/* only Mofflott uses full palette space */
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	asuka_eof_callback,
-	galmedes_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(galmedes)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_eto =
-{
+static MACHINE_DRIVER_START( eto )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ??? */
-			eto_readmem,eto_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_MEMORY(eto_readmem,eto_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	asuka_eof_callback,
-	galmedes_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(galmedes)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1554,7 +1471,7 @@ ROM_START( eto )
 ROM_END
 
 
-static void init_asuka(void)
+static DRIVER_INIT( asuka )
 {
 	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);

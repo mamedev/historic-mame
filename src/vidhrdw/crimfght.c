@@ -53,16 +53,9 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 
 ***************************************************************************/
 
-void crimfght_vh_stop( void )
+VIDEO_START( crimfght )
 {
-	free(paletteram);
-	K052109_vh_stop();
-	K051960_vh_stop();
-}
-
-int crimfght_vh_start( void )
-{
-	paletteram = malloc(0x400);
+	paletteram = auto_malloc(0x400);
 	if (!paletteram) return 1;
 
 	layer_colorbase[0] = 0;
@@ -70,16 +63,9 @@ int crimfght_vh_start( void )
 	layer_colorbase[2] = 8;
 	sprite_colorbase = 16;
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
-	{
-		free(paletteram);
 		return 1;
-	}
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		free(paletteram);
-		K052109_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
@@ -92,14 +78,14 @@ int crimfght_vh_start( void )
 
 ***************************************************************************/
 
-void crimfght_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( crimfght )
 {
 	K052109_tilemap_update();
 
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,0);
-	K051960_sprites_draw(bitmap,2,2);
-	K052109_tilemap_draw(bitmap,2,0,0);
-	K051960_sprites_draw(bitmap,1,1);
-	K052109_tilemap_draw(bitmap,0,0,0);
-	K051960_sprites_draw(bitmap,0,0);
+	K052109_tilemap_draw(bitmap,cliprect,1,TILEMAP_IGNORE_TRANSPARENCY,0);
+	K051960_sprites_draw(bitmap,cliprect,2,2);
+	K052109_tilemap_draw(bitmap,cliprect,2,0,0);
+	K051960_sprites_draw(bitmap,cliprect,1,1);
+	K052109_tilemap_draw(bitmap,cliprect,0,0,0);
+	K051960_sprites_draw(bitmap,cliprect,0,0);
 }

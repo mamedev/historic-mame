@@ -1,29 +1,31 @@
 /***************************************************************************
 
-Sega G-80 Raster game sound code
+	Sega G-80 raster hardware
 
-Across these games, there's a mixture of discrete sound circuitry,
-speech boards, ADPCM samples, and a TMS3617 music chip.
+	Across these games, there's a mixture of discrete sound circuitry,
+	speech boards, ADPCM samples, and a TMS3617 music chip.
 
-08-JAN-1999 - MAB:
- - added NEC 7751 support to Monster Bash
+	08-JAN-1999 - MAB:
+	 - added NEC 7751 support to Monster Bash
 
-05-DEC-1998 - MAB:
- - completely rewrote sound code to use Samples interface.
-   (It's based on the Zaxxon sndhrdw code.)
+	05-DEC-1998 - MAB:
+	 - completely rewrote sound code to use Samples interface.
+	   (It's based on the Zaxxon sndhrdw code.)
 
-TODO:
- - Astro Blaster needs "Attack Rate" modifiers implemented
- - Sample support for 005
- - Melody support for 005
- - Sound for Pig Newton
- - Speech for Astro Blaster
+	TODO:
+	 - Astro Blaster needs "Attack Rate" modifiers implemented
+	 - Sample support for 005
+	 - Melody support for 005
+	 - Sound for Pig Newton
+	 - Speech for Astro Blaster
 
-- Mike Balfour (mab22@po.cwru.edu)
+	- Mike Balfour (mab22@po.cwru.edu)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
+#include "segar.h"
 
 #define TOTAL_SOUNDS 16
 
@@ -444,7 +446,9 @@ WRITE_HANDLER( monsterb_audio_8255_w )
 		// D0-D2 = P24-P26, D3 = INT
 		port_8255_c03 = data & 0x0F;
 		if ((data & 0x08) == 0)
-			cpu_cause_interrupt(1,I8039_EXT_INT);
+			cpu_set_irq_line(1, 0, ASSERT_LINE);
+		else
+			cpu_set_irq_line(1, 0, CLEAR_LINE);
 
 	}
 	/* Write to 8255 control port, this should be 0x80 for "simple mode" */

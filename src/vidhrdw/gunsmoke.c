@@ -34,7 +34,7 @@ static unsigned char bgmap[9][9][2];
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gunsmoke )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -92,26 +92,17 @@ void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-int gunsmoke_vh_start(void)
+VIDEO_START( gunsmoke )
 {
-	if ((bgbitmap = bitmap_alloc(9*32,9*32)) == 0)
+	if ((bgbitmap = auto_bitmap_alloc(9*32,9*32)) == 0)
 		return 1;
 
-	if (generic_vh_start() == 1)
-	{
-		bitmap_free(bgbitmap);
+	if (video_start_generic() == 1)
 		return 1;
-	}
 
 	memset (bgmap, 0xff, sizeof (bgmap));
 
 	return 0;
-}
-
-
-void gunsmoke_vh_stop(void)
-{
-	bitmap_free(bgbitmap);
 }
 
 
@@ -162,7 +153,7 @@ WRITE_HANDLER( gunsmoke_d806_w )
   the main emulation engine.
 
 ***************************************************************************/
-void gunsmoke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gunsmoke )
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
@@ -170,7 +161,7 @@ void gunsmoke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	int top,left;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset (bgmap, 0xff, sizeof (bgmap));
 
 

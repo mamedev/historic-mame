@@ -132,9 +132,8 @@ need to reproduce the $18141a calculations.
 #include "sndhrdw/taitosnd.h"
 #include "machine/eeprom.h"
 
-int undrfire_vh_start (void);
-void undrfire_vh_stop (void);
-void undrfire_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( undrfire );
+VIDEO_UPDATE( undrfire );
 
 /* F3 sound */
 READ16_HANDLER(f3_68000_share_r);
@@ -184,12 +183,7 @@ static WRITE32_HANDLER( color_ram_w )
 
 void undrfire_interrupt5(int x)
 {
-	cpu_cause_interrupt(0,5);
-}
-
-static int undrfire_interrupt(void)
-{
-	return 4;
+	cpu_set_irq_line(0,5,HOLD_LINE);
 }
 
 
@@ -220,7 +214,7 @@ static struct EEPROM_interface undrfire_eeprom_interface =
 	"0100110000",	/* lock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( undrfire )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -352,7 +346,7 @@ static READ32_HANDLER( undrfire_lightgun_r )
 		}
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped lightgun offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped lightgun offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0x0;
 }
@@ -580,7 +574,7 @@ static struct GfxDecodeInfo undrfire_gfxdecodeinfo[] =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static void undrfire_machine_reset(void)
+static MACHINE_INIT( undrfire )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
@@ -604,50 +598,37 @@ static struct ES5505interface es5505_interface =
 };
 
 
-static struct MachineDriver machine_driver_undrfire =
-{
-	{
-		{
-			CPU_M68EC020,
-			16000000,	/* 16 MHz */
-			undrfire_readmem,undrfire_writemem,0,0,
-			undrfire_interrupt, 1
-		},
-		{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			16000000,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices */
-	undrfire_machine_reset,
+static MACHINE_DRIVER_START( undrfire )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(undrfire_readmem,undrfire_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(undrfire)
+	MDRV_NVRAM_HANDLER(undrfire)
 
 	/* video hardware */
-	40*8, 32*8, { 0, 40*8-1, 3*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 40*8-1, 3*8, 32*8-1)
+	MDRV_GFXDECODE(undrfire_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16384)
 
-	undrfire_gfxdecodeinfo,
-	16384, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	undrfire_vh_start,
-	undrfire_vh_stop,
-	undrfire_vh_screenrefresh,
+	MDRV_VIDEO_START(undrfire)
+	MDRV_VIDEO_UPDATE(undrfire)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_ES5505,
-			&es5505_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ES5505, es5505_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -695,17 +676,17 @@ ROM_END
 static READ32_HANDLER( main_cycle_r )
 {
 	int ptr;
-	if ((cpu_get_sp()&2)==0) ptr=undrfire_ram[(cpu_get_sp()&0x1ffff)/4];
-	else ptr=(((undrfire_ram[(cpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) |
-	(undrfire_ram[((cpu_get_sp()&0x1ffff)/4)+1]>>16);
+	if ((activecpu_get_sp()&2)==0) ptr=undrfire_ram[(activecpu_get_sp()&0x1ffff)/4];
+	else ptr=(((undrfire_ram[(activecpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) |
+	(undrfire_ram[((activecpu_get_sp()&0x1ffff)/4)+1]>>16);
 
-	if (cpu_get_pc()==0x682 && ptr==0x1156)
+	if (activecpu_get_pc()==0x682 && ptr==0x1156)
 		cpu_spinuntil_int();
 
 	return undrfire_ram[0x4f8/4];
 }
 
-void init_undrfire(void)
+DRIVER_INIT( undrfire )
 {
 	unsigned int offset,i;
 	UINT8 *gfx = memory_region(REGION_GFX3);

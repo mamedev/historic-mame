@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "milliped.h"
 
 
 static struct rectangle spritevisiblearea =
@@ -35,7 +35,7 @@ static struct rectangle spritevisiblearea =
 
 ***************************************************************************/
 
-void milliped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( milliped )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -101,12 +101,12 @@ WRITE_HANDLER( milliped_paletteram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void milliped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( milliped )
 {
 	int offs;
 
-
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset (dirtybuffer, 1, videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -133,7 +133,7 @@ void milliped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				color = 2;
 			else color = 0;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					0x40 + (videoram[offs] & 0x3f) + 0x80 * bank,
 					bank + color,
 					0,0,
@@ -141,6 +141,7 @@ void milliped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites */
@@ -187,6 +188,5 @@ void milliped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				}
 			}
 		}
-
 	}
 }

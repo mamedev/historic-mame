@@ -18,19 +18,22 @@ static int K051316_readroms;
 static WRITE_HANDLER( k007232_extvolume_w );
 
 /* from vidhrdw/chqflag.c */
-int chqflag_vh_start( void );
-void chqflag_vh_stop( void );
-void chqflag_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+VIDEO_START( chqflag );
+VIDEO_UPDATE( chqflag );
 
-static int chqflag_interrupt( void )
+
+static INTERRUPT_GEN( chqflag_interrupt )
 {
-	if (cpu_getiloops() == 0){
-		if (K051960_is_IRQ_enabled()) return KONAMI_INT_IRQ;
+	if (cpu_getiloops() == 0)
+	{
+		if (K051960_is_IRQ_enabled())
+			cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 	}
-	else if (cpu_getiloops() % 2){
-		if (K051960_is_NMI_enabled()) return nmi_interrupt();
+	else if (cpu_getiloops() % 2)
+	{
+		if (K051960_is_NMI_enabled())
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( chqflag_bankswitch_w )
@@ -133,7 +136,7 @@ static READ_HANDLER( analog_read_r )
 
 WRITE_HANDLER( chqflag_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,Z80_IRQ_INT);
+	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
 
@@ -322,7 +325,7 @@ INPUT_PORTS_END
 
 static void chqflag_ym2151_irq_w(int data)
 {
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -360,50 +363,35 @@ static struct K007232_interface k007232_interface =
 	{ volume_callback0,  volume_callback1 }						/* external port callback */
 };
 
-static const struct MachineDriver machine_driver_chqflag =
-{
-	{
-		{
-			CPU_KONAMI,	/* 052001 */
-			3000000,	/* ? */
-			chqflag_readmem,chqflag_writemem,0,0,
-			chqflag_interrupt,16	/* ? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? */
-			chqflag_readmem_sound, chqflag_writemem_sound,0,0,
-			ignore_interrupt,0		/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+static MACHINE_DRIVER_START( chqflag )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(KONAMI,3000000)	/* 052001 */
+	MDRV_CPU_MEMORY(chqflag_readmem,chqflag_writemem)
+	MDRV_CPU_VBLANK_INT(chqflag_interrupt,16)	/* ? */
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(chqflag_readmem_sound,chqflag_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 12*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	1024, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	chqflag_vh_start,
-	chqflag_vh_stop,
-	chqflag_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(12*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(chqflag)
+	MDRV_VIDEO_UPDATE(chqflag)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -469,7 +457,7 @@ ROM_END
 
 
 
-static void init_chqflag(void)
+static DRIVER_INIT( chqflag )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

@@ -52,9 +52,9 @@ extern data16_t *bionicc_bgvideoram;
 extern data16_t *bionicc_fgvideoram;
 extern data16_t *bionicc_txvideoram;
 
-int bionicc_vh_start(void);
-void bionicc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void bionicc_eof_callback(void);
+VIDEO_START( bionicc );
+VIDEO_UPDATE( bionicc );
+VIDEO_EOF( bionicc );
 
 void bionicc_readinputs(void);
 void bionicc_sound_cmd(int data);
@@ -65,13 +65,13 @@ static data16_t bionicc_inp[3];
 
 WRITE16_HANDLER( hacked_controls_w )
 {
-logerror("%06x: hacked_controls_w %04x %02x\n",cpu_get_pc(),offset,data);
+logerror("%06x: hacked_controls_w %04x %02x\n",activecpu_get_pc(),offset,data);
 	COMBINE_DATA(&bionicc_inp[offset]);
 }
 
 static READ16_HANDLER( hacked_controls_r )
 {
-logerror("%06x: hacked_controls_r %04x %04x\n",cpu_get_pc(),offset,bionicc_inp[offset]);
+logerror("%06x: hacked_controls_r %04x %04x\n",activecpu_get_pc(),offset,bionicc_inp[offset]);
 	return bionicc_inp[offset];
 }
 
@@ -116,11 +116,14 @@ static READ16_HANDLER( hacked_soundcommand_r )
 
 ********************************************************************/
 
-int bionicc_interrupt(void)
+INTERRUPT_GEN( bionicc_interrupt )
 {
-	if (cpu_getiloops() == 0) return 2;
-	else return 4;
+	if (cpu_getiloops() == 0) 
+		cpu_set_irq_line(0, 2, HOLD_LINE);
+	else
+		cpu_set_irq_line(0, 4, HOLD_LINE);
 }
+
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },                /* 68000 ROM */
 	{ 0xfe0000, 0xfe07ff, MRA16_RAM },                /* RAM? */
@@ -331,47 +334,34 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-static const struct MachineDriver machine_driver_bionicc =
-{
+static MACHINE_DRIVER_START( bionicc )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* ?? MHz ? */
-			readmem,writemem,0,0,
-			bionicc_interrupt,8
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,  /* 4 MHz ??? TODO: find real FRQ */
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,4	/* ??? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* ?? MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(bionicc_interrupt,8)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)  /* 4 MHz ??? TODO: find real FRQ */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)	/* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_bionicc,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_bionicc)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
-	bionicc_eof_callback,
-	bionicc_vh_start,
-	0,
-	bionicc_vh_screenrefresh,
+	MDRV_VIDEO_START(bionicc)
+	MDRV_VIDEO_EOF(bionicc)
+	MDRV_VIDEO_UPDATE(bionicc)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 

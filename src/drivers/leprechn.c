@@ -65,9 +65,8 @@
 #include "cpu/m6502/m6502.h"
 
 
-int  leprechn_vh_start(void);
-void leprechn_vh_stop(void);
-void leprechn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( leprechn );
+VIDEO_UPDATE( leprechn );
 
 WRITE_HANDLER( leprechn_graphics_command_w );
 READ_HANDLER( leprechn_graphics_data_r );
@@ -117,7 +116,7 @@ static READ_HANDLER( leprechn_0805_r )
 static WRITE_HANDLER( leprechn_sh_w )
 {
     soundlatch_w(offset,data);
-    cpu_cause_interrupt(1,M6502_INT_IRQ);
+    cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 
@@ -248,7 +247,7 @@ INPUT_PORTS_END
 
 
 /* RGBI palette. Is it correct? */
-static unsigned char palette[16 * 3] =
+static unsigned char palette_source[16 * 3] =
 {
     0x00, 0x00, 0x00,
     0xff, 0x00, 0x00,
@@ -267,9 +266,9 @@ static unsigned char palette[16 * 3] =
     0x40, 0xff, 0xff,
     0xff, 0xff, 0xff
 };
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( leprechn )
 {
-    memcpy(game_palette,palette,sizeof(palette));
+    memcpy(palette,palette_source,sizeof(palette_source));
 }
 
 
@@ -286,52 +285,37 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_leprechn =
-{
-    /* basic machine hardware */
-    {
-        // A good test to verify that the relative CPU speeds of the main
-        // and sound are correct, is when you finish a level, the sound
-        // should stop before the display switches to the name of the
-        // next level
-        {
-            CPU_M6502,
-            1250000,    /* 1.25 MHz ??? */
-            readmem,writemem,0,0,
-            interrupt,1
-        },
-        {
-            CPU_M6502 | CPU_AUDIO_CPU,
-            1500000,    /* 1.5 MHz ??? */
-            sound_readmem,sound_writemem,0,0,
-            ignore_interrupt,1      /* interrupts are triggered by the main CPU */
-        }
-    },
-    57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-    1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-    0,
+static MACHINE_DRIVER_START( leprechn )
 
-    /* video hardware */
-    256, 256, { 0, 256-1, 0, 256-1 },
-    0,
-    sizeof(palette) / sizeof(palette[0]) / 3, 0,
-    init_palette,
+	/* basic machine hardware */
+	// A good test to verify that the relative CPU speeds of the main
+	// and sound are correct, is when you finish a level, the sound
+	// should stop before the display switches to the name of the
+	// next level
+	MDRV_CPU_ADD(M6502, 1250000)    /* 1.25 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-    0,
-    leprechn_vh_start,
-    leprechn_vh_stop,
-    leprechn_vh_screenrefresh,
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 1.5 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        }
-    }
-};
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+
+	MDRV_PALETTE_INIT(leprechn)
+	MDRV_VIDEO_START(leprechn)
+	MDRV_VIDEO_UPDATE(leprechn)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

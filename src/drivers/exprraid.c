@@ -66,7 +66,7 @@ sign is intact, however Credit is spelt incorrectly.
 
 /* from vidhrdw */
 extern unsigned char *exprraid_bgcontrol;
-void exprraid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( exprraid );
 
 
 /*****************************************************************************************/
@@ -88,7 +88,7 @@ static READ_HANDLER( exprraid_prot_1_r )
 static WRITE_HANDLER( sound_cpu_command_w )
 {
     soundlatch_w(0,data);
-    cpu_cause_interrupt(1,M6809_INT_NMI);
+    cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static READ_HANDLER( vblank_r ) {
@@ -281,8 +281,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
-	//cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,linestate,0xff);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -304,68 +303,47 @@ static struct YM3526interface ym3526_interface =
 	{ irqhandler }
 };
 
-static int exprraid_interrupt(void)
+static INTERRUPT_GEN( exprraid_interrupt )
 {
 	static int coin = 0;
 
 	if ( ( ~readinputport( 3 ) ) & 0xc0 ) {
 		if ( coin == 0 ) {
 			coin = 1;
-			return nmi_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, HOLD_LINE);
 		}
 	} else
 		coin = 0;
-
-	return ignore_interrupt();
 }
 
-static const struct MachineDriver machine_driver_exprraid =
-{
+static MACHINE_DRIVER_START( exprraid )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			4000000,        /* 4 MHz ??? */
-			readmem,writemem,0,0,
-			exprraid_interrupt, 1
-		},
-		{
-			CPU_M6809,
-			2000000,        /* 2 MHz ??? */
-			sub_readmem,sub_writemem,0,0,
-			ignore_interrupt,0	/* NMIs are caused by the main CPU */
+	MDRV_CPU_ADD(M6502, 4000000)        /* 4 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(exprraid_interrupt,1)
+
+	MDRV_CPU_ADD(M6809, 2000000)        /* 2 MHz ??? */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
 								/* IRQs are caused by the YM3526 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	exprraid_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(exprraid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-	    {
-	        SOUND_YM2203,
-	        &ym2203_interface
-	    },
-	    {
-	        SOUND_YM3526,
-	        &ym3526_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -538,7 +516,7 @@ static void exprraid_gfx_expand(void)
 }
 
 
-static void init_wexpress(void)
+static DRIVER_INIT( wexpress )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
@@ -560,7 +538,7 @@ static void init_wexpress(void)
 	}
 }
 
-static void init_exprraid(void)
+static DRIVER_INIT( exprraid )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -579,13 +557,13 @@ static void init_exprraid(void)
 	init_wexpress();
 }
 
-static void init_wexpresb(void)
+static DRIVER_INIT( wexpresb )
 {
 	install_mem_read_handler(0, 0x3800, 0x3800, vblank_r);
 	exprraid_gfx_expand();
 }
 
-static void init_wexpresc(void)
+static DRIVER_INIT( wexpresc )
 {
 	install_mem_read_handler(0, 0xFFC0, 0xFFC0, vblank_r);
 	exprraid_gfx_expand();

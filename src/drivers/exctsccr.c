@@ -29,11 +29,10 @@ KNOWN ISSUES/TODO:
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern void exctsccr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-extern void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern VIDEO_UPDATE( exctsccr );
+extern PALETTE_INIT( exctsccr );
 WRITE_HANDLER( exctsccr_gfx_bank_w );
-extern int exctsccr_vh_start( void );
-extern void exctsccr_vh_stop( void );
+extern VIDEO_START( exctsccr );
 
 /* from machine */
 extern unsigned char *exctsccr_mcu_ram;
@@ -337,101 +336,68 @@ static struct DACinterface bl_dac_interface =
 
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_exctsccr =
-{
+static MACHINE_DRIVER_START( exctsccr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4123456,	/* ??? with 4 MHz, nested NMIs might happen */
-			sound_readmem,sound_writemem,0,sound_writeport,
-			ignore_interrupt,0,
-			nmi_interrupt, 4000 /* 4 kHz, updates the dac */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4123456)	/* ??? with 4 MHz, nested NMIs might happen */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,4000) /* 4 kHz, updates the dac */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 64*8,
-	exctsccr_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	exctsccr_vh_start,
-	exctsccr_vh_stop,
-	exctsccr_vh_screenrefresh,
+	MDRV_PALETTE_INIT(exctsccr)
+	MDRV_VIDEO_START(exctsccr)
+	MDRV_VIDEO_UPDATE(exctsccr)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 /* Bootleg */
-static const struct MachineDriver machine_driver_exctsccb =
-{
+static MACHINE_DRIVER_START( exctsccb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			bl_readmem,bl_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ? */
-			bl_sound_readmem,bl_sound_writemem,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(bl_readmem,bl_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
+	MDRV_CPU_MEMORY(bl_sound_readmem,bl_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 64*8,
-	exctsccr_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	exctsccr_vh_stop,
-	exctsccr_vh_screenrefresh,
+	MDRV_PALETTE_INIT(exctsccr)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(exctsccr)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&bl_ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&bl_dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, bl_ay8910_interface)
+	MDRV_SOUND_ADD(DAC, bl_dac_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -191,7 +191,7 @@ Shark	Zame
 
 
 /**************** Machine stuff ******************/
-void fsharkbt_reset_8741_mcu(void);
+MACHINE_INIT( fsharkbt_reset_8741_mcu );
 READ16_HANDLER ( fsharkbt_dsp_r );
 READ16_HANDLER ( twincobr_dsp_r );
 WRITE16_HANDLER( twincobr_dsp_w );
@@ -226,20 +226,18 @@ WRITE16_HANDLER( twincobr_fgram_w );
 WRITE16_HANDLER( twincobr_crtc_reg_sel_w );
 WRITE16_HANDLER( twincobr_crtc_data_w );
 
-int  toaplan0_vh_start(void);
-void toaplan0_vh_stop(void);
-void toaplan0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void toaplan0_eof_callback(void);
+VIDEO_START( toaplan0 );
+VIDEO_UPDATE( toaplan0 );
+VIDEO_EOF( toaplan0 );
 
 
 
-static int twincobr_interrupt(void)
+static INTERRUPT_GEN( twincobr_interrupt )
 {
 	if (twincobr_intenable) {
 		twincobr_intenable = 0;
-		return MC68000_IRQ_4;
+		cpu_set_irq_line(0, 4, HOLD_LINE);
 	}
-	else return ignore_interrupt();
 }
 
 static MEMORY_READ16_START( readmem )
@@ -680,54 +678,41 @@ static struct YM3812interface ym3812_interface =
 };
 
 
-static const struct MachineDriver machine_driver_twincobr =
-{
+static MACHINE_DRIVER_START( twincobr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			28000000/4,			/* 7.0 MHz - Main board Crystal is 28MHz */
-			readmem,writemem,0,0,
-			twincobr_interrupt,1
-		},
-		{
-			CPU_Z80,
-			28000000/8,			/* 3.5 MHz */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
-		},
-		{
-			CPU_TMS320C10,
-			28000000/8,			/* 3.5 MHz */
-			DSP_readmem,DSP_writemem,DSP_readport,DSP_writeport,
-			ignore_interrupt,0	/* IRQs are caused by 68000 */
-		},
-	},
-	56, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	100,									/* 100 CPU slices per frame */
-	fsharkbt_reset_8741_mcu,		/* Reset fshark bootleg 8741 MCU data */
+	MDRV_CPU_ADD(M68000,28000000/4)			/* 7.0 MHz - Main board Crystal is 28MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(twincobr_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,28000000/8)			/* 3.5 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_CPU_ADD(TMS320C10,28000000/8)			/* 3.5 MHz */
+	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
+	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
+
+	MDRV_FRAMES_PER_SECOND(56)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(fsharkbt_reset_8741_mcu)	/* Reset fshark bootleg 8741 MCU data */
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1792, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1792)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
-	toaplan0_eof_callback,
-	toaplan0_vh_start,
-	toaplan0_vh_stop,
-	toaplan0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan0)
+	MDRV_VIDEO_EOF(toaplan0)
+	MDRV_VIDEO_UPDATE(toaplan0)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-	},
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1091,7 +1076,7 @@ ROM_END
 
 
 
-static void init_fshark(void)
+static DRIVER_INIT( fshark )
 {
 	data8_t *source = memory_region(REGION_USER1);
 	data16_t *dest = (data16_t *)&memory_region(REGION_CPU3)[TMS320C10_PGM_OFFSET];

@@ -4,9 +4,10 @@
 
 unsigned char *labyrunr_videoram1,*labyrunr_videoram2;
 static struct tilemap *layer0, *layer1;
+static struct rectangle clip0, clip1;
 
 
-void labyrunr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( labyrunr )
 {
 	int i,pal;
 
@@ -92,24 +93,22 @@ static void get_tile_info1(int tile_index)
 
 ***************************************************************************/
 
-int labyrunr_vh_start(void)
+VIDEO_START( labyrunr )
 {
 	layer0 = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 	layer1 = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if (layer0 && layer1)
-	{
-		struct rectangle clip = Machine->visible_area;
-		clip.min_x += 40;
-		tilemap_set_clip(layer0,&clip);
+	if (!layer0 || !layer1)
+		return 1;
 
-		clip.max_x = 39;
-		clip.min_x = 0;
-		tilemap_set_clip(layer1,&clip);
+	clip0 = Machine->visible_area;
+	clip0.min_x += 40;
 
-		return 0;
-	}
-	return 1;
+	clip1 = Machine->visible_area;
+	clip1.max_x = 39;
+	clip1.min_x = 0;
+
+	return 0;
 }
 
 
@@ -146,12 +145,17 @@ WRITE_HANDLER( labyrunr_vram2_w )
 
 ***************************************************************************/
 
-void labyrunr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( labyrunr )
 {
+	struct rectangle finalclip0 = clip0, finalclip1 = clip1;
+
+	sect_rect(&finalclip0, cliprect);
+	sect_rect(&finalclip1, cliprect);
+
 	tilemap_set_scrollx(layer0,0,K007121_ctrlram[0][0x00] - 40);
 	tilemap_set_scrolly(layer0,0,K007121_ctrlram[0][0x02]);
 
-	tilemap_draw(bitmap,layer0,0,0);
-	K007121_sprites_draw(0,bitmap,spriteram,(K007121_ctrlram[0][6]&0x30)*2,40,0,-1);
-	tilemap_draw(bitmap,layer1,0,0);
+	tilemap_draw(bitmap,&finalclip0,layer0,0,0);
+	K007121_sprites_draw(0,bitmap,cliprect,spriteram,(K007121_ctrlram[0][6]&0x30)*2,40,0,-1);
+	tilemap_draw(bitmap,&finalclip1,layer1,0,0);
 }

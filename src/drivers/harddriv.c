@@ -155,141 +155,11 @@
 #include "cpu/adsp2100/adsp2100.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
+#include "harddriv.h"
 
 
 /* from slapstic.c */
 void slapstic_init(int chip);
-
-
-/* from machine */
-extern data16_t *hd68k_slapstic_base;
-extern data16_t *hdgsp_speedup_addr[2];
-extern offs_t hdgsp_speedup_pc;
-extern data16_t *hdmsp_speedup_addr;
-extern offs_t hdmsp_speedup_pc;
-extern offs_t hdadsp_speedup_pc;
-extern data16_t *hdmsp_ram;
-extern data16_t *hddsk_ram;
-extern data16_t *hddsk_rom;
-extern data16_t *hddsk_zram;
-
-void harddriv_init_machine(void);
-int hd68k_vblank_gen(void);
-int hd68k_irq_gen(void);
-void hdgsp_irq_gen(int state);
-void hdmsp_irq_gen(int state);
-
-READ16_HANDLER( hd68k_adsp_program_r );
-READ16_HANDLER( hd68k_adsp_data_r );
-READ16_HANDLER( hd68k_adsp_buffer_r );
-READ16_HANDLER( hd68k_adsp_irq_state_r );
-READ16_HANDLER( hd68k_ds3_irq_state_r );
-READ16_HANDLER( hd68k_ds3_program_r );
-READ16_HANDLER( hd68k_sound_reset_r );
-READ16_HANDLER( hd68k_adc8_r );
-READ16_HANDLER( hd68k_adc12_r );
-READ16_HANDLER( hd68k_gsp_io_r );
-READ16_HANDLER( hd68k_msp_io_r );
-READ16_HANDLER( hd68k_duart_r );
-READ16_HANDLER( hd68k_zram_r );
-READ16_HANDLER( hd68k_port0_r );
-READ16_HANDLER( hdadsp_special_r );
-READ16_HANDLER( hdds3_special_r );
-READ16_HANDLER( hdadsp_speedup_r );
-READ16_HANDLER( hdadsp_speedup2_r );
-READ16_HANDLER( hdgsp_speedup_r );
-READ16_HANDLER( hdmsp_speedup_r );
-READ16_HANDLER( hddsk_ram_r );
-READ16_HANDLER( hddsk_zram_r );
-READ16_HANDLER( hddsk_rom_r );
-READ16_HANDLER( racedriv_68k_slapstic_r );
-READ16_HANDLER( racedriv_asic65_r );
-READ16_HANDLER( racedriv_asic65_io_r );
-READ16_HANDLER( racedriv_asic61_r );
-READ16_HANDLER( steeltal_68k_slapstic_r );
-
-WRITE16_HANDLER( hd68k_nwr_w );
-WRITE16_HANDLER( hd68k_irq_ack_w );
-WRITE16_HANDLER( hd68k_adsp_program_w );
-WRITE16_HANDLER( hd68k_adsp_data_w );
-WRITE16_HANDLER( hd68k_adsp_buffer_w );
-WRITE16_HANDLER( hd68k_adsp_control_w );
-WRITE16_HANDLER( hd68k_adsp_irq_clear_w );
-WRITE16_HANDLER( hd68k_ds3_program_w );
-WRITE16_HANDLER( hd68k_ds3_control_w );
-WRITE16_HANDLER( hd68k_wr0_write );
-WRITE16_HANDLER( hd68k_wr1_write );
-WRITE16_HANDLER( hd68k_wr2_write );
-WRITE16_HANDLER( hd68k_adc_control_w );
-WRITE16_HANDLER( hd68k_gsp_io_w );
-WRITE16_HANDLER( hd68k_msp_io_w );
-WRITE16_HANDLER( hd68k_duart_w );
-WRITE16_HANDLER( hd68k_zram_w );
-WRITE16_HANDLER( hdgsp_io_w );
-WRITE16_HANDLER( hdadsp_special_w );
-WRITE16_HANDLER( hdds3_special_w );
-WRITE16_HANDLER( hdadsp_speedup2_w );
-WRITE16_HANDLER( hdgsp_speedup1_w );
-WRITE16_HANDLER( hdgsp_speedup2_w );
-WRITE16_HANDLER( hdmsp_speedup_w );
-WRITE16_HANDLER( hddsk_ram_w );
-WRITE16_HANDLER( hddsk_zram_w );
-WRITE16_HANDLER( racedriv_68k_slapstic_w );
-WRITE16_HANDLER( racedriv_asic65_w );
-WRITE16_HANDLER( racedriv_asic61_w );
-WRITE16_HANDLER( steeltal_68k_slapstic_w );
-
-
-/* from sndhrdw */
-READ16_HANDLER( hdsnd_data_r );
-READ16_HANDLER( hdsnd_320port_r );
-READ16_HANDLER( hdsnd_switches_r );
-READ16_HANDLER( hdsnd_status_r );
-READ16_HANDLER( hdsnd_320ram_r );
-READ16_HANDLER( hdsnd_320com_r );
-READ16_HANDLER( hdsnd_68k_r );
-
-WRITE16_HANDLER( hdsnd_data_w );
-WRITE16_HANDLER( hdsnd_latches_w );
-WRITE16_HANDLER( hdsnd_speech_w );
-WRITE16_HANDLER( hdsnd_irqclr_w );
-WRITE16_HANDLER( hdsnd_320ram_w );
-WRITE16_HANDLER( hdsnd_320com_w );
-WRITE16_HANDLER( hdsnd_68k_w );
-
-
-/* from vidhrdw */
-extern UINT8 hdgsp_multisync;
-extern UINT8 *hdgsp_vram;
-extern data16_t *hdgsp_vram_2bpp;
-extern data16_t *hdgsp_control_lo;
-extern data16_t *hdgsp_control_hi;
-extern data16_t *hdgsp_paletteram_lo;
-extern data16_t *hdgsp_paletteram_hi;
-extern size_t hdgsp_vram_size;
-
-int harddriv_vh_start(void);
-void harddriv_vh_stop(void);
-void harddriv_vh_eof(void);
-void harddriv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void hdgsp_write_to_shiftreg(UINT32 address, UINT16 *shiftreg);
-void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg);
-void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline);
-
-READ16_HANDLER( hdgsp_vram_2bpp_r );
-READ16_HANDLER( hdgsp_paletteram_lo_r );
-READ16_HANDLER( hdgsp_paletteram_hi_r );
-READ16_HANDLER( hdgsp_control_lo_r );
-READ16_HANDLER( hdgsp_control_hi_r );
-
-WRITE16_HANDLER( hdgsp_vram_1bpp_w );
-WRITE16_HANDLER( hdgsp_vram_2bpp_w );
-WRITE16_HANDLER( hdgsp_paletteram_lo_w );
-WRITE16_HANDLER( hdgsp_paletteram_hi_w );
-WRITE16_HANDLER( hdgsp_control_lo_w );
-WRITE16_HANDLER( hdgsp_control_hi_w );
-
 
 
 /*************************************
@@ -797,560 +667,141 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct MachineDriver machine_driver_harddriv =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,
-			32000000/4,
-			main_readmem,main_writemem,0,0,
-			hd68k_vblank_gen,1,
-			hd68k_irq_gen,244
-		},
-		{
-			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,
-			gsp_readmem_1mb,gsp_writemem_1mb,0,0,
-			ignore_interrupt,1,
-			0,0,&gsp_config
-		},
-		{
-			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,
-			msp_readmem,msp_writemem,0,0,
-			ignore_interrupt,1,
-			0,0,&msp_config
-		},
-		{
-			CPU_ADSP2100,
-			8000000,
-			adsp_readmem,adsp_writemem,0,0,
-			ignore_interrupt,1
-		},
-/*		{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			16000000/2,
-			snd_main_readmem,snd_main_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_TMS320C10 | CPU_AUDIO_CPU,
-			20000000/4,
-			main_readmem,main_writemem,0,0,
-			hd68k_vblank_gen,1,
-			hd68k_irq_gen,244
-		}*/
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	harddriv_init_machine,
+static MACHINE_DRIVER_START( harddriv )
 
-	/* video hardware */
-	512, 384, { 0, 511, 0, 383 },
-	0,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	harddriv_vh_eof,
-	harddriv_vh_start,
-	harddriv_vh_stop,
-	harddriv_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ 0 }
-	},
-	atarigen_nvram_handler
-};
-
-
-static struct MachineDriver machine_driver_racedriv =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,
-			32000000/4,
-			main_readmem,main_writemem,0,0,
-			hd68k_vblank_gen,1,
-			hd68k_irq_gen,244
-		},
-		{
-			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,
-			gsp_readmem_512k,gsp_writemem_512k,0,0,
-			ignore_interrupt,1,
-			0,0,&gsp_config
-		},
-		{
-			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,
-			msp_readmem,msp_writemem,0,0,
-			ignore_interrupt,1,
-			0,0,&msp_config
-		},
-		{
-			CPU_ADSP2100,
-			8000000,
-			adsp_readmem,adsp_writemem,0,0,
-			ignore_interrupt,1
-		},
-/*		{
-			CPU_DSP32,
-			40000000/4,
-			dsp32_readmem,dsp32_readmem,0,0,
-			ignore_interrupt,1
-		},
-	{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			hd68k_vblank_gen,1,
-			hd68k_irq_gen,244
-		},
-		{
-			CPU_TMS320C10 | CPU_AUDIO_CPU,
-			20000000/4,
-			main_readmem,main_writemem,0,0,
-			hd68k_vblank_gen,1,
-			hd68k_irq_gen,244
-		}*/
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	harddriv_init_machine,
-
-	/* video hardware */
-	512, 288, { 0, 511, 0, 287 },
-	0,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	harddriv_vh_eof,
-	harddriv_vh_start,
-	harddriv_vh_stop,
-	harddriv_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ 0 }
-	},
-	atarigen_nvram_handler
-};
-
-
-static struct MachineDriver machine_driver_stunrun =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,
-			32000000/4,
-			main_readmem,main_writemem,0,0,
-			hd68k_vblank_gen,1,
-			hd68k_irq_gen,244
-		},
-		{
-			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,
-			gsp_readmem_512k,gsp_writemem_512k,0,0,
-			ignore_interrupt,1,
-			0,0,&gsp_config
-		},
-		{
-			CPU_ADSP2100,
-			8000000,
-			adsp_readmem,adsp_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_II_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	harddriv_init_machine,
-
-	/* video hardware */
-	512, 240, { 0, 511, 0, 239 },
-	0,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	harddriv_vh_eof,
-	harddriv_vh_start,
-	harddriv_vh_stop,
-	harddriv_vh_screenrefresh,
-
-	/* sound hardware */
-	JSA_II_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
-
-
-static struct MachineDriver machine_driver_steeltal =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,
-			32000000/4,
-			main_readmem,main_writemem,0,0,
-			hd68k_vblank_gen,1,
-			hd68k_irq_gen,244
-		},
-		{
-			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,
-			gsp_readmem_1mb,gsp_writemem_1mb,0,0,
-			ignore_interrupt,1,
-			0,0,&gsp_config
-		},
-		{
-			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,
-			msp_readmem,msp_writemem,0,0,
-			ignore_interrupt,1,
-			0,0,&msp_config
-		},
-		{
-			CPU_ADSP2105,
-			12000000,
-			ds3_readmem,ds3_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_III_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	harddriv_init_machine,
-
-	/* video hardware */
-	512, 288, { 0, 511, 0, 287 },
-	0,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	harddriv_vh_eof,
-	harddriv_vh_start,
-	harddriv_vh_stop,
-	harddriv_vh_screenrefresh,
-
-	/* sound hardware */
-	JSA_III_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Common initialization
- *
- *************************************/
-
-/* COMMON INIT: initialize the original "driver" main board */
-static void init_driver(void)
-{
-	static const UINT16 default_eeprom[] =
-	{
-		1,
-		0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,
-		0x0800,0
-	};
-
-	hdgsp_multisync = 0;
-	atarigen_eeprom_default = default_eeprom;
-
-	/* install the non-multisync memory handlers */
-	install_mem_write16_handler(1, TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_1bpp_w);
-
-	/* set up the port handlers */
-	install_mem_read16_handler(0, 0x600000, 0x600001, hd68k_port0_r);
-//	install_mem_read16_handler(0, 0x840000, 0x84ffff, hdsnd_68k_r);
-//	install_mem_write16_handler(0, 0x840000, 0x84ffff, hdsnd_68k_w);
-}
-
-
-/* COMMON INIT: initialize the later "multisync" main board */
-static void init_multisync(void)
-{
-	hdgsp_multisync = 1;
-	atarigen_eeprom_default = NULL;
-
-	/* set up the port handlers */
-	install_mem_read16_handler(0, 0x600000, 0x600001, atarigen_sound_upper_r);
-	install_mem_write16_handler(0, 0x600000, 0x600001, atarigen_sound_upper_w);
-	install_mem_read16_handler(0, 0x60c000, 0x60c001, hd68k_port0_r);
-	install_mem_read16_handler(0, 0x604000, 0x607fff, hd68k_sound_reset_r);
-}
-
-
-/* COMMON INIT: initialize the ADSP/ADSP2 board */
-static void init_adsp(void)
-{
-	/* install ADSP program RAM */
-	install_mem_read16_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_r);
-	install_mem_write16_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_w);
-
-	/* install ADSP data RAM */
-	install_mem_read16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
-	install_mem_write16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
-
-	/* install ADSP serial buffer RAM */
-	install_mem_read16_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_r);
-	install_mem_write16_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_w);
-
-	/* install ADSP control locations */
-	install_mem_read16_handler(0, 0x838000, 0x83ffff, hd68k_adsp_irq_state_r);
-	install_mem_write16_handler(0, 0x818000, 0x81801f, hd68k_adsp_control_w);
-	install_mem_write16_handler(0, 0x818060, 0x81807f, hd68k_adsp_irq_clear_w);
-}
-
-
-/* COMMON INIT: initialize the DS3 board */
-static void init_ds3(void)
-{
-	/* install ADSP program RAM */
-	install_mem_read16_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_r);
-	install_mem_write16_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_w);
-
-	/* install ADSP data RAM */
-	install_mem_read16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
-	install_mem_write16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
-
-	/* install ADSP control locations */
-	install_mem_read16_handler(0, 0x820800, 0x820801, hd68k_ds3_irq_state_r);
-	install_mem_write16_handler(0, 0x821000, 0x821001, hd68k_adsp_irq_clear_w);
-	install_mem_write16_handler(0, 0x823800, 0x82381f, hd68k_ds3_control_w);
+	MDRV_CPU_ADD_TAG("main", M68010, 32000000/4)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(hd68k_vblank_gen,1)
+	MDRV_CPU_PERIODIC_INT(hd68k_irq_gen,244)
+	
+	MDRV_CPU_ADD_TAG("gsp", TMS34010, 48000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_MEMORY(gsp_readmem_1mb,gsp_writemem_1mb)
+	MDRV_CPU_CONFIG(gsp_config)
+	
+	MDRV_CPU_ADD_TAG("msp", TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_MEMORY(msp_readmem,msp_writemem)
+	MDRV_CPU_CONFIG(msp_config)
+	
+	MDRV_CPU_ADD_TAG("adsp", ADSP2100, 8000000)
+	MDRV_CPU_MEMORY(adsp_readmem,adsp_writemem)
 
 /*
-	other DS3 addresses:
-		$821000 = write after IRQ
-		$820000 = serial incrementing read
-		$820800
-
-	-----------------------------------------------------------------------
-
-	/G68RD0=820000:	reads 16-bit latch from ADSP, clears GFLAG
-
-	/G68RD1=820800:	D15 = G68FLAG
-					D14 = GFLAG
-					D13 = G68IRQS
-					D12 = /GRIRQ
-
-	/G68WR=820000:	clocks a 1 into G68FLAG (cleared by /GRD0)
-					clocks A1 into GCMD
-					latches 16 bits of data, sets G68FLAG
-
-	/GCGINT=821000:	clears ADSPIRQ and /GRIRQ
-
-	-----------------------------------------------------------------------
-
-	/GRD0=2000:		reads 16-bit latch from 68k, clears G68FLAG
-
-	/GRD1=2001:		D15 = GCMD
-					D14 = G68FLAG
-					D13 = GLFAG
-					D12 = /GWB
-
-	/GROM=2006:		reads 16-bits of ROM data
-
-	/GFWCLR=2007:
-
-	/GWR0=2000:		latches 16 bits of data, sets GFLAG
-
-	/GWR1=2001:		clocks D9 into ADSPIRQ, and /D9 into /GRIRQ (cleared by /GCGINT)
-
-	/GWR2=2002:		clocks D8 into SEND, and /D8 into /RECEIVE (cleared by /GRES)
-
-	/GWR3=2003:		clocks D9 into GFIRQS, and /D9 into G68IRQS (cleared by /GRES)
-
-	/GRML=2004:		clocks D0-D15 into A0-A15 for ROMs
-
-	/GRMADH=2005: 	clocks D0-D2 into A16-A18 and ROM select for ROMs
-
-	/IRQ2 = /GIRQ2 = (!/G68FLAG || !G68IRQS) && (!GFLAG || !GFIRQS)
+	MDRV_CPU_ADD(M68000, 16000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(snd_main_readmem,snd_main_writemem)
+	
+	MDRV_CPU_ADD(TMS320C10, 20000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 */
-}
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(harddriv)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(512, 384)
+	MDRV_VISIBLE_AREA(0, 511, 0, 383)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(harddriv)
+	MDRV_VIDEO_EOF(harddriv)
+	MDRV_VIDEO_UPDATE(harddriv)
+MACHINE_DRIVER_END
 
 
-/* COMMON INIT: initialize the DSK add-on board */
-static void init_dsk(void)
-{
-	/* install extra ROM */
-	install_mem_read16_handler(0, 0x940000, 0x95ffff, hddsk_rom_r);
-	hddsk_rom = (data16_t *)(memory_region(REGION_USER3) + 0x00000);
+static MACHINE_DRIVER_START( hdcompact )
+	MDRV_IMPORT_FROM(harddriv)
 
-	/* install extra RAM */
-	install_mem_read16_handler(0, 0x900000, 0x90ffff, hddsk_ram_r);
-	install_mem_write16_handler(0, 0x900000, 0x90ffff, hddsk_ram_w);
-	hddsk_ram = (data16_t *)(memory_region(REGION_USER3) + 0x20000);
+	MDRV_CPU_MODIFY("gsp")
+	MDRV_CPU_MEMORY(gsp_readmem_512k,gsp_writemem_512k)
+	
+/*
+	MDRV_CPU_ADD_TAG("dsp", DSP32, 40000000/4)
+*/
 
-	/* install extra ZRAM */
-	install_mem_read16_handler(0, 0x910000, 0x910fff, hddsk_zram_r);
-	install_mem_write16_handler(0, 0x910000, 0x910fff, hddsk_zram_w);
-	hddsk_zram = (data16_t *)(memory_region(REGION_USER3) + 0x30000);
-
-	/* install ASIC65 */
-	install_mem_write16_handler(0, 0x914000, 0x917fff, racedriv_asic65_w);
-	install_mem_read16_handler(0, 0x914000, 0x917fff, racedriv_asic65_r);
-	install_mem_read16_handler(0, 0x918000, 0x91bfff, racedriv_asic65_io_r);
-
-	/* install ASIC61 */
-	install_mem_write16_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_w);
-	install_mem_read16_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_r);
-}
+	MDRV_SCREEN_SIZE(512, 288)
+	MDRV_VISIBLE_AREA(0, 511, 0, 287)
+MACHINE_DRIVER_END
 
 
-/* COMMON INIT: initialize the original "driver" sound board */
-static void init_driver_sound(void)
-{
-	data16_t *base = (data16_t *)memory_region(REGION_SOUND1);
-	int length = memory_region_length(REGION_SOUND1) / 2;
-	int i;
+static MACHINE_DRIVER_START( stunrun )
 
-	/* adjust the sound ROMs */
-	for (i = 0; i < length; i++)
-		base[i] >>= 1;
-}
+	MDRV_CPU_ADD_TAG("main", M68010, 32000000/4)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(hd68k_vblank_gen,1)
+	MDRV_CPU_PERIODIC_INT(hd68k_irq_gen,244)
+	
+	MDRV_CPU_ADD_TAG("gsp", TMS34010, 48000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_MEMORY(gsp_readmem_512k,gsp_writemem_512k)
+	MDRV_CPU_CONFIG(gsp_config)
+	
+	MDRV_CPU_ADD_TAG("adsp", ADSP2100, 8000000)
+	MDRV_CPU_MEMORY(adsp_readmem,adsp_writemem)
 
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_harddriv(void)
-{
-	/* initialize the boards */
-	init_driver();
-	init_adsp();
-	init_driver_sound();
-
-	/* set up gsp speedup handler */
-	hdgsp_speedup_addr[0] = install_mem_write16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
-	hdgsp_speedup_addr[1] = install_mem_write16_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
-	install_mem_read16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
-	hdgsp_speedup_pc = 0xffc00f10;
-
-	/* set up msp speedup handler */
-	hdmsp_speedup_addr = install_mem_write16_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_w);
-	install_mem_read16_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_r);
-	hdmsp_speedup_pc = 0x00723b00;
-
-	/* set up adsp speedup handlers */
-	install_mem_read16_handler(3, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
-	install_mem_read16_handler(3, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
-	install_mem_write16_handler(3, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
-	hdadsp_speedup_pc = 0x139;
-}
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(harddriv)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(512, 240)
+	MDRV_VISIBLE_AREA(0, 511, 0, 239)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(harddriv)
+	MDRV_VIDEO_EOF(harddriv)
+	MDRV_VIDEO_UPDATE(harddriv)
+	
+	/* sound hardware */
+	MDRV_IMPORT_FROM(jsa_ii_mono)
+MACHINE_DRIVER_END
 
 
-static void init_harddrvc(void)
-{
-	/* initialize the boards */
-	init_multisync();
-	init_adsp();
-	init_driver_sound();
-}
+static MACHINE_DRIVER_START( steeltal )
 
+	MDRV_CPU_ADD_TAG("main", M68010, 32000000/4)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(hd68k_vblank_gen,1)
+	MDRV_CPU_PERIODIC_INT(hd68k_irq_gen,244)
+	
+	MDRV_CPU_ADD_TAG("gsp", TMS34010, 48000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_MEMORY(gsp_readmem_512k,gsp_writemem_512k)
+	MDRV_CPU_CONFIG(gsp_config)
+	
+	MDRV_CPU_ADD_TAG("msp", TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_MEMORY(msp_readmem,msp_writemem)
+	MDRV_CPU_CONFIG(msp_config)
+	
+	MDRV_CPU_ADD_TAG("adsp", ADSP2105, 12000000)
+	MDRV_CPU_MEMORY(ds3_readmem,ds3_writemem)
 
-static void init_stunrun(void)
-{
-	/* initialize the boards */
-	init_multisync();
-	init_adsp();
-
-	/* set up gsp speedup handler */
-	hdgsp_speedup_addr[0] = install_mem_write16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
-	hdgsp_speedup_addr[1] = install_mem_write16_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
-	install_mem_read16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
-	hdgsp_speedup_pc = 0xfff41070;
-
-	/* set up adsp speedup handlers */
-	install_mem_read16_handler(2, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
-	install_mem_read16_handler(2, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
-	install_mem_write16_handler(2, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
-	hdadsp_speedup_pc = 0x147;
-
-	atarijsa_init(3, 14, 0, 0x0020);
-
-	/* speed up the 6502 */
-	atarigen_init_6502_speedup(3, 0x4159, 0x4171);
-}
-
-
-static READ16_HANDLER( steeltal_dummy_r )
-{
-	/* this is required so that INT 4 is recongized as a sound INT */
-	return ~0;
-}
-static void init_steeltal(void)
-{
-	/* initialize the boards */
-	init_multisync();
-	init_ds3();
-
-	install_mem_read16_handler(0, 0x908000, 0x908001, steeltal_dummy_r);
-
-	/* set up the "slapstic" */
-	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_r);
-	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_w);
-
-	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarijsa_init(4, 14, 0, 0x0020);
-
-	/* speed up the 6502 */
-/*	atarigen_init_6502_speedup(4, 0x4159, 0x4171);*/
-}
-
-
-static void init_racedriv(void)
-{
-	/* initialize the boards */
-	init_driver();
-	init_adsp();
-	init_dsk();
-	init_driver_sound();
-
-	/* set up the slapstic */
-	slapstic_init(117);
-	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
-	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
-}
-
-
-static void init_racedrvc(void)
-{
-	/* initialize the boards */
-	init_multisync();
-	init_adsp();
-	init_dsk();
-	init_driver_sound();
-
-	/* set up the slapstic */
-	slapstic_init(117);
-	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
-	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
-}
-
-
-static void init_hdrivair(void)
-{
-	init_multisync();
-	init_adsp();
-}
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(harddriv)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(512, 288)
+	MDRV_VISIBLE_AREA(0, 511, 0, 287)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(harddriv)
+	MDRV_VIDEO_EOF(harddriv)
+	MDRV_VIDEO_UPDATE(harddriv)
+	
+	/* sound hardware */
+	MDRV_IMPORT_FROM(jsa_iii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -1833,16 +1284,321 @@ ROM_END
 
 /*************************************
  *
+ *	Common initialization
+ *
+ *************************************/
+
+/* COMMON INIT: initialize the original "driver" main board */
+static void init_driver(void)
+{
+	static const UINT16 default_eeprom[] =
+	{
+		1,
+		0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,0xff00,
+		0x0800,0
+	};
+
+	hdgsp_multisync = 0;
+	atarigen_eeprom_default = default_eeprom;
+
+	/* install the non-multisync memory handlers */
+	install_mem_write16_handler(1, TOBYTE(0x02000000), TOBYTE(0x0207ffff), hdgsp_vram_1bpp_w);
+
+	/* set up the port handlers */
+	install_mem_read16_handler(0, 0x600000, 0x600001, hd68k_port0_r);
+//	install_mem_read16_handler(0, 0x840000, 0x84ffff, hdsnd_68k_r);
+//	install_mem_write16_handler(0, 0x840000, 0x84ffff, hdsnd_68k_w);
+}
+
+
+/* COMMON INIT: initialize the later "multisync" main board */
+static void init_multisync(int has_jsa)
+{
+	hdgsp_multisync = 1;
+	atarigen_eeprom_default = NULL;
+
+	/* set up the port handlers */
+	install_mem_read16_handler(0, 0x600000, 0x600001, atarigen_sound_upper_r);
+	install_mem_write16_handler(0, 0x600000, 0x600001, atarigen_sound_upper_w);
+	install_mem_read16_handler(0, 0x60c000, 0x60c001, hd68k_port0_r);
+	if (has_jsa)
+		install_mem_read16_handler(0, 0x604000, 0x607fff, hd68k_sound_reset_r);
+}
+
+
+/* COMMON INIT: initialize the ADSP/ADSP2 board */
+static void init_adsp(void)
+{
+	/* install ADSP program RAM */
+	install_mem_read16_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_r);
+	install_mem_write16_handler(0, 0x800000, 0x807fff, hd68k_adsp_program_w);
+
+	/* install ADSP data RAM */
+	install_mem_read16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
+	install_mem_write16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
+
+	/* install ADSP serial buffer RAM */
+	install_mem_read16_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_r);
+	install_mem_write16_handler(0, 0x810000, 0x813fff, hd68k_adsp_buffer_w);
+
+	/* install ADSP control locations */
+	install_mem_read16_handler(0, 0x838000, 0x83ffff, hd68k_adsp_irq_state_r);
+	install_mem_write16_handler(0, 0x818000, 0x81801f, hd68k_adsp_control_w);
+	install_mem_write16_handler(0, 0x818060, 0x81807f, hd68k_adsp_irq_clear_w);
+}
+
+
+/* COMMON INIT: initialize the DS3 board */
+static void init_ds3(void)
+{
+	/* install ADSP program RAM */
+	install_mem_read16_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_r);
+	install_mem_write16_handler(0, 0x800000, 0x807fff, hd68k_ds3_program_w);
+
+	/* install ADSP data RAM */
+	install_mem_read16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_r);
+	install_mem_write16_handler(0, 0x808000, 0x80bfff, hd68k_adsp_data_w);
+
+	/* install ADSP control locations */
+	install_mem_read16_handler(0, 0x820800, 0x820801, hd68k_ds3_irq_state_r);
+	install_mem_write16_handler(0, 0x821000, 0x821001, hd68k_adsp_irq_clear_w);
+	install_mem_write16_handler(0, 0x823800, 0x82381f, hd68k_ds3_control_w);
+
+/*
+	other DS3 addresses:
+		$821000 = write after IRQ
+		$820000 = serial incrementing read
+		$820800
+
+	-----------------------------------------------------------------------
+
+	/G68RD0=820000:	reads 16-bit latch from ADSP, clears GFLAG
+
+	/G68RD1=820800:	D15 = G68FLAG
+					D14 = GFLAG
+					D13 = G68IRQS
+					D12 = /GRIRQ
+
+	/G68WR=820000:	clocks a 1 into G68FLAG (cleared by /GRD0)
+					clocks A1 into GCMD
+					latches 16 bits of data, sets G68FLAG
+
+	/GCGINT=821000:	clears ADSPIRQ and /GRIRQ
+
+	-----------------------------------------------------------------------
+
+	/GRD0=2000:		reads 16-bit latch from 68k, clears G68FLAG
+
+	/GRD1=2001:		D15 = GCMD
+					D14 = G68FLAG
+					D13 = GLFAG
+					D12 = /GWB
+
+	/GROM=2006:		reads 16-bits of ROM data
+
+	/GFWCLR=2007:
+
+	/GWR0=2000:		latches 16 bits of data, sets GFLAG
+
+	/GWR1=2001:		clocks D9 into ADSPIRQ, and /D9 into /GRIRQ (cleared by /GCGINT)
+
+	/GWR2=2002:		clocks D8 into SEND, and /D8 into /RECEIVE (cleared by /GRES)
+
+	/GWR3=2003:		clocks D9 into GFIRQS, and /D9 into G68IRQS (cleared by /GRES)
+
+	/GRML=2004:		clocks D0-D15 into A0-A15 for ROMs
+
+	/GRMADH=2005: 	clocks D0-D2 into A16-A18 and ROM select for ROMs
+
+	/IRQ2 = /GIRQ2 = (!/G68FLAG || !G68IRQS) && (!GFLAG || !GFIRQS)
+*/
+}
+
+
+/* COMMON INIT: initialize the DSK add-on board */
+static void init_dsk(void)
+{
+	/* install extra ROM */
+	install_mem_read16_handler(0, 0x940000, 0x95ffff, hddsk_rom_r);
+	hddsk_rom = (data16_t *)(memory_region(REGION_USER3) + 0x00000);
+
+	/* install extra RAM */
+	install_mem_read16_handler(0, 0x900000, 0x90ffff, hddsk_ram_r);
+	install_mem_write16_handler(0, 0x900000, 0x90ffff, hddsk_ram_w);
+	hddsk_ram = (data16_t *)(memory_region(REGION_USER3) + 0x20000);
+
+	/* install extra ZRAM */
+	install_mem_read16_handler(0, 0x910000, 0x910fff, hddsk_zram_r);
+	install_mem_write16_handler(0, 0x910000, 0x910fff, hddsk_zram_w);
+	hddsk_zram = (data16_t *)(memory_region(REGION_USER3) + 0x30000);
+
+	/* install ASIC65 */
+	install_mem_write16_handler(0, 0x914000, 0x917fff, racedriv_asic65_w);
+	install_mem_read16_handler(0, 0x914000, 0x917fff, racedriv_asic65_r);
+	install_mem_read16_handler(0, 0x918000, 0x91bfff, racedriv_asic65_io_r);
+
+	/* install ASIC61 */
+	install_mem_write16_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_w);
+	install_mem_read16_handler(0, 0x85c000, 0x85c7ff, racedriv_asic61_r);
+}
+
+
+/* COMMON INIT: initialize the original "driver" sound board */
+static void init_driver_sound(void)
+{
+	data16_t *base = (data16_t *)memory_region(REGION_SOUND1);
+	int length = memory_region_length(REGION_SOUND1) / 2;
+	int i;
+
+	/* adjust the sound ROMs */
+	for (i = 0; i < length; i++)
+		base[i] >>= 1;
+}
+
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( harddriv )
+{
+	/* initialize the boards */
+	init_driver();
+	init_adsp();
+	init_driver_sound();
+
+	/* set up gsp speedup handler */
+	hdgsp_speedup_addr[0] = install_mem_write16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
+	hdgsp_speedup_addr[1] = install_mem_write16_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
+	install_mem_read16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
+	hdgsp_speedup_pc = 0xffc00f10;
+
+	/* set up msp speedup handler */
+	hdmsp_speedup_addr = install_mem_write16_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_w);
+	install_mem_read16_handler(2, TOBYTE(0x00751b00), TOBYTE(0x00751b1f), hdmsp_speedup_r);
+	hdmsp_speedup_pc = 0x00723b00;
+
+	/* set up adsp speedup handlers */
+	install_mem_read16_handler(3, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
+	install_mem_read16_handler(3, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
+	install_mem_write16_handler(3, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
+	hdadsp_speedup_pc = 0x139;
+}
+
+
+static DRIVER_INIT( harddrvc )
+{
+	/* initialize the boards */
+	init_multisync(0);
+	init_adsp();
+	init_driver_sound();
+}
+
+
+static DRIVER_INIT( stunrun )
+{
+	/* initialize the boards */
+	init_multisync(1);
+	init_adsp();
+
+	/* set up gsp speedup handler */
+	hdgsp_speedup_addr[0] = install_mem_write16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup1_w);
+	hdgsp_speedup_addr[1] = install_mem_write16_handler(1, TOBYTE(0xfffcfc00), TOBYTE(0xfffcfc1f), hdgsp_speedup2_w);
+	install_mem_read16_handler(1, TOBYTE(0xfff9fc00), TOBYTE(0xfff9fc1f), hdgsp_speedup_r);
+	hdgsp_speedup_pc = 0xfff41070;
+
+	/* set up adsp speedup handlers */
+	install_mem_read16_handler(2, ADSP_DATA_ADDR_RANGE(0x1fff, 0x1fff), hdadsp_speedup_r);
+	install_mem_read16_handler(2, ADSP_DATA_ADDR_RANGE(0x0958, 0x0958), hdadsp_speedup2_r);
+	install_mem_write16_handler(2, ADSP_DATA_ADDR_RANGE(0x0033, 0x0033), hdadsp_speedup2_w);
+	hdadsp_speedup_pc = 0x147;
+
+	atarijsa_init(3, 14, 0, 0x0020);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(3, 0x4159, 0x4171);
+}
+
+
+static READ16_HANDLER( steeltal_dummy_r )
+{
+	/* this is required so that INT 4 is recongized as a sound INT */
+	return ~0;
+}
+static DRIVER_INIT( steeltal )
+{
+	/* initialize the boards */
+	init_multisync(1);
+	init_ds3();
+
+	install_mem_read16_handler(0, 0x908000, 0x908001, steeltal_dummy_r);
+
+	/* set up the "slapstic" */
+	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_r);
+	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, steeltal_68k_slapstic_w);
+
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarijsa_init(4, 14, 0, 0x0020);
+
+	/* speed up the 6502 */
+/*	atarigen_init_6502_speedup(4, 0x4159, 0x4171);*/
+}
+
+
+static DRIVER_INIT( racedriv )
+{
+	/* initialize the boards */
+	init_driver();
+	init_adsp();
+	init_dsk();
+	init_driver_sound();
+
+	/* set up the slapstic */
+	slapstic_init(117);
+	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
+	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
+}
+
+
+static DRIVER_INIT( racedrvc )
+{
+	/* initialize the boards */
+	init_multisync(0);
+	init_adsp();
+	init_dsk();
+	init_driver_sound();
+
+	/* set up the slapstic */
+	slapstic_init(117);
+	hd68k_slapstic_base = install_mem_read16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_r);
+	hd68k_slapstic_base = install_mem_write16_handler(0, 0xe0000, 0xfffff, racedriv_68k_slapstic_w);
+}
+
+
+static DRIVER_INIT( hdrivair )
+{
+	init_multisync(0);
+	init_adsp();
+}
+
+
+
+/*************************************
+ *
  *	Game driver(s)
  *
  *************************************/
 
 GAMEX( 1988, harddriv, 0,        harddriv, harddriv, harddriv, ROT0, "Atari Games", "Hard Drivin'", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1990, harddrvc, harddriv, racedriv, racedriv, harddrvc, ROT0, "Atari Games", "Hard Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1990, harddrvc, harddriv, hdcompact,racedriv, harddrvc, ROT0, "Atari Games", "Hard Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAME ( 1989, stunrun,  0,        stunrun,  stunrun,  stunrun,  ROT0, "Atari Games", "S.T.U.N. Runner" )
 GAME ( 1989, stunrnp,  stunrun,  stunrun,  stunrun,  stunrun,  ROT0, "Atari Games", "S.T.U.N. Runner (prototype)" )
 GAMEX( 1990, racedriv, 0,        harddriv, racedriv, racedriv, ROT0, "Atari Games", "Race Drivin' (upgrade)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1990, racedrvc, racedriv, racedriv, racedriv, racedrvc, ROT0, "Atari Games", "Race Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1990, racedrvc, racedriv, hdcompact,racedriv, racedrvc, ROT0, "Atari Games", "Race Drivin' (compact)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1990, steeltal, 0,        steeltal, steeltal, steeltal, ROT0, "Atari Games", "Steel Talons", GAME_NOT_WORKING )
 GAMEX( 1990, steeltdb, steeltal, steeltal, steeltal, steeltal, ROT0, "Atari Games", "Steel Talons (debug)", GAME_NOT_WORKING )
 GAMEX( 1993, hdrivair, 0,        steeltal, hdrivair, hdrivair, ROT0, "Atari Games", "Hard Drivin's Airborne (prototype)", GAME_NOT_WORKING )

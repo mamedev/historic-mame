@@ -14,11 +14,10 @@ void konami1_decode(void);
 extern unsigned char *hyperspt_scroll;
 
 WRITE_HANDLER( hyperspt_flipscreen_w );
-void hyperspt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int hyperspt_vh_start(void);
-void hyperspt_vh_stop(void);
-void hyperspt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void roadf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( hyperspt );
+VIDEO_START( hyperspt );
+VIDEO_UPDATE( hyperspt );
+VIDEO_UPDATE( roadf );
 
 WRITE_HANDLER( konami_sh_irqtrigger_w );
 READ_HANDLER( hyperspt_sh_timer_r );
@@ -64,7 +63,7 @@ static unsigned char *nvram;
 static size_t nvram_size;
 static int we_flipped_the_switch;
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( hyperspt )
 {
 	if (read_or_write)
 	{
@@ -473,116 +472,79 @@ static const char *hyperspt_sample_names[] =
 struct VLM5030interface hyperspt_vlm5030_interface =
 {
 	3580000,	/* master clock  */
-	255,		/* volume		 */
+	100,		/* volume		 */
 	REGION_SOUND1,	/* memory region  */
 	0,		   /* memory size	 */
 	hyperspt_sample_names
 };
 
 
-static const struct MachineDriver machine_driver_hyperspt =
-{
+static MACHINE_DRIVER_START( hyperspt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2048000,		/* 1.400 MHz ??? */
-			hyperspt_readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4, /* Z80 Clock is derived from a 14.31818 MHz crystal */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809, 2048000)		/* 1.400 MHz ??? */
+	MDRV_CPU_MEMORY(hyperspt_readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,14318180/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Z80 Clock is derived from a 14.31818 MHz crystal */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(hyperspt)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	hyperspt_gfxdecodeinfo,
-	32,16*16+16*16,
-	hyperspt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(hyperspt_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	hyperspt_vh_start,
-	hyperspt_vh_stop,
-	hyperspt_vh_screenrefresh,
+	MDRV_PALETTE_INIT(hyperspt)
+	MDRV_VIDEO_START(hyperspt)
+	MDRV_VIDEO_UPDATE(hyperspt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&konami_dac_interface
-		},
-		{
-			SOUND_SN76496,
-			&konami_sn76496_interface
-		},
-		{
-			SOUND_VLM5030,
-			&hyperspt_vlm5030_interface
-		}
-	},
+	MDRV_SOUND_ADD(DAC, konami_dac_interface)
+	MDRV_SOUND_ADD(SN76496, konami_sn76496_interface)
+	MDRV_SOUND_ADD(VLM5030, hyperspt_vlm5030_interface)
+MACHINE_DRIVER_END
 
-	nvram_handler
-};
 
-static const struct MachineDriver machine_driver_roadf =
-{
+static MACHINE_DRIVER_START( roadf )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2048000,		/* 1.400 MHz ??? */
-			roadf_readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4, /* Z80 Clock is derived from a 14.31818 MHz crystal */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809, 2048000)		/* 1.400 MHz ??? */
+	MDRV_CPU_MEMORY(roadf_readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,14318180/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Z80 Clock is derived from a 14.31818 MHz crystal */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	roadf_gfxdecodeinfo,
-	32,16*16+16*16,
-	hyperspt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(roadf_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	hyperspt_vh_start,
-	hyperspt_vh_stop,
-	roadf_vh_screenrefresh,
+	MDRV_PALETTE_INIT(hyperspt)
+	MDRV_VIDEO_START(hyperspt)
+	MDRV_VIDEO_UPDATE(roadf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&konami_dac_interface
-		},
-		{
-			SOUND_SN76496,
-			&konami_sn76496_interface
-		},
-		{
-			SOUND_VLM5030,
-			&konami_vlm5030_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, konami_dac_interface)
+	MDRV_SOUND_ADD(SN76496, konami_sn76496_interface)
+	MDRV_SOUND_ADD(VLM5030, konami_vlm5030_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -724,7 +686,7 @@ ROM_START( roadf2 )
 ROM_END
 
 
-static void init_hyperspt(void)
+static DRIVER_INIT( hyperspt )
 {
 	konami1_decode();
 }

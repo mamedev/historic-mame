@@ -123,7 +123,7 @@ READ_HANDLER( starwars_input_1_r )
 
 	/* Kludge to enable Starwars Mathbox Self-test                  */
 	/* The mathbox looks like it's running, from this address... :) */
-	if (cpu_get_pc() == 0xf978 || cpu_get_pc() == 0xf655)
+	if (activecpu_get_pc() == 0xf978 || activecpu_get_pc() == 0xf655)
 		x |= 0x80;
 
 	/* set the AVG done flag */

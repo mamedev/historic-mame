@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
+#include "shuuz.h"
 
 
 
@@ -16,7 +17,7 @@
  *
  *************************************/
 
-int shuuz_vh_start(void)
+VIDEO_START( shuuz )
 {
 	static const struct ataripf_desc pfdesc =
 	{
@@ -75,31 +76,12 @@ int shuuz_vh_start(void)
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 	return 0;
-
-cant_create_mo:
-	ataripf_free();
-cant_create_pf:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void shuuz_vh_stop(void)
-{
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -148,9 +130,9 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void shuuz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( shuuz )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	atarimo_render(0, bitmap, overrender_callback, NULL);
+	ataripf_render(0, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
 }

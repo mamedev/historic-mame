@@ -13,12 +13,12 @@ WRITE_HANDLER( lasso_gfxbank_w );
 WRITE_HANDLER( wwjgtin_gfxbank_w );
 WRITE_HANDLER( wwjgtin_lastcolor_w );
 
-void lasso_vh_convert_color_prom  (unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-void wwjgtin_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( lasso );
+PALETTE_INIT( wwjgtin );
 
-int lasso_vh_start  ( void );
-int wwjgtin_vh_start( void );
+VIDEO_START( lasso );
+VIDEO_START( wwjgtin );
 
-void lasso_vh_screenrefresh   ( struct mame_bitmap *bitmap, int fullrefresh );
-void chameleo_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
-void wwjgtin_vh_screenrefresh ( struct mame_bitmap *bitmap, int fullrefresh );
+VIDEO_UPDATE( lasso );
+VIDEO_UPDATE( chameleo );
+VIDEO_UPDATE( wwjgtin );

@@ -60,12 +60,11 @@ extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 WRITE_HANDLER( rallyx_videoram2_w );
 WRITE_HANDLER( rallyx_colorram2_w );
 WRITE_HANDLER( rallyx_flipscreen_w );
-void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int rallyx_vh_start(void);
-void rallyx_vh_stop(void);
-void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void jungler_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( locomotn );
+VIDEO_START( rallyx );
+VIDEO_UPDATE( locomotn );
+VIDEO_UPDATE( jungler );
+VIDEO_UPDATE( commsega );
 
 
 static WRITE_HANDLER( coin_1_w )
@@ -394,56 +393,57 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-#define MACHINE_DRIVER(GAMENAME)   \
-																	\
-static const struct MachineDriver machine_driver_##GAMENAME =             \
-{                                                                   \
-	/* basic machine hardware */                                    \
-	{                                                               \
-		{                                                           \
-			CPU_Z80,                                                \
-			18432000/6,	/* 3.072 MHz */                             \
-			readmem,GAMENAME##_writemem,0,0,                        \
-			nmi_interrupt,1                                         \
-		},                                                          \
-		{                                                           \
-			CPU_Z80 | CPU_AUDIO_CPU,                                \
-			14318180/8,	/* 1.789772727 MHz */						\
-			timeplt_sound_readmem,timeplt_sound_writemem,0,0,       \
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */ \
-		}                                                           \
-	},                                                              \
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */ \
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,                                                              \
-                                                                    \
-	/* video hardware */                                            \
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },                       \
-	gfxdecodeinfo,                                                  \
-	32,64*4+4,                                                      \
-	locomotn_vh_convert_color_prom,                                 \
-                                                                    \
-	VIDEO_TYPE_RASTER,                                              \
-	0,                                                              \
-	rallyx_vh_start,                                                \
-	rallyx_vh_stop,                                                 \
-	GAMENAME##_vh_screenrefresh,                                    \
-                                                                    \
-	/* sound hardware */                                            \
-	0,0,0,0,                                                        \
-	{                                                               \
-		{                                                           \
-			SOUND_AY8910,                                           \
-			&timeplt_ay8910_interface                               \
-		}                                                           \
-	}                                                               \
-};
+static MACHINE_DRIVER_START( locomotn )
 
-#define locomotn_writemem writemem
-#define commsega_writemem writemem
-MACHINE_DRIVER(locomotn)
-MACHINE_DRIVER(jungler)
-MACHINE_DRIVER(commsega)
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 14318180/8)	/* 1.789772727 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(timeplt_sound_readmem,timeplt_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+4)
+
+	MDRV_PALETTE_INIT(locomotn)
+	MDRV_VIDEO_START(rallyx)
+	MDRV_VIDEO_UPDATE(locomotn)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, timeplt_ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( jungler )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(locomotn)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem,jungler_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(jungler)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( commsega )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(locomotn)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(commsega)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

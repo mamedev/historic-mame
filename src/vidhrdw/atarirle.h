@@ -1,7 +1,7 @@
 /*##########################################################################
 
 	atarirle.h
-
+	
 	Common RLE-based motion object management functions for early 90's
 	Atari raster games.
 
@@ -39,7 +39,7 @@ struct atarirle_desc
 	UINT16				spriteramentries;	/* number of entries in sprite RAM */
 	UINT16				leftclip;			/* left clip coordinate */
 	UINT16				rightclip;			/* right clip coordinate */
-
+	
 	UINT16				palettebase;		/* base palette entry */
 	UINT16				maxcolors;			/* maximum number of colors */
 
@@ -49,7 +49,7 @@ struct atarirle_desc
 	struct atarirle_entry yposmask;			/* mask for the Y position */
 	struct atarirle_entry scalemask;		/* mask for the scale factor */
 	struct atarirle_entry hflipmask;		/* mask for the horizontal flip */
-	struct atarirle_entry vflipmask;		/* mask for the vertical flip */
+	struct atarirle_entry ordermask;		/* mask for the order */
 	struct atarirle_entry prioritymask;		/* mask for the priority */
 };
 
@@ -61,10 +61,9 @@ struct atarirle_desc
 
 /* setup/shutdown */
 int atarirle_init(int map, const struct atarirle_desc *desc);
-void atarirle_free(void);
 
 /* core processing */
-void atarirle_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb callback);
+void atarirle_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect, ataripf_overrender_cb callback);
 
 /* attribute setters */
 void atarirle_set_xscroll(int map, int xscroll, int scanline);

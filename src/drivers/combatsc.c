@@ -105,23 +105,22 @@ e000-e001	YM2203
 extern unsigned char* banked_area;
 
 /* from vidhrdw/combasc.c */
-void combasc_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
-void combascb_convert_color_prom( unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom );
+PALETTE_INIT( combasc );
+PALETTE_INIT( combascb );
 READ_HANDLER( combasc_video_r );
 WRITE_HANDLER( combasc_video_w );
-int combasc_vh_start( void );
-int combascb_vh_start( void );
-void combasc_vh_stop( void );
+VIDEO_START( combasc );
+VIDEO_START( combascb );
 
 WRITE_HANDLER( combascb_bankselect_w );
 WRITE_HANDLER( combasc_bankselect_w );
-void combasc_init_machine( void );
+MACHINE_INIT( combasc );
 WRITE_HANDLER( combasc_pf_control_w );
 READ_HANDLER( combasc_scrollram_r );
 WRITE_HANDLER( combasc_scrollram_w );
 
-void combascb_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
-void combasc_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+VIDEO_UPDATE( combascb );
+VIDEO_UPDATE( combasc );
 WRITE_HANDLER( combasc_io_w );
 WRITE_HANDLER( combasc_vreg_w );
 
@@ -195,7 +194,7 @@ static WRITE_HANDLER( protection_clock_w )
 
 static WRITE_HANDLER( combasc_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( combasc_play_w )
@@ -627,96 +626,74 @@ static struct UPD7759_interface upd7759_interface =
 
 
 /* combat school (original) */
-static const struct MachineDriver machine_driver_combasc =
-{
-	{
-		{
-			CPU_HD6309,
-			3000000,	/* 3 MHz? */
-			combasc_readmem,combasc_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1500000,	/* 1.5 MHz? */
-			combasc_readmem_sound,combasc_writemem_sound,0,0,
-			ignore_interrupt,1 	/* IRQs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10, /* CPU slices */
-	combasc_init_machine,
+static MACHINE_DRIVER_START( combasc )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(HD6309, 3000000)	/* 3 MHz? */
+	MDRV_CPU_MEMORY(combasc_readmem,combasc_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz? */
+	MDRV_CPU_MEMORY(combasc_readmem_sound,combasc_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_MACHINE_INIT(combasc)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	combasc_gfxdecodeinfo,
-	128,8*16*16,
-	combasc_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	combasc_vh_start,
-	combasc_vh_stop,
-	combasc_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(combasc_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
+	MDRV_COLORTABLE_LENGTH(8*16*16)
+
+	MDRV_PALETTE_INIT(combasc)
+	MDRV_VIDEO_START(combasc)
+	MDRV_VIDEO_UPDATE(combasc)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 /* combat school (bootleg on different hardware) */
-static const struct MachineDriver machine_driver_combascb =
-{
-	{
-		{
-			CPU_HD6309,
-			3000000,	/* 3 MHz? */
-			combascb_readmem,combascb_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1500000,
-			combasc_readmem_sound,combasc_writemem_sound,0,0, /* FAKE */
-			ignore_interrupt,0 	/* IRQs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10, /* CPU slices */
-	combasc_init_machine,
+static MACHINE_DRIVER_START( combascb )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(HD6309, 3000000)	/* 3 MHz? */
+	MDRV_CPU_MEMORY(combascb_readmem,combascb_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(combasc_readmem_sound,combasc_writemem_sound) /* FAKE */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_MACHINE_INIT(combasc)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	combascb_gfxdecodeinfo,
-	128,8*16*16,
-	combascb_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	combascb_vh_start,
-	combasc_vh_stop,
-	combascb_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(combascb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
+	MDRV_COLORTABLE_LENGTH(8*16*16)
+
+	MDRV_PALETTE_INIT(combascb)
+	MDRV_VIDEO_START(combascb)
+	MDRV_VIDEO_UPDATE(combascb)
 
 	/* We are using the original sound subsystem */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -874,13 +851,13 @@ ROM_END
 
 
 
-static void init_combasc( void )
+static DRIVER_INIT( combasc )
 {
 	/* joystick instead of trackball */
 	install_mem_read_handler(0,0x0404,0x0404,input_port_4_r);
 }
 
-static void init_combascb( void )
+static DRIVER_INIT( combascb )
 {
 	unsigned char *gfx;
 	int i;

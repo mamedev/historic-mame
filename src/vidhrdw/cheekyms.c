@@ -18,7 +18,7 @@ static data8_t sprites[0x20];
 static int char_palette = 0;
 
 
-void cheekyms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( cheekyms )
 {
 	int i,j,bit;
 
@@ -117,12 +117,12 @@ WRITE_HANDLER( cheekyms_port_80_w )
   the main emulation engine.
 
 ***************************************************************************/
-void cheekyms_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cheekyms )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer, 1, videoram_size);
 	}

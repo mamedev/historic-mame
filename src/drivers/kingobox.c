@@ -24,10 +24,10 @@ extern unsigned char *kingobox_colorram1;
 extern size_t kingobox_videoram1_size;
 extern unsigned char *kingobox_scroll_y;
 WRITE_HANDLER( kingofb_f800_w );
-void kingobox_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-void ringking_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-void kingobox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void ringking_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( kingobox );
+PALETTE_INIT( ringking );
+VIDEO_UPDATE( kingobox );
+VIDEO_UPDATE( ringking );
 
 static unsigned char *video_shared;
 static unsigned char *sprite_shared;
@@ -50,11 +50,11 @@ static WRITE_HANDLER( sprite_shared_w ) {
 }
 
 static WRITE_HANDLER( video_interrupt_w ) {
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 }
 
 static WRITE_HANDLER( sprite_interrupt_w ) {
-	cpu_cause_interrupt( 2, 0xff );
+	cpu_set_irq_line_and_vector( 2, 0, HOLD_LINE, 0xff );
 }
 
 static WRITE_HANDLER( scroll_interrupt_w ) {
@@ -64,7 +64,7 @@ static WRITE_HANDLER( scroll_interrupt_w ) {
 
 static WRITE_HANDLER( sound_command_w ) {
 	soundlatch_w( 0, data );
-	cpu_cause_interrupt( 3, 0xff );
+	cpu_set_irq_line_and_vector( 3, 0, HOLD_LINE, 0xff );
 }
 
 static MEMORY_READ_START( main_readmem )
@@ -542,135 +542,97 @@ static struct DACinterface dac_interface =
 	{ 25 }
 };
 
-static int kingobox_interrupt( void ) {
+static INTERRUPT_GEN( kingobox_interrupt ) {
 
 	if ( kingofb_nmi_enable )
-		return nmi_interrupt();
-
-	return ignore_interrupt();
+		cpu_set_irq_line(cpu_getactivecpu(), IRQ_LINE_NMI, PULSE_LINE);
 }
 
-static const struct MachineDriver machine_driver_kingofb =
-{
+static MACHINE_DRIVER_START( kingofb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4.0 MHz */
-			main_readmem, main_writemem,0,0,
-			kingobox_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,        /* 4.0 MHz */
-			video_readmem, video_writemem,0,0,
-			kingobox_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,        /* 4.0 MHz */
-			sprite_readmem, sprite_writemem,0,0,
-			kingobox_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 4.0 MHz */
-			sound_readmem, sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt, 0,
-			nmi_interrupt, 6000	/* Hz */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	100, /* We really need heavy synching among the processors */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(video_readmem,video_writemem)
+	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(sprite_readmem,sprite_writemem)
+	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,6000)	/* Hz */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* We really need heavy synching among the processors */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256+8, 256+8*2,
-	kingobox_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+8)
+	MDRV_COLORTABLE_LENGTH(256+8*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	kingobox_vh_screenrefresh,
+	MDRV_PALETTE_INIT(kingobox)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(kingobox)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 /* Ring King */
-static const struct MachineDriver machine_driver_ringking =
-{
+static MACHINE_DRIVER_START( ringking )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4.0 MHz */
-			rk_main_readmem, rk_main_writemem,0,0,
-			kingobox_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,        /* 4.0 MHz */
-			rk_video_readmem, rk_video_writemem,0,0,
-			kingobox_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,        /* 4.0 MHz */
-			rk_sprite_readmem, rk_sprite_writemem,0,0,
-			kingobox_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 4.0 MHz */
-			sound_readmem, sound_writemem,rk_sound_readport,rk_sound_writeport,
-			ignore_interrupt, 0,
-			nmi_interrupt, 6000	/* Hz */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	100, /* We really need heavy synching among the processors */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(rk_main_readmem,rk_main_writemem)
+	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(rk_video_readmem,rk_video_writemem)
+	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(rk_sprite_readmem,rk_sprite_writemem)
+	MDRV_CPU_VBLANK_INT(kingobox_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4.0 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(rk_sound_readport,rk_sound_writeport)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,6000)	/* Hz */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* We really need heavy synching among the processors */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	rk_gfxdecodeinfo,
-	256+8, 256+8*2,
-	ringking_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(rk_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+8)
+	MDRV_COLORTABLE_LENGTH(256+8*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	ringking_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ringking)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(ringking)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -838,7 +800,7 @@ ROM_START( ringkin3 )
 ROM_END
 
 
-static void init_ringkin3(void)
+static DRIVER_INIT( ringkin3 )
 {
 	int i;
 	unsigned char *RAM = memory_region(REGION_PROMS);

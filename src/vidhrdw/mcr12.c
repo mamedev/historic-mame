@@ -1,17 +1,15 @@
 /***************************************************************************
 
-  vidhrdw/mcr12.c
+	Midway MCR-I/II system
 
-  Functions to emulate the video hardware of the MCR I and MCR II machines.
-
-  Journey is an MCR/II game with a MCR/III sprite board so it has it's own
-  routines.
+	Journey is an MCR-II game with a MCR-III sprite board so it has it's
+	own routines.
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine/mcr.h"
 #include "vidhrdw/generic.h"
+#include "mcr.h"
 
 
 static UINT8 last_cocktail_flip;
@@ -34,14 +32,14 @@ static UINT8 xtiles, ytiles;
  *
  *************************************/
 
-int mcr12_vh_start(void)
+VIDEO_START( mcr12 )
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 
 	/* allocate a temporary bitmap for the sprite rendering */
 	spritebitmap_width = Machine->drv->screen_width + 2 * 32;
 	spritebitmap_height = Machine->drv->screen_height + 2 * 32;
-	spritebitmap = malloc(spritebitmap_width * spritebitmap_height);
+	spritebitmap = auto_malloc(spritebitmap_width * spritebitmap_height);
 	if (!spritebitmap)
 		return 1;
 	memset(spritebitmap, 0, spritebitmap_width * spritebitmap_height);
@@ -71,23 +69,7 @@ int mcr12_vh_start(void)
 	last_cocktail_flip = 0;
 
 	/* start up the generic system */
-	if (generic_vh_start())
-	{
-		free(spritebitmap);
-		spritebitmap = NULL;
-		return 1;
-	}
-	return 0;
-}
-
-
-void mcr12_vh_stop(void)
-{
-	generic_vh_stop();
-
-	if (spritebitmap)
-		free(spritebitmap);
-	spritebitmap = NULL;
+	return video_start_generic();
 }
 
 
@@ -187,7 +169,7 @@ static void mcr1_update_background(struct mame_bitmap *bitmap)
 	for (offs = videoram_size - 1; offs >= 0; offs--)
 	{
 		int dirty = dirtybuffer[offs];
-		if (dirty)
+		if (dirty || bitmap != tmpbitmap)
 		{
 			int mx = offs % 32;
 			int my = offs / 32;
@@ -227,7 +209,7 @@ static void mcr2_update_background(struct mame_bitmap *bitmap, int check_sprites
 	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
 	{
 		int dirty = dirtybuffer[offs];
-		if (dirty)
+		if (dirty || bitmap != tmpbitmap)
 		{
 			int mx = (offs / 2) % 32;
 			int my = (offs / 2) / 32;
@@ -262,9 +244,6 @@ static void mcr2_update_background(struct mame_bitmap *bitmap, int check_sprites
 		}
 	}
 }
-
-
-
 
 
 
@@ -416,10 +395,10 @@ static void mcr12_update_sprites(int scale)
  *
  *************************************/
 
-void mcr1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mcr1 )
 {
 	/* mark everything dirty on a full refresh or cocktail flip change */
-	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
+	if (get_vh_global_attribute_changed() || last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -431,10 +410,10 @@ void mcr1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 }
 
 
-void mcr2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mcr2 )
 {
 	/* mark everything dirty on a full refresh or cocktail flip change */
-	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
+	if (get_vh_global_attribute_changed() || last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -455,9 +434,7 @@ void mcr2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-extern void mcr3_update_sprites(struct mame_bitmap *bitmap, int color_mask, int code_xor, int dx, int dy);
-
-void journey_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( journey )
 {
 	/* mark everything dirty on a cocktail flip change */
 	if (last_cocktail_flip != mcr_cocktail_flip)
@@ -468,8 +445,8 @@ void journey_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	mcr2_update_background(tmpbitmap, 0);
 
 	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
 	/* draw the sprites */
-	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
+	mcr3_update_sprites(bitmap, cliprect, 0x03, 0, 0, 0);
 }

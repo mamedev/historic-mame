@@ -89,7 +89,7 @@ READ_HANDLER( ninjakun_io_8000_r ){
 		return ninjakun_io_8000_ctrl[3];
 	}
 
-//	logerror("PC=%04x; RAM[0x800%d]\n",cpu_get_pc(),offset);
+//	logerror("PC=%04x; RAM[0x800%d]\n",activecpu_get_pc(),offset);
 	return 0xFF;
 }
 
@@ -194,10 +194,10 @@ WRITE_HANDLER( ninjakun_paletteram_w )
 /*******************************************************************************
  Video Hardware Functions
 ********************************************************************************
- vh_start / vh_stop / vh_refresh
+ vh_start / vh_refresh
 *******************************************************************************/
 
-int ninjakid_vh_start( void ){
+VIDEO_START( ninjakid ){
     fg_tilemap = tilemap_create( get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32 );
 	bg_tilemap = tilemap_create( get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 	tilemap_set_transparent_pen( fg_tilemap,0 );
@@ -211,11 +211,10 @@ int ninjakid_vh_start( void ){
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap ){
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x800;
 
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[2];
 
 	while( source<finish ){
@@ -241,7 +240,7 @@ static void draw_sprites( struct mame_bitmap *bitmap ){
 			color,
 			flipx,flipy,
 			sx,sy,
-			clip,
+			cliprect,
 			TRANSPARENCY_PEN,0
 		);
 		if (sx>240)
@@ -252,7 +251,7 @@ static void draw_sprites( struct mame_bitmap *bitmap ){
 				color,
 				flipx,flipy,
 				sx-256,sy,
-				clip,
+				cliprect,
 				TRANSPARENCY_PEN,0
 			);
 
@@ -260,13 +259,13 @@ static void draw_sprites( struct mame_bitmap *bitmap ){
 	}
 }
 
-void ninjakid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ninjakid )
 {
 	int offs,chr,col,px,py,x,y;
 
-	tilemap_draw( bitmap,bg_tilemap,0,0 );
-	tilemap_draw( bitmap,fg_tilemap,0,0 );
-	draw_sprites( bitmap );
+	tilemap_draw( bitmap,cliprect,bg_tilemap,0,0 );
+	tilemap_draw( bitmap,cliprect,fg_tilemap,0,0 );
+	draw_sprites( bitmap,cliprect );
 
 	for (y=4; y<28; y++)
 	{
@@ -296,7 +295,7 @@ void ninjakid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					col & 0x0f,
 					flipscreen,flipscreen,
 					px,py,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

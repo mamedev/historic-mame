@@ -49,9 +49,9 @@ write:
 
 extern unsigned char *blueprnt_scrollram;
 
-void blueprnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( blueprnt );
 WRITE_HANDLER( blueprnt_flipscreen_w );
-void blueprnt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( blueprnt );
 
 
 
@@ -70,7 +70,7 @@ static READ_HANDLER( blueprnt_sh_dipsw_r )
 static WRITE_HANDLER( blueprnt_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static WRITE_HANDLER( blueprnt_coin_w )
@@ -324,49 +324,35 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_blueprnt =
-{
+static MACHINE_DRIVER_START( blueprnt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			10000000/4,	/* 2.5 MHz (2H) */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,	/* can't use CPU_AUDIO_CPU because this CPU reads the dip switches */
-			10000000/4,	/* 2.5 MHz (2H) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4	/* IRQs connected to 32V */
-						/* NMIs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80,10000000/4)	/* 2.5 MHz (2H) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,10000000/4)	/* can't use CPU_AUDIO_CPU because this CPU reads the dip switches */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* IRQs connected to 32V */
+											/* NMIs are caused by the main CPU */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	16,128*4+8,
-	blueprnt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(128*4+8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	blueprnt_vh_screenrefresh,
+	MDRV_PALETTE_INIT(blueprnt)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(blueprnt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

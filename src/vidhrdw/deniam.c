@@ -13,7 +13,7 @@ static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
 
 
-void init_logicpro(void)
+DRIVER_INIT( logicpro )
 {
 	bg_scrollx_reg = 0x00a4/2;
 	bg_scrolly_reg = 0x00a8/2;
@@ -27,7 +27,7 @@ void init_logicpro(void)
 	fg_scrollx_offs = 0x009;
 	fg_scrolly_offs = 0x000;
 }
-void init_karianx(void)
+DRIVER_INIT( karianx )
 {
 	bg_scrollx_reg = 0x00a4/2;
 	bg_scrolly_reg = 0x00a8/2;
@@ -96,7 +96,7 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int deniam_vh_start(void)
+VIDEO_START( deniam )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,scan_pages,       TILEMAP_OPAQUE,     8,8,128,64);
 	fg_tilemap = tilemap_create(get_fg_tile_info,scan_pages,       TILEMAP_TRANSPARENT,8,8,128,64);
@@ -218,7 +218,7 @@ WRITE16_HANDLER( deniam_coinctrl_w )
  *   c  | ---------------- | zoomy like in System 16?
  *   e  | ---------------- |
  */
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -272,7 +272,8 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					{
 						if (rom[i] & 0x0f)
 						{
-							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]&0x0f)]);
@@ -291,7 +292,8 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					{
 						if (rom[i] & 0xf0)
 						{
-							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]>>4)]);
@@ -314,7 +316,8 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					{
 						if (rom[i] & 0xf0)
 						{
-							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]>>4)]);
@@ -333,7 +336,8 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					{
 						if (rom[i] & 0x0f)
 						{
-							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
+							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x && 
+								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
 								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]&0x0f)]);
@@ -374,7 +378,7 @@ static void set_fg_page(int page,int value)
 	}
 }
 
-void deniam_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( deniam )
 {
 	int bg_scrollx,bg_scrolly,fg_scrollx,fg_scrolly;
 	int page;
@@ -403,11 +407,11 @@ void deniam_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(fg_tilemap,0,fg_scrollx & 0x1ff);
 	tilemap_set_scrolly(fg_tilemap,0,fg_scrolly & 0x0ff);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,bg_tilemap,0,1);
-	tilemap_draw(bitmap,fg_tilemap,0,2);
-	tilemap_draw(bitmap,tx_tilemap,0,4);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,1);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,2);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,4);
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 }

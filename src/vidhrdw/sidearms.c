@@ -24,33 +24,18 @@ static int bgon,objon;
 
 ***************************************************************************/
 
-int sidearms_vh_start(void)
+VIDEO_START( sidearms )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* create a temporary bitmap slightly larger than the screen for the background */
-	if ((tmpbitmap2 = bitmap_alloc(48*8 + 32,Machine->drv->screen_height + 32)) == 0)
-	{
-		generic_vh_stop();
+	if ((tmpbitmap2 = auto_bitmap_alloc(48*8 + 32,Machine->drv->screen_height + 32)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void sidearms_vh_stop(void)
-{
-	bitmap_free(tmpbitmap2);
-	generic_vh_stop();
-}
 
 
 
@@ -87,7 +72,7 @@ WRITE_HANDLER( sidearms_gfxctrl_w )
   the main emulation engine.
 
 ***************************************************************************/
-void sidearms_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sidearms )
 {
 	int offs, sx, sy;
 	int scrollx,scrolly;

@@ -33,7 +33,7 @@
 		* Euro Stocker
 		* Team Hat Trick
 		* Trivial Pursuit (Spanish)
-
+	
 	Known bugs:
 		* CEM3394 emulation is not perfect
 		* Shrike Avenger doesn't work properly
@@ -149,27 +149,6 @@
 
 /*************************************
  *
- *	NVRAM handling
- *
- *************************************/
-
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, nvram_size);
-	else if (file)
-		osd_fread(file, nvram, nvram_size);
-	else
-		memset(nvram, 0, nvram_size);
-}
-
-
-
-/*************************************
- *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -202,7 +181,7 @@ static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x98e0, 0x98ff, watchdog_reset_w },
 	{ 0x9903, 0x9903, MWA_NOP },
 	{ 0x9a04, 0x9a05, balsente_m6850_w },
-	{ 0x9b00, 0x9cff, MWA_RAM, &nvram, &nvram_size },		/* system NOVRAM + cart NOVRAM */
+	{ 0x9b00, 0x9cff, MWA_RAM, &generic_nvram, &generic_nvram_size },		/* system NOVRAM + cart NOVRAM */
 	{ 0xa000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -1541,96 +1520,52 @@ static struct cem3394_interface cem_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_balsente =
-{
+static MACHINE_DRIVER_START( balsente )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			5000000/4,                     /* 5MHz/4 */
-			readmem_cpu1,writemem_cpu1,0,0,
-			update_analog_inputs,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,                       /* 4MHz */
-			readmem_cpu2,writemem_cpu2,readport_cpu2,writeport_cpu2,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	balsente_init_machine,
+	MDRV_CPU_ADD(M6809, 5000000/4)
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(balsente_update_analog_inputs,1)
+	
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PORTS(readport_cpu2,writeport_cpu2)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
+	MDRV_MACHINE_INIT(balsente)
+	MDRV_NVRAM_HANDLER(generic_0fill)
+	
 	/* video hardware */
-	256, 240, { 0, 255, 0, 239 },
-	0,
-	1024,0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	balsente_vh_start,
-	0,
-	balsente_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(256, 240)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(balsente)
+	MDRV_VIDEO_UPDATE(balsente)
+	
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CEM3394, &cem_interface }
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(CEM3394, cem_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_shrike =
-{
+static MACHINE_DRIVER_START( shrike )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			5000000/4,                     /* 5MHz/4 */
-			readmem_cpu1,writemem_cpu1,0,0,
-			update_analog_inputs,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,                       /* 4MHz */
-			readmem_cpu2,writemem_cpu2,readport_cpu2,writeport_cpu2,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			8000000,                       /* 8MHz??? */
-			readmem_shrike68k,writemem_shrike68k,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,
-	balsente_init_machine,
-
+	MDRV_IMPORT_FROM(balsente)
+	
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(readmem_shrike68k,writemem_shrike68k)
+	
+	MDRV_INTERLEAVE(100)
+	
 	/* video hardware */
-	256, 240, { 0, 255, 0, 239 },
-	0,
-	1025,1025,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	balsente_vh_start,
-	0,
-	balsente_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CEM3394, &cem_interface }
-	},
-
-	nvram_handler
-};
+	MDRV_PALETTE_LENGTH(1025)
+MACHINE_DRIVER_END
 
 
 
@@ -2232,55 +2167,55 @@ static void expand_roms(UINT8 cd_rom_mask)
 	}
 }
 
-static void init_sentetst(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_cshift(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_gghost(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
-static void init_hattrick(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_otwalls(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 0; }
-static void init_snakepit(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
-static void init_snakjack(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
-static void init_stocker(void)  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 0; }
-static void init_triviag1(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_triviag2(void)
+static DRIVER_INIT( sentetst ) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static DRIVER_INIT( cshift )   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static DRIVER_INIT( gghost )   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static DRIVER_INIT( hattrick ) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static DRIVER_INIT( otwalls )  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 0; }
+static DRIVER_INIT( snakepit ) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static DRIVER_INIT( snakjack ) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static DRIVER_INIT( stocker )  { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 0; }
+static DRIVER_INIT( triviag1 ) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static DRIVER_INIT( triviag2 )
 {
 	memcpy(&memory_region(REGION_CPU1)[0x20000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
 	memcpy(&memory_region(REGION_CPU1)[0x24000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
 	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
 }
-static void init_gimeabrk(void) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
-static void init_minigolf(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; balsente_adc_shift = 2; }
-static void init_minigol2(void) { expand_roms(0x0c);        balsente_shooter = 0; balsente_adc_shift = 2; }
-static void init_toggle(void)   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
-static void init_nametune(void)
+static DRIVER_INIT( gimeabrk ) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
+static DRIVER_INIT( minigolf ) { expand_roms(EXPAND_NONE); balsente_shooter = 0; balsente_adc_shift = 2; }
+static DRIVER_INIT( minigol2 ) { expand_roms(0x0c);        balsente_shooter = 0; balsente_adc_shift = 2; }
+static DRIVER_INIT( toggle )   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
+static DRIVER_INIT( nametune )
 {
 	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
 	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */
 }
-static void init_nstocker(void)
+static DRIVER_INIT( nstocker )
 {
 	install_mem_read_handler(0, 0x9902, 0x9902, nstocker_port2_r);
 	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
 	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 1; balsente_adc_shift = 1;
 }
-static void init_sfootbal(void)
+static DRIVER_INIT( sfootbal )
 {
 	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
 	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 0;
 }
-static void init_spiker(void)
+static DRIVER_INIT( spiker )
 {
 	install_mem_write_handler(0, 0x9f80, 0x9f8f, spiker_expand_w);
 	install_mem_read_handler(0, 0x9f80, 0x9f8f, spiker_expand_r);
 	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
 	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 1;
 }
-static void init_stompin(void)
+static DRIVER_INIT( stompin )
 {
 	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
 	expand_roms(0x0c | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 32;
 }
-static void init_rescraid(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
-static void init_shrike(void)
+static DRIVER_INIT( rescraid ) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
+static DRIVER_INIT( shrike )
 {
 	install_mem_read_handler(0, 0x9e00, 0x9fff, MRA_RAM);
 	install_mem_write_handler(0, 0x9e00, 0x9fff, MWA_RAM);
@@ -2313,12 +2248,12 @@ GAME( 1984, triviabb, 0,        balsente, triviabb, triviag2, ROT0, "Bally/Sente
 GAME( 1985, gimeabrk, 0,        balsente, gimeabrk, gimeabrk, ROT0, "Bally/Sente", "Gimme A Break" )
 GAME( 1985, minigolf, 0,        balsente, minigolf, minigolf, ROT0, "Bally/Sente", "Mini Golf (set 1)" )
 GAME( 1985, minigol2, minigolf, balsente, minigol2, minigol2, ROT0, "Bally/Sente", "Mini Golf (set 2)" )
-GAME( 1985, toggle,   0,        balsente, toggle,   toggle,   ROT0, "Bally/Sente", "Toggle" )
+GAME( 1985, toggle,   0,        balsente, toggle,   toggle,   ROT0, "Bally/Sente", "Toggle (prototype)" )
 GAME( 1986, nametune, 0,        balsente, nametune, nametune, ROT0, "Bally/Sente", "Name That Tune" )
 GAME( 1986, nstocker, 0,        balsente, nstocker, nstocker, ROT0, "Bally/Sente", "Night Stocker" )
 GAME( 1986, sfootbal, 0,        balsente, sfootbal, sfootbal, ROT0, "Bally/Sente", "Street Football" )
 GAME( 1986, spiker,   0,        balsente, spiker,   spiker,   ROT0, "Bally/Sente", "Spiker" )
 GAME( 1986, stompin,  0,        balsente, stompin,  stompin,  ROT0, "Bally/Sente", "Stompin'" )
-GAME( 1987, rescraid, 0,        balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider" )
-GAME( 1987, rescrdsa, rescraid, balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider (Stand-Alone)" )
+GAME( 1987, rescraid, 0,        balsente, rescraid, rescraid, ROT0, "Bally/Midway", "Rescue Raider" )
+GAME( 1987, rescrdsa, rescraid, balsente, rescraid, rescraid, ROT0, "Bally/Midway", "Rescue Raider (Stand-Alone)" )
 GAMEX(1987, shrike,   0,        shrike,   shrike,   shrike,   ROT0, "Bally/Sente", "Shrike Avenger (prototype)", GAME_NOT_WORKING )

@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Canyon Bomber hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "canyon.h"
 
 /***************************************************************************
 
@@ -16,15 +15,19 @@
   the main emulation engine.
 
 ***************************************************************************/
-void canyon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( canyon )
 {
     int offs;
+    
+    if (get_vh_global_attribute_changed())
+    	memset(dirtybuffer, 1, videoram_size);
 
     /* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (full_refresh || dirtybuffer[offs])
+		if (dirtybuffer[offs])
 		{
 			int charcode;
 			int sx,sy;

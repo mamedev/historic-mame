@@ -42,7 +42,6 @@ static void timer_callback_2612(int param)
 	int c=param>>7;
 
 //	logerror("2612 TimerOver %d\n",c);
-	Timer[n][c] = 0;
 	lastfired[n][c] = timer_get_time();
 	YM2612TimerOver(n,c);
 }
@@ -52,30 +51,19 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 {
 	if( count == 0 )
 	{	/* Reset FM Timer */
-		if( Timer[n][c] )
-		{
-//			logerror("2612 TimerReset %d\n",c);
-	 		timer_remove (Timer[n][c]);
-			Timer[n][c] = 0;
-		}
+		timer_adjust(Timer[n][c], TIME_NEVER, (c<<7)|n, 0);
 	}
 	else
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
+		double slack;
 
-		if( Timer[n][c] == 0 )
-		{
-			double slack;
+		slack = timer_get_time() - lastfired[n][c];
+		/* hackish way to make bstars intro sync without */
+		/* breaking sonicwi2 command 0x35 */
+		if (slack < 0.000050) slack = 0;
 
-			slack = timer_get_time() - lastfired[n][c];
-			/* hackish way to make bstars intro sync without */
-			/* breaking sonicwi2 command 0x35 */
-			if (slack < 0.000050) slack = 0;
-
-//			logerror("2612 TimerSet %d %f slack %f\n",c,timeSec,slack);
-
-			Timer[n][c] = timer_set (timeSec - slack, (c<<7)|n, timer_callback_2612 );
-		}
+		timer_adjust(Timer[n][c], timeSec - slack, (c<<7)|n, 0);
 	}
 }
 
@@ -84,7 +72,10 @@ static void FMTimerInit( void )
 	int i;
 
 	for( i = 0 ; i < MAX_2612 ; i++ )
-		Timer[i][0] = Timer[i][1] = 0;
+	{
+		Timer[i][0] = timer_alloc(timer_callback_2612);
+		Timer[i][1] = timer_alloc(timer_callback_2612);
+	}
 }
 
 /* update request from fm.c */

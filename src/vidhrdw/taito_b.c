@@ -180,18 +180,10 @@ static void get_tx_tile_info(int tile_index)
 }
 
 
-void taitob_vh_stop(void)
+static VIDEO_START( taitob_core )
 {
-	bitmap_free(framebuffer[0]);
-	bitmap_free(framebuffer[1]);
-	bitmap_free(pixel_bitmap);
-	framebuffer[0] = framebuffer[1] = pixel_bitmap = 0;
-}
-
-static int taitob_vh_start_core(void)
-{
-	framebuffer[0] = bitmap_alloc(512,256);
-	framebuffer[1] = bitmap_alloc(512,256);
+	framebuffer[0] = auto_bitmap_alloc(512,256);
+	framebuffer[1] = auto_bitmap_alloc(512,256);
 	pixel_bitmap = NULL;	/* only hitice needs this */
 
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,64,64);
@@ -199,10 +191,7 @@ static int taitob_vh_start_core(void)
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap || !framebuffer[0] || !framebuffer[1])
-	{
-		taitob_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
@@ -210,7 +199,7 @@ static int taitob_vh_start_core(void)
 	return 0;
 }
 
-int taitob_vh_start_color_order0(void)
+VIDEO_START( taitob_color_order0 )
 {
 	/*graphics are shared, only that they use different palette*/
 	/*this is the basic layout used in: Nastar, Ashura Blaster, Hit the Ice, Rambo3, Tetris*/
@@ -226,10 +215,10 @@ int taitob_vh_start_color_order0(void)
 
 	b_colors_per_layer = 0x40;
 
-	return taitob_vh_start_core();
+	return video_start_taitob_core();
 }
 
-int taitob_vh_start_color_order1(void)
+VIDEO_START( taitob_color_order1 )
 {
 	/*and this is the reversed layout used in: Crime City, Puzzle Bobble*/
 	b_bg_color_base = 0x00;
@@ -239,10 +228,10 @@ int taitob_vh_start_color_order1(void)
 
 	b_colors_per_layer = 0x40;
 
-	return taitob_vh_start_core();
+	return video_start_taitob_core();
 }
 
-int taitob_vh_start_color_order2(void)
+VIDEO_START( taitob_color_order2 )
 {
 	/*this is used in: rambo3a, masterw, silentd, selfeena, ryujin */
 	b_bg_color_base = 0x30;
@@ -252,22 +241,19 @@ int taitob_vh_start_color_order2(void)
 
 	b_colors_per_layer = 0x10;
 
-	return taitob_vh_start_core();
+	return video_start_taitob_core();
 }
 
 
-int hitice_vh_start (void)
+VIDEO_START( hitice )
 {
-	if (taitob_vh_start_color_order0())
+	if (video_start_taitob_color_order0())
 		return 1;
 
-	pixel_bitmap = bitmap_alloc(1024,512);
+	pixel_bitmap = auto_bitmap_alloc(1024,512);
 
 	if (!pixel_bitmap)
-	{
-		taitob_vh_stop();
 		return 1;
-	}
 
 	pixel_init = 1;
 
@@ -341,7 +327,7 @@ WRITE16_HANDLER( hitice_pixel_scroll_w )
 }
 
 
-static void taitob_draw_sprites (struct mame_bitmap *bitmap)
+static void taitob_draw_sprites (struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 /*	Sprite format: (16 bytes per sprite)
 	offs:             bits:
@@ -447,7 +433,7 @@ static void taitob_draw_sprites (struct mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				x,y,
-				&Machine->visible_area,
+				cliprect,
 				TRANSPARENCY_PEN_RAW,0,(zx << 16) / 16,(zy << 16) / 16);
 		}
 		else
@@ -457,14 +443,14 @@ static void taitob_draw_sprites (struct mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				x,y,
-				&Machine->visible_area,
+				cliprect,
 				TRANSPARENCY_PEN_RAW,0);
 		}
 	}
 }
 
 
-static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tmap,int plane)
+static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tmap,int plane)
 {
 /*plane = 0 fg tilemap*/
 /*plane = 1 bg tilemap*/
@@ -478,8 +464,8 @@ static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tm
 	number_of_blocks = 256 / lines_per_block;
 
 
-	my_clip.min_x =	Machine->visible_area.min_x;
-	my_clip.max_x =	Machine->visible_area.max_x;
+	my_clip.min_x =	cliprect->min_x;
+	my_clip.max_x =	cliprect->max_x;
 
 	for (i = 0;i < number_of_blocks;i++)
 	{
@@ -488,25 +474,21 @@ static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tm
 
 		my_clip.min_y = i*lines_per_block;
 		my_clip.max_y = (i+1)*lines_per_block -1;
-		if (my_clip.min_y < Machine->visible_area.min_y)
-			my_clip.min_y = Machine->visible_area.min_y;
-		if (my_clip.max_y > Machine->visible_area.max_y)
-			my_clip.max_y = Machine->visible_area.max_y;
+		sect_rect(&my_clip, cliprect);
 
 		if (my_clip.min_y <= my_clip.max_y)
 		{
-			tilemap_set_clip(tmap,&my_clip);
 			tilemap_set_scrollx(tmap,0,-scrollx);
 			tilemap_set_scrolly(tmap,0,-scrolly);
-			tilemap_draw(bitmap,tmap,0,0);
+			tilemap_draw(bitmap,&my_clip,tmap,0,0);
 		}
 	}
 }
 
 
-static void draw_framebuffer(struct mame_bitmap *bitmap,int priority)
+static void draw_framebuffer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
-	struct rectangle myclip = Machine->visible_area;
+	struct rectangle myclip = *cliprect;
 	int x,y;
 
 profiler_mark(PROFILER_USER1);
@@ -575,20 +557,20 @@ profiler_mark(PROFILER_USER1);
 profiler_mark(PROFILER_END);
 }
 
-void taitob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( taitob )
 {
 	if ((video_control & 0x20) == 0)
 	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 		return;
 	}
 
 	/* Draw playfields */
-	TC0180VCU_tilemap_draw(bitmap,bg_tilemap,1);
+	TC0180VCU_tilemap_draw(bitmap,cliprect,bg_tilemap,1);
 
-	draw_framebuffer(bitmap,1);
+	draw_framebuffer(bitmap,cliprect,1);
 
-	TC0180VCU_tilemap_draw(bitmap,fg_tilemap,0);
+	TC0180VCU_tilemap_draw(bitmap,cliprect,fg_tilemap,0);
 
 	if (pixel_bitmap)	/* hitice only */
 	{
@@ -607,17 +589,17 @@ void taitob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				hitice_pixelram_w(i,0,0);
 		}
 
-		copyscrollbitmap(bitmap,pixel_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,b_fg_color_base * 16);
+		copyscrollbitmap(bitmap,pixel_bitmap,1,&scrollx,1,&scrolly,cliprect,TRANSPARENCY_COLOR,b_fg_color_base * 16);
 	}
 
-	draw_framebuffer(bitmap,0);
+	draw_framebuffer(bitmap,cliprect,0);
 
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
 
 
-void taitob_eof_callback(void)
+VIDEO_EOF( taitob )
 {
 	if (~video_control & 0x01)
 		fillbitmap(framebuffer[framebuffer_page],0,&Machine->visible_area);
@@ -625,5 +607,5 @@ void taitob_eof_callback(void)
 	if (~video_control & 0x80)
 		framebuffer_page ^= 1;
 
-	taitob_draw_sprites(framebuffer[framebuffer_page]);
+	taitob_draw_sprites(framebuffer[framebuffer_page],&Machine->visible_area);
 }

@@ -159,7 +159,7 @@ int ssv_tilemap_offsx, ssv_tilemap_offsy;
 
 ***************************************************************************/
 
-void ssv_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ssv )
 {
 	int color, pen;
 
@@ -751,7 +751,7 @@ void ssv_enable_video(int enable)
 	enable_video = enable;
 }
 
-void ssv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ssv )
 {
 	/* The background color is the first one in the palette */
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);

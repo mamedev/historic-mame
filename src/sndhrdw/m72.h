@@ -4,7 +4,7 @@
 
 ****************************************************************************/
 
-void m72_init_sound(void);
+MACHINE_INIT( m72_sound );
 void m72_ym2151_irq_handler(int irq);
 WRITE_HANDLER( m72_sound_command_w );
 WRITE_HANDLER( m72_sound_irq_ack_w );

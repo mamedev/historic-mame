@@ -216,7 +216,7 @@ unsigned char line;
 	columnvalue[line+1] = 1-(data&1);
 }
 
-void bagman_machine_init(void)
+MACHINE_INIT( bagman )
 {
 	bagman_pal16r6_w(0,1);	/*pin 2*/
 	bagman_pal16r6_w(1,1);	/*pin 3*/

@@ -67,11 +67,11 @@ B ?
 extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
 WRITE_HANDLER( espial_attributeram_w );
-void espial_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void espial_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( espial );
+VIDEO_UPDATE( espial );
 
 
-void espial_init_machine(void)
+MACHINE_INIT( espial )
 {
 	/* we must start with NMI interrupts disabled */
 	//interrupt_enable = 0;
@@ -85,16 +85,19 @@ WRITE_HANDLER( zodiac_master_interrupt_enable_w )
 }
 
 
-int zodiac_master_interrupt(void)
+INTERRUPT_GEN( zodiac_master_interrupt )
 {
-	return (cpu_getiloops() == 0) ? nmi_interrupt() : interrupt();
+	if (cpu_getiloops() == 0)
+		nmi_line_pulse();
+	else
+		irq0_line_hold();
 }
 
 
 WRITE_HANDLER( zodiac_master_soundlatch_w )
 {
 	soundlatch_w(offset, data);
-	cpu_cause_interrupt(1, Z80_IRQ_INT);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 
@@ -261,48 +264,37 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_espial =
-{
+static MACHINE_DRIVER_START( espial )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz */
-			readmem,writemem,0,0,
-			zodiac_master_interrupt,2
-		},
-		{
-			CPU_Z80,
-			3072000,	/* 2 MHz?????? */
-			sound_readmem,sound_writemem,0,sound_writeport,
-			nmi_interrupt,4
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	espial_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(zodiac_master_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 2 MHz?????? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(espial)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	espial_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	espial_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	
+	MDRV_PALETTE_INIT(espial)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(espial)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -58,7 +58,7 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int gaiden_vh_start(void)
+VIDEO_START( gaiden )
 {
 	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
@@ -192,7 +192,7 @@ WRITE16_HANDLER( gaiden_videoram_w )
 
 #define NUM_SPRITES 128
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	const UINT8 layout[8][8] =
 	{
@@ -206,7 +206,6 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 		{42,43,46,47,58,59,62,63}
 	};
 
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[3];
 	const UINT16 *source = (NUM_SPRITES-1)*8 + spriteram16;
 	int count = NUM_SPRITES;
@@ -265,7 +264,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 						color,
 						flipx,flipy,
 						sx,sy,
-						clip,TRANSPARENCY_PEN,0,
+						cliprect,TRANSPARENCY_PEN,0,
 						priority_mask);
 				}
 			}
@@ -274,13 +273,13 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	}
 }
 
-void gaiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gaiden )
 {
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0x200],&Machine->visible_area);
-	tilemap_draw(bitmap,background,0,1);
-	tilemap_draw(bitmap,foreground,0,2);
-	tilemap_draw(bitmap,text_layer,0,4);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0x200],cliprect);
+	tilemap_draw(bitmap,cliprect,background,0,1);
+	tilemap_draw(bitmap,cliprect,foreground,0,2);
+	tilemap_draw(bitmap,cliprect,text_layer,0,4);
 
-	draw_sprites( bitmap );
+	draw_sprites( bitmap,cliprect );
 }

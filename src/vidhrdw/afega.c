@@ -67,7 +67,7 @@ WRITE16_HANDLER( afega_palette_w )
 
 /* This game uses 8 bit tiles, so it ignores the color codes and just
    uses the same 256 colors for every tile */
-void grdnstrm_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( grdnstrm )
 {
 	int color, pen;
 	for( color = 0; color < 16; color++ )
@@ -144,7 +144,7 @@ WRITE16_HANDLER( afega_vram_1_w )
 
 ***************************************************************************/
 
-int afega_vh_start(void)
+VIDEO_START( afega )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0, afega_tilemap_scan_pages,
 								TILEMAP_OPAQUE,
@@ -199,7 +199,7 @@ int afega_vh_start(void)
 
 ***************************************************************************/
 
-static void afega_draw_sprites(struct mame_bitmap *bitmap)
+static void afega_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -248,7 +248,7 @@ static void afega_draw_sprites(struct mame_bitmap *bitmap)
 								color,
 								flipx, flipy,
 								sx + x * 16, sy + y * 16,
-								&Machine->visible_area,TRANSPARENCY_PEN,15 );
+								cliprect,TRANSPARENCY_PEN,15 );
 			}
 		}
 
@@ -277,7 +277,7 @@ if (keyboard_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-void afega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( afega )
 {
 	int layers_ctrl = -1;
 
@@ -300,10 +300,10 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 	if (msk != 0) layers_ctrl &= msk;	}
 #endif
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0,0,0);
-	else					fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
+	else					fillbitmap(bitmap,get_black_pen(),cliprect);
 
-	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap);
+	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap,cliprect);
 
-	if (layers_ctrl & 4)	tilemap_draw(bitmap,tilemap_1,0,0);
+	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
 }

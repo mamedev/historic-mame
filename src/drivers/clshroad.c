@@ -33,10 +33,10 @@ WRITE_HANDLER( clshroad_vram_0_w );
 WRITE_HANDLER( clshroad_vram_1_w );
 WRITE_HANDLER( clshroad_flipscreen_w );
 
-void firebatl_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-int  firebatl_vh_start(void);
-int  clshroad_vh_start(void);
-void clshroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( firebatl );
+VIDEO_START( firebatl );
+VIDEO_START( clshroad );
+VIDEO_UPDATE( clshroad );
 
 extern unsigned char *wiping_soundregs;
 int wiping_sh_start(const struct MachineSound *msound);
@@ -45,7 +45,7 @@ WRITE_HANDLER( wiping_sound_w );
 
 
 
-void clshroad_init_machine(void)
+MACHINE_INIT( clshroad )
 {
 	flip_screen_set(0);
 }
@@ -249,89 +249,69 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static const struct MachineDriver machine_driver_firebatl =
-{
-	{
-		{
-			CPU_Z80,
-			3000000,	/* ? */
-			clshroad_readmem, clshroad_writemem,	0, 0,
-			interrupt, 1	/* IRQ, no NMI */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ? */
-			clshroad_sound_readmem, clshroad_sound_writemem,	0, 0,
-			interrupt, 1	/* IRQ, no NMI */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	clshroad_init_machine,
+static MACHINE_DRIVER_START( firebatl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3000000)	/* ? */
+	MDRV_CPU_MEMORY(clshroad_readmem,clshroad_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(clshroad_sound_readmem,clshroad_sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(clshroad)
 
 	/* video hardware */
-	0x120, 0x100, { 0, 0x120-1, 0x0+16, 0x100-16-1 },
-	firebatl_gfxdecodeinfo,
-	512, 512+64*4,
-	firebatl_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x120, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x120-1, 0x0+16, 0x100-16-1)
+	MDRV_GFXDECODE(firebatl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(512+64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	firebatl_vh_start,
-	0,
-	clshroad_vh_screenrefresh,
+	MDRV_PALETTE_INIT(firebatl)
+	MDRV_VIDEO_START(firebatl)
+	MDRV_VIDEO_UPDATE(clshroad)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_clshroad =
-{
-	{
-		{
-			CPU_Z80,
-			3000000,	/* ? */
-			clshroad_readmem, clshroad_writemem,	0, 0,
-			interrupt, 1	/* IRQ, no NMI */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ? */
-			clshroad_sound_readmem, clshroad_sound_writemem,	0, 0,
-			interrupt, 1	/* IRQ, no NMI */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	clshroad_init_machine,
+static MACHINE_DRIVER_START( clshroad )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3000000)	/* ? */
+	MDRV_CPU_MEMORY(clshroad_readmem,clshroad_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(clshroad_sound_readmem,clshroad_sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ, no NMI */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(clshroad)
 
 	/* video hardware */
-	0x120, 0x100, { 0, 0x120-1, 0x0+16, 0x100-16-1 },
-	clshroad_gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x120, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x120-1, 0x0+16, 0x100-16-1)
+	MDRV_GFXDECODE(clshroad_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	clshroad_vh_start,
-	0,
-	clshroad_vh_screenrefresh,
+	MDRV_VIDEO_START(clshroad)
+	MDRV_VIDEO_UPDATE(clshroad)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -111,7 +111,7 @@ WRITE16_HANDLER( yunsun16_vram_1_w )
 
 static int sprites_scrolldx, sprites_scrolldy;
 
-int yunsun16_vh_start(void)
+VIDEO_START( yunsun16 )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0,yunsun16_tilemap_scan_pages,
 								TILEMAP_TRANSPARENT,
@@ -159,7 +159,7 @@ int yunsun16_vh_start(void)
 
 ***************************************************************************/
 
-static void yunsun16_draw_sprites(struct mame_bitmap *bitmap)
+static void yunsun16_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -200,7 +200,7 @@ static void yunsun16_draw_sprites(struct mame_bitmap *bitmap)
 					attr,
 					flipx, flipy,
 					x,y,
-					&Machine->visible_area,TRANSPARENCY_PEN,15,
+					cliprect,TRANSPARENCY_PEN,15,
 					pri_mask	);
 	}
 }
@@ -215,7 +215,7 @@ static void yunsun16_draw_sprites(struct mame_bitmap *bitmap)
 ***************************************************************************/
 
 
-void yunsun16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( yunsun16 )
 {
 	int layers_ctrl = -1;
 
@@ -243,17 +243,17 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* The color of the this layer's transparent pen goes below everything */
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
-	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
+	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, 0, 1);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0, 0, 1);
 
-	if (layers_ctrl & 2)	tilemap_draw(bitmap,tilemap_1, 0, 2);
+	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect,tilemap_1, 0, 2);
 
-	if (layers_ctrl & 8)	yunsun16_draw_sprites(bitmap);
+	if (layers_ctrl & 8)	yunsun16_draw_sprites(bitmap,cliprect);
 
 	/* tilemap.c only copes with screen widths which are a multiple of 8 pixels */
 	if ( (Machine->drv->screen_width-1-Machine->visible_area.max_x) & 7 )
@@ -263,6 +263,7 @@ if (keyboard_pressed(KEYCODE_Z))
 		clip.max_x = Machine->drv->screen_width-1;
 		clip.min_y = Machine->visible_area.min_y;
 		clip.max_y = Machine->visible_area.max_y;
+		sect_rect(&clip,cliprect);
 		fillbitmap(bitmap,Machine->pens[0],&clip);
 	}
 }

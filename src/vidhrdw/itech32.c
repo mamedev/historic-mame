@@ -1,18 +1,14 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Incredible Technologies/Strata system
+	(32-bit blitter variant)
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
-
-
-void itech32_update_interrupts(int vint, int xint, int qint);
-void itech32_update_interrupts_fast(int vint, int xint, int qint);
+#include "itech32.h"
 
 
 /*************************************
@@ -22,7 +18,6 @@ void itech32_update_interrupts_fast(int vint, int xint, int qint);
  *************************************/
 
 #define BLIT_LOGGING			0
-#define INSTANT_BLIT			1
 
 
 
@@ -149,6 +144,7 @@ static UINT16 *videoplane[2];
 static UINT32 vram_mask;
 static UINT32 vram_xmask, vram_ymask;
 
+static void scanline_interrupt(int param);
 
 
 /*************************************
@@ -193,12 +189,12 @@ INLINE void enable_clipping(void)
  *
  *************************************/
 
-int itech32_vh_start(void)
+VIDEO_START( itech32 )
 {
 	int i;
 
 	/* allocate memory */
-	videoram16 = malloc(VRAM_WIDTH * (itech32_vram_height + 16) * 2 * 2);
+	videoram16 = auto_malloc(VRAM_WIDTH * (itech32_vram_height + 16) * 2 * 2);
 	if (!videoram16)
 		return 1;
 	memset(videoram16, 0xff, VRAM_WIDTH * (itech32_vram_height + 16) * 2 * 2);
@@ -227,22 +223,11 @@ int itech32_vh_start(void)
 	/* reset statics */
 	memset(itech32_video, 0, 0x80);
 
-	scanline_timer = 0;
+	scanline_timer = timer_alloc(scanline_interrupt);
+	enable_latch[0] = 1;
+	enable_latch[1] = (itech32_planes > 1) ? 1 : 0;
 
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Video stop
- *
- *************************************/
-
-void itech32_vh_stop(void)
-{
-	free(videoram16);
 }
 
 
@@ -304,6 +289,13 @@ WRITE16_HANDLER( bloodstm_plane_w )
 		enable_latch[0] = (~data >> 1) & 1;
 		enable_latch[1] = (~data >> 2) & 1;
 	}
+}
+
+
+WRITE32_HANDLER( drivedge_color0_w )
+{
+	if (!(mem_mask & 0x00ff0000))
+		color_latch[0] = ((data >> 16) & 0x7f) << 8;
 }
 
 
@@ -400,7 +392,7 @@ static void logblit(const char *tag)
 		itech32_video[0x1a/2] == 0x000 && itech32_video[0x1c/2] == 0x100 &&
 		itech32_video[0x1e/2] == 0x000 && itech32_video[0x20/2] == 0x000)
 	{
-		fprintf(blitlog, "%s: p=%d%d c=%02x%02x %02x%04x -> (%03x,%03x) %3dx%3d f=%04x/%04x c=(%03x,%03x)-(%03x,%03x)\n", tag,
+		logerror("%s: p=%d%d c=%02x%02x %02x%04x -> (%03x,%03x) %3dx%3d f=%04x/%04x c=(%03x,%03x)-(%03x,%03x)\n", tag,
 				enable_latch[0], enable_latch[1],
 				color_latch[0] >> 8, color_latch[1] >> 8,
 				VIDEO_TRANSFER_ADDRHI, VIDEO_TRANSFER_ADDRLO,
@@ -410,7 +402,7 @@ static void logblit(const char *tag)
 	}
 	else
 	{
-		fprintf(blitlog, "%s: p=%d%d c=%02x%02x %02x%04x -> (%03x,%03x) %3dx%3d f=%04x/%04x c=(%03x,%03x)-(%03x,%03x) s=%04x %04x %04x %04x %04x %04x\n", tag,
+		logerror("%s: p=%d%d c=%02x%02x %02x%04x -> (%03x,%03x) %3dx%3d f=%04x/%04x c=(%03x,%03x)-(%03x,%03x) s=%04x %04x %04x %04x %04x %04x\n", tag,
 				enable_latch[0], enable_latch[1],
 				color_latch[0] >> 8, color_latch[1] >> 8,
 				VIDEO_TRANSFER_ADDRHI, VIDEO_TRANSFER_ADDRLO,
@@ -440,19 +432,14 @@ static void update_interrupts(int fast)
 	if (VIDEO_INTSTATE & VIDEO_INTENABLE & VIDEOINT_BLITTER)
 		blitter_state = 1;
 
-#ifndef MAME_DEBUG
-	if (fast)
-		itech32_update_interrupts_fast(-1, blitter_state, scanline_state);
-	else
-#endif
-		itech32_update_interrupts(-1, blitter_state, scanline_state);
+	itech32_update_interrupts(-1, blitter_state, scanline_state);
 }
 
 
 static void scanline_interrupt(int param)
 {
 	/* set timer for next frame */
-	scanline_timer = timer_set(cpu_getscanlinetime(VIDEO_INTSCANLINE), 0, scanline_interrupt);
+	timer_adjust(scanline_timer, cpu_getscanlinetime(VIDEO_INTSCANLINE), 0, 0);
 
 	/* set the interrupt bit in the status reg */
 	logerror("-------------- (DISPLAY INT @ %d) ----------------\n", cpu_getscanline());
@@ -1052,9 +1039,7 @@ WRITE16_HANDLER( itech32_video_w )
 			break;
 
 		case 0x2c/2:	/* VIDEO_INTSCANLINE */
-			if (scanline_timer)
-				timer_remove(scanline_timer);
-			scanline_timer = timer_set(cpu_getscanlinetime(VIDEO_INTSCANLINE), 0, scanline_interrupt);
+			timer_adjust(scanline_timer, cpu_getscanlinetime(VIDEO_INTSCANLINE), 0, 0);
 			break;
 	}
 }
@@ -1064,7 +1049,7 @@ READ16_HANDLER( itech32_video_r )
 {
 	if (offset == 0)
 	{
-		return itech32_video[offset] & ~0x08;
+		return (itech32_video[offset] & ~0x08) | 0x04 | 0x01;
 	}
 	else if (offset == 3)
 	{
@@ -1117,12 +1102,12 @@ READ32_HANDLER( itech020_video_r )
  *
  *************************************/
 
-void itech32_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( itech32 )
 {
 	int y;
 
 	/* loop over height */
-	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *src1 = &videoplane[0][compute_safe_address(VIDEO_DISPLAY_XORIGIN1, VIDEO_DISPLAY_YORIGIN1 + y)];
 
@@ -1134,7 +1119,7 @@ void itech32_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			int x;
 
 			/* blend the pixels in the scanline; color xxFF is transparent */
-			for (x = 0; x < 384; x++)
+			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			{
 				UINT16 pixel = src1[x];
 				if ((pixel & 0xff) == 0xff)
@@ -1143,11 +1128,11 @@ void itech32_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			}
 
 			/* draw from the buffer */
-			draw_scanline16(bitmap, 0, y, 384, scanline, Machine->pens, -1);
+			draw_scanline16(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], Machine->pens, -1);
 		}
 
 		/* otherwise, draw directly from VRAM */
 		else
-			draw_scanline16(bitmap, 0, y, 384, src1, Machine->pens, -1);
+			draw_scanline16(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &src1[cliprect->min_x], Machine->pens, -1);
 	}
 }

@@ -1055,7 +1055,7 @@ logerror("Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sn
 
 	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
 	refresh_period_inv = 1.0 / refresh_period;
-	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
+	sound_update_timer = timer_alloc(NULL);
 
 	if (mixer_sh_start() != 0)
 		return 1;
@@ -1097,14 +1097,7 @@ void sound_stop(void)
 	streams_sh_stop();
 	mixer_sh_stop();
 
-	if (sound_update_timer)
-	{
-		timer_remove(sound_update_timer);
-		sound_update_timer = 0;
-	}
-
 	/* free audio samples */
-	freesamples(Machine->samples);
 	Machine->samples = 0;
 }
 
@@ -1128,7 +1121,7 @@ void sound_update(void)
 	streams_sh_update();
 	mixer_sh_update();
 
-	timer_reset(sound_update_timer,TIME_NEVER);
+	timer_adjust(sound_update_timer, TIME_NEVER, 0, 0);
 
 	profiler_mark(PROFILER_END);
 }
@@ -1177,7 +1170,7 @@ int sound_clock(const struct MachineSound *msound)
 
 int sound_scalebufferpos(int value)
 {
-	int result = (int)((double)value * timer_timeelapsed (sound_update_timer) * refresh_period_inv);
+	int result = (int)((double)value * timer_timeelapsed(sound_update_timer) * refresh_period_inv);
 	if (value >= 0) return (result < value) ? result : value;
 	else return (result > value) ? result : value;
 }

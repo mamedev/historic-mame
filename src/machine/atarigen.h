@@ -86,15 +86,15 @@ void atarigen_interrupt_reset(atarigen_int_callback update_int);
 void atarigen_update_interrupts(void);
 
 void atarigen_scanline_int_set(int scanline);
-int atarigen_scanline_int_gen(void);
+INTERRUPT_GEN( atarigen_scanline_int_gen );
 WRITE16_HANDLER( atarigen_scanline_int_ack_w );
 WRITE32_HANDLER( atarigen_scanline_int_ack32_w );
 
-int atarigen_sound_int_gen(void);
+INTERRUPT_GEN( atarigen_sound_int_gen );
 WRITE16_HANDLER( atarigen_sound_int_ack_w );
 WRITE32_HANDLER( atarigen_sound_int_ack32_w );
 
-int atarigen_video_int_gen(void);
+INTERRUPT_GEN( atarigen_video_int_gen );
 WRITE16_HANDLER( atarigen_video_int_ack_w );
 WRITE32_HANDLER( atarigen_video_int_ack32_w );
 
@@ -114,7 +114,7 @@ WRITE32_HANDLER( atarigen_eeprom_enable32_w );
 WRITE32_HANDLER( atarigen_eeprom32_w );
 READ32_HANDLER( atarigen_eeprom_upper32_r );
 
-void atarigen_nvram_handler(void *file,int read_or_write);
+NVRAM_HANDLER( atarigen );
 void atarigen_hisave(void);
 
 
@@ -135,7 +135,7 @@ READ16_HANDLER( atarigen_slapstic_r );
 
 void atarigen_sound_io_reset(int cpu_num);
 
-int atarigen_6502_irq_gen(void);
+INTERRUPT_GEN( atarigen_6502_irq_gen );
 READ_HANDLER( atarigen_6502_irq_ack_r );
 WRITE_HANDLER( atarigen_6502_irq_ack_w );
 
@@ -200,7 +200,6 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w );
 	MISC HELPERS
 ---------------------------------------------------------------*/
 
-void atarigen_invert_region(int region);
 void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes);
 
 #endif

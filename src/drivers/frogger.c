@@ -87,19 +87,19 @@ extern size_t galaxian_spriteram_size;
 
 extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
 
-void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( frogger );
 
-void scramble_init_machine(void);
+MACHINE_INIT( scramble );
 
-void init_frogger(void);
-void init_froggers(void);
+DRIVER_INIT( frogger );
+DRIVER_INIT( froggers );
 
-int frogger_vh_start(void);
-int froggrmc_vh_start(void);
+VIDEO_START( frogger );
+VIDEO_START( froggrmc );
 
 WRITE_HANDLER( galaxian_flip_screen_x_w );
 WRITE_HANDLER( galaxian_flip_screen_y_w );
-void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( galaxian );
 WRITE_HANDLER( frogger_filter_w );
 
 READ_HANDLER( frogger_portB_r );
@@ -294,91 +294,71 @@ struct AY8910interface frogger_ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_frogger =
-{
+static MACHINE_DRIVER_START( frogger )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6, /* 3.072 MHz */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8, /* 1.78975 MHz */
-			frogger_sound_readmem,frogger_sound_writemem,frogger_sound_readport,frogger_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6) /* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 1.78975 MHz */
+	MDRV_CPU_MEMORY(frogger_sound_readmem,frogger_sound_writemem)
+	MDRV_CPU_PORTS(frogger_sound_readport,frogger_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */	\
-	frogger_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+1)
+	MDRV_COLORTABLE_LENGTH(8*4)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */	\
 
-	VIDEO_TYPE_RASTER,
-	0,
-	frogger_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(frogger)
+	MDRV_VIDEO_START(frogger)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&frogger_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_froggrmc =
-{
+static MACHINE_DRIVER_START( froggrmc )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6, /* 3.072 MHz */
-			froggrmc_readmem,froggrmc_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8, /* 1.78975 MHz */
-			frogger_sound_readmem,frogger_sound_writemem,frogger_sound_readport,frogger_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6) /* 3.072 MHz */
+	MDRV_CPU_MEMORY(froggrmc_readmem,froggrmc_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 1.78975 MHz */
+	MDRV_CPU_MEMORY(frogger_sound_readmem,frogger_sound_writemem)
+	MDRV_CPU_PORTS(frogger_sound_readport,frogger_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */	\
-	frogger_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+1)
+	MDRV_COLORTABLE_LENGTH(8*4)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */	\
 
-	VIDEO_TYPE_RASTER,
-	0,
-	froggrmc_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(frogger)
+	MDRV_VIDEO_START(froggrmc)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&frogger_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -118,28 +118,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-READ16_HANDLER( atarisys1_int3state_r );
-
-WRITE16_HANDLER( atarisys1_spriteram_w );
-WRITE16_HANDLER( atarisys1_bankselect_w );
-WRITE16_HANDLER( atarisys1_hscroll_w );
-WRITE16_HANDLER( atarisys1_vscroll_w );
-WRITE16_HANDLER( atarisys1_priority_w );
-
-void atarisys1_scanline_update(int scanline);
-
-int atarisys1_vh_start(void);
-void atarisys1_vh_stop(void);
-void atarisys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+#include "atarisy1.h"
 
 
 
@@ -191,7 +170,9 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static void delayed_joystick_int(int param);
+
+static MACHINE_INIT( atarisy1 )
 {
 	/* initialize the system */
 	atarigen_eeprom_reset();
@@ -201,7 +182,7 @@ static void init_machine(void)
 
 	/* reset the joystick parameters */
 	joystick_value = 0;
-	joystick_timer = NULL;
+	joystick_timer = timer_alloc(delayed_joystick_int);
 	joystick_int = 0;
 	joystick_int_enable = 0;
 
@@ -221,7 +202,6 @@ static void init_machine(void)
 
 static void delayed_joystick_int(int param)
 {
-	joystick_timer = NULL;
 	joystick_value = param;
 	joystick_int = 1;
 	atarigen_update_interrupts();
@@ -244,17 +224,12 @@ static READ16_HANDLER( joystick_r )
 	else if (joystick_type == 3)
 		newval = readinputport(1);
 
-	/* set a timer on the joystick interrupt */
-	if (joystick_timer)
-		timer_remove(joystick_timer);
-	joystick_timer = NULL;
-
 	/* the A4 bit enables/disables joystick IRQs */
 	joystick_int_enable = ((offset >> 3) & 1) ^ 1;
 
 	/* clear any existing interrupt and set a timer for a new one */
 	joystick_int = 0;
-	joystick_timer = timer_set(TIME_IN_USEC(50), newval, delayed_joystick_int);
+	timer_adjust(joystick_timer, TIME_IN_USEC(50), newval, 0);
 	atarigen_update_interrupts();
 
 	return joystick_value;
@@ -478,7 +453,7 @@ static WRITE_HANDLER( led_w )
 
 static OPBASE_HANDLER( indytemp_setopbase )
 {
-	int prevpc = cpu_getpreviouspc();
+	int prevpc = activecpu_get_previouspc();
 
 	/*
 	 *	This is a slightly ugly kludge for Indiana Jones & the Temple of Doom because it jumps
@@ -839,58 +814,38 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_atarisy1 =
-{
+static MACHINE_DRIVER_START( atarisy1 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		{
-			CPU_M6502,
-			ATARI_CLOCK_14MHz/8,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68010, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atarisy1)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	atarisys1_vh_start,
-	atarisys1_vh_stop,
-	atarisys1_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(atarisy1)
+	MDRV_VIDEO_UPDATE(atarisy1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1554,7 +1509,7 @@ ROM_END
  *
  *************************************/
 
-static void init_marble(void)
+static DRIVER_INIT( marble )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 103);
@@ -1565,7 +1520,7 @@ static void init_marble(void)
 }
 
 
-static void init_peterpak(void)
+static DRIVER_INIT( peterpak )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 107);
@@ -1576,7 +1531,7 @@ static void init_peterpak(void)
 }
 
 
-static void init_indytemp(void)
+static DRIVER_INIT( indytemp )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 105);
@@ -1590,7 +1545,7 @@ static void init_indytemp(void)
 }
 
 
-static void init_roadrunn(void)
+static DRIVER_INIT( roadrunn )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 108);
@@ -1601,7 +1556,7 @@ static void init_roadrunn(void)
 }
 
 
-static void init_roadblst(void)
+static DRIVER_INIT( roadblst )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 110);
@@ -1612,7 +1567,7 @@ static void init_roadblst(void)
 }
 
 
-static void init_roadbls2(void)
+static DRIVER_INIT( roadbls2 )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x080000, 109);

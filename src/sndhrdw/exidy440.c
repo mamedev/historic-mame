@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "exidy440.h"
 #include <math.h>
 
 
@@ -183,7 +184,7 @@ int exidy440_sh_start(const struct MachineSound *msound)
 
 	/* allocate the sample cache */
 	length = memory_region_length(REGION_SOUND1) * 16 + MAX_CACHE_ENTRIES * sizeof(sound_cache_entry);
-	sound_cache = malloc(length);
+	sound_cache = auto_malloc(length);
 	if (!sound_cache)
 		return 1;
 
@@ -192,13 +193,9 @@ int exidy440_sh_start(const struct MachineSound *msound)
 	reset_sound_cache();
 
 	/* allocate the mixer buffer */
-	mixer_buffer_left = malloc(2 * SAMPLE_RATE_FAST * sizeof(INT32));
+	mixer_buffer_left = auto_malloc(2 * SAMPLE_RATE_FAST * sizeof(INT32));
 	if (!mixer_buffer_left)
-	{
-		free(sound_cache);
-		sound_cache = NULL;
 		return 1;
-	}
 	mixer_buffer_right = mixer_buffer_left + SAMPLE_RATE_FAST;
 
 	if (SOUND_LOG)
@@ -219,14 +216,6 @@ void exidy440_sh_stop(void)
 {
 	if (SOUND_LOG && debuglog)
 		fclose(debuglog);
-
-	if (sound_cache)
-		free(sound_cache);
-	sound_cache = NULL;
-
-	if (mixer_buffer_left)
-		free(mixer_buffer_left);
-	mixer_buffer_left = mixer_buffer_right = NULL;
 }
 
 
@@ -417,13 +406,6 @@ WRITE_HANDLER( exidy440_sound_volume_w )
  *	Sound interrupt handling
  *
  *************************************/
-
-int exidy440_sound_interrupt(void)
-{
-	cpu_set_irq_line(1, 0, ASSERT_LINE);
-	return ignore_interrupt();
-}
-
 
 WRITE_HANDLER( exidy440_sound_interrupt_clear_w )
 {

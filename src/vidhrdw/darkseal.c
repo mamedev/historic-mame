@@ -164,7 +164,7 @@ WRITE16_HANDLER( darkseal_palette_24bit_b_w )
 
 /******************************************************************************/
 
-static void darkseal_drawsprites(struct mame_bitmap *bitmap)
+static void darkseal_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -222,7 +222,7 @@ static void darkseal_drawsprites(struct mame_bitmap *bitmap)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}
@@ -272,7 +272,7 @@ WRITE16_HANDLER( darkseal_control_1_w )
 
 /******************************************************************************/
 
-int darkseal_vh_start(void)
+VIDEO_START( darkseal )
 {
 	pf1_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
 	pf2_tilemap = tilemap_create(get_bg_tile_info2,darkseal_scan,    TILEMAP_TRANSPARENT,16,16,64,64);
@@ -289,7 +289,7 @@ int darkseal_vh_start(void)
 
 /******************************************************************************/
 
-void darkseal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( darkseal )
 {
 	flipscreen=!(darkseal_control_0[0]&0x80);
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
@@ -313,10 +313,10 @@ void darkseal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 	tilemap_set_scrolly( pf3_tilemap,0, darkseal_control_0[4] );
 
-	tilemap_draw(bitmap,pf3_tilemap,0,0);
-	tilemap_draw(bitmap,pf2_tilemap,0,0);
-	darkseal_drawsprites(bitmap);
-	tilemap_draw(bitmap,pf1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	darkseal_drawsprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 }
 
 /******************************************************************************/

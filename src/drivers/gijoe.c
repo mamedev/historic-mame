@@ -12,9 +12,8 @@ GI Joe
 #include "state.h"
 
 
-int gijoe_vh_start(void);
-void gijoe_vh_stop(void);
-void gijoe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( gijoe );
+VIDEO_UPDATE( gijoe );
 
 static data16_t cur_control2;
 static int init_eeprom_count;
@@ -36,7 +35,7 @@ static void eeprom_init(void)
 	init_eeprom_count = 0;
 }
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( gijoe )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -95,18 +94,17 @@ static WRITE16_HANDLER( control2_w )
 	}
 }
 
-static int gijoe_interrupt(void)
+static INTERRUPT_GEN( gijoe_interrupt )
 {
 	switch (cpu_getiloops())
 	{
 	case 0:
 		if (K054157_is_IRQ_enabled())
-			return 5;       /* ??? */
+			cpu_set_irq_line(0, 5, HOLD_LINE);       /* ??? */
 	case 1:
 		if (K054157_is_IRQ_enabled() && (cur_control2 & 0x0020))
-			return 6;       /* ??? */
+			cpu_set_irq_line(0, 6, HOLD_LINE);       /* ??? */
 	}
-	return ignore_interrupt();
 }
 
 
@@ -268,53 +266,36 @@ static struct K054539interface k054539_interface =
 	{ sound_nmi }
 };
 
-static struct MachineDriver machine_driver_gijoe =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* Confirmed */
-			readmem, writemem, 0, 0,
-			gijoe_interrupt, 2 /* ? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000,	/* Amuse & confirmed. z80e */
-			sound_readmem, sound_writemem, 0, 0,
-			0, 0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( gijoe )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* Confirmed */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(gijoe_interrupt,2) /* ? */
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Amuse & confirmed. z80e */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(gijoe)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	gijoe_vh_start,
-	gijoe_vh_stop,
-	gijoe_vh_screenrefresh,
+	MDRV_VIDEO_START(gijoe)
+	MDRV_VIDEO_UPDATE(gijoe)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K054539,
-			&k054539_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K054539, k054539_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( gijoe )
@@ -366,7 +347,7 @@ ROM_START( gijoeu )
 ROM_END
 
 
-static void init_gijoe(void)
+static DRIVER_INIT( gijoe )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);

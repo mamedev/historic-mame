@@ -29,7 +29,7 @@ extern int z80_execute(int cycles);
 extern void z80_burn(int cycles);
 extern unsigned z80_get_context (void *dst);
 extern void z80_set_context (void *src);
-extern void *z80_get_cycle_table (int which);
+extern const void *z80_get_cycle_table (int which);
 extern void z80_set_cycle_table (int which, void *new_tbl);
 extern unsigned z80_get_reg (int regnum);
 extern void z80_set_reg (int regnum, unsigned val);

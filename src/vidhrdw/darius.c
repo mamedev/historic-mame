@@ -50,23 +50,19 @@ static void dirty_fg_tilemap(void)
 
 /***************************************************************************/
 
-int darius_vh_start (void)
+VIDEO_START( darius )
 {
 	fg_tilemap = tilemap_create(darius_fg_get_tile_info[0],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
 	if (!fg_tilemap)
 		return 1;
 
-	spritelist = malloc(0x800 * sizeof(*spritelist));
+	spritelist = auto_malloc(0x800 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
 
 	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
 	if ( PC080SN_vh_start(1,1,-16,8,0,1,1) )
-	{
-		free(spritelist);
-		spritelist = 0;
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
@@ -74,14 +70,6 @@ int darius_vh_start (void)
 	state_save_register_func_postload(dirty_fg_tilemap);
 
 	return 0;
-}
-
-void darius_vh_stop(void)
-{
-	free(spritelist);
-	spritelist = 0;
-
-	PC080SN_vh_stop();
 }
 
 /***************************************************************************/
@@ -105,7 +93,7 @@ WRITE16_HANDLER( darius_fg_layer_w )
 
 /***************************************************************************/
 
-void darius_draw_sprites(struct mame_bitmap *bitmap,int *primasks, int y_offs)
+void darius_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks, int y_offs)
 {
 	int offs,curx,cury;
 	UINT16 code,data,sx,sy;
@@ -160,7 +148,7 @@ void darius_draw_sprites(struct mame_bitmap *bitmap,int *primasks, int y_offs)
 						sprite_ptr->color,
 						sprite_ptr->flipx,sprite_ptr->flipy,
 						sprite_ptr->x,sprite_ptr->y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -175,14 +163,14 @@ void darius_draw_sprites(struct mame_bitmap *bitmap,int *primasks, int y_offs)
 				sprite_ptr->color,
 				sprite_ptr->flipx,sprite_ptr->flipy,
 				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				sprite_ptr->primask);
 	}
 }
 
 
 
-void darius_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( darius )
 {
 	UINT8 layer[2];
 
@@ -195,17 +183,17 @@ void darius_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[0] = 0;
 	layer[1] = 1;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
-	PC080SN_tilemap_draw(bitmap,0,layer[1],0,2);
-	tilemap_draw(bitmap,fg_tilemap,0,4);
+ 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,2);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,4);
 
 	/* Sprites can be under/over the layer below text layer */
 	{
 		int primasks[2] = {0xfc,0xf0};
-		darius_draw_sprites(bitmap,primasks,-8);
+		darius_draw_sprites(bitmap,cliprect,primasks,-8);
 	}
 }
 

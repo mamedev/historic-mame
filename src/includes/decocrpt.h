@@ -1,2 +1,2 @@
-void deco56_decrypt(void);
-void deco74_decrypt(void);
+void deco56_decrypt(int region);
+void deco74_decrypt(int region);

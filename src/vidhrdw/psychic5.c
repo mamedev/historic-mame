@@ -39,7 +39,7 @@ int is_psychic5_title_mode(void)
 	return 1;
 }
 
-void psychic5_init_machine(void)
+MACHINE_INIT( psychic5 )
 {
 	bg_clip_mode = -10;
 }
@@ -261,75 +261,36 @@ WRITE_HANDLER( psychic5_paged_ram_w )
 }
 
 
-int psychic5_vh_start(void)
+VIDEO_START( psychic5 )
 {
-	if ((ps5_background_videoram = malloc(0x1000)) == 0)
-	{
+	if ((ps5_background_videoram = auto_malloc(0x1000)) == 0)
 		return 1;
-	}
-	if ((ps5_dummy_bg_ram = malloc(0x1000)) == 0)
-	{
-		free(ps5_background_videoram);
+
+	if ((ps5_dummy_bg_ram = auto_malloc(0x1000)) == 0)
 		return 1;
-	}
-	if ((ps5_io_ram = malloc(0x400)) == 0)
-	{
-		free(ps5_background_videoram);
-		free(ps5_dummy_bg_ram);
+
+	if ((ps5_io_ram = auto_malloc(0x400)) == 0)
 		return 1;
-	}
-	if ((ps5_palette_ram = malloc(0xc00)) == 0)
-	{
-		free(ps5_background_videoram);
-		free(ps5_dummy_bg_ram);
-		free(ps5_io_ram);
+
+	if ((ps5_palette_ram = auto_malloc(0xc00)) == 0)
 		return 1;
-	}
-	if ((ps5_foreground_videoram = malloc(0x1000)) == 0)
-	{
-		free(ps5_background_videoram);
-		free(ps5_dummy_bg_ram);
-		free(ps5_io_ram);
-		free(ps5_palette_ram);
+
+	if ((ps5_foreground_videoram = auto_malloc(0x1000)) == 0)
 		return 1;
-	}
-        if ((bg_dirtybuffer = malloc(32*64)) == 0)
-	{
-		free(ps5_background_videoram);
-		free(ps5_dummy_bg_ram);
-		free(ps5_io_ram);
-		free(ps5_palette_ram);
-		free(ps5_foreground_videoram);
-        	return 1;
-	}
-	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width*4,Machine->drv->screen_height*2)) == 0)
-	{
-		free(ps5_background_videoram);
-		free(ps5_dummy_bg_ram);
-		free(ps5_io_ram);
-		free(ps5_palette_ram);
-		free(ps5_foreground_videoram);
-		free(bg_dirtybuffer);
+
+    if ((bg_dirtybuffer = auto_malloc(32*64)) == 0)
+      	return 1;
+
+	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width*4,Machine->drv->screen_height*2)) == 0)
 		return 1;
-	}
-        memset(bg_dirtybuffer,1,32*64);
+
+    memset(bg_dirtybuffer,1,32*64);
 	memset(ps5_background_videoram, 0,0x1000);
 	memset(ps5_dummy_bg_ram,0,0x1000);
 	memset(ps5_io_ram,0,0x400);
 	memset(ps5_palette_ram,0,0xc00);
 	memset(ps5_foreground_videoram,0,0x1000);
-        return 0;
-}
-
-void psychic5_vh_stop(void)
-{
-	free(ps5_background_videoram);
-	free(ps5_dummy_bg_ram);
-	free(ps5_io_ram);
-	free(ps5_palette_ram);
-	free(ps5_foreground_videoram);
-	free(bg_dirtybuffer);
-	bitmap_free(bitmap_bg);
+    return 0;
 }
 
 void psychic5_draw_background(struct mame_bitmap *bitmap)
@@ -555,7 +516,7 @@ void psychic5_draw_sprites2(struct mame_bitmap *bitmap)
 
 
 
-void psychic5_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( psychic5 )
 {
 	int bg_scrollx,bg_scrolly;
 

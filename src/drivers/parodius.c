@@ -12,19 +12,17 @@ driver by Nicola Salmoria
 #include "vidhrdw/konamiic.h"
 
 /* prototypes */
-static void parodius_init_machine( void );
+static MACHINE_INIT( parodius );
 static void parodius_banking( int lines );
-int parodius_vh_start( void );
-void parodius_vh_stop( void );
-void parodius_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( parodius );
+VIDEO_UPDATE( parodius );
 
 static int videobank;
 static unsigned char *ram;
 
-static int parodius_interrupt(void)
+static INTERRUPT_GEN( parodius_interrupt )
 {
-	if (K052109_is_IRQ_enabled()) return interrupt();
-	else return ignore_interrupt();
+	if (K052109_is_IRQ_enabled()) cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 static READ_HANDLER( bankedram_r )
@@ -71,7 +69,7 @@ static WRITE_HANDLER( parodius_052109_053245_w )
 
 static WRITE_HANDLER( parodius_videobank_w )
 {
-	if (videobank & 0xf8) logerror("%04x: videobank = %02x\n",cpu_get_pc(),data);
+	if (videobank & 0xf8) logerror("%04x: videobank = %02x\n",activecpu_get_pc(),data);
 
 	/* bit 0 = select palette or work RAM at 0000-07ff */
 	/* bit 1 = select 052109 or 053245 at 2000-27ff */
@@ -81,7 +79,7 @@ static WRITE_HANDLER( parodius_videobank_w )
 
 static WRITE_HANDLER( parodius_3fc0_w )
 {
-	if ((data & 0xf4) != 0x10) logerror("%04x: 3fc0 = %02x\n",cpu_get_pc(),data);
+	if ((data & 0xf4) != 0x10) logerror("%04x: 3fc0 = %02x\n",activecpu_get_pc(),data);
 
 	/* bit 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -103,7 +101,7 @@ static READ_HANDLER( parodius_sound_r )
 
 static WRITE_HANDLER( parodius_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static int nmi_enabled;
@@ -131,7 +129,7 @@ static READ_HANDLER( speedup_r )
 {
 	int data = memory_region(REGION_CPU1)[0x1837];
 
-	if ( cpu_get_pc() == 0xa400 && data == 0 )
+	if ( activecpu_get_pc() == 0xa400 && data == 0 )
 		cpu_spinuntil_int();
 
 	return data;
@@ -318,53 +316,36 @@ static struct K053260_interface k053260_interface =
 
 
 
-static const struct MachineDriver machine_driver_parodius =
-{
+static MACHINE_DRIVER_START( parodius )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_KONAMI,		/* 053248 */
-			3000000,		/* ? */
-			parodius_readmem,parodius_writemem,0,0,
-            parodius_interrupt,1
-        },
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			parodius_readmem_sound, parodius_writemem_sound,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_ADD(KONAMI, 3000000)		/* 053248 */
+	MDRV_CPU_MEMORY(parodius_readmem,parodius_writemem)
+	MDRV_CPU_VBLANK_INT(parodius_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(parodius_readmem_sound,parodius_writemem_sound)
 								/* NMIs are triggered by the 053260 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	parodius_init_machine,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(parodius)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	parodius_vh_start,
-	parodius_vh_stop,
-	parodius_vh_screenrefresh,
+	MDRV_VIDEO_START(parodius)
+	MDRV_VIDEO_UPDATE(parodius)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -404,14 +385,14 @@ static void parodius_banking(int lines)
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs = 0;
 
-	if (lines & 0xf0) logerror("%04x: setlines %02x\n",cpu_get_pc(),lines);
+	if (lines & 0xf0) logerror("%04x: setlines %02x\n",activecpu_get_pc(),lines);
 
 	offs = 0x10000 + (((lines & 0x0f)^0x0f) * 0x4000);
 	if (offs >= 0x48000) offs -= 0x40000;
 	cpu_setbank( 1, &RAM[offs] );
 }
 
-static void parodius_init_machine( void )
+static MACHINE_INIT( parodius )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -426,7 +407,7 @@ static void parodius_init_machine( void )
 }
 
 
-static void init_parodius(void)
+static DRIVER_INIT( parodius )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

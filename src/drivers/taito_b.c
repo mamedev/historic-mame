@@ -108,14 +108,13 @@ extern data16_t *taitob_spriteram;
 extern data16_t *taitob_pixelram;
 
 
-int  taitob_vh_start_color_order0(void);
-int  taitob_vh_start_color_order1(void);
-int  taitob_vh_start_color_order2(void);
-int  hitice_vh_start(void);
-void taitob_vh_stop(void);
-void taitob_eof_callback(void);
+VIDEO_START( taitob_color_order0 );
+VIDEO_START( taitob_color_order1 );
+VIDEO_START( taitob_color_order2 );
+VIDEO_START( hitice );
+VIDEO_EOF( taitob );
 
-void taitob_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( taitob );
 
 WRITE16_HANDLER( TC0180VCU_word_w );
 READ16_HANDLER ( TC0180VCU_word_r );
@@ -141,116 +140,116 @@ static WRITE_HANDLER( bankswitch_w )
 
 void rsaga2_interrupt2(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_2);
+	cpu_set_irq_line(0,2,HOLD_LINE);
 }
 
-static int rastansaga2_interrupt(void)
+static INTERRUPT_GEN( rastansaga2_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,rsaga2_interrupt2);
-	return MC68000_IRQ_4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 
 void crimec_interrupt3(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_3);
+	cpu_set_irq_line(0,3,HOLD_LINE);
 }
 
-static int crimec_interrupt(void)
+static INTERRUPT_GEN( crimec_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,crimec_interrupt3);
-	return MC68000_IRQ_5;
+	cpu_set_irq_line(0, 5, HOLD_LINE);
 }
 
 
 void hitice_interrupt6(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
-static int hitice_interrupt(void)
+static INTERRUPT_GEN( hitice_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,hitice_interrupt6);
-	return MC68000_IRQ_4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 
 void rambo3_interrupt1(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_1);
+	cpu_set_irq_line(0,1,HOLD_LINE);
 }
 
-static int rambo3_interrupt(void)
+static INTERRUPT_GEN( rambo3_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,rambo3_interrupt1);
-	return MC68000_IRQ_6;
+	cpu_set_irq_line(0, 6, HOLD_LINE);
 }
 
 
 void pbobble_interrupt5(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_5);
+	cpu_set_irq_line(0,5,HOLD_LINE);
 }
 
-static int pbobble_interrupt(void)
+static INTERRUPT_GEN( pbobble_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,pbobble_interrupt5);
-	return MC68000_IRQ_3;
+	cpu_set_irq_line(0, 3, HOLD_LINE);
 }
 
 void viofight_interrupt1(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_1);
+	cpu_set_irq_line(0,1,HOLD_LINE);
 }
 
-static int viofight_interrupt(void)
+static INTERRUPT_GEN( viofight_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,viofight_interrupt1);
-	return MC68000_IRQ_4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 void masterw_interrupt4(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_4);
+	cpu_set_irq_line(0,4,HOLD_LINE);
 }
 
-static int masterw_interrupt(void)
+static INTERRUPT_GEN( masterw_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,masterw_interrupt4);
-	return MC68000_IRQ_5;
+	cpu_set_irq_line(0, 5, HOLD_LINE);
 }
 
 void silentd_interrupt6(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
-static int silentd_interrupt(void)
+static INTERRUPT_GEN( silentd_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,silentd_interrupt6);
-	return MC68000_IRQ_4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 void selfeena_interrupt4(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_4);
+	cpu_set_irq_line(0,4,HOLD_LINE);
 }
 
-static int selfeena_interrupt(void)
+static INTERRUPT_GEN( selfeena_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,selfeena_interrupt4);
-	return MC68000_IRQ_6;
+	cpu_set_irq_line(0, 6, HOLD_LINE);
 }
 
 void sbm_interrupt5(int x)//4
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_5);
+	cpu_set_irq_line(0,5,HOLD_LINE);
 }
 
-static int sbm_interrupt(void)//5
+static INTERRUPT_GEN( sbm_interrupt )//5
 {
 	timer_set(TIME_IN_CYCLES(10000,0),0,sbm_interrupt5);
-	return MC68000_IRQ_4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 
@@ -323,7 +322,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000" 	/* unlock command*/
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( taito_b )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -1709,10 +1708,6 @@ INPUT_PORTS_END
 
 /* Helps document the input ports. */
 
-#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-
-
 INPUT_PORTS_START( pbobble )	/* Missing P3&4 controls ! */
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /*unused in test mode*/
@@ -2549,7 +2544,7 @@ static struct MB87078interface mb87078_interface =
 };
 
 
-static void init_mb87078(void)
+static MACHINE_INIT( mb87078 )
 {
 	if (Machine->sample_rate != 0)
 		MB87078_start(0, &mb87078_interface); /*chip #0*/
@@ -2563,552 +2558,375 @@ static void init_mb87078(void)
 }
 
 
-static const struct MachineDriver machine_driver_rastsag2 =
-{
+static MACHINE_DRIVER_START( rastsag2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			rastsag2_readmem,rastsag2_writemem,0,0,
-			rastansaga2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(rastsag2_readmem,rastsag2_writemem)
+	MDRV_CPU_VBLANK_INT(rastansaga2_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order0,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order0)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_rsaga2
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_rsaga2)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ashura =
-{
+
+static MACHINE_DRIVER_START( ashura )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			rastsag2_readmem,rastsag2_writemem,0,0,
-			rastansaga2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(rastsag2_readmem,rastsag2_writemem)
+	MDRV_CPU_VBLANK_INT(rastansaga2_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order0,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order0)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_crimec =
-{
+
+static MACHINE_DRIVER_START( crimec )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			crimec_readmem,crimec_writemem,0,0,
-			crimec_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(crimec_readmem,crimec_writemem)
+	MDRV_CPU_VBLANK_INT(crimec_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order1,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order1)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tetrist =
-{
+
+static MACHINE_DRIVER_START( tetrist )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ???*/
-			tetrist_readmem,tetrist_writemem,0,0,
-			rastansaga2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ???*/
+	MDRV_CPU_MEMORY(tetrist_readmem,tetrist_writemem)
+	MDRV_CPU_VBLANK_INT(rastansaga2_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order0,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order0)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_rsaga2
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_rsaga2)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_hitice =
-{
+static MACHINE_DRIVER_START( hitice )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			hitice_readmem,hitice_writemem,0,0,
-			hitice_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			hitice_sound_readmem, hitice_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(hitice_readmem,hitice_writemem)
+	MDRV_CPU_VBLANK_INT(hitice_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(hitice_sound_readmem,hitice_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	hitice_vh_start,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(hitice)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_rambo3 =
-{
+
+static MACHINE_DRIVER_START( rambo3 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			rambo3_readmem,rambo3_writemem,0,0,
-			rambo3_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(rambo3_readmem,rambo3_writemem)
+	MDRV_CPU_VBLANK_INT(rambo3_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(rambo3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	rambo3_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order0,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order0)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_rambo3a =
-{
+
+static MACHINE_DRIVER_START( rambo3a )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			rambo3_readmem,rambo3_writemem,0,0,
-			rambo3_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(rambo3_readmem,rambo3_writemem)
+	MDRV_CPU_VBLANK_INT(rambo3_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order2,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_pbobble =
-{
+
+static MACHINE_DRIVER_START( pbobble )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			pbobble_readmem,pbobble_writemem,0,0,
-			pbobble_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	init_mb87078,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(pbobble_readmem,pbobble_writemem)
+	MDRV_CPU_VBLANK_INT(pbobble_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(mb87078)
+	MDRV_NVRAM_HANDLER(taito_b)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order1,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order1)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610B,
-			&ym2610_interface_crimec
-		}
-	},
+	MDRV_SOUND_ADD(YM2610B, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-	nvram_handler
 
-};
+static MACHINE_DRIVER_START( spacedx )
 
-static const struct MachineDriver machine_driver_spacedx =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			spacedx_readmem,spacedx_writemem,0,0,
-			pbobble_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	init_mb87078,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(spacedx_readmem,spacedx_writemem)
+	MDRV_CPU_VBLANK_INT(pbobble_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(mb87078)
+	MDRV_NVRAM_HANDLER(taito_b)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order1,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order1)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	},
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-	nvram_handler
 
-};
+static MACHINE_DRIVER_START( spacedxo )
 
-static const struct MachineDriver machine_driver_spacedxo =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			spacedxo_readmem,spacedxo_writemem,0,0,
-			selfeena_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(spacedxo_readmem,spacedxo_writemem)
+	MDRV_CPU_VBLANK_INT(selfeena_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order2,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	},
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-};
 
-static const struct MachineDriver machine_driver_qzshowby =
-{
+static MACHINE_DRIVER_START( qzshowby )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz according to the readme*/
-			qzshowby_readmem,qzshowby_writemem,0,0,
-			pbobble_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	init_mb87078,
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz according to the readme*/
+	MDRV_CPU_MEMORY(qzshowby_readmem,qzshowby_writemem)
+	MDRV_CPU_VBLANK_INT(pbobble_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_MACHINE_INIT(mb87078)
+	MDRV_NVRAM_HANDLER(taito_b)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order1,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order1)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610B,
-			&ym2610_interface_crimec
-		}
-	},
+	MDRV_SOUND_ADD(YM2610B, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
-	nvram_handler
 
-};
+static MACHINE_DRIVER_START( viofight )
 
-static const struct MachineDriver machine_driver_viofight =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			viofight_readmem,viofight_writemem,0,0,
-			viofight_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			hitice_sound_readmem, hitice_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(viofight_readmem,viofight_writemem)
+	MDRV_CPU_VBLANK_INT(viofight_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(hitice_sound_readmem,hitice_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order2,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 #if 0
 static void masterw_patch(void)
@@ -3118,137 +2936,94 @@ static void masterw_patch(void)
 }
 #endif
 
-static const struct MachineDriver machine_driver_masterw =
-{
+static MACHINE_DRIVER_START( masterw )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			masterw_readmem,masterw_writemem,0,0,
-			masterw_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			masterw_sound_readmem, masterw_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0, /*masterw_patch,*/
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(masterw_readmem,masterw_writemem)
+	MDRV_CPU_VBLANK_INT(masterw_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(masterw_sound_readmem,masterw_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order2,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_silentd =
-{
+
+static MACHINE_DRIVER_START( silentd )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			silentd_readmem,silentd_writemem,0,0,
-			silentd_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(silentd_readmem,silentd_writemem)
+	MDRV_CPU_VBLANK_INT(silentd_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order2,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_rsaga2
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_rsaga2)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_selfeena =
-{
+
+static MACHINE_DRIVER_START( selfeena )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			selfeena_readmem,selfeena_writemem,0,0,
-			selfeena_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(selfeena_readmem,selfeena_writemem)
+	MDRV_CPU_VBLANK_INT(selfeena_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order2,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
 #if 0
 static void ryujin_patch(void)
@@ -3260,49 +3035,34 @@ static void ryujin_patch(void)
 }
 #endif
 
-static const struct MachineDriver machine_driver_ryujin =
-{
+static MACHINE_DRIVER_START( ryujin )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			selfeena_readmem,selfeena_writemem,0,0,
-			selfeena_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0, /*ryujin_patch,*/
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(selfeena_readmem,selfeena_writemem)
+	MDRV_CPU_VBLANK_INT(selfeena_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order2,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order2)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface_crimec
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
 #if 0
 static void sbm_patch(void)
@@ -3312,49 +3072,34 @@ static void sbm_patch(void)
 }
 #endif
 
-static const struct MachineDriver machine_driver_sbm =
-{
+static MACHINE_DRIVER_START( sbm )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			sbm_readmem,sbm_writemem,0,0,
-			sbm_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610B */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0, /*sbm_patch,*/
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(sbm_readmem,sbm_writemem)
+	MDRV_CPU_VBLANK_INT(sbm_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitob_eof_callback,
-	taitob_vh_start_color_order0,
-	taitob_vh_stop,
-	taitob_vh_screenrefresh,
+	MDRV_VIDEO_START(taitob_color_order0)
+	MDRV_VIDEO_EOF(taitob)
+	MDRV_VIDEO_UPDATE(taitob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610B,
-			&ym2610_interface_crimec
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610B, ym2610_interface_crimec)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

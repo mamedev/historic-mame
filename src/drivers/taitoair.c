@@ -171,9 +171,8 @@ cpu #0 (PC=00001EBC): unmapped word write to 00830000 = A6E7 & FFFF
 
 static data16_t *taitoh_68000_mainram;
 
-int		recordbr_vh_start(void);
-void 		syvalion_vh_stop (void);
-void		recordbr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( recordbr );
+VIDEO_UPDATE( recordbr );
 
 
 static WRITE16_HANDLER( airsys_paletteram16_w )	/* xxBBBBxRRRRxGGGG */
@@ -540,47 +539,33 @@ static struct YM2610interface airsys_ym2610_interface =
 				MACHINE DRIVERS
 ************************************************************/
 
-static const struct MachineDriver machine_driver_airsys =
-{
-	{
-		{
-			CPU_M68000,
-			24000000 / 2,		/* 12 MHz ??? */
-			airsys_readmem, airsys_writemem, 0, 0,
-			m68_level5_irq, 1
-		},
-		{
-			CPU_Z80,
-			8000000 / 2,		/* 4 MHz ??? */
-			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt, 0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+static MACHINE_DRIVER_START( airsys )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(airsys_readmem,airsys_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	64*16, 64*16, { 0*16, 32*16-1, 3*16, 28*16-1 },
-	airsys_gfxdecodeinfo,
-	512*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*16, 64*16)
+	MDRV_VISIBLE_AREA(0*16, 32*16-1, 3*16, 28*16-1)
+	MDRV_GFXDECODE(airsys_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	recordbr_vh_start,
-	syvalion_vh_stop,
-	recordbr_vh_screenrefresh,
+	MDRV_VIDEO_START(recordbr)
+	MDRV_VIDEO_UPDATE(recordbr)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&airsys_ym2610_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM2610, airsys_ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /*************************************************************
@@ -680,7 +665,7 @@ ROM_START( ainferno )
 ROM_END
 
 
-static void init_ainferno(void)
+static DRIVER_INIT( ainferno )
 {
 #if 1
 	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
@@ -697,7 +682,7 @@ static void init_ainferno(void)
 }
 
 
-static void init_topland(void)
+static DRIVER_INIT( topland )
 {
 #if 1
 	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);

@@ -138,7 +138,7 @@ static void get_text_tile_info(int tile_index)
 			0)
 }
 
-int dcon_vh_start(void)
+VIDEO_START( dcon )
 {
 	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
 	foreground_layer = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -157,7 +157,7 @@ int dcon_vh_start(void)
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay;
@@ -189,17 +189,17 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 					drawgfx(bitmap,Machine->gfx[4],
 						sprite++,
 						color,fx,fy,x+ax*16,y+ay*16,
-						&Machine->visible_area,TRANSPARENCY_PEN,15);
+						cliprect,TRANSPARENCY_PEN,15);
 				else
 					drawgfx(bitmap,Machine->gfx[4],
 						sprite++,
 						color,fx,fy,x+(dx-1-ax)*16,y+ay*16,
-						&Machine->visible_area,TRANSPARENCY_PEN,15);
+						cliprect,TRANSPARENCY_PEN,15);
 			}
 	}
 }
 
-void dcon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dcon )
 {
 	/* Setup the tilemaps */
 	tilemap_set_scrollx( background_layer,0, dcon_scroll_ram[0] );
@@ -210,20 +210,20 @@ void dcon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( foreground_layer,0, dcon_scroll_ram[5] );
 
 	if ((dcon_enable&1)!=1)
-		tilemap_draw(bitmap,background_layer,0,0);
+		tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	else
-		fillbitmap(bitmap,Machine->pens[15],&Machine->visible_area); /* Should always be black, not pen 15 */
+		fillbitmap(bitmap,Machine->pens[15],cliprect); /* Should always be black, not pen 15 */
 
-	draw_sprites(bitmap,2);
-	tilemap_draw(bitmap,midground_layer,0,0);
-	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,foreground_layer,0,0);
-	draw_sprites(bitmap,0);
-	draw_sprites(bitmap,3);
-	tilemap_draw(bitmap,text_layer,0,0);
+	draw_sprites(bitmap,cliprect,2);
+	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+	draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
+	draw_sprites(bitmap,cliprect,0);
+	draw_sprites(bitmap,cliprect,3);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }
 
-void sdgndmps_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sdgndmps )
 {
 	static int last_gfx_bank=0;
 
@@ -243,15 +243,15 @@ void sdgndmps_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( text_layer,0, /*dcon_scroll_ram[7] + */ 0 );
 
 	if ((dcon_enable&1)!=1)
-		tilemap_draw(bitmap,background_layer,0,0);
+		tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	else
-		fillbitmap(bitmap,Machine->pens[15],&Machine->visible_area); /* Should always be black, not pen 15 */
+		fillbitmap(bitmap,Machine->pens[15],cliprect); /* Should always be black, not pen 15 */
 
-	draw_sprites(bitmap,2);
-	tilemap_draw(bitmap,midground_layer,0,0);
-	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,foreground_layer,0,0);
-	draw_sprites(bitmap,0);
-	draw_sprites(bitmap,3);
-	tilemap_draw(bitmap,text_layer,0,0);
+	draw_sprites(bitmap,cliprect,2);
+	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+	draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
+	draw_sprites(bitmap,cliprect,0);
+	draw_sprites(bitmap,cliprect,3);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }

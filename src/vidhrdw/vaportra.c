@@ -61,7 +61,7 @@ static void get_fg_tile_info(int tile_index)
 
 /******************************************************************************/
 
-int vaportra_vh_start(void)
+VIDEO_START( vaportra )
 {
 	pf1_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
 	pf2_tilemap = tilemap_create(get_bg2_tile_info,vaportra_scan,    TILEMAP_TRANSPARENT,16,16,64,32);
@@ -155,7 +155,7 @@ WRITE16_HANDLER( vaportra_palette_24bit_b_w )
 
 /******************************************************************************/
 
-static void vaportra_drawsprites(struct mame_bitmap *bitmap, int pri)
+static void vaportra_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	int offs,priority_value;
 
@@ -216,7 +216,7 @@ static void vaportra_drawsprites(struct mame_bitmap *bitmap, int pri)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}
@@ -224,7 +224,7 @@ static void vaportra_drawsprites(struct mame_bitmap *bitmap, int pri)
 }
 
 
-void vaportra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( vaportra )
 {
 	int pri=vaportra_control_2[0];
 
@@ -250,30 +250,30 @@ void vaportra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	/* Draw playfields */
 	if (pri==0) {
-		tilemap_draw(bitmap,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,pf2_tilemap,0,0);
-		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,pf3_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+		vaportra_drawsprites(bitmap,cliprect,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
 	}
 	else if (pri==1) {
-		tilemap_draw(bitmap,pf2_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,pf4_tilemap,0,0);
-		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,pf3_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
+		vaportra_drawsprites(bitmap,cliprect,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
 	}
 	else if (pri==2) {
-		tilemap_draw(bitmap,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,pf3_tilemap,0,0);
-		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,pf2_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
+		vaportra_drawsprites(bitmap,cliprect,0);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 	}
 	else {
-		tilemap_draw(bitmap,pf2_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,pf3_tilemap,0,0);
-		vaportra_drawsprites(bitmap,0);
-		tilemap_draw(bitmap,pf4_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
+		vaportra_drawsprites(bitmap,cliprect,0);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
 	}
 
-	vaportra_drawsprites(bitmap,1);
-	tilemap_draw(bitmap,pf1_tilemap,0,0);
+	vaportra_drawsprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 }

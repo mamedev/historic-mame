@@ -16,8 +16,8 @@ TO DO:
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw/flkatck.c */
-int flkatck_vh_start(void);
-void flkatck_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
+VIDEO_START( flkatck );
+VIDEO_UPDATE( flkatck );
 WRITE_HANDLER( flkatck_k007121_w );
 WRITE_HANDLER( flkatck_k007121_regs_w );
 
@@ -26,7 +26,7 @@ extern int flkatck_irq_enabled;
 
 /***************************************************************************/
 
-static void flkatck_init_machine( void )
+static MACHINE_INIT( flkatck )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A, bank_B;
@@ -36,12 +36,10 @@ static void flkatck_init_machine( void )
 	K007232_bankswitch(0,RAM + bank_A,RAM + bank_B);
 }
 
-static int flkatck_interrupt( void )
+static INTERRUPT_GEN( flkatck_interrupt )
 {
 	if (flkatck_irq_enabled)
-		return HD6309_INT_IRQ;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
 static WRITE_HANDLER( flkatck_bankswitch_w )
@@ -89,7 +87,7 @@ static WRITE_HANDLER( flkatck_ls138_w )
 			soundlatch_w(0, data);
 			break;
 		case 0x06:	/* Cause interrupt on audio CPU */
-			cpu_cause_interrupt(1,Z80_IRQ_INT);
+			cpu_set_irq_line(1,0,HOLD_LINE);
 			break;
 		case 0x07:	/* watchdog reset */
 			watchdog_reset_w(0, data);
@@ -283,50 +281,37 @@ static struct K007232_interface k007232_interface =
 };
 
 
-static const struct MachineDriver machine_driver_flkatck =
-{
-	{
-		{
-			CPU_HD6309, /* HD63C09EP */
-			3000000,	/* 24/8 MHz*/
-			flkatck_readmem,flkatck_writemem,0,0,
-			flkatck_interrupt,1
-		},
-		{
-			CPU_Z80,	/* NEC D780C-1 */
-			3579545,	/* 3.579545 MHz */
-			flkatck_readmem_sound, flkatck_writemem_sound,0,0,
-			ignore_interrupt,0	/* IRQs triggered by the 6309 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	flkatck_init_machine,
+static MACHINE_DRIVER_START( flkatck )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(HD6309,3000000) /* HD63C09EP, 24/8 MHz */
+	MDRV_CPU_MEMORY(flkatck_readmem,flkatck_writemem)
+	MDRV_CPU_VBLANK_INT(flkatck_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,3579545)	/* NEC D780C-1, 3.579545 MHz */
+	MDRV_CPU_MEMORY(flkatck_readmem_sound,flkatck_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_MACHINE_INIT(flkatck)
 
 	/* video hardware */
-	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	flkatck_vh_start,
-	0,
-	flkatck_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(37*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 35*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(flkatck)
+	MDRV_VIDEO_UPDATE(flkatck)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 

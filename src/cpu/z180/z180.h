@@ -133,7 +133,7 @@ extern int z180_execute(int cycles);
 extern void z180_burn(int cycles);
 extern unsigned z180_get_context (void *dst);
 extern void z180_set_context (void *src);
-extern void *z180_get_cycle_table (int which);
+extern const void *z180_get_cycle_table (int which);
 extern void z180_set_cycle_table (int which, void *new_tbl);
 extern unsigned z180_get_reg (int regnum);
 extern READ_HANDLER( z180_internal_r );

@@ -25,6 +25,8 @@
 	Yakyuu Kakutou League-Man (Japan)		(c) 1993 Irem Corp
 	Perfect Soldiers (Japan)		M92-G	(c) 1993 Irem Corp
 	Dream Soccer 94 (Japan)			M92-G	(c) 1994 Irem Corp
+	Gunforce 2 (US)					M92-G	(c) 1994 Irem Corp
+	Geostorm (Japan)				M92-G	(c) 1994 Irem Corp
 
 System notes:
 	Each game has an encrypted sound cpu (see irem_cpu.c), the sound cpu and
@@ -91,8 +93,10 @@ R-Type Leo					  1992  Rev 3.45 M92
 In The Hunt					  1993  Rev 3.45 M92
 Ninja Baseball Batman		  1993  Rev 3.50 M92
 Perfect Soldiers			  1993  Rev 3.50 M92
+World PK Soccer               1995  Rev 3.51 M92
 Fire Barrel                   1993  Rev 3.52 M92
 Dream Soccer '94              1994  Rev 3.53 M92
+Gunforce 2                    1994  Rev 3.53 M92
 
 *****************************************************************************/
 
@@ -102,7 +106,7 @@ Dream Soccer '94              1994  Rev 3.53 M92
 #include "machine/irem_cpu.h"
 
 static int m92_irq_vectorbase;
-static unsigned char *m92_ram;
+static unsigned char *m92_ram,*m92_snd_ram;
 
 #define M92_IRQ_0 ((m92_irq_vectorbase+0)/4)  /* VBL interrupt*/
 #define M92_IRQ_1 ((m92_irq_vectorbase+4)/4)  /* Sprite buffer complete interrupt */
@@ -122,9 +126,8 @@ WRITE_HANDLER( m92_pf1_control_w );
 WRITE_HANDLER( m92_pf2_control_w );
 WRITE_HANDLER( m92_pf3_control_w );
 WRITE_HANDLER( m92_master_control_w );
-int m92_vh_start(void);
-void m92_vh_stop(void);
-void m92_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( m92 );
+VIDEO_UPDATE( m92 );
 void m92_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line);
 
 extern int m92_raster_irq_position,m92_raster_enable;
@@ -137,14 +140,14 @@ extern int m92_sprite_buffer_busy,m92_game_kludge;
 static READ_HANDLER( m92_eeprom_r )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
-//	logerror("%05x: EEPROM RE %04x\n",cpu_get_pc(),offset);
+//	logerror("%05x: EEPROM RE %04x\n",activecpu_get_pc(),offset);
 	return RAM[offset/2];
 }
 
 static WRITE_HANDLER( m92_eeprom_w )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
-//	logerror("%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
+//	logerror("%05x: EEPROM WR %04x\n",activecpu_get_pc(),offset);
 	RAM[offset/2]=data;
 }
 
@@ -213,7 +216,7 @@ static int sound_status;
 
 static READ_HANDLER( m92_sound_status_r )
 {
-//logerror("%06x: read sound status\n",cpu_get_pc());
+//logerror("%06x: read sound status\n",activecpu_get_pc());
 	if (offset == 0)
 		return sound_status&0xff;
 	return sound_status>>8;
@@ -240,7 +243,7 @@ static WRITE_HANDLER( m92_sound_status_w )
 {
 	if (offset == 0) {
 		sound_status = data | (sound_status&0xff00);
-		cpu_cause_interrupt(0,M92_IRQ_3);
+		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,M92_IRQ_3);
 	}
 	else
 		sound_status = (data<<8) | (sound_status&0xff);
@@ -327,7 +330,7 @@ MEMORY_END
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x00000, 0x1ffff, MWA_ROM },
 	{ 0x9ff00, 0x9ffff, MWA_NOP }, /* Irq controller? */
-	{ 0xa0000, 0xa3fff, MWA_RAM },
+	{ 0xa0000, 0xa3fff, MWA_RAM, &m92_snd_ram },
 	{ 0xa8000, 0xa803f, IremGA20_w },
 	{ 0xa8040, 0xa8041, YM2151_register_port_0_w },
 	{ 0xa8042, 0xa8043, YM2151_data_port_0_w },
@@ -1090,15 +1093,15 @@ static struct IremGA20_interface iremGA20_interface =
 
 /***************************************************************************/
 
-static int m92_interrupt(void)
+static INTERRUPT_GEN( m92_interrupt )
 {
 	if (osd_skip_this_frame()==0)
 		m92_vh_raster_partial_refresh(Machine->scrbitmap,0,249);
 
-	return M92_IRQ_0; /* VBL */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, M92_IRQ_0); /* VBL */
 }
 
-static int m92_raster_interrupt(void)
+static INTERRUPT_GEN( m92_raster_interrupt )
 {
 	static int last_line=0;
 	int line = M92_SCANLINES - cpu_getiloops();
@@ -1108,222 +1111,149 @@ static int m92_raster_interrupt(void)
 		if (osd_skip_this_frame()==0)
 			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,line+1);
 		last_line=line+1;
-		return M92_IRQ_2;
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, M92_IRQ_2);
 	}
 
 	/* Redraw screen, then set vblank and trigger the VBL interrupt */
-	if (line==249) { /* 248 is last visible line */
+	else if (line==249) { /* 248 is last visible line */
 		if (osd_skip_this_frame()==0)
 			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,249);
 		last_line=249;
-		return M92_IRQ_0;
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, M92_IRQ_0);
 	}
 
 	/* End of vblank */
-	if (line==M92_SCANLINES-1) {
+	else if (line==M92_SCANLINES-1) {
 		last_line=0;
-		return ignore_interrupt();
 	}
-
-	return ignore_interrupt();
 }
 
 void m92_sprite_interrupt(void)
 {
-	cpu_cause_interrupt(0,M92_IRQ_1);
+	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,M92_IRQ_1);
 }
 
-static struct MachineDriver machine_driver_raster =
-{
+static MACHINE_DRIVER_START( raster )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V33,	/* NEC V33 */
-			18000000,	/* 18 MHz clock */
-			readmem,writemem,readport,writeport,
-			m92_raster_interrupt,M92_SCANLINES /* First visible line 8? */
-		},
-		{
-			CPU_V30, //| CPU_AUDIO_CPU,
-			14318180,	/* 14.31818 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(V33,18000000)	/* NEC V33, 18 MHz clock */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(m92_raster_interrupt,M92_SCANLINES) /* First visible line 8? */
+
+	MDRV_CPU_ADD(V30, 14318180)	/* 14.31818 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(80, 511-112, 128+8, 511-128-8) /* 320 x 240 */
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	m92_vh_start,
-	m92_vh_stop,
-	m92_vh_screenrefresh,
+	MDRV_VIDEO_START(m92)
+	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_IREMGA20,
-			&iremGA20_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_nonraster =
-{
+
+static MACHINE_DRIVER_START( nonraster )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V33,	/* NEC V33 */
-			18000000,	/* 18 MHz clock */
-			readmem,writemem,readport,writeport,
-			m92_interrupt,1
-		},
-		{
-			CPU_V30 | CPU_AUDIO_CPU,
-			14318180,	/* 14.31818 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(V33, 18000000)	 /* NEC V33, 18 MHz clock */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
+
+	MDRV_CPU_ADD(V30, 14318180)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(80, 511-112, 128+8, 511-128-8) /* 320 x 240 */
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	m92_vh_start,
-	m92_vh_stop,
-	m92_vh_screenrefresh,
+	MDRV_VIDEO_START(m92)
+	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_IREMGA20,
-			&iremGA20_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_lethalth =
-{
+
+static MACHINE_DRIVER_START( lethalth )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V33,	/* NEC V33 */
-			18000000,	/* 18 MHz clock */
-			lethalth_readmem,lethalth_writemem,readport,writeport,
-			m92_interrupt,1
-		},
-		{
-			CPU_V30 | CPU_AUDIO_CPU,
-			14318180,	/* 14.31818 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(V33, 18000000)	/* NEC V33, 18 MHz clock */
+	MDRV_CPU_MEMORY(lethalth_readmem,lethalth_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
+
+	MDRV_CPU_ADD(V30, 14318180)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(80, 511-112, 128+8, 511-128-8) /* 320 x 240 */
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	m92_vh_start,
-	m92_vh_stop,
-	m92_vh_screenrefresh,
+	MDRV_VIDEO_START(m92)
+	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_IREMGA20,
-			&iremGA20_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_psoldier =
-{
+
+static MACHINE_DRIVER_START( psoldier )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V33,	/* NEC V33 */
-			18000000,	/* 18 MHz clock */
-			readmem,writemem,readport,writeport,
-			m92_interrupt,1
-		},
-		{
-			CPU_V30 | CPU_AUDIO_CPU,
-			14318180,	/* 14.31818 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(V33, 18000000)		/* NEC V33, 18 MHz clock */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(m92_interrupt,1)
+
+	MDRV_CPU_ADD(V30, 14318180)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.31818 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(80, 511-112, 128+8, 511-128-8) /* 320 x 240 */
+	MDRV_GFXDECODE(gfxdecodeinfo2)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo2,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	m92_vh_start,
-	m92_vh_stop,
-	m92_vh_screenrefresh,
+	MDRV_VIDEO_START(m92)
+	MDRV_VIDEO_UPDATE(m92)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_IREMGA20,
-			&iremGA20_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -1965,11 +1895,65 @@ ROM_START( dsccr94j )
 	ROM_LOAD("ds_da0.rom" ,  0x000000, 0x100000, 0x67fc52fd )
 ROM_END
 
+ROM_START( gunforc2 )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE("a2-h0-a.6h", 0x000001, 0x040000, 0x49965e22 )
+	ROM_LOAD16_BYTE("a2-l0-a.8h", 0x000000, 0x040000, 0x8c88b278 )
+	ROM_LOAD16_BYTE("a2-h1-a.6f", 0x100001, 0x040000, 0x34280b88 )
+	ROM_LOAD16_BYTE("a2-l1-a.8f", 0x100000, 0x040000, 0xc8c13f51 )
+
+	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("a2_sho.3l",   0x000001, 0x010000, 0x2e2d103d )
+	ROM_LOAD16_BYTE("a2_slo.5l",   0x000000, 0x010000, 0x2287e0b3 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD("a2_c0.1a",   0x000000, 0x080000, 0x68b8f574 )
+	ROM_LOAD("a2_c1.1b",   0x080000, 0x080000, 0x0b9efe67 )
+	ROM_LOAD("a2_c2.3a",   0x100000, 0x080000, 0x7a9e9978 )
+	ROM_LOAD("a2_c3.3b",   0x180000, 0x080000, 0x1395ee6d )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "a2_000.8a", 0x000000, 0x100000, 0x38e03147 )
+	ROM_LOAD( "a2_010.8b", 0x100000, 0x100000, 0x1d5b05f8 )
+	ROM_LOAD( "a2_020.8c", 0x200000, 0x100000, 0xf2f461cc )
+	ROM_LOAD( "a2_030.8d", 0x300000, 0x100000, 0x97609d9d )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )
+	ROM_LOAD("a2_da.1l" ,  0x000000, 0x100000, 0x3c8cdb6a )
+ROM_END
+
+ROM_START( geostorm )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE("geo-h0.bin", 0x000001, 0x040000, 0x9be58d09 )
+	ROM_LOAD16_BYTE("geo-l0.bin", 0x000000, 0x040000, 0x59abb75d )
+	ROM_LOAD16_BYTE("a2-h1-a.6f", 0x100001, 0x040000, 0x34280b88 )
+	ROM_LOAD16_BYTE("a2-l1-a.8f", 0x100000, 0x040000, 0xc8c13f51 )
+
+	ROM_REGION( 0x100000 * 2, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("a2_sho.3l",   0x000001, 0x010000, 0x2e2d103d )
+	ROM_LOAD16_BYTE("a2_slo.5l",   0x000000, 0x010000, 0x2287e0b3 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* chars */
+	ROM_LOAD("a2_c0.1a",   0x000000, 0x080000, 0x68b8f574 )
+	ROM_LOAD("a2_c1.1b",   0x080000, 0x080000, 0x0b9efe67 )
+	ROM_LOAD("a2_c2.3a",   0x100000, 0x080000, 0x7a9e9978 )
+	ROM_LOAD("a2_c3.3b",   0x180000, 0x080000, 0x1395ee6d )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "a2_000.8a", 0x000000, 0x100000, 0x38e03147 )
+	ROM_LOAD( "a2_010.8b", 0x100000, 0x100000, 0x1d5b05f8 )
+	ROM_LOAD( "a2_020.8c", 0x200000, 0x100000, 0xf2f461cc )
+	ROM_LOAD( "a2_030.8d", 0x300000, 0x100000, 0x97609d9d )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )
+	ROM_LOAD("a2_da.1l" ,  0x000000, 0x100000, 0x3c8cdb6a )
+ROM_END
+
 /***************************************************************************/
 
 static READ_HANDLER( lethalth_cycle_r )
 {
-	if (cpu_get_pc()==0x1f4 && m92_ram[0x1e]==2 && offset==0)
+	if (activecpu_get_pc()==0x1f4 && m92_ram[0x1e]==2 && offset==0)
 		cpu_spinuntil_int();
 
 	return m92_ram[0x1e + offset];
@@ -1977,7 +1961,7 @@ static READ_HANDLER( lethalth_cycle_r )
 
 static READ_HANDLER( hook_cycle_r )
 {
-	if (cpu_get_pc()==0x55ba && m92_ram[0x12]==0 && m92_ram[0x13]==0 && offset==0)
+	if (activecpu_get_pc()==0x55ba && m92_ram[0x12]==0 && m92_ram[0x13]==0 && offset==0)
 		cpu_spinuntil_int();
 
 	return m92_ram[0x12 + offset];
@@ -1989,7 +1973,7 @@ static READ_HANDLER( bmaster_cycle_r )
 
 	/* If possible skip this cpu segment - idle loop */
 	if (d>159 && d<0xf0000000) {
-		if (cpu_get_pc()==0x410 && m92_ram[0x6fde]==0 && m92_ram[0x6fdf]==0 && offset==0) {
+		if (activecpu_get_pc()==0x410 && m92_ram[0x6fde]==0 && m92_ram[0x6fdf]==0 && offset==0) {
 			/* Adjust in-game counter, based on cycles left to run */
 			int old;
 
@@ -2009,10 +1993,21 @@ static READ_HANDLER( psoldier_cycle_r )
 	int b=m92_ram[0x1aec]+(m92_ram[0x1aed]<<8);
 	int c=m92_ram[0x1aea]+(m92_ram[0x1aeb]<<8);
 
-	if (cpu_get_pc()==0x2dae && b!=a && c!=a && offset==0)
+	if (activecpu_get_pc()==0x2dae && b!=a && c!=a && offset==0)
 		cpu_spinuntil_int();
 
 	return m92_ram[0x1aec + offset];
+}
+
+static READ_HANDLER( psoldier_snd_cycle_r )
+{
+	int a=m92_snd_ram[0xc34];
+//logerror("%08x: %d %d\n",activecpu_get_pc(),a,offset);
+	if (activecpu_get_pc()==0x8f0 && (a&0x80)!=0x80 && offset==0) {
+		cpu_spinuntil_int();
+	}
+
+	return m92_snd_ram[0xc34 + offset];
 }
 
 static READ_HANDLER( inthunt_cycle_r )
@@ -2022,7 +2017,7 @@ static READ_HANDLER( inthunt_cycle_r )
 
 	/* If possible skip this cpu segment - idle loop */
 	if (d>159 && d<0xf0000000 && line<247) {
-		if (cpu_get_pc()==0x858 && m92_ram[0x25f]==0 && offset==1) {
+		if (activecpu_get_pc()==0x858 && m92_ram[0x25f]==0 && offset==1) {
 			/* Adjust in-game counter, based on cycles left to run */
 			int old;
 
@@ -2048,7 +2043,7 @@ static READ_HANDLER( uccops_cycle_r )
 
 	/* If possible skip this cpu segment - idle loop */
 	if (d>159 && d<0xf0000000 && line<247) {
-		if ((cpu_get_pc()==0x900ff || cpu_get_pc()==0x90103) && b==c && offset==1) {
+		if ((activecpu_get_pc()==0x900ff || activecpu_get_pc()==0x90103) && b==c && offset==1) {
 			cpu_spinuntil_int();
 			/* Update internal counter based on cycles left to run */
 			a=(a+d/127)&0xffff; /* 127 cycles per loop increment */
@@ -2062,7 +2057,7 @@ static READ_HANDLER( uccops_cycle_r )
 
 static READ_HANDLER( rtypeleo_cycle_r )
 {
-	if (cpu_get_pc()==0x307a3 && offset==0 && m92_ram[0x32]==2 && m92_ram[0x33]==0)
+	if (activecpu_get_pc()==0x307a3 && offset==0 && m92_ram[0x32]==2 && m92_ram[0x33]==0)
 		cpu_spinuntil_int();
 
 	return m92_ram[0x32 + offset];
@@ -2077,7 +2072,7 @@ static READ_HANDLER( gunforce_cycle_r )
 
 	/* If possible skip this cpu segment - idle loop */
 	if (d>159 && d<0xf0000000 && line<247) {
-		if (cpu_get_pc()==0x40a && ((b&0x8000)==0) && offset==1) {
+		if (activecpu_get_pc()==0x40a && ((b&0x8000)==0) && offset==1) {
 			cpu_spinuntil_int();
 			/* Update internal counter based on cycles left to run */
 			a=(a+d/80)&0xffff; /* 80 cycles per loop increment */
@@ -2094,7 +2089,7 @@ static READ_HANDLER( dsccr94j_cycle_r )
 	int a=m92_ram[0x965a]+(m92_ram[0x965b]<<8);
 	int d=cpu_geticount();
 
-	if (cpu_get_pc()==0x988 && m92_ram[0x8636]==0 && offset==0) {
+	if (activecpu_get_pc()==0x988 && m92_ram[0x8636]==0 && offset==0) {
 		cpu_spinuntil_int();
 
 		/* Update internal counter based on cycles left to run */
@@ -2104,6 +2099,36 @@ static READ_HANDLER( dsccr94j_cycle_r )
 	}
 
 	return m92_ram[0x8636 + offset];
+}
+
+static READ_HANDLER( gunforc2_cycle_r )
+{
+	int a=m92_ram[0x9fa0]+(m92_ram[0x9fa1]<<8);
+	int b=m92_ram[0x9fa2]+(m92_ram[0x9fa3]<<8);
+	int c=m92_ram[0xa6aa]+(m92_ram[0xa6ab]<<8);
+	int d=cpu_geticount();
+
+	if (activecpu_get_pc()==0x510 && a==b && offset==0) {
+		cpu_spinuntil_int();
+
+		/* Update internal counter based on cycles left to run */
+		c=(c+d/62)&0xffff; /* 62 cycles per loop increment */
+		m92_ram[0xa6aa]=a&0xff;
+		m92_ram[0xa6ab]=a>>8;
+	}
+
+	return m92_ram[0x9fa0 + offset];
+}
+
+static READ_HANDLER( gunforc2_snd_cycle_r )
+{
+	int a=m92_snd_ram[0xc31];
+
+	if (activecpu_get_pc()==0x8aa && a!=3 && offset==1) {
+		cpu_spinuntil_int();
+	}
+
+	return m92_snd_ram[0xc30 + offset];
 }
 
 /***************************************************************************/
@@ -2128,43 +2153,43 @@ static void m92_startup(void)
 	m92_sprite_buffer_busy=0x80;
 }
 
-static void init_m92(unsigned char *decryption_table)
+static void init_m92(const unsigned char *decryption_table)
 {
 	m92_startup();
 	setvector_callback(VECTOR_INIT);
 	irem_cpu_decrypt(1,decryption_table);
 }
 
-static void init_bmaster(void)
+static DRIVER_INIT( bmaster )
 {
 	install_mem_read_handler(0, 0xe6fde, 0xe6fdf, bmaster_cycle_r);
 	init_m92(bomberman_decryption_table);
 }
 
-static void init_gunforce(void)
+static DRIVER_INIT( gunforce )
 {
 	install_mem_read_handler(0, 0xe61d0, 0xe61d1, gunforce_cycle_r);
 	init_m92(gunforce_decryption_table);
 }
 
-static void init_hook(void)
+static DRIVER_INIT( hook )
 {
 	install_mem_read_handler(0, 0xe0012, 0xe0013, hook_cycle_r);
 	init_m92(hook_decryption_table);
 }
 
-static void init_mysticri(void)
+static DRIVER_INIT( mysticri )
 {
 	init_m92(mysticri_decryption_table);
 }
 
-static void init_uccops(void)
+static DRIVER_INIT( uccops )
 {
 	install_mem_read_handler(0, 0xe3a02, 0xe3a03, uccops_cycle_r);
 	init_m92(dynablaster_decryption_table);
 }
 
-static void init_rtypeleo(void)
+static DRIVER_INIT( rtypeleo )
 {
 	install_mem_read_handler(0, 0xe0032, 0xe0033, rtypeleo_cycle_r);
 	init_m92(rtypeleo_decryption_table);
@@ -2172,7 +2197,7 @@ static void init_rtypeleo(void)
 	m92_game_kludge=1;
 }
 
-static void init_majtitl2(void)
+static DRIVER_INIT( majtitl2 )
 {
 	init_m92(majtitl2_decryption_table);
 
@@ -2183,13 +2208,13 @@ static void init_majtitl2(void)
 	m92_game_kludge=2;
 }
 
-static void init_inthunt(void)
+static DRIVER_INIT( inthunt )
 {
 	install_mem_read_handler(0, 0xe025e, 0xe025f, inthunt_cycle_r);
 	init_m92(inthunt_decryption_table);
 }
 
-static void init_lethalth(void)
+static DRIVER_INIT( lethalth )
 {
 	install_mem_read_handler(0, 0xe001e, 0xe001f, lethalth_cycle_r);
 	init_m92(lethalth_decryption_table);
@@ -2201,7 +2226,7 @@ static void init_lethalth(void)
 	m92_game_kludge=3; /* No upper palette bank? It could be a different motherboard */
 }
 
-static void init_nbbatman(void)
+static DRIVER_INIT( nbbatman )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -2210,19 +2235,31 @@ static void init_nbbatman(void)
 	memcpy(RAM+0x80000,RAM+0x100000,0x20000);
 }
 
-static void init_psoldier(void)
+static DRIVER_INIT( psoldier )
 {
 	install_mem_read_handler(0, 0xe1aec, 0xe1aed, psoldier_cycle_r);
+	install_mem_read_handler(1, 0xa0c34, 0xa0c35, psoldier_snd_cycle_r);
+
 	init_m92(psoldier_decryption_table);
 	m92_irq_vectorbase=0x20;
 	/* main CPU expects an answer even before writing the first command */
 	sound_status = 0x80;
 }
 
-static void init_dsccr94j(void)
+static DRIVER_INIT( dsccr94j )
 {
 	install_mem_read_handler(0, 0xe8636, 0xe8637, dsccr94j_cycle_r);
 	init_m92(dsoccr94_decryption_table);
+}
+
+static DRIVER_INIT( gunforc2 )
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	init_m92(lethalth_decryption_table);
+	memcpy(RAM+0x80000,RAM+0x100000,0x20000);
+
+	install_mem_read_handler(0, 0xe9fa0, 0xe9fa1, gunforc2_cycle_r);
+	install_mem_read_handler(1, 0xa0c30, 0xa0c31, gunforc2_snd_cycle_r);
 }
 
 /***************************************************************************/
@@ -2251,3 +2288,5 @@ GAMEX(1993, nbbatman, 0,        raster,    nbbatman, nbbatman, ROT0,   "Irem Ame
 GAMEX(1993, leaguemn, nbbatman, raster,    nbbatman, nbbatman, ROT0,   "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1993, psoldier, 0,        psoldier,  psoldier, psoldier, ROT0,   "Irem",         "Perfect Soldiers (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1994, dsccr94j, dsoccr94, psoldier,  dsccr94j, dsccr94j, ROT0,   "Irem",         "Dream Soccer '94 (Japan)" )
+GAME( 1994, gunforc2, 0,        raster,    gunforce, gunforc2, ROT0,   "Irem",         "Gunforce 2 (US)" )
+GAME( 1994, geostorm, gunforc2, raster,    gunforce, gunforc2, ROT0,   "Irem",         "Geostorm (Japan)" )

@@ -37,7 +37,7 @@ static int palette_bank;
   bit 0 -- Unused
 
 ***************************************************************************/
-void vicdual_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( vicdual )
 {
 	int i;
 	/* for b&w games we'll use the Head On PROM */
@@ -136,12 +136,12 @@ WRITE_HANDLER( vicdual_palette_bank_w )
   the main emulation engine.
 
 ***************************************************************************/
-void vicdual_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( vicdual )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -173,7 +173,7 @@ void vicdual_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,
 					(charcode >> 5) + 8 * palette_bank,
 					0,0,
@@ -182,6 +182,7 @@ void vicdual_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	for (offs = 0;offs < 256;offs++)

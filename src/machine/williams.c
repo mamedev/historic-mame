@@ -46,6 +46,7 @@ static WRITE_HANDLER( playball_snd_cmd_w );
 static UINT8 port_select;
 static WRITE_HANDLER( williams_port_select_w );
 static READ_HANDLER( williams_input_port_0_3_r );
+static READ_HANDLER( williams_input_port_49way_0_5_r );
 static READ_HANDLER( williams_input_port_1_4_r );
 static READ_HANDLER( williams_49way_port_0_r );
 
@@ -109,6 +110,14 @@ struct pia6821_interface williams_49way_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ williams_49way_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+/* Muxing 49-way joystick PIA 0 for Blaster kit */
+struct pia6821_interface williams_49way_muxed_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_49way_0_5_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, williams_port_select_w,
 	/*irqs   : A/B             */ 0, 0
 };
 
@@ -262,7 +271,7 @@ static void williams_va11_callback(int scanline)
 	pia_1_cb1_w(0, scanline & 0x20);
 
 	/* update the screen while we're here */
-	williams_vh_update(scanline);
+	force_partial_update(scanline - 1);
 
 	/* set a timer for the next update */
 	scanline += 8;
@@ -319,7 +328,7 @@ static void williams_snd_irq(int state)
  *
  *************************************/
 
-void williams_init_machine(void)
+MACHINE_INIT( williams )
 {
 	/* reset the PIAs */
 	pia_reset();
@@ -455,6 +464,15 @@ READ_HANDLER( williams_49way_port_0_r )
 }
 
 
+READ_HANDLER( williams_input_port_49way_0_5_r )
+{
+	if (port_select)
+		return williams_49way_port_0_r(0);
+	else
+		return readinputport(5);
+}
+
+
 
 /*************************************
  *
@@ -469,7 +487,7 @@ static void williams2_va11_callback(int scanline)
 	pia_1_ca1_w(0, scanline & 0x20);
 
 	/* update the screen while we're here */
-	williams_vh_update(scanline);
+	force_partial_update(scanline);
 
 	/* set a timer for the next update */
 	scanline += 8;
@@ -505,7 +523,7 @@ static void williams2_endscreen_callback(int param)
  *
  *************************************/
 
-void williams2_init_machine(void)
+MACHINE_INIT( williams2 )
 {
 	/* reset the PIAs */
 	pia_reset();
@@ -634,10 +652,10 @@ WRITE_HANDLER( williams2_7segment_w )
  *
  *************************************/
 
-void defender_init_machine(void)
+MACHINE_INIT( defender )
 {
 	/* standard init */
-	williams_init_machine();
+	machine_init_williams();
 
 	/* make sure the banking is reset to 0 */
 	defender_bank_select_w(0, 0);
@@ -865,7 +883,7 @@ static READ_HANDLER( tshoot_input_port_0_3_r )
 static WRITE_HANDLER( tshoot_maxvol_w )
 {
 	/* something to do with the sound volume */
-	logerror("tshoot maxvol = %d (pc:%x)\n", data, cpu_get_pc());
+	logerror("tshoot maxvol = %d (pc:%x)\n", data, activecpu_get_pc());
 }
 
 
@@ -902,10 +920,10 @@ static WRITE_HANDLER( tshoot_lamp_w )
  *
  *************************************/
 
-void joust2_init_machine(void)
+MACHINE_INIT( joust2 )
 {
 	/* standard init */
-	williams2_init_machine();
+	machine_init_williams2();
 
 	/* make sure sound board starts out in the reset state */
 	williams_cvsd_init(2, 3);

@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-	Functions to emulate the video hardware of the machine.
+	Atari Sky Diver hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "skydiver.h"
 
 static int skydiver_lamps[8];
 static int skydiver_width = 0;
@@ -62,7 +61,8 @@ WRITE_HANDLER( skydiver_iver_lamps_w )
   the main emulation engine.
 
 ***************************************************************************/
-void skydiver_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( skydiver )
 {
 	int offs;
 	int pic;
@@ -133,5 +133,4 @@ void skydiver_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	}
 }
-
 

@@ -122,11 +122,10 @@ WRITE_HANDLER( docastle_shared0_w );
 WRITE_HANDLER( docastle_shared1_w );
 WRITE_HANDLER( docastle_nmitrigger_w );
 
-void docastle_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void dorunrun_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int docastle_vh_start(void);
-void docastle_vh_stop(void);
-void docastle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( docastle );
+PALETTE_INIT( dorunrun );
+VIDEO_START( docastle );
+VIDEO_UPDATE( docastle );
 READ_HANDLER( docastle_flipscreen_off_r );
 READ_HANDLER( docastle_flipscreen_on_r );
 WRITE_HANDLER( docastle_flipscreen_off_w );
@@ -626,103 +625,71 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_docastle =
-{
+static MACHINE_DRIVER_START( docastle )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			docastle_readmem,docastle_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			docastle_readmem2,docastle_writemem2,0,0,
-			interrupt,8
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			docastle_readmem3,docastle_writemem3,0,0,
-			ignore_interrupt,0	/* ? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when communication takes place */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(docastle_readmem,docastle_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(docastle_readmem2,docastle_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(docastle_readmem3,docastle_writemem3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	258, 64*16+2*32*16,
-	docastle_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(258)
+	MDRV_COLORTABLE_LENGTH(64*16+2*32*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	docastle_vh_start,
-	docastle_vh_stop,
-	docastle_vh_screenrefresh,
+	MDRV_PALETTE_INIT(docastle)
+	MDRV_VIDEO_START(docastle)
+	MDRV_VIDEO_UPDATE(docastle)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_dorunrun =
-{
+static MACHINE_DRIVER_START( dorunrun )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			dorunrun_readmem,dorunrun_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			dorunrun_readmem2,dorunrun_writemem2,0,0,
-			interrupt,8
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			docastle_readmem3,docastle_writemem3,0,0,
-			ignore_interrupt,0	/* ? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when communication takes place */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(dorunrun_readmem,dorunrun_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(dorunrun_readmem2,dorunrun_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(docastle_readmem3,docastle_writemem3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	258, 64*16+2*32*16,
-	dorunrun_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(258)
+	MDRV_COLORTABLE_LENGTH(64*16+2*32*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	docastle_vh_start,
-	docastle_vh_stop,
-	docastle_vh_screenrefresh,
+	MDRV_PALETTE_INIT(dorunrun)
+	MDRV_VIDEO_START(docastle)
+	MDRV_VIDEO_UPDATE(docastle)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 

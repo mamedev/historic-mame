@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Jaleco Exerion
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "exerion.h"
 
 //#define DEBUG_SPRITES
 
@@ -55,7 +54,7 @@ static UINT8 *background_mixer;
 
 ***************************************************************************/
 
-void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( exerion )
 {
 	int i;
 
@@ -106,11 +105,11 @@ void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 /*************************************
  *
- *		Video system startup
+ *	Video system startup
  *
  *************************************/
 
-int exerion_vh_start (void)
+VIDEO_START( exerion )
 {
 	UINT16 *dst;
 	UINT8 *src;
@@ -124,21 +123,17 @@ int exerion_vh_start (void)
 	background_mixer = memory_region(REGION_PROMS) + 0x320;
 
 	/* allocate memory to track the background latches */
-	background_latches = malloc(Machine->drv->screen_height * 16);
+	background_latches = auto_malloc(Machine->drv->screen_height * 16);
 	if (!background_latches)
 		return 1;
 
 	/* allocate memory for the decoded background graphics */
-	background_gfx[0] = malloc(2 * 256 * 256 * 4);
+	background_gfx[0] = auto_malloc(2 * 256 * 256 * 4);
 	background_gfx[1] = background_gfx[0] + 256 * 256;
 	background_gfx[2] = background_gfx[1] + 256 * 256;
 	background_gfx[3] = background_gfx[2] + 256 * 256;
 	if (!background_gfx[0])
-	{
-		free(background_latches);
-		background_latches = NULL;
 		return 1;
-	}
 
 	/*---------------------------------
 	 * Decode the background graphics
@@ -188,43 +183,14 @@ int exerion_vh_start (void)
 		}
 	}
 
-	return generic_vh_start();
-}
-
-
-/*************************************
- *
- *		Video system shutdown
- *
- *************************************/
-
-void exerion_vh_stop (void)
-{
-#ifdef DEBUG_SPRITES
-	fclose (sprite_log);
-#endif
-
-	/* free the background graphics data */
-	if (background_gfx[0])
-		free(background_gfx[0]);
-	background_gfx[0] = NULL;
-	background_gfx[1] = NULL;
-	background_gfx[2] = NULL;
-	background_gfx[3] = NULL;
-
-	/* free the background latches data */
-	if (background_latches)
-		free(background_latches);
-	background_latches = NULL;
-
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 
 
 /*************************************
  *
- *		Video register I/O
+ *	Video register I/O
  *
  *************************************/
 
@@ -286,17 +252,17 @@ READ_HANDLER( exerion_video_timing_r )
 
 /*************************************
  *
- *		Background rendering
+ *	Background rendering
  *
  *************************************/
 
-static void draw_background(struct mame_bitmap *bitmap)
+void draw_background(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	UINT8 *latches = &background_latches[VISIBLE_Y_MIN * 16];
+	UINT8 *latches = &background_latches[cliprect->min_y * 16];
 	int x, y;
 
 	/* loop over all visible scanlines */
-	for (y = VISIBLE_Y_MIN; y < VISIBLE_Y_MAX; y++, latches += 16)
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++, latches += 16)
 	{
 		UINT16 *src0 = &background_gfx[0][latches[1] * 256];
 		UINT16 *src1 = &background_gfx[1][latches[3] * 256];
@@ -322,7 +288,7 @@ static void draw_background(struct mame_bitmap *bitmap)
 		if (!exerion_cocktail_flip)
 		{
 			/* skip processing anything that's not visible */
-			for (x = BACKGROUND_X_START; x < VISIBLE_X_MIN; x++)
+			for (x = BACKGROUND_X_START; x < cliprect->min_x; x++)
 			{
 				if (!(++xoffs0 & 0x1f)) start0++, stop0++;
 				if (!(++xoffs1 & 0x1f)) start1++, stop1++;
@@ -331,7 +297,7 @@ static void draw_background(struct mame_bitmap *bitmap)
 			}
 
 			/* draw the rest of the scanline fully */
-			for (x = VISIBLE_X_MIN; x < VISIBLE_X_MAX; x++)
+			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			{
 				UINT16 combined = 0;
 				UINT8 lookupval;
@@ -359,7 +325,7 @@ static void draw_background(struct mame_bitmap *bitmap)
 		else
 		{
 			/* skip processing anything that's not visible */
-			for (x = BACKGROUND_X_START; x < VISIBLE_X_MIN; x++)
+			for (x = BACKGROUND_X_START; x < cliprect->min_x; x++)
 			{
 				if (!(xoffs0-- & 0x1f)) start0++, stop0++;
 				if (!(xoffs1-- & 0x1f)) start1++, stop1++;
@@ -368,7 +334,7 @@ static void draw_background(struct mame_bitmap *bitmap)
 			}
 
 			/* draw the rest of the scanline fully */
-			for (x = VISIBLE_X_MIN; x < VISIBLE_X_MAX; x++)
+			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			{
 				UINT16 combined = 0;
 				UINT8 lookupval;
@@ -396,18 +362,18 @@ static void draw_background(struct mame_bitmap *bitmap)
 
 		/* draw the scanline */
 		pens = &Machine->remapped_colortable[0x200 + (latches[12] >> 4) * 16];
-		draw_scanline8(bitmap, VISIBLE_X_MIN, y, VISIBLE_X_MAX - VISIBLE_X_MIN, &scanline[VISIBLE_X_MIN], pens, -1);
+		draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], pens, -1);
 	}
 }
 
 
 /*************************************
  *
- *		Core refresh routine
+ *	Core refresh routine
  *
  *************************************/
 
-void exerion_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( exerion )
 {
 	int sx, sy, offs, i;
 
@@ -415,7 +381,7 @@ void exerion_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	exerion_video_latch_w(-1, 0);
 
 	/* draw background */
-	draw_background(bitmap);
+	draw_background(bitmap, cliprect);
 
 #ifdef DEBUG_SPRITES
 	if (sprite_log)
@@ -466,11 +432,11 @@ void exerion_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 				code &= ~0x10, code2 |= 0x10;
 
 			drawgfx(bitmap, gfx, code2, color, xflip, yflip, x, y + gfx->height,
-			        &Machine->visible_area, TRANSPARENCY_COLOR, 16);
+			        cliprect, TRANSPARENCY_COLOR, 16);
 		}
 
 		drawgfx(bitmap, gfx, code, color, xflip, yflip, x, y,
-		        &Machine->visible_area, TRANSPARENCY_COLOR, 16);
+		        cliprect, TRANSPARENCY_COLOR, 16);
 
 		if (doubled) i += 4;
 	}
@@ -487,6 +453,6 @@ void exerion_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 				videoram[offs] + 256 * char_bank,
 				((videoram[offs] & 0xf0) >> 4) + char_palette * 16,
 				exerion_cocktail_flip, exerion_cocktail_flip, x, y,
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				cliprect, TRANSPARENCY_PEN, 0);
 		}
 }

@@ -18,9 +18,9 @@ TODO:
 
 extern unsigned char *suprloco_videoram;
 
-void suprloco_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-int  suprloco_vh_start(void);
-void suprloco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( suprloco );
+VIDEO_START( suprloco );
+VIDEO_UPDATE( suprloco );
 WRITE_HANDLER( suprloco_videoram_w );
 WRITE_HANDLER( suprloco_scrollram_w );
 READ_HANDLER( suprloco_scrollram_r );
@@ -31,7 +31,7 @@ READ_HANDLER( suprloco_control_r );
 static WRITE_HANDLER( suprloco_soundport_w )
 {
 	soundlatch_w(0,data);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in Regulus) */
 	cpu_spinuntil_time(TIME_IN_USEC(50));
 }
@@ -187,49 +187,35 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_suprloco =
-{
+static MACHINE_DRIVER_START( suprloco )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4			/* NMIs are caused by the main CPU */
-		},
-	},
-	60, 5000,           /* frames per second, vblank duration */
-	1,					/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)			/* NMIs are caused by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(5000)
 
 	/* video hardware */
-	32*8, 32*8,				/* screen_width, screen_height */
-	{ 1*8, 31*8-1, 0*8, 28*8-1 },			/* struct rectangle visible_area */
-	gfxdecodeinfo,				/* GfxDecodeInfo */
-	512+256, 0,
-	suprloco_vh_convert_color_prom,		/* convert color prom routine */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512+256)
 
-	VIDEO_TYPE_RASTER,
-	0,							/* vh_init routine */
-	suprloco_vh_start,			/* vh_start routine */
-	0,			/* vh_stop routine */
-	suprloco_vh_screenrefresh,	/* vh_update routine */
+	MDRV_PALETTE_INIT(suprloco)
+	MDRV_VIDEO_START(suprloco)
+	MDRV_VIDEO_UPDATE(suprloco)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -269,7 +255,7 @@ ROM_END
 
 
 
-void init_suprloco(void)
+DRIVER_INIT( suprloco )
 {
 	/* convert graphics to 4bpp from 3bpp */
 

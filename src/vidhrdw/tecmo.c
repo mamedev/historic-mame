@@ -82,7 +82,7 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int tecmo_vh_start(void)
+VIDEO_START( tecmo )
 {
 	if (tecmo_video_type == 2)	/* gemini */
 	{
@@ -177,7 +177,7 @@ WRITE_HANDLER( tecmo_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 	const UINT8 layout[8][8] =
@@ -245,7 +245,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 							flags & 0xf,
 							flipx,flipy,
 							sx,sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							cliprect,TRANSPARENCY_PEN,0,
 							priority_mask);
 				}
 			}
@@ -254,13 +254,13 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 }
 
 
-void tecmo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tecmo )
 {
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0x100],&Machine->visible_area);
-	tilemap_draw(bitmap,bg_tilemap,0,1);
-	tilemap_draw(bitmap,fg_tilemap,0,2);
-	tilemap_draw(bitmap,tx_tilemap,0,4);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0x100],cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,1);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,2);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,4);
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 }

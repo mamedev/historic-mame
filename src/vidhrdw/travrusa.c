@@ -12,6 +12,7 @@ J Clegg
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 extern unsigned char *spriteram;
 extern size_t spriteram_size;
@@ -44,7 +45,7 @@ static struct tilemap *bg_tilemap;
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( travrusa )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -142,7 +143,7 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int travrusa_vh_start(void)
+VIDEO_START( travrusa )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,32);
 
@@ -219,7 +220,7 @@ WRITE_HANDLER( travrusa_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 	static struct rectangle spritevisiblearea =
@@ -232,6 +233,11 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 		1*8, 31*8-1,
 		8*8, 32*8-1
 	};
+	struct rectangle clip = *cliprect;
+	if (flip_screen)
+		sect_rect(&clip, &spritevisibleareaflip);
+	else
+		sect_rect(&clip, &spritevisiblearea);
 
 
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
@@ -256,13 +262,13 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				spriteram[offs + 1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				flip_screen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				&clip,TRANSPARENCY_PEN,0);
 	}
 }
 
-void travrusa_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( travrusa )
 {
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
 }

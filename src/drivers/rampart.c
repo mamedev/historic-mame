@@ -19,22 +19,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( rampart_bitmap_w );
-
-int rampart_vh_start(void);
-void rampart_vh_stop(void);
-void rampart_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-extern data16_t *rampart_bitmap;
+#include "rampart.h"
 
 
 
@@ -73,7 +58,7 @@ static void scanline_update(int scanline)
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( rampart )
 {
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -381,48 +366,33 @@ static struct YM2413interface ym2413_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_rampart =
-{
+static MACHINE_DRIVER_START( rampart )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(rampart)
+	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
-	43*8, 30*8, { 0*8+4, 43*8-1-4, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(43*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8+4, 43*8-1-4, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	rampart_vh_start,
-	rampart_vh_stop,
-	rampart_vh_screenrefresh,
+	MDRV_VIDEO_START(rampart)
+	MDRV_VIDEO_UPDATE(rampart)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -439,7 +409,7 @@ ROM_START( rampart )
 	ROM_LOAD16_BYTE( "082-2031.13l", 0x00000, 0x10000, 0x07650c7e )
 	ROM_LOAD16_BYTE( "082-2030.13h", 0x00001, 0x10000, 0xe2bf2a26 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "082-1009.2n",   0x000000, 0x20000, 0x23b95f59 )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* ADPCM data */
@@ -455,7 +425,7 @@ ROM_START( ramprt2p )
 	ROM_LOAD16_BYTE( "205113kl.rom", 0x00000, 0x20000, 0xd4e26d0f )
 	ROM_LOAD16_BYTE( "205013h.rom",  0x00001, 0x20000, 0xed2a49bd )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "10192n.rom",   0x000000, 0x20000, 0xefa38bef )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* ADPCM data */
@@ -475,7 +445,7 @@ ROM_START( rampartj )
 	ROM_LOAD16_BYTE( "1467.bin",  0xc0000, 0x20000, 0xe0cfcda5 )
 	ROM_LOAD16_BYTE( "1466.bin",  0xc0001, 0x20000, 0xa7a5a951 )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "2419.bin",   0x000000, 0x20000, 0x456a8aae )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* ADPCM data */
@@ -491,7 +461,7 @@ ROM_END
  *
  *************************************/
 
-static void init_rampart(void)
+static DRIVER_INIT( rampart )
 {
 	static const UINT16 compressed_default_eeprom[] =
 	{
@@ -520,7 +490,6 @@ static void init_rampart(void)
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	memcpy(&memory_region(REGION_CPU1)[0x140000], &memory_region(REGION_CPU1)[0x40000], 0x8000);
-	atarigen_invert_region(REGION_GFX1);
 	atarigen_slapstic_init(0, 0x140000, 118);
 }
 

@@ -31,10 +31,9 @@ WRITE_HANDLER( blktiger_bgvideoram_bank_w );
 WRITE_HANDLER( blktiger_scrollx_w );
 WRITE_HANDLER( blktiger_scrolly_w );
 
-int blktiger_vh_start(void);
-void blktiger_vh_stop(void);
-void blktiger_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void blktiger_eof_callback(void);
+VIDEO_START( blktiger );
+VIDEO_UPDATE( blktiger );
+VIDEO_EOF( blktiger );
 
 
 
@@ -42,8 +41,8 @@ void blktiger_eof_callback(void);
 /* if a read from this address doesn't return the value it expects. */
 static READ_HANDLER( blktiger_protection_r )
 {
-	int data = cpu_get_reg(Z80_DE) >> 8;
-	logerror("protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
+	int data = activecpu_get_reg(Z80_DE) >> 8;
+	logerror("protection read, PC: %04x Result:%02x\n",activecpu_get_pc(),data);
 	return data;
 }
 
@@ -270,48 +269,35 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_blktiger =
-{
+static MACHINE_DRIVER_START( blktiger )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	blktiger_eof_callback,
-	blktiger_vh_start,
-	blktiger_vh_stop,
-	blktiger_vh_screenrefresh,
+	MDRV_VIDEO_START(blktiger)
+	MDRV_VIDEO_EOF(blktiger)
+	MDRV_VIDEO_UPDATE(blktiger)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -11,9 +11,9 @@ Notes:
 #include "vidhrdw/generic.h"
 
 
-void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( nova2001 );
 WRITE_HANDLER( pkunwar_flipscreen_w );
-void pkunwar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( pkunwar );
 
 
 
@@ -164,42 +164,32 @@ static struct AY8910interface ay8910_interface = {
 
 
 
-static const struct MachineDriver machine_driver_pkunwar =
-{
+static MACHINE_DRIVER_START( pkunwar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,
-			readmem,writemem,0,writeport,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,32*16,
-	nova2001_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	pkunwar_vh_screenrefresh,
+	MDRV_PALETTE_INIT(nova2001)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(pkunwar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -122,7 +122,7 @@ void lasso_set_color(int i, int data)
 	palette_set_color( i,r,g,b );
 }
 
-void lasso_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( lasso )
 {
 	int i;
 
@@ -134,11 +134,11 @@ void lasso_vh_convert_color_prom(unsigned char *palette,unsigned short *colortab
 }
 
 /* 16 color tiles with a 4 color step for the palettes */
-void wwjgtin_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( wwjgtin )
 {
 	int color, pen;
 
-	lasso_vh_convert_color_prom(palette,colortable,color_prom);
+	palette_init_lasso(palette,colortable,color_prom);
 
 	for( color = 0; color < 0x10; color++ )
 		for( pen = 0; pen < 16; pen++ )
@@ -198,7 +198,7 @@ static void get_bg1_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int lasso_vh_start( void )
+VIDEO_START( lasso )
 {
 	background = tilemap_create(	get_bg_tile_info, tilemap_scan_rows,
 									TILEMAP_OPAQUE,		8,8,	32,32);
@@ -209,7 +209,7 @@ int lasso_vh_start( void )
 	return 0;
 }
 
-int wwjgtin_vh_start( void )
+VIDEO_START( wwjgtin )
 {
 	background = tilemap_create(	get_bg_tile_info, tilemap_scan_rows,
 									TILEMAP_TRANSPARENT,	8,8,	32,32);
@@ -247,9 +247,8 @@ int wwjgtin_vh_start( void )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, int reverse )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int reverse )
 {
-    struct rectangle clip = Machine->visible_area;
 	const data8_t *finish, *source;
 	int inc;
 
@@ -291,7 +290,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int reverse )
 					color,
 					flipx, flipy,
 					sx,sy,
-					&clip, TRANSPARENCY_PEN,0	);
+					cliprect, TRANSPARENCY_PEN,0	);
 
 		source += inc;
     }
@@ -305,13 +304,24 @@ static void draw_sprites( struct mame_bitmap *bitmap, int reverse )
 
 ***************************************************************************/
 
-static void draw_lasso( struct mame_bitmap *bitmap )
+static void draw_lasso( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	const unsigned char *source = lasso_vram;
 	int x,y;
 	int pen = Machine->pens[0x3f];
 	for( y=0; y<256; y++ )
 	{
+		if (flip_screen)
+		{
+			if (255-y < cliprect->min_y || 255-y > cliprect->max_y)
+				continue;
+		}
+		else
+		{
+			if (y < cliprect->min_y || y > cliprect->max_y)
+				continue;
+		}
+		
 		for( x=0; x<256; x+=8 )
 		{
 			int data = *source++;
@@ -347,7 +357,7 @@ static void draw_lasso( struct mame_bitmap *bitmap )
 
 ***************************************************************************/
 
-void lasso_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( lasso )
 {
 	int layers_ctrl = -1;
 
@@ -360,13 +370,13 @@ if (keyboard_pressed(KEYCODE_Z))
 	if (msk != 0) layers_ctrl &= msk;		}
 #endif
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap, background,  0,0);
-	else					fillbitmap(bitmap,Machine->pens[0],NULL);
-	if (layers_ctrl & 2)	draw_lasso(bitmap);
-	if (layers_ctrl & 4)	draw_sprites(bitmap, 0);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, background,  0,0);
+	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
+	if (layers_ctrl & 2)	draw_lasso(bitmap,cliprect);
+	if (layers_ctrl & 4)	draw_sprites(bitmap,cliprect, 0);
 }
 
-void chameleo_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( chameleo )
 {
 	int layers_ctrl = -1;
 
@@ -379,14 +389,14 @@ if (keyboard_pressed(KEYCODE_Z))
 	if (msk != 0) layers_ctrl &= msk;		}
 #endif
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap, background,  0,0);
-	else					fillbitmap(bitmap,Machine->pens[0],NULL);
-//	if (layers_ctrl & 2)	draw_lasso(bitmap);
-	if (layers_ctrl & 4)	draw_sprites(bitmap, 0);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, background,  0,0);
+	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
+//	if (layers_ctrl & 2)	draw_lasso(bitmap,cliprect);
+	if (layers_ctrl & 4)	draw_sprites(bitmap,cliprect, 0);
 }
 
 
-void wwjgtin_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( wwjgtin )
 {
 	int layers_ctrl = -1;
 
@@ -403,10 +413,10 @@ if (keyboard_pressed(KEYCODE_Z))
 	tilemap_set_scrolly(background1,0,wwjgtin_scroll[2] + wwjgtin_scroll[3]*256);
 
 	if((layers_ctrl & 1) && wwjgtin_bg1_enable)
-		tilemap_draw(bitmap, background1, 0,0);
+		tilemap_draw(bitmap,cliprect, background1, 0,0);
 	else
-		fillbitmap(bitmap,Machine->pens[0x40],NULL);	// BLACK
+		fillbitmap(bitmap,Machine->pens[0x40],cliprect);	// BLACK
 
-	if (layers_ctrl & 4)	draw_sprites(bitmap, 1);	// reverse order
-	if (layers_ctrl & 2)	tilemap_draw(bitmap, background,  0,0);
+	if (layers_ctrl & 4)	draw_sprites(bitmap,cliprect, 1);	// reverse order
+	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect, background,  0,0);
 }

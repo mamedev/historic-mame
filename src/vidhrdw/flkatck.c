@@ -9,6 +9,7 @@
 #include "vidhrdw/generic.h"
 
 static struct tilemap *k007121_tilemap[2];
+static struct rectangle k007121_clip[2];
 
 unsigned char *k007121_ram;
 
@@ -70,7 +71,7 @@ static void get_tile_info_B(int tile_index)
 
 ***************************************************************************/
 
-int flkatck_vh_start(void)
+VIDEO_START( flkatck )
 {
 	k007121_tilemap[0] = tilemap_create(get_tile_info_A,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 	k007121_tilemap[1] = tilemap_create(get_tile_info_B,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
@@ -78,17 +79,14 @@ int flkatck_vh_start(void)
 	if (!k007121_tilemap[0] || !k007121_tilemap[1])
 		return 1;
 
-	{
-		struct rectangle clip = Machine->visible_area;
-		clip.min_x += 40;
-		tilemap_set_clip(k007121_tilemap[0],&clip);
+	k007121_clip[0] = Machine->visible_area;
+	k007121_clip[0].min_x += 40;
 
-		clip.max_x = 39;
-		clip.min_x = 0;
-		tilemap_set_clip(k007121_tilemap[1],&clip);
+	k007121_clip[1] = Machine->visible_area;
+	k007121_clip[1].max_x = 39;
+	k007121_clip[1].min_x = 0;
 
-		return 0;
-	}
+	return 0;
 }
 
 
@@ -147,8 +145,10 @@ WRITE_HANDLER( flkatck_k007121_regs_w )
 
 ***************************************************************************/
 
-void flkatck_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( flkatck )
 {
+	struct rectangle final_clip[2];
+
 #if 0
 usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
 	K007121_ctrlram[0][0x00],K007121_ctrlram[0][0x01],K007121_ctrlram[0][0x02],K007121_ctrlram[0][0x03],K007121_ctrlram[0][0x04],K007121_ctrlram[0][0x05],K007121_ctrlram[0][0x06],K007121_ctrlram[0][0x07],
@@ -158,9 +158,15 @@ usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02
 	/* set scroll registers */
 	tilemap_set_scrollx(k007121_tilemap[0],0,K007121_ctrlram[0][0x00] - 40);
 	tilemap_set_scrolly(k007121_tilemap[0],0,K007121_ctrlram[0][0x02]);
+	
+	/* compute clipping */
+	final_clip[0] = k007121_clip[0];
+	final_clip[1] = k007121_clip[1];
+	sect_rect(&final_clip[0], cliprect);
+	sect_rect(&final_clip[1], cliprect);
 
 	/* draw the graphics */
-	tilemap_draw(bitmap,k007121_tilemap[0],0,0);
-	K007121_sprites_draw(0,bitmap,&k007121_ram[0x1000],0,40,0,-1);
-	tilemap_draw(bitmap,k007121_tilemap[1],0,0);
+	tilemap_draw(bitmap,&final_clip[0],k007121_tilemap[0],0,0);
+	K007121_sprites_draw(0,bitmap,cliprect,&k007121_ram[0x1000],0,40,0,-1);
+	tilemap_draw(bitmap,&final_clip[1],k007121_tilemap[1],0,0);
 }

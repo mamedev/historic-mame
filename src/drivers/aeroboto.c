@@ -15,7 +15,7 @@ extern unsigned char *aeroboto_fgscroll,*aeroboto_bgscroll;
 extern int aeroboto_charbank;
 
 void aeroboto_gfxctrl_w(int ofset,int data);
-void aeroboto_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( aeroboto );
 
 
 
@@ -32,7 +32,7 @@ static READ_HANDLER( aeroboto_201_r )
 	/* serie of values to be returned from 3004, and display "PASS 201" if it is */
 	int res[4] = { 0xff,0x9f,0x1b,0x03};
 	static int count;
-	logerror("PC %04x: read 3004\n",cpu_get_pc());
+	logerror("PC %04x: read 3004\n",activecpu_get_pc());
 	return res[(count++)&3];
 }
 
@@ -212,48 +212,34 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0 }
 };
 
-static const struct MachineDriver machine_driver_formatz =
-{
+static MACHINE_DRIVER_START( formatz )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1250000,        /* 1.25 MHz ? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 MHz ? */
-			readmem_sound,writemem_sound,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,	/* init machine */
+	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809, 1250000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 1.25 MHz ? */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	aeroboto_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(aeroboto)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -20,12 +20,13 @@ static int credits;
 static void *nmi_timer;
 
 WRITE_HANDLER( digdug_halt_w );
+void digdug_nmi_generate (int param);
 
 
-void digdig_init_machine(void)
+MACHINE_INIT( digdig )
 {
 	credits = 0;
-	nmi_timer = 0;
+	nmi_timer = timer_alloc(digdug_nmi_generate);
 	interrupt_enable_1 = interrupt_enable_2 = interrupt_enable_3 = 0;
 	digdug_halt_w (0, 0);
 }
@@ -44,7 +45,7 @@ WRITE_HANDLER( digdug_sharedram_w )
 		dirtybuffer[offset] = 1;
 
 	/* location 9b3d is set to zero just before CPU 2 spins */
-	if (offset == 0x1b3d && data == 0 && cpu_get_pc () == 0x1df1 && cpu_getactivecpu () == 1)
+	if (offset == 0x1b3d && data == 0 && activecpu_get_pc () == 0x1df1 && cpu_getactivecpu () == 1)
 		cpu_spinuntil_int ();
 
 	digdug_sharedram[offset] = data;
@@ -66,7 +67,7 @@ WRITE_HANDLER( digdug_customio_data_w )
 {
 	customio[offset] = data;
 
-logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
+logerror("%04x: custom IO offset %02x data %02x\n",activecpu_get_pc(),offset,data);
 
 	switch (customio_command)
 	{
@@ -218,22 +219,21 @@ READ_HANDLER( digdug_customio_r )
 
 void digdug_nmi_generate (int param)
 {
-	cpu_cause_interrupt (0, Z80_NMI_INT);
+	cpu_set_irq_line (0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
 WRITE_HANDLER( digdug_customio_w )
 {
 	if (data != 0x10 && data != 0x71)
-		logerror("%04x: custom IO command %02x\n",cpu_get_pc(),data);
+		logerror("%04x: custom IO command %02x\n",activecpu_get_pc(),data);
 
 	customio_command = data;
 
 	switch (data)
 	{
 		case 0x10:
-			if (nmi_timer) timer_remove (nmi_timer);
-			nmi_timer = 0;
+			timer_adjust(nmi_timer, TIME_NEVER, 0, 0);
 			return;
 
 		case 0xa1:	/* go into switch mode */
@@ -250,7 +250,7 @@ WRITE_HANDLER( digdug_customio_w )
 			break;
 	}
 
-	nmi_timer = timer_pulse (TIME_IN_USEC (50), 0, digdug_nmi_generate);
+	timer_adjust(nmi_timer, TIME_IN_USEC(50), 0, TIME_IN_USEC(50));
 }
 
 
@@ -278,10 +278,10 @@ WRITE_HANDLER( digdug_interrupt_enable_1_w )
 
 
 
-int digdug_interrupt_1(void)
+INTERRUPT_GEN( digdug_interrupt_1 )
 {
-	if (interrupt_enable_1) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_1) 
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -293,10 +293,10 @@ WRITE_HANDLER( digdug_interrupt_enable_2_w )
 
 
 
-int digdug_interrupt_2(void)
+INTERRUPT_GEN( digdug_interrupt_2 )
 {
-	if (interrupt_enable_2) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_2)
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 
@@ -308,8 +308,8 @@ WRITE_HANDLER( digdug_interrupt_enable_3_w )
 
 
 
-int digdug_interrupt_3(void)
+INTERRUPT_GEN( digdug_interrupt_3 )
 {
-	if (interrupt_enable_3) return nmi_interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_3)
+		cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);
 }

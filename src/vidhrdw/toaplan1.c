@@ -265,28 +265,6 @@ static void get_pf4_tile_info(int tile_index)
 
 ***************************************************************************/
 
-void rallybik_vh_stop(void)
-{
-	free( pf4_tilevram16 );
-	free( pf3_tilevram16 );
-	free( pf2_tilevram16 );
-	free( pf1_tilevram16 );
-	free( paletteram16 );
-}
-
-void toaplan1_vh_stop(void)
-{
-	free( toaplan1_buffered_spritesizeram16 );
-	free( toaplan1_spritesizeram16 );
-	free( buffered_spriteram16 );
-	free( spriteram16 );
-	free( pf4_tilevram16 );
-	free( pf3_tilevram16 );
-	free( pf2_tilevram16 );
-	free( pf1_tilevram16 );
-	free( paletteram16 );
-}
-
 static int toaplan1_create_tilemaps(void)
 {
 	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
@@ -308,48 +286,28 @@ static int toaplan1_create_tilemaps(void)
 
 static int toaplan1_paletteram_alloc(void)
 {
-	if ((paletteram16 = (data16_t *)malloc(toaplan1_colorram1_size + toaplan1_colorram2_size)) == 0)
-	{
+	if ((paletteram16 = (data16_t *)auto_malloc(toaplan1_colorram1_size + toaplan1_colorram2_size)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
 static int toaplan1_vram_alloc(void)
 {
-	if ((pf1_tilevram16 = (data16_t *)malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-	{
-		free( paletteram16 );
+	if ((pf1_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(pf1_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf2_tilevram16 = (data16_t *)malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-	{
-		free( pf1_tilevram16 );
-		free( paletteram16 );
+	if ((pf2_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(pf2_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf3_tilevram16 = (data16_t *)malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-	{
-		free( pf2_tilevram16 );
-		free( pf1_tilevram16 );
-		free( paletteram16 );
+	if ((pf3_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(pf3_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf4_tilevram16 = (data16_t *)malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-	{
-		free( pf3_tilevram16 );
-		free( pf2_tilevram16 );
-		free( pf1_tilevram16 );
-		free( paletteram16 );
+	if ((pf4_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(pf4_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
 	return 0;
@@ -357,54 +315,20 @@ static int toaplan1_vram_alloc(void)
 
 static int toaplan1_spritevram_alloc(void)
 {
-	if ((spriteram16 = (data16_t *)malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
-	{
-		free( pf4_tilevram16 );
-		free( pf3_tilevram16 );
-		free( pf2_tilevram16 );
-		free( pf1_tilevram16 );
-		free( paletteram16 );
+	if ((spriteram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(spriteram16,0,TOAPLAN1_SPRITERAM_SIZE);
 
-	if ((buffered_spriteram16 = (data16_t *)malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
-	{
-		free( spriteram16 );
-		free( pf4_tilevram16 );
-		free( pf3_tilevram16 );
-		free( pf2_tilevram16 );
-		free( pf1_tilevram16 );
-		free( paletteram16 );
+	if ((buffered_spriteram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(buffered_spriteram16,0,TOAPLAN1_SPRITERAM_SIZE);
 
-	if ((toaplan1_spritesizeram16 = (data16_t *)malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
-	{
-		free( buffered_spriteram16 );
-		free( spriteram16 );
-		free( pf4_tilevram16 );
-		free( pf3_tilevram16 );
-		free( pf2_tilevram16 );
-		free( pf1_tilevram16 );
-		free( paletteram16 );
+	if ((toaplan1_spritesizeram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(toaplan1_spritesizeram16,0,TOAPLAN1_SPRITESIZERAM_SIZE);
 
-	if ((toaplan1_buffered_spritesizeram16 = (data16_t *)malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
-	{
-		free( toaplan1_spritesizeram16 );
-		free( buffered_spriteram16 );
-		free( spriteram16 );
-		free( pf4_tilevram16 );
-		free( pf3_tilevram16 );
-		free( pf2_tilevram16 );
-		free( pf1_tilevram16 );
-		free( paletteram16 );
+	if ((toaplan1_buffered_spritesizeram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
 		return 1;
-	}
 	memset(toaplan1_buffered_spritesizeram16,0,TOAPLAN1_SPRITESIZERAM_SIZE);
 
 	spriteram_size = TOAPLAN1_SPRITERAM_SIZE;
@@ -434,7 +358,7 @@ void toaplan1_flipscreen(void)
 }
 
 
-int rallybik_vh_start(void)
+VIDEO_START( rallybik )
 {
 	if (toaplan1_create_tilemaps())  return 1;
 	if (toaplan1_paletteram_alloc()) return 1;
@@ -479,7 +403,7 @@ int rallybik_vh_start(void)
 	return 0;
 }
 
-int toaplan1_vh_start(void)
+VIDEO_START( toaplan1 )
 {
 	if (toaplan1_create_tilemaps())  return 1;
 	if (toaplan1_paletteram_alloc()) return 1;
@@ -1120,7 +1044,7 @@ static void mark_rallybik_sprite_priority(void)
 	Sprite Handlers
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, int priority_to_display )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority_to_display )
 {
 	data16_t *source = (data16_t *)(buffered_spriteram16);
 	data16_t *size   = (data16_t *)(toaplan1_buffered_spritesizeram16);
@@ -1184,7 +1108,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int priority_to_display )
 							color,
 							fcu_flipscreen,fcu_flipscreen,
 							sx,sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,0);
+							cliprect,TRANSPARENCY_PEN,0);
 
 					sprite++ ;
 				}
@@ -1194,7 +1118,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int priority_to_display )
 }
 
 
-static void draw_rallybik_sprites( struct mame_bitmap *bitmap, int priority )
+static void draw_rallybik_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
 {
 	int offs;
 
@@ -1220,7 +1144,7 @@ static void draw_rallybik_sprites( struct mame_bitmap *bitmap, int priority )
 					color,
 					flipx,flipy,
 					sx-31,sy-16,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -1231,7 +1155,7 @@ static void draw_rallybik_sprites( struct mame_bitmap *bitmap, int priority )
 	Draw the game screen in the given mame_bitmap.
 ***************************************************************************/
 
-void rallybik_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rallybik )
 {
 	int priority;
 
@@ -1241,23 +1165,23 @@ void rallybik_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	mark_rallybik_sprite_priority();
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	tilemap_draw(bitmap,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 0,0);
-	tilemap_draw(bitmap,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 1,0);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 0,0);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 1,0);
 
 	for (priority = 1; priority < 16; priority++)
 	{
-		tilemap_draw(bitmap,pf4_tilemap,priority,0);
-		tilemap_draw(bitmap,pf3_tilemap,priority,0);
-		tilemap_draw(bitmap,pf2_tilemap,priority,0);
-		tilemap_draw(bitmap,pf1_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,priority,0);
 		if (sprite_priority[priority])
-			draw_rallybik_sprites(bitmap,priority << 8);
+			draw_rallybik_sprites(bitmap,cliprect,priority << 8);
 	}
 }
 
-void toaplan1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( toaplan1 )
 {
 	int priority = 0;
 
@@ -1267,29 +1191,29 @@ void toaplan1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	mark_toaplan1_sprite_priority();
 
-	fillbitmap(bitmap,Machine->pens[0x120],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0x120],cliprect);
 
-	tilemap_draw(bitmap,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+	tilemap_draw(bitmap,cliprect,pf4_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 	for (priority = 8; priority < 16; priority++)
-		tilemap_draw(bitmap,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | priority,0);
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | priority,0);
 
 	for (priority = 1; priority < 16; priority++)
 	{
 		if (sprite_priority[priority])
-			draw_sprites(bitmap,priority);
-		tilemap_draw(bitmap,pf4_tilemap,priority,0);
-		tilemap_draw(bitmap,pf3_tilemap,priority,0);
-		tilemap_draw(bitmap,pf2_tilemap,priority,0);
-		tilemap_draw(bitmap,pf1_tilemap,priority,0);
+			draw_sprites(bitmap,cliprect,priority);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,priority,0);
 	}
 }
 
-void zerowing_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( zerowing )
 {
-	toaplan1_vh_screenrefresh(bitmap, full_refresh);
+	video_update_toaplan1(bitmap,cliprect);
 }
 
-void demonwld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( demonwld )
 {
 	int priority = 0;
 
@@ -1299,19 +1223,19 @@ void demonwld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	mark_toaplan1_sprite_priority();
 
-	fillbitmap(bitmap,Machine->pens[0x120],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0x120],cliprect);
 
-	tilemap_draw(bitmap,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 0,0);
-	tilemap_draw(bitmap,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 1,0);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 0,0);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY | 1,0);
 
 	for (priority = 1; priority < 16; priority++)
 	{
 		if (sprite_priority[priority])
-			draw_sprites(bitmap,priority);
-		tilemap_draw(bitmap,pf4_tilemap,priority,0);
-		tilemap_draw(bitmap,pf3_tilemap,priority,0);
-		tilemap_draw(bitmap,pf2_tilemap,priority,0);
-		tilemap_draw(bitmap,pf1_tilemap,priority,0);
+			draw_sprites(bitmap,cliprect,priority);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,priority,0);
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,priority,0);
 	}
 }
 
@@ -1322,18 +1246,18 @@ void demonwld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	assume it happens automatically every frame, at the end of vblank
 ****************************************************************************/
 
-void rallybik_eof_callback(void)
+VIDEO_EOF( rallybik )
 {
 	buffer_spriteram16_w(0, 0, 0);
 }
 
-void toaplan1_eof_callback(void)
+VIDEO_EOF( toaplan1 )
 {
 	buffer_spriteram16_w(0, 0, 0);
 	memcpy(toaplan1_buffered_spritesizeram16, toaplan1_spritesizeram16, TOAPLAN1_SPRITESIZERAM_SIZE);
 }
 
-void samesame_eof_callback(void)
+VIDEO_EOF( samesame )
 {
 	buffer_spriteram16_w(0, 0, 0);
 	memcpy(toaplan1_buffered_spritesizeram16, toaplan1_spritesizeram16, TOAPLAN1_SPRITESIZERAM_SIZE);

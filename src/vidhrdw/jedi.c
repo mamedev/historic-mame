@@ -2,12 +2,11 @@
 
 	Atari Return of the Jedi hardware
 
-	driver by Dan Boris
-
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "jedi.h"
 
 
 /* globals */
@@ -32,87 +31,44 @@ static struct mame_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
  *
  *************************************/
 
-int jedi_vh_start(void)
+VIDEO_START( jedi )
 {
 	/* allocate dirty buffer for the foreground characters */
-	fgdirty = dirtybuffer = malloc(videoram_size);
+	fgdirty = dirtybuffer = auto_malloc(videoram_size);
 	if (!fgdirty)
 		return 1;
 	memset(fgdirty, 1, videoram_size);
 
 	/* allocate an 8bpp bitmap for the raw foreground characters */
-	fgbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	fgbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (!fgbitmap)
-	{
-		free(fgdirty);
 		return 1;
-	}
 
 	/* allocate an 8bpp bitmap for the motion objects */
-	mobitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	mobitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (!mobitmap)
-	{
-		bitmap_free(fgbitmap);
-		free(fgdirty);
 		return 1;
-	}
 	fillbitmap(mobitmap, 0, &Machine->visible_area);
 
 	/* allocate dirty buffer for the background characters */
-	bgdirty = malloc(jedi_backgroundram_size);
+	bgdirty = auto_malloc(jedi_backgroundram_size);
 	if (!bgdirty)
-	{
-		bitmap_free(mobitmap);
-		bitmap_free(fgbitmap);
-		free(fgdirty);
 		return 1;
-	}
 	memset(bgdirty, 1, jedi_backgroundram_size);
 
 	/* the background area is 256x256, doubled by the hardware*/
-	bgbitmap = bitmap_alloc(256, 256);
+	bgbitmap = auto_bitmap_alloc(256, 256);
 	if (!bgbitmap)
-	{
-		bitmap_free(fgbitmap);
-		bitmap_free(mobitmap);
-		free(fgdirty);
-		free(bgdirty);
 		return 1;
-	}
 
 	/* the expanded background area is 512x512 */
-	bgexbitmap = bitmap_alloc(512, 512);
+	bgexbitmap = auto_bitmap_alloc(512, 512);
 	if (!bgexbitmap)
-	{
-		bitmap_free(fgbitmap);
-		bitmap_free(mobitmap);
-		bitmap_free(bgbitmap);
-		free(fgdirty);
-		free(bgdirty);
 		return 1;
-	}
 
 	/* reserve color 1024 for black (disabled display) */
 	palette_set_color(1024, 0, 0, 0);
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Video shutdown
- *
- *************************************/
-
-void jedi_vh_stop(void)
-{
-	bitmap_free(fgbitmap);
-	bitmap_free(mobitmap);
-	bitmap_free(bgbitmap);
-	bitmap_free(bgexbitmap);
-	free(fgdirty);
-	free(bgdirty);
 }
 
 
@@ -310,7 +266,7 @@ static void update_smoothing(int bgtilerow, int first, int last)
  *
  *************************************/
 
-void jedi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( jedi )
 {
 	int bgexdirty[32][2];
 	int offs;

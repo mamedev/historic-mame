@@ -55,13 +55,13 @@ JP4: /
 #include "vidhrdw/generic.h"
 
 
-void irem_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void battroad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int ldrun_vh_start( void );
-int kidniki_vh_start( void );
-int spelunkr_vh_start( void );
-int youjyudn_vh_start( void );
+PALETTE_INIT( irem );
+PALETTE_INIT( battroad );
+PALETTE_INIT( spelunk2 );
+VIDEO_START( ldrun );
+VIDEO_START( kidniki );
+VIDEO_START( spelunkr );
+VIDEO_START( youjyudn );
 WRITE_HANDLER( irem_flipscreen_w );
 WRITE_HANDLER( kungfum_scroll_low_w );
 WRITE_HANDLER( kungfum_scroll_high_w );
@@ -75,15 +75,15 @@ WRITE_HANDLER( kidniki_text_vscroll_w );
 WRITE_HANDLER( kidniki_background_bank_w );
 WRITE_HANDLER( spelunkr_palbank_w );
 WRITE_HANDLER( spelunk2_gfxport_w );
-void kungfum_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
-void battroad_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
-void ldrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void ldrun4_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void lotlot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void kidniki_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
-void spelunkr_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
-void spelunk2_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
-void youjyudn_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
+VIDEO_UPDATE( kungfum );
+VIDEO_UPDATE( battroad );
+VIDEO_UPDATE( ldrun );
+VIDEO_UPDATE( ldrun4 );
+VIDEO_UPDATE( lotlot );
+VIDEO_UPDATE( kidniki );
+VIDEO_UPDATE( spelunkr );
+VIDEO_UPDATE( spelunk2 );
+VIDEO_UPDATE( youjyudn );
 
 extern unsigned char *irem_textram;
 extern size_t irem_textram_size;
@@ -1251,67 +1251,183 @@ static struct GfxDecodeInfo youjyudn_gfxdecodeinfo[] =
 
 
 
-#define MACHINE_DRIVER(GAMENAME,READPORT,WRITEPORT,CLOCK,PIXELS_PER_LINE,GFXDECODE,COLORS,CONVERTCOLOR) \
-                                                                                             \
-static const struct MachineDriver machine_driver_##GAMENAME =                                \
-{                                                                                            \
-	/* basic machine hardware */                                                             \
-	{                                                                                        \
-		{                                                                                    \
-			CPU_Z80,                                                                         \
-			CLOCK/6,                                                                         \
-			GAMENAME##_readmem,GAMENAME##_writemem,READPORT##_readport,WRITEPORT##_writeport, \
-			interrupt,1                                                                      \
-		},                                                                                   \
-		IREM_AUDIO_CPU                                                                       \
-	},                                                                                       \
-	55, 1790, /* frames per second and vblank duration from the Lode Runner manual */        \
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,                                                                                       \
-                                                                                             \
-	/* video hardware */                                                                     \
-	64*8, 32*8, { (64*8-PIXELS_PER_LINE)/2, 64*8-(64*8-PIXELS_PER_LINE)/2-1, 0*8, 32*8-1 },  \
-	GFXDECODE##_gfxdecodeinfo,                                                               \
-	COLORS, 0,                                                                               \
-	CONVERTCOLOR##_vh_convert_color_prom,                                                    \
-                                                                                             \
-	VIDEO_TYPE_RASTER,                                                                       \
-	0,                                                                                       \
-	GAMENAME##_vh_start,                                                                     \
-	generic_vh_stop,                                                                         \
-	GAMENAME##_vh_screenrefresh,                                                             \
-                                                                                             \
-	/* sound hardware */                                                                     \
-	0,0,0,0,                                                                                 \
-	{                                                                                        \
-		IREM_AUDIO                                                                           \
-	}                                                                                        \
-}
 
-#define kungfum_readmem ldrun_readmem
-#define	kungfum_vh_start kidniki_vh_start
-#define	battroad_vh_start kidniki_vh_start
-#define	ldrun2_vh_start ldrun_vh_start
-#define	ldrun3_vh_start ldrun_vh_start
-#define	ldrun4_vh_start ldrun_vh_start
-#define	lotlot_vh_start ldrun_vh_start
-#define	spelunk2_vh_start spelunkr_vh_start
-#define	ldrun2_vh_screenrefresh ldrun_vh_screenrefresh
-#define	ldrun3_vh_screenrefresh ldrun_vh_screenrefresh
+static MACHINE_DRIVER_START( ldrun )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 24000000/6)
+	MDRV_CPU_MEMORY(ldrun_readmem,ldrun_writemem)
+	MDRV_CPU_PORTS(ldrun_readport,ldrun_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(55)
+	MDRV_VBLANK_DURATION(1790) /* frames per second and vblank duration from the Lode Runner manual */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA((64*8-384)/2, 64*8-(64*8-384)/2-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(kungfum_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_PALETTE_INIT(irem)
+	MDRV_VIDEO_START(ldrun)
+	MDRV_VIDEO_UPDATE(ldrun)
+
+	/* sound hardware */
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
 
 
-/*              GAMENAME READPORT WRITEPORT CLOCK    WIDTH GFXDECODE COLS PALETTE */
-MACHINE_DRIVER( kungfum,  ldrun,  ldrun,    18432000, 256, kungfum,  512, irem );
-MACHINE_DRIVER( battroad, ldrun,  battroad, 18432000, 256, battroad, 544, battroad );
-MACHINE_DRIVER( ldrun,    ldrun,  ldrun,    24000000, 384, kungfum,  512, irem );
-MACHINE_DRIVER( ldrun2,   ldrun2, ldrun2,   24000000, 384, kungfum,  512, irem );
-MACHINE_DRIVER( ldrun3,   ldrun,  ldrun3,   24000000, 384, ldrun3,   512, irem );
-MACHINE_DRIVER( ldrun4,   ldrun,  ldrun4,   24000000, 384, ldrun3,   512, irem );
-MACHINE_DRIVER( lotlot,   ldrun,  ldrun,    24000000, 384, lotlot,   768, irem );
-MACHINE_DRIVER( kidniki,  ldrun,  kidniki,  24000000, 384, kidniki,  512, irem );
-MACHINE_DRIVER( spelunkr, ldrun,  ldrun,    24000000, 384, spelunkr, 512, irem );
-MACHINE_DRIVER( spelunk2, ldrun,  ldrun,    24000000, 384, spelunk2, 768, spelunk2 );
-MACHINE_DRIVER( youjyudn, ldrun,  youjyudn, 18432000, 256, youjyudn, 512, irem );
+static MACHINE_DRIVER_START( kungfum )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_REPLACE("main", Z80, 18432000/6)
+	MDRV_CPU_MEMORY(ldrun_readmem,kungfum_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA((64*8-256)/2, 64*8-(64*8-256)/2-1, 0*8, 32*8-1)
+
+	MDRV_VIDEO_START(kidniki)
+	MDRV_VIDEO_UPDATE(kungfum)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( battroad )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_REPLACE("main", Z80, 18432000/6)
+	MDRV_CPU_MEMORY(battroad_readmem,battroad_writemem)
+	MDRV_CPU_PORTS(ldrun_readport,battroad_writeport)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA((64*8-256)/2, 64*8-(64*8-256)/2-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(battroad_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(544)
+
+	MDRV_PALETTE_INIT(battroad)
+	MDRV_VIDEO_START(kidniki)
+	MDRV_VIDEO_UPDATE(battroad)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ldrun2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(ldrun2_readmem,ldrun2_writemem)
+	MDRV_CPU_PORTS(ldrun2_readport,ldrun2_writeport)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ldrun3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(ldrun3_readmem,ldrun3_writemem)
+	MDRV_CPU_PORTS(ldrun_readport,ldrun3_writeport)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(ldrun3_gfxdecodeinfo)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ldrun4 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(ldrun4_readmem,ldrun4_writemem)
+	MDRV_CPU_PORTS(ldrun_readport,ldrun4_writeport)
+
+	/* video hardware */
+	MDRV_GFXDECODE(ldrun3_gfxdecodeinfo)
+	MDRV_VIDEO_UPDATE(ldrun4)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( lotlot )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(lotlot_readmem,lotlot_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(lotlot_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_VIDEO_UPDATE(lotlot)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( kidniki )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(kidniki_readmem,kidniki_writemem)
+	MDRV_CPU_PORTS(ldrun_readport,kidniki_writeport)
+
+	/* video hardware */
+	MDRV_GFXDECODE(kidniki_gfxdecodeinfo)
+
+	MDRV_VIDEO_START(kidniki)
+	MDRV_VIDEO_UPDATE(kidniki)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( spelunkr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(spelunkr_readmem,spelunkr_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(spelunkr_gfxdecodeinfo)
+
+	MDRV_VIDEO_START(spelunkr)
+	MDRV_VIDEO_UPDATE(spelunkr)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( spelunk2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(spelunk2_readmem,spelunk2_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(spelunk2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_PALETTE_INIT(spelunk2)
+	MDRV_VIDEO_START(spelunkr)
+	MDRV_VIDEO_UPDATE(spelunk2)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( youjyudn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ldrun)
+	MDRV_CPU_REPLACE("main", Z80, 18432000/6)
+	MDRV_CPU_MEMORY(youjyudn_readmem,youjyudn_writemem)
+	MDRV_CPU_PORTS(ldrun_readport,youjyudn_writeport)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA((64*8-256)/2, 64*8-(64*8-256)/2-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(youjyudn_gfxdecodeinfo)
+
+	MDRV_VIDEO_START(youjyudn)
+	MDRV_VIDEO_UPDATE(youjyudn)
+MACHINE_DRIVER_END
 
 
 

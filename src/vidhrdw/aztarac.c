@@ -1,12 +1,12 @@
-/*
- * Aztarac vector generator emulation
- *
- * Jul 25 1999 by Mathis Rosenhauer
- *
- */
+/*************************************************************************
+
+	Centuri Aztarac hardware
+
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "aztarac.h"
 
 #define VEC_SHIFT 16
 
@@ -82,24 +82,17 @@ WRITE16_HANDLER( aztarac_ubr_w )
     }
 }
 
-int aztarac_vg_interrupt(void)
+
+VIDEO_START( aztarac )
 {
-    return 4;
-}
-
-int aztarac_vh_start (void)
-{
-    int xmin, xmax, ymin, ymax;
-
-
-	xmin = Machine->visible_area.min_x;
-	ymin = Machine->visible_area.min_y;
-	xmax = Machine->visible_area.max_x;
-	ymax = Machine->visible_area.max_y;
+	int xmin = Machine->visible_area.min_x;
+	int ymin = Machine->visible_area.min_y;
+	int xmax = Machine->visible_area.max_x;
+	int ymax = Machine->visible_area.max_y;
 
 	xcenter=((xmax + xmin) / 2) << VEC_SHIFT;
 	ycenter=((ymax + ymin) / 2) << VEC_SHIFT;
 
 	vector_set_shift (VEC_SHIFT);
-	return vector_vh_start();
+	return video_start_vector();
 }

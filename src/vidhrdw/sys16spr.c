@@ -26,7 +26,7 @@
 */
 
 #include "driver.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 int sys16_sprite_shinobi( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor ){
 /* standard sprite hardware (Shinobi, Altered Beast, Golden Axe

@@ -101,7 +101,7 @@ static void setvector_callback(int param)
 		cpu_set_irq_line(1,0,ASSERT_LINE);
 }
 
-void m72_init_sound(void)
+MACHINE_INIT( m72_sound )
 {
 	setvector_callback(VECTOR_INIT);
 }

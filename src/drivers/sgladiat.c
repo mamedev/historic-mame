@@ -11,10 +11,9 @@
 	cocktail support is missing
 */
 
-extern void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-extern int sgladiat_vh_start( void );
-extern void sgladiat_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
-extern void snk_vh_stop( void );
+extern PALETTE_INIT( aso );
+extern VIDEO_START( sgladiat );
+extern VIDEO_UPDATE( sgladiat );
 
 #define SNK_NMI_ENABLE	1
 #define SNK_NMI_PENDING	2
@@ -92,7 +91,7 @@ static WRITE_HANDLER( snk_soundlatch_w )
 	soundlatch_w( offset, data );
 
 	/* trigger NMI on sound CPU */
-	cpu_cause_interrupt( 2, Z80_NMI_INT );
+	cpu_set_irq_line( 2, IRQ_LINE_NMI, PULSE_LINE );
 }
 
 static READ_HANDLER( snk_sound_ack_r )
@@ -108,7 +107,7 @@ static READ_HANDLER( sgladiat_cpuA_nmi_r )
 	/* trigger NMI on CPUB */
 	if( cpuB_latch & SNK_NMI_ENABLE )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		cpuB_latch = 0;
 	}
 	else
@@ -123,7 +122,7 @@ static WRITE_HANDLER( sgladiat_cpuA_nmi_w )
 	/* enable NMI on CPUA */
 	if( cpuA_latch&SNK_NMI_PENDING )
 	{
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		cpuA_latch = 0;
 	}
 	else
@@ -137,7 +136,7 @@ static READ_HANDLER( sgladiat_cpuB_nmi_r )
 	/* trigger NMI on CPUA */
 	if( cpuA_latch & SNK_NMI_ENABLE )
 	{
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		cpuA_latch = 0;
 	}
 	else
@@ -152,7 +151,7 @@ static WRITE_HANDLER( sgladiat_cpuB_nmi_w )
 	/* enable NMI on CPUB */
 	if( cpuB_latch&SNK_NMI_PENDING )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		cpuB_latch = 0;
 	}
 	else
@@ -243,54 +242,40 @@ static PORT_READ_START( sgladiat_readport )
 	{ 0x00, 0x00, MRA_NOP },
 PORT_END
 
-static const struct MachineDriver machine_driver_sgladiat =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,
-			sgladiat_readmem_cpuA,sgladiat_writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
-			sgladiat_readmem_cpuB,sgladiat_writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,/* | CPU_AUDIO_CPU, */
-			4000000,	/* 4 MHz (?) */
-			sgladiat_readmem_sound,sgladiat_writemem_sound,sgladiat_readport,0,
-			interrupt,2
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( sgladiat )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(sgladiat_readmem_cpuA,sgladiat_writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(sgladiat_readmem_cpuB,sgladiat_writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(sgladiat_readmem_sound,sgladiat_writemem_sound)
+	MDRV_CPU_PORTS(sgladiat_readport,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8+16, 36*8-1-16, 1*8, 28*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8+16, 36*8-1-16, 1*8, 28*8-1)
+	MDRV_GFXDECODE(tnk3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	tnk3_gfxdecodeinfo,
-	1024, 0,
-	aso_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	sgladiat_vh_start,
-	snk_vh_stop,
-	sgladiat_vh_screenrefresh,
+	MDRV_PALETTE_INIT(aso)
+	MDRV_VIDEO_START(sgladiat)
+	MDRV_VIDEO_UPDATE(sgladiat)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 ROM_START( sgladiat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for cpuA code */

@@ -104,14 +104,12 @@ extern data8_t *argus_bg1_scrollx;
 extern data8_t *argus_bg1_scrolly;
 extern data8_t *butasan_bg1ram;
 
-int  argus_vh_start   (void);
-int  valtric_vh_start (void);
-int  butasan_vh_start (void);
-void argus_vh_stop    (void);
-void butasan_vh_stop  (void);
-void argus_vh_screenrefresh   (struct mame_bitmap *bitmap,int full_refresh);
-void valtric_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void butasan_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( argus );
+VIDEO_START( valtric );
+VIDEO_START( butasan );
+VIDEO_UPDATE( argus );
+VIDEO_UPDATE( valtric );
+VIDEO_UPDATE( butasan );
 
 static data8_t argus_bank_latch   = 0x00;
 static data8_t butasan_page_latch = 0x00;
@@ -152,12 +150,12 @@ WRITE_HANDLER( butasan_bg1_status_w );
 
 ***************************************************************************/
 
-static int argus_interrupt(void)
+static INTERRUPT_GEN( argus_interrupt )
 {
 	if (cpu_getiloops() == 0)
-	   return 0xd7;		/* RST 10h */
+	   cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
 	else
-	   return 0xcf;		/* RST 08h */
+	   cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
 }
 
 /* Handler called by the YM2203 emulator when the internal timers cause an IRQ */
@@ -808,137 +806,95 @@ static struct GfxDecodeInfo butasan_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static const struct MachineDriver machine_driver_argus =
-{
+static MACHINE_DRIVER_START( argus )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,			/* 4 MHz */
-			argus_readmem, argus_writemem, 0, 0,
-			argus_interrupt, 2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			5000000,			/* 4 MHz */
-			sound_readmem_a,  sound_writemem_a,
-			sound_readport_1, sound_writeport_1,
-			ignore_interrupt, 0
-		}
-	},
-	54, DEFAULT_60HZ_VBLANK_DURATION,	/* This value is refered to psychic5 driver */
-	10,
-	0,
+	MDRV_CPU_ADD(Z80, 5000000)			/* 4 MHz */
+	MDRV_CPU_MEMORY(argus_readmem,argus_writemem)
+	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem_a,sound_writemem_a)
+	MDRV_CPU_PORTS(sound_readport_1,sound_writeport_1)
+
+	MDRV_FRAMES_PER_SECOND(54)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* This value is refered to psychic5 driver */
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	argus_gfxdecodeinfo,
-	896, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(argus_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(896)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	argus_vh_start,
-	argus_vh_stop,
-	argus_vh_screenrefresh,
+	MDRV_VIDEO_START(argus)
+	MDRV_VIDEO_UPDATE(argus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&argus_ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, argus_ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_valtric =
-{
+static MACHINE_DRIVER_START( valtric )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,			/* 5 MHz */
-			valtric_readmem, valtric_writemem, 0, 0,
-			argus_interrupt, 2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			5000000,			/* 5 MHz */
-			sound_readmem_a,  sound_writemem_a,
-			sound_readport_2, sound_writeport_2,
-			ignore_interrupt, 0
-		}
-	},
-	54, DEFAULT_60HZ_VBLANK_DURATION,	/* This value is refered to psychic5 driver */
-	10,
-	0,
+	MDRV_CPU_ADD(Z80, 5000000)			/* 5 MHz */
+	MDRV_CPU_MEMORY(valtric_readmem,valtric_writemem)
+	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 5 MHz */
+	MDRV_CPU_MEMORY(sound_readmem_a,sound_writemem_a)
+	MDRV_CPU_PORTS(sound_readport_2,sound_writeport_2)
+
+	MDRV_FRAMES_PER_SECOND(54)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* This value is refered to psychic5 driver */
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	valtric_gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(valtric_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	valtric_vh_start,
-	0,
-	valtric_vh_screenrefresh,
+	MDRV_VIDEO_START(valtric)
+	MDRV_VIDEO_UPDATE(valtric)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&valtric_ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, valtric_ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_butasan =
-{
+static MACHINE_DRIVER_START( butasan )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,			/* 5 MHz */
-			butasan_readmem, butasan_writemem, 0, 0,
-			argus_interrupt, 2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			5000000,			/* 5 MHz */
-			sound_readmem_b,  sound_writemem_b,
-			sound_readport_2, sound_writeport_2,
-			ignore_interrupt, 0
-		}
-	},
-	54, DEFAULT_60HZ_VBLANK_DURATION,	/* This value is refered to psychic5 driver */
-	10,
-	0,
+	MDRV_CPU_ADD(Z80, 5000000)			/* 5 MHz */
+	MDRV_CPU_MEMORY(butasan_readmem,butasan_writemem)
+	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 5 MHz */
+	MDRV_CPU_MEMORY(sound_readmem_b,sound_writemem_b)
+	MDRV_CPU_PORTS(sound_readport_2,sound_writeport_2)
+
+	MDRV_FRAMES_PER_SECOND(54)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* This value is refered to psychic5 driver */
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	butasan_gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(butasan_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	butasan_vh_start,
-	butasan_vh_stop,
-	butasan_vh_screenrefresh,
+	MDRV_VIDEO_START(butasan)
+	MDRV_VIDEO_UPDATE(butasan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&butasan_ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, butasan_ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

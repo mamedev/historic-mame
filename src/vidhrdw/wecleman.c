@@ -84,42 +84,6 @@ static void sprite_order_setup( struct sprite_list *sprite_list, int *first, int
 	*last = sprite_list->num_sprites-1;
 }
 
-/*********************************************************************
-
-	The mask buffer is a dynamically allocated resource
-	it is recycled each frame.  Using this technique reduced the runttime
-	memory requirements of the Gaiden from 512k (worst case) to approx 6K.
-
-	Sprites use offsets instead of pointers directly to the mask data, since it
-	is potentially reallocated.
-
-*********************************************************************/
-static unsigned char *mask_buffer = NULL;
-static int mask_buffer_size = 0; /* actual size of allocated buffer */
-static int mask_buffer_used = 0;
-
-static void mask_buffer_reset( void ){
-	mask_buffer_used = 0;
-}
-static void mask_buffer_dispose( void ){
-	free( mask_buffer );
-	mask_buffer = NULL;
-	mask_buffer_size = 0;
-}
-static long mask_buffer_alloc( long size ){
-	long result = mask_buffer_used;
-	long req_size = mask_buffer_used + size;
-	if( req_size>mask_buffer_size ){
-		mask_buffer = realloc( mask_buffer, req_size );
-		mask_buffer_size = req_size;
-		logerror("increased sprite mask buffer size to %d bytes.\n", mask_buffer_size );
-		if( !mask_buffer ) logerror("Error! insufficient memory for mask_buffer_alloc\n" );
-	}
-	mask_buffer_used = req_size;
-	memset( &mask_buffer[result], 0x00, size ); /* clear it */
-	return result;
-}
-
 #define BLIT \
 if( sprite->flags&SPRITE_FLIPX ){ \
 	source += screenx + flipx_adjust; \
@@ -425,22 +389,14 @@ static void sprite_init( void ){
 	screen_clip_bottom = bottom;
 }
 
-static void sprite_close( void ){
-	struct sprite_list *sprite_list = first_sprite_list;
-	mask_buffer_dispose();
-
-	while( sprite_list ){
-		struct sprite_list *next = sprite_list->next;
-		free( sprite_list->sprite );
-		free( sprite_list );
-		sprite_list = next;
-	}
-	first_sprite_list = NULL;
-}
-
 static struct sprite_list *sprite_list_create( int num_sprites ){
-	struct sprite *sprite = calloc( num_sprites, sizeof(struct sprite) );
-	struct sprite_list *sprite_list = calloc( 1, sizeof(struct sprite_list) );
+	struct sprite *sprite = auto_malloc( num_sprites * sizeof(struct sprite) );
+	struct sprite_list *sprite_list = auto_malloc( sizeof(struct sprite_list) );
+	
+	if (!sprite || !sprite_list)
+		return NULL;
+	memset(sprite, 0, num_sprites * sizeof(struct sprite));
+	memset(sprite_list, 0, sizeof(struct sprite_list));
 
 	sprite_list->num_sprites = num_sprites;
 	sprite_list->sprite = sprite;
@@ -528,7 +484,6 @@ static void sprite_update_helper( struct sprite_list *sprite_list ){
 
 static void sprite_update( void ){
 	struct sprite_list *sprite_list = first_sprite_list;
-	mask_buffer_reset();
 	while( sprite_list ){
 		sprite_update_helper( sprite_list );
 		sprite_list = sprite_list->next;
@@ -875,7 +830,7 @@ WRITE16_HANDLER( wecleman_pageram_w )
 						[ Video Hardware Start ]
 ------------------------------------------------------------------------*/
 
-int wecleman_vh_start(void)
+VIDEO_START( wecleman )
 {
 
 /*
@@ -938,11 +893,6 @@ int wecleman_vh_start(void)
 	else return 1;
 }
 
-void wecleman_vh_stop(void)
-{
-	sprite_close();
-}
-
 
 
 
@@ -987,7 +937,7 @@ static void zoom_callback_1(int *code,int *color)
 						[ Video Hardware Start ]
 ------------------------------------------------------------------------*/
 
-int hotchase_vh_start(void)
+VIDEO_START( hotchase )
 {
 /*
  Sprite banking - each bank is 0x20000 bytes (we support 0x40 bank codes)
@@ -1006,10 +956,7 @@ int hotchase_vh_start(void)
 		return 1;
 
 	if (K051316_vh_start_1(ZOOMROM1_MEM_REGION,4,TILEMAP_TRANSPARENT,0,zoom_callback_1))
-	{
-		K051316_vh_stop_0();
 		return 1;
-	}
 
 	sprite_list = sprite_list_create( NUM_SPRITES );
 
@@ -1025,14 +972,6 @@ int hotchase_vh_start(void)
 		return 0;
 	}
 	else return 1;
-}
-
-void hotchase_vh_stop(void)
-{
-	K051316_vh_stop_0();
-	K051316_vh_stop_1();
-
-	sprite_close();
 }
 
 
@@ -1075,9 +1014,8 @@ void hotchase_vh_stop(void)
 
 */
 
-void wecleman_draw_road(struct mame_bitmap *bitmap,int priority)
+void wecleman_draw_road(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
-	struct rectangle rect = Machine->visible_area;
 	int curr_code, sx,sy;
 
 /* Referred to what's in the ROMs */
@@ -1085,7 +1023,7 @@ void wecleman_draw_road(struct mame_bitmap *bitmap,int priority)
 #define YSIZE 256
 
 	/* Let's draw from the top to the bottom of the visible screen */
-	for (sy = rect.min_y ; sy <= rect.max_y ; sy ++)
+	for (sy = cliprect->min_y ; sy <= cliprect->max_y ; sy ++)
 	{
 		int code		=	wecleman_roadram[ YSIZE*0+sy ];
 		int scrollx 	=	wecleman_roadram[ YSIZE*1+sy ] + 24;	// fudge factor :)
@@ -1104,14 +1042,14 @@ void wecleman_draw_road(struct mame_bitmap *bitmap,int priority)
 		if (scrollx >= XSIZE)	{curr_code = code+(scrollx-XSIZE)/64;	code = 0;}
 		else					{curr_code = 0   + scrollx/64;}
 
-		for (sx = -(scrollx % 64) ; sx <= rect.max_x ; sx += 64)
+		for (sx = -(scrollx % 64) ; sx <= cliprect->max_x ; sx += 64)
 		{
 			drawgfx(bitmap,Machine->gfx[1],
 				curr_code++,
 				ROAD_COLOR(attr),
 				0,0,
 				sx,sy,
-				&rect,
+				cliprect,
 				TRANSPARENCY_NONE,0);
 
 			if ( (curr_code % (XSIZE/64)) == 0)	curr_code = code;
@@ -1157,7 +1095,7 @@ void wecleman_draw_road(struct mame_bitmap *bitmap,int priority)
 
 */
 
-void hotchase_draw_road(struct mame_bitmap *bitmap)
+void hotchase_draw_road(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int sy;
 
@@ -1189,7 +1127,7 @@ void hotchase_draw_road(struct mame_bitmap *bitmap)
 					color,
 					0,0,
 					((sx-scrollx)&0x3ff)-(384-32),sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -1324,7 +1262,7 @@ static void get_sprite_info(void)
 
 */
 #ifdef MAME_DEBUG
-static void browser(struct mame_bitmap *bitmap)
+static void browser(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	const pen_t          *base_pal	=	Machine->gfx[0]->colortable + 0;
 	const unsigned char  *base_gfx	=	memory_region(REGION_GFX1);
@@ -1412,8 +1350,8 @@ static void browser(struct mame_bitmap *bitmap)
 	KEY(B, browse ^= 1;) \
 	if (browse) \
 	{ \
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area); \
-		browser(bitmap); \
+		fillbitmap(bitmap,Machine->pens[0],cliprect); \
+		browser(bitmap,cliprect); \
 		return; \
 	} \
 	if (keyboard_pressed(KEYCODE_Z)) \
@@ -1434,7 +1372,7 @@ static void browser(struct mame_bitmap *bitmap)
 							WEC Le Mans 24
 ***************************************************************************/
 
-void wecleman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wecleman )
 {
 	int i, layers_ctrl = -1;
 
@@ -1477,28 +1415,28 @@ void wecleman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	sprite_update();
 
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	/* Draw the road (lines which have "priority" 0x02) */
-	if (layers_ctrl & 16)	wecleman_draw_road(bitmap,0x02);
+	if (layers_ctrl & 16)	wecleman_draw_road(bitmap,cliprect,0x02);
 
 	/* Draw the background */
 	if (layers_ctrl & 1)
-		tilemap_draw(bitmap, bg_tilemap,  0,0);
+		tilemap_draw(bitmap,cliprect, bg_tilemap,  0,0);
 
 	/* Draw the foreground */
 	if (layers_ctrl & 2)
-		tilemap_draw(bitmap, fg_tilemap,  0,0);
+		tilemap_draw(bitmap,cliprect, fg_tilemap,  0,0);
 
 	/* Draw the road (lines which have "priority" 0x04) */
-	if (layers_ctrl & 16)	wecleman_draw_road(bitmap,0x04);
+	if (layers_ctrl & 16)	wecleman_draw_road(bitmap,cliprect,0x04);
 
 	/* Draw the sprites */
 	if (layers_ctrl & 8)	sprite_draw(sprite_list,0);
 
 	/* Draw the text layer */
 	if (layers_ctrl & 4)
-		tilemap_draw(bitmap, txt_tilemap,  0,0);
+		tilemap_draw(bitmap,cliprect, txt_tilemap,  0,0);
 }
 
 
@@ -1512,7 +1450,7 @@ void wecleman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 								Hot Chase
 ***************************************************************************/
 
-void hotchase_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hotchase )
 {
 	int layers_ctrl = -1;
 
@@ -1528,20 +1466,20 @@ void hotchase_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	sprite_update();
 
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	/* Draw the background */
 	if (layers_ctrl & 1)
-		K051316_zoom_draw_0(bitmap,0,0);
+		K051316_zoom_draw_0(bitmap,cliprect,0,0);
 
 	/* Draw the road */
 	if (layers_ctrl & 16)
-		hotchase_draw_road(bitmap);
+		hotchase_draw_road(bitmap,cliprect);
 
 	/* Draw the sprites */
 	if (layers_ctrl & 8)	sprite_draw(sprite_list,0);
 
 	/* Draw the foreground (text) */
 	if (layers_ctrl & 4)
-		K051316_zoom_draw_1(bitmap,0,0);
+		K051316_zoom_draw_1(bitmap,cliprect,0,0);
 }

@@ -51,7 +51,7 @@ static void zoom_callback(int *code,int *color)
 
 ***************************************************************************/
 
-int tail2nos_vh_start(void)
+VIDEO_START( tail2nos )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
@@ -61,11 +61,8 @@ int tail2nos_vh_start(void)
 	if (K051316_vh_start_0(REGION_GFX3,4,TILEMAP_OPAQUE,0,zoom_callback))
 		return 1;
 
-	if (!(dirtychar = malloc(TOTAL_CHARS)))
-	{
-		K051316_vh_stop_0();
+	if (!(dirtychar = auto_malloc(TOTAL_CHARS)))
 		return 1;
-	}
 	memset(dirtychar,1,TOTAL_CHARS);
 
 	tilemap_set_transparent_pen(bg_tilemap,15);
@@ -75,13 +72,6 @@ int tail2nos_vh_start(void)
 	zoomdata = (data16_t *)memory_region(REGION_GFX3);
 
 	return 0;
-}
-
-void tail2nos_vh_stop(void)
-{
-	K051316_vh_stop_0();
-	free(dirtychar);
-	dirtychar = 0;
 }
 
 
@@ -155,7 +145,7 @@ WRITE16_HANDLER( tail2nos_gfxbank_w )
 
 ***************************************************************************/
 
-static void drawsprites(struct mame_bitmap *bitmap)
+static void drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -178,11 +168,11 @@ static void drawsprites(struct mame_bitmap *bitmap)
 				40 + color,
 				flipx,flipy,
 				sx+3,sy+1,	/* placement relative to zoom layer verified on the real thing */
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void tail2nos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tail2nos )
 {
 	static struct GfxLayout tilelayout =
 	{
@@ -224,10 +214,10 @@ void tail2nos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	if (video_enable)
 	{
-		K051316_zoom_draw_0(bitmap,0,0);
-		drawsprites(bitmap);
-		tilemap_draw(bitmap,bg_tilemap,0,0);
+		K051316_zoom_draw_0(bitmap,cliprect,0,0);
+		drawsprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	}
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 }

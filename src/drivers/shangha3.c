@@ -30,9 +30,8 @@ extern int shangha3_do_shadows;
 WRITE16_HANDLER( shangha3_flipscreen_w );
 WRITE16_HANDLER( shangha3_gfxlist_addr_w );
 WRITE16_HANDLER( shangha3_blitter_go_w );
-int shangha3_vh_start(void);
-void shangha3_vh_stop(void);
-void shangha3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( shangha3 );
+VIDEO_UPDATE( shangha3 );
 
 
 
@@ -54,13 +53,13 @@ static READ16_HANDLER( shangha3_prot_r )
 	static int count;
 	static int result[] = { 0x0,0x1,0x3,0x7,0xf,0xe,0xc,0x8,0x0};
 
-logerror("PC %04x: read 20004e\n",cpu_get_pc());
+logerror("PC %04x: read 20004e\n",activecpu_get_pc());
 
 	return result[count++ % 9];
 }
 static WRITE16_HANDLER( shangha3_prot_w )
 {
-logerror("PC %04x: write %02x to 20004e\n",cpu_get_pc(),data);
+logerror("PC %04x: write %02x to 20004e\n",activecpu_get_pc(),data);
 }
 
 
@@ -104,7 +103,7 @@ static WRITE16_HANDLER( heberpop_sound_command_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xff);
-		cpu_cause_interrupt(1,0xff);	/* RST 38h */
+		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);	/* RST 38h */
 	}
 }
 
@@ -513,142 +512,90 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static const struct MachineDriver machine_driver_shangha3 =
-{
+static MACHINE_DRIVER_START( shangha3 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			shangha3_readmem,shangha3_writemem,0,0,
-			m68_level4_irq,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(shangha3_readmem,shangha3_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	24*16, 16*16, { 0*16, 24*16-1, 1*16, 15*16-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(24*16, 16*16)
+	MDRV_VISIBLE_AREA(0*16, 24*16-1, 1*16, 15*16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	shangha3_vh_start,
-	shangha3_vh_stop,
-	shangha3_vh_screenrefresh,
+	MDRV_VIDEO_START(shangha3)
+	MDRV_VIDEO_UPDATE(shangha3)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_heberpop =
-{
+
+static MACHINE_DRIVER_START( heberpop )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			heberpop_readmem,heberpop_writemem,0,0,
-			m68_level4_irq,1
-		},
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz ??? */
-			heberpop_sound_readmem,heberpop_sound_writemem,heberpop_sound_readport,heberpop_sound_writeport,
-			ignore_interrupt,0	/* IRQ triggered by main CPU */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(heberpop_readmem,heberpop_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ??? */
+	MDRV_CPU_MEMORY(heberpop_sound_readmem,heberpop_sound_writemem)
+	MDRV_CPU_PORTS(heberpop_sound_readport,heberpop_sound_writeport)
 								/* NMI triggered by YM3438 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	24*16, 16*16, { 0*16, 24*16-1, 1*16, 15*16-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(24*16, 16*16)
+	MDRV_VISIBLE_AREA(0*16, 24*16-1, 1*16, 15*16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	shangha3_vh_start,
-	shangha3_vh_stop,
-	shangha3_vh_screenrefresh,
+	MDRV_VIDEO_START(shangha3)
+	MDRV_VIDEO_UPDATE(shangha3)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3438,
-			&ym3438_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3438, ym3438_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_blocken =
-{
+
+static MACHINE_DRIVER_START( blocken )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			blocken_readmem,blocken_writemem,0,0,
-			m68_level4_irq,1
-		},
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz ??? */
-			heberpop_sound_readmem,heberpop_sound_writemem,heberpop_sound_readport,heberpop_sound_writeport,
-			ignore_interrupt,0	/* IRQ triggered by main CPU */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(blocken_readmem,blocken_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ??? */
+	MDRV_CPU_MEMORY(heberpop_sound_readmem,heberpop_sound_writemem)
+	MDRV_CPU_PORTS(heberpop_sound_readport,heberpop_sound_writeport)
 								/* NMI triggered by YM3438 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	24*16, 16*16, { 0*16, 24*16-1, 1*16, 15*16-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(24*16, 16*16)
+	MDRV_VISIBLE_AREA(0*16, 24*16-1, 1*16, 15*16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	shangha3_vh_start,
-	shangha3_vh_stop,
-	shangha3_vh_screenrefresh,
+	MDRV_VIDEO_START(shangha3)
+	MDRV_VIDEO_UPDATE(shangha3)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3438,
-			&ym3438_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3438, ym3438_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -712,11 +659,11 @@ ROM_END
 
 
 
-static void init_shangha3(void)
+static DRIVER_INIT( shangha3 )
 {
 	shangha3_do_shadows = 1;
 }
-static void init_heberpop(void)
+static DRIVER_INIT( heberpop )
 {
 	shangha3_do_shadows = 0;
 }

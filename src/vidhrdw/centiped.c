@@ -1,13 +1,12 @@
-/***************************************************************************
+/*************************************************************************
 
-  vidhrdw.c
+	Atari Centipede hardware
 
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "centiped.h"
 
 
 
@@ -40,7 +39,7 @@ static struct rectangle spritevisiblearea_flip =
 
 ***************************************************************************/
 
-void centiped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( centiped )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -101,16 +100,16 @@ WRITE_HANDLER( centiped_paletteram_w )
 
 static int powerup_counter;
 
-void centiped_init_machine(void)
+MACHINE_INIT( centiped )
 {
 	powerup_counter = 10;
 }
 
-int centiped_interrupt(void)
+
+INTERRUPT_GEN( centiped_interrupt )
 {
 	int offset;
 	int slice = 3 - cpu_getiloops();
-
 
 	/* set the palette for the previous screen slice to properly support */
 	/* midframe palette changes in test mode */
@@ -121,12 +120,9 @@ int centiped_interrupt(void)
 	/* The only workaround I've found is to wait a little before starting */
 	/* to generate them. */
 	if (powerup_counter == 0)
-		return interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 	else
-	{
 		powerup_counter--;
-		return ignore_interrupt();
-	}
 }
 
 
@@ -138,11 +134,12 @@ int centiped_interrupt(void)
   the main emulation engine.
 
 ***************************************************************************/
-void centiped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( centiped )
 {
 	int offs;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset (dirtybuffer, 1, videoram_size);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	Atari System 2
+	Atari System 2 hardware
 
 	driver by Aaron Giles
 
@@ -127,31 +127,7 @@
 #include "cpu/t11/t11.h"
 #include "machine/atarigen.h"
 #include "slapstic.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-READ16_HANDLER( atarisys2_slapstic_r );
-READ16_HANDLER( atarisys2_videoram_r );
-
-WRITE16_HANDLER( atarisys2_slapstic_w );
-WRITE16_HANDLER( atarisys2_vscroll_w );
-WRITE16_HANDLER( atarisys2_hscroll_w );
-WRITE16_HANDLER( atarisys2_videoram_w );
-WRITE16_HANDLER( atarisys2_paletteram_w );
-
-void atarisys2_scanline_update(int scanline);
-
-int atarisys2_vh_start(void);
-void atarisys2_vh_stop(void);
-void atarisys2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-extern data16_t *atarisys2_slapstic;
+#include "atarisy2.h"
 
 
 
@@ -218,7 +194,7 @@ static void scanline_update(int scanline)
 {
 	/* update the display list */
 	if (scanline < Machine->drv->screen_height)
-		atarisys2_scanline_update(scanline);
+		atarisy2_scanline_update(scanline);
 
 	if (scanline <= Machine->drv->screen_height)
 	{
@@ -237,7 +213,7 @@ static void scanline_update(int scanline)
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( atarisy2 )
 {
 	atarigen_eeprom_reset();
 	slapstic_reset();
@@ -261,13 +237,11 @@ static void init_machine(void)
  *
  *************************************/
 
-static int vblank_interrupt(void)
+static INTERRUPT_GEN( vblank_int )
 {
 	/* clock the VBLANK through */
 	if (interrupt_enable & 8)
 		atarigen_video_int_gen();
-
-	return ignore_interrupt();
 }
 
 
@@ -338,7 +312,7 @@ static WRITE16_HANDLER( bankselect_w )
 	base = &memory_region(REGION_CPU1)[bankoffset[(newword >> 10) & 0x3f]];
 
 	cpu_setbank(1 + offset, base);
-	cpu_set_reg(T11_BANK2 + offset, base - OP_RAM);
+	activecpu_set_reg(T11_BANK2 + offset, base - OP_RAM);
 }
 
 
@@ -526,17 +500,17 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0x1400, 0x1403, adc_r },
 	{ 0x1800, 0x1801, switch_r },
 	{ 0x1c00, 0x1c01, sound_r },
-	{ 0x2000, 0x3fff, atarisys2_videoram_r },
+	{ 0x2000, 0x3fff, atarisy2_videoram_r },
 	{ 0x4000, 0x5fff, MRA16_BANK1 },
 	{ 0x6000, 0x7fff, MRA16_BANK2 },
-	{ 0x8000, 0x81ff, atarisys2_slapstic_r },
+	{ 0x8000, 0x81ff, atarisy2_slapstic_r },
 	{ 0x8200, 0xffff, MRA16_ROM },
 MEMORY_END
 
 
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x0000, 0x0fff, MWA16_RAM },
-	{ 0x1000, 0x11ff, atarisys2_paletteram_w, &paletteram16 },
+	{ 0x1000, 0x11ff, atarisy2_paletteram_w, &paletteram16 },
 	{ 0x1400, 0x1403, bankselect_w, &bankselect },
 	{ 0x1480, 0x148f, adc_strobe_w },
 	{ 0x1580, 0x159f, int0_ack_w },
@@ -545,12 +519,12 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x15e0, 0x15ff, atarigen_video_int_ack_w },
 	{ 0x1600, 0x1601, int_enable_w },
 	{ 0x1680, 0x1681, atarigen_sound_w },
-	{ 0x1700, 0x1701, atarisys2_hscroll_w },
-	{ 0x1780, 0x1781, atarisys2_vscroll_w },
+	{ 0x1700, 0x1701, atarisy2_hscroll_w },
+	{ 0x1780, 0x1781, atarisy2_vscroll_w },
 	{ 0x1800, 0x1801, watchdog_reset16_w },
-	{ 0x2000, 0x3fff, atarisys2_videoram_w },
+	{ 0x2000, 0x3fff, atarisy2_videoram_w },
 	{ 0x4000, 0x7fff, MWA16_ROM },
-	{ 0x8000, 0x81ff, atarisys2_slapstic_w, &atarisys2_slapstic },
+	{ 0x8000, 0x81ff, atarisy2_slapstic_w, &atarisy2_slapstic },
 	{ 0x8200, 0xffff, MWA16_ROM },
 MEMORY_END
 
@@ -1204,147 +1178,60 @@ static struct t11_setup t11_data =
 	0x36ff			/* initial mode word has DAL15,14,11,8 pulled low */
 };
 
-static const struct MachineDriver machine_driver_paperboy =
-{
+
+static MACHINE_DRIVER_START( atarisy2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_T11,
-			ATARI_CLOCK_20MHz/2,
-			main_readmem,main_writemem,0,0,
-			vblank_interrupt,1,
-			0,0,
-			&t11_data
-		},
-		{
-			CPU_M6502,
-			ATARI_CLOCK_14MHz/8,
-			sound_readmem,sound_writemem,0,0,
-			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD_TAG("main", T11, ATARI_CLOCK_20MHz/2)
+	MDRV_CPU_CONFIG(t11_data)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(vblank_int,1)
+	
+	MDRV_CPU_ADD_TAG("sound", M6502, ATARI_CLOCK_14MHz/8)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10)))
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atarisy2)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarisys2_vh_start,
-	atarisys2_vh_stop,
-	atarisys2_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(64*8, 48*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 48*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	
+	MDRV_VIDEO_START(atarisy2)
+	MDRV_VIDEO_UPDATE(atarisy2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YM2151,  &ym2151_interface  },
-		{ SOUND_POKEY,   &pokey_interface   },
-		{ SOUND_TMS5220, &tms5220_interface }
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD_TAG("ym",    YM2151,  ym2151_interface)
+	MDRV_SOUND_ADD_TAG("pokey", POKEY,   pokey_interface)
+	MDRV_SOUND_ADD_TAG("tms",   TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_a720 =
-{
+static MACHINE_DRIVER_START( 720 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_T11,
-			ATARI_CLOCK_20MHz/2,
-			main_readmem,main_writemem,0,0,
-			vblank_interrupt,1,
-			0,0,
-			&t11_data
-		},
-		{
-			CPU_M6502,
-			2200000,	/* artifically high to prevent deadlock at startup ATARI_CLOCK_14MHz/8,*/
-			sound_readmem,sound_writemem,0,0,
-			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
-	/* video hardware */
-	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarisys2_vh_start,
-	atarisys2_vh_stop,
-	atarisys2_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YM2151,  &ym2151_interface  },
-		{ SOUND_POKEY,   &pokey_interface   },
-		{ SOUND_TMS5220, &tms5220_interface }
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(atarisy2)
+	
+	MDRV_CPU_REPLACE("sound", M6502, 2200000) /* artifically high to prevent deadlock at startup ATARI_CLOCK_14MHz/8,*/
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_sprint =
-{
+static MACHINE_DRIVER_START( sprint )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_T11,
-			ATARI_CLOCK_20MHz/2,
-			main_readmem,main_writemem,0,0,
-			vblank_interrupt,1,
-			0,0,
-			&t11_data
-		},
-		{
-			CPU_M6502,
-			ATARI_CLOCK_14MHz/8,
-			sound_readmem,sound_writemem,0,0,
-			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_20MHz/2/16/16/16/10))
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
-	/* video hardware */
-	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarisys2_vh_start,
-	atarisys2_vh_stop,
-	atarisys2_vh_screenrefresh,
-
+	MDRV_IMPORT_FROM(atarisy2)
+	
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YM2151,  &ym2151_interface  },
-		{ SOUND_POKEY,   &pokey_interface   }
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_REMOVE("tms")
+MACHINE_DRIVER_END
 
 
 
@@ -1378,7 +1265,7 @@ ROM_START( paperboy )
 	ROM_LOAD( "vid_c06.bin",  0x010000, 0x08000, 0x7bb59d68 ) 	/* playfield, planes 2/3 */
 	ROM_LOAD( "vid_d06.bin",  0x01c000, 0x04000, 0x1a1d4ba8 )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "vid_l06.bin",  0x000000, 0x08000, 0x067ef202 )	/* motion objects, planes 0/1 */
 	ROM_LOAD( "vid_k06.bin",  0x008000, 0x08000, 0x76b977c4 )
 	ROM_LOAD( "vid_j06.bin",  0x010000, 0x08000, 0x2a3cc8d0 )
@@ -1419,7 +1306,7 @@ ROM_START( 720 )
 	ROM_LOAD( "1119.rom",     0x030000, 0x08000, 0x8f7b20e5 )
 	ROM_LOAD( "1120.rom",     0x038000, 0x08000, 0x46af6d35 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1109.rom",     0x020000, 0x08000, 0x0a46b693 )	/* motion objects, planes 0/1 */
 	ROM_CONTINUE(             0x000000, 0x08000 )
 	ROM_LOAD( "1110.rom",     0x028000, 0x08000, 0x457d7e38 )
@@ -1484,7 +1371,7 @@ ROM_START( 720b )
 	ROM_LOAD( "1119.rom",     0x030000, 0x08000, 0x8f7b20e5 )
 	ROM_LOAD( "1120.rom",     0x038000, 0x08000, 0x46af6d35 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1109.rom",     0x020000, 0x08000, 0x0a46b693 )	/* motion objects, planes 0/1 */
 	ROM_CONTINUE(             0x000000, 0x08000 )
 	ROM_LOAD( "1110.rom",     0x028000, 0x08000, 0x457d7e38 )
@@ -1552,7 +1439,7 @@ ROM_START( ssprint )
 	ROM_CONTINUE(             0x050000, 0x08000 )
 	ROM_LOAD( "136042.103",   0x058000, 0x08000, 0x64d473a8 )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "136042.113",   0x000000, 0x08000, 0xf869b0fc )	/* motion objects, planes 0/1 */
 	ROM_LOAD( "136042.112",   0x008000, 0x08000, 0xabcbc114 )
 	ROM_LOAD( "136042.110",   0x010000, 0x08000, 0x9e91e734 )
@@ -1594,7 +1481,7 @@ ROM_START( csprint )
 	ROM_CONTINUE(             0x050000, 0x08000 )
 	ROM_LOAD( "045-1103.7c",  0x058000, 0x08000, 0x8f8c9692 )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "045-1112.6t",  0x000000, 0x08000, 0xf869b0fc )	/* motion objects, planes 0/1 */
 	ROM_LOAD( "045-1111.6s",  0x008000, 0x08000, 0xabcbc114 )
 	ROM_LOAD( "045-1110.6p",  0x010000, 0x08000, 0x9e91e734 )
@@ -1641,7 +1528,7 @@ ROM_START( apb )
 	ROM_LOAD( "1123",         0x078000, 0x08000, 0x3c96c848 )
 	ROM_CONTINUE(             0x058000, 0x08000 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1105",         0x020000, 0x08000, 0x9b78a88e )	/* motion objects, planes 0/1 */
 	ROM_CONTINUE(             0x000000, 0x08000 )
 	ROM_LOAD( "1106",         0x028000, 0x08000, 0x4787ff58 )
@@ -1712,7 +1599,7 @@ ROM_START( apb2 )
 	ROM_LOAD( "1123",         0x078000, 0x08000, 0x3c96c848 )
 	ROM_CONTINUE(             0x058000, 0x08000 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1105",         0x020000, 0x08000, 0x9b78a88e )	/* motion objects, planes 0/1 */
 	ROM_CONTINUE(             0x000000, 0x08000 )
 	ROM_LOAD( "1106",         0x028000, 0x08000, 0x4787ff58 )
@@ -1758,7 +1645,7 @@ ROM_END
  *
  *************************************/
 
-static void init_paperboy(void)
+static DRIVER_INIT( paperboy )
 {
 	static const data16_t compressed_default_eeprom[] =
 	{
@@ -1793,7 +1680,6 @@ static void init_paperboy(void)
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-	atarigen_invert_region(REGION_GFX2);
 	slapstic_init(105);
 
 	/* expand the 16k program ROMs into full 64k chunks */
@@ -1809,11 +1695,10 @@ static void init_paperboy(void)
 }
 
 
-static void init_a720(void)
+static DRIVER_INIT( 720 )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-	atarigen_invert_region(REGION_GFX2);
 	slapstic_init(107);
 
 	pedal_count = -1;
@@ -1821,7 +1706,7 @@ static void init_a720(void)
 }
 
 
-static void init_ssprint(void)
+static DRIVER_INIT( ssprint )
 {
 	static const data16_t compressed_default_eeprom[] =
 	{
@@ -1854,7 +1739,6 @@ static void init_ssprint(void)
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	atarigen_init_6502_speedup(1, 0x8107, 0x811f);
-	atarigen_invert_region(REGION_GFX2);
 	slapstic_init(108);
 
 	/* expand the 32k program ROMs into full 64k chunks */
@@ -1866,7 +1750,7 @@ static void init_ssprint(void)
 }
 
 
-static void init_csprint(void)
+static DRIVER_INIT( csprint )
 {
 	static const data16_t compressed_default_eeprom[] =
 	{
@@ -1902,7 +1786,6 @@ static void init_csprint(void)
 
 	atarigen_eeprom_default = compressed_default_eeprom;
 	atarigen_init_6502_speedup(1, 0x8107, 0x811f);
-	atarigen_invert_region(REGION_GFX2);
 	slapstic_init(109);
 
 	/* expand the 32k program ROMs into full 64k chunks */
@@ -1914,11 +1797,10 @@ static void init_csprint(void)
 }
 
 
-static void init_apb(void)
+static DRIVER_INIT( apb )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-	atarigen_invert_region(REGION_GFX2);
 	slapstic_init(110);
 
 	pedal_count = 2;
@@ -1933,10 +1815,10 @@ static void init_apb(void)
  *
  *************************************/
 
-GAME( 1984, paperboy, 0,   paperboy, paperboy, paperboy, ROT0,   "Atari Games", "Paperboy" )
-GAME( 1986, 720,      0,   a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 1)" )
-GAME( 1986, 720b,     720, a720,     720,      a720,     ROT0,   "Atari Games", "720 Degrees (set 2)" )
+GAME( 1984, paperboy, 0,   atarisy2, paperboy, paperboy, ROT0,   "Atari Games", "Paperboy" )
+GAME( 1986, 720,      0,   720,      720,      720,      ROT0,   "Atari Games", "720 Degrees (set 1)" )
+GAME( 1986, 720b,     720, 720,      720,      720 ,     ROT0,   "Atari Games", "720 Degrees (set 2)" )
 GAME( 1986, ssprint,  0,   sprint,   ssprint,  ssprint,  ROT0,   "Atari Games", "Super Sprint" )
 GAME( 1986, csprint,  0,   sprint,   csprint,  csprint,  ROT0,   "Atari Games", "Championship Sprint" )
-GAME( 1987, apb,      0,   paperboy, apb,      apb,      ROT270, "Atari Games", "APB - All Points Bulletin (set 1)" )
-GAME( 1987, apb2,     apb, paperboy, apb,      apb,      ROT270, "Atari Games", "APB - All Points Bulletin (set 2)" )
+GAME( 1987, apb,      0,   atarisy2, apb,      apb,      ROT270, "Atari Games", "APB - All Points Bulletin (set 1)" )
+GAME( 1987, apb2,     apb, atarisy2, apb,      apb,      ROT270, "Atari Games", "APB - All Points Bulletin (set 2)" )

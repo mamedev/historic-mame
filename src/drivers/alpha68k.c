@@ -51,17 +51,17 @@ General notes:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-int kouyakyu_vh_start(void);
-int alpha68k_vh_start(void);
-void kyros_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void sstingry_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void alpha68k_I_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void kouyakyu_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void kyros_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void alpha68k_II_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( kouyakyu );
+VIDEO_START( alpha68k );
+VIDEO_UPDATE( kyros );
+VIDEO_UPDATE( sstingry );
+VIDEO_UPDATE( alpha68k_I );
+VIDEO_UPDATE( kouyakyu );
+PALETTE_INIT( kyros );
+VIDEO_UPDATE( alpha68k_II );
 WRITE16_HANDLER( alpha68k_II_video_bank_w );
-void alpha68k_V_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void alpha68k_V_sb_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_UPDATE( alpha68k_V );
+VIDEO_UPDATE( alpha68k_V_sb );
 void alpha68k_V_video_bank_w(int bank);
 void alpha68k_flipscreen_w(int flip);
 WRITE16_HANDLER( alpha68k_V_video_control_w );
@@ -184,7 +184,7 @@ static READ16_HANDLER( alpha_II_trigger_r )
 			break;
 	}
 
-	logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
+	logerror("%04x:  Alpha read trigger at %04x\n",activecpu_get_pc(),offset);
 
 	return 0; /* Values returned don't matter */
 }
@@ -257,14 +257,14 @@ static READ16_HANDLER( alpha_V_trigger_r )
 			break;
 	}
 
-	logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
+	logerror("%04x:  Alpha read trigger at %04x\n",activecpu_get_pc(),offset);
 
 	return 0; /* Values returned don't matter */
 }
 
 static WRITE16_HANDLER( alpha_microcontroller_w )
 {
-	logerror("%04x:  Alpha write trigger at %04x (%04x)\n",cpu_get_pc(),offset,data);
+	logerror("%04x:  Alpha write trigger at %04x (%04x)\n",activecpu_get_pc(),offset,data);
 	/* 0x44 = coin clear signal to microcontroller? */
 	if (offset==0x2d && ACCESSING_LSB)
 		alpha68k_flipscreen_w(data & 1);
@@ -296,7 +296,7 @@ static READ16_HANDLER( kyros_alpha_trigger_r )
 
 	}
 
-	logerror("%04x:  Alpha read trigger at %04x\n",cpu_get_pc(),offset);
+	logerror("%04x:  Alpha read trigger at %04x\n",activecpu_get_pc(),offset);
 
 	return 0; /* Values returned don't matter */
 }
@@ -1324,360 +1324,239 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static int kyros_interrupt(void)
+static INTERRUPT_GEN( kyros_interrupt )
 {
 	if (cpu_getiloops() == 0)
-		return 1;
-	return 2;
+		cpu_set_irq_line(0, 1, HOLD_LINE);
+	else
+		cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
 /******************************************************************************/
 
 
-static const struct MachineDriver machine_driver_kouyakyu =
-{
-	{
- 		{
-			CPU_M68000,
-			6000000, /* 12MHz/2? */
-			kouyakyu_readmem,kouyakyu_writemem,0,0,
-			kyros_interrupt,2
-		},
+static MACHINE_DRIVER_START( kouyakyu )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 6000000) /* 12MHz/2? */
+	MDRV_CPU_MEMORY(kouyakyu_readmem,kouyakyu_writemem)
+	MDRV_CPU_VBLANK_INT(kyros_interrupt,2)
+
 #if 0
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545, /* ? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			interrupt,1
-		}
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 #endif
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
- // 	64*8, 64*8, { 0*8, 64*8-1, 2*8, 64*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+//	MDRV_SCREEN_SIZE(64*8, 64*8)
+//	MDRV_VISIBLE_AREA(0*8, 64*8-1, 2*8, 64*8-1)
+	MDRV_GFXDECODE(kouyakyu_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	kouyakyu_gfxdecodeinfo,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	kouyakyu_vh_start,
-	0,
-	kouyakyu_vh_screenrefresh,
+	MDRV_VIDEO_START(kouyakyu)
+	MDRV_VIDEO_UPDATE(kouyakyu)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_kyros =
-{
+static MACHINE_DRIVER_START( kyros )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_M68000,
-			6000000, /* 24MHz/4? */
-			kyros_readmem,kyros_writemem,0,0,
-			kyros_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545, /* ? */
-			kyros_sound_readmem,kyros_sound_writemem,0,kyros_sound_writeport,
-			nmi_interrupt,8
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 6000000) /* 24MHz/4? */
+	MDRV_CPU_MEMORY(kyros_readmem,kyros_writemem)
+	MDRV_CPU_VBLANK_INT(kyros_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	MDRV_CPU_MEMORY(kyros_sound_readmem,kyros_sound_writemem)
+	MDRV_CPU_PORTS(0,kyros_sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,8)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(kyros_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(256)
 
-	kyros_gfxdecodeinfo,
-	256, 256,
-	kyros_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	kyros_vh_screenrefresh,
+	MDRV_PALETTE_INIT(kyros)
+	MDRV_VIDEO_UPDATE(kyros)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_sstingry =
-{
+static MACHINE_DRIVER_START( sstingry )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_M68000,
-			6000000, /* 24MHz/4? */
-			kyros_readmem,kyros_writemem,0,0,
-			kyros_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545, /* ? */
-			sstingry_sound_readmem,sstingry_sound_writemem,0,kyros_sound_writeport,
-			nmi_interrupt,32
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 6000000) /* 24MHz/4? */
+	MDRV_CPU_MEMORY(kyros_readmem,kyros_writemem)
+	MDRV_CPU_VBLANK_INT(kyros_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	MDRV_CPU_MEMORY(sstingry_sound_readmem,sstingry_sound_writemem)
+	MDRV_CPU_PORTS(0,kyros_sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,32)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(sstingry_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
 
-	sstingry_gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	sstingry_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(sstingry)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_alpha68k_I =
-{
+static MACHINE_DRIVER_START( alpha68k_I )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_M68000,
-			6000000, /* 24MHz/4? */
-			alpha68k_I_readmem,alpha68k_I_writemem,0,0,
-			m68_level1_irq,1 /* VBL */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545, /* ? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 6000000) /* 24MHz/4? */
+	MDRV_CPU_MEMORY(alpha68k_I_readmem,alpha68k_I_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(paddle_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	paddle_gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	alpha68k_I_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_UPDATE(alpha68k_I)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_alpha68k_II =
-{
+static MACHINE_DRIVER_START( alpha68k_II )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000, /* Correct */
-			alpha68k_II_readmem,alpha68k_II_writemem,0,0,
-			m68_level3_irq,1 /* VBL */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			//3579545, /* Correct?? */
-			3579545*2, /* Unlikely but needed to stop nested NMI's */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			nmi_interrupt,116
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000) /* Correct */
+	MDRV_CPU_MEMORY(alpha68k_II_readmem,alpha68k_II_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(Z80, /*3579545*/3579545*2)	/* Unlikely but needed to stop nested NMI's */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Correct?? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,116)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(alpha68k_II_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	alpha68k_II_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	alpha68k_vh_start,
-	0,
-	alpha68k_II_vh_screenrefresh,
+	MDRV_VIDEO_START(alpha68k)
+	MDRV_VIDEO_UPDATE(alpha68k_II)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_alpha68k_V =
-{
+static MACHINE_DRIVER_START( alpha68k_V )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_M68000,
-			10000000, /* ? */
-			alpha68k_V_readmem,alpha68k_V_writemem,0,0,
-			m68_level3_irq,1 /* VBL */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-//			3579545,
-			3579545*2, /* Unlikely but needed to stop nested NMI's */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			nmi_interrupt,148
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* ? */
+	MDRV_CPU_MEMORY(alpha68k_V_readmem,alpha68k_V_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(Z80, /*3579545*/3579545*2)	/* Unlikely but needed to stop nested NMI's */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,148)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(alpha68k_V_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	alpha68k_V_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	alpha68k_vh_start,
-	0,
-	alpha68k_V_vh_screenrefresh,
+	MDRV_VIDEO_START(alpha68k)
+	MDRV_VIDEO_UPDATE(alpha68k_V)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_alpha68k_V_sb =
-{
+static MACHINE_DRIVER_START( alpha68k_V_sb )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_M68000,
-			10000000, /* ? */
-			alpha68k_V_readmem,alpha68k_V_writemem,0,0,
-			m68_level3_irq,1 /* VBL */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-//			3579545,
-			3579545*2, /* Unlikely but needed to stop nested NMI's */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			nmi_interrupt,112
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* ? */
+	MDRV_CPU_MEMORY(alpha68k_V_readmem,alpha68k_V_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(Z80, /*3579545*/3579545*2)	/* Unlikely but needed to stop nested NMI's */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,112)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(alpha68k_V_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	alpha68k_V_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	alpha68k_vh_start,
-	0,
-	alpha68k_V_sb_vh_screenrefresh,
+	MDRV_VIDEO_START(alpha68k)
+	MDRV_VIDEO_UPDATE(alpha68k_V_sb)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -2240,7 +2119,7 @@ static READ16_HANDLER( timesold_cycle_r )
 {
 	int ret=shared_ram[0x4];
 
-	if (cpu_get_pc()==0x9ea2 && (ret&0xff00)==0) {
+	if (activecpu_get_pc()==0x9ea2 && (ret&0xff00)==0) {
 		cpu_spinuntil_int();
 		return 0x100 | (ret&0xff);
 	}
@@ -2252,7 +2131,7 @@ static READ16_HANDLER( skysoldr_cycle_r )
 {
 	int ret=shared_ram[0x4];
 
-	if (cpu_get_pc()==0x1f4e && (ret&0xff00)==0) {
+	if (activecpu_get_pc()==0x1f4e && (ret&0xff00)==0) {
 		cpu_spinuntil_int();
 		return 0x100 | (ret&0xff);
 	}
@@ -2264,7 +2143,7 @@ static READ16_HANDLER( gangwars_cycle_r )
 {
 	int ret=shared_ram[0x103];
 
-	if (cpu_get_pc()==0xbbca || cpu_get_pc()==0xbbb6) {
+	if (activecpu_get_pc()==0xbbca || activecpu_get_pc()==0xbbb6) {
 		cpu_spinuntil_int();
 		return (ret+2)&0xff;
 	}
@@ -2272,26 +2151,26 @@ static READ16_HANDLER( gangwars_cycle_r )
 	return ret;
 }
 
-static void init_timesold(void)
+static DRIVER_INIT( timesold )
 {
 	install_mem_read16_handler(0, 0x40008, 0x40009, timesold_cycle_r);
 	invert_controls=0;
 }
 
-static void init_skysoldr(void)
+static DRIVER_INIT( skysoldr )
 {
 	install_mem_read16_handler(0, 0x40008, 0x40009, skysoldr_cycle_r);
 	cpu_setbank(8, (memory_region(REGION_USER1))+0x40000);
 	invert_controls=0;
 }
 
-static void init_goldmedb(void)
+static DRIVER_INIT( goldmedb )
 {
 	cpu_setbank(8, memory_region(REGION_USER1));
 	invert_controls=0;
 }
 
-static void init_gangwars(void)
+static DRIVER_INIT( gangwars )
 {
 	install_mem_read16_handler(0, 0x40206, 0x40207, gangwars_cycle_r);
 	cpu_setbank(8, memory_region(REGION_USER1));
@@ -2299,12 +2178,12 @@ static void init_gangwars(void)
 	microcontroller_id=0x8512;
 }
 
-static void init_btlfield(void)
+static DRIVER_INIT( btlfield )
 {
 	invert_controls=1;
 }
 
-static void init_sbasebal(void)
+static DRIVER_INIT( sbasebal )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
@@ -2322,31 +2201,31 @@ static void init_sbasebal(void)
 	coin_id=0x23|(0x24<<8);
 }
 
-static void init_skyadvnt(void)
+static DRIVER_INIT( skyadvnt )
 {
 	microcontroller_id=0x8814;
 	invert_controls=0;
 	coin_id=0x22|(0x22<<8);
 }
 
-static void init_skyadvnu(void)
+static DRIVER_INIT( skyadvnu )
 {
 	microcontroller_id=0x8814;
 	invert_controls=0;
 	coin_id=0x23|(0x24<<8);
 }
 
-static void init_kyros(void)
+static DRIVER_INIT( kyros )
 {
 	microcontroller_id=0x12;
 }
 
-static void init_sstingry(void)
+static DRIVER_INIT( sstingry )
 {
 	microcontroller_id=0xff;
 }
 
-static void init_goldmedl(void)
+static DRIVER_INIT( goldmedl )
 {
 	invert_controls=0;
 }

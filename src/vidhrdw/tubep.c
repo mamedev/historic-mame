@@ -33,7 +33,7 @@ static data8_t *dirtybuff;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void rjammer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( rjammer )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -79,7 +79,7 @@ void rjammer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 //	}
 
 }
-void tubep_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( tubep )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -118,38 +118,20 @@ void tubep_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-int tubep_vh_start(void)
+VIDEO_START( tubep )
 {
-	if ((dirtybuff = malloc(0x800/2)) == 0)
+	if ((dirtybuff = auto_malloc(0x800/2)) == 0)
 		return 1;
 	memset(dirtybuff,1,0x800/2);
 
-	tmpbitmap  = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmap  = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
 	if ( (tmpbitmap == 0) || (tmpbitmap2 == 0) )
-	{
-		free(dirtybuff);
-		dirtybuff = 0;
-		bitmap_free(tmpbitmap);
-		bitmap_free(tmpbitmap2);
 		return 1;
-	}
 
 	return 0;
 }
-
-void tubep_vh_stop(void)
-{
-	free(dirtybuff);
-	bitmap_free(tmpbitmap);
-	bitmap_free(tmpbitmap2);
-
-	dirtybuff  = 0;
-	tmpbitmap  = 0;
-	tmpbitmap2 = 0;
-}
-
 
 WRITE_HANDLER( tubep_textram_w )
 {
@@ -179,7 +161,7 @@ WRITE_HANDLER( rjammer_background_page_w )
 }
 
 
-void rjammer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rjammer )
 {
 	int offs;
 
@@ -304,7 +286,7 @@ void rjammer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 
-void tubep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tubep )
 {
 	int offs;
 

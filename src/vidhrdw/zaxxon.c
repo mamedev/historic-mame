@@ -24,9 +24,6 @@ int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
 #define FUTSPY_VID	2
 
 
-void zaxxon_vh_stop(void);
-
-
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -49,7 +46,7 @@ void zaxxon_vh_stop(void);
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( zaxxon )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -150,13 +147,13 @@ static void create_background(struct mame_bitmap *dst_bm, struct mame_bitmap *sr
 }
 
 
-int zaxxon_vh_start(void)
+VIDEO_START( zaxxon )
 {
 	struct mame_bitmap *prebitmap;
 	int width, height;
 
 
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* for speed, backgrounds are arranged differently if axis is swapped */
@@ -167,29 +164,20 @@ int zaxxon_vh_start(void)
 		height = 256+4096+256, width = 256;
 
 	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = bitmap_alloc(width,height)) == 0)
-	{
-		zaxxon_vh_stop();
+	if ((backgroundbitmap1 = auto_bitmap_alloc(width,height)) == 0)
 		return 1;
-	}
 
 	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 	{
-		if ((backgroundbitmap2 = bitmap_alloc(width,height)) == 0)
-		{
-			zaxxon_vh_stop();
+		if ((backgroundbitmap2 = auto_bitmap_alloc(width,height)) == 0)
 			return 1;
-		}
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		/* create a temporary bitmap to prepare the background before converting it */
 		if ((prebitmap = bitmap_alloc(256,4096)) == 0)
-		{
-			zaxxon_vh_stop();
 			return 1;
-		}
 	}
 	else
 		prebitmap = backgroundbitmap1;
@@ -212,26 +200,20 @@ int zaxxon_vh_start(void)
 	return 0;
 }
 
-int razmataz_vh_start(void)
+VIDEO_START( razmataz )
 {
 	int offs;
 
 
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = bitmap_alloc(256,4096)) == 0)
-	{
-		zaxxon_vh_stop();
+	if ((backgroundbitmap1 = auto_bitmap_alloc(256,4096)) == 0)
 		return 1;
-	}
 
-	if ((backgroundbitmap2 = bitmap_alloc(256,4096)) == 0)
-	{
-		zaxxon_vh_stop();
+	if ((backgroundbitmap2 = auto_bitmap_alloc(256,4096)) == 0)
 		return 1;
-	}
 
 
 	/* prepare the background */
@@ -261,19 +243,6 @@ int razmataz_vh_start(void)
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void zaxxon_vh_stop(void)
-{
-	if (backgroundbitmap1)  bitmap_free(backgroundbitmap1);
-	if (backgroundbitmap2)  bitmap_free(backgroundbitmap2);
-	generic_vh_stop();
-}
 
 
 /***************************************************************************
@@ -366,7 +335,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( zaxxon )
 {
 	int offs;
 
@@ -486,7 +455,7 @@ void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( razmataz )
 {
 	int offs;
 
@@ -531,7 +500,7 @@ void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void ixion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ixion )
 {
 	int offs;
 

@@ -39,8 +39,8 @@ dip: 6.7 7.7
 
 
 WRITE_HANDLER( wiping_flipscreen_w );
-void wiping_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void wiping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( wiping );
+VIDEO_UPDATE( wiping );
 
 extern unsigned char *wiping_soundregs;
 int wiping_sh_start(const struct MachineSound *msound);
@@ -309,49 +309,36 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static const struct MachineDriver machine_driver_wiping =
-{
+static MACHINE_DRIVER_START( wiping )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/6,	/* 3.072 MHz */
-			sound_readmem,sound_writemem,0,0,
-			0,0,
-			interrupt,120	/* periodic interrupt, don't know about the frequency */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0, /* init machine */
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,18432000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,120)	/* periodic interrupt, don't know about the frequency */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32, 64*4+64*4,
-	wiping_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	wiping_vh_screenrefresh,
+	MDRV_PALETTE_INIT(wiping)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(wiping)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 

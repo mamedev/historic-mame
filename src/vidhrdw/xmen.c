@@ -46,24 +46,15 @@ static void xmen_sprite_callback(int *code,int *color,int *priority_mask)
 
 ***************************************************************************/
 
-int xmen_vh_start(void)
+VIDEO_START( xmen )
 {
 	K053251_vh_start();
 
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,xmen_tile_callback))
 		return 1;
 	if (K053247_vh_start(REGION_GFX2,53,-2,NORMAL_PLANE_ORDER,xmen_sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 	return 0;
-}
-
-void xmen_vh_stop(void)
-{
-	K052109_vh_stop();
-	K053247_vh_stop();
 }
 
 
@@ -91,7 +82,7 @@ static void sortlayers(int *layer,int *pri)
 }
 
 
-void xmen_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( xmen )
 {
 	int layer[3];
 
@@ -113,13 +104,13 @@ void xmen_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	sortlayers(layer,layerpri);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 	/* note the '+1' in the background color!!! */
-	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase+1],&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,layer[0],0,1);
-	K052109_tilemap_draw(bitmap,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,layer[2],0,4);
+	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase+1],cliprect);
+	K052109_tilemap_draw(bitmap,cliprect,layer[0],0,1);
+	K052109_tilemap_draw(bitmap,cliprect,layer[1],0,2);
+	K052109_tilemap_draw(bitmap,cliprect,layer[2],0,4);
 
 	pdrawgfx_shadow_lowpri = 1;	/* fix shadows of boulders in front of feet */
-	K053247_sprites_draw(bitmap);
+	K053247_sprites_draw(bitmap,cliprect);
 }

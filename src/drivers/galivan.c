@@ -36,19 +36,19 @@ WRITE_HANDLER( galivan_scrolly_w );
 WRITE_HANDLER( galivan_videoram_w );
 WRITE_HANDLER( galivan_colorram_w );
 WRITE_HANDLER( galivan_gfxbank_w );
-void galivan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int galivan_vh_start(void);
-void galivan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( galivan );
+VIDEO_START( galivan );
+VIDEO_UPDATE( galivan );
 
 WRITE_HANDLER( ninjemak_scrollx_w );
 WRITE_HANDLER( ninjemak_scrolly_w );
 WRITE_HANDLER( ninjemak_gfxbank_w );
-int ninjemak_vh_start(void);
-void ninjemak_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( ninjemak );
+VIDEO_UPDATE( ninjemak );
 
 
 
-static void galivan_init_machine(void)
+static MACHINE_INIT( galivan )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -560,101 +560,77 @@ static struct DACinterface dac_interface =
 };
 
 
-static const struct MachineDriver machine_driver_galivan =
-{
+static MACHINE_DRIVER_START( galivan )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6 MHz? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,		/* 4 MHz? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0,
-			interrupt,7250  /* timed interrupt, ?? Hz */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	galivan_init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6 MHz? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,7250)  /* timed interrupt, ?? Hz */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(galivan)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 8*16+16*16+256*16,
-	galivan_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(8*16+16*16+256*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	galivan_vh_start,
-	0,
-	galivan_vh_screenrefresh,
+	MDRV_PALETTE_INIT(galivan)
+	MDRV_VIDEO_START(galivan)
+	MDRV_VIDEO_UPDATE(galivan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&YM3526_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, YM3526_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ninjemak =
-{
+static MACHINE_DRIVER_START( ninjemak )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6 MHz? */
-			readmem,ninjemak_writemem,ninjemak_readport,ninjemak_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,		/* 4 MHz? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0,
-			interrupt,7250	/* timed interrupt, ?? Hz */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	galivan_init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6 MHz? */
+	MDRV_CPU_MEMORY(readmem,ninjemak_writemem)
+	MDRV_CPU_PORTS(ninjemak_readport,ninjemak_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 4 MHz? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,7250)	/* timed interrupt, ?? Hz */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(galivan)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	ninjemak_gfxdecodeinfo,
-	256, 8*16+16*16+256*16,
-	galivan_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(ninjemak_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(8*16+16*16+256*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ninjemak_vh_start,
-	0,
-	ninjemak_vh_screenrefresh,
+	MDRV_PALETTE_INIT(galivan)
+	MDRV_VIDEO_START(ninjemak)
+	MDRV_VIDEO_UPDATE(ninjemak)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&YM3526_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, YM3526_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -770,6 +770,50 @@ else
 CPUDEFS += -DHAS_UPD7810=0
 endif
 
+CPU=$(strip $(findstring JAGUAR@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/jaguar
+CPUDEFS += -DHAS_JAGUAR=1
+CPUOBJS += $(OBJ)/cpu/jaguar/jaguar.o
+DBGOBJS += $(OBJ)/cpu/jaguar/jagdasm.o
+$(OBJ)/cpu/jaguar/jaguar.o: jaguar.c jaguar.h
+else
+CPUDEFS += -DHAS_JAGUAR=0
+endif
+
+CPU=$(strip $(findstring R3000@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/r3000
+CPUDEFS += -DHAS_R3000=1
+CPUOBJS += $(OBJ)/cpu/mips/r3000.o
+DBGOBJS += $(OBJ)/cpu/mips/r3kdasm.o
+$(OBJ)/cpu/mips/r3000.o: r3000.c r3000.h
+else
+CPUDEFS += -DHAS_R3000=0
+endif
+
+CPU=$(strip $(findstring TMS320C31@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/tms32031
+CPUDEFS += -DHAS_TMS320C31=1
+CPUOBJS += $(OBJ)/cpu/tms32031/tms32031.o
+DBGOBJS += $(OBJ)/cpu/tms32031/dis32031.o
+$(OBJ)/cpu/tms32031/tms32031.o: tms32031.c tms32031.h
+else
+CPUDEFS += -DHAS_TMS320C31=0
+endif
+
+CPU=$(strip $(findstring ARM@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/arm
+CPUDEFS += -DHAS_ARM=1
+CPUOBJS += $(OBJ)/cpu/arm/arm.o
+DBGOBJS += $(OBJ)/cpu/arm/armdasm.o
+$(OBJ)/cpu/arm/arm.o: arm.c arm.h
+else
+CPUDEFS += -DHAS_ARM=0
+endif
+
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)

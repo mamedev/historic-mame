@@ -4,13 +4,13 @@ extern data16_t *cninja_pf3_rowscroll,*cninja_pf4_rowscroll;
 extern data16_t *cninja_pf1_data,*cninja_pf2_data;
 extern data16_t *cninja_pf3_data,*cninja_pf4_data;
 
-int  cninja_vh_start(void);
-int  edrandy_vh_start(void);
-int  robocop2_vh_start(void);
-int  stoneage_vh_start(void);
-void cninja_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void edrandy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void robocop2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( cninja );
+VIDEO_START( edrandy );
+VIDEO_START( robocop2 );
+VIDEO_START( stoneage );
+VIDEO_UPDATE( cninja );
+VIDEO_UPDATE( edrandy );
+VIDEO_UPDATE( robocop2 );
 
 WRITE16_HANDLER( cninja_pf1_data_w );
 WRITE16_HANDLER( cninja_pf2_data_w );

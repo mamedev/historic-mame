@@ -21,7 +21,7 @@
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void gaplus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gaplus )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -250,7 +250,7 @@ WRITE_HANDLER( gaplus_starfield_control_w ) {
 
 extern unsigned char *gaplus_sharedram;
 
-int gaplus_vh_start( void ) {
+VIDEO_START( gaplus ) {
 
 	/* set up spriteram area */
 	spriteram_size = 0x80;
@@ -260,12 +260,7 @@ int gaplus_vh_start( void ) {
 
 	starfield_init();
 
-	return generic_vh_start();
-}
-
-void gaplus_vh_stop( void ) {
-
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 /***************************************************************************
@@ -339,7 +334,7 @@ static void gaplus_draw_sprites(struct mame_bitmap *bitmap){
 	}
 }
 
-void gaplus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gaplus )
 {
 	int offs;
 

@@ -30,6 +30,10 @@
 #include "rc.h"
 #include "misc.h"
 
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#endif
+
 extern struct rc_option frontend_opts[];
 extern struct rc_option fileio_opts[];
 extern struct rc_option input_opts[];
@@ -340,6 +344,7 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 
 int cli_frontend_init (int argc, char **argv)
 {
+	struct InternalMachineDriver drv;
 	char buffer[128];
 	char *cmd_name;
 	int game_index;
@@ -514,7 +519,8 @@ int cli_frontend_init (int argc, char **argv)
 	/* ok, got a gamename */
 
 	/* if this is a vector game, parse vector.ini first */
-	if (drivers[game_index]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	expand_machine_driver(drivers[game_index]->drv, &drv);
+	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 		if (parse_config ("vector.ini", NULL))
 			exit(1);
 

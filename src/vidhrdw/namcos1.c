@@ -334,7 +334,7 @@ static void update_playfield( int layer )
 }
 
 
-int namcos1_vh_start( void )
+VIDEO_START( namcos1 )
 {
 	int i;
 
@@ -348,7 +348,7 @@ int namcos1_vh_start( void )
 	namcos1_controlram = memory_region(REGION_USER2) + 0x8000;
 
 	/* allocate videoram */
-	namcos1_videoram = malloc(0x8000);
+	namcos1_videoram = auto_malloc(0x8000);
 
 	/* initialize playfields */
 	tilemap[0] = tilemap_create(background_get_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
@@ -382,19 +382,12 @@ int namcos1_vh_start( void )
 		int height = mask->height;
 		int line,x,c;
 
-		mask_ptr = malloc(total * sizeof(unsigned char *));
+		mask_ptr = auto_malloc(total * sizeof(unsigned char *));
 		if(mask_ptr == 0)
-		{
-			free(namcos1_videoram);
 			return 1;
-		}
-		mask_data = malloc(total * 8);
+		mask_data = auto_malloc(total * 8);
 		if(mask_data == 0)
-		{
-			free(namcos1_videoram);
-			free(mask_ptr);
 			return 1;
-		}
 
 		for(c=0;c<total;c++)
 		{
@@ -420,17 +413,8 @@ int namcos1_vh_start( void )
 	return 0;
 }
 
-void namcos1_vh_stop( void )
-{
-	free(namcos1_videoram);
 
-	free(mask_ptr);
-	free(mask_data);
-}
-
-
-
-static void draw_sprites(struct mame_bitmap *bitmap,int priority)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
 	int offs;
 	data8_t *namcos1_spriteram = &namcos1_controlram[0x0800];
@@ -479,6 +463,11 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 		rect.max_x=sx+(width-1);
 		rect.min_y=sy;
 		rect.max_y=sy+(height-1);
+		
+		if (cliprect->min_x > rect.min_x) rect.min_x = cliprect->min_x;
+		if (cliprect->max_x < rect.max_x) rect.max_x = cliprect->max_x;
+		if (cliprect->min_y > rect.min_y) rect.min_y = cliprect->min_y;
+		if (cliprect->max_y < rect.max_y) rect.max_y = cliprect->max_y;
 
 		if (flipx) sx -= 32-width-left;
 		else sx -= left;
@@ -494,7 +483,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 	}
 }
 
-void namcos1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( namcos1 )
 {
 	int i,priority;
 
@@ -523,19 +512,19 @@ void namcos1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 	/* background color */
-	fillbitmap(bitmap,Machine->pens[BACKGROUNDCOLOR],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[BACKGROUNDCOLOR],cliprect);
 
 	for (priority = 0;priority <= 7;priority++)
 	{
 		/* bit 0-2 priority */
 		/* bit 3   disable	*/
-		if (namcos1_playfield_control[16] == priority) tilemap_draw(bitmap,tilemap[0],0,0);
-		if (namcos1_playfield_control[17] == priority) tilemap_draw(bitmap,tilemap[1],0,0);
-		if (namcos1_playfield_control[18] == priority) tilemap_draw(bitmap,tilemap[2],0,0);
-		if (namcos1_playfield_control[19] == priority) tilemap_draw(bitmap,tilemap[3],0,0);
-		if (namcos1_playfield_control[20] == priority) tilemap_draw(bitmap,tilemap[4],0,0);
-		if (namcos1_playfield_control[21] == priority) tilemap_draw(bitmap,tilemap[5],0,0);
+		if (namcos1_playfield_control[16] == priority) tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+		if (namcos1_playfield_control[17] == priority) tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+		if (namcos1_playfield_control[18] == priority) tilemap_draw(bitmap,cliprect,tilemap[2],0,0);
+		if (namcos1_playfield_control[19] == priority) tilemap_draw(bitmap,cliprect,tilemap[3],0,0);
+		if (namcos1_playfield_control[20] == priority) tilemap_draw(bitmap,cliprect,tilemap[4],0,0);
+		if (namcos1_playfield_control[21] == priority) tilemap_draw(bitmap,cliprect,tilemap[5],0,0);
 
-		draw_sprites(bitmap,priority);
+		draw_sprites(bitmap,cliprect,priority);
 	}
 }

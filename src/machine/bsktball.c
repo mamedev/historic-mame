@@ -1,13 +1,12 @@
 /***************************************************************************
 
-Atari Basketball machine
+	Atari Basketball hardware
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "bsktball.h"
 
 static int LD1=0;
 static int LD2=0;
@@ -25,7 +24,7 @@ WRITE_HANDLER( bsktball_nmion_w )
 bsktball_interrupt
 ***************************************************************************/
 /* NMI every 32V, IRQ every VBLANK */
-int bsktball_interrupt(void)
+INTERRUPT_GEN( bsktball_interrupt )
 {
 	static int i256V=0;
 
@@ -33,11 +32,9 @@ int bsktball_interrupt(void)
 	i256V=(i256V+1) % 8;
 
 	if (i256V==0)
-		return interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 	else if (NMION)
-		return nmi_interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 /***************************************************************************

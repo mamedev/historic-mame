@@ -20,22 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( vindictr_paletteram_w );
-
-int vindictr_vh_start(void);
-void vindictr_vh_stop(void);
-void vindictr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void vindictr_scanline_update(int scanline);
+#include "vindictr.h"
 
 
 
@@ -78,7 +63,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( vindictr )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -294,39 +279,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_vindictr =
-{
+static MACHINE_DRIVER_START( vindictr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_I_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68010, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(vindictr)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	vindictr_vh_start,
-	vindictr_vh_stop,
-	vindictr_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(vindictr)
+	MDRV_VIDEO_UPDATE(vindictr)
+	
 	/* sound hardware */
-	JSA_I_STEREO_WITH_POKEY,
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_i_stereo_pokey)
+MACHINE_DRIVER_END
 
 
 
@@ -349,7 +326,7 @@ ROM_START( vindictr )
 	ROM_LOAD( "vin.snd",     0x10000, 0x4000, 0xd2212c0a )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "vin.p13",     0x00000, 0x20000, 0x062f8e52 )
 	ROM_LOAD( "vin.p14",     0x20000, 0x10000, 0x0e4366fa )
 	ROM_RELOAD(              0x30000, 0x10000 )
@@ -381,7 +358,7 @@ ROM_START( vindicta )
 	ROM_LOAD( "vin.snd",     0x10000, 0x4000, 0xd2212c0a )
 	ROM_CONTINUE(            0x04000, 0xc000 )
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "vin.p13",     0x00000, 0x20000, 0x062f8e52 )
 	ROM_LOAD( "vin.p14",     0x20000, 0x10000, 0x0e4366fa )
 	ROM_RELOAD(              0x30000, 0x10000 )
@@ -407,12 +384,11 @@ ROM_END
  *
  *************************************/
 
-static void init_vindictr(void)
+static DRIVER_INIT( vindictr )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 5, 1, 0x0002);
 	atarigen_init_6502_speedup(1, 0x4150, 0x4168);
-	atarigen_invert_region(REGION_GFX1);
 }
 
 

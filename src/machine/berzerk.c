@@ -20,7 +20,7 @@ static int int_count;
 
 
 
-void berzerk_init_machine(void)
+MACHINE_INIT( berzerk )
 {
 	int i;
 
@@ -84,7 +84,7 @@ READ_HANDLER( berzerk_voiceboard_r )
       return 0x40;
 }
 
-int berzerk_interrupt(void)
+INTERRUPT_GEN( berzerk_interrupt )
 {
 	int_count++;
 
@@ -102,7 +102,8 @@ int berzerk_interrupt(void)
 		{
 			berzerk_irq_end_of_screen = 1;
 		}
-		return irq_enabled ? 0xfc : ignore_interrupt();
+		if (irq_enabled) cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xfc);
+		break;
 
 	case 1:
 	case 2:
@@ -118,7 +119,8 @@ int berzerk_interrupt(void)
 		{
 			berzerk_irq_end_of_screen = 0;
 		}
-		return nmi_enabled ? Z80_NMI_INT : ignore_interrupt();
+		if (nmi_enabled) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		break;
 	}
 }
 

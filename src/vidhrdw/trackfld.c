@@ -33,7 +33,7 @@ unsigned char *trackfld_scroll2;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( trackfld )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -83,33 +83,17 @@ void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Start the video hardware emulation.
 
 ***************************************************************************/
-int trackfld_vh_start(void)
+VIDEO_START( trackfld )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
 	/* TracknField has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void trackfld_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
 }
 
 
@@ -121,12 +105,12 @@ void trackfld_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void trackfld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( trackfld )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

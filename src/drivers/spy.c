@@ -14,19 +14,16 @@ driver by Nicola Salmoria
 #include "vidhrdw/konamiic.h"
 
 
-int spy_vh_start(void);
-void spy_vh_stop(void);
-void spy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( spy );
+VIDEO_UPDATE( spy );
 
 static data8_t *pmcram;
 
 
-static int spy_interrupt(void)
+static INTERRUPT_GEN( spy_interrupt )
 {
 	if (K052109_is_IRQ_enabled())
-		return interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -43,12 +40,12 @@ static READ_HANDLER( spy_bankedram1_r )
 	{
 		if (pmcbank)
 		{
-			logerror("%04x read pmcram %04x\n",cpu_get_pc(),offset);
+			logerror("%04x read pmcram %04x\n",activecpu_get_pc(),offset);
 			return pmcram[offset];
 		}
 		else
 		{
-			logerror("%04x read pmc internal ram %04x\n",cpu_get_pc(),offset);
+			logerror("%04x read pmc internal ram %04x\n",activecpu_get_pc(),offset);
 			return 0;
 		}
 	}
@@ -66,11 +63,11 @@ static WRITE_HANDLER( spy_bankedram1_w )
 	{
 		if (pmcbank)
 		{
-//			logerror("%04x pmcram %04x = %02x\n",cpu_get_pc(),offset,data);
+//			logerror("%04x pmcram %04x = %02x\n",activecpu_get_pc(),offset,data);
 			pmcram[offset] = data;
 		}
 		else
-			logerror("%04x pmc internal ram %04x = %02x\n",cpu_get_pc(),offset,data);
+			logerror("%04x pmc internal ram %04x = %02x\n",activecpu_get_pc(),offset,data);
 	}
 	else
 		ram[offset] = data;
@@ -78,70 +75,70 @@ static WRITE_HANDLER( spy_bankedram1_w )
 
 /*
 this is the data written to internal ram on startup:
-e7 7e 38 fc 08
-df 36 38 dc 00
-df 12 3a dc 00
-df 00 38 dc 08
-1f 7e 00 db 00
-26 fe 00 ff 0c
-89 03 34 fc 0d
-81 03 34 fc 09
-81 03 34 fc 09
-81 03 34 fc 09
-81 03 2f fc 09
-cc 36 0e d9 08
-84 7e 00 ab 0c
-5f 7e 03 cd 08
-7f 80 fe ef 08
-5f 7e 0f fd 08
-e7 7e 38 fc 08
-df 00 3a dc 00
-df 12 0e d9 08
-df ec 10 e0 0c
-1f fe 03 e0 0c
-df fe 03 e0 0c
-dc 5e 3e fc 08
-df 12 2b d9 08
-67 25 38 fc 0c
-df 12 3c dc 00
-df 36 00 db 00
-c1 14 00 fb 08
-c1 34 38 fc 08
-c5 22 37 dc 00
-cd 12 3c dc 04
-c5 46 3b dc 00
-cd 36 00 db 04
-49 16 ed f9 0c
-c9 18 ea f9 0c
-dc 12 2a f9 08
-cc 5a 26 f9 08
-5f 7e 18 fd 08
-5a 7e 32 f8 08
-84 6c 33 9c 0c
-cc 00 0e d9 08
-5f 7e 14 fd 08
-0a 7e 24 fd 08
-c5 ec 0d e0 0c
-5f 7e 28 fd 08
-dc 16 00 fb 08
-dc 44 22 fd 08
-cd fe 02 e0 0c
-84 7e 00 bb 0c
-5a 7e 00 73 08
-84 7e 00 9b 0c
-5a 7e 00 36 08
-81 03 00 fb 09
-81 03 00 fb 09
-81 03 00 fe 09
-cd fe 01 e0 0c
-84 7e 00 ab 0c
-5f 7e 00 db 00
-84 7e 3f ad 0c
-cd ec 01 e0 0c
-84 6c 00 ab 0c
-5f 7e 00 db 00
-84 6c 00 ab 0c
-5f 7e 00 ce 08
+00: e7 7e 38 fc 08
+01: df 36 38 dc 00
+02: df 12 3a dc 00
+03: df 00 38 dc 08
+04: 1f 7e 00 db 00
+05: 26 fe 00 ff 0c
+06: 89 03 34 fc 0d
+07: 81 03 34 fc 09
+08: 81 03 34 fc 09
+09: 81 03 34 fc 09
+0a: 81 03 2f fc 09
+0b: cc 36 0e d9 08
+0c: 84 7e 00 ab 0c
+0d: 5f 7e 03 cd 08
+0e: 7f 80 fe ef 08
+0f: 5f 7e 0f fd 08
+10: e7 7e 38 fc 08
+11: df 00 3a dc 00
+12: df 12 0e d9 08
+13: df ec 10 e0 0c
+14: 1f fe 03 e0 0c
+15: df fe 03 e0 0c
+16: dc 5e 3e fc 08
+17: df 12 2b d9 08
+18: 67 25 38 fc 0c
+19: df 12 3c dc 00
+1a: df 36 00 db 00
+1b: c1 14 00 fb 08
+1c: c1 34 38 fc 08
+1d: c5 22 37 dc 00
+1e: cd 12 3c dc 04
+1f: c5 46 3b dc 00
+20: cd 36 00 db 04
+21: 49 16 ed f9 0c
+22: c9 18 ea f9 0c
+23: dc 12 2a f9 08
+24: cc 5a 26 f9 08
+25: 5f 7e 18 fd 08
+26: 5a 7e 32 f8 08
+27: 84 6c 33 9c 0c
+28: cc 00 0e d9 08
+29: 5f 7e 14 fd 08
+2a: 0a 7e 24 fd 08
+2b: c5 ec 0d e0 0c
+2c: 5f 7e 28 fd 08
+2d: dc 16 00 fb 08
+2e: dc 44 22 fd 08
+2f: cd fe 02 e0 0c
+30: 84 7e 00 bb 0c
+31: 5a 7e 00 73 08
+32: 84 7e 00 9b 0c
+33: 5a 7e 00 36 08
+34: 81 03 00 fb 09
+35: 81 03 00 fb 09
+36: 81 03 00 fe 09
+37: cd fe 01 e0 0c
+38: 84 7e 00 ab 0c
+39: 5f 7e 00 db 00
+3a: 84 7e 3f ad 0c
+3b: cd ec 01 e0 0c
+3c: 84 6c 00 ab 0c
+3d: 5f 7e 00 db 00
+3e: 84 6c 00 ab 0c
+3f: 5f 7e 00 ce 08
 */
 
 static WRITE_HANDLER( bankswitch_w )
@@ -217,7 +214,7 @@ static WRITE_HANDLER( spy_3f90_w )
 	/* bit 7 = PMC-BK */
 	pmcbank = (data & 0x80) >> 7;
 
-logerror("%04x: 3f90_w %02x\n",cpu_get_pc(),data);
+logerror("%04x: 3f90_w %02x\n",activecpu_get_pc(),data);
 	/* bit 6 = PMC-START */
 	if ((data & 0x40) && !(old & 0x40))
 	{
@@ -242,7 +239,7 @@ for (i = 0;i < 0xfe;i++)
 
 static WRITE_HANDLER( spy_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( sound_bank_w )
@@ -445,52 +442,33 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static const struct MachineDriver machine_driver_spy =
-{
-	{
-		{
-			CPU_M6809,
-			3000000, /* ? */
-			spy_readmem,spy_writemem,0,0,
-			spy_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			spy_sound_readmem, spy_sound_writemem,0,0,
-			ignore_interrupt,0	/* irq is triggered by the main CPU */
+static MACHINE_DRIVER_START( spy )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 3000000) /* ? */
+	MDRV_CPU_MEMORY(spy_readmem,spy_writemem)
+	MDRV_CPU_VBLANK_INT(spy_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(spy_sound_readmem,spy_sound_writemem)
 								/* nmi by the sound chip */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	spy_vh_start,
-	spy_vh_stop,
-	spy_vh_screenrefresh,
+	MDRV_VIDEO_START(spy)
+	MDRV_VIDEO_UPDATE(spy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -534,7 +512,7 @@ static void gfx_untangle(void)
 	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
-static void init_spy(void)
+static DRIVER_INIT( spy )
 {
 	paletteram = &memory_region(REGION_CPU1)[0x28000];
 	pmcram =     &memory_region(REGION_CPU1)[0x28800];

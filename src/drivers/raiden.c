@@ -47,10 +47,10 @@ WRITE_HANDLER( raiden_background_w );
 WRITE_HANDLER( raiden_foreground_w );
 WRITE_HANDLER( raiden_text_w );
 WRITE_HANDLER( raidena_text_w );
-int raiden_vh_start(void);
-int raidena_vh_start(void);
+VIDEO_START( raiden );
+VIDEO_START( raidena );
 WRITE_HANDLER( raiden_control_w );
-void raiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( raiden );
 
 static unsigned char *raiden_shared_ram;
 extern unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;
@@ -266,101 +266,84 @@ static struct GfxDecodeInfo raiden_gfxdecodeinfo[] =
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
-static int raiden_interrupt(void)
+static INTERRUPT_GEN( raiden_interrupt )
 {
-	return 0xc8/4;	/* VBL */
+	cpu_set_irq_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
 }
 
-static void raiden_eof_callback(void)
+static VIDEO_EOF( raiden )
 {
 	buffer_spriteram_w(0,0); /* Could be a memory location instead */
 }
 
-static const struct MachineDriver machine_driver_raiden =
-{
+static MACHINE_DRIVER_START( raiden )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V30, /* NEC V30 CPU */
-			20000000, /* 20MHz */
-			readmem,writemem,0,0,
-			raiden_interrupt,1
-		},
-		{
-			CPU_V30, /* NEC V30 CPU */
-			20000000, /* 20MHz */
-			sub_readmem,sub_writemem,0,0,
-			raiden_interrupt,1
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* CPU interleave  */
-	seibu_sound_init_2,
+	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
+	
+	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200)
+
+	MDRV_MACHINE_INIT(seibu_sound_2)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	raiden_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(raiden_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	raiden_eof_callback,
-	raiden_vh_start,
-	0,
-	raiden_vh_screenrefresh,
+	MDRV_VIDEO_START(raiden)
+	MDRV_VIDEO_EOF(raiden)
+	MDRV_VIDEO_UPDATE(raiden)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_raidena =
-{
+
+static MACHINE_DRIVER_START( raidena )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V30, /* NEC V30 CPU */
-			20000000, /* 20MHz */
-			alt_readmem,alt_writemem,0,0,
-			raiden_interrupt,1
-		},
-		{
-			CPU_V30, /* NEC V30 CPU */
-			20000000, /* 20MHz */
-			sub_readmem,sub_writemem,0,0,
-			raiden_interrupt,1
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	120,	/* CPU interleave  */
-	seibu_sound_init_2,
+	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_MEMORY(alt_readmem,alt_writemem)
+	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
+
+	MDRV_CPU_ADD(V30,20000000) /* NEC V30 CPU, 20MHz */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(raiden_interrupt,1)
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(120)
+
+	MDRV_MACHINE_INIT(seibu_sound_2)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	raiden_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(raiden_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	raiden_eof_callback,
-	raidena_vh_start,
-	0,
-	raiden_vh_screenrefresh,
+	MDRV_VIDEO_START(raidena)
+	MDRV_VIDEO_EOF(raiden)
+	MDRV_VIDEO_UPDATE(raiden)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -468,7 +451,7 @@ ROM_END
 /* Spin the sub-cpu if it is waiting on the master cpu */
 static READ_HANDLER( sub_cpu_spin_r )
 {
-	int pc=cpu_get_pc();
+	int pc=activecpu_get_pc();
 	int ret=raiden_shared_ram[0x8];
 
 	if (offset==1) return raiden_shared_ram[0x9];
@@ -481,7 +464,7 @@ static READ_HANDLER( sub_cpu_spin_r )
 
 static READ_HANDLER( sub_cpu_spina_r )
 {
-	int pc=cpu_get_pc();
+	int pc=activecpu_get_pc();
 	int ret=raiden_shared_ram[0x8];
 
 	if (offset==1) return raiden_shared_ram[0x9];
@@ -492,7 +475,7 @@ static READ_HANDLER( sub_cpu_spina_r )
 	return ret;
 }
 
-static void init_raiden(void)
+static DRIVER_INIT( raiden )
 {
 	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin_r);
 }
@@ -562,13 +545,13 @@ static void common_decrypt(void)
 	}
 }
 
-static void init_raidenk(void)
+static DRIVER_INIT( raidenk )
 {
 	memory_patcha();
 	common_decrypt();
 }
 
-static void init_raidena(void)
+static DRIVER_INIT( raidena )
 {
 	memory_patcha();
 	common_decrypt();

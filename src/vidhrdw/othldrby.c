@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 
@@ -57,29 +58,17 @@ static void get_tile_info2(int tile_index)
 
 ***************************************************************************/
 
-void othldrby_vh_stop(void)
-{
-	free(vram);
-	vram = NULL;
-	free(buf_spriteram);
-	buf_spriteram = NULL;
-	buf_spriteram2 = NULL;
-}
-
-int othldrby_vh_start(void)
+VIDEO_START( othldrby )
 {
 	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	vram = malloc(VIDEORAM_SIZE * sizeof(vram[0]));
-	buf_spriteram = malloc(2*SPRITERAM_SIZE * sizeof(buf_spriteram[0]));
+	vram = auto_malloc(VIDEORAM_SIZE * sizeof(vram[0]));
+	buf_spriteram = auto_malloc(2*SPRITERAM_SIZE * sizeof(buf_spriteram[0]));
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !vram || !buf_spriteram)
-	{
-		othldrby_vh_stop();
 		return 1;
-	}
 
 	buf_spriteram2 = buf_spriteram + SPRITERAM_SIZE;
 
@@ -138,7 +127,7 @@ WRITE16_HANDLER( othldrby_vreg_w )
 	if (vreg_addr < VREG_SIZE)
 		vreg[vreg_addr++] = data;
 	else
-		usrintf_showmessage("%06x: VREG OUT OF BOUNDS %04x",cpu_get_pc(),vreg_addr);
+		usrintf_showmessage("%06x: VREG OUT OF BOUNDS %04x",activecpu_get_pc(),vreg_addr);
 }
 
 
@@ -149,7 +138,7 @@ WRITE16_HANDLER( othldrby_vreg_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,int priority)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
 	int offs;
 
@@ -182,18 +171,18 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 		{
 			for (x = 0;x < sizex;x++)
 			{
-				drawgfx(Machine->scrbitmap,Machine->gfx[0],
+				drawgfx(bitmap,Machine->gfx[0],
 						code + x + sizex * y,
 						color,
 						flipx,flipy,
 						(sx + (flipx ? (-8*(x+1)+1) : 8*x) - vreg[6]+44) & 0x1ff,(sy + (flipy ? (-8*(y+1)+1) : 8*y) - vreg[7]-9) & 0x1ff,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
 }
 
-void othldrby_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( othldrby )
 {
 	int layer;
 
@@ -214,25 +203,25 @@ void othldrby_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,tilemap[layer],0,0);
-	draw_sprites(bitmap,0);
+		tilemap_draw(bitmap,cliprect,tilemap[layer],0,0);
+	draw_sprites(bitmap,cliprect,0);
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,tilemap[layer],1,0);
-	draw_sprites(bitmap,1);
+		tilemap_draw(bitmap,cliprect,tilemap[layer],1,0);
+	draw_sprites(bitmap,cliprect,1);
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,tilemap[layer],2,0);
-	draw_sprites(bitmap,2);
+		tilemap_draw(bitmap,cliprect,tilemap[layer],2,0);
+	draw_sprites(bitmap,cliprect,2);
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,tilemap[layer],3,0);
-	draw_sprites(bitmap,3);
+		tilemap_draw(bitmap,cliprect,tilemap[layer],3,0);
+	draw_sprites(bitmap,cliprect,3);
 }
 
-void othldrby_eof_callback(void)
+VIDEO_EOF( othldrby )
 {
 	/* sprites need to be delayed two frames */
     memcpy(buf_spriteram,buf_spriteram2,SPRITERAM_SIZE*sizeof(buf_spriteram[0]));

@@ -23,7 +23,7 @@ int bublbobl_video_enable;
   the main emulation engine.
 
 ***************************************************************************/
-void bublbobl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bublbobl )
 {
 	int offs;
 	int sx,sy,xc,yc;

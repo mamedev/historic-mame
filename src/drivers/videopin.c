@@ -1,46 +1,63 @@
 /***************************************************************************
 
-Atari Video Pinball Driver
+	Atari Video Pinball hardware
 
-Done by Sebastien Monassa
-Questions, comments, etc to smonassa@mail.dotcom.fr
+	driver by Sebastien Monassa
+	Questions, comments, etc to smonassa@mail.dotcom.fr
 
-TODO: In a logical order
-	  o Debug variable force plunger and false ball movement
-	  o Is nudge effect working ?
-      o Sound (hum...)
-      o LEDs (possible ?, depends on backdrop for exact coordinates)
-	  o High score saving/loading
--	  o Get a good and final Artwork backdrop to adjust display and leds finally
+	Games supported:
+		* Video Pinball
+
+	Known issues:
+		o Debug variable force plunger and false ball movement
+		o Is nudge effect working ?
+		o Sound (hum...)
+		o LEDs (possible ?, depends on backdrop for exact coordinates)
+		o High score saving/loading
+		o Get a good and final Artwork backdrop to adjust display and leds finally
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "artwork.h"
-
-/* vidhrdw/videopin.c */
-WRITE_HANDLER( videopin_videoram_w );
-extern int videopin_vh_start(void);
-extern void videopin_vh_stop(void);
-extern void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern struct artwork_info *videopin_backdrop;
-
-
-/* machine/videopin.c */
-extern int videopin_interrupt(void);
-WRITE_HANDLER( videopin_out1_w );
-WRITE_HANDLER( videopin_out2_w );
-WRITE_HANDLER( videopin_led_w );
-WRITE_HANDLER( videopin_watchdog_w );
-WRITE_HANDLER( videopin_ball_position_w );
-WRITE_HANDLER( videopin_note_dvslrd_w );
-READ_HANDLER( videopin_in0_r );
-READ_HANDLER( videopin_in1_r );
-READ_HANDLER( videopin_in2_r );
+#include "videopin.h"
 
 
 
+/*************************************
+ *
+ *	Palette generation
+ *
+ *************************************/
+
+static unsigned char videopin_palette[] =
+{
+	0x00,0x00,0x00, /* BLACK (transparent) */
+	0xff,0xff,0xff  /* WHITE */
+};
+
+static unsigned short videopin_colortable[] =
+{
+	0x00, 0x01
+};
+
+static PALETTE_INIT( videopin )
+{
+	memcpy(palette,videopin_palette,sizeof(videopin_palette));
+	memcpy(colortable,videopin_colortable,sizeof(videopin_colortable));
+
+	/* Get Artwork */
+	artwork_load(&videopin_backdrop, "videopin.png", 2);
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( videopin_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },        /* working   RAM 512  bytes */
@@ -69,6 +86,12 @@ static MEMORY_WRITE_START( videopin_writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( videopin )
 	PORT_START		/* IN0 */
@@ -116,114 +139,84 @@ INPUT_PORTS_START( videopin )
 INPUT_PORTS_END
 
 
+
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
+
 static struct GfxLayout videopin_charlayout =
 {
-	8,8,	/* 8*8 characters */
-	64, 	/* 64 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* no separation in 1 bpp */
-/*	{ 56, 48, 40, 32, 24, 16, 8, 0 }, */
+	8,8,
+	64,
+	1,
+	{ 0 },
 	{  4, 5, 6, 7, 0x200*8 + 4, 0x200*8 + 5, 0x200*8 + 6, 0x200*8 + 7},
     { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8 /* every char takes 8 consecutive bytes */
+	8*8
 };
+
 
 static struct GfxLayout videopin_balllayout =
 {
-	8,8,	/* 8*8 characters */
-	4, 		/* 4 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* no separation in 1 bpp */
+	8,8,
+	4,
+	1,
+	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
     { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8 /* every char takes 8 consecutive bytes */
+	8*8
 };
+
 
 static struct GfxDecodeInfo videopin_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &videopin_charlayout,  0x00, 0x01 }, /* offset into colors, # of colors */
 	{ 1, 0x0400, &videopin_balllayout, 0x00, 0x01 }, /* offset into colors, # of colors */
-	{ -1 } /* end of array */
-};
-
-static unsigned char videopin_palette[] =
-{
-	0x00,0x00,0x00, /* BLACK (transparent) */
-	0xff,0xff,0xff  /* WHITE */
+	{ -1 }
 };
 
 
-static unsigned short videopin_colortable[] =
-{
-	0x00, 0x01
-};
 
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	memcpy(game_palette,videopin_palette,sizeof(videopin_palette));
-	memcpy(game_colortable,videopin_colortable,sizeof(videopin_colortable));
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
 
-	/* Get Artwork */
-	artwork_load(&videopin_backdrop, "videopin.png", 2);
-}
+static MACHINE_DRIVER_START( videopin )
 
-/*
-static struct DACinterface dac_interface =
-{
-	3,
-	{ 100, 100, 100 } // ???
-};
-*/
-
-
-static const struct MachineDriver machine_driver_videopin =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			/*12096000/8, */
-			750000, 	   /* 12000000/16 = 12MHz/16 = 750 KHz not sure about the frequency ??? */
-			videopin_readmem,videopin_writemem,0,0,
-			videopin_interrupt,8
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,750000)	/* 12000000/16 = 12MHz/16 = 750 KHz not sure about the frequency ??? */
+	MDRV_CPU_MEMORY(videopin_readmem,videopin_writemem)
+	MDRV_CPU_VBLANK_INT(videopin_interrupt,8)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	45*8, 39*8, { 0*8, 45*8-1, 0*8, 39*8-1 }, /* 360x312 */
-	/*48*8, 32*8, { 0*8, 48*8-1, 0*8, 32*8-1 },    384x256    */
-	videopin_gfxdecodeinfo,
-	256+32768, 2, /* Game is black & white, extra 254 colors for the backdrop */
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(45*8, 39*8)
+	MDRV_VISIBLE_AREA(0*8, 45*8-1, 0*8, 39*8-1)
+	MDRV_GFXDECODE(videopin_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+32768)
+	MDRV_COLORTABLE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	videopin_vh_start,
-	videopin_vh_stop,
-    videopin_vh_screenrefresh,
+	MDRV_PALETTE_INIT(videopin)
+	MDRV_VIDEO_START(videopin)
+	MDRV_VIDEO_UPDATE(videopin)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			/*SOUND_DAC, */
-			/*&dac_interface */
-			0,0 /* No sound yet */
-		}
-	}
-};
+MACHINE_DRIVER_END
 
 
 
-
-/***************************************************************************
-
-  Game ROMs
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( videopin )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64Kb code roms, the ROMs are nibble-wide */
@@ -253,5 +246,12 @@ ROM_START( videopin )
 	ROM_LOAD( "9402-01.h4",  0x0420, 0x0100, 0xb8094b4c ) /* sync (not used) */
 ROM_END
 
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAMEX( 1979, videopin, 0, videopin, videopin, 0, ROT270, "Atari", "Video Pinball", GAME_NOT_WORKING | GAME_NO_SOUND )

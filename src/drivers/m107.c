@@ -31,10 +31,9 @@ extern int m107_raster_irq_position,m107_sprite_list;
 WRITE_HANDLER( m107_spritebuffer_w );
 void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line);
 void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip);
-void m107_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void dsoccr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void m107_vh_stop(void);
-int m107_vh_start(void);
+VIDEO_UPDATE( m107 );
+VIDEO_UPDATE( dsoccr );
+VIDEO_START( m107 );
 WRITE_HANDLER( m107_control_w );
 WRITE_HANDLER( m107_vram_w );
 READ_HANDLER( m107_vram_r );
@@ -107,7 +106,7 @@ static READ_HANDLER( m92_sound_status_r )
 {
 	if (offset == 0)
 	{
-//logerror("%06x: read sound status\n",cpu_get_pc());
+//logerror("%06x: read sound status\n",activecpu_get_pc());
 
 /*
 
@@ -420,15 +419,14 @@ static struct IremGA20_interface iremGA20_interface =
 
 /***************************************************************************/
 
-static int m107_interrupt(void)
+static INTERRUPT_GEN( m107_interrupt )
 {
 	m107_vblank=0;
 	m107_vh_raster_partial_refresh(Machine->scrbitmap,0,248);
-
-	return m107_IRQ_0; /* VBL */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0); /* VBL */
 }
 
-static int m107_raster_interrupt(void)
+static INTERRUPT_GEN( m107_raster_interrupt )
 {
 	static int last_line=0;
 	int line = 256 - cpu_getiloops();
@@ -447,124 +445,91 @@ static int m107_raster_interrupt(void)
 			m107_vh_raster_partial_refresh(Machine->scrbitmap,last_line,line);
 		last_line=line+1;
 
-		return m107_IRQ_2;
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_2);
 	}
 
 	/* Kludge to get Fire Barrel running */
-	if (line==118)
-		return m107_IRQ_3;
+	else if (line==118)
+	{
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_3);
+	}
 
 	/* Redraw screen, then set vblank and trigger the VBL interrupt */
-	if (line==248) {
+	else if (line==248) {
 		if (osd_skip_this_frame()==0)
 			m107_vh_raster_partial_refresh(Machine->scrbitmap,last_line,248);
 		last_line=0;
 		m107_vblank=1;
-		return m107_IRQ_0;
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0);
 	}
 
 	/* End of vblank */
-	if (line==255)
+	else if (line==255)
 		m107_vblank=0;
-
-	return ignore_interrupt();
 }
 
-static const struct MachineDriver machine_driver_firebarr =
-{
+static MACHINE_DRIVER_START( firebarr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V33,	/* NEC V33 */
-			28000000,	/* 28MHz clock */
-			readmem,writemem,readport,writeport,
-			m107_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
-		},
-		{
-			CPU_V30 | CPU_AUDIO_CPU,
-			14318000,	/* 14.318 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(V33, 28000000)	/* NEC V33, 28MHz clock */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(m107_raster_interrupt,256) /* 8 prelines, 240 visible lines, 8 for vblank? */
+
+	MDRV_CPU_ADD(V30, 14318000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.318 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(80, 511-112, 128+8, 511-128-8) /* 320 x 240 */
+	MDRV_GFXDECODE(firebarr_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	firebarr_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	m107_vh_start,
-	m107_vh_stop,
-	m107_vh_screenrefresh,
+	MDRV_VIDEO_START(m107)
+	MDRV_VIDEO_UPDATE(m107)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_IREMGA20,
-			&iremGA20_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_dsoccr94 =
-{
+
+static MACHINE_DRIVER_START( dsoccr94 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V33,	/* NEC V33 */
-			20000000,	/* Could be 28MHz clock? */
-			readmem,writemem,readport,writeport,
-			m107_interrupt,1
-		},
-		{
-			CPU_V30 | CPU_AUDIO_CPU,
-			14318000,	/* 14.318 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(V33, 20000000)	/* NEC V33, Could be 28MHz clock? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(m107_interrupt,1)
+
+	MDRV_CPU_ADD(V30, 14318000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 14.318 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(80, 511-112, 128+8, 511-128-8) /* 320 x 240 */
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	m107_vh_start,
-	m107_vh_stop,
-	m107_vh_screenrefresh,
+	MDRV_VIDEO_START(m107)
+	MDRV_VIDEO_UPDATE(m107)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_IREMGA20,
-			&iremGA20_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(IREMGA20, iremGA20_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -661,7 +626,7 @@ ROM_END
 
 /***************************************************************************/
 
-static void init_firebarr(void)
+static DRIVER_INIT( firebarr )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -679,7 +644,7 @@ static void init_firebarr(void)
 	raster_enable=1;
 }
 
-static void init_dsoccr94(void)
+static DRIVER_INIT( dsoccr94 )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -698,7 +663,7 @@ static void init_dsoccr94(void)
 	raster_enable=0;
 }
 
-static void init_wpksoc(void)
+static DRIVER_INIT( wpksoc )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

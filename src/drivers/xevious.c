@@ -215,10 +215,10 @@ READ_HANDLER( xevious_customio_data_r );
 WRITE_HANDLER( xevious_customio_w );
 WRITE_HANDLER( xevious_customio_data_w );
 WRITE_HANDLER( xevious_halt_w );
-int  xevious_interrupt_1(void);
-int  xevious_interrupt_2(void);
-int  xevious_interrupt_3(void);
-void xevious_init_machine(void);
+INTERRUPT_GEN( xevious_interrupt_1 );
+INTERRUPT_GEN( xevious_interrupt_2 );
+INTERRUPT_GEN( xevious_interrupt_3 );
+MACHINE_INIT( xevious );
 
 WRITE_HANDLER( xevious_vh_latch_w );
 
@@ -228,9 +228,9 @@ WRITE_HANDLER( xevious_fg_videoram_w );
 WRITE_HANDLER( xevious_fg_colorram_w );
 WRITE_HANDLER( xevious_bg_videoram_w );
 WRITE_HANDLER( xevious_bg_colorram_w );
-int  xevious_vh_start( void );
-void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void xevious_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( xevious );
+PALETTE_INIT( xevious );
+VIDEO_UPDATE( xevious );
 
 WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
@@ -637,60 +637,43 @@ struct Samplesinterface samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_xevious =
-{
+static MACHINE_DRIVER_START( xevious )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.125 MHz (?) */
-			readmem_cpu1,writemem_cpu1,0,0,
-			xevious_interrupt_1,1
-		},
-		{
-			CPU_Z80,
-			3072000,	/* 3.125 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			xevious_interrupt_2,1
-		},
-		{
-			CPU_Z80,
-			3072000,	/* 3.125 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			0,0,
-			xevious_interrupt_3,16000.0/128
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	xevious_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_1,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_2,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PERIODIC_INT(xevious_interrupt_3,16000.0/128)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(xevious)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	128+1,128*4+64*8+64*2,
-	xevious_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+1)
+	MDRV_COLORTABLE_LENGTH(128*4+64*8+64*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	xevious_vh_start,
-	0,
-	xevious_vh_screenrefresh,
+	MDRV_PALETTE_INIT(xevious)
+	MDRV_VIDEO_START(xevious)
+	MDRV_VIDEO_UPDATE(xevious)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -893,7 +876,7 @@ ROM_END
 
 
 
-static void init_xevios(void)
+static DRIVER_INIT( xevios )
 {
 	int A,i;
 

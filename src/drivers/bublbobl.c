@@ -140,7 +140,7 @@ CPU 3
 /* vidhrdw/bublbobl.c */
 extern unsigned char *bublbobl_objectram;
 extern size_t bublbobl_objectram_size;
-void bublbobl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( bublbobl );
 
 /* machine/bublbobl.c */
 extern unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
@@ -148,7 +148,7 @@ READ_HANDLER( bublbobl_sharedram1_r );
 READ_HANDLER( bublbobl_sharedram2_r );
 WRITE_HANDLER( bublbobl_sharedram1_w );
 WRITE_HANDLER( bublbobl_sharedram2_w );
-int bublbobl_m68705_interrupt(void);
+INTERRUPT_GEN( bublbobl_m68705_interrupt );
 READ_HANDLER( bublbobl_68705_portA_r );
 WRITE_HANDLER( bublbobl_68705_portA_w );
 WRITE_HANDLER( bublbobl_68705_ddrA_w );
@@ -679,174 +679,113 @@ static struct YM2203interface tokio_ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_bublbobl =
-{
+static MACHINE_DRIVER_START( bublbobl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			MAIN_XTAL/4,	/* 6 MHz */
-			bublbobl_readmem,bublbobl_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the 68705 */
-		},
-		{
-			CPU_Z80,
-			MAIN_XTAL/4,	/* 6 MHz */
-			bublbobl_readmem2,bublbobl_writemem2,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			MAIN_XTAL/8,	/* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
+	MDRV_CPU_MEMORY(bublbobl_readmem,bublbobl_writemem)
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
+	MDRV_CPU_MEMORY(bublbobl_readmem2,bublbobl_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
-		},
-		{
-			CPU_M68705,
-			4000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
-			m68705_readmem,m68705_writemem,0,0,
-			bublbobl_m68705_interrupt,2	/* ??? should come from the same */
+
+	MDRV_CPU_ADD(M68705,4000000/2)	/* xtal is 4MHz, I think it's divided by 2 internally */
+	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_VBLANK_INT(bublbobl_m68705_interrupt,2)	/* ??? should come from the same */
 					/* clock which latches the INT pin on the second Z80 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	0,		/* init_machine() */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
 
 	/* video hardware */
-	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	bublbobl_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(bublbobl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_boblbobl =
-{
+static MACHINE_DRIVER_START( boblbobl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			MAIN_XTAL/4,	/* 6 MHz */
-			boblbobl_readmem,boblbobl_writemem,0,0,
-			interrupt,1	/* interrupt mode 1, unlike Bubble Bobble */
-		},
-		{
-			CPU_Z80,
-			MAIN_XTAL/4,	/* 6 MHz */
-			bublbobl_readmem2,bublbobl_writemem2,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			MAIN_XTAL/8,	/* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
+	MDRV_CPU_MEMORY(boblbobl_readmem,boblbobl_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* interrupt mode 1, unlike Bubble Bobble */
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
+	MDRV_CPU_MEMORY(bublbobl_readmem2,bublbobl_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	0,		/* init_machine() */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
 
 	/* video hardware */
-	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	bublbobl_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(bublbobl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tokio =
-{
+static MACHINE_DRIVER_START( tokio )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			MAIN_XTAL/4,	/* 6 MHz */
-			tokio_readmem,tokio_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			MAIN_XTAL/4,	/* 6 MHz */
-			tokio_readmem2,tokio_writemem2,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			MAIN_XTAL/8,	/* 3 MHz */
-			tokio_sound_readmem,tokio_sound_writemem,0,0,
-			ignore_interrupt,0
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
+	MDRV_CPU_MEMORY(tokio_readmem,tokio_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/4)	/* 6 MHz */
+	MDRV_CPU_MEMORY(tokio_readmem2,tokio_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, MAIN_XTAL/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
+	MDRV_CPU_MEMORY(tokio_sound_readmem,tokio_sound_writemem)
 						/* NMIs are triggered by the main CPU */
 						/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION, /* frames/second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	0,	/* init_machine() */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION) /* frames/second, vblank duration */
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
 
 	/* video hardware */
-	32*8, 32*8,	{ 0, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	bublbobl_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(bublbobl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&tokio_ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, tokio_ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1107,7 +1046,7 @@ ROM_END
 
 
 
-static void init_bublbobl(void)
+static DRIVER_INIT( bublbobl )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
@@ -1117,7 +1056,7 @@ static void init_bublbobl(void)
 }
 
 
-static void init_boblbobl(void)
+static DRIVER_INIT( boblbobl )
 {
 #define MOD_PAGE(page,addr,data) memory_region(REGION_CPU1)[addr-0x8000+0x10000+0x4000*page] = data;
     /* these shouldn't be necessary, surely - this is a bootleg ROM
@@ -1134,7 +1073,7 @@ static void init_boblbobl(void)
 }
 
 
-static void init_tokio(void)
+static DRIVER_INIT( tokio )
 {
 	extern int bublbobl_video_enable;
 

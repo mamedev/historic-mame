@@ -1,136 +1,142 @@
 /***************************************************************************
 
-Asteroids Memory Map (preliminary)
+	Atari Asteroids hardware
 
-Asteroids settings:
+	Games supported:
+		* Asteroids
+		* Asteroids Deluxe
+		* Lunar Lander
 
-0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
+	Known bugs:
+		* sound emu isn't perfect - sometimes explosions don't register in Asteroids
+		* the low background thrust in Lunar Lander isn't emulated
+		* Asteroids Deluxe and Lunar Lander both toggle the LEDs too frequently to be effectively emulated
+		* the ERROR message in Asteroids Deluxe self test is related to a pokey problem
 
+****************************************************************************
 
-8 SWITCH DIP
-87654321
---------
-XXXXXX11   English
-XXXXXX10   German
-XXXXXX01   French
-XXXXXX00   Spanish
-XXXXX1XX   4-ship game
-XXXXX0XX   3-ship game
-11XXXXXX   Free Play
-10XXXXXX   1 Coin  for 2 Plays
-01XXXXXX   1 Coin  for 1 Play
-00XXXXXX   2 Coins for 1 Play
+	Asteroids Memory Map (preliminary)
 
-Asteroids Deluxe settings:
+	Asteroids settings:
 
-0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
+	0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
 
 
-8 SWITCH DIP (R5)
-87654321
---------
-XXXXXX11   English $
-XXXXXX10   German
-XXXXXX01   French
-XXXXXX00   Spanish
-XXXX11XX   2-4 ships
-XXXX10XX   3-5 ships $
-XXXX01XX   4-6 ships
-XXXX00XX   5-7 ships
-XXX1XXXX   1-play minimum $
-XXX0XXXX   2-play minimum
-XX1XXXXX   Easier gameplay for first 30000 points +
-XX0XXXXX   Hard gameplay throughout the game	  +
-11XXXXXX   Bonus ship every 10,000 points $ !
-10XXXXXX   Bonus ship every 12,000 points !
-01XXXXXX   Bonus ship every 15,000 points !
-00XXXXXX   No bonus ships (adds one ship at game start)
+	8 SWITCH DIP
+	87654321
+	--------
+	XXXXXX11   English
+	XXXXXX10   German
+	XXXXXX01   French
+	XXXXXX00   Spanish
+	XXXXX1XX   4-ship game
+	XXXXX0XX   3-ship game
+	11XXXXXX   Free Play
+	10XXXXXX   1 Coin  for 2 Plays
+	01XXXXXX   1 Coin  for 1 Play
+	00XXXXXX   2 Coins for 1 Play
 
-+ only with the newer romset
-! not "every", but "at", e.g. only once.
+	Asteroids Deluxe settings:
 
-Thanks to Gregg Woodcock for the info.
-
-8 SWITCH DIP (L8)
-87654321
---------
-XXXXXX11   Free Play
-XXXXXX10   1 Coin = 2 Plays
-XXXXXX01   1 Coin = 1 Play
-XXXXXX00   2 Coins = 1 Play $
-XXXX11XX   Right coin mech * 1 $
-XXXX10XX   Right coin mech * 4
-XXXX01XX   Right coin mech * 5
-XXXX00XX   Right coin mech * 6
-XXX1XXXX   Center coin mech * 1 $
-XXX0XXXX   Center coin mech * 2
-111XXXXX   No bonus coins
-110XXXXX   For every 2 coins inserted, game logic adds 1 more coin
-101XXXXX   For every 4 coins inserted, game logic adds 1 more coin
-100XXXXX   For every 4 coins inserted, game logic adds 2 more coins $
-011XXXXX   For every 5 coins inserted, game logic adds 1 more coin
-***************************************************************************/
-
-/***************************************************************************
-
-Lunar Lander Memory Map (preliminary)
-
-Lunar Lander settings:
-
-0 = OFF  1 = ON  x = Don't Care  $ = Atari suggests
+	0 = OFF  1 = ON  X = Don't Care  $ = Atari suggests
 
 
-8 SWITCH DIP (P8) with -01 ROMs on PCB
-87654321
---------
-11xxxxxx   450 fuel units per coin
-10xxxxxx   600 fuel units per coin
-01xxxxxx   750 fuel units per coin	$
-00xxxxxx   900 fuel units per coin
-xxx0xxxx   Free play
-xxx1xxxx   Coined play as determined by toggles 7 & 8  $
-xxxx00xx   German instructions
-xxxx01xx   Spanish instructions
-xxxx10xx   French instructions
-xxxx11xx   English instructions  $
-xxxxxx11   Right coin == 1 credit/coin	$
-xxxxxx10   Right coin == 4 credit/coin
-xxxxxx01   Right coin == 5 credit/coin
-xxxxxx00   Right coin == 6 credit/coin
-		   (Left coin always registers 1 credit/coin)
+	8 SWITCH DIP (R5)
+	87654321
+	--------
+	XXXXXX11   English $
+	XXXXXX10   German
+	XXXXXX01   French
+	XXXXXX00   Spanish
+	XXXX11XX   2-4 ships
+	XXXX10XX   3-5 ships $
+	XXXX01XX   4-6 ships
+	XXXX00XX   5-7 ships
+	XXX1XXXX   1-play minimum $
+	XXX0XXXX   2-play minimum
+	XX1XXXXX   Easier gameplay for first 30000 points +
+	XX0XXXXX   Hard gameplay throughout the game	  +
+	11XXXXXX   Bonus ship every 10,000 points $ !
+	10XXXXXX   Bonus ship every 12,000 points !
+	01XXXXXX   Bonus ship every 15,000 points !
+	00XXXXXX   No bonus ships (adds one ship at game start)
+
+	+ only with the newer romset
+	! not "every", but "at", e.g. only once.
+
+	Thanks to Gregg Woodcock for the info.
+
+	8 SWITCH DIP (L8)
+	87654321
+	--------
+	XXXXXX11   Free Play
+	XXXXXX10   1 Coin = 2 Plays
+	XXXXXX01   1 Coin = 1 Play
+	XXXXXX00   2 Coins = 1 Play $
+	XXXX11XX   Right coin mech * 1 $
+	XXXX10XX   Right coin mech * 4
+	XXXX01XX   Right coin mech * 5
+	XXXX00XX   Right coin mech * 6
+	XXX1XXXX   Center coin mech * 1 $
+	XXX0XXXX   Center coin mech * 2
+	111XXXXX   No bonus coins
+	110XXXXX   For every 2 coins inserted, game logic adds 1 more coin
+	101XXXXX   For every 4 coins inserted, game logic adds 1 more coin
+	100XXXXX   For every 4 coins inserted, game logic adds 2 more coins $
+	011XXXXX   For every 5 coins inserted, game logic adds 1 more coin
+
+****************************************************************************
+
+	Lunar Lander Memory Map (preliminary)
+
+	Lunar Lander settings:
+
+	0 = OFF  1 = ON  x = Don't Care  $ = Atari suggests
 
 
-8 SWITCH DIP (P8) with -02 ROMs on PCB
-87654321
---------
-11x1xxxx   450 fuel units per coin
-10x1xxxx   600 fuel units per coin
-01x1xxxx   750 fuel units per coin	$
-00x1xxxx   900 fuel units per coin
-11x0xxxx   1100 fuel units per coin
-10x0xxxx   1300 fuel units per coin
-01x0xxxx   1550 fuel units per coin
-00x0xxxx   1800 fuel units per coin
-xx0xxxxx   Free play
-xx1xxxxx   Coined play as determined by toggles 5, 7, & 8  $
-xxxx00xx   German instructions
-xxxx01xx   Spanish instructions
-xxxx10xx   French instructions
-xxxx11xx   English instructions  $
-xxxxxx11   Right coin == 1 credit/coin	$
-xxxxxx10   Right coin == 4 credit/coin
-xxxxxx01   Right coin == 5 credit/coin
-xxxxxx00   Right coin == 6 credit/coin
-		   (Left coin always registers 1 credit/coin)
+	8 SWITCH DIP (P8) with -01 ROMs on PCB
+	87654321
+	--------
+	11xxxxxx   450 fuel units per coin
+	10xxxxxx   600 fuel units per coin
+	01xxxxxx   750 fuel units per coin	$
+	00xxxxxx   900 fuel units per coin
+	xxx0xxxx   Free play
+	xxx1xxxx   Coined play as determined by toggles 7 & 8  $
+	xxxx00xx   German instructions
+	xxxx01xx   Spanish instructions
+	xxxx10xx   French instructions
+	xxxx11xx   English instructions  $
+	xxxxxx11   Right coin == 1 credit/coin	$
+	xxxxxx10   Right coin == 4 credit/coin
+	xxxxxx01   Right coin == 5 credit/coin
+	xxxxxx00   Right coin == 6 credit/coin
+			   (Left coin always registers 1 credit/coin)
 
-Notes:
 
-Known issues:
+	8 SWITCH DIP (P8) with -02 ROMs on PCB
+	87654321
+	--------
+	11x1xxxx   450 fuel units per coin
+	10x1xxxx   600 fuel units per coin
+	01x1xxxx   750 fuel units per coin	$
+	00x1xxxx   900 fuel units per coin
+	11x0xxxx   1100 fuel units per coin
+	10x0xxxx   1300 fuel units per coin
+	01x0xxxx   1550 fuel units per coin
+	00x0xxxx   1800 fuel units per coin
+	xx0xxxxx   Free play
+	xx1xxxxx   Coined play as determined by toggles 5, 7, & 8  $
+	xxxx00xx   German instructions
+	xxxx01xx   Spanish instructions
+	xxxx10xx   French instructions
+	xxxx11xx   English instructions  $
+	xxxxxx11   Right coin == 1 credit/coin	$
+	xxxxxx10   Right coin == 4 credit/coin
+	xxxxxx01   Right coin == 5 credit/coin
+	xxxxxx00   Right coin == 6 credit/coin
+			   (Left coin always registers 1 credit/coin)
 
-* Sound emu isn't perfect - sometimes explosions don't register in Asteroids
-* The low background thrust in Lunar Lander isn't emulated
-* Asteroids Deluxe and Lunar Lander both toggle the LEDs too frequently to be effectively emulated
-* The ERROR message in Asteroids Deluxe self test is related to a pokey problem
 ***************************************************************************/
 
 #include "driver.h"
@@ -138,38 +144,15 @@ Known issues:
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
+#include "asteroid.h"
 
-void asteroid_init_machine(void);
-int asteroid_interrupt(void);
-int llander_interrupt(void);
 
-WRITE_HANDLER( asteroid_bank_switch_w );
-WRITE_HANDLER( astdelux_bank_switch_w );
-WRITE_HANDLER( astdelux_led_w );
-WRITE_HANDLER( llander_led_w );
 
-WRITE_HANDLER( asteroid_explode_w );
-WRITE_HANDLER( asteroid_thump_w );
-WRITE_HANDLER( asteroid_sounds_w );
-WRITE_HANDLER( astdelux_sounds_w );
-extern struct discrete_sound_block *asteroid_sound_interface;
-extern struct discrete_sound_block *astdelux_sound_interface;
-
-WRITE_HANDLER( llander_sounds_w );
-WRITE_HANDLER( llander_snd_reset_w );
-extern struct discrete_sound_block *llander_sound_interface;
-
-READ_HANDLER( asteroid_IN0_r );
-READ_HANDLER( asteroib_IN0_r );
-READ_HANDLER( asteroid_IN1_r );
-READ_HANDLER( asteroid_DSW1_r );
-READ_HANDLER( llander_IN0_r );
-
-void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int llander_start(void);
-void llander_stop(void);
-void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
+/*************************************
+ *
+ *	Coin counters
+ *
+ *************************************/
 
 static WRITE_HANDLER( astdelux_coin_counter_w )
 {
@@ -177,13 +160,20 @@ static WRITE_HANDLER( astdelux_coin_counter_w )
 }
 
 
-/* Lunar Lander mirrors page 0 and page 1. */
-static unsigned char *llander_zeropage;
+
+/*************************************
+ *
+ *	Lunar Lander mirrors page 0 & 1
+ *
+ *************************************/
+
+static data8_t *llander_zeropage;
 
 static READ_HANDLER( llander_zeropage_r )
 {
 	return llander_zeropage[offset & 0xff];
 }
+
 
 static WRITE_HANDLER( llander_zeropage_w )
 {
@@ -191,6 +181,12 @@ static WRITE_HANDLER( llander_zeropage_w )
 }
 
 
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( asteroid_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
@@ -203,17 +199,6 @@ static MEMORY_READ_START( asteroid_readmem )
 	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
 MEMORY_END
 
-static MEMORY_READ_START( asteroib_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x2000, 0x2000, asteroib_IN0_r }, /* IN0 */
-	{ 0x2003, 0x2003, input_port_3_r }, /* hyperspace */
-	{ 0x2400, 0x2407, asteroid_IN1_r }, /* IN1 */
-	{ 0x2800, 0x2803, asteroid_DSW1_r }, /* DSW1 */
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x5000, 0x57ff, MRA_ROM }, /* vector rom */
-	{ 0x6800, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
-MEMORY_END
 
 static MEMORY_WRITE_START( asteroid_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
@@ -228,6 +213,7 @@ static MEMORY_WRITE_START( asteroid_writemem )
 	{ 0x6800, 0x7fff, MWA_ROM },
 MEMORY_END
 
+
 static MEMORY_READ_START( astdelux_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x2000, 0x2007, asteroid_IN0_r }, /* IN0 */
@@ -240,6 +226,7 @@ static MEMORY_READ_START( astdelux_readmem )
 	{ 0x6000, 0x7fff, MRA_ROM },
 	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
 MEMORY_END
+
 
 static MEMORY_WRITE_START( astdelux_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
@@ -259,6 +246,7 @@ static MEMORY_WRITE_START( astdelux_writemem )
 	{ 0x6000, 0x7fff, MWA_ROM },
 MEMORY_END
 
+
 static MEMORY_READ_START( llander_readmem )
 	{ 0x0000, 0x01ff, llander_zeropage_r },
 	{ 0x2000, 0x2000, llander_IN0_r }, /* IN0 */
@@ -271,6 +259,7 @@ static MEMORY_READ_START( llander_readmem )
 	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
 MEMORY_END
 
+
 static MEMORY_WRITE_START( llander_writemem )
 	{ 0x0000, 0x01ff, llander_zeropage_w, &llander_zeropage },
 	{ 0x3000, 0x3000, avgdvg_go_w },
@@ -282,6 +271,14 @@ static MEMORY_WRITE_START( llander_writemem )
 	{ 0x4800, 0x5fff, MWA_ROM }, /* vector rom */
 	{ 0x6000, 0x7fff, MWA_ROM },
 MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( asteroid )
 	PORT_START /* IN0 */
@@ -330,6 +327,7 @@ INPUT_PORTS_START( asteroid )
 	PORT_DIPSETTING (	0x40, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING (	0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( asteroib )
 	PORT_START /* IN0 */
@@ -381,6 +379,7 @@ INPUT_PORTS_START( asteroib )
 	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( astdelux )
 	PORT_START /* IN0 */
@@ -450,6 +449,7 @@ INPUT_PORTS_START( astdelux )
 	PORT_DIPSETTING (	0xe0, "None" )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( llander )
 	PORT_START /* IN0 */
 	/* Bit 0 is VG_HALT, handled in the machine dependant part */
@@ -499,6 +499,7 @@ INPUT_PORTS_START( llander )
 	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( llander1 )
 	PORT_START /* IN0 */
 	/* Bit 0 is VG_HALT, handled in the machine dependant part */
@@ -546,113 +547,11 @@ INPUT_PORTS_END
 
 
 
-static void asteroid1_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x001c],2*10+3*11);
-		osd_fclose(f);
-	}
-}
-
-static void asteroid_hisave(void)
-{
-	void *f;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x001d],2*10+3*11);
-		osd_fclose(f);
-	}
-}
-
-
-
-/* Asteroids Deluxe now uses the earom routines
- * However, we keep the highscore location, just in case
- *		osd_fwrite(f,&RAM[0x0023],3*10+3*11);
- */
-
-static const struct MachineDriver machine_driver_asteroid =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz */
-			asteroid_readmem,asteroid_writemem,0,0,
-			asteroid_interrupt,4	/* 250 Hz */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	asteroid_init_machine,
-
-	/* video hardware */
-	400, 300, { 0, 1040, 70, 950 },
-	0,
-	256+32768, 0,
-	avg_init_palette_white,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	dvg_start,
-	dvg_stop,
-	vector_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DISCRETE,
-			&asteroid_sound_interface
-		}
-	}
-};
-
-static const struct MachineDriver machine_driver_asteroib =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz */
-			asteroib_readmem,asteroid_writemem,0,0,
-			asteroid_interrupt,4	/* 250 Hz */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	asteroid_init_machine,
-
-	/* video hardware */
-	400, 300, { 0, 1040, 70, 950 },
-	0,
-	256+32768, 0,
-	avg_init_palette_white,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	dvg_start,
-	dvg_stop,	vector_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DISCRETE,
-			&asteroid_sound_interface
-		}
-	}
-};
-
-
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -672,92 +571,86 @@ static struct POKEYinterface pokey_interface =
 	{ input_port_3_r }
 };
 
-static const struct MachineDriver machine_driver_astdelux =
-{
+
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( asteroid )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz */
-			astdelux_readmem,astdelux_writemem,0,0,
-			asteroid_interrupt,4	/* 250 Hz */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
+	MDRV_CPU_ADD_TAG("main", M6502, 1500000)
+	MDRV_CPU_MEMORY(asteroid_readmem,asteroid_writemem)
+	MDRV_CPU_VBLANK_INT(asteroid_interrupt,4)	/* 250 Hz */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_INIT(asteroid)
 
 	/* video hardware */
-	400, 300, { 0, 1040, 70, 950 },
-	0,
-	256+32768, 0,
-	avg_init_palette_astdelux,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400,300)
+	MDRV_VISIBLE_AREA(0, 1040, 70, 950)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	dvg_start,
-	dvg_stop,
-	vector_vh_screenrefresh,
+	MDRV_PALETTE_INIT(avg_white)
+	MDRV_VIDEO_START(dvg)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_DISCRETE,
-			&astdelux_sound_interface
-		}
-	},
-
-	atari_vg_earom_handler
-};
+	MDRV_SOUND_ADD_TAG("disc", DISCRETE, asteroid_sound_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_llander =
-{
+static MACHINE_DRIVER_START( astdelux )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,			/* 1.5 MHz */
-			llander_readmem, llander_writemem,0,0,
-			llander_interrupt,6 /* 250 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
+	MDRV_IMPORT_FROM(asteroid)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(astdelux_readmem,astdelux_writemem)
+
+	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */
-	400, 300, { 0, 1050, 0, 900 },
-	0,
-	256+32768, 0,
-	llander_init_colors,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	llander_start,
-	llander_stop,
-	llander_screenrefresh,
+	MDRV_PALETTE_INIT(avg_astdelux)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DISCRETE,
-			&llander_sound_interface
-		}
-	}
-};
+	MDRV_SOUND_REPLACE("disc", DISCRETE, astdelux_sound_interface)
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
-/***************************************************************************
 
-  Game driver(s)
+static MACHINE_DRIVER_START( llander )
 
-***************************************************************************/
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(asteroid)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(llander_readmem,llander_writemem)
+	MDRV_CPU_VBLANK_INT(llander_interrupt,6)	/* 250 Hz */
+
+	MDRV_FRAMES_PER_SECOND(40)
+	MDRV_MACHINE_INIT(NULL)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 1050, 0, 900)
+
+	MDRV_PALETTE_INIT(llander)
+	MDRV_VIDEO_START(llander)
+	MDRV_VIDEO_UPDATE(llander)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("disc", DISCRETE, llander_sound_interface)
+MACHINE_DRIVER_END
+
+
+
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( asteroid )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -769,6 +662,7 @@ ROM_START( asteroid )
 	ROM_LOAD( "035127.02",    0x5000, 0x0800, 0x8b71fd9e )
 ROM_END
 
+
 ROM_START( asteroi1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "035145.01",    0x6800, 0x0800, 0xe9bfda64 )
@@ -779,6 +673,7 @@ ROM_START( asteroi1 )
 	ROM_LOAD( "035127.01",    0x5000, 0x0800, 0x99699366 )
 ROM_END
 
+
 ROM_START( asteroib )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "035145ll.bin", 0x6800, 0x0800, 0x605fc0f2 )
@@ -788,6 +683,7 @@ ROM_START( asteroib )
 	/* Vector ROM */
 	ROM_LOAD( "035127.02",    0x5000, 0x0800, 0x8b71fd9e )
 ROM_END
+
 
 ROM_START( astdelux )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -801,6 +697,7 @@ ROM_START( astdelux )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
 
+
 ROM_START( astdelu1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x8f5dabc6 )
@@ -812,6 +709,7 @@ ROM_START( astdelu1 )
 	ROM_LOAD( "036800.01",    0x4800, 0x0800, 0x3b597407 )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
+
 
 ROM_START( llander )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -827,6 +725,7 @@ ROM_START( llander )
 	/* Unfortunately, is it not currently available. */
 	ROM_LOAD( "034597.01",    0x5800, 0x0800, 0x00000000 )
 ROM_END
+
 
 ROM_START( llander1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -845,11 +744,31 @@ ROM_END
 
 
 
-GAME( 1979, asteroid, 0,		asteroid, asteroid, 0, ROT0, "Atari", "Asteroids (rev 2)" )
-GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0, ROT0, "Atari", "Asteroids (rev 1)" )
-GAME( 1979, asteroib, asteroid, asteroib, asteroib, 0, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)" )
-GAME( 1980, astdelux, 0,		astdelux, astdelux, 0, ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
-GAME( 1980, astdelu1, astdelux, astdelux, astdelux, 0, ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
-GAME( 1979, llander,  0,		llander,  llander,	0, ROT0, "Atari", "Lunar Lander (rev 2)" )
-GAME( 1979, llander1, llander,	llander,  llander1, 0, ROT0, "Atari", "Lunar Lander (rev 1)" )
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( asteroib )
+{
+	install_mem_read_handler(0, 0x2000, 0x2000, asteroib_IN0_r);
+	install_mem_read_handler(0, 0x2003, 0x2003, input_port_3_r);
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME( 1979, asteroid, 0,		asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 2)" )
+GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0,        ROT0, "Atari", "Asteroids (rev 1)" )
+GAME( 1979, asteroib, asteroid, asteroid, asteroib, asteroib, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)" )
+GAME( 1980, astdelux, 0,		astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 2)" )
+GAME( 1980, astdelu1, astdelux, astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 1)" )
+GAME( 1979, llander,  0,		llander,  llander,	0,        ROT0, "Atari", "Lunar Lander (rev 2)" )
+GAME( 1979, llander1, llander,	llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)" )
 

@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "slapstic.h"
+#include "atarisy2.h"
 
 
 
@@ -16,7 +17,7 @@
  *
  *************************************/
 
-data16_t *atarisys2_slapstic;
+data16_t *atarisy2_slapstic;
 
 
 
@@ -39,7 +40,7 @@ static data16_t *vram;
  *
  *************************************/
 
-int atarisys2_vh_start(void)
+VIDEO_START( atarisy2 )
 {
 	static const struct ataripf_desc pfdesc =
 	{
@@ -115,24 +116,25 @@ int atarisys2_vh_start(void)
 	int i, size;
 
 	/* allocate banked memory */
-	vram = calloc(0x8000, 1);
+	vram = auto_malloc(0x8000);
 	if (!vram)
-		goto cant_allocate_ram;
+		return 1;
+	memset(vram, 0, 0x8000);
 	atarian_0_base = &vram[0x0000];
 	atarimo_0_spriteram = &vram[0x0c00];
 	ataripf_0_base = &vram[0x2000];
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
-		goto cant_create_an;
+		return 1;
 
 	/* modify the playfield lookup table to support our odd banking system */
 	pflookup = ataripf_get_lookup(0, &size);
@@ -150,32 +152,6 @@ int atarisys2_vh_start(void)
 	bankbits = 0;
 	videobank = 0;
 	return 0;
-
-	/* error cases */
-cant_create_mo:
-	ataripf_free();
-cant_create_pf:
-	atarian_free();
-cant_create_an:
-	free(vram);
-cant_allocate_ram:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void atarisys2_vh_stop(void)
-{
-	free(vram);
-	atarian_free();
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -186,7 +162,7 @@ void atarisys2_vh_stop(void)
  *
  *************************************/
 
-WRITE16_HANDLER( atarisys2_hscroll_w )
+WRITE16_HANDLER( atarisy2_hscroll_w )
 {
 	int scanline = cpu_getscanline() + 1;
 	int newscroll = (ataripf_get_xscroll(0) << 6) | ((bankbits >> 16) & 0xf);
@@ -199,7 +175,7 @@ WRITE16_HANDLER( atarisys2_hscroll_w )
 }
 
 
-WRITE16_HANDLER( atarisys2_vscroll_w )
+WRITE16_HANDLER( atarisy2_vscroll_w )
 {
 	int scanline = cpu_getscanline() + 1;
 	int newscroll = (latched_vscroll << 6) | ((bankbits >> 20) & 0xf);
@@ -222,7 +198,7 @@ WRITE16_HANDLER( atarisys2_vscroll_w )
  *
  *************************************/
 
-WRITE16_HANDLER( atarisys2_paletteram_w )
+WRITE16_HANDLER( atarisy2_paletteram_w )
 {
 	static const int intensity_table[16] =
 	{
@@ -257,9 +233,9 @@ WRITE16_HANDLER( atarisys2_paletteram_w )
  *
  *************************************/
 
-READ16_HANDLER( atarisys2_slapstic_r )
+READ16_HANDLER( atarisy2_slapstic_r )
 {
-	int result = atarisys2_slapstic[offset];
+	int result = atarisy2_slapstic[offset];
 	slapstic_tweak(offset);
 
 	/* an extra tweak for the next opcode fetch */
@@ -268,7 +244,7 @@ READ16_HANDLER( atarisys2_slapstic_r )
 }
 
 
-WRITE16_HANDLER( atarisys2_slapstic_w )
+WRITE16_HANDLER( atarisy2_slapstic_w )
 {
 	slapstic_tweak(offset);
 
@@ -284,13 +260,13 @@ WRITE16_HANDLER( atarisys2_slapstic_w )
  *
  *************************************/
 
-READ16_HANDLER( atarisys2_videoram_r )
+READ16_HANDLER( atarisy2_videoram_r )
 {
 	return vram[offset | videobank];
 }
 
 
-WRITE16_HANDLER( atarisys2_videoram_w )
+WRITE16_HANDLER( atarisy2_videoram_w )
 {
 	int offs = offset | videobank;
 
@@ -327,7 +303,7 @@ WRITE16_HANDLER( atarisys2_videoram_w )
  *
  *************************************/
 
-void atarisys2_scanline_update(int scanline)
+void atarisy2_scanline_update(int scanline)
 {
 	/* latch the Y scroll value */
 	if (scanline == 0)
@@ -374,10 +350,10 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void atarisys2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( atarisy2 )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	atarimo_render(0, bitmap, overrender_callback, NULL);
-	atarian_render(0, bitmap);
+	ataripf_render(0, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
+	atarian_render(0, bitmap, cliprect);
 }

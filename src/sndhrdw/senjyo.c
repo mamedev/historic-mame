@@ -6,7 +6,7 @@
 /* z80 pio */
 static void pio_interrupt(int state)
 {
-	cpu_cause_interrupt (1, Z80_VECTOR(0,state) );
+	cpu_set_irq_line_and_vector (1, 0, HOLD_LINE, Z80_VECTOR(0,state) );
 }
 
 static z80pio_interface pio_intf =
@@ -20,7 +20,7 @@ static z80pio_interface pio_intf =
 /* z80 ctc */
 static void ctc_interrupt (int state)
 {
-	cpu_cause_interrupt (1, Z80_VECTOR(1,state) );
+	cpu_set_irq_line_and_vector (1, 0, HOLD_LINE, Z80_VECTOR(1,state) );
 }
 
 static z80ctc_interface ctc_intf =
@@ -66,11 +66,9 @@ int senjyo_sh_start(const struct MachineSound *msound)
 	/* z80 pio init */
 	z80pio_init (&pio_intf);
 
-	if ((_single = (signed char *)malloc(SINGLE_LENGTH)) == 0)
-	{
-		free(_single);
+	if ((_single = (signed char *)auto_malloc(SINGLE_LENGTH)) == 0)
 		return 1;
-	}
+
 	for (i = 0;i < SINGLE_LENGTH;i++)		/* freq = ctc2 zco / 8 */
 		_single[i] = ((i/SINGLE_DIVIDER)&0x01)*127;
 
@@ -85,7 +83,6 @@ int senjyo_sh_start(const struct MachineSound *msound)
 
 void senjyo_sh_stop(void)
 {
-	free(_single);
 }
 
 

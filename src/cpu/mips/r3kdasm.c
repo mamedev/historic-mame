@@ -120,7 +120,9 @@ static void dasm_cop(UINT32 pc, int cop, UINT32 op, char *buffer)
 	{
 		case 0x00:	sprintf(buffer, "mfc%d   %s,%s", cop, reg[rt], cpreg[cop][rd]);					break;
 		case 0x02:	sprintf(buffer, "cfc%d   %s,%s", cop, reg[rt], ccreg[cop][rd]);					break;
-		case 0x10:	/* BC */
+		case 0x04:	sprintf(buffer, "mtc%d   %s,%s", cop, reg[rt], cpreg[cop][rd]);				break;
+		case 0x06:	sprintf(buffer, "ctc%d   %s,%s", cop, reg[rt], ccreg[cop][rd]);						break;
+		case 0x08:	/* BC */
 			switch (rt)
 			{
 				case 0x00:	sprintf(buffer, "bc%df   $%08x", cop, pc + 4 + ((INT16)op << 2));		break;
@@ -130,24 +132,22 @@ static void dasm_cop(UINT32 pc, int cop, UINT32 op, char *buffer)
 				default:	sprintf(buffer, "dc.l    $%08x [invalid]", op);							break;
 			}
 			break;
-		case 0x04:	sprintf(buffer, "mtc%d   %s,%s", cop, reg[rt], cpreg[cop][rd]);				break;
-		case 0x06:	sprintf(buffer, "ctc%d   %s,%s", cop, reg[rt], ccreg[cop][rd]);						break;
-		case 0x20:
-		case 0x21:
-		case 0x22:
-		case 0x23:
-		case 0x24:
-		case 0x25:
-		case 0x26:
-		case 0x27:
-		case 0x28:
-		case 0x29:
-		case 0x2a:
-		case 0x2b:
-		case 0x2c:
-		case 0x2d:
-		case 0x2e:
-		case 0x2f:	/* COP */
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+		case 0x14:
+		case 0x15:
+		case 0x16:
+		case 0x17:
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:	/* COP */
 			if (cop == 0)
 			{
 				switch (op & 0x01ffffff)

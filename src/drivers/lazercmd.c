@@ -234,8 +234,8 @@ int marker_x, marker_y;
    externals
 
  *************************************************************/
-int lazercmd_vh_start(void);
-void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( lazercmd );
+VIDEO_UPDATE( lazercmd );
 void lazercmd_marker_dirty(int marker);
 
 /*************************************************************
@@ -250,7 +250,7 @@ static int timer_count = 0;
  * Fake something toggling the sense input line of the S2650
  * The rate should be at about 1 Hz
  *************************************************************/
-static int lazercmd_timer(void)
+static INTERRUPT_GEN( lazercmd_timer )
 {
 	static int sense_state = 0;
 
@@ -259,14 +259,12 @@ static int lazercmd_timer(void)
 		sense_state ^= 1;
 		cpu_set_irq_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
 	}
-	return ignore_interrupt();
 }
 
-static int bbonk_timer(void)
+static INTERRUPT_GEN( bbonk_timer )
 {
 	if( ++timer_count >= 64*128 )
 		timer_count = 0;
-	return ignore_interrupt();
 }
 
 /*************************************************************
@@ -630,22 +628,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /* some colors for the frontend */
-static unsigned char palette[] =
+static unsigned char palette_source[] =
 {
 /*	Red Green Blue */
 	0x00,0x00,0x00, 	/* black */
 	0xb0,0xb0,0xb0, 	/* white */
 	0xff,0xff,0xff		/* bright white */
 };
-static unsigned short colortable[] =
+static unsigned short colortable_source[] =
 {
 	 1, 0,
 	 0, 1
 };
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( lazercmd )
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
 static struct DACinterface lazercmd_DAC_interface =
@@ -654,140 +652,102 @@ static struct DACinterface lazercmd_DAC_interface =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_lazercmd =
-{
-/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			8064000/12/3,				/* 672 kHz? */
+static MACHINE_DRIVER_START( lazercmd )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(S2650,8064000/12/3)				/* 672 kHz? */
 /*			Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-			lazercmd_readmem, lazercmd_writemem, lazercmd_readport, lazercmd_writeport,
-			lazercmd_timer, 128 	/* 7680 Hz */
-		}
-	},
-	/* frames per second, vblank duration (arbitrary values!) */
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,			/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_MEMORY(lazercmd_readmem,lazercmd_writemem)
+	MDRV_CPU_PORTS(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
 
-/* video hardware */
-	HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR,
-	{0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
-	 0 * VERT_CHR, (VERT_RES - 1) * VERT_CHR - 1},
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	gfxdecodeinfo,
-	3+32768, 2*2,		/* extra color for the overlay */
-	init_palette,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR)
+	MDRV_VISIBLE_AREA(0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
+						0 * VERT_CHR, (VERT_RES - 1) * VERT_CHR - 1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(3+32768)	/* extra color for the overlay */
+	MDRV_COLORTABLE_LENGTH(2*2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	lazercmd_vh_start,
-	generic_vh_stop,
-	lazercmd_vh_screenrefresh,
+	MDRV_PALETTE_INIT(lazercmd)
+	MDRV_VIDEO_START(lazercmd)
+	MDRV_VIDEO_UPDATE(lazercmd)
 
-/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&lazercmd_DAC_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, lazercmd_DAC_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_medlanes =
-{
-/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			8064000/12/3,				/* 672 kHz? */
+
+static MACHINE_DRIVER_START( medlanes )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(S2650,8064000/12/3)				/* 672 kHz? */
 /*			Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-			medlanes_readmem, medlanes_writemem, lazercmd_readport, lazercmd_writeport,
-			lazercmd_timer, 128 	/* 7680 Hz */
-		}
-	},
-	/* frames per second, vblank duration (arbitrary values!) */
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,			/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_MEMORY(medlanes_readmem,medlanes_writemem)
+	MDRV_CPU_PORTS(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
 
-/* video hardware */
-	HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR,
-	{0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
-	 0 * VERT_CHR, VERT_RES * VERT_CHR - 1},
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	gfxdecodeinfo,
-	3+32768, 2*2,		/* extra color for the overlay */
-	init_palette,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR)
+	MDRV_VISIBLE_AREA(0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
+						 0 * VERT_CHR, VERT_RES * VERT_CHR - 1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(3+32768)	/* extra color for the overlay */
+	MDRV_COLORTABLE_LENGTH(2*2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	lazercmd_vh_start,
-	generic_vh_stop,
-	lazercmd_vh_screenrefresh,
+	MDRV_VIDEO_START(lazercmd)
+	MDRV_VIDEO_UPDATE(lazercmd)
 
-/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&lazercmd_DAC_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, lazercmd_DAC_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bbonk =
-{
-/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			8064000/12/3,				/* 672 kHz? */
+
+static MACHINE_DRIVER_START( bbonk )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(S2650,8064000/12/3)				/* 672 kHz? */
 /*			Main Clock is 8MHz divided by 12
 			but memory and IO access is only possible
 			within the line and frame blanking period
 			thus requiring an extra loading of approx 3-5 */
-			bbonk_readmem, bbonk_writemem, lazercmd_readport, lazercmd_writeport,
-			bbonk_timer, 128			/* 7680 Hz */
-		}
-	},
-	/* frames per second, vblank duration (arbitrary values!) */
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,			/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_MEMORY(bbonk_readmem,bbonk_writemem)
+	MDRV_CPU_PORTS(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_VBLANK_INT(bbonk_timer, 128) 	/* 7680 Hz */
 
-/* video hardware */
-	HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR,
-	{0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
-	 0 * VERT_CHR, (VERT_RES - 1) * VERT_CHR - 1},
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	gfxdecodeinfo,
-	3+32768, 2*2,		/* extra color for the overlay */
-	init_palette,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(HORZ_RES * HORZ_CHR, VERT_RES * VERT_CHR)
+	MDRV_VISIBLE_AREA(0 * HORZ_CHR, HORZ_RES * HORZ_CHR - 1,
+						0 * VERT_CHR, (VERT_RES - 1) * VERT_CHR - 1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(3+32768)	/* extra color for the overlay */
+	MDRV_COLORTABLE_LENGTH(2*2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	lazercmd_vh_start,
-	generic_vh_stop,
-	lazercmd_vh_screenrefresh,
+	MDRV_PALETTE_INIT(lazercmd)
+	MDRV_VIDEO_START(lazercmd)
+	MDRV_VIDEO_UPDATE(lazercmd)
 
-/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&lazercmd_DAC_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, lazercmd_DAC_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -838,7 +798,7 @@ ROM_START( bbonk )
 ROM_END
 
 
-void init_lazercmd(void)
+DRIVER_INIT( lazercmd )
 {
 int i, y;
 
@@ -876,7 +836,7 @@ unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 	}
 }
 
-void init_medlanes(void)
+DRIVER_INIT( medlanes )
 {
 int i, y;
 
@@ -914,7 +874,7 @@ unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 	}
 }
 
-void init_bbonk(void)
+DRIVER_INIT( bbonk )
 {
 int i, y;
 

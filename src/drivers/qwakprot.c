@@ -1,57 +1,77 @@
 /***************************************************************************
 
-  Qwak (prototype) driver.
+	Atari Qwak (prototype) hardware
 
-  This driver is based *extremely* loosely on the Centipede driver.
+	driver by Mike Balfour
 
-  The following memory map is pure speculation:
+	Games supported:
+		* Qwak
 
-  0000-01FF     R/W		RAM
-  0200-025F     R/W		RAM?  ER2055 NOVRAM maybe?
-  0300-03FF     R/W		RAM
-  0400-07BF		R/W		Video RAM
-  07C0-07FF		R/W		Sprite RAM
-  1000			W		???
-  2000			W		???
-  2001			W		???
-  2003          W		Start LED 1
-  2004          W		Start LED 2
-  3000			R		$40 = !UP			$80 = unused?
-  3001			R		$40 = !DOWN			$80 = ???
-  3002			R		$40 = !LEFT			$80 = ???
-  3003			R		$40 = !RIGHT		$80 = unused?
-  3004			R		$40 = !START1		$80 = ???
-  3005			R		$40 = !START2		$80 = !COIN
-  3006			R		$40 = !BUTTON1		$80 = !COIN
-  3007			R		$40 = unused?		$80 = !COIN
-  4000          R		???
-  6000-600F		R/W		Pokey 1
-  7000-700F		R/W		Pokey 2
-  8000-BFFF		R		ROM
+	Known issues:
+		- fix colors
+		- coins seem to count twice instead of once?
+		- find DIP switches (should be at $4000, I would think)
+		- figure out what $1000, $2000, and $2001 are used for
+		- figure out exactly what the unknown bits in the $3000 area do
 
-  TODO:
-	- fix colors
-	- coins seem to count twice instead of once?
-	- find DIP switches (should be at $4000, I would think)
-	- figure out what $1000, $2000, and $2001 are used for
-	- figure out exactly what the unknown bits in the $3000 area do
+****************************************************************************
 
+	This driver is based *extremely* loosely on the Centipede driver.
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
+	The following memory map is pure speculation:
+
+	0000-01FF     R/W		RAM
+	0200-025F     R/W		RAM?  ER2055 NOVRAM maybe?
+	0300-03FF     R/W		RAM
+	0400-07BF		R/W		Video RAM
+	07C0-07FF		R/W		Sprite RAM
+	1000			W		???
+	2000			W		???
+	2001			W		???
+	2003          W		Start LED 1
+	2004          W		Start LED 2
+	3000			R		$40 = !UP			$80 = unused?
+	3001			R		$40 = !DOWN			$80 = ???
+	3002			R		$40 = !LEFT			$80 = ???
+	3003			R		$40 = !RIGHT		$80 = unused?
+	3004			R		$40 = !START1		$80 = ???
+	3005			R		$40 = !START2		$80 = !COIN
+	3006			R		$40 = !BUTTON1		$80 = !COIN
+	3007			R		$40 = unused?		$80 = !COIN
+	4000          R		???
+	6000-600F		R/W		Pokey 1
+	7000-700F		R/W		Pokey 2
+	8000-BFFF		R		ROM
+
+	If you have any questions about how this driver works, don't hesitate to
+	ask.  - Mike Balfour (mab22@po.cwru.edu)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "qwakprot.h"
 
-void qwakprot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( qwakprot_paletteram_w );
 
+
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
 
 static WRITE_HANDLER( qwakprot_led_w )
 {
 	set_led_status(offset,~data & 0x80);
 }
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM },
@@ -73,6 +93,7 @@ static MEMORY_READ_START( readmem )
 	{ 0xf000, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x0200, 0x025f, MWA_RAM },
@@ -88,6 +109,12 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( qwakprot )
 	PORT_START	/* IN0 */
@@ -150,27 +177,34 @@ INPUT_PORTS_START( qwakprot )
 INPUT_PORTS_END
 
 
+
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	128,	/* 128 characters */
-	4,	/* 4 bits per pixel */
-	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },	/* the four bitplanes are separated */
+	8,8,
+	128,
+	4,
+	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 8 consecutive bytes, then skip 8 */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	8,16,	/* 16*8 sprites */
-	128,	/* 128 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },	/* the four bitplanes are separated */
+	8,16,
+	128,
+	4,
+	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	16*8	/* every sprite takes 16 consecutive bytes */
+	16*8
 };
 
 
@@ -183,6 +217,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -203,49 +243,44 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static const struct MachineDriver machine_driver_qwakprot =
-{
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( qwakprot )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			12096000/8,	/* 1.512 MHz?? */
-			readmem,writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 1460,	/* frames per second, vblank duration??? */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,12096000/8)	/* 1.512 MHz?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1460)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	qwakprot_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(qwakprot)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
 
-  Game ROMs
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( qwakprot )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -263,5 +298,11 @@ ROM_START( qwakprot )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAMEX( 1982, qwakprot, 0, qwakprot, qwakprot, 0, ROT270, "Atari", "Qwak (prototype)", GAME_NO_COCKTAIL )

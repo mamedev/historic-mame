@@ -59,25 +59,13 @@ WRITE16_HANDLER( blockout_frontcolor_w )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int blockout_vh_start (void)
+VIDEO_START( blockout )
 {
 	/* Allocate temporary bitmaps */
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
 	return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void blockout_vh_stop (void)
-{
-	bitmap_free (tmpbitmap);
-	tmpbitmap = 0;
 }
 
 
@@ -121,7 +109,7 @@ WRITE16_HANDLER( blockout_videoram_w )
 
 
 
-void blockout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( blockout )
 {
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 

@@ -94,7 +94,7 @@ WRITE16_HANDLER( ddragon3_fg_videoram16_w )
 }
 
 /* start & stop */
-int ddragon3_vh_start(void)
+VIDEO_START( ddragon3 )
 {
 	ddragon3_bg_tilebase = 0;
 	old_ddragon3_bg_tilebase = -1;
@@ -134,9 +134,8 @@ int ddragon3_vh_start(void)
  *	 6,7| unused
  */
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	data16_t *source = spriteram16;
 	data16_t *finish = source + 0x800;
@@ -172,14 +171,14 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 					color,
 					flipx,flipy,
 					sx,sy-i*16,
-					clip,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 		source+=8;
 	}
 }
 
-void ddragon3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ddragon3 )
 {
 	if( ddragon3_bg_tilebase != old_ddragon3_bg_tilebase )
 	{
@@ -195,19 +194,19 @@ void ddragon3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	if (ddragon3_vreg & 0x40)
 	{
-		tilemap_draw( bitmap, background, 0 ,0);
-		tilemap_draw( bitmap, foreground, 0 ,0);
-		draw_sprites( bitmap );
+		tilemap_draw( bitmap,cliprect, background, 0 ,0);
+		tilemap_draw( bitmap,cliprect, foreground, 0 ,0);
+		draw_sprites( bitmap,cliprect );
 	}
 	else
 	{
-		tilemap_draw( bitmap, background, 0 ,0);
-		draw_sprites( bitmap );
-		tilemap_draw( bitmap, foreground, 0 ,0);
+		tilemap_draw( bitmap,cliprect, background, 0 ,0);
+		draw_sprites( bitmap,cliprect );
+		tilemap_draw( bitmap,cliprect, foreground, 0 ,0);
 	}
 }
 
-void ctribe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ctribe )
 {
 	if( ddragon3_bg_tilebase != old_ddragon3_bg_tilebase )
 	{
@@ -220,8 +219,8 @@ void ctribe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( foreground, 0, ddragon3_fg_scrolly );
 	tilemap_set_scrollx( foreground, 0, ddragon3_fg_scrollx );
 
-	tilemap_draw( bitmap, background, 0 ,0);
-	tilemap_draw( bitmap, foreground, 0 ,0);
-	draw_sprites( bitmap );
+	tilemap_draw( bitmap,cliprect, background, 0 ,0);
+	tilemap_draw( bitmap,cliprect, foreground, 0 ,0);
+	draw_sprites( bitmap,cliprect );
 }
 

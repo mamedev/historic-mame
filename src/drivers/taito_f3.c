@@ -36,15 +36,14 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
-#include "drivers/taito_f3.h"
+#include "taito_f3.h"
 #include "state.h"
 
 #define TRY_ALPHA 0
 
-int  f3_vh_start(void);
-void f3_vh_stop(void);
-void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void f3_eof_callback(void);
+VIDEO_START( f3 );
+VIDEO_UPDATE( f3 );
+VIDEO_EOF( f3 );
 
 extern data32_t *f3_vram,*f3_line_ram;
 extern data32_t *f3_pf_data,*f3_pivot_ram;
@@ -102,7 +101,7 @@ static READ32_HANDLER( f3_control_r )
 			return (coin_word[1]<<16) | readinputport(6);
 	}
 
-	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
+	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",activecpu_get_pc(),offset);
 	return 0xffffffff;
 }
 
@@ -139,7 +138,7 @@ static WRITE32_HANDLER( f3_control_w )
 			}
 			return;
 	}
-	logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %08x\n",cpu_get_pc(),offset,data);
+	logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %08x\n",activecpu_get_pc(),offset,data);
 }
 
 static WRITE32_HANDLER( f3_sound_reset_0_w )
@@ -437,13 +436,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static int f3_interrupt(void)
+static INTERRUPT_GEN( f3_interrupt )
 {
-	if (cpu_getiloops()) return 3;
-	return 2;
+	if (cpu_getiloops()) cpu_set_irq_line(0, 3, HOLD_LINE);
+	else cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
-static void f3_machine_reset(void)
+static MACHINE_INIT( f3 )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
@@ -480,7 +479,7 @@ static struct EEPROM_interface f3_eeprom_interface =
 	"0100110000",	/* lock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( f3 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -491,56 +490,42 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static struct MachineDriver machine_driver_f3 =
-{
+static MACHINE_DRIVER_START( f3 )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68EC020,
-			16000000,
-			f3_readmem,f3_writemem,0,0,
-			f3_interrupt,2
-		},
-		{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			16000000,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, 624, /* 58.97 Hz, 624us vblank time */
-	1,
-	f3_machine_reset,
+	MDRV_CPU_ADD(M68EC020, 16000000)
+	MDRV_CPU_MEMORY(f3_readmem,f3_writemem)
+	MDRV_CPU_VBLANK_INT(f3_interrupt,2)
+
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(624) /* 58.97 Hz, 624us vblank time */
+
+	MDRV_MACHINE_INIT(f3)
+	MDRV_NVRAM_HANDLER(f3)
 
  	/* video hardware */
-	40*8+48*2, 32*8, { 46, 40*8-1+46, 3*8, 32*8-1 },
-
-	gfxdecodeinfo,
-	8192, 0,
-	0,
-
 #if TRY_ALPHA
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
 #else
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 #endif
+	MDRV_SCREEN_SIZE(40*8+48*2, 32*8)
+	MDRV_VISIBLE_AREA(46, 40*8-1+46, 3*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	f3_eof_callback,
-	f3_vh_start,
-	f3_vh_stop,
-	f3_vh_screenrefresh,
+	MDRV_VIDEO_START(f3)
+	MDRV_VIDEO_EOF(f3)
+	MDRV_VIDEO_UPDATE(f3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_ES5505,
-			&es5505_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ES5505, es5505_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -2564,7 +2549,7 @@ static void tile_decode(int uses_5bpp_tiles)
 #define F3_IRQ_SPEEDUP_1_R(GAME, counter, mem_addr, mask) 		\
 static READ32_HANDLER( irq_speedup_r_##GAME )					\
 {																\
-	if (cpu_get_pc()==counter && (f3_ram[mem_addr]&mask)!=0)	\
+	if (activecpu_get_pc()==counter && (f3_ram[mem_addr]&mask)!=0)	\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
@@ -2572,7 +2557,7 @@ static READ32_HANDLER( irq_speedup_r_##GAME )					\
 #define F3_IRQ_SPEEDUP_2_R(GAME, counter, mem_addr, mask) 		\
 static READ32_HANDLER( irq_speedup_r_##GAME )					\
 {																\
-	if (cpu_get_pc()==counter && (f3_ram[mem_addr]&mask)==0)	\
+	if (activecpu_get_pc()==counter && (f3_ram[mem_addr]&mask)==0)	\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
@@ -2581,10 +2566,10 @@ static READ32_HANDLER( irq_speedup_r_##GAME )					\
 static READ32_HANDLER( irq_speedup_r_##GAME )					\
 {																\
 	int ptr;													\
-	if ((cpu_get_sp()&2)==0) ptr=f3_ram[(cpu_get_sp()&0x1ffff)/4];	\
-	else ptr=(((f3_ram[(cpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) | \
-	(f3_ram[((cpu_get_sp()&0x1ffff)/4)+1]>>16); 				\
-	if (cpu_get_pc()==counter && ptr==stack)					\
+	if ((activecpu_get_sp()&2)==0) ptr=f3_ram[(activecpu_get_sp()&0x1ffff)/4];	\
+	else ptr=(((f3_ram[(activecpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) | \
+	(f3_ram[((activecpu_get_sp()&0x1ffff)/4)+1]>>16); 				\
+	if (activecpu_get_pc()==counter && ptr==stack)					\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
@@ -2617,20 +2602,20 @@ F3_IRQ_SPEEDUP_3_R(eaction2, 0x133c,   0x07a0/4, 0x00001048 )
 F3_IRQ_SPEEDUP_1_R(twinqix,  0xe9a52,  0x0134/4, 0x000000ff )
 F3_IRQ_SPEEDUP_2_R(kirameki, 0x12fc6,  0x0414/4, 0x0000ff00 )
 
-static void init_ringrage(void)
+static DRIVER_INIT( ringrage )
 {
 	f3_game=RINGRAGE;
 	tile_decode(0);
 }
 
-static void init_arabianm(void)
+static DRIVER_INIT( arabianm )
 {
 	install_mem_read32_handler(0, 0x408124, 0x408127, irq_speedup_r_arabianm );
 	f3_game=ARABIANM;
 	tile_decode(1);
 }
 
-static void init_ridingf(void)
+static DRIVER_INIT( ridingf )
 {
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU2);
 
@@ -2641,41 +2626,41 @@ static void init_ridingf(void)
 	tile_decode(1);
 }
 
-static void init_gseeker(void)
+static DRIVER_INIT( gseeker )
 {
 	install_mem_read32_handler(0, 0x40ad94, 0x40ad97, irq_speedup_r_gseeker );
 	f3_game=GSEEKER;
 	tile_decode(0);
 }
 
-static void init_gunlock(void)
+static DRIVER_INIT( gunlock )
 {
 	install_mem_read32_handler(0, 0x400004, 0x400007, irq_speedup_r_gunlock );
 	f3_game=GUNLOCK;
 	tile_decode(1);
 }
 
-static void init_elvactr(void)
+static DRIVER_INIT( elvactr )
 {
 	install_mem_read32_handler(0, 0x4007a0, 0x4007a3, irq_speedup_r_eaction2 );
 	f3_game=EACTION2;
 	tile_decode(1);
 }
 
-static void init_cupfinal(void)
+static DRIVER_INIT( cupfinal )
 {
 	install_mem_read32_handler(0, 0x408114, 0x408117, irq_speedup_r_cupfinal );
 	f3_game=SCFINALS;
 	tile_decode(1);
 }
 
-static void init_trstaroj(void)
+static DRIVER_INIT( trstaroj )
 {
 	f3_game=TRSTAR;
 	tile_decode(1);
 }
 
-static void init_scfinals(void)
+static DRIVER_INIT( scfinals )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2690,41 +2675,41 @@ static void init_scfinals(void)
 	tile_decode(1);
 }
 
-static void init_lightbr(void)
+static DRIVER_INIT( lightbr )
 {
 	install_mem_read32_handler(0, 0x400130, 0x400133, irq_speedup_r_lightbr );
 	f3_game=LIGHTBR;
 	tile_decode(1);
 }
 
-static void init_kaiserkn(void)
+static DRIVER_INIT( kaiserkn )
 {
 	install_mem_read32_handler(0, 0x408110, 0x408113, irq_speedup_r_kaiserkn );
 	f3_game=KAISERKN;
 	tile_decode(1);
 }
 
-static void init_dariusg(void)
+static DRIVER_INIT( dariusg )
 {
 	install_mem_read32_handler(0, 0x406ba8, 0x406bab, irq_speedup_r_dariusg );
 	f3_game=DARIUSG;
 	tile_decode(0);
 }
 
-static void init_spcinvdj(void)
+static DRIVER_INIT( spcinvdj )
 {
 	install_mem_read32_handler(0, 0x400230, 0x400233, irq_speedup_r_spcinvdj );
 	f3_game=SPCINVDX;
 	tile_decode(0);
 }
 
-static void init_qtheater(void)
+static DRIVER_INIT( qtheater )
 {
 	f3_game=QTHEATER;
 	tile_decode(0);
 }
 
-static void init_spcinv95(void)
+static DRIVER_INIT( spcinv95 )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2741,35 +2726,35 @@ static void init_spcinv95(void)
 	tile_decode(1);
 }
 
-static void init_gekirido(void)
+static DRIVER_INIT( gekirido )
 {
 	install_mem_read32_handler(0, 0x406bb0, 0x406bb3, irq_speedup_r_gekirido );
 	f3_game=GEKIRIDO;
 	tile_decode(1);
 }
 
-static void init_ktiger2(void)
+static DRIVER_INIT( ktiger2 )
 {
 	install_mem_read32_handler(0, 0x400570, 0x400573, irq_speedup_r_ktiger2 );
 	f3_game=KTIGER2;
 	tile_decode(0);
 }
 
-static void init_bubsymph(void)
+static DRIVER_INIT( bubsymph )
 {
 	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_bubsymph );
 	f3_game=BUBSYMPH;
 	tile_decode(1);
 }
 
-static void init_bubblem(void)
+static DRIVER_INIT( bubblem )
 {
 	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_bubblem );
 	f3_game=BUBBLEM;
 	tile_decode(1);
 }
 
-static void init_cleopatr(void)
+static DRIVER_INIT( cleopatr )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2782,62 +2767,62 @@ static void init_cleopatr(void)
 	tile_decode(0);
 }
 
-static void init_popnpop(void)
+static DRIVER_INIT( popnpop )
 {
 	install_mem_read32_handler(0, 0x401cf8, 0x401cfb, irq_speedup_r_popnpop );
 	f3_game=POPNPOP;
 	tile_decode(0);
 }
 
-static void init_landmakr(void)
+static DRIVER_INIT( landmakr )
 {
 	install_mem_read32_handler(0, 0x400824, 0x400827, irq_speedup_r_landmakr );
 	f3_game=LANDMAKR;
 	tile_decode(0);
 }
 
-static void init_pbobble3(void)
+static DRIVER_INIT( pbobble3 )
 {
 	install_mem_read32_handler(0, 0x405af4, 0x405af7, irq_speedup_r_pbobble3 );
 	f3_game=PBOBBLE3;
 	tile_decode(0);
 }
 
-static void init_pbobble4(void)
+static DRIVER_INIT( pbobble4 )
 {
 	install_mem_read32_handler(0, 0x4058f4, 0x4058f7, irq_speedup_r_pbobble4 );
 	f3_game=PBOBBLE4;
 	tile_decode(0);
 }
 
-static void init_quizhuhu(void)
+static DRIVER_INIT( quizhuhu )
 {
 	f3_game=QUIZHUHU;
 	tile_decode(0);
 }
 
-static void init_pbobble2(void)
+static DRIVER_INIT( pbobble2 )
 {
 	install_mem_read32_handler(0, 0x404a50, 0x404a53, irq_speedup_r_pbobble2 );
 	f3_game=PBOBBLE2;
 	tile_decode(0);
 }
 
-static void init_pbobbl2x(void)
+static DRIVER_INIT( pbobbl2x )
 {
 	install_mem_read32_handler(0, 0x405c58, 0x405c5b, irq_speedup_r_pbobbl2x );
 	f3_game=PBOBBLE2;
 	tile_decode(0);
 }
 
-static void init_hthero95(void)
+static DRIVER_INIT( hthero95 )
 {
 	install_mem_read32_handler(0, 0x408114, 0x408117, irq_speedup_r_pwrgoal );
 	f3_game=HTHERO95;
 	tile_decode(0);
 }
 
-static void init_kirameki(void)
+static DRIVER_INIT( kirameki )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2851,21 +2836,21 @@ static void init_kirameki(void)
 	tile_decode(0);
 }
 
-static void init_puchicar(void)
+static DRIVER_INIT( puchicar )
 {
 	install_mem_read32_handler(0, 0x4024d8, 0x4024db, irq_speedup_r_puchicar );
 	f3_game=PUCHICAR;
 	tile_decode(0);
 }
 
-static void init_twinqix(void)
+static DRIVER_INIT( twinqix )
 {
 	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_twinqix );
 	f3_game=TWINQIX;
 	tile_decode(0);
 }
 
-static void init_arkretrn(void)
+static DRIVER_INIT( arkretrn )
 {
 	install_mem_read32_handler(0, 0x402154, 0x402157, irq_speedup_r_arkretrn );
 	f3_game=ARKRETRN;

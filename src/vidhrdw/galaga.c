@@ -45,7 +45,7 @@ static int total_stars;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( galaga )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -113,14 +113,14 @@ void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
   Start the video hardware emulation.
 
 ***************************************************************************/
-int galaga_vh_start(void)
+VIDEO_START( galaga )
 {
 	int generator;
 	int x,y;
 	int set = 0;
 
 
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 
@@ -174,12 +174,12 @@ int galaga_vh_start(void)
   the main emulation engine.
 
 ***************************************************************************/
-void galaga_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( galaga )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

@@ -108,7 +108,7 @@ INLINE int ROPCODE(void)
 {
 	int pc = PCD;
 	PC += 2;
-	return READ_WORD(&t11.bank[pc >> 13][pc & 0x1fff]);
+	return *(UINT16 *)(&t11.bank[pc >> 13][pc & 0x1fff]);
 }
 
 
@@ -255,6 +255,7 @@ static void t11_check_irqs(void)
 		PUSH(PC);
 		PCD = new_pc;
 		PSW = new_psw;
+		t11_check_irqs();
 
 		/* count cycles and clear the WAIT flag */
 		t11.interrupt_cycles += 114;

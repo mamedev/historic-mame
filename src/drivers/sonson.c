@@ -51,8 +51,8 @@ write:
 
 extern unsigned char *sonson_scrollx;
 
-void sonson_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void sonson_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( sonson );
+VIDEO_UPDATE( sonson );
 
 
 
@@ -64,7 +64,7 @@ WRITE_HANDLER( sonson_sh_irqtrigger_w )
 	if (last == 0 && data == 1)
 	{
 		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,M6809_INT_FIRQ);
+		cpu_set_irq_line(1,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 
 	last = data;
@@ -244,48 +244,36 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_sonson =
-{
+static MACHINE_DRIVER_START( sonson )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			12000000/6,	/* 2 MHz ??? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			12000000/6,	/* 2 MHz ??? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4	/* FIRQs are triggered by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809,12000000/6)	/* 2 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,12000000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* FIRQs are triggered by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	32,64*4+32*8,
-	sonson_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	sonson_vh_screenrefresh,
+	MDRV_PALETTE_INIT(sonson)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(sonson)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -244,14 +244,14 @@ void seibu_ym2151_irqhandler(int linestate)
 /***************************************************************************/
 
 /* Use this if the sound cpu is cpu 1 */
-void seibu_sound_init_1(void)
+MACHINE_INIT( seibu_sound_1 )
 {
 	sound_cpu=1;
 	setvector_callback(VECTOR_INIT);
 }
 
 /* Use this if the sound cpu is cpu 2 */
-void seibu_sound_init_2(void)
+MACHINE_INIT( seibu_sound_2 )
 {
 	sound_cpu=2;
 	setvector_callback(VECTOR_INIT);
@@ -299,7 +299,7 @@ WRITE_HANDLER( seibu_pending_w )
 
 READ16_HANDLER( seibu_main_word_r )
 {
-			logerror("%06x: seibu_main_word_r(%x)\n",cpu_get_pc(),offset);
+			logerror("%06x: seibu_main_word_r(%x)\n",activecpu_get_pc(),offset);
 	switch (offset)
 	{
 		case 2:
@@ -308,14 +308,14 @@ READ16_HANDLER( seibu_main_word_r )
 		case 5:
 			return main2sub_pending ? 1 : 0;
 		default:
-			logerror("%06x: seibu_main_word_r(%x)\n",cpu_get_pc(),offset);
+			logerror("%06x: seibu_main_word_r(%x)\n",activecpu_get_pc(),offset);
 			return 0xffff;
 	}
 }
 
 WRITE16_HANDLER( seibu_main_word_w )
 {
-				logerror("%06x: seibu_main_word_w(%x,%02x)\n",cpu_get_pc(),offset,data);
+				logerror("%06x: seibu_main_word_w(%x,%02x)\n",activecpu_get_pc(),offset,data);
 	if (ACCESSING_LSB)
 	{
 		switch (offset)
@@ -333,7 +333,7 @@ WRITE16_HANDLER( seibu_main_word_w )
 				main2sub_pending = 1;
 				break;
 			default:
-				logerror("%06x: seibu_main_word_w(%x,%02x)\n",cpu_get_pc(),offset,data);
+				logerror("%06x: seibu_main_word_w(%x,%02x)\n",activecpu_get_pc(),offset,data);
 		}
 	}
 }

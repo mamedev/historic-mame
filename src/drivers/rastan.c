@@ -17,9 +17,8 @@ data16_t *rastan_ram;	/* speedup hack */
 WRITE16_HANDLER( rastan_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
 
-int  rastan_vh_start(void);
-void rastan_vh_stop(void);
-void rastan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( rastan );
+VIDEO_UPDATE( rastan );
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
@@ -28,15 +27,9 @@ WRITE_HANDLER( rastan_d000_w );
 static int banknum = -1;
 
 
-static int rastan_interrupt(void)
-{
-	return 5;  /* Interrupt vector 5 */
-}
-
-
 static READ16_HANDLER( rastan_cycle_r )
 {
-	if (cpu_get_pc()==0x3b088) cpu_spinuntil_int();
+	if (activecpu_get_pc()==0x3b088) cpu_spinuntil_int();
 
 	return rastan_ram[0x1c10/2];
 }
@@ -329,52 +322,34 @@ static struct ADPCMinterface adpcm_interface =
 
 
 
-static const struct MachineDriver machine_driver_rastan =
-{
+static MACHINE_DRIVER_START( rastan )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			rastan_readmem,rastan_writemem,0,0,
-			rastan_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			rastan_s_readmem,rastan_s_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(rastan_readmem,rastan_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(rastan_s_readmem,rastan_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	rastan_vh_start,
-	rastan_vh_stop,
-	rastan_vh_screenrefresh,
+	MDRV_VIDEO_START(rastan)
+	MDRV_VIDEO_UPDATE(rastan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -501,7 +476,7 @@ ROM_START( rastsaga )
 ROM_END
 
 
-static void init_rastan(void)
+static DRIVER_INIT( rastan )
 {
 	state_save_register_int("sound", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);

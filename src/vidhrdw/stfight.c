@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 // Real stuff
 unsigned char *stfight_text_char_ram;
@@ -37,7 +38,7 @@ static int stfight_sprite_base = 0;
 
  */
 
-void stfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( stfight )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -152,7 +153,7 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int stfight_vh_start(void)
+VIDEO_START( stfight )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,bg_scan,TILEMAP_OPAQUE,     16,16,128,256);
 	fg_tilemap = tilemap_create(get_fg_tile_info,fg_scan,TILEMAP_TRANSPARENT,16,16,128,256);
@@ -249,7 +250,7 @@ WRITE_HANDLER( stfight_vh_latch_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs,sx,sy;
 
@@ -289,24 +290,24 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					 color,
 					 flipx,flip_screen,
 					 sx,sy,
-				     &Machine->visible_area,TRANSPARENCY_PEN,0x0f,
+				     cliprect,TRANSPARENCY_PEN,0x0f,
 					 pri ? 0x02 : 0);
 		}
 	}
 }
 
 
-void stfight_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
+VIDEO_UPDATE( stfight )
 {
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* in case bg_tilemap is disabled */
-    tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,1);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* in case bg_tilemap is disabled */
+    tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,1);
 
 	/* Draw sprites (may be obscured by foreground layer) */
 	if (stfight_vh_latch_ram[0x07] & 0x40)
-		draw_sprites(bitmap);
+		draw_sprites(bitmap,cliprect);
 
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }

@@ -6,7 +6,7 @@ Atari Destroyer Driver
 
 #include "driver.h"
 
-extern void destroyr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_UPDATE( destroyr );
 
 extern int destroyr_wavemod;
 extern int destroyr_cursor;
@@ -56,18 +56,17 @@ static void destroyr_frame_callback(int dummy)
 }
 
 
-static int destroyr_interrupt(void)
+static INTERRUPT_GEN( destroyr_interrupt )
 {
-	if (destroyr_int_flag)
-		return ignore_interrupt();
-
-	destroyr_int_flag = 1;
-
-	return interrupt();
+	if (!destroyr_int_flag)
+	{
+		destroyr_int_flag = 1;
+		cpu_set_irq_line(0, 0, HOLD_LINE);
+	}
 }
 
 
-static void destroyr_init_machine(void)
+static MACHINE_INIT( destroyr )
 {
 	timer_set(cpu_getscanlinetime(0), 0, destroyr_frame_callback);
 
@@ -350,9 +349,9 @@ static struct GfxDecodeInfo destroyr_gfx_decode_info[] =
 };
 
 
-static void destroyr_init_palette(unsigned char *game_palette, unsigned short *game_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( destroyr )
 {
-	static UINT8 palette[] =
+	static UINT8 palette_source[] =
 	{
 		0x00, 0x00, 0x00,   /* major objects */
 		0x55, 0x55, 0x55,
@@ -364,41 +363,34 @@ static void destroyr_init_palette(unsigned char *game_palette, unsigned short *g
 		0x78, 0x78, 0x78
 	};
 
-	memcpy(game_palette, palette, sizeof palette);
+	memcpy(palette, palette_source, sizeof palette_source);
 }
 
 
-static const struct MachineDriver machine_driver_destroyr =
-{
+static MACHINE_DRIVER_START( destroyr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6800,
-			12096000 / 16,
-			destroyr_readmem, destroyr_writemem, 0, 0,
-			destroyr_interrupt, 4
-		}
-	},
-	60,
-	(int) ((22.5 * 1000000) / (262.5 * 60) + 0.5),
-	1,
-	destroyr_init_machine,
+	MDRV_CPU_ADD(M6800,12096000 / 16)
+	MDRV_CPU_MEMORY(destroyr_readmem,destroyr_writemem)
+	MDRV_CPU_VBLANK_INT(destroyr_interrupt,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((int) ((22.5 * 1000000) / (262.5 * 60) + 0.5))
+
+	MDRV_MACHINE_INIT(destroyr)
 
 	/* video hardware */
-	256, 240, { 0, 255, 0, 239 },
-	destroyr_gfx_decode_info,
-	8, 0,
-	destroyr_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 240)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_GFXDECODE(destroyr_gfx_decode_info)
+	MDRV_PALETTE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	destroyr_vh_screenrefresh,
+	MDRV_PALETTE_INIT(destroyr)
+	MDRV_VIDEO_UPDATE(destroyr)
 
 	/* sound hardware */
-	0, 0, 0, 0
-};
+MACHINE_DRIVER_END
 
 
 ROM_START( destroyr )

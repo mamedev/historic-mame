@@ -1,10 +1,11 @@
 /***************************************************************************
 
-  Lunar Lander Specific Sound Code
+	Lunar Lander Specific Sound Code
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "asteroid.h"
 
 /************************************************************************/
 /* Lunar Lander Sound System Analog emulation by K.Wilkins Nov 2000     */

@@ -59,6 +59,7 @@ Word | Bit(s)           | Use
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 data16_t *shangha3_ram;
@@ -71,9 +72,9 @@ static struct mame_bitmap *rawbitmap;
 
 
 
-int shangha3_vh_start(void)
+VIDEO_START( shangha3 )
 {
-	if ((rawbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((rawbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
 	if (shangha3_do_shadows)
@@ -90,12 +91,6 @@ int shangha3_vh_start(void)
 	}
 
 	return 0;
-}
-
-void shangha3_vh_stop(void)
-{
-	bitmap_free(rawbitmap);
-	rawbitmap = 0;
 }
 
 
@@ -269,7 +264,7 @@ else
 }
 
 
-void shangha3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( shangha3 )
 {
 	copybitmap(bitmap,rawbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

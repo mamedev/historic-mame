@@ -292,7 +292,7 @@ void astrocade_sound_w(int num, int offset, int data)
 
 		case 8:  /* Sound Block Transfer */
 
-			bvalue = (cpu_get_reg(Z80_BC) >> 8) & 0x07;
+			bvalue = (activecpu_get_reg(Z80_BC) >> 8) & 0x07;
 
 			astrocade_sound_w(num, bvalue, data);
 

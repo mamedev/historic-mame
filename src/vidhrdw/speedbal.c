@@ -28,7 +28,7 @@ static unsigned char *ch_dirtybuffer;	  /* foreground char  */
 static struct mame_bitmap *bitmap_bg;   /* background tiles */
 static struct mame_bitmap *bitmap_ch;   /* foreground char  */
 
-void speedbal_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( speedbal )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -81,47 +81,26 @@ void speedbal_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
  *				   *
  *************************************/
 
-int speedbal_vh_start (void)
+VIDEO_START( speedbal )
 {
-	if ((bg_dirtybuffer = malloc (speedbal_background_videoram_size)) == 0)
-	{
+	if ((bg_dirtybuffer = auto_malloc (speedbal_background_videoram_size)) == 0)
 		return 1;
-	}
-	if ((ch_dirtybuffer = malloc (speedbal_foreground_videoram_size)) == 0)
-	{
-		free (bg_dirtybuffer);
+
+	if ((ch_dirtybuffer = auto_malloc (speedbal_foreground_videoram_size)) == 0)
 		return 1;
-	}
 
 	/* foreground bitmap */
-	if ((bitmap_ch = bitmap_alloc (Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free (bg_dirtybuffer);
-		free (ch_dirtybuffer);
+	if ((bitmap_ch = auto_bitmap_alloc (Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	/* background bitmap */
-	if ((bitmap_bg = bitmap_alloc (Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
-	{
-		free (bg_dirtybuffer);
-		free (ch_dirtybuffer);
-		bitmap_free (bitmap_ch);
+	if ((bitmap_bg = auto_bitmap_alloc (Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
 		return 1;
-	}
 
 	memset (ch_dirtybuffer,1,speedbal_foreground_videoram_size / 2);
 	memset (bg_dirtybuffer,1,speedbal_background_videoram_size / 2);
 	return 0;
 
-}
-
-void speedbal_vh_stop (void)
-{
-	bitmap_free (bitmap_ch);
-	bitmap_free (bitmap_bg);
-	free (bg_dirtybuffer);
-	free (ch_dirtybuffer);
 }
 
 
@@ -285,7 +264,7 @@ void speedbal_draw_foreground1 (struct mame_bitmap *bitmap)
  *				   *
  *************************************/
 
-void speedbal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( speedbal )
 {
 	// first background
 	speedbal_draw_background (bitmap);

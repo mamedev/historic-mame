@@ -55,9 +55,9 @@ Mighty Guy board layout:
 
 extern data8_t *cop01_bgvideoram,*cop01_fgvideoram;
 
-void cop01_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int cop01_vh_start(void);
-void cop01_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( cop01 );
+VIDEO_START( cop01 );
+VIDEO_UPDATE( cop01 );
 WRITE_HANDLER( cop01_background_w );
 WRITE_HANDLER( cop01_foreground_w );
 WRITE_HANDLER( cop01_vreg_w );
@@ -66,7 +66,7 @@ WRITE_HANDLER( cop01_vreg_w );
 static WRITE_HANDLER( cop01_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static READ_HANDLER( cop01_sound_command_r )
@@ -389,89 +389,69 @@ static struct YM3526interface YM3526_interface =
 
 
 
-static const struct MachineDriver machine_driver_cop01 =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* ???? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ???? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the main CPU */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0, /* init machine */
+static MACHINE_DRIVER_START( cop01 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ???? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 16+8*16+16*16,
-	cop01_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16+8*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	cop01_vh_start,
-	0,
-	cop01_vh_screenrefresh,
+	MDRV_PALETTE_INIT(cop01)
+	MDRV_VIDEO_START(cop01)
+	MDRV_VIDEO_UPDATE(cop01)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_mightguy =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* ???? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ???? */
-			sound_readmem,sound_writemem,mightguy_sound_readport,mightguy_sound_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the main CPU */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0, /* init machine */
+static MACHINE_DRIVER_START( mightguy )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ???? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(mightguy_sound_readport,mightguy_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 16+8*16+16*16,
-	cop01_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16+8*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	cop01_vh_start,
-	0,
-	cop01_vh_screenrefresh,
+	MDRV_PALETTE_INIT(cop01)
+	MDRV_VIDEO_START(cop01)
+	MDRV_VIDEO_UPDATE(cop01)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&YM3526_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, YM3526_interface)
+MACHINE_DRIVER_END
 
 
 

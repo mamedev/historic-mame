@@ -41,7 +41,7 @@ To do:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/namcos2.h"
+#include "namcos2.h"
 #include "namcos21.h"
 #include <math.h>
 
@@ -429,7 +429,7 @@ Camera Attributes
 	} /* next object */
 } /* draw_polygons */
 
-int namcos21_vh_start( void )
+VIDEO_START( namcos21 )
 {
 /*
 	int i;
@@ -443,10 +443,6 @@ int namcos21_vh_start( void )
 	}
 */
 	return 0;
-}
-
-void namcos21_vh_stop( void )
-{
 }
 
 static void draw_sprite( int page, struct mame_bitmap *bitmap, const data16_t *pSource )
@@ -610,7 +606,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	}
 }
 
-void namcos21_vh_update_default( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( namcos21_default )
 {
 	int i;
 	data16_t data1,data2;

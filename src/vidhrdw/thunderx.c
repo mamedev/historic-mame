@@ -48,7 +48,7 @@ static void sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 
 ***************************************************************************/
 
-int scontra_vh_start(void)
+VIDEO_START( scontra )
 {
 	layer_colorbase[0] = 48;
 	layer_colorbase[1] = 0;
@@ -58,18 +58,9 @@ int scontra_vh_start(void)
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 
 	return 0;
-}
-
-void scontra_vh_stop(void)
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
 }
 
 
@@ -79,25 +70,25 @@ void scontra_vh_stop(void)
 
 ***************************************************************************/
 
-void scontra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( scontra )
 {
 	K052109_tilemap_update();
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* The background color is always from layer 1 - but it's always black anyway */
-//	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],&Machine->visible_area);
+//	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],cliprect);
 	if (scontra_priority)
 	{
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,1);
-		K052109_tilemap_draw(bitmap,1,0,2);
+		K052109_tilemap_draw(bitmap,cliprect,2,TILEMAP_IGNORE_TRANSPARENCY,1);
+		K052109_tilemap_draw(bitmap,cliprect,1,0,2);
 	}
 	else
 	{
-		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,1);
-		K052109_tilemap_draw(bitmap,2,0,2);
+		K052109_tilemap_draw(bitmap,cliprect,1,TILEMAP_IGNORE_TRANSPARENCY,1);
+		K052109_tilemap_draw(bitmap,cliprect,2,0,2);
 	}
-	K052109_tilemap_draw(bitmap,0,0,4);
+	K052109_tilemap_draw(bitmap,cliprect,0,0,4);
 
-	K051960_sprites_draw(bitmap,-1,-1);
+	K051960_sprites_draw(bitmap,cliprect,-1,-1);
 }

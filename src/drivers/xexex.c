@@ -31,9 +31,8 @@ ca003		8046a		00
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
 
-int xexex_vh_start(void);
-void xexex_vh_stop(void);
-void xexex_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( xexex );
+VIDEO_UPDATE( xexex );
 void xexex_set_alpha(int on);
 
 READ16_HANDLER( xexexbg_r );
@@ -57,7 +56,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( xexex )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -154,26 +153,25 @@ static WRITE16_HANDLER( control2_w )
 	parse_control2();
 }
 
-static int xexex_interrupt(void)
+static INTERRUPT_GEN( xexex_interrupt )
 {
 	switch (cpu_getiloops())
 	{
 		case 1:
 			if (K053246_is_IRQ_enabled())
-				return 4;
+				cpu_set_irq_line(0, 4, HOLD_LINE);
 			break;
 
 		case 0:
 			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0040))
-				return 5;
+				cpu_set_irq_line(0, 5, HOLD_LINE);
 			break;
 
 		case 2:
 			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0020))
-				return 6;
+				cpu_set_irq_line(0, 6, HOLD_LINE);
 			break;
 	}
-	return ignore_interrupt();
 }
 
 static WRITE16_HANDLER( sound_cmd1_w )
@@ -353,54 +351,37 @@ static struct K054539interface k054539_interface =
 	{ ym_set_mixing }
 };
 
-static const struct MachineDriver machine_driver_xexex =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ? (xtal is 32MHz) */
-			readmem, writemem, 0, 0,
-			xexex_interrupt, 3	/* ??? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			5000000,	/* 5 MHz in Amuse (xtal is 32MHz/19.432MHz) */
-			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt, 0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( xexex )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ? (xtal is 32MHz) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(xexex_interrupt,3)	/* ??? */
+
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 5 MHz in Amuse (xtal is 32MHz/19.432MHz) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(xexex)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 0*8, 32*8-1 )
 	//	64*8, 64*8, { 0*8, (64-0)*8-1, 0*8, 64*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
-	0,
-	xexex_vh_start,
-	xexex_vh_stop,
-	xexex_vh_screenrefresh,
+	MDRV_VIDEO_START(xexex)
+	MDRV_VIDEO_UPDATE(xexex)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K054539,
-			&k054539_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K054539, k054539_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( xexex )
@@ -462,7 +443,7 @@ ROM_START( xexexj )
 ROM_END
 
 
-static void init_xexex(void)
+static DRIVER_INIT( xexex )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);

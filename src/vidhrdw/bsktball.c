@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Basketball hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "bsktball.h"
 
 unsigned char *bsktball_motion;
 
@@ -18,7 +17,8 @@ unsigned char *bsktball_motion;
   the main emulation engine.
 
 ***************************************************************************/
-void bsktball_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( bsktball )
 {
     int offs,motion;
 

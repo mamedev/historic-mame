@@ -23,10 +23,10 @@ Notes:
 
 extern unsigned char *spdodgeb_videoram;
 
-void spdodgeb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int spdodgeb_vh_start(void);
-void spdodgeb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int spdodgeb_interrupt(void);
+PALETTE_INIT( spdodgeb );
+VIDEO_START( spdodgeb );
+VIDEO_UPDATE( spdodgeb );
+INTERRUPT_GEN( spdodgeb_interrupt );
 WRITE_HANDLER( spdodgeb_scrollx_lo_w );
 WRITE_HANDLER( spdodgeb_ctrl_w );
 WRITE_HANDLER( spdodgeb_videoram_w );
@@ -41,7 +41,7 @@ static int adpcm_pos[2],adpcm_end[2],adpcm_idle[2];
 static WRITE_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,M6809_INT_IRQ);
+	cpu_set_irq_line(1,M6809_IRQ_LINE,HOLD_LINE);
 }
 
 static WRITE_HANDLER( spd_adpcm_w )
@@ -164,7 +164,7 @@ static void mcu63705_update_inputs(void)
 
 static READ_HANDLER( mcu63701_r )
 {
-//	logerror("CPU #0 PC %04x: read from port %02x of 63701 data address 3801\n",cpu_get_pc(),offset);
+//	logerror("CPU #0 PC %04x: read from port %02x of 63701 data address 3801\n",activecpu_get_pc(),offset);
 
 	if (mcu63701_command == 0) return 0x6a;
 	else switch (offset)
@@ -180,7 +180,7 @@ static READ_HANDLER( mcu63701_r )
 
 static WRITE_HANDLER( mcu63701_w )
 {
-//	logerror("CPU #0 PC %04x: write %02x to 63701 control address 3800\n",cpu_get_pc(),data);
+//	logerror("CPU #0 PC %04x: write %02x to 63701 control address 3800\n",activecpu_get_pc(),data);
 	mcu63701_command = data;
 	mcu63705_update_inputs();
 }
@@ -370,51 +370,37 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static struct MachineDriver machine_driver_spdodgeb =
-{
-	{
-		{
- 			CPU_M6502,
-			12000000/6,	/* 2MHz ? */
-			readmem,writemem,0,0,
-			spdodgeb_interrupt,34	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
-		},
-		{
- 			CPU_M6809 | CPU_AUDIO_CPU,
-			12000000/6,	/* 2MHz ? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0 /* irq on command */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */				\
-	0,
+static MACHINE_DRIVER_START( spdodgeb )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502,12000000/6)	/* 2MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(spdodgeb_interrupt,34)	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
+
+	MDRV_CPU_ADD(M6809,12000000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2MHz ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8,{ 1*8, 31*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	1024, 1024,
-	spdodgeb_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	MDRV_COLORTABLE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,	/* palette is static, but doesn't fit in 256 colors */
-	0,
-	spdodgeb_vh_start,
-	0,
-	spdodgeb_vh_screenrefresh,
+	MDRV_PALETTE_INIT(spdodgeb)
+	MDRV_VIDEO_START(spdodgeb)
+	MDRV_VIDEO_UPDATE(spdodgeb)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 

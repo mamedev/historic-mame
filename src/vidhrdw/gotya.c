@@ -15,7 +15,7 @@ static int scroll_bit_8;
   I'm using Pac Man resistor values
 
 ***************************************************************************/
-void gotya_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gotya )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -68,20 +68,15 @@ WRITE_HANDLER( gotya_video_control_w )
 }
 
 
-int gotya_vh_start(void)
+VIDEO_START( gotya )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-	{
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
 
 	/* the background area is twice as wide as the screen (actually twice as tall, */
 	/* because this is a vertical game) */
-	if ((tmpbitmap = bitmap_alloc(2*256,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(2*256,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
@@ -119,12 +114,12 @@ static void draw_status_row(struct mame_bitmap *bitmap, int sx, int col)
 }
 
 
-void gotya_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gotya )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

@@ -19,7 +19,7 @@ extern int percuss_hardware;
 
 static int flipscreen;
 
-void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( zodiack )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -116,7 +116,7 @@ WRITE_HANDLER( zodiac_control_w )
 
 ***************************************************************************/
 
-void zodiack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( zodiack )
 {
 	int offs;
 

@@ -7,7 +7,6 @@
 #define TC0100SCN_GFX_NUM 1
 
 extern UINT8 TC0360PRI_regs[16];
-void slapshot_vh_stop(void);
 
 struct tempsprite
 {
@@ -35,13 +34,13 @@ static int taito_hide_pixels;
 
 /**********************************************************/
 
-int slapshot_core_vh_start (void)
+VIDEO_START( slapshot_core )
 {
 	int i;
 
-	spriteram_delayed = malloc(spriteram_size);
-	spriteram_buffered = malloc(spriteram_size);
-	spritelist = malloc(0x400 * sizeof(*spritelist));
+	spriteram_delayed = auto_malloc(spriteram_size);
+	spriteram_buffered = auto_malloc(spriteram_size);
+	spritelist = auto_malloc(0x400 * sizeof(*spritelist));
 
 	if (!spriteram_delayed || !spriteram_buffered || !spritelist)
 		return 1;
@@ -49,18 +48,12 @@ int slapshot_core_vh_start (void)
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
 		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,30,9,-1,1,0,2,256))
-		{
-			slapshot_vh_stop();
 			return 1;
-		}
 	}
 	else	/* it's a tc0100scn game */
 	{
 		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
-		{
-			slapshot_vh_stop();
 			return 1;
-		}
 	}
 
 	TC0360PRI_vh_start();	/* Purely for save-state purposes */
@@ -82,30 +75,11 @@ int slapshot_core_vh_start (void)
 	return 0;
 }
 
-int slapshot_vh_start (void)
+VIDEO_START( slapshot )
 {
 	taito_hide_pixels = 3;
 	taito_sprite_type = 2;
-	return (slapshot_core_vh_start());
-}
-
-void slapshot_vh_stop (void)
-{
-	free(spriteram_delayed);
-	spriteram_delayed = 0;
-	free(spriteram_buffered);
-	spriteram_buffered = 0;
-	free(spritelist);
-	spritelist = 0;
-
-	if (has_TC0480SCP())
-	{
-		TC0480SCP_vh_stop();
-	}
-	else
-	{
-		TC0100SCN_vh_stop();
-	}
+	return video_start_slapshot_core();
 }
 
 
@@ -113,7 +87,7 @@ void slapshot_vh_stop (void)
 			SPRITE DRAW ROUTINES
 ************************************************************/
 
-static void slapshot_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y_offset)
+static void slapshot_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks,int y_offset)
 {
 	/*
 		Sprite format:
@@ -456,7 +430,7 @@ static void slapshot_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y
 						sprite_ptr->color,
 						sprite_ptr->flipx,sprite_ptr->flipy,
 						sprite_ptr->x,sprite_ptr->y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						cliprect,TRANSPARENCY_PEN,0,
 						sprite_ptr->zoomx,sprite_ptr->zoomy);
 			}
 		}
@@ -473,7 +447,7 @@ static void slapshot_draw_sprites(struct mame_bitmap *bitmap,int *primasks,int y
 				sprite_ptr->color,
 				sprite_ptr->flipx,sprite_ptr->flipy,
 				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				sprite_ptr->zoomx,sprite_ptr->zoomy,
 				sprite_ptr->primask);
 	}
@@ -527,7 +501,7 @@ void taito_update_sprites_active_area(void)
 	}
 }
 
-void taito_no_buffer_eof_callback(void)
+VIDEO_EOF( taito_no_buffer )
 {
 	taito_update_sprites_active_area();
 
@@ -551,7 +525,7 @@ One exception is the "puck" in early attract which is
 a bg layer given priority over some sprites.
 ********************************************************************/
 
-void slapshot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( slapshot )
 {
 	UINT8 layer[5];
 	UINT8 tilepri[5];
@@ -625,28 +599,28 @@ void slapshot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	spritepri[2] = TC0360PRI_regs[7] & 0x0f;
 	spritepri[3] = TC0360PRI_regs[7] >> 4;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[0]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
+		TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],0,1);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[1]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
+		TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,2);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[2]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
+		TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,4);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[3]]==0)
 #endif
-		TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
+		TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,8);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -660,7 +634,7 @@ void slapshot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			if (spritepri[i] < tilepri[(layer[3])]) primasks[i] |= 0xff00;
 		}
 
-		slapshot_draw_sprites(bitmap,primasks,0);
+		slapshot_draw_sprites(bitmap,cliprect,primasks,0);
 	}
 
 	/*
@@ -672,6 +646,6 @@ void slapshot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (dislayer[layer[4]]==0)
 #endif
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,0);
 }
 

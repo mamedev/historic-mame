@@ -81,10 +81,9 @@ WRITE_HANDLER( omegaf_bg1_enabled_w );
 WRITE_HANDLER( omegaf_bg2_enabled_w );
 WRITE_HANDLER( omegaf_sprite_overdraw_w );
 
-int omegaf_vh_start(void);
-int robokid_vh_start(void);
-void omegaf_vh_stop(void);
-void omegaf_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( omegaf );
+VIDEO_START( robokid );
+VIDEO_UPDATE( omegaf );
 
 static int omegaf_bank_latch = 2;
 
@@ -93,7 +92,7 @@ static int omegaf_bank_latch = 2;
   Initializers
 **************************************************************************/
 
-static void init_omegaf(void)
+static DRIVER_INIT( omegaf )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -127,9 +126,9 @@ static void init_omegaf(void)
   Interrupts
 **************************************************************************/
 
-static int omegaf_interrupt(void)
+static INTERRUPT_GEN( omegaf_interrupt )
 {
-	return 0x00d7;	/* RST 10h */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
 }
 
 
@@ -659,87 +658,68 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_omegaf =
-{
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 12000000/2 ??? */
-			omegaf_readmem, omegaf_writemem, 0, 0,	/* very sensitive to these settings */
-			omegaf_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,		/* 12000000/3 ??? */
-			sound_readmem,  sound_writemem,
-			sound_readport, sound_writeport,
-			interrupt, 2
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,									/* number of slices per frame */
-	0,
+static MACHINE_DRIVER_START( omegaf )
 
-	128*16, 32*16, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	omegaf_gfxdecodeinfo,
-	1024, 0,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 12000000/2 ??? */
+	MDRV_CPU_MEMORY(omegaf_readmem,omegaf_writemem)	/* very sensitive to these settings */
+	MDRV_CPU_VBLANK_INT(omegaf_interrupt,1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	omegaf_vh_start,
-	omegaf_vh_stop,
-	omegaf_vh_screenrefresh,
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)					/* number of slices per frame */
 
-static const struct MachineDriver machine_driver_robokid =
-{
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 12000000/2 ??? */
-			robokid_readmem, robokid_writemem, 0, 0,	/* very sensitive to these settings */
-			omegaf_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,		/* 12000000/3 ??? */
-			sound_readmem,  sound_writemem,
-			sound_readport, sound_writeport,
-			interrupt, 2
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,									/* number of slices per frame */
-	0,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(128*16, 32*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(omegaf_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	32*16, 32*16, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	robokid_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_START(omegaf)
+	MDRV_VIDEO_UPDATE(omegaf)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	robokid_vh_start,
-	omegaf_vh_stop,
-	omegaf_vh_screenrefresh,
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+
+static MACHINE_DRIVER_START( robokid )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 12000000/2 ??? */
+	MDRV_CPU_MEMORY(robokid_readmem,robokid_writemem)	/* very sensitive to these settings */
+	MDRV_CPU_VBLANK_INT(omegaf_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)					/* number of slices per frame */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(robokid_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(robokid)
+	MDRV_VIDEO_UPDATE(omegaf)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /**************************************************************************

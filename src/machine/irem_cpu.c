@@ -8,38 +8,28 @@
 	Hasamu							Nanao   08J27261A1 011 9102KK700
 	Gunforce						Nanao 	08J27261A  011 9106KK701
 	Ken-Go							?		? (Same as Gunforce)
-
 	Bomberman						Nanao   08J27261A1 012 9123KK200
 	Blade Master					?		? (Same as Bomberman)
-
 	Quiz F-1 1,2 Finish          	Nanao	08J27291A4 014 9147KK700
-	Lethal Thunder					?		? (Same as Quiz F1)
-
+	Gunforce 2						Nanao	08J27291A4 014 92457KK700
+	Lethal Thunder					?		? (Same as Quiz F1 and Gunforce 2)
 	Bomberman World/Atomic Punk				?
 	Undercover Cops							? (Same as BMan World)
+	Gun Hohki						Nanao	08J27291A6 016
+	Skins Game						Nanao 	08J27291A7 017
 
-	Gun Hohki									  16?
-
-	Skins Game						Nanao 	08J27291A7
-
-	Hook							Nanao?	D80001 ?
-
+	Hook							Irem?	D80001 ?
 	R-Type Leo						Irem 	D800001A1
 	Fire Barrel						?		? (same as R-Type Leo)
-
 	In The Hunt						Irem 	D8000011A1 020
-
 	Risky Challenge/Gussun Oyoyo 			D8000019A1
-
 	Shisensho II                 			D8000020A1 023 9320NK700
-
 	World PK Soccer					Irem	D8000021A1
 	Ninja Baseball Batman			?		?  (same as World PK Soccer)
-
 	Perfect Soldiers				Irem	D8000022A1
-
 	Dream Soccer '94				Irem	D8000023A1 026
 
+	Please let me know if you can fill in any of the blanks.
 
 	Emulation by Bryan McPhail, mish@tendril.co.uk, thanks to Chris Hardy too!
 
@@ -58,7 +48,7 @@
 #define xxxx 0xf1 /* Unknown */
 
 
-unsigned char gunforce_decryption_table[256] = {
+const unsigned char gunforce_decryption_table[256] = {
 	0xff,xxxx,xxxx,0x2c,xxxx,xxxx,0x43,0x88, xxxx,0x13,0x0a,0xbd,0xba,0x60,0xea,xxxx, /* 00 */
 	xxxx,xxxx,0xf2,0x29,0xb3,0x22,xxxx,0x0c, 0xa9,0x5f,0x9d,0x07,xxxx,xxxx,0x0b,0xbb, /* 10 */
 	0x8a,xxxx,xxxx,xxxx,0x3a,0x3c,0x5a,0x38, 0x99,xxxx,0xf8,0x89,xxxx,0x91,xxxx,0x55, /* 20 */
@@ -92,7 +82,7 @@ unsigned char gunforce_decryption_table[256] = {
 
 // 0x00 is NOT 0x20 (no context in bomberman)
 
-unsigned char bomberman_decryption_table[256] = {
+const unsigned char bomberman_decryption_table[256] = {
 	xxxx,xxxx,0x79,xxxx,0x9d,0x48,xxxx,xxxx, xxxx,xxxx,0x2e,xxxx,xxxx,0xa5,0x72,xxxx, /* 00 */
 	0x46,0x5b,0xb1,0x3a,0xc3,xxxx,0x35,xxxx, xxxx,0x23,xxxx,0x99,xxxx,0x05,xxxx,0x3c, /* 10 */
 	0x3b,0x76,0x11,xxxx,xxxx,0x4b,xxxx,0x92, xxxx,0x32,0x5d,xxxx,0xf7,0x5a,0x9c,xxxx, /* 20 */
@@ -112,17 +102,17 @@ unsigned char bomberman_decryption_table[256] = {
 };
 
 
-unsigned char lethalth_decryption_table[256] = {
+const unsigned char lethalth_decryption_table[256] = {
 	0x7f,0x26,0x5d,xxxx,0xba,xxxx,0x1e,0x5e, 0xb8,xxxx,0xbc,0xe8,0x01,xxxx,0x4a,0x25, /* 00 */
 	xxxx,0xbd,xxxx,0x22,xxxx,xxxx,0x02,0x57, xxxx,xxxx,0x7c,xxxx,0xe7,0x52,xxxx,0xa9, /* 10 */
 	xxxx,xxxx,0xc6,0x06,0xa0,0xfe,0xcf,0x8e, 0x43,xxxx,0x2d,xxxx,0xd4,0x85,0x75,0xa2, /* 20 */
 	0x3d,xxxx,xxxx,0x38,0x7c,0x89,0xd1,0x80, 0x3b,0x72,0x07,xxxx,0x42,xxxx,0x0a,0x18, /* 30 */
 	0x88,0xb4,0x98,0x8b,0xb9,0x9c,0xad,xxxx, 0x2b,xxxx,0xbf,xxxx,0x55,xxxx,0x56,0xb0, /* 40 */
 	0x93,0x91,xxxx,0xeb,xxxx,0x50,0x41,0x29, 0x47,xxxx,xxxx,0x60,xxxx,0xab,xxxx,xxxx, /* 50 */
-	0xc3,0xe2,0xd0,0xb2,0x11,0x79,xxxx,xxxx, xxxx,0xfb,xxxx,0x2c,0x23,xxxx,0x28,0x0d, /* 60 */
+	0xc3,0xe2,0xd0,0xb2,0x11,0x79,xxxx,0x08, xxxx,0xfb,xxxx,0x2c,0x23,xxxx,0x28,0x0d, /* 60 */
 	xxxx,xxxx,xxxx,0x83,0x3c,xxxx,0x1b,0x34, 0x5b,xxxx,0x40,xxxx,xxxx,0x04,0xfc,xxxx, /* 70 */
 	0xb1,0xf3,0x8a,xxxx,xxxx,0x87,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,0xbe,0x84,0x1f,0xe6, /* 80 */
-	0xff,xxxx,0x12,xxxx,0xb5,0x36,xxxx,0xb3, xxxx,xxxx,xxxx,xxxx,0x4e,xxxx,xxxx,xxxx, /* 90 */
+	0xff,xxxx,0x12,xxxx,0xb5,0x36,xxxx,0xb3, xxxx,xxxx,xxxx,0xd2,0x4e,xxxx,xxxx,xxxx, /* 90 */
 	0xa5,xxxx,xxxx,0xc7,xxxx,0x27,0x0b,xxxx, 0x20,xxxx,xxxx,xxxx,xxxx,xxxx,0x61,0x7f, /* A0 */
 	xxxx,xxxx,0x86,0x0f,xxxx,0xb7,xxxx,0x4f, xxxx,xxxx,0xc0,0xfd,xxxx,0x39,xxxx,0x7d, /* B0 */
 	0x05,0x3a,xxxx,0x48,0x92,0x7a,0x3e,0x03, xxxx,0xf8,xxxx,0x59,0xa8,0x5f,0xf9,0xbb, /* C0 */
@@ -152,7 +142,7 @@ unsigned char lethalth_decryption_table[256] = {
 // 0xc5 (0x7a) completely in the dark (game start after car seelction)
 
 
-unsigned char dynablaster_decryption_table[256] = {
+const unsigned char dynablaster_decryption_table[256] = {
 	0x1f,0x51,0x84,xxxx,0x3d,0x09,0x0d,xxxx, xxxx,0x57,xxxx,xxxx,xxxx,0x32,0x11,xxxx, /* 00 */
 	xxxx,0x9c,xxxx,xxxx,0x4b,xxxx,xxxx,0x03, xxxx,xxxx,xxxx,0x89,0xb0,xxxx,xxxx,xxxx, /* 10 */
 	xxxx,0xbb,0x18,0xbe,0x53,0x21,0x55,0x7c, xxxx,xxxx,0x47,0x58,0xf6,xxxx,xxxx,0xb2, /* 20 */
@@ -186,7 +176,7 @@ unsigned char dynablaster_decryption_table[256] = {
 // NS010718  0xa0 was 0x00 (ADDB), verified to be 0x22 (ANDB)
 
 
-unsigned char mysticri_decryption_table[256] = {
+const unsigned char mysticri_decryption_table[256] = {
 	xxxx,0x57,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, 0xbf,0x43,xxxx,xxxx,xxxx,xxxx,0xfc,xxxx, /* 00 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,0x52,0xa3,0x26, xxxx,0xc7,xxxx,0x0f,xxxx,0x0c,xxxx,xxxx, /* 10 */
 	xxxx,xxxx,0xff,xxxx,xxxx,0x02,xxxx,xxxx, 0x2e,xxxx,0x5f,xxxx,xxxx,xxxx,0x73,0x50, /* 20 */
@@ -208,7 +198,7 @@ unsigned char mysticri_decryption_table[256] = {
 // 0x4e (0x2b) not sure, could be 0x1b
 
 
-unsigned char majtitl2_decryption_table[256] = {
+const unsigned char majtitl2_decryption_table[256] = {
 	0x87,xxxx,0x78,0xaa,xxxx,xxxx,xxxx,0x2c, 0x32,0x0a,0x0f,xxxx,0x5e,xxxx,0xc6,0x8a, /* 00 */
 	0x33,xxxx,xxxx,xxxx,xxxx,0xea,xxxx,0x72, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x24,0x55, /* 10 */
 	xxxx,xxxx,xxxx,0x89,0xfb,xxxx,0x59,0x02, xxxx,xxxx,0x5d,xxxx,xxxx,xxxx,0x36,xxxx, /* 20 */
@@ -230,7 +220,7 @@ unsigned char majtitl2_decryption_table[256] = {
 // 0x70 (0x2b) not sure, could be 0x1b
 
 
-unsigned char hook_decryption_table[256] = {
+const unsigned char hook_decryption_table[256] = {
 	0xb6,0x20,0x22,xxxx,0x0f,0x57,0x59,0xc6, 0xeb,xxxx,0xb0,0xbb,0x3b,xxxx,xxxx,xxxx, /* 00 */
 	0x36,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,0xfe,xxxx,xxxx,xxxx,xxxx,xxxx,0xa0, /* 10 */
 	0x2e,xxxx,0x0b,xxxx,xxxx,0x58,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,0x80,xxxx,xxxx, /* 20 */
@@ -252,7 +242,7 @@ unsigned char hook_decryption_table[256] = {
 // 0xbb (0x2b) not sure, could be 0x1b
 
 
-unsigned char rtypeleo_decryption_table[256] = {
+const unsigned char rtypeleo_decryption_table[256] = {
 	0x5d,xxxx,0xc6,xxxx,xxxx,xxxx,0x2a,0x3a, xxxx,xxxx,xxxx,0x86,xxxx,0x22,xxxx,0xf3, /* 00 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,0x38,0x01,0x42, 0x04,xxxx,xxxx,0x1f,xxxx,xxxx,xxxx,0x58, /* 10 */
 //								  ^^^^
@@ -278,7 +268,7 @@ unsigned char rtypeleo_decryption_table[256] = {
 // 0x16 (0x01) guess (wrong?)
 
 
-unsigned char inthunt_decryption_table[256] = {
+const unsigned char inthunt_decryption_table[256] = {
 	0x1f,xxxx,0xbb,0x50,xxxx,0x58,0x42,0x57, xxxx,xxxx,0xe9,xxxx,xxxx,xxxx,xxxx,0x0b, /* 00 */
 	xxxx,xxxx,0x9d,0x9c,xxxx,xxxx,0x1e,xxxx, xxxx,0xb4,0x5b,xxxx,xxxx,xxxx,xxxx,xxxx, /* 10 */
 	xxxx,xxxx,0x78,0xc7,xxxx,xxxx,0x83,xxxx, xxxx,0x0c,0xb0,0x04,xxxx,xxxx,xxxx,xxxx, /* 20 */
@@ -300,7 +290,7 @@ unsigned char inthunt_decryption_table[256] = {
 // 0xb8 (0x2b) not sure, could be 0x1b
 
 
-unsigned char gussun_decryption_table[256] = {
+const unsigned char gussun_decryption_table[256] = {
 	xxxx,xxxx,xxxx,0x36,xxxx,0x52,0xb1,0x5b, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 00 */
 	xxxx,xxxx,0x75,xxxx,xxxx,0x83,0x33,0xe9, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0xc5,xxxx, /* 10 */
 	0x5d,0xa4,xxxx,0x51,xxxx,xxxx,xxxx,xxxx ,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x03,0x5f, /* 20 */
@@ -324,7 +314,7 @@ unsigned char gussun_decryption_table[256] = {
 //cd total guess (wrong but 3 bytes)
 
 
-unsigned char leagueman_decryption_table[256] = {
+const unsigned char leagueman_decryption_table[256] = {
 	xxxx,xxxx,xxxx,0x55,0xbb,xxxx,0x23,0x79, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x38,xxxx, /* 00 */
 	0x01,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, 0x3d,xxxx,xxxx,xxxx,0xba,xxxx,0x1e,xxxx, /* 10 */
 	0x2c,0x46,xxxx,0xb5,xxxx,0x4b,xxxx,0xfe, xxxx,xxxx,0xfb,0x2e,xxxx,xxxx,0x36,0x04, /* 20 */
@@ -346,7 +336,7 @@ unsigned char leagueman_decryption_table[256] = {
 // 0x10 (0x01) guess (wrong?)
 
 
-unsigned char psoldier_decryption_table[256] = {
+const unsigned char psoldier_decryption_table[256] = {
 	xxxx,xxxx,xxxx,0x8a,xxxx,0xaa,xxxx,xxxx, xxxx,0x20,0x23,0x55,xxxx,0xb5,0x0a,xxxx, /* 00 */
 	xxxx,0x46,xxxx,0xb6,xxxx,0x74,0x8b,xxxx, xxxx,0xba,0x01,xxxx,xxxx,0x5a,0x86,0xfb, /* 10 */
 	0xb2,xxxx,0xb0,xxxx,0x42,0x06,0x1e,0x08, 0x22,0x9d,xxxx,xxxx,xxxx,xxxx,xxxx,0x73, /* 20 */
@@ -358,7 +348,7 @@ unsigned char psoldier_decryption_table[256] = {
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,0x04,xxxx, xxxx,xxxx,xxxx,0x2c,xxxx,0xbf,xxxx,xxxx, /* 80 */
 	xxxx,xxxx,0xe8,xxxx,xxxx,0x78,xxxx,0xbb, xxxx,xxxx,0x1f,0x2b,0x87,xxxx,0x4b,0x56, /* 90 */
 	0x36,0x33,xxxx,xxxx,xxxx,0x9c,0xc3,xxxx, xxxx,0x81,xxxx,0xe9,xxxx,0xfa,xxxx,xxxx, /* A0 */
-	xxxx,0x72,xxxx,0xa2,xxxx,xxxx,0xc7,xxxx, xxxx,xxxx,xxxx,xxxx,0x88,xxxx,xxxx,xxxx, /* B0 */
+	xxxx,0x72,xxxx,0xa2,xxxx,xxxx,0xc7,xxxx, xxxx,0x92,xxxx,xxxx,0x88,xxxx,xxxx,xxxx, /* B0 */
 	0x3b,xxxx,0x0c,xxxx,0x80,xxxx,xxxx,xxxx, xxxx,0x2e,xxxx,xxxx,xxxx,0x57,xxxx,0x8e, /* C0 */
 	0x07,xxxx,0xa3,xxxx,xxxx,xxxx,0x3d,xxxx, 0xfe,xxxx,xxxx,0xfc,0xea,xxxx,0x38,xxxx, /* D0 */
 	0x3c,0xf6,xxxx,xxxx,xxxx,0x18,xxxx,xxxx, 0xb8,xxxx,xxxx,xxxx,0x2a,0x5d,0x5b,xxxx, /* E0 */
@@ -368,7 +358,7 @@ unsigned char psoldier_decryption_table[256] = {
 // 0x1a (0x01) guess (wrong?)
 
 
-unsigned char dsoccr94_decryption_table[256] = {
+const unsigned char dsoccr94_decryption_table[256] = {
 	xxxx,0xd1,xxxx,xxxx,xxxx,0x79,0x2e,xxxx, xxxx,xxxx,0x5a,0x0f,xxxx,xxxx,0x43,xxxx, /* 00 */
 	xxxx,xxxx,0xe8,0x50,xxxx,xxxx,xxxx,0xa0, 0x5d,0x22,xxxx,xxxx,0xb2,0x3a,xxxx,xxxx, /* 10 */
 	0xf6,0x8a,0x41,xxxx,xxxx,0x81,xxxx,xxxx, xxxx,xxxx,0x2b,0x58,xxxx,xxxx,xxxx,0xc6, /* 20 */
@@ -392,7 +382,7 @@ unsigned char dsoccr94_decryption_table[256] = {
 // 0x60 (0x01) guess (wrong?)
 
 
-unsigned char shisen2_decryption_table[256] = {
+const unsigned char shisen2_decryption_table[256] = {
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, 0xea,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 00 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 10 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 20 */
@@ -413,7 +403,7 @@ unsigned char shisen2_decryption_table[256] = {
 
 
 
-unsigned char test_decryption_table[256] = {
+const unsigned char test_decryption_table[256] = {
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 00 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 10 */
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* 20 */
@@ -432,7 +422,7 @@ unsigned char test_decryption_table[256] = {
 	xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx,xxxx, /* F0 */
 };
 
-static unsigned char byte_count_table[256] = {
+static const unsigned char byte_count_table[256] = {
 	2,2,2,2,2,3,1,1, 2,2,2,2,2,3,1,0, /* 00 */
 	2,2,2,2,2,3,1,1, 2,2,2,2,2,3,1,1, /* 10 */
 	2,2,2,2,2,3,1,1, 2,2,2,2,2,3,1,1, /* 20 */
@@ -451,7 +441,7 @@ static unsigned char byte_count_table[256] = {
 	0,0,0,0,0,0,0,0, 1,1,1,1,1,1,0,0, /* F0 */
 };
 
-void irem_cpu_decrypt(int cpu,unsigned char *decryption_table)
+void irem_cpu_decrypt(int cpu,const unsigned char *decryption_table)
 {
 	int A,diff;
 	unsigned char *rom;

@@ -41,8 +41,8 @@ WRITE16_HANDLER( unico16_vram_1_w );
 WRITE16_HANDLER( unico16_vram_2_w );
 WRITE16_HANDLER( unico16_palette_w );
 
-int  unico16_vh_start(void);
-void unico16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( unico16 );
+VIDEO_UPDATE( unico16 );
 
 /***************************************************************************
 
@@ -421,7 +421,7 @@ static struct GfxDecodeInfo unico16_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-void init_machine_unico16(void)
+MACHINE_INIT( unico16 )
 {
 	unico16_has_lightgun = 0;
 }
@@ -447,38 +447,33 @@ static struct OKIM6295interface unico16_m6295_intf =
 								Burglar X
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_burglarx =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			readmem_burglarx, writemem_burglarx,0,0,
-			m68_level2_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	init_machine_unico16,
+static MACHINE_DRIVER_START( burglarx )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(readmem_burglarx,writemem_burglarx)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(unico16)
 
 	/* video hardware */
-	0x180, 0xe0, { 0, 0x180-1, 0, 0xe0-1 },
-	unico16_gfxdecodeinfo,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	unico16_vh_start,
-	0,
-	unico16_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x180-1, 0, 0xe0-1)
+	MDRV_GFXDECODE(unico16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(unico16)
+	MDRV_VIDEO_UPDATE(unico16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM3812,	&unico16_ym3812_intf	},
-		{	SOUND_OKIM6295, &unico16_m6295_intf		}
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, unico16_ym3812_intf)
+	MDRV_SOUND_ADD(OKIM6295, unico16_m6295_intf)
+MACHINE_DRIVER_END
 
 
 
@@ -486,44 +481,39 @@ static const struct MachineDriver machine_driver_burglarx =
 								Zero Point
 ***************************************************************************/
 
-void init_machine_zeropt(void)
+MACHINE_INIT( zeropt )
 {
-	init_machine_unico16();
+	machine_init_unico16();
 	unico16_has_lightgun = 1;
 }
 
-static const struct MachineDriver machine_driver_zeropnt =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			readmem_zeropnt, writemem_zeropnt,0,0,
-			m68_level2_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	init_machine_zeropt,
+static MACHINE_DRIVER_START( zeropnt )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(readmem_zeropnt,writemem_zeropnt)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zeropt)
 
 	/* video hardware */
-	0x180, 0xe0, { 0, 0x180-1, 0, 0xe0-1 },
-	unico16_gfxdecodeinfo,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	unico16_vh_start,
-	0,
-	unico16_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x180-1, 0, 0xe0-1)
+	MDRV_GFXDECODE(unico16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(unico16)
+	MDRV_VIDEO_UPDATE(unico16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM3812,	&unico16_ym3812_intf	},
-		{	SOUND_OKIM6295, &unico16_m6295_intf		}
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, unico16_ym3812_intf)
+	MDRV_SOUND_ADD(OKIM6295, unico16_m6295_intf)
+MACHINE_DRIVER_END
 
 
 

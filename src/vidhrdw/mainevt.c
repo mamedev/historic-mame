@@ -68,7 +68,7 @@ static void dv_sprite_callback(int *code,int *color,int *priority,int *shadow)
 
 /*****************************************************************************/
 
-int mainevt_vh_start(void)
+VIDEO_START( mainevt )
 {
 	layer_colorbase[0] = 0;
 	layer_colorbase[1] = 8;
@@ -78,15 +78,12 @@ int mainevt_vh_start(void)
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,mainevt_tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,mainevt_sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
 
-int dv_vh_start(void)
+VIDEO_START( dv )
 {
 	layer_colorbase[0] = 0;
 	layer_colorbase[1] = 0;
@@ -96,41 +93,32 @@ int dv_vh_start(void)
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,dv_tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,dv_sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
 
-void mainevt_vh_stop(void)
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
-}
-
 /*****************************************************************************/
 
-void mainevt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mainevt )
 {
 	K052109_tilemap_update();
 
-	fillbitmap(priority_bitmap,0,NULL);
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,1);
-	K052109_tilemap_draw(bitmap,2,1,2);	/* low priority part of layer */
-	K052109_tilemap_draw(bitmap,2,0,4);	/* high priority part of layer */
-	K052109_tilemap_draw(bitmap,0,0,8);
+	fillbitmap(priority_bitmap,0,cliprect);
+	K052109_tilemap_draw(bitmap,cliprect,1,TILEMAP_IGNORE_TRANSPARENCY,1);
+	K052109_tilemap_draw(bitmap,cliprect,2,1,2);	/* low priority part of layer */
+	K052109_tilemap_draw(bitmap,cliprect,2,0,4);	/* high priority part of layer */
+	K052109_tilemap_draw(bitmap,cliprect,0,0,8);
 
-	K051960_sprites_draw(bitmap,-1,-1);
+	K051960_sprites_draw(bitmap,cliprect,-1,-1);
 }
 
-void dv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dv )
 {
 	K052109_tilemap_update();
 
-	K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,0);
-	K052109_tilemap_draw(bitmap,2,0,0);
-	K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,0,0,0);
+	K052109_tilemap_draw(bitmap,cliprect,1,TILEMAP_IGNORE_TRANSPARENCY,0);
+	K052109_tilemap_draw(bitmap,cliprect,2,0,0);
+	K051960_sprites_draw(bitmap,cliprect,0,0);
+	K052109_tilemap_draw(bitmap,cliprect,0,0,0);
 }

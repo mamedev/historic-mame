@@ -51,9 +51,9 @@ WRITE16_HANDLER( fuuki16_vram_1_w );
 WRITE16_HANDLER( fuuki16_vram_2_w );
 WRITE16_HANDLER( fuuki16_vram_3_w );
 
-int  fuuki16_vh_start(void);
-void fuuki16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void fuuki16_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_START( fuuki16 );
+VIDEO_UPDATE( fuuki16 );
+PALETTE_INIT( fuuki16 );
 
 /***************************************************************************
 
@@ -120,7 +120,7 @@ static WRITE_HANDLER( fuuki16_sound_rombank_w )
 	if (data <= 2)
 		cpu_setbank(1, memory_region(REGION_CPU2) + 0x8000 * data + 0x10000);
 	else
-	 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+	 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 }
 
 static MEMORY_READ_START( fuuki16_sound_readmem )
@@ -524,7 +524,7 @@ static struct OKIM6295interface fuuki16_m6295_intf =
 
 */
 #define INTERRUPTS_NUM	(256)
-int fuuki16_interrupt(void)
+INTERRUPT_GEN( fuuki16_interrupt )
 {
 	if ( cpu_getiloops() == 2 )
 		cpu_set_irq_line(0, 1, PULSE_LINE);
@@ -537,50 +537,41 @@ int fuuki16_interrupt(void)
 
 	if ( (fuuki16_vregs[0x1c/2] & 0xff) == (INTERRUPTS_NUM-1 - cpu_getiloops()) )
 		cpu_set_irq_line(0, 5, PULSE_LINE);	// Raster Line IRQ
-
-	return ignore_interrupt();
 }
 
-static const struct MachineDriver machine_driver_fuuki16 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			fuuki16_readmem, fuuki16_writemem,0,0,
-			fuuki16_interrupt, INTERRUPTS_NUM
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* ? */
-			fuuki16_sound_readmem,  fuuki16_sound_writemem,
-			fuuki16_sound_readport, fuuki16_sound_writeport,
-			ignore_interrupt, 1	/* IRQ by YM3812; NMI by main CPU */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( fuuki16 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(fuuki16_readmem,fuuki16_writemem)
+	MDRV_CPU_VBLANK_INT(fuuki16_interrupt,INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(fuuki16_sound_readmem,fuuki16_sound_writemem)
+	MDRV_CPU_PORTS(fuuki16_sound_readport,fuuki16_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0, 256-16-1 },
-	fuuki16_gfxdecodeinfo,
-	0x400*4, 0x400*4 + 0x40*256,	/* For the 8 bit layer */
-	fuuki16_vh_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	fuuki16_vh_start,
-	0,
-	fuuki16_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-16-1)
+	MDRV_GFXDECODE(fuuki16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x400*4)
+	MDRV_COLORTABLE_LENGTH(0x400*4 + 0x40*256)	/* For the 8 bit layer */
+
+	MDRV_PALETTE_INIT(fuuki16)
+	MDRV_VIDEO_START(fuuki16)
+	MDRV_VIDEO_UPDATE(fuuki16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YM2203,   &fuuki16_ym2203_intf },
-		{ SOUND_YM3812,   &fuuki16_ym3812_intf },
-		{ SOUND_OKIM6295, &fuuki16_m6295_intf  }
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, fuuki16_ym2203_intf)
+	MDRV_SOUND_ADD(YM3812, fuuki16_ym3812_intf)
+	MDRV_SOUND_ADD(OKIM6295, fuuki16_m6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -113,9 +113,12 @@ struct memport_data
 
 struct cpu_data
 {
-	void *				rombase;			/* ROM base pointer */
 	void *				rambase;			/* RAM base pointer */
 	opbase_handler 		opbase;				/* opcode base handler */
+
+	void *				op_ram;				/* dynamic ROM base pointer */
+	void *				op_rom;				/* dynamic RAM base pointer */
+	UINT8		 		opcode_entry;		/* opcode base handler */
 
 	struct memport_data	mem;				/* memory tables */
 	struct memport_data	port;				/* port tables */
@@ -132,6 +135,8 @@ struct memory_address_table
 /*-------------------------------------------------
 	GLOBAL VARIABLES
 -------------------------------------------------*/
+
+static int					cur_context;					/* current CPU context */
 
 UINT8 *						OP_ROM;							/* opcode ROM base */
 UINT8 *						OP_RAM;							/* opcode RAM base */
@@ -218,6 +223,9 @@ int memory_init(void)
 	verify_masks();
 #endif
 
+	/* no current context to start */
+	cur_context = -1;
+
 	/* init the static handlers */
 	if (!init_static())
 		return 0;
@@ -290,7 +298,10 @@ void memory_shutdown(void)
 
 void memory_set_opcode_base(int cpunum, void *base)
 {
-	cpudata[cpunum].rombase = base;
+	if (cur_context == cpunum)
+		OP_ROM = base;
+	else
+		cpudata[cpunum].op_rom = base;
 }
 
 
@@ -307,9 +318,19 @@ void memory_set_encrypted_opcode_range(int cpunum,offs_t min_address,offs_t max_
 
 void memory_set_context(int activecpu)
 {
-	OP_RAM = cpu_bankbase[STATIC_RAM] = cpudata[activecpu].rambase;
-	OP_ROM = cpudata[activecpu].rombase;
-	opcode_entry = STATIC_ROM;
+	/* remember dynamic RAM/ROM */
+	if (cur_context != -1)
+	{
+		cpudata[cur_context].op_ram = OP_RAM;
+		cpudata[cur_context].op_rom = OP_ROM;
+		cpudata[cur_context].opcode_entry = opcode_entry;
+	}
+	cur_context = activecpu;
+
+	cpu_bankbase[STATIC_RAM] = cpudata[activecpu].rambase;
+	OP_RAM = cpudata[activecpu].op_ram;
+	OP_ROM = cpudata[activecpu].op_rom;
+	opcode_entry = opcode_entry;
 
 	readmem_lookup = cpudata[activecpu].mem.read.table;
 	writemem_lookup = cpudata[activecpu].mem.write.table;
@@ -956,7 +977,8 @@ static int init_cpudata(void)
 		int cputype = Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK;
 
 		/* set the RAM/ROM base */
-		cpudata[cpunum].rambase = cpudata[cpunum].rombase = memory_region(REGION_CPU1 + cpunum);
+		cpudata[cpunum].rambase = cpudata[cpunum].op_ram = cpudata[cpunum].op_rom = memory_region(REGION_CPU1 + cpunum);
+		cpudata[cpunum].opcode_entry = STATIC_ROM;
 		cpudata[cpunum].opbase = NULL;
 		encrypted_opcode_start[cpunum] = 0;
 		encrypted_opcode_end[cpunum] = 0;

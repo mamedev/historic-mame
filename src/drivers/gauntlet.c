@@ -119,24 +119,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( gauntlet_xscroll_w );
-WRITE16_HANDLER( gauntlet_yscroll_w );
-
-int gauntlet_vh_start(void);
-void gauntlet_vh_stop(void);
-void gauntlet_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-extern UINT8 vindctr2_screen_refresh;
-extern data16_t *gauntlet_yscroll;
+#include "gauntlet.h"
 
 
 
@@ -189,7 +172,7 @@ static void scanline_update(int scanline)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( gauntlet )
 {
 	last_speed_check = 0;
 	last_speech_write = 0x80;
@@ -703,58 +686,38 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_gauntlet =
-{
+static MACHINE_DRIVER_START( gauntlet )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		{
-			CPU_M6502,
-			ATARI_CLOCK_14MHz/8,
-			sound_readmem,sound_writemem,0,0,
-			0,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68010, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(gauntlet)
+	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	gauntlet_vh_start,
-	gauntlet_vh_stop,
-	gauntlet_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(gauntlet)
+	MDRV_VIDEO_UPDATE(gauntlet)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -780,7 +743,7 @@ ROM_START( gauntlet )
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -811,7 +774,7 @@ ROM_START( gauntir1 )
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -842,7 +805,7 @@ ROM_START( gauntir2 )
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -873,7 +836,7 @@ ROM_START( gaunt2p )
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gauntlt1.6p",  0x00000, 0x04000, 0x6c276a1d )
 
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
 	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
 
@@ -906,7 +869,7 @@ ROM_START( gaunt2 )
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "gauntlt2.6p",  0x00000, 0x04000, 0xd101905d )
 
-	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "gauntlt2.1a",  0x00000, 0x08000, 0x09df6e23 )
 	ROM_LOAD( "gauntlt2.1b",  0x08000, 0x08000, 0x869330be )
 	ROM_LOAD( "gauntlt2.1c",  0x10000, 0x04000, 0xe4c98f01 )
@@ -951,7 +914,7 @@ ROM_START( vindctr2 )
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "1198",  0x00000, 0x04000, 0xf99b631a )
 
-	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1101", 0x00000, 0x08000, 0xdd3833ad )
 	ROM_LOAD( "1166", 0x08000, 0x08000, 0xe2db50a0 )
 	ROM_LOAD( "1170", 0x10000, 0x08000, 0xf050ab43 )
@@ -989,12 +952,11 @@ ROM_END
  *
  *************************************/
 
-static void init_gauntlet(void)
+static DRIVER_INIT( gauntlet )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 104);
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-	atarigen_invert_region(REGION_GFX2);
 
 	/* swap the top and bottom halves of the main CPU ROM images */
 	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);
@@ -1009,12 +971,11 @@ static void init_gauntlet(void)
 }
 
 
-static void init_gaunt2p(void)
+static DRIVER_INIT( gaunt2p )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 107);
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-	atarigen_invert_region(REGION_GFX2);
 
 	/* swap the top and bottom halves of the main CPU ROM images */
 	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);
@@ -1029,12 +990,11 @@ static void init_gaunt2p(void)
 }
 
 
-static void init_gauntlet2(void)
+static DRIVER_INIT( gauntlet2 )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 106);
 	atarigen_init_6502_speedup(1, 0x410f, 0x4127);
-	atarigen_invert_region(REGION_GFX2);
 
 	/* swap the top and bottom halves of the main CPU ROM images */
 	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);
@@ -1050,7 +1010,7 @@ static void init_gauntlet2(void)
 }
 
 
-static void init_vindctr2(void)
+static DRIVER_INIT( vindctr2 )
 {
 	UINT8 *gfx2_base = memory_region(REGION_GFX2);
 	UINT8 *data;
@@ -1059,7 +1019,6 @@ static void init_vindctr2(void)
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, 118);
 	atarigen_init_6502_speedup(1, 0x40ff, 0x4117);
-	atarigen_invert_region(REGION_GFX2);
 
 	/* swap the top and bottom halves of the main CPU ROM images */
 	atarigen_swap_mem(memory_region(REGION_CPU1) + 0x000000, memory_region(REGION_CPU1) + 0x008000, 0x8000);

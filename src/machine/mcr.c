@@ -1,11 +1,6 @@
 /***************************************************************************
 
-  machine.c
-
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
-
-  Tapper machine started by Chris Kirmse
+	Midway MCR system
 
 ***************************************************************************/
 
@@ -13,21 +8,14 @@
 
 #include "driver.h"
 #include "machine/z80fmly.h"
-#include "machine/mcr.h"
 #include "sndhrdw/mcr.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
+#include "mcr.h"
 
 
-#define VERBOSE 0
-
-#if VERBOSE
-#define LOG(x)	logerror x
-#else
 #define LOG(x)
-#endif
-
 
 
 /*************************************
@@ -58,6 +46,7 @@ static struct counter_state
 	UINT16	latch;
 	UINT16	count;
 	void *	timer;
+	UINT8	timer_active;
 	double	period;
 } m6840_state[3];
 
@@ -93,6 +82,7 @@ static WRITE_HANDLER( zwackery_ca2_w );
 static void zwackery_pia_irq(int state);
 
 static void reload_count(int counter);
+static void counter_fired_callback(int counter);
 
 
 
@@ -192,7 +182,7 @@ static struct pia6821_interface zwackery_pia_4_intf =
 
 static void ctc_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
 }
 
 
@@ -222,7 +212,7 @@ static z80ctc_interface ctc_intf =
  *
  *************************************/
 
-void mcr_init_machine(void)
+MACHINE_INIT( mcr )
 {
 	/* initialize the CTC */
 	ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
@@ -256,7 +246,8 @@ static void mcr68_common_init(void)
 		m6840_state[i].control = 0x00;
 		m6840_state[i].latch = 0xffff;
 		m6840_state[i].count = 0xffff;
-		m6840_state[i].timer = NULL;
+		m6840_state[i].timer = timer_alloc(counter_fired_callback);
+		m6840_state[i].timer_active = 0;
 		m6840_state[i].period = m6840_counter_periods[i];
 	}
 
@@ -272,7 +263,7 @@ static void mcr68_common_init(void)
 }
 
 
-void mcr68_init_machine(void)
+MACHINE_INIT( mcr68 )
 {
 	/* for the most part all MCR/68k games are the same */
 	mcr68_common_init();
@@ -284,7 +275,7 @@ void mcr68_init_machine(void)
 }
 
 
-void zwackery_init_machine(void)
+MACHINE_INIT( zwackery )
 {
 	/* for the most part all MCR/68k games are the same */
 	mcr68_common_init();
@@ -309,7 +300,7 @@ void zwackery_init_machine(void)
  *
  *************************************/
 
-int mcr_interrupt(void)
+INTERRUPT_GEN( mcr_interrupt )
 {
 	/* CTC line 2 is connected to VBLANK, which is once every 1/2 frame */
 	/* for the 30Hz interlaced display */
@@ -323,15 +314,13 @@ int mcr_interrupt(void)
 		z80ctc_0_trg3_w(0, 1);
 		z80ctc_0_trg3_w(0, 0);
 	}
-
-	return ignore_interrupt();
 }
 
 
-int mcr68_interrupt(void)
+INTERRUPT_GEN( mcr68_interrupt )
 {
 	/* update the 6840 VBLANK clock */
-	if (!m6840_state[0].timer)
+	if (!m6840_state[0].timer_active)
 		subtract_from_counter(0, 1);
 
 	logerror("--- VBLANK ---\n");
@@ -340,8 +329,6 @@ int mcr68_interrupt(void)
 	/* the timing of this is crucial for Blasted and Tri-Sports, which check the timing of */
 	/* VBLANK and 493 using counter 2 */
 	timer_set(TIME_IN_HZ(30) - mcr68_timing_factor, 0, v493_callback);
-
-	return ignore_interrupt();
 }
 
 
@@ -592,7 +579,7 @@ static void counter_fired_callback(int counter)
 	counter &= 3;
 
 	/* reset the timer */
-	m6840_state[counter].timer = NULL;
+	m6840_state[counter].timer_active = 0;
 
 	/* subtract it all from the counter; this will generate an interrupt */
 	subtract_from_counter(counter, count);
@@ -607,14 +594,13 @@ static void reload_count(int counter)
 	/* copy the latched value in */
 	m6840_state[counter].count = m6840_state[counter].latch;
 
-	/* remove any old timers */
-	if (m6840_state[counter].timer)
-		timer_remove(m6840_state[counter].timer);
-	m6840_state[counter].timer = NULL;
-
 	/* counter 0 is self-updating if clocked externally */
 	if (counter == 0 && !(m6840_state[counter].control & 0x02))
+	{
+		timer_adjust(m6840_state[counter].timer, TIME_NEVER, 0, 0);
+		m6840_state[counter].timer_active = 0;
 		return;
+	}
 
 	/* determine the clock period for this timer */
 	if (m6840_state[counter].control & 0x02)
@@ -630,7 +616,8 @@ static void reload_count(int counter)
 		count = count + 1;
 
 	/* set the timer */
-	m6840_state[counter].timer = timer_set(period * (double)count, (count << 2) + counter, counter_fired_callback);
+	timer_adjust(m6840_state[counter].timer, period * (double)count, (count << 2) + counter, 0);
+	m6840_state[counter].timer_active = 1;
 }
 
 
@@ -640,7 +627,7 @@ static UINT16 compute_counter(int counter)
 	int remaining;
 
 	/* if there's no timer, return the count */
-	if (!m6840_state[counter].timer)
+	if (!m6840_state[counter].timer_active)
 		return m6840_state[counter].count;
 
 	/* determine the clock period for this timer */
@@ -692,9 +679,8 @@ static WRITE_HANDLER( mcr68_6840_w_common )
 			{
 				for (i = 0; i < 3; i++)
 				{
-					if (m6840_state[i].timer)
-						timer_remove(m6840_state[i].timer);
-					m6840_state[i].timer = NULL;
+					timer_adjust(m6840_state[i].timer, TIME_NEVER, 0, 0);
+					m6840_state[i].timer_active = 0;
 				}
 			}
 
@@ -713,13 +699,13 @@ static WRITE_HANDLER( mcr68_6840_w_common )
 		if (diffs & 0x02)
 			reload_count(counter);
 
-		LOG(("%06X:Counter %d control = %02X\n", cpu_getpreviouspc(), counter, data));
+		LOG(("%06X:Counter %d control = %02X\n", activecpu_get_previouspc(), counter, data));
 	}
 
 	/* offsets 2, 4, and 6 are MSB buffer registers */
 	else if ((offset & 1) == 0)
 	{
-		LOG(("%06X:MSB = %02X\n", cpu_getpreviouspc(), data));
+		LOG(("%06X:MSB = %02X\n", activecpu_get_previouspc(), data));
 		m6840_msb_buffer = data;
 	}
 
@@ -737,7 +723,7 @@ static WRITE_HANDLER( mcr68_6840_w_common )
 		if (!(m6840_state[counter].control & 0x10))
 			reload_count(counter);
 
-		LOG(("%06X:Counter %d latch = %04X\n", cpu_getpreviouspc(), counter, m6840_state[counter].latch));
+		LOG(("%06X:Counter %d latch = %04X\n", activecpu_get_previouspc(), counter, m6840_state[counter].latch));
 	}
 }
 
@@ -751,7 +737,7 @@ static READ16_HANDLER( mcr68_6840_r_common )
 	/* offset 1 is the status register */
 	else if (offset == 1)
 	{
-		LOG(("%06X:Status read = %04X\n", cpu_getpreviouspc(), m6840_status));
+		LOG(("%06X:Status read = %04X\n", activecpu_get_previouspc(), m6840_status));
 		m6840_status_read_since_int |= m6840_status & 0x07;
 		return m6840_status;
 	}
@@ -769,7 +755,7 @@ static READ16_HANDLER( mcr68_6840_r_common )
 
 		m6840_lsb_buffer = result & 0xff;
 
-		LOG(("%06X:Counter %d read = %04X\n", cpu_getpreviouspc(), counter, result));
+		LOG(("%06X:Counter %d read = %04X\n", activecpu_get_previouspc(), counter, result));
 		return result >> 8;
 	}
 

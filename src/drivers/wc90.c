@@ -63,11 +63,11 @@ extern data8_t *wc90_scroll0ylo, *wc90_scroll0yhi;
 extern data8_t *wc90_scroll1ylo, *wc90_scroll1yhi;
 extern data8_t *wc90_scroll2ylo, *wc90_scroll2yhi;
 
-int wc90_vh_start( void );
+VIDEO_START( wc90 );
 WRITE_HANDLER( wc90_fgvideoram_w );
 WRITE_HANDLER( wc90_bgvideoram_w );
 WRITE_HANDLER( wc90_txvideoram_w );
-void wc90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( wc90 );
 
 
 static data8_t *wc90_shared;
@@ -105,7 +105,7 @@ static WRITE_HANDLER( wc90_bankswitch1_w )
 static WRITE_HANDLER( wc90_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(2,Z80_NMI_INT);
+	cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -349,55 +349,37 @@ static struct YM2608interface ym2608_interface =
 	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) }
 };
 
-static const struct MachineDriver machine_driver_wc90 =
-{
+static MACHINE_DRIVER_START( wc90 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6.0 MHz ??? */
-			wc90_readmem1, wc90_writemem1,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,	/* 6.0 MHz ??? */
-			wc90_readmem2, wc90_writemem2,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz ???? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6.0 MHz ??? */
+	MDRV_CPU_MEMORY(wc90_readmem1,wc90_writemem1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6.0 MHz ??? */
+	MDRV_CPU_MEMORY(wc90_readmem2,wc90_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ???? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMIs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	wc90_vh_start,
-	0,
-	wc90_vh_screenrefresh,
+	MDRV_VIDEO_START(wc90)
+	MDRV_VIDEO_UPDATE(wc90)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2608,
-			&ym2608_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2608, ym2608_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -11,9 +11,8 @@ Markham (c) 1983 Sun Electronics
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void markham_vh_convert_color_prom(unsigned char *palette,
-	unsigned short *colortable,const unsigned char *color_prom);
-void markham_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( markham );
+VIDEO_UPDATE( markham );
 
 static UINT8 *markham_sharedram;
 
@@ -223,46 +222,36 @@ static struct SN76496interface sn76496_interface =
 	{ 75, 75 }
 };
 
-static const struct MachineDriver machine_driver_markham =
-{
-	{
-		{
-			CPU_Z80,
-			8000000/2, /* 4.000MHz */
-			readmem1,writemem1,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			8000000/2, /* 4.000MHz */
-			readmem2,writemem2,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,
-	0,
+static MACHINE_DRIVER_START( markham )
 
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
+	MDRV_CPU_MEMORY(readmem1,writemem1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	gfxdecodeinfo,
-	256,1024,
-	markham_vh_convert_color_prom,
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	markham_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	},
-};
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(markham)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(markham)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 /****************************************************************************/
 

@@ -112,7 +112,7 @@ static void get_pf3a_tile_info(int tile_index)
 
 /******************************************************************************/
 
-int madmotor_vh_start(void)
+VIDEO_START( madmotor )
 {
 	madmotor_pf1_tilemap = tilemap_create(get_pf1_tile_info, pf1_scan, TILEMAP_TRANSPARENT, 8, 8, 64,64);
 	madmotor_pf2_tilemap = tilemap_create(get_pf2_tile_info, pf2_scan, TILEMAP_TRANSPARENT,16,16, 32,32);
@@ -203,7 +203,7 @@ WRITE16_HANDLER( madmotor_pf1_rowscroll_w )
 
 /******************************************************************************/
 
-static void madmotor_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri_val)
+static void madmotor_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri_mask,int pri_val)
 {
 	int offs;
 
@@ -262,7 +262,7 @@ static void madmotor_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri
 							color,
 							flipx,flipy,
 							sx + mult * x,sy + mult * y,
-							&Machine->visible_area,TRANSPARENCY_PEN,0);
+							cliprect,TRANSPARENCY_PEN,0);
 			}
 
 			offs += 4;
@@ -273,7 +273,7 @@ static void madmotor_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri
 
 /******************************************************************************/
 
-void madmotor_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( madmotor )
 {
 	int offs;
 
@@ -297,10 +297,10 @@ void madmotor_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	/* Draw playfields & sprites */
 	if (madmotor_pf3_control[0x03]==2)
-		tilemap_draw(bitmap,madmotor_pf3_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,madmotor_pf3_tilemap,0,0);
 	else
-		tilemap_draw(bitmap,madmotor_pf3a_tilemap,0,0);
-	tilemap_draw(bitmap,madmotor_pf2_tilemap,0,0);
-	madmotor_drawsprites(bitmap,0x00,0x00);
-	tilemap_draw(bitmap,madmotor_pf1_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,madmotor_pf3a_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,madmotor_pf2_tilemap,0,0);
+	madmotor_drawsprites(bitmap,cliprect,0x00,0x00);
+	tilemap_draw(bitmap,cliprect,madmotor_pf1_tilemap,0,0);
 }

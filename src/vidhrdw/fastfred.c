@@ -30,7 +30,7 @@ static int character_bank[2];
 static int color_bank[2];
 static int canspritesflipx = 0;
 
-void jumpcoas_init_machine(void)
+MACHINE_INIT( jumpcoas )
 {
 	canspritesflipx = 1;
 }
@@ -69,7 +69,7 @@ static void convert_color(int i, int* r, int* g, int* b)
 	*b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 }
 
-void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( fastfred )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -156,12 +156,12 @@ WRITE_HANDLER( fastfred_background_color_w )
   the main emulation engine.
 
 ***************************************************************************/
-void fastfred_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( fastfred )
 {
 	int offs, charbank, colorbank;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 

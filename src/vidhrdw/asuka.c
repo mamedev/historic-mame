@@ -5,26 +5,18 @@
 
 #define TC0100SCN_GFX_NUM 1
 
-void asuka_vh_stop(void);
-
 static UINT16 sprite_ctrl = 0;
 static UINT16 sprites_flipscreen = 0;
 
 /**********************************************************/
 
-int asuka_core_vh_start(int x_offs)
+int asuka_core_video_start(int x_offs)
 {
 	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,0))
-	{
-		asuka_vh_stop();
 		return 1;
-	}
 
 	if (TC0110PCR_vh_start())
-	{
-		asuka_vh_stop();
 		return 1;
-	}
 
 	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
 	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
@@ -32,21 +24,14 @@ int asuka_core_vh_start(int x_offs)
 	return 0;
 }
 
-int asuka_vh_start(void)
+VIDEO_START( asuka )
 {
-	return (asuka_core_vh_start(0));
+	return (asuka_core_video_start(0));
 }
 
-int galmedes_vh_start(void)
+VIDEO_START( galmedes )
 {
-	return (asuka_core_vh_start(1));
-}
-
-void asuka_vh_stop(void)
-{
-	TC0100SCN_vh_stop();
-
-	TC0110PCR_vh_stop();
+	return (asuka_core_video_start(1));
 }
 
 
@@ -126,7 +111,7 @@ WRITE16_HANDLER( asuka_spriteflip_w )
 ********************************************************/
 
 
-static void asuka_draw_sprites(struct mame_bitmap *bitmap)
+static void asuka_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 	int sprite_colbank = (sprite_ctrl & 0x3c) << 2;
@@ -167,7 +152,7 @@ static void asuka_draw_sprites(struct mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				priority ? 0xfc : 0xf0);
 	}
 }
@@ -177,7 +162,7 @@ static void asuka_draw_sprites(struct mame_bitmap *bitmap)
 				SCREEN REFRESH
 **************************************************************/
 
-void asuka_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( asuka )
 {
 	UINT8 layer[3];
 
@@ -187,16 +172,16 @@ void asuka_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,2);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
-	asuka_draw_sprites(bitmap);
+	asuka_draw_sprites(bitmap,cliprect);
 
 #if 0
 	{

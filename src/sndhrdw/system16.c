@@ -25,7 +25,7 @@ static void trigger_7751_sound(int data)
 
 	port_8255_c03 = (data>>5);
 
-	cpu_cause_interrupt(2,I8039_EXT_INT);
+	cpu_set_irq_line(2, 0, PULSE_LINE);
 }
 
 // I'm sure this must be wrong, but it seems to work for quartet music.

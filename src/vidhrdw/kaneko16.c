@@ -120,10 +120,10 @@ KANEKO16_LAYER(1)
 KANEKO16_LAYER(2)
 KANEKO16_LAYER(3)
 
-int kaneko16_vh_start_sprites(void)
+VIDEO_START( kaneko16_sprites )
 {
 	/* 0x400 sprites max */
-	spritelist.first_sprite = (struct tempsprite *)malloc(0x400 * sizeof(spritelist.first_sprite[0]));
+	spritelist.first_sprite = (struct tempsprite *)auto_malloc(0x400 * sizeof(spritelist.first_sprite[0]));
 
 	if (	!spritelist.first_sprite	)
 		return 1;
@@ -131,9 +131,9 @@ int kaneko16_vh_start_sprites(void)
 	return 0;
 }
 
-int kaneko16_vh_start_1xVIEW2(void)
+VIDEO_START( kaneko16_1xVIEW2 )
 {
-	if (	kaneko16_vh_start_sprites()	)
+	if (	video_start_kaneko16_sprites()	)
 		return 1;
 
 	kaneko16_tmap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
@@ -181,9 +181,9 @@ int kaneko16_vh_start_1xVIEW2(void)
 	}
 }
 
-int kaneko16_vh_start_2xVIEW2(void)
+VIDEO_START( kaneko16_2xVIEW2 )
 {
-	if (	kaneko16_vh_start_1xVIEW2()	)
+	if (	video_start_kaneko16_1xVIEW2()	)
 		return 1;
 
 	kaneko16_tmap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
@@ -226,9 +226,9 @@ int kaneko16_vh_start_2xVIEW2(void)
 	}
 }
 
-int sandscrp_vh_start_1xVIEW2(void)
+VIDEO_START( sandscrp_1xVIEW2 )
 {
-	if (	kaneko16_vh_start_1xVIEW2()	)
+	if (	video_start_kaneko16_1xVIEW2()	)
 		return 1;
 
 	tilemap_set_scrolldy( kaneko16_tmap_0, 0, 256 - 1 );
@@ -237,17 +237,9 @@ int sandscrp_vh_start_1xVIEW2(void)
 }
 
 
-void kaneko16_vh_stop(void)
-{
-	if (spritelist.first_sprite)
-		free(spritelist.first_sprite);
-	spritelist.first_sprite = 0;		// multisession safety
-}
-
-
 /* Berlwall has an additional hi-color background */
 
-void berlwall_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( berlwall )
 {
 	int i;
 
@@ -270,14 +262,14 @@ void berlwall_init_palette(unsigned char *obsolete,unsigned short *colortable,co
 	}
 }
 
-int berlwall_vh_start(void)
+VIDEO_START( berlwall )
 {
 	int sx, x,y;
 	unsigned char *RAM	=	memory_region(REGION_GFX3);
 
 	/* Render the hi-color static backgrounds held in the ROMs */
 
-	if ((kaneko16_bg15_bitmap = bitmap_alloc_depth(256 * 32, 256 * 1, 16)) == 0)
+	if ((kaneko16_bg15_bitmap = auto_bitmap_alloc_depth(256 * 32, 256 * 1, 16)) == 0)
 		return 1;
 
 /*
@@ -316,18 +308,8 @@ int berlwall_vh_start(void)
 						Machine->pens[2048 + ((g << 10) | (r << 5) | b)] );
 	  }
 
-	return kaneko16_vh_start_1xVIEW2();
+	return video_start_kaneko16_1xVIEW2();
 }
-
-void berlwall_vh_stop(void)
-{
-	if (kaneko16_bg15_bitmap)
-		bitmap_free(kaneko16_bg15_bitmap);
-
-	kaneko16_bg15_bitmap = 0;	// multisession safety
-	kaneko16_vh_stop();
-}
-
 
 
 /***************************************************************************
@@ -483,7 +465,7 @@ int kaneko16_parse_sprite_type3(int i, struct tempsprite *s)
 
 /* Build a list of sprites to display & draw them */
 
-void kaneko16_draw_sprites(struct mame_bitmap *bitmap, int pri)
+void kaneko16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	/* Sprites *must* be parsed from the first in RAM to the last,
 	   because of the multisprite feature. But they *must* be drawn
@@ -595,7 +577,7 @@ void kaneko16_draw_sprites(struct mame_bitmap *bitmap, int pri)
 					s->color,
 					s->flipx, s->flipy,
 					s->x, s->y,
-					&Machine->visible_area,TRANSPARENCY_PEN,0,
+					cliprect,TRANSPARENCY_PEN,0,
 					primask );
 #ifdef MAME_DEBUG
 #if 0
@@ -705,7 +687,7 @@ WRITE16_HANDLER( kaneko16_sprites_regs_w )
 			break;
 	}
 
-//	logerror("CPU #0 PC %06X : Warning, sprites reg %04X <- %04X\n",cpu_get_pc(),offset*2,data);
+//	logerror("CPU #0 PC %06X : Warning, sprites reg %04X <- %04X\n",activecpu_get_pc(),offset*2,data);
 }
 
 
@@ -805,7 +787,7 @@ WRITE16_HANDLER( kaneko16_bg15_reg_w )
 
 ***************************************************************************/
 
-void kaneko16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kaneko16 )
 {
 	int layers_flip_0, layers_flip_1 = 0;
 	int layers_ctrl = -1;
@@ -936,7 +918,7 @@ if ( keyboard_pressed(KEYCODE_Z) ||
 			bitmap, kaneko16_bg15_bitmap,
 			flip, flip,
 			-sx, -sy,
-			&Machine->visible_area, TRANSPARENCY_NONE,0 );
+			cliprect, TRANSPARENCY_NONE,0 );
 
 		flag = 0;
 	}
@@ -945,9 +927,9 @@ if ( keyboard_pressed(KEYCODE_Z) ||
 	   the times. To do it right, each pixel should be drawn with pen 0
 	   of the bottomost tile that covers it (which is pretty tricky to do) */
 
-	if (flag!=0)	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	if (flag!=0)	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (kaneko16_tmap_2)
 	{
@@ -957,20 +939,20 @@ if ( keyboard_pressed(KEYCODE_Z) ||
 		draw them with priority 0. To treat more complex cases, however,
 		we need tilemap.c to handle 8 "layers" (4 priorities x 2 chips)
 	*/
-		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+ 8)))	tilemap_draw(bitmap, kaneko16_tmap_2, i, 0);
-		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+12)))	tilemap_draw(bitmap, kaneko16_tmap_3, i, 0);
+		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+ 8)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_2, i, 0);
+		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+12)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_3, i, 0);
 	}
 
 	for ( i = 0; i < 4; i++ )
 	{
 		int tile = kaneko16_priority.tile[i];
-		if (layers_ctrl&(1<<(tile+0)))	tilemap_draw(bitmap, kaneko16_tmap_0, tile, 1<<i );
-		if (layers_ctrl&(1<<(tile+4)))	tilemap_draw(bitmap, kaneko16_tmap_1, tile, 1<<i );
+		if (layers_ctrl&(1<<(tile+0)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_0, tile, 1<<i );
+		if (layers_ctrl&(1<<(tile+4)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_1, tile, 1<<i );
 	}
 
 	/* Sprites last (rendered with pdrawgfx, so they can slip
 	   in between the layers) */
 
 	if (layers_ctrl & (0xf<<16))
-		kaneko16_draw_sprites(bitmap, (layers_ctrl >> 16) & 0xf);
+		kaneko16_draw_sprites(bitmap,cliprect, (layers_ctrl >> 16) & 0xf);
 }

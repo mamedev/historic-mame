@@ -15,7 +15,7 @@ static struct tilemap *fg_tilemap,*bg_tilemap;
 static int pf2_bankbase,pf1_bankbase;
 
 
-void hcastle_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( hcastle )
 {
 	int i,chip,pal,clut;
 
@@ -107,7 +107,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int hcastle_vh_start(void)
+VIDEO_START( hcastle )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan,TILEMAP_OPAQUE,     8,8,64,32);
@@ -190,15 +190,15 @@ WRITE_HANDLER( hcastle_pf2_control_w )
 
 /*****************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, unsigned char *sbank, int bank )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, unsigned char *sbank, int bank )
 {
 	int bank_base = (bank == 0) ? 0x4000 * (gfx_bank & 1) : 0;
-	K007121_sprites_draw(bank,bitmap,sbank,(K007121_ctrlram[bank][6]&0x30)*2,0,bank_base,-1);
+	K007121_sprites_draw(bank,bitmap,cliprect,sbank,(K007121_ctrlram[bank][6]&0x30)*2,0,bank_base,-1);
 }
 
 /*****************************************************************************/
 
-void hcastle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hcastle )
 {
 	static int old_pf1,old_pf2;
 
@@ -227,16 +227,16 @@ void hcastle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 //	if (K007121_ctrlram[0][3]&0x20)
 	if ((gfx_bank & 0x04) == 0)
 	{
-		tilemap_draw(bitmap,bg_tilemap,0,0);
-		draw_sprites( bitmap, buffered_spriteram, 0 );
-		draw_sprites( bitmap, buffered_spriteram_2, 1 );
-		tilemap_draw(bitmap,fg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+		draw_sprites( bitmap,cliprect, buffered_spriteram, 0 );
+		draw_sprites( bitmap,cliprect, buffered_spriteram_2, 1 );
+		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 	}
 	else
 	{
-		tilemap_draw(bitmap,bg_tilemap,0,0);
-		tilemap_draw(bitmap,fg_tilemap,0,0);
-		draw_sprites( bitmap, buffered_spriteram, 0 );
-		draw_sprites( bitmap, buffered_spriteram_2, 1 );
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+		draw_sprites( bitmap,cliprect, buffered_spriteram, 0 );
+		draw_sprites( bitmap,cliprect, buffered_spriteram_2, 1 );
 	}
 }

@@ -10,7 +10,7 @@ static struct tilemap *background, *foreground;
 extern unsigned char *shootout_textram;
 
 
-void shootout_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( shootout )
 {
 	int i;
 
@@ -76,7 +76,7 @@ WRITE_HANDLER( shootout_textram_w ){
 	}
 }
 
-int shootout_vh_start( void ){
+VIDEO_START( shootout ){
 	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	if( background && foreground ){
@@ -86,10 +86,9 @@ int shootout_vh_start( void ){
 	return 1; /* error */
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, int bank_bits ){
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bank_bits ){
 	static int bFlicker;
 	const struct GfxElement *gfx = Machine->gfx[1];
-	const struct rectangle *clip = &Machine->visible_area;
 	const UINT8 *source = spriteram+127*4;
 	int count;
 
@@ -122,7 +121,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int bank_bits ){
 						0 /*color*/,
 						flipx,0 /*flipy*/,
 						sx,sy,
-						clip,TRANSPARENCY_PEN,0,
+						cliprect,TRANSPARENCY_PEN,0,
 						priority_mask);
 
 					number++;
@@ -134,7 +133,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int bank_bits ){
 						0 /*color*/,
 						flipx,0 /*flipy*/,
 						sx,sy,
-						clip,TRANSPARENCY_PEN,0,
+						cliprect,TRANSPARENCY_PEN,0,
 						priority_mask);
 				}
 		}
@@ -142,20 +141,20 @@ static void draw_sprites( struct mame_bitmap *bitmap, int bank_bits ){
 	}
 }
 
-void shootout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( shootout )
 {
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,background,0,0);
-	tilemap_draw(bitmap,foreground,0,1);
-	draw_sprites( bitmap,3/*bank bits */ );
+	tilemap_draw(bitmap,cliprect,background,0,0);
+	tilemap_draw(bitmap,cliprect,foreground,0,1);
+	draw_sprites( bitmap,cliprect,3/*bank bits */ );
 }
 
-void shootouj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( shootouj )
 {
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	tilemap_draw(bitmap,background,0,1);
-	tilemap_draw(bitmap,foreground,0,2);
-	draw_sprites( bitmap,2/*bank bits*/ );
+	tilemap_draw(bitmap,cliprect,background,0,1);
+	tilemap_draw(bitmap,cliprect,foreground,0,2);
+	draw_sprites( bitmap,cliprect,2/*bank bits*/ );
 }

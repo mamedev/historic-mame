@@ -1,12 +1,12 @@
-/*
- * Cosmic Chasm video hardware emulation
- *
- * Jul 15 1999 by Mathis Rosenhauer
- *
- */
+/***************************************************************************
+
+	Cinematronics Cosmic Chasm hardware
+
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "cchasm.h"
 
 #define HALT   0
 #define JUMP   1
@@ -122,7 +122,7 @@ WRITE16_HANDLER( cchasm_refresh_control_w )
 	}
 }
 
-int cchasm_vh_start (void)
+VIDEO_START( cchasm )
 {
 	int xmin, xmax, ymin, ymax;
 
@@ -135,5 +135,5 @@ int cchasm_vh_start (void)
 	ycenter=((ymax+ymin)/2) << VEC_SHIFT;
 
 	vector_set_shift (VEC_SHIFT);
-	return vector_vh_start();
+	return video_start_vector();
 }

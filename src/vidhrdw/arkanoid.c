@@ -48,12 +48,12 @@ WRITE_HANDLER( arkanoid_d008_w )
   the main emulation engine.
 
 ***************************************************************************/
-void arkanoid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( arkanoid )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

@@ -53,6 +53,7 @@ Notes:
 #include "common.h"
 #include "usrintrf.h"
 #include "vidhrdw/generic.h"
+#include "neogeo.h"
 
 static data16_t *neogeo_vidram16;
 static data16_t *neogeo_paletteram16;	/* pointer to 1 of the 2 palette banks */
@@ -71,8 +72,6 @@ extern data16_t *neogeo_ram16;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
 
-/* in machine/neocrypt.c */
-extern int neogeo_fix_bank_type;
 
 /*
 	X zoom table - verified on real hardware
@@ -117,27 +116,7 @@ static char zoomx_draw_tables[16][16] =
 
 /******************************************************************************/
 
-void neogeo_vh_stop(void)
-{
-	if (neogeo_palettebank[0])
-		free (neogeo_palettebank[0]);
-	neogeo_palettebank[0] = NULL;
-
-	if (neogeo_palettebank[1])
-		free (neogeo_palettebank[1]);
-	neogeo_palettebank[1] = NULL;
-
-	if (neogeo_vidram16)
-		free (neogeo_vidram16);
-	neogeo_vidram16 = NULL;
-
-	if (neogeo_ram16)
-		free (neogeo_ram16);
-	neogeo_ram16 = NULL;
-}
-
-
-int neogeo_mvs_vh_start(void)
+VIDEO_START( neogeo_mvs )
 {
 	no_of_tiles=Machine->gfx[2]->total_elements;
 	if (no_of_tiles>0x10000) high_tile=1; else high_tile=0;
@@ -148,27 +127,18 @@ int neogeo_mvs_vh_start(void)
 	neogeo_palettebank[1] = NULL;
 	neogeo_vidram16 = NULL;
 
-	neogeo_palettebank[0] = malloc(0x2000);
+	neogeo_palettebank[0] = auto_malloc(0x2000);
 	if (!neogeo_palettebank[0])
-	{
-		neogeo_vh_stop();
 		return 1;
-	}
 
-	neogeo_palettebank[1] = malloc(0x2000);
+	neogeo_palettebank[1] = auto_malloc(0x2000);
 	if (!neogeo_palettebank[1])
-	{
-		neogeo_vh_stop();
 		return 1;
-	}
 
 	/* 0x20000 bytes even though only 0x10c00 is used */
-	neogeo_vidram16 = malloc(0x20000);
+	neogeo_vidram16 = auto_malloc(0x20000);
 	if (!neogeo_vidram16)
-	{
-		neogeo_vh_stop();
 		return 1;
-	}
 	memset(neogeo_vidram16,0,0x20000);
 
 	neogeo_paletteram16 = neogeo_palettebank[0];
@@ -425,7 +395,7 @@ static void NeoMVSDrawGfxLine(UINT16 **line,const struct GfxElement *gfx,
 
 /******************************************************************************/
 
-static void screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip)
+VIDEO_UPDATE( neogeo )
 {
 	int sx =0,sy =0,my =0,zx = 0x0f, zy = 0xff;
 	int offs,count;
@@ -439,7 +409,7 @@ profiler_mark(PROFILER_VIDEO);
 	/* Palette swap occured after last frame but before this one */
 	if (palette_swap_pending) swap_palettes();
 
-	fillbitmap(bitmap,Machine->pens[4095],clip);
+	fillbitmap(bitmap,Machine->pens[4095],cliprect);
 
 	/* Draw sprites */
 	for (count = 0; count < 0x300 >> 1; count++)
@@ -502,7 +472,7 @@ profiler_mark(PROFILER_VIDEO);
 		{
 			int yy = (sy + drawn_lines) & 0x1ff;
 
-			if (yy >= clip->min_y && yy <= clip->max_y)
+			if (yy >= cliprect->min_y && yy <= cliprect->max_y)
 			{
 				int tile,yoffs;
 				int zoom_line;
@@ -555,7 +525,7 @@ profiler_mark(PROFILER_VIDEO);
 					tileatr >> 8,
 					tileatr & 0x01,	/* flip x */
 					sx,yy,zx,yoffs,
-					clip
+					cliprect
 				);
 			}
 
@@ -596,7 +566,7 @@ profiler_mark(PROFILER_VIDEO);
 			}
 		}
 
-		for (y=clip->min_y / 8; y <= clip->max_y / 8; y++)
+		for (y=cliprect->min_y / 8; y <= cliprect->max_y / 8; y++)
 		{
 			for (x = 0; x < 40; x++)
 			{
@@ -625,59 +595,10 @@ profiler_mark(PROFILER_VIDEO);
 						byte2,
 						0,0,
 						x*8,y*8,
-						clip,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
 
 profiler_mark(PROFILER_END);
 }
-
-void neogeo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
-{
-	screenrefresh(bitmap,&Machine->visible_area);
-}
-
-static int next_update_first_line;
-extern int neogeo_raster_enable;
-
-void neogeo_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int current_line)
-{
-	struct rectangle clip;
-
-	if (current_line < next_update_first_line)
-		next_update_first_line = 0;
-
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = next_update_first_line;
-	clip.max_y = current_line;
-	if (clip.min_y < Machine->visible_area.min_y)
-		clip.min_y = Machine->visible_area.min_y;
-	if (clip.max_y > Machine->visible_area.max_y)
-		clip.max_y = Machine->visible_area.max_y;
-
-	if (clip.max_y >= clip.min_y)
-	{
-//logerror("refresh %d-%d\n",clip.min_y,clip.max_y);
-		screenrefresh(bitmap,&clip);
-
-		if (neogeo_raster_enable == 2)
-		{
-			int x;
-			for (x = clip.min_x;x <= clip.max_x;x++)
-			{
-				if (x & 8)
-					plot_pixel(bitmap,x,clip.max_y,Machine->uifont->colortable[1]);
-			}
-		}
-	}
-
-	next_update_first_line = current_line + 1;
-
-}
-
-void neogeo_vh_raster_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
-{
-}
-

@@ -111,6 +111,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
+#include "jedi.h"
 
 
 /* constants */
@@ -125,27 +126,7 @@ static UINT8 sound_ack_latch;
 static UINT8 sound_comm_stat;
 static UINT8 speech_write_buffer;
 static UINT8 speech_strobe_state;
-static UINT8 *nvram;
-static size_t nvram_size;
 static UINT8 nvram_enabled;
-
-
-/* video driver data & functions */
-extern UINT8 *jedi_PIXIRAM;
-extern UINT8 *jedi_backgroundram;
-extern size_t jedi_backgroundram_size;
-
-int  jedi_vh_start(void);
-void jedi_vh_stop(void);
-void jedi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( jedi_alpha_banksel_w );
-WRITE_HANDLER( jedi_paletteram_w );
-WRITE_HANDLER( jedi_backgroundram_w );
-WRITE_HANDLER( jedi_vscroll_w );
-WRITE_HANDLER( jedi_hscroll_w );
-WRITE_HANDLER( jedi_video_off_w );
-WRITE_HANDLER( jedi_PIXIRAM_w );
-
 
 
 /*************************************
@@ -157,8 +138,8 @@ WRITE_HANDLER( jedi_PIXIRAM_w );
 static void generate_interrupt(int scanline)
 {
 	/* IRQ is set by /32V */
-	cpu_set_irq_line(0, M6502_INT_IRQ, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
-	cpu_set_irq_line(1, M6502_INT_IRQ, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
+	cpu_set_irq_line(0, M6502_IRQ_LINE, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
+	cpu_set_irq_line(1, M6502_IRQ_LINE, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
 
 	/* set up for the next */
 	scanline += 32;
@@ -170,17 +151,17 @@ static void generate_interrupt(int scanline)
 
 static WRITE_HANDLER( main_irq_ack_w )
 {
-	cpu_set_irq_line(0, M6502_INT_IRQ, CLEAR_LINE);
+	cpu_set_irq_line(0, M6502_IRQ_LINE, CLEAR_LINE);
 }
 
 
 static WRITE_HANDLER( sound_irq_ack_w )
 {
-	cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+	cpu_set_irq_line(1, M6502_IRQ_LINE, CLEAR_LINE);
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( jedi )
 {
 	/* init globals */
 	control_num = 0;
@@ -349,24 +330,13 @@ static READ_HANDLER( speech_ready_r )
 static WRITE_HANDLER( nvram_data_w )
 {
 	if (nvram_enabled)
-		nvram[offset] = data;
+		generic_nvram[offset] = data;
 }
 
 
 static WRITE_HANDLER( nvram_enable_w )
 {
 	nvram_enabled = ~offset & 1;
-}
-
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, nvram_size);
-	else if (file)
-		osd_fread(file, nvram, nvram_size);
-	else
-		memset(nvram, 0, nvram_size);
 }
 
 
@@ -395,7 +365,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x08ff, nvram_data_w, &nvram, &nvram_size },
+	{ 0x0800, 0x08ff, nvram_data_w, &generic_nvram, &generic_nvram_size },
 	{ 0x1c00, 0x1c01, nvram_enable_w },
 	{ 0x1c80, 0x1c82, a2d_select_w },
 	{ 0x1d00, 0x1d00, MWA_NOP },	/* NVRAM store */
@@ -581,55 +551,37 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_jedi =
-{
+static MACHINE_DRIVER_START( jedi )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			MAIN_CPU_OSC/2/2,		/* 2.5MHz */
-			readmem,writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6502,
-			SOUND_CPU_OSC/2/4,		/* 1.5MHz */
-			readmem2,writemem2,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	4,
-	init_machine,
+	MDRV_CPU_ADD(M6502,MAIN_CPU_OSC/2/2)		/* 2.5MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_CPU_ADD(M6502,SOUND_CPU_OSC/2/4)		/* 1.5MHz */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(4)
+	
+	MDRV_MACHINE_INIT(jedi)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	37*8, 30*8, { 0*8, 37*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024+1,0,	/* no colortable, we do the lookups ourselves */
-				/* reserve color 1024 for black (disabled display) */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(37*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 37*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024+1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	jedi_vh_start,
-	jedi_vh_stop,
-	jedi_vh_screenrefresh,
+	MDRV_VIDEO_START(jedi)
+	MDRV_VIDEO_UPDATE(jedi)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(POKEY,   pokey_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
 
 
 

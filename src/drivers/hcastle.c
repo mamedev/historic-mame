@@ -11,9 +11,9 @@
 #include "cpu/konami/konami.h"
 #include "cpu/z80/z80.h"
 
-void hcastle_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void hcastle_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-int hcastle_vh_start (void);
+PALETTE_INIT( hcastle );
+VIDEO_UPDATE( hcastle );
+VIDEO_START( hcastle );
 
 extern data8_t *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 
@@ -35,7 +35,7 @@ static WRITE_HANDLER( hcastle_bankswitch_w )
 
 static WRITE_HANDLER( hcastle_soundirq_w )
 {
-	cpu_cause_interrupt( 1, Z80_IRQ_INT );
+	cpu_set_irq_line( 1, 0, HOLD_LINE );
 }
 
 static WRITE_HANDLER( hcastle_coin_w )
@@ -294,57 +294,37 @@ static struct k051649_interface k051649_interface =
 	45,			/* Volume */
 };
 
-static const struct MachineDriver machine_driver_hcastle =
-{
+static MACHINE_DRIVER_START( hcastle )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_KONAMI,
-			3000000,	/* Derived from 24 MHz clock */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	59, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second verified by comparison with real board */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(KONAMI, 3000000)	/* Derived from 24 MHz clock */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(59)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second verified by comparison with real board */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
+	MDRV_COLORTABLE_LENGTH(2*8*16*16)
 
-	gfxdecodeinfo,
-	128, 2*8*16*16,
-	hcastle_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	hcastle_vh_start,
-	0,
-	hcastle_vh_screenrefresh,
+	MDRV_PALETTE_INIT(hcastle)
+	MDRV_VIDEO_START(hcastle)
+	MDRV_VIDEO_UPDATE(hcastle)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_K051649,
-			&k051649_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(K051649, k051649_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 

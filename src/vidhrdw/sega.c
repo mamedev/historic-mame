@@ -1,10 +1,8 @@
-/***************************************************************************
+/*************************************************************************
 
-  vidhrdw.c
+	Sega vector hardware
 
-  Generic functions used by the Sega Vector games
-
-***************************************************************************/
+*************************************************************************/
 
 /*
  * History:
@@ -110,12 +108,14 @@ void sega_generate_vector_list (void)
 	} while (!(draw & 0x80));
 }
 
+
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
-int sega_vh_start (void)
+
+VIDEO_START( sega )
 {
 	int i;
 
@@ -133,15 +133,12 @@ int sega_vh_start (void)
 	vector_set_shift (VEC_SHIFT);
 
 	/* allocate memory for the sine and cosine lookup tables ASG 080697 */
-	sinTable = malloc (0x400 * sizeof (long));
+	sinTable = auto_malloc (0x400 * sizeof (long));
 	if (!sinTable)
 		return 1;
-	cosTable = malloc (0x400 * sizeof (long));
+	cosTable = auto_malloc (0x400 * sizeof (long));
 	if (!cosTable)
-	{
-		free (sinTable);
 		return 1;
-	}
 
 	/* generate the sine/cosine lookup tables */
 	for (i = 0; i < 0x400; i++)
@@ -160,28 +157,12 @@ int sega_vh_start (void)
 			cosTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) - 0.5);
 		else
 			cosTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) + 0.5);
-
 	}
 
-	return vector_vh_start();
+	return video_start_vector();
 }
 
-/***************************************************************************
 
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void sega_vh_stop (void)
-{
-	if (sinTable)
-		free (sinTable);
-	sinTable = NULL;
-	if (cosTable)
-		free (cosTable);
-	cosTable = NULL;
-
-	vector_vh_stop();
-}
 
 /***************************************************************************
 
@@ -190,8 +171,9 @@ void sega_vh_stop (void)
   the main emulation engine.
 
 ***************************************************************************/
-void sega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( sega )
 {
 	sega_generate_vector_list();
-	vector_vh_screenrefresh(bitmap,full_refresh);
+	video_update_vector(bitmap,0);
 }

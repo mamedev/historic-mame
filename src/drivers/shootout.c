@@ -36,11 +36,11 @@ unsigned char *shootout_textram;
 WRITE_HANDLER( shootout_videoram_w );
 WRITE_HANDLER( shootout_textram_w );
 
-int shootout_vh_start( void );
-void shootout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void shootouj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( shootout );
+VIDEO_UPDATE( shootout );
+VIDEO_UPDATE( shootouj );
 
-void shootout_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( shootout );
 
 /*******************************************************************************/
 
@@ -58,7 +58,7 @@ static WRITE_HANDLER( shootout_bankswitch_w )
 static WRITE_HANDLER( sound_cpu_command_w )
 {
 	soundlatch_w( offset, data );
-	cpu_cause_interrupt( 1, M6502_INT_NMI );
+	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 }
 
 /* stub for reading input ports as active low (makes building ports much easier) */
@@ -276,100 +276,73 @@ static struct YM2203interface ym2203_interface2 =
 	{ shootout_snd2_irq },
 };
 
-static int shootout_interrupt(void)
+static INTERRUPT_GEN( shootout_interrupt )
 {
 	static int coin = 0;
 
 	if ( readinputport( 2 ) & 0xc0 ) {
 		if ( coin == 0 ) {
 			coin = 1;
-			return nmi_interrupt();
+			nmi_line_pulse();
 		}
 	} else
 		coin = 0;
-
-	return ignore_interrupt();
 }
 
-static const struct MachineDriver machine_driver_shootout =
-{
+static MACHINE_DRIVER_START( shootout )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,	/* 2 MHz? */
-			readmem,writemem,0,0,
-			shootout_interrupt,1 /* nmi's are triggered at coin up */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0 /* this is a guess, but sounds just about right */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6502, 2000000)	/* 2 MHz? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(shootout_interrupt,1) /* nmi's are triggered at coin up */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	shootout_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	shootout_vh_start,
-	generic_vh_stop,
-	shootout_vh_screenrefresh,
+	MDRV_PALETTE_INIT(shootout)
+	MDRV_VIDEO_START(shootout)
+	MDRV_VIDEO_UPDATE(shootout)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_shootouj =
-{
+
+static MACHINE_DRIVER_START( shootouj )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,	/* 2 MHz? */
-			readmem_alt,writemem_alt,0,0,
-			shootout_interrupt,1 /* nmi's are triggered at coin up */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6502, 2000000)	/* 2 MHz? */
+	MDRV_CPU_MEMORY(readmem_alt,writemem_alt)
+	MDRV_CPU_VBLANK_INT(shootout_interrupt,1) /* nmi's are triggered at coin up */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	shootout_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	shootout_vh_start,
-	generic_vh_stop,
-	shootouj_vh_screenrefresh,
+	MDRV_PALETTE_INIT(shootout)
+	MDRV_VIDEO_START(shootout)
+	MDRV_VIDEO_UPDATE(shootouj)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface2
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface2)
+MACHINE_DRIVER_END
 
 
 ROM_START( shootout )
@@ -454,7 +427,7 @@ ROM_START( shootoub )
 	ROM_LOAD( "gb09.k6",        0x0100, 0x0100, 0xaa090565 )    /* unknown */
 ROM_END
 
-static void init_shootout(void)
+static DRIVER_INIT( shootout )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;

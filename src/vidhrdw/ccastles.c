@@ -1,12 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Crystal Castles hardware
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "ccastles.h"
 
 
 static struct mame_bitmap *sprite_bm;
@@ -84,39 +84,18 @@ WRITE_HANDLER( ccastles_paletteram_w )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int ccastles_vh_start(void)
+VIDEO_START( ccastles )
 {
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((maskbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		bitmap_free(tmpbitmap);
+	if ((maskbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((sprite_bm = bitmap_alloc(8,16)) == 0)
-	{
-		bitmap_free(maskbitmap);
-		bitmap_free(tmpbitmap);
+	if ((sprite_bm = auto_bitmap_alloc(8,16)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void ccastles_vh_stop(void)
-{
-	bitmap_free(sprite_bm);
-	bitmap_free(maskbitmap);
-	bitmap_free(tmpbitmap);
 }
 
 
@@ -283,14 +262,14 @@ static void redraw_bitmap(void)
 }
 
 
-void ccastles_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ccastles )
 {
 	int offs;
 	unsigned char *spriteaddr;
 	int scrollx,scrolly;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		redraw_bitmap();
 	}
@@ -305,7 +284,7 @@ void ccastles_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,
-				     &Machine->visible_area,
+				     cliprect,
 		   			 TRANSPARENCY_NONE,0);
 
 
@@ -353,7 +332,7 @@ void ccastles_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				}
 			}
 
-			copybitmap(bitmap,sprite_bm,0,0,x,y,&Machine->visible_area,TRANSPARENCY_PEN,Machine->pens[7]);
+			copybitmap(bitmap,sprite_bm,0,0,x,y,cliprect,TRANSPARENCY_PEN,Machine->pens[7]);
 		}
 		else
 		{
@@ -362,7 +341,7 @@ void ccastles_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					0,
 					flip_screen,flip_screen,
 					x,y,
-					&Machine->visible_area,TRANSPARENCY_PEN,7);
+					cliprect,TRANSPARENCY_PEN,7);
 		}
 	}
 }

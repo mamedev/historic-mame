@@ -30,7 +30,7 @@ static int palettebank;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void shaolins_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( shaolins )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -114,7 +114,7 @@ WRITE_HANDLER( shaolins_palettebank_w )
   the main emulation engine.
 
 ***************************************************************************/
-void shaolins_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( shaolins )
 {
 	int offs;
 	int sx,sy;

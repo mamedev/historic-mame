@@ -7,7 +7,7 @@ static int screenscroll;
 
 
 
-void galspnbl_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( galspnbl )
 {
 	int i;
 
@@ -120,7 +120,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 }
 
 
-void galspnbl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( galspnbl )
 {
 	int offs;
 

@@ -31,6 +31,7 @@
 #define EFFECT_RGB3			14
 #define EFFECT_RGB_TINY		15
 #define EFFECT_SCANLINE_75V	16
+#define EFFECT_SHARP		17
 
 
 

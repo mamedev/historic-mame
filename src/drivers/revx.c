@@ -1,31 +1,15 @@
 /*************************************************************************
 
-	Driver for Midway Revolution X games
+	Midway X-unit system
+	
+	driver by Aaron Giles
+	based on older drivers by Ernesto Corvi, Alex Pasadyn, Zsolt Vasvari
 
-	TMS34020 processor @ ???MHz
-	Williams compressed digital sound board, with ADSP2105 @ 10.24MHz and a DAC
+	Games supported:
+		* Revolution X
 
-
-	Created by Aaron Giles and Ernesto Corvi
-	Based on older drivers by Alex Pasadyn and Zsolt Vasvari with
-	some help from Kurt Mahan
-
-
-	Currently playable:
-	------------------
-
-
-	Currently unplayable:
-	--------------------
-	- Revolution X
-
-
-	Currently undumped:
-	-------------------
-
-
-	Known Bugs:
-	----------
+	Known bugs:
+		* none at this time
 
 **************************************************************************/
 
@@ -35,23 +19,6 @@
 #include "cpu/adsp2100/adsp2100.h"
 #include "sndhrdw/williams.h"
 #include "wmswolfu.h"
-
-
-/*************************************
- *
- *	CMOS read/write
- *
- *************************************/
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, wms_cmos_ram, 0x8000);
-	else if (file)
-		osd_fread(file, wms_cmos_ram, 0x8000);
-	else
-		memset(wms_cmos_ram, 0, 0x8000);
-}
 
 
 
@@ -88,7 +55,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ TOBYTE(0x60c000e0), TOBYTE(0x60c000ff), revx_security_w },
 	{ TOBYTE(0x80800000), TOBYTE(0x8080001f), revx_analog_select_w },
 	{ TOBYTE(0x80c00000), TOBYTE(0x80c000ff), revx_uart_w },
-	{ TOBYTE(0xa0440000), TOBYTE(0xa047ffff), revx_cmos_w, &wms_cmos_ram },
+	{ TOBYTE(0xa0440000), TOBYTE(0xa047ffff), revx_cmos_w, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ TOBYTE(0xa0800000), TOBYTE(0xa08fffff), revx_paletteram_w, &paletteram16 },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00003ff), tms34020_io_register_w },
 	{ TOBYTE(0xc0800000), TOBYTE(0xc08000ff), wms_tunit_dma_w },
@@ -233,43 +200,30 @@ static struct tms34010_config cpu_config =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_revx =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_TMS34020,
-			40000000/TMS34020_CLOCK_DIVIDER,
-			readmem,writemem,0,0,
-			ignore_interrupt,0,
-			0,0,&cpu_config
-		},
-		SOUND_CPU_WILLIAMS_DCS_UART
-	},
-	MKLA5_FPS, MKLA5_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	revx_init_machine,
+static MACHINE_DRIVER_START( revx )
 
+	/* basic machine hardware */	
+	MDRV_CPU_ADD(TMS34020, 40000000/TMS34020_CLOCK_DIVIDER)
+	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	
+	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)
+	MDRV_VBLANK_DURATION(MKLA5_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(revx)
+	MDRV_NVRAM_HANDLER(generic_0fill)
+	
 	/* video hardware */
-	512, 288, { 0, 402, 1, 253 },
-
-	0,
-	32768,0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	wms_revx_vh_start,
-	wms_tunit_vh_stop,
-	wms_tunit_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 288)
+	MDRV_VISIBLE_AREA(0, 402, 1, 253)
+	MDRV_PALETTE_LENGTH(32768)
+	
+	MDRV_VIDEO_START(revx)
+	MDRV_VIDEO_UPDATE(wms_tunit)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SOUND_WILLIAMS_DCS
-	},
-	nvram_handler
-};
+	MDRV_IMPORT_FROM(williams_dcs_uart_sound)
+MACHINE_DRIVER_END
 
 
 

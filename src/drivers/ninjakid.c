@@ -31,8 +31,8 @@ extern READ_HANDLER( ninjakid_bg_videoram_r );
 extern READ_HANDLER( ninjakun_io_8000_r );
 extern WRITE_HANDLER( ninjakun_io_8000_w );
 
-extern int ninjakid_vh_start( void );
-extern void ninjakid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( ninjakid );
+extern VIDEO_UPDATE( ninjakid );
 extern WRITE_HANDLER( ninjakun_flipscreen_w );
 
 extern WRITE_HANDLER( ninjakun_paletteram_w );
@@ -182,48 +182,34 @@ static struct AY8910interface ay8910_interface =
 	{ 50, 50 }
 };
 
-static const struct MachineDriver machine_driver_ninjakid =
-{
-    {
-    	{
-			CPU_Z80,
-			3000000, /* 3.00MHz */
-			ninjakid_primary_readmem,ninjakid_primary_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3000000, /* 3.00MHz */
-			ninjakid_secondary_readmem,ninjakid_secondary_writemem,0,0,
-			interrupt,4 /* ? */
-		}
+static MACHINE_DRIVER_START( ninjakid )
 
-    },
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame */
-    0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3000000) /* 3.00MHz */
+	MDRV_CPU_MEMORY(ninjakid_primary_readmem,ninjakid_primary_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000) /* 3.00MHz */
+	MDRV_CPU_MEMORY(ninjakid_secondary_readmem,ninjakid_secondary_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4) /* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame */
 
     /* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 4*8, (32-4)*8-1 },
-    ninjakid_gfxdecodeinfo,
-    768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, (32-4)*8-1 )
+	MDRV_GFXDECODE(ninjakid_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-    0,
-	ninjakid_vh_start,
-	0,
-	ninjakid_vh_screenrefresh,
+	MDRV_VIDEO_START(ninjakid)
+	MDRV_VIDEO_UPDATE(ninjakid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /*******************************************************************************
  Rom Definitions
@@ -338,7 +324,7 @@ INPUT_PORTS_END
  Init
 *******************************************************************************/
 
-static void init_ninjakid(void)
+static DRIVER_INIT( ninjakid )
 {
 	/* Save State Stuff */
 	state_save_register_UINT8 ("NK_Main", 0, "ninjakun_io_a002_ctrl", &ninjakun_io_a002_ctrl, 1);

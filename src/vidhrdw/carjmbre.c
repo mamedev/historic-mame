@@ -10,7 +10,7 @@ static struct tilemap *carjmbre_tilemap;
 
 static int carjmbre_flipscreen, carjmbre_bgcolor;
 
-void carjmbre_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( carjmbre )
 {
 	int i,bit0,bit1,bit2;
 
@@ -78,7 +78,7 @@ WRITE_HANDLER( carjmbre_videoram_w ){
 
 
 
-int carjmbre_vh_start(void)
+VIDEO_START( carjmbre )
 {
 
 	carjmbre_tilemap = tilemap_create( get_carjmbre_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
@@ -89,7 +89,7 @@ int carjmbre_vh_start(void)
 	return 0;
 }
 
-void carjmbre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( carjmbre )
 {
 	int offs,troffs,sx,sy,flipx,flipy;
 
@@ -100,7 +100,7 @@ void carjmbre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	//----x--- ?? probably colour, only used for ramp and pond
 	//-----xxx colour
 
-	tilemap_draw( bitmap,carjmbre_tilemap,0,0 );
+	tilemap_draw( bitmap,cliprect,carjmbre_tilemap,0,0 );
 
 	//spriteram[offs]
 	//+0       y pos
@@ -141,7 +141,7 @@ void carjmbre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 						spriteram[troffs+2]&0x07,
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

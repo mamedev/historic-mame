@@ -367,34 +367,22 @@ static void pstadium_gfxdraw(void)
 
 
 ******************************************************************************/
-int pstadium_vh_start(void)
+VIDEO_START( pstadium )
 {
-	if ((pstadium_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((pstadium_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((pstadium_palette = malloc(0x200 * sizeof(char))) == 0) return 1;
-	if ((pstadium_paltbl = malloc(0x800 * sizeof(char))) == 0) return 1;
+	if ((pstadium_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((pstadium_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
+	if ((pstadium_palette = auto_malloc(0x200 * sizeof(char))) == 0) return 1;
+	if ((pstadium_paltbl = auto_malloc(0x800 * sizeof(char))) == 0) return 1;
 	memset(pstadium_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
 	return 0;
 }
 
-void pstadium_vh_stop(void)
-{
-	free(pstadium_paltbl);
-	free(pstadium_palette);
-	free(pstadium_videoram);
-	bitmap_free(pstadium_tmpbitmap);
-	pstadium_paltbl = 0;
-	pstadium_palette = 0;
-	pstadium_videoram = 0;
-	pstadium_tmpbitmap = 0;
-}
-
-void pstadium_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pstadium )
 {
 	int x, y;
 	int color;
 
-	if (full_refresh || pstadium_screen_refresh)
+	if (get_vh_global_attribute_changed() || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
 
@@ -421,12 +409,12 @@ void pstadium_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void galkoku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( galkoku )
 {
 	int x, y;
 	int color;
 
-	if (full_refresh || pstadium_screen_refresh)
+	if (get_vh_global_attribute_changed() || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
 

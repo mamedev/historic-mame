@@ -151,14 +151,13 @@ VBlank duration: 1/VSYNC * (16/256) = 1017.6 us
 
 
 
-int gottlieb_vh_start(void);
-void gottlieb_vh_stop(void);
+VIDEO_START( gottlieb );
 WRITE_HANDLER( gottlieb_characterram_w );
 WRITE_HANDLER( gottlieb_video_outputs_w );
 WRITE_HANDLER( usvsthem_video_outputs_w );
 extern unsigned char *gottlieb_characterram;
 WRITE_HANDLER( gottlieb_paletteram_w );
-void gottlieb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( gottlieb );
 
 WRITE_HANDLER( gottlieb_sh_w );
 
@@ -179,7 +178,7 @@ WRITE_HANDLER( gottlieb_cause_dac_nmi_w );
 
 static UINT8 *audiobuffer_region;
 
-static void init_machine(void)
+MACHINE_INIT( gottlieb )
 {
 	UINT8 *ram = memory_region(REGION_CPU1);
 	cpu_setbank(1, &ram[0x8000]);
@@ -377,7 +376,7 @@ logerror("laserdisc command %02x -> %02x\n",data,cmd);
 	}
 }
 
-int gottlieb_interrupt(void)
+INTERRUPT_GEN( gottlieb_interrupt )
 {
 	if (access_time > 0) {
 		access_time--;
@@ -401,26 +400,8 @@ logerror("current frame : %d\n",current_frame);
 			else audioready = 0;
 		}
 	}
-	return nmi_interrupt();
+	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
-
-
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0xff,nvram_size);
-	}
-}
-
 
 
 static MEMORY_READ_START( reactor_readmem )
@@ -477,7 +458,7 @@ static MEMORY_READ_START( gottlieb_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( gottlieb_writemem )
-	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x00000, 0x00fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -505,7 +486,7 @@ MEMORY_END
 
 /* same as above, different video_outputs plus laser disc control outputs */
 static MEMORY_WRITE_START( usvsthem_writemem )
-	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x00000, 0x00fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x01000, 0x01fff, MWA_RAM },	/* ROM in Krull */
 	{ 0x02000, 0x02fff, MWA_RAM },	/* ROM in Krull and 3 Stooges */
 	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -553,7 +534,7 @@ MEMORY_END
 
 /* same as above, different video_outputs */
 static MEMORY_WRITE_START( stooges_writemem )
-	{ 0x00000, 0x00fff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x00000, 0x00fff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x01000, 0x01fff, MWA_RAM },
 	{ 0x02000, 0x02fff, MWA_ROM },
 	{ 0x03000, 0x030ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -1421,125 +1402,138 @@ static struct AY8910interface ay8910_interface =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER_SOUND_1(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM,SAMPLES)	\
-static const struct MachineDriver machine_driver_##GAMENAME =             \
-{                                                                   \
-	/* basic machine hardware */                                	\
-	{		                                                        \
-		{	  	                                                    \
-			CPU_I86,												\
-			5000000,        /* 5 MHz */								\
-			READMEM,WRITEMEM,0,0,									\
-			gottlieb_interrupt,1									\
-		},		                                                    \
-		{		                                                    \
-			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			3579545/4,	/* the board can be set to /2 as well */	\
-			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,		\
-			ignore_interrupt,1	/* IRQs are triggered by the main CPU */		\
-								/* NMIs are triggered by the Votrax SC-01 */	\
-		}                                                   		\
-	},                                                          	\
-	61, 1018,	/* frames per second, vblank duration */			\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	init_machine,			                                    	\
-																	\
-	/* video hardware */                                        	\
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
-	GFX,                                                        	\
-	16, 0,		                                                	\
-	0,									                           	\
-																	\
-	VIDEO_TYPE_RASTER,												\
-	0,                                                          	\
-	gottlieb_vh_start,												\
-	gottlieb_vh_stop,												\
-	gottlieb_vh_screenrefresh,										\
-																	\
-	/* sound hardware */                                        	\
-	0,0,0,0,                                                    	\
-	{                                                           	\
-		{                                                   		\
-			SOUND_DAC,												\
-			&dac1_interface											\
-		},															\
-		{															\
-			SAMPLES * SOUND_SAMPLES,	/* for Votrax simulation */	\
-			&GAMENAME##_samples_interface							\
-		}                                                   		\
-	},                                                           	\
-																	\
-	NVRAM															\
-}
-
-#define MACHINE_DRIVER_SOUND_2(GAMENAME,READMEM,WRITEMEM,GFX,NVRAM)	\
-static const struct MachineDriver machine_driver_##GAMENAME =				\
-{																	\
-	/* basic machine hardware */									\
-	{																\
-		{															\
-			CPU_I86,												\
-			5000000,        /* 5 MHz */								\
-			READMEM,WRITEMEM,0,0,									\
-			gottlieb_interrupt,1									\
-		},															\
-		{															\
-			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			1000000,	/* 1 MHz */									\
-			stooges_sound_readmem,stooges_sound_writemem,0,0,		\
-			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
-								/* NMIs are triggered by the second sound CPU */	\
-		},															\
-		{															\
-			CPU_M6502 | CPU_AUDIO_CPU ,								\
-			1000000,	/* 1 MHz */									\
-			stooges_sound2_readmem,stooges_sound2_writemem,0,0,		\
-			ignore_interrupt,1	/* IRQs are triggered by the main CPU */			\
-								/* NMIs are triggered by a programmable timer */	\
-		}															\
-	},																\
-	61, 1018,	/* frames per second, vblank duration */			\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	init_machine,													\
-																	\
-	/* video hardware */											\
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },						\
-	GFX,															\
-	16, 0,															\
-	0,																\
-																	\
-	VIDEO_TYPE_RASTER,												\
-	0,																\
-	gottlieb_vh_start,												\
-	gottlieb_vh_stop,												\
-	gottlieb_vh_screenrefresh,										\
-																	\
-	/* sound hardware */											\
-	0,0,0,0,														\
-	{																\
-		{															\
-			SOUND_DAC,												\
-			&dac2_interface											\
-		},															\
-		{															\
-			SOUND_AY8910,											\
-			&ay8910_interface										\
-		}															\
-	},																\
-																	\
-	NVRAM															\
-}
-
 /* games using the revision 1 sound board */
-MACHINE_DRIVER_SOUND_1(reactor,  reactor_readmem, reactor_writemem, charRAM_gfxdecodeinfo,0,            1);
-MACHINE_DRIVER_SOUND_1(gottlieb, gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler,0);
-MACHINE_DRIVER_SOUND_1(qbert,    gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler,1);
-MACHINE_DRIVER_SOUND_1(krull,    gottlieb_readmem,gottlieb_writemem,charRAM_gfxdecodeinfo,nvram_handler,0);
+static MACHINE_DRIVER_START( gottlieb )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", I86, 5000000)	/* 5 MHz */
+	MDRV_CPU_MEMORY(gottlieb_readmem,gottlieb_writemem)
+	MDRV_CPU_VBLANK_INT(gottlieb_interrupt,1)
+
+	MDRV_CPU_ADD_TAG("sound", M6502, 3579545/4)	/* the board can be set to /2 as well */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(gottlieb_sound_readmem,gottlieb_sound_writemem)
+								/* NMIs are triggered by the Votrax SC-01 */
+	MDRV_FRAMES_PER_SECOND(61)
+	MDRV_VBLANK_DURATION(1018)	/* frames per second, vblank duration */
+
+	MDRV_MACHINE_INIT(gottlieb)
+	MDRV_NVRAM_HANDLER(generic_1fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(charROM_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+
+	MDRV_VIDEO_START(gottlieb)
+	MDRV_VIDEO_UPDATE(gottlieb)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, dac1_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( reactor )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gottlieb)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(reactor_readmem, reactor_writemem)
+	
+	MDRV_NVRAM_HANDLER(NULL)
+
+	/* video hardware */
+	MDRV_GFXDECODE(charRAM_gfxdecodeinfo)
+	MDRV_SOUND_ADD(SAMPLES, reactor_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qbert )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gottlieb)
+
+	/* video hardware */
+	MDRV_SOUND_ADD(SAMPLES, qbert_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( krull )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gottlieb)
+
+	/* video hardware */
+	MDRV_GFXDECODE(charRAM_gfxdecodeinfo)
+MACHINE_DRIVER_END
+
+
 /* games using the revision 2 sound board */
-MACHINE_DRIVER_SOUND_2(mach3,    gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_2(usvsthem, gottlieb_readmem,usvsthem_writemem,charROM_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_2(stooges,  stooges_readmem, stooges_writemem, charRAM_gfxdecodeinfo,nvram_handler);
-MACHINE_DRIVER_SOUND_2(gottlieb2,gottlieb_readmem,gottlieb_writemem,charROM_gfxdecodeinfo,nvram_handler);
+static MACHINE_DRIVER_START( gottlieb2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", I86, 5000000)	/* 5 MHz */
+	MDRV_CPU_MEMORY(gottlieb_readmem,gottlieb_writemem)
+	MDRV_CPU_VBLANK_INT(gottlieb_interrupt,1)
+
+	MDRV_CPU_ADD_TAG("sound", M6502, 1000000)	/* 1 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(stooges_sound_readmem,stooges_sound_writemem)
+
+	MDRV_CPU_ADD_TAG("sound2", M6502, 1000000)	/* 1 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(stooges_sound2_readmem,stooges_sound2_writemem)
+								/* NMIs are triggered by the Votrax SC-01 */
+	MDRV_FRAMES_PER_SECOND(61)
+	MDRV_VBLANK_DURATION(1018)	/* frames per second, vblank duration */
+
+	MDRV_MACHINE_INIT(gottlieb)
+	MDRV_NVRAM_HANDLER(generic_1fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(charROM_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+
+	MDRV_VIDEO_START(gottlieb)
+	MDRV_VIDEO_UPDATE(gottlieb)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, dac2_interface)
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mach3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gottlieb2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(gottlieb_readmem,usvsthem_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( usvsthem )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mach3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( stooges )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gottlieb2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(stooges_readmem,stooges_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(charRAM_gfxdecodeinfo)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1868,7 +1862,7 @@ ROM_START( curvebal )
 ROM_END
 
 
-static void init_gottlieb(void)
+static DRIVER_INIT( gottlieb )
 {
 	gottlieb_sound_init();
 }
@@ -1885,5 +1879,5 @@ GAMEX(1983, mach3,    0,     mach3,    mach3,    gottlieb, ROT0,   "Mylstar", "M
 GAMEX(19??, usvsthem, 0,     usvsthem, usvsthem, gottlieb, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
 GAMEX(1984, 3stooges, 0,     stooges,  3stooges, gottlieb, ROT0,   "Mylstar", "Three Stooges", GAME_IMPERFECT_SOUND )
 GAME( 1983, qbertqub, 0,     qbert,    qbertqub, 0,        ROT270, "Mylstar", "Q*bert's Qubes" )
-GAME( 1983, screwloo, 0,     gottlieb2,screwloo, 0,        ROT0,   "Mylstar", "Screw Loose (prototype)" )
+GAME( 1983, screwloo, 0,     gottlieb2,screwloo, gottlieb, ROT0,   "Mylstar", "Screw Loose (prototype)" )
 GAME( 1984, curvebal, 0,     gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball" )

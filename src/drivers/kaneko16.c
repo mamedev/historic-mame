@@ -70,7 +70,7 @@ static data16_t *mcu_ram, gtmr_mcu_com[4];
 
 ***************************************************************************/
 
-void kaneko16_init_machine(void)
+MACHINE_INIT( kaneko16 )
 {
 	kaneko16_sprite_type  = 0;
 
@@ -97,16 +97,16 @@ void kaneko16_init_machine(void)
 	kaneko16_priority.sprite[3] = 0x0000;	// above all
 }
 
-static void berlwall_init_machine(void)
+static MACHINE_INIT( berlwall )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 2;	// like type 0, but using 16 instead of 8 bytes
 }
 
-static void blazeon_init_machine(void)
+static MACHINE_INIT( blazeon )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_xoffs = 0x10000 - 0x680;
 	kaneko16_sprite_yoffs = 0x000;
@@ -126,18 +126,18 @@ static void blazeon_init_machine(void)
 	kaneko16_priority.sprite[3] = 0x0000;	// ""
 }
 
-static void gtmr_init_machine(void)
+static MACHINE_INIT( gtmr )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 1;
 
 	memset(gtmr_mcu_com, 0, 4 * sizeof( data16_t) );
 }
 
-static void mgcrystl_init_machine (void)
+static MACHINE_INIT( mgcrystl )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 /*
 	Sx = Sprites with priority x, x = tiles with priority x,
 	Sprites - Tiles Order:
@@ -165,18 +165,18 @@ static void mgcrystl_init_machine (void)
 	kaneko16_priority.sprite[3] = 0x0000;	// ""
 }
 
-static void sandscrp_init_machine(void)
+static MACHINE_INIT( sandscrp )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 3;	// "different" sprites layout
 
 	watchdog_reset16_r(0,0);	// start with an armed watchdog
 }
 
-static void shogwarr_init_machine(void)
+static MACHINE_INIT( shogwarr )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	shogwarr_mcu_status = 0;
 	shogwarr_mcu_command_offset = 0;
@@ -215,7 +215,7 @@ void gtmr_mcu_run(void)
 	data16_t mcu_offset		=	mcu_ram[0x0012/2] / 2;
 	data16_t mcu_data		=	mcu_ram[0x0014/2];
 
-	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",cpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
 
 	switch (mcu_command >> 8)
 	{
@@ -322,30 +322,30 @@ static READ16_HANDLER( sandscrp_mcu_ram_r )
 		case 0x04/2:	// Bit 0: collision detection
 		{
 			/* First rectangle */
-			int x10		=	mcu_ram[0x00/2];
-			int x11		=	mcu_ram[0x02/2] + x10;
-			int y10		=	mcu_ram[0x04/2];
-			int y11		=	mcu_ram[0x06/2] + y10;
+			int x_10		=	mcu_ram[0x00/2];
+			int x_11		=	mcu_ram[0x02/2] + x_10;
+			int y_10		=	mcu_ram[0x04/2];
+			int y_11		=	mcu_ram[0x06/2] + y_10;
 
 			/* Second rectangle */
-			int x20		=	mcu_ram[0x08/2];
-			int x21		=	mcu_ram[0x0a/2] + x20;
-			int y20		=	mcu_ram[0x0c/2];
-			int y21		=	mcu_ram[0x0e/2] + y20;
+			int x_20		=	mcu_ram[0x08/2];
+			int x_21		=	mcu_ram[0x0a/2] + x_20;
+			int y_20		=	mcu_ram[0x0c/2];
+			int y_21		=	mcu_ram[0x0e/2] + y_20;
 
 			/* Sign extend the words */
-			x10 = (x10 & 0x7fff) - (x10 & 0x8000);
-			x11 = (x11 & 0x7fff) - (x11 & 0x8000);
-			y10 = (y10 & 0x7fff) - (y10 & 0x8000);
-			y11 = (y11 & 0x7fff) - (y11 & 0x8000);
-			x20 = (x20 & 0x7fff) - (x20 & 0x8000);
-			x21 = (x21 & 0x7fff) - (x21 & 0x8000);
-			y20 = (y20 & 0x7fff) - (y20 & 0x8000);
-			y21 = (y21 & 0x7fff) - (y21 & 0x8000);
+			x_10 = (x_10 & 0x7fff) - (x_10 & 0x8000);
+			x_11 = (x_11 & 0x7fff) - (x_11 & 0x8000);
+			y_10 = (y_10 & 0x7fff) - (y_10 & 0x8000);
+			y_11 = (y_11 & 0x7fff) - (y_11 & 0x8000);
+			x_20 = (x_20 & 0x7fff) - (x_20 & 0x8000);
+			x_21 = (x_21 & 0x7fff) - (x_21 & 0x8000);
+			y_20 = (y_20 & 0x7fff) - (y_20 & 0x8000);
+			y_21 = (y_21 & 0x7fff) - (y_21 & 0x8000);
 
 			/* Check if they overlap */
-			if	(	( x10 > x21 ) || ( x11 < x20 ) ||
-					( y10 > y21 ) || ( y11 < y20 )	)
+			if	(	( x_10 > x_21 ) || ( x_11 < x_20 ) ||
+					( y_10 > y_21 ) || ( y_11 < y_20 )	)
 				return 0;
 			else
 				return 1;
@@ -365,7 +365,7 @@ static READ16_HANDLER( sandscrp_mcu_ram_r )
 			return (rand() & 0xffff);
 	}
 
-	logerror("CPU #0 PC %06X : Unknown MCU word %04X read\n",cpu_get_pc(),offset*2);
+	logerror("CPU #0 PC %06X : Unknown MCU word %04X read\n",activecpu_get_pc(),offset*2);
 	return mcu_ram[offset];
 }
 
@@ -401,7 +401,7 @@ void shogwarr_mcu_run(void)
 	if (mcu_command == 0) return;
 
 	logerror("CPU #0 PC %06X : MCU executed command at %04X: %04X\n",
-	 	cpu_get_pc(),shogwarr_mcu_command_offset*2,mcu_command);
+	 	activecpu_get_pc(),shogwarr_mcu_command_offset*2,mcu_command);
 
 	switch (mcu_command)
 	{
@@ -616,15 +616,14 @@ static void update_irq_state(void)
 
 
 /* Called once/frame to generate the VBLANK interrupt */
-static int sandscrp_interrupt(void)
+static INTERRUPT_GEN( sandscrp_interrupt )
 {
 	vblank_irq = 1;
 	update_irq_state();
-	return ignore_interrupt();
 }
 
 
-static void sandscrp_eof_callback(void)
+static VIDEO_EOF( sandscrp )
 {
 	sprite_irq = 1;
 	update_irq_state();
@@ -901,7 +900,7 @@ WRITE16_HANDLER( gtmr_oki_0_bank_w )
 	{
 		OKIM6295_set_bank_base(0, 0x10000 * (data & 0xF) );
 		bank0 = (data & 0xF);
-//		logerror("CPU #0 PC %06X : OKI0 bank %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI0 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -910,7 +909,7 @@ WRITE16_HANDLER( gtmr_oki_1_bank_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_set_bank_base(1, 0x40000 * (data & 0x1) );
-//		logerror("CPU #0 PC %06X : OKI1 bank %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI1 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -951,7 +950,7 @@ WRITE16_HANDLER( gtmr_oki_0_data_w )
 		}
 
 		OKIM6295_data_0_w(0,data);
-//		logerror("CPU #0 PC %06X : OKI0 <- %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
 
 	}
 
@@ -962,7 +961,7 @@ WRITE16_HANDLER( gtmr_oki_1_data_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_data_1_w(0,data);
-//		logerror("CPU #0 PC %06X : OKI1 <- %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI1 <- %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -1260,7 +1259,7 @@ WRITE_HANDLER( sandscrp_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x07;
 
-	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
@@ -2095,14 +2094,13 @@ static struct GfxDecodeInfo sandscrp_gfxdecodeinfo[] =
 ***************************************************************************/
 
 #define KANEKO16_INTERRUPTS_NUM	3
-int kaneko16_interrupt(void)
+INTERRUPT_GEN( kaneko16_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  return 3;
-		case 1:  return 4;
-		case 0:  return 5;
-		default: return 0;
+		case 2:  cpu_set_irq_line(0, 3, HOLD_LINE);	break;
+		case 1:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
+		case 0:  cpu_set_irq_line(0, 5, HOLD_LINE); break;
 	}
 }
 
@@ -2186,80 +2184,67 @@ static struct YM2151interface ym2151_intf_blazeon =
 	6-7]	rte
 */
 
-static const struct MachineDriver machine_driver_berlwall =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* MC68000P12 */
-			berlwall_readmem,berlwall_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	berlwall_init_machine,
+static MACHINE_DRIVER_START( berlwall )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* MC68000P12 */
+	MDRV_CPU_MEMORY(berlwall_readmem,berlwall_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(berlwall)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 16, 240-1},
-	kaneko16_gfx_1x4bit_1x4bit,
-	2048 + 32768, 0,	/* 32768 static colors for the bg */
-	berlwall_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)	// mangled sprites otherwise
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 16, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_1x4bit)
+	MDRV_PALETTE_LENGTH(2048 + 32768)	/* 32768 static colors for the bg */
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
-	0,
-	berlwall_vh_start,
-	berlwall_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_PALETTE_INIT(berlwall)
+	MDRV_VIDEO_START(berlwall)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_AY8910,	&ay8910_intf_2x1MHz_DSW	},
-		{	SOUND_OKIM6295,	&okim6295_intf_12kHz	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x1MHz_DSW)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_12kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 							Bakuretsu Breaker
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_bakubrkr =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* ? */
-			bakubrkr_readmem,bakubrkr_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	kaneko16_init_machine,
+static MACHINE_DRIVER_START( bakubrkr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* ? */
+	MDRV_CPU_MEMORY(bakubrkr_readmem,bakubrkr_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(kaneko16)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 16, 240-1},
-	kaneko16_gfx_1x4bit_2x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)	// mangled sprites otherwise
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 16, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_2x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
-	0,
-	kaneko16_vh_start_2xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_2xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_AY8910,	&ay8910_intf_2x2MHz_EEPROM		},
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz				}
-	},
-
-	nvram_handler_93C46
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x2MHz_EEPROM)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2276,45 +2261,36 @@ static struct MachineDriver machine_driver_bakubrkr =
 		6-7]	busy loop
 */
 
-static struct MachineDriver machine_driver_blazeon =
-{
-	{
-		{
-			CPU_M68000,	/* TMP68HC000-12 */
-			12000000,
-			blazeon_readmem,blazeon_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		},
-		{
-			CPU_Z80,	/* D780C-2 */
-			4000000,	/* ? */
-			blazeon_sound_readmem, blazeon_sound_writemem,
-			blazeon_sound_readport,blazeon_sound_writeport,
-			ignore_interrupt, 1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	blazeon_init_machine,
+static MACHINE_DRIVER_START( blazeon )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12000000)	/* TMP68HC000-12 */
+	MDRV_CPU_MEMORY(blazeon_readmem,blazeon_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(Z80,4000000)	/* D780C-2 */
+	MDRV_CPU_MEMORY(blazeon_sound_readmem,blazeon_sound_writemem)
+	MDRV_CPU_PORTS(blazeon_sound_readport,blazeon_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(blazeon)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 -8},
-	kaneko16_gfx_1x4bit_1x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1 -8)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_1x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	kaneko16_vh_start_1xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_1xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&ym2151_intf_blazeon	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_intf_blazeon)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2331,79 +2307,64 @@ static struct MachineDriver machine_driver_blazeon =
 	VIDEO_UPDATE_AFTER_VBLANK fixes the mangled/wrong colored sprites
 */
 
-static const struct MachineDriver machine_driver_gtmr =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* ? Most likely a 68000-HC16 */
-			gtmr_readmem,gtmr_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	gtmr_init_machine,
+static MACHINE_DRIVER_START( gtmr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* ? Most likely a 68000-HC16 */
+	MDRV_CPU_MEMORY(gtmr_readmem,gtmr_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(gtmr)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	kaneko16_gfx_1x8bit_2x4bit,
-	32768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x8bit_2x4bit)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	kaneko16_vh_start_2xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_2xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_2x12kHz	}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2x12kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Magical Crystal
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_mgcrystl =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			mgcrystl_readmem,mgcrystl_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	mgcrystl_init_machine,
+static MACHINE_DRIVER_START( mgcrystl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(mgcrystl_readmem,mgcrystl_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(mgcrystl)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1},
-	kaneko16_gfx_1x4bit_2x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_2x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	kaneko16_vh_start_2xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_2xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_AY8910,	&ay8910_intf_2x2MHz_EEPROM	},
-		{	SOUND_OKIM6295,	&okim6295_intf_18kHz		}
-	},
-
-	nvram_handler_93C46
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x2MHz_EEPROM)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_18kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2430,46 +2391,38 @@ static struct YM2203interface ym2203_intf_sandscrp =
 };
 
 
-static const struct MachineDriver machine_driver_sandscrp =
-{
-	{
-		{
-			CPU_M68000,	/* TMP68HC000N-12 */
-			12000000,
-			sandscrp_readmem, sandscrp_writemem,0,0,
-			sandscrp_interrupt, 1
-		},
-		{
-			CPU_Z80,	/* Z8400AB1, Reads the DSWs: it can't be disabled */
-			4000000,
-			sandscrp_sound_readmem,  sandscrp_sound_writemem,
-			sandscrp_sound_readport, sandscrp_sound_writeport,
-			ignore_interrupt, 1	/* IRQ by YM2203, NMI by Main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	// eof callback
-	1,
-	sandscrp_init_machine,
+static MACHINE_DRIVER_START( sandscrp )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12000000)	/* TMP68HC000N-12 */
+	MDRV_CPU_MEMORY(sandscrp_readmem,sandscrp_writemem)
+	MDRV_CPU_VBLANK_INT(sandscrp_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,4000000)	/* Z8400AB1, Reads the DSWs: it can't be disabled */
+	MDRV_CPU_MEMORY(sandscrp_sound_readmem,sandscrp_sound_writemem)
+	MDRV_CPU_PORTS(sandscrp_sound_readport,sandscrp_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// eof callback
+
+	MDRV_MACHINE_INIT(sandscrp)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	sandscrp_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(sandscrp_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	sandscrp_eof_callback,
-	sandscrp_vh_start_1xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(sandscrp_1xVIEW2)
+	MDRV_VIDEO_EOF(sandscrp)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_15kHz	},
-		{	SOUND_YM2203,	&ym2203_intf_sandscrp	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_15kHz)
+	MDRV_SOUND_ADD(YM2203, ym2203_intf_sandscrp)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2489,49 +2442,41 @@ static const struct MachineDriver machine_driver_sandscrp =
 	other: busy loop
 */
 #define SHOGWARR_INTERRUPTS_NUM	3
-int shogwarr_interrupt(void)
+INTERRUPT_GEN( shogwarr_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  return 2;
-		case 1:  return 3;
-//		case 0:  return 4;
-		default: return 0;
+		case 2:  cpu_set_irq_line(0, 2, HOLD_LINE); break;
+		case 1:  cpu_set_irq_line(0, 3, HOLD_LINE); break;
+//		case 0:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
 	}
 }
 
-static const struct MachineDriver machine_driver_shogwarr =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			shogwarr_readmem,shogwarr_writemem,0,0,
-			shogwarr_interrupt, SHOGWARR_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	shogwarr_init_machine,
+static MACHINE_DRIVER_START( shogwarr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(shogwarr_readmem,shogwarr_writemem)
+	MDRV_CPU_VBLANK_INT(shogwarr_interrupt,SHOGWARR_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(shogwarr)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	kaneko16_gfx_1x4bit_1x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_1x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	kaneko16_vh_start_1xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_1xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_2x12kHz	}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2x12kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2561,13 +2506,13 @@ void kaneko16_unscramble_tiles(int region)
 	}
 }
 
-void init_kaneko16(void)
+DRIVER_INIT( kaneko16 )
 {
 	kaneko16_unscramble_tiles(REGION_GFX2);
 	kaneko16_unscramble_tiles(REGION_GFX3);
 }
 
-void init_berlwall(void)
+DRIVER_INIT( berlwall )
 {
 	kaneko16_unscramble_tiles(REGION_GFX2);
 }
@@ -3176,7 +3121,7 @@ ROM_START( shogwarr )
 ROM_END
 
 
-void init_shogwarr(void)
+DRIVER_INIT( shogwarr )
 {
 	/* Code patches */
 #if 0

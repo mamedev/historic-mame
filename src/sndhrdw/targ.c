@@ -1,3 +1,9 @@
+/*************************************************************************
+
+	Exidy 6502 hardware
+
+*************************************************************************/
+
 /* Sound channel usage
    0 = CPU music,  Shoot
    1 = Crash
@@ -6,6 +12,7 @@
 */
 
 #include "driver.h"
+#include "exidy.h"
 
 static int tone_channel;
 

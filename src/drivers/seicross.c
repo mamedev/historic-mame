@@ -41,15 +41,15 @@ on a very small daughterboard).
 
 extern unsigned char *seicross_row_scroll;
 WRITE_HANDLER( seicross_colorram_w );
-void seicross_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void seicross_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( seicross );
+VIDEO_UPDATE( seicross );
 
 
 static unsigned char *nvram;
 static size_t nvram_size;
 
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( seicross )
 {
 	if (read_or_write)
 		osd_fwrite(file,nvram,nvram_size);
@@ -69,7 +69,7 @@ static void nvram_handler(void *file,int read_or_write)
 
 
 
-static void friskyt_init_machine(void)
+static MACHINE_INIT( friskyt )
 {
 	/* start with the protection mcu halted */
 	cpu_set_halt_line(1, ASSERT_LINE);
@@ -86,7 +86,7 @@ static READ_HANDLER( friskyt_portB_r )
 
 static WRITE_HANDLER( friskyt_portB_w )
 {
-//logerror("PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
+//logerror("PC %04x: 8910 port B = %02x\n",activecpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
 	interrupt_enable_w(0,data & 1);
 
@@ -430,60 +430,50 @@ static struct DACinterface dac_interface =
 };
 
 
-#define MACHINE_DRIVER(NAME,NVRAM)														\
-static const struct MachineDriver machine_driver_##NAME =										\
-{																						\
-	/* basic machine hardware */														\
-	{																					\
-		{																				\
-			CPU_Z80,																	\
-			3072000,	/* 3.072 MHz? */												\
-			readmem,writemem,readport,writeport,										\
-			interrupt,1																	\
-		},																				\
-		{																				\
-			CPU_NSC8105,																\
-			6000000/4,	/* ??? */														\
-			mcu_##NAME##_readmem,mcu_##NAME##_writemem,0,0,								\
-			ignore_interrupt,0															\
-		}																				\
-	},																					\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	20,	/* 20 CPU slices per frame - an high value to ensure proper */					\
-			/* synchronization of the CPUs */											\
-	friskyt_init_machine,																\
-																						\
-	/* video hardware */																\
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },											\
-	gfxdecodeinfo,																		\
-	64, 0,																				\
-	seicross_vh_convert_color_prom,														\
-																						\
-	VIDEO_TYPE_RASTER,																	\
-	0,																					\
-	generic_vh_start,																	\
-	generic_vh_stop,																	\
-	seicross_vh_screenrefresh,															\
-																						\
-	/* sound hardware */																\
-	0,0,0,0,																			\
-	{																					\
-		{																				\
-			SOUND_AY8910,																\
-			&ay8910_interface															\
-		},																				\
-		{																				\
-			SOUND_DAC,																	\
-			&dac_interface																\
-		}																				\
-	},																					\
-																						\
-	NVRAM																				\
-};
+static MACHINE_DRIVER_START( nvram )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD_TAG("mcu", NSC8105, 6000000/4)	/* ??? */
+	MDRV_CPU_MEMORY(mcu_nvram_readmem,mcu_nvram_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+	MDRV_INTERLEAVE(20)	/* 20 CPU slices per frame - an high value to ensure proper */
+						/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(friskyt)
+	MDRV_NVRAM_HANDLER(seicross)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+
+	MDRV_PALETTE_INIT(seicross)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(seicross)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER(nvram,nvram_handler)
-MACHINE_DRIVER(no_nvram,0)
+static MACHINE_DRIVER_START( no_nvram )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nvram)
+	MDRV_CPU_MODIFY("mcu")
+	MDRV_CPU_MEMORY(mcu_no_nvram_readmem,mcu_no_nvram_writemem)
+	
+	MDRV_NVRAM_HANDLER(NULL)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -594,7 +584,7 @@ ROM_END
 
 
 
-static void init_friskyt(void)
+static DRIVER_INIT( friskyt )
 {
 	int A;
 	unsigned char *src,*dest;

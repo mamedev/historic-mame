@@ -24,12 +24,12 @@ TODO:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
-void armedf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void armedf_eof_callback(void);
-int terraf_vh_start(void);
-int armedf_vh_start(void);
-int kodure_vh_start(void);
-int cclimbr2_vh_start(void);
+VIDEO_UPDATE( armedf );
+VIDEO_EOF( armedf );
+VIDEO_START( terraf );
+VIDEO_START( armedf );
+VIDEO_START( kodure );
+VIDEO_START( cclimbr2 );
 
 WRITE16_HANDLER( armedf_bg_videoram_w );
 WRITE16_HANDLER( armedf_fg_videoram_w );
@@ -579,14 +579,6 @@ static struct YM3812interface ym3812_interface =
 	{ 255 }         /* (not supported) */
 };
 
-int armedf_interrupt(void){
-	return (1);
-}
-
-int cclimbr2_interrupt(void){
-	return (2);
-}
-
 static struct DACinterface dac_interface =
 {
 	2,	/* 2 channels */
@@ -601,189 +593,133 @@ static struct DACinterface cclimbr2_dac_interface =
 
 
 
-static const struct MachineDriver machine_driver_terraf =
-{
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz?? */
-			terraf_readmem,terraf_writemem,0,0,
-			armedf_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 MHz???? */
-			soundreadmem,soundwritemem,readport,writeport,
-			interrupt,128
-		},
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( terraf )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_MEMORY(terraf_readmem,terraf_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	MDRV_CPU_MEMORY(soundreadmem,soundwritemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 12*8, (64-12)*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(12*8, (64-12)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	armedf_eof_callback,
-	terraf_vh_start,
-	0,
-	armedf_vh_screenrefresh,
+	MDRV_VIDEO_EOF(armedf)
+	MDRV_VIDEO_START(terraf)
+	MDRV_VIDEO_UPDATE(armedf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-		   SOUND_YM3812,
-		   &ym3812_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_kodure =
-{
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz?? */
-			kodure_readmem, kodure_writemem, 0, 0,
-			armedf_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 MHz???? */
-			soundreadmem, soundwritemem, readport, writeport,
-			interrupt, 128
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( kodure )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_MEMORY(kodure_readmem,kodure_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	MDRV_CPU_MEMORY(soundreadmem,soundwritemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	armedf_eof_callback,
-	kodure_vh_start,
-	0,
-	armedf_vh_screenrefresh,
+	MDRV_VIDEO_EOF(armedf)
+	MDRV_VIDEO_START(kodure)
+	MDRV_VIDEO_UPDATE(armedf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_armedf =
-{
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz?? */
-			armedf_readmem,armedf_writemem,0,0,
-			armedf_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 MHz???? */
-			soundreadmem,soundwritemem,readport,writeport,
-			interrupt,128
-		},
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( armedf )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_MEMORY(armedf_readmem,armedf_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	MDRV_CPU_MEMORY(soundreadmem,soundwritemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 12*8, (64-12)*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(12*8, (64-12)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	armedf_eof_callback,
-	armedf_vh_start,
-	0,
-	armedf_vh_screenrefresh,
+	MDRV_VIDEO_EOF(armedf)
+	MDRV_VIDEO_START(armedf)
+	MDRV_VIDEO_UPDATE(armedf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-		   SOUND_YM3812,
-		   &ym3812_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_cclimbr2 =
-{
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz?? */
-			cclimbr2_readmem,cclimbr2_writemem,0,0,
-			cclimbr2_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 MHz???? */
-			cclimbr2_soundreadmem,cclimbr2_soundwritemem,readport,writeport,
-			interrupt,128
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( cclimbr2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_MEMORY(cclimbr2_readmem,cclimbr2_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz???? */
+	MDRV_CPU_MEMORY(cclimbr2_soundreadmem,cclimbr2_soundwritemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	armedf_eof_callback,
-	cclimbr2_vh_start,
-	0,
-	armedf_vh_screenrefresh,
+	MDRV_VIDEO_EOF(armedf)
+	MDRV_VIDEO_START(cclimbr2)
+	MDRV_VIDEO_UPDATE(armedf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-		   SOUND_YM3812,
-		   &ym3812_interface
-		},
-		{
-			SOUND_DAC,
-			&cclimbr2_dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, cclimbr2_dac_interface)
+MACHINE_DRIVER_END
 
 
 

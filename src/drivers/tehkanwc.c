@@ -26,9 +26,8 @@ extern unsigned char *tehkanwc_videoram1;
 extern size_t tehkanwc_videoram1_size;
 
 /* from vidhrdw */
-int tehkanwc_vh_start(void);
-void tehkanwc_vh_stop(void);
-void tehkanwc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( tehkanwc );
+VIDEO_UPDATE( tehkanwc );
 READ_HANDLER( tehkanwc_videoram1_r );
 WRITE_HANDLER( tehkanwc_videoram1_w );
 READ_HANDLER( tehkanwc_scroll_x_r );
@@ -101,7 +100,7 @@ static WRITE_HANDLER( tehkanwc_track_1_reset_w )
 static WRITE_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(2,Z80_NMI_INT);
+	cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static void reset_callback(int param)
@@ -115,7 +114,7 @@ static WRITE_HANDLER( sound_answer_w )
 
 	/* in Gridiron, the sound CPU goes in a tight loop after the self test, */
 	/* probably waiting to be reset by a watchdog */
-	if (cpu_get_pc() == 0x08bc) timer_set(TIME_IN_SEC(1),0,reset_callback);
+	if (activecpu_get_pc() == 0x08bc) timer_set(TIME_IN_SEC(1),0,reset_callback);
 }
 
 
@@ -635,58 +634,40 @@ static struct MSM5205interface msm5205_interface =
 	{ 25 }
 };
 
-static const struct MachineDriver machine_driver_tehkanwc =
-{
+static MACHINE_DRIVER_START( tehkanwc )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4608000,	/* 18.432000 / 4 */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4608000,	/* 18.432000 / 4 */
-			readmem_sub,writemem_sub,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,	/* communication is bidirectional, can't mark it as AUDIO_CPU */
-			4608000,	/* 18.432000 / 4 */
-			readmem_sound,writemem_sound,sound_readport,sound_writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - seems enough to keep the CPUs in sync */
-	0,
+	MDRV_CPU_ADD(Z80, 4608000)	/* 18.432000 / 4 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4608000)	/* 18.432000 / 4 */
+	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4608000)	/* 18.432000 / 4; communication is bidirectional, can't mark it as AUDIO_CPU */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - seems enough to keep the CPUs in sync */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	tehkanwc_vh_start,
-	tehkanwc_vh_stop,
-	tehkanwc_vh_screenrefresh,
+	MDRV_VIDEO_START(tehkanwc)
+	MDRV_VIDEO_UPDATE(tehkanwc)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-            &msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 

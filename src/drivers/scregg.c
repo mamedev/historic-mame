@@ -16,9 +16,9 @@ Sprite Priorities in Dommy
 
 
 /* from vidhrdw/btime.c */
-void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  btime_vh_start (void);
-void eggs_vh_screenrefresh    (struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( btime );
+VIDEO_START( btime );
+VIDEO_UPDATE( eggs );
 
 READ_HANDLER( btime_mirrorvideoram_r );
 WRITE_HANDLER( btime_mirrorvideoram_w );
@@ -199,79 +199,59 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_dommy =
-{
+static MACHINE_DRIVER_START( dommy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,
-			dommy_readmem,dommy_writemem,0,0,
-			interrupt,16
-		}
-	},
-	57, 3072,        /* frames per second, vblank duration taken from Burger Time */
-	1,      /* single CPU, no need from interleaving  */
-	0,
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_MEMORY(dommy_readmem,dommy_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,16)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3072)        /* frames per second, vblank duration taken from Burger Time */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	8, 8,
-	btime_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	btime_vh_start,
-	generic_vh_stop,
-	eggs_vh_screenrefresh,
+	MDRV_PALETTE_INIT(btime)
+	MDRV_VIDEO_START(btime)
+	MDRV_VIDEO_UPDATE(eggs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_scregg =
-{
+
+static MACHINE_DRIVER_START( scregg )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,
-			eggs_readmem,eggs_writemem,0,0,
-			interrupt,16
-		}
-	},
-	57, 3072,        /* frames per second, vblank duration taken from Burger Time */
-	1,      /* single CPU, no need from interleaving  */
-	0,
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_MEMORY(eggs_readmem,eggs_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,16)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3072)        /* frames per second, vblank duration taken from Burger Time */
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	8, 8,
-	btime_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	btime_vh_start,
-	generic_vh_stop,
-	eggs_vh_screenrefresh,
+	MDRV_PALETTE_INIT(btime)
+	MDRV_VIDEO_START(btime)
+	MDRV_VIDEO_UPDATE(eggs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START( dommy )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */

@@ -76,10 +76,9 @@ $854 marks start of service mode
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
-void taito_no_buffer_eof_callback(void);
-int slapshot_vh_start (void);
-void slapshot_vh_stop (void);
-void slapshot_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_EOF( taito_no_buffer );
+VIDEO_START( slapshot );
+VIDEO_UPDATE( slapshot );
 
 static data16_t *color_ram;
 
@@ -112,46 +111,20 @@ static WRITE16_HANDLER( color_ram_word_w )
 }
 
 
-/**********************************************************
-				NVRAM
-
- (Only alternate bytes are used, we save it all anyway)
-**********************************************************/
-
-static data16_t *slapshot_nvram;
-static size_t slapshot_nvram_size;
-
-static void slapshot_nvram_handler(void *file,int read_or_write)
-{
-	if( read_or_write )
-	{
-		osd_fwrite (file, slapshot_nvram, slapshot_nvram_size);
-	}
-	else
-	{
-		if (file)
-			osd_fread (file, slapshot_nvram, slapshot_nvram_size);
-		else
-			memset (slapshot_nvram, 0xff, slapshot_nvram_size);
-	}
-}
-
-
 /***********************************************************
 				INTERRUPTS
 ***********************************************************/
 
 void slapshot_interrupt6(int x)
 {
-	cpu_cause_interrupt(0,6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
 
-static int slapshot_interrupt(void)
+static INTERRUPT_GEN( slapshot_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, slapshot_interrupt6);
-
-	return 5;
+	cpu_set_irq_line(0,5,HOLD_LINE);
 }
 
 
@@ -241,7 +214,7 @@ static MEMORY_WRITE16_START( slapshot_writemem )
 	{ 0x800000, 0x80ffff, TC0480SCP_word_w },	  /* tilemaps */
 	{ 0x830000, 0x83002f, TC0480SCP_ctrl_word_w },
 	{ 0x900000, 0x907fff, color_ram_word_w, &color_ram },
-	{ 0xa00000, 0xa03fff, MWA16_RAM, &slapshot_nvram, &slapshot_nvram_size },
+	{ 0xa00000, 0xa03fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ 0xb00000, 0xb0001f, TC0360PRI_halfword_swap_w },	/* priority chip */
 	{ 0xc00000, 0xc0000f, TC0640FIO_halfword_byteswap_w },
 	{ 0xd00000, 0xd00003, slapshot_msb_sound_w },
@@ -409,50 +382,38 @@ static struct YM2610interface ym2610_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static struct MachineDriver machine_driver_slapshot =
-{
-	{
-		{
-			CPU_M68000,
-			14346000,	/* 28.6860 MHz / 2 ??? */
-			slapshot_readmem,slapshot_writemem,0,0,
-			slapshot_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( slapshot )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 14346000)	/* 28.6860 MHz / 2 ??? */
+	MDRV_CPU_MEMORY(slapshot_readmem,slapshot_writemem)
+	MDRV_CPU_VBLANK_INT(slapshot_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(slapshot_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	slapshot_gfxdecodeinfo,
-	8192, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	taito_no_buffer_eof_callback,
-	slapshot_vh_start,
-	slapshot_vh_stop,
-	slapshot_vh_screenrefresh,
+	MDRV_VIDEO_START(slapshot)
+	MDRV_VIDEO_EOF(taito_no_buffer)
+	MDRV_VIDEO_UPDATE(slapshot)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610B,
-			&ym2610_interface
-		}
-	},
-
-	slapshot_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610B, ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -492,7 +453,7 @@ ROM_START( slapshot )
 //	ROM_LOAD( "d71-13.8",   0x00000, 0x00???, 0x00000000 )
 ROM_END
 
-static void init_slapshot(void)
+static DRIVER_INIT( slapshot )
 {
 	unsigned int offset,i;
 	UINT8 *gfx = memory_region(REGION_GFX2);

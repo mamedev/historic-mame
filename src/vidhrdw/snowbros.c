@@ -16,7 +16,7 @@ WRITE16_HANDLER( snowbros_flipscreen_w )
 }
 
 
-void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( snowbros )
 {
 	int sx=0, sy=0, x=0, y=0, offs;
 
@@ -95,7 +95,7 @@ void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void wintbob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wintbob )
 {
 	int offs;
 

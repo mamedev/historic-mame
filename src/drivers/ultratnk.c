@@ -1,23 +1,64 @@
 /***************************************************************************
-Ultra Tank
-(C) 1979 Kee Games
 
-Known Issues:
+	Atari/Kee Ultra Tank hardware
 
-- sound samples needed
-- colors are probably correct, but should be verified
-- invisible tanks option doesn't work
-- coin counters aren't mapped
-- hardware collision detection is not emulated. However, the game is fully playable,
-  since the game software uses it only as a hint to check for tanks bumping into
-  walls/mines.
-*/
+	Games supported:
+		* Ultra Tank
+
+	Known issues:
+		- sound samples needed
+		- colors are probably correct, but should be verified
+		- invisible tanks option doesn't work
+		- coin counters aren't mapped
+		- hardware collision detection is not emulated. However, the game is fully playable,
+		  since the game software uses it only as a hint to check for tanks bumping into
+		  walls/mines.
+
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 static int ultratnk_controls;
 static data8_t *mirror_ram;
+
+
+
+/*************************************
+ *
+ *	Palette generation
+ *
+ *************************************/
+
+static unsigned char palette_source[] =
+{
+	0x00,0x00,0x00, /* BLACK */
+	0xff,0xff,0xff, /* WHITE */
+	0x80,0x80,0x80, /* LT GREY */
+	0x55,0x55,0x55, /* DK GREY */
+};
+
+static unsigned short colortable_source[] =
+{
+	0x02, 0x01,
+	0x02, 0x00,
+	0x02, 0x00,
+	0x02, 0x01
+};
+
+static PALETTE_INIT( ultratnk )
+{
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
+}
+
+
+
+/*************************************
+ *
+ *	Sprite rendering
+ *
+ *************************************/
 
 static void draw_sprites( struct mame_bitmap *bitmap )
 {
@@ -63,7 +104,15 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 		TRANSPARENCY_PEN, 0 );
 }
 
-void ultratnk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+
+/*************************************
+ *
+ *	Video update
+ *
+ *************************************/
+
+VIDEO_UPDATE( ultratnk )
 {
 	int code;
 	int sx,sy;
@@ -92,12 +141,18 @@ void ultratnk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	draw_sprites( bitmap );
 }
 
+
+
+/*************************************
+ *
+ *	Control reading
+ *
+ *************************************/
+
 static WRITE_HANDLER( da_latch_w )
 {
-	int joybits;
-	ultratnk_controls = input_port_3_r(0); /* start and fire buttons */
-
-	joybits = input_port_4_r(0);
+	int joybits = readinputport(4);
+	ultratnk_controls = readinputport(3); /* start and fire buttons */
 
 	switch( data )
 	{
@@ -119,15 +174,18 @@ static WRITE_HANDLER( da_latch_w )
 	}
 }
 
+
 static READ_HANDLER( ultratnk_controls_r )
 {
 	return (ultratnk_controls << offset) & 0x80;
 }
 
+
 static READ_HANDLER( ultratnk_barrier_r )
 {
 	return readinputport(2) & 0x80;
 }
+
 
 static READ_HANDLER( ultratnk_coin_r )
 {
@@ -142,10 +200,50 @@ static READ_HANDLER( ultratnk_coin_r )
 	return 0;
 }
 
+
 static READ_HANDLER( ultratnk_tilt_r )
 {
 	return (readinputport(2) << 5) & 0x80;	/* tilt */
 }
+
+
+static READ_HANDLER( ultratnk_dipsw_r )
+{
+	int dipsw = readinputport(0);
+	switch( offset )
+	{
+		case 0x00: return ((dipsw & 0xC0) >> 6); /* language? */
+		case 0x01: return ((dipsw & 0x30) >> 4); /* credits */
+		case 0x02: return ((dipsw & 0x0C) >> 2); /* game time */
+		case 0x03: return ((dipsw & 0x03) >> 0); /* extended time */
+	}
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Interrupt generation
+ *
+ *************************************/
+
+static INTERRUPT_GEN( ultratnk_interrupt )
+{
+	if (readinputport(1) & 0x40 )
+	{
+		/* only do NMI interrupt if not in TEST mode */
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Misc memory handlers
+ *
+ *************************************/
 
 static READ_HANDLER( ultratnk_collision_r )
 {
@@ -161,38 +259,18 @@ static READ_HANDLER( ultratnk_collision_r )
 	return 0;
 }
 
-static READ_HANDLER( ultratnk_dipsw_r )
-{
-	int dipsw = input_port_0_r(offset);
-	switch( offset )
-	{
-		case 0x00: return ((dipsw & 0xC0) >> 6); /* language? */
-		case 0x01: return ((dipsw & 0x30) >> 4); /* credits */
-		case 0x02: return ((dipsw & 0x0C) >> 2); /* game time */
-		case 0x03: return ((dipsw & 0x03) >> 0); /* extended time */
-	}
-	return 0;
-}
-
-static int ultratnk_interrupt(void)
-{
-	if( input_port_1_r(0) & 0x40 )
-	{
-		/* only do NMI interrupt if not in TEST mode */
-		return nmi_interrupt();
-	}
-	return ignore_interrupt();
-}
 
 static WRITE_HANDLER( ultratnk_leds_w )
 {
 	set_led_status(offset/2,offset&1);
 }
 
+
 static READ_HANDLER( mirror_r )
 {
 	return mirror_ram[offset];
 }
+
 
 static WRITE_HANDLER( mirror_w )
 {
@@ -200,6 +278,12 @@ static WRITE_HANDLER( mirror_w )
 }
 
 
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x00ff, MRA_RAM },
@@ -217,6 +301,7 @@ static MEMORY_READ_START( readmem )
 	{ 0xb000, 0xbfff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x00ff, MWA_RAM, &mirror_ram },
@@ -237,6 +322,12 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( ultratnk )
 	PORT_START
@@ -296,27 +387,11 @@ INPUT_PORTS_END
 
 
 
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-	0x80,0x80,0x80, /* LT GREY */
-	0x55,0x55,0x55, /* DK GREY */
-};
-
-static unsigned short colortable[] =
-{
-	0x02, 0x01,
-	0x02, 0x00,
-	0x02, 0x00,
-	0x02, 0x01
-};
-
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
-}
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
 
 static struct GfxLayout playfield_layout =
 {
@@ -328,6 +403,7 @@ static struct GfxLayout playfield_layout =
 	{ 0, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
+
 
 static struct GfxLayout motion_layout =
 {
@@ -343,49 +419,52 @@ static struct GfxLayout motion_layout =
 	16*8
 };
 
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &playfield_layout, 0, 4 }, 	/* playfield graphics */
 	{ REGION_GFX2, 0, &motion_layout,    0, 4 }, 	/* motion graphics */
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
 
-static struct MachineDriver machine_driver_ultratnk =
-{
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( ultratnk )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000, /* ? */
-			//12096000/16, 	   /* clock input is the "4H" signal */
-			readmem,writemem,0,0,
-			ultratnk_interrupt,4
-			/* NMI interrupt on the 32V signal if not in self-TEST */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,1500000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ultratnk_interrupt,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source)/3)
+	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source)/sizeof(unsigned short))
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	ultratnk_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-};
+	MDRV_PALETTE_INIT(ultratnk)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(ultratnk)
+MACHINE_DRIVER_END
 
 
+
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( ultratnk )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )
@@ -407,5 +486,12 @@ ROM_START( ultratnk )
 	ROM_LOAD( "30177-01.k6", 0x0c00, 0x0400, 0x3a91b09f )
 ROM_END
 
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAMEX( 1978, ultratnk, 0, ultratnk, ultratnk, 0, 0, "Atari", "Ultra Tank", GAME_NO_SOUND )

@@ -21,8 +21,7 @@ TODO:
 void pang_decode(void);
 
 
-int cbasebal_vh_start(void);
-void cbasebal_vh_stop(void);
+VIDEO_START( cbasebal );
 WRITE_HANDLER( cbasebal_textram_w );
 READ_HANDLER( cbasebal_textram_r );
 WRITE_HANDLER( cbasebal_scrollram_w );
@@ -30,7 +29,7 @@ READ_HANDLER( cbasebal_scrollram_r );
 WRITE_HANDLER( cbasebal_gfxctrl_w );
 WRITE_HANDLER( cbasebal_scrollx_w );
 WRITE_HANDLER( cbasebal_scrolly_w );
-void cbasebal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( cbasebal );
 
 
 static int rambank;
@@ -41,7 +40,7 @@ static WRITE_HANDLER( cbasebal_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* bits 0-4 select ROM bank */
-//logerror("%04x: bankswitch %02x\n",cpu_get_pc(),data);
+//logerror("%04x: bankswitch %02x\n",activecpu_get_pc(),data);
 	bankaddress = 0x10000 + (data & 0x1f) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
 
@@ -107,7 +106,7 @@ static struct EEPROM_interface eeprom_interface =
 };
 
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( cbasebal )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -280,43 +279,33 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static const struct MachineDriver machine_driver_cbasebal =
-{
-	{
-		{
-			CPU_Z80,
-			6000000,	/* ??? */
-			cbasebal_readmem,cbasebal_writemem,cbasebal_readport,cbasebal_writeport,
-			interrupt,1	/* ??? */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+static MACHINE_DRIVER_START( cbasebal )
 
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	cbasebal_gfxdecodeinfo,
-	1024, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	cbasebal_vh_start,
-	cbasebal_vh_stop,
-	cbasebal_vh_screenrefresh,
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-	},
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)	/* ??? */
+	MDRV_CPU_MEMORY(cbasebal_readmem,cbasebal_writemem)
+	MDRV_CPU_PORTS(cbasebal_readport,cbasebal_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* ??? */
 
-	nvram_handler
-};
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(cbasebal)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(cbasebal_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(cbasebal)
+	MDRV_VIDEO_UPDATE(cbasebal)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -348,7 +337,7 @@ ROM_START( cbasebal )
 ROM_END
 
 
-void init_cbasebal(void)
+DRIVER_INIT( cbasebal )
 {
 	pang_decode();
 }

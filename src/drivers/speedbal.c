@@ -55,9 +55,8 @@ size_t speedbal_foreground_videoram_size;
 size_t speedbal_background_videoram_size;
 size_t speedbal_sprites_dataram_size;
 
-int  speedbal_vh_start(void);
-void speedbal_vh_stop(void);
-void speedbal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( speedbal );
+VIDEO_UPDATE( speedbal );
 READ_HANDLER( speedbal_foreground_videoram_r );
 WRITE_HANDLER( speedbal_foreground_videoram_w );
 READ_HANDLER( speedbal_background_videoram_r );
@@ -254,48 +253,35 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static const struct MachineDriver machine_driver_speedbal =
-{
+static MACHINE_DRIVER_START( speedbal )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			readmem,writemem,readport,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			2660000,	/* 2.66 MHz ???  Maybe yes */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			interrupt,8
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,    /* 1 CPU slices per frame */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 2660000)	/* 2.66 MHz ???  Maybe yes */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	speedbal_vh_start,
-	speedbal_vh_stop,
-	speedbal_vh_screenrefresh,
+	MDRV_VIDEO_START(speedbal)
+	MDRV_VIDEO_UPDATE(speedbal)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -328,7 +314,7 @@ ROM_START( speedbal )
 ROM_END
 
 
-static void init_speedbal(void)
+static DRIVER_INIT( speedbal )
 {
 	int i;
 

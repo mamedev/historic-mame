@@ -14,20 +14,18 @@ driver by Allard Van Der Bas
 unsigned char *shaolins_nmi_enable;
 extern unsigned char *shaolins_scroll;
 
-void shaolins_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( shaolins );
 WRITE_HANDLER( shaolins_palettebank_w );
-void shaolins_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( shaolins );
 
 
-int shaolins_interrupt(void)
+INTERRUPT_GEN( shaolins_interrupt )
 {
-	if (cpu_getiloops() == 0) return interrupt();
+	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 0, HOLD_LINE);
 	else if (cpu_getiloops() % 2)
 	{
-		if (*shaolins_nmi_enable & 0x02) return nmi_interrupt();
+		if (*shaolins_nmi_enable & 0x02) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 
@@ -225,42 +223,31 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_shaolins =
-{
+static MACHINE_DRIVER_START( shaolins )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1250000,        /* 1.25 MHz */
-			readmem,writemem,0,0,
-			shaolins_interrupt,16	/* 1 IRQ + 8 NMI */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6809, 1250000)        /* 1.25 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(shaolins_interrupt,16)	/* 1 IRQ + 8 NMI */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	shaolins_gfxdecodeinfo,
-	256,16*8*16+16*8*16,
-	shaolins_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(shaolins_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*8*16+16*8*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	shaolins_vh_screenrefresh,
+	MDRV_PALETTE_INIT(shaolins)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(shaolins)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -113,36 +113,17 @@ WRITE_HANDLER( punchout_videoram2_w );
 WRITE_HANDLER( punchout_bigsprite1ram_w );
 WRITE_HANDLER( punchout_bigsprite2ram_w );
 WRITE_HANDLER( punchout_palettebank_w );
-int punchout_vh_start(void);
-int armwrest_vh_start(void);
-void punchout_vh_stop(void);
-void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void armwrest_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void punchout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void armwrest_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( punchout );
+VIDEO_START( armwrest );
+PALETTE_INIT( punchout );
+PALETTE_INIT( armwrest );
+VIDEO_UPDATE( punchout );
+VIDEO_UPDATE( armwrest );
 
-void init_punchout(void);
-void init_spnchout(void);
-void init_spnchotj(void);
-void init_armwrest(void);
-
-
-
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0,nvram_size);
-	}
-}
+DRIVER_INIT( punchout );
+DRIVER_INIT( spnchout );
+DRIVER_INIT( spnchotj );
+DRIVER_INIT( armwrest );
 
 
 
@@ -413,7 +394,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc3ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0xc000, 0xc3ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0xd000, 0xd7ff, MWA_RAM },
 	{ 0xdff0, 0xdff7, MWA_RAM, &punchout_bigsprite1 },
 	{ 0xdff8, 0xdffc, MWA_RAM, &punchout_bigsprite2 },
@@ -503,10 +484,10 @@ INPUT_PORTS_START( punchout )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -574,10 +555,10 @@ INPUT_PORTS_START( spnchout )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -640,12 +621,12 @@ INPUT_PORTS_START( armwrest )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -802,59 +783,56 @@ static struct VLM5030interface vlm5030_interface =
 
 
 
-#define MACHINE_DRIVER(NAME,GFX,COLORTABLE)											\
-static const struct MachineDriver machine_driver_##NAME =									\
-{																					\
-	/* basic machine hardware */													\
-	{																				\
-		{																			\
-			CPU_Z80,																\
-			8000000/2,	/* 4 MHz */													\
-			readmem,writemem,readport,writeport,									\
-			nmi_interrupt,1															\
-		},																			\
-		{																			\
-			CPU_N2A03 | CPU_AUDIO_CPU,												\
-			N2A03_DEFAULTCLOCK,														\
-			sound_readmem,sound_writemem,0,0,										\
-			nmi_interrupt,1															\
-		}																			\
-	},																				\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */	\
-	0,																				\
-																					\
-	/* video hardware */															\
-	32*8, 28*8*2, { 0*8, 32*8-1, 0*8, 28*8*2-1 },									\
-	GFX##_gfxdecodeinfo,															\
-	1024+1, COLORTABLE,																\
-	GFX##_vh_convert_color_prom,													\
-																					\
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(4,6),				\
-	0,																				\
-	GFX##_vh_start,																	\
-	punchout_vh_stop,																\
-	GFX##_vh_screenrefresh,															\
-																					\
-	/* sound hardware */															\
-	0,0,0,0,																		\
-	{																				\
-		{																			\
-			SOUND_NES,																\
-			&nes_interface															\
-		},																			\
-		{																			\
-			SOUND_VLM5030,															\
-			&vlm5030_interface														\
-		}																			\
-	},																				\
-																					\
-	nvram_handler																	\
-};
+static MACHINE_DRIVER_START( punchout )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 8000000/2)	/* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(N2A03, N2A03_DEFAULTCLOCK)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(4,6)
+	MDRV_SCREEN_SIZE(32*8, 28*8*2)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8*2-1)
+	MDRV_GFXDECODE(punchout_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024+1)
+	MDRV_COLORTABLE_LENGTH(128*4+128*4+64*8+128*4)
+
+	MDRV_PALETTE_INIT(punchout)
+	MDRV_VIDEO_START(punchout)
+	MDRV_VIDEO_UPDATE(punchout)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(NES, nes_interface)
+	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER( punchout, punchout, 128*4+128*4+64*8+128*4 )
-MACHINE_DRIVER( armwrest, armwrest, 256*4+64*8+64*8+128*4 )
+static MACHINE_DRIVER_START( armwrest )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(punchout)
+
+	/* video hardware */
+	MDRV_GFXDECODE(armwrest_gfxdecodeinfo)
+	MDRV_COLORTABLE_LENGTH(256*4+64*8+64*8+128*4)
+
+	MDRV_PALETTE_INIT(armwrest)
+	MDRV_VIDEO_START(armwrest)
+	MDRV_VIDEO_UPDATE(armwrest)
+MACHINE_DRIVER_END
 
 
 

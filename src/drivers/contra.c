@@ -21,7 +21,7 @@ extern unsigned char *contra_fg_vram,*contra_fg_cram;
 extern unsigned char *contra_bg_vram,*contra_bg_cram;
 extern unsigned char *contra_text_vram,*contra_text_cram;
 
-void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( contra );
 
 WRITE_HANDLER( contra_fg_vram_w );
 WRITE_HANDLER( contra_fg_cram_w );
@@ -32,9 +32,8 @@ WRITE_HANDLER( contra_text_cram_w );
 
 WRITE_HANDLER( contra_K007121_ctrl_0_w );
 WRITE_HANDLER( contra_K007121_ctrl_1_w );
-void contra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int contra_vh_start(void);
-void contra_vh_stop(void);
+VIDEO_UPDATE( contra );
+VIDEO_START( contra );
 
 
 WRITE_HANDLER( contra_bankswitch_w )
@@ -50,7 +49,7 @@ WRITE_HANDLER( contra_bankswitch_w )
 
 WRITE_HANDLER( contra_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,M6809_INT_IRQ);
+	cpu_set_irq_line(1,M6809_IRQ_LINE,HOLD_LINE);
 }
 
 WRITE_HANDLER( contra_coin_counter_w )
@@ -256,48 +255,37 @@ static struct YM2151interface ym2151_interface =
 
 
 
-static const struct MachineDriver machine_driver_contra =
-{
-	{
-		{
- 			CPU_M6809,
-			1500000,
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
- 			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the main CPU */
-		},
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+static MACHINE_DRIVER_START( contra )
+
+	/* basic machine hardware */
+ 	MDRV_CPU_ADD(M6809, 1500000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+ 	MDRV_CPU_ADD(M6809, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(37*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 35*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
+	MDRV_COLORTABLE_LENGTH(2*8*16*16)
 
-	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	128, 2*8*16*16,
-	contra_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	contra_vh_start,
-	contra_vh_stop,
-	contra_vh_screenrefresh,
+	MDRV_PALETTE_INIT(contra)
+	MDRV_VIDEO_START(contra)
+	MDRV_VIDEO_UPDATE(contra)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 

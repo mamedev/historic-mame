@@ -136,9 +136,9 @@ static data16_t ip_select, ip_select_values[5];
 
 /* Functions defined in vidhrdw: */
 
-void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *prom);
-int  megasys1_vh_start(void);
-void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( megasys1 );
+VIDEO_START( megasys1 );
+VIDEO_UPDATE( megasys1 );
 
 READ16_HANDLER( megasys1_vregs_C_r );
 
@@ -149,7 +149,7 @@ WRITE16_HANDLER( megasys1_vregs_D_w );
 
 
 
-void megasys1_init_machine(void)
+MACHINE_INIT( megasys1 )
 {
 	ip_select = 0;	/* reset protection */
 }
@@ -179,14 +179,13 @@ static READ16_HANDLER( dsw_r )		{return readinputport(4) * 256 +
 
 
 #define INTERRUPT_NUM_A		3
-int interrupt_A(void)
+INTERRUPT_GEN( interrupt_A )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		return 3;
-		case 1:		return 2;
-		case 2:		return 1;
-		default:	return ignore_interrupt();
+		case 0:		cpu_set_irq_line(0, 3, HOLD_LINE);	break;
+		case 1:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
+		case 2:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
 	}
 }
 
@@ -229,13 +228,13 @@ MEMORY_END
 ***************************************************************************/
 
 #define INTERRUPT_NUM_B		3
-int interrupt_B(void)
+INTERRUPT_GEN( interrupt_B )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return 4;
-		case 1:		return 1;
-		default:	return 2;
+		case 0:		cpu_set_irq_line(0, 4, HOLD_LINE); break;
+		case 1:		cpu_set_irq_line(0, 1, HOLD_LINE); break;
+		default:	cpu_set_irq_line(0, 2, HOLD_LINE); break;
 	}
 }
 
@@ -280,7 +279,7 @@ static READ16_HANDLER( ip_select_r )
 static WRITE16_HANDLER( ip_select_w )
 {
 	COMBINE_DATA(&ip_select);
-	cpu_cause_interrupt(0,2);
+	cpu_set_irq_line(0,2,HOLD_LINE);
 }
 
 
@@ -356,9 +355,9 @@ MEMORY_END
 ***************************************************************************/
 
 #define INTERRUPT_NUM_D		1
-int interrupt_D(void)
+INTERRUPT_GEN( interrupt_D )
 {
-	return 2;
+	cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
 static MEMORY_READ16_START( readmem_D )
@@ -448,9 +447,9 @@ MEMORY_END
 
 /* See stdragon, which is interrupt driven */
 #define SOUND_INTERRUPT_NUM		8
-static int sound_interrupt(void)
+static INTERRUPT_GEN( sound_interrupt )
 {
-	return 4;
+	cpu_set_irq_line(1, 4, HOLD_LINE);
 }
 
 
@@ -633,91 +632,101 @@ static struct OKIM6295interface okim6295_interface =
 	{ MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) }
 };
 
-#define MEGASYS1_MACHINE( _type_, _main_clock_,_sound_clock_) \
-static const struct MachineDriver machine_driver_system_##_type_ = \
-{ \
-	{ \
-		{ \
-			CPU_M68000, \
-			_main_clock_, \
-			readmem_##_type_,writemem_##_type_,0,0, \
-			interrupt_##_type_,INTERRUPT_NUM_##_type_ \
-		}, \
-		{ \
-			CPU_M68000 | CPU_AUDIO_CPU, \
-			_sound_clock_, \
-			sound_readmem_##_type_,sound_writemem_##_type_,0,0, \
-			sound_interrupt,SOUND_INTERRUPT_NUM, \
-		}, \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	megasys1_init_machine, \
-	/* video hardware */ \
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 }, \
-	gfxdecodeinfo_ABC, \
-	1024, 0, \
-	megasys1_convert_prom, \
-	VIDEO_TYPE_RASTER, \
-	0, \
-	megasys1_vh_start, \
-	0, \
-	megasys1_vh_screenrefresh, \
-	/* sound hardware */ \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
-	{ \
-		{	SOUND_YM2151,	&ym2151_interface	}, \
-		{	SOUND_OKIM6295,	&okim6295_interface	}  \
-	} \
-};
+static MACHINE_DRIVER_START( system_A )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 12000000)
+	MDRV_CPU_MEMORY(readmem_A,writemem_A)
+	MDRV_CPU_VBLANK_INT(interrupt_A,INTERRUPT_NUM_A)
+
+	MDRV_CPU_ADD_TAG("sound", M68000, 7000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem_A,sound_writemem_A)
+	MDRV_CPU_VBLANK_INT(sound_interrupt,SOUND_INTERRUPT_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(megasys1)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_ABC)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(megasys1)
+	MDRV_VIDEO_START(megasys1)
+	MDRV_VIDEO_UPDATE(megasys1)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
-/* OSC:	4, 7, 12 MHz */
-MEGASYS1_MACHINE( A, 12000000,7000000 )
+static MACHINE_DRIVER_START( system_B )
 
-/* OSC:	8, 7, 12 MHz */
-MEGASYS1_MACHINE( B, 12000000,7000000 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system_A)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_B,writemem_B)
+	MDRV_CPU_VBLANK_INT(interrupt_B,INTERRUPT_NUM_B)
 
-/* OSC: 7, 24 MHz */
-MEGASYS1_MACHINE( C, 12000000,7000000 )
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(sound_readmem_B,sound_writemem_B)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( system_C )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system_A)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_C,writemem_C)
+	MDRV_CPU_VBLANK_INT(interrupt_C,INTERRUPT_NUM_C)
+
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(sound_readmem_C,sound_writemem_C)
+MACHINE_DRIVER_END
+
 
 /* OSC:	4, 8, 7, 12 MHz - Type A, but only one interrupt per frame on the sound CPU */
-static const struct MachineDriver machine_driver_jitsupro =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			readmem_A,writemem_A,0,0,
-			interrupt_A,INTERRUPT_NUM_A
-		},
-		{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			7000000,
-			sound_readmem_A,sound_writemem_A,0,0,
-			sound_interrupt,1,
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	megasys1_init_machine,
+static MACHINE_DRIVER_START( jitsupro )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(readmem_A,writemem_A)
+	MDRV_CPU_VBLANK_INT(interrupt_A,INTERRUPT_NUM_A)
+
+	MDRV_CPU_ADD(M68000, 7000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem_A,sound_writemem_A)
+	MDRV_CPU_VBLANK_INT(sound_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(megasys1)
+
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_ABC,
-	1024, 0,
-	megasys1_convert_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	megasys1_vh_start,
-	0,
-	megasys1_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_ABC)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(megasys1)
+	MDRV_VIDEO_START(megasys1)
+	MDRV_VIDEO_UPDATE(megasys1)
+
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&ym2151_interface	},
-		{	SOUND_OKIM6295,	&okim6295_interface	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -739,35 +748,32 @@ static struct OKIM6295interface okim6295_interface_D =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_system_D =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,	/* ? */
-			readmem_D,writemem_D,0,0,
-			interrupt_D,INTERRUPT_NUM_D
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	megasys1_init_machine,
+static MACHINE_DRIVER_START( system_D )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)	/* ? */
+	MDRV_CPU_MEMORY(readmem_D,writemem_D)
+	MDRV_CPU_VBLANK_INT(interrupt_D,INTERRUPT_NUM_D)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(megasys1)
+
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_ABC,
-	1024, 0,
-	megasys1_convert_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	megasys1_vh_start,
-	0,
-	megasys1_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_ABC)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(megasys1)
+	MDRV_VIDEO_START(megasys1)
+	MDRV_VIDEO_UPDATE(megasys1)
+
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_interface_D	}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_D)
+MACHINE_DRIVER_END
 
 
 
@@ -801,41 +807,34 @@ static struct YM2203interface ym2203_interface =
 	{ irq_handler }
 };
 
-static const struct MachineDriver machine_driver_system_Z =
-{
-	{
-		{
-			CPU_M68000,
-			6000000, /* ??? */
-			readmem_A,writemem_A,0,0,
-			interrupt_A,INTERRUPT_NUM_A
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000, /* ??? */
-			sound_readmem_z80,sound_writemem_z80,sound_readport,sound_writeport,
-			ignore_interrupt,0	/* irq generated by YM2203 */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( system_Z )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 6000000) /* ??? */
+	MDRV_CPU_MEMORY(readmem_A,writemem_A)
+	MDRV_CPU_VBLANK_INT(interrupt_A,INTERRUPT_NUM_A)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ??? */
+	MDRV_CPU_MEMORY(sound_readmem_z80,sound_writemem_z80)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_Z,
-	768, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	megasys1_vh_start,
-	0,
-	megasys1_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_Z)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_VIDEO_START(megasys1)
+	MDRV_VIDEO_UPDATE(megasys1)
+
 	/* sound hardware */
-	0,0,0,0, /* This system is mono */
-	{
-		{	SOUND_YM2203,	&ym2203_interface	},
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -2593,7 +2592,7 @@ static WRITE16_HANDLER( protection_peekaboo_w )
 		}
 	}
 
-	cpu_cause_interrupt(0,4);
+	cpu_set_irq_line(0,4,HOLD_LINE);
 }
 
 
@@ -3363,7 +3362,7 @@ static void jitsupro_gfx_unmangle(int region)
 
 
 
-static void init_64street(void)
+static DRIVER_INIT( 64street )
 {
 //	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 //	RAM[0x006b8/2] = 0x6004;		// d8001 test
@@ -3376,7 +3375,7 @@ static void init_64street(void)
 	ip_select_values[4] = 0x56;
 }
 
-static void init_astyanax(void)
+static DRIVER_INIT( astyanax )
 {
 	data16_t *RAM;
 
@@ -3386,7 +3385,7 @@ static void init_astyanax(void)
 	RAM[0x0004e6/2] = 0x6040;	// protection
 }
 
-static void init_avspirit(void)
+static DRIVER_INIT( avspirit )
 {
 	ip_select_values[0] = 0x37;
 	ip_select_values[1] = 0x35;
@@ -3400,7 +3399,7 @@ static void init_avspirit(void)
 	megasys1_ram += 0x10000/2;
 }
 
-static void init_bigstrik(void)
+static DRIVER_INIT( bigstrik )
 {
 	ip_select_values[0] = 0x58;
 	ip_select_values[1] = 0x54;
@@ -3409,7 +3408,7 @@ static void init_bigstrik(void)
 	ip_select_values[4] = 0x57;
 }
 
-static void init_chimerab(void)
+static DRIVER_INIT( chimerab )
 {
 	/* same as cybattlr */
 	ip_select_values[0] = 0x56;
@@ -3419,7 +3418,7 @@ static void init_chimerab(void)
 	ip_select_values[4] = 0x55;
 }
 
-static void init_cybattlr(void)
+static DRIVER_INIT( cybattlr )
 {
 	ip_select_values[0] = 0x56;
 	ip_select_values[1] = 0x52;
@@ -3428,7 +3427,7 @@ static void init_cybattlr(void)
 	ip_select_values[4] = 0x55;
 }
 
-static void init_edf(void)
+static DRIVER_INIT( edf )
 {
 	ip_select_values[0] = 0x20;
 	ip_select_values[1] = 0x21;
@@ -3437,7 +3436,7 @@ static void init_edf(void)
 	ip_select_values[4] = 0x24;
 }
 
-static void init_hachoo(void)
+static DRIVER_INIT( hachoo )
 {
 	data16_t *RAM;
 
@@ -3447,7 +3446,7 @@ static void init_hachoo(void)
 	RAM[0x0006da/2] = 0x6000;	// protection
 }
 
-static void init_iganinju(void)
+static DRIVER_INIT( iganinju )
 {
 	data16_t *RAM;
 
@@ -3471,7 +3470,7 @@ static WRITE16_HANDLER( OKIM6295_data_1_both_w )
 	else				OKIM6295_data_1_w(0, (data >> 8) & 0xff );
 }
 
-static void init_jitsupro(void)
+static DRIVER_INIT( jitsupro )
 {
 	data16_t *RAM  = (data16_t *) memory_region(REGION_CPU1);
 
@@ -3488,18 +3487,18 @@ static void init_jitsupro(void)
 	install_mem_write16_handler(1, 0xc0000, 0xc0003, OKIM6295_data_1_both_w);
 }
 
-static void init_peekaboo(void)
+static DRIVER_INIT( peekaboo )
 {
 	install_mem_read16_handler (0, 0x100000, 0x100001, protection_peekaboo_r);
 	install_mem_write16_handler(0, 0x100000, 0x100001, protection_peekaboo_w);
 }
 
-static void init_phantasm(void)
+static DRIVER_INIT( phantasm )
 {
 	phantasm_rom_decode(0);
 }
 
-static void init_plusalph(void)
+static DRIVER_INIT( plusalph )
 {
 	data16_t *RAM;
 
@@ -3509,12 +3508,12 @@ static void init_plusalph(void)
 	RAM[0x0012b6/2] = 0x0000;	// protection
 }
 
-static void init_rodland(void)
+static DRIVER_INIT( rodland )
 {
 	rodland_rom_decode(0);
 }
 
-static void init_rodlandj(void)
+static DRIVER_INIT( rodlandj )
 {
 	rodlandj_gfx_unmangle(0);
 	rodlandj_gfx_unmangle(3);
@@ -3522,7 +3521,7 @@ static void init_rodlandj(void)
 	astyanax_rom_decode(0);
 }
 
-static void init_soldam(void)
+static DRIVER_INIT( soldam )
 {
 	astyanax_rom_decode(0);
 
@@ -3531,7 +3530,7 @@ static void init_soldam(void)
 	install_mem_write16_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram16_w);
 }
 
-static void init_stdragon(void)
+static DRIVER_INIT( stdragon )
 {
 	data16_t *RAM;
 

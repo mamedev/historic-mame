@@ -40,7 +40,7 @@ static void get_text_tile_info(int tile_index)
 }
 
 
-int cabal_vh_start( void )
+VIDEO_START( cabal )
 {
 	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,16);
 	text_layer       = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
@@ -106,7 +106,7 @@ WRITE16_HANDLER( cabal_text_videoram16_w )
 
 ********************************************************************/
 
-static void cabal_draw_sprites( struct mame_bitmap *bitmap )
+static void cabal_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs,data0,data1,data2;
 
@@ -140,17 +140,17 @@ static void cabal_draw_sprites( struct mame_bitmap *bitmap )
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0xf );
+				cliprect,TRANSPARENCY_PEN,0xf );
 		}
 	}
 }
 
 
-void cabal_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( cabal )
 {
-	tilemap_draw(bitmap,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
-	cabal_draw_sprites(bitmap);
-	tilemap_draw(bitmap,text_layer,0,0);
+	tilemap_draw(bitmap,cliprect,background_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
+	cabal_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }
 
 

@@ -49,9 +49,9 @@ static void print( struct mame_bitmap *bitmap, int num, int row ){
 		0,TRANSPARENCY_NONE,0);
 }
 
-void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
+PALETTE_INIT( snk_3bpp_shadow ){
 	int i;
-	palette_RRRR_GGGG_BBBB_convert_prom(obsolete, colortable, color_prom);
+	palette_init_RRRR_GGGG_BBBB(palette, colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
@@ -65,9 +65,9 @@ void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned shor
 
 }
 
-void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom){
+PALETTE_INIT( snk_4bpp_shadow ){
 	int i;
-	palette_RRRR_GGGG_BBBB_convert_prom(obsolete, colortable, color_prom);
+	palette_init_RRRR_GGGG_BBBB(palette, colortable, color_prom);
 
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 	usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
@@ -81,25 +81,16 @@ void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned shor
 
 }
 
-int snk_vh_start( void ){
-	dirtybuffer = malloc( MAX_VRAM_SIZE );
-	if( dirtybuffer ){
-		tmpbitmap = bitmap_alloc( 512, 512 );
-		if( tmpbitmap ){
-			memset( dirtybuffer, 0xff, MAX_VRAM_SIZE  );
-		//	shadows_visible = 1;
-			return 0;
-		}
-		free( dirtybuffer );
-	}
-	return 1;
-}
-
-void snk_vh_stop( void ){
-	bitmap_free( tmpbitmap );
-	tmpbitmap = 0;
-	free( dirtybuffer );
-	dirtybuffer = 0;
+VIDEO_START( snk ){
+	dirtybuffer = auto_malloc( MAX_VRAM_SIZE );
+	if( !dirtybuffer )
+		return 1;
+	tmpbitmap = auto_bitmap_alloc( 512, 512 );
+	if( !tmpbitmap )
+		return 1;
+	memset( dirtybuffer, 0xff, MAX_VRAM_SIZE  );
+//	shadows_visible = 1;
+	return 0;
 }
 
 /**************************************************************************************/
@@ -215,7 +206,7 @@ void tnk3_draw_sprites( struct mame_bitmap *bitmap, int xscroll, int yscroll )
 	}
 }
 
-void tnk3_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( tnk3 )
 {
 	unsigned char *ram = memory_region(REGION_CPU1);
 	int attributes = ram[0xc800];
@@ -255,18 +246,16 @@ void tnk3_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 
 /************************************************************************************/
 
-int sgladiat_vh_start( void ){
-	dirtybuffer = malloc( MAX_VRAM_SIZE );
-	if( dirtybuffer ){
-		tmpbitmap = bitmap_alloc( 512, 256 );
-		if( tmpbitmap ){
-			memset( dirtybuffer, 0xff, MAX_VRAM_SIZE  );
-		//	shadows_visible = 1;
-			return 0;
-		}
-		free( dirtybuffer );
-	}
-	return 1;
+VIDEO_START( sgladiat ){
+	dirtybuffer = auto_malloc( MAX_VRAM_SIZE );
+	if( !dirtybuffer )
+		return 1;
+	tmpbitmap = auto_bitmap_alloc( 512, 256 );
+	if( !tmpbitmap )
+		return 1;
+	memset( dirtybuffer, 0xff, MAX_VRAM_SIZE  );
+//	shadows_visible = 1;
+	return 0;
 }
 
 static void sgladiat_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly )
@@ -301,7 +290,7 @@ static void sgladiat_draw_background( struct mame_bitmap *bitmap, int scrollx, i
 		TRANSPARENCY_NONE,0);
 }
 
-void sgladiat_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( sgladiat )
 {
 	unsigned char *pMem = memory_region(REGION_CPU1);
 	int attributes, scrollx, scrolly;
@@ -471,7 +460,7 @@ static void ikari_draw_sprites_32x32( struct mame_bitmap *bitmap, int start, int
 	}
 }
 
-void ikari_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh){
+VIDEO_UPDATE( ikari ){
 	const unsigned char *ram = memory_region(REGION_CPU1);
 
 //	shadows_visible = !shadows_visible;
@@ -604,7 +593,7 @@ static void tdfever_draw_text( struct mame_bitmap *bitmap, int attributes, int d
 	}
 }
 
-void tdfever_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh ){
+VIDEO_UPDATE( tdfever ){
 	const unsigned char *ram = memory_region(REGION_CPU1);
 //	shadows_visible = !shadows_visible;
 
@@ -628,7 +617,7 @@ void tdfever_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh ){
 	}
 }
 
-void ftsoccer_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh ){
+VIDEO_UPDATE( ftsoccer ){
 	const unsigned char *ram = memory_region(REGION_CPU1);
 //	shadows_visible = !shadows_visible;
 	{
@@ -714,7 +703,7 @@ void gwar_draw_sprites_32x32( struct mame_bitmap *bitmap, int xscroll, int yscro
 	}
 }
 
-void gwar_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ){
+VIDEO_UPDATE( gwar ){
 	const unsigned char *ram = memory_region(REGION_CPU1);
 	unsigned char bg_attributes, sp_attributes;
 

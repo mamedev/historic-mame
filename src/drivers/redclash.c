@@ -28,8 +28,8 @@ TODO:
 
 extern data8_t *redclash_textram;
 
-void redclash_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void redclash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( redclash );
+VIDEO_UPDATE( redclash );
 
 WRITE_HANDLER( redclash_gfxbank_w );
 WRITE_HANDLER( redclash_flipscreen_w );
@@ -45,14 +45,12 @@ WRITE_HANDLER( redclash_star_reset_w );
   Interrupts are still used, but they are related to coin
   slots. Left slot generates an IRQ, Right slot a NMI.
 */
-int redclash_interrupt(void)
+INTERRUPT_GEN( redclash_interrupt )
 {
 	if (readinputport(4) & 1)	/* Left Coin */
 		cpu_set_irq_line(0,0,ASSERT_LINE);
 	else if (readinputport(4) & 2)	/* Right Coin */
 		cpu_set_nmi_line(0,PULSE_LINE);
-
-	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( irqack_w )
@@ -279,65 +277,54 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_zerohour =
-{
-	{
-		{
-		  CPU_Z80,
-		  4000000,  /* 4 MHz */
-		  zero_readmem,zero_writemem,0,0,
-		  redclash_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,  /* single CPU, no need for interleaving */
-	0,
+static MACHINE_DRIVER_START( zerohour )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)  /* 4 MHz */
+	MDRV_CPU_MEMORY(zero_readmem,zero_writemem)
+	MDRV_CPU_VBLANK_INT(redclash_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,4*24,
-	redclash_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*24)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	redclash_vh_screenrefresh,
+	MDRV_PALETTE_INIT(redclash)
+	MDRV_VIDEO_UPDATE(redclash)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_redclash =
-{
-	{
-		{
-		  CPU_Z80,
-		  4000000,  /* 4 MHz */
-		  readmem,writemem,0,0,
-		  redclash_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,  /* single CPU, no need for interleaving */
-	0,
+
+static MACHINE_DRIVER_START( redclash )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)  /* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(redclash_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,4*24,
-	redclash_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*24)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	redclash_vh_screenrefresh,
+	MDRV_PALETTE_INIT(redclash)
+	MDRV_VIDEO_UPDATE(redclash)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -421,7 +408,7 @@ ROM_START( redclask )
 	ROM_LOAD( "6331-3.11e",   0x0040, 0x0020, 0x27fa3a50 ) /* 6331.6w */
 ROM_END
 
-static void init_redclash(void)
+static DRIVER_INIT( redclash )
 {
 	int i,j;
 

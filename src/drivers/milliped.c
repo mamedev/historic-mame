@@ -1,55 +1,69 @@
 /***************************************************************************
 
-Millipede memory map (preliminary)
+	Atari Millipede hardware
 
-driver by Ivan Mackintosh
+	Games supported:
+		* Millipede
 
-0400-040F		POKEY 1
-0800-080F		POKEY 2
-1000-13BF		SCREEN RAM (8x8 TILES, 32x30 SCREEN)
-13C0-13CF		SPRITE IMAGE OFFSETS
-13D0-13DF		SPRITE HORIZONTAL OFFSETS
-13E0-13EF		SPRITE VERTICAL OFFSETS
-13F0-13FF		SPRITE COLOR OFFSETS
+	Known bugs:
+		* none at this time
 
-2000			BIT 1-4 trackball
-				BIT 5 IS P1 FIRE
-				BIT 6 IS P1 START
-				BIT 7 IS VBLANK
+****************************************************************************
 
-2001			BIT 1-4 trackball
-				BIT 5 IS P2 FIRE
-				BIT 6 IS P2 START
-				BIT 7,8 (?)
+	Millipede memory map (preliminary)
 
-2010			BIT 1 IS P1 RIGHT
-				BIT 2 IS P1 LEFT
-				BIT 3 IS P1 DOWN
-				BIT 4 IS P1 UP
-				BIT 5 IS SLAM, LEFT COIN, AND UTIL COIN
-				BIT 6,7 (?)
-				BIT 8 IS RIGHT COIN
-2030			earom read
-2480-249F		COLOR RAM
-2500-2502		Coin counters
-2503-2504		LEDs
-2505-2507		Coin door lights ??
-2600			INTERRUPT ACKNOWLEDGE
-2680			CLEAR WATCHDOG
-2700			earom control
-2780			earom write
-4000-7FFF		GAME CODE
+	driver by Ivan Mackintosh
+
+	0400-040F		POKEY 1
+	0800-080F		POKEY 2
+	1000-13BF		SCREEN RAM (8x8 TILES, 32x30 SCREEN)
+	13C0-13CF		SPRITE IMAGE OFFSETS
+	13D0-13DF		SPRITE HORIZONTAL OFFSETS
+	13E0-13EF		SPRITE VERTICAL OFFSETS
+	13F0-13FF		SPRITE COLOR OFFSETS
+
+	2000			BIT 1-4 trackball
+					BIT 5 IS P1 FIRE
+					BIT 6 IS P1 START
+					BIT 7 IS VBLANK
+
+	2001			BIT 1-4 trackball
+					BIT 5 IS P2 FIRE
+					BIT 6 IS P2 START
+					BIT 7,8 (?)
+
+	2010			BIT 1 IS P1 RIGHT
+					BIT 2 IS P1 LEFT
+					BIT 3 IS P1 DOWN
+					BIT 4 IS P1 UP
+					BIT 5 IS SLAM, LEFT COIN, AND UTIL COIN
+					BIT 6,7 (?)
+					BIT 8 IS RIGHT COIN
+	2030			earom read
+	2480-249F		COLOR RAM
+	2500-2502		Coin counters
+	2503-2504		LEDs
+	2505-2507		Coin door lights ??
+	2600			INTERRUPT ACKNOWLEDGE
+	2680			CLEAR WATCHDOG
+	2700			earom control
+	2780			earom write
+	4000-7FFF		GAME CODE
 
 *************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/atari_vg.h"
+#include "milliped.h"
 
 
-WRITE_HANDLER( milliped_paletteram_w );
-void milliped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void milliped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 /*
  * This wrapper routine is necessary because Millipede requires a direction bit
@@ -69,6 +83,7 @@ static WRITE_HANDLER( milliped_input_select_w )
 	dsw_select = (data == 0);
 }
 
+
 static READ_HANDLER( milliped_IN0_r )
 {
 	static int oldpos,sign;
@@ -86,6 +101,7 @@ static READ_HANDLER( milliped_IN0_r )
 
 	return ((readinputport(0) & 0x70) | (oldpos & 0x0f) | sign );
 }
+
 
 static READ_HANDLER( milliped_IN1_r )
 {
@@ -105,10 +121,19 @@ static READ_HANDLER( milliped_IN1_r )
 	return ((readinputport(1) & 0x70) | (oldpos & 0x0f) | sign );
 }
 
+
+
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
+
 static WRITE_HANDLER( milliped_led_w )
 {
 	set_led_status(offset,~data & 0x80);
 }
+
 
 static WRITE_HANDLER( milliped_coin_counter_w )
 {
@@ -116,6 +141,13 @@ static WRITE_HANDLER( milliped_coin_counter_w )
 }
 
 
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
@@ -130,7 +162,6 @@ static MEMORY_READ_START( readmem )
 	{ 0x4000, 0x7fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
 MEMORY_END
-
 
 
 static MEMORY_WRITE_START( writemem )
@@ -151,6 +182,13 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0x73ff, MWA_ROM },
 MEMORY_END
 
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( milliped )
 	PORT_START	/* IN0 $2000 */ /* see port 6 for x trackball */
@@ -262,6 +300,13 @@ INPUT_PORTS_START( milliped )
 INPUT_PORTS_END
 
 
+
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -272,6 +317,8 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
+
+
 static struct GfxLayout spritelayout =
 {
 	8,16,	/* 16*8 sprites */
@@ -285,7 +332,6 @@ static struct GfxLayout spritelayout =
 };
 
 
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 4 },
@@ -294,6 +340,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -315,52 +367,47 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static const struct MachineDriver machine_driver_milliped =
-{
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( milliped )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz ???? */
-			readmem,writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 4*4+4*4*4*4*4,
-	milliped_init_palette,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	milliped_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*4+4*4*4*4*4)
+	
+	MDRV_PALETTE_INIT(milliped)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(milliped)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	},
-
-	atari_vg_earom_handler
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( milliped )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -376,6 +423,12 @@ ROM_START( milliped )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1982, milliped, 0, milliped, milliped, 0, ROT270, "Atari", "Millipede" )
 

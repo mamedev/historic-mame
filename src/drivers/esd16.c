@@ -32,8 +32,8 @@ extern data16_t *esd16_vram_1, *esd16_scroll_1;
 WRITE16_HANDLER( esd16_vram_0_w );
 WRITE16_HANDLER( esd16_vram_1_w );
 
-int  esd16_vh_start(void);
-void esd16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( esd16 );
+VIDEO_UPDATE( esd16 );
 
 
 /***************************************************************************
@@ -53,7 +53,7 @@ WRITE16_HANDLER( esd16_flip_screen_w )
 		flip_screen_set( data & 0x80 );
 		//               data & 0x01 ?? always 1
 	}
-	else	logerror("CPU #0 - PC %06X: unknown flip screen bits: %02X\n",cpu_get_pc(),data);
+	else	logerror("CPU #0 - PC %06X: unknown flip screen bits: %02X\n",activecpu_get_pc(),data);
 }
 
 WRITE16_HANDLER( esd16_sound_command_w )
@@ -119,7 +119,7 @@ MEMORY_END
 static WRITE_HANDLER( esd16_sound_rombank_w )
 {
 	int bank = data & 0x7;
-	if (data != bank)	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+	if (data != bank)	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 	if (bank >= 3)	bank += 1;
 	cpu_setbank(1, memory_region(REGION_CPU2) + 0x4000 * bank);
 }
@@ -311,46 +311,36 @@ static struct OKIM6295interface esd16_m6295_intf =
 	{ 80 }
 };
 
-static const struct MachineDriver machine_driver_multchmp =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			multchmp_readmem, multchmp_writemem,0,0,
-			m68_level6_irq, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ? */
-			multchmp_sound_readmem,  multchmp_sound_writemem,
-			multchmp_sound_readport, multchmp_sound_writeport,
-			nmi_interrupt, 32	/* IRQ By Main CPU */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( multchmp )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(multchmp_readmem,multchmp_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(multchmp_sound_readmem,multchmp_sound_writemem)
+	MDRV_CPU_PORTS(multchmp_sound_readport,multchmp_sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,32)	/* IRQ By Main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	0x140, 0x100, { 0, 0x140-1, 0+8, 0x100-8-1 },
-	esd16_gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x140, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0+8, 0x100-8-1)
+	MDRV_GFXDECODE(esd16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	esd16_vh_start,
-	0,
-	esd16_vh_screenrefresh,
+	MDRV_VIDEO_START(esd16)
+	MDRV_VIDEO_UPDATE(esd16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM3812,   &esd16_ym3812_intf },
-		{ SOUND_OKIM6295, &esd16_m6295_intf  }
-	},
-};
+	MDRV_SOUND_ADD(YM3812, esd16_ym3812_intf)
+	MDRV_SOUND_ADD(OKIM6295, esd16_m6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

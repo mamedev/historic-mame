@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "foodf.h"
 
 
 static UINT8 pf_flip;
@@ -90,7 +91,7 @@ WRITE16_HANDLER( foodf_paletteram_w )
  *
  *************************************/
 
-void foodf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( foodf )
 {
 	int offs;
 
@@ -114,7 +115,7 @@ void foodf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		}
 
 	/* copy that as the background */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
 	/* walk the motion object list. */
 	for (offs = 0; offs < spriteram_size / 4; offs += 2)
@@ -130,10 +131,10 @@ void foodf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		int vflip = (data1 >> 14) & 1;
 
 		drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, vflip,
-				xpos, ypos, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+				xpos, ypos, cliprect, TRANSPARENCY_PEN, 0);
 
 		/* draw again with wraparound (needed to get the end of level animation right) */
 		drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, vflip,
-				xpos - 256, ypos, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+				xpos - 256, ypos, cliprect, TRANSPARENCY_PEN, 0);
 	}
 }

@@ -103,9 +103,6 @@
 #define LOG_SOUND		0
 
 
-static UINT8 *nvram;
-static size_t nvram_size;
-
 static UINT8 sound_response;
 static UINT8 sound_response_ack_clk;
 
@@ -125,11 +122,10 @@ WRITE_HANDLER( exidy_sfxctrl_w );
 /* video driver data & functions */
 extern UINT8 *victory_charram;
 
-int victory_vh_start(void);
-void victory_vh_stop(void);
-void victory_vh_eof(void);
-void victory_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int victory_vblank_interrupt(void);
+VIDEO_START( victory );
+VIDEO_EOF( victory );
+VIDEO_UPDATE( victory );
+INTERRUPT_GEN( victory_vblank_interrupt );
 
 READ_HANDLER( victory_video_control_r );
 WRITE_HANDLER( victory_video_control_w );
@@ -141,37 +137,13 @@ WRITE_HANDLER( victory_charram_w );
 
 /*************************************
  *
- *	Machine setup
- *
- *************************************/
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-	{
-		osd_fwrite(file, nvram, nvram_size);
-	}
-	else if (file)
-	{
-		osd_fread(file, nvram, nvram_size);
-	}
-	else
-	{
-		memset(nvram, 0x00, nvram_size);
-	}
-}
-
-
-
-/*************************************
- *
  *	Sound CPU control
  *
  *************************************/
 
 static READ_HANDLER( sound_response_r )
 {
-	if (LOG_SOUND) logerror("%04X:!!!! Sound response read = %02X\n", cpu_getpreviouspc(), sound_response);
+	if (LOG_SOUND) logerror("%04X:!!!! Sound response read = %02X\n", activecpu_get_previouspc(), sound_response);
 	pia_0_cb1_w(0, 0);
 	return sound_response;
 }
@@ -179,7 +151,7 @@ static READ_HANDLER( sound_response_r )
 
 static READ_HANDLER( sound_status_r )
 {
-	if (LOG_SOUND) logerror("%04X:!!!! Sound status read = %02X\n", cpu_getpreviouspc(), (pia_0_ca1_r(0) << 7) | (pia_0_cb1_r(0) << 6));
+	if (LOG_SOUND) logerror("%04X:!!!! Sound status read = %02X\n", activecpu_get_previouspc(), (pia_0_ca1_r(0) << 7) | (pia_0_cb1_r(0) << 6));
 	return (pia_0_ca1_r(0) << 7) | (pia_0_cb1_r(0) << 6);
 }
 
@@ -188,7 +160,7 @@ static void delayed_command_w(int data)
 {
 	pia_0_porta_w(0, data);
 	pia_0_ca1_w(0, 0);
-	if (LOG_SOUND) logerror("%04X:!!!! Sound command = %02X\n", cpu_getpreviouspc(), data);
+	if (LOG_SOUND) logerror("%04X:!!!! Sound command = %02X\n", activecpu_get_previouspc(), data);
 }
 
 static WRITE_HANDLER( sound_command_w )
@@ -200,20 +172,20 @@ static WRITE_HANDLER( sound_command_w )
 WRITE_HANDLER( victory_sound_response_w )
 {
 	sound_response = data;
-	if (LOG_SOUND) logerror("%04X:!!!! Sound response = %02X\n", cpu_getpreviouspc(), data);
+	if (LOG_SOUND) logerror("%04X:!!!! Sound response = %02X\n", activecpu_get_previouspc(), data);
 }
 
 
 WRITE_HANDLER( victory_sound_irq_clear_w )
 {
-	if (LOG_SOUND) logerror("%04X:!!!! Sound IRQ clear = %02X\n", cpu_getpreviouspc(), data);
+	if (LOG_SOUND) logerror("%04X:!!!! Sound IRQ clear = %02X\n", activecpu_get_previouspc(), data);
 	if (!data) pia_0_ca1_w(0, 1);
 }
 
 
 WRITE_HANDLER( victory_main_ack_w )
 {
-	if (LOG_SOUND) logerror("%04X:!!!! Sound ack = %02X\n", cpu_getpreviouspc(), data);
+	if (LOG_SOUND) logerror("%04X:!!!! Sound ack = %02X\n", activecpu_get_previouspc(), data);
 	if (sound_response_ack_clk && !data)
 		pia_0_cb1_w(0, 1);
 	sound_response_ack_clk = data;
@@ -262,7 +234,7 @@ static MEMORY_WRITE_START( main_writemem )
 	{ 0xc400, 0xc7ff, victory_videoram_w, &videoram },
 	{ 0xc800, 0xdfff, victory_charram_w, &victory_charram },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf7ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0xf000, 0xf7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0xf800, 0xf800, sound_command_w },
 MEMORY_END
 
@@ -390,48 +362,37 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_victory =
-{
+static MACHINE_DRIVER_START( victory )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,
-			main_readmem,main_writemem,main_readport,main_writeport,
-			victory_vblank_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			3579545/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_PORTS(main_readport,main_writeport)
+	MDRV_CPU_VBLANK_INT(victory_vblank_interrupt,1)
+
+	MDRV_CPU_ADD(M6502,3579545/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	256, 256, { 0, 255, 0, 255 },
-	0,
-	64, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 0, 255)
+	MDRV_PALETTE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	victory_vh_eof,
-	victory_vh_start,
-	victory_vh_stop,
-	victory_vh_screenrefresh,
+	MDRV_VIDEO_START(victory)
+	MDRV_VIDEO_EOF(victory)
+	MDRV_VIDEO_UPDATE(victory)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM,  &custom_interface },
-		{ SOUND_TMS5220, &tms5220_interface },
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
 
 
 

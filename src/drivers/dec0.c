@@ -62,7 +62,7 @@ static WRITE16_HANDLER( dec0_control_w )
 			if (ACCESSING_LSB)
 			{
 				soundlatch_w(0,data & 0xff);
-				cpu_cause_interrupt(1,M6502_INT_NMI);
+				cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 			}
 			break;
 
@@ -74,7 +74,7 @@ static WRITE16_HANDLER( dec0_control_w )
 			break;
 
 		case 0xa: /* Mix Psel(?). */
- 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+(offset<<1));
+ 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",activecpu_get_pc(),data,0x30c010+(offset<<1));
 			break;
 
 		case 0xc: /* Cblk - coin blockout.  Seems to be unused by the games */
@@ -82,11 +82,11 @@ static WRITE16_HANDLER( dec0_control_w )
 
 		case 0xe: /* Reset Intel 8751? - not sure, all the games write here at startup */
 			dec0_i8751_reset();
- 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+(offset<<1));
+ 			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",activecpu_get_pc(),data,0x30c010+(offset<<1));
 			break;
 
 		default:
-			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+(offset<<1));
+			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",activecpu_get_pc(),data,0x30c010+(offset<<1));
 			break;
 	}
 }
@@ -98,7 +98,7 @@ static WRITE16_HANDLER( slyspy_control_w )
 			if (ACCESSING_LSB)
 			{
 				soundlatch_w(0,data & 0xff);
-				cpu_cause_interrupt(1,H6280_INT_NMI);
+				cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 			}
 			break;
 		case 2:
@@ -112,7 +112,7 @@ static WRITE16_HANDLER( midres_sound_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xff);
-		cpu_cause_interrupt(1,H6280_INT_NMI);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -876,433 +876,253 @@ static struct OKIM6295interface okim6295_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_hbarrel =
-{
+static MACHINE_DRIVER_START( hbarrel )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			dec0_readmem,dec0_writemem,0,0,
-			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(dec0_readmem,dec0_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL, level 5 interrupts from i8751 */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
 
 	/* video hardware */
- 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	dec0_vh_start,
-	dec0_vh_stop,
-	hbarrel_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0)
+	MDRV_VIDEO_UPDATE(hbarrel)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_baddudes =
-{
+static MACHINE_DRIVER_START( baddudes )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			dec0_readmem,dec0_writemem,0,0,
-			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(dec0_readmem,dec0_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL, level 5 interrupts from i8751 */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
 
 	/* video hardware */
- 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	dec0_vh_start,
-	dec0_vh_stop,
-	baddudes_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0)
+	MDRV_VIDEO_UPDATE(baddudes)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_birdtry =
-{
+static MACHINE_DRIVER_START( birdtry )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			dec0_readmem,dec0_writemem,0,0,
-			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(dec0_readmem,dec0_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL, level 5 interrupts from i8751 */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
 
 	/* video hardware */
- 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	dec0_vh_start,
-	dec0_vh_stop,
-	birdtry_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0)
+	MDRV_VIDEO_UPDATE(birdtry)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_robocop =
-{
+static MACHINE_DRIVER_START( robocop )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			dec0_readmem,dec0_writemem,0,0,
-			m68_level6_irq,1 /* VBL */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_H6280,
-			21477200/16, /* 21.4772MHz clock */
-			robocop_sub_readmem,robocop_sub_writemem,0,0,
-			ignore_interrupt,0
-		},
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	50,	/* Interleave between HuC6280 & 68000 */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(dec0_readmem,dec0_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_CPU_ADD(H6280,21477200/16) /* 21.4772MHz clock */
+	MDRV_CPU_MEMORY(robocop_sub_readmem,robocop_sub_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
+	MDRV_INTERLEAVE(50)	/* Interleave between HuC6280 & 68000 */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	dec0_vh_start,
-	dec0_vh_stop,
-	robocop_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0)
+	MDRV_VIDEO_UPDATE(robocop)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_robocopb =
-{
+static MACHINE_DRIVER_START( robocopb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			dec0_readmem,dec0_writemem,0,0,
-			m68_level6_irq,1 /* VBL */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(dec0_readmem,dec0_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	dec0_vh_start,
-	dec0_vh_stop,
-	robocop_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0)
+	MDRV_VIDEO_UPDATE(robocop)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_hippodrm =
-{
+static MACHINE_DRIVER_START( hippodrm )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			dec0_readmem,dec0_writemem,0,0,
-			m68_level6_irq,1 /* VBL */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_H6280,
-			21477200/16, /* 21.4772MHz clock */
-			hippodrm_sub_readmem,hippodrm_sub_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	5,	/* Interleave between H6280 & 68000 */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(dec0_readmem,dec0_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_CPU_ADD(H6280,21477200/16) /* 21.4772MHz clock */
+	MDRV_CPU_MEMORY(hippodrm_sub_readmem,hippodrm_sub_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
+	MDRV_INTERLEAVE(5)	/* Interleave between H6280 & 68000 */
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	dec0_vh_start,
-	dec0_vh_stop,
-	hippodrm_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0)
+	MDRV_VIDEO_UPDATE(hippodrm)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_slyspy =
-{
+static MACHINE_DRIVER_START( slyspy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,
-			slyspy_readmem,slyspy_writemem,0,0,
-			m68_level6_irq,1 /* VBL */
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			3000000,
-			slyspy_s_readmem,slyspy_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(slyspy_readmem,slyspy_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(H6280, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(slyspy_s_readmem,slyspy_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
 
 	/* video hardware */
- 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	dec0_nodma_vh_start,
-	dec0_nodma_vh_stop,
-	slyspy_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0_nodma)
+	MDRV_VIDEO_UPDATE(slyspy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812b_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812b_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_midres =
-{
+static MACHINE_DRIVER_START( midres )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,
-			midres_readmem,midres_writemem,0,0,
-			m68_level6_irq,1 /* VBL */
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			3000000,
-			midres_s_readmem,midres_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57.41, 529, /* 57.41 Hz, 529us Vblank */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(midres_readmem,midres_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(H6280, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(midres_s_readmem,midres_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57.41)
+	MDRV_VBLANK_DURATION(529) /* 57.41 Hz, 529us Vblank */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(midres_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	midres_gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	dec0_nodma_vh_start,
-	dec0_nodma_vh_stop,
-	midres_vh_screenrefresh,
+	MDRV_VIDEO_START(dec0_nodma)
+	MDRV_VIDEO_UPDATE(midres)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812b_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812b_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 

@@ -44,10 +44,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern void moleattack_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern int moleattack_vh_start( void );
-extern void moleattack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void moleattack_vh_stop( void );
+extern PALETTE_INIT( moleattack );
+extern VIDEO_START( moleattack );
+extern VIDEO_UPDATE( moleattack );
 
 WRITE_HANDLER( moleattack_videoram_w );
 WRITE_HANDLER( moleattack_tilesetselector_w );
@@ -105,7 +104,7 @@ READ_HANDLER( mole_prot_r ){
 	switch( offset ){
 	case 0x08: return 0xb0; /* random mole placement */
 	case 0x26:
-		if( cpu_get_pc() == 0x53d7 ){
+		if( activecpu_get_pc() == 0x53d7 ){
 			return 0x06; /* bonus round */
 		}
 		else { // pc == 0x515b, 0x5162
@@ -145,36 +144,30 @@ static MEMORY_WRITE_START( moleattack_writemem )
 	{ 0xd000, 0xffff, MWA_ROM },
 MEMORY_END
 
-const struct MachineDriver machine_driver_mole =
-{
-	{
-		{
-			CPU_M6502,
-			4000000, /* ? */
-			moleattack_readmem,moleattack_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1, /* single CPU */
-	0,
+static MACHINE_DRIVER_START( mole )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502, 4000000) /* ? */
+	MDRV_CPU_MEMORY(moleattack_readmem,moleattack_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
 	/* video hardware */
-	40*8, 25*8, { 0*8, 40*8-1, 0*8, 25*8-1 },
-	gfx_decode,
-	8,8,moleattack_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	moleattack_vh_start,
-	moleattack_vh_stop,
-	moleattack_vh_screenrefresh,
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 25*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 25*8-1)
+	MDRV_GFXDECODE(gfx_decode)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(8)
+	
+	MDRV_PALETTE_INIT(moleattack)
+	MDRV_VIDEO_START(moleattack)
+	MDRV_VIDEO_UPDATE(moleattack)
+
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 ROM_START( mole ) /* ALL ROMS ARE 2732 */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for 6502 code */

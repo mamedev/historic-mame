@@ -38,7 +38,7 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 
 ***************************************************************************/
 
-int gbusters_vh_start(void)
+VIDEO_START( gbusters )
 {
 	layer_colorbase[0] = 48;
 	layer_colorbase[1] = 0;
@@ -48,42 +48,33 @@ int gbusters_vh_start(void)
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
 
-void gbusters_vh_stop(void)
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
-}
 
-
-void gbusters_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gbusters )
 {
 	K052109_tilemap_update();
 
 	/* sprite priority 3 = disable */
 	if (gbusters_priority)
 	{
-//		K051960_sprites_draw(bitmap,1,1);	/* are these used? */
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
-		K051960_sprites_draw(bitmap,2,2);
-		K052109_tilemap_draw(bitmap,1,0,0);
-		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,0,0,0);
+//		K051960_sprites_draw(bitmap,cliprect,1,1);	/* are these used? */
+		K052109_tilemap_draw(bitmap,cliprect,2,TILEMAP_IGNORE_TRANSPARENCY,0);
+		K051960_sprites_draw(bitmap,cliprect,2,2);
+		K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+		K051960_sprites_draw(bitmap,cliprect,0,0);
+		K052109_tilemap_draw(bitmap,cliprect,0,0,0);
 	}
 	else
 	{
-//		K051960_sprites_draw(bitmap,1,1);	/* are these used? */
-		K052109_tilemap_draw(bitmap,1,TILEMAP_IGNORE_TRANSPARENCY,0);
-		K051960_sprites_draw(bitmap,2,2);
-		K052109_tilemap_draw(bitmap,2,0,0);
-		K051960_sprites_draw(bitmap,0,0);
-		K052109_tilemap_draw(bitmap,0,0,0);
+//		K051960_sprites_draw(bitmap,cliprect,1,1);	/* are these used? */
+		K052109_tilemap_draw(bitmap,cliprect,1,TILEMAP_IGNORE_TRANSPARENCY,0);
+		K051960_sprites_draw(bitmap,cliprect,2,2);
+		K052109_tilemap_draw(bitmap,cliprect,2,0,0);
+		K051960_sprites_draw(bitmap,cliprect,0,0);
+		K052109_tilemap_draw(bitmap,cliprect,0,0,0);
 	}
 }

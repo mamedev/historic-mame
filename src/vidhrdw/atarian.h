@@ -74,11 +74,10 @@ struct atarian_desc
 
 /* setup/shutdown */
 int atarian_init(int map, const struct atarian_desc *desc);
-void atarian_free(void);
 UINT32 *atarian_get_lookup(int map, int *size);
 
 /* core processing */
-void atarian_render(int map, struct mame_bitmap *bitmap);
+void atarian_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 
 /* atrribute setters */
 void atarian_set_bankbits(int map, int bankbits);

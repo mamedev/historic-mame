@@ -20,22 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int blstroid_vh_start(void);
-void blstroid_vh_stop(void);
-void blstroid_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void blstroid_scanline_update(int scanline);
-
-extern data16_t *blstroid_priorityram;
+#include "blstroid.h"
 
 
 
@@ -63,7 +48,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( blstroid )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -211,40 +196,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_blstroid =
-{
+static MACHINE_DRIVER_START( blstroid )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_I_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(blstroid)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	40*16, 30*8, { 0*8, 40*16-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	blstroid_vh_start,
-	blstroid_vh_stop,
-	blstroid_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(40*16, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 40*16-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+	
+	MDRV_VIDEO_START(blstroid)
+	MDRV_VIDEO_UPDATE(blstroid)
+	
 	/* sound hardware */
-	JSA_I_STEREO,
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_i_stereo)
+MACHINE_DRIVER_END
 
 
 
@@ -372,7 +349,7 @@ ROM_END
  *
  *************************************/
 
-static void init_blstroid(void)
+static DRIVER_INIT( blstroid )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 4, 2, 0x80);

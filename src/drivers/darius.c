@@ -140,11 +140,10 @@ sounds.
 #include "sndhrdw/taitosnd.h"
 
 
-void init_darius_machine( void );
+MACHINE_INIT( darius );
 
-int  darius_vh_start(void);
-void darius_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void darius_vh_stop(void);
+VIDEO_START( darius );
+VIDEO_UPDATE( darius );
 
 static UINT16 cpua_ctrl;
 static UINT16 coin_word=0;
@@ -184,7 +183,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )
 
 	parse_control();
 
-	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
+	logerror("CPU #0 PC %06x: write %04x to cpu control\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( darius_watchdog_w )
@@ -195,21 +194,6 @@ static WRITE16_HANDLER( darius_watchdog_w )
 static READ16_HANDLER( paletteram16_r )
 {
 	return paletteram16[offset];
-}
-
-
-/***********************************************************
-				INTERRUPTS
-***********************************************************/
-
-static int darius_interrupt(void)
-{
-	return 4;
-}
-
-static int darius_cpub_interrupt(void)
-{
-	return 4;
 }
 
 
@@ -240,7 +224,7 @@ static READ16_HANDLER( darius_ioc_r )
 			return input_port_3_word_r(0,mem_mask);	/* DSW */
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -275,7 +259,7 @@ static WRITE16_HANDLER( darius_ioc_w )
 			return;
 	}
 
-logerror("CPU #0 PC %06x: warning - write unmapped ioc offset %06x with %04x\n",cpu_get_pc(),offset,data);
+logerror("CPU #0 PC %06x: warning - write unmapped ioc offset %06x with %04x\n",activecpu_get_pc(),offset,data);
 }
 
 
@@ -558,7 +542,7 @@ static struct MSM5205interface msm5205_interface =
 
 static READ_HANDLER( adpcm_command_read )
 {
-	/* logerror("read port 0: %02x  PC=%4x\n",adpcm_command, cpu_get_pc() ); */
+	/* logerror("read port 0: %02x  PC=%4x\n",adpcm_command, activecpu_get_pc() ); */
 	return adpcm_command;
 }
 
@@ -575,13 +559,13 @@ static READ_HANDLER( readport3 )
 static WRITE_HANDLER ( adpcm_nmi_disable )
 {
 	nmi_enable = 0;
-	/* logerror("write port 0: NMI DISABLE  PC=%4x\n", data, cpu_get_pc() ); */
+	/* logerror("write port 0: NMI DISABLE  PC=%4x\n", data, activecpu_get_pc() ); */
 }
 
 static WRITE_HANDLER ( adpcm_nmi_enable )
 {
 	nmi_enable = 1;
-	/* logerror("write port 1: NMI ENABLE   PC=%4x\n", cpu_get_pc() ); */
+	/* logerror("write port 1: NMI ENABLE   PC=%4x\n", activecpu_get_pc() ); */
 }
 
 static WRITE_HANDLER( adpcm_data_w )
@@ -834,64 +818,48 @@ static struct YM2203interface ym2203_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static const struct MachineDriver machine_driver_darius =
-{
+static MACHINE_DRIVER_START( darius )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			darius_readmem,darius_writemem,0,0,
-			darius_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ? */
-			darius_sound_readmem,darius_sound_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			darius_cpub_readmem,darius_cpub_writemem,0,0,
-			darius_cpub_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* ADPCM player using MSM5205 */
-			8000000/2,	/* 4 MHz ? */
-			darius_sound2_readmem,darius_sound2_writemem, darius_sound2_readport, darius_sound2_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame ? */
-	init_darius_machine,
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(darius_readmem,darius_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(darius_sound_readmem,darius_sound_writemem)
+
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(darius_cpub_readmem,darius_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4 MHz ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ADPCM player using MSM5205 */
+	MDRV_CPU_MEMORY(darius_sound2_readmem,darius_sound2_writemem)
+	MDRV_CPU_PORTS(darius_sound2_readport,darius_sound2_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame ? */
+
+	MDRV_MACHINE_INIT(darius)
 
 	/* video hardware */
-	108*8, 32*8, { 0*8, 108*8-1, 1*8, 29*8-1 },
-	darius_gfxdecodeinfo,
-	4096*2, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(12,3)
+	MDRV_SCREEN_SIZE(108*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 108*8-1, 1*8, 29*8-1)
+	MDRV_GFXDECODE(darius_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096*2)
 
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
-	0,
-	darius_vh_start,
-	darius_vh_stop,
-	darius_vh_screenrefresh,
+	MDRV_VIDEO_START(darius)
+	MDRV_VIDEO_UPDATE(darius)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1123,7 +1091,7 @@ ROM_START( dariuse )
 ROM_END
 
 
-static void init_darius(void)
+static DRIVER_INIT( darius )
 {
 //	taitosnd_setz80_soundcpu( 2 );
 
@@ -1140,7 +1108,7 @@ static void init_darius(void)
 }
 
 
-void init_darius_machine( void )
+MACHINE_INIT( darius )
 {
 	int  i;
 

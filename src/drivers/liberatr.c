@@ -1,5 +1,15 @@
 /***************************************************************************
 
+	Atari Liberator hardware
+
+	Games supported:
+		* Liberator
+
+	Known bugs:
+		* none at this time
+
+****************************************************************************
+
 	Liberator Memory Map (for the main set, the other one is rearranged)
 	 (from the schematics/manual)
 
@@ -58,97 +68,85 @@
 	-----------------------------------------------------------------
 
 
- Dip switches at D4 on the PCB for play options: (IN2)
+	 Dip switches at D4 on the PCB for play options: (IN2)
 
-LSB  D1   D2   D3   D4   D5   D6   MSB
-SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
--------------------------------------------------------------------------------------
-Off  Off                                 4 ships per game   <-
-On   Off                                 5 ships per game
-Off  On                                  6 ships per game
-On   On                                  8 ships per game
--------------------------------------------------------------------------------------
-          Off  Off                       Bonus ship every 15000 points
-          On   Off                       Bonus ship every 20000 points   <-
-          Off  On                        Bonus ship every 25000 points
-          On   On                        Bonus ship every 30000 points
--------------------------------------------------------------------------------------
-                    On   Off             Easy game play
-                    Off  Off             Normal game play   <-
-                    Off  On              Hard game play
--------------------------------------------------------------------------------------
-                                X    X   Not used
--------------------------------------------------------------------------------------
-
-
- Dip switches at A4 on the PCB for price options: (IN3)
-
-LSB  D1   D2   D3   D4   D5   D6   MSB
-SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
--------------------------------------------------------------------------------------
-Off  Off                                 Free play
-On   Off                                 1 coin for 2 credits
-Off  On                                  1 coin for 1 credit   <-
-On   On                                  2 coins for 1 credit
--------------------------------------------------------------------------------------
-          Off  Off                       Right coin mech X 1   <-
-          On   Off                       Right coin mech X 4
-          Off  On                        Right coin mech X 5
-          On   On                        Right coin mech X 6
--------------------------------------------------------------------------------------
-                    Off                  Left coin mech X 1    <-
-                    On                   Left coin mech X 2
--------------------------------------------------------------------------------------
-                         Off  Off  Off   No bonus coins        <-
-                         Off  On   Off   For every 4 coins inserted, game logic
-                                          adds 1 more coin
-
-                         On   On   Off   For every 4 coins inserted, game logic
-                                          adds 2 more coin
-                         Off  Off  On    For every 5 coins inserted, game logic
-                                          adds 1 more coin
-                         On   Off  On    For every 3 coins inserted, game logic
-                                          adds 1 more coin
-                          X   On   On    No bonus coins
--------------------------------------------------------------------------------------
-<-  = Manufacturer's suggested settings
+	LSB  D1   D2   D3   D4   D5   D6   MSB
+	SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
+	-------------------------------------------------------------------------------------
+	Off  Off                                 4 ships per game   <-
+	On   Off                                 5 ships per game
+	Off  On                                  6 ships per game
+	On   On                                  8 ships per game
+	-------------------------------------------------------------------------------------
+	          Off  Off                       Bonus ship every 15000 points
+	          On   Off                       Bonus ship every 20000 points   <-
+	          Off  On                        Bonus ship every 25000 points
+	          On   On                        Bonus ship every 30000 points
+	-------------------------------------------------------------------------------------
+	                    On   Off             Easy game play
+	                    Off  Off             Normal game play   <-
+	                    Off  On              Hard game play
+	-------------------------------------------------------------------------------------
+	                                X    X   Not used
+	-------------------------------------------------------------------------------------
 
 
-Note:
-----
+	 Dip switches at A4 on the PCB for price options: (IN3)
 
-The loop at $cf60 should count down from Y=0 instead of Y=0xff.  Because of this the first
-four leftmost pixels of each row are not cleared.  This bug is masked by the visible area
-covering up the offending pixels.
+	LSB  D1   D2   D3   D4   D5   D6   MSB
+	SW8  SW7  SW6  SW5  SW4  SW3  SW2  SW1    Option
+	-------------------------------------------------------------------------------------
+	Off  Off                                 Free play
+	On   Off                                 1 coin for 2 credits
+	Off  On                                  1 coin for 1 credit   <-
+	On   On                                  2 coins for 1 credit
+	-------------------------------------------------------------------------------------
+	          Off  Off                       Right coin mech X 1   <-
+	          On   Off                       Right coin mech X 4
+	          Off  On                        Right coin mech X 5
+	          On   On                        Right coin mech X 6
+	-------------------------------------------------------------------------------------
+	                    Off                  Left coin mech X 1    <-
+	                    On                   Left coin mech X 2
+	-------------------------------------------------------------------------------------
+	                         Off  Off  Off   No bonus coins        <-
+	                         Off  On   Off   For every 4 coins inserted, game logic
+	                                          adds 1 more coin
+
+	                         On   On   Off   For every 4 coins inserted, game logic
+	                                          adds 2 more coin
+	                         Off  Off  On    For every 5 coins inserted, game logic
+	                                          adds 1 more coin
+	                         On   Off  On    For every 3 coins inserted, game logic
+	                                          adds 1 more coin
+	                          X   On   On    No bonus coins
+	-------------------------------------------------------------------------------------
+	<-  = Manufacturer's suggested settings
+
+
+	Note:
+	----
+
+	The loop at $cf60 should count down from Y=0 instead of Y=0xff.  Because of this the first
+	four leftmost pixels of each row are not cleared.  This bug is masked by the visible area
+	covering up the offending pixels.
 
 ******************************************************************************************/
 
 #include "driver.h"
 #include "machine/atari_vg.h"
-
-
-extern UINT8 *liberatr_base_ram;
-extern UINT8 *liberatr_planet_frame;
-extern UINT8 *liberatr_planet_select;
-extern UINT8 *liberatr_x;
-extern UINT8 *liberatr_y;
-
-
-/* in vidhrdw */
-extern unsigned char *liberatr_bitmapram;
-
-int  liberatr_vh_start(void);
-void liberatr_vh_stop(void);
-void liberatr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( liberatr_colorram_w ) ;
-WRITE_HANDLER( liberatr_bitmap_w );
-READ_HANDLER( liberatr_bitmap_xy_r );
-WRITE_HANDLER( liberatr_bitmap_xy_w );
-
+#include "liberatr.h"
 
 
 static UINT8 *liberatr_ctrld;
 
+
+
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
 
 static WRITE_HANDLER( liberatr_led_w )
 {
@@ -161,6 +159,13 @@ static WRITE_HANDLER( liberatr_coin_counter_w )
 	coin_counter_w(offset ^ 0x01, data);
 }
 
+
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 static READ_HANDLER( liberatr_input_port_0_r )
 {
@@ -188,6 +193,12 @@ static READ_HANDLER( liberatr_input_port_0_r )
 
 
 
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
 static MEMORY_READ_START( liberatr_readmem )
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
 	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
@@ -197,18 +208,6 @@ static MEMORY_READ_START( liberatr_readmem )
 	{ 0x7000, 0x701f, pokey2_r },
 	{ 0x7800, 0x781f, pokey1_r },
 	{ 0x8000, 0xefff, MRA_ROM },
-	{ 0xfffa, 0xffff, MRA_ROM },
-MEMORY_END
-
-static MEMORY_READ_START( liberat2_readmem )
-	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
-	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
-	{ 0x4000, 0x4000, liberatr_input_port_0_r },
-	{ 0x4001, 0x4001, input_port_1_r },
-	{ 0x4800, 0x483f, atari_vg_earom_r },
-	{ 0x5000, 0x501f, pokey2_r },
-	{ 0x5800, 0x581f, pokey1_r },
-	{ 0x6000, 0xbfff, MRA_ROM },
 	{ 0xfffa, 0xffff, MRA_ROM },
 MEMORY_END
 
@@ -236,6 +235,27 @@ static MEMORY_WRITE_START( liberatr_writemem )
 	{ 0x0001, 0x0001, MWA_RAM, &liberatr_y },	/* just here to assign pointer */
 MEMORY_END
 
+
+
+/*************************************
+ *
+ *	Alternate main CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( liberat2_readmem )
+	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
+	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convenience */
+	{ 0x4000, 0x4000, liberatr_input_port_0_r },
+	{ 0x4001, 0x4001, input_port_1_r },
+	{ 0x4800, 0x483f, atari_vg_earom_r },
+	{ 0x5000, 0x501f, pokey2_r },
+	{ 0x5800, 0x581f, pokey1_r },
+	{ 0x6000, 0xbfff, MRA_ROM },
+	{ 0xfffa, 0xffff, MRA_ROM },
+MEMORY_END
+
+
 static MEMORY_WRITE_START( liberat2_writemem )
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
 	{ 0x0000, 0x3fff, liberatr_bitmap_w, &liberatr_bitmapram },	/* overlapping for my convenience */
@@ -261,6 +281,12 @@ static MEMORY_WRITE_START( liberat2_writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( liberatr )
 	PORT_START			/* IN0 - $5000 */
@@ -342,6 +368,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct POKEYinterface pokey_interface =
 {
 	2,				/* 2 chips */
@@ -361,55 +393,54 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-#define MACHINE_DRIVER(NAME)							\
-static const struct MachineDriver machine_driver_##NAME =		\
-{														\
-	/* basic machine hardware */						\
-	{													\
-		{												\
-			CPU_M6502,									\
-			1250000,		/* 1.25 MHz */				\
-			NAME##_readmem,NAME##_writemem,0,0,			\
-			interrupt, 4								\
-		}												\
-	},													\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */	\
-	1,      /* single CPU, no need for interleaving */	\
-	0,													\
-														\
-	/* video hardware */								\
-	256, 256, { 8, 247, 13, 244 },						\
-	0,      /* no gfxdecodeinfo - bitmapped display */	\
-	32, 0,												\
-	0,													\
-														\
-	VIDEO_TYPE_RASTER,			\
-	0,													\
-	liberatr_vh_start,									\
-	liberatr_vh_stop,									\
-	liberatr_vh_screenrefresh,							\
-														\
-	/* sound hardware */								\
-	0,0,0,0,											\
-	{													\
-		{												\
-			SOUND_POKEY,								\
-			&pokey_interface							\
-		}												\
-	},													\
-														\
-	atari_vg_earom_handler								\
-};
 
-MACHINE_DRIVER(liberatr)
-MACHINE_DRIVER(liberat2)
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+ 
+static MACHINE_DRIVER_START( liberatr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 1250000)
+	MDRV_CPU_MEMORY(liberatr_readmem,liberatr_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(atari_vg)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256,256)
+	MDRV_VISIBLE_AREA(8, 247, 13, 244)
+	MDRV_PALETTE_LENGTH(32)
+	
+	MDRV_VIDEO_START(liberatr)
+	MDRV_VIDEO_UPDATE(liberatr)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
+static MACHINE_DRIVER_START( liberat2 )
 
-  Game driver(s)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(liberatr)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(liberat2_readmem,liberat2_writemem)
+MACHINE_DRIVER_END
 
-***************************************************************************/
+
+
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( liberatr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code and data  */
@@ -429,6 +460,7 @@ ROM_START( liberatr )
 	ROM_LOAD( "136012.109",   0x3000, 0x1000, 0xdda0c0ef )
 ROM_END
 
+
 ROM_START( liberat2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code and data  */
 	ROM_LOAD( "l6.bin",       0x6000, 0x1000, 0x78093d06 )
@@ -447,6 +479,12 @@ ROM_START( liberat2 )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAMEX( 1982, liberatr, 0,        liberatr, liberatr, 0, ROT0, "Atari", "Liberator (set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1982, liberat2, liberatr, liberat2, liberatr, 0, ROT0, "Atari", "Liberator (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

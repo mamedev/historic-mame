@@ -45,10 +45,10 @@
 
 
 
-void arkanoid_init_machine(void);
+MACHINE_INIT( arkanoid );
 
 WRITE_HANDLER( arkanoid_d008_w );
-void arkanoid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( arkanoid );
 
 READ_HANDLER( arkanoid_Z80_mcu_r );
 WRITE_HANDLER( arkanoid_Z80_mcu_w );
@@ -317,85 +317,61 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_arkanoid =
-{
+static MACHINE_DRIVER_START( arkanoid )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz ?? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M68705,
-			500000,	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100, /* 100 CPU slices per second to synchronize between the MCU and the main CPU */
-	arkanoid_init_machine,
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M68705, 500000)	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* 100 CPU slices per second to synchronize between the MCU and the main CPU */
+
+	MDRV_MACHINE_INIT(arkanoid)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	arkanoid_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(arkanoid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bootleg =
-{
+static MACHINE_DRIVER_START( bootleg )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz ?? */
-			boot_readmem,boot_writemem,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
+	MDRV_CPU_MEMORY(boot_readmem,boot_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	arkanoid_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(arkanoid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

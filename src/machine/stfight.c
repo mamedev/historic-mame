@@ -34,7 +34,7 @@ Encryption PAL 16R4 on CPU board
 
 */
 
-void init_empcity(void)
+DRIVER_INIT( empcity )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -65,7 +65,7 @@ void init_empcity(void)
 	}
 }
 
-void init_stfight(void)
+DRIVER_INIT( stfight )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -82,7 +82,7 @@ void init_stfight(void)
 	rom[0xb5 + diff] = 0x00;
 }
 
-void stfight_init_machine( void )
+MACHINE_INIT( stfight )
 {
     // initialise rom bank
     stfight_bank_w( 0, 0 );
@@ -97,33 +97,20 @@ WRITE_HANDLER( stfight_bank_w )
 	cpu_setbank( 1, &ROM2[data<<14] );
 }
 
-int stfight_vb_interrupt( void )
+INTERRUPT_GEN( stfight_vb_interrupt )
 {
     // Do a RST10
-    interrupt_vector_w( 0, 0xd7 );
-
-	return( interrupt() );
+    cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);
 }
 
 /*
  *      CPU 1 timed interrupt - 30Hz???
  */
 
-int stfight_interrupt_1( void )
+INTERRUPT_GEN( stfight_interrupt_1 )
 {
     // Do a RST08
-    interrupt_vector_w( 0, 0xcf );
-
-	return( interrupt() );
-}
-
-/*
- *      CPU 2 timed interrupt - 120Hz
- */
-
-int stfight_interrupt_2( void )
-{
-	return( interrupt() );
+    cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xcf);
 }
 
 /*

@@ -13,10 +13,8 @@ extern data16_t *btoads_vram_bg0, *btoads_vram_bg1;
 extern data16_t *btoads_sprite_scale;
 extern data16_t *btoads_sprite_control;
 
-int btoads_vh_start(void);
-void btoads_vh_stop(void);
-void btoads_vh_eof(void);
-void btoads_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( btoads );
+VIDEO_UPDATE( btoads );
 
 WRITE16_HANDLER( btoads_misc_control_w );
 WRITE16_HANDLER( btoads_display_control_w );

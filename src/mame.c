@@ -8,11 +8,13 @@
 #include "vidhrdw/generic.h"
 #include "palette.h"
 
+#define TEST_CLIPPING 0
 
-static struct RunningMachine machine;
-struct RunningMachine *Machine = &machine;
+
+static struct RunningMachine active_machine;
+struct RunningMachine *Machine = &active_machine;
 static const struct GameDriver *gamedrv;
-static const struct MachineDriver *drv;
+static struct InternalMachineDriver internal_drv;
 static struct mame_bitmap *real_scrbitmap;
 
 /* Variables to hold the status of various game options */
@@ -27,26 +29,18 @@ int bailing;	/* set to 1 if the startup is aborted to prevent multiple error mes
 static int settingsloaded;
 
 static int leds_status;
+static int bitmap_dirty;
+
+static int last_partial_scanline;
+int partial_update_count;
 
 
-struct auto_link
-{
-	struct auto_link *next;
-	int tag;
-	UINT32 cookie;
-};
 
-static struct auto_link *first_auto_link;
-static int auto_malloc_tag = 0;
 
 
 int init_machine(void);
 void shutdown_machine(void);
 int run_machine(void);
-
-/* in usrintrf.c */
-void switch_ui_orientation(void);
-void switch_true_orientation(void);
 
 
 #ifdef MAME_DEBUG
@@ -84,8 +78,11 @@ static int validitychecks(void)
 
 	for (i = 0;drivers[i];i++)
 	{
+		struct InternalMachineDriver drv;
 		const struct RomModule *romp;
 		const struct InputPortTiny *inp;
+
+		expand_machine_driver(drivers[i]->drv, &drv);
 
 		if (drivers[i]->clone_of == drivers[i])
 		{
@@ -223,17 +220,17 @@ static int validitychecks(void)
 
 			for (cpu = 0;cpu < MAX_CPU;cpu++)
 			{
-				if (drivers[i]->drv->cpu[cpu].cpu_type)
+				if (drv.cpu[cpu].cpu_type)
 				{
 					int alignunit,databus_width;
 
 
-					alignunit = cputype_align_unit(drivers[i]->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
-					databus_width = cputype_databus_width(drivers[i]->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
+					alignunit = cputype_align_unit(drv.cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
+					databus_width = cputype_databus_width(drv.cpu[cpu].cpu_type & ~CPU_FLAGS_MASK);
 
-					if (drivers[i]->drv->cpu[cpu].memory_read)
+					if (drv.cpu[cpu].memory_read)
 					{
-						const struct Memory_ReadAddress *mra = drivers[i]->drv->cpu[cpu].memory_read;
+						const struct Memory_ReadAddress *mra = drv.cpu[cpu].memory_read;
 
 						if (!IS_MEMPORT_MARKER(mra) || (mra->end & MEMPORT_DIRECTION_MASK) != MEMPORT_DIRECTION_READ)
 						{
@@ -284,9 +281,9 @@ static int validitychecks(void)
 							mra++;
 						}
 					}
-					if (drivers[i]->drv->cpu[cpu].memory_write)
+					if (drv.cpu[cpu].memory_write)
 					{
-						const struct Memory_WriteAddress *mwa = drivers[i]->drv->cpu[cpu].memory_write;
+						const struct Memory_WriteAddress *mwa = drv.cpu[cpu].memory_write;
 
 						if (mwa->start != MEMPORT_MARKER ||
 								(mwa->end & MEMPORT_DIRECTION_MASK) != MEMPORT_DIRECTION_WRITE)
@@ -342,12 +339,12 @@ static int validitychecks(void)
 			}
 
 
-			if (drivers[i]->drv->gfxdecodeinfo)
+			if (drv.gfxdecodeinfo)
 			{
-				for (j = 0;j < MAX_GFX_ELEMENTS && drivers[i]->drv->gfxdecodeinfo[j].memory_region != -1;j++)
+				for (j = 0;j < MAX_GFX_ELEMENTS && drv.gfxdecodeinfo[j].memory_region != -1;j++)
 				{
 					int len,avail,k,start;
-					int type = drivers[i]->drv->gfxdecodeinfo[j].memory_region;
+					int type = drv.gfxdecodeinfo[j].memory_region;
 
 
 /*
@@ -358,19 +355,19 @@ static int validitychecks(void)
 					}
 */
 
-					if (!IS_FRAC(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->total))
+					if (!IS_FRAC(drv.gfxdecodeinfo[j].gfxlayout->total))
 					{
 						start = 0;
 						for (k = 0;k < MAX_GFX_PLANES;k++)
 						{
-							if (drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k] > start)
-								start = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->planeoffset[k];
+							if (drv.gfxdecodeinfo[j].gfxlayout->planeoffset[k] > start)
+								start = drv.gfxdecodeinfo[j].gfxlayout->planeoffset[k];
 						}
-						start &= ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement-1);
-						len = drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->total *
-								drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement;
+						start &= ~(drv.gfxdecodeinfo[j].gfxlayout->charincrement-1);
+						len = drv.gfxdecodeinfo[j].gfxlayout->total *
+								drv.gfxdecodeinfo[j].gfxlayout->charincrement;
 						avail = region_length[type]
-								- (drivers[i]->drv->gfxdecodeinfo[j].start & ~(drivers[i]->drv->gfxdecodeinfo[j].gfxlayout->charincrement/8-1));
+								- (drv.gfxdecodeinfo[j].start & ~(drv.gfxdecodeinfo[j].gfxlayout->charincrement/8-1));
 						if ((start + len) / 8 > avail)
 						{
 							printf("%s: %s has gfx[%d] extending past allocated memory\n",drivers[i]->source_file,drivers[i]->name,j);
@@ -472,7 +469,7 @@ int run_game(int game)
 {
 	int err;
 
-	auto_malloc_start();
+	begin_resource_tracking();
 
 #ifdef MAME_DEBUG
 	/* validity checks */
@@ -485,12 +482,13 @@ int run_game(int game)
 	mame_debug = options.mame_debug;
 
 	Machine->gamedrv = gamedrv = drivers[game];
-	Machine->drv = drv = gamedrv->drv;
+	expand_machine_driver(gamedrv->drv, &internal_drv);
+	Machine->drv = &internal_drv;
 
 	/* copy configuration */
-	if (drv->video_attributes & VIDEO_RGB_DIRECT)
+	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
 	{
-		if (drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN)
+		if (Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN)
 			Machine->color_depth = 32;
 		else
 			Machine->color_depth = 15;
@@ -502,14 +500,14 @@ int run_game(int game)
 	{
 		case 16:
 			/* comply to -depth 16 only if we don't need a direct RGB mode */
-			if (!(drv->video_attributes & VIDEO_RGB_DIRECT))
+			if (!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT))
 				Machine->color_depth = options.color_depth;
 			break;
 
 		case 15:
 		case 32:
 			/* comply to -depth 15/32 only if we need a direct RGB mode */
-			if (drv->video_attributes & VIDEO_RGB_DIRECT)
+			if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
 				Machine->color_depth = options.color_depth;
 			break;
 	}
@@ -517,7 +515,7 @@ int run_game(int game)
 
 	if (Machine->color_depth == 15 || Machine->color_depth == 32)
 	{
-		if (!(drv->video_attributes & VIDEO_RGB_DIRECT))
+		if (!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT))
 			Machine->color_depth = 16;
 		else
 		{
@@ -581,8 +579,6 @@ int run_game(int game)
 		Machine->ui_orientation ^= ORIENTATION_FLIP_Y;
 	}
 
-	set_pixel_functions();
-
 	/* Do the work*/
 	err = 1;
 	bailing = 0;
@@ -599,7 +595,7 @@ int run_game(int game)
 
 	if (osd_init() == 0)
 	{
-		auto_malloc_start();
+		begin_resource_tracking();
 		if (init_machine() == 0)
 		{
 			if (run_machine() == 0)
@@ -618,7 +614,7 @@ int run_game(int game)
 			printf("Unable to initialize machine emulation\n");
 		}
 
-		auto_malloc_stop();
+		end_resource_tracking();
 		osd_exit();
 	}
 	else if (!bailing)
@@ -627,7 +623,7 @@ int run_game(int game)
 		printf ("Unable to initialize system\n");
 	}
 
-	auto_malloc_stop();
+	end_resource_tracking();
 	return err;
 }
 
@@ -701,6 +697,11 @@ int init_machine(void)
 	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
 	spriteram_size=spriteram_2_size=0;
 
+	/* first init the timers; some CPUs have built-in timers and will need */
+	/* to allocate them up front */
+	timer_init();
+	cpu_init_refresh_timer();
+
 	/* first of all initialize the memory handlers, which could be used by the */
 	/* other initialization routines */
 	cpu_init();
@@ -733,7 +734,6 @@ out:
 void shutdown_machine(void)
 {
 	int i;
-
 
 	#ifdef MESS
 	exit_devices();
@@ -793,20 +793,6 @@ static void vh_close(void)
 	}
 
 	palette_stop();
-
-	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM)
-	{
-		if (buffered_spriteram)
-			free(buffered_spriteram);
-		buffered_spriteram = NULL;
-		buffered_spriteram16 = NULL;
-		buffered_spriteram32 = NULL;
-		if (buffered_spriteram_2)
-			free(buffered_spriteram_2);
-		buffered_spriteram_2 = NULL;
-		buffered_spriteram16_2 = NULL;
-		buffered_spriteram32_2 = NULL;
-	}
 }
 
 
@@ -859,16 +845,16 @@ static int vh_open(void)
 	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
 	/* convert_color_prom() routine (in palette_init()) because it might need to check the */
 	/* Machine->gfx[] data */
-	if (drv->gfxdecodeinfo)
+	if (Machine->drv->gfxdecodeinfo)
 	{
-		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
+		for (i = 0;i < MAX_GFX_ELEMENTS && Machine->drv->gfxdecodeinfo[i].memory_region != -1;i++)
 		{
-			int reglen = 8*memory_region_length(drv->gfxdecodeinfo[i].memory_region);
+			int reglen = 8*memory_region_length(Machine->drv->gfxdecodeinfo[i].memory_region);
 			struct GfxLayout glcopy;
 			int j;
 
 
-			memcpy(&glcopy,drv->gfxdecodeinfo[i].gfxlayout,sizeof(glcopy));
+			memcpy(&glcopy,Machine->drv->gfxdecodeinfo[i].gfxlayout,sizeof(glcopy));
 
 			if (IS_FRAC(glcopy.total))
 				glcopy.total = reglen / glcopy.charincrement * FRAC_NUM(glcopy.total) / FRAC_DEN(glcopy.total);
@@ -894,8 +880,8 @@ static int vh_open(void)
 				}
 			}
 
-			if ((Machine->gfx[i] = decodegfx(memory_region(drv->gfxdecodeinfo[i].memory_region)
-					+ drv->gfxdecodeinfo[i].start,
+			if ((Machine->gfx[i] = decodegfx(memory_region(Machine->drv->gfxdecodeinfo[i].memory_region)
+					+ Machine->drv->gfxdecodeinfo[i].start,
 					&glcopy)) == 0)
 			{
 				vh_close();
@@ -906,22 +892,22 @@ static int vh_open(void)
 				return 1;
 			}
 			if (Machine->remapped_colortable)
-				Machine->gfx[i]->colortable = &Machine->remapped_colortable[drv->gfxdecodeinfo[i].color_codes_start];
-			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
+				Machine->gfx[i]->colortable = &Machine->remapped_colortable[Machine->drv->gfxdecodeinfo[i].color_codes_start];
+			Machine->gfx[i]->total_colors = Machine->drv->gfxdecodeinfo[i].total_color_codes;
 		}
 	}
 
 
-	bmwidth = drv->screen_width;
-	bmheight = drv->screen_height;
+	bmwidth = Machine->drv->screen_width;
+	bmheight = Machine->drv->screen_height;
 
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		scale_vectorgames(options.vector_width,options.vector_height,&bmwidth,&bmheight);
 
 	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
 	{
-		viswidth = drv->default_visible_area.max_x - drv->default_visible_area.min_x + 1;
-		visheight = drv->default_visible_area.max_y - drv->default_visible_area.min_y + 1;
+		viswidth = Machine->drv->default_visible_area.max_x - Machine->drv->default_visible_area.min_x + 1;
+		visheight = Machine->drv->default_visible_area.max_y - Machine->drv->default_visible_area.min_y + 1;
 	}
 	else
 	{
@@ -936,13 +922,13 @@ static int vh_open(void)
 	}
 
 	/* take out the hicolor flag if it's not being used */
-	attr = drv->video_attributes;
+	attr = Machine->drv->video_attributes;
 	if (Machine->color_depth != 15 && Machine->color_depth != 32)
 		attr &= ~VIDEO_RGB_DIRECT;
 
 	/* create the display bitmap, and allocate the palette */
 	if (osd_create_display(viswidth,visheight,Machine->color_depth,
-			drv->frames_per_second,attr,Machine->orientation))
+			Machine->drv->frames_per_second,attr,Machine->orientation))
 	{
 		vh_close();
 		return 1;
@@ -955,7 +941,7 @@ static int vh_open(void)
 		return 1;
 	}
 
-	switch_ui_orientation();
+	switch_ui_orientation(NULL);
 	if (mame_debug)
 	{
 		Machine->debug_bitmap = bitmap_alloc_depth(options.debug_width,options.debug_height,Machine->color_depth);
@@ -965,20 +951,20 @@ static int vh_open(void)
 			return 1;
 		}
 	}
-	switch_true_orientation();
+	switch_true_orientation(NULL);
 
 	set_visible_area(
-			drv->default_visible_area.min_x,
-			drv->default_visible_area.max_x,
-			drv->default_visible_area.min_y,
-			drv->default_visible_area.max_y);
+			Machine->drv->default_visible_area.min_x,
+			Machine->drv->default_visible_area.max_x,
+			Machine->drv->default_visible_area.min_y,
+			Machine->drv->default_visible_area.max_y);
 
 	/* create spriteram buffers if necessary */
-	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM)
+	if (Machine->drv->video_attributes & VIDEO_BUFFERS_SPRITERAM)
 	{
 		if (spriteram_size)
 		{
-			buffered_spriteram = malloc(spriteram_size);
+			buffered_spriteram = auto_malloc(spriteram_size);
 			if (!buffered_spriteram)
 			{
 				vh_close();
@@ -989,7 +975,7 @@ static int vh_open(void)
 
 			if (spriteram_2_size)
 			{
-				buffered_spriteram_2 = malloc(spriteram_2_size);
+				buffered_spriteram_2 = auto_malloc(spriteram_2_size);
 				if (!buffered_spriteram_2)
 				{
 					vh_close();
@@ -1054,15 +1040,71 @@ static int vh_open(void)
 
 ***************************************************************************/
 
+void force_partial_update(int scanline)
+{
+	struct rectangle clip = Machine->visible_area;
+
+	/* if skipping this frame, bail */
+	if (osd_skip_this_frame())
+		return;
+
+	/* skip if less than the lowest so far */
+	if (scanline < last_partial_scanline)
+		return;
+
+	/* if there's a dirty bitmap and we didn't do any partial updates yet, handle it now */
+	if (bitmap_dirty && last_partial_scanline == 0)
+	{
+		fillbitmap(Machine->scrbitmap, get_black_pen(), NULL);
+		osd_mark_dirty(Machine->uixmin, Machine->uiymin, Machine->uixmin+Machine->uiwidth-1, Machine->uiymin+Machine->uiheight-1);
+		bitmap_dirty = 0;
+	}
+
+	/* set the start/end scanlines */
+	if (last_partial_scanline > clip.min_y)
+		clip.min_y = last_partial_scanline;
+	if (scanline < clip.max_y)
+		clip.max_y = scanline;
+
+	/* render if necessary */
+	if (clip.min_y <= clip.max_y)
+	{
+		profiler_mark(PROFILER_VIDEO);
+		(*Machine->drv->video_update)(Machine->scrbitmap, &clip);
+		partial_update_count++;
+		profiler_mark(PROFILER_END);
+	}
+
+	/* remember where we left off */
+	last_partial_scanline = scanline + 1;
+}
+
+
+void reset_partial_updates(void)
+{
+	last_partial_scanline = 0;
+	partial_update_count = 0;
+}
+
+
+
+/*************************************
+ *
+ *	Called by cpuexec either at the
+ *	start or end of VBLANK
+ *
+ *************************************/
+
 int updatescreen(void)
 {
 	/* update sound */
 	sound_update();
 
+	/* if we're not skipping this frame, draw the screen */
 	if (osd_skip_this_frame() == 0)
 	{
 		profiler_mark(PROFILER_VIDEO);
-		draw_screen();	/* update screen */
+		draw_screen();
 		profiler_mark(PROFILER_END);
 	}
 
@@ -1073,9 +1115,12 @@ int updatescreen(void)
 		/* quit if the user asked to */
 		return 1;
 
+	/* blit to the screen */
 	update_video_and_audio();
 
-	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
+	/* call the end-of-frame callback */
+	if (Machine->drv->video_eof)
+		(*Machine->drv->video_eof)();
 
 	return 0;
 }
@@ -1087,19 +1132,14 @@ int updatescreen(void)
 
 ***************************************************************************/
 
-static int bitmap_dirty;
-
 void draw_screen(void)
 {
-	if (bitmap_dirty)
-		osd_mark_dirty(Machine->uixmin,Machine->uiymin,Machine->uixmin+Machine->uiwidth-1,Machine->uiymin+Machine->uiheight-1);
+	/* finish updating the screen */
+	force_partial_update(Machine->visible_area.max_y);
 
-	(*Machine->drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
-
+	/* blend with artwork */
 	if (artwork_backdrop || artwork_overlay)
-		artwork_draw(artwork_real_scrbitmap, Machine->scrbitmap,bitmap_dirty);
-
-	bitmap_dirty = 0;
+		artwork_draw(artwork_real_scrbitmap, Machine->scrbitmap, bitmap_dirty);
 }
 
 void schedule_full_refresh(void)
@@ -1132,11 +1172,11 @@ int run_machine(void)
 {
 	int res = 1;
 
-
+	/* start the video hardware */
 	if (vh_open() == 0)
 	{
 		tilemap_init();
-		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)		/* start the video hardware */
+		if (Machine->drv->video_start == 0 || (*Machine->drv->video_start)() == 0)		/* start the video hardware */
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
@@ -1146,7 +1186,6 @@ int run_machine(void)
 					real_scrbitmap = artwork_real_scrbitmap;
 				else
 					real_scrbitmap = Machine->scrbitmap;
-
 
 				/* free memory regions allocated with REGIONFLAG_DISPOSE (typically gfx roms) */
 				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
@@ -1179,24 +1218,24 @@ int run_machine(void)
 
 					if (options.cheat) InitCheat();
 
-					if (drv->nvram_handler)
+					if (Machine->drv->nvram_handler)
 					{
 						void *f;
 
 						f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,0);
-						(*drv->nvram_handler)(f,0);
+						(*Machine->drv->nvram_handler)(f,0);
 						if (f) osd_fclose(f);
 					}
 
 					cpu_run();		/* run the emulation! */
 
-					if (drv->nvram_handler)
+					if (Machine->drv->nvram_handler)
 					{
 						void *f;
 
 						if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_NVRAM,1)) != 0)
 						{
-							(*drv->nvram_handler)(f,1);
+							(*Machine->drv->nvram_handler)(f,1);
 							osd_fclose(f);
 						}
 					}
@@ -1211,7 +1250,7 @@ userquit:
 				/* the following MUST be done after hiscore_save() otherwise */
 				/* some 68000 games will not work */
 				sound_stop();
-				if (drv->vh_stop) (*drv->vh_stop)();
+				if (Machine->drv->video_stop) (*Machine->drv->video_stop)();
 				artwork_kill();
 
 				res = 0;
@@ -1270,76 +1309,117 @@ void set_led_status(int num,int on)
 
 /*************************************
  *
- *	Allocate memory to be auto-freed
+ *	Expand a machine driver
  *
  *************************************/
 
-void *auto_malloc(size_t size)
+void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), struct InternalMachineDriver *output)
 {
-	struct auto_link *result;
+	memset(output, 0, sizeof(*output));
 
-	/* allocate reqested memory plus a link and a cookie */
-	result = malloc(size + sizeof(*result));
-	if (!result)
-		return NULL;
-
-	/* fill in the link */
-	result->next = first_auto_link;
-	result->tag = auto_malloc_tag;
-	result->cookie = 0xbaadf00d;
-	first_auto_link = result;
-
-	/* return the memory */
-	return result + 1;
+	/* if this is tagged in the new format, parse it */
+	(*constructor)(output);
 }
 
 
 
 /*************************************
  *
- *	Track a new set of memory
+ *	Helper functions for building up
+ *	InternalMachineDrivers
  *
  *************************************/
 
-void auto_malloc_start(void)
+struct MachineCPU *machine_add_cpu(struct InternalMachineDriver *machine, const char *tag, int type, int cpuclock)
 {
-	auto_malloc_tag++;
-}
+	int cpunum;
 
-
-
-/*************************************
- *
- *	Free the current set of memory
- *
- *************************************/
-
-void auto_malloc_stop(void)
-{
-	struct auto_link *link, *next;
-
-	/* follow the links */
-	link = first_auto_link;
-	while (link && link->tag == auto_malloc_tag)
-	{
-		/* validate the cookie and stop if it's bad */
-		if (link->cookie != 0xbaadf00d)
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+		if (machine->cpu[cpunum].cpu_type == 0)
 		{
-			fprintf(stderr, "Can't free all memory due to memory corruption\n");
-			break;
+			machine->cpu[cpunum].tag = tag;
+			machine->cpu[cpunum].cpu_type = type;
+			machine->cpu[cpunum].cpu_clock = cpuclock;
+			return &machine->cpu[cpunum];
 		}
 
-		/* fetch the next value before freeing */
-		next = link->next;
+	logerror("Out of CPU's!\n");
+	return NULL;
+}
 
-		/* free memory */
-		free(link);
-		link = next;
-	}
 
-	/* reset the link */
-	first_auto_link = link;
+struct MachineCPU *machine_find_cpu(struct InternalMachineDriver *machine, const char *tag)
+{
+	int cpunum;
 
-	/* decrement the tag counter */
-	auto_malloc_tag--;
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+		if (machine->cpu[cpunum].tag && strcmp(machine->cpu[cpunum].tag, tag) == 0)
+			return &machine->cpu[cpunum];
+
+	logerror("Can't find CPU '%s'!\n", tag);
+	return NULL;
+}
+
+
+void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag)
+{
+	int cpunum;
+
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+		if (machine->cpu[cpunum].tag == tag)
+		{
+			memmove(&machine->cpu[cpunum], &machine->cpu[cpunum + 1], sizeof(machine->cpu[0]) * (MAX_CPU - cpunum - 1));
+			memset(&machine->cpu[MAX_CPU - 1], 0, sizeof(machine->cpu[0]));
+			return;
+		}
+
+	logerror("Can't find CPU '%s'!\n", tag);
+}
+
+
+struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, void *sndintf)
+{
+	int soundnum;
+
+	for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
+		if (machine->sound[soundnum].sound_type == 0)
+		{
+			machine->sound[soundnum].tag = tag;
+			machine->sound[soundnum].sound_type = type;
+			machine->sound[soundnum].sound_interface = sndintf;
+			return &machine->sound[soundnum];
+		}
+
+	logerror("Out of sounds!\n");
+	return NULL;
+
+}
+
+
+struct MachineSound *machine_find_sound(struct InternalMachineDriver *machine, const char *tag)
+{
+	int soundnum;
+
+	for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
+		if (machine->sound[soundnum].tag && strcmp(machine->sound[soundnum].tag, tag) == 0)
+			return &machine->sound[soundnum];
+
+	logerror("Can't find sound '%s'!\n", tag);
+	return NULL;
+}
+
+
+void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag)
+{
+	int soundnum;
+
+	for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
+		if (machine->sound[soundnum].tag == tag)
+		{
+			memmove(&machine->sound[soundnum], &machine->sound[soundnum + 1], sizeof(machine->sound[0]) * (MAX_SOUND - soundnum - 1));
+			memset(&machine->sound[MAX_SOUND - 1], 0, sizeof(machine->sound[0]));
+			return;
+		}
+
+	logerror("Can't find sound '%s'!\n", tag);
 }

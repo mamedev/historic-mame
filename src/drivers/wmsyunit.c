@@ -1,44 +1,28 @@
 /*************************************************************************
 
-	Driver for Williams/Midway Y/Z-unit games.
+	Williams/Midway Y/Z-unit system
 
-	TMS34010 processor @ 6.00 - 6.25MHz
-	Two sound options:
-		standard Williams CVSD board, with 6809 @ 2MHz, a YM2151, and an HC55516 CVSD decoder
-		standard Williams ADPCM board, with 6809 @ 2MHz, a YM2151, and an OKI6295 ADPCM decoder
+    driver by Alex Pasadyn, Zsolt Vasvari, Kurt Mahan, Ernesto Corvi,
+    and Aaron Giles
 
+	Games supported:
+		* Narc
+		* Trog (prototype and release versions)
+		* Strike Force
+		* Smash TV
+		* Hi Impact Football
+		* Super Hi Impact
+		* Terminator 2
+		* Mortal Kombat (Y-unit versions)
+		* Total Carnage
 
-	Created by Alex Pasadyn and Zsolt Vasvari with some help from Kurt Mahan
-	Enhancements by Aaron Giles and Ernesto Corvi
-
-
-	Currently playable:
-	------------------
-	- Narc
-	- Smash TV
-	- Total Carnage
-	- Mortal Kombat (Y-unit versions)
-	- Strike Force
-	- Trog (prototype and release versions)
-	- Hi Impact Football
-	- Terminator 2
-
-
-	Not Playable:
-	------------
-	- Super Hi Impact  (freaks out during play, often after extra point)
-
-
-	Known Bugs:
-	----------
-	- When the Porsche spins in Narc, the wheels are missing for a single
-	  frame. This actually might be there on the original, because if the
-	  game runs over 60% (as it does now on my PII 266) it's very hard to
-	  notice. With 100% framerate, it would be invisible.
-
-	- Terminator 2 freezes while playing the movies after destroying skynet
-	  Currently we have a hack in which prevents the freeze, but we really
-	  should eventually figure it out for real.
+	Known bugs:
+		* Super Hi Impact freaks out during play
+		* when the Porsche spins in Narc, the wheels are missing for
+			a single frame (may be an original bug)
+		* Terminator 2 freezes while playing the movies after destroying
+			skynet. Currently we have a hack in which prevents the freeze,
+			but we really should eventually figure it out for real
 
 **************************************************************************/
 
@@ -56,7 +40,7 @@
  *
  *************************************/
 
-static void nvram_handler(void *file, int read_or_write)
+static NVRAM_HANDLER( wms_yunit )
 {
 	if (read_or_write)
 		osd_fwrite(file, wms_cmos_ram, 0x8000);
@@ -86,6 +70,7 @@ static MEMORY_READ16_START( readmem )
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA16_RAM },
 MEMORY_END
+
 
 static MEMORY_WRITE16_START( writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), wms_yunit_vram_w },
@@ -158,6 +143,7 @@ INPUT_PORTS_START( narc )
 	PORT_START
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( trog )
 	PORT_START
@@ -247,6 +233,7 @@ INPUT_PORTS_START( trog )
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( smashtv )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1 )
@@ -289,6 +276,7 @@ INPUT_PORTS_START( smashtv )
 	PORT_START
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( strkforc )
 	PORT_START
@@ -385,6 +373,7 @@ INPUT_PORTS_START( strkforc )
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( mkla1 )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
@@ -474,6 +463,7 @@ INPUT_PORTS_START( mkla1 )
 	PORT_START
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( term2 )
 	PORT_START
@@ -570,6 +560,7 @@ INPUT_PORTS_START( term2 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( totcarn )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1 )
@@ -638,43 +629,30 @@ static struct tms34010_config cpu_config =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_zunit =
-{
+static MACHINE_DRIVER_START( zunit )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 MHz */
-			readmem,writemem,0,0,
-			ignore_interrupt,0,
-			0,0,&cpu_config
-		},
-		SOUND_CPU_WILLIAMS_NARC
-	},
-	57, 0,	/* frames per second, vblank duration */
-	1,
-	wms_yunit_init_machine,
+	MDRV_CPU_ADD(TMS34010, 48000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_MACHINE_INIT(wms_yunit)
+	MDRV_NVRAM_HANDLER(wms_yunit)
 
 	/* video hardware */
-    512, 432, { 0, 511, 27, 427 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 432)
+	MDRV_VISIBLE_AREA(0, 511, 27, 427)
+	MDRV_PALETTE_LENGTH(8192)
 
-	0,
-	8192, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	wms_zunit_vh_eof,
-	wms_zunit_vh_start,
-	wms_yunit_vh_stop,
-	wms_yunit_vh_screenrefresh,
+	MDRV_VIDEO_START(wms_zunit)
+	MDRV_VIDEO_EOF(wms_zunit)
+	MDRV_VIDEO_UPDATE(wms_yunit)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_WILLIAMS_NARC
-	},
-	nvram_handler
-};
+	MDRV_IMPORT_FROM(williams_narc_sound)
+MACHINE_DRIVER_END
 
 
 
@@ -684,121 +662,65 @@ static const struct MachineDriver machine_driver_zunit =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_yunit_cvsd_4bit =
-{
+static MACHINE_DRIVER_START( yunit_core )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
-			readmem,writemem,0,0,
-			ignore_interrupt,0,
-			0,0,&cpu_config
-		},
-		SOUND_CPU_WILLIAMS_CVSD
-	},
-	MKLA5_FPS, MKLA5_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	wms_yunit_init_machine,
+	MDRV_CPU_ADD(TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
+	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)
+	MDRV_VBLANK_DURATION(MKLA5_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(wms_yunit)
+	MDRV_NVRAM_HANDLER(wms_yunit)
 
 	/* video hardware */
-	512, 288, { 0, 399, 20, 274 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 288)
+	MDRV_VISIBLE_AREA(0, 399, 20, 274)
+	MDRV_PALETTE_LENGTH(256)
 
-	0,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	wms_yunit_vh_eof,
-	wms_yunit_4bit_vh_start,
-	wms_yunit_vh_stop,
-	wms_yunit_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_WILLIAMS_CVSD
-	},
-	nvram_handler
-};
+	MDRV_VIDEO_EOF(wms_yunit)
+	MDRV_VIDEO_UPDATE(wms_yunit)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_yunit_cvsd_6bit =
-{
+static MACHINE_DRIVER_START( yunit_cvsd_4bit )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 MHz */
-			readmem,writemem,0,0,
-			ignore_interrupt,0,
-			0,0,&cpu_config
-		},
-		SOUND_CPU_WILLIAMS_CVSD
-	},
-	MKLA5_FPS, MKLA5_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	wms_yunit_init_machine,
+	MDRV_IMPORT_FROM(yunit_core)
+	MDRV_IMPORT_FROM(williams_cvsd_sound)
 
 	/* video hardware */
-	512, 288, { 0, 399, 20, 274 },
-
-	0,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	wms_yunit_vh_eof,
-	wms_yunit_6bit_vh_start,
-	wms_yunit_vh_stop,
-	wms_yunit_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_WILLIAMS_CVSD
-	},
-	nvram_handler
-};
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_VIDEO_START(wms_yunit_4bit)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_yunit_adpcm =
-{
+static MACHINE_DRIVER_START( yunit_cvsd_6bit )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_TMS34010,
-			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 MHz */
-			readmem,writemem,0,0,
-			ignore_interrupt,0,
-			0,0,&cpu_config
-		},
-		SOUND_CPU_WILLIAMS_ADPCM
-	},
-	MKLA5_FPS, MKLA5_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	wms_yunit_init_machine,
+	MDRV_IMPORT_FROM(yunit_core)
+	MDRV_IMPORT_FROM(williams_cvsd_sound)
 
 	/* video hardware */
-	512, 304, { 0, 399, 27, 282 },
+	MDRV_PALETTE_LENGTH(4096)
+	MDRV_VIDEO_START(wms_yunit_6bit)
+MACHINE_DRIVER_END
 
-	0,
-	4096, 0,
-    0,
 
-    VIDEO_TYPE_RASTER,
-	wms_yunit_vh_eof,
-	wms_yunit_6bit_vh_start,
-	wms_yunit_vh_stop,
-	wms_yunit_vh_screenrefresh,
+static MACHINE_DRIVER_START( yunit_adpcm )
 
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_WILLIAMS_ADPCM(REGION_SOUND1)
-	},
-	nvram_handler
-};
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(yunit_core)
+	MDRV_IMPORT_FROM(williams_adpcm_sound)
+
+	/* video hardware */
+	MDRV_SCREEN_SIZE(512, 304)
+	MDRV_VISIBLE_AREA(0, 399, 27, 282)
+	MDRV_PALETTE_LENGTH(4096)
+	MDRV_VIDEO_START(wms_yunit_6bit)
+MACHINE_DRIVER_END
 
 
 
@@ -891,6 +813,7 @@ ROM_START( narc )
 	ROM_LOAD ( "u26",  0x6e0000, 0x10000, 0xcb19f784 )
 ROM_END
 
+
 ROM_START( narc3 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -978,6 +901,7 @@ ROM_START( narc3 )
 	ROM_LOAD ( "u26",  0x6e0000, 0x10000, 0xcb19f784 )
 ROM_END
 
+
 ROM_START( trog )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1005,6 +929,7 @@ ROM_START( trog )
 	ROM_LOAD (  "trogu90.bin",  0x280000, 0x20000, 0x16e06753 )
 	ROM_LOAD (  "trogu91.bin",  0x2a0000, 0x20000, 0x880a02c7 )
 ROM_END
+
 
 ROM_START( trog3 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1034,6 +959,7 @@ ROM_START( trog3 )
 	ROM_LOAD (  "trogu91.bin",  0x2a0000, 0x20000, 0x880a02c7 )
 ROM_END
 
+
 ROM_START( trogp )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1062,6 +988,7 @@ ROM_START( trogp )
 	ROM_LOAD (  "trogu91.bin",  0x2a0000, 0x20000, 0x880a02c7 )
 ROM_END
 
+
 ROM_START( smashtv )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1087,6 +1014,7 @@ ROM_START( smashtv )
  	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )
 ROM_END
+
 
 ROM_START( smashtv6 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1114,6 +1042,7 @@ ROM_START( smashtv6 )
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )
 ROM_END
 
+
 ROM_START( smashtv5 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1140,6 +1069,7 @@ ROM_START( smashtv5 )
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )
 ROM_END
 
+
 ROM_START( smashtv4 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1165,6 +1095,7 @@ ROM_START( smashtv4 )
  	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )
  	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )
 ROM_END
+
 
 ROM_START( hiimpact )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1195,6 +1126,7 @@ ROM_START( hiimpact )
 	ROM_LOAD ( "la1u109.bin",  0x460000, 0x20000, 0x3689fbbc )
 ROM_END
 
+
 ROM_START( shimpact )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1223,6 +1155,7 @@ ROM_START( shimpact )
 	ROM_LOAD ( "shiu108.bin",  0x480000, 0x40000, 0xd39685a3 )
 	ROM_LOAD ( "shiu109.bin",  0x4c0000, 0x40000, 0x36e0b2b2 )
 ROM_END
+
 
 ROM_START( strkforc )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1253,6 +1186,39 @@ ROM_START( strkforc )
 	ROM_LOAD (  "sfu90.bin",  0x280000, 0x20000, 0x607bcdc0 )
 	ROM_LOAD (  "sfu91.bin",  0x2a0000, 0x20000, 0xda02547e )
 ROM_END
+
+
+ROM_START( mkprot9 )
+	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 )	/* sound CPU */
+	ROM_LOAD (  "mks-u3.rom", 0x10000, 0x40000, 0xc615844c )
+
+	ROM_REGION( 0xc0000, REGION_SOUND1, 0 )	/* ADPCM */
+	ROM_LOAD ( "mks-u12.rom", 0x00000, 0x40000, 0x258bd7f9 )
+	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x40000, 0x7b7ec3b6 )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_LOAD16_BYTE( "mkprot9.105",  0x00000, 0x80000, 0x20772bbd )
+	ROM_LOAD16_BYTE(  "mkprot9.89",  0x00001, 0x80000, 0x3238d45b )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD ( "mkg-u111.rom",  0x000000, 0x80000, 0xd17096c4 )
+	ROM_LOAD ( "mkg-u112.rom",  0x080000, 0x80000, 0x993bc2e4 )
+	ROM_LOAD ( "mkg-u113.rom",  0x100000, 0x80000, 0x6fb91ede )
+	ROM_LOAD ( "mkg-u114.rom",  0x180000, 0x80000, 0xed1ff88a )
+
+ 	ROM_LOAD (  "mkg-u95.rom",  0x200000, 0x80000, 0xa002a155 )
+ 	ROM_LOAD (  "mkg-u96.rom",  0x280000, 0x80000, 0xdcee8492 )
+	ROM_LOAD (  "mkg-u97.rom",  0x300000, 0x80000, 0xde88caef )
+	ROM_LOAD (  "mkg-u98.rom",  0x380000, 0x80000, 0x37eb01b4 )
+
+	ROM_LOAD ( "mkg-u106.rom",  0x400000, 0x80000, 0x45acaf21 )
+ 	ROM_LOAD ( "mkg-u107.rom",  0x480000, 0x80000, 0x2a6c10a0 )
+  	ROM_LOAD ( "mkg-u108.rom",  0x500000, 0x80000, 0x23308979 )
+ 	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )
+ROM_END
+
 
 ROM_START( mkla1 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1285,6 +1251,7 @@ ROM_START( mkla1 )
  	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )
 ROM_END
 
+
 ROM_START( mkla2 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1315,6 +1282,7 @@ ROM_START( mkla2 )
   	ROM_LOAD ( "mkg-u108.rom",  0x500000, 0x80000, 0x23308979 )
  	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )
 ROM_END
+
 
 ROM_START( mkla3 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1347,6 +1315,7 @@ ROM_START( mkla3 )
  	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )
 ROM_END
 
+
 ROM_START( mkla4 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1377,6 +1346,7 @@ ROM_START( mkla4 )
   	ROM_LOAD ( "mkg-u108.rom",  0x500000, 0x80000, 0x23308979 )
  	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, 0xcafc47bb )
 ROM_END
+
 
 ROM_START( term2 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1410,6 +1380,7 @@ ROM_START( term2 )
  	ROM_LOAD ( "t2.109",  0x580000, 0x80000, 0x306a9366 )
 ROM_END
 
+
 ROM_START( totcarn )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
 
@@ -1441,6 +1412,7 @@ ROM_START( totcarn )
  	ROM_LOAD ( "tcu108.bin",  0x480000, 0x40000, 0xed152acc )
  	ROM_LOAD ( "tcu109.bin",  0x4c0000, 0x40000, 0x80715252 )
 ROM_END
+
 
 ROM_START( totcarnp )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* 34010 dummy region */
@@ -1498,6 +1470,7 @@ GAME( 1990, hiimpact, 0,       yunit_cvsd_6bit, trog,    hiimpact, ROT0, "Willia
 GAMEX(1991, shimpact, 0,       yunit_cvsd_6bit, trog,    shimpact, ROT0, "Midway",   "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
 
 GAME( 1991, term2,    0,       yunit_adpcm,     term2,   term2,    ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
+GAME( 1992, mkprot9,  mk,      yunit_adpcm,     mkla1,   mkprot9,  ROT0, "Midway",   "Mortal Kombat (prototype, rev 9.0 07/28/92)" )
 GAME( 1992, mkla1,    mk,      yunit_adpcm,     mkla1,   mkla1,    ROT0, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
 GAME( 1992, mkla2,    mk,      yunit_adpcm,     mkla1,   mkla2,    ROT0, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )
 GAME( 1992, mkla3,    mk,      yunit_adpcm,     mkla1,   mkla3,    ROT0, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)" )

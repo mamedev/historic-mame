@@ -37,7 +37,7 @@ unsigned char *circusc_scroll;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( circusc )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -105,7 +105,7 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int circusc_vh_start(void)
+VIDEO_START( circusc )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
@@ -156,7 +156,7 @@ WRITE_HANDLER( circusc_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 	unsigned char *sr;
@@ -189,12 +189,12 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				sr[offs + 1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+				cliprect,TRANSPARENCY_COLOR,0);
 
 	}
 }
 
-void circusc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( circusc )
 {
 	int i;
 
@@ -203,7 +203,7 @@ void circusc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	for (i = 10;i < 32;i++)
 		tilemap_set_scrolly(bg_tilemap,i,*circusc_scroll);
 
-	tilemap_draw(bitmap,bg_tilemap,1,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,1,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }

@@ -11,9 +11,8 @@ Ikki (c) 1985 Sun Electronics
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void ikki_vh_convert_color_prom(unsigned char *palette,
-	unsigned short *colortable,const unsigned char *color_prom);
-void ikki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( ikki );
+VIDEO_UPDATE( ikki );
 
 static UINT8 *ikki_sharedram;
 
@@ -221,46 +220,35 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static const struct MachineDriver machine_driver_ikki =
-{
-	{
-		{
-			CPU_Z80,
-			8000000/2, /* 4.000MHz */
-			ikki_readmem1,ikki_writemem1,0,0,
-			interrupt,2
-		},
-		{
-			CPU_Z80,
-			8000000/2, /* 4.000MHz */
-			ikki_readmem2,ikki_writemem2,0,0,
-			interrupt,2
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( ikki )
 
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
+	MDRV_CPU_MEMORY(ikki_readmem1,ikki_writemem1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
-	gfxdecodeinfo,
-	256+1,1024,
-	ikki_vh_convert_color_prom,
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
+	MDRV_CPU_MEMORY(ikki_readmem2,ikki_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	ikki_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	},
-};
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+1)
+	MDRV_COLORTABLE_LENGTH(1024)
+	
+	MDRV_PALETTE_INIT(ikki)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(ikki)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 /****************************************************************************/
 

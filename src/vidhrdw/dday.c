@@ -21,10 +21,7 @@ struct mame_bitmap *main_bitmap;
 static int control;
 static int sl_image;
 static int sl_enable;
-static void *countdown_timer;
 static int timer_value;
-
-void dday_vh_stop(void);
 
 
 /* Note: There seems to be no way to reset this timer via hardware.
@@ -51,13 +48,7 @@ static void start_countdown_timer(void)
 {
 	timer_value = 0;
 
-	countdown_timer = timer_pulse(TIME_IN_SEC(1), 0, countdown_timer_callback);
-}
-
-static void stop_countdown_timer(void)
-{
-	if (countdown_timer)  timer_remove(countdown_timer);
-	countdown_timer = 0;
+	timer_pulse(TIME_IN_SEC(1), 0, countdown_timer_callback);
 }
 
 
@@ -67,7 +58,7 @@ static void stop_countdown_timer(void)
 
 ***************************************************************************/
 
-void dday_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( dday )
 {
 	int i;
 
@@ -244,20 +235,17 @@ static void get_sl_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int dday_vh_start(void)
+VIDEO_START( dday )
 {
 	bg_tilemap   = tilemap_create(get_bg_tile_info,  tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32);
 	fg_tilemap   = tilemap_create(get_fg_tile_info,  tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	sl_tilemap   = tilemap_create(get_sl_tile_info,  tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	main_bitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	main_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
 	if (!bg_tilemap || !fg_tilemap || !text_tilemap || !sl_tilemap || !main_bitmap)
-	{
-		dday_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transmask(bg_tilemap,0,0x00f0,0xff0f); /* pens 0-3 have priority over the foreground layer */
 
@@ -273,14 +261,6 @@ int dday_vh_start(void)
 
 	return 0;
 }
-
-void dday_vh_stop(void)
-{
-	if (main_bitmap)  bitmap_free(main_bitmap);
-
-	stop_countdown_timer();
-}
-
 
 WRITE_HANDLER( dday_bgvideoram_w )
 {
@@ -364,12 +344,12 @@ WRITE_HANDLER( dday_control_w )
 
 ***************************************************************************/
 
-void dday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dday )
 {
-	tilemap_draw(main_bitmap,bg_tilemap,TILEMAP_BACK,0);
-	tilemap_draw(main_bitmap,fg_tilemap,0,0);
-	tilemap_draw(main_bitmap,bg_tilemap,TILEMAP_FRONT,0);
-	tilemap_draw(main_bitmap,text_tilemap,0,0);
+	tilemap_draw(main_bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
+	tilemap_draw(main_bitmap,cliprect,fg_tilemap,0,0);
+	tilemap_draw(main_bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(main_bitmap,cliprect,text_tilemap,0,0);
 
 	if (sl_enable)
 	{
@@ -381,9 +361,9 @@ void dday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		sl_bitmap = tilemap_get_pixmap(sl_tilemap);
 
-		for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
+		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 		{
-			for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
+			for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 			{
 				UINT32 src_pixel;
 
@@ -401,6 +381,6 @@ void dday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 	else
 	{
-		copybitmap(bitmap,main_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,main_bitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 	}
 }

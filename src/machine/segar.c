@@ -1,18 +1,16 @@
 /***************************************************************************
 
-  machine.c
-
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
+	Sega G-80 raster hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "segar.h"
 
 void (*sega_decrypt)(int,unsigned int *);
 
-unsigned char *segar_mem;
+UINT8 *segar_mem;
 
 WRITE_HANDLER( segar_characterram_w );
 WRITE_HANDLER( segar_characterram2_w );
@@ -27,7 +25,7 @@ WRITE_HANDLER( segar_w )
 
 	off=offset;
 
-	pc=cpu_getpreviouspc();
+	pc=activecpu_get_previouspc();
 	if (pc != -1)
 	{
 		op=segar_mem[pc] & 0xFF;

@@ -15,7 +15,7 @@ unsigned char *funkyb_row_scroll;
 static int gfx_bank;
 
 
-void funkybee_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( funkybee )
 {
 	int i;
 
@@ -109,7 +109,7 @@ static void draw_chars(struct mame_bitmap *_tmpbitmap, struct mame_bitmap *bitma
 }
 
 
-void funkybee_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( funkybee )
 {
 	int offs;
 

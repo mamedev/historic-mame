@@ -118,12 +118,11 @@ TP-S.1 TP-S.2 TP-S.3 TP-B.1  8212 TP-B.2 TP-B.3          TP-B.4
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-void tubep_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void tubep_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void rjammer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void rjammer_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int tubep_vh_start(void);
-void tubep_vh_stop(void);
+PALETTE_INIT( tubep );
+VIDEO_UPDATE( tubep );
+PALETTE_INIT( rjammer );
+VIDEO_UPDATE( rjammer );
+VIDEO_START( tubep );
 
 extern data8_t *rjammer_backgroundram;
 extern data8_t *tubep_textram;
@@ -132,7 +131,6 @@ extern WRITE_HANDLER( rjammer_background_LS377_w );
 extern WRITE_HANDLER( rjammer_background_page_w );
 
 static data8_t *sharedram;
-static void *scanline_timer;
 static int sound_latch;
 
 
@@ -202,7 +200,7 @@ static WRITE_HANDLER( tubep_portb01_w )
 static WRITE_HANDLER( tubep_portb6_w )
 {
 //	if (data)
-//		usrintf_showmessage("CPU 0, port b6=%2x pc=%4x", data, cpu_get_pc() );
+//		usrintf_showmessage("CPU 0, port b6=%2x pc=%4x", data, activecpu_get_pc() );
 
 	return;
 }
@@ -340,12 +338,12 @@ static void scanline_callback(int scanline)
 	scanline += 128;
 	scanline &= 255;
 
-	scanline_timer = timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
+	timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
 }
 
-static void init_machine(void)
+static MACHINE_INIT( tubep )
 {
-	scanline_timer = timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
+	timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
 }
 
 
@@ -923,114 +921,87 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static const struct MachineDriver machine_driver_tubep =
-{
-	{
-		{
-			CPU_Z80,
-			16000000/8,	/* 2 MHz ???*/
-			tubep_readmem, tubep_writemem, tubep_readport, tubep_writeport,
-			interrupt, 1
-		},
-		{
-			CPU_Z80,
-			16000000/8,	/* 2 MHz ??? */
-			tubep_g_readmem, tubep_g_writemem, 0, 0,
-			interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/8,	/* 2 MHz ???*/
-			tubep_sound_readmem, tubep_sound_writemem, tubep_sound_readport, tubep_sound_writeport,
-			ignore_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+static MACHINE_DRIVER_START( tubep )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,16000000/8)	/* 2 MHz ???*/
+	MDRV_CPU_MEMORY(tubep_readmem,tubep_writemem)
+	MDRV_CPU_PORTS(tubep_readport,tubep_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/8)	/* 2 MHz ??? */
+	MDRV_CPU_MEMORY(tubep_g_readmem,tubep_g_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz ???*/
+	MDRV_CPU_MEMORY(tubep_sound_readmem,tubep_sound_writemem)
+	MDRV_CPU_PORTS(tubep_sound_readport,tubep_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(tubep)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 2*16 + 16*2,
-	tubep_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(2*16 + 16*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	tubep_vh_start,
-	tubep_vh_stop,
-	tubep_vh_screenrefresh,
+	MDRV_PALETTE_INIT(tubep)
+	MDRV_VIDEO_START(tubep)
+	MDRV_VIDEO_UPDATE(tubep)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_rjammer =
-{
-	{
-		{
-			CPU_Z80,
-			16000000 / 4,	/* 4 MHz */
-			rjammer_readmem, rjammer_writemem, rjammer_readport, rjammer_writeport,
-			interrupt, 1
-		},
-		{
-			CPU_Z80,
-			16000000 / 4,	/* 4 MHz */
-			rjammer_slave_readmem, rjammer_slave_writemem, 0, rjammer_slave_writeport,
-			interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			19968000 / 8,	/* Xtal3 divided by LS669 (on Qc output) (signal RH0) */
-			rjammer_sound_readmem, rjammer_sound_writemem, rjammer_sound_readport, rjammer_sound_writeport,
-			ignore_interrupt, 1
-		},
+static MACHINE_DRIVER_START( rjammer )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,16000000 / 4)	/* 4 MHz */
+	MDRV_CPU_MEMORY(rjammer_readmem,rjammer_writemem)
+	MDRV_CPU_PORTS(rjammer_readport,rjammer_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000 / 4)	/* 4 MHz */
+	MDRV_CPU_MEMORY(rjammer_slave_readmem,rjammer_slave_writemem)
+	MDRV_CPU_PORTS(0,rjammer_slave_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,19968000 / 8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Xtal3 divided by LS669 (on Qc output) (signal RH0) */
+	MDRV_CPU_MEMORY(rjammer_sound_readmem,rjammer_sound_writemem)
+	MDRV_CPU_PORTS(rjammer_sound_readport,rjammer_sound_writeport)
+
 #if 0
-		{
-			CPU_NSC8105,
-			6000000/4,	/* 1.5 MHz */
-			nsc_readmem,nsc_writemem,0,0,
-			ignore_interrupt,1
-		}
+	MDRV_CPU_ADD(NSC8105,6000000/4)	/* 1.5 MHz */
+	MDRV_CPU_MEMORY(nsc_readmem,nsc_writemem)
 #endif
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 2*16 + 16*2,
-	rjammer_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(2*16 + 16*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	tubep_vh_start,
-	tubep_vh_stop,
-	rjammer_vh_screenrefresh,
+	MDRV_PALETTE_INIT(rjammer)
+	MDRV_VIDEO_START(tubep)
+	MDRV_VIDEO_UPDATE(rjammer)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "relief.h"
 
 
 
@@ -15,7 +16,7 @@
  *
  *************************************/
 
-int relief_vh_start(void)
+VIDEO_START( relief )
 {
 	static const struct ataripf_desc pf0desc =
 	{
@@ -96,37 +97,16 @@ int relief_vh_start(void)
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pf0desc))
-		goto cant_create_pf0;
+		return 1;
 
 	/* initialize the second playfield */
 	if (!ataripf_init(1, &pf1desc))
-		goto cant_create_pf1;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 	return 0;
-
-	/* error cases */
-cant_create_mo:
-cant_create_pf1:
-	ataripf_free();
-cant_create_pf0:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void relief_vh_stop(void)
-{
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -163,10 +143,10 @@ static int overrender1_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void relief_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( relief )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	ataripf_render(1, bitmap);
-	atarimo_render(0, bitmap, NULL, overrender1_callback);
+	ataripf_render(0, bitmap, cliprect);
+	ataripf_render(1, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, NULL, overrender1_callback);
 }

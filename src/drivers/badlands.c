@@ -94,20 +94,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( badlands_pf_bank_w );
-
-int badlands_vh_start(void);
-void badlands_vh_stop(void);
-void badlands_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+#include "badlands.h"
 
 
 
@@ -156,7 +143,7 @@ static void scanline_update(int scanline)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( badlands )
 {
 	pedal_value[0] = pedal_value[1] = 0x80;
 
@@ -176,7 +163,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int vblank_int(void)
+static INTERRUPT_GEN( vblank_int )
 {
 	int pedal_state = input_port_4_r(0);
 	int i;
@@ -189,7 +176,7 @@ static int vblank_int(void)
 			pedal_value[i]++;
 	}
 
-	return atarigen_video_int_gen();
+	atarigen_video_int_gen();
 }
 
 
@@ -482,50 +469,35 @@ static struct YM2151interface ym2151_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_badlands =
-{
+static MACHINE_DRIVER_START( badlands )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			vblank_int,1
-		},
-		{
-			CPU_M6502,
-			ATARI_CLOCK_14MHz/8,
-			audio_readmem,audio_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(vblank_int,1)
+
+	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
+	MDRV_CPU_MEMORY(audio_readmem,audio_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(badlands)
+	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	badlands_vh_start,
-	badlands_vh_stop,
-	badlands_vh_screenrefresh,
+	MDRV_VIDEO_START(badlands)
+	MDRV_VIDEO_UPDATE(badlands)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -546,7 +518,7 @@ ROM_START( badlands )
 	ROM_LOAD( "1018.9c", 0x10000, 0x4000, 0xa05fd146 )
 	ROM_CONTINUE(        0x04000, 0xc000 )
 
-	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1012.4n",  0x000000, 0x10000, 0x5d124c6c )	/* playfield */
 	ROM_LOAD( "1013.2n",  0x010000, 0x10000, 0xb1ec90d6 )
 	ROM_LOAD( "1014.4s",  0x020000, 0x10000, 0x248a6845 )
@@ -554,7 +526,7 @@ ROM_START( badlands )
 	ROM_LOAD( "1016.4u",  0x040000, 0x10000, 0x878f7c66 )
 	ROM_LOAD( "1017.2u",  0x050000, 0x10000, 0xad0071a3 )
 
-	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1010.14r", 0x000000, 0x10000, 0xc15f629e )	/* mo */
 	ROM_LOAD( "1011.10r", 0x010000, 0x10000, 0xfb0b6717 )
 	ROM_LOAD( "1019.14t", 0x020000, 0x10000, 0x0e26bff6 )
@@ -568,12 +540,10 @@ ROM_END
  *
  *************************************/
 
-static void init_badlands(void)
+static DRIVER_INIT( badlands )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_init_6502_speedup(1, 0x4155, 0x416d);
-	atarigen_invert_region(REGION_GFX1);
-	atarigen_invert_region(REGION_GFX2);
 
 	/* initialize the audio system */
 	bank_base = &memory_region(REGION_CPU2)[0x03000];

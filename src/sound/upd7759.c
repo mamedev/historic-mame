@@ -94,6 +94,8 @@ Changes:
 #define LOG(n,x)
 #endif
 
+static void UPD7759_dac(int num);
+
 /* number of samples stuffed into the rom */
 static unsigned char numsam;
 
@@ -337,6 +339,7 @@ int UPD7759_sh_start (const struct MachineSound *msound)
 		updadpcm[i].signal = 0;
 		updadpcm[i].step = 0;
 		updadpcm[i].counter = emulation_rate / 2;
+		updadpcm[i].timer = timer_alloc(UPD7759_dac);
 
 		sprintf(name,"uPD7759 #%d",i);
 
@@ -532,11 +535,7 @@ void UPD7759_message_w (int num, int data)
 				logerror("upd7759_message_w unhandled $%02x\n", data);
 				if ((data & 0xc0) == 0xc0)
 				{
-					if (voice->timer)
-					{
-						timer_remove(voice->timer);
-						voice->timer = 0;
-					}
+					timer_adjust(voice->timer, TIME_NEVER, 0, 0);
 					voice->playing = 0;
 				}
         }
@@ -632,11 +631,7 @@ void UPD7759_start_w (int num, int data)
 			if( voice->count > 5 && voice->sample == 0xff && data == 0x00 )
 			{
                 /* remove an old timer */
-                if (voice->timer)
-                {
-                    timer_remove(voice->timer);
-                    voice->timer = 0;
-				}
+                timer_adjust(voice->timer, TIME_NEVER, 0, 0);
                 /* stop playing this sample */
 				voice->playing = 0;
 				return;
@@ -661,16 +656,10 @@ void UPD7759_start_w (int num, int data)
 		else
 		{
 			LOG(2,("UPD7759_start_w: $%02x\n", data));
-            /* remove an old timer */
-			if (voice->timer)
-			{
-                timer_remove(voice->timer);
-                voice->timer = 0;
-            }
 			/* bring the chip in sync with the CPU */
 			stream_update(channel[num], 0);
             /* start a new timer */
-			voice->timer = timer_pulse( TIME_IN_HZ(base_rate), num, UPD7759_dac );
+			timer_adjust(voice->timer, TIME_IN_HZ(base_rate), num, TIME_IN_HZ(base_rate));
 			voice->signal = 0;
 			voice->step = 0;	/* reset the step width */
 			voice->count = 0;	/* reset count for the detection of an sample ending */

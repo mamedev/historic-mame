@@ -1,19 +1,18 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Sun Electronics Kangaroo hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "kangaroo.h"
 
 
-unsigned char *kangaroo_video_control;
-unsigned char *kangaroo_bank_select;
-unsigned char *kangaroo_blitter;
-unsigned char *kangaroo_scroll;
+UINT8 *kangaroo_video_control;
+UINT8 *kangaroo_bank_select;
+UINT8 *kangaroo_blitter;
+UINT8 *kangaroo_scroll;
 
 static int screen_flipped;
 static struct mame_bitmap *tmpbitmap2;
@@ -39,10 +38,9 @@ static struct mame_bitmap *tmpbitmap2;
 
 ***************************************************************************/
 
-void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( kangaroo )
 {
 	int i;
-
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -60,40 +58,20 @@ void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 ***************************************************************************/
 
-int kangaroo_vh_start(void)
+VIDEO_START( kangaroo )
 {
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		bitmap_free(tmpbitmap);
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((videoram = malloc(Machine->drv->screen_width*Machine->drv->screen_height)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		bitmap_free(tmpbitmap2);
-	}
+	if ((videoram = auto_malloc(Machine->drv->screen_width*Machine->drv->screen_height)) == 0)
+		return 1;
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-
-void kangaroo_vh_stop(void)
-{
-	bitmap_free(tmpbitmap2);
-	bitmap_free(tmpbitmap);
-	free(videoram);
-}
 
 
 WRITE_HANDLER( kangaroo_video_control_w )
@@ -117,15 +95,15 @@ WRITE_HANDLER( kangaroo_video_control_w )
 
 WRITE_HANDLER( kangaroo_bank_select_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *RAM = memory_region(REGION_GFX1);
 
 
 	/* this is a VERY crude way to handle the banked ROMs - but it's */
 	/* correct enough to pass the self test */
 	if (data & 0x05)
-		cpu_setbank(1,&RAM[0x10000]);
+		cpu_setbank(1,&RAM[0x0000]);
 	else
-		cpu_setbank(1,&RAM[0x12000]);
+		cpu_setbank(1,&RAM[0x2000]);
 
 	*kangaroo_bank_select = data;
 }
@@ -309,10 +287,9 @@ WRITE_HANDLER( kangaroo_videoram_w )
 
 ***************************************************************************/
 
-void kangaroo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kangaroo )
 {
 	int scrollx, scrolly;
-
 
 	if (screen_flipped)
 	{

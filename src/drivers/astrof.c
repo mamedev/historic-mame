@@ -41,10 +41,9 @@ Also....
 extern unsigned char *astrof_color;
 extern unsigned char *tomahawk_protection;
 
-void astrof_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  astrof_vh_start(void);
-void astrof_vh_stop(void);
-void astrof_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( astrof );
+VIDEO_START( astrof );
+VIDEO_UPDATE( astrof );
 WRITE_HANDLER( astrof_videoram_w );
 WRITE_HANDLER( tomahawk_videoram_w );
 WRITE_HANDLER( astrof_video_control1_w );
@@ -95,11 +94,10 @@ MEMORY_END
   slots.
 
 ***************************************************************************/
-static int astrof_interrupt(void)
+static INTERRUPT_GEN( astrof_interrupt )
 {
 	if (readinputport(2) & 1)	/* Coin */
-		return nmi_interrupt();
-	else return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -207,47 +205,44 @@ INPUT_PORTS_START( tomahawk )
 INPUT_PORTS_END
 
 
-#define MACHINE_DRIVER(GAMENAME, NUMCOLORS) 								   \
-static const struct MachineDriver machine_driver_##GAMENAME =				   \
-{																			   \
-	/* basic machine hardware */											   \
-	{																		   \
-		{																	   \
-			CPU_M6502,														   \
-			10595000/16,	/* 0.66 MHz */									   \
-			readmem,GAMENAME##_writemem,0,0,								   \
-			astrof_interrupt,1												   \
-		}																	   \
-	},																		   \
-	60, 3400,	/* frames per second, vblank duration */					   \
-	1,	/* single CPU, no need for interleaving */							   \
-	0,																		   \
-																			   \
-	/* video hardware */													   \
-	256, 256, { 8, 256-1-8, 8, 256-1-8 },									   \
-																			   \
-	0,	/* no gfxdecodeinfo - bitmapped display */							   \
-	NUMCOLORS, 0,															   \
-	astrof_vh_convert_color_prom,											   \
-																			   \
-	VIDEO_TYPE_RASTER,														   \
-	0,																		   \
-	astrof_vh_start,														   \
-	astrof_vh_stop,															   \
-	astrof_vh_screenrefresh,												   \
-																			   \
-	/* sound hardware */													   \
-	0, 0, 0, 0,																   \
-	{						 												   \
-		{																	   \
-			SOUND_SAMPLES,		 											   \
-			&GAMENAME##_samples_interface	 								   \
-		}																	   \
-	}																		   \
-};
+static MACHINE_DRIVER_START( astrof )
 
-MACHINE_DRIVER(astrof,   16)
-MACHINE_DRIVER(tomahawk, 32)
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 10595000/16)	/* 0.66 MHz */
+	MDRV_CPU_MEMORY(readmem,astrof_writemem)
+	MDRV_CPU_VBLANK_INT(astrof_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(3400)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(8, 256-1-8, 8, 256-1-8)
+	MDRV_PALETTE_LENGTH(16)
+
+	MDRV_PALETTE_INIT(astrof)
+	MDRV_VIDEO_START(astrof)
+	MDRV_VIDEO_UPDATE(astrof)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, astrof_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tomahawk )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(astrof)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem,tomahawk_writemem)
+	
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(32)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("samples", SAMPLES, tomahawk_samples_interface)
+MACHINE_DRIVER_END
 
 
 

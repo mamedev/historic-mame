@@ -111,14 +111,13 @@ static void update_sound_68k_interrupts(void)
 }
 
 
-int cyberbal_sound_68k_irq_gen(void)
+INTERRUPT_GEN( cyberbal_sound_68k_irq_gen )
 {
 	if (!fast_68k_int)
 	{
 		fast_68k_int = 1;
 		update_sound_68k_interrupts();
 	}
-	return ignore_interrupt();
 }
 
 

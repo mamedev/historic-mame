@@ -32,11 +32,12 @@ struct MachineCPU
 	const void *memory_write;				/* struct Memory_WriteAddress */
 	const void *port_read;
 	const void *port_write;
-	int 		(*vblank_interrupt)(void);	/* for interrupts tied to VBLANK */
+	void 		(*vblank_interrupt)(void);	/* for interrupts tied to VBLANK */
 	int 		vblank_interrupts_per_frame;/* usually 1 */
-	int 		(*timed_interrupt)(void);	/* for interrupts not tied to VBLANK */
+	void 		(*timed_interrupt)(void);	/* for interrupts not tied to VBLANK */
 	int 		timed_interrupts_per_second;
 	void *		reset_param;				/* parameter for cpu_reset */
+	const char *tag;
 };
 
 
@@ -58,23 +59,6 @@ enum
 
 	/* the Z80 can be wired to use 16 bit addressing for I/O ports */
 	CPU_16BIT_PORT = 0x4000
-};
-
-
-
-/*************************************
- *
- *	Interrupt constants
- *
- *************************************/
-
-enum
-{
-	/* generic "none" vector */
-	INTERRUPT_NONE = 126,
-
-	/* generic NMI vector */
-	INTERRUPT_NMI = IRQ_LINE_NMI
 };
 
 
@@ -183,6 +167,9 @@ int cpu_scalebyfcount(int value);
  *
  *************************************/
 
+/* Initialize the refresh timer */
+void cpu_init_refresh_timer(void);
+
 /* Returns the current scanline number */
 int cpu_getscanline(void);
 
@@ -200,87 +187,6 @@ int cpu_getvblank(void);
 
 /* Returns the number of the video frame we are currently playing */
 int cpu_getcurrentframe(void);
-
-
-
-/*************************************
- *
- *	Interrupt handling
- *
- *************************************/
-
-/* Install a driver callback for IRQ acknowledge */
-void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
-
-/* Set the vector to be returned during a CPU's interrupt acknowledge cycle */
-void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
-
-/* set the IRQ line state for a specific irq line of a CPU */
-/* normally use state HOLD_LINE, irqline 0 for first IRQ type of a cpu */
-void cpu_set_irq_line(int cpunum, int irqline, int state);
-
-/* set the IRQ line state and a vector for the IRQ */
-void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector);
-
-/* macro for handling NMI lines */
-#define cpu_set_nmi_line(cpunum, state) cpu_set_irq_line(cpunum, IRQ_LINE_NMI, state)
-
-
-
-/*************************************
- *
- *	Obsolete interrupt handling
- *
- *************************************/
-
-/* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
-/* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
-/* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
-
-/* Obsolete functions: avoid to use them in new drivers if possible. */
-
-void cpu_cause_interrupt(int cpu,int type);
-void cpu_interrupt_enable(int cpu,int enabled);
-WRITE_HANDLER( interrupt_enable_w );
-WRITE_HANDLER( interrupt_vector_w );
-int interrupt(void);
-int nmi_interrupt(void);
-int ignore_interrupt(void);
-#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
-int m68_level1_irq(void);
-int m68_level2_irq(void);
-int m68_level3_irq(void);
-int m68_level4_irq(void);
-int m68_level5_irq(void);
-int m68_level6_irq(void);
-int m68_level7_irq(void);
-#endif
-
-/* defines for backward compatibility */
-#define Z80_NMI_INT 		INTERRUPT_NMI
-#define Z80_IRQ_INT 		-1000
-#define M6502_INT_IRQ		M6502_IRQ_LINE
-#define M6502_INT_NMI		INTERRUPT_NMI
-#define M6809_INT_IRQ		M6809_IRQ_LINE
-#define M6809_INT_FIRQ		M6809_FIRQ_LINE
-#define M6809_INT_NMI		INTERRUPT_NMI
-#define HD6309_INT_IRQ		HD6309_IRQ_LINE
-#define HD6309_INT_FIRQ		HD6309_FIRQ_LINE
-#define HD63705_INT_IRQ		HD63705_INT_IRQ1
-#define M68705_INT_IRQ		M68705_IRQ_LINE
-#define KONAMI_INT_IRQ		KONAMI_IRQ_LINE
-#define KONAMI_INT_FIRQ		KONAMI_FIRQ_LINE
-#define I8035_EXT_INT		0
-#define I8039_EXT_INT		0
-#define H6280_INT_IRQ1		0
-#define H6280_INT_IRQ2		1
-#define H6280_INT_NMI		INTERRUPT_NMI
-#define HD63701_INT_NMI 	INTERRUPT_NMI
-#define I8085_RST75     	I8085_RST75_LINE
-
-/* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
-/* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
-/* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
 
 
 

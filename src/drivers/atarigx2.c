@@ -22,22 +22,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int atarig42_vh_start(void);
-void atarig42_vh_stop(void);
-void atarig42_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void atarigx2_scanline_update(int param);
-
-extern UINT8 atarig42_guardian;
+#include "atarig42.h"
 
 
 
@@ -74,7 +59,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( atarigx2 )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -163,9 +148,9 @@ static data16_t last_write_offset;
 static WRITE32_HANDLER( atarigx2_protection_w )
 {
 	{
-//		int pc = cpu_getpreviouspc();
+//		int pc = activecpu_get_previouspc();
 //		if (pc == 0x11cbe || pc == 0x11c30)
-//			logerror("%06X:Protection W@%04X = %04X  (result to %06X)\n", pc, offset, data, cpu_get_reg(M68K_A2));
+//			logerror("%06X:Protection W@%04X = %04X  (result to %06X)\n", pc, offset, data, activecpu_get_reg(M68K_A2));
 //		else
 //			logerror("%06X:Protection W@%04X = %04X\n", pc, offset, data);
 	}
@@ -1084,11 +1069,11 @@ static READ32_HANDLER( atarigx2_protection_r )
 				result = rand() << 16;
 			else
 				result = 0xffff << 16;
-			logerror("%06X:Unhandled protection R@%04X = %04X\n", cpu_getpreviouspc(), offset, result);
+			logerror("%06X:Unhandled protection R@%04X = %04X\n", activecpu_get_previouspc(), offset, result);
 		}
 	}
 
-//	logerror("%06X:Protection R@%04X = %04X\n", cpu_getpreviouspc(), offset, result);
+//	logerror("%06X:Protection R@%04X = %04X\n", activecpu_get_previouspc(), offset, result);
 	return result;
 }
 
@@ -1274,79 +1259,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_atarigx2 =
-{
+static MACHINE_DRIVER_START( atarigx2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68EC020,		/* verified */
-			ATARI_CLOCK_14MHz,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_IIIS_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68EC020, ATARI_CLOCK_14MHz)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atarigx2)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarig42_vh_start,
-	atarig42_vh_stop,
-	atarig42_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(atarigx2)
+	MDRV_VIDEO_UPDATE(atarig42)
+	
 	/* sound hardware */
-	JSA_IIIS_STEREO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_spclords(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 4, 2, 0x0040);
-	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x422c, 0x4244);
-
-	atarig42_guardian = 0;
-}
-
-
-static void init_motofren(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 4, 2, 0x0040);
-	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x4168, 0x4180);
-
-	atarig42_guardian = 0;
-}
-
-
-static void init_revrally(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 4, 2, 0x0040);
-	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x416c, 0x4184);
-
-	atarig42_guardian = 0;
-}
+	MDRV_IMPORT_FROM(jsa_iiis_stereo)
+MACHINE_DRIVER_END
 
 
 
@@ -1508,6 +1446,46 @@ ROM_START( revrally )
 	ROM_LOAD( "rralpc1.bin",  0x80000, 0x80000, 0x7ccd26d7 )
 ROM_END
 
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( spclords )
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x0040);
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarigen_init_6502_speedup(1, 0x422c, 0x4244);
+
+	atarig42_swapcolors = 0;
+}
+
+
+static DRIVER_INIT( motofren )
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x0040);
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarigen_init_6502_speedup(1, 0x4168, 0x4180);
+
+	atarig42_swapcolors = 1;
+}
+
+
+static DRIVER_INIT( revrally )
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x0040);
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarigen_init_6502_speedup(1, 0x416c, 0x4184);
+
+	atarig42_swapcolors = 0;
+}
 
 
 

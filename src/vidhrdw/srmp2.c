@@ -18,7 +18,7 @@ int srmp3_gfx_bank;
 int mjyuugi_gfx_bank;
 
 
-void srmp2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( srmp2 )
 {
 	int i;
 
@@ -44,7 +44,7 @@ void srmp2_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-void srmp3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( srmp3 )
 {
 	int i;
 
@@ -452,21 +452,21 @@ static void mjyuugi_draw_sprites(struct mame_bitmap *bitmap)
 }
 
 
-void srmp2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( srmp2 )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	srmp2_draw_sprites(bitmap);
 }
 
 
-void srmp3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( srmp3 )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	srmp3_draw_sprites(bitmap);
 }
 
 
-void mjyuugi_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mjyuugi )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	mjyuugi_draw_sprites(bitmap);

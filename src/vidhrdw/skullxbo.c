@@ -15,7 +15,7 @@
  *
  *************************************/
 
-int skullxbo_vh_start(void)
+VIDEO_START( skullxbo )
 {
 	static const struct ataripf_desc pfdesc =
 	{
@@ -92,15 +92,15 @@ int skullxbo_vh_start(void)
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
-		goto cant_create_an;
+		return 1;
 
 	/* add in the code XOR for the alphas */
 	anlookup = atarian_get_lookup(0, &size);
@@ -110,29 +110,6 @@ int skullxbo_vh_start(void)
 		ATARIAN_LOOKUP_SET_CODE(anlookup[i], code ^ 0x400);
 	}
 	return 0;
-
-	/* error cases */
-cant_create_an:
-	atarimo_free();
-cant_create_mo:
-	ataripf_free();
-cant_create_pf:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void skullxbo_vh_stop(void)
-{
-	atarian_free();
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -268,10 +245,10 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void skullxbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( skullxbo )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	atarimo_render(0, bitmap, overrender_callback, NULL);
-	atarian_render(0, bitmap);
+	ataripf_render(0, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
+	atarian_render(0, bitmap, cliprect);
 }

@@ -17,7 +17,7 @@ extern UINT8 balsente_shooter_y;
 extern UINT8 balsente_adc_shift;
 extern data16_t *shrike_shared;
 
-void balsente_init_machine(void);
+MACHINE_INIT( balsente );
 
 void balsente_noise_gen(int chip, int count, short *buffer);
 
@@ -35,7 +35,7 @@ WRITE_HANDLER( balsente_m6850_w );
 READ_HANDLER( balsente_m6850_sound_r );
 WRITE_HANDLER( balsente_m6850_sound_w );
 
-int update_analog_inputs(void);
+INTERRUPT_GEN( balsente_update_analog_inputs );
 READ_HANDLER( balsente_adc_data_r );
 WRITE_HANDLER( balsente_adc_select_w );
 
@@ -61,8 +61,8 @@ WRITE_HANDLER( shrike_shared_6809_w );
 
 /*----------- defined in vidhrdw/balsente.c -----------*/
 
-int balsente_vh_start(void);
-void balsente_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( balsente );
+VIDEO_UPDATE( balsente );
 
 WRITE_HANDLER( balsente_videoram_w );
 WRITE_HANDLER( balsente_paletteram_w );

@@ -23,9 +23,9 @@ TODO:
 
 
 /* from vidhrdw */
-int kncljoe_vh_start(void);
-void kncljoe_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-void kncljoe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( kncljoe );
+PALETTE_INIT( kncljoe );
+VIDEO_UPDATE( kncljoe );
 WRITE_HANDLER(kncljoe_videoram_w);
 WRITE_HANDLER(kncljoe_control_w);
 WRITE_HANDLER(kncljoe_scroll_w);
@@ -173,40 +173,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_kncljoe =
-{
+static MACHINE_DRIVER_START( kncljoe )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000, /* ? MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		IREM_AUDIO_CPU
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000) /* ? MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	128+16, 16*8+16*8,
-	kncljoe_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+16)
+	MDRV_COLORTABLE_LENGTH(16*8+16*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	kncljoe_vh_start,
-	0,
-	kncljoe_vh_screenrefresh,
+	MDRV_PALETTE_INIT(kncljoe)
+	MDRV_VIDEO_START(kncljoe)
+	MDRV_VIDEO_UPDATE(kncljoe)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		IREM_AUDIO
-	}
-};
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
 
 
 

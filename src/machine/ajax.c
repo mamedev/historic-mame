@@ -129,7 +129,7 @@ READ_HANDLER( ajax_ls138_f10_r )
 			break;
 
 		default:
-			logerror("%04x: (ls138_f10) read from an unknown address %02x\n",cpu_get_pc(), offset);
+			logerror("%04x: (ls138_f10) read from an unknown address %02x\n",activecpu_get_pc(), offset);
 	}
 
 	return data;
@@ -143,11 +143,11 @@ WRITE_HANDLER( ajax_ls138_f10_w )
 				watchdog_reset_w(0, data);
 			else{
 				if (firq_enable)	/* Cause interrupt on slave CPU */
-					cpu_cause_interrupt(1,M6809_INT_FIRQ);
+					cpu_set_irq_line(1, M6809_FIRQ_LINE, HOLD_LINE);
 			}
 			break;
 		case 0x01:	/* Cause interrupt on audio CPU */
-			cpu_cause_interrupt(2,Z80_IRQ_INT);
+			cpu_set_irq_line(2, 0, HOLD_LINE);
 			break;
 		case 0x02:	/* Sound command number */
 			soundlatch_w(offset,data);
@@ -160,7 +160,7 @@ WRITE_HANDLER( ajax_ls138_f10_w )
 			break;
 
 		default:
-			logerror("%04x: (ls138_f10) write %02x to an unknown address %02x\n",cpu_get_pc(), data, offset);
+			logerror("%04x: (ls138_f10) write %02x to an unknown address %02x\n",activecpu_get_pc(), data, offset);
 	}
 }
 
@@ -210,15 +210,13 @@ WRITE_HANDLER( ajax_bankswitch_2_w )
 }
 
 
-void ajax_init_machine( void )
+MACHINE_INIT( ajax )
 {
 	firq_enable = 1;
 }
 
-int ajax_interrupt( void )
+INTERRUPT_GEN( ajax_interrupt )
 {
 	if (K051960_is_IRQ_enabled())
-		return KONAMI_INT_IRQ;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }

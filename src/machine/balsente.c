@@ -34,6 +34,7 @@ data16_t *shrike_shared;
 struct counter_state
 {
 	void *timer;
+	UINT8 timer_active;
 	INT32 initial;
 	INT32 count;
 	UINT8 gate;
@@ -49,6 +50,7 @@ static struct counter_state counter[3];
 static UINT8 counter_control;
 static UINT8 counter_0_ff;
 static void *counter_0_timer;
+static UINT8 counter_0_timer_active;
 
 /* random number generator states */
 static UINT8 *poly17 = NULL;
@@ -134,19 +136,25 @@ static void interrupt_timer(int param)
 }
 
 
-void balsente_init_machine(void)
+static void counter_callback(int param);
+static void clock_counter_0_ff(int param);
+
+MACHINE_INIT( balsente )
 {
 	/* create the polynomial tables */
 	poly17_init();
 
 	/* reset counters; counter 2's gate is tied high */
 	memset(counter, 0, sizeof(counter));
+	counter[1].timer = timer_alloc(counter_callback);
+	counter[2].timer = timer_alloc(counter_callback);
 	counter[2].gate = 1;
 
 	/* reset the manual counter 0 clock */
 	counter_control = 0x00;
 	counter_0_ff = 0;
-	counter_0_timer = NULL;
+	counter_0_timer = timer_alloc(clock_counter_0_ff);
+	counter_0_timer_active = 0;
 
 	/* reset the ADC states */
 	adc_value = 0;
@@ -552,7 +560,7 @@ WRITE_HANDLER( balsente_m6850_sound_w )
  *
  *************************************/
 
-int update_analog_inputs(void)
+INTERRUPT_GEN( balsente_update_analog_inputs )
 {
 	int i;
 
@@ -562,9 +570,6 @@ int update_analog_inputs(void)
 	/* read all the analog inputs at VBLANK time and just return the cached values. */
 	for (i = 0; i < 4; i++)
 		analog_input_data[i] = readinputport(4 + i);
-
-	/* don't actually generate an interrupt here */
-	return ignore_interrupt();
 }
 
 
@@ -630,8 +635,11 @@ INLINE void counter_start(int which)
 	if (which != 0)
 	{
 		/* only start a timer if we're gated and there is none already */
-		if (counter[which].gate && !counter[which].timer)
-			counter[which].timer = timer_set(TIME_IN_HZ(2000000) * (double)counter[which].count, which, counter_callback);
+		if (counter[which].gate && !counter[which].timer_active)
+		{
+			counter[which].timer_active = 1;
+			timer_adjust(counter[which].timer, TIME_IN_HZ(2000000) * (double)counter[which].count, which, 0);
+		}
 	}
 }
 
@@ -639,16 +647,16 @@ INLINE void counter_start(int which)
 INLINE void counter_stop(int which)
 {
 	/* only stop the timer if it exists */
-	if (counter[which].timer)
-		timer_remove(counter[which].timer);
-	counter[which].timer = NULL;
+	if (counter[which].timer_active)
+		timer_adjust(counter[which].timer, TIME_NEVER, 0, 0);
+	counter[which].timer_active = 0;
 }
 
 
 INLINE void counter_update_count(int which)
 {
 	/* only update if the timer is running */
-	if (counter[which].timer)
+	if (counter[which].timer_active)
 	{
 		/* determine how many 2MHz cycles are remaining */
 		int count = (int)(timer_timeleft(counter[which].timer) / TIME_IN_HZ(2000000));
@@ -717,7 +725,7 @@ static void counter_set_out(int which, int out)
 static void counter_callback(int param)
 {
 	/* reset the counter and the count */
-	counter[param].timer = NULL;
+	counter[param].timer_active = 0;
 	counter[param].count = 0;
 
 	/* set the state of the OUT line */
@@ -878,9 +886,9 @@ static void update_counter_0_timer(void)
 	int i;
 
 	/* if there's already a timer, remove it */
-	if (counter_0_timer)
-		timer_remove(counter_0_timer);
-	counter_0_timer = NULL;
+	if (counter_0_timer_active)
+		timer_adjust(counter_0_timer, TIME_NEVER, 0, 0);
+	counter_0_timer_active = 0;
 
 	/* find the counter with the maximum frequency */
 	/* this is used to calibrate the timers at startup */
@@ -902,7 +910,10 @@ static void update_counter_0_timer(void)
 
 	/* reprime the timer */
 	if (maxfreq > 0.0)
-		counter_0_timer = timer_pulse(TIME_IN_HZ(maxfreq), 0, clock_counter_0_ff);
+	{
+		counter_0_timer_active = 1;
+		timer_adjust(counter_0_timer, TIME_IN_HZ(maxfreq), 0, TIME_IN_HZ(maxfreq));
+	}
 }
 
 
@@ -946,16 +957,16 @@ WRITE_HANDLER( balsente_counter_control_w )
 
 	/* bit D1 is hooked to counter 0's gate */
 	/* if we gate on, start a pulsing timer to clock it */
-	if (!counter[0].gate && (data & 0x02) && !counter_0_timer)
+	if (!counter[0].gate && (data & 0x02) && !counter_0_timer_active)
 	{
 		update_counter_0_timer();
 	}
 
 	/* if we gate off, remove the timer */
-	else if (counter[0].gate && !(data & 0x02) && counter_0_timer)
+	else if (counter[0].gate && !(data & 0x02) && counter_0_timer_active)
 	{
-		timer_remove(counter_0_timer);
-		counter_0_timer = NULL;
+		timer_adjust(counter_0_timer, TIME_NEVER, 0, 0);
+		counter_0_timer_active = 0;
 	}
 
 	/* set the actual gate afterwards, since we need to know the old value above */
@@ -1025,13 +1036,13 @@ WRITE_HANDLER( balsente_chip_select_w )
 					"PULSE_WIDTH",
 					"WAVE_SELECT"
 				};
-				logerror("s%04X:   CEM#%d:%s=%f\n", cpu_getpreviouspc(), i, names[dac_register], voltage);
+				logerror("s%04X:   CEM#%d:%s=%f\n", activecpu_get_previouspc(), i, names[dac_register], voltage);
 			}
 #endif
 		}
 
 	/* if a timer for counter 0 is running, recompute */
-	if (counter_0_timer)
+	if (counter_0_timer_active)
 		update_counter_0_timer();
 }
 

@@ -69,9 +69,9 @@ WRITE16_HANDLER(galpani2_eeprom_w)
 
 static data16_t *galpani2_ram, *galpani2_ram2;
 
-static void galpani2_init_machine (void)
+static MACHINE_INIT( galpani2 )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 1;
 
@@ -138,7 +138,7 @@ static void galpani2_mcu_nmi(void)
 			mcu_size	=	(cpunum_read_byte(0, mcu_address + 8)<<8) +
 							(cpunum_read_byte(0, mcu_address + 9)<<0) ;
 
-			logerror("CPU #0 PC %06X : MCU executes command $A, %04X %02X-> %04x\n",cpu_get_pc(),mcu_src,mcu_size,mcu_dst);
+			logerror("CPU #0 PC %06X : MCU executes command $A, %04X %02X-> %04x\n",activecpu_get_pc(),mcu_src,mcu_size,mcu_dst);
 
 			for( ; mcu_size > 0 ; mcu_size-- )
 			{
@@ -158,7 +158,7 @@ static void galpani2_mcu_nmi(void)
 			cpunum_write_byte(0,mcu_address+0,0xff);
 			cpunum_write_byte(0,mcu_address+1,0xff);
 
-			logerror("CPU #0 PC %06X : MCU ERROR, unknown command %02X\n",cpu_get_pc(),mcu_command);
+			logerror("CPU #0 PC %06X : MCU ERROR, unknown command %02X\n",activecpu_get_pc(),mcu_command);
 		}
 
 		/* Erase command? */
@@ -202,7 +202,7 @@ WRITE16_HANDLER( galpani2_oki_0_bank_w )
 	if (ACCESSING_LSB)
 	{
 		data8_t *ROM = memory_region(REGION_SOUND1);
-		logerror("CPU #0 PC %06X : OKI 0 bank %08X\n",cpu_get_pc(),data);
+		logerror("CPU #0 PC %06X : OKI 0 bank %08X\n",activecpu_get_pc(),data);
 		if (Machine->sample_rate == 0)	return;
 		memcpy(ROM + 0x30000, ROM + 0x40000 + 0x10000 * (~data & 0xf), 0x10000);
 	}
@@ -213,7 +213,7 @@ WRITE16_HANDLER( galpani2_oki_1_bank_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_set_bank_base(1, 0x40000 * (data & 0xf) );
-		logerror("CPU #0 PC %06X : OKI 1 bank %08X\n",cpu_get_pc(),data);
+		logerror("CPU #0 PC %06X : OKI 1 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -472,72 +472,63 @@ static struct OKIM6295interface galpani2_okim6295_intf =
 
 /* CPU#1 Interrups */
 #define GALPANI2_INTERRUPTS_NUM	4
-int galpani2_interrupt(void)
+INTERRUPT_GEN( galpani2_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 3:  return 3;
-		case 2:  return 4;
-		case 1:  return 5;	// vblank?
-		case 0:  return 6;	// hblank?
-
-		default: return 0;
+		case 3:  cpu_set_irq_line(0, 3, HOLD_LINE); break;
+		case 2:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
+		case 1:  cpu_set_irq_line(0, 5, HOLD_LINE); break;	// vblank?
+		case 0:  cpu_set_irq_line(0, 6, HOLD_LINE); break;	// hblank?
 	}
 }
 
 /* CPU#2 Interrups */
 /* lev 3,4 & 5 are tested on power up. The rest is rte, but lev 7 */
 #define GALPANI2_INTERRUPTS_NUM2	3
-int galpani2_interrupt2(void)
+INTERRUPT_GEN( galpani2_interrupt2 )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  return 3;
-		case 1:  return 4;
-		case 0:  return 5;
-		default: return 0;
+		case 2:  cpu_set_irq_line(1, 3, HOLD_LINE); break;
+		case 1:  cpu_set_irq_line(1, 4, HOLD_LINE); break;
+		case 0:  cpu_set_irq_line(1, 5, HOLD_LINE); break;
 	}
 }
 
-static const struct MachineDriver machine_driver_galpani2 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16MHz */
-			galpani2_readmem,galpani2_writemem,0,0,
-			galpani2_interrupt, GALPANI2_INTERRUPTS_NUM
-		},
-		{
-			CPU_M68000,
-			16000000,	/* 16MHz */
-			galpani2_readmem2,galpani2_writemem2,0,0,
-			galpani2_interrupt2, GALPANI2_INTERRUPTS_NUM2
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	galpani2_init_machine,
+static MACHINE_DRIVER_START( galpani2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16MHz */
+	MDRV_CPU_MEMORY(galpani2_readmem,galpani2_writemem)
+	MDRV_CPU_VBLANK_INT(galpani2_interrupt,GALPANI2_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16MHz */
+	MDRV_CPU_MEMORY(galpani2_readmem2,galpani2_writemem2)
+	MDRV_CPU_VBLANK_INT(galpani2_interrupt2,GALPANI2_INTERRUPTS_NUM2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(galpani2)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0, 256-1-16 },
-	galpani2_gfxdecodeinfo,
-	0x4000 + 0x200 + 0x8000, 0x4000,	// sprites, bg8, bg15
-	galpani2_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	galpani2_vh_start,
-	galpani2_vh_stop,
-	galpani2_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-1-16)
+	MDRV_GFXDECODE(galpani2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x4000 + 0x200 + 0x8000)	// sprites, bg8, bg15
+	MDRV_COLORTABLE_LENGTH(0x4000)
+
+	MDRV_PALETTE_INIT(galpani2)
+	MDRV_VIDEO_START(galpani2)
+	MDRV_VIDEO_UPDATE(galpani2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_OKIM6295, &galpani2_okim6295_intf }
-	},
-
-	nvram_handler_93C46
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, galpani2_okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

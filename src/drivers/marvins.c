@@ -45,9 +45,9 @@ WRITE_HANDLER( marvins_spriteram_w );
 **
 ***************************************************************************/
 
-extern int marvins_vh_start( void );
-extern void marvins_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
-extern void madcrash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+extern VIDEO_START( marvins );
+extern VIDEO_UPDATE( marvins );
+extern VIDEO_UPDATE( madcrash );
 WRITE_HANDLER( marvins_palette_bank_w );
 
 /***************************************************************************
@@ -109,7 +109,7 @@ static WRITE_HANDLER( sound_command_w ){
 	sound_fetched = 0;
 	sound_command = data;
 	sound_cpu_ready = 0;
-	cpu_cause_interrupt( 2, Z80_IRQ_INT );
+	cpu_set_irq_line( 2, 0, HOLD_LINE );
 }
 
 static READ_HANDLER( sound_command_r ){
@@ -179,7 +179,7 @@ static WRITE_HANDLER( CPUA_int_enable_w )
 {
 	if( CPUA_latch & SNK_NMI_PENDING )
 	{
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		CPUA_latch = 0;
 	}
 	else
@@ -192,7 +192,7 @@ static READ_HANDLER( CPUA_int_trigger_r )
 {
 	if( CPUA_latch&SNK_NMI_ENABLE )
 	{
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		CPUA_latch = 0;
 	}
 	else
@@ -206,7 +206,7 @@ static WRITE_HANDLER( CPUB_int_enable_w )
 {
 	if( CPUB_latch & SNK_NMI_PENDING )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		CPUB_latch = 0;
 	}
 	else
@@ -219,7 +219,7 @@ static READ_HANDLER( CPUB_int_trigger_r )
 {
 	if( CPUB_latch&SNK_NMI_ENABLE )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		CPUB_latch = 0;
 	}
 	else
@@ -601,107 +601,76 @@ static struct GfxDecodeInfo marvins_gfxdecodeinfo[] =
 **
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_marvins = {
-	{
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			readmem_CPUA,writemem_CPUA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			marvins_readmem_CPUB,marvins_writemem_CPUB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4.0 MHz */
-			readmem_sound,writemem_sound,0,0,
-			nmi_interrupt,4 /* seems to be correct */
-		},
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* CPU slices per frame */
-	0, /* init_machine */
+static MACHINE_DRIVER_START( marvins )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(marvins_readmem_CPUB,marvins_writemem_CPUB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4.0 MHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* seems to be correct */
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256+32, 224, { 0, 255+32,0, 223 },
-	marvins_gfxdecodeinfo,
-	(16+2)*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256+32, 224)
+	MDRV_VISIBLE_AREA(0, 255+32,0, 223)
+	MDRV_GFXDECODE(marvins_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH((16+2)*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	marvins_vh_start,
-	0,
-	marvins_vh_screenrefresh,
+	MDRV_VIDEO_START(marvins)
+	MDRV_VIDEO_UPDATE(marvins)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_NAMCO,
-			&snkwave_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_madcrash = {
-	{
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			readmem_CPUA,writemem_CPUA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			madcrash_readmem_CPUB,madcrash_writemem_CPUB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4.0 MHz */
-			readmem_sound,writemem_sound,0,0,
-			nmi_interrupt,4 /* wrong? */
-		},
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init_machine */
+
+static MACHINE_DRIVER_START( madcrash )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(madcrash_readmem_CPUB,madcrash_writemem_CPUB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4.0 MHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* wrong? */
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256+32, 224, { 0, 255+32,0, 223 },
-	marvins_gfxdecodeinfo,
-	(16+2)*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256+32, 224)
+	MDRV_VISIBLE_AREA(0, 255+32,0, 223)
+	MDRV_GFXDECODE(marvins_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH((16+2)*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	marvins_vh_start,
-	0,
-	madcrash_vh_screenrefresh,
+	MDRV_VIDEO_START(marvins)
+	MDRV_VIDEO_UPDATE(madcrash)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_NAMCO,
-			&snkwave_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 **
@@ -823,12 +792,12 @@ ROM_END
 
 
 
-static void init_marvins(void)
+static DRIVER_INIT( marvins )
 {
 	init_sound( 0x40 );
 }
 
-static void init_madcrash( void )
+static DRIVER_INIT( madcrash )
 {
 /*
 	The following lines patch out the ROM test (which fails - probably
@@ -842,7 +811,7 @@ static void init_madcrash( void )
 	madcrash_vreg = 0x00;
 }
 
-static void init_vangrd2( void )
+static DRIVER_INIT( vangrd2 )
 {
 	init_sound( 0x20 );
 	madcrash_vreg = 0xf1;

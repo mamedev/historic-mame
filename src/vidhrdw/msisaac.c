@@ -59,7 +59,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int msisaac_vh_start(void)
+VIDEO_START( msisaac )
 {
 	background  = tilemap_create(get_bg_tile_info, tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
 	background2 = tilemap_create(get_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -169,9 +169,8 @@ WRITE_HANDLER( msisaac_fg_videoram_w )
   Display refresh
 
 ***************************************************************************/
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	const unsigned char *source = spriteram+32*4-4;
 	const unsigned char *finish = spriteram; /* ? */
 
@@ -202,41 +201,41 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 				drawgfx(bitmap,gfx,
 					sprite_number+1,color,
 					flipx,flipy,
-					sx,sy-16,clip,TRANSPARENCY_PEN,0 );
+					sx,sy-16,cliprect,TRANSPARENCY_PEN,0 );
 				drawgfx(bitmap,gfx,
 					sprite_number,color,
 					flipx,flipy,
-					sx,sy,clip,TRANSPARENCY_PEN,0 );
+					sx,sy,cliprect,TRANSPARENCY_PEN,0 );
 				break;
 			case 1: /* flipx==1 && flipy==0 */
 				drawgfx(bitmap,gfx,
 					sprite_number+1,color,
 					flipx,flipy,
-					sx,sy-16,clip,TRANSPARENCY_PEN,0 );
+					sx,sy-16,cliprect,TRANSPARENCY_PEN,0 );
 				drawgfx(bitmap,gfx,
 					sprite_number,color,
 					flipx,flipy,
-					sx,sy,clip,TRANSPARENCY_PEN,0 );
+					sx,sy,cliprect,TRANSPARENCY_PEN,0 );
 				break;
 			case 2: /* flipx==0 && flipy==1 */
 				drawgfx(bitmap,gfx,
 					sprite_number,color,
 					flipx,flipy,
-					sx,sy-16,clip,TRANSPARENCY_PEN,0 );
+					sx,sy-16,cliprect,TRANSPARENCY_PEN,0 );
 				drawgfx(bitmap,gfx,
 					sprite_number+1,color,
 					flipx,flipy,
-					sx,sy,clip,TRANSPARENCY_PEN,0 );
+					sx,sy,cliprect,TRANSPARENCY_PEN,0 );
 				break;
 			case 3: /* flipx==1 && flipy==1 */
 				drawgfx(bitmap,gfx,
 					sprite_number,color,
 					flipx,flipy,
-					sx,sy-16,clip,TRANSPARENCY_PEN,0 );
+					sx,sy-16,cliprect,TRANSPARENCY_PEN,0 );
 				drawgfx(bitmap,gfx,
 					sprite_number+1,color,
 					flipx,flipy,
-					sx,sy,clip,TRANSPARENCY_PEN,0 );
+					sx,sy,cliprect,TRANSPARENCY_PEN,0 );
 				break;
 			}
 		}
@@ -247,17 +246,17 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 				color,
 				flipx,flipy,
 				sx,sy,
-				clip,TRANSPARENCY_PEN,0 );
+				cliprect,TRANSPARENCY_PEN,0 );
 		}
 		source -= 4;
 	}
 }
 
-void msisaac_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( msisaac )
 {
-	tilemap_draw(bitmap,background, 0,0);
-	tilemap_draw(bitmap,background2,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,foreground, 0,0);
+	tilemap_draw(bitmap,cliprect,background, 0,0);
+	tilemap_draw(bitmap,cliprect,background2,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,foreground, 0,0);
 }
 

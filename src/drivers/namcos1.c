@@ -128,9 +128,8 @@ C - uses sub board with support for player 3 and 4 controls
 #include "cpu/m6800/m6800.h"
 
 /* from vidhrdw */
-extern void namcos1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern int namcos1_vh_start(void);
-extern void namcos1_vh_stop(void);
+extern VIDEO_UPDATE( namcos1 );
+extern VIDEO_START( namcos1 );
 
 /* from machine */
 WRITE_HANDLER( namcos1_bankswitch_w );
@@ -142,45 +141,31 @@ WRITE_HANDLER( namcos1_sound_bankswitch_w );
 WRITE_HANDLER( namcos1_mcu_bankswitch_w );
 WRITE_HANDLER( namcos1_mcu_patch_w );
 
-extern void init_namcos1( void );
+extern MACHINE_INIT( namcos1 );
 
-extern void init_shadowld( void );
-extern void init_dspirit( void );
-extern void init_quester( void );
-extern void init_blazer( void );
-extern void init_pacmania( void );
-extern void init_galaga88( void );
-extern void init_ws( void );
-extern void init_berabohm( void );
-extern void init_alice( void );
-extern void init_bakutotu( void );
-extern void init_wldcourt( void );
-extern void init_splatter( void );
-extern void init_faceoff( void );
-extern void init_rompers( void );
-extern void init_blastoff( void );
-extern void init_ws89( void );
-extern void init_dangseed( void );
-extern void init_ws90( void );
-extern void init_pistoldm( void );
-extern void init_soukobdx( void );
-extern void init_puzlclub( void );
-extern void init_tankfrce( void );
+extern DRIVER_INIT( shadowld );
+extern DRIVER_INIT( dspirit );
+extern DRIVER_INIT( quester );
+extern DRIVER_INIT( blazer );
+extern DRIVER_INIT( pacmania );
+extern DRIVER_INIT( galaga88 );
+extern DRIVER_INIT( ws );
+extern DRIVER_INIT( berabohm );
+extern DRIVER_INIT( alice );
+extern DRIVER_INIT( bakutotu );
+extern DRIVER_INIT( wldcourt );
+extern DRIVER_INIT( splatter );
+extern DRIVER_INIT( faceoff );
+extern DRIVER_INIT( rompers );
+extern DRIVER_INIT( blastoff );
+extern DRIVER_INIT( ws89 );
+extern DRIVER_INIT( dangseed );
+extern DRIVER_INIT( ws90 );
+extern DRIVER_INIT( pistoldm );
+extern DRIVER_INIT( soukobdx );
+extern DRIVER_INIT( puzlclub );
+extern DRIVER_INIT( tankfrce );
 
-
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-	}
-}
 
 /**********************************************************************/
 
@@ -393,7 +378,7 @@ static MEMORY_WRITE_START( mcu_writemem )
 	{ 0x4000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc000, namcos1_mcu_patch_w },
 	{ 0xc000, 0xc7ff, MWA_BANK19 },
-	{ 0xc800, 0xcfff, MWA_RAM, &nvram, &nvram_size }, /* EEPROM */
+	{ 0xc800, 0xcfff, MWA_RAM, &generic_nvram, &generic_nvram_size }, /* EEPROM */
 	{ 0xd000, 0xd000, namcos1_dac0_w },
 	{ 0xd400, 0xd400, namcos1_dac1_w },
 	{ 0xd800, 0xd800, namcos1_mcu_bankswitch_w }, /* BANK selector */
@@ -793,200 +778,136 @@ static struct DACinterface dac_interface =
 	{ 100 	}	/* mixing level */
 };
 
-static const struct MachineDriver machine_driver_ns1 =
-{
+static MACHINE_DRIVER_START( ns1 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			main_readmem,main_writemem,0,0,
-			interrupt,1,
-		},
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			sub_readmem,sub_writemem,0,0,
-			interrupt,1,
-		},
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/8/4,
-			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0, /* CPU slice timer is made by machine_init */
-	init_namcos1,
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(HD63701,49152000/8/4)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(namcos1)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	128*16+6*256+6*256+1, 0,	/* virtual palette */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128*16+6*256+6*256+1)	/* virtual palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	namcos1_vh_start,
-	namcos1_vh_stop,
-	namcos1_vh_screenrefresh,
+	MDRV_VIDEO_START(namcos1)
+	MDRV_VIDEO_UPDATE(namcos1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-	nvram_handler
-};
 
-static const struct MachineDriver machine_driver_quester =
-{
+static MACHINE_DRIVER_START( quester )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			main_readmem,main_writemem,0,0,
-			interrupt,1,
-		},
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			sub_readmem,sub_writemem,0,0,
-			interrupt,1,
-		},
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/8/4,
-			quester_mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0, /* CPU slice timer is made by machine_init */
-	init_namcos1,
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(HD63701,49152000/8/4)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(quester_mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(namcos1)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	128*16+6*256+6*256+1, 0,	/* virtual palette */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128*16+6*256+6*256+1)	/* virtual palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	namcos1_vh_start,
-	namcos1_vh_stop,
-	namcos1_vh_screenrefresh,
+	MDRV_VIDEO_START(namcos1)
+	MDRV_VIDEO_UPDATE(namcos1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-	nvram_handler
-};
 
-static const struct MachineDriver machine_driver_faceoff =
-{
+static MACHINE_DRIVER_START( faceoff )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			main_readmem,main_writemem,0,0,
-			interrupt,1,
-		},
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			sub_readmem,sub_writemem,0,0,
-			interrupt,1,
-		},
-		{
-			CPU_M6809,
-			49152000/32,	/* Not sure if divided by 32 or 24 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/8/4,
-			faceoff_mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0, /* CPU slice timer is made by machine_init */
-	init_namcos1,
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,49152000/32)	/* Not sure if divided by 32 or 24 */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(HD63701,49152000/8/4)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(faceoff_mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(namcos1)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	128*16+6*256+6*256+1, 0,	/* virtual palette */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128*16+6*256+6*256+1)	/* virtual palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	namcos1_vh_start,
-	namcos1_vh_stop,
-	namcos1_vh_screenrefresh,
+	MDRV_VIDEO_START(namcos1)
+	MDRV_VIDEO_UPDATE(namcos1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 /***********************************************************************

@@ -18,7 +18,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 /***************************************************************************/
 
@@ -31,12 +31,6 @@ static WRITE16_HANDLER( sys18_refreshenable_w ){
 		/* bit 2 is also used (0 in shadow dancer) */
 		/* shadow dancer also sets bit 7 */
 	}
-}
-
-/***************************************************************************/
-
-static int sys18_interrupt( void ){
-	return 4; /* Interrupt vector 4: VBlank */
 }
 
 /***************************************************************************/
@@ -144,7 +138,7 @@ static WRITE16_HANDLER( sound_command_nmi_w ){
 /***************************************************************************/
 
 static READ16_HANDLER( shdancer_skip_r ){
-	if (cpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0];
 }
 
@@ -209,14 +203,14 @@ static void shdancer_update_proc( void ){
 	}
 }
 
-static void shdancer_init_machine( void ){
+static MACHINE_INIT( shdancer ){
 	sys16_spritelist_end=0x8000;
 	sys16_update_proc = shdancer_update_proc;
 }
 
-static void init_shdancer( void ){
+static DRIVER_INIT( shdancer ){
 	unsigned char *RAM = memory_region(REGION_CPU2);
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 //	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip_r );
@@ -229,8 +223,8 @@ static void init_shdancer( void ){
 
 /*
 static READ_HANDLER( shdancer_skip_r ){
-	if (cpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
-	return READ_WORD(&sys16_workingram[0x0000]);
+	if (activecpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
+	return (*(UINT16 *)(&sys16_workingram[0x0000]));
 }
 */
 
@@ -302,18 +296,18 @@ static void shdancbl_update_proc( void ){
 }
 
 
-static void shdancbl_init_machine( void ){
+static MACHINE_INIT( shdancbl ){
 	sys16_spritelist_end=0x8000;
 	sys16_sprxoffset = -0xbc+0x77;
 
 	sys16_update_proc = shdancbl_update_proc;
 }
 
-static void init_shdancbl( void ){
+static DRIVER_INIT( shdancbl ){
 	unsigned char *RAM= memory_region(REGION_CPU2);
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 //	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancer_skip_r );
@@ -328,19 +322,19 @@ static void init_shdancbl( void ){
 
 /***************************************************************************/
 static READ16_HANDLER( shdancrj_skip_r ){
-	if (cpu_get_pc()==0x2f70) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x2f70) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0xc000/2];
 }
 
-static void shdancrj_init_machine( void ){
+static MACHINE_INIT( shdancrj ){
 	sys16_spritelist_end=0x8000;
 	sys16_patch_code(0x6821, 0xdf);
 	sys16_update_proc = shdancer_update_proc;
 }
 
-static void init_shdancrj( void ){
+static DRIVER_INIT( shdancrj ){
 	unsigned char *RAM= memory_region(REGION_CPU2);
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 //	install_mem_read_handler(0, 0xffc000, 0xffc001, shdancrj_skip_r );
@@ -351,7 +345,7 @@ static void init_shdancrj( void ){
 /***************************************************************************/
 
 static READ16_HANDLER( moonwlkb_skip_r ){
-	if (cpu_get_pc()==0x308a) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x308a) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x202c/2];
 }
 
@@ -424,7 +418,7 @@ static void moonwalk_update_proc( void ){
 	}
 }
 
-static void moonwalk_init_machine( void ){
+static MACHINE_INIT( moonwalk ){
 	sys16_bg_priority_value=0x1000;
 	sys16_sprxoffset = -0x238;
 	sys16_spritelist_end=0x8000;
@@ -471,9 +465,9 @@ static void moonwalk_init_machine( void ){
 	sys16_update_proc = moonwalk_update_proc;
 }
 
-static void init_moonwalk( void ){
+static DRIVER_INIT( moonwalk ){
 	unsigned char *RAM= memory_region(REGION_CPU2);
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 
@@ -483,7 +477,7 @@ static void init_moonwalk( void ){
 /***************************************************************************/
 
 static READ16_HANDLER( astorm_skip_r ){
-	if (cpu_get_pc()==0x3d4c) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x3d4c) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x2c2c/2];
 }
 
@@ -574,7 +568,7 @@ static void astorm_update_proc( void ){
 	}
 }
 
-static void astorm_init_machine( void ){
+static MACHINE_INIT( astorm ){
 	sys16_fgxoffset = sys16_bgxoffset = -9;
 
 	sys16_patch_code( 0x2D6E, 0x32 );
@@ -640,9 +634,9 @@ static void astorm_init_machine( void ){
 	sys16_update_proc = astorm_update_proc;
 }
 
-static void init_astorm( void ){
+static DRIVER_INIT( astorm ){
 	unsigned char *RAM= memory_region(REGION_CPU2);
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 
@@ -652,62 +646,89 @@ static void init_astorm( void ){
 
 /*****************************************************************************/
 
-#define MACHINE_DRIVER_18( GAMENAME,READMEM,WRITEMEM,INITMACHINE) \
-static const struct MachineDriver GAMENAME = \
-{ \
-	{ \
-		{ \
-			CPU_M68000, \
-			10000000, \
-			READMEM,WRITEMEM,0,0, \
-			sys18_interrupt,1 \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU, \
-			4096000*2, /* overclocked to fix sound, but wrong! */ \
-			sound_readmem_18,sound_writemem_18,sound_readport_18,sound_writeport_18, \
-			ignore_interrupt,1 \
-		}, \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	INITMACHINE, \
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	sys16_gfxdecodeinfo, \
-	2048*ShadowColorsMultiplier, 0, \
-	0, \
-	VIDEO_TYPE_RASTER, \
-	0, \
-	sys18_vh_start, \
-	sys16_vh_stop, \
-	sys18_vh_screenrefresh, \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
-	{ \
-		{ \
-			SOUND_YM3438, \
-			&sys18_ym3438_interface \
-		}, \
-		{ \
-			SOUND_RF5C68, \
-			&sys18_rf5c68_interface, \
-		} \
-	} \
-};
+static MACHINE_DRIVER_START( system18 )
 
-MACHINE_DRIVER_18( machine_driver_astorm, \
-	astorm_readmem,astorm_writemem,astorm_init_machine )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	
+	MDRV_CPU_ADD_TAG("sound", Z80, 4096000*2) /* overclocked to fix sound, but wrong! */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem_18,sound_writemem_18)
+	MDRV_CPU_PORTS(sound_readport_18,sound_writeport_18)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(system18)
+	MDRV_VIDEO_UPDATE(system18)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD_TAG("3438", YM3438, sys18_ym3438_interface)
+	MDRV_SOUND_ADD_TAG("5c68", RF5C68, sys18_rf5c68_interface)
+MACHINE_DRIVER_END
 
-MACHINE_DRIVER_18( machine_driver_moonwalk, \
-	moonwalk_readmem,moonwalk_writemem,moonwalk_init_machine )
 
-MACHINE_DRIVER_18( machine_driver_shdancer, \
-	shdancer_readmem,shdancer_writemem,shdancer_init_machine )
+static MACHINE_DRIVER_START( astorm )
 
-MACHINE_DRIVER_18( machine_driver_shdancbl, \
-	shdancbl_readmem,shdancbl_writemem,shdancbl_init_machine )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system18)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(astorm_readmem,astorm_writemem)
+	
+	MDRV_MACHINE_INIT(astorm)
+MACHINE_DRIVER_END
 
-MACHINE_DRIVER_18( machine_driver_shdancrj, \
-	shdancer_readmem,shdancer_writemem,shdancrj_init_machine )
+
+static MACHINE_DRIVER_START( moonwalk )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system18)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(moonwalk_readmem,moonwalk_writemem)
+	
+	MDRV_MACHINE_INIT(moonwalk)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( shdancer )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system18)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(shdancer_readmem,shdancer_writemem)
+	
+	MDRV_MACHINE_INIT(shdancer)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( shdancbl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system18)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(shdancbl_readmem,shdancbl_writemem)
+	
+	MDRV_MACHINE_INIT(shdancbl)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( shdancrj )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(shdancer)
+	
+	MDRV_MACHINE_INIT(shdancrj)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************/
 

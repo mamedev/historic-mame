@@ -19,9 +19,9 @@ WRITE_HANDLER( srumbler_foreground_w );
 WRITE_HANDLER( srumbler_scroll_w );
 WRITE_HANDLER( srumbler_4009_w );
 
-int  srumbler_vh_start(void);
-void srumbler_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void srumbler_eof_callback(void);
+VIDEO_START( srumbler );
+VIDEO_UPDATE( srumbler );
+VIDEO_EOF( srumbler );
 
 
 
@@ -49,21 +49,21 @@ static WRITE_HANDLER( srumbler_bankswitch_w )
 	}
 }
 
-static void srumbler_init_machine(void)
+static MACHINE_INIT( srumbler )
 {
 	/* initialize banked ROM pointers */
 	srumbler_bankswitch_w(0,0);
 }
 
-static int srumbler_interrupt(void)
+static INTERRUPT_GEN( srumbler_interrupt )
 {
 	if (cpu_getiloops()==0)
 	{
-		return interrupt();
+		cpu_set_irq_line(0,0,HOLD_LINE);
 	}
 	else
 	{
-		return M6809_INT_FIRQ;
+		cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 }
 
@@ -270,49 +270,37 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_srumbler =
-{
+static MACHINE_DRIVER_START( srumbler )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,        /* 1.5 MHz (?) */
-			readmem,writemem,0,0,
-			srumbler_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        /* 3 MHz ??? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	srumbler_init_machine,
+	MDRV_CPU_ADD(M6809, 1500000)        /* 1.5 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(srumbler_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(srumbler)
 
 	/* video hardware */
-	64*8, 32*8, { 10*8, (64-10)*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(10*8, (64-10)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	gfxdecodeinfo,
-	512, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	srumbler_eof_callback,
-	srumbler_vh_start,
-	0,
-	srumbler_vh_screenrefresh,
+	MDRV_VIDEO_START(srumbler)
+	MDRV_VIDEO_EOF(srumbler)
+	MDRV_VIDEO_UPDATE(srumbler)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 

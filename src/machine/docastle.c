@@ -24,7 +24,7 @@ READ_HANDLER( docastle_shared0_r )
 	/* to make dip switches work in Do Run Run. */
 	if (offset == 8)
 	{
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 		cpu_spinuntil_trigger(500);
 	}
 
@@ -70,5 +70,5 @@ WRITE_HANDLER( docastle_shared1_w )
 
 WRITE_HANDLER( docastle_nmitrigger_w )
 {
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }

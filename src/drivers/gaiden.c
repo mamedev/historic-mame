@@ -38,7 +38,7 @@ write:
 
 extern data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 
-void gaiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( gaiden );
 
 WRITE16_HANDLER( gaiden_videoram_w );
 WRITE16_HANDLER( gaiden_videoram2_w );
@@ -54,8 +54,8 @@ WRITE16_HANDLER( gaiden_bgscrollx_w );
 WRITE16_HANDLER( gaiden_bgscrolly_w );
 WRITE16_HANDLER( gaiden_flip_w );
 
-int gaiden_vh_start(void);
-void gaiden_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( gaiden );
+VIDEO_UPDATE( gaiden );
 
 
 
@@ -63,7 +63,7 @@ static WRITE16_HANDLER( gaiden_sound_command_w )
 {
 	if (ACCESSING_LSB) soundlatch_w(0,data & 0xff);	/* Ninja Gaiden */
 	if (ACCESSING_MSB) soundlatch_w(0,data >> 8);	/* Tecmo Knight */
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -88,7 +88,7 @@ static WRITE16_HANDLER( tknight_protection_w )
 
 		data >>= 8;
 
-//logerror("PC %06x: prot = %02x\n",cpu_get_pc(),data);
+//logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
 
 		switch (data & 0xf0)
 		{
@@ -126,7 +126,7 @@ logerror("unknown jumpcode %02x\n",jumpcode);
 
 static READ16_HANDLER( tknight_protection_r )
 {
-//logerror("PC %06x: read prot %02x\n",cpu_get_pc(),prot);
+//logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
 	return prot;
 }
 
@@ -424,53 +424,34 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
-static const struct MachineDriver machine_driver_gaiden =
-{
+static MACHINE_DRIVER_START( gaiden )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			readmem,writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gaiden_vh_start,
-	0,
-	gaiden_vh_screenrefresh,
+	MDRV_VIDEO_START(gaiden)
+	MDRV_VIDEO_UPDATE(gaiden)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -28,26 +28,24 @@ unsigned char *pandoras_sharedram;
 static unsigned char *pandoras_sharedram2;
 
 /* from vidhrdw */
-void pandoras_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( pandoras );
 READ_HANDLER( pandoras_vram_r );
 READ_HANDLER( pandoras_cram_r );
 WRITE_HANDLER( pandoras_vram_w );
 WRITE_HANDLER( pandoras_cram_w );
 WRITE_HANDLER( pandoras_flipscreen_w );
 WRITE_HANDLER( pandoras_scrolly_w );
-int pandoras_vh_start(void);
-void pandoras_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( pandoras );
+VIDEO_UPDATE( pandoras );
 
-static int pandoras_interrupt_a( void ){
+static INTERRUPT_GEN( pandoras_interrupt_a ){
 	if (irq_enable_a)
-		return M6809_INT_IRQ;
-	return ignore_interrupt();
+		cpu_set_irq_line(0, M6809_IRQ_LINE, HOLD_LINE);
 }
 
-static int pandoras_interrupt_b( void ){
+static INTERRUPT_GEN( pandoras_interrupt_b ){
 	if (irq_enable_b)
-		return M6809_INT_IRQ;
-	return ignore_interrupt();
+		cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 static READ_HANDLER( pandoras_sharedram_r ){
@@ -89,17 +87,17 @@ static WRITE_HANDLER( pandoras_int_control_w ){
 		case 0x06:	if (!data) cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 					irq_enable_b = data;
 					break;
-		case 0x07:	cpu_cause_interrupt(1,M6809_INT_NMI);
+		case 0x07:	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 					break;
 
 		default:
-			logerror("%04x: (irq_ctrl) write %02x to %02x\n",cpu_get_pc(), data, offset);
+			logerror("%04x: (irq_ctrl) write %02x to %02x\n",activecpu_get_pc(), data, offset);
 	}
 }
 
 WRITE_HANDLER( pandoras_cpua_irqtrigger_w ){
 	if (!firq_old_data_a && data){
-		cpu_cause_interrupt(0,M6809_INT_FIRQ);
+		cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 
 	firq_old_data_a = data;
@@ -107,16 +105,24 @@ WRITE_HANDLER( pandoras_cpua_irqtrigger_w ){
 
 WRITE_HANDLER( pandoras_cpub_irqtrigger_w ){
 	if (!firq_old_data_b && data){
-		cpu_cause_interrupt(1,M6809_INT_FIRQ);
+		cpu_set_irq_line(1,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 
 	firq_old_data_b = data;
+}
+
+WRITE_HANDLER( pandoras_i8039_irqtrigger_w )
+{
+	if (i8039_irqenable)
+		cpu_set_irq_line(3, 0, ASSERT_LINE);
 }
 
 static WRITE_HANDLER( i8039_irqen_and_status_w )
 {
 	/* bit 7 enables IRQ */
 	i8039_irqenable = data & 0x80;
+	if (i8039_irqenable == 0)
+		cpu_set_irq_line(3, 0, CLEAR_LINE);
 
 	/* bit 5 goes to 8910 port A */
 	i8039_status = (data & 0x20) >> 5;
@@ -124,13 +130,7 @@ static WRITE_HANDLER( i8039_irqen_and_status_w )
 
 WRITE_HANDLER( pandoras_z80_irqtrigger_w )
 {
-	cpu_cause_interrupt(2,0xff);
-}
-
-WRITE_HANDLER( pandoras_i8039_irqtrigger_w )
-{
-	if (i8039_irqenable)
-		cpu_cause_interrupt(3,I8039_EXT_INT);
+	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 
@@ -376,7 +376,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static void pandoras_init_machine( void )
+static MACHINE_INIT( pandoras )
 {
 	firq_old_data_a = firq_old_data_b = 0;
 	irq_enable_a = irq_enable_b = 0;
@@ -409,64 +409,48 @@ static struct DACinterface dac_interface =
 	{ 25 }
 };
 
-static const struct MachineDriver machine_driver_pandoras =
-{
+static MACHINE_DRIVER_START( pandoras )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,		/* CPU A */
-			18432000/6,		/* ??? */
-			pandoras_readmem_a,pandoras_writemem_a,0,0,
-            pandoras_interrupt_a,1,
-        },
-		{
-			CPU_M6809,		/* CPU B */
-			18432000/6,		/* ??? */
-			pandoras_readmem_b,pandoras_writemem_b,0,0,
-            pandoras_interrupt_b,1,
-        },
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,
-			pandoras_readmem_snd,pandoras_writemem_snd,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_I8039 | CPU_AUDIO_CPU,
-			14318000/2/15,
-			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
-			ignore_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	50,	/* slices per frame */
-	pandoras_init_machine,
+	MDRV_CPU_ADD(M6809,	18432000/6)	/* CPU A */
+	MDRV_CPU_MEMORY(pandoras_readmem_a,pandoras_writemem_a)
+	MDRV_CPU_VBLANK_INT(pandoras_interrupt_a,1)
+
+	MDRV_CPU_ADD(M6809,	18432000/6)	/* CPU B */
+	MDRV_CPU_MEMORY(pandoras_readmem_b,pandoras_writemem_b)
+	MDRV_CPU_VBLANK_INT(pandoras_interrupt_b,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(pandoras_readmem_snd,pandoras_writemem_snd)
+
+	MDRV_CPU_ADD(I8039,14318000/2/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
+	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(50)	/* slices per frame */
+
+	MDRV_MACHINE_INIT(pandoras)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 16*16+16*16,
-	pandoras_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pandoras_vh_start,
-	0,
-	pandoras_vh_screenrefresh,
+	MDRV_PALETTE_INIT(pandoras)
+	MDRV_VIDEO_START(pandoras)
+	MDRV_VIDEO_UPDATE(pandoras)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -28,7 +28,7 @@
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( grobda )
 {
 	int i;
 
@@ -124,12 +124,12 @@ static void grobda_draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void grobda_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( grobda )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 

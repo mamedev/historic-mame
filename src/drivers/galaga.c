@@ -83,16 +83,16 @@ READ_HANDLER( galaga_customio_data_r );
 WRITE_HANDLER( galaga_customio_w );
 WRITE_HANDLER( galaga_customio_data_w );
 WRITE_HANDLER( galaga_halt_w );
-int galaga_interrupt_1(void);
-int galaga_interrupt_2(void);
-int galaga_interrupt_3(void);
-void galaga_init_machine(void);
+INTERRUPT_GEN( galaga_interrupt_1 );
+INTERRUPT_GEN( galaga_interrupt_2 );
+INTERRUPT_GEN( galaga_interrupt_3 );
+MACHINE_INIT( galaga );
 
 
 extern unsigned char *galaga_starcontrol;
-int galaga_vh_start(void);
-void galaga_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_START( galaga );
+VIDEO_UPDATE( galaga );
+PALETTE_INIT( galaga );
 
 WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
@@ -384,58 +384,43 @@ static struct Samplesinterface samples_interface =
 };
 
 
-static const struct MachineDriver machine_driver_galaga =
-{
+static MACHINE_DRIVER_START( galaga )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3125000,        /* 3.125 MHz */
-			readmem_cpu1,writemem_cpu1,0,0,
-			galaga_interrupt_1,1
-		},
-		{
-			CPU_Z80,
-			3125000,        /* 3.125 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			galaga_interrupt_2,1
-		},
-		{
-			CPU_Z80,
-			3125000,        /* 3.125 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			galaga_interrupt_3,2
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	99,	/* 99 CPU slices per frame - with 100, galagab2 hangs on coin insertion */
-	galaga_init_machine,
+	MDRV_CPU_ADD(Z80, 3125000)        /* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(galaga_interrupt_1,1)
+
+	MDRV_CPU_ADD(Z80, 3125000)        /* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(galaga_interrupt_2,1)
+
+	MDRV_CPU_ADD(Z80, 3125000)        /* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(galaga_interrupt_3,2)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(99)	/* 99 CPU slices per frame - with 100, galagab2 hangs on coin insertion */
+
+	MDRV_MACHINE_INIT(galaga)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32+64,64*4,     /* 32 for the characters, 64 for the stars */
-	galaga_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64)
+	MDRV_COLORTABLE_LENGTH(64*4)  /* 32 for the characters, 64 for the stars */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	galaga_vh_start,
-	generic_vh_stop,
-	galaga_vh_screenrefresh,
+	MDRV_PALETTE_INIT(galaga)
+	MDRV_VIDEO_START(galaga)
+	MDRV_VIDEO_UPDATE(galaga)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 

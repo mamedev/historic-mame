@@ -131,7 +131,7 @@ READ16_HANDLER( mirror_ram_r )
 WRITE16_HANDLER( mirror_ram_w )
 {
 	COMBINE_DATA(&mirror_ram[offset]);
-//	logerror("PC %06X - Mirror RAM Written: %04X <- %04X\n", cpu_get_pc(), offset*2, data);
+//	logerror("PC %06X - Mirror RAM Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
 }
 
 
@@ -250,7 +250,7 @@ static READ_HANDLER( dsw2_r )
  Sprites Buffering
 
 */
-void seta_buffer_sprites(void)
+VIDEO_EOF( seta_buffer_sprites )
 {
 	int ctrl2	=	spriteram16[ 0x602/2 ];
 	if (~ctrl2 & 0x20)
@@ -435,7 +435,7 @@ READ16_HANDLER ( calibr50_ip_r )
 		case 0x16/2:	return (dir2>>8);			// upper 4 bits of p2 rotation
 		case 0x18/2:	return 0xffff;				// ? (value's read but not used)
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+			logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 			return 0;
 	}
 }
@@ -653,7 +653,7 @@ static READ16_HANDLER( krzybowl_input_r )
 		case 0xc/2:	return dir2y & 0xff;
 		case 0xe/2:	return dir2y >> 8;
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+			logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 			return 0;
 	}
 }
@@ -841,7 +841,7 @@ READ16_HANDLER( kiwame_input_r )
 		case 0x08/2:	return 0xffff;
 
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+			logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 			return 0x0000;
 	}
 }
@@ -879,12 +879,12 @@ MEMORY_END
 
 static READ16_HANDLER( thunderl_protection_r )
 {
-//	logerror("PC %06X - Protection Read\n", cpu_get_pc());
+//	logerror("PC %06X - Protection Read\n", activecpu_get_pc());
 	return 0x00dd;
 }
 static WRITE16_HANDLER( thunderl_protection_w )
 {
-//	logerror("PC %06X - Protection Written: %04X <- %04X\n", cpu_get_pc(), offset*2, data);
+//	logerror("PC %06X - Protection Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
 }
 
 /* Similar to downtown etc. */
@@ -3869,36 +3869,33 @@ static struct GfxDecodeInfo zingzip_gfxdecodeinfo[] =
 
 #define SETA_INTERRUPTS_NUM 2
 
-static int seta_interrupt_1_and_2(void)
+static INTERRUPT_GEN( seta_interrupt_1_and_2 )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return 1;
-		case 1:		return 2;
-		default:	return ignore_interrupt();
+		case 0:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
+		case 1:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 	}
 }
 
-static int seta_interrupt_2_and_4(void)
+static INTERRUPT_GEN( seta_interrupt_2_and_4 )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return 2;
-		case 1:		return 4;
-		default:	return ignore_interrupt();
+		case 0:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
+		case 1:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;
 	}
 }
 
 
 #define SETA_SUB_INTERRUPTS_NUM 2
 
-static int seta_sub_interrupt(void)
+static INTERRUPT_GEN( seta_sub_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return nmi_interrupt();
-		case 1:		return interrupt();
-		default:	return ignore_interrupt();
+		case 0:		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);	break;
+		case 1:		cpu_set_irq_line(1, 0, HOLD_LINE);				break;
 	}
 }
 
@@ -3907,38 +3904,30 @@ static int seta_sub_interrupt(void)
 								Athena no Hatena?
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_atehate =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			atehate_readmem, atehate_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( atehate )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(atehate_readmem,atehate_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -3951,81 +3940,70 @@ static struct MachineDriver machine_driver_atehate =
 	samples are bankswitched
 */
 
-void blandia_init_machine(void)
+MACHINE_INIT( blandia )
 {
 	seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 }
 
-static const struct MachineDriver machine_driver_blandia =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	blandia_init_machine,	// Bankswitched Samples
+static MACHINE_DRIVER_START( blandia )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(blandia)	// Bankswitched Samples
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	blandia_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer1, layer2 */
-	blandia_vh_init_palette,				/* layers 1&2 are 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(blandia_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	seta_buffer_sprites,	/* Blandia uses sprite buffering */
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(blandia)				/* layers 1&2 are 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_EOF(seta_buffer_sprites)		/* Blandia uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Block Carnival
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_blockcar =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			blockcar_readmem, blockcar_writemem,0,0,
-			m68_level3_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( blockcar )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(blockcar_readmem,blockcar_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4037,62 +4015,47 @@ static struct MachineDriver machine_driver_blockcar =
 	5 ints per frame */
 
 #define calibr50_INTERRUPTS_NUM (4+1)
-int calibr50_interrupt(void)
+INTERRUPT_GEN( calibr50_interrupt )
 {
 	switch (cpu_getiloops())
 	{
 		case 0:
 		case 1:
 		case 2:
-		case 3:		return 4;
-
-		case 4:		return 2;
-
-		default:	return ignore_interrupt();
+		case 3:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;
+		case 4:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 	}
 }
 
 
-static const struct MachineDriver machine_driver_calibr50 =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			calibr50_readmem, calibr50_writemem,0,0,
-			calibr50_interrupt, calibr50_INTERRUPTS_NUM
-		},
-		{
-			CPU_M65C02,
-			2000000,	/* ?? */
-			calibr50_sub_readmem, calibr50_sub_writemem,0,0,
-			interrupt, 4	/* IRQ: 4/frame
+static MACHINE_DRIVER_START( calibr50 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(calibr50_readmem,calibr50_writemem)
+	MDRV_CPU_VBLANK_INT(calibr50_interrupt,calibr50_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(M65C02, 2000000)	/* ?? */
+	MDRV_CPU_MEMORY(calibr50_sub_readmem,calibr50_sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* IRQ: 4/frame
 							   NMI: when the 68k writes the sound latch */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-//	seta_vh_start_1_layer,
-	seta_vh_start_1_layer_offset_0x02,	// a little offset
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer_offset_0x02)	// a little offset
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4101,44 +4064,34 @@ static const struct MachineDriver machine_driver_calibr50 =
 
 /* downtown lev 3 = lev 2 + lev 1 ! */
 
-static const struct MachineDriver machine_driver_downtown =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			downtown_readmem, downtown_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			downtown_sub_readmem, downtown_sub_writemem,0,0,
-			seta_sub_interrupt, SETA_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( downtown )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(downtown_sub_readmem,downtown_sub_writemem)
+	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_8MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_8MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4152,113 +4105,92 @@ static const struct MachineDriver machine_driver_downtown =
 	lev 2 drives the game
 */
 
-static const struct MachineDriver machine_driver_drgnunit =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			drgnunit_readmem, drgnunit_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( drgnunit )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(drgnunit_readmem,drgnunit_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	seta_buffer_sprites,	/* qzkklogy uses sprite buffering */
-//	seta_vh_start_1_layer,
-	seta_vh_start_1_layer_offset_0x02,	// a little offset
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer_offset_0x02)	// a little offset
+	MDRV_VIDEO_EOF(seta_buffer_sprites)	/* qzkklogy uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 /*	Same as qzkklogy, but with a 16MHz CPU and different
 	layout for the layer's tiles	*/
 
-static const struct MachineDriver machine_driver_qzkklgy2 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			drgnunit_readmem, drgnunit_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( qzkklgy2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(drgnunit_readmem,drgnunit_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16+1, 400-1+1, 0, 256-1 -16},	// a little offset
-	qzkklgy2_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16+1, 400-1+1, 0, 256-1 -16)	// a little offset
+	MDRV_GFXDECODE(qzkklgy2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	seta_buffer_sprites,	/* qzkklogy uses sprite buffering */
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_EOF(seta_buffer_sprites)	/* qzkklogy uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Eight Force
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_eightfrc =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	blandia_init_machine,	// Bankswitched Samples
+static MACHINE_DRIVER_START( eightfrc )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(blandia)	// Bankswitched Samples
 
 	/* video hardware */
-	400, 256-16-8, { 16, 400-1, 0, 256-1 -16-16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer1, layer2 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16-8)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16-16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4270,38 +4202,32 @@ static const struct MachineDriver machine_driver_eightfrc =
 	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
 	lev 2 drives the game
 */
-static const struct MachineDriver machine_driver_extdwnhl =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			extdwnhl_readmem, extdwnhl_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( extdwnhl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(extdwnhl_readmem,extdwnhl_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256-16, { 16, 320+16-1, 0, 256-16-1},
-	zingzip_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+16*32+64*32,	/* sprites, layer2, layer1 */
-	zingzip_vh_init_palette,				/* layer 1 gfx is 6 planes deep */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers_offset_0x02,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16, 320+16-1, 0, 256-16-1)
+	MDRV_GFXDECODE(zingzip_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+16*32+64*32)	/* sprites, layer2, layer1 */
+	
+	MDRV_PALETTE_INIT(zingzip)			/* layer 1 gfx is 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers_offset_0x02)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4312,38 +4238,32 @@ static const struct MachineDriver machine_driver_extdwnhl =
 	lev 2: Sound (generated by a timer mapped at $d00000-6 ?)
 	lev 4: VBlank
 */
-static const struct MachineDriver machine_driver_gundhara =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( gundhara )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256-16, { 16+8, 320+32+16+8+16-1, 0, 256-16-1},
-	jjsquawk_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer2, layer1 */
-	gundhara_vh_init_palette,				/* layers are 6 planes deep (but have only 4 palettes) */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16+8, 320+32+16+8+16-1, 0, 256-16-1)
+	MDRV_GFXDECODE(jjsquawk_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer2, layer1 */
+	
+	MDRV_PALETTE_INIT(gundhara)				/* layers are 6 planes deep (but have only 4 palettes) */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4354,76 +4274,62 @@ static const struct MachineDriver machine_driver_gundhara =
 	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
 	lev 2 drives the game
 */
-static const struct MachineDriver machine_driver_jjsquawk =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( jjsquawk )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	jjsquawk_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer2, layer1 */
-	jjsquawk_vh_init_palette,				/* layers are 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(jjsquawk_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(jjsquawk)				/* layers are 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Krazy Bowl
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_krzybowl =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			krzybowl_readmem, krzybowl_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( krzybowl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(krzybowl_readmem,krzybowl_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16+8, 320+8-1, 0, 256-1 -16-16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16+8, 320+8-1, 0, 256-1 -16-16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4432,44 +4338,34 @@ static struct MachineDriver machine_driver_krzybowl =
 
 /* metafox lev 3 = lev 2 + lev 1 ! */
 
-static const struct MachineDriver machine_driver_metafox =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			downtown_readmem, downtown_writemem,0,0,
-			m68_level3_irq, 1
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			metafox_sub_readmem, metafox_sub_writemem,0,0,
-			seta_sub_interrupt, SETA_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( metafox )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(metafox_sub_readmem,metafox_sub_writemem)
+	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16, 400-1, 0, 256-1 -16-16 +2},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16-16 +2)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4479,39 +4375,31 @@ static const struct MachineDriver machine_driver_metafox =
 
 /* msgundam lev 2 == lev 6 ! */
 
-static const struct MachineDriver machine_driver_msgundam =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			msgundam_readmem, msgundam_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-		},
-	},
-//	60,DEFAULT_60HZ_VBLANK_DURATION,
-	56.66,DEFAULT_60HZ_VBLANK_DURATION,	/* between 56 and 57 to match a real PCB's game speed */
-	1,
-	0,
+static MACHINE_DRIVER_START( msgundam )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(msgundam_readmem,msgundam_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(56.66)	/* between 56 and 57 to match a real PCB's game speed */
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer2, layer1 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	seta_buffer_sprites,	/* msgundam uses sprite buffering */
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_EOF(seta_buffer_sprites)	/* msgundam uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4519,78 +4407,60 @@ static const struct MachineDriver machine_driver_msgundam =
 							Oishii Puzzle
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_oisipuzl =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			oisipuzl_readmem, oisipuzl_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( oisipuzl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(oisipuzl_readmem,oisipuzl_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16, 320+16-1, 0, 256-1 -16-16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer2, layer1 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16, 320+16-1, 0, 256-1 -16-16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-//	seta_vh_start_2_layers,
-	oisipuzl_vh_start_2_layers,	// flip is inverted for the tilemaps
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(oisipuzl_2_layers)	// flip is inverted for the tilemaps
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 							Pro Mahjong Kiwame
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_kiwame =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			kiwame_readmem, kiwame_writemem,0,0,
-			m68_level1_irq, 1	/* lev 1-7 are the same. WARNING:
+static MACHINE_DRIVER_START( kiwame )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(kiwame_readmem,kiwame_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* lev 1-7 are the same. WARNING:
 								   the interrupt table is written to. */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	464, 256 -16, { 16, 464-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(464, 256 -16)
+	MDRV_VISIBLE_AREA(16, 464-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4600,38 +4470,30 @@ static struct MachineDriver machine_driver_kiwame =
 
 /* pretty much like wrofaero, but ints are 1&2, not 2&4 */
 
-static const struct MachineDriver machine_driver_rezon =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rezon )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer1, layer2 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4641,71 +4503,55 @@ static const struct MachineDriver machine_driver_rezon =
 
 /*	thunderl lev 2 = lev 3 - other levels lead to an error */
 
-static struct MachineDriver machine_driver_thunderl =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			thunderl_readmem, thunderl_writemem,0,0,
-			m68_level2_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( thunderl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(thunderl_readmem,thunderl_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16 },
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_wits =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			thunderl_readmem, thunderl_writemem,0,0,
-			m68_level2_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( wits )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(thunderl_readmem,thunderl_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16 },
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_8MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_8MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4740,60 +4586,44 @@ static struct YM3812interface ym3812_interface =
 
 
 #define TNDRCADE_SUB_INTERRUPTS_NUM 			1+16
-static int tndrcade_sub_interrupt(void)
+static INTERRUPT_GEN( tndrcade_sub_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return nmi_interrupt();
-		default:	return interrupt();
+		case 0:		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);	break;
+		default:	cpu_set_irq_line(1, 0, HOLD_LINE);				break;
 	}
 }
 
-static const struct MachineDriver machine_driver_tndrcade =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			tndrcade_readmem, tndrcade_writemem,0,0,
-			m68_level2_irq, 1
-		},
-		{
-			CPU_M65C02,
-			2000000,	/* ?? */
-			tndrcade_sub_readmem, tndrcade_sub_writemem,0,0,
-			tndrcade_sub_interrupt, TNDRCADE_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( tndrcade )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(tndrcade_readmem,tndrcade_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(M65C02, 2000000)	/* ?? */
+	MDRV_CPU_MEMORY(tndrcade_sub_readmem,tndrcade_sub_writemem)
+	MDRV_CPU_VBLANK_INT(tndrcade_sub_interrupt,TNDRCADE_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16, 400-1, 0+8, 256-1 -16-8},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16, 400-1, 0+8, 256-1 -16-8)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&tndrcade_ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, tndrcade_ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -4805,82 +4635,64 @@ static const struct MachineDriver machine_driver_tndrcade =
    the sub cpu reads the ip at different locations,
    the visible area seems different. */
 
-static const struct MachineDriver machine_driver_twineagl =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			downtown_readmem, downtown_writemem,0,0,
-			m68_level3_irq, 1
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			twineagl_sub_readmem, twineagl_sub_writemem,0,0,
-			seta_sub_interrupt, SETA_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( twineagl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(twineagl_sub_readmem,twineagl_sub_writemem)
+	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16 },
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Ultraman Club
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_umanclub =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			umanclub_readmem, umanclub_writemem,0,0,
-			m68_level3_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( umanclub )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(umanclub_readmem,umanclub_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4893,44 +4705,36 @@ static struct MachineDriver machine_driver_umanclub =
 	5 ints per frame
 */
 
-static const struct MachineDriver machine_driver_usclssic =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			usclssic_readmem, usclssic_writemem,0,0,
-			calibr50_interrupt, calibr50_INTERRUPTS_NUM
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			calibr50_sub_readmem, calibr50_sub_writemem,0,0,
-			interrupt, 1	/* NMI caused by main cpu when writing to the sound latch */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( usclssic )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(usclssic_readmem,usclssic_writemem)
+	MDRV_CPU_VBLANK_INT(calibr50_interrupt,calibr50_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(calibr50_sub_readmem,calibr50_sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMI caused by main cpu when writing to the sound latch */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	usclssic_gfxdecodeinfo,
-	16*32, 16*32 + 64*32,		/* sprites, layer */
-	usclssic_vh_init_palette,	/* layer is 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(usclssic_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32)
+	MDRV_COLORTABLE_LENGTH(16*32 + 64*32)		/* sprites, layer */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(usclssic)	/* layer is 6 planes deep */
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4941,17 +4745,17 @@ static const struct MachineDriver machine_driver_usclssic =
    call in the latter (sound related?) */
 
 
-static int wrofaero_interrupt(void)
+static INTERRUPT_GEN( wrofaero_interrupt )
 {
 	static int enab = 0;
 	switch (cpu_getiloops())
 	{
-		case 0:		return 2;
+		case 0:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 case 1:
 	enab++;
 	enab %= 2;
-	if 	(enab == 0)	return 4;
-	else			return ignore_interrupt();
+	if 	(enab == 0)	cpu_set_irq_line(0, 4, HOLD_LINE);
+	break;
 
 #if 0
 		case 1:
@@ -4968,51 +4772,40 @@ case 1:
 
 			for(i=0;i<16;i++)
 				if ( ((new_enab&(1<<i))==0) && (old_enab&(1<<i)) )
-					return 4;
-
-			return ignore_interrupt();
+					cpu_set_irq_line(0, 4, HOLD_LINE);
+			break;
 		}
 
 #endif
-		default:	return ignore_interrupt();
 	}
 }
 
 
-static const struct MachineDriver machine_driver_wrofaero =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-//			wrofaero_interrupt,2
+static MACHINE_DRIVER_START( wrofaero )
 
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+//	MDRV_CPU_VBLANK_INT(wrofaero_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer1, layer2 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -5026,38 +4819,32 @@ static const struct MachineDriver machine_driver_wrofaero =
    at int 1 is necessary: it plays the background music.
 */
 
-static const struct MachineDriver machine_driver_zingzip =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			m68_level3_irq, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( zingzip )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	zingzip_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+16*32+64*32,	/* sprites, layer2, layer1 */
-	zingzip_vh_init_palette,				/* layer 1 gfx is 6 planes deep */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(zingzip_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+16*32+64*32)	/* sprites, layer2, layer1 */
+	
+	MDRV_PALETTE_INIT(zingzip)				/* layer 1 gfx is 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_intf_16MHz }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -5113,7 +4900,7 @@ READ16_HANDLER( arbalest_protection_r )
 	return 0;
 }
 
-void init_arbalest(void)
+DRIVER_INIT( arbalest )
 {
 	install_mem_read16_handler(0, 0x80000, 0x8000f, arbalest_protection_r);
 }
@@ -5383,7 +5170,7 @@ static WRITE16_HANDLER( downtown_protection_w )
 	COMBINE_DATA(&downtown_protection[offset]);
 }
 
-void init_downtown(void)
+DRIVER_INIT( downtown )
 {
 	install_mem_read16_handler (0, 0x200000, 0x2001ff, downtown_protection_r);
 	install_mem_write16_handler(0, 0x200000, 0x2001ff, downtown_protection_w);
@@ -5507,7 +5294,7 @@ ROM_START( eightfrc )
 	ROM_LOAD( "u69.bin",  0x140000, 0x100000, 0x82ec08f1 )
 ROM_END
 
-void init_eightfrc(void)
+DRIVER_INIT( eightfrc )
 {
 	install_mem_read16_handler(0, 0x500004, 0x500005, MRA16_NOP);	// watchdog??
 }
@@ -5812,7 +5599,7 @@ ROM_START( metafox )
 ROM_END
 
 
-void init_metafox(void)
+DRIVER_INIT( metafox )
 {
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
@@ -5981,7 +5768,7 @@ ROM_START( kiwame )
 	ROM_LOAD( "fp001005.bin", 0x080000, 0x080000, 0x65b5fe9a )
 ROM_END
 
-void init_kiwame(void)
+DRIVER_INIT( kiwame )
 {
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
@@ -6116,7 +5903,7 @@ ROM_START( rezon )
 	ROM_LOAD16_WORD_SWAP( "us001009.u70",  0x000000, 0x100000, 0x0d7d2e2b )
 ROM_END
 
-void init_rezon(void)
+DRIVER_INIT( rezon )
 {
 	install_mem_read16_handler(0, 0x500006, 0x500007, MRA16_NOP);	// irq ack?
 }
@@ -6371,7 +6158,7 @@ READ16_HANDLER( twineagl_protection_r )
 	return 0;
 }
 
-void init_twineagl(void)
+DRIVER_INIT( twineagl )
 {
 	int i;
 	unsigned char *RAM = memory_region(REGION_GFX2);	// Layer

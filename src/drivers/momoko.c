@@ -22,7 +22,7 @@ Flipped screen looks wrong, but it is correct.
 extern data8_t *momoko_bg_scrollx;
 extern data8_t *momoko_bg_scrolly;
 
-void momoko_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( momoko );
 
 WRITE_HANDLER( momoko_fg_scrollx_w );
 WRITE_HANDLER( momoko_fg_scrolly_w );
@@ -256,46 +256,33 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_momoko =
-{
-	{
-		{
-			CPU_Z80,
-			5000000,	/* 5.0MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2500000,	/* 2.5MHz */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( momoko )
 
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 29*8-1 },
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 5000000)	/* 5.0MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_CPU_ADD(Z80, 2500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2.5MHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	momoko_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 29*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(momoko)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 /****************************************************************************/
 

@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 //int sys16_sh_shadowpal;
 //int sys16_MaxShadowColors;
@@ -51,7 +51,7 @@ READ16_HANDLER( SYS16_CPU2_RESET_HACK ){
 
 void (*sys16_custom_irq)(void);
 
-void sys16_onetime_init_machine( void ){
+MACHINE_INIT( sys16_onetime ){
 	sys16_bg1_trans=0;
 	sys16_rowscroll_scroll=0;
 	sys18_splittab_bg_x=0;

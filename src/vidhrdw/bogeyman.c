@@ -7,7 +7,7 @@ unsigned char *bogeyman_videoram;
 
 
 
-void bogeyman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( bogeyman )
 {
 	int i;
 
@@ -39,19 +39,18 @@ void bogeyman_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	}
 }
 
-int bogeyman_vh_start(void)
+VIDEO_START( bogeyman )
 {
-	dirtybuffer = malloc(videoram_size);
+	dirtybuffer = auto_malloc(videoram_size);
+	if (!dirtybuffer)
+		return 1;
+		
 	memset(dirtybuffer,1,videoram_size);
-	tmpbitmap = bitmap_alloc(256,256);
+	tmpbitmap = auto_bitmap_alloc(256,256);
+	if (!tmpbitmap)
+		return 1;
 
 	return 0;
-}
-
-void bogeyman_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
 }
 
 /******************************************************************************/
@@ -68,7 +67,7 @@ WRITE_HANDLER( bogeyman_videoram_w )
 	dirtybuffer[offset]=1;
 }
 
-void bogeyman_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( bogeyman )
 {
 	int mx,my,offs,color,tile,bank,sx,sy,flipx,flipy,multi;
 

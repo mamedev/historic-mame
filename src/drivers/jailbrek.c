@@ -15,10 +15,10 @@ void konami1_decode(void);
 
 /* from vidhrdw */
 extern unsigned char *jailbrek_scroll_x;
-int jailbrek_vh_start( void );
-void jailbrek_vh_stop( void );
-void jailbrek_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern unsigned char *jailbrek_scroll_dir;
+VIDEO_START( jailbrek );
+VIDEO_UPDATE( jailbrek );
+PALETTE_INIT( jailbrek );
 
 static int irq_enable,nmi_enable;
 
@@ -29,20 +29,16 @@ static WRITE_HANDLER( ctrl_w )
 	flip_screen_set(data & 0x08);
 }
 
-static int jb_interrupt(void)
+static INTERRUPT_GEN( jb_interrupt )
 {
 	if (irq_enable)
-		return interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-static int jb_interrupt_nmi(void)
+static INTERRUPT_GEN( jb_interrupt_nmi )
 {
 	if (nmi_enable)
-		return nmi_interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -81,6 +77,7 @@ static MEMORY_WRITE_START( writemem )
     { 0x10c0, 0x14ff, MWA_RAM }, /* ??? */
 	{ 0x1500, 0x1fff, MWA_RAM }, /* work ram */
     { 0x2000, 0x203f, MWA_RAM, &jailbrek_scroll_x }, /* scroll registers */
+    { 0x2042, 0x2042, MWA_RAM, &jailbrek_scroll_dir }, /* bit 2 = scroll direction */
     { 0x2043, 0x2043, MWA_NOP }, /* ??? */
     { 0x2044, 0x2044, ctrl_w }, /* irq, nmi enable, screen flip */
     { 0x3000, 0x307f, MWA_RAM }, /* ??? */
@@ -251,47 +248,33 @@ static struct VLM5030interface vlm5030_interface =
 	0,          /* memory size of speech rom */
 };
 
-static const struct MachineDriver machine_driver_jailbrek =
-{
+static MACHINE_DRIVER_START( jailbrek )
+
 	/* basic machine hardware */
-	{
-		{
-		    CPU_M6809,
-		    3000000,        /* 3 MHz ??? */
-		    readmem,writemem,0,0,
-		    jb_interrupt,1,
-		    jb_interrupt_nmi, 500 /* ? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809, 3000000)        /* 3 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(jb_interrupt,1)
+	MDRV_CPU_PERIODIC_INT(jb_interrupt_nmi,500) /* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32,512,
-	jailbrek_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	jailbrek_vh_start,
-	generic_vh_stop,
-	jailbrek_vh_screenrefresh,
+	MDRV_PALETTE_INIT(jailbrek)
+	MDRV_VIDEO_START(jailbrek)
+	MDRV_VIDEO_UPDATE(jailbrek)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		},
-		{
-			SOUND_VLM5030,
-			&vlm5030_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -351,7 +334,7 @@ ROM_START( manhatan )
 ROM_END
 
 
-static void init_jailbrek(void)
+static DRIVER_INIT( jailbrek )
 {
 	konami1_decode();
 }

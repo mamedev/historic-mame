@@ -2,8 +2,8 @@
 #include "vidhrdw/generic.h"
 
 
-void pingpong_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void pingpong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_UPDATE( pingpong );
+PALETTE_INIT( pingpong );
 
 
 
@@ -21,18 +21,16 @@ static WRITE_HANDLER( coin_w )
 	/* other bits unknown */
 }
 
-static int pingpong_interrupt(void)
+static INTERRUPT_GEN( pingpong_interrupt )
 {
 	if (cpu_getiloops() == 0)
 	{
-		if (intenable & 0x04) return interrupt();
+		if (intenable & 0x04) cpu_set_irq_line(0, 0, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
 	{
-		if (intenable & 0x08) return nmi_interrupt();
+		if (intenable & 0x08) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 
@@ -194,41 +192,31 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static const struct MachineDriver machine_driver_pingpong =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,		/* 3.072 MHz (probably) */
-			readmem,writemem,0,0,
-			pingpong_interrupt,16	/* 1 IRQ + 8 NMI */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32,64*4+64*4,
-	pingpong_vh_convert_color_prom,
+static MACHINE_DRIVER_START( pingpong )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	pingpong_vh_screenrefresh,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,18432000/6)		/* 3.072 MHz (probably) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(pingpong_interrupt,16)	/* 1 IRQ + 8 NMI */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+64*4)
+
+	MDRV_PALETTE_INIT(pingpong)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(pingpong)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 

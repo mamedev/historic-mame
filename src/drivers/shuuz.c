@@ -19,20 +19,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int shuuz_vh_start(void);
-void shuuz_vh_stop(void);
-void shuuz_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void shuuz_scanline_update(int scanline);
+#include "shuuz.h"
 
 
 
@@ -63,7 +50,7 @@ static void update_interrupts(void)
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( shuuz )
 {
 	atarigen_eeprom_reset();
 	atarivc_reset(atarivc_eof_data);
@@ -300,44 +287,31 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_shuuz =
-{
+static MACHINE_DRIVER_START( shuuz )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(shuuz)
+	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	shuuz_vh_start,
-	shuuz_vh_stop,
-	shuuz_vh_screenrefresh,
+	MDRV_VIDEO_START(shuuz)
+	MDRV_VIDEO_UPDATE(shuuz)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -352,13 +326,13 @@ ROM_START( shuuz )
 	ROM_LOAD16_BYTE( "4010.23p",     0x00000, 0x20000, 0x1c2459f8 )
 	ROM_LOAD16_BYTE( "4011.13p",     0x00001, 0x20000, 0x6db53a85 )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "2030.43x", 0x000000, 0x20000, 0x8ecf1ed8 )
 	ROM_LOAD( "2032.20x", 0x020000, 0x20000, 0x5af184e6 )
 	ROM_LOAD( "2031.87x", 0x040000, 0x20000, 0x72e9db63 )
 	ROM_LOAD( "2033.65x", 0x060000, 0x20000, 0x8f552498 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1020.43u", 0x000000, 0x20000, 0xd21ad039 )
 	ROM_LOAD( "1022.20u", 0x020000, 0x20000, 0x0c10bc90 )
 	ROM_LOAD( "1024.43m", 0x040000, 0x20000, 0xadb09347 )
@@ -379,13 +353,13 @@ ROM_START( shuuz2 )
 	ROM_LOAD16_BYTE( "23p.rom",     0x00000, 0x20000, 0x98aec4e7 )
 	ROM_LOAD16_BYTE( "13p.rom",     0x00001, 0x20000, 0xdd9d5d5c )
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "2030.43x", 0x000000, 0x20000, 0x8ecf1ed8 )
 	ROM_LOAD( "2032.20x", 0x020000, 0x20000, 0x5af184e6 )
 	ROM_LOAD( "2031.87x", 0x040000, 0x20000, 0x72e9db63 )
 	ROM_LOAD( "2033.65x", 0x060000, 0x20000, 0x8f552498 )
 
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "1020.43u", 0x000000, 0x20000, 0xd21ad039 )
 	ROM_LOAD( "1022.20u", 0x020000, 0x20000, 0x0c10bc90 )
 	ROM_LOAD( "1024.43m", 0x040000, 0x20000, 0xadb09347 )
@@ -408,11 +382,9 @@ ROM_END
  *
  *************************************/
 
-static void init_shuuz(void)
+static DRIVER_INIT( shuuz )
 {
 	atarigen_eeprom_default = NULL;
-	atarigen_invert_region(REGION_GFX1);
-	atarigen_invert_region(REGION_GFX2);
 }
 
 

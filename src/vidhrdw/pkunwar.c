@@ -31,7 +31,7 @@ WRITE_HANDLER( pkunwar_flipscreen_w )
 
 
 
-void pkunwar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pkunwar )
 {
 	int offs;
 

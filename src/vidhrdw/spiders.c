@@ -23,11 +23,11 @@ static int *screenbuffer;
   Start the video hardware emulation.
 
 ***************************************************************************/
-int spiders_vh_start(void)
+VIDEO_START( spiders )
 {
 	int loop;
 
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
 
 	for(loop=0;loop<256;loop++)
 	{
@@ -41,22 +41,10 @@ int spiders_vh_start(void)
 		bitflip[loop]|=(loop&0x80)?0x01:0x00;
 	}
 
-	if ((screenbuffer = malloc(SCREENBUFFER_SIZE*sizeof(int))) == 0) return 1;
+	if ((screenbuffer = auto_malloc(SCREENBUFFER_SIZE*sizeof(int))) == 0) return 1;
 	memset(screenbuffer,1,SCREENBUFFER_SIZE*sizeof(int));
 
 	return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void spiders_vh_stop(void)
-{
-	bitmap_free(tmpbitmap);
-	free(screenbuffer);
 }
 
 
@@ -67,7 +55,7 @@ void spiders_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void spiders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( spiders )
 {
 	int loop,data0,data1,data2,col;
 
@@ -138,9 +126,6 @@ void spiders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		video_addr&=0x3fff;
 	}
 
-	if (full_refresh)
-	{
-		/* Now copy the temp bitmap to the screen */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
+	/* Now copy the temp bitmap to the screen */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

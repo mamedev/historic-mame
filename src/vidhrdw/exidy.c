@@ -1,13 +1,12 @@
-/***************************************************************************
+/*************************************************************************
 
-  vidhrdw.c
+	Exidy 6502 hardware
 
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "exidy.h"
 
 UINT8 *exidy_characterram;
 UINT8 *exidy_color_latch;
@@ -131,11 +130,7 @@ UINT16 exidy_2bpp_colortable[] =
  *
  *************************************/
 
-/* also in driver/exidy.c */
-#define PALETTE_LEN 8
-#define COLORTABLE_LEN 20
-
-void exidy_vh_init_palette(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom)
+PALETTE_INIT( exidy )
 {
 	if (exidy_palette)
 		memcpy(palette, exidy_palette, 3 * PALETTE_LEN);
@@ -150,41 +145,20 @@ void exidy_vh_init_palette(UINT8 *palette, UINT16 *colortable, const UINT8 *colo
  *
  *************************************/
 
-int exidy_vh_start(void)
+VIDEO_START( exidy )
 {
-    if (generic_vh_start())
+    if (video_start_generic())
         return 1;
 
-	motion_object_1_vid = bitmap_alloc(16, 16);
+	motion_object_1_vid = auto_bitmap_alloc(16, 16);
     if (!motion_object_1_vid)
-    {
-        generic_vh_stop();
         return 1;
-    }
 
-	motion_object_2_vid = bitmap_alloc(16, 16);
+	motion_object_2_vid = auto_bitmap_alloc(16, 16);
     if (!motion_object_2_vid)
-    {
-        bitmap_free(motion_object_1_vid);
-        generic_vh_stop();
         return 1;
-    }
+
     return 0;
-}
-
-
-
-/*************************************
- *
- *	Video shutdown
- *
- *************************************/
-
-void exidy_vh_stop(void)
-{
-	bitmap_free(motion_object_1_vid);
-	bitmap_free(motion_object_2_vid);
-	generic_vh_stop();
 }
 
 
@@ -202,7 +176,7 @@ INLINE void latch_condition(int collision)
 }
 
 
-int exidy_vblank_interrupt(void)
+INTERRUPT_GEN( exidy_vblank_interrupt )
 {
 	/* latch the current condition */
 	latch_condition(0);
@@ -210,7 +184,6 @@ int exidy_vblank_interrupt(void)
 
 	/* set the IRQ line */
 	cpu_set_irq_line(0, 0, ASSERT_LINE);
-	return ignore_interrupt();
 }
 
 
@@ -349,7 +322,7 @@ static void collision_irq_callback(int param)
 
 ***************************************************************************/
 
-void exidy_vh_eof(void)
+VIDEO_EOF( exidy )
 {
 	UINT8 enable_set = ((*exidy_sprite_enable & 0x20) != 0);
     struct rectangle clip = { 0, 15, 0, 15 };
@@ -421,13 +394,13 @@ void exidy_vh_eof(void)
  *
  *************************************/
 
-void exidy_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( exidy )
 {
 	int sx, sy;
 
 	/* update the background and draw it */
 	update_background();
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
 	/* draw sprite 2 first */
 	if (!(*exidy_sprite_enable & 0x40))
@@ -437,7 +410,7 @@ void exidy_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 		drawgfx(bitmap, Machine->gfx[1],
 			((*exidy_sprite_no >> 4) & 0x0f) + 32, 1,
-			0, 0, sx, sy, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+			0, 0, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 	}
 
 	/* draw sprite 1 next */
@@ -452,7 +425,7 @@ void exidy_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 		drawgfx(bitmap, Machine->gfx[1],
 			(*exidy_sprite_no & 0x0f) + 16 * enable_set, 0,
-			0, 0, sx, sy, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+			0, 0, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 	}
 
 	/* indicate that we already updated the background */

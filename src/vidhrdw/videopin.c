@@ -1,13 +1,12 @@
-/***************************************************************************
+/*************************************************************************
 
-  Atari Video Pinball Video Hardware
+	Atari Video Pinball hardware
 
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "videopin.h"
 
 
 /* Artwork */
@@ -25,7 +24,7 @@ struct rectangle vpclip = { (360-296)/2, (360-296)/2 + 296,
 
 
 
-void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( videopin )
 {
 	int offs;
 	int balloffs[4], offsc=0;
@@ -35,9 +34,7 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 /*	int x,rx,ry;
 	char dbuf[50];*/
 
-	/*logerror("vh_screenrefresh, %02x\n", full_refresh); */
-
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -56,7 +53,7 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	 */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (full_refresh || dirtybuffer[offs])
+		if (dirtybuffer[offs])
 		{
 			dirtybuffer[offs]=0;
 
@@ -186,27 +183,13 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-int videopin_vh_start(void)
+VIDEO_START( videopin )
 {
-	if (generic_vh_start()!=0)
+	if (video_start_generic())
 		return 1;
 
 	if (videopin_backdrop)
-	{
 		copybitmap(tmpbitmap,videopin_backdrop->artwork,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
 
 	return 0;
 }
-
-
-void videopin_vh_stop(void)
-{
-	generic_vh_stop();
-
-	/* Free Artwork */
-	if (videopin_backdrop)
-		artwork_free(&videopin_backdrop);
-    videopin_backdrop = NULL;
-}
-

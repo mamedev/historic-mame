@@ -24,13 +24,12 @@ READ_HANDLER( ajax_sharedram_r );
 WRITE_HANDLER( ajax_sharedram_w );
 READ_HANDLER( ajax_ls138_f10_r );
 WRITE_HANDLER( ajax_ls138_f10_w );
-void ajax_init_machine( void );
-int ajax_interrupt( void );
+MACHINE_INIT( ajax );
+INTERRUPT_GEN( ajax_interrupt );
 
 /* from vidhrdw/ajax.c */
-int ajax_vh_start( void );
-void ajax_vh_stop( void );
-void ajax_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+VIDEO_START( ajax );
+VIDEO_UPDATE( ajax );
 
 /****************************************************************************/
 
@@ -273,56 +272,39 @@ static struct K007232_interface k007232_interface =
 
 
 
-static const struct MachineDriver machine_driver_ajax =
-{
-	{
-		{
-			CPU_KONAMI,	/* Konami Custom 052001 */
-			3000000,	/* 12/4 MHz*/
-			ajax_readmem,ajax_writemem,0,0,
-			ajax_interrupt,1	/* IRQs triggered by the 051960 */
-		},
-		{
-			CPU_M6809,	/* 6809E */
-			3000000,	/* ? */
-			ajax_readmem_2, ajax_writemem_2,0,0,
-			ignore_interrupt,1	/* FIRQs triggered by the 052001 */
-		},
-		{
-			CPU_Z80,	/* Z80A */
-			3579545,	/* 3.58 MHz */
-			ajax_readmem_sound, ajax_writemem_sound,0,0,
-			ignore_interrupt,0	/* IRQs triggered by the 052001 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	ajax_init_machine,
+static MACHINE_DRIVER_START( ajax )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(KONAMI, 3000000)	/* 12/4 MHz*/
+	MDRV_CPU_MEMORY(ajax_readmem,ajax_writemem)
+	MDRV_CPU_VBLANK_INT(ajax_interrupt,1)	/* IRQs triggered by the 051960 */
+
+	MDRV_CPU_ADD(M6809, 3000000)	/* ? */
+	MDRV_CPU_MEMORY(ajax_readmem_2,ajax_writemem_2)
+
+	MDRV_CPU_ADD(Z80, 3579545)	/* 3.58 MHz */
+	MDRV_CPU_MEMORY(ajax_readmem_sound,ajax_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_MACHINE_INIT(ajax)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	ajax_vh_start,
-	ajax_vh_stop,
-	ajax_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(ajax)
+	MDRV_VIDEO_UPDATE(ajax)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -435,7 +417,7 @@ ROM_START( ajaxj )
 ROM_END
 
 
-static void init_ajax(void)
+static DRIVER_INIT( ajax )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

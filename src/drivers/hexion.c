@@ -11,78 +11,79 @@ Notes:
   S.P.Y. In this game, however, the only thing it seems to do is clear the
   screen.
   This is the program for the 052591:
-5f 80 01 e0 08
-df 80 00 e0 0c
-df 90 02 e0 0c
-df a0 03 e0 0c
-df b0 0f e0 0c
-df c0 ff bf 0c
-5c 02 00 33 0c
-5f 80 04 80 0c
-5c 0e 00 2b 0c
-df 70 00 cb 08
-5f 80 00 80 0c
-5c 04 00 2b 0c
-df 60 00 cb 08
-5c 0c 1f e9 0c
-4c 0c 2d e9 08
-5f 80 03 80 0c
-5c 04 00 2b 0c
-5f 00 00 cb 00
-5f 80 02 a0 0c
-df d0 00 c0 04
-01 3a 00 f3 0a
-5c 08 00 b3 0c
-5c 0e 00 13 0c
-5f 80 00 a0 0c
-5c 00 00 13 0c
-5c 08 00 b3 0c
-5c 00 00 13 0c
-84 5a 00 b3 0c
-48 0a 5b d1 0c
-5f 80 00 e0 08
-5f 00 1e fd 0c
-5f 80 01 a0 0c
-df 20 00 cb 08
-5c 08 00 b3 0c
-5f 80 03 00 0c
-5c 08 00 b3 0c
-5f 80 00 80 0c
-5c 00 00 33 0c
-5c 08 00 93 0c
-9f 91 ff cf 0e
-5c 84 00 20 0c
-84 00 00 b3 0c
-49 10 69 d1 0c
-5f 80 00 e0 08
-5f 00 2c fd 0c
-5f 80 01 a0 0c
-df 20 00 cb 08
-5c 08 00 b3 0c
-5f 80 03 00 0c
-5c 00 00 b3 0c
-5f 80 01 00 0c
-5c 08 00 b3 0c
-5f 80 00 80 0c
-5c 00 00 33 0c
-5c 08 00 93 0c
-9f 91 ff cf 0e
-5c 84 00 20 0c
-84 00 00 b3 0c
-49 10 79 d1 0c
-5f 80 00 e0 08
-5f 00 3c fd 0c
-ff ff ff ff ff
-ff ff ff ff ff
-ff ff ff ff ff
+00: 5f 80 01 e0 08
+01: df 80 00 e0 0c
+02: df 90 02 e0 0c
+03: df a0 03 e0 0c
+04: df b0 0f e0 0c
+05: df c0 ff bf 0c
+06: 5c 02 00 33 0c
+07: 5f 80 04 80 0c
+08: 5c 0e 00 2b 0c
+09: df 70 00 cb 08
+0a: 5f 80 00 80 0c
+0b: 5c 04 00 2b 0c
+0c: df 60 00 cb 08
+0d: 5c 0c 1f e9 0c
+0e: 4c 0c 2d e9 08
+0f: 5f 80 03 80 0c
+10: 5c 04 00 2b 0c
+11: 5f 00 00 cb 00
+12: 5f 80 02 a0 0c
+13: df d0 00 c0 04
+14: 01 3a 00 f3 0a
+15: 5c 08 00 b3 0c
+16: 5c 0e 00 13 0c
+17: 5f 80 00 a0 0c
+18: 5c 00 00 13 0c
+19: 5c 08 00 b3 0c
+1a: 5c 00 00 13 0c
+1b: 84 5a 00 b3 0c
+1c: 48 0a 5b d1 0c
+1d: 5f 80 00 e0 08
+1e: 5f 00 1e fd 0c
+1f: 5f 80 01 a0 0c
+20: df 20 00 cb 08
+21: 5c 08 00 b3 0c
+22: 5f 80 03 00 0c
+23: 5c 08 00 b3 0c
+24: 5f 80 00 80 0c
+25: 5c 00 00 33 0c
+26: 5c 08 00 93 0c
+27: 9f 91 ff cf 0e
+28: 5c 84 00 20 0c
+29: 84 00 00 b3 0c
+2a: 49 10 69 d1 0c
+2b: 5f 80 00 e0 08
+2c: 5f 00 2c fd 0c
+2d: 5f 80 01 a0 0c
+2e: df 20 00 cb 08
+2f: 5c 08 00 b3 0c
+30: 5f 80 03 00 0c
+31: 5c 00 00 b3 0c
+32: 5f 80 01 00 0c
+33: 5c 08 00 b3 0c
+34: 5f 80 00 80 0c
+35: 5c 00 00 33 0c
+36: 5c 08 00 93 0c
+37: 9f 91 ff cf 0e
+38: 5c 84 00 20 0c
+39: 84 00 00 b3 0c
+3a: 49 10 79 d1 0c
+3b: 5f 80 00 e0 08
+3c: 5f 00 3c fd 0c
+3d: ff ff ff ff ff
+3e: ff ff ff ff ff
+3f: ff ff ff ff ff
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
-int hexion_vh_start(void);
-void hexion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( hexion );
+VIDEO_UPDATE( hexion );
 
 WRITE_HANDLER( hexion_bankswitch_w );
 READ_HANDLER( hexion_bankedram_r );
@@ -94,7 +95,7 @@ WRITE_HANDLER( hexion_gfxrom_select_w );
 
 static WRITE_HANDLER( coincntr_w )
 {
-//logerror("%04x: coincntr_w %02x\n",cpu_get_pc(),data);
+//logerror("%04x: coincntr_w %02x\n",activecpu_get_pc(),data);
 
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -285,55 +286,40 @@ static struct k051649_interface k051649_interface =
 
 
 
-static int hexion_interrupt(void)
+static INTERRUPT_GEN( hexion_interrupt )
 {
 	/* NMI handles start and coin inputs, origin unknown */
 	if (cpu_getiloops())
-		return nmi_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	else
-		return interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-static const struct MachineDriver machine_driver_hexion =
-{
+static MACHINE_DRIVER_START( hexion )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			24000000/4,	/* Z80B 6 MHz */
-			readmem,writemem,0,0,
-			hexion_interrupt,3	/* both IRQ and NMI are used */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD(Z80,24000000/4)	/* Z80B 6 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(hexion_interrupt,3)	/* both IRQ and NMI are used */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 64*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	hexion_vh_start,
-	0,
-	hexion_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(hexion)
+	MDRV_VIDEO_UPDATE(hexion)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_K051649,
-			&k051649_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(K051649, k051649_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -360,7 +346,7 @@ ROM_START( hexion )
 ROM_END
 
 
-static void init_hexion(void)
+static DRIVER_INIT( hexion )
 {
 	int col,i;
 	UINT8 *prom = memory_region(REGION_PROMS);

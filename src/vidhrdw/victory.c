@@ -36,6 +36,7 @@ static struct
 	UINT8	x,xp,y,yp;
 	UINT8	cmd,cmdlo;
 	void *	timer;
+	UINT8	timer_active;
 	double	endtime;
 } micro;
 
@@ -53,8 +54,6 @@ static struct
 
 
 /* function prototypes */
-void victory_vh_stop(void);
-
 static int command2(void);
 static int command3(void);
 static int command4(void);
@@ -70,28 +69,25 @@ static int command7(void);
  *
  *************************************/
 
-int victory_vh_start(void)
+VIDEO_START( victory )
 {
 	/* allocate bitmapram */
-	rram = malloc(0x4000);
-	gram = malloc(0x4000);
-	bram = malloc(0x4000);
+	rram = auto_malloc(0x4000);
+	gram = auto_malloc(0x4000);
+	bram = auto_malloc(0x4000);
 
 	/* allocate bitmaps */
-	bgbitmap = malloc(256 * 256);
-	fgbitmap = malloc(256 * 256);
+	bgbitmap = auto_malloc(256 * 256);
+	fgbitmap = auto_malloc(256 * 256);
 
 	/* allocate dirty maps */
-	bgdirty = malloc(32 * 32);
-	chardirty = malloc(256);
-	scandirty = malloc(512);
+	bgdirty = auto_malloc(32 * 32);
+	chardirty = auto_malloc(256);
+	scandirty = auto_malloc(512);
 
 	/* fail if something went wrong */
 	if (!rram || !gram || !bram || !bgbitmap || !fgbitmap || !bgdirty || !chardirty || !scandirty)
-	{
-		victory_vh_stop();
 		return 1;
-	}
 
 	/* mark everything dirty */
 	memset(bgdirty, 1, 32 * 32);
@@ -106,49 +102,9 @@ int victory_vh_start(void)
 	update_complete = 0;
 	video_control = 0;
 	memset(&micro, 0, sizeof(micro));
+	micro.timer = timer_alloc(NULL);
 
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Tear down the video system
- *
- *************************************/
-
-void victory_vh_stop(void)
-{
-	/* free dirty maps */
-	if (bgdirty)
-		free(bgdirty);
-	bgdirty = NULL;
-	if (chardirty)
-		free(chardirty);
-	chardirty = NULL;
-	if (scandirty)
-		free(scandirty);
-	scandirty = NULL;
-
-	/* free bitmaps */
-	if (bgbitmap)
-		free(bgbitmap);
-	bgbitmap = NULL;
-	if (fgbitmap)
-		free(fgbitmap);
-	fgbitmap = NULL;
-
-	/* free bitmapram */
-	if (rram)
-		free(rram);
-	rram = NULL;
-	if (gram)
-		free(gram);
-	gram = NULL;
-	if (bram)
-		free(bram);
-	bram = NULL;
 }
 
 
@@ -168,12 +124,11 @@ void victory_update_irq(void)
 }
 
 
-int victory_vblank_interrupt(void)
+INTERRUPT_GEN( victory_vblank_interrupt )
 {
 	vblank_irq = 1;
 	victory_update_irq();
 	logerror("------------- VBLANK ----------------\n");
-	return ignore_interrupt();
 }
 
 
@@ -249,7 +204,7 @@ READ_HANDLER( victory_video_control_r )
 	{
 		case 0:		/* 5XFIQ */
 			result = fgcollx;
-			if (LOG_COLLISION) logerror("%04X:5XFIQ read = %02X\n", cpu_getpreviouspc(), result);
+			if (LOG_COLLISION) logerror("%04X:5XFIQ read = %02X\n", activecpu_get_previouspc(), result);
 			return result;
 
 		case 1:		/* 5CLFIQ */
@@ -259,12 +214,12 @@ READ_HANDLER( victory_video_control_r )
 				fgcoll = 0;
 				victory_update_irq();
 			}
-			if (LOG_COLLISION) logerror("%04X:5CLFIQ read = %02X\n", cpu_getpreviouspc(), result);
+			if (LOG_COLLISION) logerror("%04X:5CLFIQ read = %02X\n", activecpu_get_previouspc(), result);
 			return result;
 
 		case 2:		/* 5BACKX */
 			result = bgcollx & 0xfc;
-			if (LOG_COLLISION) logerror("%04X:5BACKX read = %02X\n", cpu_getpreviouspc(), result);
+			if (LOG_COLLISION) logerror("%04X:5BACKX read = %02X\n", activecpu_get_previouspc(), result);
 			return result;
 
 		case 3:		/* 5BACKY */
@@ -274,7 +229,7 @@ READ_HANDLER( victory_video_control_r )
 				bgcoll = 0;
 				victory_update_irq();
 			}
-			if (LOG_COLLISION) logerror("%04X:5BACKY read = %02X\n", cpu_getpreviouspc(), result);
+			if (LOG_COLLISION) logerror("%04X:5BACKY read = %02X\n", activecpu_get_previouspc(), result);
 			return result;
 
 		case 4:		/* 5STAT */
@@ -283,17 +238,17 @@ READ_HANDLER( victory_video_control_r )
 			// D5 = 5VIRQ
 			// D4 = 5BCIRQ (3B1)
 			// D3 = SL256
-			if (micro.timer && timer_timeelapsed(micro.timer) < micro.endtime)
+			if (micro.timer_active && timer_timeelapsed(micro.timer) < micro.endtime)
 				result |= 0x80;
 			result |= (~fgcoll & 1) << 6;
 			result |= (~vblank_irq & 1) << 5;
 			result |= (~bgcoll & 1) << 4;
 			result |= (cpu_getscanline() & 0x100) >> 5;
-			if (LOG_COLLISION) logerror("%04X:5STAT read = %02X\n", cpu_getpreviouspc(), result);
+			if (LOG_COLLISION) logerror("%04X:5STAT read = %02X\n", activecpu_get_previouspc(), result);
 			return result;
 
 		default:
-			logerror("%04X:victory_video_control_r(%02X)\n", cpu_getpreviouspc(), offset);
+			logerror("%04X:victory_video_control_r(%02X)\n", activecpu_get_previouspc(), offset);
 			break;
 	}
 	return 0;
@@ -312,12 +267,12 @@ WRITE_HANDLER( victory_video_control_w )
 	switch (offset)
 	{
 		case 0:		/* LOAD IL */
-			if (LOG_MICROCODE) logerror("%04X:IL=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:IL=%02X\n", activecpu_get_previouspc(), data);
 			micro.i = (micro.i & 0xff00) | (data & 0x00ff);
 			break;
 
 		case 1:		/* LOAD IH */
-			if (LOG_MICROCODE) logerror("%04X:IH=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:IH=%02X\n", activecpu_get_previouspc(), data);
 			micro.i = (micro.i & 0x00ff) | ((data << 8) & 0xff00);
 			if (micro.cmdlo == 5)
 			{
@@ -327,7 +282,7 @@ WRITE_HANDLER( victory_video_control_w )
 			break;
 
 		case 2:		/* LOAD CMD */
-			if (LOG_MICROCODE) logerror("%04X:CMD=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:CMD=%02X\n", activecpu_get_previouspc(), data);
 			micro.cmd = data;
 			micro.cmdlo = data & 7;
 			if (micro.cmdlo == 0)
@@ -342,12 +297,12 @@ WRITE_HANDLER( victory_video_control_w )
 			break;
 
 		case 3:		/* LOAD G */
-			if (LOG_MICROCODE) logerror("%04X:G=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:G=%02X\n", activecpu_get_previouspc(), data);
 			micro.g = data;
 			break;
 
 		case 4:		/* LOAD X */
-			if (LOG_MICROCODE) logerror("%04X:X=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:X=%02X\n", activecpu_get_previouspc(), data);
 			micro.xp = data;
 			if (micro.cmdlo == 3)
 			{
@@ -357,7 +312,7 @@ WRITE_HANDLER( victory_video_control_w )
 			break;
 
 		case 5:		/* LOAD Y */
-			if (LOG_MICROCODE) logerror("%04X:Y=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:Y=%02X\n", activecpu_get_previouspc(), data);
 			micro.yp = data;
 			if (micro.cmdlo == 4)
 			{
@@ -367,12 +322,12 @@ WRITE_HANDLER( victory_video_control_w )
 			break;
 
 		case 6:		/* LOAD R */
-			if (LOG_MICROCODE) logerror("%04X:R=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:R=%02X\n", activecpu_get_previouspc(), data);
 			micro.r = data;
 			break;
 
 		case 7:		/* LOAD B */
-			if (LOG_MICROCODE) logerror("%04X:B=%02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:B=%02X\n", activecpu_get_previouspc(), data);
 			micro.b = data;
 			if (micro.cmdlo == 2)
 			{
@@ -387,12 +342,12 @@ WRITE_HANDLER( victory_video_control_w )
 			break;
 
 		case 8:		/* SCROLLX */
-			if (LOG_MICROCODE) logerror("%04X:SCROLLX write = %02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:SCROLLX write = %02X\n", activecpu_get_previouspc(), data);
 			scrollx = data;
 			break;
 
 		case 9:		/* SCROLLY */
-			if (LOG_MICROCODE) logerror("%04X:SCROLLY write = %02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:SCROLLY write = %02X\n", activecpu_get_previouspc(), data);
 			scrolly = data;
 			break;
 
@@ -404,18 +359,18 @@ WRITE_HANDLER( victory_video_control_w )
 			// D3 = SINVERT
 			// D2 = BIR12
 			// D1 = SELOVER
-			if (LOG_MICROCODE) logerror("%04X:CONTROL write = %02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:CONTROL write = %02X\n", activecpu_get_previouspc(), data);
 			video_control = data;
 			break;
 
 		case 11:	/* CLRVIRQ */
-			if (LOG_MICROCODE) logerror("%04X:CLRVIRQ write = %02X\n", cpu_getpreviouspc(), data);
+			if (LOG_MICROCODE) logerror("%04X:CLRVIRQ write = %02X\n", activecpu_get_previouspc(), data);
 			vblank_irq = 0;
 			victory_update_irq();
 			break;
 
 		default:
-			if (LOG_MICROCODE) logerror("%04X:victory_video_control_w(%02X) = %02X\n", cpu_getpreviouspc(), offset, data);
+			if (LOG_MICROCODE) logerror("%04X:victory_video_control_w(%02X) = %02X\n", activecpu_get_previouspc(), offset, data);
 			break;
 	}
 }
@@ -619,12 +574,14 @@ INLINE void count_states(int states)
 {
 	if (!micro.timer)
 	{
-		micro.timer = timer_set(TIME_NEVER, 0, NULL);
+		timer_adjust(micro.timer, TIME_NEVER, 0, 0);
+		micro.timer_active = 1;
 		micro.endtime = (double)states * MICRO_STATE_CLOCK_PERIOD;
 	}
 	else if (timer_timeelapsed(micro.timer) > micro.endtime)
 	{
-		timer_reset(micro.timer, TIME_NEVER);
+		timer_adjust(micro.timer, TIME_NEVER, 0, 0);
+		micro.timer_active = 1;
 		micro.endtime = (double)states * MICRO_STATE_CLOCK_PERIOD;
 	}
 	else
@@ -1222,7 +1179,7 @@ static void bgcoll_irq_callback(int param)
  *
  *************************************/
 
-void victory_vh_eof(void)
+VIDEO_EOF( victory )
 {
 	int bgcollmask = (video_control & 4) ? 4 : 7;
 	int count = 0;
@@ -1266,7 +1223,7 @@ void victory_vh_eof(void)
  *
  *************************************/
 
-void victory_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( victory )
 {
 	int bgcollmask = (video_control & 4) ? 4 : 7;
 	int count = 0;

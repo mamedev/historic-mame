@@ -215,7 +215,7 @@ WRITE_HANDLER( m107_control_w )
 
 /*****************************************************************************/
 
-int m107_vh_start(void)
+VIDEO_START( m107 )
 {
 	pf1_layer = tilemap_create(
 		get_pf1_tile_info,tilemap_scan_rows,
@@ -256,7 +256,9 @@ int m107_vh_start(void)
 	pf1_enable=pf2_enable=pf3_enable=pf4_enable=0;
 	pf1_rowscroll=pf2_rowscroll=pf3_rowscroll=pf4_rowscroll=0;
 
-	m107_spriteram = malloc(0x1000);
+	m107_spriteram = auto_malloc(0x1000);
+	if (!m107_spriteram)
+		return 1;
 	memset(m107_spriteram,0,0x1000);
 
 	m107_sprite_list=0;
@@ -264,14 +266,9 @@ int m107_vh_start(void)
 	return 0;
 }
 
-void m107_vh_stop(void)
-{
-	free(m107_spriteram);
-}
-
 /*****************************************************************************/
 
-static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *clip, int pri)
+static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	int offs;
 
@@ -312,7 +309,7 @@ static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle 
 						colour,
 						fx,fy,
 						x,y-i*16,
-						clip,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 				if (fy) s_ptr++; else s_ptr--;
 			}
 		}
@@ -341,7 +338,7 @@ static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle 
 								colour,
 								ffx,ffy,
 								(x+xdisp)&0x1ff,(y-ydisp-16*i)&0x1ff,
-								clip,TRANSPARENCY_PEN,0);
+								cliprect,TRANSPARENCY_PEN,0);
 					}
 
 					if (rom[rom_offs+1]&0x80) break;	/* end of block */
@@ -355,7 +352,7 @@ static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle 
 
 /*****************************************************************************/
 
-void m107_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( m107 )
 {
 	/* Nothing - screen refresh is handled by raster interrupt routine */
 }
@@ -418,22 +415,22 @@ static void m107_update_scroll_positions(void)
 
 /*****************************************************************************/
 
-void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip)
+void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	if (pf4_enable)
-		tilemap_draw(bitmap,pf4_layer,0,0);
+		tilemap_draw(bitmap,cliprect,pf4_layer,0,0);
 	else
-		fillbitmap(bitmap,Machine->pens[0],clip);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	tilemap_draw(bitmap,pf3_layer,0,0);
-	tilemap_draw(bitmap,pf2_layer,0,0);
-	tilemap_draw(bitmap,pf1_layer,0,0);
+	tilemap_draw(bitmap,cliprect,pf3_layer,0,0);
+	tilemap_draw(bitmap,cliprect,pf2_layer,0,0);
+	tilemap_draw(bitmap,cliprect,pf1_layer,0,0);
 
-	m107_drawsprites(bitmap,clip,0);
-	tilemap_draw(bitmap,pf2_layer,1,0);
-	tilemap_draw(bitmap,pf1_layer,1,0);
+	m107_drawsprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,pf2_layer,1,0);
+	tilemap_draw(bitmap,cliprect,pf1_layer,1,0);
 
-	m107_drawsprites(bitmap,clip,1);
+	m107_drawsprites(bitmap,cliprect,1);
 
 	/* This hardware probably has more priority values - but I haven't found
 		any used yet */
@@ -455,10 +452,6 @@ void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,in
 	if (clip.max_y > clip.min_y)
 	{
 		m107_update_scroll_positions();
-		tilemap_set_clip(pf1_layer,&clip);
-		tilemap_set_clip(pf2_layer,&clip);
-		tilemap_set_clip(pf3_layer,&clip);
-		tilemap_set_clip(pf4_layer,&clip);
 		m107_screenrefresh(bitmap,&clip);
 	}
 }
@@ -468,7 +461,7 @@ void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,in
 WRITE_HANDLER( m107_spritebuffer_w )
 {
 	if (offset==0) {
-//		logerror("%04x: buffered spriteram\n",cpu_get_pc());
+//		logerror("%04x: buffered spriteram\n",activecpu_get_pc());
 		memcpy(m107_spriteram,spriteram,0x1000);
 	}
 }

@@ -95,15 +95,15 @@ Did the original hardware really use the high-end tms9900 ? */
 #include "cpu/z80/z80.h"
 
 
-void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void cosmica_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void cosmicg_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void magspot2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void panic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void magspot2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void cosmica_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void cosmicg_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void nomnlnd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( panic );
+PALETTE_INIT( cosmica );
+PALETTE_INIT( cosmicg );
+PALETTE_INIT( magspot2 );
+VIDEO_UPDATE( panic );
+VIDEO_UPDATE( magspot2 );
+VIDEO_UPDATE( cosmica );
+VIDEO_UPDATE( cosmicg );
+VIDEO_UPDATE( nomnlnd );
 WRITE_HANDLER( cosmica_videoram_w );
 WRITE_HANDLER( panic_color_register_w );
 WRITE_HANDLER( cosmicg_color_register_w );
@@ -256,7 +256,7 @@ WRITE_HANDLER( cosmicg_output_w )
     #endif
 }
 
-static int panic_interrupt(void)
+static INTERRUPT_GEN( panic_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
@@ -268,30 +268,26 @@ static int panic_interrupt(void)
     	if ((input_port_3_r(0) & 0xc0) != 0xc0)
         	panic_sound_output_w(17,1);
 
-		return 0x00cf;		/* RST 08h */
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
     }
     else
     {
-        return 0x00d7;		/* RST 10h */
+        cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
     }
 }
 
-static int cosmica_interrupt(void)
+static INTERRUPT_GEN( cosmica_interrupt )
 {
     pixel_clock = (pixel_clock + 2) & 63;
 
     if (pixel_clock == 0)
     {
 		if (readinputport(3) & 1)	/* Left Coin */
-			return nmi_interrupt();
-        else
-        	return ignore_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
     }
-	else
-       	return ignore_interrupt();
 }
 
-static int cosmicg_interrupt(void)
+static INTERRUPT_GEN( cosmicg_interrupt )
 {
 	/* Increment Pixel Clock */
 
@@ -310,36 +306,30 @@ static int cosmicg_interrupt(void)
 		{
 #if COSMICG_USES_TMS9980
 			/* on tms9980, a 6 on the interrupt bus means level 4 interrupt */
-			cpu_irq_line_vector_w(0, 0, 6);
+			cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 6);
 #else
 			/* tms9900 is more straightforward */
-			cpu_irq_line_vector_w(0, 0, 4);
+			cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 4);
 #endif
-			cpu_set_irq_line(0, 0, ASSERT_LINE);
 		}
 		else
 		{
 			cpu_set_irq_line(0, 0, CLEAR_LINE);
 		}
 	}
-
-	return ignore_interrupt();
 }
 
-static int magspot2_interrupt(void)
+static INTERRUPT_GEN( magspot2_interrupt )
 {
 	/* Coin 1 causes an IRQ, Coin 2 an NMI */
 	if (input_port_4_r(0) & 0x01)
 	{
-  		return interrupt();
+  		cpu_set_irq_line(0, 0, HOLD_LINE);
 	}
-
-	if (input_port_4_r(0) & 0x02)
+	else if (input_port_4_r(0) & 0x02)
 	{
-		return nmi_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 
@@ -1151,202 +1141,146 @@ static struct Samplesinterface cosmicg_samples_interface =
 };
 
 
-static const struct MachineDriver machine_driver_panic =
-{
+static MACHINE_DRIVER_START( panic )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2000000,	/* 2 MHz? */
-			panic_readmem,panic_writemem,0,0,
-			panic_interrupt,2
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 2000000)	/* 2 MHz? */
+	MDRV_CPU_MEMORY(panic_readmem,panic_writemem)
+	MDRV_CPU_VBLANK_INT(panic_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	panic_gfxdecodeinfo,
-	16, 8*4,
-	panic_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(panic_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	panic_vh_screenrefresh,
+	MDRV_PALETTE_INIT(panic)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(panic)
 
 	/* sound hardware */
-	0,0,0,0,
-    {
-		{
-			SOUND_SAMPLES,
-			&panic_samples_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(SAMPLES, panic_samples_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_cosmica =
-{
+static MACHINE_DRIVER_START( cosmica )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1081600,
-			cosmica_readmem,cosmica_writemem,0,0,
-			cosmica_interrupt,32
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1081600)
+	MDRV_CPU_MEMORY(cosmica_readmem,cosmica_writemem)
+	MDRV_CPU_VBLANK_INT(cosmica_interrupt,32)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(2500)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	cosmica_gfxdecodeinfo,
-	8, 16*4,
-	cosmica_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(cosmica_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(16*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	cosmica_vh_screenrefresh,
+	MDRV_PALETTE_INIT(cosmica)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(cosmica)
 
 	/* sound hardware */
-	0,0,0,0
-};
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_cosmicg =
-{
+static MACHINE_DRIVER_START( cosmicg )
+
 	/* basic machine hardware */
-	{
-		{
 #if COSMICG_USES_TMS9980
-			CPU_TMS9980,
+	MDRV_CPU_ADD(TMS9980, 1228500)
 #else
-			CPU_TMS9900,
+	MDRV_CPU_ADD(TMS9900, 1228500)
 #endif
-			1228500,			/* 9.828 MHz Crystal */
+			/* 9.828 MHz Crystal */
 			/* R Nabet : huh ? This would imply the crystal frequency is somehow divided by 2 before being
 			fed to the tms9904 or tms9980.  Also, I have never heard of a tms9900/9980 operating under
 			1.5MHz.  So, if someone can check this... */
-			cosmicg_readmem,cosmicg_writemem,
-			cosmicg_readport,cosmicg_writeport,
-			cosmicg_interrupt,16
-		}
-	},
-	60, 0,		/* frames per second, vblank duration */
-	1,			/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_MEMORY(cosmicg_readmem,cosmicg_writemem)
+	MDRV_CPU_PORTS(cosmicg_readport,cosmicg_writeport)
+	MDRV_CPU_VBLANK_INT(cosmicg_interrupt,16)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	0, 			/* no gfxdecodeinfo - bitmapped display */
-    16,0,
-    cosmicg_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+    MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	cosmicg_vh_screenrefresh,
+	MDRV_PALETTE_INIT(cosmicg)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(cosmicg)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&cosmicg_samples_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, cosmicg_samples_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_magspot2 =
-{
+static MACHINE_DRIVER_START( magspot2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz ???? */
-			magspot2_readmem,magspot2_writemem,0,0,
-			magspot2_interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ???? */
+	MDRV_CPU_MEMORY(magspot2_readmem,magspot2_writemem)
+	MDRV_CPU_VBLANK_INT(magspot2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	magspot2_gfxdecodeinfo,
-	16, 8*4,
-	magspot2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(magspot2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	magspot2_vh_screenrefresh,
+	MDRV_PALETTE_INIT(magspot2)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(magspot2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_nomnlnd =
-{
+static MACHINE_DRIVER_START( nomnlnd )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz ???? */
-			nomnlnd_readmem,nomnlnd_writemem,0,0,
-			magspot2_interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame */
-	0,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ???? */
+	MDRV_CPU_MEMORY(nomnlnd_readmem,nomnlnd_writemem)
+	MDRV_CPU_VBLANK_INT(magspot2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
-	nomnlnd_gfxdecodeinfo,
-	16, 16*4,
-	magspot2_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	nomnlnd_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(nomnlnd_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(16*4)
+
+	MDRV_PALETTE_INIT(magspot2)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(nomnlnd)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-static void init_cosmicg(void)
+static DRIVER_INIT( cosmicg )
 {
 	/* Roms have data pins connected different from normal */
 

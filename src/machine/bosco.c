@@ -100,12 +100,15 @@ void bosco_vh_interrupt(void);
 static void *nmi_timer_1, *nmi_timer_2;
 
 WRITE_HANDLER( bosco_halt_w );
+static void bosco_nmi_generate_1(int);
+static void bosco_nmi_generate_2(int);
 
-void bosco_init_machine(void)
+MACHINE_INIT( bosco )
 {
 	credits = 0;
 	HiScore = 20000;
-	nmi_timer_1 = nmi_timer_2 = 0;
+	nmi_timer_1 = timer_alloc(bosco_nmi_generate_1);
+	nmi_timer_2 = timer_alloc(bosco_nmi_generate_2);
 	bosco_halt_w (0, 0);
 
 	memory_region(REGION_CPU1)[0x8c00] = 1;
@@ -154,7 +157,7 @@ WRITE_HANDLER( bosco_customio_data_1_w )
 {
 	customio_1[offset] = data;
 
-logerror("%04x: custom IO 1 offset %02x data %02x\n",cpu_get_pc(),offset,data);
+logerror("%04x: custom IO 1 offset %02x data %02x\n",activecpu_get_pc(),offset,data);
 
 	switch (customio_command_1)
 	{
@@ -432,21 +435,20 @@ READ_HANDLER( bosco_customio_1_r )
 
 void bosco_nmi_generate_1 (int param)
 {
-	cpu_cause_interrupt (0, Z80_NMI_INT );
+	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 WRITE_HANDLER( bosco_customio_1_w )
 {
 	if (data != 0x10)
-		logerror("%04x: custom IO 1 command %02x\n",cpu_get_pc(),data);
+		logerror("%04x: custom IO 1 command %02x\n",activecpu_get_pc(),data);
 
 	customio_command_1 = data;
 
 	switch (data)
 	{
 		case 0x10:
-			if (nmi_timer_1) timer_remove (nmi_timer_1);
-			nmi_timer_1 = 0;
+			timer_adjust(nmi_timer_1, TIME_NEVER, 0, 0);
 			return;
 
 		case 0x61:
@@ -477,7 +479,7 @@ WRITE_HANDLER( bosco_customio_1_w )
 			break;
 	}
 
-	nmi_timer_1 = timer_pulse (TIME_IN_USEC (50), 0, bosco_nmi_generate_1);
+	timer_adjust(nmi_timer_1, TIME_IN_USEC(50), 0, TIME_IN_USEC(50));
 }
 
 
@@ -494,7 +496,7 @@ WRITE_HANDLER( bosco_customio_data_2_w )
 {
 	customio_2[offset] = data;
 
-logerror("%04x: custom IO 2 offset %02x data %02x\n",cpu_get_pc(),offset,data);
+logerror("%04x: custom IO 2 offset %02x data %02x\n",activecpu_get_pc(),offset,data);
 	switch (customio_command_2)
 	{
 		case 0x82:
@@ -547,25 +549,24 @@ READ_HANDLER( bosco_customio_2_r )
 
 void bosco_nmi_generate_2 (int param)
 {
-	cpu_cause_interrupt (1, Z80_NMI_INT);
+	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 WRITE_HANDLER( bosco_customio_2_w )
 {
 	if (data != 0x10)
-		logerror("%04x: custom IO 2 command %02x\n",cpu_get_pc(),data);
+		logerror("%04x: custom IO 2 command %02x\n",activecpu_get_pc(),data);
 
 	customio_command_2 = data;
 
 	switch (data)
 	{
 		case 0x10:
-			if (nmi_timer_2) timer_remove (nmi_timer_2);
-			nmi_timer_2 = 0;
+			timer_adjust(nmi_timer_2, TIME_NEVER, 0, 0);
 			return;
 	}
 
-	nmi_timer_2 = timer_pulse (TIME_IN_USEC (50), 0, bosco_nmi_generate_2);
+	timer_adjust(nmi_timer_2, TIME_IN_USEC(50), 0, TIME_IN_USEC(50));
 }
 
 
@@ -596,12 +597,12 @@ WRITE_HANDLER( bosco_interrupt_enable_1_w )
 
 
 
-int bosco_interrupt_1(void)
+INTERRUPT_GEN( bosco_interrupt_1 )
 {
 	bosco_vh_interrupt();	/* update the background stars position */
 
-	if (interrupt_enable_1) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_1)
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -613,10 +614,10 @@ WRITE_HANDLER( bosco_interrupt_enable_2_w )
 
 
 
-int bosco_interrupt_2(void)
+INTERRUPT_GEN( bosco_interrupt_2 )
 {
-	if (interrupt_enable_2) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_2)
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 
@@ -628,8 +629,8 @@ WRITE_HANDLER( bosco_interrupt_enable_3_w )
 
 
 
-int bosco_interrupt_3(void)
+INTERRUPT_GEN( bosco_interrupt_3 )
 {
-	if (interrupt_enable_3) return nmi_interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_3)
+		cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);
 }

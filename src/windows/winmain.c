@@ -253,6 +253,8 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 		}
 	}
 
+	cli_frontend_exit();
+
 	// exit
 	return EXCEPTION_EXECUTE_HANDLER;
 }

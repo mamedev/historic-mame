@@ -26,7 +26,7 @@
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
-#if (HAS_Z80)
+#if (HAS_Z180)
 #include "cpu/z180/z180.h"
 #endif
 #if (HAS_8080 || HAS_8085A)
@@ -125,15 +125,24 @@
 #if (HAS_UPD7810)
 #include "cpu/upd7810/upd7810.h"
 #endif
+#if (HAS_JAGUAR)
+#include "cpu/jaguar/jaguar.h"
+#endif
+#if (HAS_R3000)
+#include "cpu/mips/r3000.h"
+#endif
+#if (HAS_TMS320C31)
+#include "cpu/tms32031/tms32031.h"
+#endif
+#if (HAS_ARM)
+#include "cpu/arm/arm.h"
+#endif
 
 
 #ifdef MESS
 
 #if (HAS_APEXC)
 #include "mess/cpu/apexc/apexc.h"
-#endif
-#if (HAS_ARM)
-#include "mess/cpu/arm/arm.h"
 #endif
 #if (HAS_CDP1802)
 #include "mess/cpu/cdp1802/cdp1802.h"
@@ -282,7 +291,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
  *************************************/
 
 /* most CPUs use this macro */
-#define CPU0(cpu,name,nirq,dirq,oc,i1,datawidth,mem,shift,bits,endian,align,maxinst) \
+#define CPU0(cpu,name,nirq,dirq,oc,datawidth,mem,shift,bits,endian,align,maxinst) \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_init, name##_reset, name##_exit, name##_execute, NULL,			   \
@@ -290,7 +299,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 		name##_get_reg, name##_set_reg,			   \
 		name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_info, name##_dasm, 										   \
-		nirq, dirq, &name##_ICount, oc, i1, 							   \
+		nirq, dirq, &name##_ICount, oc, 							   \
 		datawidth,																   \
 		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, NULL, NULL,						   \
 		0, cpu_setopbase##mem,													   \
@@ -298,7 +307,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 	}
 
 /* CPUs which have the _burn function */
-#define CPU1(cpu,name,nirq,dirq,oc,i1,datawidth,mem,shift,bits,endian,align,maxinst)	 \
+#define CPU1(cpu,name,nirq,dirq,oc,datawidth,mem,shift,bits,endian,align,maxinst)	 \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_init, name##_reset, name##_exit, name##_execute, 				   \
@@ -308,7 +317,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 		name##_get_reg, name##_set_reg,			   \
 		name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_info, name##_dasm, 										   \
-		nirq, dirq, &name##_ICount, oc, i1, 							   \
+		nirq, dirq, &name##_ICount, oc, 							   \
 		datawidth,																   \
 		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, NULL, NULL,						   \
 		0, cpu_setopbase##mem,													   \
@@ -316,7 +325,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 	}
 
 /* like CPU0, but CPU has Harvard-architecture like program/data memory */
-#define CPU3(cpu,name,nirq,dirq,oc,i1,datawidth,mem,shift,bits,endian,align,maxinst) \
+#define CPU3(cpu,name,nirq,dirq,oc,datawidth,mem,shift,bits,endian,align,maxinst) \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_init, name##_reset, name##_exit, name##_execute, NULL,			   \
@@ -324,7 +333,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 		name##_get_reg, name##_set_reg,			   \
 		name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_info, name##_dasm, 										   \
-		nirq, dirq, &name##_icount, oc, i1, 							   \
+		nirq, dirq, &name##_icount, oc, 							   \
 		datawidth,																   \
 		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, NULL, NULL,						   \
 		cpu##_PGM_OFFSET, cpu_setopbase##mem,									   \
@@ -332,7 +341,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 	}
 
 /* like CPU0, but CPU has internal memory (or I/O ports, timers or similiar) */
-#define CPU4(cpu,name,nirq,dirq,oc,i1,datawidth,mem,shift,bits,endian,align,maxinst) \
+#define CPU4(cpu,name,nirq,dirq,oc,datawidth,mem,shift,bits,endian,align,maxinst) \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_init, name##_reset, name##_exit, name##_execute, NULL,			   \
@@ -340,7 +349,7 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 		name##_get_reg, name##_set_reg,			   \
 		name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_info, name##_dasm, 										   \
-		nirq, dirq, &name##_icount, oc, i1, 							   \
+		nirq, dirq, &name##_icount, oc, 							   \
 		datawidth,																   \
 		(mem_read_handler)cpu_readmem##mem, (mem_write_handler)cpu_writemem##mem, name##_internal_r, name##_internal_w, \
 		0, cpu_setopbase##mem,													   \
@@ -357,259 +366,273 @@ static unsigned dummy_dasm(char *buffer, unsigned pc);
 
 const struct cpu_interface cpuintrf[] =
 {
-	CPU0(DUMMY,    dummy,	 1,  0,1.00,-1,			    8, 16,	  0,16,LE,1, 1	),
+	CPU0(DUMMY,    dummy,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 1	),
 #if (HAS_Z80)
-	CPU1(Z80,	   z80, 	 1,255,1.00,-1000,          8, 16,	  0,16,LE,1, 4	),
+	CPU1(Z80,	   z80, 	 1,255,1.00, 8, 16,	  0,16,LE,1, 4	),
 #endif
 #if (HAS_Z180)
-	CPU1(Z180,	   z180, 	 1,255,1.00,-1000,          8, 20,	  0,20,LE,1, 4	),
+	CPU1(Z180,	   z180, 	 1,255,1.00, 8, 20,	  0,20,LE,1, 4	),
 #endif
 #if (HAS_8080)
-	CPU0(8080,	   i8080,	 4,255,1.00,I8080_INTR_LINE,8, 16,	  0,16,LE,1, 3	),
+	CPU0(8080,	   i8080,	 4,255,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_8085A)
-	CPU0(8085A,    i8085,	 4,255,1.00,I8085_INTR_LINE,8, 16,	  0,16,LE,1, 3	),
+	CPU0(8085A,    i8085,	 4,255,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M6502)
-	CPU0(M6502,    m6502,	 1,  0,1.00,M6502_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M6502,    m6502,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M65C02)
-	CPU0(M65C02,   m65c02,	 1,  0,1.00,M65C02_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M65C02,   m65c02,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M65SC02)
-	CPU0(M65SC02,  m65sc02,  1,  0,1.00,M65SC02_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M65SC02,  m65sc02,  1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M65CE02)
-	CPU0(M65CE02,  m65ce02,  1,  0,1.00,M65CE02_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M65CE02,  m65ce02,  1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M6509)
-	CPU0(M6509,    m6509,	 1,  0,1.00,M6509_IRQ_LINE, 8, 20,	  0,20,LE,1, 3	),
+	CPU0(M6509,    m6509,	 1,  0,1.00, 8, 20,	  0,20,LE,1, 3	),
 #endif
 #if (HAS_M6510)
-	CPU0(M6510,    m6510,	 1,  0,1.00,M6510_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M6510,    m6510,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M6510T)
-	CPU0(M6510T,   m6510t,	 1,  0,1.00,M6510T_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M6510T,   m6510t,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M7501)
-	CPU0(M7501,    m7501,	 1,  0,1.00,M7501_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M7501,    m7501,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M8502)
-	CPU0(M8502,    m8502,	 1,  0,1.00,M8502_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(M8502,    m8502,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_N2A03)
-	CPU0(N2A03,    n2a03,	 1,  0,1.00,N2A03_IRQ_LINE, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(N2A03,    n2a03,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_M4510)
-	CPU0(M4510,    m4510,	 1,  0,1.00,M4510_IRQ_LINE, 8, 20,	  0,20,LE,1, 3	),
+	CPU0(M4510,    m4510,	 1,  0,1.00, 8, 20,	  0,20,LE,1, 3	),
 #endif
 #if (HAS_H6280)
-	CPU0(H6280,    h6280,	 3,  0,1.00,-1,			    8, 21,	  0,21,LE,1, 3	),
+	CPU0(H6280,    h6280,	 3,  0,1.00, 8, 21,	  0,21,LE,1, 3	),
 #endif
 #if (HAS_I86)
-	CPU0(I86,	   i86, 	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+	CPU0(I86,	   i86, 	 1,255,1.00, 8, 20,	  0,20,LE,1, 5	),
 #endif
 #if (HAS_I88)
-	CPU0(I88,	   i88, 	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+	CPU0(I88,	   i88, 	 1,255,1.00, 8, 20,	  0,20,LE,1, 5	),
 #endif
 #if (HAS_I186)
-	CPU0(I186,	   i186,	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+	CPU0(I186,	   i186,	 1,255,1.00, 8, 20,	  0,20,LE,1, 5	),
 #endif
 #if (HAS_I188)
-	CPU0(I188,	   i188,	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+	CPU0(I188,	   i188,	 1,255,1.00, 8, 20,	  0,20,LE,1, 5	),
 #endif
 #if (HAS_I286)
-	CPU0(I286,	   i286,	 1,  0,1.00,-1000,		    8, 24,	  0,24,LE,1, 5	),
+	CPU0(I286,	   i286,	 1,255,1.00, 8, 24,	  0,24,LE,1, 5	),
 #endif
 #if (HAS_V20)
-	CPU0(V20,	   v20, 	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+	CPU0(V20,	   v20, 	 1,255,1.00, 8, 20,	  0,20,LE,1, 5	),
 #endif
 #if (HAS_V30)
-	CPU0(V30,	   v30, 	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+	CPU0(V30,	   v30, 	 1,255,1.00, 8, 20,	  0,20,LE,1, 5	),
 #endif
 #if (HAS_V33)
-	CPU0(V33,	   v33, 	 1,  0,1.00,-1000,		    8, 20,	  0,20,LE,1, 5	),
+	CPU0(V33,	   v33, 	 1,255,1.00, 8, 20,	  0,20,LE,1, 5	),
 #endif
 #if (HAS_V60)
-	CPU0(V60,	   v60, 	 1,  0,1.00,-1000,		   16, 24lew, 0,24,LE,1, 11	),
+	CPU0(V60,	   v60, 	 1,  0,1.00,16, 24lew, 0,24,LE,1, 11	),
 #endif
 #if (HAS_I8035)
-	CPU0(I8035,    i8035,	 1,  0,1.00,0,              8, 16,	  0,16,LE,1, 2	),
+	CPU0(I8035,    i8035,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 2	),
 #endif
 #if (HAS_I8039)
-	CPU0(I8039,    i8039,	 1,  0,1.00,0,              8, 16,	  0,16,LE,1, 2	),
+	CPU0(I8039,    i8039,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 2	),
 #endif
 #if (HAS_I8048)
-	CPU0(I8048,    i8048,	 1,  0,1.00,0,              8, 16,	  0,16,LE,1, 2	),
+	CPU0(I8048,    i8048,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 2	),
 #endif
 #if (HAS_N7751)
-	CPU0(N7751,    n7751,	 1,  0,1.00,0,              8, 16,	  0,16,LE,1, 2	),
+	CPU0(N7751,    n7751,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 2	),
 #endif
 #if (HAS_I8X41)
-	CPU0(I8X41,    i8x41,	 1,  0,1.00,I8X41_INT_IBF,  8, 16,	  0,16,LE,1, 2	),
+	CPU0(I8X41,    i8x41,	 1,  0,1.00, 8, 16,	  0,16,LE,1, 2	),
 #endif
 #if (HAS_M6800)
-	CPU0(M6800,    m6800,	 1,  0,1.00,M6800_IRQ_LINE, 8, 16,	  0,16,BE,1, 4	),
+	CPU0(M6800,    m6800,	 1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_M6801)
-	CPU0(M6801,    m6801,	 1,  0,1.00,M6801_IRQ_LINE, 8, 16,	  0,16,BE,1, 4	),
+	CPU0(M6801,    m6801,	 1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_M6802)
-	CPU0(M6802,    m6802,	 1,  0,1.00,M6802_IRQ_LINE, 8, 16,	  0,16,BE,1, 4	),
+	CPU0(M6802,    m6802,	 1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_M6803)
-	CPU0(M6803,    m6803,	 1,  0,1.00,M6803_IRQ_LINE, 8, 16,	  0,16,BE,1, 4	),
+	CPU0(M6803,    m6803,	 1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_M6808)
-	CPU0(M6808,    m6808,	 1,  0,1.00,M6808_IRQ_LINE, 8, 16,	  0,16,BE,1, 4	),
+	CPU0(M6808,    m6808,	 1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_HD63701)
-	CPU0(HD63701,  hd63701,  1,  0,1.00,HD63701_IRQ_LINE,8, 16,	  0,16,BE,1, 4	),
+	CPU0(HD63701,  hd63701,  1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_NSC8105)
-	CPU0(NSC8105,  nsc8105,  1,  0,1.00,NSC8105_IRQ_LINE,8, 16,	  0,16,BE,1, 4	),
+	CPU0(NSC8105,  nsc8105,  1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_M6805)
-	CPU0(M6805,    m6805,	 1,  0,1.00,M6805_IRQ_LINE,  8, 16,	  0,11,BE,1, 3	),
+	CPU0(M6805,    m6805,	 1,  0,1.00, 8, 16,	  0,11,BE,1, 3	),
 #endif
 #if (HAS_M68705)
-	CPU0(M68705,   m68705,	 1,  0,1.00,M68705_IRQ_LINE, 8, 16,	  0,11,BE,1, 3	),
+	CPU0(M68705,   m68705,	 1,  0,1.00, 8, 16,	  0,11,BE,1, 3	),
 #endif
 #if (HAS_HD63705)
-	CPU0(HD63705,  hd63705,  8,  0,1.00,HD63705_INT_IRQ1,8, 16,	  0,16,BE,1, 3	),
+	CPU0(HD63705,  hd63705,  8,  0,1.00, 8, 16,	  0,16,BE,1, 3	),
 #endif
 #if (HAS_HD6309)
-	CPU0(HD6309,   hd6309,	 2,  0,1.00,HD6309_IRQ_LINE, 8, 16,	  0,16,BE,1, 4	),
+	CPU0(HD6309,   hd6309,	 2,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_M6809)
-	CPU0(M6809,    m6809,	 2,  0,1.00,M6809_IRQ_LINE,  8, 16,	  0,16,BE,1, 4	),
+	CPU0(M6809,    m6809,	 2,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_KONAMI)
-	CPU0(KONAMI,   konami,	 2,  0,1.00,KONAMI_IRQ_LINE, 8, 16,	  0,16,BE,1, 4	),
+	CPU0(KONAMI,   konami,	 2,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_M68000)
-	CPU0(M68000,   m68000,	 8, -1,1.00,-1,			   16,24bew,  0,24,BE,2,10	),
+	CPU0(M68000,   m68000,	 8, -1,1.00,16,24bew,  0,24,BE,2,10	),
 #endif
 #if (HAS_M68010)
-	CPU0(M68010,   m68010,	 8, -1,1.00,-1,			   16,24bew,  0,24,BE,2,10	),
+	CPU0(M68010,   m68010,	 8, -1,1.00,16,24bew,  0,24,BE,2,10	),
 #endif
 #if (HAS_M68EC020)
-	CPU0(M68EC020, m68ec020, 8, -1,1.00,-1,			   32,24bedw, 0,24,BE,4,10	),
+	CPU0(M68EC020, m68ec020, 8, -1,1.00,32,24bedw, 0,24,BE,4,10	),
 #endif
 #if (HAS_M68020)
-	CPU0(M68020,   m68020,	 8, -1,1.00,-1, 		   32,32bedw, 0,32,BE,4,10	),
+	CPU0(M68020,   m68020,	 8, -1,1.00,32,32bedw, 0,32,BE,4,10	),
 #endif
 #if (HAS_T11)
-	CPU0(T11,	   t11, 	 4,  0,1.00,-1,			   16,16lew,  0,16,LE,2, 6	),
+	CPU0(T11,	   t11, 	 4,  0,1.00,16,16lew,  0,16,LE,2, 6	),
 #endif
 #if (HAS_S2650)
-	CPU0(S2650,    s2650,	 2,  0,1.00,-1,			    8, 16,	  0,15,LE,1, 3	),
+	CPU0(S2650,    s2650,	 2,  0,1.00, 8, 16,	  0,15,LE,1, 3	),
 #endif
 #if (HAS_TMS34010)
-	CPU0(TMS34010, tms34010, 2,  0,1.00,0,             16,29lew,  3,29,LE,2,10	),
+	CPU0(TMS34010, tms34010, 2,  0,1.00,16,29lew,  3,29,LE,2,10	),
 #endif
 #if (HAS_TMS34020)
-	CPU0(TMS34020, tms34020, 2,  0,1.00,0,             16,29lew,  3,29,LE,2,10	),
+	CPU0(TMS34020, tms34020, 2,  0,1.00,16,29lew,  3,29,LE,2,10	),
 #endif
 #if (HAS_TMS9900)
-	CPU0(TMS9900,  tms9900,  1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
+	CPU0(TMS9900,  tms9900,  1,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif
 #if (HAS_TMS9940)
-	CPU0(TMS9940,  tms9940,  1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
+	CPU0(TMS9940,  tms9940,  1,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif
 #if (HAS_TMS9980)
-	CPU0(TMS9980,  tms9980a, 1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 6	),
+	CPU0(TMS9980,  tms9980a, 1,  0,1.00, 8, 16,	  0,16,BE,1, 6	),
 #endif
 #if (HAS_TMS9985)
-	CPU0(TMS9985,  tms9985,  1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 6	),
+	CPU0(TMS9985,  tms9985,  1,  0,1.00, 8, 16,	  0,16,BE,1, 6	),
 #endif
 #if (HAS_TMS9989)
-	CPU0(TMS9989,  tms9989,  1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 6	),
+	CPU0(TMS9989,  tms9989,  1,  0,1.00, 8, 16,	  0,16,BE,1, 6	),
 #endif
 #if (HAS_TMS9995)
-	CPU0(TMS9995,  tms9995,  1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 6	),
+	CPU0(TMS9995,  tms9995,  1,  0,1.00, 8, 16,	  0,16,BE,1, 6	),
 #endif
 #if (HAS_TMS99105A)
-	CPU0(TMS99105A,tms99105a,1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
+	CPU0(TMS99105A,tms99105a,1,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif
 #if (HAS_TMS99110A)
-	CPU0(TMS99110A,tms99110a,1,  0,1.00,-1,			   16,16bew,  0,16,BE,2, 6	),
+	CPU0(TMS99110A,tms99110a,1,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif
 #if (HAS_Z8000)
-	CPU0(Z8000,    z8000,	 2,  0,1.00,0,        	   16,16bew,  0,16,BE,2, 6	),
+	CPU0(Z8000,    z8000,	 2,  0,1.00,16,16bew,  0,16,BE,2, 6	),
 #endif
 #if (HAS_TMS320C10)
-	CPU3(TMS320C10,tms320c10,2,  0,1.00,-1,			   16,16bew, -1,16,BE,2, 4	),
+	CPU3(TMS320C10,tms320c10,2,  0,1.00,16,16bew, -1,16,BE,2, 4	),
 #endif
 #if (HAS_CCPU)
-	CPU3(CCPU,	   ccpu,	 2,  0,1.00,-1,			   16,16bew,  0,15,BE,2, 3	),
+	CPU3(CCPU,	   ccpu,	 2,  0,1.00,16,16bew,  0,15,BE,2, 3	),
 #endif
 #if (HAS_ADSP2100)
-	CPU3(ADSP2100, adsp2100, 4,  0,1.00,-1,			   16,17lew, -1,14,LE,2, 4	),
+	CPU3(ADSP2100, adsp2100, 4,  0,1.00,16,17lew, -1,14,LE,2, 4	),
 #endif
 #if (HAS_ADSP2105)
-	CPU3(ADSP2105, adsp2105, 4,  0,1.00,-1,			   16,17lew, -1,14,LE,2, 4	),
+	CPU3(ADSP2105, adsp2105, 4,  0,1.00,16,17lew, -1,14,LE,2, 4	),
 #endif
 #if (HAS_PSXCPU)
-	CPU0(PSXCPU,   mips,	 8, -1,1.00,0,             16,32lew,  0,32,LE,4, 4	),
+	CPU0(PSXCPU,   mips,	 8, -1,1.00,16,32lew,  0,32,LE,4, 4	),
 #endif
 #if (HAS_ASAP)
 	#define asap_ICount asap_icount
-	CPU0(ASAP,	   asap,	 1,  0,1.00,-1,			   32,32ledw, 0,32,LE,4, 12 ),
+	CPU0(ASAP,	   asap,	 1,  0,1.00,32,32ledw, 0,32,LE,4, 12 ),
 #endif
 #if (HAS_UPD7810)
 #define upd7810_ICount upd7810_icount
-	CPU0(UPD7810,  upd7810,  2,  0,1.00,UPD7810_INTF1,  8, 16,	  0,16,LE,1, 4	),
+	CPU0(UPD7810,  upd7810,  2,  0,1.00, 8, 16,	  0,16,LE,1, 4	),
+#endif
+#if (HAS_JAGUAR)
+	#define jaguargp_ICount jaguar_icount
+	#define jaguards_ICount jaguar_icount
+	CPU0(JAGUARGPU,jaguargp, 6,  0,1.00,32,24bedw, 0,24,BE,4, 12 ),
+	CPU0(JAGUARDSP,jaguards, 6,  0,1.00,32,24bedw, 0,24,BE,4, 12 ),
+#endif
+#if (HAS_R3000)
+	#define r3000_ICount r3000_icount
+	CPU0(R3000,    r3000,    1,  0,1.00,32,29bedw, 0,29,BE,4, 4 ),
+#endif
+#if (HAS_TMS320C31)
+	#define tms320c31_ICount tms320c31_icount
+	CPU0(TMS320C31,tms320c31,4,  0,1.00,32,26ledw,-2,26,LE,4, 4 ),
+#endif
+#if (HAS_ARM)
+	CPU0(ARM,	   arm, 	 2,  0,1.00,32,26ledw, 0,26,LE,4, 4	),
 #endif
 
 #ifdef MESS
 #if (HAS_APEXC)
-	CPU0(APEXC,    apexc,	 0,  0,1.00,-1,			   32,18bedw, 0,18,LE,1, 1	),
-#endif
-#if (HAS_ARM)
-	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_FIRQ,	   32,26ledw, 0,26,LE,4, 4	),
+	CPU0(APEXC,    apexc,	 0,  0,1.00,32,18bedw, 0,18,LE,1, 1	),
 #endif
 #if (HAS_CDP1802)
 #define cdp1802_ICount cdp1802_icount
-	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_IRQ,    8, 16,	  0,16,BE,1, 3	),
+	CPU0(CDP1802,  cdp1802,  1,  0,1.00, 8, 16,	  0,16,BE,1, 3	),
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00,-1,			    8, 16,	  0,16,LE,1, 3	),
+	CPU0(CP1600,   cp1600,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_F8)
 #define f8_ICount f8_icount
-	CPU4(F8,	   f8,		 1,  0,1.00,F8_INT_INTR,    8, 16,	  0,16,LE,1, 3	),
+	CPU4(F8,	   f8,		 1,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_G65816)
-	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_IRQ, 8, 24,	  0,24,BE,1, 3	),
+	CPU0(G65816,  g65816,	 1,  0,1.00, 8, 24,	  0,24,BE,1, 3	),
 #endif
 #if (HAS_LH5801)
 #define lh5801_ICount lh5801_icount
-	CPU0(LH5801,   lh5801,	 1,  0,1.00,LH5801_IRQ,	    8, 17,	  0,17,BE,1, 5	),
+	CPU0(LH5801,   lh5801,	 1,  0,1.00, 8, 17,	  0,17,BE,1, 5	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,-1,			    8, 16,	  0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00, 8, 16,	  0,18,LE,1, 3	),
 #endif
 #if (HAS_SATURN)
 #define saturn_ICount saturn_icount
-	CPU0(SATURN,   saturn,	 1,  0,1.00,SATURN_INT_IRQ, 8,20,	  0,20,LE,1, 21 ),
+	CPU0(SATURN,   saturn,	 1,  0,1.00, 8,20,	  0,20,LE,1, 21 ),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
-	CPU0(SC61860,  sc61860,  1,  0,1.00,-1,			    8, 16,	  0,16,BE,1, 4	),
+	CPU0(SC61860,  sc61860,  1,  0,1.00, 8, 16,	  0,16,BE,1, 4	),
 #endif
 #if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00, 0, 		   32,32bedw,   0,32,BE,2, 2  ),
+	CPU4(SH2,	   sh2, 	16,  0,1.00,32,32bedw,   0,32,BE,2, 2  ),
 #endif
 #if (HAS_SPC700)
-	CPU0(SPC700,   spc700,	 0,  0,1.00,-1,			    8, 16,	  0,16,LE,1, 3	),
+	CPU0(SPC700,   spc700,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
 #endif
 #if (HAS_Z80GB)
-	CPU0(Z80GB,    z80gb,	 5,255,1.00,0,			    8, 16,	  0,16,LE,1, 4	),
+	CPU0(Z80GB,    z80gb,	 5,255,1.00, 8, 16,	  0,16,LE,1, 4	),
 #endif
 #if (HAS_Z80_MSX)
-	CPU1(Z80_MSX,  z80_msx,	 1,255,1.00,-1000,    8, 16,	  0,16,LE,1, 4	),
+	CPU1(Z80_MSX,  z80_msx,	 1,255,1.00, 8, 16,	  0,16,LE,1, 4	),
 #endif
 #endif
 };
@@ -835,76 +858,6 @@ void cpuintrf_exit_cpu(int cpunum)
 
 /*************************************
  *
- *	Convert old-style interrupt
- *	number to an IRQ line
- *
- *************************************/
-
-int convert_type_to_irq_line(int cpunum, int num, int *vector)
-{
-	int irqline = num;
-
-	/* default vector is the num */
-	*vector = num;
-
-	switch (cpu[cpunum].cputype)
-	{
-#if (HAS_Z80)
-		case CPU_Z80:				irqline = 0; break;
-#endif
-#if (HAS_Z180)
-		case CPU_Z180:				irqline = 0; break;
-#endif
-#if (HAS_I86)
-		case CPU_I86:				irqline = 0; break;
-#endif
-#if (HAS_I88)
-		case CPU_I88:				irqline = 0; break;
-#endif
-#if (HAS_I186)
-		case CPU_I186:				irqline = 0; break;
-#endif
-#if (HAS_I188)
-		case CPU_I188:				irqline = 0; break;
-#endif
-#if (HAS_I286)
-		case CPU_I286:				irqline = 0; break;
-#endif
-#if (HAS_V20)
-		case CPU_V20:				irqline = 0; break;
-#endif
-#if (HAS_V30)
-		case CPU_V30:				irqline = 0; break;
-#endif
-#if (HAS_V33)
-		case CPU_V33:				irqline = 0; break;
-#endif
-#if (HAS_8080)
-		case CPU_8080:				irqline = 0; if (*vector == 0) *vector = 0xff; break;
-#endif
-#if (HAS_S2650)
-		case CPU_S2650:				irqline = 0; break;
-#endif
-#if (HAS_M68000)
-		case CPU_M68000:			*vector = MC68000_INT_ACK_AUTOVECTOR; break;
-#endif
-#if (HAS_M68010)
-		case CPU_M68010:			*vector = MC68000_INT_ACK_AUTOVECTOR; break;
-#endif
-#if (HAS_M68EC020)
-		case CPU_M68EC020:			*vector = MC68000_INT_ACK_AUTOVECTOR; break;
-#endif
-#if (HAS_M68020)
-		case CPU_M68020:			*vector = MC68000_INT_ACK_AUTOVECTOR; break;
-#endif
-	}
-	return irqline;
-}
-
-
-
-/*************************************
- *
  *	Interfaces to the active CPU
  *
  *************************************/
@@ -958,7 +911,7 @@ void activecpu_set_irq_line(int irqline, int state)
  	Get/set cycle table
 --------------------------*/
 
-void *activecpu_get_cycle_table(int which)
+const void *activecpu_get_cycle_table(int which)
 {
 	VERIFY_ACTIVECPU(NULL, activecpu_get_cycle_table);
 	return (*cpu[activecpu].intf.get_cycle_table)(which);
@@ -1103,7 +1056,6 @@ rettype name(void)	 										\
 	return result;											\
 }
 
-CPU_FUNC(int,          activecpu_default_irq_line,   0,  cpu[activecpu].intf.irq_int)
 CPU_FUNC(int,          activecpu_default_irq_vector, 0,  cpu[activecpu].intf.default_vector)
 CPU_FUNC(unsigned,     activecpu_address_bits,       0,  cpu[activecpu].intf.address_bits)
 CPU_FUNC(unsigned,     activecpu_address_mask,       0,  0xffffffffUL >> (32 - cpu[activecpu].intf.address_bits))
@@ -1152,6 +1104,7 @@ void cpunum_reset(int cpunum, void *param, int (*irqack)(int))
 {
 	VERIFY_CPUNUM_VOID(cpunum_reset);
 	cpuintrf_push_context(cpunum);
+	(*cpu[cpunum].intf.set_op_base)(0);
 	(*cpu[cpunum].intf.reset)(param);
 	if (irqack)
 		(*cpu[cpunum].intf.set_irq_callback)(irqack);
@@ -1202,9 +1155,9 @@ void *cpunum_get_context_ptr(int cpunum)
  	Get/set cycle table
 --------------------------*/
 
-void *cpunum_get_cycle_table(int cpunum, int which)
+const void *cpunum_get_cycle_table(int cpunum, int which)
 {
-	void *result;
+	const void *result;
 	VERIFY_CPUNUM(NULL, cpunum_get_cycle_table);
 	cpuintrf_push_context(cpunum);
 	result = (*cpu[cpunum].intf.get_cycle_table)(which);
@@ -1341,7 +1294,6 @@ rettype name(int cpunum)									\
 	return result;											\
 }
 
-CPUNUM_FUNC(int,          cpunum_default_irq_line,   0,  cpu[cpunum].intf.irq_int)
 CPUNUM_FUNC(int,          cpunum_default_irq_vector, 0,  cpu[cpunum].intf.default_vector)
 CPUNUM_FUNC(unsigned,     cpunum_address_bits,       0,  cpu[cpunum].intf.address_bits)
 CPUNUM_FUNC(unsigned,     cpunum_address_mask,       0,  0xffffffffUL >> (32 - cpu[cpunum].intf.address_bits))
@@ -1377,7 +1329,6 @@ rettype name(int cputype)									\
 	return defresult;										\
 }
 
-CPUTYPE_FUNC(int,          cputype_default_irq_line,   0,  cpuintrf[cputype].irq_int)
 CPUTYPE_FUNC(int,          cputype_default_irq_vector, 0,  cpuintrf[cputype].default_vector)
 CPUTYPE_FUNC(unsigned,     cputype_address_bits,       0,  cpuintrf[cputype].address_bits)
 CPUTYPE_FUNC(unsigned,     cputype_address_mask,       0,  0xffffffffUL >> (32 - cpuintrf[cputype].address_bits))

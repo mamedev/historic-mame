@@ -543,27 +543,26 @@ static struct GfxDecodeInfo gfxdecodeinfo_wwjgtin[] =
 
 /* IRQ = VBlank, NMI = Coin Insertion */
 
-int lasso_interrupt( void )
+INTERRUPT_GEN( lasso_interrupt )
 {
 	static int old;
 	int new;
 
 	// VBlank
 	if (cpu_getiloops() == 0)
-		return interrupt();
+	{
+		cpu_set_irq_line(0, 0, HOLD_LINE);
+		return;
+	}
 
 	// Coins
 	new = ~readinputport(3) & 0x30;
 
 	if ( ((new & 0x10) && !(old & 0x10)) ||
 		 ((new & 0x20) && !(old & 0x20)) )
-	{
-		old = new;
-		return nmi_interrupt();
-	}
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 
 	old = new;
-	return ignore_interrupt();
 }
 
 
@@ -584,137 +583,108 @@ static struct DACinterface dac_interface =
 								Chameleon
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_chameleo =
-{
-	{
-		{
-			CPU_M6502,
-			2000000,	/* 2 MHz (?) */
-			chameleo_readmem, chameleo_writemem, 0,0,
-			lasso_interrupt, 2,		/* IRQ = VBlank, NMI = Coin Insertion */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			600000,		/* ?? (controls music tempo) */
-			chameleo_sound_readmem,chameleo_sound_writemem, 0,0,
-			ignore_interrupt, 1,	/* IRQ by Main CPU, no NMI */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+static MACHINE_DRIVER_START( chameleo )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502, 2000000)	/* 2 MHz (?) */
+	MDRV_CPU_MEMORY(chameleo_readmem,chameleo_writemem)
+	MDRV_CPU_VBLANK_INT(lasso_interrupt,2)		/* IRQ = VBlank, NMI = Coin Insertion */
+
+	MDRV_CPU_ADD(M6502, 600000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ?? (controls music tempo) */
+	MDRV_CPU_MEMORY(chameleo_sound_readmem,chameleo_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 255-16-1 },
-	gfxdecodeinfo,
-	0x40,0x40,
-	lasso_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 255-16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x40)
+	MDRV_COLORTABLE_LENGTH(0x40)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	lasso_vh_start,
-	0,
-	chameleo_vh_screenrefresh,
+	MDRV_PALETTE_INIT(lasso)
+	MDRV_VIDEO_START(lasso)
+	MDRV_VIDEO_UPDATE(chameleo)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_SN76496,	&sn76496_interface	}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 								Lasso
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_lasso =
-{
-	{
-		{
-			CPU_M6502,
-			2000000,	/* 2 MHz (?) */
-			lasso_readmem,lasso_writemem, 0,0,
-			lasso_interrupt, 2,		/* IRQ = VBlank, NMI = Coin Insertion */
-		},
-		{
-			CPU_M6502,
-			2000000,	/* 2 MHz (?) */
-			lasso_coprocessor_readmem,lasso_coprocessor_writemem, 0,0,
-			ignore_interrupt, 1,	/* No IRQ */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			600000,		/* ?? (controls music tempo) */
-			lasso_sound_readmem,lasso_sound_writemem, 0,0,
-			ignore_interrupt, 1,	/* IRQ by Main CPU, no NMI */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* CPU slices */
-	0, /* init machine */
+static MACHINE_DRIVER_START( lasso )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502, 2000000)	/* 2 MHz (?) */
+	MDRV_CPU_MEMORY(lasso_readmem,lasso_writemem)
+	MDRV_CPU_VBLANK_INT(lasso_interrupt,2)		/* IRQ = VBlank, NMI = Coin Insertion */
+
+	MDRV_CPU_ADD(M6502, 2000000)	/* 2 MHz (?) */
+	MDRV_CPU_MEMORY(lasso_coprocessor_readmem,lasso_coprocessor_writemem)
+
+	MDRV_CPU_ADD(M6502, 600000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ?? (controls music tempo) */
+	MDRV_CPU_MEMORY(lasso_sound_readmem,lasso_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 255-16-1 },
-	gfxdecodeinfo,
-	0x40,0x40,
-	lasso_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 255-16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x40)
+	MDRV_COLORTABLE_LENGTH(0x40)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	lasso_vh_start,
-	0,
-	lasso_vh_screenrefresh,
+	MDRV_PALETTE_INIT(lasso)
+	MDRV_VIDEO_START(lasso)
+	MDRV_VIDEO_UPDATE(lasso)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_SN76496,	&sn76496_interface	}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 							Wai Wai Jockey Gate-In!
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_wwjgtin =
-{
-	{
-		{
-			CPU_M6502,
-			2000000,	/* 2 MHz (?) */
-			wwjgtin_readmem, wwjgtin_writemem, 0,0,
-			lasso_interrupt, 2,		/* IRQ = VBlank, NMI = Coin Insertion */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			600000,		/* ?? (controls music tempo) */
-			wwjgtin_sound_readmem,wwjgtin_sound_writemem, 0,0,
-			ignore_interrupt, 1,	/* IRQ by Main CPU, no NMI */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+static MACHINE_DRIVER_START( wwjgtin )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502, 2000000)	/* 2 MHz (?) */
+	MDRV_CPU_MEMORY(wwjgtin_readmem,wwjgtin_writemem)
+	MDRV_CPU_VBLANK_INT(lasso_interrupt,2)		/* IRQ = VBlank, NMI = Coin Insertion */
+
+	MDRV_CPU_ADD(M6502, 600000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ?? (controls music tempo) */
+	MDRV_CPU_MEMORY(wwjgtin_sound_readmem,wwjgtin_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0+8, 256-1-8, 0+16, 256-1-16 },	// Smaller visible area?
-	gfxdecodeinfo_wwjgtin,	// Has 1 additional layer
-	0x40+1, 4*16 + 16*16,	// Reserve 1 color for black
-	wwjgtin_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0+8, 256-1-8, 0+16, 256-1-16)	// Smaller visible area?
+	MDRV_GFXDECODE(gfxdecodeinfo_wwjgtin)	// Has 1 additional layer
+	MDRV_PALETTE_LENGTH(0x40+1)
+	MDRV_COLORTABLE_LENGTH(4*16 + 16*16)	// Reserve 1 color for black
 
-	VIDEO_TYPE_RASTER,
-	0,
-	wwjgtin_vh_start,
-	0,
-	wwjgtin_vh_screenrefresh,
+	MDRV_PALETTE_INIT(wwjgtin)
+	MDRV_VIDEO_START(wwjgtin)
+	MDRV_VIDEO_UPDATE(wwjgtin)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_SN76496,	&sn76496_interface	},
-		{	SOUND_DAC,		&dac_interface		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

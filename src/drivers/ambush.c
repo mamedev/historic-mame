@@ -40,8 +40,8 @@ TODO:
 extern unsigned char *ambush_scrollram;
 extern unsigned char *ambush_colorbank;
 
-void ambush_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void ambush_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( ambush );
+VIDEO_UPDATE( ambush );
 
 
 static WRITE_HANDLER( ambush_coin_counter_w )
@@ -181,42 +181,31 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_ambush =
-{
+static MACHINE_DRIVER_START( ambush )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4.00 MHz??? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.00 MHz??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-3 },  /* The -3 makes the cocktail mode perfect */
-	gfxdecodeinfo,
-	256, 0,
-	ambush_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-3)  /* The -3 makes the cocktail mode perfect */
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	ambush_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ambush)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(ambush)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

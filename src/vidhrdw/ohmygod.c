@@ -34,7 +34,7 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int ohmygod_vh_start(void)
+VIDEO_START( ohmygod )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
 
@@ -87,7 +87,7 @@ WRITE16_HANDLER( ohmygod_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -110,12 +110,12 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				color,
 				flipx,0,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
-void ohmygod_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ohmygod )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

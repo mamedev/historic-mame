@@ -75,7 +75,7 @@ TODO
 unsigned char *sauro_videoram2;
 unsigned char *sauro_colorram2;
 
-void sauro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( sauro );
 
 WRITE_HANDLER( sauro_scroll1_w );
 WRITE_HANDLER( sauro_scroll2_w );
@@ -250,10 +250,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static int sauron_interrupt(void)
+static INTERRUPT_GEN( sauron_interrupt )
 {
-	cpu_cause_interrupt(1,Z80_NMI_INT);
-	return -1000;	/* IRQ, why isn't there a constant defined? */
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
 static struct YM3526interface ym3812_interface =
@@ -264,48 +264,36 @@ static struct YM3526interface ym3812_interface =
 };
 
 
-static const struct MachineDriver machine_driver_sauro =
-{
+static MACHINE_DRIVER_START( sauro )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz??? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 4 MHz??? */
-			sound_readmem,sound_writemem,0,0,
-			sauron_interrupt,8 /* ?? */
-		}
-	},
-	60, 5000,  /* frames per second, vblank duration (otherwise sprites lag) */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(sauron_interrupt,8) /* ?? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(5000)  /* frames per second, vblank duration (otherwise sprites lag) */
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	sauro_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(sauro)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -344,7 +332,7 @@ ROM_END
 
 
 
-static void init_sauro(void)
+static DRIVER_INIT( sauro )
 {
 	/* This game doesn't like all memory to be initialized to zero, it won't
 	   initialize the high scores */

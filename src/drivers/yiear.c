@@ -52,11 +52,11 @@ The 6809 NMI is used for sound timing.
 #include "cpu/m6809/m6809.h"
 
 
-void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void yiear_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( yiear );
+VIDEO_UPDATE( yiear );
 WRITE_HANDLER( yiear_videoram_w );
 WRITE_HANDLER( yiear_control_w );
-int  yiear_nmi_interrupt(void);
+INTERRUPT_GEN( yiear_nmi_interrupt );
 
 /* in sndhrdw/trackfld.c */
 WRITE_HANDLER( konami_SN76496_latch_w );
@@ -264,47 +264,33 @@ struct VLM5030interface vlm5030_interface =
 
 
 
-static const struct MachineDriver machine_driver_yiear =
-{
+static MACHINE_DRIVER_START( yiear )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			18432000/16,	/* ???? */
-			readmem, writemem, 0, 0,
-			interrupt,1,	/* vblank */
-			yiear_nmi_interrupt,500	/* music tempo (correct frequency unknown) */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6809,18432000/16)	/* ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* vblank */
+	MDRV_CPU_PERIODIC_INT(yiear_nmi_interrupt,500)	/* music tempo (correct frequency unknown) */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 32,
-	yiear_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	yiear_vh_screenrefresh,
+	MDRV_PALETTE_INIT(yiear)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(yiear)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		},
-		{
-			SOUND_VLM5030,
-			&vlm5030_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

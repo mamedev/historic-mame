@@ -1,21 +1,17 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Cloak & Dagger hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cloak.h"
 
 
 static struct mame_bitmap *tmpbitmap2,*charbitmap;
 static unsigned char x,y,bmap;
 static unsigned char *tmpvideoram,*tmpvideoram2;
-
-
-void cloak_vh_stop(void);
 
 
 /***************************************************************************
@@ -158,60 +154,30 @@ WRITE_HANDLER( graph_processor_w )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int cloak_vh_start(void)
+
+VIDEO_START( cloak )
 {
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((charbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		cloak_vh_stop();
+	if ((charbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		cloak_vh_stop();
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-	{
-		cloak_vh_stop();
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpvideoram = malloc(256*256)) == 0)
-	{
-		cloak_vh_stop();
+	if ((tmpvideoram = auto_malloc(256*256)) == 0)
 		return 1;
-	}
 
-	if ((tmpvideoram2 = malloc(256*256)) == 0)
-	{
-		cloak_vh_stop();
+	if ((tmpvideoram2 = auto_malloc(256*256)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void cloak_vh_stop(void)
-{
-	if (charbitmap)  bitmap_free(charbitmap);
-	if (tmpbitmap2)  bitmap_free(tmpbitmap2);
-	if (tmpbitmap)   bitmap_free(tmpbitmap);
-	if (dirtybuffer) free(dirtybuffer);
-	if (tmpvideoram) free(tmpvideoram);
-	if (tmpvideoram2) free(tmpvideoram2);
-}
-
 
 /***************************************************************************
 
@@ -235,7 +201,7 @@ static void refresh_bitmaps(void)
 }
 
 
-void cloak_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cloak )
 {
 	int offs;
 

@@ -25,9 +25,9 @@ WRITE16_HANDLER( dcon_text_w );
 WRITE16_HANDLER( dcon_control_w );
 READ16_HANDLER( dcon_control_r );
 
-int dcon_vh_start(void);
-void dcon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void sdgndmps_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( dcon );
+VIDEO_UPDATE( dcon );
+VIDEO_UPDATE( sdgndmps );
 
 extern data16_t *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram,*dcon_textram;
 
@@ -279,82 +279,59 @@ static struct GfxDecodeInfo dcon_gfxdecodeinfo[] =
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(4000000,8000,REGION_SOUND1);
 SEIBU_SOUND_SYSTEM_YM2151_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
-static const struct MachineDriver machine_driver_dcon =
-{
+static MACHINE_DRIVER_START( dcon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			readmem,writemem,0,0,
-			m68_level4_irq,1
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(4000000) /* Perhaps 14318180/4? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU interleave  */
-	seibu_sound_init_1,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	SEIBU_SOUND_SYSTEM_CPU(4000000) /* Perhaps 14318180/4? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(dcon_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	dcon_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	dcon_vh_start,
-	0,
-	dcon_vh_screenrefresh,
+	MDRV_VIDEO_START(dcon)
+	MDRV_VIDEO_UPDATE(dcon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_sdgndmps =
-{
+static MACHINE_DRIVER_START( sdgndmps )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			readmem,writemem,0,0,
-			m68_level4_irq,1
-		},
-		{
-			SEIBU2_SOUND_SYSTEM_CPU(14318180/4)
-		}
-	},
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU interleave  */
-	seibu_sound_init_1,
+	SEIBU2_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dcon_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	dcon_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	dcon_vh_start,
-	0,
-	sdgndmps_vh_screenrefresh,
+	MDRV_VIDEO_START(dcon)
+	MDRV_VIDEO_UPDATE(sdgndmps)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM2151_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 

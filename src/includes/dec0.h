@@ -1,15 +1,13 @@
 /* Video emulation definitions */
-int  dec0_vh_start(void);
-void dec0_vh_stop(void);
-int  dec0_nodma_vh_start(void);
-void dec0_nodma_vh_stop(void);
-void hbarrel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void baddudes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void birdtry_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void robocop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void hippodrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void slyspy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void midres_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( dec0 );
+VIDEO_START( dec0_nodma );
+VIDEO_UPDATE( hbarrel );
+VIDEO_UPDATE( baddudes );
+VIDEO_UPDATE( birdtry );
+VIDEO_UPDATE( robocop );
+VIDEO_UPDATE( hippodrm );
+VIDEO_UPDATE( slyspy );
+VIDEO_UPDATE( midres );
 
 extern data16_t *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
 extern data16_t *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
@@ -51,13 +49,13 @@ WRITE16_HANDLER( slyspy_24e000_w );
 
 WRITE_HANDLER( robocop_bankswitch_w );
 
-void init_slyspy(void);
-void init_hippodrm(void);
-void init_robocop(void);
-void init_baddudes(void);
-void init_hbarrel(void);
-void init_hbarrelw(void);
-void init_birdtry(void);
+DRIVER_INIT( slyspy );
+DRIVER_INIT( hippodrm );
+DRIVER_INIT( robocop );
+DRIVER_INIT( baddudes );
+DRIVER_INIT( hbarrel );
+DRIVER_INIT( hbarrelw );
+DRIVER_INIT( birdtry );
 
 extern void dec0_i8751_write(int data);
 extern void dec0_i8751_reset(void);

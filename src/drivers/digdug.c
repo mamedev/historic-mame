@@ -126,19 +126,18 @@ READ_HANDLER( digdug_customio_r );
 WRITE_HANDLER( digdug_customio_w );
 READ_HANDLER( digdug_customio_data_r );
 WRITE_HANDLER( digdug_customio_data_w );
-int digdug_interrupt_1(void);
-int digdug_interrupt_2(void);
-int digdug_interrupt_3(void);
-void digdig_init_machine(void);
+INTERRUPT_GEN( digdug_interrupt_1 );
+INTERRUPT_GEN( digdug_interrupt_2 );
+INTERRUPT_GEN( digdug_interrupt_3 );
+MACHINE_INIT( digdig );
 
 WRITE_HANDLER( digdug_flipscreen_w );
 extern unsigned char *digdug_vlatches;
 WRITE_HANDLER( digdug_cpu_reset_w );
 WRITE_HANDLER( digdug_vh_latch_w );
-int digdug_vh_start(void);
-void digdug_vh_stop(void);
-void digdug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_START( digdug );
+VIDEO_UPDATE( digdug );
+PALETTE_INIT( digdug );
 
 WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
@@ -335,55 +334,42 @@ static struct namco_interface namco_interface =
 
 
 
-static const struct MachineDriver machine_driver_digdug =
-{
+static MACHINE_DRIVER_START( digdug )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3125000,	/* 3.125 MHz */
-			readmem_cpu1,writemem_cpu1,0,0,
-			digdug_interrupt_1,1
-		},
-		{
-			CPU_Z80,
-			3125000,	/* 3.125 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			digdug_interrupt_2,1
-		},
-		{
-			CPU_Z80,
-			3125000,	/* 3.125 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			digdug_interrupt_3,2
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	digdig_init_machine,
+	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(digdug_interrupt_1,1)
+
+	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(digdug_interrupt_2,1)
+
+	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(digdug_interrupt_3,2)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(digdig)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,8*2+64*4+64*4,
-	digdug_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(8*2+64*4+64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	digdug_vh_start,
-	digdug_vh_stop,
-	digdug_vh_screenrefresh,
+	MDRV_PALETTE_INIT(digdug)
+	MDRV_VIDEO_START(digdug)
+	MDRV_VIDEO_UPDATE(digdug)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 

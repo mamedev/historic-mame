@@ -65,11 +65,11 @@ Note:
 
 ***************************************************************************/
 
-void srmp2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void srmp2_vh_screenrefresh     (struct mame_bitmap *bitmap,int full_refresh);
-void srmp3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void srmp3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void mjyuugi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( srmp2 );
+VIDEO_UPDATE( srmp2 );
+PALETTE_INIT( srmp3 );
+VIDEO_UPDATE( srmp3 );
+VIDEO_UPDATE( mjyuugi );
 
 
 extern int srmp2_color_bank;
@@ -83,11 +83,6 @@ static unsigned long srmp2_adpcm_eptr;
 
 static int srmp2_port_select;
 
-static unsigned short	*srmp2_nvram;
-static size_t			srmp2_nvram_size;
-static unsigned char	*srmp3_nvram;
-static size_t			srmp3_nvram_size;
-
 
 /***************************************************************************
 
@@ -95,22 +90,17 @@ static size_t			srmp3_nvram_size;
 
 ***************************************************************************/
 
-static int srmp2_interrupt(void)
+static INTERRUPT_GEN( srmp2_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return 4;	/* vblank */
-		default:	return 2;	/* sound */
+		case 0:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;	/* vblank */
+		default:	cpu_set_irq_line(0, 2, HOLD_LINE);	break;	/* sound */
 	}
 }
 
-static int srmp3_interrupt(void)
-{
-	return interrupt();
-}
 
-
-static void init_srmp2(void)
+static DRIVER_INIT( srmp2 )
 {
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
@@ -118,7 +108,7 @@ static void init_srmp2(void)
 	RAM[0x20c80 / 2] = 0x4e75;								// RTS
 }
 
-static void init_srmp3(void)
+static DRIVER_INIT( srmp3 )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 
@@ -141,12 +131,12 @@ static void init_srmp3(void)
 	RAM[0x00000 + 0x7850] = 0x00;							// NOP
 }
 
-static void srmp2_init_machine(void)
+static MACHINE_INIT( srmp2 )
 {
 	srmp2_port_select = 0;
 }
 
-static void srmp3_init_machine(void)
+static MACHINE_INIT( srmp3 )
 {
 	srmp2_port_select = 0;
 }
@@ -157,45 +147,6 @@ static void srmp3_init_machine(void)
   Memory Handler(s)
 
 ***************************************************************************/
-
-static void srmp2_nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-	{
-		osd_fwrite(file, srmp2_nvram, srmp2_nvram_size);
-	}
-	else
-	{
-		if (file)
-		{
-			osd_fread(file, srmp2_nvram, srmp2_nvram_size);
-		}
-		else
-		{
-			memset(srmp2_nvram, 0, srmp2_nvram_size);
-		}
-	}
-}
-
-static void srmp3_nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-	{
-		osd_fwrite(file, srmp3_nvram, srmp3_nvram_size);
-	}
-	else
-	{
-		if (file)
-		{
-			osd_fread(file, srmp3_nvram, srmp3_nvram_size);
-		}
-		else
-		{
-			memset(srmp3_nvram, 0, srmp3_nvram_size);
-		}
-	}
-}
-
 
 static WRITE16_HANDLER( srmp2_flags_w )
 {
@@ -445,7 +396,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( srmp2_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x0c0000, 0x0c3fff, MWA16_RAM, &srmp2_nvram, &srmp2_nvram_size },
+	{ 0x0c0000, 0x0c3fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16_2 },	/* Sprites Code + X + Attr */
 	{ 0x180000, 0x180609, MWA16_RAM, &spriteram16 },	/* Sprites Y */
 	{ 0x1c0000, 0x1c0001, MWA16_NOP },					/* ??? */
@@ -497,7 +448,7 @@ static MEMORY_WRITE16_START( mjyuugi_writemem )
 	{ 0xd00000, 0xd00609, MWA16_RAM, &spriteram16 },	/* Sprites Y */
 	{ 0xd02000, 0xd023ff, MWA16_RAM },					/* ??? only writes $00fa */
 	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2 },	/* Sprites Code + X + Attr */
-	{ 0xffc000, 0xffffff, MWA16_RAM, &srmp2_nvram, &srmp2_nvram_size },
+	{ 0xffc000, 0xffffff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 MEMORY_END
 
 
@@ -518,7 +469,7 @@ static WRITE_HANDLER( srmp3_input_1_w )
 	---- -x-- : Player 2 side flag ?
 */
 
-	logerror("PC:%04X DATA:%02X  srmp3_input_1_w\n", cpu_get_pc(), data);
+	logerror("PC:%04X DATA:%02X  srmp3_input_1_w\n", activecpu_get_pc(), data);
 
 	srmp2_port_select = 0;
 
@@ -542,7 +493,7 @@ static WRITE_HANDLER( srmp3_input_2_w )
 
 	/* Key matrix reading related ? */
 
-	logerror("PC:%04X DATA:%02X  srmp3_input_2_w\n", cpu_get_pc(), data);
+	logerror("PC:%04X DATA:%02X  srmp3_input_2_w\n", activecpu_get_pc(), data);
 
 	srmp2_port_select = 1;
 
@@ -559,12 +510,12 @@ static READ_HANDLER( srmp3_input_r )
 
 	int keydata = 0xff;
 
-	logerror("PC:%04X          srmp3_input_r\n", cpu_get_pc());
+	logerror("PC:%04X          srmp3_input_r\n", activecpu_get_pc());
 
 	// PC:0x8903	ROM:0xC903
 	// PC:0x7805	ROM:0x7805
 
-	if ((cpu_get_pc() == 0x8903) || (cpu_get_pc() == 0x7805))	/* Panel keys */
+	if ((activecpu_get_pc() == 0x8903) || (activecpu_get_pc() == 0x7805))	/* Panel keys */
 	{
 		int i, j, t;
 
@@ -585,7 +536,7 @@ static READ_HANDLER( srmp3_input_r )
 	// PC:0x8926	ROM:0xC926
 	// PC:0x7822	ROM:0x7822
 
-	if ((cpu_get_pc() == 0x8926) || (cpu_get_pc() == 0x7822))	/* Analizer and memory reset keys */
+	if ((activecpu_get_pc() == 0x8926) || (activecpu_get_pc() == 0x7822))	/* Analizer and memory reset keys */
 	{
 		keydata = readinputport(7);
 	}
@@ -619,7 +570,7 @@ MEMORY_END
 static MEMORY_WRITE_START( srmp3_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_ROM },						/* rom bank */
-	{ 0xa000, 0xa7ff, MWA_RAM, &srmp3_nvram, &srmp3_nvram_size },	/* work ram */
+	{ 0xa000, 0xa7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },	/* work ram */
 	{ 0xa800, 0xa800, MWA_NOP },						/* flag ? */
 	{ 0xb000, 0xb303, MWA_RAM, &spriteram },			/* Sprites Y */
 	{ 0xb800, 0xb800, MWA_NOP },						/* flag ? */
@@ -1167,114 +1118,95 @@ static struct GfxDecodeInfo srmp3_gfxdecodeinfo[] =
 };
 
 
-static struct MachineDriver machine_driver_srmp2 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000/2,				/* 8.00 MHz */
-			srmp2_readmem, srmp2_writemem, 0, 0,
-			srmp2_interrupt, 16		/* Interrupt times is not understood */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	srmp2_init_machine,
+static MACHINE_DRIVER_START( srmp2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,16000000/2)				/* 8.00 MHz */
+	MDRV_CPU_MEMORY(srmp2_readmem,srmp2_writemem)
+	MDRV_CPU_VBLANK_INT(srmp2_interrupt,16)		/* Interrupt times is not understood */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(srmp2)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	464, 256-16, { 16, 464-1, 8, 256-1-24 },
-	srmp2_gfxdecodeinfo,
-	1024, 1024,						/* sprites only */
-	srmp2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(464, 256-16)
+	MDRV_VISIBLE_AREA(16, 464-1, 8, 256-1-24)
+	MDRV_GFXDECODE(srmp2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	MDRV_COLORTABLE_LENGTH(1024)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,								/* no need for a vh_start: no tilemaps */
-	0,
-	srmp2_vh_screenrefresh,			/* just draw the sprites */
+	MDRV_PALETTE_INIT(srmp2)
+	MDRV_VIDEO_UPDATE(srmp2)		/* just draw the sprites */
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_AY8910, &srmp2_ay8910_interface },
-		{ SOUND_MSM5205, &srmp2_msm5205_interface }
-	},
-	srmp2_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, srmp2_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, srmp2_msm5205_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_srmp3 =
-{
-	{
-		{
-			CPU_Z80,
-			3500000,				/* 3.50 MHz ? */
+static MACHINE_DRIVER_START( srmp3 )
+
+	/* basic machine hardware */
+
+	MDRV_CPU_ADD(Z80, 3500000)		/* 3.50 MHz ? */
 	//		4000000,				/* 4.00 MHz ? */
-			srmp3_readmem, srmp3_writemem, srmp3_readport, srmp3_writeport,
-	//		interrupt, 1
-			srmp3_interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	srmp3_init_machine,
+	MDRV_CPU_MEMORY(srmp3_readmem,srmp3_writemem)
+	MDRV_CPU_PORTS(srmp3_readport,srmp3_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(srmp3)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	400, 256-16, { 16, 400-1, 8, 256-1-24 },
-	srmp3_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	srmp3_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16, 400-1, 8, 256-1-24)
+	MDRV_GFXDECODE(srmp3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,								/* no need for a vh_start: no tilemaps */
-	0,
-	srmp3_vh_screenrefresh,			/* just draw the sprites */
+	MDRV_PALETTE_INIT(srmp3)
+	MDRV_VIDEO_UPDATE(srmp3)	/* just draw the sprites */
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_AY8910, &srmp3_ay8910_interface },
-		{ SOUND_MSM5205, &srmp3_msm5205_interface }
-	},
-	srmp3_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, srmp3_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, srmp3_msm5205_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_mjyuugi =
-{
-	{
-		{
-			CPU_M68000,
-			16000000/2,				/* 8.00 MHz */
-			mjyuugi_readmem, mjyuugi_writemem, 0, 0,
-			srmp2_interrupt, 16		/* Interrupt times is not understood */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	srmp2_init_machine,
+static MACHINE_DRIVER_START( mjyuugi )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,16000000/2)				/* 8.00 MHz */
+	MDRV_CPU_MEMORY(mjyuugi_readmem,mjyuugi_writemem)
+	MDRV_CPU_VBLANK_INT(srmp2_interrupt,16)		/* Interrupt times is not understood */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(srmp2)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	400, 256-16, { 16, 400-1, 0, 256-1-16 },
-	srmp3_gfxdecodeinfo,
-	512, 0,						/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1-16)
+	MDRV_GFXDECODE(srmp3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)			/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,								/* no need for a vh_start: no tilemaps */
-	0,
-	mjyuugi_vh_screenrefresh,		/* just draw the sprites */
+	MDRV_VIDEO_UPDATE(mjyuugi)			/* just draw the sprites */
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_AY8910, &mjyuugi_ay8910_interface },
-		{ SOUND_MSM5205, &srmp2_msm5205_interface }
-	},
-	srmp2_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, mjyuugi_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, srmp2_msm5205_interface)
+MACHINE_DRIVER_END
+
 
 
 /***************************************************************************

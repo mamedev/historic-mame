@@ -69,7 +69,7 @@ static struct rectangle radarvisibleareaflip =
 
 
 
-void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( bosco )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -123,25 +123,21 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	}
 }
 
-int bosco_vh_start(void)
+VIDEO_START( bosco )
 {
 	int generator;
 	int x,y;
 	int set = 0;
 
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((tmpbitmap1 = bitmap_alloc(32*8,32*8)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
+	if ((tmpbitmap1 = auto_bitmap_alloc(32*8,32*8)) == 0)
 		return 1;
-	}
 
 	/* precalculate the star background */
 	/* this comes from the Galaxian hardware, Bosconian is probably different */
@@ -189,20 +185,6 @@ int bosco_vh_start(void)
 
 	return 0;
 }
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void bosco_vh_stop(void)
-{
-	bitmap_free(tmpbitmap1);
-	free(dirtybuffer2);
-	generic_vh_stop();
-}
-
 
 
 WRITE_HANDLER( bosco_videoram2_w )
@@ -261,7 +243,7 @@ WRITE_HANDLER( bosco_starcontrol_w )
   the main emulation engine.
 
 ***************************************************************************/
-void bosco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bosco )
 {
 	int offs,sx,sy;
 

@@ -9,10 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/tms34061.h"
 #include "cpu/m6809/m6809.h"
-
-
-void itech8_update_interrupts(int periodic, int tms34061, int blitter);
-void slikshot_extra_draw(struct mame_bitmap *bitmap);
+#include "itech8.h"
 
 
 /*************************************
@@ -109,7 +106,7 @@ static struct tms34061_interface tms34061intf =
  *
  *************************************/
 
-int itech8_vh_start(void)
+VIDEO_START( itech8 )
 {
 	/* initialize TMS34061 emulation */
     if (tms34061_start(&tms34061intf))
@@ -130,24 +127,11 @@ int itech8_vh_start(void)
 	return 0;
 }
 
-int slikshot_vh_start(void)
+VIDEO_START( slikshot )
 {
-	int result = itech8_vh_start();
+	int result = video_start_itech8();
 	slikshot = 1;
 	return result;
-}
-
-
-
-/*************************************
- *
- *	Video stop
- *
- *************************************/
-
-void itech8_vh_stop(void)
-{
-	tms34061_stop();
 }
 
 
@@ -663,7 +647,7 @@ READ_HANDLER( itech8_blitter_r )
 	int result = blitter_data[offset / 2];
 
 	/* debugging */
-	if (FULL_LOGGING) logerror("%04x:blitter_r(%02x)\n", cpu_getpreviouspc(), offset / 2);
+	if (FULL_LOGGING) logerror("%04x:blitter_r(%02x)\n", activecpu_get_previouspc(), offset / 2);
 
 	/* low bit seems to be ignored */
 	offset /= 2;
@@ -726,7 +710,7 @@ WRITE_HANDLER( itech8_blitter_w )
 	}
 
 	/* debugging */
-	if (FULL_LOGGING) logerror("%04x:blitter_w(%02x)=%02x\n", cpu_getpreviouspc(), offset, data);
+	if (FULL_LOGGING) logerror("%04x:blitter_w(%02x)=%02x\n", activecpu_get_previouspc(), offset, data);
 }
 
 
@@ -774,7 +758,7 @@ READ_HANDLER( itech8_tms34061_r )
  *
  *************************************/
 
-void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( itech8 )
 {
 	int y, ty;
 
@@ -784,7 +768,7 @@ void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	/* if we're blanked, just fill with black */
 	if (tms_state.blanked)
 	{
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[0], cliprect);
 		return;
 	}
 
@@ -801,9 +785,12 @@ void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		int halfwidth = (Machine->visible_area.max_x + 2) / 2;
 		UINT8 *base = &tms_state.vram[(~*itech8_display_page & 0x80) << 10];
 		UINT8 *latch = &tms_state.latchram[(~*itech8_display_page & 0x80) << 10];
+		
+		base += (cliprect->min_y - Machine->visible_area.min_y) * 256;
+		latch += (cliprect->min_y - Machine->visible_area.min_y) * 256;
 
 		/* now regenerate the bitmap */
-		for (ty = 0, y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++, ty++)
+		for (ty = 0, y = cliprect->min_y; y <= cliprect->max_y; y++, ty++)
 		{
 			UINT8 scanline[512];
 			int x;
@@ -813,7 +800,7 @@ void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 				scanline[x * 2 + 0] = (latch[256 * ty + x] & 0xf0) | (base[256 * ty + x] >> 4);
 				scanline[x * 2 + 1] = (latch[256 * ty + x] << 4) | (base[256 * ty + x] & 0x0f);
 			}
-			draw_scanline8(bitmap, 0, y, 2 * halfwidth, scanline, Machine->pens, -1);
+			draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], Machine->pens, -1);
 		}
 	}
 
@@ -825,15 +812,17 @@ void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	{
 		UINT8 *base = &tms_state.vram[tms_state.dispstart & ~0x30000];
 
+		base += (cliprect->min_y - Machine->visible_area.min_y) * 256;
+
 		/* now regenerate the bitmap */
-		for (ty = 0, y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++, ty++)
+		for (ty = 0, y = cliprect->min_y; y <= cliprect->max_y; y++, ty++)
 		{
-			draw_scanline8(bitmap, 0, y, 256, &base[0x20000 + 256 * ty], Machine->pens, -1);
-			draw_scanline8(bitmap, 0, y, 256, &base[0x00000 + 256 * ty], Machine->pens, 0);
+			draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &base[0x20000 + 256 * ty + cliprect->min_x], Machine->pens, -1);
+			draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &base[0x00000 + 256 * ty + cliprect->min_x], Machine->pens, 0);
 		}
 	}
 
 	/* extra rendering for slikshot */
 	if (slikshot)
-		slikshot_extra_draw(bitmap);
+		slikshot_extra_draw(bitmap, cliprect);
 }

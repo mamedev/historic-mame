@@ -73,8 +73,6 @@ WRITE16_HANDLER( f3_volume_w )
 
 static void timer_callback(int param)
 {
-	if (timer_mode==TIMER_SINGLESHOT) timer_68681=NULL;
-
 	/* Only cause IRQ if the mask is set to allow it */
 	if (m68681_imr&8) {
 		cpu_irq_line_vector_w(1, 6, vector_reg);
@@ -85,10 +83,7 @@ static void timer_callback(int param)
 
 void f3_68681_reset(void)
 {
-	if (timer_68681) {
-		timer_remove(timer_68681);
-		timer_68681=NULL;
-	}
+	timer_68681 = timer_alloc(timer_callback);
 }
 
 READ16_HANDLER(f3_68681_r)
@@ -127,9 +122,8 @@ WRITE16_HANDLER(f3_68681_w)
 					break;
 				case 3:
 					logerror("Counter:  X1/Clk - divided by 16, counter is %04x, so interrupt every %d cycles\n",counter,(M68000_CLOCK/M68681_CLOCK)*counter*16);
-					if (timer_68681) timer_remove(timer_68681);
 					timer_mode=TIMER_SINGLESHOT;
-					timer_68681=timer_set(TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter*16,1), 0, timer_callback);
+					timer_adjust(timer_68681, TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter*16,1), 0, 0);
 					break;
 				case 4:
 					logerror("Timer:  Unimplemented external IP2\n");
@@ -139,9 +133,8 @@ WRITE16_HANDLER(f3_68681_w)
 					break;
 				case 6:
 					logerror("Timer:  X1/Clk, counter is %04x, so interrupt every %d cycles\n",counter,(M68000_CLOCK/M68681_CLOCK)*counter);
-					if (timer_68681) timer_remove(timer_68681);
 					timer_mode=TIMER_PULSE;
-					timer_68681=timer_pulse(TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter,1), 0, timer_callback);
+					timer_adjust(timer_68681, TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter,1), 0, TIME_IN_CYCLES((M68000_CLOCK/M68681_CLOCK)*counter,1));
 					break;
 				case 7:
 					logerror("Timer:  Unimplemented X1/Clk - divided by 16\n");
@@ -175,7 +168,7 @@ WRITE16_HANDLER(f3_68681_w)
 
 READ16_HANDLER(es5510_dsp_r)
 {
-//	logerror("%06x: DSP read offset %04x (data is %04x)\n",cpu_get_pc(),offset,es5510_dsp_ram[offset]);
+//	logerror("%06x: DSP read offset %04x (data is %04x)\n",activecpu_get_pc(),offset,es5510_dsp_ram[offset]);
 //	if (es_tmp) return es5510_dsp_ram[offset];
 /*
 	switch (offset) {
@@ -202,7 +195,7 @@ WRITE16_HANDLER(es5510_dsp_w)
 	UINT8 *snd_mem = (UINT8 *)memory_region(REGION_SOUND1);
 
 //	if (offset>4 && offset!=0x80  && offset!=0xa0  && offset!=0xc0  && offset!=0xe0)
-//		logerror("%06x: DSP write offset %04x %04x\n",cpu_get_pc(),offset,data);
+//		logerror("%06x: DSP write offset %04x %04x\n",activecpu_get_pc(),offset,data);
 
 	COMBINE_DATA(&es5510_dsp_ram[offset]);
 

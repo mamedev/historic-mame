@@ -40,9 +40,8 @@
 #include "sndhrdw/taitosnd.h"
 #include "machine/eeprom.h"
 
-int superchs_vh_start (void);
-void superchs_vh_stop (void);
-void superchs_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( superchs );
+VIDEO_UPDATE( superchs );
 
 static UINT16 coin_word;
 static data32_t *superchs_ram;
@@ -100,7 +99,7 @@ static WRITE32_HANDLER( cpua_ctrl_w )
 	if (ACCESSING_MSB)
 	{
 		cpu_set_reset_line(2,(data &0x200) ? CLEAR_LINE : ASSERT_LINE);
-		if (data&0x8000) cpu_cause_interrupt(0,3); /* Guess */
+		if (data&0x8000) cpu_set_irq_line(0,3,HOLD_LINE); /* Guess */
 	}
 
 	if (ACCESSING_LSB32)
@@ -233,7 +232,7 @@ static WRITE32_HANDLER( superchs_stick_w )
 		different byte in this long word before the RTE.  I assume all but the last
 		(top) byte cause an IRQ with the final one being an ACK.  (Total guess but it works). */
 	if (mem_mask!=0x00ffffff)
-		cpu_cause_interrupt(0,3);
+		cpu_set_irq_line(0,3,HOLD_LINE);
 }
 
 /***********************************************************
@@ -405,7 +404,7 @@ static struct GfxDecodeInfo superchs_gfxdecodeinfo[] =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static void superchs_machine_reset(void)
+static MACHINE_INIT( superchs )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
@@ -451,7 +450,7 @@ static data8_t default_eeprom[128]={
 	0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( superchs )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -466,56 +465,42 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static struct MachineDriver machine_driver_superchs =
-{
-	{
-		{
-			CPU_M68EC020,
-			16000000,	/* 16 MHz */
-			superchs_readmem,superchs_writemem,0,0,
-			m68_level2_irq,1 /* VBL */
-		},
-		{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			16000000,	/* 16 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz */
-			superchs_cpub_readmem,superchs_cpub_writemem,0,0,
-			m68_level4_irq,1 /* VBL */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	8,	/* CPU slices - Need to interleave Cpu's 1 & 3 */
-	superchs_machine_reset,
+static MACHINE_DRIVER_START( superchs )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(superchs_readmem,superchs_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(superchs_cpub_readmem,superchs_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(8)	/* CPU slices - Need to interleave Cpu's 1 & 3 */
+
+	MDRV_MACHINE_INIT(superchs)
+	MDRV_NVRAM_HANDLER(superchs)
 
 	/* video hardware */
-	40*8, 32*8, { 0, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(superchs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	superchs_gfxdecodeinfo,
-	8192, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	superchs_vh_start,
-	superchs_vh_stop,
-	superchs_vh_screenrefresh,
+	MDRV_VIDEO_START(superchs)
+	MDRV_VIDEO_UPDATE(superchs)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_ES5505,
-			&es5505_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ES5505, es5505_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -555,7 +540,7 @@ ROM_END
 
 static READ32_HANDLER( main_cycle_r )
 {
-	if (cpu_get_pc()==0x702)
+	if (activecpu_get_pc()==0x702)
 		cpu_spinuntil_int();
 
 	return superchs_ram[0];
@@ -563,13 +548,13 @@ static READ32_HANDLER( main_cycle_r )
 
 static READ16_HANDLER( sub_cycle_r )
 {
-	if (cpu_get_pc()==0x454)
+	if (activecpu_get_pc()==0x454)
 		cpu_spinuntil_int();
 
 	return superchs_ram[2]&0xffff;
 }
 
-static void init_superchs(void)
+static DRIVER_INIT( superchs )
 {
 	/* Speedup handlers */
 	install_mem_read32_handler(0, 0x100000, 0x100003, main_cycle_r);

@@ -31,7 +31,7 @@ static int palettebank,charbank,spriterambank;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ironhors )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -133,7 +133,7 @@ if (data & 0x88) usrintf_showmessage("ironhors_palettebank_w %02x",data);
   the main emulation engine.
 
 ***************************************************************************/
-void ironhors_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ironhors )
 {
 	int offs,i;
 

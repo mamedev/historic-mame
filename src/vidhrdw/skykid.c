@@ -22,7 +22,7 @@ static int flipscreen;
 
 ***************************************************************************/
 
-void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( skykid )
 {
 	int i;
 	int bit0,bit1,bit2,bit3;
@@ -95,7 +95,7 @@ static void get_tile_info_bg(int tile_index)
 
 ***************************************************************************/
 
-int skykid_vh_start(void)
+VIDEO_START( skykid )
 {
 	background = tilemap_create(get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
@@ -162,7 +162,7 @@ WRITE_HANDLER( skykid_flipscreen_w )
 
 ***************************************************************************/
 
-static void skykid_draw_sprites(struct mame_bitmap *bitmap)
+static void skykid_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -208,7 +208,7 @@ static void skykid_draw_sprites(struct mame_bitmap *bitmap)
 						color,
 						flipx, flipy,
 						sx+x*16,sy+y*16,
-						&Machine->visible_area,
+						cliprect,
 						TRANSPARENCY_COLOR,255);
 				}
 			}
@@ -216,13 +216,13 @@ static void skykid_draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void skykid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( skykid )
 {
 	int offs;
 
-	tilemap_draw(bitmap,background,0,0);
+	tilemap_draw(bitmap,cliprect,background,0,0);
 	if ((priority & 0xf0) != 0x50)
-		skykid_draw_sprites(bitmap);
+		skykid_draw_sprites(bitmap,cliprect);
 
 	for (offs = 0x400 - 1; offs > 0; offs--){
 		{
@@ -253,9 +253,9 @@ void skykid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs] + (flipscreen << 8),
 					skykid_textram[offs+0x400] & 0x3f,
 					0,0,sx*8,sy*8,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
         }
 	}
 	if ((priority & 0xf0) == 0x50)
-		skykid_draw_sprites(bitmap);
+		skykid_draw_sprites(bitmap,cliprect);
 }

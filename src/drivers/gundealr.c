@@ -57,13 +57,13 @@ WRITE_HANDLER( gundealr_fg_videoram_w );
 WRITE_HANDLER( gundealr_fg_scroll_w );
 WRITE_HANDLER( yamyam_fg_scroll_w );
 WRITE_HANDLER( gundealr_flipscreen_w );
-void gundealr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int gundealr_vh_start(void);
+VIDEO_UPDATE( gundealr );
+VIDEO_START( gundealr );
 
 
 static int input_ports_hack;
 
-static int yamyam_interrupt(void)
+static INTERRUPT_GEN( yamyam_interrupt )
 {
 	if (cpu_getiloops() == 0)
 	{
@@ -74,10 +74,10 @@ static int yamyam_interrupt(void)
 			RAM[0xe005] = readinputport(3);	/* IN1 */
 			RAM[0xe006] = readinputport(2);	/* IN0 */
 		}
-		return 0xd7;	/* RST 10h vblank */
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h vblank */
 	}
-	if ((cpu_getiloops() & 1) == 1) return 0xcf;	/* RST 08h sound (hand tuned) */
-	else return ignore_interrupt();
+	else if ((cpu_getiloops() & 1) == 1)
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h sound (hand tuned) */
 }
 
 static WRITE_HANDLER( yamyam_bankswitch_w )
@@ -480,42 +480,30 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_gundealr =
-{
+static MACHINE_DRIVER_START( gundealr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000,	/* 8 MHz ??? */
-			readmem,writemem,readport,writeport,
-			yamyam_interrupt,4	/* ? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(yamyam_interrupt,4)	/* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gundealr_vh_start,
-	0,
-	gundealr_vh_screenrefresh,
+	MDRV_VIDEO_START(gundealr)
+	MDRV_VIDEO_UPDATE(gundealr)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -588,12 +576,12 @@ ROM_END
 
 
 
-static void init_gundealr(void)
+static DRIVER_INIT( gundealr )
 {
 	input_ports_hack = 0;
 }
 
-static void init_yamyam(void)
+static DRIVER_INIT( yamyam )
 {
 	input_ports_hack = 1;
 	install_mem_write_handler(0, 0xe000, 0xe000, yamyam_protection_w);

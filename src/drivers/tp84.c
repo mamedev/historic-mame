@@ -93,11 +93,10 @@ WRITE_HANDLER( tp84_videoram2_w );
 WRITE_HANDLER( tp84_colorram2_w );
 WRITE_HANDLER( tp84_col0_w );
 READ_HANDLER( tp84_scanline_r );
-void tp84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int tp84_vh_start(void);
-void tp84_vh_stop(void);
-void tp84_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int tp84_6809_interrupt(void);
+PALETTE_INIT( tp84 );
+VIDEO_START( tp84 );
+VIDEO_UPDATE( tp84 );
+INTERRUPT_GEN( tp84_6809_interrupt );
 
 
 static unsigned char *sharedram;
@@ -152,7 +151,7 @@ static WRITE_HANDLER( tp84_filter_w )
 
 static WRITE_HANDLER( tp84_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(2,0xff);
+	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 
@@ -359,55 +358,41 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_tp84 =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1500000,	/* ??? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809,
-			1500000,	/* ??? */
-			readmem_cpu2,writemem_cpu2,0,0,
-			tp84_6809_interrupt,256
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	0,
+static MACHINE_DRIVER_START( tp84 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 1500000)	/* ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809, 1500000)	/* ??? */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(tp84_6809_interrupt,256)
+
+	MDRV_CPU_ADD(Z80,14318180/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,				/* GfxDecodeInfo * */
-	256,4096, /* see tp84_vh_convert_color_prom for explanation */
-	tp84_vh_convert_color_prom,							/* convert color prom routine */
-
-	VIDEO_TYPE_RASTER,
-	0,							/* vh_init routine */
-	tp84_vh_start,			/* vh_start routine */
-	tp84_vh_stop,			/* vh_stop routine */
-	tp84_vh_screenrefresh,	/* vh_update routine */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(4096)
+	
+	MDRV_PALETTE_INIT(tp84)
+	MDRV_VIDEO_START(tp84)
+	MDRV_VIDEO_UPDATE(tp84)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 

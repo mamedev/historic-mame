@@ -14,10 +14,9 @@
 extern UINT8 arabian_video_control;
 extern UINT8 arabian_flip_screen;
 
-int arabian_vh_start(void);
-void arabian_vh_stop(void);
-void arabian_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void arabian_vh_convert_color_prom(unsigned char *obsolete, unsigned short *colortable, const unsigned char *color_prom);
+PALETTE_INIT( arabian );
+VIDEO_START( arabian );
+VIDEO_UPDATE( arabian );
 
 WRITE_HANDLER( arabian_blitter_w );
 WRITE_HANDLER( arabian_videoram_w );

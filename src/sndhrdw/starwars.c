@@ -51,7 +51,7 @@ static int main_data;   /* data for the main  cpu */
 static void snd_interrupt(int foo)
 {
 	irq_flag |= 0x80; /* set timer interrupt flag */
-	cpu_cause_interrupt(1, M6809_INT_IRQ);
+	cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 
@@ -227,7 +227,7 @@ WRITE_HANDLER( starwars_main_wr_w )
 	port_A |= 0x80;  /* command from main cpu pending */
 	sound_data = data;
 	if (PA7_irq)
-		cpu_cause_interrupt(1, M6809_INT_IRQ);
+		cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 

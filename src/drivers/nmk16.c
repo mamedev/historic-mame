@@ -123,19 +123,18 @@ WRITE16_HANDLER( bioship_bank_w );
 WRITE16_HANDLER( mustang_scroll_w );
 WRITE16_HANDLER( vandyke_scroll_w );
 
-int macross_vh_start(void);
-int gunnail_vh_start(void);
-int macross2_vh_start(void);
-int bjtwin_vh_start(void);
-int bioship_vh_start(void);
-int strahl_vh_start(void);
-void nmk_vh_stop(void);
-void bioship_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void strahl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void macross_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void gunnail_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void bjtwin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void nmk_eof_callback(void);
+VIDEO_START( macross );
+VIDEO_START( gunnail );
+VIDEO_START( macross2 );
+VIDEO_START( bjtwin );
+VIDEO_START( bioship );
+VIDEO_START( strahl );
+VIDEO_UPDATE( bioship );
+VIDEO_UPDATE( strahl );
+VIDEO_UPDATE( macross );
+VIDEO_UPDATE( gunnail );
+VIDEO_UPDATE( bjtwin );
+VIDEO_EOF( nmk );
 
 
 
@@ -200,7 +199,7 @@ static void setvector_callback(int param)
 	}
 }
 
-static void mustang_init_sound(void)
+static MACHINE_INIT( mustang_sound )
 {
 	setvector_callback(VECTOR_INIT);
 }
@@ -249,7 +248,7 @@ static data16_t *ram;
 
 static WRITE16_HANDLER( macross_mcu_w )
 {
-logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
+logerror("%04x: mcu_w %02x\n",activecpu_get_pc(),data);
 }
 
 static READ16_HANDLER( macross_mcu_r )
@@ -262,10 +261,10 @@ static READ16_HANDLER( macross_mcu_r )
 							0x8b, 0xc7, 0x00 };
 	int res;
 
-	if (cpu_get_pc()==0x8aa) res = (ram[0x064/2])|0x20; /* Task Force Harrier */
-	else if (cpu_get_pc()==0x8ce) res = (ram[0x064/2])|0x60; /* Task Force Harrier */
-	else if (cpu_get_pc() == 0x0332	/* Macross */
-			||	cpu_get_pc() == 0x64f4)	/* GunNail */
+	if (activecpu_get_pc()==0x8aa) res = (ram[0x064/2])|0x20; /* Task Force Harrier */
+	else if (activecpu_get_pc()==0x8ce) res = (ram[0x064/2])|0x60; /* Task Force Harrier */
+	else if (activecpu_get_pc() == 0x0332	/* Macross */
+			||	activecpu_get_pc() == 0x64f4)	/* GunNail */
 		res = ram[0x0f6/2];
 	else
 	{
@@ -273,7 +272,7 @@ static READ16_HANDLER( macross_mcu_r )
 		if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
 	}
 
-logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
+logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
 
 	return res;
 }
@@ -292,14 +291,14 @@ static READ16_HANDLER( urashima_mcu_r )
 	res = resp[respcount++];
 	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
 
-logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
+logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
 
 	return res;
 }
 
 static WRITE16_HANDLER( tharrier_mcu_control_w )
 {
-//	logerror("%04x: mcu_control_w %02x\n",cpu_get_pc(),data);
+//	logerror("%04x: mcu_control_w %02x\n",activecpu_get_pc(),data);
 }
 
 static READ16_HANDLER( tharrier_mcu_r )
@@ -434,7 +433,7 @@ MEMORY_END
 
 static READ16_HANDLER(logr)
 {
-//logerror("Read input port 1 %05x\n",cpu_get_pc());
+//logerror("Read input port 1 %05x\n",activecpu_get_pc());
 return ~input_port_0_word_r(0,0);
 }
 
@@ -2336,529 +2335,387 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
-static int nmk_interrupt(void)
+static INTERRUPT_GEN( nmk_interrupt )
 {
-	if (cpu_getiloops() == 0) return 4;
-	return 2;
+	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 4, HOLD_LINE);
+	else cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
 
-static const struct MachineDriver machine_driver_urashima =
-{
+static MACHINE_DRIVER_START( urashima )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz ? */
-			urashima_readmem,urashima_writemem,0,0,
-			ignore_interrupt,1,//m68_level4_irq,1,
-//			m68_level1_irq,112	/* ???????? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
+	MDRV_CPU_MEMORY(urashima_readmem,urashima_writemem)
+//	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)	/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_vandyke =
-{
+
+static MACHINE_DRIVER_START( vandyke )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz ? */
-			vandyke_readmem,vandyke_writemem,0,0,
-			nmk_interrupt,2,
-			m68_level1_irq,112	/* ???????? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
+	MDRV_CPU_MEMORY(vandyke_readmem,vandyke_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		/* there's also a YM2203 */
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	/* there's also a YM2203 */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tharrier =
-{
+
+static MACHINE_DRIVER_START( tharrier )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz */
-			tharrier_readmem,tharrier_writemem,0,0,
-			nmk_interrupt,2,
-			m68_level1_irq,112	/* ???????? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000, /* 4 MHz */
-			tharrier_sound_readmem,tharrier_sound_writemem,tharrier_sound_readport,tharrier_sound_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	mustang_init_sound,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
+	MDRV_CPU_MEMORY(tharrier_readmem,tharrier_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 4 MHz */
+	MDRV_CPU_MEMORY(tharrier_sound_readmem,tharrier_sound_writemem)
+	MDRV_CPU_PORTS(tharrier_sound_readport,tharrier_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(mustang_sound)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	tharrier_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(tharrier_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface_single
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_single)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_mustang =
-{
+
+static MACHINE_DRIVER_START( mustang )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz ? */
-			mustang_readmem,mustang_writemem,0,0,
-			nmk_interrupt,2,
-			m68_level1_irq,112	/* ???????? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,  /* the Z80 is only on the bootleg, change later */
-			4000000, /* 4 MHz ? */
-			mustang_sound_readmem,mustang_sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	mustang_init_sound,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
+	MDRV_CPU_MEMORY(mustang_readmem,mustang_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_CPU_ADD(Z80,4000000)  /* the Z80 is only on the bootleg, change later */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(mustang_sound_readmem,mustang_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(mustang_sound)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface_single
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_single)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_acrobatm =
-{
+static MACHINE_DRIVER_START( acrobatm )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz ? 12 MHz? */
-			acrobatm_readmem,acrobatm_writemem,0,0,
-			nmk_interrupt,2,
-			m68_level1_irq,112	/* ???????? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? 12 MHz? */
+	MDRV_CPU_MEMORY(acrobatm_readmem,acrobatm_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		/* there's also a YM2203? */
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	/* there's also a YM2203? */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bioship =
-{
+
+static MACHINE_DRIVER_START( bioship )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000, /* 16 MHz ? */
-			bioship_readmem,bioship_writemem,0,0,
-			nmk_interrupt,2,
-			m68_level1_irq,112	/* ???????? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 16000000) /* 16 MHz ? */
+	MDRV_CPU_MEMORY(bioship_readmem,bioship_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	bioship_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(bioship_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	bioship_vh_start,
-	nmk_vh_stop,
-	bioship_vh_screenrefresh,
+	MDRV_VIDEO_START(bioship)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(bioship)
 
-	0,0,0,0,
-	{
-		/* there's also a YM2203 */
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	/* there's also a YM2203 */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tdragon =
-{
+
+static MACHINE_DRIVER_START( tdragon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			tdragon_readmem,tdragon_writemem,0,0,
-			m68_level4_irq,1,
-			m68_level1_irq,112	/* ?? drives music */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(tdragon_readmem,tdragon_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ?? drives music */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_strahl =
-{
+
+static MACHINE_DRIVER_START( strahl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000, /* 12 MHz ? */
-			strahl_readmem,strahl_writemem,0,0,
-			nmk_interrupt,2,
-			m68_level1_irq,112	/* ???????? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000) /* 12 MHz ? */
+	MDRV_CPU_MEMORY(strahl_readmem,strahl_writemem)
+	MDRV_CPU_VBLANK_INT(nmk_interrupt,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	strahl_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(strahl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	strahl_vh_start,
-	nmk_vh_stop,
-	strahl_vh_screenrefresh,
+	MDRV_VIDEO_START(strahl)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(strahl)
 
-	0,0,0,0,
-	{
-		/* there's also a YM2203 */
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	/* there's also a YM2203 */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_hachamf =
-{
+
+static MACHINE_DRIVER_START( hachamf )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz ? */
-			hachamf_readmem,hachamf_writemem,0,0,
-			m68_level4_irq,1,
-			m68_level1_irq,112	/* ???????? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
+	MDRV_CPU_MEMORY(hachamf_readmem,hachamf_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		/* there's also a YM2203 */
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	/* there's also a YM2203 */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_macross =
-{
+
+static MACHINE_DRIVER_START( macross )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz ? */
-			macross_readmem,macross_writemem,0,0,
-			m68_level4_irq,1,
-			m68_level1_irq,112	/* ???????? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
+	MDRV_CPU_MEMORY(macross_readmem,macross_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		/* there's also a YM2203 */
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	/* there's also a YM2203 */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gunnail =
-{
+
+static MACHINE_DRIVER_START( gunnail )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz? */
-			gunnail_readmem,gunnail_writemem,0,0,
-			m68_level4_irq,1,
-			m68_level1_irq,112
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz? */
+	MDRV_CPU_MEMORY(gunnail_readmem,gunnail_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
-	macross_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	gunnail_vh_start,
-	nmk_vh_stop,
-	gunnail_vh_screenrefresh,
+	MDRV_VIDEO_START(gunnail)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(gunnail)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_macross2 =
-{
+
+static MACHINE_DRIVER_START( macross2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz ? */
-			macross2_readmem,macross2_writemem,0,0,
-			m68_level4_irq,1,
-			m68_level1_irq,112	/* ???????? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000, /* 4 MHz ? */
-			macross2_sound_readmem,macross2_sound_writemem,macross2_sound_readport,macross2_sound_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz ? */
+	MDRV_CPU_MEMORY(macross2_readmem,macross2_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ???????? */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 4 MHz ? */
+	MDRV_CPU_MEMORY(macross2_sound_readmem,macross2_sound_writemem)
+	MDRV_CPU_PORTS(macross2_sound_readport,macross2_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
-	macross2_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(macross2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	macross2_vh_start,
-	nmk_vh_stop,
-	macross_vh_screenrefresh,
+	MDRV_VIDEO_START(macross2)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(macross)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bjtwin =
-{
+
+static MACHINE_DRIVER_START( bjtwin )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz? It's a P12, but xtals are 10MHz and 16MHz */
-			bjtwin_readmem,bjtwin_writemem,0,0,
-			m68_level4_irq,1,
-			m68_level1_irq,112	/* ?? drives music */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz? It's a P12, but xtals are 10MHz and 16MHz */
+	MDRV_CPU_MEMORY(bjtwin_readmem,bjtwin_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,112)/* ?? drives music */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
-	bjtwin_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(bjtwin_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	nmk_eof_callback,
-	bjtwin_vh_start,
-	nmk_vh_stop,
-	bjtwin_vh_screenrefresh,
+	MDRV_VIDEO_START(bjtwin)
+	MDRV_VIDEO_EOF(nmk)
+	MDRV_VIDEO_UPDATE(bjtwin)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -3588,19 +3445,19 @@ static void decode_tdragonb(void)
 	}
 }
 
-static void init_nmk(void)
+static DRIVER_INIT( nmk )
 {
 	decode_gfx();
 }
 
-static void init_hachamf(void)
+static DRIVER_INIT( hachamf )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 
 	rom[0x0006/2] = 0x7dc2;	/* replace reset vector with the "real" one */
 }
 
-static void init_acrobatm(void)
+static DRIVER_INIT( acrobatm )
 {
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
 
@@ -3614,7 +3471,7 @@ static void init_acrobatm(void)
 	RAM[0x97e/2] = 0x0;
 }
 
-static void init_tdragonb(void)
+static DRIVER_INIT( tdragonb )
 {
 	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
 
@@ -3625,7 +3482,7 @@ static void init_tdragonb(void)
 	ROM[0x00308/2] = 0x4e71; /* Sprite Problem */
 }
 
-static void init_tdragon(void)
+static DRIVER_INIT( tdragon )
 {
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
 
@@ -3633,7 +3490,7 @@ static void init_tdragon(void)
 	RAM[0x94b2/2] = 0x92f4;
 }
 
-static void init_strahl(void)
+static DRIVER_INIT( strahl )
 {
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
 
@@ -3647,7 +3504,7 @@ static void init_strahl(void)
 	RAM[0x8e2/2] = 0x4e71;
 }
 
-static void init_bioship(void)
+static DRIVER_INIT( bioship )
 {
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
 
@@ -3658,7 +3515,7 @@ static void init_bioship(void)
 	RAM[0xe79a/2] = 0x4e71;
 }
 
-static void init_bjtwin(void)
+static DRIVER_INIT( bjtwin )
 {
 	init_nmk();
 

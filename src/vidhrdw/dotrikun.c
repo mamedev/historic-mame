@@ -60,18 +60,18 @@ WRITE_HANDLER( dotrikun_videoram_w )
 			color = Machine->pens[((data >> i) & 0x01)];
 
 			/* I think the video hardware doubles pixels, screen would be too small otherwise */
-			plot_pixel(Machine->scrbitmap, x + 2*(7 - i),   y,   color);
-			plot_pixel(Machine->scrbitmap, x + 2*(7 - i)+1, y,   color);
-			plot_pixel(Machine->scrbitmap, x + 2*(7 - i),   y+1, color);
-			plot_pixel(Machine->scrbitmap, x + 2*(7 - i)+1, y+1, color);
+			plot_pixel(tmpbitmap, x + 2*(7 - i),   y,   color);
+			plot_pixel(tmpbitmap, x + 2*(7 - i)+1, y,   color);
+			plot_pixel(tmpbitmap, x + 2*(7 - i),   y+1, color);
+			plot_pixel(tmpbitmap, x + 2*(7 - i)+1, y+1, color);
 		}
 	}
 }
 
 
-void dotrikun_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( dotrikun )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int offs;
 
@@ -80,4 +80,5 @@ void dotrikun_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		for (offs = 0; offs < videoram_size; offs++)
 			dotrikun_videoram_w(offs,videoram[offs]);
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

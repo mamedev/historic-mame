@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "atarisy1.h"
 
 
 
@@ -78,6 +79,8 @@ static struct GfxLayout objlayout =
 static void update_timers(int scanline);
 static int decode_gfx(UINT16 *pflookup, UINT16 *molookup);
 static int get_bank(UINT8 prom1, UINT8 prom2, int bpp);
+static void int3_callback(int scanline);
+static void int3off_callback(int param);
 
 
 
@@ -87,7 +90,7 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp);
  *
  *************************************/
 
-int atarisys1_vh_start(void)
+VIDEO_START( atarisy1 )
 {
 	static const struct ataripf_desc pfdesc =
 	{
@@ -166,35 +169,35 @@ int atarisys1_vh_start(void)
 	int i, size;
 
 	/* allocate the temp bitmap #1 */
-	trans_bitmap_pf = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	trans_bitmap_pf = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
 	if (!trans_bitmap_pf)
-		goto cant_alloc_bitmap_pf;
+		return 1;
 
 	/* allocate the temp bitmap #2 */
-	trans_bitmap_mo = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	trans_bitmap_mo = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
 	if (!trans_bitmap_mo)
-		goto cant_alloc_bitmap_mo;
+		return 1;
 
 	/* allocate the priority copy bitmap */
-	priority_copy = bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
+	priority_copy = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 8);
 	if (!priority_copy)
-		goto cant_alloc_bitmap_copy;
+		return 1;
 
 	/* first decode the graphics */
 	if (!decode_gfx(pftable, motable))
-		goto cant_decode_gfx;
+		return 1;
 
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
-		goto cant_create_an;
+		return 1;
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 
 	/* modify the playfield lookup table */
 	pflookup = ataripf_get_lookup(0, &size);
@@ -226,42 +229,9 @@ int atarisys1_vh_start(void)
 	/* reset the statics */
 	atarimo_set_yscroll(0, 256, 0);
 	next_timer_scanline = -1;
-	scanline_timer = NULL;
-	int3off_timer = NULL;
+	scanline_timer = timer_alloc(int3_callback);
+	int3off_timer = timer_alloc(int3off_callback);
 	return 0;
-
-	/* error cases */
-cant_create_mo:
-	ataripf_free();
-cant_create_pf:
-	atarian_free();
-cant_create_an:
-cant_decode_gfx:
-	bitmap_free(priority_copy);
-cant_alloc_bitmap_copy:
-	bitmap_free(trans_bitmap_mo);
-cant_alloc_bitmap_mo:
-	bitmap_free(trans_bitmap_pf);
-cant_alloc_bitmap_pf:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void atarisys1_vh_stop(void)
-{
-	atarian_free();
-	atarimo_free();
-	ataripf_free();
-	bitmap_free(priority_copy);
-	bitmap_free(trans_bitmap_mo);
-	bitmap_free(trans_bitmap_pf);
 }
 
 
@@ -390,9 +360,6 @@ static void int3off_callback(int param)
 {
 	/* clear the state */
 	atarigen_scanline_int_ack_w(0, 0, 0);
-
-	/* make this timer go away */
-	int3off_timer = NULL;
 }
 
 
@@ -402,12 +369,9 @@ static void int3_callback(int scanline)
 	atarigen_scanline_int_gen();
 
 	/* set a timer to turn it off */
-	if (int3off_timer)
-		timer_remove(int3off_timer);
-	int3off_timer = timer_set(cpu_getscanlineperiod(), 0, int3off_callback);
+	timer_adjust(int3off_timer, cpu_getscanlineperiod(), 0, 0);
 
 	/* determine the time of the next one */
-	scanline_timer = NULL;
 	next_timer_scanline = -1;
 	update_timers(scanline);
 }
@@ -482,14 +446,11 @@ static void update_timers(int scanline)
 	{
 		next_timer_scanline = best;
 
-		/* remove the old one */
-		if (scanline_timer)
-			timer_remove(scanline_timer);
-		scanline_timer = NULL;
-
 		/* set a new one */
 		if (best != -1)
-			scanline_timer = timer_set(cpu_getscanlinetime(best), best, int3_callback);
+			timer_adjust(scanline_timer, cpu_getscanlinetime(best), best, 0);
+		else
+			timer_adjust(scanline_timer, TIME_NEVER, 0, 0);
 	}
 }
 
@@ -640,12 +601,12 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void atarisys1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( atarisy1 )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	atarimo_render(0, bitmap, overrender_callback, NULL);
-	atarian_render(0, bitmap);
+	ataripf_render(0, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
+	atarian_render(0, bitmap, cliprect);
 }
 
 

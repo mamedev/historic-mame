@@ -80,6 +80,7 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
+#include "gridlee.h"
 #include <math.h>
 
 
@@ -90,8 +91,6 @@
 /* local variables */
 static UINT8 last_analog_input[2];
 static UINT8 last_analog_output[2];
-static data8_t *nvram;
-static size_t nvram_size;
 
 /* random number generator states */
 static UINT8 *poly17 = NULL;
@@ -101,18 +100,6 @@ static UINT8 *rand17 = NULL;
 
 /* local prototypes */
 static void poly17_init(void);
-
-
-/* video driver data & functions */
-extern UINT8 gridlee_cocktail_flip;
-int gridlee_vh_start(void);
-void gridlee_vh_stop(void);
-void gridlee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void gridlee_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-WRITE_HANDLER( gridlee_cocktail_flip_w );
-WRITE_HANDLER( gridlee_videoram_w );
-WRITE_HANDLER( gridlee_palette_select_w );
-
 
 
 /*************************************
@@ -162,7 +149,7 @@ static void firq_timer(int param)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( gridlee )
 {
 	/* start timers to generate interrupts */
 	timer_set(cpu_getscanlinetime(0), 0, irq_timer);
@@ -236,13 +223,8 @@ static void poly17_init(void)
 	UINT32 i, x = 0;
 	UINT8 *p, *r;
 
-	/* free stale memory */
-	if (poly17)
-		free(poly17);
-	poly17 = rand17 = NULL;
-
 	/* allocate memory */
-	p = poly17 = malloc(2 * (POLY17_SIZE + 1));
+	p = poly17 = auto_malloc(2 * (POLY17_SIZE + 1));
 	if (!poly17)
 		return;
 	r = rand17 = poly17 + POLY17_SIZE + 1;
@@ -311,24 +293,6 @@ static WRITE_HANDLER( gridlee_coin_counter_w )
 
 /*************************************
  *
- *	NVRAM handling
- *
- *************************************/
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, nvram_size);
-	else if (file)
-		osd_fread(file, nvram, nvram_size);
-	else
-		memset(nvram, 0, nvram_size);
-}
-
-
-
-/*************************************
- *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -358,9 +322,8 @@ static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x9200, 0x9200, gridlee_palette_select_w },
 	{ 0x9380, 0x9380, watchdog_reset_w },
 	{ 0x9700, 0x9700, MWA_NOP },
-/*	{ 0x9828, 0x982c, unknown - sound related? */
-/*	{ 0x9830, 0x983f, unknown - sound related? */
-	{ 0x9c00, 0x9cff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x9828, 0x993f, gridlee_sound_w },
+	{ 0x9c00, 0x9cff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0xa000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -436,45 +399,65 @@ INPUT_PORTS_END
 
 /*************************************
  *
+ *	Sound definitions
+ *
+ *************************************/
+
+static struct CustomSound_interface custom_interface =
+{
+	gridlee_sh_start
+};
+
+
+static const char *sample_names[] =
+{
+	"gridlee",
+	"bounce1.wav",
+	"bounce2.wav",
+	0	/* end of array */
+};
+
+static struct Samplesinterface samples_interface =
+{
+	8,	/* 8 channels */
+	40, /* volume */
+	sample_names
+};
+
+
+
+/*************************************
+ *
  *	Machine driver
  *
  *************************************/
 
-static struct MachineDriver machine_driver_gridlee =
-{
+static MACHINE_DRIVER_START( gridlee )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			5000000/4,                     /* 5MHz/4 */
-			readmem_cpu1,writemem_cpu1,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M6809, 5000000/4)
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_INIT(gridlee)
+	MDRV_NVRAM_HANDLER(generic_0fill)
+	
 	/* video hardware */
-	256, 240, { 0, 255, 0, 239 },
-	0,
-	2048,2048,
-	gridlee_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	gridlee_vh_start,
-	gridlee_vh_stop,
-	gridlee_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(256, 240)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_PALETTE_INIT(gridlee)
+	MDRV_VIDEO_START(gridlee)
+	MDRV_VIDEO_UPDATE(gridlee)
+	
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ 0 }
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(CUSTOM,  custom_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -513,4 +496,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1983, gridlee, 0,        gridlee, gridlee, 0,     ROT0, "Videa", "Gridlee" )
+GAMEX( 1983, gridlee, 0,        gridlee, gridlee, 0,     ROT0, "Videa", "Gridlee", GAME_IMPERFECT_SOUND )

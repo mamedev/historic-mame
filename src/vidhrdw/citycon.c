@@ -59,7 +59,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int citycon_vh_start(void)
+VIDEO_START( citycon )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,citycon_scan,TILEMAP_TRANSPARENT,8,8,128,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,citycon_scan,TILEMAP_OPAQUE,     8,8,128,32);
@@ -124,7 +124,7 @@ WRITE_HANDLER( citycon_background_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -148,7 +148,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				spriteram[offs + 2] & 0x0f,
 				flipx,flip_screen,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -169,7 +169,7 @@ INLINE void changecolor_RRRRGGGGBBBBxxxx(int color,int indx)
 	palette_set_color(color,r,g,b);
 }
 
-void citycon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( citycon )
 {
 	int offs,scroll;
 
@@ -190,7 +190,7 @@ void citycon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	for (offs = 6;offs < 32;offs++)
 		tilemap_set_scrollx(fg_tilemap,offs,scroll);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

@@ -2114,7 +2114,7 @@ void z180_set_context (void *src)
 /****************************************************************************
  * Get a pointer to a cycle count table
  ****************************************************************************/
-void *z180_get_cycle_table (int which)
+const void *z180_get_cycle_table (int which)
 {
 	if (which >= 0 && which <= Z180_TABLE_xycb)
 		return cc[which];

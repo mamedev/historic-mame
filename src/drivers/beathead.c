@@ -102,31 +102,7 @@
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-extern data32_t *	beathead_vram_bulk_latch;
-extern data32_t *	beathead_palette_select;
-
-int beathead_vh_start(void);
-void beathead_vh_stop(void);
-void beathead_scanline_update(int scanline);
-void beathead_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-WRITE32_HANDLER( beathead_vram_transparent_w );
-WRITE32_HANDLER( beathead_vram_bulk_w );
-WRITE32_HANDLER( beathead_vram_latch_w );
-WRITE32_HANDLER( beathead_vram_copy_w );
-WRITE32_HANDLER( beathead_finescroll_w );
-WRITE32_HANDLER( beathead_palette_w );
-READ32_HANDLER( beathead_hsync_ram_r );
-WRITE32_HANDLER( beathead_hsync_ram_w );
+#include "beathead.h"
 
 
 
@@ -146,7 +122,6 @@ static UINT8		irq_enable[3];
 static UINT8		irq_state[3];
 
 static UINT8		eeprom_enabled;
-static data32_t *	eeprom_data;
 
 
 #define MAX_SCANLINES	262
@@ -184,7 +159,7 @@ static void scanline_callback(int scanline)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( beathead )
 {
 	/* reset the common subsystems */
 	atarigen_eeprom_reset();
@@ -267,23 +242,12 @@ static READ32_HANDLER( interrupt_control_r )
  *
  *************************************/
 
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, eeprom_data, 0x800);
-	else if (file)
-		osd_fread(file, eeprom_data, 0x800);
-	else
-		memset(eeprom_data, 0xff, 0x800);
-}
-
-
 static WRITE32_HANDLER( eeprom_data_w )
 {
 	if (eeprom_enabled)
 	{
 		mem_mask |= 0xffffff00;
-		COMBINE_DATA(&eeprom_data[offset]);
+		COMBINE_DATA(&((data32_t *)generic_nvram)[offset]);
 		eeprom_enabled = 0;
 	}
 }
@@ -396,7 +360,7 @@ MEMORY_END
 static MEMORY_WRITE32_START( writemem )
 	{ 0x00000000, 0x0001ffff, MWA32_RAM, &ram_base },
 	{ 0x01800000, 0x01bfffff, MWA32_ROM, &rom_base },
-	{ 0x40000000, 0x400007ff, eeprom_data_w, &eeprom_data },
+	{ 0x40000000, 0x400007ff, eeprom_data_w, (data32_t **)&generic_nvram, &generic_nvram_size },
 	{ 0x41000000, 0x41000003, sound_data_w },
 	{ 0x41000100, 0x4100011f, interrupt_control_w },
 	{ 0x41000208, 0x4100020f, sound_reset_w },
@@ -472,38 +436,30 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_beathead =
-{
+static MACHINE_DRIVER_START( beathead )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_ASAP,			/* verified */
-			ATARI_CLOCK_14MHz,
-			readmem,writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_III_CPU
-	},
-	60, (int)(((262. - 240.) / 262.) * 1000000. / 60.),
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(ASAP, ATARI_CLOCK_14MHz)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((int)(((262. - 240.) / 262.) * 1000000. / 60.))
+	
+	MDRV_MACHINE_INIT(beathead)
+	MDRV_NVRAM_HANDLER(generic_1fill)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	0,
-	0x8000, 0,
-	0,
-
-	VIDEO_TYPE_RASTER  | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	beathead_vh_start,
-	beathead_vh_stop,
-	beathead_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_PALETTE_LENGTH(32768)
+	
+	MDRV_VIDEO_START(beathead)
+	MDRV_VIDEO_UPDATE(beathead)
+	
 	/* sound hardware */
-	JSA_III_MONO(REGION_SOUND1),
-	nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_iii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -554,7 +510,7 @@ static data32_t *speedup_data;
 static READ32_HANDLER( speedup_r )
 {
 	int result = *speedup_data;
-	if ((cpu_getpreviouspc() & 0xfffff) == 0x006f0 && result == cpu_get_reg(ASAP_R3))
+	if ((activecpu_get_previouspc() & 0xfffff) == 0x006f0 && result == activecpu_get_reg(ASAP_R3))
 		cpu_spinuntil_int();
 	return result;
 }
@@ -564,11 +520,11 @@ static data32_t *movie_speedup_data;
 static READ32_HANDLER( movie_speedup_r )
 {
 	int result = *movie_speedup_data;
-	if ((cpu_getpreviouspc() & 0xfffff) == 0x00a88 && (cpu_get_reg(ASAP_R28) & 0xfffff) == 0x397c0 &&
-		movie_speedup_data[4] == cpu_get_reg(ASAP_R1))
+	if ((activecpu_get_previouspc() & 0xfffff) == 0x00a88 && (activecpu_get_reg(ASAP_R28) & 0xfffff) == 0x397c0 &&
+		movie_speedup_data[4] == activecpu_get_reg(ASAP_R1))
 	{
 		UINT32 temp = (INT16)result + movie_speedup_data[4] * 262;
-		if (temp - (UINT32)cpu_get_reg(ASAP_R15) < (UINT32)cpu_get_reg(ASAP_R23))
+		if (temp - (UINT32)activecpu_get_reg(ASAP_R15) < (UINT32)activecpu_get_reg(ASAP_R23))
 			cpu_spinuntil_int();
 	}
 	return result;
@@ -582,7 +538,7 @@ static READ32_HANDLER( movie_speedup_r )
  *
  *************************************/
 
-static void init_beathead(void)
+static DRIVER_INIT( beathead )
 {
 	/* initialize the common systems */
 	atarigen_eeprom_default = NULL;

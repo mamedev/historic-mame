@@ -164,20 +164,18 @@ WRITE16_HANDLER( toaplan2_1_scroll_reg_data_w );
 WRITE16_HANDLER( batrider_objectbank_w );
 WRITE16_HANDLER( batrider_textdata_decode );
 
-void toaplan2_0_eof_callback(void);
-void toaplan2_1_eof_callback(void);
-void batrider_0_eof_callback(void);
-int  toaplan2_0_vh_start(void);
-int  toaplan2_1_vh_start(void);
-int  truxton2_0_vh_start(void);
-int  batrider_0_vh_start(void);
-void toaplan2_0_vh_stop(void);
-void toaplan2_1_vh_stop(void);
-void toaplan2_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void truxton2_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void dogyuun_1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void batsugun_1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void batrider_0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_EOF( toaplan2_0 );
+VIDEO_EOF( toaplan2_1 );
+VIDEO_EOF( batrider_0 );
+VIDEO_START( toaplan2_0 );
+VIDEO_START( toaplan2_1 );
+VIDEO_START( truxton2_0 );
+VIDEO_START( batrider_0 );
+VIDEO_UPDATE( toaplan2_0 );
+VIDEO_UPDATE( truxton2_0 );
+VIDEO_UPDATE( dogyuun_1 );
+VIDEO_UPDATE( batsugun_1 );
+VIDEO_UPDATE( batrider_0 );
 
 
 /********* Video wrappers for PIPIBIBI *********/
@@ -193,7 +191,7 @@ WRITE16_HANDLER( pipibibi_scroll_w );
   Initialisation handlers
 ***************************************************************************/
 
-static void init_toaplan2(void)
+static DRIVER_INIT( toaplan2 )
 {
 	old_p1_paddle_h = 0;
 	old_p1_paddle_v = 0;
@@ -203,13 +201,13 @@ static void init_toaplan2(void)
 	mcu_data = 0;
 }
 
-static void init_toaplan3(void)
+static DRIVER_INIT( toaplan3 )
 {
 	toaplan2_sub_cpu = CPU_2_Zx80;
 	mcu_data = 0;
 }
 
-static void init_fixeight(void)
+static DRIVER_INIT( fixeight )
 {
 	install_mem_read16_handler(0, 0x28f002, 0x28fbff, MRA16_RAM );
 	install_mem_write16_handler(0, 0x28f002, 0x28fbff, MWA16_RAM );
@@ -218,19 +216,19 @@ static void init_fixeight(void)
 	mcu_data = 0;
 }
 
-static void init_snowbro2(void)
+static DRIVER_INIT( snowbro2 )
 {
 	toaplan2_sub_cpu = CPU_2_NONE;
 	mcu_data = 0;	/* not used here actually */
 }
 
-static void init_pipibibs(void)
+static DRIVER_INIT( pipibibs )
 {
 	toaplan2_sub_cpu = CPU_2_Z80;
 	mcu_data = 0;	/* not used here actually */
 }
 
-static void init_pipibibi(void)
+static DRIVER_INIT( pipibibi )
 {
 	int A;
 	int oldword, newword;
@@ -312,7 +310,7 @@ static void init_pipibibi(void)
 	mcu_data = 0;	/* not used here actually */
 }
 
-static void init_truxton2(void)
+static DRIVER_INIT( truxton2 )
 {
 	data16_t *truxton2_ROM = (data16_t *)memory_region(REGION_CPU1);
 
@@ -333,13 +331,13 @@ static void init_truxton2(void)
 	mcu_data = 0;	/* not used here actually */
 }
 
-static void init_raizing(void)
+static DRIVER_INIT( raizing )
 {
 	toaplan2_sub_cpu = CPU_2_Z80;
 	mcu_data = 0;	/* not used here actually */
 }
 
-static void init_battleg(void)
+static DRIVER_INIT( battleg )
 {
 	data8_t *Z80 = (data8_t *)memory_region(REGION_CPU2);
 
@@ -356,25 +354,13 @@ static void init_battleg(void)
   Interrupt handlers
 ***************************************************************************/
 
-static int toaplan2_interrupt(void)
-{
-	return MC68000_IRQ_4;
-}
-
-static int truxton2_interrupt(void)
-{
-	return MC68000_IRQ_2;
-}
-
-static int batrider_sound_interrupt(void)	/* Batrider uses NMI for sound cpu */
+static INTERRUPT_GEN( batrider_sound_interrupt )	/* Batrider uses NMI for sound cpu */
 {
 	if (batrider_z80nmi_enabled)
 	{
 		batrider_z80nmi_enabled = 0;
-		return nmi_interrupt();
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	else
-		return ignore_interrupt();
 }
 
 
@@ -484,7 +470,7 @@ static WRITE16_HANDLER( toaplan2_hd647180_cpu_w )
 		else										/* Teki Paki */
 		{
 			mcu_data = data & 0xff;
-			logerror("PC:%08x Writing command (%04x) to secondary CPU shared port\n",cpu_getpreviouspc(),mcu_data);
+			logerror("PC:%08x Writing command (%04x) to secondary CPU shared port\n",activecpu_get_previouspc(),mcu_data);
 		}
 	}
 }
@@ -588,7 +574,7 @@ static WRITE16_HANDLER( ghox_mcu_w )
 		}
 		else
 		{
-			logerror("PC:%08x Writing %08x to HD647180 cpu shared ram status port\n",cpu_getpreviouspc(),mcu_data);
+			logerror("PC:%08x Writing %08x to HD647180 cpu shared ram status port\n",activecpu_get_previouspc(),mcu_data);
 		}
 		toaplan2_shared_ram16[0x56 / 2] = 0x004e;	/* Return a RTS instruction */
 		toaplan2_shared_ram16[0x58 / 2] = 0x0075;
@@ -652,7 +638,7 @@ static READ16_HANDLER( kbash_sub_cpu_r )
 
 static WRITE16_HANDLER( kbash_sub_cpu_w )
 {
-	logerror("PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",cpu_getpreviouspc(),mcu_data,offset/2);
+	logerror("PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",activecpu_get_previouspc(),mcu_data,offset/2);
 }
 
 static READ16_HANDLER( shared_ram_r )
@@ -678,7 +664,7 @@ static WRITE16_HANDLER( shared_ram_w )
 			case 0xcf8:
 			case 0xff8: toaplan2_shared_ram16[offset + 1] = data; /* Dogyuun */
 						toaplan2_shared_ram16[offset + 2] = data; /* FixEight */
-						logerror("PC:%08x Writing  (%04x) to secondary CPU\n",cpu_getpreviouspc(),data);
+						logerror("PC:%08x Writing  (%04x) to secondary CPU\n",activecpu_get_previouspc(),data);
 						if (data == 0x81) data = 0x0001;
 						break;
 			default:	break;
@@ -723,7 +709,7 @@ static READ16_HANDLER( Zx80_status_port_r )
 	if (mcu_data == 0xffaa) mcu_data = 0x8000ffaa;
 	if (mcu_data == 0xff00) mcu_data = 0xffaa;
 
-	logerror("PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
+	logerror("PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",activecpu_get_previouspc(),mcu_data);
 	return mcu_data & 0xff;
 }
 
@@ -732,7 +718,7 @@ static WRITE16_HANDLER( Zx80_command_port_w )
 	if (ACCESSING_LSB)
 	{
 		mcu_data = data;
-	logerror("PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
+	logerror("PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",activecpu_get_previouspc(),mcu_data);
 }
 }
 
@@ -784,7 +770,7 @@ static READ16_HANDLER( battleg_commram_r )
 static WRITE16_HANDLER( battleg_commram_w )
 {
 	COMBINE_DATA(&battleg_commram16[offset]);
-	cpu_cause_interrupt(1, Z80_IRQ_INT);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 static READ_HANDLER( battleg_commram_check_r0 )
@@ -3088,736 +3074,515 @@ static struct OKIM6295interface batrider_okim6295_interface =
 };
 
 
-static const struct MachineDriver machine_driver_tekipaki =
-{
+static MACHINE_DRIVER_START( tekipaki )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,			/* 10MHz Oscillator */
-			tekipaki_readmem,tekipaki_writemem,0,0,
-			toaplan2_interrupt,1
-		},
+	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
+	MDRV_CPU_MEMORY(tekipaki_readmem,tekipaki_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
 #if HD64x180
-		{
-			CPU_Z180,			/* HD647180 CPU actually */
-			10000000,			/* 10MHz Oscillator */
-			hd647180_readmem,hd647180_writemem,0,0,
-			ignore_interrupt,0
-		}
+	MDRV_CPU_ADD(Z180, 10000000)			/* HD647180 CPU actually */
+	MDRV_CPU_MEMORY(hd647180_readmem,hd647180_writemem)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_toaplan2,
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ghox =
-{
+
+static MACHINE_DRIVER_START( ghox )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,			/* 10MHz Oscillator */
-			ghox_readmem,ghox_writemem,0,0,
-			toaplan2_interrupt,1
-		},
+	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
+	MDRV_CPU_MEMORY(ghox_readmem,ghox_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
 #if HD64x180
-		{
-			CPU_Z180,			/* HD647180 CPU actually */
-			10000000,			/* 10MHz Oscillator */
-			hd647180_readmem,hd647180_writemem,0,0,
-			ignore_interrupt,0
-		}
+	MDRV_CPU_ADD(Z180, 10000000)		/* HD647180 CPU actually */
+	MDRV_CPU_MEMORY(hd647180_readmem,hd647180_writemem)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_toaplan2,
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_dogyuun =
-{
+
+static MACHINE_DRIVER_START( dogyuun )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,			/* 16MHz Oscillator */
-			dogyuun_readmem,dogyuun_writemem,0,0,
-			toaplan2_interrupt,1
-		},
+	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
+	MDRV_CPU_MEMORY(dogyuun_readmem,dogyuun_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
 #if Zx80
-		{
-			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
-			16000000,			/* 16MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
-			ignore_interrupt,0
-		}
+	MDRV_CPU_ADD(Z180, 16000000)			/* Z?80 type Toaplan marked CPU ??? */
+	MDRV_CPU_MEMORY(Zx80_readmem,Zx80_writemem)
+	MDRV_CPU_PORTS(Zx80_readport,0)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_toaplan3,
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo_2,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo_2)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_1_eof_callback,
-	toaplan2_1_vh_start,
-	toaplan2_1_vh_stop,
-	dogyuun_1_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_1)
+	MDRV_VIDEO_EOF(toaplan2_1)
+	MDRV_VIDEO_UPDATE(dogyuun_1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_kbash =
-{
+
+static MACHINE_DRIVER_START( kbash )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,			/* 16MHz Oscillator */
-			kbash_readmem,kbash_writemem,0,0,
-			toaplan2_interrupt,1
-		},
+	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
+	MDRV_CPU_MEMORY(kbash_readmem,kbash_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
 #if Zx80
-		{
-			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
-			16000000,			/* 16MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
-			ignore_interrupt,0
-		}
+	MDRV_CPU_ADD(Z180, 16000000)			/* Z?80 type Toaplan marked CPU ??? */
+	MDRV_CPU_MEMORY(Zx80_readmem,Zx80_writemem)
+	MDRV_CPU_PORTS(Zx80_readport,0)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_toaplan2,
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_truxton2 =
-{
+
+static MACHINE_DRIVER_START( truxton2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,			/* 16MHz Oscillator */
-			truxton2_readmem,truxton2_writemem,0,0,
-			truxton2_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_truxton2,
+	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
+	MDRV_CPU_MEMORY(truxton2_readmem,truxton2_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	truxton2_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(truxton2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	truxton2_0_vh_start,
-	toaplan2_0_vh_stop,
-	truxton2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(truxton2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_pipibibs =
-{
+
+static MACHINE_DRIVER_START( pipibibs )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,			/* 10MHz Oscillator */
-			pipibibs_readmem,pipibibs_writemem,0,0,
-			toaplan2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			27000000/8,			/* ??? 3.37MHz , 27MHz Oscillator */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	init_pipibibs,
+	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
+	MDRV_CPU_MEMORY(pipibibs_readmem,pipibibs_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,27000000/8)			/* ??? 3.37MHz , 27MHz Oscillator */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_whoopee =
-{
+
+static MACHINE_DRIVER_START( whoopee )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,			/* 10MHz Oscillator */
-			tekipaki_readmem,tekipaki_writemem,0,0,
-			toaplan2_interrupt,1
-		},
-		{
-			CPU_Z80,			/* This should be a HD647180 */
-			27000000/8,			/* Change this to 10MHz when HD647180 gets dumped. 10MHz Oscillator */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	init_pipibibs,
+	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
+	MDRV_CPU_MEMORY(tekipaki_readmem,tekipaki_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 27000000/8)			/* This should be a HD647180 */
+											/* Change this to 10MHz when HD647180 gets dumped. 10MHz Oscillator */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_pipibibi =
-{
+
+static MACHINE_DRIVER_START( pipibibi )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,			/* 10MHz Oscillator */
-			pipibibi_readmem,pipibibi_writemem,0,0,
-			toaplan2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			27000000/8,			/* ??? 3.37MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	init_pipibibs,
+	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
+	MDRV_CPU_MEMORY(pipibibi_readmem,pipibibi_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,27000000/8)			/* ??? 3.37MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_fixeight =
-{
+
+static MACHINE_DRIVER_START( fixeight )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,			/* 16MHz Oscillator */
-			fixeight_readmem,fixeight_writemem,0,0,
-			toaplan2_interrupt,1
-		},
+	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
+	MDRV_CPU_MEMORY(fixeight_readmem,fixeight_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
 #if Zx80
-		{
-			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
-			16000000,			/* 16MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
-			ignore_interrupt,0
-		}
+	MDRV_CPU_ADD(Z180, 16000000)			/* Z?80 type Toaplan marked CPU ??? */
+	MDRV_CPU_MEMORY(Zx80_readmem,Zx80_writemem)
+	MDRV_CPU_PORTS(Zx80_readport,0)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_fixeight,
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+///	MDRV_NVRAM_HANDLER(fixeight)		/* See 37B6 code */
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	truxton2_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(truxton2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	truxton2_0_vh_start,
-	toaplan2_0_vh_stop,
-	truxton2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(truxton2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-///	fixeight_nvram_handler		/* See 37B6 code */
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_vfive =
-{
+
+static MACHINE_DRIVER_START( vfive )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,			/* 10MHz Oscillator */
-			vfive_readmem,vfive_writemem,0,0,
-			toaplan2_interrupt,1
-		},
+	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
+	MDRV_CPU_MEMORY(vfive_readmem,vfive_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
 #if Zx80
-		{
-			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
-			10000000,			/* 10MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
-			ignore_interrupt,0
-		}
+	MDRV_CPU_ADD(Z180, 10000000)			/* Z?80 type Toaplan marked CPU ??? */
+	MDRV_CPU_MEMORY(Zx80_readmem,Zx80_writemem)
+	MDRV_CPU_PORTS(Zx80_readport,0)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_toaplan3,
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_batsugun =
-{
+
+static MACHINE_DRIVER_START( batsugun )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			32000000/2,			/* 16MHz , 32MHz Oscillator */
-			batsugun_readmem,batsugun_writemem,0,0,
-			toaplan2_interrupt,1
-		},
+	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(batsugun_readmem,batsugun_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
 #if Zx80
-		{
-			CPU_Z180,			/* Z?80 type Toaplan marked CPU ??? */
-			32000000/2,			/* 16MHz , 32MHz Oscillator */
-			Zx80_readmem,Zx80_writemem,Zx80_readport,0,
-			ignore_interrupt,0
-		}
+	MDRV_CPU_ADD(Z180, 32000000/2)			/* Z?80 type Toaplan marked CPU ??? */
+	MDRV_CPU_MEMORY(Zx80_readmem,Zx80_writemem)
+	MDRV_CPU_PORTS(Zx80_readport,0)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_toaplan3,
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo_2,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo_2)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_1_eof_callback,
-	toaplan2_1_vh_start,
-	toaplan2_1_vh_stop,
-	batsugun_1_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_1)
+	MDRV_VIDEO_EOF(toaplan2_1)
+	MDRV_VIDEO_UPDATE(batsugun_1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_snowbro2 =
-{
+
+static MACHINE_DRIVER_START( snowbro2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,
-			snowbro2_readmem,snowbro2_writemem,0,0,
-			toaplan2_interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_toaplan2,
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(snowbro2_readmem,snowbro2_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	toaplan2_0_vh_start,
-	toaplan2_0_vh_stop,
-	toaplan2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_mahoudai =
-{
+
+static MACHINE_DRIVER_START( mahoudai )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			32000000/2,			/* 16MHz , 32MHz Oscillator */
-			mahoudai_readmem,mahoudai_writemem,0,0,
-			toaplan2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			32000000/8,			/* 4MHz , 32MHz Oscillator */
-			raizing_sound_readmem,raizing_sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(mahoudai_readmem,mahoudai_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(raizing_sound_readmem,raizing_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	raizing_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(raizing_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	truxton2_0_vh_start,
-	toaplan2_0_vh_stop,
-	truxton2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(truxton2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&raizing_okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, raizing_okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_shippumd =
-{
+
+static MACHINE_DRIVER_START( shippumd )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			32000000/2,			/* 16MHz , 32MHz Oscillator */
-			shippumd_readmem,shippumd_writemem,0,0,
-			toaplan2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			32000000/8,			/* 4MHz , 32MHz Oscillator */
-			raizing_sound_readmem,raizing_sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(shippumd_readmem,shippumd_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(raizing_sound_readmem,raizing_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	raizing_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(raizing_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	truxton2_0_vh_start,
-	toaplan2_0_vh_stop,
-	truxton2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(truxton2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&raizing_okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, raizing_okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_battleg =
-{
+
+static MACHINE_DRIVER_START( battleg )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			32000000/2,			/* 16MHz , 32MHz Oscillator */
-			battleg_readmem,battleg_writemem,0,0,
-			toaplan2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			32000000/8,			/* 4MHz , 32MHz Oscillator */
-			battleg_sound_readmem,battleg_sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	120,
-	init_battleg,
+	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(battleg_readmem,battleg_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(battleg_sound_readmem,battleg_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(120)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	raizing_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(raizing_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	toaplan2_0_eof_callback,
-	truxton2_0_vh_start,
-	toaplan2_0_vh_stop,
-	truxton2_0_vh_screenrefresh,
+	MDRV_VIDEO_START(truxton2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(truxton2_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&raizing_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&battleg_okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, raizing_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, battleg_okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_batrider =
-{
+
+static MACHINE_DRIVER_START( batrider )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			32000000/2,			/* 16MHz , 32MHz Oscillator */
-			batrider_readmem,batrider_writemem,0,0,
-			truxton2_interrupt,1
-		},
-		{
-			CPU_Z80,
-			32000000/8,			/* 4MHz , 32MHz Oscillator */
-			batrider_sound_readmem,batrider_sound_writemem,batrider_sound_readport,batrider_sound_writeport,
-			batrider_sound_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,
-	0,
+	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(batrider_readmem,batrider_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
+	MDRV_CPU_MEMORY(batrider_sound_readmem,batrider_sound_writemem)
+	MDRV_CPU_PORTS(batrider_sound_readport,batrider_sound_writeport)
+	MDRV_CPU_VBLANK_INT(batrider_sound_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 319, 0, 239 },
-	batrider_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(batrider_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
-	batrider_0_eof_callback,
-	batrider_0_vh_start,
-	toaplan2_0_vh_stop,
-	batrider_0_vh_screenrefresh,
+	MDRV_VIDEO_START(batrider_0)
+	MDRV_VIDEO_EOF(batrider_0)
+	MDRV_VIDEO_UPDATE(batrider_0)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&raizing_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&batrider_okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, raizing_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, batrider_okim6295_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -96,20 +96,17 @@ static struct
  *
  *************************************/
 
-int wms_tunit_vh_start(void)
+VIDEO_START( wms_tunit )
 {
 	int i;
 
 	/* allocate memory */
-	local_videoram = malloc(0x100000);
-	pen_map = malloc(65536 * sizeof(pen_map[0]));
+	local_videoram = auto_malloc(0x100000);
+	pen_map = auto_malloc(65536 * sizeof(pen_map[0]));
 
 	/* handle failure */
 	if (!local_videoram || !pen_map)
-	{
-		wms_tunit_vh_stop();
 		return 1;
-	}
 
 	/* initialize pen map */
 	for (i = 0; i < 0x10000; i++)
@@ -127,40 +124,21 @@ int wms_tunit_vh_start(void)
 }
 
 
-int wms_wolfu_vh_start(void)
+VIDEO_START( wms_wolfu )
 {
-	int result = wms_tunit_vh_start();
+	int result = video_start_wms_tunit();
 	wms_gfx_rom_large = 1;
 	return result;
 }
 
 
-int wms_revx_vh_start(void)
+VIDEO_START( revx )
 {
-	int result = wms_tunit_vh_start();
+	int result = video_start_wms_tunit();
 	wms_gfx_rom_large = 1;
 	wms_using_34020 = 1;
 	videobank_select = 1;
 	return result;
-}
-
-
-
-/*************************************
- *
- *	Video shutdown
- *
- *************************************/
-
-void wms_tunit_vh_stop(void)
-{
-	if (pen_map)
-		free(pen_map);
-	pen_map = NULL;
-
-	if (local_videoram)
-		free(local_videoram);
-	local_videoram = NULL;
 }
 
 
@@ -666,7 +644,7 @@ static void dma_callback(int is_in_34010_context)
 		TMS_SET_IRQ_LINE(ASSERT_LINE);
 	}
 	else
-		cpu_cause_interrupt(0, 0);
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -741,7 +719,7 @@ WRITE16_HANDLER( wms_tunit_dma_w )
 
 #if LOG_DMA
 	if (keyboard_pressed(KEYCODE_L))
-		logerror("%08X:DMA %d = %04X\n", cpu_get_pc(), regnum, data);
+		logerror("%08X:DMA %d = %04X\n", activecpu_get_pc(), regnum, data);
 #endif
 
 	/* only writes to DMA_COMMAND actually cause actions */
@@ -892,7 +870,7 @@ skipdma:
  *
  *************************************/
 
-void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( wms_tunit )
 {
 	int v, width, xoffs;
 	UINT32 offset;

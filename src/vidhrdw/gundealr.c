@@ -57,7 +57,7 @@ static void get_fg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int gundealr_vh_start(void)
+VIDEO_START( gundealr )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,      8, 8,32,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,gundealr_scan,    TILEMAP_TRANSPARENT,16,16,64,32);
@@ -150,8 +150,8 @@ WRITE_HANDLER( gundealr_flipscreen_w )
 
 ***************************************************************************/
 
-void gundealr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gundealr )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

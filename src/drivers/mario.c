@@ -80,9 +80,9 @@ extern unsigned char *mario_scrolly;
 
 WRITE_HANDLER( mario_gfxbank_w );
 WRITE_HANDLER( mario_palettebank_w );
-int  mario_vh_start(void);
-void mario_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mario_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( mario );
+PALETTE_INIT( mario );
+VIDEO_UPDATE( mario );
 
 /*
  *  from sndhrdw/mario.c
@@ -129,7 +129,7 @@ WRITE_HANDLER( masao_sh_irqtrigger_w )
 	if (last == 1 && data == 0)
 	{
 		/* setting bit 0 high then low triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
+		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 	}
 
 	last = data;
@@ -395,96 +395,69 @@ static MEMORY_WRITE_START( masao_sound_writemem )
 MEMORY_END
 
 
-static const struct MachineDriver machine_driver_mario =
-{
+static MACHINE_DRIVER_START( mario )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			readmem,writemem,0,mario_writeport,
-			nmi_interrupt,1
-		},
-		{
-			CPU_I8039 | CPU_AUDIO_CPU,
-			730000,         /* 730 kHz */
-			readmem_sound,writemem_sound,readport_sound,writeport_sound,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,mario_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(I8039, 730000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)         /* 730 kHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,16*4+32*8,
-	mario_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*4+32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	mario_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mario)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(mario)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_masao =
-{
+
+static MACHINE_DRIVER_START( masao )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4.000 MHz (?) */
-			readmem,masao_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			24576000/16,	/* ???? */
-			masao_sound_readmem,masao_sound_writemem,0,0,
-			ignore_interrupt,1
-		}
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.000 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,masao_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-		},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80,24576000/16)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ???? */
+	MDRV_CPU_MEMORY(masao_sound_readmem,masao_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,16*4+32*8,
-	mario_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*4+32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	mario_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mario)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(mario)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

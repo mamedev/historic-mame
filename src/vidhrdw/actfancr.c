@@ -70,7 +70,7 @@ static void register_savestate(void)
 	state_save_register_UINT8("video", 0, "control_2", actfancr_control_2, 0x20);
 }
 
-int actfancr_vh_start (void)
+VIDEO_START( actfancr )
 {
 	pf1_tilemap = tilemap_create(get_tile_info,actfancr_scan,TILEMAP_OPAQUE,16,16,256,16);
 	pf1_alt_tilemap = tilemap_create(get_tile_info,actfancr_scan2,TILEMAP_OPAQUE,16,16,128,32);
@@ -83,7 +83,7 @@ int actfancr_vh_start (void)
 	return 0;
 }
 
-int triothep_vh_start (void)
+VIDEO_START( triothep )
 {
 	pf1_tilemap = tilemap_create(get_trio_tile_info,triothep_scan,TILEMAP_OPAQUE,16,16,32,32);
 
@@ -133,7 +133,7 @@ READ_HANDLER( actfancr_pf2_data_r )
 
 /******************************************************************************/
 
-void actfancr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( actfancr )
 {
 	int my,mx,offs,color,tile,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
@@ -149,9 +149,9 @@ void actfancr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( pf1_alt_tilemap,0, scrolly );
 
 	if (actfancr_control_1[6]==1)
-		tilemap_draw(bitmap,pf1_alt_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	else
-		tilemap_draw(bitmap,pf1_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
 	/* Sprites */
 	for (offs = 0;offs < 0x800;offs += 8)
@@ -205,7 +205,7 @@ void actfancr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			multi--;
 		}
 	}
@@ -221,11 +221,11 @@ void actfancr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		if (flipscreen) {mx=31-mx; my=31-my;}
 		drawgfx(bitmap,Machine->gfx[0],
 			tile,color,flipscreen,flipscreen,8*mx,8*my,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
-void triothep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( triothep )
 {
 	int my,mx,offs,color,tile,i,mult;
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
@@ -247,7 +247,7 @@ void triothep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly( pf1_tilemap,0, scrolly );
 	}
 
-	tilemap_draw(bitmap,pf1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
 	/* Sprites */
 	for (offs = 0;offs < 0x800;offs += 8)
@@ -301,7 +301,7 @@ void triothep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			multi--;
 		}
 	}
@@ -317,6 +317,6 @@ void triothep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		if (flipscreen) {mx=31-mx; my=31-my;}
 		drawgfx(bitmap,Machine->gfx[0],
 			tile,color,flipscreen,flipscreen,8*mx,8*my,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			cliprect,TRANSPARENCY_PEN,0);
 	}
 }

@@ -58,7 +58,6 @@ struct tms34061_display
 
 /* starts/stops the emulator */
 int tms34061_start(struct tms34061_interface *interface);
-void tms34061_stop(void);
 
 /* reads/writes to the 34061 */
 data8_t tms34061_r(int col, int row, int func);

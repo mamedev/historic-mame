@@ -69,10 +69,10 @@ static int key_id;
 static int key_id_query;
 
 static READ_HANDLER( rev1_key_r ) {
-//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 		return 0;
 	}
 	return key[offset];
@@ -80,10 +80,10 @@ static READ_HANDLER( rev1_key_r ) {
 
 static WRITE_HANDLER( rev1_key_w ) {
 	static unsigned short divider, divide_32 = 0;
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 		return;
 	}
 
@@ -146,10 +146,10 @@ static WRITE_HANDLER( rev1_key_w ) {
 
 static READ_HANDLER( rev2_key_r )
 {
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 		return 0;
 	}
 	return key[offset];
@@ -157,10 +157,10 @@ static READ_HANDLER( rev2_key_r )
 
 static WRITE_HANDLER( rev2_key_w )
 {
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 		return;
 	}
 	key[offset] = data;
@@ -229,10 +229,10 @@ static WRITE_HANDLER( rev2_key_w )
 *******************************************************************************/
 
 static READ_HANDLER( dangseed_key_r ) {
-//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 		return 0;
 	}
 	return key[offset];
@@ -240,10 +240,10 @@ static READ_HANDLER( dangseed_key_r ) {
 
 static WRITE_HANDLER( dangseed_key_w ) {
 	int i;
-//	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+//	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 		return;
 	}
 
@@ -272,10 +272,10 @@ static WRITE_HANDLER( dangseed_key_w ) {
 
 static READ_HANDLER( dspirit_key_r )
 {
-	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 		return 0;
 	}
 	return key[offset];
@@ -284,10 +284,10 @@ static READ_HANDLER( dspirit_key_r )
 static WRITE_HANDLER( dspirit_key_w )
 {
 	static unsigned short divisor;
-//	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+//	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 		return;
 	}
 	key[offset] = data;
@@ -372,10 +372,10 @@ static WRITE_HANDLER( dspirit_key_w )
 
 static READ_HANDLER( blazer_key_r )
 {
-	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 		return 0;
 	}
 	return key[offset];
@@ -384,10 +384,10 @@ static READ_HANDLER( blazer_key_r )
 static WRITE_HANDLER( blazer_key_w )
 {
 	static unsigned short divisor;
-	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 		return;
 	}
 	key[offset] = data;
@@ -452,10 +452,10 @@ static WRITE_HANDLER( blazer_key_w )
 *******************************************************************************/
 
 static READ_HANDLER( ws_key_r ) {
-//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		logerror("CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 		return 0;
 	}
 	return key[offset];
@@ -463,10 +463,10 @@ static READ_HANDLER( ws_key_r ) {
 
 static WRITE_HANDLER( ws_key_w ) {
 	static unsigned short divider;
-	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
-		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		logerror("CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 		return;
 	}
 
@@ -511,7 +511,7 @@ static WRITE_HANDLER( ws_key_w ) {
 *******************************************************************************/
 
 static READ_HANDLER( splatter_key_r ) {
-//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+//	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	switch( ( offset >> 4 ) & 0x07 ) {
 		case 0x00:
 		case 0x06:
@@ -548,7 +548,7 @@ static READ_HANDLER( splatter_key_r ) {
 }
 
 static WRITE_HANDLER( splatter_key_w ) {
-//	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+//	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	/* ignored */
 }
 
@@ -586,23 +586,23 @@ static WRITE_HANDLER( soundram_w )
 	namco_wavedata[offset] = data;
 
 	//if(offset>=0x1000)
-	//	logerror("CPU #%d PC %04x: write shared ram %04x=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	//	logerror("CPU #%d PC %04x: write shared ram %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 }
 
 /* ROM handlers */
 
 static WRITE_HANDLER( rom_w ) {
-	logerror("CPU #%d PC %04x: warning - write %02x to rom address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	logerror("CPU #%d PC %04x: warning - write %02x to rom address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 }
 
 /* error handlers */
 static READ_HANDLER( unknown_r ) {
-	logerror("CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),cpu_get_pc() );
+	logerror("CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
 	return 0;
 }
 
 static WRITE_HANDLER( unknown_w ) {
-	logerror("CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),cpu_get_pc() );
+	logerror("CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
 }
 
 /* Main bankswitching routine */
@@ -643,11 +643,11 @@ void namcos1_bankswitch(int cpu, offs_t offset, data8_t data)
 		/* unmapped bank warning */
 		if( handler_r == unknown_r)
 		{
-			logerror("CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , cpu_get_pc(), bank , chip );
+			logerror("CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , activecpu_get_pc(), bank , chip );
 		}
 
 		/* renew pc base */
-//		change_pc16(cpu_get_pc());
+//		change_pc16(activecpu_get_pc());
 	} else {
 		chip &= 0x00ff;
 		chip |= ( data & 0xff ) << 8;
@@ -680,7 +680,7 @@ static int mcu_patch_data;
 
 WRITE_HANDLER( namcos1_cpu_control_w )
 {
-//	logerror("reset control pc=%04x %02x\n",cpu_get_pc(),data);
+//	logerror("reset control pc=%04x %02x\n",activecpu_get_pc(),data);
 	if( (data&1)^namcos1_reset)
 	{
 		namcos1_reset = data&1;
@@ -725,7 +725,7 @@ static int sound_spinlock_pc;
 /* sound cpu */
 static READ_HANDLER( namcos1_sound_spinlock_r )
 {
-	if(cpu_get_pc()==sound_spinlock_pc && *sound_spinlock_ram == 0)
+	if(activecpu_get_pc()==sound_spinlock_pc && *sound_spinlock_ram == 0)
 		cpu_spinuntil_int();
 	return *sound_spinlock_ram;
 }
@@ -755,7 +755,7 @@ WRITE_HANDLER( namcos1_mcu_bankswitch_w )
 	addr += (data&3)*0x8000;
 	if( addr >= memory_region_length(REGION_CPU4))
 	{
-		logerror("unmapped mcu bank selected pc=%04x bank=%02x\n",cpu_get_pc(),data);
+		logerror("unmapped mcu bank selected pc=%04x bank=%02x\n",activecpu_get_pc(),data);
 		addr = 0x4000;
 	}
 	cpu_setbank( 20, memory_region(REGION_CPU4)+addr );
@@ -775,7 +775,7 @@ WRITE_HANDLER( namcos1_mcu_bankswitch_w )
 
 WRITE_HANDLER( namcos1_mcu_patch_w )
 {
-	//logerror("mcu C000 write pc=%04x data=%02x\n",cpu_get_pc(),data);
+	//logerror("mcu C000 write pc=%04x data=%02x\n",activecpu_get_pc(),data);
 	if(mcu_patch_data == 0xa6) return;
 	mcu_patch_data = data;
 	cpu_bankbase[19][offset] = data;
@@ -856,7 +856,7 @@ static void namcos1_build_banks(mem_read_handler key_r,mem_write_handler key_w)
 	namcos1_install_rom_bank(0x3c0,0x3ff,0x20000 , 0x00000);
 }
 
-void init_namcos1( void ) {
+MACHINE_INIT( namcos1 ) {
 
 	int bank;
 
@@ -986,7 +986,7 @@ static const struct namcos1_slice_timer normal_slice[]={{0}};
 /*******************************************************************************
 *	Shadowland / Youkai Douchuuki specific									   *
 *******************************************************************************/
-void init_shadowld( void )
+DRIVER_INIT( shadowld )
 {
 	const struct namcos1_specific shadowld_specific=
 	{
@@ -1000,7 +1000,7 @@ void init_shadowld( void )
 /*******************************************************************************
 *	Dragon Spirit specific													   *
 *******************************************************************************/
-void init_dspirit( void )
+DRIVER_INIT( dspirit )
 {
 	const struct namcos1_specific dspirit_specific=
 	{
@@ -1014,7 +1014,7 @@ void init_dspirit( void )
 /*******************************************************************************
 *	Quester specific														   *
 *******************************************************************************/
-void init_quester( void )
+DRIVER_INIT( quester )
 {
 	const struct namcos1_specific quester_specific=
 	{
@@ -1028,7 +1028,7 @@ void init_quester( void )
 /*******************************************************************************
 *	Blazer specific 														   *
 *******************************************************************************/
-void init_blazer( void )
+DRIVER_INIT( blazer )
 {
 	const struct namcos1_specific blazer_specific=
 	{
@@ -1042,7 +1042,7 @@ void init_blazer( void )
 /*******************************************************************************
 *	Pac-Mania / Pac-Mania (Japan) specific									   *
 *******************************************************************************/
-void init_pacmania( void )
+DRIVER_INIT( pacmania )
 {
 	const struct namcos1_specific pacmania_specific=
 	{
@@ -1056,7 +1056,7 @@ void init_pacmania( void )
 /*******************************************************************************
 *	Galaga '88 / Galaga '88 (Japan) specific								   *
 *******************************************************************************/
-void init_galaga88( void )
+DRIVER_INIT( galaga88 )
 {
 	const struct namcos1_specific galaga88_specific=
 	{
@@ -1070,7 +1070,7 @@ void init_galaga88( void )
 /*******************************************************************************
 *	World Stadium specific													   *
 *******************************************************************************/
-void init_ws( void )
+DRIVER_INIT( ws )
 {
 	const struct namcos1_specific ws_specific=
 	{
@@ -1137,7 +1137,7 @@ static READ_HANDLER( berabohm_buttons_r )
 	return res;
 }
 
-void init_berabohm( void )
+DRIVER_INIT( berabohm )
 {
 	const struct namcos1_specific berabohm_specific=
 	{
@@ -1152,7 +1152,7 @@ void init_berabohm( void )
 /*******************************************************************************
 *	Alice in Wonderland / Marchen Maze specific 							   *
 *******************************************************************************/
-void init_alice( void )
+DRIVER_INIT( alice )
 {
 	const struct namcos1_specific alice_specific=
 	{
@@ -1166,7 +1166,7 @@ void init_alice( void )
 /*******************************************************************************
 *	Bakutotsu Kijuutei specific 											   *
 *******************************************************************************/
-void init_bakutotu( void )
+DRIVER_INIT( bakutotu )
 {
 	const struct namcos1_specific bakutotu_specific=
 	{
@@ -1180,7 +1180,7 @@ void init_bakutotu( void )
 /*******************************************************************************
 *	World Court specific													   *
 *******************************************************************************/
-void init_wldcourt( void )
+DRIVER_INIT( wldcourt )
 {
 	const struct namcos1_specific worldcourt_specific=
 	{
@@ -1194,7 +1194,7 @@ void init_wldcourt( void )
 /*******************************************************************************
 *	Splatter House specific 												   *
 *******************************************************************************/
-void init_splatter( void )
+DRIVER_INIT( splatter )
 {
 	const struct namcos1_specific splatter_specific=
 	{
@@ -1208,7 +1208,7 @@ void init_splatter( void )
 /*******************************************************************************
 *	Face Off specific														   *
 *******************************************************************************/
-void init_faceoff( void )
+DRIVER_INIT( faceoff )
 {
 	const struct namcos1_specific faceoff_specific=
 	{
@@ -1222,7 +1222,7 @@ void init_faceoff( void )
 /*******************************************************************************
 *	Rompers specific														   *
 *******************************************************************************/
-void init_rompers( void )
+DRIVER_INIT( rompers )
 {
 	const struct namcos1_specific rompers_specific=
 	{
@@ -1237,7 +1237,7 @@ void init_rompers( void )
 /*******************************************************************************
 *	Blast Off specific														   *
 *******************************************************************************/
-void init_blastoff( void )
+DRIVER_INIT( blastoff )
 {
 	const struct namcos1_specific blastoff_specific=
 	{
@@ -1252,7 +1252,7 @@ void init_blastoff( void )
 /*******************************************************************************
 *	World Stadium '89 specific                                                 *
 *******************************************************************************/
-void init_ws89( void )
+DRIVER_INIT( ws89 )
 {
 	const struct namcos1_specific ws89_specific=
 	{
@@ -1268,7 +1268,7 @@ void init_ws89( void )
 /*******************************************************************************
 *	Dangerous Seed specific 												   *
 *******************************************************************************/
-void init_dangseed( void )
+DRIVER_INIT( dangseed )
 {
 	const struct namcos1_specific dangseed_specific=
 	{
@@ -1282,7 +1282,7 @@ void init_dangseed( void )
 /*******************************************************************************
 *	World Stadium '90 specific                                                 *
 *******************************************************************************/
-void init_ws90( void )
+DRIVER_INIT( ws90 )
 {
 	const struct namcos1_specific ws90_specific=
 	{
@@ -1299,7 +1299,7 @@ void init_ws90( void )
 /*******************************************************************************
 *	Pistol Daimyo no Bouken specific										   *
 *******************************************************************************/
-void init_pistoldm( void )
+DRIVER_INIT( pistoldm )
 {
 	const struct namcos1_specific pistoldm_specific=
 	{
@@ -1316,7 +1316,7 @@ void init_pistoldm( void )
 /*******************************************************************************
 *	Souko Ban DX specific													   *
 *******************************************************************************/
-void init_soukobdx( void )
+DRIVER_INIT( soukobdx )
 {
 	const struct namcos1_specific soukobdx_specific=
 	{
@@ -1333,7 +1333,7 @@ void init_soukobdx( void )
 /*******************************************************************************
 *	Puzzle Club specific													   *
 *******************************************************************************/
-void init_puzlclub( void )
+DRIVER_INIT( puzlclub )
 {
 	const struct namcos1_specific puzlclub_specific=
 	{
@@ -1348,7 +1348,7 @@ void init_puzlclub( void )
 /*******************************************************************************
 *	Tank Force specific 													   *
 *******************************************************************************/
-void init_tankfrce( void )
+DRIVER_INIT( tankfrce )
 {
 	const struct namcos1_specific tankfrce_specific=
 	{

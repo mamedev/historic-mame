@@ -176,7 +176,7 @@ Line ram memory map:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "drivers/taito_f3.h"
+#include "taito_f3.h"
 #include "state.h"
 
 #define DARIUSG_KLUDGE
@@ -195,6 +195,7 @@ static int primasks[4];
 static UINT16 *scanline;
 static UINT8 *pivot_dirty;
 static int pf23_y_kludge,clip_pri_kludge;
+static struct rectangle pixel_layer_clip;
 
 static data32_t *f3_pf_data_1,*f3_pf_data_2,*f3_pf_data_3,*f3_pf_data_4;
 
@@ -447,12 +448,12 @@ static void get_tile_info_pixel(int tile_index)
 
 /******************************************************************************/
 
-void f3_eof_callback(void)
+VIDEO_EOF( f3 )
 {
 	memcpy(spriteram32_buffered,spriteram32,spriteram_size);
 }
 
-void f3_vh_stop (void)
+VIDEO_STOP( f3 )
 {
 	if (DEBUG_F3) {
 		FILE *fp;
@@ -473,26 +474,9 @@ void f3_vh_stop (void)
 			fclose(fp);
 		}
 	}
-
-	if (scanline) {
-		free(scanline);
-		scanline=0;
-	}
-	if (spritelist) {
-		free(spritelist);
-		spritelist=0;
-	}
-	if (spriteram32_buffered) {
-		free(spriteram32_buffered);
-		spriteram32_buffered=0;
-	}
-	if (pivot_dirty) {
-		free(pivot_dirty);
-		pivot_dirty=0;
-	}
 }
 
-int f3_vh_start(void)
+VIDEO_START( f3 )
 {
 	const struct F3config *pCFG=&f3_config_table[0];
 	int tile;
@@ -501,6 +485,7 @@ int f3_vh_start(void)
 	spritelist=0;
 	spriteram32_buffered=0;
 	pivot_dirty=0;
+	pixel_layer_clip=Machine->visible_area;
 
 	/* Setup individual game */
 	do {
@@ -535,11 +520,11 @@ int f3_vh_start(void)
 		f3_pf_data_4=f3_pf_data+0x0c00;
 	}
 
-	scanline = (UINT16 *)malloc(1024);
-	spriteram32_buffered = (UINT32 *)malloc(0x10000);
-	spritelist = malloc(0x400 * sizeof(*spritelist));
+	scanline = (UINT16 *)auto_malloc(1024);
+	spriteram32_buffered = (UINT32 *)auto_malloc(0x10000);
+	spritelist = auto_malloc(0x400 * sizeof(*spritelist));
 	pixel_layer = tilemap_create(get_tile_info_pixel,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
-	pivot_dirty = (UINT8 *)malloc(2048);
+	pivot_dirty = (UINT8 *)auto_malloc(2048);
 
 	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap
 		 || !spritelist || !pixel_layer || !spriteram32_buffered || !scanline || !pivot_dirty)
@@ -681,11 +666,11 @@ WRITE32_HANDLER( f3_lineram_w )
 
 //	if (offset>=0x6000/4 && offset<0x7000/4)
 //	if (offset==0x18c0)
-//		logerror("%08x:  Write 6000 %08x, %08x\n",cpu_get_pc(),offset,data);
+//		logerror("%08x:  Write 6000 %08x, %08x\n",activecpu_get_pc(),offset,data);
 //	if (offset>=0xa000/4 && offset<0xb000/4)
-//		logerror("%08x:  Write a000 %08x, %08x\n",cpu_get_pc(),offset,data);
+//		logerror("%08x:  Write a000 %08x, %08x\n",activecpu_get_pc(),offset,data);
 //	if (offset>=0xb000/4 && offset<0xc000/4)
-//		logerror("%08x:  Write b000 %08x, %08x\n",cpu_get_pc(),offset,data);
+//		logerror("%08x:  Write b000 %08x, %08x\n",activecpu_get_pc(),offset,data);
 
 }
 
@@ -796,7 +781,7 @@ INLINE void f3_drawscanline(
 }
 #undef ADJUST_FOR_ORIENTATION
 
-static void f3_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tilemap,UINT32 trans,int pos,int sx,int sy, int dpri)
+static void f3_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,UINT32 trans,int pos,int sx,int sy, int dpri)
 {
 	struct mame_bitmap *srcbitmap = tilemap_get_pixmap(tilemap);
 	struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap(tilemap);
@@ -954,7 +939,7 @@ static void f3_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tilemap,U
 
 /******************************************************************************/
 
-static void f3_clip_top_border(struct mame_bitmap *bitmap)
+static void f3_clip_top_border(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int pri_base,i;
 
@@ -982,7 +967,7 @@ static void f3_clip_top_border(struct mame_bitmap *bitmap)
 	}
 }
 
-static void f3_clip_bottom_border(struct mame_bitmap *bitmap)
+static void f3_clip_bottom_border(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int pri_base,i;
 
@@ -1015,8 +1000,8 @@ static void f3_clip_bottom_border(struct mame_bitmap *bitmap)
 
 static void f3_update_pivot_layer(void)
 {
-	int tile,i,pivot_base;
 	struct rectangle pivot_clip;
+	int tile,i,pivot_base;
 
 	/* A poor way to guess if the pivot layer is enabled, but quicker than
 		parsing control ram. */
@@ -1067,7 +1052,7 @@ static void f3_update_pivot_layer(void)
 	}
 
 	if (!flipscreen)
-		tilemap_set_clip(pixel_layer,&pivot_clip);
+		pixel_layer_clip = pivot_clip;
 
 	/* Decode chars & mark tilemap dirty */
 	if (pivot_changed)
@@ -1082,7 +1067,7 @@ static void f3_update_pivot_layer(void)
 
 /******************************************************************************/
 
-static void f3_draw_vram_layer(struct mame_bitmap *bitmap)
+static void f3_draw_vram_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,mx,my,tile,color,fx,fy,sx,sy;
 
@@ -1118,7 +1103,7 @@ static void f3_draw_vram_layer(struct mame_bitmap *bitmap)
 					color,
 					fx,fy,
 					504+17-(((8*mx)+sx)&0x1ff),504-(((8*my)+sy)&0x1ff),
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 		else
 	        drawgfx(bitmap,Machine->gfx[0],
@@ -1126,13 +1111,13 @@ static void f3_draw_vram_layer(struct mame_bitmap *bitmap)
 					color,
 					fx,fy,
 					((8*mx)+sx)&0x1ff,((8*my)+sy)&0x1ff,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
 /******************************************************************************/
 
-static void f3_drawsprites(struct mame_bitmap *bitmap)
+static void f3_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,spritecont,flipx,flipy,old_x,old_y,color,x,y;
 	int sprite,global_x=0,global_y=0,subglobal_x=0,subglobal_y=0;
@@ -1370,7 +1355,7 @@ static void f3_drawsprites(struct mame_bitmap *bitmap)
 				sprite_ptr->color,
 				sprite_ptr->flipx,sprite_ptr->flipy,
 				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				sprite_ptr->zoomx,sprite_ptr->zoomy,
 				sprite_ptr->primask);
 	}
@@ -1378,8 +1363,9 @@ static void f3_drawsprites(struct mame_bitmap *bitmap)
 
 /******************************************************************************/
 
-void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( f3 )
 {
+	struct rectangle tempclip;
 	int use_custom[4],tpri[4],zoom[4];
 	int sprite_pri[4],layer_pri[4],enable[4],alpha[4];
 	unsigned int sy[4],sx[4],rs[4];
@@ -1605,14 +1591,14 @@ void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		of layer ordering so it can be applied to the sprite rendering */
 	pri=1;
 	lay=0;
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 	trans=TILEMAP_IGNORE_TRANSPARENCY; /* First playfield will be drawn opaque */
 	for (i=0; i<0x10; i++) {
 		if ((tpri[0]&0xf)==i && enable[0] && !alpha[0]) {
 			if (use_custom[0])
-				f3_tilemap_draw(bitmap,pf1_tilemap,trans,0,sx[0],sy[0],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf1_tilemap,trans,0,sx[0],sy[0],pri);
 			else
-				tilemap_draw(bitmap,pf1_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf1_tilemap,trans,pri);
 			trans=0;
 			pri<<=1;
 			layer_pri[lay++]=tpri[0]&0xf;
@@ -1620,9 +1606,9 @@ void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		if ((tpri[1]&0xf)==i && enable[1] && !alpha[1]) {
 			if (use_custom[1])
-				f3_tilemap_draw(bitmap,pf2_tilemap,trans,1,sx[1],sy[1],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf2_tilemap,trans,1,sx[1],sy[1],pri);
 			else
-				tilemap_draw(bitmap,pf2_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf2_tilemap,trans,pri);
 			trans=0;
 			pri<<=1;
 			layer_pri[lay++]=tpri[1]&0xf;
@@ -1630,9 +1616,9 @@ void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		if ((tpri[2]&0xf)==i && enable[2] && !alpha[2]) {
 			if (use_custom[2])
-				f3_tilemap_draw(bitmap,pf3_tilemap,trans,2,sx[2],sy[2],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf3_tilemap,trans,2,sx[2],sy[2],pri);
 			else
-				tilemap_draw(bitmap,pf3_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf3_tilemap,trans,pri);
 			trans=0;
 			pri<<=1;
 			layer_pri[lay++]=tpri[2]&0xf;
@@ -1640,9 +1626,9 @@ void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		if ((tpri[3]&0xf)==i && enable[3] && !alpha[3]) {
 			if (use_custom[3])
-				f3_tilemap_draw(bitmap,pf4_tilemap,trans,3,sx[3],sy[3],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf4_tilemap,trans,3,sx[3],sy[3],pri);
 			else
-				tilemap_draw(bitmap,pf4_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf4_tilemap,trans,pri);
 			pri<<=1;
 			trans=0;
 			layer_pri[lay++]=tpri[3]&0xf;
@@ -1697,17 +1683,19 @@ void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 	/* Pixel layer is drawn as 8x8 chars */
+	tempclip = pixel_layer_clip;
+	sect_rect(&tempclip,cliprect);
 	if (DEBUG_F3) {
 		if (!keyboard_pressed(KEYCODE_N))
-			tilemap_draw(bitmap,pixel_layer,0,0);
+			tilemap_draw(bitmap,&tempclip,pixel_layer,0,0);
 		if (!keyboard_pressed(KEYCODE_B))
-			f3_drawsprites(bitmap);
+			f3_drawsprites(bitmap,cliprect);
 		if (!keyboard_pressed(KEYCODE_M))
-			f3_draw_vram_layer(bitmap);
+			f3_draw_vram_layer(bitmap,cliprect);
 	} else {
-		tilemap_draw(bitmap,pixel_layer,0,0);
-		f3_drawsprites(bitmap);
-		f3_draw_vram_layer(bitmap);
+		tilemap_draw(bitmap,&tempclip,pixel_layer,0,0);
+		f3_drawsprites(bitmap,cliprect);
+		f3_draw_vram_layer(bitmap,cliprect);
 	}
 
 #if TRY_ALPHA
@@ -1717,33 +1705,33 @@ void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	for (i=0; i<0x10; i++) {
 		if ((tpri[0]&0xf)==i && enable[0] && alpha[0]) {
 			if (use_custom[0])
-				f3_tilemap_draw(bitmap,pf1_tilemap,trans,0,sx[0],sy[0],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf1_tilemap,trans,0,sx[0],sy[0],pri);
 			else
-				tilemap_draw(bitmap,pf1_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf1_tilemap,trans,pri);
 			pri<<=1;
 		}
 
 		if ((tpri[1]&0xf)==i && enable[1] && alpha[1]) {
 			if (use_custom[1])
-				f3_tilemap_draw(bitmap,pf2_tilemap,trans,1,sx[1],sy[1],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf2_tilemap,trans,1,sx[1],sy[1],pri);
 			else
-				tilemap_draw(bitmap,pf2_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf2_tilemap,trans,pri);
 			pri<<=1;
 		}
 
 		if ((tpri[2]&0xf)==i && enable[2] && alpha[2]) {
 			if (use_custom[2])
-				f3_tilemap_draw(bitmap,pf3_tilemap,trans,2,sx[2],sy[2],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf3_tilemap,trans,2,sx[2],sy[2],pri);
 			else
-				tilemap_draw(bitmap,pf3_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf3_tilemap,trans,pri);
 			pri<<=1;
 		}
 
 		if ((tpri[3]&0xf)==i && enable[3] && alpha[3]) {
 			if (use_custom[3])
-				f3_tilemap_draw(bitmap,pf4_tilemap,trans,3,sx[3],sy[3],pri);
+				f3_tilemap_draw(bitmap,cliprect,pf4_tilemap,trans,3,sx[3],sy[3],pri);
 			else
-				tilemap_draw(bitmap,pf4_tilemap,trans,pri);
+				tilemap_draw(bitmap,cliprect,pf4_tilemap,trans,pri);
 			pri<<=1;
 		}
 	}
@@ -1751,8 +1739,8 @@ void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	/* Clip borders - values are taken from Layer 0 priority RAM, which is
 		perhaps not 100% accurate - they could potentially vary between layers */
-	f3_clip_top_border(bitmap);
-	f3_clip_bottom_border(bitmap);
+	f3_clip_top_border(bitmap,cliprect);
+	f3_clip_bottom_border(bitmap,cliprect);
 
 	if (DEBUG_F3 && keyboard_pressed(KEYCODE_O))
 		print_debug_info(tpri[0],tpri[1],tpri[2],tpri[3],use_custom[0],use_custom[1],use_custom[2],use_custom[3]);

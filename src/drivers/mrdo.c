@@ -24,9 +24,9 @@ WRITE_HANDLER( mrdo_fgvideoram_w );
 WRITE_HANDLER( mrdo_scrollx_w );
 WRITE_HANDLER( mrdo_scrolly_w );
 WRITE_HANDLER( mrdo_flipscreen_w );
-void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int mrdo_vh_start(void);
-void mrdo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( mrdo );
+VIDEO_START( mrdo );
+VIDEO_UPDATE( mrdo );
 
 
 
@@ -35,7 +35,7 @@ void mrdo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 READ_HANDLER( mrdo_SECRE_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-	return RAM[ cpu_get_reg(Z80_HL) ];
+	return RAM[ activecpu_get_reg(Z80_HL) ];
 }
 
 
@@ -185,42 +185,31 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_mrdo =
-{
+static MACHINE_DRIVER_START( mrdo )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,	/* 4 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		}
-	},
-	5000000.0/312/262, 4368,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80,8000000/2)	/* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(5000000.0/312/262)
+	MDRV_VBLANK_DURATION(4368)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 4*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,64*4+16*4,
-	mrdo_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+16*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mrdo_vh_start,
-	0,
-	mrdo_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mrdo)
+	MDRV_VIDEO_START(mrdo)
+	MDRV_VIDEO_UPDATE(mrdo)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 

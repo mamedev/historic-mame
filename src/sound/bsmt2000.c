@@ -82,7 +82,8 @@ struct BSMT2000Chip
 	INT32		curr_rsample;			/* current sample target */
 
 	struct BSMT2000Voice *voice;		/* the voices */
-
+	struct BSMT2000Voice compressed;	/* the compressed voice */
+	
 #if MAKE_WAVS
 	void *		wavraw;					/* raw waveform */
 	void *		wavresample;			/* resampled waveform */
@@ -114,6 +115,10 @@ static INT32 *scratch;
 		(sample1 * (INT32)(0x10000 - (accum & 0xffff)) + 							\
 		 sample2 * (INT32)(accum & 0xffff)) >> 16;
 
+#define interpolate2(sample1, sample2, accum)										\
+		(sample1 * (INT32)(0x8000 - (accum & 0x7fff)) + 							\
+		 sample2 * (INT32)(accum & 0x7fff)) >> 15;
+
 #if BACKEND_INTERPOLATE
 #define backend_interpolate(sample1, sample2, position)								\
 		(sample1 * (INT32)(FRAC_ONE - position) + 									\
@@ -132,6 +137,7 @@ static INT32 *scratch;
 
 static void generate_samples(struct BSMT2000Chip *chip, INT32 *left, INT32 *right, int samples)
 {
+	struct BSMT2000Voice *voice;
 	int v;
 
 	/* skip if nothing to do */
@@ -145,8 +151,8 @@ static void generate_samples(struct BSMT2000Chip *chip, INT32 *left, INT32 *righ
 	/* loop over voices */
 	for (v = 0; v < chip->voices; v++)
 	{
-		struct BSMT2000Voice *voice = &chip->voice[v];
-
+		voice = &chip->voice[v];
+		
 		/* compute the region base */
 		if (voice->reg[REG_BANK] < chip->total_banks)
 		{
@@ -181,6 +187,38 @@ static void generate_samples(struct BSMT2000Chip *chip, INT32 *left, INT32 *righ
 			/* update the position */
 			voice->position = pos;
 		}
+	}
+
+	/* compressed voice (11-voice model only) */
+	voice = &chip->compressed;
+	if (chip->voices == 11 && voice->reg[REG_BANK] < chip->total_banks)
+	{
+		INT8 *base = &chip->region_base[voice->reg[REG_BANK] * 0x10000];
+		INT32 *lbuffer = left, *rbuffer = right;
+		UINT32 rate = voice->adjusted_rate;
+		UINT32 pos = voice->position;
+		INT32 lvol = voice->reg[REG_LEFTVOL];
+		INT32 rvol = voice->reg[REG_RIGHTVOL];
+		int remaining = samples;
+
+		/* loop while we still have samples to generate */
+		while (remaining-- && pos < voice->loop_stop_position)
+		{
+			/* fetch two samples -- note: this is wrong, just a guess!!!*/
+			INT32 val1 = (INT8)((base[pos >> 16] << ((pos >> 13) & 4)) & 0xf0);
+			INT32 val2 = (INT8)((base[(pos + 0x8000) >> 16] << (((pos + 0x8000) >> 13) & 4)) & 0xf0);
+			pos += rate;
+
+			/* interpolate */
+			val1 = interpolate2(val1, val2, pos);
+
+			/* apply volumes and add */
+			*lbuffer++ += val1 * lvol;
+			*rbuffer++ += val1 * rvol;
+		}
+
+		/* update the position */
+		voice->position = pos;
 	}
 }
 
@@ -296,14 +334,37 @@ static void bsmt2000_update(int num, INT16 **buffer, int length)
 
 ***********************************************************************************************/
 
+INLINE void init_voice(struct BSMT2000Voice *voice)
+{
+	memset(&voice->reg, 0, sizeof(voice->reg));
+	voice->position = 0;
+	voice->adjusted_rate = 0;
+	voice->reg[REG_LEFTVOL] = 0x7fff;
+	voice->reg[REG_RIGHTVOL] = 0x7fff;
+}
+
+
+INLINE void init_all_voices(struct BSMT2000Chip *chip)
+ {
+ 	int i;
+ 
+ 	/* init the voices */
+ 	for (i = 0; i < chip->voices; i++)
+ 		init_voice(&chip->voice[i]);
+ 
+ 	/* init the compressed voice (runs at a fixed rate of ~8kHz?) */
+ 	init_voice(&chip->compressed);
+ 	chip->compressed.adjusted_rate = 0x02aa << 4;
+ }
+ 
 int BSMT2000_sh_start(const struct MachineSound *msound)
 {
 	const struct BSMT2000interface *intf = msound->sound_interface;
 	char stream_name[2][40];
 	const char *stream_name_ptrs[2];
 	int vol[2];
-	int i, j;
-
+	int i;
+	
 	/* initialize the chips */
 	memset(&bsmt2000, 0, sizeof(bsmt2000));
 	for (i = 0; i < intf->num; i++)
@@ -338,14 +399,7 @@ int BSMT2000_sh_start(const struct MachineSound *msound)
 		bsmt2000[i].output_step = (int)((double)intf->baseclock[i] / 1024.0 * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
 
 		/* init the voices */
-		for (j = 0; j < bsmt2000[i].voices; j++)
-		{
-			memset(&bsmt2000[i].voice[j].reg, 0, sizeof(bsmt2000[i].voice[j].reg));
-			bsmt2000[i].voice[j].position = 0;
-			bsmt2000[i].voice[j].adjusted_rate = 0;
-			bsmt2000[i].voice[j].reg[REG_LEFTVOL] = 0x3fff;
-			bsmt2000[i].voice[j].reg[REG_RIGHTVOL] = 0x3fff;
-		}
+		init_all_voices(&bsmt2000[i]);
 	}
 
 	/* allocate memory */
@@ -384,7 +438,7 @@ void BSMT2000_sh_stop(void)
 		if (bsmt2000[i].voice)
 			free(bsmt2000[i].voice);
 		bsmt2000[i].voice = NULL;
-
+		
 #if MAKE_WAVS
 		if (bsmt2000[i].wavraw)
 			wav_close(bsmt2000[i].wavraw);
@@ -404,20 +458,10 @@ void BSMT2000_sh_stop(void)
 
 void BSMT2000_sh_reset(void)
 {
-	int i, j;
-
+	int i;
+	
 	for (i = 0; i < MAX_BSMT2000; i++)
-	{
-		/* init the voices */
-		for (j = 0; j < bsmt2000[i].voices; j++)
-		{
-			memset(&bsmt2000[i].voice[j].reg, 0, sizeof(bsmt2000[i].voice[j].reg));
-			bsmt2000[i].voice[j].position = 0;
-			bsmt2000[i].voice[j].adjusted_rate = 0;
-			bsmt2000[i].voice[j].reg[REG_LEFTVOL] = 0x3fff;
-			bsmt2000[i].voice[j].reg[REG_RIGHTVOL] = 0x3fff;
-		}
-	}
+		init_all_voices(&bsmt2000[i]);
 }
 
 
@@ -443,8 +487,8 @@ static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, data16_
 
 	/* force an update */
 	stream_update(chip->stream, 0);
-
-	/* update parameters */
+	
+	/* update parameters for standard voices */
 	switch (regindex)
 	{
 		case REG_CURRPOS:
@@ -466,6 +510,36 @@ static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, data16_
 		case REG_ALT_RIGHTVOL:
 			COMBINE_DATA(&voice->reg[REG_RIGHTVOL]);
 			break;
+	}
+	
+	/* update parameters for compressed voice (11-voice model only) */
+	if (chip->voices == 11 && offset >= 0x6d)
+	{
+		voice = &chip->compressed;
+		switch (offset)
+		{
+			case 0x6d:
+				COMBINE_DATA(&voice->reg[REG_LOOPEND]);
+				voice->loop_stop_position = voice->reg[REG_LOOPEND] << 16;
+				break;
+				
+			case 0x6f:
+				COMBINE_DATA(&voice->reg[REG_BANK]);
+				break;
+			
+			case 0x74:
+				COMBINE_DATA(&voice->reg[REG_RIGHTVOL]);
+				break;
+
+			case 0x75:
+				COMBINE_DATA(&voice->reg[REG_CURRPOS]);
+				voice->position = voice->reg[REG_CURRPOS] << 16;
+				break;
+
+			case 0x78:
+				COMBINE_DATA(&voice->reg[REG_LEFTVOL]);
+				break;
+		}
 	}
 }
 

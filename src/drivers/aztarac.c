@@ -1,31 +1,42 @@
-/*
- * Aztarac driver
- *
- * Jul 25 1999 by Mathis Rosenhauer
- *
- * Thanks to David Fish for additional hardware information.
- *
- */
+/***************************************************************************
+
+	Centuri Aztarac hardware
+	
+	driver by Mathis Rosenhauer
+	Thanks to David Fish for additional hardware information.
+
+	Games supported:
+		* Aztarac
+
+	Known bugs:
+		* none at this time
+
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "aztarac.h"
 
-/* from vidhrdw/aztarac.c */
-int aztarac_vh_start (void);
-WRITE16_HANDLER( aztarac_ubr_w );
-int aztarac_vg_interrupt(void);
 
-extern data16_t *aztarac_vectorram;
 
-/* from sndhrdw/aztarac.c */
-READ16_HANDLER( aztarac_sound_r );
-WRITE16_HANDLER( aztarac_sound_w );
-READ_HANDLER( aztarac_snd_command_r );
-READ_HANDLER( aztarac_snd_status_r );
-WRITE_HANDLER( aztarac_snd_status_w );
-int aztarac_snd_timed_irq (void);
+/*************************************
+ *
+ *	Machine init
+ *
+ *************************************/
 
-static data16_t *nvram;
+static int aztarac_irq_callback(int irqline)
+{
+	return 0xc;
+}
+
+
+static MACHINE_INIT( aztarac )
+{
+	cpu_set_irq_callback(0, aztarac_irq_callback);
+}
+
+
 
 /*************************************
  *
@@ -33,26 +44,32 @@ static data16_t *nvram;
  *
  *************************************/
 
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, 512);
-	else if (file)
-		osd_fread(file, nvram, 512);
-	else
-		memset(nvram, 0xff, 512);
-}
-
 static READ16_HANDLER( nvram_r )
 {
-	return nvram[offset] | 0xfff0;
+	return ((data16_t *)generic_nvram)[offset] | 0xfff0;
 }
+
+
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 static READ16_HANDLER( joystick_r )
 {
     return (((input_port_0_r (offset) - 0xf) << 8) |
             ((input_port_1_r (offset) - 0xf) & 0xff));
 }
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x00bfff, MRA16_ROM },
@@ -66,14 +83,23 @@ static MEMORY_READ16_START( readmem )
 	{ 0xffe000, 0xffffff, MRA16_RAM },
 MEMORY_END
 
+
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x00bfff, MWA16_ROM },
-	{ 0x022000, 0x0220ff, MWA16_RAM, &nvram },
+	{ 0x022000, 0x0220ff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ 0x027008, 0x027009, aztarac_sound_w },
 	{ 0xff8000, 0xffafff, MWA16_RAM, &aztarac_vectorram },
 	{ 0xffb000, 0xffb001, aztarac_ubr_w },
 	{ 0xffe000, 0xffffff, MWA16_RAM },
 MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
@@ -85,6 +111,7 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0x8c06, 0x8c07, AY8910_read_port_3_r },
 	{ 0x9000, 0x9000, aztarac_snd_status_r },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x1fff, MWA_ROM },
@@ -101,6 +128,12 @@ static MEMORY_WRITE_START( sound_writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( aztarac )
 	PORT_START /* IN0 */
@@ -125,6 +158,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
@@ -136,66 +175,50 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0, 0, 0 }
 };
 
-static int aztarac_irq_callback (int irqline)
-{
-	return 0xc;
-}
 
-static void aztarac_init_machine(void)
-{
-	cpu_set_irq_callback(0, aztarac_irq_callback);
-}
 
-static const struct MachineDriver machine_driver_aztarac =
-{
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( aztarac )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz */
-			readmem, writemem,0,0,
-            aztarac_vg_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,	/* 2 MHz */
-			sound_readmem,sound_writemem, 0, 0,
-			0,0,
-            aztarac_snd_timed_irq, 100
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	aztarac_init_machine,
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	
+	MDRV_CPU_ADD(Z80, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PERIODIC_INT(aztarac_snd_timed_irq,100)
+
+	MDRV_FRAMES_PER_SECOND(40)
+	MDRV_MACHINE_INIT(aztarac)
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	400, 300, { 0, 1024-1, 0, 768-1 },
-	0,
-	32768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(0, 1024-1, 0, 768-1)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	aztarac_vh_start,
-	vector_vh_stop,
-	vector_vh_screenrefresh,
+	MDRV_VIDEO_START(aztarac)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-    },
-	nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-/***************************************************************************
 
-  Game driver(s)
 
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( aztarac )
 	ROM_REGION( 0xc000, REGION_CPU1, 0 )
@@ -217,5 +240,12 @@ ROM_START( aztarac )
 	ROM_LOAD( "j3_d.bin", 0x1000, 0x1000, 0x4016de77 )
 ROM_END
 
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1983, aztarac, 0, aztarac, aztarac, 0, ROT0, "Centuri", "Aztarac" )

@@ -101,7 +101,7 @@ void momoko_draw_bg_pri(struct mame_bitmap *bitmap, int chr, int col, int flipx,
 
 /****************************************************************************/
 
-void momoko_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( momoko )
 {
 	int x, y, dx, dy, rx, ry, radr, chr, sy, fx, fy, px, py, offs, col, pri, flip ;
 

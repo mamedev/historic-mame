@@ -16,6 +16,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 static struct rectangle _spritevisiblearea =
@@ -75,6 +76,9 @@ static void frogger_modify_color(int *code);
 static void (*modify_ypos)(UINT8*);	/* function to call to do modify how vertical positioning bits are connected */
 static void frogger_modify_ypos(UINT8 *sy);
 
+static void stars_blink_callback(int param);
+static void stars_scroll_callback(int param);
+
 /* star circuit */
 #define STAR_COUNT  252
 struct star
@@ -87,6 +91,7 @@ static int stars_scrollpos;
 static int stars_blink_state;
 static void *stars_blink_timer;
 static void *stars_scroll_timer;
+static int timer_adjusted;
        void galaxian_init_stars(unsigned char **palette);
 static void (*draw_stars)(struct mame_bitmap *);		/* function to call to draw the star layer */
 static void galaxian_draw_stars(struct mame_bitmap *bitmap);
@@ -151,7 +156,7 @@ static void   rescue_draw_background(struct mame_bitmap *bitmap);
   The RGB outputs have a 470 ohm pull-down each.
 
 ***************************************************************************/
-void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( galaxian )
 {
 	int i;
 
@@ -195,9 +200,9 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	*(palette++) = 0xef;
 }
 
-void scramble_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( scramble )
 {
-	galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_galaxian(palette, colortable, color_prom);
 
 
 	/* blue background - 390 ohm resistor */
@@ -207,9 +212,9 @@ void scramble_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	palette[(BACKGROUND_COLOR_BASE * 3) + 2] = 0x56;
 }
 
-void moonwar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( moonwar )
 {
-	scramble_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_scramble(palette, colortable, color_prom);
 
 
 	/* wire mod to connect the bullet blue output to the 220 ohm resistor */
@@ -217,12 +222,12 @@ void moonwar_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	palette[BULLETS_COLOR_BASE * 3 + 2] = 0x97;
 }
 
-void turtles_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( turtles )
 {
 	int i;
 
 
-	galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_galaxian(palette, colortable, color_prom);
 
 
 	/*  The background color generator is connected this way:
@@ -239,12 +244,12 @@ void turtles_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 }
 
-void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( stratgyx )
 {
 	int i;
 
 
-	galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_galaxian(palette, colortable, color_prom);
 
 
 	/*  The background color generator is connected this way:
@@ -261,9 +266,9 @@ void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	}
 }
 
-void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( frogger )
 {
-	galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_galaxian(palette, colortable, color_prom);
 
 
 	/* blue background - 470 ohm resistor */
@@ -292,7 +297,7 @@ void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *color
   The RGB outputs have a 470 ohm pull-down each.
 
 ***************************************************************************/
-void darkplnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( darkplnt )
 {
 	int i;
 
@@ -331,12 +336,12 @@ void darkplnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	*(palette++) = 0xef;
 }
 
-void minefld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( minefld )
 {
 	int i;
 
 
-	galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_galaxian(palette, colortable, color_prom);
 
 
 	/* set up background colors */
@@ -360,12 +365,12 @@ void minefld_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 }
 
-void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( rescue )
 {
 	int i;
 
 
-	galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_galaxian(palette, colortable, color_prom);
 
 
 	/* set up background colors */
@@ -380,12 +385,12 @@ void rescue_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	}
 }
 
-void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mariner )
 {
 	int i;
 
 
-	galaxian_vh_convert_color_prom(palette, colortable, color_prom);
+	palette_init_galaxian(palette, colortable, color_prom);
 
 
 	/* set up background colors */
@@ -419,7 +424,7 @@ void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 ***************************************************************************/
 
-int galaxian_plain_vh_start(void)
+VIDEO_START( galaxian_plain )
 {
 	extern struct GameDriver driver_newsin7;
 
@@ -460,9 +465,9 @@ int galaxian_plain_vh_start(void)
 	return 0;
 }
 
-int galaxian_vh_start(void)
+VIDEO_START( galaxian )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_stars = galaxian_draw_stars;
 
@@ -471,9 +476,9 @@ int galaxian_vh_start(void)
 	return ret;
 }
 
-int mooncrst_vh_start(void)
+VIDEO_START( mooncrst )
 {
-	int ret = galaxian_vh_start();
+	int ret = video_start_galaxian();
 
 	modify_charcode   = mooncrst_modify_charcode;
 	modify_spritecode = mooncrst_modify_spritecode;
@@ -481,9 +486,9 @@ int mooncrst_vh_start(void)
 	return ret;
 }
 
-int skybase_vh_start(void)
+VIDEO_START( skybase )
 {
-	int ret = galaxian_vh_start();
+	int ret = video_start_galaxian();
 
 	modify_charcode   = skybase_modify_charcode;
 	modify_spritecode = skybase_modify_spritecode;
@@ -491,9 +496,9 @@ int skybase_vh_start(void)
 	return ret;
 }
 
-int moonqsr_vh_start(void)
+VIDEO_START( moonqsr )
 {
-	int ret = galaxian_vh_start();
+	int ret = video_start_galaxian();
 
 	modify_charcode   = moonqsr_modify_charcode;
 	modify_spritecode = moonqsr_modify_spritecode;
@@ -501,9 +506,9 @@ int moonqsr_vh_start(void)
 	return ret;
 }
 
-int pisces_vh_start(void)
+VIDEO_START( pisces )
 {
-	int ret = galaxian_vh_start();
+	int ret = video_start_galaxian();
 
 	modify_charcode   = pisces_modify_charcode;
 	modify_spritecode = pisces_modify_spritecode;
@@ -511,18 +516,18 @@ int pisces_vh_start(void)
 	return ret;
 }
 
-int gteikob2_vh_start(void)
+VIDEO_START( gteikob2 )
 {
-	int ret = pisces_vh_start();
+	int ret = video_start_pisces();
 
 	draw_bullets = gteikob2_draw_bullets;
 
 	return ret;
 }
 
-int batman2_vh_start(void)
+VIDEO_START( batman2 )
 {
-	int ret = galaxian_vh_start();
+	int ret = video_start_galaxian();
 
 	modify_charcode   = batman2_modify_charcode;
 	modify_spritecode = batman2_modify_spritecode;
@@ -530,9 +535,9 @@ int batman2_vh_start(void)
 	return ret;
 }
 
-int scramble_vh_start(void)
+VIDEO_START( scramble )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_stars = scramble_draw_stars;
 
@@ -543,36 +548,36 @@ int scramble_vh_start(void)
 	return ret;
 }
 
-int turtles_vh_start(void)
+VIDEO_START( turtles )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_background = turtles_draw_background;
 
 	return ret;
 }
 
-int theend_vh_start(void)
+VIDEO_START( theend )
 {
-	int ret = galaxian_vh_start();
+	int ret = video_start_galaxian();
 
 	draw_bullets = theend_draw_bullets;
 
 	return ret;
 }
 
-int darkplnt_vh_start(void)
+VIDEO_START( darkplnt )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_bullets = darkplnt_draw_bullets;
 
 	return ret;
 }
 
-int rescue_vh_start(void)
+VIDEO_START( rescue )
 {
-	int ret = scramble_vh_start();
+	int ret = video_start_scramble();
 
 	draw_stars = rescue_draw_stars;
 
@@ -581,9 +586,9 @@ int rescue_vh_start(void)
 	return ret;
 }
 
-int minefld_vh_start(void)
+VIDEO_START( minefld )
 {
-	int ret = scramble_vh_start();
+	int ret = video_start_scramble();
 
 	draw_stars = rescue_draw_stars;
 
@@ -592,27 +597,27 @@ int minefld_vh_start(void)
 	return ret;
 }
 
-int stratgyx_vh_start(void)
+VIDEO_START( stratgyx )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_background = stratgyx_draw_background;
 
 	return ret;
 }
 
-int ckongs_vh_start(void)
+VIDEO_START( ckongs )
 {
-	int ret = scramble_vh_start();
+	int ret = video_start_scramble();
 
 	modify_spritecode = ckongs_modify_spritecode;
 
 	return ret;
 }
 
-int calipso_vh_start(void)
+VIDEO_START( calipso )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_bullets = scramble_draw_bullets;
 
@@ -623,9 +628,9 @@ int calipso_vh_start(void)
 	return ret;
 }
 
-int mariner_vh_start(void)
+VIDEO_START( mariner )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_stars = mariner_draw_stars;
 
@@ -638,18 +643,18 @@ int mariner_vh_start(void)
 	return ret;
 }
 
-int froggers_vh_start(void)
+VIDEO_START( froggers )
 {
-	int ret = galaxian_plain_vh_start();
+	int ret = video_start_galaxian_plain();
 
 	draw_background = frogger_draw_background;
 
 	return ret;
 }
 
-int frogger_vh_start(void)
+VIDEO_START( frogger )
 {
-	int ret = froggers_vh_start();
+	int ret = video_start_froggers();
 
 	modify_color = frogger_modify_color;
 	modify_ypos = frogger_modify_ypos;
@@ -657,18 +662,18 @@ int frogger_vh_start(void)
 	return ret;
 }
 
-int froggrmc_vh_start(void)
+VIDEO_START( froggrmc )
 {
-	int ret = froggers_vh_start();
+	int ret = video_start_froggers();
 
 	modify_color = frogger_modify_color;
 
 	return ret;
 }
 
-int jumpbug_vh_start(void)
+VIDEO_START( jumpbug )
 {
-	int ret = scramble_vh_start();
+	int ret = video_start_scramble();
 
 	draw_stars = jumpbug_draw_stars;
 
@@ -1202,10 +1207,9 @@ void galaxian_init_stars(unsigned char **palette)
 	draw_stars = 0;
 	galaxian_stars_on = 0;
 	stars_blink_state = 0;
-	if (stars_blink_timer)  timer_remove(stars_blink_timer);
-	if (stars_scroll_timer) timer_remove(stars_scroll_timer);
-	stars_blink_timer = 0;
-	stars_scroll_timer = 0;
+	stars_blink_timer = timer_alloc(stars_blink_callback);
+	stars_scroll_timer = timer_alloc(stars_scroll_callback);
+	timer_adjusted = 0;
 
 
 	for (i = 0;i < 64;i++)
@@ -1290,9 +1294,10 @@ static void galaxian_draw_stars(struct mame_bitmap *bitmap)
 	int offs;
 
 
-	if (stars_scroll_timer == 0)
+	if (!timer_adjusted)
 	{
 		start_stars_scroll_timer();
+		timer_adjusted = 1;
 	}
 
 
@@ -1316,9 +1321,10 @@ void scramble_draw_stars(struct mame_bitmap *bitmap)
 	int offs;
 
 
-	if (stars_blink_timer == 0)
+	if (!timer_adjusted)
 	{
 		start_stars_blink_timer(100000, 10000, 0.00001);
+		timer_adjusted = 1;
 	}
 
 
@@ -1361,9 +1367,10 @@ static void rescue_draw_stars(struct mame_bitmap *bitmap)
 
 	/* same as Scramble, but only top (left) half of screen */
 
-	if (stars_blink_timer == 0)
+	if (!timer_adjusted)
 	{
 		start_stars_blink_timer(100000, 10000, 0.00001);
+		timer_adjusted = 1;
 	}
 
 
@@ -1405,9 +1412,10 @@ static void mariner_draw_stars(struct mame_bitmap *bitmap)
 	UINT8 *prom;
 
 
-	if (stars_scroll_timer == 0)
+	if (!timer_adjusted)
 	{
 		start_stars_scroll_timer();
+		timer_adjusted = 1;
 	}
 
 
@@ -1438,14 +1446,11 @@ static void jumpbug_draw_stars(struct mame_bitmap *bitmap)
 	int offs;
 
 
-	if (stars_blink_timer == 0)
+	if (!timer_adjusted)
 	{
 		start_stars_blink_timer(100000, 10000, 0.00001);
-	}
-
-	if (stars_scroll_timer == 0)
-	{
 		start_stars_scroll_timer();
+		timer_adjusted = 1;
 	}
 
 
@@ -1499,7 +1504,7 @@ static void start_stars_blink_timer(double ra, double rb, double c)
 
 	double period = 0.693 * (ra + 2.0 * rb) * c;
 
-	stars_blink_timer = timer_pulse(TIME_IN_SEC(period), 0, stars_blink_callback);
+	timer_adjust(stars_blink_timer, TIME_IN_SEC(period), 0, TIME_IN_SEC(period));
 }
 
 
@@ -1513,7 +1518,7 @@ static void stars_scroll_callback(int param)
 
 static void start_stars_scroll_timer()
 {
-	stars_scroll_timer = timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, stars_scroll_callback);
+	timer_adjust(stars_scroll_timer, TIME_IN_HZ(Machine->drv->frames_per_second), 0, TIME_IN_HZ(Machine->drv->frames_per_second));
 }
 
 
@@ -1524,7 +1529,7 @@ static void start_stars_scroll_timer()
   the main emulation engine.
 
 ***************************************************************************/
-void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( galaxian )
 {
 	int x,y;
 	int offs,color_mask;
@@ -1700,10 +1705,7 @@ void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-int hunchbks_vh_interrupt(void)
+INTERRUPT_GEN( hunchbks_vh_interrupt )
 {
-	cpu_irq_line_vector_w(0,0,0x03);
-	cpu_set_irq_line(0,0,PULSE_LINE);
-
-	return ignore_interrupt();
+	cpu_set_irq_line_and_vector(0,0,PULSE_LINE,0x03);
 }

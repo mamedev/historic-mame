@@ -37,16 +37,6 @@ static UINT8 bins, gins;
 
 /*************************************
  *
- *	Prototypes
- *
- *************************************/
-
-void rpunch_vh_stop(void);
-
-
-
-/*************************************
- *
  *	Tilemap callbacks
  *
  *************************************/
@@ -88,13 +78,13 @@ static void get_bg1_tile_info(int tile_index)
 
 static void crtc_interrupt_gen(int param)
 {
-	cpu_cause_interrupt(0, 1);
+	cpu_set_irq_line(0, 1, HOLD_LINE);
 	if (param != 0)
-		crtc_timer = timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, crtc_interrupt_gen);
+		timer_adjust(crtc_timer, TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, TIME_IN_HZ(Machine->drv->frames_per_second * param));
 }
 
 
-int rpunch_vh_start(void)
+VIDEO_START( rpunch )
 {
 	int i;
 
@@ -103,14 +93,11 @@ int rpunch_vh_start(void)
 	background[1] = tilemap_create(get_bg1_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,64);
 
 	/* allocate a bitmap sum */
-	rpunch_bitmapsum = malloc(BITMAP_HEIGHT * sizeof(UINT32));
+	rpunch_bitmapsum = auto_malloc(BITMAP_HEIGHT * sizeof(UINT32));
 
 	/* if anything failed, clean up and return an error */
 	if (!background[0] || !background[1] || !rpunch_bitmapsum)
-	{
-		rpunch_vh_stop();
 		return 1;
-	}
 
 	/* configure the tilemaps */
 	tilemap_set_transparent_pen(background[1],15);
@@ -122,23 +109,8 @@ int rpunch_vh_start(void)
 		memset(rpunch_bitmapram, 0xff, rpunch_bitmapram_size);
 
 	/* reset the timer */
-	crtc_timer = NULL;
+	crtc_timer = timer_alloc(crtc_interrupt_gen);
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void rpunch_vh_stop(void)
-{
-	if (rpunch_bitmapsum)
-		free(rpunch_bitmapsum);
-	rpunch_bitmapsum = NULL;
 }
 
 
@@ -236,9 +208,7 @@ WRITE16_HANDLER( rpunch_crtc_data_w )
 		{
 			/* only register we know about.... */
 			case 0x0b:
-				if (crtc_timer)
-					timer_remove(crtc_timer);
-				crtc_timer = timer_set(cpu_getscanlinetime(Machine->visible_area.max_y + 1), (data == 0xc0) ? 2 : 1, crtc_interrupt_gen);
+				timer_adjust(crtc_timer, cpu_getscanlinetime(Machine->visible_area.max_y + 1), (data == 0xc0) ? 2 : 1, 0);
 				break;
 
 			default:
@@ -280,7 +250,7 @@ WRITE16_HANDLER( rpunch_ins_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int start, int stop)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int start, int stop)
 {
 	int offs;
 
@@ -307,7 +277,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int start, int stop)
 			if (y >= BITMAP_HEIGHT) y -= 512;
 
 			drawgfx(bitmap, Machine->gfx[2],
-					code, color + (rpunch_sprite_palette / 16), xflip, yflip, x, y, 0, TRANSPARENCY_PEN, 15);
+					code, color + (rpunch_sprite_palette / 16), xflip, yflip, x, y, cliprect, TRANSPARENCY_PEN, 15);
 		}
 	}
 }
@@ -319,31 +289,32 @@ static void draw_sprites(struct mame_bitmap *bitmap, int start, int stop)
  *
  *************************************/
 
-static void draw_bitmap(struct mame_bitmap *bitmap)
+static void draw_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	pen_t *pens = &Machine->pens[512 + (videoflags & 15) * 16];
 	int x, y;
 
 	/* draw any non-transparent scanlines from the VRAM directly */
 	for (y = 0; y < BITMAP_HEIGHT; y++)
-		if (rpunch_bitmapsum[y] != (BITMAP_WIDTH/4) * 0xffff)
-		{
-			data16_t *src = &rpunch_bitmapram[y * 128 + BITMAP_XOFFSET/4];
-			UINT8 scanline[BITMAP_WIDTH], *dst = scanline;
-
-			/* extract the scanline */
-			for (x = 0; x < BITMAP_WIDTH/4; x++)
+		if (y >= cliprect->min_y && y <= cliprect->max_y)
+			if (rpunch_bitmapsum[y] != (BITMAP_WIDTH/4) * 0xffff)
 			{
-				int data = *src++;
+				data16_t *src = &rpunch_bitmapram[y * 128 + BITMAP_XOFFSET/4];
+				UINT8 scanline[BITMAP_WIDTH], *dst = scanline;
 
-				dst[0] = data >> 12;
-				dst[1] = (data >> 8) & 15;
-				dst[2] = (data >> 4) & 15;
-				dst[3] = data & 15;
-				dst += 4;
+				/* extract the scanline */
+				for (x = 0; x < BITMAP_WIDTH/4; x++)
+				{
+					int data = *src++;
+
+					dst[0] = data >> 12;
+					dst[1] = (data >> 8) & 15;
+					dst[2] = (data >> 4) & 15;
+					dst[3] = data & 15;
+					dst += 4;
+				}
+				draw_scanline8(bitmap, 0, y, BITMAP_WIDTH, scanline, pens, 15);
 			}
-			draw_scanline8(bitmap, 0, y, BITMAP_WIDTH, scanline, pens, 15);
-		}
 }
 
 
@@ -353,17 +324,17 @@ static void draw_bitmap(struct mame_bitmap *bitmap)
  *
  *************************************/
 
-void rpunch_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( rpunch )
 {
 	int effbins;
 
 	/* this seems like the most plausible explanation */
 	effbins = (bins > gins) ? gins : bins;
 
-	tilemap_draw(bitmap, background[0], 0,0);
-	draw_sprites(bitmap, 0, effbins);
-	tilemap_draw(bitmap, background[1], 0,0);
-	draw_sprites(bitmap, effbins, gins);
+	tilemap_draw(bitmap,cliprect, background[0], 0,0);
+	draw_sprites(bitmap,cliprect, 0, effbins);
+	tilemap_draw(bitmap,cliprect, background[1], 0,0);
+	draw_sprites(bitmap,cliprect, effbins, gins);
 	if (rpunch_bitmapram)
-		draw_bitmap(bitmap);
+		draw_bitmap(bitmap,cliprect);
 }

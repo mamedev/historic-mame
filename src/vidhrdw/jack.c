@@ -29,12 +29,12 @@ WRITE_HANDLER( jack_flipscreen_w )
 }
 
 
-void jack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( jack )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */

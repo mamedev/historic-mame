@@ -21,9 +21,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void zerozone_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int zerozone_vh_start(void);
-void zerozone_vh_stop(void);
+VIDEO_UPDATE( zerozone );
 WRITE16_HANDLER( zerozone_videoram_w );
 
 extern data16_t *zerozone_videoram;
@@ -42,7 +40,7 @@ static READ16_HANDLER( zerozone_input_r )
 			return readinputport(3);
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x800000+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",activecpu_get_pc(),0x800000+offset);
 
 	return 0x00;
 }
@@ -53,7 +51,7 @@ WRITE16_HANDLER( zerozone_sound_w )
 	if (ACCESSING_MSB)
 	{
 		soundlatch_w(offset,data >> 8);
-		cpu_cause_interrupt(1,0xff);
+		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 	}
 }
 
@@ -198,47 +196,34 @@ static struct OKIM6295interface okim6295_interface =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_zerozone =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz */
-			readmem,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1000000,	/* 1 MHz ??? */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main cpu */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	0,
+static MACHINE_DRIVER_START( zerozone )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 1000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	48*8, 32*8, { 1*8, 47*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(48*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 47*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	zerozone_vh_start,
-	zerozone_vh_stop,
-	zerozone_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(zerozone)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -430,7 +430,7 @@ $a00000 checks have been seen on the Final Lap boards.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/namcos2.h"
+#include "namcos2.h"
 #include "cpu/m6809/m6809.h"
 
 
@@ -1102,208 +1102,136 @@ via software as INT1
 /*															 */
 /*************************************************************/
 
-static const struct MachineDriver machine_driver_default =
-{
-	{
-		{
-			CPU_M68000,
-			12288000,
-			readmem_master_default,writemem_master_default,0,0,
-			namcos2_68k_master_vblank,1,
-			0,0
-		},
-		{
-			CPU_M68000,
-			12288000,
-			readmem_slave_default,writemem_slave_default,0,0,
-			namcos2_68k_slave_vblank,1,
-			0,0
-		},
-		{
-			CPU_M6809, // Sound handling
-			3072000,
-			readmem_sound,writemem_sound,0,0,
-			interrupt,2,
-			namcos2_sound_interrupt,120
-		},
-		{
-			CPU_HD63705, // I/O handling
-			2048000,
-			readmem_mcu,writemem_mcu,0,0,
-			namcos2_mcu_interrupt,1,
-			0,0
-		}
-	},
-	60,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* 100 CPU slices per frame */
-	namcos2_init_machine,
+static MACHINE_DRIVER_START( default )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12288000)
+	MDRV_CPU_MEMORY(readmem_master_default,writemem_master_default)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
+
+	MDRV_CPU_ADD(M68000, 12288000)
+	MDRV_CPU_MEMORY(readmem_slave_default,writemem_slave_default)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
+
+	MDRV_CPU_ADD(M6809,3072000) // Sound handling
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
+
+	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
+	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* 100 CPU slices per frame */
+
+	MDRV_MACHINE_INIT(namcos2)
+	MDRV_NVRAM_HANDLER(namcos2)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, 0,	/* virtual palette (physical palette has 8192 colors) */
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(VIRTUAL_PALETTE_BANKS*256)	/* virtual palette (physical palette has 8192 colors) */
 
-	0,
-	namcos2_vh_start,
-	0,
-	namcos2_vh_update_default,
+	MDRV_VIDEO_START(namcos2)
+	MDRV_VIDEO_UPDATE(namcos2_default)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	/* Sound struct here */
-	{
-		{
-			SOUND_C140,
-			&C140_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	},
-
-	/* NV RAM Support */
-	namcos2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(C140, C140_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_driving =
-{
-	{
-		{
-			CPU_M68000,
-			12288000,
-			readmem_master_finallap,writemem_master_finallap,0,0,
-			namcos2_68k_master_vblank,1,
-			0,0
-		},
-		{
-			CPU_M68000,
-			12288000,
-			readmem_slave_finallap,writemem_slave_finallap,0,0,
-			namcos2_68k_slave_vblank,1,
-			0,0
-		},
-		{
-			CPU_M6809, // Sound handling
-			3072000,
-			readmem_sound,writemem_sound,0,0,
-			interrupt,2,
-			namcos2_sound_interrupt,120
-		},
-		{
-			CPU_HD63705, // I/O handling
-			2048000,
-			readmem_mcu,writemem_mcu,0,0,
-			namcos2_mcu_interrupt,1,
-			0,0
-		}
-	},
-	60,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* 100 CPU slices per frame */
-	namcos2_init_machine,
+static MACHINE_DRIVER_START( driving )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12288000)
+	MDRV_CPU_MEMORY(readmem_master_finallap,writemem_master_finallap)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
+
+	MDRV_CPU_ADD(M68000, 12288000)
+	MDRV_CPU_MEMORY(readmem_slave_finallap,writemem_slave_finallap)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
+
+	MDRV_CPU_ADD(M6809,3072000) // Sound handling
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
+
+	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
+	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* 100 CPU slices per frame */
+
+	MDRV_MACHINE_INIT(namcos2)
+	MDRV_NVRAM_HANDLER(namcos2)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, 0,	/* virtual palette (physical palette has 8192 colors) */
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(VIRTUAL_PALETTE_BANKS*256)	/* virtual palette (physical palette has 8192 colors) */
 
-	0,
-	namcos2_vh_start,
-	0,
-	namcos2_vh_update_finallap,
+	MDRV_VIDEO_START(namcos2)
+	MDRV_VIDEO_UPDATE(namcos2_finallap)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	/* Sound struct here */
-	{
-		{
-			SOUND_C140,
-			&C140_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	},
-
-	/* NV RAM Support */
-	namcos2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(C140, C140_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_metlhawk =
-{
-	{
-		{
-			CPU_M68000,
-			12288000,
-			readmem_master_metlhawk,writemem_master_metlhawk,0,0,
-			namcos2_68k_master_vblank,1,
-			0,0
-		},
-		{
-			CPU_M68000,
-			12288000,
-			readmem_slave_metlhawk,writemem_slave_metlhawk,0,0,
-			namcos2_68k_slave_vblank,1,
-			0,0
-		},
-		{
-			CPU_M6809, // Sound handling
-			3072000,
-			readmem_sound,writemem_sound,0,0,
-			interrupt,2,
-			namcos2_sound_interrupt,120
-		},
-		{
-			CPU_HD63705, // I/O handling
-			2048000,
-			readmem_mcu,writemem_mcu,0,0,
-			namcos2_mcu_interrupt,1,
-			0,0
-		}
-	},
-	60,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* 100 CPU slices per frame */
-	namcos2_init_machine,
+static MACHINE_DRIVER_START( metlhawk )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12288000)
+	MDRV_CPU_MEMORY(readmem_master_metlhawk,writemem_master_metlhawk)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
+
+	MDRV_CPU_ADD(M68000, 12288000)
+	MDRV_CPU_MEMORY(readmem_slave_metlhawk,writemem_slave_metlhawk)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
+
+	MDRV_CPU_ADD(M6809,3072000) // Sound handling
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
+
+	MDRV_CPU_ADD(HD63705,2048000) // I/O handling
+	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* 100 CPU slices per frame */
+
+	MDRV_MACHINE_INIT(namcos2)
+	MDRV_NVRAM_HANDLER(namcos2)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	VIRTUAL_PALETTE_BANKS*256, 0,	/* virtual palette (physical palette has 8192 colors) */
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(VIRTUAL_PALETTE_BANKS*256)	/* virtual palette (physical palette has 8192 colors) */
 
-	0,
-	namcos2_vh_start,
-	0,
-	namcos2_vh_update_default,
+	MDRV_VIDEO_START(namcos2)
+	MDRV_VIDEO_UPDATE(namcos2_default)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	/* Sound struct here */
-	{
-		{
-			SOUND_C140,
-			&C140_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	},
-
-	/* NV RAM Support */
-	namcos2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(C140, C140_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -3372,22 +3300,22 @@ ROM_END
 /*															 */
 /*************************************************************/
 
-void init_assault(void)
+DRIVER_INIT( assault )
 {
 	namcos2_gametype=NAMCOS2_ASSAULT;
 }
 
-void init_assaultj(void)
+DRIVER_INIT( assaultj )
 {
 	namcos2_gametype=NAMCOS2_ASSAULT_JP;
 }
 
-void init_assaultp(void)
+DRIVER_INIT( assaultp )
 {
 	namcos2_gametype=NAMCOS2_ASSAULT_PLUS;
 }
 
-void init_burnforc(void)
+DRIVER_INIT( burnforc )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_BURNING_FORCE;
@@ -3395,7 +3323,7 @@ void init_burnforc(void)
 	rom[0x003a9c/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_cosmogng(void)
+DRIVER_INIT( cosmogng )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_COSMO_GANG;
@@ -3403,7 +3331,7 @@ void init_cosmogng(void)
 }
 
 
-void init_dsaber(void)
+DRIVER_INIT( dsaber )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_DRAGON_SABER;
@@ -3412,7 +3340,7 @@ void init_dsaber(void)
 	rom[0x002160/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_dsaberj(void)
+DRIVER_INIT( dsaberj )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_DRAGON_SABER_JP;
@@ -3421,7 +3349,7 @@ void init_dsaberj(void)
 	rom[0x002160/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_dirtfoxj(void)
+DRIVER_INIT( dirtfoxj )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_DIRT_FOX_JP;
@@ -3431,12 +3359,12 @@ void init_dirtfoxj(void)
 	rom[0x00cd0a/2] = 0x007f;
 }
 
-void init_finallap(void)
+DRIVER_INIT( finallap )
 {
 	namcos2_gametype=NAMCOS2_FINAL_LAP;
 }
 
-void init_finalap2(void)
+DRIVER_INIT( finalap2 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINAL_LAP_2;
@@ -3446,7 +3374,7 @@ void init_finalap2(void)
 	rom[0x004040/2] = 0x4e71;
 }
 
-void init_finalp2j(void)
+DRIVER_INIT( finalp2j )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINAL_LAP_2;
@@ -3460,7 +3388,7 @@ void init_finalp2j(void)
 	rom[0x004040/2] = 0x4e71;
 }
 
-void init_finalap3(void)
+DRIVER_INIT( finalap3 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINAL_LAP_3;
@@ -3474,7 +3402,7 @@ void init_finalap3(void)
 	rom[0x003f7e/2] = 0x4e71;
 }
 
-void init_finehour(void)
+DRIVER_INIT( finehour )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_FINEST_HOUR;
@@ -3483,12 +3411,12 @@ void init_finehour(void)
 	rom[0x00467c/2] = 0x4e71;	// Patch $d00000 checks
 }
 
-void init_fourtrax(void)
+DRIVER_INIT( fourtrax )
 {
 	namcos2_gametype=NAMCOS2_FOUR_TRAX;
 }
 
-void init_kyukaidk(void)
+DRIVER_INIT( kyukaidk )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_KYUUKAI_DOUCHUUKI;
@@ -3496,7 +3424,7 @@ void init_kyukaidk(void)
 	rom[0x01e7ea/2] = 0x4e75;	// Patch $d00000 checks (seems to make no difference)
 }
 
-void init_marvlanj(void)
+DRIVER_INIT( marvlanj )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_MARVEL_LAND;
@@ -3506,7 +3434,7 @@ void init_marvlanj(void)
 	rom[0x0048d2/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_marvland(void)
+DRIVER_INIT( marvland )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_MARVEL_LAND;
@@ -3516,12 +3444,12 @@ void init_marvland(void)
 	rom[0x004d10/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_metlhawk(void)
+DRIVER_INIT( metlhawk )
 {
 	namcos2_gametype=NAMCOS2_METAL_HAWK;
 }
 
-void init_mirninja(void)
+DRIVER_INIT( mirninja )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_MIRAI_NINJA;
@@ -3529,7 +3457,7 @@ void init_mirninja(void)
 	rom[0x01de68/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_ordyne(void)
+DRIVER_INIT( ordyne )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_ORDYNE;
@@ -3537,7 +3465,7 @@ void init_ordyne(void)
 	rom[0x0025c2/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_phelios(void)
+DRIVER_INIT( phelios )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_PHELIOS;
@@ -3556,7 +3484,7 @@ void init_phelios(void)
 	rom[0x02607a/2] = 0x4e75;	// Patch $d00000 checks
 }
 
-void init_rthun2(void)
+DRIVER_INIT( rthun2 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_ROLLING_THUNDER_2;
@@ -3569,7 +3497,7 @@ void init_rthun2(void)
 	rom[0x004268/2] = 0x4e71;	// move.w #$0001,$100002
 }
 
-void init_rthun2j(void)
+DRIVER_INIT( rthun2j )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_ROLLING_THUNDER_2;
@@ -3583,14 +3511,14 @@ void init_rthun2j(void)
 	rom[0x00408a/2] = 0x4e71;	// move.w #$0001,$100002
 }
 
-void init_sgunner2(void)
+DRIVER_INIT( sgunner2 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_STEEL_GUNNER_2;
 	rom[0x001162/2] = 0x4e71;	// Patch $a00000 checks
 }
 
-void init_sws92(void)
+DRIVER_INIT( sws92 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_SUPER_WSTADIUM_92;
@@ -3598,7 +3526,7 @@ void init_sws92(void)
 	rom[0x0011fe/2] = 0x4e71;	// Patch $d00000 checks
 }
 
-void init_sws92g(void)
+DRIVER_INIT( sws92g )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_SUPER_WSTADIUM_92T;
@@ -3606,7 +3534,7 @@ void init_sws92g(void)
 	rom[0x001208/2] = 0x4e71;	// Patch $d00000 checks
 }
 
-void init_sws93(void)
+DRIVER_INIT( sws93 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_SUPER_WSTADIUM_93;
@@ -3614,12 +3542,12 @@ void init_sws93(void)
 	rom[0x0013b0/2] = 0x4e71;	// Patch $d00000 checks
 }
 
-void init_suzuka8h(void)
+DRIVER_INIT( suzuka8h )
 {
 	namcos2_gametype=NAMCOS2_SUZUKA_8_HOURS;
 }
 
-void init_suzuk8h2(void)
+DRIVER_INIT( suzuk8h2 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	namcos2_gametype=NAMCOS2_SUZUKA_8_HOURS_2;
@@ -3629,7 +3557,7 @@ void init_suzuk8h2(void)
 	rom[0x003eee/2] = 0x4e71;
 }
 
-void init_valkyrie(void)
+DRIVER_INIT( valkyrie )
 {
 	namcos2_gametype=NAMCOS2_VALKYRIE;
 }

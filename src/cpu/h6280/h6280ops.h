@@ -456,7 +456,7 @@
  *	set I flag, reset D flag and jump via IRQ vector
  ***************************************************************/
 #define BRK 													\
-	logerror("BRK %04x\n",cpu_get_pc());	\
+	logerror("BRK %04x\n",activecpu_get_pc());	\
 	PCW++;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
@@ -598,7 +598,7 @@
  ***************************************************************/
 #define ILL 													\
 	h6280_ICount -= 2; /* (assumed) */							\
-	logerror("%04x: WARNING - h6280 illegal opcode\n",cpu_get_pc())
+	logerror("%04x: WARNING - h6280 illegal opcode\n",activecpu_get_pc())
 
 /* 6280 ********************************************************
  *  INA Increment accumulator
@@ -882,7 +882,7 @@
  ***************************************************************/
 #define SET 													\
 	P |= _fT;													\
-	logerror("%04x: WARNING H6280 SET\n",cpu_get_pc())
+	logerror("%04x: WARNING H6280 SET\n",activecpu_get_pc())
 
 /* 6280 ********************************************************
  *  SMB Set memory bit

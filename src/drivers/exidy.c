@@ -1,177 +1,133 @@
 /***************************************************************************
 
-Exidy memory map
+	Exidy 6502 hardware
+	
+	Games supported:
+		* Side Track
+		* Targ
+		* Spectar
+		* Mouse Trap
+		* Venture
+		* Pepper 2
+		* Hard Hat
+		* Fax
 
-0000-00FF R/W Zero Page RAM
-0100-01FF R/W Stack RAM
-0200-03FF R/W Scratchpad RAM
-0800-3FFF  R  Program ROM              (Targ, Spectar only)
-1A00       R  PX3 (Player 2 inputs)    (Fax only)
-			  bit 4  D
-			  bit 5  C
-			  bit 6  B
-			  bit 7  A
-1C00       R  PX2 (Player 1 inputs)    (Fax only)
-			  bit 0  2 player start
-			  bit 1  1 player start
-			  bit 4  D
-			  bit 5  C
-			  bit 6  B
-			  bit 7  A
-2000-3FFF  R  Banked question ROM      (Fax only)
-4000-43FF R/W Screen RAM
-4800-4FFF R/W Character Generator RAM (except Pepper II and Fax)
-5000       W  Motion Object 1 Horizontal Position Latch (sprite 1 X)
-5040       W  Motion Object 1 Vertical Position Latch   (sprite 1 Y)
-5080       W  Motion Object 2 Horizontal Position Latch (sprite 2 X)
-50C0       W  Motion Object 2 Vertical Position Latch   (sprite 2 Y)
-5100       R  Option Dipswitch Port
-			  bit 0  coin 2 (NOT inverted) (must activate together with $5103 bit 5)
-			  bit 1-2  bonus
-			  bit 3-4  coins per play
-			  bit 5-6  lives
-			  bit 7  US/UK coins
-5100       W  Motion Objects Image Latch
-			  Sprite number  bits 0-3 Sprite #1  4-7 Sprite #2
-5101       R  Control Inputs Port
-			  bit 0  start 1
-			  bit 1  start 2
-			  bit 2  right
-			  bit 3  left
-			  bit 5  up
-			  bit 6  down
-			  bit 7  coin 1 (must activate together with $5103 bit 6)
-5101       W  Output Control Latch (not used in PEPPER II upright)
-			  bit 7  Enable sprite #1
-			  bit 6  Enable sprite #2
-5103       R  Interrupt Condition Latch
-			  bit 0  LNG0 - supposedly a language DIP switch
-			  bit 1  LNG1 - supposedly a language DIP switch
-			  bit 2  different for each game, but generally a collision bit
-			  bit 3  TABLE - supposedly a cocktail table DIP switch
-			  bit 4  different for each game, but generally a collision bit
-			  bit 5  coin 2 (must activate together with $5100 bit 0)
-			  bit 6  coin 1 (must activate together with $5101 bit 7)
-			  bit 7  L256 - VBlank?
-5213       R  IN2 (Mouse Trap)
-			  bit 3  blue button
-			  bit 2  free play
-			  bit 1  red button
-			  bit 0  yellow button
-52XX      R/W Audio/Color Board Communications
-6000-6FFF R/W Character Generator RAM (Pepper II, Fax only)
-8000-FFF9  R  Program memory space
-FFFA-FFFF  R  Interrupt and Reset Vectors
+	Known bugs:
+		* none at this time
 
-Exidy Sound Board:
-0000-07FF R/W RAM (mirrored every 0x7f)
-0800-0FFF R/W 6532 Timer
-1000-17FF R/W 6520 PIA
-1800-1FFF R/W 8253 Timer
-2000-27FF bit 0 Channel 1 Filter 1 enable
-		  bit 1 Channel 1 Filter 2 enable
-		  bit 2 Channel 2 Filter 1 enable
-		  bit 3 Channel 2 Filter 2 enable
-		  bit 4 Channel 3 Filter 1 enable
-		  bit 5 Channel 3 Filter 2 enable
-2800-2FFF 6840 Timer
-3000      Bit 0..1 Noise select
-3001	  Bit 0..2 Channel 1 Amplitude
-3002	  Bit 0..2 Channel 2 Amplitude
-3003	  Bit 0..2 Channel 3 Amplitude
-5800-7FFF ROM
+****************************************************************************
 
-Targ:
-5200    Sound board control
-		bit 0 Music
-		bit 1 Shoot
-		bit 2 unused
-		bit 3 Swarn
-		bit 4 Sspec
-		bit 5 crash
-		bit 6 long
-		bit 7 game
+	Exidy memory map
 
-5201    Sound board control
-		bit 0 note
-		bit 1 upper
+	0000-00FF R/W Zero Page RAM
+	0100-01FF R/W Stack RAM
+	0200-03FF R/W Scratchpad RAM
+	0800-3FFF  R  Program ROM              (Targ, Spectar only)
+	1A00       R  PX3 (Player 2 inputs)    (Fax only)
+				  bit 4  D
+				  bit 5  C
+				  bit 6  B
+				  bit 7  A
+	1C00       R  PX2 (Player 1 inputs)    (Fax only)
+				  bit 0  2 player start
+				  bit 1  1 player start
+				  bit 4  D
+				  bit 5  C
+				  bit 6  B
+				  bit 7  A
+	2000-3FFF  R  Banked question ROM      (Fax only)
+	4000-43FF R/W Screen RAM
+	4800-4FFF R/W Character Generator RAM (except Pepper II and Fax)
+	5000       W  Motion Object 1 Horizontal Position Latch (sprite 1 X)
+	5040       W  Motion Object 1 Vertical Position Latch   (sprite 1 Y)
+	5080       W  Motion Object 2 Horizontal Position Latch (sprite 2 X)
+	50C0       W  Motion Object 2 Vertical Position Latch   (sprite 2 Y)
+	5100       R  Option Dipswitch Port
+				  bit 0  coin 2 (NOT inverted) (must activate together with $5103 bit 5)
+				  bit 1-2  bonus
+				  bit 3-4  coins per play
+				  bit 5-6  lives
+				  bit 7  US/UK coins
+	5100       W  Motion Objects Image Latch
+				  Sprite number  bits 0-3 Sprite #1  4-7 Sprite #2
+	5101       R  Control Inputs Port
+				  bit 0  start 1
+				  bit 1  start 2
+				  bit 2  right
+				  bit 3  left
+				  bit 5  up
+				  bit 6  down
+				  bit 7  coin 1 (must activate together with $5103 bit 6)
+	5101       W  Output Control Latch (not used in PEPPER II upright)
+				  bit 7  Enable sprite #1
+				  bit 6  Enable sprite #2
+	5103       R  Interrupt Condition Latch
+				  bit 0  LNG0 - supposedly a language DIP switch
+				  bit 1  LNG1 - supposedly a language DIP switch
+				  bit 2  different for each game, but generally a collision bit
+				  bit 3  TABLE - supposedly a cocktail table DIP switch
+				  bit 4  different for each game, but generally a collision bit
+				  bit 5  coin 2 (must activate together with $5100 bit 0)
+				  bit 6  coin 1 (must activate together with $5101 bit 7)
+				  bit 7  L256 - VBlank?
+	5213       R  IN2 (Mouse Trap)
+				  bit 3  blue button
+				  bit 2  free play
+				  bit 1  red button
+				  bit 0  yellow button
+	52XX      R/W Audio/Color Board Communications
+	6000-6FFF R/W Character Generator RAM (Pepper II, Fax only)
+	8000-FFF9  R  Program memory space
+	FFFA-FFFF  R  Interrupt and Reset Vectors
 
-MouseTrap Digital Sound:
-0000-3FFF ROM
+	Exidy Sound Board:
+	0000-07FF R/W RAM (mirrored every 0x7f)
+	0800-0FFF R/W 6532 Timer
+	1000-17FF R/W 6520 PIA
+	1800-1FFF R/W 8253 Timer
+	2000-27FF bit 0 Channel 1 Filter 1 enable
+			  bit 1 Channel 1 Filter 2 enable
+			  bit 2 Channel 2 Filter 1 enable
+			  bit 3 Channel 2 Filter 2 enable
+			  bit 4 Channel 3 Filter 1 enable
+			  bit 5 Channel 3 Filter 2 enable
+	2800-2FFF 6840 Timer
+	3000      Bit 0..1 Noise select
+	3001	  Bit 0..2 Channel 1 Amplitude
+	3002	  Bit 0..2 Channel 2 Amplitude
+	3003	  Bit 0..2 Channel 3 Amplitude
+	5800-7FFF ROM
 
-IO:
-	A7 = 0: R Communication from sound processor
-	A6 = 0: R CVSD Clock State
-	A5 = 0: W Busy to sound processor
-	A4 = 0: W Data to CVSD
+	Targ:
+	5200    Sound board control
+			bit 0 Music
+			bit 1 Shoot
+			bit 2 unused
+			bit 3 Swarn
+			bit 4 Sspec
+			bit 5 crash
+			bit 6 long
+			bit 7 game
+
+	5201    Sound board control
+			bit 0 note
+			bit 1 upper
+
+	MouseTrap Digital Sound:
+	0000-3FFF ROM
+
+	IO:
+		A7 = 0: R Communication from sound processor
+		A6 = 0: R CVSD Clock State
+		A5 = 0: W Busy to sound processor
+		A4 = 0: W Data to CVSD
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
-
-
-/* These are defined in sndhrdw/exidy.c */
-int exidy_sh_start(const struct MachineSound *msound);
-
-WRITE_HANDLER( exidy_shriot_w );
-WRITE_HANDLER( exidy_sfxctrl_w );
-WRITE_HANDLER( exidy_sh8253_w );
-WRITE_HANDLER( exidy_sh6840_w );
-READ_HANDLER( exidy_shriot_r );
-READ_HANDLER( exidy_sh8253_r );
-READ_HANDLER( exidy_sh6840_r );
-
-WRITE_HANDLER( mtrap_voiceio_w );
-READ_HANDLER( mtrap_voiceio_r );
-
-
-/* These are defined in sndhrdw/targ.c */
-extern UINT8 targ_spec_flag;
-
-int targ_sh_start(const struct MachineSound *msound);
-void targ_sh_stop(void);
-
-WRITE_HANDLER( targ_sh_w );
-
-
-/* These are defined in vidhrdw/targ.c */
-#define PALETTE_LEN 8
-#define COLORTABLE_LEN 20
-
-extern UINT8 *exidy_characterram;
-extern UINT8 *exidy_sprite_no;
-extern UINT8 *exidy_sprite_enable;
-extern UINT8 *exidy_sprite1_xpos;
-extern UINT8 *exidy_sprite1_ypos;
-extern UINT8 *exidy_sprite2_xpos;
-extern UINT8 *exidy_sprite2_ypos;
-extern UINT8 *exidy_color_latch;
-extern UINT8 *exidy_palette;
-extern UINT16 *exidy_colortable;
-
-extern UINT8 sidetrac_palette[];
-extern UINT8 targ_palette[];
-extern UINT8 spectar_palette[];
-extern UINT16 exidy_1bpp_colortable[];
-extern UINT16 exidy_2bpp_colortable[];
-
-extern UINT8 exidy_collision_mask;
-extern UINT8 exidy_collision_invert;
-
-int exidy_vh_start(void);
-void exidy_vh_stop(void);
-void exidy_vh_eof(void);
-void exidy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void exidy_vh_init_palette(UINT8 *game_palette, UINT16 *game_colortable,const UINT8 *color_prom);
-int exidy_vblank_interrupt(void);
-
-WRITE_HANDLER( exidy_characterram_w );
-WRITE_HANDLER( exidy_color_w );
-
-READ_HANDLER( exidy_interrupt_r );
-
+#include "exidy.h"
 
 
 /*************************************
@@ -213,6 +169,7 @@ static MEMORY_READ_START( main_readmem )
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x0800, 0x3fff, MWA_ROM },
@@ -230,6 +187,7 @@ static MEMORY_WRITE_START( main_writemem )
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END
 
+
 static MEMORY_READ_START( fax_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },			/* Fax only */
@@ -245,6 +203,7 @@ static MEMORY_READ_START( fax_readmem )
 	{ 0x6000, 0x6fff, MRA_RAM },			/* Fax, Pepper II only */
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( fax_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
@@ -284,6 +243,7 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0xf800, 0xffff, MRA_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0fff, exidy_shriot_w },
@@ -297,18 +257,22 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0xf800, 0xffff, MWA_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( cvsd_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 MEMORY_END
+
 
 static MEMORY_READ_START( cvsd_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0xffff, MRA_ROM },
 MEMORY_END
 
+
 static PORT_WRITE_START( cvsd_iowrite )
 	{ 0x00, 0xff, mtrap_voiceio_w },
 PORT_END
+
 
 static PORT_READ_START( cvsd_ioread )
 	{ 0x00, 0xff, mtrap_voiceio_r },
@@ -796,6 +760,7 @@ static const char *targ_sample_names[] =
 	0       /* end of array */
 };
 
+
 static struct Samplesinterface targ_samples_interface =
 {
 	3,	/* 3 Channels */
@@ -803,11 +768,13 @@ static struct Samplesinterface targ_samples_interface =
 	targ_sample_names
 };
 
+
 static struct CustomSound_interface targ_custom_interface =
 {
 	targ_sh_start,
 	targ_sh_stop
 };
+
 
 static struct DACinterface targ_DAC_interface =
 {
@@ -815,11 +782,13 @@ static struct DACinterface targ_DAC_interface =
 	{ 100 }
 };
 
+
 static struct hc55516_interface cvsd_interface =
 {
 	1,          /* 1 chip */
 	{ 80 }
 };
+
 
 static struct CustomSound_interface exidy_custom_interface =
 {
@@ -834,213 +803,89 @@ static struct CustomSound_interface exidy_custom_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_targ =
-{
+static MACHINE_DRIVER_START( targ )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,
-			main_readmem,main_writemem,0,0,
-			exidy_vblank_interrupt,1
-		},
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD_TAG("main", M6502, 11289000/16)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(exidy_vblank_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo_1bpp,
-	PALETTE_LEN, COLORTABLE_LEN,
-	exidy_vh_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_1bpp)
+	MDRV_PALETTE_LENGTH(PALETTE_LEN)
+	MDRV_COLORTABLE_LENGTH(COLORTABLE_LEN)
 
-	VIDEO_TYPE_RASTER,
-	exidy_vh_eof,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(exidy)
+	MDRV_VIDEO_START(exidy)
+	MDRV_VIDEO_EOF(exidy)
+	MDRV_VIDEO_UPDATE(exidy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM,  &targ_custom_interface },
-		{ SOUND_SAMPLES, &targ_samples_interface },
-		{ SOUND_DAC,     &targ_DAC_interface }
-	}
-};
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM,  targ_custom_interface)
+	MDRV_SOUND_ADD_TAG("sample", SAMPLES, targ_samples_interface)
+	MDRV_SOUND_ADD_TAG("dac",    DAC,     targ_DAC_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_mtrap =
-{
+static MACHINE_DRIVER_START( venture )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,
-			main_readmem,main_writemem,0,0,
-			exidy_vblank_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			3579545/4,
-			sound_readmem,sound_writemem,0,0,
-	    	ignore_interrupt,0
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545/2,
-			cvsd_readmem,cvsd_writemem,cvsd_ioread,cvsd_iowrite,
-			ignore_interrupt,0
-		}
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-    32,
-	0,
+	MDRV_IMPORT_FROM(targ)
+
+	MDRV_CPU_ADD(M6502, 3579545/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_INTERLEAVE(10)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("custom", CUSTOM, exidy_custom_interface)
+	MDRV_SOUND_REMOVE("sample")
+	MDRV_SOUND_REMOVE("dac")
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mtrap )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(venture)
+
+	MDRV_CPU_ADD(Z80, 3579545/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(cvsd_readmem,cvsd_writemem)
+	MDRV_CPU_PORTS(cvsd_ioread,cvsd_iowrite)
+
+	MDRV_INTERLEAVE(32)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(HC55516, cvsd_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pepper2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(venture)
+	MDRV_CPU_REPLACE("main", M6502, 11289000/16)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo_1bpp,
-	PALETTE_LEN, COLORTABLE_LEN,
-	exidy_vh_init_palette,
-
-	VIDEO_TYPE_RASTER,
-	exidy_vh_eof,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_HC55516, &cvsd_interface },
-		{ SOUND_CUSTOM,  &exidy_custom_interface }
-	}
-};
+	MDRV_GFXDECODE(gfxdecodeinfo_2bpp)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_venture =
-{
+static MACHINE_DRIVER_START( fax )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,
-			main_readmem,main_writemem,0,0,
-			exidy_vblank_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			3579545/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo_1bpp,
-	PALETTE_LEN, COLORTABLE_LEN,
-	exidy_vh_init_palette,
-
-	VIDEO_TYPE_RASTER,
-	exidy_vh_eof,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM,  &exidy_custom_interface }
-	}
-};
-
-
-static const struct MachineDriver machine_driver_pepper2 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,
-			main_readmem,main_writemem,0,0,
-			exidy_vblank_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			3579545/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo_2bpp,
-	PALETTE_LEN, COLORTABLE_LEN,
-	exidy_vh_init_palette,
-
-	VIDEO_TYPE_RASTER,
-	exidy_vh_eof,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &exidy_custom_interface }
-	}
-
-};
-
-
-static const struct MachineDriver machine_driver_fax =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,
-			fax_readmem,fax_writemem,0,0,
-			exidy_vblank_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			3579545/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo_2bpp,
-	PALETTE_LEN, COLORTABLE_LEN,
-	exidy_vh_init_palette,
-
-	VIDEO_TYPE_RASTER,
-	exidy_vh_eof,
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &exidy_custom_interface }
-	}
-};
+	MDRV_IMPORT_FROM(pepper2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(fax_readmem,fax_writemem)
+MACHINE_DRIVER_END
 
 
 
@@ -1352,7 +1197,7 @@ ROM_END
  *
  *************************************/
 
-void init_sidetrac(void)
+DRIVER_INIT( sidetrac )
 {
 	exidy_palette 			= sidetrac_palette;
 	exidy_colortable 		= exidy_1bpp_colortable;
@@ -1367,7 +1212,7 @@ void init_sidetrac(void)
 	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
 }
 
-void init_targ(void)
+DRIVER_INIT( targ )
 {
 	exidy_palette 			= targ_palette;
 	exidy_colortable 		= exidy_1bpp_colortable;
@@ -1382,7 +1227,7 @@ void init_targ(void)
 	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
 }
 
-void init_spectar(void)
+DRIVER_INIT( spectar )
 {
 	exidy_palette 			= spectar_palette;
 	exidy_colortable 		= exidy_1bpp_colortable;
@@ -1397,7 +1242,7 @@ void init_spectar(void)
 	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
 }
 
-void init_mtrap(void)
+DRIVER_INIT( mtrap )
 {
 	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_1bpp_colortable;
@@ -1405,7 +1250,7 @@ void init_mtrap(void)
 	exidy_collision_invert	= 0x00;
 }
 
-void init_venture(void)
+DRIVER_INIT( venture )
 {
 	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_1bpp_colortable;
@@ -1413,7 +1258,7 @@ void init_venture(void)
 	exidy_collision_invert	= 0x04;
 }
 
-void init_pepper2(void)
+DRIVER_INIT( pepper2 )
 {
 	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_2bpp_colortable;
@@ -1425,7 +1270,7 @@ void init_pepper2(void)
 	exidy_characterram = install_mem_write_handler(0, 0x6000, 0x6fff, exidy_characterram_w);
 }
 
-void init_fax(void)
+DRIVER_INIT( fax )
 {
 	exidy_palette 			= NULL;
 	exidy_colortable 		= exidy_2bpp_colortable;

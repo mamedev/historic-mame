@@ -132,7 +132,7 @@ WRITE32_HANDLER( psikyo_vram_1_w )
 }
 
 
-int psikyo_vh_start(void)
+VIDEO_START( psikyo )
 {
 
 	/* The Hardware is Capable of Changing the Dimensions of the Tilemaps, its safer to create
@@ -230,7 +230,7 @@ Note:	Not all sprites are displayed: in the top part of spriteram
 
 ***************************************************************************/
 
-static void psikyo_draw_sprites(struct mame_bitmap *bitmap/*,int priority*/)
+static void psikyo_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect/*,int priority*/)
 {
 	int offs;
 
@@ -324,7 +324,7 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap/*,int priority*/)
 							attr >> 8,
 							flipx, flipy,
 							x + dx * 16, y + dy * 16,
-							&Machine->visible_area,TRANSPARENCY_PEN,15,
+							cliprect,TRANSPARENCY_PEN,15,
 							(attr & 0xc0) ? 2 : 0);	// layer 0&1 have pri 0&1
 				else
 					pdrawgfxzoom(bitmap,Machine->gfx[0],
@@ -332,7 +332,7 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap/*,int priority*/)
 								attr >> 8,
 								flipx, flipy,
 								x + (dx * zoomx) / 8, y + (dy * zoomy) / 8,
-								&Machine->visible_area,TRANSPARENCY_PEN,15,
+								cliprect,TRANSPARENCY_PEN,15,
 								(0x10000/0x10/8) * (zoomx + 8),(0x10000/0x10/8) * (zoomy + 8),	// nearest greater integer value to avoid holes
 								(attr & 0xc0) ? 2 : 0);	// layer 0&1 have pri 0&1
 
@@ -351,7 +351,7 @@ static void psikyo_draw_sprites(struct mame_bitmap *bitmap/*,int priority*/)
 
 ***************************************************************************/
 
-void psikyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( psikyo )
 {
 	int i, layers_ctrl = -1;
 
@@ -424,16 +424,16 @@ if (keyboard_pressed(KEYCODE_Z))
 	}
 
 
-	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
+	fillbitmap(bitmap,get_black_pen(),cliprect);
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (layers_ctrl & 1)
-		tilemap_draw(bitmap,tm0size ? tilemap_0_size1 : tilemap_0_size0, TILEMAP_IGNORE_TRANSPARENCY, 0);
+		tilemap_draw(bitmap,cliprect,tm0size ? tilemap_0_size1 : tilemap_0_size0, TILEMAP_IGNORE_TRANSPARENCY, 0);
 
 	if (layers_ctrl & 2)
-		tilemap_draw(bitmap,tm1size ? tilemap_1_size1 : tilemap_1_size0, 0,                           1);
+		tilemap_draw(bitmap,cliprect,tm1size ? tilemap_1_size1 : tilemap_1_size0, 0,                           1);
 
 	/* Sprites can go below layer 1 (and 0?) */
-	if (layers_ctrl & 4)	psikyo_draw_sprites(bitmap);
+	if (layers_ctrl & 4)	psikyo_draw_sprites(bitmap,cliprect);
 }

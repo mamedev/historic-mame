@@ -4,7 +4,13 @@
 
 	driver by Aaron Giles and Paul Leaman
 
-	-------------------------------------
+	Games supported:
+		* Ataxx
+		* World Soccer Finals
+		* Danny Sullivan's Indy Heat
+		* Brute Force
+
+****************************************************************************
 
 	To enter service mode in Ataxx and Brute Force, press 1P start and
 	then press the service switch (F2).
@@ -15,621 +21,14 @@
 	For Indy Heat, press the red turbo button (1P button 1) and then
 	press the service switch.
 
-	-------------------------------------
-
-	Still to do:
-		- memory map
-		- generate fake serial numbers
-
 ***************************************************************************/
 
 
 #include "driver.h"
-
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
-
 #include "cpu/z80/z80.h"
-
-
-/* define these to 0 to disable, or to 1 to enable */
-#define LOG_BANKSWITCHING_M	0
-#define LOG_BANKSWITCHING_S	0
-#define LOG_EEPROM			0
-#define LOG_XROM			0
-#define LOG_BATTERY_RAM		0
-
-
-/* Helps document the input ports. */
-#define IPT_SLAVEHALT 	IPT_SPECIAL
-#define IPT_EEPROM_DATA	IPT_SPECIAL
-#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_DIPSWITCH_NAME, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )	\
-	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
-	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
-
-
-static UINT8 wcol_enable;
-
-static void *master_int_timer;
-
-static UINT8 *master_base;
-static UINT8 *slave_base;
-static UINT8 *xrom_base;
-static UINT32 master_length;
-static UINT32 slave_length;
-static UINT32 xrom_length;
-
-static UINT8 analog_result;
-static UINT8 dial_last_input[4];
-static UINT8 dial_last_result[4];
-
-static UINT8 master_bank;
-
-static UINT32 xrom1_addr;
-static UINT32 xrom2_addr;
-
-#define battery_ram_size 0x4000
-static UINT8 battery_ram_enable;
-static UINT8 *battery_ram;
-
-#define extra_tram_size 0x800
-static UINT8 *extra_tram;
-
-static UINT8 eeprom_data[128*2];
-static struct EEPROM_interface eeprom_interface =
-{
-	7,
-	16,
-	"000001100",
-	"000001010",
-	0,
-	"0000010000000000",
-	"0000010011000000",
-	1
-};
-
-
-/* Sound routines */
-WRITE_HANDLER( ataxx_i86_control_w );
-WRITE_HANDLER( leland_i86_command_lo_w );
-WRITE_HANDLER( leland_i86_command_hi_w );
-READ_HANDLER( leland_i86_response_r );
-
-int  leland_i186_sh_start(const struct MachineSound *msound);
-void leland_i186_sound_init(void);
-
-void leland_i86_optimize_address(offs_t offset);
-
-extern const struct Memory_ReadAddress leland_i86_readmem[];
-extern const struct Memory_WriteAddress leland_i86_writemem[];
-extern const struct IO_ReadPort leland_i86_readport[];
-extern const struct IO_WritePort ataxx_i86_writeport[];
-
-
-/* Video routines */
-extern UINT8 *ataxx_qram;
-
-READ_HANDLER( ataxx_mvram_port_r );
-READ_HANDLER( ataxx_svram_port_r );
-WRITE_HANDLER( ataxx_mvram_port_w );
-WRITE_HANDLER( ataxx_svram_port_w );
-WRITE_HANDLER( leland_master_video_addr_w );
-WRITE_HANDLER( leland_slave_video_addr_w );
-
-WRITE_HANDLER( leland_gfx_port_w );
-
-void leland_vh_eof(void);
-int ataxx_vh_start(void);
-void ataxx_vh_stop(void);
-void ataxx_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-
-/* Internal routines */
-static void interrupt_callback(int scanline);
-static void master_bankswitch(void);
-
-
-
-/*************************************
- *
- *	Generic dial encoding
- *
- *************************************/
-
-static int dial_compute_value(int new_val, int indx)
-{
-	int delta = new_val - (int)dial_last_input[indx];
-	UINT8 result = dial_last_result[indx] & 0x80;
-
-	dial_last_input[indx] = new_val;
-
-	if (delta > 0x80)
-		delta -= 0x100;
-	else if (delta < -0x80)
-		delta += 0x100;
-
-	if (delta < 0)
-	{
-		result = 0x80;
-		delta = -delta;
-	}
-	else if (delta > 0)
-		result = 0x00;
-
-	if (delta > 0x1f)
-		delta = 0x1f;
-	result |= (dial_last_result[indx] + delta) & 0x1f;
-
-	dial_last_result[indx] = result;
-	return result;
-}
-
-
-
-/*************************************
- *
- *	Ataxx inputs
- *
- *************************************/
-
-static READ_HANDLER( ataxx_trackball_r )
-{
-	return dial_compute_value(readinputport(3 + offset), offset);
-}
-
-
-
-/*************************************
- *
- *	Indy Heat inputs
- *
- *************************************/
-
-static READ_HANDLER( indyheat_wheel_r )
-{
-	return dial_compute_value(readinputport(3 + offset), offset);
-}
-
-static READ_HANDLER( indyheat_analog_r )
-{
-	switch (offset)
-	{
-		case 0:
-			return 0;
-
-		case 1:
-			return analog_result;
-
-		case 2:
-			return 0;
-
-		case 3:
-			logerror("Unexpected analog read(%02X)\n", 8 + offset);
-			break;
-	}
-	return 0xff;
-}
-
-static WRITE_HANDLER( indyheat_analog_w )
-{
-	switch (offset)
-	{
-		case 3:
-			analog_result = readinputport(6 + data);
-			break;
-
-		case 0:
-		case 1:
-		case 2:
-			logerror("Unexpected analog write(%02X) = %02X\n", 8 + offset, data);
-			break;
-	}
-}
-
-
-
-/*************************************
- *
- *	Machine initialization
- *
- *************************************/
-
-static void init_machine(void)
-{
-	/* set the odd data banks */
-	battery_ram = memory_region(REGION_USER2);
-	extra_tram = battery_ram + battery_ram_size;
-
-	/* initialize the XROM */
-	xrom_length = memory_region_length(REGION_USER1);
-	xrom_base = memory_region(REGION_USER1);
-	xrom1_addr = 0;
-	xrom2_addr = 0;
-
-	/* start scanline interrupts going */
-	master_int_timer = timer_set(cpu_getscanlinetime(8), 8, interrupt_callback);
-
-	/* reset globals */
-	wcol_enable = 0;
-
-	analog_result = 0xff;
-	memset(dial_last_input, 0, sizeof(dial_last_input));
-	memset(dial_last_result, 0, sizeof(dial_last_result));
-
-	master_bank = 0;
-
-	/* initialize the master banks */
-	master_length = memory_region_length(REGION_CPU1);
-	master_base = memory_region(REGION_CPU1);
-	master_bankswitch();
-
-	/* initialize the slave banks */
-	slave_length = memory_region_length(REGION_CPU2);
-	slave_base = memory_region(REGION_CPU2);
-	if (slave_length > 0x10000)
-		cpu_setbank(3, &slave_base[0x10000]);
-
-	/* reset the I186 */
-	leland_i186_sound_init();
-}
-
-
-
-/*************************************
- *
- *	Master CPU interrupt handling
- *
- *************************************/
-
-static void interrupt_callback(int scanline)
-{
-	extern UINT8 leland_last_scanline_int;
-	leland_last_scanline_int = scanline;
-
-	/* interrupts generated according to the interrupt control register */
-	cpu_cause_interrupt(0, 0);
-
-	/* set a timer for the next one */
-	master_int_timer = timer_set(cpu_getscanlinetime(scanline), scanline, interrupt_callback);
-}
-
-
-
-/*************************************
- *
- *	Master CPU bankswitch handlers
- *
- *************************************/
-
-static void master_bankswitch(void)
-{
-	static const UINT32 bank_list[] =
-	{
-		0x02000, 0x18000, 0x20000, 0x28000, 0x30000, 0x38000, 0x40000, 0x48000,
-		0x50000, 0x58000, 0x60000, 0x68000, 0x70000, 0x78000, 0x80000, 0x88000
-	};
-	UINT8 *address;
-
-	battery_ram_enable = ((master_bank & 0x30) == 0x10);
-
-	address = &master_base[bank_list[master_bank & 15]];
-	if (bank_list[master_bank & 15] >= master_length)
-	{
-		logerror("%04X:Master bank %02X out of range!\n", cpu_getpreviouspc(), master_bank & 15);
-		address = &master_base[bank_list[0]];
-	}
-	cpu_setbank(1, address);
-
-	if (battery_ram_enable)
-		address = battery_ram;
-	else if ((master_bank & 0x30) == 0x20)
-		address = &ataxx_qram[(master_bank & 0xc0) << 8];
-	else
-		address = &master_base[0xa000];
-	cpu_setbank(2, address);
-
-	wcol_enable = ((master_bank & 0x30) == 0x30);
-}
-
-
-
-/*************************************
- *
- *	EEPROM handling (128 x 16bits)
- *
- *************************************/
-
-static void init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offset)
-{
-	UINT32 serial;
-
-	/* initialize everything to the default value */
-	memset(eeprom_data, default_val, sizeof(eeprom_data));
-
-	/* fill in the preset data */
-	while (*data != 0xffff)
-	{
-		int offset = *data++;
-		int value = *data++;
-		eeprom_data[offset * 2 + 0] = value >> 8;
-		eeprom_data[offset * 2 + 1] = value & 0xff;
-	}
-
-	/* pick a serial number -- examples of real serial numbers:
-
-		WSF:         30101190
-		Indy Heat:   31201339
-	*/
-	serial = 0x12345678;
-
-	/* encrypt the serial number */
-	{
-		int d, e, h, l;
-
-		/* break the serial number out into pieces */
-		l = (serial >> 24) & 0xff;
-		h = (serial >> 16) & 0xff;
-		e = (serial >> 8) & 0xff;
-		d = serial & 0xff;
-
-		/* decrypt the data */
-		h = ((h ^ 0x2a ^ l) ^ 0xff) + 5;
-		d = ((d + 0x2a) ^ e) ^ 0xff;
-		l ^= e;
-		e ^= 0x2a;
-
-		/* store the bytes */
-		eeprom_data[serial_offset * 2 + 0] = h;
-		eeprom_data[serial_offset * 2 + 1] = l;
-		eeprom_data[serial_offset * 2 + 2] = d;
-		eeprom_data[serial_offset * 2 + 3] = e;
-	}
-
-	/* compute the checksum */
-	{
-		int i, sum = 0;
-		for (i = 0; i < 0x7f * 2; i++)
-			sum += eeprom_data[i];
-		sum ^= 0xffff;
-		eeprom_data[0x7f * 2 + 0] = (sum >> 8) & 0xff;
-		eeprom_data[0x7f * 2 + 1] = sum & 0xff;
-
-		EEPROM_init(&eeprom_interface);
-	}
-}
-
-
-
-/*************************************
- *
- *	Battery backed RAM
- *
- *************************************/
-
-static WRITE_HANDLER( battery_ram_w )
-{
-	if (battery_ram_enable)
-	{
-		if (LOG_BATTERY_RAM) logerror("%04X:BatteryW@%04X=%02X\n", cpu_getpreviouspc(), offset, data);
-		battery_ram[offset] = data;
-	}
-	else if ((master_bank & 0x30) == 0x20)
-		ataxx_qram[((master_bank & 0xc0) << 8) + offset] = data;
-	else
-		logerror("%04X:BatteryW@%04X (invalid!)\n", cpu_getpreviouspc(), offset, data);
-}
-
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-	{
-		EEPROM_save(file);
-		osd_fwrite(file, memory_region(REGION_USER2), battery_ram_size);
-	}
-	else if (file)
-	{
-		EEPROM_load(file);
-		osd_fread(file, memory_region(REGION_USER2), battery_ram_size);
-	}
-	else
-	{
-		EEPROM_set_data(eeprom_data, 128*2);
-		memset(memory_region(REGION_USER2), 0x00, battery_ram_size);
-	}
-}
-
-
-
-/*************************************
- *
- *	Master CPU internal I/O
- *
- *************************************/
-
-static READ_HANDLER( master_input_r )
-{
-	int result = 0xff;
-
-	switch (offset)
-	{
-		case 0x06:	/* /GIN0 */
-			result = readinputport(0);
-			break;
-
-		case 0x07:	/* /SLVBLK */
-			result = readinputport(1);
-			if (cpunum_get_reg(1, Z80_HALT))
-				result ^= 0x01;
-			break;
-
-		default:
-			logerror("Master I/O read offset %02X\n", offset);
-			break;
-	}
-	return result;
-}
-
-
-static WRITE_HANDLER( master_output_w )
-{
-	switch (offset)
-	{
-		case 0x00:	/* /BKXL */
-		case 0x01:	/* /BKXH */
-		case 0x02:	/* /BKYL */
-		case 0x03:	/* /BKYH */
-			leland_gfx_port_w(offset, data);
-			break;
-
-		case 0x04:	/* /MBNK */
-			if (LOG_BANKSWITCHING_M)
-				if ((master_bank ^ data) & 0xff)
-					logerror("%04X:master_bank = %02X\n", cpu_getpreviouspc(), data & 0xff);
-			master_bank = data;
-			master_bankswitch();
-			break;
-
-		case 0x05:	/* /SLV0 */
-			cpu_set_irq_line  (1, 0, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
-			cpu_set_nmi_line  (1,    (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
-			cpu_set_reset_line(1,    (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
-			break;
-
-		case 0x08:	/*  */
-			if (master_int_timer)
-				timer_remove(master_int_timer);
-			master_int_timer = timer_set(cpu_getscanlinetime(data + 1), data + 1, interrupt_callback);
-			break;
-
-		default:
-			logerror("Master I/O write offset %02X=%02X\n", offset, data);
-			break;
-	}
-}
-
-
-static READ_HANDLER( eeprom_r )
-{
-	int port = readinputport(2);
-	if (LOG_EEPROM) logerror("%04X:EE read\n", cpu_getpreviouspc());
-	return (port & ~0x01) | EEPROM_read_bit();
-}
-
-
-static WRITE_HANDLER( eeprom_w )
-{
-	if (LOG_EEPROM) logerror("%04X:EE write %d%d%d\n", cpu_getpreviouspc(),
-			(data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1);
-	EEPROM_write_bit     ((data & 0x10) >> 4);
-	EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
-	EEPROM_set_cs_line  ((~data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
-}
-
-
-
-/*************************************
- *
- *	Master CPU palette gates
- *
- *************************************/
-
-static WRITE_HANDLER( paletteram_and_misc_w )
-{
-	if (wcol_enable)
-		paletteram_xxxxRRRRGGGGBBBB_w(offset, data);
-	else if (offset == 0x7f8 || offset == 0x7f9)
-		leland_master_video_addr_w(offset - 0x7f8, data);
-	else if (offset == 0x7fc)
-	{
-		xrom1_addr = (xrom1_addr & 0xff00) | (data & 0x00ff);
-		if (LOG_XROM) logerror("%04X:XROM1 address low write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom1_addr);
-	}
-	else if (offset == 0x7fd)
-	{
-		xrom1_addr = (xrom1_addr & 0x00ff) | ((data << 8) & 0xff00);
-		if (LOG_XROM) logerror("%04X:XROM1 address high write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom1_addr);
-	}
-	else if (offset == 0x7fe)
-	{
-		xrom2_addr = (xrom2_addr & 0xff00) | (data & 0x00ff);
-		if (LOG_XROM) logerror("%04X:XROM2 address low write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom2_addr);
-	}
-	else if (offset == 0x7ff)
-	{
-		xrom2_addr = (xrom2_addr & 0x00ff) | ((data << 8) & 0xff00);
-		if (LOG_XROM) logerror("%04X:XROM2 address high write = %02X (addr=%04X)\n", cpu_getpreviouspc(), data, xrom2_addr);
-	}
-	else
-		extra_tram[offset] = data;
-}
-
-
-static READ_HANDLER( paletteram_and_misc_r )
-{
-	if (wcol_enable)
-		return paletteram_r(offset);
-	else if (offset == 0x7fc || offset == 0x7fd)
-	{
-		int result = xrom_base[0x00000 | xrom1_addr | ((offset & 1) << 16)];
-		if (LOG_XROM) logerror("%04X:XROM1 read(%d) = %02X (addr=%04X)\n", cpu_getpreviouspc(), offset - 0x7fc, result, xrom1_addr);
-		return result;
-	}
-	else if (offset == 0x7fe || offset == 0x7ff)
-	{
-		int result = xrom_base[0x20000 | xrom2_addr | ((offset & 1) << 16)];
-		if (LOG_XROM) logerror("%04X:XROM2 read(%d) = %02X (addr=%04X)\n", cpu_getpreviouspc(), offset - 0x7fc, result, xrom2_addr);
-		return result;
-	}
-	else
-		return extra_tram[offset];
-}
-
-
-
-/*************************************
- *
- *	Slave CPU bankswitching
- *
- *************************************/
-
-static WRITE_HANDLER( slave_banksw_w )
-{
-	int bankaddress, bank = data & 15;
-
-	if (bank == 0)
-		bankaddress = 0x2000;
-	else
-	{
-		bankaddress = 0x10000 * bank + 0x8000 * ((data >> 4) & 1);
-		if (slave_length > 0x100000)
-			bankaddress += 0x100000 * ((data >> 5) & 1);
-	}
-
-	if (bankaddress >= slave_length)
-	{
-		logerror("%04X:Slave bank %02X out of range!", cpu_getpreviouspc(), data & 0x3f);
-		bankaddress = 0x2000;
-	}
-	cpu_setbank(3, &slave_base[bankaddress]);
-
-	if (LOG_BANKSWITCHING_S) logerror("%04X:Slave bank = %02X (%05X)\n", cpu_getpreviouspc(), data, bankaddress);
-}
-
-
-
-/*************************************
- *
- *	Slave CPU I/O
- *
- *************************************/
-
-static READ_HANDLER( raster_r )
-{
-	int scanline = cpu_getscanline();
-	return (scanline < 255) ? scanline : 255;
-}
+#include "leland.h"
 
 
 
@@ -644,30 +43,33 @@ static MEMORY_READ_START( master_readmem )
 	{ 0x2000, 0x9fff, MRA_BANK1 },
 	{ 0xa000, 0xdfff, MRA_BANK2 },
 	{ 0xe000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xffff, paletteram_and_misc_r },
+	{ 0xf800, 0xffff, ataxx_paletteram_and_misc_r },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( master_writemem )
 	{ 0x0000, 0x9fff, MWA_ROM },
-	{ 0xa000, 0xdfff, battery_ram_w },
+	{ 0xa000, 0xdfff, ataxx_battery_ram_w },
 	{ 0xe000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xffff, paletteram_and_misc_w, &paletteram },
+	{ 0xf800, 0xffff, ataxx_paletteram_and_misc_w, &paletteram },
 MEMORY_END
+
 
 static PORT_READ_START( master_readport )
     { 0x04, 0x04, leland_i86_response_r },
-    { 0x20, 0x20, eeprom_r },
+    { 0x20, 0x20, ataxx_eeprom_r },
     { 0xd0, 0xef, ataxx_mvram_port_r },
-    { 0xf0, 0xff, master_input_r },
+    { 0xf0, 0xff, ataxx_master_input_r },
 PORT_END
+
 
 static PORT_WRITE_START( master_writeport )
     { 0x05, 0x05, leland_i86_command_hi_w },
     { 0x06, 0x06, leland_i86_command_lo_w },
     { 0x0c, 0x0c, ataxx_i86_control_w },
-    { 0x20, 0x20, eeprom_w },
+    { 0x20, 0x20, ataxx_eeprom_w },
     { 0xd0, 0xef, ataxx_mvram_port_w },
-    { 0xf0, 0xff, master_output_w },
+    { 0xf0, 0xff, ataxx_master_output_w },
 PORT_END
 
 
@@ -684,19 +86,22 @@ static MEMORY_READ_START( slave_readmem )
 	{ 0x2000, 0x9fff, MRA_BANK3 },
 	{ 0xa000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xfffe, 0xfffe, raster_r },
+	{ 0xfffe, 0xfffe, leland_raster_r },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( slave_writemem )
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xfffc, 0xfffd, leland_slave_video_addr_w },
-	{ 0xffff, 0xffff, slave_banksw_w },
+	{ 0xffff, 0xffff, ataxx_slave_banksw_w },
 MEMORY_END
+
 
 static PORT_READ_START( slave_readport )
 	{ 0x60, 0x7f, ataxx_svram_port_r },
 PORT_END
+
 
 static PORT_WRITE_START( slave_writeport )
 	{ 0x60, 0x7f, ataxx_svram_port_w },
@@ -709,6 +114,11 @@ PORT_END
  *	Port definitions
  *
  *************************************/
+
+/* Helps document the input ports. */
+#define IPT_SLAVEHALT 	IPT_SPECIAL
+#define IPT_EEPROM_DATA	IPT_SPECIAL
+
 
 INPUT_PORTS_START( ataxx )
 	PORT_START		/* 0xF6 */
@@ -944,107 +354,52 @@ static struct CustomSound_interface i186_custom_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_ataxx =
-{
+static MACHINE_DRIVER_START( ataxx )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,
-			master_readmem,master_writemem,
-			master_readport,master_writeport,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,
-			slave_readmem,slave_writemem,
-			slave_readport,slave_writeport,
-	    	ignore_interrupt,1
-		},
-		{
-	    	CPU_I186 | CPU_AUDIO_CPU,
-			16000000/2,
-			leland_i86_readmem,leland_i86_writemem,
-			leland_i86_readport,ataxx_i86_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, (1000000*16)/(256*60),
-	1,
-	init_machine,
+	MDRV_CPU_ADD_TAG("master", Z80, 6000000)
+	MDRV_CPU_MEMORY(master_readmem,master_writemem)
+	MDRV_CPU_PORTS(master_readport,master_writeport)
+
+	MDRV_CPU_ADD_TAG("slave", Z80, 6000000)
+	MDRV_CPU_MEMORY(slave_readmem,slave_writemem)
+	MDRV_CPU_PORTS(slave_readport,slave_writeport)
+
+	MDRV_CPU_ADD_TAG("sound", I186, 16000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(leland_i86_readmem,leland_i86_writemem)
+	MDRV_CPU_PORTS(leland_i86_readport,ataxx_i86_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((1000000*16)/(256*60))
+	
+	MDRV_MACHINE_INIT(ataxx)
+	MDRV_NVRAM_HANDLER(ataxx)
 
 	/* video hardware */
-	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	leland_vh_eof,
-	ataxx_vh_start,
-	ataxx_vh_stop,
-	ataxx_vh_screenrefresh,
+	MDRV_VIDEO_START(ataxx)
+	MDRV_VIDEO_EOF(leland)
+	MDRV_VIDEO_UPDATE(ataxx)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &i186_custom_interface },
-	},
-	nvram_handler
-};
+	MDRV_SOUND_ADD(CUSTOM, i186_custom_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_wsf =
-{
+static MACHINE_DRIVER_START( wsf )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,
-			master_readmem,master_writemem,
-			master_readport,master_writeport,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,
-			slave_readmem,slave_writemem,
-			slave_readport,slave_writeport,
-	    	ignore_interrupt,1
-		},
-		{
-	    	CPU_I186 | CPU_AUDIO_CPU,
-			16000000/2,
-			leland_i86_readmem,leland_i86_writemem,
-			leland_i86_readport,ataxx_i86_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, (1000000*16)/(256*60),
-	1,
-	init_machine,
-
-	/* video hardware */
-	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	leland_vh_eof,
-	ataxx_vh_start,
-	ataxx_vh_stop,
-	ataxx_vh_screenrefresh,
-
+	MDRV_IMPORT_FROM(ataxx)
+	
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &i186_custom_interface },
-		{ SOUND_YM2151, &ym2151_interface },
-	},
-	nvram_handler
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1083,8 +438,9 @@ ROM_START( ataxx )
 	ROM_REGION( 0x00001, REGION_USER1, 0 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 
-	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2, 0 ) /* extra RAM regions */
+	ROM_REGION( LELAND_BATTERY_RAM_SIZE + ATAXX_EXTRA_TRAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
+
 
 ROM_START( ataxxa )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
@@ -1115,8 +471,9 @@ ROM_START( ataxxa )
 	ROM_REGION( 0x00001, REGION_USER1, 0 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 
-	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2, 0 ) /* extra RAM regions */
+	ROM_REGION( LELAND_BATTERY_RAM_SIZE + ATAXX_EXTRA_TRAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
+
 
 ROM_START( ataxxj )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
@@ -1147,8 +504,9 @@ ROM_START( ataxxj )
 	ROM_REGION( 0x00001, REGION_USER1, 0 ) /* X-ROM (data used by main processor) */
     /* Empty / not used */
 
-	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2, 0 ) /* extra RAM regions */
+	ROM_REGION( LELAND_BATTERY_RAM_SIZE + ATAXX_EXTRA_TRAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
+
 
 ROM_START( wsf )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )
@@ -1189,8 +547,9 @@ ROM_START( wsf )
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* externally clocked DAC data */
 	ROM_LOAD( "30021-01.u8",   0x00000, 0x20000, 0xbb91dc10 )
 
-	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2, 0 ) /* extra RAM regions */
+	ROM_REGION( LELAND_BATTERY_RAM_SIZE + ATAXX_EXTRA_TRAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
+
 
 ROM_START( indyheat )
 	ROM_REGION( 0x90000, REGION_CPU1, 0 )
@@ -1238,8 +597,9 @@ ROM_START( indyheat )
 	ROM_LOAD( "u8_27c.010",  0x00000, 0x20000, 0x9f16e5b6 )
 	ROM_LOAD( "u9_27c.010",  0x20000, 0x20000, 0x0dc8f488 )
 
-	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2, 0 ) /* extra RAM regions */
+	ROM_REGION( LELAND_BATTERY_RAM_SIZE + ATAXX_EXTRA_TRAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
+
 
 ROM_START( brutforc )
 	ROM_REGION( 0x90000, REGION_CPU1, 0 )
@@ -1287,7 +647,7 @@ ROM_START( brutforc )
 	ROM_LOAD( "u10", 0x40000, 0x20000, 0x1dc5f375 )
 	ROM_LOAD( "u11", 0x60000, 0x20000, 0x5ed4877f )
 
-	ROM_REGION( battery_ram_size + extra_tram_size, REGION_USER2, 0 ) /* extra RAM regions */
+	ROM_REGION( LELAND_BATTERY_RAM_SIZE + ATAXX_EXTRA_TRAM_SIZE, REGION_USER2, 0 ) /* extra RAM regions */
 ROM_END
 
 
@@ -1298,9 +658,7 @@ ROM_END
  *
  *************************************/
 
-extern void leland_rotate_memory(int cpunum);
-
-static void init_ataxx(void)
+static DRIVER_INIT( ataxx )
 {
 	/* initialize the default EEPROM state */
 	static const UINT16 ataxx_eeprom_data[] =
@@ -1314,7 +672,7 @@ static void init_ataxx(void)
 		0x14,0x5a04,
 		0xffff
 	};
-	init_eeprom(0x00, ataxx_eeprom_data, 0x00);
+	ataxx_init_eeprom(0x00, ataxx_eeprom_data, 0x00);
 
 	leland_rotate_memory(0);
 	leland_rotate_memory(1);
@@ -1326,7 +684,8 @@ static void init_ataxx(void)
 	leland_i86_optimize_address(0x612);
 }
 
-static void init_ataxxj(void)
+
+static DRIVER_INIT( ataxxj )
 {
 	/* initialize the default EEPROM state */
 	static const UINT16 ataxxj_eeprom_data[] =
@@ -1339,7 +698,7 @@ static void init_ataxxj(void)
 		0x3f,0x3c0c,
 		0xffff
 	};
-	init_eeprom(0x00, ataxxj_eeprom_data, 0x00);
+	ataxx_init_eeprom(0x00, ataxxj_eeprom_data, 0x00);
 
 	leland_rotate_memory(0);
 	leland_rotate_memory(1);
@@ -1351,7 +710,8 @@ static void init_ataxxj(void)
 	leland_i86_optimize_address(0x612);
 }
 
-static void init_wsf(void)
+
+static DRIVER_INIT( wsf )
 {
 	/* initialize the default EEPROM state */
 	static const UINT16 wsf_eeprom_data[] =
@@ -1364,7 +724,7 @@ static void init_wsf(void)
 		0x28,0xff00,
 		0xffff
 	};
-	init_eeprom(0x00, wsf_eeprom_data, 0x00);
+	ataxx_init_eeprom(0x00, wsf_eeprom_data, 0x00);
 
 	leland_rotate_memory(0);
 	leland_rotate_memory(1);
@@ -1378,7 +738,8 @@ static void init_wsf(void)
 	leland_i86_optimize_address(0x612);
 }
 
-static void init_indyheat(void)
+
+static DRIVER_INIT( indyheat )
 {
 	/* initialize the default EEPROM state */
 	static const UINT16 indyheat_eeprom_data[] =
@@ -1391,7 +752,7 @@ static void init_indyheat(void)
 		0x31,0xfafa,
 		0xffff
 	};
-	init_eeprom(0x00, indyheat_eeprom_data, 0x00);
+	ataxx_init_eeprom(0x00, indyheat_eeprom_data, 0x00);
 
 	leland_rotate_memory(0);
 	leland_rotate_memory(1);
@@ -1410,7 +771,8 @@ static void init_indyheat(void)
 	leland_i86_optimize_address(0x613);
 }
 
-static void init_brutforc(void)
+
+static DRIVER_INIT( brutforc )
 {
 	/* initialize the default EEPROM state */
 	static const UINT16 brutforc_eeprom_data[] =
@@ -1423,7 +785,7 @@ static void init_brutforc(void)
 		0x36,0x0104,
 		0xffff
 	};
-	init_eeprom(0x00, brutforc_eeprom_data, 0x00);
+	ataxx_init_eeprom(0x00, brutforc_eeprom_data, 0x00);
 
 	leland_rotate_memory(0);
 	leland_rotate_memory(1);

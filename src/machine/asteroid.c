@@ -10,24 +10,23 @@
 #include "driver.h"
 #include "machine/atari_vg.h"
 #include "vidhrdw/avgdvg.h"
+#include "asteroid.h"
 
-int asteroid_interrupt (void)
+
+INTERRUPT_GEN( asteroid_interrupt )
 {
 	/* Turn off interrupts if self-test is enabled */
-	if (readinputport(0) & 0x80)
-		return ignore_interrupt();
-	else
-		return nmi_interrupt();
+	if (!(readinputport(0) & 0x80))
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
-int llander_interrupt (void)
+INTERRUPT_GEN( llander_interrupt )
 {
 	/* Turn off interrupts if self-test is enabled */
 	if (readinputport(0) & 0x02)
-		return nmi_interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
+
 
 READ_HANDLER( asteroid_IN0_r )
 {
@@ -51,6 +50,7 @@ READ_HANDLER( asteroid_IN0_r )
 
 	return res;
 }
+
 
 READ_HANDLER( asteroib_IN0_r )
 {
@@ -85,6 +85,7 @@ READ_HANDLER( asteroid_IN1_r )
 	 	res = ~0x80;
 	return (res);
 }
+
 
 READ_HANDLER( asteroid_DSW1_r )
 {
@@ -122,6 +123,7 @@ WRITE_HANDLER( asteroid_bank_switch_w )
 	set_led_status (1, ~data & 0x01);
 }
 
+
 WRITE_HANDLER( astdelux_bank_switch_w )
 {
 	static int astdelux_bank = 0;
@@ -144,15 +146,18 @@ WRITE_HANDLER( astdelux_bank_switch_w )
 	}
 }
 
+
 WRITE_HANDLER( astdelux_led_w )
 {
 	set_led_status(offset,~data & 0x01);
 }
 
-void asteroid_init_machine(void)
+
+MACHINE_INIT( asteroid )
 {
 	asteroid_bank_switch_w (0,0);
 }
+
 
 /*
  * This is Lunar Lander's Inputport 0.

@@ -13,10 +13,9 @@ Notes:
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern int timelimt_vh_start( void );
-extern void timelimt_vh_stop( void );
-extern void timelimt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void timelimt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( timelimt );
+extern PALETTE_INIT( timelimt );
+extern VIDEO_UPDATE( timelimt );
 
 extern WRITE_HANDLER( timelimt_videoram_w );
 extern WRITE_HANDLER( timelimt_bg_videoram_w );
@@ -31,7 +30,7 @@ extern size_t timelimt_bg_videoram_size;
 
 static int nmi_enabled = 0;
 
-static void timelimt_init( void )
+static MACHINE_INIT( timelimt )
 {
 	soundlatch_setclearedvalue( 0 );
 	nmi_enabled = 0;
@@ -198,57 +197,48 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static int timelimt_irq( void ) {
+static INTERRUPT_GEN( timelimt_irq ) {
 	if ( nmi_enabled )
-		return nmi_interrupt();
-
-	return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 /***************************************************************************/
 
-static const struct MachineDriver machine_driver_timelimt =
-{
+static MACHINE_DRIVER_START( timelimt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,	/* 5.000 MHz */
-			readmem,writemem,readport,0,
-			timelimt_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/6,	/* 3.072 MHz */
-			readmem_sound,writemem_sound,readport_sound,writeport_sound,
-			interrupt,1 /* ? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	50,
-	timelimt_init,
+	MDRV_CPU_ADD(Z80, 5000000)	/* 5.000 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_VBLANK_INT(timelimt_irq,1)
+
+	MDRV_CPU_ADD(Z80,18432000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(50)
+
+	MDRV_MACHINE_INIT(timelimt)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 64,
-	timelimt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	timelimt_vh_start,
-	generic_vh_stop,
-	timelimt_vh_screenrefresh,
+	MDRV_PALETTE_INIT(timelimt)
+	MDRV_VIDEO_START(timelimt)
+	MDRV_VIDEO_UPDATE(timelimt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

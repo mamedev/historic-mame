@@ -92,6 +92,6 @@ WRITE_HANDLER( invinco_sh_port2_w )
 	}
 
 #if 0
-	logerror("Went LO: %02X  %04X\n", bitsGoneLow, cpu_get_pc());
+	logerror("Went LO: %02X  %04X\n", bitsGoneLow, activecpu_get_pc());
 #endif
 }

@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "gauntlet.h"
 
 
 
@@ -36,7 +37,7 @@ static UINT32 bankbits;
  *
  *************************************/
 
-int gauntlet_vh_start(void)
+VIDEO_START( gauntlet )
 {
 	static const struct ataripf_desc pfdesc =
 	{
@@ -114,15 +115,15 @@ int gauntlet_vh_start(void)
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
-		goto cant_create_an;
+		return 1;
 
 	/* modify the playfield lookup table to account for the code XOR */
 	pflookup = ataripf_get_lookup(0, &size);
@@ -141,29 +142,6 @@ int gauntlet_vh_start(void)
 	bankbits = vindctr2_screen_refresh ? 0x00000 : 0x40000;
 	ataripf_set_bankbits(0, bankbits, 0);
 	return 0;
-
-	/* error cases */
-cant_create_an:
-	atarimo_free();
-cant_create_mo:
-	ataripf_free();
-cant_create_pf:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void gauntlet_vh_stop(void)
-{
-	atarian_free();
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -251,10 +229,10 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void gauntlet_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( gauntlet )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	atarimo_render(0, bitmap, overrender_callback, NULL);
-	atarian_render(0, bitmap);
+	ataripf_render(0, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
+	atarian_render(0, bitmap, cliprect);
 }

@@ -77,9 +77,9 @@ WRITE_HANDLER( firetrap_bg1_scrollx_w );
 WRITE_HANDLER( firetrap_bg1_scrolly_w );
 WRITE_HANDLER( firetrap_bg2_scrollx_w );
 WRITE_HANDLER( firetrap_bg2_scrolly_w );
-int firetrap_vh_start(void);
-void firetrap_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void firetrap_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( firetrap );
+PALETTE_INIT( firetrap );
+VIDEO_UPDATE( firetrap );
 
 
 static int firetrap_irq_enable = 0;
@@ -101,7 +101,7 @@ static WRITE_HANDLER( firetrap_bankselect_w )
 
 static READ_HANDLER( firetrap_8751_r )
 {
-//logerror("PC:%04x read from 8751\n",cpu_get_pc());
+//logerror("PC:%04x read from 8751\n",activecpu_get_pc());
 
 	/* Check for coin insertion */
 	/* the following only works in the bootleg version, which doesn't have an */
@@ -112,14 +112,14 @@ static READ_HANDLER( firetrap_8751_r )
 
 static WRITE_HANDLER( firetrap_8751_w )
 {
-logerror("PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
-	cpu_cause_interrupt(0,0xff);
+logerror("PC:%04x write %02x to 8751\n",activecpu_get_pc(),data);
+	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( firetrap_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,M6502_INT_NMI);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static WRITE_HANDLER( firetrap_sound_2400_w )
@@ -149,7 +149,7 @@ static void firetrap_adpcm_int (int data)
 
 	toggle ^= 1;
 	if (firetrap_irq_enable && toggle)
-		cpu_cause_interrupt (1, M6502_INT_IRQ);
+		cpu_set_irq_line (1, M6502_IRQ_LINE, HOLD_LINE);
 }
 
 static WRITE_HANDLER( firetrap_adpcm_data_w )
@@ -359,54 +359,36 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static const struct MachineDriver machine_driver_firetrap =
-{
+static MACHINE_DRIVER_START( firetrap )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			3072000/2,	/* 1.536 MHz? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M6502,3072000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.536 MHz? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 							/* IRQs are caused by the ADPCM chip */
 							/* NMIs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	firetrap_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	firetrap_vh_start,
-	0,
-	firetrap_vh_screenrefresh,
+	MDRV_PALETTE_INIT(firetrap)
+	MDRV_VIDEO_START(firetrap)
+	MDRV_VIDEO_UPDATE(firetrap)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -14,29 +14,30 @@ driver by Mirko Buffoni
 extern unsigned char *ironhors_scroll;
 static unsigned char *ironhors_interrupt_enable;
 
-void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( ironhors );
 WRITE_HANDLER( ironhors_palettebank_w );
 WRITE_HANDLER( ironhors_charbank_w );
-void ironhors_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( ironhors );
 
 
 
-static int ironhors_interrupt(void)
+static INTERRUPT_GEN( ironhors_interrupt )
 {
 	if (cpu_getiloops() == 0)
 	{
-		if (*ironhors_interrupt_enable & 4) return M6809_INT_FIRQ;
+		if (*ironhors_interrupt_enable & 4)
+			cpu_set_irq_line(0, M6809_FIRQ_LINE, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
 	{
-		if (*ironhors_interrupt_enable & 1) return nmi_interrupt();
+		if (*ironhors_interrupt_enable & 1)
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( ironhors_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( ironhors_filter_w )
@@ -419,89 +420,67 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static const struct MachineDriver machine_driver_ironhors =
-{
-	{
-		{
-			CPU_M6809,
-			18432000/6,        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
-			ironhors_readmem,ironhors_writemem,0,0,
-			ironhors_interrupt,8
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/6,        /* 3.072 MHz */
-			ironhors_sound_readmem,ironhors_sound_writemem,ironhors_sound_readport,ironhors_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( ironhors )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,18432000/6)        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
+	MDRV_CPU_MEMORY(ironhors_readmem,ironhors_writemem)
+	MDRV_CPU_VBLANK_INT(ironhors_interrupt,8)
+
+	MDRV_CPU_ADD(Z80,18432000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.072 MHz */
+	MDRV_CPU_MEMORY(ironhors_sound_readmem,ironhors_sound_writemem)
+	MDRV_CPU_PORTS(ironhors_sound_readport,ironhors_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_30HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	ironhors_gfxdecodeinfo,
-	256,16*8*16+16*8*16,
-	ironhors_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(ironhors_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*8*16+16*8*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	ironhors_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ironhors)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(ironhors)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_farwest =
-{
-	{
-		{
-			CPU_M6809,
-			18432000/6,        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
-			ironhors_readmem,ironhors_writemem,0,0,
-			ironhors_interrupt,8
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/6,        /* 3.072 MHz */
-			farwest_sound_readmem,farwest_sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+
+static MACHINE_DRIVER_START( farwest )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,18432000/6)        /* 3.072 MHz??? mod by Shingo Suzuki 1999/10/15 */
+	MDRV_CPU_MEMORY(ironhors_readmem,ironhors_writemem)
+	MDRV_CPU_VBLANK_INT(ironhors_interrupt,8)
+
+	MDRV_CPU_ADD(Z80,18432000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 3.072 MHz */
+	MDRV_CPU_MEMORY(farwest_sound_readmem,farwest_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_30HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	farwest_gfxdecodeinfo,
-	256,16*8*16+16*8*16,
-	ironhors_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(farwest_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*8*16+16*8*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	ironhors_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ironhors)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(ironhors)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 

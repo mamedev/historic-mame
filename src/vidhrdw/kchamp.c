@@ -24,24 +24,24 @@ static kchamp_drawspritesproc kchamp_drawsprites;
   Video hardware start.
 ***************************************************************************/
 
-int kchampvs_vh_start(void) {
+VIDEO_START( kchampvs ) {
 
 	kchamp_drawsprites = kchamp_vs_drawsprites;
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
-int kchamp1p_vh_start(void) {
+VIDEO_START( kchamp1p ) {
 
 	kchamp_drawsprites = kchamp_1p_drawsprites;
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 /***************************************************************************
   Convert color prom.
 ***************************************************************************/
-void kchamp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( kchamp )
 {
         int i, red, green, blue;
         #define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -139,7 +139,7 @@ void kchamp_1p_drawsprites( struct mame_bitmap *bitmap ) {
 
 ***************************************************************************/
 
-void kchamp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kchamp )
 {
         int offs;
 

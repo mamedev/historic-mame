@@ -37,9 +37,9 @@ WRITE16_HANDLER( tecmo16_scroll2_y_w );
 WRITE16_HANDLER( tecmo16_scroll_char_x_w );
 WRITE16_HANDLER( tecmo16_scroll_char_y_w );
 
-int fstarfrc_vh_start(void);
-int ginkun_vh_start(void);
-void tecmo16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( fstarfrc );
+VIDEO_START( ginkun );
+VIDEO_UPDATE( tecmo16 );
 
 /******************************************************************************/
 
@@ -48,7 +48,7 @@ static WRITE16_HANDLER( tecmo16_sound_command_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0x00,data & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -353,103 +353,68 @@ static struct OKIM6295interface okim6295_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_fstarfrc =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			24000000/2,			/* 12MHz */
-			fstarfrc_readmem,fstarfrc_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,			/* 4MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2151 */
-								/* NMIs are triggered by the main CPU */
-		}
-	},
+static MACHINE_DRIVER_START( fstarfrc )
 
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000/2)			/* 12MHz */
+	MDRV_CPU_MEMORY(fstarfrc_readmem,fstarfrc_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+								/* NMIs are triggered by the main CPU */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	fstarfrc_vh_start,
-	0,
-	tecmo16_vh_screenrefresh,
+	MDRV_VIDEO_START(fstarfrc)
+	MDRV_VIDEO_UPDATE(tecmo16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ginkun =
-{
+
+static MACHINE_DRIVER_START( ginkun )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			24000000/2,			/* 12MHz */
-			ginkun_readmem,ginkun_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,			/* 4MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2151 */
-								/* NMIs are triggered by the main CPU */
-		}
-	},
+	MDRV_CPU_ADD(M68000,24000000/2)			/* 12MHz */
+	MDRV_CPU_MEMORY(ginkun_readmem,ginkun_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 4MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+								/* NMIs are triggered by the main CPU */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ginkun_vh_start,
-	0,
-	tecmo16_vh_screenrefresh,
+	MDRV_VIDEO_START(ginkun)
+	MDRV_VIDEO_UPDATE(tecmo16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 

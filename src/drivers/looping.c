@@ -63,7 +63,7 @@ L056-6    9A          "      "      VLI-8-4 7A         "
 
 static struct tilemap *tilemap;
 
-void looping_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( looping )
 {
 	int i;
 	for (i = 0;i < 0x20;i++)
@@ -125,7 +125,7 @@ WRITE_HANDLER( looping_colorram_w )
 	}
 }
 
-int looping_vh_init( void )
+VIDEO_START( looping )
 {
 	tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 	if( tilemap )
@@ -145,7 +145,7 @@ WRITE_HANDLER( looping_videoram_w )
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int tile_number;
 	const UINT8 *source = spriteram;
@@ -162,17 +162,17 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 			tile_number&0x80, /* flipy */
 			source[3], /* xpos */
 			240 - source[0], /* ypos */
-			&Machine->visible_area,
+			cliprect,
 			TRANSPARENCY_PEN,0 );
 
 		source += 4;
 	}
 }
 
-void looping_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( looping )
 {
-	tilemap_draw( bitmap,tilemap,0,0 );
-	draw_sprites( bitmap );
+	tilemap_draw( bitmap,cliprect,tilemap,0,0 );
+	draw_sprites( bitmap,cliprect );
 }
 
 WRITE_HANDLER( looping_intack )
@@ -184,11 +184,10 @@ WRITE_HANDLER( looping_intack )
 	}
 }
 
-int looping_interrupt( void )
+INTERRUPT_GEN( looping_interrupt )
 {
 	cpu_irq_line_vector_w(0, 0, 4);
 	cpu_set_irq_line(0, 0, ASSERT_LINE);
-	return ignore_interrupt();
 }
 
 /****** sound *******/
@@ -328,53 +327,40 @@ static struct DACinterface dac_interface =
 	{ 30 }
 };
 
-static const struct MachineDriver machine_driver_looping =
-{
-	{
-		{
-			CPU_TMS9995,
-			3000000, /* ? */
-			looping_readmem,looping_writemem,0,looping_writeport,
-			looping_interrupt,1
-		},
-		{ /* sound */
-			CPU_TMS9980,
-			2000000, // ?
-			looping_io_readmem,looping_io_writemem,0,looping_io_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame */
-	0,
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	looping_gfxdecodeinfo,
-	32,32,
-	looping_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	looping_vh_init,
-	0, /*looping_vh_stop*/
-	looping_vh_screenrefresh,
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		},
-		{
-			SOUND_DAC,
- 			&dac_interface
-		}
-	}
+static MACHINE_DRIVER_START( looping )
 
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD(TMS9995, 3000000) /* ? */
+	MDRV_CPU_MEMORY(looping_readmem,looping_writemem)
+	MDRV_CPU_PORTS(0,looping_writeport)
+	MDRV_CPU_VBLANK_INT(looping_interrupt,1)
+
+	MDRV_CPU_ADD(TMS9980, 2000000) // ?
+	MDRV_CPU_MEMORY(looping_io_readmem,looping_io_writemem)
+	MDRV_CPU_PORTS(0,looping_io_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(2500)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(looping_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32)
+
+	MDRV_PALETTE_INIT(looping)
+	MDRV_VIDEO_START(looping)
+	MDRV_VIDEO_UPDATE(looping)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+
 
 INPUT_PORTS_START( looping )
 	PORT_START
@@ -494,7 +480,7 @@ ROM_START( skybump )
 	ROM_LOAD( "vid.clr",		0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-void init_looping( void ){
+DRIVER_INIT( looping ){
 	/* unscramble the TMS9995 ROMs */
 	UINT8 *pMem = memory_region( REGION_CPU1 );
 	UINT8 raw,code;

@@ -1,10 +1,17 @@
 /*************************************************************************
 
-	Turbo - Sega - 1981
-	Subroc 3D - Sega - 1982
-	Buck Rogers: Planet of Zoom - Sega - 1982
+	Sega Z80-3D system
 
-	driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Aaron Giles, Ernesto Corvi
+	driver by Alex Pasadyn, Howie Cohen, Frank Palazzolo, Ernesto Corvi,
+	and Aaron Giles
+
+	Games supported:
+		* Turbo
+		* Subroc 3D
+		* Buck Rogers: Planet of Zoom
+
+	Known bugs:
+		* no sound support in Subroc
 
 **************************************************************************
 	TURBO
@@ -144,10 +151,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "turbo.h"
-
-
-#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+#include "machine/segacrpt.h"
 
 
 /*************************************
@@ -502,6 +506,7 @@ static struct GfxLayout numlayout =
 	10*8
 };
 
+
 static struct GfxLayout rotated_numlayout =
 {
 	10,8,
@@ -513,6 +518,7 @@ static struct GfxLayout rotated_numlayout =
 	10*8
 };
 
+
 static struct GfxLayout rotated_tachlayout =
 {
 	16,1,
@@ -523,6 +529,7 @@ static struct GfxLayout rotated_tachlayout =
 	{ 0 },
 	1*8
 };
+
 
 static struct GfxLayout charlayout =
 {
@@ -544,11 +551,13 @@ static struct GfxDecodeInfo turbo_gfxdecode[] =
 	{ -1 }
 };
 
+
 static struct GfxDecodeInfo subroc3d_gfxdecode[] =
 {
 	{ REGION_GFX4, 0x0000, &numlayout,	512,   1 },
 	{ -1 }
 };
+
 
 static struct GfxDecodeInfo buckrog_gfxdecode[] =
 {
@@ -564,7 +573,7 @@ static struct GfxDecodeInfo buckrog_gfxdecode[] =
  *
  *************************************/
 
-static const char *sample_names[]=
+static const char *turbo_sample_names[]=
 {
 	"*turbo",
 	"01.wav",		/* Trig1 */
@@ -579,11 +588,36 @@ static const char *sample_names[]=
 	0
 };
 
-static struct Samplesinterface samples_interface =
+static struct Samplesinterface turbo_samples_interface =
 {
 	8,			/* eight channels */
 	25,			/* volume */
-	sample_names
+	turbo_sample_names
+};
+
+
+static const char *buckrog_sample_names[]=
+{
+	"*buckrog",
+	"alarm0.wav",
+	"alarm1.wav",
+	"alarm2.wav",
+	"alarm3.wav",
+	"exp.wav",
+	"fire.wav",
+	"rebound.wav",
+	"hit.wav",
+	"shipsnd1.wav",
+	"shipsnd2.wav",
+	"shipsnd3.wav",
+	0
+};
+
+static struct Samplesinterface buckrog_samples_interface =
+{
+	6,                      /* 6 channels */
+	25,			/* volume */
+	buckrog_sample_names
 };
 
 
@@ -594,112 +628,93 @@ static struct Samplesinterface samples_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_turbo =
-{
+static MACHINE_DRIVER_START( turbo )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,
-			turbo_readmem,turbo_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	turbo_init_machine,
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_MEMORY(turbo_readmem,turbo_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(turbo)
 
 	/* video hardware */
-	32*8, 35*8, { 1*8, 32*8-1, 0*8, 35*8-1 },
-	turbo_gfxdecode,
-	512+6,0,
-	turbo_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_ASPECT_RATIO(104,105)
+	MDRV_SCREEN_SIZE(32*8, 35*8)
+	MDRV_VISIBLE_AREA(1*8, 32*8-1, 0*8, 35*8-1)
+	MDRV_GFXDECODE(turbo_gfxdecode)
+	MDRV_PALETTE_LENGTH(512+6)
 
-	VIDEO_TYPE_RASTER | VIDEO_ASPECT_RATIO(104,105),
-	turbo_vh_eof,
-	turbo_vh_start,
-	turbo_vh_stop,
-	turbo_vh_screenrefresh,
+	MDRV_PALETTE_INIT(turbo)
+	MDRV_VIDEO_START(turbo)
+	MDRV_VIDEO_EOF(turbo)
+	MDRV_VIDEO_UPDATE(turbo)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, turbo_samples_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_subroc3d =
-{
+static MACHINE_DRIVER_START( subroc3d )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,
-            subroc3d_readmem,subroc3d_writemem,0,0,
-            interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-    subroc3d_init_machine,
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_MEMORY(subroc3d_readmem,subroc3d_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(subroc3d)
 
 	/* video hardware */
-  	32*8, 34*8, { 0*8, 30*8-1, 0*8, 30*8-1 },
-    subroc3d_gfxdecode,
-	512+2,0,
-    subroc3d_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_ASPECT_RATIO(56,45)
+	MDRV_SCREEN_SIZE(32*8, 34*8)
+	MDRV_VISIBLE_AREA(0*8, 30*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(subroc3d_gfxdecode)
+	MDRV_PALETTE_LENGTH(512+2)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_ASPECT_RATIO(56,45),
-	0,
-	subroc3d_vh_start,
-	subroc3d_vh_stop,
-    subroc3d_vh_screenrefresh,
+	MDRV_PALETTE_INIT(subroc3d)
+	MDRV_VIDEO_START(subroc3d)
+	MDRV_VIDEO_UPDATE(subroc3d)
 
 	/* sound hardware */
-    0,0,0,0
-};
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_buckrog =
-{
+static MACHINE_DRIVER_START( buckrog )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			5000000,
-            buckrog_readmem,buckrog_writemem,0,0,
-            interrupt,1
-		},
-		{
-			CPU_Z80,
-			5000000,
-            buckrog_readmem2,buckrog_writemem2,buckrog_readport2,0,
-            ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-    buckrog_init_machine,
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_MEMORY(buckrog_readmem,buckrog_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_MEMORY(buckrog_readmem2,buckrog_writemem2)
+	MDRV_CPU_PORTS(buckrog_readport2,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	MDRV_MACHINE_INIT(buckrog)
 
 	/* video hardware */
-  	39*8, 32*8, { 0*8, 39*8-1, 0*8, 28*8-1 },
-    buckrog_gfxdecode,
-	1024+512+256+2,0,
-    buckrog_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_ASPECT_RATIO(13,8)
+	MDRV_SCREEN_SIZE(39*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 39*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(buckrog_gfxdecode)
+	MDRV_PALETTE_LENGTH(1024+512+256+2)
 
-	VIDEO_TYPE_RASTER | VIDEO_ASPECT_RATIO(13,8),
-	0,
-	buckrog_vh_start,
-	buckrog_vh_stop,
-    buckrog_vh_screenrefresh,
+	MDRV_PALETTE_INIT(buckrog)
+	MDRV_VIDEO_START(buckrog)
+	MDRV_VIDEO_UPDATE(buckrog)
 
 	/* sound hardware */
-    0,0,0,0
-};
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, buckrog_samples_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -927,6 +942,42 @@ ROM_END
 
 
 ROM_START( buckrog )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "br-3.bin", 0x0000, 0x4000, 0xf0055e97 )	/* encrypted */
+	ROM_LOAD( "br-4.bin", 0x4000, 0x4000, 0x7d084c39 )	/* encrypted */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
+	ROM_LOAD( "5200.66", 0x0000, 0x1000, 0x0d58b154 )
+
+	ROM_REGION( 0x40000, REGION_GFX1, 0 ) /* sprite data */
+	ROM_LOAD( "5216.100",  0x00000, 0x2000, 0x8155bd73 )	/* level 0 */
+	ROM_LOAD( "5213.84",   0x08000, 0x2000, 0xfd78dda4 )	/* level 1 */
+	ROM_LOAD( "ic68",      0x10000, 0x4000, 0x2a194270 )	/* level 2 */
+	ROM_LOAD( "ic52",      0x18000, 0x4000, 0xb31a120f )	/* level 3 */
+	ROM_LOAD( "ic43",      0x20000, 0x4000, 0xd3584926 )	/* level 4 */
+	ROM_LOAD( "ic59",      0x28000, 0x4000, 0xd83c7fcf )	/* level 5 */
+	ROM_LOAD( "5208.58",   0x2c000, 0x2000, 0xd181fed2 )
+	ROM_LOAD( "ic75",      0x30000, 0x4000, 0x1bd6e453 )	/* level 6 */
+	ROM_LOAD( "5239.74",   0x34000, 0x2000, 0xc34e9b82 )
+	ROM_LOAD( "ic91",      0x38000, 0x4000, 0x221f4ced )	/* level 7 */
+	ROM_LOAD( "5238.90",   0x3c000, 0x2000, 0x7aff0886 )
+
+	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_LOAD( "5201.102",  0x0000, 0x0800, 0x7f21b0a4 )
+	ROM_LOAD( "5202.103",  0x0800, 0x0800, 0x43f3e5a7 )
+
+	ROM_REGION( 0x2000, REGION_GFX3, 0 )	/* background color data */
+	ROM_LOAD( "5203.91", 0x0000, 0x2000, 0x631f5b65 )
+
+	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )	/* various PROMs */
+	ROM_LOAD( "ic95",    0x0000, 0x0400, 0x45e997a8 ) /* sprite colortable */
+	ROM_LOAD( "5198.93", 0x0400, 0x0200, 0x32e74bc8 ) /* char colortable */
+ROM_END
+
+
+ROM_START( buckrogn )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ic3", 0x0000, 0x4000, 0x7f1910af )
 	ROM_LOAD( "ic4", 0x4000, 0x4000, 0x5ecd393b )
@@ -989,7 +1040,7 @@ static const UINT8 led_tach_data[] =
 };
 
 
-static void init_common(void)
+static DRIVER_INIT( common )
 {
 	memset(memory_region(REGION_GFX4), 0, memory_region_length(REGION_GFX4));
 	memcpy(memory_region(REGION_GFX4), led_number_data, sizeof(led_number_data));
@@ -997,10 +1048,17 @@ static void init_common(void)
 }
 
 
-static void init_decode_turbo(void)
+static DRIVER_INIT( decode_turbo )
 {
 	init_common();
 	turbo_rom_decode();
+}
+
+
+static DRIVER_INIT( decode_buckrog )
+{
+	init_common();
+	buckrog_decode();
 }
 
 
@@ -1011,8 +1069,9 @@ static void init_decode_turbo(void)
  *
  *************************************/
 
-GAMEX( 1981, turbo,    0,       turbo,    turbo,    common,       ROT270,             "Sega", "Turbo", GAME_NO_COCKTAIL )
-GAMEX( 1981, turboa,   turbo,   turbo,    turbo,    decode_turbo, ROT270,             "Sega", "Turbo (encrypted set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1981, turbob,   turbo,   turbo,    turbo,    decode_turbo, ROT270,             "Sega", "Turbo (encrypted set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1982, subroc3d, 0,       subroc3d, subroc3d, common,       ORIENTATION_FLIP_X, "Sega", "Subroc3D", GAME_NO_SOUND )
-GAMEX( 1982, buckrog,  0,       buckrog,  buckrog,  common,       ROT0,               "Sega", "Buck Rogers: Planet of Zoom", GAME_NO_SOUND )
+GAMEX( 1981, turbo,    0,       turbo,    turbo,    common,         ROT270,             "Sega", "Turbo", GAME_NO_COCKTAIL )
+GAMEX( 1981, turboa,   turbo,   turbo,    turbo,    decode_turbo,   ROT270,             "Sega", "Turbo (encrypted set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1981, turbob,   turbo,   turbo,    turbo,    decode_turbo,   ROT270,             "Sega", "Turbo (encrypted set 2)", GAME_NO_COCKTAIL )
+GAMEX( 1982, subroc3d, 0,       subroc3d, subroc3d, common,         ORIENTATION_FLIP_X, "Sega", "Subroc3D", GAME_NO_SOUND )
+GAME ( 1982, buckrog,  0,       buckrog,  buckrog,  decode_buckrog, ROT0,               "Sega", "Buck Rogers: Planet of Zoom" )
+GAME ( 1982, buckrogn, buckrog, buckrog,  buckrog,  common,         ROT0,               "Sega", "Buck Rogers: Planet of Zoom (not encrypted)" )

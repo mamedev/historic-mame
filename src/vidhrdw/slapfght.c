@@ -74,7 +74,7 @@ static void get_fix_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int perfrman_vh_start (void)
+VIDEO_START( perfrman )
 {
 	pf1_tilemap = tilemap_create(get_pf_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
@@ -86,7 +86,7 @@ int perfrman_vh_start (void)
 	return 0;
 }
 
-int slapfight_vh_start (void)
+VIDEO_START( slapfight )
 {
 	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 	fix_tilemap = tilemap_create(get_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -156,7 +156,7 @@ void slapfght_log_vram(void)
   Render the Sprites
 
 ***************************************************************************/
-static void perfrman_draw_sprites( struct mame_bitmap *bitmap, int priority_to_display )
+static void perfrman_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority_to_display )
 {
 	int offs;
 
@@ -185,7 +185,7 @@ static void perfrman_draw_sprites( struct mame_bitmap *bitmap, int priority_to_d
 				,
 				flipscreen, flipscreen,
 				sx, sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -198,7 +198,7 @@ static void perfrman_draw_sprites( struct mame_bitmap *bitmap, int priority_to_d
 
 ***************************************************************************/
 
-void perfrman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( perfrman )
 {
 	tilemap_set_flip( pf1_tilemap, flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	tilemap_set_scrolly( pf1_tilemap ,0 , 0 );
@@ -209,11 +209,11 @@ void perfrman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx( pf1_tilemap ,0 , -16 );
 	}
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	perfrman_draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,pf1_tilemap,0,0);
-	perfrman_draw_sprites(bitmap,0x80);
+	perfrman_draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	perfrman_draw_sprites(bitmap,cliprect,0x80);
 
 #ifdef MAME_DEBUG
 	slapfght_log_vram();
@@ -221,7 +221,7 @@ void perfrman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void slapfight_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( slapfight )
 {
 	int offs;
 
@@ -239,7 +239,7 @@ void slapfight_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly( fix_tilemap,0, -1 ); /* Glitch in Tiger Heli otherwise */
 	}
 
-	tilemap_draw(bitmap,pf1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
 	/* Draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
@@ -250,17 +250,17 @@ void slapfight_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				(buffered_spriteram[offs+2] & 0x1e) >> 1,
 				1,1,
 				288-(buffered_spriteram[offs+1] + ((buffered_spriteram[offs+2] & 0x01) << 8)) +18,240-buffered_spriteram[offs+3],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 		else
 			drawgfx(bitmap,Machine->gfx[2],
 				buffered_spriteram[offs] + ((buffered_spriteram[offs+2] & 0xc0) << 2),
 				(buffered_spriteram[offs+2] & 0x1e) >> 1,
 				0,0,
 				(buffered_spriteram[offs+1] + ((buffered_spriteram[offs+2] & 0x01) << 8)) - 13,buffered_spriteram[offs+3],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 
 #ifdef MAME_DEBUG
 	slapfght_log_vram();

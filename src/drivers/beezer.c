@@ -12,13 +12,13 @@
 #include "cpu/m6809/m6809.h"
 
 /* from vidhrdw/beezer.c */
-extern UINT8 *beezer_ram;
-int beezer_interrupt (void);
-void beezer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern UINT8 *videoram;
+INTERRUPT_GEN( beezer_interrupt );
+VIDEO_UPDATE( beezer );
 WRITE_HANDLER( beezer_ram_w );
 
 /* from machine/beezer.c */
-void init_beezer(void);
+DRIVER_INIT( beezer );
 WRITE_HANDLER( beezer_bankswitch_w );
 
 static MEMORY_READ_START( readmem )
@@ -28,7 +28,7 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x0000, 0xbfff, beezer_ram_w, &beezer_ram },
+	{ 0x0000, 0xbfff, beezer_ram_w, &videoram, &videoram_size },
 	{ 0xc000, 0xcfff, MWA_BANK1 },
 	{ 0xd000, 0xffff, beezer_bankswitch_w },
 MEMORY_END
@@ -95,48 +95,31 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_beezer =
-{
+static MACHINE_DRIVER_START( beezer )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1000000,        /* 1 MHz */
-			readmem,writemem,0,0,
-			beezer_interrupt,128
-		},
-		{
-			CPU_M6809,
-			1000000,        /* 1 MHz */
-			readmem_sound,writemem_sound,0,0,
-			0,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame */
-	0,	/* init machine */
+	MDRV_CPU_ADD(M6809, 1000000)        /* 1 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(beezer_interrupt,128)
+
+	MDRV_CPU_ADD(M6809, 1000000)        /* 1 MHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 384, { 0, 256-1, 16, 303 },
-	0,
-	16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 384)
+	MDRV_VISIBLE_AREA(0, 256-1, 16, 303)
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	beezer_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(beezer)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

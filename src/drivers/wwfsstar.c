@@ -60,8 +60,8 @@
 WRITE16_HANDLER ( wwfsstar_scrollwrite );
 
 /* in (vidhrdw/wwfsstar.c) */
-int wwfsstar_vh_start(void);
-void wwfsstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( wwfsstar );
+VIDEO_UPDATE( wwfsstar );
 
 READ16_HANDLER( input_port_2_word_r_cust );
 
@@ -147,7 +147,7 @@ WRITE16_HANDLER ( wwfsstar_scrollwrite )
 WRITE16_HANDLER ( wwfsstar_soundwrite )
 {
 	soundlatch_w(1,data & 0xff);
-	cpu_cause_interrupt( 1, Z80_NMI_INT );
+	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 }
 
 READ16_HANDLER( input_port_2_word_r_cust )
@@ -294,21 +294,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  file)
 *******************************************************************************/
 
-static int wwfsstar_interrupt(void) {
+static INTERRUPT_GEN( wwfsstar_interrupt ) {
 	if( cpu_getiloops() == 0 ){
 		vbl = 1;
 	}
 
-	if( cpu_getiloops() == 240 ){
+	else if( cpu_getiloops() == 240 ){
 		vbl = 0;
-		return MC68000_IRQ_5;
+		cpu_set_irq_line(0, 5, HOLD_LINE);
 	}
 
-	if( cpu_getiloops() == 250 ){
-		 return MC68000_IRQ_6;
+	else if( cpu_getiloops() == 250 ){
+		 cpu_set_irq_line(0, 6, HOLD_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 /*******************************************************************************
@@ -344,54 +342,35 @@ static struct OKIM6295interface okim6295_interface =
  Clock Speeds are currently Unknown
 *******************************************************************************/
 
-static const struct MachineDriver machine_driver_wwfsstar =
-{
+static MACHINE_DRIVER_START( wwfsstar )
+
 	/* basic machine hardware */
-	{
+	MDRV_CPU_ADD(M68000, 12000000)	/* unknown */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(wwfsstar_interrupt,262)
 
-		{
-			CPU_M68000,
-			12000000,	/* unknown */
-			readmem,writemem,0,0,
-			wwfsstar_interrupt,262
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* unknown */
-			readmem_sound, writemem_sound,0,0,
-			ignore_interrupt,0
-		},
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* unknown */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
 
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	384, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	wwfsstar_vh_start,
-	0,
-	wwfsstar_vh_screenrefresh,
+	MDRV_VIDEO_START(wwfsstar)
+	MDRV_VIDEO_UPDATE(wwfsstar)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /*******************************************************************************
  Rom Loaders / Game Drivers

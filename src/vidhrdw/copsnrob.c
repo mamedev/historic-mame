@@ -1,14 +1,13 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Cops'n Robbers hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "artwork.h"
+#include "copsnrob.h"
 
 
 static const struct artwork_element copsnrob_overlay[] =
@@ -26,10 +25,9 @@ unsigned char *copsnrob_trucky;
 unsigned char *copsnrob_truckram;
 
 
-int copsnrob_vh_start(void)
+VIDEO_START( copsnrob )
 {
 	overlay_create(copsnrob_overlay, 2);
-
     return 0;
 }
 
@@ -41,10 +39,10 @@ int copsnrob_vh_start(void)
   the main emulation engine.
 
 ***************************************************************************/
-void copsnrob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( copsnrob )
 {
 	int offs, x, y;
-
 
     /* redrawing the entire display is faster in this case */
 

@@ -43,29 +43,18 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 
 ***************************************************************************/
 
-int spy_vh_start(void)
+VIDEO_START( spy )
 {
 	layer_colorbase[0] = 48;
 	layer_colorbase[1] = 0;
 	layer_colorbase[2] = 16;
 	sprite_colorbase = 32;
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
-	{
 		return 1;
-	}
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 
 	return 0;
-}
-
-void spy_vh_stop(void)
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
 }
 
 
@@ -76,21 +65,21 @@ void spy_vh_stop(void)
 
 ***************************************************************************/
 
-void spy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( spy )
 {
 	K052109_tilemap_update();
 
-	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[0]],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[0]],cliprect);
 
 	if (!spy_video_enable)
 		return;
 
-	K051960_sprites_draw(bitmap,1,1);	/* are these used? */
-	K052109_tilemap_draw(bitmap,1,0,0);
-	K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,2,0,0);
-	K051960_sprites_draw(bitmap,3,3);	/* are these used? They are supposed to have */
+	K051960_sprites_draw(bitmap,cliprect,1,1);	/* are these used? */
+	K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+	K051960_sprites_draw(bitmap,cliprect,0,0);
+	K052109_tilemap_draw(bitmap,cliprect,2,0,0);
+	K051960_sprites_draw(bitmap,cliprect,3,3);	/* are these used? They are supposed to have */
 										/* priority over layer B but not layer A. */
-	K051960_sprites_draw(bitmap,2,2);
-	K052109_tilemap_draw(bitmap,0,0,0);
+	K051960_sprites_draw(bitmap,cliprect,2,2);
+	K052109_tilemap_draw(bitmap,cliprect,0,0,0);
 }

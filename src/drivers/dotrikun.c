@@ -26,9 +26,8 @@ SOUND : (none)
 
 
 WRITE_HANDLER( dotrikun_videoram_w );
-void dotrikun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int dotrikun_vh_start(void);
-void dotrikun_vh_stop(void);
+VIDEO_UPDATE( dotrikun );
+VIDEO_START( dotrikun );
 
 WRITE_HANDLER( dotrikun_color_w );
 
@@ -65,36 +64,28 @@ INPUT_PORTS_START( dotrikun )
 INPUT_PORTS_END
 
 
-static const struct MachineDriver machine_driver_dotrikun =
-{
+static MACHINE_DRIVER_START( dotrikun )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,		 /* 4 MHz */
-			readmem, writemem, readport, writeport,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,					/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)		 /* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0, 192-1 },
-	0,
-	2, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 192-1)
+	MDRV_PALETTE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	0,
-	0,
-	dotrikun_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(dotrikun)
 
 	/* sound hardware */
-	0, 0, 0, 0
-};
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

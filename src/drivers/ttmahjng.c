@@ -10,9 +10,8 @@ extern unsigned char *ttmahjng_videoram1;
 extern unsigned char *ttmahjng_videoram2;
 extern size_t ttmahjng_videoram_size;
 
-void ttmahjng_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  ttmahjng_vh_start(void);
-void ttmahjng_vh_stop(void);
+PALETTE_INIT( ttmahjng );
+VIDEO_START( ttmahjng );
 WRITE_HANDLER( ttmahjng_out0_w );
 WRITE_HANDLER( ttmahjng_out1_w );
 WRITE_HANDLER( ttmahjng_videoram1_w );
@@ -21,7 +20,7 @@ READ_HANDLER( ttmahjng_videoram1_r );
 READ_HANDLER( ttmahjng_videoram2_r );
 WRITE_HANDLER( ttmahjng_sharedram_w );
 READ_HANDLER( ttmahjng_sharedram_r );
-void ttmahjng_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( ttmahjng );
 
 
 static int psel;
@@ -183,48 +182,33 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_ttmahjng =
-{
+static MACHINE_DRIVER_START( ttmahjng )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			2500000,	/* 10MHz / 4 = 2.5MHz */
-			cpu1_readmem, cpu1_writemem, 0, 0,
-			interrupt, 1
-		},
-		{
-			CPU_Z80,
-			2500000,	/* 10MHz / 4 = 2.5MHz */
-			cpu2_readmem, cpu2_writemem, 0, 0,
-			ignore_interrupt, 0
-		}
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD(Z80,2500000)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* 10MHz / 4 = 2.5MHz */
+	MDRV_CPU_MEMORY(cpu1_readmem,cpu1_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 2500000)	/* 10MHz / 4 = 2.5MHz */
+	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0, 256-1 },
-	0,
-	8, 0,
-	ttmahjng_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	ttmahjng_vh_start,
-	ttmahjng_vh_stop,
-	ttmahjng_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ttmahjng)
+	MDRV_VIDEO_START(ttmahjng)
+	MDRV_VIDEO_UPDATE(ttmahjng)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

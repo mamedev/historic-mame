@@ -29,11 +29,11 @@ static const struct artwork_element circus_ol[]={
 /***************************************************************************
 ***************************************************************************/
 
-int circus_vh_start(void)
+VIDEO_START( circus )
 {
 	int start_pen = 2;
 
-	if (generic_vh_start()!=0)
+	if (video_start_generic()!=0)
 		return 1;
 
 	overlay_create(circus_ol, start_pen);
@@ -150,12 +150,12 @@ static void draw_robot_box (struct mame_bitmap *bitmap, int x, int y)
 }
 
 
-void circus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( circus )
 {
 	int offs;
 	int sx,sy;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -173,7 +173,7 @@ void circus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sy = offs / 32;
 			sx = offs % 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					0,
 					0,0,
@@ -181,6 +181,7 @@ void circus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
     /* The sync generator hardware is used to   */
     /* draw the border and diving boards        */
@@ -201,37 +202,15 @@ void circus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			0,0,
 			clown_y,clown_x,
 			&Machine->visible_area,TRANSPARENCY_PEN,0);
-
-	/* mark tiles underneath as dirty */
-	sx = clown_y >> 3;
-	sy = clown_x >> 3;
-
-	{
-		int max_x = 2;
-		int max_y = 2;
-		int x2, y2;
-
-		if (clown_y & 0x0f) max_x ++;
-		if (clown_x & 0x0f) max_y ++;
-
-		for (y2 = sy; y2 < sy + max_y; y2 ++)
-		{
-			for (x2 = sx; x2 < sx + max_x; x2 ++)
-			{
-				if ((x2 < 32) && (y2 < 32) && (x2 >= 0) && (y2 >= 0))
-					dirtybuffer[x2 + 32*y2] = 1;
-			}
-		}
-	}
 }
 
 
-void robotbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( robotbowl )
 {
 	int offs;
 	int sx,sy;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer, 1, videoram_size);
 	}
@@ -249,7 +228,7 @@ void robotbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					0,
 					0,0,
@@ -257,6 +236,7 @@ void robotbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
     /* The sync generator hardware is used to   */
     /* draw the bowling alley & scorecards      */
@@ -295,37 +275,14 @@ void robotbowl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			0,0,
 			clown_y+8,clown_x+8, /* Y is horizontal position */
 			&Machine->visible_area,TRANSPARENCY_PEN,0);
-
-	/* mark tiles underneath as dirty */
-	sx = clown_y >> 3;
-	sy = clown_x >> 3;
-
-	{
-		int max_x = 2;
-		int max_y = 2;
-		int x2, y2;
-
-		if (clown_y & 0x0f) max_x ++;
-		if (clown_x & 0x0f) max_y ++;
-
-		for (y2 = sy; y2 < sy + max_y; y2 ++)
-		{
-			for (x2 = sx; x2 < sx + max_x; x2 ++)
-			{
-				if ((x2 < 32) && (y2 < 32) && (x2 >= 0) && (y2 >= 0))
-					dirtybuffer[x2 + 32*y2] = 1;
-			}
-		}
-	}
-
 }
 
-void crash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( crash )
 {
 	int offs;
 	int sx,sy;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer, 1, videoram_size);
 	}
@@ -343,7 +300,7 @@ void crash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					0,
 					0,0,
@@ -351,6 +308,7 @@ void crash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the Car */
     drawgfx(bitmap,Machine->gfx[1],
@@ -359,26 +317,4 @@ void crash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			0,0,
 			clown_y,clown_x, /* Y is horizontal position */
 			&Machine->visible_area,TRANSPARENCY_PEN,0);
-
-	/* mark tiles underneath as dirty */
-	sx = clown_y >> 3;
-	sy = clown_x >> 3;
-
-	{
-		int max_x = 2;
-		int max_y = 2;
-		int x2, y2;
-
-		if (clown_y & 0x0f) max_x ++;
-		if (clown_x & 0x0f) max_y ++;
-
-		for (y2 = sy; y2 < sy + max_y; y2 ++)
-		{
-			for (x2 = sx; x2 < sx + max_x; x2 ++)
-			{
-				if ((x2 < 32) && (y2 < 32) && (x2 >= 0) && (y2 >= 0))
-					dirtybuffer[x2 + 32*y2] = 1;
-			}
-		}
-	}
 }

@@ -53,43 +53,21 @@ WRITE_HANDLER( starcrus_p1_y_w ) { p1_y = data^0xff; }
 WRITE_HANDLER( starcrus_p2_x_w ) { p2_x = data^0xff; }
 WRITE_HANDLER( starcrus_p2_y_w ) { p2_y = data^0xff; }
 
-int starcrus_vh_start(void)
+VIDEO_START( starcrus )
 {
-	if ((ship1_vid = bitmap_alloc(16,16)) == 0)
-	{
+	if ((ship1_vid = auto_bitmap_alloc(16,16)) == 0)
 		return 1;
-	}
 
-	if ((ship2_vid = bitmap_alloc(16,16)) == 0)
-	{
-		bitmap_free(ship1_vid);
+	if ((ship2_vid = auto_bitmap_alloc(16,16)) == 0)
 		return 1;
-	}
 
-	if ((proj1_vid = bitmap_alloc(16,16)) == 0)
-	{
-		bitmap_free(ship1_vid);
-		bitmap_free(ship2_vid);
+	if ((proj1_vid = auto_bitmap_alloc(16,16)) == 0)
 		return 1;
-	}
 
-	if ((proj2_vid = bitmap_alloc(16,16)) == 0)
-	{
-		bitmap_free(ship1_vid);
-		bitmap_free(ship2_vid);
-		bitmap_free(proj1_vid);
+	if ((proj2_vid = auto_bitmap_alloc(16,16)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-void starcrus_vh_stop(void)
-{
-	bitmap_free(ship1_vid);
-	bitmap_free(ship2_vid);
-	bitmap_free(proj1_vid);
-	bitmap_free(proj2_vid);
 }
 
 WRITE_HANDLER( starcrus_ship_parm_1_w )
@@ -517,7 +495,7 @@ int starcrus_collision_check_s2p1p2(void)
     return 0;
 }
 
-void starcrus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( starcrus )
 {
     fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 

@@ -34,11 +34,6 @@ extern "C" {
 
 
 
-/* obsolete, to be removed */
-#define READ_WORD(a)			(*(UINT16 *)(a))
-#define WRITE_WORD(a,d)			(*(UINT16 *)(a) = (d))
-
-
 /***************************************************************************
 
 	Basic type definitions
@@ -875,7 +870,7 @@ do {																					\
 		if (opcode_entry == bank && cpu_getactivecpu() >= 0)							\
 		{																				\
 			opcode_entry = 0xff;														\
-			cpu_set_op_base(cpu_get_pc_byte());											\
+			activecpu_set_op_base(activecpu_get_pc_byte());											\
 		}																				\
 	}																					\
 } while (0)

@@ -64,11 +64,11 @@ track selection.
 
 
 /* from machine */
-void polepos_init_machine(void);
+MACHINE_INIT( polepos );
 WRITE_HANDLER( polepos_z80_irq_enable_w );
 WRITE16_HANDLER( polepos_z8002_nvi_enable_w );
-int polepos_z8002_1_interrupt(void);
-int polepos_z8002_2_interrupt(void);
+INTERRUPT_GEN( polepos_z8002_1_interrupt );
+INTERRUPT_GEN( polepos_z8002_2_interrupt );
 WRITE_HANDLER( polepos_z8002_enable_w );
 WRITE_HANDLER( polepos_adc_select_w );
 READ_HANDLER( polepos_adc_r );
@@ -94,10 +94,9 @@ extern data16_t *polepos_road16_memory;
 extern data16_t *polepos_alpha16_memory;
 extern data16_t *polepos_sprite16_memory;
 
-int polepos_vh_start(void);
-void polepos_vh_stop(void);
-void polepos_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void polepos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( polepos );
+PALETTE_INIT( polepos );
+VIDEO_UPDATE( polepos );
 
 WRITE16_HANDLER( polepos_view16_w );
 WRITE16_HANDLER( polepos_road16_w );
@@ -122,23 +121,6 @@ WRITE16_HANDLER( polepos_road16_vscroll_w );
 
 
 
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0xff,nvram_size);
-	}
-}
-
-
 /*********************************************************************
  * CPU memory structures
  *********************************************************************/
@@ -158,7 +140,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( z80_writemem )
 	{ 0x0000, 0x2fff, MWA_ROM },						/* ROM */
-	{ 0x3000, 0x37ff, MWA_RAM, &nvram, &nvram_size },	/* Battery Backup */
+	{ 0x3000, 0x37ff, MWA_RAM, &generic_nvram, &generic_nvram_size },	/* Battery Backup */
 	{ 0x4000, 0x47ff, polepos_sprite_w },				/* Motion Object */
 	{ 0x4800, 0x4bff, polepos_road_w }, 				/* Road Memory */
 	{ 0x4c00, 0x4fff, polepos_alpha_w },				/* Alphanumeric (char ram) */
@@ -456,64 +438,46 @@ static struct Samplesinterface samples_interface =
  * Machine driver
  *********************************************************************/
 
-static const struct MachineDriver machine_driver_polepos =
-{
+static MACHINE_DRIVER_START( polepos )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3125000,	/* 3.125 MHz */
-			z80_readmem,z80_writemem,z80_readport,z80_writeport,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z8000,
-			3125000,	/* 3.125 MHz */
-			z8002_readmem,z8002_writemem,0,0,
-			polepos_z8002_1_interrupt,1
-		},
-		{
-			CPU_Z8000,
-			3125000,	/* 3.125 MHz */
-			z8002_readmem,z8002_writemem,0,0,
-			polepos_z8002_2_interrupt,1
-		}
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,	 /* frames per second, vblank duration */
-	100,	/* some interleaving */
-	polepos_init_machine,
+	MDRV_CPU_ADD(Z80, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+	MDRV_CPU_PORTS(z80_readport,z80_writeport)
+
+	MDRV_CPU_ADD(Z8000, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(z8002_readmem,z8002_writemem)
+	MDRV_CPU_VBLANK_INT(polepos_z8002_1_interrupt,1)
+
+	MDRV_CPU_ADD(Z8000, 3125000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(z8002_readmem,z8002_writemem)
+	MDRV_CPU_VBLANK_INT(polepos_z8002_2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* some interleaving */
+
+	MDRV_MACHINE_INIT(polepos)
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	128,0x1400,
-	polepos_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
+	MDRV_COLORTABLE_LENGTH(0x1400)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	polepos_vh_start,
-	polepos_vh_stop,
-	polepos_vh_screenrefresh,
+	MDRV_PALETTE_INIT(polepos)
+	MDRV_VIDEO_START(polepos)
+	MDRV_VIDEO_UPDATE(polepos)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO, 0, 0, 0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 /*********************************************************************
@@ -1067,7 +1031,7 @@ ROM_END
  * Initialization routines
  *********************************************************************/
 
-static void init_polepos2(void)
+static DRIVER_INIT( polepos2 )
 {
 	/* note that the bootleg versions don't need this custom IC; they have a hacked ROM in its place */
 	install_mem_read16_handler(1, 0x4000, 0x5fff, polepos2_ic25_r);

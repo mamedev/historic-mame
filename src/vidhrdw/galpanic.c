@@ -8,7 +8,7 @@ size_t galpanic_fgvideoram_size;
 
 
 
-void galpanic_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( galpanic )
 {
 	int i;
 
@@ -154,7 +154,7 @@ static void draw_fgbitmap(struct mame_bitmap *bitmap)
 	}
 }
 
-void galpanic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( galpanic )
 {
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
@@ -164,7 +164,7 @@ void galpanic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	galpanic_draw_sprites(bitmap);
 }
 
-void comad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( comad )
 {
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);

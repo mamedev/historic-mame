@@ -21,7 +21,7 @@ static int mirroring;
  *	Init machine
  *
  *************************************/
-void pc10_init_machine( void )
+MACHINE_INIT( pc10 )
 {
 	/* initialize latches and flip-flops */
 	pc10_nmi_enable = pc10_dog_di = pc10_dispmask = pc10_sdcs = pc10_int_detect = 0;
@@ -256,7 +256,7 @@ static struct RP5H01_interface rp5h01_interface =
  *	Common init for all games
  *
  *************************************/
-void init_playch10( void )
+DRIVER_INIT( playch10 )
 {
 	/* initialize the security chip */
 	if ( RP5H01_init( &rp5h01_interface ) )
@@ -279,7 +279,7 @@ void init_playch10( void )
 
 /* Gun games */
 
-void init_pc_gun( void )
+DRIVER_INIT( pc_gun )
 {
 	/* common init */
 	init_playch10();
@@ -291,7 +291,7 @@ void init_pc_gun( void )
 
 /* Horizontal mirroring */
 
-void init_pc_hrz( void )
+DRIVER_INIT( pc_hrz )
 {
 	/* common init */
 	init_playch10();
@@ -422,7 +422,7 @@ static WRITE_HANDLER( aboard_vrom_switch_w )
 	ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 3 ), 512 );
 }
 
-void init_pcaboard( void )
+DRIVER_INIT( pcaboard )
 {
 	/* switches vrom with writes to the $803e-$8041 area */
 	install_mem_write_handler( 1, 0x8000, 0x8fff, aboard_vrom_switch_w );
@@ -442,7 +442,7 @@ static WRITE_HANDLER( bboard_rom_switch_w )
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bankoffset], 0x4000 );
 }
 
-void init_pcbboard( void )
+DRIVER_INIT( pcbboard )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -467,7 +467,7 @@ static WRITE_HANDLER( cboard_vrom_switch_w )
 	ppu2c03b_set_videorom_bank( 0, 0, 8, ( ( data >> 1 ) & 1 ), 512 );
 }
 
-void init_pccboard( void )
+DRIVER_INIT( pccboard )
 {
 	/* switches vrom with writes to $6000 */
 	install_mem_write_handler( 1, 0x6000, 0x6000, cboard_vrom_switch_w );
@@ -480,7 +480,7 @@ void init_pccboard( void )
 
 /* D Board games (Rad Racer) */
 
-void init_pcdboard( void )
+DRIVER_INIT( pcdboard )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -534,7 +534,7 @@ static WRITE_HANDLER( eboard_rom_switch_w )
 	}
 }
 
-void init_pceboard( void )
+DRIVER_INIT( pceboard )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -555,7 +555,7 @@ void init_pceboard( void )
 
 /* F Board games (Ninja Gaiden, Double Dragon) */
 
-void init_pcfboard( void )
+DRIVER_INIT( pcfboard )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -718,7 +718,7 @@ static WRITE_HANDLER( gboard_rom_switch_w )
 	}
 }
 
-void init_pcgboard( void )
+DRIVER_INIT( pcgboard )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -757,7 +757,7 @@ static WRITE_HANDLER( iboard_rom_switch_w )
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bank * 0x8000 + 0x10000], 0x8000 );
 }
 
-void init_pciboard( void )
+DRIVER_INIT( pciboard )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -774,7 +774,7 @@ void init_pciboard( void )
 
 /* H Board games (PinBot) */
 
-void init_pchboard( void )
+DRIVER_INIT( pchboard )
 {
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
 	memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
@@ -799,7 +799,7 @@ void init_pchboard( void )
 
 /* K Board games (Mario Open Golf) */
 
-void init_pckboard( void )
+DRIVER_INIT( pckboard )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */

@@ -70,7 +70,7 @@ static void get_bg_tile_info(int tile_index)
 
 
 
-int airbustr_vh_start(void)
+VIDEO_START( airbustr )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,32,32);
@@ -131,7 +131,7 @@ int xoffs, yoffs;
 		case 0x06:	bg_scrollx =  data;	break;
 		case 0x08:	highbits   = ~data;	break;	// complemented high bits
 
-		default:	logerror("CPU #2 - port %02X written with %02X - PC = %04X\n", offset, data, cpu_get_pc());
+		default:	logerror("CPU #2 - port %02X written with %02X - PC = %04X\n", offset, data, activecpu_get_pc());
 	}
 
 	tilemap_set_scrollx(bg_tilemap, 0, ((highbits << 6) & 0x100) + bg_scrollx + xoffs );
@@ -167,7 +167,7 @@ Offset:					Values:
 
 */
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 int i, offs;
 
@@ -204,7 +204,7 @@ int i, offs;
 					attr >> 4,
 					flipx, flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			/* let's get back to normal to support multi sprites */
 			if (flipscreen)	{sx = 240 - sx;		sy = 240 - sy;}
@@ -215,7 +215,7 @@ int i, offs;
 }
 
 
-void airbustr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( airbustr )
 {
 #if 0
 /*
@@ -231,7 +231,7 @@ void airbustr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 #endif
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

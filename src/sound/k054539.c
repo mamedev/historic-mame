@@ -60,7 +60,6 @@ static struct {
 		int cur_ptr;
 		int cur_limit;
 		unsigned char *cur_zone;
-		void *timer;
 		unsigned char *rom;
 		UINT32 rom_size;
 		UINT32 rom_mask;
@@ -360,9 +359,7 @@ static void K054539_init_chip(int chip, const struct MachineSound *msound)
 	if(K054539_chips.intf->irq[chip])
 		// One or more of the registers must be the timer period
 		// And anyway, this particular frequency is probably wrong
-		K054539_chips.chip[chip].timer = timer_pulse(TIME_IN_HZ(500), 0, K054539_irq);
-	else
-		K054539_chips.chip[chip].timer = 0;
+		timer_pulse(TIME_IN_HZ(500), 0, K054539_irq);
 
 	sprintf(buf[0], "%s.%d L", sound_name(msound), chip);
 	sprintf(buf[1], "%s.%d R", sound_name(msound), chip);
@@ -380,8 +377,6 @@ static void K054539_init_chip(int chip, const struct MachineSound *msound)
 static void K054539_stop_chip(int chip)
 {
 	free(K054539_chips.chip[chip].ram);
-	if (K054539_chips.chip[chip].timer)
-		timer_remove(K054539_chips.chip[chip].timer);
 }
 
 static void K054539_w(int chip, offs_t offset, data8_t data)

@@ -17,7 +17,7 @@ static int spriterambank,charbank;
 
 
 
-void finalizr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( finalizr )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -66,31 +66,19 @@ void finalizr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	}
 }
 
-int finalizr_vh_start(void)
+VIDEO_START( finalizr )
 {
 	dirtybuffer = 0;
 	tmpbitmap = 0;
 
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc(256,256)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(256,256)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-void finalizr_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
-
-	dirtybuffer = 0;
-	tmpbitmap = 0;
 }
 
 
@@ -117,7 +105,7 @@ WRITE_HANDLER( finalizr_videoctrl_w )
   the main emulation engine.
 
 ***************************************************************************/
-void finalizr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( finalizr )
 {
 	int offs;
 

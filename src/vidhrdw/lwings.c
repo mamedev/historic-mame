@@ -87,7 +87,7 @@ static void get_bg2_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int lwings_vh_start(void)
+VIDEO_START( lwings )
 {
 	fg_tilemap  = tilemap_create(get_fg_tile_info,        tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 	bg1_tilemap = tilemap_create(lwings_get_bg1_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
@@ -100,7 +100,7 @@ int lwings_vh_start(void)
 	return 0;
 }
 
-int trojan_vh_start(void)
+VIDEO_START( trojan )
 {
 	fg_tilemap  = tilemap_create(get_fg_tile_info,        tilemap_scan_rows,    TILEMAP_TRANSPARENT,8, 8,32,32);
 	bg1_tilemap = tilemap_create(trojan_get_bg1_tile_info,tilemap_scan_cols,    TILEMAP_SPLIT,     16,16,32,32);
@@ -118,9 +118,9 @@ int trojan_vh_start(void)
 	return 1; /* error */
 }
 
-int avengers_vh_start( void )
+VIDEO_START( avengers )
 {
-	int result = trojan_vh_start();
+	int result = video_start_trojan();
 	bAvengersHardware = 1;
 	return result;
 }
@@ -192,7 +192,7 @@ INLINE int is_sprite_on(int offs)
 	return sx && sy;
 }
 
-static void lwings_draw_sprites(struct mame_bitmap *bitmap)
+static void lwings_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -223,12 +223,12 @@ static void lwings_draw_sprites(struct mame_bitmap *bitmap)
 					code,color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 }
 
-static void trojan_draw_sprites(struct mame_bitmap *bitmap)
+static void trojan_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -271,28 +271,28 @@ static void trojan_draw_sprites(struct mame_bitmap *bitmap)
 					code,color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 }
 
-void lwings_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lwings )
 {
-	tilemap_draw(bitmap,bg1_tilemap,0,0);
-	lwings_draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	lwings_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }
 
-void trojan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( trojan )
 {
-	tilemap_draw(bitmap,bg2_tilemap,0,0);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_BACK,0);
-	trojan_draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg1_tilemap,TILEMAP_FRONT,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,TILEMAP_BACK,0);
+	trojan_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }
 
-void lwings_eof_callback(void)
+VIDEO_EOF( lwings )
 {
 	buffer_spriteram_w(0,0);
 }

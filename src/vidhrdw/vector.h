@@ -21,31 +21,26 @@
 #define MAX_PIXELS 850000  /* Maximum of pixels we can remember */
 
 #define VECTOR_COLOR111(c) \
-(((c) & 1)? 0x0000ff : 0) \
-|(((c) & 2)? 0x00ff00: 0) \
-|(((c) & 4)? 0xff0000: 0)
+	MAKE_RGB((((c) >> 2) & 1) * 0xff, (((c) >> 1) & 1) * 0xff, (((c) >> 0) & 1) * 0xff)
 
 #define VECTOR_COLOR222(c) \
-(((c) & 3) * 0x55) \
-|(((((c) >> 2) & 3) * 0x55) << 8) \
-|(((((c) >> 4) & 3) * 0x55) << 16)
+	MAKE_RGB((((c) >> 4) & 3) * 0x55, (((c) >> 2) & 3) * 0x55, (((c) >> 0) & 3) * 0x55)
 
 #define VECTOR_COLOR444(c) \
-(((c) & 0xf) * 0x11) \
-|(((((c) >> 4) & 0xf) * 0x11) << 8) \
-|(((((c) >> 8) & 0xf) * 0x11) << 16)
+	MAKE_RGB((((c) >> 8) & 15) * 0x11, (((c) >> 4) & 15) * 0x11, (((c) >> 0) & 15) * 0x11)
 
 extern int translucency;  /* translucent vectors  */
 
 extern unsigned char *vectorram;
 extern size_t vectorram_size;
 
-int  vector_vh_start (void);
-void vector_vh_stop (void);
-void vector_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( vector );
+VIDEO_UPDATE( vector );
+
 void vector_clear_list (void);
-void vector_draw_to (int x2, int y2, int col, int intensity, int dirty);
-void vector_add_point (int x, int y, int color, int intensity);
+void vector_draw_to (int x2, int y2, rgb_t col, int intensity, int dirty, rgb_t (*color_callback)(void));
+void vector_add_point (int x, int y, rgb_t color, int intensity);
+void vector_add_point_callback (int x, int y, rgb_t (*color_callback)(void), int intensity);
 void vector_add_clip (int minx, int miny, int maxx, int maxy);
 void vector_set_flip_x (int flip);
 void vector_set_flip_y (int flip);

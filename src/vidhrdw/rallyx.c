@@ -68,7 +68,7 @@ static struct rectangle radarvisibleareaflip =
   1 kohm pull-down is an all three RGB outputs.
 
 ***************************************************************************/
-void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( rallyx )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -113,7 +113,7 @@ void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(2,i) = 16 + i;
 }
 
-void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( locomotn )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -163,37 +163,19 @@ void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Start the video hardware emulation.
 
 ***************************************************************************/
-int rallyx_vh_start(void)
+VIDEO_START( rallyx )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((tmpbitmap1 = bitmap_alloc(32*8,32*8)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
+	if ((tmpbitmap1 = auto_bitmap_alloc(32*8,32*8)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void rallyx_vh_stop(void)
-{
-	bitmap_free(tmpbitmap1);
-	free(dirtybuffer2);
-	generic_vh_stop();
 }
 
 
@@ -241,7 +223,7 @@ WRITE_HANDLER( rallyx_flipscreen_w )
 
 ***************************************************************************/
 
-void rallyx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rallyx )
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
@@ -410,7 +392,7 @@ const int displacement = 1;
 
 
 
-void jungler_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( jungler )
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
@@ -536,7 +518,7 @@ const int displacement = 0;
 
 
 
-void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( locomotn )
 {
 	int offs,sx,sy;
 
@@ -678,7 +660,7 @@ if (flipscreen) sx += 32;
 
 
 
-void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( commsega )
 {
 	int offs,sx,sy;
 

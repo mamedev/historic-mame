@@ -46,10 +46,9 @@ Notes:
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern void grchamp_convert_color_prom(	UINT8 *palette,	UINT16 *colortable,	const UINT8 *color_prom );
-extern int grchamp_vh_start( void );
-extern void grchamp_vh_stop( void );
-extern void grchamp_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+extern PALETTE_INIT( grchamp );
+extern VIDEO_START( grchamp );
+extern VIDEO_UPDATE( grchamp );
 extern WRITE_HANDLER( grchamp_videoram_w );
 extern UINT8 *grchamp_videoram;
 extern UINT8 *grchamp_radar;
@@ -63,7 +62,7 @@ extern WRITE_HANDLER( grchamp_rain_ypos_w );
 
 /* from machine */
 extern int grchamp_cpu_irq_enable[2];
-extern void init_grchamp( void );
+extern DRIVER_INIT( grchamp );
 extern READ_HANDLER( grchamp_port_0_r );
 extern READ_HANDLER( grchamp_port_1_r );
 extern WRITE_HANDLER( grchamp_port_1_w );
@@ -362,70 +361,54 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static int grchamp_interrupt( void )
+static INTERRUPT_GEN( grchamp_interrupt )
 {
 	int cpu = cpu_getactivecpu();
 
 	if ( grchamp_cpu_irq_enable[cpu] )
 	{
 		grchamp_cpu_irq_enable[cpu] = 0;
-		return interrupt();
+		cpu_set_irq_line(cpu, 0, HOLD_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
-static struct MachineDriver machine_driver_grchamp =
-{
-	{
-		{
-			CPU_Z80,
-			6000000, /* ? */
-			readmem,writemem,
-			readport,writeport,
-			grchamp_interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000, /* ? */
-			readmem2,writemem2,
-			readport2,writeport2,
-			grchamp_interrupt,1	/* irq's are triggered from the main cpu */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000, /* 3 MHz (confirmed) */
-			readmem_sound,writemem_sound,
-			0,0,
-			ignore_interrupt,0, /* nmi's are triggered from another cpu */
-			interrupt, 75		/* irq's are triggered every 75 Hz */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,
-	0,
+static MACHINE_DRIVER_START( grchamp )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000) /* ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 6000000) /* ? */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PORTS(readport2,writeport2)
+	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)	/* irq's are triggered from the main cpu */
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 3 MHz (confirmed) */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,75)		/* irq's are triggered every 75 Hz */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256, 256, { 0, 255, 16, 255-16 },
-	gfxdecodeinfo,
-	0x44,0x44, /* 4 fake colors */
-	grchamp_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 16, 255-16)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x44)
+	MDRV_COLORTABLE_LENGTH(0x44) /* 4 fake colors */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	grchamp_vh_start,
-	grchamp_vh_stop,
-	grchamp_vh_screenrefresh,
+	MDRV_PALETTE_INIT(grchamp)
+	MDRV_VIDEO_START(grchamp)
+	MDRV_VIDEO_UPDATE(grchamp)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 INPUT_PORTS_START( grchamp )
 	PORT_START /* DSW A */

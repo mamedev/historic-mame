@@ -71,8 +71,8 @@ WRITE16_HANDLER( legionna_midground_w );
 WRITE16_HANDLER( legionna_text_w );
 WRITE16_HANDLER( legionna_control_w );
 
-int legionna_vh_start(void);
-void legionna_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( legionna );
+VIDEO_UPDATE( legionna );
 void heatbrl_setgfxbank(UINT16 data);
 
 extern data16_t *legionna_back_data,*legionna_fore_data,*legionna_mid_data,*legionna_scrollram16,*legionna_textram;
@@ -234,7 +234,7 @@ static READ16_HANDLER( mcu_r )
 			return input_port_3_word_r(0,0);
 
 	}
-logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",cpu_getpreviouspc(),offset);
+logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
 
 	return mcu_ram[offset];
 }
@@ -300,7 +300,7 @@ static WRITE16_HANDLER( mcu_w )
 			break;
 		}
 		default:
-logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",cpu_getpreviouspc(),offset,data);
+logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset,data);
 	}
 }
 
@@ -360,7 +360,7 @@ static READ16_HANDLER( cop2_mcu_r )
 			return input_port_3_word_r(0,0);
 
 	}
-logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",cpu_getpreviouspc(),offset);
+logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
 
 	return mcu_ram[offset];
 }
@@ -432,7 +432,7 @@ static WRITE16_HANDLER( cop2_mcu_w )
 			break;
 		}
 		default:
-logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",cpu_getpreviouspc(),offset,data);
+logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset,data);
 	}
 }
 
@@ -800,79 +800,62 @@ SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 /*****************************************************************************/
 
-static const struct MachineDriver machine_driver_legionna =
-{
+static MACHINE_DRIVER_START( legionna )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2, 	/* ??? */
-			legionna_readmem,legionna_writemem,0,0,
-			m68_level4_irq,1 /* VBL */
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	seibu_sound_init_1, /* init machine */
+	MDRV_CPU_ADD(M68000,20000000/2) 	/* ??? */
+	MDRV_CPU_MEMORY(legionna_readmem,legionna_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(legionna_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128*16)
 
-	legionna_gfxdecodeinfo,
-	128*16, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	legionna_vh_start,
-	0,
-	legionna_vh_screenrefresh,
+	MDRV_VIDEO_START(legionna)
+	MDRV_VIDEO_UPDATE(legionna)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_heatbrl =
-{
+
+static MACHINE_DRIVER_START( heatbrl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2, 	/* ??? */
-			heatbrl_readmem,heatbrl_writemem,0,0,
-			m68_level4_irq,1 /* VBL */
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	seibu_sound_init_1, /* init machine */
+	MDRV_CPU_ADD(M68000,20000000/2) 	/* ??? */
+	MDRV_CPU_MEMORY(heatbrl_readmem,heatbrl_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(heatbrl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128*16)
 
-	heatbrl_gfxdecodeinfo,
-	128*16, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	legionna_vh_start,
-	0,
-	legionna_vh_screenrefresh,
+	MDRV_VIDEO_START(legionna)
+	MDRV_VIDEO_UPDATE(legionna)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1057,7 +1040,7 @@ ROM_START( heatbrlu )
 ROM_END
 
 
-static void init_legionna(void)
+static DRIVER_INIT( legionna )
 {
 	/* Unscramble gfx: quarters 1&2 swapped, quarters 3&4 swapped */
 

@@ -50,7 +50,7 @@ Here's the hookup from the proms (82s131) to the r-g-b-outputs
 
 
 ***************************************************************************/
-void zaccaria_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( zaccaria )
 {
 	int i,j,k;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -151,7 +151,7 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int zaccaria_vh_start(void)
+VIDEO_START( zaccaria )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
@@ -216,10 +216,15 @@ WRITE_HANDLER( zaccaria_flip_screen_y_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
-
+	struct rectangle clip = *cliprect;
+	
+	if (flip_screen_x)
+		sect_rect(&clip, &spritevisiblearea_flipx);
+	else
+		sect_rect(&clip, &spritevisiblearea);
 
 	/*
 	  TODO: sprites have 32 color codes, but we are using only 8. In Jack
@@ -258,7 +263,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				4 * (spriteram_2[offs + 1] & 0x07),
 				flipx,flipy,
 				sx,sy,
-				flip_screen_x ? &spritevisiblearea_flipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				&clip,TRANSPARENCY_PEN,0);
 	}
 
 	for (offs = 0;offs < spriteram_size;offs += 4)
@@ -284,14 +289,14 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				4 * (spriteram[offs + 2] & 0x07),
 				flipx,flipy,
 				sx,sy,
-				flip_screen_x ? &spritevisiblearea_flipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				&clip,TRANSPARENCY_PEN,0);
 	}
 }
 
 
-void zaccaria_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( zaccaria )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 }

@@ -75,13 +75,19 @@ extern "C" {
 #endif
 
 typedef UINT32 pen_t;
+typedef UINT32 rgb_t;
+
+#define MAKE_RGB(r,g,b) ((((r) & 0xff) << 16) | (((g) & 0xff) << 8) | ((b) & 0xff))
+#define RGB_RED(rgb)	(((rgb) >> 16) & 0xff)
+#define RGB_GREEN(rgb)	(((rgb) >> 8) & 0xff)
+#define RGB_BLUE(rgb)	((rgb) & 0xff)
 
 int palette_start(void);
 void palette_stop(void);
 int palette_init(void);
 
-void palette_set_color(int color,UINT8 r,UINT8 g,UINT8 b);
-void palette_get_color(int color,UINT8 *r,UINT8 *g,UINT8 *b);
+void palette_set_color(pen_t color,UINT8 r,UINT8 g,UINT8 b);
+void palette_get_color(pen_t color,UINT8 *r,UINT8 *g,UINT8 *b);
 
 
 extern UINT16 *palette_shadow_table;
@@ -89,7 +95,7 @@ extern UINT16 *palette_shadow_table;
 #define PALETTE_DEFAULT_SHADOW_FACTOR (0.6)
 #define PALETTE_DEFAULT_HIGHLIGHT_FACTOR (1/PALETTE_DEFAULT_SHADOW_FACTOR)
 
-void palette_set_brightness(int color,double bright);
+void palette_set_brightness(pen_t color,double bright);
 void palette_set_shadow_factor(double factor);
 void palette_set_highlight_factor(double factor);
 
@@ -159,7 +165,7 @@ WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
 WRITE16_HANDLER( paletteram16_xrgb_word_w );
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
 
-void palette_RRRR_GGGG_BBBB_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+void palette_init_RRRR_GGGG_BBBB(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom);
 
 #ifdef __cplusplus
 }

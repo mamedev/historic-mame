@@ -75,12 +75,11 @@ extern unsigned char *route16_videoram2;
 extern size_t route16_videoram_size;
 extern int route16_hardware;
 
-void init_route16(void);
-void init_route16b(void);
-void init_stratvox(void);
-void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  route16_vh_start(void);
-void route16_vh_stop(void);
+DRIVER_INIT( route16 );
+DRIVER_INIT( route16b );
+DRIVER_INIT( stratvox );
+PALETTE_INIT( route16 );
+VIDEO_START( route16 );
 WRITE_HANDLER( route16_out0_w );
 WRITE_HANDLER( route16_out1_w );
 WRITE_HANDLER( route16_videoram1_w );
@@ -89,7 +88,7 @@ READ_HANDLER( route16_videoram1_r );
 READ_HANDLER( route16_videoram2_r );
 WRITE_HANDLER( route16_sharedram_w );
 READ_HANDLER( route16_sharedram_r );
-void route16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( route16 );
 WRITE_HANDLER( stratvox_sn76477_w );
 READ_HANDLER ( speakres_in3_r );
 WRITE_HANDLER ( speakres_out2_w );
@@ -379,72 +378,64 @@ static struct DACinterface dac_interface =
 };
 
 
-#define MACHINE_DRIVER(GAMENAME, CPU1READMEM, CPU1WRITEMEM, AUDIO_INTERFACES, CPU1_INTHANDLER, CPU1_INTSPERFRAME)   		\
-															\
-static const struct MachineDriver machine_driver_##GAMENAME =		\
-{															\
-	/* basic machine hardware */							\
-	{														\
-		{													\
-			CPU_Z80 | CPU_16BIT_PORT,						\
-			2500000,	/* 10MHz / 4 = 2.5MHz */			\
-			CPU1READMEM,CPU1WRITEMEM,0,cpu1_writeport,		\
-			interrupt,1										\
-		},													\
-		{													\
-			CPU_Z80,										\
-			2500000,	/* 10MHz / 4 = 2.5MHz */			\
-			cpu2_readmem,cpu2_writemem,0,0,					\
-			CPU1_INTHANDLER,CPU1_INTSPERFRAME				\
-		}													\
-	},														\
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */ \
-	1,														\
-	0,														\
-															\
-	/* video hardware */									\
-	256, 256, { 0, 256-1, 0, 256-1 },						\
-	0,														\
-	8, 0,													\
-	route16_vh_convert_color_prom,							\
-															\
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY , \
-	0,														\
-	route16_vh_start,										\
-	route16_vh_stop,										\
-	route16_vh_screenrefresh,								\
-															\
-	/* sound hardware */									\
-	0,0,0,0,												\
-	{														\
-		AUDIO_INTERFACES									\
-	}														\
-};
+static MACHINE_DRIVER_START( route16 )
 
-#define ROUTE16_AUDIO_INTERFACE  \
-		{						 \
-			SOUND_AY8910,		 \
-			&ay8910_interface	 \
-		}
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("cpu1", Z80, 2500000)	/* 10MHz / 4 = 2.5MHz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(cpu1_readmem,cpu1_writemem)
+	MDRV_CPU_PORTS(0,cpu1_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-#define STRATVOX_AUDIO_INTERFACE \
-		{						 \
-			SOUND_AY8910,		 \
-			&ay8910_interface	 \
-		},						 \
-		{						 \
-			SOUND_SN76477,		 \
-			&sn76477_interface	 \
-        },                       \
-        {                        \
-			SOUND_DAC,			 \
-			&dac_interface		 \
-		}
+	MDRV_CPU_ADD_TAG("cpu2", Z80, 2500000)	/* 10MHz / 4 = 2.5MHz */
+	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
 
-MACHINE_DRIVER(route16,  cpu1_readmem,    cpu1_writemem,    ROUTE16_AUDIO_INTERFACE,  ignore_interrupt, 0)
-MACHINE_DRIVER(stratvox, cpu1_readmem,    cpu1_writemem,    STRATVOX_AUDIO_INTERFACE, ignore_interrupt, 0)
-MACHINE_DRIVER(speakres, altcpu1_readmem, altcpu1_writemem, STRATVOX_AUDIO_INTERFACE, ignore_interrupt, 0)
-MACHINE_DRIVER(spacecho, altcpu1_readmem, altcpu1_writemem, STRATVOX_AUDIO_INTERFACE, interrupt,       48)
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)       /* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(8)
+
+	MDRV_PALETTE_INIT(route16)
+	MDRV_VIDEO_START(route16)
+	MDRV_VIDEO_UPDATE(route16)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( stratvox )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(route16)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76477, sn76477_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( speakres )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(stratvox)
+	MDRV_CPU_MODIFY("cpu1")
+	MDRV_CPU_MEMORY(altcpu1_readmem,altcpu1_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( spacecho )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(speakres)
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,48)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -558,12 +549,12 @@ ROM_END
   Set hardware dependent flag.
 
 ***************************************************************************/
-void init_route16b(void)
+DRIVER_INIT( route16b )
 {
     route16_hardware = 1;
 }
 
-void init_route16(void)
+DRIVER_INIT( route16 )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -578,7 +569,7 @@ void init_route16(void)
 	init_route16b();
 }
 
-void init_stratvox(void)
+DRIVER_INIT( stratvox )
 {
     route16_hardware = 0;
 }

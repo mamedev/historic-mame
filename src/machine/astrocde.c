@@ -17,7 +17,7 @@ READ_HANDLER( gorf_timer_r )
 
 	if ((RAM[0x5A93]==160) || (RAM[0x5A93]==4)) 	/* INVADERS AND    */
 	{												/* GALAXIAN SCREEN */
-		if (cpu_get_pc()==0x3086)
+		if (activecpu_get_pc()==0x3086)
 		{
 		    if(--Skip==-1)
 			{

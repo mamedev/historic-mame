@@ -10,9 +10,8 @@ Asterix
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
 
-int asterix_vh_start(void);
-void asterix_vh_stop(void);
-void asterix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( asterix );
+VIDEO_UPDATE( asterix );
 WRITE16_HANDLER( asterix_spritebank_w );
 
 static unsigned char cur_control2;
@@ -35,7 +34,7 @@ static void eeprom_init(void)
 	init_eeprom_count = 0;
 }
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( asterix )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -96,12 +95,11 @@ static WRITE16_HANDLER( control2_w )
 	}
 }
 
-static int asterix_interrupt(void)
+static INTERRUPT_GEN( asterix_interrupt )
 {
 	if (K054157_is_IRQ_enabled())
-		return 5;       /* ??? All irqs have the same vector, and the
-                           mask used is 0 or 7 */
-	return ignore_interrupt();
+		cpu_set_irq_line(0, 5, HOLD_LINE); /* ??? All irqs have the same vector, and the
+                                              mask used is 0 or 7 */
 }
 
 static READ16_HANDLER( asterix_sound_r )
@@ -274,53 +272,36 @@ static struct K053260_interface k053260_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver_asterix =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			readmem, writemem, 0, 0,
-			asterix_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000,
-			sound_readmem, sound_writemem, 0, 0,
-			0, 0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( asterix )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(asterix_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(asterix)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	asterix_vh_start,
-	asterix_vh_stop,
-	asterix_vh_screenrefresh,
+	MDRV_VIDEO_START(asterix)
+	MDRV_VIDEO_UPDATE(asterix)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( asterix )
@@ -390,7 +371,7 @@ ROM_START( astrxeaa )
 ROM_END
 
 
-static void init_asterix(void)
+static DRIVER_INIT( asterix )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

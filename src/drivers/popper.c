@@ -91,9 +91,9 @@ WRITE_HANDLER( popper_flipscreen_w );
 WRITE_HANDLER( popper_e002_w );
 WRITE_HANDLER( popper_gfx_bank_w );
 
-void popper_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  popper_vh_start(void);
-void popper_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( popper );
+VIDEO_START( popper );
+VIDEO_UPDATE( popper );
 static data8_t *popper_sharedram;
 
 static READ_HANDLER( popper_sharedram_r )
@@ -318,48 +318,38 @@ static struct AY8910interface popper_ay8910_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_popper =
-{
+static MACHINE_DRIVER_START( popper )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,
-			popper_readmem,popper_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			18432000/12,
-			popper_sound_readmem,popper_sound_writemem,0,0,
-			interrupt,4		//NMIs caused by the main CPU
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	30,
-	0,
+	MDRV_CPU_ADD(Z80,18432000/6)
+	MDRV_CPU_MEMORY(popper_readmem,popper_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,18432000/12)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(popper_sound_readmem,popper_sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)		//NMIs caused by the main CPU
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(30)
 
 	/* video hardware */
-	33*8, 32*8, { 0*8, 33*8-1, 2*8, 30*8-1 },
-	popper_gfxdecodeinfo,
-	64,64,
-	popper_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(33*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 33*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(popper_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	popper_vh_start,
-	0,
-	popper_vh_screenrefresh,
+	MDRV_PALETTE_INIT(popper)
+	MDRV_VIDEO_START(popper)
+	MDRV_VIDEO_UPDATE(popper)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&popper_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, popper_ay8910_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START( popper )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */

@@ -1,206 +1,218 @@
 /***************************************************************************
 
+	Midway Omega Race hardware
+	
+	driver by Bernd Wiebelt
+	
+	Games supported:
+		* Omega Race
 
-This driver is dedicated to my loving wife Natalia Wiebelt
-                                      and my daughter Lara Anna Maria
-Summer 1997 Bernd Wiebelt
+	Known bugs:
+		* none at this time
 
-Many thanks to Al Kossow for the original sources and the solid documentation.
-Without him, I could never had completed this driver.
+****************************************************************************
 
+	This driver is dedicated to my loving wife Natalia Wiebelt
+	                                      and my daughter Lara Anna Maria
+	Summer 1997 Bernd Wiebelt
 
---------
-
-Most of the info here comes from the wiretap archive at:
-http://www.spies.com/arcade/simulation/gameHardware/
-
-
-Omega Race Memory Map
-Version 1.1 (Jul 24,1997)
----------------------
-
-0000 - 3fff	PROM
-4000 - 4bff	RAM (3k)
-5c00 - 5cff	NVRAM (256 x 4bits)
-8000 - 8fff	Vec RAM (4k)
-9000 - 9fff	Vec ROM (4k)
-
-15 14 13 12 11 10
---+--+--+--+--+--
-0  0  0  0                       M8 - 2732  (4k)
-0  0  0  1                       L8 - 2732
-0  0  1  0                       K8 - 2732
-0  0  1  1                       J8 - 2732
-
-0  1  -  0  0  0                 RAM (3k)
-0  1  -  0  0  1
-0  1  -  0  1  0
-
-0  1  -  1  1  1                 4 Bit BB RAM (d0-d3)
-
-1  -  -  0  0                    Vec RAM (4k)
-1  -  -  0  1
-1  -  -  1  0			 Vec ROM (2k) E1
-1  -  -  1  1                    Vec ROM (2k) F1
-
-I/O Ports
-
-8	Start/ (VG start)
-9	WDOG/  (Reset watchdog)
-A	SEQRES/ (VG stop/reset?)
-B	RDSTOP/ d7 = stop (VG running if 0)
-
-10 I	DIP SW C4 (game ship settings)
-
-	6 5  4 3  2 1
-                      1st bonus ship at
-        | |  | |  0 0  40,000
-        | |  | |  0 1  50,000
-        | |  | |  1 0  70,000
-        | |  | |  1 1 100,000
-        | |  | |      2nd and  3rd bonus ships
-        | |  0 0      150,000   250,000
-        | |  0 1      250,000   500,000
-        | |  1 0      500,000   750,000
-        | |  1 1      750,000 1,500,000
-        | |           ships per credit
-        0 0           1 credit = 2 ships / 2 credits = 4 ships
-        0 1           1 credit = 2 ships / 2 credits = 5 ships
-        1 0           1 credit = 3 ships / 2 credits = 6 ships
-        1 1           1 credit = 3 ships / 2 credits = 7 ships
-
-11 I	7 = Test
-	6 = P1 Fire
-	5 = P1 Thrust
-	4 = Tilt
-
-	1 = Coin 2
-	0 = Coin 1
-
-12 I	7 = 1P1CR
-	6 = 1P2CR
-
-	3 = 2P2CR -+
-	2 = 2P1CR  |
-	1 = P2Fire |
-	0 = P2Thr -+ cocktail only
-
-13 O   7 =
-        6 = screen reverse
-        5 = 2 player 2 credit start LED
-        4 = 2 player 1 credit start LED
-        3 = 1 player 1 credit start LED
-        2 = 1 player 1 credit start LED
-        1 = coin meter 2
-        0 = coin meter 1
-
-14 O	sound command (interrupts sound Z80)
-
-15 I	encoder 1 (d7-d2)
-
-	The encoder is a 64 position Grey Code encoder, or a
-	pot and A to D converter.
-
-	Unlike the quadrature inputs on Atari and Sega games,
-        Omega Race's controller is an absolute angle.
-
-	0x00, 0x04, 0x14, 0x10, 0x18, 0x1c, 0x5c, 0x58,
-	0x50, 0x54, 0x44, 0x40, 0x48, 0x4c, 0x6c, 0x68,
-	0x60, 0x64, 0x74, 0x70, 0x78, 0x7c, 0xfc, 0xf8,
-	0xf0, 0xf4, 0xe4, 0xe0, 0xe8, 0xec, 0xcc, 0xc8,
-	0xc0, 0xc4, 0xd4, 0xd0, 0xd8, 0xdc, 0x9c, 0x98,
-	0x90, 0x94, 0x84, 0x80, 0x88, 0x8c, 0xac, 0xa8,
-	0xa0, 0xa4, 0xb4, 0xb0, 0xb8, 0xbc, 0x3c, 0x38,
-	0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08
-
-16 I	encoder 2 (d5-d0)
-
-	The inputs aren't scrambled as they are on the 1 player
-        encoder
-
-17 I	DIP SW C6 (coin/cocktail settings)
-
-        8  7  6 5 4  3 2 1
-                             coin switch 1
-        |  |  | | |  0 0 0   1 coin  2 credits
-        |  |  | | |  0 0 1   1 coin  3 credits
-        |  |  | | |  0 1 0   1 coin  5 credits
-        |  |  | | |  0 1 1   4 coins 5 credits
-        |  |  | | |  1 0 0   3 coins 4 credits
-        |  |  | | |  1 0 1   2 coins 3 credits
-        |  |  | | |  1 1 0   2 coins 1 credit
-        |  |  | | |  1 1 1   1 coin  1 credit
-        |  |  | | |
-        |  |  | | |          coin switch 2
-        |  |  0 0 0          1 coin  2 credits
-        |  |  0 0 1          1 coin  3 credits
-        |  |  0 1 0          1 coin  5 credits
-        |  |  0 1 1          4 coins 5 credits
-        |  |  1 0 0          3 coins 4 credits
-        |  |  1 0 1          2 coins 3 credits
-        |  |  1 1 0          2 coins 1 credit
-        |  |  1 1 1          1 coin  1 credit
-        |  |
-        |  0                 coin play
-        |  1                 free play
-        |
-        0                    normal
-        1                    cocktail
-
-display list format: (4 byte opcodes)
-
-+------+------+------+------+------+------+------+------+
-|DY07   DY06   DY05   DY04   DY03   DY02   DY01   DY00  | 0
-+------+------+------+------+------+------+------+------+
-|OPCD3  OPCD2  OPCD1  OPCD0  DY11   DY10   DY09   DY08  | 1 OPCD 1111 = ABBREV/
-+------+------+------+------+------+------+------+------+
-|DX07   DX06   DX05   DX04   DX03   DX02   DX01   DX00  | 2
-+------+------+------+------+------+------+------+------+
-|INTEN3 INTEN2 INTEN1 INTEN0 DX11   DX10   DX09   DX08  | 3
-+------+------+------+------+------+------+------+------+
-
-    Draw relative vector       0x80      1000YYYY YYYYYYYY IIIIXXXX XXXXXXXX
-
-    Draw relative vector
-    and load scale             0x90      1001YYYY YYYYYYYY SSSSXXXX XXXXXXXX
-
-    Beam to absolute
-    screen position            0xA0      1010YYYY YYYYYYYY ----XXXX XXXXXXXX
-
-    Halt                       0xB0      1011---- --------
-
-    Jump to subroutine         0xC0      1100AAAA AAAAAAAA
-
-    Return from subroutine     0xD0      1101---- --------
-
-    Jump to new address        0xE0      1110AAAA AAAAAAAA
-
-    Short vector draw          0xF0      1111YYYY IIIIXXXX
+	Many thanks to Al Kossow for the original sources and the solid documentation.
+	Without him, I could never had completed this driver.
 
 
-Sound Z80 Memory Map
+	--------
 
-0000 ROM
-1000 RAM
-
-15 14 13 12 11 10
-            0           2k prom (K5)
-            1           2k prom (J5)
-         1              1k RAM  (K4,J4)
-
-I/O (write-only)
-
-0,1 			8912 (K3)
-2,3			8912 (J3)
+	Most of the info here comes from the wiretap archive at:
+	http://www.spies.com/arcade/simulation/gameHardware/
 
 
-I/O (read-only)
+	Omega Race Memory Map
+	Version 1.1 (Jul 24,1997)
+	---------------------
 
-0                       input port from main CPU.
-                        main CPU writing port generated INT
-Sound Commands:
+	0000 - 3fff	PROM
+	4000 - 4bff	RAM (3k)
+	5c00 - 5cff	NVRAM (256 x 4bits)
+	8000 - 8fff	Vec RAM (4k)
+	9000 - 9fff	Vec ROM (4k)
 
-0 - reset sound CPU
+	15 14 13 12 11 10
+	--+--+--+--+--+--
+	0  0  0  0                       M8 - 2732  (4k)
+	0  0  0  1                       L8 - 2732
+	0  0  1  0                       K8 - 2732
+	0  0  1  1                       J8 - 2732
+
+	0  1  -  0  0  0                 RAM (3k)
+	0  1  -  0  0  1
+	0  1  -  0  1  0
+
+	0  1  -  1  1  1                 4 Bit BB RAM (d0-d3)
+
+	1  -  -  0  0                    Vec RAM (4k)
+	1  -  -  0  1
+	1  -  -  1  0			 Vec ROM (2k) E1
+	1  -  -  1  1                    Vec ROM (2k) F1
+
+	I/O Ports
+
+	8	Start/ (VG start)
+	9	WDOG/  (Reset watchdog)
+	A	SEQRES/ (VG stop/reset?)
+	B	RDSTOP/ d7 = stop (VG running if 0)
+
+	10 I	DIP SW C4 (game ship settings)
+
+		6 5  4 3  2 1
+	                      1st bonus ship at
+	        | |  | |  0 0  40,000
+	        | |  | |  0 1  50,000
+	        | |  | |  1 0  70,000
+	        | |  | |  1 1 100,000
+	        | |  | |      2nd and  3rd bonus ships
+	        | |  0 0      150,000   250,000
+	        | |  0 1      250,000   500,000
+	        | |  1 0      500,000   750,000
+	        | |  1 1      750,000 1,500,000
+	        | |           ships per credit
+	        0 0           1 credit = 2 ships / 2 credits = 4 ships
+	        0 1           1 credit = 2 ships / 2 credits = 5 ships
+	        1 0           1 credit = 3 ships / 2 credits = 6 ships
+	        1 1           1 credit = 3 ships / 2 credits = 7 ships
+
+	11 I	7 = Test
+		6 = P1 Fire
+		5 = P1 Thrust
+		4 = Tilt
+
+		1 = Coin 2
+		0 = Coin 1
+
+	12 I	7 = 1P1CR
+		6 = 1P2CR
+
+		3 = 2P2CR -+
+		2 = 2P1CR  |
+		1 = P2Fire |
+		0 = P2Thr -+ cocktail only
+
+	13 O   7 =
+	        6 = screen reverse
+	        5 = 2 player 2 credit start LED
+	        4 = 2 player 1 credit start LED
+	        3 = 1 player 1 credit start LED
+	        2 = 1 player 1 credit start LED
+	        1 = coin meter 2
+	        0 = coin meter 1
+
+	14 O	sound command (interrupts sound Z80)
+
+	15 I	encoder 1 (d7-d2)
+
+		The encoder is a 64 position Grey Code encoder, or a
+		pot and A to D converter.
+
+		Unlike the quadrature inputs on Atari and Sega games,
+	        Omega Race's controller is an absolute angle.
+
+		0x00, 0x04, 0x14, 0x10, 0x18, 0x1c, 0x5c, 0x58,
+		0x50, 0x54, 0x44, 0x40, 0x48, 0x4c, 0x6c, 0x68,
+		0x60, 0x64, 0x74, 0x70, 0x78, 0x7c, 0xfc, 0xf8,
+		0xf0, 0xf4, 0xe4, 0xe0, 0xe8, 0xec, 0xcc, 0xc8,
+		0xc0, 0xc4, 0xd4, 0xd0, 0xd8, 0xdc, 0x9c, 0x98,
+		0x90, 0x94, 0x84, 0x80, 0x88, 0x8c, 0xac, 0xa8,
+		0xa0, 0xa4, 0xb4, 0xb0, 0xb8, 0xbc, 0x3c, 0x38,
+		0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08
+
+	16 I	encoder 2 (d5-d0)
+
+		The inputs aren't scrambled as they are on the 1 player
+	        encoder
+
+	17 I	DIP SW C6 (coin/cocktail settings)
+
+	        8  7  6 5 4  3 2 1
+	                             coin switch 1
+	        |  |  | | |  0 0 0   1 coin  2 credits
+	        |  |  | | |  0 0 1   1 coin  3 credits
+	        |  |  | | |  0 1 0   1 coin  5 credits
+	        |  |  | | |  0 1 1   4 coins 5 credits
+	        |  |  | | |  1 0 0   3 coins 4 credits
+	        |  |  | | |  1 0 1   2 coins 3 credits
+	        |  |  | | |  1 1 0   2 coins 1 credit
+	        |  |  | | |  1 1 1   1 coin  1 credit
+	        |  |  | | |
+	        |  |  | | |          coin switch 2
+	        |  |  0 0 0          1 coin  2 credits
+	        |  |  0 0 1          1 coin  3 credits
+	        |  |  0 1 0          1 coin  5 credits
+	        |  |  0 1 1          4 coins 5 credits
+	        |  |  1 0 0          3 coins 4 credits
+	        |  |  1 0 1          2 coins 3 credits
+	        |  |  1 1 0          2 coins 1 credit
+	        |  |  1 1 1          1 coin  1 credit
+	        |  |
+	        |  0                 coin play
+	        |  1                 free play
+	        |
+	        0                    normal
+	        1                    cocktail
+
+	display list format: (4 byte opcodes)
+
+	+------+------+------+------+------+------+------+------+
+	|DY07   DY06   DY05   DY04   DY03   DY02   DY01   DY00  | 0
+	+------+------+------+------+------+------+------+------+
+	|OPCD3  OPCD2  OPCD1  OPCD0  DY11   DY10   DY09   DY08  | 1 OPCD 1111 = ABBREV/
+	+------+------+------+------+------+------+------+------+
+	|DX07   DX06   DX05   DX04   DX03   DX02   DX01   DX00  | 2
+	+------+------+------+------+------+------+------+------+
+	|INTEN3 INTEN2 INTEN1 INTEN0 DX11   DX10   DX09   DX08  | 3
+	+------+------+------+------+------+------+------+------+
+
+	    Draw relative vector       0x80      1000YYYY YYYYYYYY IIIIXXXX XXXXXXXX
+
+	    Draw relative vector
+	    and load scale             0x90      1001YYYY YYYYYYYY SSSSXXXX XXXXXXXX
+
+	    Beam to absolute
+	    screen position            0xA0      1010YYYY YYYYYYYY ----XXXX XXXXXXXX
+
+	    Halt                       0xB0      1011---- --------
+
+	    Jump to subroutine         0xC0      1100AAAA AAAAAAAA
+
+	    Return from subroutine     0xD0      1101---- --------
+
+	    Jump to new address        0xE0      1110AAAA AAAAAAAA
+
+	    Short vector draw          0xF0      1111YYYY IIIIXXXX
+
+
+	Sound Z80 Memory Map
+
+	0000 ROM
+	1000 RAM
+
+	15 14 13 12 11 10
+	            0           2k prom (K5)
+	            1           2k prom (J5)
+	         1              1k RAM  (K4,J4)
+
+	I/O (write-only)
+
+	0,1 			8912 (K3)
+	2,3			8912 (J3)
+
+
+	I/O (read-only)
+
+	0                       input port from main CPU.
+	                        main CPU writing port generated INT
+	Sound Commands:
+
+	0 - reset sound CPU
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -209,28 +221,25 @@ Sound Commands:
 
 
 
-static unsigned char *nvram;
-static size_t nvram_size;
+/*************************************
+ *
+ *	Machine init
+ *
+ *************************************/
 
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0,nvram_size);
-	}
-}
-
-
-static void omegrace_init_machine(void)
+static MACHINE_INIT( omegrace )
 {
 	/* Omega Race expects the vector processor to be ready. */
 	avgdvg_reset_w (0, 0);
 }
+
+
+
+/*************************************
+ *
+ *	Vector processor interaction
+ *
+ *************************************/
 
 static READ_HANDLER( omegrace_vg_go_r )
 {
@@ -238,18 +247,25 @@ static READ_HANDLER( omegrace_vg_go_r )
 	return 0;
 }
 
+
 static READ_HANDLER( omegrace_watchdog_r )
 {
 	return 0;
 }
 
+
 static READ_HANDLER( omegrace_vg_status_r )
 {
-	if (avgdvg_done())
-		return 0;
-	else
-		return 0x80;
+	return avgdvg_done() ? 0x00 : 0x80;
 }
+
+
+
+/*************************************
+ *
+ *	Input handlers
+ *
+ *************************************/
 
 /*
  * Encoder bit mappings
@@ -263,7 +279,8 @@ static READ_HANDLER( omegrace_vg_status_r )
  * 5 4 3 2 1 0 for encoder 2 (not shifted..)
  */
 
-static unsigned char spinnerTable[64] = {
+static unsigned char spinnerTable[64] =
+{
 	0x00, 0x04, 0x14, 0x10, 0x18, 0x1c, 0x5c, 0x58,
 	0x50, 0x54, 0x44, 0x40, 0x48, 0x4c, 0x6c, 0x68,
 	0x60, 0x64, 0x74, 0x70, 0x78, 0x7c, 0xfc, 0xf8,
@@ -271,16 +288,22 @@ static unsigned char spinnerTable[64] = {
 	0xc0, 0xc4, 0xd4, 0xd0, 0xd8, 0xdc, 0x9c, 0x98,
 	0x90, 0x94, 0x84, 0x80, 0x88, 0x8c, 0xac, 0xa8,
 	0xa0, 0xa4, 0xb4, 0xb0, 0xb8, 0xbc, 0x3c, 0x38,
-	0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08 };
+	0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08
+};
 
 
 READ_HANDLER( omegrace_spinner1_r )
 {
-	int res;
-	res=readinputport(4);
-
-	return (spinnerTable[res&0x3f]);
+	return (spinnerTable[readinputport(4) & 0x3f]);
 }
+
+
+
+/*************************************
+ *
+ *	Output handlers
+ *
+ *************************************/
 
 WRITE_HANDLER( omegrace_leds_w )
 {
@@ -297,11 +320,20 @@ WRITE_HANDLER( omegrace_leds_w )
 	/* bit 6 flips screen (not supported) */
 }
 
+
 WRITE_HANDLER( omegrace_soundlatch_w )
 {
 	soundlatch_w (offset, data);
-	cpu_cause_interrupt (1, 0xff);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -311,23 +343,13 @@ static MEMORY_READ_START( readmem )
 	{ 0x9000, 0x9fff, MRA_ROM }, /* vector rom */
 MEMORY_END
 
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM }, /* Omega Race tries to write there! */
 	{ 0x4000, 0x4bff, MWA_RAM },
-	{ 0x5c00, 0x5cff, MWA_RAM, &nvram, &nvram_size }, /* NVRAM */
+	{ 0x5c00, 0x5cff, MWA_RAM, &generic_nvram, &generic_nvram_size }, /* NVRAM */
 	{ 0x8000, 0x8fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector ram */
 	{ 0x9000, 0x9fff, MWA_ROM }, /* vector rom */
-MEMORY_END
-
-
-static MEMORY_READ_START( sound_readmem )
-	{ 0x0000, 0x07ff, MRA_ROM },
-	{ 0x1000, 0x13ff, MRA_RAM },
-MEMORY_END
-
-static MEMORY_WRITE_START( sound_writemem )
-	{ 0x0000, 0x07ff, MWA_ROM },
-	{ 0x1000, 0x13ff, MWA_RAM },
 MEMORY_END
 
 
@@ -343,15 +365,37 @@ static PORT_READ_START( readport )
 	{ 0x16, 0x16, input_port_5_r }, /* 2nd controller (cocktail) */
 PORT_END
 
+
 static PORT_WRITE_START( writeport )
 	{ 0x0a, 0x0a, avgdvg_reset_w },
 	{ 0x13, 0x13, omegrace_leds_w }, /* coin counters, leds, flip screen */
 	{ 0x14, 0x14, omegrace_soundlatch_w }, /* Sound command */
 PORT_END
 
+
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
+
+static MEMORY_READ_START( sound_readmem )
+	{ 0x0000, 0x07ff, MRA_ROM },
+	{ 0x1000, 0x13ff, MRA_RAM },
+MEMORY_END
+
+
+static MEMORY_WRITE_START( sound_writemem )
+	{ 0x0000, 0x07ff, MWA_ROM },
+	{ 0x1000, 0x13ff, MWA_RAM },
+MEMORY_END
+
+
 static PORT_READ_START( sound_readport )
 	{ 0x00, 0x00, soundlatch_r },
 PORT_END
+
 
 static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, AY8910_control_port_0_w },
@@ -359,6 +403,14 @@ static PORT_WRITE_START( sound_writeport )
 	{ 0x02, 0x02, AY8910_control_port_1_w },
 	{ 0x03, 0x03, AY8910_write_port_1_w },
 PORT_END
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( omegrace )
 	PORT_START /* SW0 */
@@ -439,6 +491,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -452,60 +510,52 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_omegrace =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,	/* 3.0 MHz */
-			readmem,writemem,readport,writeport,
-			0,0, /* no vblank interrupt */
-			interrupt, 250 /* 250 Hz */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1500000,	/* 1.5 MHz */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			0, 0, /* no vblank interrupt */
-			nmi_interrupt, 250 /* 250 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1, /* the soundcpu is synchronized by the new timer code */
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
 
-	omegrace_init_machine,
+static MACHINE_DRIVER_START( omegrace )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)
+
+	MDRV_CPU_ADD(Z80, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,250)
+
+	MDRV_FRAMES_PER_SECOND(40)
+
+	MDRV_MACHINE_INIT(omegrace)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	400, 300, { 0, 1020, -10, 1010 },
-	0,
-	256, 0,
-	avg_init_palette_white,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	dvg_start,
-	dvg_stop,
-	vector_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(0, 1020, -10, 1010)
+	MDRV_PALETTE_LENGTH(32768)
+	
+	MDRV_PALETTE_INIT(avg_white)
+	MDRV_VIDEO_START(dvg)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
 
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( omegrace )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -521,6 +571,12 @@ ROM_START( omegrace )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAMEX( 1981, omegrace, 0, omegrace, omegrace, 0, ROT0, "Midway", "Omega Race", GAME_NO_COCKTAIL )
 

@@ -11,14 +11,15 @@ Driver by Carlos A. Lozano, Rob Rosenbrock, Phil Stroffolino, Ernesto Corvi
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
+#include "vidhrdw/generic.h"
 
 /* from vidhrdw */
 extern unsigned char *ddragon_bgvideoram,*ddragon_fgvideoram;
 extern int ddragon_scrollx_hi, ddragon_scrolly_hi;
 extern unsigned char *ddragon_scrollx_lo;
 extern unsigned char *ddragon_scrolly_lo;
-int ddragon_vh_start(void);
-void ddragon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( ddragon );
+VIDEO_UPDATE( ddragon );
 WRITE_HANDLER( ddragon_bgvideoram_w );
 WRITE_HANDLER( ddragon_fgvideoram_w );
 extern unsigned char *ddragon_spriteram;
@@ -31,30 +32,30 @@ static int sprite_irq, sound_irq, ym_irq;
 static int adpcm_pos[2],adpcm_end[2],adpcm_idle[2];
 /* end of private globals */
 
-static void ddragon_init_machine( void )
+static MACHINE_INIT( ddragon )
 {
-	sprite_irq = HD63701_INT_NMI;
-	sound_irq = M6809_INT_IRQ;
+	sprite_irq = IRQ_LINE_NMI;
+	sound_irq = M6809_IRQ_LINE;
 	ym_irq = M6809_FIRQ_LINE;
 	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
 }
 
-static void ddragonb_init_machine( void )
+static MACHINE_INIT( ddragonb )
 {
-	sprite_irq = M6809_INT_NMI;
-	sound_irq = M6809_INT_IRQ;
+	sprite_irq = IRQ_LINE_NMI;
+	sound_irq = M6809_IRQ_LINE;
 	ym_irq = M6809_FIRQ_LINE;
 	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
 }
 
-static void ddragon2_init_machine( void )
+static MACHINE_INIT( ddragon2 )
 {
-	sprite_irq = Z80_NMI_INT;
-	sound_irq = Z80_NMI_INT;
+	sprite_irq = IRQ_LINE_NMI;
+	sound_irq = IRQ_LINE_NMI;
 	ym_irq = 0;
 	technos_video_hw = 2;
 	dd_sub_cpu_busy = 0x10;
@@ -74,14 +75,14 @@ static WRITE_HANDLER( ddragon_bankswitch_w )
 	if (data & 0x10)
 		dd_sub_cpu_busy = 0x00;
 	else if (dd_sub_cpu_busy == 0x00)
-		cpu_cause_interrupt( 1, sprite_irq );
+		cpu_set_irq_line( 1, sprite_irq, (sprite_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 
 	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
 }
 
 static WRITE_HANDLER( ddragon_forcedIRQ_w )
 {
-	cpu_cause_interrupt( 0, M6809_INT_IRQ );
+	cpu_set_irq_line( 0, M6809_IRQ_LINE, HOLD_LINE );
 }
 
 static READ_HANDLER( port4_r )
@@ -107,7 +108,7 @@ static WRITE_HANDLER( ddragon_spriteram_w )
 static WRITE_HANDLER( cpu_sound_command_w )
 {
 	soundlatch_w( offset, data );
-	cpu_cause_interrupt( 2, sound_irq );
+	cpu_set_irq_line( 2, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
 
 static WRITE_HANDLER( dd_adpcm_w )
@@ -466,171 +467,121 @@ static struct OKIM6295interface okim6295_interface =
 	{ 15 }
 };
 
-static int ddragon_interrupt(void)
+static INTERRUPT_GEN( ddragon_interrupt )
 {
     cpu_set_irq_line(0, 1, HOLD_LINE); /* hold the FIRQ line */
     cpu_set_nmi_line(0, PULSE_LINE); /* pulse the NMI line */
-    return ignore_interrupt();
 }
 
 
 
-static const struct MachineDriver machine_driver_ddragon =
-{
+static MACHINE_DRIVER_START( ddragon )
+
 	/* basic machine hardware */
-	{
-		{
- 			CPU_HD6309,
-			3579545,	/* 3.579545 MHz */
-			readmem,writemem,0,0,
-			ddragon_interrupt,1
-		},
-		{
- 			CPU_HD63701,
-			2000000, /* 2 MHz ???*/
-			sub_readmem,sub_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
- 			CPU_HD6309 | CPU_AUDIO_CPU,	/* ? */
-			3579545,	/* 3.579545 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0 /* irq on command */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	100, /* heavy interleaving to sync up sprite<->main cpu's */
-	ddragon_init_machine,
+ 	MDRV_CPU_ADD(HD6309, 3579545)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ddragon_interrupt,1)
+
+ 	MDRV_CPU_ADD(HD63701, 2000000) /* 2 MHz ???*/
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+
+ 	MDRV_CPU_ADD(HD6309, 3579545)
+ 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* heavy interleaving to sync up sprite<->main cpu's */
+
+	MDRV_MACHINE_INIT(ddragon)
 
 	/* video hardware */
-	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	384, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon_vh_start,
-	0,
-	ddragon_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
+
+	MDRV_VIDEO_START(ddragon)
+	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ddragonb =
-{
+static MACHINE_DRIVER_START( ddragonb )
+
 	/* basic machine hardware */
-	{
-		{
- 			CPU_HD6309,
-			3579545,	/* 3.579545 MHz */
-			readmem,writemem,0,0,
-			ddragon_interrupt,1
-		},
-		{
- 			CPU_HD6309,	/* ? */
-			12000000 / 3, /* 4 MHz */
-			sub_readmem,sub_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
- 			CPU_HD6309 | CPU_AUDIO_CPU,	/* ? */
-			3579545,	/* 3.579545 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0 /* irq on command */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	100, /* heavy interleaving to sync up sprite<->main cpu's */
-	ddragonb_init_machine,
+ 	MDRV_CPU_ADD(HD6309, 3579545)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ddragon_interrupt,1)
+
+ 	MDRV_CPU_ADD(HD6309, 12000000 / 3) /* 4 MHz */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+
+ 	MDRV_CPU_ADD(HD6309, 3579545)
+ 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* heavy interleaving to sync up sprite<->main cpu's */
+
+	MDRV_MACHINE_INIT(ddragonb)
 
 	/* video hardware */
-	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	384, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon_vh_start,
-	0,
-	ddragon_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
+
+	MDRV_VIDEO_START(ddragon)
+	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ddragon2 =
-{
+static MACHINE_DRIVER_START( ddragon2 )
+
 	/* basic machine hardware */
-	{
-		{
- 			CPU_HD6309,
-			3579545,	/* 3.579545 MHz */
-			dd2_readmem,dd2_writemem,0,0,
-			ddragon_interrupt,1
-		},
-		{
-			CPU_Z80,
-			12000000 / 3, /* 4 MHz */
-			dd2_sub_readmem,dd2_sub_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			dd2_sound_readmem,dd2_sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	100, /* heavy interleaving to sync up sprite<->main cpu's */
-	ddragon2_init_machine,
+ 	MDRV_CPU_ADD(HD6309, 3579545)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(dd2_readmem,dd2_writemem)
+	MDRV_CPU_VBLANK_INT(ddragon_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,12000000 / 3) /* 4 MHz */
+	MDRV_CPU_MEMORY(dd2_sub_readmem,dd2_sub_writemem)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(dd2_sound_readmem,dd2_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* heavy interleaving to sync up sprite<->main cpu's */
+
+	MDRV_MACHINE_INIT(ddragon2)
 
 	/* video hardware */
-	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	384, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(384)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon_vh_start,
-	0,
-	ddragon_vh_screenrefresh,
+	MDRV_VIDEO_START(ddragon)
+	MDRV_VIDEO_UPDATE(ddragon)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

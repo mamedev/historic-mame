@@ -15,7 +15,7 @@ unsigned char *phozon_spriteram;
 unsigned char *phozon_customio_1, *phozon_customio_2;
 static int credits, coincounter1, coincounter2;
 
-void phozon_init_machine( void )
+MACHINE_INIT( phozon )
 {
     credits = coincounter1 = coincounter2 = 0;
 	cpu_set_halt_line(1, CLEAR_LINE);

@@ -58,7 +58,7 @@ static int make_mixer_table(int voices, int gain)
 	int i;
 
 	/* allocate memory */
-	mixer_table = malloc(256 * voices * sizeof(INT16));
+	mixer_table = auto_malloc(256 * voices * sizeof(INT16));
 	if (!mixer_table)
 		return 1;
 
@@ -170,16 +170,13 @@ int wiping_sh_start(const struct MachineSound *msound)
 	stream = stream_init(mono_name,100/*intf->volume*/, samplerate, 0, wiping_update_mono);
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
-	if ((mixer_buffer = malloc(2 * sizeof(short) * samplerate)) == 0)
+	if ((mixer_buffer = auto_malloc(2 * sizeof(short) * samplerate)) == 0)
 		return 1;
 	mixer_buffer_2 = mixer_buffer + samplerate;
 
 	/* build the mixer table */
 	if (make_mixer_table(8, defgain))
-	{
-		free (mixer_buffer);
 		return 1;
-	}
 
 	/* extract globals from the interface */
 	num_voices = 8;
@@ -206,8 +203,6 @@ int wiping_sh_start(const struct MachineSound *msound)
 
 void wiping_sh_stop(void)
 {
-	free (mixer_table);
-	free (mixer_buffer);
 }
 
 

@@ -23,8 +23,8 @@ WRITE_HANDLER( amspdwy_colorram_w );
 WRITE_HANDLER( amspdwy_paletteram_w );
 WRITE_HANDLER( amspdwy_flipscreen_w );
 
-int  amspdwy_vh_start(void);
-void amspdwy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( amspdwy );
+VIDEO_UPDATE( amspdwy );
 
 
 /***************************************************************************
@@ -258,46 +258,35 @@ static struct YM2151interface amspdwy_ym2151_interface =
 };
 
 
-static const struct MachineDriver machine_driver_amspdwy =
-{
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			3000000,	/* ? */
-			amspdwy_readmem,  amspdwy_writemem,
-			amspdwy_readport, 0,
-			interrupt, 1	/* IRQ: 60Hz, NMI: retn */
-		},
-		{
-			CPU_Z80,	/* Can't be disabled: the YM2151 timers must work */
-			3000000,	/* ? */
-			amspdwy_sound_readmem, amspdwy_sound_writemem,
-			0, 0,
-			ignore_interrupt, 1		/* IRQ: YM2151, NMI: main CPU */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( amspdwy )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,3000000)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ? */
+	MDRV_CPU_MEMORY(amspdwy_readmem,amspdwy_writemem)
+	MDRV_CPU_PORTS(amspdwy_readport,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ: 60Hz, NMI: retn */
+
+	MDRV_CPU_ADD(Z80,3000000)	/* Can't be disabled: the YM2151 timers must work */
+	MDRV_CPU_MEMORY(amspdwy_sound_readmem,amspdwy_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	amspdwy_gfxdecodeinfo,
-	32, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(amspdwy_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	amspdwy_vh_start,
-	0,
-	amspdwy_vh_screenrefresh,
+	MDRV_VIDEO_START(amspdwy)
+	MDRV_VIDEO_UPDATE(amspdwy)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&amspdwy_ym2151_interface	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, amspdwy_ym2151_interface)
+MACHINE_DRIVER_END
 
 
 

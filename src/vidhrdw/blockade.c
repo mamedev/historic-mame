@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-void blockade_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( blockade )
 {
 	int offs;
 
@@ -28,19 +28,9 @@ void blockade_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					0,0,
 					8*sx,8*sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-			if (!full_refresh)
-				drawgfx(bitmap,Machine->gfx[0],
-					charcode,
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
-
 		}
 	}
 
-	if (full_refresh)
-		/* copy the character mapped graphics */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

@@ -30,7 +30,7 @@ static int video_control;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void spacefb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( spacefb )
 {
 	int i;
 
@@ -84,7 +84,7 @@ logerror("Port #2 = %02d\n",data);
 
 ***************************************************************************/
 
-void spacefb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( spacefb )
 {
 	int offs;
 	int spriteno, col_bit2;

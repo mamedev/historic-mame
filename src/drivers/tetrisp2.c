@@ -76,12 +76,12 @@ WRITE16_HANDLER( rocknms_sub_vram_bg_w );
 WRITE16_HANDLER( rocknms_sub_vram_fg_w );
 WRITE16_HANDLER( rocknms_sub_vram_rot_w );
 
-int  tetrisp2_vh_start(void);
-void tetrisp2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int  rockntread_vh_start(void);
-void rockntread_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int  rocknms_vh_start(void);
-void rocknms_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( tetrisp2 );
+VIDEO_UPDATE( tetrisp2 );
+VIDEO_START( rockntread );
+VIDEO_UPDATE( rockntread );
+VIDEO_START( rocknms );
+VIDEO_UPDATE( rocknms );
 
 
 /***************************************************************************
@@ -226,7 +226,7 @@ static READ16_HANDLER( tetrisp2_ip_1_word_r )
 static data16_t *tetrisp2_nvram;
 static size_t tetrisp2_nvram_size;
 
-void tetrisp2_nvram_handler(void *file,int read_or_write)
+NVRAM_HANDLER( tetrisp2 )
 {
 	if (read_or_write)
 		osd_fwrite(file,tetrisp2_nvram,tetrisp2_nvram_size);
@@ -1089,7 +1089,7 @@ void rockn_timer_level4_callback(int param)
 
 	timer = (200 + (4094 - rockn_timer) * 100);
 
-	if (!(rockn_timer_ctr % timer)) cpu_cause_interrupt(0, 4);
+	if (!(rockn_timer_ctr % timer)) cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 void rockn_timer_sub_level4_callback(int param)
@@ -1110,40 +1110,39 @@ void rockn_timer_sub_level4_callback(int param)
 
 	timer = (200 + (4094 - rockn_timer_sub) * 100);
 
-	if (!(rockn_timer_sub_ctr % timer)) cpu_cause_interrupt(1, 4);
+	if (!(rockn_timer_sub_ctr % timer)) cpu_set_irq_line(1, 4, HOLD_LINE);
 }
 
 void rockn_timer_level1_callback(int param)
 {
-	cpu_cause_interrupt(0, 1);
+	cpu_set_irq_line(0, 1, HOLD_LINE);
 }
 
 void rockn_timer_sub_level1_callback(int param)
 {
-	cpu_cause_interrupt(1, 1);
+	cpu_set_irq_line(1, 1, HOLD_LINE);
 }
 
-void init_rockn_timer(void)
+DRIVER_INIT( rockn_timer )
 {
 	rockn_timer_ctr = 0;
-	timer_init();
 	timer_pulse(TIME_IN_MSEC(32), 0, rockn_timer_level1_callback);
 	timer_pulse(TIME_IN_USEC(5), 0, rockn_timer_level4_callback);
 }
 
-void init_rockn1(void)
+DRIVER_INIT( rockn1 )
 {
 	init_rockn_timer();
 	rockn_protectdata = 1;
 }
 
-void init_rockn2(void)
+DRIVER_INIT( rockn2 )
 {
 	init_rockn_timer();
 	rockn_protectdata = 2;
 }
 
-void init_rocknms(void)
+DRIVER_INIT( rocknms )
 {
 	init_rockn_timer();
 
@@ -1154,157 +1153,127 @@ void init_rocknms(void)
 	rockn_protectdata = 3;
 }
 
-void init_rockn3(void)
+DRIVER_INIT( rockn3 )
 {
 	init_rockn_timer();
 	rockn_protectdata = 4;
 }
 
-static const struct MachineDriver machine_driver_tetrisp2 =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			tetrisp2_readmem, tetrisp2_writemem,0,0,
-			m68_level2_irq, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( tetrisp2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(tetrisp2_readmem,tetrisp2_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(tetrisp2)
 
 	/* video hardware */
-	0x140, 0xe0, { 0, 0x140-1, 0, 0xe0-1 },
-	tetrisp2_gfxdecodeinfo,
-	0x8000, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	tetrisp2_vh_start,
-	0,
-	rockntread_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x140, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0-1)
+	MDRV_GFXDECODE(tetrisp2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(tetrisp2)
+	MDRV_VIDEO_UPDATE(rockntread)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	tetrisp2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_rockn1 =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			rockn1_readmem, rockn1_writemem,0,0,
-			m68_level2_irq, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rockn1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(rockn1_readmem,rockn1_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(tetrisp2)
 
 	/* video hardware */
-	0x140, 0xe0, { 0, 0x140-1, 0, 0xe0-1 },
-	tetrisp2_gfxdecodeinfo,
-	0x8000, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	rockntread_vh_start,
-	0,
-	rockntread_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x140, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0-1)
+	MDRV_GFXDECODE(tetrisp2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(rockntread)
+	MDRV_VIDEO_UPDATE(rockntread)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	tetrisp2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_rockn2 =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			rockn2_readmem, rockn2_writemem,0,0,
-			m68_level2_irq, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rockn2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(rockn2_readmem,rockn2_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(tetrisp2)
 
 	/* video hardware */
-	0x140, 0xe0, { 0, 0x140-1, 0, 0xe0-1 },
-	tetrisp2_gfxdecodeinfo,
-	0x8000, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	rockntread_vh_start,
-	0,
-	rockntread_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x140, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0-1)
+	MDRV_GFXDECODE(tetrisp2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(rockntread)
+	MDRV_VIDEO_UPDATE(rockntread)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	tetrisp2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_rocknms =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			rocknms_main_readmem, rocknms_main_writemem,0,0,
-			m68_level2_irq, 1
-		},
-		{
-			CPU_M68000,
-			12000000,
-			rocknms_sub_readmem, rocknms_sub_writemem,0,0,
-			m68_level2_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rocknms )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(rocknms_main_readmem,rocknms_main_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(rocknms_sub_readmem,rocknms_sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(tetrisp2)
 
 	/* video hardware */
-//	0x140, 0xe0, { 0, 0x140-1, 0, 0xe0-1 },
-	0x140, 0xe0*2, { 0, 0x140-1, 0, 0xe0*2-1 },
-	rocknms_gfxdecodeinfo,
-	0x10000, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(4, 6),
-	0,
-	rocknms_vh_start,
-	0,
-	rocknms_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(8, 3)
+	MDRV_SCREEN_SIZE(0x140, 0xe0*2)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0*2-1)
+	MDRV_GFXDECODE(rocknms_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x10000)
+
+	MDRV_VIDEO_START(rocknms)
+	MDRV_VIDEO_UPDATE(rocknms)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	tetrisp2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

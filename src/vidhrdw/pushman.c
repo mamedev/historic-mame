@@ -48,7 +48,7 @@ static void get_text_tile_info( int tile_index )
 
 ***************************************************************************/
 
-int pushman_vh_start(void)
+VIDEO_START( pushman )
 {
 	bg_tilemap = tilemap_create(get_back_tile_info,background_scan_rows,TILEMAP_OPAQUE,     32,32,128,64);
 	tx_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,   TILEMAP_TRANSPARENT, 8, 8, 32,32);
@@ -91,7 +91,7 @@ WRITE16_HANDLER( pushman_videoram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,x,y,color,sprite;
 
@@ -108,17 +108,17 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 		drawgfx(bitmap,Machine->gfx[1],
 				sprite,
 				color,0,0,x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void pushman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pushman )
 {
 	/* Setup the tilemaps */
 	tilemap_set_scrollx( bg_tilemap,0, control[0] );
 	tilemap_set_scrolly( bg_tilemap,0, 0xf00-control[1] );
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }

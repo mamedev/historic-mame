@@ -71,7 +71,7 @@ static void get_ch1a_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int taitol_vh_start(void)
+VIDEO_START( taitol )
 {
 	int i;
 
@@ -123,7 +123,7 @@ WRITE_HANDLER( taitol_bankc_w )
 	if (bankc[offset] != data)
 	{
 		bankc[offset] = data;
-//		logerror("Bankc %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+//		logerror("Bankc %d, %02x (%04x)\n", offset, data, activecpu_get_pc());
 
 		tilemap_mark_all_tiles_dirty(bg18_tilemap);
 		tilemap_mark_all_tiles_dirty(bg19_tilemap);
@@ -138,7 +138,7 @@ READ_HANDLER( taitol_bankc_r )
 
 WRITE_HANDLER( taitol_control_w )
 {
-//	logerror("Control Write %02x (%04x)\n", data, cpu_get_pc());
+//	logerror("Control Write %02x (%04x)\n", data, activecpu_get_pc());
 
 	cur_ctrl = data;
 //usrintf_showmessage("%02x",data);
@@ -158,7 +158,7 @@ WRITE_HANDLER( taitol_control_w )
 
 READ_HANDLER( taitol_control_r )
 {
-//	logerror("Control Read %02x (%04x)\n", cur_ctrl, cpu_get_pc());
+//	logerror("Control Read %02x (%04x)\n", cur_ctrl, activecpu_get_pc());
 	return cur_ctrl;
 }
 
@@ -266,7 +266,7 @@ void taitol_obj1b_m(int offset)
 	             plgirs2 bullets and raimais big bosses.
 */
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -302,13 +302,13 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				(color & 0x08) ? 0xaa : 0x00);
 	}
 }
 
 
-void taitol_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( taitol )
 {
 	int dx,dy;
 
@@ -330,25 +330,25 @@ void taitol_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 	if (cur_ctrl & 0x20)	/* display enable */
 	{
-		fillbitmap(priority_bitmap,0,NULL);
+		fillbitmap(priority_bitmap,0,cliprect);
 
-		tilemap_draw(bitmap,bg19_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg19_tilemap,0,0);
 
 		if (cur_ctrl & 0x08)	/* sprites always over BG1 */
-			tilemap_draw(bitmap,bg18_tilemap,0,0);
+			tilemap_draw(bitmap,cliprect,bg18_tilemap,0,0);
 		else					/* split priority */
-			tilemap_draw(bitmap,bg18_tilemap,0,1);
-		draw_sprites(bitmap);
+			tilemap_draw(bitmap,cliprect,bg18_tilemap,0,1);
+		draw_sprites(bitmap,cliprect);
 
-		tilemap_draw(bitmap,ch1a_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,ch1a_tilemap,0,0);
 	}
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 }
 
 
 
-void taitol_eof_callback(void)
+VIDEO_EOF( taitol )
 {
 	unsigned char *spriteram = taitol_rambanks + 0x7000;
 

@@ -151,10 +151,10 @@ extern int			segac2_bg_palbase;
 extern int			segac2_sp_palbase;
 extern int			segac2_palbank;
 
-int		segac2_vh_start(void);
-void	segac2_vh_stop(void);
-void	segac2_vh_eof(void);
-void	segac2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( segac2 );
+VIDEO_EOF( segac2 );
+VIDEO_UPDATE( segac2 );
+
 void	segac2_update_display(int scanline);
 void	segac2_enable_display(int enable);
 
@@ -277,7 +277,7 @@ static void vdp_int6_off(int param)
 
 
 /* interrupt callback to generate the VBLANK interrupt */
-static int vblank_interrupt(void)
+static INTERRUPT_GEN( vblank_interrupt )
 {
 	/* generate the interrupt */
 	vblank_int = 1;
@@ -285,7 +285,6 @@ static int vblank_interrupt(void)
 
 	/* set a timer to turn it off */
 	timer_set(cpu_getscanlineperiod() * (22. / 342.), 0, vdp_int6_off);
-	return ignore_interrupt();
 }
 
 
@@ -307,7 +306,7 @@ static void ym3438_interrupt(int state)
 
 ******************************************************************************/
 
-static void init_machine(void)
+MACHINE_INIT( segac2 )
 {
 	/* set the first scanline 0 timer to go off */
 	timer_set(cpu_getscanlinetime(0) + cpu_getscanlineperiod() * (320. / 342.), 0, vdp_reload_counter);
@@ -534,11 +533,11 @@ static WRITE16_HANDLER( iochip_w )
 		case 0x0f:
 			/* ???? */
 			if (data != 0x88)
-				if (LOG_IOCHIP) logerror("%06x:I/O write @ %02x = %02x\n", cpu_getpreviouspc(), offset, data & 0xff);
+				if (LOG_IOCHIP) logerror("%06x:I/O write @ %02x = %02x\n", activecpu_get_previouspc(), offset, data & 0xff);
 			break;
 
 		default:
-			if (LOG_IOCHIP) logerror("%06x:I/O write @ %02x = %02x\n", cpu_getpreviouspc(), offset, data & 0xff);
+			if (LOG_IOCHIP) logerror("%06x:I/O write @ %02x = %02x\n", activecpu_get_previouspc(), offset, data & 0xff);
 			break;
 	}
 }
@@ -567,7 +566,7 @@ static WRITE16_HANDLER( control_w )
 
 	/* log anything suspicious */
 	if (data != 6 && data != 7)
-		if (LOG_IOCHIP) logerror("%06x:control_w suspicious value = %02X (%d)\n", cpu_getpreviouspc(), data, cpu_getscanline());
+		if (LOG_IOCHIP) logerror("%06x:control_w suspicious value = %02X (%d)\n", activecpu_get_previouspc(), data, cpu_getscanline());
 }
 
 
@@ -588,7 +587,7 @@ static WRITE16_HANDLER( control_w )
 /* protection chip reads */
 static READ16_HANDLER( prot_r )
 {
-	if (LOG_PROTECTION) logerror("%06X:protection r=%02X\n", cpu_getpreviouspc(), prot_table ? prot_read_buf : 0xff);
+	if (LOG_PROTECTION) logerror("%06X:protection r=%02X\n", activecpu_get_previouspc(), prot_table ? prot_read_buf : 0xff);
 	return prot_read_buf | 0xf0;
 }
 
@@ -613,7 +612,7 @@ static WRITE16_HANDLER( prot_w )
 	/* determine the value to return, should a read occur */
 	if (prot_table)
 		prot_read_buf = (prot_table[table_index >> 3] << (4 * (table_index & 7))) >> 28;
-	if (LOG_PROTECTION) logerror("%06X:protection w=%02X, new result=%02X\n", cpu_getpreviouspc(), data & 0x0f, prot_read_buf);
+	if (LOG_PROTECTION) logerror("%06X:protection w=%02X, new result=%02X\n", activecpu_get_previouspc(), data & 0x0f, prot_read_buf);
 
 	/* if the palette changed, force an update */
 	if (new_sp_palbase != segac2_sp_palbase || new_bg_palbase != segac2_bg_palbase)
@@ -635,7 +634,7 @@ static READ16_HANDLER( puyopuy2_prot_r )
 	int table_index = (prot_write_buf & 0xf0) | ((prot_write_buf >> 8) & 0x0f);
 	if (prot_table)
 		prot_read_buf = (prot_table[table_index >> 3] << (4 * (table_index & 7))) >> 28;
-	if (LOG_PROTECTION) logerror("%06X:protection r=%02X\n", cpu_getpreviouspc(), prot_table ? prot_read_buf : 0xff);
+	if (LOG_PROTECTION) logerror("%06X:protection r=%02X\n", activecpu_get_previouspc(), prot_table ? prot_read_buf : 0xff);
 	return prot_read_buf | 0xf0;
 }
 
@@ -1462,79 +1461,61 @@ static struct SN76496interface sn76489_intf =
 
 ******************************************************************************/
 
-static struct MachineDriver machine_driver_segac =
-{
-	/* machine hardware */
-	{
-		{
-			CPU_M68000,
-			MASTER_CLOCK/7, 		/* yes, there is a divide-by-7 circuit */
-			readmem,writemem,0,0,
-			vblank_interrupt,1
-		},
-	},
-	60,(int)(((262. - 224.) / 262.) * 1000000. / 60.),
-	1,
-	init_machine,
+static MACHINE_DRIVER_START( segac )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, MASTER_CLOCK/7) 		/* yes, there is a divide-by-7 circuit */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
+	
+	MDRV_MACHINE_INIT(segac2)
 
 	/* video hardware */
-	336,224, { 8, 327, 0, 223 },
-	NULL,
-	2048, 0,
-	NULL,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
+	MDRV_SCREEN_SIZE(336,224)
+	MDRV_VISIBLE_AREA(8, 327, 0, 223)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS,
-
-	segac2_vh_eof,
-	segac2_vh_start,
-	segac2_vh_stop,
-	segac2_vh_screenrefresh,
+	MDRV_VIDEO_START(segac2)
+	MDRV_VIDEO_EOF(segac2)
+	MDRV_VIDEO_UPDATE(segac2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2612, &ym3438_intf },
-		{ SOUND_SN76496, &sn76489_intf }
-	},
-	0
-};
+	MDRV_SOUND_ADD(YM2612, ym3438_intf)
+	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_segac2 =
-{
-	/* machine hardware */
-	{
-		{
-			CPU_M68000,
-			MASTER_CLOCK/7, 		/* yes, there is a divide-by-7 circuit */
-			readmem,writemem,0,0,
-			vblank_interrupt,1
-		},
-	},
-	60,(int)(((262. - 224.) / 262.) * 1000000. / 60.),
-	1,
-	init_machine,
+
+static MACHINE_DRIVER_START( segac2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, MASTER_CLOCK/7) 		/* yes, there is a divide-by-7 circuit */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
+	
+	MDRV_MACHINE_INIT(segac2)
 
 	/* video hardware */
-	336,224, { 8, 327, 0, 223 },
-	NULL,
-	2048, 0,
-	NULL,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
+	MDRV_SCREEN_SIZE(336,224)
+	MDRV_VISIBLE_AREA(8, 327, 0, 223)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS,
-	segac2_vh_eof,
-	segac2_vh_start,
-	segac2_vh_stop,
-	segac2_vh_screenrefresh,
+	MDRV_VIDEO_START(segac2)
+	MDRV_VIDEO_EOF(segac2)
+	MDRV_VIDEO_UPDATE(segac2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2612, &ym3438_intf },
-		{ SOUND_SN76496, &sn76489_intf },
-		{ SOUND_UPD7759, &upd7759_intf }
-	},
-	0
-};
+	MDRV_SOUND_ADD(YM2612, ym3438_intf)
+	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+	MDRV_SOUND_ADD(UPD7759, upd7759_intf)
+MACHINE_DRIVER_END
 
 
 
@@ -1804,19 +1785,19 @@ static void init_saves(void)
 	state_save_register_UINT16 ("C2 Protection", 0, "Read Buffer", &prot_read_buf, 1);
 }
 
-static void init_segac2(void)
+static DRIVER_INIT( segac2 )
 {
 	bloxeed_sound = 0;
 	init_saves();
 }
 
-static void init_bloxeedc(void)
+static DRIVER_INIT( bloxeedc )
 {
 	init_saves();
 	bloxeed_sound = 1;
 }
 
-static void init_columns(void)
+static DRIVER_INIT( columns )
 {
 	static const UINT32 columns_table[256/8] =
 	{
@@ -1834,7 +1815,7 @@ static void init_columns(void)
 	init_saves();
 }
 
-static void init_columns2(void)
+static DRIVER_INIT( columns2 )
 {
 	static const UINT32 columns2_table[256/8] =
 	{
@@ -1852,7 +1833,7 @@ static void init_columns2(void)
 	init_saves();
 }
 
-static void init_borench(void)
+static DRIVER_INIT( borench )
 {
 	static const UINT32 borench_table[256/8] =
 	{
@@ -1870,7 +1851,7 @@ static void init_borench(void)
 	init_saves();
 }
 
-static void init_tfrceac(void)
+static DRIVER_INIT( tfrceac )
 {
 	static const UINT32 tfrceac_table[256/8] =
 	{
@@ -1888,13 +1869,13 @@ static void init_tfrceac(void)
 	init_saves();
 }
 
-static void init_tfrceacb(void)
+static DRIVER_INIT( tfrceacb )
 {
 	/* disable the palette bank switching from the protecton chip */
 	install_mem_write16_handler(0, 0x800000, 0x800001, MWA16_NOP);
 }
 
-static void init_tantr(void)
+static DRIVER_INIT( tantr )
 {
 	static const UINT32 tantr_table[256/8] =
 	{
@@ -1912,7 +1893,7 @@ static void init_tantr(void)
 	init_saves();
 }
 
-static void init_ichidant(void)
+static DRIVER_INIT( ichidant )
 {
 	static const UINT32 ichidant_table[256/8] =
 	{
@@ -1930,7 +1911,7 @@ static void init_ichidant(void)
 	init_saves();
 }
 
-static void init_ichidnte(void)
+static DRIVER_INIT( ichidnte )
 {
 	static const UINT32 ichidnte_table[256/8] =
 	{
@@ -1949,7 +1930,7 @@ static void init_ichidnte(void)
 }
 
 
-static void init_potopoto(void)
+static DRIVER_INIT( potopoto )
 {
 	/* note: this is not the real table; Poto Poto only tests one  */
 	/* very specific case, so we don't have enough data to provide */
@@ -1970,7 +1951,7 @@ static void init_potopoto(void)
 	init_saves();
 }
 
-static void init_puyopuyo(void)
+static DRIVER_INIT( puyopuyo )
 {
 	static const UINT32 puyopuyo_table[256/8] =
 	{
@@ -1988,7 +1969,7 @@ static void init_puyopuyo(void)
 	init_saves();
 }
 
-static void init_puyopuy2(void)
+static DRIVER_INIT( puyopuy2 )
 {
 	/* note: this is not the real table; Puyo Puyo 2 doesn't  */
 	/* store the original table; instead it loops through all */
@@ -2012,7 +1993,7 @@ static void init_puyopuy2(void)
 	init_saves();
 }
 
-static void init_stkclmns(void)
+static DRIVER_INIT( stkclmns )
 {
 	static const UINT32 stkclmns_table[256/8] =
 	{
@@ -2039,7 +2020,7 @@ static void init_stkclmns(void)
 	init_saves();
 }
 
-static void init_zunkyou(void)
+static DRIVER_INIT( zunkyou )
 {
 	static const UINT32 zunkyou_table[256/8] =
 	{

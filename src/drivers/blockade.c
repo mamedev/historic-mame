@@ -37,7 +37,7 @@ Notes:  Support is complete with the exception of the square wave generator
 /* #define BLOCKADE_LOG 1 */
 
 /* in vidhrdw */
-void blockade_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( blockade );
 
 WRITE_HANDLER( blockade_coin_latch_w );
 WRITE_HANDLER( blockade_sound_freq_w );
@@ -49,7 +49,7 @@ WRITE_HANDLER( blockade_env_off_w );
 static int coin_latch;  /* Active Low */
 static int just_been_reset;
 
-void init_blockade(void)
+DRIVER_INIT( blockade )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
@@ -67,7 +67,7 @@ void init_blockade(void)
 	just_been_reset = 0;
 }
 
-void init_comotion(void)
+DRIVER_INIT( comotion )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
@@ -110,7 +110,7 @@ void init_comotion(void)
 /* Need to check for a coin on the interrupt, */
 /* This will reset the cpu                    */
 
-int blockade_interrupt(void)
+INTERRUPT_GEN( blockade_interrupt )
 {
 	timer_suspendcpu(0, 0, SUSPEND_ANY_REASON);
 
@@ -119,8 +119,6 @@ int blockade_interrupt(void)
 		just_been_reset = 1;
 		cpu_set_reset_line(0,PULSE_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 READ_HANDLER( blockade_input_port_0_r )
@@ -450,13 +448,13 @@ static unsigned char bw_palette[] =
 	0x00,0x00,0x00, /* BLACK */
 	0xff,0xff,0xff, /* WHITE */     /* Comotion/Blasto */
 };
-static void init_palette_gr(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( green )
 {
-	memcpy(game_palette,gr_palette,sizeof(gr_palette));
+	memcpy(palette,gr_palette,sizeof(gr_palette));
 }
-static void init_palette_bw(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( bw )
 {
-	memcpy(game_palette,bw_palette,sizeof(bw_palette));
+	memcpy(palette,bw_palette,sizeof(bw_palette));
 }
 
 
@@ -477,153 +475,113 @@ static struct Samplesinterface samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_blockade =
-{
+static MACHINE_DRIVER_START( blockade )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			2079000,
-			readmem,writemem,readport,writeport,
-			blockade_interrupt,1
-		},
-	},
-		60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-		1,
-	0,
+	MDRV_CPU_ADD(8080, 2079000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	2, 2,
-	init_palette_gr,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	blockade_vh_screenrefresh,
+	MDRV_PALETTE_INIT(green)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(blockade)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_comotion =
-{
+static MACHINE_DRIVER_START( comotion )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			2079000,
-			readmem,writemem,readport,writeport,
-			blockade_interrupt,1
-		},
-	},
-		60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-		1,
-	0,
+	MDRV_CPU_ADD(8080, 2079000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	2, 2,
-	init_palette_bw,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	blockade_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
+	
+	MDRV_PALETTE_INIT(bw)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(blockade)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_blasto =
-{
+static MACHINE_DRIVER_START( blasto )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			2079000,
-			readmem,writemem,readport,writeport,
-			blockade_interrupt,1
-		},
-	},
-		60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-		1,
-	0,
+	MDRV_CPU_ADD(8080, 2079000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	blasto_gfxdecodeinfo,
-	2, 2,
-	init_palette_bw,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(blasto_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	blockade_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bw)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(blockade)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_hustle =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_8080,
-            2079000,
-            readmem,writemem,readport,writeport,
-            blockade_interrupt,1
-        },
-    },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-        1,
-    0,
+static MACHINE_DRIVER_START( hustle )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(8080, 2079000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(blockade_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
     /* video hardware */
-    32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-    blasto_gfxdecodeinfo,
-	2, 2,
-	init_palette_gr,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(blasto_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+	MDRV_COLORTABLE_LENGTH(2)
 
-    VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-    0,
-    generic_vh_start,
-    generic_vh_stop,
-    blockade_vh_screenrefresh,
+	MDRV_PALETTE_INIT(green)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(blockade)
 
     /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_SAMPLES,
-            &samples_interface
-        }
-    }
-};
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -139,11 +139,10 @@ reg: 0->1 (main->2nd) /     : (1->0) 2nd->main :
 #include "cpu/z80/z80.h"
 #include "machine/tait8741.h"
 
-void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  gsword_vh_start(void);
-void gsword_vh_stop(void);
-void gsword_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( josvolly );
+PALETTE_INIT( gsword );
+VIDEO_START( gsword );
+VIDEO_UPDATE( gsword );
 WRITE_HANDLER( gs_charbank_w );
 WRITE_HANDLER( gs_videoctrl_w );
 WRITE_HANDLER( gs_videoram_w );
@@ -186,7 +185,7 @@ static READ_HANDLER( gsword_8741_2_r )
 	case 0x04: /* Player 2 Controller */
 		return readinputport(3);
 	default:
-		logerror("8741-2 unknown read %d PC=%04x\n",offset,cpu_get_pc());
+		logerror("8741-2 unknown read %d PC=%04x\n",offset,activecpu_get_pc());
 	}
 	/* unknown */
 	return 0;
@@ -204,7 +203,7 @@ static READ_HANDLER( gsword_8741_3_r )
 		return readinputport(3);
 	}
 	/* unknown */
-	logerror("8741-3 unknown read %d PC=%04x\n",offset,cpu_get_pc());
+	logerror("8741-3 unknown read %d PC=%04x\n",offset,activecpu_get_pc());
 	return 0;
 }
 
@@ -216,7 +215,7 @@ static struct TAITO8741interface gsword_8741interface=
 	{ input_port_7_r,input_port_6_r,gsword_8741_2_r,gsword_8741_3_r }    /* port handler */
 };
 
-void machine_init(void)
+MACHINE_INIT( gsword )
 {
 	int i;
 
@@ -228,14 +227,13 @@ void machine_init(void)
 	TAITO8741_start(&gsword_8741interface);
 }
 
-static int gsword_snd_interrupt(void)
+static INTERRUPT_GEN( gsword_snd_interrupt )
 {
 	if( (gsword_nmi_count+=gsword_nmi_step) >= 4)
 	{
 		gsword_nmi_count = 0;
-		return Z80_NMI_INT;
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( gsword_nmi_set_w )
@@ -578,110 +576,80 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static const struct MachineDriver machine_driver_josvolly =
-{
+static MACHINE_DRIVER_START( josvolly )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,
-			gsword_readmem,gsword_writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,
-			josvolly_sound_readmem,josvolly_sound_writemem,josvolly_sound_readport,josvolly_sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	machine_init,
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_MEMORY(gsword_readmem,gsword_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(josvolly_sound_readmem,josvolly_sound_writemem)
+	MDRV_CPU_PORTS(josvolly_sound_readport,josvolly_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(gsword)
 
 	/* video hardware */
-	32*8, 32*8,{ 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 
-	gfxdecodeinfo,
-	256, 64*4+64*4,
-	josvolly_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	gsword_vh_start,
-	gsword_vh_stop,
-	gsword_vh_screenrefresh,
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*4)
+
+	MDRV_PALETTE_INIT(josvolly)
+	MDRV_VIDEO_START(gsword)
+	MDRV_VIDEO_UPDATE(gsword)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-};
+static MACHINE_DRIVER_START( gsword )
 
-static const struct MachineDriver machine_driver_gsword =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,
-			gsword_readmem,gsword_writemem,
-			readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3000000,
-			readmem_cpu2,writemem_cpu2,
-			readport_cpu2,writeport_cpu2,
-			gsword_snd_interrupt,4
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,
-			readmem_cpu3,writemem_cpu3,
-			0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,                                 /* Allow time for 2nd cpu to interleave*/
-	machine_init,
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_MEMORY(gsword_readmem,gsword_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PORTS(readport_cpu2,writeport_cpu2)
+	MDRV_CPU_VBLANK_INT(gsword_snd_interrupt,4)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200) /* Allow time for 2nd cpu to interleave*/
+
+	MDRV_MACHINE_INIT(gsword)
 
 	/* video hardware */
-	32*8, 32*8,{ 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*4)
 
-	gfxdecodeinfo,
-	256, 64*4+64*4,
-	gsword_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	gsword_vh_start,
-	gsword_vh_stop,
-	gsword_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gsword)
+	MDRV_VIDEO_START(gsword)
+	MDRV_VIDEO_UPDATE(gsword)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -763,7 +731,7 @@ ROM_END
 
 
 
-static void init_gsword(void)
+static DRIVER_INIT( gsword )
 {
 	unsigned char *ROM2 = memory_region(REGION_CPU2);
 

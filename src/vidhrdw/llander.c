@@ -1,15 +1,14 @@
 /***************************************************************************
 
-  vidhrdw/llander.c
-
-  Functions to emulate the blinking control panel in lunar lander.
-  Added 11/6/98, by Chris Kirmse (ckirmse@ricochet.net)
+	Atari Lunar Lander hardware
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
+#include "artwork.h"
 #include "vidhrdw/avgdvg.h"
+#include "vidhrdw/vector.h"
+#include "asteroid.h"
 
 #define NUM_LIGHTS 5
 
@@ -29,17 +28,19 @@ static struct rectangle light_areas[NUM_LIGHTS] =
 static int lights[NUM_LIGHTS];
 /* whether or not each light needs to be redrawn*/
 static int lights_changed[NUM_LIGHTS];
+
+
 /***************************************************************************
 
   Lunar Lander video routines
 
 ***************************************************************************/
 
-void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( llander )
 {
 	int width, height, i, nextcol;
 
-	avg_init_palette_white(palette,colortable,color_prom);
+	palette_init_avg_white(palette,colortable,color_prom);
 
 	llander_lit_panel = NULL;
 	width = Machine->scrbitmap->width;
@@ -64,11 +65,12 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
 		palette[3*(i+8)]=palette[3*(i+8)+1]=palette[3*(i+8)+2]= (255*i)/15;
 }
 
-int llander_start(void)
+
+VIDEO_START( llander )
 {
 	int i;
 
-	if (dvg_start())
+	if (video_start_dvg())
 		return 1;
 
 	if (llander_panel == NULL)
@@ -82,19 +84,8 @@ int llander_start(void)
 	return 0;
 }
 
-void llander_stop(void)
-{
-	dvg_stop();
 
-	if (llander_panel != NULL)
-		artwork_free(&llander_panel);
-
-	if (llander_lit_panel != NULL)
-		artwork_free(&llander_lit_panel);
-
-}
-
-void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( llander )
 {
 	int i, pwidth, pheight;
 	float scale;
@@ -103,7 +94,7 @@ void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	if (llander_panel == NULL)
 	{
-		vector_vh_screenrefresh(bitmap,full_refresh);
+		video_update_vector(bitmap,0);
 		return;
 	}
 
@@ -112,9 +103,8 @@ void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	vector_bitmap = *bitmap;
 
-	vector_vh_screenrefresh(&vector_bitmap,full_refresh);
+	video_update_vector(&vector_bitmap,0);
 
-	if (full_refresh)
 	{
 		rect.min_x = 0;
 		rect.max_x = pwidth-1;
@@ -130,24 +120,21 @@ void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	for (i=0;i<NUM_LIGHTS;i++)
 	{
-		if (lights_changed[i] || full_refresh)
-		{
-			rect.min_x = scale * light_areas[i].min_x;
-			rect.max_x = scale * light_areas[i].max_x;
-			rect.min_y = bitmap->height - pheight + scale * light_areas[i].min_y;
-			rect.max_y = bitmap->height - pheight + scale * light_areas[i].max_y;
+		rect.min_x = scale * light_areas[i].min_x;
+		rect.max_x = scale * light_areas[i].max_x;
+		rect.min_y = bitmap->height - pheight + scale * light_areas[i].min_y;
+		rect.max_y = bitmap->height - pheight + scale * light_areas[i].max_y;
 
-			if (lights[i])
-				copybitmap(bitmap,llander_lit_panel->artwork,0,0,
-						   0,bitmap->height - pheight,&rect,TRANSPARENCY_NONE,0);
-			else
-				copybitmap(bitmap,llander_panel->artwork,0,0,
-						   0,bitmap->height - pheight,&rect,TRANSPARENCY_NONE,0);
+		if (lights[i])
+			copybitmap(bitmap,llander_lit_panel->artwork,0,0,
+					   0,bitmap->height - pheight,&rect,TRANSPARENCY_NONE,0);
+		else
+			copybitmap(bitmap,llander_panel->artwork,0,0,
+					   0,bitmap->height - pheight,&rect,TRANSPARENCY_NONE,0);
 
-			osd_mark_dirty(rect.min_x,rect.min_y,rect.max_x,rect.max_y);
+		osd_mark_dirty(rect.min_x,rect.min_y,rect.max_x,rect.max_y);
 
-			lights_changed[i] = 0;
-		}
+		lights_changed[i] = 0;
 	}
 }
 
@@ -164,6 +151,7 @@ void llander_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
    Selection lamps seem to all be driver 50/50 on/off during attract mode ?
 
 */
+
 
 WRITE_HANDLER( llander_led_w )
 {

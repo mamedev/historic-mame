@@ -29,29 +29,29 @@ extern size_t zodiack_bulletsram_size;
 
 int percuss_hardware;
 
-void zodiack_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void zodiack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void zodiack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( zodiack );
+VIDEO_UPDATE( zodiack );
+VIDEO_UPDATE( zodiack );
 WRITE_HANDLER( zodiack_attributes_w );
 WRITE_HANDLER( zodiac_flipscreen_w );
 WRITE_HANDLER( zodiac_control_w );
 
-void espial_init_machine(void);
+MACHINE_INIT( espial );
 WRITE_HANDLER( zodiac_master_interrupt_enable_w );
-int  zodiac_master_interrupt(void);
+INTERRUPT_GEN( zodiac_master_interrupt );
 WRITE_HANDLER( zodiac_master_soundlatch_w );
 
 
-static void zodiack_init_machine(void)
+static MACHINE_INIT( zodiack )
 {
 	percuss_hardware = 0;
-	espial_init_machine();
+	machine_init_espial();
 }
 
-static void percuss_init_machine(void)
+static MACHINE_INIT( percuss )
 {
 	percuss_hardware = 1;
-	espial_init_machine();
+	machine_init_espial();
 }
 
 
@@ -491,52 +491,47 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-#define MACHINE_DRIVER(GAMENAME)							\
-static const struct MachineDriver machine_driver_##GAMENAME =		\
-{															\
-	/* basic machine hardware */							\
-	{														\
-		{													\
-			CPU_Z80,										\
-			4000000,        /* 4.00 MHz??? */				\
-			readmem,writemem,0,0,							\
-			zodiac_master_interrupt,2						\
-		},													\
-		{													\
-			CPU_Z80,										\
-			14318000/8,	/* 1.78975 MHz??? */				\
-			sound_readmem,sound_writemem,0,sound_writeport,	\
-			nmi_interrupt,8	/* IRQs are triggered by the main CPU */	\
-		}													\
-	},														\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */			\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */	\
-	GAMENAME##_init_machine,								\
-															\
-	/* video hardware */									\
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },				\
-	gfxdecodeinfo,											\
-	49, 4*8+2*8+2*1,										\
-	zodiack_vh_convert_color_prom,							\
-															\
-	VIDEO_TYPE_RASTER,										\
-	0,														\
-	generic_vh_start,										\
-	generic_vh_stop,										\
-	zodiack_vh_screenrefresh,								\
-															\
-	/* sound hardware */									\
-	0,0,0,0,												\
-	{														\
-		{													\
-			SOUND_AY8910,									\
-			&ay8910_interface								\
-		}													\
-	}														\
-};
+static MACHINE_DRIVER_START( zodiack )
 
-MACHINE_DRIVER(zodiack)
-MACHINE_DRIVER(percuss)
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4.00 MHz??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(zodiac_master_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 14318000/8)	/* 1.78975 MHz??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,8)	/* IRQs are triggered by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)  /* frames per second, vblank duration */
+	
+	MDRV_MACHINE_INIT(zodiack)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(49)
+	MDRV_COLORTABLE_LENGTH(4*8+2*8+2*1)
+
+	MDRV_PALETTE_INIT(zodiack)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(zodiack)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( percuss )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(zodiack)
+	MDRV_MACHINE_INIT(percuss)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 

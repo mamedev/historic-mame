@@ -40,11 +40,10 @@ VRAM(Sprites)
 #include "cpu/m68000/m68000.h"
 
 
-void terrac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void terracre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( terrac );
+VIDEO_UPDATE( terracre );
 //void terracre_vh_screenrefresh(struct mame_bitmap *bitmap);
-int terrac_vh_start(void);
-void terrac_vh_stop(void);
+VIDEO_START( terrac );
 WRITE16_HANDLER( terrac_videoram2_w );
 READ16_HANDLER( terrac_videoram2_r );
 
@@ -275,97 +274,72 @@ static struct DACinterface dac_interface =
 };
 
 
-static const struct MachineDriver machine_driver_ym3526 =
-{
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz?? */
-			readmem,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz???? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport_3526,
-			interrupt,128	/* ??? */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( ym3526 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport_3526)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 1*16+16*16+16*256,
-	terrac_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(1*16+16*16+16*256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	terrac_vh_start,
-	terrac_vh_stop,
-	terracre_vh_screenrefresh,
+	MDRV_PALETTE_INIT(terrac)
+	MDRV_VIDEO_START(terrac)
+	MDRV_VIDEO_UPDATE(terracre)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-		   SOUND_YM3526,
-		   &ym3526_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ym2203 =
-{
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz?? */
-			readmem,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz???? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport_2203,
-			interrupt,128	/* ??? */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+
+static MACHINE_DRIVER_START( ym2203 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000) /* 8 MHz?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz???? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport_2203)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)	/* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 1*16+16*16+16*256,
-	terrac_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(1*16+16*16+16*256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	terrac_vh_start,
-	terrac_vh_stop,
-	terracre_vh_screenrefresh,
+	MDRV_PALETTE_INIT(terrac)
+	MDRV_VIDEO_START(terrac)
+	MDRV_VIDEO_UPDATE(terracre)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-		   SOUND_YM2203,
-		   &ym2203_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 

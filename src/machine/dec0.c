@@ -28,11 +28,11 @@ READ16_HANDLER( dec0_controls_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 
 		case 8: /* Intel 8751 mc, Bad Dudes & Heavy Barrel only */
-			//logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
+			//logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",activecpu_get_pc(),0x30c000+offset);
 			return i8751_return;
 	}
 
-	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
+	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",activecpu_get_pc(),0x30c000+offset);
 	return ~0;
 }
 
@@ -80,7 +80,7 @@ READ16_HANDLER( midres_controls_r )
 			return 0;	/* ?? watchdog ?? */
 	}
 
-	logerror("PC %06x unknown control read at %02x\n",cpu_get_pc(),0x180000+offset);
+	logerror("PC %06x unknown control read at %02x\n",activecpu_get_pc(),0x180000+offset);
 	return ~0;
 }
 
@@ -114,7 +114,7 @@ READ16_HANDLER( slyspy_protection_r )
 		case 6:		return 0x2;
 	}
 
-	logerror("%04x, Unknown protection read at 30c000 %d\n",cpu_get_pc(),offset);
+	logerror("%04x, Unknown protection read at 30c000 %d\n",activecpu_get_pc(),offset);
 	return 0;
 }
 
@@ -177,7 +177,7 @@ WRITE16_HANDLER( slyspy_240000_w )
 			else if (offset<0x10) dec0_pf2_control_1_w(offset-0x8,data,mem_mask);
 			return;
 	}
-	logerror("Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,activecpu_get_pc(),data,slyspy_state);
 }
 
 WRITE16_HANDLER( slyspy_242000_w )
@@ -191,7 +191,7 @@ WRITE16_HANDLER( slyspy_242000_w )
 			else if (offset<0x300) COMBINE_DATA(&dec0_pf2_rowscroll[offset-0x200]);
 			return;
 	}
-	logerror("Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,activecpu_get_pc(),data,slyspy_state);
 }
 
 WRITE16_HANDLER( slyspy_246000_w )
@@ -201,7 +201,7 @@ WRITE16_HANDLER( slyspy_246000_w )
 			dec0_pf2_data_w(offset,data,mem_mask);
 			return;
 	}
-	logerror("Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,activecpu_get_pc(),data,slyspy_state);
 }
 
 WRITE16_HANDLER( slyspy_248000_w )
@@ -218,7 +218,7 @@ WRITE16_HANDLER( slyspy_248000_w )
 			else if (offset<0x10) dec0_pf1_control_1_w(offset-0x8,data,mem_mask);
 			return;
 	}
-	logerror("Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,activecpu_get_pc(),data,slyspy_state);
 }
 
 WRITE16_HANDLER( slyspy_24c000_w )
@@ -232,7 +232,7 @@ WRITE16_HANDLER( slyspy_24c000_w )
 			else if (offset<0x300) COMBINE_DATA(&dec0_pf1_rowscroll[offset-0x200]);
 			return;
 	}
-	logerror("Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,activecpu_get_pc(),data,slyspy_state);
 }
 
 WRITE16_HANDLER( slyspy_24e000_w )
@@ -243,7 +243,7 @@ WRITE16_HANDLER( slyspy_24e000_w )
 			dec0_pf1_data_w(offset,data,mem_mask);
 			return;
 	}
-	logerror("Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,activecpu_get_pc(),data,slyspy_state);
 }
 
 /******************************************************************************/
@@ -331,7 +331,7 @@ static void hbarrel_i8751_write(int data)
 			break;
 		case 0x06:	/* Controls appearance & placement of special weapons */
 			i8751_return=weapons_table[level][data&0x1f];
-			//logerror("CPU #0 PC %06x: warning - write %02x to i8751, returning %04x\n",cpu_get_pc(),data,i8751_return);
+			//logerror("CPU #0 PC %06x: warning - write %02x to i8751, returning %04x\n",activecpu_get_pc(),data,i8751_return);
 			break;
 		case 0xb:	/* Initialise the variables? */
 			i8751_return=0;
@@ -358,7 +358,7 @@ static void hbarrel_i8751_write(int data)
 		/* We have to use a state as the microcontroller remembers previous commands */
 	}
 
-//logerror("CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
+//logerror("CPU #0 PC %06x: warning - write %02x to i8751\n",activecpu_get_pc(),data);
 }
 
 static void baddudes_i8751_write(int data)
@@ -384,14 +384,14 @@ static void baddudes_i8751_write(int data)
 		case 0x75b: i8751_return=0x70f; break;
 	}
 
-	if (!i8751_return) logerror("%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
+	if (!i8751_return) logerror("%04x: warning - write unknown command %02x to 8571\n",activecpu_get_pc(),data);
 }
 
 static void birdtry_i8751_write(int data)
 {
 	i8751_return=0;
 
-	logerror("%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
+	logerror("%04x: warning - write unknown command %02x to 8571\n",activecpu_get_pc(),data);
 
 if ((data&0xff00)==0x200) i8751_return=0x300;
 if ((data&0xff00)==0x300) i8751_return=0x200;
@@ -419,7 +419,7 @@ if ((data&0xff00)==0x300) i8751_return=0x200;
 		case 0x75b: i8751_return=0x70f; break;
 	}
 
-	if (!i8751_return) logerror("%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
+	if (!i8751_return) logerror("%04x: warning - write unknown command %02x to 8571\n",activecpu_get_pc(),data);
 */
 }
 
@@ -428,9 +428,7 @@ static void *i8751_timer;
 static void i8751_callback(int param)
 {
 	/* Signal main cpu microcontroller task is complete */
-	cpu_cause_interrupt(0,5);
-
-	timer_remove(i8751_timer);
+	cpu_set_irq_line(0,5,HOLD_LINE);
 	i8751_timer=NULL;
 
 
@@ -445,7 +443,7 @@ void dec0_i8751_write(int data)
 	if (GAME==2) baddudes_i8751_write(data);
 	if (GAME==3) birdtry_i8751_write(data);
 
-	cpu_cause_interrupt(0,5);
+	cpu_set_irq_line(0,5,HOLD_LINE);
 
 	/* Simulate the processing time of the i8751, time value is guessed
 	if (i8751_timer) {
@@ -463,7 +461,7 @@ See the code about 0xb60 (USA version)
 
 */
 
-logerror("CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
+logerror("CPU #0 PC %06x: warning - write %02x to i8751\n",activecpu_get_pc(),data);
 
 
 }
@@ -485,19 +483,19 @@ static WRITE16_HANDLER( sprite_mirror_w )
 
 static READ16_HANDLER( robocop_68000_share_r )
 {
-//logerror("%08x: Share read %04x\n",cpu_get_pc(),offset);
+//logerror("%08x: Share read %04x\n",activecpu_get_pc(),offset);
 
 	return robocop_shared_ram[offset];
 }
 
 static WRITE16_HANDLER( robocop_68000_share_w )
 {
-//	logerror("%08x: Share write %04x %04x\n",cpu_get_pc(),offset,data);
+//	logerror("%08x: Share write %04x %04x\n",activecpu_get_pc(),offset,data);
 
 	robocop_shared_ram[offset]=data&0xff;
 
 	if (offset==0x7ff) /* A control address - not standard ram */
-		cpu_cause_interrupt(2,H6280_INT_IRQ1);
+		cpu_set_irq_line(2,0,HOLD_LINE);
 }
 
 /******************************************************************************/
@@ -512,7 +510,7 @@ static void h6280_decrypt(int memory_area)
 		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x1) << 7) | ((RAM[i] & 0x80) >> 7);
 }
 
-void init_hippodrm(void)
+DRIVER_INIT( hippodrm )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 
@@ -529,7 +527,7 @@ void init_hippodrm(void)
 	RAM[0x21a]=0x60; /* RTS prot area */
 }
 
-void init_slyspy(void)
+DRIVER_INIT( slyspy )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -540,18 +538,18 @@ void init_slyspy(void)
 	RAM[0xf2e]=0xea;
 }
 
-void init_robocop(void)
+DRIVER_INIT( robocop )
 {
 	install_mem_read16_handler( 0, 0x180000, 0x180fff, robocop_68000_share_r);
 	install_mem_write16_handler(0, 0x180000, 0x180fff, robocop_68000_share_w);
 }
 
-void init_baddudes(void)
+DRIVER_INIT( baddudes )
 {
 	GAME=2;
 }
 
-void init_hbarrel(void)
+DRIVER_INIT( hbarrel )
 {
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
@@ -560,7 +558,7 @@ rom[0xb68/2] = 0x8008;
 }
 }
 
-void init_hbarrelw(void)
+DRIVER_INIT( hbarrelw )
 {
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
@@ -569,7 +567,7 @@ rom[0xb3e/2] = 0x8008;
 }
 }
 
-void init_birdtry(void)
+DRIVER_INIT( birdtry )
 {
 	GAME=3;
 }

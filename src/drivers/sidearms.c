@@ -25,10 +25,9 @@ extern unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
 
 WRITE_HANDLER( sidearms_c804_w );
 WRITE_HANDLER( sidearms_gfxctrl_w );
-int  sidearms_vh_start(void);
-void sidearms_vh_stop(void);
-void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void sidearms_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( sidearms );
+PALETTE_INIT( sidearms );
+VIDEO_UPDATE( sidearms );
 
 
 static WRITE_HANDLER( sidearms_bankswitch_w )
@@ -513,99 +512,68 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_sidearms =
-{
+static MACHINE_DRIVER_START( sidearms )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 4 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */
-		},
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
 #ifdef THIRD_CPU
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			readmem2,writemem2,0,0,
-			nmi_interrupt,1
-		}
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 #endif
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sidearms_vh_start,
-	sidearms_vh_stop,
-	sidearms_vh_screenrefresh,
+	MDRV_VIDEO_START(sidearms)
+	MDRV_VIDEO_UPDATE(sidearms)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_turtship =
-{
+
+static MACHINE_DRIVER_START( turtship )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz (?) */
-			turtship_readmem,turtship_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        /* 4 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0      /* IRQs are triggered by the YM2203 */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(turtship_readmem,turtship_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 4 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	turtship_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(turtship_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sidearms_vh_start,
-	sidearms_vh_stop,
-	sidearms_vh_screenrefresh,
+	MDRV_VIDEO_START(sidearms)
+	MDRV_VIDEO_UPDATE(sidearms)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( sidearms )

@@ -24,10 +24,9 @@ WRITE16_HANDLER( othldrby_videoram_w );
 WRITE16_HANDLER( othldrby_vreg_addr_w );
 WRITE16_HANDLER( othldrby_vreg_w );
 
-int othldrby_vh_start(void);
-void othldrby_vh_stop(void);
-void othldrby_eof_callback(void);
-void othldrby_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( othldrby );
+VIDEO_EOF( othldrby );
+VIDEO_UPDATE( othldrby );
 
 
 
@@ -252,42 +251,30 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
-static const struct MachineDriver machine_driver_othldrby =
-{
+static MACHINE_DRIVER_START( othldrby )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,
-			readmem,writemem,0,0,
-			m68_level4_irq,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 12*8, (64-12)*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	0x800, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(12*8, (64-12)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x800)
 
-	VIDEO_TYPE_RASTER,
-	othldrby_eof_callback,
-	othldrby_vh_start,
-	othldrby_vh_stop,
-	othldrby_vh_screenrefresh,
+	MDRV_VIDEO_START(othldrby)
+	MDRV_VIDEO_EOF(othldrby)
+	MDRV_VIDEO_UPDATE(othldrby)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 

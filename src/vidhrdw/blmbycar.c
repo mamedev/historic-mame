@@ -130,7 +130,7 @@ WRITE16_HANDLER( blmbycar_vram_1_w )
 
 ***************************************************************************/
 
-int blmbycar_vh_start(void)
+VIDEO_START( blmbycar )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 								TILEMAP_OPAQUE, 16,16, DIM_NX, DIM_NY );
@@ -180,7 +180,7 @@ int blmbycar_vh_start(void)
 
 ***************************************************************************/
 
-static void blmbycar_draw_sprites(struct mame_bitmap *bitmap)
+static void blmbycar_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	data16_t *source, *finish;
 
@@ -219,7 +219,7 @@ static void blmbycar_draw_sprites(struct mame_bitmap *bitmap)
 					0x20 + (attr & 0xf),
 					flipx, flipy,
 					x, y,
-					&Machine->visible_area, TRANSPARENCY_PEN,0,
+					cliprect, TRANSPARENCY_PEN,0,
 					pri_mask	);
 	}
 }
@@ -233,7 +233,7 @@ static void blmbycar_draw_sprites(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void blmbycar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( blmbycar )
 {
 	int i,layers_ctrl = -1;
 
@@ -256,17 +256,17 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (layers_ctrl&1)
 		for (i = 0; i <= 1; i++)
-			tilemap_draw(bitmap, tilemap_0, i, i);
-	else	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+			tilemap_draw(bitmap, cliprect, tilemap_0, i, i);
+	else	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	if (layers_ctrl&2)
 		for (i = 0; i <= 1; i++)
-			tilemap_draw(bitmap, tilemap_1, i, i);
+			tilemap_draw(bitmap, cliprect, tilemap_1, i, i);
 
 	if (layers_ctrl&8)
-		blmbycar_draw_sprites(bitmap);
+		blmbycar_draw_sprites(bitmap, cliprect);
 }

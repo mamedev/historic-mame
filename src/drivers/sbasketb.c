@@ -26,8 +26,8 @@ void konami1_decode(void);
 extern unsigned char *sbasketb_scroll;
 extern unsigned char *sbasketb_palettebank;
 extern unsigned char *sbasketb_spriteram_select;
-void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void sbasketb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( sbasketb );
+VIDEO_UPDATE( sbasketb );
 
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
@@ -40,7 +40,7 @@ READ_HANDLER( hyperspt_sh_timer_r );
 
 WRITE_HANDLER( sbasketb_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( flip_screen_w )
@@ -247,63 +247,44 @@ static const char *sbasketb_sample_names[] =
 struct VLM5030interface sbasketb_vlm5030_interface =
 {
 	3580000,    /* master clock  */
-	255,        /* volume        */
+	100,        /* volume        */
 	REGION_SOUND1,	/* memory region  */
 	0,         /* memory size    */
 	sbasketb_sample_names
 };
 
 
-static const struct MachineDriver machine_driver_sbasketb =
-{
+static MACHINE_DRIVER_START( sbasketb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1400000,        /* 1.400 MHz ??? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/4,	/* 3.5795 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809, 1400000)        /* 1.400 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,14318000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.5795 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,16*16+16*16*16,
-	sbasketb_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(16*16+16*16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	sbasketb_vh_screenrefresh,
+	MDRV_PALETTE_INIT(sbasketb)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(sbasketb)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&konami_dac_interface
-		},
-		{
-			SOUND_SN76496,
-			&konami_sn76496_interface
-		},
-		{
-			SOUND_VLM5030,
-			&sbasketb_vlm5030_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, konami_dac_interface)
+	MDRV_SOUND_ADD(SN76496, konami_sn76496_interface)
+	MDRV_SOUND_ADD(VLM5030, sbasketb_vlm5030_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -378,7 +359,7 @@ ROM_START( sbasketu )
 ROM_END
 
 
-static void init_sbasketb(void)
+static DRIVER_INIT( sbasketb )
 {
 	konami1_decode();
 }

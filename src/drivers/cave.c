@@ -68,32 +68,31 @@ static void update_irq_state(void)
 }
 
 /* Called once/frame to generate the VBLANK interrupt */
-static int cave_interrupt(void)
+static INTERRUPT_GEN( cave_interrupt )
 {
 	vblank_irq = 1;
 	update_irq_state();
-	return ignore_interrupt();
 }
 
-static int mazinger_interrupt(void)
+static INTERRUPT_GEN( mazinger_interrupt )
 {
 	unknown_irq = 1;
-	return cave_interrupt();
+	cave_interrupt();
 }
 
-static int metmqstr_interrupt(void)
+static INTERRUPT_GEN( metmqstr_interrupt )
 {
 	switch( cpu_getiloops() )
 	{
 		case 0:		// VBlank
 			vblank_irq = 1;
 			update_irq_state();
-			return ignore_interrupt();
+			break;
 		default:
 		case 1:		// Sprites?
 			unknown_irq = 1;
 			update_irq_state();
-			return ignore_interrupt();
+			break;
 	}
 }
 
@@ -226,7 +225,7 @@ static READ16_HANDLER( soundlatch_ack_r )
 		return data;
 	}
 	else
-	{	logerror("CPU #1 - PC %04X: Sound Buffer 2 Underflow Error\n",cpu_get_pc());
+	{	logerror("CPU #1 - PC %04X: Sound Buffer 2 Underflow Error\n",activecpu_get_pc());
 		return 0xff;	}
 }
 
@@ -238,7 +237,7 @@ static WRITE_HANDLER( soundlatch_ack_w )
 	if (soundbuf.len<32)
 		soundbuf.len++;
 	else
-		logerror("CPU #1 - PC %04X: Sound Buffer 2 Overflow Error\n",cpu_get_pc());
+		logerror("CPU #1 - PC %04X: Sound Buffer 2 Overflow Error\n",activecpu_get_pc());
 }
 
 
@@ -295,7 +294,7 @@ READ16_HANDLER( guwange_input1_r )
 WRITE16_HANDLER( cave_eeprom_msb_w )
 {
 	if (data & ~0xfe00)
-		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",cpu_get_pc(),data);
+		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",activecpu_get_pc(),data);
 
 	if ( ACCESSING_MSB )  // even address
 	{
@@ -339,7 +338,7 @@ WRITE16_HANDLER( hotdogst_eeprom_msb_w )
 WRITE16_HANDLER( cave_eeprom_lsb_w )
 {
 	if (data & ~0x00ef)
-		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",cpu_get_pc(),data);
+		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",activecpu_get_pc(),data);
 
 	if ( ACCESSING_LSB )  // odd address
 	{
@@ -364,7 +363,7 @@ WRITE16_HANDLER( cave_eeprom_lsb_w )
 WRITE16_HANDLER( metmqstr_eeprom_msb_w )
 {
 	if (data & ~0xff00)
-		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",cpu_get_pc(),data);
+		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",activecpu_get_pc(),data);
 
 	if ( ACCESSING_MSB )  // even address
 	{
@@ -385,7 +384,7 @@ WRITE16_HANDLER( metmqstr_eeprom_msb_w )
 	}
 }
 
-void cave_nvram_handler(void *file,int read_or_write)
+NVRAM_HANDLER( cave )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -918,7 +917,7 @@ static READ16_HANDLER( agallet_irq_cause_r )
 		irq_cause |= (cpu_getvblank()?0:4);
 
 // Speed hack for agallet
-		if ((cpu_get_pc() == 0xcdca) && (irq_cause & 4))
+		if ((activecpu_get_pc() == 0xcdca) && (irq_cause & 4))
 			cpu_spinuntil_int();
 	}
 
@@ -1025,7 +1024,7 @@ WRITE_HANDLER( hotdogst_rombank_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU2);
 	int bank = data & 0x0f;
-	if ( data & ~0x0f )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( data & ~0x0f )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
 	cpu_setbank(2, &RAM[ 0x4000 * bank ]);
 }
@@ -1076,7 +1075,7 @@ WRITE_HANDLER( mazinger_rombank_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU2);
 	int bank = data & 0x07;
-	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
 	cpu_setbank(2, &RAM[ 0x4000 * bank ]);
 }
@@ -1118,7 +1117,7 @@ WRITE_HANDLER( metmqstr_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU2);
 	int bank = data & 0xf;
-	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank >= 2)	bank += 2;
 	cpu_setbank(1, &ROM[ 0x4000 * bank ]);
 }
@@ -1200,7 +1199,7 @@ static WRITE_HANDLER( pwrinst2_okibank_w )
 	if (bankaddr >= size)
 	{
 		bankaddr %= size;
-logerror("CPU #1 - PC %06X: chip %d bank %X<-%02X\n",cpu_get_pc(),chip,banknum,data);
+logerror("CPU #1 - PC %06X: chip %d bank %X<-%02X\n",activecpu_get_pc(),chip,banknum,data);
 	}
 
 	/* copy the samples */
@@ -1218,7 +1217,7 @@ WRITE_HANDLER( pwrinst2_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU2);
 	int bank = data & 0x07;
-	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 2)	bank+=1;
 	cpu_setbank(1, &ROM[ 0x4000 * bank ]);
 }
@@ -1274,7 +1273,7 @@ WRITE_HANDLER( sailormn_rombank_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU2);
 	int bank = data & 0x1f;
-	if ( data & ~0x1f )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( data & ~0x1f )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
 	cpu_setbank(1, &RAM[ 0x4000 * bank ]);
 }
@@ -1700,15 +1699,15 @@ static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-void cave_init_machine(void)
+MACHINE_INIT( cave )
 {
 	soundbuf.len = 0;
 }
 
 /* start with the watchdog armed */
-void cave_init_machine_watchdog(void)
+MACHINE_INIT( cave_watchdog )
 {
-	cave_init_machine();
+	machine_init_cave();
 	watchdog_reset16_w(0,0,0);
 }
 
@@ -1785,334 +1784,294 @@ static struct YM2203interface ym2203_intf_4MHz =
 								Dangun Feveron
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_dfeveron =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			dfeveron_readmem, dfeveron_writemem,0,0,
-			cave_interrupt, 1
-		},
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine,
+static MACHINE_DRIVER_START( dfeveron )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(dfeveron_readmem,dfeveron_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	dfeveron_gfxdecodeinfo,
-	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	dfeveron_vh_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_2_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(dfeveron_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_PALETTE_INIT(dfeveron)
+	MDRV_VIDEO_START(cave_2_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Dodonpachi
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_ddonpach =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			ddonpach_readmem, ddonpach_writemem,0,0,
-			cave_interrupt, 1
-		},
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine,
+static MACHINE_DRIVER_START( ddonpach )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(ddonpach_readmem,ddonpach_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	ddonpach_gfxdecodeinfo,
-	0x8000, 0x8000 + 0x40*16,	// $400 extra entries for layers 1&2
-	ddonpach_vh_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_3_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(ddonpach_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_COLORTABLE_LENGTH(0x8000 + 0x40*16)	// $400 extra entries for layers 1&2
+
+	MDRV_PALETTE_INIT(ddonpach)
+	MDRV_VIDEO_START(cave_3_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 									Donpachi
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_donpachi =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			donpachi_readmem, donpachi_writemem,0,0,
-			cave_interrupt, 1
-		},
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine,
+static MACHINE_DRIVER_START( donpachi )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(donpachi_readmem,donpachi_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	donpachi_gfxdecodeinfo,
-	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	dfeveron_vh_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_3_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(donpachi_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_PALETTE_INIT(dfeveron)
+	MDRV_VIDEO_START(cave_3_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz_16kHz	}
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz_16kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Esprade
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_esprade =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			esprade_readmem, esprade_writemem,0,0,
-			cave_interrupt, 1
-		},
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine,
+static MACHINE_DRIVER_START( esprade )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(esprade_readmem,esprade_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	esprade_gfxdecodeinfo,
-	0x8000, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_3_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(esprade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(cave_3_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 									Guwange
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_guwange =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			guwange_readmem, guwange_writemem,0,0,
-			cave_interrupt, 1
-		},
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine,
+static MACHINE_DRIVER_START( guwange )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(guwange_readmem,guwange_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	esprade_gfxdecodeinfo,
-	0x8000, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_3_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(esprade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(cave_3_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Hotdog Storm
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_hotdogst =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			hotdogst_readmem, hotdogst_writemem,0,0,
-			cave_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ? */
-			hotdogst_sound_readmem,hotdogst_sound_writemem,hotdogst_sound_readport,hotdogst_sound_writeport,
-			ignore_interrupt,0	/* NMI triggered by main CPU, IRQ triggered by YM2203 */
-		}
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine,
+static MACHINE_DRIVER_START( hotdogst )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(hotdogst_readmem,hotdogst_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(hotdogst_sound_readmem,hotdogst_sound_writemem)
+	MDRV_CPU_PORTS(hotdogst_sound_readport,hotdogst_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	384, 240, { 0, 384-1, 0, 240-1 },
-	hotdogst_gfxdecodeinfo,
-	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	dfeveron_vh_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_3_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 240)
+	MDRV_VISIBLE_AREA(0, 384-1, 0, 240-1)
+	MDRV_GFXDECODE(hotdogst_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_PALETTE_INIT(dfeveron)
+	MDRV_VIDEO_START(cave_3_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2203,	&ym2203_intf_4MHz		},
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz		}
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_intf_4MHz)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Mazinger Z
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_mazinger =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			mazinger_readmem, mazinger_writemem,0,0,
-			mazinger_interrupt, 1
-		},
-		{
-			CPU_Z80 /*| CPU_AUDIO_CPU*/,	// Bidirectional communication
-			4000000,	/* ? */
-			mazinger_sound_readmem,mazinger_sound_writemem,mazinger_sound_readport,mazinger_sound_writeport,
-			ignore_interrupt,0	/* NMI triggered by main CPU, IRQ triggered by YM2203 */
-		}
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine_watchdog,
+static MACHINE_DRIVER_START( mazinger )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(mazinger_readmem,mazinger_writemem)
+	MDRV_CPU_VBLANK_INT(mazinger_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// Bidirectional communication
+	MDRV_CPU_MEMORY(mazinger_sound_readmem,mazinger_sound_writemem)
+	MDRV_CPU_PORTS(mazinger_sound_readport,mazinger_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave_watchdog)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	384, 240, { 0, 384-1, 0, 240-1 },
-	mazinger_gfxdecodeinfo,
-	0x4000, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	mazinger_vh_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_2_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 240)
+	MDRV_VISIBLE_AREA(0, 384-1, 0, 240-1)
+	MDRV_GFXDECODE(mazinger_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x4000)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_PALETTE_INIT(mazinger)
+	MDRV_VIDEO_START(cave_2_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2203,	&ym2203_intf_4MHz		},
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz		}
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_intf_4MHz)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Metamoqester
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_metmqstr =
-{
-	{
-		{
-			CPU_M68000,
-			32000000 / 2,
-			metmqstr_readmem, metmqstr_writemem,0,0,
-			metmqstr_interrupt, 2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			32000000 / 4,
-			metmqstr_sound_readmem,  metmqstr_sound_writemem,
-			metmqstr_sound_readport, metmqstr_sound_writeport,
-			ignore_interrupt, 0	/* NMI triggered by main CPU, IRQ triggered by YM2151 */
-		}
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine_watchdog,	/* start with the watchdog armed */
+static MACHINE_DRIVER_START( metmqstr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,32000000 / 2)
+	MDRV_CPU_MEMORY(metmqstr_readmem,metmqstr_writemem)
+	MDRV_CPU_VBLANK_INT(metmqstr_interrupt,2)
+
+	MDRV_CPU_ADD(Z80,32000000 / 4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(metmqstr_sound_readmem,metmqstr_sound_writemem)
+	MDRV_CPU_PORTS(metmqstr_sound_readport,metmqstr_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave_watchdog)	/* start with the watchdog armed */
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	0x200, 240, { 0x7d, 0x7d + 0x180-1, 0, 240-1 },
-	donpachi_gfxdecodeinfo,
-	0x800, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	dfeveron_vh_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_3_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x200, 240)
+	MDRV_VISIBLE_AREA(0x7d, 0x7d + 0x180-1, 0, 240-1)
+	MDRV_GFXDECODE(donpachi_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_PALETTE_INIT(dfeveron)
+	MDRV_VIDEO_START(cave_3_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&ym2151_intf_4MHz		},	// 32/8 ?
-		{	SOUND_OKIM6295,	&metmqstr_okim6295_intf	}
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_intf_4MHz)	// 32/8 ?
+	MDRV_SOUND_ADD(OKIM6295, metmqstr_okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2142,133 +2101,114 @@ static struct YM2203interface ym2203_intf_pwrinst2 =
 	{ irqhandler }
 };
 
-static const struct MachineDriver machine_driver_pwrinst2 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			pwrinst2_readmem, pwrinst2_writemem,0,0,
-			cave_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000 / 2,	/* ? */
-			pwrinst2_sound_readmem,  pwrinst2_sound_writemem,
-			pwrinst2_sound_readport, pwrinst2_sound_writeport,
-			ignore_interrupt,0	/* NMI triggered by main CPU, IRQ triggered by YM2203 */
-		}
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	cave_init_machine,
+static MACHINE_DRIVER_START( pwrinst2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(pwrinst2_readmem,pwrinst2_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000 / 2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(pwrinst2_sound_readmem,pwrinst2_sound_writemem)
+	MDRV_CPU_PORTS(pwrinst2_sound_readport,pwrinst2_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	0x200, 240, { 0x72, 0x72 + 0x140-1, 0, 240-1 },
-	pwrinst2_gfxdecodeinfo,
-	0x5000/2, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_4_layers,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x200, 240)
+	MDRV_VISIBLE_AREA(0x72, 0x72 + 0x140-1, 0, 240-1)
+	MDRV_GFXDECODE(pwrinst2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x5000/2)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_VIDEO_START(cave_4_layers)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2203,	&ym2203_intf_pwrinst2		},
-		{	SOUND_OKIM6295,	&okim6295_intf_pwrinst2		}
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_intf_pwrinst2)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_pwrinst2)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 						Sailor Moon / Air Gallet
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_sailormn =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			sailormn_readmem, sailormn_writemem,0,0,
-			cave_interrupt, 1
-		},
-		{
-			CPU_Z80 /*| CPU_AUDIO_CPU*/,	// Bidirectional Communication
-			8000000,
-			sailormn_sound_readmem,sailormn_sound_writemem,sailormn_sound_readport,sailormn_sound_writeport,
-			ignore_interrupt,0	/* NMI triggered by main CPU, IRQ triggered by YM2151 */
-		}
-	},
-	15625/271.5, DEFAULT_REAL_60HZ_VBLANK_DURATION,	// we use cpu_getvblank
-	10,
-	cave_init_machine,
+static MACHINE_DRIVER_START( sailormn )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(sailormn_readmem,sailormn_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+	
+	MDRV_CPU_ADD(Z80, 8000000)
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	// Bidirectional Communication
+	MDRV_CPU_MEMORY(sailormn_sound_readmem,sailormn_sound_writemem)
+	MDRV_CPU_PORTS(sailormn_sound_readport,sailormn_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we use cpu_getvblank
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(cave)
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-//	320, 240, { 0, 320-1, 0, 240-1 },
-	320+1, 240, { 0+1, 320+1-1, 0, 240-1 },
-	sailormn_gfxdecodeinfo,
-	0x2000, 0x8000,	/* $8000 palette entries for consistency with the other games */
-	sailormn_vh_init_palette,	// 4 bit sprites, 6 bit tiles
-	VIDEO_TYPE_RASTER,
-	0,
-	sailormn_vh_start_3_layers,	/* Layer 2 has 1 banked ROM */
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320+1, 240)
+	MDRV_VISIBLE_AREA(0+1, 320+1-1, 0, 240-1)
+	MDRV_GFXDECODE(sailormn_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x2000)
+	MDRV_COLORTABLE_LENGTH(0x8000)	/* $8000 palette entries for consistency with the other games */
+
+	MDRV_PALETTE_INIT(sailormn)	// 4 bit sprites, 6 bit tiles
+	MDRV_VIDEO_START(sailormn_3_layers)	/* Layer 2 has 1 banked ROM */
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&ym2151_intf_4MHz			},
-		{	SOUND_OKIM6295,	&okim6295_intf_16kHz_16kHz	}
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_intf_4MHz)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_16kHz_16kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Uo Poko
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_uopoko =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			uopoko_readmem, uopoko_writemem,0,0,
-			cave_interrupt, 1
-		},
-	},
-	15625/271.5,DEFAULT_60HZ_VBLANK_DURATION,				//ks
-	1,
-	0,
+static MACHINE_DRIVER_START( uopoko )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(uopoko_readmem,uopoko_writemem)
+	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(15625/271.5)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)				//ks
+
+	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	uopoko_gfxdecodeinfo,
-	0x8000, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	cave_vh_start_1_layer,
-	cave_vh_stop,
-	cave_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(uopoko_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+
+	MDRV_VIDEO_START(cave_1_layer)
+	MDRV_VIDEO_UPDATE(cave)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YMZ280B, &ymz280b_intf }
-	},
-
-	cave_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YMZ280B, ymz280b_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -3091,7 +3031,7 @@ void sailormn_unpack_tiles( const int region )
 	}
 }
 
-void init_agallet(void)
+DRIVER_INIT( agallet )
 {
 	sailormn_unpack_tiles( REGION_GFX4 );
 
@@ -3104,7 +3044,7 @@ void init_agallet(void)
 	install_mem_read16_handler(0, 0xb80000, 0xb80001, agallet_irq_cause_r);
 }
 
-void init_dfeveron(void)
+DRIVER_INIT( dfeveron )
 {
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
@@ -3112,7 +3052,7 @@ void init_dfeveron(void)
 	cave_spritetype = 0;	// "normal" sprites
 }
 
-void init_ddonpach(void)
+DRIVER_INIT( ddonpach )
 {
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
@@ -3120,7 +3060,7 @@ void init_ddonpach(void)
 	cave_spritetype = 1;	// "different" sprites (no zooming?)
 }
 
-void init_esprade(void)
+DRIVER_INIT( esprade )
 {
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
@@ -3137,7 +3077,7 @@ void init_esprade(void)
 //ks end
 }
 
-void init_guwange(void)
+DRIVER_INIT( guwange )
 {
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
@@ -3145,7 +3085,7 @@ void init_guwange(void)
 	cave_spritetype = 0;	// "normal" sprites
 }
 
-void init_hotdogst(void)
+DRIVER_INIT( hotdogst )
 {
 	cave_default_eeprom = cave_default_eeprom_type4;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
@@ -3153,7 +3093,7 @@ void init_hotdogst(void)
 	cave_spritetype = 2;	// "normal" sprites with different position handling
 }
 
-void init_mazinger(void)
+DRIVER_INIT( mazinger )
 {
 	unsigned char *buffer;
 	data8_t *src = memory_region(REGION_GFX1);
@@ -3179,7 +3119,7 @@ void init_mazinger(void)
 }
 
 
-void init_metmqstr(void)
+DRIVER_INIT( metmqstr )
 {
 	cave_default_eeprom = 0;
 	cave_default_eeprom_length = 0;
@@ -3188,7 +3128,7 @@ void init_metmqstr(void)
 }
 
 
-void init_pwrinst2(void)
+DRIVER_INIT( pwrinst2 )
 {
 	cave_default_eeprom = 0;
 	cave_default_eeprom_length = 0;
@@ -3199,7 +3139,7 @@ void init_pwrinst2(void)
 	cave_spritetype = 1;	// "different" sprites (no zooming?)
 }
 
-void init_sailormn(void)
+DRIVER_INIT( sailormn )
 {
 	unsigned char *buffer;
 	data8_t *src = memory_region(REGION_GFX1);
@@ -3223,7 +3163,7 @@ void init_sailormn(void)
 	cave_spritetype = 2;	// "normal" sprites with different position handling
 }
 
-void init_uopoko(void)
+DRIVER_INIT( uopoko )
 {
 	cave_default_eeprom = cave_default_eeprom_type3;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);

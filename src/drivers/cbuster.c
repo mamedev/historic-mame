@@ -17,8 +17,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 
-int  twocrude_vh_start(void);
-void twocrude_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( twocrude );
+VIDEO_UPDATE( twocrude );
 
 WRITE16_HANDLER( twocrude_pf1_data_w );
 WRITE16_HANDLER( twocrude_pf2_data_w );
@@ -51,7 +51,7 @@ static WRITE16_HANDLER( twocrude_control_w )
 
     case 2: /* Sound CPU write */
 		soundlatch_w(0,data & 0xff);
-		cpu_cause_interrupt(1,H6280_INT_IRQ1);
+		cpu_set_irq_line(1,0,HOLD_LINE);
     	return;
 
 	case 4: /* Protection, maybe this is a PAL on the board?
@@ -86,7 +86,7 @@ static WRITE16_HANDLER( twocrude_control_w )
 
 		break;
 	}
-	logerror("Warning %04x- %02x written to control %02x\n",cpu_get_pc(),data,offset);
+	logerror("Warning %04x- %02x written to control %02x\n",activecpu_get_pc(),data,offset);
 }
 
 READ16_HANDLER( twocrude_control_r )
@@ -100,7 +100,7 @@ READ16_HANDLER( twocrude_control_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 
 		case 4: /* Protection */
-			logerror("%04x : protection control read at 30c000 %d\n",cpu_get_pc(),offset);
+			logerror("%04x : protection control read at 30c000 %d\n",activecpu_get_pc(),offset);
 			return prot;
 
 		case 6: /* Credits, VBL in byte 7 */
@@ -375,57 +375,35 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static const struct MachineDriver machine_driver_twocrude =
-{
+static MACHINE_DRIVER_START( twocrude )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68000,
-			12000000, /* Accurate */
-			twocrude_readmem,twocrude_writemem,0,0,
-			m68_level4_irq,1 /* VBL */
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			32220000/8,	/* Accurate */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	58, 529, /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000) /* Accurate */
+	MDRV_CPU_MEMORY(twocrude_readmem,twocrude_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(H6280,32220000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	twocrude_vh_start,
-	0,
-	twocrude_vh_screenrefresh,
+	MDRV_VIDEO_START(twocrude)
+	MDRV_VIDEO_UPDATE(twocrude)
 
 	/* sound hardware */
-	0,0,0,0,
-  	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -591,7 +569,7 @@ ROM_END
 
 /******************************************************************************/
 
-static void init_twocrude(void)
+static DRIVER_INIT( twocrude )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	unsigned char *PTR;

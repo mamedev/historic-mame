@@ -71,7 +71,7 @@ static void get_fg_tilemap_info(int tile_index)
 			0)
 }
 
-int renegade_vh_start( void )
+VIDEO_START( renegade )
 {
 	bg_tilemap = tilemap_create(get_bg_tilemap_info,tilemap_scan_rows,TILEMAP_OPAQUE,   16,16,64,16);
 	fg_tilemap = tilemap_create(get_fg_tilemap_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -87,10 +87,8 @@ int renegade_vh_start( void )
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct rectangle *clip = &Machine->visible_area;
-
 	unsigned char *source = spriteram;
 	unsigned char *finish = source+96*4;
 
@@ -114,7 +112,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 		            color,
 		            xflip,0,
 		            sx,sy+16,
-		            clip,TRANSPARENCY_PEN,0);
+		            cliprect,TRANSPARENCY_PEN,0);
 		    }
 		    else
 			{
@@ -125,19 +123,19 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 		        color,
 		        xflip,0,
 		        sx,sy,
-		        clip,TRANSPARENCY_PEN,0);
+		        cliprect,TRANSPARENCY_PEN,0);
 		}
 		source+=4;
 	}
 }
 
-void renegade_vh_screenrefresh(struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( renegade )
 {
 	tilemap_set_scrollx( bg_tilemap, 0, renegade_scrollx );
 	tilemap_set_scrolly( bg_tilemap, 0, 0 );
 	tilemap_set_scrolly( fg_tilemap, 0, 0 );
 
-	tilemap_draw( bitmap,bg_tilemap,0 ,0);
-	draw_sprites( bitmap );
-	tilemap_draw( bitmap,fg_tilemap,0 ,0);
+	tilemap_draw( bitmap,cliprect,bg_tilemap,0 ,0);
+	draw_sprites( bitmap,cliprect );
+	tilemap_draw( bitmap,cliprect,fg_tilemap,0 ,0);
 }

@@ -33,22 +33,20 @@ Notes:
 
 /* from vidhrdw */
 int bladestl_spritebank;
-int bladestl_vh_start(void);
-void bladestl_vh_stop(void);
-void bladestl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void bladestl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_START( bladestl );
+VIDEO_UPDATE( bladestl );
+PALETTE_INIT( bladestl );
 WRITE_HANDLER( bladestl_vreg_w );
 
-static int bladestl_interrupt( void )
+static INTERRUPT_GEN( bladestl_interrupt )
 {
 	if (cpu_getiloops() == 0){
 		if (K007342_is_INT_enabled())
-			return HD6309_INT_FIRQ;
+			cpu_set_irq_line(0, HD6309_FIRQ_LINE, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2){
-		return nmi_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	return ignore_interrupt();
 }
 
 static READ_HANDLER( trackball_r )
@@ -90,7 +88,7 @@ static WRITE_HANDLER( bladestl_bankswitch_w )
 static WRITE_HANDLER( bladestl_sh_irqtrigger_w )
 {
 	soundlatch_w(offset, data);
-	cpu_cause_interrupt(1,M6809_INT_IRQ);
+	cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
 	//logerror("(sound) write %02x\n", data);
 }
 
@@ -98,19 +96,19 @@ static WRITE_HANDLER( bladestl_port_A_w ){
 	/* bits 0-4 = uPD7759 sample number (chip 0) */
 	//UPD7759_message_w( 0, data);
 	//if (data)
-	//	logerror("%04x: (port A) write %02x\n",cpu_get_pc(), data);
+	//	logerror("%04x: (port A) write %02x\n",activecpu_get_pc(), data);
 }
 
 static WRITE_HANDLER( bladestl_port_B_w ){
 	/* unknown */
 	//if (data)
-	//	logerror("%04x: (port B) write %02x\n",cpu_get_pc(), data);
+	//	logerror("%04x: (port B) write %02x\n",activecpu_get_pc(), data);
 }
 
 static WRITE_HANDLER( bladestl_speech_ctrl_w ){
 	/* not understood yet */
 	//if (data)
-	//	logerror("%04x: (speech_ctrl) write %02x\n",cpu_get_pc(), data);
+	//	logerror("%04x: (speech_ctrl) write %02x\n",activecpu_get_pc(), data);
 }
 
 static MEMORY_READ_START( bladestl_readmem )
@@ -448,52 +446,37 @@ static struct UPD7759_interface upd7759_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_bladestl =
-{
+static MACHINE_DRIVER_START( bladestl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_HD6309,
-			3000000,		/* 24MHz/8 (?) */
-			bladestl_readmem,bladestl_writemem,0,0,
-            bladestl_interrupt,2 /* (1 IRQ + 1 NMI) */
-        },
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,		/* ? */
-			bladestl_readmem_sound, bladestl_writemem_sound,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	10,
-	0,
+	MDRV_CPU_ADD(HD6309, 3000000)		/* 24MHz/8 (?) */
+	MDRV_CPU_MEMORY(bladestl_readmem,bladestl_writemem)
+	MDRV_CPU_VBLANK_INT(bladestl_interrupt,2) /* (1 IRQ + 1 NMI) */
+
+	MDRV_CPU_ADD(M6809, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	MDRV_CPU_MEMORY(bladestl_readmem_sound,bladestl_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	48, 48 + 16*16,
-	bladestl_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(48)
+	MDRV_COLORTABLE_LENGTH(48 + 16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bladestl_vh_start,
-	bladestl_vh_stop,
-	bladestl_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bladestl)
+	MDRV_VIDEO_START(bladestl)
+	MDRV_VIDEO_UPDATE(bladestl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -10,8 +10,9 @@ static struct tilemap *popper_p123_tilemap, *popper_p0_tilemap, *popper_ol_p123_
 data8_t *popper_videoram, *popper_attribram, *popper_ol_videoram, *popper_ol_attribram, *popper_spriteram;
 size_t popper_spriteram_size;
 static int popper_flipscreen, popper_e002, popper_gfx_bank;
+static struct rectangle tilemap_clip;
 
-void popper_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( popper )
 {
 	int i;
 
@@ -79,14 +80,11 @@ WRITE_HANDLER( popper_attribram_w )
 
 WRITE_HANDLER( popper_flipscreen_w )
 {
-	struct rectangle clip = Machine->visible_area;
-
 	popper_flipscreen = data;
 	tilemap_set_flip( ALL_TILEMAPS,popper_flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
 
-	clip.max_x=15;
-	tilemap_set_clip(popper_ol_p123_tilemap,&clip);
-	tilemap_set_clip(popper_ol_p0_tilemap,  &clip);
+	tilemap_clip = Machine->visible_area;
+	tilemap_clip.max_x=15;
 }
 
 WRITE_HANDLER( popper_e002_w )
@@ -163,10 +161,8 @@ static void get_popper_ol_p0_tile_info(int tile_index)
 			flags)
 }
 
-int popper_vh_start(void)
+VIDEO_START( popper )
 {
-	struct rectangle clip = Machine->visible_area;
-
 	popper_p123_tilemap    = tilemap_create( get_popper_p123_tile_info,   tilemap_scan_cols,TILEMAP_SPLIT,8,8,33,32 );
 	popper_p0_tilemap      = tilemap_create( get_popper_p0_tile_info,     tilemap_scan_cols,TILEMAP_SPLIT,8,8,33,32 );
 	popper_ol_p123_tilemap = tilemap_create( get_popper_ol_p123_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,8,8,2 ,32 );
@@ -184,9 +180,8 @@ int popper_vh_start(void)
 	tilemap_set_transmask(popper_ol_p0_tilemap,  0,0x0f,0x0e);
 	tilemap_set_transmask(popper_ol_p0_tilemap,  1,0x0e,0x0f);
 
-	clip.max_x=15;
-	tilemap_set_clip(popper_ol_p123_tilemap,&clip);
-	tilemap_set_clip(popper_ol_p0_tilemap,  &clip);
+	tilemap_clip = Machine->visible_area;
+	tilemap_clip.max_x=15;
 
 	state_save_register_int ("video", 0, "flipscreen", &popper_flipscreen);
 //	state_save_register_int ("video", 0, "e002",       &popper_e002);
@@ -195,7 +190,7 @@ int popper_vh_start(void)
 	return 0;
 }
 
-static void popper_draw_sprites(struct mame_bitmap *bitmap)
+static void popper_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,sx,sy,flipx,flipy;
 
@@ -232,28 +227,31 @@ static void popper_draw_sprites(struct mame_bitmap *bitmap)
 					(popper_spriteram[offs+2]&0x0f),
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
-void popper_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( popper )
 {
+	struct rectangle finalclip = tilemap_clip;
+	sect_rect(&finalclip, cliprect);
+	
 	//attribram
 	//76543210
 	//x------- draw over sprites
 	//-xxx---- colour for pen 0 (from second prom?)
 	//----xxxx colour for pens 1,2,3
 
-	tilemap_draw( bitmap,popper_p123_tilemap,   TILEMAP_BACK,0 );
-	tilemap_draw( bitmap,popper_p0_tilemap,     TILEMAP_BACK,0 );
-	tilemap_draw( bitmap,popper_ol_p123_tilemap,TILEMAP_BACK,0 );
-	tilemap_draw( bitmap,popper_ol_p0_tilemap,  TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,&finalclip,popper_p123_tilemap,   TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,&finalclip,popper_p0_tilemap,     TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,cliprect,popper_ol_p123_tilemap,TILEMAP_BACK,0 );
+	tilemap_draw( bitmap,cliprect,popper_ol_p0_tilemap,  TILEMAP_BACK,0 );
 
-	popper_draw_sprites(bitmap);
+	popper_draw_sprites(bitmap,cliprect);
 
-	tilemap_draw( bitmap,popper_p123_tilemap,   TILEMAP_FRONT,0 );
-	tilemap_draw( bitmap,popper_p0_tilemap,     TILEMAP_FRONT,0 );
-	tilemap_draw( bitmap,popper_ol_p123_tilemap,TILEMAP_FRONT,0 );
-	tilemap_draw( bitmap,popper_ol_p0_tilemap,  TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,&finalclip,popper_p123_tilemap,   TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,&finalclip,popper_p0_tilemap,     TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,cliprect,popper_ol_p123_tilemap,TILEMAP_FRONT,0 );
+	tilemap_draw( bitmap,cliprect,popper_ol_p0_tilemap,  TILEMAP_FRONT,0 );
 }

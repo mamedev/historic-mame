@@ -1,14 +1,13 @@
-/***************************************************************************
+/*************************************************************************
 
-Atari Video Pinball Machine
+	Atari Video Pinball hardware
 
-***************************************************************************/
-
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-//#include "cpuintrf.h"
 #include "cpu/m6502/m6502.h"
+#include "videopin.h"
 
 int ball_position;
 int attract = 0;		/* Turns off sound in attract mode */
@@ -18,7 +17,7 @@ static int NMI_mask = 1; // Active LOW
 
 static int plunger_counter = -1;
 
-int videopin_interrupt(void)
+INTERRUPT_GEN( videopin_interrupt )
 {
 	static int prev,counter;
 	int curr;
@@ -34,7 +33,7 @@ int videopin_interrupt(void)
 	 */
 	if (cpu_getiloops() == 0)
 	{
-		curr = input_port_3_r(0) & 1;
+		curr = readinputport(3) & 1;
 		if (curr != prev)
 		{
 			if (curr)	/* key pressed; initiate count */
@@ -44,7 +43,7 @@ int videopin_interrupt(void)
 			else	/* key released; cause NMI */
 			{
 				plunger_counter = counter*5 + 3;
-				cpu_cause_interrupt(0,M6502_INT_NMI);
+				cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 			}
 		}
 		if (curr)
@@ -54,7 +53,7 @@ int videopin_interrupt(void)
 		prev = curr;
 	}
 
-	return interrupt();
+	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 WRITE_HANDLER( videopin_out1_w )

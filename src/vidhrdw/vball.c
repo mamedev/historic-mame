@@ -20,30 +20,19 @@ int vball_gfxset;
 int vb_bgprombank=0xff;
 int vb_spprombank=0xff;
 
-int vb_vh_start( void )
+VIDEO_START( vb )
 {
-	dirtybuffer = malloc( 0x800 );
-	if( dirtybuffer )
-	{
-		memset(dirtybuffer,1, 0x800);
+	dirtybuffer = auto_malloc( 0x800 );
+	if( !dirtybuffer )
+		return 1;
+	memset(dirtybuffer,1, 0x800);
 
-		tmpbitmap = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2);
-
-		if( tmpbitmap ) return 0;
-
-		free( dirtybuffer );
-	}
-
-	return 1;
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2);
+	if( !tmpbitmap ) 
+		return 1;
+	return 0;
 }
 
-
-
-void vb_vh_stop( void )
-{
-	bitmap_free( tmpbitmap );
-	free( dirtybuffer );
-}
 
 void vb_bgprombank_w( int bank )
 {
@@ -268,7 +257,7 @@ static void vb_draw_background( struct mame_bitmap *bitmap )
 }
 
 
-void vb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( vb )
 {
 //	Tripping the sprite funk-tastic. :-) PaulH
 /*	static int i=0;

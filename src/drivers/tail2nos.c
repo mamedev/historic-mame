@@ -21,16 +21,15 @@ WRITE16_HANDLER( tail2nos_bgvideoram_w );
 READ16_HANDLER( tail2nos_zoomdata_r );
 WRITE16_HANDLER( tail2nos_zoomdata_w );
 WRITE16_HANDLER( tail2nos_gfxbank_w );
-int tail2nos_vh_start(void);
-void tail2nos_vh_stop(void);
-void tail2nos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( tail2nos );
+VIDEO_UPDATE( tail2nos );
 
 
 static READ_HANDLER( pip )
 {
 	return rand()&0xffff;
 }
-static void tail2nos_init_machine(void)
+static MACHINE_INIT( tail2nos )
 {
 	/* point to the extra ROMs */
 	cpu_setbank(1,memory_region(REGION_USER1));
@@ -46,7 +45,7 @@ static WRITE16_HANDLER( sound_command_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -270,49 +269,37 @@ static struct YM2608interface ym2608_interface =
 
 
 
-static const struct MachineDriver machine_driver_tail2nos =
-{
+static MACHINE_DRIVER_START( tail2nos )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			readmem,writemem,0,0,
-			m68_level6_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 								/* IRQs are triggered by the YM2608 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	tail2nos_init_machine,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(tail2nos)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
-	tail2nos_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(tail2nos_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	tail2nos_vh_start,
-	tail2nos_vh_stop,
-	tail2nos_vh_screenrefresh,
+	MDRV_VIDEO_START(tail2nos)
+	MDRV_VIDEO_UPDATE(tail2nos)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2608,
-			&ym2608_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2608, ym2608_interface)
+MACHINE_DRIVER_END
 
 
 

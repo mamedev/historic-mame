@@ -87,10 +87,9 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void pstadium_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void galkoku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int pstadium_vh_start(void);
-void pstadium_vh_stop(void);
+VIDEO_UPDATE( pstadium );
+VIDEO_UPDATE( galkoku );
+VIDEO_START( pstadium );
 
 READ_HANDLER( pstadium_palette_r );
 WRITE_HANDLER( pstadium_palette_w );
@@ -133,37 +132,37 @@ static READ_HANDLER( pstadium_sound_r )
 	return data;
 }
 
-static void init_pstadium(void)
+static DRIVER_INIT( pstadium )
 {
 	nb1413m3_type = NB1413M3_PSTADIUM;
 }
 
-static void init_triplew1(void)
+static DRIVER_INIT( triplew1 )
 {
 	nb1413m3_type = NB1413M3_TRIPLEW1;
 }
 
-static void init_triplew2(void)
+static DRIVER_INIT( triplew2 )
 {
 	nb1413m3_type = NB1413M3_TRIPLEW2;
 }
 
-static void init_ntopstar(void)
+static DRIVER_INIT( ntopstar )
 {
 	nb1413m3_type = NB1413M3_NTOPSTAR;
 }
 
-static void init_mjlstory(void)
+static DRIVER_INIT( mjlstory )
 {
 	nb1413m3_type = NB1413M3_MJLSTORY;
 }
 
-static void init_vanilla(void)
+static DRIVER_INIT( vanilla )
 {
 	nb1413m3_type = NB1413M3_VANILLA;
 }
 
-static void init_finalbny(void)
+static DRIVER_INIT( finalbny )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	int i;
@@ -173,22 +172,22 @@ static void init_finalbny(void)
 	nb1413m3_type = NB1413M3_FINALBNY;
 }
 
-static void init_qmhayaku(void)
+static DRIVER_INIT( qmhayaku )
 {
 	nb1413m3_type = NB1413M3_QMHAYAKU;
 }
 
-static void init_galkoku(void)
+static DRIVER_INIT( galkoku )
 {
 	nb1413m3_type = NB1413M3_GALKOKU;
 }
 
-static void init_hyouban(void)
+static DRIVER_INIT( hyouban )
 {
 	nb1413m3_type = NB1413M3_HYOUBAN;
 }
 
-static void init_galkaika(void)
+static DRIVER_INIT( galkaika )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -199,7 +198,7 @@ static void init_galkaika(void)
 	nb1413m3_type = NB1413M3_GALKAIKA;
 }
 
-static void init_tokyogal(void)
+static DRIVER_INIT( tokyogal )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -210,7 +209,7 @@ static void init_tokyogal(void)
 	nb1413m3_type = NB1413M3_TOKYOGAL;
 }
 
-static void init_tokimbsj(void)
+static DRIVER_INIT( tokimbsj )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -221,22 +220,22 @@ static void init_tokimbsj(void)
 	nb1413m3_type = NB1413M3_TOKIMBSJ;
 }
 
-static void init_mcontest(void)
+static DRIVER_INIT( mcontest )
 {
 	nb1413m3_type = NB1413M3_MCONTEST;
 }
 
-static void init_uchuuai(void)
+static DRIVER_INIT( uchuuai )
 {
 	nb1413m3_type = NB1413M3_UCHUUAI;
 }
 
-static void init_av2mj1bb(void)
+static DRIVER_INIT( av2mj1bb )
 {
 	nb1413m3_type = NB1413M3_AV2MJ1BB;
 }
 
-static void init_av2mj2rg(void)
+static DRIVER_INIT( av2mj2rg )
 {
 	nb1413m3_type = NB1413M3_AV2MJ2RG;
 }
@@ -1590,157 +1589,222 @@ static struct DACinterface galkoku_dac_interface =
 };
 
 
-#define NBMJDRV1( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80, \
-			6000000/2,		/* 3.00 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, 1 \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU, \
-		/*	4000000,	*/	/* 4.00 MHz */ \
-			3900000,		/* 4.00 MHz */ \
-			sound_readmem_pstadium, sound_writemem_pstadium, sound_readport_pstadium, sound_writeport_pstadium, \
-			interrupt, 128 \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 638-1, 255, 495-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	pstadium_vh_start, \
-	pstadium_vh_stop, \
-	pstadium_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&pstadium_ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&pstadium_dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+static MACHINE_DRIVER_START( nbmjdrv1 )
 
-#define NBMJDRV2( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			25000000/6.25,		/* 4.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, 128 \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 638-1, 255, 495-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	pstadium_vh_start, \
-	pstadium_vh_stop, \
-	galkoku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&galkoku_ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&galkoku_dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 6000000/2)		/* 3.00 MHz */
+	MDRV_CPU_MEMORY(readmem_pstadium, writemem_pstadium)
+	MDRV_CPU_PORTS(readport_pstadium, writeport_pstadium)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,1)
 
-#define NBMJDRV3( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			25000000/6.25,		/* 4.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, 128 \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 638-1, 255, 495-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	pstadium_vh_start, \
-	pstadium_vh_stop, \
-	galkoku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&galkoku_dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	MDRV_CPU_ADD(Z80 | CPU_AUDIO_CPU, 3900000)		/* 4.00 MHz */
+	MDRV_CPU_MEMORY(sound_readmem_pstadium,sound_writemem_pstadium)
+	MDRV_CPU_PORTS(sound_readport_pstadium,sound_writeport_pstadium)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,128)
 
-//	      NAME,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1( pstadium, pstadium, pstadium, pstadium, pstadium, 0 )
-NBMJDRV1( triplew1, triplew1, triplew1, pstadium, pstadium, 0 )
-NBMJDRV1( triplew2, triplew2, triplew2, pstadium, pstadium, 0 )
-NBMJDRV1( ntopstar, pstadium, pstadium, pstadium, pstadium, 0 )
-NBMJDRV1( mjlstory, mjlstory, mjlstory, pstadium, pstadium, 0 )
-NBMJDRV1(  vanilla, pstadium, pstadium, pstadium, pstadium, 0 )
-NBMJDRV1( finalbny, pstadium, pstadium, pstadium, pstadium, nb1413m3_nvram_handler )
-NBMJDRV1( qmhayaku, pstadium, pstadium, pstadium, pstadium, 0 )
-NBMJDRV2(  galkoku,  galkoku,  galkoku,  galkoku,  galkoku, 0 )
-NBMJDRV3(  hyouban,  galkoku,  galkoku,  hyouban,  hyouban, nb1413m3_nvram_handler )
-NBMJDRV2( galkaika, galkaika, galkaika,  galkoku,  galkoku, 0 )
-NBMJDRV2( tokyogal, tokyogal, tokyogal,  galkoku,  galkoku, 0 )
-NBMJDRV2( tokimbsj, galkaika, galkaika,  galkoku,  galkoku, nb1413m3_nvram_handler )
-NBMJDRV2( mcontest,  galkoku,  galkoku,  galkoku,  galkoku, 0 )
-NBMJDRV2(  uchuuai,  galkoku,  galkoku,  galkoku,  galkoku, 0 )
-NBMJDRV1( av2mj1bb, av2mj1bb, av2mj1bb, pstadium, av2mj1bb, 0 )
-NBMJDRV1( av2mj2rg, av2mj2rg, av2mj2rg, pstadium, av2mj1bb, 0 )
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nb1413m3)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_VISIBLE_AREA(0, 638-1, 255, 495-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(pstadium)
+	MDRV_VIDEO_UPDATE(pstadium)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM3812, pstadium_ym3812_interface)
+	MDRV_SOUND_ADD(DAC, pstadium_dac_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( nbmjdrv2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 25000000/6.25)		/* 4.00 MHz ? */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem_galkoku, writemem_galkoku)
+	MDRV_CPU_PORTS(readport_galkoku, writeport_galkoku)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(nb1413m3)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_VISIBLE_AREA(0, 638-1, 255, 495-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(pstadium)
+	MDRV_VIDEO_UPDATE(galkoku)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("3812", YM3812, galkoku_ym3812_interface)
+	MDRV_SOUND_ADD_TAG("dac",  DAC, galkoku_dac_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( nbmjdrv3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv2)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+// ---------------------------------------------------------------------
+
+static MACHINE_DRIVER_START( pstadium )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( triplew1 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_triplew1,writemem_triplew1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( triplew2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_triplew2,writemem_triplew2)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ntopstar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjlstory )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjlstory,writemem_mjlstory)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( vanilla )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( finalbny )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+	MDRV_NVRAM_HANDLER(nb1413m3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qmhayaku )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( galkoku )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv2)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hyouban )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv3)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_hyouban,writeport_hyouban)
+
+	MDRV_NVRAM_HANDLER(nb1413m3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( galkaika )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_galkaika,writemem_galkaika)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tokyogal )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_tokyogal,writemem_tokyogal)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tokimbsj )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_galkaika,writemem_galkaika)
+
+	MDRV_NVRAM_HANDLER(nb1413m3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mcontest )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv2)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( uchuuai )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv2)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( av2mj1bb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_av2mj1bb,writemem_av2mj1bb)
+	MDRV_CPU_PORTS(readport_pstadium,writemem_av2mj1bb)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( av2mj2rg )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(nbmjdrv1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_av2mj2rg,writemem_av2mj2rg)
+	MDRV_CPU_PORTS(readport_pstadium,writemem_av2mj1bb)
+MACHINE_DRIVER_END
+
+
 
 
 ROM_START( pstadium )

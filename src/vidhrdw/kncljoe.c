@@ -18,7 +18,7 @@ static int flipscreen;
 
 ***************************************************************************/
 
-void kncljoe_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( kncljoe )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -110,7 +110,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int kncljoe_vh_start( void )
+VIDEO_START( kncljoe )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
@@ -182,17 +182,23 @@ WRITE_HANDLER( kncljoe_scroll_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	struct rectangle clip = Machine->visible_area;
+	struct rectangle clip = *cliprect;
 	const struct GfxElement *gfx = Machine->gfx[1 + sprite_bank];
 	int offs;
 
 	/* score covers sprites */
 	if (flipscreen)
-		clip.max_y -= 64;
+	{
+		if (clip.max_y > Machine->visible_area.max_y - 64)
+			clip.max_y = Machine->visible_area.max_y - 64;
+	}
 	else
-		clip.min_y += 64;
+	{
+		if (clip.min_y < Machine->visible_area.min_y + 64)
+			clip.min_y = Machine->visible_area.min_y + 64;
+	}
 
 	for (offs = spriteram_size;offs >= 0;offs -= 4)
 	{
@@ -223,8 +229,8 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	}
 }
 
-void kncljoe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kncljoe )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

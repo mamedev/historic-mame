@@ -56,23 +56,22 @@ extern size_t bnj_backgroundram_size;
 extern unsigned char *zoar_scrollram;
 extern unsigned char *deco_charram;
 
-void btime_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void lnc_vh_convert_color_prom  (unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( btime );
+PALETTE_INIT( lnc );
 
-void lnc_init_machine (void);
+MACHINE_INIT( lnc );
 
-int  btime_vh_start (void);
-int  bnj_vh_start (void);
+VIDEO_START( btime );
+VIDEO_START( bnj );
 
-void bnj_vh_stop (void);
 
-void btime_vh_screenrefresh   (struct mame_bitmap *bitmap,int full_refresh);
-void cookrace_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void bnj_vh_screenrefresh     (struct mame_bitmap *bitmap,int full_refresh);
-void lnc_vh_screenrefresh     (struct mame_bitmap *bitmap,int full_refresh);
-void zoar_vh_screenrefresh    (struct mame_bitmap *bitmap,int full_refresh);
-void disco_vh_screenrefresh   (struct mame_bitmap *bitmap,int full_refresh);
-void eggs_vh_screenrefresh    (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( btime );
+VIDEO_UPDATE( cookrace );
+VIDEO_UPDATE( bnj );
+VIDEO_UPDATE( lnc );
+VIDEO_UPDATE( zoar );
+VIDEO_UPDATE( disco );
+VIDEO_UPDATE( eggs );
 
 WRITE_HANDLER( btime_paletteram_w );
 WRITE_HANDLER( bnj_background_w );
@@ -92,7 +91,7 @@ WRITE_HANDLER( bnj_video_control_w );
 WRITE_HANDLER( lnc_video_control_w );
 WRITE_HANDLER( disco_video_control_w );
 
-int lnc_sound_interrupt(void);
+INTERRUPT_GEN( lnc_sound_interrupt );
 
 static WRITE_HANDLER( sound_command_w );
 
@@ -119,11 +118,11 @@ static void btime_decrypt(void)
 	/* xxxx xxx1 xxxx x1xx are encrypted. */
 
 	/* get the address of the next opcode */
-	A = cpu_get_pc();
+	A = activecpu_get_pc();
 
 	/* however if the previous instruction was JSR (which caused a write to */
 	/* the stack), fetch the address of the next instruction. */
-	A1 = cpu_getpreviouspc();
+	A1 = activecpu_get_previouspc();
 	if (rom[A1 + diff] == 0x20)	/* JSR $xxxx */
 		A = cpu_readop_arg(A1+1) + 256 * cpu_readop_arg(A1+2);
 
@@ -150,7 +149,7 @@ static WRITE_HANDLER( lnc_w )
 	else if (offset == 0x9000)                     { return; }  /* MWA_NOP */
 	else if (offset == 0x9002)                     { sound_command_w(0,data); return; }
 	else if (offset >= 0xb000 && offset <= 0xb1ff)   ;
-	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
 	rom[offset] = data;
 
@@ -171,7 +170,7 @@ static WRITE_HANDLER( mmonkey_w )
 	else if (offset == 0x9000)                     { return; }  /* MWA_NOP */
 	else if (offset == 0x9002)                     { sound_command_w(0,data); return; }
 	else if (offset >= 0xb000 && offset <= 0xbfff) { mmonkey_protection_w(offset - 0xb000, data); return; }
-	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
 	rom[offset] = data;
 
@@ -192,7 +191,7 @@ static WRITE_HANDLER( btime_w )
 	else if (offset == 0x4002)                     btime_video_control_w(0,data);
 	else if (offset == 0x4003)                     sound_command_w(0,data);
 	else if (offset == 0x4004)                     bnj_scroll1_w(0,data);
-	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
 	btime_decrypt();
 }
@@ -211,7 +210,7 @@ static WRITE_HANDLER( zoar_w )
 	else if (offset == 0x9804)                     bnj_scroll2_w(0,data);
 	else if (offset == 0x9805)                     bnj_scroll1_w(0,data);
 	else if (offset == 0x9806)                     sound_command_w(0,data);
-	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
 	btime_decrypt();
 
@@ -228,7 +227,7 @@ static WRITE_HANDLER( disco_w )
 	else if (offset >= 0x8800 && offset <= 0x881f) RAM[offset] = data;
 	else if (offset == 0x9a00)                     sound_command_w(0,data);
 	else if (offset == 0x9c00)                     disco_video_control_w(0,data);
-	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
 	btime_decrypt();
 }
@@ -473,7 +472,7 @@ These games don't have VBlank interrupts.
 Interrupts are still used by the game, coin insertion generates an IRQ.
 
 ***************************************************************************/
-static int btime_interrupt(int(*generated_interrupt)(void), int active_high)
+static void btime_interrupt(int generated_interrupt, int active_high)
 {
 	static int coin;
 	int port;
@@ -486,33 +485,31 @@ static int btime_interrupt(int(*generated_interrupt)(void), int active_high)
 		if (coin == 0)
 		{
 			coin = 1;
-			return generated_interrupt();
+			cpu_set_irq_line(0, generated_interrupt, (generated_interrupt == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE);
 		}
 	}
 	else coin = 0;
-
-	return ignore_interrupt();
 }
 
-static int btime_irq_interrupt(void)
+static INTERRUPT_GEN( btime_irq_interrupt )
 {
-	return btime_interrupt(interrupt, 1);
+	btime_interrupt(0, 1);
 }
 
-static int zoar_irq_interrupt(void)
+static INTERRUPT_GEN( zoar_irq_interrupt )
 {
-	return btime_interrupt(interrupt, 0);
+	btime_interrupt(0, 0);
 }
 
-static int btime_nmi_interrupt(void)
+static INTERRUPT_GEN( btime_nmi_interrupt )
 {
-	return btime_interrupt(nmi_interrupt, 0);
+	btime_interrupt(IRQ_LINE_NMI, 0);
 }
 
 static WRITE_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 
@@ -1246,126 +1243,149 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-/********************************************************************
-*
-*  Machine Driver macro
-*  ====================
-*
-*  Abusing the pre-processor.
-*
-********************************************************************/
 
-#define cookrace_vh_convert_color_prom   btime_vh_convert_color_prom
-#define bnj_vh_convert_color_prom        0
-#define wtennis_vh_convert_color_prom    lnc_vh_convert_color_prom
-#define mmonkey_vh_convert_color_prom    lnc_vh_convert_color_prom
-#define zoar_vh_convert_color_prom       btime_vh_convert_color_prom
-#define disco_vh_convert_color_prom      btime_vh_convert_color_prom
+static MACHINE_DRIVER_START( btime )
 
-#define wtennis_vh_screenrefresh	eggs_vh_screenrefresh
-#define mmonkey_vh_screenrefresh	eggs_vh_screenrefresh
-
-#define wtennis_readmem			lnc_readmem
-
-#define wtennis_writemem		lnc_writemem
-
-#define btime_sound_readmem		sound_readmem
-#define cookrace_sound_readmem	sound_readmem
-#define lnc_sound_readmem		sound_readmem
-#define wtennis_sound_readmem	sound_readmem
-#define mmonkey_sound_readmem	sound_readmem
-#define bnj_sound_readmem		sound_readmem
-#define zoar_sound_readmem		sound_readmem
-
-#define btime_sound_writemem	sound_writemem
-#define cookrace_sound_writemem	sound_writemem
-#define lnc_sound_writemem		sound_writemem
-#define wtennis_sound_writemem	sound_writemem
-#define mmonkey_sound_writemem	sound_writemem
-#define bnj_sound_writemem		sound_writemem
-#define zoar_sound_writemem		sound_writemem
-
-#define btime_init_machine     0
-#define cookrace_init_machine  0
-#define bnj_init_machine       0
-#define wtennis_init_machine   lnc_init_machine
-#define mmonkey_init_machine   lnc_init_machine
-#define zoar_init_machine      0
-#define disco_init_machine     0
-
-#define cookrace_vh_start  btime_vh_start
-#define zoar_vh_start      btime_vh_start
-#define lnc_vh_start       btime_vh_start
-#define wtennis_vh_start   btime_vh_start
-#define mmonkey_vh_start   btime_vh_start
-#define disco_vh_start     btime_vh_start
-
-#define btime_vh_stop      generic_vh_stop
-#define cookrace_vh_stop   generic_vh_stop
-#define zoar_vh_stop       generic_vh_stop
-#define lnc_vh_stop        generic_vh_stop
-#define wtennis_vh_stop    generic_vh_stop
-#define mmonkey_vh_stop    generic_vh_stop
-#define disco_vh_stop      generic_vh_stop
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 1500000)
+	MDRV_CPU_MEMORY(btime_readmem,btime_writemem)
+	MDRV_CPU_VBLANK_INT(btime_irq_interrupt,1)
+	
+	MDRV_CPU_ADD_TAG("sound", M6502, 500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
+	
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3072)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(btime_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	
+	MDRV_PALETTE_INIT(btime)
+	MDRV_VIDEO_START(btime)
+	MDRV_VIDEO_UPDATE(btime)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
-#define MACHINE_DRIVER(GAMENAME, CLOCK, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
-																	\
-static const struct MachineDriver machine_driver_##GAMENAME =             \
-{                                                                   \
-	/* basic machine hardware */                                	\
-	{		                                                        \
-		{	  	                                                    \
-			CPU_M6502,                                  			\
-			CLOCK,													\
-			GAMENAME##_readmem,GAMENAME##_writemem,0,0, 			\
-			MAIN_IRQ,1                                  			\
-		},		                                                    \
-		{		                                                    \
-			CPU_M6502 | CPU_AUDIO_CPU,                  			\
-			500000, /* 500 kHz */                       			\
-			GAMENAME##_sound_readmem,GAMENAME##_sound_writemem,0,0, \
-			SOUND_IRQ,16   /* IRQs are triggered by the main CPU */ \
-		}                                                   		\
-	},                                                          	\
-	57, 3072,        /* frames per second, vblank duration */   	\
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	GAMENAME##_init_machine,		                               	\
-																	\
-	/* video hardware */                                        	\
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },                   	\
-	GFX,                                                        	\
-	COLOR, 0,	                                                	\
-	GAMENAME##_vh_convert_color_prom,                           	\
-																	\
-	VIDEO_TYPE_RASTER,      						             	\
-	0,                                                          	\
-	GAMENAME##_vh_start,                                        	\
-	GAMENAME##_vh_stop,                                         	\
-	GAMENAME##_vh_screenrefresh,                                   	\
-																	\
-	/* sound hardware */                                        	\
-	0,0,0,0,                                                    	\
-	{                                                           	\
-		{                                                   		\
-			SOUND_AY8910,                               			\
-			&ay8910_interface                           			\
-		}                                                   		\
-	}                                                           	\
-}
+static MACHINE_DRIVER_START( cookrace )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(btime)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(cookrace_readmem,cookrace_writemem)
+	MDRV_CPU_VBLANK_INT(btime_nmi_interrupt,1)
+	
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(cookrace_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	
+	MDRV_VIDEO_UPDATE(cookrace)
+MACHINE_DRIVER_END
 
 
-/*              NAME      CLOCK    MAIN_IRQ             SOUND_IRQ            GFX_DECODE              COLOR */
+static MACHINE_DRIVER_START( lnc )
 
-MACHINE_DRIVER( btime,    1500000, btime_irq_interrupt, nmi_interrupt,       btime_gfxdecodeinfo,    16);
-MACHINE_DRIVER( cookrace, 1500000, btime_nmi_interrupt, nmi_interrupt,       cookrace_gfxdecodeinfo, 16);
-MACHINE_DRIVER( lnc,      1500000, btime_nmi_interrupt, lnc_sound_interrupt, lnc_gfxdecodeinfo,      8);
-MACHINE_DRIVER( wtennis,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
-MACHINE_DRIVER( mmonkey,  1500000, btime_nmi_interrupt, nmi_interrupt,       lnc_gfxdecodeinfo,      8);
-MACHINE_DRIVER( bnj,       750000, btime_nmi_interrupt, nmi_interrupt,       bnj_gfxdecodeinfo,      16);
-MACHINE_DRIVER( zoar,     1500000, zoar_irq_interrupt,  nmi_interrupt,       zoar_gfxdecodeinfo,     64);
-MACHINE_DRIVER( disco,     750000, btime_irq_interrupt, nmi_interrupt,       disco_gfxdecodeinfo,    32);
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(btime)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(lnc_readmem,lnc_writemem)
+	MDRV_CPU_VBLANK_INT(btime_nmi_interrupt,1)
+	
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_VBLANK_INT(lnc_sound_interrupt,16)
 
+	MDRV_MACHINE_INIT(lnc)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(lnc_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	
+	MDRV_PALETTE_INIT(lnc)
+	MDRV_VIDEO_UPDATE(lnc)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( wtennis )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(lnc)
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(eggs)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mmonkey )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(wtennis)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mmonkey_readmem,mmonkey_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bnj )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(btime)
+	MDRV_CPU_REPLACE("main", M6502, 750000)
+	MDRV_CPU_MEMORY(bnj_readmem,bnj_writemem)
+	MDRV_CPU_VBLANK_INT(btime_nmi_interrupt,1)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(bnj_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	
+	MDRV_VIDEO_START(bnj)
+	MDRV_VIDEO_UPDATE(bnj)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( zoar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(btime)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(zoar_readmem,zoar_writemem)
+	MDRV_CPU_VBLANK_INT(zoar_irq_interrupt,1)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(zoar_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	
+	MDRV_VIDEO_UPDATE(zoar)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( disco )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(btime)
+	MDRV_CPU_REPLACE("main", M6502, 750000)
+	MDRV_CPU_MEMORY(disco_readmem,disco_writemem)
+	
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(disco_sound_readmem,disco_sound_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(disco_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	
+	MDRV_VIDEO_UPDATE(disco)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -1699,7 +1719,7 @@ static READ_HANDLER( wtennis_reset_hack_r )
 	return RAM[0xc15f];
 }
 
-static void init_btime(void)
+static DRIVER_INIT( btime )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1712,7 +1732,7 @@ static void init_btime(void)
 	memcpy(rom+diff,rom,0x10000);
 }
 
-static void init_zoar(void)
+static DRIVER_INIT( zoar )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -1726,7 +1746,7 @@ static void init_zoar(void)
     init_btime();
 }
 
-static void init_lnc(void)
+static DRIVER_INIT( lnc )
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -1739,7 +1759,7 @@ static void init_lnc(void)
 		rom[A+diff] = swap_bits_5_6(rom[A]);
 }
 
-static void init_wtennis(void)
+static DRIVER_INIT( wtennis )
 {
 	install_mem_read_handler(0, 0xc15f, 0xc15f, wtennis_reset_hack_r);
 	init_lnc();

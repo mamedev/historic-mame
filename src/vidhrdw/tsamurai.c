@@ -55,7 +55,7 @@ static void get_fg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int tsamurai_vh_start(void)
+VIDEO_START( tsamurai )
 {
 	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -148,10 +148,9 @@ WRITE_HANDLER( tsamurai_fg_colorram_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	struct GfxElement *gfx = Machine->gfx[2];
-	const struct rectangle *clip = &Machine->visible_area;
 	const unsigned char *source = spriteram+32*4-4;
 	const unsigned char *finish = spriteram; /* ? */
 	static int flicker;
@@ -175,7 +174,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 				color,
 				1,(sprite_number&0x80)?0:1,
 				256-32-sx,256-32-sy,
-				clip,TRANSPARENCY_PEN,0 );
+				cliprect,TRANSPARENCY_PEN,0 );
 		}
 		else
 		{
@@ -184,14 +183,14 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 				color,
 				0,sprite_number&0x80,
 				sx,sy,
-				clip,TRANSPARENCY_PEN,0 );
+				cliprect,TRANSPARENCY_PEN,0 );
 		}
 
 		source -= 4;
 	}
 }
 
-void tsamurai_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( tsamurai )
 {
 	int i;
 
@@ -211,10 +210,10 @@ void tsamurai_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 		Note that the background color register isn't well understood
 		(screenshots would be helpful)
 	*/
-	fillbitmap(bitmap,Machine->pens[bgcolor],&Machine->visible_area);
-	tilemap_draw(bitmap,background,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,foreground,0,0);
+	fillbitmap(bitmap,Machine->pens[bgcolor],cliprect);
+	tilemap_draw(bitmap,cliprect,background,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,foreground,0,0);
 }
 
 /***************************************************************************
@@ -246,14 +245,14 @@ static void get_vsgongf_tile_info(int tile_index)
 			0)
 }
 
-int vsgongf_vh_start(void)
+VIDEO_START( vsgongf )
 {
 	foreground = tilemap_create(get_vsgongf_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 	if (!foreground) return 1;
 	return 0;
 }
 
-void vsgongf_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( vsgongf )
 {
 	static int k;
 	if( keyboard_pressed( KEYCODE_Q ) ){
@@ -263,6 +262,6 @@ void vsgongf_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 		tilemap_mark_all_tiles_dirty( foreground );
 	}
 
-	tilemap_draw(bitmap,foreground,0,0);
-	draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,foreground,0,0);
+	draw_sprites(bitmap,cliprect);
 }

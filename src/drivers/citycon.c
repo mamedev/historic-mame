@@ -14,9 +14,8 @@ WRITE_HANDLER( citycon_videoram_w );
 WRITE_HANDLER( citycon_linecolor_w );
 WRITE_HANDLER( citycon_background_w );
 
-void citycon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int  citycon_vh_start(void);
-void citycon_vh_stop(void);
+VIDEO_UPDATE( citycon );
+VIDEO_START( citycon );
 
 
 READ_HANDLER( citycon_in_r )
@@ -222,52 +221,35 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_citycon =
-{
+static MACHINE_DRIVER_START( citycon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2048000,        /* 2.048 MHz ??? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			640000,        /* 0.640 MHz ??? */
-			readmem_sound,writemem_sound,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809, 2048000)        /* 2.048 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809, 640000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)        /* 0.640 MHz ??? */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	640+1024, 0,	/* 640 real palette + 1024 virtual palette */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(640+1024)	/* 640 real palette + 1024 virtual palette */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	citycon_vh_start,
-	0,
-	citycon_vh_screenrefresh,
+	MDRV_VIDEO_START(citycon)
+	MDRV_VIDEO_UPDATE(citycon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -360,7 +342,7 @@ ROM_END
 
 
 
-static void init_citycon(void)
+static DRIVER_INIT( citycon )
 {
 	UINT8 *rom = memory_region(REGION_GFX1);
 	int i;

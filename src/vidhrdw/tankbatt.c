@@ -17,7 +17,7 @@ size_t tankbatt_bulletsram_size;
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void tankbatt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( tankbatt )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -73,7 +73,7 @@ void tankbatt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   the main emulation engine.
 
 ***************************************************************************/
-void tankbatt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tankbatt )
 {
 	int offs;
 

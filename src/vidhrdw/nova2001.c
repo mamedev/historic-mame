@@ -43,7 +43,7 @@ static int flipscreen;
 
 
 
-void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( nova2001 )
 {
 	int i,j;
 
@@ -123,7 +123,7 @@ WRITE_HANDLER( nova2001_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void nova2001_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( nova2001 )
 {
 	int offs;
 

@@ -49,6 +49,10 @@ static struct tms34061_data tms34061;
 
 
 
+static void tms34061_interrupt(int param);
+
+
+
 /*************************************
  *
  *	Hardware startup
@@ -70,28 +74,21 @@ int tms34061_start(struct tms34061_interface *interface)
 		tms34061.dirtyshift++, temp >>= 1;
 
 	/* allocate memory for VRAM */
-	tms34061.vram = malloc(tms34061.intf.vramsize + 256 * 2);
+	tms34061.vram = auto_malloc(tms34061.intf.vramsize + 256 * 2);
 	if (!tms34061.vram)
 		return 1;
 	memset(tms34061.vram, 0, tms34061.intf.vramsize + 256 * 2);
 
 	/* allocate memory for latch RAM */
-	tms34061.latchram = malloc(tms34061.intf.vramsize + 256 * 2);
+	tms34061.latchram = auto_malloc(tms34061.intf.vramsize + 256 * 2);
 	if (!tms34061.latchram)
-	{
-		free(tms34061.vram);
 		return 1;
-	}
 	memset(tms34061.latchram, 0, tms34061.intf.vramsize + 256 * 2);
 
 	/* allocate memory for dirty rows */
-	tms34061.dirty = malloc(1 << (20 - tms34061.dirtyshift));
+	tms34061.dirty = auto_malloc(1 << (20 - tms34061.dirtyshift));
 	if (!tms34061.dirty)
-	{
-		free(tms34061.latchram);
-		free(tms34061.vram);
 		return 1;
-	}
 	memset(tms34061.dirty, 1, 1 << (20 - tms34061.dirtyshift));
 
 	/* add some buffer space for VRAM and latch RAM */
@@ -122,27 +119,8 @@ int tms34061_start(struct tms34061_interface *interface)
 	tms34061.regs[TMS34061_VERCOUNTER]   = 0x0000;
 
 	/* start vertical interrupt timer */
-	tms34061.timer = NULL;
+	tms34061.timer = timer_alloc(tms34061_interrupt);
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Hardware shutdown
- *
- *************************************/
-
-void tms34061_stop(void)
-{
-	/* remove buffer space for VRAM and latch RAM */
-	tms34061.vram -= 256;
-	tms34061.latchram -= 256;
-
-	free(tms34061.dirty);
-	free(tms34061.latchram);
-	free(tms34061.vram);
 }
 
 
@@ -170,7 +148,7 @@ INLINE void update_interrupts(void)
 static void tms34061_interrupt(int param)
 {
 	/* set timer for next frame */
-	tms34061.timer = timer_set(cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, tms34061_interrupt);
+	timer_adjust(tms34061.timer, cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, 0);
 
 	/* set the interrupt bit in the status reg */
 	tms34061.regs[TMS34061_STATUS] |= 1;
@@ -203,9 +181,7 @@ static WRITE_HANDLER( register_w )
 	{
 		/* vertical interrupt: adjust the timer */
 		case TMS34061_VERINT:
-			if (tms34061.timer)
-				timer_remove(tms34061.timer);
-			tms34061.timer = timer_set(cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, tms34061_interrupt);
+			timer_adjust(tms34061.timer, cpu_getscanlinetime(tms34061.regs[TMS34061_VERINT]), 0, 0);
 			break;
 
 		/* XY offset: set the X and Y masks */
@@ -243,7 +219,7 @@ static WRITE_HANDLER( register_w )
 		/* report all others */
 		default:
 			logerror("Unsupported tms34061 write. Reg #%02X=%04X - PC: %04X\n",
-					regnum, tms34061.regs[regnum], cpu_getpreviouspc());
+					regnum, tms34061.regs[regnum], activecpu_get_previouspc());
 			break;
 	}
 }
@@ -287,7 +263,7 @@ static READ_HANDLER( register_r )
 		/* report all others */
 		default:
 			logerror("Unsupported tms34061 read.  Reg #%02X      - PC: %04X\n",
-					regnum, cpu_getpreviouspc());
+					regnum, activecpu_get_previouspc());
 			break;
 	}
 	return result;
@@ -486,7 +462,7 @@ void tms34061_w(int col, int row, int func, data8_t data)
 		/* log anything else */
 		default:
 			logerror("Unsupported TMS34061 function %d - PC: %04X\n",
-					func, cpu_get_pc());
+					func, activecpu_get_pc());
 			break;
 	}
 }
@@ -542,7 +518,7 @@ data8_t tms34061_r(int col, int row, int func)
 		/* log anything else */
 		default:
 			logerror("Unsupported TMS34061 function %d - PC: %04X\n",
-					func, cpu_get_pc());
+					func, activecpu_get_pc());
 			break;
 	}
 

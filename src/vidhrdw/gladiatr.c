@@ -82,26 +82,18 @@ WRITE_HANDLER( gladiatr_video_registers_w ){
 }
 
 
-int gladiatr_vh_start(void);
-int gladiatr_vh_start(void){
+VIDEO_START( gladiatr );
+VIDEO_START( gladiatr ){
 	sprite_bank = 2;
 
-	dirtybuffer = malloc(64*32);
-	if( dirtybuffer ){
-		tmpbitmap = bitmap_alloc(512,256);
-		if( tmpbitmap ){
-			memset(dirtybuffer,1,64*32);
-			return 0;
-		}
-		free( dirtybuffer );
-	}
-	return 1; /* error */
-}
-
-void gladiatr_vh_stop(void);
-void gladiatr_vh_stop(void){
-	bitmap_free(tmpbitmap);
-	free(dirtybuffer);
+	dirtybuffer = auto_malloc(64*32);
+	if( !dirtybuffer )
+		return 1;
+	tmpbitmap = auto_bitmap_alloc(512,256);
+	if( !tmpbitmap )
+		return 1;
+	memset(dirtybuffer,1,64*32);
+	return 0;
 }
 
 
@@ -264,7 +256,7 @@ static void render_sprites(struct mame_bitmap *bitmap){
 
 
 
-void gladiatr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gladiatr )
 {
 	if (video_attributes & 0x20)	/* screen refresh enable? */
 	{

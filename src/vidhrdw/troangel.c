@@ -28,7 +28,7 @@ static int flipscreen;
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void troangel_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( troangel )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -229,7 +229,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 
 
 
-void troangel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( troangel )
 {
 	draw_background(bitmap);
 	draw_sprites(bitmap);

@@ -65,7 +65,7 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int wc90_vh_start(void)
+VIDEO_START( wc90 )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
@@ -125,7 +125,7 @@ WRITE_HANDLER( wc90_txvideoram_w )
 
 #define WC90_DRAW_SPRITE( code, sx, sy ) \
 					drawgfx( bitmap, Machine->gfx[3], code, flags >> 4, \
-					bank&1, bank&2, sx, sy, &Machine->visible_area, TRANSPARENCY_PEN, 0 )
+					bank&1, bank&2, sx, sy, cliprect, TRANSPARENCY_PEN, 0 )
 
 static char pos32x32[] = { 0, 1, 2, 3 };
 static char pos32x32x[] = { 1, 0, 3, 2 };
@@ -175,12 +175,12 @@ static char* p64x64[4] = {
 	pos64x64xy
 };
 
-static void drawsprite_16x16( struct mame_bitmap *bitmap, int code,
+static void drawsprite_16x16( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	WC90_DRAW_SPRITE( code, sx, sy );
 }
 
-static void drawsprite_16x32( struct mame_bitmap *bitmap, int code,
+static void drawsprite_16x32( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 2 ) {
 		WC90_DRAW_SPRITE( code+1, sx, sy+16 );
@@ -191,7 +191,7 @@ static void drawsprite_16x32( struct mame_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_16x64( struct mame_bitmap *bitmap, int code,
+static void drawsprite_16x64( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 2 ) {
 		WC90_DRAW_SPRITE( code+3, sx, sy+48 );
@@ -206,7 +206,7 @@ static void drawsprite_16x64( struct mame_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_32x16( struct mame_bitmap *bitmap, int code,
+static void drawsprite_32x16( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 1 ) {
 		WC90_DRAW_SPRITE( code+1, sx+16, sy );
@@ -217,7 +217,7 @@ static void drawsprite_32x16( struct mame_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_32x32( struct mame_bitmap *bitmap, int code,
+static void drawsprite_32x32( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p32x32[ bank&3 ];
@@ -228,7 +228,7 @@ static void drawsprite_32x32( struct mame_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[3], sx+16, sy+16 );
 }
 
-static void drawsprite_32x64( struct mame_bitmap *bitmap, int code,
+static void drawsprite_32x64( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p32x64[ bank&3 ];
@@ -243,7 +243,7 @@ static void drawsprite_32x64( struct mame_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[7], sx+16, sy+48 );
 }
 
-static void drawsprite_64x16( struct mame_bitmap *bitmap, int code,
+static void drawsprite_64x16( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 1 ) {
 		WC90_DRAW_SPRITE( code+3, sx+48, sy );
@@ -258,7 +258,7 @@ static void drawsprite_64x16( struct mame_bitmap *bitmap, int code,
 	}
 }
 
-static void drawsprite_64x32( struct mame_bitmap *bitmap, int code,
+static void drawsprite_64x32( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p64x32[ bank&3 ];
@@ -273,7 +273,7 @@ static void drawsprite_64x32( struct mame_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[7], sx+48, sy+16 );
 }
 
-static void drawsprite_64x64( struct mame_bitmap *bitmap, int code,
+static void drawsprite_64x64( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p64x64[ bank&3 ];
@@ -297,12 +297,12 @@ static void drawsprite_64x64( struct mame_bitmap *bitmap, int code,
 	WC90_DRAW_SPRITE( code+p[15], sx+48, sy+48 );
 }
 
-static void drawsprite_invalid( struct mame_bitmap *bitmap, int code,
+static void drawsprite_invalid( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
 											int sx, int sy, int bank, int flags ) {
 	logerror("8 pixel sprite size not supported\n" );
 }
 
-typedef void (*drawsprites_procdef)( struct mame_bitmap *, int, int, int, int, int );
+typedef void (*drawsprites_procdef)( struct mame_bitmap *, const struct rectangle *, int, int, int, int, int );
 
 static drawsprites_procdef drawsprites_proc[16] = {
 	drawsprite_invalid,		/* 0000 = 08x08 */
@@ -323,7 +323,7 @@ static drawsprites_procdef drawsprites_proc[16] = {
 	drawsprite_64x64		/* 1111 = 64x64 */
 };
 
-static void draw_sprites( struct mame_bitmap *bitmap, int priority )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
 {
 	int offs, sx,sy, flags, which;
 
@@ -340,7 +340,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int priority )
 				sy = spriteram[offs + 6] + ( (spriteram[offs + 7] & 1 ) << 8 );
 
 				flags = spriteram[offs+4];
-				( *( drawsprites_proc[ flags & 0x0f ] ) )( bitmap, which, sx, sy, bank, flags );
+				( *( drawsprites_proc[ flags & 0x0f ] ) )( bitmap,cliprect, which, sx, sy, bank, flags );
 			}
 		}
 	}
@@ -349,7 +349,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int priority )
 #undef WC90_DRAW_SPRITE
 
 
-void wc90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wc90 )
 {
 	tilemap_set_scrollx(bg_tilemap,0,wc90_scroll2xlo[0] + 256 * wc90_scroll2xhi[0]);
 	tilemap_set_scrolly(bg_tilemap,0,wc90_scroll2ylo[0] + 256 * wc90_scroll2yhi[0]);
@@ -358,11 +358,11 @@ void wc90_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(tx_tilemap,0,wc90_scroll0xlo[0] + 256 * wc90_scroll0xhi[0]);
 	tilemap_set_scrolly(tx_tilemap,0,wc90_scroll0ylo[0] + 256 * wc90_scroll0yhi[0]);
 
-//	draw_sprites( bitmap, 3 );
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites( bitmap, 2 );
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_sprites( bitmap, 1 );
-	tilemap_draw(bitmap,tx_tilemap,0,0);
-	draw_sprites( bitmap, 0 );
+//	draw_sprites( bitmap,cliprect, 3 );
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites( bitmap,cliprect, 2 );
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites( bitmap,cliprect, 1 );
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	draw_sprites( bitmap,cliprect, 0 );
 }

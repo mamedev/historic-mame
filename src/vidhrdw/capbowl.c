@@ -1,14 +1,13 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Coors Light Bowling/Bowl-O-Rama hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/tms34061.h"
 #include "cpu/m6809/m6809.h"
+#include "capbowl.h"
 
 unsigned char *capbowl_rowaddress;
 
@@ -40,7 +39,7 @@ static struct tms34061_interface tms34061intf =
  *
  *************************************/
 
-int capbowl_vh_start(void)
+VIDEO_START( capbowl )
 {
 	/* initialize TMS34061 emulation */
     if (tms34061_start(&tms34061intf))
@@ -49,18 +48,6 @@ int capbowl_vh_start(void)
 	return 0;
 }
 
-
-
-/*************************************
- *
- *	Video stop
- *
- *************************************/
-
-void capbowl_vh_stop(void)
-{
-	tms34061_stop();
-}
 
 
 /*************************************
@@ -99,15 +86,16 @@ READ_HANDLER( capbowl_tms34061_r )
 }
 
 
+
 /*************************************
  *
  *	Main refresh
  *
  *************************************/
 
-void capbowl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( capbowl )
 {
-	int halfwidth = (Machine->visible_area.max_x - Machine->visible_area.min_x + 1) / 2;
+	int halfwidth = (cliprect->max_x - cliprect->min_x + 1) / 2;
 	struct tms34061_display state;
 	int x, y;
 
@@ -117,7 +105,7 @@ void capbowl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	/* if we're blanked, just fill with black */
 	if (state.blanked)
 	{
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[0], cliprect);
 		return;
 	}
 
@@ -139,23 +127,22 @@ void capbowl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		}
 
 	/* now regenerate the bitmap */
-	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
-		if (full_refresh || state.dirty[y])
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+	{
+		UINT8 *src = &state.vram[256 * y + 32 + cliprect->min_x / 2];
+		UINT8 scanline[400];
+		UINT8 *dst = scanline;
+
+		/* expand row to 8bpp */
+		for (x = 0; x < halfwidth; x++)
 		{
-			UINT8 *src = &state.vram[256 * y + 32];
-			UINT8 scanline[400];
-			UINT8 *dst = scanline;
-
-			/* expand row to 8bpp */
-			for (x = 0; x < halfwidth; x++)
-			{
-				int pix = *src++;
-				*dst++ = pix >> 4;
-				*dst++ = pix & 0x0f;
-			}
-
-			/* redraw the scanline and mark it no longer dirty */
-			draw_scanline8(bitmap, Machine->visible_area.min_x, y, halfwidth * 2, scanline, &Machine->pens[16 * y], -1);
-			state.dirty[y] = 0;
+			int pix = *src++;
+			*dst++ = pix >> 4;
+			*dst++ = pix & 0x0f;
 		}
+
+		/* redraw the scanline and mark it no longer dirty */
+		draw_scanline8(bitmap, cliprect->min_x, y, halfwidth * 2, scanline, &Machine->pens[16 * y], -1);
+		state.dirty[y] = 0;
+	}
 }

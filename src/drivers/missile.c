@@ -1,15 +1,24 @@
 /***************************************************************************
 
+	Atari Missile Command hardware
 
-	  Modified from original schematics...
+	Games supported:
+		* Missile Command
 
-	  MISSILE COMMAND
-	  ---------------
-	  HEX		 R/W   D7 D6 D5 D4 D3 D2 D2 D0	function
-	  ---------+-----+------------------------+------------------------
-	  0000-01FF  R/W   D  D  D	D  D  D  D	D	512 bytes working ram
+	Known issues:
+		* none at this time
 
-	  0200-05FF  R/W   D  D  D	D  D  D  D	D	3rd color bit region
+****************************************************************************
+
+	Modified from original schematics...
+
+	MISSILE COMMAND
+	---------------
+	HEX		 R/W   D7 D6 D5 D4 D3 D2 D2 D0	function
+	---------+-----+------------------------+------------------------
+	0000-01FF  R/W   D  D  D	D  D  D  D	D	512 bytes working ram
+
+	0200-05FF  R/W   D  D  D	D  D  D  D	D	3rd color bit region
 												of screen ram.
 												Each bit of every odd byte is the low color
 												bit for the bottom scanlines
@@ -18,139 +27,132 @@
 												$401-$5FF for the bottom 8 scanlines...
 												Pretty wild, huh?
 
-	  0600-063F  R/W   D  D  D	D  D  D  D	D	More working ram.
+	0600-063F  R/W   D  D  D	D  D  D  D	D	More working ram.
 
-	  0640-3FFF  R/W   D  D  D	D  D  D  D	D	2-color bit region of
+	0640-3FFF  R/W   D  D  D	D  D  D  D	D	2-color bit region of
 												screen ram.
 												Writes to 4 bytes each to effectively
 												address $1900-$ffff.
 
-	  1900-FFFF  R/W   D  D 					2-color bit region of
+	1900-FFFF  R/W   D  D 						2-color bit region of
 												screen ram
-													  Only accessed with
-													   LDA ($ZZ,X) and
-													   STA ($ZZ,X)
-													  Those instructions take longer
-													  than 5 cycles.
+												  Only accessed with
+												   LDA ($ZZ,X) and
+												   STA ($ZZ,X)
+												  Those instructions take longer
+												  than 5 cycles.
 
-	  ---------+-----+------------------------+------------------------
-	  4000-400F  R/W   D  D  D	D  D  D  D	D	POKEY ports.
-	  -----------------------------------------------------------------
-	  4008		 R	   D  D  D	D  D  D  D	D	Game Option switches
-	  -----------------------------------------------------------------
-	  4800		 R	   D						Right coin
-	  4800		 R		  D 					Center coin
-	  4800		 R			 D					Left coin
-	  4800		 R				D				1 player start
-	  4800		 R				   D			2 player start
-	  4800		 R					  D 		2nd player left fire(cocktail)
-	  4800		 R						 D		2nd player center fire	"
-	  4800		 R							D	2nd player right fire	"
-	  ---------+-----+------------------------+------------------------
-	  4800		 R				   D  D  D	D	Horiz trackball displacement
-															if ctrld=high.
-	  4800		 R	   D  D  D	D				Vert trackball displacement
-															if ctrld=high.
-	  ---------+-----+------------------------+------------------------
-	  4800		 W	   D						Unused ??
-	  4800		 W		  D 					screen flip
-	  4800		 W			 D					left coin counter
-	  4800		 W				D				center coin counter
-	  4800		 W				   D			right coin counter
-	  4800		 W					  D 		2 player start LED.
-	  4800		 W						 D		1 player start LED.
-	  4800		 W							D	CTRLD, 0=read switches,
-															1= read trackball.
-	  ---------+-----+------------------------+------------------------
-	  4900		 R	   D						VBLANK read
-	  4900		 R		  D 					Self test switch input.
-	  4900		 R			 D					SLAM switch input.
-	  4900		 R				D				Horiz trackball direction input.
-	  4900		 R				   D			Vert trackball direction input.
-	  4900		 R					  D 		1st player left fire.
-	  4900		 R						 D		1st player center fire.
-	  4900		 R							D	1st player right fire.
-	  ---------+-----+------------------------+------------------------
-	  4A00		 R	   D  D  D	D  D  D  D	D	Pricing Option switches.
-	  4B00-4B07  W				   D  D  D	D	Color RAM.
-	  4C00		 W								Watchdog.
-	  4D00		 W								Interrupt acknowledge.
-	  ---------+-----+------------------------+------------------------
-	  5000-7FFF  R	   D  D  D	D  D  D  D	D	Program.
-	  ---------+-----+------------------------+------------------------
-
-
+	---------+-----+------------------------+------------------------
+	4000-400F  R/W   D  D  D	D  D  D  D	D	POKEY ports.
+	-----------------------------------------------------------------
+	4008		 R	   D  D  D	D  D  D  D	D	Game Option switches
+	-----------------------------------------------------------------
+	4800		 R	   D						Right coin
+	4800		 R		  D 					Center coin
+	4800		 R			 D					Left coin
+	4800		 R				D				1 player start
+	4800		 R				   D			2 player start
+	4800		 R					  D 		2nd player left fire(cocktail)
+	4800		 R						 D		2nd player center fire	"
+	4800		 R							D	2nd player right fire	"
+	---------+-----+------------------------+------------------------
+	4800		 R				   D  D  D	D	Horiz trackball displacement
+														if ctrld=high.
+	4800		 R	   D  D  D	D				Vert trackball displacement
+														if ctrld=high.
+	---------+-----+------------------------+------------------------
+	4800		 W	   D						Unused ??
+	4800		 W		  D 					screen flip
+	4800		 W			 D					left coin counter
+	4800		 W				D				center coin counter
+	4800		 W				   D			right coin counter
+	4800		 W					  D 		2 player start LED.
+	4800		 W						 D		1 player start LED.
+	4800		 W							D	CTRLD, 0=read switches,
+														1= read trackball.
+	---------+-----+------------------------+------------------------
+	4900		 R	   D						VBLANK read
+	4900		 R		  D 					Self test switch input.
+	4900		 R			 D					SLAM switch input.
+	4900		 R				D				Horiz trackball direction input.
+	4900		 R				   D			Vert trackball direction input.
+	4900		 R					  D 		1st player left fire.
+	4900		 R						 D		1st player center fire.
+	4900		 R							D	1st player right fire.
+	---------+-----+------------------------+------------------------
+	4A00		 R	   D  D  D	D  D  D  D	D	Pricing Option switches.
+	4B00-4B07  W				   D  D  D	D	Color RAM.
+	4C00		 W								Watchdog.
+	4D00		 W								Interrupt acknowledge.
+	---------+-----+------------------------+------------------------
+	5000-7FFF  R	   D  D  D	D  D  D  D	D	Program.
+	---------+-----+------------------------+------------------------
 
 
-MISSILE COMMAND SWITCH SETTINGS (Atari, 1980)
----------------------------------------------
+	MISSILE COMMAND SWITCH SETTINGS (Atari, 1980)
+	---------------------------------------------
 
 
-GAME OPTIONS:
-(8-position switch at R8)
+	GAME OPTIONS:
+	(8-position switch at R8)
 
-1	2	3	4	5	6	7	8	Meaning
--------------------------------------------------------------------------
-Off Off 						Game starts with 7 cities
-On	On							Game starts with 6 cities
-On	Off 						Game starts with 5 cities
-Off On							Game starts with 4 cities
-		On						No bonus credit
-		Off 					1 bonus credit for 4 successive coins
-			On					Large trak-ball input
-			Off 				Mini Trak-ball input
-				On	Off Off 	Bonus city every  8000 pts
-				On	On	On		Bonus city every 10000 pts
-				Off On	On		Bonus city every 12000 pts
-				On	Off On		Bonus city every 14000 pts
-				Off Off On		Bonus city every 15000 pts
-				On	On	Off 	Bonus city every 18000 pts
-				Off On	Off 	Bonus city every 20000 pts
-				Off Off Off 	No bonus cities
-							On	Upright
-							Off Cocktail
+	1	2	3	4	5	6	7	8	Meaning
+	-------------------------------------------------------------------------
+	Off Off 						Game starts with 7 cities
+	On	On							Game starts with 6 cities
+	On	Off 						Game starts with 5 cities
+	Off On							Game starts with 4 cities
+			On						No bonus credit
+			Off 					1 bonus credit for 4 successive coins
+				On					Large trak-ball input
+				Off 				Mini Trak-ball input
+					On	Off Off 	Bonus city every  8000 pts
+					On	On	On		Bonus city every 10000 pts
+					Off On	On		Bonus city every 12000 pts
+					On	Off On		Bonus city every 14000 pts
+					Off Off On		Bonus city every 15000 pts
+					On	On	Off 	Bonus city every 18000 pts
+					Off On	Off 	Bonus city every 20000 pts
+					Off Off Off 	No bonus cities
+								On	Upright
+								Off Cocktail
 
 
 
-PRICING OPTIONS:
-(8-position switch at R10)
+	PRICING OPTIONS:
+	(8-position switch at R10)
 
-1	2	3	4	5	6	7	8	Meaning
--------------------------------------------------------------------------
-On	On							1 coin 1 play
-Off On							Free play
-On Off							2 coins 1 play
-Off Off 						1 coin 2 plays
-		On	On					Right coin mech * 1
-		Off On					Right coin mech * 4
-		On	Off 				Right coin mech * 5
-		Off Off 				Right coin mech * 6
-				On				Center coin mech * 1
-				Off 			Center coin mech * 2
-					On	On		English
-					Off On		French
-					On	Off 	German
-					Off Off 	Spanish
-							On	( Unused )
-							Off ( Unused )
-
+	1	2	3	4	5	6	7	8	Meaning
+	-------------------------------------------------------------------------
+	On	On							1 coin 1 play
+	Off On							Free play
+	On Off							2 coins 1 play
+	Off Off 						1 coin 2 plays
+			On	On					Right coin mech * 1
+			Off On					Right coin mech * 4
+			On	Off 				Right coin mech * 5
+			Off Off 				Right coin mech * 6
+					On				Center coin mech * 1
+					Off 			Center coin mech * 2
+						On	On		English
+						Off On		French
+						On	Off 	German
+						Off Off 	Spanish
+								On	( Unused )
+								Off ( Unused )
 
 ******************************************************************************************/
+
 #include "driver.h"
+#include "missile.h"
 
-extern unsigned char *missile_video2ram;
 
-void missile_init_machine(void);
-READ_HANDLER( missile_r );
-WRITE_HANDLER( missile_w );
 
-int  missile_vh_start(void);
-void missile_vh_stop(void);
-void missile_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-WRITE_HANDLER( missile_video_3rd_bit_w );
-WRITE_HANDLER( missile_video2_w );
-
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x18ff, MRA_RAM },
@@ -168,6 +170,12 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( missile )
 	PORT_START	/* IN0 */
@@ -249,6 +257,7 @@ INPUT_PORTS_START( missile )
 	PORT_START	/* FAKE */
 	PORT_ANALOG( 0x0f, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_COCKTAIL, 20, 10, 0, 0)
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( suprmatk )
 	PORT_START	/* IN0 */
@@ -333,6 +342,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
@@ -353,51 +368,44 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static const struct MachineDriver machine_driver_missile =
-{
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( missile )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 MHz ???? */
-			readmem,writemem,0,0,
-			interrupt, 4  /* EEA was 1 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	missile_init_machine,
+	MDRV_CPU_ADD(M6502,1000000)		/* 1 MHz ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(missile)
 
 	/* video hardware */
-	256, 231, { 0, 255, 0, 230 },
-	0,
-	8, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(256, 231)
+	MDRV_VISIBLE_AREA(0, 255, 0, 230)
+	MDRV_PALETTE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	missile_vh_start,
-	missile_vh_stop,
-	missile_vh_screenrefresh,
+	MDRV_VIDEO_START(missile)
+	MDRV_VIDEO_UPDATE(missile)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
 
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( missile )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -410,6 +418,7 @@ ROM_START( missile )
 	ROM_RELOAD( 		   0xF800, 0x0800 ) 	/* for interrupt vectors  */
 ROM_END
 
+
 ROM_START( missile2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "35820-01.h1",  0x5000, 0x0800, 0x41cbb8f2 )
@@ -420,6 +429,7 @@ ROM_START( missile2 )
 	ROM_LOAD( "35825-01.r1",  0x7800, 0x0800, 0x428cf0d5 )
 	ROM_RELOAD( 		      0xF800, 0x0800 ) 	/* for interrupt vectors  */
 ROM_END
+
 
 ROM_START( suprmatk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -433,6 +443,12 @@ ROM_START( suprmatk )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1980, missile,  0,       missile, missile,  0, ROT0, "Atari", "Missile Command (set 1)" )
 GAME( 1980, missile2, missile, missile, missile,  0, ROT0, "Atari", "Missile Command (set 2)" )

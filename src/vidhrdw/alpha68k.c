@@ -71,7 +71,7 @@ WRITE16_HANDLER( alpha68k_videoram_w )
 	tilemap_mark_tile_dirty(fix_tilemap,offset/2);
 }
 
-int alpha68k_vh_start(void)
+VIDEO_START( alpha68k )
 {
 	fix_tilemap = tilemap_create(get_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
@@ -85,7 +85,7 @@ int alpha68k_vh_start(void)
 
 /******************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int j, int pos)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j, int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -126,7 +126,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int j, int pos)
 					color,
 					fx,fy,
 					mx,my,
-					0,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			if (flipscreen)
 				my=(my-16)&0x1ff;
@@ -138,7 +138,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int j, int pos)
 
 /******************************************************************************/
 
-void alpha68k_II_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( alpha68k_II )
 {
 	static int last_bank=0;
 
@@ -147,15 +147,15 @@ void alpha68k_II_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	last_bank=bank_base;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[2047],cliprect);
 
-	draw_sprites(bitmap,1,0x000);
-	draw_sprites(bitmap,1,0x400);
-	draw_sprites(bitmap,0,0x000);
-	draw_sprites(bitmap,0,0x400);
-	draw_sprites(bitmap,2,0x000);
-	draw_sprites(bitmap,2,0x400);
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,1,0x000);
+	draw_sprites(bitmap,cliprect,1,0x400);
+	draw_sprites(bitmap,cliprect,0,0x000);
+	draw_sprites(bitmap,cliprect,0,0x400);
+	draw_sprites(bitmap,cliprect,2,0x000);
+	draw_sprites(bitmap,cliprect,2,0x400);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 }
 
 /******************************************************************************/
@@ -227,7 +227,7 @@ WRITE16_HANDLER( alpha68k_V_video_control_w )
 	}
 }
 
-static void draw_sprites_V(struct mame_bitmap *bitmap, int j, int s, int e, int fx_mask, int fy_mask, int sprite_mask)
+static void draw_sprites_V(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j, int s, int e, int fx_mask, int fy_mask, int sprite_mask)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -269,7 +269,7 @@ static void draw_sprites_V(struct mame_bitmap *bitmap, int j, int s, int e, int 
 					color,
 					fx,fy,
 					mx,my,
-					0,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			if (flipscreen)
 				my=(my-16)&0x1ff;
@@ -279,7 +279,7 @@ static void draw_sprites_V(struct mame_bitmap *bitmap, int j, int s, int e, int 
 	}
 }
 
-void alpha68k_V_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( alpha68k_V )
 {
 	static int last_bank=0;
 
@@ -288,28 +288,28 @@ void alpha68k_V_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	last_bank=bank_base;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[4095],cliprect);
 
 	/* This appears to be correct priority */
 	if (!strcmp(Machine->gamedrv->name,"skyadvnt") || !strcmp(Machine->gamedrv->name,"skyadvnu")) /* Todo */
 	{
-		draw_sprites_V(bitmap,0,0x07c0,0x0800,0,0x8000,0x7fff);
-		draw_sprites_V(bitmap,1,0x0000,0x0800,0,0x8000,0x7fff);
-		draw_sprites_V(bitmap,2,0x0000,0x0800,0,0x8000,0x7fff);
-		draw_sprites_V(bitmap,0,0x0000,0x07c0,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,cliprect,0,0x07c0,0x0800,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,cliprect,1,0x0000,0x0800,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,cliprect,2,0x0000,0x0800,0,0x8000,0x7fff);
+		draw_sprites_V(bitmap,cliprect,0,0x0000,0x07c0,0,0x8000,0x7fff);
 	}
 	else	/* gangwars */
 	{
-		draw_sprites_V(bitmap,0,0x07c0,0x0800,0x8000,0,0x7fff);
-		draw_sprites_V(bitmap,1,0x0000,0x0800,0x8000,0,0x7fff);
-		draw_sprites_V(bitmap,2,0x0000,0x0800,0x8000,0,0x7fff);
-		draw_sprites_V(bitmap,0,0x0000,0x07c0,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,cliprect,0,0x07c0,0x0800,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,cliprect,1,0x0000,0x0800,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,cliprect,2,0x0000,0x0800,0x8000,0,0x7fff);
+		draw_sprites_V(bitmap,cliprect,0,0x0000,0x07c0,0x8000,0,0x7fff);
 	}
 
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 }
 
-void alpha68k_V_sb_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( alpha68k_V_sb )
 {
 	static int last_bank=0;
 
@@ -318,20 +318,20 @@ void alpha68k_V_sb_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh
 	last_bank=bank_base;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[4095],cliprect);
 
 	/* This appears to be correct priority */
-	draw_sprites_V(bitmap,0,0x07c0,0x0800,0x4000,0x8000,0x3fff);
-	draw_sprites_V(bitmap,1,0x0000,0x0800,0x4000,0x8000,0x3fff);
-	draw_sprites_V(bitmap,2,0x0000,0x0800,0x4000,0x8000,0x3fff);
-	draw_sprites_V(bitmap,0,0x0000,0x07c0,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,cliprect,0,0x07c0,0x0800,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,cliprect,1,0x0000,0x0800,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,cliprect,2,0x0000,0x0800,0x4000,0x8000,0x3fff);
+	draw_sprites_V(bitmap,cliprect,0,0x0000,0x07c0,0x4000,0x8000,0x3fff);
 
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 }
 
 /******************************************************************************/
 
-static void draw_sprites2(struct mame_bitmap *bitmap, int c,int d)
+static void draw_sprites2(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int c,int d)
 {
 	int offs,mx,my,color,tile,i;
 
@@ -360,27 +360,27 @@ static void draw_sprites2(struct mame_bitmap *bitmap, int c,int d)
 					color,
 					0,0,
 					mx+16,my,
-					0,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			my=(my+8)&0xff;
 		}
 	}
 }
 
-void alpha68k_I_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( alpha68k_I )
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	/* This appears to be correct priority */
-draw_sprites2(bitmap,3,0x0c00);
-draw_sprites2(bitmap,2,0x0800);
-draw_sprites2(bitmap,1,0x0400);
+draw_sprites2(bitmap,cliprect,3,0x0c00);
+draw_sprites2(bitmap,cliprect,2,0x0800);
+draw_sprites2(bitmap,cliprect,1,0x0400);
 //
 }
 
 /******************************************************************************/
 
-void kyros_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( kyros )
 {
 	int i,bit0,bit1,bit2,bit3;
 
@@ -417,7 +417,7 @@ void kyros_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-static void kyros_draw_sprites(struct mame_bitmap *bitmap, int c,int d)
+static void kyros_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int c,int d)
 {
 	int offs,mx,my,color,tile,i,bank,fy;
 
@@ -439,25 +439,25 @@ static void kyros_draw_sprites(struct mame_bitmap *bitmap, int c,int d)
 					color,
 					0,fy,
 					mx,my,
-					0,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			my=(my+8)&0xff;
 		}
 	}
 }
 
-void kyros_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( kyros )
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	kyros_draw_sprites(bitmap,2,0x0800);
-	kyros_draw_sprites(bitmap,3,0x0c00);
-	kyros_draw_sprites(bitmap,1,0x0400);
+	kyros_draw_sprites(bitmap,cliprect,2,0x0800);
+	kyros_draw_sprites(bitmap,cliprect,3,0x0c00);
+	kyros_draw_sprites(bitmap,cliprect,1,0x0400);
 }
 
 /******************************************************************************/
 
-static void sstingry_draw_sprites(struct mame_bitmap *bitmap, int c,int d)
+static void sstingry_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int c,int d)
 {
 	int offs,mx,my,color,tile,i,bank,fx,fy;
 
@@ -480,20 +480,20 @@ static void sstingry_draw_sprites(struct mame_bitmap *bitmap, int c,int d)
 					color,
 					fx,fy,
 					mx,my,
-					0,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			my=(my+8)&0xff;
 		}
 	}
 }
 
-void sstingry_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( sstingry )
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	sstingry_draw_sprites(bitmap,2,0x0800);
-	sstingry_draw_sprites(bitmap,3,0x0c00);
-	sstingry_draw_sprites(bitmap,1,0x0400);
+	sstingry_draw_sprites(bitmap,cliprect,2,0x0800);
+	sstingry_draw_sprites(bitmap,cliprect,3,0x0c00);
+	sstingry_draw_sprites(bitmap,cliprect,1,0x0400);
 }
 
 /******************************************************************************/
@@ -517,7 +517,7 @@ WRITE16_HANDLER( kouyakyu_video_w )
 	tilemap_mark_tile_dirty( fix_tilemap, offset/2 );
 }
 
-int kouyakyu_vh_start(void)
+VIDEO_START( kouyakyu )
 {
 	fix_tilemap = tilemap_create(get_kouyakyu_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
@@ -529,13 +529,13 @@ int kouyakyu_vh_start(void)
 	return 0;
 }
 
-void kouyakyu_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( kouyakyu )
 {
-	fillbitmap(bitmap,1,&Machine->visible_area);
+	fillbitmap(bitmap,1,cliprect);
 
-sstingry_draw_sprites(bitmap,2,0x0800);
-sstingry_draw_sprites(bitmap,3,0x0c00);
-sstingry_draw_sprites(bitmap,1,0x0400);
+sstingry_draw_sprites(bitmap,cliprect,2,0x0800);
+sstingry_draw_sprites(bitmap,cliprect,3,0x0c00);
+sstingry_draw_sprites(bitmap,cliprect,1,0x0400);
 
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 }

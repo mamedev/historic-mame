@@ -56,7 +56,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int commando_vh_start(void)
+VIDEO_START( commando )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
@@ -127,7 +127,7 @@ WRITE_HANDLER( commando_c804_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -158,18 +158,18 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					(attr & 0x30) >> 4,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void commando_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( commando )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }
 
-void commando_eof_callback(void)
+VIDEO_EOF( commando )
 {
 	buffer_spriteram_w(0,0);
 }

@@ -39,7 +39,7 @@ READ16_HANDLER( galpani2_bg8_regs_##_n_##_r ) \
 	{ \
 		case 0x16:	return rand() & 1; \
 		default: \
-			logerror("CPU #0 PC %06X : Warning, bg8 #%d screen reg %04X read\n",cpu_get_pc(),_n_,offset*2); \
+			logerror("CPU #0 PC %06X : Warning, bg8 #%d screen reg %04X read\n",activecpu_get_pc(),_n_,offset*2); \
 	} \
 	return galpani2_bg8_regs_##_n_[offset]; \
 }
@@ -123,7 +123,7 @@ WRITE16_HANDLER( galpani2_bg15_w )
 
 ***************************************************************************/
 
-void galpani2_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( galpani2 )
 {
 	int i;
 	palette += 0x4200 * 3;	/* first $4200 colors are dynamic */
@@ -142,28 +142,14 @@ void galpani2_init_palette(unsigned char *palette, unsigned short *colortable,co
 	}
 }
 
-int  galpani2_vh_start(void)
+VIDEO_START( galpani2 )
 {
-	if ((galpani2_bg15_bitmap  = bitmap_alloc_depth(256*8, 256, 16)) == 0)	return 1;
+	if ((galpani2_bg15_bitmap  = auto_bitmap_alloc_depth(256*8, 256, 16)) == 0)	return 1;
 
-	if ((galpani2_bg8_bitmap_0 = bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
-	if ((galpani2_bg8_bitmap_1 = bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
+	if ((galpani2_bg8_bitmap_0 = auto_bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
+	if ((galpani2_bg8_bitmap_1 = auto_bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
 
-	return kaneko16_vh_start_sprites();
-}
-
-void galpani2_vh_stop(void)
-{
-	if (galpani2_bg15_bitmap)	bitmap_free(galpani2_bg15_bitmap);
-
-	if (galpani2_bg8_bitmap_0)	bitmap_free(galpani2_bg8_bitmap_0);
-	if (galpani2_bg8_bitmap_1)	bitmap_free(galpani2_bg8_bitmap_1);
-
-	galpani2_bg15_bitmap	=	0;	// multisession safety
-	galpani2_bg8_bitmap_0	=	0;
-	galpani2_bg8_bitmap_1	=	0;
-
-	kaneko16_vh_stop();
+	return video_start_kaneko16_sprites();
 }
 
 
@@ -175,7 +161,7 @@ void galpani2_vh_stop(void)
 
 ***************************************************************************/
 
-void galpani2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( galpani2 )
 {
 	int layers_ctrl = -1;
 
@@ -191,8 +177,8 @@ if (keyboard_pressed(KEYCODE_Z))
 	if (msk != 0) layers_ctrl &= msk;	}
 #endif
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (layers_ctrl & 0x1)
 	{
@@ -200,7 +186,7 @@ if (keyboard_pressed(KEYCODE_Z))
 		int y = 0;
 		copyscrollbitmap(	bitmap, galpani2_bg15_bitmap,
 							1, &x, 1, &y,
-							&Machine->visible_area,TRANSPARENCY_PEN,Machine->pens[0x4200 + 0]);
+							cliprect,TRANSPARENCY_PEN,Machine->pens[0x4200 + 0]);
 	}
 
 /*	test mode:
@@ -215,7 +201,7 @@ if (keyboard_pressed(KEYCODE_Z))
 		int y = - ( *galpani2_bg8_0_scrolly + 0x200 - 0x1be );
 		copyscrollbitmap(	bitmap, galpani2_bg8_bitmap_0,
 							1, &x, 1, &y,
-							&Machine->visible_area,TRANSPARENCY_PEN,Machine->pens[0x4000 + 0]);
+							cliprect,TRANSPARENCY_PEN,Machine->pens[0x4000 + 0]);
 	}
 
 	if (layers_ctrl & 0x4)
@@ -224,8 +210,8 @@ if (keyboard_pressed(KEYCODE_Z))
 		int y = - ( *galpani2_bg8_1_scrolly + 0x200 - 0x1be );
 		copyscrollbitmap(	bitmap, galpani2_bg8_bitmap_1,
 							1, &x, 1, &y,
-							&Machine->visible_area,TRANSPARENCY_PEN,Machine->pens[0x4000 + 0]);
+							cliprect,TRANSPARENCY_PEN,Machine->pens[0x4000 + 0]);
 	}
 
-	if (layers_ctrl & 0x8)	kaneko16_draw_sprites(bitmap, 0xf);
+	if (layers_ctrl & 0x8)	kaneko16_draw_sprites(bitmap, cliprect, 0xf);
 }

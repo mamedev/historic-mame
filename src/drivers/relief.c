@@ -19,18 +19,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int relief_vh_start(void);
-void relief_vh_stop(void);
-void relief_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+#include "relief.h"
 
 
 
@@ -73,7 +62,7 @@ static void update_interrupts(void)
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( relief )
 {
 	atarigen_eeprom_reset();
 	atarivc_reset(atarivc_eof_data);
@@ -341,48 +330,84 @@ static struct YM2413interface ym2413_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_relief =
-{
+static MACHINE_DRIVER_START( relief )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(relief)
+	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 2048,	/* can't make colortable_len = 0 because of 0xffff transparency kludge */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	MDRV_COLORTABLE_LENGTH(2048)	/* can't make colortable_len = 0 because of 0xffff transparency kludge */
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	relief_vh_start,
-	relief_vh_stop,
-	relief_vh_screenrefresh,
+	MDRV_VIDEO_START(relief)
+	MDRV_VIDEO_UPDATE(relief)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		}
-	},
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(YM2413,   ym2413_interface)
+MACHINE_DRIVER_END
 
-	atarigen_nvram_handler
-};
+
+
+/*************************************
+ *
+ *	ROM definition(s)
+ *
+ *************************************/
+
+ROM_START( relief )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
+	ROM_LOAD16_BYTE( "0011d.19e", 0x00000, 0x20000, 0xcb3f73ad )
+	ROM_LOAD16_BYTE( "0012d.19j", 0x00001, 0x20000, 0x90655721 )
+	ROM_LOAD16_BYTE( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
+	ROM_LOAD16_BYTE( "093-0014.17j", 0x40001, 0x20000, 0x19e5decd )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
+	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
+	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
+	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "093-0029.4d",  0x000000, 0x40000, 0xe4593ff4 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* 2MB for ADPCM data */
+	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
+	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
+ROM_END
+
+
+ROM_START( relief2 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
+	ROM_LOAD16_BYTE( "093-0011.19e", 0x00000, 0x20000, 0x794cea33 )
+	ROM_LOAD16_BYTE( "093-0012.19j", 0x00001, 0x20000, 0x577495f8 )
+	ROM_LOAD16_BYTE( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
+	ROM_LOAD16_BYTE( "093-0014.17j", 0x40001, 0x20000, 0x19e5decd )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
+	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
+	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
+	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "093-0029.4d",  0x000000, 0x40000, 0xe4593ff4 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* 2MB for ADPCM data */
+	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
+	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
+ROM_END
 
 
 
@@ -397,8 +422,6 @@ static void init_common(const data16_t *def_eeprom)
 	UINT8 *sound_base = memory_region(REGION_SOUND1);
 
 	atarigen_eeprom_default = def_eeprom;
-	atarigen_invert_region(REGION_GFX1);
-	atarigen_invert_region(REGION_GFX2);
 
 	/* expand the ADPCM data to avoid lots of memcpy's during gameplay */
 	/* the upper 128k is fixed, the lower 128k is bankswitched */
@@ -422,7 +445,7 @@ static void init_common(const data16_t *def_eeprom)
 }
 
 
-static void init_relief(void)
+static DRIVER_INIT( relief )
 {
 	static const data16_t default_eeprom[] =
 	{
@@ -438,7 +461,7 @@ static void init_relief(void)
 }
 
 
-static void init_relief2(void)
+static DRIVER_INIT( relief2 )
 {
 	static const data16_t default_eeprom[] =
 	{
@@ -459,57 +482,6 @@ static void init_relief2(void)
 	};
 	init_common(default_eeprom);
 }
-
-
-
-/*************************************
- *
- *	ROM definition(s)
- *
- *************************************/
-
-ROM_START( relief )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
-	ROM_LOAD16_BYTE( "0011d.19e", 0x00000, 0x20000, 0xcb3f73ad )
-	ROM_LOAD16_BYTE( "0012d.19j", 0x00001, 0x20000, 0x90655721 )
-	ROM_LOAD16_BYTE( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
-	ROM_LOAD16_BYTE( "093-0014.17j", 0x40001, 0x20000, 0x19e5decd )
-
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
-	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
-	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
-	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
-
-	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "093-0029.4d",  0x000000, 0x40000, 0xe4593ff4 )
-
-	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* 2MB for ADPCM data */
-	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
-	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
-ROM_END
-
-
-ROM_START( relief2 )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
-	ROM_LOAD16_BYTE( "093-0011.19e", 0x00000, 0x20000, 0x794cea33 )
-	ROM_LOAD16_BYTE( "093-0012.19j", 0x00001, 0x20000, 0x577495f8 )
-	ROM_LOAD16_BYTE( "093-0013.17e", 0x40000, 0x20000, 0x1e1e82e5 )
-	ROM_LOAD16_BYTE( "093-0014.17j", 0x40001, 0x20000, 0x19e5decd )
-
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "093-0025.14s", 0x000000, 0x80000, 0x1b9e5ef2 )
-	ROM_LOAD( "093-0026.8d",  0x080000, 0x80000, 0x09b25d93 )
-	ROM_LOAD( "093-0027.18s", 0x100000, 0x80000, 0x5bc1c37b )
-	ROM_LOAD( "093-0028.10d", 0x180000, 0x80000, 0x55fb9111 )
-
-	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "093-0029.4d",  0x000000, 0x40000, 0xe4593ff4 )
-
-	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* 2MB for ADPCM data */
-	ROM_LOAD( "093-0030.9b",  0x100000, 0x80000, 0xf4c567f5 )
-	ROM_LOAD( "093-0031.10b", 0x180000, 0x80000, 0xba908d73 )
-ROM_END
 
 
 

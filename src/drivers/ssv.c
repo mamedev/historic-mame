@@ -102,7 +102,7 @@ int ssv_irq_callback(int level)
 			return vector;
 		}
 	}
-	return ignore_interrupt();
+	return 0;
 }
 
 WRITE16_HANDLER( ssv_irq_ack_w )
@@ -112,11 +112,10 @@ WRITE16_HANDLER( ssv_irq_ack_w )
 	update_irq_state();
 }
 
-int ssv_interrupt(void)
+INTERRUPT_GEN( ssv_interrupt )
 {
 	requested_int |= 1 << 3;
 	update_irq_state();
-	return ignore_interrupt();
 }
 
 
@@ -172,7 +171,7 @@ static WRITE16_HANDLER( ssv_lockout_inv_w )
 	}
 }
 
-void ssv_init_machine(void)
+MACHINE_INIT( ssv )
 {
 	requested_int = 0;
 	cpu_set_irq_callback(0, ssv_irq_callback);
@@ -191,7 +190,7 @@ void ssv_init_machine(void)
 static data16_t *ssv_nvram;
 static size_t    ssv_nvram_size;
 
-void ssv_nvram_handler(void *file,int read_or_write)
+NVRAM_HANDLER( ssv )
 {
 	if (read_or_write)
 		osd_fwrite(file, ssv_nvram, ssv_nvram_size);
@@ -298,7 +297,7 @@ static READ16_HANDLER( hypreact_input_r )
 	if (input_sel & 0x0002)	return readinputport(6);
 	if (input_sel & 0x0004)	return readinputport(7);
 	if (input_sel & 0x0008)	return readinputport(8);
-	logerror("CPU #0 PC %06X: unknown input read: %04X\n",cpu_get_pc(),input_sel);
+	logerror("CPU #0 PC %06X: unknown input read: %04X\n",activecpu_get_pc(),input_sel);
 	return 0xffff;
 }
 
@@ -440,7 +439,7 @@ static READ16_HANDLER( srmp4_input_r )
 	if (input_sel & 0x0004)	return readinputport(6);
 	if (input_sel & 0x0008)	return readinputport(7);
 	if (input_sel & 0x0010)	return readinputport(8);
-	logerror("CPU #0 PC %06X: unknown input read: %04X\n",cpu_get_pc(),input_sel);
+	logerror("CPU #0 PC %06X: unknown input read: %04X\n",activecpu_get_pc(),input_sel);
 	return 0xffff;
 }
 
@@ -489,7 +488,7 @@ static READ16_HANDLER( srmp7_input_r )
 	if (input_sel & 0x0004)	return readinputport(6);
 	if (input_sel & 0x0008)	return readinputport(7);
 	if (input_sel & 0x0010)	return readinputport(8);
-	logerror("CPU #0 PC %06X: unknown input read: %04X\n",cpu_get_pc(),input_sel);
+	logerror("CPU #0 PC %06X: unknown input read: %04X\n",activecpu_get_pc(),input_sel);
 	return 0xffff;
 }
 
@@ -1910,42 +1909,6 @@ static struct ES5506interface es5506_interface =
 #define CLOCK_12MHz_UNK		CLOCK_12MHz
 #define CLOCK_16MHz_UNK		CLOCK_16MHz
 
-#define SSV_MACHINE( _NAME, _CLOCK, _MIN_X, _MAX_X, _MIN_Y, _MAX_Y, _NVRAM )	\
-static const struct MachineDriver machine_driver_##_NAME =				\
-{																		\
-	{																	\
-		{																\
-			CPU_V60,													\
-			_CLOCK,														\
-			_NAME##_readmem, _NAME##_writemem,0,0,						\
-			ssv_interrupt, 1	/* Vblank */							\
-		}																\
-	},																	\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* we use cpu_getvblank */	\
-	1,																	\
-	ssv_init_machine,													\
-																		\
-	/* video hardware */												\
-	0x180, 0x100, { _MIN_X, _MAX_X, _MIN_Y, _MAX_Y },					\
-	ssv_gfxdecodeinfo,													\
-	0x8000, (0x8000/64)*256*2,											\
-	ssv_vh_init_palette,												\
-																		\
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,						\
-	0,																	\
-	0,																	\
-	0,																	\
-	ssv_vh_screenrefresh,												\
-																		\
-	/* sound hardware */												\
-	SOUND_SUPPORTS_STEREO,0,0,0,										\
-	{																	\
-		{ SOUND_ES5506, &es5506_interface }								\
-	},																	\
-																		\
-	_NVRAM																\
-};
-
 /***************************************************************************
 
 	Some games (e.g. hypreac2) oddly map the high bits of the tile code
@@ -1980,62 +1943,234 @@ void hypreac2_init(void)
 }
 
 
-void init_drifto94(void)	{	init_ssv();
+DRIVER_INIT( drifto94 )	{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-void init_hypreact(void)	{	init_ssv();
+DRIVER_INIT( hypreact )	{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf7;	}
-void init_hypreac2(void)	{	hypreac2_init();	// different
+DRIVER_INIT( hypreac2 )	{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
-void init_janjans1(void)	{	init_ssv();
+DRIVER_INIT( janjans1 )	{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-void init_keithlcy(void)	{	init_ssv();
+DRIVER_INIT( keithlcy )	{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf1;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-void init_meosism(void)		{	init_ssv();
+DRIVER_INIT( meosism )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
-void init_mslider(void)		{	init_ssv();
+DRIVER_INIT( mslider )		{	init_ssv();
 								ssv_sprites_offsx =-16;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +8;	ssv_tilemap_offsy = -0xf1;	}
-void init_ryorioh(void)		{	init_ssv();
+DRIVER_INIT( ryorioh )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-void init_srmp4(void)		{	init_ssv();
+DRIVER_INIT( srmp4 )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-void init_srmp7(void)		{	init_ssv();
+DRIVER_INIT( srmp7 )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = -0xf;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
-void init_survarts(void)	{	init_ssv();
+DRIVER_INIT( survarts )	{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
-void init_sxyreact(void)	{	hypreac2_init();	// different
+DRIVER_INIT( sxyreact )	{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
-void init_twineag2(void)	{	init_ssv();
+DRIVER_INIT( twineag2 )	{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;	}
 
 
-//           name      clock            visible_area           nvram_handler
+static MACHINE_DRIVER_START( ssv )
 
-SSV_MACHINE( drifto94, CLOCK_16MHz,     0, 0x150-1, 4, 0xf0-1, ssv_nvram_handler )
-SSV_MACHINE( hypreact, CLOCK_12MHz_UNK, 0, 0x150-1, 8, 0xf8-1, 0 )
-SSV_MACHINE( hypreac2, CLOCK_12MHz_UNK, 0, 0x150-1, 8, 0xf8-1, 0 )
-SSV_MACHINE( janjans1, CLOCK_12MHz_UNK, 0, 0x150-1, 0, 0xf0-1, 0 )
-SSV_MACHINE( keithlcy, CLOCK_12MHz_UNK, 0, 0x150-1, 4, 0xf0-1, 0 )
-SSV_MACHINE( meosism,  CLOCK_12MHz_UNK, 0, 0x150-1, 0, 0xf0-1, ssv_nvram_handler )
-SSV_MACHINE( mslider,  CLOCK_12MHz_UNK, 0, 0x150-1, 0, 0xf0-1, 0 )
-SSV_MACHINE( ryorioh,  CLOCK_12MHz_UNK, 0, 0x150-1, 0, 0xf0-1, 0 )
-SSV_MACHINE( srmp4,    CLOCK_12MHz,     0, 0x150-1, 4, 0xf4-1, 0 )
-SSV_MACHINE( srmp7,    CLOCK_12MHz_UNK, 0, 0x150-1, 0, 0xf0-1, 0 )
-SSV_MACHINE( survarts, CLOCK_12MHz_UNK, 0, 0x150-1, 4, 0xf4-1, 0 )
-SSV_MACHINE( sxyreact, CLOCK_12MHz_UNK, 0, 0x150-1, 0, 0xf0-1, 0 )
-SSV_MACHINE( twineag2, CLOCK_12MHz_UNK, 0, 0x150-1, 0, 0xf0-1, 0 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", V60, CLOCK_12MHz)
+	MDRV_CPU_VBLANK_INT(ssv_interrupt,1)	/* Vblank */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* we use cpu_getvblank */
+
+	MDRV_MACHINE_INIT(ssv)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(0x180, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_GFXDECODE(ssv_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x8000)
+	MDRV_COLORTABLE_LENGTH((0x8000/64)*256*2)
+
+	MDRV_PALETTE_INIT(ssv)
+	MDRV_VIDEO_UPDATE(ssv)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ES5506, es5506_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( drifto94 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_16MHz)
+	MDRV_CPU_MEMORY(drifto94_readmem, drifto94_writemem)
+
+	MDRV_NVRAM_HANDLER(ssv)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hypreact )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(hypreact_readmem, hypreact_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 8, 0xf8-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hypreac2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(hypreac2_readmem, hypreac2_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 8, 0xf8-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( janjans1 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(janjans1_readmem, janjans1_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( keithlcy )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(keithlcy_readmem, keithlcy_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( meosism )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(meosism_readmem, meosism_writemem)
+
+	MDRV_NVRAM_HANDLER(ssv)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mslider )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(mslider_readmem, mslider_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ryorioh )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(ryorioh_readmem, ryorioh_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( srmp4 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz)
+	MDRV_CPU_MEMORY(srmp4_readmem, srmp4_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( srmp7 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(srmp7_readmem, srmp7_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( survarts )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(survarts_readmem, survarts_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sxyreact )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(sxyreact_readmem, sxyreact_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( twineag2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ssv)
+	MDRV_CPU_REPLACE("main", V60, CLOCK_12MHz_UNK)
+	MDRV_CPU_MEMORY(twineag2_readmem, twineag2_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+MACHINE_DRIVER_END
+
 
 
 /***************************************************************************

@@ -22,12 +22,12 @@ extern double mcr68_timing_factor;
 extern Z80_DaisyChain mcr_daisy_chain[];
 extern UINT8 mcr_cocktail_flip;
 
-void mcr_init_machine(void);
-void mcr68_init_machine(void);
-void zwackery_init_machine(void);
+MACHINE_INIT( mcr );
+MACHINE_INIT( mcr68 );
+MACHINE_INIT( zwackery );
 
-int mcr_interrupt(void);
-int mcr68_interrupt(void);
+INTERRUPT_GEN( mcr_interrupt );
+INTERRUPT_GEN( mcr68_interrupt );
 
 WRITE_HANDLER( mcr_control_port_w );
 WRITE_HANDLER( mcrmono_control_port_w );

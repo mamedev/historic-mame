@@ -102,25 +102,24 @@ extern unsigned char *zaxxon_char_color_bank;
 extern unsigned char *zaxxon_background_position;
 extern unsigned char *zaxxon_background_color_bank;
 extern unsigned char *zaxxon_background_enable;
-void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  zaxxon_vh_start(void);
-int  razmataz_vh_start(void);
-void zaxxon_vh_stop(void);
-void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void ixion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( zaxxon );
+VIDEO_START( zaxxon );
+VIDEO_START( razmataz );
+VIDEO_UPDATE( zaxxon );
+VIDEO_UPDATE( razmataz );
+VIDEO_UPDATE( ixion );
 extern int zaxxon_vid_type;
 
 WRITE_HANDLER( zaxxon_sound_w );
 
 
 
-void zaxxon_init_machine(void)
+MACHINE_INIT( zaxxon )
 {
 	zaxxon_vid_type = 0;
 }
 
-void futspy_init_machine(void)
+MACHINE_INIT( futspy )
 {
 	zaxxon_vid_type = 2;
 }
@@ -281,11 +280,12 @@ MEMORY_END
 
 ***************************************************************************/
 
-static int zaxxon_interrupt(void)
+static INTERRUPT_GEN( zaxxon_interrupt )
 {
 	if (readinputport(5) & 1)	/* get status of the F2 key */
-		return nmi_interrupt(); /* trigger self test */
-	else return interrupt();
+		nmi_line_pulse(); /* trigger self test */
+	else 
+		irq0_line_hold();
 }
 
 INPUT_PORTS_START( zaxxon )
@@ -770,141 +770,118 @@ static struct Samplesinterface zaxxon_samples_interface =
 };
 
 
-static const struct MachineDriver machine_driver_zaxxon =
-{
+static MACHINE_DRIVER_START( zaxxon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			readmem,writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	zaxxon_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zaxxon)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	zaxxon_vh_start,
-	zaxxon_vh_stop,
-	zaxxon_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(zaxxon)
+	MDRV_VIDEO_UPDATE(zaxxon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&zaxxon_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, zaxxon_samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_futspy =
-{
+
+static MACHINE_DRIVER_START( futspy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			readmem,futspy_writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	futspy_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(readmem,futspy_writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(futspy)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	futspy_gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(futspy_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	zaxxon_vh_start,
-	zaxxon_vh_stop,
-	zaxxon_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(zaxxon)
+	MDRV_VIDEO_UPDATE(zaxxon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&zaxxon_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, zaxxon_samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_razmataz =
-{
+
+static MACHINE_DRIVER_START( razmataz )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			razmataz_readmem,razmataz_writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	zaxxon_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(razmataz_readmem,razmataz_writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zaxxon)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	razmataz_vh_start,
-	zaxxon_vh_stop,
-	razmataz_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(razmataz)
+	MDRV_VIDEO_UPDATE(razmataz)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ixion =
-{
+
+static MACHINE_DRIVER_START( ixion )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			ixion_readmem,razmataz_writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	zaxxon_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(ixion_readmem,razmataz_writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zaxxon)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	razmataz_vh_start,
-	zaxxon_vh_stop,
-	ixion_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(razmataz)
+	MDRV_VIDEO_UPDATE(ixion)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -1144,7 +1121,7 @@ ROM_START( ixion )
 	ROM_LOAD( "1944a.u51",      0x0800, 0x0800, 0x88215098 )
 ROM_END
 
-static void init_zaxxonb(void)
+static DRIVER_INIT( zaxxonb )
 {
 /*
 	the values vary, but the translation mask is always laid out like this:
@@ -1219,22 +1196,22 @@ static void init_zaxxonb(void)
 	}
 }
 
-static void init_szaxxon(void)
+static DRIVER_INIT( szaxxon )
 {
 	szaxxon_decode();
 }
 
-static void init_futspy(void)
+static DRIVER_INIT( futspy )
 {
 	futspy_decode();
 }
 
-static void init_razmataz(void)
+static DRIVER_INIT( razmataz )
 {
 	nprinces_decode();
 }
 
-static void init_ixion(void)
+static DRIVER_INIT( ixion )
 {
 	szaxxon_decode();
 }

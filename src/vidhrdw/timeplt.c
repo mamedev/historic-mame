@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 extern unsigned char *spriteram,*spriteram_2;
 extern size_t spriteram_size;
@@ -41,7 +42,7 @@ static int scanline;
   bit 0 -- not connected
 
 ***************************************************************************/
-void timeplt_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( timeplt )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -115,26 +116,15 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-void timeplt_vh_stop(void)
-{
-	free(sprite_mux_buffer);
-	free(sprite_mux_buffer_2);
-	sprite_mux_buffer = NULL;
-	sprite_mux_buffer_2 = NULL;
-}
-
-int timeplt_vh_start(void)
+VIDEO_START( timeplt )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	sprite_mux_buffer = malloc(256 * spriteram_size);
-	sprite_mux_buffer_2 = malloc(256 * spriteram_size);
+	sprite_mux_buffer = auto_malloc(256 * spriteram_size);
+	sprite_mux_buffer_2 = auto_malloc(256 * spriteram_size);
 
 	if (!bg_tilemap || !sprite_mux_buffer || !sprite_mux_buffer_2)
-	{
-		timeplt_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
@@ -184,17 +174,17 @@ READ_HANDLER( timeplt_scanline_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
-	struct rectangle clip = Machine->visible_area;
+	struct rectangle clip = *cliprect;
 	int offs;
 	int line;
 
 
 	for (line = 0;line < 256;line++)
 	{
-		if (line >= Machine->visible_area.min_y && line <= Machine->visible_area.max_y)
+		if (line >= cliprect->min_y && line <= cliprect->max_y)
 		{
 			unsigned char *sr,*sr2;
 
@@ -228,15 +218,15 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void timeplt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( timeplt )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,1,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,1,0);
 }
 
 
-int timeplt_interrupt(void)
+INTERRUPT_GEN( timeplt_interrupt )
 {
 	scanline = 255 - cpu_getiloops();
 
@@ -244,7 +234,5 @@ int timeplt_interrupt(void)
 	memcpy(sprite_mux_buffer_2 + scanline * spriteram_size,spriteram_2,spriteram_size);
 
 	if (scanline == 255)
-		return nmi_interrupt();
-	else
-		return ignore_interrupt();
+		nmi_line_pulse();
 }

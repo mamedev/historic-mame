@@ -56,26 +56,28 @@ static int trueorientation;
 static int orientation_count;
 
 
-void switch_ui_orientation(void)
+void switch_ui_orientation(struct mame_bitmap *bitmap)
 {
 	if (orientation_count == 0)
 	{
 		trueorientation = Machine->orientation;
 		Machine->orientation = Machine->ui_orientation;
-		set_pixel_functions();
+		if (bitmap)
+			set_pixel_functions(bitmap);
 	}
 
 	orientation_count++;
 }
 
-void switch_true_orientation(void)
+void switch_true_orientation(struct mame_bitmap *bitmap)
 {
 	orientation_count--;
 
 	if (orientation_count == 0)
 	{
 		Machine->orientation = trueorientation;
-		set_pixel_functions();
+		if (bitmap)
+			set_pixel_functions(bitmap);
 	}
 }
 
@@ -383,7 +385,7 @@ struct GfxElement *builduifont(void)
 	static pen_t colortable[2*2];	/* ASG 980209 */
 
 
-	switch_ui_orientation();
+	switch_ui_orientation(NULL);
 
 	if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -422,7 +424,7 @@ struct GfxElement *builduifont(void)
 		font->total_colors = 2;
 	}
 
-	switch_true_orientation();
+	switch_true_orientation(NULL);
 
 	return font;
 }
@@ -445,7 +447,7 @@ static void erase_screen(struct mame_bitmap *bitmap)
 
 void displaytext(struct mame_bitmap *bitmap,const struct DisplayText *dt)
 {
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 
 	osd_mark_dirty(Machine->uixmin,Machine->uiymin,Machine->uixmin+Machine->uiwidth-1,Machine->uiymin+Machine->uiheight-1);
 
@@ -513,13 +515,13 @@ void displaytext(struct mame_bitmap *bitmap,const struct DisplayText *dt)
 		dt++;
 	}
 
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
 }
 
 /* Writes messages on the screen. */
 static void ui_text_ex(struct mame_bitmap *bitmap,const char* buf_begin, const char* buf_end, int x, int y, int color)
 {
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 
 	for (;buf_begin != buf_end; ++buf_begin)
 	{
@@ -529,7 +531,7 @@ static void ui_text_ex(struct mame_bitmap *bitmap,const char* buf_begin, const c
 		x += Machine->uifontwidth;
 	}
 
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
 }
 
 /* Writes messages on the screen. */
@@ -543,7 +545,7 @@ void ui_drawbox(struct mame_bitmap *bitmap,int leftx,int topy,int width,int heig
 {
 	UINT32 black,white;
 
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 
 	if (leftx < 0) leftx = 0;
 	if (topy < 0) topy = 0;
@@ -562,7 +564,7 @@ void ui_drawbox(struct mame_bitmap *bitmap,int leftx,int topy,int width,int heig
 	plot_box(bitmap,leftx+width-1,topy,         1,      height,  white);
 	plot_box(bitmap,leftx+1,      topy+1,       width-2,height-2,black);
 
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
 }
 
 
@@ -571,7 +573,7 @@ static void drawbar(struct mame_bitmap *bitmap,int leftx,int topy,int width,int 
 	UINT32 black,white;
 
 
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 
 	if (leftx < 0) leftx = 0;
 	if (topy < 0) topy = 0;
@@ -594,7 +596,7 @@ static void drawbar(struct mame_bitmap *bitmap,int leftx,int topy,int width,int 
 
 	plot_box(bitmap,leftx+(width-1)*default_percentage/100,topy+height-height/8,1,height/8,white);
 
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
 }
 
 /* Extract one line from a multiline buffer */
@@ -1018,7 +1020,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 					{
 						int sx,sy,colors;
 
-						switch_ui_orientation();
+						switch_ui_orientation(bitmap);
 
 						colors = total_colors - 256 * palpage;
 						if (colors > 256) colors = 256;
@@ -1044,7 +1046,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 							sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
 							plot_box(bitmap,sx,sy,Machine->uifontwidth*4/3,Machine->uifontheight,colortable[i + 256*palpage]);
 						}
-						switch_true_orientation();
+						switch_true_orientation(bitmap);
 					}
 					else
 						ui_text(bitmap,"N/A",3*Machine->uifontwidth,2*Machine->uifontheight);
@@ -1074,7 +1076,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 						if (firstdrawn < 0) firstdrawn = 0;
 					}
 
-					switch_ui_orientation();
+					switch_ui_orientation(bitmap);
 
 
 #ifndef PREROTATE_GFX
@@ -1103,7 +1105,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 						lastdrawn = i+firstdrawn;
 					}
 
-					switch_true_orientation();
+					switch_true_orientation(bitmap);
 
 					sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
 					ui_text(bitmap,buf,0,0);
@@ -2139,6 +2141,7 @@ int showcopyright(struct mame_bitmap *bitmap)
 
 	setup_selected = -1;////
 	done = 0;
+
 	do
 	{
 		update_video_and_audio();
@@ -3630,7 +3633,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		{
 #include "cpu/z80/z80.h"
 			soundlatch_w(0,jukebox_selected);
-			cpu_cause_interrupt(1,Z80_NMI_INT);
+			cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 		}
 		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 		{

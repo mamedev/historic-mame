@@ -18,8 +18,8 @@ NOTE:  ROM DM03 is missing from all known ROM sets.  This is a color palette.
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void bking2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( bking2 );
+VIDEO_UPDATE( bking2 );
 WRITE_HANDLER( bking2_xld1_w );
 WRITE_HANDLER( bking2_yld1_w );
 WRITE_HANDLER( bking2_xld2_w );
@@ -59,7 +59,7 @@ static WRITE_HANDLER( bking2_soundlatch_w )
 		if (data & (1 << i)) code |= 0x80 >> i;
 
 	soundlatch_w(offset,code);
-	if (sndnmi_enable) cpu_cause_interrupt(1,Z80_NMI_INT);
+	if (sndnmi_enable) cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -315,59 +315,43 @@ static struct DACinterface dac_interface =
 
 
 
-static const struct MachineDriver machine_driver_bking2 =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80,
-			4000000,	/* 4 MHz */
-            readmem,writemem,
-            readport,writeport,
-            interrupt,1
-        },
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
+static MACHINE_DRIVER_START( bking2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 			/* interrupts (from Jungle King hardware, might be wrong): */
 			/* - no interrupts synced with vblank */
 			/* - NMI triggered by the main CPU */
 			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
 			/*   that is a period of 27306666.6666 ns */
-			0,0,
-			interrupt,27306667
-		}
-    },
-    60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-    0,  /* init machine */
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,27306667)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
     /* video hardware */
-    32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-    gfxdecodeinfo,
-    512, 4*8+4*4+4*2+4*2,
-    bking2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(4*8+4*4+4*2+4*2)
 
-    VIDEO_TYPE_RASTER,
-    0,  /* video hardware init */
-    generic_vh_start,
-    generic_vh_stop,
-    bking2_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bking2)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(bking2)
 
     /* sound hardware */
-    0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

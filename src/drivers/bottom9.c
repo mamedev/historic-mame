@@ -16,16 +16,15 @@ driver by Nicola Salmoria
 
 extern int bottom9_video_enable;
 
-int bottom9_vh_start(void);
-void bottom9_vh_stop(void);
-void bottom9_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( bottom9 );
+VIDEO_UPDATE( bottom9 );
 
 
 
-static int bottom9_interrupt(void)
+static INTERRUPT_GEN( bottom9_interrupt )
 {
-	if (K052109_is_IRQ_enabled()) return interrupt();
-	else return ignore_interrupt();
+	if (K052109_is_IRQ_enabled())	
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -97,15 +96,15 @@ static WRITE_HANDLER( bottom9_1f90_w )
 
 static WRITE_HANDLER( bottom9_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static int nmienable;
 
-static int bottom9_sound_interrupt(void)
+static INTERRUPT_GEN( bottom9_sound_interrupt )
 {
-	if (nmienable) return nmi_interrupt();
-	else return ignore_interrupt();
+	if (nmienable)
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static WRITE_HANDLER( nmi_enable_w )
@@ -398,47 +397,33 @@ static struct K007232_interface k007232_interface =
 
 
 
-static const struct MachineDriver machine_driver_bottom9 =
-{
-	{
-		{
-			CPU_M6809,
-			2000000, /* ? */
-			bottom9_readmem,bottom9_writemem,0,0,
-			bottom9_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			bottom9_sound_readmem, bottom9_sound_writemem,0,0,
-			bottom9_sound_interrupt,8	/* irq is triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( bottom9 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 2000000) /* ? */
+	MDRV_CPU_MEMORY(bottom9_readmem,bottom9_writemem)
+	MDRV_CPU_VBLANK_INT(bottom9_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(bottom9_sound_readmem,bottom9_sound_writemem)
+	MDRV_CPU_VBLANK_INT(bottom9_sound_interrupt,8)	/* irq is triggered by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	bottom9_vh_start,
-	bottom9_vh_stop,
-	bottom9_vh_screenrefresh,
+	MDRV_VIDEO_START(bottom9)
+	MDRV_VIDEO_UPDATE(bottom9)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_K007232,
-			&k007232_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -620,7 +605,7 @@ ROM_END
 
 
 
-static void init_bottom9(void)
+static DRIVER_INIT( bottom9 )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

@@ -16,10 +16,10 @@ a 68000 to create the background image.
 #include "vidhrdw/generic.h"
 
 // machine\toypop.c
-void toypop_init_machine(void);
-int toypop_main_interrupt(void);
-int toypop_sound_interrupt(void);
-int toypop_m68000_interrupt(void);
+MACHINE_INIT( toypop );
+INTERRUPT_GEN( toypop_main_interrupt );
+INTERRUPT_GEN( toypop_sound_interrupt );
+INTERRUPT_GEN( toypop_m68000_interrupt );
 WRITE_HANDLER( toypop_main_interrupt_enable_w );
 WRITE_HANDLER( toypop_main_interrupt_disable_w );
 WRITE_HANDLER( toypop_sound_interrupt_enable_w );
@@ -45,8 +45,8 @@ WRITE16_HANDLER( toypop_merged_background_w );
 WRITE_HANDLER( toypop_palettebank_w );
 WRITE16_HANDLER( toypop_flipscreen_w );
 WRITE16_HANDLER( liblrabl_flipscreen_w );
-void toypop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void toypop_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_UPDATE( toypop );
+PALETTE_INIT( toypop );
 
 
 
@@ -364,54 +364,42 @@ static struct namco_interface namco_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_toypop =
-{
-	{
-		{
-			CPU_M6809,
-			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
-			readmem_mainCPU,writemem_mainCPU,0,0,
-			toypop_main_interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1536000,	/* 1.536 MHz (measured on Libble Rabble board) */
-			readmem_soundCPU,writemem_soundCPU,0,0,
-			toypop_sound_interrupt,1
-		},
-		{
-			CPU_M68000,
-			6144000,	/* 6.144 MHz (measured on Libble Rabble board) */
-			readmem_68k,writemem_68k,0,0,
-			toypop_m68000_interrupt,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	toypop_init_machine,
+static MACHINE_DRIVER_START( toypop )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 1536000)	/* 1.536 MHz (measured on Libble Rabble board) */
+	MDRV_CPU_MEMORY(readmem_mainCPU,writemem_mainCPU)
+	MDRV_CPU_VBLANK_INT(toypop_main_interrupt,1)
+
+	MDRV_CPU_ADD(M6809, 1536000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.536 MHz (measured on Libble Rabble board) */
+	MDRV_CPU_MEMORY(readmem_soundCPU,writemem_soundCPU)
+	MDRV_CPU_VBLANK_INT(toypop_sound_interrupt,1)
+
+	MDRV_CPU_ADD(M68000, 6144000)	/* 6.144 MHz (measured on Libble Rabble board) */
+	MDRV_CPU_MEMORY(readmem_68k,writemem_68k)
+	MDRV_CPU_VBLANK_INT(toypop_m68000_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(toypop)
 
 	/* video hardware */
-	18*16, 14*16, { 0*16, 18*16-1, 0*16, 14*16-1 },
-	gfxdecodeinfo,
-	256,128*4+64*4,
-	toypop_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(18*16, 14*16)
+	MDRV_VISIBLE_AREA(0*16, 18*16-1, 0*16, 14*16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(128*4+64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	toypop_vh_screenrefresh,
+	MDRV_PALETTE_INIT(toypop)
+	MDRV_VIDEO_UPDATE(toypop)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -490,7 +478,7 @@ ROM_END
  *
  *************************************/
 
-static void init_liblrabl(void)
+static DRIVER_INIT( liblrabl )
 {
 	/* install the custom I/O chip */
 	install_mem_read_handler(0, 0x6800, 0x683f, liblrabl_customio_r);
@@ -503,7 +491,7 @@ static void init_liblrabl(void)
 }
 
 
-static void init_toypop(void)
+static DRIVER_INIT( toypop )
 {
 	/* install the custom I/O chip */
 	install_mem_read_handler(0, 0x6000, 0x603f, toypop_customio_r);

@@ -198,20 +198,9 @@ When it is long, 14 stages everything is possible.
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
-int darius2d_vh_start (void);
-int warriorb_vh_start (void);
-void warriorb_vh_stop (void);
-void warriorb_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-
-
-/***********************************************************
-				INTERRUPTS
-***********************************************************/
-
-static int warriorb_interrupt(void)
-{
-	return 4;
-}
+VIDEO_START( darius2d );
+VIDEO_START( warriorb );
+VIDEO_UPDATE( warriorb );
 
 
 /***********************************************************
@@ -584,95 +573,67 @@ static struct CustomSound_interface subwoofer_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static struct MachineDriver machine_driver_darius2d =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? (Might well be 16!) */
-			darius2d_readmem,darius2d_writemem,0,0,
-			warriorb_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( darius2d )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? (Might well be 16!) */
+	MDRV_CPU_MEMORY(darius2d_readmem,darius2d_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	80*8, 32*8, { 0*8, 80*8-1, 3*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(8,3)
+	MDRV_SCREEN_SIZE(80*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 80*8-1, 3*8, 32*8-1)
+	MDRV_GFXDECODE(warriorb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096*2)
 
-	warriorb_gfxdecodeinfo,
-	4096*2, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
-	0,
-	darius2d_vh_start,
-	warriorb_vh_stop,
-	warriorb_vh_screenrefresh,
+	MDRV_VIDEO_START(darius2d)
+	MDRV_VIDEO_UPDATE(warriorb)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&subwoofer_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_warriorb =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ? */
-			warriorb_readmem,warriorb_writemem,0,0,
-			warriorb_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices */
-	0,
+
+static MACHINE_DRIVER_START( warriorb )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ? */
+	MDRV_CPU_MEMORY(warriorb_readmem,warriorb_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	80*8, 32*8, { 0*8, 80*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(8,3)
+	MDRV_SCREEN_SIZE(80*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 80*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(warriorb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096*2)
 
-	warriorb_gfxdecodeinfo,
-	4096*2, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(8,3),
-	0,
-	warriorb_vh_start,
-	warriorb_vh_stop,
-	warriorb_vh_screenrefresh,
+	MDRV_VIDEO_START(warriorb)
+	MDRV_VIDEO_UPDATE(warriorb)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610B,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610B, ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -810,7 +771,7 @@ ROM_START( warriorb )
 ROM_END
 
 
-static void init_warriorb(void)
+static DRIVER_INIT( warriorb )
 {
 	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);

@@ -1,34 +1,29 @@
-/*
- * Cosmic Chasm driver
- *
- * Jul 15 1999 by Mathis Rosenhauer
- *
- */
+/***************************************************************************
+
+	Cinematronics Cosmic Chasm hardware
+	
+	driver by Mathis Rosenhauer
+
+	Games supported:
+		* Cosmic Chasm
+
+	Known bugs:
+		* none at this time
+
+***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "machine/z80fmly.h"
+#include "cchasm.h"
 
-/* from machine/cchasm.c */
-READ16_HANDLER( cchasm_6840_r );
-WRITE16_HANDLER( cchasm_6840_w );
-WRITE16_HANDLER( cchasm_led_w );
 
-/* from vidhrdw/cchasm.c */
-WRITE16_HANDLER( cchasm_refresh_control_w );
-void cchasm_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int cchasm_vh_start (void);
-void cchasm_vh_stop (void);
 
-extern data16_t *cchasm_ram;
-
-/* from sndhrdw/cchasm.c */
-WRITE16_HANDLER( cchasm_io_w );
-READ16_HANDLER( cchasm_io_r );
-READ_HANDLER( cchasm_snd_io_r );
-WRITE_HANDLER( cchasm_snd_io_w );
-int cchasm_sh_start(const struct MachineSound *msound);
-void cchasm_sh_update(void);
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x00ffff, MRA16_ROM },
@@ -37,6 +32,7 @@ static MEMORY_READ16_START( readmem )
 	{ 0xf80000, 0xf800ff, cchasm_io_r },
 	{ 0xffb000, 0xffffff, MRA16_RAM },
 MEMORY_END
+
 
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x00ffff, MWA16_ROM },
@@ -48,12 +44,21 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0xffb000, 0xffffff, MWA16_RAM, &cchasm_ram },
 MEMORY_END
 
+
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
+
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x5000, 0x53ff, MRA_RAM },
 	{ 0x6000, 0x6fff, cchasm_snd_io_r },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
@@ -62,14 +67,23 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x6000, 0x6fff, cchasm_snd_io_w },
 MEMORY_END
 
+
 static PORT_READ_START( sound_readport )
 	{ 0x00, 0x03, z80ctc_0_r },
 PORT_END
+
 
 static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x03, z80ctc_0_w },
 PORT_END
 
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( cchasm )
 	PORT_START /* DSW */
@@ -119,6 +133,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -130,6 +150,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0 }
 };
 
+
 static struct CustomSound_interface custom_interface =
 {
 	cchasm_sh_start,
@@ -137,67 +158,62 @@ static struct CustomSound_interface custom_interface =
 	cchasm_sh_update
 };
 
+
+
+/*************************************
+ *
+ *	CPU config
+ *
+ *************************************/
+
 static Z80_DaisyChain daisy_chain[] =
 {
 	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-	{ 0,0,0,-1} 		/* end mark */
+	{ 0,0,0,-1 } 		/* end mark */
 };
 
-static const struct MachineDriver machine_driver_cchasm =
-{
+
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( cchasm )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000, /* 8 MHz (from schematics) */
-			readmem, writemem,0,0,
-			0,0
-		},
-		{
-			CPU_Z80,
-			3584229,	/* 3.58  MHz (from schematics) */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			0,0,
-            0,0,daisy_chain
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
+	MDRV_CPU_ADD(M68000,8000000)	/* 8 MHz (from schematics) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	
+	MDRV_CPU_ADD(Z80,3584229)		/* 3.58  MHz (from schematics) */
+	MDRV_CPU_CONFIG(daisy_chain)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(40)
 
 	/* video hardware */
-	400, 300, { 0, 1024-1, 0, 768-1 },
-	0,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(0, 1024-1, 0, 768-1)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	cchasm_vh_start,
-	vector_vh_stop,
-	vector_vh_screenrefresh,
+	MDRV_VIDEO_START(cchasm)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( cchasm )
 	ROM_REGION( 0x010000, REGION_CPU1, 0 )
@@ -221,6 +237,7 @@ ROM_START( cchasm )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
+
 
 ROM_START( cchasm1 )
 	ROM_REGION( 0x010000, REGION_CPU1, 0 )
@@ -246,6 +263,12 @@ ROM_START( cchasm1 )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1983, cchasm,  0,      cchasm, cchasm, 0, ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 1)" )
 GAME( 1983, cchasm1, cchasm, cchasm, cchasm, 0, ROT270, "Cinematronics / GCE", "Cosmic Chasm (set 2)" )

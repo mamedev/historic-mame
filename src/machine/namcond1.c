@@ -19,7 +19,7 @@ static UINT8 namcond1_h8_irq5_enabled;
 static UINT8 coin_state;
 static UINT8 coin_count[4];
 
-void namcond1_init_machine(void)
+MACHINE_INIT( namcond1 )
 {
 #ifdef MAME_DEBUG
     /*unsigned char   *ROM = memory_region(REGION_CPU1);*/
@@ -44,11 +44,6 @@ void namcond1_init_machine(void)
     coin_state = 0;
     coin_count[0] = coin_count[1] =
     coin_count[2] = coin_count[3] = 0;
-}
-
-int namcond1_vb_interrupt( void )
-{
-    return( m68_level1_irq() );
 }
 
 // instance of the shared ram pointer
@@ -143,7 +138,7 @@ READ16_HANDLER( namcond1_cuskey_r )
 
         default :
             logerror( "offset $%X accessed from $%X\n",
-                      offset<<1, cpu_get_pc() );
+                      offset<<1, activecpu_get_pc() );
             return( 0 );
     }
 }
@@ -157,7 +152,7 @@ WRITE16_HANDLER( namcond1_shared_ram_w )
             if( namcond1_shared_ram[offset] == 0x0000 &&
                 data == 0x0001 )
               logerror( "changing 0$->$1 to $%x @$%x\n",
-                        offset<<1, cpu_get_pc() );
+                        offset<<1, activecpu_get_pc() );
         #endif
             COMBINE_DATA( namcond1_shared_ram + offset );
             break;
@@ -182,18 +177,18 @@ WRITE16_HANDLER( namcond1_cuskey_w )
 data16_t *namcond1_eeprom;
 
 /* not used at this point */
-void namcond1_nvramhandler( void *f, int state )
+NVRAM_HANDLER( namcond1 )
 {
-  if( f == 0 )
+  if( file == 0 )
     return;
 
-  if( state == 0 ) {
+  if( read_or_write == 0 ) {
     /* read eeprom contents */
-    osd_fread( f, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
+    osd_fread( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
   }
   else {
     /* write eeprom contents */
-    osd_fwrite( f, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
+    osd_fwrite( file, namcond1_eeprom, NAMCOND1_EEPROM_SIZE );
   }
 }
 

@@ -122,7 +122,7 @@ LAYER( 2 )
 
 static int sprites_scrolldx, sprites_scrolldy;
 
-int unico16_vh_start(void)
+VIDEO_START( unico16 )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0,tilemap_scan_rows,
 								TILEMAP_TRANSPARENT,	16,16,	0x40, 0x40);
@@ -173,7 +173,7 @@ int unico16_vh_start(void)
 
 ***************************************************************************/
 
-static void unico16_draw_sprites(struct mame_bitmap *bitmap)
+static void unico16_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -220,7 +220,7 @@ static void unico16_draw_sprites(struct mame_bitmap *bitmap)
 						attr & 0x1f,
 						flipx, flipy,
 						x, sy,
-						&Machine->visible_area, TRANSPARENCY_PEN,0x00,
+						cliprect, TRANSPARENCY_PEN,0x00,
 						pri_mask	);
 		}
 
@@ -249,7 +249,7 @@ if (keyboard_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-void unico16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( unico16 )
 {
 	int gunx[256] = {
 		0x160,0x162,0x164,0x165,
@@ -294,20 +294,20 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 #endif
 
 	/* The background color is the first of the last palette */
-	fillbitmap(bitmap,Machine->pens[0x1f00],&Machine->visible_area);
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(bitmap,Machine->pens[0x1f00],cliprect);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0,0,1);
-	if (layers_ctrl & 2)	tilemap_draw(bitmap,tilemap_1,0,2);
-	if (layers_ctrl & 4)	tilemap_draw(bitmap,tilemap_2,0,4);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,1);
+	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect,tilemap_1,0,2);
+	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_2,0,4);
 
 	/* Sprites are drawn last, using pdrawgfx */
-	if (layers_ctrl & 8)	unico16_draw_sprites(bitmap);
+	if (layers_ctrl & 8)	unico16_draw_sprites(bitmap,cliprect);
 
 	/* Draw the gunsight for ligth gun games */
 	if (unico16_has_lightgun)
 		draw_crosshair(bitmap,
 			gunx[readinputport(6)&0xff] - 0x08 -3,
 			readinputport(5) -0x17 -3,
-			&Machine->visible_area);
+			cliprect);
 }

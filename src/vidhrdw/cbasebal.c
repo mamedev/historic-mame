@@ -44,27 +44,16 @@ static void get_fg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-void cbasebal_vh_stop(void)
+VIDEO_START( cbasebal )
 {
-	free(cbasebal_textram);
-	cbasebal_textram = 0;
-	free(cbasebal_scrollram);
-	cbasebal_scrollram = 0;
-}
-
-int cbasebal_vh_start(void)
-{
-	cbasebal_textram = malloc(0x1000);
-	cbasebal_scrollram = malloc(0x1000);
+	cbasebal_textram = auto_malloc(0x1000);
+	cbasebal_scrollram = auto_malloc(0x1000);
 
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,   16,16,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 	if (!cbasebal_textram || !cbasebal_scrollram || !bg_tilemap || !fg_tilemap)
-	{
-		cbasebal_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(fg_tilemap,3);
 
@@ -166,7 +155,7 @@ WRITE_HANDLER( cbasebal_scrolly_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs,sx,sy;
 
@@ -195,20 +184,20 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				color,
 				flipx,flipscreen,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void cbasebal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cbasebal )
 {
 	if (bg_on)
-		tilemap_draw(bitmap,bg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	else
-		fillbitmap(bitmap,Machine->pens[768],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[768],cliprect);
 
 	if (obj_on)
-		draw_sprites(bitmap);
+		draw_sprites(bitmap,cliprect);
 
 	if (text_on)
-		tilemap_draw(bitmap,fg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

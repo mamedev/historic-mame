@@ -765,13 +765,13 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			if( pb == 0x8c )
 			{
 				sym1 = set_ea_info(1, pc, (INT8)offset, EA_REL_PC);
-				ea = (pc + (INT8)offset + cpu_get_reg(regid_6309[reg])) & 0xffff;
+				ea = (pc + (INT8)offset + activecpu_get_reg(regid_6309[reg])) & 0xffff;
 				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
 			else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT8, EA_VALUE);
-				ea = (cpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
 				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
 		}
@@ -801,7 +801,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
-				ea = (cpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
 				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
 		}
@@ -809,7 +809,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		if ( pb == 0x8f || pb == 0x90 )
 		{
 			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
-			ea = (cpu_get_reg(HD6309_E) << 8) + cpu_get_reg(HD6309_F);
+			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",W");
 		}
 		else
@@ -821,21 +821,21 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			p += 2;
 
 			sym1 = set_ea_info(1, offset, EA_INT16, EA_MEM_WR);
-			ea = ((cpu_get_reg(HD6309_E) << 8) + (cpu_get_reg(HD6309_F)) + offset) & 0xffff;
+			ea = ((activecpu_get_reg(HD6309_E) << 8) + (activecpu_get_reg(HD6309_F)) + offset) & 0xffff;
 			buffer += sprintf (buffer, "%s,W", sym1);
 		}
 		else
 		if ( pb == 0xcf || pb == 0xd0 )
 		{
 			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
-			ea = (cpu_get_reg(HD6309_E) << 8) + cpu_get_reg(HD6309_F);
+			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",W++");
 		}
 		else
 		if ( pb == 0xef || pb == 0xf0 )
 		{
 			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
-			ea = (cpu_get_reg(HD6309_E) << 8) + cpu_get_reg(HD6309_F);
+			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",--W");
 		}
 		else
@@ -846,47 +846,47 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			switch( pb & 0x8f )
 			{
 			case 0x80:
-				ea = cpu_get_reg(regid_6309[reg]);
+				ea = activecpu_get_reg(regid_6309[reg]);
 				buffer += sprintf (buffer, ",%s+", regs_6309[reg]);
 				break;
 			case 0x81:
-				ea = cpu_get_reg(regid_6309[reg]);
+				ea = activecpu_get_reg(regid_6309[reg]);
 				buffer += sprintf (buffer, ",%s++", regs_6309[reg]);
 				break;
 			case 0x82:
-				ea = cpu_get_reg(regid_6309[reg]);
+				ea = activecpu_get_reg(regid_6309[reg]);
 				buffer += sprintf (buffer, ",-%s", regs_6309[reg]);
 				break;
 			case 0x83:
-				ea = cpu_get_reg(regid_6309[reg]);
+				ea = activecpu_get_reg(regid_6309[reg]);
 				buffer += sprintf (buffer, ",--%s", regs_6309[reg]);
 				break;
 			case 0x84:
-				ea = cpu_get_reg(regid_6309[reg]);
+				ea = activecpu_get_reg(regid_6309[reg]);
 				buffer += sprintf (buffer, ",%s", regs_6309[reg]);
 				break;
 			case 0x85:
-				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_B)) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_B)) & 0xffff;
 				buffer += sprintf (buffer, "B,%s", regs_6309[reg]);
 				break;
 			case 0x86:
-				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_A)) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_A)) & 0xffff;
 				buffer += sprintf (buffer, "A,%s", regs_6309[reg]);
 				break;
 			case 0x87:
-				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_E)) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_E)) & 0xffff;
 				buffer += sprintf (buffer, "E,%s", regs_6309[reg]);
 				break;
 			case 0x8a:
-				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_F)) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_F)) & 0xffff;
 				buffer += sprintf (buffer, "F,%s", regs_6309[reg]);
 				break;
 			case 0x8b:
-				ea = (cpu_get_reg(regid_6309[reg]) + (cpu_get_reg(HD6309_A) << 8) + cpu_get_reg(HD6309_B)) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + (activecpu_get_reg(HD6309_A) << 8) + activecpu_get_reg(HD6309_B)) & 0xffff;
 				buffer += sprintf (buffer, "D,%s", regs_6309[reg]);
 				break;
 			case 0x8e:
-				ea = (cpu_get_reg(regid_6309[reg]) + (cpu_get_reg(HD6309_E) << 8) + cpu_get_reg(HD6309_F)) & 0xffff;
+				ea = (activecpu_get_reg(regid_6309[reg]) + (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F)) & 0xffff;
 				buffer += sprintf (buffer, "W,%s", regs_6309[reg]);
 				break;
 			}

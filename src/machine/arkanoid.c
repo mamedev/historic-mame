@@ -20,7 +20,7 @@ static unsigned char portC_out,ddrC;
 
 FILE *thelog;
 
-void arkanoid_init_machine(void)
+MACHINE_INIT( arkanoid )
 {
 	portA_in = portA_out = z80write = m68705write = 0;
 }

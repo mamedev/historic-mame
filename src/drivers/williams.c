@@ -1,475 +1,476 @@
-/*
+/***************************************************************************
 
-	Ordering:
+	Williams 6809 system
 
+    driver by Michael Soderstrom, Marc LaFontaine, Aaron Giles
+
+	Games supported:
 		* Defender
-		* Defense Command
-		* Mayday Mai'dez
+		* Mayday
 		* Colony 7
-
 		* Stargate
 		* Robotron
 		* Joust
 		* Bubbles
-		* Splat
+		* Splat!
 		* Sinistar
-		* Lotto Fun
-
+		* PlayBall!
 		* Blaster
-
 		* Mystic Marathon
 		* Turkey Shoot
 		* Inferno
 		* Joust 2
-
-*/
-
-
-/***************************************************************************
-
-Changes:
-	Mar 12 98 LBO
-	* Added Sinistar speech samples provided by Howie Cohen
-	* Fixed clipping circuit with help from Sean Riddle and Pat Lawrence
-
-	Mar 22 98 ASG
-	* Fixed Sinistar head drawing, did another major cleanup
-	* Rewrote the blitter routines
-	* Fixed interrupt timing finally!!!
-
-Note: the visible area (according to the service mode) seems to be
-	{ 6, 297-1, 7, 246-1 },
-however I use
-	{ 6, 298-1, 7, 247-1 },
-because the DOS port doesn't support well screen widths which are not multiple of 4.
-
-------- Blaster Bubbles Joust Robotron Sinistar Splat Stargate -------------
-
-0000-8FFF ROM   (for Blaster, 0000-3FFF is a bank of 12 ROMs)
-0000-97FF Video  RAM Bank switched with ROM (96FF for Blaster)
-9800-BFFF RAM
-	0xBB00 Blaster only, Color 0 for each line (256 entry)
-	0xBC00 Blaster only, Color 0 flags, latch color only if bit 0 = 1 (256 entry)
-	    Do something else with the bit 1, I do not know what
-C000-CFFF I/O
-D000-FFFF ROM
-
-c000-C00F color_registers  (16 bytes of BBGGGRRR)
-
-c804 widget_pia_dataa (widget = I/O board)
-c805 widget_pia_ctrla
-c806 widget_pia_datab
-c807 widget_pia_ctrlb (CB2 select between player 1 and player 2
-		       controls if Table or Joust)
-      bits 5-3 = 110 = player 2
-      bits 5-3 = 111 = player 1
-
-c80c rom_pia_dataa
-c80d rom_pia_ctrla
-c80e rom_pia_datab
-      bit 0 \
-      bit 1 |
-      bit 2 |-6 bits to sound board
-      bit 3 |
-      bit 4 |
-      bit 5 /
-      bit 6 \
-      bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
-c80f rom_pia_ctrlb
-
-C900 rom_enable_scr_ctrl  Switch between video ram and rom at 0000-97FF
-
-C940 Blaster only: Select bank in the color Prom for color remap
-C980 Blaster only: Select which ROM is at 0000-3FFF
-C9C0 Blaster only: bit 0 = enable the color 0 changing each lines
-		   bit 1 = erase back each frame
-
-
-***** Blitter ****** (Stargate and Defender do not have blitter)
-CA00 start_blitter    Each bits has a function
-      1000 0000 Do not process half the byte 4-7
-      0100 0000 Do not process half the byte 0-3
-      0010 0000 Shift the shape one pixel right (to display a shape on an odd pixel)
-      0001 0000 Remap, if shape != 0 then pixel = mask
-      0000 1000 Source  1 = take source 0 = take Mask only
-      0000 0100 ?
-      0000 0010 Transparent
-      0000 0001
-CA01 blitter_mask     Not really a mask, more a remap color, see Blitter
-CA02 blitter_source   hi
-CA03 blitter_source   lo
-CA04 blitter_dest     hi
-CA05 blitter_dest     lo
-CA06 blitter_w_h      H  Do a XOR with 4 to have the real value (Except Splat)
-CA07 blitter_w_h      W  Do a XOR with 4 to have the real value (Except Splat)
-
-CB00 6 bits of the video counters bits 2-7
-
-CBFF watchdog
-
-CC00-CFFF 1K X 4 CMOS ram battery backed up (8 bits on Sinistar)
-
-
-
-
------------------- Robotron -------------------
-c804 widget_pia_dataa (widget = I/O board)
-  bit 0  Move Up
-  bit 1  Move Down
-  bit 2  Move Left
-  bit 3  Move Right
-  bit 4  1 Player
-  bit 5  2 Players
-  bit 6  Fire Up
-  bit 7  Fire Down
-
-c806 widget_pia_datab
-  bit 0  Fire Left
-  bit 1  Fire Right
-  bit 2
-  bit 3
-  bit 4
-  bit 5
-  bit 6
-  bit 7
-
-c80c rom_pia_dataa
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin
-  bit 3  High Score Reset
-  bit 4  Left Coin
-  bit 5  Center Coin
-  bit 6  Slam Door Tilt
-  bit 7  Hand Shake from sound board
-
-
------------------- Joust -------------------
-c804 widget_pia_dataa (widget = I/O board)
-  bit 0  Move Left   player 1/2
-  bit 1  Move Right  player 1/2
-  bit 2  Flap        player 1/2
-  bit 3
-  bit 4  2 Player
-  bit 5  1 Players
-  bit 6
-  bit 7
-
-c806 widget_pia_datab
-  bit 0
-  bit 1
-  bit 2
-  bit 3
-  bit 4
-  bit 5
-  bit 6
-  bit 7
-
-c80c rom_pia_dataa
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin
-  bit 3  High Score Reset
-  bit 4  Left Coin
-  bit 5  Center Coin
-  bit 6  Slam Door Tilt
-  bit 7  Hand Shake from sound board
-
-
------------------- Stargate -------------------
-c804 widget_pia_dataa (widget = I/O board)
-  bit 0  Fire
-  bit 1  Thrust
-  bit 2  Smart Bomb
-  bit 3  HyperSpace
-  bit 4  2 Players
-  bit 5  1 Player
-  bit 6  Reverse
-  bit 7  Down
-
-c806 widget_pia_datab
-  bit 0  Up
-  bit 1  Inviso
-  bit 2
-  bit 3
-  bit 4
-  bit 5
-  bit 6
-  bit 7  0 = Upright  1 = Table
-
-c80c rom_pia_dataa
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin        (High Score Reset in schematics)
-  bit 3  High Score Reset  (Left Coin in schematics)
-  bit 4  Left Coin         (Center Coin in schematics)
-  bit 5  Center Coin       (Right Coin in schematics)
-  bit 6  Slam Door Tilt
-  bit 7  Hand Shake from sound board
-
-
------------------- Splat -------------------
-c804 widget_pia_dataa (widget = I/O board)
-  bit 0  Walk Up
-  bit 1  Walk Down
-  bit 2  Walk Left
-  bit 3  Walk Right
-  bit 4  1 Player
-  bit 5  2 Players
-  bit 6  Throw Up
-  bit 7  Throw Down
-
-c806 widget_pia_datab
-  bit 0  Throw Left
-  bit 1  Throw Right
-  bit 2
-  bit 3
-  bit 4
-  bit 5
-  bit 6
-  bit 7
-
-c80c rom_pia_dataa
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin
-  bit 3  High Score Reset
-  bit 4  Left Coin
-  bit 5  Center Coin
-  bit 6  Slam Door Tilt
-  bit 7  Hand Shake from sound board
-
-
------------------- Blaster -------------------
-c804 widget_pia_dataa (widget = I/O board)
-  bit 0  up/down switch a
-  bit 1  up/down switch b
-  bit 2  up/down switch c
-  bit 3  up/down direction
-  bit 4  left/right switch a
-  bit 5  left/right switch b
-  bit 6  left/right switch c
-  bit 7  left/right direction
-
-c806 widget_pia_datab
-  bit 0  Thrust (Panel)
-  bit 1  Blast
-  bit 2  Thrust (Joystick)
-  bit 3
-  bit 4  1 Player
-  bit 5  2 Player
-  bit 6
-  bit 7
-
-c80c rom_pia_dataa
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin
-  bit 3  High Score Reset
-  bit 4  Left Coin
-  bit 5  Center Coin
-  bit 6  Slam Door Tilt
-  bit 7  Hand Shake from sound board
-
-------------------------- Sinistar -------------------------------------
-c804 widget_pia_dataa (widget = I/O board)
-  bit 0  up/down switch a
-  bit 1  up/down switch b
-  bit 2  up/down switch c
-  bit 3  up/down direction
-  bit 4  left/right switch a
-  bit 5  left/right switch b
-  bit 6  left/right switch c
-  bit 7  left/right direction
-
-c806 widget_pia_datab
-  bit 0  Fire
-  bit 1  Bomb
-  bit 2
-  bit 3
-  bit 4  1 Player
-  bit 5  2 Player
-  bit 6
-  bit 7
-
-c80c rom_pia_dataa
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin
-  bit 3  High Score Reset
-  bit 4  Left Coin
-  bit 5  Center Coin
-  bit 6  Slam Door Tilt
-  bit 7  Hand Shake from sound board
-
-
------------------- Bubbles -------------------
-c804 widget_pia_dataa (widget = I/O board)
-  bit 0  Up
-  bit 1  Down
-  bit 2  Left
-  bit 3  Right
-  bit 4  2 Players
-  bit 5  1 Player
-  bit 6
-  bit 7
-
-c806 widget_pia_datab
-  bit 0
-  bit 1
-  bit 2
-  bit 3
-  bit 4
-  bit 5
-  bit 6
-  bit 7
-
-c80c rom_pia_dataa
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin        (High Score Reset in schematics)
-  bit 3  High Score Reset  (Left Coin in schematics)
-  bit 4  Left Coin         (Center Coin in schematics)
-  bit 5  Center Coin       (Right Coin in schematics)
-  bit 6  Slam Door Tilt
-  bit 7  Hand Shake from sound board
-
-------------------------- Defender -------------------------------------
-0000-9800 Video RAM
-C000-CFFF ROM (4 banks) + I/O
-d000-ffff ROM
-
-c000-c00f color_registers  (16 bytes of BBGGGRRR)
-
-C3FC      WatchDog
-
-C400-C4FF CMOS ram battery backed up
-
-C800      6 bits of the video counters bits 2-7
-
-cc00 pia1_dataa (widget = I/O board)
-  bit 0  Auto Up
-  bit 1  Advance
-  bit 2  Right Coin
-  bit 3  High Score Reset
-  bit 4  Left Coin
-  bit 5  Center Coin
-  bit 6
-  bit 7
-cc01 pia1_ctrla
-
-cc02 pia1_datab
-  bit 0 \
-  bit 1 |
-  bit 2 |-6 bits to sound board
-  bit 3 |
-  bit 4 |
-  bit 5 /
-  bit 6 \
-  bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
-cc03 pia1_ctrlb (CB2 select between player 1 and player 2 controls if Table)
-
-cc04 pia2_dataa
-  bit 0  Fire
-  bit 1  Thrust
-  bit 2  Smart Bomb
-  bit 3  HyperSpace
-  bit 4  2 Players
-  bit 5  1 Player
-  bit 6  Reverse
-  bit 7  Down
-cc05 pia2_ctrla
-
-cc06 pia2_datab
-  bit 0  Up
-  bit 1
-  bit 2
-  bit 3
-  bit 4
-  bit 5
-  bit 6
-  bit 7
-cc07 pia2_ctrlb
-  Control the IRQ
-
-d000 Select bank (c000-cfff)
-  0 = I/O
-  1 = BANK 1
-  2 = BANK 2
-  3 = BANK 3
-  7 = BANK 4
-
-------------------------------------------------------------------------
-
-Mystic Marathon (1983)
-Turkey Shoot (1984)
-Inferno (1984)
-Joust2 Survival of the Fittest (1986)
-
-All have two boards, a large board with lots of RAM and
-three ROMs, and a smaller board with lots of ROMs,
-the CPU, the 6821 PIAs, and the two "Special Chip 2"
-custom BIT/BLT chips.
-Joust 2 has an additional music/speech board that has a
-68B09E CPU, 68B21 PIA, Harris 55564-5 CVSD, and a YM2151.
-
-Contact Michael Soderstrom (ichael@geocities.com) if you
-have any additional information or corrections.
-
-Memory Map:
-
-15 14 13 12  11 10  9  8   7  6  5  4   3  2  1  0
---------------------------------------------------
- x  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-BFFF	48K DRAM
-
- 0  0  0  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-1FFF	8K ROM
- 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	8K ROM
- 0  1  0  x   x  x  x  x   x  x  x  x   x  x  x  x	4000-5FFF	8K ROM
- 0  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	6000-7FFF	8K ROM
-
- 1  0  0  0   x  x  x  x   x  x  x  x   x  x  x  x	8000-8FFF	EN_COLOR* (PAGE3 only)
-
- 0  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-7FFF	OE_DRAM* (PAGE0 and read only) or:
- 1  0  x  x   x  x  x  x   x  x  x  x   x  x  x  x	9000-BFFF	OE_DRAM* (!EN COLOR and read only)
-
- 1  1  0  0   x  x  x  x   x  x  x  x   x  x  x  x	C000-CFFF	I/O:
- 1  1  0  0   0  x  x  x   x  x  x  x   x  x  x  x	C000-C7FF	MAP_EN*
- 1  1  0  0   1  0  0  0   0  x  x  x   x  x  x  x	C800-C87F	CS_PAGE
- 1  1  0  0   1  0  0  0   1  x  x  x   x  x  x  x	C880-C87F	CS_INT* (blitter)
- 1  1  0  0   1  0  0  1   0  x  x  x   x  x  x  x	C900-C97F	CS_WDOG* (data = 0x14)
- 1  1  0  0   1  0  0  1   1  x  x  x   x  x  x  x	C980-C9FF	CS_PIA
- 1  1  0  0   1  0  0  1   1  x  x  x   0  0  x  x	C980-C983	PIA IC5
- 1  1  0  0   1  0  0  1   1  x  x  x   0  1  x  x	C984-C987	PIA IC6
- 1  1  0  0   1  0  0  1   1  x  x  x   1  1  x  x	C98C		7 segment LED
-
- 1  1  0  0   1  0  1  1   0  0  0  x   x  x  x  x	CB00-CB1F	CK_FG
- 1  1  0  0   1  0  1  1   0  0  1  x   x  x  x  x	CB20-CB3F	CK_BG
- 1  1  0  0   1  0  1  1   0  1  0  x   x  x  x  x	CB40-CB5F	CK_SCL
- 1  1  0  0   1  0  1  1   0  1  1  x   x  x  x  x	CB60-CB7F	CK_SCH
- 1  1  0  0   1  0  1  1   1  0  0  x   x  x  x  x	CB80-CB9F	FLIP clk
- 1  1  0  0   1  0  1  1   1  0  1  x   x  x  x  x	CBA0-CBBF	DMA_WRINH clk
-
- 1  1  0  0   1  0  1  1   1  1  1  0   x  x  x  x	CBE0-CBEF	EN VPOS*
-
- 1  1  0  0   1  1  0  0   x  x  x  x   x  x  x  x	CC00-CCFF	1Kx4 CMOS RAM MEM_PROT protected
- 1  1  0  0   1  1  x  x   x  x  x  x   x  x  x  x	CD00-CFFF	          not MEM_PROT protected
-
- Mystic Marathon/Inferno:
- 1  1  0  1   0  x  x  x   x  x  x  x   x  x  x  x	D000-D7FF	SRAM0*
- 1  1  0  1   1  x  x  x   x  x  x  x   x  x  x  x	D800-DFFF	SRAM1*
- 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
- 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
-
- Turkey Shoot/Joust2:
- 1  1  0  1   x  x  x  x   x  x  x  x   x  x  x  x	D000-DFFF	DXXX* 4K ROM
- 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
- 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
-
-6802/6808 Sound
-
- 0  0  0  x   x  x  x  x   0  x  x  x   x  x  x  x	0000-007F	128 bytes RAM
- 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	CS PIA IC4
- 1  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	E000-FFFF	8K ROM
+		* Lotto Fun
+
+****************************************************************************
+
+	Blitter (Stargate and Defender do not have blitter)
+	---------------------------------------------------
+
+	CA00 start_blitter    Each bits has a function
+	      1000 0000 Do not process half the byte 4-7
+	      0100 0000 Do not process half the byte 0-3
+	      0010 0000 Shift the shape one pixel right (to display a shape on an odd pixel)
+	      0001 0000 Remap, if shape != 0 then pixel = mask
+	      0000 1000 Source  1 = take source 0 = take Mask only
+	      0000 0100 ?
+	      0000 0010 Transparent
+	      0000 0001
+	CA01 blitter_mask     Not really a mask, more a remap color, see Blitter
+	CA02 blitter_source   hi
+	CA03 blitter_source   lo
+	CA04 blitter_dest     hi
+	CA05 blitter_dest     lo
+	CA06 blitter_w_h      H  Do a XOR with 4 to have the real value (Except Splat)
+	CA07 blitter_w_h      W  Do a XOR with 4 to have the real value (Except Splat)
+
+	CB00 6 bits of the video counters bits 2-7
+
+	CBFF watchdog
+
+	CC00-CFFF 1K X 4 CMOS ram battery backed up (8 bits on Sinistar)
+
+****************************************************************************
+
+	Blaster Bubbles Joust Robotron Sinistar Splat Stargate
+	------------------------------------------------------
+
+	0000-8FFF ROM   (for Blaster, 0000-3FFF is a bank of 12 ROMs)
+	0000-97FF Video  RAM Bank switched with ROM (96FF for Blaster)
+	9800-BFFF RAM
+		0xBB00 Blaster only, Color 0 for each line (256 entry)
+		0xBC00 Blaster only, Color 0 flags, latch color only if bit 0 = 1 (256 entry)
+		    Do something else with the bit 1, I do not know what
+	C000-CFFF I/O
+	D000-FFFF ROM
+
+	c000-C00F color_registers  (16 bytes of BBGGGRRR)
+
+	c804 widget_pia_dataa (widget = I/O board)
+	c805 widget_pia_ctrla
+	c806 widget_pia_datab
+	c807 widget_pia_ctrlb (CB2 select between player 1 and player 2
+			       controls if Table or Joust)
+	      bits 5-3 = 110 = player 2
+	      bits 5-3 = 111 = player 1
+
+	c80c rom_pia_dataa
+	c80d rom_pia_ctrla
+	c80e rom_pia_datab
+	      bit 0 \
+	      bit 1 |
+	      bit 2 |-6 bits to sound board
+	      bit 3 |
+	      bit 4 |
+	      bit 5 /
+	      bit 6 \
+	      bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
+	c80f rom_pia_ctrlb
+
+	C900 rom_enable_scr_ctrl  Switch between video ram and rom at 0000-97FF
+
+	C940 Blaster only: Select bank in the color Prom for color remap
+	C980 Blaster only: Select which ROM is at 0000-3FFF
+	C9C0 Blaster only: bit 0 = enable the color 0 changing each lines
+			   bit 1 = erase back each frame
+
+****************************************************************************
+
+	Robotron
+	--------
+	c804 widget_pia_dataa (widget = I/O board)
+	  bit 0  Move Up
+	  bit 1  Move Down
+	  bit 2  Move Left
+	  bit 3  Move Right
+	  bit 4  1 Player
+	  bit 5  2 Players
+	  bit 6  Fire Up
+	  bit 7  Fire Down
+
+	c806 widget_pia_datab
+	  bit 0  Fire Left
+	  bit 1  Fire Right
+	  bit 2
+	  bit 3
+	  bit 4
+	  bit 5
+	  bit 6
+	  bit 7
+
+	c80c rom_pia_dataa
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin
+	  bit 3  High Score Reset
+	  bit 4  Left Coin
+	  bit 5  Center Coin
+	  bit 6  Slam Door Tilt
+	  bit 7  Hand Shake from sound board
+
+****************************************************************************
+
+	Joust
+	-----
+	c804 widget_pia_dataa (widget = I/O board)
+	  bit 0  Move Left   player 1/2
+	  bit 1  Move Right  player 1/2
+	  bit 2  Flap        player 1/2
+	  bit 3
+	  bit 4  2 Player
+	  bit 5  1 Players
+	  bit 6
+	  bit 7
+
+	c806 widget_pia_datab
+	  bit 0
+	  bit 1
+	  bit 2
+	  bit 3
+	  bit 4
+	  bit 5
+	  bit 6
+	  bit 7
+
+	c80c rom_pia_dataa
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin
+	  bit 3  High Score Reset
+	  bit 4  Left Coin
+	  bit 5  Center Coin
+	  bit 6  Slam Door Tilt
+	  bit 7  Hand Shake from sound board
+
+****************************************************************************
+
+	Stargate
+	--------
+	c804 widget_pia_dataa (widget = I/O board)
+	  bit 0  Fire
+	  bit 1  Thrust
+	  bit 2  Smart Bomb
+	  bit 3  HyperSpace
+	  bit 4  2 Players
+	  bit 5  1 Player
+	  bit 6  Reverse
+	  bit 7  Down
+
+	c806 widget_pia_datab
+	  bit 0  Up
+	  bit 1  Inviso
+	  bit 2
+	  bit 3
+	  bit 4
+	  bit 5
+	  bit 6
+	  bit 7  0 = Upright  1 = Table
+
+	c80c rom_pia_dataa
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin        (High Score Reset in schematics)
+	  bit 3  High Score Reset  (Left Coin in schematics)
+	  bit 4  Left Coin         (Center Coin in schematics)
+	  bit 5  Center Coin       (Right Coin in schematics)
+	  bit 6  Slam Door Tilt
+	  bit 7  Hand Shake from sound board
+
+****************************************************************************
+
+	Splat
+	-----
+	c804 widget_pia_dataa (widget = I/O board)
+	  bit 0  Walk Up
+	  bit 1  Walk Down
+	  bit 2  Walk Left
+	  bit 3  Walk Right
+	  bit 4  1 Player
+	  bit 5  2 Players
+	  bit 6  Throw Up
+	  bit 7  Throw Down
+
+	c806 widget_pia_datab
+	  bit 0  Throw Left
+	  bit 1  Throw Right
+	  bit 2
+	  bit 3
+	  bit 4
+	  bit 5
+	  bit 6
+	  bit 7
+
+	c80c rom_pia_dataa
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin
+	  bit 3  High Score Reset
+	  bit 4  Left Coin
+	  bit 5  Center Coin
+	  bit 6  Slam Door Tilt
+	  bit 7  Hand Shake from sound board
+
+****************************************************************************
+
+	Blaster
+	-------
+	c804 widget_pia_dataa (widget = I/O board)
+	  bit 0  up/down switch a
+	  bit 1  up/down switch b
+	  bit 2  up/down switch c
+	  bit 3  up/down direction
+	  bit 4  left/right switch a
+	  bit 5  left/right switch b
+	  bit 6  left/right switch c
+	  bit 7  left/right direction
+
+	c806 widget_pia_datab
+	  bit 0  Thrust (Panel)
+	  bit 1  Blast
+	  bit 2  Thrust (Joystick)
+	  bit 3
+	  bit 4  1 Player
+	  bit 5  2 Player
+	  bit 6
+	  bit 7
+
+	c80c rom_pia_dataa
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin
+	  bit 3  High Score Reset
+	  bit 4  Left Coin
+	  bit 5  Center Coin
+	  bit 6  Slam Door Tilt
+	  bit 7  Hand Shake from sound board
+
+****************************************************************************
+
+	Sinistar
+	--------
+	c804 widget_pia_dataa (widget = I/O board)
+	  bit 0  up/down switch a
+	  bit 1  up/down switch b
+	  bit 2  up/down switch c
+	  bit 3  up/down direction
+	  bit 4  left/right switch a
+	  bit 5  left/right switch b
+	  bit 6  left/right switch c
+	  bit 7  left/right direction
+
+	c806 widget_pia_datab
+	  bit 0  Fire
+	  bit 1  Bomb
+	  bit 2
+	  bit 3
+	  bit 4  1 Player
+	  bit 5  2 Player
+	  bit 6
+	  bit 7
+
+	c80c rom_pia_dataa
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin
+	  bit 3  High Score Reset
+	  bit 4  Left Coin
+	  bit 5  Center Coin
+	  bit 6  Slam Door Tilt
+	  bit 7  Hand Shake from sound board
+
+****************************************************************************
+
+	Bubbles
+	-------
+	c804 widget_pia_dataa (widget = I/O board)
+	  bit 0  Up
+	  bit 1  Down
+	  bit 2  Left
+	  bit 3  Right
+	  bit 4  2 Players
+	  bit 5  1 Player
+	  bit 6
+	  bit 7
+
+	c806 widget_pia_datab
+	  bit 0
+	  bit 1
+	  bit 2
+	  bit 3
+	  bit 4
+	  bit 5
+	  bit 6
+	  bit 7
+
+	c80c rom_pia_dataa
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin        (High Score Reset in schematics)
+	  bit 3  High Score Reset  (Left Coin in schematics)
+	  bit 4  Left Coin         (Center Coin in schematics)
+	  bit 5  Center Coin       (Right Coin in schematics)
+	  bit 6  Slam Door Tilt
+	  bit 7  Hand Shake from sound board
+
+****************************************************************************
+
+	Defender
+	--------
+	0000-9800 Video RAM
+	C000-CFFF ROM (4 banks) + I/O
+	d000-ffff ROM
+
+	c000-c00f color_registers  (16 bytes of BBGGGRRR)
+
+	C3FC      WatchDog
+
+	C400-C4FF CMOS ram battery backed up
+
+	C800      6 bits of the video counters bits 2-7
+
+	cc00 pia1_dataa (widget = I/O board)
+	  bit 0  Auto Up
+	  bit 1  Advance
+	  bit 2  Right Coin
+	  bit 3  High Score Reset
+	  bit 4  Left Coin
+	  bit 5  Center Coin
+	  bit 6
+	  bit 7
+	cc01 pia1_ctrla
+
+	cc02 pia1_datab
+	  bit 0 \
+	  bit 1 |
+	  bit 2 |-6 bits to sound board
+	  bit 3 |
+	  bit 4 |
+	  bit 5 /
+	  bit 6 \
+	  bit 7 /Plus CA2 and CB2 = 4 bits to drive the LED 7 segment
+	cc03 pia1_ctrlb (CB2 select between player 1 and player 2 controls if Table)
+
+	cc04 pia2_dataa
+	  bit 0  Fire
+	  bit 1  Thrust
+	  bit 2  Smart Bomb
+	  bit 3  HyperSpace
+	  bit 4  2 Players
+	  bit 5  1 Player
+	  bit 6  Reverse
+	  bit 7  Down
+	cc05 pia2_ctrla
+
+	cc06 pia2_datab
+	  bit 0  Up
+	  bit 1
+	  bit 2
+	  bit 3
+	  bit 4
+	  bit 5
+	  bit 6
+	  bit 7
+	cc07 pia2_ctrlb
+	  Control the IRQ
+
+	d000 Select bank (c000-cfff)
+	  0 = I/O
+	  1 = BANK 1
+	  2 = BANK 2
+	  3 = BANK 3
+	  7 = BANK 4
+
+****************************************************************************
+
+	Mystic Marathon (1983)
+	Turkey Shoot (1984)
+	Inferno (1984)
+	Joust2 Survival of the Fittest (1986)
+
+	All have two boards, a large board with lots of RAM and
+	three ROMs, and a smaller board with lots of ROMs,
+	the CPU, the 6821 PIAs, and the two "Special Chip 2"
+	custom BIT/BLT chips.
+	Joust 2 has an additional music/speech board that has a
+	68B09E CPU, 68B21 PIA, Harris 55564-5 CVSD, and a YM2151.
+
+	Contact Michael Soderstrom (ichael@geocities.com) if you
+	have any additional information or corrections.
+
+	Memory Map:
+
+	15 14 13 12  11 10  9  8   7  6  5  4   3  2  1  0
+	--------------------------------------------------
+	 x  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-BFFF	48K DRAM
+
+	 0  0  0  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-1FFF	8K ROM
+	 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	8K ROM
+	 0  1  0  x   x  x  x  x   x  x  x  x   x  x  x  x	4000-5FFF	8K ROM
+	 0  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	6000-7FFF	8K ROM
+
+	 1  0  0  0   x  x  x  x   x  x  x  x   x  x  x  x	8000-8FFF	EN_COLOR* (PAGE3 only)
+
+	 0  x  x  x   x  x  x  x   x  x  x  x   x  x  x  x	0000-7FFF	OE_DRAM* (PAGE0 and read only) or:
+	 1  0  x  x   x  x  x  x   x  x  x  x   x  x  x  x	9000-BFFF	OE_DRAM* (!EN COLOR and read only)
+
+	 1  1  0  0   x  x  x  x   x  x  x  x   x  x  x  x	C000-CFFF	I/O:
+	 1  1  0  0   0  x  x  x   x  x  x  x   x  x  x  x	C000-C7FF	MAP_EN*
+	 1  1  0  0   1  0  0  0   0  x  x  x   x  x  x  x	C800-C87F	CS_PAGE
+	 1  1  0  0   1  0  0  0   1  x  x  x   x  x  x  x	C880-C87F	CS_INT* (blitter)
+	 1  1  0  0   1  0  0  1   0  x  x  x   x  x  x  x	C900-C97F	CS_WDOG* (data = 0x14)
+	 1  1  0  0   1  0  0  1   1  x  x  x   x  x  x  x	C980-C9FF	CS_PIA
+	 1  1  0  0   1  0  0  1   1  x  x  x   0  0  x  x	C980-C983	PIA IC5
+	 1  1  0  0   1  0  0  1   1  x  x  x   0  1  x  x	C984-C987	PIA IC6
+	 1  1  0  0   1  0  0  1   1  x  x  x   1  1  x  x	C98C		7 segment LED
+
+	 1  1  0  0   1  0  1  1   0  0  0  x   x  x  x  x	CB00-CB1F	CK_FG
+	 1  1  0  0   1  0  1  1   0  0  1  x   x  x  x  x	CB20-CB3F	CK_BG
+	 1  1  0  0   1  0  1  1   0  1  0  x   x  x  x  x	CB40-CB5F	CK_SCL
+	 1  1  0  0   1  0  1  1   0  1  1  x   x  x  x  x	CB60-CB7F	CK_SCH
+	 1  1  0  0   1  0  1  1   1  0  0  x   x  x  x  x	CB80-CB9F	FLIP clk
+	 1  1  0  0   1  0  1  1   1  0  1  x   x  x  x  x	CBA0-CBBF	DMA_WRINH clk
+
+	 1  1  0  0   1  0  1  1   1  1  1  0   x  x  x  x	CBE0-CBEF	EN VPOS*
+
+	 1  1  0  0   1  1  0  0   x  x  x  x   x  x  x  x	CC00-CCFF	1Kx4 CMOS RAM MEM_PROT protected
+	 1  1  0  0   1  1  x  x   x  x  x  x   x  x  x  x	CD00-CFFF	          not MEM_PROT protected
+
+	 Mystic Marathon/Inferno:
+	 1  1  0  1   0  x  x  x   x  x  x  x   x  x  x  x	D000-D7FF	SRAM0*
+	 1  1  0  1   1  x  x  x   x  x  x  x   x  x  x  x	D800-DFFF	SRAM1*
+	 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
+	 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
+
+	 Turkey Shoot/Joust2:
+	 1  1  0  1   x  x  x  x   x  x  x  x   x  x  x  x	D000-DFFF	DXXX* 4K ROM
+	 1  1  1  0   x  x  x  x   x  x  x  x   x  x  x  x	E000-EFFF	EXXX* 4K ROM
+	 1  1  1  1   x  x  x  x   x  x  x  x   x  x  x  x	F000-FFFF	FXXX* 4K ROM
+
+	6802/6808 Sound
+
+	 0  0  0  x   x  x  x  x   0  x  x  x   x  x  x  x	0000-007F	128 bytes RAM
+	 0  0  1  x   x  x  x  x   x  x  x  x   x  x  x  x	2000-3FFF	CS PIA IC4
+	 1  1  1  x   x  x  x  x   x  x  x  x   x  x  x  x	E000-FFFF	8K ROM
 
 ***************************************************************************/
 
@@ -480,18 +481,11 @@ Memory Map:
 #include "williams.h"
 
 
-/**** local stuff ****/
-
-static UINT16 cmos_base;
-static UINT16 cmos_length;
-
-
-
 /**** configuration macros ****/
 
 #define CONFIGURE_CMOS(a,l) \
-	cmos_base = a;\
-	cmos_length = l
+	generic_nvram = &memory_region(REGION_CPU1)[a];\
+	generic_nvram_size = l
 
 #define CONFIGURE_BLITTER(x,r,c) \
 	williams_blitter_xor = x;\
@@ -510,23 +504,6 @@ static UINT16 cmos_length;
 	pia_config(0, PIA_STANDARD_ORDERING, &a);\
 	pia_config(1, PIA_STANDARD_ORDERING, &b);\
 	pia_config(2, PIA_STANDARD_ORDERING, &c)
-
-
-
-static void nvram_handler(void *file,int read_or_write)
-{
-	UINT8 *ram = memory_region(REGION_CPU1);
-
-	if (read_or_write)
-		osd_fwrite(file,&ram[cmos_base],cmos_length);
-	else
-	{
-		if (file)
-			osd_fread(file,&ram[cmos_base],cmos_length);
-		else
-			memset(&ram[cmos_base],0,cmos_length);
-	}
-}
 
 
 
@@ -747,6 +724,7 @@ INPUT_PORTS_START( defender )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( colony7 )
 	PORT_START	/* IN0 */
@@ -1034,6 +1012,38 @@ INPUT_PORTS_START( blaster )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( blastkit )
+	PORT_START      /* IN0 */
+	/* pseudo analog joystick, see below */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", KEYCODE_7, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+
+	PORT_START	/* fake, converted by sinistar_input_port_0() */
+	PORT_ANALOG( 0xff, 0x38, IPT_AD_STICK_X, 100, 10, 0x00, 0x6f )
+
+	PORT_START	/* fake, converted by sinistar_input_port_0() */
+	PORT_ANALOG( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0x00, 0x6f )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( mysticm )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
@@ -1210,7 +1220,7 @@ static struct DACinterface dac_interface =
 
 static struct hc55516_interface sinistar_cvsd_interface =
 {
-	1,	/* 1 chip */
+	1,
 	{ 80 },
 };
 
@@ -1222,339 +1232,124 @@ static struct hc55516_interface sinistar_cvsd_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_defender =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,
-			defender_readmem,defender_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			3579000/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	defender_init_machine,
+static MACHINE_DRIVER_START( defender )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6809, 1000000)
+	MDRV_CPU_MEMORY(defender_readmem,defender_writemem)
+
+	MDRV_CPU_ADD_TAG("sound", M6808, 3579000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(defender)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	304, 256,
-	{ 6, 298-1, 7, 247-1 },
-	0,
-	16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(304, 256)
+	MDRV_VISIBLE_AREA(6, 298-1, 7, 247-1)
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	williams_vh_start,
-	williams_vh_stop,
-	williams_vh_screenrefresh,
+	MDRV_VIDEO_START(williams)
+	MDRV_VIDEO_UPDATE(williams)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_williams =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,
-			williams_readmem,williams_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			3579000/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	williams_init_machine,
+static MACHINE_DRIVER_START( williams )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(defender)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(williams_readmem,williams_writemem)
+
+	MDRV_MACHINE_INIT(williams)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sinistar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(williams)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(HC55516, sinistar_cvsd_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( playball )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(sinistar)
 
 	/* video hardware */
-	304, 256,
-	{ 6, 298-1, 7, 247-1 },
-	0,
-	16, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	williams_vh_start,
-	williams_vh_stop,
-	williams_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_VISIBLE_AREA(6, 298-1, 8, 239-1)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_sinistar =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,
-			williams_readmem,williams_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			3579000/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	williams_init_machine,
+static MACHINE_DRIVER_START( blaster )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(williams)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(blaster_readmem,blaster_writemem)
 
 	/* video hardware */
-	304, 256,
-	{ 6, 298-1, 7, 247-1 },
-	0,
-	16, 0,
-	0,
+	MDRV_PALETTE_LENGTH(16+240)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	williams_vh_start,
-	williams_vh_stop,
-	williams_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_HC55516,
-			&sinistar_cvsd_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_VIDEO_START(blaster)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_playball =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,
-			williams_readmem,williams_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			3579000/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	williams_init_machine,
+static MACHINE_DRIVER_START( williams2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6809, 1000000)
+	MDRV_CPU_MEMORY(williams2_readmem,williams2_writemem)
+
+	MDRV_CPU_ADD_TAG("sound", M6808, 3579000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(williams2_sound_readmem,williams2_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(williams2)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	304, 256,
-	{ 6, 298-1, 8, 239-1 },
-	0,
-	16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(288, 256)
+	MDRV_VISIBLE_AREA(4, 288-1, 8, 248-1)
+	MDRV_GFXDECODE(williams2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16+8*16)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	williams_vh_start,
-	williams_vh_stop,
-	williams_vh_screenrefresh,
+	MDRV_VIDEO_START(williams2)
+	MDRV_VIDEO_UPDATE(williams2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_HC55516,
-			&sinistar_cvsd_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD_TAG("wmsdac", DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_blaster =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,
-			blaster_readmem,blaster_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			3579000/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	williams_init_machine,
+static MACHINE_DRIVER_START( joust2 )
 
-	/* video hardware */
-	304, 256,
-	{ 6, 298-1, 7, 247-1 },
-	0,
-	16+240, 0,
-	0,
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(williams2)
+	MDRV_IMPORT_FROM(williams_cvsd_sound)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	blaster_vh_start,
-	williams_vh_stop,
-	williams_vh_screenrefresh,
+	MDRV_MACHINE_INIT(joust2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
-
-
-static const struct MachineDriver machine_driver_williams2 =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,
-			williams2_readmem,williams2_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			3579000/4,
-			williams2_sound_readmem,williams2_sound_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	williams2_init_machine,
-
-	/* video hardware */
-	288, 256,
-	{ 4, 288-1, 8, 248-1 },
-	williams2_gfxdecodeinfo,
-	16+8*16, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	williams2_vh_start,
-	williams2_vh_stop,
-	williams2_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
-
-
-static const struct MachineDriver machine_driver_joust2 =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,
-			williams2_readmem,williams2_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			3579000/4,
-			williams2_sound_readmem,williams2_sound_writemem,0,0,
-			ignore_interrupt,1
-		},
-		SOUND_CPU_WILLIAMS_CVSD
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	joust2_init_machine,
-
-	/* video hardware */
-	288, 256,
-	{ 4, 288-1, 8, 248-1 },
-	williams2_gfxdecodeinfo,
-	16+8*16, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	williams2_vh_start,
-	williams2_vh_stop,
-	williams2_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		SOUND_WILLIAMS_CVSD
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_REMOVE("wmsdac")
+MACHINE_DRIVER_END
 
 
 
@@ -1580,7 +1375,7 @@ ROM_START( defender )
 	ROM_RELOAD(               0x13800, 0x0800 )
 	ROM_LOAD( "defend.6",     0x13000, 0x0800, 0x65f4efd1 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "defend.snd",   0xf800, 0x0800, 0xfefd5b48 )
 ROM_END
 
@@ -1601,7 +1396,7 @@ ROM_START( defendg )
 	ROM_RELOAD(               0x13800, 0x0800 )
 	ROM_LOAD( "defeng06.bin", 0x13000, 0x0800, 0x3af34c05 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "defend.snd",   0xf800, 0x0800, 0xfefd5b48 )
 ROM_END
 
@@ -1638,7 +1433,7 @@ ROM_START( defndjeu )
 	ROM_LOAD( "21", 0x13000, 0x1000, 0xbddb71a3 )
 	ROM_RELOAD(     0x14000, 0x1000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "s", 0xf800, 0x0800, 0xcb79ae42 )
 ROM_END
 
@@ -1657,7 +1452,7 @@ ROM_START( defcmnd )
 	ROM_LOAD( "defcmnda.5",   0x12800, 0x0800, 0x49b50b40 )
 	ROM_LOAD( "defcmnda.4",   0x13000, 0x0800, 0x43d42a1b )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, 0xf122d9c9 )
 ROM_END
 
@@ -1676,7 +1471,7 @@ ROM_START( defence )
 	ROM_LOAD( "5",            0x12800, 0x0800, 0x4a270340 )
 	ROM_LOAD( "4",            0x13000, 0x0800, 0xe13f457c )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, 0xf122d9c9 )
 ROM_END
 
@@ -1693,9 +1488,8 @@ ROM_START( mayday )
 	ROM_LOAD( "ic07-7d.bin", 0x13000, 0x1000, 0xd9c065e7 )
 	ROM_RELOAD(              0x14000, 0x1000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "ic28-8.bin",  0xf800, 0x0800, 0xfefd5b48 )
-	/* Sound ROM is same in both versions. Can be merged !!! */
 ROM_END
 
 
@@ -1711,8 +1505,31 @@ ROM_START( maydaya )
 	ROM_LOAD( "mayday.g", 0x13000, 0x1000, 0x2bd0f106 )
 	ROM_RELOAD(           0x14000, 0x1000 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "ic28-8.bin", 0xf800, 0x0800, 0xfefd5b48 )
+ROM_END
+
+
+ROM_START( maydayb )
+	ROM_REGION( 0x15000, REGION_CPU1, 0 )
+	ROM_LOAD( "ic03-3.bin",  0x0d000, 0x1000, 0xa1ff6e62 )
+	ROM_LOAD( "ic02-2.bin",  0x0e000, 0x1000, 0x62183aea )
+	ROM_LOAD( "ic01-1.bin",  0x0f000, 0x1000, 0x5dcb113f )
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "rom7.bin",    0x10000, 0x1000, 0x0c3ca687 )
+	ROM_LOAD( "ic05-5.bin",  0x11000, 0x1000, 0x0d797a3e )
+	ROM_LOAD( "ic06-6.bin",  0x12000, 0x1000, 0xee8bfcd6 )
+	ROM_LOAD( "ic07-7d.bin", 0x13000, 0x1000, 0xd9c065e7 )
+	ROM_RELOAD(              0x14000, 0x1000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "ic28-8.bin",  0xf800, 0x0800, 0xfefd5b48 )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )
+	ROM_LOAD( "rom11.bin",   0x0000, 0x0800, 0x7e113979 )
+	ROM_LOAD( "rom12.bin",   0x0800, 0x0800, 0xa562c506 )
+	ROM_LOAD( "rom6a.bin",   0x1000, 0x0800, 0x8e4e981f )
+	ROM_LOAD( "rom8-sos.bin",0x1800, 0x0800, 0x6a9b383f )
 ROM_END
 
 
@@ -1730,7 +1547,7 @@ ROM_START( colony7 )
 	ROM_RELOAD(           0x12800, 0x0800 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "cs11.bin",     0xf800, 0x0800, 0x6032293c ) /* Sound ROM */
+	ROM_LOAD( "cs11.bin",     0xf800, 0x0800, 0x6032293c )
 ROM_END
 
 
@@ -1748,12 +1565,12 @@ ROM_START( colony7a )
 	ROM_RELOAD(            0x12800, 0x0800 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "cs11.bin",     0xf800, 0x0800, 0x6032293c ) /* Sound ROM */
+	ROM_LOAD( "cs11.bin",     0xf800, 0x0800, 0x6032293c )
 ROM_END
 
 
 ROM_START( stargate )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "01",           0x0000, 0x1000, 0x88824d18 )
 	ROM_LOAD( "02",           0x1000, 0x1000, 0xafc614c5 )
 	ROM_LOAD( "03",           0x2000, 0x1000, 0x15077a9d )
@@ -1767,13 +1584,13 @@ ROM_START( stargate )
 	ROM_LOAD( "11",           0xe000, 0x1000, 0x7d2c5daf )
 	ROM_LOAD( "12",           0xf000, 0x1000, 0xa0396670 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "sg.snd",       0xf800, 0x0800, 0x2fcf6c4d )
 ROM_END
 
 
 ROM_START( joust )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
 	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
 	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
@@ -1787,13 +1604,13 @@ ROM_START( joust )
 	ROM_LOAD( "joust.wgb",    0xe000, 0x1000, 0xea48b359 )
 	ROM_LOAD( "joust.wgc",    0xf000, 0x1000, 0xc710717b )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
 
 ROM_START( joustwr )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
 	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
 	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
@@ -1807,13 +1624,13 @@ ROM_START( joustwr )
 	ROM_LOAD( "joust.wgb",    0xe000, 0x1000, 0xea48b359 )
 	ROM_LOAD( "joust.wgc",    0xf000, 0x1000, 0xc710717b )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
 
 ROM_START( joustr )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "joust.wg1",    0x0000, 0x1000, 0xfe41b2af )
 	ROM_LOAD( "joust.wg2",    0x1000, 0x1000, 0x501c143c )
 	ROM_LOAD( "joust.wg3",    0x2000, 0x1000, 0x43f7161d )
@@ -1827,13 +1644,13 @@ ROM_START( joustr )
 	ROM_LOAD( "joust.srb",    0xe000, 0x1000, 0xab11bcf9 )
 	ROM_LOAD( "joust.src",    0xf000, 0x1000, 0xea14574b )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "joust.snd",    0xf000, 0x1000, 0xf1835bdd )
 ROM_END
 
 
 ROM_START( robotron )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "robotron.sb1", 0x0000, 0x1000, 0x66c7d3ef )
 	ROM_LOAD( "robotron.sb2", 0x1000, 0x1000, 0x5bc6c614 )
 	ROM_LOAD( "robotron.sb3", 0x2000, 0x1000, 0xe99a82be )
@@ -1847,13 +1664,13 @@ ROM_START( robotron )
 	ROM_LOAD( "robotron.sbb", 0xe000, 0x1000, 0x7e3c1b87 )
 	ROM_LOAD( "robotron.sbc", 0xf000, 0x1000, 0x645d543e )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "robotron.snd", 0xf000, 0x1000, 0xc56c1d28 )
 ROM_END
 
 
 ROM_START( robotryo )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "robotron.sb1", 0x0000, 0x1000, 0x66c7d3ef )
 	ROM_LOAD( "robotron.sb2", 0x1000, 0x1000, 0x5bc6c614 )
 	ROM_LOAD( "robotron.yo3", 0x2000, 0x1000, 0x67a369bc )
@@ -1867,13 +1684,13 @@ ROM_START( robotryo )
 	ROM_LOAD( "robotron.yob", 0xe000, 0x1000, 0x2afc5e7f )
 	ROM_LOAD( "robotron.yoc", 0xf000, 0x1000, 0x45da9202 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "robotron.snd", 0xf000, 0x1000, 0xc56c1d28 )
 ROM_END
 
 
 ROM_START( bubbles )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "bubbles.1b",   0x0000, 0x1000, 0x8234f55c )
 	ROM_LOAD( "bubbles.2b",   0x1000, 0x1000, 0x4a188d6a )
 	ROM_LOAD( "bubbles.3b",   0x2000, 0x1000, 0x7728f07f )
@@ -1887,13 +1704,13 @@ ROM_START( bubbles )
 	ROM_LOAD( "bubbles.11b",  0xe000, 0x1000, 0x5a5b572f )
 	ROM_LOAD( "bubbles.12b",  0xf000, 0x1000, 0xce22d2e2 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
 
 
 ROM_START( bubblesr )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "bubblesr.1b",  0x0000, 0x1000, 0xdda4e782 )
 	ROM_LOAD( "bubblesr.2b",  0x1000, 0x1000, 0x3c8fa7f5 )
 	ROM_LOAD( "bubblesr.3b",  0x2000, 0x1000, 0xf869bb9c )
@@ -1907,12 +1724,12 @@ ROM_START( bubblesr )
 	ROM_LOAD( "bubblesr.11b", 0xe000, 0x1000, 0x096af43e )
 	ROM_LOAD( "bubblesr.12b", 0xf000, 0x1000, 0x5c1244ef )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
 
 ROM_START( bubblesp )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "bub_prot.1b",  0x0000, 0x1000, 0x6466a746 )
 	ROM_LOAD( "bub_prot.2b",  0x1000, 0x1000, 0xcca04357 )
 	ROM_LOAD( "bub_prot.3b",  0x2000, 0x1000, 0x7aaff9e5 )
@@ -1926,12 +1743,12 @@ ROM_START( bubblesp )
 	ROM_LOAD( "bub_prot.11b", 0xe000, 0x1000, 0x5a0c36a7 )
 	ROM_LOAD( "bub_prot.12b", 0xf000, 0x1000, 0x2bfd3438 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "bubbles.snd",  0xf000, 0x1000, 0x689ce2aa )
 ROM_END
 
 ROM_START( splat )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "splat.01",     0x0000, 0x1000, 0x1cf26e48 )
 	ROM_LOAD( "splat.02",     0x1000, 0x1000, 0xac0d4276 )
 	ROM_LOAD( "splat.03",     0x2000, 0x1000, 0x74873e59 )
@@ -1945,13 +1762,13 @@ ROM_START( splat )
 	ROM_LOAD( "splat.11",     0xe000, 0x1000, 0xca8cde95 )
 	ROM_LOAD( "splat.12",     0xf000, 0x1000, 0x5bee3e60 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "splat.snd",    0xf000, 0x1000, 0xa878d5f3 )
 ROM_END
 
 
 ROM_START( sinistar )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "sinistar.01",  0x0000, 0x1000, 0xf6f3a22c )
 	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
 	ROM_LOAD( "sinistar.03",  0x2000, 0x1000, 0x1ce1b3cc )
@@ -1964,7 +1781,7 @@ ROM_START( sinistar )
 	ROM_LOAD( "sinistar.10",  0xe000, 0x1000, 0x3d670417 )
 	ROM_LOAD( "sinistar.11",  0xf000, 0x1000, 0x3162bc50 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
 	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
 	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
@@ -1974,7 +1791,7 @@ ROM_END
 
 
 ROM_START( sinista1 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "sinrev1.01",   0x0000, 0x1000, 0x3810d7b8 )
 	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
 	ROM_LOAD( "sinrev1.03",   0x2000, 0x1000, 0x7c984ca9 )
@@ -1987,7 +1804,7 @@ ROM_START( sinista1 )
 	ROM_LOAD( "sinrev1.10",   0xe000, 0x1000, 0xea87a53f )
 	ROM_LOAD( "sinrev1.11",   0xf000, 0x1000, 0x88d36e80 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
 	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
 	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
@@ -1997,7 +1814,7 @@ ROM_END
 
 
 ROM_START( sinista2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "sinistar.01",  0x0000, 0x1000, 0xf6f3a22c )
 	ROM_LOAD( "sinistar.02",  0x1000, 0x1000, 0xcab3185c )
 	ROM_LOAD( "sinistar.03",  0x2000, 0x1000, 0x1ce1b3cc )
@@ -2010,7 +1827,7 @@ ROM_START( sinista2 )
 	ROM_LOAD( "sinistar.10",  0xe000, 0x1000, 0x3d670417 )
 	ROM_LOAD( "sinrev2.11",   0xf000, 0x1000, 0x792c8b00 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "speech.ic7",   0xb000, 0x1000, 0xe1019568 )
 	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xcf3b5ffd )
 	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0xff8d2645 )
@@ -2020,7 +1837,7 @@ ROM_END
 
 
 ROM_START( playball )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "playball.01",  0x0000, 0x1000, 0x7ba8fd71 )
 	ROM_LOAD( "playball.02",  0x1000, 0x1000, 0x2387c3d4 )
 	ROM_LOAD( "playball.03",  0x2000, 0x1000, 0xd34cc5fd )
@@ -2034,7 +1851,7 @@ ROM_START( playball )
 	ROM_LOAD( "playball.11",  0xe000, 0x1000, 0x1dd5c8f2 )
 	ROM_LOAD( "playball.12",  0xf000, 0x1000, 0xa700597b )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "speech.ic4",   0xb000, 0x1000, 0x7e4fc798 )
 	ROM_LOAD( "speech.ic5",   0xc000, 0x1000, 0xddfe860c )
 	ROM_LOAD( "speech.ic6",   0xd000, 0x1000, 0x8bfebf87 )
@@ -2044,7 +1861,7 @@ ROM_END
 
 
 ROM_START( lottofun )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 	/* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "vl4e.dat",     0x0000, 0x1000, 0x5e9af236 )
 	ROM_LOAD( "vl4c.dat",     0x1000, 0x1000, 0x4b134ae2 )
 	ROM_LOAD( "vl4a.dat",     0x2000, 0x1000, 0xb2f1f95a )
@@ -2058,7 +1875,7 @@ ROM_START( lottofun )
 	ROM_LOAD( "vl7c.dat",     0xe000, 0x1000, 0x9a496519 )
 	ROM_LOAD( "vl7e.dat",     0xf000, 0x1000, 0x032cab4b )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) 	/* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "vl2532.snd",   0xf000, 0x1000, 0x214b8a04 )
 ROM_END
 
@@ -2084,7 +1901,36 @@ ROM_START( blaster )
 	ROM_LOAD( "blaster.4",    0x34000, 0x4000, 0xfc9d39fb )
 	ROM_LOAD( "blaster.3",    0x38000, 0x4000, 0x253690fb )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "blaster.18",   0xf000, 0x1000, 0xc33a3145 )
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )		/* color PROM data */
+	ROM_LOAD( "blaster.col",  0x0000, 0x0800, 0xbac50bc4 )
+ROM_END
+
+
+ROM_START( blastkit )
+	ROM_REGION( 0x3c000, REGION_CPU1, 0 )
+	ROM_LOAD( "blastkit.11",  0x04000, 0x2000, 0xb7df4914 )
+	ROM_LOAD( "blastkit.12",  0x06000, 0x2000, 0x8b1e26ab )
+	ROM_LOAD( "blastkit.17",  0x08000, 0x1000, 0x577d1e9a )
+	ROM_LOAD( "blastkit.16",  0x0d000, 0x1000, 0x414b2abf )
+	ROM_LOAD( "blastkit.13",  0x0e000, 0x2000, 0x9c64db76 )
+
+	ROM_LOAD( "blaster.15",   0x00000, 0x4000, 0x1ad146a4 )
+	ROM_LOAD( "blaster.8",    0x10000, 0x4000, 0xf110bbb0 )
+	ROM_LOAD( "blaster.9",    0x14000, 0x4000, 0x5c5b0f8a )
+	ROM_LOAD( "blaster.10",   0x18000, 0x4000, 0xd47eb67f )
+	ROM_LOAD( "blaster.6",    0x1c000, 0x4000, 0x47fc007e )
+	ROM_LOAD( "blaster.5",    0x20000, 0x4000, 0x15c1b94d )
+	ROM_LOAD( "blaster.14",   0x24000, 0x4000, 0xaea6b846 )
+	ROM_LOAD( "blastkit.7",   0x28000, 0x4000, 0x6fcc2153 )
+	ROM_LOAD( "blaster.1",    0x2c000, 0x4000, 0x8d0ea9e7 )
+	ROM_LOAD( "blaster.2",    0x30000, 0x4000, 0x03c4012c )
+	ROM_LOAD( "blastkit.4",   0x34000, 0x4000, 0xf80e9ff5 )
+	ROM_LOAD( "blastkit.3",   0x38000, 0x4000, 0x20e851f9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "blaster.18",   0xf000, 0x1000, 0xc33a3145 )
 
 	ROM_REGION( 0x0800, REGION_PROMS, 0 )		/* color PROM data */
@@ -2094,9 +1940,9 @@ ROM_END
 
 ROM_START( tshoot )
 	ROM_REGION( 0x48000, REGION_CPU1, 0 )
-	ROM_LOAD( "rom18.cpu", 0x0D000, 0x1000, 0xeffc33f1 )	/* IC55 */
-	ROM_LOAD( "rom2.cpu",  0x0E000, 0x1000, 0xfd982687 )	/* IC9	*/
-	ROM_LOAD( "rom3.cpu",  0x0F000, 0x1000, 0x9617054d )	/* IC10 */
+	ROM_LOAD( "rom18.cpu", 0x0d000, 0x1000, 0xeffc33f1 )	/* IC55 */
+	ROM_LOAD( "rom2.cpu",  0x0e000, 0x1000, 0xfd982687 )	/* IC9	*/
+	ROM_LOAD( "rom3.cpu",  0x0f000, 0x1000, 0x9617054d )	/* IC10 */
 
 	ROM_LOAD( "rom11.cpu", 0x10000, 0x2000, 0x60d5fab8 )	/* IC18 */
 	ROM_LOAD( "rom9.cpu",  0x12000, 0x2000, 0xa4dd4a0e )	/* IC16 */
@@ -2118,12 +1964,78 @@ ROM_START( tshoot )
 
 	/* sound CPU */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "rom1.cpu", 0xE000, 0x2000, 0x011a94a7 )		/* IC8	*/
+	ROM_LOAD( "rom1.cpu", 0xe000, 0x2000, 0x011a94a7 )		/* IC8	*/
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rom20.cpu", 0x00000, 0x2000, 0xc6e1d253 )	/* IC57 */
 	ROM_LOAD( "rom21.cpu", 0x04000, 0x2000, 0x9874e90f )	/* IC58 */
 	ROM_LOAD( "rom19.cpu", 0x08000, 0x2000, 0xb9ce4d2a )	/* IC41 */
+ROM_END
+
+
+ROM_START( mysticm )
+	ROM_REGION( 0x48000, REGION_CPU1, 0 )
+	ROM_LOAD( "mm02_2.a09", 0x0e000, 0x1000, 0x3a776ea8 )	/* IC9	*/
+	ROM_LOAD( "mm03_2.a10", 0x0f000, 0x1000, 0x6e247c75 )	/* IC10 */
+
+	ROM_LOAD( "mm11_1.a18", 0x10000, 0x2000, 0xf537968e )	/* IC18 */
+	ROM_LOAD( "mm09_1.a16", 0x12000, 0x2000, 0x3bd12f6c )	/* IC16 */
+	ROM_LOAD( "mm07_1.a14", 0x14000, 0x2000, 0xea2a2a68 )	/* IC14 */
+	ROM_LOAD( "mm05_1.a12", 0x16000, 0x2000, 0xb514eef3 )	/* IC12 */
+
+	ROM_LOAD( "mm18_1.a26", 0x20000, 0x2000, 0x9b391a81 )	/* IC26 */
+	ROM_LOAD( "mm16_1.a24", 0x22000, 0x2000, 0x399e175d )	/* IC24 */
+	ROM_LOAD( "mm14_1.a22", 0x24000, 0x2000, 0x191153b1 )	/* IC22 */
+
+	ROM_LOAD( "mm10_1.a17", 0x30000, 0x2000, 0xd6a37509 )	/* IC17 */
+	ROM_LOAD( "mm08_1.a15", 0x32000, 0x2000, 0x6f1a64f2 )	/* IC15 */
+	ROM_LOAD( "mm06_1.a13", 0x34000, 0x2000, 0x2e6795d4 )	/* IC13 */
+	ROM_LOAD( "mm04_1.a11", 0x36000, 0x2000, 0xc222fb64 )	/* IC11 */
+
+	ROM_LOAD( "mm17_1.a25", 0x40000, 0x2000, 0xd36f0a96 )	/* IC25 */
+	ROM_LOAD( "mm15_1.a23", 0x42000, 0x2000, 0xcd5d99da )	/* IC23 */
+	ROM_LOAD( "mm13_1.a21", 0x44000, 0x2000, 0xef4b79db )	/* IC21 */
+	ROM_LOAD( "mm12_1.a19", 0x46000, 0x2000, 0xa1f04bf0 )	/* IC19 */
+
+	/* sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "mm01_1.a08", 0x0e000, 0x2000, 0x65339512 )	/* IC8	*/
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mm20_1.b57", 0x00000, 0x2000, 0x5c0f4f46 )	/* IC57 */
+	ROM_LOAD( "mm21_1.b58", 0x04000, 0x2000, 0xcb90b3c5 )	/* IC58 */
+	ROM_LOAD( "mm19_1.b41", 0x08000, 0x2000, 0xe274df86 )	/* IC41 */
+ROM_END
+
+
+ROM_START( inferno )
+	ROM_REGION( 0x48000, REGION_CPU1, 0 )
+	ROM_LOAD( "ic9.inf",  0x0e000, 0x1000, 0x1a013185 )		/* IC9	*/
+	ROM_LOAD( "ic10.inf", 0x0f000, 0x1000, 0xdbf64a36 ) 	/* IC10 */
+
+	ROM_LOAD( "ic18.inf", 0x10000, 0x2000, 0x95bcf7b1 )		/* IC18 */
+	ROM_LOAD( "ic16.inf", 0x12000, 0x2000, 0x8bc4f935 )		/* IC16 */
+	ROM_LOAD( "ic14.inf", 0x14000, 0x2000, 0xa70508a7 )		/* IC14 */
+	ROM_LOAD( "ic12.inf", 0x16000, 0x2000, 0x7ffb87f9 )		/* IC12 */
+
+	ROM_LOAD( "ic17.inf", 0x30000, 0x2000, 0xb4684139 ) 	/* IC17 */
+	ROM_LOAD( "ic15.inf", 0x32000, 0x2000, 0x128a6ad6 ) 	/* IC15 */
+	ROM_LOAD( "ic13.inf", 0x34000, 0x2000, 0x83a9e4d6 ) 	/* IC13 */
+	ROM_LOAD( "ic11.inf", 0x36000, 0x2000, 0xc2e9c909 ) 	/* IC11 */
+
+	ROM_LOAD( "ic25.inf", 0x40000, 0x2000, 0x103a5951 ) 	/* IC25 */
+	ROM_LOAD( "ic23.inf", 0x42000, 0x2000, 0xc04749a0 ) 	/* IC23 */
+	ROM_LOAD( "ic21.inf", 0x44000, 0x2000, 0xc405f853 ) 	/* IC21 */
+	ROM_LOAD( "ic19.inf", 0x46000, 0x2000, 0xade7645a ) 	/* IC19 */
+
+	/* sound CPU */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "ic8.inf", 0x0e000, 0x2000, 0x4e3123b8 )		/* IC8	*/
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic57.inf", 0x00000, 0x2000, 0x65a4ef79 ) 	/* IC57 */
+	ROM_LOAD( "ic58.inf", 0x04000, 0x2000, 0x4bb1c2a0 ) 	/* IC58 */
+	ROM_LOAD( "ic41.inf", 0x08000, 0x2000, 0xf3f7238f ) 	/* IC41 */
 ROM_END
 
 
@@ -2169,72 +2081,6 @@ ROM_START( joust2 )
 ROM_END
 
 
-ROM_START( mysticm )
-	ROM_REGION( 0x48000, REGION_CPU1, 0 )
-	ROM_LOAD( "mm02_2.a09", 0x0E000, 0x1000, 0x3a776ea8 )	/* IC9	*/
-	ROM_LOAD( "mm03_2.a10", 0x0F000, 0x1000, 0x6e247c75 )	/* IC10 */
-
-	ROM_LOAD( "mm11_1.a18", 0x10000, 0x2000, 0xf537968e )	/* IC18 */
-	ROM_LOAD( "mm09_1.a16", 0x12000, 0x2000, 0x3bd12f6c )	/* IC16 */
-	ROM_LOAD( "mm07_1.a14", 0x14000, 0x2000, 0xea2a2a68 )	/* IC14 */
-	ROM_LOAD( "mm05_1.a12", 0x16000, 0x2000, 0xb514eef3 )	/* IC12 */
-
-	ROM_LOAD( "mm18_1.a26", 0x20000, 0x2000, 0x9b391a81 )	/* IC26 */
-	ROM_LOAD( "mm16_1.a24", 0x22000, 0x2000, 0x399e175d )	/* IC24 */
-	ROM_LOAD( "mm14_1.a22", 0x24000, 0x2000, 0x191153b1 )	/* IC22 */
-
-	ROM_LOAD( "mm10_1.a17", 0x30000, 0x2000, 0xd6a37509 )	/* IC17 */
-	ROM_LOAD( "mm08_1.a15", 0x32000, 0x2000, 0x6f1a64f2 )	/* IC15 */
-	ROM_LOAD( "mm06_1.a13", 0x34000, 0x2000, 0x2e6795d4 )	/* IC13 */
-	ROM_LOAD( "mm04_1.a11", 0x36000, 0x2000, 0xc222fb64 )	/* IC11 */
-
-	ROM_LOAD( "mm17_1.a25", 0x40000, 0x2000, 0xd36f0a96 )	/* IC25 */
-	ROM_LOAD( "mm15_1.a23", 0x42000, 0x2000, 0xcd5d99da )	/* IC23 */
-	ROM_LOAD( "mm13_1.a21", 0x44000, 0x2000, 0xef4b79db )	/* IC21 */
-	ROM_LOAD( "mm12_1.a19", 0x46000, 0x2000, 0xa1f04bf0 )	/* IC19 */
-
-	/* sound CPU */
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "mm01_1.a08", 0x0E000, 0x2000, 0x65339512 )	/* IC8	*/
-
-	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mm20_1.b57", 0x00000, 0x2000, 0x5c0f4f46 )	/* IC57 */
-	ROM_LOAD( "mm21_1.b58", 0x04000, 0x2000, 0xcb90b3c5 )	/* IC58 */
-	ROM_LOAD( "mm19_1.b41", 0x08000, 0x2000, 0xe274df86 )	/* IC41 */
-ROM_END
-
-
-ROM_START( inferno )
-	ROM_REGION( 0x48000, REGION_CPU1, 0 )
-	ROM_LOAD( "ic9.inf", 0x0E000, 0x1000, 0x1a013185 )		/* IC9	*/
-	ROM_LOAD( "ic10.inf", 0x0F000, 0x1000, 0xdbf64a36 ) 	/* IC10 */
-
-	ROM_LOAD( "ic18.inf", 0x10000, 0x2000, 0x95bcf7b1 )		/* IC18 */
-	ROM_LOAD( "ic16.inf", 0x12000, 0x2000, 0x8bc4f935 )		/* IC16 */
-	ROM_LOAD( "ic14.inf", 0x14000, 0x2000, 0xa70508a7 )		/* IC14 */
-	ROM_LOAD( "ic12.inf", 0x16000, 0x2000, 0x7ffb87f9 )		/* IC12 */
-
-	ROM_LOAD( "ic17.inf", 0x30000, 0x2000, 0xb4684139 ) 	/* IC17 */
-	ROM_LOAD( "ic15.inf", 0x32000, 0x2000, 0x128a6ad6 ) 	/* IC15 */
-	ROM_LOAD( "ic13.inf", 0x34000, 0x2000, 0x83a9e4d6 ) 	/* IC13 */
-	ROM_LOAD( "ic11.inf", 0x36000, 0x2000, 0xc2e9c909 ) 	/* IC11 */
-
-	ROM_LOAD( "ic25.inf", 0x40000, 0x2000, 0x103a5951 ) 	/* IC25 */
-	ROM_LOAD( "ic23.inf", 0x42000, 0x2000, 0xc04749a0 ) 	/* IC23 */
-	ROM_LOAD( "ic21.inf", 0x44000, 0x2000, 0xc405f853 ) 	/* IC21 */
-	ROM_LOAD( "ic19.inf", 0x46000, 0x2000, 0xade7645a ) 	/* IC19 */
-
-	/* sound CPU */
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "ic8.inf", 0x0E000, 0x2000, 0x4e3123b8 )		/* IC8	*/
-
-	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic57.inf", 0x00000, 0x2000, 0x65a4ef79 ) 	/* IC57 */
-	ROM_LOAD( "ic58.inf", 0x04000, 0x2000, 0x4bb1c2a0 ) 	/* IC58 */
-	ROM_LOAD( "ic41.inf", 0x08000, 0x2000, 0xf3f7238f ) 	/* IC41 */
-ROM_END
-
-
 
 /*************************************
  *
@@ -2242,7 +2088,7 @@ ROM_END
  *
  *************************************/
 
-static void init_defender(void)
+static DRIVER_INIT( defender )
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
 	defender_bank_list = bank;
@@ -2255,7 +2101,7 @@ static void init_defender(void)
 }
 
 
-static void init_defndjeu(void)
+static DRIVER_INIT( defndjeu )
 {
 /*
 	Note: Please do not remove these comments in BETA versions. They are
@@ -2301,7 +2147,7 @@ static void init_defndjeu(void)
 }
 
 #if 0
-static void init_defcmnd(void)
+static DRIVER_INIT( defcmnd )
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x13000, 0x0c000, 0x0c000, 0x14000 };
 	defender_bank_list = bank;
@@ -2314,7 +2160,7 @@ static void init_defcmnd(void)
 }
 #endif
 
-static void init_mayday(void)
+static DRIVER_INIT( mayday )
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
 	defender_bank_list = bank;
@@ -2330,7 +2176,7 @@ static void init_mayday(void)
 }
 
 
-static void init_colony7(void)
+static DRIVER_INIT( colony7 )
 {
 	static const UINT32 bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x0c000 };
 	defender_bank_list = bank;
@@ -2343,7 +2189,7 @@ static void init_colony7(void)
 }
 
 
-static void init_stargate(void)
+static DRIVER_INIT( stargate )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2353,7 +2199,7 @@ static void init_stargate(void)
 }
 
 
-static void init_joust(void)
+static DRIVER_INIT( joust )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2366,7 +2212,7 @@ static void init_joust(void)
 }
 
 
-static void init_robotron(void)
+static DRIVER_INIT( robotron )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2379,7 +2225,7 @@ static void init_robotron(void)
 }
 
 
-static void init_bubbles(void)
+static DRIVER_INIT( bubbles )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2392,7 +2238,7 @@ static void init_bubbles(void)
 }
 
 
-static void init_splat(void)
+static DRIVER_INIT( splat )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2405,7 +2251,7 @@ static void init_splat(void)
 }
 
 
-static void init_sinistar(void)
+static DRIVER_INIT( sinistar )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2422,7 +2268,7 @@ static void init_sinistar(void)
 }
 
 
-static void init_playball(void)
+static DRIVER_INIT( playball )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2439,7 +2285,7 @@ static void init_playball(void)
 }
 
 
-static void init_lottofun(void)
+static DRIVER_INIT( lottofun )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2452,7 +2298,7 @@ static void init_lottofun(void)
 }
 
 
-static void init_blaster(void)
+static DRIVER_INIT( blaster )
 {
 	/* CMOS configuration */
 	CONFIGURE_CMOS(0xcc00, 0x400);
@@ -2465,7 +2311,40 @@ static void init_blaster(void)
 }
 
 
-static void init_tshoot(void)
+static DRIVER_INIT( blastkit )
+{
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 1, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams_49way_muxed_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
+}
+
+
+static DRIVER_INIT( mysticm )
+{
+	static const UINT8 tilemap_colors[] = { 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 0, 0);
+	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 1);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(mysticm_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
+
+	/* install RAM instead of ROM in the Dxxx slot */
+	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
+	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
+}
+
+
+static DRIVER_INIT( tshoot )
 {
 	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
 
@@ -2481,7 +2360,27 @@ static void init_tshoot(void)
 }
 
 
-static void init_joust2(void)
+static DRIVER_INIT( inferno )
+{
+	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
+
+	/* CMOS configuration */
+	CONFIGURE_CMOS(0xcc00, 0x400);
+
+	/* video configuration */
+	CONFIGURE_BLITTER(0, 0, 0);
+	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 0);
+
+	/* PIA configuration */
+	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
+
+	/* install RAM instead of ROM in the Dxxx slot */
+	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
+	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
+}
+
+
+static DRIVER_INIT( joust2 )
 {
 	static const UINT8 tilemap_colors[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -2505,46 +2404,6 @@ static void init_joust2(void)
 }
 
 
-static void init_mysticm(void)
-{
-	static const UINT8 tilemap_colors[] = { 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 0, 0);
-	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 1);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(mysticm_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
-
-	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
-}
-
-
-static void init_inferno(void)
-{
-	static const UINT8 tilemap_colors[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 };
-
-	/* CMOS configuration */
-	CONFIGURE_CMOS(0xcc00, 0x400);
-
-	/* video configuration */
-	CONFIGURE_BLITTER(0, 0, 0);
-	CONFIGURE_TILEMAP(0x7f, tilemap_colors, 1, 0, 0);
-
-	/* PIA configuration */
-	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
-
-	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA_RAM);
-}
-
-
 
 /*************************************
  *
@@ -2561,6 +2420,7 @@ GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Lim
 
 GAME( 1980, mayday,   0,        defender, defender, mayday,   ROT0,   "<unknown>", "Mayday (set 1)" )
 GAME( 1980, maydaya,  mayday,   defender, defender, mayday,   ROT0,   "<unknown>", "Mayday (set 2)" )
+GAME( 1980, maydayb,  mayday,   defender, defender, mayday,   ROT0,   "<unknown>", "Mayday (set 3)" )
 
 GAME( 1981, colony7,  0,        defender, colony7,  colony7,  ROT270, "Taito", "Colony 7 (set 1)" )
 GAME( 1981, colony7a, colony7,  defender, colony7,  colony7,  ROT270, "Taito", "Colony 7 (set 2)" )
@@ -2587,6 +2447,7 @@ GAME( 1982, sinista2, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams"
 GAME( 1983, playball, 0,        playball, playball, playball, ROT270, "Williams", "PlayBall! (prototype)" )
 
 GAME( 1983, blaster,  0,        blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster" )
+GAME( 1983, blastkit, blaster,  blaster,  blastkit, blastkit, ROT0,   "Williams", "Blaster (kit)" )
 
 GAME( 1983, mysticm,  0,        williams2,mysticm,  mysticm,  ROT0,   "Williams", "Mystic Marathon" )
 GAME( 1984, tshoot,   0,        williams2,tshoot,   tshoot,   ROT0,   "Williams", "Turkey Shoot" )

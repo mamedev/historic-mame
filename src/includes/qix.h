@@ -15,9 +15,9 @@ extern UINT8 *qix_sharedram;
 extern UINT8 *qix_68705_port_out;
 extern UINT8 *qix_68705_ddr;
 
-void qix_init_machine(void);
-void qixmcu_init_machine(void);
-void slither_init_machine(void);
+MACHINE_INIT( qix );
+MACHINE_INIT( qixmcu );
+MACHINE_INIT( slither );
 
 READ_HANDLER( qix_sharedram_r );
 WRITE_HANDLER( qix_sharedram_w );
@@ -48,15 +48,13 @@ WRITE_HANDLER( zookeep_pia_2_w );
 
 /*----------- defined in vidhrdw/qix.c -----------*/
 
-extern UINT8 *qix_palettebank;
 extern UINT8 *qix_videoaddress;
 extern UINT8 qix_cocktail_flip;
 
-int qix_vh_start(void);
-void qix_vh_stop(void);
-void qix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( qix );
+VIDEO_UPDATE( qix );
 
-int qix_vblank_start(void);
+INTERRUPT_GEN( qix_vblank_start );
 void qix_scanline_callback(int scanline);
 
 READ_HANDLER( qix_scanline_r );

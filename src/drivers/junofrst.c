@@ -90,7 +90,7 @@ extern unsigned char *tutankhm_scrollx;
 
 WRITE_HANDLER( tutankhm_videoram_w );
 WRITE_HANDLER( junofrst_blitter_w );
-void tutankhm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( tutankhm );
 
 
 WRITE_HANDLER( tutankhm_sh_irqtrigger_w );
@@ -151,7 +151,7 @@ WRITE_HANDLER( junofrst_sh_irqtrigger_w )
 	if (last == 0 && data == 1)
 	{
 		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
+		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 	}
 
 	last = data;
@@ -160,12 +160,14 @@ WRITE_HANDLER( junofrst_sh_irqtrigger_w )
 WRITE_HANDLER( junofrst_i8039_irq_w )
 {
 	if (i8039_irqenable)
-		cpu_cause_interrupt(2,I8039_EXT_INT);
+		cpu_set_irq_line(2, 0, ASSERT_LINE);
 }
 
 static WRITE_HANDLER( i8039_irqen_and_status_w )
 {
 	i8039_irqenable = data & 0x80;
+	if (i8039_irqenable == 0)
+		cpu_set_irq_line(2, 0, CLEAR_LINE);
 	i8039_status = (data & 0x70) >> 4;
 }
 
@@ -360,59 +362,38 @@ static struct DACinterface dac_interface =
 };
 
 
-static const struct MachineDriver machine_driver_junofrst =
-{
+static MACHINE_DRIVER_START( junofrst )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,			/* 1.5 MHz ??? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		},
-		{
-			CPU_I8039 | CPU_AUDIO_CPU,
-			8000000/15,	/* 8MHz crystal */
-			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
-			ignore_interrupt,1
-		}
-	},
-	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,				/* init machine routine */
+	MDRV_CPU_ADD(M6809, 1500000)			/* 1.5 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_CPU_ADD(I8039,8000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 8MHz crystal */
+	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
+	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_30HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },	/* not sure about the visible area */
-	0,					/* GfxDecodeInfo * */
-	16,                                  /* total colors */
-	0,                                      /* color table length */
-	0,			/* convert color prom routine */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)	/* not sure about the visible area */
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER,
-	0,						/* vh_init routine */
-	generic_vh_start,					/* vh_start routine */
-	generic_vh_stop,					/* vh_stop routine */
-	tutankhm_vh_screenrefresh,				/* vh_update routine */
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(tutankhm)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( junofrst )
@@ -467,7 +448,7 @@ ROM_END
 
 
 
-static void init_junofrst(void)
+static DRIVER_INIT( junofrst )
 {
 	konami1_decode();
 }

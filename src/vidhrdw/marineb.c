@@ -46,12 +46,12 @@ WRITE_HANDLER( marineb_flipscreen_y_w )
 
 ***************************************************************************/
 static void draw_chars(struct mame_bitmap *_tmpbitmap, struct mame_bitmap *bitmap,
-                       int scroll_cols, int full_refresh)
+                       int scroll_cols)
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -122,12 +122,12 @@ static void draw_chars(struct mame_bitmap *_tmpbitmap, struct mame_bitmap *bitma
 }
 
 
-void marineb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( marineb )
 {
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 24, full_refresh);
+	draw_chars(tmpbitmap, bitmap, 24);
 
 
 	/* draw the sprites */
@@ -190,12 +190,12 @@ void marineb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void changes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( changes )
 {
 	int offs,sx,sy,code,col,flipx,flipy;
 
 
-	draw_chars(tmpbitmap, bitmap, 26, full_refresh);
+	draw_chars(tmpbitmap, bitmap, 26);
 
 
 	/* draw the small sprites */
@@ -272,12 +272,12 @@ void changes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void springer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( springer )
 {
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 0, full_refresh);
+	draw_chars(tmpbitmap, bitmap, 0);
 
 
 	/* draw the sprites */
@@ -334,12 +334,12 @@ void springer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void hoccer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hoccer )
 {
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 0, full_refresh);
+	draw_chars(tmpbitmap, bitmap, 0);
 
 
 	/* draw the sprites */
@@ -380,12 +380,12 @@ void hoccer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void hopprobo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hopprobo )
 {
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 0, full_refresh);
+	draw_chars(tmpbitmap, bitmap, 0);
 
 
 	/* draw the sprites */

@@ -23,17 +23,17 @@ static void mark_all_dirty(void)
           INITIALISATION AND CLEAN-UP
 ******************************************************/
 
-int volfied_vh_start (void)
+VIDEO_START( volfied )
 {
-	pixel_layer = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	pixel_layer = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (pixel_layer == NULL)
 		return 1;
 
-	line_dirty = malloc(256);
+	line_dirty = auto_malloc(256);
 	if (line_dirty == NULL)
 		return 1;
 
-	video_ram = malloc(0x40000 * sizeof (UINT16));
+	video_ram = auto_malloc(0x40000 * sizeof (UINT16));
 	if (video_ram == NULL)
 		return 1;
 
@@ -46,18 +46,6 @@ int volfied_vh_start (void)
 	state_save_register_func_postload (mark_all_dirty);
 
 	return 0;
-}
-
-void volfied_vh_stop (void)
-{
-	if (video_ram != NULL)
-		free(video_ram);
-
-	if (line_dirty != NULL)
-		free(line_dirty);
-
-	if (pixel_layer != NULL)
-		bitmap_free(pixel_layer);
 }
 
 
@@ -216,7 +204,7 @@ static void refresh_pixel_layer(void)
 	}
 }
 
-void volfied_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( volfied )
 {
 	refresh_pixel_layer();
 

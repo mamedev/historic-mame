@@ -1,158 +1,164 @@
 /***************************************************************************
 
-Main clock: XTAL = 12.096 MHz
-6502 Clock: XTAL/8 = 1.512 MHz (0.756 when accessing playfield RAM)
-Horizontal video frequency: HSYNC = XTAL/256/3 = 15.75 kHz
-Video frequency: VSYNC = HSYNC/263 ?? = 59.88593 Hz (not sure, could be /262)
-VBlank duration: 1/VSYNC * (23/263) = 1460 us
+	Atari Centipede hardware
+
+	Games supported:
+		* Centipede
+
+	Known bugs:
+		* are coins supposed to take over a second to register?
+		* need to confirm CPU and Pokey clocks
+
+****************************************************************************
+
+	Main clock: XTAL = 12.096 MHz
+	6502 Clock: XTAL/8 = 1.512 MHz (0.756 when accessing playfield RAM)
+	Horizontal video frequency: HSYNC = XTAL/256/3 = 15.75 kHz
+	Video frequency: VSYNC = HSYNC/263 ?? = 59.88593 Hz (not sure, could be /262)
+	VBlank duration: 1/VSYNC * (23/263) = 1460 us
 
 
-              Centipede Memory map and Dip Switches
-              -------------------------------------
+	              Centipede Memory map and Dip Switches
+	              -------------------------------------
 
-Memory map for Centipede directly from the Atari schematics (1981).
+	Memory map for Centipede directly from the Atari schematics (1981).
 
- Address  R/W  D7 D6 D5 D4 D3 D2 D1 D0   Function
---------------------------------------------------------------------------------------
-0000-03FF       D  D  D  D  D  D  D  D   RAM
---------------------------------------------------------------------------------------
-0400-07BF       D  D  D  D  D  D  D  D   Playfield RAM
-07C0-07CF       D  D  D  D  D  D  D  D   Motion Object Picture
-07D0-07DF       D  D  D  D  D  D  D  D   Motion Object Vert.
-07E0-07EF       D  D  D  D  D  D  D  D   Motion Object Horiz.
-07F0-07FF             D  D  D  D  D  D   Motion Object Color
---------------------------------------------------------------------------------------
-0800       R    D  D  D  D  D  D  D  D   Option Switch 1 (0 = On)
-0801       R    D  D  D  D  D  D  D  D   Option Switch 2 (0 = On)
---------------------------------------------------------------------------------------
-0C00       R    D           D  D  D  D   Horizontal Mini-Track Ball tm Inputs
-           R       D                     VBLANK  (1 = VBlank)
-           R          D                  Self-Test  (0 = On)
-           R             D               Cocktail Cabinet  (1 = Cocktail)
-0C01       R    D  D  D                  R,C,L Coin Switches (0 = On)
-           R             D               SLAM  (0 = On)
-           R                D            Player 2 Fire Switch (0 = On)
-           R                   D         Player 1 Fire Switch (0 = On)
-           R                      D      Player 2 Start Switch (0 = On)
-           R                         D   Player 1 Start Switch (0 = On)
+	 Address  R/W  D7 D6 D5 D4 D3 D2 D1 D0   Function
+	--------------------------------------------------------------------------------------
+	0000-03FF       D  D  D  D  D  D  D  D   RAM
+	--------------------------------------------------------------------------------------
+	0400-07BF       D  D  D  D  D  D  D  D   Playfield RAM
+	07C0-07CF       D  D  D  D  D  D  D  D   Motion Object Picture
+	07D0-07DF       D  D  D  D  D  D  D  D   Motion Object Vert.
+	07E0-07EF       D  D  D  D  D  D  D  D   Motion Object Horiz.
+	07F0-07FF             D  D  D  D  D  D   Motion Object Color
+	--------------------------------------------------------------------------------------
+	0800       R    D  D  D  D  D  D  D  D   Option Switch 1 (0 = On)
+	0801       R    D  D  D  D  D  D  D  D   Option Switch 2 (0 = On)
+	--------------------------------------------------------------------------------------
+	0C00       R    D           D  D  D  D   Horizontal Mini-Track Ball tm Inputs
+	           R       D                     VBLANK  (1 = VBlank)
+	           R          D                  Self-Test  (0 = On)
+	           R             D               Cocktail Cabinet  (1 = Cocktail)
+	0C01       R    D  D  D                  R,C,L Coin Switches (0 = On)
+	           R             D               SLAM  (0 = On)
+	           R                D            Player 2 Fire Switch (0 = On)
+	           R                   D         Player 1 Fire Switch (0 = On)
+	           R                      D      Player 2 Start Switch (0 = On)
+	           R                         D   Player 1 Start Switch (0 = On)
 
-0C02       R    D           D  D  D  D   Vertical Mini-Track Ball tm Inputs
-0C03       R    D  D  D  D               Player 1 Joystick (R,L,Down,Up)
-           R                D  D  D  D   Player 2 Joystick   (0 = On)
---------------------------------------------------------------------------------------
-1000-100F R/W   D  D  D  D  D  D  D  D   Custom Audio Chip
-1404       W                D  D  D  D   Playfield Color RAM
-140C       W                D  D  D  D   Motion Object Color RAM
---------------------------------------------------------------------------------------
-1600       W    D  D  D  D  D  D  D  D   EA ROM Address & Data Latch
-1680       W                D  D  D  D   EA ROM Control Latch
-1700       R    D  D  D  D  D  D  D  D   EA ROM Read Data
---------------------------------------------------------------------------------------
-1800       W                             IRQ Acknowledge
---------------------------------------------------------------------------------------
-1C00       W    D                        Left Coin Counter (1 = On)
-1C01       W    D                        Center Coin Counter (1 = On)
-1C02       W    D                        Right Coin Counter (1 = On)
-1C03       W    D                        Player 1 Start LED (0 = On)
-1C04       W    D                        Player 2 Start LED (0 = On)
-1C07       W    D                        Track Ball Flip Control (0 = Player 1)
---------------------------------------------------------------------------------------
-2000       W                             WATCHDOG
-2400       W                             Clear Mini-Track Ball Counters
---------------------------------------------------------------------------------------
-2000-3FFF  R                             Program ROM
---------------------------------------------------------------------------------------
+	0C02       R    D           D  D  D  D   Vertical Mini-Track Ball tm Inputs
+	0C03       R    D  D  D  D               Player 1 Joystick (R,L,Down,Up)
+	           R                D  D  D  D   Player 2 Joystick   (0 = On)
+	--------------------------------------------------------------------------------------
+	1000-100F R/W   D  D  D  D  D  D  D  D   Custom Audio Chip
+	1404       W                D  D  D  D   Playfield Color RAM
+	140C       W                D  D  D  D   Motion Object Color RAM
+	--------------------------------------------------------------------------------------
+	1600       W    D  D  D  D  D  D  D  D   EA ROM Address & Data Latch
+	1680       W                D  D  D  D   EA ROM Control Latch
+	1700       R    D  D  D  D  D  D  D  D   EA ROM Read Data
+	--------------------------------------------------------------------------------------
+	1800       W                             IRQ Acknowledge
+	--------------------------------------------------------------------------------------
+	1C00       W    D                        Left Coin Counter (1 = On)
+	1C01       W    D                        Center Coin Counter (1 = On)
+	1C02       W    D                        Right Coin Counter (1 = On)
+	1C03       W    D                        Player 1 Start LED (0 = On)
+	1C04       W    D                        Player 2 Start LED (0 = On)
+	1C07       W    D                        Track Ball Flip Control (0 = Player 1)
+	--------------------------------------------------------------------------------------
+	2000       W                             WATCHDOG
+	2400       W                             Clear Mini-Track Ball Counters
+	--------------------------------------------------------------------------------------
+	2000-3FFF  R                             Program ROM
+	--------------------------------------------------------------------------------------
 
--EA ROM is an Erasable Reprogrammable rom to save the top 3 high scores
-  and other stuff.
-
-
- Dip switches at N9 on the PCB
-
- 8    7    6    5    4    3    2    1    Option
--------------------------------------------------------------------------------------
-                              On   On    English $
-                              On   Off   German
-                              Off  On    French
-                              Off  Off   Spanish
--------------------------------------------------------------------------------------
-                    On   On              2 lives per game
-                    On   Off             3 lives per game $
-                    Off  On              4 lives per game
-                    Off  Off             5 lives per game
--------------------------------------------------------------------------------------
-                                         Bonus life granted at every:
-          On   On                        10,000 points
-          On   Off                       12.000 points $
-          Off  On                        15,000 points
-          Off  Off                       20,000 points
--------------------------------------------------------------------------------------
-     On                                  Hard game difficulty
-     Off                                 Easy game difficulty $
--------------------------------------------------------------------------------------
-On                                       1-credit minimum $
-Off                                      2-credit minimum
--------------------------------------------------------------------------------------
-
-$ = Manufacturer's suggested settings
+	-EA ROM is an Erasable Reprogrammable rom to save the top 3 high scores
+	  and other stuff.
 
 
- Dip switches at N8 on the PCB
+	 Dip switches at N9 on the PCB
 
- 8    7    6    5    4    3    2    1    Option
--------------------------------------------------------------------------------------
-                              On   On    Free play
-                              On   Off   1 coin for 2 credits
-                              Off  On    1 coin for 1 credit $
-                              Off  Off   2 coins for 1 credit
--------------------------------------------------------------------------------------
-                    On   On              Right coin mech X 1 $
-                    On   Off             Right coin mech X 4
-                    Off  On              Right coin mech X 5
-                    Off  Off             Right coin mech X 6
--------------------------------------------------------------------------------------
-               On                        Left coin mech X 1 $
-               Off                       Left coin mech X 2
--------------------------------------------------------------------------------------
-On   On   On                             No bonus coins $
-On   On   Off                            For every 2 coins inserted, game logic
-                                          adds 1 more coin
-On   Off  On                             For every 4 coins inserted, game logic
-                                          adds 1 more coin
-On   Off  Off                            For every 4 coins inserted, game logic
-                                          adds 2 more coin
-Off  On   On                             For every 5 coins inserted, game logic
-                                          adds 1 more coin
-Off  On   Off                            For every 3 coins inserted, game logic
-                                          adds 1 more coin
--------------------------------------------------------------------------------------
-$ = Manufacturer's suggested settings
+	 8    7    6    5    4    3    2    1    Option
+	-------------------------------------------------------------------------------------
+	                              On   On    English $
+	                              On   Off   German
+	                              Off  On    French
+	                              Off  Off   Spanish
+	-------------------------------------------------------------------------------------
+	                    On   On              2 lives per game
+	                    On   Off             3 lives per game $
+	                    Off  On              4 lives per game
+	                    Off  Off             5 lives per game
+	-------------------------------------------------------------------------------------
+	                                         Bonus life granted at every:
+	          On   On                        10,000 points
+	          On   Off                       12.000 points $
+	          Off  On                        15,000 points
+	          Off  Off                       20,000 points
+	-------------------------------------------------------------------------------------
+	     On                                  Hard game difficulty
+	     Off                                 Easy game difficulty $
+	-------------------------------------------------------------------------------------
+	On                                       1-credit minimum $
+	Off                                      2-credit minimum
+	-------------------------------------------------------------------------------------
 
-Changes:
-	30 Apr 98 LBO
-	* Fixed test mode
-	* Changed high score to use earom routines
-	* Added support for alternate rom set
+	$ = Manufacturer's suggested settings
 
-Known issues:
 
-* Are coins supposed to take over a second to register?
-* Need to confirm CPU and Pokey clocks
+	 Dip switches at N8 on the PCB
+
+	 8    7    6    5    4    3    2    1    Option
+	-------------------------------------------------------------------------------------
+	                              On   On    Free play
+	                              On   Off   1 coin for 2 credits
+	                              Off  On    1 coin for 1 credit $
+	                              Off  Off   2 coins for 1 credit
+	-------------------------------------------------------------------------------------
+	                    On   On              Right coin mech X 1 $
+	                    On   Off             Right coin mech X 4
+	                    Off  On              Right coin mech X 5
+	                    Off  Off             Right coin mech X 6
+	-------------------------------------------------------------------------------------
+	               On                        Left coin mech X 1 $
+	               Off                       Left coin mech X 2
+	-------------------------------------------------------------------------------------
+	On   On   On                             No bonus coins $
+	On   On   Off                            For every 2 coins inserted, game logic
+	                                          adds 1 more coin
+	On   Off  On                             For every 4 coins inserted, game logic
+	                                          adds 1 more coin
+	On   Off  Off                            For every 4 coins inserted, game logic
+	                                          adds 2 more coin
+	Off  On   On                             For every 5 coins inserted, game logic
+	                                          adds 1 more coin
+	Off  On   Off                            For every 3 coins inserted, game logic
+	                                          adds 1 more coin
+	-------------------------------------------------------------------------------------
+	$ = Manufacturer's suggested settings
+
+	Changes:
+		30 Apr 98 LBO
+		* Fixed test mode
+		* Changed high score to use earom routines
+		* Added support for alternate rom set
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/atari_vg.h"
+#include "centiped.h"
 
 
-WRITE_HANDLER( centiped_paletteram_w );
-void centiped_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void centiped_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
-void centiped_init_machine(void);	/* in vidhrdw */
-int centiped_interrupt(void);	/* in vidhrdw */
-
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 /*
  * This wrapper routine is necessary because Centipede requires a direction bit
@@ -186,6 +192,7 @@ static READ_HANDLER( centiped_IN0_r )
 	return ((readinputport(0) & 0x70) | (oldpos & 0x0f) | sign );
 }
 
+
 static READ_HANDLER( centiped_IN2_r )
 {
 	static int oldpos,sign;
@@ -202,15 +209,43 @@ static READ_HANDLER( centiped_IN2_r )
 }
 
 
+
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
+
 static WRITE_HANDLER( centiped_led_w )
 {
 	set_led_status(offset,~data & 0x80);
 }
 
+
 static READ_HANDLER( centipdb_rand_r )
 {
 	return rand() % 0xff;
 }
+
+
+static WRITE_HANDLER( flip_screen_w )
+{
+	flip_screen_set(data);
+}
+
+
+static WRITE_HANDLER( centiped_coin_counter_w )
+{
+	coin_counter_w(offset,data);
+}
+
+
+
+/*************************************
+ *
+ *	Bootleg sound
+ *
+ *************************************/
 
 static WRITE_HANDLER( centipdb_AY8910_w )
 {
@@ -224,16 +259,13 @@ static READ_HANDLER( centipdb_AY8910_r )
 	return AY8910_read_port_0_r(0);
 }
 
-static WRITE_HANDLER( flip_screen_w )
-{
-	flip_screen_set(data);
-}
 
-static WRITE_HANDLER( centiped_coin_counter_w )
-{
-	coin_counter_w(offset,data);
-}
 
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( centiped_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
@@ -250,38 +282,6 @@ static MEMORY_READ_START( centiped_readmem )
 	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 MEMORY_END
 
-/* Same as the regular one, except it uses an AY8910 and an external RNG */
-static MEMORY_READ_START( centipdb_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
-	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
-	{ 0x0c00, 0x0c00, centiped_IN0_r },	/* IN0 */
-	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
-	{ 0x0c02, 0x0c02, centiped_IN2_r },	/* IN2 */	/* JB 971220 */
-	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
-	{ 0x1000, 0x100f, centipdb_AY8910_r },
-	{ 0x1700, 0x173f, atari_vg_earom_r },
-	{ 0x1780, 0x1780, centipdb_rand_r },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
-
-static MEMORY_READ_START( centipb2_readmem )
-	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
-	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
-	{ 0x0c00, 0x0c00, centiped_IN0_r },	/* IN0 */
-	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
-	{ 0x0c02, 0x0c02, centiped_IN2_r },	/* IN2 */	/* JB 971220 */
-	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
-	{ 0x1001, 0x1001, AY8910_read_port_0_r },
-	{ 0x1700, 0x173f, atari_vg_earom_r },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0x6000, 0x67ff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
-MEMORY_END
 
 static MEMORY_WRITE_START( centiped_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
@@ -299,41 +299,13 @@ static MEMORY_WRITE_START( centiped_writemem )
 	{ 0x2000, 0x3fff, MWA_ROM },
 MEMORY_END
 
-/* Same as the regular one, except it uses an AY8910 */
-static MEMORY_WRITE_START( centipdb_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
-	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x1000, 0x100f, centipdb_AY8910_w },
-	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
-	{ 0x1600, 0x163f, atari_vg_earom_w },
-	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
-	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
-	{ 0x1c00, 0x1c02, centiped_coin_counter_w },
-	{ 0x1c03, 0x1c04, centiped_led_w },
-	{ 0x1c07, 0x1c07, flip_screen_w },
-	{ 0x2000, 0x2000, watchdog_reset_w },
-	{ 0x2000, 0x3fff, MWA_ROM },
-MEMORY_END
 
-static MEMORY_WRITE_START( centipb2_writemem )
-	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
-	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x1000, 0x1000, AY8910_write_port_0_w },
-	{ 0x1001, 0x1001, AY8910_control_port_0_w },
-	{ 0x1400, 0x140f, centiped_paletteram_w, &paletteram },
-	{ 0x1600, 0x163f, atari_vg_earom_w },
-	{ 0x1680, 0x1680, atari_vg_earom_ctrl_w },
-	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
-	{ 0x1c00, 0x1c02, centiped_coin_counter_w },
-	{ 0x1c03, 0x1c04, centiped_led_w },
-	{ 0x1c07, 0x1c07, flip_screen_w },
-	{ 0x2000, 0x2000, watchdog_reset_w },
-	{ 0x2000, 0x3fff, MWA_ROM },
-	{ 0x6000, 0x67ff, MWA_ROM },
-MEMORY_END
 
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 /* The input ports are identical for the real one and the bootleg one, except
    that one of the languages is Italian in the bootleg one instead of Spanish */
@@ -454,6 +426,12 @@ static struct GfxLayout spritelayout =
 
 
 
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 4 },	/* 4 color codes to support midframe */
@@ -464,9 +442,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct POKEYinterface pokey_interface =
 {
-	1,	/* 1 chip */
+	1,
 	12096000/8,	/* 1.512 MHz */
 	{ 100 },
 	/* The 8 pot handlers */
@@ -482,9 +466,10 @@ static struct POKEYinterface pokey_interface =
 	{ 0 },
 };
 
+
 static struct AY8910interface centipdb_ay8910_interface =
 {
-	1,	/* 1 chips */
+	1,
 	12096000/8,	/* 1.512 MHz */
 	{ 50 },
 	{ 0 },
@@ -495,7 +480,7 @@ static struct AY8910interface centipdb_ay8910_interface =
 
 static struct AY8910interface centipb2_ay8910_interface =
 {
-	1,	/* 1 chips */
+	1,
 	12096000/8,	/* 1.512 MHz */
 	{ 50 },
 	{ centipdb_rand_r },
@@ -505,60 +490,69 @@ static struct AY8910interface centipb2_ay8910_interface =
 };
 
 
-#define DRIVER(GAMENAME, SOUND_TYPE, SOUND_INTERFACE)							\
-																				\
-static const struct MachineDriver machine_driver_##GAMENAME =					\
-{																				\
-	/* basic machine hardware */												\
-	{																			\
-		{																		\
-			CPU_M6502,															\
-			12096000/8,	/* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */	\
-			GAMENAME##_readmem,GAMENAME##_writemem,0,0,							\
-			centiped_interrupt,4												\
-		}																		\
-	},																			\
-	60, 1460,	/* frames per second, vblank duration */						\
-	1,	/* single CPU, no need for interleaving */								\
-	centiped_init_machine,														\
-																				\
-	/* video hardware */														\
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },									\
-	gfxdecodeinfo,																\
-	4+4*4, 4*4+4*4*4*4,															\
-	centiped_init_palette,														\
-																				\
-	VIDEO_TYPE_RASTER,									\
-	0,																			\
-	generic_vh_start,															\
-	generic_vh_stop,															\
-	centiped_vh_screenrefresh,													\
-																				\
-	/* sound hardware */														\
-	0,0,0,0,																	\
-	{																			\
-		{																		\
-			SOUND_TYPE,															\
-			SOUND_INTERFACE,													\
-		}																		\
-	},																			\
-																				\
-	atari_vg_earom_handler														\
-};
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( centiped )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 12096000/8)	/* 1.512 MHz (slows down to 0.75MHz while accessing playfield RAM) */
+	MDRV_CPU_MEMORY(centiped_readmem,centiped_writemem)
+	MDRV_CPU_VBLANK_INT(centiped_interrupt,4)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1460)
+
+	MDRV_MACHINE_INIT(centiped)
+	MDRV_NVRAM_HANDLER(atari_vg)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4+4*4)
+	MDRV_COLORTABLE_LENGTH(4*4+4*4*4*4)
+	
+	MDRV_PALETTE_INIT(centiped)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(centiped)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("pokey", POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
-DRIVER(centiped, SOUND_POKEY, &pokey_interface)
+static MACHINE_DRIVER_START( centipdb )
 
-/* In the bootlegs the Pokey has been replaced by an AY8910 */
-DRIVER(centipdb, SOUND_AY8910, &centipdb_ay8910_interface)
-DRIVER(centipb2, SOUND_AY8910, &centipb2_ay8910_interface)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(centiped)
+	
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("pokey", AY8910, centipdb_ay8910_interface)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
+static MACHINE_DRIVER_START( centipb2 )
 
-  Game driver(s)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(centiped)
+	
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("pokey", AY8910, centipb2_ay8910_interface)
+MACHINE_DRIVER_END
 
-***************************************************************************/
+
+
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( centiped )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -573,6 +567,7 @@ ROM_START( centiped )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
+
 ROM_START( centipd2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0xb2909e2f )
@@ -586,6 +581,7 @@ ROM_START( centipd2 )
 	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
+
 ROM_START( centipdb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "olympia.c28",  0x2000, 0x0800, 0x8a744e57 )
@@ -598,6 +594,7 @@ ROM_START( centipdb )
 	ROM_LOAD( "olympia.c32",  0x0000, 0x0800, 0xd91b9724 )
 	ROM_LOAD( "olympia.c33",  0x0800, 0x0800, 0x1a6acd02 )
 ROM_END
+
 
 ROM_START( centipb2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -614,7 +611,43 @@ ROM_START( centipb2 )
 ROM_END
 
 
-GAME( 1980, centiped, 0,        centiped, centiped, 0, ROT270, "Atari", "Centipede (revision 3)" )
-GAME( 1980, centipd2, centiped, centiped, centiped, 0, ROT270, "Atari", "Centipede (revision 2)" )
-GAME( 1980, centipdb, centiped, centipdb, centipdb, 0, ROT270, "bootleg", "Centipede (bootleg set 1)" )
-GAME( 1980, centipb2, centiped, centipb2, centiped, 0, ROT270, "bootleg", "Centipede (bootleg set 2)" )
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( centipdb )
+{
+	install_mem_read_handler(0, 0x1000, 0x100f, centipdb_AY8910_r);
+	install_mem_read_handler(0, 0x1780, 0x1780, centipdb_rand_r);
+
+	install_mem_write_handler(0, 0x1000, 0x100f, centipdb_AY8910_w);
+}
+
+
+static DRIVER_INIT( centipb2 )
+{
+	install_mem_read_handler(0, 0x1000, 0x100f, MRA_NOP);
+	install_mem_read_handler(0, 0x1001, 0x1001, AY8910_read_port_0_r);
+	install_mem_read_handler(0, 0x6000, 0x67ff, MRA_ROM);
+
+	install_mem_write_handler(0, 0x1000, 0x100f, MWA_NOP);
+	install_mem_write_handler(0, 0x1000, 0x1000, AY8910_write_port_0_w);
+	install_mem_write_handler(0, 0x1001, 0x1001, AY8910_control_port_0_w);
+	install_mem_write_handler(0, 0x6000, 0x67ff, MWA_ROM);
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari", "Centipede (revision 3)" )
+GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari", "Centipede (revision 2)" )
+GAME( 1980, centipdb, centiped, centipdb, centipdb, centipdb, ROT270, "bootleg", "Centipede (bootleg set 1)" )
+GAME( 1980, centipb2, centiped, centipb2, centiped, centipb2, ROT270, "bootleg", "Centipede (bootleg set 2)" )

@@ -49,9 +49,8 @@ starfira has one less rom in total than starfire but everything passes as
 
 
 /* In vidhrdw/starfire.c */
-void starfire_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern int starfire_vh_start(void);
-extern void starfire_vh_stop(void);
+VIDEO_UPDATE( starfire );
+extern VIDEO_START( starfire );
 extern void starfire_video_update(int scanline, int count);
 
 WRITE_HANDLER( starfire_videoram_w );
@@ -90,7 +89,7 @@ static void update_callback(int scanline)
 }
 
 
-static void init_machine(void)
+MACHINE_INIT( starfire )
 {
 	timer_set(cpu_getscanlinetime(32 + SCANLINE_UPDATE_CHUNK - 1), 32, update_callback);
 }
@@ -310,36 +309,29 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_starfire =
-{
+static MACHINE_DRIVER_START( starfire )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-            2500000,
-			readmem,writemem,0,0,
-            nmi_interrupt,1
-		}
-	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-    init_machine,
+	MDRV_CPU_ADD(Z80, 2500000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(starfire)
 
 	/* video hardware */
-    256, 256, { 0, 256-1, 32, 256-1 },
-    0,
-    64, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 32, 256-1)
+	MDRV_PALETTE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-    starfire_vh_start,
-    starfire_vh_stop,
-    starfire_vh_screenrefresh,
+	MDRV_VIDEO_START(starfire)
+	MDRV_VIDEO_UPDATE(starfire)
 
 	/* sound hardware */
-    0,0,0,0
-};
+MACHINE_DRIVER_END
 
 
 
@@ -404,12 +396,12 @@ ROM_END
  *
  *************************************/
 
-static void init_starfire(void)
+static DRIVER_INIT( starfire )
 {
 	input_read = starfire_input_r;
 }
 
-static void init_fireone(void)
+static DRIVER_INIT( fireone )
 {
 	input_read = fireone_input_r;
 }

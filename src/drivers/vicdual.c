@@ -81,11 +81,11 @@ write:
 static unsigned char *vicdual_ram;
 
 extern unsigned char *vicdual_characterram;
-void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( vicdual );
 WRITE_HANDLER( vicdual_characterram_w );
 READ_HANDLER( vicdual_characterram_r );
 WRITE_HANDLER( vicdual_palette_bank_w );
-void vicdual_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( vicdual );
 
 /* Carnival sound handlers */
 extern const char *carnival_sample_names[];
@@ -1032,8 +1032,6 @@ static struct Samplesinterface samples_interface_invinco3 =
 	invinco_sample_names
 };
 
-#define samples_interface_invinco4 samples_interface_invinco3
-
 static struct Samplesinterface samples_interface_pulsar =
 {
 	12,	/* 12 channels */
@@ -1041,58 +1039,99 @@ static struct Samplesinterface samples_interface_pulsar =
 	pulsar_sample_names
 };
 
-#define samples_interface_2ports samples_interface_carnival	/* not used */
-#define samples_interface_3ports samples_interface_carnival	/* not used */
-#define samples_interface_4ports samples_interface_carnival	/* not used */
-#define samples_interface_safari samples_interface_carnival	/* not used */
+
+static MACHINE_DRIVER_START( 2ports )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 15468480/8)
+	MDRV_CPU_MEMORY(vicdual_readmem,vicdual_writemem)
+	MDRV_CPU_PORTS(readport_2ports,writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(5000)	/* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+
+	MDRV_PALETTE_INIT(vicdual)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(vicdual)
+
+	/* sound hardware */
+MACHINE_DRIVER_END
 
 
-#define MACHINEDRIVER(NAME, MEM, PORT, SAMPLES)		\
-static const struct MachineDriver machine_driver_##NAME =	\
-{													\
-	/* basic machine hardware */					\
-	{												\
-		{											\
-			CPU_Z80,								\
-			15468480/8,								\
-			MEM##_readmem,MEM##_writemem,readport_##PORT,writeport,	\
-			ignore_interrupt,1						\
-		}											\
-	},												\
-	60, 5000,	/* frames per second, vblank duration */	\
-	1,	/* single CPU, no need for interleaving */	\
-	0,												\
-													\
-	/* video hardware */							\
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },		\
-	gfxdecodeinfo,									\
-	64, 0,											\
-	vicdual_vh_convert_color_prom,					\
-													\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,			\
-	0,												\
-	generic_vh_start,								\
-	generic_vh_stop,								\
-	vicdual_vh_screenrefresh,						\
-													\
-	/* sound hardware */							\
-	0,0,0,0,										\
-	{												\
-		{											\
-			SAMPLES * SOUND_SAMPLES,				\
-			&samples_interface_##NAME				\
-		}											\
-	}												\
-};
+static MACHINE_DRIVER_START( 3ports )
 
-MACHINEDRIVER( 2ports,   vicdual, 2ports, 0 )
-MACHINEDRIVER( 3ports,   vicdual, 3ports, 0 )
-MACHINEDRIVER( 4ports,   vicdual, 4ports, 0 )
-MACHINEDRIVER( safari,   safari,  safari, 0 )
-MACHINEDRIVER( depthch,  vicdual, 2ports, 1 )
-MACHINEDRIVER( invinco3, vicdual, 3ports, 1 )
-MACHINEDRIVER( invinco4, vicdual, 4ports, 1 )
-MACHINEDRIVER( pulsar,   vicdual, 4ports, 1 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(2ports)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_3ports,writeport)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( 4ports )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(2ports)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_4ports,writeport)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( safari )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(2ports)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(safari_readmem,safari_writemem)
+	MDRV_CPU_PORTS(readport_safari,writeport)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( depthch )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(2ports)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, samples_interface_depthch)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( invinco3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(3ports)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, samples_interface_invinco3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( invinco4 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(4ports)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, samples_interface_invinco3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pulsar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(4ports)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, samples_interface_pulsar)
+MACHINE_DRIVER_END
+
 
 
 static struct AY8910interface carnival_ay8910_interface =
@@ -1108,52 +1147,37 @@ static struct AY8910interface carnival_ay8910_interface =
 
 /* don't know if any of the other games use the 8048 music board */
 /* so, we won't burden those drivers with the extra music handling */
-static const struct MachineDriver machine_driver_carnival =
-{
+static MACHINE_DRIVER_START( carnival )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			15468480/8,
-			vicdual_readmem,vicdual_writemem,readport_4ports,writeport,
-			ignore_interrupt,1
-		},
-		{
-			CPU_I8039 | CPU_AUDIO_CPU,
-			( ( 3579545 / 5 ) / 3 ),
-			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, 5000,	/* frames per second, vblank duration */
-	10,
-	0,
+	MDRV_CPU_ADD(Z80,15468480/8)
+	MDRV_CPU_MEMORY(vicdual_readmem,vicdual_writemem)
+	MDRV_CPU_PORTS(readport_4ports,writeport)
+
+	MDRV_CPU_ADD(I8039,( ( 3579545 / 5 ) / 3 ))
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
+	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(5000)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	64, 0,
-	vicdual_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	vicdual_vh_screenrefresh,
+	MDRV_PALETTE_INIT(vicdual)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(vicdual)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&carnival_ay8910_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface_carnival
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, carnival_ay8910_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface_carnival)
+MACHINE_DRIVER_END
 
 
 
@@ -1603,12 +1627,12 @@ static void vicdual_decode(void)
 
 
 
-static void init_nosamples(void)
+static DRIVER_INIT( nosamples )
 {
 	vicdual_decode();
 }
 
-static void init_depthch(void)
+static DRIVER_INIT( depthch )
 {
 	install_port_read_handler(0, 0x08, 0x08, depthch_input_port_1_r);
 
@@ -1618,7 +1642,7 @@ static void init_depthch(void)
 	vicdual_decode();
 }
 
-static void init_samurai(void)
+static DRIVER_INIT( samurai )
 {
 	/* install protection handlers */
 	install_mem_write_handler(0, 0x7f00, 0x7f00, samurai_protection_w);
@@ -1627,7 +1651,7 @@ static void init_samurai(void)
 	vicdual_decode();
 }
 
-static void init_carnival(void)
+static DRIVER_INIT( carnival )
 {
 	/* install sample triggers */
 	install_port_write_handler(0, 0x01, 0x01, carnival_sh_port1_w);
@@ -1636,7 +1660,7 @@ static void init_carnival(void)
 	vicdual_decode();
 }
 
-static void init_invinco(void)
+static DRIVER_INIT( invinco )
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
@@ -1644,7 +1668,7 @@ static void init_invinco(void)
 	vicdual_decode();
 }
 
-static void init_invho2(void)
+static DRIVER_INIT( invho2 )
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
@@ -1652,7 +1676,7 @@ static void init_invho2(void)
 	vicdual_decode();
 }
 
-static void init_invds(void)
+static DRIVER_INIT( invds )
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
@@ -1660,7 +1684,7 @@ static void init_invds(void)
 	vicdual_decode();
 }
 
-static void init_pulsar(void)
+static DRIVER_INIT( pulsar )
 {
 	/* install sample triggers */
 	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);

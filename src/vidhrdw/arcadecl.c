@@ -10,18 +10,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int rampart_bitmap_init(int _xdim, int _ydim);
-void rampart_bitmap_free(void);
-void rampart_bitmap_render(struct mame_bitmap *bitmap);
+#include "arcadecl.h"
 
 
 
@@ -41,7 +30,7 @@ static UINT8 has_mo;
  *
  *************************************/
 
-int arcadecl_vh_start(void)
+VIDEO_START( arcadecl )
 {
 	static const struct atarimo_desc modesc =
 	{
@@ -81,37 +70,17 @@ int arcadecl_vh_start(void)
 
 	/* initialize the playfield */
 	if (!rampart_bitmap_init(43*8, 30*8))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 
 	/* set the intial scroll offset */
 	atarimo_set_xscroll(0, -4, 0);
 	atarimo_set_yscroll(0, 0x110, 0);
 	has_mo = (Machine->gfx[0]->total_elements > 10);
 	return 0;
-
-	/* error cases */
-cant_create_mo:
-	rampart_bitmap_free();
-cant_create_pf:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void arcadecl_vh_stop(void)
-{
-	atarimo_free();
-	rampart_bitmap_free();
 }
 
 
@@ -122,10 +91,10 @@ void arcadecl_vh_stop(void)
  *
  *************************************/
 
-void arcadecl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( arcadecl )
 {
 	/* draw the layers */
-	rampart_bitmap_render(bitmap);
+	rampart_bitmap_render(bitmap, cliprect);
 	if (has_mo)
-		atarimo_render(0, bitmap, NULL, NULL);
+		atarimo_render(0, bitmap, cliprect, NULL, NULL);
 }

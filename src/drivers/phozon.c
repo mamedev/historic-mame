@@ -61,13 +61,12 @@ WRITE_HANDLER( phozon_customio_2_w );
 WRITE_HANDLER( phozon_cpu2_enable_w );
 WRITE_HANDLER( phozon_cpu3_enable_w );
 WRITE_HANDLER( phozon_cpu3_reset_w );
-extern void phozon_init_machine(void);
+extern MACHINE_INIT( phozon );
 
 /* video functions */
-extern int phozon_vh_start( void );
-extern void phozon_vh_stop( void );
-extern void phozon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void phozon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( phozon );
+extern PALETTE_INIT( phozon );
+extern VIDEO_UPDATE( phozon );
 
 	/* CPU 1 (MAIN CPU) read addresses */
 static MEMORY_READ_START( readmem_cpu1 )
@@ -252,54 +251,42 @@ static struct namco_interface namco_interface =
 	REGION_SOUND1	/* memory region */
 };
 
-static const struct MachineDriver machine_driver_phozon =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1536000,			/* same as Gaplus? */
-			readmem_cpu1,writemem_cpu1,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809,			/* SUB CPU */
-			1536000,			/* same as Gaplus? */
-			readmem_cpu2,writemem_cpu2,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* same as Gaplus? */
-			readmem_cpu3,writemem_cpu3,0,0,
-			interrupt,1
-		},
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	phozon_init_machine,	/* init machine routine */
+static MACHINE_DRIVER_START( phozon )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,	1536000)	/* MAIN CPU, same as Gaplus? */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* SUB CPU, same as Gaplus? */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* SOUND CPU, same as Gaplus? */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+	
+	MDRV_MACHINE_INIT(phozon)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,
-	64*4+64*8,
-	phozon_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	phozon_vh_start,
-	phozon_vh_stop,
-	phozon_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*8)
+
+	MDRV_PALETTE_INIT(phozon)
+	MDRV_VIDEO_START(phozon)
+	MDRV_VIDEO_UPDATE(phozon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 

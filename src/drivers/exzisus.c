@@ -60,7 +60,7 @@ WRITE_HANDLER( exzisus_videoram_1_w );
 WRITE_HANDLER( exzisus_objectram_0_w );
 WRITE_HANDLER( exzisus_objectram_1_w );
 
-void exzisus_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_UPDATE( exzisus );
 
 
 /***************************************************************************
@@ -132,7 +132,7 @@ static WRITE_HANDLER( exzisus_sharedram_bc_w )
 
 **************************************************************************/
 
-static void init_exzisus(void)
+static DRIVER_INIT( exzisus )
 {
 	data8_t *RAM = memory_region(REGION_CPU4);
 
@@ -348,60 +348,41 @@ static struct GfxDecodeInfo exzisus_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static const struct MachineDriver machine_driver_exzisus =
-{
+static MACHINE_DRIVER_START( exzisus )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,			/* 6 MHz ??? */
-			cpua_readmem, cpua_writemem, 0, 0,
-			interrupt, 1
-		},
-		{
-			CPU_Z80,
-			4000000,			/* 4 MHz ??? */
-			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt, 1
-		},
-		{
-			CPU_Z80,
-			6000000,			/* 6 MHz ??? */
-			cpub_readmem, cpub_writemem, 0, 0,
-			interrupt, 1
-		},
-		{
-			CPU_Z80,
-			6000000,			/* 6 MHz ??? */
-			cpuc_readmem, cpuc_writemem, 0, 0,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(Z80, 6000000)			/* 6 MHz ??? */
+	MDRV_CPU_MEMORY(cpua_readmem,cpua_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)			/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_CPU_ADD(Z80, 6000000)			/* 6 MHz ??? */
+	MDRV_CPU_MEMORY(cpub_readmem,cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)			/* 6 MHz ??? */
+	MDRV_CPU_MEMORY(cpuc_readmem,cpuc_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	exzisus_gfxdecodeinfo,
-	1024, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(exzisus_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	exzisus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_UPDATE(exzisus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

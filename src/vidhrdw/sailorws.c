@@ -686,15 +686,15 @@ READ_HANDLER( sailorws_gfxrom_1_r ) { return sailorws_gfxrom_r(1, offset); }
 
 
 ******************************************************************************/
-int sailorws_vh_start(void)
+VIDEO_START( sailorws )
 {
-	if ((sailorws_tmpbitmap0 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((sailorws_tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((sailorws_videoram0 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((sailorws_videoram1 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((sailorws_palette = malloc(0x200 * sizeof(char))) == 0) return 1;
-	if ((sailorws_paltbl0 = malloc(0x1000 * sizeof(char))) == 0) return 1;
-	if ((sailorws_paltbl1 = malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((sailorws_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((sailorws_tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((sailorws_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((sailorws_videoram1 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((sailorws_palette = auto_malloc(0x200 * sizeof(char))) == 0) return 1;
+	if ((sailorws_paltbl0 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((sailorws_paltbl1 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
 	memset(sailorws_videoram0, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(sailorws_videoram1, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 #if RASTER_SCROLL
@@ -704,30 +704,12 @@ int sailorws_vh_start(void)
 	return 0;
 }
 
-void sailorws_vh_stop(void)
+VIDEO_START( mjkoiura )
 {
-	free(sailorws_paltbl1);
-	free(sailorws_paltbl0);
-	free(sailorws_palette);
-	free(sailorws_videoram1);
-	free(sailorws_videoram0);
-	bitmap_free(sailorws_tmpbitmap1);
-	bitmap_free(sailorws_tmpbitmap0);
-	sailorws_paltbl1 = 0;
-	sailorws_paltbl0 = 0;
-	sailorws_palette = 0;
-	sailorws_videoram1 = 0;
-	sailorws_videoram0 = 0;
-	sailorws_tmpbitmap1 = 0;
-	sailorws_tmpbitmap0 = 0;
-}
-
-int mjkoiura_vh_start(void)
-{
-	if ((sailorws_tmpbitmap0 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((sailorws_videoram0 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((sailorws_palette = malloc(0x200 * sizeof(char))) == 0) return 1;
-	if ((sailorws_paltbl0 = malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((sailorws_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((sailorws_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((sailorws_palette = auto_malloc(0x200 * sizeof(char))) == 0) return 1;
+	if ((sailorws_paltbl0 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
 	memset(sailorws_videoram0, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 #if RASTER_SCROLL
 	sailorws_scanline[0] = sailorws_scanline[1] = SCANLINE_MIN;
@@ -736,29 +718,17 @@ int mjkoiura_vh_start(void)
 	return 0;
 }
 
-void mjkoiura_vh_stop(void)
+VIDEO_START( mscoutm )
 {
-	free(sailorws_paltbl0);
-	free(sailorws_palette);
-	free(sailorws_videoram0);
-	bitmap_free(sailorws_tmpbitmap0);
-	sailorws_paltbl0 = 0;
-	sailorws_palette = 0;
-	sailorws_videoram0 = 0;
-	sailorws_tmpbitmap0 = 0;
-}
-
-int mscoutm_vh_start(void)
-{
-	if ((sailorws_tmpbitmap0 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((sailorws_tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((sailorws_videoram0 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((sailorws_videoram1 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((sailorws_videoworkram0 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((sailorws_videoworkram1 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mscoutm_palette = malloc(0xc00 * sizeof(char))) == 0) return 1;
-	if ((sailorws_paltbl0 = malloc(0x1000 * sizeof(char))) == 0) return 1;
-	if ((sailorws_paltbl1 = malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((sailorws_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((sailorws_tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((sailorws_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((sailorws_videoram1 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((sailorws_videoworkram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((sailorws_videoworkram1 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mscoutm_palette = auto_malloc(0xc00 * sizeof(char))) == 0) return 1;
+	if ((sailorws_paltbl0 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((sailorws_paltbl1 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
 	memset(sailorws_videoram0, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(sailorws_videoram1, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(sailorws_videoworkram0, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
@@ -767,38 +737,16 @@ int mscoutm_vh_start(void)
 	return 0;
 }
 
-void mscoutm_vh_stop(void)
-{
-	free(sailorws_paltbl1);
-	free(sailorws_paltbl0);
-	free(mscoutm_palette);
-	free(sailorws_videoworkram1);
-	free(sailorws_videoworkram0);
-	free(sailorws_videoram1);
-	free(sailorws_videoram0);
-	bitmap_free(sailorws_tmpbitmap1);
-	bitmap_free(sailorws_tmpbitmap0);
-	sailorws_paltbl1 = 0;
-	sailorws_paltbl0 = 0;
-	mscoutm_palette = 0;
-	sailorws_videoworkram1 = 0;
-	sailorws_videoworkram0 = 0;
-	sailorws_videoram1 = 0;
-	sailorws_videoram0 = 0;
-	sailorws_tmpbitmap1 = 0;
-	sailorws_tmpbitmap0 = 0;
-}
-
 /******************************************************************************
 
 
 ******************************************************************************/
-void sailorws_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( sailorws )
 {
 	int x, y;
 	unsigned short color;
 
-	if (full_refresh || sailorws_screen_refresh)
+	if (get_vh_global_attribute_changed() || sailorws_screen_refresh)
 	{
 		sailorws_screen_refresh = 0;
 
@@ -877,12 +825,12 @@ void sailorws_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void mscoutm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mscoutm )
 {
 	int x, y;
 	unsigned short color;
 
-	if (full_refresh || sailorws_screen_refresh)
+	if (get_vh_global_attribute_changed() || sailorws_screen_refresh)
 	{
 		sailorws_screen_refresh = 0;
 

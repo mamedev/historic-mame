@@ -10,11 +10,10 @@ extern size_t welltris_spriteram_size;
 extern data16_t *welltris_pixelram;
 
 /* Sprite Drawing is pretty much the same as fromance.c */
-static void wel_draw_sprites(struct mame_bitmap *bitmap)
+static void wel_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 	int offs;
-	const struct rectangle *clip = &Machine->visible_area;
 
 	/* draw the sprites */
 	for (offs = 0; offs < 0x200; offs += 4)
@@ -54,10 +53,10 @@ static void wel_draw_sprites(struct mame_bitmap *bitmap)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[1], code, color, 0, 0,
-									x + xt * 16, y + yt * 16, clip, TRANSPARENCY_PEN, 15);
+									x + xt * 16, y + yt * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 					drawgfxzoom(bitmap, Machine->gfx[1], code, color, 0, 0,
-									x + xt * xzoom, y + yt * yzoom, clip, TRANSPARENCY_PEN, 15,
+									x + xt * xzoom, y + yt * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 
@@ -68,10 +67,10 @@ static void wel_draw_sprites(struct mame_bitmap *bitmap)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[1], code, color, 1, 0,
-									x + (xtiles - 1 - xt) * 16, y + yt * 16, clip, TRANSPARENCY_PEN, 15);
+									x + (xtiles - 1 - xt) * 16, y + yt * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 							drawgfxzoom(bitmap, Machine->gfx[1], code, color, 1, 0,
-									x + (xtiles - 1 - xt) * xzoom, y + yt * yzoom, clip, TRANSPARENCY_PEN, 15,
+									x + (xtiles - 1 - xt) * xzoom, y + yt * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 
@@ -82,10 +81,10 @@ static void wel_draw_sprites(struct mame_bitmap *bitmap)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[1], code, color, 0, 1,
-									x + xt * 16, y + (ytiles - 1 - yt) * 16, clip, TRANSPARENCY_PEN, 15);
+									x + xt * 16, y + (ytiles - 1 - yt) * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 							drawgfxzoom(bitmap, Machine->gfx[1], code, color, 0, 1,
-									x + xt * xzoom, y + (ytiles - 1 - yt) * yzoom, clip, TRANSPARENCY_PEN, 15,
+									x + xt * xzoom, y + (ytiles - 1 - yt) * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 
@@ -96,10 +95,10 @@ static void wel_draw_sprites(struct mame_bitmap *bitmap)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[1], code, color, 1, 1,
-									x + (xtiles - 1 - xt) * 16, y + (ytiles - 1 - yt) * 16, clip, TRANSPARENCY_PEN, 15);
+									x + (xtiles - 1 - xt) * 16, y + (ytiles - 1 - yt) * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 							drawgfxzoom(bitmap, Machine->gfx[1], code, color, 1, 1,
-									x + (xtiles - 1 - xt) * xzoom, y + (ytiles - 1 - yt) * yzoom, clip, TRANSPARENCY_PEN, 15,
+									x + (xtiles - 1 - xt) * xzoom, y + (ytiles - 1 - yt) * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 		}
@@ -161,7 +160,7 @@ WRITE16_HANDLER( welltris_charvideoram_w )
 		tilemap_mark_tile_dirty(char_tilemap,offset);
 }
 
-int welltris_vh_start(void)
+VIDEO_START( welltris )
 {
 
 	char_tilemap = tilemap_create(get_welltris_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -173,16 +172,16 @@ int welltris_vh_start(void)
 
 
 
-void welltris_drawbackground(struct mame_bitmap *bitmap)
+void welltris_drawbackground(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	const int xoffset = 8;
 	const int yoffset = 8;
 
 	int x,y;
 
-	for (x=0;x<352/2;x++) {
+	for (x=cliprect->min_x;x<cliprect->max_x/2;x++) {
 
-	for  (y=0;y<240;y++) {
+	for  (y=cliprect->min_y;y<=cliprect->max_y;y++) {
 
 		int pixdata;
 
@@ -196,13 +195,13 @@ void welltris_drawbackground(struct mame_bitmap *bitmap)
 	}
 }
 
-void welltris_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( welltris )
 {
 
-	welltris_drawbackground(bitmap);
-	tilemap_draw(bitmap,char_tilemap,0,0);
+	welltris_drawbackground(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
 //	usrintf_showmessage("%04X %04X %04X %04X %04X %04X %04X %04X",welltris_registers[0],welltris_registers[1],welltris_registers[2],welltris_registers[3],welltris_registers[4],welltris_registers[5],welltris_registers[6],welltris_registers[7]);
 
-	wel_draw_sprites(bitmap);
+	wel_draw_sprites(bitmap,cliprect);
 
 }

@@ -30,10 +30,9 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void hyhoo_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void hyhoo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int hyhoo_vh_start(void);
-void hyhoo_vh_stop(void);
+PALETTE_INIT( hyhoo );
+VIDEO_UPDATE( hyhoo );
+VIDEO_START( hyhoo );
 
 WRITE_HANDLER( hyhoo_palette_w );
 void hyhoo_radrx_w(int data);
@@ -47,12 +46,12 @@ void hyhoo_drawy_w(int data);
 void hyhoo_romsel_w(int data);
 
 
-static void init_hyhoo(void)
+static DRIVER_INIT( hyhoo )
 {
 	nb1413m3_type = NB1413M3_HYHOO;
 }
 
-static void init_hyhoo2(void)
+static DRIVER_INIT( hyhoo2 )
 {
 	nb1413m3_type = NB1413M3_HYHOO2;
 }
@@ -318,52 +317,36 @@ static struct DACinterface dac_interface =
 };
 
 
-#define NBMJDRV1( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			5000000/1,		/* 2.50 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	65536, 65536, \
-	hyhoo_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
-	0, \
-	hyhoo_vh_start, \
-	hyhoo_vh_stop, \
-	hyhoo_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+static MACHINE_DRIVER_START( hyhoo )
 
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 5000000/1)	/* 2.50 MHz */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem_hyhoo,writemem_hyhoo)
+	MDRV_CPU_PORTS(readport_hyhoo,writeport_hyhoo)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
 
-//	      NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1(    hyhoo, 128,    hyhoo,    hyhoo,    hyhoo,    hyhoo, nb1413m3_nvram_handler )
-NBMJDRV1(   hyhoo2, 128,    hyhoo,    hyhoo,    hyhoo,    hyhoo, nb1413m3_nvram_handler )
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(nb1413m3)
+	MDRV_NVRAM_HANDLER(nb1413m3)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 15, 239-1)
+	MDRV_PALETTE_LENGTH(65536)
+	MDRV_COLORTABLE_LENGTH(65536)
+
+	MDRV_PALETTE_INIT(hyhoo)
+	MDRV_VIDEO_START(hyhoo)
+	MDRV_VIDEO_UPDATE(hyhoo)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( hyhoo )
@@ -410,4 +393,4 @@ ROM_END
 
 
 GAME( 1987, hyhoo,  0, hyhoo,  hyhoo,  hyhoo,  ROT90, "Nichibutsu", "Taisen Quiz HYHOO (Japan)" )
-GAME( 1987, hyhoo2, 0, hyhoo2, hyhoo2, hyhoo2, ROT90, "Nichibutsu", "Taisen Quiz HYHOO 2 (Japan)" )
+GAME( 1987, hyhoo2, 0, hyhoo,  hyhoo2, hyhoo2, ROT90, "Nichibutsu", "Taisen Quiz HYHOO 2 (Japan)" )

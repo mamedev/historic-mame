@@ -22,6 +22,7 @@ static int xevious_bs[2];
 static void *nmi_timer;
 
 WRITE_HANDLER( xevious_halt_w );
+void xevious_nmi_generate (int param);
 
 /* namco stick number array */
 /*
@@ -42,13 +43,13 @@ unsigned char namco_key[16] =
 /*  LDRU,LDR,LDU,LD ,LRU,LR ,LU , L ,DRU,DR ,DU , D ,RU , R , U ,NON  */
   {   5 , 5 , 5 , 5 , 7 , 6 , 7 , 6 , 3 , 3 , 4 , 4 , 1 , 2 , 0 , 8 };
 
-void xevious_init_machine(void)
+MACHINE_INIT( xevious )
 {
 	rom2a = memory_region(REGION_GFX4);
 	rom2b = memory_region(REGION_GFX4)+0x1000;
 	rom2c = memory_region(REGION_GFX4)+0x3000;
 
-	nmi_timer = 0;
+	nmi_timer = timer_alloc(xevious_nmi_generate);
 
 	xevious_halt_w (0, 0);
 }
@@ -135,7 +136,7 @@ WRITE_HANDLER( xevious_customio_data_w )
 {
 	customio[offset] = data;
 
-logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
+logerror("%04x: custom IO offset %02x data %02x\n",activecpu_get_pc(),offset,data);
 
 	switch (customio_command)
 	{
@@ -184,7 +185,7 @@ logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 				}
 				else
 				{
-					logerror("%04x: custom IO offset %02x\n",cpu_get_pc(),offset);
+					logerror("%04x: custom IO offset %02x\n",activecpu_get_pc(),offset);
 					logerror("data[0]=%02x\n",customio[0]);
 					logerror("data[1]=%02x\n",customio[1]);
 					logerror("data[2]=%02x\n",customio[2]);
@@ -202,7 +203,7 @@ logerror("%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 READ_HANDLER( xevious_customio_data_r )
 {
 	if (customio_command != 0x71)
-		logerror("%04x: custom IO read offset %02x\n",cpu_get_pc(),offset);
+		logerror("%04x: custom IO read offset %02x\n",activecpu_get_pc(),offset);
 
 	switch (customio_command)
 	{
@@ -316,25 +317,24 @@ READ_HANDLER( xevious_customio_r )
 
 void xevious_nmi_generate (int param)
 {
-	cpu_cause_interrupt (0, Z80_NMI_INT);
+	cpu_set_irq_line (0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
 WRITE_HANDLER( xevious_customio_w )
 {
 	if (data != 0x10 && data != 0x71)
-		logerror("%04x: custom IO command %02x\n",cpu_get_pc(),data);
+		logerror("%04x: custom IO command %02x\n",activecpu_get_pc(),data);
 
 	customio_command = data;
 
 	switch (data)
 	{
 		case 0x10:
-			if (nmi_timer) timer_remove (nmi_timer);
-			nmi_timer = 0;
+			timer_adjust(nmi_timer, TIME_NEVER, 0, 0);
 			return; /* nop */
 	}
-	nmi_timer = timer_pulse (TIME_IN_USEC (50), 0, xevious_nmi_generate);
+	timer_adjust(nmi_timer, TIME_IN_USEC(50), 0, TIME_IN_USEC(50));
 
 }
 
@@ -363,10 +363,10 @@ WRITE_HANDLER( xevious_interrupt_enable_1_w )
 
 
 
-int xevious_interrupt_1(void)
+INTERRUPT_GEN( xevious_interrupt_1 )
 {
-	if (interrupt_enable_1) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_1)
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -378,10 +378,10 @@ WRITE_HANDLER( xevious_interrupt_enable_2_w )
 
 
 
-int xevious_interrupt_2(void)
+INTERRUPT_GEN( xevious_interrupt_2 )
 {
-	if (interrupt_enable_2) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_2)
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 
@@ -393,8 +393,8 @@ WRITE_HANDLER( xevious_interrupt_enable_3_w )
 
 
 
-int xevious_interrupt_3(void)
+INTERRUPT_GEN( xevious_interrupt_3 )
 {
-	if (interrupt_enable_3) return nmi_interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_3)
+		cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);
 }

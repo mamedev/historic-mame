@@ -113,7 +113,7 @@ static const unsigned char panic_remap_sprite_code[64][2] =
  *
  */
 
-void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( panic )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -147,7 +147,7 @@ void panic_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
  *
  */
 
-void cosmica_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( cosmica )
 {
 	int i;
 
@@ -184,7 +184,7 @@ void cosmica_vh_convert_color_prom(unsigned char *palette, unsigned short *color
  *
  */
 
-void cosmicg_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( cosmicg )
 {
 	int i;
 
@@ -210,7 +210,7 @@ void cosmicg_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 /* 16 colors, 8 sprite color codes				  */
 /**************************************************/
 
-void magspot2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( magspot2 )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -269,9 +269,9 @@ WRITE_HANDLER( cosmica_videoram_w )
 }
 
 
-void cosmicg_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cosmicg )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int offs;
 
@@ -285,12 +285,12 @@ void cosmicg_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void panic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( panic )
 {
 	int offs;
 
 
-	cosmicg_vh_screenrefresh(bitmap, full_refresh);
+	video_update_cosmicg(bitmap, 0);
 
 
     /* draw the sprites */
@@ -330,12 +330,12 @@ void panic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void cosmica_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cosmica )
 {
 	int offs;
 
 
-	cosmicg_vh_screenrefresh(bitmap, full_refresh);
+	video_update_cosmicg(bitmap, 0);
 
 
     /* draw the sprites */
@@ -376,12 +376,12 @@ void cosmica_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void magspot2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( magspot2 )
 {
 	int offs;
 
 
-	cosmicg_vh_screenrefresh(bitmap, full_refresh);
+	video_update_cosmicg(bitmap, 0);
 
 
     /* draw the sprites */
@@ -422,12 +422,12 @@ void magspot2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void nomnlnd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( nomnlnd )
 {
 	int offs;
 
 
-	magspot2_vh_screenrefresh(bitmap, full_refresh);
+	video_update_magspot2(bitmap, 0);
 
 
     if (nomnlnd_background_on)

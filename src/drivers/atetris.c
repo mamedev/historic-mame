@@ -51,21 +51,13 @@
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 #include "slapstic.h"
+#include "atetris.h"
 
 
 #define ATARI_CLOCK_14MHz	14318180
 
 
-int atetris_vh_start(void);
-void atetris_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-WRITE_HANDLER( atetris_videoram_w );
-
-
-
 /* Local variables */
-static UINT8 *nvram;
-static size_t nvram_size;
 static UINT8 *slapstic_source;
 static UINT8 *slapstic_base;
 static UINT8 current_bank;
@@ -106,7 +98,7 @@ static WRITE_HANDLER( irq_ack_w )
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( atetris )
 {
 	/* reset the slapstic */
 	slapstic_reset();
@@ -164,7 +156,7 @@ static WRITE_HANDLER( coincount_w )
 static WRITE_HANDLER( nvram_w )
 {
 	if (nvram_write_enable)
-		nvram[offset] = data;
+		generic_nvram[offset] = data;
 	nvram_write_enable = 0;
 }
 
@@ -172,24 +164,6 @@ static WRITE_HANDLER( nvram_w )
 static WRITE_HANDLER( nvram_enable_w )
 {
 	nvram_write_enable = 1;
-}
-
-
-
-/*************************************
- *
- *	NVRAM handler
- *
- *************************************/
-
-static void nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, nvram_size);
-	else if (file)
-		osd_fread(file, nvram, nvram_size);
-	else
-		memset(nvram, 0xff, nvram_size);
 }
 
 
@@ -215,7 +189,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1fff, atetris_videoram_w, &videoram, &videoram_size },
 	{ 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
-	{ 0x2400, 0x25ff, nvram_w, &nvram, &nvram_size },
+	{ 0x2400, 0x25ff, nvram_w, &generic_nvram, &generic_nvram_size },
 	{ 0x2800, 0x280f, pokey1_w },
 	{ 0x2810, 0x281f, pokey2_w },
 	{ 0x3000, 0x3000, watchdog_reset_w },
@@ -346,41 +320,31 @@ static struct POKEYinterface pokey_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_atetris =
-{
+static MACHINE_DRIVER_START( atetris )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			ATARI_CLOCK_14MHz/8,
-			readmem,writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M6502,ATARI_CLOCK_14MHz/8)
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atetris)
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	atetris_vh_start,
-	0,
-	atetris_vh_screenrefresh,
+	MDRV_VIDEO_START(atetris)
+	MDRV_VIDEO_UPDATE(atetris)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_POKEY, &pokey_interface }
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -452,7 +416,7 @@ ROM_END
  *
  *************************************/
 
-static void init_atetris(void)
+static DRIVER_INIT( atetris )
 {
 	slapstic_init(101);
 	slapstic_source = &memory_region(REGION_CPU1)[0x10000];

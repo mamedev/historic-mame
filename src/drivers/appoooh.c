@@ -51,7 +51,7 @@ Credits:
 static unsigned char *adpcmptr = 0;
 static int appoooh_adpcm_data;
 
-static void appoooh_adpcm_int (int num)
+static void appoooh_adpcm_int(int num)
 {
 	if( adpcmptr )
 	{
@@ -227,46 +227,33 @@ static struct MSM5205interface msm5205_interface =
 
 
 
-static const struct MachineDriver machine_driver_appoooh =
-{
+static MACHINE_DRIVER_START( appoooh )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* ??? the main xtal is 18.432 MHz */
-			readmem,writemem,readport,writeport,
-			nmi_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* ??? the main xtal is 18.432 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 32*8+32*8,
-	appoooh_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32*8+32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	appoooh_vh_start,
-	0,
-	appoooh_vh_screenrefresh,
+	MDRV_PALETTE_INIT(appoooh)
+	MDRV_VIDEO_START(appoooh)
+	MDRV_VIDEO_UPDATE(appoooh)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -188,17 +188,16 @@ its place. The East Technology games on this hardware follow Daisenpu.
 #include "sndhrdw/taitosnd.h"
 
 
-void superman_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-int superman_vh_start (void);
-int ballbros_vh_start (void);
-void superman_vh_stop (void);
+VIDEO_UPDATE( superman );
+VIDEO_START( superman );
+VIDEO_START( ballbros );
 
 extern size_t supes_videoram_size;
 extern size_t supes_attribram_size;
 extern data16_t *supes_videoram;
 extern data16_t *supes_attribram;
 
-void cchip1_init_machine(void);
+MACHINE_INIT( cchip1 );
 READ16_HANDLER ( cchip1_word_r );
 WRITE16_HANDLER( cchip1_word_w );
 
@@ -958,181 +957,129 @@ static struct YM2151interface ym2151_interface =
 
 /**************************************************************************/
 
-static const struct MachineDriver machine_driver_superman =
-{
+static MACHINE_DRIVER_START( superman )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz? */
-			superman_readmem,superman_writemem,0,0,
-			m68_level6_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	cchip1_init_machine,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz? */
+	MDRV_CPU_MEMORY(superman_readmem,superman_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(cchip1)
 
 	/* video hardware */
-	52*8, 32*8, { 2*8, 50*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(52*8, 32*8)
+	MDRV_VISIBLE_AREA(2*8, 50*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(superman_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	superman_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	superman_vh_start,
-	superman_vh_stop,
-	superman_vh_screenrefresh,
+	MDRV_VIDEO_START(superman)
+	MDRV_VIDEO_UPDATE(superman)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_daisenpu =
-{
+
+static MACHINE_DRIVER_START( daisenpu )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz? */
-			daisenpu_readmem,daisenpu_writemem,0,0,
-			m68_level2_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			daisenpu_sound_readmem, daisenpu_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2151 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	cchip1_init_machine,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz? */
+	MDRV_CPU_MEMORY(daisenpu_readmem,daisenpu_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(daisenpu_sound_readmem,daisenpu_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(cchip1)
 
 	/* video hardware */
-	52*8, 32*8, { 2*8, 50*8-1, 3*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(52*8, 32*8)
+	MDRV_VISIBLE_AREA(2*8, 50*8-1, 3*8, 31*8-1)
+	MDRV_GFXDECODE(superman_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	superman_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	superman_vh_start,
-	superman_vh_stop,
-	superman_vh_screenrefresh,
+	MDRV_VIDEO_START(superman)
+	MDRV_VIDEO_UPDATE(superman)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_gigandes =
-{
+
+static MACHINE_DRIVER_START( gigandes )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz? */
-			gigandes_readmem,gigandes_writemem,0,0,
-			m68_level2_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			ballbros_sound_readmem, ballbros_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	cchip1_init_machine,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz? */
+	MDRV_CPU_MEMORY(gigandes_readmem,gigandes_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(ballbros_sound_readmem,ballbros_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(cchip1)
 
 	/* video hardware */
-	52*8, 32*8, { 2*8, 50*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(52*8, 32*8)
+	MDRV_VISIBLE_AREA(2*8, 50*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(superman_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	superman_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	superman_vh_start,
-	superman_vh_stop,
-	superman_vh_screenrefresh,
+	MDRV_VIDEO_START(superman)
+	MDRV_VIDEO_UPDATE(superman)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ballbros_ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ballbros_ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_ballbros =
-{
+
+static MACHINE_DRIVER_START( ballbros )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz? */
-			ballbros_readmem,ballbros_writemem,0,0,
-			m68_level2_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			ballbros_sound_readmem, ballbros_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	cchip1_init_machine,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz? */
+	MDRV_CPU_MEMORY(ballbros_readmem,ballbros_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(ballbros_sound_readmem,ballbros_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(cchip1)
 
 	/* video hardware */
-	52*8, 32*8, { 2*8, 50*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(52*8, 32*8)
+	MDRV_VISIBLE_AREA(2*8, 50*8-1, 2*8, 32*8-1)
 
-	ballbros_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_GFXDECODE(ballbros_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ballbros_vh_start,
-	superman_vh_stop,
-	superman_vh_screenrefresh,
+	MDRV_VIDEO_START(ballbros)
+	MDRV_VIDEO_UPDATE(superman)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ballbros_ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ballbros_ym2610_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1260,7 +1207,7 @@ ROM_START( ballbros )
 ROM_END
 
 
-void init_taitox( void)
+DRIVER_INIT( taitox )
 {
 	state_save_register_int("taitof2", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);

@@ -33,8 +33,8 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-void hanaawas_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void hanaawas_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( hanaawas );
+VIDEO_UPDATE( hanaawas );
 WRITE_HANDLER( hanaawas_portB_w );
 WRITE_HANDLER( hanaawas_colorram_w );
 
@@ -172,42 +172,32 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_hanaawas =
-{
+static MACHINE_DRIVER_START( hanaawas )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz ??? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	16, 32*8,
-	hanaawas_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	hanaawas_vh_screenrefresh,
+	MDRV_PALETTE_INIT(hanaawas)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(hanaawas)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

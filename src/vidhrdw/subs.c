@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Subs hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "subs.h"
 
 WRITE_HANDLER( subs_invert1_w )
 {
@@ -45,15 +44,17 @@ WRITE_HANDLER( subs_invert2_w )
   the main emulation engine.
 
 ***************************************************************************/
-void subs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( subs )
 {
+	int updateall = get_vh_global_attribute_changed();
 	int offs;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (full_refresh || dirtybuffer[offs])
+		if (updateall || dirtybuffer[offs])
 		{
 			int charcode;
 			int sx,sy;

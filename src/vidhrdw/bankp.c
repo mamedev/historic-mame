@@ -43,7 +43,7 @@ static int priority;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void bankp_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( bankp )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -98,24 +98,18 @@ void bankp_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colorta
   Start the video hardware emulation.
 
 ***************************************************************************/
-int bankp_vh_start(void)
+VIDEO_START( bankp )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
-	{
-		generic_vh_stop();
+	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
+
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
@@ -125,20 +119,6 @@ int bankp_vh_start(void)
 WRITE_HANDLER( bankp_scroll_w )
 {
 	scroll_x = data;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void bankp_vh_stop(void)
-{
-	free(dirtybuffer2);
-	bitmap_free(tmpbitmap2);
-	generic_vh_stop();
 }
 
 
@@ -199,7 +179,7 @@ WRITE_HANDLER( bankp_out_w )
   the main emulation engine.
 
 ***************************************************************************/
-void bankp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bankp )
 {
 	int offs;
 

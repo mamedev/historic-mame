@@ -12,17 +12,14 @@ Additional tweaking by Jarek Burczynski
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 
-void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void magmax_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int magmax_vh_start(void);
-void magmax_vh_stop(void);
+PALETTE_INIT( magmax );
+VIDEO_UPDATE( magmax );
+VIDEO_START( magmax );
 
 extern unsigned short magmax_vreg;
 extern data16_t *magmax_scroll_x;
 extern data16_t *magmax_scroll_y;
 
-
-static void * scanline_timer;
 
 static unsigned char sound_latch = 0;
 static unsigned char LS74_clr = 0;
@@ -66,12 +63,12 @@ static void scanline_callback(int scanline)
 	scanline += 128;
 	scanline &= 255;
 
-	scanline_timer = timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
+	timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
 }
 
-static void init_machine(void)
+MACHINE_INIT( magmax )
 {
-	scanline_timer = timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
+	timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
 }
 
 
@@ -290,52 +287,38 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-int magmax_interrupt(void)
-{
-	return MC68000_IRQ_1;
-}
+static MACHINE_DRIVER_START( magmax )
 
-static const struct MachineDriver machine_driver_magmax =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			magmax_readmem, magmax_writemem, 0, 0,
-			magmax_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			10000000/4,	/* 2.5 MHz */
-			magmax_soundreadmem, magmax_soundwritemem, magmax_soundreadport, magmax_soundwriteport,
-			ignore_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(magmax_readmem,magmax_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,10000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2.5 MHz */
+	MDRV_CPU_MEMORY(magmax_soundreadmem,magmax_soundwritemem)
+	MDRV_CPU_PORTS(magmax_soundreadport,magmax_soundwriteport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(magmax)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 1*16 + 16*16,
-	magmax_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(1*16 + 16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	magmax_vh_start,
-	magmax_vh_stop,
-	magmax_vh_screenrefresh,
+	MDRV_PALETTE_INIT(magmax)
+	MDRV_VIDEO_START(magmax)
+	MDRV_VIDEO_UPDATE(magmax)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( magmax )

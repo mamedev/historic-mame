@@ -161,29 +161,22 @@ READ_HANDLER( battlane_bitmap_r )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int battlane_vh_start(void)
+VIDEO_START( battlane )
 {
-	screen_bitmap = bitmap_alloc(0x20*8, 0x20*8);
+	screen_bitmap = auto_bitmap_alloc(0x20*8, 0x20*8);
 	if (!screen_bitmap)
-	{
 		return 1;
-	}
 
-	battlane_bitmap=malloc(battlane_bitmap_size);
+	battlane_bitmap=auto_malloc(battlane_bitmap_size);
 	if (!battlane_bitmap)
-	{
 		return 1;
-	}
 
 	memset(battlane_spriteram, 0, battlane_spriteram_size);
     memset(battlane_tileram,255, battlane_tileram_size);
 
-    bkgnd_bitmap = bitmap_alloc(0x0200, 0x0200);
+    bkgnd_bitmap = auto_bitmap_alloc(0x0200, 0x0200);
     if (!bkgnd_bitmap)
-	{
 		return 1;
-	}
-
 
 	return 0;
 }
@@ -192,33 +185,12 @@ int battlane_vh_start(void)
 
 /***************************************************************************
 
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void battlane_vh_stop(void)
-{
-	if (screen_bitmap)
-	{
-		bitmap_free(screen_bitmap);
-	}
-	if (battlane_bitmap)
-	{
-		free(battlane_bitmap);
-	}
-    if (bkgnd_bitmap)
-    {
-        free(bkgnd_bitmap);
-    }
-}
-
-/***************************************************************************
-
   Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void battlane_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( battlane )
 {
     int scrollx,scrolly;
 	int x,y, offs;

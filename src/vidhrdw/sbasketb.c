@@ -34,7 +34,7 @@ static struct rectangle scroll_area = { 0*8, 32*8-1, 0*8, 32*8-1 };
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( sbasketb )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -94,13 +94,13 @@ void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   the main emulation engine.
 
 ***************************************************************************/
-void sbasketb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sbasketb )
 {
 	int offs,i;
 	int sx,sy,code,color,flipx,flipy;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

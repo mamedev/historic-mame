@@ -20,25 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( skullxbo_playfieldlatch_w );
-WRITE16_HANDLER( skullxbo_hscroll_w );
-WRITE16_HANDLER( skullxbo_vscroll_w );
-WRITE16_HANDLER( skullxbo_mobmsb_w );
-
-int skullxbo_vh_start(void);
-void skullxbo_vh_stop(void);
-void skullxbo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void skullxbo_scanline_update(int param);
+#include "skullxbo.h"
 
 
 
@@ -87,7 +69,7 @@ static void alpha_row_update(int scanline)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( skullxbo )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -270,40 +252,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_skullxbo =
-{
+static MACHINE_DRIVER_START( skullxbo )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_II_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(skullxbo)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*16, 30*8, { 0*16, 42*16-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	skullxbo_vh_start,
-	skullxbo_vh_stop,
-	skullxbo_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(42*16, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*16-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(skullxbo)
+	MDRV_VIDEO_UPDATE(skullxbo)
+	
 	/* sound hardware */
-	JSA_II_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_ii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -358,7 +332,7 @@ ROM_START( skullxbo )
 	ROM_LOAD( "1128",     0x160000, 0x10000, 0xdce32863 ) /* MO */
 	/* 170000-18ffff empty */
 
-	ROM_REGION( 0x0a0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x0a0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "2129",     0x000000, 0x10000, 0x36b1a578 ) /* playfield */
 	ROM_LOAD( "2131",     0x010000, 0x10000, 0x7b7c04a1 ) /* playfield */
 	ROM_LOAD( "2133",     0x020000, 0x10000, 0xe03fe4d9 ) /* playfield */
@@ -426,7 +400,7 @@ ROM_START( skullxb2 )
 	ROM_LOAD( "1128",     0x160000, 0x10000, 0xdce32863 ) /* MO */
 	/* 170000-18ffff empty */
 
-	ROM_REGION( 0x0a0000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x0a0000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "2129",     0x000000, 0x10000, 0x36b1a578 ) /* playfield */
 	ROM_LOAD( "2131",     0x010000, 0x10000, 0x7b7c04a1 ) /* playfield */
 	ROM_LOAD( "2133",     0x020000, 0x10000, 0xe03fe4d9 ) /* playfield */
@@ -456,13 +430,12 @@ ROM_END
  *
  *************************************/
 
-static void init_skullxbo(void)
+static DRIVER_INIT( skullxbo )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 2, 1, 0x0080);
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
 	memset(memory_region(REGION_GFX1) + 0x170000, 0, 0x20000);
-	atarigen_invert_region(REGION_GFX2);
 }
 
 

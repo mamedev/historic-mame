@@ -45,7 +45,7 @@ size_t irem_textram_size;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void irem_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( irem )
 {
 	int i;
 
@@ -82,7 +82,7 @@ void irem_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	sprite_height_prom = color_prom;	/* we'll need this at run time */
 }
 
-void battroad_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( battroad )
 {
 	int i;
 
@@ -142,7 +142,7 @@ void battroad_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	sprite_height_prom = color_prom;	/* we'll need this at run time */
 }
 
-void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( spelunk2 )
 {
 	int i;
 
@@ -212,11 +212,11 @@ void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-int ldrun_vh_start(void)
+VIDEO_START( ldrun )
 {
 	irem_background_hscroll = 0;
 	irem_background_vscroll = 0;
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 
@@ -225,30 +225,27 @@ static int irem_vh_start( int width, int height )
 	irem_background_hscroll = 0;
 	irem_background_vscroll = 0;
 
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc(width,height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(width,height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-int kidniki_vh_start(void)
+VIDEO_START( kidniki )
 {
 	return irem_vh_start(512,256);
 }
 
-int spelunkr_vh_start(void)
+VIDEO_START( spelunkr )
 {
 	return irem_vh_start(512,512);
 }
 
-int youjyudn_vh_start(void)
+VIDEO_START( youjyudn )
 {
 	return irem_vh_start(512,256);
 }
@@ -1156,14 +1153,14 @@ static void youjyudn_draw_text(struct mame_bitmap *bitmap)
 }
 
 
-void kungfum_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kungfum )
 {
 	kungfum_draw_background(bitmap,0);
 	draw_sprites(bitmap);
 	kungfum_draw_background(bitmap,1);
 }
 
-void battroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( battroad )
 {
 	battroad_draw_background(bitmap, 0);
 	draw_priority_sprites(bitmap, 0);
@@ -1172,7 +1169,7 @@ void battroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	battroad_draw_text(bitmap);
 }
 
-void ldrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ldrun )
 {
 	ldrun_draw_background(bitmap, 0);
 	draw_priority_sprites(bitmap, 0);
@@ -1180,40 +1177,40 @@ void ldrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	draw_priority_sprites(bitmap, 1);
 }
 
-void ldrun4_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ldrun4 )
 {
 	ldrun4_draw_background(bitmap);
 	draw_sprites(bitmap);
 }
 
-void lotlot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lotlot )
 {
 	lotlot_draw_background(bitmap);
 	draw_sprites(bitmap);
 }
 
-void kidniki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kidniki )
 {
 	kidniki_draw_background(bitmap);
 	draw_sprites(bitmap);
 	kidniki_draw_text(bitmap);
 }
 
-void spelunkr_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( spelunkr )
 {
 	spelunkr_draw_background(bitmap);
 	draw_sprites(bitmap);
 	spelunkr_draw_text(bitmap);
 }
 
-void spelunk2_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( spelunk2 )
 {
 	spelunk2_draw_background(bitmap);
 	draw_sprites(bitmap);
 	spelunkr_draw_text(bitmap);
 }
 
-void youjyudn_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( youjyudn )
 {
 	youjyudn_draw_background(bitmap,0);
 	draw_sprites(bitmap);

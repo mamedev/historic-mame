@@ -15,17 +15,9 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-void superchs_vh_stop (void)
+VIDEO_START( superchs )
 {
-	free(spritelist);
-	spritelist = 0;
-
-	TC0480SCP_vh_stop();
-}
-
-int superchs_vh_start (void)
-{
-	spritelist = malloc(0x4000 * sizeof(*spritelist));
+	spritelist = auto_malloc(0x4000 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
 
@@ -81,7 +73,7 @@ Heavy use is made of sprite zooming.
 
 ********************************************************/
 
-static void superchs_draw_sprites_16x16(struct mame_bitmap *bitmap,int *primasks,int x_offs,int y_offs)
+static void superchs_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks,int x_offs,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -195,7 +187,7 @@ static void superchs_draw_sprites_16x16(struct mame_bitmap *bitmap,int *primasks
 							sprite_ptr->color,
 							sprite_ptr->flipx,sprite_ptr->flipy,
 							sprite_ptr->x,sprite_ptr->y,
-							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							cliprect,TRANSPARENCY_PEN,0,
 							sprite_ptr->zoomx,sprite_ptr->zoomy);
 				}
 			}
@@ -215,7 +207,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				sprite_ptr->color,
 				sprite_ptr->flipx,sprite_ptr->flipy,
 				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				sprite_ptr->zoomx,sprite_ptr->zoomy,
 				sprite_ptr->primask);
 	}
@@ -226,7 +218,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				SCREEN REFRESH
 **************************************************************/
 
-void superchs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( superchs )
 {
 	UINT8 layer[5];
 	UINT16 priority;
@@ -241,24 +233,24 @@ void superchs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[3] = (priority &0x000f) >>  0;	/* tells us which is top */
 	layer[4] = 4;   /* text layer always over bg layers */
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* We have to assume 2nd to bottom layer is always underneath
 	   sprites as pdrawgfx cannot yet cope with more than 4 layers */
 
 #ifdef MAME_DEBUG
-	if (!keyboard_pressed (KEYCODE_Z)) TC0480SCP_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
-	if (!keyboard_pressed (KEYCODE_X)) TC0480SCP_tilemap_draw(bitmap,layer[1],0,1);
-	if (!keyboard_pressed (KEYCODE_C)) TC0480SCP_tilemap_draw(bitmap,layer[2],0,2);
-	if (!keyboard_pressed (KEYCODE_V)) TC0480SCP_tilemap_draw(bitmap,layer[3],0,4);
-	if (!keyboard_pressed (KEYCODE_B)) TC0480SCP_tilemap_draw(bitmap,layer[4],0,8);
-	if (!keyboard_pressed (KEYCODE_N)) superchs_draw_sprites_16x16(bitmap,primasks,48,-116);
+	if (!keyboard_pressed (KEYCODE_Z)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	if (!keyboard_pressed (KEYCODE_X)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,1);
+	if (!keyboard_pressed (KEYCODE_C)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,2);
+	if (!keyboard_pressed (KEYCODE_V)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,4);
+	if (!keyboard_pressed (KEYCODE_B)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,8);
+	if (!keyboard_pressed (KEYCODE_N)) superchs_draw_sprites_16x16(bitmap,cliprect,primasks,48,-116);
 #else
-	TC0480SCP_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
-	TC0480SCP_tilemap_draw(bitmap,layer[1],0,1);
-	TC0480SCP_tilemap_draw(bitmap,layer[2],0,2);
-	TC0480SCP_tilemap_draw(bitmap,layer[3],0,4);
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0,8);	/* text layer */
-	superchs_draw_sprites_16x16(bitmap,primasks,48,-116);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,1);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,2);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,4);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,8);	/* text layer */
+	superchs_draw_sprites_16x16(bitmap,cliprect,primasks,48,-116);
 #endif
 }

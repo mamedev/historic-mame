@@ -23,7 +23,7 @@ static int charbank[2];
 static struct tilemap *fg_tilemap,*bg_tilemap;
 
 
-void ddrible_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ddrible )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -111,7 +111,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int ddrible_vh_start ( void )
+VIDEO_START( ddrible )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan,TILEMAP_OPAQUE,     8,8,64,32);
@@ -170,7 +170,7 @@ byte #4:	attributes
 
 ***************************************************************************/
 
-static void ddribble_draw_sprites( struct mame_bitmap *bitmap, unsigned char* source, int lenght, int gfxset, int flipscreen )
+static void ddribble_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, unsigned char* source, int lenght, int gfxset, int flipscreen )
 {
 	struct GfxElement *gfx = Machine->gfx[gfxset];
 	const unsigned char *finish = source + lenght;
@@ -225,7 +225,7 @@ static void ddribble_draw_sprites( struct mame_bitmap *bitmap, unsigned char* so
 						color,
 						flipx, flipy,
 						sx+x*16,sy+y*16,
-						&Machine->visible_area,
+						cliprect,
 						TRANSPARENCY_PEN, 0);
 				}
 			}
@@ -240,7 +240,7 @@ static void ddribble_draw_sprites( struct mame_bitmap *bitmap, unsigned char* so
 
 ***************************************************************************/
 
-void ddrible_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( ddrible )
 {
 	tilemap_set_flip(fg_tilemap, (ddribble_vregs[0][4] & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	tilemap_set_flip(bg_tilemap, (ddribble_vregs[1][4] & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
@@ -251,8 +251,8 @@ void ddrible_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
 	tilemap_set_scrolly(fg_tilemap,0,ddribble_vregs[0][0]);
 	tilemap_set_scrolly(bg_tilemap,0,ddribble_vregs[1][0]);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	ddribble_draw_sprites(bitmap,ddrible_spriteram_1,0x07d,2,ddribble_vregs[0][4] & 0x08);
-	ddribble_draw_sprites(bitmap,ddrible_spriteram_2,0x140,3,ddribble_vregs[1][4] & 0x08);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	ddribble_draw_sprites(bitmap,cliprect,ddrible_spriteram_1,0x07d,2,ddribble_vregs[0][4] & 0x08);
+	ddribble_draw_sprites(bitmap,cliprect,ddrible_spriteram_2,0x140,3,ddribble_vregs[1][4] & 0x08);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

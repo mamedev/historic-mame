@@ -136,8 +136,8 @@ extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
 WRITE_HANDLER( cclimber_colorram_w );
 WRITE_HANDLER( cclimber_bigsprite_videoram_w );
-void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( cclimber );
+VIDEO_UPDATE( cclimber );
 
 WRITE_HANDLER( cclimber_sample_select_w );
 WRITE_HANDLER( cclimber_sample_trigger_w );
@@ -158,7 +158,7 @@ static WRITE_HANDLER( flip_screen_y_w )
 }
 
 
-static void cclimber_init_machine (void)
+static MACHINE_INIT( cclimber )
 {
 	/* Disable interrupts, River Patrol / Silver Land needs this */
 	cpu_interrupt_enable(0,0);
@@ -435,46 +435,34 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static const struct MachineDriver machine_driver_cclimber =
-{
+static MACHINE_DRIVER_START( cclimber )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz */
-			readmem,writemem,readport,writeport,
-			nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	cclimber_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(cclimber)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	96,16*4+8*4,
-	cclimber_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(96)
+	MDRV_COLORTABLE_LENGTH(16*4+8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	cclimber_vh_screenrefresh,
+	MDRV_PALETTE_INIT(cclimber)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(cclimber)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -516,7 +504,7 @@ ROM_START( cclimber )
 	ROM_LOAD( "cc12",         0x1000, 0x1000, 0x5da13aaa )
 ROM_END
 
-static void init_cclimber(void)
+static DRIVER_INIT( cclimber )
 {
 /*
 	translation mask is layed out like this:
@@ -689,7 +677,7 @@ ROM_START( ccboot2 )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-static void init_cclimbrj(void)
+static DRIVER_INIT( cclimbrj )
 {
 /*
 	translation mask is layed out like this:
@@ -1018,8 +1006,8 @@ ROM_END
 
 WRITE_HANDLER( swimmer_bgcolor_w );
 WRITE_HANDLER( swimmer_palettebank_w );
-void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void swimmer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( swimmer );
+VIDEO_UPDATE( swimmer );
 WRITE_HANDLER( swimmer_sidepanel_enable_w );
 
 
@@ -1027,7 +1015,7 @@ WRITE_HANDLER( swimmer_sidepanel_enable_w );
 WRITE_HANDLER( swimmer_sh_soundlatch_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 
@@ -1272,49 +1260,37 @@ static struct AY8910interface swimmer_ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_swimmer =
-{
+static MACHINE_DRIVER_START( swimmer )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz */
-			swimmer_readmem,swimmer_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000/2,	/* 2 MHz */
-			sound_readmem,sound_writemem,0,sound_writeport,
-			0,0,
-			nmi_interrupt,4000000/16384 /* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(swimmer_readmem,swimmer_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,4000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,4000000/16384) /* IRQs are triggered by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	swimmer_gfxdecodeinfo,
-	256+32+2,64*8+4*8,
-	swimmer_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(swimmer_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+32+2)
+	MDRV_COLORTABLE_LENGTH(64*8+4*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	swimmer_vh_screenrefresh,
+	MDRV_PALETTE_INIT(swimmer)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(swimmer)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&swimmer_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, swimmer_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

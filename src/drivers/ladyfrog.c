@@ -14,7 +14,7 @@ VIDEO COMPUTER SYSTEM  (C)1989 DYNAX INC  NAGOYA JAPAN  DRAGON PUNCH  VER. 1.30
 #include "driver.h"
 
 
-void ladyfrog_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ladyfrog )
 {
 }
 
@@ -75,42 +75,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_ladyfrog =
-{
+static MACHINE_DRIVER_START( ladyfrog )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz??? */
-			readmem,writemem,0,0,
-			m68_level6_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz??? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* interrupt mode 0 + NMI */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */				\
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0, 256-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	ladyfrog_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(ladyfrog)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 
 

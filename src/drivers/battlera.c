@@ -22,10 +22,9 @@
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 
-void battlera_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int battlera_vh_start (void);
-void battlera_vh_stop (void);
-int battlera_interrupt(void);
+VIDEO_UPDATE( battlera );
+VIDEO_START( battlera );
+INTERRUPT_GEN( battlera_interrupt );
 
 READ_HANDLER( HuC6270_register_r );
 WRITE_HANDLER( HuC6270_register_w );
@@ -44,7 +43,7 @@ static WRITE_HANDLER( battlera_sound_w )
 {
 	if (offset==0) {
 		soundlatch_w(0,data);
-		cpu_cause_interrupt(1,H6280_INT_IRQ1);
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 	}
 }
 
@@ -116,7 +115,7 @@ static void battlera_adpcm_int(int data)
 
 	toggle = 1 - toggle;
 	if (toggle)
-		cpu_cause_interrupt(1,H6280_INT_IRQ2);
+		cpu_set_irq_line(1, 1, HOLD_LINE);
 }
 
 static WRITE_HANDLER( battlera_adpcm_data_w )
@@ -282,53 +281,35 @@ static struct MSM5205interface msm5205_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_battlera =
-{
+static MACHINE_DRIVER_START( battlera )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_H6280,
-			21477200/3,
-			battlera_readmem,battlera_writemem,0,battlera_portwrite,
-			battlera_interrupt,256 /* 8 prelines, 232 lines, 16 vblank? */
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			21477200/3,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* Interrupts from OPL chip */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written*/
-	0,
+	MDRV_CPU_ADD(H6280,21477200/3)
+	MDRV_CPU_MEMORY(battlera_readmem,battlera_writemem)
+	MDRV_CPU_PORTS(0,battlera_portwrite)
+	MDRV_CPU_VBLANK_INT(battlera_interrupt,256) /* 8 prelines, 232 lines, 16 vblank? */
+
+	MDRV_CPU_ADD(H6280,21477200/3)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	gfxdecodeinfo,
-	512, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	battlera_vh_start,
-	battlera_vh_stop,
-	battlera_vh_screenrefresh,
+	MDRV_VIDEO_START(battlera)
+	MDRV_VIDEO_UPDATE(battlera)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 

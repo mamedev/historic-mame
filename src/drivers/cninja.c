@@ -15,9 +15,7 @@
   strangely makes very little use of it (only one check at the start).
   Robocop 2 is a different board but similar hardware.
 
-  Robocop 2 road level is wrong (row offsets aren't written?!)
-  Robocop 2 has a special graphics mode which displays high colour pictures
-  in the attract mode (not implemented yet).
+  Robocop 2 road level is wrong (raster update supported needed)
 
   The sound program of Stoneage is ripped from Block Out (by Technos!)
 
@@ -42,13 +40,13 @@ static data16_t *cninja_ram;
 static WRITE16_HANDLER( cninja_sound_w )
 {
 	soundlatch_w(0,data&0xff);
-	cpu_cause_interrupt(1,H6280_INT_IRQ1);
+	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
 static WRITE16_HANDLER( stoneage_sound_w )
 {
 	soundlatch_w(0,data&0xff);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static WRITE16_HANDLER( cninja_loopback_w )
@@ -60,8 +58,9 @@ static WRITE16_HANDLER( cninja_loopback_w )
 && offset!=0x2c && offset!=0x34
 && (offset>0xb0 || offset<0xa0) /* in game prot writes */
 )
-logerror("Protection PC %06x: warning - write %04x to %04x\n",cpu_get_pc(),data,offset);
 #endif
+logerror("Protection PC %06x: warning - write %04x to %04x\n",activecpu_get_pc(),data,offset);
+
 }
 
 static READ16_HANDLER( cninja_prot_r )
@@ -106,13 +105,15 @@ static READ16_HANDLER( cninja_prot_r )
 		case 0x22c: /* Player 1 & 2 input ports */
 			return (readinputport(0) + (readinputport(1) << 8));
 	}
-	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
+	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset);
 	return 0;
 }
 
 static READ16_HANDLER( edrandy_prot_r )
 {
- 	switch (offset<<1) {
+	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset*2);
+
+	switch (offset<<1) {
 		/* Video registers */
 		case 0x32a: /* Moved to 0x140006 on int */
 			return loopback[0x40];
@@ -130,8 +131,8 @@ static READ16_HANDLER( edrandy_prot_r )
 
 
 
-case 0x6c4: /* dma enable, bit 7 set, below bit 5 */
-case 0x33e: return loopback[0x16]; /* allows video registers */
+//case 0x6c4: /* dma enable, bit 7 set, below bit 5 */
+//case 0x33e: return loopback[0x16]; /* allows video registers */
 
 
 
@@ -270,14 +271,14 @@ case 0x2a0: return loopback[0x56];
 #endif
 	}
 
-//	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
+//	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset);
 	return 0;
 }
 
 #if 0
 static WRITE_HANDLER( log_m_w )
 {
-	logerror("INTERRUPT %06x: warning - write address %04x\n",cpu_get_pc(),offset);
+	logerror("INTERRUPT %06x: warning - write address %04x\n",activecpu_get_pc(),offset);
 
 }
 #endif
@@ -292,10 +293,10 @@ static READ16_HANDLER( robocop2_prot_r )
 		case 0x41a: /* Player 1 & 2 input ports */
 			return (readinputport(0) + (readinputport(1) << 8));
 		case 0x504: /* PC: 6b6.  b4, 2c, 36 written before read */
-			logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
+			logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset);
 			return 0x84;
 	}
-	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
+	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset);
 	return 0;
 }
 
@@ -397,8 +398,8 @@ static MEMORY_WRITE16_START( robocop2_writemem )
 	{ 0x150000, 0x15000f, cninja_control_0_w },
 	{ 0x154000, 0x154fff, cninja_pf3_data_w, &cninja_pf3_data },
 	{ 0x156000, 0x156fff, cninja_pf2_data_w, &cninja_pf2_data },
-	{ 0x15c000, 0x15c7ff, MWA16_RAM, &cninja_pf2_rowscroll },
-	{ 0x15e000, 0x15e7ff, MWA16_RAM, &cninja_pf3_rowscroll },
+	{ 0x15c000, 0x15c7ff, MWA16_RAM, &cninja_pf3_rowscroll },
+	{ 0x15e000, 0x15e7ff, MWA16_RAM, &cninja_pf2_rowscroll },
 
 	{ 0x180000, 0x1807ff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x18c064, 0x18c065, cninja_sound_w },
@@ -730,12 +731,35 @@ static struct GfxLayout tilelayout =
 	64*8
 };
 
+static struct GfxLayout tilelayout_8bpp =
+{
+	16,16,
+	4096,
+	8,
+	{ 0x100000*8+8, 0x100000*8, 0x40000*8+8, 0x40000*8, 0xc0000*8+8, 0xc0000*8, 8, 0 },
+	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
+		0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	64*8
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,    0, 16 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,  512, 64 },	/* Tiles 16x16 */
 	{ REGION_GFX3, 0, &tilelayout,  256, 16 },	/* Tiles 16x16 */
 	{ REGION_GFX4, 0, &spritelayout,768, 32 },	/* Sprites 16x16 */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo_robocop2[] =
+{
+	{ REGION_GFX1, 0, &charlayout,    0, 16 },	/* Characters 8x8 */
+	{ REGION_GFX2, 0, &tilelayout,  512, 64 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &tilelayout,  256, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX4, 0, &spritelayout,768, 32 },	/* Sprites 16x16 */
+	{ REGION_GFX2, 0, &tilelayout_8bpp,  512, 1 },	/* Tiles 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -795,209 +819,125 @@ static struct OKIM6295interface okim6295_interface =
 
 /**********************************************************************************/
 
-static const struct MachineDriver machine_driver_cninja =
-{
+static MACHINE_DRIVER_START( cninja )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,
-			cninja_readmem,cninja_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			32220000/8,	/* Accurate */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	58, 529,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(cninja_readmem,cninja_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(H6280,32220000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	cninja_vh_start,
-	0,
-	cninja_vh_screenrefresh,
+	MDRV_VIDEO_START(cninja)
+	MDRV_VIDEO_UPDATE(cninja)
 
 	/* sound hardware */
-	0,0,0,0, /* Mono */
-  	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_stoneage =
-{
+static MACHINE_DRIVER_START( stoneage )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,
-			cninja_readmem,cninja_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			stoneage_s_readmem,stoneage_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	58, 529,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(cninja_readmem,cninja_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(stoneage_s_readmem,stoneage_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	stoneage_vh_start,
-	0,
-	cninja_vh_screenrefresh,
+	MDRV_VIDEO_START(stoneage)
+	MDRV_VIDEO_UPDATE(cninja)
 
 	/* sound hardware */
-	0,0,0,0, /* Mono */
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface2
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface2)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_edrandy =
-{
+static MACHINE_DRIVER_START( edrandy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,
-			edrandy_readmem,edrandy_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			32220000/8,	/* Accurate */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	58, 529,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(edrandy_readmem,edrandy_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(H6280,32220000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	edrandy_vh_start,
-	0,
-	edrandy_vh_screenrefresh,
+	MDRV_VIDEO_START(edrandy)
+	MDRV_VIDEO_UPDATE(edrandy)
 
 	/* sound hardware */
-	0,0,0,0, /* Mono */
-  	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_robocop2 =
-{
+static MACHINE_DRIVER_START( robocop2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			14000000,
-			robocop2_readmem,robocop2_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU,
-			32220000/8,	/* Accurate */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, 529,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 14000000)
+	MDRV_CPU_MEMORY(robocop2_readmem,robocop2_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(H6280,32220000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_robocop2)
+	MDRV_PALETTE_LENGTH(2048)
 
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	robocop2_vh_start,
-	0,
-	robocop2_vh_screenrefresh,
+	MDRV_VIDEO_START(robocop2)
+	MDRV_VIDEO_UPDATE(robocop2)
 
 	/* sound hardware */
-	0,0,0,0, /* Mono? */
-  	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /**********************************************************************************/
 
@@ -1491,13 +1431,13 @@ static void edrandyj_patch(void)
 
 /**********************************************************************************/
 
-static void init_cninja(void)
+static DRIVER_INIT( cninja )
 {
 	install_mem_write16_handler(0, 0x1bc0a8, 0x1bc0a9, cninja_sound_w);
 	cninja_patch();
 }
 
-static void init_stoneage(void)
+static DRIVER_INIT( stoneage )
 {
 	install_mem_write16_handler(0, 0x1bc0a8, 0x1bc0a9, stoneage_sound_w);
 }

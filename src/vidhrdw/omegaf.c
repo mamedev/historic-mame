@@ -252,41 +252,25 @@ static void get_fg_tile_info(int tile_index)
 static int videoram_alloc(int size)
 {
 	/* create video ram */
-	if ( (omegaf_bg0_videoram = malloc(size)) == NULL )
-	{
+	if ( (omegaf_bg0_videoram = auto_malloc(size)) == NULL )
 		return 1;
-	}
 	memset( omegaf_bg0_videoram, 0x00, size );
 
-	if ( (omegaf_bg1_videoram = malloc(size)) == NULL )
-	{
-		free( omegaf_bg0_videoram );
+	if ( (omegaf_bg1_videoram = auto_malloc(size)) == NULL )
 		return 1;
-	}
 	memset( omegaf_bg1_videoram, 0x00, size );
 
-	if ( (omegaf_bg2_videoram = malloc(size)) == NULL )
-	{
-		free( omegaf_bg0_videoram );
-		free( omegaf_bg1_videoram );
+	if ( (omegaf_bg2_videoram = auto_malloc(size)) == NULL )
 		return 1;
-	}
 	memset( omegaf_bg2_videoram, 0x00, size );
 
-	if ( (bitmap_sp =
-	      bitmap_alloc (Machine -> drv -> screen_width, Machine -> drv -> screen_height
-	   ) ) == NULL )
-	{
-		free( omegaf_bg0_videoram );
-		free( omegaf_bg1_videoram );
-		free( omegaf_bg2_videoram );
+	if ( (bitmap_sp = auto_bitmap_alloc (Machine -> drv -> screen_width, Machine -> drv -> screen_height ) ) == NULL )
 		return 1;
-	}
 
 	return 0;
 }
 
-int omegaf_vh_start(void)
+VIDEO_START( omegaf )
 {
 	scrollx_mask = 0x07ff;
 	bank_mask = 7;
@@ -311,7 +295,7 @@ int omegaf_vh_start(void)
 	return 0;
 }
 
-int robokid_vh_start(void)
+VIDEO_START( robokid )
 {
 	scrollx_mask = 0x01ff;
 	bank_mask = 1;
@@ -334,14 +318,6 @@ int robokid_vh_start(void)
 	tilemap_set_transparent_pen( bg2_tilemap, 15 );
 
 	return 0;
-}
-
-void omegaf_vh_stop(void)
-{
-	free( omegaf_bg0_videoram );
-	free( omegaf_bg1_videoram );
-	free( omegaf_bg2_videoram );
-	bitmap_free(bitmap_sp);
 }
 
 
@@ -577,7 +553,7 @@ WRITE_HANDLER( omegaf_sprite_overdraw_w )
   Screen refresh
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -613,20 +589,20 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void omegaf_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( omegaf )
 {
-	fillbitmap(bitmap,Machine->pens[15],&Machine->visible_area);	// ??
+	fillbitmap(bitmap,Machine->pens[15],cliprect);	// ??
 
-	if (bg0_enabled)	tilemap_draw(bitmap, bg0_tilemap, 0, 0);
-	if (bg1_enabled)	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
-	if (bg2_enabled)	tilemap_draw(bitmap, bg2_tilemap, 0, 0);
+	if (bg0_enabled)	tilemap_draw(bitmap,cliprect, bg0_tilemap, 0, 0);
+	if (bg1_enabled)	tilemap_draw(bitmap,cliprect, bg1_tilemap, 0, 0);
+	if (bg2_enabled)	tilemap_draw(bitmap,cliprect, bg2_tilemap, 0, 0);
 	if ( sprite_overdraw_enabled )				/* overdraw sprite mode */
 	{
-		draw_sprites(bitmap_sp);
+		draw_sprites(bitmap_sp,cliprect);
 		copybitmap(bitmap, bitmap_sp, 0, 0, 0, 0,
-		           &Machine->visible_area, TRANSPARENCY_PEN, 15);
+		           cliprect, TRANSPARENCY_PEN, 15);
 	}
 	else										/* normal sprite mode */
-		draw_sprites(bitmap);
-	tilemap_draw(bitmap, fg_tilemap, 0, 0);
+		draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
 }

@@ -11,22 +11,7 @@
 #include "cpu/tms34010/tms34010.h"
 
 
-#define DEBUG 0
-
-
-/*************************************
- *
- *	Data types
- *
- *************************************/
-
-struct display_state
-{
-	int scanline;
-	int xscroll0, yscroll0;
-	int xscroll1, yscroll1;
-	int screen_control;
-};
+#define BT_DEBUG 0
 
 
 
@@ -43,9 +28,9 @@ data16_t *btoads_sprite_control;
 
 static UINT8 *vram_fg_draw, *vram_fg_display;
 
-static struct display_state current_state;
-static struct display_state *state_cache;
-static UINT8 state_index;
+static int xscroll0, yscroll0;
+static int xscroll1, yscroll1;
+static int screen_control;
 
 static UINT8 palette_entry;
 static UINT8 palette_color;
@@ -65,13 +50,8 @@ static UINT16 misc_control;
  *
  *************************************/
 
-int btoads_vh_start(void)
+VIDEO_START( btoads )
 {
-	/* allocate memory */
-	state_cache = malloc(256 * sizeof(struct display_state));
-	if (!state_cache)
-		return 1;
-
 	/* initialize the swapped pointers */
 	vram_fg_draw = (UINT8 *)btoads_vram_fg0;
 	vram_fg_display = (UINT8 *)btoads_vram_fg1;
@@ -82,40 +62,9 @@ int btoads_vh_start(void)
 
 /*************************************
  *
- *	Video system stop
- *
- *************************************/
-
-void btoads_vh_stop(void)
-{
-	if (state_cache)
-		free(state_cache);
-	state_cache = NULL;
-}
-
-
-
-/*************************************
- *
  *	Control registers
  *
  *************************************/
-
-INLINE void update_display_state(void)
-{
-	int scanline = cpu_getscanline();
-
-	/* if we're in mid-screen, cache the current state */
-	if (scanline < 224)
-	{
-		current_state.scanline = scanline;
-		if (state_index == 0 || state_cache[state_index - 1].scanline != scanline)
-			state_cache[state_index++] = current_state;
-		else
-			state_cache[state_index] = current_state;
-	}
-}
-
 
 WRITE16_HANDLER( btoads_misc_control_w )
 {
@@ -131,7 +80,7 @@ WRITE16_HANDLER( btoads_display_control_w )
 	if (ACCESSING_MSB)
 	{
 		/* allow multiple changes during display */
-		update_display_state();
+		force_partial_update(cpu_getscanline() - 1);
 
 		/* bit 15 controls which page is rendered and which page is displayed */
 		if (data & 0x8000)
@@ -146,7 +95,7 @@ WRITE16_HANDLER( btoads_display_control_w )
 		}
 
 		/* stash the remaining data for later */
-		current_state.screen_control = data >> 8;
+		screen_control = data >> 8;
 	}
 }
 
@@ -161,26 +110,26 @@ WRITE16_HANDLER( btoads_display_control_w )
 WRITE16_HANDLER( btoads_scroll0_w )
 {
 	/* allow multiple changes during display */
-	update_display_state();
+	force_partial_update(cpu_getscanline() - 1);
 
 	/* upper bits are Y scroll, lower bits are X scroll */
 	if (ACCESSING_MSB)
-		current_state.yscroll0 = data >> 8;
+		yscroll0 = data >> 8;
 	if (ACCESSING_LSB)
-		current_state.xscroll0 = data & 0xff;
+		xscroll0 = data & 0xff;
 }
 
 
 WRITE16_HANDLER( btoads_scroll1_w )
 {
 	/* allow multiple changes during display */
-	update_display_state();
+	force_partial_update(cpu_getscanline() - 1);
 
 	/* upper bits are Y scroll, lower bits are X scroll */
 	if (ACCESSING_MSB)
-		current_state.yscroll1 = data >> 8;
+		yscroll1 = data >> 8;
 	if (ACCESSING_LSB)
-		current_state.xscroll1 = data & 0xff;
+		xscroll1 = data & 0xff;
 }
 
 
@@ -370,7 +319,7 @@ void btoads_to_shiftreg(UINT32 address, UINT16 *shiftreg)
 	}
 
 	else
-		logerror("%08X:btoads_to_shiftreg(%08X)\n", cpu_get_pc(), address);
+		logerror("%08X:btoads_to_shiftreg(%08X)\n", activecpu_get_pc(), address);
 }
 
 
@@ -395,7 +344,7 @@ void btoads_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 		render_sprite_row(shiftreg, address);
 
 	else
-		logerror("%08X:btoads_from_shiftreg(%08X)\n", cpu_get_pc(), address);
+		logerror("%08X:btoads_from_shiftreg(%08X)\n", activecpu_get_pc(), address);
 }
 
 
@@ -406,36 +355,21 @@ void btoads_from_shiftreg(UINT32 address, UINT16 *shiftreg)
  *
  *************************************/
 
-void btoads_vh_eof(void)
+VIDEO_UPDATE( btoads )
 {
-	/* reset the display state counter */
-	state_index = 0;
-}
-
-
-void btoads_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-	struct display_state *curstate = state_cache;
 	int x, y;
 
-	/* add a final state for the last scanline */
-	if (state_index == 0 || state_cache[state_index - 1].scanline != 224)
-	{
-		current_state.scanline = 224;
-		state_cache[state_index] = current_state;
-	}
-
 	/* loop over all scanlines */
-	for (y = 0; y < 224; y++)
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *bg0_base = &btoads_vram_bg0[((y + curstate->yscroll0) & 0xff) * TOWORD(0x4000)];
-		UINT16 *bg1_base = &btoads_vram_bg1[((y + curstate->yscroll1) & 0xff) * TOWORD(0x4000)];
+		UINT16 *bg0_base = &btoads_vram_bg0[((y + yscroll0) & 0xff) * TOWORD(0x4000)];
+		UINT16 *bg1_base = &btoads_vram_bg1[((y + yscroll1) & 0xff) * TOWORD(0x4000)];
 		UINT8 *spr_base = &vram_fg_display[y * TOWORD(0x4000)];
 		UINT8 scanline[512];
 		UINT8 *dst = scanline;
 
 		/* for each scanline, switch off the render mode */
-		switch (curstate->screen_control & 3)
+		switch (screen_control & 3)
 		{
 			/* mode 0: used in ship level, snake boss, title screen (free play) */
 			case 0:
@@ -453,8 +387,8 @@ void btoads_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 					}
 					else
 					{
-						UINT16 bg0pix = bg0_base[(x + curstate->xscroll0) & 0xff];
-						UINT16 bg1pix = bg1_base[(x + curstate->xscroll1) & 0xff];
+						UINT16 bg0pix = bg0_base[(x + xscroll0) & 0xff];
+						UINT16 bg1pix = bg1_base[(x + xscroll1) & 0xff];
 
 						if (bg1pix & 0xff)
 							dst[0] = bg1pix;
@@ -482,8 +416,8 @@ void btoads_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 					}
 					else
 					{
-						UINT16 bg0pix = bg0_base[(x + curstate->xscroll0) & 0xff];
-						UINT16 bg1pix = bg1_base[(x + curstate->xscroll1) & 0xff];
+						UINT16 bg0pix = bg0_base[(x + xscroll0) & 0xff];
+						UINT16 bg1pix = bg1_base[(x + xscroll1) & 0xff];
 
 						if (bg0pix & 0xff)
 							dst[0] = bg0pix;
@@ -510,8 +444,8 @@ void btoads_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			case 3:
 				for (x = 0; x < 256; x++, dst += 2)
 				{
-					UINT16 bg0pix = bg0_base[(x + curstate->xscroll0) & 0xff];
-					UINT16 bg1pix = bg1_base[(x + curstate->xscroll1) & 0xff];
+					UINT16 bg0pix = bg0_base[(x + xscroll0) & 0xff];
+					UINT16 bg1pix = bg1_base[(x + xscroll1) & 0xff];
 					UINT8 sprpix = spr_base[x];
 
 					if (bg1pix & 0x80)
@@ -540,15 +474,11 @@ void btoads_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		}
 
 		/* render the scanline */
-		draw_scanline8(bitmap, 0, y, 512, scanline, NULL, -1);
-
-		/* switch to the next state if we need to */
-		if (y >= curstate->scanline)
-			curstate++;
+		draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], NULL, -1);
 	}
 
 	/* debugging - dump the screen contents to a file */
-#if DEBUG
+#if BT_DEBUG
 	if (keyboard_pressed(KEYCODE_X))
 	{
 		static int count = 0;
@@ -558,13 +488,13 @@ void btoads_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 		sprintf(name, "disp%d.log", count++);
 		f = fopen(name, "w");
-		fprintf(f, "screen_control = %04X\n\n", current_state.screen_control << 8);
+		fprintf(f, "screen_control = %04X\n\n", screen_control << 8);
 
 		for (i = 0; i < 3; i++)
 		{
 			UINT16 *base = (i == 0) ? (UINT16 *)vram_fg_display : (i == 1) ? btoads_vram_bg0 : btoads_vram_bg1;
-			int xscr = (i == 0) ? 0 : (i == 1) ? current_state.xscroll0 : current_state.xscroll1;
-			int yscr = (i == 0) ? 0 : (i == 1) ? current_state.yscroll0 : current_state.yscroll1;
+			int xscr = (i == 0) ? 0 : (i == 1) ? xscroll0 : xscroll1;
+			int yscr = (i == 0) ? 0 : (i == 1) ? yscroll0 : yscroll1;
 
 			for (y = 0; y < 224; y++)
 			{

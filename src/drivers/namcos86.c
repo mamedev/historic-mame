@@ -28,9 +28,9 @@ extern unsigned char *rthunder_videoram1, *rthunder_videoram2, *spriteram, *dirt
 
 /*******************************************************************/
 
-void namcos86_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-int namcos86_vh_start(void);
-void namcos86_vh_screenrefresh(struct mame_bitmap *bitmap,int fullrefresh);
+PALETTE_INIT( namcos86 );
+VIDEO_START( namcos86 );
+VIDEO_UPDATE( namcos86 );
 READ_HANDLER( rthunder_videoram1_r );
 WRITE_HANDLER( rthunder_videoram1_w );
 READ_HANDLER( rthunder_videoram2_r );
@@ -89,7 +89,7 @@ static int rt_decode_sample(const struct MachineSound *msound)
 	size = sizeof( struct GameSamples ) + n * sizeof( struct GameSamples * );
 
 	/* allocate */
-	if ( ( Machine->samples = malloc( size ) ) == NULL )
+	if ( ( Machine->samples = auto_malloc( size ) ) == NULL )
 		return 1;
 
 	samples = Machine->samples;
@@ -148,7 +148,7 @@ static int rt_decode_sample(const struct MachineSound *msound)
 		}
 
 		/* allocate sample */
-		if ( ( samples->sample[n] = malloc( sizeof( struct GameSample ) + size * sizeof( unsigned char ) ) ) == NULL )
+		if ( ( samples->sample[n] = auto_malloc( sizeof( struct GameSample ) + size * sizeof( unsigned char ) ) ) == NULL )
 			return 1;
 
 		/* fill up the sample info */
@@ -374,26 +374,22 @@ static WRITE_HANDLER( int_ack2_w )
 	int_enabled[1] = 1;
 }
 
-static int namco86_interrupt1(void)
+static INTERRUPT_GEN( namco86_interrupt1 )
 {
 	if (int_enabled[0])
 	{
 		int_enabled[0] = 0;
-		return interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
-static int namco86_interrupt2(void)
+static INTERRUPT_GEN( namco86_interrupt2 )
 {
 	if (int_enabled[1])
 	{
 		int_enabled[1] = 0;
-		return interrupt();
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 static WRITE_HANDLER( namcos86_coin_w )
@@ -1199,7 +1195,7 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static void namco86_init_machine( void )
+static MACHINE_INIT( namco86 )
 {
 	unsigned char *base = memory_region(REGION_CPU1) + 0x10000;
 
@@ -1209,75 +1205,116 @@ static void namco86_init_machine( void )
 }
 
 
-#define MACHINE_DRIVER(NAME,GFX)												\
-static const struct MachineDriver machine_driver_##NAME =								\
-{																				\
-	{																			\
-		{																		\
-			CPU_M6809,															\
-			6000000/4,		/* ? */												\
-			/*49152000/32, rthunder doesn't work with this */					\
-			readmem1,writemem1,0,0,												\
-			namco86_interrupt1,1												\
-		},																		\
-		{																		\
-			CPU_M6809,															\
-			49152000/32, 		/* ? */											\
-			NAME##_readmem2,NAME##_writemem2,0,0,								\
-			namco86_interrupt2,1												\
-		},																		\
-		{																		\
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */	\
-			49152000/32, 		/* ? */											\
-			NAME##_mcu_readmem,NAME##_mcu_writemem,mcu_readport,mcu_writeport,	\
-			interrupt, 1	/* ??? */											\
-		}																		\
-	},																			\
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,									\
-	100, /* cpu slices */														\
-	namco86_init_machine, /* init machine */									\
-																				\
-	/* video hardware */														\
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },									\
-	gfxdecodeinfo_##GFX,														\
-	512,4096,																	\
-	namcos86_vh_convert_color_prom,												\
-																				\
-	VIDEO_TYPE_RASTER,															\
-	0,																			\
-	namcos86_vh_start,															\
-	0,																			\
-	namcos86_vh_screenrefresh,													\
-																				\
-	/* sound hardware */														\
-	0,0,0,0,																	\
-	{																			\
-		{																		\
-			SOUND_YM2151,														\
-			&ym2151_interface													\
-		},																		\
-		{																		\
-			SOUND_NAMCO,														\
-			&namco_interface													\
-		},																		\
-		{																		\
-			SOUND_SAMPLES,														\
-			&samples_interface													\
-		},																		\
-		{																		\
-			SOUND_CUSTOM,	/* actually initializes the samples */				\
-			&custom_interface													\
-		}																		\
-	}																			\
-};
+static MACHINE_DRIVER_START( hopmappy )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("cpu1", M6809, 6000000/4)	/*49152000/32, rthunder doesn't work with this */
+	MDRV_CPU_MEMORY(readmem1,writemem1)
+	MDRV_CPU_VBLANK_INT(namco86_interrupt1,1)
+
+	MDRV_CPU_ADD_TAG("cpu2", M6809, 49152000/32)
+	MDRV_CPU_MEMORY(hopmappy_readmem2,hopmappy_writemem2)
+	MDRV_CPU_VBLANK_INT(namco86_interrupt2,1)
+
+	MDRV_CPU_ADD_TAG("mcu", HD63701, 49152000/32)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(hopmappy_mcu_readmem,hopmappy_mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(namco86)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_256)
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(4096)
+
+	MDRV_PALETTE_INIT(namcos86)
+	MDRV_VIDEO_START(namcos86)
+	MDRV_VIDEO_UPDATE(namcos86)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER( hopmappy, 256 )
-MACHINE_DRIVER( skykiddx, 256 )
-MACHINE_DRIVER( roishtar, 256 )
-MACHINE_DRIVER( genpeitd, 1024 )
-MACHINE_DRIVER( rthunder, 512 )
-MACHINE_DRIVER( wndrmomo, 512 )
+static MACHINE_DRIVER_START( skykiddx )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hopmappy)
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_MEMORY(skykiddx_readmem2,skykiddx_writemem2)
+
+	MDRV_CPU_MODIFY("mcu")
+	MDRV_CPU_MEMORY(skykiddx_mcu_readmem,skykiddx_mcu_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( roishtar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hopmappy)
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_MEMORY(roishtar_readmem2,roishtar_writemem2)
+
+	MDRV_CPU_MODIFY("mcu")
+	MDRV_CPU_MEMORY(roishtar_mcu_readmem,roishtar_mcu_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( genpeitd )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hopmappy)
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_MEMORY(genpeitd_readmem2,genpeitd_writemem2)
+
+	MDRV_CPU_MODIFY("mcu")
+	MDRV_CPU_MEMORY(genpeitd_mcu_readmem,genpeitd_mcu_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(gfxdecodeinfo_1024)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( rthunder )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hopmappy)
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_MEMORY(rthunder_readmem2,rthunder_writemem2)
+
+	MDRV_CPU_MODIFY("mcu")
+	MDRV_CPU_MEMORY(rthunder_mcu_readmem,rthunder_mcu_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(gfxdecodeinfo_512)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( wndrmomo )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hopmappy)
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_MEMORY(wndrmomo_readmem2,wndrmomo_writemem2)
+
+	MDRV_CPU_MODIFY("mcu")
+	MDRV_CPU_MEMORY(wndrmomo_mcu_readmem,wndrmomo_mcu_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(gfxdecodeinfo_512)
+MACHINE_DRIVER_END
+
 
 
 /***************************************************************************
@@ -1649,7 +1686,7 @@ ROM_END
 
 
 
-static void init_namco86(void)
+static DRIVER_INIT( namco86 )
 {
 	int size;
 	unsigned char *gfx;
@@ -1719,7 +1756,7 @@ WRITE_HANDLER( roishtar_semaphore_w )
 	    cpu_spinuntil_int();
 }
 
-static void init_roishtar(void)
+static DRIVER_INIT( roishtar )
 {
 	/* install hook to avoid hang at game over */
     install_mem_write_handler(1, 0x7e24, 0x7e24, roishtar_semaphore_w);

@@ -94,7 +94,7 @@ WRITE16_HANDLER( metro_K053936_w )
 		tilemap_mark_tile_dirty(metro_K053936_tilemap,offset);
 }
 
-void K053936_zoom_draw(struct mame_bitmap *bitmap)
+void K053936_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
@@ -112,7 +112,7 @@ void K053936_zoom_draw(struct mame_bitmap *bitmap)
 	startx += 69 * incxx;
 	starty += 69 * incxy;
 
-	tilemap_draw_roz(bitmap,metro_K053936_tilemap,startx << 5,starty << 5,
+	tilemap_draw_roz(bitmap,cliprect,metro_K053936_tilemap,startx << 5,starty << 5,
 			incxx << 5,incxy << 5,incyx << 5,incyy << 5,
 			0,	/* no wraparound */
 			0,0);
@@ -408,20 +408,11 @@ WRITE16_HANDLER( metro_window_w )
 int metro_sprite_xoffs, metro_sprite_yoffs;
 
 
-void metro_vh_stop(void)
-{
-	free(empty_tiles);
-	empty_tiles = NULL;
-
-	free(metro_tiletable_old);
-	metro_tiletable_old = NULL;
-}
-
 static void alloc_empty_tiles(void)
 {
 	int code,i;
 
-	empty_tiles = malloc(16*16*16);
+	empty_tiles = auto_malloc(16*16*16);
 	if (!empty_tiles) return;
 
 	for (code = 0;code < 0x10;code++)
@@ -429,14 +420,14 @@ static void alloc_empty_tiles(void)
 			empty_tiles[16*16*code + i] = code ^ 0x0f;
 }
 
-int metro_vh_start_14100(void)
+VIDEO_START( metro_14100 )
 {
 	support_8bpp = 0;
 	support_16x16 = 0;
 	has_zoom = 0;
 
 	alloc_empty_tiles();
-	metro_tiletable_old = malloc(metro_tiletable_size);
+	metro_tiletable_old = auto_malloc(metro_tiletable_size);
 
 	tilemap[0] = tilemap_create(get_tile_info_0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 	tilemap[1] = tilemap_create(get_tile_info_1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
@@ -447,10 +438,7 @@ int metro_vh_start_14100(void)
 	tilemap_16x16[2] = NULL;
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !empty_tiles || !metro_tiletable_old)
-	{
-		metro_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(tilemap[0],0);
 	tilemap_set_transparent_pen(tilemap[1],0);
@@ -459,14 +447,14 @@ int metro_vh_start_14100(void)
 	return 0;
 }
 
-int metro_vh_start_14220(void)
+VIDEO_START( metro_14220 )
 {
 	support_8bpp = 1;
 	support_16x16 = 0;
 	has_zoom = 0;
 
 	alloc_empty_tiles();
-	metro_tiletable_old = malloc(metro_tiletable_size);
+	metro_tiletable_old = auto_malloc(metro_tiletable_size);
 
 	tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 	tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
@@ -477,10 +465,7 @@ int metro_vh_start_14220(void)
 	tilemap_16x16[2] = NULL;
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !empty_tiles || !metro_tiletable_old)
-	{
-		metro_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(tilemap[0],0);
 	tilemap_set_transparent_pen(tilemap[1],0);
@@ -493,14 +478,14 @@ int metro_vh_start_14220(void)
 	return 0;
 }
 
-int metro_vh_start_14300(void)
+VIDEO_START( metro_14300 )
 {
 	support_8bpp = 1;
 	support_16x16 = 1;
 	has_zoom = 0;
 
 	alloc_empty_tiles();
-	metro_tiletable_old = malloc(metro_tiletable_size);
+	metro_tiletable_old = auto_malloc(metro_tiletable_size);
 
 	tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 	tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
@@ -513,10 +498,7 @@ int metro_vh_start_14300(void)
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2]
 			|| !tilemap_16x16[0] || !tilemap_16x16[1] || !tilemap_16x16[2]
 			|| !empty_tiles || !metro_tiletable_old)
-	{
-		metro_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(tilemap[0],0);
 	tilemap_set_transparent_pen(tilemap[1],0);
@@ -528,9 +510,9 @@ int metro_vh_start_14300(void)
 	return 0;
 }
 
-int  blzntrnd_vh_start(void)
+VIDEO_START( blzntrnd )
 {
-	if (metro_vh_start_14220())
+	if (video_start_metro_14220())
 		return 1;
 
 	has_zoom = 1;
@@ -608,7 +590,7 @@ int  blzntrnd_vh_start(void)
 
 /* Draw sprites of a given priority */
 
-void metro_draw_sprites(struct mame_bitmap *bitmap, int pri)
+void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	const int region		=	REGION_GFX1;
 
@@ -698,7 +680,7 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, int pri)
 							color_start >> 4,
 							flipx, flipy,
 							x, y,
-							&Machine->visible_area, TRANSPARENCY_PEN, 0,
+							cliprect, TRANSPARENCY_PEN, 0,
 							zoom, zoom	);
 		}
 		else
@@ -732,7 +714,7 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, int pri)
 							(color ^ 0x0f) + color_start,
 							flipx, flipy,
 							x, y,
-							&Machine->visible_area, TRANSPARENCY_PEN, 0,
+							cliprect, TRANSPARENCY_PEN, 0,
 							zoom, zoom	);
 		}
 
@@ -757,13 +739,13 @@ void metro_draw_sprites(struct mame_bitmap *bitmap, int pri)
 
 ***************************************************************************/
 
-void metro_tilemap_draw	(struct mame_bitmap *bitmap, struct tilemap *tmap, UINT32 flags, UINT32 priority,
+void metro_tilemap_draw	(struct mame_bitmap *bitmap, const struct rectangle *cliprect, struct tilemap *tmap, UINT32 flags, UINT32 priority,
 						 int sx, int sy, int wx, int wy)	// scroll & window values
 {
 #if 1
 		tilemap_set_scrollx(tmap, 0, sx - wx + (wx & 7));
 		tilemap_set_scrolly(tmap, 0, sy - wy + (wy & 7));
-		tilemap_draw(bitmap,tmap, flags, priority);
+		tilemap_draw(bitmap,cliprect,tmap, flags, priority);
 #else
 	int x,y,i;
 
@@ -810,14 +792,14 @@ void metro_tilemap_draw	(struct mame_bitmap *bitmap, struct tilemap *tmap, UINT3
 		   This fact renderes the function useless, as far as
 		   we are concerned! */
 		tilemap_set_clip(tmap, &clip);
-		tilemap_draw(bitmap,tmap, flags, priority);
+		tilemap_draw(bitmap,cliprect,tmap, flags, priority);
 	}
 #endif
 }
 
 
 /* Draw all the layers that match the given priority */
-static void draw_layers(struct mame_bitmap *bitmap, int pri, int layers_ctrl)
+static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int layers_ctrl)
 {
 	data16_t layers_pri = metro_videoregs[0x10/2];
 	int layer;
@@ -834,8 +816,8 @@ static void draw_layers(struct mame_bitmap *bitmap, int pri, int layers_ctrl)
 			if (layers_ctrl & (1<<layer))	// for debug
 			{
 				/* Only *one* of tilemap_16x16 & tilemap is enabled at any given time! */
-				metro_tilemap_draw(bitmap,tilemap[layer], 0, 0, sx, sy, wx, wy);
-				if (tilemap_16x16[layer]) metro_tilemap_draw(bitmap,tilemap_16x16[layer], 0, 0, sx, sy, wx, wy);
+				metro_tilemap_draw(bitmap,cliprect,tilemap[layer], 0, 0, sx, sy, wx, wy);
+				if (tilemap_16x16[layer]) metro_tilemap_draw(bitmap,cliprect,tilemap_16x16[layer], 0, 0, sx, sy, wx, wy);
 			}
 		}
 	}
@@ -867,7 +849,7 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 }
 
 
-void metro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( metro )
 {
 	int i,pri,sprites_pri,layers_ctrl = -1;
 	data8_t *dirtyindex;
@@ -905,7 +887,7 @@ void metro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	metro_sprite_yoffs	=	metro_videoregs[0x04/2] - Machine->drv->screen_height / 2;
 
 	/* The background color is selected by a register */
-	fillbitmap(bitmap,Machine->pens[((metro_videoregs[0x12/2] & 0x0fff) ^ 0x0ff) + 0x1000],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[((metro_videoregs[0x12/2] & 0x0fff) ^ 0x0ff) + 0x1000],cliprect);
 
 	/*	Screen Control Register:
 
@@ -946,7 +928,7 @@ if (keyboard_pressed(KEYCODE_Z))
 	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
 	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0)
-	{	fillbitmap(bitmap,0,&Machine->visible_area);
+	{	fillbitmap(bitmap,0,cliprect);
 		layers_ctrl &= msk;	}
 
 	usrintf_showmessage("l %x-%x-%x r %04x %04x %04x",
@@ -955,17 +937,17 @@ if (keyboard_pressed(KEYCODE_Z))
 				*metro_screenctrl);					}
 #endif
 
-	if (has_zoom) K053936_zoom_draw(bitmap);
+	if (has_zoom) K053936_zoom_draw(bitmap,cliprect);
 
 	/* Sprites priority wrt layers: 3..0 (low..high) */
 	sprites_pri	=	(metro_videoregs[0x02/2] & 0x0300) >> 8;
 
 	for (pri = 3; pri >=0; pri--)
 	{
-		draw_layers(bitmap,pri,layers_ctrl);
+		draw_layers(bitmap,cliprect,pri,layers_ctrl);
 
 		if ((layers_ctrl & 8) && (sprites_pri == pri))
 			for (i = 0; i < 0x20; i++)
-				metro_draw_sprites(bitmap, i);
+				metro_draw_sprites(bitmap,cliprect, i);
 	}
 }

@@ -2,9 +2,14 @@
 
 	Midway MCR-1 system
 
-	Currently implemented:
+    driver by Christopher Kirmse, Aaron Giles
+
+	Games supported:
 		* Solar Fox
 		* Kick
+
+	Known bugs:
+		* none at this time
 
 ****************************************************************************
 
@@ -71,25 +76,10 @@
 
 
 #include "driver.h"
-#include "machine/mcr.h"
 #include "machine/z80fmly.h"
 #include "sndhrdw/mcr.h"
 #include "vidhrdw/generic.h"
-
-
-/* constants */
-#define MAIN_OSC		19968000
-
-
-/* video driver data & functions */
-extern INT8 mcr12_sprite_xoffs;
-extern INT8 mcr12_sprite_xoffs_flip;
-
-int mcr12_vh_start(void);
-void mcr12_vh_stop(void);
-void mcr1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-WRITE_HANDLER( mcr1_videoram_w );
+#include "mcr.h"
 
 
 static const UINT8 *nvram_init;
@@ -145,7 +135,7 @@ static READ_HANDLER( solarfox_input_1_r )
  *
  *************************************/
 
-static void mcr1_nvram_handler(void *file, int read_or_write)
+static NVRAM_HANDLER( mcr1 )
 {
 	unsigned char *ram = memory_region(REGION_CPU1);
 
@@ -355,77 +345,33 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_mcr1 =
-{
+static MACHINE_DRIVER_START( mcr1 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			MAIN_OSC/8,		/* 2.5 MHz */
-			readmem,writemem,readport,writeport,
-			mcr_interrupt,2,
-			0,0,mcr_daisy_chain
-		},
-		SOUND_CPU_SSIO
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
-	1,
-	mcr_init_machine,
-
+	MDRV_CPU_ADD(Z80, MAIN_OSC_MCR_I/8)
+	MDRV_CPU_CONFIG(mcr_daisy_chain)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(mcr_interrupt,2)
+	
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(mcr)
+	MDRV_NVRAM_HANDLER(mcr1)
+	
 	/* video hardware */
-	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
-	gfxdecodeinfo,
-	32, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	mcr12_vh_start,
-	mcr12_vh_stop,
-	mcr1_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 30*16)
+	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	
+	MDRV_VIDEO_START(mcr12)
+	MDRV_VIDEO_UPDATE(mcr1)
+	
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_SSIO
-	},
-	mcr1_nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_solarfox(void)
-{
-	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7 };
-	nvram_init = hiscore_init;
-
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_read_handler(0, 0x00, 0x00, solarfox_input_0_r);
-	install_port_read_handler(0, 0x01, 0x01, solarfox_input_1_r);
-	install_port_write_handler(0, 0x01, 0x01, mcr_control_port_w);
-
-	mcr12_sprite_xoffs = 16;
-	mcr12_sprite_xoffs_flip = 0;
-}
-
-
-static void init_kick(void)
-{
-	nvram_init = NULL;
-
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_read_handler(0, 0x01, 0x01, kick_dial_r);
-	install_port_write_handler(0, 0x03, 0x03, mcr_control_port_w);
-
-	mcr12_sprite_xoffs = 0;
-	mcr12_sprite_xoffs_flip = 16;
-}
+	MDRV_IMPORT_FROM(mcr_ssio)
+MACHINE_DRIVER_END
 
 
 
@@ -514,6 +460,41 @@ ROM_START( kicka )
 	ROM_LOAD( "2800-c.1b",    0x4000, 0x2000, 0xc93e0170 )
 	ROM_LOAD( "2900-d.1a",    0x6000, 0x2000, 0x91e59383 )
 ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( solarfox )
+{
+	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7 };
+	nvram_init = hiscore_init;
+
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_read_handler(0, 0x00, 0x00, solarfox_input_0_r);
+	install_port_read_handler(0, 0x01, 0x01, solarfox_input_1_r);
+	install_port_write_handler(0, 0x01, 0x01, mcr_control_port_w);
+
+	mcr12_sprite_xoffs = 16;
+	mcr12_sprite_xoffs_flip = 0;
+}
+
+
+static DRIVER_INIT( kick )
+{
+	nvram_init = NULL;
+
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_read_handler(0, 0x01, 0x01, kick_dial_r);
+	install_port_write_handler(0, 0x03, 0x03, mcr_control_port_w);
+
+	mcr12_sprite_xoffs = 0;
+	mcr12_sprite_xoffs_flip = 16;
+}
 
 
 

@@ -5,7 +5,7 @@
 
 
 /************* Machine stuff ****** machine/toaplan1.c *************/
-int toaplan1_interrupt(void);
+INTERRUPT_GEN( toaplan1_interrupt );
 WRITE16_HANDLER( toaplan1_int_enable_w );
 READ16_HANDLER ( toaplan1_shared_r );
 WRITE16_HANDLER( toaplan1_shared_w );
@@ -22,10 +22,10 @@ WRITE_HANDLER( rallybik_coin_w );
 WRITE_HANDLER( toaplan1_coin_w );
 WRITE16_HANDLER( samesame_coin_w );
 
-void toaplan1_init_machine(void);
-void demonwld_init_machine(void);
-void vimana_init_machine(void);
-void zerozone_init_machine(void);	/* hack for ZeroWing/OutZone. See vidhrdw */
+MACHINE_INIT( toaplan1 );
+MACHINE_INIT( demonwld );
+MACHINE_INIT( vimana );
+MACHINE_INIT( zerozone );	/* hack for ZeroWing/OutZone. See vidhrdw */
 
 int toaplan1_unk_reset_port;
 
@@ -61,17 +61,15 @@ WRITE16_HANDLER( toaplan1_tileram_offs_w );
 READ16_HANDLER ( toaplan1_spriteram_offs_r );
 WRITE16_HANDLER( toaplan1_spriteram_offs_w );
 
-void rallybik_eof_callback(void);
-void toaplan1_eof_callback(void);
-void samesame_eof_callback(void);
-int  rallybik_vh_start(void);
-void rallybik_vh_stop(void);
-int  toaplan1_vh_start(void);
-void toaplan1_vh_stop(void);
-void rallybik_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void toaplan1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void zerowing_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void demonwld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_EOF( rallybik );
+VIDEO_EOF( toaplan1 );
+VIDEO_EOF( samesame );
+VIDEO_START( rallybik );
+VIDEO_START( toaplan1 );
+VIDEO_UPDATE( rallybik );
+VIDEO_UPDATE( toaplan1 );
+VIDEO_UPDATE( zerowing );
+VIDEO_UPDATE( demonwld );
 
 
 extern data16_t *toaplan1_colorram1;

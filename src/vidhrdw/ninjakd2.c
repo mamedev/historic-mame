@@ -22,35 +22,21 @@ static unsigned char 	 *bg_dirtybuffer;
 static int 		 bg_enable = 1;
 static int 		 sp_overdraw = 0;
 
-int ninjakd2_vh_start(void)
+VIDEO_START( ninjakd2 )
 {
-	if ((bg_dirtybuffer = malloc(1024)) == 0)
-	{
+	if ((bg_dirtybuffer = auto_malloc(1024)) == 0)
 		return 1;
-	}
-	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
-	{
-		free (bg_dirtybuffer);
+
+	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
 		return 1;
-	}
-	if ((bitmap_sp = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free (bg_dirtybuffer);
-		free (bitmap_bg);
+
+	if ((bitmap_sp = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
+
 	memset(bg_dirtybuffer,1,1024);
 
 	return 0;
 }
-
-void ninjakd2_vh_stop(void)
-{
-	bitmap_free(bitmap_bg);
-	bitmap_free(bitmap_sp);
-	free(bg_dirtybuffer);
-}
-
 
 WRITE_HANDLER( ninjakd2_bgvideoram_w )
 {
@@ -197,7 +183,7 @@ void ninjakd2_draw_sprites(struct mame_bitmap *bitmap)
   the main emulation engine.
 
 ***************************************************************************/
-void ninjakd2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ninjakd2 )
 {
 	int scrollx,scrolly;
 

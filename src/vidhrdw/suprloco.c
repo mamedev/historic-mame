@@ -31,7 +31,7 @@ static int control;
   I'm not sure about the resistor values, I'm using the Galaxian ones.
 
 ***************************************************************************/
-void suprloco_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( suprloco )
 {
 	int i;
 
@@ -96,7 +96,7 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int suprloco_vh_start(void)
+VIDEO_START( suprloco )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
@@ -182,7 +182,7 @@ READ_HANDLER( suprloco_control_r )
 
 ***************************************************************************/
 
-INLINE void draw_pixel(struct mame_bitmap *bitmap,int x,int y,int color)
+INLINE void draw_pixel(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int x,int y,int color)
 {
 	if (flip_screen)
 	{
@@ -190,17 +190,17 @@ INLINE void draw_pixel(struct mame_bitmap *bitmap,int x,int y,int color)
 		y = bitmap->height - y - 1;
 	}
 
-	if (x < Machine->visible_area.min_x ||
-		x > Machine->visible_area.max_x ||
-		y < Machine->visible_area.min_y ||
-		y > Machine->visible_area.max_y)
+	if (x < cliprect->min_x ||
+		x > cliprect->max_x ||
+		y < cliprect->min_y ||
+		y > cliprect->max_y)
 		return;
 
 	plot_pixel(bitmap, x, y, color);
 }
 
 
-static void render_sprite(struct mame_bitmap *bitmap,int spr_number)
+static void render_sprite(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int spr_number)
 {
 	int sx,sy,col,row,height,src,adjy,dy;
 	unsigned char *spr_reg;
@@ -260,18 +260,18 @@ static void render_sprite(struct mame_bitmap *bitmap,int spr_number)
 
 			if (color1 == 15) break;
 			if (color1)
-				draw_pixel(bitmap,sx+col,  adjy,spr_palette[color1]);
+				draw_pixel(bitmap,cliprect,sx+col,  adjy,spr_palette[color1]);
 
 			if (color2 == 15) break;
 			if (color2)
-				draw_pixel(bitmap,sx+col+1,adjy,spr_palette[color2]);
+				draw_pixel(bitmap,cliprect,sx+col+1,adjy,spr_palette[color2]);
 
 			col += 2;
 		}
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int spr_number;
 	unsigned char *spr_reg;
@@ -281,13 +281,13 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	{
 		spr_reg = spriteram + 0x10 * spr_number;
 		if (spr_reg[SPR_X] != 0xff)
-			render_sprite(bitmap,spr_number);
+			render_sprite(bitmap,cliprect,spr_number);
 	}
 }
 
-void suprloco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( suprloco )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,1,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,1,0);
 }

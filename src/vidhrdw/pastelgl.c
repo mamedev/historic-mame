@@ -35,7 +35,7 @@ void pastelgl_gfxdraw(void);
 
 
 ******************************************************************************/
-void pastelgl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( pastelgl )
 {
 	int i;
 
@@ -282,34 +282,25 @@ void pastelgl_gfxdraw(void)
 
 
 ******************************************************************************/
-int pastelgl_vh_start(void)
+VIDEO_START( pastelgl )
 {
-	if ((pastelgl_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((pastelgl_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((pastelgl_paltbl = malloc(0x10 * sizeof(char))) == 0) return 1;
+	if ((pastelgl_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((pastelgl_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
+	if ((pastelgl_paltbl = auto_malloc(0x10 * sizeof(char))) == 0) return 1;
 	memset(pastelgl_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
 	return 0;
-}
-
-void pastelgl_vh_stop(void)
-{
-	free(pastelgl_paltbl);
-	free(pastelgl_videoram);
-	bitmap_free(pastelgl_tmpbitmap);
-	pastelgl_videoram = 0;
-	pastelgl_tmpbitmap = 0;
 }
 
 /******************************************************************************
 
 
 ******************************************************************************/
-void pastelgl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pastelgl )
 {
 	int x, y;
 	unsigned char color;
 
-	if (full_refresh || pastelgl_screen_refresh)
+	if (get_vh_global_attribute_changed() || pastelgl_screen_refresh)
 	{
 		pastelgl_screen_refresh = 0;
 

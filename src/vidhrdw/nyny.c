@@ -17,7 +17,7 @@ static struct mame_bitmap *tmpbitmap2;
 
 
 /* used by nyny and spiders */
-void nyny_init_palette(unsigned char *obsolete,unsigned short *game_colortable,const unsigned char *color_prom)
+PALETTE_INIT( nyny )
 {
 	int i;
 
@@ -34,20 +34,16 @@ void nyny_init_palette(unsigned char *obsolete,unsigned short *game_colortable,c
 
 ***************************************************************************/
 
-int nyny_vh_start(void)
+VIDEO_START( nyny )
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
+	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		bitmap_free(tmpbitmap1);
-		return 1;
-	}
 
-	nyny_videoram = malloc(0x4000);
-	nyny_colourram = malloc(0x4000);
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
+	nyny_videoram = auto_malloc(0x4000);
+	nyny_colourram = auto_malloc(0x4000);
 
 	return 0;
 }
@@ -55,15 +51,6 @@ int nyny_vh_start(void)
 /***************************************************************************
   Stop the video hardware emulation.
 ***************************************************************************/
-
-void nyny_vh_stop(void)
-{
-   free(nyny_videoram);
-   free(nyny_colourram);
-
-   bitmap_free(tmpbitmap1);
-   bitmap_free(tmpbitmap2);
-}
 
 WRITE_HANDLER( nyny_flipscreen_w )
 {
@@ -161,7 +148,7 @@ WRITE_HANDLER( nyny_videoram1_w )
 	}
 }
 
-void nyny_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( nyny )
 {
 	copybitmap(bitmap,tmpbitmap2,flip_screen,flip_screen,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap1,flip_screen,flip_screen,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);

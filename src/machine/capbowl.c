@@ -1,9 +1,6 @@
 /***************************************************************************
 
-  machine.c
-
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
+	Coors Light Bowling/Bowl-O-Rama hardware
 
 ***************************************************************************/
 
@@ -15,7 +12,7 @@ static int GRHighByte = 0;
 static int GRMidByte  = 0;
 static int GRLowByte = 0;
 
-void capbowl_init_machine(void)
+MACHINE_INIT( capbowl )
 {
 	/* Initialize the ticket dispenser to 100 milliseconds */
 	/* (I'm not sure what the correct value really is) */
@@ -53,7 +50,7 @@ WRITE_HANDLER( bowlrama_turbo_w )
 			break;
 
 		default:
-			logerror("PC=%04X Write to unsupported Turbo address %02X Data=%02X\n",cpu_get_pc(),offset, data);
+			logerror("PC=%04X Write to unsupported Turbo address %02X Data=%02X\n",activecpu_get_pc(),offset, data);
 	}
 
 	currentaddress = ((GRHighByte << 16) | (GRMidByte << 8) | GRLowByte);
@@ -100,7 +97,7 @@ READ_HANDLER( bowlrama_turbo_r )
 		break;
 
 	default:
-		logerror("PC=%04X Read from unsupported Turbo address %02X\n",cpu_get_pc(),offset);
+		logerror("PC=%04X Read from unsupported Turbo address %02X\n",activecpu_get_pc(),offset);
 	}
 
 	return ret;

@@ -14,12 +14,11 @@ Preliminary driver by:
 
 
 /* prototypes */
-static void crimfght_init_machine( void );
+static MACHINE_INIT( crimfght );
 static void crimfght_banking( int lines );
 
-void crimfght_vh_stop( void );
-int crimfght_vh_start( void );
-void crimfght_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( crimfght );
+VIDEO_UPDATE( crimfght );
 
 
 static WRITE_HANDLER( crimfght_coin_w )
@@ -31,7 +30,7 @@ static WRITE_HANDLER( crimfght_coin_w )
 static WRITE_HANDLER( crimfght_sh_irqtrigger_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( crimfght_snd_bankswitch_w )
@@ -386,53 +385,36 @@ static struct K007232_interface k007232_interface =
 
 
 
-static const struct MachineDriver machine_driver_crimfght =
-{
+static MACHINE_DRIVER_START( crimfght )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_KONAMI,
-			3000000,		/* ? */
-			crimfght_readmem,crimfght_writemem,0,0,
-            interrupt,1
-        },
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			crimfght_readmem_sound, crimfght_writemem_sound,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	crimfght_init_machine,
+	MDRV_CPU_ADD(KONAMI, 3000000)		/* ? */
+	MDRV_CPU_MEMORY(crimfght_readmem,crimfght_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(crimfght_readmem_sound,crimfght_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(crimfght)
 
 	/* video hardware */
-	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(13*8, (64-13)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	crimfght_vh_start,
-	crimfght_vh_stop,
-	crimfght_vh_screenrefresh,
+	MDRV_VIDEO_START(crimfght)
+	MDRV_VIDEO_UPDATE(crimfght)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		}
-
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -537,7 +519,7 @@ static void crimfght_banking( int lines )
 	cpu_setbank( 2, &RAM[offs] );
 }
 
-static void crimfght_init_machine( void )
+static MACHINE_INIT( crimfght )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -547,7 +529,7 @@ static void crimfght_init_machine( void )
 	cpu_setbank( 2, &RAM[0x10000] );
 }
 
-static void init_crimfght(void)
+static DRIVER_INIT( crimfght )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

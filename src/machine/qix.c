@@ -203,7 +203,7 @@ static struct pia6821_interface slither_pia_3_intf =
  *
  *************************************/
 
-void qix_init_machine(void)
+MACHINE_INIT( qix )
 {
 	/* set a timer for the first scanline */
 	timer_set(cpu_getscanlinetime(0), 0, qix_scanline_callback);
@@ -220,7 +220,7 @@ void qix_init_machine(void)
 }
 
 
-void qixmcu_init_machine(void)
+MACHINE_INIT( qixmcu )
 {
 	/* set a timer for the first scanline */
 	timer_set(cpu_getscanlinetime(0), 0, qix_scanline_callback);
@@ -240,7 +240,7 @@ void qixmcu_init_machine(void)
 }
 
 
-void slither_init_machine(void)
+MACHINE_INIT( slither )
 {
 	/* set a timer for the first scanline */
 	timer_set(cpu_getscanlinetime(0), 0, qix_scanline_callback);
@@ -268,11 +268,10 @@ static void vblank_stop(int param)
 }
 
 
-int qix_vblank_start(void)
+INTERRUPT_GEN( qix_vblank_start )
 {
 	pia_3_cb1_w(0, 1);
 	timer_set(cpu_getscanlinetime(0), 0, vblank_stop);
-	return ignore_interrupt();
 }
 
 

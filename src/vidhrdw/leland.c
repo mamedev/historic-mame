@@ -3,14 +3,12 @@
 	Cinemat/Leland driver
 
 	Leland video hardware
-	driver by Aaron Giles and Paul Leaman
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-#include "osdepend.h"
+#include "leland.h"
 
 
 /* constants */
@@ -32,19 +30,12 @@ struct vram_state_data
 	UINT8	latch[2];
 };
 
-struct scroll_position
-{
-	UINT16 	scanline;
-	UINT16 	x, y;
-	UINT8 	gfxbank;
-};
-
 
 /* video RAM */
-static struct mame_bitmap *fgbitmap;
-static UINT8 *leland_video_ram;
 UINT8 *ataxx_qram;
 UINT8 leland_last_scanline_int;
+static struct mame_bitmap *fgbitmap;
+static UINT8 *leland_video_ram;
 
 /* video RAM bitmap drawing */
 static struct vram_state_data vram_state[2];
@@ -57,14 +48,6 @@ static int next_update_scanline;
 static UINT16 xscroll;
 static UINT16 yscroll;
 static UINT8 gfxbank;
-static UINT8 scroll_index;
-static struct scroll_position scroll_pos[VIDEO_HEIGHT];
-
-
-/* sound routines */
-extern UINT8 leland_dac_control;
-
-extern void leland_dac_update(int dacnum, UINT8 sample);
 
 
 
@@ -74,82 +57,36 @@ extern void leland_dac_update(int dacnum, UINT8 sample);
  *
  *************************************/
 
-int leland_vh_start(void)
+VIDEO_START( leland )
 {
-	void leland_vh_stop(void);
-
 	/* allocate memory */
-    leland_video_ram = malloc(VRAM_SIZE);
-    fgbitmap = bitmap_alloc(VIDEO_WIDTH * 8, VIDEO_HEIGHT * 8);
+    leland_video_ram = auto_malloc(VRAM_SIZE);
+    fgbitmap = auto_bitmap_alloc(VIDEO_WIDTH * 8, VIDEO_HEIGHT * 8);
 
 	/* error cases */
     if (!leland_video_ram || !fgbitmap)
-    {
-    	leland_vh_stop();
 		return 1;
-	}
 
 	/* reset videoram */
     memset(leland_video_ram, 0, VRAM_SIZE);
-
-	/* reset scrolling */
-	scroll_index = 0;
-	memset(scroll_pos, 0, sizeof(scroll_pos));
-
 	return 0;
 }
 
 
-int ataxx_vh_start(void)
+VIDEO_START( ataxx )
 {
-	void ataxx_vh_stop(void);
-
 	/* first do the standard stuff */
-	if (leland_vh_start())
+	if (video_start_leland())
 		return 1;
 
 	/* allocate memory */
-	ataxx_qram = malloc(QRAM_SIZE);
-
-	/* error cases */
+	ataxx_qram = auto_malloc(QRAM_SIZE);
     if (!ataxx_qram)
-    {
-    	ataxx_vh_stop();
 		return 1;
-	}
 
 	/* reset QRAM */
 	memset(ataxx_qram, 0, QRAM_SIZE);
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Stop video hardware
- *
- *************************************/
-
-void leland_vh_stop(void)
-{
-	if (leland_video_ram)
-		free(leland_video_ram);
-	leland_video_ram = NULL;
-
-	if (fgbitmap)
-		bitmap_free(fgbitmap);
-	fgbitmap = NULL;
-}
-
-
-void ataxx_vh_stop(void)
-{
-	leland_vh_stop();
-
-	if (ataxx_qram)
-		free(ataxx_qram);
-	ataxx_qram = NULL;
 }
 
 
@@ -162,46 +99,48 @@ void ataxx_vh_stop(void)
 
 WRITE_HANDLER( leland_gfx_port_w )
 {
-	int scanline = leland_last_scanline_int;
-	struct scroll_position *scroll;
-
-	/* treat anything during the VBLANK as scanline 0 */
-	if (scanline > Machine->visible_area.max_y)
-		scanline = 0;
-
 	/* adjust the proper scroll value */
     switch (offset)
     {
     	case -1:
-    		gfxbank = data;
+    		if (gfxbank != data)
+    		{
+				force_partial_update(leland_last_scanline_int);
+	    		gfxbank = data;
+			}
     		break;
+
 		case 0:
-			xscroll = (xscroll & 0xff00) | (data & 0x00ff);
+			if ((xscroll & 0xff) != data)
+			{
+				force_partial_update(leland_last_scanline_int);
+				xscroll = (xscroll & 0xff00) | (data & 0x00ff);
+			}
 			break;
+
 		case 1:
-			xscroll = (xscroll & 0x00ff) | ((data << 8) & 0xff00);
+			if ((xscroll >> 8) != data)
+			{
+				force_partial_update(leland_last_scanline_int);
+				xscroll = (xscroll & 0x00ff) | ((data << 8) & 0xff00);
+			}
 			break;
+
 		case 2:
-			yscroll = (yscroll & 0xff00) | (data & 0x00ff);
+			if ((yscroll & 0xff) != data)
+			{
+				force_partial_update(leland_last_scanline_int);
+				yscroll = (yscroll & 0xff00) | (data & 0x00ff);
+			}
 			break;
+
 		case 3:
-			yscroll = (yscroll & 0x00ff) | ((data << 8) & 0xff00);
+			if ((yscroll >> 8) != data)
+			{
+				force_partial_update(leland_last_scanline_int);
+				yscroll = (yscroll & 0x00ff) | ((data << 8) & 0xff00);
+			}
 			break;
-	}
-
-	/* update if necessary */
-	scroll = &scroll_pos[scroll_index];
-	if (xscroll != scroll->x || yscroll != scroll->y || gfxbank != scroll->gfxbank)
-	{
-		/* determine which entry to use */
-		if (scroll->scanline != scanline && scroll_index < VIDEO_HEIGHT - 1)
-			scroll++, scroll_index++;
-
-		/* fill in the data */
-		scroll->scanline = scanline;
-		scroll->x = xscroll;
-		scroll->y = yscroll;
-		scroll->gfxbank = gfxbank;
 	}
 }
 
@@ -213,7 +152,7 @@ WRITE_HANDLER( leland_gfx_port_w )
  *
  *************************************/
 
-void leland_video_addr_w(int offset, int data, int num)
+static void leland_video_addr_w(int offset, int data, int num)
 {
 	struct vram_state_data *state = vram_state + num;
 
@@ -282,7 +221,7 @@ static void update_for_scanline(int scanline)
  *
  *************************************/
 
-int leland_vram_port_r(int offset, int num)
+static int leland_vram_port_r(int offset, int num)
 {
 	struct vram_state_data *state = vram_state + num;
 	int addr = state->addr;
@@ -309,14 +248,14 @@ int leland_vram_port_r(int offset, int num)
 
         default:
             logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);
+                        cpu_getactivecpu(),activecpu_get_pc(), offset, addr);
             ret = 0;
             break;
     }
     state->addr = addr;
 
 	if (LOG_COMM && addr >= 0xf000)
-		logerror("%04X:%s comm read %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, ret);
+		logerror("%04X:%s comm read %04X = %02X\n", activecpu_get_previouspc(), num ? "slave" : "master", addr, ret);
 
     return ret;
 }
@@ -329,7 +268,7 @@ int leland_vram_port_r(int offset, int num)
  *
  *************************************/
 
-void leland_vram_port_w(int offset, int data, int num)
+static void leland_vram_port_w(int offset, int data, int num)
 {
 	struct vram_state_data *state = vram_state + num;
 	int addr = state->addr;
@@ -347,7 +286,7 @@ void leland_vram_port_w(int offset, int data, int num)
 	}
 
 	if (LOG_COMM && addr >= 0xf000)
-		logerror("%04X:%s comm write %04X = %02X\n", cpu_getpreviouspc(), num ? "slave" : "master", addr, data);
+		logerror("%04X:%s comm write %04X = %02X\n", activecpu_get_previouspc(), num ? "slave" : "master", addr, data);
 
 	/* based on the low 3 bits of the offset, update the destination */
     switch (offset & 7)
@@ -399,7 +338,7 @@ void leland_vram_port_w(int offset, int data, int num)
 
         default:
             logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset, addr);
+                        cpu_getactivecpu(),activecpu_get_pc(), offset, addr);
             break;
     }
 
@@ -460,10 +399,12 @@ WRITE_HANDLER( leland_slave_video_addr_w )
     leland_video_addr_w(offset, data, 1);
 }
 
+
 WRITE_HANDLER( leland_svram_port_w )
 {
     leland_vram_port_w(offset, data, 1);
 }
+
 
 READ_HANDLER( leland_svram_port_r )
 {
@@ -536,15 +477,8 @@ static void scanline_reset(int param)
 }
 
 
-void leland_vh_eof(void)
+VIDEO_EOF( leland )
 {
-	/* reset scrolling */
-	scroll_index = 0;
-	scroll_pos[0].scanline = 0;
-	scroll_pos[0].x = xscroll;
-	scroll_pos[0].y = yscroll;
-	scroll_pos[0].gfxbank = gfxbank;
-
 	/* update anything remaining */
 	update_for_scanline(VIDEO_HEIGHT * 8);
 
@@ -560,64 +494,47 @@ void leland_vh_eof(void)
  *
  *************************************/
 
-void leland_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( leland )
 {
 	const UINT8 *background_prom = memory_region(REGION_USER1);
 	const struct GfxElement *gfx = Machine->gfx[0];
-	int x, y, chunk;
+	int char_bank = ((gfxbank >> 4) & 0x03) * 0x0400;
+	int prom_bank = ((gfxbank >> 3) & 0x01) * 0x2000;
+	int xcoarse = xscroll / 8;
+	int ycoarse = yscroll / 8;
+	int xfine = xscroll % 8;
+	int yfine = yscroll % 8;
+	int x, y;
 
 	/* update anything remaining */
-	update_for_scanline(VIDEO_HEIGHT * 8);
+	update_for_scanline(cliprect->max_y);
 
-	/* loop over scrolling chunks */
-	/* it's okay to do this before the palette calc because */
-	/* these values are raw indexes, not pens */
-	for (chunk = 0; chunk <= scroll_index; chunk++)
+	/* draw what's visible to the main bitmap */
+	for (y = cliprect->min_y / 8; y < cliprect->max_y / 8 + 2; y++)
 	{
-		int char_bank = ((scroll_pos[chunk].gfxbank >> 4) & 0x03) * 0x0400;
-		int prom_bank = ((scroll_pos[chunk].gfxbank >> 3) & 0x01) * 0x2000;
-
-		/* determine scrolling parameters */
-		int xfine = scroll_pos[chunk].x % 8;
-		int yfine = scroll_pos[chunk].y % 8;
-		int xcoarse = scroll_pos[chunk].x / 8;
-		int ycoarse = scroll_pos[chunk].y / 8;
-		struct rectangle clip;
-
-		/* make a clipper */
-		clip = Machine->visible_area;
-		if (chunk != 0)
-			clip.min_y = scroll_pos[chunk].scanline;
-		if (chunk != scroll_index)
-			clip.max_y = scroll_pos[chunk + 1].scanline - 1;
-
-		/* draw what's visible to the main bitmap */
-		for (y = clip.min_y / 8; y < clip.max_y / 8 + 2; y++)
+		int ysum = ycoarse + y;
+		for (x = 0; x < VIDEO_WIDTH + 1; x++)
 		{
-			int ysum = ycoarse + y;
-			for (x = 0; x < VIDEO_WIDTH + 1; x++)
-			{
-				int xsum = xcoarse + x;
-				int offs = ((xsum << 0) & 0x000ff) |
-				           ((ysum << 8) & 0x01f00) |
-				           prom_bank |
-				           ((ysum << 9) & 0x1c000);
-				int code = background_prom[offs] |
-				           ((ysum << 2) & 0x300) |
-				           char_bank;
-				int color = (code >> 5) & 7;
+			int xsum = xcoarse + x;
+			int offs = ((xsum << 0) & 0x000ff) |
+			           ((ysum << 8) & 0x01f00) |
+			           prom_bank |
+			           ((ysum << 9) & 0x1c000);
+			int code = background_prom[offs] |
+			           ((ysum << 2) & 0x300) |
+			           char_bank;
+			int color = (code >> 5) & 7;
 
-				/* draw to the bitmap */
-				drawgfx(bitmap, gfx,
-						code, 8 * color, 0, 0,
-						8 * x - xfine, 8 * y - yfine,
-						&clip, TRANSPARENCY_NONE_RAW, 0);
-			}
+			/* draw to the bitmap */
+			drawgfx(bitmap, gfx,
+					code, 8 * color, 0, 0,
+					8 * x - xfine, 8 * y - yfine,
+					cliprect, TRANSPARENCY_NONE_RAW, 0);
 		}
 	}
 
 	/* Merge the two bitmaps together */
-	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND, 6);
+	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_BLEND, 6);
 }
 
 
@@ -628,52 +545,36 @@ void leland_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
  *
  *************************************/
 
-void ataxx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ataxx )
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
-	int x, y, chunk;
+	int xcoarse = xscroll / 8;
+	int ycoarse = yscroll / 8;
+	int xfine = xscroll % 8;
+	int yfine = yscroll % 8;
+	int x, y;
 
 	/* update anything remaining */
-	update_for_scanline(VIDEO_HEIGHT * 8);
+	update_for_scanline(cliprect->max_y);
 
-	/* loop over scrolling chunks */
-	/* it's okay to do this before the palette calc because */
-	/* these values are raw indexes, not pens */
-	for (chunk = 0; chunk <= scroll_index; chunk++)
+	/* draw what's visible to the main bitmap */
+	for (y = cliprect->min_y / 8; y < cliprect->max_y / 8 + 2; y++)
 	{
-		/* determine scrolling parameters */
-		int xfine = scroll_pos[chunk].x % 8;
-		int yfine = scroll_pos[chunk].y % 8;
-		int xcoarse = scroll_pos[chunk].x / 8;
-		int ycoarse = scroll_pos[chunk].y / 8;
-		struct rectangle clip;
-
-		/* make a clipper */
-		clip = Machine->visible_area;
-		if (chunk != 0)
-			clip.min_y = scroll_pos[chunk].scanline;
-		if (chunk != scroll_index)
-			clip.max_y = scroll_pos[chunk + 1].scanline - 1;
-
-		/* draw what's visible to the main bitmap */
-		for (y = clip.min_y / 8; y < clip.max_y / 8 + 2; y++)
+		int ysum = ycoarse + y;
+		for (x = 0; x < VIDEO_WIDTH + 1; x++)
 		{
-			int ysum = ycoarse + y;
-			for (x = 0; x < VIDEO_WIDTH + 1; x++)
-			{
-				int xsum = xcoarse + x;
-				int offs = ((ysum & 0x40) << 9) + ((ysum & 0x3f) << 8) + (xsum & 0xff);
-				int code = ataxx_qram[offs] | ((ataxx_qram[offs + 0x4000] & 0x7f) << 8);
+			int xsum = xcoarse + x;
+			int offs = ((ysum & 0x40) << 9) + ((ysum & 0x3f) << 8) + (xsum & 0xff);
+			int code = ataxx_qram[offs] | ((ataxx_qram[offs + 0x4000] & 0x7f) << 8);
 
-				/* draw to the bitmap */
-				drawgfx(bitmap, gfx,
-						code, 0, 0, 0,
-						8 * x - xfine, 8 * y - yfine,
-						&clip, TRANSPARENCY_NONE_RAW, 0);
-			}
+			/* draw to the bitmap */
+			drawgfx(bitmap, gfx,
+					code, 0, 0, 0,
+					8 * x - xfine, 8 * y - yfine,
+					cliprect, TRANSPARENCY_NONE_RAW, 0);
 		}
 	}
 
 	/* Merge the two bitmaps together */
-	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_BLEND, 6);
+	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_BLEND, 6);
 }

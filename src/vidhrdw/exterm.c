@@ -21,7 +21,7 @@ data16_t *exterm_master_videoram, *exterm_slave_videoram;
  *
  *************************************/
 
-void exterm_init_palette(UINT8 *palette, UINT16 *colortable,const UINT8 *color_prom)
+PALETTE_INIT( exterm )
 {
 	int i;
 
@@ -78,13 +78,9 @@ void exterm_from_shiftreg_slave(unsigned int address, UINT16* shiftreg)
  *
  *************************************/
 
-int exterm_vh_start(void)
+VIDEO_START( exterm )
 {
 	return 0;
-}
-
-void exterm_vh_stop(void)
-{
 }
 
 
@@ -95,25 +91,21 @@ void exterm_vh_stop(void)
  *
  *************************************/
 
-void exterm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( exterm )
 {
-	data16_t *bgsrc, *fgsrc;
 	int x, y;
 
 	/* if the display is blanked, fill with black */
 	if (tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[0], cliprect);
 		return;
 	}
 
-	/* redraw screen */
-	bgsrc = &exterm_master_videoram[0];
-	fgsrc = (tms34010_get_DPYSTRT(1) & 0x800) ? &exterm_slave_videoram[40*128] : &exterm_slave_videoram[296*128];
-
 	/* 16-bit case */
-	for (y = 0; y < 256; y++)
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
+		data16_t *bgsrc = &exterm_master_videoram[256 * y];
 		UINT16 scanline[256];
 
 		/* on the top/bottom of the screen, it's all background */
@@ -126,6 +118,9 @@ void exterm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		/* elsewhere, we have to blend foreground and background */
 		else
+		{
+			data16_t *fgsrc = (tms34010_get_DPYSTRT(1) & 0x800) ? &exterm_slave_videoram[y*128] : &exterm_slave_videoram[(256+y)*128];
+
 			for (x = 0; x < 256; x += 2)
 			{
 				UINT16 fgdata = *fgsrc++;
@@ -149,8 +144,9 @@ void exterm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 				bgsrc += 2;
 			}
+		}
 
 		/* draw the scanline */
-		draw_scanline16(bitmap, 0, y, 256, scanline, Machine->pens, -1);
+		draw_scanline16(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x, &scanline[cliprect->min_x], Machine->pens, -1);
 	}
 }

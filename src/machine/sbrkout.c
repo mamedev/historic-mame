@@ -1,20 +1,20 @@
-/***************************************************************************
+/*************************************************************************
 
-Atari Super Breakout machine
+	Atari Super Breakout hardware
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
+#include "sbrkout.h"
 
 #define SBRKOUT_PROGRESSIVE 0x00
 #define SBRKOUT_DOUBLE      0x01
 #define SBRKOUT_CAVITY      0x02
 
 int sbrkout_game_switch = SBRKOUT_PROGRESSIVE;
+
 
 /***************************************************************************
 Interrupt
@@ -27,11 +27,9 @@ the game checks the game switch, because we would probably lose a *lot* of
 key presses.  Also, MAME doesn't currently support a switch control like
 DIP switches that's used as a runtime control.
 ***************************************************************************/
-int sbrkout_interrupt(void)
+INTERRUPT_GEN( sbrkout_interrupt )
 {
-    int game_switch;
-
-    game_switch=input_port_7_r(0);
+    int game_switch=input_port_7_r(0);
 
     if (game_switch & 0x01)
         sbrkout_game_switch=SBRKOUT_PROGRESSIVE;
@@ -40,7 +38,7 @@ int sbrkout_interrupt(void)
     else if (game_switch & 0x04)
         sbrkout_game_switch=SBRKOUT_CAVITY;
 
-    return interrupt();
+    cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 READ_HANDLER( sbrkout_select1_r )
@@ -60,7 +58,7 @@ READ_HANDLER( sbrkout_select2_r )
 WRITE_HANDLER( sbrkout_irq_w )
 {
         /* generate irq */
-        cpu_cause_interrupt(0,M6502_INT_IRQ);
+        cpu_set_irq_line(0,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 

@@ -32,7 +32,7 @@ void gameplan_clear_screen(void);
 ***************************************************************************/
 
 
-int gameplan_vh_start(void)
+VIDEO_START( gameplan )
 {
 	if (strcmp(Machine->gamedrv->name, "kaos") == 0)
 		gameplan_this_is_kaos = 1;
@@ -44,7 +44,7 @@ int gameplan_vh_start(void)
 	else
 		gameplan_this_is_megatack = 0;
 
-	return generic_bitmapped_vh_start();
+	return video_start_generic_bitmapped();
 }
 
 
@@ -56,7 +56,7 @@ static int cb2 = -1;
 READ_HANDLER( gameplan_sound_r )
 {
 #ifdef VERBOSE
-	logerror("GAME:  read reg%X at PC %04x\n", offset, cpu_get_pc());
+	logerror("GAME:  read reg%X at PC %04x\n", offset, activecpu_get_pc());
 #endif
 
 	if (offset == 0)
@@ -75,7 +75,7 @@ READ_HANDLER( gameplan_sound_r )
 WRITE_HANDLER( gameplan_sound_w )
 {
 #ifdef VERBOSE
-	logerror("GAME: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
+	logerror("GAME: write reg%X with %02x at PC %04x\n", offset, data, activecpu_get_pc());
 #endif
 
 	if (offset == 1)
@@ -116,7 +116,7 @@ WRITE_HANDLER( gameplan_sound_w )
 READ_HANDLER( gameplan_via5_r )
 {
 #ifdef VERBOSE
-	logerror("SOUND:  read reg%X at PC %04x\n", offset, cpu_get_pc());
+	logerror("SOUND:  read reg%X at PC %04x\n", offset, activecpu_get_pc());
 #endif
 
 	if (offset == 0)
@@ -152,7 +152,7 @@ READ_HANDLER( gameplan_via5_r )
 WRITE_HANDLER( gameplan_via5_w )
 {
 #ifdef VERBOSE
-	logerror("SOUND: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
+	logerror("SOUND: write reg%X with %02x at PC %04x\n", offset, data, activecpu_get_pc());
 #endif
 
 	if (offset == 2)
@@ -169,7 +169,7 @@ READ_HANDLER( gameplan_video_r )
 	static int x;
 	x++;
 #if 0
-	logerror("%04x: reading %d from 200d\n", cpu_get_pc(), x);
+	logerror("%04x: reading %d from 200d\n", activecpu_get_pc(), x);
 #endif
 	return x;
 }
@@ -180,7 +180,7 @@ WRITE_HANDLER( gameplan_video_w )
 	static unsigned char xpos, ypos, colour = 7;
 
 #ifdef VERBOSE
-	logerror("VIA 1: PC %04x: %x -> reg%X\n", cpu_get_pc(), data, offset);
+	logerror("VIA 1: PC %04x: %x -> reg%X\n", activecpu_get_pc(), data, offset);
 #endif
 
 	if (offset == 0)			/* write to 2000 */

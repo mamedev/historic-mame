@@ -15,9 +15,8 @@ WRITE_HANDLER( mnight_bgvideoram_w );
 WRITE_HANDLER( mnight_fgvideoram_w );
 WRITE_HANDLER( mnight_sprite_overdraw_w );
 WRITE_HANDLER( mnight_background_enable_w );
-int  mnight_vh_start(void);
-void mnight_vh_stop(void);
-void mnight_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( mnight );
+VIDEO_UPDATE( mnight );
 
 extern unsigned char    *mnight_scrolly_ram;
 extern unsigned char    *mnight_scrollx_ram;
@@ -30,14 +29,14 @@ extern size_t mnight_foregroundram_size;
 
 static int mnight_bank_latch = 255, main_cpu_num;
 
-void mnight_init_machine(void)
+MACHINE_INIT( mnight )
 {
 	main_cpu_num = 0;
 }
 
-int mnight_interrupt(void)
+INTERRUPT_GEN( mnight_interrupt )
 {
-	return 0x00d7;	/* RST 10h */
+	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);	/* RST 10h */
 }
 
 READ_HANDLER( mnight_bankselect_r )
@@ -352,46 +351,38 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-static const struct MachineDriver machine_driver_mnight =
-{
-	{
-		{
-			CPU_Z80,
-			6000000,		/* 12000000/2 ??? */
-			readmem,writemem,0,0,	/* very sensitive to these settings */
-			mnight_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,		/* 12000000/3 ??? */
-			snd_readmem,snd_writemem,
-			0,snd_writeport,
-			interrupt,2
-		},
-	},
-	60, 10000,			/* frames per second, vblank duration */
-	10,				/* single CPU, no need for interleaving */
-	mnight_init_machine,
+static MACHINE_DRIVER_START( mnight )
 
-	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1},
-	gfxdecodeinfo,
-	768, 0,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)	/* very sensitive to these settings */
+	MDRV_CPU_VBLANK_INT(mnight_interrupt,1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mnight_vh_start,
-	mnight_vh_stop,
-	mnight_vh_screenrefresh,
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 12000000/3 ??? */
+	MDRV_CPU_MEMORY(snd_readmem,snd_writemem)
+	MDRV_CPU_PORTS(0,snd_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(10000)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_MACHINE_INIT(mnight)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
+
+	MDRV_VIDEO_START(mnight)
+	MDRV_VIDEO_UPDATE(mnight)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( mnight )

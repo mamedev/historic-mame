@@ -19,7 +19,7 @@ unsigned char *jackal_rambank = 0;
 unsigned char *jackal_spritebank = 0;
 
 
-void jackal_init_machine(void)
+MACHINE_INIT( jackal )
 {
 	cpu_setbank(1,&((memory_region(REGION_CPU1))[0x4000]));
  	jackal_rambank = &((memory_region(REGION_CPU1))[0]);

@@ -17,7 +17,7 @@ static int credits, coinsA, coinsB;
 static int coinageA[8][2] = {{1,1},{2,1},{1,3},{3,1},{1,2},{2,3},{1,6},{3,2}};
 static int coinageB[4][2] = {{1,1},{1,7},{1,5},{2,1}};
 
-void toypop_init_machine(void)
+MACHINE_INIT( toypop )
 {
 	credits = coinsA = coinsB = 0;
 	interrupt_enable_mainCPU = 0;
@@ -29,7 +29,7 @@ READ_HANDLER( toypop_sound_sharedram_r )
 {
 	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0xa1 - 0x40 && toypop_sound_sharedram[offset] == 0 && cpu_get_pc() == 0xe4df)
+	if (offset == 0xa1 - 0x40 && toypop_sound_sharedram[offset] == 0 && activecpu_get_pc() == 0xe4df)
 		cpu_spinuntil_int();
 	return toypop_sound_sharedram[offset];
 }
@@ -80,28 +80,22 @@ WRITE16_HANDLER( toypop_m68000_interrupt_disable_w )
 	interrupt_enable_68k = 0;
 }
 
-int toypop_main_interrupt(void)
+INTERRUPT_GEN( toypop_main_interrupt )
 {
 	if (interrupt_enable_mainCPU)
-		return interrupt();
-	else
-		return ignore_interrupt();
+		irq0_line_hold();
 }
 
-int toypop_sound_interrupt(void)
+INTERRUPT_GEN( toypop_sound_interrupt )
 {
 	if (interrupt_enable_sound)
-		return interrupt();
-	else
-		return ignore_interrupt();
+		irq0_line_hold();
 }
 
-int toypop_m68000_interrupt(void)
+INTERRUPT_GEN( toypop_m68000_interrupt )
 {
 	if (interrupt_enable_68k)
-		return MC68000_IRQ_6;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(2, 6, HOLD_LINE);
 }
 
 READ_HANDLER( toypop_customio_r )

@@ -50,62 +50,34 @@ static int scroll_realign_x = 0;
 
 /************************* Wardner variables *******************************/
 
-int toaplan0_vh_start(void)
+VIDEO_START( toaplan0 )
 {
 	/* the video RAM is accessed via ports, it's not memory mapped */
 	videoram_size = 0x800;
 	twincobr_bgvideoram_size = 0x2000;	/* banked two times 0x1000 */
 	twincobr_fgvideoram_size = 0x1000;
 
-	if ((videoram16 = malloc(videoram_size*2)) == 0)
+	if ((videoram16 = auto_malloc(videoram_size*2)) == 0)
 		return 1;
 	memset(videoram16,0,videoram_size*2);
 
-	if ((twincobr_fgvideoram16 = malloc(twincobr_fgvideoram_size*2)) == 0)
-	{
-		free(videoram16);
+	if ((twincobr_fgvideoram16 = auto_malloc(twincobr_fgvideoram_size*2)) == 0)
 		return 1;
-	}
 	memset(twincobr_fgvideoram16,0,twincobr_fgvideoram_size*2);
 
-	if ((twincobr_bgvideoram16 = malloc(twincobr_bgvideoram_size*2)) == 0)
-	{
-		free(twincobr_fgvideoram16);
-		free(videoram16);
+	if ((twincobr_bgvideoram16 = auto_malloc(twincobr_bgvideoram_size*2)) == 0)
 		return 1;
-	}
 	memset(twincobr_bgvideoram16,0,twincobr_bgvideoram_size*2);
 
-	if ((dirtybuffer = malloc(twincobr_bgvideoram_size*2)) == 0)
-	{
-		free(twincobr_bgvideoram16);
-		free(twincobr_fgvideoram16);
-		free(videoram16);
+	if ((dirtybuffer = auto_malloc(twincobr_bgvideoram_size*2)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer,1,twincobr_bgvideoram_size*2);
 
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
-		free(twincobr_bgvideoram16);
-		free(twincobr_fgvideoram16);
-		free(videoram16);
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
-
-void toaplan0_vh_stop(void)
-{
-	bitmap_free(tmpbitmap);
-	free(dirtybuffer);
-	free(twincobr_bgvideoram16);
-	free(twincobr_fgvideoram16);
-	free(videoram16);
-}
-
 
 
 WRITE16_HANDLER( twincobr_crtc_reg_sel_w )
@@ -278,7 +250,7 @@ static void twincobr_draw_sprites(struct mame_bitmap *bitmap, int priority)
 
 
 
-void toaplan0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( toaplan0 )
 {
 	static int offs,code,tile,color;
 
@@ -423,7 +395,7 @@ void toaplan0_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	twincobr_draw_sprites (bitmap, 0x0c00);
 }
 
-void toaplan0_eof_callback(void)
+VIDEO_EOF( toaplan0 )
 {
 	/*  Spriteram is always 1 frame ahead, suggesting spriteram buffering.
 		There are no CPU output registers that control this so we

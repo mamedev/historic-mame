@@ -218,7 +218,7 @@ READ_HANDLER( vsnes_in1_1_r )
  *	Init machine
  *
  *************************************/
-void vsnes_init_machine( void )
+MACHINE_INIT( vsnes )
 {
 	input_latch[0] = input_latch[1] = 0;
 	input_latch[2] = input_latch[3] = 0;
@@ -236,7 +236,7 @@ void vsnes_init_machine( void )
  *	Init machine
  *
  *************************************/
-void vsdual_init_machine( void )
+MACHINE_INIT( vsdual )
 {
 	input_latch[0] = input_latch[1] = 0;
 	input_latch[2] = input_latch[3] = 0;
@@ -258,7 +258,7 @@ void vsdual_init_machine( void )
  *	Common init for all games
  *
  *************************************/
-void init_vsnes( void )
+DRIVER_INIT( vsnes )
 {
 	/* set the controller to default */
 	vsnes_gun_controller = 0;
@@ -286,7 +286,7 @@ static WRITE_HANDLER( vsnormal_vrom_banking )
 
 /* Most games switch VROM Banks in controller 0 write */
 /* they dont do any other trickery */
-void init_vsnormal( void )
+DRIVER_INIT( vsnormal )
 {
 	/* vrom switching is enabled with bit 2 of $4016 */
 	install_mem_write_handler( 0, 0x4016, 0x4016, vsnormal_vrom_banking );
@@ -296,7 +296,7 @@ void init_vsnormal( void )
 
 /* Super Mario Bros. Extra ram at $6000 (NV?) and remapped colors */
 
-void init_suprmrio( void )
+DRIVER_INIT( suprmrio )
 {
 	/* common init */
 	init_vsnes();
@@ -370,7 +370,7 @@ static int zapstore;
 
 }
 
-void init_duckhunt( void )
+DRIVER_INIT( duckhunt )
 {
 	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r);
 	/* vrom switching is enabled with bit 2 of $4016 */
@@ -416,7 +416,7 @@ static WRITE_HANDLER( goonies_rom_banking )
 	}
 }
 
-void init_goonies( void )
+DRIVER_INIT( goonies )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -432,7 +432,7 @@ void init_goonies( void )
 	remapped_colortable = rp2c04003_colortable;
 }
 
-void init_vsgradus( void )
+DRIVER_INIT( vsgradus )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -448,7 +448,7 @@ void init_vsgradus( void )
 	remapped_colortable = rp2c04001_colortable;
 }
 
-void init_vspinbal( void )
+DRIVER_INIT( vspinbal )
 {
 	/* common init */
 	init_vsnes();
@@ -462,7 +462,7 @@ void init_vspinbal( void )
 
 }
 
-void init_hogalley( void )
+DRIVER_INIT( hogalley )
 {
 
 	install_mem_read_handler ( 0, 0x4016, 0x4016, gun_in0_r);
@@ -595,7 +595,7 @@ static WRITE_HANDLER( drmario_rom_banking )
 	}
 }
 
-void init_drmario( void )
+DRIVER_INIT( drmario )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -619,7 +619,7 @@ void init_drmario( void )
 
 /* Excite Bike */
 
-void init_excitebk( void )
+DRIVER_INIT( excitebk )
 {
 	/* common init */
 	init_vsnes();
@@ -634,7 +634,7 @@ void init_excitebk( void )
 }
 
 
-void init_excitbkj( void )
+DRIVER_INIT( excitbkj )
 {
 	/* common init */
 	init_vsnes();
@@ -652,7 +652,7 @@ void init_excitbkj( void )
 
 /* Mach Rider */
 
-void init_machridr( void )
+DRIVER_INIT( machridr )
 {
 	/* common init */
 	init_vsnes();
@@ -670,7 +670,7 @@ void init_machridr( void )
 
 /* VS Slalom */
 
-void init_vsslalom( void )
+DRIVER_INIT( vsslalom )
 {
 	/* common init */
 	init_vsnes();
@@ -692,7 +692,7 @@ static WRITE_HANDLER( castlevania_rom_banking )
 	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[rombank], 0x4000 );
 }
 
-void init_cstlevna( void )
+DRIVER_INIT( cstlevna )
 {
 	/* when starting the game , the 1st 16k and the last 16k are loaded into the 2 banks */
 	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );
@@ -737,7 +737,7 @@ static WRITE_HANDLER( topgun_security_w )
 	ppu2c03b_0_w( 1, data );
 }
 
-void init_vstopgun( void )
+DRIVER_INIT( vstopgun )
 {
 	/* when starting a mmc1 game , the 1st 16k and the last 16k are loaded into the 2 banks */
 	memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );/*memcpy( &memory_region( REGION_CPU1 )[0x08000], &memory_region( REGION_CPU1 )[0x28000], 0x8000 );*/
@@ -915,7 +915,7 @@ static WRITE_HANDLER( rbibb_rom_switch_w )
 	}
 }
 
-void init_rbibb( void )
+DRIVER_INIT( rbibb )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -976,7 +976,7 @@ return 0x37;
 }
 
 
-void init_xevious( void )
+DRIVER_INIT( xevious )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -1024,7 +1024,7 @@ static READ_HANDLER( tko_security_r )
 
 }
 
-void init_tkoboxng( void )
+DRIVER_INIT( tkoboxng )
 {
 	/* We do manual banking, in case the code falls through */
 	/* Copy the initial banks */
@@ -1107,7 +1107,7 @@ static WRITE_HANDLER( vsskykid_rom_switch_w )
 
 }
 
-void init_vsskykid( void )
+DRIVER_INIT( vsskykid )
 {
 	/* ??? mapper at writes to $8000-$ffff */
 	install_mem_write_handler( 0, 0x8000, 0xffff, vsskykid_rom_switch_w );
@@ -1158,7 +1158,7 @@ static WRITE_HANDLER( mapper68_rom_banking ){
 
 
 
-void init_platoon( void )
+DRIVER_INIT( platoon )
 {
 
 /* when starting a mapper 68 game  the first 16K ROM bank in the cart is loaded into $8000
@@ -1200,7 +1200,7 @@ static WRITE_HANDLER( vstennis_vrom_banking )
 		vsnes_in0_1_w( offset, data );
 }
 
-void init_vstennis( void )
+DRIVER_INIT( vstennis )
 {
 	/* vrom switching is enabled with bit 2 of $4016 */
 	install_mem_write_handler( 0, 0x4016, 0x4016, vstennis_vrom_banking );
@@ -1221,7 +1221,7 @@ void init_vstennis( void )
 /**********************************************************************/
 /* Wrecking Crew Init*/
 
-void init_wrecking(void)
+DRIVER_INIT( wrecking )
 {
 /* only differance between this and vstennis is the colors */
 
@@ -1232,7 +1232,7 @@ void init_wrecking(void)
 /**********************************************************************/
 /* VS Balloon Fight */
 
-void init_balonfgt(void)
+DRIVER_INIT( balonfgt )
 {
 /* only differance between this and vstennis is the colors */
 
@@ -1245,7 +1245,7 @@ void init_balonfgt(void)
 /**********************************************************************/
 /* VS Baseball */
 
-void init_vsbball(void)
+DRIVER_INIT( vsbball )
 {
 /* only differance between this and vstennis is the colors */
 
@@ -1259,7 +1259,7 @@ remapped_colortable = rp2c04001_colortable;
 /**********************************************************************/
 /* Dual Ice climr Jpn */
 
-void init_iceclmrj(void)
+DRIVER_INIT( iceclmrj )
 {
 /* only differance between this and vstennis is the colors */
 
@@ -1271,7 +1271,7 @@ remapped_colortable = rp2c05004_colortable;
 
 /**********************************************************************/
 /* Battle City */
-void init_btlecity(void)
+DRIVER_INIT( btlecity )
 {
 	init_vsnes();
 	init_vsnormal();
@@ -1280,7 +1280,7 @@ void init_btlecity(void)
 
 /***********************************************************************/
 /* Tetris */
-void init_vstetris(void)
+DRIVER_INIT( vstetris )
 {
 	init_vsnes();
 	init_vsnormal();

@@ -58,7 +58,7 @@ WRITE_HANDLER( rollrace_flipx_w )
 	ra_flipx = data & 0x01;
 }
 
-void rollrace_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rollrace )
 {
 
 	int offs;

@@ -111,7 +111,7 @@ static void get_bg0_tile_info(int tile_index)
  sprite colour marking could probably be improved..
 *******************************************************************************/
 
-static void wwfsstar_drawsprites( struct mame_bitmap *bitmap )
+static void wwfsstar_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	/*- SPR RAM Format -**
 
@@ -134,7 +134,6 @@ static void wwfsstar_drawsprites( struct mame_bitmap *bitmap )
 
 	**- End of Comments -*/
 
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	data16_t *source = spriteram16;
 	data16_t *finish = source + 0x3ff/2;
@@ -156,10 +155,10 @@ static void wwfsstar_drawsprites( struct mame_bitmap *bitmap )
 
 		 if (enable) {
 			if (chain){
-				drawgfx(bitmap,gfx,number,colourbank,flipx,flipy,xpos,ypos-16,clip,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,gfx,number+1,colourbank,flipx,flipy,xpos,ypos,clip,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,gfx,number,colourbank,flipx,flipy,xpos,ypos-16,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,gfx,number+1,colourbank,flipx,flipy,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
 			} else {
-				drawgfx(bitmap,gfx,number,colourbank,flipx,flipy,xpos,ypos,clip,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,gfx,number,colourbank,flipx,flipy,xpos,ypos,cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 
@@ -177,7 +176,7 @@ static void wwfsstar_drawsprites( struct mame_bitmap *bitmap )
 *******************************************************************************/
 
 
-int wwfsstar_vh_start(void)
+VIDEO_START( wwfsstar )
 {
 	fg0_tilemap = tilemap_create(get_fg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 	tilemap_set_transparent_pen(fg0_tilemap,0);
@@ -191,12 +190,12 @@ int wwfsstar_vh_start(void)
 	return 0;
 }
 
-void wwfsstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wwfsstar )
 {
 	tilemap_set_scrolly( bg0_tilemap, 0, wwfsstar_scrolly  );
 	tilemap_set_scrollx( bg0_tilemap, 0, wwfsstar_scrollx  );
 
-	tilemap_draw(bitmap,bg0_tilemap,0,0);
-	wwfsstar_drawsprites( bitmap );
-	tilemap_draw(bitmap,fg0_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg0_tilemap,0,0);
+	wwfsstar_drawsprites( bitmap,cliprect );
+	tilemap_draw(bitmap,cliprect,fg0_tilemap,0,0);
 }

@@ -30,7 +30,7 @@ WRITE_HANDLER( pinbo_flipscreen_w )
 	}
 }
 
-void pinbo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pinbo )
 {
 	int offs;
 

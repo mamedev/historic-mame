@@ -49,14 +49,10 @@ static void get_bg_tile_info(int tile_index){
 		(memory_region( REGION_PROMS )[0x800+color*4]==2)?1:0;
 }
 
-int shangkid_vh_start( void )
+VIDEO_START( shangkid )
 {
 	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	return background?0:1;
-}
-
-void shangkid_vh_stop( void )
-{
 }
 
 WRITE_HANDLER( shangkid_videoram_w )
@@ -67,8 +63,7 @@ WRITE_HANDLER( shangkid_videoram_w )
 	}
 }
 
-static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap ){
-	struct rectangle *clip = &Machine->visible_area;
+static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
 	const struct GfxElement *gfx;
 	int transparent_pen;
 	int bank_index;
@@ -154,14 +149,14 @@ static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap ){
 				color,
 				xflip,yflip,
 				sx,sy,
-				clip,
+				cliprect,
 				TRANSPARENCY_PEN,transparent_pen,
 				(width<<16)/16, (height<<16)/16 );
 		}
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	const UINT8 *source, *finish;
 
@@ -169,33 +164,32 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	source = spriteram+0x200;
 	while( source>finish ){
 		source -= 8;
-		draw_sprite( source, bitmap );
+		draw_sprite( source, bitmap,cliprect );
 	}
 }
 
-void shangkid_screenrefresh( struct mame_bitmap *bitmap, int fullfresh )
+VIDEO_UPDATE( shangkid )
 {
 	int flipscreen = shangkid_videoreg[1]&0x80;
 	tilemap_set_flip( background, flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
 	tilemap_set_scrollx( background,0,shangkid_videoreg[0]-40 );
 	tilemap_set_scrolly( background,0,shangkid_videoreg[2]+0x10 );
 
-	tilemap_draw( bitmap,background,0,0 );
-	draw_sprites( bitmap );
-	tilemap_draw( bitmap,background,1,0 ); /* high priority tiles */
+	tilemap_draw( bitmap,cliprect,background,0,0 );
+	draw_sprites( bitmap,cliprect );
+	tilemap_draw( bitmap,cliprect,background,1,0 ); /* high priority tiles */
 }
 
 
 
 
-static void dynamski_draw_background( struct mame_bitmap *bitmap, int pri )
+static void dynamski_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
 {
 	int i;
 	int sx,sy;
 	int tile;
 	int attr;
 	int temp;
-	struct rectangle *clip = &Machine->visible_area;
 
 	int transparency = pri?TRANSPARENCY_PEN:TRANSPARENCY_NONE;
 
@@ -237,13 +231,13 @@ static void dynamski_draw_background( struct mame_bitmap *bitmap, int pri )
 				0, /* color */
 				0,0,//xflip,yflip,
 				sx,sy,
-				clip,
+				cliprect,
 				transparency,3 );
 		}
 	}
 }
 
-static void dynamski_draw_sprites( struct mame_bitmap *bitmap )
+static void dynamski_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int i;
 	int sx,sy;
@@ -251,7 +245,6 @@ static void dynamski_draw_sprites( struct mame_bitmap *bitmap )
 	int bank;
 	int attr;
 	int color;
-	struct rectangle *clip = &Machine->visible_area;
 	for( i=0x7e; i>=0x00; i-=2 )
 	{
 		bank = videoram[0x1b80+i];
@@ -270,14 +263,14 @@ static void dynamski_draw_sprites( struct mame_bitmap *bitmap )
 				color,
 				tile&0x80,tile&0x40, /* flipx,flipy */
 				sx,sy,
-				clip,
+				cliprect,
 				TRANSPARENCY_PEN,3 );
 	}
 }
 
-void dynamski_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( dynamski )
 {
-	dynamski_draw_background( bitmap, 0 );
-	dynamski_draw_sprites( bitmap );
-	dynamski_draw_background( bitmap, 1 );
+	dynamski_draw_background( bitmap,cliprect, 0 );
+	dynamski_draw_sprites( bitmap,cliprect );
+	dynamski_draw_background( bitmap,cliprect, 1 );
 }

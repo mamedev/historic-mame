@@ -1,3 +1,4 @@
+void buckrog_decode(void);
 void pengo_decode(void);
 void szaxxon_decode(void);
 void suprloco_decode(void);

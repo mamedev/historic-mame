@@ -15,25 +15,14 @@ WRITE_HANDLER( exctsccr_gfx_bank_w ) {
 	gfx_bank = data & 1;
 }
 
-void *exctsccr_fm_timer;
-
 static void exctsccr_fm_callback( int param ) {
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 }
 
-int exctsccr_vh_start( void ) {
-	exctsccr_fm_timer = timer_pulse( TIME_IN_HZ( 75.0 ), 0, exctsccr_fm_callback ); /* updates fm */
+VIDEO_START( exctsccr ) {
+	timer_pulse( TIME_IN_HZ( 75.0 ), 0, exctsccr_fm_callback ); /* updates fm */
 
-	return generic_vh_start();
-}
-
-void exctsccr_vh_stop( void ) {
-	if ( exctsccr_fm_timer ) {
-		timer_remove( exctsccr_fm_timer );
-		exctsccr_fm_timer = 0;
-	}
-
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 /***************************************************************************
@@ -41,7 +30,7 @@ void exctsccr_vh_stop( void ) {
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( exctsccr )
 {
 	int i,idx;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -217,7 +206,7 @@ static void exctsccr_drawsprites( struct mame_bitmap *bitmap ) {
   the main emulation engine.
 
 ***************************************************************************/
-void exctsccr_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ) {
+VIDEO_UPDATE( exctsccr ) {
 	int offs;
 
 	/* background chars */

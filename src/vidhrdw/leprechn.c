@@ -28,7 +28,7 @@ WRITE_HANDLER( leprechn_graphics_data_w )
 
     if (pending)
     {
-		plot_pixel(Machine->scrbitmap, pending_x, pending_y, Machine->pens[pending_color]);
+		plot_pixel(tmpbitmap, pending_x, pending_y, Machine->pens[pending_color]);
         videoram[pending_y * screen_width + pending_x] = pending_color;
 
         pending = 0;
@@ -110,13 +110,13 @@ WRITE_HANDLER( leprechn_graphics_data_w )
 
     // Clear Bitmap
     case 0x18:
-        fillbitmap(Machine->scrbitmap,Machine->pens[data],0);
+        fillbitmap(tmpbitmap,Machine->pens[data],0);
         memset(videoram, data, screen_width * Machine->drv->screen_height);
         return;
     }
 
     // Just a precaution. Doesn't seem to happen.
-    logerror("Unknown Graphics Command #%2X at %04X\n", last_command, cpu_get_pc());
+    logerror("Unknown Graphics Command #%2X at %04X\n", last_command, activecpu_get_pc());
 }
 
 
@@ -131,14 +131,15 @@ READ_HANDLER( leprechn_graphics_data_r )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int leprechn_vh_start(void)
+VIDEO_START( leprechn )
 {
     screen_width = Machine->drv->screen_width;
 
-    if ((videoram = malloc(screen_width*Machine->drv->screen_height)) == 0)
-    {
+    if ((videoram = auto_malloc(screen_width*Machine->drv->screen_height)) == 0)
         return 1;
-    }
+
+    if ((tmpbitmap = auto_bitmap_alloc(screen_width,Machine->drv->screen_height)) == 0)
+        return 1;
 
     pending = 0;
 
@@ -147,25 +148,14 @@ int leprechn_vh_start(void)
 
 /***************************************************************************
 
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void leprechn_vh_stop(void)
-{
-    free(videoram);
-}
-
-
-/***************************************************************************
-
   Draw the game screen in the given mame_bitmap.
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
 ***************************************************************************/
-void leprechn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( leprechn )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int sx, sy;
 
@@ -175,8 +165,9 @@ void leprechn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		{
 			for (sy = 0; sy < Machine->drv->screen_height; sy++)
 			{
-				plot_pixel(Machine->scrbitmap, sx, sy, Machine->pens[videoram[sy * screen_width + sx]]);
+				plot_pixel(tmpbitmap, sx, sy, Machine->pens[videoram[sy * screen_width + sx]]);
 			}
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

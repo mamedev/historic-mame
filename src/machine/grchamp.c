@@ -13,7 +13,7 @@ static int comm_latch2[4];
 
 ***************************************************************************/
 
-void init_grchamp( void ) {
+DRIVER_INIT( grchamp ) {
 	/* clear the irq latches */
 	grchamp_cpu_irq_enable[0] = grchamp_cpu_irq_enable[1] = 0;
 

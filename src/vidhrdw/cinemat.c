@@ -1,14 +1,13 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Generic functions used by the Cinematronics Vector games
+	Cinematronics vector hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vector.h"
 #include "cpu/ccpu/ccpu.h"
+#include "cinemat.h"
 
 #define VEC_SHIFT 16
 
@@ -57,7 +56,7 @@ struct artwork_element solarq_overlay[]=
 };
 
 
-void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
+void CinemaVectorData(int fromx, int fromy, int tox, int toy, int color)
 {
     static int lastx, lasty;
 
@@ -78,7 +77,7 @@ void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 
 /* This is called by the game specific init function and sets the local
  * parameters for the generic function cinemat_init_colors() */
-void cinemat_select_artwork (int monitor_type, int overlay_req, int backdrop_req, struct artwork_element *simple_overlay)
+void cinemat_select_artwork(int monitor_type, int overlay_req, int backdrop_req, struct artwork_element *simple_overlay)
 {
 	cinemat_monitor_type = monitor_type;
 	cinemat_overlay_req = overlay_req;
@@ -86,7 +85,7 @@ void cinemat_select_artwork (int monitor_type, int overlay_req, int backdrop_req
 	cinemat_simple_overlay = simple_overlay;
 }
 
-void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( cinemat )
 {
 	char filename[1024];
 
@@ -129,7 +128,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 }
 
 
-void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( spacewar )
 {
 	int width, height;
 
@@ -157,44 +156,21 @@ void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,co
 
 ***************************************************************************/
 
-int cinemat_vh_start (void)
+VIDEO_START( cinemat )
 {
-	vector_set_shift (VEC_SHIFT);
+	vector_set_shift(VEC_SHIFT);
 	cinemat_screenh = Machine->visible_area.max_y - Machine->visible_area.min_y;
-	return vector_vh_start();
+	return video_start_vector();
 }
 
-int spacewar_vh_start (void)
+
+VIDEO_EOF( cinemat )
 {
-	vector_set_shift (VEC_SHIFT);
-	cinemat_screenh = Machine->visible_area.max_y - Machine->visible_area.min_y;
-	return vector_vh_start();
+	vector_clear_list();
 }
 
 
-void cinemat_vh_stop (void)
-{
-	vector_vh_stop();
-}
-
-void spacewar_vh_stop (void)
-{
-	if (spacewar_panel != NULL)
-		artwork_free(&spacewar_panel);
-
-	if (spacewar_pressed_panel != NULL)
-		artwork_free(&spacewar_pressed_panel);
-
-	vector_vh_stop();
-}
-
-void cinemat_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
-{
-    vector_vh_screenrefresh(bitmap, full_refresh);
-    vector_clear_list ();
-}
-
-void spacewar_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( spacewar )
 {
     int tk[] = {3, 8, 4, 9, 1, 6, 2, 7, 5, 0};
 	int i, pwidth, pheight, key, row, col, sw_option;
@@ -206,8 +182,7 @@ void spacewar_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 
 	if (spacewar_panel == NULL)
 	{
-        vector_vh_screenrefresh(bitmap, full_refresh);
-        vector_clear_list ();
+        video_update_vector(bitmap, 0);
 		return;
 	}
 
@@ -216,12 +191,10 @@ void spacewar_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 
 	vector_bitmap = *bitmap;
 
-	vector_vh_screenrefresh(&vector_bitmap,full_refresh);
-    vector_clear_list ();
+	video_update_vector(&vector_bitmap,0);
 
-	if (full_refresh)
-		copybitmap(bitmap,spacewar_panel->artwork,0,0,
-				   0,bitmap->height - pheight, 0,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,spacewar_panel->artwork,0,0,
+			   0,bitmap->height - pheight, 0,TRANSPARENCY_NONE,0);
 
 	scale = pwidth/1024.0;
 
@@ -234,36 +207,27 @@ void spacewar_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 
 	for (i = 0; i < 10; i++)
 	{
-		if (sw_option_change & (1 << i) || full_refresh)
-		{
-            key = tk[i];
-            col = key % 5;
-            row = key / 5;
-			rect.min_x = scale * (465 + 20 * col);
-			rect.max_x = scale * (465 + 20 * col + 18);
-			rect.min_y = scale * (39  + 20 * row) + vector_bitmap.height;
-			rect.max_y = scale * (39  + 20 * row + 18) + vector_bitmap.height;
+       key = tk[i];
+       col = key % 5;
+       row = key / 5;
+		rect.min_x = scale * (465 + 20 * col);
+		rect.max_x = scale * (465 + 20 * col + 18);
+		rect.min_y = scale * (39  + 20 * row) + vector_bitmap.height;
+		rect.max_y = scale * (39  + 20 * row + 18) + vector_bitmap.height;
 
-			if (sw_option & (1 << i))
-            {
-				copybitmap(bitmap,spacewar_panel->artwork,0,0,
-						   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
-            }
-			else
-            {
-				copybitmap(bitmap,spacewar_pressed_panel->artwork,0,0,
-						   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
-            }
+		if (sw_option & (1 << i))
+       {
+			copybitmap(bitmap,spacewar_panel->artwork,0,0,
+					   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
+       }
+		else
+       {
+			copybitmap(bitmap,spacewar_pressed_panel->artwork,0,0,
+					   0, vector_bitmap.height, &rect,TRANSPARENCY_NONE,0);
+       }
 
-			osd_mark_dirty(rect.min_x,rect.min_y,rect.max_x,rect.max_y);
-		}
+		osd_mark_dirty(rect.min_x,rect.min_y,rect.max_x,rect.max_y);
 	}
     sw_option_change = sw_option;
 }
 
-int cinemat_clear_list(void)
-{
-    if (osd_skip_this_frame())
-        vector_clear_list ();
-    return ignore_interrupt();
-}

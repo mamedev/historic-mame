@@ -104,7 +104,7 @@ static void get_tx_tile_info(int tile_index)
 			0)
 }
 
-int dynduke_vh_start(void)
+VIDEO_START( dynduke )
 {
 	bg_layer = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,      16,16,32,32);
 	fg_layer = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -155,7 +155,7 @@ WRITE_HANDLER( dynduke_control_w )
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,int pri)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 
@@ -189,11 +189,11 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pri)
 		drawgfx(bitmap,Machine->gfx[3],
 				sprite,
 				color,fx,fy,x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void dynduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dynduke )
 {
 	/* Setup the tilemaps */
 	tilemap_set_scrolly( bg_layer,0, ((dynduke_scroll_ram[0x02]&0x30)<<4)+((dynduke_scroll_ram[0x04]&0x7f)<<1)+((dynduke_scroll_ram[0x04]&0x80)>>7) );
@@ -204,15 +204,15 @@ void dynduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_enable( fg_layer,fore_enable);
 
 	if (back_enable)
-		tilemap_draw(bitmap,bg_layer,TILEMAP_BACK,0);
+		tilemap_draw(bitmap,cliprect,bg_layer,TILEMAP_BACK,0);
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	draw_sprites(bitmap,0); /* Untested: does anything use it? Could be behind background */
-	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,bg_layer,TILEMAP_FRONT,0);
-	draw_sprites(bitmap,2);
-	tilemap_draw(bitmap,fg_layer,0,0);
-	draw_sprites(bitmap,3);
-	tilemap_draw(bitmap,tx_layer,0,0);
+	draw_sprites(bitmap,cliprect,0); /* Untested: does anything use it? Could be behind background */
+	draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,bg_layer,TILEMAP_FRONT,0);
+	draw_sprites(bitmap,cliprect,2);
+	tilemap_draw(bitmap,cliprect,fg_layer,0,0);
+	draw_sprites(bitmap,cliprect,3);
+	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
 }

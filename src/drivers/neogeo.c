@@ -173,57 +173,12 @@ Points to note, known and proven information deleted from this map:
 #include "vidhrdw/generic.h"
 #include "machine/pd4990a.h"
 #include "cpu/z80/z80.h"
+#include "neogeo.h"
 
 
 #define RASTER_LINES 262	/* almost certainly correct */
 #define FIRST_VISIBLE_LINE 16
 #define LAST_VISIBLE_LINE 239
-
-
-extern data16_t *neogeo_vidram16;
-extern data16_t *neogeo_sram16;
-
-WRITE16_HANDLER( neogeo_sram16_lock_w );
-WRITE16_HANDLER( neogeo_sram16_unlock_w );
-READ16_HANDLER( neogeo_sram16_r );
-WRITE16_HANDLER( neogeo_sram16_w );
-void neogeo_nvram_handler(void *file,int read_or_write);
-
-extern int	memcard_status;
-READ16_HANDLER( neogeo_memcard16_r );
-WRITE16_HANDLER( neogeo_memcard16_w );
-
-
-
-/* from vidhrdw/neogeo.c */
-void neogeo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void neogeo_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int current_line);
-void neogeo_vh_raster_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int  neogeo_mvs_vh_start(void);
-void neogeo_vh_stop(void);
-WRITE16_HANDLER( neogeo_paletteram16_w );
-READ16_HANDLER( neogeo_paletteram16_r );
-WRITE16_HANDLER( neogeo_setpalbank0_16_w );
-WRITE16_HANDLER( neogeo_setpalbank1_16_w );
-
-WRITE16_HANDLER( neo_board_fix_16_w );
-WRITE16_HANDLER( neo_game_fix_16_w );
-
-WRITE16_HANDLER( neogeo_vidram16_modulo_w );
-WRITE16_HANDLER( neogeo_vidram16_data_w );
-WRITE16_HANDLER( neogeo_vidram16_offset_w );
-
-READ16_HANDLER( neogeo_vidram16_data_r );
-READ16_HANDLER( neogeo_vidram16_modulo_r );
-
-
-/* from machine/neogeo.c */
-void neogeo_init_machine(void);
-void init_neogeo(void);
-
-/* from machine/neocrypt.c */
-void kof99_neogeo_gfx_decrypt(int extra_xor);
-void kof2000_neogeo_gfx_decrypt(int extra_xor);
 
 
 /******************************************************************************/
@@ -267,7 +222,7 @@ static WRITE16_HANDLER( neo_irqack_w )
 }
 
 
-static int neogeo_interrupt(void)
+static INTERRUPT_GEN( neogeo_interrupt )
 {
 	static int fc=0;
 	int line = RASTER_LINES - cpu_getiloops();
@@ -301,11 +256,10 @@ static int neogeo_interrupt(void)
 	}
 
 	update_interrupts();
-	return ignore_interrupt();
 }
 
 
-static int raster_interrupt(int busy)
+static void raster_interrupt(int busy)
 {
 	static int fc=0;
 	int line = RASTER_LINES - cpu_getiloops();
@@ -355,7 +309,7 @@ if (!strcmp(Machine->gamedrv->name,"zedblade"))
 
 		if (keyboard_pressed_memory(KEYCODE_F1))
 		{
-			neogeo_raster_enable = (neogeo_raster_enable + 1) % 3;
+			neogeo_raster_enable = (neogeo_raster_enable + 1) % 2;
 			usrintf_showmessage("raster effects %sabled",neogeo_raster_enable ? "en" : "dis");
 		}
 
@@ -387,20 +341,19 @@ if (!strcmp(Machine->gamedrv->name,"zedblade"))
 	}
 
 	if (do_refresh && osd_skip_this_frame() == 0)
-		neogeo_vh_raster_partial_refresh(Machine->scrbitmap,current_scanline);
+		force_partial_update(current_scanline);
 
 	update_interrupts();
-	return ignore_interrupt();
 }
 
-static int neogeo_raster_interrupt(void)
+static INTERRUPT_GEN( neogeo_raster_interrupt )
 {
-	return raster_interrupt(0);
+	raster_interrupt(0);
 }
 
-static int neogeo_raster_interrupt_busy(void)
+static INTERRUPT_GEN( neogeo_raster_interrupt_busy )
 {
-	return raster_interrupt(1);
+	raster_interrupt(1);
 }
 
 
@@ -415,7 +368,7 @@ static READ16_HANDLER( timer16_r )
 	int coinflip = pd4990a_testbit_r(0);
 	int databit = pd4990a_databit_r(0);
 
-//	logerror("CPU %04x - Read timer\n",cpu_get_pc());
+//	logerror("CPU %04x - Read timer\n",activecpu_get_pc());
 
 	res = readinputport(4) ^ (coinflip << 6) ^ (databit << 7);
 
@@ -437,7 +390,7 @@ static WRITE16_HANDLER( neo_z80_w )
 
 	soundlatch_w(0,(data>>8)&0xff);
 	pending_command = 1;
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in pspikes2) */
 	cpu_spinuntil_time(TIME_IN_USEC(50));
 }
@@ -498,7 +451,7 @@ logerror("warning: bankswitch to %02x but no banks available\n",data);
 	bankaddress = (data+1)*0x100000;
 	if (bankaddress >= memory_region_length(REGION_CPU1))
 	{
-logerror("PC %06x: warning: bankswitch to empty bank %02x\n",cpu_get_pc(),data);
+logerror("PC %06x: warning: bankswitch to empty bank %02x\n",activecpu_get_pc(),data);
 		bankaddress = 0x100000;
 	}
 
@@ -545,7 +498,7 @@ static READ16_HANDLER( neo_control_16_r )
 			(irq_bit << 15) |						/* vblank or irq2 */
 			(neogeo_frame_counter & 0x0007);		/* frame counter */
 
-	logerror("PC %06x: neo_control_16_r (%04x)\n",cpu_get_pc(),res);
+	logerror("PC %06x: neo_control_16_r (%04x)\n",activecpu_get_pc(),res);
 
 	return res;
 }
@@ -554,7 +507,7 @@ static READ16_HANDLER( neo_control_16_r )
 /* this does much more than this, but I'm not sure exactly what */
 WRITE16_HANDLER( neo_control_16_w )
 {
-	logerror("%06x: neo_control_16_w %04x\n",cpu_get_pc(),data);
+	logerror("%06x: neo_control_16_w %04x\n",activecpu_get_pc(),data);
 
 	/* Auto-Anim Speed Control */
 	neogeo_frame_counter_speed = (data >> 8) & 0xff;
@@ -586,7 +539,7 @@ WRITE16_HANDLER( neo_control_16_w )
 
 static WRITE16_HANDLER( neo_irq2pos_16_w )
 {
-	logerror("%06x: neo_irq2pos_16_w offset %d %04x\n",cpu_get_pc(),offset,data);
+	logerror("%06x: neo_irq2pos_16_w offset %d %04x\n",activecpu_get_pc(),offset,data);
 
 	if (offset)
 		irq2pos_value = (irq2pos_value & 0xffff0000) | (UINT32)data;
@@ -761,7 +714,7 @@ static READ_HANDLER( z80_port_r )
 		}
 
 	default:
-logerror("CPU #1 PC %04x: read unmapped port %02x\n",cpu_get_pc(),offset&0xff);
+logerror("CPU #1 PC %04x: read unmapped port %02x\n",activecpu_get_pc(),offset&0xff);
 		return 0;
 		break;
 	}
@@ -800,7 +753,7 @@ static WRITE_HANDLER( z80_port_w )
 		break;
 
 	default:
-logerror("CPU #1 PC %04x: write %02x to unmapped port %02x\n",cpu_get_pc(),data,offset&0xff);
+logerror("CPU #1 PC %04x: write %02x to unmapped port %02x\n",activecpu_get_pc(),data,offset&0xff);
 		break;
 	}
 }
@@ -1029,134 +982,60 @@ struct YM2610interface neogeo_ym2610_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_neogeo =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			neogeo_readmem,neogeo_writemem,0,0,
-			neogeo_interrupt,RASTER_LINES
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
-			6000000,
-			sound_readmem,sound_writemem,neo_readio,neo_writeio,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	neogeo_init_machine,
-	40*8, 32*8, { 1*8, 39*8-1, 2*8, 30*8-1 },
-	neogeo_mvs_gfxdecodeinfo,
-	4096, 0,
-	0,
+static MACHINE_DRIVER_START( neogeo )
 
-	/* please don't put VIDEO_SUPPRTS_16BIT in all games. It is stupid, because */
-	/* most games don't need it. Only put it in games that use more than 256 colors */
-	/* at the same time (and let the MAME team know about it) */
-	VIDEO_TYPE_RASTER,
-	0,
-	neogeo_mvs_vh_start,
-	neogeo_vh_stop,
-	neogeo_vh_screenrefresh,
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 12000000)
+	MDRV_CPU_MEMORY(neogeo_readmem,neogeo_writemem)
+	MDRV_CPU_VBLANK_INT(neogeo_interrupt,RASTER_LINES)
+
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU | CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(neo_readio,neo_writeio)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(neogeo)
+	MDRV_NVRAM_HANDLER(neogeo)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 39*8-1, FIRST_VISIBLE_LINE, LAST_VISIBLE_LINE)
+	MDRV_GFXDECODE(neogeo_mvs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(neogeo_mvs)
+	MDRV_VIDEO_UPDATE(neogeo)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&neogeo_ym2610_interface,
-		},
-	},
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, neogeo_ym2610_interface)
+MACHINE_DRIVER_END
 
-	neogeo_nvram_handler
-};
 
-static const struct MachineDriver machine_driver_raster =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			neogeo_readmem,neogeo_writemem,0,0,
-			neogeo_raster_interrupt,RASTER_LINES
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
-			6000000,
-			sound_readmem,sound_writemem,neo_readio,neo_writeio,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	neogeo_init_machine,
-	40*8, 32*8, { 1*8, 39*8-1, FIRST_VISIBLE_LINE, LAST_VISIBLE_LINE },
-	neogeo_mvs_gfxdecodeinfo,
-	4096, 0,
-	0,
+static MACHINE_DRIVER_START( raster )
 
-	VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT,
-	0,
-	neogeo_mvs_vh_start,
-	neogeo_vh_stop,
-	neogeo_vh_raster_screenrefresh,
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(neogeo)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(neogeo_raster_interrupt,RASTER_LINES)
 
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&neogeo_ym2610_interface,
-		},
-	},
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
+MACHINE_DRIVER_END
 
-	neogeo_nvram_handler
-};
 
-static const struct MachineDriver machine_driver_raster_busy =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			neogeo_readmem,neogeo_writemem,0,0,
-			neogeo_raster_interrupt_busy,RASTER_LINES
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
-			6000000,
-			sound_readmem,sound_writemem,neo_readio,neo_writeio,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	neogeo_init_machine,
-	40*8, 32*8, { 1*8, 39*8-1, FIRST_VISIBLE_LINE, LAST_VISIBLE_LINE },
-	neogeo_mvs_gfxdecodeinfo,
-	4096, 0,
-	0,
+static MACHINE_DRIVER_START( raster_busy )
 
-	VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT,
-	0,
-	neogeo_mvs_vh_start,
-	neogeo_vh_stop,
-	neogeo_vh_raster_screenrefresh,
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(raster)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(neogeo_raster_interrupt_busy,RASTER_LINES)
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&neogeo_ym2610_interface,
-		},
-	},
-
-	neogeo_nvram_handler
-};
 
 /******************************************************************************/
 
@@ -4408,13 +4287,13 @@ ROM_START( kof99 ) /* Original Version - Encrypted Code & GFX */
 
 	NEO_BIOS_SOUND_128K( "251-m1.bin", 0x5e74539c )
 
-	ROM_REGION( 0x0c00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_REGION( 0x0e00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "251-v1.bin", 0x000000, 0x400000, 0xef2eecc8 )
 	ROM_LOAD( "251-v2.bin", 0x400000, 0x400000, 0x73e211ca )
 	ROM_LOAD( "251-v3.bin", 0x800000, 0x400000, 0x821901da )
+	ROM_LOAD( "251-v4.bin", 0xc00000, 0x200000, 0xb49e6178 )
 
-	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "251-v4.bin", 0x000000, 0x200000, 0xb49e6178 )
+	NO_DELTAT_REGION
 
 	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	/* Encrypted */
@@ -4441,13 +4320,13 @@ ROM_START( kof99n ) /* Original Version - Encrypted GFX */
 
 	NEO_BIOS_SOUND_128K( "251-m1.bin", 0x5e74539c )
 
-	ROM_REGION( 0x0c00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_REGION( 0x0e00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "251-v1.bin", 0x000000, 0x400000, 0xef2eecc8 )
 	ROM_LOAD( "251-v2.bin", 0x400000, 0x400000, 0x73e211ca )
 	ROM_LOAD( "251-v3.bin", 0x800000, 0x400000, 0x821901da )
+	ROM_LOAD( "251-v4.bin", 0xc00000, 0x200000, 0xb49e6178 )
 
-	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "251-v4.bin", 0x000000, 0x200000, 0xb49e6178 )
+	NO_DELTAT_REGION
 
 	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	/* Encrypted */
@@ -4472,13 +4351,13 @@ ROM_START( kof99p ) /* Prototype Version - Possibly Hacked */
 	/* Did the Prototype really use the same sound program / voice roms, sound isn't great .. */
 	NEO_BIOS_SOUND_128K( "251-m1.bin", 0x5e74539c )
 
-	ROM_REGION( 0x0c00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_REGION( 0x0e00000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "251-v1.bin", 0x000000, 0x400000, 0xef2eecc8 )
 	ROM_LOAD( "251-v2.bin", 0x400000, 0x400000, 0x73e211ca )
 	ROM_LOAD( "251-v3.bin", 0x800000, 0x400000, 0x821901da )
+	ROM_LOAD( "251-v4.bin", 0xc00000, 0x200000, 0xb49e6178 )
 
-	ROM_REGION( 0x0200000, REGION_SOUND2, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "251-v4.bin", 0x000000, 0x200000, 0xb49e6178 )
+	NO_DELTAT_REGION
 
 	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
 	/* these are probably decrypted versions of the roms found in the final */
@@ -4555,8 +4434,8 @@ ROM_END
 ROM_START( garouo )
 	ROM_REGION( 0x900000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "253-smao.bin", 0x0c0000, 0x040000, 0x96c72233 )	/* stored in the custom chip */
-	ROM_LOAD16_WORD_SWAP( "garou_p1.rom", 0x100000, 0x400000, 0x18ae5d7e )
-	ROM_LOAD16_WORD_SWAP( "garou_p2.rom", 0x500000, 0x400000, 0xafffa779 )
+	ROM_LOAD16_WORD_SWAP( "253-p1.bin",   0x100000, 0x400000, 0x18ae5d7e )
+	ROM_LOAD16_WORD_SWAP( "253-p2.bin",   0x500000, 0x400000, 0xafffa779 )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
 	ROM_REGION( 0x80000, REGION_GFX1, 0 )	/* larger char set */
@@ -4678,11 +4557,11 @@ ROM_END
 ROM_START( mslug3 ) /* Original Version - Encrypted Code & GFX */
 	ROM_REGION( 0x900000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "256-sma.bin", 0x0c0000, 0x040000, 0x9cd55736 )	/* stored in the custom chip */
-	ROM_LOAD16_WORD_SWAP( "ms3_p1.rom",  0x100000, 0x400000, 0xb07edfd5 )
-	ROM_LOAD16_WORD_SWAP( "ms3_p2.rom",  0x500000, 0x400000, 0x6097c26b )
+	ROM_LOAD16_WORD_SWAP( "256-p1.bin",  0x100000, 0x400000, 0xb07edfd5 )
+	ROM_LOAD16_WORD_SWAP( "256-p2.bin",  0x500000, 0x400000, 0x6097c26b )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
-	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* larger char set */
 	ROM_FILL(                 0x000000, 0x20000, 0 )
 	ROM_REGION( 0x20000, REGION_GFX2, 0 )
 	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
@@ -4760,7 +4639,7 @@ ROM_START( kof2000 ) /* Original Version, Encrypted Code + Sound + GFX Roms */
 	NEO_BIOS_SOUND_256K( "257-m1d.bin", 0xd404db70 )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "257-v1.bin", 0x000000, 0x400000, 0x45911f5c )
+	ROM_LOAD( "257-v1.bin", 0x000000, 0x400000, 0x17cde847 )
 	ROM_LOAD( "257-v2.bin", 0x400000, 0x400000, 0x1afb20ff )
 	ROM_LOAD( "257-v3.bin", 0x800000, 0x400000, 0x4605036a )
 	ROM_LOAD( "257-v4.bin", 0xc00000, 0x400000, 0x764bbd6b )
@@ -4795,7 +4674,7 @@ ROM_START( kof2000n ) /* Original Version, Encrypted Sound + GFX Roms */
 	NEO_BIOS_SOUND_256K( "257-m1d.bin", 0xd404db70 )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "257-v1.bin", 0x000000, 0x400000, 0x45911f5c )
+	ROM_LOAD( "257-v1.bin", 0x000000, 0x400000, 0x17cde847 )
 	ROM_LOAD( "257-v2.bin", 0x400000, 0x400000, 0x1afb20ff )
 	ROM_LOAD( "257-v3.bin", 0x800000, 0x400000, 0x4605036a )
 	ROM_LOAD( "257-v4.bin", 0xc00000, 0x400000, 0x764bbd6b )
@@ -4834,6 +4713,29 @@ ROM_START( nitd ) /* Original Version - Encrypted GFX */
 	/* Encrypted */
 	ROM_LOAD16_BYTE( "nitd_c1.rom", 0x0000000, 0x800000, 0x147b0c7f )
 	ROM_LOAD16_BYTE( "nitd_c2.rom", 0x0000001, 0x800000, 0xd2b04b0d )
+ROM_END
+
+ROM_START( zupapa ) /* Original Version - Encrypted GFX */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "070-p1.bin", 0x000000, 0x100000, 0x5a96203e )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_FILL(                 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "ng-sfix.rom",  0x000000, 0x20000, 0x354029fc )
+
+	NEO_BIOS_SOUND_128K( "070-m1.bin", 0x5a3b3191 )
+
+	ROM_REGION( 0x0200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "070-v1.bin", 0x000000, 0x200000, 0xd3a7e1ff )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x1000000, REGION_GFX3, 0 )
+	/* Encrypted */
+	ROM_LOAD16_BYTE( "070-c1.bin", 0x0000000, 0x800000, 0xf8ad02d8 )
+	ROM_LOAD16_BYTE( "070-c2.bin", 0x0000001, 0x800000, 0x70156dde )
 ROM_END
 
 ROM_START( sengoku3 ) /* Original Version - Encrypted GFX */
@@ -4885,7 +4787,7 @@ ROM_END
 
 
 
-void init_kof99(void)
+DRIVER_INIT( kof99 )
 {
 	data16_t *rom;
 	int i,j;
@@ -4919,7 +4821,43 @@ void init_kof99(void)
 	init_neogeo();
 }
 
-void init_garouo(void)
+DRIVER_INIT( garou )
+{
+	data16_t *rom;
+	int i,j;
+
+	/* thanks to Razoola and Mr K for the info */
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],13,12,14,10,8,2,3,1,5,9,11,4,15,0,6,7);
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (data16_t *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x710000/2 + BITSWAP24(i,23,22,21,20,19,18,4,5,16,14,7,9,6,13,17,15,3,1,2,12,11,8,10,0)];
+	}
+
+	/* swap address lines for the banked part */
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	for (i = 0;i < 0x800000/2;i+=0x8000/2)
+	{
+		data16_t buffer[0x8000/2];
+		memcpy(buffer,&rom[i],0x8000);
+		for (j = 0;j < 0x8000/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,9,4,8,3,13,6,2,7,0,12,1,11,10,5)];
+		}
+	}
+
+	kof99_neogeo_gfx_decrypt(0x06);
+	init_neogeo();
+}
+
+DRIVER_INIT( garouo )
 {
 	data16_t *rom;
 	int i,j;
@@ -4955,7 +4893,43 @@ void init_garouo(void)
 	init_neogeo();
 }
 
-void init_kof2000(void)
+DRIVER_INIT( mslug3 )
+{
+	data16_t *rom;
+	int i,j;
+
+	/* thanks to Razoola and Mr K for the info */
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],4,11,14,3,1,13,0,7,2,8,12,15,10,9,5,6);
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (data16_t *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x5d0000/2 + BITSWAP24(i,23,22,21,20,19,18,15,2,1,13,3,0,9,6,16,4,11,5,7,12,17,14,10,8)];
+	}
+
+	/* swap address lines for the banked part */
+	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	for (i = 0;i < 0x800000/2;i+=0x10000/2)
+	{
+		data16_t buffer[0x10000/2];
+		memcpy(buffer,&rom[i],0x10000);
+		for (j = 0;j < 0x10000/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,2,11,0,14,6,4,13,8,9,3,10,7,5,12,1)];
+		}
+	}
+
+	kof99_neogeo_gfx_decrypt(0xad);
+	init_neogeo();
+}
+
+DRIVER_INIT( kof2000 )
 {
 	data16_t *rom;
 	int i,j;
@@ -4969,7 +4943,7 @@ void init_kof2000(void)
 	}
 
 	/* swap address lines for the banked part */
-	for (i = 0;i < 0x63a000/2; i+=0x800/2)
+	for (i = 0;i < 0x63a000/2;i+=0x800/2)
 	{
 		data16_t buffer[0x800/2];
 		memcpy(buffer,&rom[i],0x800);
@@ -4991,55 +4965,55 @@ void init_kof2000(void)
 }
 
 
-void init_kof99n(void)
+DRIVER_INIT( kof99n )
 {
 	kof99_neogeo_gfx_decrypt(0x00);
 	init_neogeo();
 }
 
-void init_ganryu(void)
+DRIVER_INIT( ganryu )
 {
 	kof99_neogeo_gfx_decrypt(0x07);
 	init_neogeo();
 }
 
-void init_garou(void)
-{
-	kof99_neogeo_gfx_decrypt(0x06);
-	init_neogeo();
-}
-
-void init_s1945p(void)
+DRIVER_INIT( s1945p )
 {
 	kof99_neogeo_gfx_decrypt(0x05);
 	init_neogeo();
 }
 
-void init_preisle2(void)
+DRIVER_INIT( preisle2 )
 {
 	kof99_neogeo_gfx_decrypt(0x9f);
 	init_neogeo();
 }
 
-void init_mslug3(void)
+DRIVER_INIT( mslug3n )
 {
 	kof99_neogeo_gfx_decrypt(0xad);
 	init_neogeo();
 }
 
-void init_kof2000n(void)
+DRIVER_INIT( kof2000n )
 {
 	kof2000_neogeo_gfx_decrypt(0x00);
 	init_neogeo();
 }
 
-void init_nitd(void)
+DRIVER_INIT( nitd )
 {
 	kof99_neogeo_gfx_decrypt(0xff);
 	init_neogeo();
 }
 
-void init_sengoku3(void)
+DRIVER_INIT( zupapa )
+{
+	kof99_neogeo_gfx_decrypt(0xbd);
+	init_neogeo();
+}
+
+DRIVER_INIT( sengoku3 )
 {
 	kof99_neogeo_gfx_decrypt(0xfe);
 	init_neogeo();
@@ -5125,13 +5099,14 @@ GAME( 1999, mslugx,   neogeo,   neogeo, neogeo,  neogeo,   ROT0, "SNK", "Metal S
 GAME( 1999, kof99,    neogeo,   raster, neogeo,  kof99,    ROT0, "SNK", "The King of Fighters '99 - Millennium Battle" ) /* Encrypted Code & GFX */
 GAME( 1999, kof99n,   kof99,    raster, neogeo,  kof99n,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (not encrypted)" )	/* Encrypted GFX */
 GAME( 1999, kof99p,   kof99,    raster, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (prototype)" )
-GAMEX(1999, garou,    neogeo,   raster, neogeo,  garou,    ROT0, "SNK", "Garou - Mark of the Wolves (set 1)", GAME_NOT_WORKING ) /* Encrypted Code & GFX */
+GAME( 1999, garou,    neogeo,   raster, neogeo,  garou,    ROT0, "SNK", "Garou - Mark of the Wolves (set 1)" ) /* Encrypted Code & GFX */
 GAME( 1999, garouo,   garou,    raster, neogeo,  garouo,   ROT0, "SNK", "Garou - Mark of the Wolves (set 2))" ) /* Encrypted Code & GFX */
 GAME( 1999, garoup,   garou,    raster, neogeo,  neogeo,   ROT0, "SNK", "Garou - Mark of the Wolves (prototype)" )
-GAMEX(2000, mslug3,   neogeo,   raster, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3", GAME_NOT_WORKING ) /* Encrypted Code & GFX */
-GAME( 2000, mslug3n,  mslug3,   raster, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3 (not encrypted)" ) /* Encrypted GFX */
+GAME( 2000, mslug3,   neogeo,   raster, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3" ) /* Encrypted Code & GFX */
+GAME( 2000, mslug3n,  mslug3,   raster, neogeo,  mslug3n,  ROT0, "SNK", "Metal Slug 3 (not encrypted)" ) /* Encrypted GFX */
 GAME( 2000, kof2000,  neogeo,   neogeo, neogeo,  kof2000,  ROT0, "SNK", "The King of Fighters 2000" ) /* Encrypted Code & GFX */
 GAME( 2000, kof2000n, kof2000,  neogeo, neogeo,  kof2000n, ROT0, "SNK", "The King of Fighters 2000 (not encrypted)" ) /* Encrypted GFX */
+GAME( 2001, zupapa,   neogeo,   neogeo, neogeo,  zupapa,   ROT0, "SNK", "Zupapa!" )	/* Encrypted GFX */
 GAME( 2001, sengoku3, neogeo,   neogeo, neogeo,  sengoku3, ROT0, "SNK", "Sengoku 3" )	/* Encrypted GFX */
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */

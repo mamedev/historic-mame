@@ -40,15 +40,14 @@ Chelnov - level number at 0x60189 - enter a value at cartoon intro
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-void karnov_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void karnov_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( karnov );
+VIDEO_UPDATE( karnov );
 WRITE16_HANDLER( karnov_playfield_w );
 WRITE16_HANDLER( karnov_videoram_w );
 void karnov_flipscreen_w(int data);
 
-int karnov_vh_start (void);
-int wndrplnt_vh_start (void);
-void karnov_vh_stop (void);
+VIDEO_START( karnov );
+VIDEO_START( wndrplnt );
 
 enum { KARNOV=0, KARNOVJ, CHELNOV, CHELNOVJ, CHELNOVW, WNDRPLNT };
 
@@ -78,9 +77,9 @@ static void karnov_i8751_w(int data)
 	if (data==0x401) i8751_return=0x4138; /* ^Whistling wind */
 	if (data==0x408) i8751_return=0x4276; /* ^Heavy Gates */
 
-//	if (!i8751_return && data!=0x300) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+//	if (!i8751_return && data!=0x300) logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
-	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
+	cpu_set_irq_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
 }
 
 static void wndrplnt_i8751_w(int data)
@@ -101,7 +100,7 @@ static void wndrplnt_i8751_w(int data)
 			case 0x18:	i8751_return=0x5341; break;
 		}
 	}
-//	else logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+//	else logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
 	/* These are 68k function call addresses - different address for each power-up */
 	if (data==0x400) i8751_return=0x594;
@@ -127,7 +126,7 @@ static void wndrplnt_i8751_w(int data)
 	if (data==0x501) i8751_return=0x6bf8;
 	if (data==0x500) i8751_return=0x4e75;
 
-	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
+	cpu_set_irq_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
 }
 
 static void chelnov_i8751_w(int data)
@@ -228,9 +227,9 @@ static void chelnov_i8751_w(int data)
 		}
 	}
 
-//	logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+//	logerror("CPU %04x - Unknown Write %02x intel\n",activecpu_get_pc(),data);
 
-	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
+	cpu_set_irq_line(0,6,HOLD_LINE); /* Signal main cpu task is complete */
 }
 
 /******************************************************************************/
@@ -244,7 +243,7 @@ static WRITE16_HANDLER( karnov_control_w )
 
 		case 2: /* SONREQ (Sound CPU byte) */
 			soundlatch_w(0,data&0xff);
-			cpu_cause_interrupt (1, M6502_INT_NMI);
+			cpu_set_irq_line (1, IRQ_LINE_NMI, PULSE_LINE);
 			break;
 
 		case 4: /* DM (DMA to buffer spriteram) */
@@ -639,7 +638,7 @@ static struct GfxDecodeInfo karnov_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static int karnov_interrupt(void)
+static INTERRUPT_GEN( karnov_interrupt )
 {
 	static int latch;
 
@@ -647,11 +646,11 @@ static int karnov_interrupt(void)
 	if (readinputport(3) == coin_mask) latch=1;
 	if (readinputport(3) != coin_mask && latch) {
 		i8751_return=readinputport(3) | 0x8000;
-		cpu_cause_interrupt(0,6);
+		cpu_set_irq_line(0,6,HOLD_LINE);
 		latch=0;
 	}
 
-	return 7;	/* VBL */
+	cpu_set_irq_line(0,7,HOLD_LINE);	/* VBL */
 }
 
 static void sound_irq(int linestate)
@@ -680,106 +679,75 @@ static struct YM3526interface ym3526_interface =
 
 /******************************************************************************/
 
-static void karnov_reset_init(void)
+static MACHINE_INIT( karnov )
 {
 	memset(karnov_ram,0,0x4000/2); /* Chelnov likes ram clear on reset.. */
 }
 
-static const struct MachineDriver machine_driver_karnov =
-{
+static MACHINE_DRIVER_START( karnov )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz */
-			karnov_readmem,karnov_writemem,0,0,
-			karnov_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,	/* Accurate */
-			karnov_s_readmem,karnov_s_writemem,0,0,
-			ignore_interrupt,0	/* Interrupts from OPL chip */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	karnov_reset_init,
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
+	MDRV_CPU_MEMORY(karnov_readmem,karnov_writemem)
+	MDRV_CPU_VBLANK_INT(karnov_interrupt,1)
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(karnov_s_readmem,karnov_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(karnov)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(karnov_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	MDRV_COLORTABLE_LENGTH(1024)
 
-	karnov_gfxdecodeinfo,
-	1024, 1024,
-	karnov_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	karnov_vh_start,
-	karnov_vh_stop,
-	karnov_vh_screenrefresh,
+	MDRV_PALETTE_INIT(karnov)
+	MDRV_VIDEO_START(karnov)
+	MDRV_VIDEO_UPDATE(karnov)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_wndrplnt =
-{
+
+static MACHINE_DRIVER_START( wndrplnt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz */
-			karnov_readmem,karnov_writemem,0,0,
-			karnov_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,	/* Accurate */
-			karnov_s_readmem,karnov_s_writemem,0,0,
-			ignore_interrupt,0	/* Interrupts from OPL chip */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	karnov_reset_init,
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
+	MDRV_CPU_MEMORY(karnov_readmem,karnov_writemem)
+	MDRV_CPU_VBLANK_INT(karnov_interrupt,1)
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(karnov_s_readmem,karnov_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(karnov)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(karnov_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	MDRV_COLORTABLE_LENGTH(1024)
 
-	karnov_gfxdecodeinfo,
-	1024, 1024,
-	karnov_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	wndrplnt_vh_start,
-	karnov_vh_stop,
-	karnov_vh_screenrefresh,
+	MDRV_PALETTE_INIT(karnov)
+	MDRV_VIDEO_START(wndrplnt)
+	MDRV_VIDEO_UPDATE(karnov)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -992,25 +960,25 @@ ROM_END
 
 /******************************************************************************/
 
-static void init_karnov(void)
+static DRIVER_INIT( karnov )
 {
 	microcontroller_id=KARNOV;
 	coin_mask=0;
 }
 
-static void init_karnovj(void)
+static DRIVER_INIT( karnovj )
 {
 	microcontroller_id=KARNOVJ;
 	coin_mask=0;
 }
 
-static void init_wndrplnt(void)
+static DRIVER_INIT( wndrplnt )
 {
 	microcontroller_id=WNDRPLNT;
 	coin_mask=0;
 }
 
-static void init_chelnov(void)
+static DRIVER_INIT( chelnov )
 {
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
 
@@ -1020,7 +988,7 @@ static void init_chelnov(void)
 	RAM[0x062a/2]=0x4E71;  /* hangs waiting on i8751 int */
 }
 
-static void init_chelnovw(void)
+static DRIVER_INIT( chelnovw )
 {
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
 
@@ -1030,7 +998,7 @@ static void init_chelnovw(void)
 	RAM[0x062a/2]=0x4E71;  /* hangs waiting on i8751 int */
 }
 
-static void init_chelnovj(void)
+static DRIVER_INIT( chelnovj )
 {
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
 

@@ -129,7 +129,7 @@ WRITE_HANDLER( redalert_characterram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void redalert_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( redalert )
 {
 	int offs,i;
 

@@ -69,6 +69,7 @@
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "itech8.h"
 
 static UINT8 z80_ctrl;
 static UINT8 z80_port_val;
@@ -536,7 +537,7 @@ WRITE_HANDLER( slikshot_z80_control_w )
  *
  *************************************/
 
-void slikshot_extra_draw(struct mame_bitmap *bitmap)
+void slikshot_extra_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	INT8 vx = (INT8)readinputport(3);
 	INT8 vy = (INT8)readinputport(4);
@@ -596,8 +597,8 @@ void slikshot_extra_draw(struct mame_bitmap *bitmap)
 	{
 		int px = xstart >> 16, py = ystart >> 16;
 
-		if (px >= 0 && px < bitmap->width &&
-			py >= 0 && py < bitmap->height)
+		if (px >= cliprect->min_x && px <= cliprect->max_x &&
+			py >= cliprect->min_y && py <= cliprect->max_y)
 		{
 			if (bitmap->depth == 8)
 				((UINT8 *)bitmap->line[py])[px] = Machine->pens[256];

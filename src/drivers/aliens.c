@@ -13,23 +13,22 @@ Preliminary driver by:
 #include "vidhrdw/konamiic.h"
 
 /* prototypes */
-static void aliens_init_machine( void );
+static MACHINE_INIT( aliens );
 static void aliens_banking( int lines );
 
 
-void aliens_vh_stop( void );
-int aliens_vh_start( void );
-void aliens_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( aliens );
+VIDEO_UPDATE( aliens );
 
 
 static int palette_selected;
 static unsigned char *ram;
 
 
-static int aliens_interrupt( void )
+static INTERRUPT_GEN( aliens_interrupt )
 {
-	if (K051960_is_IRQ_enabled()) return interrupt();
-	else return ignore_interrupt();
+	if (K051960_is_IRQ_enabled())
+		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
 static READ_HANDLER( bankedram_r )
@@ -73,7 +72,7 @@ static WRITE_HANDLER( aliens_coin_counter_w )
 WRITE_HANDLER( aliens_sh_irqtrigger_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
 static WRITE_HANDLER( aliens_snd_bankswitch_w )
@@ -263,52 +262,35 @@ static struct YM2151interface ym2151_interface =
 	{ aliens_snd_bankswitch_w }
 };
 
-static const struct MachineDriver machine_driver_aliens =
-{
+static MACHINE_DRIVER_START( aliens )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_KONAMI,
-			3000000,		/* ? */
-			aliens_readmem,aliens_writemem,0,0,
-            aliens_interrupt,1
-        },
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,		/* ? */
-			aliens_readmem_sound, aliens_writemem_sound,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	aliens_init_machine,
+	MDRV_CPU_ADD(KONAMI, 3000000)		/* ? */
+	MDRV_CPU_MEMORY(aliens_readmem,aliens_writemem)
+	MDRV_CPU_VBLANK_INT(aliens_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	MDRV_CPU_MEMORY(aliens_readmem_sound,aliens_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(aliens)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	aliens_vh_start,
-	aliens_vh_stop,
-	aliens_vh_screenrefresh,
+	MDRV_VIDEO_START(aliens)
+	MDRV_VIDEO_UPDATE(aliens)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -464,7 +446,7 @@ static void aliens_banking( int lines )
 	cpu_setbank( 1, &RAM[offs] );
 }
 
-static void aliens_init_machine( void )
+static MACHINE_INIT( aliens )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -476,7 +458,7 @@ static void aliens_init_machine( void )
 
 
 
-static void init_aliens(void)
+static DRIVER_INIT( aliens )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

@@ -12,7 +12,7 @@ Video hardware driver by Uki
 
 static UINT8 strnskil_flipscreen, strnskil_xscroll[2], strnskil_scrl_ctrl;
 
-void strnskil_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( strnskil )
 {
 	int i;
 
@@ -50,7 +50,7 @@ WRITE_HANDLER( strnskil_scrl_ctrl_w )
 	strnskil_flipscreen = (data >> 3) & 1;
 }
 
-void strnskil_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( strnskil )
 {
 
 	int offs,chr,col,x,y,px,py,fx,fy,bank,d ;

@@ -40,13 +40,7 @@ a000-a3ff	R/W X/Y scroll position of each character (can be scrolled up
 extern unsigned char *spcforce_scrollram;
 
 WRITE_HANDLER( spcforce_flip_screen_w );
-void spcforce_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-
-static int spcforce_interrupt(void)
-{
-	return I8085_RST75;
-}
+VIDEO_UPDATE( spcforce );
 
 
 static int spcforce_SN76496_latch;
@@ -80,7 +74,7 @@ static READ_HANDLER( spcforce_t0_r )
 
 static WRITE_HANDLER( spcforce_soundtrigger_w )
 {
-	cpu_set_irq_line(1, I8039_EXT_INT, (~data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(1, 0, (~data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -236,7 +230,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* 1-bit RGB palette */
-static unsigned char palette[] =
+static unsigned char palette_source[] =
 {
 	0x00, 0x00, 0x00,
 	0xff, 0x00, 0x00,
@@ -247,7 +241,7 @@ static unsigned char palette[] =
 	0x00, 0xff, 0xff,
 	0xff, 0xff, 0xff
 };
-static unsigned short colortable[] =
+static unsigned short colortable_source[] =
 {
 	0, 1, 2, 3, 4, 5, 6, 7,
 	0, 0, 1, 2, 3, 4, 5, 6,	 /* not sure about these, but they are only used */
@@ -258,10 +252,10 @@ static unsigned short colortable[] =
 	0, 3, 4, 5, 6, 7, 0, 1,
 	0, 2, 3, 4, 5, 6, 7, 0
 };
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( spcforce )
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
 
@@ -273,48 +267,36 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static const struct MachineDriver machine_driver_spcforce =
-{
+static MACHINE_DRIVER_START( spcforce )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8085A,
-			4000000,        /* 4.00 MHz??? */
-			readmem,writemem,0,0,
-			spcforce_interrupt,1
-		},
-		{
-            CPU_I8035 | CPU_AUDIO_CPU,
-            6144000/8,		/* divisor ??? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-            ignore_interrupt,0  /* IRQ's are triggered by the main CPU */
-        }
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(8085A, 4000000)        /* 4.00 MHz??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_CPU_ADD(I8035,6144000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* divisor ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	spcforce_vh_screenrefresh,
+	MDRV_PALETTE_INIT(spcforce)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(spcforce)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -25,9 +25,8 @@ extern UINT8 *mnchmobl_sprite_xpos;
 extern UINT8 *mnchmobl_sprite_attr;
 extern UINT8 *mnchmobl_sprite_tile;
 
-void mnchmobl_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-int mnchmobl_vh_start( void );
-void mnchmobl_vh_stop( void );
+PALETTE_INIT( mnchmobl );
+VIDEO_START( mnchmobl );
 WRITE_HANDLER( mnchmobl_palette_bank_w );
 WRITE_HANDLER( mnchmobl_flipscreen_w );
 READ_HANDLER( mnchmobl_sprite_xpos_r );
@@ -38,7 +37,7 @@ READ_HANDLER( mnchmobl_sprite_tile_r );
 WRITE_HANDLER( mnchmobl_sprite_tile_w );
 READ_HANDLER( mnchmobl_videoram_r );
 WRITE_HANDLER( mnchmobl_videoram_w );
-void mnchmobl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( mnchmobl );
 
 
 /***************************************************************************/
@@ -50,19 +49,18 @@ static WRITE_HANDLER( mnchmobl_nmi_enable_w )
 	mnchmobl_nmi_enable = data;
 }
 
-static int mnchmobl_interrupt( void )
+static INTERRUPT_GEN( mnchmobl_interrupt )
 {
 	static int which;
 	which = !which;
-	if( which ) return interrupt();
-	if( mnchmobl_nmi_enable ) return nmi_interrupt();
-	return ignore_interrupt();
+	if( which ) cpu_set_irq_line(0, 0, HOLD_LINE);
+	else if( mnchmobl_nmi_enable ) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 WRITE_HANDLER( mnchmobl_soundlatch_w )
 {
 	soundlatch_w( offset, data );
-	cpu_cause_interrupt( 1, Z80_IRQ_INT );
+	cpu_set_irq_line( 1, 0, HOLD_LINE );
 }
 
 static MEMORY_READ_START( readmem )
@@ -289,47 +287,35 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static const struct MachineDriver machine_driver_munchmo =
-{
-	{
-		{
-			CPU_Z80,
-			3750000, /* ? */
-			readmem,writemem,0,0,
-			mnchmobl_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3750000, /* ? */
-			readmem_sound,writemem_sound,0,0,
-			nmi_interrupt,1
-		}
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+static MACHINE_DRIVER_START( munchmo )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3750000) /* ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(mnchmobl_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3750000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* ? */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256+32+32, 256, { 0, 255+32+32,0, 255-16 },
-	gfxdecodeinfo,
-	256, 0,
-	mnchmobl_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256+32+32, 256)
+	MDRV_VISIBLE_AREA(0, 255+32+32,0, 255-16)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mnchmobl_vh_start,
-	mnchmobl_vh_stop,
-	mnchmobl_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mnchmobl)
+	MDRV_VIDEO_START(mnchmobl)
+	MDRV_VIDEO_UPDATE(mnchmobl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( joyfulr )

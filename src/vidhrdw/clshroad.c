@@ -53,7 +53,7 @@ WRITE_HANDLER( clshroad_flipscreen_w )
 }
 
 
-void firebatl_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( firebatl )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -224,7 +224,7 @@ WRITE_HANDLER( clshroad_vram_1_w )
 }
 
 
-int firebatl_vh_start(void)
+VIDEO_START( firebatl )
 {
 	/* These 2 use the graphics and scroll value */
 	tilemap_0a = tilemap_create(get_tile_info_0a,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,0x20,0x10);
@@ -253,7 +253,7 @@ int firebatl_vh_start(void)
 	return 0;
 }
 
-int clshroad_vh_start(void)
+VIDEO_START( clshroad )
 {
 	/* These 2 use the graphics and scroll value */
 	tilemap_0a = tilemap_create(get_tile_info_0a,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,0x20,0x10);
@@ -311,7 +311,7 @@ Offset:		Format:		Value:
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int i;
 
@@ -338,7 +338,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				attr & 0x0f,
 				flipx,flipy,
 				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0 );
+				cliprect,TRANSPARENCY_PEN,0 );
 	}
 }
 
@@ -351,7 +351,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void clshroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( clshroad )
 {
 	int scrollx  = clshroad_vregs[ 0 ] + (clshroad_vregs[ 1 ] << 8);
 //	int priority = clshroad_vregs[ 2 ];
@@ -360,8 +360,8 @@ void clshroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(tilemap_0a, 0, scrollx);
 	tilemap_set_scrollx(tilemap_0b, 0, scrollx);
 
-	tilemap_draw(bitmap,tilemap_0a,0,0);	// Opaque
-	tilemap_draw(bitmap,tilemap_0b,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,tilemap_1,0,0);
+	tilemap_draw(bitmap,cliprect,tilemap_0a,0,0);	// Opaque
+	tilemap_draw(bitmap,cliprect,tilemap_0b,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
 }

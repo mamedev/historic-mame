@@ -79,7 +79,7 @@ static void get_tx_tile_info(int tile_index)
 			0)
 }
 
-int lkage_vh_start(void)
+VIDEO_START( lkage )
 {
 	bg_tile_bank = fg_tile_bank = 0;
 
@@ -100,9 +100,8 @@ int lkage_vh_start(void)
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, int priority )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	const unsigned char *finish = spriteram;
 	const unsigned char *source = spriteram+0x60-4;
 	const struct GfxElement *gfx = Machine->gfx[1];
@@ -154,7 +153,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int priority )
 						color,
 						flipx,flipy,
 						sx,sy + 16*y,
-						clip,
+						cliprect,
 						TRANSPARENCY_PEN,0 );
 			}
 		}
@@ -178,7 +177,7 @@ void lkage_set_palette_row( int virtual_row, int logical_row, int len )
 	}
 }
 
-void lkage_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lkage )
 {
 	flip_screen_x_set(~lkage_vreg[2] & 0x01);
 	flip_screen_y_set(~lkage_vreg[2] & 0x02);
@@ -211,14 +210,14 @@ void lkage_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	if ((lkage_vreg[2] & 0xf0) == 0xf0)
 	{
-		tilemap_draw( bitmap,bg_tilemap,0 ,0);
-		draw_sprites( bitmap, 1 );
-		tilemap_draw( bitmap,fg_tilemap,0 ,0);
-		draw_sprites( bitmap, 0 );
-		tilemap_draw( bitmap,tx_tilemap,0 ,0);
+		tilemap_draw( bitmap,cliprect,bg_tilemap,0 ,0);
+		draw_sprites( bitmap,cliprect, 1 );
+		tilemap_draw( bitmap,cliprect,fg_tilemap,0 ,0);
+		draw_sprites( bitmap,cliprect, 0 );
+		tilemap_draw( bitmap,cliprect,tx_tilemap,0 ,0);
 	}
 	else
 	{
-		tilemap_draw( bitmap,tx_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
+		tilemap_draw( bitmap,cliprect,tx_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
 	}
 }

@@ -4,9 +4,10 @@
 
 unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
 static struct tilemap *layer0, *layer1;
+static struct rectangle clip0, clip1;
 
 
-void fastlane_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( fastlane )
 {
 	int pal,col;
 
@@ -81,7 +82,7 @@ static void get_tile_info1(int tile_index)
 
 ***************************************************************************/
 
-int fastlane_vh_start(void)
+VIDEO_START( fastlane )
 {
 	layer0 = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 	layer1 = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
@@ -91,17 +92,14 @@ int fastlane_vh_start(void)
 	if (!layer0 || !layer1)
 		return 1;
 
-	{
-		struct rectangle clip = Machine->visible_area;
-		clip.min_x += 40;
-		tilemap_set_clip(layer0,&clip);
+	clip0 = Machine->visible_area;
+	clip0.min_x += 40;
 
-		clip.max_x = 39;
-		clip.min_x = 0;
-		tilemap_set_clip(layer1,&clip);
+	clip1 = Machine->visible_area;
+	clip1.max_x = 39;
+	clip1.min_x = 0;
 
-		return 0;
-	}
+	return 0;
 }
 
 /***************************************************************************
@@ -136,9 +134,13 @@ WRITE_HANDLER( fastlane_vram2_w )
 
 ***************************************************************************/
 
-void fastlane_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( fastlane )
 {
+	struct rectangle finalclip0 = clip0, finalclip1 = clip1;
 	int i, xoffs;
+	
+	sect_rect(&finalclip0, cliprect);
+	sect_rect(&finalclip1, cliprect);
 
 	/* set scroll registers */
 	xoffs = K007121_ctrlram[0][0x00];
@@ -147,7 +149,7 @@ void fastlane_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 	tilemap_set_scrolly( layer0, 0, K007121_ctrlram[0][0x02] );
 
-	tilemap_draw(bitmap,layer0,0,0);
-	K007121_sprites_draw(0,bitmap,spriteram,0,40,0,-1);
-	tilemap_draw(bitmap,layer1,0,0);
+	tilemap_draw(bitmap,&finalclip0,layer0,0,0);
+	K007121_sprites_draw(0,bitmap,cliprect,spriteram,0,40,0,-1);
+	tilemap_draw(bitmap,&finalclip1,layer1,0,0);
 }

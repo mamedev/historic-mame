@@ -68,22 +68,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( rampart_bitmap_w );
-
-int arcadecl_vh_start(void);
-void arcadecl_vh_stop(void);
-void arcadecl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-extern data16_t *rampart_bitmap;
+#include "arcadecl.h"
 
 
 
@@ -122,7 +107,7 @@ static void scanline_update(int scanline)
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( arcadecl )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -381,44 +366,32 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_arcadecl =
-{
+static MACHINE_DRIVER_START( arcadecl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000,	ATARI_CLOCK_14MHz)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(arcadecl)
+	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
-	43*8, 30*8, { 0*8+4, 43*8-1-4, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(43*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8+4, 43*8-1-4, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	arcadecl_vh_start,
-	arcadecl_vh_stop,
-	arcadecl_vh_screenrefresh,
+	MDRV_VIDEO_START(arcadecl)
+	MDRV_VIDEO_UPDATE(arcadecl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -433,7 +406,7 @@ ROM_START( arcadecl )
 	ROM_LOAD16_BYTE( "pgm0",  0x00000, 0x80000, 0xb5b93623 )
 	ROM_LOAD16_BYTE( "prog1", 0x00001, 0x80000, 0xe7efef85 )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "atcl_mob",   0x00000, 0x80000, 0x0e9b3930 )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
@@ -461,14 +434,13 @@ ROM_END
  *
  *************************************/
 
-static void init_arcadecl(void)
+static DRIVER_INIT( arcadecl )
 {
 	atarigen_eeprom_default = NULL;
-	atarigen_invert_region(REGION_GFX1);
 }
 
 
-static void init_sparkz(void)
+static DRIVER_INIT( sparkz )
 {
 	atarigen_eeprom_default = NULL;
 	memset(memory_region(REGION_GFX1), 0, memory_region_length(REGION_GFX1));

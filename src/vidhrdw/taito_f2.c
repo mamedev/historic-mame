@@ -9,7 +9,6 @@
 #define TC0430GRW_GFX_NUM 2
 
 extern UINT8 TC0360PRI_regs[16];
-void taitof2_vh_stop (void);
 
 struct tempsprite
 {
@@ -86,59 +85,41 @@ int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int
 	f2_hide_pixels = hide;
 	f2_flip_hide_pixels = flip_hide;
 
-	spriteram_delayed = malloc(spriteram_size);
-	spriteram_buffered = malloc(spriteram_size);
-	spritelist = malloc(0x400 * sizeof(*spritelist));
+	spriteram_delayed = auto_malloc(spriteram_size);
+	spriteram_buffered = auto_malloc(spriteram_size);
+	spritelist = auto_malloc(0x400 * sizeof(*spritelist));
 	if (!spriteram_delayed || !spriteram_buffered || !spritelist)
 		return 1;
 
 	chips = number_of_TC0100SCN();
 
 	if (chips < 0)	/* we have an erroneous TC0100SCN configuration */
-	{
-		taitof2_vh_stop();
 		return 1;
-	}
 
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
 		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,f2_hide_pixels,f2_tilemap_xoffs,
 		   f2_tilemap_yoffs,f2_text_xoffs,0,-1,0,f2_tilemap_col_base))
-		{
-			taitof2_vh_stop();
 			return 1;
-		}
 	}
 	else	/* it's a tc0100scn game */
 	{
 		if (TC0100SCN_vh_start(chips,TC0100SCN_GFX_NUM,f2_hide_pixels,0,
-			flip_xoffs,flip_yoffs,flip_text_x_offs,flip_text_yoffs,0))
-		{
-			taitof2_vh_stop();
+			flip_xoffs,flip_yoffs,flip_text_x_offs,flip_text_yoffs,TC0100SCN_SINGLE_VDU))
 			return 1;
-		}
 	}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
-		{
-			taitof2_vh_stop();
 			return 1;
-		}
 
 	if (has_TC0280GRD())
 		if (TC0280GRD_vh_start(TC0280GRD_GFX_NUM))
-		{
-			taitof2_vh_stop();
 			return 1;
-		}
 
 	if (has_TC0430GRW())
 		if (TC0430GRW_vh_start(TC0430GRW_GFX_NUM))
-		{
-			taitof2_vh_stop();
 			return 1;
-		}
 
 	if (has_TC0360PRI())
 		TC0360PRI_vh_start();	/* Purely for save-state purposes */
@@ -171,67 +152,67 @@ int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int
 /*    ( spritetype, hide, hideflip, xoffs, yoffs, flipx, flipy, textflipx, textflipy) */
 /**************************************************************************************/
 
-int taitof2_default_vh_start (void)
+VIDEO_START( taitof2_default )
 {
 	return (taitof2_core_vh_start(0,0,0,0,0,0,0,0,0));
 }
 
-int taitof2_megab_vh_start (void)   /* Megab, Liquidk */
+VIDEO_START( taitof2_megab )   /* Megab, Liquidk */
 {
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_quiz_vh_start (void)   /* Quiz Crayons, Quiz Jinsei */
+VIDEO_START( taitof2_quiz )   /* Quiz Crayons, Quiz Jinsei */
 {
 	return (taitof2_core_vh_start(3,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_finalb_vh_start (void)
+VIDEO_START( taitof2_finalb )
 {
 	return (taitof2_core_vh_start(0,1,1,0,0,0,0,0,0));
 }
 
-int taitof2_ssi_vh_start (void)
+VIDEO_START( taitof2_ssi )
 {
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_growl_vh_start (void)
+VIDEO_START( taitof2_growl )
 {
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_ninjak_vh_start (void)
+VIDEO_START( taitof2_ninjak )
 {
 	return (taitof2_core_vh_start(0,0,0,0,0,0,0,1,2));
 }
 
-int taitof2_qzchikyu_vh_start (void)
+VIDEO_START( taitof2_qzchikyu )
 {
 	return (taitof2_core_vh_start(0,0,4,0,0,-4,0,-11,0));
 }
 
-int taitof2_solfigtr_vh_start (void)
+VIDEO_START( taitof2_solfigtr )
 {
 	return (taitof2_core_vh_start(0,3,-3,0,0,6,0,6,0));
 }
 
-int taitof2_koshien_vh_start (void)
+VIDEO_START( taitof2_koshien )
 {
 	return (taitof2_core_vh_start(0,1,-1,0,0,2,0,0,0));
 }
 
-int taitof2_gunfront_vh_start (void)
+VIDEO_START( taitof2_gunfront )
 {
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_thundfox_vh_start (void)
+VIDEO_START( taitof2_thundfox )
 {
 	return (taitof2_core_vh_start(0,3,-3,0,0,5,0,4,1));
 }
 
-int taitof2_mjnquest_vh_start (void)
+VIDEO_START( taitof2_mjnquest )
 {
 	int failed = (taitof2_core_vh_start(0,0,0,0,0,0,0,0,0));	/* non-zero = failure */
 	if (!failed)  TC0100SCN_set_bg_tilemask(0x7fff);
@@ -239,7 +220,7 @@ int taitof2_mjnquest_vh_start (void)
 	return failed;
 }
 
-int taitof2_footchmp_vh_start (void)
+VIDEO_START( taitof2_footchmp )
 {
 	int failed;
 	f2_tilemap_xoffs = 0x1d;
@@ -252,7 +233,7 @@ int taitof2_footchmp_vh_start (void)
 	return failed;
 }
 
-int taitof2_hthero_vh_start (void)
+VIDEO_START( taitof2_hthero )
 {
 	int failed;
 	f2_tilemap_xoffs = 0x33;
@@ -265,7 +246,7 @@ int taitof2_hthero_vh_start (void)
 	return failed;
 }
 
-int taitof2_deadconx_vh_start (void)
+VIDEO_START( taitof2_deadconx )
 {
 	f2_tilemap_xoffs = 0x1e;
 	f2_tilemap_yoffs = 0x08;
@@ -274,7 +255,7 @@ int taitof2_deadconx_vh_start (void)
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_deadconj_vh_start (void)
+VIDEO_START( taitof2_deadconj )
 {
 	f2_tilemap_xoffs = 0x34;
 	f2_tilemap_yoffs = - 0x05;
@@ -283,7 +264,7 @@ int taitof2_deadconj_vh_start (void)
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_metalb_vh_start (void)
+VIDEO_START( taitof2_metalb )
 {
 	f2_tilemap_xoffs = 0x32;
 	f2_tilemap_yoffs = - 0x04;
@@ -292,69 +273,40 @@ int taitof2_metalb_vh_start (void)
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_yuyugogo_vh_start (void)
+VIDEO_START( taitof2_yuyugogo )
 {
 	return (taitof2_core_vh_start(1,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_yesnoj_vh_start (void)
+VIDEO_START( taitof2_yesnoj )
 {
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_dinorex_vh_start (void)
+VIDEO_START( taitof2_dinorex )
 {
 	return (taitof2_core_vh_start(3,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_dondokod_vh_start (void)	/* dondokod, cameltry */
+VIDEO_START( taitof2_dondokod )	/* dondokod, cameltry */
 {
 	f2_pivot_xdisp = -16;
 	f2_pivot_ydisp = 0;
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_pulirula_vh_start (void)
+VIDEO_START( taitof2_pulirula )
 {
 	f2_pivot_xdisp = -10;	/* alignment seems correct (see level 2, falling */
 	f2_pivot_ydisp = 16;	/* block of ice after armour man) */
 	return (taitof2_core_vh_start(2,3,3,0,0,0,0,0,0));
 }
 
-int taitof2_driftout_vh_start (void)
+VIDEO_START( taitof2_driftout )
 {
 	f2_pivot_xdisp = -16;
 	f2_pivot_ydisp = 16;
 	return (taitof2_core_vh_start(0,3,3,0,0,0,0,0,0));
-}
-
-void taitof2_vh_stop (void)
-{
-	free(spriteram_delayed);
-	spriteram_delayed = 0;
-	free(spriteram_buffered);
-	spriteram_buffered = 0;
-	free(spritelist);
-	spritelist = 0;
-
-	if (has_TC0480SCP())
-	{
-		TC0480SCP_vh_stop();
-	}
-	else	/* it's a tc0100scn game */
-	{
-		TC0100SCN_vh_stop();
-	}
-
-	if (has_TC0110PCR())
-		TC0110PCR_vh_stop();
-
-	if (has_TC0280GRD())
-		TC0280GRD_vh_stop();
-
-	if (has_TC0430GRW())
-		TC0430GRW_vh_stop();
-
 }
 
 
@@ -429,7 +381,7 @@ WRITE16_HANDLER( koshien_spritebank_w )
 
 
 
-static void draw_sprites(struct mame_bitmap *bitmap,int *primasks)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks)
 {
 	/*
 		Sprite format:
@@ -775,7 +727,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int *primasks)
 						sprite_ptr->color,
 						sprite_ptr->flipx,sprite_ptr->flipy,
 						sprite_ptr->x,sprite_ptr->y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						cliprect,TRANSPARENCY_PEN,0,
 						sprite_ptr->zoomx,sprite_ptr->zoomy);
 			}
 		}
@@ -792,7 +744,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int *primasks)
 				sprite_ptr->color,
 				sprite_ptr->flipx,sprite_ptr->flipy,
 				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				sprite_ptr->zoomx,sprite_ptr->zoomy,
 				sprite_ptr->primask);
 	}
@@ -874,14 +826,14 @@ static void taitof2_update_sprites_active_area(void)
 	}
 }
 
-void taitof2_no_buffer_eof_callback(void)
+VIDEO_EOF( taitof2_no_buffer )
 {
 	taitof2_update_sprites_active_area();
 
 	prepare_sprites = 1;
 }
 
-void taitof2_full_buffer_delayed_eof_callback(void)
+VIDEO_EOF( taitof2_full_buffer_delayed )
 {
 	int i;
 
@@ -894,7 +846,7 @@ void taitof2_full_buffer_delayed_eof_callback(void)
 	memcpy(spriteram_delayed,spriteram16,spriteram_size);
 }
 
-void taitof2_partial_buffer_delayed_eof_callback(void)
+VIDEO_EOF( taitof2_partial_buffer_delayed )
 {
 	int i;
 
@@ -907,7 +859,7 @@ void taitof2_partial_buffer_delayed_eof_callback(void)
 	memcpy(spriteram_delayed,spriteram16,spriteram_size);
 }
 
-void taitof2_partial_buffer_delayed_thundfox_eof_callback(void)
+VIDEO_EOF( taitof2_partial_buffer_delayed_thundfox )
 {
 	int i;
 
@@ -924,7 +876,7 @@ void taitof2_partial_buffer_delayed_thundfox_eof_callback(void)
 	memcpy(spriteram_delayed,spriteram16,spriteram_size);
 }
 
-void taitof2_partial_buffer_delayed_qzchikyu_eof_callback(void)
+VIDEO_EOF( taitof2_partial_buffer_delayed_qzchikyu )
 {
 	/* spriteram[2] and [3] are 1 frame behind...
 	   probably thundfox_eof_callback would work fine */
@@ -949,49 +901,49 @@ void taitof2_partial_buffer_delayed_qzchikyu_eof_callback(void)
 
 
 /* SSI */
-void ssi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ssi )
 {
 	taitof2_handle_sprite_buffering();
 
 	/* SSI only uses sprites, the tilemap registers are not even initialized.
 	   (they are in Majestic 12, but the tilemaps are not used anyway) */
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	draw_sprites(bitmap,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	draw_sprites(bitmap,cliprect,NULL);
 }
 
 
-void yesnoj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( yesnoj )
 {
 	taitof2_handle_sprite_buffering();
 
 	TC0100SCN_tilemap_update();
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	draw_sprites(bitmap,NULL);
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0),0,0);
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0)^1,0,0);
-	TC0100SCN_tilemap_draw(bitmap,0,2,0,0);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
+	draw_sprites(bitmap,cliprect,NULL);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,TC0100SCN_bottomlayer(0),0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,TC0100SCN_bottomlayer(0)^1,0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,2,0,0);
 }
 
 
-void taitof2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( taitof2 )
 {
 	taitof2_handle_sprite_buffering();
 
 	TC0100SCN_tilemap_update();
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0),0,0);
-	TC0100SCN_tilemap_draw(bitmap,0,TC0100SCN_bottomlayer(0)^1,0,0);
-	draw_sprites(bitmap,NULL);
-	TC0100SCN_tilemap_draw(bitmap,0,2,0,0);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,TC0100SCN_bottomlayer(0),0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,TC0100SCN_bottomlayer(0)^1,0,0);
+	draw_sprites(bitmap,cliprect,NULL);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,2,0,0);
 }
 
 
-void taitof2_pri_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( taitof2_pri )
 {
 	int tilepri[3];
 	int spritepri[4];
@@ -1014,12 +966,12 @@ void taitof2_pri_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	spritepri[2] = TC0360PRI_regs[7] & 0x0f;
 	spritepri[3] = TC0360PRI_regs[7] >> 4;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,1);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],0,1);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,2);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -1032,7 +984,7 @@ void taitof2_pri_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			if (spritepri[i] < tilepri[2]) primasks[i] |= 0xf0;
 		}
 
-		draw_sprites(bitmap,primasks);
+		draw_sprites(bitmap,cliprect,primasks);
 	}
 
 #if 0
@@ -1047,17 +999,17 @@ void taitof2_pri_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 
-static void draw_roz_layer(struct mame_bitmap *bitmap)
+static void draw_roz_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	if (has_TC0280GRD())
-		TC0280GRD_zoom_draw(bitmap,f2_pivot_xdisp,f2_pivot_ydisp,8);
+		TC0280GRD_zoom_draw(bitmap,cliprect,f2_pivot_xdisp,f2_pivot_ydisp,8);
 
 	if (has_TC0430GRW())
-		TC0430GRW_zoom_draw(bitmap,f2_pivot_xdisp,f2_pivot_ydisp,8);
+		TC0430GRW_zoom_draw(bitmap,cliprect,f2_pivot_xdisp,f2_pivot_ydisp,8);
 }
 
 
-void taitof2_pri_roz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( taitof2_pri_roz )
 {
 	int tilepri[3];
 	int spritepri[4];
@@ -1093,8 +1045,8 @@ void taitof2_pri_roz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refres
 	rozpri = (TC0360PRI_regs[1] & 0xc0) >> 6;
 	rozpri = (TC0360PRI_regs[8 + rozpri/2] >> 4*(rozpri & 1)) & 0x0f;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
 
 	drawn = 0;
 	lastpri = 0;
@@ -1102,15 +1054,15 @@ void taitof2_pri_roz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refres
 	{
 		if (rozpri > lastpri && rozpri <= tilepri[drawn])
 		{
-			draw_roz_layer(bitmap);
+			draw_roz_layer(bitmap,cliprect);
 			lastpri = rozpri;
 		}
-		TC0100SCN_tilemap_draw(bitmap,0,layer[drawn],0,1<<drawn);
+		TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[drawn],0,1<<drawn);
 		lastpri = tilepri[drawn];
 		drawn++;
 	}
 	if (rozpri > lastpri)
-		draw_roz_layer(bitmap);
+		draw_roz_layer(bitmap,cliprect);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -1124,14 +1076,14 @@ void taitof2_pri_roz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refres
 			if (spritepri[i] < rozpri)     primasks[i] |= 0xff00;
 		}
 
-		draw_sprites(bitmap,primasks);
+		draw_sprites(bitmap,cliprect,primasks);
 	}
 }
 
 
 
 /* Thunderfox */
-void thundfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( thundfox )
 {
 	int tilepri[2][3];
 	int spritepri[4];
@@ -1163,8 +1115,8 @@ void thundfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	spritepri[3] = TC0360PRI_regs[7] >> 4;
 
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
 
 
 	/*
@@ -1182,17 +1134,17 @@ void thundfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			pick = 0;
 		else pick = 1;
 
-		TC0100SCN_tilemap_draw(bitmap,pick,layer[pick][drawn[pick]],0,1<<(drawn[pick]+2*pick));
+		TC0100SCN_tilemap_draw(bitmap,cliprect,pick,layer[pick][drawn[pick]],0,1<<(drawn[pick]+2*pick));
 		drawn[pick]++;
 	}
 	while (drawn[0] < 2)
 	{
-		TC0100SCN_tilemap_draw(bitmap,0,layer[0][drawn[0]],0,1<<drawn[0]);
+		TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0][drawn[0]],0,1<<drawn[0]);
 		drawn[0]++;
 	}
 	while (drawn[1] < 2)
 	{
-		TC0100SCN_tilemap_draw(bitmap,1,layer[1][drawn[1]],0,1<<(drawn[1]+2));
+		TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[1][drawn[1]],0,1<<(drawn[1]+2));
 		drawn[1]++;
 	}
 
@@ -1208,7 +1160,7 @@ void thundfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			if (spritepri[i] < tilepri[1][1]) primasks[i] |= 0xff00;
 		}
 
-		draw_sprites(bitmap,primasks);
+		draw_sprites(bitmap,cliprect,primasks);
 	}
 
 
@@ -1220,13 +1172,13 @@ void thundfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	if (tilepri[0][2] < tilepri[1][2])
 	{
-		TC0100SCN_tilemap_draw(bitmap,0,layer[0][2],0,0);
-		TC0100SCN_tilemap_draw(bitmap,1,layer[1][2],0,0);
+		TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0][2],0,0);
+		TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[1][2],0,0);
 	}
 	else
 	{
-		TC0100SCN_tilemap_draw(bitmap,1,layer[1][2],0,0);
-		TC0100SCN_tilemap_draw(bitmap,0,layer[0][2],0,0);
+		TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[1][2],0,0);
+		TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0][2],0,0);
 	}
 }
 
@@ -1260,7 +1212,7 @@ and it changes these (and the sprite pri settings) a lot.
 
 ********************************************************************/
 
-void metalb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( metalb )
 {
 	UINT8 layer[5];
 	UINT8 tilepri[5];
@@ -1292,13 +1244,13 @@ void metalb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	spritepri[2] = TC0360PRI_regs[7] & 0x0f;
 	spritepri[3] = TC0360PRI_regs[7] >> 4;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
-	TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
-	TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
-	TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],0,1);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,2);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,4);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,8);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -1312,7 +1264,7 @@ void metalb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			if (spritepri[i] < tilepri[(layer[3])]) primasks[i] |= 0xff00;
 		}
 
-		draw_sprites(bitmap,primasks);
+		draw_sprites(bitmap,cliprect,primasks);
 	}
 
 	/*
@@ -1321,12 +1273,12 @@ void metalb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	that the FG layer is always on top of sprites.
 	*/
 
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,0);
 }
 
 
 /* Deadconx, Footchmp */
-void deadconx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( deadconx )
 {
 	UINT8 layer[5];
 	UINT8 tilepri[5];
@@ -1358,13 +1310,13 @@ void deadconx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	spritepri[2] = TC0360PRI_regs[7] & 0x0f;
 	spritepri[3] = TC0360PRI_regs[7] >> 4;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
-	TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
-	TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
-	TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],0,1);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,2);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,4);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,8);
 
 	{
 		int primasks[4] = {0,0,0,0};
@@ -1378,7 +1330,7 @@ void deadconx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			if (spritepri[i] < tilepri[(layer[3])]) primasks[i] |= 0xff00;
 		}
 
-		draw_sprites(bitmap,primasks);
+		draw_sprites(bitmap,cliprect,primasks);
 	}
 
 	/*
@@ -1387,5 +1339,5 @@ void deadconx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	that the FG layer is always on top of sprites.
 	*/
 
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,0);
 }

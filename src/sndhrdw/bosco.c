@@ -17,7 +17,7 @@ int bosco_sh_start(const struct MachineSound *msound)
 	channel = mixer_allocate_channel(25);
 	mixer_set_name(channel,"Samples");
 
-	speech = malloc(2*memory_region_length(REGION_SOUND2));
+	speech = auto_malloc(2*memory_region_length(REGION_SOUND2));
 	if (!speech)
 		return 1;
 
@@ -37,9 +37,6 @@ int bosco_sh_start(const struct MachineSound *msound)
 
 void bosco_sh_stop (void)
 {
-	if (speech)
-		free(speech);
-	speech = NULL;
 }
 
 

@@ -88,21 +88,6 @@ static UINT8 *custom_cpu_ram;
  *
  *************************************/
 
-static int generate_interrupt(void)
-{
-	/* IRQ is acknowledged by the Z80 acknowledge pin */
-	cpu_set_irq_line(0, 0, HOLD_LINE);
-	return ignore_interrupt();
-}
-
-
-
-/*************************************
- *
- *	Audio chip output ports
- *
- *************************************/
-
 static WRITE_HANDLER( ay8910_porta_w )
 {
 	/*
@@ -179,7 +164,7 @@ static READ_HANDLER( custom_cpu_r )
 
 		/* error cases */
 		default:
-			logerror("Input Port %04X read.  PC=%04X\n", offset+0xd7f0, cpu_get_pc());
+			logerror("Input Port %04X read.  PC=%04X\n", offset+0xd7f0, activecpu_get_pc());
 			return 0;
 	}
 	return 0;
@@ -371,39 +356,32 @@ static struct AY8910interface ay8910_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_arabian =
-{
+static MACHINE_DRIVER_START( arabian )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			MAIN_OSC/4,		/* 3 MHz */
-			readmem,writemem,0,writeport,
-			generate_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, MAIN_OSC/4)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 255, 11, 244 },
-	0,
-	64,256*32,
-	arabian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	arabian_vh_start,
-	arabian_vh_stop,
-	arabian_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 11, 244)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(256*32)
+	
+	MDRV_PALETTE_INIT(arabian)
+	MDRV_VIDEO_START(arabian)
+	MDRV_VIDEO_UPDATE(arabian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_AY8910, &ay8910_interface }
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -450,7 +428,7 @@ ROM_END
  *
  *************************************/
 
-static void init_arabian(void)
+static DRIVER_INIT( arabian )
 {
 	install_mem_write_handler(0, 0xd34b, 0xd34b, custom_flip_w);
 	install_mem_write_handler(0, 0xd400, 0xd401, custom_cocktail_w);

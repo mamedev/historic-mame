@@ -30,7 +30,7 @@ extern data16_t *kaneko16_sprites_regs;
 READ16_HANDLER ( kaneko16_sprites_regs_r );
 WRITE16_HANDLER( kaneko16_sprites_regs_w );
 
-void kaneko16_draw_sprites(struct mame_bitmap *bitmap, int pri);
+void kaneko16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri);
 
 /* Pixel Layer: */
 
@@ -42,7 +42,7 @@ WRITE16_HANDLER( kaneko16_bg15_select_w );
 READ16_HANDLER ( kaneko16_bg15_reg_r );
 WRITE16_HANDLER( kaneko16_bg15_reg_w );
 
-void berlwall_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( berlwall );
 
 
 /* Priorities: */
@@ -58,18 +58,16 @@ extern kaneko16_priority_t kaneko16_priority;
 
 /* Machine */
 
-int kaneko16_vh_start_sprites(void);
-int kaneko16_vh_start_1xVIEW2(void);
-int kaneko16_vh_start_2xVIEW2(void);
-int berlwall_vh_start(void);
-int sandscrp_vh_start_1xVIEW2(void);
+VIDEO_START( kaneko16_sprites );
+VIDEO_START( kaneko16_1xVIEW2 );
+VIDEO_START( kaneko16_2xVIEW2 );
+VIDEO_START( berlwall );
+VIDEO_START( sandscrp_1xVIEW2 );
 
-void kaneko16_vh_stop(void);
-void berlwall_vh_stop(void);
 
-void kaneko16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( kaneko16 );
 
-void kaneko16_init_machine(void);
+MACHINE_INIT( kaneko16 );
 
 
 /* in drivers/galpani2.c */
@@ -86,10 +84,9 @@ extern data16_t *galpani2_bg8_0_scrolly, *galpani2_bg8_1_scrolly;
 
 extern data16_t *galpani2_bg15;
 
-void galpani2_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  galpani2_vh_start(void);
-void galpani2_vh_stop(void);
-void galpani2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( galpani2 );
+VIDEO_START( galpani2 );
+VIDEO_UPDATE( galpani2 );
 
 WRITE16_HANDLER( galpani2_palette_0_w );
 WRITE16_HANDLER( galpani2_palette_1_w );

@@ -31,7 +31,6 @@ struct K053260_chip_def {
 	int								regs[0x30];
 	unsigned char					*rom;
 	int								rom_size;
-	void							*timer; /* SH1 int timer */
 	unsigned long					*delta_table;
 	struct K053260_channel_def		channels[4];
 };
@@ -231,9 +230,7 @@ int K053260_sh_start(const struct MachineSound *msound) {
 
 		/* setup SH1 timer if necessary */
 		if ( intf->irq[ics] )
-			ic->timer = timer_pulse( TIME_IN_HZ( ( intf->clock[ics] / 32 ) ), 0, intf->irq[ics] );
-		else
-			ic->timer = 0;
+			timer_pulse( TIME_IN_HZ( ( intf->clock[ics] / 32 ) ), 0, intf->irq[ics] );
 	}
 
     return 0;
@@ -250,11 +247,6 @@ void K053260_sh_stop( void ) {
 				free( ic->delta_table );
 
 			ic->delta_table = 0;
-
-			if ( ic->timer )
-				timer_remove( ic->timer );
-
-			ic->timer = 0;
 		}
 
 		free( K053260_chip );
@@ -428,7 +420,7 @@ data8_t K053260_read( int chip, offs_t offset )
 				ic->channels[0].pos += ( 1 << 16 );
 
 				if ( offs > ic->rom_size ) {
-					logerror("%06x: K53260: Attempting to read past rom size in rom Read Mode (offs = %06x, size = %06x).\n",cpu_get_pc(),offs,ic->rom_size );
+					logerror("%06x: K53260: Attempting to read past rom size in rom Read Mode (offs = %06x, size = %06x).\n",activecpu_get_pc(),offs,ic->rom_size );
 
 					return 0;
 				}

@@ -95,9 +95,9 @@ static void plot_pattern(struct mame_bitmap *bitmap, int x, int y)
 }
 
 
-int lazercmd_vh_start(void)
+VIDEO_START( lazercmd )
 {
-	if( generic_vh_start() )
+	if( video_start_generic() )
 		return 1;
 
 	/* is overlay enabled? */
@@ -111,7 +111,7 @@ int lazercmd_vh_start(void)
 }
 
 
-void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lazercmd )
 {
 	int i,x,y;
 
@@ -121,7 +121,7 @@ void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		memset(dirtybuffer, 1, videoram_size);
 	}
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
         memset(dirtybuffer, 1, videoram_size);
 
 	/* The first row of characters are invisible */
@@ -139,13 +139,14 @@ void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sx *= HORZ_CHR;
 			sy *= VERT_CHR;
 
-			drawgfx(bitmap, Machine->gfx[0],
+			drawgfx(tmpbitmap, Machine->gfx[0],
 					videoram[i], video_inverted ? 1 : 0,
 					0,0,
 					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	x = marker_x - 1;             /* normal video lags marker by 1 pixel */
 	y = vert_scale(marker_y) - VERT_CHR; /* first line used as scratch pad */

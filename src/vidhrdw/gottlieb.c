@@ -92,16 +92,14 @@ WRITE_HANDLER( gottlieb_paletteram_w )
 
 ***************************************************************************/
 
-int gottlieb_vh_start(void)
+VIDEO_START( gottlieb )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtycharacter = malloc(MAX_CHARS)) == 0)
-	{
-		generic_vh_stop();
+	if ((dirtycharacter = auto_malloc(MAX_CHARS)) == 0)
 		return 1;
-	}
+
 	/* Some games have character gfx data in ROM, some others in RAM. We don't */
 	/* want to recalculate chars if data is in ROM, so let's start with the array */
 	/* initialized to 0. */
@@ -109,18 +107,6 @@ int gottlieb_vh_start(void)
 
 	return 0;
 }
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void gottlieb_vh_stop(void)
-{
-	free(dirtycharacter);
-	generic_vh_stop();
-}
-
 
 
 WRITE_HANDLER( gottlieb_video_outputs_w )
@@ -179,7 +165,7 @@ WRITE_HANDLER( gottlieb_characterram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void gottlieb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gottlieb )
 {
     int offs;
 

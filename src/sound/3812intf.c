@@ -70,7 +70,7 @@ static void timer1_callback (int chip)
 	}
 
 	/* next! */
-	st->timer1 = timer_set ((double)st->timer1_val*4*timer_step, chip, timer1_callback);
+	timer_adjust(st->timer1, (double)st->timer1_val*4*timer_step, chip, 0);
 }
 
 static void timer2_callback (int chip)
@@ -85,7 +85,7 @@ static void timer2_callback (int chip)
 	}
 
 	/* next! */
-	st->timer2 = timer_set ((double)st->timer2_val*16*timer_step, chip, timer2_callback);
+	timer_adjust(st->timer2, (double)st->timer2_val*16*timer_step, chip, 0);
 }
 
 static int nonemu_YM3812_sh_start(const struct MachineSound *msound)
@@ -100,8 +100,8 @@ static int nonemu_YM3812_sh_start(const struct MachineSound *msound)
 	for(i=0;i<intf->num;i++)
 	{
 		nonemu_state[i].address_register = 0;
-		nonemu_state[i].timer1 =
-		nonemu_state[i].timer2 = 0;
+		nonemu_state[i].timer1 = timer_alloc(timer1_callback);
+		nonemu_state[i].timer2 = timer_alloc(timer2_callback);
 		nonemu_state[i].status_register = 0;
 		nonemu_state[i].timer_register = 0;
 		nonemu_state[i].timer1_val =
@@ -199,28 +199,19 @@ static void nonemu_YM3812_write_port_w(int chip,int data)
 			{
 				/* set the new timer register */
 				st->timer_register = data;
-					/*  bit 0 starts/stops timer 1 */
+
+				/*  bit 0 starts/stops timer 1 */
 				if (data & 0x01)
-				{
-					if (!st->timer1)
-						st->timer1 = timer_set ((double)st->timer1_val*4*timer_step, chip, timer1_callback);
-				}
-				else if (st->timer1)
-				{
-					timer_remove (st->timer1);
-					st->timer1 = 0;
-				}
+					timer_adjust(st->timer1, (double)st->timer1_val*4*timer_step, chip, 0);
+				else
+					timer_adjust(st->timer1, TIME_NEVER, chip, 0);
+
 				/*  bit 1 starts/stops timer 2 */
 				if (data & 0x02)
-				{
-					if (!st->timer2)
-						st->timer2 = timer_set ((double)st->timer2_val*16*timer_step, chip, timer2_callback);
-				}
-				else if (st->timer2)
-				{
-					timer_remove (st->timer2);
-					st->timer2 = 0;
-				}
+					timer_adjust(st->timer2, (double)st->timer2_val*16*timer_step, chip, 0);
+				else
+					timer_adjust(st->timer2, TIME_NEVER, chip, 0);
+
 				/* bits 5 & 6 clear and mask the appropriate bit in the status register */
 				st->status_register &= ~(data & 0x60);
 
@@ -284,7 +275,6 @@ static void timer_callback_3812(int param)
 {
 	int n=param>>1;
 	int c=param&1;
-	Timer[param] = 0;
 	OPLTimerOver(F3812[n],c);
 }
 
@@ -293,15 +283,11 @@ static void TimerHandler(int c,double period)
 {
 	if( period == 0 )
 	{	/* Reset FM Timer */
-		if( Timer[c] )
-		{
-	 		timer_remove (Timer[c]);
-			Timer[c] = 0;
-		}
+		timer_adjust(Timer[c], TIME_NEVER, c, 0);
 	}
 	else
 	{	/* Start FM Timer */
-		Timer[c] = timer_set(period, c, timer_callback_3812 );
+		timer_adjust(Timer[c], period, c, 0);
 	}
 }
 
@@ -348,6 +334,9 @@ static int emu_YM3812_sh_start(const struct MachineSound *msound)
 		OPLSetTimerHandler(F3812[i],TimerHandler,i*2);
 		OPLSetIRQHandler(F3812[i]  ,IRQHandler,i);
 		OPLSetUpdateHandler(F3812[i],stream_update,stream[i]);
+		
+		Timer[i*2+0] = timer_alloc(timer_callback_3812);
+		Timer[i*2+1] = timer_alloc(timer_callback_3812);
 	}
 	return 0;
 }

@@ -15,18 +15,15 @@ Driver by Manuel Abadia <manu@teleline.es>
 extern int rockrage_irq_enable;
 
 /* from vidhrdw */
-int rockrage_vh_start(void);
-void rockrage_vh_stop(void);
-void rockrage_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( rockrage );
+VIDEO_UPDATE( rockrage );
 WRITE_HANDLER( rockrage_vreg_w );
-void rockrage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( rockrage );
 
-static int rockrage_interrupt( void )
+static INTERRUPT_GEN( rockrage_interrupt )
 {
 	if (K007342_is_INT_enabled())
-        return HD6309_INT_IRQ;
-    else
-		return ignore_interrupt();
+        cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
 static WRITE_HANDLER( rockrage_bankswitch_w )
@@ -48,7 +45,7 @@ static WRITE_HANDLER( rockrage_bankswitch_w )
 static WRITE_HANDLER( rockrage_sh_irqtrigger_w )
 {
 	soundlatch_w(offset, data);
-	cpu_cause_interrupt(1,M6809_INT_IRQ);
+	cpu_set_irq_line(1,M6809_IRQ_LINE,HOLD_LINE);
 }
 
 static READ_HANDLER( rockrage_VLM5030_busy_r ) {
@@ -56,9 +53,9 @@ static READ_HANDLER( rockrage_VLM5030_busy_r ) {
 }
 
 static WRITE_HANDLER( rockrage_speech_w ) {
-	VLM5030_RST( ( data >> 2 ) & 0x01 );
+	/* bit2 = data bus enable */
+	VLM5030_RST( ( data >> 1 ) & 0x01 );
 	VLM5030_ST(  ( data >> 0 ) & 0x01 );
-	VLM5030_VCU( ( data >> 1 ) & 0x01 );
 }
 
 static MEMORY_READ_START( rockrage_readmem )
@@ -264,52 +261,36 @@ static struct VLM5030interface vlm5030_interface =
 	0,
 };
 
-static const struct MachineDriver machine_driver_rockrage =
-{
+static MACHINE_DRIVER_START( rockrage )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_HD6309,
-			3000000,		/* 24MHz/8 (?) */
-			rockrage_readmem,rockrage_writemem,0,0,
-            rockrage_interrupt,1
-        },
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,		/* 24MHz/12 (?) */
-			rockrage_readmem_sound, rockrage_writemem_sound,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(HD6309, 3000000)		/* 24MHz/8 (?) */
+	MDRV_CPU_MEMORY(rockrage_readmem,rockrage_writemem)
+	MDRV_CPU_VBLANK_INT(rockrage_interrupt,1)
+
+	MDRV_CPU_ADD(M6809, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 24MHz/12 (?) */
+	MDRV_CPU_MEMORY(rockrage_readmem_sound,rockrage_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 64 + 2*16*16,
-	rockrage_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(64 + 2*16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	rockrage_vh_start,
-	rockrage_vh_stop,
-	rockrage_vh_screenrefresh,
+	MDRV_PALETTE_INIT(rockrage)
+	MDRV_VIDEO_START(rockrage)
+	MDRV_VIDEO_UPDATE(rockrage)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_VLM5030,
-			&vlm5030_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

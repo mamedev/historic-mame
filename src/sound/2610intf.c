@@ -40,7 +40,6 @@ static void timer_callback_2610(int param)
 	int c=param>>7;
 
 //	logerror("2610 TimerOver %d\n",c);
-	Timer[n][c] = 0;
 	YM2610TimerOver(n,c);
 }
 
@@ -49,21 +48,12 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 {
 	if( count == 0 )
 	{	/* Reset FM Timer */
-		if( Timer[n][c] )
-		{
-//			logerror("2610 TimerReset %d\n",c);
-	 		timer_remove (Timer[n][c]);
-			Timer[n][c] = 0;
-		}
+		timer_adjust(Timer[n][c], TIME_NEVER, (c<<7)|n, 0);
 	}
 	else
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
-
-		if( Timer[n][c] == 0 )
-		{
-			Timer[n][c] = timer_set (timeSec , (c<<7)|n, timer_callback_2610 );
-		}
+		timer_adjust(Timer[n][c], timeSec, (c<<7)|n, 0);
 	}
 }
 
@@ -72,7 +62,10 @@ static void FMTimerInit( void )
 	int i;
 
 	for( i = 0 ; i < MAX_2610 ; i++ )
-		Timer[i][0] = Timer[i][1] = 0;
+	{
+		Timer[i][0] = timer_alloc(timer_callback_2610);
+		Timer[i][1] = timer_alloc(timer_callback_2610);
+	}
 }
 
 /* update request from fm.c */
@@ -204,25 +197,25 @@ void YM2610_sh_reset(void)
 /************************************************/
 READ_HANDLER( YM2610_status_port_0_A_r )
 {
-//logerror("PC %04x: 2610 S0A=%02X\n",cpu_get_pc(),YM2610Read(0,0));
+//logerror("PC %04x: 2610 S0A=%02X\n",activecpu_get_pc(),YM2610Read(0,0));
 	return YM2610Read(0,0);
 }
 
 READ16_HANDLER( YM2610_status_port_0_A_lsb_r )
 {
-//logerror("PC %04x: 2610 S0A=%02X\n",cpu_get_pc(),YM2610Read(0,0));
+//logerror("PC %04x: 2610 S0A=%02X\n",activecpu_get_pc(),YM2610Read(0,0));
 	return YM2610Read(0,0);
 }
 
 READ_HANDLER( YM2610_status_port_0_B_r )
 {
-//logerror("PC %04x: 2610 S0B=%02X\n",cpu_get_pc(),YM2610Read(0,2));
+//logerror("PC %04x: 2610 S0B=%02X\n",activecpu_get_pc(),YM2610Read(0,2));
 	return YM2610Read(0,2);
 }
 
 READ16_HANDLER( YM2610_status_port_0_B_lsb_r )
 {
-//logerror("PC %04x: 2610 S0B=%02X\n",cpu_get_pc(),YM2610Read(0,2));
+//logerror("PC %04x: 2610 S0B=%02X\n",activecpu_get_pc(),YM2610Read(0,2));
 	return YM2610Read(0,2);
 }
 
@@ -273,13 +266,13 @@ READ16_HANDLER( YM2610_read_port_1_lsb_r ){
 /************************************************/
 WRITE_HANDLER( YM2610_control_port_0_A_w )
 {
-//logerror("PC %04x: 2610 Reg A %02X",cpu_get_pc(),data);
+//logerror("PC %04x: 2610 Reg A %02X",activecpu_get_pc(),data);
 	YM2610Write(0,0,data);
 }
 
 WRITE16_HANDLER( YM2610_control_port_0_A_lsb_w )
 {
-//logerror("PC %04x: 2610 Reg A %02X",cpu_get_pc(),data);
+//logerror("PC %04x: 2610 Reg A %02X",activecpu_get_pc(),data);
 	if (ACCESSING_LSB)
 	{
 		YM2610Write(0,0,data);
@@ -288,13 +281,13 @@ WRITE16_HANDLER( YM2610_control_port_0_A_lsb_w )
 
 WRITE_HANDLER( YM2610_control_port_0_B_w )
 {
-//logerror("PC %04x: 2610 Reg B %02X",cpu_get_pc(),data);
+//logerror("PC %04x: 2610 Reg B %02X",activecpu_get_pc(),data);
 	YM2610Write(0,2,data);
 }
 
 WRITE16_HANDLER( YM2610_control_port_0_B_lsb_w )
 {
-//logerror("PC %04x: 2610 Reg B %02X",cpu_get_pc(),data);
+//logerror("PC %04x: 2610 Reg B %02X",activecpu_get_pc(),data);
 	if (ACCESSING_LSB)
 	{
 		YM2610Write(0,2,data);

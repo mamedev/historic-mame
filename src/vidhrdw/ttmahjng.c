@@ -31,7 +31,7 @@ static void common_videoram_w(int offset,int data,
 
 
 
-void ttmahjng_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ttmahjng )
 {
 	ttmahjng_color_prom = color_prom;	/* we'll need this later */
 }
@@ -42,20 +42,13 @@ void ttmahjng_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Start the video hardware emulation.
 
 ***************************************************************************/
-int ttmahjng_vh_start(void)
+VIDEO_START( ttmahjng )
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
+	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-
-		bitmap_free(tmpbitmap1);
-		tmpbitmap1 = 0;
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	video_flip = 0;
 	video_color_select_1 = 0;
@@ -64,17 +57,6 @@ int ttmahjng_vh_start(void)
 	video_remap_2 = 1;
 
 	return 0;
-}
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void ttmahjng_vh_stop(void)
-{
-	bitmap_free(tmpbitmap1);
-	bitmap_free(tmpbitmap2);
 }
 
 /***************************************************************************
@@ -212,7 +194,7 @@ static void common_videoram_w(int offset,int data,
   the main emulation engine.
 
 ***************************************************************************/
-void ttmahjng_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ttmahjng )
 {
 	if (video_remap_1)
 	{
@@ -231,7 +213,7 @@ void ttmahjng_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 
-	if (full_refresh || video_remap_1 || video_remap_2)
+	if (get_vh_global_attribute_changed() || video_remap_1 || video_remap_2)
 	{
 		int offs;
 

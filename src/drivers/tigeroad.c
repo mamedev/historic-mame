@@ -26,8 +26,8 @@ Memory Overview:
 
 WRITE16_HANDLER( tigeroad_videoctrl_w );
 WRITE16_HANDLER( tigeroad_scroll_w );
-void tigeroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void tigeroad_eof_callback(void);
+VIDEO_UPDATE( tigeroad );
+VIDEO_EOF( tigeroad );
 
 
 static data16_t *ram16;
@@ -87,7 +87,7 @@ static void f1dream_protection_w(void)
 {
 	int indx;
 	int value = 255;
-	int prevpc = cpu_getpreviouspc();
+	int prevpc = activecpu_get_previouspc();
 
 	if (prevpc == 0x244c)
 	{
@@ -148,7 +148,7 @@ static void f1dream_protection_w(void)
 
 static WRITE16_HANDLER( f1dream_control_w )
 {
-	logerror("protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram16[0x3fe0/2]);
+	logerror("protection write, PC: %04x  FFE1 Value:%01x\n",activecpu_get_pc(), ram16[0x3fe0/2]);
 	f1dream_protection_w();
 }
 
@@ -164,11 +164,6 @@ static WRITE_HANDLER( msm5205_w )
 	MSM5205_data_w(offset,data);
 	MSM5205_vclk_w(offset,1);
 	MSM5205_vclk_w(offset,0);
-}
-
-int tigeroad_interrupt(void)
-{
-	return 2;
 }
 
 
@@ -554,103 +549,51 @@ static struct MSM5205interface msm5205_interface =
 };
 
 
-static const struct MachineDriver machine_driver_tigeroad =
-{
-	{
-		{
-			CPU_M68000,
-			6000000, /* ? Main clock is 24MHz */
-			readmem,writemem,0,0,
-			tigeroad_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,    /* 4 MHz ??? */
-			sound_readmem,sound_writemem,0,sound_writeport,
-			ignore_interrupt,0  /* NMIs are triggered by the main CPU */
+static MACHINE_DRIVER_START( tigeroad )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 6000000) /* ? Main clock is 24MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(0,sound_writeport)
 								/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,  /* CPU slices per frame */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	576, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(576)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	tigeroad_eof_callback,
-	0,
-	0,
-	tigeroad_vh_screenrefresh,
+	MDRV_VIDEO_EOF(tigeroad)
+	MDRV_VIDEO_UPDATE(tigeroad)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
+
 
 /* same as above but with additional Z80 for samples playback */
-static const struct MachineDriver machine_driver_toramich =
-{
-	{
-		{
-			CPU_M68000,
-			6000000, /* ? Main clock is 24MHz */
-			readmem,writemem,0,0,
-			tigeroad_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,    /* 4 MHz ??? */
-			sound_readmem,sound_writemem,0,sound_writeport,
-			ignore_interrupt,0  /* NMIs are triggered by the main CPU */
-								/* IRQs are triggered by the YM2203 */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? */
-			sample_readmem,sample_writemem,sample_readport,sample_writeport,
-			0,0,
-			interrupt,4000	/* ? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,  /* CPU slices per frame */
-	0,
+static MACHINE_DRIVER_START( toramich )
 
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	576, 0,
-	0,
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(tigeroad)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	tigeroad_eof_callback,
-	0,
-	0,
-	tigeroad_vh_screenrefresh,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(sample_readmem,sample_writemem)
+	MDRV_CPU_PORTS(sample_readport,sample_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,4000)	/* ? */
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -801,12 +744,12 @@ ROM_END
 
 
 
-void init_tigeroad(void)
+DRIVER_INIT( tigeroad )
 {
 	install_mem_write16_handler(0, 0xfe4002, 0xfe4003, tigeroad_soundcmd_w);
 }
 
-void init_f1dream(void)
+DRIVER_INIT( f1dream )
 {
 	install_mem_write16_handler(0, 0xfe4002, 0xfe4003, f1dream_control_w);
 }

@@ -42,7 +42,7 @@ The 2 ay-8910 read ports are responsible for reading the sound commands.
 
 
 WRITE_HANDLER( jack_paletteram_w );
-void jack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( jack );
 READ_HANDLER( jack_flipscreen_r );
 WRITE_HANDLER( jack_flipscreen_w );
 
@@ -60,7 +60,7 @@ static READ_HANDLER( timer_r )
 static WRITE_HANDLER( jack_sh_command_w )
 {
 	soundlatch_w(0,data);
-	cpu_cause_interrupt(1, Z80_IRQ_INT);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 
@@ -365,48 +365,34 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_jack =
-{
+static MACHINE_DRIVER_START( jack )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18000000/6,	/* 3 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			18000000/12,	/* 1.5 MHz */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80,18000000/6)	/* 3 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,18000000/12)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.5 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	jack_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(jack)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -654,18 +640,18 @@ static void treahunt_decode(void)
 	}
 }
 
-static void init_jack(void)
+static DRIVER_INIT( jack )
 {
 	timer_rate = 128;
 }
 
-static void init_treahunt(void)
+static DRIVER_INIT( treahunt )
 {
 	timer_rate = 128;
 	treahunt_decode();
 }
 
-static void init_zzyzzyxx(void)
+static DRIVER_INIT( zzyzzyxx )
 {
 	timer_rate = 16;
 }

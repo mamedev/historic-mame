@@ -10,6 +10,7 @@
 		* Bloodstorm (3 sets)
 		* Hard Yardage (2 sets)
 		* Pairs
+		* Driver's Edge (not working)
 		* Shuffleshot
 		* Street Fighter: The Movie (3 sets)
 
@@ -23,8 +24,6 @@
 
 	Games that might use this hardware, but have no known (good) dumps:
 		* Dyno-Bop
-		* Poker Dice
-		* Driver's Edge
 
 ****************************************************************************
 
@@ -38,7 +37,7 @@
 #include "cpu/m68000/m68000.h"
 #include "machine/ticket.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/tms34061.h"
+#include "itech32.h"
 #include <math.h>
 
 
@@ -47,44 +46,6 @@
 #define CLOCK_8MHz		(8000000)
 #define CLOCK_12MHz		(12000000)
 #define CLOCK_25MHz		(25000000)
-
-
-
-/*************************************
- *
- *	External definitions
- *
- *************************************/
-
-/* video driver data & functions */
-extern data16_t *itech32_video;
-extern UINT8 itech32_planes;
-extern UINT16 itech32_vram_height;
-
-int itech32_vh_start(void);
-void itech32_vh_stop(void);
-void itech32_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-WRITE16_HANDLER( timekill_paletteram_w );
-WRITE16_HANDLER( bloodstm_paletteram_w );
-WRITE32_HANDLER( itech020_paletteram_w );
-
-WRITE16_HANDLER( itech32_video_w );
-WRITE16_HANDLER( bloodstm_video_w );
-WRITE32_HANDLER( itech020_video_w );
-READ16_HANDLER( itech32_video_r );
-READ16_HANDLER( bloodstm_video_r );
-READ32_HANDLER( itech020_video_r );
-
-WRITE16_HANDLER( timekill_colora_w );
-WRITE16_HANDLER( timekill_colorbc_w );
-WRITE16_HANDLER( timekill_intensity_w );
-WRITE16_HANDLER( bloodstm_color1_w );
-WRITE16_HANDLER( bloodstm_color2_w );
-WRITE16_HANDLER( bloodstm_plane_w );
-WRITE32_HANDLER( itech020_color1_w );
-WRITE32_HANDLER( itech020_color2_w );
-WRITE32_HANDLER( itech020_plane_w );
 
 
 
@@ -117,6 +78,8 @@ static offs_t itech020_prot_address;
 static data8_t *sound_speedup_data;
 static data16_t sound_speedup_pc;
 
+static UINT8 is_drivedge;
+
 
 
 /*************************************
@@ -138,6 +101,10 @@ INLINE int determine_irq_state(int vint, int xint, int qint)
 	if (vint_state) level = 1;
 	if (xint_state) level = 2;
 	if (qint_state) level = 3;
+
+	/* Driver's Edge shifts the interrupts a bit */
+	if (is_drivedge && level) level += 2;
+
 	return level;
 }
 
@@ -154,27 +121,11 @@ void itech32_update_interrupts(int vint, int xint, int qint)
 }
 
 
-void itech32_update_interrupts_fast(int vint, int xint, int qint)
-{
-	itech32_update_interrupts(vint, xint, qint);
-//	int level = determine_irq_state(vint, xint, qint);
-
-	/* update it */
-//	if (level)
-//		(*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].set_irq_line)(level, ASSERT_LINE);
-//	else
-//		(*cpuintf[Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK].set_irq_line)(7, CLEAR_LINE);
-
-}
-
-
-static int generate_int1(void)
+static INTERRUPT_GEN( generate_int1 )
 {
 	/* signal the NMI */
 	itech32_update_interrupts(1, -1, -1);
-
 	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------\n", cpu_getscanline());
-	return ignore_interrupt();
 }
 
 
@@ -191,7 +142,9 @@ static WRITE16_HANDLER( int1_ack_w )
  *
  *************************************/
 
-static void init_machine(void)
+static void via6522_timer_callback(int which);
+
+static MACHINE_INIT( itech32 )
 {
 	vint_state = xint_state = qint_state = 0;
 	sound_data = 0;
@@ -199,11 +152,16 @@ static void init_machine(void)
 
 	/* reset the VIA chip (if used) */
 	via6522_timer_count[0] = via6522_timer_count[1] = 0;
-	via6522_timer[0] = via6522_timer[1] = 0;
+	via6522_timer[0] = timer_alloc(via6522_timer_callback);
+	via6522_timer[1] = 0;
 	via6522_int_state = 0;
 
 	/* reset the ticket dispenser */
 	ticket_dispenser_init(200, TICKET_MOTOR_ACTIVE_HIGH, TICKET_STATUS_ACTIVE_HIGH);
+
+	/* map the mirrored RAM in Driver's Edge */
+	if (is_drivedge)
+		cpu_setbank(2, main_ram);
 }
 
 
@@ -453,6 +411,8 @@ static void via6522_timer_callback(int which)
 
 static WRITE_HANDLER( via6522_w )
 {
+	double period;
+
 	/* update the data */
 	via6522[offset] = data;
 
@@ -465,9 +425,8 @@ static WRITE_HANDLER( via6522_w )
 
 		case 5:		/* write into high order timer 1 */
 			via6522_timer_count[0] = (via6522[5] << 8) | via6522[4];
-			if (via6522_timer[0])
-				timer_remove(via6522_timer[0]);
-			via6522_timer[0] = timer_pulse(TIME_IN_HZ(CLOCK_8MHz/4) * (double)via6522_timer_count[0], 0, via6522_timer_callback);
+			period = TIME_IN_HZ(CLOCK_8MHz/4) * (double)via6522_timer_count[0];
+			timer_adjust(via6522_timer[0], period, 0, period);
 
 			via6522_int_state &= ~0x40;
 			update_via_int();
@@ -516,13 +475,6 @@ static READ_HANDLER( via6522_r )
  *
  *************************************/
 
-static int generate_firq(void)
-{
-	cpu_set_irq_line(1, M6809_FIRQ_LINE, ASSERT_LINE);
-	return ignore_interrupt();
-}
-
-
 static WRITE_HANDLER( firq_clear_w )
 {
 	cpu_set_irq_line(1, M6809_FIRQ_LINE, CLEAR_LINE);
@@ -538,7 +490,7 @@ static WRITE_HANDLER( firq_clear_w )
 
 static READ_HANDLER( sound_speedup_r )
 {
-	if (sound_speedup_data[0] == sound_speedup_data[1] && cpu_getpreviouspc() == sound_speedup_pc)
+	if (sound_speedup_data[0] == sound_speedup_data[1] && activecpu_get_previouspc() == sound_speedup_pc)
 		cpu_spinuntil_int();
 	return sound_speedup_data[0];
 }
@@ -600,7 +552,7 @@ static WRITE32_HANDLER( int1_ack32_w )
  *
  *************************************/
 
-static void nvram_handler(void *file, int read_or_write)
+static NVRAM_HANDLER( itech32 )
 {
 	int i;
 
@@ -614,7 +566,7 @@ static void nvram_handler(void *file, int read_or_write)
 }
 
 
-static void nvram_handler_itech020(void *file, int read_or_write)
+static NVRAM_HANDLER( itech020 )
 {
 	int i;
 
@@ -723,6 +675,41 @@ static MEMORY_WRITE16_START( pairs_writemem )
 MEMORY_END
 
 
+/*------ Driver's Edge memory layout ------*/
+static MEMORY_READ32_START( drivedge_readmem )
+	{ 0x000000, 0x03ffff, MRA32_RAM },
+	{ 0x040000, 0x07ffff, MRA32_BANK2 },
+	{ 0x08c000, 0x08c003, input_port_0_msw_r },
+	{ 0x08e000, 0x08e003, input_port_1_msw_r },
+	{ 0x1a0000, 0x1bffff, MRA32_RAM },
+	{ 0x1e0000, 0x1e00ff, itech020_video_r },
+	{ 0x200000, 0x200003, input_port_2_msw_r },
+	{ 0x280000, 0x280fff, MRA32_RAM },
+	{ 0x300000, 0x300fff, MRA32_RAM },
+	{ 0x600000, 0x607fff, MRA32_ROM },
+MEMORY_END
+
+
+static MEMORY_WRITE32_START( drivedge_writemem )
+	{ 0x000000, 0x03ffff, MWA32_RAM, (data32_t **)&main_ram, &main_ram_size },
+	{ 0x040000, 0x07ffff, MWA32_BANK2 },
+	{ 0x084000, 0x084003, sound_data32_w },
+//	{ 0x100000, 0x10000f, ???_w },	= 4 longwords (TMS control?)
+	{ 0x180000, 0x180003, drivedge_color0_w },
+	{ 0x1a0000, 0x1bffff, itech020_paletteram_w, &paletteram32 },
+//	{ 0x1c0000, 0x1c0001, ???_w },	= 0x64
+	{ 0x1e0000, 0x1e00ff, itech020_video_w, (data32_t **)&itech32_video },
+//	{ 0x1e4000, 0x1e4003, ???_w },	= 0x1ffff
+	{ 0x280000, 0x280fff, MWA32_RAM },	// initialized to zero
+	{ 0x300000, 0x300fff, MWA32_RAM },	// initialized to zero
+	{ 0x380000, 0x380003, MWA32_NOP },	// watchdog
+	{ 0x600000, 0x607fff, MWA32_ROM, (data32_t **)&main_rom },
+MEMORY_END
+
+// 0x10000c/0/4/8 = $8000/$0/$0/$ffff1e
+// 0x100008/c     = $ffffff/$8000
+
+
 /*------ 68EC020-based memory layout ------*/
 static MEMORY_READ32_START( itech020_readmem )
 	{ 0x000000, 0x007fff, MRA32_RAM },
@@ -817,9 +804,6 @@ MEMORY_END
  *	Port definitions
  *
  *************************************/
-
-#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 INPUT_PORTS_START( timekill )
 	PORT_START	/* 40000 */
@@ -1042,59 +1026,64 @@ INPUT_PORTS_START( pairs )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( shufshot )
-	PORT_START	/* 080000 */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
-	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_START( drivedge )
+	PORT_START	/* 40000 */
+	PORT_BIT ( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON7 | IPF_PLAYER1, "Gear 1", KEYCODE_Z, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON8 | IPF_PLAYER1, "Gear 2", KEYCODE_X, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON9 | IPF_PLAYER1, "Gear 3", KEYCODE_C, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON10 | IPF_PLAYER1, "Gear 4", KEYCODE_V, IP_JOY_DEFAULT )
+	PORT_SERVICE_NO_TOGGLE( 0x0040, IP_ACTIVE_LOW )
+	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* 100000 */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
-	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START	/* 48000 */
+	PORT_BITX( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Fan",         KEYCODE_F, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Tow Truck",   KEYCODE_T, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1, "Horn",        KEYCODE_SPACE, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Turbo Boost", KEYCODE_Z, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1, "Network On",  KEYCODE_N, IP_JOY_DEFAULT )
+	PORT_BITX( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Key",         KEYCODE_K, IP_JOY_DEFAULT )
+	PORT_BIT ( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* 180000 */
-	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START	/* 48000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER3 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4        | IPF_PLAYER3 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER3 )
 
-	PORT_START	/* 200000 */
-	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START	/* 50000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON5        | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON5        | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* 280000 */
+	PORT_START	/* 58000 */
 	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
 	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
-	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
+	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
-
-	PORT_START	/* 780000 */
-	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START	/* analog */
-    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_REVERSE, 25, 32, 0, 255 )
-
-	PORT_START	/* analog */
-    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 25, 32, 0, 255 )
-
-	PORT_START	/* analog */
-    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_COCKTAIL | IPF_REVERSE, 25, 32, 0, 255 )
-
-	PORT_START	/* analog */
-    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL, 25, 32, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1155,6 +1144,62 @@ INPUT_PORTS_START( sftm )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( shufshot )
+	PORT_START	/* 080000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 100000 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 | IPF_COCKTAIL )
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 180000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 200000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 280000 */
+	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
+	PORT_DIPNAME( 0x0080, 0x0000, "Force Test Mode" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
+
+	PORT_START	/* 780000 */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2 | IPF_COCKTAIL | IPF_REVERSE, 25, 32, 0, 255 )
+
+	PORT_START	/* analog */
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2 | IPF_COCKTAIL, 25, 32, 0, 255 )
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -1182,54 +1227,88 @@ static struct ES5506interface es5506_interface =
  *
  *************************************/
 
-#define ITECH_DRIVER(NAME, CPUTYPE, CPUCLOCK, MAINMEM, SOUNDMEM, SOUNDINT, COLORS, YMAX, NVRAM)	\
-static struct MachineDriver machine_driver_##NAME =								\
-{																				\
-	/* basic machine hardware */												\
-	{																			\
-		{																		\
-			CPUTYPE,															\
-			CPUCLOCK,															\
-			MAINMEM##_readmem,MAINMEM##_writemem,0,0,							\
-			generate_int1,1														\
-		},																		\
-		{																		\
-			CPU_M6809,															\
-			CLOCK_8MHz/4,														\
-			SOUNDMEM##_readmem,SOUNDMEM##_writemem,0,0,							\
-			SOUNDINT,4															\
-		}																		\
-	},																			\
-	60,(int)(((263. - 240.) / 263.) * 1000000. / 60.),							\
-	1,																			\
-	init_machine,																\
-																				\
-	/* video hardware */														\
-	384, 240, { 0, 383, 0, YMAX },												\
-	0,																			\
-	COLORS, 0,																	\
-	0,																			\
-																				\
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,	\
-	0,																			\
-	itech32_vh_start,															\
-	itech32_vh_stop,															\
-	itech32_vh_screenrefresh,													\
-																				\
-	/* sound hardware */														\
-	0,0,0,0,																	\
-	{																			\
-		{ SOUND_ES5506, &es5506_interface }										\
-	},																			\
-	NVRAM																		\
-};
+static MACHINE_DRIVER_START( timekill )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, CLOCK_12MHz)
+	MDRV_CPU_MEMORY(timekill_readmem,timekill_writemem)
+	MDRV_CPU_VBLANK_INT(generate_int1,1)
+
+	MDRV_CPU_ADD_TAG("sound", M6809, CLOCK_8MHz/4)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((int)(((263. - 240.) / 263.) * 1000000. / 60.))
+
+	MDRV_MACHINE_INIT(itech32)
+	MDRV_NVRAM_HANDLER(itech32)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(384,256)
+	MDRV_VISIBLE_AREA(0, 383, 0, 239)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(itech32)
+	MDRV_VIDEO_UPDATE(itech32)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(ES5506, es5506_interface)
+MACHINE_DRIVER_END
 
 
-/*           NAME,     CPU,          CPUCLOCK,    MAINMEM,  SOUNDMEM,  SOUNDINT,         COLORS,YMAX,NVRAM) */
-ITECH_DRIVER(timekill, CPU_M68000,   CLOCK_12MHz, timekill, sound,     ignore_interrupt,  8192, 239, nvram_handler)
-ITECH_DRIVER(bloodstm, CPU_M68000,   CLOCK_12MHz, bloodstm, sound,     ignore_interrupt, 32768, 239, nvram_handler)
-ITECH_DRIVER(pairs,    CPU_M68000,   CLOCK_12MHz, pairs,    sound,     ignore_interrupt, 32768, 239, nvram_handler)
-ITECH_DRIVER(sftm,     CPU_M68EC020, CLOCK_25MHz, itech020, sound_020, generate_firq,    32768, 254, nvram_handler_itech020)
+static MACHINE_DRIVER_START( bloodstm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(timekill)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(bloodstm_readmem,bloodstm_writemem)
+
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(32768)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pairs )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(bloodstm)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(pairs_readmem,pairs_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( drivedge )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(bloodstm)
+
+	MDRV_CPU_REPLACE("main", M68EC020, CLOCK_25MHz)
+	MDRV_CPU_MEMORY(drivedge_readmem,drivedge_writemem)
+
+	MDRV_NVRAM_HANDLER(itech020)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sftm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(bloodstm)
+
+	MDRV_CPU_REPLACE("main", M68EC020, CLOCK_25MHz)
+	MDRV_CPU_MEMORY(itech020_readmem,itech020_writemem)
+
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(sound_020_readmem,sound_020_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_assert,4)
+
+	MDRV_NVRAM_HANDLER(itech020)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 383, 0, 254)
+MACHINE_DRIVER_END
 
 
 
@@ -1512,40 +1591,47 @@ ROM_START( pairs )
 ROM_END
 
 
-ROM_START( shufshot )
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+ROM_START( drivedge )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 
-	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
-	ROM_LOAD32_BYTE( "pgm0v1.39", 0x00000, 0x20000, 0xe811fc4a )
-	ROM_LOAD32_BYTE( "pgm1v1.39", 0x00001, 0x20000, 0xf9d120c5 )
-	ROM_LOAD32_BYTE( "pgm2v1.39", 0x00002, 0x20000, 0x9f12414d )
-	ROM_LOAD32_BYTE( "pgm3v1.39", 0x00003, 0x20000, 0x108a69be )
+	ROM_REGION32_BE( 0x8000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD( "de-u130.bin", 0x00000, 0x8000, 0x873579b0 )
 
 	ROM_REGION( 0x28000, REGION_CPU2, 0 )
-	ROM_LOAD( "sndv1.1", 0x10000, 0x18000, 0xe37d599d )
-	ROM_CONTINUE(        0x08000, 0x08000 )
+	ROM_LOAD( "desndu17.bin", 0x10000, 0x18000, 0x6e8ca8bc )
+	ROM_CONTINUE(             0x08000, 0x08000 )
 
-	ROM_REGION( 0x800000, REGION_GFX1, 0 )
-	ROM_LOAD32_BYTE( "grom0_0", 0x000000, 0x80000, 0x832a3d6a )
-	ROM_LOAD32_BYTE( "grom0_1", 0x000001, 0x80000, 0x155e48a2 )
-	ROM_LOAD32_BYTE( "grom0_2", 0x000002, 0x80000, 0x9f2b470d )
-	ROM_LOAD32_BYTE( "grom0_3", 0x000003, 0x80000, 0x3855a16a )
-	ROM_LOAD32_BYTE( "grom1_0", 0x200000, 0x80000, 0xed140389 )
-	ROM_LOAD32_BYTE( "grom1_1", 0x200001, 0x80000, 0xbd2ffbca )
-	ROM_LOAD32_BYTE( "grom1_2", 0x200002, 0x80000, 0xc6de4187 )
-	ROM_LOAD32_BYTE( "grom1_3", 0x200003, 0x80000, 0x0c707aa2 )
-	ROM_LOAD32_BYTE( "grom2_0", 0x400000, 0x80000, 0x529b4259 )
-	ROM_LOAD32_BYTE( "grom2_1", 0x400001, 0x80000, 0x4b52ab1a )
-	ROM_LOAD32_BYTE( "grom2_2", 0x400002, 0x80000, 0xf45fad03 )
-	ROM_LOAD32_BYTE( "grom2_3", 0x400003, 0x80000, 0x1bcb26c8 )
-	ROM_LOAD32_BYTE( "grom3_0", 0x600000, 0x80000, 0xa29763db )
-	ROM_LOAD32_BYTE( "grom3_1", 0x600001, 0x80000, 0xc757084c )
-	ROM_LOAD32_BYTE( "grom3_2", 0x600002, 0x80000, 0x2971cb25 )
-	ROM_LOAD32_BYTE( "grom3_3", 0x600003, 0x80000, 0x4fcbee51 )
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_LOAD( "de-u7net.bin", 0x08000, 0x08000, 0xdea8b9de )
+
+	ROM_REGION( 0xa00000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "de-grom0.bin", 0x000000, 0x80000, 0x7fe5b01b )
+	ROM_LOAD32_BYTE( "de-grom5.bin", 0x000001, 0x80000, 0x5ea6dbc2 )
+	ROM_LOAD32_BYTE( "de-grm10.bin", 0x000002, 0x80000, 0x76be06cd )
+	ROM_LOAD32_BYTE( "de-grm15.bin", 0x000003, 0x80000, 0x119bf46b )
+	ROM_LOAD32_BYTE( "de-grom1.bin", 0x200000, 0x80000, 0x5b88e8b7 )
+	ROM_LOAD32_BYTE( "de-grom6.bin", 0x200001, 0x80000, 0x2cb76b9a )
+	ROM_LOAD32_BYTE( "de-grm11.bin", 0x200002, 0x80000, 0x5d29018c )
+	ROM_LOAD32_BYTE( "de-grm16.bin", 0x200003, 0x80000, 0x476940fb )
+	ROM_LOAD32_BYTE( "de-grom2.bin", 0x400000, 0x80000, 0x5ccc4c62 )
+	ROM_LOAD32_BYTE( "de-grom7.bin", 0x400001, 0x80000, 0x45367070 )
+	ROM_LOAD32_BYTE( "de-grm12.bin", 0x400002, 0x80000, 0xb978ef5a )
+	ROM_LOAD32_BYTE( "de-grm17.bin", 0x400003, 0x80000, 0xeff8abac )
+	ROM_LOAD32_BYTE( "de-grom3.bin", 0x600000, 0x20000, 0x9cd252c9 )
+	ROM_LOAD32_BYTE( "de-grom8.bin", 0x600001, 0x20000, 0x43f10ca4 )
+	ROM_LOAD32_BYTE( "de-grm13.bin", 0x600002, 0x20000, 0x431d131e )
+	ROM_LOAD32_BYTE( "de-grm18.bin", 0x600003, 0x20000, 0xb09e0d9c )
+	ROM_LOAD32_BYTE( "de-grom4.bin", 0x800000, 0x20000, 0xc499cdfa )
+	ROM_LOAD32_BYTE( "de-grom9.bin", 0x800001, 0x20000, 0xe5f21566 )
+	ROM_LOAD32_BYTE( "de-grm14.bin", 0x800002, 0x20000, 0x09dbe382 )
+	ROM_LOAD32_BYTE( "de-grm19.bin", 0x800003, 0x20000, 0x4ced78e1 )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, 0x9a3cb6c9 )
-	ROM_LOAD16_BYTE( "srom1", 0x200000, 0x80000, 0x8c89948a )
+	ROM_LOAD16_BYTE( "fbrom0.bin", 0x000000, 0x200000, 0x9fdc4825 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "de-srom0.bin", 0x000000, 0x80000, 0x649c685f )
+	ROM_LOAD16_BYTE( "de-srom1.bin", 0x100000, 0x80000, 0xdf4fff97 )
 ROM_END
 
 
@@ -1654,6 +1740,43 @@ ROM_START( sftmj )
 ROM_END
 
 
+ROM_START( shufshot )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "pgm0v1.39", 0x00000, 0x20000, 0xe811fc4a )
+	ROM_LOAD32_BYTE( "pgm1v1.39", 0x00001, 0x20000, 0xf9d120c5 )
+	ROM_LOAD32_BYTE( "pgm2v1.39", 0x00002, 0x20000, 0x9f12414d )
+	ROM_LOAD32_BYTE( "pgm3v1.39", 0x00003, 0x20000, 0x108a69be )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "sndv1.1", 0x10000, 0x18000, 0xe37d599d )
+	ROM_CONTINUE(        0x08000, 0x08000 )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "grom0_0", 0x000000, 0x80000, 0x832a3d6a )
+	ROM_LOAD32_BYTE( "grom0_1", 0x000001, 0x80000, 0x155e48a2 )
+	ROM_LOAD32_BYTE( "grom0_2", 0x000002, 0x80000, 0x9f2b470d )
+	ROM_LOAD32_BYTE( "grom0_3", 0x000003, 0x80000, 0x3855a16a )
+	ROM_LOAD32_BYTE( "grom1_0", 0x200000, 0x80000, 0xed140389 )
+	ROM_LOAD32_BYTE( "grom1_1", 0x200001, 0x80000, 0xbd2ffbca )
+	ROM_LOAD32_BYTE( "grom1_2", 0x200002, 0x80000, 0xc6de4187 )
+	ROM_LOAD32_BYTE( "grom1_3", 0x200003, 0x80000, 0x0c707aa2 )
+	ROM_LOAD32_BYTE( "grom2_0", 0x400000, 0x80000, 0x529b4259 )
+	ROM_LOAD32_BYTE( "grom2_1", 0x400001, 0x80000, 0x4b52ab1a )
+	ROM_LOAD32_BYTE( "grom2_2", 0x400002, 0x80000, 0xf45fad03 )
+	ROM_LOAD32_BYTE( "grom2_3", 0x400003, 0x80000, 0x1bcb26c8 )
+	ROM_LOAD32_BYTE( "grom3_0", 0x600000, 0x80000, 0xa29763db )
+	ROM_LOAD32_BYTE( "grom3_1", 0x600001, 0x80000, 0xc757084c )
+	ROM_LOAD32_BYTE( "grom3_2", 0x600002, 0x80000, 0x2971cb25 )
+	ROM_LOAD32_BYTE( "grom3_3", 0x600003, 0x80000, 0x4fcbee51 )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "srom0", 0x000000, 0x80000, 0x9a3cb6c9 )
+	ROM_LOAD16_BYTE( "srom1", 0x200000, 0x80000, 0x8c89948a )
+ROM_END
+
+
 
 /*************************************
  *
@@ -1667,6 +1790,7 @@ static void init_program_rom(void)
 	memcpy(memory_region(REGION_CPU1), memory_region(REGION_USER1), 0x80);
 }
 
+
 static void init_sound_speedup(offs_t offset, offs_t pc)
 {
 	sound_speedup_data = install_mem_read_handler(1, offset, offset, sound_speedup_r);
@@ -1674,29 +1798,45 @@ static void init_sound_speedup(offs_t offset, offs_t pc)
 }
 
 
-static void init_timekill(void)
+static DRIVER_INIT( timekill )
 {
 	init_program_rom();
 	init_sound_speedup(0x2010, 0x8c54);
 	itech32_vram_height = 512;
 	itech32_planes = 2;
+	is_drivedge = 0;
 }
 
-static void init_hardyard(void)
+
+static DRIVER_INIT( hardyard )
 {
 	init_program_rom();
 	init_sound_speedup(0x2010, 0x8e16);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
+	is_drivedge = 0;
 }
 
-static void init_bloodstm(void)
+
+static DRIVER_INIT( bloodstm )
 {
 	init_program_rom();
 	init_sound_speedup(0x2011, 0x8ebf);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
+	is_drivedge = 0;
 }
+
+
+static DRIVER_INIT( drivedge )
+{
+	init_program_rom();
+//	init_sound_speedup(0x2011, 0x8ebf);
+	itech32_vram_height = 1024;
+	itech32_planes = 1;
+	is_drivedge = 1;
+}
+
 
 static void init_sftm_common(int prot_addr, int sound_pc)
 {
@@ -1704,6 +1844,7 @@ static void init_sftm_common(int prot_addr, int sound_pc)
 	init_sound_speedup(0x2011, sound_pc);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
+	is_drivedge = 0;
 
 	itech020_prot_address = prot_addr;
 
@@ -1711,22 +1852,26 @@ static void init_sftm_common(int prot_addr, int sound_pc)
 	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
 }
 
-static void init_sftm(void)
+
+static DRIVER_INIT( sftm )
 {
 	init_sftm_common(0x7a6a, 0x905f);
 }
 
-static void init_sftm110(void)
+
+static DRIVER_INIT( sftm110 )
 {
 	init_sftm_common(0x7a66, 0x9059);
 }
 
-static void init_shufshot(void)
+
+static DRIVER_INIT( shufshot )
 {
 	init_program_rom();
 	init_sound_speedup(0x2011, 0x906c);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
+	is_drivedge = 0;
 
 	itech020_prot_address = 0x111a;
 
@@ -1735,6 +1880,7 @@ static void init_shufshot(void)
 	install_mem_read32_handler(0, 0x180800, 0x180803, trackball32_4bit_r);
 	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
 }
+
 
 
 /*************************************
@@ -1751,6 +1897,7 @@ GAME( 1994, bloodstm, 0,        bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incr
 GAME( 1994, bloods22, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.20)" )
 GAME( 1994, bloods21, bloodstm, bloodstm, bloodstm, bloodstm, ROT0, "Strata/Incredible Technologies", "Blood Storm (v2.10)" )
 GAME( 1994, pairs,    0,        pairs,    pairs,    bloodstm, ROT0, "Strata/Incredible Technologies", "Pairs" )
+GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incredible Technologies", "Driver's Edge", GAME_NOT_WORKING )
 GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )
 GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" )
 GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" )

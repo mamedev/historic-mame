@@ -34,11 +34,8 @@ enum {
 	TWIN16_TILE_FLIPY		= 0x20	/* confirmed? Vulcan Venture */
 };
 
-int twin16_vh_start( void ){
+VIDEO_START( twin16 ){
 	return 0;
-}
-
-void twin16_vh_stop( void ){
 }
 
 /******************************************************************************************/
@@ -563,7 +560,7 @@ static void draw_layer( struct mame_bitmap *bitmap, int opaque ){
 	}
 }
 
-void twin16_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh ){
+VIDEO_UPDATE( twin16 ){
 	if( twin16_spriteram_process_enable() && need_process_spriteram ) twin16_spriteram_process();
 	need_process_spriteram = 1;
 

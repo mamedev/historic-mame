@@ -69,10 +69,9 @@ WRITE_HANDLER( rallyx_videoram2_w );
 WRITE_HANDLER( rallyx_colorram2_w );
 WRITE_HANDLER( rallyx_spriteram_w );
 WRITE_HANDLER( rallyx_flipscreen_w );
-void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int rallyx_vh_start(void);
-void rallyx_vh_stop(void);
-void rallyx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( rallyx );
+VIDEO_START( rallyx );
+VIDEO_UPDATE( rallyx );
 
 
 static WRITE_HANDLER( rallyx_coin_lockout_w )
@@ -307,46 +306,33 @@ static struct Samplesinterface samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_rallyx =
-{
+static MACHINE_DRIVER_START( rallyx )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ? */
-			readmem,writemem,0,writeport,
-			interrupt,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,64*4+4,
-	rallyx_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	rallyx_vh_start,
-	rallyx_vh_stop,
-	rallyx_vh_screenrefresh,
+	MDRV_PALETTE_INIT(rallyx)
+	MDRV_VIDEO_START(rallyx)
+	MDRV_VIDEO_UPDATE(rallyx)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -120,7 +120,7 @@ write:
 
 
 
-void taitosj_init_machine(void);
+MACHINE_INIT( taitosj );
 WRITE_HANDLER( taitosj_bankswitch_w );
 READ_HANDLER( taitosj_fake_data_r );
 READ_HANDLER( taitosj_fake_status_r );
@@ -144,7 +144,7 @@ extern unsigned char *taitosj_scroll;
 extern unsigned char *taitosj_colscrolly;
 extern unsigned char *taitosj_gfxpointer;
 extern unsigned char *taitosj_colorbank,*taitosj_video_priority;
-void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( taitosj );
 READ_HANDLER( taitosj_gfxrom_r );
 WRITE_HANDLER( taitosj_videoram2_w );
 WRITE_HANDLER( taitosj_videoram3_w );
@@ -155,9 +155,8 @@ WRITE_HANDLER( taitosj_characterram_w );
 WRITE_HANDLER( junglhbr_characterram_w );
 READ_HANDLER( taitosj_collision_reg_r );
 WRITE_HANDLER( taitosj_collision_reg_clear_w );
-int taitosj_vh_start(void);
-void taitosj_vh_stop(void);
-void taitosj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( taitosj );
+VIDEO_UPDATE( taitosj );
 
 
 static int sndnmi_disable = 1;
@@ -170,7 +169,7 @@ static WRITE_HANDLER( taitosj_sndnmi_msk_w )
 static WRITE_HANDLER( taitosj_soundcommand_w )
 {
 	soundlatch_w(offset,data);
-	if (!sndnmi_disable) cpu_cause_interrupt(1,Z80_NMI_INT);
+	if (!sndnmi_disable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -1661,118 +1660,57 @@ static struct DACinterface dac_interface =
 
 
 
-static const struct MachineDriver machine_driver_nomcu =
-{
+static MACHINE_DRIVER_START( nomcu )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,      /* 4 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,      /* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
+	MDRV_CPU_ADD_TAG("main",Z80,8000000/2)      /* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,6000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)      /* 3 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 			/* interrupts: */
 			/* - no interrupts synced with vblank */
 			/* - NMI triggered by the main CPU */
 			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
 			/*   that is a period of 27306666.6666 ns */
-			0,0,
-			interrupt,27306667
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	taitosj_init_machine,
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,27306667)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(taitosj)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 16*8,
-	taitosj_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(16*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	taitosj_vh_start,
-	taitosj_vh_stop,
-	taitosj_vh_screenrefresh,
+	MDRV_PALETTE_INIT(taitosj)
+	MDRV_VIDEO_START(taitosj)
+	MDRV_VIDEO_UPDATE(taitosj)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
 
 /* same as above, but with additional 68705 MCU */
-static const struct MachineDriver machine_driver_mcu =
-{
+static MACHINE_DRIVER_START( mcu )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,      /* 4 MHz */
-			mcu_readmem,mcu_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,      /* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
-			/* interrupts: */
-			/* - no interrupts synced with vblank */
-			/* - NMI triggered by the main CPU */
-			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
-			/*   that is a period of 27306666.6666 ns */
-			0,0,
-			interrupt,27306667
-		},
-		{
-			CPU_M68705,
-			3000000/2,      /* xtal is 3MHz, I think it's divided by 2 internally */
-			m68705_readmem,m68705_writemem,0,0,
-			ignore_interrupt,0      /* IRQs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when necessary */
-	taitosj_init_machine,
+	MDRV_IMPORT_FROM(nomcu)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
 
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 16*8,
-	taitosj_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitosj_vh_start,
-	taitosj_vh_stop,
-	taitosj_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_CPU_ADD(M68705,3000000/2)      /* xtal is 3MHz, I think it's divided by 2 internally */
+	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+MACHINE_DRIVER_END
 
 
 
@@ -2337,21 +2275,21 @@ ROM_END
 
 
 
-static void init_alpine(void)
+static DRIVER_INIT( alpine )
 {
 	/* install protection handlers */
 	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
 	install_mem_write_handler(0, 0xd50f, 0xd50f, alpine_protection_w);
 }
 
-static void init_alpinea(void)
+static DRIVER_INIT( alpinea )
 {
 	/* install protection handlers */
 	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
 	install_mem_write_handler(0, 0xd50e, 0xd50e, alpinea_bankswitch_w);
 }
 
-static void init_junglhbr(void)
+static DRIVER_INIT( junglhbr )
 {
 	/* inverter on bits 0 and 1 */
 	install_mem_write_handler (0, 0x9000, 0xbfff, junglhbr_characterram_w);

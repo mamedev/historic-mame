@@ -64,13 +64,13 @@ int ppi8255_r(int which, int offset)
 	/* some bounds checking */
 	if (which > num)
 	{
-		logerror("Attempting to access an unmapped 8255 chip.  PC: %04X\n", cpu_get_pc());
+		logerror("Attempting to access an unmapped 8255 chip.  PC: %04X\n", activecpu_get_pc());
 		return 0xff;
 	}
 
 	if (offset > 3)
 	{
-		logerror("Attempting to access an invalid 8255 register.  PC: %04X\n", cpu_get_pc());
+		logerror("Attempting to access an invalid 8255 register.  PC: %04X\n", activecpu_get_pc());
 		return 0xff;
 	}
 
@@ -111,7 +111,7 @@ int ppi8255_r(int which, int offset)
 	if (chip->portAwrite)								\
 		(*chip->portAwrite)(0, write_data);				\
 	else												\
-		logerror("8255 chip %d: Port A is being written to but has no handler.  PC: %08X - %02X\n", which, cpu_get_pc(), write_data);	\
+		logerror("8255 chip %d: Port A is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), write_data);	\
 }
 
 #define PPI8255_PORT_B_WRITE()							\
@@ -121,7 +121,7 @@ int ppi8255_r(int which, int offset)
 	if (chip->portBwrite)								\
 		(*chip->portBwrite)(0, write_data);				\
 	else												\
-		logerror("8255 chip %d: Port B is being written to but has no handler.  PC: %08X - %02X\n", which, cpu_get_pc(), write_data);	\
+		logerror("8255 chip %d: Port B is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), write_data);	\
 }
 
 #define PPI8255_PORT_C_WRITE()							\
@@ -131,7 +131,7 @@ int ppi8255_r(int which, int offset)
 	if (chip->portCwrite)								\
 		(*chip->portCwrite)(0, write_data);				\
 	else												\
-		logerror("8255 chip %d: Port C is being written to but has no handler.  PC: %08X - %02X\n", which, cpu_get_pc(), write_data);	\
+		logerror("8255 chip %d: Port C is being written to but has no handler.  PC: %08X - %02X\n", which, activecpu_get_pc(), write_data);	\
 }
 
 
@@ -142,13 +142,13 @@ void ppi8255_w(int which, int offset, int data)
 	/* Some bounds checking */
 	if (which > num)
 	{
-		logerror("Attempting to access an unmapped 8255 chip.  PC: %04X\n", cpu_get_pc());
+		logerror("Attempting to access an unmapped 8255 chip.  PC: %04X\n", activecpu_get_pc());
 		return;
 	}
 
 	if (offset > 3)
 	{
-		logerror("Attempting to access an invalid 8255 register.  PC: %04X\n", cpu_get_pc());
+		logerror("Attempting to access an invalid 8255 register.  PC: %04X\n", activecpu_get_pc());
 		return;
 	}
 
@@ -200,7 +200,7 @@ data8_t ppi8255_peek( int which, offs_t offset )
 	/* Some bounds checking */
 	if (which > num)
 	{
-		logerror("Attempting to access an unmapped 8255 chip.  PC: %04X\n", cpu_get_pc());
+		logerror("Attempting to access an unmapped 8255 chip.  PC: %04X\n", activecpu_get_pc());
 		return 0xff;
 	}
 
@@ -209,7 +209,7 @@ data8_t ppi8255_peek( int which, offs_t offset )
 
 	if (offset > 2)
 	{
-		logerror("Attempting to access an invalid 8255 port.  PC: %04X\n", cpu_get_pc());
+		logerror("Attempting to access an invalid 8255 port.  PC: %04X\n", activecpu_get_pc());
 		return 0xff;
 	}
 
@@ -262,7 +262,7 @@ static void set_mode(int which, int data, int call_handlers)
 
 	if ((chip->groupA_mode == 1) || (chip->groupB_mode == 1))
 	{
-		logerror("8255 chip %d: Setting an unsupported mode %02X.  PC: %04X\n", which, data & 0x62, cpu_get_pc());
+		logerror("8255 chip %d: Setting an unsupported mode %02X.  PC: %04X\n", which, data & 0x62, activecpu_get_pc());
 		return;
 	}
 

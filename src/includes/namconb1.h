@@ -25,6 +25,5 @@ extern data32_t *namconb1_spritepos32;
 extern data8_t *namconb1_maskrom;
 
 WRITE32_HANDLER( namconb1_videoram_w );
-void namconb1_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-int namconb1_vh_start( void );
-void namconb1_vh_stop( void );
+VIDEO_UPDATE( namconb1 );
+VIDEO_START( namconb1 );

@@ -20,16 +20,16 @@
 #include "cpu/m6502/m6502.h"
 #include "cpu/h6280/h6280.h"
 
-void actfancr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void triothep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( actfancr );
+VIDEO_UPDATE( triothep );
 WRITE_HANDLER( actfancr_pf1_data_w );
 READ_HANDLER( actfancr_pf1_data_r );
 WRITE_HANDLER( actfancr_pf1_control_w );
 WRITE_HANDLER( actfancr_pf2_data_w );
 READ_HANDLER( actfancr_pf2_data_r );
 WRITE_HANDLER( actfancr_pf2_control_w );
-int actfancr_vh_start (void);
-int triothep_vh_start (void);
+VIDEO_START( actfancr );
+VIDEO_START( triothep );
 
 extern unsigned char *actfancr_pf1_data,*actfancr_pf2_data,*actfancr_pf1_rowscroll_data;
 static unsigned char *actfancr_ram;
@@ -75,7 +75,7 @@ static READ_HANDLER( triothep_control_r )
 static WRITE_HANDLER( actfancr_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
-	cpu_cause_interrupt(1,M6502_INT_NMI);
+	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 /******************************************************************************/
@@ -404,114 +404,65 @@ static struct OKIM6295interface okim6295_interface =
 
 /******************************************************************************/
 
-static int actfan_interrupt(void)
-{
-	return H6280_INT_IRQ1;
-}
+static MACHINE_DRIVER_START( actfancr )
 
-static const struct MachineDriver machine_driver_actfancr =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_H6280,
-			21477200/3, /* Should be accurate */
-			actfan_readmem,actfan_writemem,0,0,
-			actfan_interrupt,1 /* VBL */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000, /* Should be accurate */
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0	/* Interrupts from OPL chip */
-		}
-	},
-	60, 529,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written*/
-	0,
+	MDRV_CPU_ADD(H6280,21477200/3) /* Should be accurate */
+	MDRV_CPU_MEMORY(actfan_readmem,actfan_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* VBL */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Should be accurate */
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(actfan_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	actfan_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	actfancr_vh_start,
-	0,
-	actfancr_vh_screenrefresh,
+	MDRV_VIDEO_START(actfancr)
+	MDRV_VIDEO_UPDATE(actfancr)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_triothep =
-{
+static MACHINE_DRIVER_START( triothep )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_H6280,
-			21477200/3, /* Should be accurate */
-			triothep_readmem,triothep_writemem,0,0,
-			actfan_interrupt,1 /* VBL */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000, /* Should be accurate */
-			dec0_s_readmem,dec0_s_writemem,0,0,
-			ignore_interrupt,0	/* Interrupts from OPL chip */
-		}
-	},
-	60, 529,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written*/
-	0,
+	MDRV_CPU_ADD(H6280,21477200/3) /* Should be accurate */
+	MDRV_CPU_MEMORY(triothep_readmem,triothep_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* VBL */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Should be accurate */
+	MDRV_CPU_MEMORY(dec0_s_readmem,dec0_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(triothep_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	triothep_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	triothep_vh_start,
-	0,
-	triothep_vh_screenrefresh,
+	MDRV_VIDEO_START(triothep)
+	MDRV_VIDEO_UPDATE(triothep)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -651,7 +602,7 @@ ROM_END
 
 static READ_HANDLER( cycle_r )
 {
-	int pc=cpu_get_pc();
+	int pc=activecpu_get_pc();
 	int ret=actfancr_ram[0x26];
 
 	if (offset==1) return actfancr_ram[0x27];
@@ -666,7 +617,7 @@ static READ_HANDLER( cycle_r )
 
 static READ_HANDLER( cyclej_r )
 {
-	int pc=cpu_get_pc();
+	int pc=activecpu_get_pc();
 	int ret=actfancr_ram[0x26];
 
 	if (offset==1) return actfancr_ram[0x27];
@@ -679,12 +630,12 @@ static READ_HANDLER( cyclej_r )
 	return ret;
 }
 
-static void init_actfancr(void)
+static DRIVER_INIT( actfancr )
 {
 	install_mem_read_handler(0, 0x1f0026, 0x1f0027, cycle_r);
 }
 
-static void init_actfancj(void)
+static DRIVER_INIT( actfancj )
 {
 	install_mem_read_handler(0, 0x1f0026, 0x1f0027, cyclej_r);
 }

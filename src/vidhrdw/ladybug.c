@@ -33,7 +33,7 @@ static int flipscreen;
   bit 0 -- inverter -- 470 ohm resistor  -- RED
 
 ***************************************************************************/
-void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ladybug )
 {
 	int i;
 
@@ -105,7 +105,7 @@ WRITE_HANDLER( ladybug_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void ladybug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ladybug )
 {
 	int i,offs;
 

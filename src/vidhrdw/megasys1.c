@@ -222,7 +222,7 @@ static int hardware_type_z;
 { \
 	sprintf(buf,_format_,_offset_,_data_);\
 	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
 }
 
 #else
@@ -230,7 +230,7 @@ static int hardware_type_z;
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
 	sprintf(buf,_format_,_offset_,_data_); \
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
 }
 
 #endif
@@ -249,7 +249,7 @@ extern struct GameDriver driver_lomakai;
 extern struct GameDriver driver_soldamj;
 
 
-int megasys1_vh_start(void)
+VIDEO_START( megasys1 )
 {
 	int i;
 
@@ -468,7 +468,7 @@ WRITE16_HANDLER( megasys1_vregs_A_w )
 							break;
 
 		case 0x308/2   :	soundlatch_word_w(0,new_data,0);
-							cpu_cause_interrupt(1,4);
+							cpu_set_irq_line(1,4,HOLD_LINE);
 							break;
 
 		default		 :	SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
@@ -520,7 +520,7 @@ WRITE16_HANDLER( megasys1_vregs_C_w )
 
 		case 0x8000/2   :	/* Cybattler reads sound latch on irq 2 */
 							soundlatch_word_w(0,new_data,0);
-							cpu_cause_interrupt(1,2);
+							cpu_set_irq_line(1,2,HOLD_LINE);
 							break;
 
 		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
@@ -584,7 +584,7 @@ WRITE16_HANDLER( megasys1_vregs_D_w )
 	0C		Y position
 	0E		Code											*/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 
@@ -631,7 +631,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 						color,
 						flipx, flipy,
 						sx, sy,
-						&Machine->visible_area,
+						cliprect,
 						TRANSPARENCY_PEN,15,
 						(attr & 0x08) ? 0x0c : 0x0a);
 			}	/* sprite */
@@ -671,7 +671,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					color,
 					flipx, flipy,
 					sx, sy,
-					&Machine->visible_area,
+					cliprect,
 					TRANSPARENCY_PEN,15,
 					(attr & 0x08) ? 0x0c : 0x0a);
 		}	/* sprite */
@@ -805,7 +805,7 @@ static struct priority priorities[] =
 	pens.
 */
 
-void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *prom)
+PALETTE_INIT( megasys1 )
 {
 	int pri_code, offset, i, order;
 
@@ -842,7 +842,7 @@ void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,co
 
 			do
 			{
-				int top = prom[pri_code * 0x20 + offset + enable_mask * 2] & 3;	// this must be the top layer
+				int top = color_prom[pri_code * 0x20 + offset + enable_mask * 2] & 3;	// this must be the top layer
 				int top_mask = 1 << top;
 
 				int	result = 0;		// result of the feasibility check for this layer
@@ -850,7 +850,7 @@ void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,co
 				for (i = 0; i < 0x10 ; i++)	// every combination of opaque and transparent pens
 				{
 					int opacity	=	i & enable_mask;	// only consider active layers
-					int layer	=	prom[pri_code * 0x20 + offset + opacity * 2];
+					int layer	=	color_prom[pri_code * 0x20 + offset + opacity * 2];
 
 					if (opacity)
 					{
@@ -973,7 +973,7 @@ void megasys1_convert_prom(unsigned char *obsolete,unsigned short *colortable,co
 ***************************************************************************/
 
 
-void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( megasys1 )
 {
 	int i,flag,pri,primask;
 	int active_layers;
@@ -1021,7 +1021,7 @@ void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	flag = TILEMAP_IGNORE_TRANSPARENCY;
 	primask = 0;
@@ -1038,7 +1038,7 @@ void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			case 2:
 				if ( (megasys1_tmap[layer]) && (active_layers & (1 << layer) ) )
 				{
-					tilemap_draw(bitmap,megasys1_tmap[layer],flag,primask);
+					tilemap_draw(bitmap,cliprect,megasys1_tmap[layer],flag,primask);
 					flag = 0;
 				}
 				break;
@@ -1047,7 +1047,7 @@ void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				if (flag != 0)
 				{
 					flag = 0;
-					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+					fillbitmap(bitmap,Machine->pens[0],cliprect);
 				}
 
 				if (megasys1_sprite_flag & 0x100)	/* sprites are split */
@@ -1064,5 +1064,5 @@ void megasys1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 	if (active_layers & 0x08)
-		draw_sprites(bitmap);
+		draw_sprites(bitmap,cliprect);
 }

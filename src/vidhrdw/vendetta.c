@@ -46,22 +46,13 @@ static void sprite_callback(int *code,int *color,int *priority_mask)
 
 ***************************************************************************/
 
-int vendetta_vh_start(void)
+VIDEO_START( vendetta )
 {
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
 	if (K053247_vh_start(REGION_GFX2,53,6,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 	return 0;
-}
-
-void vendetta_vh_stop(void)
-{
-	K052109_vh_stop();
-	K053247_vh_stop();
 }
 
 
@@ -88,7 +79,7 @@ static void sortlayers(int *layer,int *pri)
 	SWAP(1,2)
 }
 
-void vendetta_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( vendetta )
 {
 	int layer[3];
 
@@ -110,10 +101,10 @@ void vendetta_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	sortlayers(layer,layerpri);
 
-	fillbitmap(priority_bitmap,0,NULL);
-	K052109_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
-	K052109_tilemap_draw(bitmap,layer[1],0,2);
-	K052109_tilemap_draw(bitmap,layer[2],0,4);
+	fillbitmap(priority_bitmap,0,cliprect);
+	K052109_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	K052109_tilemap_draw(bitmap,cliprect,layer[1],0,2);
+	K052109_tilemap_draw(bitmap,cliprect,layer[2],0,4);
 
-	K053247_sprites_draw(bitmap);
+	K053247_sprites_draw(bitmap,cliprect);
 }

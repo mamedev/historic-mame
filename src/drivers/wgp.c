@@ -268,10 +268,9 @@ $fcc00-$fffff empty (0xff fill)
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
-int wgp_vh_start (void);
-int wgp2_vh_start (void);
-void wgp_vh_stop (void);
-void wgp_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( wgp );
+VIDEO_START( wgp2 );
+VIDEO_UPDATE( wgp );
 
 extern data16_t *wgp_spritemap;
 extern size_t    wgp_spritemap_size;
@@ -319,7 +318,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 
 	parse_control();
 
-	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
+	logerror("CPU #0 PC %06x: write %04x to cpu control\n",activecpu_get_pc(),data);
 }
 
 
@@ -332,38 +331,33 @@ static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 /*
 void wgp_interrupt4(int x)
 {
-	cpu_cause_interrupt(0,4);
+	cpu_set_irq_line(0,4,HOLD_LINE);
 }
 */
 
 void wgp_interrupt6(int x)
 {
-	cpu_cause_interrupt(0,6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
 /* 68000 B */
 
 void wgp_cpub_interrupt6(int x)
 {
-	cpu_cause_interrupt(2,6);	/* assumes Z80 sandwiched between the 68Ks */
+	cpu_set_irq_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 
 
 /***** Routines for particular games *****/
 
-static int wgp_interrupt(void)
-{
-	return 4;
-}
-
 /* FWIW offset of 10000,10500 on ints can get CPUB obeying the
    first CPUA command the same frame; probably not necessary */
 
-static int wgp_cpub_interrupt(void)
+static INTERRUPT_GEN( wgp_cpub_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, wgp_cpub_interrupt6);
-	return 4;
+	cpu_set_irq_line(2, 4, HOLD_LINE);
 }
 
 
@@ -373,7 +367,7 @@ static int wgp_cpub_interrupt(void)
 
 static READ16_HANDLER( lan_status_r )
 {
-	logerror("CPU #2 PC %06x: warning - read lan status\n",cpu_get_pc());
+	logerror("CPU #2 PC %06x: warning - read lan status\n",activecpu_get_pc());
 
 	return  (0x4 << 8);	/* CPUB expects this in code at $104d0 (Wgp) */
 }
@@ -400,7 +394,7 @@ static WRITE16_HANDLER( rotate_port_w )
 	{
 		case 0x00:
 		{
-//logerror("CPU #0 PC %06x: warning - port %04x write %04x\n",cpu_get_pc(),port_sel,data);
+//logerror("CPU #0 PC %06x: warning - port %04x write %04x\n",activecpu_get_pc(),port_sel,data);
 
 			wgp_rotate_ctrl[port_sel] = data;
 			return;
@@ -470,7 +464,7 @@ static READ16_HANDLER( wgp_adinput_r )
 			return input_port_7_word_r(0,0);	/* unknown */
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped a/d input offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped a/d input offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -888,103 +882,74 @@ However sync to vblank is lacking, which is causing the
 graphics glitches.
 ***********************************************************/
 
-static struct MachineDriver machine_driver_wgp =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			wgp_readmem,wgp_writemem,0,0,
-			wgp_interrupt, 1
-		},
-		{																			\
-			CPU_Z80 | CPU_AUDIO_CPU,												\
-			16000000/4,	/* 4 MHz ??? */													\
-			z80_sound_readmem, z80_sound_writemem,0,0,										\
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */				\
-		},																			\
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			wgp_cpub_readmem,wgp_cpub_writemem,0,0,
-			wgp_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	250,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( wgp )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(wgp_readmem,wgp_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	
+	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz ??? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(wgp_cpub_readmem,wgp_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(wgp_cpub_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(250)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(wgp_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	wgp_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	wgp_vh_start,
-	wgp_vh_stop,
-	wgp_vh_screenrefresh,
+	MDRV_VIDEO_START(wgp)
+	MDRV_VIDEO_UPDATE(wgp)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_wgp2 =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			wgp_readmem,wgp_writemem,0,0,
-			wgp_interrupt, 1
-		},
-		{																			\
-			CPU_Z80 | CPU_AUDIO_CPU,												\
-			16000000/4,	/* 4 MHz ??? */													\
-			z80_sound_readmem, z80_sound_writemem,0,0,										\
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */				\
-		},																			\
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			wgp_cpub_readmem,wgp_cpub_writemem,0,0,
-			wgp_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* CPU slices */
-	0,
+
+static MACHINE_DRIVER_START( wgp2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(wgp_readmem,wgp_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz ??? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(wgp_cpub_readmem,wgp_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(wgp_cpub_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(wgp_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	wgp_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	wgp2_vh_start,
-	wgp_vh_stop,
-	wgp_vh_screenrefresh,
+	MDRV_VIDEO_START(wgp2)
+	MDRV_VIDEO_UPDATE(wgp)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1192,7 +1157,7 @@ ROM_START( wgp2 )
 ROM_END
 
 
-void init_wgp(void)
+DRIVER_INIT( wgp )
 {
 #if 0
 	/* Patch for coding error that causes corrupt data in
@@ -1211,7 +1176,7 @@ void init_wgp(void)
 	state_save_register_func_postload(reset_sound_region);
 }
 
-void init_wgp2(void)
+DRIVER_INIT( wgp2 )
 {
 	/* Code patches to prevent failure in memory checks */
 	data16_t *ROM = (data16_t *)memory_region(REGION_CPU3);

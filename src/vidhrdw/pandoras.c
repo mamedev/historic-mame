@@ -23,7 +23,7 @@ extern unsigned char *pandoras_sharedram;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void pandoras_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( pandoras )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -88,7 +88,7 @@ static void get_tile_info0(int tile_index)
 
 ***************************************************************************/
 
-int pandoras_vh_start(void)
+VIDEO_START( pandoras )
 {
 	layer0 = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
@@ -149,7 +149,7 @@ WRITE_HANDLER( pandoras_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, unsigned char* sr)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, unsigned char* sr)
 {
 	int offs;
 
@@ -165,13 +165,13 @@ static void draw_sprites(struct mame_bitmap *bitmap, unsigned char* sr)
 			sr[offs + 3] & 0x0f,
 			!nflipx,!nflipy,
 			sx,sy,
-			&Machine->visible_area,TRANSPARENCY_COLOR,0);
+			cliprect,TRANSPARENCY_COLOR,0);
 	}
 }
 
-void pandoras_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pandoras )
 {
-	tilemap_draw( bitmap, layer0, 1 ,0);
-	draw_sprites( bitmap, &pandoras_sharedram[0x800] );
-	tilemap_draw( bitmap, layer0, 0 ,0);
+	tilemap_draw( bitmap,cliprect, layer0, 1 ,0);
+	draw_sprites( bitmap,cliprect, &pandoras_sharedram[0x800] );
+	tilemap_draw( bitmap,cliprect, layer0, 0 ,0);
 }

@@ -73,6 +73,8 @@ static INT16 backgroundwave[32] =
 static int channelnoise,channelshoot,channellfo;
 static int tone_stream;
 
+static void lfo_timer_cb(int param);
+
 static void tone_update(int ch, INT16 *buffer, int length)
 {
 	int i,j;
@@ -149,11 +151,7 @@ WRITE_HANDLER( galaxian_noise_enable_w )
 	{
 		if( data & 1 )
 		{
-			if( noisetimer )
-			{
-				timer_remove(noisetimer);
-				noisetimer = 0;
-			}
+			timer_adjust(noisetimer, TIME_NEVER, 0, 0);
 			noisevolume = 100;
 			mixer_set_volume(channelnoise,noisevolume);
 		}
@@ -161,9 +159,7 @@ WRITE_HANDLER( galaxian_noise_enable_w )
 		{
 			/* discharge C21, 22uF via 150k+22k R35/R36 */
 			if (noisevolume == 100)
-			{
-				noisetimer = timer_pulse(TIME_IN_USEC(0.693*(155000+22000)*22 / 100), 0, noise_timer_cb);
-			}
+				timer_adjust(noisetimer, TIME_IN_USEC(0.693*(155000+22000)*22 / 100), 0, TIME_IN_USEC(0.693*(155000+22000)*22 / 100));
 		}
 	}
 }
@@ -235,7 +231,7 @@ int galaxian_sh_start(const struct MachineSound *msound)
 		deathsampleloaded = 0;
 #endif
 
-	if( (noisewave = malloc(NOISE_LENGTH * sizeof(INT16))) == 0 )
+	if( (noisewave = auto_malloc(NOISE_LENGTH * sizeof(INT16))) == 0 )
 	{
 		return 1;
 	}
@@ -244,14 +240,11 @@ int galaxian_sh_start(const struct MachineSound *msound)
 #define SHOOT_SEC 2
 	shoot_rate = Machine->sample_rate;
 	shoot_length = SHOOT_SEC * shoot_rate;
-	if ((shootwave = malloc(shoot_length * sizeof(INT16))) == 0)
+	if ((shootwave = auto_malloc(shoot_length * sizeof(INT16))) == 0)
 #else
-	if( (shootwave = malloc(SHOOT_LENGTH * sizeof(INT16))) == 0 )
+	if( (shootwave = auto_malloc(SHOOT_LENGTH * sizeof(INT16))) == 0 )
 #endif
-	{
-		free(noisewave);
 		return 1;
-	}
 
 	/*
 	 * The RNG shifter is clocked with RNG_RATE, bit 17 is
@@ -496,6 +489,9 @@ int galaxian_sh_start(const struct MachineSound *msound)
 	mixer_play_sample_16(channellfo+1,backgroundwave,sizeof(backgroundwave),1000,1);
 	mixer_set_volume(channellfo+2,0);
 	mixer_play_sample_16(channellfo+2,backgroundwave,sizeof(backgroundwave),1000,1);
+	
+	noisetimer = timer_alloc(noise_timer_cb);
+	lfotimer = timer_alloc(lfo_timer_cb);
 
 	return 0;
 }
@@ -504,25 +500,11 @@ int galaxian_sh_start(const struct MachineSound *msound)
 
 void galaxian_sh_stop(void)
 {
-	if( lfotimer )
-	{
-		timer_remove( lfotimer );
-		lfotimer = 0;
-	}
-	if( noisetimer )
-	{
-		timer_remove(noisetimer);
-		noisetimer = 0;
-	}
 	mixer_stop_sample(channelnoise);
 	mixer_stop_sample(channelshoot);
 	mixer_stop_sample(channellfo+0);
 	mixer_stop_sample(channellfo+1);
 	mixer_stop_sample(channellfo+2);
-	free(noisewave);
-	noisewave = 0;
-	free(shootwave);
-	shootwave = 0;
 }
 
 WRITE_HANDLER( galaxian_background_enable_w )
@@ -582,12 +564,6 @@ WRITE_HANDLER( galaxian_lfo_freq_w )
 			r2 = (r2*rv[i])/(r2+rv[i]); /* Low */
 	}
 
-	if( lfotimer )
-	{
-		timer_remove( lfotimer );
-		lfotimer = 0;
-	}
-
 #define Vcc 5.0
 #define Vbe 0.65		/* 2SA1015 */
 #define Cap 0.000001	/* C15 1uF */
@@ -596,7 +572,7 @@ WRITE_HANDLER( galaxian_lfo_freq_w )
 #undef Vbe
 #undef Vcc
 	logerror("lfo timer bits:%d%d%d%d r1:%d, r2:%d, re: %d, td: %9.2fsec\n", lfobit[0], lfobit[1], lfobit[2], lfobit[3], (int)r1, (int)r2, (int)Re, td);
-	lfotimer = timer_pulse( TIME_IN_SEC(td / (MAXFREQ-MINFREQ)), 0, lfo_timer_cb);
+	timer_adjust(lfotimer, TIME_IN_SEC(td / (MAXFREQ-MINFREQ)), 0, TIME_IN_SEC(td / (MAXFREQ-MINFREQ)));
 #else
 	static int lfobit[4];
 	double r0, r1, rx = 100000.0;
@@ -647,12 +623,6 @@ WRITE_HANDLER( galaxian_lfo_freq_w )
 	else
 		r0 += 1.0/100000;
 
-	if( lfotimer )
-	{
-		timer_remove( lfotimer );
-		lfotimer = 0;
-	}
-
 	r0 = 1.0/r0;
 	r1 = 1.0/r1;
 
@@ -660,7 +630,7 @@ WRITE_HANDLER( galaxian_lfo_freq_w )
 	rx = rx + 2000000.0 * r0 / (r0+r1);
 
 	LOG(("lfotimer bits:%d%d%d%d r0:%d, r1:%d, rx: %d, time: %9.2fus\n", lfobit[3], lfobit[2], lfobit[1], lfobit[0], (int)r0, (int)r1, (int)rx, 0.639 * rx));
-	lfotimer = timer_pulse( TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)), 0, lfo_timer_cb);
+	timer_adjust(lfotimer, TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)), 0, TIME_IN_USEC(0.639 * rx / (MAXFREQ-MINFREQ)));
 #endif
 }
 

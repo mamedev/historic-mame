@@ -1,79 +1,128 @@
 /***************************************************************************
 
-Cinematronics vector game handlers
+	Cinematronics vector hardware
 
-driver by Aaron Giles
+	driver by Aaron Giles
 
-Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
-Retrocade Alliance
+	Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
+	Retrocade Alliance
 
-to do:
+	Games supported:
+		* Space Wars
+		* Barrier
+		* Star Hawk
+		* Star Castle
+		* Tailgunner
+		* Rip Off
+		* Speed Freak
+		* Sundance
+		* Warrior
+		* Armor Attack
+		* Solar Quest
+		* Demon
+		* War of the Worlds
+		* Boxing Bugs
 
-* Fix Sundance controls
+	Known issues:
+		* fix Sundance controls
 
 ***************************************************************************/
-
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "cpu/ccpu/ccpu.h"
 #include "machine/z80fmly.h"
+#include "cinemat.h"
 
 
-/* from vidhrdw/cinemat.c */
-void cinemat_select_artwork (int monitor, int overlay_req, int backdrop_req, struct artwork_element *simple_overlay);
-void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int cinemat_vh_start (void);
-void cinemat_vh_stop (void);
-void cinemat_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-int cinemat_clear_list(void);
 
-void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int spacewar_vh_start (void);
-void spacewar_vh_stop (void);
-void spacewar_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+/*************************************
+ *
+ *	Speed Freak inputs
+ *
+ *************************************/
 
-extern struct artwork_element starcas_overlay[];
-extern struct artwork_element tailg_overlay[];
-extern struct artwork_element sundance_overlay[];
-extern struct artwork_element solarq_overlay[];
+static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x3, 0x7, 0xf};
 
-/* from sndhrdw/cinemat.c */
-typedef void (*cinemat_sound_handler_proc)(UINT8, UINT8);
+READ16_HANDLER( speedfrk_input_port_1_r )
+{
+    static int last_wheel=0, delta_wheel, last_frame=0, gear=0xe0;
+	int val, current_frame;
 
-READ16_HANDLER( cinemat_output_port_r );
-WRITE16_HANDLER( cinemat_output_port_w );
-void cinemat_set_sound_handler(cinemat_sound_handler_proc sound_handler);
-void starcas_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void warrior_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void spacewar_sound_w(UINT8 sound_val, UINT8 bits_changed);
-void demon_sound_w(UINT8 sound_val, UINT8 bits_changed);
+	/* check the fake gear input port and determine the bit settings for the gear */
+	if ((input_port_5_r(0) & 0xf0) != 0xf0)
+        gear = input_port_5_r(0) & 0xf0;
 
-extern struct Samplesinterface starcas_samples_interface;
-extern struct Samplesinterface warrior_samples_interface;
-extern struct Samplesinterface spacewar_samples_interface;
-extern struct Samplesinterface ripoff_samples_interface;
-extern struct Samplesinterface solarq_samples_interface;
+    val = (input_port_1_word_r(0, 0) & 0xff00) | gear;
 
-extern const struct Memory_ReadAddress demon_sound_readmem[];
-extern const struct Memory_WriteAddress demon_sound_writemem[];
-extern const struct IO_WritePort demon_sound_writeport[];
-extern struct AY8910interface demon_ay8910_interface;
-extern z80ctc_interface demon_z80ctc_interface;
+	/* add the start key into the mix */
+	if (input_port_1_word_r(0, 0) & 0x80)
+        val |= 0x80;
+	else
+        val &= ~0x80;
 
+	/* and for the cherry on top, we add the scrambled analog steering */
+    current_frame = cpu_getcurrentframe();
+    if (current_frame > last_frame)
+    {
+        /* the shift register is cleared once per 'frame' */
+        delta_wheel = input_port_4_r(0) - last_wheel;
+        last_wheel += delta_wheel;
+        if (delta_wheel > 3)
+            delta_wheel = 3;
+        else if (delta_wheel < -3)
+            delta_wheel = -3;
+    }
+    last_frame = current_frame;
+
+    val |= speedfrk_steer[delta_wheel + 3];
+
+	return val;
+}
+
+
+
+/*************************************
+ *
+ *	Boxing Bugs inputs
+ *
+ *************************************/
+
+static READ16_HANDLER( boxingb_input_port_1_r )
+{
+	if (cinemat_output_port_r(0,0) & 0x80)
+		return ((input_port_4_r(0) & 0x0f) << 12) + input_port_1_word_r(0,0);
+	else
+		return ((input_port_4_r(0) & 0xf0) << 8)  + input_port_1_word_r(0,0);
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ16_START( readmem )
 	{ 0x0000, 0x01ff, MRA16_RAM },
 	{ 0x8000, 0xffff, MRA16_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE16_START( writemem )
 	{ 0x0000, 0x01ff, MWA16_RAM },
 	{ 0x8000, 0xffff, MWA16_ROM },
 MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Main CPU port handlers
+ *
+ *************************************/
 
 static PORT_READ16_START( readport )
 	{ CCPU_PORT_IOSWITCHES,   CCPU_PORT_IOSWITCHES+1,   input_port_0_word_r },
@@ -83,51 +132,18 @@ static PORT_READ16_START( readport )
 	{ CCPU_PORT_IN_JOYSTICKY, CCPU_PORT_IN_JOYSTICKY+1, input_port_3_word_r },
 PORT_END
 
+
 static PORT_WRITE16_START( writeport )
 	{ CCPU_PORT_IOOUTPUTS,    CCPU_PORT_IOOUTPUTS+1,    cinemat_output_port_w },
 PORT_END
 
 
-/* Note: the CPU speed is somewhat arbitrary as the cycle timings in
-   the core are incomplete. */
-#define CINEMA_MACHINE(driver, minx, miny, maxx, maxy, samples, sample_interface) 	\
-static const struct MachineDriver machine_driver_##driver = 						\
-{ 																					\
-	/* basic machine hardware */ 													\
-	{ 																				\
-		{ 																			\
-			CPU_CCPU,																\
-			5000000,																\
-			readmem,writemem,readport,writeport,									\
-			cinemat_clear_list, 1													\
-		} 																			\
-	}, 																				\
-	38, 0,	/* frames per second, vblank duration (vector game, so no vblank) */ 	\
-	1, 																				\
-	driver##_init_machine, 															\
-																					\
-	/* video hardware */ 															\
-	400, 300, { minx, maxx, miny, maxy }, 											\
-	0, 																				\
-	256 + 32768, 0, 																\
-	cinemat_init_colors, 															\
-																					\
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,					\
-	0, 																				\
-	cinemat_vh_start, 																\
-	cinemat_vh_stop, 																\
-	cinemat_vh_screenrefresh, 														\
-																					\
-	/* sound hardware */ 															\
-	0,0,0,0, 																		\
-	{ 																				\
-		{ 																			\
-			samples, 																\
-			sample_interface 														\
-		} 																			\
-	} 																				\
-};
 
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 /* switch definitions are all mangled; for ease of use, I created these handy macros */
 
@@ -155,12 +171,6 @@ static const struct MachineDriver machine_driver_##driver = 						\
 #define SW2ON  0
 #define SW1ON  0
 
-
-/***************************************************************************
-
-  Spacewar
-
-***************************************************************************/
 
 INPUT_PORTS_START( spacewar )
 	PORT_START /* switches */
@@ -203,57 +213,6 @@ INPUT_PORTS_START( spacewar )
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
-
-void spacewar_init_machine (void)
-{
-	ccpu_Config (0, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (spacewar_sound_w);
-}
-
-static const struct MachineDriver machine_driver_spacewar =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_CCPU,
-			5000000,
-			readmem,writemem,readport,writeport,
-			cinemat_clear_list, 1
-		}
-	},
-	38, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	spacewar_init_machine,
-
-	/* video hardware */
-	400, 300, { 0, 1024, 0, 768 },
-	0,
-	256 + 32768, 0,
- 	spacewar_init_colors,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	spacewar_vh_start,
-	spacewar_vh_stop,
-	spacewar_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&spacewar_samples_interface
-		}
-	}
-};
-
-
-/***************************************************************************
-
-  Barrier
-
-***************************************************************************/
 
 INPUT_PORTS_START( barrier )
 	PORT_START /* switches */
@@ -306,29 +265,6 @@ INPUT_PORTS_START( barrier )
 INPUT_PORTS_END
 
 
-void barrier_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (0);
-}
-
-void init_barrier(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
-}
-
-
-CINEMA_MACHINE (barrier, 0, 0, 1024, 768, 0, 0)
-
-
-
-
-/***************************************************************************
-
-  Star Hawk
-
-***************************************************************************/
-
 /* TODO: 4way or 8way stick? */
 INPUT_PORTS_START( starhawk )
 	PORT_START /* switches */
@@ -371,30 +307,6 @@ INPUT_PORTS_START( starhawk )
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
-
-void starhawk_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (0);
-}
-
-void init_starhawk(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
-}
-
-
-CINEMA_MACHINE (starhawk, 0, 0, 1024, 768, 0, 0)
-
-
-
-
-/***************************************************************************
-
-  Star Castle
-
-***************************************************************************/
 
 INPUT_PORTS_START( starcas )
 	PORT_START /* switches */
@@ -442,25 +354,6 @@ INPUT_PORTS_START( starcas )
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
-void starcas_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (starcas_sound_w);
-}
-
-void init_starcas(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, starcas_overlay);
-}
-
-CINEMA_MACHINE (starcas, 0, 0, 1024, 768, SOUND_SAMPLES, &starcas_samples_interface)
-
-/***************************************************************************
-
-  Tailgunner
-
-***************************************************************************/
 
 INPUT_PORTS_START( tailg )
 	PORT_START /* switches */
@@ -513,28 +406,6 @@ INPUT_PORTS_START( tailg )
 INPUT_PORTS_END
 
 
-
-void tailg_init_machine (void)
-{
-	ccpu_Config (0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (0);
-}
-
-void init_tailg(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, tailg_overlay);
-}
-
-CINEMA_MACHINE (tailg, 0, 0, 1024, 768, 0, 0)
-
-
-
-/***************************************************************************
-
-  Ripoff
-
-***************************************************************************/
-
 INPUT_PORTS_START( ripoff )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
@@ -580,68 +451,6 @@ INPUT_PORTS_START( ripoff )
 	PORT_START /* analog stick Y - unused */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
-
-
-void ripoff_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (ripoff_sound_w);
-}
-
-void init_ripoff(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
-}
-
-
-CINEMA_MACHINE (ripoff, 0, 0, 1024, 768, SOUND_SAMPLES, &ripoff_samples_interface)
-
-
-
-
-/***************************************************************************
-
-  Speed Freak
-
-***************************************************************************/
-
-static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x3, 0x7, 0xf};
-
-READ16_HANDLER( speedfrk_input_port_1_r )
-{
-    static int last_wheel=0, delta_wheel, last_frame=0, gear=0xe0;
-	int val, current_frame;
-
-	/* check the fake gear input port and determine the bit settings for the gear */
-	if ((input_port_5_r(0) & 0xf0) != 0xf0)
-        gear = input_port_5_r(0) & 0xf0;
-
-    val = (input_port_1_word_r(0, 0) & 0xff00) | gear;
-
-	/* add the start key into the mix */
-	if (input_port_1_word_r(0, 0) & 0x80)
-        val |= 0x80;
-	else
-        val &= ~0x80;
-
-	/* and for the cherry on top, we add the scrambled analog steering */
-    current_frame = cpu_getcurrentframe();
-    if (current_frame > last_frame)
-    {
-        /* the shift register is cleared once per 'frame' */
-        delta_wheel = input_port_4_r(0) - last_wheel;
-        last_wheel += delta_wheel;
-        if (delta_wheel > 3)
-            delta_wheel = 3;
-        else if (delta_wheel < -3)
-            delta_wheel = -3;
-    }
-    last_frame = current_frame;
-
-    val |= speedfrk_steer[delta_wheel + 3];
-
-	return val;
-}
 
 
 INPUT_PORTS_START( speedfrk )
@@ -699,31 +508,6 @@ INPUT_PORTS_START( speedfrk )
 INPUT_PORTS_END
 
 
-
-void speedfrk_init_machine (void)
-{
-	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, speedfrk_input_port_1_r );
-
-	ccpu_Config (0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (0);
-}
-
-void init_speedfrk(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
-}
-
-CINEMA_MACHINE (speedfrk, 0, 0, 1024, 768, 0, 0)
-
-
-
-
-/***************************************************************************
-
-  Sundance
-
-***************************************************************************/
-
 INPUT_PORTS_START( sundance )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
@@ -774,29 +558,6 @@ INPUT_PORTS_START( sundance )
 INPUT_PORTS_END
 
 
-
-void sundance_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16LEV);
-	cinemat_set_sound_handler (0);
-}
-
-void init_sundance(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_16LEV, 1, 0, sundance_overlay);
-}
-
-CINEMA_MACHINE (sundance, 0, 0, 1024, 768, 0, 0)
-
-
-
-
-/***************************************************************************
-
-  Warrior
-
-***************************************************************************/
-
 INPUT_PORTS_START( warrior )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
@@ -846,29 +607,6 @@ INPUT_PORTS_START( warrior )
 INPUT_PORTS_END
 
 
-
-void warrior_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (warrior_sound_w);
-}
-
-void init_warrior(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 1, 0);
-}
-
-CINEMA_MACHINE (warrior, 0, 0, 1024, 780, SOUND_SAMPLES, &warrior_samples_interface)
-
-
-
-
-/***************************************************************************
-
-  Armor Attack
-
-***************************************************************************/
-
 INPUT_PORTS_START( armora )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
@@ -912,28 +650,6 @@ INPUT_PORTS_START( armora )
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
 INPUT_PORTS_END
 
-
-
-void armora_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (0);
-}
-
-void init_armora(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, 0);
-}
-
-CINEMA_MACHINE (armora, 0, 0, 1024, 772, 0, 0)
-
-
-
-/***************************************************************************
-
-  Solar Quest
-
-***************************************************************************/
 
 INPUT_PORTS_START( solarq )
 	PORT_START /* switches */
@@ -984,28 +700,6 @@ INPUT_PORTS_START( solarq )
 INPUT_PORTS_END
 
 
-void solarq_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (solarq_sound_w);
-}
-
-void init_solarq(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 1, solarq_overlay);
-}
-
-
-CINEMA_MACHINE (solarq, 0, 0, 1024, 768, SOUND_SAMPLES, &solarq_samples_interface)
-
-
-
-/***************************************************************************
-
-  Demon
-
-***************************************************************************/
-
 INPUT_PORTS_START( demon )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
@@ -1055,93 +749,6 @@ INPUT_PORTS_START( demon )
 INPUT_PORTS_END
 
 
-
-void demon_init_machine (void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU2);
-
-	demon_z80ctc_interface.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
-	z80ctc_init(&demon_z80ctc_interface);
-
-	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
-	cinemat_set_sound_handler (demon_sound_w);
-
-	RAM[0x0091]=0xcb;	/* bit 7,a */
-	RAM[0x0092]=0x7f;
-	RAM[0x0093]=0xc2;	/* jp nz,$0088 */
-	RAM[0x0094]=0x88;
-	RAM[0x0095]=0x00;
-	RAM[0x0096]=0xc3;	/* jp $00fd */
-	RAM[0x0097]=0xfd;
-	RAM[0x0098]=0x00;
-}
-
-void init_demon(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, 0);
-}
-
-static Z80_DaisyChain daisy_chain[] =
-{
-	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
-	{ 0,0,0,-1} 		/* end mark */
-};
-
-
-/* Note: the CPU speed is somewhat arbitrary as the cycle timings in
-   the core are incomplete. */
-static const struct MachineDriver machine_driver_demon =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_CCPU,
-			5000000,
-			readmem,writemem,readport,writeport,
-			cinemat_clear_list, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			demon_sound_readmem,demon_sound_writemem,0,demon_sound_writeport,
-			0,0,
-			0,0,&daisy_chain
-		}
-	},
-	38, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	demon_init_machine,
-
-	/* video hardware */
-	400, 300, { 0, 1024, 0, 800 },
-	0,
-	256 + 32768, 0,
- 	cinemat_init_colors,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	cinemat_vh_start,
-	cinemat_vh_stop,
-	cinemat_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&demon_ay8910_interface
-		}
-	}
-};
-
-
-
-/***************************************************************************
-
-  War of the Worlds
-
-***************************************************************************/
-
 INPUT_PORTS_START( wotw )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
@@ -1190,30 +797,6 @@ INPUT_PORTS_START( wotw )
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
-
-void wotw_init_machine (void)
-{
-	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_WOWCOL);
-	cinemat_set_sound_handler (0);
-}
-
-void init_wotw(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_WOWCOL, 0, 0, 0);
-}
-
-
-CINEMA_MACHINE (wotw, 0, 0, 1024, 768, 0, 0)
-
-
-
-
-/***************************************************************************
-
-  Boxing Bugs
-
-***************************************************************************/
 
 INPUT_PORTS_START( boxingb )
 	PORT_START /* switches */
@@ -1266,31 +849,124 @@ INPUT_PORTS_END
 
 
 
-static READ16_HANDLER( boxingb_input_port_1_r )
-{
-	if (cinemat_output_port_r(0,0) & 0x80)
-		return ((input_port_4_r(0) & 0x0f) << 12) + input_port_1_word_r(0,0);
-	else
-		return ((input_port_4_r(0) & 0xf0) << 8)  + input_port_1_word_r(0,0);
-}
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
 
-void boxingb_init_machine (void)
-{
-	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, boxingb_input_port_1_r );
+/* Note: the CPU speed is somewhat arbitrary as the cycle timings in
+   the core are incomplete. */
+static MACHINE_DRIVER_START( cinemat )
 
-	ccpu_Config (1, CCPU_MEMSIZE_32K, CCPU_MONITOR_WOWCOL);
-	cinemat_set_sound_handler (0);
-}
+	/* basic machine hardware */
+	MDRV_CPU_ADD(CCPU, 5000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	
+	MDRV_FRAMES_PER_SECOND(38)
+	MDRV_MACHINE_INIT(cinemat_sound)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(0, 1024, 0, 768)
+	MDRV_PALETTE_LENGTH(256+32768)
+	
+	MDRV_PALETTE_INIT(cinemat)
+	MDRV_VIDEO_START(cinemat)
+	MDRV_VIDEO_EOF(cinemat)
+	MDRV_VIDEO_UPDATE(vector)
+	
+	/* sound hardware */
+MACHINE_DRIVER_END
 
-void init_boxingb(void)
-{
-	cinemat_select_artwork (CCPU_MONITOR_WOWCOL, 0, 0, 0);
-}
+
+static MACHINE_DRIVER_START( spacewar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* video hardware */
+	MDRV_PALETTE_INIT(spacewar)
+	MDRV_VIDEO_UPDATE(spacewar)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, spacewar_samples_interface)
+MACHINE_DRIVER_END
 
 
-CINEMA_MACHINE (boxingb, 0, 0, 1024, 768, 0, 0)
+static MACHINE_DRIVER_START( starcas )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, starcas_samples_interface)
+MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( ripoff )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, ripoff_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( warrior )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 1024, 0, 780)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, warrior_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( armora )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 1024, 0, 772)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( solarq )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, solarq_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( demon )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cinemat)
+	MDRV_IMPORT_FROM(demon_sound)
+	
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 1024, 0, 800)
+MACHINE_DRIVER_END
+
+
+
+
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( spacewar )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 4k for code */
@@ -1298,17 +974,20 @@ ROM_START( spacewar )
 	ROM_LOAD16_BYTE( "spacewar.2r", 0x8001, 0x0800, 0x4f21328b )
 ROM_END
 
+
 ROM_START( barrier )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 4k for code */
 	ROM_LOAD16_BYTE( "barrier.t7", 0x8000, 0x0800, 0x7c3d68c8 )
 	ROM_LOAD16_BYTE( "barrier.p7", 0x8001, 0x0800, 0xaec142b5 )
 ROM_END
 
+
 ROM_START( starhawk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 4k for code */
 	ROM_LOAD16_BYTE( "u7", 0x8000, 0x0800, 0x376e6c5c )
 	ROM_LOAD16_BYTE( "r7", 0x8001, 0x0800, 0xbb71144f )
 ROM_END
+
 
 ROM_START( starcas )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
@@ -1318,6 +997,7 @@ ROM_START( starcas )
 	ROM_LOAD16_BYTE( "starcas3.r7", 0x9001, 0x0800, 0xc367b69d )
 ROM_END
 
+
 ROM_START( starcas1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
 	ROM_LOAD16_BYTE( "starcast.t7", 0x8000, 0x0800, 0x65d0a225 )
@@ -1325,6 +1005,7 @@ ROM_START( starcas1 )
 	ROM_LOAD16_BYTE( "starcast.u7", 0x9000, 0x0800, 0xd4f35b82 )
 	ROM_LOAD16_BYTE( "starcast.r7", 0x9001, 0x0800, 0x9fd3de54 )
 ROM_END
+
 
 ROM_START( tailg )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
@@ -1334,6 +1015,7 @@ ROM_START( tailg )
 	ROM_LOAD16_BYTE( "tgunner.p71", 0x9001, 0x0800, 0x8e2c8494 )
 ROM_END
 
+
 ROM_START( ripoff )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
 	ROM_LOAD16_BYTE( "ripoff.t7", 0x8000, 0x0800, 0x40c2c5b8 )
@@ -1341,6 +1023,7 @@ ROM_START( ripoff )
 	ROM_LOAD16_BYTE( "ripoff.u7", 0x9000, 0x0800, 0x29c13701 )
 	ROM_LOAD16_BYTE( "ripoff.r7", 0x9001, 0x0800, 0x150bd4c8 )
 ROM_END
+
 
 ROM_START( speedfrk )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
@@ -1350,6 +1033,7 @@ ROM_START( speedfrk )
 	ROM_LOAD16_BYTE( "speedfrk.r7", 0x9001, 0x0800, 0xfbe90d63 )
 ROM_END
 
+
 ROM_START( sundance )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
 	ROM_LOAD16_BYTE( "sundance.t7", 0x8000, 0x0800, 0xd5b9cb19 )
@@ -1357,6 +1041,7 @@ ROM_START( sundance )
 	ROM_LOAD16_BYTE( "sundance.u7", 0x9000, 0x0800, 0x67887d48 )
 	ROM_LOAD16_BYTE( "sundance.r7", 0x9001, 0x0800, 0x10b77ebd )
 ROM_END
+
 
 ROM_START( warrior )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
@@ -1366,6 +1051,7 @@ ROM_START( warrior )
 	ROM_LOAD16_BYTE( "warrior.r7", 0x9001, 0x0800, 0x8e91b502 )
 ROM_END
 
+
 ROM_START( armora )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
 	ROM_LOAD16_BYTE( "ar414le.t6", 0x8000, 0x1000, 0xd7e71f84 )
@@ -1374,6 +1060,7 @@ ROM_START( armora )
 	ROM_LOAD16_BYTE( "ar414uo.r6", 0xa001, 0x1000, 0x229d779f )
 ROM_END
 
+
 ROM_START( solarq )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
 	ROM_LOAD16_BYTE( "solar.6t", 0x8000, 0x1000, 0x1f3c5333 )
@@ -1381,6 +1068,7 @@ ROM_START( solarq )
 	ROM_LOAD16_BYTE( "solar.6u", 0xa000, 0x1000, 0xa5970e5c )
 	ROM_LOAD16_BYTE( "solar.6r", 0xa001, 0x1000, 0xb763fff2 )
 ROM_END
+
 
 ROM_START( demon )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
@@ -1393,6 +1081,7 @@ ROM_START( demon )
 	ROM_LOAD         ( "demon.snd", 0x0000, 0x1000, 0x1e2cc262 )
 ROM_END
 
+
 ROM_START( wotw )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
 	ROM_LOAD16_BYTE( "wow_le.t7", 0x8000, 0x1000, 0xb16440f9 )
@@ -1400,6 +1089,7 @@ ROM_START( wotw )
 	ROM_LOAD16_BYTE( "wow_ue.u7", 0xa000, 0x1000, 0x9b5cea48 )
 	ROM_LOAD16_BYTE( "wow_uo.r7", 0xa001, 0x1000, 0xc9d3c866 )
 ROM_END
+
 
 ROM_START( boxingb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 32k for code */
@@ -1415,20 +1105,157 @@ ROM_END
 
 
 
-GAME( 1978, spacewar, 0,       spacewar, spacewar, 0,        ROT0,   "Cinematronics", "Space Wars" )
-GAMEX(1979, barrier,  0,       barrier,  barrier,  barrier,  ROT270, "Vectorbeam", "Barrier", GAME_NO_SOUND )
-GAMEX(1981, starhawk, 0,       starhawk, starhawk, starhawk, ROT0,   "Cinematronics", "Star Hawk", GAME_NO_SOUND )
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( spacewar )
+{
+	ccpu_Config(0, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = spacewar_sound_w;
+}
+
+
+static DRIVER_INIT( barrier )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
+}
+
+
+static DRIVER_INIT( starhawk )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
+}
+
+
+static DRIVER_INIT( starcas )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = starcas_sound_w;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, starcas_overlay);
+}
+
+
+static DRIVER_INIT( tailg )
+{
+	ccpu_Config(0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, tailg_overlay);
+}
+
+
+static DRIVER_INIT( ripoff )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = ripoff_sound_w;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
+}
+
+
+static DRIVER_INIT( speedfrk )
+{
+	ccpu_Config(0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 0, 0);
+
+	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, speedfrk_input_port_1_r);
+}
+
+
+static DRIVER_INIT( sundance )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_16LEV);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_16LEV, 1, 0, sundance_overlay);
+}
+
+
+static DRIVER_INIT( warrior )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = warrior_sound_w;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 0, 1, 0);
+}
+
+
+static DRIVER_INIT( armora )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, 0);
+}
+
+
+static DRIVER_INIT( solarq )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = solarq_sound_w;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 1, solarq_overlay);
+}
+
+
+static DRIVER_INIT( demon )
+{
+	unsigned char *RAM = memory_region(REGION_CPU2);
+
+	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
+	cinemat_sound_handler = demon_sound_w;
+	cinemat_select_artwork(CCPU_MONITOR_BILEV, 1, 0, 0);
+
+	RAM[0x0091]=0xcb;	/* bit 7,a */
+	RAM[0x0092]=0x7f;
+	RAM[0x0093]=0xc2;	/* jp nz,$0088 */
+	RAM[0x0094]=0x88;
+	RAM[0x0095]=0x00;
+	RAM[0x0096]=0xc3;	/* jp $00fd */
+	RAM[0x0097]=0xfd;
+	RAM[0x0098]=0x00;
+}
+
+
+static DRIVER_INIT( wotw )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_16K, CCPU_MONITOR_WOWCOL);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_WOWCOL, 0, 0, 0);
+}
+
+
+static DRIVER_INIT( boxingb )
+{
+	ccpu_Config(1, CCPU_MEMSIZE_32K, CCPU_MONITOR_WOWCOL);
+	cinemat_sound_handler = 0;
+	cinemat_select_artwork(CCPU_MONITOR_WOWCOL, 0, 0, 0);
+
+	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, boxingb_input_port_1_r);
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME( 1978, spacewar, 0,       spacewar, spacewar, spacewar, ROT0,   "Cinematronics", "Space Wars" )
+GAMEX(1979, barrier,  0,       cinemat,  barrier,  barrier,  ROT270, "Vectorbeam", "Barrier", GAME_NO_SOUND )
+GAMEX(1981, starhawk, 0,       cinemat,  starhawk, starhawk, ROT0,   "Cinematronics", "Star Hawk", GAME_NO_SOUND )
 GAME( 1980, starcas,  0,       starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (version 3)" )
 GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ROT0,   "Cinematronics", "Star Castle (older)" )
-GAMEX(1979, tailg,    0,       tailg,    tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner", GAME_NO_SOUND )
+GAMEX(1979, tailg,    0,       cinemat,  tailg,    tailg,    ROT0,   "Cinematronics", "Tailgunner", GAME_NO_SOUND )
 GAME( 1979, ripoff,   0,       ripoff,   ripoff,   ripoff,   ROT0,   "Cinematronics", "Rip Off" )
-GAMEX(19??, speedfrk, 0,       speedfrk, speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
-GAMEX(1979, sundance, 0,       sundance, sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NOT_WORKING )
+GAMEX(19??, speedfrk, 0,       cinemat,  speedfrk, speedfrk, ROT0,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
+GAMEX(1979, sundance, 0,       cinemat,  sundance, sundance, ROT270, "Cinematronics", "Sundance", GAME_NOT_WORKING )
 GAME( 1978, warrior,  0,       warrior,  warrior,  warrior,  ROT0,   "Vectorbeam", "Warrior" )
 GAMEX(1980, armora,   0,       armora,   armora,   armora,   ROT0,   "Cinematronics", "Armor Attack", GAME_NO_SOUND )
 GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
 GAME( 1982, demon,    0,       demon,    demon,    demon,    ROT0,   "Rock-ola", "Demon" )
-GAMEX(1981, wotw,     0,       wotw,     wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
-GAMEX(1981, boxingb,  0,       boxingb,  boxingb,  boxingb,  ROT0,   "Cinematronics", "Boxing Bugs", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
-
-
+GAMEX(1981, wotw,     0,       cinemat,  wotw,     wotw,     ROT0,   "Cinematronics", "War of the Worlds", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )
+GAMEX(1981, boxingb,  0,       cinemat,  boxingb,  boxingb,  ROT0,   "Cinematronics", "Boxing Bugs", GAME_IMPERFECT_COLORS | GAME_NO_SOUND )

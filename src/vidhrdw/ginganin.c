@@ -142,7 +142,7 @@ WRITE16_HANDLER( ginganin_txtram16_w )
 }
 
 
-int ginganin_vh_start(void)
+VIDEO_START( ginganin )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,BG_NX,BG_NY);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,FG_NX,FG_NY);
@@ -192,7 +192,7 @@ WRITE16_HANDLER( ginganin_vregs16_w )
 		cpu_set_nmi_line(1,PULSE_LINE);
 		break;
 	default:
-		logerror("CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_get_pc(),offset,data);
+		logerror("CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",activecpu_get_pc(),offset,data);
 	}
 }
 
@@ -218,7 +218,7 @@ Offset: 		Values: 		Format:
 
 ------------------------------------------------------------------------ */
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 int offs;
 
@@ -245,13 +245,13 @@ int offs;
 				attr >> 12,
 				flipx, flipy,
 				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 
 	}
 }
 
 
-void ginganin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ginganin )
 {
 	int layers_ctrl1;
 
@@ -288,12 +288,12 @@ if (keyboard_pressed(KEYCODE_Z))
 #endif
 
 
-	if (layers_ctrl1 & 1)	tilemap_draw(bitmap, bg_tilemap,  0,0);
-	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	if (layers_ctrl1 & 1)	tilemap_draw(bitmap,cliprect, bg_tilemap,  0,0);
+	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	if (layers_ctrl1 & 2)	tilemap_draw(bitmap, fg_tilemap,  0,0);
-	if (layers_ctrl1 & 8)	draw_sprites(bitmap);
-	if (layers_ctrl1 & 4)	tilemap_draw(bitmap, tx_tilemap, 0,0);
+	if (layers_ctrl1 & 2)	tilemap_draw(bitmap,cliprect, fg_tilemap,  0,0);
+	if (layers_ctrl1 & 8)	draw_sprites(bitmap,cliprect);
+	if (layers_ctrl1 & 4)	tilemap_draw(bitmap,cliprect, tx_tilemap, 0,0);
 
 }
 

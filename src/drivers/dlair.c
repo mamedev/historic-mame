@@ -43,7 +43,7 @@ WRITE_HANDLER( dlair_led1_w )
 	led1 = data;
 }
 
-void dlair_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dlair )
 {
 	int offs;
 
@@ -117,7 +117,7 @@ if ((led1 & 64) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
 /* z80 ctc */
 static void ctc_interrupt (int state)
 {
-	cpu_cause_interrupt (0, Z80_VECTOR(0,state) );
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0,state));
 }
 
 static z80ctc_interface ctc_intf =
@@ -132,7 +132,7 @@ static z80ctc_interface ctc_intf =
 };
 
 
-void dlair_init_machine(void)
+MACHINE_INIT( dlair )
 {
    /* initialize the CTC */
    ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
@@ -159,12 +159,12 @@ MEMORY_END
 static unsigned char pip[4];
 static READ_HANDLER( pip_r )
 {
-logerror("PC %04x: read I/O port %02x\n",cpu_get_pc(),offset);
+logerror("PC %04x: read I/O port %02x\n",activecpu_get_pc(),offset);
 	return pip[offset];
 }
 static WRITE_HANDLER( pip_w )
 {
-logerror("PC %04x: write %02x to I/O port %02x\n",cpu_get_pc(),data,offset);
+logerror("PC %04x: write %02x to I/O port %02x\n",activecpu_get_pc(),data,offset);
 	pip[offset] = data;
 z80ctc_0_w(offset,data);
 }
@@ -216,37 +216,31 @@ static Z80_DaisyChain daisy_chain[] =
 
 
 
-static const struct MachineDriver machine_driver_dlair =
-{
+static MACHINE_DRIVER_START( dlair )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ? */
-			readmem,writemem,readport,writeport,
-			0,0, /* interrupts are made by z80 daisy chain system */
-			0,0,daisy_chain
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	dlair_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
+	MDRV_CPU_CONFIG(daisy_chain)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(dlair)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	8, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	dlair_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(dlair)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 
 

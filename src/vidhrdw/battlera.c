@@ -23,31 +23,20 @@ static int irq_enable,rcr_enable,sb_enable,bb_enable,bldwolf_vblank;
 
 /******************************************************************************/
 
-void battlera_vh_stop (void)
+VIDEO_START( battlera )
 {
-	free(tile_dirty);
-	free(HuC6270_vram);
-	free(sprite_dirty);
-	free(vram_dirty);
-
-	bitmap_free (tile_bitmap);
-	bitmap_free (front_bitmap);
-}
-
-int battlera_vh_start (void)
-{
-	HuC6270_vram=malloc(0x20000);
-	tile_dirty=malloc(0x1000);
-	sprite_dirty=malloc(0x400);
-	vram_dirty=malloc(0x1000);
+	HuC6270_vram=auto_malloc(0x20000);
+	tile_dirty=auto_malloc(0x1000);
+	sprite_dirty=auto_malloc(0x400);
+	vram_dirty=auto_malloc(0x1000);
 
 	memset(HuC6270_vram,0,0x20000);
 	memset(tile_dirty,1,0x1000);
 	memset(sprite_dirty,1,0x400);
 	memset(vram_dirty,1,0x1000);
 
-	tile_bitmap=bitmap_alloc(512,512);
-	front_bitmap=bitmap_alloc(512,512);
+	tile_bitmap=auto_bitmap_alloc(512,512);
+	front_bitmap=auto_bitmap_alloc(512,512);
 
 	if (!tile_bitmap || !front_bitmap || !tile_dirty || !HuC6270_vram || !sprite_dirty || !vram_dirty)
 		return 1;
@@ -185,7 +174,7 @@ WRITE_HANDLER( HuC6270_data_w )
 			case 16:
 			case 17:
 			case 18:
-				logerror("%04x: dma 2 %02x\n",cpu_get_pc(),data);
+				logerror("%04x: dma 2 %02x\n",activecpu_get_pc(),data);
 				break;
 
 			case 19: /* SATB */
@@ -247,7 +236,7 @@ WRITE_HANDLER( HuC6270_data_w )
 			case 16:
 			case 17:
 			case 18:
-				logerror("%04x: dma 2 %02x\n",cpu_get_pc(),data);
+				logerror("%04x: dma 2 %02x\n",activecpu_get_pc(),data);
 				break;
 
 			case 19: /* SATB - Sprites */
@@ -256,7 +245,7 @@ WRITE_HANDLER( HuC6270_data_w )
 			}
 			break;
 	}
-	logerror("%04x: unknown write to  VDC_register %02x (%02x) at %02x\n",cpu_get_pc(),VDC_register,data,offset);
+	logerror("%04x: unknown write to  VDC_register %02x (%02x) at %02x\n",activecpu_get_pc(),VDC_register,data,offset);
 }
 
 /******************************************************************************/
@@ -396,7 +385,7 @@ static void screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *cli
 
 /******************************************************************************/
 
-void battlera_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( battlera )
 {
 	/* Nothing */
 }
@@ -422,7 +411,7 @@ static void partial_refresh(struct mame_bitmap *bitmap,int current_line)
 	next_update_first_line = current_line + 1;
 }
 
-void battlera_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
+void battlera_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
 {
 	struct rectangle clip;
 
@@ -443,7 +432,7 @@ void battlera_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_lin
 
 /******************************************************************************/
 
-int battlera_interrupt(void)
+INTERRUPT_GEN( battlera_interrupt )
 {
 	static int last_line=0;
 
@@ -451,17 +440,17 @@ int battlera_interrupt(void)
 
 	/* If raster interrupt occurs, refresh screen _up_ to this point */
 	if (rcr_enable && (current_scanline+56)==HuC6270_registers[6]) {
-		battlera_vh_raster_partial_refresh(Machine->scrbitmap,last_line,current_scanline);
+		battlera_raster_partial_refresh(Machine->scrbitmap,last_line,current_scanline);
 		last_line=current_scanline;
-		return H6280_INT_IRQ1; /* RCR interrupt */
+		cpu_set_irq_line(0, 0, HOLD_LINE); /* RCR interrupt */
 	}
 
 	/* Start of vblank */
-	if (current_scanline==240) {
+	else if (current_scanline==240) {
 		bldwolf_vblank=1;
-		battlera_vh_raster_partial_refresh(Machine->scrbitmap,last_line,240);
+		battlera_raster_partial_refresh(Machine->scrbitmap,last_line,240);
 		if (irq_enable)
-			return H6280_INT_IRQ1; /* VBL */
+			cpu_set_irq_line(0, 0, HOLD_LINE); /* VBL */
 	}
 
 	/* End of vblank */
@@ -469,6 +458,4 @@ int battlera_interrupt(void)
 		bldwolf_vblank=0;
 		last_line=0;
 	}
-
-	return ignore_interrupt();
 }

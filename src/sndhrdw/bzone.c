@@ -19,6 +19,7 @@ D0	explosion enable		gates a noise generator
 
 #include <math.h>
 #include "driver.h"
+#include "bzone.h"
 
 
 /* Statics */
@@ -269,7 +270,7 @@ int bzone_sh_start(const struct MachineSound *msound)
 {
     int i;
 
-	discharge = (INT16 *)malloc(32768 * sizeof(INT16));
+	discharge = (INT16 *)auto_malloc(32768 * sizeof(INT16));
 	if( !discharge )
         return 1;
 
@@ -285,9 +286,6 @@ int bzone_sh_start(const struct MachineSound *msound)
 
 void bzone_sh_stop(void)
 {
-	if( discharge )
-		free(discharge);
-	discharge = NULL;
 }
 
 void bzone_sh_update(void)

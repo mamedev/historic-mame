@@ -52,7 +52,7 @@ unsigned char *matmania_pageselect;
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
-void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( matmania )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -126,53 +126,27 @@ WRITE_HANDLER( matmania_paletteram_w )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int matmania_vh_start(void)
+VIDEO_START( matmania )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((dirtybuffer2 = malloc(matmania_videoram3_size)) == 0)
-	{
-		free(dirtybuffer);
+	if ((dirtybuffer2 = auto_malloc(matmania_videoram3_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer2,1,matmania_videoram3_size);
 
 	/* Mat Mania has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,2* Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
-		free(dirtybuffer2);
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,2* Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	/* Mat Mania has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,2 * Machine->drv->screen_height)) == 0)
-	{
-		free(tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,2 * Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void matmania_vh_stop(void)
-{
-	free(dirtybuffer);
-	free(dirtybuffer2);
-	bitmap_free(tmpbitmap);
-	bitmap_free(tmpbitmap2);
-}
 
 
 WRITE_HANDLER( matmania_videoram3_w )
@@ -198,7 +172,7 @@ WRITE_HANDLER( matmania_colorram3_w )
 }
 
 
-void matmania_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( matmania )
 {
 	int offs;
 
@@ -294,7 +268,7 @@ void matmania_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void maniach_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( maniach )
 {
 	int offs;
 

@@ -45,12 +45,12 @@ WRITE_HANDLER( yunsung8_videoram_w );
 
 WRITE_HANDLER( yunsung8_flipscreen_w );
 
-int  yunsung8_vh_start(void);
-void yunsung8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( yunsung8 );
+VIDEO_UPDATE( yunsung8 );
 
 
 
-void yunsung8_init_machine( void )
+MACHINE_INIT( yunsung8 )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1) + 0x24000;
 
@@ -76,7 +76,7 @@ WRITE_HANDLER( yunsung8_bankswitch_w )
 	int bank			=	data & 7;		// ROM bank
 	yunsung8_layers_ctrl	=	data & 0x30;	// Layers enable
 
-	if (data & ~0x37)	logerror("CPU #0 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if (data & ~0x37)	logerror("CPU #0 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
@@ -143,7 +143,7 @@ WRITE_HANDLER( yunsung8_sound_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bank = data & 7;
 
-	if ( bank != (data&(~0x20)) ) 	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( bank != (data&(~0x20)) ) 	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
@@ -447,47 +447,39 @@ struct MSM5205interface yunsung8_msm5205_interface =
 };
 
 
-static const struct MachineDriver machine_driver_yunsung8 =
-{
-	{
-		{
-			CPU_Z80,					/* Z80B */
-			8000000,					/* ? */
-			yunsung8_readmem,  yunsung8_writemem,
-			yunsung8_readport, yunsung8_writeport,
-			interrupt, 1	/* No nmi routine */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* Z80A */
-			4000000,					/* ? */
-			yunsung8_sound_readmem, yunsung8_sound_writemem,
-			0,0,
-			interrupt, 1	/* NMI caused by the MSM5205? */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	yunsung8_init_machine,
+static MACHINE_DRIVER_START( yunsung8 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 8000000)			/* Z80B */
+	MDRV_CPU_MEMORY(yunsung8_readmem,yunsung8_writemem)
+	MDRV_CPU_PORTS(yunsung8_readport,yunsung8_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* No nmi routine */
+
+	MDRV_CPU_ADD(Z80, 4000000)			/* ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(yunsung8_sound_readmem,yunsung8_sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMI caused by the MSM5205? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(yunsung8)
 
 	/* video hardware */
-	512, 256, { 0+64, 512-64-1, 0+8, 256-8-1 },
-	yunsung8_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0+64, 512-64-1, 0+8, 256-8-1)
+	MDRV_GFXDECODE(yunsung8_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	yunsung8_vh_start,
-	0,
-	yunsung8_vh_screenrefresh,
+	MDRV_VIDEO_START(yunsung8)
+	MDRV_VIDEO_UPDATE(yunsung8)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_YM3812,  &yunsung8_ym3812_interface  },
-		{ SOUND_MSM5205, &yunsung8_msm5205_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, yunsung8_ym3812_interface)
+	MDRV_SOUND_ADD(MSM5205, yunsung8_msm5205_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

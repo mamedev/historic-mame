@@ -25,7 +25,7 @@ Special thanks to:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 /*****************************************************************************/
 /* After Burner I (Japanese Version)
@@ -812,7 +812,7 @@ PORT_END
 
 /***************************************************************************/
 
-static void aburner_init_machine( void ){ /* called after vh_start */
+static MACHINE_INIT( aburner ){
 	sys16_textmode = 2;
 	sys16_spritesystem = sys16_sprite_aburner;
 	sys16_sprxoffset = -0xc0;
@@ -824,13 +824,13 @@ static void aburner_init_machine( void ){ /* called after vh_start */
 	sys16_textlayer_hi_max=0xff;
 }
 
-static void init_thndrbdj( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( thndrbdj ){
+	machine_init_sys16_onetime();
 	sys16_bg1_trans = 1;
 	sys16_interleave_sprite_data( 0x200000 );
 }
 
-static void init_aburner( void ){
+static DRIVER_INIT( aburner ){
 	/* reset hack for AfterBurner */
 	sys16_patch_code(0xe76c,0x4a);
 	sys16_patch_code(0xe76d,0x79);
@@ -839,12 +839,12 @@ static void init_aburner( void ){
 	sys16_patch_code(0xe770,0x00);
 	sys16_patch_code(0xe771,0x00);
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_bg1_trans = 1;
 	sys16_interleave_sprite_data( 0x200000 );
 }
 
-static void init_aburner2( void ){
+static DRIVER_INIT( aburner2 ){
 	/* reset hack for AfterBurner2 */
 	sys16_patch_code(0x1483c,0x4a);
 	sys16_patch_code(0x1483d,0x79);
@@ -853,68 +853,55 @@ static void init_aburner2( void ){
 	sys16_patch_code(0x14840,0x00);
 	sys16_patch_code(0x14841,0x00);
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_bg1_trans = 1;
 	sys16_interleave_sprite_data( 0x200000 );
 }
 
-int aburner_interrupt( void ){
-	if( cpu_getiloops()!=0 ) return 2; /* (?) updates sound and inputs */
-	return 4; /* vblank */
+INTERRUPT_GEN( aburner_interrupt ){
+	if( cpu_getiloops()!=0 )
+		irq2_line_hold(); /* (?) updates sound and inputs */
+	else
+		irq4_line_hold(); /* vblank */
 }
 
-static int aburner_interrupt2( void ){
-	return 4; /* Interrupt vector 4, used by VBlank */
-}
+static MACHINE_DRIVER_START( aburner )
 
-static const struct MachineDriver machine_driver_aburner =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			aburner_readmem,aburner_writemem,0,0,
-			aburner_interrupt,7
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4096000, /* ? */
-			aburner_sound_readmem, aburner_sound_writemem,
-			aburner_sound_readport, aburner_sound_writeport,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			12000000, /* ? */
-			aburner_readmem2,aburner_writemem2,0,0,
-			aburner_interrupt2,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	100,
-	aburner_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	sys16_gfxdecodeinfo,
-	0x2010, 0,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(aburner_readmem,aburner_writemem)
+	MDRV_CPU_VBLANK_INT(aburner_interrupt,7)
+	
+	MDRV_CPU_ADD(Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(aburner_sound_readmem, aburner_sound_writemem)
+	MDRV_CPU_PORTS(aburner_sound_readport, aburner_sound_writeport)
+	
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(aburner_readmem2,aburner_writemem2)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sys16_aburner_vh_start,
-	sys16_aburner_vh_stop,
-	sys16_aburner_vh_screenrefresh,
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&sys16_ym2151_interface
-		},
-		{
-			SOUND_SEGAPCM,
-			&sys16_segapcm_interface_15k_512,
-		}
-	}
-};
+	MDRV_MACHINE_INIT(aburner)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x2010)
+	
+	MDRV_VIDEO_START(aburner)
+	MDRV_VIDEO_UPDATE(aburner)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)
+	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_15k_512)
+MACHINE_DRIVER_END
 
 /*          rom       parent    machine   inp       init */
 GAME( 1987, aburner,  aburner2, aburner,  aburner,  aburner,  ROT0, "Sega", "After Burner (Japan)" )

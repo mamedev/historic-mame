@@ -69,7 +69,7 @@ static void zoom_callback(int *code,int *color)
 
 ***************************************************************************/
 
-int ajax_vh_start( void )
+VIDEO_START( ajax )
 {
 	layer_colorbase[0] = 64;
 	layer_colorbase[1] = 0;
@@ -79,25 +79,11 @@ int ajax_vh_start( void )
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 	if (K051316_vh_start_0(REGION_GFX3,7,TILEMAP_TRANSPARENT,0,zoom_callback))
-	{
-		K052109_vh_stop();
-		K051960_vh_stop();
 		return 1;
-	}
 
 	return 0;
-}
-
-void ajax_vh_stop( void )
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
-	K051316_vh_stop_0();
 }
 
 
@@ -108,27 +94,27 @@ void ajax_vh_stop( void )
 
 ***************************************************************************/
 
-void ajax_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( ajax )
 {
 	K052109_tilemap_update();
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
-	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
-	K052109_tilemap_draw(bitmap,2,0,1);
+	fillbitmap(bitmap,get_black_pen(),cliprect);
+	K052109_tilemap_draw(bitmap,cliprect,2,0,1);
 	if (ajax_priority)
 	{
 		/* basic layer order is B, zoom, A, F */
-		K051316_zoom_draw_0(bitmap,0,4);
-		K052109_tilemap_draw(bitmap,1,0,2);
+		K051316_zoom_draw_0(bitmap,cliprect,0,4);
+		K052109_tilemap_draw(bitmap,cliprect,1,0,2);
 	}
 	else
 	{
 		/* basic layer order is B, A, zoom, F */
-		K052109_tilemap_draw(bitmap,1,0,2);
-		K051316_zoom_draw_0(bitmap,0,4);
+		K052109_tilemap_draw(bitmap,cliprect,1,0,2);
+		K051316_zoom_draw_0(bitmap,cliprect,0,4);
 	}
-	K052109_tilemap_draw(bitmap,0,0,8);
+	K052109_tilemap_draw(bitmap,cliprect,0,0,8);
 
-	K051960_sprites_draw(bitmap,-1,-1);
+	K051960_sprites_draw(bitmap,cliprect,-1,-1);
 }

@@ -85,11 +85,11 @@ static void draw_background( struct mame_bitmap *bitmap ){
 	}
 }
 
-int mrflea_vh_start( void ){
+VIDEO_START( mrflea ){
 	return 0;
 }
 
-void mrflea_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( mrflea )
 {
 	draw_background( bitmap );
 	draw_sprites( bitmap );

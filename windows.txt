@@ -278,6 +278,7 @@ these modes. The current implementation is already as fast as possible, using
 self-modifying assembly code. For some of these, MMX is required. Possible
 values:
   none         no effect (this is the default)
+  sharp        no effect, but gives a sharper image than the default
   scan25       25% scanlines
   scan50       50% scanlines
   scan75       75% scanlines

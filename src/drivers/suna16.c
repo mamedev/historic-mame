@@ -29,9 +29,8 @@ WRITE16_HANDLER( suna16_flipscreen_w );
 READ16_HANDLER ( suna16_paletteram16_r );
 WRITE16_HANDLER( suna16_paletteram16_w );
 
-int  suna16_vh_start(void);
-void suna16_vh_stop(void);
-void suna16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( suna16 );
+VIDEO_UPDATE( suna16 );
 
 
 /***************************************************************************
@@ -49,7 +48,7 @@ WRITE16_HANDLER( suna16_soundlatch_w )
 		if (Machine->sample_rate != 0)
 			soundlatch_w( 0, data & 0xff );
 	}
-	if (data & ~0xff)	logerror("CPU#0 PC %06X - Sound latch unknown bits: %04X\n", cpu_get_pc(), data);
+	if (data & ~0xff)	logerror("CPU#0 PC %06X - Sound latch unknown bits: %04X\n", activecpu_get_pc(), data);
 }
 
 
@@ -63,7 +62,7 @@ WRITE16_HANDLER( bssoccer_leds_w )
 		set_led_status(3, data & 0x08);
 		coin_counter_w(0, data & 0x10);
 	}
-	if (data & ~0x1f)	logerror("CPU#0 PC %06X - Leds unknown bits: %04X\n", cpu_get_pc(), data);
+	if (data & ~0x1f)	logerror("CPU#0 PC %06X - Leds unknown bits: %04X\n", activecpu_get_pc(), data);
 }
 
 
@@ -75,7 +74,7 @@ WRITE16_HANDLER( uballoon_leds_w )
 		set_led_status(0, data & 0x02);
 		set_led_status(1, data & 0x04);
 	}
-	if (data & ~0x07)	logerror("CPU#0 PC %06X - Leds unknown bits: %04X\n", cpu_get_pc(), data);
+	if (data & ~0x07)	logerror("CPU#0 PC %06X - Leds unknown bits: %04X\n", activecpu_get_pc(), data);
 }
 
 
@@ -222,7 +221,7 @@ static WRITE_HANDLER( bssoccer_pcm_1_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	int bank = data & 7;
-	if (bank & ~7)	logerror("CPU#2 PC %06X - ROM bank unknown bits: %02X\n", cpu_get_pc(), data);
+	if (bank & ~7)	logerror("CPU#2 PC %06X - ROM bank unknown bits: %02X\n", activecpu_get_pc(), data);
 	cpu_setbank(1, &RAM[bank * 0x10000 + 0x1000]);
 }
 
@@ -230,7 +229,7 @@ static WRITE_HANDLER( bssoccer_pcm_2_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU4);
 	int bank = data & 7;
-	if (bank & ~7)	logerror("CPU#3 PC %06X - ROM bank unknown bits: %02X\n", cpu_get_pc(), data);
+	if (bank & ~7)	logerror("CPU#3 PC %06X - ROM bank unknown bits: %02X\n", activecpu_get_pc(), data);
 	cpu_setbank(2, &RAM[bank * 0x10000 + 0x1000]);
 }
 
@@ -299,7 +298,7 @@ static WRITE_HANDLER( uballoon_pcm_1_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	int bank = data & 1;
-	if (bank & ~1)	logerror("CPU#2 PC %06X - ROM bank unknown bits: %02X\n", cpu_get_pc(), data);
+	if (bank & ~1)	logerror("CPU#2 PC %06X - ROM bank unknown bits: %02X\n", activecpu_get_pc(), data);
 	cpu_setbank(1, &RAM[bank * 0x10000 + 0x400]);
 }
 
@@ -580,69 +579,55 @@ static struct DACinterface bssoccer_dac_interface =
 		MIXER(40,MIXER_PAN_LEFT), MIXER(40,MIXER_PAN_RIGHT)	}
 };
 
-int bssoccer_interrupt(void)
+INTERRUPT_GEN( bssoccer_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0: 	return 1;
-		case 1: 	return 2;
-		default:	return ignore_interrupt();
+		case 0: 	cpu_set_irq_line(0, 1, HOLD_LINE);	break;
+		case 1: 	cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 	}
 }
 
-static const struct MachineDriver machine_driver_bssoccer =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* ? */
-			bssoccer_readmem, bssoccer_writemem,0,0,
-			bssoccer_interrupt, 2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* Z80B */
-			3579545,	/* ? */
-			bssoccer_sound_readmem,  bssoccer_sound_writemem,
-			0,0,
-			ignore_interrupt, 1 	/* No interrupts! */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* Z80B */
-			5000000,	/* ? */
-			bssoccer_pcm_1_readmem,  bssoccer_pcm_1_writemem,
-			bssoccer_pcm_1_readport, bssoccer_pcm_1_writeport,
-			ignore_interrupt, 1 	/* No interrupts! */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* Z80B */
-			5000000,	/* ? */
-			bssoccer_pcm_2_readmem,  bssoccer_pcm_2_writemem,
-			bssoccer_pcm_2_readport, bssoccer_pcm_2_writeport,
-			ignore_interrupt, 1 	/* No interrupts! */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	100,
-	0,
+static MACHINE_DRIVER_START( bssoccer )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* ? */
+	MDRV_CPU_MEMORY(bssoccer_readmem,bssoccer_writemem)
+	MDRV_CPU_VBLANK_INT(bssoccer_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)		/* Z80B */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(bssoccer_sound_readmem,bssoccer_sound_writemem)
+
+	MDRV_CPU_ADD(Z80, 5000000)		/* Z80B */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(bssoccer_pcm_1_readmem,bssoccer_pcm_1_writemem)
+	MDRV_CPU_PORTS(bssoccer_pcm_1_readport,bssoccer_pcm_1_writeport)
+
+	MDRV_CPU_ADD(Z80, 5000000)		/* Z80B */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(bssoccer_pcm_2_readmem,bssoccer_pcm_2_writemem)
+	MDRV_CPU_PORTS(bssoccer_pcm_2_readport,bssoccer_pcm_2_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	suna16_gfxdecodeinfo,
-	512, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	suna16_vh_start,
-	suna16_vh_stop,
-	suna16_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(suna16)
+	MDRV_VIDEO_UPDATE(suna16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&bssoccer_ym2151_interface	},
-		{	SOUND_DAC,		&bssoccer_dac_interface		},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, bssoccer_ym2151_interface)
+	MDRV_SOUND_ADD(DAC, bssoccer_dac_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -665,55 +650,43 @@ static struct DACinterface uballoon_dac_interface =
 	{ MIXER(50,MIXER_PAN_LEFT), MIXER(50,MIXER_PAN_RIGHT) }
 };
 
-static const struct MachineDriver machine_driver_uballoon =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			uballoon_readmem, uballoon_writemem,0,0,
-			m68_level1_irq, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? */
-			uballoon_sound_readmem,  uballoon_sound_writemem,
-			0,0,
-			ignore_interrupt, 1 	/* No interrupts! */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			5000000,	/* ? */
-			uballoon_pcm_1_readmem,  uballoon_pcm_1_writemem,
-			uballoon_pcm_1_readport, uballoon_pcm_1_writeport,
-			ignore_interrupt, 1 	/* No interrupts! */
-		},
+static MACHINE_DRIVER_START( uballoon )
 
-		/* 2nd PCM Z80 missing */
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(uballoon_readmem,uballoon_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	100,
-	0,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(uballoon_sound_readmem,uballoon_sound_writemem)
+
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(uballoon_pcm_1_readmem,uballoon_pcm_1_writemem)
+	MDRV_CPU_PORTS(uballoon_pcm_1_readport,uballoon_pcm_1_writeport)
+
+	/* 2nd PCM Z80 missing */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	suna16_gfxdecodeinfo,
-	512, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	suna16_vh_start,
-	suna16_vh_stop,
-	suna16_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(suna16)
+	MDRV_VIDEO_UPDATE(suna16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&uballoon_ym2151_interface	},
-		{	SOUND_DAC,		&uballoon_dac_interface		},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, uballoon_ym2151_interface)
+	MDRV_SOUND_ADD(DAC, uballoon_dac_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -816,7 +789,7 @@ ROM_START( uballoon )
 ROM_END
 
 
-void init_uballoon(void)
+DRIVER_INIT( uballoon )
 {
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 

@@ -7639,11 +7639,11 @@ void CodeSegmentBegin(void)
 	fprintf(fp, "\t\t EXTERN _OP_RAM\n");
 
 	fprintf(fp, "\t\t EXTERN _opcode_entry\n");
-	fprintf(fp, "\t\t EXTERN _cur_mrhard\n");
+//	fprintf(fp, "\t\t EXTERN _cur_mrhard\n");
 
-//#ifdef MAME_DEBUG
+#ifdef MAME_DEBUG
 	fprintf(fp, "\t\t EXTERN _m68k_illegal_opcode\n");
-//#endif
+#endif
 
 #ifdef OS2
 	fprintf(fp, "\t\t SECTION maincode USE32 FLAT CLASS=CODE\n\n");

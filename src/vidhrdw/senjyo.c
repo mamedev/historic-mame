@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "machine/segacrpt.h"
+#include "vidhrdw/generic.h"
 
 
 
@@ -31,12 +32,12 @@ static int senjyo_bgstripes;
 static struct mame_bitmap *bgbitmap;
 
 
-void init_starforc(void)
+DRIVER_INIT( starforc )
 {
 	senjyo = 0;
 	scrollhack = 1;
 }
-void init_starfore(void)
+DRIVER_INIT( starfore )
 {
 	/* encrypted CPU */
 	suprloco_decode();
@@ -44,7 +45,7 @@ void init_starfore(void)
 	senjyo = 0;
 	scrollhack = 0;
 }
-void init_senjyo(void)
+DRIVER_INIT( senjyo )
 {
 	senjyo = 1;
 	scrollhack = 0;
@@ -120,15 +121,9 @@ static void get_bg3_tile_info(int tile_index)
 
 ***************************************************************************/
 
-void senjyo_vh_stop(void)
+VIDEO_START( senjyo )
 {
-	bitmap_free(bgbitmap);
-	bgbitmap = 0;
-}
-
-int senjyo_vh_start(void)
-{
-	bgbitmap = bitmap_alloc(256,256);
+	bgbitmap = auto_bitmap_alloc(256,256);
 	if (!bgbitmap)
 		return 1;
 
@@ -148,11 +143,7 @@ int senjyo_vh_start(void)
 
 
 	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap || !bg3_tilemap)
-	{
-		senjyo_vh_stop();
-
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(bg1_tilemap,0);
@@ -160,7 +151,7 @@ int senjyo_vh_start(void)
 	tilemap_set_transparent_pen(bg3_tilemap,0);
 	tilemap_set_scroll_cols(fg_tilemap,32);
 
-	schedule_full_refresh();
+	set_vh_global_attribute(NULL,0);
 
 	return 0;
 }
@@ -226,18 +217,18 @@ WRITE_HANDLER( senjyo_bgstripes_w )
 
 ***************************************************************************/
 
-static void draw_bgbitmap(struct mame_bitmap *bitmap, int full_refresh)
+static void draw_bgbitmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int x,y,pen,strwid,count;
 
 
 	if (senjyo_bgstripes == 0xff)	/* off */
 	{
-		fillbitmap(bitmap,Machine->pens[0],0);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 		return;
 	}
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		pen = 0;
 		count = 0;
@@ -271,10 +262,10 @@ static void draw_bgbitmap(struct mame_bitmap *bitmap, int full_refresh)
 		}
 	}
 
-	copybitmap(bitmap,bgbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,bgbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 }
 
-static void draw_radar(struct mame_bitmap *bitmap)
+static void draw_radar(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,x;
 
@@ -297,18 +288,19 @@ static void draw_radar(struct mame_bitmap *bitmap)
 						sy = 255 - sy;
 					}
 
-					plot_pixel(bitmap,
-							   sx, sy,
-							   Machine->pens[offs < 0x200 ? 400 : 401]);
+					if (sy >= cliprect->min_y && sy <= cliprect->max_y &&
+						sx >= cliprect->min_x && sx <= cliprect->max_x)
+						plot_pixel(bitmap,
+								   sx, sy,
+								   Machine->pens[offs < 0x200 ? 400 : 401]);
 				}
 			}
 		}
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,int priority)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 
 
@@ -353,12 +345,12 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 					spriteram[offs + 1] & 0x07,
 					flipx,flipy,
 					sx,sy,
-					clip,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
-void senjyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( senjyo )
 {
 	int i;
 
@@ -400,16 +392,16 @@ void senjyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly(bg3_tilemap,0,scrolly);
 	}
 
-	draw_bgbitmap(bitmap, full_refresh);
-	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,bg3_tilemap,0,0);
-	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,bg2_tilemap,0,0);
-	draw_sprites(bitmap,2);
-	tilemap_draw(bitmap,bg1_tilemap,0,0);
-	draw_sprites(bitmap,3);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_radar(bitmap);
+	draw_bgbitmap(bitmap,cliprect);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,bg3_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,2);
+	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,3);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_radar(bitmap,cliprect);
 
 #if 0
 {

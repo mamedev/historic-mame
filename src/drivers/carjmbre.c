@@ -46,10 +46,9 @@ WRITE_HANDLER( carjmbre_flipscreen_w );
 WRITE_HANDLER( carjmbre_bgcolor_w );
 WRITE_HANDLER( carjmbre_videoram_w );
 
-void carjmbre_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  carjmbre_vh_start(void);
-void carjmbre_vh_stop(void);
-void carjmbre_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( carjmbre );
+VIDEO_START( carjmbre );
+VIDEO_UPDATE( carjmbre );
 
 
 static MEMORY_READ_START( carjmbre_readmem )
@@ -192,48 +191,37 @@ static struct AY8910interface carjmbre_ay8910_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_carjmbre =
-{
+static MACHINE_DRIVER_START( carjmbre )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,
-			carjmbre_readmem,carjmbre_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1500000,
-			carjmbre_sound_readmem,carjmbre_sound_writemem,carjmbre_sound_readport,carjmbre_sound_writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(Z80,18432000/6)
+	MDRV_CPU_MEMORY(carjmbre_readmem,carjmbre_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(carjmbre_sound_readmem,carjmbre_sound_writemem)
+	MDRV_CPU_PORTS(carjmbre_sound_readport,carjmbre_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	carjmbre_gfxdecodeinfo,
-	64,64,
-	carjmbre_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(carjmbre_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	carjmbre_vh_start,
-	0,
-	carjmbre_vh_screenrefresh,
+	MDRV_PALETTE_INIT(carjmbre)
+	MDRV_VIDEO_START(carjmbre)
+	MDRV_VIDEO_UPDATE(carjmbre)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&carjmbre_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, carjmbre_ay8910_interface)
+MACHINE_DRIVER_END
 
 ROM_START( carjmbre )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )

@@ -15,13 +15,13 @@ extern unsigned char *galaxian_spriteram;
 extern unsigned char *galaxian_attributesram;
 extern size_t galaxian_spriteram_size;
 
-void turtles_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( turtles );
 WRITE_HANDLER( scramble_background_red_w );
 WRITE_HANDLER( scramble_background_green_w );
 WRITE_HANDLER( scramble_background_blue_w );
 WRITE_HANDLER( galaxian_flip_screen_x_w );
 WRITE_HANDLER( galaxian_flip_screen_y_w );
-void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( galaxian );
 
 extern struct AY8910interface scobra_ay8910_interface;
 extern const struct Memory_ReadAddress scobra_sound_readmem[];
@@ -31,12 +31,12 @@ extern const struct IO_WritePort scobra_sound_writeport[];
 
 extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
 
-void init_scramble_ppi(void);
-void init_amidar(void);
+DRIVER_INIT( scramble_ppi );
+DRIVER_INIT( amidar );
 
-void scramble_init_machine(void);
+MACHINE_INIT( scramble );
 
-int turtles_vh_start(void);
+VIDEO_START( turtles );
 
 READ_HANDLER(amidar_ppi8255_0_r);
 READ_HANDLER(amidar_ppi8255_1_r);
@@ -424,48 +424,38 @@ INPUT_PORTS_START( turpin )
 INPUT_PORTS_END
 
 
-static const struct MachineDriver machine_driver_amidar =
-{
+static MACHINE_DRIVER_START( amidar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+8,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
-	turtles_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+8)
+	MDRV_COLORTABLE_LENGTH(8*4)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	turtles_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(turtles)
+	MDRV_VIDEO_START(turtles)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -103,7 +103,7 @@ static data16_t *t2_hack_mem;
 
 WRITE16_HANDLER( wms_yunit_cmos_w )
 {
-	logerror("%08x:CMOS Write @ %05X\n", cpu_get_pc(), offset);
+	logerror("%08x:CMOS Write @ %05X\n", activecpu_get_pc(), offset);
 	COMBINE_DATA(&wms_cmos_ram[offset + wms_cmos_page]);
 }
 
@@ -125,7 +125,7 @@ WRITE16_HANDLER( wms_yunit_cmos_enable_w )
 {
 	cmos_w_enable = (~data >> 9) & 1;
 
-	logerror("%08x:Protection write = %04X\n", cpu_get_pc(), data);
+	logerror("%08x:Protection write = %04X\n", activecpu_get_pc(), data);
 
 	/* only go down this path if we have a data structure */
 	if (prot_data)
@@ -174,7 +174,7 @@ WRITE16_HANDLER( wms_yunit_cmos_enable_w )
 READ16_HANDLER( wms_yunit_protection_r )
 {
 	/* return the most recently clocked value */
-	logerror("%08X:Protection read = %04X\n", cpu_get_pc(), prot_result);
+	logerror("%08X:Protection read = %04X\n", activecpu_get_pc(), prot_result);
 	return prot_result;
 }
 
@@ -232,7 +232,7 @@ static WRITE16_HANDLER( term2_sound_w )
 
 static WRITE16_HANDLER( term2_hack_w )
 {
-    if (offset == 0 && cpu_get_pc() == 0xffce5230)
+    if (offset == 0 && activecpu_get_pc() == 0xffce5230)
     {
         t2_hack_mem[offset] = 0;
         return;
@@ -387,7 +387,7 @@ static READ16_HANDLER( term2_speedup_r )
 		UINT32 value1 = wms_scratch_ram[TOWORD(0xaa040)];
 
 		/* Suspend cpu if it's waiting for an interrupt */
-		if (cpu_get_pc() == 0xffcdc270 && !value1)
+		if (activecpu_get_pc() == 0xffcdc270 && !value1)
 		{
 			INT32 a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a14,b0,b1,b2;
 			INT32 a3x,a5x,a6x,a7x;
@@ -552,7 +552,7 @@ READ16_HANDLER( wms_generic_speedup_1_16bit )
 		return value;
 
 	/* suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == wms_speedup_pc && !value)
+	if (activecpu_get_pc() == wms_speedup_pc && !value)
 	{
 		DO_SPEEDUP_LOOP_1(wms_speedup_spin[0], wms_speedup_spin[1], wms_speedup_spin[2], INT16, INT16);
 	}
@@ -577,7 +577,7 @@ READ16_HANDLER( wms_generic_speedup_1_mixedbits )
 		return value;
 
 	/* suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == wms_speedup_pc && !value)
+	if (activecpu_get_pc() == wms_speedup_pc && !value)
 	{
 		DO_SPEEDUP_LOOP_1(wms_speedup_spin[0], wms_speedup_spin[1], wms_speedup_spin[2], INT16, INT32);
 	}
@@ -602,7 +602,7 @@ READ16_HANDLER( wms_generic_speedup_1_32bit )
 		return value;
 
 	/* suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == wms_speedup_pc && !value)
+	if (activecpu_get_pc() == wms_speedup_pc && !value)
 	{
 		DO_SPEEDUP_LOOP_1(wms_speedup_spin[0], wms_speedup_spin[1], wms_speedup_spin[2], INT32, INT32);
 	}
@@ -645,7 +645,7 @@ READ16_HANDLER( wms_generic_speedup_3 )
 		return value;
 
 	/* suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == wms_speedup_pc && !value)
+	if (activecpu_get_pc() == wms_speedup_pc && !value)
 	{
 		DO_SPEEDUP_LOOP_3(wms_speedup_spin[0], wms_speedup_spin[1], wms_speedup_spin[2]);
 	}
@@ -770,7 +770,7 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end, int m
  *
  *************************************/
 
-void init_narc(void)
+DRIVER_INIT( narc )
 {
 	/* common init */
 	init_generic(8, SOUND_NARC, 0xcdff, 0xce29, 511, 426);
@@ -779,7 +779,7 @@ void init_narc(void)
 	INSTALL_SPEEDUP_1_32BIT(0x0101b310, 0xffde33e0, 0x1000040, 0xc0, 0xa0);
 }
 
-void init_narc3(void)
+DRIVER_INIT( narc3 )
 {
 	UINT32 bank, offset;
 
@@ -825,19 +825,19 @@ static void init_trog_common(void)
 	init_generic(4, SOUND_CVSD_SMALL, 0x9eaf, 0x9ed9, 394, 274);
 }
 
-void init_trog(void)
+DRIVER_INIT( trog )
 {
 	init_trog_common();
 	INSTALL_SPEEDUP_1_32BIT(0x010a20a0, 0xffe20630, 0x1000040, 0xc0, 0xa0);
 }
 
-void init_trog3(void)
+DRIVER_INIT( trog3 )
 {
 	init_trog_common();
 	INSTALL_SPEEDUP_1_32BIT(0x010a2090, 0xffe20660, 0x1000040, 0xc0, 0xa0);
 }
 
-void init_trogp(void)
+DRIVER_INIT( trogp )
 {
 	init_trog_common();
 	INSTALL_SPEEDUP_1_32BIT(0x010a1ee0, 0xffe210d0, 0x1000040, 0xc0, 0xa0);
@@ -852,13 +852,13 @@ static void init_smashtv_common(void)
 	init_generic(6, SOUND_CVSD_SMALL, 0x9cf6, 0x9d21, 394, 274);
 }
 
-void init_smashtv(void)
+DRIVER_INIT( smashtv )
 {
 	init_smashtv_common();
 	INSTALL_SPEEDUP_1_MIXEDBITS(0x01086760, 0xffe0a340, 0x1000040, 0xa0, 0x80);
 }
 
-void init_smashtv4(void)
+DRIVER_INIT( smashtv4 )
 {
 	init_smashtv_common();
 	INSTALL_SPEEDUP_1_MIXEDBITS(0x01086790, 0xffe0a320, 0x1000040, 0xa0, 0x80);
@@ -882,7 +882,7 @@ static void init_hiimpact_common(void)
 	init_generic(6, SOUND_CVSD, 0x9b79, 0x9ba3, 394, 274);
 }
 
-void init_hiimpact(void)
+DRIVER_INIT( hiimpact )
 {
 	init_hiimpact_common();
 	INSTALL_SPEEDUP_3(0x01053150, 0xffe28bb0, 0x1000080, 0x10000a0, 0x10000c0);
@@ -906,7 +906,7 @@ static void init_shimpact_common(void)
 	init_generic(6, SOUND_CVSD, 0x9c06, 0x9c15, 394, 274);
 }
 
-void init_shimpact(void)
+DRIVER_INIT( shimpact )
 {
 	init_shimpact_common();
 	INSTALL_SPEEDUP_3(0x01052070, 0xffe27f00, 0x1000000, 0x1000020, 0x1000040);
@@ -928,7 +928,7 @@ static void init_strkforc_common(void)
 	init_generic(4, SOUND_CVSD_SMALL, 0x9f7d, 0x9fa7, 399, 274);
 }
 
-void init_strkforc(void)
+DRIVER_INIT( strkforc )
 {
 	init_strkforc_common();
 	INSTALL_SPEEDUP_1_32BIT(0x01071dd0, 0xffe0a290, 0x1000060, 0xc0, 0xa0);
@@ -963,25 +963,31 @@ static void init_mk_common(void)
 	init_generic(6, SOUND_ADPCM, 0xfb9c, 0xfbc6, 398, 281);
 }
 
-void init_mkla1(void)
+DRIVER_INIT( mkprot9 )
+{
+	init_mk_common();
+	INSTALL_SPEEDUP_3(0x0104ef90, 0xffcdb3f0, 0x104b6b0, 0x104b6f0, 0x104b710);
+}
+
+DRIVER_INIT( mkla1 )
 {
 	init_mk_common();
 	INSTALL_SPEEDUP_3(0x0104f000, 0xffcddc00, 0x104b6b0, 0x104b6f0, 0x104b710);
 }
 
-void init_mkla2(void)
+DRIVER_INIT( mkla2 )
 {
 	init_mk_common();
 	INSTALL_SPEEDUP_3(0x0104f020, 0xffcde000, 0x104b6b0, 0x104b6f0, 0x104b710);
 }
 
-void init_mkla3(void)
+DRIVER_INIT( mkla3 )
 {
 	init_mk_common();
 	INSTALL_SPEEDUP_3(0x0104f040, 0xffce1ec0, 0x104b6b0, 0x104b6f0, 0x104b710);
 }
 
-void init_mkla4(void)
+DRIVER_INIT( mkla4 )
 {
 	init_mk_common();
 	INSTALL_SPEEDUP_3(0x0104f050, 0xffce21d0, 0x104b6b0, 0x104b6f0, 0x104b710);
@@ -1012,7 +1018,7 @@ static void init_term2_common(void)
 	t2_hack_mem = install_mem_write16_handler(0, TOBYTE(0x010aa0e0), TOBYTE(0x010aa0ff), term2_hack_w);
 }
 
-void init_term2(void)
+DRIVER_INIT( term2 )
 {
 	init_term2_common();
 	install_mem_read16_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
@@ -1037,13 +1043,13 @@ static void init_totcarn_common(void)
 	wms_partial_update_offset = 8;
 }
 
-void init_totcarn(void)
+DRIVER_INIT( totcarn )
 {
 	init_totcarn_common();
 	INSTALL_SPEEDUP_1_16BIT(0x0107dde0, 0xffc0c970, 0x1000040, 0xa0, 0x90);
 }
 
-void init_totcarnp(void)
+DRIVER_INIT( totcarnp )
 {
 	init_totcarn_common();
 	INSTALL_SPEEDUP_1_16BIT(0x0107dde0, 0xffc0c970, 0x1000040, 0xa0, 0x90);
@@ -1057,7 +1063,7 @@ void init_totcarnp(void)
  *
  *************************************/
 
-void wms_yunit_init_machine(void)
+MACHINE_INIT( wms_yunit )
 {
 	/* reset sound */
 	switch (sound_type)
@@ -1092,7 +1098,7 @@ WRITE16_HANDLER( wms_yunit_sound_w )
 	/* check for out-of-bounds accesses */
 	if (offset)
 	{
-		logerror("%08X:Unexpected write to sound (hi) = %04X\n", cpu_get_pc(), data);
+		logerror("%08X:Unexpected write to sound (hi) = %04X\n", activecpu_get_pc(), data);
 		return;
 	}
 

@@ -208,7 +208,7 @@ static void update_gfx( void )
 	}
 } /* update_gfx */
 
-int namcona1_vh_start( void )
+VIDEO_START( namcona1 )
 {
 	int i;
 	struct GfxElement *gfx0,*gfx1;
@@ -226,9 +226,9 @@ int namcona1_vh_start( void )
 		tilemap_palette_bank[i] = -1;
 	}
 
-	shaperam		= malloc( 0x1000*4*2 );
-	cgram			= malloc( 0x1000*0x20*2 );
-	dirtychar		= malloc( 0x1000 );
+	shaperam		= auto_malloc( 0x1000*4*2 );
+	cgram			= auto_malloc( 0x1000*0x20*2 );
+	dirtychar		= auto_malloc( 0x1000 );
 
 	if( shaperam && cgram && dirtychar )
 	{
@@ -247,21 +247,14 @@ int namcona1_vh_start( void )
 			return 0;
 		}
 	}
-	namcona1_vh_stop();
 	return -1; /* error */
 } /* namcona1_vh_start */
-
-void namcona1_vh_stop( void )
-{
-	free( shaperam );
-	free( cgram );
-	free( dirtychar );
-} /* namcona1_vh_stop */
 
 /*************************************************************************/
 
 static void pdraw_masked_tile(
 		struct mame_bitmap *bitmap,
+		const struct rectangle *cliprect,
 		unsigned int code,
 		int color,
 		int sx, int sy,
@@ -392,6 +385,7 @@ static void pdraw_masked_tile(
 
 static void pdraw_opaque_tile(
 		struct mame_bitmap *bitmap,
+		const struct rectangle *cliprect,
 		unsigned int code,
 		int color,
 		int sx, int sy,
@@ -455,12 +449,13 @@ static void pdraw_opaque_tile(
 
 static const data8_t pri_mask[8] = { 0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f };
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int which;
 	const data16_t *source = spriteram16;
 	void (*drawtile)(
 		struct mame_bitmap *,
+		const struct rectangle *,
 		unsigned int code,
 		int color,
 		int sx, int sy,
@@ -523,7 +518,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 					sx+=col*8;
 				}
 				drawtile(
-					bitmap,
+					bitmap,cliprect,
 					tile + row*64+col,
 					(color>>4)&0xf,
 					((sx+16)&0x1ff)-8,
@@ -551,7 +546,7 @@ static void draw_pixel_line( UINT16 *pDest, UINT8 *pPri, data16_t *pSource, cons
 	} /* next x */
 } /* draw_pixel_line */
 
-static void draw_background( struct mame_bitmap *bitmap, int which, int primask )
+static void draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int which, int primask )
 {
 	/*			scrollx	lineselect
 	 *	tmap0	ffe000	ffe200
@@ -572,48 +567,48 @@ static void draw_background( struct mame_bitmap *bitmap, int which, int primask 
 	paldata = &pGfx->colortable[pGfx->color_granularity * tilemap_palette_bank[which]];
 
 	/* draw one scanline at a time */
-	clip.min_x = 0;
-	clip.max_x = 38*8-1;
+	clip.min_x = cliprect->min_x;
+	clip.max_x = cliprect->max_x;
 	scrollx = 0;
 	scrolly = 0;
 	for( line=0; line<256; line++ )
-	{
-		clip.min_y = line;
-		clip.max_y = line;
-		tilemap_set_clip( tilemap[which], &clip );
-		xdata = scroll[line];
-		if( xdata )
+		if (line >= cliprect->min_y && line <= cliprect->max_y)
 		{
-			/* screenwise linescroll */
-			scrollx = xadjust+xdata;
+			clip.min_y = line;
+			clip.max_y = line;
+			xdata = scroll[line];
+			if( xdata )
+			{
+				/* screenwise linescroll */
+				scrollx = xadjust+xdata;
+			}
+			ydata = scroll[line+0x100];
+			if( ydata&0x4000 )
+			{
+				/* line select: dword offset from 0xff000 or tilemap source line */
+				scrolly = (ydata - line)&0x1ff;
+			}
+			if( xdata == 0xc001 )
+			{
+				/* This is a simplification, but produces the correct behavior for the only game that uses this
+				 * feature, Numan Athletics.
+				 */
+				draw_pixel_line(
+					bitmap->line[line],
+					priority_bitmap->line[line],
+					namcona1_sparevram + (ydata-0x4000) + 25,
+					paldata );
+			}
+			else
+			{
+				tilemap_set_scrollx( tilemap[which], 0, scrollx );
+				tilemap_set_scrolly( tilemap[which], 0, scrolly );
+				tilemap_draw( bitmap, &clip, tilemap[which], 0, primask );
+			}
 		}
-		ydata = scroll[line+0x100];
-		if( ydata&0x4000 )
-		{
-			/* line select: dword offset from 0xff000 or tilemap source line */
-			scrolly = (ydata - line)&0x1ff;
-		}
-		if( xdata == 0xc001 )
-		{
-			/* This is a simplification, but produces the correct behavior for the only game that uses this
-			 * feature, Numan Athletics.
-			 */
-			draw_pixel_line(
-				bitmap->line[line],
-				priority_bitmap->line[line],
-				namcona1_sparevram + (ydata-0x4000) + 25,
-				paldata );
-		}
-		else
-		{
-			tilemap_set_scrollx( tilemap[which], 0, scrollx );
-			tilemap_set_scrolly( tilemap[which], 0, scrolly );
-			tilemap_draw( bitmap, tilemap[which], 0, primask );
-		}
-	}
 } /* draw_background */
 
-void namcona1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( namcona1 )
 {
 	int which;
 	int priority;
@@ -632,18 +627,18 @@ void namcona1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				tilemap_palette_bank[which] = tilemap_color;
 			}
 		} /* next tilemap */
-		fillbitmap( priority_bitmap,0,NULL );
-		fillbitmap( bitmap,get_black_pen(),&Machine->visible_area );
+		fillbitmap( priority_bitmap,0,cliprect );
+		fillbitmap( bitmap,get_black_pen(),cliprect );
 		for( priority = 0; priority<8; priority++ )
 		{
 			for( which=NAMCONA1_NUM_TILEMAPS-1; which>=0; which-- )
 			{
 				if( namcona1_vreg[0x50+which] == priority )
 				{
-					draw_background( bitmap,which,pri_mask[priority] );
+					draw_background( bitmap,cliprect,which,pri_mask[priority] );
 				}
 			} /* next tilemap */
 		} /* next priority level */
-		draw_sprites( bitmap );
+		draw_sprites( bitmap,cliprect );
 	} /* gfx enabled */
 } /* namcona1_vh_screenrefresh */

@@ -37,7 +37,7 @@ static int tnzs_screenflip;
   form 512 xRRRRRGGGGGBBBBB color values.
 
 ***************************************************************************/
-void arknoid2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( arknoid2 )
 {
 	int i,col;
 
@@ -178,7 +178,7 @@ void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
 	}
 }
 
-void tnzs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tnzs )
 {
 	/* If the byte at f300 has bit 6 set, flip the screen
 	   (I'm not 100% sure about this) */

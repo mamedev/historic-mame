@@ -13,25 +13,22 @@ Preliminary driver by:
 #include "vidhrdw/konamiic.h"
 
 /* prototypes */
-static void gbusters_init_machine( void );
+static MACHINE_INIT( gbusters );
 static void gbusters_banking( int lines );
 
 
 extern int gbusters_priority;
 
-void gbusters_vh_stop( void );
-int gbusters_vh_start( void );
-void gbusters_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( gbusters );
+VIDEO_UPDATE( gbusters );
 
 static int palette_selected;
 static unsigned char *ram;
 
-static int gbusters_interrupt( void )
+static INTERRUPT_GEN( gbusters_interrupt )
 {
 	if (K052109_is_IRQ_enabled())
-		return KONAMI_INT_IRQ;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
 static READ_HANDLER( bankedram_r )
@@ -60,7 +57,7 @@ static WRITE_HANDLER( gbusters_1f98_w )
 
 	/* other bits unused/unknown */
 	if (data & 0xfe){
-		//logerror("%04x: (1f98) write %02x\n",cpu_get_pc(), data);
+		//logerror("%04x: (1f98) write %02x\n",activecpu_get_pc(), data);
 		//usrintf_showmessage("$1f98 = %02x", data);
 	}
 }
@@ -83,7 +80,7 @@ static WRITE_HANDLER( gbusters_coin_counter_w )
 	if (data & 0xf8)
 	{
 		char baf[40];
-		logerror("%04x: (ccount) write %02x\n",cpu_get_pc(), data);
+		logerror("%04x: (ccount) write %02x\n",activecpu_get_pc(), data);
 		sprintf(baf,"ccnt = %02x", data);
 //		usrintf_showmessage(baf);
 	}
@@ -91,7 +88,7 @@ static WRITE_HANDLER( gbusters_coin_counter_w )
 
 static WRITE_HANDLER( gbusters_unknown_w )
 {
-	logerror("%04x: write %02x to 0x1f9c\n",cpu_get_pc(), data);
+	logerror("%04x: write %02x to 0x1f9c\n",activecpu_get_pc(), data);
 
 {
 char baf[40];
@@ -102,7 +99,7 @@ char baf[40];
 
 WRITE_HANDLER( gbusters_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( gbusters_snd_bankswitch_w )
@@ -309,52 +306,35 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_gbusters =
-{
+static MACHINE_DRIVER_START( gbusters )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_KONAMI,		/* Konami custom 052526 */
-			3000000,		/* ? */
-			gbusters_readmem,gbusters_writemem,0,0,
-            gbusters_interrupt,1
-        },
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,		/* ? */
-			gbusters_readmem_sound, gbusters_writemem_sound,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	gbusters_init_machine,
+	MDRV_CPU_ADD(KONAMI, 3000000)	/* Konami custom 052526 */
+	MDRV_CPU_MEMORY(gbusters_readmem,gbusters_writemem)
+	MDRV_CPU_VBLANK_INT(gbusters_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	MDRV_CPU_MEMORY(gbusters_readmem_sound,gbusters_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(gbusters)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	gbusters_vh_start,
-	gbusters_vh_stop,
-	gbusters_vh_screenrefresh,
+	MDRV_VIDEO_START(gbusters)
+	MDRV_VIDEO_UPDATE(gbusters)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -422,14 +402,14 @@ static void gbusters_banking( int lines )
 	cpu_setbank( 1, &RAM[offs] );
 
 	if (lines & 0xf0){
-		//logerror("%04x: (lines) write %02x\n",cpu_get_pc(), lines);
+		//logerror("%04x: (lines) write %02x\n",activecpu_get_pc(), lines);
 		//usrintf_showmessage("lines = %02x", lines);
 	}
 
 	/* other bits unknown */
 }
 
-static void gbusters_init_machine( void )
+static MACHINE_INIT( gbusters )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -442,7 +422,7 @@ static void gbusters_init_machine( void )
 }
 
 
-static void init_gbusters(void)
+static DRIVER_INIT( gbusters )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

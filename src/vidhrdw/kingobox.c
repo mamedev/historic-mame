@@ -31,7 +31,7 @@ static int palette_bank;
   bit 3 --  51 ohm resistor  -- BLUE
 
 ***************************************************************************/
-void kingobox_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( kingobox )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -86,7 +86,7 @@ void kingobox_vh_convert_color_prom(unsigned char *palette,unsigned short *color
 
 
 /* Ring King has one 256x8 PROM instead of two 256x4 */
-void ringking_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ringking )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -154,7 +154,7 @@ WRITE_HANDLER( kingofb_f800_w )
 
 
 
-void kingobox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kingobox )
 {
 	int offs;
 
@@ -239,7 +239,7 @@ void kingobox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void ringking_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ringking )
 {
 	int offs;
 

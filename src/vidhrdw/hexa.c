@@ -59,7 +59,7 @@ WRITE_HANDLER( hexa_d008_w )
   the main emulation engine.
 
 ***************************************************************************/
-void hexa_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hexa )
 {
 	int offs;
 

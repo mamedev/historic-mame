@@ -20,11 +20,11 @@
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 
-void ddragon3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void ctribe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( ddragon3 );
+VIDEO_UPDATE( ctribe );
 WRITE16_HANDLER( ddragon3_scroll16_w );
 
-extern int ddragon3_vh_start(void);
+extern VIDEO_START( ddragon3 );
 
 extern data16_t *ddragon3_bg_videoram16;
 WRITE16_HANDLER( ddragon3_bg_videoram16_w );
@@ -81,14 +81,13 @@ static READ16_HANDLER( ddragon3_io16_r )
 
 extern UINT16 ddragon3_vreg;
 
-static int ddragon3_cpu_interrupt(void) { /* 6:0x177e - 5:0x176a */
+static INTERRUPT_GEN( ddragon3_cpu_interrupt ) { /* 6:0x177e - 5:0x176a */
 	if( cpu_getiloops() == 0 ){
-		return MC68000_IRQ_6;  /* VBlank */
+		cpu_set_irq_line(0, 6, HOLD_LINE);  /* VBlank */
 	}
 	else {
-		return MC68000_IRQ_5; /* Input Ports */
+		cpu_set_irq_line(0, 5, HOLD_LINE); /* Input Ports */
 	}
-	return ignore_interrupt();
 }
 
 static data16_t reg[8];
@@ -105,7 +104,7 @@ static WRITE16_HANDLER( ddragon3_io16_w )
 
 	case 1: /* soundlatch_w */
 	soundlatch_w(1,reg[1]&0xff);
-	cpu_cause_interrupt( 1, Z80_NMI_INT );
+	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 	break;
 
 	case 2:
@@ -124,7 +123,7 @@ static WRITE16_HANDLER( ddragon3_io16_w )
 	break;
 
 	default:
-	logerror("OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, cpu_get_pc() );
+	logerror("OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, activecpu_get_pc() );
 	break;
 	}
 }
@@ -559,146 +558,95 @@ static struct OKIM6295interface okim6295_interface =
 
 /**************************************************************************/
 
-static const struct MachineDriver machine_driver_ddragon3 =
-{
-	{
-		{
-			CPU_M68000,
-			12000000, /* Guess */
-			readmem,writemem,0,0,
-			ddragon3_cpu_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* Guess */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( ddragon3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000) /* Guess */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 240, { 0, 319, 8, 239 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 8, 239)
+	MDRV_GFXDECODE(ddragon3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	ddragon3_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon3_vh_start,
-	0,
-	ddragon3_vh_screenrefresh,
+	MDRV_VIDEO_START(ddragon3)
+	MDRV_VIDEO_UPDATE(ddragon3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ddrago3b =
-{
-	{
-		{
-			CPU_M68000,
-			12000000, /* Guess */
-			dd3b_readmem,dd3b_writemem,0,0,
-			ddragon3_cpu_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* Guess */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( ddrago3b )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000) /* Guess */
+	MDRV_CPU_MEMORY(dd3b_readmem,dd3b_writemem)
+	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 240, { 0, 319, 8, 239 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 8, 239)
+	MDRV_GFXDECODE(ddragon3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	ddragon3_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon3_vh_start,
-	0,
-	ddragon3_vh_screenrefresh,
+	MDRV_VIDEO_START(ddragon3)
+	MDRV_VIDEO_UPDATE(ddragon3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ctribe =
-{
-	{
-		{
-			CPU_M68000,
-			12000000, /* Guess */
-			ctribe_readmem,ctribe_writemem,0,0,
-			ddragon3_cpu_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* Guess */
-			ctribe_readmem_sound,ctribe_writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( ctribe )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000) /* Guess */
+	MDRV_CPU_MEMORY(ctribe_readmem,ctribe_writemem)
+	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	MDRV_CPU_MEMORY(ctribe_readmem_sound,ctribe_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 240, { 0, 319, 8, 239 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 8, 239)
+	MDRV_GFXDECODE(ddragon3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	ddragon3_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon3_vh_start,
-	0,
-	ctribe_vh_screenrefresh,
+	MDRV_VIDEO_START(ddragon3)
+	MDRV_VIDEO_UPDATE(ctribe)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /**************************************************************************/
 

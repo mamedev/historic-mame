@@ -1,16 +1,12 @@
 /***************************************************************************
 
-  vidhrdw/mcr68.c
-
-  Xenophobe video hardware very similar to Rampage.
-
-  Colour 8 in sprites indicates transparency in closed area.
-  Each tile has an attribute to indicate tile drawn on top of sprite.
+	Midway MCR-68k system
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "mcr.h"
 
 
 #define LOW_BYTE(x) ((x) & 0xff)
@@ -75,7 +71,7 @@ WRITE16_HANDLER( mcr68_videoram_w )
  *
  *************************************/
 
-static void mcr68_update_background(struct mame_bitmap *bitmap, int overrender)
+static void mcr68_update_background(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int overrender)
 {
 	int offs;
 
@@ -95,10 +91,10 @@ static void mcr68_update_background(struct mame_bitmap *bitmap, int overrender)
 
 			if (!overrender)
 				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08,
-						16 * mx, 16 * my, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+						16 * mx, 16 * my, cliprect, TRANSPARENCY_NONE, 0);
 			else if (Machine->gfx[0]->total_elements < 0x1000 && (attr & 0x80))
 				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08,
-						16 * mx, 16 * my, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+						16 * mx, 16 * my, cliprect, TRANSPARENCY_PEN, 0);
 			else
 				continue;
 
@@ -116,7 +112,7 @@ static void mcr68_update_background(struct mame_bitmap *bitmap, int overrender)
  *
  *************************************/
 
-static void mcr68_update_sprites(struct mame_bitmap *bitmap, int priority)
+static void mcr68_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	struct rectangle sprite_clip = Machine->visible_area;
 	int offs;
@@ -124,8 +120,9 @@ static void mcr68_update_sprites(struct mame_bitmap *bitmap, int priority)
 	/* adjust for clipping */
 	sprite_clip.min_x += mcr68_sprite_clip;
 	sprite_clip.max_x -= mcr68_sprite_clip;
+	sect_rect(&sprite_clip, cliprect);
 
-	fillbitmap(priority_bitmap,1,NULL);
+	fillbitmap(priority_bitmap,1,&sprite_clip);
 
 	/* loop over sprite RAM */
 	for (offs = spriteram_size / 2 - 4;offs >= 0;offs -= 4)
@@ -189,22 +186,22 @@ static void mcr68_update_sprites(struct mame_bitmap *bitmap, int priority)
  *
  *************************************/
 
-void mcr68_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mcr68 )
 {
 	/* draw the background */
-	mcr68_update_background(tmpbitmap, 0);
+	mcr68_update_background(tmpbitmap, &Machine->visible_area, 0);
 
 	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
 	/* draw the low-priority sprites */
-	mcr68_update_sprites(bitmap, 0);
+	mcr68_update_sprites(bitmap, cliprect, 0);
 
     /* redraw tiles with priority over sprites */
-	mcr68_update_background(bitmap, 1);
+	mcr68_update_background(bitmap, cliprect, 1);
 
 	/* draw the high-priority sprites */
-	mcr68_update_sprites(bitmap, 1);
+	mcr68_update_sprites(bitmap, cliprect, 1);
 }
 
 
@@ -279,7 +276,7 @@ WRITE16_HANDLER( zwackery_spriteram_w )
  *
  *************************************/
 
-void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( zwackery )
 {
 	const UINT8 *colordatabase = (const UINT8 *)memory_region(REGION_GFX3);
 	struct GfxElement *gfx0 = Machine->gfx[0];
@@ -334,7 +331,7 @@ void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colorta
  *
  *************************************/
 
-static void zwackery_update_background(struct mame_bitmap *bitmap, int overrender)
+static void zwackery_update_background(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int overrender)
 {
 	int offs;
 
@@ -378,11 +375,11 @@ static void zwackery_update_background(struct mame_bitmap *bitmap, int overrende
  *
  *************************************/
 
-static void zwackery_update_sprites(struct mame_bitmap *bitmap, int priority)
+static void zwackery_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	int offs;
 
-	fillbitmap(priority_bitmap,1,NULL);
+	fillbitmap(priority_bitmap,1,cliprect);
 
 	/* loop over sprite RAM */
 	for (offs = spriteram_size / 2 - 4;offs >= 0;offs -= 4)
@@ -425,12 +422,11 @@ static void zwackery_update_sprites(struct mame_bitmap *bitmap, int priority)
 
 		/* first draw the sprite, visible */
 		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
-				&Machine->visible_area, TRANSPARENCY_PENS, 0x0101, 0x00);
+				cliprect, TRANSPARENCY_PENS, 0x0101, 0x00);
 
 		/* then draw the mask, behind the background but obscuring following sprites */
 		pdrawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
-				&Machine->visible_area, TRANSPARENCY_PENS, 0xfeff, 0x02);
-
+				cliprect, TRANSPARENCY_PENS, 0xfeff, 0x02);
 
 		/* mark tiles underneath as dirty for overrendering */
 		if (priority == 0)
@@ -455,20 +451,20 @@ static void zwackery_update_sprites(struct mame_bitmap *bitmap, int priority)
  *
  *************************************/
 
-void zwackery_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( zwackery )
 {
 	/* draw the background */
-	zwackery_update_background(tmpbitmap, 0);
+	zwackery_update_background(tmpbitmap, &Machine->visible_area, 0);
 
 	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
 	/* draw the low-priority sprites */
-	zwackery_update_sprites(bitmap, 0);
+	zwackery_update_sprites(bitmap, cliprect, 0);
 
 	/* draw the background */
-	zwackery_update_background(bitmap, 1);
+	zwackery_update_background(bitmap, cliprect, 1);
 
 	/* draw the high-priority sprites */
-	zwackery_update_sprites(bitmap, 1);
+	zwackery_update_sprites(bitmap, cliprect, 1);
 }

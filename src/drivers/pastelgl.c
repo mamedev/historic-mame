@@ -29,10 +29,9 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void pastelgl_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void pastelgl_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int pastelgl_vh_start(void);
-void pastelgl_vh_stop(void);
+PALETTE_INIT( pastelgl );
+VIDEO_UPDATE( pastelgl );
+VIDEO_START( pastelgl );
 
 void pastelgl_paltbl_w(int offset, int data);
 void pastelgl_radrx_w(int data);
@@ -65,7 +64,7 @@ int pastelgl_sndrom_r(int offset)
 	return ROM[(((0x0100 * voiradr_h) + voiradr_l) & 0x7fff)];
 }
 
-static void init_pastelgl(void)
+static DRIVER_INIT( pastelgl )
 {
 	nb1413m3_type = NB1413M3_PASTELGL;
 }
@@ -230,51 +229,34 @@ static struct DACinterface dac_interface =
 };
 
 
-#define NBMJDRV(_name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			19968000/8,		/* 2.496 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	0, \
-\
-	/* video hardware */ \
-	256, 256, { 0, 256-1, 16, 240-1 }, \
-	0, \
-	32, 0, \
-	pastelgl_vh_convert_color_prom, \
-\
-	VIDEO_TYPE_RASTER, \
-	0, \
-	pastelgl_vh_start, \
-	pastelgl_vh_stop, \
-	pastelgl_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+static MACHINE_DRIVER_START( pastelgl )
 
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 19968000/8)	/* 2.496 MHz ? */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem_pastelgl, writemem_pastelgl)
+	MDRV_CPU_PORTS(readport_pastelgl, writeport_pastelgl)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)
 
-//	     NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV( pastelgl,  96, pastelgl, pastelgl, pastelgl, pastelgl, nb1413m3_nvram_handler )
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(nb1413m3)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 16, 240-1)
+	MDRV_PALETTE_LENGTH(32)
+
+	MDRV_PALETTE_INIT(pastelgl)
+	MDRV_VIDEO_START(pastelgl)
+	MDRV_VIDEO_UPDATE(pastelgl)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( pastelgl )

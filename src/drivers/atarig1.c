@@ -21,24 +21,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( atarig1_mo_control_w );
-
-int atarig1_vh_start(void);
-void atarig1_vh_stop(void);
-void atarig1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void atarig1_scanline_update(int param);
-
-extern UINT8 atarig1_pitfight;
+#include "atarig1.h"
 
 
 
@@ -79,7 +62,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( atarig1 )
 {
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -367,89 +350,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_atarig1 =
-{
+static MACHINE_DRIVER_START( atarig1 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_II_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atarig1)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1280, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarig1_vh_start,
-	atarig1_vh_stop,
-	atarig1_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1280)
+	
+	MDRV_VIDEO_START(atarig1)
+	MDRV_VIDEO_UPDATE(atarig1)
+	
 	/* sound hardware */
-	JSA_II_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_hydra(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarigen_slapstic_init(0, 0x078000, 116);
-	atarijsa_init(1, 4, 0, 0x8000);
-	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
-
-	atarig1_pitfight = 0;
-}
-
-
-static void init_hydrap(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 4, 0, 0x8000);
-	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
-
-	atarig1_pitfight = 0;
-}
-
-
-static void init_pitfight(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarigen_slapstic_init(0, 0x038000, 111);
-	atarijsa_init(1, 4, 0, 0x8000);
-	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
-
-	atarig1_pitfight = 1;
-}
-
-
-static void init_pitfighb(void)
-{
-	atarigen_eeprom_default = NULL;
-	pitfighb_cheap_slapstic_init();
-	atarijsa_init(1, 4, 0, 0x8000);
-	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
-
-	atarig1_pitfight = 1;
-}
+	MDRV_IMPORT_FROM(jsa_ii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -708,6 +634,56 @@ ROM_START( pitfighb )
 	ROM_LOAD( "1063",  0x20000, 0x10000, 0xaa93421d )
 	ROM_LOAD( "1064",  0x30000, 0x10000, 0x33f045d5 )
 ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( hydra )
+{
+	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x078000, 116);
+	atarijsa_init(1, 4, 0, 0x8000);
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	atarig1_pitfight = 0;
+}
+
+
+static DRIVER_INIT( hydrap )
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 0, 0x8000);
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	atarig1_pitfight = 0;
+}
+
+
+static DRIVER_INIT( pitfight )
+{
+	atarigen_eeprom_default = NULL;
+	atarigen_slapstic_init(0, 0x038000, 111);
+	atarijsa_init(1, 4, 0, 0x8000);
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	atarig1_pitfight = 1;
+}
+
+
+static DRIVER_INIT( pitfighb )
+{
+	atarigen_eeprom_default = NULL;
+	pitfighb_cheap_slapstic_init();
+	atarijsa_init(1, 4, 0, 0x8000);
+	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	atarig1_pitfight = 1;
+}
 
 
 

@@ -459,58 +459,34 @@ READ16_HANDLER( niyanpai_gfxrom_2_r ) { return niyanpai_gfxrom_r(2, offset); }
 
 
 ******************************************************************************/
-int niyanpai_vh_start(void)
+VIDEO_START( niyanpai )
 {
-	if ((niyanpai_tmpbitmap0 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((niyanpai_tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((niyanpai_tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((niyanpai_videoram0 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((niyanpai_videoram1 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((niyanpai_videoram2 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((niyanpai_palette = malloc(0x480 * sizeof(short))) == 0) return 1;
-	if ((niyanpai_paltbl0 = malloc(0x1000 * sizeof(char))) == 0) return 1;
-	if ((niyanpai_paltbl1 = malloc(0x1000 * sizeof(char))) == 0) return 1;
-	if ((niyanpai_paltbl2 = malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((niyanpai_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((niyanpai_tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((niyanpai_tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((niyanpai_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((niyanpai_videoram1 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((niyanpai_videoram2 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((niyanpai_palette = auto_malloc(0x480 * sizeof(short))) == 0) return 1;
+	if ((niyanpai_paltbl0 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((niyanpai_paltbl1 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
+	if ((niyanpai_paltbl2 = auto_malloc(0x1000 * sizeof(char))) == 0) return 1;
 	memset(niyanpai_videoram0, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(niyanpai_videoram1, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(niyanpai_videoram2, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	return 0;
 }
 
-void niyanpai_vh_stop(void)
-{
-	free(niyanpai_paltbl2);
-	free(niyanpai_paltbl1);
-	free(niyanpai_paltbl0);
-	free(niyanpai_palette);
-	free(niyanpai_videoram2);
-	free(niyanpai_videoram1);
-	free(niyanpai_videoram0);
-	bitmap_free(niyanpai_tmpbitmap2);
-	bitmap_free(niyanpai_tmpbitmap1);
-	bitmap_free(niyanpai_tmpbitmap0);
-	niyanpai_paltbl2 = 0;
-	niyanpai_paltbl1 = 0;
-	niyanpai_paltbl0 = 0;
-	niyanpai_palette = 0;
-	niyanpai_videoram2 = 0;
-	niyanpai_videoram1 = 0;
-	niyanpai_videoram0 = 0;
-	niyanpai_tmpbitmap2 = 0;
-	niyanpai_tmpbitmap1 = 0;
-	niyanpai_tmpbitmap0 = 0;
-}
-
 /******************************************************************************
 
 
 ******************************************************************************/
-void niyanpai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( niyanpai )
 {
 	int x, y;
 	unsigned short color;
 
-	if (full_refresh || niyanpai_screen_refresh)
+	if (get_vh_global_attribute_changed() || niyanpai_screen_refresh)
 	{
 		niyanpai_screen_refresh = 0;
 

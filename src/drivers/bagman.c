@@ -62,14 +62,14 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 
 READ_HANDLER( bagman_pal16r6_r );
-void bagman_machine_init(void);
+MACHINE_INIT( bagman );
 WRITE_HANDLER( bagman_pal16r6_w );
 
 
 extern unsigned char *bagman_video_enable;
 WRITE_HANDLER( bagman_flipscreen_w );
-void bagman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void bagman_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable, const unsigned char *color_prom);
+VIDEO_UPDATE( bagman );
+PALETTE_INIT( bagman );
 
 
 
@@ -515,83 +515,62 @@ static struct TMS5110interface tms5110_interface =
 	bagman_speech_rom_read_bit	/*M0 callback function. Called whenever chip requests a single bit of data*/
 };
 
-static const struct MachineDriver machine_driver_bagman =
-{
+static MACHINE_DRIVER_START( bagman )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	bagman_machine_init,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(bagman)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 0,
-	bagman_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	bagman_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bagman)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(bagman)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_TMS5110,
-			&tms5110_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(TMS5110, tms5110_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_pickin =
-{
+static MACHINE_DRIVER_START( pickin )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			pickin_readmem,pickin_writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	bagman_machine_init,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(pickin_readmem,pickin_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(bagman)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	pickin_gfxdecodeinfo,
-	64, 0,
-	bagman_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(pickin_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	bagman_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bagman)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(bagman)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

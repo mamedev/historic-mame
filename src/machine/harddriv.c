@@ -9,6 +9,7 @@
 #include "cpu/tms34010/34010ops.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "sndhrdw/atarijsa.h"
+#include "harddriv.h"
 
 
 /*************************************
@@ -140,7 +141,9 @@ static void update_interrupts(void)
 }
 
 
-void harddriv_init_machine(void)
+static void duart_callback(int param);
+
+MACHINE_INIT( harddriv )
 {
 	int has_6502 = 0;
 	int i;
@@ -208,7 +211,7 @@ void harddriv_init_machine(void)
 	memset(duart_read_data, 0, sizeof(duart_read_data));
 	memset(duart_write_data, 0, sizeof(duart_write_data));
 	duart_output_port = 0;
-	duart_timer = NULL;
+	duart_timer = timer_alloc(duart_callback);
 
 	adsp_halt = 1;
 	adsp_br = 0;
@@ -225,7 +228,7 @@ void harddriv_init_machine(void)
  *
  *************************************/
 
-int hd68k_vblank_gen(void)
+INTERRUPT_GEN( hd68k_vblank_gen )
 {
 	/* update the pedals once per frame */
 	if (readinputport(5) & 1)
@@ -238,15 +241,14 @@ int hd68k_vblank_gen(void)
 		if (pedal_value > 16)
 			pedal_value -= 16;
 	}
-	return atarigen_video_int_gen();
+	atarigen_video_int_gen();
 }
 
 
-int hd68k_irq_gen(void)
+INTERRUPT_GEN( hd68k_irq_gen )
 {
 	irq_state = 1;
 	atarigen_update_interrupts();
-	return ignore_interrupt();
 }
 
 
@@ -855,7 +857,7 @@ READ16_HANDLER( hdadsp_special_r )
 			break;
 
 		default:
-			logerror("%04X:hdadsp_special_r(%04X)\n", cpu_getpreviouspc(), offset);
+			logerror("%04X:hdadsp_special_r(%04X)\n", activecpu_get_previouspc(), offset);
 			break;
 	}
 	return 0;
@@ -883,7 +885,7 @@ WRITE16_HANDLER( hdadsp_special_w )
 			break;
 
 		case 6:	/* /GINT */
-			logerror("%04X:ADSP signals interrupt\n", cpu_getpreviouspc());
+			logerror("%04X:ADSP signals interrupt\n", activecpu_get_previouspc());
 			adsp_irq_state = 1;
 			atarigen_update_interrupts();
 			break;
@@ -893,7 +895,7 @@ WRITE16_HANDLER( hdadsp_special_w )
 			break;
 
 		default:
-			logerror("%04X:hdadsp_special_w(%04X)=%04X\n", cpu_getpreviouspc(), offset, data);
+			logerror("%04X:hdadsp_special_w(%04X)=%04X\n", activecpu_get_previouspc(), offset, data);
 			break;
 	}
 }
@@ -949,7 +951,7 @@ static void duart_callback(int param)
 		duart_irq_state = (duart_read_data[0x05] & duart_write_data[0x05]) != 0;
 		atarigen_update_interrupts();
 	}
-	duart_timer = timer_set(duart_clock_period() * 65536.0, 0, duart_callback);
+	timer_adjust(duart_timer, duart_clock_period() * 65536.0, 0, 0);
 }
 
 
@@ -976,22 +978,18 @@ READ16_HANDLER( hd68k_duart_r )
 		case 0x0e:		/* Start-Counter Command 3 */
 		{
 			int reps = (duart_write_data[0x06] << 8) | duart_write_data[0x07];
-			if (duart_timer)
-				timer_remove(duart_timer);
-			duart_timer = timer_set(duart_clock_period() * (double)reps, 0, duart_callback);
+			timer_adjust(duart_timer, duart_clock_period() * (double)reps, 0, 0);
 			logerror("DUART timer started (period=%f)\n", duart_clock_period() * (double)reps);
 			return 0x00ff;
 		}
 		case 0x0f:		/* Stop-Counter Command 3 */
-			if (duart_timer)
 			{
 				int reps = timer_timeleft(duart_timer) / duart_clock_period();
-				timer_remove(duart_timer);
+				timer_adjust(duart_timer, TIME_NEVER, 0, 0);
 				duart_read_data[0x06] = reps >> 8;
 				duart_read_data[0x07] = reps & 0xff;
 				logerror("DUART timer stopped (final count=%04X)\n", reps);
 			}
-			duart_timer = NULL;
 			duart_read_data[0x05] &= ~0x08;
 			duart_irq_state = (duart_read_data[0x05] & duart_write_data[0x05]) != 0;
 			atarigen_update_interrupts();
@@ -1199,7 +1197,7 @@ WRITE16_HANDLER( racedriv_asic65_w )
 	/* commands go to offset 1 */
 	else
 	{
-		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", cpu_getpreviouspc(), data);
+		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", activecpu_get_previouspc(), data);
 
 		asic65_command = data;
 		asic65_result_index = asic65_param_index = 0;
@@ -1325,9 +1323,9 @@ static WRITE16_HANDLER( asic61_w )
 {
 	if (!asic61_ram_low)
 	{
-		asic61_ram_low = malloc(2 * 0x1000);
-		asic61_ram_mid = malloc(2 * 0x20000);
-		asic61_ram_high = malloc(2 * 0x00800);
+		asic61_ram_low = auto_malloc(2 * 0x1000);
+		asic61_ram_mid = auto_malloc(2 * 0x20000);
+		asic61_ram_high = auto_malloc(2 * 0x00800);
 		if (!asic61_ram_low || !asic61_ram_mid || !asic61_ram_high)
 			return;
 	}
@@ -1346,9 +1344,9 @@ static READ16_HANDLER( asic61_r )
 {
 	if (!asic61_ram_low)
 	{
-		asic61_ram_low = malloc(2 * 0x1000);
-		asic61_ram_mid = malloc(2 * 0x20000);
-		asic61_ram_high = malloc(2 * 0x00800);
+		asic61_ram_low = auto_malloc(2 * 0x1000);
+		asic61_ram_mid = auto_malloc(2 * 0x20000);
+		asic61_ram_high = auto_malloc(2 * 0x00800);
 		if (!asic61_ram_low || !asic61_ram_mid || !asic61_ram_high)
 			return 0;
 	}
@@ -1374,23 +1372,23 @@ WRITE16_HANDLER( racedriv_asic61_w )
 	switch (offset)
 	{
 		case 0x00:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem addr lo = %04X\n", cpu_getpreviouspc(), data);
+//			if (asic61_log) fprintf(asic61_log, "%06X:mem addr lo = %04X\n", activecpu_get_previouspc(), data);
 			asic61_addr = (asic61_addr & 0x00ff0000) | (data & 0xfffe);
 			break;
 
 		case 0x02:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem W @ %08X=%04X\n", cpu_getpreviouspc(), asic61_addr, data);
+//			if (asic61_log) fprintf(asic61_log, "%06X:mem W @ %08X=%04X\n", activecpu_get_previouspc(), asic61_addr, data);
 			asic61_w(asic61_addr, data, mem_mask);
 			asic61_addr = (asic61_addr & 0xffff0000) | ((asic61_addr+1) & 0x0000ffff);
 			break;
 
 		case 0x0b:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem addr hi = %04X\n", cpu_getpreviouspc(), data);
+//			if (asic61_log) fprintf(asic61_log, "%06X:mem addr hi = %04X\n", activecpu_get_previouspc(), data);
 			asic61_addr = ((data << 16) & 0x00ff0000) | (asic61_addr & 0xfffe);
 			break;
 
 		default:
-			if (asic61_log) fprintf(asic61_log, "%06X:W@%02X = %04X\n", cpu_getpreviouspc(), offset, data);
+			if (asic61_log) fprintf(asic61_log, "%06X:W@%02X = %04X\n", activecpu_get_previouspc(), offset, data);
 			break;
 	}
 }
@@ -1405,11 +1403,11 @@ READ16_HANDLER( racedriv_asic61_r )
 	switch (offset)
 	{
 		case 0x00:
-//			if (asic61_log) fprintf(asic61_log, "%06X:read mem addr lo = %04X\n", cpu_getpreviouspc(), asic61_addr & 0xffff);
+//			if (asic61_log) fprintf(asic61_log, "%06X:read mem addr lo = %04X\n", activecpu_get_previouspc(), asic61_addr & 0xffff);
 			return (asic61_addr & 0xfffe) | 1;
 
 		case 0x02:
-//			if (asic61_log) fprintf(asic61_log, "%06X:mem R @ %08X=%04X\n", cpu_getpreviouspc(), asic61_addr, asic61_r(asic61_addr));
+//			if (asic61_log) fprintf(asic61_log, "%06X:mem R @ %08X=%04X\n", activecpu_get_previouspc(), asic61_addr, asic61_r(asic61_addr));
 			asic61_addr = (asic61_addr & 0xffff0000) | ((asic61_addr+1) & 0x0000ffff);
 
 			/* special case: reading from 0x613e08 seems to be a flag */
@@ -1418,7 +1416,7 @@ READ16_HANDLER( racedriv_asic61_r )
 			return asic61_r(orig_addr,0);
 
 		default:
-//			if (asic61_log) fprintf(asic61_log, "%06X:R@%02X\n", cpu_getpreviouspc(), offset);
+//			if (asic61_log) fprintf(asic61_log, "%06X:R@%02X\n", activecpu_get_previouspc(), offset);
 			break;
 	}
 	return 0;
@@ -1492,7 +1490,7 @@ READ16_HANDLER( hdadsp_speedup_r )
 {
 	int data = READ_DATA(0x1fff);
 
-	if (data == 0xffff && cpu_get_pc() <= 0x14 && cpu_getactivecpu() == adsp_cpu)
+	if (data == 0xffff && activecpu_get_pc() <= 0x14 && cpu_getactivecpu() == adsp_cpu)
 		cpu_spinuntil_trigger(554433);
 
 	return data;
@@ -1503,12 +1501,12 @@ READ16_HANDLER( hdadsp_speedup2_r )
 {
 	UINT32 i5 = READ_DATA(0x0958);
 
-	int pc = cpu_get_pc();
+	int pc = activecpu_get_pc();
 	if (pc >= 0x07c7 && pc <= 0x7d5)
 	{
-		UINT32 i4 = cpu_get_reg(ADSP2100_I4);
-		INT32 ay = (READ_PGM(i4++) << 16) | (UINT16)cpu_get_reg(ADSP2100_AY1);
-		INT32 sr = (cpu_get_reg(ADSP2100_SR1) << 16) | (UINT16)cpu_get_reg(ADSP2100_SR0);
+		UINT32 i4 = activecpu_get_reg(ADSP2100_I4);
+		INT32 ay = (READ_PGM(i4++) << 16) | (UINT16)activecpu_get_reg(ADSP2100_AY1);
+		INT32 sr = (activecpu_get_reg(ADSP2100_SR1) << 16) | (UINT16)activecpu_get_reg(ADSP2100_SR0);
 		INT32 last_ay;
 
 		if (ay < sr)
@@ -1521,8 +1519,8 @@ READ16_HANDLER( hdadsp_speedup2_r )
 				ay = (UINT16)READ_PGM(i4) | (READ_PGM(i4 + 1) << 16);
 				i4 += 2;
 			} while (sr >= last_ay);
-			cpu_set_reg(ADSP2100_I4, i4);
-			cpu_set_reg(ADSP2100_PC, pc + 0x7d0 - 0x7c7);
+			activecpu_set_reg(ADSP2100_I4, i4);
+			activecpu_set_reg(ADSP2100_PC, pc + 0x7d0 - 0x7c7);
 		}
 		else
 		{
@@ -1535,10 +1533,10 @@ READ16_HANDLER( hdadsp_speedup2_r )
 				ay = (UINT16)READ_PGM(i4) | (READ_PGM(i4 + 1) << 16);
 				i4 += 3;
 			} while (last_ay >= sr);
-			cpu_set_reg(ADSP2100_I4, i4);
-			cpu_set_reg(ADSP2100_AR, i4 - 3);
-			cpu_set_reg(ADSP2100_M4, 2);
-			cpu_set_reg(ADSP2100_PC, pc + 0x7ec - 0x7c7);
+			activecpu_set_reg(ADSP2100_I4, i4);
+			activecpu_set_reg(ADSP2100_AR, i4 - 3);
+			activecpu_set_reg(ADSP2100_M4, 2);
+			activecpu_set_reg(ADSP2100_PC, pc + 0x7ec - 0x7c7);
 		}
 	}
 
@@ -1553,8 +1551,8 @@ READ16_HANDLER( hdadsp_speedup2_r )
 
 WRITE16_HANDLER( hdadsp_speedup2_w )
 {
-	int se = (INT8)cpu_get_reg(ADSP2100_SE);
-	UINT32 pc = cpu_get_pc();
+	int se = (INT8)activecpu_get_reg(ADSP2100_SE);
+	UINT32 pc = activecpu_get_pc();
 	data32_t *matrix;
 	INT16 *vector;
 	INT16 *trans;
@@ -1630,10 +1628,10 @@ WRITE16_HANDLER( hdadsp_speedup2_w )
 
 		vector += 3;
 	}
-	cpu_set_reg(ADSP2100_SI, *vector++);
+	activecpu_set_reg(ADSP2100_SI, *vector++);
 	adsp_sim_address = ((data16_t *)vector - sim_memory) - adsp_eprom_base;
 
-	cpu_set_reg(ADSP2100_PC, pc + 0x165 - 0x139);
+	activecpu_set_reg(ADSP2100_PC, pc + 0x165 - 0x139);
 }
 
 
@@ -1651,7 +1649,7 @@ READ16_HANDLER( hdgsp_speedup_r )
 	if (offset != 0 || result == 0xffff)
 		return result;
 
-	if (cpu_get_pc() == hdgsp_speedup_pc && hdgsp_speedup_addr[1][0] != 0xffff && cpu_getactivecpu() == gsp_cpu)
+	if (activecpu_get_pc() == hdgsp_speedup_pc && hdgsp_speedup_addr[1][0] != 0xffff && cpu_getactivecpu() == gsp_cpu)
 		cpu_spinuntil_int();
 
 	return result;
@@ -1688,7 +1686,7 @@ READ16_HANDLER( hdmsp_speedup_r )
 	if (offset != 0 || result != 0)
 		return result;
 
-	if (cpu_get_pc() == hdmsp_speedup_pc && cpu_getactivecpu() == msp_cpu)
+	if (activecpu_get_pc() == hdmsp_speedup_pc && cpu_getactivecpu() == msp_cpu)
 		cpu_spinuntil_int();
 
 	return result;

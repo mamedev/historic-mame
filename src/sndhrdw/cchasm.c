@@ -1,13 +1,13 @@
-/*
- * Cosmic Chasm sound and other IO hardware emulation
- *
- * Jul 15 1999 by Mathis Rosenhauer
- *
- */
+/***************************************************************************
+
+	Cinematronics Cosmic Chasm hardware
+
+***************************************************************************/
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "machine/z80fmly.h"
+#include "cchasm.h"
 
 static int sound_flags;
 
@@ -68,7 +68,7 @@ WRITE_HANDLER( cchasm_snd_io_w )
     case 0x41:
         sound_flags |= 0x40;
         soundlatch4_w (offset, data);
-        cpu_cause_interrupt(0,1);
+        cpu_set_irq_line(0, 1, HOLD_LINE);
         break;
 
     case 0x61:
@@ -96,7 +96,7 @@ WRITE16_HANDLER( cchasm_io_w )
 			sound_flags |= 0x80;
 			soundlatch2_w (offset, data);
 			z80ctc_0_trg2_w (0, 1);
-			cpu_cause_interrupt( 1, Z80_NMI_INT );
+			cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 			break;
 		case 2:
 			led = data;
@@ -130,7 +130,7 @@ static int output[2];
 
 static void ctc_interrupt (int state)
 {
-	cpu_cause_interrupt (1, Z80_VECTOR(0,state) );
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0,state));
 }
 
 static WRITE_HANDLER( ctc_timer_1_w )

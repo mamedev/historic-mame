@@ -6,6 +6,7 @@ struct MachineSound
 {
 	int sound_type;
 	void *sound_interface;
+	const char *tag;
 };
 
 

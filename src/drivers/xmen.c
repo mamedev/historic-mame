@@ -11,9 +11,8 @@ driver by Nicola Salmoria
 #include "cpu/z80/z80.h"
 #include "state.h"
 
-int xmen_vh_start(void);
-void xmen_vh_stop(void);
-void xmen_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( xmen );
+VIDEO_UPDATE( xmen );
 
 
 /***************************************************************************
@@ -36,7 +35,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( xmen )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -58,7 +57,7 @@ static READ16_HANDLER( eeprom_r )
 {
 	int res;
 
-logerror("%06x eeprom_r\n",cpu_get_pc());
+logerror("%06x eeprom_r\n",activecpu_get_pc());
 	/* bit 6 is EEPROM data */
 	/* bit 7 is EEPROM ready */
 	/* bit 14 is service button */
@@ -73,7 +72,7 @@ logerror("%06x eeprom_r\n",cpu_get_pc());
 
 static WRITE16_HANDLER( eeprom_w )
 {
-logerror("%06x: write %04x to 108000\n",cpu_get_pc(),data);
+logerror("%06x: write %04x to 108000\n",activecpu_get_pc(),data);
 	if (ACCESSING_LSB)
 	{
 		/* bit 0 = coin counter */
@@ -318,60 +317,42 @@ static struct K054539interface k054539_interface =
 
 
 
-static int xmen_interrupt(void)
+static INTERRUPT_GEN( xmen_interrupt )
 {
-	if (cpu_getiloops() == 0) return m68_level5_irq();
-	else return m68_level3_irq();
+	if (cpu_getiloops() == 0) irq5_line_hold();
+	else irq3_line_hold();
 }
 
-static const struct MachineDriver machine_driver_xmen =
-{
+static MACHINE_DRIVER_START( xmen )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* ? */
-			readmem,writemem,0,0,
-			xmen_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2*3579545,	/* ????? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 16000000)	/* ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(xmen_interrupt,2)
 
+	MDRV_CPU_ADD(Z80,2*3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ????? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(xmen)
+	
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	xmen_vh_start,
-	xmen_vh_stop,
-	xmen_vh_screenrefresh,
+	MDRV_VIDEO_START(xmen)
+	MDRV_VIDEO_UPDATE(xmen)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K054539,
-			&k054539_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K054539, k054539_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -458,7 +439,7 @@ ROM_END
 
 
 
-static void init_xmen(void)
+static DRIVER_INIT( xmen )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
@@ -467,7 +448,7 @@ static void init_xmen(void)
 	state_save_register_func_postload(sound_reset_bank);
 }
 
-static void init_xmen6p(void)
+static DRIVER_INIT( xmen6p )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 

@@ -36,7 +36,7 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 
 ***************************************************************************/
 
-int blockhl_vh_start(void)
+VIDEO_START( blockhl )
 {
 	layer_colorbase[0] = 0;
 	layer_colorbase[1] = 16;
@@ -46,28 +46,19 @@ int blockhl_vh_start(void)
 	if (K052109_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,tile_callback))
 		return 1;
 	if (K051960_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER,sprite_callback))
-	{
-		K052109_vh_stop();
 		return 1;
-	}
 
 	return 0;
 }
 
-void blockhl_vh_stop(void)
-{
-	K052109_vh_stop();
-	K051960_vh_stop();
-}
 
-
-void blockhl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( blockhl )
 {
 	K052109_tilemap_update();
 
-	K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY,0);
-	K051960_sprites_draw(bitmap,1,1);
-	K052109_tilemap_draw(bitmap,1,0,0);
-	K051960_sprites_draw(bitmap,0,0);
-	K052109_tilemap_draw(bitmap,0,0,0);
+	K052109_tilemap_draw(bitmap,cliprect,2,TILEMAP_IGNORE_TRANSPARENCY,0);
+	K051960_sprites_draw(bitmap,cliprect,1,1);
+	K052109_tilemap_draw(bitmap,cliprect,1,0,0);
+	K051960_sprites_draw(bitmap,cliprect,0,0);
+	K052109_tilemap_draw(bitmap,cliprect,0,0,0);
 }

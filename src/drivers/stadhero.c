@@ -11,8 +11,8 @@
 #include "cpu/m6502/m6502.h"
 
 /* Video emulation definitions */
-int  stadhero_vh_start(void);
-void stadhero_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( stadhero );
+VIDEO_UPDATE( stadhero );
 
 extern data16_t *stadhero_pf1_data,*stadhero_pf2_data;
 
@@ -37,7 +37,7 @@ static READ16_HANDLER( stadhero_control_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 	}
 
-	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
+	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",activecpu_get_pc(),0x30c000+offset);
 	return ~0;
 }
 
@@ -49,10 +49,10 @@ static WRITE16_HANDLER( stadhero_control_w )
 			break;
 		case 6: /* 6502 sound cpu */
 			soundlatch_w(0,data & 0xff);
-			cpu_cause_interrupt(1,M6502_INT_NMI);
+			cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 			break;
 		default:
-			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+offset);
+			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",activecpu_get_pc(),data,0x30c010+offset);
 			break;
 	}
 }
@@ -298,57 +298,35 @@ static struct OKIM6295interface okim6295_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_stadhero =
-{
+static MACHINE_DRIVER_START( stadhero )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			stadhero_readmem,stadhero_writemem,0,0,
-			m68_level5_irq,1 /* VBL */
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			stadhero_s_readmem,stadhero_s_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	58, 529,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(stadhero_readmem,stadhero_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(stadhero_s_readmem,stadhero_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	stadhero_vh_start,
-	0,
-	stadhero_vh_screenrefresh,
+	MDRV_VIDEO_START(stadhero)
+	MDRV_VIDEO_UPDATE(stadhero)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 

@@ -122,7 +122,7 @@ struct {
 };
 #endif
 
-void jrpacman_init_machine(void)
+MACHINE_INIT( jrpacman )
 {
 #ifndef PreDecryptedRoms
 	s0 = 1;
@@ -428,9 +428,9 @@ all games do it: many use */
 doesn't use an interrupt vector */
 						/* (see Z80.c for details). */
 
-int jrpacman_interrupt(void)
+INTERRUPT_GEN( jrpacman_interrupt )
 {
-	return interrupt();
+	irq0_line_hold();
 }
 
 

@@ -112,39 +112,39 @@ extern unsigned char *galaxian_bulletsram;
 extern size_t galaxian_spriteram_size;
 extern size_t galaxian_bulletsram_size;
 
-void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void scramble_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void moonwar_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void darkplnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void rescue_vh_convert_color_prom  (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void minefld_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void stratgyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( galaxian );
+PALETTE_INIT( scramble );
+PALETTE_INIT( moonwar );
+PALETTE_INIT( darkplnt );
+PALETTE_INIT( rescue );
+PALETTE_INIT( minefld );
+PALETTE_INIT( stratgyx );
 
-void init_scramble_ppi(void);
-void init_scobra(void);
-void init_stratgyx(void);
-void init_moonwar(void);
-void init_darkplnt(void);
-void init_tazmani2(void);
-void init_anteater(void);
-void init_rescue(void);
-void init_minefld(void);
-void init_losttomb(void);
-void init_superbon(void);
-void init_hustler(void);
-void init_billiard(void);
+DRIVER_INIT( scramble_ppi );
+DRIVER_INIT( scobra );
+DRIVER_INIT( stratgyx );
+DRIVER_INIT( moonwar );
+DRIVER_INIT( darkplnt );
+DRIVER_INIT( tazmani2 );
+DRIVER_INIT( anteater );
+DRIVER_INIT( rescue );
+DRIVER_INIT( minefld );
+DRIVER_INIT( losttomb );
+DRIVER_INIT( superbon );
+DRIVER_INIT( hustler );
+DRIVER_INIT( billiard );
 
-void scramble_init_machine(void);
+MACHINE_INIT( scramble );
 
-int  scramble_vh_start(void);
-int  theend_vh_start(void);
-int  darkplnt_vh_start(void);
-int  rescue_vh_start  (void);
-int  minefld_vh_start (void);
-int  calipso_vh_start (void);
-int  stratgyx_vh_start(void);
+VIDEO_START( scramble );
+VIDEO_START( theend );
+VIDEO_START( darkplnt );
+VIDEO_START( rescue );
+VIDEO_START( minefld );
+VIDEO_START( calipso );
+VIDEO_START( stratgyx );
 
-void galaxian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( galaxian );
 WRITE_HANDLER( galaxian_videoram_w );
 READ_HANDLER ( galaxian_videoram_r );
 WRITE_HANDLER( galaxian_stars_enable_w );
@@ -1130,484 +1130,384 @@ struct AY8910interface scobra_ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_type1 =
-{
+static MACHINE_DRIVER_START( type1 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type1_readmem,type1_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */	\
-	scramble_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(scramble)
+	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
+
 
 /* same as regular type 1, the only difference that it has long bullets */
-static const struct MachineDriver machine_driver_armorcar =
-{
+static MACHINE_DRIVER_START( armorcar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type1_readmem,type1_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
-	galaxian_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	theend_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(galaxian)
+	MDRV_VIDEO_START(theend)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
+
 
 /* same as regular type 1, the only difference is that the bullets are less yellow */
-static const struct MachineDriver machine_driver_moonwar =
-{
+static MACHINE_DRIVER_START( moonwar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type1_readmem,type1_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
-	moonwar_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(moonwar)
+	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
+
 
 /* Rescue, Minefield and Strategy X have extra colors, and custom video initialise */
 /* routines to set up the graduated color backgound they use */
-static const struct MachineDriver machine_driver_rescue =
-{
+static MACHINE_DRIVER_START( rescue )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type1_readmem,type1_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+128,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 128 for background */
-	rescue_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,	/* needs fine color resolution for the gradient background */
-	0,
-	rescue_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)	/* needs fine color resolution for the gradient background */
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+128)	/* 32 for characters, 64 for stars, 2 for bullets, 128 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
+	
+	MDRV_PALETTE_INIT(rescue)
+	MDRV_VIDEO_START(rescue)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_minefld =
-{
+
+static MACHINE_DRIVER_START( minefld )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type1_readmem,type1_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+256,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 256 for background */
-	minefld_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,	/* needs fine color resolution for the gradient background */
-	0,
-	minefld_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)	/* needs fine color resolution for the gradient background */
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+256)	/* 32 for characters, 64 for stars, 2 for bullets, 256 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
+	
+	MDRV_PALETTE_INIT(minefld)
+	MDRV_VIDEO_START(minefld)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_stratgyx =
-{
+
+static MACHINE_DRIVER_START( stratgyx )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type2_readmem,type2_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type2_readmem,type2_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+8,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
-	stratgyx_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	stratgyx_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(stratgyx)
+	MDRV_VIDEO_START(stratgyx)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_type2 =
-{
+
+static MACHINE_DRIVER_START( type2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type2_readmem,type2_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type2_readmem,type2_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
-	scramble_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(scramble)
+	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_darkplnt =
-{
+
+static MACHINE_DRIVER_START( darkplnt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type2_readmem,type2_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type2_readmem,type2_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+2,8*4+128*1, /* 32 for characters, 2 for bullets */
-	darkplnt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+2) /* 32 for characters, 2 for bullets */
+	MDRV_COLORTABLE_LENGTH(8*4+128*1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	darkplnt_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(darkplnt)
+	MDRV_VIDEO_START(darkplnt)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_hustler =
-{
+
+static MACHINE_DRIVER_START( hustler )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			hustler_readmem,hustler_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			frogger_sound_readmem,frogger_sound_writemem,frogger_sound_readport,frogger_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(hustler_readmem,hustler_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(frogger_sound_readmem,frogger_sound_writemem)
+	MDRV_CPU_PORTS(frogger_sound_readport,frogger_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
-	galaxian_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(galaxian)
+	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&frogger_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_hustlerb =
-{
+
+static MACHINE_DRIVER_START( hustlerb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			hustlerb_readmem,hustlerb_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,hustlerb_sound_writemem,hustlerb_sound_readport,hustlerb_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(hustlerb_readmem,hustlerb_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,hustlerb_sound_writemem)
+	MDRV_CPU_PORTS(hustlerb_sound_readport,hustlerb_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2,8*4,	/* 32 for characters, 64 for stars, 2 for bullets */
-	galaxian_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(galaxian)
+	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&frogger_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, frogger_ay8910_interface)
+MACHINE_DRIVER_END
+
 
 /* same as the others, but no sprite flipping, but instead, the bits are used
    as extra sprite code bits, giving 256 sprite images */
-static const struct MachineDriver machine_driver_calipso =
-{
+static MACHINE_DRIVER_START( calipso )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			type1_readmem,type1_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			scobra_sound_readmem,scobra_sound_writemem,scobra_sound_readport,scobra_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	16000.0/132/2, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	scramble_init_machine,
+	MDRV_CPU_ADD(Z80,18432000/6)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(type1_readmem,type1_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.78975 MHz */
+	MDRV_CPU_MEMORY(scobra_sound_readmem,scobra_sound_writemem)
+	MDRV_CPU_PORTS(scobra_sound_readport,scobra_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_VBLANK_DURATION(2500)
+
+	MDRV_MACHINE_INIT(scramble)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	galaxian_gfxdecodeinfo,
-	32+64+2+1,8*4,	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
-	scramble_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(galaxian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	calipso_vh_start,
-	0,
-	galaxian_vh_screenrefresh,
+	MDRV_PALETTE_INIT(scramble)
+	MDRV_VIDEO_START(calipso)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scobra_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, scobra_ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

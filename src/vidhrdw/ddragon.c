@@ -104,7 +104,7 @@ static void get_fg_16color_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int ddragon_vh_start(void)
+VIDEO_START( ddragon )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,background_scan,  TILEMAP_OPAQUE,     16,16,32,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
@@ -117,7 +117,7 @@ int ddragon_vh_start(void)
 	return 0;
 }
 
-int chinagat_vh_start(void)
+VIDEO_START( chinagat )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,background_scan,  TILEMAP_OPAQUE,     16,16,32,32);
 	fg_tilemap = tilemap_create(get_fg_16color_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
@@ -164,11 +164,10 @@ WRITE_HANDLER( ddragon_fgvideoram_w )
 
 #define DRAW_SPRITE( order, sx, sy ) drawgfx( bitmap, gfx, \
 					(which+order),color,flipx,flipy,sx,sy, \
-					clip,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 
 	data8_t *src;
@@ -248,7 +247,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 #undef DRAW_SPRITE
 
 
-void ddragon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ddragon )
 {
 	int scrollx = ddragon_scrollx_hi + *ddragon_scrollx_lo;
 	int scrolly = ddragon_scrolly_hi + *ddragon_scrolly_lo;
@@ -256,7 +255,7 @@ void ddragon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrollx(bg_tilemap,0,scrollx);
 	tilemap_set_scrolly(bg_tilemap,0,scrolly);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

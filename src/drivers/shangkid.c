@@ -55,14 +55,13 @@ Games by Nihon Game/Culture Brain:
 #include "cpu/z80/z80.h"
 
 /* from vidhrdw/shangkid.c */
-extern int shangkid_vh_start( void );
-extern void shangkid_vh_stop( void );
-extern void shangkid_screenrefresh( struct mame_bitmap *bitmap, int fullfresh );
+extern VIDEO_START( shangkid );
+extern VIDEO_UPDATE( shangkid );
 extern WRITE_HANDLER( shangkid_videoram_w );
 extern UINT8 *shangkid_videoreg;
 extern int shangkid_gfx_type;
 
-extern void dynamski_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+extern VIDEO_UPDATE( dynamski );
 
 /***************************************************************************************/
 
@@ -90,17 +89,17 @@ static struct AY8910interface ay8910_interface = {
 
 /***************************************************************************************/
 
-static void init_chinhero( void )
+static DRIVER_INIT( chinhero )
 {
 	shangkid_gfx_type = 0;
 }
 
-static void init_shangkid( void )
+static DRIVER_INIT( shangkid )
 {
 	shangkid_gfx_type = 1;
 }
 
-static void init_dynamski( void )
+static DRIVER_INIT( dynamski )
 {
 /*
 	unsigned char *pMem;
@@ -160,7 +159,7 @@ WRITE_HANDLER( shangkid_bbx_AY8910_write_w )
 			if( data == 0x01 )
 			{
 				/* 0->1 transition triggers interrupt on Sound CPU */
-				cpu_cause_interrupt( 2, Z80_IRQ_INT );
+				cpu_set_irq_line( 2, 0, HOLD_LINE );
 			}
 		}
 		else
@@ -360,57 +359,54 @@ PORT_END
 
 /***************************************************************************************/
 
-#define MACHINE_DRIVER( NAME ) \
-static struct MachineDriver machine_driver_##NAME = { \
-	{ \
-		{ \
-			CPU_Z80, \
-			3000000, /* ? */ \
-			main_readmem,main_writemem,0,0, \
-			interrupt,1 \
-		}, \
-		{ \
-			CPU_Z80, \
-			3000000, /* ? */ \
-			bbx_readmem,bbx_writemem, \
-			0,bbx_writeport, \
-			interrupt,1 \
-		}, \
-		{ \
-			CPU_Z80|CPU_AUDIO_CPU, \
-			3000000, /* ? */ \
-			sound_readmem,sound_writemem, \
-			readport_sound,writeport_sound, \
-			ignore_interrupt,1 \
-		}, \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	10, /* CPU slices */ \
-	0, /* init machine */ \
-	40*8, 28*8, { 16, 319-16, 0, 223 }, \
-	NAME##_gfxdecodeinfo, \
-	256, 0, \
-	palette_RRRR_GGGG_BBBB_convert_prom, \
-	VIDEO_TYPE_RASTER, \
-	0, \
-	shangkid_vh_start, \
-	shangkid_vh_stop, \
-	shangkid_screenrefresh, \
-	0,0,0,0, \
-	{ \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		}, \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		} \
-	} \
-};
+static MACHINE_DRIVER_START( chinhero )
 
-MACHINE_DRIVER( chinhero )
-MACHINE_DRIVER( shangkid )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3000000) /* ? */
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000) /* ? */
+	MDRV_CPU_MEMORY(bbx_readmem,bbx_writemem)
+	MDRV_CPU_PORTS(0,bbx_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000) /* ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(16, 319-16, 0, 223)
+	MDRV_GFXDECODE(chinhero_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(shangkid)
+	MDRV_VIDEO_UPDATE(shangkid)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( shangkid )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(chinhero)
+
+	/* video hardware */
+	MDRV_GFXDECODE(shangkid_gfxdecodeinfo)
+MACHINE_DRIVER_END
+
+
 
 static MEMORY_READ_START( dynamski_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -443,36 +439,29 @@ static PORT_WRITE_START( dynamski_writeport )
 	{ 0x01, 0x01, AY8910_control_port_0_w },
 PORT_END
 
-static struct MachineDriver machine_driver_dynamski = {
-	{
-		{
-			CPU_Z80,
-			3000000, /* ? */
-			dynamski_readmem,dynamski_writemem,0,dynamski_writeport,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
-	256+32, 256, { 0, 255+32, 16, 255-16 },
-	dynamski_gfxdecodeinfo,
-	256, 0,
-	0,
+static MACHINE_DRIVER_START( dynamski )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,//vh_start,
-	0,//vh_stop,
-	dynamski_screenrefresh,
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3000000) /* ? */
+	MDRV_CPU_MEMORY(dynamski_readmem,dynamski_writemem)
+	MDRV_CPU_PORTS(0,dynamski_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256+32, 256)
+	MDRV_VISIBLE_AREA(0, 255+32, 16, 255-16)
+	MDRV_GFXDECODE(dynamski_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_UPDATE(dynamski)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************************/
 

@@ -60,9 +60,9 @@ WRITE_HANDLER( tutankhm_videoram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void tutankhm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tutankhm )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int offs;
 

@@ -12,6 +12,7 @@ extern struct pia6821_interface williams_pia_0_intf;
 extern struct pia6821_interface williams_muxed_pia_0_intf;
 extern struct pia6821_interface williams_dual_muxed_pia_0_intf;
 extern struct pia6821_interface williams_49way_pia_0_intf;
+extern struct pia6821_interface williams_49way_muxed_pia_0_intf;
 extern struct pia6821_interface williams_pia_1_intf;
 extern struct pia6821_interface williams_snd_pia_intf;
 
@@ -44,10 +45,10 @@ extern UINT16 sinistar_clip;
 extern UINT8 williams_cocktail;
 
 /* initialization */
-void defender_init_machine(void);
-void williams_init_machine(void);
-void williams2_init_machine(void);
-void joust2_init_machine(void);
+MACHINE_INIT( defender );
+MACHINE_INIT( williams );
+MACHINE_INIT( williams2 );
+MACHINE_INIT( joust2 );
 
 /* banking */
 WRITE_HANDLER( williams_vram_select_w );
@@ -101,17 +102,12 @@ WRITE_HANDLER( blaster_remap_select_w );
 WRITE_HANDLER( blaster_palette_0_w );
 READ_HANDLER( williams_video_counter_r );
 
-void williams_vh_update(int scanline);
+VIDEO_START( williams );
+VIDEO_UPDATE( williams );
+VIDEO_UPDATE( williams2 );
 
-int williams_vh_start(void);
-void williams_vh_stop(void);
-void williams_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void williams2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-int blaster_vh_start(void);
-
-int williams2_vh_start(void);
-void williams2_vh_stop(void);
+VIDEO_START( blaster );
+VIDEO_START( williams2 );
 
 WRITE_HANDLER( williams2_fg_select_w );
 WRITE_HANDLER( williams2_bg_select_w );

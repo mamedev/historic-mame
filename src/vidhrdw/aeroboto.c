@@ -27,7 +27,7 @@ int aeroboto_charbank;
   the main emulation engine.
 
 ***************************************************************************/
-void aeroboto_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( aeroboto )
 {
 	int offs;
 

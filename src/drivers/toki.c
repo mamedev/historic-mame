@@ -28,11 +28,11 @@ extern data16_t *toki_background2_videoram16;
 extern data16_t *toki_sprites_dataram16;
 extern data16_t *toki_scrollram16;
 
-int toki_interrupt(void);
-int  toki_vh_start(void);
-void toki_eof_callback(void);
-void toki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void tokib_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+INTERRUPT_GEN( toki_interrupt );
+VIDEO_START( toki );
+VIDEO_EOF( toki );
+VIDEO_UPDATE( toki );
+VIDEO_UPDATE( tokib );
 WRITE16_HANDLER( toki_background1_videoram16_w );
 WRITE16_HANDLER( toki_background2_videoram16_w );
 WRITE16_HANDLER( toki_control_w );
@@ -456,89 +456,64 @@ static struct MSM5205interface msm5205_interface =
 };
 
 
-static const struct MachineDriver machine_driver_toki =
-{
+static MACHINE_DRIVER_START( toki )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2, 	/* Accurate?  There is a 20MHz near the cpu, but a 12MHz elsewhere */
-			toki_readmem,toki_writemem,0,0,
-			m68_level1_irq,1 /* VBL */
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	seibu_sound_init_1, /* init machine */
+	MDRV_CPU_ADD(M68000,20000000/2) 	/* Accurate?  There is a 20MHz near the cpu, but a 12MHz elsewhere */
+	MDRV_CPU_MEMORY(toki_readmem,toki_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* VBL */
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(toki_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	toki_gfxdecodeinfo,
-	1024, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	toki_eof_callback,
-	toki_vh_start,
-	0,
-	toki_vh_screenrefresh,
+	MDRV_VIDEO_START(toki)
+	MDRV_VIDEO_EOF(toki)
+	MDRV_VIDEO_UPDATE(toki)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tokib =
-{
+
+static MACHINE_DRIVER_START( tokib )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 10MHz causes bad slowdowns with monkey machine rd1 */
-			tokib_readmem,tokib_writemem,0,0,
-			m68_level6_irq,1 /* VBL (could be level1, same vector) */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			tokib_sound_readmem,tokib_sound_writemem,
-			0,0,
-			ignore_interrupt,0	/* IRQs are caused by the main CPU?? */
-								/* NMIs are caused by the ADPCM chip */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 10MHz causes bad slowdowns with monkey machine rd1 */
+	MDRV_CPU_MEMORY(tokib_readmem,tokib_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL (could be level1, same vector) */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(tokib_sound_readmem,tokib_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
-	tokib_gfxdecodeinfo,
-	1024, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	toki_eof_callback,
-	toki_vh_start,
-	0,
-	tokib_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(tokib_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(toki)
+	MDRV_VIDEO_EOF(toki)
+	MDRV_VIDEO_UPDATE(tokib)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_tokib_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_tokib_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -713,13 +688,13 @@ ROM_START( tokib )
 ROM_END
 
 
-static void init_toki(void)
+static DRIVER_INIT( toki )
 {
 	seibu_sound_decrypt(REGION_CPU2,0x2000);
 }
 
 
-void init_tokib(void)
+DRIVER_INIT( tokib )
 {
 	unsigned char *temp = malloc (65536 * 2);
 	int i, offs;

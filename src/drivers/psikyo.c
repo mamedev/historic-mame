@@ -75,8 +75,8 @@ extern data32_t *psikyo_vram_0, *psikyo_vram_1, *psikyo_vregs;
 WRITE32_HANDLER( psikyo_vram_0_w );
 WRITE32_HANDLER( psikyo_vram_1_w );
 
-int  psikyo_vh_start(void);
-void psikyo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( psikyo );
+VIDEO_UPDATE( psikyo );
 
 /* Variables only used here */
 
@@ -117,7 +117,7 @@ READ32_HANDLER( gunbird_input_r )
 					return (readinputport(0) << 16) | (readinputport(1) & ~bit) | ret;
 		}
 		case 0x1:	return (readinputport(2) << 16) | readinputport(3);
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+		default:	logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 					return 0;
 	}
 }
@@ -139,7 +139,7 @@ READ32_HANDLER( s1945_input_r )
 		}
 		case 0x1:	return (readinputport(2) << 16) | readinputport(3);
 		case 0x2:	return (rand() & 0xffff) << 16;	// protection??
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+		default:	logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 					return 0;
 	}
 }
@@ -160,7 +160,7 @@ READ32_HANDLER( sngkace_input_r )
 					if (Machine->sample_rate == 0)	ret = 0;
 					return (((readinputport(1) & ~bit) | ret) << 16) | readinputport(3);
 		}
-		default:	logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+		default:	logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 					return 0;
 	}
 }
@@ -786,48 +786,35 @@ struct YM2610interface gunbird_ym2610_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
-static const struct MachineDriver machine_driver_gunbird =
-{
-	{
-		{
-			CPU_M68EC020,
-			16000000,
-			sngkace_readmem,sngkace_writemem,0,0,
-			m68_level1_irq, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* ! LZ8420M (Z80 core) ! */
-			4000000,	/* ? */
-			gunbird_sound_readmem,  gunbird_sound_writemem,
-			gunbird_sound_readport, gunbird_sound_writeport,
-			ignore_interrupt, 1		/* */
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,	// we're using IPT_VBLANK
-	1,
-	0,
+static MACHINE_DRIVER_START( gunbird )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68EC020, 16000000)
+	MDRV_CPU_MEMORY(sngkace_readmem,sngkace_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* ! LZ8420M (Z80 core) ! */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(gunbird_sound_readmem,gunbird_sound_writemem)
+	MDRV_CPU_PORTS(gunbird_sound_readport,gunbird_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0, 256-32-1 },
-	sngkace_gfxdecodeinfo,
-	0x1000, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-32-1)
+	MDRV_GFXDECODE(sngkace_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x1000)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	psikyo_vh_start,
-	0,
-	psikyo_vh_screenrefresh,
+	MDRV_VIDEO_START(psikyo)
+	MDRV_VIDEO_UPDATE(psikyo)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,				/* ! YMF286-K ! */
-			&gunbird_ym2610_interface,
-		},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, gunbird_ym2610_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -853,48 +840,35 @@ struct YM2610interface sngkace_ym2610_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
-static const struct MachineDriver machine_driver_sngkace =
-{
-	{
-		{
-			CPU_M68EC020,
-			16000000,
-			sngkace_readmem,sngkace_writemem,0,0,
-			m68_level1_irq, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ? */
-			sngkace_sound_readmem,  sngkace_sound_writemem,
-			sngkace_sound_readport, sngkace_sound_writeport,
-			ignore_interrupt, 1		/* NMI caused by main CPU, IRQ by the YM2610 */
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,	// we're using IPT_VBLANK
-	1,
-	0,
+static MACHINE_DRIVER_START( sngkace )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68EC020, 16000000)
+	MDRV_CPU_MEMORY(sngkace_readmem,sngkace_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(sngkace_sound_readmem,sngkace_sound_writemem)
+	MDRV_CPU_PORTS(sngkace_sound_readport,sngkace_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0, 256-32-1 },
-	sngkace_gfxdecodeinfo,
-	0x1000, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-32-1)
+	MDRV_GFXDECODE(sngkace_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x1000)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	psikyo_vh_start,
-	0,
-	psikyo_vh_screenrefresh,
+	MDRV_VIDEO_START(psikyo)
+	MDRV_VIDEO_UPDATE(psikyo)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&sngkace_ym2610_interface,
-		},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, sngkace_ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -917,51 +891,37 @@ struct YM2610interface s1945_ym2610_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
-static const struct MachineDriver machine_driver_s1945 =
-{
-	{
-		{
-			CPU_M68EC020,
-			16000000,
-			sngkace_readmem,sngkace_writemem,0,0,
-			m68_level1_irq, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* ! LZ8420M (Z80 core) ! */
-			4000000,	/* ? */
-			gunbird_sound_readmem, gunbird_sound_writemem,
-			s1945_sound_readport,  s1945_sound_writeport,
-			ignore_interrupt, 1		/* */
-		}
+static MACHINE_DRIVER_START( s1945 )
 
-		/* MCU should go here */
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68EC020, 16000000)
+	MDRV_CPU_MEMORY(sngkace_readmem,sngkace_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
 
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,	// we're using IPT_VBLANK
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* ! LZ8420M (Z80 core) ! */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(gunbird_sound_readmem,gunbird_sound_writemem)
+	MDRV_CPU_PORTS(s1945_sound_readport,s1945_sound_writeport)
+
+	/* MCU should go here */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0, 256-32-1 },
-	sngkace_gfxdecodeinfo,
-	0x1000, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-32-1)
+	MDRV_GFXDECODE(sngkace_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x1000)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	psikyo_vh_start,
-	0,
-	psikyo_vh_screenrefresh,
+	MDRV_VIDEO_START(psikyo)
+	MDRV_VIDEO_UPDATE(psikyo)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,				/* ! YMF286-K ! */
-			&s1945_ym2610_interface,
-		},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, s1945_ym2610_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1101,7 +1061,7 @@ ROM_END
 
 
 
-void init_gunbird(void)
+DRIVER_INIT( gunbird )
 {
 	/* The input ports are different */
 	install_mem_read32_handler(0, 0xc00000, 0xc0000b, gunbird_input_r);
@@ -1155,7 +1115,7 @@ ROM_START( sngkace )
 ROM_END
 
 
-void init_sngkace(void)
+DRIVER_INIT( sngkace )
 {
 	unsigned char *RAM	=	memory_region(REGION_SOUND1);
 	int len				=	memory_region_length(REGION_SOUND1);
@@ -1226,7 +1186,7 @@ ROM_START( sngkblad )
 
 ROM_END
 
-void init_sngkblad(void)
+DRIVER_INIT( sngkblad )
 {
 	data16_t *RAM	= (data16_t *) memory_region(REGION_CPU1);
 
@@ -1301,7 +1261,7 @@ ROM_START( s1945 )
 ROM_END
 
 
-void init_s1945(void)
+DRIVER_INIT( s1945 )
 {
 	data16_t *RAM	= (data16_t *) memory_region(REGION_CPU1);
 

@@ -1,8 +1,18 @@
 /***************************************************************************
 
-Atari Canyon Bomber Driver
+	Atari Canyon Bomber hardware
 
-Memory Map:
+	driver by Mike Balfour
+
+	Games supported:
+		* Canyon Bomber
+
+	Known issues:
+		* none at this time
+
+****************************************************************************
+
+	Memory Map:
         0000-01FF       WRAM
         0400-04FF       W A0=0:MOTOR1, A0=1:MOTOR2
         0500-05FF       W A0=0:EXPLODE, A0=1:TIMER RESET
@@ -18,15 +28,49 @@ Memory Map:
         3800-3FFF       ROM4 (Program ROM)
        (F800-FFFF)      ROM4 (Program ROM) - only needed for the 6502 vectors
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
+	If you have any questions about how this driver works, don't hesitate to
+	ask.  - Mike Balfour (mab22@po.cwru.edu)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "canyon.h"
 
-/* vidhrdw/canyon.c */
-extern void canyon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+
+
+/*************************************
+ *
+ *	Palette generation
+ *
+ *************************************/
+
+static unsigned char palette_source[] =
+{
+	0x00,0x00,0x00, /* BLACK */
+	0x80,0x80,0x80, /* LT GREY */
+	0xff,0xff,0xff, /* WHITE */
+};
+
+static unsigned short colortable_source[] =
+{
+	0x01, 0x00,
+	0x01, 0x02,
+};
+
+static PALETTE_INIT( canyon )
+{
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
+}
+
+
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
 
 static READ_HANDLER( canyon_options_r )
 {
@@ -44,6 +88,7 @@ static READ_HANDLER( canyon_options_r )
 
 	return 0xFF;
 }
+
 
 static READ_HANDLER( canyon_switches_r )
 {
@@ -70,10 +115,26 @@ static READ_HANDLER( canyon_switches_r )
 	return 0xFF;
 }
 
+
+
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
+
 WRITE_HANDLER( canyon_led_w )
 {
 	set_led_status((offset & 0x01), data & 0x01);
 }
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x01ff, MRA_RAM }, /* WRAM */
@@ -87,6 +148,7 @@ static MEMORY_READ_START( readmem )
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM4 for 6502 vectors */
 MEMORY_END
 
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
 //	{ 0x0680, 0x06ff, canyon_led_w },
@@ -97,6 +159,14 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x3000, 0x37ff, MWA_NOP }, /* PROM3 */
 	{ 0x3800, 0x3fff, MWA_ROM }, /* PROM4 */
 MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( canyon )
 	PORT_START      /* DSW - fake port, gets mapped to Canyon Bomber ports */
@@ -138,108 +208,98 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-    64,     /* 64 characters */
-    1,      /* 1 bit per pixel */
-    { 0 },  /* no separation in 1 bpp */
+	8,8,
+    64,
+    1,
+    { 0 },
     { 4, 5, 6, 7, 12, 13, 14, 15 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
+
 
 static struct GfxLayout motionlayout =
 {
-	32,16,   /* 32*16 characters */
-	4,       /* 4 characters? */
-	1,       /* 1 bit per pixel */
-	{ 0 },   /* no separation in 1 bpp */
+	32,16,
+	4,
+	1,
+	{ 0 },
 	{ 0x100*8 + 7, 0x100*8 + 6, 0x100*8 + 5, 0x100*8 + 4, 7, 6, 5, 4,
 	  0x100*8 + 15, 0x100*8 + 14, 0x100*8 + 13, 0x100*8 + 12, 15, 14, 13, 12,
 	  0x100*8 + 256+7, 0x100*8 + 256+6, 0x100*8 + 256+5, 0x100*8 + 256+4, 256+7, 256+6, 256+5, 256+4,
 	  0x100*8 + 256+15, 0x100*8 + 256+14, 0x100*8 + 256+13, 0x100*8 + 256+12, 256+15, 256+14, 256+13, 256+12 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 	  8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8     /* every char takes 64 consecutive bytes */
+	64*8
 };
+
 
 static struct GfxLayout bomb_layout =
 {
-	2,2,	/* 2*2 bomb */
-    1,      /* 1 character */
-    1,      /* 1 bit per pixel */
-    { 0 },  /* no separation in 1 bpp */
-    { 4, 4 }, /* I know that this bit is 1 */
-	{ 3*16, 3*16 },  /* I know that this bit is 1 */
-	16*8	/* every char takes 16 consecutive bytes */
+	2,2,
+    1,
+    1,
+    { 0 },
+    { 4, 4 },
+	{ 3*16, 3*16 },
+	16*8
 };
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 2 },
 	{ REGION_GFX2, 0, &motionlayout, 0, 2 },
 	{ REGION_GFX1, 0, &bomb_layout,  0, 2 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00, /* BLACK */
-	0x80,0x80,0x80, /* LT GREY */
-	0xff,0xff,0xff, /* WHITE */
-};
-static unsigned short colortable[] =
-{
-	0x01, 0x00,
-	0x01, 0x02,
-};
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
-}
 
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
 
-static const struct MachineDriver machine_driver_canyon =
-{
+static MACHINE_DRIVER_START( canyon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-            750000,        /* 0.3 MHz ???? */
-			readmem,writemem,0,0,
-            nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,750000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-    32*8, 30*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-    VIDEO_TYPE_RASTER,
-	0,
-    generic_vh_start,
-    generic_vh_stop,
-    canyon_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0
-
-};
+    MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+    MDRV_SCREEN_SIZE(32*8, 30*8)
+    MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
+	
+	MDRV_PALETTE_INIT(canyon)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(canyon)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
 
-  Game ROMs
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( canyon )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -256,6 +316,7 @@ ROM_START( canyon )
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
 	ROM_LOAD( "9491-01.j6", 0x0000, 0x0100, 0xb8094b4c )	/* sync (not used) */
 ROM_END
+
 
 ROM_START( canbprot )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -278,6 +339,12 @@ ROM_START( canbprot )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAMEX( 1977, canyon,   0,      canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber", GAME_NO_SOUND )
 GAMEX( 1977, canbprot, canyon, canyon, canyon, 0, ROT0, "Atari", "Canyon Bomber (prototype)", GAME_NO_SOUND )

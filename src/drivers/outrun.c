@@ -12,7 +12,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 static void set_fg_page( int data ){
 	sys16_fg_page[0] = data>>12;
@@ -145,6 +145,7 @@ static void generate_gr_screen(
 		i=1;
 		while ( (1<<i) < sys16_gr_bitmap_width ) i++;
 		sys16_gr_bitmap_width=i; // power of 2
+		free(buf);
 	}
 }
 
@@ -191,9 +192,9 @@ static WRITE16_HANDLER( sys16_coinctrl_w )
 	}
 }
 
-static int sys16_interrupt( void ){
+static INTERRUPT_GEN( sys16_interrupt ){
 	if(sys16_custom_irq) sys16_custom_irq();
-	return 4; /* Interrupt vector 4, used by VBlank */
+	cpu_set_irq_line(cpu_getactivecpu(), 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
 }
 
 static PORT_READ_START( sound_readport )
@@ -776,7 +777,7 @@ static void outrun_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void outrun_init_machine( void ){
+static MACHINE_INIT( outrun ){
 	static int bank[8] = {
 		7,0,1,2,
 		3,4,5,6
@@ -827,7 +828,7 @@ static void outrun_init_machine( void ){
 	sys16_gr_second_road = &sys16_extraram[0x8000];
 }
 
-static void outruna_init_machine( void ){
+static MACHINE_INIT( outruna ){
 	static int bank[8] = {
 		7,0,1,2,
 		3,4,5,6
@@ -877,19 +878,19 @@ static void outruna_init_machine( void ){
 	sys16_gr_second_road = &sys16_extraram[0x10000];
 }
 
-static void init_outrun( void )
+static DRIVER_INIT( outrun )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_interleave_sprite_data( 0x100000 );
 	generate_gr_screen(512,2048,0,0,3,0x8000);
 }
 
-static void init_outrunb( void )
+static DRIVER_INIT( outrunb )
 {
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 /*
   Main Processor
 	Comparing the bootleg with the custom bootleg, it seems that:-
@@ -1038,63 +1039,59 @@ PORT_START	/* Brake */
 INPUT_PORTS_END
 
 /***************************************************************************/
-static int or_interrupt( void ){
+static INTERRUPT_GEN( or_interrupt ){
 	int intleft=cpu_getiloops();
-	if(intleft!=0) return 2;
-	else return 4;
+	if(intleft!=0) cpu_set_irq_line(0, 2, HOLD_LINE);
+	else cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 
-#define MACHINE_DRIVER_OUTRUN( GAMENAME,INITMACHINE) \
-static const struct MachineDriver GAMENAME = \
-{ \
-	{ \
-		{ \
-			CPU_M68000, \
-			12000000, \
-			outrun_readmem,outrun_writemem,0,0, \
-			or_interrupt,2 \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU, \
-			4096000, \
-			outrun_sound_readmem,outrun_sound_writemem,sound_readport,sound_writeport, \
-			ignore_interrupt,1 \
-		}, \
-		{ \
-			CPU_M68000, \
-			12000000, \
-			outrun_readmem2,outrun_writemem2,0,0, \
-			sys16_interrupt,2 \
-		}, \
-	}, \
-	60, 100 /*DEFAULT_60HZ_VBLANK_DURATION*/, \
-	4, /* needed to sync processors */ \
-	INITMACHINE, \
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	sys16_gfxdecodeinfo, \
-	4096*ShadowColorsMultiplier, 0, \
-	0, \
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK, \
-	0, \
-	sys16_outrun_vh_start, \
-	sys16_vh_stop, \
-	sys16_outrun_vh_screenrefresh, \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
-	{ \
-		{ \
-			SOUND_YM2151, \
-			&sys16_ym2151_interface \
-		}, \
-		{ \
-			SOUND_SEGAPCM, \
-			&sys16_segapcm_interface_15k, \
-		} \
-	} \
-};
+static MACHINE_DRIVER_START( outrun )
 
-MACHINE_DRIVER_OUTRUN(machine_driver_outrun,outrun_init_machine)
-MACHINE_DRIVER_OUTRUN(machine_driver_outruna,outruna_init_machine)
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(outrun_readmem,outrun_writemem)
+	MDRV_CPU_VBLANK_INT(or_interrupt,2)
+	
+	MDRV_CPU_ADD(Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(outrun_sound_readmem,outrun_sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(outrun_readmem2,outrun_writemem2)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,2)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(outrun)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(outrun)
+	MDRV_VIDEO_UPDATE(outrun)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)
+	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_15k)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( outruna )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(outrun)
+	
+	MDRV_MACHINE_INIT(outruna)
+MACHINE_DRIVER_END
 
 
 static data16_t *shared_ram2;
@@ -1177,7 +1174,7 @@ static void shangon_update_proc( void ){
 	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
 }
 
-static void shangon_init_machine( void ){
+static MACHINE_INIT( shangon ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_hangon;
 	sys16_sprxoffset = -0xc0;
@@ -1211,16 +1208,16 @@ static void shangon_init_machine( void ){
 	sys16_gr_colorflip[1][3]=0x02 / 2;
 }
 
-static void init_shangon( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( shangon ){
+	machine_init_sys16_onetime();
 	generate_gr_screen(512,1024,0,0,4,0x8000);
 
 	sys16_patch_z80code( 0x1087, 0x20);
 	sys16_patch_z80code( 0x1088, 0x01);
 }
 
-static void init_shangonb( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( shangonb ){
+	machine_init_sys16_onetime();
 	generate_gr_screen(512,1024,8,0,4,0x8000);
 }
 /***************************************************************************/
@@ -1288,52 +1285,43 @@ PORT_START	/* Brake */
 INPUT_PORTS_END
 
 /***************************************************************************/
-static const struct MachineDriver machine_driver_shangon =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			shangon_readmem,shangon_writemem,0,0,
-			sys16_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4096000,
-			shangon_sound_readmem,shangon_sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,
-			shangon_readmem2,shangon_writemem2,0,0,
-			sys16_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	shangon_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	sys16_hangon_vh_start,
-	sys16_vh_stop,
-	sys16_hangon_vh_screenrefresh,
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&sys16_ym2151_interface
-		},
-		{
-			SOUND_SEGAPCM,
-			&sys16_segapcm_interface_15k_512,
-		}
-	}
-};
+
+static MACHINE_DRIVER_START( shangon )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(shangon_readmem,shangon_writemem)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_CPU_ADD(Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(shangon_sound_readmem,shangon_sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(shangon_readmem2,shangon_writemem2)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(100)
+
+	MDRV_MACHINE_INIT(shangon)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(hangon)
+	MDRV_VIDEO_UPDATE(hangon)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, sys16_ym2151_interface)
+	MDRV_SOUND_ADD(SEGAPCM, sys16_segapcm_interface_15k_512)
+MACHINE_DRIVER_END
 
 GAMEX(1992, shangon,  0,        shangon,  shangon,  shangon,  ROT0,         "Sega",    "Super Hang-On", GAME_NOT_WORKING )
 GAME( 1992, shangonb, shangon,  shangon,  shangon,  shangonb, ROT0,         "bootleg", "Super Hang-On (bootleg)" )

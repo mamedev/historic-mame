@@ -35,11 +35,11 @@ static WRITE16_HANDLER( funkyjet_protection16_w )
 		offset != (0x58c >> 1) && offset != (0x18e >> 1) && offset != (0x304 >> 1) &&
 		offset != (0x78e >> 1))
 
-		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",cpu_get_pc(),offset<<1,data);
+		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",activecpu_get_pc(),offset<<1,data);
 
 	if (offset == (0x10a >> 1)) {
 		soundlatch_w(0,data&0xff);
-		cpu_cause_interrupt(1,H6280_INT_IRQ1);
+		cpu_set_irq_line(1,0,HOLD_LINE);
 	}
 }
 
@@ -99,7 +99,7 @@ static READ16_HANDLER( funkyjet_protection16_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 	}
 
-//	if (cpu_get_pc()!=0xc0ea)	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset<<1);
+//	if (activecpu_get_pc()!=0xc0ea)	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",activecpu_get_pc(),offset<<1);
 
 	return 0;
 }
@@ -395,91 +395,59 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static const struct MachineDriver machine_driver_funkyjet =
-{
+static MACHINE_DRIVER_START( funkyjet )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68000,
-			14000000, /* 28 MHz crystal */
-			funkyjet_readmem,funkyjet_writemem,0,0,
-			m68_level6_irq,1
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
-			32220000/8, /* Audio section crystal is 32.220 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, 529,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 14000000) /* 28 MHz crystal */
+	MDRV_CPU_MEMORY(funkyjet_readmem,funkyjet_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(H6280,32220000/8)	/* Custom chip 45, Audio section crystal is 32.220 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	funkyjet_vh_start,
-	0,
-	funkyjet_vh_screenrefresh,
+	MDRV_VIDEO_START(funkyjet)
+	MDRV_VIDEO_UPDATE(funkyjet)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-  	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_funkyjtb =
-{
+static MACHINE_DRIVER_START( funkyjtb )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68000,
-			14000000, /* 28 MHz crystal */
-			funkyjet_readmem,funkyjet_writemem,0,0,
-			m68_level6_irq,1
-		}
-	},
-	60, 529,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 14000000) /* 28 MHz crystal */
+	MDRV_CPU_MEMORY(funkyjet_readmem,funkyjet_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	funkyjet_vh_start,
-	0,
-	funkyjet_vh_screenrefresh,
+	MDRV_VIDEO_START(funkyjet)
+	MDRV_VIDEO_UPDATE(funkyjet)
 
 	/* sound hardware */
-	0,0,0,0,
-  	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -522,9 +490,9 @@ ROM_START( sotsugyo )
 ROM_END
 
 
-static void init_funkyjet(void)
+static DRIVER_INIT( funkyjet )
 {
-	deco74_decrypt();
+	deco74_decrypt(REGION_GFX1);
 }
 
 /******************************************************************************/

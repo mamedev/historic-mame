@@ -45,18 +45,17 @@ WRITE_HANDLER( thief_blit_w );
 READ_HANDLER( thief_coprocessor_r );
 WRITE_HANDLER( thief_coprocessor_w );
 
-void thief_vh_stop( void );
-int thief_vh_start( void );
-void thief_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( thief );
+VIDEO_UPDATE( thief );
 
 
-static int thief_interrupt( void )
+static INTERRUPT_GEN( thief_interrupt )
 {
 	/* SLAM switch causes an NMI if it's pressed */
 	if( (input_port_3_r(0) & 0x10) == 0 )
-		return nmi_interrupt();
-
-	return interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	else
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 /**********************************************************/
@@ -465,128 +464,82 @@ static struct Samplesinterface natodef_samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_sharkatt =
-{
+static MACHINE_DRIVER_START( sharkatt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,        /* 4 MHz? */
-			sharkatt_readmem,sharkatt_writemem,readport,writeport,
-			thief_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz? */
+	MDRV_CPU_MEMORY(sharkatt_readmem,sharkatt_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(thief_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	0,      /* no gfxdecodeinfo - bitmapped display */
-	16, 0,
-	0,
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	thief_vh_start,
-	thief_vh_stop,
-	thief_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_START(thief)
+	MDRV_VIDEO_UPDATE(thief)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&sharkatt_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(SAMPLES, sharkatt_samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_thief =
-{
+
+static MACHINE_DRIVER_START( thief )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000, /* 4 MHz? */
-			thief_readmem,thief_writemem,readport,writeport,
-			thief_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1, /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz? */
+	MDRV_CPU_MEMORY(thief_readmem,thief_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(thief_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,
-	16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	thief_vh_start,
-	thief_vh_stop,
-	thief_vh_screenrefresh,
+	MDRV_VIDEO_START(thief)
+	MDRV_VIDEO_UPDATE(thief)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&thief_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(SAMPLES, thief_samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_natodef =
-{
+
+static MACHINE_DRIVER_START( natodef )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000, /* 4 MHz? */
-			thief_readmem,thief_writemem,readport,writeport,
-			thief_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1, /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz? */
+	MDRV_CPU_MEMORY(thief_readmem,thief_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(thief_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,
-	16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	thief_vh_start,
-	thief_vh_stop,
-	thief_vh_screenrefresh,
+	MDRV_VIDEO_START(thief)
+	MDRV_VIDEO_UPDATE(thief)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&natodef_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(SAMPLES, natodef_samples_interface)
+MACHINE_DRIVER_END
 
 /**********************************************************/
 
@@ -683,7 +636,7 @@ ROM_START( natodefa )
 ROM_END
 
 
-static void init_thief(void)
+static DRIVER_INIT( thief )
 {
 	UINT8 *dest = memory_region( REGION_CPU1 );
 	const UINT8 *source = memory_region( REGION_CPU2 );

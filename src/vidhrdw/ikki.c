@@ -12,7 +12,7 @@ Video hardware driver by Uki
 
 static UINT8 ikki_flipscreen, ikki_scroll[2];
 
-void ikki_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ikki )
 {
 	int i;
 	int colors = Machine->drv->total_colors-1;
@@ -60,7 +60,7 @@ WRITE_HANDLER( ikki_scrn_ctrl_w )
 	ikki_flipscreen = (data >> 2) & 1;
 }
 
-void ikki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ikki )
 {
 
 	int offs,chr,col,px,py,f,bank,d;

@@ -68,7 +68,7 @@ static struct rectangle rightvisiblearea =
   plus 270 ohm pullup and pulldown resistors on all lines
 
 ***************************************************************************/
-void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( naughtyb )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -131,36 +131,21 @@ void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Start the video hardware emulation.
 
 ***************************************************************************/
-int naughtyb_vh_start(void)
+VIDEO_START( naughtyb )
 {
 	videoreg = palreg = bankreg = 0;
 
 	/* Naughty Boy has a virtual screen twice as large as the visible screen */
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc(68*8,28*8)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(68*8,28*8)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void naughtyb_vh_stop(void)
-{
-	bitmap_free(tmpbitmap);
-	free(dirtybuffer);
-}
 
 
 
@@ -258,7 +243,7 @@ WRITE_HANDLER( popflame_videoreg_w )
 
 
 ***************************************************************************/
-void naughtyb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( naughtyb )
 {
 	int offs;
 

@@ -71,7 +71,7 @@ int polepos_sh_start(const struct MachineSound *msound)
 	channel = mixer_allocate_channel(25);
 	mixer_set_name(channel,"Speech");
 
-	speech = malloc(16*SAMPLE_SIZE);
+	speech = auto_malloc(16*SAMPLE_SIZE);
 	if (!speech)
 		return 1;
 
@@ -135,9 +135,6 @@ int polepos_sh_start(const struct MachineSound *msound)
 /************************************/
 void polepos_sh_stop(void)
 {
-	if (speech)
-		free(speech);
-	speech = NULL;
 }
 
 /************************************/

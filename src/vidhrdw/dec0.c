@@ -151,7 +151,7 @@ WRITE16_HANDLER( dec0_paletteram_b_w )
 
 /******************************************************************************/
 
-static void dec0_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri_val)
+static void dec0_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri_mask,int pri_val)
 {
 	int offs;
 
@@ -210,7 +210,7 @@ static void dec0_drawsprites(struct mame_bitmap *bitmap,int pri_mask,int pri_val
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}
@@ -419,7 +419,7 @@ static void dec0_pf3_update(void)
 
 /******************************************************************************/
 
-static void dec0_pf1_draw(struct mame_bitmap *bitmap,int flags,int pri)
+static void dec0_pf1_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int flags,int pri)
 {
 	tilemap_set_enable(pf1_tilemap_0,0);
 	tilemap_set_enable(pf1_tilemap_1,0);
@@ -428,21 +428,21 @@ static void dec0_pf1_draw(struct mame_bitmap *bitmap,int flags,int pri)
 	switch (dec0_pf1_control_0[3]&0x3) {
 		case 0:	/* 4x1 */
 			tilemap_set_enable(pf1_tilemap_0,1);
-			tilemap_draw(bitmap,pf1_tilemap_0,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf1_tilemap_0,flags,pri);
 			break;
 		case 1:	/* 2x2 */
 		default:
 			tilemap_set_enable(pf1_tilemap_1,1);
-			tilemap_draw(bitmap,pf1_tilemap_1,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf1_tilemap_1,flags,pri);
 			break;
 		case 2:	/* 1x4 */
 			tilemap_set_enable(pf1_tilemap_2,1);
-			tilemap_draw(bitmap,pf1_tilemap_2,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf1_tilemap_2,flags,pri);
 			break;
 	}
 }
 
-static void dec0_pf2_draw(struct mame_bitmap *bitmap,int flags,int pri)
+static void dec0_pf2_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int flags,int pri)
 {
 	tilemap_set_enable(pf2_tilemap_0,0);
 	tilemap_set_enable(pf2_tilemap_1,0);
@@ -451,21 +451,21 @@ static void dec0_pf2_draw(struct mame_bitmap *bitmap,int flags,int pri)
 	switch (dec0_pf2_control_0[3]&0x3) {
 		case 0:	/* 4x1 */
 			tilemap_set_enable(pf2_tilemap_0,1);
-			tilemap_draw(bitmap,pf2_tilemap_0,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf2_tilemap_0,flags,pri);
 			break;
 		case 1:	/* 2x2 */
 		default:
 			tilemap_set_enable(pf2_tilemap_1,1);
-			tilemap_draw(bitmap,pf2_tilemap_1,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf2_tilemap_1,flags,pri);
 			break;
 		case 2:	/* 1x4 */
 			tilemap_set_enable(pf2_tilemap_2,1);
-			tilemap_draw(bitmap,pf2_tilemap_2,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf2_tilemap_2,flags,pri);
 			break;
 	}
 }
 
-static void dec0_pf3_draw(struct mame_bitmap *bitmap,int flags,int pri)
+static void dec0_pf3_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int flags,int pri)
 {
 	tilemap_set_enable(pf3_tilemap_0,0);
 	tilemap_set_enable(pf3_tilemap_1,0);
@@ -474,43 +474,43 @@ static void dec0_pf3_draw(struct mame_bitmap *bitmap,int flags,int pri)
 	switch (dec0_pf3_control_0[3]&0x3) {
 		case 0:	/* 4x1 */
 			tilemap_set_enable(pf3_tilemap_0,1);
-			tilemap_draw(bitmap,pf3_tilemap_0,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf3_tilemap_0,flags,pri);
 			break;
 		case 1:	/* 2x2 */
 		default:
 			tilemap_set_enable(pf3_tilemap_1,1);
-			tilemap_draw(bitmap,pf3_tilemap_1,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf3_tilemap_1,flags,pri);
 			break;
 		case 2:	/* 1x4 */
 			tilemap_set_enable(pf3_tilemap_2,1);
-			tilemap_draw(bitmap,pf3_tilemap_2,flags,pri);
+			tilemap_draw(bitmap,cliprect,pf3_tilemap_2,flags,pri);
 			break;
 	}
 }
 
 /******************************************************************************/
 
-void hbarrel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hbarrel )
 {
 	dec0_pf1_update();
 	dec0_pf2_update();
 	dec0_pf3_update();
 
-	dec0_pf3_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-	dec0_pf3_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-	dec0_drawsprites(bitmap,0x08,0x08);
-	dec0_pf2_draw(bitmap,TILEMAP_BACK,0);
-	dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+	dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+	dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+	dec0_drawsprites(bitmap,cliprect,0x08,0x08);
+	dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
+	dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 
 	/* HB always keeps pf2 on top of pf3, no need explicitly support priority register */
 
-	dec0_drawsprites(bitmap,0x08,0x00);
-	dec0_pf1_draw(bitmap,0,0);
+	dec0_drawsprites(bitmap,cliprect,0x08,0x00);
+	dec0_pf1_draw(bitmap,cliprect,0,0);
 }
 
 /******************************************************************************/
 
-void baddudes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( baddudes )
 {
 	/* WARNING: priority inverted wrt all the other games */
 	dec0_pf1_update();
@@ -520,47 +520,47 @@ void baddudes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	/* WARNING: inverted wrt Midnight Resistance */
 	if ((dec0_pri & 0x01) == 0)
 	{
-		dec0_pf2_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
 		if (!(dec0_pri & 2))
-			dec0_pf2_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
 
-		dec0_pf3_draw(bitmap,TILEMAP_BACK,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
 		if (!(dec0_pri & 4))
-			dec0_pf3_draw(bitmap,TILEMAP_FRONT,1);
+			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 
 		if (dec0_pri & 2)
-			dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 
-		dec0_drawsprites(bitmap,0x00,0x00);
+		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
 		if (dec0_pri & 4)
-			dec0_pf3_draw(bitmap,TILEMAP_FRONT,1); /* Foreground pens only */
+			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1); /* Foreground pens only */
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
 		if (!(dec0_pri & 2))
-			dec0_pf3_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
 
-		dec0_pf2_draw(bitmap,TILEMAP_BACK,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
 		if (!(dec0_pri & 4))
-			dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 
 		if (dec0_pri & 2)
-			dec0_pf3_draw(bitmap,TILEMAP_FRONT,1);
+			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 
-		dec0_drawsprites(bitmap,0x00,0x00);
+		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
 		if (dec0_pri & 4)
-			dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 	}
 
-	dec0_pf1_draw(bitmap,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0,0);
 }
 
 /******************************************************************************/
 
-void robocop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( robocop )
 {
 	int trans;
 
@@ -579,51 +579,51 @@ void robocop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		/* Robocop uses it only for the title screen, so this might be just */
 		/* completely wrong. The top 8 bits of the register might mean */
 		/* something (they are 0x80 in midres, 0x00 here) */
-		dec0_pf2_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
 
 		if (dec0_pri & 0x02)
-			dec0_drawsprites(bitmap,0x08,trans);
+			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf3_draw(bitmap,TILEMAP_BACK,0);
-		dec0_pf3_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf3_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
 
 		if (dec0_pri & 0x02)
-			dec0_drawsprites(bitmap,0x08,trans);
+			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf2_draw(bitmap,TILEMAP_BACK,0);
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 	}
 
 	if (dec0_pri & 0x02)
-		dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
+		dec0_drawsprites(bitmap,cliprect,0x08,trans ^ 0x08);
 	else
-		dec0_drawsprites(bitmap,0x00,0x00);
+		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
-	dec0_pf1_draw(bitmap,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0,0);
 }
 
 /******************************************************************************/
 
-void birdtry_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( birdtry )
 {
 	/* This game doesn't have the extra playfield chip on the game board */
 	dec0_pf1_update();
 	dec0_pf2_update();
-	dec0_pf2_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-	dec0_pf2_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-	dec0_drawsprites(bitmap,0x00,0x00);
-	dec0_pf1_draw(bitmap,0,0);
+	dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+	dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
+	dec0_pf1_draw(bitmap,cliprect,0,0);
 }
 
 /******************************************************************************/
 
-void hippodrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hippodrm )
 {
 	dec0_pf1_update();
 	dec0_pf2_update();
@@ -631,48 +631,48 @@ void hippodrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	if (dec0_pri & 0x01)
 	{
-		dec0_pf2_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-		dec0_pf3_draw(bitmap,TILEMAP_BACK,0);
-		dec0_pf3_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf3_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-		dec0_pf2_draw(bitmap,TILEMAP_BACK,0);
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 	}
 
-	dec0_drawsprites(bitmap,0x00,0x00);
-	dec0_pf1_draw(bitmap,0,0);
+	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
+	dec0_pf1_draw(bitmap,cliprect,0,0);
 }
 
 /******************************************************************************/
 
-void slyspy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( slyspy )
 {
 	dec0_pf1_update();
 	dec0_pf2_update();
 	dec0_pf3_update();
 
-	dec0_pf3_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-	dec0_pf3_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-	dec0_pf2_draw(bitmap,TILEMAP_BACK,0);
+	dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+	dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+	dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
 	if (!(dec0_pri&0x80))
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 
-	dec0_drawsprites(bitmap,0x00,0x00);
+	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
 	if (dec0_pri&0x80)
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 
-	dec0_pf1_draw(bitmap,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0,0);
 }
 
 /******************************************************************************/
 
-void midres_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( midres )
 {
 	int trans;
 
@@ -686,33 +686,33 @@ void midres_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	if (dec0_pri & 0x01)
 	{
-		dec0_pf2_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
 
 		if (dec0_pri & 0x02)
-			dec0_drawsprites(bitmap,0x08,trans);
+			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf3_draw(bitmap,TILEMAP_BACK,0);
-		dec0_pf3_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf3_draw(bitmap,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
 
 		if (dec0_pri & 0x02)
-			dec0_drawsprites(bitmap,0x08,trans);
+			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf2_draw(bitmap,TILEMAP_BACK,0);
-		dec0_pf2_draw(bitmap,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
 	}
 
 	if (dec0_pri & 0x02)
-		dec0_drawsprites(bitmap,0x08,trans ^ 0x08);
+		dec0_drawsprites(bitmap,cliprect,0x08,trans ^ 0x08);
 	else
-		dec0_drawsprites(bitmap,0x00,0x00);
+		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
-	dec0_pf1_draw(bitmap,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0,0);
 }
 
 /******************************************************************************/
@@ -877,16 +877,7 @@ static void get_pf3_tile_info(int tile_index)
 	SET_TILE_INFO(2,tile&0xfff,tile>>12,TILE_SPLIT(pri))
 }
 
-void dec0_nodma_vh_stop (void)
-{
-}
-
-void dec0_vh_stop (void)
-{
-	free(dec0_spriteram);
-}
-
-int dec0_nodma_vh_start (void)
+VIDEO_START( dec0_nodma )
 {
 	pf1_tilemap_0 = tilemap_create(get_pf1_tile_info,tile_shape0_8x8_scan,TILEMAP_TRANSPARENT, 8, 8,128, 32);
 	pf1_tilemap_1 = tilemap_create(get_pf1_tile_info,tile_shape1_8x8_scan,TILEMAP_TRANSPARENT, 8, 8, 64, 64);
@@ -930,10 +921,10 @@ int dec0_nodma_vh_start (void)
 	return 0;
 }
 
-int dec0_vh_start (void)
+VIDEO_START( dec0 )
 {
-	dec0_nodma_vh_start();
-	dec0_spriteram=malloc(0x800);
+	video_start_dec0_nodma();
+	dec0_spriteram=auto_malloc(0x800);
 
 	return 0;
 }

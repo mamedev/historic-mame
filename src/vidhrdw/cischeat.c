@@ -76,13 +76,13 @@ data16_t *cischeat_roadram[2];
 {\
 	sprintf(buf,_format_,_offset_);\
 	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
 	sprintf(buf,_format_,_offset_,_data_);\
 	usrintf_showmessage(buf);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
 }
 
 #else
@@ -90,12 +90,12 @@ data16_t *cischeat_roadram[2];
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
 	sprintf(buf,_format_,_offset_);\
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);\
+	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf);\
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
 	sprintf(buf,_format_,_offset_,_data_); \
-	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",activecpu_get_pc(), buf); \
 }
 
 #endif
@@ -117,7 +117,7 @@ data16_t *cischeat_roadram[2];
 #define cischeat_tmap_DRAW(_n_) \
 	if ( (megasys1_tmap[_n_]) && (megasys1_active_layers & (1 << _n_) ) ) \
 	{ \
-		tilemap_draw(bitmap, megasys1_tmap[_n_], flag, 0 ); \
+		tilemap_draw(bitmap, cliprect, megasys1_tmap[_n_], flag, 0 ); \
 		flag = 0; \
 	}
 
@@ -145,9 +145,9 @@ void prepare_shadows(void)
 **************************************************************************/
 
 /* 32 colour codes for the tiles */
-int cischeat_vh_start(void)
+VIDEO_START( cischeat )
 {
-	if (megasys1_vh_start())	return 1;
+	if (video_start_megasys1())	return 1;
 
  	megasys1_bits_per_color_code = 5;
 
@@ -161,18 +161,18 @@ int cischeat_vh_start(void)
 **************************************************************************/
 
 /* 16 colour codes for the tiles */
-int f1gpstar_vh_start(void)
+VIDEO_START( f1gpstar )
 {
-	if (cischeat_vh_start())	return 1;
+	if (video_start_cischeat())	return 1;
 
  	megasys1_bits_per_color_code = 4;
 
  	return 0;
 }
 
-int bigrun_vh_start(void)
+VIDEO_START( bigrun )
 {
-	return f1gpstar_vh_start();
+	return video_start_f1gpstar();
 }
 
 
@@ -396,7 +396,7 @@ WRITE16_HANDLER( cischeat_vregs_w )
 
 		case 0x2300/2   :	/* Sound CPU: reads latch during int 4, and stores command */
 							soundlatch_word_w(0,new_data,0);
-							cpu_cause_interrupt(3,4);
+							cpu_set_irq_line(3,4,HOLD_LINE);
 							break;
 
 		/* Not sure about this one.. */
@@ -471,7 +471,7 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 
 		/* Usually written in sequence, but not always */
 		case 0x0008/2   :	soundlatch_word_w(0,new_data,0);	break;
-		case 0x0018/2   :	cpu_cause_interrupt(3,4);		break;
+		case 0x0018/2   :	cpu_set_irq_line(3,4,HOLD_LINE);	break;
 
 		case 0x0010/2   :	break;
 
@@ -570,12 +570,12 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 /*	Draw the road in the given bitmap. The priority1 and priority2 parameters
 	specify the range of lines to draw	*/
 
-void cischeat_draw_road(struct mame_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
+void cischeat_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
 {
 	int curr_code,sx,sy;
 	int min_priority, max_priority;
 
-	struct rectangle rect		=	Machine->visible_area;
+	struct rectangle rect		=	*cliprect;
 	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
 	data16_t *roadram			=	cischeat_roadram[road_num & 1];
@@ -660,13 +660,13 @@ void cischeat_draw_road(struct mame_bitmap *bitmap, int road_num, int priority1,
 /*	Draw the road in the given bitmap. The priority1 and priority2 parameters
 	specify the range of lines to draw	*/
 
-void f1gpstar_draw_road(struct mame_bitmap *bitmap, int road_num, int priority1, int priority2, int transparency)
+void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
 {
 	int sx,sy;
 	int xstart;
 	int min_priority, max_priority;
 
-	struct rectangle rect		=	Machine->visible_area;
+	struct rectangle rect		=	*cliprect;
 	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
 	data16_t *roadram			=	cischeat_roadram[road_num & 1];
@@ -776,7 +776,7 @@ void f1gpstar_draw_road(struct mame_bitmap *bitmap, int road_num, int priority1,
 	sprites whose priority nibble is between 0 and 15 and whose
 	colour code's high bit is set.	*/
 
-static void cischeat_draw_sprites(struct mame_bitmap *bitmap , int priority1, int priority2)
+static void cischeat_draw_sprites(struct mame_bitmap *bitmap , const struct rectangle *cliprect, int priority1, int priority2)
 {
 	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
 	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
@@ -880,7 +880,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 							color,
 							flipx,flipy,
 							(sx + x * xdim) / 0x10000, (sy + y * ydim) / 0x10000,
-							&Machine->visible_area,
+							cliprect,
 							shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,15,
 							xscale, yscale );
 			}
@@ -894,7 +894,7 @@ if (keyboard_pressed(KEYCODE_X))
 	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
 	dt[0].x = sx>>16;	dt[0].y = sy>>16;
 	dt[1].text = 0;	/* terminate array */
-	displaytext(Machine->scrbitmap,dt);		}
+	displaytext(bitmap,dt);		}
 #endif
 #endif
 	}	/* end sprite loop */
@@ -934,7 +934,7 @@ if (keyboard_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-static void bigrun_draw_sprites(struct mame_bitmap *bitmap , int priority1, int priority2)
+static void bigrun_draw_sprites(struct mame_bitmap *bitmap , const struct rectangle *cliprect, int priority1, int priority2)
 {
 	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
 	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
@@ -1037,7 +1037,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 							color,
 							flipx,flipy,
 							(sx + x * xdim) / 0x10000, (sy + y * ydim) / 0x10000,
-							&Machine->visible_area,
+							cliprect,
 							shadow ? TRANSPARENCY_PEN_TABLE : TRANSPARENCY_PEN,15,
 							xscale, yscale );
 			}
@@ -1051,7 +1051,7 @@ if (keyboard_pressed(KEYCODE_X))
 	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
 	dt[0].x = sx>>16;	dt[0].y = sy>>16;
 	dt[1].text = 0;	/* terminate array */
-	displaytext(Machine->scrbitmap,dt);		}
+	displaytext(bitmap,dt);		}
 #endif
 #endif
 	}	/* end sprite loop */
@@ -1098,7 +1098,7 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) ) \
 								Big Run
 **************************************************************************/
 
-void bigrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bigrun )
 {
 	int i;
 	int megasys1_active_layers1, flag;
@@ -1121,12 +1121,12 @@ void bigrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	for (i = 7; i >= 4; i--)
 	{											/* bitmap, road, min_priority, max_priority, transparency */
-		if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,i,i,TRANSPARENCY_NONE);
-		if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,i,i,TRANSPARENCY_PEN);
+		if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,cliprect,0,i,i,TRANSPARENCY_NONE);
+		if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,cliprect,1,i,i,TRANSPARENCY_PEN);
 	}
 
 	flag = 0;
@@ -1135,11 +1135,11 @@ void bigrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	for (i = 3; i >= 0; i--)
 	{											/* bitmap, road, min_priority, max_priority, transparency */
-		if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,i,i,TRANSPARENCY_PEN);
-		if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,i,i,TRANSPARENCY_PEN);
+		if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,cliprect,0,i,i,TRANSPARENCY_PEN);
+		if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,cliprect,1,i,i,TRANSPARENCY_PEN);
 	}
 
-	if (megasys1_active_layers & 0x08)	bigrun_draw_sprites(bitmap,15,0);
+	if (megasys1_active_layers & 0x08)	bigrun_draw_sprites(bitmap,cliprect,15,0);
 
 	cischeat_tmap_DRAW(2)
 
@@ -1151,7 +1151,7 @@ void bigrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 								Cisco Heat
 **************************************************************************/
 
-void cischeat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cischeat )
 {
 	int megasys1_active_layers1, flag;
 
@@ -1173,28 +1173,28 @@ void cischeat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 										/* bitmap, road, priority, transparency */
-	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,7,5,TRANSPARENCY_NONE);
-	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,7,5,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,cliprect,0,7,5,TRANSPARENCY_NONE);
+	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,cliprect,1,7,5,TRANSPARENCY_PEN);
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+//	else fillbitmap(bitmap,Machine->pens[0],cliprect);
 	cischeat_tmap_DRAW(1)
 
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,15,3);
-	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,4,1,TRANSPARENCY_PEN);
-	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,4,1,TRANSPARENCY_PEN);
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,2,2);
-	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,0,0,0,TRANSPARENCY_PEN);
-	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,1,0,0,TRANSPARENCY_PEN);
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,1,0);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,15,3);
+	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,cliprect,0,4,1,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,cliprect,1,4,1,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,2,2);
+	if (megasys1_active_layers & 0x10)	cischeat_draw_road(bitmap,cliprect,0,0,0,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x20)	cischeat_draw_road(bitmap,cliprect,1,0,0,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,1,0);
 	cischeat_tmap_DRAW(2)
 
 	/* for the map screen */
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0+16,0+16);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,0+16,0+16);
 
 
 	megasys1_active_layers = megasys1_active_layers1;
@@ -1206,7 +1206,7 @@ void cischeat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 							F1 GrandPrix Star
 **************************************************************************/
 
-void f1gpstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( f1gpstar )
 {
 	int megasys1_active_layers1, flag;
 
@@ -1228,32 +1228,32 @@ void f1gpstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 /*	1: clouds 5, grad 7, road 0		2: clouds 5, grad 7, road 0, tunnel roof 0 */
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
-	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,1,6,7,TRANSPARENCY_PEN);
-	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,0,6,7,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,cliprect,1,6,7,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,cliprect,0,6,7,TRANSPARENCY_PEN);
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+//	else fillbitmap(bitmap,Machine->pens[0],cliprect);
 	cischeat_tmap_DRAW(1)
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
-	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,1,1,5,TRANSPARENCY_PEN);
-	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,0,1,5,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,cliprect,1,1,5,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,cliprect,0,1,5,TRANSPARENCY_PEN);
 
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,15,2);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,15,2);
 
 	/* road 1!! 0!! */					/* bitmap, road, min_priority, max_priority, transparency */
-	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,1,0,0,TRANSPARENCY_PEN);
-	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,0,0,0,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x20)	f1gpstar_draw_road(bitmap,cliprect,1,0,0,TRANSPARENCY_PEN);
+	if (megasys1_active_layers & 0x10)	f1gpstar_draw_road(bitmap,cliprect,0,0,0,TRANSPARENCY_PEN);
 
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,1,1);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,1,1);
 	cischeat_tmap_DRAW(2)
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0,0);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,0,0);
 
 
 	megasys1_active_layers = megasys1_active_layers1;
@@ -1271,7 +1271,7 @@ extern data16_t scudhamm_motor_command;
 	READ16_HANDLER( scudhamm_motor_status_r );
 	READ16_HANDLER( scudhamm_analog_r );
 
-void scudhamm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( scudhamm )
 {
 	int megasys1_active_layers1, flag;
 	megasys1_active_layers = 0x0d;
@@ -1306,13 +1306,13 @@ if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
 //	cischeat_tmap_SET_SCROLL(1)
 	cischeat_tmap_SET_SCROLL(2)
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	flag = 0;
 	cischeat_tmap_DRAW(0)
-//	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+//	else fillbitmap(bitmap,Machine->pens[0],cliprect);
 //	cischeat_tmap_DRAW(1)
-	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,0,15);
+	if (megasys1_active_layers & 0x08)	cischeat_draw_sprites(bitmap,cliprect,0,15);
 	cischeat_tmap_DRAW(2)
 
 	megasys1_active_layers = megasys1_active_layers1;

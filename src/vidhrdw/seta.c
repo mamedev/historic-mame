@@ -207,7 +207,7 @@ WRITE16_HANDLER( seta_vregs_w )
 					if ( (samples_len > 0x100000) && ((addr+0x40000) <= samples_len) )
 						memcpy(&RAM[0xc0000],&RAM[addr],0x40000);
 					else
-						logerror("PC %06X - Invalid samples bank %02X !\n", cpu_get_pc(), new_bank);
+						logerror("PC %06X - Invalid samples bank %02X !\n", activecpu_get_pc(), new_bank);
 				}
 
 			}
@@ -279,7 +279,7 @@ SETA_TILEMAP(3)
 
 
 /* 2 layers */
-int seta_vh_start_2_layers(void)
+VIDEO_START( seta_2_layers )
 {
 	/* Each layer consists of 2 tilemaps: only one can be displayed
 	   at any given time */
@@ -336,7 +336,7 @@ int seta_vh_start_2_layers(void)
 
 
 /* 1 layer */
-int seta_vh_start_1_layer(void)
+VIDEO_START( seta_1_layer )
 {
 	/* Each layer consists of 2 tilemaps: only one can be displayed
 	   at any given time */
@@ -378,7 +378,7 @@ int seta_vh_start_1_layer(void)
 
 
 /* NO layers, only sprites */
-int seta_vh_start_no_layers(void)
+VIDEO_START( seta_no_layers )
 {
 	tilemap_0 = 0;
 	tilemap_1 = 0;
@@ -387,9 +387,9 @@ int seta_vh_start_no_layers(void)
 	return 0;
 }
 
-int seta_vh_start_2_layers_offset_0x02(void)
+VIDEO_START( seta_2_layers_offset_0x02 )
 {
-	if (seta_vh_start_2_layers())
+	if (video_start_seta_2_layers())
 		return 1;
 
 	tilemap_set_scrolldx(tilemap_0, -0x02, 0x00);
@@ -404,17 +404,17 @@ int seta_vh_start_2_layers_offset_0x02(void)
 	return 0;
 }
 
-int oisipuzl_vh_start_2_layers(void)
+VIDEO_START( oisipuzl_2_layers )
 {
-	if (seta_vh_start_2_layers_offset_0x02())
+	if (video_start_seta_2_layers_offset_0x02())
 		return 1;
 	tilemaps_flip = 1;
 	return 0;
 }
 
-int seta_vh_start_1_layer_offset_0x02(void)
+VIDEO_START( seta_1_layer_offset_0x02 )
 {
-	if (seta_vh_start_1_layer())	return 1;
+	if (video_start_seta_1_layer())	return 1;
 
 	tilemap_set_scrolldx(tilemap_0, -0x02, 0x00); // see calibr50's rescue
 	tilemap_set_scrolldx(tilemap_1, -0x02, 0x00);
@@ -445,7 +445,7 @@ int seta_vh_start_1_layer_offset_0x02(void)
 
    I think that's because this game's a prototype..
 */
-void blandia_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( blandia )
 {
 	int color, pen;
 	for( color = 0; color < 32; color++ )
@@ -460,7 +460,7 @@ void blandia_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 
 /* layers have 6 bits per pixel, but the color code has a 16 colors granularity,
    even if the low 2 bits are ignored (so there are only 4 different palettes) */
-void gundhara_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gundhara )
 {
 	int color, pen;
 	for( color = 0; color < 32; color++ )
@@ -474,7 +474,7 @@ void gundhara_vh_init_palette(unsigned char *palette, unsigned short *colortable
 
 
 /* layers have 6 bits per pixel, but the color code has a 16 colors granularity */
-void jjsquawk_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( jjsquawk )
 {
 	int color, pen;
 	for( color = 0; color < 32; color++ )
@@ -487,7 +487,7 @@ void jjsquawk_vh_init_palette(unsigned char *palette, unsigned short *colortable
 
 
 /* layer 0 is 6 bit per pixel, but the color code has a 16 colors granularity */
-void zingzip_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( zingzip )
 {
 	int color, pen;
 	for( color = 0; color < 32; color++ )
@@ -499,7 +499,7 @@ void zingzip_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 
 
 /* 6 bit layer. The colors are still WRONG */
-void usclssic_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( usclssic )
 {
 	int color, pen;
 	for( color = 0; color < 32; color++ )
@@ -519,7 +519,7 @@ void usclssic_vh_init_palette(unsigned char *palette, unsigned short *colortable
 ***************************************************************************/
 
 
-static void seta_draw_sprites_map(struct mame_bitmap *bitmap)
+static void seta_draw_sprites_map(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs, col;
 	int xoffs, yoffs;
@@ -610,7 +610,7 @@ oisipuzl:	059 020 00 00	(game - yes, flip on!)
 					color, \
 					flipx, flipy, \
 					_x_,_y_, \
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			DRAWTILE(sx - 0x000, sy + 0x000)
 			DRAWTILE(sx - 0x200, sy + 0x000)
@@ -625,7 +625,7 @@ oisipuzl:	059 020 00 00	(game - yes, flip on!)
 
 
 
-static void seta_draw_sprites(struct mame_bitmap *bitmap)
+static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 	int xoffs, yoffs;
@@ -645,7 +645,7 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap)
 
 
 
-	seta_draw_sprites_map(bitmap);
+	seta_draw_sprites_map(bitmap,cliprect);
 
 
 
@@ -683,7 +683,7 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap)
 				flipx, flipy,
 				(x + xoffs) & 0x1ff,
 				max_y - ((y + yoffs) & 0x0ff),
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 
 }
@@ -701,16 +701,16 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap)
 ***************************************************************************/
 
 /* For games without tilemaps */
-void seta_vh_screenrefresh_no_layers(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( seta_no_layers )
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	seta_draw_sprites(bitmap);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	seta_draw_sprites(bitmap,cliprect);
 }
 
 
 
 /* For games with 1 or 2 tilemaps */
-void seta_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( seta )
 {
 	int layers_ctrl = -1;
 	int enab_0, enab_1, x_0, x_1, y_0, y_1;
@@ -785,53 +785,53 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	if (order & 1)	// swap the layers?
 	{
 		if (tilemap_2)
 		{
-			if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2, TILEMAP_IGNORE_TRANSPARENCY, 0);
-			if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3, TILEMAP_IGNORE_TRANSPARENCY, 0);
+			if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect, tilemap_2, TILEMAP_IGNORE_TRANSPARENCY, 0);
+			if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect, tilemap_3, TILEMAP_IGNORE_TRANSPARENCY, 0);
 		}
 
 		if (order & 2)	// layer-sprite priority?
 		{
-			if (layers_ctrl & 8)	seta_draw_sprites(bitmap);
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  0, 0);
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  0, 0);
+			if (layers_ctrl & 8)	seta_draw_sprites(bitmap,cliprect);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, tilemap_0,  0, 0);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, tilemap_1,  0, 0);
 		}
 		else
 		{
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  0, 0);
-			if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  0, 0);
-			if (layers_ctrl & 8)	seta_draw_sprites(bitmap);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, tilemap_0,  0, 0);
+			if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, tilemap_1,  0, 0);
+			if (layers_ctrl & 8)	seta_draw_sprites(bitmap,cliprect);
 		}
 	}
 	else
 	{
-		if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_0,  TILEMAP_IGNORE_TRANSPARENCY, 0);
-		if (layers_ctrl & 1)	tilemap_draw(bitmap, tilemap_1,  TILEMAP_IGNORE_TRANSPARENCY, 0);
+		if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, tilemap_0,  TILEMAP_IGNORE_TRANSPARENCY, 0);
+		if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect, tilemap_1,  TILEMAP_IGNORE_TRANSPARENCY, 0);
 
 		if (order & 2)	// layer-sprite priority?
 		{
-			if (layers_ctrl & 8)	seta_draw_sprites(bitmap);
+			if (layers_ctrl & 8)	seta_draw_sprites(bitmap,cliprect);
 
 			if (tilemap_2)
 			{
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2,  0, 0);
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3,  0, 0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect, tilemap_2,  0, 0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect, tilemap_3,  0, 0);
 			}
 		}
 		else
 		{
 			if (tilemap_2)
 			{
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_2,  0, 0);
-				if (layers_ctrl & 2)	tilemap_draw(bitmap, tilemap_3,  0, 0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect, tilemap_2,  0, 0);
+				if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect, tilemap_3,  0, 0);
 			}
 
-			if (layers_ctrl & 8)	seta_draw_sprites(bitmap);
+			if (layers_ctrl & 8)	seta_draw_sprites(bitmap,cliprect);
 		}
 	}
 

@@ -83,24 +83,15 @@ static void wbeachvl_get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-void bigtwin_vh_stop(void)
+VIDEO_START( bigtwin )
 {
-	bitmap_free(bgbitmap);
-	bgbitmap = 0;
-}
-
-int bigtwin_vh_start(void)
-{
-	bgbitmap = bitmap_alloc(512,512);
+	bgbitmap = auto_bitmap_alloc(512,512);
 
 	tx_tilemap = tilemap_create(bigtwin_get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	fg_tilemap = tilemap_create(bigtwin_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,16);
 
 	if (!tx_tilemap || !fg_tilemap || !bgbitmap)
-	{
-		bigtwin_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(tx_tilemap,0);
 	tilemap_set_transparent_pen(fg_tilemap,0);
@@ -109,7 +100,7 @@ int bigtwin_vh_start(void)
 }
 
 
-int wbeachvl_vh_start(void)
+VIDEO_START( wbeachvl )
 {
 	tx_tilemap = tilemap_create(wbeachvl_get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	fg_tilemap = tilemap_create(wbeachvl_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
@@ -240,7 +231,7 @@ WRITE16_HANDLER( wbeachvl_scroll_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,int codeshift)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int codeshift)
 {
 	int offs;
 	int height = Machine->gfx[0]->height;
@@ -264,25 +255,25 @@ static void draw_sprites(struct mame_bitmap *bitmap,int codeshift)
 				color/colordiv,
 				flipx,0,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
 
-void bigtwin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bigtwin )
 {
 	palette_set_color(256,0,0,0);	/* keep the background black */
 
-	copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_sprites(bitmap,4);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,cliprect,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,4);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
-void wbeachvl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wbeachvl )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
-	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }

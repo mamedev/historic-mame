@@ -153,7 +153,7 @@ CPU68 PCB:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/namcos2.h"
+#include "namcos2.h"
 #include "cpu/m6809/m6809.h"
 #include "namcos21.h"
 
@@ -399,66 +399,49 @@ static struct C140interface C140_interface =
 	50
 };
 
-static const struct MachineDriver machine_driver_poly =
-{
-	{
-		{
-			CPU_M68000, /* Master */
-			12288000,
-			readmem_master_default,writemem_master_default,0,0,
-			namcos2_68k_master_vblank,1
-		},
-		{
-			CPU_M68000, /* Slave */
-			12288000,
-			readmem_slave_default,writemem_slave_default,0,0,
-			namcos2_68k_slave_vblank,1
-		},
-		{
-			CPU_M6809, /* Sound */
-			3072000,
-			readmem_sound,writemem_sound,0,0,
-			interrupt,2,
-			namcos2_sound_interrupt,120
-		},
-		{
-			CPU_HD63705, /* IO */
-			2048000,
-			readmem_mcu,writemem_mcu,0,0,
-			namcos2_mcu_interrupt,1,
-			0,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* 100 CPU slices per frame */
-	namcos2_init_machine,
+static MACHINE_DRIVER_START( poly )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12288000) /* Master */
+	MDRV_CPU_MEMORY(readmem_master_default,writemem_master_default)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
+
+	MDRV_CPU_ADD(M68000,12288000) /* Slave */
+	MDRV_CPU_MEMORY(readmem_slave_default,writemem_slave_default)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
+
+	MDRV_CPU_ADD(M6809,3072000) /* Sound */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
+
+	MDRV_CPU_ADD(HD63705,2048000) /* IO */
+	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* 100 CPU slices per frame */
+
+	MDRV_MACHINE_INIT(namcos2)
+	MDRV_NVRAM_HANDLER(namcos2)
 
 	/* video hardware */
-	62*8, 60*8, { 0*8, 62*8-1, 0*8, 60*8-1 },
-	gfxdecodeinfo,
-	NAMCOS21_NUM_COLORS,NAMCOS21_NUM_COLORS,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	namcos21_vh_start,
-	namcos21_vh_stop,
-	namcos21_vh_update_default,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(62*8, 60*8)
+	MDRV_VISIBLE_AREA(0*8, 62*8-1, 0*8, 60*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(NAMCOS21_NUM_COLORS)
+	MDRV_COLORTABLE_LENGTH(NAMCOS21_NUM_COLORS)
+
+	MDRV_VIDEO_START(namcos21)
+	MDRV_VIDEO_UPDATE(namcos21_default)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	/* Sound struct here */
-	{
-		{
-			SOUND_C140,
-			&C140_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	},
-	namcos2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(C140, C140_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 ROM_START( aircombu )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* Master */
@@ -773,12 +756,12 @@ static void namcos21_init( int game_type )
 	}
 }
 
-static void init_winrun( void )
+static DRIVER_INIT( winrun )
 {
 	namcos21_init( NAMCOS21_WINRUN91 );
 }
 
-static void init_aircombt( void )
+static DRIVER_INIT( aircombt )
 {
 #if 0 /* Patch test mode: replace first four tests with hidden tests */
 	data16_t *pMem = (data16_t *)memory_region( REGION_CPU1 );
@@ -791,13 +774,13 @@ static void init_aircombt( void )
 	namcos21_init( NAMCOS21_AIRCOMBAT );
 }
 
-void init_starblad( void )
+DRIVER_INIT( starblad )
 {
 	namcos21_init( NAMCOS21_STARBLADE );
 }
 
 
-void init_cybsled( void )
+DRIVER_INIT( cybsled )
 {
 	namcos21_init( NAMCOS21_CYBERSLED );
 }

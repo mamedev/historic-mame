@@ -1,22 +1,16 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari I, Robot hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "irobot.h"
 
 #define BITMAP_WIDTH	256
 static UINT8 *polybitmap1,*polybitmap2;
 static UINT8 *polybitmap;
-
-extern UINT8 irvg_clear;
-extern UINT8 irobot_bufsel;
-extern UINT8 irobot_alphamap;
-extern UINT8 *irobot_combase;
 
 static int ir_xmin, ir_ymin, ir_xmax, ir_ymax; /* clipping area */
 
@@ -48,7 +42,8 @@ static int ir_xmin, ir_ymin, ir_xmax, ir_ymax; /* clipping area */
           the processor)
 
 ***************************************************************************/
-void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+PALETTE_INIT( irobot )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -119,12 +114,12 @@ WRITE_HANDLER( irobot_paletteram_w )
   Start the video hardware emulation.
 
 ***************************************************************************/
-int irobot_vh_start(void)
+VIDEO_START( irobot )
 {
 	/* Setup 2 bitmaps for the polygon generator */
-	if ((polybitmap1 = malloc(BITMAP_WIDTH * Machine->drv->screen_height)) == 0)
+	if ((polybitmap1 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen_height)) == 0)
 		return 1;
-	if ((polybitmap2 = malloc(BITMAP_WIDTH * Machine->drv->screen_height)) == 0)
+	if ((polybitmap2 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen_height)) == 0)
 		return 1;
 
 	/* Set clipping */
@@ -135,16 +130,6 @@ int irobot_vh_start(void)
 	return 0;
 }
 
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void irobot_vh_stop(void)
-{
-	free(polybitmap1);
-	free(polybitmap2);
-}
 
 /***************************************************************************
 
@@ -250,7 +235,7 @@ static void draw_line (int x1, int y1, int x2, int y2, int col)
 
 #define ROUND_TO_PIXEL(x)	((x >> 7) - 128)
 
-void run_video(void)
+void irobot_run_video(void)
 {
 	UINT16 *combase16 = (UINT16 *)irobot_combase;
 	int sx,sy,ex,ey,sx2,ey2;
@@ -390,7 +375,8 @@ void run_video(void)
   the main emulation engine.
 
 ***************************************************************************/
-void irobot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( irobot )
 {
 	UINT8 *bitmap_base = irobot_bufsel ? polybitmap1 : polybitmap2;
 	int x, y, offs;

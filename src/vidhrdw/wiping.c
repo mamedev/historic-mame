@@ -19,7 +19,7 @@ static int flipscreen;
 
 ***************************************************************************/
 
-void wiping_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( wiping )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -80,7 +80,7 @@ WRITE_HANDLER( wiping_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void wiping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wiping )
 {
 	int offs;
 

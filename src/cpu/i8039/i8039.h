@@ -16,12 +16,12 @@
 
 #include "osd_cpu.h"
 
-enum { I8039_PC=1, I8039_SP, I8039_PSW, I8039_A,  I8039_IRQ_STATE,
-	   I8039_R0,   I8039_R1, I8039_R2,  I8039_R3, I8039_R4,
-	   I8039_R5,   I8039_R6, I8039_R7,  I8039_P1, I8039_P2
+enum { I8039_PC=1, I8039_SP, I8039_PSW, I8039_A,  I8039_IRQ_STATE, I8039_TC,
+	   I8039_P1,   I8039_P2, I8039_R0,  I8039_R1, I8039_R2,
+	   I8039_R3,   I8039_R4, I8039_R5,  I8039_R6, I8039_R7
 };
 
-extern int i8039_ICount;        /* T-state count                          */
+extern int i8039_ICount;						/* T-state count */
 
 extern void i8039_init(void);
 extern void i8039_reset(void *param);			/* Reset processor & registers	*/
@@ -60,6 +60,9 @@ extern unsigned i8039_dasm(char *buffer, unsigned pc);
 #define I8035_PSW				I8039_PSW
 #define I8035_A 				I8039_A
 #define I8035_IRQ_STATE 		I8039_IRQ_STATE
+#define I8035_TC				I8039_TC
+#define I8035_P1				I8039_P1
+#define I8035_P2				I8039_P2
 #define I8035_R0				I8039_R0
 #define I8035_R1				I8039_R1
 #define I8035_R2				I8039_R2
@@ -68,10 +71,8 @@ extern unsigned i8039_dasm(char *buffer, unsigned pc);
 #define I8035_R5				I8039_R5
 #define I8035_R6				I8039_R6
 #define I8035_R7				I8039_R7
-#define I8035_P1				I8039_P1
-#define I8035_P2				I8039_P2
 
-#define i8035_ICount            i8039_ICount
+#define i8035_ICount			i8039_ICount
 
 extern void i8035_init(void);
 extern void i8035_reset(void *param);
@@ -96,6 +97,9 @@ extern unsigned i8035_dasm(char *buffer, unsigned pc);
 #define I8048_PSW				I8039_PSW
 #define I8048_A 				I8039_A
 #define I8048_IRQ_STATE 		I8039_IRQ_STATE
+#define I8048_TC				I8039_TC
+#define I8048_P1				I8039_P1
+#define I8048_P2				I8039_P2
 #define I8048_R0				I8039_R0
 #define I8048_R1				I8039_R1
 #define I8048_R2				I8039_R2
@@ -104,10 +108,8 @@ extern unsigned i8035_dasm(char *buffer, unsigned pc);
 #define I8048_R5				I8039_R5
 #define I8048_R6				I8039_R6
 #define I8048_R7				I8039_R7
-#define I8048_P1				I8039_P1
-#define I8048_P2				I8039_P2
 
-#define i8048_ICount            i8039_ICount
+#define i8048_ICount			i8039_ICount
 
 extern void i8048_init(void);
 extern void i8048_reset(void *param);
@@ -132,6 +134,9 @@ extern unsigned i8048_dasm(char *buffer, unsigned pc);
 #define N7751_PSW				I8039_PSW
 #define N7751_A 				I8039_A
 #define N7751_IRQ_STATE 		I8039_IRQ_STATE
+#define N7751_TC				I8039_TC
+#define N7751_P1				I8039_P1
+#define N7751_P2				I8039_P2
 #define N7751_R0				I8039_R0
 #define N7751_R1				I8039_R1
 #define N7751_R2				I8039_R2
@@ -140,10 +145,8 @@ extern unsigned i8048_dasm(char *buffer, unsigned pc);
 #define N7751_R5				I8039_R5
 #define N7751_R6				I8039_R6
 #define N7751_R7				I8039_R7
-#define N7751_P1				I8039_P1
-#define N7751_P2				I8039_P2
 
-#define n7751_ICount            i8039_ICount
+#define n7751_ICount			i8039_ICount
 
 extern void n7751_init(void);
 extern void n7751_reset(void *param);

@@ -43,8 +43,8 @@ void seibu_ym2151_irqhandler(int linestate);
 READ_HANDLER( seibu_soundlatch_r );
 READ_HANDLER( seibu_main_data_pending_r );
 WRITE_HANDLER( seibu_main_data_w );
-void seibu_sound_init_1(void);
-void seibu_sound_init_2(void);
+MACHINE_INIT( seibu_sound_1 );
+MACHINE_INIT( seibu_sound_2 );
 void seibu_sound_decrypt(int cpu_region,int length);
 
 /**************************************************************************/
@@ -92,36 +92,22 @@ static struct OKIM6295interface okim6295_interface2 =				\
 }
 
 #define SEIBU_SOUND_SYSTEM_CPU(freq)								\
-	CPU_Z80 | CPU_AUDIO_CPU,										\
-	freq,															\
-	seibu_sound_readmem,seibu_sound_writemem,0,0,					\
-	ignore_interrupt,0
+	MDRV_CPU_ADD(Z80, freq)											\
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	MDRV_CPU_MEMORY(seibu_sound_readmem,seibu_sound_writemem)		\
 
 #define SEIBU2_SOUND_SYSTEM_CPU(freq)								\
-	CPU_Z80 | CPU_AUDIO_CPU,										\
-	freq,															\
-	seibu2_sound_readmem,seibu2_sound_writemem,0,0,					\
-	ignore_interrupt,0
+	MDRV_CPU_ADD(Z80, freq)											\
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	MDRV_CPU_MEMORY(seibu2_sound_readmem,seibu2_sound_writemem)		\
 
 #define SEIBU_SOUND_SYSTEM_YM3812_INTERFACE							\
-	{																\
-		SOUND_YM3812,												\
-		&ym3812_interface											\
-	},																\
-	{																\
-		SOUND_OKIM6295,												\
-		&okim6295_interface											\
-	}
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)						\
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)					\
 
 #define SEIBU_SOUND_SYSTEM_YM2151_INTERFACE							\
-	{																\
-		SOUND_YM2151,												\
-		&ym2151_interface											\
-	},																\
-	{																\
-		SOUND_OKIM6295,												\
-		&okim6295_interface2										\
-	}
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)						\
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)					\
 
 /**************************************************************************/
 

@@ -107,7 +107,7 @@ WRITE_HANDLER( m92_spritecontrol_w )
 		*/
 		timer_set (TIME_IN_NSEC(37 * 0x400), 0, spritebuffer_callback);
 	}
-//	logerror("%04x: m92_spritecontrol_w %08x %08x\n",cpu_get_pc(),offset,data);
+//	logerror("%04x: m92_spritecontrol_w %08x %08x\n",activecpu_get_pc(),offset,data);
 }
 
 WRITE_HANDLER( m92_videocontrol_w )
@@ -131,7 +131,7 @@ WRITE_HANDLER( m92_videocontrol_w )
 		if ((data & 0x2) == 0x2 && m92_game_kludge!=3) m92_palette_bank = 1;
 		else                     m92_palette_bank = 0;
 	}
-//	logerror("%04x: m92_videocontrol_w %d = %02x\n",cpu_get_pc(),offset,data);
+//	logerror("%04x: m92_videocontrol_w %d = %02x\n",activecpu_get_pc(),offset,data);
 }
 
 READ_HANDLER( m92_paletteram_r )
@@ -396,14 +396,14 @@ WRITE_HANDLER( m92_master_control_w )
 //			else
 				m92_raster_irq_position=((pf4_control[7]<<8) | pf4_control[6])-128;
 //			if (offset==7)
-//				logerror("%06x: Raster %d %d\n",cpu_get_pc(),offset, m92_raster_irq_position);
+//				logerror("%06x: Raster %d %d\n",activecpu_get_pc(),offset, m92_raster_irq_position);
 			break;
 	}
 }
 
 /*****************************************************************************/
 
-int m92_vh_start(void)
+VIDEO_START( m92 )
 {
 	if (RYPELEO_SPEEDUP) {
 		pf1_hlayer = tilemap_create(
@@ -458,7 +458,7 @@ int m92_vh_start(void)
 		128,64
 	);
 
-	paletteram = malloc(0x1000);
+	paletteram = auto_malloc(0x1000);
 
 	if (!pf1_layer || !pf2_layer || !pf3_layer || !pf1_wide_layer || !pf3_wide_layer || !paletteram)
 		return 1;
@@ -493,14 +493,9 @@ int m92_vh_start(void)
 	return 0;
 }
 
-void m92_vh_stop(void)
-{
-	free(paletteram);
-}
-
 /*****************************************************************************/
 
-static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *clip)
+static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs=0;
 
@@ -543,14 +538,14 @@ static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *
 							colour,
 							ffx,ffy,
 							496-x,496-(y-i*16),
-							clip,TRANSPARENCY_PEN,0,pri);
+							cliprect,TRANSPARENCY_PEN,0,pri);
 				} else {
 					pdrawgfx(bitmap,Machine->gfx[1],
 							sprite + s_ptr,
 							colour,
 							fx,fy,
 							x,y-i*16,
-							clip,TRANSPARENCY_PEN,0,pri);
+							cliprect,TRANSPARENCY_PEN,0,pri);
 				}
 				if (fy) s_ptr++; else s_ptr--;
 			}
@@ -562,7 +557,7 @@ static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *
 
 /*****************************************************************************/
 
-void m92_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( m92 )
 {
 	/* Screen refresh is handled by raster interrupt routine, here
 		we just check the keyboard */
@@ -658,34 +653,34 @@ static void m92_update_scroll_positions(void)
 
 /*****************************************************************************/
 
-static void m92_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip)
+static void m92_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (pf3_enable) {
-		tilemap_draw(bitmap,pf3_wide_layer,TILEMAP_BACK,0);
-		tilemap_draw(bitmap,pf3_layer,TILEMAP_BACK,0);
+		tilemap_draw(bitmap,cliprect,pf3_wide_layer,TILEMAP_BACK,0);
+		tilemap_draw(bitmap,cliprect,pf3_layer,TILEMAP_BACK,0);
 	}
 	else
-		fillbitmap(bitmap,Machine->pens[0],clip);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	tilemap_draw(bitmap,pf2_layer,TILEMAP_BACK,0);
-	tilemap_draw(bitmap,pf1_wide_layer,TILEMAP_BACK,0);
+	tilemap_draw(bitmap,cliprect,pf2_layer,TILEMAP_BACK,0);
+	tilemap_draw(bitmap,cliprect,pf1_wide_layer,TILEMAP_BACK,0);
 	if (RYPELEO_SPEEDUP && pf1_vram_ptr==0xc000)
-		tilemap_draw(bitmap,pf1_hlayer,TILEMAP_BACK,0);
+		tilemap_draw(bitmap,cliprect,pf1_hlayer,TILEMAP_BACK,0);
 	else
-		tilemap_draw(bitmap,pf1_layer,TILEMAP_BACK,0);
+		tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_BACK,0);
 
-	tilemap_draw(bitmap,pf3_wide_layer,TILEMAP_FRONT,1);
-	tilemap_draw(bitmap,pf3_layer,TILEMAP_FRONT,1);
-	tilemap_draw(bitmap,pf2_layer,TILEMAP_FRONT,1);
-	tilemap_draw(bitmap,pf1_wide_layer,TILEMAP_FRONT,1);
+	tilemap_draw(bitmap,cliprect,pf3_wide_layer,TILEMAP_FRONT,1);
+	tilemap_draw(bitmap,cliprect,pf3_layer,TILEMAP_FRONT,1);
+	tilemap_draw(bitmap,cliprect,pf2_layer,TILEMAP_FRONT,1);
+	tilemap_draw(bitmap,cliprect,pf1_wide_layer,TILEMAP_FRONT,1);
 	if (RYPELEO_SPEEDUP && pf1_vram_ptr==0xc000)
-		tilemap_draw(bitmap,pf1_hlayer,TILEMAP_FRONT,1);
+		tilemap_draw(bitmap,cliprect,pf1_hlayer,TILEMAP_FRONT,1);
 	else
-		tilemap_draw(bitmap,pf1_layer,TILEMAP_FRONT,1);
+		tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_FRONT,1);
 
-	m92_drawsprites(bitmap,clip);
+	m92_drawsprites(bitmap,cliprect);
 }
 
 void m92_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line)
@@ -704,12 +699,6 @@ void m92_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int
 	if (clip.max_y > clip.min_y)
 	{
 		m92_update_scroll_positions();
-		if (RYPELEO_SPEEDUP) tilemap_set_clip(pf1_hlayer,&clip);
-		tilemap_set_clip(pf1_layer,&clip);
-		tilemap_set_clip(pf2_layer,&clip);
-		tilemap_set_clip(pf3_layer,&clip);
-		tilemap_set_clip(pf1_wide_layer,&clip);
-		tilemap_set_clip(pf3_wide_layer,&clip);
 		m92_screenrefresh(bitmap,&clip);
 	}
 }

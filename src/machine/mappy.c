@@ -18,14 +18,14 @@ static unsigned char interrupt_enable_1,interrupt_enable_2;
 static int credits, coin, start1, start2;
 static int io_chip_1_enabled, io_chip_2_enabled;
 
-void mappy_init_machine(void)
+MACHINE_INIT( mappy )
 {
 	/* Reset all flags */
 	credits = coin = start1 = start2 = 0;
 	interrupt_enable_1 = interrupt_enable_2 = 0;
 }
 
-void motos_init_machine(void)
+MACHINE_INIT( motos )
 {
 	/* Reset all flags */
 	credits = coin = start1 = start2 = 0;
@@ -442,7 +442,7 @@ READ_HANDLER( todruaga_customio_1_r )
 	static int credden[] = { 1, 2, 1, 3 };
 	int val, temp, mode = mappy_customio_1[8];
 
-	logerror("%04x: I/O read 1: mode %d offset %d\n", cpu_get_pc(), mode, offset);
+	logerror("%04x: I/O read 1: mode %d offset %d\n", activecpu_get_pc(), mode, offset);
 
 	if (io_chip_1_enabled)
 	{
@@ -512,7 +512,7 @@ READ_HANDLER( todruaga_customio_2_r )
 {
 	int mode = mappy_customio_2[8];
 
-	logerror("%04x: I/O read 2: mode %d, offset %d\n", cpu_get_pc(), mode, offset);
+	logerror("%04x: I/O read 2: mode %d, offset %d\n", activecpu_get_pc(), mode, offset);
 
 	if (io_chip_1_enabled)
 	{
@@ -557,10 +557,10 @@ WRITE_HANDLER( mappy_interrupt_enable_1_w )
 
 
 
-int mappy_interrupt_1(void)
+INTERRUPT_GEN( mappy_interrupt_1 )
 {
-	if (interrupt_enable_1) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_1)
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -572,10 +572,10 @@ WRITE_HANDLER( mappy_interrupt_enable_2_w )
 
 
 
-int mappy_interrupt_2(void)
+INTERRUPT_GEN( mappy_interrupt_2 )
 {
-	if (interrupt_enable_2) return interrupt();
-	else return ignore_interrupt();
+	if (interrupt_enable_2)
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 

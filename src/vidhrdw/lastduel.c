@@ -84,7 +84,7 @@ static void get_fix_info(int tile_index)
 
 ***************************************************************************/
 
-int lastduel_vh_start(void)
+VIDEO_START( lastduel )
 {
 	bg_tilemap = tilemap_create(ld_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,64);
 	fg_tilemap = tilemap_create(ld_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,64,64);
@@ -103,7 +103,7 @@ int lastduel_vh_start(void)
 	return 0;
 }
 
-int madgear_vh_start(void)
+VIDEO_START( madgear )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,16,16,64,32);
@@ -205,7 +205,7 @@ WRITE16_HANDLER( madgear_scroll2_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int pri)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	int offs;
 
@@ -246,23 +246,23 @@ static void draw_sprites(struct mame_bitmap *bitmap, int pri)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,
+				cliprect,
 				TRANSPARENCY_PEN,15);
 	}
 }
 
-void lastduel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lastduel )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK,0);
-	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT,0);
-	draw_sprites(bitmap,1);
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_BACK,0);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_FRONT,0);
+	draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
 
-void lastduel_eof_callback(void)
+VIDEO_EOF( lastduel )
 {
 	/* Spriteram is always 1 frame ahead, suggesting buffering.  I can't find
 		a register to control this so I assume it happens automatically

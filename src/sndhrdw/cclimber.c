@@ -20,7 +20,7 @@ int cclimber_sh_start(const struct MachineSound *msound)
 	samplebuf = 0;
 	if (memory_region(REGION_SOUND1))
 	{
-		samplebuf = malloc(2*memory_region_length(REGION_SOUND1));
+		samplebuf = auto_malloc(2*memory_region_length(REGION_SOUND1));
 		if (!samplebuf)
 			return 1;
 	}
@@ -30,9 +30,6 @@ int cclimber_sh_start(const struct MachineSound *msound)
 
 void cclimber_sh_stop(void)
 {
-	if (samplebuf)
-		free(samplebuf);
-	samplebuf = NULL;
 }
 
 

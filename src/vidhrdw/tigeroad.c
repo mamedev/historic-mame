@@ -171,7 +171,7 @@ static void render_text( struct mame_bitmap *bitmap )
 
 
 
-void tigeroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tigeroad )
 {
 	render_background( bitmap,0 );
 	render_sprites( bitmap );
@@ -179,7 +179,7 @@ void tigeroad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	render_text( bitmap );
 }
 
-void tigeroad_eof_callback(void)
+VIDEO_EOF( tigeroad )
 {
 	buffer_spriteram16_w(0,0,0);
 }

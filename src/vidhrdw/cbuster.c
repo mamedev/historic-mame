@@ -62,7 +62,7 @@ static void get_fore_tile_info(int tile_index)
 
 /******************************************************************************/
 
-int twocrude_vh_start(void)
+VIDEO_START( twocrude )
 {
 	pf2_tilemap = tilemap_create(get_back_tile_info2,back_scan,        TILEMAP_OPAQUE,16,16,64,32);
 	pf3_tilemap = tilemap_create(get_back_tile_info3,back_scan,        TILEMAP_TRANSPARENT,16,16,64,32);
@@ -155,7 +155,7 @@ WRITE16_HANDLER( twocrude_control_1_w )
 
 /******************************************************************************/
 
-static void twocrude_drawsprites(struct mame_bitmap *bitmap, int pri)
+static void twocrude_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	int offs;
 
@@ -216,7 +216,7 @@ static void twocrude_drawsprites(struct mame_bitmap *bitmap, int pri)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}
@@ -225,7 +225,7 @@ static void twocrude_drawsprites(struct mame_bitmap *bitmap, int pri)
 
 /******************************************************************************/
 
-void twocrude_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( twocrude )
 {
 	int offs;
 	int pf23_control,pf14_control;
@@ -383,18 +383,18 @@ void twocrude_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 	/* Draw playfields & sprites */
-	tilemap_draw(bitmap,pf2_tilemap,0,0);
-	twocrude_drawsprites(bitmap,0);
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	twocrude_drawsprites(bitmap,cliprect,0);
 
 	if (twocrude_pri) {
-		tilemap_draw(bitmap,pf4_tilemap,0,0);
-		tilemap_draw(bitmap,pf3_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
 	}
 	else {
-		tilemap_draw(bitmap,pf3_tilemap,0,0);
-		tilemap_draw(bitmap,pf4_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
 	}
 
-	twocrude_drawsprites(bitmap,1);
-	tilemap_draw(bitmap,pf1_tilemap,0,0);
+	twocrude_drawsprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 }

@@ -190,9 +190,8 @@ Maybe the second area for each layer contains colscroll ?
 WRITE16_HANDLER( rainbow_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
 
-int  topspeed_vh_start(void);
-void topspeed_vh_stop(void);
-void topspeed_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( topspeed );
+VIDEO_UPDATE( topspeed );
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
@@ -236,7 +235,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )
 
 	parse_control();
 
-	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
+	logerror("CPU #0 PC %06x: write %04x to cpu control\n",activecpu_get_pc(),data);
 }
 
 
@@ -248,29 +247,29 @@ static WRITE16_HANDLER( cpua_ctrl_w )
 
 void topspeed_interrupt6(int x)
 {
-	cpu_cause_interrupt(0,6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
 /* 68000 B */
 
 void topspeed_cpub_interrupt6(int x)
 {
-	cpu_cause_interrupt(2,6);	/* assumes Z80 sandwiched between the 68Ks */
+	cpu_set_irq_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 
-static int topspeed_interrupt(void)
+static INTERRUPT_GEN( topspeed_interrupt )
 {
 	/* Unsure how many int6's per frame */
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, topspeed_interrupt6);
-	return 5;
+	cpu_set_irq_line(0, 5, HOLD_LINE);
 }
 
-static int topspeed_cpub_interrupt(void)
+static INTERRUPT_GEN( topspeed_cpub_interrupt )
 {
 	/* Unsure how many int6's per frame */
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, topspeed_cpub_interrupt6);
-	return 5;
+	cpu_set_irq_line(2, 5, HOLD_LINE);
 }
 
 
@@ -334,7 +333,7 @@ static READ16_HANDLER( topspeed_motor_r )
 			return 0x55;	/* motor cpu status ? */
 
 		default:
-logerror("CPU #0 PC %06x: warning - read from motor cpu %03x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read from motor cpu %03x\n",activecpu_get_pc(),offset);
 			return 0;
 	}
 }
@@ -343,7 +342,7 @@ static WRITE16_HANDLER( topspeed_motor_w )
 {
 	/* Writes $900000-25 and $900200-219 */
 
-logerror("CPU #0 PC %06x: warning - write %04x to motor cpu %03x\n",cpu_get_pc(),data,offset);
+logerror("CPU #0 PC %06x: warning - write %04x to motor cpu %03x\n",activecpu_get_pc(),data,offset);
 
 }
 
@@ -782,58 +781,38 @@ static struct ADPCMinterface adpcm_interface =
                      MACHINE DRIVERS
 ***********************************************************/
 
-static struct MachineDriver machine_driver_topspeed =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			topspeed_readmem,topspeed_writemem,0,0,
-			topspeed_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_readmem, z80_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2151 */
-		},
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			topspeed_cpub_readmem,topspeed_cpub_writemem,0,0,
-			topspeed_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( topspeed )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(topspeed_readmem,topspeed_writemem)
+	MDRV_CPU_VBLANK_INT(topspeed_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(topspeed_cpub_readmem,topspeed_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(topspeed_cpub_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(topspeed_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	topspeed_gfxdecodeinfo,
-	8192, 0,
-	0,
-
-	VIDEO_TYPE_RASTER ,
-	0,
-	topspeed_vh_start,
-	topspeed_vh_stop,
-	topspeed_vh_screenrefresh,
+	MDRV_VIDEO_START(topspeed)
+	MDRV_VIDEO_UPDATE(topspeed)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -968,7 +947,7 @@ ROM_START( fullthrl )
 ROM_END
 
 
-void init_topspeed(void)
+DRIVER_INIT( topspeed )
 {
 //	taitosnd_setz80_soundcpu( 2 );
 

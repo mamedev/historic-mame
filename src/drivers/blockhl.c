@@ -25,24 +25,21 @@ found it.
 #include "vidhrdw/konamiic.h"
 
 /* prototypes */
-static void blockhl_init_machine( void );
+static MACHINE_INIT( blockhl );
 static void blockhl_banking( int lines );
 
 
-void blockhl_vh_stop( void );
-int blockhl_vh_start( void );
-void blockhl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( blockhl );
+VIDEO_UPDATE( blockhl );
 
 static int palette_selected;
 static unsigned char *ram;
 static int rombank;
 
-static int blockhl_interrupt( void )
+static INTERRUPT_GEN( blockhl_interrupt )
 {
 	if (K052109_is_IRQ_enabled() && rombank == 0)	/* kludge to prevent crashes */
-		return KONAMI_INT_IRQ;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
 static READ_HANDLER( bankedram_r )
@@ -63,7 +60,7 @@ static WRITE_HANDLER( bankedram_w )
 
 WRITE_HANDLER( blockhl_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
 
@@ -228,48 +225,33 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_blockhl =
-{
+static MACHINE_DRIVER_START( blockhl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_KONAMI,		/* Konami custom 052526 */
-			3000000,		/* ? */
-			readmem,writemem,0,0,
-            blockhl_interrupt,1
-        },
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,		/* ? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	blockhl_init_machine,
+	MDRV_CPU_ADD(KONAMI,3000000)		/* Konami custom 052526 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(blockhl_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(blockhl)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	blockhl_vh_start,
-	blockhl_vh_stop,
-	blockhl_vh_screenrefresh,
+	MDRV_VIDEO_START(blockhl)
+	MDRV_VIDEO_UPDATE(blockhl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -357,10 +339,10 @@ static void blockhl_banking( int lines )
 
 	/* other bits unknown */
 
-	if ((lines & 0x84) != 0x80) logerror("%04x: setlines %02x\n",cpu_get_pc(),lines);
+	if ((lines & 0x84) != 0x80) logerror("%04x: setlines %02x\n",activecpu_get_pc(),lines);
 }
 
-static void blockhl_init_machine( void )
+static MACHINE_INIT( blockhl )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -370,7 +352,7 @@ static void blockhl_init_machine( void )
 }
 
 
-static void init_blockhl(void)
+static DRIVER_INIT( blockhl )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

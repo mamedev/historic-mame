@@ -75,7 +75,7 @@ static char *instruction_name[64] =
 int HD63484_start(void)
 {
 	fifo_counter = 0;
-	HD63484_ram = malloc(HD63484_RAM_SIZE);
+	HD63484_ram = auto_malloc(HD63484_RAM_SIZE);
 	if (!HD63484_ram) return 1;
 	memset(HD63484_ram,0,HD63484_RAM_SIZE);
 	return 0;
@@ -83,8 +83,6 @@ int HD63484_start(void)
 
 void HD63484_stop(void)
 {
-	free(HD63484_ram);
-	HD63484_ram = 0;
 }
 
 static void doclr(int opcode,UINT16 fill,int *dst,INT16 _ax,INT16 _ay)
@@ -318,7 +316,7 @@ void HD63484_command_w(UINT16 cmd)
 	{
 		int i;
 
-		logerror("PC %05x: HD63484 command %s (%04x) ",cpu_get_pc(),instruction_name[fifo[0]>>10],fifo[0]);
+		logerror("PC %05x: HD63484 command %s (%04x) ",activecpu_get_pc(),instruction_name[fifo[0]>>10],fifo[0]);
 		for (i = 1;i < fifo_counter;i++)
 			logerror("%04x ",fifo[i]);
 		logerror("\n");
@@ -617,7 +615,7 @@ static READ_HANDLER( HD63484_status_r )
 {
 	if (offset == 1) return 0xff;	/* high 8 bits - not used */
 
-	if (cpu_get_pc() != 0xfced6 && cpu_get_pc() != 0xfe1d6) logerror("%05x: HD63484 status read\n",cpu_get_pc());
+	if (activecpu_get_pc() != 0xfced6 && activecpu_get_pc() != 0xfe1d6) logerror("%05x: HD63484 status read\n",activecpu_get_pc());
 	return 0x22|4;	/* write FIFO ready + command end    + read FIFO ready */
 }
 
@@ -628,7 +626,7 @@ static WRITE_HANDLER( HD63484_address_w )
 	reg[offset] = data;
 	regno = reg[0];	/* only low 8 bits are used */
 //if (offset == 0)
-//	logerror("PC %05x: HD63484 select register %02x\n",cpu_get_pc(),regno);
+//	logerror("PC %05x: HD63484 select register %02x\n",activecpu_get_pc(),regno);
 }
 
 static WRITE_HANDLER( HD63484_data_w )
@@ -644,7 +642,7 @@ static WRITE_HANDLER( HD63484_data_w )
 			HD63484_command_w(val);
 		else
 		{
-logerror("PC %05x: HD63484 register %02x write %04x\n",cpu_get_pc(),regno,val);
+logerror("PC %05x: HD63484 register %02x write %04x\n",activecpu_get_pc(),regno,val);
 			HD63484_reg[regno/2] = val;
 			if (regno & 0x80) regno += 2;	/* autoincrement */
 		}
@@ -661,12 +659,12 @@ static READ_HANDLER( HD63484_data_r )
 	}
 	else if (regno == 0)
 	{
-logerror("%05x: HD63484 read FIFO\n",cpu_get_pc());
+logerror("%05x: HD63484 read FIFO\n",activecpu_get_pc());
 		res = readfifo;
 	}
 	else
 	{
-logerror("%05x: HD63484 read register %02x\n",cpu_get_pc(),regno);
+logerror("%05x: HD63484 read register %02x\n",activecpu_get_pc(),regno);
 		res = 0;
 	}
 
@@ -679,7 +677,7 @@ logerror("%05x: HD63484 read register %02x\n",cpu_get_pc(),regno);
 
 
 
-void shanghai_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( shanghai )
 {
 	int i;
 
@@ -707,17 +705,17 @@ void shanghai_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	}
 }
 
-int shanghai_vh_start(void)
+VIDEO_START( shanghai )
 {
 	return HD63484_start();
 }
 
-void shanghai_vh_stop(void)
+VIDEO_STOP( shanghai )
 {
 	HD63484_stop();
 }
 
-void shanghai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( shanghai )
 {
 	int x,y,b;
 
@@ -756,10 +754,9 @@ void shanghai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-static int shanghai_interrupt(void)
+static INTERRUPT_GEN( shanghai_interrupt )
 {
-	interrupt_vector_w(0,0x80);
-	return interrupt();
+	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0x80);
 }
 
 static WRITE_HANDLER( shanghai_coin_w )
@@ -1000,81 +997,55 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_shanghai =
-{
+static MACHINE_DRIVER_START( shanghai )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V30,
-			16000000/2,	/* ? */
-			readmem,writemem,readport,writeport,
-			shanghai_interrupt,1,
-			0,0
-		}
-	},
-	30, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(V30,16000000/2)	/* ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(shanghai_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	384, 280, { 0, 384-1, 0, 280-1 },
-	0,
-	256,0,
-	shanghai_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 280)
+	MDRV_VISIBLE_AREA(0, 384-1, 0, 280-1)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	shanghai_vh_start,
-	shanghai_vh_stop,
-	shanghai_vh_screenrefresh,
+	MDRV_PALETTE_INIT(shanghai)
+	MDRV_VIDEO_START(shanghai)
+	MDRV_VIDEO_UPDATE(shanghai)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_shangha2 =
-{
+
+static MACHINE_DRIVER_START( shangha2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V30,
-			16000000/2,	/* ? */
-			shangha2_readmem,shangha2_writemem,shangha2_readport,shangha2_writeport,
-			shanghai_interrupt,1,
-			0,0
-		}
-	},
-	30, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(V30,16000000/2)	/* ? */
+	MDRV_CPU_MEMORY(shangha2_readmem,shangha2_writemem)
+	MDRV_CPU_PORTS(shangha2_readport,shangha2_writeport)
+	MDRV_CPU_VBLANK_INT(shanghai_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	384, 280, { 0, 384-1, 0, 280-1 },
-	0,
-	256,0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 280)
+	MDRV_VISIBLE_AREA(0, 384-1, 0, 280-1)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	shanghai_vh_start,
-	shanghai_vh_stop,
-	shanghai_vh_screenrefresh,
+	MDRV_VIDEO_START(shanghai)
+	MDRV_VIDEO_UPDATE(shanghai)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -42,31 +42,18 @@ WRITE_HANDLER( battlnts_spritebank_w )
 
 ***************************************************************************/
 
-int battlnts_vh_start(void)
+VIDEO_START( battlnts )
 {
 	layer_colorbase[0] = 0;
 	layer_colorbase[1] = 0;
 
 	if (K007342_vh_start(0,tile_callback))
-	{
-		/* Battlantis use this as Work RAM */
-		K007342_tilemap_set_enable(1, 0);
 		return 1;
-	}
 
 	if (K007420_vh_start(1,sprite_callback))
-	{
-		K007420_vh_stop();
 		return 1;
-	}
 
 	return 0;
-}
-
-void battlnts_vh_stop(void)
-{
-	K007342_vh_stop();
-	K007420_vh_stop();
 }
 
 /***************************************************************************
@@ -75,11 +62,11 @@ void battlnts_vh_stop(void)
 
 ***************************************************************************/
 
-void battlnts_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh){
+VIDEO_UPDATE( battlnts ){
 
 	K007342_tilemap_update();
 
-	K007342_tilemap_draw( bitmap, 0, TILEMAP_IGNORE_TRANSPARENCY ,0);
-	K007420_sprites_draw( bitmap );
-	K007342_tilemap_draw( bitmap, 0, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);
+	K007342_tilemap_draw( bitmap, cliprect, 0, TILEMAP_IGNORE_TRANSPARENCY ,0);
+	K007420_sprites_draw( bitmap, cliprect );
+	K007342_tilemap_draw( bitmap, cliprect, 0, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);
 }

@@ -46,10 +46,10 @@ WRITE_HANDLER( skychut_colorram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void skychut_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( skychut )
 {
 	int offs;
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset (dirtybuffer, 1, videoram_size);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -64,7 +64,7 @@ void skychut_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					 colorram[offs],
 					flipscreen,flipscreen,
@@ -73,6 +73,7 @@ void skychut_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		}
 	}
 
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 UINT8* iremm15_chargen;
@@ -103,10 +104,10 @@ static void iremm15_drawgfx(struct mame_bitmap *bitmap, int ch,
   the main emulation engine.
 
 ***************************************************************************/
-void iremm15_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( iremm15 )
 {
 	int offs;
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset (dirtybuffer, 1, videoram_size);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -121,7 +122,7 @@ void iremm15_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			iremm15_drawgfx(bitmap,
+			iremm15_drawgfx(tmpbitmap,
 							videoram[offs],
 							Machine->pens[colorram[offs]],
 							Machine->pens[7], // space beam not color 0
@@ -129,5 +130,6 @@ void iremm15_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		}
 	}
 
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 

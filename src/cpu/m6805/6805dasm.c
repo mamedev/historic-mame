@@ -227,14 +227,14 @@ unsigned Dasm6805 (char *buf, unsigned pc)
 		return 1;
 	case _ix1:	/* indexed + byte (zero page) */
 		addr = cpu_readop_arg(pc+1);
-		ea = (addr + cpu_get_reg(M6805_X)) & 0xff;
+		ea = (addr + activecpu_get_reg(M6805_X)) & 0xff;
 		sym1 = set_ea_info(0, addr, EA_UINT8, EA_VALUE);
 		sym2 = set_ea_info(0, ea, size, access);
 		sprintf (buf, "(x+%s)", sym1);
 		return 2;
 	case _ix2:	/* indexed + word (16 bit address) */
 		addr = (cpu_readop_arg(pc+1) << 8) + cpu_readop_arg(pc+2);
-		ea = (addr + cpu_get_reg(M6805_X)) & 0xffff;
+		ea = (addr + activecpu_get_reg(M6805_X)) & 0xffff;
 		sym1 = set_ea_info(0, addr, EA_UINT16, EA_VALUE);
 		sym2 = set_ea_info(0, ea, size, access);
 		sprintf (buf, "(x+%s)", sym1);

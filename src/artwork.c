@@ -32,8 +32,6 @@ struct artwork_info *artwork_overlay = NULL;
 
 struct mame_bitmap *artwork_real_scrbitmap;
 
-void artwork_free(struct artwork_info **a);
-
 static int my_stricmp( const char *dst, const char *src)
 {
 	while (*src && *dst)
@@ -172,47 +170,42 @@ static void allocate_artwork_mem (int width, int height, struct artwork_info **a
 		width = temp;
 	}
 
-	*a = (struct artwork_info *)malloc(sizeof(struct artwork_info));
+	*a = (struct artwork_info *)auto_malloc(sizeof(struct artwork_info));
 	if (*a == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
 		return;
 	}
 
-	if (((*a)->orig_artwork = bitmap_alloc(width, height)) == 0)
+	if (((*a)->orig_artwork = auto_bitmap_alloc(width, height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
-		artwork_free(a);
 		return;
 	}
 	fillbitmap((*a)->orig_artwork,0,0);
 
-	if (((*a)->alpha = bitmap_alloc(width, height)) == 0)
+	if (((*a)->alpha = auto_bitmap_alloc(width, height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
-		artwork_free(a);
 		return;
 	}
 	fillbitmap((*a)->alpha,0,0);
 
-	if (((*a)->artwork = bitmap_alloc(width,height)) == 0)
+	if (((*a)->artwork = auto_bitmap_alloc(width,height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
-		artwork_free(a);
 		return;
 	}
 
-	if (((*a)->artwork1 = bitmap_alloc(width,height)) == 0)
+	if (((*a)->artwork1 = auto_bitmap_alloc(width,height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
-		artwork_free(a);
 		return;
 	}
 
-	if (((*a)->rgb = (UINT32*)malloc(width*height*sizeof(UINT32)))==0)
+	if (((*a)->rgb = (UINT32*)auto_malloc(width*height*sizeof(UINT32)))==0)
 	{
 		logerror("Not enough memory.\n");
-		artwork_free(a);
 		return;
 	}
 }
@@ -500,6 +493,7 @@ static void load_png(const char *filename, unsigned int start_pen,
 		(*a)->start_pen = 0;
 
 	artwork_remap(*a);
+logerror("Png Loaded %d %d\n", width, height);
 }
 
 static void load_png_fit(const char *filename, unsigned int start_pen, struct artwork_info **a)
@@ -711,18 +705,18 @@ static void overlay_draw(struct mame_bitmap *dest, struct mame_bitmap *source)
 
 static void backdrop_draw(struct mame_bitmap *dest, struct mame_bitmap *source)
 {
-	int i, j, brgb, bp, black = -1;
-	UINT8 r, g, b;
-	UINT32 bright[65536];
+	int i, j;
 
-	memset (bright, 0xff, sizeof(int)*65536);
 	copybitmap(dest, artwork_backdrop->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
 
 	switch (Machine->color_depth)
 	{
 	case 16:
 	{
+		int brgb, black = -1;
+		UINT8 r, g, b;
 		UINT16 *dst, *bdr, *src;
+
 		for ( j = 0; j < source->height; j++)
 		{
 			dst = (UINT16 *)dest->line[j];
@@ -732,31 +726,24 @@ static void backdrop_draw(struct mame_bitmap *dest, struct mame_bitmap *source)
 			{
 				if (*src != black)
 				{
-					bp = bright[*src];
-					if (bp)
-					{
-						if (bp == 0xffffffff)
-						{
-							palette_get_color(*src, &r, &g, &b);
-							bright[*src]=(222*r+707*g+71*b)/1000;
-						}
-						else
-							palette_get_color(*src, &r, &g, &b);
+					palette_get_color(*src, &r, &g, &b);
 
-						r >>= 3;
-						g >>= 3;
-						b >>= 3;
-						brgb = *bdr - artwork_backdrop->start_pen;
-						r += brgb >> 10;
-						if (r > 0x1f) r = 0x1f;
-						g += (brgb >> 5) & 0x1f;
-						if (g > 0x1f) g = 0x1f;
-						b += brgb & 0x1f;
-						if (b > 0x1f) b = 0x1f;
-						*dst = ((r << 10) | (g << 5) | b) + artwork_backdrop->start_pen;
-					}
-					else
+					if ((r == 0) && (g == 0) && (b == 0))
+					{
 						black = *src;
+					}
+
+					r >>= 3;
+					g >>= 3;
+					b >>= 3;
+					brgb = *bdr - artwork_backdrop->start_pen;
+					r += brgb >> 10;
+					if (r > 0x1f) r = 0x1f;
+					g += (brgb >> 5) & 0x1f;
+					if (g > 0x1f) g = 0x1f;
+					b += brgb & 0x1f;
+					if (b > 0x1f) b = 0x1f;
+					*dst = ((r << 10) | (g << 5) | b) + artwork_backdrop->start_pen;
 				}
 				dst++;
 				src++;
@@ -765,9 +752,11 @@ static void backdrop_draw(struct mame_bitmap *dest, struct mame_bitmap *source)
 		}
 		break;
 	}
+
 	case 15:
 	{
 		UINT16 *dst, *src, *bdr;
+
 		for ( j = 0; j < source->height; j++)
 		{
 			dst = (UINT16 *)dest->line[j];
@@ -788,9 +777,11 @@ static void backdrop_draw(struct mame_bitmap *dest, struct mame_bitmap *source)
 		}
 		break;
 	}
+
 	case 32:
 	{
 		UINT32 *dst, *src, *bdr;
+
 		for ( j = 0; j < source->height; j++)
 		{
 			dst = (UINT32 *)dest->line[j];
@@ -848,11 +839,6 @@ void artwork_free(struct artwork_info **a)
 
 void artwork_kill (void)
 {
-	if (artwork_backdrop || artwork_overlay)
-		bitmap_free(artwork_real_scrbitmap);
-
-	if (artwork_backdrop) artwork_free(&artwork_backdrop);
-	if (artwork_overlay) artwork_free(&artwork_overlay);
 }
 
 void overlay_load(const char *filename, unsigned int start_pen)
@@ -878,7 +864,7 @@ void overlay_load(const char *filename, unsigned int start_pen)
 
 	if (artwork_overlay)
 	{
-		if ((artwork_real_scrbitmap = bitmap_alloc(width, height)) == 0)
+		if ((artwork_real_scrbitmap = auto_bitmap_alloc(width, height)) == 0)
 		{
 			artwork_kill();
 			logerror("Not enough memory for artwork!\n");
@@ -911,7 +897,7 @@ void backdrop_load(const char *filename, unsigned int start_pen)
 			width = temp;
 		}
 
-		if ((artwork_real_scrbitmap = bitmap_alloc(width, height)) == 0)
+		if ((artwork_real_scrbitmap = auto_bitmap_alloc(width, height)) == 0)
 		{
 			artwork_kill();
 			logerror("Not enough memory for artwork!\n");
@@ -1005,7 +991,7 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen)
 		width = temp;
 	}
 
-	if ((artwork_real_scrbitmap = bitmap_alloc(width, height)) == 0)
+	if ((artwork_real_scrbitmap = auto_bitmap_alloc(width, height)) == 0)
 	{
 		artwork_kill();
 		logerror("Not enough memory for artwork!\n");

@@ -37,7 +37,7 @@ unsigned char *warpwarp_bulletsram;
   Moreover, the bullet is pure white, obtained with three 220 ohm resistors.
 
 ***************************************************************************/
-void warpwarp_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( warpwarp )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -84,7 +84,7 @@ void warpwarp_init_palette(unsigned char *obsolete,unsigned short *colortable,co
   the main emulation engine.
 
 ***************************************************************************/
-void warpwarp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( warpwarp )
 {
 	int offs;
 

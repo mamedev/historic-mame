@@ -10,7 +10,7 @@ data8_t *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
 size_t sprcros2_spriteram_size;
 extern int sprcros2_m_port7;
 
-void sprcros2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( sprcros2 )
 {
 	int i,bit0,bit1,bit2;
 
@@ -111,7 +111,7 @@ static void get_sprcros2_fgtile_info(int tile_index)
 			0)
 }
 
-int sprcros2_vh_start(void)
+VIDEO_START( sprcros2 )
 {
 	sprcros2_bgtilemap = tilemap_create( get_sprcros2_bgtile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 	sprcros2_fgtilemap = tilemap_create( get_sprcros2_fgtile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,32,32 );
@@ -124,7 +124,7 @@ int sprcros2_vh_start(void)
 	return 0;
 }
 
-static void sprcros2_draw_sprites(struct mame_bitmap *bitmap)
+static void sprcros2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,sx,sy,flipx,flipy;
 
@@ -165,14 +165,14 @@ static void sprcros2_draw_sprites(struct mame_bitmap *bitmap)
 				(sprcros2_spriteram[offs+1]&0x38)>>3,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+				cliprect,TRANSPARENCY_COLOR,0);
 		}
 	}
 }
 
-void sprcros2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sprcros2 )
 {
-	tilemap_draw( bitmap,sprcros2_bgtilemap,0,0 );
-	sprcros2_draw_sprites(bitmap);
-	tilemap_draw( bitmap,sprcros2_fgtilemap,0,0 );
+	tilemap_draw( bitmap,cliprect,sprcros2_bgtilemap,0,0 );
+	sprcros2_draw_sprites(bitmap,cliprect);
+	tilemap_draw( bitmap,cliprect,sprcros2_fgtilemap,0,0 );
 }

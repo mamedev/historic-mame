@@ -26,9 +26,9 @@ extern int skyfox_bg_pos, skyfox_bg_ctrl;
 READ_HANDLER( skyfox_vregs_r );
 WRITE_HANDLER( skyfox_vregs_w );
 
-void skyfox_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( skyfox );
 
-void skyfox_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( skyfox );
 
 
 /***************************************************************************
@@ -245,14 +245,13 @@ static struct GfxDecodeInfo skyfox_gfxdecodeinfo[] =
 /* Check for coin insertion once a frame (polling a fake input port).
    Generate an NMI in case. Scroll the background too. */
 
-static int skyfox_interrupt(void)
+static INTERRUPT_GEN( skyfox_interrupt )
 {
 	/* Scroll the bg */
 	skyfox_bg_pos += (skyfox_bg_ctrl >> 1) & 0x7;	// maybe..
 
 	/* Check coin 1 & 2 */
-	if ((readinputport(4) & 3) == 3)	return ignore_interrupt();
-	else								return nmi_interrupt();
+	if ((readinputport(4) & 3) != 3) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static struct YM2203interface skyfox_ym2203_interface =
@@ -267,47 +266,33 @@ static struct YM2203interface skyfox_ym2203_interface =
 	{ 0, 0 }
 };
 
-static const struct MachineDriver machine_driver_skyfox =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,
-			skyfox_readmem,skyfox_writemem,0,0,
-			skyfox_interrupt, 1		/* NMI caused by coin insertion */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1748000,
-			skyfox_sound_readmem,skyfox_sound_writemem,0,0,
-			ignore_interrupt, 1		/* No interrupts */
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,	// we're using IPT_VBLANK
-	1,
-	0,
+static MACHINE_DRIVER_START( skyfox )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(skyfox_readmem,skyfox_writemem)
+	MDRV_CPU_VBLANK_INT(skyfox_interrupt,1)		/* NMI caused by coin insertion */
+
+	MDRV_CPU_ADD(Z80, 1748000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(skyfox_sound_readmem,skyfox_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
 	/* video hardware */
-	512, 256, { 0+0x60, 320-1+0x60, 0+16, 256-1-16 },	// from $30*2 to $CC*2+8
-	skyfox_gfxdecodeinfo,
-	256+256, 0,		/* 256 static colors (+256 for the background??) */
-	skyfox_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0+0x60, 320-1+0x60, 0+16, 256-1-16)	// from $30*2 to $CC*2+8
+	MDRV_GFXDECODE(skyfox_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+256)	/* 256 static colors (+256 for the background??) */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	skyfox_vh_screenrefresh,
+	MDRV_PALETTE_INIT(skyfox)
+	MDRV_VIDEO_UPDATE(skyfox)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&skyfox_ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, skyfox_ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -436,7 +421,7 @@ ROM_END
 
 
 /* Untangle the graphics: cut each 32x32x8 tile in 16 8x8x8 tiles */
-void init_skyfox(void)
+DRIVER_INIT( skyfox )
 {
 	unsigned char *RAM = memory_region(REGION_GFX1);
 	unsigned char *end = RAM + memory_region_length(REGION_GFX1);

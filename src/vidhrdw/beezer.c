@@ -1,11 +1,11 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6522via.h"
+#include "vidhrdw/generic.h"
 
-UINT8 *beezer_ram;
 static int scanline=0;
 
-int beezer_interrupt (void)
+INTERRUPT_GEN( beezer_interrupt )
 {
 	scanline = (scanline + 1) % 0x80;
 	via_0_ca2_w (0, scanline & 0x10);
@@ -13,23 +13,23 @@ int beezer_interrupt (void)
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
-	return ignore_interrupt();
 }
 
-void beezer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( beezer )
 {
 	int x, y;
-	const UINT8 *ram = memory_region(REGION_CPU1);
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y+=2)
 		{
 			for (x = Machine->visible_area.min_x; x <= Machine->visible_area.max_x; x++)
 			{
-				plot_pixel (bitmap, x, y+1, Machine->pens[ram[0x80*y+x] & 0x0f]);
-				plot_pixel (bitmap, x, y, Machine->pens[(ram[0x80*y+x] >> 4)& 0x0f]);
+				plot_pixel (tmpbitmap, x, y+1, Machine->pens[videoram[0x80*y+x] & 0x0f]);
+				plot_pixel (tmpbitmap, x, y, Machine->pens[(videoram[0x80*y+x] >> 4)& 0x0f]);
 			}
 		}
+	
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 WRITE_HANDLER( beezer_map_w )
@@ -73,11 +73,11 @@ WRITE_HANDLER( beezer_ram_w )
 
 	if( (y >= Machine->visible_area.min_y) && (y <= Machine->visible_area.max_y) )
 	{
-		plot_pixel (Machine->scrbitmap, x, y+1, Machine->pens[data & 0x0f]);
-		plot_pixel (Machine->scrbitmap, x, y, Machine->pens[(data >> 4)& 0x0f]);
+		plot_pixel (tmpbitmap, x, y+1, Machine->pens[data & 0x0f]);
+		plot_pixel (tmpbitmap, x, y, Machine->pens[(data >> 4)& 0x0f]);
 	}
 
-	beezer_ram[offset] = data;
+	videoram[offset] = data;
 }
 
 READ_HANDLER( beezer_line_r )

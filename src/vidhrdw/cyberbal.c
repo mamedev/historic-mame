@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
+#include "cyberbal.h"
 
 
 
@@ -39,7 +40,7 @@ static data16_t current_slip[2];
  *
  *************************************/
 
-static int cyberbal_vh_start_common(int screens)
+static int video_start_cyberbal_common(int screens)
 {
 	static const struct ataripf_desc pf0desc =
 	{
@@ -186,30 +187,30 @@ static int cyberbal_vh_start_common(int screens)
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pf0desc))
-		goto cant_create_pf0;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &mo0desc))
-		goto cant_create_mo0;
+		return 1;
 
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &an0desc))
-		goto cant_create_an0;
+		return 1;
 
 	/* allocate the second screen if necessary */
 	if (screens == 2)
 	{
 		/* initialize the playfield */
 		if (!ataripf_init(1, &pf1desc))
-			goto cant_create_pf1;
+			return 1;
 
 		/* initialize the motion objects */
 		if (!atarimo_init(1, &mo1desc))
-			goto cant_create_mo1;
+			return 1;
 
 		/* initialize the alphanumerics */
 		if (!atarian_init(1, &an1desc))
-			goto cant_create_an1;
+			return 1;
 	}
 
 	/* reset statics */
@@ -218,24 +219,12 @@ static int cyberbal_vh_start_common(int screens)
 	total_screens = screens;
 	current_screen = 0;
 	return 0;
-
-	/* error cases */
-cant_create_an1:
-cant_create_mo1:
-cant_create_pf1:
-	atarian_free();
-cant_create_an0:
-	atarimo_free();
-cant_create_mo0:
-	ataripf_free();
-cant_create_pf0:
-	return 1;
 }
 
 
-int cyberbal_vh_start(void)
+VIDEO_START( cyberbal )
 {
-	int result = cyberbal_vh_start_common(2);
+	int result = video_start_cyberbal_common(2);
 	if (!result)
 	{
 		/* adjust the sprite positions */
@@ -246,30 +235,15 @@ int cyberbal_vh_start(void)
 }
 
 
-int cyberb2p_vh_start(void)
+VIDEO_START( cyberb2p )
 {
-	int result = cyberbal_vh_start_common(1);
+	int result = video_start_cyberbal_common(1);
 	if (!result)
 	{
 		/* adjust the sprite positions */
 		atarimo_set_xscroll(0, 5, 0);
 	}
 	return result;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void cyberbal_vh_stop(void)
-{
-	atarian_free();
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -390,10 +364,10 @@ void cyberbal_scanline_update(int scanline)
  *
  *************************************/
 
-void cyberbal_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( cyberbal )
 {
 	/* draw the layers */
-	ataripf_render(current_screen, bitmap);
-	atarimo_render(current_screen, bitmap, NULL, NULL);
-	atarian_render(current_screen, bitmap);
+	ataripf_render(current_screen, bitmap, cliprect);
+	atarimo_render(current_screen, bitmap, cliprect, NULL, NULL);
+	atarian_render(current_screen, bitmap, cliprect);
 }

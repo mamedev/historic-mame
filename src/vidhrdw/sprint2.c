@@ -1,19 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Sprint 2 hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-/* machine/sprint2.c */
-extern int sprint2_collision1_data;
-extern int sprint2_collision2_data;
-extern int sprint2_gear1;
-extern int sprint2_gear2;
+#include "sprint2.h"
 
 unsigned char *sprint2_horiz_ram;
 unsigned char *sprint2_vert_car_ram;
@@ -31,54 +24,24 @@ static struct mame_bitmap *white_car_vid;
 /***************************************************************************
 ***************************************************************************/
 
-int sprint2_vh_start(void)
+VIDEO_START( sprint2 )
 {
-	if (generic_vh_start()!=0)
+	if (video_start_generic())
 		return 1;
 
-	if ((back_vid = bitmap_alloc(16,8)) == 0)
-	{
-		generic_vh_stop();
+	if ((back_vid = auto_bitmap_alloc(16,8)) == 0)
 		return 1;
-	}
 
-	if ((grey_cars_vid = bitmap_alloc(16,8)) == 0)
-	{
-		bitmap_free(back_vid);
-		generic_vh_stop();
+	if ((grey_cars_vid = auto_bitmap_alloc(16,8)) == 0)
 		return 1;
-	}
 
-	if ((black_car_vid = bitmap_alloc(16,8)) == 0)
-	{
-		bitmap_free(back_vid);
-		bitmap_free(grey_cars_vid);
-		generic_vh_stop();
+	if ((black_car_vid = auto_bitmap_alloc(16,8)) == 0)
 		return 1;
-	}
 
-	if ((white_car_vid = bitmap_alloc(16,8)) == 0)
-	{
-		bitmap_free(back_vid);
-		bitmap_free(grey_cars_vid);
-		bitmap_free(black_car_vid);
-		generic_vh_stop();
+	if ((white_car_vid = auto_bitmap_alloc(16,8)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-/***************************************************************************
-***************************************************************************/
-
-void sprint2_vh_stop(void)
-{
-	bitmap_free(back_vid);
-	bitmap_free(grey_cars_vid);
-	bitmap_free(black_car_vid);
-	bitmap_free(white_car_vid);
-	generic_vh_stop();
 }
 
 /***************************************************************************
@@ -397,7 +360,8 @@ void sprint2_check_collision2(struct mame_bitmap *bitmap)
   the main emulation engine.
 
 ***************************************************************************/
-static void sprint_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+static VIDEO_UPDATE( sprint )
 {
 	int offs,car;
 
@@ -462,17 +426,17 @@ static void draw_gear_indicator(int gear, struct mame_bitmap *bitmap, int x, int
 }
 
 
-void sprint2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sprint2 )
 {
-	sprint_vh_screenrefresh(bitmap,full_refresh);
+	video_update_sprint(bitmap,0);
 
 	draw_gear_indicator(sprint2_gear1, bitmap, 25, 1);
 	draw_gear_indicator(sprint2_gear2, bitmap, 1 , 0);
 }
 
-void sprint1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sprint1 )
 {
-	sprint_vh_screenrefresh(bitmap,full_refresh);
+	video_update_sprint(bitmap,0);
 
 	draw_gear_indicator(sprint2_gear1, bitmap, 12, 1);
 }

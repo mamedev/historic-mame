@@ -1,22 +1,22 @@
 /***************************************************************************
 
-Cinematronics sound handlers
+	Cinematronics vector hardware
 
-Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
-Retrocade Alliance
+	Special thanks to Neil Bradley, Zonn Moore, and Jeff Mitchell of the
+	Retrocade Alliance
 
-Update:
-6/27/99 Jim Hernandez -- 1st Attempt at Fixing Drone Star Castle sound and
-                         pitch adjustments.
-6/30/99 MLR added Rip Off, Solar Quest, Armor Attack (no samples yet)
+	Update:
+	6/27/99 Jim Hernandez -- 1st Attempt at Fixing Drone Star Castle sound and
+	                         pitch adjustments.
+	6/30/99 MLR added Rip Off, Solar Quest, Armor Attack (no samples yet)
 
-Bugs: Sometimes the death explosion (small explosion) does not trigger.
-
+	Bugs: Sometimes the death explosion (small explosion) does not trigger.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "machine/z80fmly.h"
+#include "cinemat.h"
 
 
 static UINT32 current_shift = 0;
@@ -27,15 +27,21 @@ static UINT32 last_frame = 0;
 
 static int cinemat_outputs = 0xff;
 
+cinemat_sound_handler_proc cinemat_sound_handler;
 
-typedef void (*cinemat_sound_handler_proc)(UINT8, UINT8);
 
-static cinemat_sound_handler_proc cinemat_sound_handler;
+
+/*************************************
+ *
+ *	General read/write handlers
+ *
+ *************************************/
 
 READ16_HANDLER( cinemat_output_port_r )
 {
 	return cinemat_outputs;
 }
+
 
 WRITE16_HANDLER( cinemat_output_port_w )
 {
@@ -50,10 +56,14 @@ WRITE16_HANDLER( cinemat_output_port_w )
 
 
 
-void cinemat_set_sound_handler(cinemat_sound_handler_proc sound_handler)
-{
-	cinemat_sound_handler = sound_handler;
+/*************************************
+ *
+ *	Sound reset
+ *
+ *************************************/
 
+MACHINE_INIT( cinemat_sound )
+{
     current_shift = 0xffff;
     last_shift = 0xffff;
     last_shift16 = 0xffff;
@@ -64,7 +74,7 @@ void cinemat_set_sound_handler(cinemat_sound_handler_proc sound_handler)
 
 }
 
-static void cinemat_shift (UINT8 sound_val, UINT8 bits_changed, UINT8 A1, UINT8 CLK)
+static void cinemat_shift(UINT8 sound_val, UINT8 bits_changed, UINT8 A1, UINT8 CLK)
 {
 	// See if we're latching a shift
 
@@ -77,11 +87,12 @@ static void cinemat_shift (UINT8 sound_val, UINT8 bits_changed, UINT8 A1, UINT8 
 }
 
 
-/***************************************************************************
 
-  Star Castle
-
-***************************************************************************/
+/*************************************
+ *
+ *	Star Castle
+ *
+ *************************************/
 
 static const char *starcas_sample_names[] =
 {
@@ -188,11 +199,11 @@ void starcas_sound_w(UINT8 sound_val, UINT8 bits_changed)
 }
 
 
-/***************************************************************************
-
-  Warrior
-
-***************************************************************************/
+/*************************************
+ *
+ *	Warrior
+ *
+ *************************************/
 
 static const char *warrior_sample_names[] =
 {
@@ -244,11 +255,11 @@ void warrior_sound_w(UINT8 sound_val, UINT8 bits_changed)
 }
 
 
-/***************************************************************************
-
-  Armor Attack
-
-***************************************************************************/
+/*************************************
+ *
+ *	Armor Attack
+ *
+ *************************************/
 
 void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
@@ -304,11 +315,11 @@ void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 }
 
 
-/***************************************************************************
-
-  Ripoff
-
-***************************************************************************/
+/*************************************
+ *
+ *	Ripoff
+ *
+ *************************************/
 
 static const char *ripoff_sample_names[] =
 {
@@ -393,11 +404,11 @@ void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed)
 }
 
 
-/***************************************************************************
-
-  Solar Quest
-
-***************************************************************************/
+/*************************************
+ *
+ *	Solar Quest
+ *
+ *************************************/
 
 static const char *solarq_sample_names[] =
 {
@@ -521,11 +532,11 @@ void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
 }
 
 
-/***************************************************************************
-
-  Spacewar
-
-***************************************************************************/
+/*************************************
+ *
+ *	Space Wars
+ *
+ *************************************/
 
 static const char *spacewar_sample_names[] =
 {
@@ -567,10 +578,10 @@ void spacewar_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 	if ((sound_val & 0x02) && (bits_changed & 0x02))
 	{
-            if (rand() & 1)
-                sample_start(1, 1, 0);
-            else
-                sample_start(1, 7, 0);
+       if (rand() & 1)
+           sample_start(1, 1, 0);
+       else
+           sample_start(1, 7, 0);
 	}
 
 	// Player 1 thrust
@@ -617,12 +628,11 @@ void spacewar_sound_w(UINT8 sound_val, UINT8 bits_changed)
 }
 
 
-/***************************************************************************
-
-  Demon
-
-***************************************************************************/
-
+/*************************************
+ *
+ *	Demon
+ *
+ *************************************/
 
 /* circular queue with read and write pointers */
 #define QUEUE_ENTRY_COUNT  10
@@ -632,7 +642,7 @@ static int sound_latch[QUEUE_ENTRY_COUNT];
 
 void demon_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
-	int pc = cpu_get_pc();
+	int pc = activecpu_get_pc();
 
 	if (pc == 0x0fbc ||
 		pc == 0x1fed ||
@@ -655,7 +665,7 @@ void demon_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	}
 }
 
-static READ_HANDLER(demon_sound_r)
+static READ_HANDLER( demon_sound_r )
 {
 	int ret;
 
@@ -666,7 +676,7 @@ static READ_HANDLER(demon_sound_r)
 	sound_latch_rp++;
 	if (sound_latch_rp == QUEUE_ENTRY_COUNT)  sound_latch_rp = 0;
 
-	//logerror("Reading Sound Latch %04X = %02X\n", cpu_get_pc(), ret);
+	//logerror("Reading Sound Latch %04X = %02X\n", activecpu_get_pc(), ret);
 
 	return ret;
 }
@@ -684,10 +694,11 @@ struct AY8910interface demon_ay8910_interface =
 };
 
 
-static void ctc_interrupt (int state)
+static void ctc_interrupt(int state)
 {
-	cpu_cause_interrupt (1, Z80_VECTOR(0,state) );
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0,state));
 }
+
 
 z80ctc_interface demon_z80ctc_interface =
 {
@@ -701,6 +712,13 @@ z80ctc_interface demon_z80ctc_interface =
 };
 
 
+MACHINE_INIT( demon_sound )
+{
+	demon_z80ctc_interface.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init(&demon_z80ctc_interface);
+}
+
+
 MEMORY_READ_START( demon_sound_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x3000, 0x33ff, MRA_RAM },
@@ -708,6 +726,7 @@ MEMORY_READ_START( demon_sound_readmem )
 	{ 0x5001, 0x5001, AY8910_read_port_1_r },
 	{ 0x6001, 0x6001, AY8910_read_port_2_r },
 MEMORY_END
+
 
 MEMORY_WRITE_START( demon_sound_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
@@ -721,7 +740,31 @@ MEMORY_WRITE_START( demon_sound_writemem )
 	{ 0x7000, 0x7000, MWA_NOP },  /* watchdog? */
 MEMORY_END
 
+
 PORT_WRITE_START( demon_sound_writeport )
 	{ 0x00, 0x03, z80ctc_0_w },
 	{ 0x1c, 0x1f, z80ctc_0_w },
 PORT_END
+
+
+static Z80_DaisyChain daisy_chain[] =
+{
+	{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
+	{ 0,0,0,-1} 		/* end mark */
+};
+
+
+MACHINE_DRIVER_START( demon_sound )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU);
+	MDRV_CPU_CONFIG(daisy_chain)
+	MDRV_CPU_MEMORY(demon_sound_readmem,demon_sound_writemem)
+	MDRV_CPU_PORTS(0,demon_sound_writeport)
+	
+	MDRV_MACHINE_INIT( demon_sound )
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, demon_ay8910_interface)
+MACHINE_DRIVER_END

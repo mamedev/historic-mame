@@ -21,7 +21,6 @@
 
 /* RAM globals */
 UINT8 *williams_videoram;
-static UINT8 *williams_videoram_copy;
 UINT8 *williams2_paletteram;
 
 /* blitter variables */
@@ -50,12 +49,6 @@ static UINT8 williams2_bg_color; /* IC89 */
 UINT8 *williams2_blit_inhibit;
 UINT8 *williams2_xscroll_low;
 UINT8 *williams2_xscroll_high;
-
-/* control routines */
-void williams2_vh_stop(void);
-
-/* pixel copiers */
-static UINT8 *scanline_dirty;
 
 /* blitter functions */
 static void williams_blit_opaque(int sstart, int dstart, int w, int h, int data);
@@ -129,25 +122,19 @@ static void copy_pixels(struct mame_bitmap *bitmap, const struct rectangle *clip
 	/* loop over rows */
 	for (y = clip->min_y; y <= clip->max_y; y++)
 	{
-		const UINT8 *source = &williams_videoram_copy[y + 256 * (xoffset / 2)];
+		UINT8 *source = &williams_videoram[y + 256 * (xoffset / 2)];
 		UINT8 scanline[400];
 		UINT8 *dest = scanline;
+		int erase_behind;
 
-		/* skip if not dirty (but only for non-transparent drawing) */
-		if (transparent_pen == -1 && !williams_blitter_remap)
-		{
-			if (!scanline_dirty[y])
-				continue;
-			scanline_dirty[y]--;
-		}
-
-		/* mark the pixels dirty */
-		mark_dirty(clip->min_x, y, clip->max_x, y);
+		/* should we erase as we draw? */
+		erase_behind = (williams_blitter_remap && y >= 32 && (*blaster_video_bits & 0x02));
 
 		/* draw all pairs */
 		for (x = 0; x < pairs; x++, source += 256)
 		{
 			int pix = *source;
+			if (erase_behind) *source = 0;
 			*dest++ = pix >> 4;
 			*dest++ = pix & 0x0f;
 		}
@@ -187,19 +174,15 @@ static void copy_pixels(struct mame_bitmap *bitmap, const struct rectangle *clip
  *
  *************************************/
 
-int williams_vh_start(void)
+VIDEO_START( williams )
 {
 	/* allocate space for video RAM and dirty scanlines */
-	williams_videoram = malloc(2 * VIDEORAM_SIZE + 256);
+	williams_videoram = auto_malloc(VIDEORAM_SIZE);
 	if (!williams_videoram)
 		return 1;
-	williams_videoram_copy = williams_videoram + VIDEORAM_SIZE;
-	scanline_dirty = williams_videoram_copy + VIDEORAM_SIZE;
 
 	/* reset everything */
 	memset(williams_videoram, 0, VIDEORAM_SIZE);
-	memset(williams_videoram_copy, 0, VIDEORAM_SIZE);
-	memset(scanline_dirty, 2, 256);
 
 	/* pick the blitters */
 	blitter_table = williams_blitters;
@@ -214,21 +197,6 @@ int williams_vh_start(void)
 }
 
 
-void williams_vh_stop(void)
-{
-	/* free any remap lookup tables */
-	if (blaster_remap_lookup)
-		free(blaster_remap_lookup);
-	blaster_remap_lookup = NULL;
-
-	/* free video RAM */
-	if (williams_videoram)
-		free(williams_videoram);
-	williams_videoram = williams_videoram_copy = NULL;
-	scanline_dirty = NULL;
-}
-
-
 
 /*************************************
  *
@@ -236,50 +204,10 @@ void williams_vh_stop(void)
  *
  *************************************/
 
-void williams_vh_update(int scanline)
+VIDEO_UPDATE( williams )
 {
-	int erase_behind = 0;
-	UINT32 *srcbase, *dstbase;
-	int x;
-
-	/* wrap around at the bottom */
-	if (scanline == 0)
-		scanline = 256;
-
-	/* should we erase as we draw? */
-	if (williams_blitter_remap && scanline >= 32 && (*blaster_video_bits & 0x02))
-		erase_behind = 1;
-
-	/* determine the source and destination */
- 	srcbase = (UINT32 *)&williams_videoram[scanline - 8];
- 	dstbase = (UINT32 *)&williams_videoram_copy[scanline - 8];
-
- 	/* loop over columns and copy a 16-row chunk */
- 	for (x = 0; x < VIDEORAM_WIDTH/2; x++)
- 	{
- 		/* copy 16 rows' worth of data */
- 		dstbase[0] = srcbase[0];
- 		dstbase[1] = srcbase[1];
-
-		/* handle Blaster autoerase for scanlines 24 and up */
-		if (erase_behind)
-			srcbase[0] = srcbase[1] = 0;
-
- 		/* advance to the next column */
- 		srcbase += 256/4;
- 		dstbase += 256/4;
- 	}
-}
-
-
-void williams_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-	/* full refresh forces us to redraw everything */
-	if (full_refresh)
-		memset(scanline_dirty, 2, 256);
-
 	/* copy the pixels into the final result */
-	copy_pixels(bitmap, &Machine->visible_area, -1);
+	copy_pixels(bitmap, cliprect, -1);
 }
 
 
@@ -292,13 +220,7 @@ void williams_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 WRITE_HANDLER( williams_videoram_w )
 {
-	/* only update if different */
-	if (williams_videoram[offset] != data)
-	{
-		/* store to videoram and mark the scanline dirty */
-		williams_videoram[offset] = data;
-		scanline_dirty[offset % 256] = 2;
-	}
+	williams_videoram[offset] = data;
 }
 
 
@@ -315,22 +237,19 @@ READ_HANDLER( williams_video_counter_r )
  *
  *************************************/
 
-int williams2_vh_start(void)
+VIDEO_START( williams2 )
 {
 	/* standard initialization */
-	if (williams_vh_start())
+	if (video_start_williams())
 		return 1;
 
 	/* override the blitters */
 	blitter_table = williams2_blitters;
 
 	/* allocate a buffer for palette RAM */
-	williams2_paletteram = malloc(4 * 1024 * 4 / 8);
+	williams2_paletteram = auto_malloc(4 * 1024 * 4 / 8);
 	if (!williams2_paletteram)
-	{
-		williams2_vh_stop();
 		return 1;
-	}
 
 	/* clear it */
 	memset(williams2_paletteram, 0, 4 * 1024 * 4 / 8);
@@ -343,18 +262,6 @@ int williams2_vh_start(void)
 }
 
 
-void williams2_vh_stop(void)
-{
-	/* free palette RAM */
-	if (williams2_paletteram)
-		free(williams2_paletteram);
-	williams2_paletteram = NULL;
-
-	/* clean up other stuff */
-	williams_vh_stop();
-}
-
-
 
 /*************************************
  *
@@ -362,15 +269,11 @@ void williams2_vh_stop(void)
  *
  *************************************/
 
-void williams2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( williams2 )
 {
 	UINT8 *tileram = &memory_region(REGION_CPU1)[0xc000];
 	int xpixeloffset, xtileoffset;
 	int color, col, y;
-
-	/* full refresh forces us to redraw everything */
-	if (full_refresh)
-		memset(scanline_dirty, 2, 256);
 
 	/* assemble the bits that describe the X scroll offset */
 	xpixeloffset = (*williams2_xscroll_high & 1) * 12 +
@@ -380,9 +283,10 @@ void williams2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	xtileoffset = *williams2_xscroll_high >> 1;
 
 	/* adjust the offset for the row and compute the palette index */
-	for (y = 0; y < 256; y += 16, tileram++)
+	tileram += cliprect->min_y / 16;
+	for (y = cliprect->min_y / 16; y < cliprect->max_y / 16 + 1; y++, tileram++)
 	{
-		color = williams2_row_to_palette[y / 16];
+		color = williams2_row_to_palette[y];
 
 		/* 12 columns wide, each block is 24 pixels wide, 288 pixel lines */
 		for (col = 0; col <= 12; col++)
@@ -390,13 +294,13 @@ void williams2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			unsigned int map = tileram[((col + xtileoffset) * 16) & 0x07ff];
 
 			drawgfx(bitmap, Machine->gfx[0], map & williams2_tilemap_mask,
-					color, map & williams2_M7_flip, 0, col * 24 - xpixeloffset, y,
-					&Machine->visible_area, TRANSPARENCY_NONE, 0);
+					color, map & williams2_M7_flip, 0, col * 24 - xpixeloffset, y * 16,
+					cliprect, TRANSPARENCY_NONE, 0);
 		}
 	}
 
 	/* copy the bitmap data on top of that */
-	copy_pixels(bitmap, &Machine->visible_area, 0);
+	copy_pixels(bitmap, cliprect, 0);
 }
 
 
@@ -551,16 +455,16 @@ WRITE_HANDLER( williams2_videoram_w )
  *
  *************************************/
 
-int blaster_vh_start(void)
+VIDEO_START( blaster )
 {
 	int i, j;
 
 	/* standard startup first */
-	if (williams_vh_start())
+	if (video_start_williams())
 		return 1;
 
-	/* Expand the lookup table so that we do one lookup per byte */
-	blaster_remap_lookup = malloc(256 * 256);
+	/* expand the lookup table so that we do one lookup per byte */
+	blaster_remap_lookup = auto_malloc(256 * 256);
 	if (blaster_remap_lookup)
 		for (i = 0; i < 256; i++)
 		{
@@ -704,13 +608,8 @@ WRITE_HANDLER( williams_blitter_w )
 		count = w + w * h;
 	if (count > 256) count = 256;
 
-	/* mark dirty */
-	w = dstart % 256;
-	while (count-- > 0)
-		scanline_dirty[w++ % 256] = 2;
-
 	/* Log blits */
-	logerror("---------- Blit %02X--------------PC: %04X\n",data,cpu_get_pc());
+	logerror("---------- Blit %02X--------------PC: %04X\n",data,activecpu_get_pc());
 	logerror("Source : %02X %02X\n",williams_blitterram[2],williams_blitterram[3]);
 	logerror("Dest   : %02X %02X\n",williams_blitterram[4],williams_blitterram[5]);
 	logerror("W H    : %02X %02X (%d,%d)\n",williams_blitterram[6],williams_blitterram[7],williams_blitterram[6]^4,williams_blitterram[7]^4);

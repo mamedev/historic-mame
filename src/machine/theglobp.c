@@ -63,7 +63,7 @@
 
 #include "driver.h"
 
-void pacman_init_machine(void);
+void machine_init_pacman(void);
 
 static int counter=0;
 
@@ -241,7 +241,7 @@ READ_HANDLER( theglobp_decrypt_rom )
 }
 
 
-void theglobp_init_machine(void)
+MACHINE_INIT( theglobp )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -257,5 +257,5 @@ void theglobp_init_machine(void)
 	counter = 0x0A;
 	cpu_setbank (1, &RAM[0x18000]);
 
-	pacman_init_machine();
+	machine_init_pacman();
 }

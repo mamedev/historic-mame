@@ -70,13 +70,13 @@ WRITE_HANDLER( gottlieb_sh_w )
 		{
 		case 2:
 			/* Revision 1 sound board */
-			cpu_cause_interrupt(1,M6502_INT_IRQ);
+			cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
 			break;
 		case 3:
 		case 4:
 			/* Revision 2 & 3 sound board */
-			cpu_cause_interrupt(cpu_gettotalcpu()-1,M6502_INT_IRQ);
-			cpu_cause_interrupt(cpu_gettotalcpu()-2,M6502_INT_IRQ);
+			cpu_set_irq_line(cpu_gettotalcpu()-1,M6502_IRQ_LINE,HOLD_LINE);
+			cpu_set_irq_line(cpu_gettotalcpu()-2,M6502_IRQ_LINE,HOLD_LINE);
 			break;
 		}
 	}
@@ -98,7 +98,7 @@ void gottlieb_knocker(void)
 /* callback for the timer */
 void gottlieb_nmi_generate(int param)
 {
-	cpu_cause_interrupt(1,M6502_INT_NMI);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static const char *PhonemeTable[65] =
@@ -203,9 +203,10 @@ static void *nmi_timer;
 static int nmi_rate;
 static int ym2151_port;
 
+static void nmi_callback(int param);
 void gottlieb_sound_init(void)
 {
-	nmi_timer = NULL;
+	nmi_timer = timer_alloc(nmi_callback);
 }
 
 READ_HANDLER( stooges_sound_input_r )
@@ -229,25 +230,20 @@ WRITE_HANDLER( stooges_8910_latch_w )
 /* callback for the timer */
 static void nmi_callback(int param)
 {
-	cpu_cause_interrupt(cpu_gettotalcpu()-1, M6502_INT_NMI);
+	cpu_set_irq_line(cpu_gettotalcpu()-1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static WRITE_HANDLER( common_sound_control_w )
 {
 	/* Bit 0 enables and starts NMI timer */
-
-	if (nmi_timer)
-	{
-		timer_remove(nmi_timer);
-		nmi_timer = 0;
-	}
-
 	if (data & 0x01)
 	{
 		/* base clock is 250kHz divided by 256 */
 		double interval = TIME_IN_HZ(250000.0/256/(256-nmi_rate));
-		nmi_timer = timer_pulse(interval, 0, nmi_callback);
+		timer_adjust(nmi_timer, interval, 0, interval);
 	}
+	else
+		timer_adjust(nmi_timer, TIME_NEVER, 0, 0);
 
 	/* Bit 1 controls a LED on the sound board. I'm not emulating it */
 }
@@ -307,7 +303,7 @@ WRITE_HANDLER( gottlieb_nmi_rate_w )
 
 WRITE_HANDLER( gottlieb_cause_dac_nmi_w )
 {
-	cpu_cause_interrupt(cpu_gettotalcpu()-2, M6502_INT_NMI);
+	cpu_set_irq_line(cpu_gettotalcpu()-2, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 READ_HANDLER( gottlieb_cause_dac_nmi_r )

@@ -16,6 +16,5 @@ extern WRITE16_HANDLER( namcona1_gfxram_w );
 extern READ16_HANDLER( namcona1_paletteram_r );
 extern WRITE16_HANDLER( namcona1_paletteram_w );
 
-extern void namcona1_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-extern int namcona1_vh_start( void );
-extern void namcona1_vh_stop( void );
+extern VIDEO_UPDATE( namcona1 );
+extern VIDEO_START( namcona1 );

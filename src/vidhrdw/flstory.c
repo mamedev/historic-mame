@@ -30,27 +30,17 @@ static void get_tile_info(int tile_index)
 }
 
 
-int flstory_vh_start(void)
+VIDEO_START( flstory )
 {
     tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32 );
 //	tilemap_set_transparent_pen( tilemap,15 );
 	tilemap_set_transmask(tilemap,0,0x3fff,0xc000);
 	tilemap_set_scroll_cols(tilemap,32);
 
-	paletteram = malloc(0x200);
-	paletteram_2 = malloc(0x200);
-	return generic_vh_start();
+	paletteram = auto_malloc(0x200);
+	paletteram_2 = auto_malloc(0x200);
+	return video_start_generic();
 }
-
-void flstory_vh_stop(void)
-{
-	free(paletteram);
-	paletteram = 0;
-	free(paletteram_2);
-	paletteram_2 = 0;
-	generic_vh_stop();
-}
-
 
 WRITE_HANDLER( flstory_videoram_w )
 {
@@ -86,7 +76,7 @@ WRITE_HANDLER( flstory_gfxctrl_w )
 
 	flip_screen_set(flipscreen);
 
-//usrintf_showmessage("%04x: gfxctrl = %02x\n",cpu_get_pc(),data);
+//usrintf_showmessage("%04x: gfxctrl = %02x\n",activecpu_get_pc(),data);
 
 }
 
@@ -109,7 +99,7 @@ WRITE_HANDLER( flstory_scrlram_w )
 
 ***************************************************************************/
 
-void flstory_draw_sprites(struct mame_bitmap *bitmap, int pri)
+void flstory_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	int i;
 
@@ -142,7 +132,7 @@ void flstory_draw_sprites(struct mame_bitmap *bitmap, int pri)
 					spriteram[offs+1] & 0x0f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 			/* wrap around */
 			if (sx > 240)
 				drawgfx(bitmap,Machine->gfx[1],
@@ -150,19 +140,19 @@ void flstory_draw_sprites(struct mame_bitmap *bitmap, int pri)
 						spriteram[offs+1] & 0x0f,
 						flipx,flipy,
 						sx-256,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,15);
+						cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 }
 
-void flstory_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( flstory )
 {
 	int offs;
 
-	tilemap_draw(bitmap,tilemap,TILEMAP_BACK,0);
-	flstory_draw_sprites(bitmap,0x00);
-	tilemap_draw(bitmap,tilemap,TILEMAP_FRONT,0);
-	flstory_draw_sprites(bitmap,0x80);
+	tilemap_draw(bitmap,cliprect,tilemap,TILEMAP_BACK,0);
+	flstory_draw_sprites(bitmap,cliprect,0x00);
+	tilemap_draw(bitmap,cliprect,tilemap,TILEMAP_FRONT,0);
+	flstory_draw_sprites(bitmap,cliprect,0x80);
 
 
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
@@ -189,7 +179,7 @@ void flstory_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				( ( videoram[offs + 1] & 0x08 ) >> 3 ) ^ flipscreen,
 				( ( videoram[offs + 1] & 0x10 ) >> 4 ) ^ flipscreen,
 				sx,sy & 0xff,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 

@@ -14,7 +14,7 @@ UINT8* destroyr_minor_obj_ram;
 UINT8* destroyr_alpha_num_ram;
 
 
-void destroyr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( destroyr )
 {
 	int i;
 	int j;

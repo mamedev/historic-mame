@@ -55,7 +55,7 @@ struct atarian_data
 #define VERIFY(cond, msg) if (!(cond)) { logerror(msg); return; }
 
 /* verification macro for non-void functions */
-#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); atarian_free(); return (ret); }
+#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); return (ret); }
 
 
 
@@ -188,7 +188,7 @@ int atarian_init(int map, const struct atarian_desc *desc)
 	an->vram         = (map == 0) ? &atarian_0_base : &atarian_1_base;
 
 	/* allocate the attribute lookup */
-	an->lookup = malloc(lookupcount * sizeof(an->lookup[0]));
+	an->lookup = auto_malloc(lookupcount * sizeof(an->lookup[0]));
 	VERIFYRETFREE(an->lookup, "atarian_init: out of memory for lookup", 0)
 
 	/* fill in the attribute lookup */
@@ -231,26 +231,6 @@ int atarian_init(int map, const struct atarian_desc *desc)
 
 
 /*---------------------------------------------------------------
-	atarian_free: Frees any memory allocated for the alphanumerics.
----------------------------------------------------------------*/
-
-void atarian_free(void)
-{
-	int i;
-
-	for (i = 0; i < ATARIAN_MAX; i++)
-	{
-		struct atarian_data *an = &atarian[i];
-
-		/* free the lookup */
-		if (an->lookup)
-			free(an->lookup);
-		an->lookup = NULL;
-	}
-}
-
-
-/*---------------------------------------------------------------
 	atarian_get_lookup: Fetches the lookup table so it can
 	be modified.
 ---------------------------------------------------------------*/
@@ -270,9 +250,8 @@ UINT32 *atarian_get_lookup(int map, int *size)
 	destination bitmap.
 ---------------------------------------------------------------*/
 
-void atarian_render(int map, struct mame_bitmap *bitmap)
+void atarian_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	struct atarian_data *an = &atarian[map];
 	data16_t *base = *an->vram;
 	int x, y;
@@ -297,7 +276,7 @@ void atarian_render(int map, struct mame_bitmap *bitmap)
 				int hflip = ATARIAN_LOOKUP_HFLIP(lookup);
 
 				drawgfx(bitmap, &an->gfxelement, code, color, hflip, 0,
-						x << an->tilexshift, y << an->tileyshift, clip,
+						x << an->tilexshift, y << an->tileyshift, cliprect,
 						opaque ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
 			}
 		}

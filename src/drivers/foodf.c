@@ -76,20 +76,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( foodf_playfieldram_w );
-WRITE16_HANDLER( foodf_paletteram_w );
-
-void foodf_set_flip(int flip);
-void foodf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+#include "foodf.h"
 
 
 
@@ -100,30 +87,18 @@ void foodf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
  *************************************/
 
 static UINT8 whichport = 0;
-static data16_t *nvram;
 
 
 
 /*************************************
  *
- *	NVRAM handler
+ *	NVRAM
  *
  *************************************/
 
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, 512);
-	else if (file)
-		osd_fread(file, nvram, 512);
-	else
-		memset(nvram, 0xff, 512);
-}
-
-
 static READ16_HANDLER( nvram_r )
 {
-	return nvram[offset] | 0xfff0;
+	return ((data16_t *)generic_nvram)[offset] | 0xfff0;
 }
 
 
@@ -158,7 +133,7 @@ static void scanline_update(int scanline)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( foodf )
 {
 	atarigen_interrupt_reset(update_interrupts);
 	atarigen_scanline_timer_reset(scanline_update, 32);
@@ -250,7 +225,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x014000, 0x01bfff, MWA16_RAM },
 	{ 0x01c000, 0x01cfff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x800000, 0x8007ff, foodf_playfieldram_w, &videoram16, &videoram_size },
-	{ 0x900000, 0x9001ff, MWA16_RAM, &nvram },
+	{ 0x900000, 0x9001ff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ 0x944000, 0x944007, analog_w },
 	{ 0x948000, 0x948001, digital_w },
 	{ 0x950000, 0x9501ff, foodf_paletteram_w, &paletteram16 },
@@ -392,44 +367,32 @@ static struct POKEYinterface pokey_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_foodf =
-{
+static MACHINE_DRIVER_START( foodf )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			6000000,	/* 6 MHz */
-			readmem,writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000, 6000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(foodf)
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	foodf_vh_screenrefresh,
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(foodf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
 

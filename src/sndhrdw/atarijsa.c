@@ -775,7 +775,7 @@ MEMORY_END
  *
  *************************************/
 
-struct TMS5220interface atarijsa_tms5220_interface =
+static struct TMS5220interface tms5220_interface =
 {
 	ATARI_CLOCK_3MHz*2/11,	/* potentially ATARI_CLOCK_3MHz/9 as well */
 	100,
@@ -783,7 +783,7 @@ struct TMS5220interface atarijsa_tms5220_interface =
 };
 
 
-struct POKEYinterface atarijsa_pokey_interface =
+static struct POKEYinterface pokey_interface =
 {
 	1,			/* 1 chip */
 	ATARI_CLOCK_3MHz/2,
@@ -791,16 +791,7 @@ struct POKEYinterface atarijsa_pokey_interface =
 };
 
 
-struct YM2151interface atarijsa_ym2151_interface_mono =
-{
-	1,			/* 1 chip */
-	ATARI_CLOCK_3MHz,
-	{ YM3012_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },
-	{ atarigen_ym2151_irq_gen }
-};
-
-
-struct YM2151interface atarijsa_ym2151_interface_stereo =
+static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	ATARI_CLOCK_3MHz,
@@ -809,7 +800,7 @@ struct YM2151interface atarijsa_ym2151_interface_stereo =
 };
 
 
-struct YM2151interface atarijsa_ym2151_interface_stereo_swapped =
+static struct YM2151interface ym2151_interface_swapped =
 {
 	1,			/* 1 chip */
 	ATARI_CLOCK_3MHz,
@@ -818,7 +809,7 @@ struct YM2151interface atarijsa_ym2151_interface_stereo_swapped =
 };
 
 
-struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
+static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	{ ATARI_CLOCK_3MHz/3/132 },
@@ -827,10 +818,114 @@ struct OKIM6295interface atarijsa_okim6295_interface_REGION_SOUND1 =
 };
 
 
-struct OKIM6295interface atarijsa_okim6295s_interface_REGION_SOUND1 =
+static struct OKIM6295interface okim6295s_interface =
 {
 	2, 				/* 2 chips */
 	{ ATARI_CLOCK_3MHz/3/132, ATARI_CLOCK_3MHz/3/132 },
 	{ REGION_SOUND1, REGION_SOUND1 },
 	{ MIXER(75,MIXER_PAN_LEFT), MIXER(75,MIXER_PAN_RIGHT) }
 };
+
+
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+/* Used by Blasteroids */
+MACHINE_DRIVER_START( jsa_i_stereo )
+	
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
+	MDRV_CPU_MEMORY(atarijsa1_readmem,atarijsa1_writemem)
+	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_3MHz/4/16/16/14)))
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD_TAG("ym", YM2151, ym2151_interface)
+MACHINE_DRIVER_END
+
+
+/* Used by Xybots */
+MACHINE_DRIVER_START( jsa_i_stereo_swapped )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jsa_i_stereo)
+	
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("ym", YM2151, ym2151_interface_swapped)
+MACHINE_DRIVER_END
+
+
+/* Used by Toobin', Vindicators */
+MACHINE_DRIVER_START( jsa_i_stereo_pokey )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jsa_i_stereo)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
+
+
+/* Used by Escape from the Planet of the Robot Monsters */
+MACHINE_DRIVER_START( jsa_i_mono_speech )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jsa_i_stereo)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
+
+
+/* Used by Cyberball 2072, STUN Runner, Skull & Crossbones, ThunderJaws, Hydra, Pit Fighter */
+MACHINE_DRIVER_START( jsa_ii_mono )
+	
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jsa_i_stereo)
+	MDRV_CPU_MODIFY("jsa")
+	MDRV_CPU_MEMORY(atarijsa2_readmem,atarijsa2_writemem)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_ADD_TAG("adpcm", OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
+
+
+/* Used by Batman, Guardians of the 'Hood, Road Riot 4WD */
+MACHINE_DRIVER_START( jsa_iii_mono )
+	
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jsa_ii_mono)
+	MDRV_CPU_MODIFY("jsa")
+	MDRV_CPU_MEMORY(atarijsa3_readmem,atarijsa3_writemem)
+MACHINE_DRIVER_END
+
+
+/* Used by Off the Wall */
+MACHINE_DRIVER_START( jsa_iii_mono_noadpcm )
+	
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jsa_iii_mono)
+
+	/* sound hardware */
+	MDRV_SOUND_REMOVE("adpcm")
+MACHINE_DRIVER_END
+
+
+/* Used by Space Lords, Moto Frenzy, Steel Talons, Road Riot's Revenge Rally */
+MACHINE_DRIVER_START( jsa_iiis_stereo )
+	
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jsa_iii_mono)
+	MDRV_CPU_MODIFY("jsa")
+	MDRV_CPU_MEMORY(atarijsa3s_readmem,atarijsa3s_writemem)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_REPLACE("adpcm", OKIM6295, okim6295s_interface)
+MACHINE_DRIVER_END

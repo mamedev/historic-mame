@@ -11,39 +11,21 @@
 #include "vidhrdw/konamiic.h"
 
 
-static void k88games_init_machine( void );
+static MACHINE_INIT( 88games );
 static void k88games_banking( int lines );
 
 static unsigned char *ram;
 static int videobank;
 
 extern int k88games_priority;
-int k88games_vh_start(void);
-void k88games_vh_stop(void);
-void k88games_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( 88games );
+VIDEO_UPDATE( 88games );
 
 
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file,int read_or_write)
+static INTERRUPT_GEN( k88games_interrupt )
 {
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0,nvram_size);
-	}
-}
-
-
-static int k88games_interrupt(void)
-{
-	if (K052109_is_IRQ_enabled()) return interrupt();
-	else return ignore_interrupt();
+	if (K052109_is_IRQ_enabled())
+		irq0_line_hold();
 }
 
 static int zoomreadroms;
@@ -86,7 +68,7 @@ static WRITE_HANDLER( k88games_5f84_w )
 
 static WRITE_HANDLER( k88games_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
 /* handle fake button for speed cheat */
@@ -148,7 +130,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0fff, MWA_RAM },	/* banked ROM */
 	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },	/* banked ROM + palette RAM */
 	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x37ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x3000, 0x37ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x3800, 0x3fff, bankedram_w, &ram },
 	{ 0x5f84, 0x5f84, k88games_5f84_w },
 	{ 0x5f88, 0x5f88, watchdog_reset_w },
@@ -306,53 +288,36 @@ static struct UPD7759_interface upd7759_interface =
 
 
 
-static const struct MachineDriver machine_driver_88games =
-{
-	{
-		{
-			CPU_KONAMI,
-			3000000, /* ? */
-			readmem,writemem,0,0,
-			k88games_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			sound_readmem, sound_writemem,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	k88games_init_machine,
+static MACHINE_DRIVER_START( 88games )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(KONAMI, 3000000) /* ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(k88games_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(88games)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(13*8, (64-13)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	k88games_vh_start,
-	k88games_vh_stop,
-	k88games_vh_screenrefresh,
+	MDRV_VIDEO_START(88games)
+	MDRV_VIDEO_UPDATE(88games)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -531,7 +496,7 @@ static void k88games_banking( int lines )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
-logerror("%04x: bank select %02x\n",cpu_get_pc(),lines);
+logerror("%04x: bank select %02x\n",activecpu_get_pc(),lines);
 
 	/* bits 0-2 select ROM bank for 0000-1fff */
 	/* bit 3: when 1, palette RAM at 1000-1fff */
@@ -566,7 +531,7 @@ logerror("%04x: bank select %02x\n",cpu_get_pc(),lines);
 	k88games_priority = lines & 0x80;
 }
 
-static void k88games_init_machine( void )
+static MACHINE_INIT( 88games )
 {
 	konami_cpu_setlines_callback = k88games_banking;
 	paletteram = &memory_region(REGION_CPU1)[0x20000];
@@ -574,7 +539,7 @@ static void k88games_init_machine( void )
 
 
 
-static void init_88games(void)
+static DRIVER_INIT( 88games )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

@@ -1,12 +1,11 @@
 /***************************************************************************
 
-Subs machine
+	Atari Subs hardware
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
+#include "subs.h"
 
 static int subs_steering_buf1;
 static int subs_steering_buf2;
@@ -16,7 +15,7 @@ static int subs_steering_val2;
 /***************************************************************************
 subs_init_machine
 ***************************************************************************/
-void subs_init_machine(void)
+MACHINE_INIT( subs )
 {
 	subs_steering_buf1 = 0;
 	subs_steering_buf2 = 0;
@@ -27,13 +26,11 @@ void subs_init_machine(void)
 /***************************************************************************
 subs_interrupt
 ***************************************************************************/
-int subs_interrupt(void)
+INTERRUPT_GEN( subs_interrupt )
 {
 	/* only do NMI interrupt if not in TEST mode */
 	if ((input_port_2_r(0) & 0x40)==0x40)
-		return nmi_interrupt();
-
-	return ignore_interrupt();
+		cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 /***************************************************************************
@@ -45,60 +42,60 @@ Be sure to keep returning a direction until steer_reset is called.
 ***************************************************************************/
 static int subs_steering_1(void)
 {
-        static int last_val=0;
-        int this_val;
-        int delta;
+	static int last_val=0;
+	int this_val;
+	int delta;
 
-        this_val=input_port_3_r(0);
+	this_val=input_port_3_r(0);
 
-        delta=this_val-last_val;
-        last_val=this_val;
-        if (delta>128) delta-=256;
-        else if (delta<-128) delta+=256;
-        /* Divide by four to make our steering less sensitive */
-        subs_steering_buf1+=(delta/4);
+	delta=this_val-last_val;
+	last_val=this_val;
+	if (delta>128) delta-=256;
+	else if (delta<-128) delta+=256;
+	/* Divide by four to make our steering less sensitive */
+	subs_steering_buf1+=(delta/4);
 
-        if (subs_steering_buf1>0)
-        {
-                subs_steering_buf1--;
-                subs_steering_val1=0xC0;
-        }
-        else if (subs_steering_buf1<0)
-        {
-                subs_steering_buf1++;
-                subs_steering_val1=0x80;
-        }
+	if (subs_steering_buf1>0)
+	{
+	      subs_steering_buf1--;
+	      subs_steering_val1=0xC0;
+	}
+	else if (subs_steering_buf1<0)
+	{
+	      subs_steering_buf1++;
+	      subs_steering_val1=0x80;
+	}
 
-        return subs_steering_val1;
+	return subs_steering_val1;
 }
 
 static int subs_steering_2(void)
 {
-        static int last_val=0;
-        int this_val;
-        int delta;
+	static int last_val=0;
+	int this_val;
+	int delta;
 
-        this_val=input_port_4_r(0);
+	this_val=input_port_4_r(0);
 
-        delta=this_val-last_val;
-        last_val=this_val;
-        if (delta>128) delta-=256;
-        else if (delta<-128) delta+=256;
-        /* Divide by four to make our steering less sensitive */
-        subs_steering_buf2+=(delta/4);
+	delta=this_val-last_val;
+	last_val=this_val;
+	if (delta>128) delta-=256;
+	else if (delta<-128) delta+=256;
+	/* Divide by four to make our steering less sensitive */
+	subs_steering_buf2+=(delta/4);
 
-        if (subs_steering_buf2>0)
-        {
-                subs_steering_buf2--;
-                subs_steering_val2=0xC0;
-        }
-        else if (subs_steering_buf2<0)
-        {
-                subs_steering_buf2++;
-                subs_steering_val2=0x80;
-        }
+	if (subs_steering_buf2>0)
+	{
+		subs_steering_buf2--;
+		subs_steering_val2=0xC0;
+	}
+	else if (subs_steering_buf2<0)
+	{
+		subs_steering_buf2++;
+		subs_steering_val2=0x80;
+	}
 
-        return subs_steering_val2;
+	return subs_steering_val2;
 }
 
 /***************************************************************************

@@ -38,7 +38,7 @@ static int flipscreen;
 
 ***************************************************************************/
 
-void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gberet )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -105,7 +105,7 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int gberet_vh_start(void)
+VIDEO_START( gberet )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,64,32);
 
@@ -178,15 +178,15 @@ WRITE_HANDLER( gberetb_scroll_w )
 }
 
 
-int gberet_interrupt(void)
+INTERRUPT_GEN( gberet_interrupt )
 {
-	if (cpu_getiloops() == 0) return interrupt();
+	if (cpu_getiloops() == 0)
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 	else if (cpu_getiloops() % 2)
 	{
-		if (interruptenable) return nmi_interrupt();
+		if (interruptenable)
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 
@@ -197,7 +197,7 @@ int gberet_interrupt(void)
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 	unsigned char *sr;
@@ -231,12 +231,12 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					sr[offs+1] & 0x0f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,0);
+					cliprect,TRANSPARENCY_COLOR,0);
 		}
 	}
 }
 
-static void draw_sprites_bootleg(struct mame_bitmap *bitmap)
+static void draw_sprites_bootleg(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 	unsigned char *sr;
@@ -269,24 +269,24 @@ static void draw_sprites_bootleg(struct mame_bitmap *bitmap)
 					sr[offs+3] & 0x0f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,0);
+					cliprect,TRANSPARENCY_COLOR,0);
 		}
 	}
 }
 
 
-void gberet_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gberet )
 {
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
-void gberetb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gberetb )
 {
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
-	draw_sprites_bootleg(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY|1,0);
+	draw_sprites_bootleg(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }

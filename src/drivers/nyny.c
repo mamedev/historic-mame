@@ -40,10 +40,9 @@ fedcba98
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 
-void nyny_init_palette(unsigned char *obsolete,unsigned short *game_colortable,const unsigned char *color_prom);
-void nyny_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int nyny_vh_start(void);
-void nyny_vh_stop(void);
+PALETTE_INIT( nyny );
+VIDEO_UPDATE( nyny );
+VIDEO_START( nyny );
 
 unsigned char *nyny_videoram ;
 unsigned char *nyny_colourram ;
@@ -66,25 +65,7 @@ WRITE_HANDLER( nyny_flipscreen_w ) ;
 
 
 
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0x00,nvram_size);
-	}
-}
-
-
-
-int nyny_interrupt(void)
+INTERRUPT_GEN( nyny_interrupt )
 {
 	/* this is not accurate */
 	/* pia1_ca1 should be toggled by output of LS123 */
@@ -94,7 +75,7 @@ int nyny_interrupt(void)
 	pia_0_ca1_w(0,input_port_5_r(0)&0x01);
 	pia_0_ca2_w(0,input_port_6_r(0)&0x01);
 
-	return 0 ;
+	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 /***************************************************************************
@@ -142,7 +123,7 @@ static struct pia6821_interface pia1_intf =
 	/*irqs   : A/B             */ 0, 0
 };
 
-void nyny_init_machine(void)
+MACHINE_INIT( nyny )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
@@ -210,7 +191,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x4000, 0x5fff, nyny_videoram1_w }, // WE2
 	{ 0x6000, 0x7fff, nyny_colourram1_w }, // WE4
 	{ 0x8000, 0x9fff, MWA_RAM }, // WE1
-	{ 0xa000, 0xa007, MWA_RAM, &nvram, &nvram_size }, // SRAM (coin counter, shown when holding F2)
+	{ 0xa000, 0xa007, MWA_RAM, &generic_nvram, &generic_nvram_size }, // SRAM (coin counter, shown when holding F2)
 	{ 0xa204, 0xa207, pia_0_w },
 	{ 0xa208, 0xa20b, pia_1_w },
 	{ 0xa300, 0xa300, shared_w_irq },
@@ -357,59 +338,39 @@ static struct DACinterface dac_interface =
 
 
 
-static struct MachineDriver machine_driver_nyny =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1400000,	/* 1.40 MHz */
-			readmem, writemem, 0, 0,
-			nyny_interrupt,2 /* game doesn't use video based irqs it's polling based */
-		},
-		{
-			CPU_M6802,
-			4000000/4,	/* 1 MHz */
-			sound_readmem, sound_writemem, 0, 0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M6802,
-			4000000/4,	/* 1 MHz */
-			sound2_readmem, sound2_writemem, 0, 0,
-			ignore_interrupt,0
-		}
-	},
-	50, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices per frame  */
-	nyny_init_machine,
-	/* video hardware */
-	256, 256, { 0, 255, 4, 251 },	/* visible_area - just a guess */
-	0,
-	8, 0,
-	nyny_init_palette,
+static MACHINE_DRIVER_START( nyny )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	nyny_vh_start,
-	nyny_vh_stop,
-	nyny_vh_screenrefresh,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 1400000)	/* 1.40 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nyny_interrupt,2) /* game doesn't use video based irqs it's polling based */
+
+	MDRV_CPU_ADD(M6802,4000000/4)	/* 1 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_CPU_ADD(M6802,4000000/4)	/* 1 MHz */
+	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
+
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(nyny)
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 4, 251)	/* visible_area - just a guess */
+	MDRV_PALETTE_LENGTH(8)
+
+	MDRV_PALETTE_INIT(nyny)
+	MDRV_VIDEO_START(nyny)
+	MDRV_VIDEO_UPDATE(nyny)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
   Game driver(s)

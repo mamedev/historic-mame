@@ -302,6 +302,15 @@ static struct rgb_descriptor scan75v_desc =
 	}
 };
 
+// table for "sharp" pattern, i.e., no change, just pixel double
+static struct rgb_descriptor sharp_desc =
+{
+	1,
+	{
+		{ RGB,RGB,RGB,RGB,RGB,RGB,RGB,RGB, RGB,RGB,RGB,RGB,RGB,RGB,RGB,RGB }
+	}
+};
+
 
 //============================================================
 //	PROTOTYPES
@@ -453,7 +462,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 
 	asmblit_dirtydata = blit->dirtydata;
 
-	if (((UINT32)asmblit_dstdata & 15) != 0)
+	if (((UINT32)asmblit_dstdata & 7) != 0)
 		fprintf(stderr, "Misaligned blit to: %08x\n", (UINT32)asmblit_dstdata);
 
 	// pick the blitter
@@ -1045,6 +1054,8 @@ static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 
 					generate_rgb_masks(&rgbtiny_desc, blit);
 				else if (blit->dsteffect == EFFECT_SCANLINE_75V)
 					generate_rgb_masks(&scan75v_desc, blit);
+				else if (blit->dsteffect == EFFECT_SHARP)
+					generate_rgb_masks(&sharp_desc, blit);
 
 				if (which == 1)
 					blitter = (UINT8 *)(blit1_core_rgb[srcdepth_index][dstdepth_index]);

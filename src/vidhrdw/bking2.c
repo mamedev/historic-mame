@@ -40,7 +40,7 @@ static int hitclr=0;
   bit 0 -- 220 ohm resistor  -- RED
 
 ***************************************************************************/
-void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( bking2 )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -237,12 +237,12 @@ READ_HANDLER( bking2_pos_r )
   the main emulation engine.
 
 ***************************************************************************/
-void bking2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bking2 )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

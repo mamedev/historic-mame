@@ -68,7 +68,7 @@ WRITE16_HANDLER( suna16_flipscreen_w )
 		flip_screen_set( data & 1 );
 		color_bank = data & 4;
 	}
-	if (data & ~5)	logerror("CPU#0 PC %06X - Flip screen unknown bits: %04X\n", cpu_get_pc(), data);
+	if (data & ~5)	logerror("CPU#0 PC %06X - Flip screen unknown bits: %04X\n", activecpu_get_pc(), data);
 }
 
 
@@ -80,16 +80,11 @@ WRITE16_HANDLER( suna16_flipscreen_w )
 
 ***************************************************************************/
 
-int suna16_vh_start(void)
+VIDEO_START( suna16 )
 {
-	paletteram16_2 = malloc( 0x100 * sizeof(data16_t) );
+	paletteram16_2 = auto_malloc( 0x100 * sizeof(data16_t) );
 	if (paletteram16_2 != NULL)	return 0;
 	else						return 1;
-}
-
-void suna16_vh_stop(void)
-{
-	if (paletteram16_2 != NULL)	free(paletteram16_2);
 }
 
 READ16_HANDLER( suna16_paletteram16_r )
@@ -218,7 +213,7 @@ static void suna16_draw_sprites(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void suna16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( suna16 )
 {
 	/* I believe background is black */
 	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);

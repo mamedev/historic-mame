@@ -16,8 +16,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 
-int  madmotor_vh_start(void);
-void madmotor_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( madmotor );
+VIDEO_UPDATE( madmotor );
 
 READ16_HANDLER( madmotor_pf1_rowscroll_r );
 WRITE16_HANDLER( madmotor_pf1_rowscroll_w );
@@ -41,7 +41,7 @@ static WRITE16_HANDLER( madmotor_sound_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xff);
-		cpu_cause_interrupt(1,H6280_INT_IRQ1);
+		cpu_set_irq_line(1,0,HOLD_LINE);
 	}
 }
 
@@ -303,57 +303,35 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static const struct MachineDriver machine_driver_madmotor =
-{
+static MACHINE_DRIVER_START( madmotor )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68000, /* Custom chip 59 */
-			12000000, /* 24 MHz crystal */
-			madmotor_readmem,madmotor_writemem,0,0,
-			m68_level6_irq,1 /* VBL */
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
-			8053000/2, /* Crystal near CPU is 8.053 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	58, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration taken from Burger Time */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000) /* Custom chip 59, 24 MHz crystal */
+	MDRV_CPU_MEMORY(madmotor_readmem,madmotor_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)/* VBL */
+
+	MDRV_CPU_ADD(H6280, 8053000/2) /* Custom chip 45, Crystal near CPU is 8.053 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION) /* frames per second, vblank duration taken from Burger Time */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	madmotor_vh_start,
-	0,
-	madmotor_vh_screenrefresh,
+	MDRV_VIDEO_START(madmotor)
+	MDRV_VIDEO_UPDATE(madmotor)
 
 	/* sound hardware */
-	0,0,0,0,
-  	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -400,7 +378,7 @@ ROM_END
 
 /******************************************************************************/
 
-static void init_madmotor(void)
+static DRIVER_INIT( madmotor )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;

@@ -23,23 +23,16 @@ static void solomon_dirty_all(void)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int solomon_vh_start(void)
+VIDEO_START( solomon )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		generic_vh_stop();
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
-	{
-		bitmap_free(tmpbitmap2);
-		generic_vh_stop();
+	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer2,1,videoram_size);
 
 	state_save_register_int ("video", 0, "flipscreen", &flipscreen);
@@ -48,19 +41,6 @@ int solomon_vh_start(void)
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void solomon_vh_stop(void)
-{
-	bitmap_free(tmpbitmap2);
-	free(dirtybuffer2);
-	generic_vh_stop();
-}
 
 
 WRITE_HANDLER( solomon_bgvideoram_w )
@@ -104,7 +84,7 @@ WRITE_HANDLER( solomon_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void solomon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( solomon )
 {
 	int offs;
 

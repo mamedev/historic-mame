@@ -55,13 +55,13 @@ write:
 
 WRITE_HANDLER( crbaloon_spritectrl_w );
 WRITE_HANDLER( crbaloon_flipscreen_w );
-void crbaloon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void crbaloon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( crbaloon );
+VIDEO_UPDATE( crbaloon );
 
 
 int val06,val08,val0a;
 
-static void crbaloon_machine_init(void)
+static MACHINE_INIT( crbaloon )
 {
 	/* MIXER A = 0, MIXER C = 1 */
 	SN76477_mixer_a_w(0, 0);
@@ -143,12 +143,12 @@ READ_HANDLER( crbaloon_IN2_r )
 	/* the following is needed for the game to boot up */
 	if (val06 & 0x80)
 	{
-logerror("PC %04x: %02x high\n",cpu_get_pc(),offset);
+logerror("PC %04x: %02x high\n",activecpu_get_pc(),offset);
 		return (input_port_2_r(0) & 0xf0) | 0x07;
 	}
 	else
 	{
-logerror("PC %04x: %02x low\n",cpu_get_pc(),offset);
+logerror("PC %04x: %02x low\n",activecpu_get_pc(),offset);
 		return (input_port_2_r(0) & 0xf0) | 0x07;
 	}
 }
@@ -162,12 +162,12 @@ READ_HANDLER( crbaloon_IN3_r )
 	/* the following is needed for the game to boot up */
 	if (val0a & 0x01)
 	{
-logerror("PC %04x: 03 high\n",cpu_get_pc());
+logerror("PC %04x: 03 high\n",activecpu_get_pc());
 		return (input_port_3_r(0) & 0x0f) | 0x00;
 	}
 	else
 	{
-logerror("PC %04x: 03 low\n",cpu_get_pc());
+logerror("PC %04x: 03 low\n",activecpu_get_pc());
 		return (input_port_3_r(0) & 0x0f) | 0x00;
 	}
 }
@@ -348,42 +348,34 @@ static struct SN76477interface sn76477_interface =
 };
 
 
-static const struct MachineDriver machine_driver_crbaloon =
-{
+static MACHINE_DRIVER_START( crbaloon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ????? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	crbaloon_machine_init,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ????? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(crbaloon)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16, 16*2,
-	crbaloon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(16*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	crbaloon_vh_screenrefresh,
+	MDRV_PALETTE_INIT(crbaloon)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(crbaloon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76477,
-			&sn76477_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76477, sn76477_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -198,7 +198,7 @@ WRITE16_HANDLER( powerins_vram_1_w )
 
 ***************************************************************************/
 
-int powerins_vh_start(void)
+VIDEO_START( powerins )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0,
 								powerins_get_memory_offset_0,
@@ -276,7 +276,7 @@ Offset:		Format:					Value:
 #define SIGN_EXTEND_POS(_var_)	{_var_ &= 0x3ff; if (_var_ > 0x1ff) _var_ -= 0x400;}
 
 
-static void powerins_draw_sprites(struct mame_bitmap *bitmap)
+static void powerins_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	data16_t *source = spriteram16 + 0x8000/2;
 	data16_t *finish = spriteram16 + 0x9000/2;
@@ -327,7 +327,7 @@ static void powerins_draw_sprites(struct mame_bitmap *bitmap)
 						flipx, flipy,
 						sx + x*16,
 						sy + y*16,
-						&Machine->visible_area,TRANSPARENCY_PEN,15);
+						cliprect,TRANSPARENCY_PEN,15);
 
 				code += inc;
 			}
@@ -349,7 +349,7 @@ static void powerins_draw_sprites(struct mame_bitmap *bitmap)
 ***************************************************************************/
 
 
-void powerins_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( powerins )
 {
 	int layers_ctrl = -1;
 
@@ -375,8 +375,8 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	if (layers_ctrl&1)		tilemap_draw(bitmap, tilemap_0, 0, 0);
-	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	if (layers_ctrl&8)		powerins_draw_sprites(bitmap);
-	if (layers_ctrl&2)		tilemap_draw(bitmap, tilemap_1, 0, 0);
+	if (layers_ctrl&1)		tilemap_draw(bitmap,cliprect, tilemap_0, 0, 0);
+	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
+	if (layers_ctrl&8)		powerins_draw_sprites(bitmap,cliprect);
+	if (layers_ctrl&2)		tilemap_draw(bitmap,cliprect, tilemap_1, 0, 0);
 }

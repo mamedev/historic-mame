@@ -38,7 +38,7 @@ static unsigned char sc1map[9][9][2];
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void c1943_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( 1943 )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -110,35 +110,21 @@ void c1943_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colorta
 
 
 
-int c1943_vh_start(void)
+VIDEO_START( 1943 )
 {
-	if ((sc2bitmap = bitmap_alloc(9*32,8*32)) == 0)
+	if ((sc2bitmap = auto_bitmap_alloc(9*32,8*32)) == 0)
 		return 1;
 
-	if ((sc1bitmap = bitmap_alloc(9*32,9*32)) == 0)
-	{
-		bitmap_free(sc2bitmap);
+	if ((sc1bitmap = auto_bitmap_alloc(9*32,9*32)) == 0)
 		return 1;
-	}
 
-	if (generic_vh_start() == 1)
-	{
-		bitmap_free(sc2bitmap);
-		bitmap_free(sc1bitmap);
+	if (video_start_generic())
 		return 1;
-	}
 
 	memset (sc2map, 0xff, sizeof (sc2map));
 	memset (sc1map, 0xff, sizeof (sc1map));
 
 	return 0;
-}
-
-
-void c1943_vh_stop(void)
-{
-	bitmap_free(sc2bitmap);
-	bitmap_free(sc1bitmap);
 }
 
 
@@ -193,7 +179,7 @@ WRITE_HANDLER( c1943_d806_w )
   the main emulation engine.
 
 ***************************************************************************/
-void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( 1943 )
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
@@ -247,10 +233,10 @@ void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap(bitmap,sc2bitmap,
 			1,&xscroll,
 			1,&yscroll,
-			&Machine->visible_area,
+			cliprect,
 			TRANSPARENCY_NONE,0);
 	}
-	else fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
+	else fillbitmap(bitmap,get_black_pen(),cliprect);
 
 
 	if (objon)
@@ -278,7 +264,7 @@ void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -337,7 +323,7 @@ void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap(bitmap,sc1bitmap,
 			1,&xscroll,
 			1,&yscroll,
-			&Machine->visible_area,
+			cliprect,
 			TRANSPARENCY_COLOR,0);
 	}
 
@@ -367,7 +353,7 @@ void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -391,7 +377,7 @@ void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x1f,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,79);
+					cliprect,TRANSPARENCY_COLOR,79);
 		}
 	}
 }

@@ -28,7 +28,7 @@ int fortyl_pix_color[4];
 *	color prom decoding
 */
 
-void fortyl_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( fortyl )
 {
 	int i;
 
@@ -99,17 +99,17 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int fortyl_vh_start(void)
+VIDEO_START( fortyl )
 {
-	fortyl_pixram1 = malloc(0x4000);
-	fortyl_pixram2 = malloc(0x4000);
+	fortyl_pixram1 = auto_malloc(0x4000);
+	fortyl_pixram2 = auto_malloc(0x4000);
 
-	pixel_bitmap1 = bitmap_alloc(256,256);
-	pixel_bitmap2 = bitmap_alloc(256,256);
+	pixel_bitmap1 = auto_bitmap_alloc(256,256);
+	pixel_bitmap2 = auto_bitmap_alloc(256,256);
 
 	background  = tilemap_create(get_bg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8,8,64,32);
 
-	if (!background)
+	if (!background || !fortyl_pixram1 || !fortyl_pixram2 || !pixel_bitmap1 || !pixel_bitmap2)
 		return 1;
 
 	tilemap_set_scroll_rows(background,32);
@@ -118,13 +118,6 @@ int fortyl_vh_start(void)
 	return 0;
 }
 
-void fortyl_vh_stop(void)
-{
-	free(fortyl_pixram1);
-	fortyl_pixram1 = 0;
-	free(fortyl_pixram2);
-	fortyl_pixram2 = 0;
-}
 
 /***************************************************************************
 
@@ -157,7 +150,7 @@ WRITE_HANDLER( fortyl_pixram_sel_w )
 
 	pixram_sel = (data & 0x04) >> 2;
 
-	if (fortyl_flipscreen != f);
+	if (fortyl_flipscreen != f)
 	{
 		fortyl_flipscreen = f;
 		flip_screen_set(fortyl_flipscreen);
@@ -268,9 +261,8 @@ spriteram format (4 bytes per sprite):
 	offset	3	xxxxxxxx	x position
 */
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 
 	/* spriteram #1 */
@@ -299,7 +291,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 				color,
 				flipx,flipy,
 				sx+fortyl_xoffset,sy,
-				clip,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 
 	/* spriteram #2 */
@@ -328,11 +320,11 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 				color,
 				flipx,flipy,
 				sx+fortyl_xoffset,sy,
-				clip,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
-static void draw_pixram( struct mame_bitmap *bitmap )
+static void draw_pixram( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
 	int f = fortyl_flipscreen ^ 1;
@@ -346,17 +338,17 @@ static void draw_pixram( struct mame_bitmap *bitmap )
 	}
 
 	if (pixram_sel)
-		copybitmap(bitmap,pixel_bitmap1,f,f,fortyl_xoffset,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,pixel_bitmap1,f,f,fortyl_xoffset,0,cliprect,TRANSPARENCY_NONE,0);
 	else
-		copybitmap(bitmap,pixel_bitmap2,f,f,fortyl_xoffset,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,pixel_bitmap2,f,f,fortyl_xoffset,0,cliprect,TRANSPARENCY_NONE,0);
 }
 
-void fortyl_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( fortyl )
 {
-	draw_pixram(bitmap);
+	draw_pixram(bitmap,cliprect);
 
 	tilemap_set_scrolldy(background,-fortyl_video_ctrl[1]+1,-fortyl_video_ctrl[1]-1 );
-	tilemap_draw(bitmap,background,0,0);
+	tilemap_draw(bitmap,cliprect,background,0,0);
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 }

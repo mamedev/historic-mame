@@ -70,15 +70,15 @@ WRITE16_HANDLER( aerofgt_bg1scrolly_w );
 WRITE16_HANDLER( aerofgt_bg2scrollx_w );
 WRITE16_HANDLER( aerofgt_bg2scrolly_w );
 WRITE16_HANDLER( pspikes_palette_bank_w );
-int pspikes_vh_start(void);
-int karatblz_vh_start(void);
-int spinlbrk_vh_start(void);
-int turbofrc_vh_start(void);
-void pspikes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void karatblz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void spinlbrk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void turbofrc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void aerofgt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( pspikes );
+VIDEO_START( karatblz );
+VIDEO_START( spinlbrk );
+VIDEO_START( turbofrc );
+VIDEO_UPDATE( pspikes );
+VIDEO_UPDATE( karatblz );
+VIDEO_UPDATE( spinlbrk );
+VIDEO_UPDATE( turbofrc );
+VIDEO_UPDATE( aerofgt );
 
 
 
@@ -91,7 +91,7 @@ static WRITE16_HANDLER( sound_command_w )
 	{
 		pending_command = 1;
 		soundlatch_w(offset,data & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -101,7 +101,7 @@ static WRITE16_HANDLER( turbofrc_sound_command_w )
 	{
 		pending_command = 1;
 		soundlatch_w(offset,(data >> 8) & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -1036,271 +1036,187 @@ static struct YM2610interface ym2610_interface =
 
 
 
-static const struct MachineDriver machine_driver_pspikes =
-{
+static MACHINE_DRIVER_START( pspikes )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			pspikes_readmem,pspikes_writemem,0,0,
-			m68_level1_irq,1	/* all irq vectors are the same */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_MEMORY(pspikes_readmem,pspikes_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* all irq vectors are the same */
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(turbofrc_sound_readport,turbofrc_sound_writeport)
 								/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8+4, 44*8+4-1, 0*8, 30*8-1 },
-	pspikes_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8+4, 44*8+4-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(pspikes_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pspikes_vh_start,
-	0,
-	pspikes_vh_screenrefresh,
+	MDRV_VIDEO_START(pspikes)
+	MDRV_VIDEO_UPDATE(pspikes)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_karatblz =
-{
+static MACHINE_DRIVER_START( karatblz )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			karatblz_readmem,karatblz_writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_MEMORY(karatblz_readmem,karatblz_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(turbofrc_sound_readport,turbofrc_sound_writeport)
 								/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 1*8, 45*8-1, 0*8, 30*8-1 },
-	turbofrc_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 45*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(turbofrc_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	karatblz_vh_start,
-	0,
-	karatblz_vh_screenrefresh,
+	MDRV_VIDEO_START(karatblz)
+	MDRV_VIDEO_UPDATE(karatblz)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_spinlbrk =
-{
+static MACHINE_DRIVER_START( spinlbrk )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			spinlbrk_readmem,spinlbrk_writemem,0,0,
-			m68_level1_irq,1	/* there are vectors for 3 and 4 too */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_MEMORY(spinlbrk_readmem,spinlbrk_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* there are vectors for 3 and 4 too */
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(turbofrc_sound_readport,turbofrc_sound_writeport)
 								/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 1*8, 45*8-1, 0*8, 30*8-1 },
-	turbofrc_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 45*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(turbofrc_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	spinlbrk_vh_start,
-	0,
-	spinlbrk_vh_screenrefresh,
+	MDRV_VIDEO_START(spinlbrk)
+	MDRV_VIDEO_UPDATE(spinlbrk)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_turbofrc =
-{
+static MACHINE_DRIVER_START( turbofrc )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			turbofrc_readmem,turbofrc_writemem,0,0,
-			m68_level1_irq,1	/* all irq vectors are the same */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,turbofrc_sound_readport,turbofrc_sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_MEMORY(turbofrc_readmem,turbofrc_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* all irq vectors are the same */
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(turbofrc_sound_readport,turbofrc_sound_writeport)
 								/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
-	turbofrc_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 44*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(turbofrc_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	turbofrc_vh_start,
-	0,
-	turbofrc_vh_screenrefresh,
+	MDRV_VIDEO_START(turbofrc)
+	MDRV_VIDEO_UPDATE(turbofrc)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_aerofgtb =
-{
+static MACHINE_DRIVER_START( aerofgtb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			aerofgtb_readmem,aerofgtb_writemem,0,0,
-			m68_level1_irq,1	/* all irq vectors are the same */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_MEMORY(aerofgtb_readmem,aerofgtb_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* all irq vectors are the same */
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(aerofgt_sound_readport,aerofgt_sound_writeport)
 								/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, 500,	/* frames per second, vblank duration */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(500)
 				/* wrong but improves sprite-background synchronization */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
 
 	/* video hardware */
-	64*8, 32*8, { 0*8+12, 40*8-1+12, 0*8, 28*8-1 },
-	aerofgtb_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8+12, 40*8-1+12, 0*8, 28*8-1)
+	MDRV_GFXDECODE(aerofgtb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	turbofrc_vh_start,
-	0,
-	turbofrc_vh_screenrefresh,
+	MDRV_VIDEO_START(turbofrc)
+	MDRV_VIDEO_UPDATE(turbofrc)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_aerofgt =
-{
+static MACHINE_DRIVER_START( aerofgt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			aerofgt_readmem,aerofgt_writemem,0,0,
-			m68_level1_irq,1	/* all irq vectors are the same */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000,20000000/2)	/* 10 MHz (?) */
+	MDRV_CPU_MEMORY(aerofgt_readmem,aerofgt_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* all irq vectors are the same */
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(aerofgt_sound_readport,aerofgt_sound_writeport)
 								/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, 400,	/* frames per second, vblank duration */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(400)
 				/* wrong but improves sprite-background synchronization */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	aerofgt_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(aerofgt_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	turbofrc_vh_start,
-	0,
-	aerofgt_vh_screenrefresh,
+	MDRV_VIDEO_START(turbofrc)
+	MDRV_VIDEO_UPDATE(aerofgt)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
 
 

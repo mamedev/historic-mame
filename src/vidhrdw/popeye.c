@@ -131,14 +131,14 @@ static void convert_color_prom(unsigned char *palette,unsigned short *colortable
 	}
 }
 
-void popeye_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( popeye )
 {
 	invertmask = 0xff;
 
 	convert_color_prom(palette,colortable,color_prom);
 }
 
-void popeyebl_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( popeyebl )
 {
 	invertmask = 0x00;
 
@@ -152,17 +152,12 @@ void popeyebl_vh_convert_color_prom(unsigned char *palette,unsigned short *color
   Start the video hardware emulation.
 
 ***************************************************************************/
-int popeye_vh_start(void)
+VIDEO_START( popeye )
 {
-	if ((tmpbitmap2 = bitmap_alloc(512,512)) == 0)
+	if ((tmpbitmap2 = auto_bitmap_alloc(512,512)) == 0)
 		return 1;
 
 	return 0;
-}
-
-void popeye_vh_stop(void)
-{
-	bitmap_free(tmpbitmap2);
 }
 
 
@@ -269,7 +264,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void popeye_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( popeye )
 {
 	int offs;
 

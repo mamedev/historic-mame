@@ -27,9 +27,8 @@ WRITE_HANDLER( starcrus_ship_parm_2_w );
 WRITE_HANDLER( starcrus_proj_parm_1_w );
 WRITE_HANDLER( starcrus_proj_parm_2_w );
 READ_HANDLER( starcrus_coll_det_r );
-extern int starcrus_vh_start(void);
-extern void starcrus_vh_stop(void);
-extern void starcrus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( starcrus );
+extern VIDEO_UPDATE( starcrus );
 extern int p1_sprite;
 extern int p2_sprite;
 extern int s1_sprite;
@@ -153,19 +152,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static unsigned char palette[] =
+static unsigned char palette_source[] =
 {
 	0x00,0x00,0x00, /* Black */
     0xff,0xff,0xff, /* White */
 };
-static unsigned short colortable[] =
+static unsigned short colortable_source[] =
 {
 	0x00, 0x01, /* White on Black */
 };
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( starcrus )
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
 static const char *starcrus_sample_names[] =
@@ -186,43 +185,32 @@ static struct Samplesinterface samples_interface =
 };
 
 
-static const struct MachineDriver machine_driver_starcrus =
-{
+static MACHINE_DRIVER_START( starcrus )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			9750000/9,  /* 8224 chip is a divide by 9 */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(8080,9750000/9)  /* 8224 chip is a divide by 9 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-    32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	starcrus_vh_start,
-	starcrus_vh_stop,
-	starcrus_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
+	
+	MDRV_PALETTE_INIT(starcrus)
+	MDRV_VIDEO_START(starcrus)
+	MDRV_VIDEO_UPDATE(starcrus)
 
     /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_SAMPLES,
-            &samples_interface
-        }
-    }
-
-};
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

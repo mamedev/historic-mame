@@ -195,10 +195,10 @@ extern unsigned char *slapfight_videoram;
 extern unsigned char *slapfight_colorram;
 extern size_t slapfight_videoram_size;
 extern unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
-void slapfight_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void perfrman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int slapfight_vh_start (void);
-int perfrman_vh_start (void);
+VIDEO_UPDATE( slapfight );
+VIDEO_UPDATE( perfrman );
+VIDEO_START( slapfight );
+VIDEO_START( perfrman );
 WRITE_HANDLER( slapfight_flipscreen_w );
 WRITE_HANDLER( slapfight_fixram_w );
 WRITE_HANDLER( slapfight_fixcol_w );
@@ -207,7 +207,7 @@ WRITE_HANDLER( slapfight_colorram_w );
 
 /* MACHINE */
 
-void slapfight_init_machine(void);
+MACHINE_INIT( slapfight );
 
 extern unsigned char *slapfight_dpram;
 extern size_t slapfight_dpram_size;
@@ -227,7 +227,7 @@ WRITE_HANDLER( slapfight_port_09_w );
 
 READ_HANDLER( getstar_e803_r );
 WRITE_HANDLER( getstar_sh_intenable_w );
-int getstar_interrupt(void);
+INTERRUPT_GEN( getstar_interrupt );
 
 
 /* Driver structure definition */
@@ -761,190 +761,152 @@ static struct AY8910interface perfrman_ay8910_interface =
 	{ 0, 0 }
 };
 
-static void eof_callback(void)
+static VIDEO_EOF( perfrman )
 {
 	buffer_spriteram_w(0,0);
 }
 
-static struct MachineDriver machine_driver_perfrman =
-{
+static MACHINE_DRIVER_START( perfrman )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			16000000/4,			/* 4MHz ???, 16MHz Oscillator */
-			perfrman_readmem,perfrman_writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			16000000/8,			/* 2MHz ???, 16MHz Oscillator */
-			perfrman_sound_readmem,perfrman_sound_writemem,0,0,
-			getstar_interrupt, 6,	/* p'tit Seb 980926 this way it sound much better ! */
-			0,0						/* I think music is not so far from correct speed */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	slapfight_init_machine,
+	MDRV_CPU_ADD(Z80,16000000/4)			/* 4MHz ???, 16MHz Oscillator */
+	MDRV_CPU_MEMORY(perfrman_readmem,perfrman_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/8)			/* 2MHz ???, 16MHz Oscillator */
+	MDRV_CPU_MEMORY(perfrman_sound_readmem,perfrman_sound_writemem)
+	MDRV_CPU_VBLANK_INT(getstar_interrupt,6)	/* p'tit Seb 980926 this way it sound much better ! */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+
+	MDRV_MACHINE_INIT(slapfight)
 
 	/* video hardware */
-	64*8, 32*8, { 1*8, 34*8-1, 2*8, 32*8-1 },
-	perfrman_gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 34*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(perfrman_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	eof_callback,
-	perfrman_vh_start,
-	0,
-	perfrman_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(perfrman)
+	MDRV_VIDEO_EOF(perfrman)
+	MDRV_VIDEO_UPDATE(perfrman)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&perfrman_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, perfrman_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tigerh =
-{
+
+static MACHINE_DRIVER_START( tigerh )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,
-			tigerh_readmem,writemem,readport,tigerh_writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,6,    /* ??? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	slapfight_init_machine,
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_MEMORY(tigerh_readmem,writemem)
+	MDRV_CPU_PORTS(readport,tigerh_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,6)    /* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+
+	MDRV_MACHINE_INIT(slapfight)
 
 	/* video hardware */
-	64*8, 32*8, { 1*8, 36*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 36*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	eof_callback,
-	slapfight_vh_start,
-	0,
-	slapfight_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(slapfight)
+	MDRV_VIDEO_EOF(perfrman)
+	MDRV_VIDEO_UPDATE(slapfight)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_slapfigh =
-{
+
+static MACHINE_DRIVER_START( slapfigh )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,
-			sound_readmem,sound_writemem,0,0,
-				getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
-			0,0                  /* I think music is not so far from correct speed */
-/*			ignore_interrupt, 0,
-			slapfight_sound_interrupt, 27306667 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	slapfight_init_machine,
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(getstar_interrupt/*nmi_line_pulse*/, 3)    /* p'tit Seb 980926 this way it sound much better ! */
+/*	MDRV_CPU_PERIODIC_INT(slapfight_sound_interrupt, 27306667) */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+
+	MDRV_MACHINE_INIT(slapfight)
 
 	/* video hardware */
-	64*8, 32*8, { 1*8, 36*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 36*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	eof_callback,
-	slapfight_vh_start,
-	0,
-	slapfight_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(slapfight)
+	MDRV_VIDEO_EOF(perfrman)
+	MDRV_VIDEO_UPDATE(slapfight)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
 
 /* identical to slapfigh_ but writemem has different scroll registers */
-static const struct MachineDriver machine_driver_slapbtuk =
-{
+static MACHINE_DRIVER_START( slapbtuk )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,
-			readmem,slapbtuk_writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,
-			sound_readmem,sound_writemem,0,0,
-			getstar_interrupt/*nmi_interrupt*/, 3,    /* p'tit Seb 980926 this way it sound much better ! */
-			0,0                  /* I think music is not so far from correct speed */
-/*			ignore_interrupt, 0,
-			slapfight_sound_interrupt, 27306667 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	slapfight_init_machine,
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_MEMORY(readmem,slapbtuk_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(getstar_interrupt/*nmi_line_pulse*/, 3)    /* p'tit Seb 980926 this way it sound much better ! */
+/*	MDRV_CPU_PERIODIC_INT(slapfight_sound_interrupt, 27306667) */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+
+	MDRV_MACHINE_INIT(slapfight)
 
 	/* video hardware */
-	64*8, 32*8, { 1*8, 36*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 36*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	eof_callback,
-	slapfight_vh_start,
-	0,
-	slapfight_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(slapfight)
+	MDRV_VIDEO_EOF(perfrman)
+	MDRV_VIDEO_UPDATE(slapfight)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -81,40 +81,28 @@ static int zoomy_conv_table[] =
   Initialize and destroy video hardware emulation
 ***************************************************************************/
 
-int syvalion_vh_start(void)
+VIDEO_START( syvalion )
 {
 	if ( TC0080VCO_vh_start(0,1,1,1,-2))
-	{
 		return 1;
-	}
 
 	return 0;
 }
 
-int recordbr_vh_start(void)
+VIDEO_START( recordbr )
 {
 	if ( TC0080VCO_vh_start(0,0,1,1,-2))
-	{
 		return 1;
-	}
 
 	return 0;
 }
 
-int dleague_vh_start(void)
+VIDEO_START( dleague )
 {
 	if ( TC0080VCO_vh_start(0,0,1,1,-2))
-	{
 		return 1;
-	}
 
 	return 0;
-}
-
-void syvalion_vh_stop(void)
-{
-	TC0080VCO_vh_stop();
-	return;
 }
 
 
@@ -122,7 +110,7 @@ void syvalion_vh_stop(void)
   Screen refresh
 ***************************************************************************/
 
-static void syvalion_draw_sprites(struct mame_bitmap *bitmap)
+static void syvalion_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
 	   is always 64 pixels. */
@@ -201,7 +189,7 @@ static void syvalion_draw_sprites(struct mame_bitmap *bitmap)
 								 color,
 								 flipx, flipy,
 								 x, y,
-								 &Machine->visible_area,
+								 cliprect,
 								 TRANSPARENCY_PEN, 0,
 								 zx, zx
 						);
@@ -215,7 +203,7 @@ static void syvalion_draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-static void recordbr_draw_sprites(struct mame_bitmap *bitmap, int priority)
+static void recordbr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
 	   is always 64 pixels. */
@@ -313,7 +301,7 @@ static void recordbr_draw_sprites(struct mame_bitmap *bitmap, int priority)
 								 color,
 								 flipx, flipy,
 								 x, y,
-								 &Machine->visible_area,
+								 cliprect,
 								 TRANSPARENCY_PEN, 0,
 								 zx, zy
 						);
@@ -327,7 +315,7 @@ static void recordbr_draw_sprites(struct mame_bitmap *bitmap, int priority)
 	}
 }
 
-static void dleague_draw_sprites(struct mame_bitmap *bitmap, int priority)
+static void dleague_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
 	   is always 64 pixels. */
@@ -414,7 +402,7 @@ static void dleague_draw_sprites(struct mame_bitmap *bitmap, int priority)
 									 color,
 									 flipx, flipy,
 									 x, y,
-									 &Machine->visible_area,
+									 cliprect,
 									 TRANSPARENCY_PEN, 0,
 									 zx, zx
 							);
@@ -444,7 +432,7 @@ static void taitoh_log_vram(void)
 
 /**************************************************************************/
 
-void syvalion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( syvalion )
 {
 	TC0080VCO_tilemap_update();
 
@@ -452,16 +440,16 @@ void syvalion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	taitoh_log_vram();
 #endif
 
-	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	TC0080VCO_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
-	TC0080VCO_tilemap_draw(bitmap,1,0,0);
-	syvalion_draw_sprites (bitmap);
-	TC0080VCO_tilemap_draw(bitmap,2,0,0);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,1,0,0);
+	syvalion_draw_sprites (bitmap,cliprect);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,2,0,0);
 }
 
 
-void recordbr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( recordbr )
 {
 	TC0080VCO_tilemap_update();
 
@@ -469,29 +457,29 @@ void recordbr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	taitoh_log_vram();
 #endif
 
-	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
 #ifdef MAME_DEBUG
 	if ( !keyboard_pressed(KEYCODE_A) )
-		TC0080VCO_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+		TC0080VCO_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,0);
 	if ( !keyboard_pressed(KEYCODE_S) )
-		recordbr_draw_sprites(bitmap,0);
+		recordbr_draw_sprites(bitmap,cliprect,0);
 	if ( !keyboard_pressed(KEYCODE_D) )
-		TC0080VCO_tilemap_draw(bitmap,1,0,0);
+		TC0080VCO_tilemap_draw(bitmap,cliprect,1,0,0);
 	if ( !keyboard_pressed(KEYCODE_F) )
-		recordbr_draw_sprites(bitmap,1);
+		recordbr_draw_sprites(bitmap,cliprect,1);
 #else
-	TC0080VCO_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
-	recordbr_draw_sprites (bitmap,0);
-	TC0080VCO_tilemap_draw(bitmap,1,0,0);
-	recordbr_draw_sprites (bitmap,1);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+	recordbr_draw_sprites (bitmap,cliprect,0);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,1,0,0);
+	recordbr_draw_sprites (bitmap,cliprect,1);
 #endif
 
-	TC0080VCO_tilemap_draw(bitmap,2,0,0);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,2,0,0);
 }
 
 
-void dleague_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dleague )
 {
 	TC0080VCO_tilemap_update();
 
@@ -499,24 +487,24 @@ void dleague_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	taitoh_log_vram();
 #endif
 
-	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
 #ifdef MAME_DEBUG
 	if ( !keyboard_pressed(KEYCODE_A) )
-		TC0080VCO_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+		TC0080VCO_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,0);
 	if ( !keyboard_pressed(KEYCODE_S) )
-		dleague_draw_sprites(bitmap,0);
+		dleague_draw_sprites(bitmap,cliprect,0);
 	if ( !keyboard_pressed(KEYCODE_D) )
-		TC0080VCO_tilemap_draw(bitmap,1,0,0);
+		TC0080VCO_tilemap_draw(bitmap,cliprect,1,0,0);
 	if ( !keyboard_pressed(KEYCODE_F) )
-		dleague_draw_sprites(bitmap,1);
+		dleague_draw_sprites(bitmap,cliprect,1);
 #else
-	TC0080VCO_tilemap_draw(bitmap,0,TILEMAP_IGNORE_TRANSPARENCY,0);
-	dleague_draw_sprites  (bitmap,0);
-	TC0080VCO_tilemap_draw(bitmap,1,0,0);
-	dleague_draw_sprites  (bitmap,1);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+	dleague_draw_sprites  (bitmap,cliprect,0);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,1,0,0);
+	dleague_draw_sprites  (bitmap,cliprect,1);
 #endif
 
-	TC0080VCO_tilemap_draw(bitmap,2,0,0);
+	TC0080VCO_tilemap_draw(bitmap,cliprect,2,0,0);
 }
 

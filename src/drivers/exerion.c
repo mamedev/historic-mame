@@ -1,36 +1,29 @@
 /***************************************************************************
 
-Exerion by Jaleco
+	Jaleco Exerion hardware
 
-Exerion is a unique driver in that it has idiosyncracies that are straight
-out of Bizarro World. I submit for your approval:
+****************************************************************************
 
-* The mystery reads from $d802 - timer-based protection?
-* The freakish graphics encoding scheme, which no other MAME-supported game uses
-* The sprite-ram, and all the funky parameters that go along with it
-* The unusual parallaxed background. Is it controlled by the 2nd CPU?
+	Exerion is a unique driver in that it has idiosyncracies that are straight
+	out of Bizarro World. I submit for your approval:
+
+	* The mystery reads from $d802 - timer-based protection?
+	* The freakish graphics encoding scheme, which no other MAME-supported game uses
+	* The sprite-ram, and all the funky parameters that go along with it
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "exerion.h"
 
 
-void exerion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-int exerion_vh_start(void);
-void exerion_vh_stop(void);
-void exerion_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
-WRITE_HANDLER( exerion_videoreg_w );
-WRITE_HANDLER( exerion_video_latch_w );
-READ_HANDLER( exerion_video_timing_r );
-
-extern UINT8 exerion_cocktail_flip;
-
-
-/*********************************************************************
- * Interrupts & inputs
- *********************************************************************/
+/*************************************
+ *
+ *	Interrupts & inputs
+ *
+ *************************************/
 
 static READ_HANDLER( exerion_port01_r )
 {
@@ -50,19 +43,20 @@ static READ_HANDLER( exerion_port3_r )
 }
 
 
-static int exerion_interrupt(void)
+static INTERRUPT_GEN( exerion_interrupt )
 {
 	/* Exerion triggers NMIs on coin insertion */
 	if (readinputport(4) & 1)
-		return nmi_interrupt();
-	else return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
 
-/*********************************************************************
- * Protection??
- *********************************************************************/
+/*************************************
+ *
+ *	Protection??
+ *
+ *************************************/
 
 /* This is the first of many Exerion "features." No clue if it's */
 /* protection or some sort of timer. */
@@ -75,6 +69,7 @@ static READ_HANDLER( exerion_porta_r )
 	return porta;
 }
 
+
 static WRITE_HANDLER( exerion_portb_w )
 {
 	/* pull the expected value from the ROM */
@@ -83,6 +78,7 @@ static WRITE_HANDLER( exerion_portb_w )
 
 	logerror("Port B = %02X\n", data);
 }
+
 
 static READ_HANDLER( exerion_protection_r )
 {
@@ -96,9 +92,11 @@ static READ_HANDLER( exerion_protection_r )
 
 
 
-/*********************************************************************
- * CPU memory structures
- *********************************************************************/
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x5fff, MRA_ROM },
@@ -127,6 +125,13 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Sub CPU memory handlers
+ *
+ *************************************/
+
 static MEMORY_READ_START( cpu2_readmem )
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
@@ -143,9 +148,11 @@ MEMORY_END
 
 
 
-/*********************************************************************
- * Input port definitions
- *********************************************************************/
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( exerion )
 	PORT_START      /* player 1 inputs (muxed on 0xa000) */
@@ -214,9 +221,11 @@ INPUT_PORTS_END
 
 
 
-/*********************************************************************
- * Graphics layouts
- *********************************************************************/
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
 
 static struct GfxLayout charlayout =
 {
@@ -228,6 +237,7 @@ static struct GfxLayout charlayout =
 	{ 16*0, 16*1, 16*2, 16*3, 16*4, 16*5, 16*6, 16*7 },
 	16*8
 };
+
 
 /* 16 x 16 sprites -- requires reorganizing characters in init_exerion() */
 static struct GfxLayout spritelayout =
@@ -242,6 +252,7 @@ static struct GfxLayout spritelayout =
 			32*8, 32*9, 32*10, 32*11, 32*12, 32*13, 32*14, 32*15 },
 	64*8
 };
+
 
 /* Quick and dirty way to emulate pixel-doubled sprites. */
 static struct GfxLayout bigspritelayout =
@@ -261,6 +272,7 @@ static struct GfxLayout bigspritelayout =
 	64*8
 };
 
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,         0, 64 },
@@ -271,9 +283,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/*********************************************************************
- * Sound interfaces
- *********************************************************************/
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct AY8910interface ay8910_interface =
 {
@@ -288,55 +302,46 @@ static struct AY8910interface ay8910_interface =
 
 
 
-/*********************************************************************
- * Machine driver
- *********************************************************************/
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
 
-static const struct MachineDriver machine_driver_exerion =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			10000000/3, /* 3.333 MHz */
-			readmem,writemem,0,0,
-			exerion_interrupt,1
-		},
-		{
-			CPU_Z80,
-			10000000/3, /* 3.333 MHz */
-			cpu2_readmem,cpu2_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, 0,  /* frames per second, vblank duration */
-	1,  /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( exerion )
 
+	MDRV_CPU_ADD(Z80, 10000000/3)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(exerion_interrupt,1)
+	
+	MDRV_CPU_ADD(Z80, 10000000/3)
+	MDRV_CPU_MEMORY(cpu2_readmem,cpu2_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	
 	/* video hardware */
-	64*8, 32*8, { 12*8, 52*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32,256*3,
-	exerion_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	exerion_vh_start,
-	exerion_vh_stop,
-	exerion_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(12*8, 52*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(256*3)
+	
+	MDRV_PALETTE_INIT(exerion)
+	MDRV_VIDEO_START(exerion)
+	MDRV_VIDEO_UPDATE(exerion)
+	
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_AY8910, &ay8910_interface }
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 
-/*********************************************************************
- * ROM definitions
- *********************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( exerion )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -368,6 +373,7 @@ ROM_START( exerion )
 	ROM_LOAD( "exerion.k4",   0x0320, 0x0100, 0xffc2ba43 ) /* bg char mixer */
 ROM_END
 
+
 ROM_START( exeriont )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "prom5.4p",     0x0000, 0x4000, 0x58b4dc1b )
@@ -396,6 +402,7 @@ ROM_START( exeriont )
 	ROM_LOAD( "exerion.i3",   0x0220, 0x0100, 0xfe72ab79 ) /* bg char lookup table */
 	ROM_LOAD( "exerion.k4",   0x0320, 0x0100, 0xffc2ba43 ) /* bg char mixer */
 ROM_END
+
 
 ROM_START( exerionb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -428,11 +435,13 @@ ROM_END
 
 
 
-/*********************************************************************
- * Initialization routines
- *********************************************************************/
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
 
-static void init_exerion(void)
+static DRIVER_INIT( exerion )
 {
 	UINT32 oldaddr, newaddr, length;
 	UINT8 *src, *dst, *temp;
@@ -483,7 +492,7 @@ static void init_exerion(void)
 }
 
 
-static void init_exerionb(void)
+static DRIVER_INIT( exerionb )
 {
 	UINT8 *ram = memory_region(REGION_CPU1);
 	int addr;
@@ -498,9 +507,11 @@ static void init_exerionb(void)
 
 
 
-/*********************************************************************
- * Game drivers
- *********************************************************************/
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion" )
 GAME( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)" )

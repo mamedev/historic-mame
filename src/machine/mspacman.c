@@ -35,7 +35,7 @@
 */
 
 
-void pacman_init_machine(void);
+void machine_init_pacman(void);
 
 
 
@@ -180,14 +180,13 @@ void mspacman_decode(void)
 }
 
 
-void mspacman_init_machine(void)
+MACHINE_INIT( mspacman )
 {
-
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mspacman_decode();
 	cpu_setbank (1, &RAM[0x00000]);
 
-	pacman_init_machine();
+	machine_init_pacman();
 }
 
 

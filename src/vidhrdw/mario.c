@@ -35,7 +35,7 @@ unsigned char *mario_scrolly;
   bit 0 -- 470 ohm resistor -- inverter  -- BLUE
 
 ***************************************************************************/
-void mario_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mario )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -118,7 +118,7 @@ WRITE_HANDLER( mario_palettebank_w )
   the main emulation engine.
 
 ***************************************************************************/
-void mario_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mario )
 {
 	int offs;
 

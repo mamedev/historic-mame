@@ -48,10 +48,10 @@ GFX             - SEI0210   custom    (128 pin PQFP)
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-extern void bloodbro_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
-extern void weststry_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
-extern void skysmash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
-extern int bloodbro_vh_start(void);
+extern VIDEO_UPDATE( bloodbro );
+extern VIDEO_UPDATE( weststry );
+extern VIDEO_UPDATE( skysmash );
+extern VIDEO_START( bloodbro );
 
 WRITE16_HANDLER( bloodbro_bgvideoram_w );
 WRITE16_HANDLER( bloodbro_fgvideoram_w );
@@ -514,113 +514,86 @@ static struct GfxDecodeInfo weststry_gfxdecodeinfo[] =
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
-static const struct MachineDriver machine_driver_bloodbro =
-{
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz */
-			readmem_cpu,writemem_cpu,0,0,
-			m68_level4_irq,1
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	seibu_sound_init_1, /* init machine */
+static MACHINE_DRIVER_START( bloodbro )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu,writemem_cpu)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	bloodbro_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(bloodbro_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bloodbro_vh_start,
-	0,
-	bloodbro_vh_screenrefresh,
+	MDRV_VIDEO_START(bloodbro)
+	MDRV_VIDEO_UPDATE(bloodbro)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_skysmash =
-{
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz */
-			readmem_cpu,writemem_cpu,0,0,
-			m68_level2_irq,1
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	seibu_sound_init_1, /* init machine */
+static MACHINE_DRIVER_START( skysmash )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu,writemem_cpu)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	bloodbro_gfxdecodeinfo,
-	2048,0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(bloodbro_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bloodbro_vh_start,
-	0,
-	skysmash_vh_screenrefresh,
+	MDRV_VIDEO_START(bloodbro)
+	MDRV_VIDEO_UPDATE(skysmash)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_weststry =
-{
-	{
-		{
-			CPU_M68000,
-			10000000, /* 10 MHz */
-			weststry_readmem_cpu,weststry_writemem_cpu,0,0,
-			m68_level6_irq,1
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	seibu_sound_init_1, /* init machine */
+static MACHINE_DRIVER_START( weststry )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000) /* 10 MHz */
+	MDRV_CPU_MEMORY(weststry_readmem_cpu,weststry_writemem_cpu)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(seibu_sound_1)
 
 	/* video hardware */
-	256, 256, { 0, 255, 16, 239 },
-	weststry_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 16, 239)
+	MDRV_GFXDECODE(weststry_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bloodbro_vh_start,
-	0,
-	weststry_vh_screenrefresh,
+	MDRV_VIDEO_START(bloodbro)
+	MDRV_VIDEO_UPDATE(weststry)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
 
 
@@ -725,7 +698,7 @@ ROM_END
 
 /***************************************************************************/
 
-static void init_weststry(void)
+static DRIVER_INIT( weststry )
 {
 	UINT8 *gfx = memory_region(REGION_GFX3);
 	int i;

@@ -68,8 +68,8 @@ standard NMI at 0x66
 
 
 WRITE_HANDLER( pooyan_flipscreen_w );
-void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pooyan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( pooyan );
+VIDEO_UPDATE( pooyan );
 
 
 static MEMORY_READ_START( readmem )
@@ -226,48 +226,35 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_pooyan =
-{
+static MACHINE_DRIVER_START( pooyan )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/8,	/* 1.789772727 MHz */						\
-			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,14318180/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 1.789772727 MHz */						\
+	MDRV_CPU_MEMORY(timeplt_sound_readmem,timeplt_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32,16*16+16*16,
-	pooyan_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	pooyan_vh_screenrefresh,
+	MDRV_PALETTE_INIT(pooyan)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(pooyan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&timeplt_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, timeplt_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -28,20 +28,20 @@ READ16_HANDLER( revx_status_r );
 READ16_HANDLER( revx_uart_r );
 WRITE16_HANDLER( revx_uart_w );
 
-void init_mk3(void);
-void init_mk3r20(void);
-void init_mk3r10(void);
-void init_umk3(void);
-void init_umk3r11(void);
+DRIVER_INIT( mk3 );
+DRIVER_INIT( mk3r20 );
+DRIVER_INIT( mk3r10 );
+DRIVER_INIT( umk3 );
+DRIVER_INIT( umk3r11 );
 
-void init_openice(void);
-void init_nbahangt(void);
-void init_wwfmania(void);
-void init_rmpgwt(void);
-void init_revx(void);
+DRIVER_INIT( openice );
+DRIVER_INIT( nbahangt );
+DRIVER_INIT( wwfmania );
+DRIVER_INIT( rmpgwt );
+DRIVER_INIT( revx );
 
-void wms_wolfu_init_machine(void);
-void revx_init_machine(void);
+MACHINE_INIT( wms_wolfu );
+MACHINE_INIT( revx );
 
 READ16_HANDLER( wms_wolfu_security_r );
 WRITE16_HANDLER( wms_wolfu_security_w );

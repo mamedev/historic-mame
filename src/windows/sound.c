@@ -301,7 +301,7 @@ static void copy_sample_data(UINT16 *data, int bytes_to_copy)
 
 	// attempt to lock the stream buffer
 	result = IDirectSoundBuffer_Lock(stream_buffer, stream_buffer_in, bytes_to_copy, &buffer1, &length1, &buffer2, &length2, 0);
-	if (result != DD_OK)
+	if (result != DS_OK)
 	{
 		buffer_underflows++;
 		return;

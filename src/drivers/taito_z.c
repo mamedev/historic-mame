@@ -11,6 +11,7 @@ source was very helpful in many areas particularly the sprites.)
 
 - Changes Log -
 
+01-26-02 Added Enforce
 10-17-01 TC0150ROD support improved (e.g. Aquajack)
 09-01-01 Preliminary TC0150ROD support
 08-28-01 Fixed uncentered steer inputs, Nightstr controls
@@ -331,6 +332,20 @@ here' sprite): two bits above tile number are used. Are these
 meaningless, or is some effect missing?]
 
 
+Enforce
+-------
+
+Map inputs correctly, including direction controls.
+
+The weird rushing hillscape in the background is surely wrong.
+68000A sets $620000.w with a value from shared memory that is being
+updated by 68000B (in a hard to follow piece of code). Since high
+interleaving does not cure this maybe we have (a) incorrect
+assignation of shared / unshared memory (b) some unmapped read?
+
+Some layer offsets are out a little.
+
+
 Battle Shark
 ------------
 
@@ -439,17 +454,16 @@ wrong.)
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
-int taitoz_vh_start (void);
-int spacegun_vh_start (void);
-void taitoz_vh_stop (void);
+VIDEO_START( taitoz );
+VIDEO_START( spacegun );
 
-void contcirc_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void chasehq_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
-void bshark_vh_screenrefresh   (struct mame_bitmap *bitmap,int full_refresh);
-void sci_vh_screenrefresh      (struct mame_bitmap *bitmap,int full_refresh);
-void aquajack_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void spacegun_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void dblaxle_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( contcirc );
+VIDEO_UPDATE( chasehq );
+VIDEO_UPDATE( bshark );
+VIDEO_UPDATE( sci );
+VIDEO_UPDATE( aquajack );
+VIDEO_UPDATE( spacegun );
+VIDEO_UPDATE( dblaxle );
 
 READ16_HANDLER ( sci_spriteframe_r );
 WRITE16_HANDLER( sci_spriteframe_w );
@@ -506,7 +520,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )	/* assumes Z80 sandwiched between 68Ks */
 
 	parse_control();
 
-	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
+	logerror("CPU #0 PC %06x: write %04x to cpu control\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( cpua_noz80_ctrl_w )	/* assumes no Z80 */
@@ -517,7 +531,7 @@ static WRITE16_HANDLER( cpua_noz80_ctrl_w )	/* assumes no Z80 */
 
 	parse_control_noz80();
 
-	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
+	logerror("CPU #0 PC %06x: write %04x to cpu control\n",activecpu_get_pc(),data);
 }
 
 
@@ -527,72 +541,32 @@ static WRITE16_HANDLER( cpua_noz80_ctrl_w )	/* assumes no Z80 */
 
 /* 68000 A */
 
-static int taitoz_interrupt(void)
-{
-	return 4;
-}
-
 static void taitoz_interrupt6(int x)
 {
-	cpu_cause_interrupt(0,6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
 /* 68000 B */
 
-static int taitoz_cpub_interrupt(void)
-{
-	return 4;
-}
-
 static void taitoz_cpub_interrupt5(int x)
 {
-	cpu_cause_interrupt(2,5);	/* assumes Z80 sandwiched between the 68Ks */
+	cpu_set_irq_line(2,5,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 static void taitoz_sg_cpub_interrupt5(int x)
 {
-	cpu_cause_interrupt(1,5);	/* assumes no Z80 */
+	cpu_set_irq_line(1,5,HOLD_LINE);	/* assumes no Z80 */
 }
 
 static void taitoz_cpub_interrupt6(int x)
 {
-	cpu_cause_interrupt(2,6);	/* assumes Z80 sandwiched between the 68Ks */
+	cpu_set_irq_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 
 /***** Routines for particular games *****/
 
-static int contcirc_interrupt(void)
-{
-	return 6;
-}
-
-static int contcirc_cpub_interrupt(void)
-{
-	return 6;
-}
-
-static int chasehq_interrupt(void)
-{
-	return 4;
-}
-
-static int chq_cpub_interrupt(void)
-{
-	return 4;
-}
-
-static int bshark_interrupt(void)
-{
-	return 4;
-}
-
-static int bshark_cpub_interrupt(void)
-{
-	return 4;
-}
-
-static int sci_interrupt(void)
+static INTERRUPT_GEN( sci_interrupt )
 {
 	/* Need 2 int4's per int6 else (-$6b63,A5) never set to 1 which
 	   causes all sprites to vanish! Spriteram has areas for 2 frames
@@ -602,42 +576,7 @@ static int sci_interrupt(void)
 
 	if (sci_int6)
 		timer_set(TIME_IN_CYCLES(200000-500,0),0, taitoz_interrupt6);
-	return 4;
-}
-
-static int sci_cpub_interrupt(void)
-{
-	return 4;
-}
-
-static int nightstr_interrupt(void)
-{
-	return 4;
-}
-
-static int nightstr_cpub_interrupt(void)
-{
-	return 4;
-}
-
-static int aquajack_interrupt(void)
-{
-	return 4;
-}
-
-static int aquajack_cpub_interrupt(void)
-{
-	return 4;	/* int4 goes straight to RTE */
-}
-
-static int spacegun_interrupt(void)
-{
-	return 4;
-}
-
-static int spacegun_cpub_interrupt(void)
-{
-	return 4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 /* Double Axle seems to keep only 1 sprite frame in sprite ram,
@@ -645,7 +584,7 @@ static int spacegun_cpub_interrupt(void)
    at all. Cpu control byte has 0,4,8,c poked into 2nd nibble
    and it seems possible this should be causing int6's ? */
 
-static int dblaxle_interrupt(void)
+static INTERRUPT_GEN( dblaxle_interrupt )
 {
 	// Unsure how many int6's per frame, copy SCI for now
 	dblaxle_int6 = !dblaxle_int6;
@@ -653,14 +592,14 @@ static int dblaxle_interrupt(void)
 	if (dblaxle_int6)
 		timer_set(TIME_IN_CYCLES(200000-500,0),0, taitoz_interrupt6);
 
-	return 4;
+	cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
-static int dblaxle_cpub_interrupt(void)
+static INTERRUPT_GEN( dblaxle_cpub_interrupt )
 {
 	// Unsure how many int6's per frame
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, taitoz_interrupt6);
-	return 4;
+	cpu_set_irq_line(2, 4, HOLD_LINE);
 }
 
 
@@ -691,7 +630,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100111111" 	/* unlock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( spacegun )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -852,7 +791,7 @@ static READ16_HANDLER( bshark_stick_r )
 			return input_port_8_word_r(0,mem_mask);
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -885,7 +824,7 @@ static READ16_HANDLER( nightstr_stick_r )
 			return input_port_8_word_r(0,mem_mask);
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -933,7 +872,7 @@ static READ16_HANDLER( sci_steer_input_r )
 			return (steer & 0xff00) >> 8;
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped steer input offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped steer input offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -1016,7 +955,7 @@ static READ16_HANDLER( dblaxle_steer_input_r )
 			return steer &0xff;
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped steer input offset %02x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped steer input offset %02x\n",activecpu_get_pc(),offset);
 	return 0x00;
 }
 
@@ -1032,7 +971,7 @@ static READ16_HANDLER( chasehq_motor_r )
 			return 0x55;	/* motor cpu status ? */
 
 		default:
-logerror("CPU #0 PC %06x: warning - read motor cpu %03x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read motor cpu %03x\n",activecpu_get_pc(),offset);
 			return 0;
 	}
 }
@@ -1041,7 +980,7 @@ static WRITE16_HANDLER( chasehq_motor_w )
 {
 	/* Writes $e00000-25 and $e00200-219 */
 
-logerror("CPU #0 PC %06x: warning - write %04x to motor cpu %03x\n",cpu_get_pc(),data,offset);
+logerror("CPU #0 PC %06x: warning - write %04x to motor cpu %03x\n",activecpu_get_pc(),data,offset);
 
 }
 
@@ -1209,6 +1148,48 @@ static MEMORY_WRITE16_START( chq_cpub_writemem )
 	{ 0x100000, 0x103fff, MWA16_RAM },
 	{ 0x108000, 0x10bfff, sharedram_w, &taitoz_sharedram },
 	{ 0x800000, 0x801fff, TC0150ROD_word_w },
+MEMORY_END
+
+
+static MEMORY_READ16_START( enforce_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },	/* main CPUA ram */
+	{ 0x104000, 0x107fff, sharedram_r },
+	{ 0x300000, 0x3006ff, MRA16_RAM },	/* spriteram */
+	{ 0x400000, 0x401fff, TC0150ROD_word_r },	/* "root ram" ??? */
+	{ 0x500000, 0x500007, TC0110PCR_word_r },	/* palette */
+	{ 0x600000, 0x60ffff, TC0100SCN_word_0_r },	/* tilemaps */
+	{ 0x620000, 0x62000f, TC0100SCN_ctrl_word_0_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( enforce_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x104000, 0x107fff, sharedram_w, &taitoz_sharedram, &taitoz_sharedram_size },
+	{ 0x200000, 0x200001, cpua_ctrl_w },	// works without?
+	{ 0x300000, 0x3006ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x400000, 0x401fff, TC0150ROD_word_w },	/* "root ram" ??? */
+	{ 0x500000, 0x500007, TC0110PCR_step1_rbswap_word_w },	/* palette */
+	{ 0x600000, 0x60ffff, TC0100SCN_word_0_w },	/* tilemaps */
+	{ 0x620000, 0x62000f, TC0100SCN_ctrl_word_0_w },
+MEMORY_END
+
+static MEMORY_READ16_START( enforce_cpub_readmem )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+	{ 0x104000, 0x107fff, sharedram_r },
+	{ 0x200000, 0x200003, taitoz_sound_r },
+	{ 0x300000, 0x300001, contcirc_input_bypass_r },	// probably needs its own routine
+	{ 0x300002, 0x300003, TC0220IOC_halfword_port_r },	/* (actually game uses TC040IOC ????) */
+MEMORY_END
+
+static MEMORY_WRITE16_START( enforce_cpub_writemem )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x104000, 0x107fff, sharedram_w, &taitoz_sharedram },
+	{ 0x200000, 0x200003, taitoz_sound_w },
+	{ 0x300000, 0x300001, TC0220IOC_halfword_portreg_w },
+	{ 0x300002, 0x300003, TC0220IOC_halfword_port_w },
 MEMORY_END
 
 
@@ -1722,6 +1703,87 @@ INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 50, 15, 0x00, 0xff )
 
 	PORT_START      /* IN8, fake allowing digital steer */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
+	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
+	PORT_DIPSETTING(    0x10, "Digital" )
+	PORT_DIPSETTING(    0x00, "Analogue" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( enforce )	// Preliminary, handle control not understood
+	PORT_START /* DSW A, wrong */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+	PORT_START /* DSW B, wrong */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Default screen type" )
+	PORT_DIPSETTING(    0x20, "3D" )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )	/* Bomb */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )	/* Laser */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON6 | IPF_PLAYER1 )
+
+	PORT_START      /* IN2 ??? */
+
+	PORT_START      /* IN3 ??? */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 50, 15, 0x00, 0xff)
+
+	PORT_START      /* IN4, fake allowing digital steer */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_DIPNAME( 0x10, 0x00, "Steering type" )
@@ -2376,6 +2438,9 @@ CPU Interleaving
 Chasehq2 needs high interleaving to have sound (not checked
 since May 2001 - may have changed).
 
+Enforce with interleave of 1 sometimes lets you take over from
+the demo game when you coin up! Set to 10 seems to cure this.
+
 Bshark needs the high cpu interleaving to run test mode.
 
 Nightstr needs the high cpu interleaving to get through init.
@@ -2395,392 +2460,312 @@ Contcirc road glitchiness in attract?
 
 /* Contcirc vis area seems narrower than the other games... */
 
-static struct MachineDriver machine_driver_contcirc =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			contcirc_readmem,contcirc_writemem,0,0,
-			contcirc_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			contcirc_cpub_readmem,contcirc_cpub_writemem,0,0,
-			contcirc_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( contcirc )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(contcirc_readmem,contcirc_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(contcirc_cpub_readmem,contcirc_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 3*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 3*8, 31*8-1)
+	MDRV_GFXDECODE(taitoz_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	taitoz_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitoz_vh_start,
-	taitoz_vh_stop,
-	contcirc_vh_screenrefresh,
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(contcirc)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&subwoofer_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_chasehq =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			chasehq_readmem,chasehq_writemem,0,0,
-			chasehq_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			chq_cpub_readmem,chq_cpub_writemem,0,0,
-			chq_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices */
-	0,
+
+static MACHINE_DRIVER_START( chasehq )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(chasehq_readmem,chasehq_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(chq_cpub_readmem,chq_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(chasehq_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	chasehq_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitoz_vh_start,
-	taitoz_vh_stop,
-	chasehq_vh_screenrefresh,
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(chasehq)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_bshark =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			bshark_readmem,bshark_writemem,0,0,
-			bshark_interrupt, 1
-		},
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			bshark_cpub_readmem,bshark_cpub_writemem,0,0,
-			bshark_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* CPU slices */
-	0,
+
+static MACHINE_DRIVER_START( enforce )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(enforce_readmem,enforce_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(enforce_cpub_readmem,enforce_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 31*8-1)
+	MDRV_GFXDECODE(taitoz_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	taitoz_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitoz_vh_start,
-	taitoz_vh_stop,
-	bshark_vh_screenrefresh,
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(contcirc)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interfaceb
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_sci =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			sci_readmem,sci_writemem,0,0,
-			sci_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			sci_cpub_readmem,sci_cpub_writemem,0,0,
-			sci_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	50,	/* CPU slices */
-	0,
+
+static MACHINE_DRIVER_START( bshark )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(bshark_readmem,bshark_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(bshark_cpub_readmem,bshark_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(taitoz_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	taitoz_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitoz_vh_start,
-	taitoz_vh_stop,
-	sci_vh_screenrefresh,
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(bshark)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interfaceb)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_nightstr =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			nightstr_readmem,nightstr_writemem,0,0,
-			nightstr_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			nightstr_cpub_readmem,nightstr_cpub_writemem,0,0,
-			nightstr_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* CPU slices */
-	0,
+
+static MACHINE_DRIVER_START( sci )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(sci_readmem,sci_writemem)
+	MDRV_CPU_VBLANK_INT(sci_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(sci_cpub_readmem,sci_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(50)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(taitoz_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	chasehq_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitoz_vh_start,
-	taitoz_vh_stop,
-	chasehq_vh_screenrefresh,
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(sci)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_aquajack =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			aquajack_readmem,aquajack_writemem,0,0,
-			aquajack_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			aquajack_cpub_readmem,aquajack_cpub_writemem,0,0,
-			aquajack_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	500,	/* CPU slices */
-	0,
+
+static MACHINE_DRIVER_START( nightstr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(nightstr_readmem,nightstr_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(nightstr_cpub_readmem,nightstr_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(chasehq_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	taitoz_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitoz_vh_start,
-	taitoz_vh_stop,
-	aquajack_vh_screenrefresh,
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(chasehq)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_spacegun =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			spacegun_readmem,spacegun_writemem,0,0,
-			spacegun_interrupt, 1
-		},
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			spacegun_cpub_readmem,spacegun_cpub_writemem,0,0,
-			spacegun_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices: sprites much worse at 10, high values don't seem better */
-	0,
+
+static MACHINE_DRIVER_START( aquajack )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(aquajack_readmem,aquajack_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(aquajack_cpub_readmem,aquajack_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(500)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(taitoz_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	taitoz_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	spacegun_vh_start,
-	taitoz_vh_stop,
-	spacegun_vh_screenrefresh,
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(aquajack)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interfaceb
-		}
-	},
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-	nvram_handler	/* for the eerom */
 
-};
+static MACHINE_DRIVER_START( spacegun )
 
-static struct MachineDriver machine_driver_dblaxle =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			dblaxle_readmem,dblaxle_writemem,0,0,
-			dblaxle_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz ??? */
-			dblaxle_cpub_readmem,dblaxle_cpub_writemem,0,0,
-			dblaxle_cpub_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* CPU slices */
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(spacegun_readmem,spacegun_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(spacegun_cpub_readmem,spacegun_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(spacegun)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(taitoz_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	dblaxle_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitoz_vh_start,
-	taitoz_vh_stop,
-	dblaxle_vh_screenrefresh,
+	MDRV_VIDEO_START(spacegun)
+	MDRV_VIDEO_UPDATE(spacegun)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interfaceb)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( dblaxle )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(dblaxle_readmem,dblaxle_writemem)
+	MDRV_CPU_VBLANK_INT(dblaxle_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
+	MDRV_CPU_MEMORY(dblaxle_cpub_readmem,dblaxle_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(dblaxle_cpub_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(dblaxle_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(taitoz)
+	MDRV_VIDEO_UPDATE(dblaxle)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2984,6 +2969,50 @@ ROM_START( chasehqj )
 	ROM_LOAD( "b52-51.65",   0x00000, 0x10000, 0x30cc1f79 )
 	ROM_LOAD( "b52-126.136", 0x00000, 0x00400, 0xfa2f840e )
 	ROM_LOAD( "b52-127.156", 0x00000, 0x00400, 0x77682a4f )
+ROM_END
+
+ROM_START( enforce )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 256K for 68000 code (CPU A) */
+	ROM_LOAD16_BYTE( "b58-27.27", 0x00000, 0x20000, 0xa1aa0191 )
+	ROM_LOAD16_BYTE( "b58-19.19", 0x00001, 0x20000, 0x40f43da3 )
+
+	ROM_REGION( 0x40000, REGION_CPU3, 0 )	/* 256K for 68000 code (CPU B) */
+	ROM_LOAD16_BYTE( "b58-26.26", 0x00000, 0x20000, 0xe823c85c )
+	ROM_LOAD16_BYTE( "b58-18.18", 0x00001, 0x20000, 0x65328a3e )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* Z80 sound cpu */
+	ROM_LOAD( "b58-32.41",   0x00000, 0x04000, 0xf3fd8eca )
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b58-09.13", 0x00000, 0x80000, 0x9ffd5b31 )	/* SCR 8x8 */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD32_BYTE( "b58-04.7",  0x000000, 0x080000, 0x9482f08d )
+	ROM_LOAD32_BYTE( "b58-03.6",  0x000001, 0x080000, 0x158bc440 )	/* OBJ 16x16 */
+	ROM_LOAD32_BYTE( "b58-02.2",  0x000002, 0x080000, 0x6a6e307c )
+	ROM_LOAD32_BYTE( "b58-01.1",  0x000003, 0x080000, 0x01e9f0a8 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, 0 )	/* don't dispose */
+	ROM_LOAD( "b58-06.116", 0x00000, 0x80000, 0xb3495d70 )	/* ROD, road lines */
+
+	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD16_WORD( "b58-05.71", 0x00000, 0x80000, 0xd1f4991b )	/* STY spritemap */
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "b58-07.11", 0x000000, 0x080000, 0xeeb5ba08 )
+	ROM_LOAD( "b58-08.12", 0x080000, 0x080000, 0x049243cf )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples ??? */
+	ROM_LOAD( "b58-10.14", 0x00000, 0x80000, 0xedce0cc1 )	/* ??? */
+
+	ROM_REGION( 0x10000, REGION_USER2, 0 )
+	ROM_LOAD( "b58-26a.104", 0x00000, 0x10000, 0xdccb0c7f )	/* unused roms */
+	ROM_LOAD( "b58-27.56",   0x00000, 0x02000, 0x5c6b013d )
+	ROM_LOAD( "b58-23.52",   0x00000, 0x00100, 0x7b7d8ff4 )
+	ROM_LOAD( "b58-24.51",   0x00000, 0x00100, 0xfbf81f30 )
+	ROM_LOAD( "b58-25.75",   0x00000, 0x00100, 0xde547342 )
+// Add pals...
 ROM_END
 
 ROM_START( bshark )
@@ -3467,7 +3496,7 @@ ROM_START( pwheelsj )
 ROM_END
 
 
-static void init_taitoz(void)
+static DRIVER_INIT( taitoz )
 {
 //	taitosnd_setz80_soundcpu( 2 );
 
@@ -3484,7 +3513,7 @@ static void init_taitoz(void)
 	state_save_register_func_postload(reset_sound_region);
 }
 
-static void init_bshark(void)
+static DRIVER_INIT( bshark )
 {
 	cpua_ctrl = 0xff;
 	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
@@ -3501,6 +3530,7 @@ GAMEX( 1989, contcirc, 0,        contcirc, contcirc, taitoz,   ROT0,            
 GAMEX( 1987, contcrcu, contcirc, contcirc, contcirc, taitoz,   ROT0,               "Taito America Corporation", "Continental Circus (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, chasehq,  0,        chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation Japan", "Chase HQ (World)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, chasehqj, chasehq,  chasehq,  chasehq,  taitoz,   ROT0,               "Taito Corporation", "Chase HQ (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, enforce,  0,        enforce,  enforce,  taitoz,   ROT0,               "Taito Corporation", "Enforce (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, bshark,   0,        bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito America Corporation", "Battle Shark (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, bsharkj,  bshark,   bshark,   bshark,   bshark,   ORIENTATION_FLIP_X, "Taito Corporation", "Battle Shark (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1989, sci,      0,        sci,      sci,      taitoz,   ROT0,               "Taito Corporation Japan", "Special Criminal Investigation (World set 1)", GAME_IMPERFECT_GRAPHICS )

@@ -153,9 +153,7 @@ static unsigned char stactics_special_chars[32*8] = {
 static int firebeam_state;
 static int old_firebeam_state;
 
-void stactics_vh_convert_color_prom(unsigned char *palette,
-                                    unsigned short *colortable,
-                                    const unsigned char *color_prom)
+PALETTE_INIT( stactics )
 {
     int i,j;
 
@@ -226,28 +224,28 @@ void stactics_vh_convert_color_prom(unsigned char *palette,
 
 ***************************************************************************/
 
-int stactics_vh_start(void)
+VIDEO_START( stactics )
 {
     int i,j;
     const unsigned char *firebeam_data;
     unsigned char firechar[256*8*9];
 
-    if ((tmpbitmap  = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
-    if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
-    if ((bitmap_B = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
-    if ((bitmap_D = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
-    if ((bitmap_E = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
-    if ((bitmap_F = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
+    if ((tmpbitmap  = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
+    if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
+    if ((bitmap_B = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
+    if ((bitmap_D = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
+    if ((bitmap_E = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
+    if ((bitmap_F = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
 
 	/* Allocate dirty buffers */
-	if ((dirty_videoram_b = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_videoram_d = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_videoram_e = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_videoram_f = (unsigned char *)malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_chardata_b = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
-	if ((dirty_chardata_d = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
-	if ((dirty_chardata_e = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
-	if ((dirty_chardata_f = (unsigned char *)malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	if ((dirty_videoram_b = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_videoram_d = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_videoram_e = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_videoram_f = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
+	if ((dirty_chardata_b = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	if ((dirty_chardata_d = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	if ((dirty_chardata_e = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	if ((dirty_chardata_f = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
 
     memset(dirty_videoram_b,1,videoram_size);
     memset(dirty_videoram_d,1,videoram_size);
@@ -296,7 +294,7 @@ int stactics_vh_start(void)
     /* (I am basically just juggling the bytes */
     /* and storing it again to make it easier) */
 
-	if ((beamdata = (unsigned char *)malloc(BEAMDATA_SIZE)) == 0) return 1;
+	if ((beamdata = (unsigned char *)auto_malloc(BEAMDATA_SIZE)) == 0) return 1;
 
     firebeam_data = memory_region(REGION_GFX1);
 
@@ -328,33 +326,6 @@ int stactics_vh_start(void)
     *stactics_motor_on = 0;
 
     return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void stactics_vh_stop(void)
-{
-	free(dirty_videoram_b);
-	free(dirty_videoram_d);
-	free(dirty_videoram_e);
-	free(dirty_videoram_f);
-	free(dirty_chardata_b);
-	free(dirty_chardata_d);
-	free(dirty_chardata_e);
-	free(dirty_chardata_f);
-
-	free(beamdata);
-
-    bitmap_free(tmpbitmap);
-    bitmap_free(tmpbitmap2);
-    bitmap_free(bitmap_B);
-    bitmap_free(bitmap_D);
-    bitmap_free(bitmap_E);
-    bitmap_free(bitmap_F);
 }
 
 
@@ -536,7 +507,7 @@ static const struct rectangle visible_screen_area = {0*8, 32*8, 0*8, 30*8};
 
 ***************************************************************************/
 
-void stactics_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( stactics )
 {
     int offs, sx, sy, i;
     int char_number;

@@ -19,9 +19,6 @@ static unsigned char *pang_objram;           /* Sprite RAM */
 static struct tilemap *bg_tilemap;
 static int flipscreen;
 
-/* Declarations */
-void pang_vh_stop(void);
-
 
 
 /***************************************************************************
@@ -49,7 +46,7 @@ static void get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int pang_vh_start(void)
+VIDEO_START( pang )
 {
 	pang_objram=NULL;
 	paletteram=NULL;
@@ -65,34 +62,20 @@ int pang_vh_start(void)
 	/*
 		OBJ RAM
 	*/
-	pang_objram=malloc(pang_videoram_size);
+	pang_objram=auto_malloc(pang_videoram_size);
 	if (!pang_objram)
-	{
-		pang_vh_stop();
 		return 1;
-	}
 	memset(pang_objram, 0, pang_videoram_size);
 
 	/*
 		Palette RAM
 	*/
-	paletteram = malloc(2*Machine->drv->total_colors);
+	paletteram = auto_malloc(2*Machine->drv->total_colors);
 	if (!paletteram)
-	{
-		pang_vh_stop();
 		return 1;
-	}
 	memset(paletteram, 0, 2*Machine->drv->total_colors);
 
 	return 0;
-}
-
-void pang_vh_stop(void)
-{
-	free(pang_objram);
-	pang_objram = 0;
-	free(paletteram);
-	paletteram = 0;
 }
 
 
@@ -177,7 +160,7 @@ static int paletteram_bank;
 
 WRITE_HANDLER( pang_gfxctrl_w )
 {
-logerror("PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),data);
+logerror("PC %04x: pang_gfxctrl_w %02x\n",activecpu_get_pc(),data);
 {
 	char baf[40];
 	sprintf(baf,"%02x",data);
@@ -240,7 +223,7 @@ READ_HANDLER( mgakuen_paletteram_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,sx,sy;
 
@@ -264,13 +247,13 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				 color,
 				 flipscreen,flipscreen,
 				 sx,sy,
-				 &Machine->visible_area,TRANSPARENCY_PEN,15);
+				 cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void pang_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pang )
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

@@ -42,9 +42,8 @@ void qsangoku_decode(void);
 void block_decode(void);
 
 
-int  pang_vh_start(void);
-void pang_vh_stop(void);
-void pang_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( pang );
+VIDEO_UPDATE( pang );
 
 WRITE_HANDLER( mgakuen_paletteram_w );
 READ_HANDLER( mgakuen_paletteram_r );
@@ -100,7 +99,7 @@ static unsigned char *nvram;
 static size_t nvram_size;
 static int init_eeprom_count;
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( mitchell )
 {
 	if (read_or_write)
 	{
@@ -279,7 +278,7 @@ static WRITE_HANDLER( input_w )
 	{
 		case 0:
 		default:
-logerror("PC %04x: write %02x to port 01\n",cpu_get_pc(),data);
+logerror("PC %04x: write %02x to port 01\n",activecpu_get_pc(),data);
 			break;
 		case 1:
 			mahjong_input_select_w(offset,data);
@@ -971,119 +970,89 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static const struct MachineDriver machine_driver_mgakuen =
-{
-	{
-		{
-			CPU_Z80,
-			6000000,	/* ??? */
-			mgakuen_readmem,mgakuen_writemem,readport,writeport,
-			interrupt,2	/* ??? one extra irq seems to be needed for music (see input5_r) */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+static MACHINE_DRIVER_START( mgakuen )
 
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	mgakuen_gfxdecodeinfo,
-	1024, 0,	/* less colors than the others */
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	pang_vh_start,
-	pang_vh_stop,
-	pang_vh_screenrefresh,
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-	}
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)	/* ??? */
+	MDRV_CPU_MEMORY(mgakuen_readmem,mgakuen_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* ??? one extra irq seems to be needed for music (see input5_r) */
 
-	/* no EEPROM */
-};
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-static const struct MachineDriver machine_driver_pang =
-{
-	{
-		{
-			CPU_Z80,
-			8000000,	/* Super Pang says 8MHZ ORIGINAL BOARD */
-			readmem,writemem,readport,writeport,
-			interrupt,2	/* ??? one extra irq seems to be needed for music (see input5_r) */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(mgakuen_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)	/* less colors than the others */
 
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	pang_vh_start,
-	pang_vh_stop,
-	pang_vh_screenrefresh,
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-	},
+	MDRV_VIDEO_START(pang)
+	MDRV_VIDEO_UPDATE(pang)
 
-	nvram_handler
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_marukin =
-{
-	{
-		{
-			CPU_Z80,
-			8000000,	/* Super Pang says 8MHZ ORIGINAL BOARD */
-			readmem,writemem,readport,writeport,
-			interrupt,2	/* ??? one extra irq seems to be needed for music (see input5_r) */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
 
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
-	marukin_gfxdecodeinfo,
-	2048, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	pang_vh_start,
-	pang_vh_stop,
-	pang_vh_screenrefresh,
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-	},
+static MACHINE_DRIVER_START( pang )
 
-	nvram_handler
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 8000000)	/* Super Pang says 8MHZ ORIGINAL BOARD */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* ??? one extra irq seems to be needed for music (see input5_r) */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(mitchell)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(pang)
+	MDRV_VIDEO_UPDATE(pang)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( marukin )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 8000000)	/* Super Pang says 8MHZ ORIGINAL BOARD */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* ??? one extra irq seems to be needed for music (see input5_r) */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(mitchell)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(marukin_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(pang)
+	MDRV_VIDEO_UPDATE(pang)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1544,86 +1513,86 @@ static void bootleg_decode(void)
 
 
 
-static void init_dokaben(void)
+static DRIVER_INIT( dokaben )
 {
 	input_type = 0;
 	nvram_size = 0;
 	mgakuen2_decode();
 }
-static void init_pang(void)
+static DRIVER_INIT( pang )
 {
 	input_type = 0;
 	nvram_size = 0;
 	pang_decode();
 }
-static void init_pangb(void)
+static DRIVER_INIT( pangb )
 {
 	input_type = 0;
 	nvram_size = 0;
 	bootleg_decode();
 }
-static void init_cworld(void)
+static DRIVER_INIT( cworld )
 {
 	input_type = 0;
 	nvram_size = 0;
 	cworld_decode();
 }
-static void init_hatena(void)
+static DRIVER_INIT( hatena )
 {
 	input_type = 0;
 	nvram_size = 0;
 	hatena_decode();
 }
-static void init_spang(void)
+static DRIVER_INIT( spang )
 {
 	input_type = 3;
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
 	spang_decode();
 }
-static void init_sbbros(void)
+static DRIVER_INIT( sbbros )
 {
 	input_type = 3;
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
 	sbbros_decode();
 }
-static void init_qtono1(void)
+static DRIVER_INIT( qtono1 )
 {
 	input_type = 0;
 	nvram_size = 0;
 	qtono1_decode();
 }
-static void init_qsangoku(void)
+static DRIVER_INIT( qsangoku )
 {
 	input_type = 0;
 	nvram_size = 0;
 	qsangoku_decode();
 }
-static void init_mgakuen(void)
+static DRIVER_INIT( mgakuen )
 {
 	input_type = 1;
 }
-static void init_mgakuen2(void)
+static DRIVER_INIT( mgakuen2 )
 {
 	input_type = 1;
 	nvram_size = 0;
 	mgakuen2_decode();
 }
-static void init_marukin(void)
+static DRIVER_INIT( marukin )
 {
 	input_type = 1;
 	nvram_size = 0;
 	marukin_decode();
 }
-static void init_block(void)
+static DRIVER_INIT( block )
 {
 	input_type = 2;
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xff80];	/* NVRAM */
 	block_decode();
 }
-static void init_blockbl(void)
+static DRIVER_INIT( blockbl )
 {
 	input_type = 2;
 	nvram_size = 0x80;

@@ -181,16 +181,16 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 /* prototypes for functions in ../machine/tnzs.c */
 unsigned char *tnzs_objram, *tnzs_workram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram;
-void init_extrmatn(void);
-void init_arknoid2(void);
-void init_drtoppel(void);
-void init_chukatai(void);
-void init_tnzs(void);
-void init_insectx(void);
-void init_kageki(void);
+DRIVER_INIT( extrmatn );
+DRIVER_INIT( arknoid2 );
+DRIVER_INIT( drtoppel );
+DRIVER_INIT( chukatai );
+DRIVER_INIT( tnzs );
+DRIVER_INIT( insectx );
+DRIVER_INIT( kageki );
 READ_HANDLER( arknoid2_sh_f000_r );
-void tnzs_init_machine(void);
-int tnzs_interrupt (void);
+MACHINE_INIT( tnzs );
+INTERRUPT_GEN( tnzs_interrupt );
 READ_HANDLER( tnzs_mcu_r );
 READ_HANDLER( tnzs_workram_r );
 READ_HANDLER( tnzs_workram_sub_r );
@@ -202,8 +202,8 @@ WRITE_HANDLER( tnzs_bankswitch1_w );
 
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
-void arknoid2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void tnzs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( arknoid2 );
+VIDEO_UPDATE( tnzs );
 
 
 
@@ -219,7 +219,7 @@ int kageki_init_samples(const struct MachineSound *msound)
 
 	size = sizeof(struct GameSamples) + MAX_SAMPLES * sizeof(struct GameSamples *);
 
-	if ((Machine->samples = malloc(size)) == NULL) return 1;
+	if ((Machine->samples = auto_malloc(size)) == NULL) return 1;
 
 	samples = Machine->samples;
 	samples->total = MAX_SAMPLES;
@@ -241,7 +241,7 @@ int kageki_init_samples(const struct MachineSound *msound)
 				size++;
 			}
 		}
-		if ((samples->sample[i] = malloc(sizeof(struct GameSample) + size * sizeof(unsigned char))) == NULL) return 1;
+		if ((samples->sample[i] = auto_malloc(sizeof(struct GameSample) + size * sizeof(unsigned char))) == NULL) return 1;
 
 		if (start < 0x100) start = size = 0;
 
@@ -392,7 +392,7 @@ MEMORY_END
 static WRITE_HANDLER( tnzsb_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(2,0xff);
+	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 static MEMORY_READ_START( tnzsb_readmem1 )
@@ -1402,281 +1402,199 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-static const struct MachineDriver machine_driver_arknoid2 =
-{
+static MACHINE_DRIVER_START( arknoid2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000,	/* ?? Hz (only crystal is 12MHz) */
-						/* 8MHz is wrong, but extrmatn doesn't work properly at 6MHz */
-			readmem,writemem,0,0,
-			tnzs_interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,	/* ?? Hz */
-			sub_readmem,sub_writemem,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* video frequency (Hz), duration */
-	100,							/* cpu slices */
-	tnzs_init_machine,
+	MDRV_CPU_ADD(Z80, 8000000)	/* ?? Hz (only crystal is 12MHz) */
+								/* 8MHz is wrong, but extrmatn doesn't work properly at 6MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tnzs_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* ?? Hz */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	arknoid2_gfxdecodeinfo,
-	512, 0,
-	arknoid2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(arknoid2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	tnzs_vh_screenrefresh,
+	MDRV_PALETTE_INIT(arknoid2)
+	MDRV_VIDEO_UPDATE(tnzs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_drtoppel =
-{
+
+static MACHINE_DRIVER_START( drtoppel )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-			readmem,writemem,0,0,
-			tnzs_interrupt,1
-		},
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-			sub_readmem,sub_writemem,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* video frequency (Hz), duration */
-	100,							/* cpu slices */
-	tnzs_init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tnzs_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	tnzs_gfxdecodeinfo,
-	512, 0,
-	arknoid2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(tnzs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	tnzs_vh_screenrefresh,
+	MDRV_PALETTE_INIT(arknoid2)
+	MDRV_VIDEO_UPDATE(tnzs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tnzs =
-{
+
+static MACHINE_DRIVER_START( tnzs )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-			readmem,writemem,0,0,
-			tnzs_interrupt,1
-		},
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
-			sub_readmem,sub_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	tnzs_init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tnzs_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.0 MHz ??? - Main board Crystal is 12MHz */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	tnzs_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(tnzs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	tnzs_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(tnzs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tnzsb =
-{
+
+static MACHINE_DRIVER_START( tnzsb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,		/* 6 MHz(?) */
-			readmem,writemem,0,0,
-			tnzs_interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,		/* 6 MHz(?) */
-			tnzsb_readmem1,tnzsb_writemem1,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,		/* 4 MHz??? */
-			tnzsb_readmem2,tnzsb_writemem2,tnzsb_readport,tnzsb_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	tnzs_init_machine,
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz(?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tnzs_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz(?) */
+	MDRV_CPU_MEMORY(tnzsb_readmem1,tnzsb_writemem1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)		/* 4 MHz??? */
+	MDRV_CPU_MEMORY(tnzsb_readmem2,tnzsb_writemem2)
+	MDRV_CPU_PORTS(tnzsb_readport,tnzsb_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	tnzs_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(tnzs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	tnzs_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(tnzs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203b_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203b_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_insectx =
-{
+
+static MACHINE_DRIVER_START( insectx )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz(?) */
-			readmem,writemem,0,0,
-			tnzs_interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz(?) */
-			sub_readmem,sub_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	tnzs_init_machine,
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz(?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tnzs_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz(?) */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	insectx_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(insectx_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	tnzs_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(tnzs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_kageki =
-{
-	{
-		{
-			CPU_Z80,
-			6000000,		/* 12000000/2 ??? */
-			readmem, writemem, 0, 0,
-			tnzs_interrupt, 1
-		},
-		{
-			CPU_Z80,
-			4000000,		/* 12000000/3 ??? */
-			kageki_sub_readmem, kageki_sub_writemem, 0, 0,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	200,	/* 200 CPU slices per frame - an high value to ensure proper */
-		/* synchronization of the CPUs */
-	tnzs_init_machine,
+
+static MACHINE_DRIVER_START( kageki )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 12000000/2 ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tnzs_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)		/* 12000000/3 ??? */
+	MDRV_CPU_MEMORY(kageki_sub_readmem,kageki_sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	tnzs_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(tnzs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	tnzs_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(tnzs)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_YM2203,
-			&kageki_ym2203_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, kageki_ym2203_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 

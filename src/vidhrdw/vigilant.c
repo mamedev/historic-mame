@@ -39,23 +39,14 @@ static int rear_refresh=1;
 static struct mame_bitmap *bg_bitmap;
 
 
-int vigilant_vh_start(void)
+VIDEO_START( vigilant )
 {
-	generic_vh_start();
+	video_start_generic();
 
-	if ((bg_bitmap = bitmap_alloc(512*3,256)) == 0)
-	{
-		generic_vh_stop();
+	if ((bg_bitmap = auto_bitmap_alloc(512*3,256)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-void vigilant_vh_stop(void)
-{
-	bitmap_free(bg_bitmap);
-	generic_vh_stop();
 }
 
 
@@ -292,7 +283,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	}
 }
 
-void vigilant_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( vigilant )
 {
 	int i;
 
@@ -331,7 +322,7 @@ void vigilant_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void kikcubic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kikcubic )
 {
 	int offs;
 

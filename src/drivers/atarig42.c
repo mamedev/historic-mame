@@ -21,23 +21,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int atarig42_vh_start(void);
-void atarig42_vh_stop(void);
-void atarig42_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void atarig42_scanline_update(int param);
-
-extern UINT8 atarig42_guardian;
-
+#include "atarig42.h"
 
 
 /*************************************
@@ -73,7 +57,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( atarig42 )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -89,7 +73,7 @@ static void init_machine(void)
  *
  *************************************/
 
-static int vblank_gen(void)
+static INTERRUPT_GEN( vblank_int )
 {
 	/* update the pedals once per frame */
 	if (readinputport(5) & 1)
@@ -102,7 +86,7 @@ static int vblank_gen(void)
 		if (pedal_value < 0x40 - 4)
 			pedal_value += 4;
 	}
-	return atarigen_video_int_gen();
+	atarigen_video_int_gen();
 }
 
 
@@ -146,6 +130,13 @@ static READ16_HANDLER( a2d_data_r )
 
 static WRITE16_HANDLER( io_latch_w )
 {
+	/* upper byte */
+	if (ACCESSING_MSB)
+	{
+		/* bit 14 controls the ASIC65 reset line */
+		asic65_reset((~data >> 14) & 1);
+	}
+	
 	/* lower byte */
 	if (ACCESSING_LSB)
 	{
@@ -164,159 +155,100 @@ static WRITE16_HANDLER( io_latch_w )
 
 /*************************************
  *
- *	!$#@$ asic
- *
- *************************************/
-
-static UINT16 asic65_command;
-static UINT16 asic65_param[32];
-static UINT8  asic65_param_index;
-static UINT16 asic65_result[32];
-static UINT8  asic65_result_index;
-
-static FILE * asic65_log;
-
-static WRITE16_HANDLER( asic65_w )
-{
-//	if (!asic65_log) asic65_log = fopen("asic65.log", "w");
-
-	/* parameters go to offset 0 */
-	if (offset == 0)
-	{
-		if (asic65_log) fprintf(asic65_log, " W=%04X", data);
-
-		asic65_param[asic65_param_index++] = data;
-		if (asic65_param_index >= 32)
-			asic65_param_index = 32;
-	}
-
-	/* commands go to offset 2 */
-	else
-	{
-		if (asic65_log) fprintf(asic65_log, "\n(%06X) %04X:", cpu_getpreviouspc(), data);
-
-		asic65_command = data;
-		asic65_result_index = asic65_param_index = 0;
-	}
-
-	/* update results */
-	switch (asic65_command)
-	{
-		case 0x01:	/* reflect data */
-			if (asic65_param_index >= 1)
-			{
-				asic65_result[0] = asic65_param[0];
-				asic65_result_index = asic65_param_index = 0;
-			}
-			break;
-
-		case 0x02:	/* compute checksum (should be XX27) */
-			asic65_result[0] = 0x0027;
-			asic65_result_index = asic65_param_index = 0;
-			break;
-
-		case 0x03:	/* get version (returns 1.3) */
-			asic65_result[0] = 0x0013;
-			asic65_result_index = asic65_param_index = 0;
-			break;
-
-		case 0x04:	/* internal RAM test (result should be 0) */
-			asic65_result[0] = 0;
-			asic65_result_index = asic65_param_index = 0;
-			break;
-
-		case 0x10:	/* matrix multiply */
-			if (asic65_param_index >= 9+6)
-			{
-				INT64 element, result;
-
-				element = (INT32)((asic65_param[9] << 16) | asic65_param[10]);
-				result = element * (INT16)asic65_param[0] +
-						 element * (INT16)asic65_param[1] +
-						 element * (INT16)asic65_param[2];
-				result >>= 14;
-				asic65_result[0] = result >> 16;
-				asic65_result[1] = result & 0xffff;
-
-				element = (INT32)((asic65_param[11] << 16) | asic65_param[12]);
-				result = element * (INT16)asic65_param[3] +
-						 element * (INT16)asic65_param[4] +
-						 element * (INT16)asic65_param[5];
-				result >>= 14;
-				asic65_result[2] = result >> 16;
-				asic65_result[3] = result & 0xffff;
-
-				element = (INT32)((asic65_param[13] << 16) | asic65_param[14]);
-				result = element * (INT16)asic65_param[6] +
-						 element * (INT16)asic65_param[7] +
-						 element * (INT16)asic65_param[8];
-				result >>= 14;
-				asic65_result[4] = result >> 16;
-				asic65_result[5] = result & 0xffff;
-			}
-			break;
-
-		case 0x14:	/* ??? */
-			if (asic65_param_index >= 1)
-			{
-				if (asic65_param[0] != 0)
-					asic65_result[0] = (0x40000000 / (INT16)asic65_param[0]) >> 16;
-				else
-					asic65_result[0] = 0x7fff;
-				asic65_result_index = asic65_param_index = 0;
-			}
-			break;
-
-		case 0x15:	/* ??? */
-			if (asic65_param_index >= 1)
-			{
-				if (asic65_param[0] != 0)
-					asic65_result[0] = (0x40000000 / (INT16)asic65_param[0]);
-				else
-					asic65_result[0] = 0xffff;
-				asic65_result_index = asic65_param_index = 0;
-			}
-			break;
-
-		case 0x17:	/* vector scale */
-			if (asic65_param_index >= 2)
-			{
-				asic65_result[0] = ((INT16)asic65_param[0] * (INT16)asic65_param[1]) >> 12;
-				asic65_result_index = 0;
-				asic65_param_index = 1;
-			}
-			break;
-	}
-}
-
-
-static READ16_HANDLER( asic65_r )
-{
-	int result;
-
-	if (!asic65_log) asic65_log = fopen("asic65.log", "w");
-	if (asic65_log) fprintf(asic65_log, " (R=%04X)", asic65_result[asic65_result_index]);
-
-	/* return the next result */
-	result = asic65_result[asic65_result_index++];
-	if (asic65_result_index >= 32)
-		asic65_result_index = 32;
-	return result;
-}
-
-
-static READ16_HANDLER( asic65_io_r )
-{
-	/* indicate that we always are ready to accept data and always ready to send */
-	return 0x4000;
-}
-
-
-
-/*************************************
- *
  *	Main CPU memory handlers
  *
+ *
+ 
+ 	FExxxx = 68.RAM
+ 	FCxxxx = 68.CRAM
+ 	FAxxxx = 68.EEROM
+ 	F8xxxx = 68.TDSPWR
+ 	F6xxxx = 68.TDSPRD
+ 	F4xxxx = 68.RDSTAT
+ 	  8000 = TFULL (clocked when 68.TDSPWR, clear when T.RD68)
+ 	  4000 = 68FULL (clocked when T.WR68, clear when 68.TDSPRD)
+ 	  2000 = XFLG (= TD0 when T.WRSTAT)
+ 	  1000 = 1
+ 	
+ 	E038xx = 68.WDOG
+ 	E030xx = 68.IRQACK
+ 	E008xx = 68.MTRSOL
+ 	E000xx = 68.CIO
+ 	
+ 	E0006x = 68.UNLOCK
+ 	E0005x = 68.LATCH
+ 	  4000 = /TRESET
+ 	  2000 = FRAME
+ 	  1000 = ERASE
+ 	  0800 = /MOGO
+ 	  0100 = VCR
+ 	  0020 = /XRESET
+ 	  0010 = /SNDRES
+ 	  0008 = CC.L
+ 	  0001 = CC.R
+ 	E0004x = 68.AUDWR
+ 	E0003x = 68.AUDRD
+ 	E0002x = 68.A2D (upper 8 bits)
+ 	E0001x = 68.STATUS
+ 	E0000x = 68.SW
+
+	E00012 = 68.STATUS1
+	  0080 = 0
+	  0040 = 0
+	  0020 = /SER.L
+	  0010 = /SER.R
+	  0008 = /XFULL
+	  0004 = /X.IRQ
+	  0002 = n/c
+	  0001 = n/c
+	E00010 = 68.STATUS0
+	  0080 = VBLANK
+	  0040 = S-TEST
+	  0020 = /AUDFULL
+	  0010 = /AUDIRQ
+	  0008 = A2D.EOC
+	  0004 = 0
+	  0002 = 0
+	  0001 = 0
+ 	
+ 	E00002 = 68.SW1
+ 	  8000 = UP2
+ 	  4000 = DN2
+ 	  2000 = LF2
+ 	  1000 = RT2
+ 	  0800 = ACTC2
+ 	  0400 = ACTB2
+ 	  0200 = ACTA2
+ 	  0100 = STRT2
+ 	  0080 = SERVICE3
+ 	  0040 = COIN3
+ 	  0020 = ACTTL3
+ 	  0010 = ACTTR3
+ 	  0008 = ACTTL2
+ 	  0004 = ACTTR2
+ 	  0002 = ACTTL1
+ 	  0001 = ACTTR1
+ 	E00000 = 68.SW0
+ 	  8000 = UP1
+ 	  4000 = DN1
+ 	  2000 = LF1
+ 	  1000 = RT1
+ 	  0800 = ACTC1
+ 	  0400 = ACTB1
+ 	  0200 = ACTA1
+ 	  0100 = STRT1
+ 	  0080 = UP3
+ 	  0040 = DN3
+ 	  0020 = LF3
+ 	  0010 = RT3
+ 	  0008 = ACTC3
+ 	  0004 = ACTB3
+ 	  0002 = ACTA3
+ 	  0001 = STRT3
+ 	
+ 	68.RDSTAT
+ 	
+ 
  *************************************/
 
 static MEMORY_READ16_START( main_readmem )
@@ -328,8 +260,8 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0xe00020, 0xe00027, a2d_data_r },
 	{ 0xe00030, 0xe00031, atarigen_sound_r },
 	{ 0xe80000, 0xe80fff, MRA16_RAM },
-	{ 0xf40000, 0xf40001, asic65_io_r },
-	{ 0xf60000, 0xf60001, asic65_r },
+	{ 0xf40000, 0xf40001, asic65_status_r },
+	{ 0xf60000, 0xf60001, asic65_data_r },
 	{ 0xfa0000, 0xfa0fff, atarigen_eeprom_r },
 	{ 0xfc0000, 0xfc0fff, MRA16_RAM },
 	{ 0xff0000, 0xffffff, MRA16_RAM },
@@ -345,7 +277,7 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xe03000, 0xe03001, atarigen_video_int_ack_w },
 	{ 0xe03800, 0xe03801, watchdog_reset16_w },
 	{ 0xe80000, 0xe80fff, MWA16_RAM },
-	{ 0xf80000, 0xf80003, asic65_w },
+	{ 0xf80000, 0xf80003, asic65_data_w },
 	{ 0xfa0000, 0xfa0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xfc0000, 0xfc0fff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0xff0000, 0xff0fff, atarirle_0_spriteram_w, &atarirle_0_spriteram },
@@ -489,39 +421,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_atarig42 =
-{
+static MACHINE_DRIVER_START( atarig42 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			ATARI_CLOCK_14MHz,
-			main_readmem,main_writemem,0,0,
-			vblank_gen,1
-		},
-		JSA_III_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(vblank_int,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atarig42)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarig42_vh_start,
-	atarig42_vh_stop,
-	atarig42_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(atarig42)
+	MDRV_VIDEO_UPDATE(atarig42)
+	
 	/* sound hardware */
-	JSA_III_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_iii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -577,6 +502,7 @@ ROM_START( roadriot )
 	ROM_LOAD( "rriots.15e",  0xc0000, 0x20000, 0x64d410bb )
 	ROM_LOAD( "rriots.12e",  0xe0000, 0x20000, 0xbffd01c8 )
 ROM_END
+
 
 ROM_START( roadriop )
 	ROM_REGION( 0x80004, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
@@ -647,6 +573,7 @@ ROM_START( roadriop )
 	ROM_LOAD( "rriots.12e",  0xe0000, 0x20000, 0xbffd01c8 )
 ROM_END
 
+
 ROM_START( guardian )
 	ROM_REGION( 0x80004, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
 	ROM_LOAD16_BYTE( "2021.8e",  0x00000, 0x20000, 0xefea1e02 )
@@ -692,7 +619,7 @@ ROM_END
  *
  *************************************/
 
-static void init_roadriot(void)
+static DRIVER_INIT( roadriot )
 {
 	static const UINT16 default_eeprom[] =
 	{
@@ -711,11 +638,11 @@ static void init_roadriot(void)
 	atarijsa3_init_adpcm(REGION_SOUND1);
 	atarigen_init_6502_speedup(1, 0x4168, 0x4180);
 
-	atarig42_guardian = 0;
+	atarig42_swapcolors = 1;
 }
 
 
-static void init_guardian(void)
+static DRIVER_INIT( guardian )
 {
 	static const UINT16 default_eeprom[] =
 	{
@@ -735,7 +662,7 @@ static void init_guardian(void)
 	atarijsa3_init_adpcm(REGION_SOUND1);
 	atarigen_init_6502_speedup(1, 0x3168, 0x3180);
 
-	atarig42_guardian = 1;
+	atarig42_swapcolors = 0;
 
 	/* it looks like they jsr to $80000 as some kind of protection */
 	/* put an RTS there so we don't die */

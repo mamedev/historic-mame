@@ -21,35 +21,19 @@ static struct tempsprite *spritelist;
 
 /******************************************************************/
 
-void undrfire_vh_stop (void)
-{
-	free(spritelist);
-	spritelist = 0;
-
-	TC0100SCN_vh_stop();
-
-	TC0480SCP_vh_stop();
-}
-
-int undrfire_vh_start (void)
+VIDEO_START( undrfire )
 {
 	int i;
 
-	spritelist = malloc(0x4000 * sizeof(*spritelist));
+	spritelist = auto_malloc(0x4000 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
 
 	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,50,8,0,0,0,0,0))
-	{
-		undrfire_vh_stop();
 		return 1;
-	}
 
 	if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,0,0x24,0,-1,0,0,0,0))
-	{
-		undrfire_vh_stop();
 		return 1;
-	}
 
 	for (i=0; i<16384; i++) /* Fix later - some weird colours in places */
 		palette_set_color(i,0,0,0);
@@ -103,7 +87,7 @@ Heavy use is made of sprite zooming.
 
 ***************************************************************/
 
-static void undrfire_draw_sprites_16x16(struct mame_bitmap *bitmap,int *primasks,int x_offs,int y_offs)
+static void undrfire_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks,int x_offs,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
@@ -220,7 +204,7 @@ static void undrfire_draw_sprites_16x16(struct mame_bitmap *bitmap,int *primasks
 							sprite_ptr->color,
 							sprite_ptr->flipx,sprite_ptr->flipy,
 							sprite_ptr->x,sprite_ptr->y,
-							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							cliprect,TRANSPARENCY_PEN,0,
 							sprite_ptr->zoomx,sprite_ptr->zoomy);
 				}
 			}
@@ -240,7 +224,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				sprite_ptr->color,
 				sprite_ptr->flipx,sprite_ptr->flipy,
 				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				sprite_ptr->zoomx,sprite_ptr->zoomy,
 				sprite_ptr->primask);
 	}
@@ -250,7 +234,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				SCREEN REFRESH
 **************************************************************/
 
-void undrfire_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( undrfire )
 {
 	UINT8 layer[5];
 	UINT8 pivlayer[3];
@@ -319,8 +303,8 @@ void undrfire_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	pivlayer[1] = pivlayer[0]^1;
 	pivlayer[2] = 2;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);	/* wrong color? */
 
 
 /* The "PIV" chip seems to be a renamed TC0100SCN. It has a
@@ -329,28 +313,28 @@ void undrfire_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
    pointless - it's always hidden by other layers. Does it
    serve some blending pupose ? */
 
-	TC0100SCN_tilemap_draw(bitmap,0,pivlayer[0],0,0);
-	TC0100SCN_tilemap_draw(bitmap,0,pivlayer[1],0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,pivlayer[0],0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,pivlayer[1],0,0);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[0]]==0)
 #endif
-	TC0480SCP_tilemap_draw(bitmap,layer[0],0,1);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],0,1);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[1]]==0)
 #endif
-	TC0480SCP_tilemap_draw(bitmap,layer[1],0,2);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,2);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[2]]==0)
 #endif
-	TC0480SCP_tilemap_draw(bitmap,layer[2],0,4);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,4);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[3]]==0)
 #endif
-	TC0480SCP_tilemap_draw(bitmap,layer[3],0,8);
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,8);
 
 #ifdef MAME_DEBUG
 	if (dislayer[4]==0)
@@ -360,21 +344,21 @@ void undrfire_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		if ((TC0480SCP_pri_reg &0x3) == 3)	/* on road levels kludge sprites up 1 priority */
 		{
 			int primasks[4] = {0xfff0, 0xff00, 0x0, 0x0};
-			undrfire_draw_sprites_16x16(bitmap,primasks,44,-574);
+			undrfire_draw_sprites_16x16(bitmap,cliprect,primasks,44,-574);
 		}
 		else
 		{
 			int primasks[4] = {0xfffc, 0xfff0, 0xff00, 0x0};
-			undrfire_draw_sprites_16x16(bitmap,primasks,44,-574);
+			undrfire_draw_sprites_16x16(bitmap,cliprect,primasks,44,-574);
 		}
 	}
 
 #ifdef MAME_DEBUG
 	if (dislayer[5]==0)
 #endif
-	TC0100SCN_tilemap_draw(bitmap,0,pivlayer[2],0,0);	/* piv text layer */
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,pivlayer[2],0,0);	/* piv text layer */
 
-	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);	/* TC0480SCP text layer */
+	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,0);	/* TC0480SCP text layer */
 
 	/* See if we should draw artificial gun targets */
 	/* (not yet implemented...) */

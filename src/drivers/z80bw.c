@@ -33,23 +33,20 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
+#include "8080bw.h"
 #include "vidhrdw/generic.h"
 
-int  astinvad_interrupt(void);
 
-int invaders_vh_start(void);
-void invaders_vh_stop(void);
+INTERRUPT_GEN( astinvad_interrupt );
 
-void invadpt2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( invaders_videoram_w );
-void invaders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( invadpt2 );
 
 WRITE_HANDLER( astinvad_sh_port_4_w );
 WRITE_HANDLER( astinvad_sh_port_5_w );
 void astinvad_sh_update(void);
 
-void init_astinvad(void);
-void init_spaceint(void);
+DRIVER_INIT( astinvad );
+DRIVER_INIT( spaceint );
 
 extern struct Samplesinterface astinvad_samples_interface;
 
@@ -62,7 +59,7 @@ MEMORY_END
 static MEMORY_WRITE_START( astinvad_writemem )
 	{ 0x0000, 0x1bff, MWA_ROM },
 	{ 0x1c00, 0x23ff, MWA_RAM },
-	{ 0x2400, 0x3fff, invaders_videoram_w, &videoram, &videoram_size },
+	{ 0x2400, 0x3fff, c8080bw_videoram_w, &videoram, &videoram_size },
 MEMORY_END
 
 
@@ -163,42 +160,30 @@ INPUT_PORTS_START( kamikaze )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-static const struct MachineDriver machine_driver_astinvad =
-{
+static MACHINE_DRIVER_START( astinvad )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2000000,        /* 2 MHz? */
-			astinvad_readmem,astinvad_writemem,astinvad_readport,astinvad_writeport,
-			interrupt,1    /* two interrupts per frame */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 2000000)        /* 2 MHz? */
+	MDRV_CPU_MEMORY(astinvad_readmem,astinvad_writemem)
+	MDRV_CPU_PORTS(astinvad_readport,astinvad_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)    /* two interrupts per frame */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	0,      /* no gfxdecodeinfo - bitmapped display */
-	8, 0,
-	invadpt2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_PALETTE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	invaders_vh_start,
-	invaders_vh_stop,
-	invaders_vh_screenrefresh,
+	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VIDEO_START(8080bw)
+	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SAMPLES,
-			&astinvad_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, astinvad_samples_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -216,11 +201,12 @@ static const struct MachineDriver machine_driver_astinvad =
 ------------------------------------------------------------------------------*/
 
 
-static int spaceint_interrupt(void)
+static INTERRUPT_GEN( spaceint_interrupt )
 {
 	if (readinputport(2) & 1)	/* Coin */
-		return nmi_interrupt();
-	else return interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	else
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -234,7 +220,7 @@ static MEMORY_WRITE_START( spaceint_writemem )
 	{ 0x0000, 0x17ff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
 	{ 0x4000, 0x40ff, MWA_RAM },
-	{ 0x4100, 0x5fff, invaders_videoram_w, &videoram, &videoram_size },
+	{ 0x4100, 0x5fff, c8080bw_videoram_w, &videoram, &videoram_size },
 MEMORY_END
 
 
@@ -296,43 +282,30 @@ INPUT_PORTS_START( spaceint )
 INPUT_PORTS_END
 
 
-static const struct MachineDriver machine_driver_spaceint =
-{
+static MACHINE_DRIVER_START( spaceint )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2000000,        /* 2 MHz? */
-			spaceint_readmem,spaceint_writemem,spaceint_readport,0,
-			spaceint_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 2000000)        /* 2 MHz? */
+	MDRV_CPU_MEMORY(spaceint_readmem,spaceint_writemem)
+	MDRV_CPU_PORTS(spaceint_readport,0)
+	MDRV_CPU_VBLANK_INT(spaceint_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	//32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,      /* no gfxdecodeinfo - bitmapped display */
-	8, 0,
-	invadpt2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-	0,
-	invaders_vh_start,
-	invaders_vh_stop,
-	invaders_vh_screenrefresh,
+	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VIDEO_START(8080bw)
+	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_SAMPLES,
-			&astinvad_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, astinvad_samples_interface)
+MACHINE_DRIVER_END
 
 
 

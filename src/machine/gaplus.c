@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
+#include "vidhrdw/generic.h"
 
 unsigned char *gaplus_snd_sharedram;
 unsigned char *gaplus_sharedram;
@@ -18,7 +19,7 @@ static int credits, coincounter1, coincounter2;
 
 extern void gaplus_starfield_update( void );
 
-void gaplus_init_machine( void )
+MACHINE_INIT( gaplus )
 {
     int_enable_2 = int_enable_3 = 1;
     credits = coincounter1 = coincounter2 = 0;
@@ -63,27 +64,22 @@ WRITE_HANDLER( gaplus_interrupt_ctrl_3b_w )
     int_enable_3 = 0;
 }
 
-int gaplus_interrupt_1( void ) {
+INTERRUPT_GEN( gaplus_interrupt_1 ) {
 
 	gaplus_starfield_update(); /* update starfields */
-
-	return interrupt();
+	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-int gaplus_interrupt_2( void )
+INTERRUPT_GEN( gaplus_interrupt_2 )
 {
     if (int_enable_2)
-        return interrupt();
-    else
-        return ignore_interrupt();
+    	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
-int gaplus_interrupt_3( void )
+INTERRUPT_GEN( gaplus_interrupt_3 )
 {
     if (int_enable_3)
-        return interrupt();
-    else
-        return ignore_interrupt();
+    	cpu_set_irq_line(2, 0, HOLD_LINE);
 }
 
 WRITE_HANDLER( gaplus_reset_2_3_w )

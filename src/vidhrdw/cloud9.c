@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Cloud 9 (prototype) hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cloud9.h"
 
 
 unsigned char *cloud9_vram2;
@@ -250,13 +249,11 @@ WRITE_HANDLER( cloud9_bitmap_w )
   the main emulation engine.
 
 ***************************************************************************/
-void cloud9_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cloud9 )
 {
 	int offs;
 
-
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
 
 	/* draw the sprites */
 	for (offs = 0;offs < 20;offs++)

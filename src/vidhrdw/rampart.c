@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
+#include "rampart.h"
 
 
 
@@ -30,10 +31,6 @@ static UINT8 *pfdirty;
 static struct mame_bitmap *pfbitmap;
 static int xdim, ydim;
 
-int rampart_bitmap_init(int _xdim, int _ydim);
-void rampart_bitmap_free(void);
-void rampart_bitmap_render(struct mame_bitmap *bitmap);
-
 
 
 /*************************************
@@ -42,7 +39,7 @@ void rampart_bitmap_render(struct mame_bitmap *bitmap);
  *
  *************************************/
 
-int rampart_vh_start(void)
+VIDEO_START( rampart )
 {
 	static const struct atarimo_desc modesc =
 	{
@@ -82,35 +79,15 @@ int rampart_vh_start(void)
 
 	/* initialize the playfield */
 	if (!rampart_bitmap_init(43*8, 30*8))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 
 	/* set the intial scroll offset */
 	atarimo_set_xscroll(0, -4, 0);
 	return 0;
-
-	/* error cases */
-cant_create_mo:
-	rampart_bitmap_free();
-cant_create_pf:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void rampart_vh_stop(void)
-{
-	atarimo_free();
-	rampart_bitmap_free();
 }
 
 
@@ -121,11 +98,11 @@ void rampart_vh_stop(void)
  *
  *************************************/
 
-void rampart_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rampart )
 {
 	/* draw the layers */
-	rampart_bitmap_render(bitmap);
-	atarimo_render(0, bitmap, NULL, NULL);
+	rampart_bitmap_render(bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, NULL, NULL);
 }
 
 
@@ -143,36 +120,16 @@ int rampart_bitmap_init(int _xdim, int _ydim)
 	ydim = _ydim;
 
 	/* allocate dirty map */
-	pfdirty = malloc(sizeof(pfdirty[0]) * ydim);
+	pfdirty = auto_malloc(sizeof(pfdirty[0]) * ydim);
 	if (!pfdirty)
-		goto cant_alloc_dirty;
+		return 0;
 	memset(pfdirty, 1, sizeof(pfdirty[0]) * ydim);
 
 	/* allocate playfield bitmap */
-	pfbitmap = bitmap_alloc(xdim, ydim);
+	pfbitmap = auto_bitmap_alloc(xdim, ydim);
 	if (!pfbitmap)
-		goto cant_alloc_pf;
+		return 0;
 	return 1;
-
-	/* error cases */
-cant_alloc_pf:
-	free(pfdirty);
-cant_alloc_dirty:
-	return 0;
-}
-
-
-
-/*************************************
- *
- *	Bitmap freeing
- *
- *************************************/
-
-void rampart_bitmap_free(void)
-{
-	bitmap_free(pfbitmap);
-	free(pfdirty);
 }
 
 
@@ -210,7 +167,7 @@ WRITE16_HANDLER( rampart_bitmap_w )
  *
  *************************************/
 
-void rampart_bitmap_render(struct mame_bitmap *bitmap)
+void rampart_bitmap_render(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int x, y;
 
@@ -236,5 +193,5 @@ void rampart_bitmap_render(struct mame_bitmap *bitmap)
 		}
 
 	/* copy the cached bitmap */
-	copybitmap(bitmap, pfbitmap, 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, pfbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 }

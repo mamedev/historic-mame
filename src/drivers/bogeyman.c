@@ -14,10 +14,9 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-void bogeyman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void bogeyman_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int bogeyman_vh_start(void);
-void bogeyman_vh_stop(void);
+PALETTE_INIT( bogeyman );
+VIDEO_UPDATE( bogeyman );
+VIDEO_START( bogeyman );
 WRITE_HANDLER( bogeyman_paletteram_w );
 WRITE_HANDLER( bogeyman_videoram_w );
 
@@ -245,43 +244,32 @@ static struct AY8910interface ay8910_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_bogeyman =
-{
+static MACHINE_DRIVER_START( bogeyman )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_M6502,
-			2000000, /* 12 MHz clock on board */
-			bogeyman_readmem,bogeyman_writemem,0,0,
-			interrupt,16 /* Controls sound */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,	/* init machine */
+	MDRV_CPU_ADD(M6502, 2000000) /* 12 MHz clock on board */
+	MDRV_CPU_MEMORY(bogeyman_readmem,bogeyman_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,16) /* Controls sound */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
 
-	gfxdecodeinfo,
-	16+256, 16+256,
-	bogeyman_vh_convert_color_prom,
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16+256)
+	MDRV_COLORTABLE_LENGTH(16+256)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK ,
-	0,
-	bogeyman_vh_start,
-	bogeyman_vh_stop,
-	bogeyman_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bogeyman)
+	MDRV_VIDEO_START(bogeyman)
+	MDRV_VIDEO_UPDATE(bogeyman)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 

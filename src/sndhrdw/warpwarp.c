@@ -51,9 +51,7 @@ WRITE_HANDLER( warpwarp_sound_w )
 		 * discharge C90(?) (1uF) through R13||R14 (22k||47k)
 		 * 0.639 * 15k * 1uF -> 0.9585s
 		 */
-		if( sound_volume_timer )
-			timer_remove(sound_volume_timer);
-		sound_volume_timer = timer_pulse(TIME_IN_HZ(32768/0.9585), 0, sound_volume_decay);
+		timer_adjust(sound_volume_timer, TIME_IN_HZ(32768/0.9585), 0, TIME_IN_HZ(32768/0.9585));
 	}
 	else
 	{
@@ -64,10 +62,8 @@ WRITE_HANDLER( warpwarp_sound_w )
 		 * ...but this is not very realistic for the game sound :(
 		 * maybe there _is_ a discharge through the diode D17?
 		 */
-		if( sound_volume_timer )
-			timer_remove(sound_volume_timer);
-//		sound_volume_timer = timer_pulse(TIME_IN_HZ(32768/7.0290), 0, sound_volume_decay);
-		sound_volume_timer = timer_pulse(TIME_IN_HZ(32768/1.917), 0, sound_volume_decay);
+//		timer_adjust(sound_volume_timer, TIME_IN_HZ(32768/7.0290), 0, TIME_IN_HZ(32768/7.0290));
+		timer_adjust(sound_volume_timer, TIME_IN_HZ(32768/1.917), 0, TIME_IN_HZ(32768/1.917));
     }
 }
 
@@ -101,10 +97,8 @@ WRITE_HANDLER( warpwarp_music2_w )
 		 * 0.639 * 15k * 10uF -> 9.585s
 		 * ...I'm sure this is off by one number of magnitude :/
 		 */
-		if( music_volume_timer )
-			timer_remove(music_volume_timer);
-//		music_volume_timer = timer_pulse(TIME_IN_HZ(32768/9.585), 0, music_volume_decay);
-		music_volume_timer = timer_pulse(TIME_IN_HZ(32768/0.9585), 0, music_volume_decay);
+//		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/9.585), 0, TIME_IN_HZ(32768/9.585));
+		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/0.9585), 0, TIME_IN_HZ(32768/0.9585));
 	}
 	else
 	{
@@ -113,10 +107,8 @@ WRITE_HANDLER( warpwarp_music2_w )
 		 * discharge C95(?) (10uF) through R14 (47k)
 		 * 0.639 * 47k * 10uF -> 30.033s
 		 */
-		if( music_volume_timer )
-			timer_remove(music_volume_timer);
-//		music_volume_timer = timer_pulse(TIME_IN_HZ(32768/30.033), 0, music_volume_decay);
-		music_volume_timer = timer_pulse(TIME_IN_HZ(32768/3.0033), 0, music_volume_decay);
+//		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/30.033), 0, TIME_IN_HZ(32768/30.033));
+		timer_adjust(music_volume_timer, TIME_IN_HZ(32768/3.0033), 0, TIME_IN_HZ(32768/3.0033));
 	}
 
 }
@@ -209,7 +201,7 @@ int warpwarp_sh_start(const struct MachineSound *msound)
 {
 	int i;
 
-	decay = (INT16 *) malloc(32768 * sizeof(INT16));
+	decay = (INT16 *) auto_malloc(32768 * sizeof(INT16));
 	if( !decay )
 		return 1;
 
@@ -217,16 +209,14 @@ int warpwarp_sh_start(const struct MachineSound *msound)
 		decay[0x7fff-i] = (INT16) (0x7fff/exp(1.0*i/4096));
 
 	channel = stream_init("WarpWarp", 100, Machine->sample_rate, 0, warpwarp_sound_update);
+
+	sound_volume_timer = timer_alloc(sound_volume_decay);
+	music_volume_timer = timer_alloc(music_volume_decay);
     return 0;
 }
 
 void warpwarp_sh_stop(void)
 {
-	if( decay )
-		free(decay);
-	decay = NULL;
-	music_volume_timer = NULL;
-	sound_volume_timer = NULL;
 }
 
 void warpwarp_sh_update(void)

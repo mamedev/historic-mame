@@ -19,14 +19,13 @@ Notes:
 
 
 
-int superqix_vh_start(void);
-void superqix_vh_stop(void);
+VIDEO_START( superqix );
 READ_HANDLER( superqix_bitmapram_r );
 WRITE_HANDLER( superqix_bitmapram_w );
 READ_HANDLER( superqix_bitmapram2_r );
 WRITE_HANDLER( superqix_bitmapram2_w );
 WRITE_HANDLER( superqix_0410_w );
-void superqix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( superqix );
 
 
 
@@ -197,7 +196,7 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }	/* port Bwrite */
 };
 
-int sqix_interrupt(void)
+INTERRUPT_GEN( sqix_interrupt )
 {
 	static int loop=0;
 
@@ -205,50 +204,37 @@ int sqix_interrupt(void)
 
 	if(loop>2) {
 		if(loop==6) loop=0;
-		return nmi_interrupt();
+		nmi_line_pulse();
 	}
-	else
-		return ignore_interrupt();
 }
 
-static const struct MachineDriver machine_driver_superqix =
-{
+static MACHINE_DRIVER_START( superqix )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ? */
 //			10000000,	/* 10 MHz ? */
-			6000000,	/* 6 MHz ? */
-			readmem,writemem,readport,writeport,
-//			nmi_interrupt,3	/* ??? */
-			sqix_interrupt,6	/* ??? */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,3)	/* ??? */
+	MDRV_CPU_VBLANK_INT(sqix_interrupt,6)	/* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	superqix_vh_start,
-	superqix_vh_stop,
-	superqix_vh_screenrefresh,
+	MDRV_VIDEO_START(superqix)
+	MDRV_VIDEO_UPDATE(superqix)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

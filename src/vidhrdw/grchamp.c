@@ -47,7 +47,7 @@ WRITE_HANDLER( grchamp_rain_ypos_w )
 	grchamp_rain_ypos = data;
 }
 
-void grchamp_convert_color_prom( UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom )
+PALETTE_INIT( grchamp )
 {
 	int i;
 	for( i=0; i<0x20; i++ )
@@ -136,37 +136,29 @@ static UINT32 get_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32
 	return offset;
 }
 
-int grchamp_vh_start( void )
+VIDEO_START( grchamp )
 {
-	headlight_bitmap = bitmap_alloc( 64,128 );
-	if( headlight_bitmap ){
-		work_bitmap = bitmap_alloc( 32,32 );
-		if( work_bitmap ){
-			tilemap[0] = tilemap_create(get_bg0_tile_info,get_memory_offset,TILEMAP_OPAQUE,8,8,64,32);
-			tilemap[1] = tilemap_create(get_bg1_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
-			tilemap[2] = tilemap_create(get_bg2_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
-			if( tilemap[0] && tilemap[1] && tilemap[2] )
-			{
-				tilemap_set_transparent_pen( tilemap[1], 0 );
-				tilemap_set_transparent_pen( tilemap[2], 0 );
-				return 0;
-			}
-			bitmap_free( work_bitmap );
-		}
-		bitmap_free( headlight_bitmap );
+	headlight_bitmap = auto_bitmap_alloc( 64,128 );
+	if( !headlight_bitmap )
+		return 1;
+	work_bitmap = auto_bitmap_alloc( 32,32 );
+	if( !work_bitmap )
+		return 1;
+		
+	tilemap[0] = tilemap_create(get_bg0_tile_info,get_memory_offset,TILEMAP_OPAQUE,8,8,64,32);
+	tilemap[1] = tilemap_create(get_bg1_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
+	tilemap[2] = tilemap_create(get_bg2_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
+	if( tilemap[0] && tilemap[1] && tilemap[2] )
+	{
+		tilemap_set_transparent_pen( tilemap[1], 0 );
+		tilemap_set_transparent_pen( tilemap[2], 0 );
+		return 0;
 	}
 	return 1;
 }
 
-void grchamp_vh_stop( void )
+static void draw_text( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	bitmap_free( headlight_bitmap );
-	bitmap_free( work_bitmap );
-}
-
-static void draw_text( struct mame_bitmap *bitmap )
-{
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
 	const UINT8 *source = videoram;
 	int bank = (grchamp_videoreg0&0x20)?256:0;
@@ -185,12 +177,12 @@ static void draw_text( struct mame_bitmap *bitmap )
 			0,0, /* no flip */
 			8*col,
 			(8*row-scroll)&0xff,
-			clip,
+			cliprect,
 			TRANSPARENCY_PEN, 0 );
 	}
 }
 
-static void draw_background( struct mame_bitmap *bitmap )
+static void draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int dx = -48;
 	int dy = 16;
@@ -215,12 +207,12 @@ static void draw_background( struct mame_bitmap *bitmap )
 	tilemap_set_scrollx( tilemap[2], 0, dx-(grchamp_vreg1[0x9]+ ((attributes&0x20)?256:(grchamp_vreg1[0xa]*256))));
 	tilemap_set_scrolly( tilemap[2], 0, dy - grchamp_vreg1[0xb] );
 
-	tilemap_draw(bitmap,tilemap[0],0,0);
-	tilemap_draw(bitmap,tilemap[1],0,0);
-	tilemap_draw(bitmap,tilemap[2],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[2],0,0);
 }
 
-static void draw_player_car( struct mame_bitmap *bitmap )
+static void draw_player_car( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	drawgfx( bitmap,
 		Machine->gfx[2],
@@ -229,7 +221,7 @@ static void draw_player_car( struct mame_bitmap *bitmap )
 		0,0, /* flip */
 		256-grchamp_player_xpos,
 		240-grchamp_player_ypos,
-		&Machine->visible_area,
+		cliprect,
 		TRANSPARENCY_PEN, 0 );
 }
 
@@ -280,9 +272,8 @@ static int collision_check( struct mame_bitmap *bitmap, int which )
 	return result?(1<<which):0;
 }
 
-static void draw_rain( struct mame_bitmap *bitmap ){
+static void draw_rain( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
 	const struct GfxElement *gfx = Machine->gfx[4];
-	const struct rectangle *clip = &Machine->visible_area;
 	int tile_number = grchamp_tile_number>>4;
 	if( tile_number ){
 		int scrollx = grchamp_rain_xpos;
@@ -294,14 +285,14 @@ static void draw_rain( struct mame_bitmap *bitmap ){
 					tile_number, 0,
 					0,0,
 					(sx+scrollx)&0xff,(sy+scrolly)&0xff,
-					clip,
+					cliprect,
 					TRANSPARENCY_PEN, 0 );
 			}
 		}
 	}
 }
 
-static void draw_fog( struct mame_bitmap *bitmap, int bFog ){
+static void draw_fog( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog ){
 	int x0 = 256-grchamp_player_xpos-64;
 	int y0 = 240-grchamp_player_ypos-64;
 	int color = Machine->pens[bFog?0x40:0x00];
@@ -311,13 +302,13 @@ static void draw_fog( struct mame_bitmap *bitmap, int bFog ){
 		bitmap, /* source */
 		0,0, /* flipx,flipy */
 		-x0,-y0, /* sx,sy */
-		0, /* clip */
+		cliprect, /* clip */
 		TRANSPARENCY_NONE,0 );
 
-	fillbitmap( bitmap,color,0 );
+	fillbitmap( bitmap,color,cliprect );
 }
 
-static void draw_headlights( struct mame_bitmap *bitmap, int bFog )
+static void draw_headlights( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog )
 {
 	int sx, sy, color;
 	int x0 = 256-grchamp_player_xpos-64;
@@ -337,7 +328,8 @@ static void draw_headlights( struct mame_bitmap *bitmap, int bFog )
 					if( data&0x80 ){
 						sx = x0+x+bit;
 						sy = y0+y;
-						if( sx>=0 && sy>=0 && sx<=255 && sy<=255 )
+						if( sx>=cliprect->min_x && sy>=cliprect->min_y && 
+							sx<=cliprect->max_x && sy<=cliprect->max_y )
 						{
 							color = read_pixel( headlight_bitmap, x+bit, y );
 							plot_pixel( bitmap, sx,sy, color );
@@ -350,7 +342,7 @@ static void draw_headlights( struct mame_bitmap *bitmap, int bFog )
 	}
 }
 
-static void draw_radar( struct mame_bitmap *bitmap ){
+static void draw_radar( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
 	const UINT8 *source = grchamp_radar;
 	int color = Machine->pens[3];
 	int offs;
@@ -361,14 +353,17 @@ static void draw_radar( struct mame_bitmap *bitmap ){
 			int y = (offs/32)+16;
 			int bit;
 			for( bit=0; bit<8; bit++ ){
-				if( data&0x80 ) plot_pixel( bitmap, x+bit, y, color );
+				if( data&0x80 ) 
+					if ((x+bit) >= cliprect->min_x && (x+bit) <= cliprect->max_x &&
+						y >= cliprect->min_y && y <= cliprect->max_y)
+						plot_pixel( bitmap, x+bit, y, color );
 				data <<= 1;
 			}
 		}
 	}
 }
 
-static void draw_tachometer( struct mame_bitmap *bitmap ){
+static void draw_tachometer( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
 /*
 	int value = grchamp_vreg1[0x03]&0xf;
 	int i;
@@ -384,9 +379,8 @@ static void draw_tachometer( struct mame_bitmap *bitmap ){
 */
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, int bFog ){
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog ){
 	const struct GfxElement *gfx = Machine->gfx[3];
-	const struct rectangle *clip = &Machine->visible_area;
 	int bank = (grchamp_videoreg0&0x20)?0x40:0x00;
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x40;
@@ -400,37 +394,37 @@ static void draw_sprites( struct mame_bitmap *bitmap, int bFog ){
 			color,
 			code&0x40,code&0x80,
 			sx,sy,
-			clip,
+			cliprect,
 			TRANSPARENCY_PEN, 0 );
 		source += 4;
 	}
 }
 
-void grchamp_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh ){
+VIDEO_UPDATE( grchamp ){
 	int bFog = grchamp_videoreg0&0x40;
 
-	draw_background( bitmap ); /* 3 layers */
+	draw_background( bitmap,cliprect ); /* 3 layers */
 
 	grchamp_collision = collision_check( bitmap,0 );
-	draw_sprites( bitmap, 0 ); /* computer cars */
+	draw_sprites( bitmap,cliprect, 0 ); /* computer cars */
 	grchamp_collision |= collision_check( bitmap,1 );
 
-	draw_player_car( bitmap );
+	draw_player_car( bitmap,cliprect );
 
 	if( grchamp_videoreg0&(0x10|0x40) ){
-		draw_fog( bitmap,bFog ); /* grey fog / black tunnel darkness */
+		draw_fog( bitmap,cliprect,bFog ); /* grey fog / black tunnel darkness */
 	}
 
 	/* fog covered sprites look like black shadows */
-	if( bFog ) draw_sprites( bitmap, bFog );
+	if( bFog ) draw_sprites( bitmap,cliprect, bFog );
 
 	/* paint the visible area exposed by headlights shape */
 	if( grchamp_videoreg0&(0x10|0x40) ){
-		draw_headlights( bitmap,bFog );
+		draw_headlights( bitmap,cliprect,bFog );
 	}
 
-	draw_rain( bitmap );
-	draw_text( bitmap );
-	if( grchamp_videoreg0&0x80 ) draw_radar( bitmap );
-	draw_tachometer( bitmap );
+	draw_rain( bitmap,cliprect );
+	draw_text( bitmap,cliprect );
+	if( grchamp_videoreg0&0x80 ) draw_radar( bitmap,cliprect );
+	draw_tachometer( bitmap,cliprect );
 }

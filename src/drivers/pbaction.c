@@ -43,16 +43,15 @@ WRITE_HANDLER( pbaction_videoram2_w );
 WRITE_HANDLER( pbaction_colorram2_w );
 WRITE_HANDLER( pbaction_flipscreen_w );
 WRITE_HANDLER( pbaction_scroll_w );
-int pbaction_vh_start(void);
-void pbaction_vh_stop(void);
+VIDEO_START( pbaction );
 
-void pbaction_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( pbaction );
 
 
 static WRITE_HANDLER( pbaction_sh_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,0x00);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0x00);
 }
 
 
@@ -262,55 +261,41 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-int pbaction_interrupt(void)
+INTERRUPT_GEN( pbaction_interrupt )
 {
-	return  0x02;	/* the CPU is in Interrupt Mode 2 */
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0x02);	/* the CPU is in Interrupt Mode 2 */
 }
 
 
-static const struct MachineDriver machine_driver_pbaction =
-{
+static MACHINE_DRIVER_START( pbaction )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz? */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 MHz (?????) */
-			sound_readmem,sound_writemem,0,sound_writeport,
-			pbaction_interrupt,2	/* ??? */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz (?????) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(0,sound_writeport)
+	MDRV_CPU_VBLANK_INT(pbaction_interrupt,2)	/* ??? */
 									/* IRQs are caused by the main CPU */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pbaction_vh_start,
-	pbaction_vh_stop,
-	pbaction_vh_screenrefresh,
+	MDRV_VIDEO_START(pbaction)
+	MDRV_VIDEO_UPDATE(pbaction)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

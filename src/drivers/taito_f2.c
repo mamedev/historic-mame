@@ -332,7 +332,7 @@ static READ16_HANDLER( growl_dsw_r )
               return input_port_4_word_r(0,mem_mask); /* DSW B */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped dsw_r offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped dsw_r offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -352,7 +352,7 @@ static READ16_HANDLER( growl_input_r )
 
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -386,7 +386,7 @@ static READ16_HANDLER( footchmp_input_r )
 			return input_port_6_word_r(0,mem_mask); /* IN4 */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -420,7 +420,7 @@ static READ16_HANDLER( ninjak_input_r )
 //			return (coin_word & ~mem_mask);
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -445,7 +445,7 @@ static READ16_HANDLER( cameltry_paddle_r )
 			return res;
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped paddle offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped paddle offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0;
 }
@@ -461,7 +461,7 @@ static READ16_HANDLER( driftout_paddle_r )
               return input_port_6_word_r(0,mem_mask); /* Paddle B */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped paddle offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped paddle offset %06x\n",activecpu_get_pc(),offset);
 
         return 0xff;
 }
@@ -495,7 +495,7 @@ static READ16_HANDLER( deadconx_input_r )
 			return input_port_6_word_r(0,mem_mask); /* IN4 */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -515,7 +515,7 @@ static READ16_HANDLER( mjnquest_dsw_r )
         }
     }
 
-    logerror("CPU #0 PC %06x: warning - read unmapped dsw_r offset %06x\n",cpu_get_pc(),offset);
+    logerror("CPU #0 PC %06x: warning - read unmapped dsw_r offset %06x\n",activecpu_get_pc(),offset);
 
     return 0xff;
 }
@@ -541,7 +541,7 @@ static READ16_HANDLER( mjnquest_input_r )
 
     }
 
-logerror("CPU #0 mjnquest_input %06x: warning - read unknown input %06x\n",cpu_get_pc(),mjnquest_input);
+logerror("CPU #0 mjnquest_input %06x: warning - read unknown input %06x\n",activecpu_get_pc(),mjnquest_input);
 
 	return 0xff;
 }
@@ -562,7 +562,7 @@ static READ16_HANDLER( quizhq_input1_r )
               return input_port_0_word_r(0,mem_mask); /* IN0 */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -581,7 +581,7 @@ static READ16_HANDLER( quizhq_input2_r )
               return input_port_2_word_r(0,mem_mask); /* IN2 */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -600,7 +600,7 @@ static READ16_HANDLER( yesnoj_input_r )
               return input_port_1_word_r(0,mem_mask); /* IN1 */
     }
 
-logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0x0;
 }
@@ -608,7 +608,7 @@ logerror("CPU #0 PC %06x: warning - read unmapped input_r offset %06x\n",cpu_get
 static READ16_HANDLER( yesnoj_dsw_r )
 {
 #ifdef MAME_DEBUG
-	logerror("CPU #0 PC = %06x: read yesnoj DSW %01x\n",cpu_get_pc(),yesnoj_dsw);
+	logerror("CPU #0 PC = %06x: read yesnoj DSW %01x\n",activecpu_get_pc(),yesnoj_dsw);
 #endif
 
 	yesnoj_dsw = 1 - yesnoj_dsw;   /* game reads same word twice to get DSW A then B so we toggle */
@@ -769,13 +769,13 @@ driftout  8000 0000/8  0000 0000	The first control changes from 8000 to 0000 at 
 
 void taitof2_interrupt6(int x)
 {
-	cpu_cause_interrupt(0,MC68000_IRQ_6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
-static int taitof2_interrupt(void)
+static INTERRUPT_GEN( taitof2_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(500,0),0, taitof2_interrupt6);
-	return MC68000_IRQ_5;
+	cpu_set_irq_line(0, 5, HOLD_LINE);
 }
 
 
@@ -4744,184 +4744,516 @@ static struct OKIM6295interface okim6295_interface =
                       MACHINE DRIVERS
 ***********************************************************/
 
-static void init_machine_qcrayon(void)
+MACHINE_INIT( qcrayon )
 {
 	/* point to the extra ROM */
 	cpu_setbank(1,memory_region(REGION_USER1));
 }
 
-#define init_machine_0 0
 
-#define MACHINE_DRIVER(NAME,INIT,MAXCOLS,GFX,VHSTART,VHREFRESH,EOF)							\
-static const struct MachineDriver machine_driver_##NAME =									\
-{																					\
-	/* basic machine hardware */													\
-	{																				\
-		{																			\
-			CPU_M68000,																\
-			24000000/2,	/* 12 MHz */												\
-			NAME##_readmem, NAME##_writemem,0,0,									\
-			taitof2_interrupt,1														\
-		},																			\
-		{																			\
-			CPU_Z80 | CPU_AUDIO_CPU,												\
-			16000000/4,	/* 4 MHz */													\
-			sound_readmem, sound_writemem,0,0,										\
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */				\
-		}																			\
-	},																				\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,																				\
-	init_machine_##INIT,															\
-																					\
-	/* video hardware */															\
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },										\
-																					\
-	GFX##_gfxdecodeinfo,															\
-	MAXCOLS, 0,																		\
-	0,																				\
-																					\
-	VIDEO_TYPE_RASTER,										\
-	taitof2_##EOF##_eof_callback,													\
-	taitof2_##VHSTART##_vh_start,													\
-	taitof2_vh_stop,																\
-	VHREFRESH##_vh_screenrefresh,													\
-																					\
-	/* sound hardware */															\
-	SOUND_SUPPORTS_STEREO,0,0,0,													\
-	{																				\
-		{																			\
-			SOUND_YM2610,															\
-			&ym2610_interface														\
-		}																			\
-	}																				\
-};
+static MACHINE_DRIVER_START( taito_f2 )
 
-#define hthero_readmem		footchmp_readmem
-#define hthero_writemem		footchmp_writemem
-#define deadconj_readmem	deadconx_readmem
-#define deadconj_writemem	deadconx_writemem
-
-/*              NAME      INIT     MAXCOLS	GFX       VHSTART   VHREFRESH        EOF*/
-MACHINE_DRIVER( finalb,   0,       4096,	finalb,   finalb,   taitof2,         partial_buffer_delayed )
-MACHINE_DRIVER( dondokod, 0,       4096,	pivot,    dondokod, taitof2_pri_roz, partial_buffer_delayed )
-MACHINE_DRIVER( megab,    0,       4096,	taitof2,  megab,    taitof2_pri,     no_buffer )
-MACHINE_DRIVER( thundfox, 0,       4096,	thundfox, thundfox, thundfox,        partial_buffer_delayed_thundfox )
-MACHINE_DRIVER( cameltry, 0,       4096,	pivot,    dondokod, taitof2_pri_roz, no_buffer )
-MACHINE_DRIVER( qtorimon, 0,       4096,	yuyugogo, default,  taitof2,         partial_buffer_delayed )
-MACHINE_DRIVER( liquidk,  0,       4096,	taitof2,  megab,    taitof2_pri,     partial_buffer_delayed )
-MACHINE_DRIVER( quizhq,   0,       4096,	yuyugogo, default,  taitof2,         partial_buffer_delayed )
-MACHINE_DRIVER( ssi,      0,       4096,	taitof2,  ssi,      ssi,             partial_buffer_delayed )
-MACHINE_DRIVER( gunfront, 0,       4096,	taitof2,  gunfront, taitof2_pri,     no_buffer )
-MACHINE_DRIVER( growl,    0,       4096,	taitof2,  growl,    taitof2_pri,     no_buffer )
-MACHINE_DRIVER( mjnquest, 0,       4096,	taitof2,  mjnquest, taitof2,         no_buffer )
-MACHINE_DRIVER( footchmp, 0,       4096,	deadconx, footchmp, deadconx,        full_buffer_delayed )
-MACHINE_DRIVER( hthero,   0,       4096,	deadconx, hthero,   deadconx,        full_buffer_delayed )
-MACHINE_DRIVER( koshien,  0,       4096,	taitof2,  koshien,  taitof2_pri,     no_buffer )
-MACHINE_DRIVER( yuyugogo, qcrayon, 4096,	yuyugogo, yuyugogo, yesnoj,          no_buffer )
-MACHINE_DRIVER( ninjak,   0,       4096,	taitof2,  ninjak,   taitof2_pri,     no_buffer )
-MACHINE_DRIVER( solfigtr, 0,       4096,	taitof2,  solfigtr, taitof2_pri,     no_buffer )
-MACHINE_DRIVER( qzquest,  0,       4096,	taitof2,  default,  taitof2,         partial_buffer_delayed )
-MACHINE_DRIVER( pulirula, 0,       4096,	pivot,    pulirula, taitof2_pri_roz, no_buffer )
-MACHINE_DRIVER( metalb,   0,       8192,	deadconx, metalb,   metalb,          no_buffer )
-MACHINE_DRIVER( qzchikyu, 0,       4096,	taitof2,  qzchikyu, taitof2,         partial_buffer_delayed_qzchikyu )
-MACHINE_DRIVER( yesnoj,   0,       4096,	yuyugogo, yesnoj,   yesnoj,          no_buffer )
-MACHINE_DRIVER( deadconx, 0,       4096,	deadconx, deadconx, deadconx,        no_buffer )
-MACHINE_DRIVER( deadconj, 0,       4096,	deadconx, deadconj, deadconx,        no_buffer )
-MACHINE_DRIVER( dinorex,  0,       4096,	taitof2,  dinorex,  taitof2_pri,     no_buffer )
-MACHINE_DRIVER( qjinsei,  0,       4096,	taitof2,  quiz,     taitof2_pri,     no_buffer )
-MACHINE_DRIVER( qcrayon,  qcrayon, 4096,	taitof2,  quiz,     taitof2_pri,     no_buffer )
-MACHINE_DRIVER( qcrayon2, qcrayon, 4096,	taitof2,  quiz,     taitof2_pri,     no_buffer )
-MACHINE_DRIVER( driftout, 0,       4096,	pivot,    driftout, taitof2_pri_roz, no_buffer )
-
-
-static const struct MachineDriver machine_driver_camltrua =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			24000000/2,	/* 12 MHz */
-			cameltry_readmem, cameltry_writemem,0,0,
-			taitof2_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			camltrua_sound_readmem, camltrua_sound_writemem,0,0,
-			ignore_interrupt,1	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD_TAG("main", M68000, 24000000/2)	/* 12 MHz */
+	MDRV_CPU_VBLANK_INT(taitof2_interrupt,1)
 
+	MDRV_CPU_ADD(Z80, 16000000/4)	/* 4 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+	
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(taitof2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	pivot_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	taitof2_no_buffer_eof_callback,
-	taitof2_dondokod_vh_start,
-	taitof2_vh_stop,
-	taitof2_pri_roz_vh_screenrefresh,
+	MDRV_VIDEO_START(taitof2_default)
+	MDRV_VIDEO_EOF(taitof2_no_buffer)
+	MDRV_VIDEO_UPDATE(taitof2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_driveout =									\
-{
+
+static MACHINE_DRIVER_START( finalb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			24000000/2,	/* 12 MHz */
-			driveout_readmem, driveout_writemem,0,0,
-			taitof2_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz */
-			driveout_sound_readmem, driveout_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(finalb_readmem,finalb_writemem)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 30*8-1 },
+	MDRV_GFXDECODE(finalb_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_finalb)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+MACHINE_DRIVER_END
 
-	pivot_gfxdecodeinfo,
-	4096, 0,
-	0,
 
-	VIDEO_TYPE_RASTER,
-	taitof2_no_buffer_eof_callback,
-	taitof2_driftout_vh_start,
-	taitof2_vh_stop,
-	taitof2_pri_roz_vh_screenrefresh,
+static MACHINE_DRIVER_START( dondokod )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(dondokod_readmem,dondokod_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_dondokod)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( megab )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(megab_readmem,megab_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_megab)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( thundfox )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(thundfox_readmem,thundfox_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(thundfox_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_thundfox)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed_thundfox)
+	MDRV_VIDEO_UPDATE(thundfox)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cameltry )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(cameltry_readmem,cameltry_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_dondokod)
+	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qtorimon )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(qtorimon_readmem,qtorimon_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(yuyugogo_gfxdecodeinfo)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( liquidk )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(liquidk_readmem,liquidk_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_megab)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( quizhq )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(quizhq_readmem,quizhq_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(yuyugogo_gfxdecodeinfo)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ssi )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(ssi_readmem,ssi_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_ssi)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+	MDRV_VIDEO_UPDATE(ssi)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( gunfront )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(gunfront_readmem,gunfront_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_gunfront)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( growl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(growl_readmem,growl_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_growl)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjnquest )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mjnquest_readmem,mjnquest_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_mjnquest)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( footchmp )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(footchmp_readmem,footchmp_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_footchmp)
+	MDRV_VIDEO_EOF(taitof2_full_buffer_delayed)
+	MDRV_VIDEO_UPDATE(deadconx)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hthero )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(footchmp_readmem,footchmp_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_hthero)
+	MDRV_VIDEO_EOF(taitof2_full_buffer_delayed)
+	MDRV_VIDEO_UPDATE(deadconx)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( koshien )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(koshien_readmem,koshien_writemem)
+
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_koshien)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( yuyugogo )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(yuyugogo_readmem,yuyugogo_writemem)
+	
+	MDRV_MACHINE_INIT(qcrayon)
+
+	/* video hardware */
+	MDRV_GFXDECODE(yuyugogo_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_yuyugogo)
+	MDRV_VIDEO_UPDATE(yesnoj)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ninjak )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(ninjak_readmem,ninjak_writemem)
+	
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_ninjak)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( solfigtr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(solfigtr_readmem,solfigtr_writemem)
+	
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_solfigtr)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qzquest )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(qzquest_readmem,qzquest_writemem)
+	
+	/* video hardware */
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pulirula )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(pulirula_readmem,pulirula_writemem)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_pulirula)
+	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( metalb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(metalb_readmem,metalb_writemem)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
+	MDRV_VIDEO_START(taitof2_metalb)
+	MDRV_VIDEO_UPDATE(metalb)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qzchikyu )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(qzchikyu_readmem,qzchikyu_writemem)
+	
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_qzchikyu)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed_qzchikyu)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( yesnoj )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(yesnoj_readmem,yesnoj_writemem)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(yuyugogo_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_yesnoj)
+	MDRV_VIDEO_UPDATE(yesnoj)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( deadconx )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(deadconx_readmem,deadconx_writemem)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_deadconx)
+	MDRV_VIDEO_UPDATE(deadconx)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( deadconj )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(deadconx_readmem,deadconx_writemem)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(deadconx_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_deadconj)
+	MDRV_VIDEO_UPDATE(deadconx)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( dinorex )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(dinorex_readmem,dinorex_writemem)
+	
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_dinorex)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qjinsei )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(qjinsei_readmem,qjinsei_writemem)
+	
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_quiz)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qcrayon )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(qcrayon_readmem,qcrayon_writemem)
+	
+	MDRV_MACHINE_INIT(qcrayon)
+	
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_quiz)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qcrayon2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(qcrayon2_readmem,qcrayon2_writemem)
+	
+	MDRV_MACHINE_INIT(qcrayon)
+	
+	/* video hardware */
+	MDRV_VIDEO_START(taitof2_quiz)
+	MDRV_VIDEO_UPDATE(taitof2_pri)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( driftout )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(taito_f2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(driftout_readmem,driftout_writemem)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
+	MDRV_VIDEO_START(taitof2_driftout)
+	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( camltrua )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000/2)	/* 12 MHz */
+	MDRV_CPU_MEMORY(cameltry_readmem,cameltry_writemem)
+	MDRV_CPU_VBLANK_INT(taitof2_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(camltrua_sound_readmem,camltrua_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(taitof2_dondokod)
+	MDRV_VIDEO_EOF(taitof2_no_buffer)
+	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO   /* does it ? */,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( driveout )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000/2)	/* 12 MHz */
+	MDRV_CPU_MEMORY(driveout_readmem,driveout_writemem)
+	MDRV_CPU_VBLANK_INT(taitof2_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz */
+	MDRV_CPU_MEMORY(driveout_sound_readmem,driveout_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(pivot_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(taitof2_driftout)
+	MDRV_VIDEO_EOF(taitof2_no_buffer)
+	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)   /* does it ? */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -6246,13 +6578,13 @@ ROM_START( driveout )
 ROM_END
 
 
-void init_f2( void)
+DRIVER_INIT( f2 )
 {
 	state_save_register_int("taitof2", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);
 }
 
-void init_finalb(void)
+DRIVER_INIT( finalb )
 {
 	int i;
 	unsigned char data;
@@ -6281,7 +6613,7 @@ void init_finalb(void)
 	init_f2();
 }
 
-void init_mjnquest(void)
+DRIVER_INIT( mjnquest )
 {
 	int i;
 	UINT8 *gfx = memory_region(REGION_GFX2);
@@ -6300,14 +6632,14 @@ void init_mjnquest(void)
 	init_f2();
 }
 
-void init_yesnoj( void)
+DRIVER_INIT( yesnoj )
 {
 	yesnoj_dsw = 0;
 	state_save_register_int("yesnoj_dsw", 0, "control", &yesnoj_dsw);
 	init_f2();
 }
 
-void init_driveout( void)
+DRIVER_INIT( driveout )
 {
 	state_save_register_int("driveout_sound1", 0, "sound", &driveout_sound_latch);
 	state_save_register_int("driveout_sound2", 0, "sound region", &oki_bank);

@@ -1,15 +1,13 @@
 /***************************************************************************
 
-  machine.c
-
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
+	Atari I, Robot hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "cpuintrf.h"
 #include "cpu/m6809/m6809.h"
+#include "irobot.h"
 
 /* Note:
  * There's probably something wrong with the way the Mathbox gets started.
@@ -28,24 +26,18 @@
 
 #define IR_CPU_STATE \
 	logerror(\
-			"pc: %4x, scanline: %d\n", cpu_getpreviouspc(), cpu_getscanline())
+			"pc: %4x, scanline: %d\n", activecpu_get_previouspc(), cpu_getscanline())
 
 
 UINT8 irvg_clear;
 static UINT8 irvg_vblank;
 static UINT8 irvg_running;
 static UINT8 irmb_running;
-static void *irscanline_timer;
 
 #if IR_TIMING
 static void *irvg_timer;
 static void *irmb_timer;
 #endif
-extern void run_video(void);
-
-extern void irobot_poly_clear(void);
-
-extern struct mame_bitmap *polybitmapt;
 
 static UINT8 *comRAM[2], *mbRAM, *mbROM;
 static UINT8 irobot_control_num = 0;
@@ -114,20 +106,14 @@ WRITE_HANDLER( irobot_statwr_w )
 
 	if ((data & 0x04) && !(irobot_statwr & 0x04))
 	{
-		run_video();
+		irobot_run_video();
 #if IR_TIMING
 		if (irvg_running == 0)
-		{
 			logerror("vg start ");
-			IR_CPU_STATE;
-			irvg_timer = timer_set (TIME_IN_MSEC(10), 0, irvg_done_callback);
-		}
 		else
-		{
 			logerror("vg start [busy!] ");
-			IR_CPU_STATE;
-			timer_reset (irvg_timer , TIME_IN_MSEC(10));
-		}
+		IR_CPU_STATE;
+		timer_adjust(irvg_timer, TIME_IN_MSEC(10), 0, 0);
 #endif
 		irvg_running=1;
 	}
@@ -198,10 +184,11 @@ static void scanline_callback(int scanline)
     /* set a callback for the next 32-scanline increment */
     scanline += 32;
     if (scanline >= 256) scanline = 0;
-    irscanline_timer = timer_set(cpu_getscanlinetime(scanline), scanline, scanline_callback);
+    timer_set(cpu_getscanlinetime(scanline), scanline, scanline_callback);
 }
 
-void irobot_init_machine(void)
+static void irmb_done_callback (int param);
+MACHINE_INIT( irobot )
 {
 	UINT8 *MB = memory_region(REGION_CPU2);
 
@@ -213,10 +200,12 @@ void irobot_init_machine(void)
 
 	irvg_vblank=0;
 	irvg_running = 0;
+	irvg_timer = timer_alloc(irvg_done_callback);
 	irmb_running = 0;
+	irmb_timer = timer_alloc(irmb_done_callback);
 
 	/* set an initial timer to go off on scanline 0 */
-	irscanline_timer = timer_set(cpu_getscanlinetime(0), 0, scanline_callback);
+	timer_set(cpu_getscanlinetime(0), 0, scanline_callback);
 
 	irobot_rom_banksel_w(0,0);
 	irobot_out0_w(0,0);
@@ -385,7 +374,7 @@ void load_oproms(void)
 	int i;
 
 	/* allocate RAM */
-	mbops = malloc(sizeof(irmb_ops) * 1024);
+	mbops = auto_malloc(sizeof(irmb_ops) * 1024);
 	if (!mbops) return;
 
 	for (i = 0; i < 1024; i++)
@@ -452,7 +441,7 @@ void load_oproms(void)
 
 
 /* Init mathbox (only called once) */
-void init_irobot(void)
+DRIVER_INIT( irobot )
 {
 	int i;
 	for (i = 0; i < 16; i++)
@@ -862,7 +851,7 @@ default:	case 0x3f:	IXOR(irmb_din(curop), 0);							break;
 #if IR_TIMING
 	if (irmb_running == 0)
 	{
-		irmb_timer = timer_set (TIME_IN_HZ(12000000) * icount, 0, irmb_done_callback);
+		timer_adjust(irmb_timer, TIME_IN_HZ(12000000) * icount, 0, 0);
 		logerror("mb start ");
 		IR_CPU_STATE;
 	}
@@ -870,7 +859,7 @@ default:	case 0x3f:	IXOR(irmb_din(curop), 0);							break;
 	{
 		logerror("mb start [busy!] ");
 		IR_CPU_STATE;
-		timer_reset (irmb_timer, TIME_IN_NSEC(200) * icount);
+		timer_adjust(irmb_timer, TIME_IN_NSEC(200) * icount, 0, 0);
 	}
 #else
 	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);

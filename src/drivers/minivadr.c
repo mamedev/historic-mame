@@ -16,8 +16,8 @@ Japan). It has no sound.
 
 
 WRITE_HANDLER( minivadr_videoram_w );
-void minivadr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void minivadr_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
+VIDEO_UPDATE( minivadr );
+PALETTE_INIT( minivadr );
 
 
 static MEMORY_READ_START( readmem )
@@ -46,36 +46,28 @@ INPUT_PORTS_START( minivadr )
 INPUT_PORTS_END
 
 
-static const struct MachineDriver machine_driver_minivadr =
-{
+static MACHINE_DRIVER_START( minivadr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			24000000 / 6,		 /* 4 MHz ? */
-			readmem, writemem, 0, 0,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,					/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80,24000000 / 6)		 /* 4 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 16, 240-1 },
-	0,
-	2, 0,
-	minivadr_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 16, 240-1)
+	MDRV_PALETTE_LENGTH(2)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	0,
-	0,
-	minivadr_vh_screenrefresh,
+	MDRV_PALETTE_INIT(minivadr)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(minivadr)
 
 	/* sound hardware */
-	0, 0, 0, 0
-};
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

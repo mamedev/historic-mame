@@ -177,44 +177,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
   - The level 1 interrupt to the 68k has been measured at 60Hz.
 *******************************************/
 
-static struct MachineDriver machine_driver_namcond1 =
-{
-	{
-		{
-			CPU_M68000,
-			12288000,
-			readmem, writemem, 0, 0,
-			namcond1_vb_interrupt, 1,
-			ygv608_timed_interrupt, 1000,
-			0
-		}
-	},
-	60.0,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* 100 CPU slices per frame */
-	namcond1_init_machine,
+static MACHINE_DRIVER_START( namcond1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12288000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold, 1)
+	MDRV_CPU_PERIODIC_INT(ygv608_timed_interrupt, 1000)
+
+	MDRV_FRAMES_PER_SECOND(60.0)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(namcond1)
+	MDRV_NVRAM_HANDLER(namcond1)
 
 	/* video hardware */
-	288, 224,             // maximum display resolution (512x512 in theory)
-	{ 0, 287, 0, 223 },   // default visible area
-	gfxdecodeinfo,
-	256, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,			                /* Video initialisation    */
-	ygv608_vh_start,	            /* Video start             */
-	ygv608_vh_stop,	            /* Video stop              */
-	ygv608_vh_update,	            /* Video update            */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(288, 224)   // maximum display resolution (512x512 in theory)
+	MDRV_VISIBLE_AREA(0, 287, 0, 223)   // default visible area
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	/* sound hardware */
-	0,0,0,0,
-	/* Sound struct here */
-	{
-		{ 0, 0 }
-	},
-
-	namcond1_nvramhandler
-};
+	MDRV_VIDEO_START(ygv608)
+	MDRV_VIDEO_UPDATE(ygv608)
+MACHINE_DRIVER_END
 
 
 ROM_START( ncv1 )

@@ -38,7 +38,7 @@ static int chon,objon,sc1on,sc2on;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( exedexes )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -153,7 +153,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int priority)
 }
 
 
-void exedexes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( exedexes )
 {
 	int offs,sx,sy;
 
@@ -239,7 +239,7 @@ void exedexes_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void exedexes_eof_callback(void)
+VIDEO_EOF( exedexes )
 {
 	buffer_spriteram_w(0,0);
 }

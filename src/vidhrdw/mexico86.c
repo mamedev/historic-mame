@@ -20,7 +20,7 @@ WRITE_HANDLER( mexico86_bankswitch_w )
 
 
 
-void mexico86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mexico86 )
 {
 	int offs;
 	int sx,sy,xc,yc;
@@ -99,7 +99,7 @@ if (offs >= mexico86_objectram_size+0x1c0) continue;
 	}
 }
 
-void kikikai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kikikai )
 {
 	int offs;
 	int sx,sy,xc,yc;

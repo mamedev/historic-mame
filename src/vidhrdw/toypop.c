@@ -23,7 +23,7 @@ static int flipscreen, palettebank;
 
 
 ***************************************************************************/
-void toypop_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( toypop )
 {
 	int i;
 
@@ -160,7 +160,7 @@ void draw_background_and_characters(struct mame_bitmap *bitmap)
 	}
 }
 
-void toypop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( toypop )
 {
 	register int offs, x, y;
 

@@ -200,29 +200,6 @@
 #define COIN_CLOCK_OSC		4000000		/* 4 MHz */
 
 
-/* Local variables */
-static UINT8 *nvram;
-static size_t nvram_size;
-
-
-
-/*************************************
- *
- *	NVRAM
- *
- *************************************/
-
-static void nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, nvram_size);
-	else if (file)
-		osd_fread(file, nvram, nvram_size);
-	else
-		memset(nvram, 0, nvram_size);
-}
-
-
 
 /*************************************
  *
@@ -307,8 +284,8 @@ MEMORY_END
 static MEMORY_WRITE_START( writemem_video )
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
-	{ 0x8400, 0x87ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x8800, 0x8800, qix_palettebank_w, &qix_palettebank },
+	{ 0x8400, 0x87ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
+	{ 0x8800, 0x8800, qix_palettebank_w },
 	{ 0x8c00, 0x8c00, qix_data_firq_w },
 	{ 0x8c01, 0x8c01, qix_video_firq_ack_w },
 	{ 0x9000, 0x93ff, qix_paletteram_w, &paletteram },
@@ -336,8 +313,8 @@ MEMORY_END
 static MEMORY_WRITE_START( zoo_writemem_video )
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
-	{ 0x8400, 0x87ff, MWA_RAM, &nvram, &nvram_size },
-	{ 0x8800, 0x8800, qix_palettebank_w, &qix_palettebank },
+	{ 0x8400, 0x87ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
+	{ 0x8800, 0x8800, qix_palettebank_w },
 	{ 0x8801, 0x8801, zoo_bankswitch_w },
 	{ 0x8c00, 0x8c00, qix_data_firq_w },
 	{ 0x8c01, 0x8c01, qix_video_firq_ack_w },
@@ -638,218 +615,82 @@ static struct SN76496interface sn76496_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_qix =
-{
+static MACHINE_DRIVER_START( qix )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			MAIN_CLOCK_OSC/4/4,		/* 1.25 MHz */
-			readmem_data,writemem_data,0,0,
-			qix_vblank_start,1
-		},
-		{
-			CPU_M6809,
-			MAIN_CLOCK_OSC/4/4,		/* 1.25 MHz */
-			readmem_video,writemem_video,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M6802 | CPU_AUDIO_CPU,
-			SOUND_CLOCK_OSC/2/4,	/* 0.92 MHz */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* synchronization done by scanline timing */
-	qix_init_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, MAIN_CLOCK_OSC/4/4)	/* 1.25 MHz */
+	MDRV_CPU_MEMORY(readmem_data,writemem_data)
+	MDRV_CPU_VBLANK_INT(qix_vblank_start,1)
+
+	MDRV_CPU_ADD_TAG("video", M6809, MAIN_CLOCK_OSC/4/4)	/* 1.25 MHz */
+	MDRV_CPU_MEMORY(readmem_video,writemem_video)
+
+	MDRV_CPU_ADD_TAG("sound", M6802, SOUND_CLOCK_OSC/2/4)	/* 0.92 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(qix)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	256, 256, { 0, 255, 8, 247 },
-	0,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 8, 247)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	qix_vh_start,
-	qix_vh_stop,
-	qix_vh_screenrefresh,
+	MDRV_VIDEO_START(qix)
+	MDRV_VIDEO_UPDATE(qix)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD_TAG("dac", DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_mcu =
-{
+static MACHINE_DRIVER_START( mcu )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			MAIN_CLOCK_OSC/4/4,		/* 1.25 MHz */
-			readmem_data,writemem_data,0,0,
-			qix_vblank_start,1
-		},
-		{
-			CPU_M6809,
-			MAIN_CLOCK_OSC/4/4,		/* 1.25 MHz */
-			readmem_video,writemem_video,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M6802 | CPU_AUDIO_CPU,
-			SOUND_CLOCK_OSC/2/4,	/* 0.92 MHz */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M68705,
-			COIN_CLOCK_OSC/4,		/* 1.00 MHz */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* synchronization done by scanline timing */
-	qixmcu_init_machine,
+	MDRV_IMPORT_FROM(qix)
+
+	MDRV_CPU_ADD(M68705, COIN_CLOCK_OSC/4)	/* 1.00 MHz */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+
+	MDRV_MACHINE_INIT(qixmcu)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( zookeep )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mcu)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(zoo_readmem_data,zoo_writemem_data)
+
+	MDRV_CPU_MODIFY("video")
+	MDRV_CPU_MEMORY(zoo_readmem_video,zoo_writemem_video)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( slither )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(qix)
+
+	MDRV_CPU_REPLACE("main", M6809, SLITHER_CLOCK_OSC/4/4)	/* 1.34 MHz */
+	MDRV_CPU_REPLACE("video", M6809, SLITHER_CLOCK_OSC/4/4)	/* 1.34 MHz */
+	MDRV_CPU_REMOVE("sound")
+
+	MDRV_MACHINE_INIT(slither)
 
 	/* video hardware */
-	256, 256, { 0, 255, 8, 247 },
-	0,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	qix_vh_start,
-	qix_vh_stop,
-	qix_vh_screenrefresh,
+	MDRV_VISIBLE_AREA(0, 255, 0, 255)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
-
-
-static const struct MachineDriver machine_driver_zookeep =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			MAIN_CLOCK_OSC/4/4,		/* 1.25 MHz */
-			zoo_readmem_data,zoo_writemem_data,0,0,
-			qix_vblank_start,1
-		},
-		{
-			CPU_M6809,
-			MAIN_CLOCK_OSC/4/4,		/* 1.25 MHz */
-			zoo_readmem_video,zoo_writemem_video,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M6802 | CPU_AUDIO_CPU,
-			SOUND_CLOCK_OSC/2/4,	/* 0.92 MHz */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M68705,
-			COIN_CLOCK_OSC/4,		/* 1.00 MHz */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* synchronization done by scanline timing */
-	qixmcu_init_machine,
-
-	/* video hardware */
-	256, 256, { 0, 255, 8, 247 },
-	0,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	qix_vh_start,
-	qix_vh_stop,
-	qix_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	nvram_handler
-};
-
-
-static const struct MachineDriver machine_driver_slither =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			SLITHER_CLOCK_OSC/4/4,	/* 1.34 MHz */
-			readmem_data,writemem_data,0,0,
-			qix_vblank_start,1
-		},
-		{
-			CPU_M6809,
-			SLITHER_CLOCK_OSC/4/4,	/* 1.34 MHz */
-			readmem_video,writemem_video,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* synchronization done by scanline timing */
-	slither_init_machine,
-
-	/* video hardware */
-	256, 256, { 0, 255, 0, 255 },
-	0,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	qix_vh_start,
-	qix_vh_stop,
-	qix_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_REPLACE("dac", SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1080,6 +921,31 @@ ROM_START( kram2 )
 ROM_END
 
 
+ROM_START( kram3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+    ROM_LOAD( "kr-u14", 0xa000, 0x1000, 0x02c1bd1e )
+    ROM_LOAD( "kr-u15", 0xb000, 0x1000, 0x46b3ff33 )
+    ROM_LOAD( "kr-u16", 0xc000, 0x1000, 0xf202b9cf )
+    ROM_LOAD( "kr-u17", 0xd000, 0x1000, 0x257cea23 )
+    ROM_LOAD( "kr-u18", 0xe000, 0x1000, 0xda3aed8c )
+    ROM_LOAD( "kr-u19", 0xf000, 0x1000, 0x496ab571 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+    ROM_LOAD( "kr-u5",  0xa000, 0x1000, 0x9e63c2bc )
+    ROM_LOAD( "kr-u6",  0xb000, 0x1000, 0xa0ff1244 )
+    ROM_LOAD( "kr-u7",  0xc000, 0x1000, 0x20a15024 )
+    ROM_LOAD( "kr-u8",  0xd000, 0x1000, 0x1127c4e4 )
+    ROM_LOAD( "kr-u9",  0xe000, 0x1000, 0xd3bc8b5e )
+    ROM_LOAD( "kr-u10", 0xf000, 0x1000, 0x0a8adbd8 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+    ROM_LOAD( "kr-u27", 0xf800, 0x0800, 0xc46530c8 )
+
+	ROM_REGION( 0x0800, REGION_CPU4, 0 )
+	ROM_LOAD( "ks101.dat", 0x0000, 0x0800, 0xe53d97b7 )
+ROM_END
+
+
 ROM_START( zookeep )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "za12", 0x8000, 0x1000, 0x4e40d8dc )
@@ -1219,14 +1085,14 @@ ROM_END
  *
  *************************************/
 
-static void init_kram(void)
+static DRIVER_INIT( kram )
 {
 	/* we need to override one PIA handler to prevent controls from getting disabled */
 	install_mem_write_handler(0, 0x9400, 0x97ff, zookeep_pia_0_w);
 }
 
 
-static void init_zookeep(void)
+static DRIVER_INIT( zookeep )
 {
 	/* we need to override two PIA handlers to prevent controls from getting disabled */
 	install_mem_write_handler(0, 0x1400, 0x17ff, zookeep_pia_0_w);
@@ -1234,7 +1100,7 @@ static void init_zookeep(void)
 }
 
 
-static void init_slither(void)
+static DRIVER_INIT( slither )
 {
 	install_mem_write_handler(1, 0x9401, 0x9401, slither_vram_mask_w);
 }
@@ -1256,6 +1122,7 @@ GAME( 1982, elecyoyo, 0,        mcu,     elecyoyo, 0,        ROT270, "Taito Amer
 GAME( 1982, elecyoy2, elecyoyo, mcu,     elecyoyo, 0,        ROT270, "Taito America Corporation", "The Electric Yo-Yo (set 2)" )
 GAME( 1982, kram,     0,        mcu,     kram,     kram,     ROT0,   "Taito America Corporation", "Kram (set 1)" )
 GAME( 1982, kram2,    kram,     mcu,     kram,     kram,     ROT0,   "Taito America Corporation", "Kram (set 2)" )
+GAMEX(1982, kram3,    kram,     mcu,     kram,     kram,     ROT0,   "Taito America Corporation", "Kram (set 3)", GAME_UNEMULATED_PROTECTION )
 GAME( 1982, zookeep,  0,        zookeep, zookeep,  zookeep,  ROT0,   "Taito America Corporation", "Zoo Keeper (set 1)" )
 GAME( 1982, zookeep2, zookeep,  zookeep, zookeep,  zookeep,  ROT0,   "Taito America Corporation", "Zoo Keeper (set 2)" )
 GAME( 1982, zookeep3, zookeep,  zookeep, zookeep,  zookeep,  ROT0,   "Taito America Corporation", "Zoo Keeper (set 3)" )

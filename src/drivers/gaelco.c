@@ -17,7 +17,6 @@ extern data16_t *gaelco_spriteram;
 
 /* from vidhrdw/gaelco.c */
 WRITE16_HANDLER( gaelco_vram_w );
-void gaelco_vh_stop(void);
 
 
 #define TILELAYOUT8(NUM) static struct GfxLayout tilelayout8_##NUM =	\
@@ -53,8 +52,8 @@ void gaelco_vh_stop(void);
 							BIG KARNAK
   ============================================================================*/
 
-int bigkarnk_vh_start( void );
-void bigkarnk_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+VIDEO_START( bigkarnk );
+VIDEO_UPDATE( bigkarnk );
 
 
 static MEMORY_READ16_START( bigkarnk_readmem )
@@ -75,7 +74,7 @@ WRITE16_HANDLER( bigkarnk_sound_command_w )
 {
 	if (ACCESSING_LSB){
 		soundlatch_w(0,data & 0xff);
-		cpu_cause_interrupt(1,M6809_INT_FIRQ);
+		cpu_set_irq_line(1,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 }
 
@@ -228,51 +227,35 @@ static struct OKIM6295interface bigkarnk_okim6295_interface =
 };
 
 
-static const struct MachineDriver machine_driver_bigkarnk =
-{
-	{
-		{
-			CPU_M68000,					/* MC68000P10 */
-			10000000,					/* 10 MHz */
-			bigkarnk_readmem,bigkarnk_writemem,0,0,
-			m68_level6_irq,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,	/* 68B09 */
-			8867000/4,					/* 2.21675 MHz? */
-			bigkarnk_readmem_snd,bigkarnk_writemem_snd,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	0,
+static MACHINE_DRIVER_START( bigkarnk )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)	/* MC68000P10, 10 MHz */
+	MDRV_CPU_MEMORY(bigkarnk_readmem,bigkarnk_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(M6809, 8867000/4)	/* 68B09, 2.21675 MHz? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	
+	MDRV_CPU_MEMORY(bigkarnk_readmem_snd,bigkarnk_writemem_snd)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 320-1, 16, 256-1 },
-	gfxdecodeinfo_0x100000,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 320-1, 16, 256-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_0x100000)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bigkarnk_vh_start,
-	gaelco_vh_stop,
-	bigkarnk_vh_screenrefresh,
+	MDRV_VIDEO_START(bigkarnk)
+	MDRV_VIDEO_UPDATE(bigkarnk)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&bigkarnk_ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&bigkarnk_okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, bigkarnk_ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, bigkarnk_okim6295_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( bigkarnk )
@@ -302,8 +285,8 @@ ROM_END
 					BIOMECHANICAL TOY & MANIAC SQUARE
   ============================================================================*/
 
-int maniacsq_vh_start( void );
-void maniacsq_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+VIDEO_START( maniacsq );
+VIDEO_UPDATE( maniacsq );
 
 
 static MEMORY_READ16_START( maniacsq_readmem )
@@ -497,41 +480,29 @@ static struct OKIM6295interface maniacsq_okim6295_interface =
 	{ 100 }				/* volume */
 };
 
-static const struct MachineDriver machine_driver_maniacsq =
-{
-	{
-		{
-			CPU_M68000,
-			24000000/2,			/* 12 MHz */
-			maniacsq_readmem,maniacsq_writemem,0,0,
-			m68_level6_irq,1
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( maniacsq )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz */
+	MDRV_CPU_MEMORY(maniacsq_readmem,maniacsq_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*16, 32*16, { 0, 320-1, 16, 256-1 },
-	gfxdecodeinfo_0x100000,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 320-1, 16, 256-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_0x100000)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	maniacsq_vh_start,
-	gaelco_vh_stop,
-	maniacsq_vh_screenrefresh,
+	MDRV_VIDEO_START(maniacsq)
+	MDRV_VIDEO_UPDATE(maniacsq)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&maniacsq_okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, maniacsq_okim6295_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( maniacsq )

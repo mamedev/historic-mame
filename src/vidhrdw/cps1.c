@@ -357,7 +357,7 @@ void cps_setversion(int v)
 }
 
 
-static void cps_init_machine(void)
+static MACHINE_INIT( cps )
 {
 	const char *gamename = Machine->gamedrv->name;
 	struct CPS1config *pCFG=&cps1_config_table[0];
@@ -447,7 +447,7 @@ INLINE data16_t *cps1_base(int offset,int boundary)
 READ16_HANDLER( cps1_output_r )
 {
 #if VERBOSE
-if (offset >= 0x18/2) logerror("PC %06x: read output port %02x\n",cpu_get_pc(),offset*2);
+if (offset >= 0x18/2) logerror("PC %06x: read output port %02x\n",activecpu_get_pc(),offset*2);
 #endif
 
 	/* Some games interrogate a couple of registers on bootup. */
@@ -496,7 +496,7 @@ if (offset > 0x22/2 &&
 		offset != cps1_game_config->priority[2]/2 &&
 		offset != cps1_game_config->priority[3]/2 &&
 		offset != cps1_game_config->control_reg/2)
-	logerror("PC %06x: write %02x to output port %02x\n",cpu_get_pc(),data,offset*2);
+	logerror("PC %06x: write %02x to output port %02x\n",activecpu_get_pc(),data,offset*2);
 
 #ifdef MAME_DEBUG
 if (offset == 0x22/2 && (data & ~0x8001) != 0x0e)
@@ -672,12 +672,12 @@ static void cps2_gfx_decode(void)
 }
 
 
-void init_cps1(void)
+DRIVER_INIT( cps1 )
 {
 	cps1_gfx_decode();
 }
 
-void init_cps2(void)
+DRIVER_INIT( cps2 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	data16_t *xor = (data16_t *)memory_region(REGION_USER1);
@@ -1027,11 +1027,11 @@ static void update_transmasks(void)
 	}
 }
 
-int cps_vh_start(void)
+VIDEO_START( cps )
 {
 	int i;
 
-    cps_init_machine();
+    machine_init_cps();
 
 	tilemap[0] = tilemap_create(get_tile0_info,tilemap0_scan,TILEMAP_SPLIT, 8, 8,64,64);
 	tilemap[1] = tilemap_create(get_tile1_info,tilemap1_scan,TILEMAP_SPLIT,16,16,64,64);
@@ -1044,32 +1044,26 @@ int cps_vh_start(void)
 	update_transmasks();
 	memset(empty_tile,0xff,sizeof(empty_tile));
 
-	cps1_old_palette=malloc(cps1_palette_size);
+	cps1_old_palette=auto_malloc(cps1_palette_size);
 	if (!cps1_old_palette)
-	{
-		return -1;
-	}
+		return 1;
 	memset(cps1_old_palette, 0x00, cps1_palette_size);
 	for (i = 0;i < cps1_palette_entries*16;i++)
 	{
 		palette_set_color(i,0,0,0);
 	}
 
-    cps1_buffered_obj = malloc (cps1_obj_size);
+    cps1_buffered_obj = auto_malloc (cps1_obj_size);
     if (!cps1_buffered_obj)
-    {
-		return -1;
-	}
+		return 1;
     memset(cps1_buffered_obj, 0x00, cps1_obj_size);
 
 //ks s
 /*
     if (cps_version==2) {
-	cps2_buffered_obj = malloc (2*cps2_obj_size);
+	cps2_buffered_obj = auto_malloc (2*cps2_obj_size);
 	if (!cps2_buffered_obj)
-	{
-	    return -1;
-	}
+	    return 1;
 	memset(cps2_buffered_obj, 0x00, 2*cps2_obj_size);
     }
 */
@@ -1115,36 +1109,19 @@ int cps_vh_start(void)
 	return 0;
 }
 
-int cps1_vh_start(void)
+VIDEO_START( cps1 )
 {
     cps_version=1;
-    return cps_vh_start();
+    return video_start_cps();
 }
 
-int cps2_vh_start(void)
+VIDEO_START( cps2 )
 {
     if (cps_version != 99)
     {
         cps_version=2;
     }
-    return cps_vh_start();
-}
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void cps1_vh_stop(void)
-{
-	if (cps1_old_palette)
-		free(cps1_old_palette);
-	if (cps1_buffered_obj)
-		free(cps1_buffered_obj);
-//ks s
-//    if (cps2_buffered_obj)
-//        free(cps2_buffered_obj);
-//ks e
+    return video_start_cps();
 }
 
 /***************************************************************************
@@ -1213,7 +1190,8 @@ void cps1_build_palette(void)
 					0x0010	colour
 					0x0020	X Flip
 					0x0040	Y Flip
-					0x0080	unknown
+					0x0080	unknown (appears to be object X offset toggle,
+					            used only by Marvel vs. Capcom.)
 					0x0100	X block size (in sprites)
 					0x0200	X block size
 					0x0400	X block size
@@ -1247,7 +1225,7 @@ void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
 }
 
 
-void cps1_render_sprites(struct mame_bitmap *bitmap)
+void cps1_render_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 #define DRAWSPRITE(CODE,COLOR,FLIPX,FLIPY,SX,SY)					\
 {																	\
@@ -1257,14 +1235,14 @@ void cps1_render_sprites(struct mame_bitmap *bitmap)
 				COLOR,												\
 				!(FLIPX),!(FLIPY),									\
 				511-16-(SX),255-16-(SY),							\
-				&Machine->visible_area,TRANSPARENCY_PEN,15,0x02);	\
+				cliprect,TRANSPARENCY_PEN,15,0x02);					\
 	else															\
 		pdrawgfx(bitmap,Machine->gfx[1],							\
 				CODE,												\
 				COLOR,												\
 				FLIPX,FLIPY,										\
 				SX,SY,												\
-				&Machine->visible_area,TRANSPARENCY_PEN,15,0x02);	\
+				cliprect,TRANSPARENCY_PEN,15,0x02);					\
 }
 
 
@@ -1480,7 +1458,7 @@ void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
 #undef DRAWSPRITE
 }
 
-void cps2_render_sprites(struct mame_bitmap *bitmap,int *primasks)
+void cps2_render_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks)
 {
 #define DRAWSPRITE(CODE,COLOR,FLIPX,FLIPY,SX,SY)									\
 {																					\
@@ -1490,14 +1468,14 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,int *primasks)
 				COLOR,																\
 				!(FLIPX),!(FLIPY),													\
 				511-16-(SX),255-16-(SY),											\
-				&Machine->visible_area,TRANSPARENCY_PEN,15,primasks[priority]);		\
+				cliprect,TRANSPARENCY_PEN,15,primasks[priority]);					\
 	else																			\
 		pdrawgfx(bitmap,Machine->gfx[1],											\
 				CODE,																\
 				COLOR,																\
 				FLIPX,FLIPY,														\
 				SX,SY,																\
-				&Machine->visible_area,TRANSPARENCY_PEN,15,primasks[priority]);		\
+				cliprect,TRANSPARENCY_PEN,15,primasks[priority]);					\
 }
 
 	int i;
@@ -1520,6 +1498,9 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,int *primasks)
 		int colour= base[i+3];
 		int col=colour&0x1f;
 
+		if(colour & 0x80)
+			x += cps2_port(CPS2_OBJ_XOFFS);  /* To fix the offset of some */
+						/* sprites in the Marvel vs. Capcom ending credits */
 		if (colour & 0xff00 )
 		{
 			/* handle blocked sprites */
@@ -1620,7 +1601,7 @@ void cps2_render_sprites(struct mame_bitmap *bitmap,int *primasks)
 
 
 
-void cps1_render_stars(struct mame_bitmap *bitmap)
+void cps1_render_stars(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 	UINT8 *stars_rom = memory_region(REGION_GFX2);
@@ -1652,8 +1633,8 @@ void cps1_render_stars(struct mame_bitmap *bitmap)
 
 				col = ((col & 0xe0) >> 1) + (cpu_getcurrentframe()/16 & 0x0f);
 
-				if (sx <= Machine->visible_area.max_x &&
-						sy <= Machine->visible_area.max_y)
+				if (sx >= cliprect->min_x && sx <= cliprect->max_x &&
+					sy >= cliprect->min_y && sy <= cliprect->max_y)
 					plot_pixel(bitmap,sx,sy,Machine->pens[0xa00+col]);
 			}
 		}
@@ -1678,8 +1659,8 @@ void cps1_render_stars(struct mame_bitmap *bitmap)
 
 				col = ((col & 0xe0) >> 1) + (cpu_getcurrentframe()/16 & 0x0f);
 
-				if (sx <= Machine->visible_area.max_x &&
-						sy <= Machine->visible_area.max_y)
+				if (sx >= cliprect->min_x && sx <= cliprect->max_x &&
+					sy >= cliprect->min_y && sy <= cliprect->max_y)
 					plot_pixel(bitmap,sx,sy,Machine->pens[0x800+col]);
 			}
 		}
@@ -1687,22 +1668,22 @@ void cps1_render_stars(struct mame_bitmap *bitmap)
 }
 
 
-void cps1_render_layer(struct mame_bitmap *bitmap,int layer,int primask)
+void cps1_render_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int layer,int primask)
 {
 	switch (layer)
 	{
 		case 0:
-			cps1_render_sprites(bitmap);
+			cps1_render_sprites(bitmap,cliprect);
 			break;
 		case 1:
 		case 2:
 		case 3:
-			tilemap_draw(bitmap,tilemap[layer-1],TILEMAP_BACK,primask);
+			tilemap_draw(bitmap,cliprect,tilemap[layer-1],TILEMAP_BACK,primask);
 			break;
 	}
 }
 
-void cps1_render_high_layer(struct mame_bitmap *bitmap, int layer)
+void cps1_render_high_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer)
 {
 	switch (layer)
 	{
@@ -1712,7 +1693,7 @@ void cps1_render_high_layer(struct mame_bitmap *bitmap, int layer)
 		case 1:
 		case 2:
 		case 3:
-			tilemap_draw(NULL,tilemap[layer-1],TILEMAP_FRONT,1);
+			tilemap_draw(NULL,cliprect,tilemap[layer-1],TILEMAP_FRONT,1);
 			break;
 	}
 }
@@ -1724,7 +1705,7 @@ void cps1_render_high_layer(struct mame_bitmap *bitmap, int layer)
 
 ***************************************************************************/
 
-void cps1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cps1 )
 {
     int layercontrol,l0,l1,l2,l3;
 	int videocontrol=cps1_port(0x22);
@@ -1774,26 +1755,26 @@ void cps1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 	/* Blank screen */
-	fillbitmap(bitmap,Machine->pens[4095],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[4095],cliprect);
 
-	cps1_render_stars(bitmap);
+	cps1_render_stars(bitmap,cliprect);
 
 	/* Draw layers (0 = sprites, 1-3 = tilemaps) */
 	l0 = (layercontrol >> 0x06) & 03;
 	l1 = (layercontrol >> 0x08) & 03;
 	l2 = (layercontrol >> 0x0a) & 03;
 	l3 = (layercontrol >> 0x0c) & 03;
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (cps_version == 1)
 	{
-		cps1_render_layer(bitmap,l0,0);
-		if (l1 == 0) cps1_render_high_layer(bitmap,l0); /* prepare mask for sprites */
-		cps1_render_layer(bitmap,l1,0);
-		if (l2 == 0) cps1_render_high_layer(bitmap,l1); /* prepare mask for sprites */
-		cps1_render_layer(bitmap,l2,0);
-		if (l3 == 0) cps1_render_high_layer(bitmap,l2); /* prepare mask for sprites */
-		cps1_render_layer(bitmap,l3,0);
+		cps1_render_layer(bitmap,cliprect,l0,0);
+		if (l1 == 0) cps1_render_high_layer(bitmap,cliprect,l0); /* prepare mask for sprites */
+		cps1_render_layer(bitmap,cliprect,l1,0);
+		if (l2 == 0) cps1_render_high_layer(bitmap,cliprect,l1); /* prepare mask for sprites */
+		cps1_render_layer(bitmap,cliprect,l2,0);
+		if (l3 == 0) cps1_render_high_layer(bitmap,cliprect,l2); /* prepare mask for sprites */
+		cps1_render_layer(bitmap,cliprect,l3,0);
 	}
 	else
 	{
@@ -1832,10 +1813,10 @@ if (0 && keyboard_pressed(KEYCODE_Z))
 			if (i <= l2pri) primasks[i] |= 0xf0;
 		}
 
-		cps1_render_layer(bitmap,l0,1);
-		cps1_render_layer(bitmap,l1,2);
-		cps1_render_layer(bitmap,l2,4);
-		cps2_render_sprites(bitmap,primasks);
+		cps1_render_layer(bitmap,cliprect,l0,1);
+		cps1_render_layer(bitmap,cliprect,l1,2);
+		cps1_render_layer(bitmap,cliprect,l2,4);
+		cps2_render_sprites(bitmap,cliprect,primasks);
 	}
 
 #if CPS1_DUMP_VIDEO
@@ -1846,7 +1827,7 @@ if (0 && keyboard_pressed(KEYCODE_Z))
 #endif
 }
 
-void cps1_eof_callback(void)
+VIDEO_EOF( cps1 )
 {
 	/* Get video memory base registers */
 	cps1_get_video_base();

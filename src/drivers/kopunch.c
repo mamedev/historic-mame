@@ -4,7 +4,7 @@
 unsigned char *bsvideoram;
 size_t bsvideoram_size;
 
-void kopunch_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( kopunch )
 {
 	int i;
 
@@ -35,7 +35,7 @@ color_prom+=32+32+16+8;
 	}
 }
 
-void kopunch_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kopunch )
 {
 	int offs;
 static int bank=0;
@@ -89,13 +89,14 @@ if (keyboard_pressed_memory(KEYCODE_X)) bank++;
 }
 
 
-int kopunch_interrupt(void)
+INTERRUPT_GEN( kopunch_interrupt )
 {
-	if (keyboard_pressed(KEYCODE_Q)) return 0xef;	/* RST 28h */
-	if (keyboard_pressed(KEYCODE_W)) return 0xf7;	/* RST 30h */
-	if (keyboard_pressed(KEYCODE_E)) return 0xff;	/* RST 38h */
-
-	return ignore_interrupt();
+	if (keyboard_pressed(KEYCODE_Q))
+		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xef);	/* RST 28h */
+	else if (keyboard_pressed(KEYCODE_W))
+		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xf7);	/* RST 30h */
+	else if (keyboard_pressed(KEYCODE_E))
+		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xff);	/* RST 38h */
 }
 
 
@@ -152,36 +153,30 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_kopunch =
-{
+static MACHINE_DRIVER_START( kopunch )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ? */
-			readmem,writemem,0,0,
-			kopunch_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(kopunch_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	8,8,
-	kopunch_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	kopunch_vh_screenrefresh,
+	MDRV_PALETTE_INIT(kopunch)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(kopunch)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 
 
@@ -216,7 +211,7 @@ ROM_START( kopunch )
 ROM_END
 
 
-static void init_kopunch(void)
+static DRIVER_INIT( kopunch )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

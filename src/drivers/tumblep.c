@@ -17,9 +17,9 @@
 #include "cpu/h6280/h6280.h"
 #include "decocrpt.h"
 
-int  tumblep_vh_start(void);
-void tumblep_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void tumblepb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( tumblep );
+VIDEO_UPDATE( tumblep );
+VIDEO_UPDATE( tumblepb );
 
 WRITE16_HANDLER( tumblep_pf1_data_w );
 WRITE16_HANDLER( tumblep_pf2_data_w );
@@ -43,7 +43,7 @@ static READ16_HANDLER( tumblep_prot_r )
 static WRITE16_HANDLER( tumblep_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
-	cpu_cause_interrupt(1,H6280_INT_IRQ1);
+	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
 /******************************************************************************/
@@ -310,91 +310,60 @@ static struct YM2151interface ym2151_interface =
 	{ sound_irq }
 };
 
-static const struct MachineDriver machine_driver_tumblepop =
-{
+static MACHINE_DRIVER_START( tumblepop )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68000,
-			14000000,
-			tumblepop_readmem,tumblepop_writemem,0,0,
-			m68_level6_irq,1
-		},
-		{
-			CPU_H6280 | CPU_AUDIO_CPU, /* Custom chip 45 */
-			32220000/8, /* Audio section crystal is 32.220 MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	58, 529,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 14000000)
+	MDRV_CPU_MEMORY(tumblepop_readmem,tumblepop_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(H6280, 32220000/8)	/* Custom chip 45; Audio section crystal is 32.220 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	tumblep_vh_start,
-	0,
-	tumblep_vh_screenrefresh,
+	MDRV_VIDEO_START(tumblep)
+	MDRV_VIDEO_UPDATE(tumblep)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-  	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tumblepb =
-{
+
+static MACHINE_DRIVER_START( tumblepb )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68000,
-			14000000,
-			tumblepopb_readmem,tumblepopb_writemem,0,0,
-			m68_level6_irq,1
-		},
-	},
-	58, 529,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 14000000)
+	MDRV_CPU_MEMORY(tumblepopb_readmem,tumblepopb_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	tumblep_vh_start,
-	0,
-	tumblepb_vh_screenrefresh,
+	MDRV_VIDEO_START(tumblep)
+	MDRV_VIDEO_UPDATE(tumblepb)
 
 	/* sound hardware */
-	0,0,0,0,
-  	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface2
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -474,12 +443,12 @@ ROM_END
 /******************************************************************************/
 
 
-static void init_tumblep(void)
+static DRIVER_INIT( tumblep )
 {
-	deco56_decrypt();
+	deco56_decrypt(REGION_GFX1);
 }
 
-static void init_tumblepb(void)
+static DRIVER_INIT( tumblepb )
 {
 	data8_t *rom = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);

@@ -77,7 +77,7 @@ WRITE_HANDLER( exzisus_objectram_1_w )
   Screen refresh
 ***************************************************************************/
 
-void exzisus_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( exzisus )
 {
 	int offs;
 	int sx, sy, xc, yc;

@@ -25,7 +25,7 @@ WRITE_HANDLER( spcforce_flip_screen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void spcforce_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( spcforce )
 {
 	int offs;
 

@@ -26,10 +26,10 @@ WRITE16_HANDLER( lastduel_scroll2_w );
 WRITE16_HANDLER( madgear_scroll1_w );
 WRITE16_HANDLER( madgear_scroll2_w );
 WRITE16_HANDLER( lastduel_scroll_w );
-int lastduel_vh_start(void);
-int madgear_vh_start(void);
-void lastduel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void lastduel_eof_callback(void);
+VIDEO_START( lastduel );
+VIDEO_START( madgear );
+VIDEO_UPDATE( lastduel );
+VIDEO_EOF( lastduel );
 
 extern data16_t *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 
@@ -257,109 +257,77 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static int lastduel_interrupt(void)
+static INTERRUPT_GEN( lastduel_interrupt )
 {
-	if (cpu_getiloops() == 0) return 2; /* VBL */
-	else return 4; /* Controls */
+	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 2, HOLD_LINE); /* VBL */
+	else cpu_set_irq_line(0, 4, HOLD_LINE); /* Controls */
 }
 
-static int madgear_interrupt(void)
+static INTERRUPT_GEN( madgear_interrupt )
 {
-	if (cpu_getiloops() == 0) return 5; /* VBL */
-	else return 6; /* Controls */
+	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 5, HOLD_LINE); /* VBL */
+	else cpu_set_irq_line(0, 6, HOLD_LINE); /* Controls */
 }
 
-static const struct MachineDriver machine_driver_lastduel =
-{
+static MACHINE_DRIVER_START( lastduel )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* Could be 8 MHz */
-			lastduel_readmem, lastduel_writemem, 0,0,
-			lastduel_interrupt,3	/* 1 for vbl, 2 for control reads?? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545, /* Accurate */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* Could be 8 MHz */
+	MDRV_CPU_MEMORY(lastduel_readmem,lastduel_writemem)
+	MDRV_CPU_VBLANK_INT(lastduel_interrupt,3)	/* 1 for vbl, 2 for control reads?? */
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(lastduel_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	lastduel_gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
-	lastduel_eof_callback,
-	lastduel_vh_start,
-	0,
-	lastduel_vh_screenrefresh,
+	MDRV_VIDEO_START(lastduel)
+	MDRV_VIDEO_EOF(lastduel)
+	MDRV_VIDEO_UPDATE(lastduel)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_madgear =
-{
+
+static MACHINE_DRIVER_START( madgear )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000, /* Accurate */
-			madgear_readmem, madgear_writemem, 0,0,
-			madgear_interrupt,3	/* 1 for vbl, 2 for control reads?? */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545, /* Accurate */
-			mg_sound_readmem,mg_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2203 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000) /* Accurate */
+	MDRV_CPU_MEMORY(madgear_readmem,madgear_writemem)
+	MDRV_CPU_VBLANK_INT(madgear_interrupt,3)	/* 1 for vbl, 2 for control reads?? */
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* Accurate */
+	MDRV_CPU_MEMORY(mg_sound_readmem,mg_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 1*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 1*8, 31*8-1 )
+	MDRV_GFXDECODE(madgear_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	madgear_gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
-	lastduel_eof_callback,
-	madgear_vh_start,
-	0,
-	lastduel_vh_screenrefresh,
+	MDRV_VIDEO_START(madgear)
+	MDRV_VIDEO_EOF(lastduel)
+	MDRV_VIDEO_UPDATE(lastduel)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 

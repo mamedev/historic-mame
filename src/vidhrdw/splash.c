@@ -120,11 +120,11 @@ WRITE16_HANDLER( splash_pixelram_w )
 
 ***************************************************************************/
 
-int splash_vh_start(void)
+VIDEO_START( splash )
 {
 	screen[0] = tilemap_create(get_tile_info_splash_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	screen[1] = tilemap_create(get_tile_info_splash_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	screen2 = bitmap_alloc (512, 256);
+	screen2 = auto_bitmap_alloc (512, 256);
 
 	if (!screen[0] || !screen[1] || !screen2)
 		return 1;
@@ -166,7 +166,7 @@ int splash_vh_start(void)
 	  400| xxxxxxxx -------- | unused
 */
 
-static void splash_draw_sprites(struct mame_bitmap *bitmap)
+static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
 	const struct GfxElement *gfx = Machine->gfx[1];
@@ -183,7 +183,7 @@ static void splash_draw_sprites(struct mame_bitmap *bitmap)
 		drawgfx(bitmap,gfx,number,
 			0x10 + (attr2 & 0x0f),attr & 0x40,attr & 0x80,
 			sx-8,sy,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -193,15 +193,15 @@ static void splash_draw_sprites(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void splash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( splash )
 {
 	/* set scroll registers */
 	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);
 	tilemap_set_scrolly(screen[1], 0, splash_vregs[1]);
 
-	copybitmap(bitmap,screen2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,screen2,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
-	tilemap_draw(bitmap,screen[1],0,0);
-	splash_draw_sprites(bitmap);
-	tilemap_draw(bitmap,screen[0],0,0);
+	tilemap_draw(bitmap,cliprect,screen[1],0,0);
+	splash_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,screen[0],0,0);
 }

@@ -91,7 +91,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void lsasquad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lsasquad )
 {
 	fillbitmap(bitmap,Machine->pens[511],&Machine->visible_area);
 

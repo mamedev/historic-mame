@@ -590,7 +590,7 @@ int phoenix_sh_start(const struct MachineSound *msound)
 	int i, j;
 	UINT32 shiftreg;
 
-	poly18 = (UINT32 *)malloc((1ul << (18-5)) * sizeof(UINT32));
+	poly18 = (UINT32 *)auto_malloc((1ul << (18-5)) * sizeof(UINT32));
 
 	if( !poly18 )
 		return 1;
@@ -619,9 +619,6 @@ int phoenix_sh_start(const struct MachineSound *msound)
 
 void phoenix_sh_stop(void)
 {
-	if( poly18 )
-		free(poly18);
-	poly18 = NULL;
 }
 
 void phoenix_sh_update(void)

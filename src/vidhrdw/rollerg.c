@@ -47,7 +47,7 @@ static void zoom_callback(int *code,int *color)
 
 ***************************************************************************/
 
-int rollerg_vh_start(void)
+VIDEO_START( rollerg )
 {
 	bg_colorbase = 16;
 	sprite_colorbase = 16;
@@ -56,19 +56,10 @@ int rollerg_vh_start(void)
 	if (K053245_vh_start(REGION_GFX1,NORMAL_PLANE_ORDER,sprite_callback))
 		return 1;
 	if (K051316_vh_start_0(REGION_GFX2,4,TILEMAP_TRANSPARENT,0,zoom_callback))
-	{
-		K053245_vh_stop();
 		return 1;
-	}
 
 	K051316_set_offset(0, 22, 1);
 	return 0;
-}
-
-void rollerg_vh_stop(void)
-{
-	K053245_vh_stop();
-	K051316_vh_stop_0();
 }
 
 
@@ -79,10 +70,10 @@ void rollerg_vh_stop(void)
 
 ***************************************************************************/
 
-void rollerg_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rollerg )
 {
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
-	K051316_zoom_draw_0(bitmap,0,1);
-	K053245_sprites_draw(bitmap);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],cliprect);
+	K051316_zoom_draw_0(bitmap,cliprect,0,1);
+	K053245_sprites_draw(bitmap,cliprect);
 }

@@ -178,11 +178,11 @@ WRITE_HANDLER( dkong_flipscreen_w );
 WRITE_HANDLER( dkongjr_gfxbank_w );
 WRITE_HANDLER( dkong3_gfxbank_w );
 WRITE_HANDLER( dkong_palettebank_w );
-void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int dkong_vh_start(void);
-void radarscp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void dkong_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( dkong );
+PALETTE_INIT( dkong3 );
+VIDEO_START( dkong );
+VIDEO_UPDATE( radarscp );
+VIDEO_UPDATE( dkong );
 
 WRITE_HANDLER( dkong_sh_w );
 WRITE_HANDLER( dkongjr_sh_death_w );
@@ -911,237 +911,169 @@ static struct Samplesinterface dkongjr_samples_interface =
 	dkongjr_sample_names
 };
 
-static const struct MachineDriver machine_driver_radarscp =
-{
+static MACHINE_DRIVER_START( radarscp )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			readmem,radarscp_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6MHz crystal */
-			readmem_sound,writemem_sound,readport_sound,writeport_sound,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,radarscp_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(I8035,6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	dkong_gfxdecodeinfo,
-	256+2, 64*4,	/* two extra colors for stars and radar grid */
-	dkong_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dkong_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+2)
+	MDRV_COLORTABLE_LENGTH(64*4)	/* two extra colors for stars and radar grid */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	dkong_vh_start,
-	generic_vh_stop,
-	radarscp_vh_screenrefresh,
+	MDRV_PALETTE_INIT(dkong)
+	MDRV_VIDEO_START(dkong)
+	MDRV_VIDEO_UPDATE(radarscp)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dkong_dac_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&dkong_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+	MDRV_SOUND_ADD(SAMPLES, dkong_samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_dkong =
-{
+static MACHINE_DRIVER_START( dkong )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			readmem,dkong_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6MHz crystal */
-			readmem_sound,writemem_sound,readport_sound,writeport_sound,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,dkong_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(I8035,6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	dkong_gfxdecodeinfo,
-	256, 64*4,
-	dkong_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dkong_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	dkong_vh_start,
-	generic_vh_stop,
-	dkong_vh_screenrefresh,
+	MDRV_PALETTE_INIT(dkong)
+	MDRV_VIDEO_START(dkong)
+	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dkong_dac_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&dkong_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+	MDRV_SOUND_ADD(SAMPLES, dkong_samples_interface)
+MACHINE_DRIVER_END
 
-static int hunchbkd_interrupt(void)
+static INTERRUPT_GEN( hunchbkd_interrupt )
 {
-	return 0x03;	/* hunchbkd S2650 interrupt vector */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x03);
 }
 
-static const struct MachineDriver machine_driver_hunchbkd =
-{
+static MACHINE_DRIVER_START( hunchbkd )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			3072000,
-			hunchbkd_readmem,hunchbkd_writemem,hunchbkd_readport,hunchbkd_writeport,
-			hunchbkd_interrupt,1
-		},
-        {
-			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6MHz crystal */
-			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
-			ignore_interrupt,1
-		}
-    },
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(S2650, 3072000)
+	MDRV_CPU_MEMORY(hunchbkd_readmem,hunchbkd_writemem)
+	MDRV_CPU_PORTS(hunchbkd_readport,hunchbkd_writeport)
+	MDRV_CPU_VBLANK_INT(hunchbkd_interrupt,1)
+
+	MDRV_CPU_ADD(I8035,6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_hunchbkd_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	dkong_gfxdecodeinfo,
-	256, 64*4,
-	dkong_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dkong_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	dkong_vh_start,
-	generic_vh_stop,
-	dkong_vh_screenrefresh,
+	MDRV_PALETTE_INIT(dkong)
+	MDRV_VIDEO_START(dkong)
+	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dkong_dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_herbiedk =
-{
+static MACHINE_DRIVER_START( herbiedk )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			3072000,
-			hunchbkd_readmem,hunchbkd_writemem,herbiedk_readport,hunchbkd_writeport,
-			ignore_interrupt,1
-		},
-        {
-			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6MHz crystal */
-			readmem_sound,writemem_sound,readport_hunchbkd_sound,writeport_sound,
-			ignore_interrupt,1
-		}
-    },
-	60, 1000,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(S2650, 3072000)
+	MDRV_CPU_MEMORY(hunchbkd_readmem,hunchbkd_writemem)
+	MDRV_CPU_PORTS(herbiedk_readport,hunchbkd_writeport)
+
+	MDRV_CPU_ADD(I8035,6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_hunchbkd_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1000)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	dkong_gfxdecodeinfo,
-	256, 64*4,
-	dkong_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dkong_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	dkong_vh_start,
-	generic_vh_stop,
-	dkong_vh_screenrefresh,
+	MDRV_PALETTE_INIT(dkong)
+	MDRV_VIDEO_START(dkong)
+	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dkong_dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_dkongjr =
-{
+static MACHINE_DRIVER_START( dkongjr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			readmem,dkongjr_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_I8035 | CPU_AUDIO_CPU,
-			6000000/15,	/* 6MHz crystal */
-			readmem_sound,writemem_sound,readport_sound,writeport_sound,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,dkongjr_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(I8035,6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 6MHz crystal */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_PORTS(readport_sound,writeport_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	dkongjr_gfxdecodeinfo,
-	256, 64*4,
-	dkong_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dkongjr_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	dkong_vh_start,
-	generic_vh_stop,
-	dkong_vh_screenrefresh,
+	MDRV_PALETTE_INIT(dkong)
+	MDRV_VIDEO_START(dkong)
+	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dkong_dac_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&dkongjr_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dkong_dac_interface)
+	MDRV_SOUND_ADD(SAMPLES, dkongjr_samples_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1153,54 +1085,42 @@ static struct NESinterface nes_interface =
 };
 
 
-static const struct MachineDriver machine_driver_dkong3 =
-{
+static MACHINE_DRIVER_START( dkong3 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,	/* 4 MHz */
-			dkong3_readmem,dkong3_writemem,0,dkong3_writeport,
-			nmi_interrupt,1
-		},
-		{
-			CPU_N2A03 | CPU_AUDIO_CPU,
-			N2A03_DEFAULTCLOCK,
-			dkong3_sound1_readmem,dkong3_sound1_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_N2A03 | CPU_AUDIO_CPU,
-			N2A03_DEFAULTCLOCK,
-			dkong3_sound2_readmem,dkong3_sound2_writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80,8000000/2)	/* 4 MHz */
+	MDRV_CPU_MEMORY(dkong3_readmem,dkong3_writemem)
+	MDRV_CPU_PORTS(0,dkong3_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(N2A03,N2A03_DEFAULTCLOCK)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dkong3_sound1_readmem,dkong3_sound1_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(N2A03,N2A03_DEFAULTCLOCK)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(dkong3_sound2_readmem,dkong3_sound2_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	dkong3_gfxdecodeinfo,
-	256, 64*4,
-	dkong3_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dkong3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	dkong_vh_start,
-	generic_vh_stop,
-	dkong_vh_screenrefresh,
+	MDRV_PALETTE_INIT(dkong3)
+	MDRV_VIDEO_START(dkong)
+	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NES,
-			&nes_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NES, nes_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1685,7 +1605,7 @@ ROM_START( herocast )
 ROM_END
 
 
-static void init_herocast(void)
+static DRIVER_INIT( herocast )
 {
 	int A;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -1703,7 +1623,7 @@ static void init_herocast(void)
 
 
 
-static void init_radarscp(void)
+static DRIVER_INIT( radarscp )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

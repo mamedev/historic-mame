@@ -12,7 +12,7 @@ Namco System II
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6805/m6805.h"
-#include "machine/namcos2.h"
+#include "namcos2.h"
 #include "vidhrdw/generic.h"
 
 data16_t *namcos2_68k_master_ram=NULL;
@@ -25,7 +25,7 @@ int namcos2_gametype=0;
 /* Perform basic machine initialisation 					 */
 /*************************************************************/
 
-void namcos2_init_machine(void){
+MACHINE_INIT( namcos2 ){
 	int loop;
 
 	/* Initialise the bank select in the sound CPU */
@@ -61,7 +61,7 @@ void namcos2_init_machine(void){
 data16_t *namcos2_eeprom;
 size_t namcos2_eeprom_size;
 
-void namcos2_nvram_handler(void *file,int read_or_write){
+NVRAM_HANDLER( namcos2 ){
 	if( read_or_write ){
 		osd_fwrite (file, namcos2_eeprom, namcos2_eeprom_size);
 	}
@@ -193,13 +193,13 @@ data16_t namcos2_68k_key[0x08];
 READ16_HANDLER( namcos2_68k_key_r )
 {
 /*	return namcos2_68k_key[offset]); */
-//logerror("%06x: key_r 0xd0000%x\n",cpu_get_pc(),2*offset);
+//logerror("%06x: key_r 0xd0000%x\n",activecpu_get_pc(),2*offset);
 	return rand()&0xffff;
 }
 
 WRITE16_HANDLER( namcos2_68k_key_w )
 {
-//logerror("%06x: key_w 0xd0000%x = %04x\n",cpu_get_pc(),2*offset,data);
+//logerror("%06x: key_w 0xd0000%x = %04x\n",activecpu_get_pc(),2*offset,data);
 	COMBINE_DATA(&namcos2_68k_key[offset]);
 }
 
@@ -346,7 +346,7 @@ READ16_HANDLER( namcos2_68k_master_C148_r ){
 	return namcos2_68k_master_C148[(offset>>13)&0x1f];
 }
 
-int namcos2_68k_master_vblank(void)
+INTERRUPT_GEN( namcos2_68k_master_vblank )
 {
 	/* If the POS interrupt is running then set it at half way thru the frame */
 	if(namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ]){
@@ -354,7 +354,7 @@ int namcos2_68k_master_vblank(void)
 	}
 
 	/* Assert the VBLANK interrupt */
-	return namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ];
+	cpu_set_irq_line(cpu_getactivecpu(), namcos2_68k_master_C148[NAMCOS2_C148_VBLANKIRQ], HOLD_LINE);
 }
 
 void namcos2_68k_master_posirq( int moog ){
@@ -422,19 +422,13 @@ READ16_HANDLER( namcos2_68k_slave_C148_r )
 	return namcos2_68k_slave_C148[(offset>>13)&0x1f];
 }
 
-int namcos2_68k_slave_vblank(void){
-	return namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ];
+INTERRUPT_GEN( namcos2_68k_slave_vblank ){
+	cpu_set_irq_line(cpu_getactivecpu(), namcos2_68k_slave_C148[NAMCOS2_C148_VBLANKIRQ], HOLD_LINE);
 }
 
 /**************************************************************/
 /*	Sound sub-system										  */
 /**************************************************************/
-
-int namcos2_sound_interrupt(void)
-{
-	return M6809_INT_FIRQ;
-}
-
 
 WRITE_HANDLER( namcos2_sound_bankselect_w )
 {
@@ -450,11 +444,6 @@ WRITE_HANDLER( namcos2_sound_bankselect_w )
 /*	68705 IO CPU Support functions							  */
 /*															  */
 /**************************************************************/
-
-int namcos2_mcu_interrupt(void)
-{
-	return HD63705_INT_IRQ;
-}
 
 static int namcos2_mcu_analog_ctrl=0;
 static int namcos2_mcu_analog_data=0xaa;

@@ -75,13 +75,13 @@ extern int namcos2_gametype;
 
 /*********************************************/
 
-int  namcos2_vh_start(void);
-void namcos2_vh_update_default(struct mame_bitmap *bitmap, int full_refresh);
-void namcos2_vh_update_finallap(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( namcos2 );
+VIDEO_UPDATE( namcos2_default );
+VIDEO_UPDATE( namcos2_finallap );
 
 /* MACHINE */
 
-void namcos2_init_machine(void);
+MACHINE_INIT( namcos2 );
 
 
 
@@ -97,9 +97,9 @@ WRITE16_HANDLER( namcos2_sprite_ram_w );
 /**************************************************************/
 #define NAMCOS2_68K_EEPROM_W	namcos2_68k_eeprom_w, &namcos2_eeprom, &namcos2_eeprom_size
 #define NAMCOS2_68K_EEPROM_R	namcos2_68k_eeprom_r
-void	namcos2_nvram_handler(void *file, int read_or_write);
-WRITE16_HANDLER( 	namcos2_68k_eeprom_w );
-READ16_HANDLER( 	namcos2_68k_eeprom_r );
+NVRAM_HANDLER( namcos2 );
+WRITE16_HANDLER( namcos2_68k_eeprom_w );
+READ16_HANDLER( namcos2_68k_eeprom_r );
 extern data16_t *namcos2_eeprom;
 extern size_t namcos2_eeprom_size;
 
@@ -177,12 +177,12 @@ extern data16_t namcos2_68k_slave_C148[];
 
 WRITE16_HANDLER( namcos2_68k_master_C148_w );
 READ16_HANDLER( namcos2_68k_master_C148_r );
-int  namcos2_68k_master_vblank( void );
+INTERRUPT_GEN( namcos2_68k_master_vblank );
 void namcos2_68k_master_posirq( int moog );
 
 WRITE16_HANDLER( namcos2_68k_slave_C148_w );
 READ16_HANDLER( namcos2_68k_slave_C148_r );
-int  namcos2_68k_slave_vblank(void);
+INTERRUPT_GEN( namcos2_68k_slave_vblank );
 void namcos2_68k_slave_posirq( int moog );
 
 
@@ -248,15 +248,12 @@ READ16_HANDLER( namcos2_68k_road_ctrl_r );
 /* Sound CPU support handlers - 6809						  */
 /**************************************************************/
 
-int  namcos2_sound_interrupt(void);
 WRITE_HANDLER( namcos2_sound_bankselect_w );
 
 
 /**************************************************************/
 /* MCU Specific support handlers - HD63705					  */
 /**************************************************************/
-
-int  namcos2_mcu_interrupt(void);
 
 WRITE_HANDLER( namcos2_mcu_analog_ctrl_w );
 READ_HANDLER( namcos2_mcu_analog_ctrl_r );

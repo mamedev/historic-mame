@@ -40,12 +40,12 @@ WRITE_HANDLER( sauro_scroll2_w )
   the main emulation engine.
 
 ***************************************************************************/
-void sauro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sauro )
 {
 	int offs,code,sx,sy,color,flipx;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

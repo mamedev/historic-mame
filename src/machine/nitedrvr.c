@@ -1,13 +1,12 @@
 /***************************************************************************
 
-Atari Night Driver machine
+	Atari Night Driver hardware
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "nitedrvr.h"
 
 unsigned char *nitedrvr_ram;
 

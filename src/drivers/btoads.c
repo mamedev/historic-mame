@@ -19,9 +19,7 @@
  *************************************/
 
 static data16_t *code_rom;
-static data16_t *cmos_base;
 static data16_t *main_speedup;
-static size_t cmos_size;
 
 static UINT8 main_to_sound_data;
 static UINT8 main_to_sound_ready;
@@ -104,7 +102,7 @@ static READ_HANDLER( sound_ready_to_send_r )
 
 static READ_HANDLER( sound_data_ready_r )
 {
-	if (cpu_get_pc() == 0xd50 && !main_to_sound_ready)
+	if (activecpu_get_pc() == 0xd50 && !main_to_sound_ready)
 		cpu_spinuntil_int();
 	return main_to_sound_ready ? 0x00 : 0x80;
 }
@@ -117,14 +115,13 @@ static READ_HANDLER( sound_data_ready_r )
  *
  *************************************/
 
-static int sound_interrupt(void)
+static INTERRUPT_GEN( sound_interrupt )
 {
 	if (sound_int_state & 0x80)
 	{
 		cpu_set_irq_line(1, 0, ASSERT_LINE);
 		sound_int_state = 0x00;
 	}
-	return ignore_interrupt();
 }
 
 
@@ -168,27 +165,9 @@ static WRITE_HANDLER( bsmt2000_port_w )
 static READ16_HANDLER( main_speedup_r )
 {
 	int result = *main_speedup;
-	if (cpu_get_pc() == 0xffd51a50 && result == 0)
+	if (activecpu_get_pc() == 0xffd51a50 && result == 0)
 		cpu_spinuntil_int();
 	return result;
-}
-
-
-
-/*************************************
- *
- *	NVRAM read/write
- *
- *************************************/
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, cmos_base, cmos_size);
-	else if (file)
-		osd_fread(file, cmos_base, cmos_size);
-	else
-		memset(cmos_base, 0xff, cmos_size);
 }
 
 
@@ -230,7 +209,7 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ TOBYTE(0x20000380), TOBYTE(0x200003ff), main_sound_w },
 	{ TOBYTE(0x20000400), TOBYTE(0x2000047f), btoads_misc_control_w },
 	{ TOBYTE(0x40000000), TOBYTE(0x4000000f), MWA16_NOP },	/* watchdog? */
-	{ TOBYTE(0x60000000), TOBYTE(0x6003ffff), MWA16_RAM, &cmos_base, &cmos_size },
+	{ TOBYTE(0x60000000), TOBYTE(0x6003ffff), MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ TOBYTE(0xa0000000), TOBYTE(0xa03fffff), btoads_vram_fg_display_w, &btoads_vram_fg0 },
 	{ TOBYTE(0xa4000000), TOBYTE(0xa43fffff), btoads_vram_fg_draw_w, &btoads_vram_fg1 },
 	{ TOBYTE(0xa8000000), TOBYTE(0xa87fffff), MWA16_RAM, &btoads_vram_fg_data },
@@ -280,9 +259,6 @@ MEMORY_END
  *	Input ports
  *
  *************************************/
-
-#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 INPUT_PORTS_START( btoads )
 	PORT_START
@@ -399,49 +375,35 @@ static struct BSMT2000interface bsmt2000_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_btoads =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_TMS34020,
-			40000000/TMS34020_CLOCK_DIVIDER,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,0,
-			0,0,&cpu_config
-		},
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			4000000,
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			0,0,
-			sound_interrupt,183
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	0,
+static MACHINE_DRIVER_START( btoads )
+
+	MDRV_CPU_ADD(TMS34020, 40000000/TMS34020_CLOCK_DIVIDER)
+	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_PERIODIC_INT(sound_interrupt,183)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	512, 256, { 0, 511, 0, 223 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512,256)
+	MDRV_VISIBLE_AREA(0,511, 0,223)
+	MDRV_PALETTE_LENGTH(256)
 
-	0,
-	256,0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	btoads_vh_eof,
-	btoads_vh_start,
-	btoads_vh_stop,
-	btoads_vh_screenrefresh,
+	MDRV_VIDEO_START(btoads)
+	MDRV_VIDEO_UPDATE(btoads)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_BSMT2000, &bsmt2000_interface }
-	},
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(BSMT2000, bsmt2000_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -473,7 +435,7 @@ ROM_END
  *
  *************************************/
 
-static void init_btoads(void)
+static DRIVER_INIT( btoads )
 {
 	/* set up code ROMs */
 	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));

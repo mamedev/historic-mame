@@ -306,26 +306,25 @@ second level. Probably related to the mapper's irq timming.
 #define N2A03_DEFAULTCLOCK (21477272.724 / 12)
 
 /* from vidhrdw */
-extern int playch10_vh_start( void );
-extern void playch10_vh_stop( void );
-extern void playch10_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void playch10_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
+extern VIDEO_START( playch10 );
+extern PALETTE_INIT( playch10 );
+extern VIDEO_UPDATE( playch10 );
 
 /* from machine */
-extern void pc10_init_machine( void );
-extern void init_playch10( void );	/* standard games */
-extern void init_pc_gun( void );	/* gun games */
-extern void init_pc_hrz( void );	/* horizontal games */
-extern void init_pcaboard( void );	/* a-board games */
-extern void init_pcbboard( void );	/* b-board games */
-extern void init_pccboard( void );	/* c-board games */
-extern void init_pcdboard( void );	/* d-board games */
-extern void init_pceboard( void );	/* e-board games */
-extern void init_pcfboard( void );	/* f-board games */
-extern void init_pcgboard( void );	/* g-board games */
-extern void init_pchboard( void );	/* h-board games */
-extern void init_pciboard( void );	/* i-board games */
-extern void init_pckboard( void );	/* k-board games */
+extern MACHINE_INIT( pc10 );
+extern DRIVER_INIT( playch10 );	/* standard games */
+extern DRIVER_INIT( pc_gun );	/* gun games */
+extern DRIVER_INIT( pc_hrz );	/* horizontal games */
+extern DRIVER_INIT( pcaboard );	/* a-board games */
+extern DRIVER_INIT( pcbboard );	/* b-board games */
+extern DRIVER_INIT( pccboard );	/* c-board games */
+extern DRIVER_INIT( pcdboard );	/* d-board games */
+extern DRIVER_INIT( pceboard );	/* e-board games */
+extern DRIVER_INIT( pcfboard );	/* f-board games */
+extern DRIVER_INIT( pcgboard );	/* g-board games */
+extern DRIVER_INIT( pchboard );	/* h-board games */
+extern DRIVER_INIT( pciboard );	/* i-board games */
+extern DRIVER_INIT( pckboard );	/* k-board games */
 READ_HANDLER( pc10_port_0_r );
 READ_HANDLER( pc10_instrom_r );
 READ_HANDLER( pc10_prot_r );
@@ -399,7 +398,7 @@ static WRITE_HANDLER( sprite_dma_w )
 	ppu2c03b_spriteram_dma( 0, &work_ram[source] );
 }
 
-static void nvram_handler(void *file, int read_or_write)
+static NVRAM_HANDLER( playch10 )
 {
 	UINT8 *mem = memory_region( REGION_CPU2 ) + 0x6000;
 
@@ -625,18 +624,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static int playch10_interrupt( void ) {
+static INTERRUPT_GEN( playch10_interrupt ) {
 
 	/* LS161A, Sheet 1 - bottom left of Z80 */
 	if ( !pc10_dog_di && !pc10_nmi_enable ) {
 		cpu_set_reset_line( 0, PULSE_LINE );
-		return ignore_interrupt();
 	}
 
-	if ( pc10_nmi_enable )
-		return nmi_interrupt();
-
-	return ignore_interrupt();
+	else if ( pc10_nmi_enable )
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static struct NESinterface nes_interface =
@@ -653,57 +649,49 @@ static struct DACinterface nes_dac_interface =
 };
 
 
-#define PC10_MACHINE_DRIVER( name, nvram )								\
-static const struct MachineDriver machine_driver_##name =						\
-{																		\
-	/* basic machine hardware */										\
-	{																	\
-		{																\
-			CPU_Z80,													\
-			8000000 / 2,        /* 8 MHz / 2 */							\
-			readmem,writemem,readport,writeport,						\
-			playch10_interrupt, 1										\
-		},																\
-		{																\
-			CPU_N2A03,													\
-			N2A03_DEFAULTCLOCK,											\
-			cart_readmem, cart_writemem, 0, 0,							\
-			ignore_interrupt, 0											\
-		}																\
-	},																	\
-	60, ( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ),  /* fps, vblank duration */	\
-	1,	/* cpus dont talk to each other */								\
-	pc10_init_machine,													\
-																		\
-	/* video hardware */												\
-	32*8, 30*8*2, { 0*8, 32*8-1, 0*8, 30*8*2-1 },						\
-	gfxdecodeinfo,														\
-	256+4*16, 256+4*8,													\
-	playch10_vh_convert_color_prom,										\
-																		\
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(4,6),	\
-	0,																	\
-	playch10_vh_start,													\
-	playch10_vh_stop,													\
-	playch10_vh_screenrefresh,											\
-																		\
-	/* sound hardware */												\
-	0,0,0,0,															\
-	{																	\
-		{																\
-			SOUND_NES,													\
-			&nes_interface												\
-		},																\
-		{																\
-			SOUND_DAC,													\
-			&nes_dac_interface											\
-		}																\
-	},																	\
-	nvram																\
-};
+static MACHINE_DRIVER_START( playch10 )
 
-PC10_MACHINE_DRIVER( playch10, NULL )
-PC10_MACHINE_DRIVER( playchnv, nvram_handler )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 8000000 / 2)        /* 8 MHz / 2 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(playch10_interrupt,1)
+
+	MDRV_CPU_ADD(N2A03, N2A03_DEFAULTCLOCK)
+	MDRV_CPU_MEMORY(cart_readmem,cart_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ))
+
+	MDRV_MACHINE_INIT(pc10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(4,6)
+	MDRV_SCREEN_SIZE(32*8, 30*8*2)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8*2-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+4*16)
+	MDRV_COLORTABLE_LENGTH(256+4*8)
+
+	MDRV_PALETTE_INIT(playch10)
+	MDRV_VIDEO_START(playch10)
+	MDRV_VIDEO_UPDATE(playch10)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(NES, nes_interface)
+	MDRV_SOUND_ADD(DAC, nes_dac_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( playchnv )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(playch10)
+	MDRV_NVRAM_HANDLER(playch10)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 

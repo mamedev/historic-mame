@@ -32,7 +32,7 @@ static struct tilemap *fg_tilemap, *bg_tilemap;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void c1942_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( 1942 )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -130,7 +130,7 @@ static void get_bg_tile_info(int tile_index)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int c1942_vh_start(void)
+VIDEO_START( 1942 )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,16);
@@ -201,7 +201,7 @@ WRITE_HANDLER( c1942_c804_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -234,7 +234,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					code + i,col,
 					flip_screen,flip_screen,
 					sx,sy + 16 * i * dir,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 
 			i--;
 		} while (i >= 0);
@@ -243,9 +243,9 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 }
 
-void c1942_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( 1942 )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

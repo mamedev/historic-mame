@@ -78,7 +78,7 @@ static void get_ikari3_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int pow_vh_start(void)
+VIDEO_START( pow )
 {
 	fix_tilemap = tilemap_create(get_pow_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
@@ -90,7 +90,7 @@ int pow_vh_start(void)
 	return 0;
 }
 
-int searchar_vh_start(void)
+VIDEO_START( searchar )
 {
 	fix_tilemap = tilemap_create(get_sar_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
@@ -102,7 +102,7 @@ int searchar_vh_start(void)
 	return 0;
 }
 
-int ikari3_vh_start(void)
+VIDEO_START( ikari3 )
 {
 	fix_tilemap = tilemap_create(get_ikari3_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
@@ -158,7 +158,7 @@ WRITE16_HANDLER( pow_video16_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int j,int pos)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j,int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -199,7 +199,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int j,int pos)
 					color,
 					fx,fy,
 					mx,my,
-					0,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			}
 
 			if (flip_screen) {
@@ -215,23 +215,23 @@ static void draw_sprites(struct mame_bitmap *bitmap, int j,int pos)
 }
 
 
-void pow_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pow )
 {
-	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[2047],cliprect);
 
 	/* This appears to be correct priority */
-	draw_sprites(bitmap,1,0x000);
-	draw_sprites(bitmap,1,0x800);
-	draw_sprites(bitmap,0,0x000);
-	draw_sprites(bitmap,2,0x000);
-	draw_sprites(bitmap,2,0x800);
-	draw_sprites(bitmap,0,0x800);
+	draw_sprites(bitmap,cliprect,1,0x000);
+	draw_sprites(bitmap,cliprect,1,0x800);
+	draw_sprites(bitmap,cliprect,0,0x000);
+	draw_sprites(bitmap,cliprect,2,0x000);
+	draw_sprites(bitmap,cliprect,2,0x800);
+	draw_sprites(bitmap,cliprect,0,0x800);
 
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 }
 
 
-static void draw_sprites2(struct mame_bitmap *bitmap, int j, int z, int pos)
+static void draw_sprites2(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j, int z, int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -281,7 +281,7 @@ static void draw_sprites2(struct mame_bitmap *bitmap, int j, int z, int pos)
 					color,
 					fx,fy,
 					mx,my,
-					0,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			}
 			if (flip_screen) {
 				my-=16;
@@ -296,18 +296,18 @@ static void draw_sprites2(struct mame_bitmap *bitmap, int j, int z, int pos)
 }
 
 
-void searchar_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( searchar )
 {
-	fillbitmap(bitmap,Machine->pens[2047],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[2047],cliprect);
 
 	/* This appears to be correct priority */
-	draw_sprites2(bitmap,8,0x2000,0x000);
-	draw_sprites2(bitmap,8,0x2000,0x800);
-	draw_sprites2(bitmap,12,0x3000,0x000);
-	draw_sprites2(bitmap,12,0x3000,0x800);
-	draw_sprites2(bitmap,4,0x1000,0x000);
-	draw_sprites2(bitmap,4,0x1000,0x800);
+	draw_sprites2(bitmap,cliprect,8,0x2000,0x000);
+	draw_sprites2(bitmap,cliprect,8,0x2000,0x800);
+	draw_sprites2(bitmap,cliprect,12,0x3000,0x000);
+	draw_sprites2(bitmap,cliprect,12,0x3000,0x800);
+	draw_sprites2(bitmap,cliprect,4,0x1000,0x000);
+	draw_sprites2(bitmap,cliprect,4,0x1000,0x800);
 
-	tilemap_draw(bitmap,fix_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
 }
 

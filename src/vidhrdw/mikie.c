@@ -30,7 +30,7 @@ static int palettebank,flipscreen;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void mikie_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mikie )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -119,7 +119,7 @@ WRITE_HANDLER( mikie_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void mikie_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mikie )
 {
 	int offs;
 

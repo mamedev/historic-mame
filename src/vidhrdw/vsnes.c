@@ -5,12 +5,12 @@
 extern int vsnes_gun_controller;
 
 
-void vsnes_vh_convert_color_prom( unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom )
+PALETTE_INIT( vsnes )
 {
 	ppu2c03b_init_palette( palette );
 }
 
-void vsdual_vh_convert_color_prom( unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom )
+PALETTE_INIT( vsdual )
 {
 	ppu2c03b_init_palette( palette );
 	ppu2c03b_init_palette( &palette[3*64] );
@@ -43,19 +43,14 @@ static struct ppu2c03b_interface ppu_dual_interface =
 	{ ppu_irq, ppu_irq }					/* irq */
 };
 
-int vsnes_vh_start( void )
+VIDEO_START( vsnes )
 {
 	return ppu2c03b_init( &ppu_interface );
 }
 
-int vsdual_vh_start( void )
+VIDEO_START( vsdual )
 {
 	return ppu2c03b_init( &ppu_dual_interface );
-}
-
-void vsnes_vh_stop( void )
-{
-	ppu2c03b_dispose();
 }
 
 /***************************************************************************
@@ -63,7 +58,7 @@ void vsnes_vh_stop( void )
   Display refresh
 
 ***************************************************************************/
-void vsnes_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
+VIDEO_UPDATE( vsnes )
 {
 	/* render the ppu */
 	ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
@@ -81,7 +76,7 @@ void vsnes_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 	}
 
 
-void vsdual_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
+VIDEO_UPDATE( vsdual )
 {
 	/* render the ppu's */
 	ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );

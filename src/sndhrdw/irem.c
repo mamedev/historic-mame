@@ -143,3 +143,17 @@ PORT_WRITE_START( irem_sound_writeport )
 	{ M6803_PORT1, M6803_PORT1, irem_port1_w },
 	{ M6803_PORT2, M6803_PORT2, irem_port2_w },
 PORT_END
+
+
+MACHINE_DRIVER_START( irem_audio )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6803, 3579545/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(irem_sound_readmem,irem_sound_writemem)
+	MDRV_CPU_PORTS(irem_sound_readport,irem_sound_writeport)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, irem_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, irem_msm5205_interface)
+MACHINE_DRIVER_END

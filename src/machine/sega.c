@@ -1,11 +1,8 @@
-/***************************************************************************
+/*************************************************************************
 
-  machine.c
+	Sega vector hardware
 
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
-
-***************************************************************************/
+*************************************************************************/
 
 /*
  * History:
@@ -15,19 +12,20 @@
  */
 
 #include "driver.h"
+#include "sega.h"
+#include "segar.h"
 
-extern void (*sega_decrypt)(int,unsigned int *);
-unsigned char *sega_mem;
+UINT8 *sega_mem;
 
-unsigned char mult1;
-unsigned short result;
-unsigned char ioSwitch; /* determines whether we're reading the spinner or the buttons */
+static UINT8 mult1;
+static UINT16 result;
+static UINT8 ioSwitch; /* determines whether we're reading the spinner or the buttons */
 
 WRITE_HANDLER( sega_w )
 {
 	int pc,off;
 
-	pc = cpu_getpreviouspc();
+	pc = activecpu_get_previouspc();
 	off = offset;
 
 	/* Check if this is a valid PC (ie not a spurious stack write) */
@@ -59,12 +57,12 @@ WRITE_HANDLER( sega_w )
 	}
 }
 
-int sega_interrupt (void)
+INTERRUPT_GEN( sega_interrupt )
 {
 	if (input_port_5_r(0) & 0x01)
-		return nmi_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	else
-		return interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 WRITE_HANDLER( sega_mult1_w )

@@ -31,11 +31,10 @@ Memo:
 #include "cpu/z80/z80.h"
 
 
-void ojankohs_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void ojankoy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int ojankohs_vh_start(void);
-int ojankoy_vh_start(void);
-void ojankohs_vh_stop(void);
+VIDEO_UPDATE( ojankohs );
+PALETTE_INIT( ojankoy );
+VIDEO_START( ojankohs );
+VIDEO_START( ojankoy );
 READ_HANDLER( ojankohs_palette_r );
 WRITE_HANDLER( ojankohs_palette_w );
 READ_HANDLER( ojankohs_videoram_r );
@@ -46,28 +45,13 @@ WRITE_HANDLER( ojankohs_gfxreg_w );
 WRITE_HANDLER( ojankohs_flipscreen_w );
 
 
-unsigned char *ojankohs_nvram;
-size_t ojankohs_nvram_size;
 static int ojankohs_portselect;
 static int ojankohs_adpcm_reset;
 static int ojankohs_adpcm_data;
 static int ojankohs_vclk_left;
 
 
-void ojankohs_nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, ojankohs_nvram, ojankohs_nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file, ojankohs_nvram, ojankohs_nvram_size);
-		else
-			memset(ojankohs_nvram, 0, ojankohs_nvram_size);
-	}
-}
-
-static void ojankohs_init_machine(void)
+static MACHINE_INIT( ojankohs )
 {
 	ojankohs_portselect = 0;
 
@@ -142,7 +126,7 @@ static MEMORY_WRITE_START( writemem_ojankohs )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, ojankohs_videoram_w },
 	{ 0x9000, 0x9fff, ojankohs_colorram_w },
-	{ 0xa000, 0xb7ff, MWA_RAM, &ojankohs_nvram, &ojankohs_nvram_size },
+	{ 0xa000, 0xb7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0xb800, 0xbfff, ojankohs_palette_w },
 	{ 0xc000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -159,7 +143,7 @@ static MEMORY_WRITE_START( writemem_ojankoy )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, ojankohs_videoram_w },
 	{ 0xa000, 0xafff, ojankohs_colorram_w },
-	{ 0xb000, 0xbfff, MWA_RAM, &ojankohs_nvram, &ojankohs_nvram_size },
+	{ 0xb000, 0xbfff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0xc000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -189,7 +173,7 @@ static READ_HANDLER( ojankohs_keymatrix_r )
 				ret &= readinputport(8);
 				break;
 		default:	ret = 0xff;
-				logerror("PC:%04X unknown %02X\n", cpu_get_pc(), ojankohs_portselect);
+				logerror("PC:%04X unknown %02X\n", activecpu_get_pc(), ojankohs_portselect);
 				break;
 	}
 
@@ -282,7 +266,7 @@ static READ_HANDLER( io_ccasino_r )
 		case	0x0400:	ret = (readinputport(10) ^ 0xff); break;	// DIPSW 4
 		case	0x0600:	ret = AY8910_read_port_0_r(0); break;
 		default:	ret = 0xff;
-				logerror("PC:%04X unknown I/O Read %02X\n", cpu_get_pc(), ((offset & 0xff00) >> 8));
+				logerror("PC:%04X unknown I/O Read %02X\n", activecpu_get_pc(), ((offset & 0xff00) >> 8));
 				break;
 	}
 
@@ -315,7 +299,7 @@ static WRITE_HANDLER( io_ccasino_w )
 		case	0x0700:	AY8910_control_port_0_w(0, data); break;
 		case	0x1000:	break;				// unknown
 		case	0x1100:	break;				// unknown
-		default:	logerror("PC:%04X unknown I/O Write %02X, %02X\n", cpu_get_pc(), ((offset & 0xff00) >> 8), data);
+		default:	logerror("PC:%04X unknown I/O Write %02X, %02X\n", activecpu_get_pc(), ((offset & 0xff00) >> 8), data);
 				break;
 	}
 }
@@ -780,128 +764,96 @@ static struct MSM5205interface msm5205_interface =
 };
 
 
-static struct MachineDriver machine_driver_ojankohs =
-{
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			readmem_ojankohs, writemem_ojankohs, readport_ojankohs, writeport_ojankohs,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	ojankohs_init_machine,
+static MACHINE_DRIVER_START( ojankohs )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(readmem_ojankohs,writemem_ojankohs)
+	MDRV_CPU_PORTS(readport_ojankohs,writeport_ojankohs)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	512, 512, { 0, 288-1, 0, 224-1 },
-	ojankohs_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 288-1, 0, 224-1)
+	MDRV_GFXDECODE(ojankohs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ojankohs_vh_start,
-	ojankohs_vh_stop,
-	ojankohs_vh_screenrefresh,
+	MDRV_VIDEO_START(ojankohs)
+	MDRV_VIDEO_UPDATE(ojankohs)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ojankohs_ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	},
-	ojankohs_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, ojankohs_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_ojankoy =
-{
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			readmem_ojankoy, writemem_ojankoy, readport_ojankohs, writeport_ojankoy,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	ojankohs_init_machine,
+
+static MACHINE_DRIVER_START( ojankoy )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(readmem_ojankoy,writemem_ojankoy)
+	MDRV_CPU_PORTS(readport_ojankohs,writeport_ojankoy)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	512, 512, { 0, 288-1, 0, 224-1 },
-	ojankohs_gfxdecodeinfo,
-	1024, 0,
-	ojankoy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 288-1, 0, 224-1)
+	MDRV_GFXDECODE(ojankohs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	MDRV_PALETTE_INIT(ojankoy)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ojankoy_vh_start,
-	ojankohs_vh_stop,
-	ojankohs_vh_screenrefresh,
+	MDRV_VIDEO_START(ojankoy)
+	MDRV_VIDEO_UPDATE(ojankohs)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ojankoy_ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	},
-	ojankohs_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, ojankoy_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_ccasino =
-{
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			12000000/2,		/* 6.00 Mhz ? */
-			readmem_ojankoy, writemem_ojankoy, readport_ccasino, writeport_ccasino,
-			interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	ojankohs_init_machine,
+
+static MACHINE_DRIVER_START( ccasino )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,12000000/2)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(readmem_ojankoy,writemem_ojankoy)
+	MDRV_CPU_PORTS(readport_ccasino,writeport_ccasino)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	512, 512, { 0, 288-1, 0, 224-1 },
-	ojankohs_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 288-1, 0, 224-1)
+	MDRV_GFXDECODE(ojankohs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ojankoy_vh_start,
-	ojankohs_vh_stop,
-	ojankohs_vh_screenrefresh,
+	MDRV_VIDEO_START(ojankoy)
+	MDRV_VIDEO_UPDATE(ojankohs)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ojankoy_ay8910_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	},
-	ojankohs_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, ojankoy_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( ojankohs )

@@ -64,11 +64,10 @@ void konami1_decode_cpu2(void);
 
 WRITE_HANDLER( gyruss_flipscreen_w );
 READ_HANDLER( gyruss_scanline_r );
-int  gyruss_vh_start(void);
-void gyruss_vh_stop(void);
-void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void gyruss_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int gyruss_6809_interrupt(void);
+VIDEO_START( gyruss );
+PALETTE_INIT( gyruss );
+VIDEO_UPDATE( gyruss );
+INTERRUPT_GEN( gyruss_6809_interrupt );
 
 
 READ_HANDLER( gyruss_portA_r );
@@ -437,64 +436,47 @@ static struct DACinterface dac_interface =
 
 
 
-static const struct MachineDriver machine_driver_gyruss =
-{
+static MACHINE_DRIVER_START( gyruss )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz (?) */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_M6809,
-			2000000,        /* 2 MHz ??? */
-			m6809_readmem,m6809_writemem,0,0,
-			gyruss_6809_interrupt,256
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* 3.579545 MHz */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		},
-		{
-			CPU_I8039 | CPU_AUDIO_CPU,
-			8000000/15,	/* 8MHz crystal */
-			i8039_readmem,i8039_writemem,i8039_readport,i8039_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced by the 6809 interrupts anyway */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M6809, 2000000)        /* 2 MHz ??? */
+	MDRV_CPU_MEMORY(m6809_readmem,m6809_writemem)
+	MDRV_CPU_VBLANK_INT(gyruss_6809_interrupt,256)
+
+	MDRV_CPU_ADD(Z80,14318180/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_CPU_ADD(I8039,8000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 8MHz crystal */
+	MDRV_CPU_MEMORY(i8039_readmem,i8039_writemem)
+	MDRV_CPU_PORTS(i8039_readport,i8039_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32,16*4+16*16,
-	gyruss_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(16*4+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gyruss_vh_start,
-	gyruss_vh_stop,
-	gyruss_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gyruss)
+	MDRV_VIDEO_START(gyruss)
+	MDRV_VIDEO_UPDATE(gyruss)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -604,7 +586,7 @@ ROM_START( venus )
 ROM_END
 
 
-static void init_gyruss(void)
+static DRIVER_INIT( gyruss )
 {
 	konami1_decode_cpu2();
 }

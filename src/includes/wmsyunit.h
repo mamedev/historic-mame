@@ -37,47 +37,46 @@ READ16_HANDLER( wms_generic_speedup_1_mixedbits );
 READ16_HANDLER( wms_generic_speedup_1_32bit );
 READ16_HANDLER( wms_generic_speedup_3 );
 
-void init_narc(void);
-void init_narc3(void);
+DRIVER_INIT( narc );
+DRIVER_INIT( narc3 );
 
-void init_trog(void);
-void init_trog3(void);
-void init_trogp(void);
+DRIVER_INIT( trog );
+DRIVER_INIT( trog3 );
+DRIVER_INIT( trogp );
 
-void init_smashtv(void);
-void init_smashtv4(void);
+DRIVER_INIT( smashtv );
+DRIVER_INIT( smashtv4 );
 
-void init_hiimpact(void);
-void init_shimpact(void);
-void init_strkforc(void);
+DRIVER_INIT( hiimpact );
+DRIVER_INIT( shimpact );
+DRIVER_INIT( strkforc );
 
-void init_mkla1(void);
-void init_mkla2(void);
-void init_mkla3(void);
-void init_mkla4(void);
+DRIVER_INIT( mkprot9 );
+DRIVER_INIT( mkla1 );
+DRIVER_INIT( mkla2 );
+DRIVER_INIT( mkla3 );
+DRIVER_INIT( mkla4 );
 
-void init_term2(void);
+DRIVER_INIT( term2 );
 
-void init_totcarn(void);
-void init_totcarnp(void);
+DRIVER_INIT( totcarn );
+DRIVER_INIT( totcarnp );
 
-void wms_yunit_init_machine(void);
+MACHINE_INIT( wms_yunit );
 
 WRITE16_HANDLER( wms_yunit_sound_w );
 
 
 /*----------- defined in vidhrdw/wmsyunit.c -----------*/
 
-struct rectangle wms_visible_area;
-UINT8 *	wms_gfx_rom;
-size_t	wms_gfx_rom_size;
-UINT8	wms_partial_update_offset;
+extern struct rectangle wms_visible_area;
+extern UINT8 *	wms_gfx_rom;
+extern size_t	wms_gfx_rom_size;
+extern UINT8	wms_partial_update_offset;
 
-int wms_yunit_4bit_vh_start(void);
-int wms_yunit_6bit_vh_start(void);
-int wms_zunit_vh_start(void);
-
-void wms_yunit_vh_stop(void);
+VIDEO_START( wms_yunit_4bit );
+VIDEO_START( wms_yunit_6bit );
+VIDEO_START( wms_zunit );
 
 READ16_HANDLER( wms_yunit_gfxrom_r );
 
@@ -96,7 +95,7 @@ WRITE16_HANDLER( wms_yunit_dma_w );
 void wms_yunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline);
 void wms_yunit_display_interrupt(int scanline);
 
-void wms_yunit_vh_eof(void);
-void wms_zunit_vh_eof(void);
+VIDEO_EOF( wms_yunit );
+VIDEO_EOF( wms_zunit );
 
-void wms_yunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_UPDATE( wms_yunit );

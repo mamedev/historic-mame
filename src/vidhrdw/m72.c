@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "sndhrdw/m72.h"
+#include "vidhrdw/generic.h"
 
 
 
@@ -16,37 +17,37 @@ extern size_t spriteram_size;
 
 static int irqbase;
 
-void m72_init_machine(void)
+MACHINE_INIT( m72 )
 {
 	irqbase = 0x20;
-	m72_init_sound();
+	machine_init_m72_sound();
 }
 
-void xmultipl_init_machine(void)
+MACHINE_INIT( xmultipl )
 {
 	irqbase = 0x08;
-	m72_init_sound();
+	machine_init_m72_sound();
 }
 
-void kengo_init_machine(void)
+MACHINE_INIT( kengo )
 {
 	irqbase = 0x18;
-	m72_init_sound();
+	machine_init_m72_sound();
 }
 
-int m72_interrupt(void)
+INTERRUPT_GEN( m72_interrupt )
 {
 	int line = 255 - cpu_getiloops();
 
 	if (line == 255)	/* vblank */
 	{
 		rastersplit = 0;
-		return irqbase+0;
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irqbase+0);
 	}
 	else
 	{
 		if (line != splitline - 128)
-			return ignore_interrupt();
+			return;
 
 		rastersplit = line + 1;
 
@@ -56,7 +57,7 @@ int m72_interrupt(void)
 		   multiple times, by changing the interrupt line register in the
 		   interrupt handler).
 		 */
-		return irqbase+2;
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irqbase+2);
 	}
 }
 
@@ -68,15 +69,15 @@ int m72_interrupt(void)
 
 ***************************************************************************/
 
-INLINE void m72_get_tile_info(int tile_index,unsigned char *videoram,int gfxnum)
+INLINE void m72_get_tile_info(int tile_index,unsigned char *vram,int gfxnum)
 {
 	int code,attr,color,pri;
 
 	tile_index *= 4;
 
-	code  = videoram[tile_index];
-	attr  = videoram[tile_index+1];
-	color = videoram[tile_index+2];
+	code  = vram[tile_index];
+	attr  = vram[tile_index+1];
+	color = vram[tile_index+2];
 
 	if (color & 0x80) pri = 2;
 	else if (color & 0x40) pri = 1;
@@ -90,22 +91,22 @@ INLINE void m72_get_tile_info(int tile_index,unsigned char *videoram,int gfxnum)
 			TILE_FLIPYX((attr & 0xc0) >> 6) | TILE_SPLIT(pri))
 }
 
-INLINE void rtype2_get_tile_info(int tile_index,unsigned char *videoram,int gfxnum)
+INLINE void rtype2_get_tile_info(int tile_index,unsigned char *vram,int gfxnum)
 {
 	int code,attr,color,pri;
 
 	tile_index *= 4;
 
-	code  = videoram[tile_index] + (videoram[tile_index+1] << 8);
-	color = videoram[tile_index+2];
-	attr  = videoram[tile_index+3];
+	code  = vram[tile_index] + (vram[tile_index+1] << 8);
+	color = vram[tile_index+2];
+	attr  = vram[tile_index+3];
 
 	if (attr & 0x01) pri = 2;
 	else if (color & 0x80) pri = 1;
 	else pri = 0;
 
-/* (videoram[tile_index+2] & 0x10) is used by majtitle on the green, but it's not clear for what */
-/* (videoram[tile_index+3] & 0xfe) are used as well */
+/* (vram[tile_index+2] & 0x10) is used by majtitle on the green, but it's not clear for what */
+/* (vram[tile_index+3] & 0xfe) are used as well */
 
 	SET_TILE_INFO(
 			gfxnum,
@@ -159,12 +160,12 @@ static UINT32 majtitle_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT3
 
 ***************************************************************************/
 
-int m72_vh_start(void)
+VIDEO_START( m72 )
 {
 	bg_tilemap = tilemap_create(m72_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 	fg_tilemap = tilemap_create(m72_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
-	m72_spriteram = malloc(spriteram_size);
+	m72_spriteram = auto_malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
@@ -184,12 +185,12 @@ int m72_vh_start(void)
 	return 0;
 }
 
-int rtype2_vh_start(void)
+VIDEO_START( rtype2 )
 {
 	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
-	m72_spriteram = malloc(spriteram_size);
+	m72_spriteram = auto_malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
@@ -209,9 +210,9 @@ int rtype2_vh_start(void)
 	return 0;
 }
 
-int poundfor_vh_start(void)
+VIDEO_START( poundfor )
 {
-	int res = rtype2_vh_start();
+	int res = video_start_rtype2();
 
 	xadjust = -6;
 
@@ -220,7 +221,7 @@ int poundfor_vh_start(void)
 
 
 /* Major Title has a larger background RAM, and rowscroll */
-int majtitle_vh_start(void)
+VIDEO_START( majtitle )
 {
 // The tilemap can be 256x64, but seems to be used at 128x64 (scroll wraparound).
 // The layout ramains 256x64, the right half is just not displayed.
@@ -228,7 +229,7 @@ int majtitle_vh_start(void)
 	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,majtitle_scan_rows,TILEMAP_SPLIT,8,8,128,64);
 	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
-	m72_spriteram = malloc(spriteram_size);
+	m72_spriteram = auto_malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
@@ -248,12 +249,12 @@ int majtitle_vh_start(void)
 	return 0;
 }
 
-int hharry_vh_start(void)
+VIDEO_START( hharry )
 {
 	bg_tilemap = tilemap_create(hharry_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 	fg_tilemap = tilemap_create(hharry_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
-	m72_spriteram = malloc(spriteram_size);
+	m72_spriteram = auto_malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
@@ -272,13 +273,6 @@ int hharry_vh_start(void)
 
 	return 0;
 }
-
-void m72_vh_stop(void)
-{
-	free(m72_spriteram);
-	m72_spriteram = 0;
-}
-
 
 
 /***************************************************************************
@@ -507,7 +501,7 @@ WRITE_HANDLER( majtitle_gfx_ctrl_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -552,7 +546,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 						color,
 						flipx,flipy,
 						sx + 16*x,sy + 16*y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 
@@ -560,7 +554,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-static void majtitle_draw_sprites(struct mame_bitmap *bitmap)
+static void majtitle_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -604,22 +598,22 @@ static void majtitle_draw_sprites(struct mame_bitmap *bitmap)
 						color,
 						flipx,flipy,
 						sx + 16*x,sy + 16*y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
 }
 
-static void draw_layer(struct mame_bitmap *bitmap,
+static void draw_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 		struct tilemap *tilemap,int *scrollx,int *scrolly,int priority)
 {
 	int start,i;
 	/* use clip regions to split the screen */
 	struct rectangle clip;
 
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	start = Machine->visible_area.min_y - 128;
+	clip.min_x = cliprect->min_x;
+	clip.max_x = cliprect->max_x;
+	start = cliprect->min_y - 128;
 	do
 	{
 		i = start;
@@ -629,49 +623,49 @@ static void draw_layer(struct mame_bitmap *bitmap,
 
 		clip.min_y = start + 128;
 		clip.max_y = i + 128;
-		tilemap_set_clip(tilemap,&clip);
+		sect_rect(&clip,cliprect);
 		tilemap_set_scrollx(tilemap,0,scrollx[start] + xadjust);
 		tilemap_set_scrolly(tilemap,0,scrolly[start]);
-		tilemap_draw(bitmap,tilemap,priority,0);
+		tilemap_draw(bitmap,&clip,tilemap,priority,0);
 
 		start = i+1;
-	} while (start < Machine->visible_area.max_y - 128);
+	} while (start < cliprect->max_y - 128);
 }
 
-static void draw_bg(struct mame_bitmap *bitmap,int priority)
+static void draw_bg(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
-	draw_layer(bitmap,bg_tilemap,scrollx2,scrolly2,priority);
+	draw_layer(bitmap,cliprect,bg_tilemap,scrollx2,scrolly2,priority);
 }
 
-static void draw_fg(struct mame_bitmap *bitmap,int priority)
+static void draw_fg(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
-	draw_layer(bitmap,fg_tilemap,scrollx1,scrolly1,priority);
+	draw_layer(bitmap,cliprect,fg_tilemap,scrollx1,scrolly1,priority);
 }
 
 
-void m72_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( m72 )
 {
 	if (video_off)
 	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 		return;
 	}
 
-	draw_bg(bitmap,TILEMAP_BACK);
-	draw_fg(bitmap,TILEMAP_BACK);
-	draw_sprites(bitmap);
-	draw_bg(bitmap,TILEMAP_FRONT);
-	draw_fg(bitmap,TILEMAP_FRONT);
+	draw_bg(bitmap,cliprect,TILEMAP_BACK);
+	draw_fg(bitmap,cliprect,TILEMAP_BACK);
+	draw_sprites(bitmap,cliprect);
+	draw_bg(bitmap,cliprect,TILEMAP_FRONT);
+	draw_fg(bitmap,cliprect,TILEMAP_FRONT);
 }
 
-void majtitle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( majtitle )
 {
 	int i;
 
 
 	if (video_off)
 	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 		return;
 	}
 
@@ -689,16 +683,16 @@ void majtitle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 	tilemap_set_scrolly(bg_tilemap,0,scrolly2[0]);
 
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
-	draw_fg(bitmap,TILEMAP_BACK);
-	majtitle_draw_sprites(bitmap);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
-	draw_fg(bitmap,TILEMAP_FRONT);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
+	draw_fg(bitmap,cliprect,TILEMAP_BACK);
+	majtitle_draw_sprites(bitmap,cliprect);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
+	draw_fg(bitmap,cliprect,TILEMAP_FRONT);
 }
 
 
-void m72_eof_callback(void)
+VIDEO_EOF( m72 )
 {
 	int i;
 

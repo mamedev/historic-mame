@@ -22,7 +22,7 @@ static int charbank,charpalbank;
 static int flipscreen;
 
 
-void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( josvolly )
 {
 	/* sprite lookup table is not original but it is almost 98% correct */
 
@@ -73,7 +73,7 @@ void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gsword )
 {
 	/* sprite lookup table is not original but it is almost 98% correct */
 
@@ -120,22 +120,13 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 }
 
 
-int gsword_vh_start(void)
+VIDEO_START( gsword )
 {
-	if ((dirtybuffer = malloc(gs_videoram_size)) == 0) return 1;
-	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((dirtybuffer = auto_malloc(gs_videoram_size)) == 0) return 1;
+	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer,1,gs_videoram_size);
 	return 0;
-}
-
-void gsword_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(bitmap_bg);
 }
 
 WRITE_HANDLER( gs_charbank_w )
@@ -263,7 +254,7 @@ void render_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void gsword_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gsword )
 {
 	int scrollx=0, scrolly=-(*gs_scrolly_ram);
 

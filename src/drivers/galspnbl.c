@@ -27,10 +27,10 @@ TODO:
 
 extern data16_t *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;
 
-void galspnbl_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( galspnbl );
 WRITE16_HANDLER( galspnbl_bgvideoram_w );
 WRITE16_HANDLER( galspnbl_scroll_w );
-void galspnbl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( galspnbl );
 
 
 static WRITE16_HANDLER( soundcommand_w )
@@ -38,7 +38,7 @@ static WRITE16_HANDLER( soundcommand_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -327,53 +327,36 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static const struct MachineDriver machine_driver_hotpinbl =
-{
+static MACHINE_DRIVER_START( hotpinbl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz ??? */
-			readmem,writemem,0,0,
-			m68_level3_irq,1	/* also has vector for 6, but it does nothing */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz ??? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1	/* IRQ is caused by the YM3812 */
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* also has vector for 6, but it does nothing */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMI is caused by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	512, 256, { 0, 512-1, 16, 240-1 },
-	gfxdecodeinfo,
-	1024 + 32768, 1024,
-	galspnbl_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 16, 240-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024 + 32768)
+	MDRV_COLORTABLE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	galspnbl_vh_screenrefresh,
+	MDRV_PALETTE_INIT(galspnbl)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(galspnbl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 

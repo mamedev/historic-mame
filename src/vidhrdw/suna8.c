@@ -73,8 +73,8 @@ data8_t suna8_unknown;
 WRITE_HANDLER( suna8_spriteram_w );			// for debug
 WRITE_HANDLER( suna8_banked_spriteram_w );	// for debug
 
-int  suna8_vh_start(void);
-void suna8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( suna8 );
+VIDEO_UPDATE( suna8 );
 
 
 /***************************************************************************
@@ -186,9 +186,9 @@ int suna8_vh_start_common(int dim)
 	return 0;
 }
 
-int suna8_vh_start_textdim0(void)	{ return suna8_vh_start_common(0);  }
-int suna8_vh_start_textdim8(void)	{ return suna8_vh_start_common(8);  }
-int suna8_vh_start_textdim12(void)	{ return suna8_vh_start_common(12); }
+VIDEO_START( suna8_textdim0 )	{ return suna8_vh_start_common(0);  }
+VIDEO_START( suna8_textdim8 )	{ return suna8_vh_start_common(8);  }
+VIDEO_START( suna8_textdim12 )	{ return suna8_vh_start_common(12); }
 
 /***************************************************************************
 
@@ -198,7 +198,7 @@ int suna8_vh_start_textdim12(void)	{ return suna8_vh_start_common(12); }
 
 ***************************************************************************/
 
-void suna8_draw_normal_sprites(struct mame_bitmap *bitmap)
+void suna8_draw_normal_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
 	int mx = 0;	// multisprite x counter
@@ -320,14 +320,14 @@ void suna8_draw_normal_sprites(struct mame_bitmap *bitmap)
 							(attr >> 2) & 0xf,
 							tile_flipx, tile_flipy,
 							sx, sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,15);
+							cliprect,TRANSPARENCY_PEN,15);
 			}
 		}
 
 	}
 }
 
-void suna8_draw_text_sprites(struct mame_bitmap *bitmap)
+void suna8_draw_text_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
 
@@ -385,7 +385,7 @@ void suna8_draw_text_sprites(struct mame_bitmap *bitmap)
 							(attr >> 2) & 0xf,
 							flipx, flipy,
 							sx, sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,15);
+							cliprect,TRANSPARENCY_PEN,15);
 			}
 		}
 
@@ -411,7 +411,7 @@ void suna8_draw_text_sprites(struct mame_bitmap *bitmap)
 */
 #define TILEMAPS 0
 
-void suna8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( suna8 )
 {
 #ifdef MAME_DEBUG
 #if TILEMAPS
@@ -446,17 +446,17 @@ void suna8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 #endif
 
 	/* see hardhead, hardhea2 test mode (press button 2 for both players) */
-	fillbitmap(bitmap,Machine->pens[0xff],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0xff],cliprect);
 
 #ifdef MAME_DEBUG
 #if TILEMAPS
 	if (keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X))
-		tilemap_draw(bitmap, tilemap, 0, 0);
+		tilemap_draw(bitmap,cliprect, tilemap, 0, 0);
 	else
 #endif
 #endif
 	{
-		suna8_draw_normal_sprites(bitmap);
-		suna8_draw_text_sprites(bitmap);
+		suna8_draw_normal_sprites(bitmap,cliprect);
+		suna8_draw_text_sprites(bitmap,cliprect);
 	}
 }

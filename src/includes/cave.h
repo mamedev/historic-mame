@@ -26,20 +26,19 @@ WRITE16_HANDLER( cave_vram_1_8x8_w );
 WRITE16_HANDLER( cave_vram_2_8x8_w );
 WRITE16_HANDLER( cave_vram_3_8x8_w );
 
-void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mazinger_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void sailormn_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( ddonpach );
+PALETTE_INIT( dfeveron );
+PALETTE_INIT( mazinger );
+PALETTE_INIT( sailormn );
 
-int cave_vh_start_1_layer (void);
-int cave_vh_start_2_layers(void);
-int cave_vh_start_3_layers(void);
-int cave_vh_start_4_layers(void);
+VIDEO_START( cave_1_layer );
+VIDEO_START( cave_2_layers );
+VIDEO_START( cave_3_layers );
+VIDEO_START( cave_4_layers );
 
-int sailormn_vh_start_3_layers(void);
+VIDEO_START( sailormn_3_layers );
 
-void cave_vh_stop(void);
 
-void cave_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( cave );
 
 void sailormn_tilebank_w( int bank );

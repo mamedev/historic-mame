@@ -60,8 +60,8 @@ extern data16_t *ginganin_fgram16, *ginganin_txtram16, *ginganin_vregs16;
 WRITE16_HANDLER( ginganin_fgram16_w );
 WRITE16_HANDLER( ginganin_txtram16_w );
 WRITE16_HANDLER( ginganin_vregs16_w );
-int  ginganin_vh_start(void);
-void ginganin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( ginganin );
+VIDEO_UPDATE( ginganin );
 
 
 /*
@@ -315,13 +315,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-int ginganin_interrupt(void)
-{
-	return 1;	/* ? (vectors 1-7 cointain the same address) */
-}
-
 /* Modified by Takahiro Nogi. 1999/09/27 */
-int ginganin_sound_interrupt(void)
+INTERRUPT_GEN( ginganin_sound_interrupt )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -344,8 +339,6 @@ int ginganin_sound_interrupt(void)
 			MC6809_CTR++;
 		}
 	}
-
-	return ignore_interrupt();
 }
 
 
@@ -376,51 +369,35 @@ static struct Y8950interface y8950_interface =
 	{ 0 }	/* I/O write */
 };
 
-static const struct MachineDriver machine_driver_ginganin =
-{
-	{
-		{
-			CPU_M68000,
-			6000000,	/* ? */
-			readmem,writemem,0,0,
-			ginganin_interrupt, 1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1000000,	/* ? */ /* Takahiro Nogi. 1999/09/27 (3579545 -> 1000000) */
-			sound_readmem,sound_writemem,0,0,
-			ginganin_sound_interrupt, 60	/* Takahiro Nogi. 1999/09/27 (1 -> 60) */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( ginganin )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 6000000)	/* ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1) /* ? (vectors 1-7 cointain the same address) */
+
+	MDRV_CPU_ADD(M6809, 1000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */ /* Takahiro Nogi. 1999/09/27 (3579545 -> 1000000) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(ginganin_sound_interrupt,60)	/* Takahiro Nogi. 1999/09/27 (1 -> 60) */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 255, 0 + 16 , 255 - 16 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 0 + 16 , 255 - 16)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ginganin_vh_start,
-	0,
-	ginganin_vh_screenrefresh,
+	MDRV_VIDEO_START(ginganin)
+	MDRV_VIDEO_UPDATE(ginganin)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&AY8910_interface
-		},
-		{
-			SOUND_Y8950,
-			&y8950_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, AY8910_interface)
+	MDRV_SOUND_ADD(Y8950, y8950_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -467,7 +444,7 @@ ROM_END
 
 
 
-void init_ginganin(void)
+DRIVER_INIT( ginganin )
 {
 	data16_t *rom;
 

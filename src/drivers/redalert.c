@@ -21,7 +21,7 @@ WRITE_HANDLER( redalert_backram_w );
 WRITE_HANDLER( redalert_spriteram1_w );
 WRITE_HANDLER( redalert_spriteram2_w );
 WRITE_HANDLER( redalert_characterram_w );
-extern void redalert_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_UPDATE( redalert );
 WRITE_HANDLER( redalert_c040_w );
 WRITE_HANDLER( redalert_backcolor_w );
 
@@ -194,7 +194,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /* Arbitrary colors */
-static unsigned char palette[] =
+static unsigned char palette_source[] =
 {
 	0x40,0x80,0xff,	/* Background */
 	0x00,0x00,0xff,	/* Blue */
@@ -208,7 +208,7 @@ static unsigned char palette[] =
 };
 
 /* Arbitrary colortable */
-static unsigned short colortable[] =
+static unsigned short colortable_source[] =
 {
 	0,7,
 	0,6,
@@ -225,15 +225,15 @@ static unsigned short colortable[] =
 	0,8,5,1,
 };
 
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( redalert )
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
 
 
-static int redalert_interrupt(void)
+static INTERRUPT_GEN( redalert_interrupt )
 {
 	static int lastcoin = 0;
 	int newcoin;
@@ -245,17 +245,19 @@ static int redalert_interrupt(void)
 		if ((newcoin & 0x01) && !(lastcoin & 0x01))
 		{
 			lastcoin = newcoin;
-			return nmi_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			return;
 		}
 		if ((newcoin & 0x02) && !(lastcoin & 0x02))
 		{
 			lastcoin = newcoin;
-			return nmi_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			return;
 		}
 	}
 
 	lastcoin = newcoin;
-	return interrupt();
+	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 static struct AY8910interface ay8910_interface =
@@ -271,57 +273,41 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_redalert =
-{
+static MACHINE_DRIVER_START( redalert )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	   /* ???? */
-			readmem,writemem,0,0,
-			redalert_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1000000,	   /* 1 MHz */
-			sound_readmem,sound_writemem,0,0,
+	MDRV_CPU_ADD(M6502, 1000000)	   /* ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(redalert_interrupt,1)
+
+	MDRV_CPU_ADD(M6502, 1000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	   /* 1 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 			/* IRQ is hooked to a 555 timer, whose freq is 1150 Hz */
-			0,0,
-			interrupt,1150
-		},
-		{
-			CPU_8085A | CPU_AUDIO_CPU,
-			1000000,	   /* 1 MHz? */
-			voice_readmem,voice_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,1150)
+
+	MDRV_CPU_ADD(8085A, 1000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	   /* 1 MHz? */
+	MDRV_CPU_MEMORY(voice_readmem,voice_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	redalert_vh_screenrefresh,
+	MDRV_PALETTE_INIT(redalert)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(redalert)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

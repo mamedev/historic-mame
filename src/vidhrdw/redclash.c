@@ -24,7 +24,7 @@ static int gfxbank;
   schematics show a different resistor network.
 
 ***************************************************************************/
-void redclash_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( redclash )
 {
 	int i;
 
@@ -111,7 +111,7 @@ WRITE_HANDLER( redclash_star_reset_w ) { }
   the main emulation engine.
 
 ***************************************************************************/
-void redclash_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( redclash )
 {
 	int i,offs;
 

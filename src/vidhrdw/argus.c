@@ -292,7 +292,7 @@ static void butasan_get_bg1_tile_info(int tile_index)
   Initialize and destroy video hardware emulation
 ***************************************************************************/
 
-int argus_vh_start(void)
+VIDEO_START( argus )
 {
 	lowbitscroll = 0;
 	/*                           info                      offset             type                  w   h  col  row */
@@ -301,12 +301,10 @@ int argus_vh_start(void)
 	tx_tilemap  = tilemap_create(argus_get_tx_tile_info,   tilemap_scan_cols, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
 
 	if ( !tx_tilemap || !bg0_tilemap || !bg1_tilemap )
-	{
 		return 1;
-	}
 
 	/* dummy RAM for back ground */
-	argus_dummy_bg0ram = malloc( 0x800 );
+	argus_dummy_bg0ram = auto_malloc( 0x800 );
 	if ( argus_dummy_bg0ram == NULL )
 		return 1;
 	memset( argus_dummy_bg0ram, 0, 0x800 );
@@ -320,23 +318,21 @@ int argus_vh_start(void)
 	return 0;
 }
 
-int valtric_vh_start(void)
+VIDEO_START( valtric )
 {
 	/*                           info                       offset             type                 w   h  col  row */
 	bg1_tilemap = tilemap_create(valtric_get_bg_tile_info,  tilemap_scan_cols, TILEMAP_OPAQUE,      16, 16, 32, 32);
 	tx_tilemap  = tilemap_create(valtric_get_tx_tile_info,  tilemap_scan_cols, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
 
 	if ( !tx_tilemap || !bg1_tilemap )
-	{
 		return 1;
-	}
 
 	tilemap_set_transparent_pen( bg1_tilemap, 15 );
 	tilemap_set_transparent_pen( tx_tilemap,  15 );
 	return 0;
 }
 
-int butasan_vh_start(void)
+VIDEO_START( butasan )
 {
 	/*                           info                       offset             type                 w   h  col  row */
 	bg0_tilemap = tilemap_create(butasan_get_bg0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 32, 32);
@@ -344,37 +340,23 @@ int butasan_vh_start(void)
 	tx_tilemap  = tilemap_create(butasan_get_tx_tile_info,  tilemap_scan_rows, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
 
 	if ( !tx_tilemap || !bg0_tilemap || !bg1_tilemap )
-	{
 		return 1;
-	}
 
-	butasan_txram = malloc( BUTASAN_TEXT_RAMSIZE );
+	butasan_txram = auto_malloc( BUTASAN_TEXT_RAMSIZE );
 	if (butasan_txram == NULL)
 		return 1;
 
-	butasan_bg0ram = malloc( BUTASAN_BG0_RAMSIZE );
+	butasan_bg0ram = auto_malloc( BUTASAN_BG0_RAMSIZE );
 	if (butasan_bg0ram == NULL)
-	{
-		free(butasan_txram);
 		return 1;
-	}
 
-	butasan_txbackram = malloc( BUTASAN_TXBACK_RAMSIZE );
+	butasan_txbackram = auto_malloc( BUTASAN_TXBACK_RAMSIZE );
 	if (butasan_txbackram == NULL)
-	{
-		free(butasan_txram);
-		free(butasan_bg1ram);
 		return 1;
-	}
 
-	butasan_bg0backram = malloc( BUTASAN_BG0BACK_RAMSIZE );
+	butasan_bg0backram = auto_malloc( BUTASAN_BG0BACK_RAMSIZE );
 	if (butasan_bg0backram == NULL)
-	{
-		free(butasan_txram);
-		free(butasan_bg1ram);
-		free(butasan_txbackram);
 		return 1;
-	}
 
 	memset( butasan_txram,      0x00, BUTASAN_TEXT_RAMSIZE );
 	memset( butasan_bg0ram,     0x00, BUTASAN_BG0_RAMSIZE );
@@ -384,19 +366,6 @@ int butasan_vh_start(void)
 	tilemap_set_transparent_pen( tx_tilemap,  15 );
 
 	return 0;
-}
-
-void argus_vh_stop(void)
-{
-	free(argus_dummy_bg0ram);
-}
-
-void butasan_vh_stop(void)
-{
-	free(butasan_txram);
-	free(butasan_bg0ram);
-	free(butasan_txbackram);
-	free(butasan_bg0backram);
 }
 
 
@@ -1011,7 +980,7 @@ static void argus_bg0_scroll_handle( void )
 
 }
 
-static void argus_draw_sprites(struct mame_bitmap *bitmap, int priority)
+static void argus_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
 	int offs;
 
@@ -1060,14 +1029,14 @@ static void argus_draw_sprites(struct mame_bitmap *bitmap, int priority)
 							color,
 							flipx, flipy,
 							sx, sy,
-							&Machine->visible_area,
+							cliprect,
 							TRANSPARENCY_PEN, 15
 				);
 		}
 	}
 }
 
-static void valtric_draw_sprites(struct mame_bitmap *bitmap)
+static void valtric_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -1114,13 +1083,13 @@ static void valtric_draw_sprites(struct mame_bitmap *bitmap)
 						color,
 						flipx, flipy,
 						sx, sy,
-						&Machine->visible_area,
+						cliprect,
 						TRANSPARENCY_PEN, 15);
 		}
 	}
 }
 
-void butasan_draw_sprites(struct mame_bitmap *bitmap)
+void butasan_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -1149,7 +1118,7 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 							color,
 							flipx, flipy,
 							sx, sy,
-							&Machine->visible_area,
+							cliprect,
 							TRANSPARENCY_PEN, 7);
 			}
 			else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
@@ -1167,7 +1136,7 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 								color,
 								flipx, flipy,
 								sx + i * 16, sy,
-								&Machine->visible_area,
+								cliprect,
 								TRANSPARENCY_PEN, 7);
 				}
 			}
@@ -1191,7 +1160,7 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 									color,
 									flipx, flipy,
 									sx + j * 16, sy - i * 16,
-									&Machine->visible_area,
+									cliprect,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1215,7 +1184,8 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 									tile + td,
 									color,
 									flipx, flipy,
-									sx + j * 16, sy - i * 16,									&Machine->visible_area,
+									sx + j * 16, sy - i * 16,									
+									cliprect,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1235,7 +1205,7 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 							color,
 							flipx, flipy,
 							sx, sy,
-							&Machine->visible_area,
+							cliprect,
 							TRANSPARENCY_PEN, 7);
 			}
 			else if ( (offs >= 0x000 && offs < 0x100) || (offs >= 0x300 && offs < 0x400) )
@@ -1253,7 +1223,7 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 								color,
 								flipx, flipy,
 								sx - i * 16, sy,
-								&Machine->visible_area,
+								cliprect,
 								TRANSPARENCY_PEN, 7);
 				}
 			}
@@ -1277,7 +1247,7 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 									color,
 									flipx, flipy,
 									sx - j * 16, sy + i * 16,
-									&Machine->visible_area,
+									cliprect,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1301,7 +1271,8 @@ void butasan_draw_sprites(struct mame_bitmap *bitmap)
 									tile + td,
 									color,
 									flipx, flipy,
-									sx - j * 16, sy + i * 16,									&Machine->visible_area,
+									sx - j * 16, sy + i * 16,
+									cliprect,
 									TRANSPARENCY_PEN, 7);
 					}
 				}
@@ -1363,37 +1334,37 @@ static void butasan_log_vram(void)
 }
 #endif
 
-void argus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( argus )
 {
 	/* scroll BG0 and render tile at proper position */
 	argus_bg0_scroll_handle();
 
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	tilemap_draw(bitmap, bg0_tilemap, 0, 0);
-	argus_draw_sprites(bitmap, 0);
-	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
-	argus_draw_sprites(bitmap, 1);
-	tilemap_draw(bitmap, tx_tilemap,  0, 0);
+	tilemap_draw(bitmap, cliprect, bg0_tilemap, 0, 0);
+	argus_draw_sprites(bitmap, cliprect, 0);
+	tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
+	argus_draw_sprites(bitmap, cliprect, 1);
+	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
 }
 
-void valtric_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( valtric )
 {
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
-	valtric_draw_sprites(bitmap);
-	tilemap_draw(bitmap, tx_tilemap,  0, 0);
+	tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
+	valtric_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
 }
 
-void butasan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( butasan )
 {
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	tilemap_draw(bitmap, bg1_tilemap, 0, 0);
-	tilemap_draw(bitmap, bg0_tilemap, 0, 0);
-	butasan_draw_sprites(bitmap);
-	tilemap_draw(bitmap, tx_tilemap,  0, 0);
+	tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg0_tilemap, 0, 0);
+	butasan_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
 
 #ifdef MAME_DEBUG
 	butasan_log_vram();

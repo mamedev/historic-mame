@@ -11,18 +11,13 @@ static UINT32 xexexbg_rommask;
 int xexexbg_vh_start(int region)
 {
 	xexexbg_base = memory_region(region);
-	xexexbg_ram = malloc(0x1000);
+	xexexbg_ram = auto_malloc(0x1000);
 	xexexbg_rammax = xexexbg_ram + 0x800;
 	xexexbg_rommask = memory_region_length(region) - 1;
 
 	state_save_register_UINT16("xexexbg", 0, "memory",    xexexbg_ram,  0x800);
 	state_save_register_UINT8 ("xexexbg", 0, "registers", xexexbg_regs, 8);
 	return 0;
-}
-
-void xexexbg_vh_stop(void)
-{
-	free(xexexbg_ram);
 }
 
 WRITE16_HANDLER( xexexbg_w )
@@ -55,9 +50,9 @@ READ16_HANDLER( xexexbg_rom_r )
 	return *(xexexbg_base + 2048*xexexbg_regs[7] + (offset>>1));
 }
 
-void xexexbg_draw(struct mame_bitmap *bitmap, int colorbase, int pri)
+void xexexbg_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int colorbase, int pri)
 {
-	const struct rectangle area = Machine->visible_area;
+	const struct rectangle area = *cliprect;
 	data16_t *line;
 	int delta, dim1, dim1_max, dim2_max;
 	UINT32 mask1, mask2;
@@ -214,7 +209,7 @@ static int scrolld[2][4][2] = {
  	{{ 53-64, 16 }, {53-64, 16}, {53-64-2, 16}, {53-64-4, 16}}
 };
 
-int xexex_vh_start(void)
+VIDEO_START( xexex )
 {
 	cur_alpha = 0;
 	cur_alpha_level = 0x1f;
@@ -223,27 +218,14 @@ int xexex_vh_start(void)
 
 	xexexbg_vh_start(REGION_GFX3);
 	if (K054157_vh_start(REGION_GFX1, 1, scrolld, NORMAL_PLANE_ORDER, xexex_tile_callback))
-	{
-		xexexbg_vh_stop();
 		return 1;
-	}
+
 	if (K053247_vh_start(REGION_GFX2, -28, 32, NORMAL_PLANE_ORDER, xexex_sprite_callback))
-	{
-		K054157_vh_stop();
-		xexexbg_vh_stop();
 		return 1;
-	}
 
 	// cur_alpha is saved as part of "control2" in the main driver
 	state_save_register_int ("video", 0, "alpha", &cur_alpha_level);
 	return 0;
-}
-
-void xexex_vh_stop(void)
-{
-	xexexbg_vh_stop();
-	K054157_vh_stop();
-	K053247_vh_stop();
 }
 
 /* useful function to sort the four tile layers by priority order */
@@ -266,7 +248,7 @@ static void sortlayers(int *layer, int *pri)
 	SWAP(2, 3)
 }
 int xdump = 0;
-void xexex_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( xexex )
 {
 	int layer[4];
 	int plane;
@@ -291,20 +273,20 @@ void xexex_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 	sortlayers(layer, layerpri);
 
-	fillbitmap(priority_bitmap, 0, NULL);
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(priority_bitmap, 0, cliprect);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 	for(plane=0; plane<4; plane++)
 		if(layer[plane] < 0)
-			xexexbg_draw(bitmap, bg_colorbase, 1<<plane);
+			xexexbg_draw(bitmap,cliprect, bg_colorbase, 1<<plane);
 		else if(!cur_alpha || (layer[plane] != 1))
-			K054157_tilemap_draw(bitmap, layer[plane], 0, 1<<plane);
+			K054157_tilemap_draw(bitmap,cliprect, layer[plane], 0, 1<<plane);
 
-	K053247_sprites_draw(bitmap);
+	K053247_sprites_draw(bitmap,cliprect);
 
 	if(cur_alpha) {
 		alpha_set_level(cur_alpha_level);
-		K054157_tilemap_draw(bitmap, 1, TILEMAP_ALPHA, 0);
+		K054157_tilemap_draw(bitmap,cliprect, 1, TILEMAP_ALPHA, 0);
 	}
 
-	K054157_tilemap_draw(bitmap, 0, 0, 0);
+	K054157_tilemap_draw(bitmap,cliprect, 0, 0, 0);
 }

@@ -21,7 +21,7 @@ static const unsigned char *prom;
 
 
 /* Just save the colorprom pointer */
-void astrof_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( astrof )
 {
 	prom = color_prom;
 }
@@ -78,30 +78,18 @@ static void modify_palette(void)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int astrof_vh_start(void)
+VIDEO_START( astrof )
 {
-	if ((colorram = malloc(videoram_size)) == 0)
-	{
-		generic_bitmapped_vh_stop();
+	if ((colorram = auto_malloc(videoram_size)) == 0)
 		return 1;
-	}
+	if (video_start_generic())
+		return 1;
 
 	do_modify_palette = 0;
 	palette_bank = -1;
 	red_on = -1;
 
 	return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void astrof_vh_stop(void)
-{
-	if (colorram)  free(colorram);
 }
 
 
@@ -133,7 +121,7 @@ static void common_videoram_w(int offset, int data, int color)
 
 	for (i = 0; i < 8; i++)
 	{
-		plot_pixel(Machine->scrbitmap, x, y, (data & 1) ? fore : back);
+		plot_pixel(tmpbitmap, x, y, (data & 1) ? fore : back);
 
 		x += dx;
 		data >>= 1;
@@ -237,7 +225,7 @@ READ_HANDLER( tomahawk_protection_r )
   the main emulation engine.
 
 ***************************************************************************/
-void astrof_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( astrof )
 {
 	if (do_modify_palette)
 	{
@@ -246,7 +234,7 @@ void astrof_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		do_modify_palette = 0;
 	}
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int offs;
 
@@ -256,4 +244,6 @@ void astrof_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			common_videoram_w(offs, videoram[offs], colorram[offs]);
 		}
 	}
+	
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

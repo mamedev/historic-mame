@@ -53,7 +53,7 @@
 
 struct cpu_interface
 m6502_interface=
-CPU0(M6502,    m6502,    1,  0,1.00,M6502_INT_NONE,    M6502_INT_IRQ,  M6502_INT_NMI,  8, 16,     0,16,LE,1, 3),
+CPU0(M6502,    m6502,    1,  0,1.00,M6502_INT_NONE,    M6502_IRQ_LINE,  IRQ_LINE_NMI,  8, 16,     0,16,LE,1, 3),
 	m65c02_interface=
 CPU0(M65C02,   m65c02,   1,  0,1.00,M65C02_INT_NONE,   M65C02_INT_IRQ, M65C02_INT_NMI, 8, 16,     0,16,LE,1, 3),
 	m65sc02_interface=

@@ -57,9 +57,8 @@ DIPs
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
-int othunder_vh_start (void);
-void othunder_vh_stop (void);
-void othunder_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( othunder );
+VIDEO_UPDATE( othunder );
 
 static data16_t eep_latch = 0;
 
@@ -70,14 +69,9 @@ extern data16_t *othunder_ram;
 				INTERRUPTS
 ***********************************************************/
 
-static int othunder_interrupt(void)
-{
-	return 5;
-}
-
 static void othunder_gun_interrupt(int x)
 {
-	cpu_cause_interrupt(0,6);
+	cpu_set_irq_line(0,6,HOLD_LINE);
 }
 
 
@@ -112,7 +106,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100111111" 	/* unlock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( othunder )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -194,7 +188,7 @@ static READ16_HANDLER( othunder_lightgun_r )
 			return input_port_8_word_r(0,mem_mask);	/* P2Y */
 	}
 
-//logerror("CPU #0 lightgun_r offset %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),offset);
+//logerror("CPU #0 lightgun_r offset %06x: warning - read unmapped memory address %06x\n",activecpu_get_pc(),offset);
 
 	return 0x0;
 }
@@ -560,51 +554,36 @@ static struct YM2610interface ym2610_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static struct MachineDriver machine_driver_othunder =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			othunder_readmem,othunder_writemem,0,0,
-			othunder_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ??? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( othunder )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(othunder_readmem,othunder_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(othunder)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(othunder_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	othunder_gfxdecodeinfo,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	othunder_vh_start,
-	othunder_vh_stop,
-	othunder_vh_screenrefresh,
+	MDRV_VIDEO_START(othunder)
+	MDRV_VIDEO_UPDATE(othunder)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	},
-
-	nvram_handler	/* for the eerom */
-
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -678,7 +657,7 @@ ROM_START( othundu )
 ROM_END
 
 
-static void init_othunder(void)
+static DRIVER_INIT( othunder )
 {
 	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);

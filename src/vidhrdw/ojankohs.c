@@ -57,7 +57,7 @@ INLINE void ojankoy_get_tile_info(int tile_index)
 
 
 ******************************************************************************/
-void ojankoy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ojankoy )
 {
 	int i;
 	int bit0, bit1, bit2, bit3, bit4;
@@ -185,34 +185,30 @@ WRITE_HANDLER( ojankohs_flipscreen_w )
 
 ******************************************************************************/
 
-int ojankohs_vh_start(void)
+VIDEO_START( ojankohs )
 {
 	ojankohs_tilemap = tilemap_create(ojankohs_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 4, 64, 64);
 
-	ojankohs_videoram = malloc(0x2000);
-	ojankohs_colorram = malloc(0x1000);
-	ojankohs_paletteram = malloc(0x800);
+	ojankohs_videoram = auto_malloc(0x2000);
+	ojankohs_colorram = auto_malloc(0x1000);
+	ojankohs_paletteram = auto_malloc(0x800);
 
 	if (!ojankohs_tilemap || !ojankohs_videoram || !ojankohs_colorram || !ojankohs_paletteram) return 1;
 
 	return 0;
 }
 
-int ojankoy_vh_start(void)
+VIDEO_START( ojankoy )
 {
 	ojankohs_tilemap = tilemap_create(ojankoy_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 4, 64, 64);
 
-	ojankohs_videoram = malloc(0x2000);
-	ojankohs_colorram = malloc(0x1000);
-	ojankohs_paletteram = malloc(0x800);
+	ojankohs_videoram = auto_malloc(0x2000);
+	ojankohs_colorram = auto_malloc(0x1000);
+	ojankohs_paletteram = auto_malloc(0x800);
 
 	if (!ojankohs_tilemap || !ojankohs_videoram || !ojankohs_colorram || !ojankohs_paletteram) return 1;
 
 	return 0;
-}
-
-void ojankohs_vh_stop(void)
-{
 }
 
 /******************************************************************************
@@ -221,10 +217,10 @@ void ojankohs_vh_stop(void)
 
 ******************************************************************************/
 
-void ojankohs_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( ojankohs )
 {
 	tilemap_set_scrollx(ojankohs_tilemap, 0, ojankohs_scrollx);
 	tilemap_set_scrolly(ojankohs_tilemap, 0, ojankohs_scrolly);
 
-	tilemap_draw(bitmap, ojankohs_tilemap, 0, 0);
+	tilemap_draw(bitmap,cliprect, ojankohs_tilemap, 0, 0);
 }

@@ -909,6 +909,11 @@ static void display_fps(struct mame_bitmap *bitmap)
 		sprintf(buf, " %d vector updates", vups);
 		ui_text(bitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, Machine->uifontheight);
 	}
+	else
+	{
+		sprintf(buf, " %d partial updates", partial_update_count);
+		ui_text(bitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, Machine->uifontheight);
+	}
 
 	// update the temporary FPS display state
 	if (showfpstemp)

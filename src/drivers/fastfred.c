@@ -64,12 +64,12 @@ I/O write:
 extern unsigned char *fastfred_attributesram;
 WRITE_HANDLER( fastfred_attributes_w );
 
-void fastfred_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void fastfred_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( fastfred );
+VIDEO_UPDATE( fastfred );
 WRITE_HANDLER( fastfred_character_bank_select_w );
 WRITE_HANDLER( fastfred_color_bank_select_w );
 WRITE_HANDLER( fastfred_background_color_w );
-void jumpcoas_init_machine(void);
+MACHINE_INIT( jumpcoas );
 
 static READ_HANDLER( jumpcoas_custom_io_r )
 {
@@ -85,7 +85,7 @@ static READ_HANDLER( jumpcoas_custom_io_r )
 // to change if a different ROM set ever surfaces.
 static READ_HANDLER( fastfred_custom_io_r )
 {
-    switch (cpu_get_pc())
+    switch (activecpu_get_pc())
     {
     case 0x03c0: return 0x9d;
     case 0x03e6: return 0x9f;
@@ -111,7 +111,7 @@ static READ_HANDLER( fastfred_custom_io_r )
     case 0x7b58: return 0x20;
     }
 
-    logerror("Uncaught custom I/O read %04X at %04X\n", 0xc800+offset, cpu_get_pc());
+    logerror("Uncaught custom I/O read %04X at %04X\n", 0xc800+offset, activecpu_get_pc());
     return 0x00;
 }
 
@@ -449,85 +449,63 @@ static struct AY8910interface jumpcoas_ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_fastfred =
-{
+static MACHINE_DRIVER_START( fastfred )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			CLOCK/6,     /* 3.072 MHz */
-			fastfred_readmem,fastfred_writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			CLOCK/12,    /* 1.536 MHz */
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,4
-		}
-	},
-	60, 0,//CLOCK/16/60,       /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, CLOCK/6)     /* 3.072 MHz */
+	MDRV_CPU_MEMORY(fastfred_readmem,fastfred_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, CLOCK/12)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)    /* 1.536 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)//CLOCK/16/60,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	fastfred_gfxdecodeinfo,
-	256,32*8,
-	fastfred_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(fastfred_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	fastfred_vh_screenrefresh,
+	MDRV_PALETTE_INIT(fastfred)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(fastfred)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&fastfred_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, fastfred_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_jumpcoas =
-{
+static MACHINE_DRIVER_START( jumpcoas )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			CLOCK/6,     /* 3.072 MHz */
-			jumpcoas_readmem,jumpcoas_writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60, 0,//CLOCK/16/60,       /* frames per second, vblank duration */
-	1,      /* Single CPU game */
-	jumpcoas_init_machine,
+	MDRV_CPU_ADD(Z80, CLOCK/6)     /* 3.072 MHz */
+	MDRV_CPU_MEMORY(jumpcoas_readmem,jumpcoas_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)//CLOCK/16/60,
+	MDRV_MACHINE_INIT(jumpcoas)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	jumpcoas_gfxdecodeinfo,
-	256,32*8,
-	fastfred_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(jumpcoas_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	fastfred_vh_screenrefresh,
+	MDRV_PALETTE_INIT(fastfred)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(fastfred)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&jumpcoas_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, jumpcoas_ay8910_interface)
+MACHINE_DRIVER_END
 
 #undef CLOCK
 
@@ -658,12 +636,12 @@ ROM_START( jumpcoas )
 ROM_END
 
 
-static void init_fastfred(void)
+static DRIVER_INIT( fastfred )
 {
 	install_mem_read_handler(0, 0xc800, 0xcfff, fastfred_custom_io_r);
 }
 
-static void init_jumpcoas(void)
+static DRIVER_INIT( jumpcoas )
 {
 	install_mem_read_handler(0, 0xc800, 0xcfff, jumpcoas_custom_io_r);
 }

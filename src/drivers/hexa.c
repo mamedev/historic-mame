@@ -36,7 +36,7 @@ NOTES:
 
 
 
-void hexa_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( hexa );
 WRITE_HANDLER( hexa_d008_w );
 
 
@@ -133,44 +133,30 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_hexa =
-{
+static MACHINE_DRIVER_START( hexa )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,		/* 4 MHz ??????? */
-			readmem,writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,					/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)		/* 4 MHz ??????? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,					/* vh_init routine */
-	generic_vh_start,		/* vh_start routine */
-	generic_vh_stop,		/* vh_stop routine */
-	hexa_vh_screenrefresh,	/* vh_update routine */
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(hexa)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
-
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -197,7 +183,7 @@ ROM_END
 
 
 
-static void init_hexa(void)
+static DRIVER_INIT( hexa )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

@@ -20,7 +20,7 @@ WRITE_HANDLER( scramble_background_blue_w );
 WRITE_HANDLER( darkplnt_bullet_color_w );
 
 
-void scramble_init_machine(void)
+MACHINE_INIT( scramble )
 {
 	/* we must start with NMI interrupts disabled, otherwise some games */
 	/* (e.g. Lost Tomb, Rescue) will not pass the startup test. */
@@ -40,10 +40,10 @@ static READ_HANDLER( scrambls_input_port_2_r )
 
 	res = readinputport(2);
 
-/*logerror("%04x: read IN2\n",cpu_get_pc());*/
+/*logerror("%04x: read IN2\n",activecpu_get_pc());*/
 
 	/* avoid protection */
-	if (cpu_get_pc() == 0x00e4) res &= 0x7f;
+	if (activecpu_get_pc() == 0x00e4) res &= 0x7f;
 
 	return res;
 }
@@ -118,7 +118,7 @@ static WRITE_HANDLER( scramble_protection_w )
 
 static READ_HANDLER( scramble_protection_r )
 {
-	switch (cpu_get_pc())
+	switch (activecpu_get_pc())
 	{
 	case 0x00a8: return 0xf0;
 	case 0x00be: return 0xb0;
@@ -129,37 +129,37 @@ static READ_HANDLER( scramble_protection_r )
 	case 0x1ca2: return 0x00;  /* I don't think it's checked */
 	case 0x1d7e: return 0xb0;
 	default:
-		logerror("%04x: read protection\n",cpu_get_pc());
+		logerror("%04x: read protection\n",activecpu_get_pc());
 		return 0;
 	}
 }
 
 static READ_HANDLER( scrambls_protection_r )
 {
-	logerror("%04x: read protection\n",cpu_get_pc());
+	logerror("%04x: read protection\n",activecpu_get_pc());
 
 	return 0x6f;
 }
 
 READ_HANDLER( scramblb_protection_1_r )
 {
-	switch (cpu_get_pc())
+	switch (activecpu_get_pc())
 	{
 	case 0x01da: return 0x80;
 	case 0x01e4: return 0x00;
 	default:
-		logerror("%04x: read protection 1\n",cpu_get_pc());
+		logerror("%04x: read protection 1\n",activecpu_get_pc());
 		return 0;
 	}
 }
 
 READ_HANDLER( scramblb_protection_2_r )
 {
-	switch (cpu_get_pc())
+	switch (activecpu_get_pc())
 	{
 	case 0x01ca: return 0x90;
 	default:
-		logerror("%04x: read protection 2\n",cpu_get_pc());
+		logerror("%04x: read protection 2\n",activecpu_get_pc());
 		return 0;
 	}
 }
@@ -184,16 +184,16 @@ static READ_HANDLER( mariner_protection_2_r )
 
 READ_HANDLER( triplep_pip_r )
 {
-	logerror("PC %04x: triplep read port 2\n",cpu_get_pc());
-	if (cpu_get_pc() == 0x015a) return 0xff;
-	else if (cpu_get_pc() == 0x0886) return 0x05;
+	logerror("PC %04x: triplep read port 2\n",activecpu_get_pc());
+	if (activecpu_get_pc() == 0x015a) return 0xff;
+	else if (activecpu_get_pc() == 0x0886) return 0x05;
 	else return 0;
 }
 
 READ_HANDLER( triplep_pap_r )
 {
-	logerror("PC %04x: triplep read port 3\n",cpu_get_pc());
-	if (cpu_get_pc() == 0x015d) return 0x04;
+	logerror("PC %04x: triplep read port 3\n",activecpu_get_pc());
+	if (activecpu_get_pc() == 0x015d) return 0x04;
 	else return 0;
 }
 
@@ -360,26 +360,26 @@ static ppi8255_interface ppi8255_intf =
 };
 
 
-void init_scramble_ppi(void)
+DRIVER_INIT( scramble_ppi )
 {
 	ppi8255_init(&ppi8255_intf);
 }
 
-void init_scobra(void)
+DRIVER_INIT( scobra )
 {
 	init_scramble_ppi();
 
 	install_mem_write_handler(0, 0xa803, 0xa803, scramble_background_enable_w);
 }
 
-void init_atlantis(void)
+DRIVER_INIT( atlantis )
 {
 	init_scramble_ppi();
 
 	install_mem_write_handler(0, 0x6803, 0x6803, scramble_background_enable_w);
 }
 
-void init_scramble(void)
+DRIVER_INIT( scramble )
 {
 	init_atlantis();
 
@@ -387,7 +387,7 @@ void init_scramble(void)
 	ppi8255_set_portCwrite(1, scramble_protection_w);
 }
 
-void init_scrambls(void)
+DRIVER_INIT( scrambls )
 {
 	init_atlantis();
 
@@ -396,14 +396,14 @@ void init_scrambls(void)
 	ppi8255_set_portCwrite(1, scramble_protection_w);
 }
 
-void init_theend(void)
+DRIVER_INIT( theend )
 {
 	init_scramble_ppi();
 
 	ppi8255_set_portCwrite(0, theend_coin_counter_w);
 }
 
-void init_stratgyx(void)
+DRIVER_INIT( stratgyx )
 {
 	init_scramble_ppi();
 
@@ -415,14 +415,14 @@ void init_stratgyx(void)
 	ppi8255_set_portCread(1, stratgyx_input_port_3_r);
 }
 
-void init_tazmani2(void)
+DRIVER_INIT( tazmani2 )
 {
 	init_scramble_ppi();
 
 	install_mem_write_handler(0, 0xb002, 0xb002, scramble_background_enable_w);
 }
 
-void init_amidar(void)
+DRIVER_INIT( amidar )
 {
 	init_scramble_ppi();
 
@@ -430,7 +430,7 @@ void init_amidar(void)
 	ppi8255_set_portCread(1, input_port_3_r);
 }
 
-void init_ckongs(void)
+DRIVER_INIT( ckongs )
 {
 	init_scramble_ppi();
 
@@ -438,7 +438,7 @@ void init_ckongs(void)
 	ppi8255_set_portCread(0, ckongs_input_port_2_r);
 }
 
-void init_mariner(void)
+DRIVER_INIT( mariner )
 {
 	init_scramble_ppi();
 
@@ -453,7 +453,7 @@ void init_mariner(void)
 	/*install_mem_write_handler(0, 0x6803, 0x6803, MWA_NOP);*/
 }
 
-void init_frogger(void)
+DRIVER_INIT( frogger )
 {
 	int A;
 	unsigned char *rom;
@@ -473,7 +473,7 @@ void init_frogger(void)
 		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 }
 
-void init_froggers(void)
+DRIVER_INIT( froggers )
 {
 	int A;
 	unsigned char *rom;
@@ -487,7 +487,7 @@ void init_froggers(void)
 		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 }
 
-void init_mars(void)
+DRIVER_INIT( mars )
 {
 	int i;
 	unsigned char *RAM;
@@ -521,14 +521,14 @@ void init_mars(void)
 	}
 }
 
-void init_hotshock(void)
+DRIVER_INIT( hotshock )
 {
 	/* protection??? The game jumps into never-neverland here. I think
 	   it just expects a RET there */
 	memory_region(REGION_CPU1)[0x2ef9] = 0xc9;
 }
 
-void init_cavelon(void)
+DRIVER_INIT( cavelon )
 {
 	init_scramble_ppi();
 
@@ -544,7 +544,7 @@ void init_cavelon(void)
 															   an AY8910, but not sure */
 }
 
-void init_moonwar(void)
+DRIVER_INIT( moonwar )
 {
 	init_scramble_ppi();
 
@@ -553,7 +553,7 @@ void init_moonwar(void)
 	ppi8255_set_portCwrite(0, moonwar_port_select_w);
 }
 
-void init_darkplnt(void)
+DRIVER_INIT( darkplnt )
 {
 	init_scramble_ppi();
 
@@ -570,7 +570,7 @@ static int bit(int i,int n)
 }
 
 
-void init_anteater(void)
+DRIVER_INIT( anteater )
 {
 	int i;
 	unsigned char *RAM;
@@ -609,7 +609,7 @@ void init_anteater(void)
 	}
 }
 
-void init_rescue(void)
+DRIVER_INIT( rescue )
 {
 	int i;
 	unsigned char *RAM;
@@ -648,7 +648,7 @@ void init_rescue(void)
 	}
 }
 
-void init_minefld(void)
+DRIVER_INIT( minefld )
 {
 	int i;
 	unsigned char *RAM;
@@ -687,7 +687,7 @@ void init_minefld(void)
 	}
 }
 
-void init_losttomb(void)
+DRIVER_INIT( losttomb )
 {
 	int i;
 	unsigned char *RAM;
@@ -726,7 +726,7 @@ void init_losttomb(void)
 	}
 }
 
-void init_superbon(void)
+DRIVER_INIT( superbon )
 {
 	int i;
 	unsigned char *RAM;
@@ -762,7 +762,7 @@ void init_superbon(void)
 }
 
 
-void init_hustler(void)
+DRIVER_INIT( hustler )
 {
 	int A;
 
@@ -804,7 +804,7 @@ void init_hustler(void)
 	}
 }
 
-void init_billiard(void)
+DRIVER_INIT( billiard )
 {
 	int A;
 

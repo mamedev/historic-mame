@@ -21,13 +21,11 @@ extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
 WRITE_HANDLER( cclimber_colorram_w );
 WRITE_HANDLER( cclimber_bigsprite_videoram_w );
-void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int cclimber_vh_start(void);
-void cclimber_vh_stop(void);
-void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( cclimber );
+VIDEO_UPDATE( cclimber );
 
 
-void yamato_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( yamato )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -334,48 +332,37 @@ static struct AY8910interface yamato_ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_yamato =
-{
+static MACHINE_DRIVER_START( yamato )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ? */
-			yamato_readmem,yamato_writemem,0,yamato_writeport,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 MHz ? */
-			yamato_sound_readmem,yamato_sound_writemem,yamato_sound_readport,yamato_sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ? */
+	MDRV_CPU_MEMORY(yamato_readmem,yamato_writemem)
+	MDRV_CPU_PORTS(0,yamato_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz ? */
+	MDRV_CPU_MEMORY(yamato_sound_readmem,yamato_sound_writemem)
+	MDRV_CPU_PORTS(yamato_sound_readport,yamato_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	96,16*4+8*4,
-	yamato_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(96)
+	MDRV_COLORTABLE_LENGTH(16*4+8*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	cclimber_vh_start,
-	cclimber_vh_stop,
-	cclimber_vh_screenrefresh,
+	MDRV_PALETTE_INIT(yamato)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(cclimber)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&yamato_ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, yamato_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -454,7 +441,7 @@ ROM_START( yamato2 )
 ROM_END
 
 
-static void init_yamato(void)
+static DRIVER_INIT( yamato )
 {
 	yamato_decode();
 }

@@ -1,12 +1,12 @@
-/*
- * Aztarac soundboard interface emulation
- *
- * Jul 25 1999 by Mathis Rosenhauer
- *
- */
+/***************************************************************************
+
+	Centuri Aztarac hardware
+	
+***************************************************************************/
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "aztarac.h"
 
 static int sound_status;
 
@@ -26,7 +26,7 @@ WRITE16_HANDLER( aztarac_sound_w )
 		soundlatch_w(offset, data);
 		sound_status ^= 0x21;
 		if (sound_status & 0x20)
-			cpu_cause_interrupt( 1, Z80_IRQ_INT );
+			cpu_set_irq_line(1, 0, HOLD_LINE);
 	}
 }
 
@@ -47,14 +47,12 @@ WRITE_HANDLER( aztarac_snd_status_w )
     sound_status &= ~0x10;
 }
 
-int aztarac_snd_timed_irq (void)
+INTERRUPT_GEN( aztarac_snd_timed_irq )
 {
     sound_status ^= 0x10;
 
     if (sound_status & 0x10)
-        return interrupt();
-    else
-        return ignore_interrupt();
+        cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
 

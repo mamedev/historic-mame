@@ -41,6 +41,9 @@ Version 0.3, Februari 2000
 
 #include "rc.h"
 
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
 #define BUF_SIZE 512
 
 struct rc_struct

@@ -16,20 +16,16 @@ data16_t *supes_attribram;
 static UINT16 tilemask;
 
 
-int superman_vh_start (void)
+VIDEO_START( superman )
 {
 	tilemask = 0x3fff;
 	return 0;
 }
 
-int ballbros_vh_start (void)
+VIDEO_START( ballbros )
 {
 	tilemask = 0x0fff;
 	return 0;
-}
-
-void superman_vh_stop (void)
-{
 }
 
 /**************************************************************************/
@@ -133,7 +129,7 @@ static void superman_draw_sprites (struct mame_bitmap *bitmap,int bankbase,int c
 }
 
 
-void superman_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( superman )
 {
 	int bankbase;
 	int attribfix;

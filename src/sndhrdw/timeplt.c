@@ -115,7 +115,7 @@ WRITE_HANDLER( timeplt_sh_irqtrigger_w )
 	if (last == 0 && data)
 	{
 		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
+		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 	}
 
 	last = data;

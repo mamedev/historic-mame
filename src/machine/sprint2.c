@@ -1,46 +1,48 @@
 /***************************************************************************
 
-Atari Sprint2 machine
+	Atari Sprint 2 hardware
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sprint2.h"
 
 int sprint2_collision1_data = 0;
 int sprint2_collision2_data = 0;
 int sprint2_gear1 = 1;
 int sprint2_gear2 = 1;
 
+UINT8 sprintx_is_sprint2;
+
 static int sprint2_steering_buf1 = 0;
 static int sprint2_steering_buf2 = 0;
 static int sprint2_steering_val1 = 0xFF;
 static int sprint2_steering_val2 = 0xFF;
 
+
 /***************************************************************************
-Read Ports
+	Read Ports
 
-Sprint1 looks for the following:
-   AAAAAAAA          D                   D
-   76543210          6                   7
-   00101000 ($28)    n/a                 1st1 (player 1 1st gear)
-   00101001 ($29)    n/a                 1st1 (player 1 2nd gear)
-   00101010 ($2A)    n/a                 1st1 (player 1 3rd gear)
-   00101100 ($2B)    n/a                 Gas1 (player 1 accelerator)
-   00101101 ($2C)    n/a                 Self Test
-   00101110 ($2D)    n/a                 Start1
+	Sprint1 looks for the following:
+	   AAAAAAAA          D                   D
+	   76543210          6                   7
+	   00101000 ($28)    n/a                 1st1 (player 1 1st gear)
+	   00101001 ($29)    n/a                 1st1 (player 1 2nd gear)
+	   00101010 ($2A)    n/a                 1st1 (player 1 3rd gear)
+	   00101100 ($2B)    n/a                 Gas1 (player 1 accelerator)
+	   00101101 ($2C)    n/a                 Self Test
+	   00101110 ($2D)    n/a                 Start1
 
-   00x10x00          Track Cycle (DIP)   Oil Slick (DIP)
-   00x10x01          Mode 0 $ (DIP)      Mode 1 $ (DIP)
-   00x10x10          Spare (DIP?)        Ext Play (DIP)
-   00x10x11          Time 0 (DIP)        Time 1 (DIP)
+	   00x10x00          Track Cycle (DIP)   Oil Slick (DIP)
+	   00x10x01          Mode 0 $ (DIP)      Mode 1 $ (DIP)
+	   00x10x10          Spare (DIP?)        Ext Play (DIP)
+	   00x10x11          Time 0 (DIP)        Time 1 (DIP)
 
-We remap our input ports because if we didn't, we'd need 16 ports for this.
+	We remap our input ports because if we didn't, we'd need 16 ports for this.
 ***************************************************************************/
 
-READ_HANDLER( sprint1_read_ports_r )
+static READ_HANDLER( sprint1_read_ports_r )
 {
 	int gear;
 
@@ -82,35 +84,36 @@ READ_HANDLER( sprint1_read_ports_r )
 	}
 }
 
+
 /***************************************************************************
-Read Ports
+	Read Ports
 
-Sprint2 looks for the following:
-   AAAAAAAA          D                   D
-   76543210          6                   7
-   00011000 ($18)    n/a                 1st1 (player 1 1st gear)
-   00011001 ($19)    n/a                 1st2 (player 2 1st gear)
-   00011010 ($1A)    n/a                 2nd1 (player 1 2nd gear)
-   00011011 ($1B)    n/a                 2nd2 (player 2 2nd gear)
-   00011100 ($1C)    n/a                 3rd1 (player 1 3rd gear)
-   00011101 ($1D)    n/a                 3rd2 (player 2 3rd gear)
+	Sprint2 looks for the following:
+	   AAAAAAAA          D                   D
+	   76543210          6                   7
+	   00011000 ($18)    n/a                 1st1 (player 1 1st gear)
+	   00011001 ($19)    n/a                 1st2 (player 2 1st gear)
+	   00011010 ($1A)    n/a                 2nd1 (player 1 2nd gear)
+	   00011011 ($1B)    n/a                 2nd2 (player 2 2nd gear)
+	   00011100 ($1C)    n/a                 3rd1 (player 1 3rd gear)
+	   00011101 ($1D)    n/a                 3rd2 (player 2 3rd gear)
 
-   00101000 ($28)    n/a                 Gas1 (player 1 accelerator)
-   00101001 ($29)    n/a                 Gas2 (player 2 accelerator)
-   00101010 ($2A)    n/a                 Self Test
-   00101100 ($2B)    n/a                 Start1
-   00101101 ($2C)    n/a                 Start2
-   00101110 ($2D)    n/a                 Track Select Button
+	   00101000 ($28)    n/a                 Gas1 (player 1 accelerator)
+	   00101001 ($29)    n/a                 Gas2 (player 2 accelerator)
+	   00101010 ($2A)    n/a                 Self Test
+	   00101100 ($2B)    n/a                 Start1
+	   00101101 ($2C)    n/a                 Start2
+	   00101110 ($2D)    n/a                 Track Select Button
 
-   00x10x00          Track Cycle (DIP)   Oil Slick (DIP)
-   00x10x01          Mode 0 $ (DIP)      Mode 1 $ (DIP)
-   00x10x10          Spare (DIP?)        Ext Play (DIP)
-   00x10x11          Time 0 (DIP)        Time 1 (DIP)
+	   00x10x00          Track Cycle (DIP)   Oil Slick (DIP)
+	   00x10x01          Mode 0 $ (DIP)      Mode 1 $ (DIP)
+	   00x10x10          Spare (DIP?)        Ext Play (DIP)
+	   00x10x11          Time 0 (DIP)        Time 1 (DIP)
 
-We remap our input ports because if we didn't, we'd need 16 ports for this.
+	We remap our input ports because if we didn't, we'd need 16 ports for this.
 ***************************************************************************/
 
-READ_HANDLER( sprint2_read_ports_r )
+static READ_HANDLER( sprint2_read_ports_r )
 {
 	int gear;
 
@@ -165,33 +168,47 @@ READ_HANDLER( sprint2_read_ports_r )
 	}
 }
 
+
+
+READ_HANDLER( sprintx_read_ports_r )
+{
+	if (sprintx_is_sprint2)
+		return sprint2_read_ports_r(offset);
+	else
+		return sprint1_read_ports_r(offset);
+}
+
+
+
 /***************************************************************************
-Sync
+	Sync
 
-When reading from SYNC:
-   D4 = ATTRACT
-   D5 = VRESET
-   D6 = VBLANK*
-   D7 = some alternating signal!?!
+	When reading from SYNC:
+	   D4 = ATTRACT
+	   D5 = VRESET
+	   D6 = VBLANK*
+	   D7 = some alternating signal!?!
 
-The only one of these I really understand is the VBLANK...
+	The only one of these I really understand is the VBLANK...
 ***************************************************************************/
+
 READ_HANDLER( sprint2_read_sync_r )
 {
 	static int ac_line=0x00;
 
 	ac_line=(ac_line+1) % 3;
 	if (ac_line==0)
-	        return ((input_port_3_r(0) & 0x7f) | 0x80);
+        return ((input_port_3_r(0) & 0x7f) | 0x80);
 	else
-	        return (input_port_3_r(0) & 0x7F);
+        return (input_port_3_r(0) & 0x7F);
 }
 
 
 
 /***************************************************************************
-Coin inputs - Nothing special here.
+	Coin inputs - Nothing special here.
 ***************************************************************************/
+
 READ_HANDLER( sprint2_coins_r )
 {
 	return (input_port_4_r(0));
@@ -200,14 +217,15 @@ READ_HANDLER( sprint2_coins_r )
 
 
 /***************************************************************************
-Steering
+	Steering
 
-When D7 is low, the steering wheel has moved.
-If D6 is low, it moved left.  If D6 is high, it moved right.
-Be sure to keep returning a direction until steering_reset is called,
-because D6 and D7 are apparently checked at different times, and a
-change in-between can affect the direction you move.
+	When D7 is low, the steering wheel has moved.
+	If D6 is low, it moved left.  If D6 is high, it moved right.
+	Be sure to keep returning a direction until steering_reset is called,
+	because D6 and D7 are apparently checked at different times, and a
+	change in-between can affect the direction you move.
 ***************************************************************************/
+
 READ_HANDLER( sprint2_steering1_r )
 {
 	static int last_val=0;
@@ -225,17 +243,18 @@ READ_HANDLER( sprint2_steering1_r )
 
 	if (sprint2_steering_buf1>0)
 	{
-	        sprint2_steering_buf1--;
-	        sprint2_steering_val1=0x7F;
+        sprint2_steering_buf1--;
+        sprint2_steering_val1=0x7F;
 	}
 	else if (sprint2_steering_buf1<0)
 	{
-	        sprint2_steering_buf1++;
-	        sprint2_steering_val1=0x3F;
+        sprint2_steering_buf1++;
+        sprint2_steering_val1=0x3F;
 	}
 
 	return sprint2_steering_val1;
 }
+
 
 READ_HANDLER( sprint2_steering2_r )
 {
@@ -253,22 +272,24 @@ READ_HANDLER( sprint2_steering2_r )
 
 	if (sprint2_steering_buf2>0)
 	{
-	        sprint2_steering_buf2--;
-	        sprint2_steering_val2=0x7F;
+        sprint2_steering_buf2--;
+        sprint2_steering_val2=0x7F;
 	}
 	else if (sprint2_steering_buf2<0)
 	{
-	        sprint2_steering_buf2++;
-	        sprint2_steering_val2=0x3F;
+        sprint2_steering_buf2++;
+        sprint2_steering_val2=0x3F;
 	}
 
 	return sprint2_steering_val2;
 }
 
+
 WRITE_HANDLER( sprint2_steering_reset1_w )
 {
     sprint2_steering_val1=0xFF;
 }
+
 
 WRITE_HANDLER( sprint2_steering_reset2_w )
 {
@@ -278,44 +299,49 @@ WRITE_HANDLER( sprint2_steering_reset2_w )
 
 
 /***************************************************************************
-Collisions
+	Collisions
 
-D6=1, skid.  D7=1, crash.
+	D6=1, skid.  D7=1, crash.
 
-Note:  collisions are actually being set in vidhrdw/sprint2.c
+	Note:  collisions are actually being set in vidhrdw/sprint2.c
 ***************************************************************************/
+
 READ_HANDLER( sprint2_collision1_r )
 {
 	return sprint2_collision1_data;
 }
+
 
 READ_HANDLER( sprint2_collision2_r )
 {
 	return sprint2_collision2_data;
 }
 
+
 WRITE_HANDLER( sprint2_collision_reset1_w )
 {
 	sprint2_collision1_data=0;
 }
+
 
 WRITE_HANDLER( sprint2_collision_reset2_w )
 {
 	sprint2_collision2_data=0;
 }
 
+
 /***************************************************************************
-Lamps
+	Lamps
 ***************************************************************************/
+
 WRITE_HANDLER( sprint2_lamp1_w )
 {
 	set_led_status(0,offset & 1);
 }
 
+
 WRITE_HANDLER( sprint2_lamp2_w )
 {
 	set_led_status(1,offset & 1);
 }
-
-
 

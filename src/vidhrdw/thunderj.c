@@ -35,7 +35,7 @@ static void special_callback(struct mame_bitmap *bitmap, struct rectangle *clip,
  *
  *************************************/
 
-int thunderj_vh_start(void)
+VIDEO_START( thunderj )
 {
 	static const struct ataripf_desc pf0desc =
 	{
@@ -130,25 +130,25 @@ int thunderj_vh_start(void)
 	int i, size;
 
 	/* allocate temp memory */
-	start_end = malloc(sizeof(UINT32) * 512);
+	start_end = auto_malloc(sizeof(UINT32) * 512);
 	if (!start_end)
-		goto cant_allocate_startend;
+		return 1;
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pf0desc))
-		goto cant_create_pf0;
+		return 1;
 
 	/* initialize the second playfield */
 	if (!ataripf_init(1, &pf1desc))
-		goto cant_create_pf1;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 
 	/* initialize the alphanumerics */
 	if (!atarian_init(0, &andesc))
-		goto cant_create_an;
+		return 1;
 
 	/* modify the playfield 0 lookup table to handle the palette bank */
 	pflookup = ataripf_get_lookup(0, &size);
@@ -179,33 +179,6 @@ int thunderj_vh_start(void)
 		ATARIAN_LOOKUP_SET_CODE(anlookup[i], code);
 	}
 	return 0;
-
-	/* error cases */
-cant_create_an:
-	atarimo_free();
-cant_create_mo:
-cant_create_pf1:
-	ataripf_free();
-cant_create_pf0:
-	free(start_end);
-cant_allocate_startend:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void thunderj_vh_stop(void)
-{
-	atarian_free();
-	atarimo_free();
-	ataripf_free();
-	free(start_end);
 }
 
 
@@ -368,11 +341,11 @@ static void special_callback(struct mame_bitmap *bitmap, struct rectangle *clip,
  *
  *************************************/
 
-void thunderj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( thunderj )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	ataripf_render(1, bitmap);
-	atarimo_render(0, bitmap, overrender0_callback, overrender1_callback);
-	atarian_render(0, bitmap);
+	ataripf_render(0, bitmap, cliprect);
+	ataripf_render(1, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, overrender0_callback, overrender1_callback);
+	atarian_render(0, bitmap, cliprect);
 }

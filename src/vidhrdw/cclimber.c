@@ -36,7 +36,7 @@ static int sidepanel_enabled;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( cclimber )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -126,7 +126,7 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 #define BGPEN (256+32)
 #define SIDEPEN (256+32+1)
 
-void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( swimmer )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -259,33 +259,6 @@ WRITE_HANDLER( swimmer_bgcolor_w )
 
 
 
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int cclimber_vh_start(void)
-{
-	if (generic_vh_start() != 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void cclimber_vh_stop(void)
-{
-	generic_vh_stop();
-}
-
-
-
 WRITE_HANDLER( cclimber_colorram_w )
 {
 	if (colorram[offset] != data)
@@ -379,12 +352,12 @@ static void drawbigsprite(struct mame_bitmap *bitmap)
 }
 
 
-void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cclimber )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -497,12 +470,12 @@ void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 
-void swimmer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( swimmer )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

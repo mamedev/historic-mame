@@ -22,7 +22,7 @@ extern unsigned char *getstar_e803;
 
 /* Perform basic machine initialisation */
 
-void slapfight_init_machine(void)
+MACHINE_INIT( slapfight )
 {
 	/* MAIN CPU */
 
@@ -51,7 +51,7 @@ WRITE_HANDLER( slapfight_dpram_w )
 	timer_set(TIME_NOW,0,0);       P'tit Seb 980926 Commented out because it doesn't seem to be necessary
 
 	// Now cause the interrupt
-    cpu_cause_interrupt (1, Z80_NMI_INT);
+    cpu_set_irq_line (1, IRQ_LINE_NMI, PULSE_LINE);
 
 */
 
@@ -150,18 +150,16 @@ unsigned char val;
 WRITE_HANDLER( getstar_sh_intenable_w )
 {
 	getstar_sh_intenabled = 1;
-	logerror("cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
+	logerror("cpu #1 PC=%d: %d written to a0e0\n",activecpu_get_pc(),data);
 }
 
 
 
 /* Generate interrups only if they have been enabled */
-int getstar_interrupt(void)
+INTERRUPT_GEN( getstar_interrupt )
 {
 	if (getstar_sh_intenabled)
-		return nmi_interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 WRITE_HANDLER( getstar_port_04_w )

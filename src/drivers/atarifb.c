@@ -1,142 +1,132 @@
 /***************************************************************************
 
-Atari Football Driver
+	Atari Football hardware
 
-Driver by Mike Balfour, Patrick Lawrence, Brad Oliver
+	driver by Mike Balfour, Patrick Lawrence, Brad Oliver
 
-Memory Map:
-	0000-01FF	Working RAM
-	0200-025F	Playfield - Player 1
-	03A0-03FF	Playfield - Player 2
-	1000-13BF	Scrollfield
-	13C0-13FF	Motion Object Parameters:
+	Games supported:
+		* Atari Football
+		* Atari Baseball
+		* Atari Soccer
 
-	13C0		Motion Object 1 Picture #
-	13C1		Motion Object 1 Vertical Position
-	13C2		Motion Object 2 Picture #
-	13C3		Motion Object 2 Vertical Position
-	...
-	13DE		Motion Object 16 Picture #
-	13DF		Motion Object 16 Vertical Position
+	Known issues:
+		* The down marker sprite is multiplexed so that it will be drawn at the
+		  top and bottom of the screen. We fake this feature. Additionally, we
+		  draw it at a different location which seems to make more sense.
 
-	13E0		Motion Object 1 Horizontal Position
-	13E1		Spare
-	13E2		Motion Object 2 Horizontal Position
-	13E3		Spare
-	...
-	13FE		Motion Object 16 Horizontal Position
-	13FF		Spare
+		* The play which is chosen is drawn in text at the top of the screen;
+		  no backdrop/overlay is supported yet. High quality artwork would be
+		  appreciated.
 
-	2000-2003	Output ports:
+		* The sound is ripped for the most part from the Basketball driver and
+		  is missing the kick, hit and whistle tones. I don't know if the noise
+		  is entirely accurate either.
 
-	2000		(OUT 0) Scrollfield Offset (8 bits)
-	2001		(OUT 1)
-				D0 = Whistle
-				D1 = Hit
-				D2 = Kicker
-				D5 = CTRLD
-	2002		(OUT 2)
-				D0-D3 = Noise Amplitude
-				D4 = Coin Counter
-				D5 = Attract
-	2003		(OUT 3)
-				D0-D3 = LED Cathodes
-				D4-D5 Spare
+		* I'm not good at reading the schematics, so I'm unsure about the
+		  exact vblank duration. I'm pretty sure it is one of two values though.
 
-	3000		Interrupt Acknowledge
-	4000-4003	Input ports:
+		* The 4-player variation is slightly broken. I'm unsure of the
+		  LED multiplexing.
 
-	4000		(IN 0) = 0
-				D0 = Trackball Direction PL2VD
-				D1 = Trackball Direction PL2HD
-				D2 = Trackball Direction PL1VD
-				D3 = Trackball Direction PL1HD
-				D4 = Select 1
-				D5 = Slam
-				D6 = End Screen
-				D7 = Coin 1
-	4000		(CTRLD) = 1
-				D0-D3 = Track-ball Horiz. 1
-				D4-D7 = Track-ball Vert. 1
-	4002		(IN 2) = 0
-				D0-D3 = Option Switches
-				D4 = Select 2
-				D5 = Spare
-				D6 = Test
-				D7 = Coin 2
-	4002		(CTRLD) = 1
-				D0-D3 = Track-ball Horiz. 2
-				D4-D7 = Track-ball Vert. 2
+****************************************************************************
 
-	5000		Watchdog
-	6800-7FFF	Program
-	(F800-FFFF) - only needed for the 6502 vectors
+	Memory Map:
+		0000-01FF	Working RAM
+		0200-025F	Playfield - Player 1
+		03A0-03FF	Playfield - Player 2
+		1000-13BF	Scrollfield
+		13C0-13FF	Motion Object Parameters:
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
+		13C0		Motion Object 1 Picture #
+		13C1		Motion Object 1 Vertical Position
+		13C2		Motion Object 2 Picture #
+		13C3		Motion Object 2 Vertical Position
+		...
+		13DE		Motion Object 16 Picture #
+		13DF		Motion Object 16 Vertical Position
 
-Changes:
-	LBO - lots of cleanup, now it's playable.
+		13E0		Motion Object 1 Horizontal Position
+		13E1		Spare
+		13E2		Motion Object 2 Horizontal Position
+		13E3		Spare
+		...
+		13FE		Motion Object 16 Horizontal Position
+		13FF		Spare
 
-TODO:
-	* The down marker sprite is multiplexed so that it will be drawn at the
-	  top and bottom of the screen. We fake this feature. Additionally, we
-	  draw it at a different location which seems to make more sense.
+		2000-2003	Output ports:
 
-	* The play which is chosen is drawn in text at the top of the screen;
-	  no backdrop/overlay is supported yet. High quality artwork would be
-	  appreciated.
+		2000		(OUT 0) Scrollfield Offset (8 bits)
+		2001		(OUT 1)
+					D0 = Whistle
+					D1 = Hit
+					D2 = Kicker
+					D5 = CTRLD
+		2002		(OUT 2)
+					D0-D3 = Noise Amplitude
+					D4 = Coin Counter
+					D5 = Attract
+		2003		(OUT 3)
+					D0-D3 = LED Cathodes
+					D4-D5 Spare
 
-	* The sound is ripped for the most part from the Basketball driver and
-	  is missing the kick, hit and whistle tones. I don't know if the noise
-	  is entirely accurate either.
+		3000		Interrupt Acknowledge
+		4000-4003	Input ports:
 
-	* I'm not good at reading the schematics, so I'm unsure about the
-	  exact vblank duration. I'm pretty sure it is one of two values though.
+		4000		(IN 0) = 0
+					D0 = Trackball Direction PL2VD
+					D1 = Trackball Direction PL2HD
+					D2 = Trackball Direction PL1VD
+					D3 = Trackball Direction PL1HD
+					D4 = Select 1
+					D5 = Slam
+					D6 = End Screen
+					D7 = Coin 1
+		4000		(CTRLD) = 1
+					D0-D3 = Track-ball Horiz. 1
+					D4-D7 = Track-ball Vert. 1
+		4002		(IN 2) = 0
+					D0-D3 = Option Switches
+					D4 = Select 2
+					D5 = Spare
+					D6 = Test
+					D7 = Coin 2
+		4002		(CTRLD) = 1
+					D0-D3 = Track-ball Horiz. 2
+					D4-D7 = Track-ball Vert. 2
 
-	* The 4-player variation is slightly broken. I'm unsure of the
-	  LED multiplexing.
+		5000		Watchdog
+		6800-7FFF	Program
+		(F800-FFFF) - only needed for the 6502 vectors
+
+	If you have any questions about how this driver works, don't hesitate to
+	ask.  - Mike Balfour (mab22@po.cwru.edu)
+
+	Changes:
+		LBO - lots of cleanup, now it's playable.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "atarifb.h"
 
-/* vidhrdw/atarifb.c */
-extern size_t atarifb_alphap1_vram_size;
-extern size_t atarifb_alphap2_vram_size;
-extern unsigned char *atarifb_alphap1_vram;
-extern unsigned char *atarifb_alphap2_vram;
-extern unsigned char *atarifb_scroll_register;
-
-WRITE_HANDLER( atarifb_scroll_w );
-WRITE_HANDLER( atarifb_alphap1_vram_w );
-WRITE_HANDLER( atarifb_alphap2_vram_w );
-extern int atarifb_vh_start(void);
-extern void atarifb_vh_stop(void);
-extern void atarifb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-/* machine/atarifb.c */
-WRITE_HANDLER( atarifb_out1_w );
-READ_HANDLER( atarifb_in0_r );
-READ_HANDLER( atarifb_in2_r );
-WRITE_HANDLER( atarifb4_out1_w );
-READ_HANDLER( atarifb4_in0_r );
-READ_HANDLER( atarifb4_in2_r );
-WRITE_HANDLER( soccer_out1_w );
-
-int atarifb_lamp1, atarifb_lamp2;
-int atarifb_game;
 
 /* sound code shamelessly ripped from bsktball.c */
 static int crowd_mask;
 static int noise_b10=0;
 static int noise_a10=0;
 static int noise=0;
-static int noise_timer_set=0;
+
 #define TIME_32H 10582*2
 #define TIME_256H TIME_32H*4
 
+
+
+/*************************************
+ *
+ *	Sound control
+ *
+ *************************************/
 
 static void atarifb_noise_256H(int foo)
 {
@@ -155,10 +145,14 @@ static void atarifb_noise_256H(int foo)
 		DAC_data_w(2,crowd_mask);
 	else
 		DAC_data_w(2,0);
-
-	timer_set (TIME_IN_NSEC(TIME_256H), 0, atarifb_noise_256H);
-	noise_timer_set=1;
 }
+
+
+static MACHINE_INIT( atarifb )
+{
+	timer_pulse(TIME_IN_NSEC(TIME_256H), 0, atarifb_noise_256H);
+}
+
 
 static WRITE_HANDLER( atarifb_out2_w )
 {
@@ -169,13 +163,10 @@ static WRITE_HANDLER( atarifb_out2_w )
 	else
 		DAC_data_w(2,0);
 
-	if (!noise_timer_set)
-		timer_set (TIME_IN_NSEC(TIME_256H), 0, atarifb_noise_256H);
-	noise_timer_set=1;
-
 	coin_counter_w (0, data & 0x10);
 //	logerror("out2_w: %02x\n", data & ~0x0f);
 }
+
 
 static WRITE_HANDLER( soccer_out2_w )
 {
@@ -186,15 +177,19 @@ static WRITE_HANDLER( soccer_out2_w )
 	else
 		DAC_data_w(2,0);
 
-	if (!noise_timer_set)
-		timer_set (TIME_IN_NSEC(TIME_256H), 0, atarifb_noise_256H);
-	noise_timer_set=1;
-
 	coin_counter_w (0, data & 0x40);
 	coin_counter_w (1, data & 0x20);
 	coin_counter_w (2, data & 0x10);
 //	logerror("out2_w: %02x\n", data & ~0x0f);
 }
+
+
+
+/*************************************
+ *
+ *	LED control
+ *
+ *************************************/
 
 static WRITE_HANDLER( atarifb_out3_w )
 {
@@ -218,6 +213,46 @@ static WRITE_HANDLER( atarifb_out3_w )
 //	logerror("out3_w, %02x:%02x\n", loop, data);
 }
 
+
+
+/*************************************
+ *
+ *	Palette generation
+ *
+ *************************************/
+
+static const unsigned char palette_source[] =
+{
+	0x00,0x00,0x00, /* black  */
+	0x80,0x80,0x80, /* grey  */
+	0xff,0xff,0xff, /* white  */
+	0x40,0x40,0x40, /* dark grey (?) - used in Soccer only */
+};
+
+static const unsigned short colortable_source[] =
+{
+	0x02, 0x00, /* chars */
+	0x03, 0x02, /* sprites */
+	0x03, 0x00,
+	0x03, 0x01, /* sprite masks */
+	0x03, 0x00,
+	0x03, 0x02,
+};
+
+static PALETTE_INIT( atarifb )
+{
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x1000, 0x13bf, MRA_RAM },
@@ -228,6 +263,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
 MEMORY_END
+
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
@@ -245,6 +281,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
 MEMORY_END
 
+
 static MEMORY_READ_START( atarifb4_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x1000, 0x13bf, MRA_RAM },
@@ -256,6 +293,7 @@ static MEMORY_READ_START( atarifb4_readmem )
 	{ 0x6000, 0x7fff, MRA_ROM }, /* PROM */
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
 MEMORY_END
+
 
 static MEMORY_WRITE_START( atarifb4_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
@@ -273,6 +311,7 @@ static MEMORY_WRITE_START( atarifb4_writemem )
 	{ 0x6000, 0x7fff, MWA_ROM }, /* PROM */
 MEMORY_END
 
+
 static MEMORY_READ_START( soccer_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x0bff, MRA_RAM },	/* playfield/object RAM */
@@ -283,6 +322,7 @@ static MEMORY_READ_START( soccer_readmem )
 	{ 0x1803, 0x1803, input_port_11_r },
 	{ 0xfff0, 0xffff, MRA_ROM }, /* PROM for 6502 vectors */
 MEMORY_END
+
 
 static MEMORY_WRITE_START( soccer_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
@@ -299,6 +339,13 @@ static MEMORY_WRITE_START( soccer_writemem )
 	{ 0x2000, 0x3fff, MWA_ROM }, /* PROM */
 MEMORY_END
 
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( atarifb )
 	PORT_START		/* IN0 */
@@ -341,6 +388,7 @@ INPUT_PORTS_START( atarifb )
 	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( atarifb4 )
 	PORT_START		/* IN0 */
@@ -404,6 +452,7 @@ INPUT_PORTS_START( atarifb4 )
 	/* The lower 4 bits are the input */
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( abaseb )
 	PORT_START		/* IN0 */
 	PORT_BIT ( 0x0F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -445,6 +494,7 @@ INPUT_PORTS_START( abaseb )
 	PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0 )
 	/* The lower 4 bits are the input */
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( soccer )
 	PORT_START		/* IN0 */
@@ -535,63 +585,73 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	64, 	/* 64 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* no separation in 1 bpp */
+	8,8,
+	64,
+	1,
+	{ 0 },
 	{ 15, 14, 13, 12, 7, 6, 5, 4 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
+
 
 static struct GfxLayout fieldlayout =
 {
-	8,8,	/* 8*8 characters */
-	64, 	/* 64 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* no separation in 1 bpp */
+	8,8,
+	64,
+	1,
+	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8 /* every char takes 8 consecutive bytes */
+	8*8
 };
+
 
 static struct GfxLayout soccer_fieldlayout =
 {
-	8,8,	/* 8*8 characters */
-	64, 	/* 64 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* no separation in 1 bpp */
+	8,8,
+	64,
+	1,
+	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
+
 
 static struct GfxLayout spritelayout =
 {
-	8,16,	/* 8*16 characters */
-	64, 	/* 64 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* no separation in 1 bpp */
+	8,16,
+	64,
+	1,
+	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	16*8 /* every char takes 16 consecutive bytes */
+	16*8
 };
+
 
 static struct GfxLayout spritemasklayout =
 {
-	8,16,	/* 8*6 characters */
-	64, 	/* 64 characters */
-	1,		/* 1 bit per pixel */
-	{ 0 },	/* no separation in 1 bpp */
+	8,16,
+	64,
+	1,
+	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -599,6 +659,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX2, 0, &fieldlayout, 0x02, 0x01 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
+
 
 static struct GfxDecodeInfo soccer_gfxdecodeinfo[] =
 {
@@ -609,28 +670,13 @@ static struct GfxDecodeInfo soccer_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00, /* black  */
-	0x80,0x80,0x80, /* grey  */
-	0xff,0xff,0xff, /* white  */
-	0x40,0x40,0x40, /* dark grey (?) - used in Soccer only */
-};
-static unsigned short colortable[] =
-{
-	0x02, 0x00, /* chars */
-	0x03, 0x02, /* sprites */
-	0x03, 0x00,
-	0x03, 0x01, /* sprite masks */
-	0x03, 0x00,
-	0x03, 0x02,
-};
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
-}
 
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct DACinterface dac_interface =
 {
@@ -638,126 +684,70 @@ static struct DACinterface dac_interface =
 	{ 50, 50, 50 }
 };
 
-static const struct MachineDriver machine_driver_atarifb =
-{
+
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( atarifb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			750000, 	   /* 750 KHz */
-			readmem,writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
-//	60, 1528,	/* frames per second, vblank duration: 16.3ms * 3/32 = 1528.125. Is it 1/8th or 3/32nds? (1528?) */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD_TAG("main", M6502, 750000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(2037)	/* 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
+	
+	MDRV_MACHINE_INIT(atarifb)
 
 	/* video hardware */
-	38*8, 32*8, { 0*8, 38*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	atarifb_vh_start,
-	atarifb_vh_stop,
-	atarifb_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(38*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
+	
+	MDRV_PALETTE_INIT(atarifb)
+	MDRV_VIDEO_START(atarifb)
+	MDRV_VIDEO_UPDATE(atarifb)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_atarifb4 =
-{
+
+static MACHINE_DRIVER_START( atarifb4 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			750000, 	   /* 750 KHz */
-			atarifb4_readmem,atarifb4_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
-//	60, 1528,	/* frames per second, vblank duration: 16.3ms * 3/32 = 1528.125. Is it 1/8th or 3/32nds? (1528?) */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_IMPORT_FROM(atarifb)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(atarifb4_readmem,atarifb4_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( soccer )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(atarifb)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(soccer_readmem,soccer_writemem)
 
 	/* video hardware */
-	38*8, 32*8, { 0*8, 38*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	atarifb_vh_start,
-	atarifb_vh_stop,
-	atarifb_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
-
-static const struct MachineDriver machine_driver_soccer =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			750000, 	   /* 750 KHz */
-			soccer_readmem, soccer_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
-//	60, 1528,	/* frames per second, vblank duration: 16.3ms * 3/32 = 1528.125. Is it 1/8th or 3/32nds? (1528?) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	38*8, 32*8, { 0*8, 38*8-1, 0*8, 32*8-1 },
-	soccer_gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
-	init_palette,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	atarifb_vh_start,
-	atarifb_vh_stop,
-	atarifb_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_GFXDECODE(soccer_gfxdecodeinfo)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
 
-  Game ROMs
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( atarifb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -774,6 +764,7 @@ ROM_START( atarifb )
 	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
 ROM_END
 
+
 ROM_START( atarifb1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "03302601.m1", 0x6800, 0x0800, 0xf8ce7ed8 )
@@ -788,6 +779,7 @@ ROM_START( atarifb1 )
 	ROM_LOAD_NIB_LOW ( "033030.c5", 0x0000, 0x0200, 0xeac9ef90 )
 	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
 ROM_END
+
 
 ROM_START( atarifb4 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
@@ -818,6 +810,7 @@ ROM_START( atarifb4 )
 	ROM_LOAD_NIB_HIGH( "033031.d5", 0x0000, 0x0200, 0x89d619b8 )
 ROM_END
 
+
 ROM_START( abaseb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, 0xedcfffe8 )
@@ -833,6 +826,7 @@ ROM_START( abaseb )
 	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, 0x8a0f971b )
 	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, 0x021d1067 )
 ROM_END
+
 
 ROM_START( abaseb2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
@@ -862,6 +856,7 @@ ROM_START( abaseb2 )
 	ROM_LOAD_NIB_LOW ( "034708.n7", 0x0000, 0x0200, 0x8a0f971b )
 	ROM_LOAD_NIB_HIGH( "034709.c5", 0x0000, 0x0200, 0x021d1067 )
 ROM_END
+
 
 ROM_START( soccer )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code, the ROMs are nibble-wide */
@@ -897,31 +892,47 @@ ROM_START( soccer )
 ROM_END
 
 
-void init_atarifb (void)
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( atarifb )
 {
 	/* Tell the video code to draw the plays for this version */
 	atarifb_game = 1;
 }
 
-void init_atarifb4(void)
+
+static DRIVER_INIT( atarifb4 )
 {
 	/* Tell the video code to draw the plays for this version */
 	atarifb_game = 2;
 }
 
-void init_abaseb(void)
+
+static DRIVER_INIT( abaseb )
 {
 	/* Tell the video code to draw the plays for this version */
 	atarifb_game = 3;
 }
 
-void init_soccer(void)
+
+static DRIVER_INIT( soccer )
 {
 	/* Tell the video code to draw the plays for this version */
 	atarifb_game = 4;
 }
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1978, atarifb,  0,       atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 2)" )
 GAME( 1978, atarifb1, atarifb, atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 1)" )

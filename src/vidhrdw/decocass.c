@@ -42,6 +42,9 @@ static char *char_dirty;
 static char *tile_dirty;
 static char object_dirty;
 
+static struct rectangle bg_tilemap_l_clip;
+static struct rectangle bg_tilemap_r_clip;
+
 static UINT32 tile_offset[32*32] = {
 	0x078,0x079,0x07a,0x07b,0x07c,0x07d,0x07e,0x07f,0x0ff,0x0fe,0x0fd,0x0fc,0x0fb,0x0fa,0x0f9,0x0f8,0x278,0x279,0x27a,0x27b,0x27c,0x27d,0x27e,0x27f,0x2ff,0x2fe,0x2fd,0x2fc,0x2fb,0x2fa,0x2f9,0x2f8,
 	0x070,0x071,0x072,0x073,0x074,0x075,0x076,0x077,0x0f7,0x0f6,0x0f5,0x0f4,0x0f3,0x0f2,0x0f1,0x0f0,0x270,0x271,0x272,0x273,0x274,0x275,0x276,0x277,0x2f7,0x2f6,0x2f5,0x2f4,0x2f3,0x2f2,0x2f1,0x2f0,
@@ -128,7 +131,7 @@ static void get_fg_tile_info(int tile_index)
 	big object
  ********************************************/
 
-static void draw_object(struct mame_bitmap *bitmap)
+static void draw_object(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int sx, sy, color;
 
@@ -144,13 +147,13 @@ static void draw_object(struct mame_bitmap *bitmap)
 	else
 		sx = 91 - (part_h_shift & 0x7f);
 
-	drawgfx(bitmap, Machine->gfx[3], 0, color, 0, 0, sx + 64, sy, &Machine->visible_area, TRANSPARENCY_PEN, 0);
-	drawgfx(bitmap, Machine->gfx[3], 1, color, 0, 0, sx, sy, &Machine->visible_area, TRANSPARENCY_PEN, 0);
-	drawgfx(bitmap, Machine->gfx[3], 0, color, 0, 1, sx + 64, sy - 64, &Machine->visible_area, TRANSPARENCY_PEN, 0);
-	drawgfx(bitmap, Machine->gfx[3], 1, color, 0, 1, sx, sy - 64, &Machine->visible_area, TRANSPARENCY_PEN, 0);
+	drawgfx(bitmap, Machine->gfx[3], 0, color, 0, 0, sx + 64, sy, cliprect, TRANSPARENCY_PEN, 0);
+	drawgfx(bitmap, Machine->gfx[3], 1, color, 0, 0, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+	drawgfx(bitmap, Machine->gfx[3], 0, color, 0, 1, sx + 64, sy - 64, cliprect, TRANSPARENCY_PEN, 0);
+	drawgfx(bitmap, Machine->gfx[3], 1, color, 0, 1, sx, sy - 64, cliprect, TRANSPARENCY_PEN, 0);
 }
 
-static void draw_center(struct mame_bitmap *bitmap)
+static void draw_center(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int sx, sy, x, y, color;
 
@@ -168,12 +171,13 @@ static void draw_center(struct mame_bitmap *bitmap)
 	sx = (center_h_shift_space >> 2) & 0x3c;
 
 	for (y = 0; y < 4; y++)
-	{
-		if (((sy + y) & color_center_bot & 3) == (sy & color_center_bot & 3))
-			for (x = 0; x < 256; x++)
-				if (0 != (x & 16) || 0 != (center_h_shift_space & 1))
-					plot_pixel(bitmap, (sx + x) & 255, sy + y, Machine->pens[color]);
-	}
+		if ((sy + y) >= cliprect->min_y && (sy + y) <= cliprect->max_y)
+		{
+			if (((sy + y) & color_center_bot & 3) == (sy & color_center_bot & 3))
+				for (x = 0; x < 256; x++)
+					if (0 != (x & 16) || 0 != (center_h_shift_space & 1))
+						plot_pixel(bitmap, (sx + x) & 255, sy + y, Machine->pens[color]);
+		}
 }
 
 /********************************************
@@ -430,7 +434,7 @@ WRITE_HANDLER( decocass_center_v_shift_w )
 	memory handlers
  ********************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int color,
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int color,
 						int sprite_y_adjust, int sprite_y_adjust_flip_screen,
 						unsigned char *sprite_ram, int interleave)
 {
@@ -466,7 +470,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int color,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				cliprect, TRANSPARENCY_PEN, 0);
 
 		sy += (flip_screen ? -256 : 256);
 
@@ -476,12 +480,12 @@ static void draw_sprites(struct mame_bitmap *bitmap, int color,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				cliprect, TRANSPARENCY_PEN, 0);
 	}
 }
 
 
-static void draw_missiles(struct mame_bitmap *bitmap,
+static void draw_missiles(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
 						int missile_y_adjust, int missile_y_adjust_flip_screen,
 						unsigned char *missile_ram, int interleave)
 {
@@ -503,7 +507,7 @@ static void draw_missiles(struct mame_bitmap *bitmap,
 		sy -= missile_y_adjust;
 		drawgfx(bitmap,Machine->gfx[4],
 				0,32 + ((color_missiles >> 4) & 7), 0,0, sx,sy,
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				cliprect, TRANSPARENCY_PEN, 0);
 
 		sy = 255 - missile_ram[offs + 1*interleave];
 		sx = 255 - missile_ram[offs + 3*interleave];
@@ -515,7 +519,7 @@ static void draw_missiles(struct mame_bitmap *bitmap,
 		sy -= missile_y_adjust;
 		drawgfx(bitmap,Machine->gfx[4],
 				0,32 + (color_missiles & 7), 0,0, sx,sy,
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				cliprect, TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -592,13 +596,11 @@ static void decode_modified(unsigned char *sprite_ram, int interleave)
 	}
 }
 
-int decocass_vh_start (void)
+VIDEO_START( decocass )
 {
-	struct rectangle clip;
-
-	if (NULL == (sprite_dirty = malloc(256)) ||
-		NULL == (char_dirty = malloc(1024)) ||
-		NULL == (tile_dirty = malloc(16)))
+	if (NULL == (sprite_dirty = auto_malloc(256)) ||
+		NULL == (char_dirty = auto_malloc(1024)) ||
+		NULL == (tile_dirty = auto_malloc(16)))
 		return 1;
 
 	bg_tilemap_l = tilemap_create( get_bg_l_tile_info, bgvideoram_scan_cols, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
@@ -612,13 +614,11 @@ int decocass_vh_start (void)
 	tilemap_set_transparent_pen( bg_tilemap_r, 0 );
 	tilemap_set_transparent_pen( fg_tilemap, 0 );
 
-	clip = Machine->visible_area;
-	clip.max_y = Machine->drv->screen_height / 2;
-	tilemap_set_clip(bg_tilemap_l, &clip);
+	bg_tilemap_l_clip = Machine->visible_area;
+	bg_tilemap_l_clip.max_y = Machine->drv->screen_height / 2;
 
-	clip = Machine->visible_area;
-	clip.min_y = Machine->drv->screen_height / 2;
-	tilemap_set_clip(bg_tilemap_r, &clip);
+	bg_tilemap_r_clip = Machine->visible_area;
+	bg_tilemap_r_clip.min_y = Machine->drv->screen_height / 2;
 
 	/* background videroam bits D0-D3 are shared with the tileram */
 	decocass_bgvideoram = decocass_tileram;
@@ -640,22 +640,10 @@ int decocass_vh_start (void)
 	return 0;
 }
 
-void decocass_vh_stop (void)
-{
-	if (tile_dirty)
-		free(tile_dirty);
-	tile_dirty = NULL;
-	if (char_dirty)
-		free(char_dirty);
-	char_dirty = NULL;
-	if (sprite_dirty)
-		free(sprite_dirty);
-	sprite_dirty = NULL;
-}
-
-void decocass_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( decocass )
 {
 	int scrollx, scrolly_l, scrolly_r;
+	struct rectangle clip;
 
 	if (0xc0 != (input_port_2_r(0) & 0xc0))  /* coin slots assert an NMI */
 		cpu_set_nmi_line(0, ASSERT_LINE);
@@ -701,7 +689,7 @@ void decocass_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 #endif
 
-	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );
+	fillbitmap( bitmap, Machine->pens[0], cliprect );
 
 	decode_modified( decocass_fgvideoram, 0x20 );
 
@@ -733,24 +721,34 @@ void decocass_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	{
 		if (mode_set & 0x08)	/* bkg_ena on ? */
 		{
-			tilemap_draw(bitmap, bg_tilemap_l, 0, 0);
-			tilemap_draw(bitmap, bg_tilemap_r, 0, 0);
+			clip = bg_tilemap_l_clip;
+			sect_rect(&clip,cliprect);
+			tilemap_draw(bitmap,&clip, bg_tilemap_l, 0, 0);
+
+			clip = bg_tilemap_r_clip;
+			sect_rect(&clip,cliprect);
+			tilemap_draw(bitmap,&clip, bg_tilemap_r, 0, 0);
 		}
-		draw_object(bitmap);
-		draw_center(bitmap);
+		draw_object(bitmap,cliprect);
+		draw_center(bitmap,cliprect);
 	}
 	else
 	{
-		draw_object(bitmap);
-		draw_center(bitmap);
+		draw_object(bitmap,cliprect);
+		draw_center(bitmap,cliprect);
 		if (mode_set & 0x08)	/* bkg_ena on ? */
 		{
-			tilemap_draw(bitmap, bg_tilemap_l, 0, 0);
-			tilemap_draw(bitmap, bg_tilemap_r, 0, 0);
+			clip = bg_tilemap_l_clip;
+			sect_rect(&clip,cliprect);
+			tilemap_draw(bitmap,&clip, bg_tilemap_l, 0, 0);
+
+			clip = bg_tilemap_r_clip;
+			sect_rect(&clip,cliprect);
+			tilemap_draw(bitmap,&clip, bg_tilemap_r, 0, 0);
 		}
 	}
-	tilemap_draw(bitmap, fg_tilemap, 0, 0);
-	draw_sprites(bitmap, (color_center_bot >> 1) & 1, 0, 0, decocass_fgvideoram, 0x20);
-	draw_missiles(bitmap, 1, 0, decocass_colorram, 0x20);
+	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
+	draw_sprites(bitmap,cliprect, (color_center_bot >> 1) & 1, 0, 0, decocass_fgvideoram, 0x20);
+	draw_missiles(bitmap,cliprect, 1, 0, decocass_colorram, 0x20);
 }
 

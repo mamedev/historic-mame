@@ -11,8 +11,8 @@ driver by Phil Stroffolino
 
 extern unsigned char *troangel_scroll;
 WRITE_HANDLER( troangel_flipscreen_w );
-void troangel_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void troangel_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( troangel );
+VIDEO_UPDATE( troangel );
 
 
 
@@ -167,44 +167,33 @@ static struct GfxDecodeInfo troangel_gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_troangel =
-{
+static MACHINE_DRIVER_START( troangel )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,	/* 3 MHz ??? */
-			troangel_readmem,troangel_writemem,
-			0,0,
-			interrupt,1
-		},
-		IREM_AUDIO_CPU
-	},
-	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
+	MDRV_CPU_ADD(Z80, 3000000)	/* 3 MHz ??? */
+	MDRV_CPU_MEMORY(troangel_readmem,troangel_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(1790)	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
 				/* talks about 55Hz and 1790ms vblank duration. */
-	1, /* cpu slices */
-	0, /* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
-	troangel_gfxdecodeinfo,
-	32*8+16,32*8+32*8,
-	troangel_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(troangel_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32*8+16)
+	MDRV_COLORTABLE_LENGTH(32*8+32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	troangel_vh_screenrefresh,
-
+	MDRV_PALETTE_INIT(troangel)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(troangel)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		IREM_AUDIO
-	}
-};
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
 
 
 

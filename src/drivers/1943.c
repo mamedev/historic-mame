@@ -15,10 +15,9 @@ extern unsigned char *c1943_scrolly;
 extern unsigned char *c1943_bgscrolly;
 WRITE_HANDLER( c1943_c804_w );	/* in vidhrdw/c1943.c */
 WRITE_HANDLER( c1943_d806_w );	/* in vidhrdw/c1943.c */
-void c1943_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void c1943_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int c1943_vh_start(void);
-void c1943_vh_stop(void);
+PALETTE_INIT( 1943 );
+VIDEO_UPDATE( 1943 );
+VIDEO_START( 1943 );
 
 
 
@@ -26,8 +25,8 @@ void c1943_vh_stop(void);
 /* if a read from this address doesn't return the value it expects. */
 static READ_HANDLER( c1943_protection_r )
 {
-	int data = cpu_get_reg(Z80_BC) >> 8;
-	logerror("protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
+	int data = activecpu_get_reg(Z80_BC) >> 8;
+	logerror("protection read, PC: %04x Result:%02x\n",activecpu_get_pc(),data);
 	return data;
 }
 
@@ -250,48 +249,36 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_1943 =
-{
+static MACHINE_DRIVER_START( 1943 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,32*4+16*16+16*16+16*16,
-	c1943_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*4+16*16+16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	c1943_vh_start,
-	c1943_vh_stop,
-	c1943_vh_screenrefresh,
+	MDRV_PALETTE_INIT(1943)
+	MDRV_VIDEO_START(1943)
+	MDRV_VIDEO_UPDATE(1943)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -21,7 +21,7 @@ static int flipscreen;
 
 ***************************************************************************/
 
-void baraduke_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( baraduke )
 {
 	int i;
 	int bit0,bit1,bit2,bit3;
@@ -89,7 +89,7 @@ static void get_tile_info1(int tile_index)
 
 ***************************************************************************/
 
-int baraduke_vh_start( void )
+VIDEO_START( baraduke )
 {
 	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -168,10 +168,8 @@ WRITE_HANDLER( baraduke_scroll1_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int priority)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
-	const struct rectangle *clip = &Machine->visible_area;
-
 	const unsigned char *source = &spriteram[0];
 	const unsigned char *finish = &spriteram[0x0800-16];/* the last is NOT a sprite */
 
@@ -229,7 +227,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int priority)
 								!flipx,!flipy,
 								512-67 - (sx+16*(flipx ? 1-col : col)),
 								64-16-209 - (sy+16*(flipy ? 1-row : row)),
-								clip,
+								cliprect,
 								TRANSPARENCY_PEN, 0xf );
 						}
 						else
@@ -240,7 +238,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int priority)
 								flipx,flipy,
 								-87 + (sx+16*(flipx ? 1-col : col)),
 								209 + (sy+16*(flipy ? 1-row : row)),
-								clip,
+								cliprect,
 								TRANSPARENCY_PEN, 0x0f );
 						}
 					}
@@ -251,7 +249,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, int priority)
 	}
 }
 
-void baraduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( baraduke )
 {
 	int offs;
 
@@ -259,10 +257,10 @@ void baraduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	flipscreen = spriteram[0x07f6] & 0x01;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	tilemap_draw(bitmap,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY,0);
-	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,tilemap[0],0,0);
-	draw_sprites(bitmap,1);
+	tilemap_draw(bitmap,cliprect,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY,0);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+	draw_sprites(bitmap,cliprect,1);
 
 	for (offs = 0x400 - 1; offs > 0; offs--)
 	{
@@ -293,11 +291,11 @@ void baraduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
 				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
 				flipscreen,flipscreen,sx*8,sy*8,
-				&Machine->visible_area,TRANSPARENCY_PEN,3);
+				cliprect,TRANSPARENCY_PEN,3);
 	}
 }
 
-void metrocrs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( metrocrs )
 {
 	int offs;
 
@@ -305,10 +303,10 @@ void metrocrs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	flipscreen = spriteram[0x07f6] & 0x01;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	tilemap_draw(bitmap,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
-	draw_sprites(bitmap,0);
-	tilemap_draw(bitmap,tilemap[1],0,0);
-	draw_sprites(bitmap,1);
+	tilemap_draw(bitmap,cliprect,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+	draw_sprites(bitmap,cliprect,1);
 	for (offs = 0x400 - 1; offs > 0; offs--)
 	{
 		int mx,my,sx,sy;
@@ -337,6 +335,6 @@ void metrocrs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
 				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
 				flipscreen,flipscreen,sx*8,sy*8,
-				&Machine->visible_area,TRANSPARENCY_PEN,3);
+				cliprect,TRANSPARENCY_PEN,3);
 	}
 }

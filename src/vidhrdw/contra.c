@@ -16,6 +16,7 @@ unsigned char *contra_text_vram,*contra_text_cram;
 unsigned char *contra_bg_vram,*contra_bg_cram;
 
 static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static struct rectangle bg_clip, fg_clip, tx_clip;
 
 /***************************************************************************
 **
@@ -28,7 +29,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 **
 ***************************************************************************/
 
-void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( contra )
 {
 	int i,chip,pal,clut;
 
@@ -135,38 +136,29 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int contra_vh_start(void)
+VIDEO_START( contra )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
 
-	private_spriteram = malloc(0x800);
-	private_spriteram_2 = malloc(0x800);
+	private_spriteram = auto_malloc(0x800);
+	private_spriteram_2 = auto_malloc(0x800);
 
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	{
-		struct rectangle clip = Machine->visible_area;
-		clip.min_x += 40;
-		tilemap_set_clip( bg_tilemap, &clip );
-		tilemap_set_clip( fg_tilemap, &clip );
-
-		clip.max_x = 39;
-		clip.min_x = 0;
-		tilemap_set_clip( tx_tilemap, &clip );
-
-		tilemap_set_transparent_pen(fg_tilemap,0);
-
-		return 0;
-	}
-}
-
-void contra_vh_stop(void)
-{
-	free(private_spriteram);
-	free(private_spriteram_2);
+	bg_clip = Machine->visible_area;
+	bg_clip.min_x += 40;
+	
+	fg_clip = bg_clip;
+	
+	tx_clip = Machine->visible_area;
+	tx_clip.max_x = 39;
+	tx_clip.min_x = 0;
+	
+	tilemap_set_transparent_pen(fg_tilemap,0);
+	return 0;
 }
 
 
@@ -277,7 +269,7 @@ WRITE_HANDLER( contra_K007121_ctrl_1_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, int bank )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bank )
 {
 	const unsigned char *source;
 	int base_color = (K007121_ctrlram[bank][6]&0x30)*2;
@@ -285,19 +277,27 @@ static void draw_sprites( struct mame_bitmap *bitmap, int bank )
 	if (bank==0) source=private_spriteram;
 	else source=private_spriteram_2;
 
-	K007121_sprites_draw(bank,bitmap,source,base_color,40,0,-1);
+	K007121_sprites_draw(bank,bitmap,cliprect,source,base_color,40,0,-1);
 }
 
-void contra_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( contra )
 {
+	struct rectangle bg_finalclip = bg_clip;
+	struct rectangle fg_finalclip = fg_clip;
+	struct rectangle tx_finalclip = tx_clip;
+	
+	sect_rect(&bg_finalclip, cliprect);
+	sect_rect(&fg_finalclip, cliprect);
+	sect_rect(&tx_finalclip, cliprect);
+
 	tilemap_set_scrollx( fg_tilemap,0, K007121_ctrlram[0][0x00] - 40 );
 	tilemap_set_scrolly( fg_tilemap,0, K007121_ctrlram[0][0x02] );
 	tilemap_set_scrollx( bg_tilemap,0, K007121_ctrlram[1][0x00] - 40 );
 	tilemap_set_scrolly( bg_tilemap,0, K007121_ctrlram[1][0x02] );
 
-	tilemap_draw( bitmap, bg_tilemap, 0 ,0);
-	tilemap_draw( bitmap, fg_tilemap, 0 ,0);
-	draw_sprites( bitmap, 0 );
-	draw_sprites( bitmap, 1 );
-	tilemap_draw( bitmap, tx_tilemap, 0 ,0);
+	tilemap_draw( bitmap,&bg_finalclip, bg_tilemap, 0 ,0);
+	tilemap_draw( bitmap,&fg_finalclip, fg_tilemap, 0 ,0);
+	draw_sprites( bitmap,cliprect, 0 );
+	draw_sprites( bitmap,cliprect, 1 );
+	tilemap_draw( bitmap,&tx_finalclip, tx_tilemap, 0 ,0);
 }

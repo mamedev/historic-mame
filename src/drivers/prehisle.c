@@ -11,12 +11,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void prehisle_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_UPDATE( prehisle );
 WRITE16_HANDLER( prehisle_video16_w );
 WRITE16_HANDLER( prehisle_control16_w );
 READ16_HANDLER( prehisle_control16_r );
-void prehisle_vh_stop (void);
-int prehisle_vh_start (void);
+VIDEO_START( prehisle );
 
 static data16_t *prehisle_ram16;
 extern data16_t *prehisle_video16;
@@ -237,54 +236,35 @@ static struct UPD7759_interface upd7759_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_prehisle =
-{
+static MACHINE_DRIVER_START( prehisle )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,
-			prehisle_readmem,prehisle_writemem,0,0,
-			m68_level4_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			prehisle_sound_readmem,prehisle_sound_writemem,
-			prehisle_sound_readport,prehisle_sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(prehisle_readmem,prehisle_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(prehisle_sound_readmem,prehisle_sound_writemem)
+	MDRV_CPU_PORTS(prehisle_sound_readport,prehisle_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	prehisle_vh_start,
-	prehisle_vh_stop,
-	prehisle_vh_screenrefresh,
+	MDRV_VIDEO_START(prehisle)
+	MDRV_VIDEO_UPDATE(prehisle)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -376,7 +356,7 @@ ROM_END
 
 static READ16_HANDLER( world_cycle_r )
 {
-	int pc=cpu_get_pc();
+	int pc=activecpu_get_pc();
 	int ret=prehisle_ram16[0x12];
 
 	if ((ret&0x8000) && (pc==0x260c || pc==0x268a || pc==0x2b0a || pc==0x34a8 || pc==0x6ae4 || pc==0x83ac || pc==0x25ce || pc==0x29c4)) {
@@ -386,14 +366,14 @@ static READ16_HANDLER( world_cycle_r )
 	return ret;
 }
 
-static void init_prehisle(void)
+static DRIVER_INIT( prehisle )
 {
 	install_mem_read16_handler(0, 0x70024, 0x70025, world_cycle_r);
 }
 
 static READ16_HANDLER( usa_cycle_r )
 {
-	int pc=cpu_get_pc();
+	int pc=activecpu_get_pc();
 	int ret=prehisle_ram16[0x12];
 
 	if ((ret&0x8000) && (pc==0x281e || pc==0x28a6 || pc==0x295a || pc==0x2868 || pc==0x8f98 || pc==0x3b1e)) {
@@ -403,14 +383,14 @@ static READ16_HANDLER( usa_cycle_r )
 	return ret;
 }
 
-static void init_prehislu(void)
+static DRIVER_INIT( prehislu )
 {
 	install_mem_read16_handler(0, 0x70024, 0x70025, usa_cycle_r);
 }
 
 static READ16_HANDLER( jap_cycle_r )
 {
-	int pc=cpu_get_pc();
+	int pc=activecpu_get_pc();
 	int ret=prehisle_ram16[0x12];
 
 	if ((ret&0x8000) && (pc==0x34b6 /* Todo! */ )) {
@@ -420,7 +400,7 @@ static READ16_HANDLER( jap_cycle_r )
 	return ret;
 }
 
-static void init_gensitou(void)
+static DRIVER_INIT( gensitou )
 {
 	install_mem_read16_handler(0, 0x70024, 0x70025, jap_cycle_r);
 }

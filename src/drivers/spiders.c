@@ -169,15 +169,14 @@ $F987 - Addresses table at $f98d containing four structs:
 
 /* VIDHRDW */
 
-void nyny_init_palette(unsigned char *obsolete,unsigned short *game_colortable,const unsigned char *color_prom);
-int  spiders_vh_start(void);
-void spiders_vh_stop(void);
-void spiders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( nyny );
+VIDEO_START( spiders );
+VIDEO_UPDATE( spiders );
 
 /* MACHINE */
 
-void spiders_init_machine(void);
-int spiders_timed_irq(void);
+MACHINE_INIT( spiders );
+INTERRUPT_GEN( spiders_timed_irq );
 
 
 /* Driver structure definition */
@@ -302,45 +301,34 @@ INPUT_PORTS_END
 
 
 
-static const struct MachineDriver machine_driver_spiders =
-{
+static MACHINE_DRIVER_START( spiders )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			2800000,
-			readmem,writemem,0,0,
-			ignore_interrupt,0,      /* Vblank Int */
-			spiders_timed_irq , 25   /* Timed Int  */
-		},
-		{
-			CPU_M6802 | CPU_AUDIO_CPU,
-			3000000/4,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0,
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,     /* CPU slices per frame */
-	spiders_init_machine,
+	MDRV_CPU_ADD(M6809, 2800000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PERIODIC_INT(spiders_timed_irq , 25)   /* Timed Int  */
+
+	MDRV_CPU_ADD(M6802,3000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(spiders)
 
 	/* video hardware */
-	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },       /* Visible area         */
-	0,
-	8, 0,
-	nyny_init_palette,
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,                  /* Video attributes     */
-	0,                                  /* Video initialisation */
-	spiders_vh_start,                    /* Video start          */
-	spiders_vh_stop,                     /* Video stop           */
-	spiders_vh_screenrefresh,                   /* Video update         */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_PALETTE_LENGTH(8)
+	
+	MDRV_PALETTE_INIT(nyny)
+	MDRV_VIDEO_START(spiders)
+	MDRV_VIDEO_UPDATE(spiders)
 
 	/* sound hardware */
-	0,0,0,0
-	/* Sound struct here */
-};
-
+MACHINE_DRIVER_END
 
 
 ROM_START( spiders )

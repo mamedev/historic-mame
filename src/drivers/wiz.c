@@ -101,10 +101,10 @@ WRITE_HANDLER( wiz_palettebank_w );
 WRITE_HANDLER( wiz_bgcolor_w );
 WRITE_HANDLER( wiz_flipx_w );
 WRITE_HANDLER( wiz_flipy_w );
-int  wiz_vh_start(void);
-void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void wiz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void stinger_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( wiz );
+PALETTE_INIT( wiz );
+VIDEO_UPDATE( wiz );
+VIDEO_UPDATE( stinger );
 
 
 static READ_HANDLER( wiz_protection_r )
@@ -552,51 +552,50 @@ static struct AY8910interface stinger_ay8910_interface =
 };
 
 
-#define MACHINE_DRIVER(NAME)									\
-static const struct MachineDriver machine_driver_##NAME =				\
-{																\
-	{															\
-		{														\
-			CPU_Z80,											\
-			18432000/6,     /* 3.072 MHz ??? */					\
-			readmem,writemem,0,0,								\
-			nmi_interrupt,1										\
-		},														\
-		{														\
-			CPU_Z80 | CPU_AUDIO_CPU,							\
-			14318000/8,     /* ? */								\
-			sound_readmem,sound_writemem,0,0,					\
-			nmi_interrupt,4 /* ??? */							\
-		}														\
-	},															\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */			\
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */	\
-	0,															\
-																\
-	/* video hardware */										\
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },					\
-	NAME##_gfxdecodeinfo,										\
-	256,32*8,													\
-	wiz_vh_convert_color_prom,									\
-																\
-	VIDEO_TYPE_RASTER,											\
-	0,															\
-	wiz_vh_start,												\
-	generic_vh_stop,											\
-	NAME##_vh_screenrefresh,									\
-																\
-	/* sound hardware */										\
-	0,0,0,0,													\
-	{															\
-		{														\
-			SOUND_AY8910,										\
-			&NAME##_ay8910_interface							\
-		}														\
-	}															\
-}
+static MACHINE_DRIVER_START( wiz )
 
-MACHINE_DRIVER(wiz);
-MACHINE_DRIVER(stinger);
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 18432000/6)     /* 3.072 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 14318000/8)     /* ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(wiz_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
+
+	MDRV_PALETTE_INIT(wiz)
+	MDRV_VIDEO_START(wiz)
+	MDRV_VIDEO_UPDATE(wiz)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("8910", AY8910, wiz_ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( stinger )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(wiz)
+
+	/* video hardware */
+	MDRV_GFXDECODE(stinger_gfxdecodeinfo)
+	MDRV_VIDEO_UPDATE(stinger)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("8910", AY8910, stinger_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -771,7 +770,7 @@ ROM_END
 
 
 
-static void init_stinger(void)
+static DRIVER_INIT( stinger )
 {
 	static const unsigned char xortable[4][4] =
 	{
@@ -817,7 +816,7 @@ static void init_stinger(void)
 }
 
 
-static void init_wiz(void)
+static DRIVER_INIT( wiz )
 {
 	install_mem_read_handler(0, 0xd400, 0xd400, wiz_protection_r);
 }

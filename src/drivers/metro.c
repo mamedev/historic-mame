@@ -94,13 +94,12 @@ WRITE16_HANDLER( metro_vram_1_w );
 WRITE16_HANDLER( metro_vram_2_w );
 
 
-int  metro_vh_start_14100(void);
-int  metro_vh_start_14220(void);
-int  metro_vh_start_14300(void);
-int  blzntrnd_vh_start(void);
-void metro_vh_stop(void);
+VIDEO_START( metro_14100 );
+VIDEO_START( metro_14220 );
+VIDEO_START( metro_14300 );
+VIDEO_START( blzntrnd );
 
-void metro_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( metro );
 
 
 /***************************************************************************
@@ -169,11 +168,11 @@ static void update_irq_state(void)
 /* For games that supply an *IRQ Vector* on the data bus */
 int metro_irq_callback(int int_level)
 {
-//	logerror("CPU #0 PC %06X: irq callback returns %04X\n",cpu_get_pc(),metro_irq_vectors[int_level]);
+//	logerror("CPU #0 PC %06X: irq callback returns %04X\n",activecpu_get_pc(),metro_irq_vectors[int_level]);
 	return metro_irq_vectors[int_level]&0xff;
 }
 
-void metro_init_machine(void)
+MACHINE_INIT( metro )
 {
 	if (irq_line == -1)
 		cpu_set_irq_callback(0, metro_irq_callback);
@@ -182,7 +181,7 @@ void metro_init_machine(void)
 
 WRITE16_HANDLER( metro_irq_cause_w )
 {
-//if (data & ~0x15)	logerror("CPU #0 PC %06X : unknown bits of irqcause written: %04X\n",cpu_get_pc(),data);
+//if (data & ~0x15)	logerror("CPU #0 PC %06X : unknown bits of irqcause written: %04X\n",activecpu_get_pc(),data);
 
 	if (ACCESSING_LSB)
 	{
@@ -201,7 +200,7 @@ WRITE16_HANDLER( metro_irq_cause_w )
 }
 
 
-int metro_interrupt(void)
+INTERRUPT_GEN( metro_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -215,16 +214,14 @@ int metro_interrupt(void)
 			update_irq_state();
 			break;
 	}
-	return ignore_interrupt();
 }
 
 /* Lev 1. Lev 2 seems sound related */
-int bangball_interrupt(void)
+INTERRUPT_GEN( bangball_interrupt )
 {
 	requested_int[0] = 1;	// set scroll regs if a flag is set
 	requested_int[4] = 1;	// clear that flag
 	update_irq_state();
-	return ignore_interrupt();
 }
 
 
@@ -234,7 +231,7 @@ static void vblank_end_callback(int param)
 }
 
 /* lev 2-7 (lev 1 seems sound related) */
-int karatour_interrupt(void)
+INTERRUPT_GEN( karatour_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -250,10 +247,9 @@ int karatour_interrupt(void)
 			update_irq_state();
 			break;
 	}
-	return ignore_interrupt();
 }
 
-int mouja_interrupt(void)
+INTERRUPT_GEN( mouja_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -267,10 +263,9 @@ int mouja_interrupt(void)
 			update_irq_state();
 			break;
 	}
-	return ignore_interrupt();
 }
 
-int gakusai_interrupt(void)
+INTERRUPT_GEN( gakusai_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -279,10 +274,9 @@ int gakusai_interrupt(void)
 			update_irq_state();
 			break;
 	}
-	return ignore_interrupt();
 }
 
-int dokyusei_interrupt(void)
+INTERRUPT_GEN( dokyusei_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -295,7 +289,6 @@ int dokyusei_interrupt(void)
 			update_irq_state();
 			break;
 	}
-	return ignore_interrupt();
 }
 
 /***************************************************************************
@@ -341,7 +334,7 @@ WRITE16_HANDLER( metro_soundstatus_w )
 	{
 		metro_soundstatus = (~data) & 1;
 	}
-	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of soundstatus written: %04X\n",cpu_get_pc(),data);
+	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of soundstatus written: %04X\n",activecpu_get_pc(),data);
 }
 
 
@@ -361,7 +354,7 @@ static WRITE_HANDLER( daitorid_sound_rombank_w )
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bank = (data >> 4) & 0x07;
 
-	if ( data & ~0x70 ) 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+	if ( data & ~0x70 ) 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 
 	if (bank < 2)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-2) + 0x10000];
@@ -380,7 +373,7 @@ static READ_HANDLER( daitorid_sound_chip_data_r )
 	case 0xb7: return YM2151_status_port_0_r(0);
 	case 0xe7: return OKIM6295_status_0_r(0);
 	default:
-		logerror("CPU #1 PC %04X : reading from unknown chip: %02X\n",cpu_get_pc(),chip_select);
+		logerror("CPU #1 PC %04X : reading from unknown chip: %02X\n",activecpu_get_pc(),chip_select);
 		toggle_bit7 ^= 0x80;
         return toggle_bit7;
 	}
@@ -409,7 +402,7 @@ static WRITE_HANDLER( daitorid_sound_chip_select_w )
 	case 0xbb: YM2151_data_port_0_w(0,soundlatch2_r(0)); break;
 	case 0xeb: OKIM6295_data_0_w(0,soundlatch2_r(0)); break;
 	default:
-		logerror("CPU #1 PC %04X : writing to unknown chip: %02X\n",cpu_get_pc(),chip_select);
+		logerror("CPU #1 PC %04X : writing to unknown chip: %02X\n",activecpu_get_pc(),chip_select);
 	}
 }
 
@@ -468,7 +461,7 @@ WRITE16_HANDLER( metro_soundstatus_w )
 	{
 		metro_soundstatus = (~data) & 1;
 	}
-	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of soundstatus written: %04X\n",cpu_get_pc(),data);
+	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of soundstatus written: %04X\n",activecpu_get_pc(),data);
 }
 
 
@@ -533,14 +526,14 @@ WRITE16_HANDLER( metro_coin_lockout_1word_w )
 //		coin_lockout_w(0, data & 1);
 //		coin_lockout_w(1, data & 2);
 	}
-	if (data & ~3)	logerror("CPU #0 PC %06X : unknown bits of coin lockout written: %04X\n",cpu_get_pc(),data);
+	if (data & ~3)	logerror("CPU #0 PC %06X : unknown bits of coin lockout written: %04X\n",activecpu_get_pc(),data);
 }
 
 
 WRITE16_HANDLER( metro_coin_lockout_4words_w )
 {
 //	coin_lockout_w( (offset >> 1) & 1, offset & 1 );
-	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of coin lockout written: %04X\n",cpu_get_pc(),data);
+	if (data & ~1)	logerror("CPU #0 PC %06X : unknown bits of coin lockout written: %04X\n",activecpu_get_pc(),data);
 }
 
 
@@ -647,7 +640,7 @@ INLINE void blt_write(const int tmap, const offs_t offs, const data16_t data, co
 		case 2:	metro_vram_1_w(offs,data,mask);	break;
 		case 3:	metro_vram_2_w(offs,data,mask);	break;
 	}
-//	logerror("CPU #0 PC %06X : Blitter %X] %04X <- %04X & %04X\n",cpu_get_pc(),tmap,offs,data,mask);
+//	logerror("CPU #0 PC %06X : Blitter %X] %04X <- %04X & %04X\n",activecpu_get_pc(),tmap,offs,data,mask);
 }
 
 
@@ -672,7 +665,7 @@ WRITE16_HANDLER( metro_blitter_w )
 		int shift			=	(dst_offs & 0x80) ? 0 : 8;
 		data16_t mask		=	(dst_offs & 0x80) ? 0xff00 : 0x00ff;
 
-//		logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",cpu_get_pc(),tmap,src_offs,dst_offs);
+//		logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",activecpu_get_pc(),tmap,src_offs,dst_offs);
 
 		dst_offs >>= 7+1;
 		switch( tmap )
@@ -682,7 +675,7 @@ WRITE16_HANDLER( metro_blitter_w )
 			case 3:
 				break;
 			default:
-				logerror("CPU #0 PC %06X : Blitter unknown destination: %08X\n",cpu_get_pc(),tmap);
+				logerror("CPU #0 PC %06X : Blitter unknown destination: %08X\n",activecpu_get_pc(),tmap);
 				return;
 		}
 
@@ -692,7 +685,7 @@ WRITE16_HANDLER( metro_blitter_w )
 
 			src_offs %= src_len;
 			b1 = blt_read(src,src_offs);
-//			logerror("CPU #0 PC %06X : Blitter opcode %02X at %06X\n",cpu_get_pc(),b1,src_offs);
+//			logerror("CPU #0 PC %06X : Blitter opcode %02X at %06X\n",activecpu_get_pc(),b1,src_offs);
 			src_offs++;
 
 			count = ((~b1) & 0x3f) + 1;
@@ -776,7 +769,7 @@ WRITE16_HANDLER( metro_blitter_w )
 
 
 				default:
-					logerror("CPU #0 PC %06X : Blitter unknown opcode %02X at %06X\n",cpu_get_pc(),b1,src_offs-1);
+					logerror("CPU #0 PC %06X : Blitter unknown opcode %02X at %06X\n",activecpu_get_pc(),b1,src_offs-1);
 					return;
 			}
 
@@ -831,7 +824,7 @@ static READ16_HANDLER( balcube_dsw_r )
 		case 0x17FFE:	return (dsw2 & 0x40) ? 0x40 : 0;
 		case 0x0FFFE:	return (dsw2 & 0x80) ? 0x40 : 0;
 	}
-	logerror("CPU #0 PC %06X : unknown dsw address read: %04X\n",cpu_get_pc(),offset);
+	logerror("CPU #0 PC %06X : unknown dsw address read: %04X\n",activecpu_get_pc(),offset);
 	return 0xffff;
 }
 
@@ -3006,257 +2999,219 @@ static struct GfxDecodeInfo gfxdecodeinfo_14300[] =
 
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_balcube =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			balcube_readmem, balcube_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+static MACHINE_DRIVER_START( balcube )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(balcube_readmem,balcube_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_14220,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14220,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14220)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14220)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	/* YMF278B (unemulated) + YRW801-M (Standard Samples ROM) */
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	/* YMF278B (unemulated) + YRW801-M (Standard Samples ROM) */
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_bangball =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			bangball_readmem, bangball_writemem,0,0,
-			bangball_interrupt, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+static MACHINE_DRIVER_START( bangball )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(bangball_readmem,bangball_writemem)
+	MDRV_CPU_VBLANK_INT(bangball_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_14220,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14220,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14220)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14220)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	/* YMF278B (unemulated) + YRW801-M (Standard Samples ROM) */
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	/* YMF278B (unemulated) + YRW801-M (Standard Samples ROM) */
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_daitorid =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			daitorid_readmem, daitorid_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( daitorid )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(daitorid_readmem,daitorid_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
 #ifdef TEST_SOUND
-		{
-			CPU_UPD7810,
-			12000000,
-			upd7810_readmem, upd7810_writemem, upd7810_readport, upd7810_writeport,
-			ignore_interrupt, 0,
-			0, 0,
-			(void *)metro_io_callback
-        }
+	MDRV_CPU_ADD(UPD7810, 12000000)
+	MDRV_CPU_CONFIG((void *)metro_io_callback)
+	MDRV_CPU_MEMORY(upd7810_readmem,upd7810_writemem)
+	MDRV_CPU_PORTS(upd7810_readport,upd7810_writeport)
 #endif
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_14220,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14220,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14220)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14220)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 #ifdef TEST_SOUND
-	{
-        {   SOUND_YM2151,   &daitorid_ym2151_interface      },
-		{	SOUND_OKIM6295, &okim6295_interface	}
-	},
+	MDRV_SOUND_ADD(YM2151, daitorid_ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 #endif
-};
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_dharma =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			dharma_readmem, dharma_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( dharma )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(dharma_readmem,dharma_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_karatour =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			karatour_readmem, karatour_writemem,0,0,
-//			metro_interrupt, 10	/* ? */
-			karatour_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( karatour )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(karatour_readmem,karatour_writemem)
+	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295, YM2413
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295, YM2413
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_lastfort =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			lastfort_readmem, lastfort_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( lastfort )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(lastfort_readmem,lastfort_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(360, 224)
+	MDRV_VISIBLE_AREA(0, 360-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295, YM2413
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295, YM2413
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_dokyusei =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			dokyusei_readmem, dokyusei_writemem,0,0,
-			dokyusei_interrupt, 2	/* ? */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+
+static MACHINE_DRIVER_START( dokyusei )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(dokyusei_readmem,dokyusei_writemem)
+	MDRV_CPU_VBLANK_INT(dokyusei_interrupt,2)	/* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 256-32, { 0, 320-1, 0, 256-32-1 },
-	gfxdecodeinfo_14300,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14300,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256-32)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-32-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14300)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14300)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz	},
-		{	SOUND_YM2413,	&ym2413_intf_8MHz	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+MACHINE_DRIVER_END
 
-void dokyusp_nvram_handler(void *file,int read_or_write)
+NVRAM_HANDLER( dokyusp )
 {
 	data8_t def_data[] = {0x00,0xe0};
 
@@ -3270,362 +3225,307 @@ void dokyusp_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static const struct MachineDriver machine_driver_dokyusp =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			dokyusp_readmem, dokyusp_writemem,0,0,
-			gakusai_interrupt, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+static MACHINE_DRIVER_START( dokyusp )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(dokyusp_readmem,dokyusp_writemem)
+	MDRV_CPU_VBLANK_INT(gakusai_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
+	MDRV_NVRAM_HANDLER(dokyusp)
 
 	/* video hardware */
-	384, 256-32, { 0, 384-1, 0, 256-32-1 },
-	gfxdecodeinfo_14300,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14300,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 256-32)
+	MDRV_VISIBLE_AREA(0, 384-1, 0, 256-32-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14300)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14300)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_16kHz	},
-		{	SOUND_YM2413,	&ym2413_intf_8MHz		},
-	},
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_16kHz)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+MACHINE_DRIVER_END
 
-	dokyusp_nvram_handler
-};
 
-static const struct MachineDriver machine_driver_gakusai =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			gakusai_readmem, gakusai_writemem,0,0,
-			gakusai_interrupt, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+static MACHINE_DRIVER_START( gakusai )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(gakusai_readmem,gakusai_writemem)
+	MDRV_CPU_VBLANK_INT(gakusai_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	gfxdecodeinfo_14300,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14300,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14300)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14300)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_16kHz	},
-		{	SOUND_YM2413,	&ym2413_intf_8MHz		},
-	},
-
-	nvram_handler_93C46
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_16kHz)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_gakusai2 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			gakusai2_readmem, gakusai2_writemem,0,0,
-			gakusai_interrupt, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+static MACHINE_DRIVER_START( gakusai2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(gakusai2_readmem,gakusai2_writemem)
+	MDRV_CPU_VBLANK_INT(gakusai_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	gfxdecodeinfo_14300,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14300,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14300)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14300)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_16kHz	},
-		{	SOUND_YM2413,	&ym2413_intf_8MHz		},
-	},
-
-	nvram_handler_93C46
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_16kHz)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_pangpoms =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			pangpoms_readmem, pangpoms_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( pangpoms )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(pangpoms_readmem,pangpoms_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(360, 224)
+	MDRV_VISIBLE_AREA(0, 360-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295, YM2413
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295, YM2413
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_poitto =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			poitto_readmem, poitto_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( poitto )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(poitto_readmem,poitto_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(360, 224)
+	MDRV_VISIBLE_AREA(0, 360-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295, YM2413
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295, YM2413
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_pururun =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			pururun_readmem, pururun_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( pururun )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(pururun_readmem,pururun_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295, YM2151, Y3012
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295, YM2151, Y3012
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_skyalert =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			skyalert_readmem, skyalert_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( skyalert )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(skyalert_readmem,skyalert_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	360, 224, { 0, 360-1, 0, 224-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(360, 224)
+	MDRV_VISIBLE_AREA(0, 360-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295, YM2413
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295, YM2413
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_toride2g =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			toride2g_readmem, toride2g_writemem,0,0,
-			metro_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( toride2g )
 
-		/* Sound CPU is unemulated */
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(toride2g_readmem,toride2g_writemem)
+	MDRV_CPU_VBLANK_INT(metro_interrupt,10)	/* ? */
+
+	/* Sound CPU is unemulated */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 224, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_14100,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14100,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14100)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14100)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	// M6295, YM2413
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	// M6295, YM2413
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_mouja =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* ??? */
-			mouja_readmem, mouja_writemem,0,0,
-			mouja_interrupt, 2	/* ? */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+static MACHINE_DRIVER_START( mouja )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* ??? */
+	MDRV_CPU_MEMORY(mouja_readmem,mouja_writemem)
+	MDRV_CPU_VBLANK_INT(mouja_interrupt,2)	/* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	512, 256, { 0, 320-1, 0, 224-1 },
-	gfxdecodeinfo_14300,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	metro_vh_start_14300,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14300)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14300)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_12kHz	},
-		{	SOUND_YM2413,	&ym2413_intf_8MHz		},
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_12kHz)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf_8MHz)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_blzntrnd =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			blzntrnd_readmem, blzntrnd_writemem,0,0,
-//			metro_interrupt, 10	/* ? */
-			karatour_interrupt, 10	/* ? */
-		},
+static MACHINE_DRIVER_START( blzntrnd )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(blzntrnd_readmem,blzntrnd_writemem)
+	MDRV_CPU_VBLANK_INT(karatour_interrupt,10)	/* ? */
+
 #if 0
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/2,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-		}
+	MDRV_CPU_ADD(Z80,16000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 #endif
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	metro_init_machine,
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(metro)
 
 	/* video hardware */
-	320, 224, { 8, 320-8-1, 0, 224-1 },
-	gfxdecodeinfo_blzntrnd,
-	8192, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	blzntrnd_vh_start,
-	metro_vh_stop,
-	metro_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(8, 320-8-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_blzntrnd)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(blzntrnd)
+	MDRV_VIDEO_UPDATE(metro)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ 0 },	/* YMF286K (unemulated) + YRW801-M? (Standard Samples ROM) */
-	},
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	/* YMF286K (unemulated) + YRW801-M? (Standard Samples ROM) */
+MACHINE_DRIVER_END
 
 
 
@@ -3637,7 +3537,7 @@ static const struct MachineDriver machine_driver_blzntrnd =
 
 ***************************************************************************/
 
-static void init_metro(void)
+static DRIVER_INIT( metro )
 {
 	int i;
 
@@ -3671,7 +3571,7 @@ static void init_metro(void)
 }
 
 
-void init_karatour(void)
+DRIVER_INIT( karatour )
 {
 	data16_t *RAM = (data16_t *) memory_region( REGION_USER1 );
 	metro_vram_0 = RAM + (0x20000/2) * 0;
@@ -3681,7 +3581,7 @@ void init_karatour(void)
 }
 
 /* Unscramble the GFX ROMs */
-static void init_balcube(void)
+static DRIVER_INIT( balcube )
 {
 	const int region	=	REGION_GFX1;
 
@@ -3706,20 +3606,20 @@ static void init_balcube(void)
 }
 
 
-static void init_blzntrnd(void)
+static DRIVER_INIT( blzntrnd )
 {
 	init_metro();
 	irq_line = 1;
 }
 
 
-static void init_mouja(void)
+static DRIVER_INIT( mouja )
 {
 	init_metro();
 	irq_line = -1;	/* split interrupt handlers */
 }
 
-static void init_gakusai(void)
+static DRIVER_INIT( gakusai )
 {
 	init_metro();
 	irq_line = -1;

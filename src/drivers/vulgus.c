@@ -51,16 +51,16 @@ WRITE_HANDLER( vulgus_fgvideoram_w );
 WRITE_HANDLER( vulgus_bgvideoram_w );
 WRITE_HANDLER( vulgus_c804_w );
 WRITE_HANDLER( vulgus_palette_bank_w );
-int vulgus_vh_start(void);
-void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void vulgus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( vulgus );
+PALETTE_INIT( vulgus );
+VIDEO_UPDATE( vulgus );
 
 
 
-static int vulgus_interrupt(void)
+static INTERRUPT_GEN( vulgus_interrupt )
 {
-	if (cpu_getiloops() != 0) return 0x00cf;	/* RST 08h */
-	else return 0x00d7;	/* RST 10h - vblank */
+	if (cpu_getiloops() != 0) cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
+	else cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h - vblank */
 }
 
 
@@ -254,48 +254,36 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_vulgus =
-{
+static MACHINE_DRIVER_START( vulgus )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
-			readmem,writemem,0,0,
-			vulgus_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz ??? */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,8
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(vulgus_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,8)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,64*4+16*16+4*32*8,
-	vulgus_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+16*16+4*32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	vulgus_vh_start,
-	0,
-	vulgus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(vulgus)
+	MDRV_VIDEO_START(vulgus)
+	MDRV_VIDEO_UPDATE(vulgus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

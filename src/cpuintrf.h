@@ -229,13 +229,23 @@ enum
 #if (HAS_UPD7810)
 	CPU_UPD7810,
 #endif
+#if (HAS_JAGUAR)
+	CPU_JAGUARGPU,
+	CPU_JAGUARDSP,
+#endif
+#if (HAS_R3000)
+	CPU_R3000,
+#endif
+#if (HAS_TMS320C31)
+	CPU_TMS320C31,
+#endif
+#if (HAS_ARM)
+	CPU_ARM,
+#endif
 
 #ifdef MESS
 #if (HAS_APEXC)
 	CPU_APEXC,
-#endif
-#if (HAS_ARM)
-	CPU_ARM,
 #endif
 #if (HAS_CDP1802)
 	CPU_CDP1802,
@@ -315,20 +325,20 @@ enum
 {
 	MAX_REGS = 128,				/* maximum number of register of any CPU */
 
-	/* This value is passed to cpu_get_reg to retrieve the previous
+	/* This value is passed to activecpu_get_reg to retrieve the previous
 	 * program counter value, ie. before a CPU emulation started
 	 * to fetch opcodes and arguments for the current instrution. */
 	REG_PREVIOUSPC = -1,
 
-	/* This value is passed to cpu_get_reg to retrieve the current
+	/* This value is passed to activecpu_get_reg to retrieve the current
 	 * program counter value. */
 	REG_PC = -2,
 
-	/* This value is passed to cpu_get_reg to retrieve the current
+	/* This value is passed to activecpu_get_reg to retrieve the current
 	 * stack pointer value. */
 	REG_SP = -3,
 
-	/* This value is passed to cpu_get_reg/cpu_set_reg, instead of one of
+	/* This value is passed to activecpu_get_reg/activecpu_set_reg, instead of one of
 	 * the names from the enum a CPU core defines for it's registers,
 	 * to get or set the contents of the memory pointed to by a stack pointer.
 	 * You can specify the n'th element on the stack by (REG_SP_CONTENTS-n),
@@ -381,7 +391,7 @@ struct cpu_interface
 	void		(*burn)(int cycles);
 	unsigned	(*get_context)(void *reg);
 	void		(*set_context)(void *reg);
-	void *		(*get_cycle_table)(int which);
+	const void *(*get_cycle_table)(int which);
 	void		(*set_cycle_table)(int which, void *new_table);
 	unsigned	(*get_reg)(int regnum);
 	void		(*set_reg)(int regnum, unsigned val);
@@ -395,7 +405,6 @@ struct cpu_interface
 	int			default_vector;
 	int *		icount;
 	double		overclock;
-	int			irq_int;
 
 	/* memory information */
 	int			databus_width;
@@ -456,7 +465,7 @@ void activecpu_reset_banking(void);
 void activecpu_set_irq_line(int irqline, int state);
 
 /* return a pointer to the active cycle count table for the active CPU */
-void *activecpu_get_cycle_table(int which);
+const void *activecpu_get_cycle_table(int which);
 
 /* set a pointer to the active cycle count table for the active CPU */
 void activecpu_set_cycle_tbl(int which, void *new_table);
@@ -484,9 +493,6 @@ const char *activecpu_dump_reg(int regnum);
 
 /* return a string containing the state of the active CPU */
 const char *activecpu_dump_state(void);
-
-/* return the default IRQ line for the active CPU */
-int activecpu_default_irq_line(void);
 
 /* return the default IRQ vector for the active CPU */
 int activecpu_default_irq_vector(void);
@@ -558,7 +564,7 @@ void cpunum_write_byte(int cpunum, offs_t address, data8_t data);
 void *cpunum_get_context_ptr(int cpunum);
 
 /* return a pointer to the active cycle count table for a given CPU */
-void *cpunum_get_cycle_table(int cpunum, int which);
+const void *cpunum_get_cycle_table(int cpunum, int which);
 
 /* set a pointer to the active cycle count table for a given CPU */
 void cpunum_set_cycle_tbl(int cpunum, int which, void *new_table);
@@ -586,9 +592,6 @@ const char *cpunum_dump_reg(int cpunum, int regnum);
 
 /* return a string containing the state of a given CPU */
 const char *cpunum_dump_state(int cpunum);
-
-/* return the default IRQ line for a given CPU */
-int cpunum_default_irq_line(int cpunum);
 
 /* return the default IRQ vector for a given CPU */
 int cpunum_default_irq_vector(int cpunum);
@@ -642,9 +645,6 @@ const char *cpunum_win_layout(int cpunum);
  *	 CPU type acccessors
  *
  *************************************/
-
-/* return the default IRQ line for a given CPU type */
-int cputype_default_irq_line(int cputype);
 
 /* return the default IRQ vector for a given CPU type */
 int cputype_default_irq_vector(int cputype);
@@ -705,9 +705,6 @@ void cpu_dump_states(void);
 /* set a callback function for reset on the 68k */
 void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void));
 
-/* convert IRQ number to IRQ line for old-style interrupts */
-int convert_type_to_irq_line(int cpunum, int num, int *vector);
-
 
 
 /*************************************
@@ -730,15 +727,6 @@ int convert_type_to_irq_line(int cpunum, int num, int *vector);
 
 /* this is kind of gross - is it necessary */
 #define 	cpu_geturnpc() 				activecpu_get_reg(REG_SP_CONTENTS)
-
-/* map older cpu_* functions to activecpu_* */
-#define		cpu_get_pc					activecpu_get_pc
-#define		cpu_get_sp					activecpu_get_sp
-#define		cpu_get_reg					activecpu_get_reg
-#define		cpu_set_reg					activecpu_set_reg
-#define		cpu_getpreviouspc			activecpu_get_previouspc
-#define		cpu_set_op_base				activecpu_set_op_base
-#define		cpu_get_pc_byte				activecpu_get_pc_byte
 
 
 

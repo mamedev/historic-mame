@@ -11,7 +11,7 @@ UINT8 *mnchmobl_sprite_tile;
 static int mnchmobl_palette_bank;
 static int flipscreen;
 
-void mnchmobl_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mnchmobl )
 {
 	int i;
 
@@ -66,22 +66,15 @@ WRITE_HANDLER( mnchmobl_sprite_attr_w ){ mnchmobl_sprite_attr[offset] = data; }
 READ_HANDLER( mnchmobl_sprite_tile_r ){ return mnchmobl_sprite_tile[offset]; }
 WRITE_HANDLER( mnchmobl_sprite_tile_w ){ mnchmobl_sprite_tile[offset] = data; }
 
-void mnchmobl_vh_stop( void )
+VIDEO_START( mnchmobl )
 {
-	if( tmpbitmap ) bitmap_free( tmpbitmap );
-	free( dirtybuffer );
-}
-
-int mnchmobl_vh_start( void )
-{
-	dirtybuffer = malloc(0x100);
-	tmpbitmap = bitmap_alloc(512,512);
+	dirtybuffer = auto_malloc(0x100);
+	tmpbitmap = auto_bitmap_alloc(512,512);
 	if( dirtybuffer && tmpbitmap )
 	{
 		memset( dirtybuffer, 1, 0x100 );
 		return 0;
 	}
-	mnchmobl_vh_stop();
 	return 1;
 }
 
@@ -203,7 +196,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	}
 }
 
-void mnchmobl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mnchmobl )
 {
 	draw_background( bitmap );
 	draw_sprites( bitmap );

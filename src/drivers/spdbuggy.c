@@ -50,8 +50,8 @@ WRITE_HANDLER( spdbuggy_fgram_w );
 
 WRITE_HANDLER( spdbuggy_scrollregs_w );
 
-int  spdbuggy_vh_start(void);
-void spdbuggy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( spdbuggy );
+VIDEO_UPDATE( spdbuggy );
 
 
 
@@ -369,43 +369,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct MachineDriver machine_driver_spdbuggy =
-{
-	{
-		{
-			CPU_V20,
-			4000000,	/* ?? */
-			spdbuggy_readmem, spdbuggy_writemem, 0,0,
-ignore_interrupt, 1,
-		},
-		{
-			CPU_V20,
-			4000000,	/* ?? */
-			spdbuggy_readmem2, spdbuggy_writemem2, 0,0,
-ignore_interrupt, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( spdbuggy )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(V20, 4000000)	/* ?? */
+	MDRV_CPU_MEMORY(spdbuggy_readmem,spdbuggy_writemem)
+
+	MDRV_CPU_ADD(V20, 4000000)	/* ?? */
+	MDRV_CPU_MEMORY(spdbuggy_readmem2,spdbuggy_writemem2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0, 256-1 },
-	gfxdecodeinfo,
-	256 * 3, 256 * 3,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	spdbuggy_vh_start,
-	0,
-	spdbuggy_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256 * 3)
+	MDRV_COLORTABLE_LENGTH(256 * 3)
+
+	MDRV_VIDEO_START(spdbuggy)
+	MDRV_VIDEO_UPDATE(spdbuggy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ 0 },
-	}
-};
+MACHINE_DRIVER_END
 
 
 
@@ -586,7 +574,7 @@ static void spdbuggy_get_bg_tile_info( int tile_index )
 
 WRITE_HANDLER( spdbuggy_bgram_w )
 {
-	if (data != spdbuggy_bgram[offset]);
+	if (data != spdbuggy_bgram[offset])
 	{
 		spdbuggy_bgram[offset] = data;
 		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
@@ -611,7 +599,7 @@ static void spdbuggy_get_fg_tile_info( int tile_index )
 
 WRITE_HANDLER( spdbuggy_fgram_w )
 {
-	if (data != spdbuggy_fgram[offset]);
+	if (data != spdbuggy_fgram[offset])
 	{
 		spdbuggy_fgram[offset] = data;
 		tilemap_mark_tile_dirty(fg_tilemap, offset / 2);
@@ -626,7 +614,7 @@ WRITE_HANDLER( spdbuggy_fgram_w )
 						[ Video Hardware Start ]
 ------------------------------------------------------------------------*/
 
-int spdbuggy_vh_start(void)
+VIDEO_START( spdbuggy )
 {
 	bg_tilemap = tilemap_create(spdbuggy_get_bg_tile_info,
 								tilemap_scan_rows,
@@ -662,7 +650,7 @@ int spdbuggy_vh_start(void)
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 }
 
@@ -675,7 +663,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 
 
-void spdbuggy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( spdbuggy )
 {
 	int layers_ctrl = 0xFFFF;
 
@@ -714,12 +702,12 @@ void spdbuggy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 	/* Draw the background */
-	if (layers_ctrl & 1)	tilemap_draw(bitmap, bg_tilemap,  0, 0);
-	else					fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	if (layers_ctrl & 1)	tilemap_draw(bitmap, cliprect, bg_tilemap,  0, 0);
+	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	/* Draw the sprites */
-	if (layers_ctrl & 8)	draw_sprites(bitmap);
+	if (layers_ctrl & 8)	draw_sprites(bitmap, cliprect);
 
 	/* Draw the foreground (text) */
-	if (layers_ctrl & 4)	tilemap_draw(bitmap, fg_tilemap,  0, 0);
+	if (layers_ctrl & 4)	tilemap_draw(bitmap, cliprect, fg_tilemap,  0, 0);
 }

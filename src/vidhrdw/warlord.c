@@ -1,13 +1,12 @@
 /***************************************************************************
-Warlords Driver by Lee Taylor and John Clegg
-  vidhrdw.c
 
-  Functions to emulate the video hardware of the machine.
+	Atari Warlords hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "warlord.h"
 
 
 
@@ -22,7 +21,8 @@ Warlords Driver by Lee Taylor and John Clegg
   bit 0 -- BLUE
 
 ***************************************************************************/
-void warlord_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+PALETTE_INIT( warlord )
 {
 	int i, j;
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -73,7 +73,8 @@ void warlord_vh_convert_color_prom(unsigned char *palette, unsigned short *color
   the main emulation engine.
 
 ***************************************************************************/
-void warlord_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( warlord )
 {
 	int offs, upright_mode, palette;
 

@@ -206,7 +206,7 @@ data8_t *namconb1_maskrom;
 
 enum namconb1_type namconb1_type;
 
-static void namconb1_nvram_handler(void *file,int read_or_write){
+static NVRAM_HANDLER( namconb1 ){
 	if( read_or_write )
 	{
 		osd_fwrite( file, nvmem32, NB1_NVMEM_SIZE );
@@ -223,27 +223,27 @@ static void namconb1_nvram_handler(void *file,int read_or_write){
 	}
 }
 
-static void init_nebulray( void )
+static DRIVER_INIT( nebulray )
 {
 	namconb1_type = key_nebulray;
 }
 
-static void init_gslgr94u( void )
+static DRIVER_INIT( gslgr94u )
 {
 	namconb1_type = key_gslgr94u;
 }
 
-static void init_sws96( void )
+static DRIVER_INIT( sws96 )
 {
 	namconb1_type = key_sws96;
 }
 
-static void init_sws97( void )
+static DRIVER_INIT( sws97 )
 {
 	namconb1_type = key_sws97;
 }
 
-static void init_gunbulet( void )
+static DRIVER_INIT( gunbulet )
 {
 //	data32_t *pMem = (data32_t *)memory_region(REGION_CPU1);
 	namconb1_type = key_gunbulet;
@@ -299,7 +299,7 @@ static READ32_HANDLER( custom_key_r )
 		break;
 	}
 
-	logerror( "custom_key_r(%d); pc=%08x\n", offset, cpu_get_pc() );
+	logerror( "custom_key_r(%d); pc=%08x\n", offset, activecpu_get_pc() );
 	return 0;
 }
 
@@ -418,48 +418,38 @@ static MEMORY_WRITE32_START( namconb1_writemem )
 	{ 0x700000, 0x707fff, MWA32_RAM, &paletteram32 },
 MEMORY_END
 
-static int namconb1_interrupt( void )
+static INTERRUPT_GEN( namconb1_interrupt )
 {
-	if( namconb1_type == key_gunbulet ) return 5;
-	return 2;
+	if( namconb1_type == key_gunbulet ) cpu_set_irq_line(0, 5, HOLD_LINE);
+	else cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
-static struct MachineDriver machine_driver_namconb1 =
-{
-	{
-		{
-			CPU_M68EC020,
-			25000000/2, /* 25 MHz? */
-			namconb1_readmem,namconb1_writemem,0,0,
-			namconb1_interrupt,1
- 		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
-	/* video hardware */
-	NAMCONB1_COLS*8, NAMCONB1_ROWS*8, /* 288x224 pixels */
-	{ 0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1 },
+static MACHINE_DRIVER_START( namconb1 )
 
-	gfxdecodeinfo,
-	0x2000, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	namconb1_vh_start,
-	namconb1_vh_stop,
-	namconb1_vh_screenrefresh,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68EC020,25000000/2) /* 25 MHz? */
+	MDRV_CPU_MEMORY(namconb1_readmem,namconb1_writemem)
+	MDRV_CPU_VBLANK_INT(namconb1_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(namconb1)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
+	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x2000)
+
+	MDRV_VIDEO_START(namconb1)
+	MDRV_VIDEO_UPDATE(namconb1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			0 /* similar to C140?  managed by MCU */
-		}
-	},
-
-	namconb1_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	/* similar to C140?  managed by MCU */
+MACHINE_DRIVER_END
 
 /***************************************************************/
 

@@ -15,21 +15,18 @@ Preliminary driver by:
 
 /* from vidhrdw */
 WRITE_HANDLER( battlnts_spritebank_w );
-int battlnts_vh_start(void);
-void battlnts_vh_stop(void);
-void battlnts_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( battlnts );
+VIDEO_UPDATE( battlnts );
 
-static int battlnts_interrupt( void )
+static INTERRUPT_GEN( battlnts_interrupt )
 {
 	if (K007342_is_INT_enabled())
-		return HD6309_INT_IRQ;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
 WRITE_HANDLER( battlnts_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
 static WRITE_HANDLER( battlnts_bankswitch_w )
@@ -340,48 +337,33 @@ static struct YM3812interface ym3812_interface =
 	{ 0, 0 },
 };
 
-static const struct MachineDriver machine_driver_battlnts =
-{
+static MACHINE_DRIVER_START( battlnts )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_HD6309,
-			3000000,		/* ? */
-			battlnts_readmem,battlnts_writemem,0,0,
-			battlnts_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,		/* ? */
-			battlnts_readmem_sound, battlnts_writemem_sound,0,0,
-			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(HD6309, 3000000)		/* ? */
+	MDRV_CPU_MEMORY(battlnts_readmem,battlnts_writemem)
+	MDRV_CPU_VBLANK_INT(battlnts_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* ? */
+	MDRV_CPU_MEMORY(battlnts_readmem_sound,battlnts_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	128, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	battlnts_vh_start,
-	battlnts_vh_stop,
-	battlnts_vh_screenrefresh,
+	MDRV_VIDEO_START(battlnts)
+	MDRV_VIDEO_UPDATE(battlnts)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -494,7 +476,7 @@ static void shuffle(UINT8 *buf,int len)
 }
 
 
-static void init_rackemup(void)
+static DRIVER_INIT( rackemup )
 {
 	/* rearrange char ROM */
 	shuffle(memory_region(REGION_GFX1),memory_region_length(REGION_GFX1));

@@ -41,7 +41,7 @@ static struct rectangle spritevisiblearea =
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void pingpong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( pingpong )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -100,7 +100,7 @@ void pingpong_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Draw the game screen in the given mame_bitmap.
 
 ***************************************************************************/
-void pingpong_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pingpong )
 {
 	int offs;
 

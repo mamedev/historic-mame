@@ -393,69 +393,41 @@ static void gionbana_gfxdraw(void)
 
 
 ******************************************************************************/
-int gionbana_vh_start(void)
+VIDEO_START( gionbana )
 {
-	if ((gionbana_tmpbitmap0 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((gionbana_tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((gionbana_videoram0 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((gionbana_videoram1 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((gionbana_palette = malloc(0x200 * sizeof(char))) == 0) return 1;
-	if ((gionbana_paltbl = malloc(0x800 * sizeof(char))) == 0) return 1;
+	if ((gionbana_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((gionbana_tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((gionbana_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
+	if ((gionbana_videoram1 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
+	if ((gionbana_palette = auto_malloc(0x200 * sizeof(char))) == 0) return 1;
+	if ((gionbana_paltbl = auto_malloc(0x800 * sizeof(char))) == 0) return 1;
 	memset(gionbana_videoram0, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
 	memset(gionbana_videoram1, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
 	gfxdraw_mode = 1;
 	return 0;
 }
 
-void gionbana_vh_stop(void)
+VIDEO_START( hanamomo )
 {
-	free(gionbana_paltbl);
-	free(gionbana_palette);
-	free(gionbana_videoram1);
-	free(gionbana_videoram0);
-	bitmap_free(gionbana_tmpbitmap1);
-	bitmap_free(gionbana_tmpbitmap0);
-	gionbana_paltbl = 0;
-	gionbana_palette = 0;
-	gionbana_videoram1 = 0;
-	gionbana_videoram0 = 0;
-	gionbana_tmpbitmap1 = 0;
-	gionbana_tmpbitmap0 = 0;
-}
-
-int hanamomo_vh_start(void)
-{
-	if ((gionbana_tmpbitmap0 = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((gionbana_videoram0 = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((gionbana_palette = malloc(0x200 * sizeof(char))) == 0) return 1;
-	if ((gionbana_paltbl = malloc(0x800 * sizeof(char))) == 0) return 1;
+	if ((gionbana_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((gionbana_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
+	if ((gionbana_palette = auto_malloc(0x200 * sizeof(char))) == 0) return 1;
+	if ((gionbana_paltbl = auto_malloc(0x800 * sizeof(char))) == 0) return 1;
 	memset(gionbana_videoram0, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
 	gfxdraw_mode = 0;
 	return 0;
-}
-
-void hanamomo_vh_stop(void)
-{
-	free(gionbana_paltbl);
-	free(gionbana_palette);
-	free(gionbana_videoram0);
-	bitmap_free(gionbana_tmpbitmap0);
-	gionbana_paltbl = 0;
-	gionbana_palette = 0;
-	gionbana_videoram0 = 0;
-	gionbana_tmpbitmap0 = 0;
 }
 
 /******************************************************************************
 
 
 ******************************************************************************/
-void gionbana_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( gionbana )
 {
 	int x, y;
 	unsigned char color;
 
-	if (full_refresh || gionbana_screen_refresh)
+	if (get_vh_global_attribute_changed() || gionbana_screen_refresh)
 	{
 		gionbana_screen_refresh = 0;
 

@@ -118,7 +118,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 /***************************************************************************/
 
@@ -155,140 +155,13 @@ static WRITE16_HANDLER( sys16_3d_coinctrl_w )
 	}
 }
 
-#define MACHINE_DRIVER( GAMENAME,READMEM,WRITEMEM,INITMACHINE) \
-static const struct MachineDriver GAMENAME = \
-{ \
-	{ \
-		{ \
-			CPU_M68000, \
-			10000000, \
-			READMEM,WRITEMEM,0,0, \
-			sys16_interrupt,1 \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU, \
-			4096000, \
-			sound_readmem,sound_writemem,sound_readport,sound_writeport, \
-			ignore_interrupt,1 \
-		}, \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	INITMACHINE, \
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	sys16_gfxdecodeinfo, \
-	2048*ShadowColorsMultiplier, 0, \
-	0, \
-	VIDEO_TYPE_RASTER, \
-	0, \
-	sys16_vh_start, \
-	sys16_vh_stop, \
-	sys16_vh_screenrefresh, \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
-	{ \
-		{ \
-			SOUND_YM2151, \
-			&sys16_ym2151_interface \
-		} \
-	} \
-};
-
-#define MACHINE_DRIVER_7759( GAMENAME,READMEM,WRITEMEM,INITMACHINE, UPD7759INTF ) \
-static const struct MachineDriver GAMENAME = \
-{ \
-	{ \
-		{ \
-			CPU_M68000, \
-			10000000, \
-			READMEM,WRITEMEM,0,0, \
-			sys16_interrupt,1 \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU, \
-			4096000, \
-			sound_readmem_7759,sound_writemem,sound_readport,sound_writeport_7759, \
-			ignore_interrupt,1 \
-		}, \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	INITMACHINE, \
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	sys16_gfxdecodeinfo, \
-	2048*ShadowColorsMultiplier, 0, \
-	0, \
-	VIDEO_TYPE_RASTER, \
-	0, \
-	sys16_vh_start, \
-	sys16_vh_stop, \
-	sys16_vh_screenrefresh, \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
-	{ \
-		{ \
-			SOUND_YM2151, \
-			&sys16_ym2151_interface \
-		}, { \
-			SOUND_UPD7759, \
-			&UPD7759INTF \
-		} \
-	} \
-};
-
-
-#define MACHINE_DRIVER_7751( GAMENAME,READMEM,WRITEMEM,INITMACHINE ) \
-static const struct MachineDriver GAMENAME = \
-{ \
-	{ \
-		{ \
-			CPU_M68000, \
-			10000000, \
-			READMEM,WRITEMEM,0,0, \
-			sys16_interrupt,1 \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU, \
-			4096000, \
-			sound_readmem_7751,sound_writemem,sound_readport_7751,sound_writeport_7751, \
-			ignore_interrupt,1 \
-		}, \
-		{ \
-			CPU_N7751 | CPU_AUDIO_CPU, \
-			6000000/15,        /* 6MHz crystal */ \
-			readmem_7751,writemem_7751,readport_7751,writeport_7751, \
-			ignore_interrupt,1 \
-		} \
-	}, \
-	60, DEFAULT_60HZ_VBLANK_DURATION, \
-	1, \
-	INITMACHINE, \
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 }, \
-	sys16_gfxdecodeinfo, \
-	2048*ShadowColorsMultiplier, 0, \
-	0, \
-	VIDEO_TYPE_RASTER, \
-	0, \
-	sys16_vh_start, \
-	sys16_vh_stop, \
-	sys16_vh_screenrefresh, \
-	SOUND_SUPPORTS_STEREO,0,0,0, \
-	{ \
-		{ \
-			SOUND_YM2151, \
-			&sys16_ym2151_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&sys16_7751_dac_interface \
-		} \
-	} \
-};
-
-/***************************************************************************/
-
-static int sys16_interrupt( void ){
+static INTERRUPT_GEN( sys16_interrupt )
+{
 	if(sys16_custom_irq) sys16_custom_irq();
-	return 4; /* Interrupt vector 4, used by VBlank */
+	cpu_set_irq_line(0, 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
 }
+
+
 
 /***************************************************************************/
 
@@ -383,7 +256,7 @@ PORT_END
 static WRITE16_HANDLER( sound_command_w ){
 	if( ACCESSING_LSB ){
 		soundlatch_w( 0,data&0xff );
-		cpu_cause_interrupt( 1, 0 );
+		cpu_set_irq_line( 1, 0, HOLD_LINE );
 	}
 }
 
@@ -413,6 +286,70 @@ static WRITE16_HANDLER( sys16_coinctrl_w )
 		/* eswat sets bit 4 */
 	}
 }
+
+/***************************************************************************/
+
+static MACHINE_DRIVER_START( system16 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
+	MDRV_CPU_VBLANK_INT(sys16_interrupt,1)
+	
+	MDRV_CPU_ADD_TAG("sound", Z80, 4096000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sys16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048*ShadowColorsMultiplier)
+	
+	MDRV_VIDEO_START(system16)
+	MDRV_VIDEO_UPDATE(system16)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD_TAG("2151", YM2151, sys16_ym2151_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( system16_7759 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(sound_readmem_7759,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport_7759)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("7759", UPD7759, sys16_upd7759_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( system16_7751 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(sound_readmem_7751,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport_7751,sound_writeport_7751)
+	
+	MDRV_CPU_ADD(N7751, 6000000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_7751,writemem_7751)
+	MDRV_CPU_PORTS(readport_7751,writeport_7751)
+	
+	/* sound hardware */
+	MDRV_SOUND_ADD(DAC, sys16_7751_dac_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -543,7 +480,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( alexkidd_skip_r ){
-	if (cpu_get_pc()==0x242c) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x242c) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x3108/2];
 }
 
@@ -586,7 +523,7 @@ static void alexkidd_update_proc( void ){
 	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
 }
 
-static void alexkidd_init_machine( void ){
+static MACHINE_INIT( alexkidd ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_quartet2;
 	sys16_sprxoffset = -0xbc;
@@ -596,9 +533,9 @@ static void alexkidd_init_machine( void ){
 	sys16_update_proc = alexkidd_update_proc;
 }
 
-static void init_alexkidd( void )
+static DRIVER_INIT( alexkidd )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -635,8 +572,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( machine_driver_alexkidd, \
-	alexkidd_readmem,alexkidd_writemem,alexkidd_init_machine )
+static MACHINE_DRIVER_START( alexkidd )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7751)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(alexkidd_readmem,alexkidd_writemem)
+	
+	MDRV_MACHINE_INIT(alexkidd)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -805,7 +749,7 @@ static void aliensyn_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void aliensyn_init_machine( void ){
+static MACHINE_INIT( aliensyn ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,3,
@@ -820,9 +764,9 @@ static void aliensyn_init_machine( void ){
 	sys16_update_proc = aliensyn_update_proc;
 }
 
-static void init_aliensyn( void )
+static DRIVER_INIT( aliensyn )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	sys16_bg1_trans=1;
 }
 
@@ -860,8 +804,18 @@ INPUT_PORTS_END
 
 /****************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_aliensyn, \
-	aliensyn_readmem,aliensyn_writemem,aliensyn_init_machine, aliensyn_upd7759_interface )
+static MACHINE_DRIVER_START( aliensyn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(aliensyn_readmem,aliensyn_writemem)
+	
+	MDRV_MACHINE_INIT(aliensyn)
+	
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("7759", UPD7759, aliensyn_upd7759_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -949,7 +903,7 @@ ROM_END
 
 static READ16_HANDLER( altbeast_skip_r )
 {
-	if (cpu_get_pc()==0x3994) {cpu_spinuntil_int(); return 1<<8;}
+	if (activecpu_get_pc()==0x3994) {cpu_spinuntil_int(); return 1<<8;}
 	return sys16_workingram[0x301c/2];
 }
 
@@ -999,11 +953,11 @@ static void altbeast_update_proc( void ){
 	set_tile_bank( sys16_workingram[0x3094/2] );
 }
 
-static void altbeast_init_machine( void ){
+static MACHINE_INIT( altbeast ){
 	sys16_update_proc = altbeast_update_proc;
 }
 
-static void altbeas2_init_machine( void ){
+static MACHINE_INIT( altbeas2 ){
 	static int bank[16] = {
 		0x00,0x00,
 		0x01,0x00,
@@ -1018,9 +972,9 @@ static void altbeas2_init_machine( void ){
 	sys16_update_proc = altbeast_update_proc;
 }
 
-static void init_altbeast( void )
+static DRIVER_INIT( altbeast )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
 /***************************************************************************/
@@ -1057,11 +1011,26 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_altbeast, \
-	altbeast_readmem,altbeast_writemem,altbeast_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( altbeast )
 
-MACHINE_DRIVER_7759( machine_driver_altbeas2, \
-	altbeast_readmem,altbeast_writemem,altbeas2_init_machine,sys16_upd7759_interface )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(altbeast_readmem,altbeast_writemem)
+	
+	MDRV_MACHINE_INIT(altbeast)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( altbeas2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(altbeast_readmem,altbeast_writemem)
+	
+	MDRV_MACHINE_INIT(altbeas2)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -1081,7 +1050,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( atomicp_skip_r ){
-	if (cpu_get_pc()==0x7fc) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x7fc) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0902/2];
 }
 
@@ -1135,13 +1104,13 @@ static void atomicp_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void atomicp_init_machine( void ){
+static MACHINE_INIT( atomicp ){
 	sys16_update_proc = atomicp_update_proc;
 }
 
-static void init_atomicp( void )
+static DRIVER_INIT( atomicp )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
 /***************************************************************************/
@@ -1223,42 +1192,31 @@ PORT_START  //dip2
 INPUT_PORTS_END
 
 /***************************************************************************/
-static int ap_interrupt( void ){
+static INTERRUPT_GEN( ap_interrupt )
+{
 	int intleft=cpu_getiloops();
-	if(intleft!=0) return 2;
-	else return 4;
+	if(intleft!=0) cpu_set_irq_line(0, 2, HOLD_LINE);
+	else cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
-static const struct MachineDriver machine_driver_atomicp =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,
-			atomicp_readmem,atomicp_writemem,0,0,
-			ap_interrupt,2
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	atomicp_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	sys16_vh_start,
-	sys16_vh_stop,
-	sys16_vh_screenrefresh,
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2413,
-			&sys16_ym2413_interface
-		}
-	}
-};
+
+static MACHINE_DRIVER_START( atomicp )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(atomicp_readmem,atomicp_writemem)
+	MDRV_CPU_VBLANK_INT(ap_interrupt,2)
+	
+	MDRV_CPU_REMOVE("sound")
+	
+	MDRV_MACHINE_INIT(atomicp)
+	
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_REPLACE("2151", YM2413, sys16_ym2413_interface)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -1352,7 +1310,7 @@ ROM_END
 
 static READ16_HANDLER( aurail_skip_r )
 {
-	if (cpu_get_pc()==0xe4e) {cpu_spinuntil_int(); return 0;}
+	if (activecpu_get_pc()==0xe4e) {cpu_spinuntil_int(); return 0;}
 	return sys16_workingram[0x274e/2];
 }
 
@@ -1400,7 +1358,7 @@ static void aurail_update_proc (void){
 	set_tile_bank( sys16_extraram3[0x0002/2] );
 }
 
-static void aurail_init_machine( void ){
+static MACHINE_INIT( aurail ){
 	sys16_spritesystem = sys16_sprite_aurail;
 	sys16_spritelist_end=0x8000;
 	sys16_bg_priority_mode=1;
@@ -1408,12 +1366,12 @@ static void aurail_init_machine( void ){
 	sys16_update_proc = aurail_update_proc;
 }
 
-static void init_aurail (void)
+static DRIVER_INIT( aurail )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
-static void init_auraila(void)
+static DRIVER_INIT( auraila )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	int diff = 0x40000;	/* place decrypted opcodes in a empty hole */
@@ -1465,8 +1423,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_aurail, \
-	aurail_readmem,aurail_writemem,aurail_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( aurail )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(aurail_readmem,aurail_writemem)
+	
+	MDRV_MACHINE_INIT(aurail)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -1624,7 +1589,7 @@ static void bayroute_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void bayroute_init_machine( void ){
+static MACHINE_INIT( bayroute ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,3,
@@ -1637,17 +1602,17 @@ static void bayroute_init_machine( void ){
 	sys16_spritelist_end=0xc000;
 }
 
-static void init_bayroute( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( bayroute ){
+	machine_init_sys16_onetime();
 }
 
-static void init_bayrouta( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( bayrouta ){
+	machine_init_sys16_onetime();
 }
 
-static void init_bayrtbl1( void ){
+static DRIVER_INIT( bayrtbl1 ){
 	int i;
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
 		memory_region(REGION_GFX1)[i] ^= 0xff;
@@ -1687,8 +1652,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_bayroute, \
-	bayroute_readmem,bayroute_writemem,bayroute_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( bayroute )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(bayroute_readmem,bayroute_writemem)
+	
+	MDRV_MACHINE_INIT(bayroute)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -1815,7 +1787,7 @@ static void bodyslam_update_proc (void){
 	set_bg_page1( sys16_textram[0x0e9c/2] );
 }
 
-static void bodyslam_init_machine( void ){
+static MACHINE_INIT( bodyslam ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_quartet2;
 	sys16_sprxoffset = -0xbc;
@@ -1835,10 +1807,10 @@ static void bodyslam_init_machine( void ){
 // timer in the code and this seems to work ok.
 static void bodyslam_irq_timer(void)
 {
-	int flag=READ_WORD(&sys16_workingram[0x200])>>8;
-	int tick=READ_WORD(&sys16_workingram[0x200])&0xff;
-	int sec=READ_WORD(&sys16_workingram[0x202])>>8;
-	int min=READ_WORD(&sys16_workingram[0x202])&0xff;
+	int flag=(*(UINT16 *)(&sys16_workingram[0x200]))>>8;
+	int tick=(*(UINT16 *)(&sys16_workingram[0x200]))&0xff;
+	int sec=(*(UINT16 *)(&sys16_workingram[0x202]))>>8;
+	int min=(*(UINT16 *)(&sys16_workingram[0x202]))&0xff;
 
 	if(tick == 0 && sec == 0 && min == 0)
 		flag=1;
@@ -1877,8 +1849,8 @@ static void bodyslam_irq_timer(void)
 	sys16_workingram[0x202/2] = (sec<<8)+min;
 }
 
-static void init_bodyslam( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( bodyslam ){
+	machine_init_sys16_onetime();
 	sys16_bg1_trans=1;
 	sys16_custom_irq=bodyslam_irq_timer;
 }
@@ -1921,8 +1893,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( machine_driver_bodyslam, \
-	bodyslam_readmem,bodyslam_writemem,bodyslam_init_machine )
+static MACHINE_DRIVER_START( bodyslam )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7751)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(bodyslam_readmem,bodyslam_writemem)
+	
+	MDRV_MACHINE_INIT(bodyslam)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -1955,7 +1934,7 @@ ROM_END
 
 /***************************************************************************/
 static READ16_HANDLER( dduxbl_skip_r ){
-	if (cpu_get_pc()==0x502) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x502) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x36e0/2];
 }
 
@@ -2002,7 +1981,7 @@ static void dduxbl_update_proc( void ){
 
 		if (lu==4 && ld==4 && ru==5 && rd==5)
 		{ // fix a bug in chicago round (un-tested in MAME)
-			int vs=READ_WORD(&sys16_workingram[0x36ec]);
+			int vs=(*(UINT16 *)(&sys16_workingram[0x36ec]));
 			sys16_bg_scrolly = vs & 0xff;
 			sys16_fg_scrolly = vs & 0xff;
 			if (vs >= 0x100)
@@ -2026,7 +2005,7 @@ static void dduxbl_update_proc( void ){
 	}
 }
 
-static void dduxbl_init_machine( void ){
+static MACHINE_INIT( dduxbl ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,3,
@@ -2052,11 +2031,11 @@ static void dduxbl_init_machine( void ){
 	sys16_sprxoffset = -0x48;
 }
 
-static void init_dduxbl(void)
+static DRIVER_INIT( dduxbl )
 {
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -2097,8 +2076,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( machine_driver_dduxbl, \
-	dduxbl_readmem,dduxbl_writemem,dduxbl_init_machine)
+static MACHINE_DRIVER_START( dduxbl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(dduxbl_readmem,dduxbl_writemem)
+	
+	MDRV_MACHINE_INIT(dduxbl)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -2154,7 +2140,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( eswatbl_skip_r ){
-	if (cpu_get_pc()==0x65c) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x65c) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0454/2];
 }
 
@@ -2209,7 +2195,7 @@ static void eswat_update_proc( void ){
 	sys16_tile_bank0 = eswat_tilebank0;
 }
 
-static void eswat_init_machine( void ){
+static MACHINE_INIT( eswat ){
 	static int bank[] = {
 		0,1,	4,5,
 		8,9,	12,13,
@@ -2224,8 +2210,8 @@ static void eswat_init_machine( void ){
 	sys16_update_proc = eswat_update_proc;
 }
 
-static void init_eswat( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( eswat ){
+	machine_init_sys16_onetime();
 	sys16_rowscroll_scroll=0x8000;
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 }
@@ -2265,8 +2251,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_eswat, \
-	eswat_readmem,eswat_writemem,eswat_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( eswat )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(eswat_readmem,eswat_writemem)
+	
+	MDRV_MACHINE_INIT(eswat)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16A
@@ -2326,7 +2319,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( fantzone_skip_r ){
-	if (cpu_get_pc()==0x91b2) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x91b2) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x022a/2];
 }
 
@@ -2396,7 +2389,7 @@ static void fantzone_update_proc( void ){
 	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
 }
 
-static void fantzono_init_machine( void ){
+static MACHINE_INIT( fantzono ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_fantzone;
 	sys16_sprxoffset = -0xbe;
@@ -2430,7 +2423,7 @@ static void fantzono_init_machine( void ){
 	sys16_update_proc = fantzone_update_proc;
 }
 
-static void fantzone_init_machine( void ){
+static MACHINE_INIT( fantzone ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_fantzone;
 	sys16_sprxoffset = -0xbe;
@@ -2446,9 +2439,9 @@ static void fantzone_init_machine( void ){
 	sys16_update_proc = fantzone_update_proc;
 }
 
-static void init_fantzone( void )
+static DRIVER_INIT( fantzone )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -2485,10 +2478,26 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( machine_driver_fantzono, \
-	fantzono_readmem,fantzono_writemem,fantzono_init_machine )
-MACHINE_DRIVER( machine_driver_fantzone, \
-	fantzone_readmem,fantzone_writemem,fantzone_init_machine )
+static MACHINE_DRIVER_START( fantzono )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(fantzono_readmem,fantzono_writemem)
+	
+	MDRV_MACHINE_INIT(fantzono)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( fantzone )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(fantzone_readmem,fantzone_writemem)
+	
+	MDRV_MACHINE_INIT(fantzone)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -2573,7 +2582,7 @@ static void fpoint_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void fpoint_init_machine( void ){
+static MACHINE_INIT( fpoint ){
 	sys16_patch_code( 0x454, 0x33 );
 	sys16_patch_code( 0x455, 0xf8 );
 	sys16_patch_code( 0x456, 0xe0 );
@@ -2601,14 +2610,14 @@ static void fpoint_init_machine( void ){
 	sys16_update_proc = fpoint_update_proc;
 }
 
-static void init_fpoint(void){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( fpoint ){
+	machine_init_sys16_onetime();
 }
 
-static void init_fpointbl(void){
+static DRIVER_INIT( fpointbl ){
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -2669,8 +2678,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( machine_driver_fpoint, \
-	fpoint_readmem,fpoint_writemem,fpoint_init_machine)
+static MACHINE_DRIVER_START( fpoint )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(fpoint_readmem,fpoint_writemem)
+	
+	MDRV_MACHINE_INIT(fpoint)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -2771,7 +2787,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( goldnaxe_skip_r ){
-	if (cpu_get_pc()==0x3cb0) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x3cb0) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x2c1c/2];
 }
 
@@ -2804,7 +2820,7 @@ static WRITE16_HANDLER( ga_sound_command_w ){
 	COMBINE_DATA( &sys16_workingram[(0xecfc-0xc000)/2] );
 	if( ACCESSING_MSB ){
 		soundlatch_w( 0,data>>8 );
-		cpu_cause_interrupt( 1, 0 );
+		cpu_set_irq_line( 1, 0, HOLD_LINE );
 	}
 }
 
@@ -2845,7 +2861,7 @@ static void goldnaxe_update_proc( void ){
 	set_tile_bank( sys16_workingram[0x2c94/2] );
 }
 
-static void goldnaxe_init_machine( void ){
+static MACHINE_INIT( goldnaxe ){
 	static int bank[16] = {
 		0,1,4,5,
 		8,9,0,0,
@@ -2862,14 +2878,14 @@ static void goldnaxe_init_machine( void ){
 	sys16_update_proc = goldnaxe_update_proc;
 }
 
-static void init_goldnaxe( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( goldnaxe ){
+	machine_init_sys16_onetime();
 }
 
-static void init_goldnabl( void ){
+static DRIVER_INIT( goldnabl ){
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x60000; i++)
@@ -2911,8 +2927,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_goldnaxe, \
-	goldnaxe_readmem,goldnaxe_writemem,goldnaxe_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( goldnaxe )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(goldnaxe_readmem,goldnaxe_writemem)
+	
+	MDRV_MACHINE_INIT(goldnaxe)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -2991,7 +3014,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( goldnaxa_skip_r ){
-	if (cpu_get_pc()==0x3ca0) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x3ca0) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x2c1c/2];
 }
 
@@ -3080,7 +3103,7 @@ static void goldnaxa_update_proc( void ){
 	set_tile_bank( sys16_workingram[0x2c94/2] );
 }
 
-static void goldnaxa_init_machine( void ){
+static MACHINE_INIT( goldnaxa ){
 	static int bank[16] = {
 		0,1,4,5,
 		8,9,0,0,
@@ -3097,8 +3120,15 @@ static void goldnaxa_init_machine( void ){
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_goldnaxa, \
-	goldnaxa_readmem,goldnaxa_writemem,goldnaxa_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( goldnaxa )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(goldnaxa_readmem,goldnaxa_writemem)
+	
+	MDRV_MACHINE_INIT(goldnaxa)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -3236,14 +3266,14 @@ static void hwchamp_update_proc( void ){
 	sys16_tile_bank1 = sys16_extraram[1]&0xf;
 }
 
-static void hwchamp_init_machine( void ){
+static MACHINE_INIT( hwchamp ){
 	sys16_spritelist_end=0xc000;
 	sys16_update_proc = hwchamp_update_proc;
 }
 
-static void init_hwchamp( void )
+static DRIVER_INIT( hwchamp )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -3293,8 +3323,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_hwchamp, \
-	hwchamp_readmem,hwchamp_writemem,hwchamp_init_machine ,sys16_upd7759_interface)
+static MACHINE_DRIVER_START( hwchamp )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(hwchamp_readmem,hwchamp_writemem)
+	
+	MDRV_MACHINE_INIT(hwchamp)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // pre16
@@ -3438,7 +3475,7 @@ static void mjleague_update_proc( void ){
 	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
 }
 
-static void mjleague_init_machine( void ){
+static MACHINE_INIT( mjleague ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_quartet2;
 	sys16_sprxoffset = -0xbd;
@@ -3450,9 +3487,9 @@ static void mjleague_init_machine( void ){
 	sys16_update_proc = mjleague_update_proc;
 }
 
-static void init_mjleague( void )
+static DRIVER_INIT( mjleague )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
 /***************************************************************************/
@@ -3524,8 +3561,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( machine_driver_mjleague, \
-	mjleague_readmem,mjleague_writemem,mjleague_init_machine)
+static MACHINE_DRIVER_START( mjleague )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7751)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mjleague_readmem,mjleague_writemem)
+	
+	MDRV_MACHINE_INIT(mjleague)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -3725,7 +3769,7 @@ static void passht4b_update_proc( void ){
 	set_bg_page( sys16_textram[0x0ff4/2] );
 }
 
-static void passsht_init_machine( void ){
+static MACHINE_INIT( passsht ){
 	sys16_sprxoffset = -0x48;
 	sys16_spritesystem = sys16_sprite_passshot;
 
@@ -3735,7 +3779,7 @@ static void passsht_init_machine( void ){
 	sys16_update_proc = passsht_update_proc;
 }
 
-static void passht4b_init_machine( void ){
+static MACHINE_INIT( passht4b ){
 	sys16_sprxoffset = -0xb8;
 	sys16_spritesystem = sys16_sprite_passshot;
 
@@ -3745,15 +3789,15 @@ static void passht4b_init_machine( void ){
 	sys16_update_proc = passht4b_update_proc;
 }
 
-static void init_passsht( void )
+static DRIVER_INIT( passsht )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
-static void init_passht4b( void ){
+static DRIVER_INIT( passht4b ){
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -3892,11 +3936,26 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_passsht, \
-	passsht_readmem,passsht_writemem,passsht_init_machine, sys16_upd7759_interface)
+static MACHINE_DRIVER_START( passsht )
 
-MACHINE_DRIVER_7759( machine_driver_passht4b, \
-	passht4b_readmem,passht4b_writemem,passht4b_init_machine ,sys16_upd7759_interface)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(passsht_readmem,passsht_writemem)
+	
+	MDRV_MACHINE_INIT(passsht)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( passht4b )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(passht4b_readmem,passht4b_writemem)
+	
+	MDRV_MACHINE_INIT(passht4b)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // pre16
@@ -3982,7 +4041,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( quartet_skip_r ){
-	if (cpu_get_pc()==0x89b2) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x89b2) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0800/2];
 }
 
@@ -4022,7 +4081,7 @@ static void quartet_update_proc( void ){
 	sys16_fg_scrolly = sys16_textram[0x0f24/2] & 0x00ff;
 	sys16_bg_scrolly = sys16_textram[0x0f26/2] & 0x01ff;
 
-	if((READ_WORD(&sys16_extraram[4]) & 0xff) == 1)
+	if(((*(UINT16 *)(&sys16_extraram[4])) & 0xff) == 1)
 		sys16_quartet_title_kludge=1;
 	else
 		sys16_quartet_title_kludge=0;
@@ -4031,7 +4090,7 @@ static void quartet_update_proc( void ){
 	set_bg_page1( sys16_workingram[0x0d1e/2] );
 }
 
-static void quartet_init_machine( void ){
+static MACHINE_INIT( quartet ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_quartet2;
 	sys16_sprxoffset = -0xbc;
@@ -4040,9 +4099,9 @@ static void quartet_init_machine( void ){
 	sys16_update_proc = quartet_update_proc;
 }
 
-static void init_quartet( void )
+static DRIVER_INIT( quartet )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -4119,8 +4178,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( machine_driver_quartet, \
-	quartet_readmem,quartet_writemem,quartet_init_machine )
+static MACHINE_DRIVER_START( quartet )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7751)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(quartet_readmem,quartet_writemem)
+	
+	MDRV_MACHINE_INIT(quartet)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // pre16
@@ -4166,7 +4232,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( quartet2_skip_r ){
-	if (cpu_get_pc()==0x8f6c) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x8f6c) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0800/2];
 }
 
@@ -4206,7 +4272,7 @@ static void quartet2_update_proc( void ){
 	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
 
 //let's fix this properly
-//	if((READ_WORD(&sys16_extraram[4]) & 0xff) == 1)
+//	if(((*(UINT16 *)(&sys16_extraram[4])) & 0xff) == 1)
 //		sys16_quartet_title_kludge=1;
 //	else
 		sys16_quartet_title_kludge=0;
@@ -4215,7 +4281,7 @@ static void quartet2_update_proc( void ){
 	set_bg_page1( sys16_workingram[0x0d1e/2] );
 }
 
-static void quartet2_init_machine( void ){
+static MACHINE_INIT( quartet2 ){
 	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_quartet2;
 	sys16_sprxoffset = -0xbc;
@@ -4224,8 +4290,8 @@ static void quartet2_init_machine( void ){
 	sys16_update_proc = quartet2_update_proc;
 }
 
-static void init_quartet2( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( quartet2 ){
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -4263,8 +4329,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( machine_driver_quartet2, \
-	quartet2_readmem,quartet2_writemem,quartet2_init_machine )
+static MACHINE_DRIVER_START( quartet2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7751)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(quartet2_readmem,quartet2_writemem)
+	
+	MDRV_MACHINE_INIT(quartet2)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -4304,7 +4377,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( riotcity_skip_r ){
-	if (cpu_get_pc()==0x3ce) {cpu_spinuntil_int(); return 0;}
+	if (activecpu_get_pc()==0x3ce) {cpu_spinuntil_int(); return 0;}
 	return sys16_workingram[0x2cde/2];
 }
 
@@ -4354,7 +4427,7 @@ static void riotcity_update_proc (void)
 	sys16_tile_bank0 = sys16_extraram3[0x0000/2] & 0xf;
 }
 
-static void riotcity_init_machine( void ){
+static MACHINE_INIT( riotcity ){
 	static int bank[16] = {
 		0x0,0x1,0x4,0x5,
 		0x8,0x9,0x0,0x0,
@@ -4369,9 +4442,9 @@ static void riotcity_init_machine( void ){
 	sys16_update_proc = riotcity_update_proc;
 }
 
-static void init_riotcity(void)
+static DRIVER_INIT( riotcity )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
 /***************************************************************************/
@@ -4409,8 +4482,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_riotcity, \
-	riotcity_readmem,riotcity_writemem,riotcity_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( riotcity )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(riotcity_readmem,riotcity_writemem)
+	
+	MDRV_MACHINE_INIT(riotcity)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -4478,7 +4558,7 @@ static READ16_HANDLER( io_p2mousex_r ){ return input_port_7_r( offset ); }
 static READ16_HANDLER( io_p2mousey_r ){ return input_port_8_r( offset ); }
 
 static READ16_HANDLER( sdi_skip_r ){
-	if (cpu_get_pc()==0x5326) {cpu_spinuntil_int(); return 0xffff;}
+	if (activecpu_get_pc()==0x5326) {cpu_spinuntil_int(); return 0xffff;}
 	return sys16_workingram[0x0400/2];
 }
 
@@ -4526,7 +4606,7 @@ static void sdi_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void sdi_init_machine( void ){
+static MACHINE_INIT( sdi ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,3,
@@ -4541,8 +4621,8 @@ static void sdi_init_machine( void ){
 	sys16_update_proc = sdi_update_proc;
 }
 
-static void init_sdi( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( sdi ){
+	machine_init_sys16_onetime();
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
 	sys16_rowscroll_scroll=0xff00;
 }
@@ -4613,8 +4693,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( machine_driver_sdi, \
-	sdi_readmem,sdi_writemem,sdi_init_machine)
+static MACHINE_DRIVER_START( sdi )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(sdi_readmem,sdi_writemem)
+	
+	MDRV_MACHINE_INIT(sdi)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -4682,7 +4769,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( shinobi_skip_r ){
-	if (cpu_get_pc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
+	if (activecpu_get_pc()==0x32e0) {cpu_spinuntil_int(); return 1<<8;}
 	return sys16_workingram[0x301c/2];
 }
 
@@ -4725,7 +4812,7 @@ static void shinobi_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void shinobi_init_machine( void ){
+static MACHINE_INIT( shinobi ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,3,
@@ -4737,9 +4824,9 @@ static void shinobi_init_machine( void ){
 	sys16_update_proc = shinobi_update_proc;
 }
 
-static void init_shinobi( void )
+static DRIVER_INIT( shinobi )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
 /***************************************************************************/
@@ -4778,8 +4865,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_shinobi, \
-	shinobi_readmem,shinobi_writemem,shinobi_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( shinobi )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(shinobi_readmem,shinobi_writemem)
+	
+	MDRV_MACHINE_INIT(shinobi)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16A
@@ -4895,7 +4989,7 @@ static void shinobl_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x7fd] & 0x01ff;
 }
 
-static void shinobl_init_machine( void ){
+static MACHINE_INIT( shinobl ){
 	static int bank[] = {
 		0,2,4,6,
 		1,3,5,7
@@ -4915,8 +5009,15 @@ static void shinobl_init_machine( void ){
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7751( machine_driver_shinobl, \
-	shinobl_readmem,shinobl_writemem,shinobl_init_machine)
+static MACHINE_DRIVER_START( shinobl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7751)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(shinobl_readmem,shinobl_writemem)
+	
+	MDRV_MACHINE_INIT(shinobl)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -5022,7 +5123,7 @@ static void tetris_update_proc( void ){
 	set_bg_page( sys16_extraram2[0x28/2] );
 }
 
-static void tetris_init_machine( void ){
+static MACHINE_INIT( tetris ){
 	sys16_patch_code( 0xba6, 0x4e );
 	sys16_patch_code( 0xba7, 0x71 );
 
@@ -5030,14 +5131,14 @@ static void tetris_init_machine( void ){
 	sys16_update_proc = tetris_update_proc;
 }
 
-static void init_tetris( void )
+static DRIVER_INIT( tetris )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
-static void init_tetrisbl( void )
+static DRIVER_INIT( tetrisbl )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -5074,8 +5175,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( machine_driver_tetris, \
-	tetris_readmem,tetris_writemem,tetris_init_machine )
+static MACHINE_DRIVER_START( tetris )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(tetris_readmem,tetris_writemem)
+	
+	MDRV_MACHINE_INIT(tetris)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -5111,7 +5219,7 @@ ROM_END
 /***************************************************************************/
 
 static READ16_HANDLER( timscanr_skip_r ){
-	if (cpu_get_pc()==0x1044c) {cpu_spinuntil_int(); return 0;}
+	if (activecpu_get_pc()==0x1044c) {cpu_spinuntil_int(); return 0;}
 	return sys16_workingram[0x000c/2];
 }
 
@@ -5153,7 +5261,7 @@ static void timscanr_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void timscanr_init_machine( void ){
+static MACHINE_INIT( timscanr ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,3,
@@ -5166,8 +5274,8 @@ static void timscanr_init_machine( void ){
 	sys16_update_proc = timscanr_update_proc;
 }
 
-static void init_timscanr( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( timscanr ){
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -5238,8 +5346,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_timscanr, \
-	timscanr_readmem,timscanr_writemem,timscanr_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( timscanr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(timscanr_readmem,timscanr_writemem)
+	
+	MDRV_MACHINE_INIT(timscanr)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -5314,13 +5429,13 @@ static void toryumon_update_proc( void ){
 	sys16_tile_bank1 = sys16_extraram[1]&0xf;
 }
 
-static void toryumon_init_machine( void ){
+static MACHINE_INIT( toryumon ){
 	sys16_update_proc = toryumon_update_proc;
 }
 
-static void init_toryumon(void)
+static DRIVER_INIT( toryumon )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -5359,8 +5474,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_toryumon, \
-	toryumon_readmem,toryumon_writemem,toryumon_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( toryumon )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(toryumon_readmem,toryumon_writemem)
+	
+	MDRV_MACHINE_INIT(toryumon)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -5464,14 +5586,14 @@ static void tturf_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void tturf_init_machine( void ){
+static MACHINE_INIT( tturf ){
 	static int bank[16] = { 0,0,1,0,2,0,3,0 };
 	sys16_obj_bank = bank;
 	sys16_spritelist_end=0xc000;
 	sys16_update_proc = tturf_update_proc;
 }
 
-static void tturfu_init_machine( void ){
+static MACHINE_INIT( tturfu ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,0,
@@ -5484,8 +5606,8 @@ static void tturfu_init_machine( void ){
 	sys16_update_proc = tturf_update_proc;
 }
 
-static void init_tturf(void){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( tturf ){
+	machine_init_sys16_onetime();
 }
 /***************************************************************************/
 
@@ -5521,11 +5643,23 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_tturf, \
-	tturf_readmem,tturf_writemem,tturf_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( tturf )
 
-MACHINE_DRIVER_7759( machine_driver_tturfu, \
-	tturf_readmem,tturf_writemem,tturfu_init_machine,sys16_upd7759_interface )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(tturf_readmem,tturf_writemem)
+	
+	MDRV_MACHINE_INIT(tturf)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tturfu )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(tturf)
+	MDRV_MACHINE_INIT(tturfu)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -5619,7 +5753,7 @@ static void tturfbl_update_proc( void ){
 	}
 }
 
-static void tturfbl_init_machine( void ){
+static MACHINE_INIT( tturfbl ){
 	static int bank[16] = {
 		0,0,0,0,
 		0,0,0,3,
@@ -5633,11 +5767,11 @@ static void tturfbl_init_machine( void ){
 	sys16_update_proc = tturfbl_update_proc;
 }
 
-static void init_tturfbl(void)
+static DRIVER_INIT( tturfbl )
 {
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -5645,8 +5779,15 @@ static void init_tturfbl(void)
 }
 /***************************************************************************/
 // sound ??
-MACHINE_DRIVER_7759( machine_driver_tturfbl, \
-	tturfbl_readmem,tturfbl_writemem,tturfbl_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( tturfbl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(tturfbl_readmem,tturfbl_writemem)
+	
+	MDRV_MACHINE_INIT(tturfbl)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -5742,7 +5883,7 @@ static void wb3_update_proc( void ){
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static void wb3_init_machine( void ){
+static MACHINE_INIT( wb3 ){
 	static int bank[16] = {
 		2,0,
 		1,0,
@@ -5757,8 +5898,8 @@ static void wb3_init_machine( void ){
 	sys16_update_proc = wb3_update_proc;
 }
 
-static void init_wb3(void){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( wb3 ){
+	machine_init_sys16_onetime();
 }
 
 /***************************************************************************/
@@ -5797,8 +5938,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER( machine_driver_wb3, \
-	wb3_readmem,wb3_writemem,wb3_init_machine )
+static MACHINE_DRIVER_START( wb3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(wb3_readmem,wb3_writemem)
+	
+	MDRV_MACHINE_INIT(wb3)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -5871,7 +6019,7 @@ static void wb3bl_update_proc( void ){
 	set_bg_page( sys16_textram[0x0ff4/2] );
 }
 
-static void wb3bl_init_machine( void ){
+static MACHINE_INIT( wb3bl ){
 	static int bank[16] = {
 		2,0,
 		1,0,
@@ -5909,11 +6057,11 @@ static void wb3bl_init_machine( void ){
 	sys16_update_proc = wb3bl_update_proc;
 }
 
-static void init_wb3bl(void)
+static DRIVER_INIT( wb3bl )
 {
 	int i;
 
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -5922,8 +6070,15 @@ static void init_wb3bl(void)
 
 /***************************************************************************/
 
-MACHINE_DRIVER( machine_driver_wb3bl, \
-	wb3bl_readmem,wb3bl_writemem,wb3bl_init_machine )
+static MACHINE_DRIVER_START( wb3bl )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(wb3bl_readmem,wb3bl_writemem)
+	
+	MDRV_MACHINE_INIT(wb3bl)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 // sys16B
@@ -6007,14 +6162,14 @@ static void wrestwar_update_proc( void ){
 	set_tile_bank( sys16_extraram[1] );
 }
 
-static void wrestwar_init_machine( void ){
+static MACHINE_INIT( wrestwar ){
 	sys16_bg_priority_mode=2;
 	sys16_bg_priority_value=0x0a00;
 	sys16_update_proc = wrestwar_update_proc;
 }
 
-static void init_wrestwar( void ){
-	sys16_onetime_init_machine();
+static DRIVER_INIT( wrestwar ){
+	machine_init_sys16_onetime();
 	sys16_bg1_trans=1;
 	sys16_MaxShadowColors=16;
 	sys18_splittab_bg_y=&sys16_textram[0x0f40];
@@ -6057,8 +6212,15 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-MACHINE_DRIVER_7759( machine_driver_wrestwar, \
-	wrestwar_readmem,wrestwar_writemem,wrestwar_init_machine,sys16_upd7759_interface )
+static MACHINE_DRIVER_START( wrestwar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16_7759)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(wrestwar_readmem,wrestwar_writemem)
+	
+	MDRV_MACHINE_INIT(wrestwar)
+MACHINE_DRIVER_END
 
 /*****************************************************************************/
 /* Dummy drivers for games that don't have a working clone and are protected */
@@ -6074,19 +6236,26 @@ static MEMORY_WRITE16_START( sys16_dummy_writemem )
 	{ 0xff0000, 0xffffff, SYS16_MWA16_WORKINGRAM },
 MEMORY_END
 
-static void sys16_dummy_init_machine( void ){
+static MACHINE_INIT( sys16_dummy ){
 }
 
-static void init_s16dummy( void )
+static DRIVER_INIT( s16dummy )
 {
-	sys16_onetime_init_machine();
+	machine_init_sys16_onetime();
 }
 
 INPUT_PORTS_START( s16dummy )
 INPUT_PORTS_END
 
-MACHINE_DRIVER( machine_driver_s16dummy, \
-	sys16_dummy_readmem,sys16_dummy_writemem,sys16_dummy_init_machine)
+static MACHINE_DRIVER_START( s16dummy )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(sys16_dummy_readmem,sys16_dummy_writemem)
+	
+	MDRV_MACHINE_INIT(sys16_dummy)
+MACHINE_DRIVER_END
 
 /*****************************************************************************/
 // Cotton

@@ -27,20 +27,17 @@ static UINT8 starfire_color;
  *
  *************************************/
 
-int starfire_vh_start(void)
+VIDEO_START( starfire )
 {
 	/* make a temporary bitmap */
-	tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (!tmpbitmap)
 		return 1;
 
 	/* make a dirty array */
-	scanline_dirty = malloc(256);
+	scanline_dirty = auto_malloc(256);
 	if (!scanline_dirty)
-	{
-		bitmap_free(tmpbitmap);
 		return 1;
-	}
 
 	/* reset videoram */
 	memset(starfire_videoram, 0, 0x2000);
@@ -48,20 +45,6 @@ int starfire_vh_start(void)
 	memset(scanline_dirty, 1, 256);
 
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Tear down the video system
- *
- *************************************/
-
-void starfire_vh_stop(void)
-{
-	bitmap_free(tmpbitmap);
-	free(scanline_dirty);
 }
 
 
@@ -300,7 +283,7 @@ void starfire_video_update(int scanline, int count)
  *
  *************************************/
 
-void starfire_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( starfire )
 {
 	/* copy the bitmap, remapping the colors */
 	copybitmap_remap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);

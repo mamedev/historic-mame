@@ -121,7 +121,7 @@ static UINT8 sound_command;
  *
  *************************************/
 
-static void init_machine(void)
+MACHINE_INIT( pipedrm )
 {
 	UINT8 *ram;
 
@@ -602,86 +602,70 @@ static struct YM2610interface ym2610_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_pipedrm =
-{
+static MACHINE_DRIVER_START( pipedrm )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/4,
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,14318000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(pipedrm)
 
 	/* video hardware */
-  	44*8, 30*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(44*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 44*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	fromance_vh_start,
-	fromance_vh_stop,
-	pipedrm_vh_screenrefresh,
+	MDRV_VIDEO_START(fromance)
+	MDRV_VIDEO_UPDATE(pipedrm)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2610, &ym2610_interface }
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_hatris =
-{
+static MACHINE_DRIVER_START( hatris )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/4,
-			sound_readmem,sound_writemem,hatris_sound_readport,hatris_sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,14318000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(hatris_sound_readport,hatris_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(pipedrm)
 
 	/* video hardware */
-  	44*8, 30*8, { 0*8, 44*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo_hatris,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(44*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 44*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_hatris)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	fromance_vh_start,
-	fromance_vh_stop,
-	fromance_vh_screenrefresh,
+	MDRV_VIDEO_START(fromance)
+	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2608, &ym2608_interface }
-	}
-};
+	MDRV_SOUND_ADD(YM2608, ym2608_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -778,7 +762,7 @@ ROM_END
  *
  *************************************/
 
-static void init_pipedrm(void)
+static DRIVER_INIT( pipedrm )
 {
 	/* sprite RAM lives at the end of palette RAM */
 	spriteram = install_mem_read_handler(0, 0xcc00, 0xcfff, MRA_RAM);
@@ -787,7 +771,7 @@ static void init_pipedrm(void)
 }
 
 
-static void init_hatris(void)
+static DRIVER_INIT( hatris )
 {
 	install_port_write_handler(0, 0x20, 0x20, sound_command_nonmi_w);
 	install_port_write_handler(0, 0x21, 0x21, fromance_gfxreg_w);

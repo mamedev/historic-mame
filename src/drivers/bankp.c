@@ -39,14 +39,13 @@ write:
 
 extern unsigned char *bankp_videoram2;
 extern unsigned char *bankp_colorram2;
-void bankp_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( bankp );
 WRITE_HANDLER( bankp_videoram2_w );
 WRITE_HANDLER( bankp_colorram2_w );
 WRITE_HANDLER( bankp_scroll_w );
 WRITE_HANDLER( bankp_out_w );
-int bankp_vh_start(void);
-void bankp_vh_stop(void);
-void bankp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( bankp );
+VIDEO_UPDATE( bankp );
 
 
 
@@ -177,42 +176,32 @@ static struct SN76496interface sn76496_interface =
 
 
 
-static const struct MachineDriver machine_driver_bankp =
-{
+static MACHINE_DRIVER_START( bankp )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* ?? the main oscillator is 15.46848 MHz */
-			readmem,writemem,readport,writeport,
-			nmi_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 3867120)	/* ?? the main oscillator is 15.46848 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 3*8, 31*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	32, 32*4+16*8,
-	bankp_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(3*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32*4+16*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bankp_vh_start,
-	bankp_vh_stop,
-	bankp_vh_screenrefresh,
+	MDRV_PALETTE_INIT(bankp)
+	MDRV_VIDEO_START(bankp)
+	MDRV_VIDEO_UPDATE(bankp)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 
 

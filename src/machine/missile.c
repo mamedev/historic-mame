@@ -1,22 +1,17 @@
 /***************************************************************************
 
-  machine.c
-
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
+	Atari Missile Command hardware
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "missile.h"
+#include "vidhrdw/generic.h"
 
 
 static int ctrld;
 static int h_pos, v_pos;
 
-READ_HANDLER( missile_video_r );
-WRITE_HANDLER( missile_video_w );
-WRITE_HANDLER( missile_video_mult_w );
-WRITE_HANDLER( missile_palette_w );
 
 
 /********************************************************************************************/
@@ -35,7 +30,7 @@ READ_HANDLER( missile_IN0_r )
 
 
 /********************************************************************************************/
-void missile_init_machine(void)
+MACHINE_INIT( missile )
 {
 	h_pos = v_pos = 0;
 }
@@ -47,7 +42,7 @@ WRITE_HANDLER( missile_w )
 	int pc, opcode;
 	offset = offset + 0x640;
 
-	pc = cpu_getpreviouspc();
+	pc = activecpu_get_previouspc();
 	opcode = cpu_readop(pc);
 
 	/* 3 different ways to write to video ram - the third is caught by the core memory handler */
@@ -124,7 +119,7 @@ READ_HANDLER( missile_r )
 	int pc, opcode;
 	offset = offset + 0x1900;
 
-	pc = cpu_getpreviouspc();
+	pc = activecpu_get_previouspc();
 	opcode = cpu_readop(pc);
 
 	if (opcode == 0xa1)

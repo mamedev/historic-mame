@@ -1,4 +1,4 @@
-This is the complete list of games supported by MAME 0.57 (Jan  1 2002).
+This is the complete list of games supported by MAME 0.58 (Feb  6 2002).
 Variants of the same game are not included, you can use the -listclones command
 to get a list of the alternate versions of a given game.
 
@@ -89,7 +89,7 @@ Internal Name
 | Ajax                             |  Yes  |  Yes  |  Yes  |  Yes  | ajax     |
 | Akkanvader                       |  Yes  |  Yes  |  Yes  |  Yes  | akkanvdr |
 | Alex Kidd                        | No(1) |  Yes  |  Yes  |  Yes  | alexkidd |
-| Ali Baba and 40 Thieves          |  Yes  |  Yes  |  Yes  |  Yes  | alibaba  |
+| Ali Baba and 40 Thieves          |   No  |   No  |  Yes  |  Yes  | alibaba  |
 | Alien Storm                      | No(1) |  Yes  |  Yes  |  Yes  | astorm   |
 | Alien Syndrome                   |  Yes  |  Yes  |  Yes  |  Yes  | aliensyn |
 | Alien vs. Predator               |  Yes  |  Yes  |  Yes  |  Yes  | avsp     |
@@ -105,6 +105,7 @@ Internal Name
 | American Speedway                |  Yes  |  Yes  |  Yes  |  Yes  | amspdwy  |
 | Amidar                           |  Yes  |  Yes  |  Yes  |  Yes  | amidar   |
 | Andro Dunos                      |  Yes  |  Yes  |  Yes  |  Yes  | androdun |
+| Angel Kids                       |  Yes  |  Yes  |  Yes  |  Yes  | angelkds |
 | Anteater                         |  Yes  |  Yes  |  Yes  |  Yes  | anteater |
 | Apparel Night                    |  Yes  |  Yes  |  Yes  |  Yes  | apparel  |
 | Appoooh                          |  Yes  |  Yes  |  Yes  |  Yes  | appoooh  |
@@ -262,7 +263,7 @@ Internal Name
 | Bubble Bobble 2                  |  Yes  |  Yes  |  Yes  |  Yes  | bublbob2 |
 | Bubble Memories - The Story Of Bu|  Yes  |  Yes  |  Yes  |  Yes  | bubblem  |
 | Bubbles                          |  Yes  |  Yes  |  Yes  |  Yes  | bubbles  |
-| Buck Rogers: Planet of Zoom      |  Yes  |  Yes  |   No  |  Yes  | buckrog  |
+| Buck Rogers: Planet of Zoom      |  Yes  |  Yes  | Yes(2)|  Yes  | buckrog  |
 | Buggy Challenge                  |  Yes  |  Yes  |Partial|  Yes  | buggychl |
 | Bullfight                        |  Yes  |  Yes  |  Yes  |  Yes  | bullfgt  |
 | Burger Time                      |  Yes  |  Yes  |  Yes  |  Yes  | btime    |
@@ -285,6 +286,7 @@ Internal Name
 | Capcom Sports Club               |  Yes  |  Yes  |  Yes  |  Yes  | csclubj  |
 | Capcom World                     |  Yes  |  Yes  |  Yes  |  Yes  | cworld   |
 | Capcom World 2                   |  Yes  |  Yes  |  Yes  |  Yes  | cworld2j |
+| Captain America                  |  Yes  |  Yes  |  Yes  |  Yes  | captaven |
 | Captain Commando                 |  Yes  |  Yes  |  Yes  |  Yes  | captcomm |
 | Captain Silver                   |  Yes  |  Yes  |  Yes  |  Yes  | csilver  |
 | Captain Tomaday                  |  Yes  |  Yes  |  Yes  |  Yes  | ctomaday |
@@ -548,6 +550,7 @@ Internal Name
 | Flash Point                      | No(1) |  Yes  |  Yes  |  Yes  | fpoint   |
 | Flicky                           |  Yes  |  Yes  |  Yes  |  Yes  | flicky   |
 | Fly-Boy                          | No(1) |  Yes  |  Yes  |  Yes  | flyboy   |
+| Flyball                          |  Yes  |  Yes  |   No  |  Yes  | flyball  |
 | Flying Shark                     |  Yes  |  Yes  |  Yes  |  Yes  | fshark   |
 | Food Fight                       |  Yes  |  Yes  |  Yes  |  Yes  | foodf    |
 | Football Champ                   |  Yes  |  Yes  |  Yes  |  Yes  | footchmp |
@@ -581,7 +584,7 @@ Internal Name
 | Gang Busters                     |  Yes  |  Yes  |  Yes  |  Yes  | gbusters |
 | Gang Wars                        |  Yes  |  Yes  |  Yes  |  Yes  | gangwars |
 | Gaplus                           |  Yes  |  Yes  | Yes(2)|  Yes  | gaplus   |
-| Garou - Mark of the Wolves       | No(1) |  Yes  |  Yes  |  Yes  | garou    |
+| Garou - Mark of the Wolves       |  Yes  |  Yes  |  Yes  |  Yes  | garou    |
 | Garyo Retsuden                   |  Yes  |  Yes  |  Yes  |  Yes  | garyoret |
 | Gauntlet                         |  Yes  |  Yes  |  Yes  |  Yes  | gauntlet |
 | Gauntlet II                      |  Yes  |  Yes  |  Yes  |  Yes  | gaunt2   |
@@ -614,6 +617,7 @@ Internal Name
 | Gourmet Battle Quiz Ryorioh CooKi|  Yes  |  Yes  |  Yes  |   No  | ryorioh  |
 | Gradius III                      |  Yes  |  Yes  |  Yes  |  Yes  | gradius3 |
 | Grand Champion                   |  Yes  |  Yes  |Partial|  Yes  | grchamp  |
+| Grand Cross                      |  Yes  |  Yes  |   No  |  Yes  | gcpinbal |
 | Gravitar                         |  Yes  |  Yes  |  Yes  |  Yes  | gravitar |
 | Great 1000 Miles Rally           |  Yes  |  Yes  |  Yes  |  Yes  | gtmr     |
 | Great Sluggers '94               |  Yes  |  Yes  |   No  |  Yes  | gslgr94u |
@@ -621,7 +625,7 @@ Internal Name
 | Green Beret                      |  Yes  |  Yes  |  Yes  |  Yes  | gberet   |
 | Grid Seeker: Project Stormhammer |  Yes  |  Yes  |  Yes  |  Yes  | gseeker  |
 | Gridiron Fight                   |  Yes  |  Yes  |  Yes  |  Yes  | gridiron |
-| Gridlee                          |  Yes  |  Yes  |  Yes  |  Yes  | gridlee  |
+| Gridlee                          |  Yes  |  Yes  |Part(2)|  Yes  | gridlee  |
 | Grobda                           |  Yes  |  Yes  |  Yes  |  Yes  | grobda   |
 | Growl                            |  Yes  |  Yes  |  Yes  |  Yes  | growl    |
 | Guardian                         | No(1) |  Yes  |  Yes  |   No  | getstar  |
@@ -638,6 +642,7 @@ Internal Name
 | Gunbuster                        |  Yes  |  Yes  |  Yes  |  Yes  | gunbustr |
 | Gundhara                         |  Yes  |  Yes  |Partial|  Yes  | gundhara |
 | Gunforce - Battle Fire Engulfed T|  Yes  |  Yes  |  Yes  |  Yes  | gunforce |
+| Gunforce 2                       |  Yes  |  Yes  |  Yes  |  Yes  | gunforc2 |
 | Gunlock                          |  Yes  |  Yes  |  Yes  |  Yes  | gunlock  |
 | Gururin                          |  Yes  |  Yes  |  Yes  |  Yes  | gururin  |
 | Guwange                          |  Yes  |  Yes  |  Yes  |  Yes  | guwange  |
@@ -809,6 +814,7 @@ Internal Name
 | Legend of Makai                  |  Yes  |  Yes  |  Yes  |  Yes  | lomakai  |
 | Legend of Success Joe / Ashitano |  Yes  |  Yes  |  Yes  |  Yes  | legendos |
 | Legendary Wings                  |  Yes  |  Yes  |  Yes  |  Yes  | lwings   |
+| Lemmings                         |  Yes  |  Yes  |  Yes  |  Yes  | lemmings |
 | Leprechaun                       |  Yes  |  Yes  |  Yes  |  Yes  | leprechn |
 | Lethal Thunder                   |  Yes  |  Yes  |  Yes  |  Yes  | lethalth |
 | Levers                           |  Yes  |  Yes  |  Yes  |  Yes  | levers   |
@@ -922,6 +928,7 @@ Internal Name
 | Marvel Land                      |  Yes  |  Yes  |  Yes  |  Yes  | marvland |
 | Marvel Super Heroes              |  Yes  |  Yes  |  Yes  |  Yes  | msh      |
 | Marvel Super Heroes Vs. Street Fi|  Yes  |  Yes  |  Yes  |  Yes  | mshvsf   |
+| Marvel Vs. Capcom: Clash of Super|  Yes  |  Yes  |  Yes  |  Yes  | mvsc     |
 | Marvin's Maze                    |  Yes  |  Yes  |  Yes  |  Yes  | marvins  |
 | Master of Weapon                 |  Yes  |  Yes  |  Yes  |   No  | masterw  |
 | Mat Mania                        |  Yes  |  Yes  |  Yes  |  Yes  | matmania |
@@ -947,7 +954,7 @@ Internal Name
 | Metal Black                      |  Yes  |  Yes  |  Yes  |  Yes  | metalb   |
 | Metal Slug - Super Vehicle-001   |  Yes  |  Yes  |  Yes  |  Yes  | mslug    |
 | Metal Slug 2 - Super Vehicle-001/|  Yes  |  Yes  |  Yes  |  Yes  | mslug2   |
-| Metal Slug 3                     | No(1) |  Yes  |  Yes  |  Yes  | mslug3   |
+| Metal Slug 3                     |  Yes  |  Yes  |  Yes  |  Yes  | mslug3   |
 | Metal Slug X - Super Vehicle-001 |  Yes  |  Yes  |  Yes  |  Yes  | mslugx   |
 | Metamoqester                     |  Yes  |  Yes  |  Yes  |  Yes  | metmqstr |
 | Metro-Cross                      |  Yes  |  Yes  |  Yes  |  Yes  | metrocrs |
@@ -995,8 +1002,9 @@ Internal Name
 | Mr. Do's Wild Ride               |  Yes  |  Yes  |  Yes  |  Yes  | dowild   |
 | Mr. Goemon                       |  Yes  |  Yes  |  Yes  |  Yes  | mrgoemon |
 | Mr. Jong                         |  Yes  |  Yes  |  Yes  |  Yes  | mrjong   |
-| Mr. TNT                          |  Yes  |  Yes  |  Yes  |  Yes  | mrtnt    |
+| Mr. TNT                          |  Yes  |   No  |  Yes  |  Yes  | mrtnt    |
 | Ms. Pac-Man                      |  Yes  |  Yes  |  Yes  |  Yes  | mspacman |
+| Mug Smashers                     |  Yes  |  Yes  |  Yes  |  Yes  | mugsmash |
 | Multi Champ                      |  Yes  |  Yes  |  Yes  |  Yes  | multchmp |
 | Musashi Ganryuuki                |  Yes  |  Yes  |  Yes  |  Yes  | ganryu   |
 | Mutant Night                     |  Yes  |  Yes  |  Yes  |  Yes  | mnight   |
@@ -1050,6 +1058,7 @@ Internal Name
 | Ninjakun Majou no Bouken         |  Yes  |  Yes  |  Yes  |  Yes  | ninjakun |
 | Niyanpai                         |  Yes  |  Yes  |  Yes  |  Yes  | niyanpai |
 | No Man's Land                    |  Yes  |   No  |Partial|  Yes  | nomnlnd  |
+| Noboranka                        |  Yes  |  Yes  |  Yes  |  Yes  | noboranb |
 | Nouryoku Koujou Iinkai           |  Yes  |  Yes  |  Yes  |   No  | nouryoku |
 | Nova 2001                        |  Yes  |  Yes  |  Yes  |  Yes  | nova2001 |
 | Numan Athletics                  |  Yes  |  Yes  |   No  |  Yes  | numanath |
@@ -1526,6 +1535,7 @@ Internal Name
 | Star Trek                        |  Yes  |  Yes  | Yes(2)|  Yes  | startrek |
 | Star Wars                        |  Yes  |  Yes  |  Yes  |  Yes  | starwars |
 | Stargate                         |  Yes  |  Yes  |  Yes  |  Yes  | stargate |
+| Steel Force                      |  Yes  |  Yes  |  Yes  |  Yes  | stlforce |
 | Stinger                          |  Yes  |  Yes  |  Yes  |  Yes  | stinger  |
 | Stocker                          |  Yes  |  Yes  |  Yes  |  Yes  | stocker  |
 | Stompin'                         |  Yes  |  Yes  |  Yes  |  Yes  | stompin  |
@@ -1837,7 +1847,7 @@ Internal Name
 | Warriors of Fate                 |  Yes  |  Yes  |  Yes  |  Yes  | wof      |
 | Water Match                      |  Yes  |  Yes  |  Yes  |  Yes  | wmatch   |
 | Water Ski                        |  Yes  |  Yes  |  Yes  |  Yes  | waterski |
-| Welltris                         |  Yes  |  Yes  |   No  |   No  | welltris |
+| Welltris                         |  Yes  |  Yes  |  Yes  |   No  | welltris |
 | Wheel Of Fortune                 |  Yes  |  Yes  |  Yes  |  Yes  | wfortune |
 | Who Dunit                        |  Yes  |  Yes  |  Yes  |  Yes  | whodunit |
 | Wild Western                     |  Yes  |  Yes  |  Yes  |  Yes  | wwestern |

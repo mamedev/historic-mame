@@ -25,8 +25,8 @@ WRITE16_HANDLER( sf1_bg_scroll_w );
 WRITE16_HANDLER( sf1_fg_scroll_w );
 WRITE16_HANDLER( sf1_videoram_w );
 WRITE16_HANDLER( sf1_gfxctrl_w );
-int sf1_vh_start(void);
-void sf1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( sf1 );
+VIDEO_UPDATE( sf1 );
 
 
 static READ16_HANDLER( dummy_r )
@@ -53,7 +53,7 @@ static WRITE16_HANDLER( soundcmd_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -149,7 +149,7 @@ static WRITE16_HANDLER( protection_w )
 		}
 	default:
 		{
-			logerror("Write protection at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
+			logerror("Write protection at %06x (%04x)\n", activecpu_get_pc(), data&0xffff);
 			logerror("*** Unknown protection %d\n", cpu_readmem24bew(0xffc684));
 			break;
 		}
@@ -846,170 +846,115 @@ static struct MSM5205interface msm5205_interface =
 	{ 100, 100 }
 };
 
-static const struct MachineDriver machine_driver_sf1 =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			readmem,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
+static MACHINE_DRIVER_START( sf1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMIs are caused by the main CPU */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound2_readmem, sound2_writemem,
-			sound2_readport, sound2_writeport,
-			0,0,
-			interrupt,8000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
+	MDRV_CPU_PORTS(sound2_readport,sound2_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,8000)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sf1_vh_start,
-	0,
-	sf1_vh_screenrefresh,
+	MDRV_VIDEO_START(sf1)
+	MDRV_VIDEO_UPDATE(sf1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_sf1us =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			readmemus,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
+
+static MACHINE_DRIVER_START( sf1us )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
+	MDRV_CPU_MEMORY(readmemus,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMIs are caused by the main CPU */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound2_readmem, sound2_writemem,
-			sound2_readport, sound2_writeport,
-			0,0,
-			interrupt,8000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
+	MDRV_CPU_PORTS(sound2_readport,sound2_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,8000)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sf1_vh_start,
-	0,
-	sf1_vh_screenrefresh,
+	MDRV_VIDEO_START(sf1)
+	MDRV_VIDEO_UPDATE(sf1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_sf1jp =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			readmemjp,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
+
+static MACHINE_DRIVER_START( sf1jp )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
+	MDRV_CPU_MEMORY(readmemjp,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMIs are caused by the main CPU */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound2_readmem, sound2_writemem,
-			sound2_readport, sound2_writeport,
-			0,0,
-			interrupt,8000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
+	MDRV_CPU_PORTS(sound2_readport,sound2_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,8000)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sf1_vh_start,
-	0,
-	sf1_vh_screenrefresh,
+	MDRV_VIDEO_START(sf1)
+	MDRV_VIDEO_UPDATE(sf1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( sf1 )

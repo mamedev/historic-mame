@@ -70,7 +70,7 @@ WRITE_HANDLER( safarir_ram_bank_w )
 }
 
 
-void safarir_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( safarir )
 {
 	int offs;
 
@@ -122,22 +122,22 @@ void safarir_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-static unsigned char palette[] =
+static unsigned char palette_source[] =
 {
 	0x00,0x00,0x00, /* black */
 	0x80,0x80,0x80, /* gray */
 	0xff,0xff,0xff, /* white */
 };
-static unsigned short colortable[] =
+static unsigned short colortable_source[] =
 {
 	0x00, 0x01,
 	0x00, 0x02,
 };
 
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( safarir )
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
 
@@ -215,36 +215,28 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_safarir =
-{
+static MACHINE_DRIVER_START( safarir )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			3072000,	/* 3 MHz ? */								\
-			readmem,writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,      /* single CPU, no need for interleaving */
-	0,	/* init machine */
+	MDRV_CPU_ADD(8080, 3072000)	/* 3 MHz ? */								\
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 30*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	3,2*2,
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 30*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(3)
+	MDRV_COLORTABLE_LENGTH(2*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	safarir_vh_screenrefresh,
+	MDRV_PALETTE_INIT(safarir)
+	MDRV_VIDEO_UPDATE(safarir)
 
 	/* sound hardware */
-	0,0,0,0
-};
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -56,7 +56,7 @@ static void tx_get_tile_info(int tile_index)
 
 /******************************************************************************/
 
-int fstarfrc_vh_start(void)
+VIDEO_START( fstarfrc )
 {
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
@@ -74,7 +74,7 @@ int fstarfrc_vh_start(void)
 	return 0;
 }
 
-int ginkun_vh_start(void)
+VIDEO_START( ginkun )
 {
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
@@ -179,7 +179,7 @@ WRITE16_HANDLER( tecmo16_scroll_char_y_w )
 
 /******************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 	const UINT8 layout[8][8] =
@@ -240,7 +240,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							cliprect,TRANSPARENCY_PEN,0,
 							priority_mask);
 				}
 			}
@@ -250,13 +250,13 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 /******************************************************************************/
 
-void tecmo16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tecmo16 )
 {
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0x300],&Machine->visible_area);
-	tilemap_draw(bitmap,bg_tilemap,0,1);
-	tilemap_draw(bitmap,fg_tilemap,0,2);
-	tilemap_draw(bitmap,tx_tilemap,0,4);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0x300],cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,1);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,2);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,4);
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 }

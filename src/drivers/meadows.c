@@ -107,9 +107,9 @@
 /* Externals                                                 */
 /*                                                           */
 /*************************************************************/
-int deadeye_vh_start(void);
-int gypsyjug_vh_start(void);
-void meadows_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( deadeye );
+VIDEO_START( gypsyjug );
+VIDEO_UPDATE( meadows );
 WRITE_HANDLER( meadows_videoram_w );
 WRITE_HANDLER( meadows_sprite_w );
 
@@ -194,7 +194,7 @@ WRITE_HANDLER( meadows_hardware_w )
 /* Interrupt for the main cpu                                */
 /*                                                           */
 /*************************************************************/
-int     meadows_interrupt(void)
+INTERRUPT_GEN( meadows_interrupt )
 {
 static  int sense_state = 0;
 static	int coin1_state = 0;
@@ -212,7 +212,6 @@ static	int coin1_state = 0;
 		}
 	}
 	coin1_state = 0;
-	return ignore_interrupt();
 }
 
 /*************************************************************/
@@ -279,14 +278,13 @@ static READ_HANDLER( sound_hardware_r )
 /* Interrupt for the sound cpu                               */
 /*                                                           */
 /*************************************************************/
-static int sound_interrupt(void)
+static INTERRUPT_GEN( sound_interrupt )
 {
 	static	int sense_state = 0;
 
     /* fake something toggling the sense input line of the S2650 */
 	sense_state ^= 1;
 	cpu_set_irq_line( 1, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
-	return ignore_interrupt();
 }
 
 /*************************************************************/
@@ -400,7 +398,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char palette[] =
+static unsigned char palette_source[] =
 {
 	0x00,0x00,0x00, /* BLACK */
 	0xff,0xff,0xff, /* WHITE */
@@ -408,15 +406,15 @@ static unsigned char palette[] =
 
 #define ARTWORK_COLORS (2 + 32768)
 
-static unsigned short colortable[ARTWORK_COLORS] =
+static unsigned short colortable_source[ARTWORK_COLORS] =
 {
 	0,0,
 	0,1,
 };
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( meadows )
 {
-	memcpy(game_palette,palette,sizeof(palette));
-	memcpy(game_colortable,colortable,sizeof(colortable));
+	memcpy(palette,palette_source,sizeof(palette_source));
+	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 
 
@@ -435,103 +433,72 @@ static struct CustomSound_interface custom_interface =
 
 
 
-static const struct MachineDriver machine_driver_deadeye =
-{
+static MACHINE_DRIVER_START( deadeye )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			625000, 	/* 5MHz / 8 = 625 kHz */
-			readmem,writemem,0,0,
-			meadows_interrupt,1 	/* one interrupt per frame!? */
-		},
-		{
-			CPU_S2650 | CPU_AUDIO_CPU,
-			625000, 	/* 5MHz / 8 = 625 kHz */
-			sound_readmem,sound_writemem,
-			0,0,
-			0,0,
-			sound_interrupt,38	/* 5000000/131072 interrupts per frame */
-        }
-    },
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10, 									/* dual CPU; interleave them */
-	0,
+	MDRV_CPU_ADD(S2650, 625000) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(meadows_interrupt,1) 	/* one interrupt per frame!? */
+
+	MDRV_CPU_ADD(S2650, 625000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PERIODIC_INT(sound_interrupt,38)	/* 5000000/131072 interrupts per frame */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
-	init_palette,
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-    0,
-	deadeye_vh_start,
-	generic_vh_stop,
-	meadows_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
+	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)	/* Leave extra colors for the overlay */
+	
+	MDRV_PALETTE_INIT(meadows)
+	MDRV_VIDEO_START(deadeye)
+	MDRV_VIDEO_UPDATE(meadows)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gypsyjug =
-{
+
+static MACHINE_DRIVER_START( gypsyjug )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			625000, 	/* 5MHz / 8 = 625 kHz */
-			readmem,writemem,0,0,
-			meadows_interrupt,1 	/* one interrupt per frame!? */
-		},
-		{
-			CPU_S2650 | CPU_AUDIO_CPU,
-			625000, 	/* 5MHz / 8 = 625 kHz */
-			sound_readmem,sound_writemem,
-			0,0,
-			0,0,
-			sound_interrupt,38	/* 5000000/131072 interrupts per frame */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10, 									/* dual CPU; interleave them */
-	0,
+	MDRV_CPU_ADD(S2650, 625000) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(meadows_interrupt,1) 	/* one interrupt per frame!? */
+
+	MDRV_CPU_ADD(S2650, 625000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PERIODIC_INT(sound_interrupt,38)	/* 5000000/131072 interrupts per frame */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	32*8, 30*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	ARTWORK_COLORS,ARTWORK_COLORS,		/* Leave extra colors for the overlay */
-	init_palette,
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY ,
-    0,
-	gypsyjug_vh_start,
-	generic_vh_stop,
-	meadows_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
+	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)	/* Leave extra colors for the overlay */
+	
+	MDRV_PALETTE_INIT(meadows)
+	MDRV_VIDEO_START(gypsyjug)
+	MDRV_VIDEO_UPDATE(meadows)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -598,7 +565,7 @@ ROM_END
 
 
 /* A fake for the missing ball sprites #3 and #4 */
-static void init_gypsyjug(void)
+static DRIVER_INIT( gypsyjug )
 {
 int i;
 static unsigned char ball[16*2] = {

@@ -16,15 +16,13 @@
 
 
 /* Globals */
-UINT8 *qix_palettebank;
 UINT8 *qix_videoaddress;
 UINT8 qix_cocktail_flip;
 
 
 /* Local variables */
 static UINT8 vram_mask;
-static UINT8 *videoram_cache;
-static UINT8 *palette_cache;
+static UINT8 qix_palettebank;
 
 
 
@@ -34,55 +32,16 @@ static UINT8 *palette_cache;
  *
  *************************************/
 
-int qix_vh_start(void)
+VIDEO_START( qix )
 {
 	/* allocate memory for the full video RAM */
-	videoram = malloc(256 * 256);
+	videoram = auto_malloc(256 * 256);
 	if (!videoram)
 		return 1;
-
-	/* allocate memory for the cached video RAM */
-	videoram_cache = malloc(256 * 256);
-	if (!videoram_cache)
-	{
-		free(videoram);
-		videoram = NULL;
-		return 1;
-	}
-
-	/* allocate memory for the cached palette banks */
-	palette_cache = malloc(256 * sizeof(palette_cache[0]));
-	if (!palette_cache)
-	{
-		free(videoram_cache);
-		free(videoram);
-		videoram = videoram_cache = NULL;
-		return 1;
-	}
 
 	/* initialize the mask for games that don't use it */
 	vram_mask = 0xff;
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Video shutdown
- *
- *************************************/
-
-void qix_vh_stop(void)
-{
-	/* free memory */
-	free(palette_cache);
-	free(videoram_cache);
-	free(videoram);
-
-	/* reset the pointers */
-	videoram = videoram_cache = NULL;
-	palette_cache = NULL;
 }
 
 
@@ -95,29 +54,8 @@ void qix_vh_stop(void)
 
 void qix_scanline_callback(int scanline)
 {
-	/* for non-zero scanlines, cache the previous data and the palette bank */
-	if (scanline != 0)
-	{
-		int offset = (scanline - SCANLINE_INCREMENT) * 256;
-		int count = SCANLINE_INCREMENT * 256;
-		UINT8 *src, *dst = &videoram_cache[offset];
-
-		/* copy the data forwards or backwards, based on the cocktail flip */
-		if (!qix_cocktail_flip)
-		{
-			src = &videoram[offset];
-			memcpy(dst, src, count);
-		}
-		else
-		{
-			src = &videoram[offset ^ 0xffff];
-			while (count--)
-				*dst++ = *src--;
-		}
-
-		/* cache the palette bank as well */
-		memset(&palette_cache[scanline - SCANLINE_INCREMENT], *qix_palettebank, SCANLINE_INCREMENT);
-	}
+	/* force a partial update */
+	force_partial_update(scanline - 1);
 
 	/* set a timer for the next increment */
 	scanline += SCANLINE_INCREMENT;
@@ -278,8 +216,12 @@ WRITE_HANDLER( qix_paletteram_w )
 
 WRITE_HANDLER( qix_palettebank_w )
 {
-	/* set the bank value; this is cached per-scanline above */
-	*qix_palettebank = data;
+	/* set the bank value */
+	if (qix_palettebank != (data & 3))
+	{
+		force_partial_update(cpu_getscanline() - 1);
+		qix_palettebank = data & 3;
+	}
 
 	/* LEDs are in the upper 6 bits */
 }
@@ -292,14 +234,12 @@ WRITE_HANDLER( qix_palettebank_w )
  *
  *************************************/
 
-void qix_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( qix )
 {
+	pen_t *pens = &Machine->pens[qix_palettebank * 256];
 	int y;
 
 	/* draw the bitmap */
-	for (y = 0; y < 256; y++)
-	{
-		pen_t *pens = &Machine->pens[(palette_cache[y] & 3) * 256];
-		draw_scanline8(bitmap, 0, y, 256, &videoram_cache[y * 256], pens, -1);
-	}
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+		draw_scanline8(bitmap, 0, y, 256, &videoram[y * 256], pens, -1);
 }

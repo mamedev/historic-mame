@@ -15,7 +15,7 @@ unsigned char *grobda_customio_1,*grobda_customio_2;
 static int int_enable_1, int_enable_2;
 static int credits, coincounter1, coincounter2;
 
-void grobda_init_machine( void )
+MACHINE_INIT( grobda )
 {
     int_enable_1 = int_enable_2 = 1;
     credits = coincounter1 = coincounter2 = 0;
@@ -42,18 +42,14 @@ WRITE_HANDLER( grobda_interrupt_ctrl_2_w ){
     int_enable_2 = offset;
 }
 
-int grobda_interrupt_1( void ) {
+INTERRUPT_GEN( grobda_interrupt_1 ) {
 	if (int_enable_1)
-        return interrupt();
-    else
-        return ignore_interrupt();
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-int grobda_interrupt_2( void ){
+INTERRUPT_GEN( grobda_interrupt_2 ){
     if (int_enable_2)
-        return interrupt();
-    else
-        return ignore_interrupt();
+        cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 WRITE_HANDLER( grobda_cpu2_enable_w )

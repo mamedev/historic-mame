@@ -168,7 +168,7 @@ static void get_tile_info_1( int tile_index )
 
 ***************************************************************************/
 
-int yunsung8_vh_start(void)
+VIDEO_START( yunsung8 )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 								TILEMAP_OPAQUE, 8,8, DIM_NX_0, DIM_NY_0 );
@@ -194,7 +194,7 @@ int yunsung8_vh_start(void)
 
 ***************************************************************************/
 
-void yunsung8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( yunsung8 )
 {
 	int layers_ctrl = (~yunsung8_layers_ctrl) >> 4;
 
@@ -208,8 +208,8 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	if (layers_ctrl&1)	tilemap_draw(bitmap, tilemap_0, 0,0);
-	else				fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	if (layers_ctrl&1)	tilemap_draw(bitmap,cliprect, tilemap_0, 0,0);
+	else				fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	if (layers_ctrl&2)	tilemap_draw(bitmap, tilemap_1, 0,0);
+	if (layers_ctrl&2)	tilemap_draw(bitmap,cliprect, tilemap_1, 0,0);
 }

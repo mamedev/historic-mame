@@ -13,14 +13,14 @@
 
 
 WRITE16_HANDLER( snowbros_flipscreen_w );
-void snowbros_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void wintbob_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( snowbros );
+VIDEO_UPDATE( wintbob );
 
 
 
-static int snowbros_interrupt(void)
+static INTERRUPT_GEN( snowbros_interrupt )
 {
-	return cpu_getiloops() + 2;	/* IRQs 4, 3, and 2 */
+	cpu_set_irq_line(0, cpu_getiloops() + 2, HOLD_LINE);	/* IRQs 4, 3, and 2 */
 }
 
 
@@ -50,7 +50,7 @@ static WRITE16_HANDLER( snowbros_68000_sound_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -302,91 +302,62 @@ static struct YM3812interface ym3812_interface =
 
 
 
-static const struct MachineDriver machine_driver_snowbros =
-{
+static MACHINE_DRIVER_START( snowbros )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ????? */
-			readmem,writemem,0,0,
-			snowbros_interrupt,3
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3600000,	/* 3.6 MHz ??? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ????? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
+
+	MDRV_CPU_ADD(Z80, 3600000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.6 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	snowbros_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(snowbros)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_wintbob =
-{
+
+static MACHINE_DRIVER_START( wintbob )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10MHz .. Needed to compensate for less capable gfx hardware? otherwise game runs too slow */
-			readmem,writemem,0,0,
-			snowbros_interrupt,3
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3600000,	/* 3.6 MHz ??? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10MHz .. Needed to compensate for less capable gfx hardware? otherwise game runs too slow */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
+
+	MDRV_CPU_ADD(Z80, 3600000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.6 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo_wb,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_wb)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	wintbob_vh_screenrefresh,
+	MDRV_VIDEO_UPDATE(wintbob)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

@@ -149,7 +149,7 @@ static void get_bg1_tile_info(int tile_index)
  sprite drawing could probably be improved a bit
 *******************************************************************************/
 
-static void wwfwfest_drawsprites( struct mame_bitmap *bitmap )
+static void wwfwfest_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	/*- SPR RAM Format -**
 
@@ -171,7 +171,6 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap )
 
 	**- End of Comments -*/
 
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	data16_t *source = buffered_spriteram16;
 	data16_t *finish = source + 0x2000/2;
@@ -205,15 +204,15 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap )
 			for (count=0;count<chain;count++) {
 				if (flip_screen) {
 					if (!flipy) {
-						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+(16*(chain-1))-(16*count),clip,TRANSPARENCY_PEN,0);
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+(16*(chain-1))-(16*count),cliprect,TRANSPARENCY_PEN,0);
 					} else {
-						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+16*count,clip,TRANSPARENCY_PEN,0);
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos+16*count,cliprect,TRANSPARENCY_PEN,0);
 					}
 				} else {
 						if (flipy) {
-						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-(16*(chain-1))+(16*count),clip,TRANSPARENCY_PEN,0);
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-(16*(chain-1))+(16*count),cliprect,TRANSPARENCY_PEN,0);
 					} else {
-						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-16*count,clip,TRANSPARENCY_PEN,0);
+						drawgfx(bitmap,gfx,number+count,colourbank,flipx,flipy,xpos,ypos-16*count,cliprect,TRANSPARENCY_PEN,0);
 					}
 				}
 			}
@@ -228,7 +227,7 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap )
  Draw Order / Priority seems to affect where the scroll values are used also.
 *******************************************************************************/
 
-int wwfwfest_vh_start(void)
+VIDEO_START( wwfwfest )
 {
 	fg0_tilemap = tilemap_create(get_fg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	bg1_tilemap = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,32,32);
@@ -244,7 +243,7 @@ int wwfwfest_vh_start(void)
 	return 0;
 }
 
-void wwfwfest_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( wwfwfest )
 {
 	if (wwfwfest_pri == 0x0078) {
 		tilemap_set_scrolly( bg0_tilemap, 0, wwfwfest_bg0_scrolly  );
@@ -261,23 +260,23 @@ void wwfwfest_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 	/* todo : which bits of pri are significant to the order */
 
 	if (wwfwfest_pri == 0x007b) {
-		tilemap_draw(bitmap,bg0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,bg1_tilemap,0,0);
-		wwfwfest_drawsprites(bitmap);
-		tilemap_draw(bitmap,fg0_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+		wwfwfest_drawsprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,fg0_tilemap,0,0);
 	}
 
 	if (wwfwfest_pri == 0x007c) {
-		tilemap_draw(bitmap,bg0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
-		wwfwfest_drawsprites(bitmap);
-		tilemap_draw(bitmap,bg1_tilemap,0,0);
-		tilemap_draw(bitmap,fg0_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg0_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		wwfwfest_drawsprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,fg0_tilemap,0,0);
 	}
 
 	if (wwfwfest_pri == 0x0078) {
-		tilemap_draw(bitmap,bg1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
-		tilemap_draw(bitmap,bg0_tilemap,0,0);
-		wwfwfest_drawsprites(bitmap);
-		tilemap_draw(bitmap,fg0_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,bg0_tilemap,0,0);
+		wwfwfest_drawsprites(bitmap,cliprect);
+		tilemap_draw(bitmap,cliprect,fg0_tilemap,0,0);
 	}
 }

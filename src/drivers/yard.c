@@ -18,12 +18,11 @@ extern unsigned char *yard_scroll_x_high;
 extern unsigned char *yard_scroll_y_low;
 extern unsigned char *yard_score_panel_disabled;
 
-void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int yard_vh_start(void);
-void yard_vh_stop(void);
+PALETTE_INIT( yard );
+VIDEO_START( yard );
 WRITE_HANDLER( yard_flipscreen_w );
 WRITE_HANDLER( yard_scroll_panel_w );
-void yard_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( yard );
 
 
 
@@ -295,42 +294,33 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_yard =
-{
+static MACHINE_DRIVER_START( yard )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		IREM_AUDIO_CPU
-	},
-	57, 1790,	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(1790)	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
 				/* talks about 55Hz and 1790ms vblank duration. */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	256+16+256, 32*8+32*8,
-	yard_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+16+256)
+	MDRV_COLORTABLE_LENGTH(32*8+32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	yard_vh_start,
-	yard_vh_stop,
-	yard_vh_screenrefresh,
+	MDRV_PALETTE_INIT(yard)
+	MDRV_VIDEO_START(yard)
+	MDRV_VIDEO_UPDATE(yard)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		IREM_AUDIO
-	}
-};
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -85,11 +85,11 @@ extern data8_t *wc90b_scroll2x;
 extern data8_t *wc90b_scroll1y;
 extern data8_t *wc90b_scroll2y;
 
-int wc90b_vh_start( void );
+VIDEO_START( wc90b );
 WRITE_HANDLER( wc90b_bgvideoram_w );
 WRITE_HANDLER( wc90b_fgvideoram_w );
 WRITE_HANDLER( wc90b_txvideoram_w );
-void wc90b_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( wc90b );
 
 
 
@@ -128,7 +128,7 @@ static WRITE_HANDLER( wc90b_bankswitch1_w )
 static WRITE_HANDLER( wc90b_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(2,/*Z80_NMI_INT*/-1000);
+	cpu_set_irq_line(2,0,HOLD_LINE);
 }
 
 
@@ -365,56 +365,37 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static const struct MachineDriver machine_driver_wc90b =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6.0 MHz ??? */
-			wc90b_readmem1, wc90b_writemem1,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			6000000,	/* 6.0 MHz ??? */
-			wc90b_readmem2, wc90b_writemem2,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz ???? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* NMIs are triggered by the YM2203 */
-								/* IRQs are triggered by the main CPU */
-		}
+static MACHINE_DRIVER_START( wc90b )
 
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6.0 MHz ??? */
+	MDRV_CPU_MEMORY(wc90b_readmem1,wc90b_writemem1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6.0 MHz ??? */
+	MDRV_CPU_MEMORY(wc90b_readmem2,wc90b_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ???? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+								/* IRQs are triggered by the main CPU */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	wc90b_vh_start,
-	0,
-	wc90b_vh_screenrefresh,
+	MDRV_VIDEO_START(wc90b)
+	MDRV_VIDEO_UPDATE(wc90b)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 ROM_START( wc90b )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 128k for code */
@@ -452,7 +433,7 @@ ROM_START( wc90b )
 ROM_END
 
 
-void init_wc90b(void)
+DRIVER_INIT( wc90b )
 {
 	int i;
 

@@ -20,20 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int thunderj_vh_start(void);
-void thunderj_vh_stop(void);
-void thunderj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-void thunderj_scanline_update(int scanline);
+#include "thunderj.h"
 
 
 
@@ -75,7 +62,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( thunderj )
 {
 	atarigen_eeprom_reset();
 	atarivc_reset(atarivc_eof_data);
@@ -315,45 +302,36 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_thunderj =
-{
+static MACHINE_DRIVER_START( thunderj )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			extra_readmem,extra_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_II_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(extra_readmem,extra_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+	
+	MDRV_MACHINE_INIT(thunderj)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	thunderj_vh_start,
-	thunderj_vh_stop,
-	thunderj_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	MDRV_COLORTABLE_LENGTH(2048) /* can't make colortable_len = 0 because of 0xffff transparency kludge */
+	
+	MDRV_VIDEO_START(thunderj)
+	MDRV_VIDEO_UPDATE(thunderj)
+	
 	/* sound hardware */
-	JSA_II_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_ii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -439,7 +417,7 @@ ROM_END
  *
  *************************************/
 
-static void init_thunderj(void)
+static DRIVER_INIT( thunderj )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 3, 2, 0x0002);

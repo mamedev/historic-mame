@@ -32,9 +32,9 @@ WRITE_HANDLER( dynduke_background_w );
 WRITE_HANDLER( dynduke_foreground_w );
 WRITE_HANDLER( dynduke_text_w );
 WRITE_HANDLER( dynduke_gfxbank_w );
-int dynduke_vh_start(void);
+VIDEO_START( dynduke );
 WRITE_HANDLER( dynduke_control_w );
-void dynduke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( dynduke );
 WRITE_HANDLER( dynduke_paletteram_w );
 
 static unsigned char *dynduke_shared_ram;
@@ -242,59 +242,49 @@ static struct GfxDecodeInfo dynduke_gfxdecodeinfo[] =
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
-static int dynduke_interrupt(void)
+static INTERRUPT_GEN( dynduke_interrupt )
 {
-	return 0xc8/4;	/* VBL */
+	cpu_set_irq_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
 }
 
-static void dynduke_eof_callback(void)
+VIDEO_EOF( dynduke )
 {
 	buffer_spriteram_w(0,0); /* Could be a memory location instead */
 }
 
-static const struct MachineDriver machine_driver_dynduke =
-{
+static MACHINE_DRIVER_START( dynduke )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_V30, /* NEC V30-8 CPU */
-			16000000, /* Guess */
-			readmem,writemem,0,0,
-			dynduke_interrupt,1
-		},
-		{
-			CPU_V30, /* NEC V30-8 CPU */
-			16000000, /* Guess */
-			sub_readmem,sub_writemem,0,0,
-			dynduke_interrupt,1
-		},
-		{
-			SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	60,	/* CPU interleave  */
-	seibu_sound_init_2,
+	MDRV_CPU_ADD(V30,16000000) /* NEC V30-8 CPU */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
+
+	MDRV_CPU_ADD(V30,16000000) /* NEC V30-8 CPU */
+	MDRV_CPU_MEMORY(sub_readmem,sub_writemem)
+	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
+
+	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(60)	/* CPU interleave  */
+
+	MDRV_MACHINE_INIT(seibu_sound_2)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(dynduke_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048+1024)	/* 2048 real palette, 1024 for transparency kludge */
 
-	dynduke_gfxdecodeinfo,
-	2048+1024, 0,	/* 2048 real palette, 1024 for transparency kludge */
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	dynduke_eof_callback,
-	dynduke_vh_start,
-	0,
-	dynduke_vh_screenrefresh,
+	MDRV_VIDEO_START(dynduke)
+	MDRV_VIDEO_EOF(dynduke)
+	MDRV_VIDEO_UPDATE(dynduke)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
-	}
-};
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -401,7 +391,7 @@ ROM_END
 /***************************************************************************/
 
 
-static void init_dynduke(void)
+static DRIVER_INIT( dynduke )
 {
 	seibu_sound_decrypt(REGION_CPU3,0x20000);
 }

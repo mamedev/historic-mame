@@ -43,7 +43,7 @@ static void Interrupt_Controller(void)
 {
 	if ( tc0140syt.nmi_req && tc0140syt.nmi_enabled )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		tc0140syt.nmi_req = 0;
 	}
 }
@@ -93,7 +93,7 @@ WRITE_HANDLER( taitosound_comm_w )
 			
 		case 0x04:		// port status
 //#ifdef REPORT_DATA_FLOW
-			//logerror("taitosnd: Master issued control value %02x (PC = %08x) \n",data, cpu_get_pc() );
+			//logerror("taitosnd: Master issued control value %02x (PC = %08x) \n",data, activecpu_get_pc() );
 //#endif
 			/* this does a hi-lo transition to reset the sound cpu */
 			if (data)
@@ -222,7 +222,7 @@ READ_HANDLER( taitosound_slave_comm_r )
 			break;
 			
 		case 0x01:		// mode #1
-			//logerror("taitosnd: Slave cpu receives 0/1 : %01x%01x PC=%4x\n", tc0140syt.slavedata[1],tc0140syt.slavedata[0],cpu_get_pc());
+			//logerror("taitosnd: Slave cpu receives 0/1 : %01x%01x PC=%4x\n", tc0140syt.slavedata[1],tc0140syt.slavedata[0],activecpu_get_pc());
 			tc0140syt.status &= ~TC0140SYT_PORT01_FULL;
 			res = tc0140syt.slavedata[tc0140syt.submode ++];
 			break;

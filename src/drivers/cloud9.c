@@ -1,91 +1,80 @@
 /***************************************************************************
 
-  Cloud9 (prototype) driver.
+	Atari Cloud 9 (prototype) hardware
 
-  This hardware is yet another variant of the Centipede/Millipede hardware,
-  but as you can see there are some significant deviations...
+	driver by Mike Balfour
 
-  0000			R/W 	X index into the bitmap
-  0001			R/W 	Y index into the bitmap
-  0002			R/W 	Current bitmap pixel value
-  0003-05FF 	R/W 	RAM
-  0600-3FFF 	R/W 	Bitmap RAM bank 0 (and bank 1 ?)
-  5000-5073 	R/W 	Motion Object RAM
-  5400			W		Watchdog
-  5480			W		IRQ Acknowledge
-  5500-557F 	W		Color RAM (9 bits, 4 banks, LSB of Blue is addr&$40)
+	Games supported:
+		* Cloud 9
 
-  5580			W		Auto-increment X bitmap index (~D7)
-  5581			W		Auto-increment Y bitmap index (~D7)
-  5584			W		VRAM Both Banks - (D7) seems to allow writing to both banks
-  5585			W		Invert screen?
-  5586			W		VRAM Bank select?
-  5587			W		Color bank select
+	Known issues:
+		* none at this time
 
-  5600			W		Coin Counter 1 (D7)
-  5601			W		Coin Counter 2 (D7)
-  5602			W		Start1 LED (~D7)
-  5603			W		Start2 LED (~D7)
+****************************************************************************
 
-  5680			W		Force Write to EAROM?
-  5700			W		EAROM Off?
-  5780			W		EAROM On?
+	Cloud9 (prototype) driver.
 
-  5800			R		IN0 (D7=Vblank, D6=Right Coin, D5=Left Coin, D4=Aux, D3=Self Test)
-  5801			R		IN1 (D7=Start1, D6=Start2, D5=Fire, D4=Zap)
-  5900			R		Trackball Vert
-  5901			R		Trackball Horiz
+	This hardware is yet another variant of the Centipede/Millipede hardware,
+	but as you can see there are some significant deviations...
 
-  5A00-5A0F 	R/W 	Pokey 1
-  5B00-5B0F 	R/W 	Pokey 2
-  5C00-5CFF 	W		EAROM
-  6000-FFFF 	R		Program ROM
+	0000			R/W 	X index into the bitmap
+	0001			R/W 	Y index into the bitmap
+	0002			R/W 	Current bitmap pixel value
+	0003-05FF 	R/W 	RAM
+	0600-3FFF 	R/W 	Bitmap RAM bank 0 (and bank 1 ?)
+	5000-5073 	R/W 	Motion Object RAM
+	5400			W		Watchdog
+	5480			W		IRQ Acknowledge
+	5500-557F 	W		Color RAM (9 bits, 4 banks, LSB of Blue is addr&$40)
 
+	5580			W		Auto-increment X bitmap index (~D7)
+	5581			W		Auto-increment Y bitmap index (~D7)
+	5584			W		VRAM Both Banks - (D7) seems to allow writing to both banks
+	5585			W		Invert screen?
+	5586			W		VRAM Bank select?
+	5587			W		Color bank select
 
+	5600			W		Coin Counter 1 (D7)
+	5601			W		Coin Counter 2 (D7)
+	5602			W		Start1 LED (~D7)
+	5603			W		Start2 LED (~D7)
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
+	5680			W		Force Write to EAROM?
+	5700			W		EAROM Off?
+	5780			W		EAROM On?
+
+	5800			R		IN0 (D7=Vblank, D6=Right Coin, D5=Left Coin, D4=Aux, D3=Self Test)
+	5801			R		IN1 (D7=Start1, D6=Start2, D5=Fire, D4=Zap)
+	5900			R		Trackball Vert
+	5901			R		Trackball Horiz
+
+	5A00-5A0F 	R/W 	Pokey 1
+	5B00-5B0F 	R/W 	Pokey 2
+	5C00-5CFF 	W		EAROM
+	6000-FFFF 	R		Program ROM
+
+	If you have any questions about how this driver works, don't hesitate to
+	ask.  - Mike Balfour (mab22@po.cwru.edu)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-WRITE_HANDLER( cloud9_paletteram_w );
-READ_HANDLER( cloud9_bitmap_regs_r );
-WRITE_HANDLER( cloud9_bitmap_regs_w );
-WRITE_HANDLER( cloud9_bitmap_w );
-extern void cloud9_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-extern unsigned char *cloud9_vram2;
-extern unsigned char *cloud9_bitmap_regs;
-extern unsigned char *cloud9_auto_inc_x;
-extern unsigned char *cloud9_auto_inc_y;
-extern unsigned char *cloud9_both_banks;
-extern unsigned char *cloud9_vram_bank;
-extern unsigned char *cloud9_color_bank;
+#include "cloud9.h"
 
 
-static unsigned char *nvram;
-static size_t nvram_size;
 
-static void nvram_handler(void *file,int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0,nvram_size);
-	}
-}
-
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
 
 static WRITE_HANDLER( cloud9_led_w )
 {
 	set_led_status(offset,~data & 0x80);
 }
+
 
 static WRITE_HANDLER( cloud9_coin_counter_w )
 {
@@ -93,6 +82,12 @@ static WRITE_HANDLER( cloud9_coin_counter_w )
 }
 
 
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x0002, cloud9_bitmap_regs_r },
@@ -108,6 +103,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x5c00, 0x5cff, MRA_RAM },	/* EAROM */
 	{ 0x6000, 0xffff, MRA_ROM },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x0002, cloud9_bitmap_regs_w, &cloud9_bitmap_regs },
@@ -126,12 +122,18 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x5602, 0x5603, cloud9_led_w },
 	{ 0x5a00, 0x5a0f, pokey1_w },
 	{ 0x5b00, 0x5b0f, pokey2_w },
-	{ 0x5c00, 0x5cff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x5c00, 0x5cff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ 0x10600,0x13fff, MWA_RAM, &cloud9_vram2 },
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( cloud9 )
 	PORT_START	/* IN0 */
@@ -180,27 +182,36 @@ INPUT_PORTS_START( cloud9 )
 	PORT_DIPSETTING (	0x00, "None" )
 INPUT_PORTS_END
 
+
+
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	128,	/* 128 characters */
-	4,	/* 4 bits per pixel */
-	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },	/* the four bitplanes are separated */
+	8,8,
+	128,
+	4,
+	{ 0x3000*8, 0x2000*8, 0x1000*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 8 consecutive bytes, then skip 8 */
+	16*8
 };
+
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16*16 sprites */
-	64, /* 64 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0x3000*8, 0x2000*8, 0x1000*8, 0x0000*8 }, /* the four bitplanes are separated */
+	16,16,
+	64,
+	4,
+	{ 0x3000*8, 0x2000*8, 0x1000*8, 0x0000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,
 			16*8, 18*8, 20*8, 22*8, 24*8, 26*8, 28*8, 30*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	32*8
 };
 
 
@@ -209,10 +220,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0x0800, &charlayout,   0, 4 },
 	{ REGION_GFX1, 0x0808, &charlayout,   0, 4 },
 	{ REGION_GFX1, 0x0000, &spritelayout, 0, 4 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
 
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -233,51 +250,46 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static const struct MachineDriver machine_driver_cloud9 =
-{
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( cloud9 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			12096000/8, /* 1.512 MHz?? */
-			readmem,writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, 1460,	/* frames per second, vblank duration??? */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,12096000/8)	/* 1.512 MHz?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1460)
+
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	64, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	cloud9_vh_screenrefresh,
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(cloud9)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
 
-  Game ROMs
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( cloud9 )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code + extra VRAM space */
@@ -295,6 +307,12 @@ ROM_START( cloud9 )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAMEX( 1983, cloud9, 0, cloud9, cloud9, 0, ROT0, "Atari", "Cloud 9 (prototype)", GAME_NO_COCKTAIL )
 

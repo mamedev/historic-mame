@@ -1,8 +1,6 @@
 /*************************************************************************
 
-	Turbo - Sega - 1981
-	Subroc 3D - Sega - 1982
-	Buck Rogers: Planet of Zoom - Sega - 1982
+	Sega Z80-3D system
 
 *************************************************************************/
 
@@ -270,7 +268,7 @@ static WRITE_HANDLER( buckrog_cpu2_command_w )
 {
 	buckrog_status &= ~0x80;
 	buckrog_command = data;
-	cpu_cause_interrupt(1, Z80_IRQ_INT);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 
@@ -327,7 +325,7 @@ static ppi8255_interface buckrog_8255_intf =
 
 *******************************************/
 
-void turbo_init_machine(void)
+MACHINE_INIT( turbo )
 {
 	ppi8255_init(&turbo_8255_intf);
 	segment_address = segment_increment = 0;
@@ -335,14 +333,14 @@ void turbo_init_machine(void)
 }
 
 
-void subroc3d_init_machine(void)
+MACHINE_INIT( subroc3d )
 {
 	ppi8255_init(&subroc3d_8255_intf);
 	segment_address = segment_increment = 0;
 }
 
 
-void buckrog_init_machine(void)
+MACHINE_INIT( buckrog )
 {
 	ppi8255_init(&buckrog_8255_intf);
 	segment_address = segment_increment = 0;

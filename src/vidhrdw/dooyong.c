@@ -54,7 +54,7 @@ WRITE_HANDLER( primella_ctrl_w )
 
 	/* bit 5 used but unknown */
 
-//	logerror("%04x: bankswitch = %02x\n",cpu_get_pc(),data&0xe0);
+//	logerror("%04x: bankswitch = %02x\n",activecpu_get_pc(),data&0xe0);
 }
 
 WRITE16_HANDLER( rshark_ctrl_w )
@@ -407,7 +407,7 @@ static void rshark_draw_sprites(struct mame_bitmap *bitmap)
 }
 
 
-void lastday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lastday )
 {
 	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
 	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
@@ -415,7 +415,7 @@ void lastday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	draw_tx(bitmap,-1);
 }
 
-void gulfstrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gulfstrm )
 {
 	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
 	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
@@ -423,7 +423,7 @@ void gulfstrm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	draw_tx(bitmap,-1);
 }
 
-void pollux_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pollux )
 {
 	draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
 	draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX6),TRANSPARENCY_PEN);
@@ -431,7 +431,7 @@ void pollux_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	draw_tx(bitmap,0);
 }
 
-void bluehawk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bluehawk )
 {
 	bluehawk_draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX3)+0x78000,TRANSPARENCY_NONE);
 	bluehawk_draw_layer(bitmap,3,lastday_fgscroll,memory_region(REGION_GFX4)+0x78000,TRANSPARENCY_PEN);
@@ -440,7 +440,7 @@ void bluehawk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	bluehawk_draw_tx(bitmap);
 }
 
-void primella_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( primella )
 {
 	bluehawk_draw_layer(bitmap,1,lastday_bgscroll,memory_region(REGION_GFX2)+memory_region_length(REGION_GFX2)-0x8000,TRANSPARENCY_NONE);
 	if (tx_pri) bluehawk_draw_tx(bitmap);
@@ -448,7 +448,7 @@ void primella_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	if (!tx_pri) bluehawk_draw_tx(bitmap);
 }
 
-void rshark_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rshark )
 {
 	rshark_draw_layer(bitmap,4,rshark_scroll4,memory_region(REGION_GFX5),memory_region(REGION_GFX6)+0x60000,TRANSPARENCY_NONE);
 	rshark_draw_layer(bitmap,3,rshark_scroll3,memory_region(REGION_GFX4),memory_region(REGION_GFX6)+0x40000,TRANSPARENCY_PEN);
@@ -457,12 +457,12 @@ void rshark_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	rshark_draw_sprites(bitmap);
 }
 
-void dooyong_eof_callback(void)
+VIDEO_EOF( dooyong )
 {
 	buffer_spriteram_w(0,0);
 }
 
-void rshark_eof_callback(void)
+VIDEO_EOF( rshark )
 {
 	buffer_spriteram16_w(0,0,0);
 }

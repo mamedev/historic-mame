@@ -39,15 +39,15 @@ Notes:
 
 extern data16_t *deniam_videoram,*deniam_textram;
 
-void init_logicpro(void);
-void init_karianx(void);
+DRIVER_INIT( logicpro );
+DRIVER_INIT( karianx );
 WRITE16_HANDLER( deniam_videoram_w );
 WRITE16_HANDLER( deniam_textram_w );
 WRITE16_HANDLER( deniam_palette_w );
 READ16_HANDLER( deniam_coinctrl_r );
 WRITE16_HANDLER( deniam_coinctrl_w );
-int deniam_vh_start(void);
-void deniam_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( deniam );
+VIDEO_UPDATE( deniam );
 
 
 
@@ -57,7 +57,7 @@ static WRITE16_HANDLER( sound_command_w )
 	if (ACCESSING_MSB)
 	{
 		soundlatch_w(offset,(data >> 8) & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -72,7 +72,7 @@ static WRITE16_HANDLER( deniam16c_oki_rom_bank_w )
 		OKIM6295_set_bank_base(0,(data & 0x01) ? 0x40000 : 0x00000);
 }
 
-static void deniam_init_machine(void)
+static MACHINE_INIT( deniam )
 {
 	/* logicpr2 does not reset the bank base on startup */
 	OKIM6295_set_bank_base(0,0x00000);
@@ -332,93 +332,63 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static const struct MachineDriver machine_driver_deniam16b =
-{
+static MACHINE_DRIVER_START( deniam16b )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			25000000/2,	/* ??? */
-			deniam16b_readmem,deniam16b_writemem,0,0,
-			m68_level4_irq,1
-		},
-		{
-			CPU_Z80,
-			25000000/4,	/* (makes logicpro music tempo correct) */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* NMI is caused by the main cpu */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	deniam_init_machine,
+	MDRV_CPU_ADD(M68000,25000000/2)	/* ??? */
+	MDRV_CPU_MEMORY(deniam16b_readmem,deniam16b_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,25000000/4)	/* (makes logicpro music tempo correct) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(deniam)
 
 	/* video hardware */
-	512, 256, { 24*8, 64*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(24*8, 64*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	deniam_vh_start,
-	0,
-	deniam_vh_screenrefresh,
+	MDRV_VIDEO_START(deniam)
+	MDRV_VIDEO_UPDATE(deniam)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_deniam16c =
-{
+static MACHINE_DRIVER_START( deniam16c )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			25000000/2,	/* ??? */
-			deniam16c_readmem,deniam16c_writemem,0,0,
-			m68_level4_irq,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	deniam_init_machine,
+	MDRV_CPU_ADD(M68000,25000000/2)	/* ??? */
+	MDRV_CPU_MEMORY(deniam16c_readmem,deniam16c_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(deniam)
 
 	/* video hardware */
-	512, 256, { 24*8, 64*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(24*8, 64*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	deniam_vh_start,
-	0,
-	deniam_vh_screenrefresh,
+	MDRV_VIDEO_START(deniam)
+	MDRV_VIDEO_UPDATE(deniam)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 

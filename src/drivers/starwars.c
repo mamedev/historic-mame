@@ -31,8 +31,6 @@
 
 
 /* Local variables */
-static UINT8 *nvram;
-static size_t nvram_size;
 static UINT8 *slapstic_source;
 static UINT8 *slapstic_base;
 static UINT8 current_bank;
@@ -42,29 +40,11 @@ static UINT8 is_esb;
 
 /*************************************
  *
- *	NVRAM handler
- *
- *************************************/
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file, nvram, nvram_size);
-	else if (file)
-		osd_fread(file, nvram, nvram_size);
-	else
-		memset(nvram, 0, nvram_size);
-}
-
-
-
-/*************************************
- *
  *	Machine init
  *
  *************************************/
 
-static void init_machine(void)
+MACHINE_INIT( starwars )
 {
 	/* ESB-specific */
 	if (is_esb)
@@ -89,13 +69,6 @@ static void init_machine(void)
  *	Interrupt generation
  *
  *************************************/
-
-static int generate_irq(void)
-{
-	cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
-	return ignore_interrupt();
-}
-
 
 static WRITE_HANDLER( irq_ack_w )
 {
@@ -147,7 +120,7 @@ WRITE_HANDLER( esb_slapstic_w )
 
 OPBASE_HANDLER( esb_setopbase )
 {
-	int prevpc = cpu_getpreviouspc();
+	int prevpc = activecpu_get_previouspc();
 
 	/*
 	 *	This is a slightly ugly kludge for Empire Strikes Back because it jumps
@@ -206,7 +179,7 @@ static MEMORY_WRITE_START( main_writemem )
 	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x3000, 0x3fff, MWA_ROM },								/* vector_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
-	{ 0x4500, 0x45ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x4500, 0x45ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0x4600, 0x461f, avgdvg_go_w },
 	{ 0x4620, 0x463f, avgdvg_reset_w },
 	{ 0x4640, 0x465f, watchdog_reset_w },
@@ -452,48 +425,35 @@ static struct TMS5220interface tms5220_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_starwars =
-{
+static MACHINE_DRIVER_START( starwars )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,
-			main_readmem,main_writemem,0,0,
-			generate_irq,6 /* 183Hz ? */
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			1500000,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	30, 0,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M6809,1500000)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_assert,6)		/* 183Hz ? */
+
+	MDRV_CPU_ADD(M6809,1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_MACHINE_INIT(starwars)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	400, 300, { 0, 250, 0, 280 },
-	0,
-	256, 0,
-	avg_init_palette_multi,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(0, 250, 0, 280)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	avg_start_starwars,
-	avg_stop,
-	vector_vh_screenrefresh,
+	MDRV_PALETTE_INIT(avg_multi)
+	MDRV_VIDEO_START(avg_starwars)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_POKEY, &pokey_interface },
-		{ SOUND_TMS5220, &tms5220_interface }
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -594,7 +554,7 @@ ROM_END
  *
  *************************************/
 
-static void init_starwars(void)
+static DRIVER_INIT( starwars )
 {
 	/* prepare the mathbox */
 	is_esb = 0;
@@ -602,7 +562,7 @@ static void init_starwars(void)
 }
 
 
-static void init_esb(void)
+static DRIVER_INIT( esb )
 {
 	/* init the slapstic */
 	slapstic_init(101);

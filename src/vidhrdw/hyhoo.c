@@ -37,7 +37,7 @@ static void hyhoo_gfxdraw(void);
 
 
 ******************************************************************************/
-void hyhoo_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( hyhoo )
 {
 	int i;
 
@@ -350,38 +350,26 @@ void hyhoo_gfxdraw(void)
 
 
 ******************************************************************************/
-int hyhoo_vh_start(void)
+VIDEO_START( hyhoo )
 {
-	if ((hyhoo_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((hyhoo_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((hyhoo_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((hyhoo_palette = malloc(0x10 * sizeof(char))) == 0) return 1;
+	if ((hyhoo_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((hyhoo_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((hyhoo_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((hyhoo_palette = auto_malloc(0x10 * sizeof(char))) == 0) return 1;
 	memset(hyhoo_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	return 0;
-}
-
-void hyhoo_vh_stop(void)
-{
-	free(hyhoo_palette);
-	free(hyhoo_videoworkram);
-	free(hyhoo_videoram);
-	bitmap_free(hyhoo_tmpbitmap);
-	hyhoo_palette = 0;
-	hyhoo_videoworkram = 0;
-	hyhoo_videoram = 0;
-	hyhoo_tmpbitmap = 0;
 }
 
 /******************************************************************************
 
 
 ******************************************************************************/
-void hyhoo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( hyhoo )
 {
 	int x, y;
 	unsigned short color;
 
-	if (full_refresh || hyhoo_screen_refresh)
+	if (get_vh_global_attribute_changed() || hyhoo_screen_refresh)
 	{
 		hyhoo_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

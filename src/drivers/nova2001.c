@@ -34,11 +34,11 @@
 extern unsigned char *nova2001_videoram,*nova2001_colorram;
 extern size_t nova2001_videoram_size;
 
-void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( nova2001 );
 WRITE_HANDLER( nova2001_scroll_x_w );
 WRITE_HANDLER( nova2001_scroll_y_w );
 WRITE_HANDLER( nova2001_flipscreen_w );
-void nova2001_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( nova2001 );
 
 
 
@@ -200,40 +200,31 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_nova2001 =
-{
-	{
-		{
-			CPU_Z80,
-			3000000,	/* 3 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+static MACHINE_DRIVER_START( nova2001 )
 
-	32*8, 32*8, { 0*8, 32*8-1, 4*8, 28*8-1 },
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3000000)	/* 3 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	gfxdecodeinfo,
-	32,32*16,
-	nova2001_vh_convert_color_prom,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	nova2001_vh_screenrefresh,
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32*16)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_PALETTE_INIT(nova2001)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(nova2001)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

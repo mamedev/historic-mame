@@ -78,7 +78,7 @@ WRITE_HANDLER( raiders5_paletteram_w )
 
 /****************************************************************************/
 
-void raiders5_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( raiders5 )
 {
 	int offs;
 	int chr,col;

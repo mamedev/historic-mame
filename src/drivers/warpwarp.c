@@ -50,8 +50,8 @@ C037	  flip screen (currently ignored)
 
 
 extern unsigned char *warpwarp_bulletsram;
-void warpwarp_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void warpwarp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( warpwarp );
+VIDEO_UPDATE( warpwarp );
 
 /* from sndhrdw/warpwarp.c */
 WRITE_HANDLER( warpwarp_sound_w );
@@ -364,46 +364,40 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-#define MACHINE(NAME)								\
-static const struct MachineDriver machine_driver_##NAME = \
-{													\
-	{												\
-		{											\
-			CPU_8080,								\
-			2048000,	/* 3 MHz? */				\
-			NAME##_readmem,NAME##_writemem,0,0, 	\
-			interrupt,1 							\
-		}											\
-	},												\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* single CPU, no need for interleaving */	\
-	0,												\
-													\
-	/* video hardware */							\
-	34*8, 32*8, { 0*8, 34*8-1, 2*8, 30*8-1 },		\
-	gfxdecodeinfo,									\
-	256, 2*256, 									\
-	warpwarp_init_palette, 							\
-													\
-	VIDEO_TYPE_RASTER,								\
-	0,												\
-	generic_vh_start,								\
-	generic_vh_stop,								\
-	warpwarp_vh_screenrefresh,						\
-													\
-	/* sound hardware */							\
-	0,0,0,0,										\
-	{												\
-		{											\
-			SOUND_CUSTOM,							\
-			&custom_interface						\
-		}											\
-	}												\
-};
+static MACHINE_DRIVER_START( bombbee )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", 8080, 2048000)	/* 3 MHz? */
+	MDRV_CPU_MEMORY(bombbee_readmem,bombbee_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(34*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 34*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(2*256)
+
+	MDRV_PALETTE_INIT(warpwarp)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(warpwarp)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
-MACHINE( bombbee )
-MACHINE( warpwarp )
+static MACHINE_DRIVER_START( warpwarp )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(bombbee)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(warpwarp_readmem,warpwarp_writemem)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -60,7 +60,7 @@ static struct rectangle panelvisibleareaflip =
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( yard )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -165,41 +165,21 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
   Start the video hardware emulation.
 
 ***************************************************************************/
-int yard_vh_start(void)
+VIDEO_START( yard )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((scroll_panel_bitmap = bitmap_alloc(SCROLL_PANEL_WIDTH,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
-		bitmap_free(tmpbitmap);
+	if ((scroll_panel_bitmap = auto_bitmap_alloc(SCROLL_PANEL_WIDTH,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void yard_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
-	bitmap_free(scroll_panel_bitmap);
-}
 
 
 
@@ -245,12 +225,12 @@ WRITE_HANDLER( yard_scroll_panel_w )
   the main emulation engine.
 
 ***************************************************************************/
-void yard_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( yard )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

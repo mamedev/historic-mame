@@ -35,9 +35,9 @@ READ16_HANDLER( demonwld_dsp_r )
 	switch (main_ram_seg) {
 		case 0xc00000:	input_data = *((data16_t *)&(cpu_bankbase[1][(dsp_addr_w)])); break;
 
-		default:		logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+		default:		logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",activecpu_get_previouspc(),main_ram_seg + dsp_addr_w);
 	}
-	logerror("DSP PC:%04x IO read %04x at %08x (port 1)\n",cpu_getpreviouspc(),input_data,main_ram_seg + dsp_addr_w);
+	logerror("DSP PC:%04x IO read %04x at %08x (port 1)\n",activecpu_get_previouspc(),input_data,main_ram_seg + dsp_addr_w);
 	return input_data;
 }
 
@@ -54,7 +54,7 @@ WRITE16_HANDLER( demonwld_dsp_w )
 
 		dsp_addr_w = ((data & 0x1fff) << 1);
 		main_ram_seg = ((data & 0xe000) << 9);
-		logerror("DSP PC:%04x IO write %04x (%08x) at port 0\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
+		logerror("DSP PC:%04x IO write %04x (%08x) at port 0\n",activecpu_get_previouspc(),data,main_ram_seg + dsp_addr_w);
 	}
 	if (offset == 1) {
 		/* Data written to main CPU RAM via DSP IO port 1*/
@@ -63,9 +63,9 @@ WRITE16_HANDLER( demonwld_dsp_w )
 		switch (main_ram_seg) {
 			case 0xc00000:	*((data16_t *)&(cpu_bankbase[1][(dsp_addr_w)])) = data;
 							if ((dsp_addr_w < 3) && (data == 0)) dsp_execute = 1; break;
-			default:		logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",cpu_getpreviouspc(),main_ram_seg + dsp_addr_w);
+			default:		logerror("DSP PC:%04x Warning !!! IO writing to %08x (port 1)\n",activecpu_get_previouspc(),main_ram_seg + dsp_addr_w);
 		}
-		logerror("DSP PC:%04x IO write %04x at %08x (port 1)\n",cpu_getpreviouspc(),data,main_ram_seg + dsp_addr_w);
+		logerror("DSP PC:%04x IO write %04x at %08x (port 1)\n",activecpu_get_previouspc(),data,main_ram_seg + dsp_addr_w);
 	}
 	if (offset == 3) {
 		/* data 0xffff	means inhibit BIO line to DSP and enable  */
@@ -73,7 +73,7 @@ WRITE16_HANDLER( demonwld_dsp_w )
 		/*				Actually only DSP data bit 15 controls this */
 		/* data 0x0000	means set DSP BIO line active and disable */
 		/*				communication to main processor*/
-		logerror("DSP PC:%04x IO write %04x at port 3\n",cpu_getpreviouspc(),data);
+		logerror("DSP PC:%04x IO write %04x at port 3\n",activecpu_get_previouspc(),data);
 		if (data & 0x8000) {
 			cpu_set_irq_line(2, TMS320C10_ACTIVE_BIO, CLEAR_LINE);
 		}
@@ -91,7 +91,7 @@ WRITE16_HANDLER( demonwld_dsp_w )
 WRITE16_HANDLER( demonwld_dsp_ctrl_w )
 {
 #if 0
-	logerror("68000:%08x  Writing %08x to %08x.\n",cpu_get_pc() ,data ,0xe0000a + offset);
+	logerror("68000:%08x  Writing %08x to %08x.\n",activecpu_get_pc() ,data ,0xe0000a + offset);
 #endif
 
 	if (ACCESSING_LSB)
@@ -109,24 +109,21 @@ WRITE16_HANDLER( demonwld_dsp_ctrl_w )
 						cpu_set_irq_line(2, TMS320C10_ACTIVE_INT, CLEAR_LINE);
 						timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
 						break;
-			default:	logerror("68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);
+			default:	logerror("68000:%04x  writing unknown command %08x to %08x\n",activecpu_get_previouspc() ,data ,0xe0000a + offset);
 		}
 	}
 	else
 	{
-		logerror("68000:%04x  writing unknown command %08x to %08x\n",cpu_getpreviouspc() ,data ,0xe0000a + offset);
+		logerror("68000:%04x  writing unknown command %08x to %08x\n",activecpu_get_previouspc() ,data ,0xe0000a + offset);
 	}
 }
 
 
 
-int toaplan1_interrupt(void)
+INTERRUPT_GEN( toaplan1_interrupt )
 {
 	if (toaplan1_int_enable)
-	{
-		return MC68000_IRQ_4;
-	}
-	return ignore_interrupt();
+		cpu_set_irq_line(0, 4, HOLD_LINE);
 }
 
 WRITE16_HANDLER( toaplan1_int_enable_w )
@@ -140,7 +137,7 @@ WRITE16_HANDLER( toaplan1_int_enable_w )
 READ16_HANDLER( samesame_port_6_word_r )
 {
 	/* Bit 0x80 is secondary CPU (HD647180) ready signal */
-	logerror("PC:%04x Warning !!! IO reading from $14000a\n",cpu_getpreviouspc());
+	logerror("PC:%04x Warning !!! IO reading from $14000a\n",activecpu_get_previouspc());
 	return (0x80 | input_port_6_word_r(0,0)) & 0xff;
 }
 
@@ -207,7 +204,7 @@ WRITE16_HANDLER( toaplan1_reset_sound )
 
 	if (ACCESSING_LSB && (data == 0))
 	{
-		logerror("PC:%04x  Resetting Sound CPU and Sound chip (%08x)\n",cpu_getpreviouspc(),data);
+		logerror("PC:%04x  Resetting Sound CPU and Sound chip (%08x)\n",activecpu_get_previouspc(),data);
 		if (Machine->drv->sound[0].sound_type == SOUND_YM3812)
 			YM3812_sh_reset();
 		if (Machine->drv->cpu[1].cpu_type == CPU_Z80)
@@ -215,7 +212,7 @@ WRITE16_HANDLER( toaplan1_reset_sound )
 	}
 }
 
-void toaplan1_init_machine(void)
+MACHINE_INIT( toaplan1 )
 {
 	toaplan1_int_enable = 0;
 	toaplan1_coin_count = 0;
@@ -225,13 +222,13 @@ void toaplan1_init_machine(void)
 	state_save_register_int("toaplan1", 0, "Coin counter", &toaplan1_coin_count);
 }
 
-void zerozone_init_machine(void)	/* Hack for ZeroWing and OutZone. See the video driver */
+MACHINE_INIT( zerozone )	/* Hack for ZeroWing and OutZone. See the video driver */
 {
-	toaplan1_init_machine();
+	machine_init_toaplan1();
 	toaplan1_unk_reset_port = 1;
 }
 
-void demonwld_init_machine(void)
+MACHINE_INIT( demonwld )
 {
 	dsp_addr_w = 0;
 	dsp_execute = 0;
@@ -239,16 +236,16 @@ void demonwld_init_machine(void)
 	state_save_register_int("demonwld", 0, "DSP_execute", &dsp_execute);
 	state_save_register_UINT32("demonwld", 0, "DSP address", &dsp_addr_w, 1);
 	state_save_register_UINT32("demonwld", 0, "DSP to 68K RAM bank", &main_ram_seg, 1);
-	toaplan1_init_machine();
+	machine_init_toaplan1();
 }
 
-void vimana_init_machine(void)
+MACHINE_INIT( vimana )
 {
 	credits = 0;
 	latch = 0;
 	state_save_register_int("vimana", 0, "Credits count", &credits);
 	state_save_register_int("vimana", 0, "MCU latch", &latch);
-	toaplan1_init_machine();
+	machine_init_toaplan1();
 }
 
 WRITE_HANDLER( rallybik_coin_w )
@@ -262,7 +259,7 @@ WRITE_HANDLER( rallybik_coin_w )
 		case 0x0d: coin_lockout_w(0,0); coin_lockout_w(2,0); break;
 		case 0x0e: coin_lockout_w(1,1); coin_lockout_w(3,1); break;
 		case 0x0f: coin_lockout_w(1,0); coin_lockout_w(3,0); toaplan1_coin_count=1; break;
-		default:   logerror("PC:%04x  Writing unknown data (%04x) to coin count/lockout port\n",cpu_getpreviouspc(),data); break;
+		default:   logerror("PC:%04x  Writing unknown data (%04x) to coin count/lockout port\n",activecpu_get_previouspc(),data); break;
 	}
 }
 
@@ -292,7 +289,7 @@ WRITE_HANDLER( toaplan1_coin_w )
 		case 0x02: coin_lockout_w(1,1); break;	/* Lock coin slot B */
 		case 0x01: coin_lockout_w(0,1); break;	/* Lock coin slot A */
 		case 0x00: coin_lockout_global_w(1); break;	/* Lock all coin slots */
-		default:   logerror("PC:%04x  Writing unknown data (%04x) to coin count/lockout port\n",cpu_getpreviouspc(),data); break;
+		default:   logerror("PC:%04x  Writing unknown data (%04x) to coin count/lockout port\n",activecpu_get_previouspc(),data); break;
 	}
 }
 
@@ -304,6 +301,6 @@ WRITE16_HANDLER( samesame_coin_w )
 	}
 	if (ACCESSING_MSB && (data&0xff00))
 	{
-		logerror("PC:%04x  Writing unknown MSB data (%04x) to coin count/lockout port\n",cpu_getpreviouspc(),data);
+		logerror("PC:%04x  Writing unknown MSB data (%04x) to coin count/lockout port\n",activecpu_get_previouspc(),data);
 	}
 }

@@ -40,12 +40,13 @@ static struct polepos_mcu_def
 /* Prototypes */
 static void z80_interrupt(int scanline);
 void polepos_sample_play(int sample); /* from sndhrdw */
+static void polepos_mcu_callback(int param);
 
 /*************************************************************************************/
 /* Interrupt handling																 */
 /*************************************************************************************/
 
-void polepos_init_machine(void)
+MACHINE_INIT( polepos )
 {
 	/* reset all the interrupt states */
 	z80_irq_enabled = z8002_1_nvi_enabled = z8002_2_nvi_enabled = 0;
@@ -62,7 +63,7 @@ void polepos_init_machine(void)
 	polepos_mcu.enabled = 0; /* disabled */
 	polepos_mcu.status = 0x10; /* ready to transfer */
 	polepos_mcu.transfer_id = 0; /* clear out the transfer id */
-	polepos_mcu.timer = 0;
+	polepos_mcu.timer = timer_alloc(polepos_mcu_callback);
 	polepos_mcu.start = 0;
 
 	/* halt the two Z8002 cpus */
@@ -102,20 +103,16 @@ WRITE16_HANDLER( polepos_z8002_nvi_enable_w )
 	LOG(("Z8K#%d cpu%d_nvi_enable_w $%02x\n", cpu_getactivecpu(), which, data));
 }
 
-int polepos_z8002_1_interrupt(void)
+INTERRUPT_GEN( polepos_z8002_1_interrupt )
 {
 	if (z8002_1_nvi_enabled)
 		cpu_set_irq_line(1, 0, ASSERT_LINE);
-
-	return ignore_interrupt();
 }
 
-int polepos_z8002_2_interrupt(void)
+INTERRUPT_GEN( polepos_z8002_2_interrupt )
 {
 	if (z8002_2_nvi_enabled)
 		cpu_set_irq_line(2, 0, ASSERT_LINE);
-
-	return ignore_interrupt();
 }
 
 WRITE_HANDLER( polepos_z8002_enable_w )
@@ -192,7 +189,7 @@ READ16_HANDLER( polepos2_ic25_r )
 		ic25_last_result = (INT8)ic25_last_signed * (UINT8)ic25_last_unsigned;
 	}
 
-	logerror("%04X: read IC25 @ %04X = %02X\n", cpu_get_pc(), offset, result);
+	logerror("%04X: read IC25 @ %04X = %02X\n", activecpu_get_pc(), offset, result);
 
 	return result | (result << 8);
 }
@@ -210,11 +207,7 @@ WRITE_HANDLER( polepos_mcu_enable_w )
 	if (polepos_mcu.enabled == 0)
 	{
 		/* If its getting disabled, kill our timer */
-		if (polepos_mcu.timer)
-		{
-			timer_remove(polepos_mcu.timer);
-			polepos_mcu.timer = 0;
-		}
+		timer_adjust(polepos_mcu.timer, TIME_NEVER, 0, 0);
 	}
 }
 
@@ -242,17 +235,13 @@ WRITE_HANDLER( polepos_mcu_control_w )
 			/* start transfer */
 			polepos_mcu.transfer_id = data; /* get the id */
 			polepos_mcu.status = 0xe0;		/* set status */
-			if (polepos_mcu.timer)
-				timer_remove(polepos_mcu.timer);
 			/* fire off the transfer timer */
-			polepos_mcu.timer = timer_pulse(TIME_IN_USEC(50), 0, polepos_mcu_callback);
+			timer_adjust(polepos_mcu.timer, TIME_IN_USEC(50), 0, TIME_IN_USEC(50));
 		}
 		else
 		{
 			/* end transfer */
-			if (polepos_mcu.timer) /* shut down our transfer timer */
-				timer_remove(polepos_mcu.timer);
-			polepos_mcu.timer = 0;
+			timer_adjust(polepos_mcu.timer, TIME_NEVER, 0, 0); /* shut down our transfer timer */
 			polepos_mcu.status = 0x10; /* set status */
 		}
 	}
@@ -262,7 +251,7 @@ READ_HANDLER( polepos_mcu_data_r )
 {
 	if (polepos_mcu.enabled)
 	{
-		LOG(("MCU read: PC = %04x, transfer mode = %02x, offset = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset ));
+		LOG(("MCU read: PC = %04x, transfer mode = %02x, offset = %02x\n", activecpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset ));
 
 		switch(polepos_mcu.transfer_id)
 		{
@@ -358,7 +347,7 @@ WRITE_HANDLER( polepos_mcu_data_w )
 {
 	if (polepos_mcu.enabled)
 	{
-		LOG(("MCU write: PC = %04x, transfer mode = %02x, offset = %02x, data = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset, data ));
+		LOG(("MCU write: PC = %04x, transfer mode = %02x, offset = %02x, data = %02x\n", activecpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset, data ));
 
 		if ( polepos_mcu.transfer_id == 0xa1 ) { /* setup coins/credits, etc ( 8 bytes ) */
 			switch( offset ) {

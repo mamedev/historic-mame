@@ -25,88 +25,37 @@ int sqix_current_bitmap;
   Start the video hardware emulation.
 
 ***************************************************************************/
-int superqix_vh_start(void)
+VIDEO_START( superqix )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* palette RAM is accessed thorough I/O ports, so we have to */
 	/* allocate it ourselves */
-	if ((paletteram = malloc(256 * sizeof(unsigned char))) == 0)
-	{
-		generic_vh_stop();
+	if ((paletteram = auto_malloc(256 * sizeof(unsigned char))) == 0)
 		return 1;
-	}
 
-	if ((superqix_bitmapram = malloc(0x7000 * sizeof(unsigned char))) == 0)
-	{
-		free(paletteram);
-		generic_vh_stop();
+	if ((superqix_bitmapram = auto_malloc(0x7000 * sizeof(unsigned char))) == 0)
 		return 1;
-	}
 
-	if ((superqix_bitmapram2 = malloc(0x7000 * sizeof(unsigned char))) == 0)
-	{
-		free(superqix_bitmapram);
-		free(paletteram);
-		generic_vh_stop();
+	if ((superqix_bitmapram2 = auto_malloc(0x7000 * sizeof(unsigned char))) == 0)
 		return 1;
-	}
 
-	if ((superqix_bitmapram_dirty = malloc(0x7000 * sizeof(unsigned char))) == 0)
-	{
-		free(superqix_bitmapram2);
-		free(superqix_bitmapram);
-		free(paletteram);
-		generic_vh_stop();
+	if ((superqix_bitmapram_dirty = auto_malloc(0x7000 * sizeof(unsigned char))) == 0)
 		return 1;
-	}
 	memset(superqix_bitmapram_dirty,1,0x7000);
 
-	if ((superqix_bitmapram2_dirty = malloc(0x7000 * sizeof(unsigned char))) == 0)
-	{
-		free(superqix_bitmapram_dirty);
-		free(superqix_bitmapram2);
-		free(superqix_bitmapram);
-		free(paletteram);
-		generic_vh_stop();
+	if ((superqix_bitmapram2_dirty = auto_malloc(0x7000 * sizeof(unsigned char))) == 0)
 		return 1;
-	}
 	memset(superqix_bitmapram2_dirty,1,0x7000);
 
-	if ((tmpbitmap2 = bitmap_alloc(256, 256)) == 0)
-	{
-		free(superqix_bitmapram2_dirty);
-		free(superqix_bitmapram_dirty);
-		free(superqix_bitmapram2);
-		free(superqix_bitmapram);
-		free(paletteram);
-		generic_vh_stop();
+	if ((tmpbitmap2 = auto_bitmap_alloc(256, 256)) == 0)
 		return 1;
-	}
 
 	sqix_minx=0;sqix_maxx=127;sqix_miny=0;sqix_maxy=223;
 	sqix_last_bitmap=0;
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void superqix_vh_stop(void)
-{
-	free(superqix_bitmapram2);
-	free(superqix_bitmapram);
-	free(superqix_bitmapram_dirty);
-	free(superqix_bitmapram2_dirty);
-	bitmap_free (tmpbitmap2);
-	free(paletteram);
-	generic_vh_stop();
 }
 
 
@@ -196,7 +145,7 @@ WRITE_HANDLER( superqix_0410_w )
   the main emulation engine.
 
 ***************************************************************************/
-void superqix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( superqix )
 {
 	int offs,i;
 	unsigned char pens[16];

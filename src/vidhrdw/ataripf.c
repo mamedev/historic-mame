@@ -38,7 +38,6 @@ struct ataripf_gfxelement
 struct ataripf_data
 {
 	int					initialized;		/* true if we're initialized */
-	int					timerallocated;		/* true if we've allocated the timer */
 	int					gfxchanged;			/* true if the gfx info has changed */
 
 	int					colshift;			/* bits to shift X coordinate when looking up in VRAM */
@@ -69,7 +68,7 @@ struct ataripf_data
 	int					latchdata;			/* shifted value for latching */
 	int					latchmask;			/* mask for latching */
 
-	struct mame_bitmap *	bitmap;				/* backing bitmap */
+	struct mame_bitmap *bitmap;				/* backing bitmap */
 	UINT32 *			vram;				/* pointer to VRAM */
 	UINT32 *			dirtymap;			/* dirty bitmap */
 	UINT8 *				visitmap;			/* visiting bitmap */
@@ -82,6 +81,8 @@ struct ataripf_data
 	struct rectangle	process_clip;		/* (during processing) the clip rectangle */
 	struct rectangle	process_tiles;		/* (during processing) the tiles rectangle */
 	void *				process_param;		/* (during processing) the callback parameter */
+	
+	void *				eof_timer;			/* eof timer */
 
 	struct ataripf_gfxelement gfxelement[MAX_GFX_ELEMENTS]; /* graphics element copies */
 };
@@ -100,7 +101,7 @@ typedef void (*pf_callback)(struct ataripf_data *pf, const struct ataripf_state 
 #define VERIFY(cond, msg) if (!(cond)) { logerror(msg); return; }
 
 /* verification macro for non-void functions */
-#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); ataripf_free(); return (ret); }
+#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); return (ret); }
 
 
 /* accessors for upper/lower halves of a 32-bit value */
@@ -324,7 +325,6 @@ int ataripf_init(int map, const struct ataripf_desc *desc)
 
 	/* copy in the basic data */
 	pf->initialized  = 0;
-	pf->timerallocated = 0;
 	pf->gfxchanged   = 0;
 
 	pf->colshift     = compute_log(desc->xmult);
@@ -356,32 +356,32 @@ int ataripf_init(int map, const struct ataripf_desc *desc)
 	pf->latchmask    = desc->latchmask;
 
 	/* allocate the backing bitmap */
-	pf->bitmap = bitmap_alloc(pf->bitmapwidth, pf->bitmapheight);
+	pf->bitmap = auto_bitmap_alloc(pf->bitmapwidth, pf->bitmapheight);
 	VERIFYRETFREE(pf->bitmap, "ataripf_init: out of memory for bitmap", 0)
 
 	/* allocate the vram */
-	pf->vram = malloc(sizeof(pf->vram[0]) * pf->vramsize);
+	pf->vram = auto_malloc(sizeof(pf->vram[0]) * pf->vramsize);
 	VERIFYRETFREE(pf->vram, "ataripf_init: out of memory for vram", 0)
 
 	/* clear it to zero */
 	memset(pf->vram, 0, sizeof(pf->vram[0]) * pf->vramsize);
 
 	/* allocate the dirty map */
-	pf->dirtymap = malloc(sizeof(pf->dirtymap[0]) * pf->vramsize);
+	pf->dirtymap = auto_malloc(sizeof(pf->dirtymap[0]) * pf->vramsize);
 	VERIFYRETFREE(pf->dirtymap, "ataripf_init: out of memory for dirtymap", 0)
 
 	/* mark everything dirty */
 	memset(pf->dirtymap, -1, sizeof(pf->dirtymap[0]) * pf->vramsize);
 
 	/* allocate the visitation map */
-	pf->visitmap = malloc(sizeof(pf->visitmap[0]) * pf->vramsize);
+	pf->visitmap = auto_malloc(sizeof(pf->visitmap[0]) * pf->vramsize);
 	VERIFYRETFREE(pf->visitmap, "ataripf_init: out of memory for visitmap", 0)
 
 	/* mark everything non-visited */
 	memset(pf->visitmap, 0, sizeof(pf->visitmap[0]) * pf->vramsize);
 
 	/* allocate the attribute lookup */
-	pf->lookup = malloc(lookupcount * sizeof(pf->lookup[0]));
+	pf->lookup = auto_malloc(lookupcount * sizeof(pf->lookup[0]));
 	VERIFYRETFREE(pf->lookup, "ataripf_init: out of memory for lookup", 0)
 
 	/* fill in the attribute lookup */
@@ -401,13 +401,17 @@ int ataripf_init(int map, const struct ataripf_desc *desc)
 	pf_init_gfx(pf, desc->gfxindex);
 
 	/* allocate the state list */
-	pf->statelist = malloc(pf->bitmapheight * sizeof(pf->statelist[0]));
+	pf->statelist = auto_malloc(pf->bitmapheight * sizeof(pf->statelist[0]));
 	VERIFYRETFREE(pf->statelist, "ataripf_init: out of memory for extra state list", 0)
 
 	/* reset the state list */
 	memset(&pf->curstate, 0, sizeof(pf->curstate));
 	pf->statelist[0] = pf->curstate;
 	pf->stateindex = 1;
+
+	/* set a timer to call the eof function just before scanline 0 */
+	pf->eof_timer = timer_alloc(pf_eof_callback);
+	timer_adjust(pf->eof_timer, cpu_getscanlinetime(0), map, 0);
 
 	pf->initialized = 1;
 
@@ -419,58 +423,6 @@ int ataripf_init(int map, const struct ataripf_desc *desc)
 	logerror("  bitmap size=%dx%d\n", pf->bitmapwidth, pf->bitmapheight);
 
 	return 1;
-}
-
-
-/*---------------------------------------------------------------
-	ataripf_free: Frees any memory allocated for any playfield.
----------------------------------------------------------------*/
-
-void ataripf_free(void)
-{
-	int i;
-
-	/* free the playfield data */
-	for (i = 0; i < ATARIPF_MAX; i++)
-	{
-		struct ataripf_data *pf = &ataripf[i];
-
-		/* free the backing bitmap */
-		if (pf->bitmap)
-			bitmap_free(pf->bitmap);
-		pf->bitmap = NULL;
-
-		/* free the vram */
-		if (pf->vram)
-			free(pf->vram);
-		pf->vram = NULL;
-
-		/* free the dirty map */
-		if (pf->dirtymap)
-			free(pf->dirtymap);
-		pf->dirtymap = NULL;
-
-		/* free the visitation map */
-		if (pf->visitmap)
-			free(pf->visitmap);
-		pf->visitmap = NULL;
-
-		/* free the attribute lookup */
-		if (pf->lookup)
-			free(pf->lookup);
-		pf->lookup = NULL;
-
-		/* free the state list */
-		if (pf->statelist)
-			free(pf->statelist);
-		pf->statelist = NULL;
-
-		/* free the extended usage maps */
-		for (i = 0; i < MAX_GFX_ELEMENTS; i++)
-			pf->gfxelement[i].initialized = 0;
-
-		pf->initialized = 0;
-	}
 }
 
 
@@ -493,21 +445,14 @@ UINT32 *ataripf_get_lookup(int map, int *size)
 	blocks, and copy it to the destination bitmap.
 ---------------------------------------------------------------*/
 
-void ataripf_render(int map, struct mame_bitmap *bitmap)
+void ataripf_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	struct ataripf_data *pf = &ataripf[map];
 
 	if (pf->initialized)
 	{
 		/* render via the standard render callback */
-		pf_process(pf, pf_render_callback, bitmap, NULL);
-
-		/* set a timer to call the eof function just before scanline 0 */
-		if (!pf->timerallocated)
-		{
-			timer_set(cpu_getscanlinetime(0), map, pf_eof_callback);
-			pf->timerallocated = 1;
-		}
+		pf_process(pf, pf_render_callback, bitmap, cliprect);
 	}
 }
 
@@ -1180,7 +1125,7 @@ static void pf_eof_callback(int map)
 	pf->stateindex = 1;
 
 	/* go off again same time next frame */
-	timer_set(cpu_getscanlinetime(0), map, pf_eof_callback);
+	timer_adjust(pf->eof_timer, cpu_getscanlinetime(0), map, 0);
 }
 
 

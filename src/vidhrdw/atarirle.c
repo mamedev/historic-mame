@@ -49,8 +49,6 @@ struct atarirle_info
 	INT16 				xoffs;
 	INT16 				yoffs;
 	int 				bpp;
-	UINT32 				pen_usage;
-	UINT32 				pen_usage_hi;
 	const data16_t *	table;
 	const data16_t *	data;
 };
@@ -58,8 +56,6 @@ struct atarirle_info
 /* internal structure containing the state of the motion objects */
 struct atarirle_data
 {
-	int					timerallocated;		/* true if we've allocated the timer */
-
 	int					bitmapwidth;		/* width of the full playfield bitmap */
 	int					bitmapheight;		/* height of the full playfield bitmap */
 	int					bitmapxmask;		/* x coordinate mask for the playfield bitmap */
@@ -82,7 +78,7 @@ struct atarirle_data
 	struct atarirle_mask yposmask;			/* mask for the Y position */
 	struct atarirle_mask scalemask;			/* mask for the scale factor */
 	struct atarirle_mask hflipmask;			/* mask for the horizontal flip */
-	struct atarirle_mask vflipmask;			/* mask for the vertical flip */
+	struct atarirle_mask ordermask;			/* mask for the order */
 	struct atarirle_mask prioritymask;		/* mask for the priority */
 
 	const data16_t *	rombase;			/* pointer to the base of the GFX ROM */
@@ -108,7 +104,7 @@ struct atarirle_data
 #define VERIFY(cond, msg) if (!(cond)) { logerror(msg); return; }
 
 /* verification macro for non-void functions */
-#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); atarirle_free(); return (ret); }
+#define VERIFYRETFREE(cond, msg, ret) if (!(cond)) { logerror(msg); return (ret); }
 
 
 /* data extraction */
@@ -147,16 +143,10 @@ static void prescan_rle(const struct atarirle_data *mo, int which);
 static void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
 		int x, int y, int xscale, int yscale, const struct rectangle *clip);
 static void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip);
-static void draw_rle_zoom_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 static void draw_rle_zoom_hflip(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip);
-static void draw_rle_zoom_hflip_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 
 
@@ -295,12 +285,10 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	convert_mask(&desc->yposmask,     &mo->yposmask);
 	convert_mask(&desc->scalemask,    &mo->scalemask);
 	convert_mask(&desc->hflipmask,    &mo->hflipmask);
-	convert_mask(&desc->vflipmask,    &mo->vflipmask);
+	convert_mask(&desc->ordermask,    &mo->ordermask);
 	convert_mask(&desc->prioritymask, &mo->prioritymask);
 
 	/* copy in the basic data */
-	mo->timerallocated = 0;
-
 	mo->bitmapwidth   = round_to_powerof2(mo->xposmask.mask);
 	mo->bitmapheight  = round_to_powerof2(mo->yposmask.mask);
 	mo->bitmapxmask   = mo->bitmapwidth - 1;
@@ -327,7 +315,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	}
 
 	/* allocate the object info */
-	mo->info = malloc(sizeof(mo->info[0]) * mo->objectcount);
+	mo->info = auto_malloc(sizeof(mo->info[0]) * mo->objectcount);
 	VERIFYRETFREE(mo->info, "atarirle_init: out of memory for object info", 0)
 
 	/* fill in the data */
@@ -336,7 +324,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 		prescan_rle(mo, i);
 
 	/* allocate the spriteram */
-	mo->spriteram = malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
+	mo->spriteram = auto_malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
 	VERIFYRETFREE(mo->spriteram, "atarirle_init: out of memory for spriteram", 0)
 
 	/* clear it to zero */
@@ -347,49 +335,20 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 
 
 /*---------------------------------------------------------------
-	atarirle_free: Frees all data allocated by the init
-	function.
----------------------------------------------------------------*/
-
-void atarirle_free(void)
-{
-	int i;
-
-	/* loop over object banks */
-	for (i = 0; i < ATARIRLE_MAX; i++)
-	{
-		struct atarirle_data *mo = &atarirle[i];
-
-		/* free the spriteram */
-		if (mo->spriteram)
-			free(mo->spriteram);
-		mo->spriteram = NULL;
-
-		/* free the info data */
-		if (mo->info)
-			free(mo->info);
-		mo->info = NULL;
-	}
-
-	/* free the tables */
-	if (rle_table[0])
-		free(rle_table[0]);
-	memset(rle_table, 0, sizeof(rle_table));
-}
-
-
-/*---------------------------------------------------------------
 	atarirle_render: Render all motion objects in order.
 ---------------------------------------------------------------*/
 
-void atarirle_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb callback)
+void atarirle_render(int map, struct mame_bitmap *bitmap, const struct rectangle *cliprect, ataripf_overrender_cb callback)
 {
 	struct atarirle_data *mo = &atarirle[map];
 	struct atarirle_entry *obj = mo->spriteram;
 	struct mo_sort_entry sort_entry[256];
 	struct mo_sort_entry *list_head[256];
 	struct mo_sort_entry *current;
+	struct rectangle finalclip = *cliprect;
 	int i;
+	
+	sect_rect(&finalclip, &mo->cliprect);
 
 // expected pit fighter checksums
 //		0xc289, 0x3103, 0x2b8d, 0xe048, 0xc12e, 0x0ede, 0x2cd7, 0x7dc8,
@@ -412,10 +371,10 @@ void atarirle_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb 
 	memset(list_head, 0, sizeof(list_head));
 	for (i = 0; i < 256; i++, obj++)
 	{
-		int priority = EXTRACT_DATA(obj, mo->prioritymask);
+		int order = EXTRACT_DATA(obj, mo->ordermask);
 		sort_entry[i].entry = i;
-		sort_entry[i].next = list_head[priority];
-		list_head[priority] = &sort_entry[i];
+		sort_entry[i].next = list_head[order];
+		list_head[order] = &sort_entry[i];
 	}
 
 	/* now loop back and process */
@@ -443,7 +402,7 @@ void atarirle_render(int map, struct mame_bitmap *bitmap, ataripf_overrender_cb 
 					y = (INT16)(y | ~mo->yposmask.mask);
 				x += mo->cliprect.min_x;
 
-				draw_rle(mo, bitmap, code, color * 16, hflip, 0, x, y, scale, scale, &mo->cliprect);
+				draw_rle(mo, bitmap, code, color * 16, hflip, 0, x, y, scale, scale, &finalclip);
 			}
 		}
 }
@@ -539,7 +498,7 @@ static int build_rle_tables(void)
 		return 0;
 
 	/* allocate all 5 tables */
-	base = malloc(0x500 * sizeof(UINT16));
+	base = auto_malloc(0x500 * sizeof(UINT16));
 	if (!base)
 		return 0;
 
@@ -613,15 +572,14 @@ int count_objects(const data16_t *base, int length)
 
 
 /*---------------------------------------------------------------
-	prescan_rle: Prescans an RLE object, computing the pen
-	usage, width, height, and other goodies.
+	prescan_rle: Prescans an RLE object, computing the
+	width, height, and other goodies.
 ---------------------------------------------------------------*/
 
 static void prescan_rle(const struct atarirle_data *mo, int which)
 {
 	struct atarirle_info *rledata = &mo->info[which];
 	data16_t *base = (data16_t *)&mo->rombase[which * 4];
-	UINT32 usage = 0, usage_hi = 0;
 	int width = 0, height, flags, offset;
 	const data16_t *table;
 
@@ -674,19 +632,11 @@ static void prescan_rle(const struct atarirle_data *mo, int which)
 			count = table[word & 0xff];
 			value = count & 0xff;
 			tempwidth += count >> 8;
-			if (value < 32)
-				usage |= 1 << value;
-			else
-				usage_hi |= 1 << (value - 32);
 
 			/* decode the upper byte second */
 			count = table[word >> 8];
 			value = count & 0xff;
 			tempwidth += count >> 8;
-			if (value < 32)
-				usage |= 1 << value;
-			else
-				usage_hi |= 1 << (value - 32);
 		}
 
 		/* only remember the max */
@@ -697,8 +647,6 @@ static void prescan_rle(const struct atarirle_data *mo, int which)
 	/* fill in the data */
 	rledata->width = width;
 	rledata->height = height;
-	rledata->pen_usage = usage;
-	rledata->pen_usage_hi = usage_hi;
 }
 
 
@@ -731,29 +679,24 @@ void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, in
 	if (bitmap->depth == 16)
 	{
 		if (!hflip)
-			draw_rle_zoom_16(bitmap, info, palettebase, vflip, x, y, xscale << 4, yscale << 4, clip);
+			draw_rle_zoom(bitmap, info, palettebase, x, y, xscale << 4, yscale << 4, clip);
 		else
-			draw_rle_zoom_hflip_16(bitmap, info, palettebase, vflip, x, y, xscale << 4, yscale << 4, clip);
+			draw_rle_zoom_hflip(bitmap, info, palettebase, x, y, xscale << 4, yscale << 4, clip);
 	}
 
-	/* 8-bit case */
+	/* other cases */
 	else
-	{
-		if (!hflip)
-			draw_rle_zoom(bitmap, info, palettebase, vflip, x, y, xscale << 4, yscale << 4, clip);
-		else
-			draw_rle_zoom_hflip(bitmap, info, palettebase, vflip, x, y, xscale << 4, yscale << 4, clip);
-	}
+		logerror("Unsupported bitmap depth = %d\n", bitmap->depth);
 }
 
 
 /*---------------------------------------------------------------
-	draw_rle_zoom: Draw an RLE-compressed object to an 8-bit
+	draw_rle_zoom: Draw an RLE-compressed object to a 16-bit
 	bitmap.
 ---------------------------------------------------------------*/
 
 void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
+		const UINT32 *palette, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
@@ -808,7 +751,7 @@ void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		UINT8 *dest = ((UINT8 *)bitmap->line[y])+sx;
+		UINT16 *dest = &((UINT16 *)bitmap->line[y])[sx];
 		int j, sourcex = dx / 2, rle_end = 0;
 		const UINT16 *base;
 		int entry_count;
@@ -871,196 +814,7 @@ void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		/* clipped case */
 		else
 		{
-			const UINT8 *end = ((UINT8 *)bitmap->line[y])+ex;
-			int to_be_skipped = pixels_to_skip;
-
-			/* decode the pixels */
-			for (j = 0; j < entry_count && dest <= end; j++)
-			{
-				int word = *base++;
-				int count, value;
-
-				/* decode the low byte first */
-				count = table[word & 0xff];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (to_be_skipped)
-				{
-					while (to_be_skipped && sourcex < rle_end)
-						dest++, sourcex += dx, to_be_skipped--;
-					if (to_be_skipped) goto next1;
-				}
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end && dest <= end)
-						*dest++ = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest++, sourcex += dx;
-				}
-
-			next1:
-				/* decode the upper byte second */
-				count = table[word >> 8];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (to_be_skipped)
-				{
-					while (to_be_skipped && sourcex < rle_end)
-						dest++, sourcex += dx, to_be_skipped--;
-					if (to_be_skipped) goto next2;
-				}
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end && dest <= end)
-						*dest++ = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest++, sourcex += dx;
-				}
-			next2:
-				;
-			}
-		}
-	}
-}
-
-
-/*---------------------------------------------------------------
-	draw_rle_zoom_16: Draw an RLE-compressed object to a 16-bit
-	bitmap.
----------------------------------------------------------------*/
-
-void draw_rle_zoom_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip)
-{
-	const UINT16 *row_start = gfx->data;
-	const UINT16 *table = gfx->table;
-	volatile int current_row = 0;
-
-	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
-	int scaled_height = (scaley * gfx->height + 0x7fff) >> 16;
-
-	int pixels_to_skip = 0, xclipped = 0;
-	int dx, dy, ex, ey;
-	int y, sourcey;
-
-	/* make sure we didn't end up with 0 */
-	if (scaled_width == 0) scaled_width = 1;
-	if (scaled_height == 0) scaled_height = 1;
-
-	/* compute the remaining parameters */
-	dx = (gfx->width << 16) / scaled_width;
-	dy = (gfx->height << 16) / scaled_height;
-	ex = sx + scaled_width - 1;
-	ey = sy + scaled_height - 1;
-	sourcey = dy / 2;
-
-	/* left edge clip */
-	if (sx < clip->min_x)
-		pixels_to_skip = clip->min_x - sx, xclipped = 1;
-	if (sx > clip->max_x)
-		return;
-
-	/* right edge clip */
-	if (ex > clip->max_x)
-		ex = clip->max_x, xclipped = 1;
-	else if (ex < clip->min_x)
-		return;
-
-	/* top edge clip */
-	if (sy < clip->min_y)
-	{
-		sourcey += (clip->min_y - sy) * dy;
-		sy = clip->min_y;
-	}
-	else if (sy > clip->max_y)
-		return;
-
-	/* bottom edge clip */
-	if (ey > clip->max_y)
-		ey = clip->max_y;
-	else if (ey < clip->min_y)
-		return;
-
-	/* loop top to bottom */
-	for (y = sy; y <= ey; y++, sourcey += dy)
-	{
-		UINT16 *dest = ((UINT16 *)bitmap->line[y])+sx;
-		int j, sourcex = dx / 2, rle_end = 0;
-		const UINT16 *base;
-		int entry_count;
-
-		/* loop until we hit the row we're on */
-		for ( ; current_row != (sourcey >> 16); current_row++)
-			row_start += 1 + *row_start;
-
-		/* grab our starting parameters from this row */
-		base = row_start;
-		entry_count = *base++;
-
-		/* non-clipped case */
-		if (!xclipped)
-		{
-			/* decode the pixels */
-			for (j = 0; j < entry_count; j++)
-			{
-				int word = *base++;
-				int count, value;
-
-				/* decode the low byte first */
-				count = table[word & 0xff];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end)
-						*dest++ = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest++, sourcex += dx;
-				}
-
-				/* decode the upper byte second */
-				count = table[word >> 8];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end)
-						*dest++ = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest++, sourcex += dx;
-				}
-			}
-		}
-
-		/* clipped case */
-		else
-		{
-			const UINT16 *end = ((UINT16 *)bitmap->line[y])+ex;
+			const UINT16 *end = &((const UINT16 *)bitmap->line[y])[ex];
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */
@@ -1126,200 +880,12 @@ void draw_rle_zoom_16(struct mame_bitmap *bitmap, const struct atarirle_info *gf
 
 
 /*---------------------------------------------------------------
-	draw_rle_zoom_hflip: Draw an RLE-compressed object to an
-	8-bit bitmap with horizontal flip.
----------------------------------------------------------------*/
-
-void draw_rle_zoom_hflip(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip)
-{
-	const UINT16 *row_start = gfx->data;
-	const UINT16 *table = gfx->table;
-	volatile int current_row = 0;
-
-	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
-	int scaled_height = (scaley * gfx->height + 0x7fff) >> 16;
-	int pixels_to_skip = 0, xclipped = 0;
-	int dx, dy, ex, ey;
-	int y, sourcey;
-
-	/* make sure we didn't end up with 0 */
-	if (scaled_width == 0) scaled_width = 1;
-	if (scaled_height == 0) scaled_height = 1;
-
-	/* compute the remaining parameters */
-	dx = (gfx->width << 16) / scaled_width;
-	dy = (gfx->height << 16) / scaled_height;
-	ex = sx + scaled_width - 1;
-	ey = sy + scaled_height - 1;
-	sourcey = dy / 2;
-
-	/* left edge clip */
-	if (sx < clip->min_x)
-		sx = clip->min_x, xclipped = 1;
-	if (sx > clip->max_x)
-		return;
-
-	/* right edge clip */
-	if (ex > clip->max_x)
-		pixels_to_skip = ex - clip->max_x, xclipped = 1;
-	else if (ex < clip->min_x)
-		return;
-
-	/* top edge clip */
-	if (sy < clip->min_y)
-	{
-		sourcey += (clip->min_y - sy) * dy;
-		sy = clip->min_y;
-	}
-	else if (sy > clip->max_y)
-		return;
-
-	/* bottom edge clip */
-	if (ey > clip->max_y)
-		ey = clip->max_y;
-	else if (ey < clip->min_y)
-		return;
-
-	/* loop top to bottom */
-	for (y = sy; y <= ey; y++, sourcey += dy)
-	{
-		UINT8 *dest = ((UINT8 *)bitmap->line[y])+ex;
-		int j, sourcex = dx / 2, rle_end = 0;
-		const UINT16 *base;
-		int entry_count;
-
-		/* loop until we hit the row we're on */
-		for ( ; current_row != (sourcey >> 16); current_row++)
-			row_start += 1 + *row_start;
-
-		/* grab our starting parameters from this row */
-		base = row_start;
-		entry_count = *base++;
-
-		/* non-clipped case */
-		if (!xclipped)
-		{
-			/* decode the pixels */
-			for (j = 0; j < entry_count; j++)
-			{
-				int word = *base++;
-				int count, value;
-
-				/* decode the low byte first */
-				count = table[word & 0xff];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end)
-						*dest-- = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest--, sourcex += dx;
-				}
-
-				/* decode the upper byte second */
-				count = table[word >> 8];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end)
-						*dest-- = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest--, sourcex += dx;
-				}
-			}
-		}
-
-		/* clipped case */
-		else
-		{
-			const UINT8 *start = ((UINT8 *)bitmap->line[y])+sx;
-			int to_be_skipped = pixels_to_skip;
-
-			/* decode the pixels */
-			for (j = 0; j < entry_count && dest >= start; j++)
-			{
-				int word = *base++;
-				int count, value;
-
-				/* decode the low byte first */
-				count = table[word & 0xff];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (to_be_skipped)
-				{
-					while (to_be_skipped && sourcex < rle_end)
-						dest--, sourcex += dx, to_be_skipped--;
-					if (to_be_skipped) goto next1;
-				}
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end && dest >= start)
-						*dest-- = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest--, sourcex += dx;
-				}
-
-			next1:
-				/* decode the upper byte second */
-				count = table[word >> 8];
-				value = count & 0xff;
-				rle_end += (count & 0xff00) << 8;
-
-				/* store copies of the value until we pass the end of this chunk */
-				if (to_be_skipped)
-				{
-					while (to_be_skipped && sourcex < rle_end)
-						dest--, sourcex += dx, to_be_skipped--;
-					if (to_be_skipped) goto next2;
-				}
-				if (value)
-				{
-					value = palette[value];
-					while (sourcex < rle_end && dest >= start)
-						*dest-- = value, sourcex += dx;
-				}
-				else
-				{
-					while (sourcex < rle_end)
-						dest--, sourcex += dx;
-				}
-			next2:
-				;
-			}
-		}
-	}
-}
-
-
-/*---------------------------------------------------------------
-	draw_rle_zoom_hflip_16: Draw an RLE-compressed object to a
+	draw_rle_zoom_hflip: Draw an RLE-compressed object to a
 	16-bit bitmap with horizontal flip.
 ---------------------------------------------------------------*/
 
-void draw_rle_zoom_hflip_16(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
-		const pen_t *palette, int flipy, int sx, int sy, int scalex, int scaley,
+void draw_rle_zoom_hflip(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
+		const UINT32 *palette, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
@@ -1373,7 +939,7 @@ void draw_rle_zoom_hflip_16(struct mame_bitmap *bitmap, const struct atarirle_in
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		UINT16 *dest = ((UINT16 *)bitmap->line[y])+ex;
+		UINT16 *dest = &((UINT16 *)bitmap->line[y])[ex];
 		int j, sourcex = dx / 2, rle_end = 0;
 		const UINT16 *base;
 		int entry_count;
@@ -1436,7 +1002,7 @@ void draw_rle_zoom_hflip_16(struct mame_bitmap *bitmap, const struct atarirle_in
 		/* clipped case */
 		else
 		{
-			const UINT16 *start = ((UINT16 *)bitmap->line[y])+sx;
+			const UINT16 *start = &((const UINT16 *)bitmap->line[y])[sx];
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */

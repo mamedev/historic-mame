@@ -35,7 +35,7 @@ static int gfxbank;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void champbas_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( champbas )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -96,7 +96,7 @@ WRITE_HANDLER( champbas_gfxbank_w )
   the main emulation engine.
 
 ***************************************************************************/
-void champbas_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( champbas )
 {
 	int offs;
 

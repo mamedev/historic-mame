@@ -63,7 +63,7 @@ static void get_char_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int xain_vh_start(void)
+VIDEO_START( xain )
 {
 	bgram0_tilemap = tilemap_create(get_bgram0_tile_info,back_scan,    TILEMAP_OPAQUE,     16,16,32,32);
 	bgram1_tilemap = tilemap_create(get_bgram1_tile_info,back_scan,    TILEMAP_TRANSPARENT,16,16,32,32);
@@ -158,7 +158,7 @@ WRITE_HANDLER( xain_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -188,13 +188,13 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					color,
 					flipx,flip_screen,
 					sx-1,flip_screen?sy+16:sy-16,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			drawgfx(bitmap,Machine->gfx[3],
 					numtile+1,
 					color,
 					flipx,flip_screen,
 					sx-1,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 		else
 		{
@@ -203,15 +203,15 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					color,
 					flipx,flip_screen,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
-void xain_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( xain )
 {
-	tilemap_draw(bitmap,bgram0_tilemap,0,0);
-	tilemap_draw(bitmap,bgram1_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,char_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bgram0_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bgram1_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
 }

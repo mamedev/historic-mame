@@ -202,8 +202,8 @@ extern unsigned char *airbustr_bgram, *airbustr_fgram;
 WRITE_HANDLER( airbustr_bgram_w );
 WRITE_HANDLER( airbustr_fgram_w );
 WRITE_HANDLER( airbustr_scrollregs_w );
-extern int  airbustr_vh_start(void);
-extern void airbustr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+extern VIDEO_START( airbustr );
+extern VIDEO_UPDATE( airbustr );
 
 /* Debug stuff (bound to go away sometime) */
 int u1, u2, u3, u4;
@@ -213,7 +213,7 @@ static WRITE_HANDLER( bankswitch_w );
 static WRITE_HANDLER( bankswitch2_w );
 static WRITE_HANDLER( sound_bankswitch_w );
 
-static void airbustr_init_machine (void)
+static MACHINE_INIT( airbustr )
 {
 	soundlatch_status = soundlatch2_status = 0;
 	bankswitch_w(0,2);
@@ -231,13 +231,12 @@ static void airbustr_init_machine (void)
 /*	Runs in IM 2	fd-fe	address of int: 0x38
 					ff-100	address of int: 0x16	*/
 
-int airbustr_interrupt(void)
+INTERRUPT_GEN( airbustr_interrupt )
 {
 static int addr = 0xff;
 
 	addr ^= 0x02;
-
-	return addr;
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, addr);
 }
 
 
@@ -290,7 +289,7 @@ unsigned char *RAM = memory_region(REGION_CPU1);
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
 
 	cpu_setbank(1,RAM);
-//	if (data > 7)	logerror("CPU #0 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
+//	if (data > 7)	logerror("CPU #0 - suspicious bank: %d ! - PC = %04X\n", data, activecpu_get_pc());
 
 	u1 = data & 0xf8;
 }
@@ -317,7 +316,7 @@ MEMORY_END
 
 static WRITE_HANDLER( cause_nmi_w )
 {
-	cpu_cause_interrupt(1,Z80_NMI_INT);	// cause a nmi to sub cpu
+	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static PORT_WRITE_START( writeport )
@@ -345,13 +344,12 @@ PORT_END
 /*	Runs in IM 2	fd-fe	address of int: 0x36e	(same as 0x38)
 					ff-100	address of int: 0x4b0	(only writes to port 38h)	*/
 
-int airbustr_interrupt2(void)
+INTERRUPT_GEN( airbustr_interrupt2 )
 {
 static int addr = 0xfd;
 
 	addr ^= 0x02;
-
-	return addr;
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, addr);
 }
 
 
@@ -363,7 +361,7 @@ unsigned char *RAM = memory_region(REGION_CPU2);
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
 
 	cpu_setbank(2,RAM);
-//	if (data > 7)	logerror("CPU #1 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
+//	if (data > 7)	logerror("CPU #1 - suspicious bank: %d ! - PC = %04X\n", data, activecpu_get_pc());
 
 	flipscreen = data & 0x10;	// probably..
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
@@ -453,7 +451,7 @@ static WRITE_HANDLER( soundcommand_w )
 {
 	soundlatch_w(0,data);
 	soundlatch_status = 1;				// soundlatch has been written
-	cpu_cause_interrupt(2,Z80_NMI_INT);	// cause a nmi to sub cpu
+	cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);	// cause a nmi to sub cpu
 }
 
 
@@ -499,7 +497,7 @@ unsigned char *RAM = memory_region(REGION_CPU3);
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
 
 	cpu_setbank(3,RAM);
-//	if (data > 7)	logerror("CPU #2 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
+//	if (data > 7)	logerror("CPU #2 - suspicious bank: %d ! - PC = %04X\n", data, activecpu_get_pc());
 
 	u3 = data & 0xf8;
 }
@@ -696,58 +694,44 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
-static const struct MachineDriver machine_driver_airbustr =
-{
-	{
-		{
-			CPU_Z80,
-			6000000,	/* ?? */
-			readmem,writemem,0,writeport,
-			airbustr_interrupt, 2	/* nmi caused by sub cpu?, ? */
-		},
-		{
-			CPU_Z80,
-			6000000,	/* ?? */
-			readmem2,writemem2,readport2,writeport2,
-			airbustr_interrupt2, 2	/* nmi caused by main cpu, ? */
-		},
-		{
-			CPU_Z80,	/* Sound CPU, reads DSWs. Hence it can't be disabled */
-			6000000,	/* ?? */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			interrupt,1	/* nmi are caused by sub cpu writing a sound command */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	100,	/* Palette RAM is filled by sub cpu with data supplied by main cpu */
-			/* Maybe an high value is safer in order to avoid glitches */
-	airbustr_init_machine,
+static MACHINE_DRIVER_START( airbustr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_VBLANK_INT(airbustr_interrupt,2)	/* nmi caused by sub cpu?, ? */
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_PORTS(readport2,writeport2)
+	MDRV_CPU_VBLANK_INT(airbustr_interrupt2,2)	/* nmi caused by main cpu, ? */
+
+	MDRV_CPU_ADD(Z80, 6000000)	/* ?? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* nmi are caused by sub cpu writing a sound command */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* Palette RAM is filled by sub cpu with data supplied by main cpu */
+							/* Maybe an high value is safer in order to avoid glitches */
+	MDRV_MACHINE_INIT(airbustr)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	gfxdecodeinfo,
-	768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	airbustr_vh_start,
-	0,
-	airbustr_vh_screenrefresh,
+	MDRV_VIDEO_START(airbustr)
+	MDRV_VIDEO_UPDATE(airbustr)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -783,7 +767,7 @@ ROM_END
 
 
 
-void init_airbustr(void)
+DRIVER_INIT( airbustr )
 {
 int i;
 unsigned char *RAM;

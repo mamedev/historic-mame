@@ -36,7 +36,7 @@ static void rastan_coin_ctrl(void)
 }
 
 
-int rastan_vh_start (void)
+VIDEO_START( rastan )
 {
 	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
 	if (PC080SN_vh_start(1,1,0,0,0,0,0))
@@ -48,7 +48,7 @@ int rastan_vh_start (void)
 	return 0;
 }
 
-int opwolf_vh_start (void)
+VIDEO_START( opwolf )
 {
 	if (PC080SN_vh_start(1,1,0,0,0,0,0))
 		return 1;
@@ -58,7 +58,7 @@ int opwolf_vh_start (void)
 	return 0;
 }
 
-int rainbow_vh_start (void)
+VIDEO_START( rainbow )
 {
 	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
 	if (PC080SN_vh_start(1,1,0,0,0,0,0))
@@ -69,7 +69,7 @@ int rainbow_vh_start (void)
 	return 0;
 }
 
-int jumping_vh_start(void)
+VIDEO_START( jumping )
 {
 	if (PC080SN_vh_start(1,1,0,0,1,0,0))
 		return 1;
@@ -80,11 +80,6 @@ int jumping_vh_start(void)
 	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
 	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
 	return 0;
-}
-
-void rastan_vh_stop(void)
-{
-	PC080SN_vh_stop();
 }
 
 
@@ -120,7 +115,7 @@ WRITE16_HANDLER( rastan_spriteflip_w )
 
 /***************************************************************************/
 
-static void rastan_draw_sprites(struct mame_bitmap *bitmap,int y_offs)
+static void rastan_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
 {
 	int offs,tile;
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
@@ -158,13 +153,13 @@ static void rastan_draw_sprites(struct mame_bitmap *bitmap,int y_offs)
 					color,
 					flipx, flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
 
-void rastan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rastan )
 {
 	int layer[2];
 
@@ -173,12 +168,12 @@ void rastan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[0] = 0;
 	layer[1] = 1;
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
-	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
+ 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,0);
 
-	rastan_draw_sprites(bitmap,0);
+	rastan_draw_sprites(bitmap,cliprect,0);
 
 #if 0
 	{
@@ -191,7 +186,7 @@ void rastan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 /***************************************************************************/
 
-void opwolf_eof_callback(void)
+VIDEO_EOF( opwolf )
 {
 	/* Ensure the analog x,y values are read _exactly once_ */
 	/* per frame irrespective of frameskip and fake DSW */
@@ -199,7 +194,7 @@ void opwolf_eof_callback(void)
 	beamy = ((input_port_6_r(0) * 256) >> 8);	//+19
 }
 
-void opwolf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( opwolf )
 {
 	int layer[2];
 
@@ -208,17 +203,17 @@ void opwolf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[0] = 0;
 	layer[1] = 1;
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
-	rastan_draw_sprites(bitmap,0);
-	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
+ 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	rastan_draw_sprites(bitmap,cliprect,0);
+	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,0);
 
 	/* See if we should draw artificial gun targets */
 	if (input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
 	{
 		/* Draw an aiming crosshair */
-		draw_crosshair(bitmap,beamx,beamy,&Machine->visible_area);
+		draw_crosshair(bitmap,beamx,beamy,cliprect);
 	}
 
 #if 0
@@ -232,7 +227,7 @@ void opwolf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 /***************************************************************************/
 
-void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rainbow )
 {
 	int offs;
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
@@ -243,9 +238,9 @@ void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[0] = 0;
 	layer[1] = 1;
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+ 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	/* Draw the sprites. 256 sprites in total */
 	for (offs = spriteram_size/2-4; offs >= 0; offs -= 4)
@@ -280,7 +275,7 @@ void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					color,
 					flipx, flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 			else if (tile < 5120)
 			/*
 			There is a bug in Rainbow Islands that affects the secret room on
@@ -294,11 +289,11 @@ void rainbow_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					color,
 					flipx, flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
 
-	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
+	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,0);
 
 #if 0
 	{
@@ -319,7 +314,7 @@ the Y settings are active low.
 
 */
 
-void jumping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( jumping )
 {
 	int offs,layer[2];
 	int sprite_colbank = (sprite_ctrl & 0xe0) >> 1;
@@ -332,9 +327,9 @@ void jumping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[0] = 0;
 	layer[1] = 1;
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+ 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	/* Draw the sprites. 128 sprites in total */
 	for (offs = spriteram_size/2-8; offs >= 0; offs -= 8)
@@ -357,11 +352,11 @@ void jumping_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					color,
 					data1 & 0x40, data1 & 0x80,
 					sx,sy+1,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 		}
 	}
 
- 	PC080SN_tilemap_draw(bitmap,0,layer[1],0,0);
+ 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,0);
 
 #if 0
 	{

@@ -37,24 +37,22 @@ WRITE16_HANDLER( cps2_qsound_sharedram_w )
 extern data16_t *cps2_objram1,*cps2_objram2;
 extern data16_t *cps2_output;
 extern size_t cps2_output_size;
-extern int cps2_vh_start(void);
+extern VIDEO_START( cps2 );
 
 
-int cps2_interrupt(void)
+INTERRUPT_GEN( cps2_interrupt )
 {
 	/* 2 is vblank, 4 is some sort of scanline interrupt, 6 is both at the same time. */
 
 //usrintf_showmessage("%04x %04x %04x",cps1_output[0x4e/2],cps1_output[0x50/2],cps1_output[0x52/2]);
 	if (cpu_getiloops() == 0)
-		return 2;
+		cpu_set_irq_line(0, 2, HOLD_LINE);
 	else if (~cps1_output[0x4e/2] & 0x200)
 	{
 		if (cps1_output[0x52/2])	/* scanline counter? */
 			cps1_output[0x52/2]--;
-		return 4;
+		cpu_set_irq_line(0, 4, HOLD_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
 
@@ -68,7 +66,7 @@ static struct EEPROM_interface cps2_eeprom_interface =
 	"0111"	/* erase command */
 };
 
-static void cps2_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( cps2 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -684,54 +682,38 @@ static struct m68k_encryption_interface cps2_encryption =
 	CPS2_Read16, CPS2_Read32
 };
 
-static const struct MachineDriver machine_driver_cps2 =
-{
+static MACHINE_DRIVER_START( cps2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			11800000,
-			cps2_readmem,cps2_writemem,0,0,
-			cps2_interrupt, 1,	// 262  /* ??? interrupts per frame */
-			0,0,
-			&cps2_encryption
-		},
-		{
-			CPU_Z80,
-			8000000,
-			qsound_readmem,qsound_writemem,0,0,
-			0,0,
-			interrupt,250	/* ?? */
-		}
-	},
-//	59.633333, DEFAULT_60HZ_VBLANK_DURATION,
-	59.633333, 400,		//ks
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 11800000)
+	MDRV_CPU_CONFIG(cps2_encryption)
+	MDRV_CPU_MEMORY(cps2_readmem,cps2_writemem)
+	MDRV_CPU_VBLANK_INT(cps2_interrupt,1)	// 262  /* ??? interrupts per frame */
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)	/* ?? */
+
+	MDRV_FRAMES_PER_SECOND(59.633333)
+	MDRV_VBLANK_DURATION(400)		//ks
+
+	MDRV_NVRAM_HANDLER(cps2)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_AFTER_VBLANK)		//ks
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-//	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_AFTER_VBLANK,		//ks
-	cps1_eof_callback,
-	cps2_vh_start,
-	cps1_vh_stop,
-	cps1_vh_screenrefresh,
+	MDRV_VIDEO_START(cps2)
+	MDRV_VIDEO_EOF(cps1)
+	MDRV_VIDEO_UPDATE(cps1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_QSOUND,
-			&qsound_interface
-		}
-	},
-	cps2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(QSOUND, qsound_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1740,6 +1722,41 @@ ROM_END
 
 ROM_START( dstlk )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "vame.03a", 0x000000, 0x80000, 0x004c9cff )
+	ROM_LOAD16_WORD_SWAP( "vame.04a", 0x080000, 0x80000, 0xae413ff2 )
+	ROM_LOAD16_WORD_SWAP( "vame.05a", 0x100000, 0x80000, 0x60678756 )
+	ROM_LOAD16_WORD_SWAP( "vame.06a", 0x180000, 0x80000, 0x912870b3 )
+	ROM_LOAD16_WORD_SWAP( "vame.07a", 0x200000, 0x80000, 0xdabae3e8 )
+	ROM_LOAD16_WORD_SWAP( "vame.08a", 0x280000, 0x80000, 0x2c6e3077 )
+	ROM_LOAD16_WORD_SWAP( "vame.09a", 0x300000, 0x80000, 0xf16db74b )
+	ROM_LOAD16_WORD_SWAP( "vame.10a", 0x380000, 0x80000, 0x701e2147 )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "vamex.03a", 0x000000, 0x80000, 0x2d1e4919 )
+	ROM_LOAD16_WORD_SWAP( "vamex.04a", 0x080000, 0x80000, 0xe5172837 )
+
+	ROM_REGION( 0x1400000, REGION_GFX1, 0 )
+	ROMX_LOAD( "vam.13",   0x0000000, 0x400000, 0xc51baf99, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "vam.15",   0x0000002, 0x400000, 0x3ce83c77, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "vam.17",   0x0000004, 0x400000, 0x4f2408e0, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "vam.19",   0x0000006, 0x400000, 0x9ff60250, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "vam.14",   0x1000000, 0x100000, 0xbd87243c, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "vam.16",   0x1000002, 0x100000, 0xafec855f, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "vam.18",   0x1000004, 0x100000, 0x3a033625, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "vam.20",   0x1000006, 0x100000, 0x2bff6a89, ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "vam.01",   0x00000, 0x08000, 0x64b685d5 )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+	ROM_LOAD( "vam.02",   0x28000, 0x20000, 0xcf7c97c7 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "vam.11",   0x000000, 0x200000, 0x4a39deb2 )
+	ROM_LOAD16_WORD_SWAP( "vam.12",   0x200000, 0x200000, 0x1a3e5c03 )
+ROM_END
+
+ROM_START( dstlku )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "vamu.03b", 0x000000, 0x80000, 0x68a6343f )
 	ROM_LOAD16_WORD_SWAP( "vamu.04b", 0x080000, 0x80000, 0x58161453 )
 	ROM_LOAD16_WORD_SWAP( "vamu.05b", 0x100000, 0x80000, 0xdfc038b8 )
@@ -1773,7 +1790,7 @@ ROM_START( dstlk )
 	ROM_LOAD16_WORD_SWAP( "vam.12",   0x200000, 0x200000, 0x1a3e5c03 )
 ROM_END
 
-ROM_START( dstlkr1 )
+ROM_START( dstlkur1 )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "vamu.03a", 0x000000, 0x80000, 0x628899f9 )
 	ROM_LOAD16_WORD_SWAP( "vamu.04a", 0x080000, 0x80000, 0x696d9b25 )
@@ -2429,8 +2446,8 @@ ROM_START( mvsc )
 	ROM_LOAD16_WORD_SWAP( "mvc.10",   0x380000, 0x80000, 0x0fdd1e26 )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mvcux.03d", 0x000000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mvcux.04d", 0x080000, 0x80000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "mvcux.03d", 0x000000, 0x80000, 0x86685cbf )
+	ROM_LOAD16_WORD_SWAP( "mvcux.04d", 0x080000, 0x80000, 0x438ba92b )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mvc.13",   0x0000000, 0x400000, 0xfa5f74bc, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -2464,8 +2481,8 @@ ROM_START( mvscj )
 	ROM_LOAD16_WORD_SWAP( "mvc.10",   0x380000, 0x80000, 0x0fdd1e26 )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mvcjx.03a", 0x000000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mvcjx.04a", 0x080000, 0x80000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "mvcjx.03a", 0x000000, 0x80000, 0xe696a098 )
+	ROM_LOAD16_WORD_SWAP( "mvcjx.04a", 0x080000, 0x80000, 0x7faeee82 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mvc.13",   0x0000000, 0x400000, 0xfa5f74bc, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -2499,8 +2516,8 @@ ROM_START( mvscjr1 )
 	ROM_LOAD16_WORD_SWAP( "mvc.10",  0x380000, 0x80000, 0x0fdd1e26 )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mvcjx.03", 0x000000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mvcjx.04", 0x080000, 0x80000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "mvcjx.03", 0x000000, 0x80000, 0xcc94ab89 )
+	ROM_LOAD16_WORD_SWAP( "mvcjx.04", 0x080000, 0x80000, 0xc5a83202 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mvc.13",   0x0000000, 0x400000, 0xfa5f74bc, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -2534,8 +2551,8 @@ ROM_START( mvsca )
 	ROM_LOAD16_WORD_SWAP( "mvc.10",  0x380000, 0x80000, 0x0fdd1e26 )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mvcax.03", 0x000000, 0x80000, 0x00000000 )
-	ROM_LOAD16_WORD_SWAP( "mvcax.04", 0x080000, 0x80000, 0x00000000 )
+	ROM_LOAD16_WORD_SWAP( "mvcax.03", 0x000000, 0x80000, 0x4512a6af )
+	ROM_LOAD16_WORD_SWAP( "mvcax.04", 0x080000, 0x80000, 0xe6f537d2 )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "mvc.13",   0x0000000, 0x400000, 0xfa5f74bc, ROM_GROUPWORD | ROM_SKIP(6) )
@@ -4839,8 +4856,9 @@ GAME( 1996, ddsomjr1, ddsom,   cps2, ddtod,   cps2, ROT0,   "Capcom", "Dungeons 
 GAMEX(1996, ddsoma,   ddsom,   cps2, ddtod,   cps2, ROT0,   "Capcom", "Dungeons & Dragons: Shadow over Mystara (Asia 960619)", GAME_NOT_WORKING )
 GAMEX(2000, dimahoo,  0,       cps2, sgemf,   cps2, ROT270, "Capcom", "Dimahoo (US 000121)", GAME_NOT_WORKING )
 GAMEX(2000, gmahou,   dimahoo, cps2, sgemf,   cps2, ROT270, "Capcom", "Great Mahou Daisakusen (Japan 000121)", GAME_NOT_WORKING )
-GAME( 1994, dstlk,    0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Darkstalkers: The Night Warriors (US 940818)" )
-GAME( 1994, dstlkr1,  dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Darkstalkers: The Night Warriors (US 940705)" )
+GAME( 1994, dstlk,    0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Darkstalkers: The Night Warriors (Euro 940705)" )
+GAME( 1994, dstlku,   dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Darkstalkers: The Night Warriors (US 940818)" )
+GAME( 1994, dstlkur1, dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Darkstalkers: The Night Warriors (US 940705)" )
 GAME( 1994, dstlka,   dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Darkstalkers: The Night Warriors (Asia 940705)" )
 GAME( 1994, vampj,    dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire: The Night Warriors (Japan 940705)" )
 GAME( 1994, vampja,   dstlk,   cps2, ssf2,    cps2, ROT0,   "Capcom", "Vampire: The Night Warriors (Japan 940705 alt)" )
@@ -4859,10 +4877,10 @@ GAME( 1997, mshvsfj1, mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Su
 GAMEX(1997, mshvsfh,  mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes Vs. Street Fighter (Hispanic 970625)", GAME_NOT_WORKING )
 GAMEX(1997, mshvsfa,  mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes Vs. Street Fighter (Asia 970625)", GAME_NOT_WORKING )
 GAMEX(1997, mshvsfa1, mshvsf,  cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Super Heroes Vs. Street Fighter (Asia 970620)", GAME_NOT_WORKING )
-GAMEX(1998, mvsc,     0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (US 980123)", GAME_NOT_WORKING )
-GAMEX(1998, mvscj,    mvsc,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (Japan 980123)", GAME_NOT_WORKING )
-GAMEX(1998, mvscjr1,  mvsc,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (Japan 980112)", GAME_NOT_WORKING )
-GAMEX(1998, mvsca,    mvsc,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (Asia 980112)", GAME_NOT_WORKING )
+GAME( 1998, mvsc,     0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (US 980123)" )
+GAME( 1998, mvscj,    mvsc,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (Japan 980123)" )
+GAME( 1998, mvscjr1,  mvsc,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (Japan 980112)" )
+GAME( 1998, mvsca,    mvsc,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (Asia 980112)" )
 GAMEX(1998, mvsch,    mvsc,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Marvel Vs. Capcom: Clash of Super Heroes (Hispanic 980123)", GAME_NOT_WORKING )
 GAMEX(2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Mighty! Pang (Japan 001011)", GAME_NOT_WORKING )
 GAMEX(1995, nwarr,    0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Night Warriors: Darkstalkers Revenge (US 950406)", GAME_NOT_WORKING )

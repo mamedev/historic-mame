@@ -56,8 +56,8 @@ static int mrflea_select3;
 extern WRITE_HANDLER( mrflea_gfx_bank_w );
 extern WRITE_HANDLER( mrflea_videoram_w );
 extern WRITE_HANDLER( mrflea_spriteram_w );
-extern int mrflea_vh_start( void );
-extern void mrflea_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
+extern VIDEO_START( mrflea );
+extern VIDEO_UPDATE( mrflea );
 
 static struct AY8910interface ay8910_interface = {
 	3,	/* 3 chips */
@@ -137,7 +137,7 @@ static WRITE_HANDLER( mrflea_main_w ){
 static WRITE_HANDLER( mrflea_io_w ){
 	mrflea_status |= 0x08; // pending command to IO CPU
 	mrflea_io = data;
-	cpu_cause_interrupt( 1, Z80_IRQ_INT );
+	cpu_set_irq_line( 1, 0, HOLD_LINE );
 }
 
 static READ_HANDLER( mrflea_main_r ){
@@ -164,9 +164,9 @@ static READ_HANDLER( mrflea_io_status_r ){
 	return mrflea_status^0x01;
 }
 
-int mrflea_io_interrupt( void ){
-	if( cpu_getiloops()==0 || (mrflea_status&0x08) ) return interrupt();
-	return ignore_interrupt();
+INTERRUPT_GEN( mrflea_io_interrupt ){
+	if( cpu_getiloops()==0 || (mrflea_status&0x08) ) 
+		cpu_set_irq_line(1, 0, HOLD_LINE);
 }
 
 static READ_HANDLER( mrflea_interrupt_type_r ){
@@ -278,48 +278,36 @@ static PORT_WRITE_START( writeport_io )
 	{ 0x47, 0x47, mrflea_select3_w },
 PORT_END
 
-static struct MachineDriver machine_driver_mrflea = {
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000, /* 4 MHz? */
-			readmem,writemem,
-			readport,writeport,
-			interrupt,1 /* NMI resets the game */
-		},
-		{
-			CPU_Z80,
-			6000000,
-			readmem_io,writemem_io,
-			readport_io,writeport_io,
-			mrflea_io_interrupt,2
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	100,
-	0,
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 31*8-1 },
-	gfxdecodeinfo,
-	32, 0,
-	0,
+static MACHINE_DRIVER_START( mrflea )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mrflea_vh_start,
-	0,
-	mrflea_vh_screenrefresh,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* NMI resets the game */
+
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_MEMORY(readmem_io,writemem_io)
+	MDRV_CPU_PORTS(readport_io,writeport_io)
+	MDRV_CPU_VBLANK_INT(mrflea_io_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+
+	MDRV_VIDEO_START(mrflea)
+	MDRV_VIDEO_UPDATE(mrflea)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 ROM_START( mrflea )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code; main CPU */

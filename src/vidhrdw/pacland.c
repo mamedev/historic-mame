@@ -40,7 +40,7 @@ static struct rectangle spritevisiblearea =
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
-void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( pacland )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -88,44 +88,24 @@ void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
-int pacland_vh_start( void )
+VIDEO_START( pacland )
 {
-	if ( ( dirtybuffer = malloc( videoram_size ) ) == 0)
+	if ( ( dirtybuffer = auto_malloc( videoram_size ) ) == 0)
 		return 1;
 	memset (dirtybuffer, 1, videoram_size);
 
-	if ( ( tmpbitmap = bitmap_alloc( 64*8, 32*8 ) ) == 0 )
-	{
-		free( dirtybuffer );
+	if ( ( tmpbitmap = auto_bitmap_alloc( 64*8, 32*8 ) ) == 0 )
 		return 1;
-	}
 
-	if ( ( tmpbitmap2 = bitmap_alloc( 64*8, 32*8 ) ) == 0 )
-	{
-		bitmap_free(tmpbitmap);
-		free( dirtybuffer );
+	if ( ( tmpbitmap2 = auto_bitmap_alloc( 64*8, 32*8 ) ) == 0 )
 		return 1;
-	}
 
-	if ( ( tmpbitmap3 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 )
-	{
-		bitmap_free(tmpbitmap2);
-		bitmap_free(tmpbitmap);
-		free( dirtybuffer );
+	if ( ( tmpbitmap3 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 )
 		return 1;
-	}
 
 	palette_bank = -1;
 
 	return 0;
-}
-
-void pacland_vh_stop(void)
-{
-	bitmap_free(tmpbitmap3);
-	bitmap_free(tmpbitmap2);
-	bitmap_free(tmpbitmap);
-	free( dirtybuffer );
 }
 
 
@@ -271,7 +251,7 @@ static void pacland_draw_sprites( struct mame_bitmap *bitmap,int priority)
 
 
 
-void pacland_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pacland )
 {
 	int offs;
 	int sx,sy, code, flipx, flipy, color;

@@ -41,9 +41,7 @@ WRITE_HANDLER( geebee_sound_w )
 		 * Decay:
 		 * discharge C33 (1uF) through R50 (22k) -> 0.14058s
 		 */
-		if( volume_timer )
-			timer_remove(volume_timer);
-		volume_timer = timer_pulse(TIME_IN_HZ(32768/0.14058), 0, volume_decay);
+		timer_adjust(volume_timer, TIME_IN_HZ(32768/0.14058), 0, TIME_IN_HZ(32768/0.14058));
 	}
 	else
 	{
@@ -54,9 +52,7 @@ WRITE_HANDLER( geebee_sound_w )
 		 * I can only guess here that the decay should be slower,
 		 * maybe half as fast?
 		 */
-		if( volume_timer )
-			timer_remove(volume_timer);
-		volume_timer = timer_pulse(TIME_IN_HZ(32768/0.2906), 0, volume_decay);
+		timer_adjust(volume_timer, TIME_IN_HZ(32768/0.2906), 0, TIME_IN_HZ(32768/0.2906));
     }
 }
 
@@ -118,7 +114,7 @@ int geebee_sh_start(const struct MachineSound *msound)
 {
 	int i;
 
-	decay = (UINT16 *)malloc(32768 * sizeof(INT16));
+	decay = (UINT16 *)auto_malloc(32768 * sizeof(INT16));
 	if( !decay )
 		return 1;
 
@@ -126,17 +122,13 @@ int geebee_sh_start(const struct MachineSound *msound)
 		decay[0x7fff-i] = (INT16) (0x7fff/exp(1.0*i/4096));
 
 	channel = stream_init("GeeBee", 100, Machine->sample_rate, 0, geebee_sound_update);
+	
+	volume_timer = timer_alloc(volume_decay);
     return 0;
 }
 
 void geebee_sh_stop(void)
 {
-	if( volume_timer )
-		timer_remove(volume_timer);
-	volume_timer = NULL;
-    if( decay )
-		free(decay);
-	decay = NULL;
 }
 
 void geebee_sh_update(void)

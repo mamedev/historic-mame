@@ -314,7 +314,11 @@ static HRESULT WINAPI enum_callback(LPDDSURFACEDESC desc, LPVOID context)
 static HRESULT WINAPI enum2_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 {
 	int refresh = (win_match_refresh || win_gfx_refresh) ? desc->DUMMYUNIONNAMEN(2).dwRefreshRate : 0;
+#ifdef _MSC_VER
+	int depth = desc->DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+#else
 	int depth = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+#endif
 	double score;
 
 	// compute this mode's score

@@ -22,7 +22,7 @@ Notes:
 
 /* in machine/mexico86.c */
 extern unsigned char *mexico86_protection_ram;
-int mexico86_m68705_interrupt(void);
+INTERRUPT_GEN( mexico86_m68705_interrupt );
 READ_HANDLER( mexico86_68705_portA_r );
 WRITE_HANDLER( mexico86_68705_portA_w );
 WRITE_HANDLER( mexico86_68705_ddrA_w );
@@ -34,8 +34,8 @@ WRITE_HANDLER( mexico86_68705_ddrB_w );
 extern unsigned char *mexico86_videoram,*mexico86_objectram;
 extern size_t mexico86_objectram_size;
 WRITE_HANDLER( mexico86_bankswitch_w );
-void mexico86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void kikikai_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( mexico86 );
+VIDEO_UPDATE( kikikai );
 
 
 
@@ -345,59 +345,48 @@ static struct YM2203interface ym2203_interface =
 
 
 
-#define MACHINEDRIVER(NAME) 														\
-static const struct MachineDriver machine_driver_##NAME = 							\
-{																					\
-	{																				\
-		{																			\
-			CPU_Z80,																\
-			6000000,		/* 6 MHz??? */											\
-			readmem,writemem,0,0,													\
-			ignore_interrupt,0	/* IRQs are triggered by the 68705 */				\
-		},																			\
-		{																			\
-			CPU_Z80,																\
-			6000000,		/* 6 MHz??? */											\
-			sound_readmem,sound_writemem,0,0,										\
-			interrupt,1																\
-		},																			\
-		{																			\
-			CPU_M68705,																\
-			4000000/2,	/* xtal is 4MHz (????) I think it's divided by 2 internally */	\
-			m68705_readmem,m68705_writemem,0,0,										\
-			mexico86_m68705_interrupt,2												\
-		}																			\
-	},																				\
-	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */		\
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */			\
-			/* synchronization of the CPUs */										\
-	0,																				\
-																					\
-	/* video hardware */															\
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },										\
-	gfxdecodeinfo,																	\
-	256, 0,																			\
-	palette_RRRR_GGGG_BBBB_convert_prom,											\
-																					\
-	VIDEO_TYPE_RASTER,																\
-	0,																				\
-	0,																				\
-	0,																				\
-	NAME##_vh_screenrefresh,														\
-																					\
-	/* sound hardware */															\
-	0,0,0,0,																		\
-	{																				\
-		{																			\
-			SOUND_YM2203,															\
-			&ym2203_interface														\
-		}																			\
-	}																				\
-};
+static MACHINE_DRIVER_START( mexico86 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M68705, 4000000/2)	/* xtal is 4MHz (????) I think it's divided by 2 internally */
+	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+	MDRV_CPU_VBLANK_INT(mexico86_m68705_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)  /* frames per second, vblank duration */
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_UPDATE(mexico86)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
-MACHINEDRIVER( mexico86 )
-MACHINEDRIVER( kikikai )
+static MACHINE_DRIVER_START( kikikai )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mexico86)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(kikikai)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

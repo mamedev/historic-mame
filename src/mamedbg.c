@@ -382,7 +382,7 @@ typedef struct {
 	UINT32	newval[MAX_REGS];		/* new register values */
 	s_edit	edit[MAX_REGS]; 		/* list of x,y,w triplets for the register values */
 	char	name[MAX_REGS][15+1];	/* ...fifteen characters enough!? */
-	UINT8	id[MAX_REGS];			/* the ID of the register (cpu_get_reg/cpu_set_reg) */
+	UINT8	id[MAX_REGS];			/* the ID of the register (activecpu_get_reg/activecpu_set_reg) */
 	UINT32	max_width;				/* maximum width of any dumped register */
 	INT32	idx;					/* index of current register */
 	INT32	count;					/* number of registers */
@@ -514,17 +514,13 @@ UINT8 debugger_palette[] = {
 };
 
 
-/* in usrintrf.c */
-void switch_ui_orientation(void);
-void switch_true_orientation(void);
-
 #include "dbgfonts/m0813fnt.c"
 
 struct GfxElement *build_debugger_font(void)
 {
 	struct GfxElement *font;
 
-	switch_ui_orientation();
+	switch_ui_orientation(NULL);
 
 	font = decodegfx(fontdata,&fontlayout);
 
@@ -534,7 +530,7 @@ struct GfxElement *build_debugger_font(void)
 		font->total_colors = DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS;
 	}
 
-	switch_true_orientation();
+	switch_true_orientation(NULL);
 
 	return font;
 }
@@ -546,7 +542,7 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 
 	/* ASG: this allows the debug bitmap to be a different depth than the screen */
 	Machine->color_depth = bitmap->depth;
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 	sx = cursor_x * font->width;
 	sy = cursor_y * font->height;
 	for (y = 0; y < font->height; y++)
@@ -567,7 +563,7 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 		}
 	}
 	Machine->color_depth = saved_depth;
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
 	cursor_on ^= 1;
 }
 
@@ -576,11 +572,11 @@ void dbg_put_screen_char(int ch, int attr, int x, int y)
 	struct mame_bitmap *bitmap = Machine->debug_bitmap;
 	struct GfxElement *font = Machine->debugger_font;
 
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 	drawgfx(bitmap, font,
 		ch, attr, 0, 0, x*font->width, y*font->height,
 		0, TRANSPARENCY_NONE, 0);
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
 }
 
 static void set_screen_curpos(int x, int y)

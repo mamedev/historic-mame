@@ -51,9 +51,8 @@ Known Issues:
 WRITE16_HANDLER( fround_gfx_bank_w );
 WRITE16_HANDLER( twin16_video_register_w );
 
-extern int twin16_vh_start( void );
-extern void twin16_vh_stop( void );
-extern void twin16_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+extern VIDEO_START( twin16 );
+extern VIDEO_UPDATE( twin16 );
 
 extern void twin16_spriteram_process( void );
 
@@ -94,7 +93,7 @@ enum
 #define COMRAM_r					MRA16_BANK1
 #define COMRAM_w					MWA16_BANK1
 
-static void cuebrick_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( cuebrick )
 {
 	if (read_or_write)
 		osd_fwrite(file,battery_backed_ram,0x4000);
@@ -164,14 +163,14 @@ static WRITE16_HANDLER( sound_command_w )
 	soundlatch_w( 0, twin16_sound_command&0xff );
 }
 
-static int CPUA_interrupt( void )
+static INTERRUPT_GEN( CPUA_interrupt )
 {
-	return CPUA_IRQ_ENABLE?MC68000_IRQ_5:ignore_interrupt();
+	if (CPUA_IRQ_ENABLE) cpu_set_irq_line(cpu_getactivecpu(), 5, HOLD_LINE);
 }
 
-static int CPUB_interrupt( void )
+static INTERRUPT_GEN( CPUB_interrupt )
 {
-	return CPUB_IRQ_ENABLE?MC68000_IRQ_5:ignore_interrupt();
+	if (CPUB_IRQ_ENABLE) cpu_set_irq_line(cpu_getactivecpu(), 5, HOLD_LINE);
 }
 
 static READ16_HANDLER( twin16_sprite_status_r )
@@ -203,7 +202,7 @@ static WRITE16_HANDLER( twin16_CPUA_register_w )
 	{
 		if( (old&0x08)==0 && (twin16_CPUA_register&0x08) )
 		{
-			cpu_cause_interrupt( CPU_SOUND, 0xff );
+			cpu_set_irq_line_and_vector( CPU_SOUND, 0, HOLD_LINE, 0xff );
 		}
 
 		if( (old&0x40) && (twin16_CPUA_register&0x40)==0 )
@@ -213,7 +212,7 @@ static WRITE16_HANDLER( twin16_CPUA_register_w )
 
 		if( (old&0x10)==0 && (twin16_CPUA_register&0x10) )
 		{
-			cpu_cause_interrupt( CPU_B, MC68000_IRQ_6 );
+			cpu_set_irq_line( CPU_B, MC68000_IRQ_6, HOLD_LINE );
 		}
 		coin_counter_w( 0, twin16_CPUA_register&0x01 );
 		coin_counter_w( 1, twin16_CPUA_register&0x02 );
@@ -234,7 +233,7 @@ static WRITE16_HANDLER( twin16_CPUB_register_w )
 	{
 		if( (old&0x01)==0 && (twin16_CPUB_register&0x1) )
 		{
-			cpu_cause_interrupt( CPU_A, MC68000_IRQ_6 );
+			cpu_set_irq_line( CPU_A, MC68000_IRQ_6, HOLD_LINE );
 		}
 	}
 }
@@ -246,7 +245,7 @@ static WRITE16_HANDLER( fround_CPU_register_w )
 	if( twin16_CPUA_register!=old )
 	{
 		if( (old&0x08)==0 && (twin16_CPUA_register&0x08) )
-			cpu_cause_interrupt( CPU_SOUND, 0xff ); // trigger IRQ on sound CPU
+			cpu_set_irq_line_and_vector( CPU_SOUND, 0, HOLD_LINE, 0xff ); // trigger IRQ on sound CPU
 	}
 }
 
@@ -1083,172 +1082,119 @@ static struct UPD7759_interface upd7759_interface =
 
 
 
-#define MACHINE_DRIVER(NAME,NVRAM)				\
-static const struct MachineDriver machine_driver_##NAME =	\
-{	\
-	{	\
-		{	\
-			CPU_Z80 | CPU_AUDIO_CPU,	\
-			3579545,	\
-			readmem_sound,writemem_sound,0,0,	\
-			ignore_interrupt,1	\
-		},	\
-		{	\
-			CPU_M68000,	\
-			10000000,	\
-			readmem_sub,writemem_sub,0,0,	\
-			CPUB_interrupt,1	\
-		},	\
-		{	\
-			CPU_M68000,	\
-			10000000,	\
-			readmem,writemem,0,0,	\
-			CPUA_interrupt,1	\
-		},	\
-	},	\
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	\
-	100, /* CPU slices */	\
-	0, /* init machine */	\
-	\
-	/* video hardware */	\
-	320, 256, { 0, 319, 0+16, 255-16 },	\
-	gfxdecodeinfo,	\
-	0x400, 0,	\
-	0,	\
-	\
-	VIDEO_TYPE_RASTER,	\
-	0,	\
-	twin16_vh_start,	\
-	twin16_vh_stop,	\
-	twin16_vh_screenrefresh,	\
-	\
-	/* sound hardware */	\
-	SOUND_SUPPORTS_STEREO,0,0,0,	\
-	{	\
-		{	\
-			SOUND_YM2151,	\
-			&ym2151_interface	\
-		},	\
-		{	\
-			SOUND_K007232,	\
-			&k007232_interface,	\
-		},	\
-		{	\
-			SOUND_UPD7759,	\
-			&upd7759_interface	\
-		}	\
-	},	\
-	NVRAM	\
-};
+static MACHINE_DRIVER_START( twin16 )
 
-MACHINE_DRIVER(twin16,0)
-MACHINE_DRIVER(cuebrick,cuebrick_nvram_handler)
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
 
-static const struct MachineDriver machine_driver_heavysync =
-{
-	{
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,
-			readmem_sub,writemem_sub,0,0,
-			CPUB_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,
-			readmem,writemem,0,0,
-			CPUA_interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1000, /* CPU slices */
-	0, /* init machine */
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_VBLANK_INT(CPUB_interrupt,1)
+
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(CPUA_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	320, 256, { 0, 319, 0+16, 255-16 },
-	gfxdecodeinfo,
-	0x400, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 319, 0+16, 255-16)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x400)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	twin16_vh_start,
-	twin16_vh_stop,
-	twin16_vh_screenrefresh,
+	MDRV_VIDEO_START(twin16)
+	MDRV_VIDEO_UPDATE(twin16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_fround =
-{
-	{
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,
-			fround_readmem,fround_writemem,0,0,
-			CPUA_interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* CPU slices */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( cuebrick )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(twin16)
+	MDRV_NVRAM_HANDLER(cuebrick)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( heavysync )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(readmem_sub,writemem_sub)
+	MDRV_CPU_VBLANK_INT(CPUB_interrupt,1)
+
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(CPUA_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1000)
 
 	/* video hardware */
-	320, 256, { 0, 319, 0+16, 255-16 },
-	gfxdecodeinfo,
-	0x400, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 319, 0+16, 255-16)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x400)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	twin16_vh_start,
-	twin16_vh_stop,
-	twin16_vh_screenrefresh,
+	MDRV_VIDEO_START(twin16)
+	MDRV_VIDEO_UPDATE(twin16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( fround )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(fround_readmem,fround_writemem)
+	MDRV_CPU_VBLANK_INT(CPUA_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 319, 0+16, 255-16)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x400)
+
+	MDRV_VIDEO_START(twin16)
+	MDRV_VIDEO_UPDATE(twin16)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************************/
 
@@ -1665,13 +1611,13 @@ static void gfx_untangle( void )
 	}
 }
 
-static void init_twin16(void)
+static DRIVER_INIT( twin16 )
 {
 	gfx_untangle();
 	twin16_custom_vidhrdw = 0;
 }
 
-static void init_fround(void)
+static DRIVER_INIT( fround )
 {
 	gfx_untangle();
 	twin16_custom_vidhrdw = 1;

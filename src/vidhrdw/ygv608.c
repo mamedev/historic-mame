@@ -54,7 +54,7 @@ static void dump_block( char *name, unsigned char *block, int len );
 #endif
 
 /* interrupt generated every 1ms second */
-int ygv608_timed_interrupt( void )
+INTERRUPT_GEN( ygv608_timed_interrupt )
 {
 /*
     this is not quite generic, because we trigger a 68k interrupt
@@ -72,18 +72,16 @@ int ygv608_timed_interrupt( void )
     {
 		ygv608.ports.s.p6 |= p6_fv;;
 		if (ygv608.regs.s.r14 & r14_iev)
-			return( m68_level2_irq() );
+			irq2_line_hold();
 	}
 
 	/* once every 60Hz, set the position detection flag (somewhere) */
-	if( ( timer % (1000/60) ) == 7 )
+	else if( ( timer % (1000/60) ) == 7 )
 	{
 		ygv608.ports.s.p6 |= p6_fp;
 		if (ygv608.regs.s.r14 & r14_iep)
-			return( m68_level2_irq() );
+			irq2_line_hold();
 	}
-
-	return( 0 );
 }
 
 
@@ -395,7 +393,7 @@ static void get_tile_info_B_16( int offset )
 	}
 }
 
-int ygv608_vh_start(void)
+VIDEO_START( ygv608 )
 {
 	memset( &ygv608, 0, sizeof(ygv608) );
 
@@ -406,7 +404,7 @@ int ygv608_vh_start(void)
 	return 0;
 }
 
-void ygv608_vh_stop(void)
+VIDEO_STOP( ygv608 )
 {
 #ifdef _ENABLE_ROTATE_ZOOM
 	if( work_bitmap )
@@ -414,7 +412,7 @@ void ygv608_vh_stop(void)
 #endif
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 #ifdef _ENABLE_SPRITES
 
@@ -431,6 +429,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
     return;
 
   /* draw sprites */
+  sect_rect(&spriteClip, cliprect);
   sa = &ygv608.sprite_attribute_table.s[YGV608_MAX_SPRITES-1];
   for( i=0; i<YGV608_MAX_SPRITES; i++, sa-- )
   {
@@ -607,7 +606,7 @@ static char *mode[] = { "2PLANE_8BIT",
 static char *psize[] = { "8x8", "16x16", "32x32", "64x64" };
 #endif
 
-void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh )
+VIDEO_UPDATE( ygv608 )
 {
 #ifdef _SHOW_VIDEO_DEBUG
     char buffer[64];
@@ -690,7 +689,7 @@ void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh )
 		tilemap_set_scroll_cols( tilemap_B, ygv608.page_x );
 
 		// now clear the screen in case we change to 1-plane mode
-		fillbitmap( work_bitmap, Machine->pens[0], &Machine->visible_area );
+		fillbitmap( work_bitmap, Machine->pens[0], cliprect );
 
 		// reset resize flag
 		ygv608.tilemap_resize = 0;
@@ -743,12 +742,12 @@ void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh )
 	if ((ygv608.regs.s.r7 & r7_md) & MD_1PLANE)
 	{
 		// If the background tilemap is disabled, we need to clear the bitmap to black
-		fillbitmap (work_bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap (work_bitmap,Machine->pens[0],cliprect);
 //		fillbitmap (work_bitmap,1,&Machine->visible_area);
 	}
 	else
 #endif
-		tilemap_draw( work_bitmap, tilemap_B, 0, 0 );
+		tilemap_draw( work_bitmap,NULL, tilemap_B, 0, 0 );
 
 #ifdef _ENABLE_ROTATE_ZOOM
 
@@ -772,11 +771,11 @@ void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh )
                     ygv608.ay + 0x10000 * r *
                     ( cos( alpha ) * cos_theta + sin( alpha ) * sin_theta ),
                    ygv608.dx, ygv608.dxy, ygv608.dyx, ygv608.dy, 0,
-                   &Machine->visible_area,
+                   cliprect,
                    TRANSPARENCY_NONE, 0, 0 );
   else
     copybitmap( bitmap, work_bitmap, 0, 0, 0, 0,
-                &Machine->visible_area,
+                cliprect,
                 TRANSPARENCY_NONE, 0 );
 
   // for some reason we can't use an opaque tilemap_A
@@ -789,9 +788,9 @@ void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh )
 
 	if ((ygv608.regs.s.r11 & r11_prm) == PRM_ASBDEX ||
 		(ygv608.regs.s.r11 & r11_prm) == PRM_ASEBDX )
-		draw_sprites( bitmap );
+		draw_sprites( bitmap,cliprect );
 
-	tilemap_draw( work_bitmap, tilemap_A, 0, 0 );
+	tilemap_draw( work_bitmap,cliprect, tilemap_A, 0, 0 );
 
 #ifdef _ENABLE_ROTATE_ZOOM
   if( ygv608.regs.s.zron )
@@ -799,17 +798,17 @@ void ygv608_vh_update( struct mame_bitmap *bitmap, int full_refresh )
                    ygv608.ax, // + ( Machine->visible_area.min_x << 16 ),
                    ygv608.ay, // + ( Machine->visible_area.min_y << 16 ),
                    ygv608.dx, ygv608.dxy, ygv608.dyx, ygv608.dy, 0,
-                   &Machine->visible_area,
+                   cliprect,
                    TRANSPARENCY_PEN, Machine->pens[0], 0 );
   else
     copybitmap( bitmap, work_bitmap, 0, 0, 0, 0,
-                &Machine->visible_area,
+                cliprect,
                 TRANSPARENCY_PEN, Machine->pens[0] );
 #endif
 
 	if ((ygv608.regs.s.r11 & r11_prm) == PRM_SABDEX ||
 		(ygv608.regs.s.r11 & r11_prm) == PRM_SEABDX)
-		draw_sprites( bitmap );
+		draw_sprites( bitmap,cliprect );
 
 
 #ifdef _SHOW_VIDEO_DEBUG
@@ -1321,7 +1320,7 @@ void SetPostShortcuts( int reg )
 
 			if (yTile >= ygv608.page_y)
 				logerror ("setting pny(%d) >= page_y(%d) @ $%X\n",
-						yTile, ygv608.page_y, cpu_get_pc() );
+						yTile, ygv608.page_y, activecpu_get_pc() );
 			yTile &= (ygv608.page_y - 1);
 			ygv608.regs.s.r0 &= ~r0_pny;
 			ygv608.regs.s.r0 |= yTile;
@@ -1334,7 +1333,7 @@ void SetPostShortcuts( int reg )
 
 			if (xTile >= ygv608.page_x)
 				logerror ("setting pnx(%d) >= page_x(%d) @ $%X\n",
-						xTile, ygv608.page_x, cpu_get_pc() );
+						xTile, ygv608.page_x, activecpu_get_pc() );
 			xTile &= (ygv608.page_x - 1);
 			ygv608.regs.s.r1 &= ~r1_pnx;
 			ygv608.regs.s.r1 |= xTile;

@@ -30,9 +30,9 @@ WRITE_HANDLER( gng_bgvideoram_w );
 WRITE_HANDLER( gng_bgscrollx_w );
 WRITE_HANDLER( gng_bgscrolly_w );
 WRITE_HANDLER( gng_flipscreen_w );
-int gng_vh_start(void);
-void gng_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void gng_eof_callback(void);
+VIDEO_START( gng );
+VIDEO_UPDATE( gng );
+VIDEO_EOF( gng );
 
 
 
@@ -416,48 +416,35 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_gng =
-{
+static MACHINE_DRIVER_START( gng )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,			/* 1.5 MHz ? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6809, 1500000)			/* 1.5 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	gng_eof_callback,
-	gng_vh_start,
-	0,
-	gng_vh_screenrefresh,
+	MDRV_VIDEO_START(gng)
+	MDRV_VIDEO_EOF(gng)
+	MDRV_VIDEO_UPDATE(gng)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -704,7 +691,7 @@ static READ_HANDLER( diamond_hack_r )
 	return 0;
 }
 
-static void init_diamond(void)
+static DRIVER_INIT( diamond )
 {
 	install_mem_read_handler(0,0x6000,0x6000,diamond_hack_r);
 }

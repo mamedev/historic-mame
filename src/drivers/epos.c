@@ -1,52 +1,64 @@
 /***************************************************************************
 
-  Epos games
+	Epos games
 
-  driver by Zsolt Vasvari
+	driver by Zsolt Vasvari
 
 
-  Notes:
+	Notes:
 
-  - To walk in IGMO, hold down button 2.
-  - Super Glob seems like a later revision of The Glob, the most obvious
-    difference being an updated service mode.
-  - These games don't have cocktail mode.
-  - The divisor 4 was derived using the timing loop used to split the screen
-    in the middle.  This loop takes roughly 24200 cycles, giving
-    2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75MHz for the CPU speed,
-    assuming 60 fps and a 2500 cycle VBLANK period.  Since the schematics
-    are available, so this should be easy to check.
-  - I think theglob2 is earlier than theglob.  They only differ in one routine,
-    but it appears to be a bug fix.  Also, theglob3 appears to be even older.
+	- To walk in IGMO, hold down button 2.
+	- Super Glob seems like a later revision of The Glob, the most obvious
+	difference being an updated service mode.
+	- These games don't have cocktail mode.
+	- The divisor 4 was derived using the timing loop used to split the screen
+	in the middle.  This loop takes roughly 24200 cycles, giving
+	2500 + (24200 - 2500) * 2 * 60 = 2754000 = 2.75MHz for the CPU speed,
+	assuming 60 fps and a 2500 cycle VBLANK period.  Since the schematics
+	are available, so this should be easy to check.
+	- I think theglob2 is earlier than theglob.  They only differ in one routine,
+	but it appears to be a bug fix.  Also, theglob3 appears to be even older.
 
-  To Do:
+	To Do:
 
-  - During the color test, Super Blob uses a busy loop to split the screen
-    between the two palettes.  This effect is not emulated.  See $039c.
-    The Glob has a different color test, not using the busy loop.
+	- During the color test, Super Blob uses a busy loop to split the screen
+	between the two palettes.  This effect is not emulated.  See $039c.
+	The Glob has a different color test, not using the busy loop.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "epos.h"
 
 
-void epos_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( epos_videoram_w );
-WRITE_HANDLER( epos_port_1_w );
-void epos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x77ff, MRA_ROM },
 	{ 0x7800, 0xffff, MRA_RAM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x77ff, MWA_ROM },
 	{ 0x7800, 0x7fff, MWA_RAM },
 	{ 0x8000, 0xffff, epos_videoram_w, &videoram, &videoram_size },
 MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Main CPU port handlers
+ *
+ *************************************/
 
 static PORT_READ_START( readport )
 	{ 0x00, 0x00, input_port_0_r },
@@ -55,6 +67,7 @@ static PORT_READ_START( readport )
 	{ 0x03, 0x03, input_port_3_r },
 PORT_END
 
+
 static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, watchdog_reset_w },
 	{ 0x01, 0x01, epos_port_1_w },
@@ -62,6 +75,13 @@ static PORT_WRITE_START( writeport )
 	{ 0x06, 0x06, AY8910_control_port_0_w },
 PORT_END
 
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 /* I think the upper two bits of port 1 are used as a simple form of protection,
    so that ROMs couldn't be simply swapped.  Each game checks these bits and halts
@@ -117,6 +137,7 @@ INPUT_PORTS_START( suprglob )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( igmo )
 	PORT_START      /* IN0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
@@ -166,6 +187,13 @@ INPUT_PORTS_START( igmo )
 INPUT_PORTS_END
 
 
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct AY8910interface ay8912_interface =
 {
 	1,	/* 1 chip */
@@ -178,49 +206,46 @@ static struct AY8910interface ay8912_interface =
 };
 
 
-static const struct MachineDriver machine_driver_epos =
-{
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( epos )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			11000000/4,		/* 2.75 MHz (see notes) */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, 2500,  /* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, 11000000/4)	/* 2.75 MHz (see notes) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	272, 241, { 0, 271, 0, 235 },	/* an unusual resolution */
-	0,
-	32, 0,
-	epos_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(272, 241)
+	MDRV_VISIBLE_AREA(0, 271, 0, 235)
+	MDRV_PALETTE_LENGTH(32)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	epos_vh_screenrefresh,
+	MDRV_PALETTE_INIT(epos)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(epos)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8912_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8912_interface)
+MACHINE_DRIVER_END
 
 
-/***************************************************************************
 
-  Game driver(s)
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
-***************************************************************************/
 ROM_START( suprglob )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "u10",			0x0000, 0x1000, 0xc0141324 )
@@ -235,6 +260,7 @@ ROM_START( suprglob )
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, 0xf4f6ddc5 )
 ROM_END
+
 
 ROM_START( theglob )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
@@ -251,6 +277,7 @@ ROM_START( theglob )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, 0xf4f6ddc5 )
 ROM_END
 
+
 ROM_START( theglob2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "611293.u10",		0x0000, 0x1000, 0x870af7ce )
@@ -266,6 +293,7 @@ ROM_START( theglob2 )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, 0xf4f6ddc5 )
 ROM_END
 
+
 ROM_START( theglob3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
 	ROM_LOAD( "theglob3.u10",	0x0000, 0x1000, 0x969cfaf6 )
@@ -280,6 +308,7 @@ ROM_START( theglob3 )
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, 0xf4f6ddc5 )
 ROM_END
+
 
 ROM_START( igmo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )       /* 64k for code */
@@ -297,6 +326,12 @@ ROM_START( igmo )
 ROM_END
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME ( 1983, suprglob, 0,        epos, suprglob, 0, ROT270, "Epos Corporation", "Super Glob" )
 GAME ( 1983, theglob,  suprglob, epos, suprglob, 0, ROT270, "Epos Corporation", "The Glob" )

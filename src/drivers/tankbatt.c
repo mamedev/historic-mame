@@ -65,8 +65,8 @@ extern size_t tankbatt_bulletsram_size;
 static int tankbatt_nmi_enable; /* No need to init this - the game will set it on reset */
 static int tankbatt_sound_enable;
 
-void tankbatt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void tankbatt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( tankbatt );
+VIDEO_UPDATE( tankbatt );
 
 WRITE_HANDLER( tankbatt_led_w )
 {
@@ -171,11 +171,10 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x2000, 0x3fff, MWA_ROM },
 MEMORY_END
 
-int tankbatt_interrupt (void)
+INTERRUPT_GEN( tankbatt_interrupt )
 {
-	if ((readinputport (0) & 0x60) == 0) return interrupt ();
-	if (tankbatt_nmi_enable) return nmi_interrupt ();
-	else return ignore_interrupt ();
+	if ((readinputport (0) & 0x60) == 0) cpu_set_irq_line(0,0,HOLD_LINE);
+	else if (tankbatt_nmi_enable) cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 INPUT_PORTS_START( tankbatt )
@@ -276,42 +275,31 @@ static struct Samplesinterface samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_tankbatt =
-{
+static MACHINE_DRIVER_START( tankbatt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 MHz ???? */
-			readmem,writemem,0,0,
-			tankbatt_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD(M6502, 1000000)	/* 1 MHz ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tankbatt_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	65, 128,
-	tankbatt_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(65)
+	MDRV_COLORTABLE_LENGTH(128)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	tankbatt_vh_screenrefresh,
+	MDRV_PALETTE_INIT(tankbatt)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(tankbatt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -11,9 +11,8 @@ Strength & Skill (c) 1984 Sun Electronics
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void strnskil_vh_convert_color_prom(unsigned char *palette,
-	unsigned short *colortable,const unsigned char *color_prom);
-void strnskil_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( strnskil );
+VIDEO_UPDATE( strnskil );
 
 static UINT8 *strnskil_sharedram;
 
@@ -47,7 +46,7 @@ static READ_HANDLER( protection_r )
 {
 	int res;
 
-	switch (cpu_get_pc())
+	switch (activecpu_get_pc())
 	{
 		case 0x6066:	res = 0xa5;	break;
 		case 0x60dc:	res = 0x20;	break;	/* bits 0-3 unknown */
@@ -58,13 +57,13 @@ static READ_HANDLER( protection_r )
 		default:		res = 0xff; break;
 	}
 
-	logerror("%04x: protection_r -> %02x\n",cpu_get_pc(),res);
+	logerror("%04x: protection_r -> %02x\n",activecpu_get_pc(),res);
 	return res;
 }
 
 static WRITE_HANDLER( protection_w )
 {
-	logerror("%04x: protection_w %02x\n",cpu_get_pc(),data);
+	logerror("%04x: protection_w %02x\n",activecpu_get_pc(),data);
 }
 
 /****************************************************************************/
@@ -338,46 +337,36 @@ static struct SN76496interface sn76496_interface =
 };
 
 
-static const struct MachineDriver machine_driver_strnskil =
-{
-	{
-		{
-			CPU_Z80,
-			8000000/2, /* 4.000MHz */
-			strnskil_readmem1,strnskil_writemem1,0,0,
-			interrupt,2
-		},
-		{
-			CPU_Z80,
-			8000000/2, /* 4.000MHz */
-			strnskil_readmem2,strnskil_writemem2,0,0,
-			interrupt,2
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,
-	0,
+static MACHINE_DRIVER_START( strnskil )
 
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
+	MDRV_CPU_MEMORY(strnskil_readmem1,strnskil_writemem1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
-	gfxdecodeinfo,
-	256,1024,
-	strnskil_vh_convert_color_prom,
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4.000MHz */
+	MDRV_CPU_MEMORY(strnskil_readmem2,strnskil_writemem2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	strnskil_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	},
-};
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(strnskil)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(strnskil)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
 /****************************************************************************/
 

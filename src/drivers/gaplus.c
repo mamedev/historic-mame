@@ -36,19 +36,18 @@ READ_HANDLER( galaga3_customio_1_r );
 READ_HANDLER( galaga3_customio_2_r );
 READ_HANDLER( galaga3_customio_3_r );
 
-extern int gaplus_interrupt_1(void);
+extern INTERRUPT_GEN( gaplus_interrupt_1 );
 WRITE_HANDLER( gaplus_reset_2_3_w );
-extern int gaplus_interrupt_2(void);
+extern INTERRUPT_GEN( gaplus_interrupt_2 );
 WRITE_HANDLER( gaplus_interrupt_ctrl_2_w );
-extern int gaplus_interrupt_3( void );
+extern INTERRUPT_GEN( gaplus_interrupt_3 );
 WRITE_HANDLER( gaplus_interrupt_ctrl_3a_w );
 WRITE_HANDLER( gaplus_interrupt_ctrl_3b_w );
 
-extern int gaplus_vh_start( void );
-extern void gaplus_vh_stop( void );
-extern void gaplus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void gaplus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void gaplus_init_machine(void);
+extern VIDEO_START( gaplus );
+extern PALETTE_INIT( gaplus );
+extern VIDEO_UPDATE( gaplus );
+extern MACHINE_INIT( gaplus );
 WRITE_HANDLER( gaplus_starfield_control_w );
 
 static MEMORY_READ_START( readmem_cpu1 )
@@ -448,170 +447,117 @@ static struct Samplesinterface samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_gaplus =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu1,writemem_cpu1,0,0,
-			gaplus_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SUB CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			gaplus_interrupt_2,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			gaplus_interrupt_3,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,
+static MACHINE_DRIVER_START( gaplus )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_2,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_3,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+
+	MDRV_MACHINE_INIT(gaplus)
 
 	/* video hardware */
-	36*8, 28*8,
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,
-	64*4+64*8,
-	gaplus_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gaplus_vh_start,
-	gaplus_vh_stop,
-	gaplus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gaplus)
+	MDRV_VIDEO_START(gaplus)
+	MDRV_VIDEO_UPDATE(gaplus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gaplusa =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			gaplusa_readmem_cpu1,writemem_cpu1,0,0,
-			gaplus_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SUB CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			gaplus_interrupt_2,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			gaplus_interrupt_3,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,
+static MACHINE_DRIVER_START( gaplusa )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(gaplusa_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_2,1)
+
+	MDRV_CPU_ADD(M6809, 1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_3,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+	MDRV_MACHINE_INIT(gaplus)
 
 	/* video hardware */
-	36*8, 28*8,
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,
-	64*4+64*8,
-	gaplus_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gaplus_vh_start,
-	gaplus_vh_stop,
-	gaplus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gaplus)
+	MDRV_VIDEO_START(gaplus)
+	MDRV_VIDEO_UPDATE(gaplus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_galaga3 =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			galaga3_readmem_cpu1,writemem_cpu1,0,0,
-			gaplus_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SUB CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			gaplus_interrupt_2,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			gaplus_interrupt_3,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,
+static MACHINE_DRIVER_START( galaga3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(galaga3_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_2,1)
+
+	MDRV_CPU_ADD(M6809, 1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_3,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+	MDRV_MACHINE_INIT(gaplus)
 
 	/* video hardware */
-	36*8, 28*8,
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,
-	64*4+64*8,
-	gaplus_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gaplus_vh_start,
-	gaplus_vh_stop,
-	gaplus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gaplus)
+	MDRV_VIDEO_START(gaplus)
+	MDRV_VIDEO_UPDATE(gaplus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 

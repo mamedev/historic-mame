@@ -198,7 +198,7 @@ static WRITE_HANDLER( oki_bankswitch_w )
 static WRITE16_HANDLER ( wwfwfest_soundwrite )
 {
 	soundlatch_w(1,data & 0xff);
-	cpu_cause_interrupt( 1, Z80_NMI_INT );
+	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 }
 
 /*******************************************************************************
@@ -371,11 +371,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  Interrupt Function
 *******************************************************************************/
 
-static int wwfwfest_interrupt(void) {
+static INTERRUPT_GEN( wwfwfest_interrupt ) {
 	if( cpu_getiloops() == 0 )
-		return MC68000_IRQ_3;
-
-	 return MC68000_IRQ_2;
+		cpu_set_irq_line(0, 3, HOLD_LINE);
+	else
+		cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
 /*******************************************************************************
@@ -405,7 +405,7 @@ static struct OKIM6295interface okim6295_interface =
 	{ 90 }
 };
 
-void wwfwfest_eof_callback(void)
+VIDEO_EOF( wwfwfest )
 {
 	buffer_spriteram16_w(0,0,0);
 }
@@ -414,53 +414,35 @@ void wwfwfest_eof_callback(void)
  Machine Driver(s)
 *******************************************************************************/
 
-static const struct MachineDriver machine_driver_wwfwfest =
-{
-	/* basic machine hardware */
-	{
+static MACHINE_DRIVER_START( wwfwfest )
 
-		{
-			CPU_M68000,
-			12000000,	/* 24 crystal, 12 rated chip */
-			readmem,writemem,0,0,
-			wwfwfest_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 24 crystal, 12 rated chip */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(wwfwfest_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 256, { 0, 319, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 319, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	wwfwfest_eof_callback,
-	wwfwfest_vh_start,
-	0,
-	wwfwfest_vh_screenrefresh,
+	MDRV_VIDEO_START(wwfwfest)
+	MDRV_VIDEO_EOF(wwfwfest)
+	MDRV_VIDEO_UPDATE(wwfwfest)
 
 	/* sound hardware */
-	0,0,0,0, /* Mono */
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /*******************************************************************************
  Rom Loaders / Game Drivers

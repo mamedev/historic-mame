@@ -7,7 +7,7 @@ extern int pc10_sdcs;			/* ShareD Chip Select */
 extern int pc10_dispmask;		/* Display Mask */
 extern int pc10_gun_controller;	/* wether we need to draw a crosshair or not */
 
-void playch10_vh_convert_color_prom( unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom )
+PALETTE_INIT( playch10 )
 {
 	int i;
 
@@ -61,19 +61,13 @@ static struct ppu2c03b_interface ppu_interface =
 	{ ppu_irq }				/* irq */
 };
 
-int playch10_vh_start( void )
+VIDEO_START( playch10 )
 {
 	if ( ppu2c03b_init( &ppu_interface ) )
 		return 1;
 
 	/* the bios uses the generic stuff */
-	return generic_vh_start();
-}
-
-void playch10_vh_stop( void )
-{
-	ppu2c03b_dispose();
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 
@@ -83,7 +77,7 @@ void playch10_vh_stop( void )
 
 ***************************************************************************/
 
-void playch10_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
+VIDEO_UPDATE( playch10 )
 {
 	int offs;
 
@@ -93,7 +87,7 @@ void playch10_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 	top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 	bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
 
-	if ( full_refresh )
+	if ( get_vh_global_attribute_changed() )
 		memset( dirtybuffer, 1, videoram_size );
 
 	/* On Playchoice 10 single monitor, this bit toggles	*/

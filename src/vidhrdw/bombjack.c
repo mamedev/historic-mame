@@ -41,12 +41,12 @@ static void dirty_all(void)
 	memset(dirtybuffer,1,videoram_size);
 }
 
-int bombjack_vh_start(void)
+VIDEO_START( bombjack )
 {
 	state_save_register_int ("video", 0, "background_image", &background_image);
 	state_save_register_int ("video", 0, "flipscreen",       &flipscreen);
 	state_save_register_func_postload (dirty_all);
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 /***************************************************************************
@@ -56,7 +56,7 @@ int bombjack_vh_start(void)
   the main emulation engine.
 
 ***************************************************************************/
-void bombjack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bombjack )
 {
 	int offs,base;
 

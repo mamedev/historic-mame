@@ -113,25 +113,16 @@ WRITE_HANDLER( thief_videoram_w ){
 
 /***************************************************************************/
 
-void thief_vh_stop( void ){
-	free( videoram );
-	free( dirtybuffer );
-	bitmap_free( thief_page1 );
-	bitmap_free( thief_page0 );
-	free( thief_coprocessor.context_ram );
-	free( thief_coprocessor.image_ram );
-}
-
-int thief_vh_start( void ){
+VIDEO_START( thief ){
 	memset( &thief_coprocessor, 0x00, sizeof(thief_coprocessor) );
 
-	thief_page0	= bitmap_alloc( 256,256 );
-	thief_page1	= bitmap_alloc( 256,256 );
-	videoram = calloc( 0x2000*4*2,1 );
-	dirtybuffer = malloc( 0x2000*2 );
+	thief_page0	= auto_bitmap_alloc( 256,256 );
+	thief_page1	= auto_bitmap_alloc( 256,256 );
+	videoram = auto_malloc( 0x2000*4*2 );
+	dirtybuffer = auto_malloc( 0x2000*2 );
 
-	thief_coprocessor.image_ram = malloc( 0x2000 );
-	thief_coprocessor.context_ram = malloc( 0x400 );
+	thief_coprocessor.image_ram = auto_malloc( 0x2000 );
+	thief_coprocessor.context_ram = auto_malloc( 0x400 );
 
 	if( thief_page0 && thief_page1 &&
 		videoram && dirtybuffer &&
@@ -139,13 +130,13 @@ int thief_vh_start( void ){
 		thief_coprocessor.context_ram )
 	{
 		memset( dirtybuffer, 1, 0x2000*2 );
+		memset( videoram, 0, 0x2000*4*2 );
 		return 0;
 	}
-	thief_vh_stop();
 	return 1;
 }
 
-void thief_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh){
+VIDEO_UPDATE( thief ){
 	unsigned int offs;
 	int flipscreen = thief_video_control&1;
 	const pen_t *pal_data = Machine->pens;

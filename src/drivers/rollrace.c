@@ -11,10 +11,9 @@ Issues:
 #include "cpu/z80/z80.h"
 
 
-void rollrace_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void wiz_vh_convert_color_prom(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
-int rollrace_vh_start(void);
-void rollrace_vh_stop(void);
+VIDEO_UPDATE( rollrace );
+PALETTE_INIT( wiz );
+VIDEO_START( rollrace );
 
 WRITE_HANDLER( rollrace_charbank_w );
 WRITE_HANDLER( rollrace_backgroundpage_w);
@@ -246,50 +245,36 @@ static struct AY8910interface ra_ay8910_interface =
 	{ 0 }
 };
 
-static struct MachineDriver machine_driver_rollrace =
-{
+static MACHINE_DRIVER_START( rollrace )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,			/* ?? */
-			readmem, writemem, 0, 0,
-			nmi_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/6,			/* ?? */
-			readmem_snd, writemem_snd, 0, 0,
-			nmi_interrupt, 3
-		},
+	MDRV_CPU_ADD(Z80,18432000/6)			/* ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
+	MDRV_CPU_ADD(Z80,14318000/6)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* ?? */
+	MDRV_CPU_MEMORY(readmem_snd,writemem_snd)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,3)
 
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0,255,16, 255-16 },
-	gfxdecodeinfo,
-	256, 32*8,
-	wiz_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	rollrace_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0,255,16, 255-16)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
+
+	MDRV_PALETTE_INIT(wiz)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(rollrace)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{															\
-		{														\
-			SOUND_AY8910,										\
-			&ra_ay8910_interface													   \
-		}														\
-	}															\
-
-};
+	MDRV_SOUND_ADD(AY8910, ra_ay8910_interface)														\
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

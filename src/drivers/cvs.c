@@ -87,11 +87,10 @@ Hardware Info
 #include "cpu/s2650/s2650.h"
 #include "sound/tms5110.h"
 
-int  cvs_interrupt(void);
-void cvs_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void cvs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int  cvs_vh_start(void);
-void cvs_vh_stop(void);
+INTERRUPT_GEN( cvs_interrupt );
+PALETTE_INIT( cvs );
+VIDEO_UPDATE( cvs );
+VIDEO_START( cvs );
 int  s2650_get_flag(void);
 
 extern unsigned char *dirty_character;
@@ -177,7 +176,7 @@ WRITE_HANDLER( control_port_w )
     /* Sample CPU write - Causes interrupt if bit 7 set */
 
     soundlatch_w(0,data);
-	if(data & 0x80) cpu_cause_interrupt(1,3);
+	if(data & 0x80) cpu_set_irq_line(1,3,HOLD_LINE);
 
 
     /* Speech CPU stuff */
@@ -434,52 +433,38 @@ static struct GfxDecodeInfo cvs_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct MachineDriver machine_driver_cvs =
-{
+static MACHINE_DRIVER_START( cvs )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_S2650,
-			894886.25,
-			cvs_readmem,cvs_writemem,cvs_readport,cvs_writeport,
-			cvs_interrupt,1
-		},
-		{
-			CPU_S2650 | CPU_AUDIO_CPU,
-			894886.25/3,
-			cvs_sound_readmem,cvs_sound_writemem,cvs_sound_readport,0,
-			ignore_interrupt,1
-		}
-	},
-	60, 1000,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD(S2650,894886.25)
+	MDRV_CPU_MEMORY(cvs_readmem,cvs_writemem)
+	MDRV_CPU_PORTS(cvs_readport,cvs_writeport)
+	MDRV_CPU_VBLANK_INT(cvs_interrupt,1)
+
+	MDRV_CPU_ADD(S2650,894886.25/3)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(cvs_sound_readmem,cvs_sound_writemem)
+	MDRV_CPU_PORTS(cvs_sound_readport,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(1000)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 32*8-1 },
-	cvs_gfxdecodeinfo,
-	16,4096,
-	cvs_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 32*8-1)
+	MDRV_GFXDECODE(cvs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	cvs_vh_start,
-	cvs_vh_stop,
-	cvs_vh_screenrefresh,
+	MDRV_PALETTE_INIT(cvs)
+	MDRV_VIDEO_START(cvs)
+	MDRV_VIDEO_UPDATE(cvs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_TMS5110,
-			&tms5110_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(TMS5110, tms5110_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -557,7 +542,7 @@ CVS_ROM(cosmos  ,cs,0x7eb96ddf,cs,0x6975a8f7,cs,0x76904b13,cs,0xbdc89719,cs,0x94
 CVS_ROM(heartatk,ha,0xe8297c23,ha,0xf7632afc,ha,0xa9ce3c6a,ha,0x090f30a9,ha,0x163b3d2d,ha,0x2d0f6d13,ha,0x7f5671bd,ha,0x35b05ab4,ha,0xb9c466a0,0x1000,ha,0xfa21422a,0x1000)
 CVS_ROM(spacefrt,sf,0x1158fc3a,sf,0x8b4e1582,sf,0x48f05102,sf,0xc5b14631,sf,0xd7eca1b6,sf,0xda194a68,sf,0xb96977c7,sf,0xf5d67b9a,sf,0x339a327f,0x0800,sf,0xc5628d30,0x1000)
 
-static void init_spacefrt(void)
+static DRIVER_INIT( spacefrt )
 {
 	/* Patch out 2nd Character Mode Change */
 
@@ -565,7 +550,7 @@ static void init_spacefrt(void)
     memory_region(REGION_CPU1)[0x0261] = 0xc0;
 }
 
-static void init_cosmos(void)
+static DRIVER_INIT( cosmos )
 {
 	/* Patch out 2nd Character Mode Change */
 
@@ -573,7 +558,7 @@ static void init_cosmos(void)
     memory_region(REGION_CPU1)[0x0358] = 0xc0;
 }
 
-static void init_goldbug(void)
+static DRIVER_INIT( goldbug )
 {
 	/* Redirect calls to real memory bank */
 
@@ -581,7 +566,7 @@ static void init_goldbug(void)
     memory_region(REGION_CPU1)[0x436a] = 0x1e;
 }
 
-static void init_huncholy(void)
+static DRIVER_INIT( huncholy )
 {
     /* Patch out protection */
 
@@ -599,7 +584,7 @@ static void init_huncholy(void)
     memory_region(REGION_CPU1)[0x4458] = 0xc0;
 }
 
-static void init_superbik(void)
+static DRIVER_INIT( superbik )
 {
     /* Patch out protection */
 
@@ -626,7 +611,7 @@ static void init_superbik(void)
     memory_region(REGION_CPU1)[0x00bd] = 0xc0;
 }
 
-static void init_hero(void)
+static DRIVER_INIT( hero )
 {
     /* Patch out protection */
 

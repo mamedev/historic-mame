@@ -43,7 +43,7 @@ unsigned char *sonson_scrollx;
   bit 0 -- 2.2kohm resistor  -- RED
 
 ***************************************************************************/
-void sonson_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( sonson )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -98,7 +98,7 @@ void sonson_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colort
   the main emulation engine.
 
 ***************************************************************************/
-void sonson_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sonson )
 {
 	int offs;
 

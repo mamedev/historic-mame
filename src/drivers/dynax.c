@@ -43,9 +43,7 @@ void sprtmtch_update_irq(void)
 	int irq	=	((dynax_sound_irq)   ? 0x08 : 0) |
 				((dynax_vblank_irq)  ? 0x10 : 0) |
 				((dynax_blitter_irq) ? 0x20 : 0) ;
-
-	cpu_irq_line_vector_w(0,0,0xc7 | irq);	/* rst $xx */
-	cpu_set_irq_line(0, 0, irq ? ASSERT_LINE : CLEAR_LINE );
+	cpu_set_irq_line_and_vector(0, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
 }
 
 WRITE_HANDLER( sprtmtch_vblank_ack_w )
@@ -60,11 +58,10 @@ WRITE_HANDLER( sprtmtch_blitter_ack_w )
 	sprtmtch_update_irq();
 }
 
-int sprtmtch_vblank_interrupt(void)
+INTERRUPT_GEN( sprtmtch_vblank_interrupt )
 {
 	dynax_vblank_irq = 1;
 	sprtmtch_update_irq();
-	return ignore_interrupt();
 }
 
 void sprtmtch_sound_callback(int state)
@@ -89,13 +86,13 @@ static WRITE_HANDLER( sprtmtch_coincounter_0_w )
 {
 	coin_counter_w(0, data & 1);
 	if (data & ~1)
-		logerror("CPU#0 PC %06X: Warning, coin counter 0 <- %02X\n", cpu_get_pc(), data);
+		logerror("CPU#0 PC %06X: Warning, coin counter 0 <- %02X\n", activecpu_get_pc(), data);
 }
 static WRITE_HANDLER( sprtmtch_coincounter_1_w )
 {
 	coin_counter_w(1, data & 1);
 	if (data & ~1)
-		logerror("CPU#0 PC %06X: Warning, coin counter 1 <- %02X\n", cpu_get_pc(), data);
+		logerror("CPU#0 PC %06X: Warning, coin counter 1 <- %02X\n", activecpu_get_pc(), data);
 }
 
 static READ_HANDLER( ret_ff )	{	return 0xff;	}
@@ -167,7 +164,7 @@ static READ16_HANDLER( ddenlovr_gfxrom_r )
 	if (address >= size)
 	{
 		address %= size;
-		logerror("CPU#0 PC %06X: Error, Blitter address %06X out of range\n", cpu_get_pc(), address);
+		logerror("CPU#0 PC %06X: Error, Blitter address %06X out of range\n", activecpu_get_pc(), address);
 	}
 
 	dynax_blit_address++;
@@ -180,7 +177,7 @@ static WRITE16_HANDLER( ddenlovr_blit_w )
 	if (ACCESSING_LSB)
 	{
 		data &= 0xff;
-//logerror("CPU#0 PC %06X: Blitter %x <- %02X\n", cpu_get_pc(), offset, data);
+//logerror("CPU#0 PC %06X: Blitter %x <- %02X\n", activecpu_get_pc(), offset, data);
 		switch(offset)
 		{
 		case 0:
@@ -242,14 +239,14 @@ static WRITE16_HANDLER( ddenlovr_coincounter_0_w )
 	if (ACCESSING_LSB)
 		coin_counter_w(0, data & 1);
 	else
-		logerror("CPU#0 PC %06X: Error, MSB of coin counter 0 written\n", cpu_get_pc());
+		logerror("CPU#0 PC %06X: Error, MSB of coin counter 0 written\n", activecpu_get_pc());
 }
 static WRITE16_HANDLER( ddenlovr_coincounter_1_w )
 {
 	if (ACCESSING_LSB)
 		coin_counter_w(1, data & 1);
 	else
-		logerror("CPU#0 PC %06X: Error, MSB of coin counter 1 written\n", cpu_get_pc());
+		logerror("CPU#0 PC %06X: Error, MSB of coin counter 1 written\n", activecpu_get_pc());
 }
 
 static MEMORY_READ16_START( ddenlovr_readmem )
@@ -620,38 +617,31 @@ static struct YM2203interface ym2203_intf =
 	{ sprtmtch_sound_callback },	/* IRQ handler */
 };
 
-static const struct MachineDriver machine_driver_sprtmtch =
-{
-	{
-		{
-			CPU_Z80,
-			22000000 / 6,	/* ? */
-			sprtmtch_readmem,  sprtmtch_writemem,
-			sprtmtch_readport, sprtmtch_writeport,
-			sprtmtch_vblank_interrupt, 1	/* IM 0 needs an opcode on the data bus */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( sprtmtch )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,22000000 / 6)	/* ? */
+	MDRV_CPU_MEMORY(sprtmtch_readmem,sprtmtch_writemem)
+	MDRV_CPU_PORTS(sprtmtch_readport,sprtmtch_writeport)
+	MDRV_CPU_VBLANK_INT(sprtmtch_vblank_interrupt,1)	/* IM 0 needs an opcode on the data bus */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+8, 256-1-8 },
-	0,	// no tiles
-	512, 0,
-	sprtmtch_vh_convert_color_prom,			// static palette
-	VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT,	// needs alpha blending
-	0,
-	sprtmtch_vh_start,
-	sprtmtch_vh_stop,
-	sprtmtch_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)	// needs alpha blending
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+8, 256-1-8)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_PALETTE_INIT(sprtmtch)			// static palette
+	MDRV_VIDEO_START(sprtmtch)
+	MDRV_VIDEO_UPDATE(sprtmtch)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2203,	&ym2203_intf	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -673,77 +663,63 @@ static struct OKIM6295interface okim6295_intf =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_ddenlovr =
-{
-	{
-		{
-			CPU_M68000,
-			24000000 / 2,
-			ddenlovr_readmem, ddenlovr_writemem,0,0,
-			m68_level1_irq, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( ddenlovr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000 / 2)
+	MDRV_CPU_MEMORY(ddenlovr_readmem,ddenlovr_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0, 256-1 },
-	0,		// no tiles
-	0x800, 0x800,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	dynax_vh_start,
-	0,
-	dynax_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x800)
+
+	MDRV_VIDEO_START(dynax)
+	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2413,	&ym2413_intf	},
-		{	SOUND_OKIM6295,	&okim6295_intf	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Rong Rong
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_rongrong =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* ? */
-			rongrong_readmem,  rongrong_writemem,
-			rongrong_readport, rongrong_writeport,
-			interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rongrong )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* ? */
+	MDRV_CPU_MEMORY(rongrong_readmem,rongrong_writemem)
+	MDRV_CPU_PORTS(rongrong_readport,rongrong_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0, 256-1 },
-	0,		// no tiles
-	0x800, 0x800,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	dynax_vh_start,
-	0,
-	dynax_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x800)
+
+	MDRV_VIDEO_START(dynax)
+	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2413,	&ym2413_intf	},
-		{	SOUND_OKIM6295,	&okim6295_intf	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

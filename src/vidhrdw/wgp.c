@@ -18,9 +18,6 @@ UINT16 wgp_rotate_ctrl[8];
 int wgp_piv_xoffs,wgp_piv_yoffs;
 
 
-void wgp_vh_stop(void);
-
-
 
 /*******************************************************************/
 
@@ -73,10 +70,7 @@ int wgp_core_vh_start (int x_offs,int y_offs,int piv_xoffs,int piv_yoffs)
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
-		{
-			wgp_vh_stop();
 			return 1;
-		}
 
 	wgp_piv_xoffs = piv_xoffs;
 	wgp_piv_yoffs = piv_yoffs;
@@ -104,22 +98,14 @@ int wgp_core_vh_start (int x_offs,int y_offs,int piv_xoffs,int piv_yoffs)
 	return 0;
 }
 
-int wgp_vh_start (void)
+VIDEO_START( wgp )
 {
 	return (wgp_core_vh_start(0,0,32,16));
 }
 
-int wgp2_vh_start (void)
+VIDEO_START( wgp2 )
 {
 	return (wgp_core_vh_start(4,2,32,16));
-}
-
-void wgp_vh_stop (void)
-{
-	TC0100SCN_vh_stop();
-
-	if (has_TC0110PCR())
-		TC0110PCR_vh_stop();
 }
 
 
@@ -389,7 +375,7 @@ static UINT8 ylookup[16] =
 	  2, 2, 3, 3,
 	  2, 2, 3, 3 };
 
-static void wgp_draw_sprites(struct mame_bitmap *bitmap,int y_offs)
+static void wgp_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
 {
 	int offs,i,j,k;
 	int x,y,curx,cury;
@@ -476,7 +462,7 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 							col,
 							flipx, flipy,
 							curx,cury,
-							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							cliprect,TRANSPARENCY_PEN,0,
 							zx << 12, zy << 12,
 							primasks[((priority >> 1) &1)]);	/* maybe >> 2 or 0...? */
 				}
@@ -508,7 +494,7 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 							col,
 							flipx, flipy,
 							curx,cury,
-							&Machine->visible_area,TRANSPARENCY_PEN,0,
+							cliprect,TRANSPARENCY_PEN,0,
 							zx << 12, zy << 12,
 							primasks[((priority >> 1) &1)]);	/* maybe >> 2 or 0...? */
 				}
@@ -590,7 +576,7 @@ INLINE void bryan2_drawscanline(
 
 
 
-static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UINT32 priority)
+static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int layer,int flags,UINT32 priority)
 {
 	struct mame_bitmap *srcbitmap = tilemap_get_pixmap(wgp_piv_tilemap[layer]);
 	struct mame_bitmap *transbitmap = tilemap_get_transparency_bitmap(wgp_piv_tilemap[layer]);
@@ -609,10 +595,10 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UI
 	int flipscreen = 0;	/* n/a */
 	int machine_flip = 0;	/* for  ROT 180 ? */
 
-	UINT16 screen_width = Machine->visible_area.max_x -
-							Machine->visible_area.min_x + 1;
-//	UINT16 min_y = Machine->visible_area.min_y;
-//	UINT16 max_y = Machine->visible_area.max_y;
+	UINT16 screen_width = cliprect->max_x -
+							cliprect->min_x + 1;
+	UINT16 min_y = cliprect->min_y;
+	UINT16 max_y = cliprect->max_y;
 
 	int width_mask=0x3ff;
 
@@ -634,7 +620,7 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UI
 		sx += (wgp_piv_xoffs) * zoomx;		/* may be imperfect */
 
 		y_index = (wgp_piv_scrolly[layer] << 16);
-		y_index += (wgp_piv_yoffs) * zoomy;		/* may be imperfect */
+		y_index += (wgp_piv_yoffs + min_y) * zoomy;		/* may be imperfect */
 	}
 	else	/* piv tiles flipscreen n/a */
 	{
@@ -642,7 +628,7 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UI
 		y_index = 0;
 	}
 
-	if (!machine_flip) y=0; else y=255;
+	if (!machine_flip) y=min_y; else y=max_y;
 
 	do
 	{
@@ -706,7 +692,7 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UI
 		y_index += zoomy;
 		if (!machine_flip) y++; else y--;
 	}
-	while ( (!machine_flip && y<256) || (machine_flip && y>=0) );
+	while ( (!machine_flip && y<=max_y) || (machine_flip && y>=min_y) );
 
 }
 
@@ -716,7 +702,7 @@ static void wgp_piv_layer_draw(struct mame_bitmap *bitmap,int layer,int flags,UI
                         SCREEN REFRESH
 **************************************************************/
 
-void wgp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wgp )
 {
 	int i;
 	UINT8 layer[3];
@@ -764,7 +750,7 @@ void wgp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
 	layer[0] = 0;
 	layer[1] = 1;
@@ -781,19 +767,19 @@ void wgp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 #ifdef MAME_DEBUG
 	if (dislayer[layer[0]]==0)
 #endif
-	wgp_piv_layer_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	wgp_piv_layer_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[1]]==0)
 #endif
-	wgp_piv_layer_draw(bitmap,layer[1],0,2);
+	wgp_piv_layer_draw(bitmap,cliprect,layer[1],0,2);
 
 #ifdef MAME_DEBUG
 	if (dislayer[layer[2]]==0)
 #endif
-	wgp_piv_layer_draw(bitmap,layer[2],0,4);
+	wgp_piv_layer_draw(bitmap,cliprect,layer[2],0,4);
 
-	wgp_draw_sprites(bitmap,16);
+	wgp_draw_sprites(bitmap,cliprect,16);
 
 /* ... then here we should apply rotation from wgp_rotate_ctrl[] to
    the bitmap before we draw the TC0100SCN layers on it */
@@ -802,13 +788,13 @@ void wgp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],0,0);
 
 #ifdef MAME_DEBUG
 	if (dislayer[3]==0)
 #endif
-	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,0);
 
 #if 0
 	{
@@ -828,7 +814,7 @@ void wgp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		for (i = 0; i < 8; i += 1)
 		{
 			sprintf (buf, "%02x: %04x", i, wgp_rotate_ctrl[i]);
-			ui_text (Machine->scrbitmap, buf, 0, i*8);
+			ui_text (bitmap, buf, 0, i*8);
 		}
 	}
 #endif

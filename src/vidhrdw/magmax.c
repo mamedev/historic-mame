@@ -201,7 +201,7 @@ static void set_custom_blit(void)
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( magmax )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -245,29 +245,17 @@ void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 }
 
-void magmax_vh_stop(void)
-{
-	free(prom_tab);
-	prom_tab = 0;
-
-	bitmap_free(tmpbitmap);
-	tmpbitmap = 0;
-}
-
-int magmax_vh_start(void)
+VIDEO_START( magmax )
 {
 	int i,v;
 	unsigned char * prom14D = memory_region(REGION_USER2);
 
-	if ((prom_tab = malloc(256 * sizeof(UINT32))) == 0)
+	if ((prom_tab = auto_malloc(256 * sizeof(UINT32))) == 0)
 		return 1;
 
 	/* Allocate temporary bitmap */
- 	if ((tmpbitmap = bitmap_alloc(256,256)) == 0)
-	{
-		magmax_vh_stop ();
+ 	if ((tmpbitmap = auto_bitmap_alloc(256,256)) == 0)
 		return 1;
-	}
 
 	for (i=0; i<256; i++)
 	{
@@ -282,7 +270,7 @@ int magmax_vh_start(void)
 
 
 
-void magmax_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( magmax )
 {
 	int offs;
 

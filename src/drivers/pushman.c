@@ -21,10 +21,10 @@
 #include "cpu/z80/z80.h"
 #include "cpu/m6805/m6805.h"
 
-void pushman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( pushman );
 WRITE16_HANDLER( pushman_scroll_w );
 WRITE16_HANDLER( pushman_videoram_w );
-int pushman_vh_start(void);
+VIDEO_START( pushman );
 
 static UINT8 shared_ram[8];
 static UINT16 latch,new_latch=0;
@@ -57,7 +57,7 @@ static WRITE16_HANDLER( pushman_68705_w )
 
 	if (offset==1)
 	{
-		cpu_cause_interrupt(1,M68705_INT_IRQ);
+		cpu_set_irq_line(1,M68705_IRQ_LINE,HOLD_LINE);
 		cpu_spin();
 		new_latch=0;
 	}
@@ -287,57 +287,39 @@ static struct YM2203interface ym2203_interface =
 
 static UINT32 amask_m68705 = 0xfff;
 
-static struct MachineDriver machine_driver_pushman =
-{
+static MACHINE_DRIVER_START( pushman )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,
-			readmem,writemem,0,0,
-			m68_level2_irq,1
-		},
-		{
-			CPU_M68705,
-			400000,	/* No idea */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,1,
-			0,0,
-			&amask_m68705
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			sound_readmem,sound_writemem,0,sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	60,					/* CPU interleave  */
-	0,					/* Hardware initialization-function */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(M68705, 400000)	/* No idea */
+	MDRV_CPU_CONFIG(amask_m68705)
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(0,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(60)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(pushman_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	pushman_gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pushman_vh_start,
-	0,
-	pushman_vh_screenrefresh,
+	MDRV_VIDEO_START(pushman)
+	MDRV_VIDEO_UPDATE(pushman)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 

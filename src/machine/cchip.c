@@ -63,7 +63,7 @@ static UINT8 superman_code[40] =
 	0x4e, 0x75                          /* RTS                    ( Return ) */
 };
 
-void cchip1_init_machine(void)
+MACHINE_INIT( cchip1 )
 {
 	state_save_register_int  ("cchip1", 0, "current_bank", &current_bank);
 	state_save_register_UINT8("cchip1", 0, "cc_port",      &cc_port, 1);
@@ -86,7 +86,7 @@ WRITE16_HANDLER( cchip1_word_w )
 	}
 	else
 	{
-logerror("cchip1_w pc: %06x bank %02x offset %04x: %02x\n",cpu_get_pc(),current_bank,offset,data);
+logerror("cchip1_w pc: %06x bank %02x offset %04x: %02x\n",activecpu_get_pc(),current_bank,offset,data);
 	}
 }
 
@@ -143,7 +143,7 @@ data16_t *cchip_ram;
 
 WRITE16_HANDLER( cchip2_word_w )
 {
-    logerror("cchip2_w pc: %06x offset %04x: %02x\n", cpu_get_pc(), offset, data);
+    logerror("cchip2_w pc: %06x offset %04x: %02x\n", activecpu_get_pc(), offset, data);
 
     COMBINE_DATA(&cchip_ram[offset]);
 }

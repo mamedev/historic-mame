@@ -172,14 +172,14 @@ WRITE16_HANDLER( cischeat_vregs_w );
 WRITE16_HANDLER( f1gpstar_vregs_w );
 WRITE16_HANDLER( scudhamm_vregs_w );
 
-int bigrun_vh_start(void);
-int cischeat_vh_start(void);
-int f1gpstar_vh_start(void);
+VIDEO_START( bigrun );
+VIDEO_START( cischeat );
+VIDEO_START( f1gpstar );
 
-void bigrun_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void cischeat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void f1gpstar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void scudhamm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( bigrun );
+VIDEO_UPDATE( cischeat );
+VIDEO_UPDATE( f1gpstar );
+VIDEO_UPDATE( scudhamm );
 
 
 /**************************************************************************
@@ -1363,131 +1363,137 @@ static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
 
 /* CPU # 1 */
 #define CISCHEAT_INTERRUPT_NUM	3
-int cischeat_interrupt(void)
+INTERRUPT_GEN( cischeat_interrupt )
 {
-	if (cpu_getiloops()==0)	return 4; /* Once */
+	if (cpu_getiloops()==0)
+		cpu_set_irq_line(0, 4, HOLD_LINE); /* Once */
 	else
 	{
-		if (cpu_getiloops()%2)	return 2;
-		else 					return 1;
+		if (cpu_getiloops()%2)	cpu_set_irq_line(0, 2, HOLD_LINE);
+		else 					cpu_set_irq_line(0, 1, HOLD_LINE);
 	}
 }
 
 
 /* CPU # 2 & 3 */
 #define CISCHEAT_SUB_INTERRUPT_NUM	1
-int cischeat_sub_interrupt(void)
-{
-	return 4;
-}
 
 /* CPU # 4 */
 #define CISCHEAT_SOUND_INTERRUPT_NUM	16
-int cischeat_sound_interrupt(void)
-{
-	return 4;
-}
 
 #define STD_FM_CLOCK	3000000
 #define STD_OKI_CLOCK	  12000
 
 
-#define GAME_DRIVER(_shortname_, \
-					_cpu_1_clock_,_cpu_2_clock_,_cpu_3_clock_,_cpu_4_clock_, \
-					_fm_clock_,_oki1_clock_,_oki2_clock_, \
-					_visible_area_, _colors_num_ ) \
-\
-static struct YM2151interface _shortname_##_ym2151_intf = \
-{ \
-	1, \
-	_fm_clock_, \
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }, \
-	{ 0 } \
-}; \
-\
-static struct OKIM6295interface _shortname_##_okim6295_intf = \
-{ \
-	2, \
-	{_oki1_clock_, _oki2_clock_},\
-	{REGION_SOUND1,REGION_SOUND2}, \
-	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) } \
-}; \
-\
-static const struct MachineDriver machine_driver_##_shortname_ = \
-{ \
-	{ \
-		{ \
-			CPU_M68000, \
-			_cpu_1_clock_, \
-			_shortname_##_readmem,_shortname_##_writemem,0,0, \
-			cischeat_interrupt, CISCHEAT_INTERRUPT_NUM \
-		}, \
-		{ \
-			CPU_M68000, \
-			_cpu_2_clock_, \
-			_shortname_##_readmem2,_shortname_##_writemem2,0,0, \
-			cischeat_sub_interrupt, CISCHEAT_SUB_INTERRUPT_NUM \
-		}, \
-		{ \
-			CPU_M68000, \
-			_cpu_3_clock_, \
-			_shortname_##_readmem3,_shortname_##_writemem3,0,0, \
-			cischeat_sub_interrupt, CISCHEAT_SUB_INTERRUPT_NUM \
-		}, \
-		{ \
-			CPU_M68000 | CPU_AUDIO_CPU, \
-			_cpu_4_clock_, \
-			_shortname_##_sound_readmem,_shortname_##_sound_writemem,0,0, \
-			cischeat_sound_interrupt, CISCHEAT_SOUND_INTERRUPT_NUM \
-		}, \
-	}, \
-	/*	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,*/ \
-30,DEFAULT_REAL_30HZ_VBLANK_DURATION, \
-20, \
-	0, /* Init Machine */ \
-\
-	/* video hardware */ \
-	256, 256,_visible_area_, \
-\
-	_shortname_##_gfxdecodeinfo, \
-	_colors_num_, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,       \
-	0, \
-	_shortname_##_vh_start, \
-	0, \
-	_shortname_##_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	SOUND_SUPPORTS_STEREO,0,0,0, /* Stereo Output */\
-	{ \
-		{	SOUND_YM2151,	&_shortname_##_ym2151_intf		},\
-		{	SOUND_OKIM6295,	&_shortname_##_okim6295_intf	} \
-	} \
+
+static struct YM2151interface ym2151_intf =
+{
+	1,
+	STD_FM_CLOCK,
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	{ 0 }
+};
+
+static struct OKIM6295interface okim6295_intf =
+{
+	2,
+	{STD_OKI_CLOCK, STD_OKI_CLOCK},
+	{REGION_SOUND1,REGION_SOUND2},
+	{ MIXER(100,MIXER_PAN_LEFT), MIXER(100,MIXER_PAN_RIGHT) }
 };
 
 
-#define BIGRUN_VISIBLE_AREA		{0, 256-1,	0+16, 256-16-1  }
-#define CISCHEAT_VISIBLE_AREA	{0, 256-1,	0+16, 256-16-8-1}
+	 
+static MACHINE_DRIVER_START( bigrun )
 
-GAME_DRIVER(	bigrun,
-				10000000,10000000,10000000,6000000,
-				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				BIGRUN_VISIBLE_AREA,
-				16*16 * 3 + 64*16 * 2 + 64*16)	/* scroll 0,1,2; road 0,1; sprites */
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("cpu1", M68000, 10000000)
+	MDRV_CPU_MEMORY(bigrun_readmem,bigrun_writemem)
+	MDRV_CPU_VBLANK_INT(cischeat_interrupt,CISCHEAT_INTERRUPT_NUM)
+	
+	MDRV_CPU_ADD_TAG("cpu2", M68000, 10000000)
+	MDRV_CPU_MEMORY(bigrun_readmem2,bigrun_writemem2)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,CISCHEAT_SUB_INTERRUPT_NUM)
+	
+	MDRV_CPU_ADD_TAG("cpu3", M68000, 10000000)
+	MDRV_CPU_MEMORY(bigrun_readmem3,bigrun_writemem3)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,CISCHEAT_SUB_INTERRUPT_NUM)
 
-GAME_DRIVER(	cischeat,
-				10000000,10000000,10000000,6000000,
-				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				CISCHEAT_VISIBLE_AREA,
-				32*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
+	MDRV_CPU_ADD_TAG("sound", M68000, 6000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(bigrun_sound_readmem,bigrun_sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,CISCHEAT_SOUND_INTERRUPT_NUM)
+	
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(20)
+	
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1,	0+16, 256-16-1)
+	MDRV_GFXDECODE(bigrun_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*16 * 3 + 64*16 * 2 + 64*16)	/* scroll 0,1,2; road 0,1; sprites */
 
-GAME_DRIVER(	f1gpstar,	// The date is 1992 whenever the country (DSW) isn't set to Japan
-				12000000,12000000,12000000,6000000,
-				STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-				BIGRUN_VISIBLE_AREA,
-				16*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
+	MDRV_VIDEO_START(bigrun)
+	MDRV_VIDEO_UPDATE(bigrun)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_intf)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cischeat )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(bigrun)
+	MDRV_CPU_MODIFY("cpu1")
+	MDRV_CPU_MEMORY(cischeat_readmem,cischeat_writemem)
+	
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_MEMORY(cischeat_readmem2,cischeat_writemem2)
+	
+	MDRV_CPU_MODIFY("cpu3")
+	MDRV_CPU_MEMORY(cischeat_readmem3,cischeat_writemem3)
+
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(cischeat_sound_readmem,cischeat_sound_writemem)
+	
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 256-1,	0+16, 256-16-8-1)
+	MDRV_GFXDECODE(cischeat_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
+
+	MDRV_VIDEO_START(cischeat)
+	MDRV_VIDEO_UPDATE(cischeat)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( f1gpstar )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(bigrun)
+	MDRV_CPU_REPLACE("cpu1", M68000, 12000000)
+	MDRV_CPU_MEMORY(f1gpstar_readmem,f1gpstar_writemem)
+	
+	MDRV_CPU_REPLACE("cpu2", M68000, 12000000)
+	MDRV_CPU_MEMORY(f1gpstar_readmem2,f1gpstar_writemem2)
+	
+	MDRV_CPU_REPLACE("cpu3", M68000, 12000000)
+	MDRV_CPU_MEMORY(f1gpstar_readmem3,f1gpstar_writemem3)
+
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_MEMORY(f1gpstar_sound_readmem,f1gpstar_sound_writemem)
+	
+	/* video hardware */
+	MDRV_GFXDECODE(f1gpstar_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*16 * 3 + 64*16 * 2 + 128*16)	/* scroll 0,1,2; road 0,1; sprites */
+
+	MDRV_VIDEO_START(f1gpstar)
+	MDRV_VIDEO_UPDATE(f1gpstar)
+MACHINE_DRIVER_END
 
 
 /**************************************************************************
@@ -1509,51 +1515,41 @@ static struct OKIM6295interface scudhamm_okim6295_intf =
 	4]	 		== 3
 */
 #define INTERRUPT_NUM_SCUDHAMM		30
-int interrupt_scudhamm(void)
+INTERRUPT_GEN( interrupt_scudhamm )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		return 3;	// update palette, layers etc. Not the sprites.
-		case 14:	return 2;	// "real" vblank. It just sets a flag that
+		case 0:		cpu_set_irq_line(0, 3, HOLD_LINE);	// update palette, layers etc. Not the sprites.
+		case 14:	cpu_set_irq_line(0, 2, HOLD_LINE);	// "real" vblank. It just sets a flag that
 								// the main loop polls before updating the sprites.
-
-		default:	return ignore_interrupt();
 	}
 }
 
 
-static const struct MachineDriver machine_driver_scudhamm =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			readmem_scudhamm,writemem_scudhamm,0,0,
-			interrupt_scudhamm,INTERRUPT_NUM_SCUDHAMM
-		},
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION * 3 ,
+static MACHINE_DRIVER_START( scudhamm )
 
-	1,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(readmem_scudhamm,writemem_scudhamm)
+	MDRV_CPU_VBLANK_INT(interrupt_scudhamm,INTERRUPT_NUM_SCUDHAMM)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION * 3)
 
 	/* video hardware */
-	256, 256,{ 0, 256-1, 0 +16, 256-1 -16},
-	gfxdecodeinfo_scudhamm,
-	16*16+16*16+128*16, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS,
-	0,
-	f1gpstar_vh_start,	// 16 color codes, shadows
-	0,
-	scudhamm_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0 +16, 256-1 -16)
+	MDRV_GFXDECODE(gfxdecodeinfo_scudhamm)
+	MDRV_PALETTE_LENGTH(16*16+16*16+128*16)
+	
+	MDRV_VIDEO_START(f1gpstar)
+	MDRV_VIDEO_UPDATE(scudhamm)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&scudhamm_okim6295_intf	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, scudhamm_okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1728,7 +1724,7 @@ ROM_START( bigrun )
 	ROM_LOAD( "br8951b.23",  0x000000, 0x010000, 0xb9474fec )	// 000xxxxxxxxxxxxx
 ROM_END
 
-void init_bigrun(void)
+DRIVER_INIT( bigrun )
 {
 	/* Split ROMs */
 	rom_1 = (data16_t *) memory_region(REGION_USER1);
@@ -1850,7 +1846,7 @@ ROM_START( cischeat )
 	ROM_LOAD( "ch9072.03",  0x000000, 0x040000, 0x7e79151a )
 ROM_END
 
-void init_cischeat(void)
+DRIVER_INIT( cischeat )
 {
 	/* Split ROMs */
 	rom_1 = (data16_t *) (memory_region(REGION_USER1) + 0x00000);
@@ -2077,7 +2073,7 @@ ROM_START( f1gpstar )
 	ROM_LOAD( "pr90015b",  0x000000, 0x000100, 0xbe240dac )	// FIXED BITS (000xxxxx000xxxx1)
 ROM_END
 
-void init_f1gpstar(void)
+DRIVER_INIT( f1gpstar )
 {
 	/* Split ROMs */
 	rom_1 = (data16_t *) memory_region(REGION_USER1);

@@ -116,7 +116,7 @@ static UINT32		window_vpos;				/* window Y position */
 
 ******************************************************************************/
 
-int segac2_vh_start(void)
+VIDEO_START( segac2 )
 {
 	static const UINT8 vdp_init[24] =
 	{
@@ -127,10 +127,10 @@ int segac2_vh_start(void)
 	int i;
 
 	/* allocate memory for the VDP, the lookup table, and the buffer bitmap */
-	vdp_vram			= malloc(VRAM_SIZE);
-	vdp_vsram			= malloc(VSRAM_SIZE);
-	transparent_lookup	= malloc(0x1000 * sizeof(UINT16));
-	cache_bitmap		= malloc(BITMAP_WIDTH * BITMAP_HEIGHT * sizeof(UINT16));
+	vdp_vram			= auto_malloc(VRAM_SIZE);
+	vdp_vsram			= auto_malloc(VSRAM_SIZE);
+	transparent_lookup	= auto_malloc(0x1000 * sizeof(UINT16));
+	cache_bitmap		= auto_malloc(BITMAP_WIDTH * BITMAP_HEIGHT * sizeof(UINT16));
 
 	/* check for errors */
 	if (!vdp_vram || !vdp_vsram || !transparent_lookup || !cache_bitmap)
@@ -203,15 +203,6 @@ int segac2_vh_start(void)
 }
 
 
-void segac2_vh_stop(void)
-{
-	free(cache_bitmap);
-	free(transparent_lookup);
-	free(vdp_vram);
-	free(vdp_vsram);
-}
-
-
 
 /******************************************************************************
 	VBLANK routines
@@ -235,7 +226,7 @@ static void vblank_end(int param)
 
 
 /* end-of-frame callback to mark the start of VBLANK */
-void segac2_vh_eof(void)
+VIDEO_EOF( segac2 )
 {
 	/* set VBLANK flag */
 	internal_vblank = 1;
@@ -293,7 +284,7 @@ void segac2_enable_display(int enable)
 
 
 /* core refresh: computes the final screen */
-void segac2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( segac2 )
 {
 	int y;
 
@@ -433,7 +424,7 @@ static int vdp_data_r(void)
 			break;
 
 		default:		/* Illegal read attempt */
-			logerror("%06x: VDP illegal read type %02x\n", cpu_getpreviouspc(), vdp_code);
+			logerror("%06x: VDP illegal read type %02x\n", activecpu_get_previouspc(), vdp_code);
 			read = 0x00;
 			break;
 	}
@@ -489,7 +480,7 @@ static void vdp_data_w(int data)
 			break;
 
 		default:		/* Illegal write attempt */
-			logerror("PC:%06x: VDP illegal write type %02x data %04x\n", cpu_getpreviouspc(), vdp_code, data);
+			logerror("PC:%06x: VDP illegal write type %02x data %04x\n", activecpu_get_previouspc(), vdp_code, data);
 			break;
 	}
 

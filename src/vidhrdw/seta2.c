@@ -86,7 +86,7 @@ data16_t *seta2_vregs;
 ***************************************************************************/
 
 /* 256 color sprites, but the color code granularity is of 16 colors */
-void seta2_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( seta2 )
 {
 	int color, pen;
 	for( color = 0; color < (0x8000/16); color++ )
@@ -110,23 +110,23 @@ WRITE16_HANDLER( seta2_vregs_w )
 	{
 	case 0x1c:	// FLIP SCREEN (myangel)
 		flip_screen_set( data & 1 );
-		if (data & ~1)	logerror("CPU #0 PC %06X: flip screen unknown bits %04X\n",cpu_get_pc(),data);
+		if (data & ~1)	logerror("CPU #0 PC %06X: flip screen unknown bits %04X\n",activecpu_get_pc(),data);
 		break;
 	case 0x2a:	// FLIP X (pzlbowl)
 		flip_screen_x_set( data & 1 );
-		if (data & ~1)	logerror("CPU #0 PC %06X: flipx unknown bits %04X\n",cpu_get_pc(),data);
+		if (data & ~1)	logerror("CPU #0 PC %06X: flipx unknown bits %04X\n",activecpu_get_pc(),data);
 		break;
 	case 0x2c:	// FLIP Y (pzlbowl)
 		flip_screen_y_set( data & 1 );
-		if (data & ~1)	logerror("CPU #0 PC %06X: flipy unknown bits %04X\n",cpu_get_pc(),data);
+		if (data & ~1)	logerror("CPU #0 PC %06X: flipy unknown bits %04X\n",activecpu_get_pc(),data);
 		break;
 
 	case 0x30:	// BLANK SCREEN (pzlbowl, myangel)
-		if (data & ~1)	logerror("CPU #0 PC %06X: blank unknown bits %04X\n",cpu_get_pc(),data);
+		if (data & ~1)	logerror("CPU #0 PC %06X: blank unknown bits %04X\n",activecpu_get_pc(),data);
 		break;
 
 	default:
-		logerror("CPU #0 PC %06X: Video Reg %02X <- %04X\n",cpu_get_pc(),offset*2,data);
+		logerror("CPU #0 PC %06X: Video Reg %02X <- %04X\n",activecpu_get_pc(),offset*2,data);
 	}
 }
 
@@ -387,7 +387,7 @@ else
 
 ***************************************************************************/
 
-void seta2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( seta2 )
 {
 	/* Black or pens[0]? */
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);

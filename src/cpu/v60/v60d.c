@@ -1216,8 +1216,9 @@ void v60_dasm_init(void)
 	dasm_optable[0xFF] = dopCLRTLB;
 }
 
+#ifdef MAME_DEBUG
 unsigned v60_dasm(char *buffer,  unsigned pc)
 {
 	return dasm_optable[cpu_readmem24lew(pc)](pc, pc+1, buffer);
 }
-
+#endif

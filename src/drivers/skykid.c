@@ -16,26 +16,24 @@ static unsigned char *sharedram;
 extern unsigned char *skykid_textram, *spriteram, *skykid_videoram;
 
 /* from vidhrdw/skykid.c */
-int skykid_vh_start( void );
+VIDEO_START( skykid );
 READ_HANDLER( skykid_videoram_r );
 WRITE_HANDLER( skykid_videoram_w );
 WRITE_HANDLER( skykid_scroll_x_w );
 WRITE_HANDLER( skykid_scroll_y_w );
 WRITE_HANDLER( skykid_flipscreen_w );
-void skykid_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-void drgnbstr_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_UPDATE( skykid );
+VIDEO_UPDATE( drgnbstr );
+PALETTE_INIT( skykid );
 
 
 static int irq_disabled = 1;
 static int inputport_selected;
 
-static int skykid_interrupt( void )
+static INTERRUPT_GEN( skykid_interrupt )
 {
 	if (!irq_disabled)
-		return M6809_INT_IRQ;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 static WRITE_HANDLER( skykid_irq_ctrl_w )
@@ -450,48 +448,37 @@ static struct namco_interface namco_interface =
 	0					/* stereo */
 };
 
-static const struct MachineDriver machine_driver_skykid =
-{
+static MACHINE_DRIVER_START( skykid )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* ??? */
-			skykid_readmem,skykid_writemem,0,0,
-			skykid_interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/32,	/* ??? */
-			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* we need heavy synch */
-	0,
+	MDRV_CPU_ADD(M6809,49152000/32)	/* ??? */
+	MDRV_CPU_MEMORY(skykid_readmem,skykid_writemem)
+	MDRV_CPU_VBLANK_INT(skykid_interrupt,1)
+	
+	MDRV_CPU_ADD(HD63701,49152000/32)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* we need heavy synch */
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256, 64*4+128*4+64*8,
-	skykid_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+128*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	skykid_vh_start,
-	0,
-	skykid_vh_screenrefresh,
+	MDRV_PALETTE_INIT(skykid)
+	MDRV_VIDEO_START(skykid)
+	MDRV_VIDEO_UPDATE(skykid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( skykid )

@@ -56,10 +56,9 @@ extern unsigned char *dday_fgvideoram;
 extern unsigned char *dday_textvideoram;
 extern unsigned char *dday_colorram;
 
-void dday_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-int dday_vh_start(void);
-void dday_vh_stop(void);
-void dday_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( dday );
+VIDEO_START( dday );
+VIDEO_UPDATE( dday );
 WRITE_HANDLER( dday_bgvideoram_w );
 WRITE_HANDLER( dday_fgvideoram_w );
 WRITE_HANDLER( dday_textvideoram_w );
@@ -316,42 +315,30 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_dday =
-{
+static MACHINE_DRIVER_START( dday )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2000000,     /* 2 MHz ? */
-			readmem,writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 2000000)     /* 2 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,256,//8*8+8*4+8*4,
-	dday_vh_convert_color_prom,
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(256)//8*8+8*4+8*4,
+	MDRV_PALETTE_INIT(dday)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	dday_vh_start,
-	dday_vh_stop,
-	dday_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_VIDEO_START(dday)
+	MDRV_VIDEO_UPDATE(dday)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

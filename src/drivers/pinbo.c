@@ -107,26 +107,25 @@ Driver by Scott Kelley (wizard@tripoint.org)
 #include "cpu/z80/z80.h"
 
 
-void pinbo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( pinbo );
 
 
 
-static int pinbo_interrupt(void)
+static INTERRUPT_GEN( pinbo_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
 		/* user asks to insert coin: generate a NMI interrupt. */
 		if (readinputport(3) & 0x30)
-			return nmi_interrupt();
-		else return ignore_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	else return interrupt();	/* one IRQ per frame */
+	else cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
 }
 
 static WRITE_HANDLER( pinbo_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,Z80_IRQ_INT);
+	cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
 
@@ -359,49 +358,34 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_pinbo =
-{
+static MACHINE_DRIVER_START( pinbo )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			3072000,	/* ??? */
-			readmem,writemem,0,0,
-			pinbo_interrupt,2,	/* IRQ = vblank, NMI = coin */
-		},
-		{
-			CPU_Z80,
-			3000000,	/* ??? */
-			sound_readmem, sound_writemem,
-			sound_readport,sound_writeport,
-			ignore_interrupt,0	/* triggered by main cpu */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M6502, 3072000)	/* ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(pinbo_interrupt,2)	/* IRQ = vblank, NMI = coin */
+
+	MDRV_CPU_ADD(Z80, 3000000)	/* ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	pinbo_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(pinbo)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -9,9 +9,9 @@ WRITE_HANDLER( appoooh_fg_videoram_w );
 WRITE_HANDLER( appoooh_fg_colorram_w );
 WRITE_HANDLER( appoooh_bg_videoram_w );
 WRITE_HANDLER( appoooh_bg_colorram_w );
-void appoooh_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( appoooh );
 WRITE_HANDLER( appoooh_scroll_w );
 WRITE_HANDLER( appoooh_out_w );
-int appoooh_vh_start(void);
-void appoooh_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( appoooh );
+VIDEO_UPDATE( appoooh );
 

@@ -44,7 +44,7 @@ static int lnc_sound_interrupt_enabled = 0;
     bit 0 -- 47 kohm resistor  -- RED (inverted)
 
 ***************************************************************************/
-void btime_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( btime )
 {
 	int i;
 
@@ -93,7 +93,7 @@ void btime_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colorta
     bit 0 -- 15 kohm resistor  -- BLUE
 
 ***************************************************************************/
-void lnc_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( lnc )
 {
 	int i;
 
@@ -123,7 +123,7 @@ void lnc_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortabl
 }
 
 
-void lnc_init_machine(void)
+MACHINE_INIT( lnc )
 {
     *lnc_charbank = 1;
 }
@@ -134,25 +134,18 @@ void lnc_init_machine(void)
 Start the video hardware emulation.
 
 ***************************************************************************/
-int bnj_vh_start (void)
+VIDEO_START( bnj )
 {
-    if (generic_vh_start() != 0)
+    if (video_start_generic() != 0)
         return 1;
 
-    if ((dirtybuffer2 = malloc(bnj_backgroundram_size)) == 0)
-    {
-        generic_vh_stop();
+    if ((dirtybuffer2 = auto_malloc(bnj_backgroundram_size)) == 0)
         return 1;
-    }
     memset(dirtybuffer2,1,bnj_backgroundram_size);
 
     /* the background area is twice as wide as the screen */
-    if ((background_bitmap = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-    {
-        free(dirtybuffer2);
-        generic_vh_stop();
+    if ((background_bitmap = auto_bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
         return 1;
-    }
 
     bnj_scroll1 = 0;
     bnj_scroll2 = 0;
@@ -160,25 +153,14 @@ int bnj_vh_start (void)
     return 0;
 }
 
-int btime_vh_start (void)
+VIDEO_START( btime )
 {
     bnj_scroll1 = 0;
     bnj_scroll2 = 0;
 
-    return generic_vh_start();
+    return video_start_generic();
 }
 
-/***************************************************************************
-
-Stop the video hardware emulation.
-
-***************************************************************************/
-void bnj_vh_stop (void)
-{
-    bitmap_free(background_bitmap);
-    free(dirtybuffer2);
-    generic_vh_stop();
-}
 
 
 WRITE_HANDLER( btime_paletteram_w )
@@ -288,7 +270,7 @@ WRITE_HANDLER( bnj_scroll1_w )
     // Dirty screen if background is being turned off
     if (bnj_scroll1 && !data)
     {
-		schedule_full_refresh();
+		set_vh_global_attribute(NULL,0);
     }
 
     bnj_scroll1 = data;
@@ -357,12 +339,10 @@ WRITE_HANDLER( disco_video_control_w )
 }
 
 
-int lnc_sound_interrupt(void)
+INTERRUPT_GEN( lnc_sound_interrupt )
 {
     if (lnc_sound_interrupt_enabled)
-        return nmi_interrupt();
-    else
-        return ignore_interrupt();
+    	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -548,9 +528,9 @@ static void decode_modified(unsigned char *sprite_ram, int interleave)
 }
 
 
-void btime_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( btime )
 {
-    if (full_refresh)
+    if (get_vh_global_attribute_changed())
         memset(dirtybuffer,1,videoram_size);
 
     if (bnj_scroll1 & 0x10)
@@ -587,9 +567,9 @@ void btime_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void eggs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( eggs )
 {
-    if (full_refresh)
+    if (get_vh_global_attribute_changed())
         memset(dirtybuffer,1,videoram_size);
 
     drawchars(tmpbitmap, TRANSPARENCY_NONE, 0, -1);
@@ -601,9 +581,9 @@ void eggs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void lnc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lnc )
 {
-    if (full_refresh)
+    if (get_vh_global_attribute_changed())
         memset(dirtybuffer,1,videoram_size);
 
     drawchars(tmpbitmap, TRANSPARENCY_NONE, 0, -1);
@@ -615,9 +595,9 @@ void lnc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void zoar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( zoar )
 {
-    if (full_refresh)
+    if (get_vh_global_attribute_changed())
         memset(dirtybuffer,1,videoram_size);
 
     if (bnj_scroll1 & 0x04)
@@ -640,9 +620,9 @@ void zoar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void bnj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bnj )
 {
-    if (full_refresh)
+    if (get_vh_global_attribute_changed())
     {
         memset(dirtybuffer,1,videoram_size);
         memset(dirtybuffer2,1,bnj_backgroundram_size);
@@ -706,12 +686,12 @@ void bnj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void cookrace_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cookrace )
 {
     int offs;
 
 
-    if (full_refresh)
+    if (get_vh_global_attribute_changed())
         memset(dirtybuffer,1,videoram_size);
 
     /*
@@ -745,9 +725,9 @@ void cookrace_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void disco_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( disco )
 {
-    if (full_refresh)
+    if (get_vh_global_attribute_changed())
         memset(dirtybuffer,1,videoram_size);
 
     decode_modified(spriteram, 1);

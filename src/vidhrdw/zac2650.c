@@ -145,30 +145,19 @@ int SpriteCollision(int first,int second)
 	return Checksum;
 }
 
-int tinvader_vh_start(void)
+VIDEO_START( tinvader )
 {
 // 	overlay_create(tinv2650_overlay, 1, 8);
 
-	generic_vh_start();
+	video_start_generic();
 
-	if ((spritebitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+	if ((spritebitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-void tinvader_vh_stop(void)
-{
-	generic_vh_stop();
-	bitmap_free(spritebitmap);
-    spritebitmap = 0;
-}
-
-void tinvader_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tinvader )
 {
 	int offs;
 

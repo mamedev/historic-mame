@@ -15,12 +15,10 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "liberatr.h"
 
 
-unsigned char *liberatr_bitmapram;
-
-
-void liberatr_vh_stop(void);
+UINT8 *liberatr_bitmapram;
 
 
 /*
@@ -118,7 +116,7 @@ INLINE void bitmap_common_w(UINT8 x, UINT8 y, int data)
 	liberatr_videoram[(y<<8) | x] = data & 0xe0;
 
 	pen = Machine->pens[(data >> 5) + 0x10];
-	plot_pixel(Machine->scrbitmap, x, y, pen);
+	plot_pixel(tmpbitmap, x, y, pen);
 }
 
 WRITE_HANDLER( liberatr_bitmap_xy_w )
@@ -296,7 +294,7 @@ static int liberatr_init_planet(int planet_select)
 		   many segments it will take to store the description, allocate the
 		   space for it and copy the data to it.
 		*/
-		if ((buffer = (UINT8 *)malloc(2*(128 + total_segment_count))) == 0)
+		if ((buffer = (UINT8 *)auto_malloc(2*(128 + total_segment_count))) == 0)
 			return 1;
 
 		liberatr_planet_segs[ planet_select ]->frame[ longitude ] = buffer;
@@ -334,71 +332,33 @@ static int liberatr_init_planet(int planet_select)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int liberatr_vh_start(void)
+
+VIDEO_START( liberatr )
 {
     liberatr_videoram = 0;
     liberatr_planet_segs[0] = 0;
     liberatr_planet_segs[1] = 0;
+    
+    /* allocate a tmpbitmap */
+    if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
+    	return 1;
 
-
-	if ((liberatr_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height)) == 0)
-	{
-		liberatr_vh_stop();
+	if ((liberatr_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	/* allocate the planet descriptor structure */
-	if (((liberatr_planet_segs[0] = malloc(sizeof(Liberator_Planet))) == 0) ||
-	    ((liberatr_planet_segs[1] = malloc(sizeof(Liberator_Planet))) == 0))
-	{
-		liberatr_vh_stop();
+	if (((liberatr_planet_segs[0] = auto_malloc(sizeof(Liberator_Planet))) == 0) ||
+	    ((liberatr_planet_segs[1] = auto_malloc(sizeof(Liberator_Planet))) == 0))
 		return 1;
-	}
 
 	memset(liberatr_planet_segs[0], 0, sizeof(Liberator_Planet));
 	memset(liberatr_planet_segs[1], 0, sizeof(Liberator_Planet));
 
 	/* for each planet in the planet ROMs */
-	if (liberatr_init_planet(0) ||
-		liberatr_init_planet(1))
-	{
-		liberatr_vh_stop();
+	if (liberatr_init_planet(0) || liberatr_init_planet(1))
 		return 1;
-	}
 
 	return 0;
-}
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void liberatr_vh_stop(void)
-{
-	int i;
-
-	if (liberatr_videoram)
-	{
-		free(liberatr_videoram);
-		liberatr_videoram = 0;
-	}
-	if (liberatr_planet_segs[0])
-	{
-		for (i = 0; i < 256; i++)
-			if (liberatr_planet_segs[0]->frame[i])
-				free(liberatr_planet_segs[0]->frame[i]);
-		free(liberatr_planet_segs[0]);
-		liberatr_planet_segs[0] = 0;
-	}
-	if (liberatr_planet_segs[1])
-	{
-		for (i = 0; i < 256; i++)
-			if (liberatr_planet_segs[1]->frame[i])
-				free(liberatr_planet_segs[1]->frame[i]);
-		free(liberatr_planet_segs[1]);
-		liberatr_planet_segs[1] = 0;
-	}
 }
 
 
@@ -410,7 +370,7 @@ void liberatr_vh_stop(void)
 
 ***************************************************************************/
 
-static void liberatr_draw_planet(void)
+static void liberatr_draw_planet(struct mame_bitmap *bitmap)
 {
 	UINT8 latitude;
 	UINT8 *buffer;
@@ -448,16 +408,16 @@ static void liberatr_draw_planet(void)
 			{
 				/* only plot pixels that don't cover the foreground up */
 				if (!liberatr_videoram[(y<<8) | x])
-					plot_pixel(Machine->scrbitmap, x, y, pen);
+					plot_pixel(bitmap, x, y, pen);
 			}
 		}
 	}
 }
 
 
-void liberatr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( liberatr )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		UINT8 liberatr_y_save = *liberatr_y;
 		UINT8 liberatr_x_save = *liberatr_x;
@@ -474,7 +434,8 @@ void liberatr_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		*liberatr_y = liberatr_y_save;
 		*liberatr_x = liberatr_x_save;
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw the planet */
-	liberatr_draw_planet();
+	liberatr_draw_planet(bitmap);
 }

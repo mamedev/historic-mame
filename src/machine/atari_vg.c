@@ -1,9 +1,6 @@
 /***************************************************************************
 
-  machine.c
-
-  Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
-  I/O ports)
+	Atari vector hardware
 
 ***************************************************************************/
 
@@ -15,11 +12,13 @@ static int earom_offset;
 static int earom_data;
 static char earom[EAROM_SIZE];
 
+
 READ_HANDLER( atari_vg_earom_r )
 {
 	logerror("read earom: %02x(%02x):%02x\n", earom_offset, offset, earom_data);
 	return (earom_data);
 }
+
 
 WRITE_HANDLER( atari_vg_earom_w )
 {
@@ -27,6 +26,7 @@ WRITE_HANDLER( atari_vg_earom_w )
 	earom_offset = offset;
 	earom_data = data;
 }
+
 
 /* 0,8 and 14 get written to this location, too.
  * Don't know what they do exactly
@@ -50,15 +50,12 @@ WRITE_HANDLER( atari_vg_earom_ctrl_w )
 }
 
 
-void atari_vg_earom_handler(void *file,int read_or_write)
+NVRAM_HANDLER( atari_vg )
 {
 	if (read_or_write)
 		osd_fwrite(file,earom,EAROM_SIZE);
+	else if (file)
+		osd_fread(file,earom,EAROM_SIZE);
 	else
-	{
-		if (file)
-			osd_fread(file,earom,EAROM_SIZE);
-		else
-			memset(earom,0,EAROM_SIZE);
-	}
+		memset(earom,0,EAROM_SIZE);
 }

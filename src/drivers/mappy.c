@@ -50,14 +50,14 @@ Aug 1999   Proper cocktail emulation implemented by Chad Hendrickson
 /* machine driver data & functions */
 extern unsigned char *mappy_sharedram;
 extern unsigned char *mappy_customio_1,*mappy_customio_2;
-void mappy_init_machine(void);
-void motos_init_machine(void);
+MACHINE_INIT( mappy );
+MACHINE_INIT( motos );
 READ_HANDLER( mappy_sharedram_r );
 WRITE_HANDLER( mappy_sharedram_w );
 WRITE_HANDLER( mappy_customio_1_w );
 WRITE_HANDLER( mappy_customio_2_w );
-int mappy_interrupt_1(void);
-int mappy_interrupt_2(void);
+INTERRUPT_GEN( mappy_interrupt_1 );
+INTERRUPT_GEN( mappy_interrupt_2 );
 WRITE_HANDLER( mappy_interrupt_enable_1_w );
 WRITE_HANDLER( mappy_interrupt_enable_2_w );
 WRITE_HANDLER( mappy_cpu_enable_w );
@@ -78,15 +78,14 @@ READ_HANDLER( todruaga_customio_1_r );
 READ_HANDLER( todruaga_customio_2_r );
 
 /* video driver data & functions */
-int mappy_vh_start(void);
-int motos_vh_start(void);
-int todruaga_vh_start(void);
-void mappy_vh_stop(void);
-void mappy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( mappy );
+VIDEO_START( motos );
+VIDEO_START( todruaga );
+VIDEO_UPDATE( mappy );
 WRITE_HANDLER( mappy_videoram_w );
 WRITE_HANDLER( mappy_colorram_w );
 WRITE_HANDLER( mappy_scroll_w );
-void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( mappy );
 
 /* sound driver data & functions */
 extern unsigned char *mappy_soundregs;
@@ -602,181 +601,140 @@ static struct namco_interface namco_interface =
 
 
 /* the machine driver: 2 6809s running at 1MHz */
-static const struct MachineDriver machine_driver_mappy =
-{
+static MACHINE_DRIVER_START( mappy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1100000,                        /* 1.1 MHz */
-			mappy_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1100000,                        /* 1.1 MHz */
-			mappy_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	mappy_init_machine,
+	MDRV_CPU_ADD(M6809, 1100000)                        /* 1.1 MHz */
+	MDRV_CPU_MEMORY(mappy_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1100000)                        /* 1.1 MHz */
+	MDRV_CPU_MEMORY(mappy_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(mappy)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	mappy_gfxdecodeinfo,
-	32,64*4+16*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(mappy_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mappy_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(mappy)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_digdug2 =
-{
+
+static MACHINE_DRIVER_START( digdug2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			digdug2_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			digdug2_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	mappy_init_machine,
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(digdug2_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(digdug2_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(mappy)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	digdug2_gfxdecodeinfo,
-	32,64*4+16*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(digdug2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mappy_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(mappy)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_motos =
-{
+
+static MACHINE_DRIVER_START( motos )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			motos_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			motos_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	motos_init_machine,
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(motos_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(motos_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(motos)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	digdug2_gfxdecodeinfo,
-	32,64*4+16*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(digdug2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	motos_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(motos)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_todruaga =
-{
+
+static MACHINE_DRIVER_START( todruaga )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			todruaga_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			todruaga_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	mappy_init_machine,
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(todruaga_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(todruaga_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(mappy)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	todruaga_gfxdecodeinfo,
-	32,64*4+64*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(todruaga_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+64*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	todruaga_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(todruaga)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -39,27 +39,21 @@ WRITE16_HANDLER( glfgreat_122000_w );
 WRITE16_HANDLER( ssriders_1c0300_w );
 WRITE16_HANDLER( prmrsocr_122000_w );
 WRITE16_HANDLER( tmnt_priority_w );
-int mia_vh_start(void);
-int tmnt_vh_start(void);
-int punkshot_vh_start(void);
-void punkshot_vh_stop(void);
-int lgtnfght_vh_start(void);
-void lgtnfght_vh_stop(void);
-int detatwin_vh_start(void);
-void detatwin_vh_stop(void);
-int glfgreat_vh_start(void);
-void glfgreat_vh_stop(void);
-int thndrx2_vh_start(void);
-void thndrx2_vh_stop(void);
-int prmrsocr_vh_start(void);
-void prmrsocr_vh_stop(void);
-void mia_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void tmnt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void punkshot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void lgtnfght_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void glfgreat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void tmnt2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void thndrx2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( mia );
+VIDEO_START( tmnt );
+VIDEO_START( punkshot );
+VIDEO_START( lgtnfght );
+VIDEO_START( detatwin );
+VIDEO_START( glfgreat );
+VIDEO_START( thndrx2 );
+VIDEO_START( prmrsocr );
+VIDEO_UPDATE( mia );
+VIDEO_UPDATE( tmnt );
+VIDEO_UPDATE( punkshot );
+VIDEO_UPDATE( lgtnfght );
+VIDEO_UPDATE( glfgreat );
+VIDEO_UPDATE( tmnt2 );
+VIDEO_UPDATE( thndrx2 );
 static int tmnt_soundlatch;
 
 static READ16_HANDLER( K052109_word_noA12_r )
@@ -119,7 +113,7 @@ static WRITE16_HANDLER( K053245_scattered_word_w )
 	{
 		offset = ((offset & 0x000e) >> 1) | ((offset & 0x1fc0) >> 3);
 //if ((offset&0xf) == 0)
-//	logerror("%04x: write %02x to spriteram %04x\n",cpu_get_pc(),data,offset);
+//	logerror("%04x: write %02x to spriteram %04x\n",activecpu_get_pc(),data,offset);
 		K053245_word_w(offset,data,mem_mask);
 	}
 }
@@ -143,17 +137,15 @@ static WRITE16_HANDLER( K053244_word_noA1_w )
 
 
 
-static int punkshot_interrupt(void)
+static INTERRUPT_GEN( punkshot_interrupt )
 {
-	if (K052109_is_IRQ_enabled()) return m68_level4_irq();
-	else return ignore_interrupt();
+	if (K052109_is_IRQ_enabled()) irq4_line_hold();
 
 }
 
-static int lgtnfght_interrupt(void)
+static INTERRUPT_GEN( lgtnfght_interrupt )
 {
-	if (K052109_is_IRQ_enabled()) return m68_level5_irq();
-	else return ignore_interrupt();
+	if (K052109_is_IRQ_enabled()) irq5_line_hold();
 
 }
 
@@ -195,7 +187,7 @@ static WRITE16_HANDLER( glfgreat_sound_w )
 		K053260_0_w(offset, (data >> 8) & 0xff);
 
 	if (offset)
-		cpu_cause_interrupt(1,0xff);
+		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static READ16_HANDLER( prmrsocr_sound_r )
@@ -224,7 +216,7 @@ static WRITE16_HANDLER( prmrsocr_sound_cmd_w )
 
 static WRITE16_HANDLER( prmrsocr_sound_irq_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( prmrsocr_s_bankswitch_w )
@@ -274,12 +266,12 @@ static int tmnt_decode_sample(const struct MachineSound *msound)
 	struct GameSamples *samples;
 
 
-	if ((Machine->samples = malloc(sizeof(struct GameSamples))) == NULL)
+	if ((Machine->samples = auto_malloc(sizeof(struct GameSamples))) == NULL)
 		return 1;
 
 	samples = Machine->samples;
 
-	if ((samples->sample[0] = malloc(sizeof(struct GameSample) + (0x40000)*sizeof(short))) == NULL)
+	if ((samples->sample[0] = auto_malloc(sizeof(struct GameSample) + (0x40000)*sizeof(short))) == NULL)
 		return 1;
 
 	samples->sample[0]->length = 0x40000*2;
@@ -389,8 +381,8 @@ static READ16_HANDLER( ssriders_protection_r )
 			return data;
 
 		default:
-			usrintf_showmessage("%06x: unknown protection read",cpu_get_pc());
-			logerror("%06x: read 1c0800 (D7=%02x 1058fc=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),cmd,data);
+			usrintf_showmessage("%06x: unknown protection read",activecpu_get_pc());
+			logerror("%06x: read 1c0800 (D7=%02x 1058fc=%02x 105a0a=%02x)\n",activecpu_get_pc(),activecpu_get_reg(M68K_D7),cmd,data);
 			return 0xffff;
     }
 }
@@ -441,7 +433,7 @@ static struct EEPROM_interface eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( eeprom )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -532,7 +524,7 @@ static struct EEPROM_interface thndrx2_eeprom_interface =
 	"0100110000000" /* unlock command */
 };
 
-static void thndrx2_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( thndrx2 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -592,7 +584,7 @@ static WRITE16_HANDLER( thndrx2_eeprom_w )
 
 		/* bit 5 triggers IRQ on sound cpu */
 		if (last == 0 && (data & 0x20) != 0)
-			cpu_cause_interrupt(1,0xff);
+			cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 		last = data & 0x20;
 
 		/* bit 6 = enable char ROM reading through the video RAM */
@@ -767,7 +759,7 @@ MEMORY_END
 static WRITE16_HANDLER( ssriders_soundkludge_w )
 {
 	/* I think this is more than just a trigger */
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static MEMORY_READ16_START( detatwin_readmem )
@@ -2379,257 +2371,157 @@ static struct K053260_interface glfgreat_k053260_interface =
 };
 
 
-static const struct MachineDriver machine_driver_mia =
-{
+static MACHINE_DRIVER_START( mia )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			mia_readmem,mia_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			mia_s_readmem,mia_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(mia_readmem,mia_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(mia_s_readmem,mia_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	mia_vh_start,
-	punkshot_vh_stop,
-	mia_vh_screenrefresh,
+	MDRV_VIDEO_START(mia)
+	MDRV_VIDEO_UPDATE(mia)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tmnt =
-{
+
+static MACHINE_DRIVER_START( tmnt )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			tmnt_readmem,tmnt_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			tmnt_s_readmem,tmnt_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(tmnt_readmem,tmnt_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(tmnt_s_readmem,tmnt_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(13*8, (64-13)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	tmnt_vh_start,
-	punkshot_vh_stop,
-	tmnt_vh_screenrefresh,
+	MDRV_VIDEO_START(tmnt)
+	MDRV_VIDEO_UPDATE(tmnt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually initializes the samples */
-			&custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_punkshot =
-{
+
+static MACHINE_DRIVER_START( punkshot )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* CPU is 68000/12, but this doesn't necessarily mean it's */
-						/* running at 12MHz. TMNT uses 8MHz */
-			punkshot_readmem,punkshot_writemem,0,0,
-			punkshot_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			punkshot_s_readmem,punkshot_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000, 12000000)	/* CPU is 68000/12, but this doesn't necessarily mean it's */
+									/* running at 12MHz. TMNT uses 8MHz */
+	MDRV_CPU_MEMORY(punkshot_readmem,punkshot_writemem)
+	MDRV_CPU_VBLANK_INT(punkshot_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(punkshot_s_readmem,punkshot_s_writemem)
 								/* NMIs are generated by the 053260 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	punkshot_vh_start,
-	punkshot_vh_stop,
-	punkshot_vh_screenrefresh,
+	MDRV_VIDEO_START(punkshot)
+	MDRV_VIDEO_UPDATE(punkshot)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface_nmi
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_lgtnfght =
-{
+
+static MACHINE_DRIVER_START( lgtnfght )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			lgtnfght_readmem,lgtnfght_writemem,0,0,
-			lgtnfght_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			lgtnfght_s_readmem,lgtnfght_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(lgtnfght_readmem,lgtnfght_writemem)
+	MDRV_CPU_VBLANK_INT(lgtnfght_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(lgtnfght_s_readmem,lgtnfght_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	lgtnfght_vh_start,
-	lgtnfght_vh_stop,
-	lgtnfght_vh_screenrefresh,
+	MDRV_VIDEO_START(lgtnfght)
+	MDRV_VIDEO_UPDATE(lgtnfght)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_detatwin =
-{
+
+static MACHINE_DRIVER_START( detatwin )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz */
-			detatwin_readmem,detatwin_writemem,0,0,
-			punkshot_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ????? */
-			ssriders_s_readmem,ssriders_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(detatwin_readmem,detatwin_writemem)
+	MDRV_CPU_VBLANK_INT(punkshot_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ????? */
+	MDRV_CPU_MEMORY(ssriders_s_readmem,ssriders_s_writemem)
 								/* NMIs are generated by the 053260 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(eeprom)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	detatwin_vh_start,
-	detatwin_vh_stop,
-	lgtnfght_vh_screenrefresh,
+	MDRV_VIDEO_START(detatwin)
+	MDRV_VIDEO_UPDATE(lgtnfght)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface_nmi
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+MACHINE_DRIVER_END
 
 
 
@@ -2649,203 +2541,134 @@ static struct GfxDecodeInfo glfgreat_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static const struct MachineDriver machine_driver_glfgreat =
-{
+static MACHINE_DRIVER_START( glfgreat )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* ? */
-			glfgreat_readmem,glfgreat_writemem,0,0,
-			lgtnfght_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? */
-			glfgreat_s_readmem,glfgreat_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000, 12000000)	/* ? */
+	MDRV_CPU_MEMORY(glfgreat_readmem,glfgreat_writemem)
+	MDRV_CPU_VBLANK_INT(lgtnfght_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(glfgreat_s_readmem,glfgreat_s_writemem)
 								/* NMIs are generated by the 053260 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	glfgreat_gfxdecodeinfo,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(glfgreat_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	glfgreat_vh_start,
-	glfgreat_vh_stop,
-	glfgreat_vh_screenrefresh,
+	MDRV_VIDEO_START(glfgreat)
+	MDRV_VIDEO_UPDATE(glfgreat)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_K053260,
-			&glfgreat_k053260_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(K053260, glfgreat_k053260_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tmnt2 =
-{
+
+static MACHINE_DRIVER_START( tmnt2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz */
-			tmnt2_readmem,tmnt2_writemem,0,0,
-			punkshot_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000,	/* 8 MHz; clock is correct, but there's 1 cycle wait for ROM/RAM */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(tmnt2_readmem,tmnt2_writemem)
+	MDRV_CPU_VBLANK_INT(punkshot_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 8 MHz; clock is correct, but there's 1 cycle wait for ROM/RAM */
 						/* access. Access speed of ROM/RAM used on the machine is 150ns, */
 						/* without the wait, they cannot run on 8MHz.                    */
 						/* We are not emulating the wait state, so the ROM test ends at  */
 						/* 02 instead of 00. */
-			ssriders_s_readmem,ssriders_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_MEMORY(ssriders_s_readmem,ssriders_s_writemem)
 								/* NMIs are generated by the 053260 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(eeprom)
 
 	/* video hardware */
-	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(13*8, (64-13)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	lgtnfght_vh_start,
-	lgtnfght_vh_stop,
-	tmnt2_vh_screenrefresh,
+	MDRV_VIDEO_START(lgtnfght)
+	MDRV_VIDEO_UPDATE(tmnt2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface_nmi
-		}
-	},
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+MACHINE_DRIVER_END
 
-	nvram_handler
-};
 
-static const struct MachineDriver machine_driver_ssriders =
-{
+static MACHINE_DRIVER_START( ssriders )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000,	/* 16 MHz */
-			ssriders_readmem,ssriders_writemem,0,0,
-			punkshot_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* ????? makes the ROM test sync */
-			ssriders_s_readmem,ssriders_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */
+	MDRV_CPU_MEMORY(ssriders_readmem,ssriders_writemem)
+	MDRV_CPU_VBLANK_INT(punkshot_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ????? makes the ROM test sync */
+	MDRV_CPU_MEMORY(ssriders_s_readmem,ssriders_s_writemem)
 								/* NMIs are generated by the 053260 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(eeprom)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	lgtnfght_vh_start,
-	lgtnfght_vh_stop,
-	tmnt2_vh_screenrefresh,
+	MDRV_VIDEO_START(lgtnfght)
+	MDRV_VIDEO_UPDATE(tmnt2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface_nmi
-		}
-	},
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+MACHINE_DRIVER_END
 
-	nvram_handler
-};
 
-static const struct MachineDriver machine_driver_thndrx2 =
-{
+static MACHINE_DRIVER_START( thndrx2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz */
-			thndrx2_readmem,thndrx2_writemem,0,0,
-			punkshot_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ????? */
-			thndrx2_s_readmem,thndrx2_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_MEMORY(thndrx2_readmem,thndrx2_writemem)
+	MDRV_CPU_VBLANK_INT(punkshot_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ????? */
+	MDRV_CPU_MEMORY(thndrx2_s_readmem,thndrx2_s_writemem)
 								/* NMIs are generated by the 053260 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(eeprom)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	thndrx2_vh_start,
-	thndrx2_vh_stop,
-	thndrx2_vh_screenrefresh,
+	MDRV_VIDEO_START(thndrx2)
+	MDRV_VIDEO_UPDATE(thndrx2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K053260,
-			&k053260_interface_nmi
-		}
-	},
-
-	thndrx2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K053260, k053260_interface_nmi)
+MACHINE_DRIVER_END
 
 
 static void sound_nmi(void)
@@ -2863,51 +2686,36 @@ static struct K054539interface k054539_interface =
 	{ sound_nmi }
 };
 
-static const struct MachineDriver machine_driver_prmrsocr =
-{
+static MACHINE_DRIVER_START( prmrsocr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* ? */
-			prmrsocr_readmem,prmrsocr_writemem,0,0,
-			lgtnfght_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000,	/* ? */
-			prmrsocr_s_readmem,prmrsocr_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_ADD(M68000, 12000000)	/* ? */
+	MDRV_CPU_MEMORY(prmrsocr_readmem,prmrsocr_writemem)
+	MDRV_CPU_VBLANK_INT(lgtnfght_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? */
+	MDRV_CPU_MEMORY(prmrsocr_s_readmem,prmrsocr_s_writemem)
 								/* NMIs are generated by the 054539 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(thndrx2)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	glfgreat_gfxdecodeinfo,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(glfgreat_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	prmrsocr_vh_start,
-	prmrsocr_vh_stop,
-	glfgreat_vh_screenrefresh,
+	MDRV_VIDEO_START(prmrsocr)
+	MDRV_VIDEO_UPDATE(glfgreat)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_K054539,
-			&k054539_interface
-		}
-	},
-
-	thndrx2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(K054539, k054539_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -3741,13 +3549,13 @@ ROM_END
 
 
 
-static void init_gfx(void)
+static DRIVER_INIT( gfx )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);
 }
 
-static void init_mia(void)
+static DRIVER_INIT( mia )
 {
 	unsigned char *gfxdata;
 	int len;
@@ -3843,7 +3651,7 @@ static void init_mia(void)
 }
 
 
-static void init_tmnt(void)
+static DRIVER_INIT( tmnt )
 {
 	unsigned char *gfxdata;
 	int len;
@@ -3974,7 +3782,7 @@ static void shuffle(UINT8 *buf,int len)
 	shuffle(buf + len,len);
 }
 
-static void init_glfgreat(void)
+static DRIVER_INIT( glfgreat )
 {
 	/* ROMs are interleaved at byte level */
 	shuffle(memory_region(REGION_GFX1),memory_region_length(REGION_GFX1));

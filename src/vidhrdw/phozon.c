@@ -23,7 +23,7 @@ extern unsigned char *phozon_spriteram;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void phozon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
+PALETTE_INIT( phozon ){
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -64,19 +64,14 @@ void phozon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(2,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-int phozon_vh_start( void ) {
+VIDEO_START( phozon ) {
 	/* set up spriteram area */
 	spriteram_size = 0x80;
 	spriteram = &phozon_spriteram[0x780];
 	spriteram_2 = &phozon_spriteram[0x780+0x800];
 	spriteram_3 = &phozon_spriteram[0x780+0x800+0x800];
 
-	return generic_vh_start();
-}
-
-void phozon_vh_stop( void ) {
-
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 void phozon_draw_sprite(struct mame_bitmap *dest,unsigned int code,unsigned int color,
@@ -100,7 +95,7 @@ void phozon_draw_sprite8(struct mame_bitmap *dest,unsigned int code,unsigned int
   the main emulation engine.
 
 ***************************************************************************/
-void phozon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( phozon )
 {
 	int offs;
 

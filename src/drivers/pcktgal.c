@@ -16,8 +16,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-void pcktgal_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void pcktgal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( pcktgal );
+VIDEO_UPDATE( pcktgal );
 WRITE_HANDLER( pcktgal_flipscreen_w );
 
 /***************************************************************************/
@@ -44,7 +44,7 @@ static WRITE_HANDLER( pcktgal_sound_bank_w )
 static WRITE_HANDLER( pcktgal_sound_w )
 {
 	soundlatch_w(0,data);
-	cpu_cause_interrupt(1,M6502_INT_NMI);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 static int msm5205next;
@@ -58,7 +58,7 @@ static void pcktgal_adpcm_int(int data)
 
 	toggle = 1 - toggle;
 	if (toggle)
-		cpu_cause_interrupt(1,M6502_INT_IRQ);
+		cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 static WRITE_HANDLER( pcktgal_adpcm_data_w )
@@ -256,111 +256,70 @@ static struct MSM5205interface msm5205_interface =
 
 /***************************************************************************/
 
-static const struct MachineDriver machine_driver_pcktgal =
-{
+static MACHINE_DRIVER_START( pcktgal )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
+	MDRV_CPU_ADD(M6502, 2000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 							/* IRQs are caused by the ADPCM chip */
 							/* NMIs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	pcktgal_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	pcktgal_vh_screenrefresh,
+	MDRV_PALETTE_INIT(pcktgal)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(pcktgal)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bootleg =
-{
+
+static MACHINE_DRIVER_START( bootleg )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			2000000,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
+	MDRV_CPU_ADD(M6502, 2000000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M6502, 1500000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 							/* IRQs are caused by the ADPCM chip */
 							/* NMIs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	bootleg_gfxdecodeinfo,
-	512, 0,
-	pcktgal_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(bootleg_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	pcktgal_vh_screenrefresh,
+	MDRV_PALETTE_INIT(pcktgal)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(pcktgal)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -482,7 +441,7 @@ ROM_END
 
 /***************************************************************************/
 
-static void init_deco222(void)
+static DRIVER_INIT( deco222 )
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU2);
@@ -496,7 +455,7 @@ static void init_deco222(void)
 		rom[A + diff] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
 }
 
-static void init_graphics(void)
+static DRIVER_INIT( graphics )
 {
 	unsigned char *rom = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
@@ -514,7 +473,7 @@ static void init_graphics(void)
 	}
 }
 
-static void init_pcktgal(void)
+static DRIVER_INIT( pcktgal )
 {
 	init_deco222();
 	init_graphics();

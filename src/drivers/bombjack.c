@@ -74,8 +74,8 @@ NMI interrupts for music timing
 
 WRITE_HANDLER( bombjack_background_w );
 WRITE_HANDLER( bombjack_flipscreen_w );
-void bombjack_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int bombjack_vh_start(void);
+VIDEO_UPDATE( bombjack );
+VIDEO_START( bombjack );
 
 
 
@@ -309,48 +309,35 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_bombjack =
-{
+static MACHINE_DRIVER_START( bombjack )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3.072 MHz????? */
-			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
-			nmi_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.072 MHz????? */
+	MDRV_CPU_MEMORY(bombjack_sound_readmem,bombjack_sound_writemem)
+	MDRV_CPU_PORTS(0,bombjack_sound_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	128, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bombjack_vh_start,
-	generic_vh_stop,
-	bombjack_vh_screenrefresh,
+	MDRV_VIDEO_START(bombjack)
+	MDRV_VIDEO_UPDATE(bombjack)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -420,7 +407,7 @@ ROM_START( bombjac2 )
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
 ROM_END
 
-static void init_bombjack(void)
+static DRIVER_INIT( bombjack )
 {
 	state_save_register_int ("main", 0, "sound latch", &latch);
 }

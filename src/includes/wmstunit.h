@@ -14,14 +14,15 @@ READ16_HANDLER( wms_tunit_cmos_r );
 
 READ16_HANDLER( wms_tunit_input_r );
 
-void init_mk(void);
-void init_nbajam(void);
-void init_nbajam20(void);
-void init_nbajamte(void);
-void init_mk2(void);
-void init_mk2r14(void);
+DRIVER_INIT( mk );
+DRIVER_INIT( nbajam );
+DRIVER_INIT( nbajam20 );
+DRIVER_INIT( nbajamte );
+DRIVER_INIT( mk2 );
+DRIVER_INIT( mk2r14 );
+DRIVER_INIT( mk2r21 );
 
-void wms_tunit_init_machine(void);
+MACHINE_INIT( wms_tunit );
 
 READ16_HANDLER( wms_tunit_sound_state_r );
 READ16_HANDLER( wms_tunit_sound_r );
@@ -32,11 +33,9 @@ WRITE16_HANDLER( wms_tunit_sound_w );
 
 extern UINT8 wms_gfx_rom_large;
 
-int wms_tunit_vh_start(void);
-int wms_wolfu_vh_start(void);
-int wms_revx_vh_start(void);
-
-void wms_tunit_vh_stop(void);
+VIDEO_START( wms_tunit );
+VIDEO_START( wms_wolfu );
+VIDEO_START( revx );
 
 READ16_HANDLER( wms_tunit_gfxrom_r );
 READ16_HANDLER( wms_wolfu_gfxrom_r );
@@ -63,4 +62,4 @@ READ16_HANDLER( revx_paletteram_r );
 READ16_HANDLER( wms_tunit_dma_r );
 WRITE16_HANDLER( wms_tunit_dma_w );
 
-void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_UPDATE( wms_tunit );

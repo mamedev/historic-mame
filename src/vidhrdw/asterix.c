@@ -48,21 +48,12 @@ static int scrolld[2][4][2] = {
  	{{-73-112, 0 }, {-73-112, 0}, {-73-112, 0}, {-73-112, 0}}
 };
 
-int asterix_vh_start(void)
+VIDEO_START( asterix )
 {
 	K054157_vh_start(REGION_GFX1, 0, scrolld, NORMAL_PLANE_ORDER, asterix_tile_callback);
 	if (K053245_vh_start(REGION_GFX2,NORMAL_PLANE_ORDER, asterix_sprite_callback))
-	{
-		K054157_vh_stop();
 		return 1;
-	}
 	return 0;
-}
-
-void asterix_vh_stop(void)
-{
-	K054157_vh_stop();
-	K053245_vh_stop();
 }
 
 /* useful function to sort the three tile layers by priority order */
@@ -81,7 +72,7 @@ static void sortlayers(int *layer,int *pri)
 	SWAP(1,2)
 }
 
-void asterix_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( asterix )
 {
 	int layer[3];
 	int new_base;
@@ -128,15 +119,15 @@ void asterix_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
 	sortlayers(layer, layerpri);
 
-	fillbitmap(priority_bitmap, 0, NULL);
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(priority_bitmap, 0, cliprect);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	K054157_tilemap_draw(bitmap, layer[0], 0, 1);
-	K054157_tilemap_draw(bitmap, layer[1], 0, 2);
-	K054157_tilemap_draw(bitmap, layer[2], 0, 4);
+	K054157_tilemap_draw(bitmap, cliprect, layer[0], 0, 1);
+	K054157_tilemap_draw(bitmap, cliprect, layer[1], 0, 2);
+	K054157_tilemap_draw(bitmap, cliprect, layer[2], 0, 4);
 
 	pdrawgfx_shadow_lowpri = 1;	/* fix shadows in front of feet */
-	K053245_sprites_draw(bitmap);
+	K053245_sprites_draw(bitmap, cliprect);
 
-	K054157_tilemap_draw(bitmap, 2, 0, 0);
+	K054157_tilemap_draw(bitmap, cliprect, 2, 0, 0);
 }

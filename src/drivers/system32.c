@@ -57,7 +57,7 @@ static struct EEPROM_interface eeprom_interface =
 	0
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NRAM_HANDLER( system32 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -121,19 +121,18 @@ PORT_END
 static PORT_WRITE_START( system32_writeport )
 PORT_END
 
-static void system32_init_machine(void)
+static MACHINE_INIT( system32 )
 {
 	cpu_setbank(1, memory_region(REGION_CPU1));
 	irq_init();
 }
 
-static int system32_interrupt(void)
+static INTERRUPT_GEN( system32_interrupt )
 {
 	if(cpu_getiloops())
 		irq_raise(1);
 	else
 		irq_raise(0);
-	return ignore_interrupt();
 }
 
 INPUT_PORTS_START( ga2 )
@@ -180,44 +179,41 @@ ROM_START( ga2 )
 	ROM_LOAD( "mpr14943", 0x200000, 0x100000, 0x24d40333 )
 ROM_END
 
-int system32_vh_start(void)
+VIDEO_START( system32 )
 {
 	return 0;
 }
 
-void system32_vh_stop(void)
+VIDEO_STOP( system32 )
 {
 }
 
-void system32_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( system32 )
 {
 	fillbitmap(bitmap, 0, 0);
 }
 
-static const struct MachineDriver machine_driver_ga2 =
-{
-	{
-		{
-			CPU_V60,
-			8000000, // Reality is 16Mhz
-			ga2_readmem, ga2_writemem, 0, 0,
-			system32_interrupt, 2
-		},
-	},
-	60, 100 /*DEFAULT_60HZ_VBLANK_DURATION*/,
-	1,
-	system32_init_machine,
-	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	0,
-	16384, 0,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	system32_vh_start,
-	system32_vh_stop,
-	system32_vh_screenrefresh,
-	0,0,0,0,{},
-	nvram_handler
-};
+static MACHINE_DRIVER_START( ga2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(V60, 8000000) // Reality is 16Mhz
+	MDRV_CPU_MEMORY(ga2_readmem,ga2_writemem)
+	MDRV_CPU_VBLANK_INT(system32_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(100 /*DEFAULT_60HZ_VBLANK_DURATION*/)
+
+	MDRV_MACHINE_INIT(system32)
+	MDRV_NVRAM_HANDLER(system32)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(40*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_PALETTE_LENGTH(16384)
+
+	MDRV_VIDEO_START(system32)
+	MDRV_VIDEO_UPDATE(system32)
+MACHINE_DRIVER_END
 
 GAME( 1992, ga2, 0, ga2, ga2, 0, ROT0, "Sega", "Golden Axe 2" )

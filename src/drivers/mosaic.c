@@ -15,8 +15,8 @@ extern data8_t *mosaic_fgvideoram;
 extern data8_t *mosaic_bgvideoram;
 WRITE_HANDLER( mosaic_fgvideoram_w );
 WRITE_HANDLER( mosaic_bgvideoram_w );
-int mosaic_vh_start(void);
-void mosaic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( mosaic );
+VIDEO_UPDATE( mosaic );
 
 
 
@@ -171,41 +171,30 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_mosaic =
-{
-	{
-		{
-			CPU_Z180,
-			7000000,	/* ??? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+static MACHINE_DRIVER_START( mosaic )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z180, 7000000)	/* ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, 48*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, 48*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mosaic_vh_start,
-	0,
-	mosaic_vh_screenrefresh,
+	MDRV_VIDEO_START(mosaic)
+	MDRV_VIDEO_UPDATE(mosaic)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 

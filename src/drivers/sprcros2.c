@@ -65,9 +65,9 @@ WRITE_HANDLER( sprcros2_bgvideoram_w );
 WRITE_HANDLER( sprcros2_bgscrollx_w );
 WRITE_HANDLER( sprcros2_bgscrolly_w );
 
-void sprcros2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  sprcros2_vh_start(void);
-void sprcros2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( sprcros2 );
+VIDEO_START( sprcros2 );
+VIDEO_UPDATE( sprcros2 );
 static data8_t *sprcros2_sharedram;
 int sprcros2_m_port7 = 0;
 static int sprcros2_s_port3 = 0;
@@ -277,74 +277,59 @@ static struct SN76496interface sprcros2_sn76496_interface =
 	{ 50, 50, 50 }
 };
 
-static int sprcros2_m_interrupt(void)
+static INTERRUPT_GEN( sprcros2_m_interrupt )
 {
 	if (cpu_getiloops() == 0)
 	{
 		if(sprcros2_m_port7&0x01)
-			return nmi_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
 	else
 	{
 		if(sprcros2_m_port7&0x08)
-			return interrupt();
+			cpu_set_irq_line(0, 0, HOLD_LINE);
 	}
-
-	return ignore_interrupt();
 }
 
-static int sprcros2_s_interrupt(void)
+static INTERRUPT_GEN( sprcros2_s_interrupt )
 {
 	if(sprcros2_s_port3&0x01)
-		return nmi_interrupt();
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
-static const struct MachineDriver machine_driver_sprcros2 =
-{
+static MACHINE_DRIVER_START( sprcros2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			10000000/2,
-			sprcros2_m_readmem,sprcros2_m_writemem,sprcros2_m_readport,sprcros2_m_writeport,
-			sprcros2_m_interrupt,2,	//1 nmi + 1 irq
-		},
-		{
-			CPU_Z80,
-			10000000/2,
-			sprcros2_s_readmem,sprcros2_s_writemem,0,sprcros2_s_writeport,
-			sprcros2_s_interrupt,2	//2 nmis
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(Z80,10000000/2)
+	MDRV_CPU_MEMORY(sprcros2_m_readmem,sprcros2_m_writemem)
+	MDRV_CPU_PORTS(sprcros2_m_readport,sprcros2_m_writeport)
+	MDRV_CPU_VBLANK_INT(sprcros2_m_interrupt,2)	//1 nmi + 1 irq
+
+	MDRV_CPU_ADD(Z80,10000000/2)
+	MDRV_CPU_MEMORY(sprcros2_s_readmem,sprcros2_s_writemem)
+	MDRV_CPU_PORTS(0,sprcros2_s_writeport)
+	MDRV_CPU_VBLANK_INT(sprcros2_s_interrupt,2)	//2 nmis
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
-	sprcros2_gfxdecodeinfo,
-	18,768,
-	sprcros2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(sprcros2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(18)
+	MDRV_COLORTABLE_LENGTH(768)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sprcros2_vh_start,
-	0,
-	sprcros2_vh_screenrefresh,
+	MDRV_PALETTE_INIT(sprcros2)
+	MDRV_VIDEO_START(sprcros2)
+	MDRV_VIDEO_UPDATE(sprcros2)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sprcros2_sn76496_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, sprcros2_sn76496_interface)
+MACHINE_DRIVER_END
 
-static void init_sprcros2(void)
+static DRIVER_INIT( sprcros2 )
 {
 	state_save_register_int("main", 0, "m_cpu_port7", &sprcros2_m_port7);
 	state_save_register_int("main", 0, "s_cpu_port3", &sprcros2_s_port3);

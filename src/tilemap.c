@@ -73,8 +73,6 @@ struct tilemap
 	int *logical_rowscroll, *logical_colscroll;
 
 	int orientation;
-	int clip_left,clip_right,clip_top,clip_bottom;
-	struct rectangle logical_clip;
 
 	UINT16 tile_depth, tile_granularity;
 	UINT8 *tile_dirty_map;
@@ -679,7 +677,6 @@ struct tilemap *tilemap_create(
 			}
 			install_draw_handlers( tilemap );
 			mappings_update( tilemap );
-			tilemap_set_clip( tilemap, &Machine->visible_area );
 			memset( tilemap->transparency_data, TILE_FLAG_DIRTY, num_tiles );
 			tilemap->next = first_tilemap;
 			first_tilemap = tilemap;
@@ -757,54 +754,6 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes )
 		recalculate_scroll( tilemap );
 		tilemap_mark_all_tiles_dirty( tilemap );
 	}
-}
-
-void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *pClip )
-{
-	int left,top,right,bottom;
-
-	if( pClip )
-	{
-		tilemap->logical_clip = *pClip;
-		left	= pClip->min_x;
-		top		= pClip->min_y;
-		right	= pClip->max_x+1;
-		bottom	= pClip->max_y+1;
-
-		if( tilemap->orientation & ORIENTATION_SWAP_XY )
-		{
-			SWAP(left,top)
-			SWAP(right,bottom)
-		}
-
-		if( tilemap->orientation & ORIENTATION_FLIP_X )
-		{
-			SWAP(left,right)
-			left	= screen_width-left;
-			right	= screen_width-right;
-		}
-
-		if( tilemap->orientation & ORIENTATION_FLIP_Y )
-		{
-			SWAP(top,bottom)
-			top		= screen_height-top;
-			bottom	= screen_height-bottom;
-		}
-	}
-	else
-	{
-		/* does anyone rely on this behavior? */
-		tilemap->logical_clip = Machine->visible_area;
-		left	= 0;
-		top		= 0;
-		right	= tilemap->cached_width;
-		bottom	= tilemap->cached_height;
-	}
-
-	tilemap->clip_left		= left;
-	tilemap->clip_right		= right;
-	tilemap->clip_top		= top;
-	tilemap->clip_bottom	= bottom;
 }
 
 /***********************************************************************************/
@@ -1029,7 +978,7 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value )
 
 /***********************************************************************************/
 
-void tilemap_draw( struct mame_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority )
+void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, struct tilemap *tilemap, UINT32 flags, UINT32 priority )
 {
 	int xpos,ypos,mask,value;
 	int rows, cols;
@@ -1046,10 +995,40 @@ profiler_mark(PROFILER_TILEMAP_DRAW);
 		colscroll	= tilemap->cached_colscroll;
 
 		/* clipping */
-		left		= tilemap->clip_left;
-		right		= tilemap->clip_right;
-		top			= tilemap->clip_top;
-		bottom		= tilemap->clip_bottom;
+		if( cliprect )
+		{
+			left	= cliprect->min_x;
+			top		= cliprect->min_y;
+			right	= cliprect->max_x+1;
+			bottom	= cliprect->max_y+1;
+
+			if( Machine->orientation & ORIENTATION_SWAP_XY )
+			{
+				SWAP(left,top)
+				SWAP(right,bottom)
+			}
+
+			if( Machine->orientation & ORIENTATION_FLIP_X )
+			{
+				SWAP(left,right)
+				left	= screen_width-left;
+				right	= screen_width-right;
+			}
+
+			if( Machine->orientation & ORIENTATION_FLIP_Y )
+			{
+				SWAP(top,bottom)
+				top		= screen_height-top;
+				bottom	= screen_height-bottom;
+			}
+		}
+		else
+		{
+			left	= 0;
+			top		= 0;
+			right	= tilemap->cached_width;
+			bottom	= tilemap->cached_height;
+		}
 
 		/* tile priority */
 		mask		= TILE_FLAG_TILE_PRIORITY;
@@ -1302,7 +1281,7 @@ profiler_mark(PROFILER_END);
    - startx and starty MUST be UINT32 for calculations to work correctly
    - srcbitmap->width and height are assumed to be a power of 2 to speed up wraparound
    */
-void tilemap_draw_roz(struct mame_bitmap *dest,struct tilemap *tilemap,
+void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority )
@@ -1337,13 +1316,13 @@ profiler_mark(PROFILER_TILEMAP_DRAW_ROZ);
 
 		case 32:
 			copyrozbitmap_core32BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
-				wraparound,&tilemap->logical_clip,mask,value,priority);
+				wraparound,cliprect,mask,value,priority);
 			break;
 
 		case 15:
 		case 16:
 			copyrozbitmap_core16BPP(dest,tilemap,startx,starty,incxx,incxy,incyx,incyy,
-				wraparound,&tilemap->logical_clip,mask,value,priority);
+				wraparound,cliprect,mask,value,priority);
 			break;
 
 		default:

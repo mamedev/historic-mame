@@ -138,12 +138,12 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 
 
 
-void docastle_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( docastle )
 {
 	convert_color_prom(palette,colortable,color_prom,0);
 }
 
-void dorunrun_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( dorunrun )
 {
 	convert_color_prom(palette,colortable,color_prom,1);
 }
@@ -155,32 +155,17 @@ void dorunrun_vh_convert_color_prom(unsigned char *palette,unsigned short *color
   Start the video hardware emulation.
 
 ***************************************************************************/
-int docastle_vh_start(void)
+VIDEO_START( docastle )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		generic_vh_stop();
+	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void docastle_vh_stop(void)
-{
-	bitmap_free(tmpbitmap1);
-	generic_vh_stop();
-}
 
 
 READ_HANDLER( docastle_flipscreen_off_r )
@@ -214,12 +199,12 @@ WRITE_HANDLER( docastle_flipscreen_on_w )
   the main emulation engine.
 
 ***************************************************************************/
-void docastle_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( docastle )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

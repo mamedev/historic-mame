@@ -44,18 +44,18 @@ WRITE_HANDLER( qsound_queue_w )
 	}
 }
 
-static int znqs_vh_start( void )
+static VIDEO_START( znqs )
 {
 	return 0;
 }
 
-static void znqs_vh_stop( void )
+static VIDEO_STOP( znqs )
 {
 }
 
-static void znqs_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+static VIDEO_UPDATE( znqs )
 {
-	int refresh = full_refresh;
+	int refresh = 0;
 
 	if( queue_len == 0 )
 	{
@@ -134,7 +134,7 @@ static WRITE_HANDLER( qsound_banksw_w )
 	unsigned char *RAM = memory_region( REGION_CPU2 );
 	if( ( data & 0xf0 ) != 0 )
 	{
-		logerror( "%08lx: qsound_banksw_w( %02x )\n", cpu_get_pc(), data & 0xff );
+		logerror( "%08lx: qsound_banksw_w( %02x )\n", activecpu_get_pc(), data & 0xff );
 	}
 	cpu_setbank( 1, &RAM[ 0x10000 + ( ( data & 0x0f ) * 0x4000 ) ] );
 }
@@ -172,24 +172,25 @@ static MEMORY_WRITE16_START( znqs_writemem )
 MEMORY_END
 
 
-static int qsound_interrupt( void )
+static INTERRUPT_GEN( qsound_interrupt )
 {
 	if( queue_len == 2 )
 	{
 		soundlatch_w( 0, queue_data >> 8 );
 		queue_len--;
-		return nmi_interrupt();
+		cpu_set_irq_line(cpu_getactivecpu(), IRQ_LINE_NMI, PULSE_LINE);
 	}
 	else if( queue_len == 1 )
 	{
 		soundlatch_w( 0, queue_data & 0xff );
 		queue_len--;
-		return nmi_interrupt();
+		cpu_set_irq_line(cpu_getactivecpu(), IRQ_LINE_NMI, PULSE_LINE);
 	}
-	return interrupt();
+	else
+		cpu_set_irq_line(cpu_getactivecpu(), 0, HOLD_LINE);
 }
 
-static void znqs_init_machine( void )
+static MACHINE_INIT( znqs )
 {
 	/* stop CPU1 as it doesn't do anything useful yet. */
 	timer_suspendcpu( 0, 1, SUSPEND_REASON_DISABLE );
@@ -215,43 +216,38 @@ static void znqs_init_machine( void )
 	qsound_banksw_w( 0, 0 );
 }
 
-static const struct MachineDriver machine_driver_znqs =
-{
+static MACHINE_DRIVER_START( znqs )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_PSXCPU,
-			33000000, /* 33MHz ?? */
-			znqs_readmem, znqs_writemem, 0, 0,
-			ignore_interrupt, 1  /* ??? interrupts per frame */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000,  /* 8MHz ?? */
-			qsound_readmem, qsound_writemem, qsound_readport, 0,
-			qsound_interrupt, 4 /* 4 interrupts per frame ?? */
-		}
-	},
-	60, 0,
-	1,
-	znqs_init_machine,
+	MDRV_CPU_ADD(PSXCPU, 33000000) /* 33MHz ?? */
+	MDRV_CPU_MEMORY(znqs_readmem,znqs_writemem)
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)  /* 8MHz ?? */
+	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
+	MDRV_CPU_PORTS(qsound_readport,0)
+	MDRV_CPU_VBLANK_INT(qsound_interrupt,4) /* 4 interrupts per frame ?? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT(znqs)
 
 	/* video hardware */
-	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
-	znqs_gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x30*8+32*2, 0x1c*8+32*3)
+	MDRV_VISIBLE_AREA(32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1)
+	MDRV_GFXDECODE(znqs_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	znqs_vh_start,
-	znqs_vh_stop,
-	znqs_vh_screenrefresh,
+	MDRV_VIDEO_START(znqs)
+	MDRV_VIDEO_UPDATE(znqs)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{ { SOUND_QSOUND, &qsound_interface } }
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(QSOUND, qsound_interface)
+MACHINE_DRIVER_END
+
 
 INPUT_PORTS_START( zn )
 	PORT_START		/* IN0 */
@@ -566,26 +562,15 @@ static unsigned short *m_p_vram;
 static UINT32 m_p_gpu_buffer[ 16 ];
 static unsigned char m_n_gpu_buffer_offset;
 
-static void zn_vh_stop( void )
+static VIDEO_START( zn )
 {
-	if( m_p_vram != NULL )
-	{
-		free( m_p_vram );
-	}
-}
-
-static int zn_vh_start( void )
-{
-	m_p_vram = malloc( VRAM_SIZE );
+	m_p_vram = auto_malloc( VRAM_SIZE );
 	if( m_p_vram == NULL )
-	{
-		zn_vh_stop();
 		return 1;
-	}
 	return 0;
 }
 
-void zn_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( zn )
 {
 	UINT16 n_r;
 	UINT16 n_g;
@@ -604,36 +589,33 @@ void zn_init_palette(unsigned char *palette, unsigned short *colortable,const un
 	}
 }
 
-static void zn_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh )
+static VIDEO_UPDATE( zn )
 {
 	UINT16 n_x;
 	UINT16 n_y;
 	pen_t *pens = Machine->pens;
 
-	if( full_refresh )
+	if( bitmap->depth == 16 )
 	{
-		if( bitmap->depth == 16 )
+		UINT16 *p_line;
+		for( n_y = 0; n_y < bitmap->height; n_y++ )
 		{
-			UINT16 *p_line;
-			for( n_y = 0; n_y < bitmap->height; n_y++ )
+			p_line = (UINT16 *)bitmap->line[ n_y ];
+			for( n_x = 0; n_x < bitmap->width; n_x++ )
 			{
-				p_line = (UINT16 *)bitmap->line[ n_y ];
-				for( n_x = 0; n_x < bitmap->width; n_x++ )
-				{
-					*( p_line++ ) = pens[ m_p_vram[ ( n_y * 1024 ) + n_x ] ];
-				}
+				*( p_line++ ) = pens[ m_p_vram[ ( n_y * 1024 ) + n_x ] ];
 			}
 		}
-		else
+	}
+	else
+	{
+		UINT8 *p_line;
+		for( n_y = 0; n_y < bitmap->height; n_y++ )
 		{
-			UINT8 *p_line;
-			for( n_y = 0; n_y < bitmap->height; n_y++ )
+			p_line = (UINT8 *)bitmap->line[ n_y ];
+			for( n_x = 0; n_x < bitmap->width; n_x++ )
 			{
-				p_line = (UINT8 *)bitmap->line[ n_y ];
-				for( n_x = 0; n_x < bitmap->width; n_x++ )
-				{
-					*( p_line++ ) = pens[ m_p_vram[ ( n_y * 1024 ) + n_x ] ];
-				}
+				*( p_line++ ) = pens[ m_p_vram[ ( n_y * 1024 ) + n_x ] ];
 			}
 		}
 	}
@@ -710,7 +692,7 @@ static void triangle( UINT32 n_x1, UINT32 n_y1, UINT32 n_x2, UINT32 n_y2, UINT32
 		n_cx2 += n_dx2;
 		n_y++;
 	}
-	schedule_full_refresh();
+	set_vh_global_attribute(NULL,0);
 }
 
 void gpu32_w( UINT32 offset, UINT32 data )
@@ -759,13 +741,12 @@ Transfers are always 32bits no matter what the cpu reads / writes.
 */
 
 static UINT32 m_n_bridge_data;
-void *m_p_bridge_timer;
+void *m_p_bridge_timer_w, *m_p_bridge_timer_r;
 void ( *m_p_bridge32_w )( UINT32 offset, UINT32 data );
 
 static void bridge_w_flush( int offset )
 {
 	m_p_bridge32_w( offset, m_n_bridge_data );
-	m_p_bridge_timer = NULL;
 }
 
 void bridge_w( void ( *p_bridge32_w )( UINT32 offset, UINT32 data ), UINT32 offset, UINT32 data )
@@ -778,25 +759,19 @@ void bridge_w( void ( *p_bridge32_w )( UINT32 offset, UINT32 data ), UINT32 offs
 	{
 		m_n_bridge_data = ( m_n_bridge_data & 0xffff0000 ) | ( data & 0xffff );
 	}
-	if( m_p_bridge_timer == NULL )
-	{
-		m_p_bridge32_w = p_bridge32_w;
-		m_p_bridge_timer = timer_set( TIME_NOW, offset & ~3, bridge_w_flush );
-	}
+	
+	timer_adjust(m_p_bridge_timer_w, TIME_NOW, offset & ~3, 0 );
 }
 
 static void bridge_r_flush( int offset )
 {
-	m_p_bridge_timer = NULL;
 }
 
 UINT16 bridge_r( UINT32 ( *p_bridge32_r )( UINT32 offset ), UINT32 offset )
 {
-	if( m_p_bridge_timer == NULL )
-	{
-		m_p_bridge_timer = timer_set( TIME_NOW, 0, bridge_r_flush );
-		m_n_bridge_data = p_bridge32_r( offset & ~3 );
-	}
+	timer_adjust(m_p_bridge_timer_r, TIME_NOW, 0, 0 );
+	m_n_bridge_data = p_bridge32_r( offset & ~3 );
+
 	if( ( offset % 4 ) != 0 )
 	{
 		return m_n_bridge_data >> 16;
@@ -828,7 +803,7 @@ static MEMORY_WRITE16_START( zn_writemem )
 	{ 0xbfc00000, 0xbfc7ffff, MWA16_ROM },	/* bios */
 MEMORY_END
 
-static void zn_init_machine( void )
+static MACHINE_INIT( zn )
 {
 	cpu_setbank( 1, memory_region( REGION_CPU1 ) );
 	cpu_setbank( 2, memory_region( REGION_USER1 ) );
@@ -836,39 +811,34 @@ static void zn_init_machine( void )
 	m_n_gpu_buffer_offset = 0;
 	memset( m_p_vram, 0x00, VRAM_SIZE );
 
-	m_p_bridge_timer = NULL;
+	m_p_bridge_timer_w = timer_alloc(bridge_w_flush);
+	m_p_bridge_timer_r = timer_alloc(bridge_r_flush);
 }
 
-static const struct MachineDriver machine_driver_zn =
-{
+static MACHINE_DRIVER_START( zn )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_PSXCPU,
-			33868800, /* 33MHz ?? */
-			zn_readmem, zn_writemem, 0, 0,
-			ignore_interrupt,1 /* ??? interrupts per frame */
-		},
-	},
-	60, 0,
-	1,
-	zn_init_machine,
+	MDRV_CPU_ADD(PSXCPU, 33868800) /* 33MHz ?? */
+	MDRV_CPU_MEMORY(zn_readmem,zn_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT(zn)
 
 	/* video hardware */
-	256, 240, { 0, 255, 0, 239 },
-	0,
-	65536, 0,
-	zn_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 240)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_PALETTE_LENGTH(65536)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	zn_vh_start,
-	zn_vh_stop,
-	zn_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zn)
+	MDRV_VIDEO_START(zn)
+	MDRV_VIDEO_UPDATE(zn)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+MACHINE_DRIVER_END
 
 ROM_START( doapp )
 	ROM_REGION( 0x200400, REGION_CPU1, 0 )

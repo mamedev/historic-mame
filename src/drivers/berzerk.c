@@ -10,11 +10,11 @@
 
 extern unsigned char* berzerk_magicram;
 
-void berzerk_init_machine(void);
+MACHINE_INIT( berzerk );
 
-void berzerk_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( berzerk );
 
-int  berzerk_interrupt(void);
+INTERRUPT_GEN( berzerk_interrupt );
 WRITE_HANDLER( berzerk_irq_enable_w );
 WRITE_HANDLER( berzerk_nmi_enable_w );
 WRITE_HANDLER( berzerk_nmi_disable_w );
@@ -38,7 +38,7 @@ void berzerk_sh_update(void);
 static unsigned char *nvram;
 static size_t nvram_size;
 
-static void berzerk_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( berzerk )
 {
 	if (read_or_write)
 		osd_fwrite(file,nvram,nvram_size);
@@ -338,7 +338,7 @@ INPUT_PORTS_END
 
 
 /* Simple 1-bit RGBI palette */
-static unsigned char palette[16 * 3] =
+static unsigned char palette_source[16 * 3] =
 {
 	0x00, 0x00, 0x00,
 	0xff, 0x00, 0x00,
@@ -357,9 +357,9 @@ static unsigned char palette[16 * 3] =
 	0x40, 0xff, 0xff,
 	0xff, 0xff, 0xff
 };
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( berzerk )
 {
-	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(palette,palette_source,sizeof(palette_source));
 }
 
 
@@ -421,56 +421,45 @@ static struct CustomSound_interface custom_interface =
 
 
 
-#define  frenzy_init_machine  0
+static MACHINE_DRIVER_START( berzerk )
 
-#define DRIVER(GAMENAME,NVRAM)											\
-																		\
-static const struct MachineDriver machine_driver_##GAMENAME =					\
-{																		\
-	/* basic machine hardware */										\
-	{																	\
-		{																\
-			CPU_Z80,													\
-			2500000,        /* 2.5 MHz */								\
-			GAMENAME##_readmem,GAMENAME##_writemem,readport,writeport,	\
-			berzerk_interrupt,8											\
-		},																\
-	},																	\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* single CPU, no need for interleaving */						\
-	GAMENAME##_init_machine,											\
-																		\
-	/* video hardware */												\
-	256, 256, { 0, 256-1, 32, 256-1 },									\
-	0,																	\
-	sizeof(palette) / sizeof(palette[0]) / 3, 0,						\
-	init_palette,														\
-																		\
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,							\
-	0,																	\
-	0,																	\
-	0,																	\
-	berzerk_vh_screenrefresh,											\
-																		\
-	/* sound hardware */												\
-	0,0,0,0,															\
-	{																	\
-		{																\
-			SOUND_SAMPLES,												\
-			&berzerk_samples_interface									\
-		},																\
-		{																\
-			SOUND_CUSTOM,	/* actually plays the samples */			\
-			&custom_interface											\
-		}																\
-	},																	\
-																		\
-	NVRAM																\
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 2500000)        /* 2.5 MHz */
+	MDRV_CPU_MEMORY(berzerk_readmem,berzerk_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(berzerk_interrupt,8)
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
 
-DRIVER(berzerk,berzerk_nvram_handler)
-DRIVER(frenzy,0)
+	MDRV_MACHINE_INIT(berzerk)
+	MDRV_NVRAM_HANDLER(berzerk)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 32, 256-1)
+	MDRV_PALETTE_LENGTH(sizeof(palette_source) / sizeof(palette_source[0]) / 3)
+
+	MDRV_PALETTE_INIT(berzerk)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(berzerk)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SAMPLES, berzerk_samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( frenzy )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(berzerk)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(frenzy_readmem,frenzy_writemem)
+	
+	MDRV_MACHINE_INIT(NULL)
+	MDRV_NVRAM_HANDLER(NULL)
+MACHINE_DRIVER_END
 
 
 

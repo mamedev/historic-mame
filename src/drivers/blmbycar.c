@@ -31,8 +31,8 @@ WRITE16_HANDLER( blmbycar_palette_w );
 WRITE16_HANDLER( blmbycar_vram_0_w );
 WRITE16_HANDLER( blmbycar_vram_1_w );
 
-int  blmbycar_vh_start(void);
-void blmbycar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( blmbycar );
+VIDEO_UPDATE( blmbycar );
 
 
 /***************************************************************************
@@ -279,37 +279,30 @@ static struct OKIM6295interface blmbycar_okim6295_interface =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_blmbycar =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,	/* ? */
-			blmbycar_readmem, blmbycar_writemem,0,0,
-			m68_level1_irq, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( blmbycar )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)	/* ? */
+	MDRV_CPU_MEMORY(blmbycar_readmem,blmbycar_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	0x180, 0x100, { 0, 0x180-1, 0, 0x100-1 },
-	blmbycar_gfxdecodeinfo,
-	0x300, 0,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	blmbycar_vh_start,
-	0,
-	blmbycar_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x180-1, 0, 0x100-1)
+	MDRV_GFXDECODE(blmbycar_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x300)
+
+	MDRV_VIDEO_START(blmbycar)
+	MDRV_VIDEO_UPDATE(blmbycar)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&blmbycar_okim6295_interface	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, blmbycar_okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -370,7 +363,7 @@ ROM_START( blmbycau )
 ROM_END
 
 
-void init_blmbycar(void)
+DRIVER_INIT( blmbycar )
 {
 	data16_t *RAM  = (data16_t *) memory_region(REGION_CPU1);
 	size_t    size = memory_region_length(REGION_CPU1) / 2;

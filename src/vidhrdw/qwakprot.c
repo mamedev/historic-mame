@@ -1,8 +1,6 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Atari Qwak (prototype) hardware
 
 ***************************************************************************/
 
@@ -60,11 +58,11 @@ WRITE_HANDLER( qwakprot_paletteram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void qwakprot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( qwakprot )
 {
 	int offs;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset (dirtybuffer, 1, videoram_size);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -81,7 +79,7 @@ void qwakprot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sy = offs / 32;
 
 			gfxset = ((videoram[offs] & 0x80) >> 7);
-			drawgfx(bitmap,Machine->gfx[gfxset],
+			drawgfx(tmpbitmap,Machine->gfx[gfxset],
 					videoram[offs] & 0x7f,
 					0,		/* color */
 					0,0,	/* flipx, flipy */
@@ -89,6 +87,7 @@ void qwakprot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites */
 	for (offs = 0;offs < 0x10;offs++)

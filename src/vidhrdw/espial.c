@@ -35,7 +35,7 @@ unsigned char *espial_column_scroll;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void espial_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( espial )
 {
 	int i;
 
@@ -85,7 +85,7 @@ WRITE_HANDLER( espial_attributeram_w )
   the main emulation engine.
 
 ***************************************************************************/
-void espial_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( espial )
 {
 	int offs;
 

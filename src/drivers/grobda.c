@@ -24,16 +24,16 @@ READ_HANDLER( grobda_customio_1_r );
 READ_HANDLER( grobda_customio_2_r );
 
 /* INT functions */
-int grobda_interrupt_1(void);
-int grobda_interrupt_2(void);
+INTERRUPT_GEN( grobda_interrupt_1 );
+INTERRUPT_GEN( grobda_interrupt_2 );
 WRITE_HANDLER( grobda_cpu2_enable_w );
 WRITE_HANDLER( grobda_interrupt_ctrl_1_w );
 WRITE_HANDLER( grobda_interrupt_ctrl_2_w );
-void grobda_init_machine(void);
+MACHINE_INIT( grobda );
 
 /* video functions */
-void grobda_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void grobda_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( grobda );
+VIDEO_UPDATE( grobda );
 
 
 static WRITE_HANDLER( flip_screen_w )
@@ -209,52 +209,39 @@ static struct DACinterface dac_interface =
 	{ 55 }
 };
 
-static const struct MachineDriver machine_driver_grobda =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1500000,			/* 1.5 MHz? */
-			readmem_cpu1,writemem_cpu1,0,0,
-			grobda_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1500000,			/* 1.5 MHz? */
-			readmem_cpu2,writemem_cpu2,0,0,
-			grobda_interrupt_2,1
-		},
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	grobda_init_machine,
+static MACHINE_DRIVER_START( grobda )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,	 1500000)	/* 1.5 MHz? */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(grobda_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1500000)	/* 1.5 MHz? */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(grobda_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+
+	MDRV_MACHINE_INIT(grobda)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,
-	4*(64+64),
-	grobda_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	grobda_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*(64+64))
+
+	MDRV_PALETTE_INIT(grobda)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(grobda)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 

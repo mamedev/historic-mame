@@ -99,14 +99,14 @@ extern const char *vanguard_sample_names[];
 
 WRITE_HANDLER( satansat_b002_w );
 WRITE_HANDLER( satansat_backcolor_w );
-void satansat_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void satansat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( satansat );
+VIDEO_UPDATE( satansat );
 WRITE_HANDLER( satansat_characterram_w );
 
 WRITE_HANDLER( rockola_characterram_w );
 WRITE_HANDLER( rockola_flipscreen_w );
-void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void rockola_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( rockola );
+VIDEO_UPDATE( rockola );
 
 WRITE_HANDLER( satansat_sound0_w );
 WRITE_HANDLER( satansat_sound1_w );
@@ -241,28 +241,26 @@ MEMORY_END
 
 
 
-static int satansat_interrupt(void)
+static INTERRUPT_GEN( satansat_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
 		/* user asks to insert coin: generate a NMI interrupt. */
 		if (readinputport(3) & 1)
-			return nmi_interrupt();
-		else return ignore_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	else return interrupt();	/* one IRQ per frame */
+	else cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
 }
 
-static int rockola_interrupt(void)
+static INTERRUPT_GEN( rockola_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
 		/* user asks to insert coin: generate a NMI interrupt. */
 		if (readinputport(3) & 3)
-			return nmi_interrupt();
-		else return ignore_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 	}
-	else return interrupt();	/* one IRQ per frame */
+	else cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
 }
 
 
@@ -686,201 +684,143 @@ static struct Samplesinterface vanguard_samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_sasuke =
-{
+static MACHINE_DRIVER_START( sasuke )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,    /* 700 kHz */
-			satansat_readmem,sasuke_writemem,0,0,
-			satansat_interrupt,2
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,11289000/16)    /* 700 kHz */
+	MDRV_CPU_MEMORY(satansat_readmem,sasuke_writemem)
+	MDRV_CPU_VBLANK_INT(satansat_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	sasuke_gfxdecodeinfo,
-	32,4*4 + 4*4,
-	satansat_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(sasuke_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*4 + 4*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	satansat_vh_screenrefresh,
+	MDRV_PALETTE_INIT(satansat)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(satansat)
 
 	/* sound hardware */
-	0,0,0,0
-};
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_satansat =
-{
+
+static MACHINE_DRIVER_START( satansat )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			11289000/16,    /* 700 kHz */
-			satansat_readmem,satansat_writemem,0,0,
-			satansat_interrupt,2
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,11289000/16)    /* 700 kHz */
+	MDRV_CPU_MEMORY(satansat_readmem,satansat_writemem)
+	MDRV_CPU_VBLANK_INT(satansat_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	satansat_gfxdecodeinfo,
-	32,4*4 + 4*4,
-	satansat_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(satansat_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*4 + 4*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	satansat_vh_screenrefresh,
+	MDRV_PALETTE_INIT(satansat)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(satansat)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
- 		{
-			SOUND_SAMPLES,
-			&vanguard_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* also plays the samples */
- 			&custom_interface
- 		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_vanguard =
-{
+
+static MACHINE_DRIVER_START( vanguard )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,    /* 1 MHz??? */
-			vanguard_readmem,vanguard_writemem,0,0,
-			rockola_interrupt,2
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
+	MDRV_CPU_MEMORY(vanguard_readmem,vanguard_writemem)
+	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	vanguard_gfxdecodeinfo,
-	64,16*4,
-	rockola_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(vanguard_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(16*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	rockola_vh_screenrefresh,
+	MDRV_PALETTE_INIT(rockola)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
- 		{
-			SOUND_SAMPLES,
-			&vanguard_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* also plays the samples */
- 			&custom_interface
- 		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_fantasy =
-{
+
+static MACHINE_DRIVER_START( fantasy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,    /* 1 MHz??? */
-			fantasy_readmem,fantasy_writemem,0,0,
-			rockola_interrupt,2
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
+	MDRV_CPU_MEMORY(fantasy_readmem,fantasy_writemem)
+	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	vanguard_gfxdecodeinfo,
-	64,16*4,
-	rockola_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(vanguard_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(16*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	rockola_vh_screenrefresh,
+	MDRV_PALETTE_INIT(rockola)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
- 		{
-			SOUND_SAMPLES,
-			&vanguard_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* also plays the samples */
- 			&custom_interface
- 		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
+
 
 /* note that in this driver the visible area is different! */
-static const struct MachineDriver machine_driver_pballoon =
-{
+static MACHINE_DRIVER_START( pballoon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,    /* 1 MHz??? */
-			pballoon_readmem,pballoon_writemem,0,0,
-			rockola_interrupt,2
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502, 1000000)    /* 1 MHz??? */
+	MDRV_CPU_MEMORY(pballoon_readmem,pballoon_writemem)
+	MDRV_CPU_VBLANK_INT(rockola_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	vanguard_gfxdecodeinfo,
-	64,16*4,
-	rockola_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(vanguard_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(16*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	rockola_vh_screenrefresh,
+	MDRV_PALETTE_INIT(rockola)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(rockola)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
- 		{
-			SOUND_SAMPLES,
-			&vanguard_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* also plays the samples */
- 			&custom_interface
- 		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, vanguard_samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 

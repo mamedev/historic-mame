@@ -86,7 +86,7 @@ WRITE32_HANDLER( namconb1_videoram_w )
 }
 
 static void draw_sprite(
-		struct mame_bitmap *bitmap,
+		struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 		const data32_t *pSource,
 		int pri_table[8] )
 {
@@ -179,7 +179,7 @@ static void draw_sprite(
 					color&0xf,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,
+					cliprect,
 					TRANSPARENCY_PEN,0xff,
 					zoomx, zoomy,
 					pri );
@@ -188,7 +188,7 @@ static void draw_sprite(
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, int pri_table[8] )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri_table[8] )
 {
 	int i;
 	data16_t which;
@@ -207,7 +207,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int pri_table[8] )
 	for( i=0; i<count; i++ )
 	{
 		which = nth_word( namconb1_spritelist32, count-i-1 );
-		draw_sprite( bitmap, &spriteram32[(which&0xff)*4], pri_table );
+		draw_sprite( bitmap,cliprect, &spriteram32[(which&0xff)*4], pri_table );
 	}
 }
 
@@ -265,7 +265,7 @@ static void handle_mcu( void )
 	namconb1_workram32[0x601e/4] |= credits;
 }
 
-void namconb1_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
+VIDEO_UPDATE( namconb1 )
 {
 	int beamx,beamy;
 
@@ -292,8 +292,8 @@ void namconb1_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 
 	nab1_install_palette();
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap( bitmap, 0, 0 ); /* what should background color be? */
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap( bitmap, 0, cliprect ); /* what should background color be? */
 
 	for( i=0; i<6; i++ )
 	{
@@ -337,7 +337,7 @@ void namconb1_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 		{
 			if( nth_word( &namconb1_scrollram32[0x20/4],j ) == i )
 			{
-				tilemap_draw( bitmap, background[j], 0, 1<<pri );
+				tilemap_draw( bitmap,cliprect, background[j], 0, 1<<pri );
 				bPriUsed = 1;
 			}
 		}
@@ -345,21 +345,21 @@ void namconb1_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 		pri_table[i] = primask[pri];
 	}
 
-	draw_sprites( bitmap,pri_table );
+	draw_sprites( bitmap,cliprect,pri_table );
 
 	if( namconb1_type == key_gunbulet )
 	{
 		beamx = ((readinputport(4)) * 320)/256;
 		beamy = readinputport(5);
-		draw_crosshair( bitmap, beamx, beamy, &Machine->visible_area );
+		draw_crosshair( bitmap, beamx, beamy, cliprect );
 
 		beamx = ((readinputport(6)) * 320)/256;
 		beamy = readinputport(7);
-		draw_crosshair( bitmap, beamx, beamy, &Machine->visible_area );
+		draw_crosshair( bitmap, beamx, beamy, cliprect );
 	}
 }
 
-int namconb1_vh_start( void )
+VIDEO_START( namconb1 )
 {
 	int i;
 	static void (*get_info[6])(int tile_index) =
@@ -440,8 +440,4 @@ int namconb1_vh_start( void )
 	}
 
 	return 0; /* no error */
-}
-
-void namconb1_vh_stop( void )
-{
 }

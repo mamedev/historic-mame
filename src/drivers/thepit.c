@@ -62,9 +62,9 @@ extern unsigned char *thepit_attributesram;
 extern unsigned char *intrepid_sprite_bank_select;
 WRITE_HANDLER( thepit_attributes_w );
 
-void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void suprmous_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void thepit_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( thepit );
+PALETTE_INIT( suprmous );
+VIDEO_UPDATE( thepit );
 READ_HANDLER( thepit_input_port_0_r );
 WRITE_HANDLER( thepit_sound_enable_w );
 WRITE_HANDLER( intrepid_graphics_bank_select_w );
@@ -609,58 +609,63 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-#define MACHINE_DRIVER(GAMENAME, CONVERT)		            \
-static const struct MachineDriver machine_driver_##GAMENAME =		\
-{									  			            \
-	/* basic machine hardware */							\
-	{														\
-		{													\
-			CPU_Z80,										\
-			18432000/6,     /* 3.072 MHz */					\
-			GAMENAME##_readmem,GAMENAME##_writemem,0,0,		\
-			nmi_interrupt,1									\
-		},													\
-		{													\
-			CPU_Z80 | CPU_AUDIO_CPU,						\
-			10000000/4,     /* 2.5 MHz */					\
-			sound_readmem,sound_writemem,					\
-			sound_readport,sound_writeport,					\
-			interrupt,1										\
-		}													\
-	},														\
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */ \
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */ \
-	0,														\
-															\
-	/* video hardware */									\
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },				\
-	GAMENAME##_gfxdecodeinfo,								\
-	32+8, 32,												\
-	CONVERT##_vh_convert_color_prom,						\
-															\
-	VIDEO_TYPE_RASTER,										\
-	0,														\
-	generic_vh_start,										\
-	generic_vh_stop,										\
-	thepit_vh_screenrefresh,								\
-															\
-	/* sound hardware */									\
-	0,0,0,0,												\
-	{														\
-		{													\
-			SOUND_AY8910,									\
-			&ay8910_interface								\
-		}													\
-	}														\
-};
+static MACHINE_DRIVER_START( thepit )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)     /* 3.072 MHz */
+	MDRV_CPU_MEMORY(thepit_readmem,thepit_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80, 10000000/4)     /* 2.5 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)       /* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(thepit_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32+8)
+	MDRV_COLORTABLE_LENGTH(32)
+
+	MDRV_PALETTE_INIT(thepit)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(thepit)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
-#define suprmous_readmem   intrepid_readmem
-#define suprmous_writemem  intrepid_writemem
+static MACHINE_DRIVER_START( intrepid )
 
-MACHINE_DRIVER(thepit,   thepit)
-MACHINE_DRIVER(intrepid, thepit)
-MACHINE_DRIVER(suprmous, suprmous)
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(thepit)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(intrepid_readmem,intrepid_writemem)
+
+	/* video hardware */
+	MDRV_GFXDECODE(intrepid_gfxdecodeinfo)
+	MDRV_PALETTE_INIT(thepit)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( suprmous )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(intrepid)
+
+	/* video hardware */
+	MDRV_GFXDECODE(suprmous_gfxdecodeinfo)
+	MDRV_PALETTE_INIT(suprmous)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 

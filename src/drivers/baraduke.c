@@ -19,18 +19,17 @@ static unsigned char *sharedram;
 extern unsigned char *baraduke_textram, *spriteram, *baraduke_videoram;
 
 /* from vidhrdw/baraduke.c */
-int baraduke_vh_start( void );
-int metrocrs_vh_start( void );
-void baraduke_vh_stop( void );
-void baraduke_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-void metrocrs_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+VIDEO_START( baraduke );
+VIDEO_START( metrocrs );
+VIDEO_UPDATE( baraduke );
+VIDEO_UPDATE( metrocrs );
 READ_HANDLER( baraduke_textlayer_r );
 READ_HANDLER( baraduke_videoram_r );
 WRITE_HANDLER( baraduke_textlayer_w );
 WRITE_HANDLER( baraduke_videoram_w );
 WRITE_HANDLER( baraduke_scroll0_w );
 WRITE_HANDLER( baraduke_scroll1_w );
-void baraduke_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( baraduke );
 
 static int inputport_selected;
 
@@ -428,91 +427,69 @@ static struct namco_interface namco_interface =
 };
 
 
-static const struct MachineDriver machine_driver_baraduke =
-{
+static MACHINE_DRIVER_START( baraduke )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* ??? */
-			baraduke_readmem,baraduke_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/32,	/* ??? */
-			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,		/* we need heavy synch */
-	0,
+	MDRV_CPU_ADD(M6809,49152000/32)	/* ??? */
+	MDRV_CPU_MEMORY(baraduke_readmem,baraduke_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(HD63701,49152000/32)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)		/* we need heavy synch */
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	2048,2048*4,
-	baraduke_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	MDRV_COLORTABLE_LENGTH(2048*4)
 
-	VIDEO_TYPE_RASTER,	/* palette is static but doesn't fit in 256 colors */
-	0,
-	baraduke_vh_start,
-	0,
-	baraduke_vh_screenrefresh,
+	MDRV_PALETTE_INIT(baraduke)
+	MDRV_VIDEO_START(baraduke)
+	MDRV_VIDEO_UPDATE(baraduke)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_metrocrs =
-{
+static MACHINE_DRIVER_START( metrocrs )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* ??? */
-			baraduke_readmem,baraduke_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/32,	/* ??? */
-			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,		/* we need heavy synch */
-	0,
+	MDRV_CPU_ADD(M6809,49152000/32)	/* ??? */
+	MDRV_CPU_MEMORY(baraduke_readmem,baraduke_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+	
+	MDRV_CPU_ADD(HD63701,49152000/32)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)		/* we need heavy synch */
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	2048,2048*4,
-	baraduke_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	MDRV_COLORTABLE_LENGTH(2048*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	baraduke_vh_start,
-	0,
-	metrocrs_vh_screenrefresh,
+	MDRV_PALETTE_INIT(baraduke)
+	MDRV_VIDEO_START(baraduke)
+	MDRV_VIDEO_UPDATE(metrocrs)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 ROM_START( baraduke )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 6809 code */
@@ -573,7 +550,7 @@ ROM_END
 
 
 
-static void init_metrocrs( void )
+static DRIVER_INIT( metrocrs )
 {
 	int i;
 	unsigned char *rom = memory_region(REGION_GFX2);

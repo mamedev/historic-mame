@@ -5,7 +5,7 @@ static int flipscreen;
 
 
 
-void pcktgal_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( pcktgal )
 {
 	int i;
 
@@ -44,7 +44,7 @@ WRITE_HANDLER( pcktgal_flipscreen_w )
 	last_flip=flipscreen;
 }
 
-void pcktgal_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pcktgal )
 {
 	int offs;
 

@@ -69,25 +69,16 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-void blktiger_vh_stop(void)
+VIDEO_START( blktiger )
 {
-	free(scroll_ram);
-	scroll_ram = NULL;
-}
-
-int blktiger_vh_start(void)
-{
-	scroll_ram = malloc(BGRAM_BANK_SIZE * BGRAM_BANKS);
+	scroll_ram = auto_malloc(BGRAM_BANK_SIZE * BGRAM_BANKS);
 
 	tx_tilemap =    tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	bg_tilemap8x4 = tilemap_create(get_bg_tile_info,bg8x4_scan,       TILEMAP_SPLIT,   16,16,128,64);
 	bg_tilemap4x8 = tilemap_create(get_bg_tile_info,bg4x8_scan,       TILEMAP_SPLIT,   16,16,64,128);
 
 	if (!scroll_ram || !tx_tilemap || !bg_tilemap8x4 || !bg_tilemap4x8)
-	{
-		blktiger_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen(tx_tilemap,3);
 
@@ -207,7 +198,7 @@ WRITE_HANDLER( blktiger_screen_layout_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -233,28 +224,28 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				color,
 				flipx,flip_screen,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				cliprect,TRANSPARENCY_PEN,15);
 	}
 }
 
-void blktiger_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( blktiger )
 {
-	fillbitmap(bitmap,Machine->pens[1023],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[1023],cliprect);
 
 	if (bgon)
-		tilemap_draw(bitmap,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_BACK,0);
+		tilemap_draw(bitmap,cliprect,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_BACK,0);
 
 	if (objon)
-		draw_sprites(bitmap);
+		draw_sprites(bitmap,cliprect);
 
 	if (bgon)
-		tilemap_draw(bitmap,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_FRONT,0);
+		tilemap_draw(bitmap,cliprect,screen_layout ? bg_tilemap8x4 : bg_tilemap4x8,TILEMAP_FRONT,0);
 
 	if (chon)
-		tilemap_draw(bitmap,tx_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
-void blktiger_eof_callback(void)
+VIDEO_EOF( blktiger )
 {
 	buffer_spriteram_w(0,0);
 }

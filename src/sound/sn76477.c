@@ -146,8 +146,6 @@ static void vco_envelope_cb(int param)
 
 static void oneshot_envelope_cb(int param)
 {
-	struct SN76477 *sn = sn76477[param];
-	sn->oneshot_timer = NULL;
 	attack_decay(param);
 }
 
@@ -305,26 +303,24 @@ void SN76477_enable_w(int chip, int data)
 	stream_update(sn->channel, 0);
 	sn->enable = data;
 	sn->envelope_state = data;
-	if( sn->envelope_timer )
-		timer_remove(sn->envelope_timer);
-	sn->envelope_timer = NULL;
-	if( sn->oneshot_timer )
-		timer_remove(sn->oneshot_timer);
-	sn->oneshot_timer = NULL;
+
+	timer_adjust(sn->envelope_timer, TIME_NEVER, chip, 0);
+	timer_adjust(sn->oneshot_timer, TIME_NEVER, chip, 0);
+	
 	if( sn->enable == 0 )
 	{
 		switch( sn->envelope )
 		{
 		case 0: /* VCO */
 			if( sn->vco_res > 0 && sn->vco_cap > 0 )
-				sn->envelope_timer = timer_pulse(TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)), chip, vco_envelope_cb);
+				timer_adjust(sn->envelope_timer, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)), chip, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)));
 			else
 				oneshot_envelope_cb(chip);
 			break;
 		case 1: /* One-Shot */
 			oneshot_envelope_cb(chip);
 			if (sn->oneshot_time > 0)
-				sn->oneshot_timer = timer_set(sn->oneshot_time, chip, oneshot_envelope_cb);
+				timer_adjust(sn->oneshot_timer, sn->oneshot_time, chip, 0);
 			break;
 		case 2: /* MIXER only */
 			sn->vol = VMAX;
@@ -332,7 +328,7 @@ void SN76477_enable_w(int chip, int data)
 		default:  /* VCO with alternating polariy */
 			/* huh? */
 			if( sn->vco_res > 0 && sn->vco_cap > 0 )
-				sn->envelope_timer = timer_pulse(TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)/2), chip, vco_envelope_cb);
+				timer_adjust(sn->envelope_timer, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)/2), chip, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)/2));
 			else
 				oneshot_envelope_cb(chip);
 			break;
@@ -344,7 +340,7 @@ void SN76477_enable_w(int chip, int data)
 		{
 		case 0: /* VCO */
 			if( sn->vco_res > 0 && sn->vco_cap > 0 )
-				sn->envelope_timer = timer_pulse(TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)), chip, vco_envelope_cb);
+				timer_adjust(sn->envelope_timer, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)), chip, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)));
 			else
 				oneshot_envelope_cb(chip);
 			break;
@@ -357,7 +353,7 @@ void SN76477_enable_w(int chip, int data)
 		default:  /* VCO with alternating polariy */
 			/* huh? */
 			if( sn->vco_res > 0 && sn->vco_cap > 0 )
-				sn->envelope_timer = timer_pulse(TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)/2), chip, vco_envelope_cb);
+				timer_adjust(sn->envelope_timer, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)/2), chip, TIME_IN_HZ(0.64/(sn->vco_res * sn->vco_cap)/2));
 			else
 				oneshot_envelope_cb(chip);
 			break;
@@ -971,7 +967,7 @@ int SN76477_sh_start(const struct MachineSound *msound)
 	{
 		char name[16];
 
-		sn76477[i] = malloc(sizeof(struct SN76477));
+		sn76477[i] = auto_malloc(sizeof(struct SN76477));
 		if( !sn76477[i] )
 		{
 			LOG(0,("%s failed to malloc struct SN76477\n", name));
@@ -987,6 +983,10 @@ int SN76477_sh_start(const struct MachineSound *msound)
 			return 1;
 		}
 		sn76477[i]->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;
+		
+		sn76477[i]->envelope_timer = timer_alloc(vco_envelope_cb);
+		sn76477[i]->oneshot_timer = timer_alloc(oneshot_envelope_cb);
+		
 		/* set up interface (default) values */
 		SN76477_set_noise_res(i, intf->noise_res[i]);
 		SN76477_set_filter_res(i, intf->filter_res[i]);
@@ -1013,17 +1013,6 @@ int SN76477_sh_start(const struct MachineSound *msound)
 
 void SN76477_sh_stop(void)
 {
-	int i;
-	for( i = 0; i < intf->num; i++ )
-	{
-		if( sn76477[i] )
-		{
-			if( sn76477[i]->envelope_timer )
-				timer_remove(sn76477[i]->envelope_timer);
-			free(sn76477[i]);
-		}
-		sn76477[i] = NULL;
-	}
 }
 
 void SN76477_sh_update(void)

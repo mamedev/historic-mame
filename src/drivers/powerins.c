@@ -36,8 +36,8 @@ WRITE16_HANDLER( powerins_paletteram16_w );
 WRITE16_HANDLER( powerins_vram_0_w );
 WRITE16_HANDLER( powerins_vram_1_w );
 
-int  powerins_vh_start(void);
-void powerins_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( powerins );
+VIDEO_UPDATE( powerins );
 
 
 /***************************************************************************
@@ -260,7 +260,7 @@ static struct GfxDecodeInfo powerins_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-void powerins_init_machine(void)
+MACHINE_INIT( powerins )
 {
 	oki_bank = -1;	// samples bank "unitialised"
 }
@@ -273,41 +273,31 @@ static struct OKIM6295interface powerins_okim6295_interface =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_powerins =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,	/* ? (it affects the game's speed!) */
-			powerins_readmem, powerins_writemem,0,0,
-			m68_level4_irq, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	powerins_init_machine,
+static MACHINE_DRIVER_START( powerins )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)	/* ? (it affects the game's speed!) */
+	MDRV_CPU_MEMORY(powerins_readmem,powerins_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(powerins)
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0+16, 256-16-1 },
-	powerins_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(powerins_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	powerins_vh_start,
-	0,
-	powerins_vh_screenrefresh,
+	MDRV_VIDEO_START(powerins)
+	MDRV_VIDEO_UPDATE(powerins)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&powerins_okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, powerins_okim6295_interface)
+MACHINE_DRIVER_END
 
 
 

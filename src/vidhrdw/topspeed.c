@@ -7,20 +7,13 @@ data16_t *topspeed_raster_ctrl;
 
 /****************************************************************************/
 
-int topspeed_vh_start (void)
+VIDEO_START( topspeed )
 {
 	/* (chips, gfxnum, x_offs, y_offs, y_invert, opaque, dblwidth) */
 	if (PC080SN_vh_start(2,1,0,8,0,0,0))
-	{
 		return 1;
-	}
 
 	return 0;
-}
-
-void topspeed_vh_stop(void)
-{
-	PC080SN_vh_stop();
 }
 
 
@@ -46,7 +39,7 @@ void topspeed_vh_stop(void)
 
 ********************************************************************************/
 
-void topspeed_draw_sprites(struct mame_bitmap *bitmap)
+void topspeed_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,map_offset,x,y,curx,cury,sprite_chunk;
 	data16_t *spritemap = topspeed_spritemap;
@@ -115,7 +108,7 @@ void topspeed_draw_sprites(struct mame_bitmap *bitmap)
 					color,
 					flipx,flipy,
 					curx,cury,
-					&Machine->visible_area,TRANSPARENCY_PEN,0,
+					cliprect,TRANSPARENCY_PEN,0,
 					zx<<12,zy<<13,
 					primasks[priority]);
 		}
@@ -128,7 +121,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 /***************************************************************************/
 
-void topspeed_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( topspeed )
 {
 	UINT8 layer[4];
 
@@ -182,34 +175,34 @@ void topspeed_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[2] = 1;
 	layer[3] = 0;
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
 #ifdef MAME_DEBUG
 	if (dislayer[3]==0)
 #endif
-	PC080SN_tilemap_draw(bitmap,1,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	PC080SN_tilemap_draw(bitmap,cliprect,1,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 
 #ifdef MAME_DEBUG
 	if (dislayer[2]==0)
 #endif
-	PC080SN_tilemap_draw_special(bitmap,1,layer[1],0,2,topspeed_raster_ctrl);
+	PC080SN_tilemap_draw_special(bitmap,cliprect,1,layer[1],0,2,topspeed_raster_ctrl);
 
 #ifdef MAME_DEBUG
 	if (dislayer[1]==0)
 #endif
- 	PC080SN_tilemap_draw_special(bitmap,0,layer[2],0,4,topspeed_raster_ctrl + 0x100);
+ 	PC080SN_tilemap_draw_special(bitmap,cliprect,0,layer[2],0,4,topspeed_raster_ctrl + 0x100);
 
 #ifdef MAME_DEBUG
 	if (dislayer[0]==0)
 #endif
-	PC080SN_tilemap_draw(bitmap,0,layer[3],0,8);
+	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[3],0,8);
 
 #ifdef MAME_DEBUG
 	if (dislayer[4]==0)
 #endif
 
-	topspeed_draw_sprites(bitmap);
+	topspeed_draw_sprites(bitmap,cliprect);
 }
 
 

@@ -58,7 +58,6 @@ static void timer_callback_2608(int param)
 	int c=param>>7;
 
 //	logerror("2608 TimerOver %d\n",c);
-	Timer[n][c] = 0;
 	YM2608TimerOver(n,c);
 }
 
@@ -67,21 +66,12 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 {
 	if( count == 0 )
 	{	/* Reset FM Timer */
-		if( Timer[n][c] )
-		{
-//			logerror("2608 TimerReset %d\n",c);
-	 		timer_remove (Timer[n][c]);
-			Timer[n][c] = 0;
-		}
+		timer_adjust(Timer[n][c], TIME_NEVER, (c<<7)|n, 0);
 	}
 	else
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
-
-		if( Timer[n][c] == 0 )
-		{
-			Timer[n][c] = timer_set (timeSec , (c<<7)|n, timer_callback_2608 );
-		}
+		timer_adjust(Timer[n][c], timeSec, (c<<7)|n, 0);
 	}
 }
 
@@ -90,7 +80,10 @@ static void FMTimerInit( void )
 	int i;
 
 	for( i = 0 ; i < MAX_2608 ; i++ )
-		Timer[i][0] = Timer[i][1] = 0;
+	{
+		Timer[i][0] = timer_alloc(timer_callback_2608);
+		Timer[i][1] = timer_alloc(timer_callback_2608);
+	}
 }
 
 /* update request from fm.c */
@@ -231,13 +224,13 @@ void YM2608_sh_reset(void)
 /************************************************/
 READ_HANDLER( YM2608_status_port_0_A_r )
 {
-//logerror("PC %04x: 2608 S0A=%02X\n",cpu_get_pc(),YM2608Read(0,0));
+//logerror("PC %04x: 2608 S0A=%02X\n",activecpu_get_pc(),YM2608Read(0,0));
 	return YM2608Read(0,0);
 }
 
 READ_HANDLER( YM2608_status_port_0_B_r )
 {
-//logerror("PC %04x: 2608 S0B=%02X\n",cpu_get_pc(),YM2608Read(0,2));
+//logerror("PC %04x: 2608 S0B=%02X\n",activecpu_get_pc(),YM2608Read(0,2));
 	return YM2608Read(0,2);
 }
 

@@ -19,7 +19,7 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-void tagteam_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( tagteam );
 
 READ_HANDLER( tagteam_mirrorvideoram_r );
 WRITE_HANDLER( tagteam_mirrorvideoram_w );
@@ -28,14 +28,13 @@ WRITE_HANDLER( tagteam_mirrorcolorram_w );
 WRITE_HANDLER( tagteam_video_control_w );
 WRITE_HANDLER( tagteam_control_w );
 
-int  tagteam_vh_start (void);
-void tagteam_vh_stop (void);
-void tagteam_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( tagteam );
+VIDEO_UPDATE( tagteam );
 
 static WRITE_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 
@@ -83,7 +82,7 @@ MEMORY_END
 
 
 
-static int tagteam_interrupt(void)
+static INTERRUPT_GEN( tagteam_interrupt )
 {
 	static int coin;
 	int port;
@@ -95,12 +94,10 @@ static int tagteam_interrupt(void)
 		if (coin == 0)
 		{
 			coin = 1;
-			return nmi_interrupt();
+			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 		}
 	}
 	else coin = 0;
-
-        return ignore_interrupt();
 }
 
 INPUT_PORTS_START( tagteam )
@@ -233,52 +230,37 @@ static struct DACinterface dac_interface =
 	{ 255 }
 };
 
-static const struct MachineDriver machine_driver_tagteam =
-{
+static MACHINE_DRIVER_START( tagteam )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz ?? */
-			readmem,writemem,0,0,
-			tagteam_interrupt,1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			975000,  /* 975 kHz ?? */
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,16   /* IRQs are triggered by the main CPU */
-		}
-	},
-	57, 3072,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6502, 1500000)	/* 1.5 MHz ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(tagteam_interrupt,1)
+
+	MDRV_CPU_ADD(M6502, 975000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)  /* 975 kHz ?? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)   /* IRQs are triggered by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(3072)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
-	tagteam_gfxdecodeinfo,
-	32, 32,
-	tagteam_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(tagteam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	tagteam_vh_screenrefresh,
+	MDRV_PALETTE_INIT(tagteam)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(tagteam)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -31,7 +31,7 @@ static int flipscreen[2];
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void bagman_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( bagman )
 {
 	int i;
 
@@ -51,10 +51,9 @@ void bagman_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colort
 		bit2 = (color_prom[i] >> 5) & 0x01;
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		bit0 = 0;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[i] >> 6) & 0x01;
+		bit1 = (color_prom[i] >> 7) & 0x01;
+		b = 0x4f * bit0 + 0xa8 * bit1;
 
 		palette_set_color(i,r,g,b);
 	}
@@ -82,7 +81,7 @@ WRITE_HANDLER( bagman_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void bagman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bagman )
 {
 	int offs;
 

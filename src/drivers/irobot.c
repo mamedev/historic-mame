@@ -1,124 +1,123 @@
-/****************************************************************************
-I-Robot Memory Map
+/***************************************************************************
 
-0000 - 07FF  R/W    RAM
-0800 - 0FFF  R/W    Banked RAM
-1000 - 1000  INRD1  Bit 7 = Right Coin
-                    Bit 6 = Left Coin
-                    Bit 5 = Aux Coin
-                    Bit 4 = Self Test
-                    Bit 3 = ?
-                    Bit 2 = ?
-                    Bit 1 = ?
-                    Bit 0 = ?
-1040 - 1040  INRD2  Bit 7 = Start 1
-                    Bit 6 = Start 2
-                    Bit 5 = ?
-                    Bit 4 = Fire
-                    Bit 3 = ?
-                    Bit 2 = ?
-                    Bit 1 = ?
-                    Bit 0 = ?
-1080 - 1080  STATRD Bit 7 = VBLANK
-                    Bit 6 = Polygon generator done
-                    Bit 5 = Mathbox done
-                    Bit 4 = Unused
-                    Bit 3 = ?
-                    Bit 2 = ?
-                    Bit 1 = ?
-                    Bit 0 = ?
-10C0 - 10C0  INRD3  Dip switch
-1140 - 1140  STATWR Bit 7 = Select Polygon RAM banks
-                    Bit 6 = BFCALL
-                    Bit 5 = Cocktail Flip
-                    Bit 4 = Start Mathbox
-                    Bit 3 = Connect processor bus to mathbox bus
-                    Bit 2 = Start polygon generator
-                    Bit 1 = Select polygon image RAM bank
-                    Bit 0 = Erase polygon image memory
-1180 - 1180  OUT0   Bit 7 = Alpha Map 1
-                    Bit 6,5 = RAM bank select
-                    Bit 4,3 = Mathbox memory select
-                    Bit 2,1 = Mathbox bank select
-11C0 - 11C0  OUT1   Bit 7 = Coin Counter R
-                    Bit 6 = Coin Counter L
-                    Bit 5 = LED2
-                    Bit 4 = LED1
-                    Bit 3,2,1 = ROM bank select
-1200 - 12FF  R/W    NVRAM (bits 0..3 only)
-1300 - 13FF  W      Select analog controller
-1300 - 13FF  R      Read analog controller
-1400 - 143F  R/W    Quad Pokey
-1800 - 18FF         Palette RAM
-1900 - 1900  W      Watchdog reset
-1A00 - 1A00  W      FIREQ Enable
-1B00 - 1BFF  W      Start analog controller ADC
-1C00 - 1FFF  R/W    Character RAM
-2000 - 3FFF  R/W    Mathbox/Vector Gen Shared RAM
-4000 - 5FFF  R      Banked ROM
-6000 - FFFF  R      Fixed ROM
+	Atari I, Robot hardware
 
-Notes:
-- There is no flip screen nor cocktail mode in the original game
+	Games supported:
+		* I, Robot
+
+	Known issues:
+		* none at this time
+
+****************************************************************************
+
+	I-Robot Memory Map
+
+	0000 - 07FF  R/W    RAM
+	0800 - 0FFF  R/W    Banked RAM
+	1000 - 1000  INRD1  Bit 7 = Right Coin
+	                    Bit 6 = Left Coin
+	                    Bit 5 = Aux Coin
+	                    Bit 4 = Self Test
+	                    Bit 3 = ?
+	                    Bit 2 = ?
+	                    Bit 1 = ?
+	                    Bit 0 = ?
+	1040 - 1040  INRD2  Bit 7 = Start 1
+	                    Bit 6 = Start 2
+	                    Bit 5 = ?
+	                    Bit 4 = Fire
+	                    Bit 3 = ?
+	                    Bit 2 = ?
+	                    Bit 1 = ?
+	                    Bit 0 = ?
+	1080 - 1080  STATRD Bit 7 = VBLANK
+	                    Bit 6 = Polygon generator done
+	                    Bit 5 = Mathbox done
+	                    Bit 4 = Unused
+	                    Bit 3 = ?
+	                    Bit 2 = ?
+	                    Bit 1 = ?
+	                    Bit 0 = ?
+	10C0 - 10C0  INRD3  Dip switch
+	1140 - 1140  STATWR Bit 7 = Select Polygon RAM banks
+	                    Bit 6 = BFCALL
+	                    Bit 5 = Cocktail Flip
+	                    Bit 4 = Start Mathbox
+	                    Bit 3 = Connect processor bus to mathbox bus
+	                    Bit 2 = Start polygon generator
+	                    Bit 1 = Select polygon image RAM bank
+	                    Bit 0 = Erase polygon image memory
+	1180 - 1180  OUT0   Bit 7 = Alpha Map 1
+	                    Bit 6,5 = RAM bank select
+	                    Bit 4,3 = Mathbox memory select
+	                    Bit 2,1 = Mathbox bank select
+	11C0 - 11C0  OUT1   Bit 7 = Coin Counter R
+	                    Bit 6 = Coin Counter L
+	                    Bit 5 = LED2
+	                    Bit 4 = LED1
+	                    Bit 3,2,1 = ROM bank select
+	1200 - 12FF  R/W    NVRAM (bits 0..3 only)
+	1300 - 13FF  W      Select analog controller
+	1300 - 13FF  R      Read analog controller
+	1400 - 143F  R/W    Quad Pokey
+	1800 - 18FF         Palette RAM
+	1900 - 1900  W      Watchdog reset
+	1A00 - 1A00  W      FIREQ Enable
+	1B00 - 1BFF  W      Start analog controller ADC
+	1C00 - 1FFF  R/W    Character RAM
+	2000 - 3FFF  R/W    Mathbox/Vector Gen Shared RAM
+	4000 - 5FFF  R      Banked ROM
+	6000 - FFFF  R      Fixed ROM
+
+	Notes:
+	- There is no flip screen nor cocktail mode in the original game
 
 ****************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
-
-extern int  irobot_vh_start(void);
-extern void irobot_vh_stop(void);
-extern void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void irobot_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( irobot_paletteram_w );
-
-void init_irobot(void);	/* convert mathbox ROMs */
-void irobot_init_machine (void);
-
-READ_HANDLER( irobot_status_r );
-WRITE_HANDLER( irobot_statwr_w );
-WRITE_HANDLER( irobot_out0_w );
-WRITE_HANDLER( irobot_rom_banksel_w );
-READ_HANDLER( irobot_control_r );
-WRITE_HANDLER( irobot_control_w );
-READ_HANDLER( irobot_sharedmem_r );
-WRITE_HANDLER( irobot_sharedmem_w );
+#include "irobot.h"
 
 
 
-static unsigned char *nvram;
-static size_t nvram_size;
-
-static void nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-		osd_fwrite(file,nvram,nvram_size);
-	else
-	{
-		if (file)
-			osd_fread(file,nvram,nvram_size);
-		else
-			memset(nvram,0,nvram_size);
-	}
-}
+/*************************************
+ *
+ *	NVRAM handler
+ *
+ *************************************/
 
 WRITE_HANDLER( irobot_nvram_w )
 {
-	nvram[offset] = data & 0x0f;
+	generic_nvram[offset] = data & 0x0f;
 }
 
+
+
+/*************************************
+ *
+ *	IRQ acknowledgement
+ *
+ *************************************/
 
 static WRITE_HANDLER( irobot_clearirq_w )
 {
     cpu_set_irq_line(0, M6809_IRQ_LINE ,CLEAR_LINE);
 }
 
+
 static WRITE_HANDLER( irobot_clearfirq_w )
 {
     cpu_set_irq_line(0, M6809_FIRQ_LINE ,CLEAR_LINE);
 }
 
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
     { 0x0000, 0x07ff, MRA_RAM },
@@ -136,6 +135,7 @@ static MEMORY_READ_START( readmem )
     { 0x6000, 0xffff, MRA_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( writemem )
     { 0x0000, 0x07ff, MWA_RAM },
     { 0x0800, 0x0fff, MWA_BANK2 },
@@ -143,7 +143,7 @@ static MEMORY_WRITE_START( writemem )
     { 0x1140, 0x1140, irobot_statwr_w },
     { 0x1180, 0x1180, irobot_out0_w },
     { 0x11c0, 0x11c0, irobot_rom_banksel_w },
-    { 0x1200, 0x12ff, irobot_nvram_w, &nvram, &nvram_size },
+    { 0x1200, 0x12ff, irobot_nvram_w, &generic_nvram, &generic_nvram_size },
     { 0x1400, 0x143f, quad_pokey_w },
     { 0x1800, 0x18ff, irobot_paletteram_w },
     { 0x1900, 0x19ff, MWA_RAM },            /* Watchdog reset */
@@ -155,6 +155,12 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( irobot )
 	PORT_START	/* IN0 */
@@ -243,22 +249,38 @@ INPUT_PORTS_START( irobot )
 INPUT_PORTS_END
 
 
+
+/*************************************
+ *
+ *	Graphics definitions
+ *
+ *************************************/
+
 static struct GfxLayout charlayout =
 {
-	8,8,    /* 8*8 characters */
-    64,    /* 64 characters */
-    1,      /* 1 bit per pixel */
-    { 0 }, /* the bitplanes are packed in one nibble */
+	8,8,
+    64,
+    1,
+    { 0 },
     { 4, 5, 6, 7, 12, 13, 14, 15},
     { 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16},
-    16*8   /* every char takes 16 consecutive bytes */
+    16*8
 };
+
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
     { REGION_GFX1, 0, &charlayout, 64, 16 },
 	{ -1 }
 };
+
+
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct POKEYinterface pokey_interface =
 {
@@ -279,52 +301,48 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-static const struct MachineDriver machine_driver_irobot =
-{
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( irobot )
+
 	/* basic machine hardware */
-	{
-		{
-            CPU_M6809,
-            1500000,    /* 1.5 MHz */
-			readmem,writemem,0,0,
-            ignore_interrupt,0		/* interrupt handled by scanline callbacks */
-         },
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-    1,
-    irobot_init_machine,
+	MDRV_CPU_ADD(M6809,1500000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(irobot)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 29*8-1 },
-	gfxdecodeinfo,
-    64 + 32,64 + 32, /* 64 for polygons, 32 for text */
-    irobot_vh_convert_color_prom,
-
-    VIDEO_TYPE_RASTER,
-	0,
-    irobot_vh_start,
-    irobot_vh_stop,
-    irobot_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 29*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64 + 32)
+	MDRV_COLORTABLE_LENGTH(64 + 32)	/* 64 for polygons, 32 for text */
+	
+	MDRV_PALETTE_INIT(irobot)
+	MDRV_VIDEO_START(irobot)
+	MDRV_VIDEO_UPDATE(irobot)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( irobot )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 64k for code + 48K Banked ROM*/
@@ -367,5 +385,11 @@ ROM_END
 	/*  ROM_LOAD( "136029.125",    0x0000, 0x0020, 0xc05abf82 ) */
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot" )

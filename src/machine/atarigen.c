@@ -121,6 +121,9 @@ void atarigen_interrupt_reset(atarigen_int_callback update_int)
 	/* reset the interrupt states */
 	atarigen_video_int_state = atarigen_sound_int_state = atarigen_scanline_int_state = 0;
 	scanline_interrupt_timer = NULL;
+	
+	/* create a timer for scanlines */
+	scanline_interrupt_timer = timer_alloc(scanline_interrupt_callback);
 }
 
 
@@ -144,9 +147,7 @@ void atarigen_update_interrupts(void)
 
 void atarigen_scanline_int_set(int scanline)
 {
-	if (scanline_interrupt_timer)
-		timer_remove(scanline_interrupt_timer);
-	scanline_interrupt_timer = timer_set(cpu_getscanlinetime(scanline), 0, scanline_interrupt_callback);
+	timer_adjust(scanline_interrupt_timer, cpu_getscanlinetime(scanline), 0, 0);
 }
 
 
@@ -155,11 +156,10 @@ void atarigen_scanline_int_set(int scanline)
 	which sets the scanline interrupt state.
 ---------------------------------------------------------------*/
 
-int atarigen_scanline_int_gen(void)
+INTERRUPT_GEN( atarigen_scanline_int_gen )
 {
 	atarigen_scanline_int_state = 1;
 	(*update_int_callback)();
-	return ignore_interrupt();
 }
 
 
@@ -186,11 +186,10 @@ WRITE32_HANDLER( atarigen_scanline_int_ack32_w )
 	sets the sound interrupt state.
 ---------------------------------------------------------------*/
 
-int atarigen_sound_int_gen(void)
+INTERRUPT_GEN( atarigen_sound_int_gen )
 {
 	atarigen_sound_int_state = 1;
 	(*update_int_callback)();
-	return ignore_interrupt();
 }
 
 
@@ -217,11 +216,10 @@ WRITE32_HANDLER( atarigen_sound_int_ack32_w )
 	sets the video interrupt state.
 ---------------------------------------------------------------*/
 
-int atarigen_video_int_gen(void)
+INTERRUPT_GEN( atarigen_video_int_gen )
 {
 	atarigen_video_int_state = 1;
 	(*update_int_callback)();
-	return ignore_interrupt();
 }
 
 
@@ -253,7 +251,7 @@ static void scanline_interrupt_callback(int param)
 	atarigen_scanline_int_gen();
 
 	/* set a new timer to go off at the same scan line next frame */
-	scanline_interrupt_timer = timer_set(TIME_IN_HZ(Machine->drv->frames_per_second), 0, scanline_interrupt_callback);
+	timer_adjust(scanline_interrupt_timer, TIME_IN_HZ(Machine->drv->frames_per_second), 0, 0);
 }
 
 
@@ -338,10 +336,10 @@ READ32_HANDLER( atarigen_eeprom_upper32_r )
 
 
 /*---------------------------------------------------------------
-	atarigen_nvram_handler: Loads the EEPROM data.
+	nvram_handler_atarigen: Loads the EEPROM data.
 ---------------------------------------------------------------*/
 
-void atarigen_nvram_handler(void *file, int read_or_write)
+NVRAM_HANDLER( atarigen )
 {
 	if (read_or_write)
 		osd_fwrite(file, atarigen_eeprom, atarigen_eeprom_size);
@@ -527,11 +525,10 @@ void atarigen_sound_io_reset(int cpu_num)
 	sound processor.
 ---------------------------------------------------------------*/
 
-int atarigen_6502_irq_gen(void)
+INTERRUPT_GEN( atarigen_6502_irq_gen )
 {
 	timed_int = 1;
 	update_6502_irq();
-	return ignore_interrupt();
 }
 
 
@@ -544,7 +541,7 @@ READ_HANDLER( atarigen_6502_irq_ack_r )
 {
 	timed_int = 0;
 	update_6502_irq();
-	return ignore_interrupt();
+	return 0;
 }
 
 WRITE_HANDLER( atarigen_6502_irq_ack_w )
@@ -677,9 +674,9 @@ READ_HANDLER( atarigen_6502_sound_r )
 void update_6502_irq(void)
 {
 	if (timed_int || ym2151_int)
-		cpu_set_irq_line(sound_cpu_num, M6502_INT_IRQ, ASSERT_LINE);
+		cpu_set_irq_line(sound_cpu_num, M6502_IRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(sound_cpu_num, M6502_INT_IRQ, CLEAR_LINE);
+		cpu_set_irq_line(sound_cpu_num, M6502_IRQ_LINE, CLEAR_LINE);
 }
 
 
@@ -851,7 +848,7 @@ static READ_HANDLER( m6502_speedup_r )
 {
 	int result = speed_b[0];
 
-	if (cpu_getpreviouspc() == speed_pc && speed_a[0] == speed_a[1] && result == speed_b[1])
+	if (activecpu_get_previouspc() == speed_pc && speed_a[0] == speed_a[1] && result == speed_b[1])
 		cpu_spinuntil_int();
 
 	return result;
@@ -1294,16 +1291,6 @@ static void unhalt_cpu(int param)
 /*---------------------------------------------------------------
 	atarigen_invert_region: Inverts the bits in a region.
 ---------------------------------------------------------------*/
-
-void atarigen_invert_region(int region)
-{
-	int length = memory_region_length(region);
-	UINT8 *base = memory_region(region);
-
-	while (length--)
-		*base++ ^= 0xff;
-}
-
 
 void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes)
 {

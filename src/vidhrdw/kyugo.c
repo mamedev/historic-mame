@@ -100,7 +100,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 
 
-void kyugo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kyugo )
 {
 	int offs;
 	const UINT8 *color_codes = memory_region(REGION_PROMS) + 0x300;

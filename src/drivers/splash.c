@@ -22,15 +22,15 @@ READ16_HANDLER( splash_vram_r );
 READ16_HANDLER( splash_pixelram_r );
 WRITE16_HANDLER( splash_vram_w );
 WRITE16_HANDLER( splash_pixelram_w );
-int splash_vh_start( void );
-void splash_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
+VIDEO_START( splash );
+VIDEO_UPDATE( splash );
 
 
 static WRITE16_HANDLER( splash_sh_irqtrigger_w )
 {
 	if (ACCESSING_LSB){
 		soundlatch_w(0,data & 0xff);
-		cpu_cause_interrupt(1,Z80_IRQ_INT);
+		cpu_set_irq_line(1,0,HOLD_LINE);
 	}
 }
 
@@ -229,51 +229,35 @@ static struct MSM5205interface splash_msm5205_interface =
 };
 
 
-static const struct MachineDriver machine_driver_splash =
-{
-	{
-		{
-			CPU_M68000,
-			24000000/2,			/* 12 MHz */
-			splash_readmem,splash_writemem,0,0,
-			m68_level6_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			30000000/8,			/* 3.75 MHz? */
-			splash_readmem_sound, splash_writemem_sound,0,0,
-			nmi_interrupt,64	/* needed for the msm5205 to play the samples */
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( splash )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz */
+	MDRV_CPU_MEMORY(splash_readmem,splash_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,30000000/8)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz? */
+	MDRV_CPU_MEMORY(splash_readmem_sound,splash_writemem_sound)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 64*8, { 2*8, 49*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
+	MDRV_VISIBLE_AREA(2*8, 49*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	splash_vh_start,
-	0,
-	splash_vh_screenrefresh,
+	MDRV_VIDEO_START(splash)
+	MDRV_VIDEO_UPDATE(splash)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&splash_ym3812_interface
-		},
-		{
-			SOUND_MSM5205,
-			&splash_msm5205_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM3812, splash_ym3812_interface)
+	MDRV_SOUND_ADD(MSM5205, splash_msm5205_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( splash )

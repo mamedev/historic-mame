@@ -76,7 +76,7 @@ static int ModeOffset[4] = {223,191,255,127};
  * colours are taken from SRAM and are programmable   *
  ******************************************************/
 
-void cvs_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( cvs )
 {
 	int attr,col,map;
 
@@ -364,12 +364,12 @@ READ_HANDLER( cvs_2636_3_r )
     }
 }
 
-int cvs_vh_start(void)
+VIDEO_START( cvs )
 {
 	int generator = 0;
     int x,y;
 
-	generic_vh_start();
+	video_start_generic();
 
 	/* precalculate the star background */
 
@@ -406,87 +406,35 @@ int cvs_vh_start(void)
 
     /* Need 3 bitmaps for 2636 chips */
 
-	if ((s2636_1_bitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+	if ((s2636_1_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 		return 1;
-	}
 
-	if ((s2636_2_bitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
-	{
-		bitmap_free(s2636_1_bitmap);
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+	if ((s2636_2_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 		return 1;
-	}
 
-	if ((s2636_3_bitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
-	{
-		bitmap_free(s2636_1_bitmap);
-		bitmap_free(s2636_2_bitmap);
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+	if ((s2636_3_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 		return 1;
-	}
 
     /* 3 bitmaps for collision detection */
 
-	if ((collision_bitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
-	{
-		bitmap_free(s2636_1_bitmap);
-		bitmap_free(s2636_2_bitmap);
-		bitmap_free(s2636_3_bitmap);
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+	if ((collision_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 		return 1;
-	}
 
-	if ((collision_background = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
-	{
-    	bitmap_free(collision_bitmap);
-		bitmap_free(s2636_1_bitmap);
-		bitmap_free(s2636_2_bitmap);
-		bitmap_free(s2636_3_bitmap);
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+	if ((collision_background = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 		return 1;
-	}
 
-	if ((scrolled_background = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
-	{
-    	bitmap_free(collision_background);
-    	bitmap_free(collision_bitmap);
-		bitmap_free(s2636_1_bitmap);
-		bitmap_free(s2636_2_bitmap);
-		bitmap_free(s2636_3_bitmap);
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
+	if ((scrolled_background = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-void cvs_vh_stop(void)
-{
-	generic_vh_stop();
-	bitmap_free(s2636_1_bitmap);
-	bitmap_free(s2636_2_bitmap);
-	bitmap_free(s2636_3_bitmap);
-	bitmap_free(collision_bitmap);
-	bitmap_free(collision_background);
-    bitmap_free(scrolled_background);
-}
-
-int cvs_interrupt(void)
+INTERRUPT_GEN( cvs_interrupt )
 {
 	stars_scroll++;
 
 	cpu_irq_line_vector_w(0,0,0x03);
 	cpu_set_irq_line(0,0,PULSE_LINE);
-
-	return ignore_interrupt();
 }
 
 INLINE void plot_star(struct mame_bitmap *bitmap, int x, int y)
@@ -506,10 +454,13 @@ INLINE void plot_star(struct mame_bitmap *bitmap, int x, int y)
 	}
 }
 
-void cvs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cvs )
 {
 	int offs,character;
 	int sx,sy;
+
+	if (get_vh_global_attribute_changed())
+		memset(dirtybuffer, 1, videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -518,7 +469,7 @@ void cvs_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	{
         character = videoram[offs];
 
-		if(dirtybuffer[offs] || full_refresh || dirty_character[character])
+		if(dirtybuffer[offs] || dirty_character[character])
 		{
             int character_bank;
             int forecolor;

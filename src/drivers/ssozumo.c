@@ -17,13 +17,12 @@ extern size_t ssozumo_videoram2_size;
 extern unsigned char *ssozumo_scroll;
 
 WRITE_HANDLER( ssozumo_paletteram_w );
-void ssozumo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void ssozumo_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int ssozumo_vh_start(void);
-void ssozumo_vh_stop(void);
+PALETTE_INIT( ssozumo );
+VIDEO_UPDATE( ssozumo );
+VIDEO_START( ssozumo );
 
 
-static int ssozumo_interrupt(void)
+static INTERRUPT_GEN( ssozumo_interrupt )
 {
 	static int coin;
 
@@ -32,19 +31,20 @@ static int ssozumo_interrupt(void)
 		if (coin == 0)
 		{
 			coin = 1;
-			return nmi_interrupt();
+			nmi_line_pulse();
+			return;
 		}
 	}
 	else coin = 0;
 
-	return interrupt();
+	irq0_line_hold();
 }
 
 
 WRITE_HANDLER( ssozumo_sh_command_w )
 {
 	soundlatch_w(offset, data);
-	cpu_cause_interrupt(1, M6502_INT_IRQ);
+	cpu_set_irq_line(1, M6502_IRQ_LINE, HOLD_LINE);
 }
 
 
@@ -245,52 +245,37 @@ static struct DACinterface dac_interface =
 };
 
 
-static const struct MachineDriver machine_driver_ssozumo =
-{
+static MACHINE_DRIVER_START( ssozumo )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1200000,	/* 1.2 MHz ???? */
-			readmem, writemem, 0, 0,
-			ssozumo_interrupt, 1
-		},
-		{
-			CPU_M6502 | CPU_AUDIO_CPU,
-			975000, 		/* 975 kHz ?? */
-			sound_readmem, sound_writemem, 0, 0,
-			nmi_interrupt,16	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,					/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(M6502, 1200000)	/* 1.2 MHz ???? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ssozumo_interrupt,1)
+
+	MDRV_CPU_ADD(M6502, 975000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) 		/* 975 kHz ?? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)	/* IRQs are triggered by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8 - 1, 1*8, 31*8 - 1 },
-	gfxdecodeinfo,
-	64 + 16, 64 + 16,
-	ssozumo_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8 - 1, 1*8, 31*8 - 1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64 + 16)
+	MDRV_COLORTABLE_LENGTH(64 + 16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ssozumo_vh_start,
-	ssozumo_vh_stop,
-	ssozumo_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ssozumo)
+	MDRV_VIDEO_START(ssozumo)
+	MDRV_VIDEO_UPDATE(ssozumo)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 

@@ -115,10 +115,9 @@ WRITE_HANDLER( naughtyb_videoram2_w );
 WRITE_HANDLER( naughtyb_scrollreg_w );
 WRITE_HANDLER( naughtyb_videoreg_w );
 WRITE_HANDLER( popflame_videoreg_w );
-int naughtyb_vh_start(void);
-void naughtyb_vh_stop(void);
-void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void naughtyb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( naughtyb );
+PALETTE_INIT( naughtyb );
+VIDEO_UPDATE( naughtyb );
 
 WRITE_HANDLER( pleiads_sound_control_a_w );
 WRITE_HANDLER( pleiads_sound_control_b_w );
@@ -146,16 +145,16 @@ READ_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
 	return values[count];
 
 #if 0
-	if ( cpu_get_pc() == (0x26F2 + 0x03) )
+	if ( activecpu_get_pc() == (0x26F2 + 0x03) )
 	{
 		popflame_prot_count = 0;
 		return 0x01;
 	} /* Must not carry when rotated left */
 
-	if ( cpu_get_pc() == (0x26F9 + 0x03) )
+	if ( activecpu_get_pc() == (0x26F9 + 0x03) )
 		return 0x80; /* Must carry when rotated left */
 
-	if ( cpu_get_pc() == (0x270F + 0x03) )
+	if ( activecpu_get_pc() == (0x270F + 0x03) )
 	{
 		switch( popflame_prot_count++ )
 		{
@@ -165,7 +164,7 @@ READ_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
 			case 3: return 0x38; /* x011 1xxx, matches 0x07 at $2693, stored in $400D */
 		}
 	}
-	logerror("CPU #0 PC %06x: unmapped protection read\n", cpu_get_pc());
+	logerror("CPU #0 PC %06x: unmapped protection read\n", activecpu_get_pc());
 	return 0x00;
 #endif
 }
@@ -211,11 +210,10 @@ MEMORY_END
 
 ***************************************************************************/
 
-int naughtyb_interrupt(void)
+INTERRUPT_GEN( naughtyb_interrupt )
 {
 	if (readinputport(2) & 1)
-		return nmi_interrupt();
-	else return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 INPUT_PORTS_START( naughtyb )
@@ -316,90 +314,62 @@ static struct TMS36XXinterface tms3615_interface =
 
 
 
-static const struct MachineDriver machine_driver_naughtyb =
-{
+static MACHINE_DRIVER_START( naughtyb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1500000,	/* 3 MHz ? */
-			readmem,writemem,0,0,
-			naughtyb_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1500000)	/* 3 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(naughtyb_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,32*4+32*4,
-	naughtyb_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*4+32*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	naughtyb_vh_start,
-	naughtyb_vh_stop,
-	naughtyb_vh_screenrefresh,
+	MDRV_PALETTE_INIT(naughtyb)
+	MDRV_VIDEO_START(naughtyb)
+	MDRV_VIDEO_UPDATE(naughtyb)
 
 	/* sound hardware */
 	/* uses the TMS3615NS for sound */
-	0,0,0,0,
-	{
-		{
-			SOUND_TMS36XX,
-			&tms3615_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&naughtyb_custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(TMS36XX, tms3615_interface)
+	MDRV_SOUND_ADD(CUSTOM, naughtyb_custom_interface)
+MACHINE_DRIVER_END
+
 
 /* Exactly the same but for the writemem handler */
-static const struct MachineDriver machine_driver_popflame =
-{
+static MACHINE_DRIVER_START( popflame )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1500000,	/* 3 MHz ? */
-			readmem,popflame_writemem,0,0,
-			naughtyb_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1500000)	/* 3 MHz ? */
+	MDRV_CPU_MEMORY(readmem,popflame_writemem)
+	MDRV_CPU_VBLANK_INT(naughtyb_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,32*4+32*4,
-	naughtyb_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*4+32*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	naughtyb_vh_start,
-	naughtyb_vh_stop,
-	naughtyb_vh_screenrefresh,
+	MDRV_PALETTE_INIT(naughtyb)
+	MDRV_VIDEO_START(naughtyb)
+	MDRV_VIDEO_UPDATE(naughtyb)
 
 	/* sound hardware */
-	/* uses the TMS3615NS for sound */
-	0,0,0,0,
-	{
-		{
-			SOUND_TMS36XX,
-			&tms3615_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&popflame_custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(TMS36XX, tms3615_interface)
+	MDRV_SOUND_ADD(CUSTOM, popflame_custom_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -555,7 +525,7 @@ ROM_END
 
 
 
-void init_popflame(void)
+DRIVER_INIT( popflame )
 {
 	/* install a handler to catch protection checks */
 	install_mem_read_handler(0, 0x9000, 0x9000, popflame_protection_r);

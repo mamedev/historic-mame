@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "blstroid.h"
 
 
 
@@ -25,7 +26,7 @@ data16_t *blstroid_priorityram;
  *
  *************************************/
 
-int blstroid_vh_start(void)
+VIDEO_START( blstroid )
 {
 	static const struct ataripf_desc pfdesc =
 	{
@@ -84,32 +85,12 @@ int blstroid_vh_start(void)
 
 	/* initialize the playfield */
 	if (!ataripf_init(0, &pfdesc))
-		goto cant_create_pf;
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))
-		goto cant_create_mo;
+		return 1;
 	return 0;
-
-	/* error cases */
-cant_create_mo:
-	ataripf_free();
-cant_create_pf:
-	return 1;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void blstroid_vh_stop(void)
-{
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -188,9 +169,9 @@ static int overrender_callback(struct ataripf_overrender_data *data, int state)
  *
  *************************************/
 
-void blstroid_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( blstroid )
 {
 	/* draw the layers */
-	ataripf_render(0, bitmap);
-	atarimo_render(0, bitmap, overrender_callback, NULL);
+	ataripf_render(0, bitmap, cliprect);
+	atarimo_render(0, bitmap, cliprect, overrender_callback, NULL);
 }

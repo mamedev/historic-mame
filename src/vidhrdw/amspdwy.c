@@ -83,7 +83,7 @@ UINT32 tilemap_scan_cols_back( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 n
 }
 
 
-int amspdwy_vh_start(void)
+VIDEO_START( amspdwy )
 {
 	tilemap	=	tilemap_create(	get_tile_info,	tilemap_scan_cols_back,
 								TILEMAP_OPAQUE,	8,8,	0x20, 0x20 );
@@ -112,7 +112,7 @@ Offset:		Format:		Value:
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int i;
 	int max_x = Machine->drv->screen_width  - 1;
@@ -139,7 +139,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 				attr,
 				flipx, flipy,
 				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0 );
+				cliprect,TRANSPARENCY_PEN,0 );
 	}
 }
 
@@ -152,8 +152,8 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void amspdwy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( amspdwy )
 {
-	tilemap_draw(bitmap,tilemap,0,0);
-	draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

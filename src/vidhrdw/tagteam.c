@@ -14,7 +14,7 @@ static int palettebank;
 
 
 
-void tagteam_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( tagteam )
 {
 	int i;
 
@@ -94,7 +94,7 @@ WRITE_HANDLER( tagteam_mirrorcolorram_w )
 
 WRITE_HANDLER( tagteam_control_w )
 {
-logerror("%04x: control = %02x\n",cpu_get_pc(),data);
+logerror("%04x: control = %02x\n",activecpu_get_pc(),data);
 
 	/* bit 7 is the palette bank */
 	palettebank = (data & 0x80) >> 7;
@@ -197,7 +197,7 @@ static void drawsprites(struct mame_bitmap *bitmap,int color)
 	}
 }
 
-void tagteam_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tagteam )
 {
 	drawchars(bitmap,palettebank);
 

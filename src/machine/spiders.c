@@ -81,7 +81,7 @@ static struct pia6821_interface pia_3_intf =
 
 ***************************************************************************/
 
-void spiders_init_machine(void)
+MACHINE_INIT( spiders )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
@@ -99,7 +99,7 @@ void spiders_init_machine(void)
 
 ***************************************************************************/
 
-int spiders_timed_irq(void)
+INTERRUPT_GEN( spiders_timed_irq )
 {
 	/* Update CA1 on PIA1 - copy of PA0 (COIN1?) */
 	pia_0_ca1_w(0 , input_port_0_r(0)&0x01);
@@ -111,8 +111,6 @@ int spiders_timed_irq(void)
 	pia_0_cb1_w(0 , input_port_6_r(0));
 
 	/* Update CB2 on PIA1 - NOT CONNECTED */
-
-	return ignore_interrupt();
 }
 
 

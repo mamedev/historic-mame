@@ -5,6 +5,7 @@
 static int flipscreen, sprite_flip_adjust;
 static struct tilemap *fg_tilemap, *bg_tilemap, *tx_tilemap;
 static unsigned char bg_color, fg_color, old_bg_color, old_fg_color;
+static struct rectangle tilemap_clip;
 
 /***************************************************************************
 **
@@ -174,7 +175,7 @@ static void get_tx_tilemap_info(int tile_index)
 **
 ***************************************************************************/
 
-int marvins_vh_start( void )
+VIDEO_START( marvins )
 {
 	flipscreen = -1; old_bg_color = old_fg_color = -1;
 
@@ -189,12 +190,9 @@ int marvins_vh_start( void )
 		return 1;
 
 	{
-		struct rectangle clip = Machine->visible_area;
-		clip.max_x-=16;
-		clip.min_x+=16;
-		tilemap_set_clip( fg_tilemap, &clip );
-		tilemap_set_clip( bg_tilemap, &clip );
-		tilemap_set_clip( tx_tilemap, &clip );
+		tilemap_clip = Machine->visible_area;
+		tilemap_clip.max_x-=16;
+		tilemap_clip.min_x+=16;
 
 		tilemap_set_transparent_pen(fg_tilemap,0xf);
 		tilemap_set_transparent_pen(bg_tilemap,0xf);
@@ -228,10 +226,9 @@ int marvins_vh_start( void )
 **
 ***************************************************************************/
 
-static void draw_status( struct mame_bitmap *bitmap )
+static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	const unsigned char *base = videoram+0x2400;
-	struct rectangle clip = Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ )
@@ -254,17 +251,16 @@ static void draw_status( struct mame_bitmap *bitmap )
 			    tile_number, tile_number>>5,
 			    0,0, /* no flip */
 			    sx,sy,
-			    &clip,
+			    cliprect,
 			    TRANSPARENCY_NONE, 0xf );
 		}
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scrollx, int scrolly,
 		int priority, unsigned char sprite_partition )
 {
 	const struct GfxElement *gfx = Machine->gfx[3];
-	struct rectangle clip = Machine->visible_area;
 	const unsigned char *source, *finish;
 
 	if( sprite_partition>0x64 ) sprite_partition = 0x64;
@@ -311,16 +307,15 @@ static void draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
 			color,
 			flipx, flipy,
 			(256-sx)&0x1ff,sy,
-			&clip,TRANSPARENCY_PEN,7);
+			cliprect,TRANSPARENCY_PEN,7);
 
 		source+=4;
 	}
 }
 
-void marvins_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( marvins )
 {
 	unsigned char *mem = memory_region(REGION_CPU1);
-
 	unsigned char sprite_partition = mem[0xfe00];
 
 	int attributes = mem[0x8600]; /* 0x20: normal, 0xa0: video flipped */
@@ -332,6 +327,9 @@ void marvins_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 	int bg_scrollx = mem[0xfb00];
 	int fg_scrolly = mem[0xfc00];
 	int fg_scrollx = mem[0xfd00];
+	
+	struct rectangle finalclip = tilemap_clip;
+	sect_rect(&finalclip, cliprect);
 
 	if( (scroll_attributes & 4)==0 ) bg_scrollx += 256;
 	if( scroll_attributes & 1 ) sprite_scrollx += 256;
@@ -353,15 +351,15 @@ void marvins_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrollx( tx_tilemap,  0, 0 );
 	tilemap_set_scrolly( tx_tilemap,  0, 0 );
 
-	tilemap_draw( bitmap,fg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
-	draw_sprites( bitmap, sprite_scrollx+29+1, sprite_scrolly, 0, sprite_partition );
-	tilemap_draw( bitmap,bg_tilemap,0 ,0);
-	draw_sprites( bitmap, sprite_scrollx+29+1, sprite_scrolly, 1, sprite_partition );
-	tilemap_draw( bitmap,tx_tilemap,0 ,0);
-	draw_status( bitmap );
+	tilemap_draw( bitmap,&finalclip,fg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
+	draw_sprites( bitmap,cliprect, sprite_scrollx+29+1, sprite_scrolly, 0, sprite_partition );
+	tilemap_draw( bitmap,&finalclip,bg_tilemap,0 ,0);
+	draw_sprites( bitmap,cliprect, sprite_scrollx+29+1, sprite_scrolly, 1, sprite_partition );
+	tilemap_draw( bitmap,&finalclip,tx_tilemap,0 ,0);
+	draw_status( bitmap,cliprect );
 }
 
-void madcrash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( madcrash )
 {
 	extern int madcrash_vreg;
 	unsigned char *mem = memory_region(REGION_CPU1)+madcrash_vreg;
@@ -374,6 +372,10 @@ void madcrash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 	int sprite_scrollx = mem[0xfd00];
 	int fg_scrolly = mem[0xfe00];
 	int fg_scrollx = mem[0xff00];
+
+	struct rectangle finalclip = tilemap_clip;
+	sect_rect(&finalclip, cliprect);
+
 	if( (scroll_attributes & 4)==0 ) bg_scrollx += 256;
 	if( scroll_attributes & 1 ) sprite_scrollx += 256;
 	if( scroll_attributes & 2 ) fg_scrollx += 256;
@@ -394,10 +396,10 @@ void madcrash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
 	tilemap_set_scrollx( tx_tilemap,  0, 0 );
 	tilemap_set_scrolly( tx_tilemap,  0, 0 );
 
-	tilemap_draw( bitmap,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
-	tilemap_draw( bitmap,fg_tilemap,0 ,0);
-	draw_sprites( bitmap, sprite_scrollx+29, sprite_scrolly+1, 1, 0 );
+	tilemap_draw( bitmap,&finalclip,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY ,0);
+	tilemap_draw( bitmap,&finalclip,fg_tilemap,0 ,0);
+	draw_sprites( bitmap,cliprect, sprite_scrollx+29, sprite_scrolly+1, 1, 0 );
 
-	tilemap_draw( bitmap,tx_tilemap,0 ,0);
-	draw_status( bitmap );
+	tilemap_draw( bitmap,&finalclip,tx_tilemap,0 ,0);
+	draw_status( bitmap,cliprect );
 }

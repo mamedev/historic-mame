@@ -22,33 +22,19 @@ static unsigned char scroll_x[2],scroll_y;
 static unsigned char led0,led1;
 
 
-int tehkanwc_vh_start(void)
+VIDEO_START( tehkanwc )
 {
-	if (generic_vh_start())
+	if (video_start_generic())
 		return 1;
 
-	if ((tmpbitmap1 = bitmap_alloc(2 * Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
-	{
-		generic_vh_stop();
+	if ((tmpbitmap1 = auto_bitmap_alloc(2 * Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((dirtybuffer1 = malloc(tehkanwc_videoram1_size)) == 0)
-	{
-		bitmap_free(tmpbitmap1);
-		generic_vh_stop();
+	if ((dirtybuffer1 = auto_malloc(tehkanwc_videoram1_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer1,1,tehkanwc_videoram1_size);
 
 	return 0;
-}
-
-void tehkanwc_vh_stop(void)
-{
-	free(dirtybuffer1);
-	bitmap_free(tmpbitmap1);
-	generic_vh_stop();
 }
 
 
@@ -152,7 +138,7 @@ else logerror("unknown LED %02x for player %d\n",led,player);
 
 
 
-void tehkanwc_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( tehkanwc )
 {
 	int offs;
 

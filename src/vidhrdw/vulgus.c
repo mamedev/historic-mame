@@ -22,7 +22,7 @@ static struct tilemap *fg_tilemap, *bg_tilemap;
 
 ***************************************************************************/
 
-void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( vulgus )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -118,7 +118,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int vulgus_vh_start(void)
+VIDEO_START( vulgus )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR, 8, 8,32,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE           ,16,16,32,32);
@@ -178,7 +178,7 @@ WRITE_HANDLER( vulgus_palette_bank_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -210,7 +210,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					col,
 					flip_screen,flip_screen,
 					sx, sy + 16 * i * dir,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 
 			/* draw again with wraparound */
 			drawgfx(bitmap,Machine->gfx[2],
@@ -218,18 +218,18 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					col,
 					flip_screen,flip_screen,
 					sx, sy + 16 * i * dir -  dir * 256,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
+					cliprect,TRANSPARENCY_PEN,15);
 			i--;
 		} while (i >= 0);
 	}
 }
 
-void vulgus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( vulgus )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, vulgus_scroll_low[1] + 256 * vulgus_scroll_high[1]);
 	tilemap_set_scrolly(bg_tilemap, 0, vulgus_scroll_low[0] + 256 * vulgus_scroll_high[0]);
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

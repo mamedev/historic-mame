@@ -33,7 +33,7 @@ UINT8 arabian_flip_screen;
  *
  *************************************/
 
-void arabian_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( arabian )
 {
 	int i;
 
@@ -161,7 +161,7 @@ void arabian_vh_convert_color_prom(unsigned char *obsolete,unsigned short *color
  *
  *************************************/
 
-int arabian_vh_start(void)
+VIDEO_START( arabian )
 {
 	UINT8 *gfxbase = memory_region(REGION_GFX1);
 	int offs;
@@ -169,17 +169,14 @@ int arabian_vh_start(void)
 	/* allocate a common bitmap to use for both planes */
 	/* plane A (top plane with motion objects) is in the upper 4 bits */
 	/* plane B (bottom plane with playfield) is in the lower 4 bits */
-	main_bitmap = malloc(BITMAP_WIDTH * BITMAP_HEIGHT);
+	main_bitmap = auto_malloc(BITMAP_WIDTH * BITMAP_HEIGHT);
 	if (main_bitmap == 0)
 		return 1;
 
 	/* allocate memory for the converted graphics data */
-	converted_gfx = malloc(0x8000 * 2);
+	converted_gfx = auto_malloc(0x8000 * 2);
 	if (converted_gfx == 0)
-	{
-		free(main_bitmap);
 		return 1;
-	}
 
 
 	/*--------------------------------------------------
@@ -224,20 +221,6 @@ int arabian_vh_start(void)
 	}
 
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Video shutdown
- *
- *************************************/
-
-void arabian_vh_stop(void)
-{
-	free(converted_gfx);
-	free(main_bitmap);
 }
 
 
@@ -393,7 +376,7 @@ WRITE_HANDLER( arabian_videoram_w )
  *
  *************************************/
 
-void arabian_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( arabian )
 {
 	pen_t *colortable = &Machine->remapped_colortable[(arabian_video_control >> 3) << 8];
 	int y;

@@ -159,6 +159,7 @@ static struct win_effect_data effect_table[] =
 	{ "rgb3",    EFFECT_RGB3,        2, 2, 2, 2 },
 	{ "rgbtiny", EFFECT_RGB_TINY,    2, 2, 2, 2 },
 	{ "scan75v", EFFECT_SCANLINE_75V,2, 2, 2, 2 },
+	{ "sharp",   EFFECT_SHARP,       2, 2, 2, 2 },
 };
 
 

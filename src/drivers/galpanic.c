@@ -52,20 +52,22 @@ the board, and no piggybacked ROMs. Board number is MDK 321 V-0    EXPRO-02
 extern data16_t *galpanic_bgvideoram,*galpanic_fgvideoram;
 extern size_t galpanic_fgvideoram_size;
 
-void galpanic_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
+PALETTE_INIT( galpanic );
 WRITE16_HANDLER( galpanic_bgvideoram_w );
 WRITE16_HANDLER( galpanic_paletteram_w );
-void galpanic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void comad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( galpanic );
+VIDEO_UPDATE( comad );
 
 
 
 
-static int galpanic_interrupt(void)
+static INTERRUPT_GEN( galpanic_interrupt )
 {
 	/* IRQ 3 drives the game, IRQ 5 updates the palette */
-	if (cpu_getiloops() != 0) return 5;
-	else return 3;
+	if (cpu_getiloops() != 0)
+		cpu_set_irq_line(0, 5, HOLD_LINE);
+	else
+		cpu_set_irq_line(0, 3, HOLD_LINE);
 }
 
 static WRITE16_HANDLER( galpanic_6295_bankswitch_w )
@@ -406,46 +408,43 @@ static struct OKIM6295interface okim6295_interface =
 };
 
 
-#define MACHINEDRIVER(NAME,CLOCK,SCREENREFRESH)								\
-static const struct MachineDriver machine_driver_##NAME =							\
-{																			\
-	/* basic machine hardware */											\
-	{																		\
-		{																	\
-			CPU_M68000,														\
-			CLOCK,															\
-			NAME##_readmem,NAME##_writemem,0,0,								\
-			galpanic_interrupt,2											\
-		}																	\
-	},																		\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* single CPU, no need for interleaving */							\
-	0,																		\
-																			\
-	/* video hardware */													\
-	256, 256, { 0, 256-1, 0, 224-1 },										\
-	gfxdecodeinfo,															\
-	1024 + 32768, 1024,														\
-	galpanic_init_palette,													\
-																			\
-	VIDEO_TYPE_RASTER,								\
-	0,																		\
-	generic_bitmapped_vh_start,												\
-	generic_bitmapped_vh_stop,												\
-	SCREENREFRESH##_vh_screenrefresh,										\
-																			\
-	/* sound hardware */													\
-	0,0,0,0,																\
-	{																		\
-		{																	\
-			SOUND_OKIM6295,													\
-			&okim6295_interface												\
-		}																	\
-	}																		\
-};
+static MACHINE_DRIVER_START( galpanic )
 
-MACHINEDRIVER(galpanic, 8000000,galpanic)	/*  8 MHz ??? */
-MACHINEDRIVER(comad,   10000000,comad)		/* 10 MHz ??? */
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 8000000)
+	MDRV_CPU_MEMORY(galpanic_readmem,galpanic_writemem)
+	MDRV_CPU_VBLANK_INT(galpanic_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024 + 32768)
+	MDRV_COLORTABLE_LENGTH(1024)
+
+	MDRV_PALETTE_INIT(galpanic)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(galpanic)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( comad )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galpanic)
+	MDRV_CPU_REPLACE("main", M68000, 10000000)
+	MDRV_CPU_MEMORY(comad_readmem,comad_writemem)
+	
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(comad)
+MACHINE_DRIVER_END
 
 
 

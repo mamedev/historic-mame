@@ -28,18 +28,6 @@ extern char geebee_msg[32+1];
 extern int geebee_cnt;
 #endif
 
-int geebee_interrupt(void)
-{
-	cpu_set_irq_line(0, 0, PULSE_LINE);
-    return ignore_interrupt();
-}
-
-int kaitei_interrupt(void)
-{
-	cpu_set_irq_line(0, 0, HOLD_LINE);
-    return ignore_interrupt();
-}
-
 READ_HANDLER( geebee_in_r )
 {
 	int data = readinputport(offset & 3);

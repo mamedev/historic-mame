@@ -81,7 +81,7 @@ LAYER( 3 )
 
 ***************************************************************************/
 
-void fuuki16_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( fuuki16 )
 {
 	int color, pen;
 
@@ -96,7 +96,7 @@ void fuuki16_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 	memset(palette, 0, 3 * Machine->drv->total_colors);
 }
 
-int fuuki16_vh_start(void)
+VIDEO_START( fuuki16 )
 {
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 16,16, 0x40,0x20);
@@ -150,7 +150,7 @@ int fuuki16_vh_start(void)
 
 ***************************************************************************/
 
-static void fuuki16_draw_sprites(struct mame_bitmap *bitmap)
+static void fuuki16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -212,7 +212,7 @@ static void fuuki16_draw_sprites(struct mame_bitmap *bitmap)
 									attr & 0x3f,
 									flipx, flipy,
 									sx + x * 16, sy + y * 16,
-									&Machine->visible_area,TRANSPARENCY_PEN,15,
+									cliprect,TRANSPARENCY_PEN,15,
 									pri_mask	);
 				else
 					pdrawgfxzoom(	bitmap,Machine->gfx[0],
@@ -220,7 +220,7 @@ static void fuuki16_draw_sprites(struct mame_bitmap *bitmap)
 									attr & 0x3f,
 									flipx, flipy,
 									sx + (x * xzoom) / 8, sy + (y * yzoom) / 8,
-									&Machine->visible_area,TRANSPARENCY_PEN,15,
+									cliprect,TRANSPARENCY_PEN,15,
 									(0x10000/0x10/8) * (xzoom + 8),(0x10000/0x10/8) * (yzoom + 8),	// nearest greater integer value to avoid holes
 									pri_mask	);
 			}
@@ -281,21 +281,21 @@ if (keyboard_pressed(KEYCODE_X))
 ***************************************************************************/
 
 
-static void fuuki16_draw_layer(struct mame_bitmap *bitmap, int i, int flag, int pri)
+static void fuuki16_draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int i, int flag, int pri)
 {
 	switch( i )
 	{
-		case 0:	tilemap_draw(bitmap,tilemap_0,flag,pri);
+		case 0:	tilemap_draw(bitmap,cliprect,tilemap_0,flag,pri);
 				return;
-		case 1:	tilemap_draw(bitmap,tilemap_1,flag,pri);
+		case 1:	tilemap_draw(bitmap,cliprect,tilemap_1,flag,pri);
 				return;
-		case 2:	tilemap_draw(bitmap,tilemap_3,flag,pri);
-				tilemap_draw(bitmap,tilemap_2,flag,pri);
+		case 2:	tilemap_draw(bitmap,cliprect,tilemap_3,flag,pri);
+				tilemap_draw(bitmap,cliprect,tilemap_2,flag,pri);
 				return;
 	}
 }
 
-void fuuki16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( fuuki16 )
 {
 	data16_t layer0_scrollx, layer0_scrolly;
 	data16_t layer1_scrollx, layer1_scrolly;
@@ -337,16 +337,16 @@ void fuuki16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	/* swap mg with fg */
 	if (*fuuki16_priority & 2)	{ int t = foreground;	foreground = middleground;	middleground = t;	}
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* The backmost tilemap decides the background color(s) but sprites can
 	   go below the opaque pixels of that tilemap. We thus need to mark the
 	   transparent pixels of this layer with a different priority value */
-	fuuki16_draw_layer(bitmap, background,  TILEMAP_IGNORE_TRANSPARENCY, 0);
+	fuuki16_draw_layer(bitmap,cliprect, background,  TILEMAP_IGNORE_TRANSPARENCY, 0);
 
-	fuuki16_draw_layer(bitmap, background,  0, 1);
-	fuuki16_draw_layer(bitmap, foreground,  0, 2);
-	fuuki16_draw_layer(bitmap, middleground,0, 2);
+	fuuki16_draw_layer(bitmap,cliprect, background,  0, 1);
+	fuuki16_draw_layer(bitmap,cliprect, foreground,  0, 2);
+	fuuki16_draw_layer(bitmap,cliprect, middleground,0, 2);
 
-	fuuki16_draw_sprites(bitmap);
+	fuuki16_draw_sprites(bitmap,cliprect);
 }

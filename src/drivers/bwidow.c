@@ -1,210 +1,221 @@
 /***************************************************************************
 
-Black Widow memory map (preliminary)
+	Atari Black Widow hardware
 
-0000-04ff RAM
-0800      COIN_IN
-0a00      IN1
-0c00      IN2
+	Games supported:
+		* Space Duel
+		* Black Widow
+		* Gravitar
 
-2000-27ff Vector generator RAM
-5000-7fff ROM
+	Known bugs:
+		* Black Widow cannot use the the earom routines
+		* she writes into some locations at $2fac-$2fd7, which is clearly
+		  the vector rom. Perhaps there is some address-logic that is not yet
+		  emulated
 
- * Black Widow cannot use the the earom routines
- * She writes into some locations at $2fac-$2fd7, which is clearly
- * the vector rom. Perhaps there is some address-logic that is not yet
- * emulated
+****************************************************************************
 
+	Black Widow memory map (preliminary)
 
-BLACK WIDOW SWITCH SETTINGS (Atari, 1983)
------------------------------------------
+	0000-04ff RAM
+	0800      COIN_IN
+	0a00      IN1
+	0c00      IN2
 
--------------------------------------------------------------------------------
-Settings of 8-Toggle Switch on Black Widow CPU PCB (at D4)
- 8   7   6   5   4   3   2   1   Option
--------------------------------------------------------------------------------
-Off Off                          1 coin/1 credit <
-On  On                           1 coin/2 credits
-On  Off                          2 coins/1 credit
-Off On                           Free play
-
-        Off Off                  Right coin mechanism x 1 <
-        On  Off                  Right coin mechanism x 4
-        Off On                   Right coin mechanism x 5
-        On  On                   Right coin mechanism x 6
-
-                Off              Left coin mechanism x 1 <
-                On               Left coin mechanism x 2
-
-                    Off Off Off  No bonus coins (0)* <
-                    Off On  On   No bonus coins (6)
-                    On  On  On   No bonus coins (7)
-
-                    On  Off Off  For every 2 coins inserted,
-                                 logic adds 1 more coin (1)
-                    Off On  Off  For every 4 coins inserted,
-                                 logic adds 1 more coin (2)
-                    On  On  Off  For every 4 coins inserted,
-                                 logic adds 2 more coins (3)
-                    Off Off On   For every 5 coins inserted,
-                                 logic adds 1 more coin (4)
-                    On  Off On   For every 3 coins inserted,
-                                 logic adds 1 more coin (5)
-
--------------------------------------------------------------------------------
-
-* The numbers in parentheses will appear on the BONUS ADDER line in the
-  Operator Information Display (Figure 2-1) for these settings.
-< Manufacturer's recommended setting
-
--------------------------------------------------------------------------------
-Settings of 8-Toggle Switch on Black Widow CPU PCB (at B4)
- 8   7   6   5   4   3   2   1   Option
-
-Note: The bits are the exact opposite of the switch numbers - switch 8 is bit 0.
--------------------------------------------------------------------------------
-Off Off                          Maximum start at level 13
-On  Off                          Maximum start at level 21 <
-Off On                           Maximum start at level 37
-On  On                           Maximum start at level 53
-
-        Off Off                  3 spiders per game <
-        On  Off                  4 spiders per game
-        Off On                   5 spiders per game
-        On  On                   6 spiders per game
-
-                Off Off          Easy game play
-                On  Off          Medium game play <
-                Off On           Hard game play
-                On  On           Demonstration mode
-
-                        Off Off  Bonus spider every 20,000 points <
-                        On  Off  Bonus spider every 30,000 points
-                        Off On   Bonus spider every 40,000 points
-                        On  On   No bonus
-
--------------------------------------------------------------------------------
-
-< Manufacturer's recommended setting
+	2000-27ff Vector generator RAM
+	5000-7fff ROM
 
 
-GRAVITAR SWITCH SETTINGS (Atari, 1982)
---------------------------------------
 
--------------------------------------------------------------------------------
-Settings of 8-Toggle Switch on Gravitar PCB (at B4)
- 8   7   6   5   4   3   2   1   Option
--------------------------------------------------------------------------------
-Off On                           Free play
-On  On                           1 coin for 2 credits
-Off Off                          1 coin for 1 credit <
-On  Off                          2 coins for 1 credit
+	BLACK WIDOW SWITCH SETTINGS (Atari, 1983)
+	-----------------------------------------
 
-        Off Off                  Right coin mechanism x 1 <
-        On  Off                  Right coin mechanism x 4
-        Off On                   Right coin mechanism x 5
-        On  On                   Right coin mechanism x 6
+	-------------------------------------------------------------------------------
+	Settings of 8-Toggle Switch on Black Widow CPU PCB (at D4)
+	 8   7   6   5   4   3   2   1   Option
+	-------------------------------------------------------------------------------
+	Off Off                          1 coin/1 credit <
+	On  On                           1 coin/2 credits
+	On  Off                          2 coins/1 credit
+	Off On                           Free play
 
-                Off              Left coin mechanism x 1 <
-                On               Left coin mechanism x 2
+	        Off Off                  Right coin mechanism x 1 <
+	        On  Off                  Right coin mechanism x 4
+	        Off On                   Right coin mechanism x 5
+	        On  On                   Right coin mechanism x 6
 
-                    Off Off Off  No bonus coins <
+	                Off              Left coin mechanism x 1 <
+	                On               Left coin mechanism x 2
 
-                    Off On  Off  For every 4 coins inserted,
-                                 logic adds 1 more coin
-                    On  On  Off  For every 4 coins inserted,
-                                 logic adds 2 more coins
-                    Off Off On   For every 5 coins inserted,
-                                 logic adds 1 more coin
-                    On  Off On   For every 3 coins inserted,
-                                 logic adds 1 more coin
+	                    Off Off Off  No bonus coins (0)* <
+	                    Off On  On   No bonus coins (6)
+	                    On  On  On   No bonus coins (7)
 
-                    Off On  On   No bonus coins
-                    On  Off Off  ??? (not in manual!)
-                    On  On  On   No bonus coins
+	                    On  Off Off  For every 2 coins inserted,
+	                                 logic adds 1 more coin (1)
+	                    Off On  Off  For every 4 coins inserted,
+	                                 logic adds 1 more coin (2)
+	                    On  On  Off  For every 4 coins inserted,
+	                                 logic adds 2 more coins (3)
+	                    Off Off On   For every 5 coins inserted,
+	                                 logic adds 1 more coin (4)
+	                    On  Off On   For every 3 coins inserted,
+	                                 logic adds 1 more coin (5)
 
--------------------------------------------------------------------------------
+	-------------------------------------------------------------------------------
 
-< Manufacturer's recommended setting
+	* The numbers in parentheses will appear on the BONUS ADDER line in the
+	  Operator Information Display (Figure 2-1) for these settings.
+	< Manufacturer's recommended setting
 
--------------------------------------------------------------------------------
-Settings of 8-Toggle Switch on Gravitar PCB (at D4)
- 8   7   6   5   4   3   2   1   Option
--------------------------------------------------------------------------------
-                        On  On   No bonus
-                        Off Off  Bonus ship every 10,000 points <
- d   d               d  On  Off  Bonus ship every 20,000 points
- e   e               e  Off On   Bonus ship every 30,000 points
- s   s               s
- U   U          On   U           Easy game play <
-                Off              Hard game play
- t   t               t
- o   o  Off Off      o           3 ships per game
- N   N  On  Off      N           4 ships per game <
-        Off On                   5 ships per game
-        On  On                   6 ships per game
+	-------------------------------------------------------------------------------
+	Settings of 8-Toggle Switch on Black Widow CPU PCB (at B4)
+	 8   7   6   5   4   3   2   1   Option
 
--------------------------------------------------------------------------------
+	Note: The bits are the exact opposite of the switch numbers - switch 8 is bit 0.
+	-------------------------------------------------------------------------------
+	Off Off                          Maximum start at level 13
+	On  Off                          Maximum start at level 21 <
+	Off On                           Maximum start at level 37
+	On  On                           Maximum start at level 53
 
-< Manufacturer's recommended setting
+	        Off Off                  3 spiders per game <
+	        On  Off                  4 spiders per game
+	        Off On                   5 spiders per game
+	        On  On                   6 spiders per game
 
-Space Duel Settings
--------------------
+	                Off Off          Easy game play
+	                On  Off          Medium game play <
+	                Off On           Hard game play
+	                On  On           Demonstration mode
 
-(Settings of 8-Toggle Switch on Space Duel game PCB at D4)
-Note: The bits are the exact opposite of the switch numbers - switch 8 is bit 0.
+	                        Off Off  Bonus spider every 20,000 points <
+	                        On  Off  Bonus spider every 30,000 points
+	                        Off On   Bonus spider every 40,000 points
+	                        On  On   No bonus
 
- 8   7   6   5   4   3   2   1       Option
-On  Off                         3 ships per game
-Off Off                         4 ships per game $
-On  On                          5 ships per game
-Off On                          6 ships per game
-        On  Off                *Easy game difficulty
-        Off Off                 Normal game difficulty $
-        On  On                  Medium game difficulty
-        Off On                  Hard game difficulty
-                Off Off         English $
-                On  Off         German
-                On  On          Spanish
-                Off On          French
-                                Bonus life granted every:
-                        Off On  8,000 points
-                        Off Off 10,000 points
-                        On  Off 15,000 points
-                        On  On  No bonus life
+	-------------------------------------------------------------------------------
 
-$Manufacturer's suggested settings
-*Easy-In the beginning of the first wave, 3 targets appear on the
-screen.  Targets increase by one in each new wave.
-Normal-Space station action is the same as 'Easy'.  Fighter action has
-4 targets in the beginning of the first wave.  Targets increase by 2
-in each new wave.  Targets move faster and more targets enter.
-Medium and Hard-In the beginning of the first wave, 4 targets appear
-on the screen.  Targets increase by 2 in each new wave.  As difficulty
-increases, targets move faster, and more targets enter.
+	< Manufacturer's recommended setting
 
 
-(Settings of 8-Toggle Switch on Space Duel game PCB at B4)
- 8   7   6   5   4   3   2   1       Option
-Off On                          Free play
-Off Off                        *1 coin for 1 game (or 1 player) $
-On  On                          1 coin for 2 game (or 2 players)
-On  Off                         2 coins for 1 game (or 1 player)
-        Off Off                 Right coin mech x 1 $
-        On  Off                 Right coin mech x 4
-        Off On                  Right coin mech x 5
-        On  On                  Right coin mech x 6
-                Off             Left coin mech x 1 $
-                On              Left coin mech x 2
-                    Off Off Off No bonus coins $
-                    Off On  Off For every 4 coins, game logic adds 1 more coin
-                    On  On  Off For every 4 coins, game logic adds 2 more coin
-                    Off On  On  For every 5 coins, game logic adds 1 more coin
-                    On  Off On**For every 3 coins, game logic adds 1 more coin
+	GRAVITAR SWITCH SETTINGS (Atari, 1982)
+	--------------------------------------
 
-$Manufacturer's suggested settings
+	-------------------------------------------------------------------------------
+	Settings of 8-Toggle Switch on Gravitar PCB (at B4)
+	 8   7   6   5   4   3   2   1   Option
+	-------------------------------------------------------------------------------
+	Off On                           Free play
+	On  On                           1 coin for 2 credits
+	Off Off                          1 coin for 1 credit <
+	On  Off                          2 coins for 1 credit
 
-**In operator Information Display, this option displays same as no bonus.
+	        Off Off                  Right coin mechanism x 1 <
+	        On  Off                  Right coin mechanism x 4
+	        Off On                   Right coin mechanism x 5
+	        On  On                   Right coin mechanism x 6
+
+	                Off              Left coin mechanism x 1 <
+	                On               Left coin mechanism x 2
+
+	                    Off Off Off  No bonus coins <
+
+	                    Off On  Off  For every 4 coins inserted,
+	                                 logic adds 1 more coin
+	                    On  On  Off  For every 4 coins inserted,
+	                                 logic adds 2 more coins
+	                    Off Off On   For every 5 coins inserted,
+	                                 logic adds 1 more coin
+	                    On  Off On   For every 3 coins inserted,
+	                                 logic adds 1 more coin
+
+	                    Off On  On   No bonus coins
+	                    On  Off Off  ??? (not in manual!)
+	                    On  On  On   No bonus coins
+
+	-------------------------------------------------------------------------------
+
+	< Manufacturer's recommended setting
+
+	-------------------------------------------------------------------------------
+	Settings of 8-Toggle Switch on Gravitar PCB (at D4)
+	 8   7   6   5   4   3   2   1   Option
+	-------------------------------------------------------------------------------
+	                        On  On   No bonus
+	                        Off Off  Bonus ship every 10,000 points <
+	 d   d               d  On  Off  Bonus ship every 20,000 points
+	 e   e               e  Off On   Bonus ship every 30,000 points
+	 s   s               s
+	 U   U          On   U           Easy game play <
+	                Off              Hard game play
+	 t   t               t
+	 o   o  Off Off      o           3 ships per game
+	 N   N  On  Off      N           4 ships per game <
+	        Off On                   5 ships per game
+	        On  On                   6 ships per game
+
+	-------------------------------------------------------------------------------
+
+	< Manufacturer's recommended setting
+
+	Space Duel Settings
+	-------------------
+
+	(Settings of 8-Toggle Switch on Space Duel game PCB at D4)
+	Note: The bits are the exact opposite of the switch numbers - switch 8 is bit 0.
+
+	 8   7   6   5   4   3   2   1       Option
+	On  Off                         3 ships per game
+	Off Off                         4 ships per game $
+	On  On                          5 ships per game
+	Off On                          6 ships per game
+	        On  Off                *Easy game difficulty
+	        Off Off                 Normal game difficulty $
+	        On  On                  Medium game difficulty
+	        Off On                  Hard game difficulty
+	                Off Off         English $
+	                On  Off         German
+	                On  On          Spanish
+	                Off On          French
+	                                Bonus life granted every:
+	                        Off On  8,000 points
+	                        Off Off 10,000 points
+	                        On  Off 15,000 points
+	                        On  On  No bonus life
+
+	$Manufacturer's suggested settings
+	*Easy-In the beginning of the first wave, 3 targets appear on the
+	screen.  Targets increase by one in each new wave.
+	Normal-Space station action is the same as 'Easy'.  Fighter action has
+	4 targets in the beginning of the first wave.  Targets increase by 2
+	in each new wave.  Targets move faster and more targets enter.
+	Medium and Hard-In the beginning of the first wave, 4 targets appear
+	on the screen.  Targets increase by 2 in each new wave.  As difficulty
+	increases, targets move faster, and more targets enter.
+
+
+	(Settings of 8-Toggle Switch on Space Duel game PCB at B4)
+	 8   7   6   5   4   3   2   1       Option
+	Off On                          Free play
+	Off Off                        *1 coin for 1 game (or 1 player) $
+	On  On                          1 coin for 2 game (or 2 players)
+	On  Off                         2 coins for 1 game (or 1 player)
+	        Off Off                 Right coin mech x 1 $
+	        On  Off                 Right coin mech x 4
+	        Off On                  Right coin mech x 5
+	        On  On                  Right coin mech x 6
+	                Off             Left coin mech x 1 $
+	                On              Left coin mech x 2
+	                    Off Off Off No bonus coins $
+	                    Off On  Off For every 4 coins, game logic adds 1 more coin
+	                    On  On  Off For every 4 coins, game logic adds 2 more coin
+	                    Off On  On  For every 5 coins, game logic adds 1 more coin
+	                    On  Off On**For every 3 coins, game logic adds 1 more coin
+
+	$Manufacturer's suggested settings
+
+	**In operator Information Display, this option displays same as no bonus.
 
 ***************************************************************************/
 
@@ -213,6 +224,7 @@ $Manufacturer's suggested settings
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
+#include "bzone.h"
 
 
 #define IN_LEFT	(1 << 0)
@@ -223,6 +235,13 @@ $Manufacturer's suggested settings
 #define IN_P1 (1 << 5)
 #define IN_P2 (1 << 6)
 
+
+/*************************************
+ *
+ *	Input ports
+ *
+ *************************************/
+
 /*
 
 These 7 memory locations are used to read the 2 players' controls as well
@@ -231,8 +250,8 @@ Typically, only the high 2 bits are read.
 
 */
 
-static READ_HANDLER( spacduel_IN3_r ) {
-
+static READ_HANDLER( spacduel_IN3_r )
+{
 	int res;
 	int res1;
 	int res2;
@@ -241,7 +260,8 @@ static READ_HANDLER( spacduel_IN3_r ) {
 	res2 = readinputport(4);
 	res = 0x00;
 
-	switch (offset & 0x07) {
+	switch (offset & 0x07)
+	{
 		case 0:
 			if (res1 & IN_SHIELD) res |= 0x80;
 			if (res1 & IN_FIRE) res |= 0x40;
@@ -271,11 +291,18 @@ static READ_HANDLER( spacduel_IN3_r ) {
 		case 7:
 			res = (0x00 /* upright */ | (0 & 0x40));
 			break;
-		}
-	return res;
 	}
+		
+	return res;
+}
 
-READ_HANDLER( bzone_IN0_r );
+
+
+/*************************************
+ *
+ *	Output ports
+ *
+ *************************************/
 
 WRITE_HANDLER( bwidow_misc_w )
 {
@@ -288,13 +315,20 @@ WRITE_HANDLER( bwidow_misc_w )
 	static int lastdata;
 
 	if (data == lastdata) return;
-	set_led_status (0,~data & 0x10);
-	set_led_status (1,~data & 0x20);
-	coin_counter_w (0, data & 0x01);
-	coin_counter_w (1, data & 0x02);
+	set_led_status(0,~data & 0x10);
+	set_led_status(1,~data & 0x20);
+	coin_counter_w(0, data & 0x01);
+	coin_counter_w(1, data & 0x02);
 	lastdata = data;
 }
 
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( bwidow_readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },
@@ -308,6 +342,7 @@ static MEMORY_READ_START( bwidow_readmem )
 	{ 0x8800, 0x8800, input_port_4_r },	/* IN1 */
 	{ 0x9000, 0xffff, MRA_ROM },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( bwidow_writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
@@ -325,6 +360,7 @@ static MEMORY_WRITE_START( bwidow_writemem )
 	{ 0x9000, 0xffff, MWA_ROM },
 MEMORY_END
 
+
 static MEMORY_READ_START( spacduel_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
@@ -337,6 +373,7 @@ static MEMORY_READ_START( spacduel_readmem )
 	{ 0x4000, 0x8fff, MRA_ROM },
 	{ 0xf000, 0xffff, MRA_ROM },
 MEMORY_END
+
 
 static MEMORY_WRITE_START( spacduel_writemem )
 	{ 0x0000, 0x03ff, MWA_RAM },
@@ -355,6 +392,14 @@ static MEMORY_WRITE_START( spacduel_writemem )
 	{ 0x4000, 0x8fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( bwidow )
 	PORT_START	/* IN0 */
@@ -590,6 +635,12 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
+
 static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
@@ -610,128 +661,67 @@ static struct POKEYinterface pokey_interface =
 
 
 
-static const struct MachineDriver machine_driver_bwidow =
-{
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( bwidow )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz */
-			bwidow_readmem,bwidow_writemem,0,0,
-			interrupt,4	/* 4.1ms */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
+	MDRV_CPU_ADD_TAG("main", M6502, 1500000)	/* 1.5 MHz */
+	MDRV_CPU_MEMORY(bwidow_readmem,bwidow_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4) 		/* 4.1ms */
+
+	MDRV_FRAMES_PER_SECOND(60)
 
 	/* video hardware */
-	400, 300, { 0, 480, 0, 440 },
-	0,
-	256, 0,
-	avg_init_palette_multi,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(0, 480, 0, 440)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	avg_start,
-	avg_stop,
-	vector_vh_screenrefresh,
+	MDRV_PALETTE_INIT(avg_multi)
+	MDRV_VIDEO_START(avg)
+	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gravitar =
-{
+
+static MACHINE_DRIVER_START( gravitar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz */
-			bwidow_readmem,bwidow_writemem,0,0,
-			interrupt,4 /* 4.1ms */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
+	MDRV_IMPORT_FROM(bwidow)
+	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */
-	400, 300, { 0, 420, 0, 400 },
-	0,
-	256, 0,
-	avg_init_palette_multi,
+	MDRV_VISIBLE_AREA(0, 420, 0, 400)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	avg_start,
-	avg_stop,
-	vector_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	},
+static MACHINE_DRIVER_START( spacduel )
 
-	atari_vg_earom_handler
-};
-
-static const struct MachineDriver machine_driver_spacduel =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 MHz */
-			spacduel_readmem,spacduel_writemem,0,0,
-			interrupt,4 /* 5.4ms */
-		}
-	},
-	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
+	MDRV_IMPORT_FROM(gravitar)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(spacduel_readmem,spacduel_writemem)
+
+	MDRV_FRAMES_PER_SECOND(45)
 
 	/* video hardware */
-	400, 300, { 0, 540, 0, 400 },
-	0,
-	256, 0,
-	avg_init_palette_multi,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	avg_start,
-	avg_stop,
-	vector_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	},
-
-	atari_vg_earom_handler
-};
+	MDRV_VISIBLE_AREA(0, 540, 0, 400)
+MACHINE_DRIVER_END
 
 
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( bwidow )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -750,6 +740,7 @@ ROM_START( bwidow )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
+
 ROM_START( gravitar )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	/* Vector ROM */
@@ -767,6 +758,7 @@ ROM_START( gravitar )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
+
 ROM_START( gravitr2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	/* Vector ROM */
@@ -783,6 +775,7 @@ ROM_START( gravitr2 )
 	ROM_LOAD( "136010.206",   0xe000, 0x1000, 0x4521ca48 )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
+
 
 ROM_START( spacduel )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -806,7 +799,13 @@ ROM_END
 
 
 
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME( 1980, spacduel, 0,        spacduel, spacduel, 0, ROT0, "Atari", "Space Duel" )
 GAME( 1982, bwidow,   0,        bwidow,   bwidow,   0, ROT0, "Atari", "Black Widow" )
 GAME( 1982, gravitar, 0,        gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 3)" )
 GAME( 1982, gravitr2, gravitar, gravitar, gravitar, 0, ROT0, "Atari", "Gravitar (version 2)" )
-GAME( 1980, spacduel, 0,        spacduel, spacduel, 0, ROT0, "Atari", "Space Duel" )

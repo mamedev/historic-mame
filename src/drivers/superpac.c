@@ -50,10 +50,10 @@ WRITE_HANDLER( superpac_interrupt_enable_w );
 WRITE_HANDLER( superpac_cpu_enable_w );
 WRITE_HANDLER( superpac_reset_2_w );
 
-int superpac_vh_start(void);
-void superpac_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void superpac_init_machine(void);
-void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_START( superpac );
+VIDEO_UPDATE( superpac );
+MACHINE_INIT( superpac );
+PALETTE_INIT( superpac );
 READ_HANDLER( superpac_flipscreen_r );
 WRITE_HANDLER( superpac_flipscreen_w );
 
@@ -369,48 +369,38 @@ static struct namco_interface namco_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_superpac =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1100000,
-			readmem_cpu1,writemem_cpu1,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M6809,
-			1100000,
-			readmem_cpu2,writemem_cpu2,0,0,
-			interrupt,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,
-	100,
-	superpac_init_machine,
+static MACHINE_DRIVER_START( superpac )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 1100000)
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M6809, 1100000)
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(superpac)
 
 	/* video hardware */
-	36*8, 28*8,	{ 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	32,	4*(64+64),
-	superpac_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(4*(64+64))
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	superpac_vh_screenrefresh,
+	MDRV_PALETTE_INIT(superpac)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(superpac)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 

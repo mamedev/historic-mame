@@ -53,7 +53,7 @@ static void crzrally_get_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int holeland_vh_start( void )
+VIDEO_START( holeland )
 {
 	bg_tilemap = tilemap_create(holeland_get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,32);
 
@@ -65,7 +65,7 @@ int holeland_vh_start( void )
 	return 0;
 }
 
-int crzrally_vh_start( void )
+VIDEO_START( crzrally )
 {
 	bg_tilemap = tilemap_create(crzrally_get_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,8,8,32,32);
 
@@ -116,7 +116,7 @@ WRITE_HANDLER( holeland_flipscreen_w )
 }
 
 
-static void holeland_draw_sprites(struct mame_bitmap *bitmap)
+static void holeland_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 
@@ -151,11 +151,11 @@ static void holeland_draw_sprites(struct mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				2*sx,2*sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
-static void crzrally_draw_sprites(struct mame_bitmap *bitmap)
+static void crzrally_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 
@@ -189,20 +189,20 @@ static void crzrally_draw_sprites(struct mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_PEN,0);
 	}
 }
 
-void holeland_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( holeland )
 {
 /*tilemap_mark_all_tiles_dirty(bg_tilemap); */
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
-	holeland_draw_sprites(bitmap);
-	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
+	holeland_draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
 }
 
-void crzrally_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( crzrally )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	crzrally_draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	crzrally_draw_sprites(bitmap,cliprect);
 }

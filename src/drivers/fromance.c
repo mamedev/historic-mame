@@ -59,7 +59,7 @@ static UINT8 fromance_vclk_left;
  *
  *************************************/
 
-static void fromance_init_machine(void)
+static MACHINE_INIT( fromance )
 {
 	fromance_directionflag = 0;
 	fromance_commanddata = 0;
@@ -1078,130 +1078,100 @@ static struct MSM5205interface fromance_msm5205_interface =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_nekkyoku =
-{
+static MACHINE_DRIVER_START( nekkyoku )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			nekkyoku_readmem_main,nekkyoku_writemem_main,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			nekkyoku_readmem_sub,nekkyoku_writemem_sub,nekkyoku_readport_sub,nekkyoku_writeport_sub,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	fromance_init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(nekkyoku_readmem_main,nekkyoku_writemem_main)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(nekkyoku_readmem_sub,nekkyoku_writemem_sub)
+	MDRV_CPU_PORTS(nekkyoku_readport_sub,nekkyoku_writeport_sub)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(fromance)
 
 	/* video hardware */
-	512, 256, { 0, 352-1, 0, 240-1 },
-	fromance_gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+	MDRV_GFXDECODE(fromance_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	nekkyoku_vh_start,
-	fromance_vh_stop,
-	fromance_vh_screenrefresh,
+	MDRV_VIDEO_START(nekkyoku)
+	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_AY8910, &ay8910_interface },
-		{ SOUND_MSM5205, &msm5205_interface }
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_idolmj =
-{
+static MACHINE_DRIVER_START( idolmj )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			fromance_readmem_main,fromance_writemem_main, 0, 0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			fromance_readmem_sub,fromance_writemem_sub,fromance_readport_sub,idolmj_writeport_sub,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	fromance_init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(fromance_readmem_main,fromance_writemem_main)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(fromance_readmem_sub,fromance_writemem_sub)
+	MDRV_CPU_PORTS(fromance_readport_sub,idolmj_writeport_sub)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(fromance)
 
 	/* video hardware */
-	512, 256, { 0, 352-1, 0, 240-1 },
-	fromance_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+	MDRV_GFXDECODE(fromance_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	fromance_vh_start,
-	fromance_vh_stop,
-	fromance_vh_screenrefresh,
+	MDRV_VIDEO_START(fromance)
+	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_AY8910, &ay8910_interface },
-		{ SOUND_MSM5205, &msm5205_interface }
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_fromance =
-{
+static MACHINE_DRIVER_START( fromance )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			fromance_readmem_main,fromance_writemem_main,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			12000000/2,		/* 6.00 Mhz ? */
-			fromance_readmem_sub,fromance_writemem_sub,fromance_readport_sub,fromance_writeport_sub,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	fromance_init_machine,
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(fromance_readmem_main,fromance_writemem_main)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,12000000/2)		/* 6.00 Mhz ? */
+	MDRV_CPU_MEMORY(fromance_readmem_sub,fromance_writemem_sub)
+	MDRV_CPU_PORTS(fromance_readport_sub,fromance_writeport_sub)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(fromance)
 
 	/* video hardware */
-	512, 256, { 0, 352-1, 0, 240-1 },
-	fromance_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+	MDRV_GFXDECODE(fromance_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	fromance_vh_start,
-	fromance_vh_stop,
-	fromance_vh_screenrefresh,
+	MDRV_VIDEO_START(fromance)
+	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2413, &ym2413_interface },
-		{ SOUND_MSM5205, &fromance_msm5205_interface }
-	}
-};
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SOUND_ADD(MSM5205, fromance_msm5205_interface)
+MACHINE_DRIVER_END
 
 
 

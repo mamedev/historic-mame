@@ -42,6 +42,9 @@ int handle_user_interface(struct mame_bitmap *bitmap);
 int onscrd_active(void);
 int setup_active(void);
 
+void switch_ui_orientation(struct mame_bitmap *bitmap);
+void switch_true_orientation(struct mame_bitmap *bitmap);
+
 void CLIB_DECL usrintf_showmessage(const char *text,...);
 void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...);
 

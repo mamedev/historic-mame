@@ -1,34 +1,64 @@
 /***************************************************************************
 
-Atari Avalanche Driver
+	Atari Avalanche hardware
 
-Memory Map:
-				0000-1FFF				RAM
-				2000-2FFF		R		INPUTS
-				3000-3FFF		W		WATCHDOG
-				4000-4FFF		W		OUTPUTS
-				5000-5FFF		W		SOUND LEVEL
-				6000-7FFF		R		PROGRAM ROM
-				8000-DFFF				UNUSED
-				E000-FFFF				PROGRAM ROM (Remapped)
+	driver by Mike Balfour
 
-If you have any questions about how this driver works, don't hesitate to
-ask.  - Mike Balfour (mab22@po.cwru.edu)
+	Games supported:
+		* Avalanche
+
+	Known issues:
+		* none at this time
+
+****************************************************************************
+
+	Memory Map:
+					0000-1FFF				RAM
+					2000-2FFF		R		INPUTS
+					3000-3FFF		W		WATCHDOG
+					4000-4FFF		W		OUTPUTS
+					5000-5FFF		W		SOUND LEVEL
+					6000-7FFF		R		PROGRAM ROM
+					8000-DFFF				UNUSED
+					E000-FFFF				PROGRAM ROM (Remapped)
+
+	If you have any questions about how this driver works, don't hesitate to
+	ask.  - Mike Balfour (mab22@po.cwru.edu)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "avalnche.h"
 
-/* machine/avalnche.c */
-READ_HANDLER( avalnche_input_r );
-WRITE_HANDLER( avalnche_output_w );
-WRITE_HANDLER( avalnche_noise_amplitude_w );
-int avalnche_interrupt(void);
 
-/* vidhrdw/avalnche.c */
-WRITE_HANDLER( avalnche_videoram_w );
-int avalnche_vh_start(void);
-void avalnche_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+
+/*************************************
+ *
+ *	Palette generation
+ *
+ *************************************/
+
+#define ARTWORK_COLORS (2 + 32768)
+
+static PALETTE_INIT( avalnche )
+{
+	/* 2 colors in the palette: black & white */
+	memset(palette, 0, ARTWORK_COLORS * 3 * sizeof(palette[0]));
+	palette[1*3+0] = palette[1*3+1] = palette[1*3+2] = 0xff;
+
+	/* 4 entries in the color table */
+	memset(colortable, 0, ARTWORK_COLORS * sizeof(colortable[0]));
+	colortable[1] = 1;
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x1fff, MRA_RAM }, /* RAM SEL */
@@ -36,6 +66,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x6000, 0x7fff, MRA_ROM }, /* ROM1-ROM2 */
 	{ 0xe000, 0xffff, MRA_ROM }, /* ROM2 for 6502 vectors */
 MEMORY_END
+
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x1fff, avalnche_videoram_w, &videoram, &videoram_size }, /* DISPLAY */
@@ -47,6 +78,12 @@ static MEMORY_WRITE_START( writemem )
 MEMORY_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( avalnche )
 	PORT_START /* IN0 */
@@ -84,20 +121,11 @@ INPUT_PORTS_END
 
 
 
-#define ARTWORK_COLORS (2 + 32768)
-
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	/* 2 colors in the palette: black & white */
-	memset(game_palette, 0, ARTWORK_COLORS * 3 * sizeof(game_palette[0]));
-	game_palette[1*3+0] = game_palette[1*3+1] = game_palette[1*3+2] = 0xff;
-
-	/* 4 entries in the color table */
-	memset(game_colortable, 0, ARTWORK_COLORS * sizeof(game_colortable[0]));
-	game_colortable[1] = 1;
-}
-
-
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct DACinterface dac_interface =
 {
@@ -106,50 +134,45 @@ static struct DACinterface dac_interface =
 };
 
 
-static const struct MachineDriver machine_driver_avalnche =
-{
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( avalnche )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			12096000/16, 	   /* clock input is the "2H" signal divided by two */
-			readmem,writemem,0,0,
-			avalnche_interrupt,32	/* interrupt at a 4V frequency for sound */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M6502,12096000/16)	   /* clock input is the "2H" signal divided by two */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(avalnche_interrupt,32)	/* interrupt at a 4V frequency for sound */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 32*8-1 },
-	0,
-	ARTWORK_COLORS,ARTWORK_COLORS,		/* Declare extra colors for the overlay */
-	init_palette,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	avalnche_vh_start,
-	generic_vh_stop,
-	avalnche_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(ARTWORK_COLORS)
+	MDRV_COLORTABLE_LENGTH(ARTWORK_COLORS)
+	
+	MDRV_PALETTE_INIT(avalnche)
+	MDRV_VIDEO_START(avalnche)
+	MDRV_VIDEO_UPDATE(avalnche)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
 
-/***************************************************************************
-
-  Game ROMs
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( avalnche )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -168,7 +191,13 @@ ROM_END
 
 
 
-static void init_avalnche(void)
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( avalnche )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
@@ -184,5 +213,11 @@ static void init_avalnche(void)
 }
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1978, avalnche, 0, avalnche, avalnche, avalnche, ROT0, "Atari", "Avalanche" )

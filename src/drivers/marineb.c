@@ -43,8 +43,8 @@ write
 extern unsigned char *marineb_column_scroll;
 extern int marineb_active_low_flipscreen;
 
-void espial_init_machine(void);
-void espial_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+MACHINE_INIT( espial );
+PALETTE_INIT( espial );
 
 WRITE_HANDLER( marineb_palbank0_w );
 WRITE_HANDLER( marineb_palbank1_w );
@@ -52,23 +52,23 @@ WRITE_HANDLER( marineb_palbank1_w );
 WRITE_HANDLER( marineb_flipscreen_x_w );
 WRITE_HANDLER( marineb_flipscreen_y_w );
 
-void marineb_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void changes_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void springer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void hoccer_vh_screenrefresh  (struct mame_bitmap *bitmap,int full_refresh);
-void hopprobo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( marineb );
+VIDEO_UPDATE( changes );
+VIDEO_UPDATE( springer );
+VIDEO_UPDATE( hoccer );
+VIDEO_UPDATE( hopprobo );
 
 
-static void marineb_init_machine(void)
+static MACHINE_INIT( marineb )
 {
 	marineb_active_low_flipscreen = 0;
-	espial_init_machine();
+	machine_init_espial();
 }
 
-static void springer_init_machine(void)
+static MACHINE_INIT( springer )
 {
 	marineb_active_low_flipscreen = 1;
-	espial_init_machine();
+	machine_init_espial();
 }
 
 static MEMORY_READ_START( readmem )
@@ -562,91 +562,123 @@ static struct AY8910interface wanted_ay8910_interface =
 	{ 0 }
 };
 
-#define springer_gfxdecodeinfo   marineb_gfxdecodeinfo
-#define wanted_vh_screenrefresh  springer_vh_screenrefresh
 
-#define DRIVER(NAME, INITMACHINE, SNDHRDW, INTERRUPT)				\
-static const struct MachineDriver machine_driver_##NAME =					\
-{																	\
-	/* basic machine hardware */									\
-	{																\
-		{															\
-			CPU_Z80,												\
-			3072000,	/* 3.072 MHz */								\
-			readmem,writemem,0,SNDHRDW##_writeport,					\
-			INTERRUPT,1	 	                                        \
-		}															\
-	},																\
-	60, 5000,	/* frames per second, vblank duration */			\
-	1,	/* single CPU game */										\
-	INITMACHINE##_init_machine,										\
-																	\
-	/* video hardware */											\
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },						\
-	NAME##_gfxdecodeinfo,											\
-	256, 0,															\
-	espial_vh_convert_color_prom,									\
-	VIDEO_TYPE_RASTER,												\
-	0,																\
-	generic_vh_start,												\
-	generic_vh_stop,												\
-	NAME##_vh_screenrefresh,										\
-																	\
-	/* sound hardware */											\
-	0,0,0,0,														\
-	{																\
-		{															\
-			SOUND_AY8910,											\
-			&SNDHRDW##_ay8910_interface								\
-		}															\
-	}																\
-}
+static MACHINE_DRIVER_START( marineb )
 
-
-/*     NAME      INITMACH  SNDHRDW	INTERRUPT */
-DRIVER(marineb,  marineb,  marineb, nmi_interrupt);
-DRIVER(changes,  marineb,  marineb, nmi_interrupt);
-DRIVER(springer, springer, marineb, nmi_interrupt);
-DRIVER(hoccer,   marineb,  marineb, nmi_interrupt);
-DRIVER(wanted,   marineb,  wanted,  interrupt    );
-DRIVER(hopprobo, marineb,  marineb, nmi_interrupt);
-
-static const struct MachineDriver machine_driver_bcruzm12 =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz  */
-			readmem,writemem,0,wanted_writeport,
-			interrupt,1
-		}
-	},
-	60, 5000,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	springer_init_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 3072000)	/* 3.072 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,marineb_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(5000)	/* frames per second, vblank duration */
+
+	MDRV_MACHINE_INIT(marineb)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	wanted_gfxdecodeinfo,
-	256, 0,
-	espial_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(marineb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	wanted_vh_screenrefresh,
+	MDRV_PALETTE_INIT(espial)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(marineb)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&wanted_ay8910_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD_TAG("8910", AY8910, marineb_ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( changes )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(marineb)
+
+	/* video hardware */
+	MDRV_GFXDECODE(changes_gfxdecodeinfo)
+	MDRV_VIDEO_UPDATE(changes)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( springer )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(marineb)
+	MDRV_MACHINE_INIT(springer)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(springer)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hoccer )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(marineb)
+
+	/* video hardware */
+	MDRV_GFXDECODE(hoccer_gfxdecodeinfo)
+	MDRV_VIDEO_UPDATE(hoccer)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( wanted )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(marineb)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(0,wanted_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	/* video hardware */
+	MDRV_GFXDECODE(wanted_gfxdecodeinfo)
+	MDRV_VIDEO_UPDATE(springer)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("8910", AY8910, wanted_ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hopprobo )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(marineb)
+
+	/* video hardware */
+	MDRV_GFXDECODE(hopprobo_gfxdecodeinfo)
+	MDRV_VIDEO_UPDATE(hopprobo)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bcruzm12 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz  */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,wanted_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(5000)
+	MDRV_MACHINE_INIT(springer)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(wanted_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_PALETTE_INIT(espial)
+
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(springer)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, wanted_ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

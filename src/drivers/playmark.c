@@ -43,9 +43,8 @@ extern data16_t *bigtwin_bgvideoram;
 extern size_t bigtwin_bgvideoram_size;
 extern data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
 
-int bigtwin_vh_start(void);
-void bigtwin_vh_stop(void);
-int wbeachvl_vh_start(void);
+VIDEO_START( bigtwin );
+VIDEO_START( wbeachvl );
 WRITE16_HANDLER( wbeachvl_txvideoram_w );
 WRITE16_HANDLER( wbeachvl_fgvideoram_w );
 WRITE16_HANDLER( wbeachvl_bgvideoram_w );
@@ -53,8 +52,8 @@ WRITE16_HANDLER( bigtwin_paletteram_w );
 WRITE16_HANDLER( bigtwin_bgvideoram_w );
 WRITE16_HANDLER( bigtwin_scroll_w );
 WRITE16_HANDLER( wbeachvl_scroll_w );
-void bigtwin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void wbeachvl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( bigtwin );
+VIDEO_UPDATE( wbeachvl );
 
 
 
@@ -85,7 +84,7 @@ static struct EEPROM_interface eeprom_interface =
 	"100110000"	/* unlock command */
 };
 
-static void wbeachvl_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( wbeachvl )
 {
 	if (read_or_write)
 	{
@@ -99,13 +98,9 @@ static void wbeachvl_nvram_handler(void *file,int read_or_write)
 			EEPROM_load(file);
 		else
 		{
-			UINT8 *init = malloc(128);
-			if (init)
-			{
-				memset(init,0,128);
-				EEPROM_set_data(init,128);
-				free(init);
-			}
+			UINT8 init[128];
+			memset(init,0,128);
+			EEPROM_set_data(init,128);
 		}
 	}
 }
@@ -467,81 +462,56 @@ static struct OKIM6295interface okim6295_interface =
 
 
 
-static const struct MachineDriver machine_driver_bigtwin =
-{
+static MACHINE_DRIVER_START( bigtwin )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz? */
-			bigtwin_readmem,bigtwin_writemem,0,0,
-			m68_level2_irq,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
+	MDRV_CPU_MEMORY(bigtwin_readmem,bigtwin_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	bigtwin_vh_start,
-	bigtwin_vh_stop,
-	bigtwin_vh_screenrefresh,
+	MDRV_VIDEO_START(bigtwin)
+	MDRV_VIDEO_UPDATE(bigtwin)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_wbeachvl =
-{
+
+static MACHINE_DRIVER_START( wbeachvl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz? */
-			wbeachvl_readmem,wbeachvl_writemem,0,0,
-			m68_level2_irq,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz? */
+	MDRV_CPU_MEMORY(wbeachvl_readmem,wbeachvl_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_NVRAM_HANDLER(wbeachvl)
 
 	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	wbeachvl_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(wbeachvl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	wbeachvl_vh_start,
-	0,
-	wbeachvl_vh_screenrefresh,
+	MDRV_VIDEO_START(wbeachvl)
+	MDRV_VIDEO_UPDATE(wbeachvl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	},
-
-	wbeachvl_nvram_handler
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

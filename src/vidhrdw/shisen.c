@@ -47,7 +47,7 @@ WRITE_HANDLER( sichuan2_paletteram_w )
 
 
 
-void sichuan2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sichuan2 )
 {
 	int offs;
 

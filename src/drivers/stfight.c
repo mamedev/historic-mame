@@ -232,12 +232,11 @@ DONE? (check on real board)
 #include "vidhrdw/generic.h"
 
 // machine
-void init_empcity(void);
-void init_stfight(void);
-void stfight_init_machine(void);
-int  stfight_vb_interrupt( void );
-int  stfight_interrupt_1( void );
-int  stfight_interrupt_2( void );
+DRIVER_INIT( empcity );
+DRIVER_INIT( stfight );
+MACHINE_INIT( stfight );
+INTERRUPT_GEN( stfight_vb_interrupt );
+INTERRUPT_GEN( stfight_interrupt_1 );
 READ_HANDLER( stfight_dsw_r );
 WRITE_HANDLER( stfight_fm_w );
 WRITE_HANDLER( stfight_voice_w );
@@ -249,13 +248,13 @@ void stfight_adpcm_int( int data );
 WRITE_HANDLER( stfight_adpcm_control_w );
 
 // vidhrdw
-void stfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( stfight );
 WRITE_HANDLER( stfight_text_char_w );
 WRITE_HANDLER( stfight_text_attr_w );
 WRITE_HANDLER( stfight_vh_latch_w );
 WRITE_HANDLER( stfight_sprite_bank_w );
-int  stfight_vh_start( void );
-void stfight_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
+VIDEO_START( stfight );
+VIDEO_UPDATE( stfight );
 
 // vidhrdw
 extern unsigned char *stfight_text_char_ram;
@@ -498,55 +497,41 @@ static struct MSM5205interface msm5205_interface =
 	{ 50 }
 };
 
-static const struct MachineDriver machine_driver_stfight =
-{
+static MACHINE_DRIVER_START( stfight )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,	/* 3 MHz */
-			readmem_cpu1, writemem_cpu1, 0, 0,
-			stfight_vb_interrupt, 1,
-            stfight_interrupt_1, 30
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz */
-			readmem_cpu2, writemem_cpu2, 0, 0,
-			0, 0,
-            stfight_interrupt_2, 120
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	stfight_init_machine,
+	MDRV_CPU_ADD(Z80, 3000000)	/* 3 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(stfight_vb_interrupt,1)
+	MDRV_CPU_PERIODIC_INT(stfight_interrupt_1,30)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,120)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	MDRV_MACHINE_INIT(stfight)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256+1, 16*4+16*16+16*16+16*16,
-	stfight_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+1)
+	MDRV_COLORTABLE_LENGTH(16*4+16*16+16*16+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-
-	stfight_vh_start,
-	0,
-	stfight_vh_screenrefresh,
+	MDRV_PALETTE_INIT(stfight)
+	MDRV_VIDEO_START(stfight)
+	MDRV_VIDEO_UPDATE(stfight)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

@@ -70,31 +70,31 @@ extern unsigned char *wow_videoram;
 extern const char *wow_sample_names[];
 extern const char *gorf_sample_names[];
 
-void astrocde_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
+PALETTE_INIT( astrocde );
 READ_HANDLER( wow_intercept_r );
 WRITE_HANDLER( wow_videoram_w );
 WRITE_HANDLER( astrocde_magic_expand_color_w );
 WRITE_HANDLER( astrocde_magic_control_w );
 WRITE_HANDLER( wow_magicram_w );
 WRITE_HANDLER( astrocde_pattern_board_w );
-void astrocde_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( astrocde );
 READ_HANDLER( wow_video_retrace_r );
 
+WRITE_HANDLER( astrocde_interrupt_vector_w );
 WRITE_HANDLER( astrocde_interrupt_enable_w );
 WRITE_HANDLER( astrocde_interrupt_w );
-int  wow_interrupt(void);
+INTERRUPT_GEN( wow_interrupt );
 
 READ_HANDLER( seawolf2_controller1_r );
 READ_HANDLER( seawolf2_controller2_r );
-void seawolf2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( seawolf2 );
 
-int  gorf_interrupt(void);
+INTERRUPT_GEN( gorf_interrupt );
 READ_HANDLER( gorf_timer_r );
 READ_HANDLER( gorf_io_r );
 
-int  astrocde_vh_start(void);
-int  astrocde_stars_vh_start(void);
-void astrocde_vh_stop(void);
+VIDEO_START( astrocde );
+VIDEO_START( astrocde_stars );
 
 int  wow_sh_start(const struct MachineSound *msound);
 void wow_sh_update(void);
@@ -203,7 +203,7 @@ static PORT_WRITE_START( seawolf2_writeport )
 	{ 0x0a, 0x0a, astrocde_vertical_blank_w },
 	{ 0x0b, 0x0b, astrocde_colour_block_w },
 	{ 0x0c, 0x0c, astrocde_magic_control_w },
-	{ 0x0d, 0x0d, interrupt_vector_w },
+	{ 0x0d, 0x0d, astrocde_interrupt_vector_w },
 	{ 0x0e, 0x0e, astrocde_interrupt_enable_w },
 	{ 0x0f, 0x0f, astrocde_interrupt_w },
 	{ 0x19, 0x19, astrocde_magic_expand_color_w },
@@ -218,7 +218,7 @@ static PORT_WRITE_START( writeport )
 	{ 0x0a, 0x0a, astrocde_vertical_blank_w },
 	{ 0x0b, 0x0b, astrocde_colour_block_w },
 	{ 0x0c, 0x0c, astrocde_magic_control_w },
-	{ 0x0d, 0x0d, interrupt_vector_w },
+	{ 0x0d, 0x0d, astrocde_interrupt_vector_w },
 	{ 0x0e, 0x0e, astrocde_interrupt_enable_w },
 	{ 0x0f, 0x0f, astrocde_interrupt_w },
 	{ 0x10, 0x18, astrocade_sound1_w },
@@ -617,277 +617,186 @@ static struct CustomSound_interface wow_custom_interface =
 
 
 
-static const struct MachineDriver machine_driver_seawolf2 =
-{
+static MACHINE_DRIVER_START( seawolf2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789773,	/* 1.789 MHz */
-			seawolf2_readmem,seawolf2_writemem,readport,seawolf2_writeport,
-			wow_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_MEMORY(seawolf2_readmem,seawolf2_writemem)
+	MDRV_CPU_PORTS(readport,seawolf2_writeport)
+	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	256, 0,
-	astrocde_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	astrocde_vh_start,
-	astrocde_vh_stop,
-	seawolf2_vh_screenrefresh,
+	MDRV_PALETTE_INIT(astrocde)
+	MDRV_VIDEO_START(astrocde)
+	MDRV_VIDEO_UPDATE(seawolf2)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_spacezap =
-{
+static MACHINE_DRIVER_START( spacezap )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789773,	/* 1.789 MHz */
-			readmem,writemem,readport,writeport,
-			wow_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	256, 0,
-	astrocde_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	astrocde_vh_start,
-	astrocde_vh_stop,
-	astrocde_vh_screenrefresh,
+	MDRV_PALETTE_INIT(astrocde)
+	MDRV_VIDEO_START(astrocde)
+	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_ASTROCADE,
-			&astrocade_2chip_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ebases =
-{
+static MACHINE_DRIVER_START( ebases )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789773,	/* 1.789 MHz */
-			readmem,writemem,readport,writeport,
-			wow_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	256, 0,
-	astrocde_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	astrocde_vh_start,
-	astrocde_vh_stop,
-	astrocde_vh_screenrefresh,
+	MDRV_PALETTE_INIT(astrocde)
+	MDRV_VIDEO_START(astrocde)
+	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_ASTROCADE,
-			&astrocade_1chip_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_1chip_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_wow =
-{
+static MACHINE_DRIVER_START( wow )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789773,	/* 1.789 MHz */
-			readmem,writemem,readport,writeport,
-			wow_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	256, 0,
-	astrocde_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_PALETTE_INIT(astrocde)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	astrocde_stars_vh_start,
-	astrocde_vh_stop,
-	astrocde_vh_screenrefresh,
+	MDRV_VIDEO_START(astrocde_stars)
+	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_ASTROCADE,
-			&astrocade_2chip_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&wow_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&wow_custom_interface
-		}
- 	}
-};
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+	MDRV_SOUND_ADD(SAMPLES, wow_samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, wow_custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gorf =
-{
+static MACHINE_DRIVER_START( gorf )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789773,	/* 1.789 MHz */
-			readmem,writemem,readport,writeport,
-			gorf_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(gorf_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	/* it may look like the right hand side of the screen needs clipping, but */
 	/* this isn't the case: cocktail mode would be clipped on the wrong side */
 
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	256, 0,
-	astrocde_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	astrocde_stars_vh_start,
-	astrocde_vh_stop,
-	astrocde_vh_screenrefresh,
+	MDRV_PALETTE_INIT(astrocde)
+	MDRV_VIDEO_START(astrocde_stars)
+	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_ASTROCADE,
-			&astrocade_2chip_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&gorf_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&gorf_custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+	MDRV_SOUND_ADD(SAMPLES, gorf_samples_interface)
+	MDRV_SOUND_ADD(CUSTOM, gorf_custom_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_robby =
-{
+static MACHINE_DRIVER_START( robby )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789773,	/* 1.789 MHz */
-			robby_readmem,robby_writemem,readport,writeport,
-			wow_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_MEMORY(robby_readmem,robby_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	256, 0,
-	astrocde_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_PALETTE_INIT(astrocde)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	astrocde_vh_start,
-	astrocde_vh_stop,
-	astrocde_vh_screenrefresh,
+	MDRV_VIDEO_START(astrocde)
+	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_ASTROCADE,
-			&astrocade_2chip_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_profpac =
-{
+static MACHINE_DRIVER_START( profpac )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789773,	/* 1.789 MHz */
-			profpac_readmem,profpac_writemem,readport,writeport,
-			wow_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
+	MDRV_CPU_MEMORY(profpac_readmem,profpac_writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	256, 0,
-	astrocde_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	astrocde_vh_start,
-	astrocde_vh_stop,
-	astrocde_vh_screenrefresh,
+	MDRV_PALETTE_INIT(astrocde)
+	MDRV_VIDEO_START(astrocde)
+	MDRV_VIDEO_UPDATE(astrocde)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_ASTROCADE,
-			&astrocade_2chip_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_2chip_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -996,23 +905,23 @@ ROM_END
 
 
 
-static void init_seawolf2(void)
+static DRIVER_INIT( seawolf2 )
 {
 	install_port_read_handler(0, 0x10, 0x10, seawolf2_controller2_r);
 	install_port_read_handler(0, 0x11, 0x11, seawolf2_controller1_r);
 }
-static void init_ebases(void)
+static DRIVER_INIT( ebases )
 {
 	install_port_read_handler (0, 0x13, 0x13, ebases_trackball_r);
 	install_port_write_handler(0, 0x28, 0x28, ebases_trackball_select_w);
 }
-static void init_wow(void)
+static DRIVER_INIT( wow )
 {
 	install_port_read_handler(0, 0x12, 0x12, wow_port_2_r);
 	install_port_read_handler(0, 0x15, 0x15, wow_io_r);
 	install_port_read_handler(0, 0x17, 0x17, wow_speech_r);
 }
-static void init_gorf(void)
+static DRIVER_INIT( gorf )
 {
 	install_mem_read_handler (0, 0xd0a5, 0xd0a5, gorf_timer_r);
 

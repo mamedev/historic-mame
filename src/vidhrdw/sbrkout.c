@@ -1,16 +1,13 @@
-/***************************************************************************
+/*************************************************************************
 
-  vidhrdw.c
+	Atari Super Breakout hardware
 
-  Functions to emulate the video hardware of the machine.
-
-  CHANGES:
-  MAB 05 MAR 99 - changed overlay support to use artwork functions
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "artwork.h"
+#include "sbrkout.h"
 
 unsigned char *sbrkout_horiz_ram;
 unsigned char *sbrkout_vert_ram;
@@ -32,11 +29,11 @@ static const struct artwork_element sbrkout_ol[] =
 /***************************************************************************
 ***************************************************************************/
 
-int sbrkout_vh_start(void)
+VIDEO_START( sbrkout )
 {
 	int start_pen = 2;	/* leave space for black and white */
 
-	if (generic_vh_start()!=0)
+	if (video_start_generic())
 		return 1;
 
 	overlay_create(sbrkout_ol, start_pen);
@@ -51,13 +48,13 @@ int sbrkout_vh_start(void)
   the main emulation engine.
 
 ***************************************************************************/
-void sbrkout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sbrkout )
 {
 	int offs;
 	int ball;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */

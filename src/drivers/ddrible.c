@@ -26,25 +26,23 @@ WRITE_HANDLER( ddrible_fg_videoram_w );
 WRITE_HANDLER( ddrible_bg_videoram_w );
 
 /* video hardware functions */
-void ddrible_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int ddrible_vh_start( void );
-void ddrible_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh );
+PALETTE_INIT( ddrible );
+VIDEO_START( ddrible );
+VIDEO_UPDATE( ddrible );
 WRITE_HANDLER( K005885_0_w );
 WRITE_HANDLER( K005885_1_w );
 
 
-static int ddrible_interrupt_0( void )
+static INTERRUPT_GEN( ddrible_interrupt_0 )
 {
 	if (ddrible_int_enable_0)
-		return M6809_INT_FIRQ;
-	return ignore_interrupt();
+		cpu_set_irq_line(0, M6809_FIRQ_LINE, HOLD_LINE);
 }
 
-static int ddrible_interrupt_1( void )
+static INTERRUPT_GEN( ddrible_interrupt_1 )
 {
 	if (ddrible_int_enable_1)
-		return M6809_INT_FIRQ;
-	return ignore_interrupt();
+		cpu_set_irq_line(1, M6809_FIRQ_LINE, HOLD_LINE);
 }
 
 
@@ -332,64 +330,47 @@ static struct YM2203interface ym2203_interface =
 static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* 3.58 MHz */
-	25,         /* volume */
+	100,         /* volume */
 	REGION_SOUND1,/* memory region of speech rom */
 	0x10000,    /* memory size 64Kbyte * 2 bank */
 };
 
-static const struct MachineDriver machine_driver_ddribble =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* CPU #0 */
-			1536000,			/* 18432000/12 MHz? */
-			readmem_cpu0,writemem_cpu0,0,0,
-			ddrible_interrupt_0,1
-		},
-		{
-			CPU_M6809,			/* CPU #1 */
-			1536000,			/* 18432000/12 MHz? */
-			readmem_cpu1,writemem_cpu1,0,0,
-			ddrible_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* 18432000/12 MHz? */
-			readmem_cpu2,writemem_cpu2,0,0,
-			ignore_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	100,	/* we need heavy synch */
-	0,
+static MACHINE_DRIVER_START( ddribble )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,	1536000)	/* 18432000/12 MHz? */
+	MDRV_CPU_MEMORY(readmem_cpu0,writemem_cpu0)
+	MDRV_CPU_VBLANK_INT(ddrible_interrupt_0,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 18432000/12 MHz? */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(ddrible_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 18432000/12 MHz? */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* we need heavy synch */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	/*64*8, 32*8, { 0*8, 64*8-1, 2*8, 30*8-1 }, */
-	gfxdecodeinfo,
-	64, 64 + 256,
-	ddrible_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+/*	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 2*8, 30*8-1) */
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(64 + 256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ddrible_vh_start,
-	0,
-	ddrible_vh_screenrefresh,
+	MDRV_PALETTE_INIT(ddrible)
+	MDRV_VIDEO_START(ddrible)
+	MDRV_VIDEO_UPDATE(ddrible)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_VLM5030,
-			&vlm5030_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(VLM5030, vlm5030_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( ddribble )

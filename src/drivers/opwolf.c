@@ -65,10 +65,9 @@ static data8_t *cchip_ram;
 WRITE16_HANDLER( rainbow_spritectrl_w );
 WRITE16_HANDLER( rastan_spriteflip_w );
 
-int  opwolf_vh_start(void);
-void opwolf_eof_callback(void);
-void opwolf_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void rastan_vh_stop(void);
+VIDEO_START( opwolf );
+VIDEO_EOF( opwolf );
+VIDEO_UPDATE( opwolf );
 
 static int opwolf_gun_xoffs,opwolf_gun_yoffs;
 
@@ -81,23 +80,6 @@ static WRITE16_HANDLER( cchip_w )
 {
 	cchip_ram[offset] = data &0xff;
 }
-
-/***********************************************************
-				INTERRUPTS
-***********************************************************/
-
-//void opwolf_irq_handler(int irq);
-
-static int opwolf_interrupt(void)
-{
-	return 5;  /* interrupt vector 5: others are RTE */
-}
-
-static int sub_z80_interrupt(void)
-{
-	return 1;  // ??
-}
-
 
 /**********************************************************
 				GAME INPUTS
@@ -243,7 +225,7 @@ static WRITE_HANDLER( opwolf_adpcm_b_w )
 		ADPCM_play(0,start,(end-start)*2);
 	}
 
-	/*logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,cpu_get_pc() );*/
+	/*logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
 }
 
 
@@ -263,18 +245,18 @@ static WRITE_HANDLER( opwolf_adpcm_c_w )
 		ADPCM_play(1,start,(end-start)*2);
 	}
 
-	/*logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,cpu_get_pc() );*/
+	/*logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
 }
 
 
 static WRITE_HANDLER( opwolf_adpcm_d_w )
 {
-	logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,cpu_get_pc() );
+	logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 static WRITE_HANDLER( opwolf_adpcm_e_w )
 {
-	logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,cpu_get_pc() );
+	logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 
@@ -480,111 +462,74 @@ static struct ADPCMinterface adpcm_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static struct MachineDriver machine_driver_opwolf =
-{
+static MACHINE_DRIVER_START( opwolf )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			opwolf_readmem,opwolf_writemem,0,0,
-			opwolf_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80,	/* fake, not present on the original board */
-			4000000,	/* 4 MHz ??? */
-			sub_z80_readmem,sub_z80_writemem,0,0,
-			sub_z80_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(opwolf_readmem,opwolf_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* fake, not present on the original board */
+	MDRV_CPU_MEMORY(sub_z80_readmem,sub_z80_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
-	opwolf_gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(opwolf_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	VIDEO_TYPE_RASTER,
-	opwolf_eof_callback,
-	opwolf_vh_start,
-	rastan_vh_stop,
-	opwolf_vh_screenrefresh,
+	MDRV_VIDEO_START(opwolf)
+	MDRV_VIDEO_EOF(opwolf)
+	MDRV_VIDEO_UPDATE(opwolf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_opwolfb =
-{
+
+static MACHINE_DRIVER_START( opwolfb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,	/* 12 MHz ??? */
-			opwolf_readmem,opwolf_writemem,0,0,
-			opwolf_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			sub_z80_readmem,sub_z80_writemem,0,0,
-			sub_z80_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(opwolf_readmem,opwolf_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(sub_z80_readmem,sub_z80_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
-	opwolfb_gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(opwolfb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	VIDEO_TYPE_RASTER,
-	opwolf_eof_callback,
-	opwolf_vh_start,
-	rastan_vh_stop,
-	opwolf_vh_screenrefresh,
+	MDRV_VIDEO_START(opwolf)
+	MDRV_VIDEO_EOF(opwolf)
+	MDRV_VIDEO_UPDATE(opwolf)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -661,7 +606,7 @@ ROM_START( opwolfb )
 ROM_END
 
 
-static void init_opwolf(void)
+static DRIVER_INIT( opwolf )
 {
 	opwolf_gun_xoffs = 0;
 	opwolf_gun_yoffs = 0;
@@ -673,7 +618,7 @@ static void init_opwolf(void)
 	state_save_register_func_postload(reset_sound_region);
 }
 
-static void init_opwolfb(void)
+static DRIVER_INIT( opwolfb )
 {
 	/* bootleg needs different range of raw gun coords */
 	opwolf_gun_xoffs = -2;

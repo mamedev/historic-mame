@@ -59,7 +59,7 @@ static void get_tx_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int sf1_vh_start(void)
+VIDEO_START( sf1 )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,2048,16);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,2048,16);
@@ -138,7 +138,7 @@ INLINE int sf1_invert(int nb)
 	return nb ^ delta[(nb >> 3) & 3];
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -186,28 +186,28 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+					cliprect, TRANSPARENCY_PEN, 15);
 			drawgfx(bitmap,
 					Machine->gfx[2],
 					sf1_invert(c2),
 					color,
 					flipx,flipy,
 					sx+16,sy,
-					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+					cliprect, TRANSPARENCY_PEN, 15);
 			drawgfx(bitmap,
 					Machine->gfx[2],
 					sf1_invert(c3),
 					color,
 					flipx,flipy,
 					sx,sy+16,
-					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+					cliprect, TRANSPARENCY_PEN, 15);
 			drawgfx(bitmap,
 					Machine->gfx[2],
 					sf1_invert(c4),
 					color,
 					flipx,flipy,
 					sx+16,sy+16,
-					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+					cliprect, TRANSPARENCY_PEN, 15);
 		}
 		else
 		{
@@ -225,23 +225,23 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 					color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area, TRANSPARENCY_PEN, 15);
+					cliprect, TRANSPARENCY_PEN, 15);
 		}
 	}
 }
 
 
-void sf1_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( sf1 )
 {
 	if (sf1_active & 0x20)
-		tilemap_draw(bitmap,bg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 
 	if (sf1_active & 0x80)
-		draw_sprites(bitmap);
+		draw_sprites(bitmap,cliprect);
 
-	tilemap_draw(bitmap,tx_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }

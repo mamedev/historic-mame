@@ -37,10 +37,9 @@ static unsigned char *sharedram1;
 WRITE_HANDLER( pacland_scroll0_w );
 WRITE_HANDLER( pacland_scroll1_w );
 WRITE_HANDLER( pacland_bankswitch_w );
-void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int pacland_vh_start(void);
-void pacland_vh_stop(void);
-void pacland_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( pacland );
+VIDEO_START( pacland );
+VIDEO_UPDATE( pacland );
 
 
 static READ_HANDLER( sharedram1_r )
@@ -300,49 +299,38 @@ static struct namco_interface namco_interface =
 };
 
 
-static const struct MachineDriver machine_driver_pacland =
-{
+static MACHINE_DRIVER_START( pacland )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,	/* 1.500 MHz (?) */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_ADD(M6809, 1500000)	/* 1.500 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(HD63701, 6000000/3.9)	/* or compatible 6808 with extra instructions */
 //			6000000/4,		/* ??? */
-			6000000/3.9,		/* ??? */
-			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		},
-	},
-	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* we need heavy synching between the MCU and the CPU */
-	0,
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* we need heavy synching between the MCU and the CPU */
 
 	/* video hardware */
-	42*8, 32*8, { 3*8, 39*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,256*4+256*4+3*64*16,
-	pacland_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 32*8)
+	MDRV_VISIBLE_AREA(3*8, 39*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(256*4+256*4+3*64*16)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	pacland_vh_start,
-	pacland_vh_stop,
-	pacland_vh_screenrefresh,
+	MDRV_PALETTE_INIT(pacland)
+	MDRV_VIDEO_START(pacland)
+	MDRV_VIDEO_UPDATE(pacland)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************

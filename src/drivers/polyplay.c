@@ -88,8 +88,8 @@ void polyplay_reset(void);
 
 /* video hardware access */
 extern unsigned char *polyplay_characterram;
-void polyplay_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void polyplay_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( polyplay );
+VIDEO_UPDATE( polyplay );
 READ_HANDLER( polyplay_characterram_r );
 WRITE_HANDLER( polyplay_characterram_w );
 
@@ -106,7 +106,7 @@ static int channel1_active;
 static int channel1_const;
 static int channel2_active;
 static int channel2_const;
-static void init_polyplay_sound(void);
+static DRIVER_INIT( polyplay_sound );
 void play_channel1(int data);
 void play_channel2(int data);
 int  polyplay_sh_start(const struct MachineSound *msound);
@@ -129,7 +129,7 @@ static struct CustomSound_interface custom_interface =
 };
 
 
-void polyplay_reset(void)
+MACHINE_INIT( polyplay )
 {
 	channel1_active = 0;
 	channel1_const = 0;
@@ -299,46 +299,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* the machine driver */
 
-#define MACHINEDRIVER(NAME, MEM, PORT)				\
-static const struct MachineDriver machine_driver_##NAME =	\
-{													\
-	/* basic machine hardware */					\
-	{												\
-		{											\
-			CPU_Z80,								\
-			9830400/4,								\
-			MEM##_readmem,MEM##_writemem,           \
-			readport_##PORT,writeport_polyplay,	    \
-			ignore_interrupt, 1					\
-		}											\
-	},												\
-	50, 0,	/* frames per second, vblank duration */ \
-	0,	/* single CPU, no need for interleaving */	\
-	polyplay_reset,									\
-													\
-	/* video hardware */							\
-	64*8, 32*8, { 0*8, 64*8-1, 0*8, 32*8-1 },		\
-	gfxdecodeinfo,									\
-	10, 0,											\
-	polyplay_init_palette,					        \
-													\
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,			\
-	0,												\
-	generic_vh_start,								\
-	generic_vh_stop,								\
-	polyplay_vh_screenrefresh,						\
-													\
-	/* sound hardware */							\
-	0,0,0,0,										\
-	{							                    \
-		{						                    \
-			SOUND_CUSTOM,		                    \
-			&custom_interface	                    \
-		}						                    \
-	}							                    \
-};
+static MACHINE_DRIVER_START( polyplay )
 
-MACHINEDRIVER( polyplay, polyplay, polyplay )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 9830400/4)
+	MDRV_CPU_MEMORY(polyplay_readmem,polyplay_writemem)
+	MDRV_CPU_PORTS(readport_polyplay,writeport_polyplay)
+
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(0)	/* frames per second, vblank duration */
+
+	MDRV_MACHINE_INIT(polyplay)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(10)
+
+	MDRV_PALETTE_INIT(polyplay)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(polyplay)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -390,7 +376,7 @@ READ_HANDLER( polyplay_input_read )
 	int inp = input_port_0_r(offset);
 
 	if ((inp & 0x80) == 0) {    /* Coin inserted */
-		cpu_cause_interrupt(0, 0x50);
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x50);
 		coin_counter_w(0, 1);
 		timer_set(TIME_IN_SEC(1), 2, polyplay_timer);
 	}
@@ -402,12 +388,12 @@ static void polyplay_timer(int param)
 {
 	switch(param) {
 	case 0:
-		cpu_cause_interrupt(0, 0x4e);
+		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4e);
 		break;
 	case 1:
 		if (timer2_active) {
 			timer_set(TIME_IN_HZ(40), 1, polyplay_timer);
-			cpu_cause_interrupt(0, 0x4c);
+			cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4c);
 		}
 		break;
 	case 2:
@@ -417,9 +403,8 @@ static void polyplay_timer(int param)
 }
 
 /* initialization */
-static void init_polyplay_sound(void)
+static DRIVER_INIT( polyplay_sound )
 {
-	timer_init();
 	timer_pulse(TIME_IN_HZ(75), 0, polyplay_timer);
 	timer2_active = 0;
 }

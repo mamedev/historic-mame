@@ -20,8 +20,8 @@ TODO:
 
 static unsigned char *xain_sharedram;
 
-void xain_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int xain_vh_start(void);
+VIDEO_UPDATE( xain );
+VIDEO_START( xain );
 WRITE_HANDLER( xain_scrollxP0_w );
 WRITE_HANDLER( xain_scrollyP0_w );
 WRITE_HANDLER( xain_scrollxP1_w );
@@ -68,7 +68,7 @@ static WRITE_HANDLER( xainCPUB_bankswitch_w )
 static WRITE_HANDLER( xain_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(2,M6809_INT_IRQ);
+	cpu_set_irq_line(2,M6809_IRQ_LINE,HOLD_LINE);
 }
 
 static WRITE_HANDLER( xain_irqA_assert_w )
@@ -107,7 +107,7 @@ static WRITE_HANDLER( xain_68705_w )
 //	logerror("write %02x to 68705\n",data);
 }
 
-static int xainA_interrupt(void)
+static INTERRUPT_GEN( xainA_interrupt )
 {
 	/* returning nmi on iloops() == 0 will cause lockups because the nmi handler */
 	/* waits for the vblank bit to be clear and there are other places in the code */
@@ -116,7 +116,6 @@ static int xainA_interrupt(void)
 		cpu_set_nmi_line(0,PULSE_LINE);
 	else
 		cpu_set_irq_line(0,M6809_FIRQ_LINE,ASSERT_LINE);
-	return ignore_interrupt();
 }
 
 
@@ -322,59 +321,41 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_xsleena =
-{
-	{
-		{
-			CPU_M6809,
-			2000000,	/* 2 MHz ??? */
-			readmem,writemem,0,0,
-			xainA_interrupt,4	/* wrong, this is just a hack */
+static MACHINE_DRIVER_START( xsleena )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(xainA_interrupt,4)	/* wrong, this is just a hack */
 								/* IRQs are caused by CPU B */
 								/* FIRQs are caused by ? */
 								/* NMIs are caused by... vblank it seems, but it checks */
 								/* the vblank bit before RTI, and there are other places in */
 								/* the code that check that bit, so it would cause lockups */
-		},
-		{
-			CPU_M6809,
-			2000000,	/* 2 MHz ??? */
-			readmemB,writememB,0,0,
-			ignore_interrupt,0	/* IRQs are caused by CPU A */
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 MHz ??? */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by CPU A */
+	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz ??? */
+	MDRV_CPU_MEMORY(readmemB,writememB)
+
+	MDRV_CPU_ADD(M6809, 2000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 2 MHz ??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* FIRQs are caused by the YM2203 */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* 100 CPU slice per frame */
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	xain_vh_start,
-	0,
-	xain_vh_screenrefresh,
+	MDRV_VIDEO_START(xain)
+	MDRV_VIDEO_UPDATE(xain)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -539,7 +520,7 @@ ROM_END
 
 
 
-void init_xsleena(void)
+DRIVER_INIT( xsleena )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -552,7 +533,7 @@ void init_xsleena(void)
 	RAM[0xd48d] = 0x12;
 }
 
-void init_solarwar(void)
+DRIVER_INIT( solarwar )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

@@ -34,8 +34,8 @@ Take the following observations with a grain of salt (might not be true):
 
 extern unsigned char *lkage_scroll, *lkage_vreg;
 WRITE_HANDLER( lkage_videoram_w );
-int lkage_vh_start(void);
-void lkage_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( lkage );
+VIDEO_UPDATE( lkage );
 
 READ_HANDLER( lkage_68705_portA_r );
 WRITE_HANDLER( lkage_68705_portA_w );
@@ -55,7 +55,7 @@ static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_cause_interrupt(1,Z80_NMI_INT);
+	if (sound_nmi_enable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
@@ -75,7 +75,7 @@ static WRITE_HANDLER( lkage_sh_nmi_enable_w )
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{ /* probably wrong but commands may go lost otherwise */
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -351,103 +351,77 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_lkage =
-{
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			6000000,	/* ??? */
-			readmem,writemem,readport,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000,	/* ??? */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+static MACHINE_DRIVER_START( lkage )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,6000000)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
-		},
-		{
-			CPU_M68705,
-			4000000/2,	/* ??? */
-			m68705_readmem,m68705_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+	MDRV_CPU_ADD(M68705,4000000/2)	/* ??? */
+	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	176, 0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(176)
 		/*
 			there are actually 1024 colors in paletteram, however, we use a 100% correct
 			reduced "virtual palette" to achieve some optimizations in the video driver.
 		*/
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	lkage_vh_start,
-	0,
-	lkage_vh_screenrefresh,
+
+	MDRV_VIDEO_START(lkage)
+	MDRV_VIDEO_UPDATE(lkage)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_lkageb =
-{
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			6000000,	/* ??? */
-			readmem,writemem,readport,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000,	/* ??? */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+
+static MACHINE_DRIVER_START( lkageb )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,6000000)
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)	/* ??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 6000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ??? */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
 								/* IRQs are triggered by the YM2203 */
-		}
-	},
-	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	176, 0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(176)
 		/*
 			there are actually 1024 colors in paletteram, however, we use a 100% correct
 			reduced "virtual palette" to achieve some optimizations in the video driver.
 		*/
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	lkage_vh_start,
-	0,
-	lkage_vh_screenrefresh,
+
+	MDRV_VIDEO_START(lkage)
+	MDRV_VIDEO_UPDATE(lkage)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -550,7 +524,7 @@ static READ_HANDLER( fake_status_r )
 	return 3;
 }
 
-void init_lkageb(void)
+DRIVER_INIT( lkageb )
 {
 	install_mem_read_handler(0,0xf062,0xf062,fake_mcu_r);
 	install_mem_read_handler(0,0xf087,0xf087,fake_status_r);

@@ -49,15 +49,15 @@ WRITE_HANDLER( commando_bgvideoram_w );
 WRITE_HANDLER( commando_scrollx_w );
 WRITE_HANDLER( commando_scrolly_w );
 WRITE_HANDLER( commando_c804_w );
-int commando_vh_start(void);
-void commando_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void commando_eof_callback(void);
+VIDEO_START( commando );
+VIDEO_UPDATE( commando );
+VIDEO_EOF( commando );
 
 
 
-static int commando_interrupt(void)
+static INTERRUPT_GEN( commando_interrupt )
 {
-	return 0x00d7;	/* RST 10h - VBLANK */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h - VBLANK */
 }
 
 
@@ -323,48 +323,36 @@ static struct YM2203interface ym2203_interface =
 
 
 
-static const struct MachineDriver machine_driver_commando =
-{
+static MACHINE_DRIVER_START( commando )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
-			readmem,writemem,0,0,
-			commando_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz (?) */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(commando_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3 MHz (?) */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	commando_eof_callback,
-	commando_vh_start,
-	0,
-	commando_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(commando)
+	MDRV_VIDEO_EOF(commando)
+	MDRV_VIDEO_UPDATE(commando)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -520,7 +508,7 @@ ROM_END
 
 
 
-static void init_commando(void)
+static DRIVER_INIT( commando )
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -540,7 +528,7 @@ static void init_commando(void)
 	}
 }
 
-static void init_spaceinv(void)
+static DRIVER_INIT( spaceinv )
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);
