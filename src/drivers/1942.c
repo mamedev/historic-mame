@@ -354,7 +354,7 @@ WWW.SPIES.COM contains DIP switch settings.
 
 extern unsigned char *c1942_scroll;
 extern unsigned char *c1942_palette_bank;
-void c1942_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void c1942_flipscreen_w(int offset,int data);
 void c1942_updatehook0(int offset);
 void c1942_updatehook1(int offset);

@@ -24,7 +24,7 @@ MAIN BOARD:
 
 
 void trackfld_flipscreen_w(int offset,int data);
-void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap);
 int trackfld_vh_start(void);
 void trackfld_vh_stop(void);

@@ -54,7 +54,7 @@ interrupt mode 1 triggered by the main CPU
 
 
 
-void amidar_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void amidar_updatehook00(int offset);
 void amidar_updatehook01(int offset);
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);

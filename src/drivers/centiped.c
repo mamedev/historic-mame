@@ -1,5 +1,12 @@
 /***************************************************************************
 
+Main clock: XTAL = 12.096 MHz
+6502 Clock: XTAL/8 = 1.512 MHz (0.756 when accessing playfield RAM)
+Horizontal video frequency: HSYNC = XTAL/256/3 = 15.75 kHz
+Video frequency: VSYNC = HSYNC/263 ?? = 59.88593 Hz (not sure, could be /262)
+VBlank duration: 1/VSYNC * (23/263) = 1460 us
+
+
               Centipede Memory map and Dip Switches
               -------------------------------------
 
@@ -164,16 +171,16 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x2000, 0x3fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
+	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
 	{ 0x0c00, 0x0c00, centiped_IN0_r },	/* IN0 */
 	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
 	{ 0x0c02, 0x0c02, centiped_IN2_r },	/* IN2 */	/* JB 971220 */
 	{ 0x0c03, 0x0c03, input_port_3_r },	/* IN3 */
-	{ 0x0800, 0x0800, input_port_4_r },	/* DSW1 */
-	{ 0x0801, 0x0801, input_port_5_r },	/* DSW2 */
 	{ 0x1000, 0x100f, pokey1_r },
 	{ 0x1700, 0x173f, atari_vg_earom_r },
+	{ 0x2000, 0x3fff, MRA_ROM },
+	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
 	{ -1 }	/* end of table */
 };
 
@@ -189,7 +196,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1800, MWA_NOP },	/* IRQ acknowldege */
 	{ 0x1c00, 0x1c02, coin_counter_w },
 	{ 0x1c03, 0x1c04, centiped_led_w },
-	{ 0x1c05, 0x1c06, MWA_NOP }, /* coin door lights? */
 	{ 0x1c07, 0x1c07, centiped_vh_flipscreen_w },
 	{ 0x2000, 0x2000, watchdog_reset_w },
 	{ 0x2000, 0x3fff, MWA_ROM },
@@ -324,7 +330,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
+	12096000/8,	/* 1.512 MHz */
 	255,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
@@ -347,13 +353,13 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6502,
-			1500000,	/* 1.5 Mhz ???? */
+			12096000/8,	/* 1.512 Mhz (slows down to 0.75MHz while accessing playfield RAM) */
 			0,
 			readmem,writemem,0,0,
 			centiped_interrupt,4
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, 1460,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 

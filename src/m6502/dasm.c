@@ -5,7 +5,7 @@
 /** This file contains the source of a portable disassembler **/
 /** for the 6502 CPU.                                        **/
 /**                                                          **/
-/** Copyright (C) Marat Fayzullin 1996                       **/
+/** Copyright (C) Marat Fayzullin 1996-1998                  **/
 /**               Alex Krasivsky  1996                       **/
 /**     You are not allowed to distribute this software      **/
 /**     commercially. Please, notify me, if you make any     **/
@@ -82,9 +82,9 @@ static byte AD[512] =
   48,Il, 43,Ay, No,No, No,No, No,No, 43,Ax, 26,Ax, No,No
 };
 
-/** DAsm() ****************************************************/        
-/** This function will disassemble a single command and      **/    
-/** return the number of bytes disassembled.                 **/  
+/** DAsm() ****************************************************/
+/** This function will disassemble a single command and      **/
+/** return the number of bytes disassembled.                 **/
 /**************************************************************/
 int DAsm(char *S,byte *A,unsigned long PC)
 {
@@ -98,7 +98,7 @@ int DAsm(char *S,byte *A,unsigned long PC)
     case Ac: sprintf(S,"%s a",MN[AD[OP]]);break;
     case Il: sprintf(S,"%s",MN[AD[OP]]);break;
 
-    case Rl: J=*B++;PC+=2+((J<0x80)? J:(J-256)); 
+    case Rl: J=*B++;PC+=2+((J<0x80)? J:(J-256));
              sprintf(S,"%s $%08lX",MN[AD[OP]],PC);break;
 
     case Im: sprintf(S,"%s #$%02X",MN[AD[OP]],*B++);break;
@@ -135,7 +135,7 @@ int main(int argc,char *argv[])
     {
       case 'o': sscanf(argv[J],"-o%lx",&Counter);
                 Counter&=0xFFFFFFFFL;break;
-      default: 
+      default:
         for(J=1;argv[N][J];J++)
           switch(argv[N][J])
           {
@@ -145,7 +145,7 @@ int main(int argc,char *argv[])
           }
     }
 
-  if(N==argc)  
+  if(N==argc)
   {
     fprintf(stderr,"DASM6502 6502 Disassembler v.2.0 by Marat Fayzullin\n");
 #ifdef ZLIB
@@ -157,10 +157,10 @@ int main(int argc,char *argv[])
     fprintf(stderr,"  -o - Count addresses from a given origin (hex)\n");
     return(1);
   }
-    
+
   if(!(F=fopen(argv[N],"rb")))
   { printf("\n%s: Can't open file %s\n",argv[0],argv[N]);return(1); }
-    
+
   for(N=0;N+=fread(Buf+N,1,16-N,F);)
   {
     memset(Buf+N,0,32-N);
@@ -172,10 +172,10 @@ int main(int argc,char *argv[])
       if(I<3) printf("\t");
     }
     printf("\t%s\n",S);
-    Counter+=I;N-=I;
-    if(N>0) for(J=0;J<N;J++) Buf[J]=Buf[16-N+J];
-    else if(N<0) N=0;
+    Counter+=I;
+    for(J=0;J<N;J++) Buf[J]=Buf[J+I];
+    N=N>I? N-I:0;
   }
-    
+
   fclose(F);return(0);
 }

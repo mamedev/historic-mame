@@ -56,16 +56,16 @@ Known issues:
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
-void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap);
 void mcr3_videoram_w(int offset,int data);
 void mcr3_palette_w(int offset,int data);
 extern unsigned char *mcr3_paletteram;
 
-void rampage_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void rampage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rampage_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int spyhunt_vh_start(void);
 void spyhunt_vh_stop(void);
 void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap);

@@ -498,7 +498,7 @@ void system8_vh_screenrefresh(struct osd_bitmap *bitmap)
 }
 
 
-void system8_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void system8_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 

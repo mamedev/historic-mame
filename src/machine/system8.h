@@ -54,7 +54,7 @@ void system8_paletteram_w(int offset,int data);
 void system8_backgroundram_w(int offset,int data);
 void system8_backgroundpaletteram_w(int offset,int data);
 void system8_vh_screenrefresh(struct osd_bitmap *bitmap);
-void system8_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void system8_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void system8_bankswitch_w(int offset,int data);
 int  system8_bankswitch_r(int offset);
 

@@ -394,18 +394,18 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( lnc_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -650,14 +650,15 @@ unsigned char eggs_colortable[] =
 
 static unsigned char lnc_color_prom[] =
 {
+	// I think the color PROM is corrupted in the nibble indicated by the arrow.
+	// Changing it to 0x07 makes the color scheme match the flyer's drawing to
+	// a tee. The flyer is at
+	// www.gamearchive.com/flyers/video/taito/locknchase_f.jpg
+
 	/* palette SC-5M */
-		0x00,0xdf,0x51,0x1c,0xa7,0xe0,0xfc,0xff,
-//RGB	BLK  DKW  DKG  GRN  PUR	 RED  YEL  WHT
-//RBG	BLK	 DKW  DKB  BLU  MUST RED  PUR  WHT
-//GRB	BLK	 DKW  DKR  RED	LBL	 GRN  LBLU WHT
-//GBR	BLK  DKW  DKB  BLU  TAN  GRN  YEL  WHT
-//BRG	BLK	 DKW  DKR  RED	LBL	 BLU  PUR  WHT
-//BGR	BLK  DKW  DKG  GRN	PUR	 BLU  LBLU WHT
+  //0x00,0xdf,0x51,0x1c,0xa7,0xe0,0xfc,0xff,
+    0x00,0xdf,0x51,0x1c,0x07,0xe0,0xfc,0xff,
+  //                      ^
 
 	/* ROM SB-4C, don't know what it is, unused for now */
 	0xf7,0xf7,0xf5,0xfd,0xf9,0xf9,0xf0,0xf6,0xf6,0xf6,0xf6,0xf4,0xfc,0xf8,0xf8,0xf6,
@@ -688,7 +689,7 @@ static struct AY8910interface ay8910_interface =
 #define MACHINE_DRIVER(GAMENAME, MAIN_IRQ, SOUND_IRQ, GFX, COLOR)   \
 																	\
 void GAMENAME##_init_machine(void);                                 \
-void GAMENAME##_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom); \
+void GAMENAME##_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom); \
 int  GAMENAME##_vh_start (void);                                    \
 void GAMENAME##_vh_stop (void);                                     \
 																	\
@@ -876,11 +877,11 @@ ROM_START( lnc_rom )
 	ROM_LOAD( "s0-3a", 0xf000, 0x1000, 0xee021c06 )
 
 	ROM_REGION(0x6000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s8-15l",  0x0000, 0x1000, 0x04ac8f32 )  // 2
+	ROM_LOAD( "s8-15l",  0x0000, 0x1000, 0x04ac8f32 )
 	ROM_LOAD( "s9-15m",  0x1000, 0x1000, 0x0845b92f )
-	ROM_LOAD( "s6-13l",  0x2000, 0x1000, 0x7550c9d6 )  // 1
+	ROM_LOAD( "s6-13l",  0x2000, 0x1000, 0x7550c9d6 )
 	ROM_LOAD( "s7-13m",  0x3000, 0x1000, 0x23457281 )
-	ROM_LOAD( "s4-11l",  0x4000, 0x1000, 0x4b6f09bf )  // 0
+	ROM_LOAD( "s4-11l",  0x4000, 0x1000, 0x4b6f09bf )
 	ROM_LOAD( "s5-11m",  0x5000, 0x1000, 0x7aa5ddab )
 // 0 1 2   2 1 0   1 0 2   0 2 1   1 2 0    2 0 1
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */

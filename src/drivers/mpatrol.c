@@ -52,7 +52,7 @@ void mpatrol_bg2ypos_w(int offset,int data);
 void mpatrol_bgcontrol_w(int offset,int data);
 int mpatrol_vh_start(void);
 void mpatrol_vh_stop(void);
-void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void mpatrol_io_w(int offset, int value);

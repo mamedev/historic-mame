@@ -72,7 +72,7 @@ extern unsigned char *wiz_attributesram2;
 extern unsigned char *wiz_sprite_bank;
 
 void wiz_background_bank_select_w (int offset, int data);
-void wiz_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void wiz_vh_screenrefresh(struct osd_bitmap *bitmap);
 void wiz_flipx_w(int offset,int data);
 void wiz_flipy_w(int offset,int data);

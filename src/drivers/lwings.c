@@ -686,12 +686,12 @@ static struct GfxLayout spritelayout_trojan = /* LWings, with more sprites */
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxLayout bktilelayout_trojan = /* LWings, with more sprites */
+static struct GfxLayout bktilelayout_trojan =
 {
 	16,16,	/* 16*16 sprites */
 	512,   /* 512 sprites */
 	4,	/* 4 bits per pixel */
-	{ 0x08000*8+4, 0x08000*8+0, 4, 0},
+	{ 0x08000*8+0, 0x08000*8+4, 0, 4},
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,

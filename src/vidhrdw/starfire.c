@@ -52,7 +52,7 @@ void starfire_colorram_w(int offset,int data){
         bit2 = (b >> 2) & 0x01;
         b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
-        osd_modify_pen(Machine->pens[offset & 0x3f],r,g,b);
+        palette_change_color(offset & 0x3f,r,g,b);
     }
 }
 
@@ -157,7 +157,7 @@ int starfire_videoram_r(int offset) {
 
 
 ***************************************************************************/
-void starfire_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void starfire_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
     int i;
 

@@ -93,7 +93,7 @@ extern unsigned char *galaga_starcontrol;
 void galaga_flipscreen_w(int offset,int data);
 int galaga_vh_start(void);
 void galaga_vh_screenrefresh(struct osd_bitmap *bitmap);
-void galaga_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void pengo_sound_w(int offset,int data);
 extern unsigned char *pengo_soundregs;

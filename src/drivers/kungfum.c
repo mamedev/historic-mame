@@ -178,7 +178,7 @@ Note #2: Initiate "Stop Mode" with 2P Start button.
 extern unsigned char *kungfum_scroll_low;
 extern unsigned char *kungfum_scroll_high;
 void kungfum_flipscreen_w(int offset,int value);
-void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int kungfum_vh_start(void);
 void kungfum_vh_stop(void);
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -366,11 +366,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,           0, 32 },
-	{ 1, 0x06000, &spritelayout,      32*8, 32 },
-	{ 1, 0x08000, &spritelayout,      32*8, 32 },
-	{ 1, 0x0a000, &spritelayout,      32*8, 32 },
-	{ 1, 0x0c000, &spritelayout,      32*8, 32 },
+	{ 1, 0x00000, &charlayout,      0, 32 },	/* use colors   0-255 */
+	{ 1, 0x06000, &spritelayout, 32*8, 32 },	/* use colors 256-511 */
+	{ 1, 0x08000, &spritelayout, 32*8, 32 },
+	{ 1, 0x0a000, &spritelayout, 32*8, 32 },
+	{ 1, 0x0c000, &spritelayout, 32*8, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -532,7 +532,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	256,32*8+32*8,
+	512, 512,
 	kungfum_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

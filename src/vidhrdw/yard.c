@@ -55,7 +55,7 @@ static struct rectangle spritevisiblearea2 =
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void yard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	const unsigned char *spritepalette;

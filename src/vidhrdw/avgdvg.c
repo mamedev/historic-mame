@@ -18,16 +18,19 @@
  * for the rest. There is a circuit to clip color 0 lines extending to the
  * red zone. This is emulated now. Thanks to Neil Bradley for the info. BW
  *
- * Framerates (info by Neil Bradley + own experimentation) BW
- * 60 fps: Asteroid, Asteroid Deluxe, Space Duel
- * 40 fps: Lunar Lander, Battle Zone, Red Baron
- * 30 fps: StarWars
+ * Frame and interrupt rates (Neil Bradley) BW
+ * ~60 fps/4.0ms: Asteroid, Asteroid Deluxe
+ * ~40 fps/4.0ms: Lunar Lander
+ * ~40 fps/4.1ms: Battle Zone
+ * ~45 fps/5.4ms: Space Duel, Red Baron
+ * ~30 fps/5.4ms: StarWars
  *
- * Games with variable framerates (loosely tied to interrupt rate):
- * Black Widow, Gravitar, Tempest, Major Havoc, Quantum, Omega Race
- * most of them are running at 30fps for now.
+ * Games with self adjusting framerate
  *
- * TODO: accurate vector timing (need timing diagramm) 
+ * 5.4ms: Black Widow, Gravitar, Red Baron
+ * 4.1ms: Tempest
+ *
+ * TODO: accurate vector timing (need timing diagramm)
  */
 
 #include "driver.h"
@@ -234,7 +237,7 @@ static void dvg_generate_vector_list(void)
 				if (z)
 					z = (z << 4) | 0x0f;
 				vector_add_point (currentx, currenty, colorram[1], z);
-			
+
 				break;
 
 			case DLABS:
@@ -785,7 +788,7 @@ void avgdvg_go (int offset, int data)
 	{
 		avg_generate_vector_list();
 		if (total_length > 1)
-			timer_set (TIME_IN_NSEC(2000) * total_length, 1, avgdvg_clr_busy);
+			timer_set (TIME_IN_NSEC(1500) * total_length, 1, avgdvg_clr_busy);
 		/* this is for Major Havoc */
 		else
 		{
@@ -869,11 +872,11 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
 {
 	int i, inten, index_range, inten_range;
 
-	index_range = end_index-start_index; 
+	index_range = end_index-start_index;
 	inten_range = end_inten-start_inten;
 	for (i = start_index; i <= end_index; i++)
-	{ 
-		inten = start_inten + (inten_range) * (i-start_index) / (index_range); 
+	{
+		inten = start_inten + (inten_range) * (i-start_index) / (index_range);
 		palette[3*i  ] = (rgb & RED  )? inten : 0;
 		palette[3*i+1] = (rgb & GREEN)? inten : 0;
 		palette[3*i+2] = (rgb & BLUE )? inten : 0;
@@ -881,7 +884,7 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
 }
 
 
-void avg_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void avg_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,j,k;
 
@@ -900,14 +903,14 @@ void avg_init_colors (unsigned char *palette, unsigned char *colortable,const un
 
 	/* initialize the colorram */
 	for (i = 0; i < 16; i++)
-		colorram[i] = i & 0x07; 
+		colorram[i] = i & 0x07;
 
 	/* fill the rest of the 256 color entries depending on the game */
 	switch (color_prom[0])
 	{
 		/* Black and White vector colors (Asteroids,Omega Race) .ac JAN2498 */
 		case  VEC_PAL_BW:
-			shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);	
+			shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
 			colorram[1] = 7; /* BW games use only color 1 (== white) */
 			break;
 
@@ -921,7 +924,7 @@ void avg_init_colors (unsigned char *palette, unsigned char *colortable,const un
 		/* Monochrome Green/Red vector colors (Battlezone) .ac JAN2498 */
 		case  VEC_PAL_BZONE:
 			shade_fill (palette, RED  ,     8, 128+4, 1, 254);
-			shade_fill (palette, GREEN, 128+5, 254  , 1, 254); 
+			shade_fill (palette, GREEN, 128+5, 254  , 1, 254);
 			break;
 
 		/* Colored games (Major Havoc, Star Wars, Tempest) .ac JAN2498 */
@@ -966,9 +969,9 @@ static void colorram_w (int offset, int data)
 }
 
 /*
- * Tempest, Major Havoc and Quantum select colors via a 16 byte colorram. 
+ * Tempest, Major Havoc and Quantum select colors via a 16 byte colorram.
  * What's more, they have a different ordering of the rgbi bits than the other
- * color avg games. 
+ * color avg games.
  * We need translation tables.
  */
 
@@ -976,7 +979,7 @@ void tempest_colorram_w (int offset, int data)
 {
 #if 0 /* with low intensity bit */
 	int trans[]= { 7, 15, 3, 11, 6, 14, 2, 10, 5, 13, 1,  9, 4, 12, 0,  8 };
-#else /* high intensity */ 
+#else /* high intensity */
 	int trans[]= { 7,  7, 3,  3, 6,  6, 2,  2, 5,  5, 1,  1, 4,  4, 0,  0 };
 #endif
 	colorram_w (offset, trans[data & 0x0f]);
@@ -986,7 +989,7 @@ void mhavoc_colorram_w (int offset, int data)
 {
 #if 0 /* with low intensity bit */
 	int trans[]= { 7, 6, 5, 4, 15, 14, 13, 12, 3, 2, 1, 0, 11, 10, 9, 8 };
-#else /* high intensity */ 
+#else /* high intensity */
 	int trans[]= { 7, 6, 5, 4,  7,  6,  5,  4, 3, 2, 1, 0,  3,  2, 1, 0 };
 #endif
 	if (errorlog)

@@ -76,7 +76,7 @@ void starforc_paletteram_w(int offset,int data);
 int starforc_vh_start(void);
 void starforc_vh_stop(void);
 
-void starforc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void starforc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void starforc_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int starforc_sh_start(void);

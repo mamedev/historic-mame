@@ -280,7 +280,7 @@ void bwidow_misc_w (int offset, int data)
 		0x02 = coin counter 2
 	*/
 	static int lastdata;
-	
+
 	if (data == lastdata) return;
 	osd_led_w (0, ~((data & 0x10) >> 4));
 	osd_led_w (1, ~((data & 0x20) >> 5));
@@ -649,7 +649,7 @@ static struct MachineDriver bwidow_machine_driver =
 			0,
 			bwidow_readmem,bwidow_writemem,0,0,
 			0, 0, /* no vblank-interrupts */
-			interrupt, 240 /* 240 Hz */
+			interrupt, 185 /* 5.4ms */
 		}
 	},
 	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -688,10 +688,10 @@ static struct MachineDriver gravitar_machine_driver =
 			0,
 			bwidow_readmem,bwidow_writemem,0,0,
 			0, 0, /* no vblank-interrupts */
-			interrupt, 240 /* 240 Hz */
+			interrupt, 185 /* 5.4ms */
 		}
 	},
-	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
@@ -727,10 +727,10 @@ static struct MachineDriver spacduel_machine_driver =
 			0,
 			spacduel_readmem,spacduel_writemem,0,0,
 			0, 0, /* no vblank-interrupts */
-			interrupt, 240 /* 240 Hz */
+			interrupt, 185 /* 5.4ms */
 		}
 	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 

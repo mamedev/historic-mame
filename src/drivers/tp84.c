@@ -103,7 +103,7 @@ extern unsigned char *tp84_scrolly;
 void tp84_videoram2_w(int offset,int data);
 void tp84_colorram2_w(int offset,int data);
 void tp84_col0_w(int offset,int data);
-void tp84_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void tp84_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int tp84_vh_start(void);
 void tp84_vh_stop(void);
 void tp84_vh_screenrefresh(struct osd_bitmap *bitmap);

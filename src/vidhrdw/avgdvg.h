@@ -26,7 +26,7 @@ void avgdvg_go (int offset, int data);
 void avgdvg_reset (int offset, int data);
 int avgdvg_init(int vgType);
 
-void avg_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void avg_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void tempest_colorram_w (int offset, int data);
 void mhavoc_colorram_w (int offset, int data);

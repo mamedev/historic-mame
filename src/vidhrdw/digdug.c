@@ -35,7 +35,7 @@ static int pflastindex = -1, pflastcolor = -1;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void digdug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 

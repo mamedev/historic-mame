@@ -3,6 +3,7 @@
 
 
 #include "common.h"
+#include "palette.h"
 #include "gfxlayer.h"
 #include "mame.h"
 #include "cpuintrf.h"
@@ -257,7 +258,7 @@ struct MachineDriver
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	unsigned int total_colors;	/* palette is 3*total_colors bytes long */
 	unsigned int color_table_len;	/* length in bytes of the color lookup table */
-	void (*vh_convert_color_prom)(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
 	struct MachineLayer *layer;	/* make sure the array has MAX_LAYERS elements */

@@ -33,7 +33,7 @@ static void common_videoram_w(int offset,int data,
 
 
 
-void route16_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
         int i;
 
@@ -340,11 +340,11 @@ void route16_vh_screenrefresh(struct osd_bitmap *bitmap)
  ***************************************************************************/
 static void modify_pen(int pen, int colorindex)
 {
-        int r,g,b,color;
+	int r,g,b,color;
 
-        color = Machine->gamedrv->color_prom[colorindex];
-        r = ((color & 1) ? 0xff : 0x00);
-        g = ((color & 2) ? 0xff : 0x00);
-        b = ((color & 4) ? 0xff : 0x00);
-        osd_modify_pen(Machine->pens[pen],r,g,b);
+	color = Machine->gamedrv->color_prom[colorindex];
+	r = ((color & 1) ? 0xff : 0x00);
+	g = ((color & 2) ? 0xff : 0x00);
+	b = ((color & 4) ? 0xff : 0x00);
+	palette_change_color(pen,r,g,b);
 }

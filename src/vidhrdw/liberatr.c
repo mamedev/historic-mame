@@ -370,7 +370,7 @@ void liberator_vh_stop(void)
 } /* liberator_vh_stop */
 
 /********************************************************************************************/
-void liberator_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void liberator_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	/* this function intentionally left blank at this time */
 	return ;

@@ -14,7 +14,7 @@ Shaolin's Road memory map (preliminary)
 unsigned char *shaolins_nmi_enable;
 extern unsigned char *shaolins_scroll;
 
-void shaolins_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void shaolins_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void shaolins_palettebank_w(int offset,int data);
 void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap);
 

@@ -157,7 +157,7 @@ extern unsigned char *taito_scrolly1,*taito_scrolly2,*taito_scrolly3;
 extern unsigned char *taito_colscrolly1,*taito_colscrolly2,*taito_colscrolly3;
 extern unsigned char *taito_gfxpointer,*taito_paletteram;
 extern unsigned char *taito_colorbank,*taito_video_priority,*taito_video_enable;
-void taito_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void taito_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int taito_gfxrom_r(int offset);
 void taito_videoram2_w(int offset,int data);
 void taito_videoram3_w(int offset,int data);

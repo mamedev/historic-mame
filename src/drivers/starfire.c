@@ -61,7 +61,7 @@ C000 - DFFF: Video RAM
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void starfire_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void starfire_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void starfire_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern void starfire_soundctrl_w(int offset, int data);

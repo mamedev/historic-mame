@@ -11,7 +11,7 @@ Lode Runner
 
 extern unsigned char *lrunner_scroll_low;
 extern unsigned char *lrunner_scroll_high;
-void lrunner_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void lrunner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int lrunner_vh_start(void);
 void lrunner_vh_stop(void);
 void lrunner_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -199,8 +199,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,      0, 32 },
-	{ 1, 0x06000, &spritelayout, 32*8, 32 },
+	{ 1, 0x00000, &charlayout,      0, 32 },	/* use colors   0-255 */
+	{ 1, 0x06000, &spritelayout, 32*8, 32 },	/* use colors 256-511 */
 	{ -1 } /* end of array */
 };
 
@@ -357,9 +357,9 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	48*8, 32*8, { 0*8, 48*8-1, 0*8, 32*8-1 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	256,32*8+32*8,
+	512, 512,
 	lrunner_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

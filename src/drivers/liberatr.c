@@ -137,7 +137,7 @@ int  liberator_port_r(int offset) ;
 int  liberator_interrupt(void) ;
 
 /* from vidhrdw */
-void liberator_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void liberator_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  liberator_vh_start(void);
 void liberator_vh_update(struct osd_bitmap *bitmap);
 void liberator_vh_stop(void);

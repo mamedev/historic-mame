@@ -23,7 +23,7 @@ static int draw_lamps;
 
 ***************************************************************************/
 
-void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void mcr3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -176,7 +176,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void rampage_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void rampage_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	struct osd_bitmap *bitmap = Machine->gfx[0]->gfxdata;
 	int y, x;
@@ -276,7 +276,7 @@ int spyhunt_scrollx,spyhunt_scrolly;
 static struct osd_bitmap *backbitmap;	/* spy hunter only for scrolling background */
 
 
-void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	/* standard init */
    mcr3_vh_convert_color_prom(palette,colortable,color_prom);

@@ -98,7 +98,7 @@ extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 void rallyx_videoram2_w(int offset,int data);
 void rallyx_colorram2_w(int offset,int data);
 void rallyx_flipscreen_w(int offset,int data);
-void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap);

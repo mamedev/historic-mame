@@ -19,7 +19,7 @@ static int flipscreen;
 static int charbank;
 
 
-void rockola_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -128,11 +128,11 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		scrollx = -*rockola_scrolly;
-		scrolly = -*rockola_scrollx + 16;
+		scrolly = -*rockola_scrollx;
 		if (flipscreen)
 		{
 			scrollx = -scrollx;
-			scrolly = -scrolly;
+			scrolly = -scrolly - 32;
 		}
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
@@ -155,11 +155,11 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 
 		sx = offs % 32;
-		sy = offs / 32 + 2;
+		sy = offs / 32;
 		if (flipscreen)
 		{
 			sx = 31 - sx;
-			sy = 31 - sy;
+			sy = 27 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],

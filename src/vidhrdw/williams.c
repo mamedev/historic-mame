@@ -88,7 +88,7 @@ static void sinistar_opaque_solid_blitter_w (int offset, int data, int keepmask)
 
 ***************************************************************************/
 
-void williams_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void williams_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	/* no remap table by default */
 	williams_remap_lookup = 0;
@@ -298,7 +298,7 @@ void williams_palette_w (int offset, int data)
 	bit2 = (data >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	osd_modify_pen (Machine->pens[offset], r, g, b);
+	palette_change_color(offset,r,g,b);
 }
 
 
@@ -790,7 +790,7 @@ static void sinistar_opaque_solid_blitter_w (int offset, int data, int keepmask)
  *  Create the palette
  */
 
-void blaster_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void blaster_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	unsigned char *pal;

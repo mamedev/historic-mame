@@ -62,7 +62,6 @@ void gaiden_scrollb_w(int offset,int data);
 
 
 void gaiden_background_w(int offset,int data);
-void gaiden_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int  gaiden_vh_start(void);

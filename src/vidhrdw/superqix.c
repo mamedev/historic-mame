@@ -48,7 +48,7 @@ void superqix_palette_w(int offset,int data)
 	bits = (data >> 6) & 0x03;
 	b = 0x44 * bits + 0x11 * intensity;
 
-	osd_modify_pen(Machine->pens[offset],r,g,b);
+	palette_change_color(offset,r,g,b);
 }
 
 

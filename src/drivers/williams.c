@@ -425,7 +425,7 @@ extern unsigned char *williams_blitterram;
 extern unsigned char *williams_remap_select;
 
 extern int williams_paletteram_size;
-void williams_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void williams_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int williams_vh_start(void);
 int williams_vh_start_sc2(void);
 void williams_vh_stop(void);
@@ -438,7 +438,7 @@ void williams_remap_select_w(int offset, int data);
 extern unsigned char *blaster_color_zero_table;
 extern unsigned char *blaster_color_zero_flags;
 extern unsigned char *blaster_video_bits;
-void blaster_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void blaster_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void blaster_vh_screenrefresh(struct osd_bitmap *bitmap);
 void blaster_video_bits_w(int offset, int data);
 

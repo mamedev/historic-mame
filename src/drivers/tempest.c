@@ -211,7 +211,7 @@ static void tempest_led_w (int offset, int data)
 static void tempest_coin_w (int offset, int data)
 {
 	static int lastval;
-	
+
 	if (lastval == data) return;
 	coin_counter_w (0, (data & 0x01));
 	coin_counter_w (1, (data & 0x02));
@@ -419,7 +419,7 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			0,0,	/* no vblank interrupts */
-			interrupt, 240 /* 240Hz */
+			interrupt, 244 /* 4.1ms */
 		}
 	},
 	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */

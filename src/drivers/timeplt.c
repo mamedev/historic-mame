@@ -46,7 +46,7 @@ same as Pooyan
 
 void timeplt_flipscreen_w(int offset,int data);
 int timeplt_scanline_r(int offset);
-void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

@@ -34,7 +34,7 @@ int seicross_protection_r(int offset);
 
 extern unsigned char *seicross_row_scroll;
 void seicross_colorram_w(int offset,int data);
-void seicross_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void seicross_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

@@ -5,8 +5,8 @@ CC = gcc
 LD = gcc
 
 # add -DMAME_DEBUG to include the debugger
-#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DMAME_DEBUG -DBETA_VERSION
+DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DBETA_VERSION
+#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DMAME_DEBUG
 CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
 	-W -Wno-sign-compare -Wno-unused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
@@ -25,7 +25,7 @@ LDFLAGS = -s
 #LDFLAGS =
 LIBS   = -lalleg $(DJDIR)/lib/audiodjf.a
 OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
-         obj/cpuintrf.o obj/memory.o obj/timer.o obj/gfxlayer.o \
+         obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o obj/gfxlayer.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
          obj/audit.o \
          obj/sndhrdw/adpcm.o \
@@ -220,6 +220,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/vidhrdw/sidepckt.o obj/drivers/sidepckt.o \
          obj/vidhrdw/zarzon.o obj/drivers/zarzon.o \
          obj/vidhrdw/xain.o obj/drivers/xain.o \
+         obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o \
 		 obj/M6809/m6809.o obj/M6808/m6808.o obj/M6805/m6805.o \
          obj/M68000/opcode0.o obj/M68000/opcode1.o obj/M68000/opcode2.o obj/M68000/opcode3.o obj/M68000/opcode4.o obj/M68000/opcode5.o \

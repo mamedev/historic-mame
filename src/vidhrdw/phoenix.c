@@ -47,7 +47,7 @@ static struct rectangle backtmparea =
   plus 270 ohm pullup and pulldown resistors on all lines
 
 ***************************************************************************/
-void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)

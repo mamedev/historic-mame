@@ -12,7 +12,6 @@ extern FILE *errorlog;
 
 #define MAX_GFX_ELEMENTS 20
 #define MAX_MEMORY_REGIONS 10
-#define MAX_PENS 256	/* can't handle more than 256 colors on screen */
 
 #define MAX_LAYERS 4	/* MAX_LAYERS is the maximum number of gfx layers */
 						/* which we can handle. Currently, 4 is enough. */
@@ -24,13 +23,12 @@ struct RunningMachine
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct GfxLayer *dirtylayer;	/* for GfxLayer games: keep track of dirty portions of scrbitmap */
 	struct GfxLayer *layer[MAX_LAYERS];
-	/* ASG 980209 - converted pens from an array to a pointer */
 	unsigned short *pens;	/* remapped palette pen numbers. When you write */
-							/* directly to a bitmap never use absolute values, */
+							/* directly to a bitmap, never use absolute values, */
 							/* use this array to get the pen number. For example, */
 							/* if you want to use color #6 in the palette, use */
 							/* pens[6] instead of just 6. */
-	unsigned short *colortable;
+	unsigned short *colortable;	/* lookup table used to map gfx pen numbers to palette pen numbers */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 	int sample_rate;	/* the digital audio sample rate; 0 if sound is disabled. */

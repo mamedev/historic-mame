@@ -105,7 +105,7 @@ void punchout_bigsprite2ram_w(int offset,int data);
 void punchout_palettebank_w(int offset,int data);
 int punchout_vh_start(void);
 void punchout_vh_stop(void);
-void punchout_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void punchout_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int punchout_input_3_r(int offset);

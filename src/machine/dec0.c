@@ -11,14 +11,15 @@ Data East machine functions - Bryan McPhail, mish@tendril.force9.net
 * dude_interrupt - Interrupts for Bad Dudes, Dragonninja, Mid. Res, H.B.
 
 Plus protection enable for Hippodrome, protection enable for Robocop not
-needed now unprotected rom set has appeared...  Protection for Heavy Barrel
-is patched out at rom loading stage in driver file.
+needed now unprotected rom set has appeared...
 
 *******************************************************************************/
 
 #include "driver.h"
 
 /******************************************************************************/
+
+static int hb_prot;
 
 int dec0_controls_read(int offset)
 {
@@ -33,12 +34,20 @@ int dec0_controls_read(int offset)
 		case 4: /* Byte 4: Dipswitch bank 2, Byte 5: Dipswitch Bank 1 */
 			return (readinputport(3) + (readinputport(4) << 8));
 
-		case 8: /* Unknown, needed 0 for Bad Dudes */
-			return 0;
+		case 8: /* Unknown, needed 0 for Bad Dudes, 8751 MC read in HB */
+
+      /* Protection return in Heavy Barrel.. Hopefully this won't break
+      	any of the other games (which don't use a microcontroller).
+
+      int a=cpu_getpc();
+			if (a!=0x1024 && a!=0x1345c && errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x (%04x)\n",cpu_getpc(),0x30c000+offset,hb_prot);
+
+      */
+
+			return hb_prot;
 	}
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x30c000+offset);
-
+	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_getpc(),0x30c000+offset);
 	return 0xffff;
 }
 
@@ -55,7 +64,7 @@ int dec0_rotary_read(int offset)
 			return ~(1 << (readinputport(6) * 12 / 256));
 
 		default:
-if (errorlog) fprintf(errorlog,"Unknown rotary read at 300000 %02x\n",offset);
+			if (errorlog) fprintf(errorlog,"Unknown rotary read at 300000 %02x\n",offset);
 	}
 
 	return 0;
@@ -86,8 +95,7 @@ int midres_controls_read(int offset)
 			return 0;	/* ?? watchdog ?? */
 	}
 
-if (errorlog) fprintf(errorlog,"PC %06x unknown control read at %02x\n",cpu_getpc(),0x180000+offset);
-
+	if (errorlog) fprintf(errorlog,"PC %06x unknown control read at %02x\n",cpu_getpc(),0x180000+offset);
 	return 0xffff;
 }
 
@@ -107,8 +115,7 @@ int slyspy_controls_read(int offset)
 			return readinputport(2);
 	}
 
-if (errorlog) fprintf(errorlog,"Unknown control read at 30c000 %d\n",offset);
-
+	if (errorlog) fprintf(errorlog,"Unknown control read at 30c000 %d\n",offset);
 	return 0xffff;
 }
 
@@ -139,6 +146,24 @@ int hippodrm_protection(int offset)
   	case 0x1c: return 4;
   }
   return 0; /* Keep zero */
+}
+
+/******************************************************************************/
+
+/* We can catch microcontroller commands and try to guess what the results
+  should be... */
+void hb_8751_write(int data)
+{
+  /* Code 0x500 is unknown but we can use it to initialise the variable */
+	if (data==0x500 || data==0xb3b) hb_prot=0;
+
+  /* Command 0x301 is written at end of each level */
+  if (data==0x301) hb_prot++;
+
+  /* Many commands unknown!  Attract mode still doesn't work.. */
+//  if (errorlog && data!=0x600) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_getpc(),data,0x30c010+offset);
+ if (errorlog) fprintf(errorlog,"warning - write %02x to 8571\n",data);
+
 }
 
 /******************************************************************************/

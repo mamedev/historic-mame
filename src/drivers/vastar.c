@@ -73,7 +73,7 @@ void vastar_bg1colorram2_w(int offset,int data);
 void vastar_bg2videoram_w(int offset,int data);
 void vastar_bg2colorram1_w(int offset,int data);
 void vastar_bg2colorram2_w(int offset,int data);
-void vastar_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void vastar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int vastar_vh_start(void);
 void vastar_vh_stop(void);
 void vastar_vh_screenrefresh(struct osd_bitmap *bitmap);

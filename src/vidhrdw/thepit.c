@@ -28,7 +28,7 @@ static struct rectangle spritevisibleareaflipx =
   I'm assuming Frogger resistor values
 
 ***************************************************************************/
-void thepit_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 

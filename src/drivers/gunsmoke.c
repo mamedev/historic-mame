@@ -23,7 +23,7 @@ extern unsigned char *gunsmoke_bg_scrolly;
 
 void gunsmoke_c804_w(int offset,int data);	/* in vidhrdw/c1943.c */
 void gunsmoke_d806_w(int offset,int data);	/* in vidhrdw/c1943.c */
-void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap);
 int gunsmoke_vh_start(void);
 void gunsmoke_vh_stop(void);

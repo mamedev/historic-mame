@@ -81,22 +81,22 @@ void invadpt2_sh_port3_w(int offset, int data)
 	if (data & 0x04 && ~Sound & 0x04){
             sample_start (2, 2, 0);
     /* turn all colours red here */
-            osd_modify_pen(Machine->pens[1],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[2],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[3],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[4],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[5],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[6],0xff,0x00,0x00);
+		palette_change_color(1,0xff,0x00,0x00);
+		palette_change_color(2,0xff,0x00,0x00);
+		palette_change_color(3,0xff,0x00,0x00);
+		palette_change_color(4,0xff,0x00,0x00);
+		palette_change_color(5,0xff,0x00,0x00);
+		palette_change_color(6,0xff,0x00,0x00);
         }
 
 	if (~data & 0x04 && Sound & 0x04){
-            sample_stop (2);
-            osd_modify_pen(Machine->pens[1],0xff,0x20,0x20);
-            osd_modify_pen(Machine->pens[2],0x20,0xff,0x20);
-            osd_modify_pen(Machine->pens[3],0xff,0xff,0x20);
-            osd_modify_pen(Machine->pens[4],0xff,0xff,0xff);
-            osd_modify_pen(Machine->pens[5],0x20,0xff,0xff);
-            osd_modify_pen(Machine->pens[6],0xff,0x20,0xff);
+		sample_stop (2);
+		palette_change_color(1,0xff,0x20,0x20);
+		palette_change_color(2,0x20,0xff,0x20);
+		palette_change_color(3,0xff,0xff,0x20);
+		palette_change_color(4,0xff,0xff,0xff);
+		palette_change_color(5,0x20,0xff,0xff);
+		palette_change_color(6,0xff,0x20,0xff);
         }
 	if (data & 0x08 && ~Sound & 0x08)
 		sample_start (3, 3, 0);
@@ -127,25 +127,25 @@ void invaders_sh_port4_w(int offset, int data)
 	if (data & 0x04 && ~Sound & 0x04){
             sample_start (2, 2, 0);
     /* turn all colours red here */
-            osd_modify_pen(Machine->pens[1],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[2],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[3],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[4],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[5],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[6],0xff,0x00,0x00);
-            osd_modify_pen(Machine->pens[7],0xff,0x00,0x00);
+			palette_change_color(1,0xff,0x00,0x00);
+			palette_change_color(2,0xff,0x00,0x00);
+			palette_change_color(3,0xff,0x00,0x00);
+			palette_change_color(4,0xff,0x00,0x00);
+			palette_change_color(5,0xff,0x00,0x00);
+			palette_change_color(6,0xff,0x00,0x00);
+			palette_change_color(7,0xff,0x00,0x00);
         }
 
 	if (~data & 0x04 && Sound & 0x04){
             sample_stop (2);
     /* restore colours here */
-            osd_modify_pen(Machine->pens[1],0x20,0x20,0xff);
-            osd_modify_pen(Machine->pens[2],0x20,0xff,0x20);
-            osd_modify_pen(Machine->pens[3],0x20,0xff,0xff);
-            osd_modify_pen(Machine->pens[4],0xff,0x20,0x20);
-            osd_modify_pen(Machine->pens[5],0xff,0x20,0xff);
-            osd_modify_pen(Machine->pens[6],0xff,0xff,0x20);
-            osd_modify_pen(Machine->pens[7],0xff,0xff,0xff);
+			palette_change_color(1,0x20,0x20,0xff);
+			palette_change_color(2,0x20,0xff,0x20);
+			palette_change_color(3,0x20,0xff,0xff);
+			palette_change_color(4,0xff,0x20,0x20);
+			palette_change_color(5,0xff,0x20,0xff);
+			palette_change_color(6,0xff,0xff,0x20);
+			palette_change_color(7,0xff,0xff,0xff);
         }
 	if (data & 0x08 && ~Sound & 0x08)
 		sample_start (3, 3, 0);

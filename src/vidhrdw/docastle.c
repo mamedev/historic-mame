@@ -33,7 +33,7 @@ static char sprite_transparency[256];
   bit 0 -- 390 ohm resistor  -- BLUE
 
 ***************************************************************************/
-static void convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom,
+static void convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom,
 		int priority)
 {
 	int i,j;
@@ -144,12 +144,12 @@ if (errorlog) fprintf(errorlog,"sprite %i has transparency.\n",i);
 
 
 
-void docastle_vh_convert_color_prom(unsigned char *palette,unsigned char *colortable,const unsigned char *color_prom)
+void docastle_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
 {
 	convert_color_prom(palette,colortable,color_prom,0);
 }
 
-void dowild_vh_convert_color_prom(unsigned char *palette,unsigned char *colortable,const unsigned char *color_prom)
+void dowild_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
 {
 	convert_color_prom(palette,colortable,color_prom,1);
 }

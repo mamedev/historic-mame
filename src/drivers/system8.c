@@ -1150,8 +1150,20 @@ static int wbdeluxe_hiload(void)
 	{
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
+			int i;
+
+
 			osd_fread(f,&RAM[0xC100],320);
 			osd_fclose(f);
+
+			/* copy the high score to the screen as well */
+			for (i = 0; i < 6; i++) /* 6 digits are stored, one per byte */
+			{
+				if (RAM[0xC102 + i] == 0x20)  /* spaces */
+					RAM[0xE858 + i * 2] = 0x01;
+				else                          /* digits */
+					RAM[0xE858 + i * 2] = RAM[0xC102 + i] - 0x30 + 0x10;
+			}
 		}
 		return 1;
 	}

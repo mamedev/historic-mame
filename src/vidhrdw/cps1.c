@@ -5,21 +5,20 @@
   Functions to emulate the video hardware of the machine.
 
   Todo:
-
   Scroll 2 to scroll 3 priority (not quite right in Strider).
   Layer-sprite priority (almost there... masking not correct)
-  Brightness.
   Loads of unknown attribute bits on scroll 2.
+  Entire unknown graphic RAM region
   Final fight 32x32 tiles are not linear.
-  Speed, speed, speed... (not optimized yet)
+  Speed, speed, speed...
 
   OUTPUT PORTS (preliminary)
-  0x00-0x01     OBJ RAM paragraph base (Alternates between Work Ram and obj Ram)
-  0x02-0x03     Scroll1 RAM paragraph base
-  0x04-0x05     Scroll2 RAM paragraph base
-  0x06-0x07     Scroll3 RAM paragraph base
-  0x08-0x09     ????? Base of something ????
-  0x0a-0x0b     ????? Palette paragraph base ????
+  0x00-0x01     OBJ RAM base (/256)
+  0x02-0x03     Scroll1 RAM base (/256)
+  0x04-0x05     Scroll2 RAM base (/256)
+  0x06-0x07     Scroll3 RAM base (/256)
+  0x08-0x09     ??? Base address of something (this could be important) ???
+  0x0a-0x0b     Palette base (/256)
   0x0c-0x0d     Scroll 1 X
   0x0e-0x0f     Scroll 1 Y
   0x10-0x11     Scroll 2 X
@@ -32,6 +31,8 @@
   0x22-0x23     ????
   0x24-0x25     ????
 
+  0x4e-0x4f     ????
+  0x5e-0x5f     ????
 
   0x66-0x67     Video control register (location varies according to game)
   0x6a-0x6b     ????
@@ -40,10 +41,8 @@
   0x70-0x72     ????
 
 
-  0x80-0x81     ????            Port thingy 1
-  0x88-0x89     ????            Port thingy 2
-
-  Sprite ram appears to alternate (double buffered)
+  0x80-0x81     ????            Sound output.
+  0x88-0x89     ????            Port thingy (sound fade???)
 
 ***************************************************************************/
 
@@ -53,45 +52,59 @@
 
 #include "osdepend.h"
 
-int cps1_scroll1_size;
-int cps1_scroll2_size;
-int cps1_scroll3_size;
-int cps1_obj_size;
-int cps1_work_ram_size;
-int cps1_palette_size;
+/* Public variables */
+unsigned char *cps1_gfxram;
+unsigned char *cps1_output;
+int cps1_gfxram_size;
 int cps1_output_size;
 
-unsigned char *cps1_scroll1;
-unsigned char *cps1_scroll2;
-unsigned char *cps1_scroll3;
-unsigned char *cps1_obj;
-unsigned char *cps1_work_ram;
-unsigned char *cps1_palette;
-unsigned char *cps1_output;
+/* Private */
+const int cps1_scroll1_size=0x4000;
+const int cps1_scroll2_size=0x4000;
+const int cps1_scroll3_size=0x4000;
+const int cps1_obj_size    =0x4000;
+const int cps1_unknown_size=0x4000;
+const int cps1_palette_size=0x1000;
 
-static unsigned char *cps1_palette_dirty;
+static unsigned char *cps1_scroll1;
+static unsigned char *cps1_scroll2;
+static unsigned char *cps1_scroll3;
+static unsigned char *cps1_obj;
+static unsigned char *cps1_palette;
+static unsigned char *cps1_unknown;
+static unsigned char *cps1_old_palette;
 
-#define SCROLL1_XSCROLL 0x0c
-#define SCROLL1_YSCROLL 0x0e
-#define SCROLL2_XSCROLL 0x10
-#define SCROLL2_YSCROLL 0x12
-#define SCROLL3_XSCROLL 0x14
-#define SCROLL3_YSCROLL 0x16
-
-#define LAYER_CONTROL   0x66
-
-int cps1_paletteram_size;
-unsigned char *cps1_paletteram;
-
-                   /* Chars  Sprites   16*16   32*32 */
-static int start[4]={0x0400, 0x0000,  0x0800, 0x0c00};
-static int count[4]={0x0200, 0x0200,  0x0200, 0x0200};
-
-int scrollx, scrolly, scroll2x, scroll2y, scroll3x, scroll3y;
-
+int scroll1x, scroll1y, scroll2x, scroll2y, scroll3x, scroll3y;
 struct CPS1config *cps1_game_config;
 
+/* Output ports */
+#define CPS1_OBJ_BASE           0x00    /* Base address of objects */
+#define CPS1_SCROLL1_BASE       0x02    /* Base address of scroll 1 */
+#define CPS1_SCROLL2_BASE       0x04    /* Base address of scroll 2 */
+#define CPS1_SCROLL3_BASE       0x06    /* Base address of scroll 3 */
+#define CPS1_UNKNOWN_BASE       0x08    /* Base address of unknown video */
+#define CPS1_PALETTE_BASE       0x0a    /* Base address of palette */
+#define CPS1_SCROLL1_SCROLLX    0x0c    /* Scroll 1 X */
+#define CPS1_SCROLL1_SCROLLY    0x0e    /* Scroll 1 Y */
+#define CPS1_SCROLL2_SCROLLX    0x10    /* Scroll 2 X */
+#define CPS1_SCROLL2_SCROLLY    0x12    /* Scroll 2 Y */
+#define CPS1_SCROLL3_SCROLLX    0x14    /* Scroll 3 X */
+#define CPS1_SCROLL3_SCROLLY    0x16    /* Scroll 3 Y */
 
+#define CPS1_LAYER_CONTROL      0x66    /* (or maybe not) */
+
+inline int cps1_port(int offset)
+{
+        return READ_WORD(&cps1_output[offset]);
+}
+
+inline unsigned char * cps1_base(int offset)
+{
+        int base=cps1_port(offset)*256;
+        return &cps1_gfxram[base&0x3ffff];
+}
+
+#ifdef MAME_DEBUG
 void cps1_dump_video(void)
 {
         FILE *fp;
@@ -119,12 +132,14 @@ void cps1_dump_video(void)
                 fwrite(cps1_obj, cps1_obj_size, 1, fp);
                 fclose(fp);
         }
-        fp=fopen("WORK.DMP", "w+b");
+
+        fp=fopen("UNKNOWN.DMP", "w+b");
         if (fp)
         {
-                fwrite(cps1_work_ram, cps1_work_ram_size, 1, fp);
+                fwrite(cps1_unknown, cps1_unknown_size, 1, fp);
                 fclose(fp);
         }
+
         fp=fopen("PALETTE.DMP", "w+b");
         if (fp)
         {
@@ -138,73 +153,19 @@ void cps1_dump_video(void)
                 fclose(fp);
         }
 }
+#endif
 
 
-int cps1_scroll1_r(int offset)
+inline void cps1_get_video_base(void)
 {
-        return READ_WORD(&cps1_scroll1[offset]);
+        /* Re-calculate the VIDEO RAM base */
+        cps1_scroll1=cps1_base(CPS1_SCROLL1_BASE);
+        cps1_scroll2=cps1_base(CPS1_SCROLL2_BASE);
+        cps1_scroll3=cps1_base(CPS1_SCROLL3_BASE);
+        cps1_obj    =cps1_base(CPS1_OBJ_BASE);
+        cps1_palette=cps1_base(CPS1_PALETTE_BASE);
+        cps1_unknown=cps1_base(CPS1_UNKNOWN_BASE);
 }
-void cps1_scroll1_w(int offset, int value)
-{
-        COMBINE_WORD_MEM(&cps1_scroll1[offset],value);
-}
-
-int cps1_scroll2_r(int offset)
-{
-        return READ_WORD(&cps1_scroll2[offset]);
-}
-void cps1_scroll2_w(int offset, int value)
-{
-        COMBINE_WORD_MEM(&cps1_scroll2[offset],value);
-}
-
-int cps1_scroll3_r(int offset)
-{
-        return READ_WORD(&cps1_scroll3[offset]);
-}
-void cps1_scroll3_w(int offset, int value)
-{
-        COMBINE_WORD_MEM(&cps1_scroll3[offset],value);
-}
-
-int cps1_obj_r(int offset)
-{
-        return READ_WORD(&cps1_obj[offset]);
-}
-void cps1_obj_w(int offset, int value)
-{
-        COMBINE_WORD_MEM(&cps1_obj[offset],value);
-}
-
-int cps1_work_ram_r(int offset)
-{
-        return READ_WORD(&cps1_work_ram[offset]);
-}
-void cps1_work_ram_w(int offset, int value)
-{
-        COMBINE_WORD_MEM(&cps1_work_ram[offset],value);
-}
-
-int cps1_palette_r(int offset)
-{
-        return READ_WORD(&cps1_palette[offset]);
-}
-void cps1_palette_w(int offset, int value)
-{
-        cps1_palette_dirty[offset]=1;
-        COMBINE_WORD_MEM(&cps1_palette[offset],value);
-}
-
-
-void cps1_output_w(int offset, int value)
-{
-        if (errorlog)
-        {
-              fprintf(errorlog, "%04x=%04x\n", offset, cps1_output[offset]);
-        }
-        COMBINE_WORD_MEM(&cps1_output[offset],value);
-}
-
 
 /***************************************************************************
 
@@ -215,29 +176,17 @@ void cps1_output_w(int offset, int value)
 int cps1_vh_start()
 {
         int i,j;
-        cps1_palette_dirty=(unsigned char *)malloc(cps1_palette_size);
-        if (!cps1_palette_dirty)
+        cps1_old_palette=(unsigned char *)malloc(cps1_palette_size);
+        if (!cps1_old_palette)
         {
                 return -1;
         }
-        memset(cps1_palette_dirty, 0, cps1_palette_size);
+        memset(cps1_old_palette, 0xff, cps1_palette_size);
 
-        /* Clear areas of memory */
-        memset(cps1_obj, 0, cps1_obj_size);
-        memset(cps1_output, 0, cps1_output_size);
+        memset(cps1_gfxram, 0, cps1_gfxram_size);   /* Clear GFX RAM */
+        memset(cps1_output, 0, cps1_output_size);   /* Clear output ports */
 
-        /* build a default colour lookup table from RAM palette */
-        for (j=0; j<4; j++)
-	{
-                int offset=start[j];
-                for (i=0; i<count[j]; i++)
-                {
-                      int n=offset&0x0f;
-                      int w=(n<<8)+(n<<4)+n;
-                      COMBINE_WORD_MEM(&cps1_palette[offset], w);
-                      offset+=2;
-                }
-        }
+        cps1_get_video_base();   /* Calculate base pointers */
 
         /*
                 Some games interrogate a couple of registers on bootup.
@@ -258,18 +207,24 @@ int cps1_vh_start()
 ***************************************************************************/
 void cps1_vh_stop(void)
 {
-        if (cps1_palette_dirty)
-                free(cps1_palette_dirty);
+        if (cps1_old_palette)
+                free(cps1_old_palette);
 }
 
 /***************************************************************************
 
-        Build palette from palette RAM
+  Build palette from palette RAM
+
+  12 bit RGB with a 4 bit brightness value.
 
 ***************************************************************************/
 
-void cps1_build_palette(void)
+inline void cps1_build_palette(void)
 {
+                          /* Chars  Sprites   16*16   32*32 */
+        static int start[4]={0x0400, 0x0000,  0x0800, 0x0c00};
+        static int count[4]={0x0200, 0x0200,  0x0200, 0x0200};
+
         int j, i;
         /* rebuild the colour lookup table from RAM palette */
         for (j=0; j<4; j++)
@@ -279,22 +234,20 @@ void cps1_build_palette(void)
 
               for (i=0; i<max; i++)
               {
-                    if (cps1_palette_dirty[offset]||cps1_palette_dirty[offset+1])
+                    int palette=READ_WORD(&cps1_palette[offset]);
+                    if (palette != READ_WORD(&cps1_old_palette[offset]) )
                     {
                         int red, green, blue, bright;
-                        int nPalette=READ_WORD(&cps1_palette[offset]);
-                        bright= (nPalette>>12); /* TODO: use this value */
-                        red  = ((nPalette>>8)&0x0f);
-                        green   = ((nPalette>>4)&0x0f);
-                        blue = (nPalette&0x0f);
-
-                        red = (red << 4) + red;
-                        green = (green << 4) + green;
-                        blue = (blue << 4) + blue;
+                        bright= (palette>>12);
+                        red   = ((palette>>8)&0x0f);
+                        green = ((palette>>4)&0x0f);
+                        blue  = (palette&0x0f);
+                        red   = (red * bright ) + red ;
+                        green = (green * bright) + green ;
+                        blue  = (blue * bright) + blue ;
 
                         setgfxcolorentry (Machine->gfx[j], i, red, green, blue);
-                        cps1_palette_dirty[offset]=0;
-                        cps1_palette_dirty[offset+1]=0;
+                        WRITE_WORD(&cps1_old_palette[offset], palette);
                     }
                     offset+=2;
               }
@@ -307,19 +260,20 @@ void cps1_build_palette(void)
 
 ***************************************************************************/
 
-void cps1_render_scroll1(struct osd_bitmap *bitmap)
+inline void cps1_render_scroll1(struct osd_bitmap *bitmap)
 {
         int x,y, offs,  sx, sy;
         int base_scroll1=cps1_game_config->base_scroll1;
+        int space_char=cps1_game_config->space_scroll1;
 
-        int scrlxrough=(scrollx>>3)+8;
-        int scrlyrough=(scrolly>>3);
+        int scrlxrough=(scroll1x>>3)+8;
+        int scrlyrough=(scroll1y>>3);
 
-        sx=-(scrollx&0x07);
+        sx=-(scroll1x&0x07);
 
         for (x=0; x<0x34; x++)
         {
-             sy=-(scrolly&0x07);
+             sy=-(scroll1y&0x07);
              for (y=0; y<0x20; y++)
              {
                  int code;
@@ -333,13 +287,13 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap)
 
                  code=READ_WORD(&cps1_scroll1[offs])&0x0fff;
 
-                 if (code >= base_scroll1)
+                 if (code >= base_scroll1 && code != space_char)
                  {
-                        int colour;
-                        code -= base_scroll1;
-
-                        colour=READ_WORD(&cps1_scroll1[offs+2]);
-                        drawgfx(bitmap,Machine->gfx[0],
+                       /* Optimization: only draw non-spaces */
+                       int colour;
+                       code -= base_scroll1;
+                       colour=READ_WORD(&cps1_scroll1[offs+2]);
+                       drawgfx(bitmap,Machine->gfx[0],
                                      code,
                                      colour&0x1f,
                                      colour&0x20,colour&0x40,sx,sy,
@@ -358,7 +312,7 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void cps1_render_sprites(struct osd_bitmap *bitmap)
+inline void cps1_render_sprites(struct osd_bitmap *bitmap)
 {
         int i;
         /* Draw the sprites */
@@ -475,9 +429,10 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
+inline void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 {
          int base_scroll2=cps1_game_config->base_scroll2;
+         int space_char=cps1_game_config->space_scroll2;
          int sx, sy;
          int nxoffset=scroll2x&0x0f;    /* Smooth X */
          int nyoffset=scroll2y&0x0f;    /* Smooth Y */
@@ -497,7 +452,7 @@ void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
                         offs &= 0x3fff;
 
                         code=READ_WORD(&cps1_scroll2[offs]);
-                        if (code > base_scroll2)
+                        if (code >= base_scroll2 && code != space_char)
                         {
                                 code -= base_scroll2;
                                 colour=READ_WORD(&cps1_scroll2[offs+2]);
@@ -555,11 +510,12 @@ void cps1_render_scroll2(struct osd_bitmap *bitmap, int priority)
 
 ***************************************************************************/
 
-void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
+inline void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 {
         int base_scroll3=cps1_game_config->base_scroll3;
+        int space_char=cps1_game_config->space_scroll3;
         int sx,sy;
-         /* SCROLL 3 */
+         /* CPS1_SCROLL 3 */
         int nxoffset=scroll3x&0x1f;
         int nyoffset=scroll3y&0x1f;
         int nx=(scroll3x>>5)+2;
@@ -577,7 +533,7 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
                         offs=offsy+offsx;
                         offs &= 0x3fff;
                         code=READ_WORD(&cps1_scroll3[offs]);
-                        if (code>=base_scroll3)
+                        if (code>=base_scroll3 && code != space_char)
                         {
                             code -= base_scroll3;
                             colour=READ_WORD(&cps1_scroll3[offs+2]);
@@ -628,9 +584,7 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+        Refresh screen
 
 ***************************************************************************/
 
@@ -640,13 +594,18 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
         int scrl2on, scrl3on;
         int scroll1priority;
         int scroll2priority;        /* Temporary kludge */
-        scrollx=READ_WORD(&cps1_output[SCROLL1_XSCROLL]);
-        scrolly=READ_WORD(&cps1_output[SCROLL1_YSCROLL]);
-        scroll2x=READ_WORD(&cps1_output[SCROLL2_XSCROLL]);
-        scroll2y=READ_WORD(&cps1_output[SCROLL2_YSCROLL]);
-        scroll3x=READ_WORD(&cps1_output[SCROLL3_XSCROLL]);
-        scroll3y=READ_WORD(&cps1_output[SCROLL3_YSCROLL]);
 
+        cps1_get_video_base();
+
+        /* Get scroll values */
+        scroll1x=cps1_port(CPS1_SCROLL1_SCROLLX);
+        scroll1y=cps1_port(CPS1_SCROLL1_SCROLLY);
+        scroll2x=cps1_port(CPS1_SCROLL2_SCROLLX);
+        scroll2y=cps1_port(CPS1_SCROLL2_SCROLLY);
+        scroll3x=cps1_port(CPS1_SCROLL3_SCROLLX);
+        scroll3y=cps1_port(CPS1_SCROLL3_SCROLLY);
+
+        /* Welcome to kludgesville... */
         switch (cps1_game_config->alternative)
         {
                 /* Wandering video control ports */
@@ -661,8 +620,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap)
                 default:
                         layercontrol=0xffff;
                         break;
-
         }
+
         /* Build palette */
         cps1_build_palette();
 

@@ -205,13 +205,15 @@ void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. Attributes are the ones defined in driver.h. */
-/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
-/* in *pens the pen values corresponding to the requested colors. */
 /* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,unsigned int totalcolors,
-		const unsigned char *palette,unsigned short *pens,int attributes);
+struct osd_bitmap *osd_create_display(int width,int height,int attributes);
 int osd_set_display(int width,int height,int attributes);
 void osd_close_display(void);
+/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
+/* in *pens the pen values corresponding to the requested colors. */
+/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
+/* with pen values corresponding to a 5-5-5 15-bit palette */
+void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */

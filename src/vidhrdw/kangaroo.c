@@ -43,7 +43,7 @@ static unsigned char inverse_palette_b[256];
   register is written to, one is for the background, the other for sprites.
 
 ***************************************************************************/
-void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -129,7 +129,7 @@ void kangaroo_color_mask_w(int offset,int data)
 		g = ((i & 2) >> 1) * ((data & 0x10) ? 0xff : 0x7f);
 		b = ((i & 1) >> 0) * ((data & 0x08) ? 0xff : 0x7f);
 
-		osd_modify_pen(Machine->pens[8 + i],r,g,b);
+		palette_change_color(8 + i,r,g,b);
 	}
 
 	/* color mask for B plane */
@@ -142,7 +142,7 @@ void kangaroo_color_mask_w(int offset,int data)
 		g = ((i & 2) >> 1) * ((data & 0x02) ? 0xff : 0x7f);
 		b = ((i & 1) >> 0) * ((data & 0x01) ? 0xff : 0x7f);
 
-		osd_modify_pen(Machine->pens[16 + i],r,g,b);
+		palette_change_color(16 + i,r,g,b);
 	}
 }
 

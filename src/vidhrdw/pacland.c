@@ -39,7 +39,7 @@ static struct rectangle spritevisiblearea =
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
-void pacland_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -167,7 +167,7 @@ void pacland_bankswitch_w(int offset,int data)
 
 			color_prom++;
 
-			osd_modify_pen(Machine->pens[i],r,g,b);
+			palette_change_color(i,r,g,b);
 		}
 	}
 }

@@ -234,7 +234,7 @@ void xevious_videoram2_w(int offset,int data);
 void xevious_colorram2_w(int offset,int data);
 int  xevious_vh_start( void );
 void xevious_vh_stop( void );
-void xevious_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void xevious_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void pengo_sound_w(int offset,int data);

@@ -46,7 +46,7 @@ static int flipscreen[2];
   bit 0 -- inverter -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void taito_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void taito_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -96,7 +96,7 @@ void taito_paletteram_w(int offset,int data)
 	bit2 = (~val >> 2) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	osd_modify_pen(Machine->pens[offset / 2],r,g,b);
+	palette_change_color(offset / 2,r,g,b);
 }
 
 

@@ -65,7 +65,7 @@ extern unsigned char *rockola_characterram;
 extern unsigned char *rockola_scrollx,*rockola_scrolly;
 void rockola_characterram_w(int offset,int data);
 void rockola_flipscreen_w(int offset,int data);
-void rockola_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rockola_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void rockola_sound0_w(int offset,int data);
@@ -434,7 +434,7 @@ static struct MachineDriver vanguard_machine_driver =
 	{
 		{
 			CPU_M6502,
-            11289000/16,    /* 700 kHz? (the same as Zarzon) */
+			1000000,    /* 1 MHz??? */
 			0,
 			vanguard_readmem,vanguard_writemem,0,0,
 			rockola_interrupt,2
@@ -445,7 +445,7 @@ static struct MachineDriver vanguard_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	vanguard_gfxdecodeinfo,
 	16*4,16*4,
 	rockola_vh_convert_color_prom,
@@ -469,7 +469,7 @@ static struct MachineDriver fantasy_machine_driver =
 	{
 		{
 			CPU_M6502,
-            11289000/16,    /* 700 kHz? (the same as Zarzon) */
+			1000000,    /* 1 MHz??? */
 			0,
 			fantasy_readmem,fantasy_writemem,0,0,
 			rockola_interrupt,2
@@ -480,7 +480,7 @@ static struct MachineDriver fantasy_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	fantasy_gfxdecodeinfo,
 	16*4,16*4,
 	rockola_vh_convert_color_prom,

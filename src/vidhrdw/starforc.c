@@ -40,7 +40,7 @@ static unsigned char dirtycolor[48];	/* keep track of modified colors */
   bit 0 -- Red
 
 ***************************************************************************/
-void starforc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void starforc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 

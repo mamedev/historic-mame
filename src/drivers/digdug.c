@@ -133,7 +133,7 @@ void digdug_vh_latch_w(int offset, int data);
 int digdug_vh_start(void);
 void digdug_vh_stop(void);
 void digdug_vh_screenrefresh(struct osd_bitmap *bitmap);
-void digdug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void pengo_sound_w(int offset,int data);
 extern unsigned char *pengo_soundregs;

@@ -21,7 +21,7 @@ static unsigned int jedi_alpha_bank;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
 
-void jedi_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void jedi_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)

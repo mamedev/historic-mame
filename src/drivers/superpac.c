@@ -63,7 +63,7 @@ void pacnpal_interrupt_enable_2_w(int offset,int data);
 int superpac_vh_start(void);
 void superpac_vh_screenrefresh(struct osd_bitmap *bitmap);
 void superpac_init_machine(void);
-void superpac_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 
 /* CPU 1 read addresses */

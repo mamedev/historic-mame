@@ -24,7 +24,7 @@ static int flipscreen;
 /* dynamically. The color space is 4x4x4, and the number of unique colors is */
 /* greater than 256; however, ignoring the least significant bit of the blue */
 /* component, we can squeeze them into 250 colors with no appreciable loss. */
-void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 

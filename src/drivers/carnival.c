@@ -57,7 +57,7 @@ int carnival_interrupt(void);
 
 extern unsigned char *carnival_characterram;
 void carnival_characterram_w(int offset,int data);
-void carnival_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void carnival_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void carnival_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void carnival_sh_port1_w(int offset, int data);			/* MJC */

@@ -89,7 +89,7 @@ static unsigned char backcolour[256];  	/* MJC 220198 */
   resistor.
 
 ***************************************************************************/
-void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	unsigned char *opalette;

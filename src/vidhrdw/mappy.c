@@ -35,7 +35,7 @@ static unsigned char *transparency;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void mappy_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
@@ -70,7 +70,7 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
       struct GfxElement *gfx;
       unsigned char *dp;
       int i, x, y, color;
-      
+
       transparency = malloc (64*256);
       if (!transparency)
       	return;
@@ -185,12 +185,12 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		int color = colorram[offs];
 		int video = videoram[offs];
-		
+
 		/* characters with bit 0x40 set are higher priority than sprites; remember and redraw later */
 		if (color & 0x40)
 			if (!transparency[(video << 6) + (color & 0x3f)])
 				*save++ = offs;
-		
+
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,mx,my;
@@ -332,7 +332,7 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 		}
 	}
-	
+
 	/* Draw the high priority characters */
 	while (save > overoffset)
 	{
@@ -348,7 +348,7 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			sx = 29 - mx;
 			sy = my;
-			
+
 			sx *= 8;
 		}
 		else if (offs >= videoram_size - 128)
@@ -359,7 +359,7 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			sx = 29 - mx;
 			sy = my + 34;
-			
+
 			sx *= 8;
 		}
 		else
@@ -370,10 +370,10 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			sx = 59 - mx;
 			sy = my + 2;
-			
+
 			sx = (8*sx+mappy_scroll-256);
 		}
-		
+
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs],
 				colorram[offs],

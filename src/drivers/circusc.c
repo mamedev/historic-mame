@@ -14,7 +14,7 @@ extern unsigned char *circusc_spritebank;
 extern unsigned char *circusc_scroll;
 
 void circusc_flipscreen_w(int offset,int data);
-void circusc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void circusc_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void circusc_sprite_bank_select_w(int offset, int data);
 void circusc_vh_screenrefresh(struct osd_bitmap *bitmap);
 

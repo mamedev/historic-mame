@@ -149,7 +149,7 @@ void tacscan_sh_update(void);
 void startrek_sh_w (int offset, int data);
 
 /* Video hardware prototypes */
-void sega_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void sega_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int sega_vh_start (void);
 void sega_vh_stop (void);
 void sega_vh_screenrefresh(struct osd_bitmap *bitmap);

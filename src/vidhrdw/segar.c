@@ -50,7 +50,7 @@ static struct osd_bitmap *vertbackbitmap;
 
 ***************************************************************************/
 
-void segar_init_colors(unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom)
+void segar_init_colors(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
         static unsigned char color_scale[] = {0x00, 0x40, 0x80, 0xC0 };
 	int i;

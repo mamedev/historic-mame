@@ -49,7 +49,7 @@ write:
 
 extern unsigned char *sonson_scrollx;
 
-void sonson_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void sonson_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sonson_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

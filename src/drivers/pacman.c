@@ -56,7 +56,7 @@ OUT on port $0 sets the interrupt vector
 void pacman_init_machine(void);
 int pacman_interrupt(void);
 
-void pengo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pengo_updatehook0(int offset);
 int pacman_vh_start(void);
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);

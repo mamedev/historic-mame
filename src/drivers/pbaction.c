@@ -35,7 +35,7 @@ void pbaction_colorram2_w(int offset,int data);
 int pbaction_vh_start(void);
 void pbaction_vh_stop(void);
 
-void pbaction_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void pbaction_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

@@ -54,7 +54,7 @@ The game uses both IRQ (mode 1) and NMI.
 extern unsigned char *gberet_scroll;
 extern unsigned char *gberet_spritebank;
 void gberet_e044_w(int offset,int data);
-void gberet_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int gberet_vh_start(void);
 void gberet_vh_stop(void);
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap);

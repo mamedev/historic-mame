@@ -44,7 +44,7 @@ extern unsigned char *matmania_pageselect;
 int mystston_interrupt(void);
 
 void matmania_paletteram_w(int offset,int data);
-void matmania_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void matmania_vh_screenrefresh(struct osd_bitmap *bitmap);
 void maniach_vh_screenrefresh(struct osd_bitmap *bitmap);
 void matmania_videoram3_w(int offset,int data);

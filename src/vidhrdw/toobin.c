@@ -702,7 +702,7 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap)
 					int green = (((palette >> 5) & 0x1f) * intensity) >> 2;
 					int blue = ((palette & 0x1f) * intensity) >> 2;
 
-					osd_modify_pen (Machine->pens[pal + j], red, green, blue);
+					palette_change_color(pal + j,red,green,blue);
 
 					colordirty[index + j] = 0;
 				}

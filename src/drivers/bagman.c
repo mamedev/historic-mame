@@ -52,7 +52,7 @@ void bagman_pal16r6_w(int offset, int data);
 extern unsigned char *bagman_video_enable;
 void bagman_flipscreen_w(int offset,int data);
 void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
-void bagman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
+void bagman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 
 
 

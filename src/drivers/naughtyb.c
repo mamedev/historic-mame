@@ -112,7 +112,7 @@ void naughtyb_scrollreg_w (int offset,int data);
 void naughtyb_videoreg_w (int offset,int data);
 int naughtyb_vh_start(void);
 void naughtyb_vh_stop(void);
-void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void naughtyb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 // Let's skip the sound for now.. ;)
@@ -421,7 +421,7 @@ ROM_END
 
 
 
-static int hiload(void)
+static int naughtyb_hiload(void)
 {
    void *f;
 
@@ -469,14 +469,12 @@ static int hiload(void)
    else return 0; /* we can't load the hi scores yet */
 }
 
-
-
 static unsigned long get_score(unsigned char *score)
 {
    return (score[3])+(154*score[2])+((unsigned long)(39322)*score[1])+((unsigned long)(39322)*154*score[0]);
 }
 
-static void hisave(void)
+static void naughtyb_hisave(void)
 {
    unsigned long score1,score2,hiscore;
    void *f;
@@ -500,6 +498,62 @@ static void hisave(void)
 
 
 
+static int popflame_hiload (void)
+{
+	void *f;
+
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score has already been written to screen */
+	if ((RAM[0x874a] == 8) && (RAM[0x8746] == 9) && (RAM[0x8742] == 7) &&
+	(RAM[0x873e] == 8) &&  /* HIGH */
+	(RAM[0x8743] == 0x20) && (RAM[0x873f] == 0x20) && (RAM[0x873b] == 0x20)
+			&& (RAM[0x8737] == 0x20)) /* 0000 */
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread (f,&RAM[0x4004],3);
+			osd_fclose (f);
+
+			videoram_w (0x743, (RAM[0x4004] >> 4) | 0x20);
+			videoram_w (0x73f, (RAM[0x4004] & 0x0f) | 0x20);
+			videoram_w (0x73b, (RAM[0x4005] >> 4) | 0x20);
+			videoram_w (0x737, (RAM[0x4005] & 0x0f) | 0x20);
+			videoram_w (0x733, (RAM[0x4006] >> 4) | 0x20);
+			videoram_w (0x72f, (RAM[0x4006] & 0x0f) | 0x20);
+		}
+
+		return 1;
+	}
+	else return 0; /* we can't load the hi scores yet */
+}
+
+static void popflame_hisave (void)
+{
+	unsigned long score1,score2,hiscore;
+	void *f;
+
+	unsigned char *RAM = Machine->memory_region[0];
+
+	score1 = get_score (&RAM[0x4021]);
+	score2 = get_score (&RAM[0x4031]);
+	hiscore = get_score (&RAM[0x4004]);
+
+	if (score1 > hiscore) RAM += 0x4021;
+	else if (score2 > hiscore) RAM += 0x4031;
+	else RAM += 0x4004;
+
+	if ((f = osd_fopen (Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite (f,&RAM[0],3);
+		osd_fclose (f);
+	}
+}
+
+
 
 struct GameDriver naughtyb_driver =
 {
@@ -518,7 +572,7 @@ struct GameDriver naughtyb_driver =
 	naughtyb_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	naughtyb_hiload, naughtyb_hisave
 };
 
 struct GameDriver popflame_driver =
@@ -538,5 +592,5 @@ struct GameDriver popflame_driver =
 	popflame_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	popflame_hiload, popflame_hisave
 };

@@ -70,7 +70,7 @@ int espial_interrupt(void);
 extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
 void espial_attributeram_w(int offset,int data);
-void espial_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void espial_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int espial_sh_interrupt(void);

@@ -14,6 +14,7 @@ extern void cps1_dump_video(void);
 int cps1_ram_size;
 unsigned char *cps1_ram;
 
+#ifdef MAME_DEBUG
 void cps1_dump_driver(void)
 {
         FILE *fp=fopen("RAM.DMP", "w+b");
@@ -30,6 +31,7 @@ void cps1_dump_driver(void)
         }
 
 }
+#endif
 
 int cps1_input_r(int offset)
 {
@@ -39,11 +41,13 @@ int cps1_input_r(int offset)
 
 int cps1_interrupt(void)
 {
+#ifdef MAME_DEBUG
         if (osd_key_pressed(OSD_KEY_F))
         {
                 cps1_dump_video();
                 cps1_dump_driver();
         }
+#endif
         return 6;
 }
 
@@ -52,12 +56,13 @@ int cps1_interrupt2(void)
 {
         static int s;
         s^=1;
-
+#ifdef MAME_DEBUG
         if (osd_key_pressed(OSD_KEY_F))
         {
                 cps1_dump_video();
                 cps1_dump_driver();
         }
+#endif
         if (s)
                 return 2;
         else

@@ -13,7 +13,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 extern unsigned char *hyperspt_scroll;
 
 void hyperspt_flipscreen_w(int offset,int data);
-void hyperspt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void hyperspt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int hyperspt_vh_start(void);
 void hyperspt_vh_stop(void);
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap);

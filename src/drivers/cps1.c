@@ -24,14 +24,10 @@
 #include "cps1.h"       /* External CPS1 defintions */
 
 /* Please include this credit for the CPS1 driver */
-#define CPS1_CREDITS "Capcom System 1\n"\
-                     "===============\n\n"\
-                     "Paul Leaman\n"\
-                     "Phil Stroffolino\n"\
+#define CPS1_CREDITS(X) X " (Game driver)\n"\
+                     "Paul Leaman (Capcom System 1 driver)\n"\
                      "Aaron Giles (additional info)\n"\
-                     "\n"\
-                     "Game driver\n"\
-                     "===========\n"
+
 
 /********************************************************************
 *
@@ -41,16 +37,16 @@
 static void cps1_irq_handler_mus (void) {  cpu_cause_interrupt (0, 0); }
 static struct YM2151interface interface_mus =
 {
-        1,                      /* 1 chip  ? */
-	4000000,		/* 3.58 MHZ ? */
+        1,                      /* 1 chip */
+        4000000,                /* 4 MHZ TODO: find out the real frq */
         { 170 },                /* 170 somethings */
         { cps1_irq_handler_mus }
 };
 
 static struct OKIM6295interface interface_okim6295 =
 {
-        1,              /* 1 chip?? */
-	8000,           /* 8000Hz frequency */
+        1,              /* 1 chip */
+        8000,           /* 8000Hz ??? TODO: find out the real frequency */
 	3,              /* memory region 3 */
 	{ 255 }
 };
@@ -90,6 +86,38 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+
+/********************************************************************
+*
+*  Memory Read-Write handlers
+*  ==========================
+*
+********************************************************************/
+
+static struct MemoryReadAddress cps1_readmem[] =
+{
+        { 0x000000, 0x0fffff, MRA_ROM },     /* 68000 ROM */
+        { 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
+        { 0x900000, 0x92ffff, MRA_BANK5 },
+        { 0x800000, 0x800003, cps1_input_r}, /* Not really, but it gets them working */
+        { 0x800018, 0x80001f, cps1_input_r}, /* Input ports */
+        { 0x860000, 0x8603ff, MRA_BANK3 },   /* ??? Unknown ??? */
+        { 0x800100, 0x8001ff, MRA_BANK4 },  /* Output ports */
+	{ -1 }	/* end of table */
+};
+
+
+static struct MemoryWriteAddress cps1_writemem[] =
+{
+        { 0x000000, 0x0fffff, MWA_ROM },      /* ROM */
+        { 0xff0000, 0xffffff, MWA_BANK2, &cps1_ram, &cps1_ram_size },        /* RAM */
+        { 0x900000, 0x92ffff, MWA_BANK5, &cps1_gfxram, &cps1_gfxram_size},
+        { 0x800030, 0x800033, MWA_NOP },      /* ??? Unknown ??? */
+        { 0x800180, 0x800183, cps1_sound_cmd_w},  /* Sound command */
+        { 0x800100, 0x8001ff, MWA_BANK4, &cps1_output, &cps1_output_size },  /* Output ports */
+	{ -1 }	/* end of table */
+};
+
 /********************************************************************
 *
 *  Machine Driver macro
@@ -99,27 +127,27 @@ static struct MemoryWriteAddress sound_writemem[] =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER(CPS1_DRVNAME, CPS1_RDMEM, CPS1_WRMEM, CPS1_IRQ, CPS1_GFX) \
+#define MACHINE_DRIVER(CPS1_DRVNAME, CPS1_IRQ, CPS1_GFX) \
 static struct MachineDriver CPS1_DRVNAME =                             \
 {                                                                        \
         /* basic machine hardware */                                     \
         {                                                                \
                 {                                                        \
                         CPU_M68000,                                      \
-                        8000000,                /* 8MHz ? */             \
+                        8000000,   /* 8MHz ? TODO: Find real FRQ */      \
                         0,                                               \
-                        CPS1_RDMEM,CPS1_WRMEM,0,0,                  \
+                        cps1_readmem,cps1_writemem,0,0,                  \
                         CPS1_IRQ, 2   /* 2 interrupts per frame */       \
                 },                                                       \
                 {                                                        \
                         CPU_Z80 | CPU_AUDIO_CPU,                         \
-                        3000000,        /* 3 Mhz ??? */                  \
+                        3000000,  /* 3 Mhz ??? TODO: find real FRQ */    \
                         2,      /* memory region #2 */                   \
                         sound_readmem,sound_writemem,0,0,                \
                         interrupt,4                                      \
                 }                                                        \
         },                                                               \
-        60, 2500,                                                       \
+        60, DEFAULT_60HZ_VBLANK_DURATION,                                \
         1,                                                               \
         cps1_init_machine,                                              \
                                                                          \
@@ -214,15 +242,17 @@ static struct GfxLayout LAYOUT =        \
 
 static struct CPS1config cps1_config_table[]=
 {
-        { "strider",     0,  0, 2*4096,      0,   0x00000000, 0 },
-        { "ffight",    1024,  0, 2*4096,   512,   0x00000000, 2 },
-        { "mtwins",      0,   0,      2*4096, 0x0e00,   0x00000000, 3 },
-        { "unsquad",      0,   0,      2*4096, 0,   0x00000000, 0 },
-        { "willow",       0,  0,      0,  1536,   0x00000000, 1 },
-        { "3wonders",0x0800,  0,      0,     0,   0x00000000, 0 },
+  {"strider",      0,   0, 0x2000,      0, 0x000000, 0, 0x0020,0x0020,0x0020},
+  {"ffight",  0x0400,   0, 0x2000, 0x0200, 0x000000, 2, 0x4420,0x3000,0x0980},
+  {"mtwins",       0,   0, 0x2000, 0x0e00, 0x000000, 3, 0x0020,0x0000,0x0000},
+  {"unsquad",      0,   0, 0x2000,      0, 0x000000, 0, 0x0020,0x0000,0x0000},
+  {"willow",       0,   0,      0,   1536, 0x000000, 1, 0x7020,0x0000,0x0a00},
+  {"msword",       0,   0, 0x2800, 0x0e00, 0x000000, 3,   -1,   -1,   -1 },
+//  {"nemo",         0,   0,      0,   1536, 0x000000, 1,   -1,   -1,   -1 },
+//  {"3wonders",0x0800,   0,      0,      0, 0x000000, 0,   -1,   -1,   -1 },
 
-        /* End of table (default values) */
-        { 0,           0,   0,   0,   0,          0x00000000, 0 },
+  /* End of table (default values) */
+  {0,           0,   0,   0,   0,          0x000000, 0,   -1,   -1,   -1 },
 };
 
 static int cps1_sh_init(const char *gamename)
@@ -238,6 +268,12 @@ static int cps1_sh_init(const char *gamename)
         }
 
         cps1_game_config=pCFG;
+
+        if (pCFG->space_scroll1 != -1)
+        {
+                pCFG->space_scroll1 &= 0xfff;
+        }
+
 
 #if 0
         if (pCFG->code_start)
@@ -340,51 +376,6 @@ INPUT_PORTS_START( input_ports_strider )
         PORT_DIPSETTING(    0x03, "6" )
 INPUT_PORTS_END
 
-
-static struct MemoryReadAddress readmem_strider[] =
-{
-        { 0x000000, 0x0fffff, MRA_ROM },     /* 68000 ROM */
-        { 0x800000, 0x800003, cps1_input_r}, /* Not really, but it gets them working */
-        { 0x800018, 0x80001f, cps1_input_r}, /* Input ports */
-        { 0x800100, 0x8001ff, MRA_BANK4, &cps1_output },  /* Output ports */
-        { 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
-        { 0x860000, 0x8603ff, MRA_BANK3 },   /* ??? Unknown ??? */
-
-        /* Game dependent graphics RAM */
-        { 0x900000, 0x903fff, cps1_work_ram_r }, /* Work RAM */
-        { 0x904000, 0x907fff, cps1_obj_r },      /* Object RAM */
-        { 0x908000, 0x90bfff, cps1_scroll1_r },  /* Video RAM 1 */
-        { 0x90c000, 0x90ffff, cps1_scroll2_r },  /* Video RAM 2 */
-        { 0x910000, 0x913fff, cps1_scroll3_r },  /* Video RAM 3 */
-        { 0x914000, 0x9157ff, cps1_palette_r },  /* Palette */
-        { 0x915800, 0x930000, MRA_BANK5 }, /* OTHER RAM (3 wonders) */
-
-        /* Final fight 91c000 = ?? */
-        { 0x91c000, 0x91c003, MRA_NOP },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress writemem_strider[] =
-{
-        { 0x000000, 0x0fffff, MWA_ROM },      /* ROM */
-        { 0x800030, 0x800033, MWA_NOP },      /* Unknown output */
-        { 0x800180, 0x800183, cps1_sound_cmd_w },  /* Sound command */
-        { 0x800100, 0x8001ff, MWA_BANK4, &cps1_output, &cps1_output_size },  /* Output ports */
-        { 0xff0000, 0xffffff, MWA_BANK2, &cps1_ram, &cps1_ram_size },        /* RAM */
-
-        /* Game dependent graphics RAM */
-        { 0x900000, 0x903fff, cps1_work_ram_w, &cps1_work_ram, &cps1_work_ram_size },        /* Work RAM */
-        { 0x904000, 0x907fff, cps1_obj_w,      &cps1_obj, &cps1_obj_size },
-        { 0x908000, 0x90bfff, cps1_scroll1_w,  &cps1_scroll1, &cps1_scroll1_size },  /* Video RAM 1 */
-        { 0x90c000, 0x90ffff, cps1_scroll2_w,  &cps1_scroll2, &cps1_scroll2_size },  /* Video RAM 2 */
-        { 0x910000, 0x913fff, cps1_scroll3_w,  &cps1_scroll3, &cps1_scroll3_size },  /* Video RAM 3 */
-        { 0x914000, 0x9157ff, cps1_palette_w,  &cps1_palette, &cps1_palette_size },  /* Palette */
-        { 0x915800, 0x930000, MWA_BANK5 }, /* OTHER RAM (3 wonders) */
-        /* Final fight 91c000 = ?? */
-        { 0x91c000, 0x91c003, MWA_NOP },
-	{ -1 }	/* end of table */
-};
-
 CHAR_LAYOUT(charlayout_strider, 2048)
 SPRITE_LAYOUT(spritelayout_strider, 8192+2048)
 SPRITE_LAYOUT(tilelayout_strider, 8192-2048)
@@ -402,8 +393,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_strider[] =
 
 MACHINE_DRIVER(
         strider_machine_driver,
-        readmem_strider,
-        writemem_strider,
         cps1_interrupt2,
         gfxdecodeinfo_strider)
 
@@ -416,15 +405,15 @@ ROM_START( strider_rom )
         ROM_LOAD_WIDE_SWAP("strider.32", 0x80000, 0x80000, 0x59b99ecf ) /* Tile map */
 
         ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "strider.02",   0x000000, 0x80000, 0x5f694f7b ) /* sprites */
-        ROM_LOAD( "strider.06",   0x080000, 0x80000, 0x19fbe6a7 ) /* sprites */
-        ROM_LOAD( "strider.04",   0x100000, 0x80000, 0x2c9017c2 ) /* sprites */
-        ROM_LOAD( "strider.08",   0x180000, 0x80000, 0x3b0e4930 ) /* sprites */
+        ROM_LOAD( "strider.02",   0x000000, 0x80000, 0x5f694f7b )
+        ROM_LOAD( "strider.06",   0x080000, 0x80000, 0x19fbe6a7 )
+        ROM_LOAD( "strider.04",   0x100000, 0x80000, 0x2c9017c2 )
+        ROM_LOAD( "strider.08",   0x180000, 0x80000, 0x3b0e4930 )
 
-        ROM_LOAD( "strider.01",   0x200000, 0x80000, 0x0e0c0fb8 ) /* tiles + chars */
-        ROM_LOAD( "strider.05",   0x280000, 0x80000, 0x542a60c8 ) /* tiles + chars */
-        ROM_LOAD( "strider.03",   0x300000, 0x80000, 0x6c8b64c9 ) /* tiles + chars */
-        ROM_LOAD( "strider.07",   0x380000, 0x80000, 0x27932793 ) /* tiles + chars */
+        ROM_LOAD( "strider.01",   0x200000, 0x80000, 0x0e0c0fb8 )
+        ROM_LOAD( "strider.05",   0x280000, 0x80000, 0x542a60c8 )
+        ROM_LOAD( "strider.03",   0x300000, 0x80000, 0x6c8b64c9 )
+        ROM_LOAD( "strider.07",   0x380000, 0x80000, 0x27932793 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "strider.09",    0x00000, 0x10000, 0x85adabcd )
@@ -439,8 +428,7 @@ struct GameDriver strider_driver =
 {
         "Strider",
         "strider",
-        CPS1_CREDITS
-        "Paul Leaman",
+        CPS1_CREDITS("Paul Leaman"),
         &strider_machine_driver,
 
         strider_rom,
@@ -456,51 +444,11 @@ struct GameDriver strider_driver =
 };
 
 
-
 /********************************************************************
 
                               WILLOW
 
 ********************************************************************/
-
-
-static struct MemoryReadAddress readmem_willow[] =
-{
-        { 0x000000, 0x0fffff, MRA_ROM },     /* 68000 ROM */
-        { 0x800000, 0x800003, cps1_input_r}, /* Not really, but it gets them working */
-        { 0x800018, 0x80001f, cps1_input_r}, /* Input ports */
-        { 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
-        { 0x860000, 0x8603ff, MRA_BANK3 },   /* ??? Unknown ??? */
-
-        { 0x900000, 0x903fff, cps1_obj_r },      /* Object RAM */
-        { 0x904000, 0x907fff, cps1_work_ram_r }, /* Work RAM */
-        { 0x910000, 0x913fff, cps1_scroll1_r },  /* Video RAM 3 */
-        { 0x914000, 0x917fff, cps1_scroll3_r },  /* Video RAM 1 */
-        { 0x918000, 0x91bfff, cps1_scroll2_r },  /* Video RAM 2 */
-
-        { 0x91c000, 0x91d7ff, cps1_palette_r },  /* Palette */
-	{ -1 }	/* end of table */
-};
-
-
-static struct MemoryWriteAddress writemem_willow[] =
-{
-        { 0x000000, 0x0fffff, MWA_ROM },      /* ROM */
-        { 0x800030, 0x800033, MWA_NOP },      /* Unknown output (0x800000)*/
-        { 0x800180, 0x800183, cps1_sound_cmd_w},  /* Sound command */
-        { 0x800100, 0x8001ff, MWA_BANK4, &cps1_output, &cps1_output_size },  /* Output ports */
-        { 0xff0000, 0xffffff, MWA_BANK2, &cps1_ram, &cps1_ram_size },        /* RAM */
-
-        { 0x900000, 0x903fff, cps1_obj_w,      &cps1_obj, &cps1_obj_size },
-        { 0x904000, 0x907fff, cps1_work_ram_w, &cps1_work_ram, &cps1_work_ram_size },        /* Work RAM */
-
-        { 0x910000, 0x913fff, cps1_scroll1_w,  &cps1_scroll3, &cps1_scroll3_size },  /* Video RAM 3 */
-        { 0x914000, 0x917fff, cps1_scroll3_w,  &cps1_scroll1, &cps1_scroll1_size },  /* Video RAM 1 */
-        { 0x918000, 0x91bfff, cps1_scroll2_w,  &cps1_scroll2, &cps1_scroll2_size },  /* Video RAM 2 */
-
-        { 0x91c000, 0x91d7ff, cps1_palette_w,  &cps1_palette, &cps1_palette_size },  /* Palette */
-	{ -1 }	/* end of table */
-};
 
 CHAR_LAYOUT(charlayout_willow, 4096)
 TILE32_LAYOUT(tile32layout_willow, 1024,    0x080000*8)
@@ -518,8 +466,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_willow[] =
 
 MACHINE_DRIVER(
         willow_machine_driver,
-        readmem_willow,
-        writemem_willow,
         cps1_interrupt2,
         gfxdecodeinfo_willow)
 
@@ -533,20 +479,20 @@ ROM_START( willow_rom )
         ROM_LOAD_WIDE_SWAP("WL_32.ROM",  0x80000, 0x80000, 0xe75769a9 ) /* Tile map */
 
         ROM_REGION(0x300000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "WL_GFX1.ROM",   0x000000, 0x80000, 0x352afe30 ) /* sprites */
-        ROM_LOAD( "WL_GFX5.ROM",   0x080000, 0x80000, 0x768c375a ) /* sprites */
-        ROM_LOAD( "WL_GFX3.ROM",   0x100000, 0x80000, 0x3c9240f4 ) /* sprites */
-        ROM_LOAD( "WL_GFX7.ROM",   0x180000, 0x80000, 0x95e77d43 ) /* sprites */
+        ROM_LOAD( "WL_GFX1.ROM",   0x000000, 0x80000, 0x352afe30 )
+        ROM_LOAD( "WL_GFX5.ROM",   0x080000, 0x80000, 0x768c375a )
+        ROM_LOAD( "WL_GFX3.ROM",   0x100000, 0x80000, 0x3c9240f4 )
+        ROM_LOAD( "WL_GFX7.ROM",   0x180000, 0x80000, 0x95e77d43 )
 
-        ROM_LOAD( "WL_20.ROM",     0x200000, 0x20000, 0x67c34af5 ) /* tiles */
-        ROM_LOAD( "WL_10.ROM",     0x220000, 0x20000, 0xc8c6fe3c ) /* tiles */
-        ROM_LOAD( "WL_22.ROM",     0x240000, 0x20000, 0x6a95084b ) /* tiles */
-        ROM_LOAD( "WL_12.ROM",     0x260000, 0x20000, 0x66735153 ) /* tiles */
+        ROM_LOAD( "WL_20.ROM",     0x200000, 0x20000, 0x67c34af5 )
+        ROM_LOAD( "WL_10.ROM",     0x220000, 0x20000, 0xc8c6fe3c )
+        ROM_LOAD( "WL_22.ROM",     0x240000, 0x20000, 0x6a95084b )
+        ROM_LOAD( "WL_12.ROM",     0x260000, 0x20000, 0x66735153 )
 
-        ROM_LOAD( "WL_24.ROM",     0x280000, 0x20000, 0x839200be ) /* tiles */
-        ROM_LOAD( "WL_14.ROM",     0x2a0000, 0x20000, 0x6cf8259c ) /* tiles */
-        ROM_LOAD( "WL_26.ROM",     0x2c0000, 0x20000, 0xeef53eb5 ) /* tiles */
-        ROM_LOAD( "WL_16.ROM",     0x2e0000, 0x20000, 0x6a02dfde ) /* tiles */
+        ROM_LOAD( "WL_24.ROM",     0x280000, 0x20000, 0x839200be )
+        ROM_LOAD( "WL_14.ROM",     0x2a0000, 0x20000, 0x6cf8259c )
+        ROM_LOAD( "WL_26.ROM",     0x2c0000, 0x20000, 0xeef53eb5 )
+        ROM_LOAD( "WL_16.ROM",     0x2e0000, 0x20000, 0x6a02dfde )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "WL_09.ROM",    0x00000, 0x10000, 0x56014501 )
@@ -562,8 +508,7 @@ struct GameDriver willow_driver =
 {
         "Willow",
         "willow",
-        CPS1_CREDITS
-        "Paul Leaman",
+        CPS1_CREDITS("Paul Leaman"),
         &willow_machine_driver,
         willow_rom,
         0,0,0,0,
@@ -670,8 +615,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_ffight[] =
 
 MACHINE_DRIVER(
         ffight_machine_driver,
-        readmem_strider,
-        writemem_strider,
         cps1_interrupt2,
         gfxdecodeinfo_ffight)
 
@@ -685,10 +628,10 @@ ROM_START( ffight_rom )
         ROM_LOAD_WIDE_SWAP("FF32-32M.BIN",  0x80000, 0x80000, 0x5247370d ) /* Tile map */
 
         ROM_REGION(0x500000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "FF01-01M.BIN",   0x000000, 0x80000, 0x6dd3c4d5 ) /* sprites */
-        ROM_LOAD( "FF05-05M.BIN",   0x080000, 0x80000, 0x16c0c960 ) /* sprites */
-        ROM_LOAD( "FF03-03M.BIN",   0x100000, 0x80000, 0x98c30301 ) /* sprites */
-        ROM_LOAD( "FF07-07M.BIN",   0x180000, 0x80000, 0x306ada3e ) /* sprites */
+        ROM_LOAD( "FF01-01M.BIN",   0x000000, 0x80000, 0x6dd3c4d5 )
+        ROM_LOAD( "FF05-05M.BIN",   0x080000, 0x80000, 0x16c0c960 )
+        ROM_LOAD( "FF03-03M.BIN",   0x100000, 0x80000, 0x98c30301 )
+        ROM_LOAD( "FF07-07M.BIN",   0x180000, 0x80000, 0x306ada3e )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "FF09-09.BIN",    0x00000, 0x10000, 0x06b2f7f8 )
@@ -704,8 +647,7 @@ struct GameDriver ffight_driver =
 {
         "Final Fight",
         "ffight",
-        CPS1_CREDITS
-        "Paul Leaman",
+        CPS1_CREDITS("Paul Leaman"),
         &ffight_machine_driver,
         ffight_rom,
         0,0,0,0,
@@ -738,8 +680,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_unsquad[] =
 
 MACHINE_DRIVER(
         unsquad_machine_driver,
-        readmem_strider,
-        writemem_strider,
         cps1_interrupt2,
         gfxdecodeinfo_unsquad)
 
@@ -752,10 +692,10 @@ ROM_START( unsquad_rom )
         ROM_LOAD_WIDE_SWAP( "UNSQUAD.32", 0x80000, 0x80000, 0x45a55eb7 ) /* tiles + chars */
 
         ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "UNSQUAD.01",   0x000000, 0x80000, 0x87c8d9a8 ) /* tiles + chars */
-        ROM_LOAD( "UNSQUAD.05",   0x080000, 0x80000, 0xea7f4a55 ) /* tiles + chars */
-        ROM_LOAD( "UNSQUAD.03",   0x100000, 0x80000, 0x0ce0ac76 ) /* tiles + chars */
-        ROM_LOAD( "UNSQUAD.07",   0x180000, 0x80000, 0x837e8800 ) /* tiles + chars */
+        ROM_LOAD( "UNSQUAD.01",   0x000000, 0x80000, 0x87c8d9a8 )
+        ROM_LOAD( "UNSQUAD.05",   0x080000, 0x80000, 0xea7f4a55 )
+        ROM_LOAD( "UNSQUAD.03",   0x100000, 0x80000, 0x0ce0ac76 )
+        ROM_LOAD( "UNSQUAD.07",   0x180000, 0x80000, 0x837e8800 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "UNSQUAD.09",    0x00000, 0x10000, 0xc55f46db )
@@ -769,8 +709,7 @@ struct GameDriver unsquad_driver =
 {
         "UN Squadron",
         "unsquad",
-        CPS1_CREDITS
-        "Paul Leaman",
+        CPS1_CREDITS("Paul Leaman"),
         &unsquad_machine_driver,
 
         unsquad_rom,
@@ -810,8 +749,6 @@ static struct GfxDecodeInfo gfxdecodeinfo_mtwins[] =
 
 MACHINE_DRIVER(
         mtwins_machine_driver,
-        readmem_strider,
-        writemem_strider,
         cps1_interrupt2,
         gfxdecodeinfo_mtwins)
 
@@ -824,10 +761,10 @@ ROM_START( mtwins_rom )
         ROM_LOAD_WIDE_SWAP( "CH_32.ROM", 0x80000, 0x80000, 0xbc81ffbb ) /* tiles + chars */
 
         ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "CH_GFX1.ROM",   0x000000, 0x80000, 0x8394505c ) /* tiles + chars */
-        ROM_LOAD( "CH_GFX5.ROM",   0x080000, 0x80000, 0x8ce0dcfe ) /* tiles + chars */
-        ROM_LOAD( "CH_GFX3.ROM",   0x100000, 0x80000, 0x12e50cdf ) /* tiles + chars */
-        ROM_LOAD( "CH_GFX7.ROM",   0x180000, 0x80000, 0xb11a09e0 ) /* tiles + chars */
+        ROM_LOAD( "CH_GFX1.ROM",   0x000000, 0x80000, 0x8394505c )
+        ROM_LOAD( "CH_GFX5.ROM",   0x080000, 0x80000, 0x8ce0dcfe )
+        ROM_LOAD( "CH_GFX3.ROM",   0x100000, 0x80000, 0x12e50cdf )
+        ROM_LOAD( "CH_GFX7.ROM",   0x180000, 0x80000, 0xb11a09e0 )
 
         ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
         ROM_LOAD( "CH_09.ROM",    0x00000, 0x10000, 0x9dfa57d4 )
@@ -843,8 +780,7 @@ struct GameDriver mtwins_driver =
 {
         "Mega Twins",
         "mtwins",
-        CPS1_CREDITS
-        "Paul Leaman",
+        CPS1_CREDITS("Paul Leaman"),
         &mtwins_machine_driver,
 
         mtwins_rom,
@@ -863,183 +799,70 @@ struct GameDriver mtwins_driver =
 
 /********************************************************************
 
-                          GHOULS AND GHOSTS
-
-        Possibly incomplete ROM set.
+                          Magic Sword
 
 ********************************************************************/
 
-static struct MemoryReadAddress readmem_ghouls[] =
+
+CHAR_LAYOUT(charlayout_msword,  4096);
+SPRITE_LAYOUT(spritelayout_msword, 8192);
+SPRITE_LAYOUT(tilelayout_msword, 4096);
+TILE32_LAYOUT(tilelayout32_msword, 512,  0x080000*8);
+
+static struct GfxDecodeInfo gfxdecodeinfo_msword[] =
 {
-        { 0x000000, 0x0fffff, MRA_ROM },     /* 68000 ROM */
-        { 0x800000, 0x800003, cps1_input_r}, /* Not really, but it gets them working */
-        { 0x800018, 0x80001f, cps1_input_r}, /* Input ports */
-        { 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
-        { 0x860000, 0x8603ff, MRA_BANK3 },   /* ??? Unknown ??? */
-
-        { 0x900000, 0x903fff, cps1_scroll1_r },
-        { 0x904000, 0x907fff, cps1_scroll2_r },
-        { 0x908000, 0x90bfff, cps1_scroll3_r },
-        { 0x90c000, 0x90ffff, cps1_work_ram_r },
-        { 0x920000, 0x9287ff, cps1_obj_r },
-        { 0x910000, 0x911fff, cps1_palette_r },
-
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress writemem_ghouls[] =
-{
-        { 0x000000, 0x0fffff, MWA_ROM },      /* ROM */
-        { 0x800030, 0x800033, MWA_NOP },      /* Unknown output (0x800000)*/
-        { 0x800180, 0x800183, cps1_sound_cmd_w},  /* Sound command */
-        { 0x800100, 0x8001ff, MWA_BANK4, &cps1_output, &cps1_output_size },  /* Output ports */
-        { 0xff0000, 0xffffff, MWA_BANK2, &cps1_ram, &cps1_ram_size },        /* RAM */
-
-        { 0x900000, 0x903fff, cps1_scroll1_w,  &cps1_scroll1, &cps1_scroll1_size },
-        { 0x904000, 0x907fff, cps1_scroll2_w,  &cps1_scroll2, &cps1_scroll2_size },
-        { 0x908000, 0x90bfff, cps1_scroll3_w,  &cps1_scroll3, &cps1_scroll3_size },
-        { 0x90c000, 0x90ffff, cps1_work_ram_w, &cps1_work_ram, &cps1_work_ram_size },
-        { 0x910000, 0x911fff, cps1_palette_w,  &cps1_palette, &cps1_palette_size },
-        { 0x920000, 0x9287ff, cps1_obj_w,      &cps1_obj, &cps1_obj_size },
-	{ -1 }	/* end of table */
-};
-#define SPRITE_SEP (0x80000*8)
-static struct GfxLayout spritelayout_ghouls =
-{
-        16,16,  /* 16*16 sprites */
-        8192+1024,   /* 8192 sprites */
-        4,      /* 4 bits per pixel */
-        { 0x60000*8,0x40000*8,0x20000*8,0 },
-        {
-           0,1,2,3,4,5,6,7,
-           SPRITE_SEP+0, SPRITE_SEP+1, SPRITE_SEP+2, SPRITE_SEP+3,
-           SPRITE_SEP+4, SPRITE_SEP+5, SPRITE_SEP+6, SPRITE_SEP+7
-        },
-        {
-           0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-           8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8,
-        },
-        16*8    /* every sprite takes 16*8 consecutive bytes */
-};
-
-#define TILE_SEP (32*8)
-
-static struct GfxLayout charlayout =
-{
-        8,8,   /* 16*16 tiles */
-        2*4096,  /* 8192  tiles */
-        4,       /* 4 bits per pixel */
-        {0x8000*8+8,0x8000*8,8,0},
-        {
-           0,1,2,3,4,5,6,7,
-        },
-        {
-           0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,
-        },
-        16*8    /* every sprite takes 16*8 consecutive bytes */
-};
-
-#if 0
-/* WRONG !!! */
-static struct GfxLayout tilelayout=
-{
-  16,16,  /* 16*16 tiles */
-  3096,   /* 2048 tiles */
-  4,      /* 4 bits per pixel */
-  { 0,4, 0, 4 }, //0x08000*8,(0x08000*8)+4 },
-  {
-    0,1,2,3,8,9,10,11,
-    (8*4*8)+0,(8*4*8)+1,(8*4*8)+2,(8*4*8)+3,
-    (8*4*8)+8,(8*4*8)+9,(8*4*8)+10,(8*4*8)+11
-  },
-  {
-    0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-    8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16
-  },
-  512   /* each tile takes 512 consecutive bytes */
-};
-#endif
-
-TILE_LAYOUT2(tilelayout_ghouls, 4096,     0x040000*8, 0x010000 )
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        /*   start    pointer       colour start   number of colours */
-        { 1, 0x10F000, &charlayout,             0,  32 },
-        { 1, 0x000000, &spritelayout_ghouls,    0,  32 },
-        { 1, 0x080000, &tilelayout_ghouls,      0,  32 },
-        { 1, 0x100000, &tilelayout_ghouls,      0,  32 },
+        /*   start    pointer          colour start   number of colours */
+        { 1, 0x040000, &charlayout_msword,    0,                      32 },
+        { 1, 0x000000, &spritelayout_msword,  32*16,                  32 },
+        { 1, 0x050000, &tilelayout_msword,    32*16+32*16,            32 },
+        { 1, 0x070000, &tilelayout32_msword,  32*16+32*16+32*16,      32 },
 	{ -1 } /* end of array */
 };
 
 MACHINE_DRIVER(
-        ghouls_machine_driver,
-        readmem_ghouls,
-        writemem_ghouls,
-        cps1_interrupt,
-        gfxdecodeinfo)
+        msword_machine_driver,
+        cps1_interrupt2,
+        gfxdecodeinfo_msword);
 
-ROM_START( ghouls_rom )
-        ROM_REGION(0x100000)      /*  */
-        ROM_LOAD_EVEN("dmu.29",   0x00000, 0x20000, 0x90efb087 ) /* 68000 code */
-        ROM_LOAD_ODD ("dmu.30",   0x00000, 0x20000, 0xac09ca89 ) /* 68000 code */
-        ROM_LOAD_EVEN("dmu.27",   0x40000, 0x20000, 0x7bc0c8d8 ) /* 68000 code */
-        ROM_LOAD_ODD ("dmu.28",   0x40000, 0x20000, 0xc07d69e3 ) /* 68000 code */
-        ROM_LOAD_WIDE("dmu.29",   0x80000, 0x20000, 0x90efb087 ) /* 68000 code */
-        ROM_LOAD_WIDE("dmu.29",   0xa0000, 0x20000, 0x90efb087 ) /* 68000 code */
+ROM_START( msword_rom )
+        ROM_REGION(0x100000)      /* 68000 code */
+        ROM_LOAD_EVEN("MSE_30.ROM",  0x00000, 0x20000, 0xa99a131a )
+        ROM_LOAD_ODD ("MSE_35.ROM",  0x00000, 0x20000, 0x452c3188 )
+        ROM_LOAD_EVEN("MSE_31.ROM",  0x40000, 0x20000, 0x1948cd8a )
+        ROM_LOAD_ODD ("MSE_36.ROM",  0x40000, 0x20000, 0x19a7b0c1 )
+        ROM_LOAD_WIDE_SWAP( "MS_32.ROM", 0x80000, 0x80000, 0x78415913 )
 
-        ROM_REGION(0x800000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_REGION(0x200000)     /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "MS_GFX1.ROM",   0x000000, 0x80000, 0x0ac52871 )
+        ROM_LOAD( "MS_GFX5.ROM",   0x080000, 0x80000, 0xd9d46ec2 )
+        ROM_LOAD( "MS_GFX3.ROM",   0x100000, 0x80000, 0x957cc634 )
+        ROM_LOAD( "MS_GFX7.ROM",   0x180000, 0x80000, 0xb546d1d6 )
 
-        ROM_LOAD( "dmu.23",      0x000000, 0x10000, 0xa1a14a87 ) /* sprites Plane 4 */
-        ROM_LOAD( "dmu.23",      0x010000, 0x10000, 0xa1a14a87 ) /* sprites Plane 4 */
-        ROM_LOAD( "dmu.10",      0x020000, 0x10000, 0x1ad5edb3 ) /* sprites Plane 1 */
-        ROM_LOAD( "dmu.10",      0x030000, 0x10000, 0x1ad5edb3 ) /* sprites Plane 1 */
-        ROM_LOAD( "dmu.14",      0x040000, 0x10000, 0xa1e55fd9 ) /* sprites Plane 2 */
-        ROM_LOAD( "dmu.14",      0x050000, 0x10000, 0xa1e55fd9 ) /* sprites Plane 2 */
-        ROM_LOAD( "dmu.19",      0x060000, 0x10000, 0x142db95f ) /* sprites Plane 3 */
-        ROM_LOAD( "dmu.19",      0x070000, 0x10000, 0x142db95f ) /* sprites Plane 3 */
+        ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+        ROM_LOAD( "MS_9.ROM",    0x00000, 0x10000, 0x16de56f0 )
+        ROM_LOAD( "MS_9.ROM",    0x08000, 0x10000, 0x16de56f0 )
 
-        ROM_LOAD( "dmu.10",      0x080000, 0x10000, 0x0f231d0f ) /* 16x16 */
-        ROM_LOAD( "dmu.23",      0x090000, 0x10000, 0x0f231d0f ) /* 16x16 */
-        ROM_LOAD( "dmu.14",      0x0a0000, 0x10000, 0xb0882fde ) /* 16x16 */
-
-        ROM_LOAD( "dmu.21",      0x0c0000, 0x10000, 0xc47e04ba ) /* 16x16 */
-        ROM_LOAD( "dmu.12",      0x0d0000, 0x10000, 0xc47e04ba ) /* 16x16 */
-        ROM_LOAD( "dmu.25",      0x0e0000, 0x10000, 0x30cecdb6 ) /* 16x16 */
-        ROM_LOAD( "dmu.16",      0x0f0000, 0x10000, 0x30cecdb6 ) /* 16x16 */
-
-        ROM_LOAD( "dmu.11",      0x100000, 0x10000, 0x3d57242d ) /* 32x32 */
-        ROM_LOAD( "dmu.13",      0x110000, 0x10000, 0x18a99b29 ) /* 32x32 */
-        ROM_LOAD( "dmu.15",      0x120000, 0x10000, 0x237eb922 ) /* 32x32 */
-        ROM_LOAD( "dmu.20",      0x130000, 0x10000, 0x08a71d8f ) /* 32x32 */
-        ROM_LOAD( "dmu.22",      0x130000, 0x10000, 0x08a71d8f ) /* 32x32 */
-        ROM_LOAD( "dmu.24",      0x130000, 0x10000, 0x08a71d8f ) /* 32x32 */
-
-        ROM_REGION(0x18000) /* 64k for the audio CPU */
-        ROM_LOAD( "dmu.26",      0x0000, 0x10000, 0x8df5e803 )
+        ROM_REGION(0x40000) /* Samples */
+        ROM_LOAD ("MS_18.ROM",    0x00000, 0x20000, 0x422df0cd )
+        ROM_LOAD ("MS_19.ROM",    0x20000, 0x20000, 0xf249d475 )
 ROM_END
 
-struct GameDriver ghouls_driver =
+struct GameDriver msword_driver =
 {
-        "Ghouls and Ghosts",
-        "ghouls",
-        CPS1_CREDITS
-        "Paul Leaman",
-        &ghouls_machine_driver,
+        "Magic Sword",
+        "msword",
+        CPS1_CREDITS("Paul Leaman"),
+        &msword_machine_driver,
 
-        ghouls_rom,
+        msword_rom,
         0,
         0,0,
         0,      /* sound_prom */
 
-        input_ports_strider,
+        input_ports_ffight,
         NULL, 0, 0,
 
         ORIENTATION_DEFAULT,
         NULL, NULL
 };
-
-
-
-
 

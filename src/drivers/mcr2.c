@@ -44,11 +44,11 @@ Known issues:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void journey_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void journey_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void journey_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void mcr2_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void wacko_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mcr2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void wacko_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap);
 void mcr2_videoram_w(int offset,int data);
 void mcr2_palette_w(int offset,int data);

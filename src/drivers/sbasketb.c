@@ -20,7 +20,7 @@ MAIN BOARD:
 
 extern unsigned char *sbasketb_scroll;
 extern unsigned char *sbasketb_palettebank;
-void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern unsigned char *konami_dac;

@@ -73,7 +73,7 @@ static void update_pen (int pen, int val)
 	bits = (val >> 2) & 0x03;
 	blue = table[(bits << 2) | intensity];
 
-	osd_modify_pen (Machine->pens[pen], red, green, blue);
+	palette_change_color(pen,red,green,blue);
 }
 
 

@@ -465,12 +465,12 @@ static void watchdog_callback (int param)
 
 void watchdog_reset_w(int offset,int data)
 {
-	timer_reset (watchdog_timer, TIME_IN_HZ (1));
+	timer_reset (watchdog_timer, TIME_IN_SEC (1));
 }
 
 int watchdog_reset_r(int offset)
 {
-	timer_reset (watchdog_timer, TIME_IN_HZ (1));
+	timer_reset (watchdog_timer, TIME_IN_SEC (1));
 	return 0;
 }
 

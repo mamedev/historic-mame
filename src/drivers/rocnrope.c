@@ -11,7 +11,7 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 
 
 void rocnrope_flipscreen_w(int offset,int data);
-void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void rocnrope_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );

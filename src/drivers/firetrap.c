@@ -75,7 +75,7 @@ void firetrap_bg2videoram_w(int offset,int data);
 void firetrap_flipscreen_w(int offset,int data);
 int firetrap_vh_start(void);
 void firetrap_vh_stop(void);
-void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

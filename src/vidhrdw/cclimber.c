@@ -42,7 +42,7 @@ static int sidepanel_enabled;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -117,7 +117,7 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,j,used,realcnt;
 	unsigned char allocated[256];
@@ -261,7 +261,7 @@ void swimmer_bgcolor_w(int offset,int data)
 	bit2 = (data >> 2) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	osd_modify_pen(Machine->pens[0],r,g,b);
+	palette_change_color(0,r,g,b);
 }
 
 

@@ -99,7 +99,7 @@ int jrpacman_interrupt(void);
 extern unsigned char *jrpacman_scroll,*jrpacman_bgpriority;
 extern unsigned char *jrpacman_charbank,*jrpacman_spritebank;
 extern unsigned char *jrpacman_palettebank,*jrpacman_colortablebank;
-void jrpacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void jrpacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int jrpacman_vh_start(void);
 void jrpacman_vh_stop(void);
 void jrpacman_videoram_w(int offset,int data);

@@ -30,7 +30,7 @@ void zarzon_characterram_w(int offset,int data)
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void zarzon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void zarzon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -140,7 +140,7 @@ void zarzon_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int sx,sy;
 
 		sx = offs % 32;
-		sy = offs / 32 + 2;
+		sy = offs / 32;
 
 		charcode = zarzon_videoram1[offs];
 

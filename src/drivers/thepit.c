@@ -53,7 +53,7 @@ Port I/O Write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void thepit_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void thepit_vh_screenrefresh(struct osd_bitmap *bitmap);
 void thepit_flipx_w(int offset,int data);
 void thepit_flipy_w(int offset,int data);

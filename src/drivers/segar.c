@@ -65,7 +65,7 @@ extern unsigned char *segar_mem_colortable;
 extern unsigned char *segar_mem_bcolortable;
 extern unsigned char *segar_mem_blookup;
 
-extern void segar_init_colors(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+extern void segar_init_colors(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern int spaceod_vh_start(void);
 extern void spaceod_vh_stop(void);
 extern void segar_video_port_w(int offset,int data);
@@ -734,6 +734,10 @@ ROM_START( astrob_rom )
 	ROM_LOAD( "905", 0x9000, 0x0800, 0x0f21a0f1 ) /* U16 */
 	ROM_LOAD( "906", 0x9800, 0x0800, 0xd1a84b58 ) /* U16 */
 
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
 	ROM_REGION(0x10000)	/* 64k for speech code */
 	ROM_LOAD( "808b", 0x0000, 0x0800, 0x62a09920 ) /* U7 */
 	ROM_LOAD( "809a", 0x0800, 0x0800, 0x88f4cd68 ) /* U6 */
@@ -761,6 +765,10 @@ ROM_START( astrob1_rom )
 	ROM_LOAD( "850", 0x7000, 0x0800, 0x1e1039e8 ) /* U14 */
 	ROM_LOAD( "851", 0x7800, 0x0800, 0xf1403e8e ) /* U15 */
 	ROM_LOAD( "852", 0x8000, 0x0800, 0x2769427b ) /* U16 */
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for speech code */
 	ROM_LOAD( "808b", 0x0000, 0x0800, 0x62a09920 ) /* U7 */
@@ -793,6 +801,10 @@ ROM_START( s005_rom )
 	ROM_LOAD( "5109.u18", 0x9000, 0x0800, 0xb647bdb1 ) /* U18 */
 	ROM_LOAD( "5110.u19", 0x9800, 0x0800, 0x228b1921 ) /* U19 */
 	ROM_LOAD( "5111.u20", 0xA000, 0x0800, 0x2d069e9a ) /* U20 */
+
+	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x800)	/* 2k for sound */
 	ROM_LOAD( "epr-1286.16",0x0000, 0x0800, 0x7b132c1b )
@@ -831,13 +843,13 @@ ROM_START( monsterb_rom )
 	ROM_LOAD( "1516.bin", 0x0000, 0x2000, 0xee08373e ) /* U25 */
 	ROM_LOAD( "1517.bin", 0x2000, 0x2000, 0xa1a6c650 ) /* U25 */
 
-        ROM_REGION(0x2000)      /* 8k for sound */
-        ROM_LOAD( "1543snd.bin", 0x0000, 0x1000, 0x8503b7d3 ) /* U25 */
-        ROM_LOAD( "1544snd.bin", 0x1000, 0x1000, 0x3f427e0e ) /* U25 */
+	ROM_REGION(0x2000)      /* 8k for sound */
+	ROM_LOAD( "1543snd.bin", 0x0000, 0x1000, 0x8503b7d3 ) /* U25 */
+	ROM_LOAD( "1544snd.bin", 0x1000, 0x1000, 0x3f427e0e ) /* U25 */
 ROM_END
 
 ROM_START( spaceod_rom )
-        ROM_REGION(0x14000)     /* 64k for code + 4k for background lookup */
+	ROM_REGION(0x14000)     /* 64k for code + 4k for background lookup */
 	ROM_LOAD( "so-959.dat", 0x0000, 0x0800, 0x3a1abb14 ) /* U25 */
 	ROM_LOAD( "so-941.dat", 0x0800, 0x0800, 0x8eb435d6 ) /* U1 */
 	ROM_LOAD( "so-942.dat", 0x1000, 0x0800, 0xe3a8b98c ) /* U2 */
@@ -858,19 +870,19 @@ ROM_START( spaceod_rom )
 	ROM_LOAD( "so-957.dat", 0x8800, 0x0800, 0x13c86eec ) /* U17 */
 	ROM_LOAD( "so-958.dat", 0x9000, 0x0800, 0xffd5a7b9 ) /* U18 */
 
-        ROM_LOAD( "epr-09.dat", 0x10000, 0x1000, 0x422dc709 )
-        ROM_LOAD( "epr-10.dat", 0x11000, 0x1000, 0xceee55fe )
-        ROM_LOAD( "epr-11.dat", 0x12000, 0x1000, 0x615dab29 )
-        ROM_LOAD( "epr-12.dat", 0x13000, 0x1000, 0xbf615473 )
+	ROM_LOAD( "epr-09.dat", 0x10000, 0x1000, 0x422dc709 )
+	ROM_LOAD( "epr-10.dat", 0x11000, 0x1000, 0xceee55fe )
+	ROM_LOAD( "epr-11.dat", 0x12000, 0x1000, 0x615dab29 )
+	ROM_LOAD( "epr-12.dat", 0x13000, 0x1000, 0xbf615473 )
 
 
-        ROM_REGION(0x6000)      /* for backgrounds */
-        ROM_LOAD( "epr-13.dat", 0x0000, 0x1000, 0xefcae6a6 )
-        ROM_LOAD( "epr-14.dat", 0x1000, 0x1000, 0x839535c3 )
-        ROM_LOAD( "epr-15.dat", 0x2000, 0x1000, 0xf372e574 )
-        ROM_LOAD( "epr-16.dat", 0x3000, 0x1000, 0xe6565672 )
-        ROM_LOAD( "epr-17.dat", 0x4000, 0x1000, 0xf0a1f50d )
-        ROM_LOAD( "epr-18.dat", 0x5000, 0x1000, 0x126e945e )
+	ROM_REGION(0x6000)      /* for backgrounds */
+	ROM_LOAD( "epr-13.dat", 0x0000, 0x1000, 0xefcae6a6 )
+	ROM_LOAD( "epr-14.dat", 0x1000, 0x1000, 0x839535c3 )
+	ROM_LOAD( "epr-15.dat", 0x2000, 0x1000, 0xf372e574 )
+	ROM_LOAD( "epr-16.dat", 0x3000, 0x1000, 0xe6565672 )
+	ROM_LOAD( "epr-17.dat", 0x4000, 0x1000, 0xf0a1f50d )
+	ROM_LOAD( "epr-18.dat", 0x5000, 0x1000, 0x126e945e )
 ROM_END
 
 /***************************************************************************

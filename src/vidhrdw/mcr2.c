@@ -24,7 +24,7 @@ static int sprite_color;
 
 ***************************************************************************/
 
-void mcr2_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void mcr2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -147,7 +147,7 @@ void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void wacko_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void wacko_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	/* standard init */
 	mcr2_vh_convert_color_prom (palette, colortable, color_prom);
@@ -163,7 +163,7 @@ void wacko_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 
 ***************************************************************************/
 
-void journey_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void journey_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)

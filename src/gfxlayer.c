@@ -155,17 +155,17 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 		if (minx <= layer_dirty_minx - 8) return;
 		minx = layer_dirty_minx;
 	}
+	else if (minx > layer_dirty_maxx)
+	{
+		if (minx >= layer_dirty_maxx + 8) return;
+		minx = layer_dirty_maxx;
+	}
 	if (miny < layer_dirty_miny)
 	{
 		if (miny <= layer_dirty_miny - 8) return;
 		miny = layer_dirty_miny;
 	}
-	if (minx > layer_dirty_maxx)
-	{
-		if (minx >= layer_dirty_maxx + 8) return;
-		minx = layer_dirty_maxx;
-	}
-	if (miny > layer_dirty_maxy)
+	else if (miny > layer_dirty_maxy)
 	{
 		if (miny >= layer_dirty_maxy + 8) return;
 		miny = layer_dirty_maxy;
@@ -207,6 +207,7 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					layer->dirty[block] = TILE_DIRTY;
 					block += 1 << layer_dirty_shift;
 					layer->dirty[block] = TILE_DIRTY;
+					layer->dirtyline[(miny >> 3)] = 1;
 					layer->dirtyline[(miny >> 3) + 1] = 1;
 					break;
 				case MARK_ALL_NOT_CLEAN:
@@ -218,7 +219,7 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
 					{
 						layer->dirty[block] = TILE_DIRTY;
-						layer->dirtyline[(miny >> 3) + 1] = 1;
+						layer->dirtyline[(miny >> 3)] = 1;
 					}
 					block += 1 << layer_dirty_shift;
 					if (layer->dirty[block] == TILE_NOT_CLEAN)
@@ -307,6 +308,72 @@ void layer_mark_block_dirty(struct GfxLayer *layer,int minx,int miny,int action)
 					}
 					break;
 			}
+		}
+	}
+}
+
+/* companion to mark_block_dirty() which marks a number of horizontally consecutive */
+/* blocks dirty. This function is hardwired to MARK_ALL_DIRTY - no other actions available. */
+static void layer_mark_blocks_dirty(struct GfxLayer *layer,int minx,int miny,int hcount)
+{
+	int block;
+
+
+	if (minx < layer_dirty_minx) minx = layer_dirty_minx;
+	else if (minx +  8 * (hcount - 1) > layer_dirty_maxx) minx = layer_dirty_maxx - 8 * (hcount - 1);
+	if (miny < layer_dirty_miny) miny = layer_dirty_miny;
+	else if (miny > layer_dirty_maxy) miny = layer_dirty_maxy;
+
+	block = ((miny >> 3) << layer_dirty_shift) + (minx >> 3);
+
+	if ((minx & 0x07) == 0)
+	{
+		if ((miny & 0x07) == 0)
+		{
+			/* totally aligned case */
+			layer->dirtyline[miny >> 3] = 1;
+			do
+			{
+				layer->dirty[block] = TILE_DIRTY;
+				block++;
+			} while (--hcount > 0);
+		}
+		else
+		{
+			/* horizontally aligned case */
+			layer->dirtyline[(miny >> 3)] = 1;
+			layer->dirtyline[(miny >> 3) + 1] = 1;
+			do
+			{
+				layer->dirty[block] = TILE_DIRTY;
+				layer->dirty[block + (1 << layer_dirty_shift)] = TILE_DIRTY;
+				block++;
+			} while (--hcount > 0);
+		}
+	}
+	else
+	{
+		if ((miny & 0x07) == 0)
+		{
+			/* vertically aligned case */
+			layer->dirtyline[miny >> 3] = 1;
+			do
+			{
+				layer->dirty[block] = TILE_DIRTY;
+				block++;
+			} while (--hcount >= 0);	/* mark one block more than requested */
+		}
+		else
+		{
+			/* totally unaligned case */
+			layer->dirtyline[miny >> 3] = 1;
+			layer->dirtyline[(miny >> 3) + 1] = 1;
+			do
+			{
+				layer->dirty[block] = TILE_DIRTY;
+				layer->dirty[block + (1 << layer_dirty_shift)] = TILE_DIRTY;
+				block++;
+			} while (--hcount >= 0);	/* mark one block more than requested */
 		}
 	}
 }
@@ -396,9 +463,9 @@ int layer_count_blocks_dirty(struct GfxLayer *layer,int minx,int miny)
 
 
 	if (minx < layer_dirty_minx) minx = layer_dirty_minx;
+	else if (minx > layer_dirty_maxx) minx = layer_dirty_maxx;
 	if (miny < layer_dirty_miny) miny = layer_dirty_miny;
-	if (minx > layer_dirty_maxx) minx = layer_dirty_maxx;
-	if (miny > layer_dirty_maxy) miny = layer_dirty_maxy;
+	else if (miny > layer_dirty_maxy) miny = layer_dirty_maxy;
 
 	block = ((miny >> 3) << layer_dirty_shift) + (minx >> 3);
 	maxblock = ((miny >> 3) << layer_dirty_shift) + (layer_dirty_maxx >> 3);
@@ -485,7 +552,7 @@ int layer_is_line_dirty(struct GfxLayer *layer,int miny)
 
 
 	if (miny < layer_dirty_miny) miny = layer_dirty_miny;
-	if (miny > layer_dirty_maxy) miny = layer_dirty_maxy;
+	else if (miny > layer_dirty_maxy) miny = layer_dirty_maxy;
 
 	block = miny >> 3;
 
@@ -503,69 +570,80 @@ int layer_is_line_dirty(struct GfxLayer *layer,int miny)
 	return 0;
 }
 
-static inline int are_tiles_opaque_norotate(int layer_num,int minx,int miny)
+
+/* check if the given tile is totally covered by tiles in the above layers */
+static inline int is_tile_obscured(int layer_num,int minx,int miny)
 {
-	int x,y,tile;
-	struct GfxLayer *layer = Machine->layer[layer_num];
-	int bminy;
-	int lminx,lminy;
+	int i;
 
 
-	if (layer == 0) return 0;
-
-	if (layer->tilemap.flip & TILE_FLIPX)
-		minx = layer->tilemap.width - 8 - minx;
-	if (layer->tilemap.flip & TILE_FLIPY)
-		miny = layer->tilemap.height - 8 - miny;
-
-	minx -= layer->tilemap.scrollx;
-	miny -= layer->tilemap.scrolly;
-
-	do
+	for (i = layer_num - 1;i >= 0;i--)
 	{
-		lminx = minx;
-		if (lminx > -8 && lminx < layer->tilemap.width)
+		int x,y,tile;
+		struct GfxLayer *layer = Machine->layer[i];
+		int bminy;
+		int lminx,lminy;
+		int res;
+
+
+		if (layer->tilemap.flip & TILE_FLIPX)
+			minx = layer->tilemap.width - 8 - minx;
+		if (layer->tilemap.flip & TILE_FLIPY)
+			miny = layer->tilemap.height - 8 - miny;
+
+		minx -= layer->tilemap.scrollx;
+		miny -= layer->tilemap.scrolly;
+
+		res = 1;
+
+		do
 		{
-			if (lminx < 0) lminx = 0;
-			bminy = miny;
-			do
+			lminx = minx;
+			if (lminx > -8 && lminx < layer->tilemap.width)
 			{
-				lminy = bminy;
-				if (lminy > -8 && lminy < layer->tilemap.height)
+				if (lminx < 0) lminx = 0;
+				bminy = miny;
+				do
 				{
-					if (lminy < 0) lminy = 0;
-					x = lminx / 8;
-					y = lminy / 8;
-
-					tile = y * (layer->tilemap.width / 8) + x;
-					if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile]) != TILE_TRANSPARENCY_OPAQUE)
-						return 0;
-					if (lminx & 0x07)
+					lminy = bminy;
+					if (lminy > -8 && lminy < layer->tilemap.height)
 					{
-						if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile + 1]) != TILE_TRANSPARENCY_OPAQUE)
-							return 0;
-					}
+						if (lminy < 0) lminy = 0;
+						x = lminx / 8;
+						y = lminy / 8;
 
-					if (lminy & 0x07)
-					{
-						tile += layer->tilemap.width / 8;
+						tile = y * (layer->tilemap.width / 8) + x;
 						if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile]) != TILE_TRANSPARENCY_OPAQUE)
-							return 0;
-
+							res = 0;
 						if (lminx & 0x07)
 						{
 							if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile + 1]) != TILE_TRANSPARENCY_OPAQUE)
-								return 0;
+								res = 0;
+						}
+
+						if (lminy & 0x07)
+						{
+							tile += layer->tilemap.width / 8;
+							if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile]) != TILE_TRANSPARENCY_OPAQUE)
+								res = 0;
+
+							if (lminx & 0x07)
+							{
+								if (TILE_TRANSPARENCY(layer->tilemap.tiles[tile + 1]) != TILE_TRANSPARENCY_OPAQUE)
+									res = 0;
+							}
 						}
 					}
-				}
-				bminy += layer->tilemap.height;
-			} while (bminy < layer->tilemap.height);
-		}
-		minx += layer->tilemap.width;
-	} while (minx < layer->tilemap.width);
+					bminy += layer->tilemap.height;
+				} while (bminy < layer->tilemap.height);
+			}
+			minx += layer->tilemap.width;
+		} while (minx < layer->tilemap.width);
 
-	return 1;
+		if (res == 1) return 1;
+	}
+
+	return 0;
 }
 
 
@@ -649,6 +727,7 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	if (flipy)
 	{
 		bm += (layer->tilemap.height - 1) * dy;
+		miny += layer->tilemap.height - 8;
 		dy = -dy;
 	}
 	dx = 8;
@@ -663,78 +742,67 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 
 	while (ebm != eebm)
 	{
-		if (dy > 0)
-			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) / dy - 8;
-		else
-			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) / -dy - 7 - 8;
-
 		if (layer_is_line_dirty(layer,miny))
 		{
 			int countdirty;
 
 
+			if (dy > 0)
+				minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) % dy - 8;
+			else
+				minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) % -dy - 8;
+
 			countdirty = 0;
+
 			while (bm != ebm)
 			{
-				long tile;
-
-
-				tile = *tiles;
-
-				if (dy > 0)
-					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) % dy - 8;
-				else
-					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) % -dy - 8;
-
-				if (countdirty == 0) countdirty = layer_count_blocks_dirty(layer,minx,miny);
+				if (countdirty == 0)
+				{
+					countdirty = layer_count_blocks_dirty(layer,minx,miny);
+					if (countdirty > 0)
+					{
+						if (layer_num == 0)
+						{
+							/* mark screen bitmap dirty */
+							layer_mark_blocks_dirty(Machine->dirtylayer,minx,miny,countdirty);
+						}
+						else
+						{
+							/* mark tiles in the layer above this one as dirty */
+							layer_mark_blocks_dirty(Machine->layer[layer_num - 1],minx,miny,countdirty);
+						}
+					}
+				}
 
 				if (countdirty > 0)
 				{
+					long tile;
+
+
 					countdirty--;
 
-					if (layer_num == 0)
-					{
-						/* mark screen bitmap dirty */
-						layer_mark_block_dirty(Machine->dirtylayer,minx,miny,MARK_ALL_DIRTY);
-					}
-					else
-					{
-						/* mark tiles in the layer above this one as dirty */
-						layer_mark_block_dirty(Machine->layer[layer_num - 1],minx,miny,MARK_ALL_DIRTY);
-					}
+					tile = *tiles;
 
-					if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT)
+					if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT &&
+							is_tile_obscured(layer_num,minx,miny) == 0)
 					{
+						const unsigned short *paldata;
+						const unsigned char *sd;
+						const struct GfxTileBank *gfxtilebank;
 						int i;
 
 
-						/* check opaqueness of all tiles above this one */
-						for (i = 0;i < layer_num;i++)
+						/* mark all tiles below this one as not clean */
+						for (i = layer_num + 1;i < MAX_LAYERS && Machine->layer[i];i++)
+							layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
+
+						gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
+
+						paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
+						sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
+
+						switch (TILE_TRANSPARENCY(tile))
 						{
-							if (are_tiles_opaque_norotate(i,minx,miny))
-							{
-								/* we are totally covered, no need to redraw */
-								break;
-							}
-						}
-						if (i == layer_num)
-						{
-							const unsigned short *paldata;
-							const unsigned char *sd;
-							const struct GfxTileBank *gfxtilebank;
-
-
-							/* mark all tiles below this one as not clean */
-							for (i = layer_num + 1;i < MAX_LAYERS && Machine->layer[i];i++)
-								layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
-
-							gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
-
-							paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
-							sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
-
-							switch (TILE_TRANSPARENCY(tile))
-							{
 #define DOALLCOPIES \
 	switch (TILE_FLIP(tile) ^ flipx) {\
 		case 0:\
@@ -809,12 +877,12 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	}
 
 
-								case TILE_TRANSPARENCY_TRANSPARENT:
-									/* don't draw anything, totally transparent */
-									bm += dx;
-									break;
+							case TILE_TRANSPARENCY_TRANSPARENT:
+								/* don't draw anything, totally transparent */
+								bm += dx;
+								break;
 
-								case TILE_TRANSPARENCY_OPAQUE:
+							case TILE_TRANSPARENCY_OPAQUE:
 #define DOCOPY \
 	bm[0] = paldata[sd[0]];\
 	bm[1] = paldata[sd[1]];\
@@ -834,13 +902,13 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	bm[6] = paldata[sd[1]];\
 	bm[7] = paldata[sd[0]];
 
-									DOALLCOPIES
+								DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-									break;
+								break;
 
-								case TILE_TRANSPARENCY_PEN:
+							case TILE_TRANSPARENCY_PEN:
 {
 	unsigned char *mask;
 	unsigned char m;
@@ -868,14 +936,14 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	if (m & 0x40) bm[1] = paldata[sd[6]];\
 	if (m & 0x80) bm[0] = paldata[sd[7]];
 
-									DOALLCOPIESWITHMASK
+								DOALLCOPIESWITHMASK
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
 }
-									break;
+								break;
 
-								case TILE_TRANSPARENCY_COLOR:
+							case TILE_TRANSPARENCY_COLOR:
 #define DOCOPY \
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[0]])) == 0) bm[0] = paldata[sd[0]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[1]])) == 0) bm[1] = paldata[sd[1]];\
@@ -895,22 +963,22 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[6]])) == 0) bm[1] = paldata[sd[6]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[7]])) == 0) bm[0] = paldata[sd[7]];
 
-									DOALLCOPIES
+								DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-									break;
-							}
-
-							bm = bm - 8 * dy + dx;
+								break;
 						}
-						else bm += dx;
+
+						bm = bm - 8 * dy + dx;
 					}
 					else bm += dx;
 				}
 				else bm += dx;
 
 				tiles++;
+
+				minx += dx;
 			}
 
 			bm = bm - cols_to_copy * dx + 8 * dy;
@@ -923,6 +991,8 @@ static void draw_tilemap_core8(int layer_num,struct osd_bitmap *bitmap,int x,int
 		}
 
 		ebm += 8 * dy;
+
+		miny += (dy > 0) ? 8 : -8;
 	}
 #undef DATA_SIZE
 }
@@ -1006,6 +1076,7 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	if (flipy)
 	{
 		bm += (layer->tilemap.height - 1) * dy;
+		miny += layer->tilemap.height - 8;
 		dy = -dy;
 	}
 	dx = 8;
@@ -1020,78 +1091,67 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 
 	while (ebm != eebm)
 	{
-		if (dy > 0)
-			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) / dy - 8;
-		else
-			miny = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) / -dy - 7 - 8;
-
 		if (layer_is_line_dirty(layer,miny))
 		{
 			int countdirty;
 
 
+			if (dy > 0)
+				minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) % dy - 8;
+			else
+				minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) % -dy - 8;
+
 			countdirty = 0;
+
 			while (bm != ebm)
 			{
-				long tile;
-
-
-				tile = *tiles;
-
-				if (dy > 0)
-					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8-8*dy)) % dy - 8;
-				else
-					minx = (bm - ((DATA_SIZE *)bitmap->line[0]-8+8*dy)) % -dy - 8;
-
-				if (countdirty == 0) countdirty = layer_count_blocks_dirty(layer,minx,miny);
+				if (countdirty == 0)
+				{
+					countdirty = layer_count_blocks_dirty(layer,minx,miny);
+					if (countdirty > 0)
+					{
+						if (layer_num == 0)
+						{
+							/* mark screen bitmap dirty */
+							layer_mark_blocks_dirty(Machine->dirtylayer,minx,miny,countdirty);
+						}
+						else
+						{
+							/* mark tiles in the layer above this one as dirty */
+							layer_mark_blocks_dirty(Machine->layer[layer_num - 1],minx,miny,countdirty);
+						}
+					}
+				}
 
 				if (countdirty > 0)
 				{
+					long tile;
+
+
 					countdirty--;
 
-					if (layer_num == 0)
-					{
-						/* mark screen bitmap dirty */
-						layer_mark_block_dirty(Machine->dirtylayer,minx,miny,MARK_ALL_DIRTY);
-					}
-					else
-					{
-						/* mark tiles in the layer above this one as dirty */
-						layer_mark_block_dirty(Machine->layer[layer_num - 1],minx,miny,MARK_ALL_DIRTY);
-					}
+					tile = *tiles;
 
-					if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT)
+					if (TILE_TRANSPARENCY(tile) != TILE_TRANSPARENCY_TRANSPARENT &&
+							is_tile_obscured(layer_num,minx,miny) == 0)
 					{
+						const unsigned short *paldata;
+						const unsigned char *sd;
+						const struct GfxTileBank *gfxtilebank;
 						int i;
 
 
-						/* check opaqueness of all tiles above this one */
-						for (i = 0;i < layer_num;i++)
+						/* mark all tiles below this one as not clean */
+						for (i = layer_num + 1;i < MAX_LAYERS && Machine->layer[i];i++)
+							layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
+
+						gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
+
+						paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
+						sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
+
+						switch (TILE_TRANSPARENCY(tile))
 						{
-							if (are_tiles_opaque_norotate(i,minx,miny))
-							{
-								/* we are totally covered, no need to redraw */
-								break;
-							}
-						}
-						if (i == layer_num)
-						{
-							const unsigned short *paldata;
-							const unsigned char *sd;
-							const struct GfxTileBank *gfxtilebank;
-
-
-							/* mark all tiles below this one as not clean */
-							for (i = layer_num + 1;i < MAX_LAYERS && Machine->layer[i];i++)
-								layer_mark_block_dirty(Machine->layer[i],minx,miny,MARK_ALL_NOT_CLEAN);
-
-							gfxtilebank = layer->tilemap.gfxtilebank[TILE_BANK(tile)];
-
-							paldata = &gfxtilebank->colortable[gfxtilebank->color_granularity * TILE_COLOR(tile)];
-							sd = gfxtilebank->tiles[TILE_CODE(tile)].pen;
-
-							switch (TILE_TRANSPARENCY(tile))
-							{
 #define DOALLCOPIES \
 	switch (TILE_FLIP(tile) ^ flipx) {\
 		case 0:\
@@ -1166,12 +1226,12 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	}
 
 
-								case TILE_TRANSPARENCY_TRANSPARENT:
-									/* don't draw anything, totally transparent */
-									bm += dx;
-									break;
+							case TILE_TRANSPARENCY_TRANSPARENT:
+								/* don't draw anything, totally transparent */
+								bm += dx;
+								break;
 
-								case TILE_TRANSPARENCY_OPAQUE:
+							case TILE_TRANSPARENCY_OPAQUE:
 #define DOCOPY \
 	bm[0] = paldata[sd[0]];\
 	bm[1] = paldata[sd[1]];\
@@ -1191,13 +1251,13 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	bm[6] = paldata[sd[1]];\
 	bm[7] = paldata[sd[0]];
 
-									DOALLCOPIES
+								DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-									break;
+								break;
 
-								case TILE_TRANSPARENCY_PEN:
+							case TILE_TRANSPARENCY_PEN:
 {
 	unsigned char *mask;
 	unsigned char m;
@@ -1225,14 +1285,14 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	if (m & 0x40) bm[1] = paldata[sd[6]];\
 	if (m & 0x80) bm[0] = paldata[sd[7]];
 
-									DOALLCOPIESWITHMASK
+								DOALLCOPIESWITHMASK
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
 }
-									break;
+								break;
 
-								case TILE_TRANSPARENCY_COLOR:
+							case TILE_TRANSPARENCY_COLOR:
 #define DOCOPY \
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[0]])) == 0) bm[0] = paldata[sd[0]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[1]])) == 0) bm[1] = paldata[sd[1]];\
@@ -1252,22 +1312,22 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[6]])) == 0) bm[1] = paldata[sd[6]];\
 	if ((gfxtilebank->transparency_mask & (1<<paldata[sd[7]])) == 0) bm[0] = paldata[sd[7]];
 
-									DOALLCOPIES
+								DOALLCOPIES
 
 #undef DOCOPY
 #undef DOCOPY_FLIPX
-									break;
-							}
-
-							bm = bm - 8 * dy + dx;
+								break;
 						}
-						else bm += dx;
+
+						bm = bm - 8 * dy + dx;
 					}
 					else bm += dx;
 				}
 				else bm += dx;
 
 				tiles++;
+
+				minx += dx;
 			}
 
 			bm = bm - cols_to_copy * dx + 8 * dy;
@@ -1280,6 +1340,8 @@ static void draw_tilemap_core16(int layer_num,struct osd_bitmap *bitmap,int x,in
 		}
 
 		ebm += 8 * dy;
+
+		miny += (dy > 0) ? 8 : -8;
 	}
 #undef DATA_SIZE
 }
@@ -1786,7 +1848,7 @@ void free_tile_layer(struct GfxLayer *layer)
 
 void layer_mark_rectangle_dirty(struct GfxLayer *layer,int minx,int maxx,int miny,int maxy)
 {
-	int x,y;
+	int y;
 
 
 	if (layer == 0) return;
@@ -1830,16 +1892,13 @@ void layer_mark_rectangle_dirty(struct GfxLayer *layer,int minx,int maxx,int min
 
 	for (y = miny & ~0x07;y <= maxy;y += 8)
 	{
-		for (x = minx & ~0x07;x <= maxx;x += 8)
-		{
-			layer_mark_block_dirty(layer,x,y,MARK_ALL_DIRTY);
-		}
+		layer_mark_blocks_dirty(layer,minx,y,(maxx - minx) / 8 + 1);
 	}
 }
 
 void layer_mark_rectangle_dirty_norotate(struct GfxLayer *layer,int minx,int maxx,int miny,int maxy)
 {
-	int x,y;
+	int y;
 
 
 	if (layer == 0) return;
@@ -1851,10 +1910,7 @@ void layer_mark_rectangle_dirty_norotate(struct GfxLayer *layer,int minx,int max
 
 	for (y = miny & ~0x07;y <= maxy;y += 8)
 	{
-		for (x = minx & ~0x07;x <= maxx;x += 8)
-		{
-			layer_mark_block_dirty(layer,x,y,MARK_ALL_DIRTY);
-		}
+		layer_mark_blocks_dirty(layer,minx,y,(((maxx + 7) & 0x07) - (minx & 0x07)) / 8 + 1);
 	}
 }
 

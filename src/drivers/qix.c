@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Qix/ZooKeeper Memory Map
+Qix/ZooKeeper/Space Dungeon Memory Map
 ------------- ------ ---
 
 Qix uses two 6809 CPUs:  one for data and sound and the other for video.
@@ -363,6 +363,39 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sdungeon_input_ports )
+	PORT_START	/* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE, "Test Advance", OSD_KEY_F1, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test Next line", OSD_KEY_F2, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Up", OSD_KEY_F5, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Down", OSD_KEY_F6, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Coin switch */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+
+    PORT_START /* Game PIA 2 Port B */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( zoo_input_ports )
 	PORT_START	/* IN0 */
@@ -448,7 +481,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	256, 256,					/* screen_width, screen_height */
-	{ 0, 255, 8, 247 }, 		/* struct rectangle visible_area */
+	{ 0, 255, 8, 247 }, 		/* struct rectangle visible_area - just a guess */
 	0,							/* GfxDecodeInfo * */
 	256,						/* total colors */
 	0,							/* color table length */
@@ -508,7 +541,7 @@ static struct MachineDriver zoo_machine_driver =
 
 	/* video hardware */
 	256, 256,					/* screen_width, screen_height */
-	{ 0, 255, 8, 247 }, 		/* struct rectangle visible_area */
+	{ 0, 255, 8, 247 }, 		/* struct rectangle visible_area - just a guess */
 	0,							/* GfxDecodeInfo * */
 	256,						/* total colors */
 	0,							/* color table length */
@@ -537,6 +570,33 @@ static struct MachineDriver zoo_machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( sdungeon_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "sd14.u14", 0xA000, 0x1000, 0xf9c6981e )
+    ROM_LOAD( "sd15.u15", 0xB000, 0x1000, 0x9f512c93 )
+    ROM_LOAD( "sd16.u16", 0xC000, 0x1000, 0x3f462084 )
+    ROM_LOAD( "sd17.u17", 0xD000, 0x1000, 0xedd308f5 )
+    ROM_LOAD( "sd18.u18", 0xE000, 0x1000, 0xc50e5838 )
+    ROM_LOAD( "sd19.u19", 0xF000, 0x1000, 0xb0c02320 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD(  "sd05.u5", 0x0A000, 0x1000, 0xfdceac26 )
+    ROM_LOAD(  "sd06.u6", 0x0B000, 0x1000, 0x02049b9a )
+
+    ROM_LOAD(  "sd07.u7", 0x0C000, 0x1000, 0x0690b3fa )
+    ROM_LOAD(  "sd08.u8", 0x0D000, 0x1000, 0x5cf68752 )
+    ROM_LOAD(  "sd09.u9", 0x0E000, 0x1000, 0x606dd945 )
+    ROM_LOAD( "sd10.u10", 0x0F000, 0x1000, 0x85f6cf42 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "SD26.U26", 0xF000, 0x0800, 0xa078ff04)
+    ROM_LOAD( "SD27.U27", 0xF800, 0x0800, 0x51c8f2e2 )
+ROM_END
 
 ROM_START( qix_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
@@ -725,3 +785,22 @@ struct GameDriver zookeep_driver =
 	hiload,hisave		/* High score load and save */
 };
 
+struct GameDriver sdungeon_driver =
+{
+    "Space Dungeon",
+    "sdungeon",
+    "John Butler\nEd Mueller\nAaron Giles\nMarco Cassili\nDan Boris",
+	&machine_driver,
+
+    sdungeon_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+    sdungeon_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};

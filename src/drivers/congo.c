@@ -51,7 +51,7 @@ NMI causes a ROM/RAM test.
 
 extern unsigned char *congo_background_position;
 extern unsigned char *congo_background_enable;
-void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  congo_vh_start(void);
 void congo_vh_stop(void);
 void congo_vh_screenrefresh(struct osd_bitmap *bitmap);

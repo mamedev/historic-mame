@@ -48,7 +48,7 @@ void tutankhm_palette_w(int offset,int data)
 	bit2 = (data >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	osd_modify_pen(Machine->pens[offset], r, g, b);
+	palette_change_color(offset,r,g,b);
 }
 
 

@@ -79,7 +79,7 @@ void docastle_shared0_w(int offset,int data);
 void docastle_shared1_w(int offset,int data);
 void docastle_nmitrigger(int offset,int data);
 
-void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void docastle_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int docastle_vh_start(void);
 void docastle_vh_stop(void);
 void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);

@@ -27,7 +27,7 @@ DECLARE_COLOR_DEPTH_LIST(
 void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
 void joy_calibration(void);
 
-static struct osd_bitmap *bitmap;
+static struct osd_bitmap *scrbitmap;
 static unsigned char current_palette[256][3];
 static unsigned char current_background_color;
 static PALETTE adjusted_palette;
@@ -178,11 +178,11 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 	}
 
 
-	if (bitmap == Machine->scrbitmap)
+	if (bitmap == scrbitmap)
 	{
 		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
 
-		/* signal the layer system that the screenneeds a complete refresh */
+		/* signal the layer system that the screen needs a complete refresh */
 		layer_mark_full_screen_dirty();
 	}
 }
@@ -508,17 +508,16 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	set_ui_visarea (skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
 }
 
+
+
 int game_width;
 int game_height;
 int game_attributes;
 
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. Attributes are the ones defined in driver.h. */
-/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
-/* in *pens the pen values corresponding to the requested colors. */
 /* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,unsigned int totalcolors,
-		const unsigned char *palette,unsigned short *pens,int attributes)
+struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 {
 	int i;
 
@@ -566,47 +565,16 @@ struct osd_bitmap *osd_create_display(int width,int height,unsigned int totalcol
 	game_attributes = attributes;
 
 	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
-		bitmap = osd_new_bitmap(width,height,16);
+		scrbitmap = osd_new_bitmap(width,height,16);
 	else
-		bitmap = osd_new_bitmap(width,height,8);
+		scrbitmap = osd_new_bitmap(width,height,8);
 
-	if (!bitmap) return 0;
+	if (!scrbitmap) return 0;
 
 	if (!osd_set_display(width, height, attributes))
 		return 0;
 
-	if (bitmap->depth == 16)
-	{
-		int r,g,b;
-
-
-		for (r = 0; r < 32; r++)
-			for (g = 0; g < 32; g++)
-				for (b = 0; b < 32; b++)
-					*pens++ = makecol(8*r,8*g,8*b);
-	}
-	else
-	{
-		/* initialize the palette */
-		for (i = 0;i < 256;i++)
-		{
-			current_palette[i][0] = current_palette[i][1] = current_palette[i][2] = 0;
-		}
-
-		/* fill the palette starting from the end, so we mess up badly written */
-		/* drivers which don't go through Machine->pens[] */
-		for (i = 0;i < totalcolors;i++)
-			pens[i] = 255-i;
-
-		for (i = 0;i < totalcolors;i++)
-		{
-			current_palette[pens[i]][0] = palette[3*i];
-			current_palette[pens[i]][1] = palette[3*i+1];
-			current_palette[pens[i]][2] = palette[3*i+2];
-		}
-	}
-
-	return bitmap;
+	return scrbitmap;
 }
 
 /* set the actual display screen but don't allocate the screen bitmap */
@@ -698,7 +666,7 @@ int osd_set_display(int width,int height, int attributes)
 		for (mode=gfx_mode; mode>=GFX_VESA1; mode--)
 		{
 			/* try 5-6-5 first and 5-5-5 in case of 16 bit colors */
-			bits = bitmap->depth;
+			bits = scrbitmap->depth;
 			set_color_depth(bits);
 
 			if (errorlog)
@@ -725,7 +693,7 @@ int osd_set_display(int width,int height, int attributes)
 		if (mode < GFX_VESA1)
 		{
 			printf ("\nNo %d-bit %dx%d VESA mode available.\n",
-					bitmap->depth,gfx_width,gfx_height);
+					scrbitmap->depth,gfx_width,gfx_height);
 			printf ("\nPossible causes:\n"
 "1) Your video card does not support VESA modes at all. Almost all\n"
 "   video cards support VESA modes natively these days, so you probably\n"
@@ -801,19 +769,67 @@ void osd_close_display(void)
 {
 	set_gfx_mode(GFX_TEXT,80,25,0,0);
 
-	if (bitmap)
+	if (scrbitmap)
 	{
-		osd_free_bitmap(bitmap);
-		bitmap = NULL;
+		osd_free_bitmap(scrbitmap);
+		scrbitmap = NULL;
 	}
 }
 
 
+
+/* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
+/* in *pens the pen values corresponding to the requested colors. */
+/* If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled */
+/* with pen values corresponding to a 5-5-5 15-bit palette */
+void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens)
+{
+	if (totalcolors == 32768)
+	{
+		int r,g,b;
+
+
+		for (r = 0; r < 32; r++)
+			for (g = 0; g < 32; g++)
+				for (b = 0; b < 32; b++)
+					*pens++ = makecol((r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+	}
+	else
+	{
+		int i;
+
+
+		/* initialize the palette */
+		for (i = 0;i < 256;i++)
+			current_palette[i][0] = current_palette[i][1] = current_palette[i][2] = 0;
+
+		/* fill the palette starting from the end, so we mess up badly written */
+		/* drivers which don't go through Machine->pens[] */
+		for (i = 0;i < totalcolors;i++)
+			pens[i] = 255-i;
+
+		for (i = 0;i < totalcolors;i++)
+		{
+			current_palette[pens[i]][0] = palette[3*i];
+			current_palette[pens[i]][1] = palette[3*i+1];
+			current_palette[pens[i]][2] = palette[3*i+2];
+		}
+	}
+
+	/* do a first screen update to pick the */
+	/* background pen before the copyright screen is displayed. */
+	osd_update_display();
+	/* the first call picked the color, the second call actually refreshes the screen */
+	osd_update_display();
+}
+
+
+
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue)
 {
-	if (bitmap->depth != 8)
+	if (scrbitmap->depth != 8)
 	{
-		if (errorlog) fprintf(errorlog,"error: osd_modify_pen() doesn't work with %d bit video modes.\n",bitmap->depth);
+		if (errorlog) fprintf(errorlog,"error: osd_modify_pen() doesn't work with %d bit video modes.\n",scrbitmap->depth);
 		return;
 	}
 
@@ -835,7 +851,7 @@ void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned cha
 
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue)
 {
-	if (bitmap->depth == 16)
+	if (scrbitmap->depth == 16)
 	{
 		*red = getr(pen);
 		*green = getg(pen);
@@ -945,10 +961,10 @@ void update_screen(void)
 
 
 			width = gfx_width;
-			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
+			width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
 			columns4 = gfx_display_columns/4;
 			address = 0xa0000 + gfx_xoffset + gfx_yoffset * width;
-			lb = (unsigned long *)(bitmap->line[skiplines] + skipcolumns);
+			lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
 			for (y = 0; y < gfx_display_lines; y++)
 			{
 				if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
@@ -968,8 +984,8 @@ void update_screen(void)
 			src_seg = _my_ds();
 			dest_seg = screen->seg;
 			vesa_line = gfx_yoffset;
-			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
-			depth = bitmap->depth;
+			width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+			depth = scrbitmap->depth;
 			if (depth == 8)
 			{
 				xoffs = gfx_xoffset;
@@ -983,7 +999,7 @@ void update_screen(void)
 				skipcol2 = skipcolumns*2;
 			}
 
-			lb = (unsigned long *)(bitmap->line[skiplines] + skipcol2 );
+			lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
 			for (y = 0; y < gfx_display_lines; y++)
 			{
 				if (Machine->dirtylayer->dirtyline[(y+skiplines) >> 3] != 0)
@@ -1023,10 +1039,10 @@ void update_screen(void)
 
 
 			width = gfx_width;
-			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
+			width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
 			columns4 = gfx_display_columns/4;
 			address = 0xa0000 + gfx_xoffset + gfx_yoffset * width;
-			lb = (unsigned long *)(bitmap->line[skiplines] + skipcolumns);
+			lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
 			for (y = 0; y < gfx_display_lines; y++)
 			{
 				if (!use_dirty || (dirty_new[y+skiplines]+dirty_old[y+skiplines]) != 0)
@@ -1046,8 +1062,8 @@ void update_screen(void)
 			src_seg = _my_ds();
 			dest_seg = screen->seg;
 			vesa_line = gfx_yoffset;
-			width4 = (bitmap->line[1] - bitmap->line[0]) / 4;
-			depth = bitmap->depth;
+			width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+			depth = scrbitmap->depth;
 			if (depth == 8)
 			{
 				xoffs = gfx_xoffset;
@@ -1061,7 +1077,7 @@ void update_screen(void)
 				skipcol2 = skipcolumns*2;
 			}
 
-			lb = (unsigned long *)(bitmap->line[skiplines] + skipcol2 );
+			lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
 			for (y = 0; y < gfx_display_lines; y++)
 			{
 				if (!use_dirty || (dirty_new[y+skiplines]+dirty_old[y+skiplines]) != 0)
@@ -1125,7 +1141,7 @@ void clear_screen(void)
 		src_seg = _my_ds();
 		dest_seg = screen->seg;
 		columns4 = gfx_width/4;
-		if (bitmap->depth == 16)
+		if (scrbitmap->depth == 16)
 		{
 			/* TODO: support clearing a 16-bit video mode */
 			return;
@@ -1146,12 +1162,18 @@ static inline void pan_display(void)
 		if (osd_key_pressed(OSD_KEY_PGUP))
 		{
 			if (skipcolumns < skipcolumnsmax)
+			{
 				skipcolumns++;
+				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			}
 		}
 		if (osd_key_pressed(OSD_KEY_PGDN))
 		{
 			if (skipcolumns > skipcolumnsmin)
+			{
 				skipcolumns--;
+				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			}
 		}
 	}
 	else /*  vertical panning */
@@ -1159,12 +1181,18 @@ static inline void pan_display(void)
 		if (osd_key_pressed(OSD_KEY_PGDN))
 		{
 			if (skiplines < skiplinesmax)
+			{
 				skiplines++;
+				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			}
 		}
 		if (osd_key_pressed(OSD_KEY_PGUP))
 		{
 			if (skiplines > skiplinesmin)
+			{
 				skiplines--;
+				osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+			}
 		}
 	}
 
@@ -1202,16 +1230,16 @@ static void save_screen(void)
 	get_palette(pal);
 	if (gfx_mode == GFX_VGA)
 	{
-		bmp = create_bitmap(bitmap->width,bitmap->height);
-		for (y = 0;y < bitmap->height;y++)
-			memcpy(bmp->line[y],bitmap->line[y],bitmap->width);
+		bmp = create_bitmap(scrbitmap->width,scrbitmap->height);
+		for (y = 0;y < scrbitmap->height;y++)
+			memcpy(bmp->line[y],scrbitmap->line[y],scrbitmap->width);
 	}
 	else /* VESA modes */
 	{
 		int width, height;
 
-		width = bitmap->width-skipcolumns;
-		height = bitmap->height-skiplines;
+		width = scrbitmap->width-skipcolumns;
+		height = scrbitmap->height-skiplines;
 
 		if (doubling)
 		{
@@ -1242,6 +1270,11 @@ void osd_update_display(void)
 	extern int frameskip;
 	static int vups,vfcount;
 	int need_to_clear_bitmap = 0;
+
+
+	/* Check for PGUP, PGDN and pan screen */
+	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
+		pan_display();
 
 
 	if (osd_key_pressed(OSD_KEY_F8))
@@ -1368,7 +1401,7 @@ void osd_update_display(void)
 		joy_calibration();
 
 
-	if (bitmap->depth == 8)
+	if (scrbitmap->depth == 8)
 	{
 		if (osd_key_pressed(OSD_KEY_LSHIFT) &&
 				(osd_key_pressed(OSD_KEY_PLUS_PAD) || osd_key_pressed(OSD_KEY_MINUS_PAD)))
@@ -1455,9 +1488,6 @@ void osd_update_display(void)
 				{
 					/* update the background areas of the screen to the new color */
 					clear_screen();
-/* TODO: this is just a temporary kludge to avoid drawing colored borders around the */
-/* vidible area, until we implement clipping in the video refresh code */
-need_to_clear_bitmap = 1;
 
 					inportb(STATUS_ADDR);  		/* reset read/write flip-flop */
 					outportb(ATTRCON_ADDR, 0x11 | 0x20);
@@ -1472,11 +1502,7 @@ need_to_clear_bitmap = 1;
 	update_screen();
 
 	if (need_to_clear_bitmap)
-		osd_clearbitmap(Machine->scrbitmap);
-
-	/* Check for PGUP, PGDN and pan screen */
-	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
-		pan_display();
+		osd_clearbitmap(scrbitmap);
 
 	if (use_dirty)
 	{

@@ -40,7 +40,7 @@ extern unsigned char *mrdo_scroll_y;
 void mrdo_videoram2_w(int offset,int data);
 void mrdo_colorram2_w(int offset,int data);
 void mrdo_flipscreen_w(int offset,int data);
-void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int mrdo_vh_start(void);
 void mrdo_vh_stop(void);
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);

@@ -64,10 +64,9 @@ extern unsigned char *zaxxon_char_color_bank;
 extern unsigned char *zaxxon_background_position;
 extern unsigned char *zaxxon_background_color_bank;
 extern unsigned char *zaxxon_background_enable;
-void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  zaxxon_vh_start(void);
 void zaxxon_vh_stop(void);
-void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void zaxxon_sound_w(int offset, int data);

@@ -114,7 +114,10 @@ static int DasmToFile(char *param);
 static int DisplayMemory(char *param);
 static int DisplayCode(char *param);
 static int EditMemory(char *param);
+static int FastDebug(char *param);
 static int TraceToFile(char *param);	/* JB 980214 */
+static int SetWatchPoint(char *param);	/* EHC 980506 */
+static int ClearWatchPoint(char *param);	/* EHC 980506 */
 
 /* private functions */
 static void DrawMemWindow (int Base, int Col, int Offset, int DisplayASCII);	/* MB 980103 */
@@ -126,7 +129,6 @@ static void debug_draw_flags (void);
 static void debug_draw_registers (void);
 
 static void EditRegisters (int);
-static int  debug_key_pressed (void);
 static int	IsRegister(int cputype, char *);
 static unsigned long GetAddress(int cputype, char *src);
 
@@ -177,7 +179,7 @@ typedef struct
 
 
 /* LEAVE cmNOMORE as last Command! */
-enum { cmBPX, cmBC, cmD, cmDASM, cmDUMP, cmE, cmG, cmHERE, cmJ, cmR, cmTRACE, cmNOMORE };
+enum { cmBPX, cmBC, cmD, cmDASM, cmDUMP, cmE, cmF, cmG, cmHERE, cmJ, cmR, cmTRACE, cmWPX, cmWC, cmNOMORE };
 
 typedef struct
 {
@@ -196,11 +198,14 @@ static tCommands CommandInfo[] =
 	{	cmDASM,	"DASM ",	"Dasm <FileName> <StartAddr> <EndAddr>", DasmToFile },
 	{	cmDUMP,	"DUMP ",	"Dump <FileName> <StartAddr> <EndAddr>", DumpToFile },
 	{   cmE,	"E ",		"Edit <1|2> [address]", EditMemory },
+	{   cmF,	"F ",		"Fast", FastDebug },
 	{	cmG,	"G ", 		"Go <address>", Go },
 	{	cmHERE,	"HERE ",	"Run to cursor", Here },
 	{	cmJ,	"J ",		"Jump <Address>", DisplayCode },
 	{	cmR,	"R ",		"r [register] = [register|value]", ModifyRegisters },
 	{	cmTRACE,"TRACE ",	"Trace <FileName>|OFF", TraceToFile },	/* JB 980214 */
+	{	cmWPX,	"WPX ",		"Set Watchpoint <Address>", SetWatchPoint },	/* EHC 980506 */
+	{	cmWC,	"WC ",		"Clear Watchpoint", ClearWatchPoint },	/* EHC 980506 */
 	{   cmNOMORE },
 };
 

@@ -63,7 +63,7 @@ static struct rectangle backgroundvisiblearea =
   bit 0 -- 2.2kohm resistor -- inverter  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void punchout_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void punchout_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,j,used;
 	unsigned char allocated[3*256];

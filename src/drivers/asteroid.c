@@ -46,7 +46,7 @@ XX0XXXXX   Hard gameplay throughout the game      +
 01XXXXXX   Bonus ship every 15,000 points !
 00XXXXXX   No bonus ships (adds one ship at game start)
 
-+ only with the newer romset  
++ only with the newer romset
 ! not "every", but "at", e.g. only once.
 
 Thanks to Gregg Woodcock for the info.
@@ -253,7 +253,7 @@ static struct MemoryWriteAddress llander_writemem[] =
 /*	{ 0x0100, 0x01ff, MWA_RAM },*/
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x3000, 0x3000, avgdvg_go },
-/*	{ 0x3200, 0x3200, llander_led_w }, */
+	{ 0x3200, 0x3200, llander_led_w },
 	{ 0x3400, 0x3400, watchdog_reset_w },
 	{ 0x3c00, 0x3c00, llander_sounds_w },
 /*	{ 0x3e00, 0x3e00, llander_snd_reset }, */
@@ -547,7 +547,7 @@ static struct MachineDriver asteroid_machine_driver =
 			0,
 			asteroid_readmem,asteroid_writemem,0,0,
 			0, 0, /* no vblank based interrupt */
-			asteroid_interrupt, 240 /* 240Hz? */
+			asteroid_interrupt, 250 /* 250Hz? */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -614,7 +614,7 @@ static struct MachineDriver astdelux_machine_driver =
 			0,
 			astdelux_readmem,astdelux_writemem,0,0,
 			0, 0, /* no vblank based interrupt */
-			asteroid_interrupt, 240 /* 240Hz? */
+			asteroid_interrupt, 250 /* 250Hz? */
 		}
 	},
 	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -664,7 +664,7 @@ static struct MachineDriver llander_machine_driver =
 			0,
 			llander_readmem, llander_writemem,0,0,
 			0, 0, /* no vblank based interrupt */
-			llander_interrupt, 240 /* 240Hz? */
+			llander_interrupt, 250 /* 250Hz? */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */

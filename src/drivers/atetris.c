@@ -32,8 +32,6 @@ Write
 
 extern unsigned char *atetris_paletteram;
 
-int  atetris_vh_start(void);
-void atetris_vh_stop(void);
 void atetris_vh_screenrefresh(struct osd_bitmap *bitmap);
 int  atetris_slapstic_r(int offset);
 void atetris_palette_w(int offset, int data);
@@ -185,8 +183,8 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	atetris_vh_start,
-	atetris_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	atetris_vh_screenrefresh,
 
 	/* sound hardware */

@@ -92,7 +92,7 @@ void bosco_init_machine(void);
 void bosco_cpu_reset_w(int offset, int data);
 int  bosco_vh_start(void);
 void bosco_vh_screenrefresh(struct osd_bitmap *bitmap);
-void bosco_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 extern unsigned char *bosco_videoram2,*bosco_colorram2;
 extern unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;

@@ -78,7 +78,7 @@ static int t[2] = { 0,0 };
 void mario_gfxbank_w(int offset,int data);
 void mario_palettebank_w(int offset,int data);
 int  mario_vh_start(void);
-void mario_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mario_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mario_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 /*

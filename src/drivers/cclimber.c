@@ -137,7 +137,7 @@ extern unsigned char *cclimber_column_scroll;
 void cclimber_flipscreen_w(int offset,int data);
 void cclimber_colorram_w(int offset,int data);
 void cclimber_bigsprite_videoram_w(int offset,int data);
-void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int cclimber_vh_start(void);
 void cclimber_vh_stop(void);
 void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -1094,7 +1094,7 @@ struct GameDriver monkeyd_driver =
 
 void swimmer_bgcolor_w(int offset,int data);
 void swimmer_palettebank_w(int offset,int data);
-void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap);
 void swimmer_sidepanel_enable_w(int offset,int data);
 
@@ -1574,6 +1574,57 @@ ROM_END
 
 
 
+static int swimmer_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	/* check if the hi score table has already been initialized */
+	/* Look for "TEK" in the 1st and 5th positions */
+	if (memcmp(&RAM[0x84e6],"\x54\x45\x48",3) == 0 &&
+			memcmp(&RAM[0x850a],"\x54\x45\x48",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x84e0],9*5);
+			osd_fclose(f);
+
+			RAM[0x8577] = RAM[0x84e0];
+			RAM[0x8578] = RAM[0x84e1];
+			RAM[0x8579] = RAM[0x84e2];
+			RAM[0x857a] = RAM[0x84e3];
+			RAM[0x857b] = RAM[0x84e4];
+			RAM[0x857c] = RAM[0x84e5];
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+
+
+static void swimmer_hisave(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x84e0],9*5);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver swimmer_driver =
 {
 	"Swimmer",
@@ -1591,7 +1642,7 @@ struct GameDriver swimmer_driver =
 	swimmer_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	swimmer_hiload, swimmer_hisave
 };
 
 struct GameDriver swimmera_driver =
@@ -1611,7 +1662,7 @@ struct GameDriver swimmera_driver =
 	swimmer_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	swimmer_hiload, swimmer_hisave
 };
 
 struct GameDriver guzzler_driver =

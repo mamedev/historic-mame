@@ -66,7 +66,7 @@ and 1 SFX channel controlled by an 8039:
 extern unsigned char *gyruss_spritebank,*gyruss_6809_drawplanet,*gyruss_6809_drawship;
 void gyruss_queuereg_w(int offset, int data);
 void gyruss_flipscreen_w(int offset, int data);
-void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int gyruss_portA_r(int offset);

@@ -761,7 +761,7 @@ printpfattributes();
 
 /******************************************************************************/
 
-void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap)
+void heavyb_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
    int xscroll_f,yscroll_f,xscroll_b,yscroll_b;
    int scrollx,scrolly;
@@ -1125,26 +1125,6 @@ void dec1_recalc_palette(int offset)
 	Machine->gfx[0]->colortable[1024 + offset/2] = Machine->pens[pen];
 }
 
-/***************************************************************************
-
-	Set up some colours...  Each game will set it's own palette when run
-
-***************************************************************************/
-void dec0_dummy_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	for (i = 0;i < Machine->drv->total_colors;i++) {
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		colortable[i] = i;
-}
-
 /******************************************************************************/
 
 void dec0_palette_24bit_rg(int offset,int data)
@@ -1418,7 +1398,7 @@ void dec0_vh_stop (void)
 
 	osd_free_bitmap(dec0_pf2_bitmap);
 	osd_free_bitmap(dec0_pf3_bitmap);
-
+	osd_free_bitmap(dec0_pf1_bitmap);
 	free(dec0_pf3_data);
 	free(dec0_pf2_data);
 	free(dec0_pf1_data);

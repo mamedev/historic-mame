@@ -470,7 +470,7 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,readport,writeport,
 			0,0, /* no vblank interrupt */
-			interrupt, 240 /* 240 Hz */
+			interrupt, 250 /* 250 Hz */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -478,7 +478,7 @@ static struct MachineDriver machine_driver =
 			2, 		/* memory region 1*/
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			0, 0, /* no vblank interrupt */
-			nmi_interrupt, 240 /* 240 Hz */
+			nmi_interrupt, 250 /* 250 Hz */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */

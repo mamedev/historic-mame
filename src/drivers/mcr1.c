@@ -44,8 +44,8 @@ DSW1
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void mcr1_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void solarfox_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mcr1_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void solarfox_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap);
 void mcr1_palette_w(int offset,int data);
 extern unsigned char *mcr1_paletteram;

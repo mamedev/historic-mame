@@ -53,7 +53,7 @@ static int total_stars;
   bit 0 -- 150 ohm resistor  -- RED
 
 ***************************************************************************/
-void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 

@@ -320,7 +320,7 @@ static struct MachineDriver berzerk_machine_driver =
 	{
 			{
 					CPU_Z80,
-					4000000,        /* 4 Mhz ??? */
+					2500000,        /* 2.5 MHz ? */
 					0,
 					readmem,writemem,readport,writeport,
 					berzerk_interrupt,8
@@ -362,7 +362,7 @@ static struct MachineDriver frenzy_machine_driver =
 	{
 		{
 			CPU_Z80,
-			4000000,        /* 4 Mhz ??? */
+			2500000,        /* 2.5 MHz ? */
 			0,
 			frenzy_readmem,frenzy_writemem,readport,writeport,
 			berzerk_interrupt,8

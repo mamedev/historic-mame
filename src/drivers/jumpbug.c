@@ -41,7 +41,7 @@ write:
 extern unsigned char *jumpbug_attributesram;
 extern unsigned char *jumpbug_gfxbank;
 extern unsigned char *jumpbug_stars;
-void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void jumpbug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void jumpbug_attributes_w(int offset,int data);
 void jumpbug_gfxbank_w(int offset,int data);
 void jumpbug_stars_w(int offset,int data);

@@ -41,7 +41,7 @@ int ladybug_IN0_r(int offset);
 int ladybug_IN1_r(int offset);
 int ladybug_interrupt(void);
 
-void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void ladybug_flipscreen_w(int offset,int data);
 void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
 

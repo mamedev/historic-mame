@@ -34,7 +34,7 @@ Write:
 extern unsigned char *ironhors_scroll;
 static unsigned char *ironhors_interrupt_enable;
 
-void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void ironhors_palettebank_w(int offset,int data);
 void ironhors_charbank_w(int offset,int data);
 void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap);

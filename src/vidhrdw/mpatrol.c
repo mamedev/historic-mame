@@ -52,7 +52,7 @@ static struct osd_bitmap *bgbitmap;
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)

@@ -86,7 +86,7 @@ int foodf_interrupt(void);
 int foodf_vh_start(void);
 void foodf_vh_stop(void);
 
-void foodf_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void foodf_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void foodf_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

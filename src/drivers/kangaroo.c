@@ -108,7 +108,7 @@ void kangaroo_sec_chip_w(int offset,int val);
 /* vidhrdw */
 extern unsigned char *kangaroo_bank_select;
 extern unsigned char *kangaroo_blitter;
-void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  kangaroo_vh_start(void);
 void kangaroo_vh_stop(void);
 void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap);

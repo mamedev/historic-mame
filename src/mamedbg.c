@@ -1,7 +1,7 @@
 /*		The MAME Debugger!
  *
  *		Written by:   Martin Scragg, John Butler, Mirko Buffoni
- *		              Chris Moore, Aaron Giles
+ *		              Chris Moore, Aaron Giles, Ernesto Corvi
  *
  *		Powered by the new Command-Line parser!    (MB: 980204)
  *		Many commands accept either a value or a register name.
@@ -26,6 +26,8 @@
  *		-  E    <1|2> [address]     Edit an address on viewport 1 or
  *									2.  Default to not changing the
  *									location which the viewport is editing.
+ *		-  F                        Run fast.  Ignore breakpoints, etc.
+ *                                  Just watch for TILDE being pressed.
  *		-  G    <address>           Continue execution.  If an address is
  *		                            provided, MDB will set a breakpoint there
  *		-  HERE                     Set a temporary breakpoint to current
@@ -36,6 +38,8 @@
  *		        <register|value>    the first register is edited.  If only the
  *		                            first parameter is given, it will edit
  *		                            <register>.
+ *		-  WPX	<address>			Set a Watchpoint for the currently active cpu
+ *		-  WC						Clear Watchpoint for the currently active cpu
  *
  *		During memory editing, it is possible to search for a string by
  *		pressing S.  This doesn't work yet on 68K systems if string is not
@@ -76,6 +80,8 @@
 static int MEM1 = MEM1DEFAULT;	/* JB 971210 */
 static int MEM2 = MEM2DEFAULT;	/* JB 971210 */
 
+extern int debug_key_pressed;	/* JB 980505 */
+
 /* globals */
 static int              BreakPoint[5] = { -1, -1, -1, -1, -1 };
 static int              TempBreakPoint = -1;	/* MB 980103 */
@@ -91,7 +97,9 @@ static int              DisplayASCII[2] = { FALSE, FALSE };	/* MB 980103 */
 static int				InDebug=FALSE;
 static int				Update;
 static int				gCurrentTraceCPU = -1;	/* JB 980214 */
-
+static int				DebugFast = 0; /* CM 980506 */
+static int				CPUWatchpoint[5] = { -1, -1, -1, -1, -1 };	/* EHC 980506 */
+static int				CPUWatchdata[5] = { -1, -1, -1, -1, -1 };	/* EHC 980506 */
 
 /* Draw the screen outline */
 static void DrawDebugScreen8 (int TextCol, int LineCol)
@@ -532,6 +540,38 @@ static int ClearBreakPoint(char *param)
 	return 0;
 }
 
+/* EHC 980506 */
+/* WPX <addr> */
+static int SetWatchPoint(char *param)
+{
+	int	i,nCorrectParams = 0;
+	char s1[20];
+	char *pr = param;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	nCorrectParams = sscanf(param, "%s", s1);
+	if (nCorrectParams > 0)
+	{
+		int addr = GetAddress(cputype, s1);
+		CPUWatchpoint[activecpu] = addr & DebugInfo[cputype].AddMask;
+		CPUWatchdata[activecpu] = cpuintf[cputype].memory_read( CPUWatchpoint[activecpu] );
+		return 0;
+	}
+
+	return -1;
+}
+
+/* EHC 980506 */
+/* WPC */
+static int ClearWatchPoint(char *param)
+{
+	CPUWatchpoint[activecpu] = -1;
+	return 0;
+}
+
 static int Here(char *param)
 {
 	TempBreakPoint = CursorPC;
@@ -609,6 +649,12 @@ static int EditMemory(char *param)
 						  3, 10, MEM1_COLOUR, MEM1, &DisplayASCII[0]);
 	}
 	return rv;
+}
+
+static int FastDebug(char *param)
+{
+	DebugFast = 1;
+	return Go("");
 }
 
 static int DisplayMemory(char *param)
@@ -1421,24 +1467,10 @@ static void EditRegisters (int Which)
 	cpuintf[cputype].set_regs(rgs);
 }
 
-static int debug_key_pressed (void)
-{
-	static int	delay = 0;
-
-	if (++delay==0x7fff)
-	{
-		delay = 0;
-		return osd_key_pressed (OSD_KEY_TILDE);
-	}
-	else
-		return FALSE;
-}
-
-
 static int DisplayCommandInfo(char * commandline, char * command)
 {
 	int i,found,offst, rv = -1;
-	char info[80] = "\0";
+	char info[90] = "\0";
 
 	sprintf(info, "%-67s", " ");
 	ScreenPutString(info, INSTRUCTION_COLOUR, 10, 21);
@@ -1512,19 +1544,31 @@ void MAME_Debug (void)
 	static int		FirstTime = TRUE;
 	int				Key;
 
-	memset(CommandLine,0,80);
-	memset(Command,0,80);
+	if (DebugFast)
+	{
+		if (debug_key_pressed)
+			DebugFast = 0;
+		else
+			return;
+	}
+
+	*CommandLine = '\0';
+	*Command = '\0';
+
 	activecpu = cpu_getactivecpu ();
 	cputype = Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK;
 	cpuintf[cputype].get_regs(rgs);
 
-	/* JB 980214 -- Call CPU trace function */
-	if (activecpu != gCurrentTraceCPU)
+	if (traceon)				/* CM 980505 - skip if trace is off */
 	{
-		gCurrentTraceCPU = activecpu;
-		asg_TraceSelect (gCurrentTraceCPU);
+		/* JB 980214 -- Call CPU trace function */
+		if (activecpu != gCurrentTraceCPU)
+		{
+			gCurrentTraceCPU = activecpu;
+			asg_TraceSelect (gCurrentTraceCPU);
+		}
+		DebugInfo[cputype].Trace(cpu_getpc ());
 	}
-	DebugInfo[cputype].Trace(cpu_getpc ());
 
 	if (PreviousSP)
 	{
@@ -1555,10 +1599,20 @@ void MAME_Debug (void)
 	}
 
 	/* Check for breakpoint or tilde key to enter debugger */
-	if (cpu_getpc()==BreakPoint[activecpu] || cpu_getpc() == TempBreakPoint ||	/* MB 980103 */
-			debug_key_pressed () || FirstTime || ((CPUBreakPoint >= 0) && (activecpu != CPUBreakPoint)))    /* MB 980121 */
+	if ((BreakPoint[activecpu] != -1 && cpu_getpc()==BreakPoint[activecpu]) ||
+		(TempBreakPoint != -1 && cpu_getpc() == TempBreakPoint) ||/*MB 980103*/
+		( ( CPUWatchpoint[activecpu] >= 0 ) && ( cpuintf[cputype].memory_read( CPUWatchpoint[activecpu] ) != CPUWatchdata[activecpu] ) ) || /* EHC 980506 */
+		debug_key_pressed /* JB 980505 */ || FirstTime || ((CPUBreakPoint >= 0) && (activecpu != CPUBreakPoint)))    /* MB 980121 */
 	{
 		uclock_t	curr = uclock();
+
+		debug_key_pressed = 0;	/* JB 980505 */
+
+		/* EHC 980506 - Watchpoint support */
+		if ( ( ( CPUWatchpoint[activecpu] >= 0 ) && ( cpuintf[cputype].memory_read( CPUWatchpoint[activecpu] ) != CPUWatchdata[activecpu] ) ) ) {
+			/* if we dropped in because of a watchpoint, update it with the new value */
+			CPUWatchdata[activecpu] = cpuintf[cputype].memory_read( CPUWatchpoint[activecpu] );
+		}
 
 		osd_set_mastervolume(0);
 		do

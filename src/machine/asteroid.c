@@ -173,10 +173,26 @@ int llander_IN0_r (int offset)
 	return res;
 }
 
+
+/* Lunar lander LED port seems to be mapped thus:
+
+   NNxxxxxx - Apparently unused
+   xxNxxxxx - Unknown gives 4 high pulses of variable duration when coin put in ?
+   xxxNxxxx - Start    Lamp ON/OFF == 0/1
+   xxxxNxxx - Training Lamp ON/OFF == 1/0
+   xxxxxNxx - Cadet    Lamp ON/OFF
+   xxxxxxNx - Prime    Lamp ON/OFF
+   xxxxxxxN - Command  Lamp ON/OFF
+
+   Selection lamps seem to all be driver 50/50 on/off during attract mode ?
+
+*/
+
 void llander_led_w (int offset,int data)
 {
-	osd_led_w (0, ~(data >> 1));
-	osd_led_w (1, ~data);
+//	if (errorlog) fprintf (errorlog, "LANDER LED: %02x\n",data);
+
+	osd_led_w (0,~((data>>4)&0x01));
 }
 
 int llander_zeropage_r(int offset)

@@ -52,7 +52,7 @@ VBlank duration: 1/VSYNC * (20/132) = 2500 us
 
 
 
-void pengo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pengo_updatehook0(int offset);
 void pengo_gfxbank_w(int offset,int data);
 int pengo_vh_start(void);

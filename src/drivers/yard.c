@@ -18,7 +18,7 @@ extern unsigned char *yard_scroll_x_high;
 extern unsigned char *yard_scroll_y_low;
 extern unsigned char *yard_sprite_priority; /* JB 970912 */
 
-void yard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int yard_vh_start(void);
 void yard_vh_stop(void);
 void yard_vh_screenrefresh(struct osd_bitmap *bitmap);

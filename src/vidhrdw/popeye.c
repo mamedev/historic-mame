@@ -53,36 +53,101 @@ static struct osd_bitmap *tmpbitmap2;
 TODO: properly implement the above values. The current palette is an approximation.
 
 ***************************************************************************/
-void popeye_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void popeye_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 
+	/* background - darker than the others */
+	for (i = 0;i < 32;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
+
+		color_prom++;
+	}
+
+	/* characters */
+	for (i = 0;i < 16;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+	color_prom += 16;	/* skip unused part of the PROM */
+
+	/* sprites */
 	for (i = 0;i < 256;i++)
 	{
-		int bits;
+		int bit0,bit1,bit2;
 
 
-		bits = (i >> 0) & 0x07;
-		palette[3*i] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 3) & 0x07;
-		palette[3*i + 1] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 6) & 0x03;
-		palette[3*i + 2] = bits | (bits >> 2) | (bits << 4) | (bits << 6);
+		/* red component */
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[0] >> 3) & 0x01;
+		bit1 = (color_prom[256] >> 0) & 0x01;
+		bit2 = (color_prom[256] >> 1) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (color_prom[256] >> 2) & 0x01;
+		bit2 = (color_prom[256] >> 3) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
-	for (i = 0;i < 32;i++)	/* characters */
-	{
-		colortable[2*i] = 0;
-		colortable[2*i + 1] = color_prom[i];
-	}
 	for (i = 0;i < 32;i++)	/* background */
 	{
-		colortable[i+32*2] = color_prom[i+32];
+		*(colortable++) = i;
 	}
-	for (i = 0;i < 64*4;i++)	/* sprites */
+	for (i = 0;i < 16;i++)	/* characters */
 	{
-		colortable[i+32*2+32] = (color_prom[i+64] & 0x0f) | ((color_prom[i+64+64*4] << 4) & 0xf0);
+		*(colortable++) = 0;	/* since chars are transparent, the PROM only */
+								/* stores the non transparent color */
+		*(colortable++) = i + 32;
+	}
+	for (i = 0;i < 256;i++)	/* sprites */
+	{
+		*(colortable++) = i + 32+16;
 	}
 }
 

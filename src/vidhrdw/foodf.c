@@ -50,7 +50,7 @@ void foodf_vh_stop (void);
   Graphics use 2 bitplanes.
 
 ***************************************************************************/
-void foodf_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void foodf_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -123,7 +123,7 @@ void foodf_playfieldram_w (int offset, int data)
 {
 	int oldword = READ_WORD (&foodf_playfieldram[offset]);
 	int newword = COMBINE_WORD (oldword, data);
-	
+
 	if (oldword != newword)
 	{
 		WRITE_WORD (&foodf_playfieldram[offset], newword);

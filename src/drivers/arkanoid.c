@@ -12,7 +12,7 @@
 extern unsigned char *arkanoid_stat;
 
 void arkanoid_d008_w(int offset,int data);
-void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void arkanoid_vh_screenrefresh (struct osd_bitmap *bitmap);
 
 int arkanoid_Z80_mcu_r (int value);
@@ -127,7 +127,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 - spinner (multiplexed for player 1 and 2) */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 30, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue", IP_KEY_NONE )
@@ -173,7 +173,7 @@ INPUT_PORTS_START( arkatayt_input_ports )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 - spinner (multiplexed for player 1 and 2) */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 30, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue", IP_KEY_NONE )
@@ -370,7 +370,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,64*8,
+	512, 512,
 	arkanoid_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
@@ -408,7 +408,7 @@ static struct MachineDriver bootleg_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,64*8,
+	512, 512,
 	arkanoid_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,

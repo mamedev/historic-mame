@@ -53,7 +53,7 @@ unsigned char *matmania_pageselect;
   bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
-void matmania_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -118,7 +118,7 @@ void matmania_paletteram_w(int offset,int data)
 	bit3 = (val >> 3) & 0x01;
 	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	osd_modify_pen(Machine->pens[offs2 + 64],r,g,b);
+	palette_change_color(offs2 + 64,r,g,b);
 }
 
 

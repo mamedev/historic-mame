@@ -188,10 +188,16 @@ void llander_sounds_w (int offset,int data)
 
 	if (beeper && volume)
 	{
-		/* Play the beeper sample on voice 1 and loop it */
+		/* Play the beeper sample on voice 0 and loop it */
 		sample_start(0,kLLbeeper,1);
 	}
-	else if (explosion && volume)
+	else if (!beeper)
+	{
+		/* Stop the beeper sample on voice 0 */
+		sample_stop(0);
+	}
+
+	if (explosion && volume)
 	{
 		if (!explosionPlaying)
 		{

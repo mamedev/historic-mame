@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Q*bert's driver : dedicated to Jeff Lee, Warren Davis & David Thiel
+Q*bert's driver : dedicated to Warren Davis, Jeff Lee & David Thiel
 
 ****************************************************************************
 
@@ -353,6 +353,28 @@ ROM_START( qbertjp_rom )
 	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
 ROM_END
 
+ROM_START( sqbert_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xe4417b2b )
+	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0x97ded634 )
+	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0x15050cd5 )
+
+	ROM_REGION(0xA000)      /* temporary space for graphics */
+	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x3be1e889 )
+	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0x0e5c8e52 )
+	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x6d4c679c )       /* sprites */
+	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x78869f58 )       /* sprites */
+	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0xb6cc7972 )       /* sprites */
+	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0xf7b7f189 )       /* sprites */
+
+	ROM_REGION(0x10000)      /* 64k for sound cpu */
+	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_RELOAD(0x7000, 0x800) /* A15 is not decoded */
+	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_RELOAD(0x7800, 0x800) /* A15 is not decoded */
+ROM_END
+
+
 /* JB 980110 */
 static const char *sample_names[] =
 {
@@ -370,7 +392,7 @@ struct GameDriver qbert_driver =
 {
 	"Q*Bert (US version)",
 	"qbert",
-        "Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nJeff Lee\nWarren Davies\nDavid Thiel",
+	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	&machine_driver,
 
 	qbert_rom,
@@ -390,7 +412,7 @@ struct GameDriver qbertjp_driver =
 {
 	"Q*Bert (Japanese version)",
 	"qbertjp",
-        "Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nJeff Lee\nWarren Davies\nDavid Thiel",
+	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	&machine_driver,
 
 	qbertjp_rom,
@@ -405,3 +427,24 @@ struct GameDriver qbertjp_driver =
 
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
+
+struct GameDriver sqbert_driver =
+{
+	"FHMC Q*Bert",
+	"sqbert",
+	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
+	&machine_driver,
+
+	sqbert_rom,
+	0, 0,   /* rom decode and opcode decode functions */
+	sample_names,	/* JB 980110 */
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	gottlieb_nvram_load, gottlieb_nvram_save
+};
+

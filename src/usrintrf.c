@@ -32,6 +32,8 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 	Machine->uiymin = ymin;
 }
 
+
+
 static int findbestcolor(unsigned char r,unsigned char g,unsigned char b)
 {
 	int i;
@@ -1286,11 +1288,119 @@ int showcredits(void)
 	return 0;
 }
 
-enum { UI_SWITCH = 0, UI_KEY, UI_JOY, UI_ANALOG, UI_STATS, UI_CREDITS, UI_CHEAT, UI_EXIT };
+int showgameinfo(void)
+{
+	int key;
+	int i;
+	struct DisplayText dt[2];
+	char buf[1024];
+	static char *cpunames[] =
+	{
+		"",
+		"Z80",
+		"6502",
+		"8086",
+		"8035",
+		"6803",
+		"6805",
+		"6809",
+		"68000"
+	};
+	static char *soundnames[] =
+	{
+		"",
+		"<custom>",
+		"<samples>",
+		"DAC",
+		"AY-3-8910",
+		"YM2203",
+		"YM2151",
+		"YM2151",
+		"YM3812",
+		"SN76496",
+		"Pokey",
+		"Namco",
+		"NES",
+		"TMS5220",
+		"VLM5030",
+		"ADPCM samples",
+		"OKIM6295 ADPCM",
+		"MSM5205 ADPCM"
+	};
+
+
+	sprintf(buf,"%s\n\nCPU:\n",Machine->gamedrv->description);
+	i = 0;
+	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
+	{
+		sprintf(&buf[strlen(buf)],"%s %d.%06d MHz\n",
+				cpunames[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK],
+				Machine->drv->cpu[i].cpu_clock / 1000000,
+				Machine->drv->cpu[i].cpu_clock % 1000000);
+		i++;
+	}
+
+	sprintf(&buf[strlen(buf)],"\nSound:\n");
+	i = 0;
+	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
+	{
+		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
+				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
+			sprintf(&buf[strlen(buf)],"%d x ",((struct PSGinterface *)Machine->drv->sound[i].sound_interface)->num);
+
+		sprintf(&buf[strlen(buf)],"%s",
+				soundnames[Machine->drv->sound[i].sound_type]);
+
+		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
+				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
+			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
+					((struct PSGinterface *)Machine->drv->sound[i].sound_interface)->clock / 1000000,
+					((struct PSGinterface *)Machine->drv->sound[i].sound_interface)->clock % 1000000);
+
+		strcat(buf,"\n");
+
+		i++;
+	}
+
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+		sprintf(&buf[strlen(buf)],"\nVector Game\n");
+	else
+	{
+		sprintf(&buf[strlen(buf)],"\nScreen resolution:\n");
+		if (Machine->gamedrv->orientation & ORIENTATION_SWAP_XY)
+			sprintf(&buf[strlen(buf)],"%d x %d (vert) %d Hz\n",
+					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
+					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
+					Machine->drv->frames_per_second);
+		else
+			sprintf(&buf[strlen(buf)],"%d x %d (horz) %d Hz\n",
+					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
+					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
+					Machine->drv->frames_per_second);
+		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
+			sprintf(&buf[strlen(buf)],">256 colors (16-bit required)\n");
+		else
+			sprintf(&buf[strlen(buf)],"%d colors\n",Machine->drv->total_colors);
+	}
+
+	dt[0].text = buf;
+	dt[0].color = DT_COLOR_WHITE;
+	dt[0].x = 0;
+	dt[0].y = 0;
+	dt[1].text = 0;
+	displaytext(dt,1);
+
+	key = osd_read_key();
+	while (osd_key_pressed(key));	/* wait for key release */
+
+	return 0;
+}
+
+enum { UI_SWITCH = 0, UI_KEY, UI_JOY, UI_ANALOG, UI_STATS, UI_CREDITS, UI_GAMEINFO, UI_CHEAT, UI_EXIT };
 
 int setup_menu (void)
 {
-	struct DisplayText dt[10];
+	struct DisplayText dt[20];
 	int ui_menu[9];
 	int i,s,key,done;
 	int total = 0;
@@ -1324,6 +1434,7 @@ int setup_menu (void)
 
 	dt[total].text = "STATS"; ui_menu[total++] = UI_STATS;
 	dt[total].text = "CREDITS"; ui_menu[total++] = UI_CREDITS;
+	dt[total].text = "GAME INFORMATION"; ui_menu[total++] = UI_GAMEINFO;
 
 	if (nocheat == 0)
 	{
@@ -1389,6 +1500,10 @@ int setup_menu (void)
 
 					case UI_CREDITS:
 						if (showcredits()) done = 2;
+						break;
+
+					case UI_GAMEINFO:
+						if (showgameinfo()) done = 2;
 						break;
 
 					case UI_CHEAT:

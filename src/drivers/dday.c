@@ -51,7 +51,7 @@ extern unsigned char *dday_videoram2;
 extern unsigned char *dday_videoram3;
 extern unsigned char *dday_video_control;
 
-void dday_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void dday_vh_screenrefresh(struct osd_bitmap *bitmap);
 void dday_colorram_w(int offset, int data);
 int  dday_colorram_r(int offset);

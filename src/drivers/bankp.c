@@ -35,7 +35,7 @@ write:
 
 extern unsigned char *bankp_videoram2;
 extern unsigned char *bankp_colorram2;
-void bankp_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void bankp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void bankp_videoram2_w(int offset,int data);
 void bankp_colorram2_w(int offset,int data);
 void bankp_scroll_w(int offset,int data);

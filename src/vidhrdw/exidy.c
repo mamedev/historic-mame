@@ -100,7 +100,7 @@ void exidy_color_w(int offset,int data)
 		g=((exidy_color_latch[COLOR_GREEN]>>i) & 0x01) * 0xFF;
 		b=((exidy_color_latch[COLOR_BLUE]>>i) & 0x01) * 0xFF;
 
-		osd_modify_pen(Machine->pens[i],r,g,b);
+		palette_change_color(i,r,g,b);
 	}
 }
 

@@ -46,7 +46,8 @@ Warlords Driver by Lee Taylor and John Clegg
 5000-7FFF  R                             Program ROM
 --------------------------------------------------------------------------------------
 
-
+1c00-1c02 - coin counters
+1c03-1c06 - color
 
 Game Option Settings - J2 (DSW1)
 =========================
@@ -101,8 +102,16 @@ int warlord_pot3_r (int offset);
 int warlord_pot4_r (int offset);
 int warlord_trakball_r (int offset);
 
-void warlord_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void warlord_vh_screenrefresh(struct osd_bitmap *bitmap);
+void warlord_paletteram_w (int offset, int data);
+
+extern unsigned char *warlord_paletteram;
+
+
+void warlord_led_w(int offset,int data)
+{
+	osd_led_w(offset,~data >> 7);
+}
 
 
 
@@ -110,13 +119,13 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x5000, 0x7fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
+	{ 0x0800, 0x0800, input_port_2_r },	/* DSW1 */
+	{ 0x0801, 0x0801, input_port_3_r },	/* DSW2 */
 	{ 0x0c00, 0x0c00, input_port_0_r },	/* IN0 */
 	{ 0x0c01, 0x0c01, input_port_1_r },	/* IN1 */
 	{ 0x1000, 0x100f, pokey1_r },		/* Read the 4 paddle values & the random # gen */
-	{ 0x0800, 0x0800, input_port_2_r },	/* DSW1 */
-	{ 0x0801, 0x0801, input_port_3_r },	/* DSW2 */
+	{ 0x5000, 0x7fff, MRA_ROM },
+	{ 0xf800, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
 	{ -1 }	/* end of table */
 };
 
@@ -126,10 +135,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x1000, 0x100f, pokey1_w },
-	{ 0x1010, 0x10ff, MWA_NOP },
 	{ 0x1800, 0x1800, MWA_NOP },
-	{ 0x1c00, 0x1cff, MWA_NOP },
-	{ 0x4000, 0x4000, MWA_NOP },
+	{ 0x1c00, 0x1c02, coin_counter_w },
+	{ 0x1c03, 0x1c06, warlord_led_w },	/* 4 start lights */
+	{ 0x4000, 0x4000, watchdog_reset_w },
 	{ 0x5000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -210,7 +219,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
 	2,	/* 2 bits per pixel */
-	{ 128*8*8 , 0 },	/* bitplane separation */
+	{ 0, 128*8*8 },	/* bitplane separation */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -221,6 +230,7 @@ static struct GfxLayout charlayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,   0, 1 },
+	{ 1, 0x0000, &charlayout,  12, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -257,7 +267,7 @@ static struct MachineDriver machine_driver =
 			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
-			interrupt,1
+			interrupt,4
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -267,10 +277,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	16, 2*4,
-	warlord_vh_convert_color_prom,
+	16, 16,
+	0,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -314,7 +324,7 @@ struct GameDriver warlord_driver =
 {
 	"Warlords",
 	"warlord",
-	"LEE TAYLOR\nJOHN CLEGG",
+	"Lee Taylor\nJohn Clegg\nBrad Oliver (additional code)",
 	&machine_driver,
 
 	warlord_rom,

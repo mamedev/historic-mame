@@ -46,7 +46,6 @@ extern void karnov_palette(void);
 
 int karnov_vh_start (void);
 void karnov_vh_stop (void);
-void karnov_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 static int prot=0; /* For 'protection' on main player sprite */
 
@@ -483,7 +482,7 @@ static struct MachineDriver karnov_machine_driver =
 	karnov_gfxdecodeinfo,
 	256,
 	64*16,
-	karnov_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -534,7 +533,7 @@ static struct MachineDriver chelnov_machine_driver =
 	chelnov_gfxdecodeinfo,
 	256,
 	64*16,
-	karnov_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,

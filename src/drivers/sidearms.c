@@ -30,7 +30,7 @@ void sidearms_paletteram_w(int offset, int data);
 void sidearms_c804_w(int offset, int data);
 int  sidearms_vh_start(void);
 void sidearms_vh_stop(void);
-void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

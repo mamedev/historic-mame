@@ -689,7 +689,7 @@ void freegfx(struct GfxElement *gfx)
 ***************************************************************************/
 /* ASG 971011 -- moved this into a "core" function */
 /* ASG 980209 -- changed to drawgfx_core8 */
-void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
+static void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int dirty)
 {
@@ -1261,7 +1261,7 @@ void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 }
 
-void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
+static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int dirty)
 {

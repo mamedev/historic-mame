@@ -470,10 +470,10 @@ INPUT_PORTS_START( redbaron_input_ports )
 	/* These 2 are fake - they are bank-switched from reads to IN3 */
 	/* Red Baron doesn't seem to use the full 0-255 range. */
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 64, 192 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 25, 0, 64, 192 )
 
 	PORT_START	/* IN6 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 50, 0, 64, 192 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 25, 0, 64, 192 )
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -570,7 +570,7 @@ static struct MachineDriver bzone_machine_driver =
 			0,
 			bzone_readmem,bzone_writemem,0,0,
 			0, 0, /* no vblank interrupt */
-			bzone_interrupt, 240 /* 240 Hz */
+			bzone_interrupt, 244 /* 4.1ms */
 		}
 	},
 	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
@@ -736,10 +736,10 @@ static struct MachineDriver redbaron_machine_driver =
 			0,
 			redbaron_readmem,redbaron_writemem,0,0,
 			0, 0, /* no vblank interrupts */
-			bzone_interrupt, 240 /* 240 Hz */
+			bzone_interrupt, 185 /* 5.4ms */
 		}
 	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	45, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 

@@ -56,7 +56,7 @@ extern int brkthru_videoram_size;
 void brkthru_1800_w(int offset,int data);
 int brkthru_vh_start(void);
 void brkthru_vh_stop(void);
-void brkthru_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void brkthru_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

@@ -45,58 +45,35 @@ static struct rectangle flipspritevisiblearea =
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void kungfum_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,j,used;
-	unsigned char allocated[3*256];
+	int i;
 
 
-	/* The game has 512 colors, but we are limited to a maximum of 256. */
-	/* Luckily, many of the colors are duplicated, so the total number of */
-	/* different colors is less than 256. We select the unique colors and */
-	/* put them in our palette. */
-
-	memset(palette,0,3 * Machine->drv->total_colors);
-
-	used = 0;
-	for (i = 0;i < 512;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		for (j = 0;j < used;j++)
-		{
-			if (allocated[j] == color_prom[i] &&
-					allocated[j+256] == color_prom[i+512] &&
-					allocated[j+2*256] == color_prom[i+2*512])
-				break;
-		}
-		if (j == used)
-		{
-			int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3;
 
+		/* red component */
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* green component */
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* blue component */
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-			used++;
-
-			allocated[j] = color_prom[i];
-			allocated[j+256] = color_prom[i+512];
-			allocated[j+2*256] = color_prom[i+2*512];
-
-			bit0 = (color_prom[i] >> 0) & 0x01;
-			bit1 = (color_prom[i] >> 1) & 0x01;
-			bit2 = (color_prom[i] >> 2) & 0x01;
-			bit3 = (color_prom[i] >> 3) & 0x01;
-			palette[3*j] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-			bit0 = (color_prom[i+512] >> 0) & 0x01;
-			bit1 = (color_prom[i+512] >> 1) & 0x01;
-			bit2 = (color_prom[i+512] >> 2) & 0x01;
-			bit3 = (color_prom[i+512] >> 3) & 0x01;
-			palette[3*j + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-			bit0 = (color_prom[i+512*2] >> 0) & 0x01;
-			bit1 = (color_prom[i+512*2] >> 1) & 0x01;
-			bit2 = (color_prom[i+512*2] >> 2) & 0x01;
-			bit3 = (color_prom[i+512*2] >> 3) & 0x01;
-			palette[3*j + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		}
-
-		colortable[i] = j;
+		color_prom++;
 	}
 }
 

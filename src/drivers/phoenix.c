@@ -62,7 +62,7 @@ extern unsigned char *phoenix_scroll;
 int phoenix_DSW_r (int offset);
 
 void phoenix_videoreg_w (int offset,int data);
-void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void phoenix_sound_control_a_w(int offset, int data);

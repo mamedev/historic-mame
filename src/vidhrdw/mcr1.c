@@ -20,7 +20,7 @@ static int spriteoffs;
 
 ***************************************************************************/
 
-void mcr1_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void mcr1_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -127,7 +127,7 @@ void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 ***************************************************************************/
 
-void solarfox_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void solarfox_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	/* standard init */
 	mcr1_vh_convert_color_prom (palette, colortable, color_prom);

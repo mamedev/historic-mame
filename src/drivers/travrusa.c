@@ -16,7 +16,7 @@ Loosely based on the our previous 10 Yard Fight driver.
 extern unsigned char *trace_scroll_x_low;
 extern unsigned char *trace_scroll_x_high;
 
-void trace_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int trace_vh_start(void);
 void trace_vh_stop(void);
 void trace_vh_screenrefresh(struct osd_bitmap *bitmap);

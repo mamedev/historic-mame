@@ -52,7 +52,7 @@ extern unsigned char *route16_sharedram;
 extern unsigned char *route16_videoram1;
 extern unsigned char *route16_videoram2;
 
-void route16_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void route16_set_machine_type(void);
 void stratvox_set_machine_type(void);
 int  route16_vh_start(void);

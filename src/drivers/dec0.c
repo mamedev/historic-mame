@@ -8,7 +8,8 @@
     * Dragonninja
     * Robocop (Pirate rom set)
     * Hippodrome
-    * Heavy Barrel (Partially working, the board has an 8751 for protection)
+    * Heavy Barrel (Romlist Set - 4 roms missing)
+    * Heavy Barrel (Powerjaw Set - complete)
     * Sly Spy
     * Midnight Resistance
 
@@ -25,6 +26,7 @@
 	  The end of game scrolling background is corrupted
 	Robocop end credits don't show up
 
+  Dark Seal/Gate Of Doom may fit in this driver but it's processor is unknown.
 
   Thanks to Gouky & Richard Bush for information along the way, especially
   Gouky's patch for Bad Dudes & YM3812 information!
@@ -35,7 +37,6 @@
 #include "vidhrdw/generic.h"
 #include "M6502/M6502.h"
 
-
 /* Video emulation definitions */
 extern unsigned char *dec0_sprite;
 
@@ -45,7 +46,7 @@ void dec0_vh_screenrefresh(struct osd_bitmap *bitmap);
 void midres_vh_screenrefresh(struct osd_bitmap *bitmap);
 void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap);
 void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap);
-void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap);
+void heavyb_vh_screenrefresh(struct osd_bitmap *bitmap);
 void robocop_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void dec0_priority_w(int offset,int data);
@@ -71,13 +72,11 @@ void dec0_pf3_rowscroll_w(int offset,int data);
 void dec0_pf3_data_w(int offset,int data);
 int dec0_pf3_data_r(int offset);
 
-
 /* Palette mappers & memory writes */
 void dec0_palette_24bit_rg(int offset,int data);
 void dec0_palette_24bit_b(int offset,int data);
 void dec0_palette_12bit_w(int offset, int data);
 void robocop_palette_b(int offset, int data);
-void dec0_dummy_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 /* System prototypes - from machine/dec0.c */
 extern int dec0_controls_read(int offset);
@@ -87,8 +86,9 @@ extern int slyspy_controls_read(int offset);
 extern int robocop_interrupt(void);
 extern int dude_interrupt(void);
 extern int hippodrm_protection(int offset);
+extern void hb_8751_write(int data);
 
-
+/******************************************************************************/
 
 void dec0_30c010_w(int offset,int data)
 {
@@ -98,21 +98,28 @@ void dec0_30c010_w(int offset,int data)
 			dec0_priority_w(0,data);
 			break;
 
+/*  case 2: Unknown write */
+
 		case 4:
 			soundlatch_w(0,data & 0xff);
 			cpu_cause_interrupt(1,INT_NMI);
 			break;
+
+    case 6: /* Data with highest bit low seems to be for Heavy Barrel's 8751
+    					microcontroller - everything else unknown.. */
+      if (!(data&0x8000))
+      	hb_8751_write(data);
+      break;
 
 		case 8:
 			watchdog_reset_w(0,0);
 			break;
 
 		default:
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_getpc(),data,0x30c010+offset);
+			if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_getpc(),data,0x30c010+offset);
 			break;
 	}
 }
-
 
 /******************************************************************************/
 
@@ -143,7 +150,7 @@ static struct MemoryWriteAddress dec0_writemem[] =
 	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
 	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
 	{ 0x24c800, 0x24c87f, MWA_NOP },	/* unknown */
-	{ 0x24cc00, 0x24cfff, MWA_NOP },	/* unknown */
+	{ 0x24cc00, 0x24cfff, MWA_NOP },	/* Presumably pf3_rowscroll */
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_w },
 	{ 0x30c010, 0x30c01f, dec0_30c010_w },	/* playfield priority at 30c010, */
 											/* sound at 30c014, watchdog at 30c018, */
@@ -196,7 +203,7 @@ static struct MemoryWriteAddress robocop_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryReadAddress hbarrel_readmem[] =
+static struct MemoryReadAddress heavyb_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
 	{ 0x244000, 0x245fff, dec0_pf1_data_r },
@@ -208,7 +215,7 @@ static struct MemoryReadAddress hbarrel_readmem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress hbarrel_writemem[] =
+static struct MemoryWriteAddress heavyb_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0x240000, 0x240007, dec0_pf1_control_0_w },	/* text layer */
@@ -224,7 +231,7 @@ static struct MemoryWriteAddress hbarrel_writemem[] =
 	{ 0x24c000, 0x24c007, dec0_pf3_control_0_w },	/* second tile layer */
 	{ 0x24c010, 0x24c017, dec0_pf3_control_1_w },
 	{ 0x24c800, 0x24c87f, MWA_BANK3 },	/* unknown */
-	{ 0x24cc00, 0x24cfff, MWA_NOP },	/* unknown */
+	{ 0x24cc00, 0x24cfff, MWA_NOP },	/* pf3_rowscroll - is this used? */
 	{ 0x24d000, 0x24d7ff, dec0_pf3_data_w },
 	{ 0x30c010, 0x30c01f, dec0_30c010_w },	/* playfield priority at 30c010, */
 											/* sound at 30c014, watchdog at 30c018, */
@@ -321,21 +328,21 @@ static struct MemoryWriteAddress slyspy_writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x230000, 0x230007, dec0_pf2_control_0_w },	/* moved at this address */
 	{ 0x230010, 0x230017, dec0_pf2_control_1_w },	/* by slyspy_patch() */
-{ 0x240000, 0x2407ff, dec0_pf2_data_w },
+	{ 0x240000, 0x2407ff, dec0_pf2_data_w },
 	{ 0x242400, 0x24241f, dec0_pf2_rowscroll_w, &dec0_pf2_rowscroll },	/* larger in the */
 												/* other drivers, but in this case it */
 												/* overlaps pf1_data_w below */
-{ 0x243800, 0x243fff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },	/* ARBITRARILY placed here */
+	{ 0x243800, 0x243fff, dec0_pf1_rowscroll_w, &dec0_pf1_rowscroll },	/* ARBITRARILY placed here */
 												/* just to make pf1_rowscroll point somewhere */
-{ 0x242000, 0x243fff, dec0_pf1_data_w },
+	{ 0x242000, 0x243fff, dec0_pf1_data_w },
 	{ 0x244000, 0x244003, MWA_NOP }, /* ?? watchdog ?? */
-{ 0x246000, 0x2467ff, dec0_pf2_data_w },
+	{ 0x246000, 0x2467ff, dec0_pf2_data_w },
 	{ 0x248000, 0x248007, dec0_pf1_control_0_w },
 	{ 0x248010, 0x248017, dec0_pf1_control_1_w },
-{ 0x248000, 0x2487ff, dec0_pf2_data_w },
+	{ 0x248000, 0x2487ff, dec0_pf2_data_w },
 	{ 0x24a000, 0x24a003, MWA_NOP }, /* ?? watchdog ?? */
-{ 0x24c000, 0x24c7ff, dec0_pf2_data_w },
-{ 0x24e000, 0x24ffff, dec0_pf1_data_w },
+	{ 0x24c000, 0x24c7ff, dec0_pf2_data_w },
+	{ 0x24e000, 0x24ffff, dec0_pf1_data_w },
 	{ 0x300000, 0x300007, dec0_pf3_control_0_w },
 	{ 0x300010, 0x300017, dec0_pf3_control_1_w },
 	{ 0x300800, 0x30087f, MWA_NOP },	/* unknown */
@@ -617,7 +624,7 @@ INPUT_PORTS_START( baddudes_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hbarrel_input_ports )
+INPUT_PORTS_START( heavyb_input_ports )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -962,7 +969,7 @@ static struct MachineDriver robocop_machine_driver =
 
 	gfxdecodeinfo,
 	256,2*64*16,
-	dec0_dummy_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1016,7 +1023,7 @@ static struct MachineDriver hippodrm_machine_driver =
 
 	gfxdecodeinfo,
 	256,2*64*16,
-	dec0_dummy_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1070,7 +1077,7 @@ static struct MachineDriver baddudes_machine_driver =
 
 	gfxdecodeinfo,
 	256,2*64*16,
-	dec0_dummy_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1124,7 +1131,7 @@ static struct MachineDriver slyspy_machine_driver =
 
 	gfxdecodeinfo,
 	256,2*64*16,
-	dec0_dummy_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1164,7 +1171,7 @@ static struct MachineDriver midres_machine_driver =
 
 	gfxdecodeinfo,
 	256,2*64*16,
-	dec0_dummy_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -1176,7 +1183,7 @@ static struct MachineDriver midres_machine_driver =
 	0,0,0,0,
 };
 
-static struct MachineDriver hbarrel_machine_driver =
+static struct MachineDriver heavyb_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -1184,7 +1191,7 @@ static struct MachineDriver hbarrel_machine_driver =
 			CPU_M68000,
 			10000000,
 			0,
-			hbarrel_readmem,hbarrel_writemem,0,0,
+			heavyb_readmem,heavyb_writemem,0,0,
 			dude_interrupt,2
 		},
 		{
@@ -1204,13 +1211,13 @@ static struct MachineDriver hbarrel_machine_driver =
 
 	gfxdecodeinfo,
 	256,2*64*16,
-	dec0_dummy_color_prom,
+	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
-	hbarrel_vh_screenrefresh,
+	heavyb_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1419,7 +1426,51 @@ ROM_START( hippodrm_rom )
 	ROM_LOAD( "ew03", 0x0000, 0x10000, 0x3d50a8dc )
 ROM_END
 
-ROM_START( hbarrel_rom )
+ROM_START( heavyb_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "HB04.BIN", 0x00000, 0x10000, 0x3a3a153a )
+	ROM_LOAD_ODD ( "HB01.BIN", 0x00000, 0x10000, 0x94922044 )
+	ROM_LOAD_EVEN( "HB05.BIN", 0x20000, 0x10000, 0x78b2245c )
+	ROM_LOAD_ODD ( "HB02.BIN", 0x20000, 0x10000, 0x2d180d42 )
+	ROM_LOAD_EVEN( "HB06.BIN", 0x40000, 0x10000, 0xa32aebea )
+	ROM_LOAD_ODD ( "HB03.BIN", 0x40000, 0x10000, 0x68e7b4f7 )
+
+	ROM_REGION(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "HB25.BIN", 0x000000, 0x10000, 0x6ce711ab )	/* chars */
+	ROM_LOAD( "HB26.BIN", 0x010000, 0x10000, 0x438de025 )
+	ROM_LOAD( "HB18.BIN", 0x020000, 0x10000, 0xb7fd55af )	/* tiles */
+	ROM_LOAD( "HB17.BIN", 0x030000, 0x10000, 0x3c3a5e24 )
+	ROM_LOAD( "HB20.BIN", 0x040000, 0x10000, 0x7f1adece )
+	ROM_LOAD( "HB19.BIN", 0x050000, 0x10000, 0xdb6d548f )
+	ROM_LOAD( "HB22.BIN", 0x060000, 0x10000, 0xa86f2849 )
+	ROM_LOAD( "HB21.BIN", 0x070000, 0x10000, 0x5c30dfa8 )
+	ROM_LOAD( "HB24.BIN", 0x080000, 0x10000, 0x36dd8003 )
+	ROM_LOAD( "HB23.BIN", 0x090000, 0x10000, 0xc3744af2 )
+	ROM_LOAD( "HB29.BIN", 0x0a0000, 0x10000, 0xecc05140 )	/* tiles */
+	/* b0000-bfff empty */
+	ROM_LOAD( "HB30.BIN", 0x0c0000, 0x10000, 0x64394369 )
+	/* d0000-dfff empty */
+	ROM_LOAD( "HB27.BIN", 0x0e0000, 0x10000, 0x37f5c863 )
+	/* f0000-ffff empty */
+	ROM_LOAD( "HB28.BIN", 0x100000, 0x10000, 0xd5ccead8 )
+	/* 110000-11fff empty */
+	ROM_LOAD( "HB15.BIN", 0x120000, 0x10000, 0x30b6bb34 )	/* sprites */
+	ROM_LOAD( "HB16.BIN", 0x130000, 0x10000, 0x19bcf8ec )
+	ROM_LOAD( "HB11.BIN", 0x140000, 0x10000, 0xa2817053 )
+	ROM_LOAD( "HB12.BIN", 0x150000, 0x10000, 0x7de7b9f7 )
+	ROM_LOAD( "HB13.BIN", 0x160000, 0x10000, 0xcea5802b )
+	ROM_LOAD( "HB14.BIN", 0x170000, 0x10000, 0x4d942794 )
+	ROM_LOAD( "HB09.BIN", 0x180000, 0x10000, 0x4c370c4d )
+	ROM_LOAD( "HB10.BIN", 0x190000, 0x10000, 0x46722c8a )
+
+	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_LOAD( "HB07.BIN", 0x8000, 0x8000, 0x0063a9fb )
+
+	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_LOAD( "HB08.BIN", 0x0000, 0x10000, 0x3743341b )
+ROM_END
+
+ROM_START( heavyb2_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "HB_EC04.ROM", 0x00000, 0x10000, 0x17e8d870 )
 	ROM_LOAD_ODD ( "HB_EC01.ROM", 0x00000, 0x10000, 0x041e5e7c )
@@ -1432,20 +1483,20 @@ ROM_START( hbarrel_rom )
 	ROM_LOAD( "HB_EC25.ROM", 0x000000, 0x10000, 0x31a223b0 )	/* chars */
 	ROM_LOAD( "HB_EC26.ROM", 0x010000, 0x10000, 0x4409e027 )
 	ROM_LOAD( "HB_EC18.ROM", 0x020000, 0x10000, 0xb7fd55af )	/* tiles */
-	/* 30000-3fff empty */
+	ROM_LOAD( "HB_EC17.ROM", 0x030000, 0x10000, 0x3c3a5e24 )
 	ROM_LOAD( "HB_EC20.ROM", 0x040000, 0x10000, 0x7f1adece )
-	/* 50000-5fff empty */
+	ROM_LOAD( "HB_EC19.ROM", 0x050000, 0x10000, 0xdb6d548f )
 	ROM_LOAD( "HB_EC22.ROM", 0x060000, 0x10000, 0xa86f2849 )
-	/* 70000-7fff empty */
+	ROM_LOAD( "HB_EC21.ROM", 0x070000, 0x10000, 0x5c30dfa8 )
 	ROM_LOAD( "HB_EC24.ROM", 0x080000, 0x10000, 0x36dd8003 )
-	/* 90000-9fff empty */
-	ROM_LOAD( "HB_EC17.ROM", 0x0a0000, 0x10000, 0x3c3a5e24 )	/* tiles */
+	ROM_LOAD( "HB_EC23.ROM", 0x090000, 0x10000, 0xc3744af2 )
+	ROM_LOAD( "HB29.BIN", 0x0a0000, 0x10000, 0xecc05140 )	/* tiles */
 	/* b0000-bfff empty */
-	ROM_LOAD( "HB_EC19.ROM", 0x0c0000, 0x10000, 0xdb6d548f )
+	ROM_LOAD( "HB30.BIN", 0x0c0000, 0x10000, 0x64394369 )
 	/* d0000-dfff empty */
-	ROM_LOAD( "HB_EC21.ROM", 0x0e0000, 0x10000, 0x5c30dfa8 )
+	ROM_LOAD( "HB27.BIN", 0x0e0000, 0x10000, 0x37f5c863 )
 	/* f0000-ffff empty */
-	ROM_LOAD( "HB_EC23.ROM", 0x100000, 0x10000, 0xc3744af2 )
+	ROM_LOAD( "HB28.BIN", 0x100000, 0x10000, 0xd5ccead8 )
 	/* 110000-11fff empty */
 	ROM_LOAD( "HB_EC15.ROM", 0x120000, 0x10000, 0x30b6bb34 )	/* sprites */
 	ROM_LOAD( "HB_EC16.ROM", 0x130000, 0x10000, 0x19bcf8ec )
@@ -1545,7 +1596,25 @@ ROM_END
 
 /******************************************************************************/
 
-static void hbarrel_patch(void)
+static void heavyb_patch(void)
+{
+ /* Correct initial stack pointer */
+ WRITE_WORD (&RAM[0x742],0x00FF);
+ WRITE_WORD (&RAM[0x744],0xC000);
+
+ WRITE_WORD (&RAM[0x8B2],0x4E71);
+
+ /* Fix the stack pointer corruption when A7 is read from external IO */
+ WRITE_WORD (&RAM[0x948],0x4E71);
+ WRITE_WORD (&RAM[0x94A],0x4E71);
+ WRITE_WORD (&RAM[0x94C],0x4E71);
+
+ WRITE_WORD (&RAM[0x8E2],0x4E71);
+ WRITE_WORD (&RAM[0x8E4],0x4E71);
+ WRITE_WORD (&RAM[0x8E6],0x4E71);
+}
+
+static void heavyb2_patch(void)
 {
  /* Correct initial stack pointer */
  WRITE_WORD (&RAM[0x742],0x00FF);
@@ -1655,19 +1724,38 @@ struct GameDriver robocopp_driver =
 	0, 0
 };
 
-struct GameDriver hbarrel_driver =
+struct GameDriver heavyb_driver =
 {
 	"Heavy Barrel",
 	"hbarrel",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	&hbarrel_machine_driver,
+	&heavyb_machine_driver,
 
-	hbarrel_rom,
-	hbarrel_patch, 0,
+	heavyb_rom,
+	heavyb_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	hbarrel_input_ports,
+	heavyb_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver heavyb2_driver =
+{
+	"Heavy Barrel (alternate)",
+	"hbarrel2",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	&heavyb_machine_driver,
+
+	heavyb2_rom,
+	heavyb2_patch, 0,
+	0,
+	0,	/* sound_prom */
+
+	heavyb_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,

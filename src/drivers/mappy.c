@@ -80,7 +80,7 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap);
 void mappy_videoram_w(int offset,int data);
 void mappy_colorram_w(int offset,int data);
 void mappy_scroll_w(int offset,int data);
-void mappy_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 /* sound driver data & functions */
 extern unsigned char *mappy_soundregs;

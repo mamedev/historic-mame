@@ -60,7 +60,7 @@ standard NMI at 0x66
 
 
 void pooyan_flipscreen_w(int offset,int data);
-void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

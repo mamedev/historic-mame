@@ -32,7 +32,7 @@
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void champbas_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void champbas_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -64,6 +64,8 @@ void champbas_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	}
 
 	/* color_prom now points to the beginning of the lookup table */
+
+	/* TODO: there are 32 colors in the palette, but we are suing only 16 */
 
 	/* character lookup table */
 	/* sprites use the same color lookup table as characters */
@@ -115,7 +117,7 @@ void champbas_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	for (offs = spriteram_size - 2;offs > 0;offs -= 2)
+	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs] >> 2,

@@ -20,7 +20,7 @@ MAIN BOARD:
 
 
 void mikie_palettebank_w(int offset,int data);
-void mikie_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void mikie_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mikie_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 

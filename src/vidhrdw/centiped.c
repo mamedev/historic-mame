@@ -54,7 +54,7 @@ static void setcolor(int pen,int data)
 		else if (g) g = 0xc0;
 	}
 
-	osd_modify_pen(Machine->pens[pen],r,g,b);
+	palette_change_color(pen,r,g,b);
 }
 
 void centiped_paletteram_w(int offset,int data)
@@ -125,7 +125,7 @@ void centiped_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					(videoram[offs] & 0x3f) + 0x40,
-					sy / 8,	/* support midframe palette changes in test mode */
+					(sy + 1) / 8,	/* support midframe palette changes in test mode */
 					flipscreen,flipscreen,
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

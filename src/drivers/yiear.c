@@ -58,7 +58,7 @@ Memory map
 #include "vidhrdw/generic.h"
 #include "M6809/M6809.h"
 
-void yiear_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap);
 void yiear_videoram_w(int offset,int data);
 void yiear_4f00_w(int offset,int data);

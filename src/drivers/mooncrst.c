@@ -23,7 +23,7 @@ TODO:
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
-void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void galaxian_flipx_w(int offset,int data);
 void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);

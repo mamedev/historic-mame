@@ -13,38 +13,6 @@
 //#define LOG_SLAPSTICK
 
 unsigned char *atetris_paletteram;
-static unsigned char *palette_entry_dirty;
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int atetris_vh_start(void)
-{
-    if (generic_vh_start())
-        return 1;
-
-    if (!(palette_entry_dirty = malloc(256)))
-        return 1;
-
-    return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void atetris_vh_stop(void)
-{
-    generic_vh_stop();
-
-    free(palette_entry_dirty);
-}
-
 
 
 static int slapstic_primed   = 0;
@@ -174,14 +142,31 @@ int atetris_slapstic_r(int offset)
 }
 
 
-void atetris_palette_w(int offset, int data)
+
+void atetris_palette_w(int offset,int data)
 {
-    if (atetris_paletteram[offset] != data)
-    {
-        atetris_paletteram[offset] = data;
-        palette_entry_dirty[offset] = 1;
-    }
+	int r,g,b;
+	int bit0,bit1,bit2;
+
+
+	atetris_paletteram[offset] = data;
+
+	bit0 = (data >> 5) & 0x01;
+	bit1 = (data >> 6) & 0x01;
+	bit2 = (data >> 7) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	bit0 = (data >> 2) & 0x01;
+	bit1 = (data >> 3) & 0x01;
+	bit2 = (data >> 4) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	bit0 = 0;
+	bit1 = (data >> 0) & 0x01;
+	bit2 = (data >> 1) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	palette_change_color(offset,r,g,b);
 }
+
 
 /***************************************************************************
 
@@ -192,67 +177,35 @@ void atetris_palette_w(int offset, int data)
 ***************************************************************************/
 void atetris_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-        int offs;
-
-        /* Check if need to remap the colors */
-        for (offs = 0; offs < 256; offs++)
-        {
-            int r,g,b,color;
-            int bit0,bit1,bit2;
-
-            if (!palette_entry_dirty[offs]) continue;
-
-            palette_entry_dirty[offs] = 0;
-
-            color = atetris_paletteram[offs];
-
-            r = (color & 0xe0) >> 5;
-            g = (color & 0x1c) >> 2;
-            b = (color & 0x03);
-
-            bit0 = (r >> 0) & 0x01;
-            bit1 = (r >> 1) & 0x01;
-            bit2 = (r >> 2) & 0x01;
-            r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-            bit0 = (g >> 0) & 0x01;
-            bit1 = (g >> 1) & 0x01;
-            bit2 = (g >> 2) & 0x01;
-            g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-            bit0 = 0;
-            bit1 = (b >> 0) & 0x01;
-            bit2 = (b >> 1) & 0x01;
-            b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-            osd_modify_pen(Machine->pens[offs],r,g,b);
-        }
+	int offs;
 
 
-        /* for every character in the backround RAM, check if it has been modified */
-        /* since last time and update it accordingly. */
-        for (offs = 0; offs < videoram_size; offs += 2)
-        {
-            int charcode,sx,sy,color;
+	/* for every character in the backround RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = 0; offs < videoram_size; offs += 2)
+	{
+		int charcode,sx,sy,color;
 
-            if (!dirtybuffer[offs] && !dirtybuffer[offs + 1]) continue;
+		if (!dirtybuffer[offs] && !dirtybuffer[offs + 1]) continue;
 
-            dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
+		dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
 
-            sy = 8 * (offs / 128);
-            sx = 4 * (offs % 128);
+		sy = 8 * (offs / 128);
+		sx = 4 * (offs % 128);
 
-            if (sx >= 42*8) continue;
+		if (sx >= 42*8) continue;
 
-            charcode = videoram[offs] | ((videoram[offs + 1] & 0x07) << 8);
+		charcode = videoram[offs] | ((videoram[offs + 1] & 0x07) << 8);
 
-            color = ((videoram[offs + 1] & 0xf0) >> 4);
+		color = ((videoram[offs + 1] & 0xf0) >> 4);
 
-            drawgfx(tmpbitmap,Machine->gfx[0],
-                    charcode,
-                    color,
-                    0,0,
-                    sx,sy,
-                    &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-        }
+		drawgfx(tmpbitmap,Machine->gfx[0],
+				charcode,
+				color,
+				0,0,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 
-        copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

@@ -38,7 +38,7 @@ static void *pacland_timer = 0;
 void pacland_scroll0_w(int offset,int data);
 void pacland_scroll1_w(int offset,int data);
 void pacland_bankswitch_w(int offset,int data);
-void pacland_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int pacland_vh_start(void);
 void pacland_vh_stop(void);
 void pacland_vh_screenrefresh(struct osd_bitmap *bitmap);

@@ -138,6 +138,7 @@ void karnov_vh_stop (void)
   if (dirty_f) free(dirty_f);
   if (karnov_foreground) free(karnov_foreground);
   if (bitmap_f) osd_free_bitmap (bitmap_f);
+  generic_vh_stop();
 }
 
 int karnov_vh_start (void)
@@ -219,22 +220,6 @@ void karnov_palette(void)
   Machine->gfx[3]->colortable[offset/2]=Machine->pens[kColours_Allocated];
   kColours_Allocated++;
   }
-}
-
-/* Dummy palette for startup screen - Palette is dynamically mapped into 256 colours at runtime */
-void karnov_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
- 	int i;
-
-	for (i = 0;i < Machine->drv->total_colors;i++) {
-		*(palette++) = ((i & 1) >> 0) * 0xff;
-		*(palette++) = ((i & 2) >> 1) * 0xff;
-		*(palette++) = ((i & 4) >> 2) * 0xff;
-	}
-
-	/* initialize the color table */
-	for (i = 0;i < Machine->drv->total_colors;i++)
-		colortable[i] = i;
 }
 
 /******************************************************************************/

@@ -86,7 +86,7 @@ void jedi_paletteram_w(int offset,int data);
 void jedi_backgroundram_w(int offset,int data);
 int  jedi_vh_start(void);
 void jedi_vh_stop(void);
-void jedi_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void jedi_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void jedi_vh_screenrefresh(struct osd_bitmap *bitmap);
 void jedi_vscroll_w(int offset,int data);
 void jedi_hscroll_w(int offset,int data);

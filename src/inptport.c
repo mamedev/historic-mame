@@ -34,6 +34,10 @@ static int mouse_last_x,mouse_last_y;
 static int mouse_current_x,mouse_current_y;
 static int mouse_previous_x,mouse_previous_y;
 
+#ifdef MAME_DEBUG
+int debug_key_pressed;	/* JB 980505 */
+#endif
+
 
 /***************************************************************************
 
@@ -742,6 +746,10 @@ if (errorlog && in->arg == 0)
 		osd_fread(playback,input_port_value,MAX_INPUT_PORTS);
 	else if (record)
 		osd_fwrite(record,input_port_value,MAX_INPUT_PORTS);
+
+#ifdef MAME_DEBUG
+	debug_key_pressed = osd_key_pressed (OSD_KEY_TILDE);	/* JB 980505 */
+#endif
 }
 
 

@@ -342,7 +342,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Gyruss               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gyruss   |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Heavy Barrel         |Partial.|  Yes   | Yes(3) |   No   |   No   | hbarrel  |
+| Heavy Barrel         |  Yes   |  Yes   | Yes(3) |   No   |   No   | heavyb   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Hunchback            |   No   |  n/a   |   No   |  n/a   |   No   | hunchy   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -400,7 +400,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Liberator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | liberatr |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Lock'n'Chase         |  Yes   |   No   |  Yes   |  Yes   |   No   | lnc      |
+| Lock'n'Chase         |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | lnc      |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Loco-Motion          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | locomotn |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -415,6 +415,8 @@ The list doesn't include variants of the same game.
 | Lunar Rescue         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lrescue  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Mad Planets          |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | mplanets |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Magic Sword          |  Yes   |  Yes   |  Yes   |   No   |   No   | msword   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Major Havoc          |  Yes   |  Yes   |  Yes   |   No   |   No   | mhavoc   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -506,7 +508,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeye   |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Pop Flamer           |  Yes   |  Yes   |  Yes   |   No   |   No   | popflame |
+| Pop Flamer           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popflame |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Pulsar               |  Yes   |  Yes?  |   No   |   No   |   No   | pulsar   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -582,6 +584,8 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Sinistar             |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | sinistar |
 |----------------------|--------|--------|--------|--------|--------|----------|
+| Slap Fight           |Partial |   No   |  Yes   |   No   |   No   | slapfigh |
+|----------------------|--------|--------|--------|--------|--------|----------|
 | Sly Spy              |  Yes   |  Yes   |   No   |   No   |   No   | slyspy   |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Snap Jack            |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | snapjack |
@@ -597,6 +601,8 @@ The list doesn't include variants of the same game.
 | Space Chaser         |  Yes   |  Yes   |  Yes   |   No   |   No   | schaser  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Space Duel           |  Yes   | Close  |  Yes   |  Yes   |   No   | spacduel |
+|----------------------|--------|--------|--------|--------|--------|----------|
+| Space Dungeon        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sdungeon |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Space Firebird       |  Yes   |  Yes   |   No   |  Yes   |   No   | spacefb  |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -650,7 +656,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Super Zaxxon         |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | szaxxon  |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Swimmer              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | swimmer  |
+| Swimmer              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | swimmer  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Tac/Scan             |  Yes   | Close  | Yes(1) |  Yes   |   No   | tacscan  |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -688,7 +694,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Time Pilot 84        |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | tp84     |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Toki                 |  Yes   |  Yes   |Partial |  Yes   |   No   | toki     |
+| Toki                 |  Yes   |  Yes   |   No   |  Yes   |   No   | toki     |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Toobin'              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | toobin   |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -750,7 +756,7 @@ The list doesn't include variants of the same game.
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Yie Ar Kung Fu       |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | yiear    |
 |----------------------|--------|--------|--------|--------|--------|----------|
-| Xain'd Sleena        |Partial |  Yes   | Yes(2) |   No   |   No   | xsleena  |
+| Xain'd Sleena        |  Yes   |  Yes   | Yes(2) |   No   |   No   | xsleena  |
 |----------------------|--------|--------|--------|--------|--------|----------|
 | Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | xevious  |
 |----------------------|--------|--------|--------|--------|--------|----------|
@@ -1476,6 +1482,18 @@ Known issues:
 
 
 
+Heavy Barrel ("heavyb")
+=======================
+Clones supported:
+  alternate version ("heavyb2")
+
+Known issues:
+- The game is playable to the end, however there are some problems due to
+  copy protection. For example, the demo doesn't work, and you can't collect
+  pieces of the "supergun".
+
+
+
 Hunchback ("hunchy")
 ====================
 Runs on a modified Donkey Kong Jr. board.
@@ -2047,6 +2065,7 @@ following round. You also get infinite lives.
 
 Clones supported:
   Japanese version ("qbertjp")
+  Faster, Harder, More Challenging Q*Bert ("sqbert")
 
 
 
@@ -2208,6 +2227,18 @@ F1+F2 bookeeping/setup
 
 
 
+Slap Fight ("slapfigh")
+=======================
+Clones supported:
+  Japanese bootleg ("slapboot")
+  English bootleg ("slpboota")
+
+Known issues:
+- Due to protection, the original version doesn't work. Use one of the
+  bootlegs instead.
+
+
+
 Space Attack ("sspaceat")
 =========================
 Note that this is NOT the same as "Space Attack II", which runs on Space
@@ -2221,6 +2252,23 @@ Known issues:
 Space Duel ("spacduel")
 =======================
 Press "2" to choose level, the game won't start otherwise.
+
+
+
+Space Dungeon ("sdungeon")
+==========================
+Keep F2 pressed to enter test mode, then F1 to advance to the next test.
+
+There are no dip switches, press F1 to enter the service mode, then
+  F1      Next screen
+  F2      Next line
+  F5      Up
+  F6      Down
+
+The first time you run the game, it will ask the language. You can use F1 to
+proceed through all the configuration screens, or just reset (F3).
+To change the language afterwards, delete the SDUNGEON.HI file from the HI
+directory and re-run the program.
 
 
 

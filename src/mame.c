@@ -16,9 +16,6 @@ int frameskip;
 int VolumePTR = 0;
 int CurrentVolume = 100;
 
-#define MAX_COLOR_TUPLE 16      /* no more than 4 bits per pixel, for now */
-#define MAX_COLOR_CODES 256     /* no more than 256 color codes, for now */
-
 
 unsigned char *RAM;
 unsigned char *ROM;
@@ -226,12 +223,17 @@ static void vh_close(void)
 	int i;
 
 
-	for (i = 0;i < MAX_GFX_ELEMENTS;i++) freegfx(Machine->gfx[i]);
+	for (i = 0;i < MAX_GFX_ELEMENTS;i++)
+	{
+		freegfx(Machine->gfx[i]);
+		Machine->gfx[i] = 0;
+	}
 	freegfx(Machine->uifont);
-	/* ASG 980209 - added: */
-	free(Machine->pens);
+	Machine->uifont = 0;
 	osd_close_display();
 	free_tile_layer(Machine->dirtylayer);
+	Machine->dirtylayer = 0;
+	palette_stop();
 }
 
 
@@ -239,25 +241,21 @@ static void vh_close(void)
 static int vh_open(void)
 {
 	int i;
-	const unsigned char *palette,*colortable;
-	unsigned char convpalette[3 * MAX_PENS];
-	unsigned char *convtable;
 
-
-	convtable = malloc(drv->color_table_len);
-	if (!convtable) return 1;
-
-	if ((Machine->colortable = malloc(drv->color_table_len * sizeof(unsigned short))) == 0)
-	{
-		free (convtable);
-		return 1;
-	}
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
 	Machine->uifont = 0;
 
+	if (palette_start() != 0)
+	{
+		vh_close();
+		return 1;
+	}
+
+
 	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
-	/* convert_color_prom() routine because it might need to check the Machine->gfx[] data */
+	/* convert_color_prom() routine (in palette_init()) because it might need to check the */
+	/* Machine->gfx[] data */
 	if (drv->gfxdecodeinfo)
 	{
 		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
@@ -267,7 +265,6 @@ static int vh_open(void)
 					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
 			{
 				vh_close();
-				free (convtable);
 				return 1;
 			}
 			Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
@@ -275,122 +272,47 @@ static int vh_open(void)
 		}
 	}
 
-
-	/* convert the palette */
-	if (drv->video_attributes & VIDEO_SUPPORTS_16BIT)       /* ASG 980209 - RGB/332 for 16-bit games */
-	{
-		unsigned char *p = convpalette;
-		int r, g, b;
-
-		for (r = 0; r < 8; r++)
-		{
-			for (g = 0; g < 8; g++)
-			{
-				for (b = 0; b < 4; b++)
-				{
-					*p++ = (r << 5) | (r << 2) | (r >> 1);
-					*p++ = (g << 5) | (g << 2) | (g >> 1);
-					*p++ = (b << 6) | (b << 4) | (b << 2) | b;
-				}
-			}
-		}
-		palette = convpalette;
-		colortable = convtable;
-	}
-	else if (gamedrv->palette)
-	{
-		palette = gamedrv->palette;
-		colortable = gamedrv->colortable;
-	}
-	else
-	{
-		unsigned char *p = convpalette;
-		int i;
-
-
-		/* We initialize the palette and colortable to some default values so that */
-		/* drivers which dynamically change the palette don't need a convert_color_prom() */
-		/* function (provided the default color table fits their needs). */
-		/* The default color table follows the same order of the palette. */
-
-		for (i = 0;i < drv->total_colors;i++)
-		{
-			*(p++) = ((i & 1) >> 0) * 0xff;
-			*(p++) = ((i & 2) >> 1) * 0xff;
-			*(p++) = ((i & 4) >> 2) * 0xff;
-		}
-
-		for (i = 0;i < drv->color_table_len;i++)
-			convtable[i] = i % drv->total_colors;
-
-		/* now the driver can modify the dafult values if it wants to. */
-		if (drv->vh_convert_color_prom)
- 			(*drv->vh_convert_color_prom)(convpalette,convtable,gamedrv->color_prom);
-
-		palette = convpalette;
-		colortable = convtable;
-	}
-
-
-	/* ASG 980209 - allocate space for the pens */
-	if (drv->video_attributes & VIDEO_SUPPORTS_16BIT)
-		Machine->pens = malloc(32768 * sizeof (short));
-	else
-		Machine->pens = malloc(MAX_PENS * sizeof (short));
-
-	if (Machine->pens == 0)
-	{
-		free (convtable);
-		return 1;
-	}
-
-	/* create the display bitmap, and allocate the palette */
-	if ((Machine->scrbitmap = osd_create_display(
-			drv->screen_width,drv->screen_height,
-			drv->total_colors,
-			palette,Machine->pens,drv->video_attributes)) == 0)
-	{
-		free (convtable);
-		return 1;
-	}
-
-{
-	static struct MachineLayer ml =
-	{
-		LAYER_TILE,
-		0,0,	/* width and height, filled in later */
-		/* all other fields are 0 */
-	};
-
-	ml.width = drv->screen_width;
-	ml.height = drv->screen_height;
-	if ((Machine->dirtylayer = create_tile_layer(&ml)) == 0)
-	{
-		vh_close();
-		free(convtable);
-		return 1;
-	}
-}
-
-
-	for (i = 0;i < drv->color_table_len;i++)
-		Machine->colortable[i] = Machine->pens[colortable[i]];
-
-
 	/* build our private user interface font */
 	if ((Machine->uifont = builduifont()) == 0)
 	{
 		vh_close();
-		free(convtable);
 		return 1;
 	}
 
-	free (convtable);
+
+	/* if the GfxLayer system is enabled, create the dirty map needed by the */
+	/* OS dependant code to selectively refresh the screen. */
+	if (Machine->drv->layer)
+	{
+		static struct MachineLayer ml =
+		{
+			LAYER_TILE,
+			0,0,	/* width and height, filled in later */
+			/* all other fields are 0 */
+		};
+
+		ml.width = drv->screen_width;
+		ml.height = drv->screen_height;
+		if ((Machine->dirtylayer = create_tile_layer(&ml)) == 0)
+		{
+			vh_close();
+			return 1;
+		}
+	}
+	else Machine->dirtylayer = 0;
 
 
-	/* do a first screen update to make the OS dependant code pick the */
-	/* background pen before the copyright screen is displayed. */
-	osd_update_display();
+	/* create the display bitmap, and allocate the palette */
+	if ((Machine->scrbitmap = osd_create_display(
+			drv->screen_width,drv->screen_height,
+			drv->video_attributes)) == 0)
+	{
+		vh_close();
+		return 1;
+	}
+
+	/* initialize the palette - must be done after osd_create_display() */
+	palette_init();
 
 	return 0;
 }
@@ -642,6 +564,8 @@ int run_machine(void)
 #endif
 				{
 					showcredits();  /* show the driver credits */
+
+					showgameinfo();  /* show info about the game */
 
 					osd_clearbitmap(Machine->scrbitmap);
 					osd_update_display();

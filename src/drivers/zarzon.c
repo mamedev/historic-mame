@@ -7,7 +7,7 @@ Sound chip is a 76477
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern void zarzon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+extern void zarzon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void zarzon_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void zarzon_characterram_w(int offset,int data);
 
@@ -152,7 +152,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6502,
-            11289000/16,    /* 700 kHz */
+			11289000/16,    /* 700 kHz */
 			0,
 			readmem,writemem,0,0,
             zarzon_interrupt,2
@@ -163,7 +163,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
     32,4*4 + 4*4,
     zarzon_vh_convert_color_prom,

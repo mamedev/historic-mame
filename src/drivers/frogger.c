@@ -82,7 +82,7 @@ interrupt mode 1 triggered by the main CPU
 
 
 extern unsigned char *frogger_attributesram;
-void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void frogger_attributes_w(int offset,int data);
 void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
 void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -117,10 +117,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
 	{ 0xb040, 0xb05f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb808, 0xb808, interrupt_enable_w },
-	{ 0xd000, 0xd000, soundlatch_w },
-	{ 0xd002, 0xd002, frogger_sh_irqtrigger_w },
 	{ 0xb818, 0xb818, coin_counter_w },
 	{ 0xb81c, 0xb81c, frogger_counterb_w },
+	{ 0xd000, 0xd000, soundlatch_w },
+	{ 0xd002, 0xd002, frogger_sh_irqtrigger_w },
 	{ -1 }	/* end of table */
 };
 

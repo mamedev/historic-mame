@@ -225,10 +225,12 @@ extern struct GameDriver qbertjp_driver;	/* GV-103 (c) 1982 + Konami license */
 extern struct GameDriver krull_driver;		/* GV-105 (c) 1983 */
 extern struct GameDriver stooges_driver;	/* GV-113 (c) 1984 Mylstar */
 extern struct GameDriver qbertqub_driver;	/* GV-119 (c) 1983 Mylstar */
+extern struct GameDriver sqbert_driver;		/* (c) 1983 Mylstar - never released */
 	/* other games running on similar hardware: GV-134 Curveball, GV-109 Mach 3 (a laserdisc game) */
 /* Taito "Qix hardware" games */
 extern struct GameDriver qix_driver;		/* (c) 1981 */
 extern struct GameDriver qix2_driver;		/* (c) 1981 */
+extern struct GameDriver sdungeon_driver;	/* (c) 1981 Taito America */
 extern struct GameDriver zookeep_driver;	/* (c) 1982 Taito America */
 /* Taito "Jungle King hardware" games */
 extern struct GameDriver junglek_driver;	/* (c) 1982 */
@@ -257,6 +259,9 @@ extern struct GameDriver tnzs_driver;		/* (c) 1988 */
 extern struct GameDriver tnzs2_driver;		/* (c) 1988 */
 extern struct GameDriver xsleena_driver;	/* (c) 1986 Technos Japan */
 extern struct GameDriver solarwar_driver;	/* (c) 1986 + Memetron license */
+extern struct GameDriver slapfigh_driver;
+extern struct GameDriver slapboot_driver;	/* bootleg */
+extern struct GameDriver slpboota_driver;	/* bootleg */
 //extern struct GameDriver twincobr_driver;
 /* Williams games */
 extern struct GameDriver robotron_driver;	/* (c) 1982 */
@@ -312,6 +317,7 @@ extern struct GameDriver willow_driver;		/* (c) 1989 */
 extern struct GameDriver ffight_driver;		/* (c) */
 extern struct GameDriver mtwins_driver;		/* (c) 1990 */
 extern struct GameDriver unsquad_driver;	/* (c) 1989 */
+extern struct GameDriver msword_driver;		/* (c) 1990 */
 /* Sega "dual game board" games */
 extern struct GameDriver carnival_driver;	/* (c) 1980 */
 extern struct GameDriver pulsar_driver;		/* (c) 1981 */
@@ -373,7 +379,8 @@ extern struct GameDriver chelnovj_driver;	/* (c) 1987 */
 extern struct GameDriver baddudes_driver;	/* (c) 1988 Data East USA */
 extern struct GameDriver drgninja_driver;	/* (c) 1988 Data East */
 extern struct GameDriver robocopp_driver;	/* (c) 1988 */
-extern struct GameDriver hbarrel_driver;	/* (c) 1987 */
+extern struct GameDriver heavyb_driver;
+extern struct GameDriver heavyb2_driver;
 extern struct GameDriver slyspy_driver;		/* (c) 1989 */
 extern struct GameDriver hippodrm_driver;	/* (c) 1989 */
 extern struct GameDriver midres_driver;		/* (c) 1989 */
@@ -526,6 +533,7 @@ extern struct GameDriver espial_driver;		/* (c) 1983 Thunderbolt */
 extern struct GameDriver espiale_driver;	/* (c) 1983 Thunderbolt */
 extern struct GameDriver cloak_driver;		/* (c) 1983 Atari */
 extern struct GameDriver champbas_driver;	/* (c) 1983 Sega */
+//extern struct GameDriver champbb2_driver;
 extern struct GameDriver exerion_driver;	/* (c) 1983 Jaleco */
 extern struct GameDriver foodf_driver;		/* (c) 1982 Atari */
 extern struct GameDriver jack_driver;		/* (c) 1982 Cinematronics */
@@ -772,9 +780,11 @@ const struct GameDriver *drivers[] =
 	&krull_driver,
 	&stooges_driver,
 	&qbertqub_driver,
+	&sqbert_driver,
 	/* Taito "Qix hardware" games */
 	&qix_driver,
 	&qix2_driver,
+	&sdungeon_driver,
 	&zookeep_driver,
 	/* Taito "Jungle King hardware" games */
 	&junglek_driver,
@@ -803,6 +813,9 @@ const struct GameDriver *drivers[] =
 	&tnzs2_driver,
 	&xsleena_driver,
 	&solarwar_driver,
+	&slapfigh_driver,
+	&slapboot_driver,
+	&slpboota_driver,
 //	&twincobr_driver,
 	/* Williams games */
 	&robotron_driver,
@@ -858,6 +871,7 @@ const struct GameDriver *drivers[] =
 	&ffight_driver,
 	&mtwins_driver,
 	&unsquad_driver,
+	&msword_driver,
 	/* Sega "dual game board" games */
 	&carnival_driver,
 	&pulsar_driver,
@@ -917,7 +931,8 @@ const struct GameDriver *drivers[] =
 	&baddudes_driver,
 	&drgninja_driver,
 	&robocopp_driver,
-	&hbarrel_driver,
+	&heavyb_driver,
+	&heavyb2_driver,
 	&slyspy_driver,
 	&hippodrm_driver,
 	&midres_driver,
@@ -1070,6 +1085,7 @@ const struct GameDriver *drivers[] =
 	&espiale_driver,
 	&cloak_driver,
 	&champbas_driver,
+//	&champbb2_driver,
 	&exerion_driver,
 	&foodf_driver,
 	&jack_driver,
