@@ -29,10 +29,15 @@ static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are
 	0xff,0x20,0xff,  /* PURPLE */
 	0xff,0xff,0xff /* WHITE */
 };
-
 static unsigned short colortable[] =
-{      0,1,0,2,0,3,0,4,0,5,0,6
+{
+	0,1,0,2,0,3,0,4,0,5,0,6
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 
@@ -132,8 +137,8 @@ static struct MachineDriver skychut_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3, sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -154,7 +159,7 @@ static struct MachineDriver skychut_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( skychut_rom )
+ROM_START( skychut )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sc1d", 0x1000, 0x0400, 0x30b5ded1 )
 	ROM_LOAD( "sc2d", 0x1400, 0x0400, 0xfd1f4b9e )
@@ -195,7 +200,7 @@ struct GameDriver skychut_driver =
 
 	skychut_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

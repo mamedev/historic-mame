@@ -365,7 +365,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( shuuz_rom )
+ROM_START( shuuz )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "4010.23p",     0x00000, 0x20000, 0x1c2459f8 )
 	ROM_LOAD_ODD ( "4011.13p",     0x00000, 0x20000, 0x6db53a85 )
@@ -391,7 +391,7 @@ ROM_START( shuuz_rom )
 ROM_END
 
 
-ROM_START( shuuz2_rom )
+ROM_START( shuuz2 )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "23p.rom",     0x00000, 0x20000, 0x98aec4e7 )
 	ROM_LOAD_ODD ( "13p.rom",     0x00000, 0x20000, 0xdd9d5d5c )

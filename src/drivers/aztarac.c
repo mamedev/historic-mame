@@ -117,23 +117,6 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout fakelayout =
-{
-    1,1,
-    0,
-    1,
-    { 0 },
-    { 0 },
-    { 0 },
-    0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
 static struct AY8910interface ay8910_interface =
 {
 	4,	/* 4 chips */
@@ -172,7 +155,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1024-1, 0, 768-1 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
 	aztarac_init_colors,
 
@@ -198,7 +181,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( aztarac_rom )
+ROM_START( aztarac )
 	ROM_REGION(0xc000)
 	ROM_LOAD_EVEN( "l8_6.bin", 0x000000, 0x001000, 0x25f8da18 )
 	ROM_LOAD_ODD ( "n8_0.bin", 0x000000, 0x001000, 0x04e20626 )

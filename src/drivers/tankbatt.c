@@ -314,7 +314,7 @@ static const char *tankbatt_sample_names[] =
     0	/* end of array */
 };
 
-ROM_START( tankbatt_rom )
+ROM_START( tankbatt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tb1-1.bin",    0x6000, 0x0800, 0x278a0b8c )
 	ROM_LOAD( "tb1-2.bin",    0x6800, 0x0800, 0xe0923370 )

@@ -126,8 +126,8 @@ enum
 #if (HAS_HD63705)
 	CPU_HD63705,	/* M6805 family but larger address space, different stack size */
 #endif
-#if (HAS_M6309)
-	CPU_M6309,		/* same as CPU_M6809 (actually it's not 100% compatible) */
+#if (HAS_HD6309)
+	CPU_HD6309,		/* same as CPU_M6809 (actually it's not 100% compatible) */
 #endif
 #if (HAS_M6809)
 	CPU_M6809,
@@ -214,7 +214,7 @@ struct MachineDriver
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	unsigned int total_colors;	/* palette is 3*total_colors bytes long */
 	unsigned int color_table_len;	/* length in shorts of the color lookup table */
-	void (*vh_convert_color_prom)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+	void (*vh_init_palette)(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
 
@@ -228,9 +228,9 @@ struct MachineDriver
 
 	/* sound hardware */
 	int sound_attributes;
+	int obsolete1;
 	int obsolete2;
 	int obsolete3;
-	int obsolete4;
 	struct MachineSound sound[MAX_SOUND];
 };
 
@@ -270,10 +270,6 @@ struct MachineDriver
 /* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
 #define	VIDEO_MODIFIES_PALETTE	0x0004
 
-/* ASG 980209 - added: */
-/* bit 3 of the video attributes indicates whether or not the driver wants 16-bit color */
-#define	VIDEO_SUPPORTS_16BIT		0x0008
-
 /* ASG 980417 - added: */
 /* bit 4 of the video attributes indicates that the driver wants its refresh after */
 /*       the VBLANK instead of before. */
@@ -305,8 +301,8 @@ struct GameDriver
 	const char *description;
 	const char *year;
 	const char *manufacturer;
-	const char *obsolete;
-	int flags;	/* see defines below */
+	const char *obsolete1;
+	UINT32 flags;	/* see defines below */
 	const struct MachineDriver *drv;
 	void (*driver_init)(void);	/* optional function to be called during initialization */
 								/* This is called ONCE, unlike Machine->init_machine */
@@ -327,18 +323,13 @@ struct GameDriver
 									/* if the encryption is different from the above. */
 	const char **samplenames;		/* optional array of names of samples to load. */
 									/* drivers can retrieve them in Machine->samples */
-	struct ADPCMsample *adpcm_sample_list;	/* was sound_prom */
+	int obsolete2;
 
 	struct InputPort *input_ports;
 
-	/* if they are available, provide a dump of the color proms, or even */
-	/* better load them from disk like the other ROMs. */
-	/* If you load them from disk, you must place them in a memory region by */
-	/* itself, and use the PROM_MEMORY_REGION macro below to say in which */
-	/* region they are. */
-	const unsigned char *color_prom;
-	const unsigned char *palette;
-	const unsigned short *colortable;
+	int prom_memory_region;
+	int obsolete3;
+	int obsolete4;
 	int orientation;	/* orientation of the monitor; see defines below */
 
 	int (*hiscore_load)(void);	/* will be called every vblank until it */
@@ -354,12 +345,13 @@ struct GameDriver
 #define GAME_IMPERFECT_COLORS	0x0004	/* colors are not 100% accurate, but close */
 #define GAME_NO_SOUND			0x0008	/* sound is missing */
 #define GAME_IMPERFECT_SOUND	0x0010	/* sound is known to be wrong */
+#define	GAME_REQUIRES_16BIT		0x0020	/* cannot fit in 256 colors */
 
 #ifdef MESS
  #define GAME_COMPUTER			0x8000	/* Driver is a computer (needs full keyboard) */
 #endif
 
-#define PROM_MEMORY_REGION(region) ((const unsigned char *)((-(region))-1))
+#define PROM_MEMORY_REGION(region) (region)
 
 
 #define	ORIENTATION_DEFAULT		0x00
@@ -367,11 +359,11 @@ struct GameDriver
 #define	ORIENTATION_FLIP_Y		0x02	/* mirror everything in the Y direction */
 #define ORIENTATION_SWAP_XY		0x04	/* mirror along the top-left/bottom-right diagonal */
 #define	ORIENTATION_ROTATE_90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
-#define	ORIENTATION_ROTATE_180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)	/* rotate 180 degrees */
+#define	ORIENTATION_ROTATE_180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)		/* rotate 180 degrees */
 #define	ORIENTATION_ROTATE_270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
 /* IMPORTANT: to perform more than one transformation, DO NOT USE |, use ^ instead. */
 /* For example, to rotate 90 degrees counterclockwise and flip horizontally, use: */
-/* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X*/
+/* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X */
 /* Always remember that FLIP is performed *after* SWAP_XY. */
 
 

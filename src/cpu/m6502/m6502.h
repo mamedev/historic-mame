@@ -28,6 +28,17 @@
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
 #define FAST_MEMORY 1
 
+#define SUBTYPE_6502	0
+#if HAS_M65C02
+#define SUBTYPE_65C02	1
+#endif
+#if HAS_M6510
+#define SUBTYPE_6510	2
+#endif
+#if HAS_N2A03
+#define SUBTYPE_2A03	3
+#endif
+
 enum {
 	M6502_PC=1, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y,
 	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE, M6502_SUBTYPE

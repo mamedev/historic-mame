@@ -311,7 +311,7 @@ static struct MachineDriver mikie_machine_driver =
 ***************************************************************************/
 
 
-ROM_START( mikie_rom )
+ROM_START( mikie )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "11c_n14.bin",  0x6000, 0x2000, 0xf698e6dd )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
@@ -335,7 +335,7 @@ ROM_START( mikie_rom )
 	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
-ROM_START( mikiej_rom )
+ROM_START( mikiej )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "11c_n14.bin",  0x6000, 0x2000, 0xf698e6dd )
 	ROM_LOAD( "12a_o13.bin",  0x8000, 0x4000, 0x826e7035 )
@@ -359,7 +359,7 @@ ROM_START( mikiej_rom )
 	ROM_LOAD( "06e_n10.bin",  0x0000, 0x2000, 0x2cf9d670 )
 ROM_END
 
-ROM_START( mikiehs_rom )
+ROM_START( mikiehs )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "11c_l14.bin",  0x6000, 0x2000, 0x633f3a6d )
 	ROM_LOAD( "12a_m13.bin",  0x8000, 0x4000, 0x9c42d715 )

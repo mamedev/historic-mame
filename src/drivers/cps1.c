@@ -3560,51 +3560,6 @@ static struct MachineDriver DRVNAME##_machine_driver =           \
 	}                            \
 };
 
-#define MACHINE_DRIVER_16BIT(DRVNAME,CPU_FRQ,OKI_FREQ) \
-static struct MachineDriver DRVNAME##_machine_driver =           \
-{                                                                        \
-	/* basic machine hardware */                                     \
-	{                                                                \
-		{                                                        \
-			CPU_M68000,                                      \
-			CPU_FRQ,                                    \
-			0,                                               \
-			cps1_readmem,cps1_writemem,0,0,                  \
-			cps1_interrupt, 1										\
-		},                                                       \
-		{                                                        \
-			CPU_Z80 | CPU_AUDIO_CPU,                         \
-			4000000,  /* 4 Mhz ??? TODO: find real FRQ */    \
-			2,      /* memory region #2 */                   \
-			sound_readmem,sound_writemem,0,0,                \
-			ignore_interrupt,0                               \
-		}                                                        \
-	},                                                               \
-	60, 3000, 									                     \
-	1,                                                               \
-	0,                                                               \
-									 \
-	/* video hardware */                                             \
-	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 }, \
-									 \
-	cps1_gfxdecodeinfo,                                              \
-	32*16+32*16+32*16+32*16,   /* lotsa colours */                   \
-	32*16+32*16+32*16+32*16,   /* Colour table length */             \
-	0,                                                               \
-									 \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT, \
-	cps1_eof_callback,                                               \
-	cps1_vh_start,                                                   \
-	cps1_vh_stop,                                                    \
-	cps1_vh_screenrefresh,                                           \
-									 \
-	/* sound hardware */                                             \
-	0,0,0,0,                                     \
-	{ { SOUND_YM2151,  &ym2151_interface },                          \
-	  { SOUND_OKIM6295,  &okim6295_interface_##OKI_FREQ }                       \
-	}                            \
-};
-
 #define QSOUND_MACHINE_DRIVER(CPS1_DRVNAME, CPS1_CPU_FRQ) \
 static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 {                                                                        \
@@ -3653,7 +3608,7 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 #define CPS1_DEFAULT_CPU_SPEED          10000000
 #define CPS1_DEFAULT_CPU_SLOW_SPEED      8000000
 
-MACHINE_DRIVER( forgottn,  CPS1_DEFAULT_CPU_SLOW_SPEED, 6061 )
+MACHINE_DRIVER( forgottn,  10000000, 6061 )
 MACHINE_DRIVER( ghouls,    CPS1_DEFAULT_CPU_SLOW_SPEED, 7576 )
 MACHINE_DRIVER( strider,   CPS1_DEFAULT_CPU_SPEED, 7576 )
 MACHINE_DRIVER( dwj,       CPS1_DEFAULT_CPU_SPEED, 7576 )
@@ -3672,7 +3627,7 @@ MACHINE_DRIVER( kod,       CPS1_DEFAULT_CPU_SPEED, 7576 )
 MACHINE_DRIVER( captcomm,  CPS1_DEFAULT_CPU_SPEED, 7576 )
 MACHINE_DRIVER( knights,   CPS1_DEFAULT_CPU_SPEED, 7576 )
 MACHINE_DRIVER( varth,     CPS1_DEFAULT_CPU_SPEED, 7576 )
-MACHINE_DRIVER_16BIT( cworld2j,  CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( cworld2j,  CPS1_DEFAULT_CPU_SPEED, 7576 )
 QSOUND_MACHINE_DRIVER( wof,      CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( dino,     CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( punisher, CPS1_DEFAULT_CPU_SPEED )
@@ -3681,9 +3636,9 @@ QSOUND_MACHINE_DRIVER( mbombrd,  CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( pnickj,    CPS1_DEFAULT_CPU_SPEED, 7576 )
 MACHINE_DRIVER( qad,       CPS1_DEFAULT_CPU_SPEED, 7576 )
 MACHINE_DRIVER( qtono2,    CPS1_DEFAULT_CPU_SPEED, 7576 )
-MACHINE_DRIVER_16BIT( pang3,     CPS1_DEFAULT_CPU_SPEED, 7576 )
-MACHINE_DRIVER_16BIT( megaman,   CPS1_DEFAULT_CPU_SPEED, 7576 )
-MACHINE_DRIVER_16BIT( sfzch,   CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( pang3,     CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( megaman,   CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( sfzch,   CPS1_DEFAULT_CPU_SPEED, 7576 )
 
 
 
@@ -3695,7 +3650,7 @@ MACHINE_DRIVER_16BIT( sfzch,   CPS1_DEFAULT_CPU_SPEED, 7576 )
 
 #define CODE_SIZE 0x200000
 
-ROM_START( forgottn_rom )
+ROM_START( forgottn )
 	ROM_REGION(CODE_SIZE)
 	ROM_LOAD_EVEN( "lwu11a",        0x00000, 0x20000, 0xddf78831 )
 	ROM_LOAD_ODD ( "lwu15a",        0x00000, 0x20000, 0xf7ce2097 )
@@ -3722,7 +3677,7 @@ ROM_START( forgottn_rom )
 	ROM_LOAD( "lw-04u",        0x20000, 0x20000, 0xe6cd098e )
 ROM_END
 
-ROM_START( lostwrld_rom )
+ROM_START( lostwrld )
 	ROM_REGION(CODE_SIZE)
 	ROM_LOAD_EVEN( "lw-11c.14f",    0x00000, 0x20000, 0x67e42546 )
 	ROM_LOAD_ODD ( "lw-15c.14g",    0x00000, 0x20000, 0x402e2a46 )
@@ -3749,7 +3704,7 @@ ROM_START( lostwrld_rom )
 	ROM_LOAD( "lw-04.13c",     0x20000, 0x20000, 0x39305536 )
 ROM_END
 
-ROM_START( ghouls_rom )
+ROM_START( ghouls )
 	ROM_REGION(CODE_SIZE)
 	ROM_LOAD_EVEN( "ghl29.bin",    0x00000, 0x20000, 0x166a58a2 )
 	ROM_LOAD_ODD ( "ghl30.bin",    0x00000, 0x20000, 0x7ac8407a )
@@ -3784,7 +3739,7 @@ ROM_START( ghouls_rom )
 	ROM_CONTINUE(             0x010000, 0x08000 )
 ROM_END
 
-ROM_START( ghoulsj_rom )
+ROM_START( ghoulsj )
 	ROM_REGION(CODE_SIZE)
 	ROM_LOAD_EVEN( "ghlj29.bin",   0x00000, 0x20000, 0x82fd1798 )
 	ROM_LOAD_ODD ( "ghlj30.bin",   0x00000, 0x20000, 0x35366ccc )
@@ -3819,7 +3774,7 @@ ROM_START( ghoulsj_rom )
 	ROM_CONTINUE(             0x010000, 0x08000 )
 ROM_END
 
-ROM_START( strider_rom )
+ROM_START( strider )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "strider.30",   0x00000, 0x20000, 0xda997474 )
 	ROM_LOAD_ODD ( "strider.35",   0x00000, 0x20000, 0x5463aaa3 )
@@ -3846,7 +3801,7 @@ ROM_START( strider_rom )
 	ROM_LOAD( "strider.19",   0x20000, 0x20000, 0x444536d7 )
 ROM_END
 
-ROM_START( striderj_rom )
+ROM_START( striderj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sthj23.bin",   0x00000, 0x80000, 0x046e7b12 )
 	ROM_LOAD_WIDE_SWAP( "strider.32",   0x80000, 0x80000, 0x9b3cfc08 )
@@ -3870,7 +3825,7 @@ ROM_START( striderj_rom )
 	ROM_LOAD( "strider.19",   0x20000, 0x20000, 0x444536d7 )
 ROM_END
 
-ROM_START( stridrja_rom )
+ROM_START( stridrja )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "sth36.bin",   0x00000, 0x20000, 0x53c7b006 )
 	ROM_LOAD_ODD ( "sth42.bin",   0x00000, 0x20000, 0x4037f65f )
@@ -3897,7 +3852,7 @@ ROM_START( stridrja_rom )
 	ROM_LOAD( "strider.19",   0x20000, 0x20000, 0x444536d7 )
 ROM_END
 
-ROM_START( dwj_rom )
+ROM_START( dwj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "36.bin",       0x00000, 0x20000, 0x1a516657 )
 	ROM_LOAD_ODD ( "42.bin",       0x00000, 0x20000, 0x12a290a0 )
@@ -3951,7 +3906,7 @@ ROM_START( dwj_rom )
 	ROM_LOAD( "31.bin",       0x20000, 0x20000, 0x4a30c737 )
 ROM_END
 
-ROM_START( willow_rom )
+ROM_START( willow )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "wlu_30.rom",   0x00000, 0x20000, 0xd604dbb1 )
 	ROM_LOAD_ODD ( "wlu_35.rom",   0x00000, 0x20000, 0xdaee72fe )
@@ -3982,7 +3937,7 @@ ROM_START( willow_rom )
 	ROM_LOAD( "wl_19.rom",    0x20000, 0x20000, 0x683898f5 )
 ROM_END
 
-ROM_START( willowj_rom )
+ROM_START( willowj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "wl36.bin",     0x00000, 0x20000, 0x2b0d7cbc )
 	ROM_LOAD_ODD ( "wl42.bin",     0x00000, 0x20000, 0x1ac39615 )
@@ -4013,7 +3968,7 @@ ROM_START( willowj_rom )
 	ROM_LOAD( "wl_19.rom",    0x20000, 0x20000, 0x683898f5 )
 ROM_END
 
-ROM_START( unsquad_rom )
+ROM_START( unsquad )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "unsquad.30",   0x00000, 0x20000, 0x24d8f88d )
 	ROM_LOAD_ODD ( "unsquad.35",   0x00000, 0x20000, 0x8b954b59 )
@@ -4035,7 +3990,7 @@ ROM_START( unsquad_rom )
 	ROM_LOAD( "unsquad.18",   0x00000, 0x20000, 0x584b43a9 )
 ROM_END
 
-ROM_START( area88_rom )
+ROM_START( area88 )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "ar36.bin",     0x00000, 0x20000, 0x65030392 )
 	ROM_LOAD_ODD ( "ar42.bin",     0x00000, 0x20000, 0xc48170de )
@@ -4057,7 +4012,7 @@ ROM_START( area88_rom )
 	ROM_LOAD( "unsquad.18",   0x00000, 0x20000, 0x584b43a9 )
 ROM_END
 
-ROM_START( ffight_rom )
+ROM_START( ffight )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "ff30-36.bin",  0x00000, 0x20000, 0xf9a5ce83 )
 	ROM_LOAD_ODD ( "ff35-42.bin",  0x00000, 0x20000, 0x65f11215 )
@@ -4080,7 +4035,7 @@ ROM_START( ffight_rom )
 	ROM_LOAD( "ff19-19.bin",  0x20000, 0x20000, 0x1ef137f9 )
 ROM_END
 
-ROM_START( ffightu_rom )
+ROM_START( ffightu )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "36",           0x00000, 0x20000, 0xe2a48af9 )
 	ROM_LOAD_ODD ( "42",           0x00000, 0x20000, 0xf4bb480e )
@@ -4106,7 +4061,7 @@ ROM_START( ffightu_rom )
 	ROM_LOAD( "ff19-19.bin",  0x20000, 0x20000, 0x1ef137f9 )
 ROM_END
 
-ROM_START( ffightj_rom )
+ROM_START( ffightj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "ff30-36.bin",  0x00000, 0x20000, 0xf9a5ce83 )
 	ROM_LOAD_ODD ( "ff35-42.bin",  0x00000, 0x20000, 0x65f11215 )
@@ -4141,7 +4096,7 @@ ROM_START( ffightj_rom )
 	ROM_LOAD( "ff19-19.bin",  0x20000, 0x20000, 0x1ef137f9 )
 ROM_END
 
-ROM_START( c1941_rom )
+ROM_START( c1941 )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "41e_30.rom",   0x00000, 0x20000, 0x9deb1e75 )
 	ROM_LOAD_ODD ( "41e_35.rom",   0x00000, 0x20000, 0xd63942b3 )
@@ -4164,7 +4119,7 @@ ROM_START( c1941_rom )
 	ROM_LOAD( "41_19.rom",    0x20000, 0x20000, 0x15aec3a6 )
 ROM_END
 
-ROM_START( c1941j_rom )
+ROM_START( c1941j )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "4136.bin",     0x00000, 0x20000, 0x7fbd42ab )
 	ROM_LOAD_ODD ( "4142.bin",     0x00000, 0x20000, 0xc7781f89 )
@@ -4187,7 +4142,7 @@ ROM_START( c1941j_rom )
 	ROM_LOAD( "41_19.rom",    0x20000, 0x20000, 0x15aec3a6 )
 ROM_END
 
-ROM_START( mercs_rom )
+ROM_START( mercs )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "so2_30e.rom",  0x00000, 0x20000, 0xe17f9bf7 )
 	ROM_LOAD_ODD ( "so2_35e.rom",  0x00000, 0x20000, 0x78e63575 )
@@ -4218,7 +4173,7 @@ ROM_START( mercs_rom )
 	ROM_LOAD( "so2_19.rom",   0x20000, 0x20000, 0xac58aa71 )
 ROM_END
 
-ROM_START( mercsu_rom )
+ROM_START( mercsu )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "so2_30e.rom",  0x00000, 0x20000, 0xe17f9bf7 )
 	ROM_LOAD_ODD ( "s02-35",       0x00000, 0x20000, 0x4477df61 )
@@ -4249,7 +4204,7 @@ ROM_START( mercsu_rom )
 	ROM_LOAD( "so2_19.rom",   0x20000, 0x20000, 0xac58aa71 )
 ROM_END
 
-ROM_START( mercsj_rom )
+ROM_START( mercsj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "so2_30e.rom",  0x00000, 0x20000, 0xe17f9bf7 )
 	ROM_LOAD_ODD ( "so2_42.bin",   0x00000, 0x20000, 0x2c3884c6 )
@@ -4280,7 +4235,7 @@ ROM_START( mercsj_rom )
 	ROM_LOAD( "so2_19.rom",   0x20000, 0x20000, 0xac58aa71 )
 ROM_END
 
-ROM_START( mtwins_rom )
+ROM_START( mtwins )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "che_30.rom",   0x00000, 0x20000, 0x9a2a2db1 )
 	ROM_LOAD_ODD ( "che_35.rom",   0x00000, 0x20000, 0xa7f96b02 )
@@ -4303,7 +4258,7 @@ ROM_START( mtwins_rom )
 	ROM_LOAD( "ch_19.rom",    0x20000, 0x20000, 0xfc158cf7 )
 ROM_END
 
-ROM_START( chikij_rom )
+ROM_START( chikij )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "chj36a.bin",   0x00000, 0x20000, 0xec1328d8 )
 	ROM_LOAD_ODD ( "chj42a.bin",   0x00000, 0x20000, 0x4ae13503 )
@@ -4326,7 +4281,7 @@ ROM_START( chikij_rom )
 	ROM_LOAD( "ch_19.rom",    0x20000, 0x20000, 0xfc158cf7 )
 ROM_END
 
-ROM_START( msword_rom )
+ROM_START( msword )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "mse_30.rom",   0x00000, 0x20000, 0x03fc8dbc )
 	ROM_LOAD_ODD ( "mse_35.rom",   0x00000, 0x20000, 0xd5bf66cd )
@@ -4349,7 +4304,7 @@ ROM_START( msword_rom )
 	ROM_LOAD( "ms_19.rom",    0x20000, 0x20000, 0x74f892b9 )
 ROM_END
 
-ROM_START( mswordu_rom )
+ROM_START( mswordu )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "msu30",   0x00000, 0x20000, 0xd963c816 )
 	ROM_LOAD_ODD ( "msu35",   0x00000, 0x20000, 0x72f179b3 )
@@ -4372,7 +4327,7 @@ ROM_START( mswordu_rom )
 	ROM_LOAD( "ms_19.rom",    0x20000, 0x20000, 0x74f892b9 )
 ROM_END
 
-ROM_START( mswordj_rom )
+ROM_START( mswordj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "msj_30.rom",   0x00000, 0x20000, 0x04f0ef50 )
 	ROM_LOAD_ODD ( "msj_35.rom",   0x00000, 0x20000, 0x9fcbb9cd )
@@ -4395,7 +4350,7 @@ ROM_START( mswordj_rom )
 	ROM_LOAD( "ms_19.rom",    0x20000, 0x20000, 0x74f892b9 )
 ROM_END
 
-ROM_START( cawing_rom )
+ROM_START( cawing )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "cae_30a.rom",  0x00000, 0x20000, 0x91fceacd )
 	ROM_LOAD_ODD ( "cae_35a.rom",  0x00000, 0x20000, 0x3ef03083 )
@@ -4418,7 +4373,7 @@ ROM_START( cawing_rom )
 	ROM_LOAD( "ca_19.rom",    0x20000, 0x20000, 0x74584493 )
 ROM_END
 
-ROM_START( cawingj_rom )
+ROM_START( cawingj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "cae_30a.rom",  0x00000, 0x20000, 0x91fceacd )
 	ROM_LOAD_ODD ( "caj42a.bin",   0x00000, 0x20000, 0x039f8362 )
@@ -4456,7 +4411,7 @@ ROM_START( cawingj_rom )
 	ROM_LOAD( "ca_19.rom",    0x20000, 0x20000, 0x74584493 )
 ROM_END
 
-ROM_START( nemo_rom )
+ROM_START( nemo )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "nme_30a.rom",  0x00000, 0x20000, 0xd2c03e56 )
 	ROM_LOAD_ODD ( "nme_35a.rom",  0x00000, 0x20000, 0x5fd31661 )
@@ -4479,7 +4434,7 @@ ROM_START( nemo_rom )
 	ROM_LOAD( "nm_19.rom",    0x20000, 0x20000, 0x2650a0a8 )
 ROM_END
 
-ROM_START( nemoj_rom )
+ROM_START( nemoj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "nm36.bin",     0x00000, 0x20000, 0xdaeceabb )
 	ROM_LOAD_ODD ( "nm42.bin",     0x00000, 0x20000, 0x55024740 )
@@ -4502,7 +4457,7 @@ ROM_START( nemoj_rom )
 	ROM_LOAD( "nm_19.rom",    0x20000, 0x20000, 0x2650a0a8 )
 ROM_END
 
-ROM_START( sf2_rom )
+ROM_START( sf2 )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "sf2e_30b.rom",    0x00000, 0x20000, 0x57bd7051 )
 	ROM_LOAD_ODD ( "sf2e_37b.rom",    0x00000, 0x20000, 0x62691cdd )
@@ -4536,7 +4491,7 @@ ROM_START( sf2_rom )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2a_rom )
+ROM_START( sf2a )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "sf2u.30a",    0x00000, 0x20000, 0x08beb861 )
 	ROM_LOAD_ODD ( "sf2u.37a",    0x00000, 0x20000, 0xb7638d69 )
@@ -4570,7 +4525,7 @@ ROM_START( sf2a_rom )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2b_rom )
+ROM_START( sf2b )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "sf2e_30b.rom",   0x00000, 0x20000, 0x57bd7051 )
 	ROM_LOAD_ODD ( "sf2u.37b",       0x00000, 0x20000, 0x4a54d479 )
@@ -4604,7 +4559,7 @@ ROM_START( sf2b_rom )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2e_rom )
+ROM_START( sf2e )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "sf2u.30e",    0x00000, 0x20000, 0xf37cd088 )
 	ROM_LOAD_ODD ( "sf2u.37e",    0x00000, 0x20000, 0x6c61a513 )
@@ -4638,7 +4593,7 @@ ROM_START( sf2e_rom )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2j_rom )
+ROM_START( sf2j )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "sf2j30.bin",    0x00000, 0x20000, 0x79022b31 )
 	ROM_LOAD_ODD ( "sf2j37.bin",    0x00000, 0x20000, 0x516776ec )
@@ -4672,7 +4627,7 @@ ROM_START( sf2j_rom )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2jb_rom )
+ROM_START( sf2jb )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "sf2e_30b.rom",   0x00000, 0x20000, 0x57bd7051 )
 	ROM_LOAD_ODD ( "sf2j_37b.rom",   0x00000, 0x20000, 0x1e1f6844 )
@@ -4706,7 +4661,7 @@ ROM_START( sf2jb_rom )
 	ROM_LOAD( "sf2_19.rom",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( c3wonders_rom )
+ROM_START( c3wonders )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "3wonders.30",  0x00000, 0x20000, 0x0b156fd8 )
 	ROM_LOAD_ODD ( "3wonders.35",  0x00000, 0x20000, 0x57350bf4 )
@@ -4736,7 +4691,7 @@ ROM_START( c3wonders_rom )
 	ROM_LOAD( "3wonders.19",  0x20000, 0x20000, 0xdbe64ad0 )
 ROM_END
 
-ROM_START( wonder3_rom )
+ROM_START( wonder3 )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "rtj36.bin",    0x00000, 0x20000, 0xe3741247 )
 	ROM_LOAD_ODD ( "rtj42.bin",    0x00000, 0x20000, 0xb4baa117 )
@@ -4767,7 +4722,7 @@ ROM_START( wonder3_rom )
 	ROM_LOAD( "3wonders.19",  0x20000, 0x20000, 0xdbe64ad0 )
 ROM_END
 
-ROM_START( kod_rom )
+ROM_START( kod )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "kod30.rom",    0x00000, 0x20000, 0xc7414fd4 )
 	ROM_LOAD_ODD ( "kod37.rom",    0x00000, 0x20000, 0xa5bf40d2 )
@@ -4797,7 +4752,7 @@ ROM_START( kod_rom )
 	ROM_LOAD( "kod19.rom",    0x20000, 0x20000, 0x02d851c1 )
 ROM_END
 
-ROM_START( kodj_rom )
+ROM_START( kodj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "kd30.bin",    0x00000, 0x20000, 0xebc788ad )
 	ROM_LOAD_ODD ( "kd37.bin",    0x00000, 0x20000, 0xe55c3529 )
@@ -4824,7 +4779,7 @@ ROM_START( kodj_rom )
 	ROM_LOAD( "kd19.bin",    0x20000, 0x20000, 0x92941b80 )
 ROM_END
 
-ROM_START( kodb_rom )
+ROM_START( kodb )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "kod.17",    0x00000, 0x80000, 0x036dd74c )
 	ROM_LOAD_ODD ( "kod.18",    0x00000, 0x80000, 0x3e4b7295 )
@@ -4848,7 +4803,7 @@ ROM_START( kodb_rom )
 	ROM_LOAD( "kd19.bin",    0x20000, 0x20000, 0x92941b80 )
 ROM_END
 
-ROM_START( captcomm_rom )
+ROM_START( captcomm )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "cce_23d.rom",  0x000000, 0x80000, 0x19c58ece )
 	ROM_LOAD_WIDE_SWAP( "cc_22d.rom",   0x080000, 0x80000, 0xa91949b7 )
@@ -4874,7 +4829,7 @@ ROM_START( captcomm_rom )
 	ROM_LOAD( "cc_19.rom",    0x20000, 0x20000, 0xb99091ae )
 ROM_END
 
-ROM_START( captcomu_rom )
+ROM_START( captcomu )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "23b",   0x000000, 0x80000, 0x03da44fd )
 	ROM_LOAD_WIDE_SWAP( "22c",   0x080000, 0x80000, 0x9b82a052 )
@@ -4900,7 +4855,7 @@ ROM_START( captcomu_rom )
 	ROM_LOAD( "cc_19.rom",    0x20000, 0x20000, 0xb99091ae )
 ROM_END
 
-ROM_START( captcomj_rom )
+ROM_START( captcomj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "cc23.bin",   0x000000, 0x80000, 0x5b482b62 )
 	ROM_LOAD_WIDE_SWAP( "cc22.bin",   0x080000, 0x80000, 0x0fd34195 )
@@ -4926,7 +4881,7 @@ ROM_START( captcomj_rom )
 	ROM_LOAD( "cc_19.rom",    0x20000, 0x20000, 0xb99091ae )
 ROM_END
 
-ROM_START( knights_rom )
+ROM_START( knights )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "kr_23e.rom",   0x00000, 0x80000, 0x1b3997eb )
 	ROM_LOAD_WIDE_SWAP( "kr_22.rom",    0x80000, 0x80000, 0xd0b671a9 )
@@ -4950,7 +4905,7 @@ ROM_START( knights_rom )
 	ROM_LOAD( "kr_19.rom",    0x20000, 0x20000, 0xbfc654e9 )
 ROM_END
 
-ROM_START( knightsj_rom )
+ROM_START( knightsj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "krj30.bin",   0x00000, 0x20000, 0xad3d1a8e )
 	ROM_LOAD_ODD ( "krj37.bin",   0x00000, 0x20000, 0xe694a491 )
@@ -4977,7 +4932,7 @@ ROM_START( knightsj_rom )
 	ROM_LOAD( "kr_19.rom",    0x20000, 0x20000, 0xbfc654e9 )
 ROM_END
 
-ROM_START( sf2ce_rom )
+ROM_START( sf2ce )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sf2ce.23",     0x000000, 0x80000, 0x3f846b74 )
 	ROM_LOAD_WIDE_SWAP( "sf2ce.22",     0x080000, 0x80000, 0x99f1cca4 )
@@ -5006,7 +4961,7 @@ ROM_START( sf2ce_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2cea_rom )
+ROM_START( sf2cea )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "s92u-23a",     0x000000, 0x80000, 0xac44415b )
 	ROM_LOAD_WIDE_SWAP( "sf2ce.22",     0x080000, 0x80000, 0x99f1cca4 )
@@ -5035,7 +4990,7 @@ ROM_START( sf2cea_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2ceb_rom )
+ROM_START( sf2ceb )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "s92-23b",      0x000000, 0x80000, 0x996a3015 )
 	ROM_LOAD_WIDE_SWAP( "s92-22b",      0x080000, 0x80000, 0x2bbe15ed )
@@ -5064,7 +5019,7 @@ ROM_START( sf2ceb_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2cej_rom )
+ROM_START( sf2cej )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE( "sf2cej.23",    0x000000, 0x80000, 0x7c463f94 )
 	ROM_LOAD_WIDE( "sf2cej.22",    0x080000, 0x80000, 0x6628f6a6 )
@@ -5093,7 +5048,7 @@ ROM_START( sf2cej_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2rb_rom )
+ROM_START( sf2rb )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE( "sf2d__23.rom", 0x000000, 0x80000, 0x450532b0 )
 	ROM_LOAD_WIDE( "sf2d__22.rom", 0x080000, 0x80000, 0xfe9d9cf5 )
@@ -5122,7 +5077,7 @@ ROM_START( sf2rb_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2red_rom )
+ROM_START( sf2red )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sf2red.23",    0x000000, 0x80000, 0x40276abb )
 	ROM_LOAD_WIDE_SWAP( "sf2red.22",    0x080000, 0x80000, 0x18daf387 )
@@ -5151,7 +5106,7 @@ ROM_START( sf2red_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2accp2_rom )
+ROM_START( sf2accp2 )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sf2ca-23.bin", 0x000000, 0x80000, 0x36c3ba2f )
 	ROM_LOAD_WIDE_SWAP( "sf2ca-22.bin", 0x080000, 0x80000, 0x0550453d )
@@ -5180,7 +5135,7 @@ ROM_START( sf2accp2_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( varth_rom )
+ROM_START( varth )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "vae_30a.rom",  0x00000, 0x20000, 0x7fcd0091 )
 	ROM_LOAD_ODD ( "vae_35a.rom",  0x00000, 0x20000, 0x35cf9509 )
@@ -5206,7 +5161,7 @@ ROM_START( varth_rom )
 	ROM_LOAD( "va_19.rom",    0x20000, 0x20000, 0x0610a4ac )
 ROM_END
 
-ROM_START( varthj_rom )
+ROM_START( varthj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "vaj36b.bin",   0x00000, 0x20000, 0x1d798d6a )
 	ROM_LOAD_ODD ( "vaj42b.bin",   0x00000, 0x20000, 0x0f720233 )
@@ -5232,7 +5187,7 @@ ROM_START( varthj_rom )
 	ROM_LOAD( "va_19.rom",    0x20000, 0x20000, 0x0610a4ac )
 ROM_END
 
-ROM_START( cworld2j_rom )
+ROM_START( cworld2j )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "q536.bin",       0x00000, 0x20000, 0x38a08099 )
 	ROM_LOAD_ODD ( "q542.bin",       0x00000, 0x20000, 0x4d29b3a4 )
@@ -5270,7 +5225,7 @@ ROM_START( cworld2j_rom )
 	ROM_LOAD( "q531.bin",       0x20000, 0x20000, 0x7d17e496 )
 ROM_END
 
-ROM_START( wof_rom )
+ROM_START( wof )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tk2e_23b.rom",  0x000000, 0x80000, 0x11fb2ed1 )
 	ROM_LOAD_WIDE_SWAP( "tk2e_22b.rom",  0x080000, 0x80000, 0x479b3f24 )
@@ -5296,7 +5251,7 @@ ROM_START( wof_rom )
 	ROM_LOAD( "tk2_q4.rom",     0x180000, 0x80000, 0x36642e88 )
 ROM_END
 
-ROM_START( wofj_rom )
+ROM_START( wofj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tk2j23c.bin",  0x000000, 0x80000, 0x9b215a68 )
 	ROM_LOAD_WIDE_SWAP( "tk2j22c.bin",  0x080000, 0x80000, 0xb74b09ac )
@@ -5322,7 +5277,7 @@ ROM_START( wofj_rom )
 	ROM_LOAD( "tk2_q4.rom",     0x180000, 0x80000, 0x36642e88 )
 ROM_END
 
-ROM_START( sf2t_rom )
+ROM_START( sf2t )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sf2.23",       0x000000, 0x80000, 0x89a1fc38 )
 	ROM_LOAD_WIDE_SWAP( "sf2.22",       0x080000, 0x80000, 0xaea6e035 )
@@ -5351,7 +5306,7 @@ ROM_START( sf2t_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( sf2tj_rom )
+ROM_START( sf2tj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sf2tj.23",   0x000000, 0x80000, 0xea73b4dc )
 	ROM_LOAD_WIDE_SWAP( "sf2.22",     0x080000, 0x80000, 0xaea6e035 )
@@ -5380,7 +5335,7 @@ ROM_START( sf2tj_rom )
 	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
-ROM_START( dino_rom )
+ROM_START( dino )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "cde_23a.rom",  0x000000, 0x80000, 0x8f4e585e )
 	ROM_LOAD_WIDE_SWAP( "cde_22a.rom",  0x080000, 0x80000, 0x9278aa12 )
@@ -5407,7 +5362,7 @@ ROM_START( dino_rom )
 	ROM_LOAD( "cd_q4.rom",      0x180000, 0x80000, 0x2c67821d )
 ROM_END
 
-ROM_START( dinoj_rom )
+ROM_START( dinoj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "cdj-23a.8f",   0x000000, 0x80000, 0x5f3ece96 )
 	ROM_LOAD_WIDE_SWAP( "cdj-22a.7f",   0x080000, 0x80000, 0xa0d8de29 )
@@ -5434,7 +5389,7 @@ ROM_START( dinoj_rom )
 	ROM_LOAD( "cd_q4.rom",      0x180000, 0x80000, 0x2c67821d )
 ROM_END
 
-ROM_START( punisher_rom )
+ROM_START( punisher )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "pse_26.rom",       0x000000, 0x20000, 0x389a99d2 )
 	ROM_LOAD_ODD ( "pse_30.rom",       0x000000, 0x20000, 0x68fb06ac )
@@ -5467,7 +5422,7 @@ ROM_START( punisher_rom )
 	ROM_LOAD( "ps_q4.rom",      0x180000, 0x80000, 0xbed42f03 )
 ROM_END
 
-ROM_START( punishrj_rom )
+ROM_START( punishrj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "psj23.bin",   0x000000, 0x80000, 0x6b2fda52 )
 	ROM_LOAD_WIDE_SWAP( "psj22.bin",   0x080000, 0x80000, 0xe01036bc )
@@ -5494,7 +5449,7 @@ ROM_START( punishrj_rom )
 	ROM_LOAD( "ps_q4.rom",      0x180000, 0x80000, 0xbed42f03 )
 ROM_END
 
-ROM_START( slammast_rom )
+ROM_START( slammast )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "mbe_23e.rom",  0x000000, 0x80000, 0x5394057a )
 	ROM_LOAD_EVEN( "mbe_24b.rom",       0x080000, 0x20000, 0x95d5e729 )
@@ -5533,7 +5488,7 @@ ROM_START( slammast_rom )
 	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
-ROM_START( mbomberj_rom )
+ROM_START( mbomberj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "mbj23e",       0x000000, 0x80000, 0x0d06036a )
 	ROM_LOAD_EVEN( "mbe_24b.rom",       0x080000, 0x20000, 0x95d5e729 )
@@ -5572,7 +5527,7 @@ ROM_START( mbomberj_rom )
 	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
-ROM_START( mbombrd_rom )
+ROM_START( mbombrd )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "mbde_26.rom",       0x000000, 0x20000, 0x72b7451c )
 	ROM_LOAD_ODD ( "mbde_30.rom",       0x000000, 0x20000, 0xa036dc16 )
@@ -5614,7 +5569,7 @@ ROM_START( mbombrd_rom )
 	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
-ROM_START( mbombrdj_rom )
+ROM_START( mbombrdj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "mbde_26.rom",       0x000000, 0x20000, 0x72b7451c )
 	ROM_LOAD_ODD ( "mbde30.rom",        0x000000, 0x20000, 0xbeff31cf )
@@ -5656,7 +5611,7 @@ ROM_START( mbombrdj_rom )
 	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
-ROM_START( pnickj_rom )
+ROM_START( pnickj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "pnij36.bin",   0x00000, 0x20000, 0x2d4ffb2b )
 	ROM_LOAD_ODD ( "pnij42.bin",   0x00000, 0x20000, 0xc085dfaf )
@@ -5688,7 +5643,7 @@ ROM_START( pnickj_rom )
 	ROM_LOAD( "pnij25.bin",   0x20000, 0x20000, 0x22109aaa )
 ROM_END
 
-ROM_START( qad_rom )
+ROM_START( qad )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "qdu_36a.rom",  0x00000, 0x20000, 0xde9c24a0 )
 	ROM_LOAD_ODD ( "qdu_42a.rom",  0x00000, 0x20000, 0xcfe36f0c )
@@ -5714,7 +5669,7 @@ ROM_START( qad_rom )
 	ROM_LOAD( "qdu_31.rom",  0x20000, 0x20000, 0xb7583f73 )
 ROM_END
 
-ROM_START( qadj_rom )
+ROM_START( qadj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "qad23a.bin",   0x00000, 0x80000, 0x4d3553de )
 	ROM_LOAD_WIDE_SWAP( "qad22a.bin",   0x80000, 0x80000, 0x3191ddd0 )
@@ -5734,7 +5689,7 @@ ROM_START( qadj_rom )
 	ROM_LOAD( "qad19.bin",   0x20000, 0x20000, 0x13d3236b )
 ROM_END
 
-ROM_START( qtono2_rom )
+ROM_START( qtono2 )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_EVEN( "tn2j-30.11e",  0x00000, 0x20000, 0x9226eb5e )
 	ROM_LOAD_ODD ( "tn2j-37.11f",  0x00000, 0x20000, 0xd1d30da1 )
@@ -5763,7 +5718,7 @@ ROM_START( qtono2_rom )
 	ROM_LOAD( "tn2j-19.12c",  0x20000, 0x20000, 0x5b3b931e )
 ROM_END
 
-ROM_START( pang3_rom )
+ROM_START( pang3 )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "pa3j-17.11l",  0x00000, 0x80000, 0x21f6e51f )
 	ROM_LOAD_WIDE_SWAP( "pa3j-16.10l",  0x80000, 0x80000, 0xca1d7897 )
@@ -5783,7 +5738,7 @@ ROM_START( pang3_rom )
 	ROM_LOAD( "pa3-06.11d",    0x20000, 0x20000, 0xaffa4f82 )
 ROM_END
 
-ROM_START( megaman_rom )
+ROM_START( megaman )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "rcma_23b.rom",   0x000000, 0x80000, 0x61e4a397 )
 	ROM_LOAD_WIDE_SWAP( "rcma_22b.rom",   0x080000, 0x80000, 0x708268c4 )
@@ -5816,7 +5771,7 @@ ROM_START( megaman_rom )
 	ROM_LOAD( "rcm_19.rom",    0x20000, 0x20000, 0xf257dbe1 )
 ROM_END
 
-ROM_START( rockmanj_rom )
+ROM_START( rockmanj )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "rcm23a.bin",   0x000000, 0x80000, 0xefd96cb2 )
 	ROM_LOAD_WIDE_SWAP( "rcm22a.bin",   0x080000, 0x80000, 0x8729a689 )
@@ -5849,7 +5804,7 @@ ROM_START( rockmanj_rom )
 	ROM_LOAD( "rcm_19.rom",    0x20000, 0x20000, 0xf257dbe1 )
 ROM_END
 
-ROM_START( sfzch_rom )
+ROM_START( sfzch )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "sfzch23",        0x000000, 0x80000, 0x1140743f )
 	ROM_LOAD_WIDE_SWAP( "sfza22",         0x080000, 0x80000, 0x8d9b2480 )
@@ -5910,6 +5865,29 @@ struct GameDriver NAME##_driver =  \
 	0, 0                           \
 };
 
+#define GAME_DRIVER_16(NAME,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	0,                             \
+	#NAME,                         \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	GAME_REQUIRES_16BIT,           \
+	&NAME##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, 0,                          \
+	0,                             \
+	0,                             \
+	NAME##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	0, 0                           \
+};
+
 #define GAME_DRIVER_CLONE(NAME,MAIN,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
 struct GameDriver NAME##_driver =  \
 {                                  \
@@ -5921,6 +5899,29 @@ struct GameDriver NAME##_driver =  \
 	MANUFACTURER,                  \
 	CPS1_CREDITS,                  \
 	0,                             \
+	&MAIN##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, 0,                          \
+	0,                             \
+	0,                             \
+	MAIN##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	0, 0                           \
+};
+
+#define GAME_DRIVER_16_CLONE(NAME,MAIN,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	&MAIN##_driver,                \
+	#NAME,                         \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	GAME_REQUIRES_16BIT,           \
 	&MAIN##_machine_driver,        \
 	0,                             \
 	NAME##_rom,                    \
@@ -6106,7 +6107,7 @@ GAME_DRIVER_CLONE(sf2red,  sf2ce,    "Street Fighter II' - Champion Edition (Red
 GAME_DRIVER_CLONE(sf2accp2,sf2ce,    "Street Fighter II' - Champion Edition (Accelerator Pt.II)", "1992","hack",ORIENTATION_DEFAULT)
 GAME_DRIVER      (varth,             "Varth - Operation Thunderstorm (World)", "1992","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER_CLONE(varthj,  varth,    "Varth - Operation Thunderstorm (Japan)", "1992","Capcom",ORIENTATION_ROTATE_270)
-GAME_DRIVER      (cworld2j,          "Capcom World 2 (Japan)",            "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_16   (cworld2j,          "Capcom World 2 (Japan)",            "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (wof,               "Warriors of Fate (World)",        "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND_CLONE(wofj,    wof,      "Tenchi wo Kurau II - Sekiheki no Tatakai (Japan)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2t,    sf2ce,    "Street Fighter II' - Hyper Fighting (US)", "1992","Capcom",ORIENTATION_DEFAULT)
@@ -6119,9 +6120,9 @@ GAME_DRIVER      (pnickj,            "Pnickies (Japan)",                  "1994"
 GAME_DRIVER      (qad,               "Quiz & Dragons (US)",               "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONEI(qadj,    qad,      "Quiz & Dragons (Japan)",            "1994","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (qtono2,            "Quiz Tonosama no Yabou 2 Zenkoku-ban (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER      (megaman,           "Mega Man - The Power Battle (Asia)","1995","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(rockmanj,megaman,  "Rockman - The Power Battle (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER      (sfzch,             "Street Fighter ZERO (Japan CPS Changer)", "1995","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_16      (megaman,           "Mega Man - The Power Battle (Asia)","1995","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_16_CLONE(rockmanj,megaman,  "Rockman - The Power Battle (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_16   (sfzch,             "Street Fighter ZERO (Japan CPS Changer)", "1995","Capcom",ORIENTATION_DEFAULT)
 
 
 
@@ -6282,7 +6283,7 @@ struct GameDriver pang3_driver =
 	"1995",
 	"Mitchell",
 	CPS1_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&pang3_machine_driver,
 	pang3_eeprom_init,
 

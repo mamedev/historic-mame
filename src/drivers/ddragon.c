@@ -436,7 +436,7 @@ static void dd_irq_handler(int irq) {
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3582071,	/* seems to be the standard */
+	3579545,	/* ??? */
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ dd_irq_handler }
 };
@@ -472,7 +472,7 @@ static struct MachineDriver ddragon_machine_driver =
 	/* basic machine hardware */
 	{
 		{
- 			CPU_M6309,
+ 			CPU_HD6309,
 			3579545,	/* 3.579545 Mhz */
 			0,
 			readmem,writemem,0,0,
@@ -486,7 +486,7 @@ static struct MachineDriver ddragon_machine_driver =
 			ignore_interrupt,0
 		},
 		{
- 			CPU_M6809 | CPU_AUDIO_CPU,
+ 			CPU_HD6309 | CPU_AUDIO_CPU,	/* ? */
 			3579545,	/* 3.579545 Mhz */
 			3,
 			sound_readmem,sound_writemem,0,0,
@@ -527,21 +527,21 @@ static struct MachineDriver ddragonb_machine_driver =
 	/* basic machine hardware */
 	{
 		{
- 			CPU_M6309,
+ 			CPU_HD6309,
 			3579545,	/* 3.579545 Mhz */
 			0,
 			readmem,writemem,0,0,
 			dd_interrupt,1
 		},
 		{
- 			CPU_M6809,
+ 			CPU_HD6309,	/* ? */
 			12000000 / 3, /* 4 Mhz */
 			2,
 			sub_readmem,sub_writemem,0,0,
 			ignore_interrupt,0
 		},
 		{
- 			CPU_M6809 | CPU_AUDIO_CPU,
+ 			CPU_HD6309 | CPU_AUDIO_CPU,	/* ? */
 			3579545,	/* 3.579545 Mhz */
 			3,
 			sound_readmem,sound_writemem,0,0,
@@ -582,7 +582,7 @@ static struct MachineDriver ddragon2_machine_driver =
 	/* basic machine hardware */
 	{
 		{
- 			CPU_M6309,
+ 			CPU_HD6309,
 			3579545,	/* 3.579545 Mhz */
 			0,
 			readmem,dd2_writemem,0,0,
@@ -640,7 +640,7 @@ static struct MachineDriver ddragon2_machine_driver =
 ***************************************************************************/
 
 
-ROM_START( ddragon_rom )
+ROM_START( ddragon )
 	ROM_REGION(0x28000)	/* 64k for code + bankswitched memory */
 	ROM_LOAD( "a_m2_d02.bin", 0x08000, 0x08000, 0x668dfa19 )
 	ROM_LOAD( "a_k2_d03.bin", 0x10000, 0x08000, 0x5779705e ) /* banked at 0x4000-0x8000 */
@@ -674,7 +674,7 @@ ROM_START( ddragon_rom )
 	ROM_LOAD( "a_r6_d08.bin", 0x10000, 0x10000, 0x904de6f8 )
 ROM_END
 
-ROM_START( ddragonb_rom )
+ROM_START( ddragonb )
 	ROM_REGION(0x28000)	/* 64k for code + bankswitched memory */
 	ROM_LOAD( "ic26",         0x08000, 0x08000, 0xae714964 )
 	ROM_LOAD( "a_k2_d03.bin", 0x10000, 0x08000, 0x5779705e ) /* banked at 0x4000-0x8000 */
@@ -707,7 +707,7 @@ ROM_START( ddragonb_rom )
 	ROM_LOAD( "a_r6_d08.bin", 0x10000, 0x10000, 0x904de6f8 )
 ROM_END
 
-ROM_START( ddragon2_rom )
+ROM_START( ddragon2 )
 	ROM_REGION(0x28000)	/* region#0: 64k for code */
 	ROM_LOAD( "26a9-04.bin",  0x08000, 0x8000, 0xf2cfc649 )
 	ROM_LOAD( "26aa-03.bin",  0x10000, 0x8000, 0x44dd5d4b )

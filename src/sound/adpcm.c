@@ -122,7 +122,7 @@ int ADPCM_sh_start (const struct MachineSound *msound)
 	adpcm_intf = msound->sound_interface;
 
 	/* set the default sample table */
-	sample_list = Machine->gamedrv->adpcm_sample_list;
+	sample_list = 0;
 
 	/* if there's an init function, call it now to generate the table */
 	if (adpcm_intf->init)
@@ -182,9 +182,11 @@ void ADPCM_sh_stop (void)
 	int i;
 
 	/* free the temporary table if we created it */
-	if (sample_list && sample_list != Machine->gamedrv->adpcm_sample_list)
+	if (sample_list)
+	{
 		free (sample_list);
-	sample_list = 0;
+		sample_list = 0;
+	}
 
 	/* free any output and streaming buffers */
 	for (i = 0; i < adpcm_intf->num; i++)
@@ -581,7 +583,7 @@ static int OKIM6295_sub_start (const struct MachineSound *msound)
 	adpcm_intf = msound->sound_interface;
 
 	/* set the default sample table */
-	sample_list = Machine->gamedrv->adpcm_sample_list;
+	sample_list = 0;
 
 	/* if there's an init function, call it now to generate the table */
 	if (adpcm_intf->init)

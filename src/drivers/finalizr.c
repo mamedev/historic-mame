@@ -283,7 +283,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( finalizr_rom )
+ROM_START( finalizr )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "523k01.9c",    0x4000, 0x4000, 0x716633cb )
 	ROM_LOAD( "523k02.12c",   0x8000, 0x4000, 0x1bccc696 )

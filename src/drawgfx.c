@@ -1292,6 +1292,31 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 }
 
 
+void plot_pixel(struct osd_bitmap *bitmap,int x,int y,int pen)
+{
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = x;
+		x = y;
+		y = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = bitmap->width-1 - x;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = bitmap->height-1 - y;
+
+	if (bitmap->depth == 16)
+		((unsigned short *)bitmap->line[y])[x] = pen;
+	else
+		bitmap->line[y][x] = pen;
+
+	/* TODO: we should mark 8 bits dirty at a time */
+	osd_mark_dirty (x,y,x,y,0);
+}
+
+
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley)

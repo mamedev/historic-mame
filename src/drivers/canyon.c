@@ -193,12 +193,16 @@ static unsigned char palette[] =
 	0x80,0x80,0x80, /* LT GREY */
 	0xff,0xff,0xff, /* WHITE */
 };
-
 static unsigned short colortable[] =
 {
 	0x01, 0x00,
 	0x01, 0x02,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct MachineDriver machine_driver =
@@ -220,8 +224,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
     32*8, 30*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-    0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
     VIDEO_TYPE_RASTER,
 	0,
@@ -241,7 +245,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( canyon_rom )
+ROM_START( canyon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "9496-01.d1", 0x3800, 0x0800, 0x8be15080 )
 	ROM_RELOAD(             0xF800, 0x0800 )
@@ -253,7 +257,7 @@ ROM_START( canyon_rom )
 ROM_END
 
 
-ROM_START( canbprot_rom )
+ROM_START( canbprot )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, 0x49cf29a0 )
 	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, 0xb4385c23 )
@@ -348,8 +352,9 @@ struct GameDriver canyon_driver =
 
     canyon_input_ports,
 
-    0, palette, colortable,
+    0, 0, 0,
 	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };
 
@@ -373,8 +378,9 @@ struct GameDriver canbprot_driver =
 
     canyon_input_ports,
 
-    0, palette, colortable,
+    0, 0, 0,
 	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };
 

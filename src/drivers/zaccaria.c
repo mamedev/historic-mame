@@ -515,7 +515,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( monymony_rom )
+ROM_START( monymony )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "1a",           0x0000, 0x1000, 0x13c227ca )
 	ROM_CONTINUE(             0x8000, 0x1000 )
@@ -553,7 +553,7 @@ ROM_START( monymony_rom )
 	ROM_LOAD( "2g",           0x0000, 0x2000, 0x78b01b98 )
 ROM_END
 
-ROM_START( jackrabt_rom )
+ROM_START( jackrabt )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cpu-01.1a",    0x0000, 0x1000, 0x499efe97 )
 	ROM_CONTINUE(             0x8000, 0x1000 )
@@ -591,7 +591,7 @@ ROM_START( jackrabt_rom )
 	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
 ROM_END
 
-ROM_START( jackrab2_rom )
+ROM_START( jackrab2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "1cpu2.1a",     0x0000, 0x1000, 0xf9374113 )
 	ROM_CONTINUE(             0x8000, 0x1000 )
@@ -629,7 +629,7 @@ ROM_START( jackrab2_rom )
 	ROM_LOAD( "13snd.2g",     0x0000, 0x2000, 0xfc05654e )
 ROM_END
 
-ROM_START( jackrabs_rom )
+ROM_START( jackrabs )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "1cpu.1a",      0x0000, 0x1000, 0x6698dc65 )
 	ROM_CONTINUE(             0x8000, 0x1000 )

@@ -308,7 +308,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( commando_rom )
+ROM_START( commando )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, 0x8438b694 )
 	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, 0x35486542 )
@@ -337,7 +337,7 @@ ROM_START( commando_rom )
 	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
 ROM_END
 
-ROM_START( commandu_rom )
+ROM_START( commandu )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "u4-f",         0x0000, 0x8000, 0xa6118935 )
 	ROM_LOAD( "u3-f",         0x8000, 0x4000, 0x24f49684 )
@@ -366,7 +366,7 @@ ROM_START( commandu_rom )
 	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
 ROM_END
 
-ROM_START( commandj_rom )
+ROM_START( commandj )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "09m_so04.bin", 0x0000, 0x8000, 0xd3f2bfb3 )
 	ROM_LOAD( "08m_so03.bin", 0x8000, 0x4000, 0xed01f472 )
@@ -395,7 +395,7 @@ ROM_START( commandj_rom )
 	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, 0xca20aca5 )
 ROM_END
 
-ROM_START( spaceinv_rom )
+ROM_START( spaceinv )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "u4",           0x0000, 0x8000, 0x834ba0de )
 	ROM_LOAD( "u3",           0x8000, 0x4000, 0x07e4ee3a )

@@ -757,7 +757,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( gauntlet_rom )
+ROM_START( gauntlet )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gauntlt1.9a",  0x00000, 0x08000, 0x46fe8743 )
 	ROM_LOAD_ODD ( "gauntlt1.9b",  0x00000, 0x08000, 0x276e15c4 )
@@ -788,7 +788,7 @@ ROM_START( gauntlet_rom )
 ROM_END
 
 
-ROM_START( gauntir1_rom )
+ROM_START( gauntir1 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gaun1ir1.9a",  0x00000, 0x08000, 0xfd871f81 )
 	ROM_LOAD_ODD ( "gaun1ir1.9b",  0x00000, 0x08000, 0xbcb2fb1d )
@@ -819,7 +819,7 @@ ROM_START( gauntir1_rom )
 ROM_END
 
 
-ROM_START( gauntir2_rom )
+ROM_START( gauntir2 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gaun1ir1.9a",  0x00000, 0x08000, 0xfd871f81 )
 	ROM_LOAD_ODD ( "gaun1ir1.9b",  0x00000, 0x08000, 0xbcb2fb1d )
@@ -850,7 +850,7 @@ ROM_START( gauntir2_rom )
 ROM_END
 
 
-ROM_START( gaunt2p_rom )
+ROM_START( gaunt2p )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gaunt2p.9a",   0x00000, 0x08000, 0x8784133f )
 	ROM_LOAD_ODD ( "gaunt2p.9b",   0x00000, 0x08000, 0x2843bde3 )
@@ -881,7 +881,7 @@ ROM_START( gaunt2p_rom )
 ROM_END
 
 
-ROM_START( gaunt2_rom )
+ROM_START( gaunt2 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "gauntlt2.9a",  0x00000, 0x08000, 0x46fe8743 )
 	ROM_LOAD_ODD ( "gauntlt2.9b",  0x00000, 0x08000, 0x276e15c4 )
@@ -922,7 +922,7 @@ ROM_START( gaunt2_rom )
 ROM_END
 
 
-ROM_START( vindctr2_rom )
+ROM_START( vindctr2 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1186", 0x00000, 0x08000, 0xaf138263 )
 	ROM_LOAD_ODD ( "1187", 0x00000, 0x08000, 0x44baff64 )

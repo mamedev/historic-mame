@@ -690,7 +690,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-ROM_START( lastduel_rom )
+ROM_START( lastduel )
 	ROM_REGION(0x60000)	/* 68000 code */
 	ROM_LOAD_EVEN( "ldu-06.rom",   0x00000, 0x20000, 0x4228a00b )
 	ROM_LOAD_ODD ( "ldu-05.rom",   0x00000, 0x20000, 0x7260434f )
@@ -724,7 +724,7 @@ ROM_START( lastduel_rom )
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
-ROM_START( lstduela_rom )
+ROM_START( lstduela )
 	ROM_REGION(0x60000)	/* 68000 code */
 	ROM_LOAD_EVEN( "06",   0x00000, 0x20000, 0x0e71acaf )
 	ROM_LOAD_ODD ( "05",   0x00000, 0x20000, 0x47a85bea )
@@ -758,7 +758,7 @@ ROM_START( lstduela_rom )
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
-ROM_START( lstduelb_rom )
+ROM_START( lstduelb )
 	ROM_REGION(0x60000)	/* 68000 code */
 	ROM_LOAD_EVEN( "ld_08.bin",    0x00000, 0x10000, 0x43811a96 )
 	ROM_LOAD_ODD ( "ld_07.bin",    0x00000, 0x10000, 0x63c30946 )
@@ -794,7 +794,7 @@ ROM_START( lstduelb_rom )
 	ROM_LOAD( "ld_02.bin",    0x0000, 0x10000, 0x91834d0c )
 ROM_END
 
-ROM_START( madgear_rom )
+ROM_START( madgear )
 	ROM_REGION(0x80000)	/* 256K for 68000 code */
 	ROM_LOAD_EVEN( "mg_04.rom",    0x00000, 0x20000, 0xb112257d )
 	ROM_LOAD_ODD ( "mg_03.rom",    0x00000, 0x20000, 0xb2672465 )
@@ -823,7 +823,7 @@ ROM_START( madgear_rom )
 	ROM_LOAD( "ls-05",        0x20000, 0x20000, 0xb06e03b5 )
 ROM_END
 
-ROM_START( ledstorm_rom )
+ROM_START( ledstorm )
 	ROM_REGION(0x80000)	/* 256K for 68000 code */
 	ROM_LOAD_EVEN( "mdu.04",    0x00000, 0x20000, 0x7f7f8329 )
 	ROM_LOAD_ODD ( "mdu.03",    0x00000, 0x20000, 0x11fa542f )

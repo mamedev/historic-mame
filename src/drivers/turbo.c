@@ -385,7 +385,7 @@ static struct MachineDriver turbo_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( turbo_rom )
+ROM_START( turbo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr1513.bin",  0x0000, 0x2000, 0x0326adfc )
 	ROM_LOAD( "epr1514.bin",  0x2000, 0x2000, 0x25af63b0 )
@@ -438,7 +438,7 @@ ROM_START( turbo_rom )
 	ROM_LOAD( "pr1116.bin",  0x4820, 0x0020, 0x3956767d )
 ROM_END
 
-ROM_START( turboa_rom )
+ROM_START( turboa )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr1262.rom",  0x0000, 0x2000, 0x1951b83a )
 	ROM_LOAD( "epr1263.rom",  0x2000, 0x2000, 0x45e01608 )
@@ -491,7 +491,7 @@ ROM_START( turboa_rom )
 	ROM_LOAD( "pr1116.bin",  0x4820, 0x0020, 0x3956767d )
 ROM_END
 
-ROM_START( turbob_rom )
+ROM_START( turbob )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr-1363.cpu",  0x0000, 0x2000, 0x5c110fb6 )
 	ROM_LOAD( "epr-1364.cpu",  0x2000, 0x2000, 0x6a341693 )

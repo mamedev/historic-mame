@@ -104,9 +104,9 @@ int bublbobl_m68705_interrupt(void)
 {
 	/* I don't know how to handle the interrupt line so I just toggle it every time. */
 	if (cpu_getiloops() & 1)
-		cpu_set_irq_line(3,0,ASSERT_LINE);
-	else
 		cpu_set_irq_line(3,0,CLEAR_LINE);
+	else
+		cpu_set_irq_line(3,0,ASSERT_LINE);
 
     return 0;
 }

@@ -23,14 +23,14 @@ command to list them.
 | 720 Degrees          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 720      |
 | '88 Games            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | 88games  |
 | Act Fancer           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | actfancr |
-| Adv.Quiz 2 Hatena no Dai-Bouken  Yes   |Partial |   No   |  Yes   | hatena   |
+| Adv.Quiz 2 Hatena no |  Yes   |  Yes   |Partial |   No   |  Yes   | hatena   |
 | Adv.of Robby Roto,The|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
 | Aero Fighters        |  Yes   |  Yes   |  Yes   |   No   |   No   | aerofgt  |
 | Air Buster           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | airbustr |
 | Air Wolf             |  Yes   |  Yes   |  Yes   |   No   |  Yes   | airwolf  |
 | Ajax                 |  Yes   |  Yes   |  Yes   |   No   |  Yes   | ajax     |
 | Alex Kidd            |   No   |  Yes   |   No   |   No   |   No   | alexkidd |
-| Ali Baba and 40 Thieves Yes   |   No   |  Bad   |   No   |  Yes   | alibaba  |
+| Ali Baba and 40 Thiev|  Yes   |   No   |  Bad   |   No   |  Yes   | alibaba  |
 | Alien Storm          |   No   |  Yes   |   No   |   No   |   No   | astormbl |
 | Alien Syndrome       |  Yes   |  Yes   |  Yes   |   No   |   No   | aliensyn |
 | Aliens               |  Yes   |  Yes   |  Yes   |   No   |  Yes   | aliens   |
@@ -66,7 +66,7 @@ command to list them.
 | Avalanche            |  Yes   |  b/w   |  Yes   |  Yes   |  n/a   | avalnche |
 | Avengers             |   No   |   No   |  Yes   |   No   |   No   | avengers |
 | Avenging Spirit      |  Yes   |  Yes   |  Yes   |   No   |   No   | avspirit |
-| Azurian Attack       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | azurian  |
+| Azurian Attack       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | azurian  |
 | Bad Dudes            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | baddudes |
 | Bad Lands            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | badlands |
 | Bagman               |  Yes   |  Yes   |No Speech  Yes   |  Yes   | bagman   |
@@ -81,6 +81,7 @@ command to list them.
 | Battle-Road,The      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | battroad |
 | Bermuda Triangle     |  Yes   |   No   |Partial |  Yes   |  n/a?  | bermudat |
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | berzerk  |
+| Big Striker          |  Yes   |  Yes   |  Yes   |   No   |   No   | bigstrik |
 | Bio Attack           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
 | Bionic Commando      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bionicc  |
 | Birdie King 2        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | bking2   |
@@ -203,6 +204,7 @@ command to list them.
 | Double Dragon 2      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ddragon2 |
 | Double Dribble       |  Yes   |  Yes   |No Speech   No   |   No   | ddribble |
 | Dragon Breed         |  Yes   |  Yes   |  Yes   |   No   |   No   | dbreed   |
+| Dream Soccer '94     |  Yes   |  Yes   |   No   |   No   |   No   | dsoccr94 |
 | Dyger                |  Yes   |  Yes   |  Yes   |   No   |   NO   | dyger    |
 | Dynamite Dux         |   No   |  Yes   |   No   |   No   |   No   | dduxbl   |
 | Dynasty Wars         |  Yes   |  Yes   |  Yes   |   No   |   No   | dwj      |
@@ -227,7 +229,7 @@ command to list them.
 | Eyes                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | eyes     |
 | F.H.M.C. Q*Bert      |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | sqbert   |
 | F1 Dream             |  Yes   |  Yes   |  Yes   |   No   |   No   | f1dream  |
-| Fantasy              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | fantasy  |
+| Fantasy              |  Yes   |  Yes   |No Spech|  Yes   |  Yes   | fantasy  |
 | Fantasy Zone         |   No   |  Yes   |   No   |   No   |   No   | fantzone |
 | Fax                  |  Yes   |  Yes   |   No   |   No   |   No   | fax      |
 | Final Fight          |  Yes   |  Yes   |  Yes   |   No   |   No   | ffight   |
@@ -252,7 +254,7 @@ command to list them.
 | Galactic Warriors    |  Yes   |  Yes   |Partial |   No   |   No   | gwarrior |
 | Galaga               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | galaga   |
 | Galaxian             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | galaxian |
-| Gallop               |Partial.|  Yes   |  Yes   |   No   |   No   | gallop   |
+| Gallop               |  Yes   |  Yes   |  Yes   |   No   |   No   | gallop   |
 | Gals Panic           |  Yes   |  Yes   |  Yes   |   No   |   No   | galpanic |
 | Gang Busters         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | gbusters |
 | Gang Wars            |  Yes   |  Yes   |  Yes   |   No   |   No   | gangwars |
@@ -267,7 +269,7 @@ command to list them.
 | Ghosts'n Goblins     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gng      |
 | Ghouls'n Ghosts      |  Yes   |  Yes   |  Yes   |   No   |   No   | ghouls   |
 | Ginga NinkyouDen     |  Yes   |  Yes   |Partial |   No   |   No   | ginganin |
-| Gingateikoku No GyakushuYes   |  Yes   |  Yes   |  Yes   |   No   | japirem  |
+| Gingateikoku No Gyaku|  Yes   |  Yes   |  Yes   |  Yes   |   No   | japirem  |
 | Gladiator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gladiatr |
 | Glob,The             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | theglob  |
 | Go Go Mr. Yamaguchi  |   No   |   No   |  Bad   |   No   |  Yes   | yamagchi |
@@ -285,7 +287,7 @@ command to list them.
 | Growl                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | growl    |
 | Guerilla War         |  Yes   |  Yes   |Partial |  Yes   |   No   | gwar     |
 | Gun Dealer           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | gundealr |
-| Gunforce             |Partial.|  Yes   |   No   |   No   |   No   | gunforce |
+| Gunforce             |  Yes   |  Yes   |   No   |   No   |   No   | gunforce |
 | Gunsmoke             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gunsmoke |
 | Guzzler              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | guzzler  |
 | Gypsy Juggler        |  Yes   |Overlay |   No   |   No   |   No   | gypsyjug |
@@ -311,7 +313,7 @@ command to list them.
 | Hippodrome           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hippodrm |
 | Hit 'n Miss          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hitnmiss |
 | Hoccer               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hoccer   |
-| Hook                 |Partial.|  Yes   |   No   |   No   |   No   | hook     |
+| Hook                 |  Yes   |  Yes   |   No   |   No   |   No   | hook     |
 | Hopper Robo          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hopprobo |
 | Hot Chase            |  Yes   |  Yes   |  Yes   |   No   |   No   | hotchase |
 | Hot Shocker          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hotshock |
@@ -348,17 +350,21 @@ command to list them.
 | Jungle King          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | junglek  |
 | Jungler              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | jungler  |
 | Juno First           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | junofrst |
+| Kageki               |  Yes   |  Yes   |  Yes   |   No   |   No   | kageki   |
 | Kangaroo             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kangaroo |
 | Kaos                 |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | kaos     |
 | Karate Champ         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kchamp   |
 | Karate Champ VS      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kchampvs |
 | Karnov               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | karnov   |
 | Kick                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kick     |
+| Kick and Run         |  Yes   |  Yes   |  Yes   |   No   |   No   | kicknrun |
+| Kick Off             |  Yes   |  Yes   |  Yes   |   No   |   No   | kickoff  |
 | Kick Rider           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kickridr |
 | Kick Start           |   No   |  Yes   |  Yes   |   No   |   No   | kikstart |
 | Kicker               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kicker   |
 | Kickle Cubicle       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kikcubic |
 | Kid Niki             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kidniki  |
+| KiKi KaiKai          |  Yes   |  Yes   |  Yes   |   No   |   No   | kikikai  |
 | Killer Comet         |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | killcom  |
 | King & Balloon       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kingball |
 | King of Boxer        |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | kingofb  |
@@ -478,6 +484,7 @@ command to list them.
 | Nunchackun           |  Yes   |   No   |  Bad   |   No   |  Yes   | nunchaku |
 | Off the Wall         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | offtwall |
 | Omega Race           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | omegrace |
+| Orbitron             |  Yes   |  Yes   |Partial |  Yes   |  Yes   | orbitron |
 | Out Run              |  Yes   |  Yes   |  Yes   |   No   |   No   | outrun   |
 | Out Zone             |  Yes   |  Yes   |  Yes   |   No   |   No   | outzone  |
 | P-47                 |  Yes   |  Yes   |  Yes   |   No   |   No   | p47      |
@@ -493,6 +500,7 @@ command to list them.
 | Pengo                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pengo    |
 | Penguin-Kun Wars     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pkunwar  |
 | Pepper II            |  Yes   |  Yes   |   No   |  Yes   |   No   | pepper2  |
+| Perfect Soldiers     |  Yes   |  Yes   |   No   |   No   |   No   | psoldier |
 | Peter Packrat        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | peterpak |
 | Phoenix              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | phoenix  |
 | Phozon               |  Yes   |  Yes   |  Yes   |   No   |   No   | phozon   |
@@ -537,7 +545,7 @@ command to list them.
 | Qwak                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qwakprot |
 | R-Type               |  Yes   |  Yes   |  Yes   |   No   |   No   | rtype    |
 | R-Type II            |  Yes   |  Yes   |  Yes   |   No   |   No   | rtype2   |
-| R-Type Leo           |Partial.|  Yes   |   No   |   No   |   No   | rtypeleo |
+| R-Type Leo           |  Yes   |  Yes   |   No   |   No   |   No   | rtypeleo |
 | Radar Scope          |  Yes   |  Yes?  |Partial |  Yes   |   No   | radarscp |
 | Radical Radial       |   No   |  Yes   |  Yes   |   No   |   No   | radrad   |
 | Raiden               |  Yes   |  Yes   |  Yes   |   No   |   No   | raiden   |
@@ -583,7 +591,7 @@ command to list them.
 | Samurai (Sega)       |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
 | Samurai (Taito)      |  Yes   | Close  |  Bad   |   No   |  Yes   | tsamurai |
 | Sarge                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sarge    |
-| Sasuke vs. Commander |  Yes   |   No   |   No   |   No   |  Yes   | sasuke   |
+| Sasuke vs. Commander |  Yes   |  Yes   |   No   |   No   |  Yes   | sasuke   |
 | Satan of Saturn      |  Yes   |  Yes?  |Partial |   No   |  Yes   | satansat |
 | Satan's Hollow       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shollow  |
 | Saturn               |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | saturn   |
@@ -803,7 +811,7 @@ command to list them.
 | World Tennis         |  Yes   |  Yes?  |  Yes   |   No   |  Yes   | wtennis  |
 | Wrestle War          |   No   |  Yes   |   No   |   No   |   No   | wrestwar |
 | X Multiply           |  Yes   |  Yes   |  Yes   |   No   |   No   | xmultipl |
-| X-Men                |  Yes   |  Yes   |   No   |   No   |  Yes   | xmen     |
+| X-Men                |  Yes   |  Yes   |Partial |   No   |  Yes   | xmen     |
 | Xain'd Sleena        |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | xsleena  |
 | Xenophobe            |  Yes   |  Yes   |  Yes   |  n/a   |   No   | xenophob |
 | Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | xevious  |

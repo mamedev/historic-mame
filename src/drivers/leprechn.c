@@ -221,7 +221,7 @@ INPUT_PORTS_END
 
 
 /* RGBI palette. Is it correct? */
-unsigned char leprechn_palette[16 * 3] =
+static unsigned char palette[16 * 3] =
 {
 	0x00, 0x00, 0x00,
 	0xff, 0x00, 0x00,
@@ -240,6 +240,11 @@ unsigned char leprechn_palette[16 * 3] =
 	0x40, 0xff, 0xff,
 	0xff, 0xff, 0xff
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+}
+
 
 
 static struct AY8910interface ay8910_interface =
@@ -285,8 +290,8 @@ static struct MachineDriver leprechn_machine_driver =
 	/* video hardware */
 	256, 256, { 0, 256-1, 0, 256-1 },
 	0,
-	sizeof(leprechn_palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -311,7 +316,7 @@ static struct MachineDriver leprechn_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( leprechn_rom )
+ROM_START( leprechn )
 	ROM_REGION(0x10000)  /* 64k for the main CPU */
 	ROM_LOAD( "lep1",         0x8000, 0x1000, 0x2c4a46ca )
 	ROM_LOAD( "lep2",         0x9000, 0x1000, 0x6ed26b3e )
@@ -330,7 +335,7 @@ ROM_START( leprechn_rom )
 	ROM_LOAD( "lepsound",     0xf000, 0x1000, 0x6651e294 )
 ROM_END
 
-ROM_START( potogold_rom )
+ROM_START( potogold )
 	ROM_REGION(0x10000)  /* 64k for the main CPU */
 	ROM_LOAD( "pog.pg1",      0x8000, 0x1000, 0x9f1dbda6 )
 	ROM_LOAD( "pog.pg2",      0x9000, 0x1000, 0xa70e3811 )
@@ -410,7 +415,7 @@ struct GameDriver leprechn_driver =
 
 	input_ports,
 
-	0, leprechn_palette, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,  // Upright game
 
@@ -437,7 +442,7 @@ struct GameDriver potogold_driver =
 
 	input_ports,
 
-	0, leprechn_palette, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,  // Upright game
 

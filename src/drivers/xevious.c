@@ -704,7 +704,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( xevious_rom )
+ROM_START( xevious )
 	ROM_REGION(0x10000)	/* 64k for the first CPU */
 	ROM_LOAD( "xvi_1.3p",     0x0000, 0x1000, 0x09964dda )
 	ROM_LOAD( "xvi_2.3m",     0x1000, 0x1000, 0x60ecce84 )
@@ -747,7 +747,7 @@ ROM_START( xevious_rom )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( xeviousa_rom )
+ROM_START( xeviousa )
 	ROM_REGION(0x10000)	/* 64k for the first CPU */
 	ROM_LOAD( "xea-1m-a.bin", 0x0000, 0x2000, 0x8c2b50ec )
 	ROM_LOAD( "xea-1l-a.bin", 0x2000, 0x2000, 0x0821642b )
@@ -787,7 +787,7 @@ ROM_START( xeviousa_rom )
 	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( xevios_rom )
+ROM_START( xevios )
 	ROM_REGION(0x10000)	/* 64k for the first CPU */
 	ROM_LOAD( "4.7h",         0x0000, 0x1000, 0x1f8ca4c0 )
 	ROM_LOAD( "5.6h",         0x1000, 0x1000, 0x2e47ce8f )
@@ -836,7 +836,7 @@ ROM_START( xevios_rom )
 	ROM_LOAD( "2.17b",        0x1000, 0x2000, 0xde359fac )
 ROM_END
 
-ROM_START( sxevious_rom )
+ROM_START( sxevious )
 	ROM_REGION(0x10000)	/* 64k for the first CPU */
 	ROM_LOAD( "cpu_3p.rom",   0x0000, 0x1000, 0x1c8d27d5 )
 	ROM_LOAD( "cpu_3m.rom",   0x1000, 0x1000, 0xfd04e615 )

@@ -386,7 +386,7 @@ static struct MachineDriver goldstbl_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( goldstar_rom )
+ROM_START( goldstar )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "gs4-cpu.bin",  0x0000, 0x10000, 0x73e47d4d )
 
@@ -399,7 +399,7 @@ ROM_START( goldstar_rom )
 ROM_END
 
 
-ROM_START( goldstbl_rom )
+ROM_START( goldstbl )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "gsb-cpu.bin",  0x0000, 0x10000, 0x82b238c3 )
 

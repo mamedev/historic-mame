@@ -131,22 +131,7 @@ INPUT_PORTS_START( cchasm_input_ports )
 
 INPUT_PORTS_END
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
 
 static struct AY8910interface ay8910_interface =
 {
@@ -199,7 +184,7 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1024-1, 0, 768-1 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
 	cchasm_init_colors,
 
@@ -231,7 +216,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cchasm_rom )
+ROM_START( cchasm )
 	ROM_REGION(0x010000)
     ROM_LOAD_EVEN( "chasm.u4",  0x000000, 0x001000, 0x19244f25 )
     ROM_LOAD_ODD ( "chasm.u12", 0x000000, 0x001000, 0x5d702c7d )
@@ -254,7 +239,7 @@ ROM_START( cchasm_rom )
 	ROM_LOAD( "2732.bin", 0x0000, 0x1000, 0x715adc4a )
 ROM_END
 
-ROM_START( cchasm1_rom )
+ROM_START( cchasm1 )
 	ROM_REGION(0x010000)
     ROM_LOAD_EVEN( "chasm.u4",  0x000000, 0x001000, 0x19244f25 )
     ROM_LOAD_ODD ( "chasm.u12", 0x000000, 0x001000, 0x5d702c7d )

@@ -262,7 +262,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( superqix_rom )
+ROM_START( superqix )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "sq01.97",      0x00000, 0x08000, 0x0888b7de )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
@@ -277,7 +277,7 @@ ROM_START( superqix_rom )
 	ROM_LOAD( "sq07.108",     0x00000, 0x1000, 0x071a598c )
 ROM_END
 
-ROM_START( sqixbl_rom )
+ROM_START( sqixbl )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "cpu.2",        0x00000, 0x08000, 0x682e28e3 )
 	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )

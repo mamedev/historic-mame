@@ -49,6 +49,7 @@
 #include "driver.h"
 #include "machine/mcr.h"
 #include "sndhrdw/mcr.h"
+#include "sndhrdw/williams.h"
 #include "vidhrdw/generic.h"
 
 
@@ -213,8 +214,8 @@ static void archrivl_control_w(int offset, int data)
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&control_word[offset], newword);
 
-	advaudio_reset_w(~newword & 0x0400);
-	advaudio_data_w(offset, newword & 0x3ff);
+	williams_cvsd_reset_w(~newword & 0x0400);
+	williams_cvsd_data_w(offset, newword & 0x3ff);
 }
 
 
@@ -348,7 +349,7 @@ static struct MemoryWriteAddress mcr68_writemem[] =
 	{ 0x090000, 0x09007f, mcr68_paletteram_w, &paletteram },
 	{ 0x0a0000, 0x0a000f, mcr68_6840_upper_w },
 	{ 0x0b0000, 0x0bffff, watchdog_reset_w },
-	{ 0x0c0000, 0x0cffff, MWA_BANK6, &control_word },
+	{ 0x0c0000, 0x0cffff, MWA_NOP, &control_word },
 	{ -1 }  /* end of table */
 };
 
@@ -424,7 +425,7 @@ static struct MemoryWriteAddress pigskin_writemem[] =
 	{ 0x140000, 0x143fff, MWA_BANK3 },
 	{ 0x160000, 0x1607ff, MWA_BANK4, &spriteram, &spriteram_size },
 	{ 0x180000, 0x18000f, mcr68_6840_upper_w },
-	{ 0x1a0000, 0x1affff, MWA_BANK6, &control_word },
+	{ 0x1a0000, 0x1affff, MWA_NOP, &control_word },
 	{ -1 }  /* end of table */
 };
 
@@ -458,7 +459,7 @@ static struct MemoryWriteAddress trisport_writemem[] =
 	{ 0x140000, 0x1407ff, MWA_BANK3, &spriteram, &spriteram_size },
 	{ 0x160000, 0x160fff, mcr68_videoram_w, &videoram, &videoram_size },
 	{ 0x180000, 0x18000f, mcr68_6840_upper_w },
-	{ 0x1a0000, 0x1affff, MWA_BANK6, &control_word },
+	{ 0x1a0000, 0x1affff, MWA_NOP, &control_word },
 	{ 0x1c0000, 0x1cffff, watchdog_reset_w },
 	{ -1 }  /* end of table */
 };
@@ -1080,7 +1081,7 @@ static struct MachineDriver archrivl_machine_driver =
 			mcr68_readmem,mcr68_writemem,0,0,
 			mcr68_interrupt,1
 		},
-		SOUND_CPU_ADVANCED_AUDIO(2)
+		SOUND_CPU_WILLIAMS_CVSD(2)
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -1101,7 +1102,7 @@ static struct MachineDriver archrivl_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		SOUND_ADVANCED_AUDIO
+		SOUND_WILLIAMS_CVSD
 	}
 };
 
@@ -1117,7 +1118,7 @@ static struct MachineDriver pigskin_machine_driver =
 			pigskin_readmem,pigskin_writemem,0,0,
 			mcr68_interrupt,1
 		},
-		SOUND_CPU_ADVANCED_AUDIO(2)
+		SOUND_CPU_WILLIAMS_CVSD(2)
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -1138,7 +1139,7 @@ static struct MachineDriver pigskin_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		SOUND_ADVANCED_AUDIO
+		SOUND_WILLIAMS_CVSD
 	}
 };
 
@@ -1154,7 +1155,7 @@ static struct MachineDriver trisport_machine_driver =
 			trisport_readmem,trisport_writemem,0,0,
 			mcr68_interrupt,1
 		},
-		SOUND_CPU_ADVANCED_AUDIO(2)
+		SOUND_CPU_WILLIAMS_CVSD(2)
 	},
 	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
 	1,
@@ -1175,7 +1176,7 @@ static struct MachineDriver trisport_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		SOUND_ADVANCED_AUDIO
+		SOUND_WILLIAMS_CVSD
 	}
 };
 
@@ -1261,7 +1262,7 @@ static void blasted_init(void)
 static void archrivl_init(void)
 {
 	MCR_CONFIGURE_NO_HISCORE;
-	MCR_CONFIGURE_SOUND(MCR_ADVANCED_AUDIO);
+	MCR_CONFIGURE_SOUND(MCR_WILLIAMS_SOUND);
 
 	mcr68_char_code_mask = 0xfff;
 	mcr68_sprite_code_mask = 0x3ff;
@@ -1283,16 +1284,18 @@ static void archrivl_init(void)
 
 	/* expand the sound ROMs */
 	memcpy(&Machine->memory_region[2][0x18000], &Machine->memory_region[2][0x10000], 0x08000);
-	memcpy(&Machine->memory_region[2][0x28000], &Machine->memory_region[2][0x20000], 0x08000);
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
 	memcpy(&Machine->memory_region[2][0x38000], &Machine->memory_region[2][0x30000], 0x08000);
 	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x58000], &Machine->memory_region[2][0x50000], 0x08000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 
 
 static void pigskin_init(void)
 {
 	MCR_CONFIGURE_NO_HISCORE;
-	MCR_CONFIGURE_SOUND(MCR_ADVANCED_AUDIO);
+	MCR_CONFIGURE_SOUND(MCR_WILLIAMS_SOUND);
 
 	/* handle control writes */
 	install_mem_write_handler(0, 0x1a0000, 0x1affff, archrivl_control_w);
@@ -1306,14 +1309,16 @@ static void pigskin_init(void)
 	mcr68_sprite_xoffset = 0;
 
 	/* expand the sound ROMs */
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
 	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 
 
 static void trisport_init(void)
 {
 	MCR_CONFIGURE_NO_HISCORE;
-	MCR_CONFIGURE_SOUND(MCR_ADVANCED_AUDIO);
+	MCR_CONFIGURE_SOUND(MCR_WILLIAMS_SOUND);
 
 	/* Tri-Sports checks the timing of VBLANK relative to the 493 interrupt */
 	/* VBLANK is required to come within 87-119 E clocks (i.e., 870-1190 CPU clocks) */
@@ -1329,8 +1334,10 @@ static void trisport_init(void)
 	mcr68_sprite_xoffset = 0;
 
 	/* expand the sound ROMs */
-	memcpy(&Machine->memory_region[2][0x38000], &Machine->memory_region[2][0x30000], 0x08000);
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
 	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x58000], &Machine->memory_region[2][0x50000], 0x08000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 
 
@@ -1358,7 +1365,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( zwackery_rom )
+ROM_START( zwackery )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "pro0.bin",   0x00000, 0x4000, 0x6fb9731c )
 	ROM_LOAD_ODD ( "pro1.bin",   0x00000, 0x4000, 0x84b92555 )
@@ -1399,7 +1406,7 @@ ROM_START( zwackery_rom )
 ROM_END
 
 
-ROM_START( xenophob_rom )
+ROM_START( xenophob )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "xeno_pro.3c",  0x00000, 0x10000, 0xf44c2e60 )
 	ROM_LOAD_ODD ( "xeno_pro.3b",  0x00000, 0x10000, 0x01609a3b )
@@ -1422,7 +1429,7 @@ ROM_START( xenophob_rom )
 ROM_END
 
 
-ROM_START( spyhunt2_rom )
+ROM_START( spyhunt2 )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "3c",  0x00000, 0x10000, 0x5b92aadf )
 	ROM_LOAD_ODD ( "3b",  0x00000, 0x10000, 0x6ed0a25f )
@@ -1449,7 +1456,7 @@ ROM_START( spyhunt2_rom )
 ROM_END
 
 
-ROM_START( blasted_rom )
+ROM_START( blasted )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "3c",  0x00000, 0x10000, 0xb243b7df )
 	ROM_LOAD_ODD ( "3b",  0x00000, 0x10000, 0x627e30d3 )
@@ -1472,7 +1479,7 @@ ROM_START( blasted_rom )
 ROM_END
 
 
-ROM_START( archrivl_rom )
+ROM_START( archrivl )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "3c-rev2",  0x00000, 0x10000, 0x60d4b760 )
 	ROM_LOAD_ODD ( "3b-rev2",  0x00000, 0x10000, 0xe0c07a8d )
@@ -1487,14 +1494,14 @@ ROM_START( archrivl_rom )
 	ROM_LOAD( "9j-rev1",   0x60000, 0x20000, 0x0dd1204e )
 	ROM_LOAD( "10j-rev1",  0x80000, 0x20000, 0xeb3d0344 )
 
-	ROM_REGION(0x50000)  /* Audio System board */
+	ROM_REGION(0x70000)  /* Audio System board */
 	ROM_LOAD( "u4.snd",  0x10000, 0x08000, 0x96b3c652 )
-	ROM_LOAD( "u19.snd", 0x20000, 0x08000, 0xc4b3dc23 )
-	ROM_LOAD( "u20.snd", 0x30000, 0x08000, 0xf7907a02 )
+	ROM_LOAD( "u19.snd", 0x30000, 0x08000, 0xc4b3dc23 )
+	ROM_LOAD( "u20.snd", 0x50000, 0x08000, 0xf7907a02 )
 ROM_END
 
 
-ROM_START( pigskin_rom )
+ROM_START( pigskin )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "pigskin.a5",  0x00000, 0x10000, 0xab61c29b )
 	ROM_LOAD_ODD ( "pigskin.b5",  0x00000, 0x10000, 0x55a802aa )
@@ -1509,14 +1516,14 @@ ROM_START( pigskin_rom )
 	ROM_LOAD( "pigskin.h18", 0x60000, 0x20000, 0xb36c4109 )
 	ROM_LOAD( "pigskin.h14", 0x80000, 0x20000, 0x09c87104 )
 
-	ROM_REGION(0x50000)  /* Audio System board */
+	ROM_REGION(0x70000)  /* Audio System board */
 	ROM_LOAD( "pigskin.u4",  0x10000, 0x10000, 0x6daf2d37 )
-	ROM_LOAD( "pigskin.u19", 0x20000, 0x10000, 0x56fd16a3 )
-	ROM_LOAD( "pigskin.u20", 0x30000, 0x10000, 0x5d032fb8 )
+	ROM_LOAD( "pigskin.u19", 0x30000, 0x10000, 0x56fd16a3 )
+	ROM_LOAD( "pigskin.u20", 0x50000, 0x10000, 0x5d032fb8 )
 ROM_END
 
 
-ROM_START( trisport_rom )
+ROM_START( trisport )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "la3.a5",  0x00000, 0x10000, 0xfe1e9e37 )
 	ROM_LOAD_ODD ( "la3.b5",  0x00000, 0x10000, 0xf352ec81 )
@@ -1531,10 +1538,10 @@ ROM_START( trisport_rom )
 	ROM_LOAD( "la2.h18", 0x60000, 0x20000, 0xf7637a18 )
 	ROM_LOAD( "la2.h14", 0x80000, 0x20000, 0x403f9401 )
 
-	ROM_REGION(0x50000)  /* Audio System board */
+	ROM_REGION(0x70000)  /* Audio System board */
 	ROM_LOAD( "sl1-snd.u4",  0x10000, 0x10000, 0x0ed8c904 )
-	ROM_LOAD( "sl1-snd.u19", 0x20000, 0x10000, 0xb57d7d7e )
-	ROM_LOAD( "sl1-snd.u20", 0x30000, 0x08000, 0x3ae15c08 )
+	ROM_LOAD( "sl1-snd.u19", 0x30000, 0x10000, 0xb57d7d7e )
+	ROM_LOAD( "sl1-snd.u20", 0x50000, 0x08000, 0x3ae15c08 )
 ROM_END
 
 

@@ -384,7 +384,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( vendetta_rom )
+ROM_START( vendetta )
 	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081u01", 0x10000, 0x38000, 0xb4d9ade5 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
@@ -406,7 +406,7 @@ ROM_START( vendetta_rom )
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
-ROM_START( vendett2_rom )
+ROM_START( vendett2 )
 	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081d01", 0x10000, 0x38000, 0x335da495 )
 	ROM_CONTINUE(		0x08000, 0x08000 )
@@ -428,7 +428,7 @@ ROM_START( vendett2_rom )
 	ROM_LOAD( "081a03", 0x000000, 0x100000, 0x14b6baea )
 ROM_END
 
-ROM_START( vendettj_rom )
+ROM_START( vendettj )
 	ROM_REGION( 0x49000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "081p01", 0x10000, 0x38000, 0x5fe30242 )
 	ROM_CONTINUE(		0x08000, 0x08000 )

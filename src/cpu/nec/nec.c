@@ -105,13 +105,34 @@
 	    fixed:	- found almost every opcode for all NEC-CPUS. No code though but opcodes
 			  are known now. I inserted the comments from OPCODE.LST.
 
-  2do: - Timings for other NEC'S. Think the timings should come from a table (depending on R/M)
-         maybe rewrite this part.
-       - add some code to identify which cpu we are trying to emulate (for correct timing)
-       - strip unnecessary code
+	  2do: - Timings for other NEC'S. Think the timings should come from a table (depending on R/M)
+	         maybe rewrite this part.
+	       - add some code to identify which cpu we are trying to emulate (for correct timing)
+	       - strip unnecessary code
+
+	09.11.1999 v1.6: Additions by Bryan McPhail
+		Fixed bug in i_rotshft_bd8 and i_rotshft_wd8 (thanks Nao).
+		Fixed bug in i_imul_d16
+		Moved prefix_base & seg_prefix inside reg struct
+		Removed amask stuff
+		To do:  Double check int3(), into(), lea()
+
+	10.11.1999 v1.7: Additions by Bryan McPhail
+		Adjusted IncWord,DecWord, IYV, IIYV
+
+		NB: STOSW - Implementing this as two byte writes causes
+		Lethal Thunder to break, but using a single word write works.
+
+		Why?  Because PutMemW does NOT use the DefaultBase macro!
+
+		However I have no idea what is right and what the DefaultBase
+		macro even does...  For now I'm using PutMemW.
+
+		This 'bug' may also affect i_insw.
+
+		All my changes are flagged 'MISH'.
 
 */
-
 
 #include <stdio.h>
 #include <string.h>
@@ -152,7 +173,6 @@ typedef union
 typedef struct
 {
     necbasicregs regs;
-	int 	amask;			/* address mask */
     int     ip;
 	UINT16	flags;
 	UINT32	base[4];
@@ -164,8 +184,10 @@ typedef struct
 	UINT8	pending_irq;
 	INT8	nmi_state;
 	INT8	irq_state;
-} nec_Regs;
 
+	unsigned prefix_base;	/* base address of the latest prefix segment */
+	char seg_prefix;		/* prefix segment indicator */
+} nec_Regs;
 
 /***************************************************************************/
 /* cpu state                                                               */
@@ -174,9 +196,6 @@ typedef struct
 int nec_ICount;
 
 static nec_Regs I;
-static unsigned prefix_base;	/* base address of the latest prefix segment */
-static char seg_prefix;         /* prefix segment indicator */
-
 
 /* The interrupt number of a pending external interrupt pending NMI is 2.	*/
 /* For INTR interrupts, the level is caught on the bus during an INTA cycle */
@@ -199,15 +218,10 @@ void nec_reset (void *param)
 
 	memset( &I, 0, sizeof(I) );
 
-	/* If a reset parameter is given, take it as pointer to an address mask */
-    if( param )
-		I.amask = *(unsigned*)param;
-	else
-		I.amask = 0x1fffff;
-    I.sregs[CS] = 0xffff;
+     I.sregs[CS] = 0xffff;
 	I.base[CS] = I.sregs[CS] << 4;
 
-	change_pc20( (I.base[CS] + I.ip) & I.amask);
+	change_pc20( (I.base[CS] + I.ip));
 
     for (i = 0;i < 256; i++)
     {
@@ -265,7 +279,7 @@ static void nec_interrupt(unsigned int_num,BOOLEAN md_flag)
 	I.ip = (WORD)dest_off;
 	I.sregs[CS] = (WORD)dest_seg;
 	I.base[CS] = SegBase(CS);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 //	if (errorlog)
 //		fprintf(errorlog,"=%06x\n",cpu_get_pc());
 }
@@ -413,8 +427,6 @@ static void i_push_cs(void)    /* Opcode 0x0e */
 	nec_ICount-=3;
 	PUSH(I.sregs[CS]);
 }
-
-
 
 static void i_pre_nec(void) /* Opcode 0x0f */
 {
@@ -1562,8 +1574,8 @@ static void i_and_axd16(void)    /* Opcode 0x25 */
 
 static void i_es(void)    /* Opcode 0x26 */
 {
-    seg_prefix=TRUE;
-	prefix_base=I.base[ES];
+    I.seg_prefix=TRUE;
+	I.prefix_base=I.base[ES];
 	nec_ICount-=2;
 	nec_instruction[FETCHOP]();
 }
@@ -1640,8 +1652,8 @@ static void i_sub_axd16(void)    /* Opcode 0x2d */
 
 static void i_cs(void)    /* Opcode 0x2e */
 {
-    seg_prefix=TRUE;
-	prefix_base=I.base[CS];
+    I.seg_prefix=TRUE;
+	I.prefix_base=I.base[CS];
 	nec_ICount-=2;
 	nec_instruction[FETCHOP]();
 }
@@ -1716,8 +1728,8 @@ static void i_xor_axd16(void)    /* Opcode 0x35 */
 
 static void i_ss(void)    /* Opcode 0x36 */
 {
-    seg_prefix=TRUE;
-	prefix_base=I.base[SS];
+    I.seg_prefix=TRUE;
+	I.prefix_base=I.base[SS];
 	nec_ICount-=2;
 	nec_instruction[FETCHOP]();
 }
@@ -1784,8 +1796,8 @@ static void i_cmp_axd16(void)    /* Opcode 0x3d */
 
 static void i_ds(void)    /* Opcode 0x3e */
 {
-    seg_prefix=TRUE;
-	prefix_base=I.base[DS];
+    I.seg_prefix=TRUE;
+	I.prefix_base=I.base[DS];
 	nec_ICount-=2;
 	nec_instruction[FETCHOP]();
 }
@@ -1813,7 +1825,8 @@ static void i_aas(void)    /* Opcode 0x3f */
 {											\
 	unsigned tmp = (unsigned)I.regs.w[Reg]; \
 	unsigned tmp1 = tmp+1;					\
-	SetOFW_Add(tmp1,tmp,1); 				\
+	/*SetOFW_Add(tmp1,tmp,1);*/				\
+	I.OverVal = (tmp == 0x7fff); /* MISH */ \
 	SetAF(tmp1,tmp,1);						\
 	SetSZPF_Word(tmp1); 					\
 	I.regs.w[Reg]=tmp1; 					\
@@ -1861,15 +1874,16 @@ static void i_inc_di(void)    /* Opcode 0x47 */
     IncWordReg(IY);
 }
 
-#define DecWordReg(Reg) \
-{ \
+#define DecWordReg(Reg) 					\
+{ 											\
 	unsigned tmp = (unsigned)I.regs.w[Reg]; \
-    unsigned tmp1 = tmp-1; \
-    SetOFW_Sub(tmp1,1,tmp); \
-    SetAF(tmp1,tmp,1); \
-    SetSZPF_Word(tmp1); \
-	I.regs.w[Reg]=tmp1; \
-	nec_ICount-=2; \
+    unsigned tmp1 = tmp-1; 					\
+    /*SetOFW_Sub(tmp1,1,tmp);*/ 			\
+	I.OverVal = (tmp == 0x8000); /* MISH */ \
+    SetAF(tmp1,tmp,1); 						\
+    SetSZPF_Word(tmp1); 					\
+	I.regs.w[Reg]=tmp1; 					\
+	nec_ICount-=2; 							\
 }
 
 static void i_dec_ax(void)    /* Opcode 0x48 */
@@ -2102,26 +2116,26 @@ static void repc(int flagval)
     switch(next)
     {
     case 0x26:  /* ES: */
-        seg_prefix=TRUE;
-		prefix_base=I.base[ES];
+        I.seg_prefix=TRUE;
+		I.prefix_base=I.base[ES];
 		nec_ICount-=2;
 		repc(flagval);
 		break;
     case 0x2e:  /* CS: */
-        seg_prefix=TRUE;
-		prefix_base=I.base[CS];
+        I.seg_prefix=TRUE;
+		I.prefix_base=I.base[CS];
 		nec_ICount-=2;
 		repc(flagval);
 		break;
     case 0x36:  /* SS: */
-        seg_prefix=TRUE;
-		prefix_base=I.base[SS];
+        I.seg_prefix=TRUE;
+		I.prefix_base=I.base[SS];
 		nec_ICount-=2;
 		repc(flagval);
 		break;
     case 0x3e:  /* DS: */
-        seg_prefix=TRUE;
-		prefix_base=I.base[DS];
+        I.seg_prefix=TRUE;
+		I.prefix_base=I.base[DS];
 		nec_ICount-=2;
 		repc(flagval);
 		break;
@@ -2236,13 +2250,12 @@ static void i_imul_d16(void)    /* Opcode 0x69 */
 {
     DEF_r16w(dst,src);
     unsigned src2=FETCH;
-    src+=(FETCH<<8);
+    src2+=(FETCH<<8);
     dst = (INT32)((INT16)src)*(INT32)((INT16)src2);
 	I.CarryVal = I.OverVal = (((INT32)dst) >> 15 != 0) && (((INT32)dst) >> 15 != -1);
     RegWord(ModRM)=(WORD)dst;
     nec_ICount-=(ModRM >=0xc0 )?38:47;
 }
-
 
 static void i_push_d8(void)    /* Opcode 0x6a */
 {
@@ -2272,6 +2285,7 @@ static void i_insw(void)    /* Opcode 0x6d */
 {
 	PutMemB(ES,I.regs.w[IY],read_port(I.regs.w[DW]));
 	PutMemB(ES,I.regs.w[IY]+1,read_port(I.regs.w[DW]+1));
+//if (errorlog) fprintf(errorlog,"%04x:  insw\n",cpu_get_pc());
 	I.regs.w[IY]+= -4 * I.DF + 2;
 	nec_ICount-=8;
 }
@@ -2298,7 +2312,7 @@ static void i_jo(void)    /* Opcode 0x70 */
 	{
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2308,7 +2322,7 @@ static void i_jno(void)    /* Opcode 0x71 */
 	if (!OF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2318,7 +2332,7 @@ static void i_jb(void)    /* Opcode 0x72 */
 	if (CF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2328,7 +2342,7 @@ static void i_jnb(void)    /* Opcode 0x73 */
 	if (!CF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2338,7 +2352,7 @@ static void i_jz(void)    /* Opcode 0x74 */
 	if (ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2348,7 +2362,7 @@ static void i_jnz(void)    /* Opcode 0x75 */
 	if (!ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2358,7 +2372,7 @@ static void i_jbe(void)    /* Opcode 0x76 */
     if (CF || ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2368,7 +2382,7 @@ static void i_jnbe(void)    /* Opcode 0x77 */
     if (!(CF || ZF)) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2378,7 +2392,7 @@ static void i_js(void)    /* Opcode 0x78 */
     if (SF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2388,7 +2402,7 @@ static void i_jns(void)    /* Opcode 0x79 */
     if (!SF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2398,7 +2412,7 @@ static void i_jp(void)    /* Opcode 0x7a */
     if (PF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2408,7 +2422,7 @@ static void i_jnp(void)    /* Opcode 0x7b */
     if (!PF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2418,7 +2432,7 @@ static void i_jl(void)    /* Opcode 0x7c */
     if ((SF!=OF)&&!ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2428,7 +2442,7 @@ static void i_jnl(void)    /* Opcode 0x7d */
     if (ZF||(SF==OF)) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2438,7 +2452,7 @@ static void i_jle(void)    /* Opcode 0x7e */
     if (ZF||(SF!=OF)) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2448,7 +2462,7 @@ static void i_jnle(void)    /* Opcode 0x7f */
     if ((SF==OF)&&!ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		nec_ICount-=14;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=4;
 }
 
@@ -2828,7 +2842,7 @@ static void i_call_far(void)
 	I.ip = (WORD)tmp;
 	I.sregs[CS] = (WORD)tmp2;
 	I.base[CS] = SegBase(CS);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=39;
 }
 
@@ -2967,8 +2981,9 @@ static void i_stosb(void)    /* Opcode 0xaa */
 
 static void i_stosw(void)    /* Opcode 0xab */
 {
-	PutMemB(ES,I.regs.w[IY],I.regs.b[AL]);
-	PutMemB(ES,I.regs.w[IY]+1,I.regs.b[AH]);
+	PutMemW(ES,I.regs.w[IY],I.regs.w[AW]);
+//	PutMemB(ES,I.regs.w[IY],I.regs.b[AL]); /* MISH */
+//	PutMemB(ES,I.regs.w[IY]+1,I.regs.b[AH]);
 	I.regs.w[IY] += -4 * I.DF + 2;
 	nec_ICount-=5;
 }
@@ -3109,10 +3124,13 @@ static void i_mov_did16(void)    /* Opcode 0xbf */
 	nec_ICount-=4;
 }
 
-void nec_rotate_shift_Byte(unsigned ModRM, unsigned count)
+void nec_rotate_shift_Byte(unsigned ModRM, int count)
 {
   unsigned src = (unsigned)GetRMByte(ModRM);
   unsigned dst=src;
+
+	if (count < 0) /* FETCH must come _after_ GetRMWord */
+		count = FETCH;
 
   if (count==0)
   {
@@ -3241,10 +3259,13 @@ void nec_rotate_shift_Byte(unsigned ModRM, unsigned count)
 }
 
 
-void nec_rotate_shift_Word(unsigned ModRM, unsigned count)
+void nec_rotate_shift_Word(unsigned ModRM, int count)
 {
-  unsigned src = GetRMWord(ModRM);
-  unsigned dst=src;
+	unsigned src = GetRMWord(ModRM);
+	unsigned dst=src;
+
+	if (count < 0) /* FETCH must come _after_ GetRMWord */
+		count = FETCH;
 
   if (count==0)
   {
@@ -3429,15 +3450,13 @@ void nec_rotate_shift_Word(unsigned ModRM, unsigned count)
 static void i_rotshft_bd8(void)    /* Opcode 0xc0 */
 {
     unsigned ModRM = FETCH;
-    unsigned count = FETCH;
-    nec_rotate_shift_Byte(ModRM,count);
+    nec_rotate_shift_Byte(ModRM,-1);
 }
 
 static void i_rotshft_wd8(void)    /* Opcode 0xc1 */
 {
     unsigned ModRM = FETCH;
-    unsigned count = FETCH;
-    nec_rotate_shift_Word(ModRM,count);
+    nec_rotate_shift_Word(ModRM,-1);
 }
 
 
@@ -3447,14 +3466,14 @@ static void i_ret_d16(void)    /* Opcode 0xc2 */
 	count += FETCH << 8;
 	POP(I.ip);
 	I.regs.w[SP]+=count;
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=22;	// near 20-24
 }
 
 static void i_ret(void)    /* Opcode 0xc3 */
 {
 	POP(I.ip);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=17; // near 15-19
 }
 
@@ -3527,7 +3546,7 @@ static void i_retf_d16(void)    /* Opcode 0xca */
 	POP(I.sregs[CS]);
 	I.base[CS] = SegBase(CS);
 	I.regs.w[SP]+=count;
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=25; // 21-29
 }
 
@@ -3536,7 +3555,7 @@ static void i_retf(void)    /* Opcode 0xcb */
 	POP(I.ip);
 	POP(I.sregs[CS]);
 	I.base[CS] = SegBase(CS);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=28;	// 24-32
 }
 
@@ -3567,7 +3586,7 @@ static void i_iret(void)    /* Opcode 0xcf */
 	POP(I.sregs[CS]);
 	I.base[CS] = SegBase(CS);
     	i_popf();
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=32;	// 27-39
 }
 
@@ -3688,7 +3707,7 @@ static void i_loopne(void)    /* Opcode 0xe0 */
     if (!ZF && tmp) {
 	nec_ICount-=14;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
     } else nec_ICount-=5;
 }
 
@@ -3701,7 +3720,7 @@ static void i_loope(void)    /* Opcode 0xe1 */
     if (ZF && tmp) {
 	nec_ICount-=14;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
    } else nec_ICount-=5;
 }
 
@@ -3715,7 +3734,7 @@ static void i_loop(void)    /* Opcode 0xe2 */
     if (tmp) {
 	nec_ICount-=13;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=5;
 }
 
@@ -3725,7 +3744,7 @@ static void i_jcxz(void)    /* Opcode 0xe3 */
 	if (I.regs.w[CW] == 0) {
 	nec_ICount-=13;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	} else nec_ICount-=5;
 }
 
@@ -3766,7 +3785,7 @@ static void i_call_d16(void)    /* Opcode 0xe8 */
 
 	PUSH(I.ip);
 	I.ip = (WORD)(I.ip+(INT16)tmp);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=24; // 21-29
 }
 
@@ -3777,7 +3796,7 @@ static void i_jmp_d16(void)    /* Opcode 0xe9 */
 	tmp += FETCH << 8;
 
 	I.ip = (WORD)(I.ip+(INT16)tmp);
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=15;
 }
 
@@ -3794,7 +3813,7 @@ static void i_jmp_far(void)    /* Opcode 0xea */
 	I.sregs[CS] = (WORD)tmp1;
 	I.base[CS] = SegBase(CS);
 	I.ip = (WORD)tmp;
-	change_pc20((I.base[CS]+I.ip) & I.amask);
+	change_pc20((I.base[CS]+I.ip));
 	nec_ICount-=27; // 27-35
 }
 
@@ -3888,27 +3907,27 @@ static void rep(int flagval)
 
     switch(next)
     {
-    case 0x26:  /* ES: */
-        seg_prefix=TRUE;
-	prefix_base=I.base[ES];
-	nec_ICount-=2;
-	rep(flagval);
-	break;
-    case 0x2e:  /* CS: */
-        seg_prefix=TRUE;
-	prefix_base=I.base[CS];
-	nec_ICount-=2;
-	rep(flagval);
-	break;
+    	case 0x26:  /* ES: */
+			I.seg_prefix=TRUE;
+			I.prefix_base=I.base[ES];
+			nec_ICount-=2;
+			rep(flagval);
+			break;
+	    case 0x2e:  /* CS: */
+			I.seg_prefix=TRUE;
+			I.prefix_base=I.base[CS];
+			nec_ICount-=2;
+			rep(flagval);
+			break;
     case 0x36:  /* SS: */
-        seg_prefix=TRUE;
-	prefix_base=I.base[SS];
+        I.seg_prefix=TRUE;
+	I.prefix_base=I.base[SS];
 	nec_ICount-=2;
 	rep(flagval);
 	break;
     case 0x3e:  /* DS: */
-        seg_prefix=TRUE;
-	prefix_base=I.base[DS];
+        I.seg_prefix=TRUE;
+	I.prefix_base=I.base[DS];
 	nec_ICount-=2;
 	rep(flagval);
 	break;
@@ -4093,15 +4112,17 @@ static void i_f6pre(void)
 
 			if (tmp)
 			{
-				if ((result / tmp) > 0xff)
+				tmp2 = result % tmp;
+
+				if ((result /= tmp) > 0xff)
 				{
 					nec_interrupt(0,0);
 					break;
 				}
 				else
 				{
-					I.regs.b[AH] = result % tmp;
-					I.regs.b[AL] = result / tmp;
+					I.regs.b[AL] = result;
+					I.regs.b[AH] = tmp2;
 				}
 			}
 			else
@@ -4117,7 +4138,7 @@ static void i_f6pre(void)
 
 			INT16 result;
 
-			result = I.regs.w[AW];
+			result = (INT16)I.regs.w[AW];
 
 			if (tmp)
 			{
@@ -4223,21 +4244,20 @@ static void i_f7pre(void)
 		{
 			UINT32 result;
 
-			result = (I.regs.w[DW] << 16) + I.regs.w[AW];
+            result = (((UINT32)I.regs.w[DW]) << 16) | I.regs.w[AW];
 
 			if (tmp)
 			{
 				tmp2 = result % tmp;
-				if ((result / tmp) > 0xffff)
+				if ((result /= tmp) > 0xffff)
 				{
 					nec_interrupt(0,0);
 					break;
 				}
 				else
 				{
-					I.regs.w[DW]=tmp2;
-					result /= tmp;
-					I.regs.w[AW]=result;
+                    I.regs.w[AW]=result;
+                    I.regs.w[DW]=tmp2;
 				}
 			}
 			else
@@ -4252,7 +4272,7 @@ static void i_f7pre(void)
 		{
 			INT32 result;
 
-			result = (I.regs.w[DW] << 16) + I.regs.w[AW];
+			result = ((UINT32)I.regs.w[DW] << 16) + I.regs.w[AW];
 
 			if (tmp)
 			{
@@ -4353,7 +4373,8 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		tmp = GetRMWord(ModRM);
 		tmp1 = tmp+1;
 
-		SetOFW_Add(tmp1,tmp,1);
+		/*SetOFW_Add(tmp1,tmp,1);*/
+        I.OverVal = (tmp==0x7fff); /* Mish */
 		SetAF(tmp1,tmp,1);
 		SetSZPF_Word(tmp1);
 
@@ -4365,7 +4386,8 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		tmp = GetRMWord(ModRM);
 		tmp1 = tmp-1;
 
-		SetOFW_Sub(tmp1,1,tmp);
+		/*SetOFW_Sub(tmp1,1,tmp);*/
+		I.OverVal = (tmp==0x8000);	 /* Mish */
 		SetAF(tmp1,tmp,1);
 		SetSZPF_Word(tmp1);
 
@@ -4377,7 +4399,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		tmp = GetRMWord(ModRM);
 		PUSH(I.ip);
 		I.ip = (WORD)tmp;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 		nec_ICount-=(ModRM >=0xc0 )?16:20;
 		break;
 
@@ -4389,14 +4411,14 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		PUSH(tmp);
 		PUSH(I.ip);
 		I.ip = tmp1;
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 		nec_ICount-=(ModRM >=0xc0 )?16:26;
 		break;
 
     case 0x20:  /* JMP ea */
 		nec_ICount-=13;
 		I.ip = GetRMWord(ModRM);
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 		break;
 
     case 0x28:  /* JMP FAR ea */
@@ -4404,7 +4426,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		I.ip = GetRMWord(ModRM);
 		I.sregs[CS] = GetnextRMWord;
 		I.base[CS] = SegBase(CS);
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 		break;
 
     case 0x30:  /* PUSH ea */
@@ -4423,7 +4445,7 @@ static void i_invalid(void)
 	I.ip--;
 	nec_ICount-=10;
 	if (errorlog)
-		fprintf(errorlog,"PC=%06x : Invalid Opcode %02x\n",cpu_get_pc(),(BYTE)cpu_readop((I.base[CS]+I.ip)&I.amask));
+		fprintf(errorlog,"PC=%06x : Invalid Opcode %02x\n",cpu_get_pc(),(BYTE)cpu_readop((I.base[CS]+I.ip)));
 }
 
 /* ASG 971222 -- added these interface functions */
@@ -4444,13 +4466,13 @@ void nec_set_context(void *src)
 		I.base[DS] = SegBase(DS);
 		I.base[ES] = SegBase(ES);
 		I.base[SS] = SegBase(SS);
-		change_pc20((I.base[CS]+I.ip) & I.amask);
+		change_pc20((I.base[CS]+I.ip));
 	}
 }
 
 unsigned nec_get_pc(void)
 {
-	return (I.base[CS] + (WORD)I.ip) & I.amask;
+	return (I.base[CS] + (WORD)I.ip);
 }
 
 void nec_set_pc(unsigned val)
@@ -4512,9 +4534,8 @@ unsigned nec_get_reg(int regnum)
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < I.amask )
-					return cpu_readmem20( offset ) | ( cpu_readmem20( offset + 1) << 8 );
+				unsigned offset = ((I.base[SS] + I.regs.w[SP])) + 2 * (REG_SP_CONTENTS - regnum);
+				return cpu_readmem20( offset ) | ( cpu_readmem20( offset + 1) << 8 );
 			}
 	}
 	return 0;
@@ -4545,12 +4566,9 @@ void nec_set_reg(int regnum, unsigned val)
 		default:
 			if( regnum <= REG_SP_CONTENTS )
 			{
-				unsigned offset = ((I.base[SS] + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
-				if( offset < I.amask - 1 )
-				{
-					cpu_writemem20( offset, val & 0xff );
-					cpu_writemem20( offset+1, (val >> 8) & 0xff );
-				}
+				unsigned offset = ((I.base[SS] + I.regs.w[SP])) + 2 * (REG_SP_CONTENTS - regnum);
+				cpu_writemem20( offset, val & 0xff );
+				cpu_writemem20( offset+1, (val >> 8) & 0xff );
 			}
     }
 }
@@ -4600,7 +4618,7 @@ printf("[%04x:%04x]=%02x\tAW=%04x\tBW=%04x\tCW=%04x\tDW=%04x\n",sregs[CS],I.ip,G
 
 	CALL_MAME_DEBUG;
 
-	seg_prefix=FALSE;
+	I.seg_prefix=FALSE;
 #if defined(BIGCASE) && !defined(RS6000)
   /* Some compilers cannot handle large case statements */
 	switch(FETCHOP)
@@ -4928,7 +4946,7 @@ const char *nec_v20_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "V20";
 		case CPU_INFO_FAMILY: return "NEC V-Series";
-		case CPU_INFO_VERSION: return "1.3";
+		case CPU_INFO_VERSION: return "1.6";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
 		case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
@@ -4990,7 +5008,7 @@ const char *nec_v30_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "V30";
 		case CPU_INFO_FAMILY: return "NEC V-Series";
-		case CPU_INFO_VERSION: return "1.3";
+		case CPU_INFO_VERSION: return "1.6";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
 		case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;
@@ -5052,7 +5070,7 @@ const char *nec_v33_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "V33";
 		case CPU_INFO_FAMILY: return "NEC V-Series";
-		case CPU_INFO_VERSION: return "1.3";
+		case CPU_INFO_VERSION: return "1.6";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Real mode NEC emulator v1.3 by Oliver Bergmann\n(initial work based on Fabrice Fabian's i86 core)";
 		case CPU_INFO_REG_LAYOUT: return (const char*)nec_reg_layout;

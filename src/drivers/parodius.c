@@ -379,7 +379,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( parodius_rom )
+ROM_START( parodius )
 	ROM_REGION( 0x51000 ) /* code + banked roms + palette RAM */
 	ROM_LOAD( "955e01.bin", 0x10000, 0x20000, 0x49baa334 )
 	ROM_LOAD( "955e02.bin", 0x30000, 0x18000, 0x14010d6f )

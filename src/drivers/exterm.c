@@ -86,7 +86,6 @@ void exterm_sound_control_w(int offset, int data);
 void exterm_ym2151_w(int offset, int data);
 
 /* Functions in machine/exterm.c */
-void exterm_init_machine(void);
 void exterm_host_data_w(int offset, int data);
 int  exterm_host_data_r(int offset);
 int  exterm_coderom_r(int offset);
@@ -327,7 +326,7 @@ static struct MachineDriver machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
-	exterm_init_machine,
+	0,
 
 	/* video hardware, the reason for 263 is that the VCOUNT register is
 	   supposed to go from 0 to the value in VEND-1, which is 263 */
@@ -337,7 +336,7 @@ static struct MachineDriver machine_driver =
 	4096+32768,0,
     exterm_vh_convert_color_prom,
 
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
+    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	exterm_vh_start,
 	exterm_vh_stop,
@@ -398,7 +397,7 @@ static void hisave (void)
 
 ***************************************************************************/
 
-ROM_START( exterm_rom )
+ROM_START( exterm )
 	ROM_REGION(0x200000)     /* 2MB for 34010 code */
 	ROM_LOAD_ODD(  "v101bg0",  0x000000, 0x10000, 0x8c8e72cf )
 	ROM_LOAD_EVEN( "v101bg1",  0x000000, 0x10000, 0xcc2da0d8 )
@@ -451,7 +450,7 @@ struct GameDriver exterm_driver =
 	"1989",
 	"Gottlieb / Premier Technology",
 	"Zsolt Vasvari\nAlex Pasadyn",
-	0,
+	GAME_REQUIRES_16BIT,
 	&machine_driver,
 	driver_init,
 

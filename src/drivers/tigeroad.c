@@ -499,7 +499,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	2,          /* 2 chips */
-	3500000,    /* 3.5 MHz ? */
+	3579545,    /* 3.579 MHz ? */
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -565,7 +565,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( tigeroad_rom )
+ROM_START( tigeroad )
 	ROM_REGION(0x40000) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "tru02.bin",    0x00000, 0x20000, 0x8d283a95 )
 	ROM_LOAD_ODD( "tru04.bin",    0x00000, 0x20000, 0x72e2ef20 )
@@ -592,7 +592,7 @@ ROM_START( tigeroad_rom )
 	ROM_LOAD( "tru05.bin",    0x0000, 0x8000, 0xf9a7c9bf )
 ROM_END
 
-ROM_START( f1dream_rom )
+ROM_START( f1dream )
 	ROM_REGION(0x40000) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "06j_02.bin",   0x00000, 0x20000, 0x3c2ec697 )
 	ROM_LOAD_ODD( "06k_03.bin",   0x00000, 0x20000, 0x85ebad91 )
@@ -623,7 +623,7 @@ ROM_START( f1dream_rom )
 	ROM_LOAD( "12k_04.bin",   0x0000, 0x8000, 0x4b9a7524 )
 ROM_END
 
-ROM_START( f1dreamb_rom )
+ROM_START( f1dreamb )
 	ROM_REGION(0x40000) /* 256K for 68000 code */
 	ROM_LOAD_EVEN( "f1d_04.bin",   0x00000, 0x10000, 0x903febad )
 	ROM_LOAD_ODD( "f1d_05.bin",   0x00000, 0x10000, 0x666fa2a7 )

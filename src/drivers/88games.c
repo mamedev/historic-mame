@@ -353,7 +353,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( k88games_rom )
+ROM_START( k88games )
 	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
     ROM_LOAD( "861m01.k18", 0x08000, 0x08000, 0x4a4e2959 )
 	ROM_LOAD( "861m02.k16", 0x10000, 0x10000, 0xe19f15f6 )
@@ -407,7 +407,7 @@ ROM_START( k88games_rom )
 	ROM_LOAD( "861.g3",   0x0000, 0x0100, 0x429785db )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( konami88_rom )
+ROM_START( konami88 )
 	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "861.e03", 0x08000, 0x08000, 0x55979bd9 )
 	ROM_LOAD( "861.e02", 0x10000, 0x10000, 0x5b7e98a6 )

@@ -44,7 +44,7 @@
 #if (HAS_M6805 || HAS_M68705 || HAS_HD63705)
 #include "cpu/m6805/m6805.h"
 #endif
-#if (HAS_M6309 || HAS_M6809)
+#if (HAS_HD6309 || HAS_M6809)
 #include "cpu/m6809/m6809.h"
 #endif
 #if (HAS_KONAMI)
@@ -1164,9 +1164,9 @@ struct cpu_interface cpuintf[] =
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
-#if (HAS_M6309)
+#if (HAS_HD6309)
     {
-		CPU_M6309,							/* CPU number and family cores sharing resources */
+		CPU_HD6309,							/* CPU number and family cores sharing resources */
         m6309_reset,                        /* Reset CPU */
 		m6309_exit, 						/* Shut down the CPU */
 		m6309_execute,						/* Execute a number of cycles */
@@ -2853,8 +2853,8 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 #if (HAS_HD63705)
 			case CPU_HD63705:			irq_line = 0; LOG((errorlog,"HD68705 IRQ\n")); break;
 #endif
-#if (HAS_M6309)
-            case CPU_M6309:
+#if (HAS_HD6309)
+            case CPU_HD6309:
 				switch (num)
 				{
 				case M6309_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6309 IRQ\n")); break;
@@ -3126,10 +3126,12 @@ static void cpu_vblankreset (void)
 	int i;
 
 	/* read hi scores from disk */
-profiler_mark(PROFILER_HISCORE);
 	if (hiscoreloaded == 0 && Machine->gamedrv->hiscore_load)
+	{
+profiler_mark(PROFILER_HISCORE);
 		hiscoreloaded = (*Machine->gamedrv->hiscore_load)();
 profiler_mark(PROFILER_END);
+	}
 
 	/* read keyboard & update the status of the input ports */
 	update_input_ports ();

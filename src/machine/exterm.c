@@ -7,13 +7,6 @@ unsigned char *exterm_master_speedup, *exterm_slave_speedup;
 static int aimpos1, aimpos2;
 
 
-void exterm_init_machine(void)
-{
-	/* halt the slave CPU to start */
-	tms34010_host_w(1, TMS34010_HOST_CONTROL, 0x8000);
-}
-
-
 void exterm_host_data_w(int offset, int data)
 {
 	tms34010_host_w(1, offset / TOBYTE(0x00100000), data);

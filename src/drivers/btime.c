@@ -1406,7 +1406,7 @@ MACHINE_DRIVER( disco,     750000, btime_irq_interrupt, nmi_interrupt,       dis
 
 ***************************************************************************/
 
-ROM_START( btime_rom )
+ROM_START( btime )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "aa04.9b",      0xc000, 0x1000, 0x368a25b5 )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
@@ -1431,7 +1431,7 @@ ROM_START( btime_rom )
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
-ROM_START( btime2_rom )
+ROM_START( btime2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "aa04.9b2",     0xc000, 0x1000, 0xa041e25b )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, 0xb4ba400d )
@@ -1456,7 +1456,7 @@ ROM_START( btime2_rom )
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
-ROM_START( btimem_rom )
+ROM_START( btimem )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ab05a1.12b",   0xb000, 0x1000, 0x0a98b230 )
 	ROM_LOAD( "ab04.9b",      0xc000, 0x1000, 0x797e5f75 )
@@ -1482,7 +1482,7 @@ ROM_START( btimem_rom )
 	ROM_LOAD( "ab03.6b",      0x0000, 0x0800, 0xd26bc1f3 )
 ROM_END
 
-ROM_START( cookrace_rom )
+ROM_START( cookrace )
 	ROM_REGION(0x10000)     /* 64k for code */
 	/* code is in the range 0500-3fff, encrypted */
 	ROM_LOAD( "1f.1",         0x0000, 0x2000, 0x68759d32 )
@@ -1512,7 +1512,7 @@ ROM_END
 /* There is a flyer with a screen shot for Lock'n'Chase at:
    http://www.gamearchive.com/flyers/video/taito/locknchase_f.jpg  */
 
-ROM_START( lnc_rom )
+ROM_START( lnc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "s3-3d",        0xc000, 0x1000, 0x1ab4f2c2 )
 	ROM_LOAD( "s2-3c",        0xd000, 0x1000, 0x5e46b789 )
@@ -1535,7 +1535,7 @@ ROM_START( lnc_rom )
     ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
-ROM_START( wtennis_rom )
+ROM_START( wtennis )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "tx",           0xc000, 0x0800, 0xfd343474 )
 	ROM_LOAD( "t4",           0xd000, 0x1000, 0xe465d82c )
@@ -1559,7 +1559,7 @@ ROM_START( wtennis_rom )
     ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
-ROM_START( mmonkey_rom )
+ROM_START( mmonkey )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mmonkey.e4",   0xc000, 0x1000, 0x8d31bf6a )
 	ROM_LOAD( "mmonkey.d4",   0xd000, 0x1000, 0xe54f584a )
@@ -1582,7 +1582,7 @@ ROM_START( mmonkey_rom )
     ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
-ROM_START( brubber_rom )
+ROM_START( brubber )
 	ROM_REGION(0x10000)     /* 64k for code */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
@@ -1599,7 +1599,7 @@ ROM_START( brubber_rom )
 	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
 ROM_END
 
-ROM_START( bnj_rom )
+ROM_START( bnj )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "bnj12b.bin",   0xa000, 0x2000, 0xba3e3801 )
 	ROM_LOAD( "bnj12c.bin",   0xc000, 0x2000, 0xfb3a2cdd )
@@ -1616,7 +1616,7 @@ ROM_START( bnj_rom )
 	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
 ROM_END
 
-ROM_START( caractn_rom )
+ROM_START( caractn )
 	ROM_REGION(0x10000)     /* 64k for code */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, 0xb5279c70 )
@@ -1633,7 +1633,7 @@ ROM_START( caractn_rom )
 	ROM_LOAD( "bnj6c.bin",    0xf000, 0x1000, 0x8c02f662 )
 ROM_END
 
-ROM_START( zoar_rom )
+ROM_START( zoar )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "zoar15",       0xd000, 0x1000, 0x1f0cfdb7 )
 	ROM_LOAD( "zoar16",       0xe000, 0x1000, 0x7685999c )
@@ -1666,7 +1666,7 @@ ROM_START( zoar_rom )
     ROM_LOAD( "z21-1l",       0x0020, 0x0020, 0x5e1e5788 )
 ROM_END
 
-ROM_START( disco_rom )
+ROM_START( disco )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "disco.w5",     0xa000, 0x1000, 0xb2c87b78 )
 	ROM_LOAD( "disco.w4",     0xb000, 0x1000, 0xad7040ee )
@@ -2111,7 +2111,7 @@ struct GameDriver cookrace_driver =
 
 	cookrace_input_ports,
 
-    PROM_MEMORY_REGION(3), 0, 0,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
@@ -2537,7 +2537,7 @@ ignore_interrupt,0,//			nmi_interrupt,16   /* IRQs are triggered by the main CPU
 	}
 };
 
-ROM_START( decocass_rom )
+ROM_START( decocass )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rms8.cpu",     0xf000, 0x1000, 0x23d929b7 )
 /* the following two are just about the same stuff as the one above */

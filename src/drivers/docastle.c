@@ -728,7 +728,7 @@ static struct MachineDriver dorunrun_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( docastle_rom )
+ROM_START( docastle )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "01p_a1.bin",   0x0000, 0x2000, 0x17c6fc24 )
 	ROM_LOAD( "01n_a2.bin",   0x2000, 0x2000, 0x1d2fc7f4 )
@@ -750,7 +750,7 @@ ROM_START( docastle_rom )
 	ROM_LOAD( "07n_a0.bin",   0x0000, 0x4000, 0xf23b5cdb )
 ROM_END
 
-ROM_START( docastl2_rom )
+ROM_START( docastl2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a1",           0x0000, 0x2000, 0x0d81fafc )
 	ROM_LOAD( "a2",           0x2000, 0x2000, 0xa13dc4ac )
@@ -772,7 +772,7 @@ ROM_START( docastl2_rom )
 	ROM_LOAD( "a10",          0x0000, 0x4000, 0x45f7f69b )
 ROM_END
 
-ROM_START( dounicorn_rom )
+ROM_START( dounicorn )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dorev1.bin",   0x0000, 0x2000, 0x1e2cbb3c )
 	ROM_LOAD( "dorev2.bin",   0x2000, 0x2000, 0x18418f83 )
@@ -794,7 +794,7 @@ ROM_START( dounicorn_rom )
 	ROM_LOAD( "dorev10.bin",  0x0000, 0x4000, 0x4b1925e3 )
 ROM_END
 
-ROM_START( dorunruc_rom )
+ROM_START( dorunruc )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "rev-0-1.p1",   0x0000, 0x2000, 0x49906ebd )
 	ROM_LOAD( "rev-0-2.n1",   0x2000, 0x2000, 0xdbe3e7db )
@@ -815,7 +815,7 @@ ROM_START( dorunruc_rom )
 	ROM_LOAD( "rev-0-2.n7",   0x0000, 0x4000, 0x6dac2fa3 )
 ROM_END
 
-ROM_START( dorunrun_rom )
+ROM_START( dorunrun )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2764.p1",      0x0000, 0x2000, 0x95c86f8e )
 	ROM_LOAD( "2764.l1",      0x4000, 0x2000, 0xe9a65ba7 )
@@ -836,7 +836,7 @@ ROM_START( dorunrun_rom )
 	ROM_LOAD( "27128.p7",     0x0000, 0x4000, 0x8b06d461 )
 ROM_END
 
-ROM_START( dorunru2_rom )
+ROM_START( dorunru2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "p1",           0x0000, 0x2000, 0x12a99365 )
 	ROM_LOAD( "l1",           0x4000, 0x2000, 0x38609287 )
@@ -857,7 +857,7 @@ ROM_START( dorunru2_rom )
 	ROM_LOAD( "27128.p7",     0x0000, 0x4000, 0x8b06d461 )
 ROM_END
 
-ROM_START( spiero_rom )
+ROM_START( spiero )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sp1.bin",      0x0000, 0x2000, 0x08d23e38 )
 	ROM_LOAD( "sp3.bin",      0x4000, 0x2000, 0xfaa0c18c )
@@ -879,7 +879,7 @@ ROM_START( spiero_rom )
 	ROM_LOAD( "27128.p7",     0x0000, 0x4000, 0x8b06d461 )
 ROM_END
 
-ROM_START( dowild_rom )
+ROM_START( dowild )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "w1",           0x0000, 0x2000, 0x097de78b )
 	ROM_LOAD( "w3",           0x4000, 0x2000, 0xfc6a1cbb )
@@ -900,7 +900,7 @@ ROM_START( dowild_rom )
 	ROM_LOAD( "w10",          0x0000, 0x4000, 0xd1f37fba )
 ROM_END
 
-ROM_START( jjack_rom )
+ROM_START( jjack )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "j1.bin",       0x0000, 0x2000, 0x87f29bd2 )
 	ROM_LOAD( "j3.bin",       0x4000, 0x2000, 0x35b0517e )
@@ -922,7 +922,7 @@ ROM_START( jjack_rom )
 	ROM_LOAD( "j0.bin",       0x0000, 0x4000, 0xab042f04 )
 ROM_END
 
-ROM_START( kickridr_rom )
+ROM_START( kickridr )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "k1",           0x0000, 0x2000, 0xdfdd1ab4 )
 	ROM_LOAD( "k3",           0x4000, 0x2000, 0x412244da )

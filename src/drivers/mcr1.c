@@ -115,7 +115,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x00, 0x04, mcr_port_04_dispatch_r },
-	{ 0x07, 0x07, mcr_sound_status_r },
+	{ 0x07, 0x07, ssio_status_r },
 	{ 0x10, 0x10, mcr_port_04_dispatch_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
 	{ -1 }
@@ -304,7 +304,7 @@ static void kick_init(void)
  *
  *************************************/
 
-ROM_START( solarfox_rom )
+ROM_START( solarfox )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sfcpu.3b",     0x0000, 0x1000, 0x8c40f6eb )
 	ROM_LOAD( "sfcpu.4b",     0x1000, 0x1000, 0x4d47bd7e )
@@ -329,7 +329,7 @@ ROM_START( solarfox_rom )
 ROM_END
 
 
-ROM_START( kick_rom )
+ROM_START( kick )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1200a-v2.b3",  0x0000, 0x1000, 0x65924917 )
 	ROM_LOAD( "1300b-v2.b4",  0x1000, 0x1000, 0x27929f52 )
@@ -354,7 +354,7 @@ ROM_START( kick_rom )
 ROM_END
 
 
-ROM_START( kicka_rom )
+ROM_START( kicka )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1200-a.b3",    0x0000, 0x1000, 0x22fa42ed )
 	ROM_LOAD( "1300-b.b4",    0x1000, 0x1000, 0xafaca819 )

@@ -237,6 +237,14 @@ static unsigned short colortable[] =
 	0,8,5,1,
 };
 
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
+
+
+
 static int redalert_interrupt(void)
 {
 	static int lastcoin = 0;
@@ -311,8 +319,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -338,7 +346,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( redalert_rom )
+ROM_START( redalert )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "rag5",         	0x5000, 0x1000, 0xd7c9cdd6 )
 	ROM_LOAD( "rag6",         	0x6000, 0x1000, 0xcb2a308c )
@@ -380,7 +388,7 @@ struct GameDriver redalert_driver =
 	"1981",
 	"GDI + Irem",
 	"Mike Balfour\nDick Milliken (Information)",
-	GAME_IMPERFECT_COLORS,
+	GAME_WRONG_COLORS,
 	&machine_driver,
 	0,
 
@@ -391,7 +399,8 @@ struct GameDriver redalert_driver =
 
 	redalert_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
+
 	0, 0
 };

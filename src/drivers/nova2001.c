@@ -198,7 +198,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	1200000,	/* 1.2 MHz */
+	6000000/3,	/* 2 MHz */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0, input_port_3_r },
@@ -244,7 +244,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( nova2001_rom )
+ROM_START( nova2001 )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "nova2001.1",   0x0000, 0x2000, 0xb79461bd )
 	ROM_LOAD( "nova2001.2",   0x2000, 0x2000, 0xfab87144 )

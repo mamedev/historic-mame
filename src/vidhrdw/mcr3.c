@@ -129,14 +129,14 @@ static void mcr3_update_background(struct osd_bitmap *bitmap, UINT8 color_xor)
 			int attr = videoram[offs + 1];
 			int color = ((attr & 0x30) >> 4) ^ color_xor;
 			int code = videoram[offs] + 256 * (attr & 0x03);
-			
+
 			code &= mcr3_char_code_mask;
 
 			if (!mcr_cocktail_flip)
-				drawgfx(bitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08, 
+				drawgfx(bitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 			else
-				drawgfx(bitmap, Machine->gfx[0], code, color, !(attr & 0x04), !(attr & 0x08), 
+				drawgfx(bitmap, Machine->gfx[0], code, color, !(attr & 0x04), !(attr & 0x08),
 						16 * (31 - mx), 16 * (29 - my), &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 
 			dirtybuffer[offs] = 0;
@@ -155,7 +155,7 @@ static void mcr3_update_background(struct osd_bitmap *bitmap, UINT8 color_xor)
 void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor, int dx, int dy)
 {
 	int offs;
-	
+
 	/* loop over sprite RAM */
 	for (offs = 0; offs < spriteram_size; offs += 4)
 	{
@@ -176,10 +176,10 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
 
 		code ^= code_xor;
 		code &= mcr3_sprite_code_mask;
-		
+
 		sx += dx;
 		sy += dy;
-		
+
 		/* draw the sprite */
 		if (!mcr_cocktail_flip)
 			drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
@@ -215,7 +215,7 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
 void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a cocktail flip change */
-	if (last_cocktail_flip != mcr_cocktail_flip)
+	if (palette_recalc() || last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -224,7 +224,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* copy it to the destination */
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-	
+
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
 }
@@ -239,12 +239,15 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	if (palette_recalc())
+		memset(dirtybuffer, 1, videoram_size);
+
 	/* redraw the background */
 	mcr3_update_background(tmpbitmap, 3);
 
 	/* copy it to the destination */
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-	
+
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
 }
@@ -254,7 +257,7 @@ void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 /*************************************
  *
  *	Spy Hunter-specific color PROM decoder
- * 
+ *
  *************************************/
 
 void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
@@ -285,7 +288,7 @@ void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 /*************************************
  *
  *	Spy Hunter-specific video startup
- * 
+ *
  *************************************/
 
 int spyhunt_vh_start(void)
@@ -315,7 +318,7 @@ int spyhunt_vh_start(void)
 /*************************************
  *
  *	Spy Hunter-specific video shutdown
- * 
+ *
  *************************************/
 
 void spyhunt_vh_stop(void)
@@ -338,6 +341,9 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	static const struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
 	int offs, scrollx, scrolly;
 
+	if (palette_recalc())
+		memset(dirtybuffer, 1, videoram_size);
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1; offs >= 0; offs--)
@@ -352,7 +358,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			code = (code & 0x3f) | ((code & 0x80) >> 1);
 			code &= mcr3_char_code_mask;
 
-			drawgfx(spyhunt_backbitmap, Machine->gfx[0], code, 0, 0, vflip, 
+			drawgfx(spyhunt_backbitmap, Machine->gfx[0], code, 0, 0, vflip,
 					64 * mx, 32 * my, NULL, TRANSPARENCY_NONE, 0);
 
 			dirtybuffer[offs] = 0;
@@ -363,7 +369,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	scrollx = -spyhunt_scrollx * 2 + spyhunt_scroll_offset;
 	scrolly = -spyhunt_scrolly * 2;
 	copyscrollbitmap(bitmap, spyhunt_backbitmap, 1, &scrollx, 1, &scrolly, &clip, TRANSPARENCY_NONE, 0);
-	
+
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, spyhunt_sprite_color_mask, 0x80, -12, 0);
 
@@ -376,7 +382,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			int mx = offs / 32;
 			int my = offs % 32;
 
-			drawgfx(bitmap, Machine->gfx[2], ch, 0, 0, 0, 
+			drawgfx(bitmap, Machine->gfx[2], ch, 0, 0, 0,
 					16 * mx - 16, 16 * my, &clip, TRANSPARENCY_PEN, 0);
 		}
 	}
@@ -403,7 +409,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 /*************************************
  *
  *	Discs of Tron-specific video startup
- * 
+ *
  *************************************/
 
 int dotron_vh_start(void)
@@ -452,7 +458,7 @@ int dotron_vh_start(void)
 /*************************************
  *
  *	Discs of Tron-specific video shutdown
- * 
+ *
  *************************************/
 
 void dotron_vh_stop(void)
@@ -469,7 +475,7 @@ void dotron_vh_stop(void)
 /*************************************
  *
  *	Discs of Tron light management
- * 
+ *
  *************************************/
 
 void dotron_change_light(int light)
@@ -486,7 +492,7 @@ static void dotron_change_palette(int which)
 	/* get the palette indices */
 	offset = dotron_backdrop->start_pen + 95;
 	new_palette = dotron_palettes[which];
-	
+
 	/* update the palette entries */
 	for (i = 0; i < dotron_backdrop->num_pens_used; i++)
 		palette_change_color(i + offset, new_palette[i * 3], new_palette[i * 3 + 1], new_palette[i * 3 + 2]);
@@ -497,7 +503,7 @@ static void dotron_change_palette(int which)
 /*************************************
  *
  *	Discs of Tron-specific redraw
- * 
+ *
  *************************************/
 
 void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
@@ -512,6 +518,9 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if ((light_status & 2) && (cpu_getcurrentframe() & 1)) light++;	/* strobe */
 		dotron_change_palette(light);
 	}
+
+	if (palette_recalc())
+		memset(dirtybuffer, 1, videoram_size);
 
 	/* Screen clip, because our backdrop is a different resolution than the game */
 	sclip.min_x = DOTRON_X_START + 0;
@@ -556,18 +565,18 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			mx += DOTRON_X_START;
 			my += DOTRON_Y_START;
 
-			drawgfx(tmpbitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08, 
+			drawgfx(tmpbitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
 					mx, my, &sclip, TRANSPARENCY_NONE, 0);
 
 			if (dotron_backdrop != NULL)
 			{
 				struct rectangle bclip;
-				
+
 				bclip.min_x = mx;
 				bclip.max_x = mx + 16 - 1;
 				bclip.min_y = my;
 				bclip.max_y = my + 16 - 1;
-				
+
 				draw_backdrop(tmpbitmap, dotron_backdrop->artwork, 0, 0, &bclip);
 			}
 

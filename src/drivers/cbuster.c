@@ -453,7 +453,7 @@ static struct MachineDriver twocrude_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( cbuster_rom )
+ROM_START( cbuster )
 	ROM_REGION(0x80000) /* 68000 code */
   	ROM_LOAD_EVEN( "fx01.rom", 0x00000, 0x20000, 0xddae6d83 )
 	ROM_LOAD_ODD ( "fx00.rom", 0x00000, 0x20000, 0x5bc2c0de )
@@ -487,7 +487,7 @@ ROM_START( cbuster_rom )
 	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
-ROM_START( cbusterw_rom )
+ROM_START( cbusterw )
 	ROM_REGION(0x80000) /* 68000 code */
   	ROM_LOAD_EVEN( "fu01-.rom", 0x00000, 0x20000, 0x0203e0f8 )
 	ROM_LOAD_ODD ( "fu00-.rom", 0x00000, 0x20000, 0x9c58626d )
@@ -521,7 +521,7 @@ ROM_START( cbusterw_rom )
 	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
-ROM_START( cbusterj_rom )
+ROM_START( cbusterj )
 	ROM_REGION(0x80000) /* 68000 code */
   	ROM_LOAD_EVEN( "fr01-1", 0x00000, 0x20000, 0xaf3c014f )
 	ROM_LOAD_ODD ( "fr00-1", 0x00000, 0x20000, 0xf666ad52 )
@@ -555,7 +555,7 @@ ROM_START( cbusterj_rom )
 	ROM_LOAD( "fu13-.rom",    0x00000, 0x20000, 0xb8525622 )
 ROM_END
 
-ROM_START( twocrude_rom )
+ROM_START( twocrude )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "ft01",    0x00000, 0x20000, 0x08e96489 )
 	ROM_LOAD_ODD ( "ft00",    0x00000, 0x20000, 0x6765c445 )

@@ -918,6 +918,53 @@ int cpu_readmem16 (int address)
 }
 
 
+int cpu_readmem16bew (int address)
+{
+	int shift, data;
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mrhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
+	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
+		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
+	}
+
+	/* fallback to handler */
+	shift = 8 - ((address & 1) << 3);
+	address &= ~1;
+	data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
+	return (data >> shift) & 0xff;
+}
+
+
+int cpu_readmem16bew_word (int address)
+{
+	MHELE hw;
+
+	/* reads across word boundaries must be broken up */
+	/* disabled because only one processor uses this (TMS9900), and it always uses aligned operands */
+	/*if (address & 1)
+		return (cpu_readmem16bew (address) << 8) + cpu_readmem16bew (address + 1);*/
+
+	/* 1st element link */
+	hw = cur_mrhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
+	if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
+		if (hw <= HT_BANKMAX) return READ_WORD (&cpu_bankbase[hw][address - memoryreadoffset[hw]]);
+	}
+
+	/* fallback to handler */
+	return memoryreadhandler[hw](address - memoryreadoffset[hw]);
+}
+
+
 int cpu_readmem16lew (int address)
 {
 	int shift, data;
@@ -1269,6 +1316,72 @@ void cpu_writemem16 (int address, int data)
 
 	/* fallback to handler */
 	memorywritehandler[hw](address - memorywriteoffset[hw], data);
+}
+
+
+void cpu_writemem16bew (int address, int data)
+{
+	int shift;
+	MHELE hw;
+
+	/* 1st element link */
+	hw = cur_mwhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
+	if (hw <= HT_BANKMAX)
+	{
+		cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
+		if (hw <= HT_BANKMAX)
+		{
+			cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+			return;
+		}
+	}
+
+	/* fallback to handler */
+	shift = 8 - ((address & 1) << 3);
+	address &= ~1;
+	memorywritehandler[hw](address - memorywriteoffset[hw], (0xff000000 >> shift) | ((data & 0xff) << shift));
+}
+
+
+void cpu_writemem16bew_word (int address, int data)
+{
+	MHELE hw;
+
+	/* writes across word boundaries must be broken up */
+	/* disabled because only one processor uses this (TMS9900), and it always uses aligned operands */
+	/*if (address & 1)
+	{
+		cpu_writemem16bew (address, data >> 8);
+		cpu_writemem16bew (address + 1, data & 0xff);
+		return;
+	}*/
+
+	/* 1st element link */
+	hw = cur_mwhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
+	if (hw <= HT_BANKMAX)
+	{
+		WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+		return;
+	}
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
+		if (hw <= HT_BANKMAX)
+		{
+			WRITE_WORD (&cpu_bankbase[hw][address - memorywriteoffset[hw]], data);
+			return;
+		}
+	}
+
+	/* fallback to handler */
+	memorywritehandler[hw](address - memorywriteoffset[hw], data & 0xffff);
 }
 
 
@@ -1918,6 +2031,48 @@ void cpu_setOPbase16 (int pc)
 	{
 		/* 2nd element link */
 		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_16) & MHMASK(ABITS2_16))];
+	}
+	ophw = hw;
+
+	if (!hw)
+	{
+	 /* memory direct */
+		OP_RAM = RAM;
+		OP_ROM = ROM;
+		return;
+	}
+
+	if (hw <= HT_BANKMAX)
+	{
+		/* banked memory select */
+		OP_RAM = cpu_bankbase[hw] - memoryreadoffset[hw];
+		if (RAM == ROM) OP_ROM = OP_RAM;
+		return;
+	}
+
+	/* do not support on callbank memory reasion */
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_get_pc());
+}
+
+
+void cpu_setOPbase16bew (int pc)
+{
+	MHELE hw;
+
+	/* ASG 970206 -- allow overrides */
+	if (OPbasefunc)
+	{
+		pc = OPbasefunc (pc);
+		if (pc == -1)
+			return;
+	}
+
+	/* 1st element link */
+	hw = cur_mrhard[pc >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
+	if (hw >= MH_HARDMAX)
+	{
+		/* 2nd element link */
+		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((pc >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
 	}
 	ophw = hw;
 

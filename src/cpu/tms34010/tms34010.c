@@ -115,15 +115,18 @@ typedef struct
 	UINT8* stackbase;
 	UINT32 stackoffs;
 	int (*irq_callback)(int irqline);
+	int last_update_vcount;
 	struct tms34010_config *config;
 } TMS34010_Regs;
 
 static TMS34010_Regs state;
 static TMS34010_Regs *host_interface_context;
 static UINT8 host_interface_cpu;
-static int *TMS34010_timer[MAX_CPU];		  /* Display interrupt timer */
+static int *dpyint_timer[MAX_CPU];		  /* Display interrupt timer */
+static int *vsblnk_timer[MAX_CPU];		  /* VBLANK start timer */
 static UINT8* stackbase[MAX_CPU] = {0,0,0,0};
 static UINT32 stackoffs[MAX_CPU] = {0,0,0,0};
+static int first_reset = 1;					/* cheesy, but gets the job done */
 
 /* default configuration */
 static struct tms34010_config default_config =
@@ -133,8 +136,6 @@ static struct tms34010_config default_config =
 	NULL,				/* no shiftreg functions */
 	NULL				/* no shiftreg functions */
 };
-
-static void TMS34010_io_intcallback(int param);
 
 static void check_interrupt(void);
 
@@ -168,6 +169,9 @@ static INT32 (*rfield_functions_s[32]) (UINT32 bitaddr) =
 
 /* public globals */
 int	tms34010_ICount;
+
+/* context finder */
+#define FINDCONTEXT(_cpu) (cpu_is_saving_context(_cpu) ? cpu_getcontext(_cpu) : &state)
 
 /* register definitions and shortcuts */
 #define PC         (state.pc)
@@ -603,32 +607,18 @@ static UINT32 read_pixel_16(UINT32 address)
 static UINT32 write_pixel_shiftreg (UINT32 address, UINT32 value)
 {
 	if (state.config->from_shiftreg)
-	{
 		state.config->from_shiftreg(address, &state.shiftreg[0]);
-	}
 	else
-	{
-		if (errorlog)
-		{
-			fprintf(errorlog, "From ShiftReg function not set. PC = %08X\n", PC);
-		}
-	}
+		if (errorlog) fprintf(errorlog, "From ShiftReg function not set. PC = %08X\n", PC);
 	return 1;
 }
 
 static UINT32 read_pixel_shiftreg (UINT32 address)
 {
 	if (state.config->to_shiftreg)
-	{
 		state.config->to_shiftreg(address, &state.shiftreg[0]);
-	}
 	else
-	{
-		if (errorlog)
-		{
-			fprintf(errorlog, "To ShiftReg function not set. PC = %08X\n", PC);
-		}
-	}
+		if (errorlog) fprintf(errorlog, "To ShiftReg function not set. PC = %08X\n", PC);
 	return state.shiftreg[0];
 }
 
@@ -637,6 +627,7 @@ static UINT32 read_pixel_shiftreg (UINT32 address)
 
 /* includes the actual opcode implementations */
 #include "34010ops.c"
+#include "34010gfx.c"
 
 
 /* Raster operations */
@@ -761,7 +752,7 @@ void tms34010_reset(void *param)
 	int i;
 
 	/* zap the state and copy in the config pointer */
-	memset(&state, 0, sizeof (state));
+	memset(&state, 0, sizeof(state));
 	state.lastpixaddr = INVALID_PIX_ADDRESS;
 	state.config = config;
 
@@ -775,21 +766,23 @@ void tms34010_reset(void *param)
 
 	/* set up the speedy stack (this gets us into trouble later, though!) */
 	if (stackbase[cpunum] == 0)
-	{
 		if (errorlog) fprintf(errorlog, "Stack Base not set on CPU #%d\n", cpunum);
-	}
 	state.stackbase = stackbase[cpunum] - stackoffs[cpunum];
-
-	/* reset the timers and the host interface */
-	host_interface_context = NULL;
-	for (i = 0; i < MAX_CPU; i ++)
-		TMS34010_timer[i] = 0;
 	
 	/* HALT the CPU if requested, and remember to re-read the starting PC */
 	/* the first time we are run */
 	state.reset_deferred = config->halt_on_reset;
 	if (config->halt_on_reset)
 		TMS34010_io_register_w(REG_HSTCTLH * 2, 0x8000);
+
+	/* reset the timers and the host interface (but only the first time) */
+	host_interface_context = NULL;
+	if (first_reset)
+	{
+		for (i = 0; i < MAX_CPU; i++)
+			dpyint_timer[i] = vsblnk_timer[i] = NULL;
+		first_reset = 0;
+	}
 }
 
 /****************************************************************************
@@ -797,7 +790,7 @@ void tms34010_reset(void *param)
  ****************************************************************************/
 void tms34010_exit(void)
 {
-	/* nothing to do ? */
+	first_reset = 1;
 }
 
 /****************************************************************************
@@ -1109,6 +1102,12 @@ int tms34010_execute(int cycles)
 	{
 		state.reset_deferred = 0;
 		PC = RLONG(0xffffffe0);
+#if MAME_DEBUG
+{
+		extern int debug_key_pressed;
+		debug_key_pressed = 1;
+}
+#endif
 	}
 
 	tms34010_ICount = cycles;
@@ -1138,10 +1137,6 @@ int tms34010_execute(int cycles)
 		#endif
 		state.op = ROPCODE ();
 		(*opcode_table[state.op >> 4])();
-
-#if !TMS34010_ACCURATE_TIMING
-		tms34010_ICount -= 4 * TMS34010_AVGCYCLES;
-#endif
 
 	} while (tms34010_ICount > 0);
 
@@ -1347,8 +1342,124 @@ static void set_raster_op(TMS34010_Regs *context)
 
 
 /*###################################################################################################
+**	VIDEO TIMING HELPERS
+**#################################################################################################*/
+
+INLINE int scanline_to_vcount(TMS34010_Regs *context, int scanline)
+{
+	if (Machine->drv->visible_area.min_y == 0)
+		scanline += CONTEXT_IOREG(context, REG_VEBLNK);
+	if (scanline > CONTEXT_IOREG(context, REG_VTOTAL))
+		scanline -= CONTEXT_IOREG(context, REG_VTOTAL);
+	return scanline;
+}
+
+
+INLINE int vcount_to_scanline(TMS34010_Regs *context, int vcount)
+{
+	if (Machine->drv->visible_area.min_y == 0)
+		vcount -= CONTEXT_IOREG(context, REG_VEBLNK);
+	if (vcount < 0)
+		vcount += CONTEXT_IOREG(context, REG_VTOTAL);
+	if (vcount > Machine->drv->visible_area.max_y)
+		vcount = 0;
+	return vcount;
+}
+
+
+static void update_display_address(TMS34010_Regs *context, int vcount)
+{
+	UINT32 dpyadr = CONTEXT_IOREG(context, REG_DPYADR) & 0xfffc;
+	UINT32 dpytap = CONTEXT_IOREG(context, REG_DPYTAP) & 0x3fff;
+	INT32 dudate = CONTEXT_IOREG(context, REG_DPYCTL) & 0x03fc;
+	int org = CONTEXT_IOREG(context, REG_DPYCTL) & 0x0400;
+	int scans = (CONTEXT_IOREG(context, REG_DPYSTRT) & 3) + 1;
+	
+	/* anytime during VBLANK is effectively the start of the next frame */
+	if (vcount >= CONTEXT_IOREG(context, REG_VSBLNK) || vcount <= CONTEXT_IOREG(context, REG_VEBLNK))
+		context->last_update_vcount = vcount = CONTEXT_IOREG(context, REG_VEBLNK);
+	
+	/* otherwise, compute the updated address */
+	else
+	{
+		int rows = vcount - context->last_update_vcount;
+		if (rows < 0) rows += CONTEXT_IOREG(context, REG_VCOUNT);
+		dpyadr -= rows * dudate / scans;
+		CONTEXT_IOREG(context, REG_DPYADR) = dpyadr | (CONTEXT_IOREG(context, REG_DPYADR) & 0x0003);
+		context->last_update_vcount = vcount;
+	}
+	
+	/* now compute the actual address */
+	if (org == 0) dpyadr ^= 0xfffc;
+	dpyadr <<= 8;
+	dpyadr |= dpytap << 4;
+	
+	/* callback */
+	if (context->config->display_addr_changed)
+	{
+		if (org != 0) dudate = -dudate;
+		(*context->config->display_addr_changed)(dpyadr & 0x00ffffff, (dudate << 8) / scans, vcount_to_scanline(context, vcount));
+	}
+}
+
+
+static void vsblnk_callback(int cpunum)
+{
+	/* reset timer for next frame */
+	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
+	TMS34010_Regs *context = FINDCONTEXT(cpunum);
+	vsblnk_timer[cpunum] = timer_set(interval, cpunum, vsblnk_callback);
+	CONTEXT_IOREG(context, REG_DPYADR) = CONTEXT_IOREG(context, REG_DPYSTRT);
+	update_display_address(context, CONTEXT_IOREG(context, REG_VSBLNK));
+}
+
+
+static void dpyint_callback(int cpunum)
+{
+	/* reset timer for next frame */
+	TMS34010_Regs *context = FINDCONTEXT(cpunum);
+	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
+	dpyint_timer[cpunum] = timer_set(interval, cpunum, dpyint_callback);
+	cpu_generate_internal_interrupt(cpunum, TMS34010_DI);
+	
+	/* allow a callback so we can update before they are likely to do nasty things */
+	if (context->config->display_int_callback)
+		(*context->config->display_int_callback)(vcount_to_scanline(context, CONTEXT_IOREG(context, REG_DPYINT)));
+}
+
+
+static void update_timers(int cpunum, TMS34010_Regs *context)
+{
+	int dpyint = CONTEXT_IOREG(context, REG_DPYINT);
+	int vsblnk = CONTEXT_IOREG(context, REG_VSBLNK);
+
+	/* remove any old timers */
+	if (dpyint_timer[cpunum])
+		timer_remove(dpyint_timer[cpunum]);
+	if (vsblnk_timer[cpunum])
+		timer_remove(vsblnk_timer[cpunum]);
+		
+	/* set new timers */
+	dpyint_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(context, dpyint)), cpunum, dpyint_callback);
+	vsblnk_timer[cpunum] = timer_set(cpu_getscanlinetime(vcount_to_scanline(context, vsblnk)), cpunum, vsblnk_callback);
+}
+
+
+/*###################################################################################################
 **	I/O REGISTER WRITES
 **#################################################################################################*/
+
+static const char *ioreg_name[] =
+{
+	"HESYNC", "HEBLNK", "HSBLNK", "HTOTAL",
+	"VESYNC", "VEBLNK", "VSBLNK", "VTOTAL",
+	"DPYCTL", "DPYSTART", "DPYINT", "CONTROL",
+	"HSTDATA", "HSTADRL", "HSTADRH", "HSTCTLL",
+	"HSTCTLH", "INTENB", "INTPEND", "CONVSP",
+	"CONVDP", "PSIZE", "PMASK", "RESERVED",
+	"RESERVED", "RESERVED", "RESERVED", "DPYTAP",
+	"HCOUNT", "VCOUNT", "DPYADR", "REFCNT"
+};
 
 static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, int data)
 {
@@ -1362,20 +1473,18 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 	switch (reg)
 	{
 		case REG_DPYINT:
-			/* remove any old timer */
-			if (TMS34010_timer[cpunum])
-				timer_remove(TMS34010_timer[cpunum]);
-				
-			/* if the game's visible area starts at 0, */
-			/* factor VBLANK into the calculations */
-			if (Machine->drv->visible_area.min_y == 0)
-			{
-				data -= CONTEXT_IOREG(context, REG_VEBLNK);
-				if (data < 0) data += CONTEXT_IOREG(context, REG_VTOTAL);
-			}
-			
-			/* set a new timer */
-			TMS34010_timer[cpunum] = timer_set(cpu_getscanlinetime(data), cpunum, TMS34010_io_intcallback);
+			if (data != oldreg || !dpyint_timer[cpunum])
+				update_timers(cpunum, context);
+			break;
+		
+		case REG_VSBLNK:
+			if (data != oldreg || !vsblnk_timer[cpunum])
+				update_timers(cpunum, context);
+			break;
+	
+		case REG_VEBLNK:
+			if (data != oldreg)
+				update_timers(cpunum, context);
 			break;
 	
 		case REG_CONTROL:
@@ -1405,6 +1514,26 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 	
 		case REG_DPYCTL:
 			set_pixel_function(context);
+			if ((oldreg ^ data) & 0x03fc)
+				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
+			break;
+			
+		case REG_DPYADR:
+			if (data != oldreg)
+			{
+				context->last_update_vcount = scanline_to_vcount(context, cpu_getscanline());
+				update_display_address(context, context->last_update_vcount);
+			}
+			break;
+		
+		case REG_DPYSTRT:
+			if (data != oldreg)
+				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
+			break;
+		
+		case REG_DPYTAP:
+			if ((oldreg ^ data) & 0x3fff)
+				update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
 			break;
 	
 		case REG_HSTCTLH:
@@ -1439,20 +1568,28 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 			/* output interrupt? */
 			if (!(oldreg & 0x0080) && (newreg & 0x0080))
 			{
+				if (errorlog) fprintf(errorlog, "CPU#%d Output int = 1\n", cpunum);
 				if (context->config->output_int)
 					(*context->config->output_int)(1);
 			}
 			else if ((oldreg & 0x0080) && !(newreg & 0x0080))
 			{
+				if (errorlog) fprintf(errorlog, "CPU#%d Output int = 0\n", cpunum);
 				if (context->config->output_int)
 					(*context->config->output_int)(0);
 			}
 		
 			/* input interrupt? (should really be state-based, but the functions don't exist!) */
 			if (!(oldreg & 0x0008) && (newreg & 0x0008))
+			{
+				if (errorlog) fprintf(errorlog, "CPU#%d Input int = 1\n", cpunum);
 				cpu_generate_internal_interrupt(cpunum, TMS34010_HI);
+			}
 			else if ((oldreg & 0x0008) && !(newreg & 0x0008))
-				IOREG(REG_INTPEND) &= ~TMS34010_HI;
+			{
+				if (errorlog) fprintf(errorlog, "CPU#%d Input int = 0\n", cpunum);
+				CONTEXT_IOREG(context, REG_INTPEND) &= ~TMS34010_HI;
+			}
 			break;
 	
 		case REG_CONVDP:
@@ -1460,15 +1597,13 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 			break;
 	
 		case REG_INTENB:
-			if (IOREG(REG_INTENB) & IOREG(REG_INTPEND)) check_interrupt();
+			if (CONTEXT_IOREG(context, REG_INTENB) & CONTEXT_IOREG(context, REG_INTPEND))
+				check_interrupt();
 			break;
 	}
 
-/*	if (errorlog)
-	{
-		fprintf(errorlog, "TMS34010 io write. Reg #%02X=%04X - PC: %04X\n",
-				reg, IOREG(reg), cpu_get_pc());
-	}*/
+	if (errorlog)
+		fprintf(errorlog, "CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
 }
 
 void TMS34010_io_register_w(int reg, int data)
@@ -1489,21 +1624,13 @@ static int common_io_register_r(int cpunum, TMS34010_Regs *context, int reg)
 	int result, total;
 	
 	reg >>= 1;
+	if (errorlog)
+		fprintf(errorlog, "CPU#%d: read %s\n", cpunum, ioreg_name[reg]);
+
 	switch (reg)
 	{
 		case REG_VCOUNT:
-		
-			/* if the game's visible area starts at 0, */
-			/* offset the current scanline by the VBLANK end */
-			result = cpu_getscanline();
-			total = CONTEXT_IOREG(context, REG_VTOTAL);
-			if (Machine->drv->visible_area.min_y == 0)
-				result += CONTEXT_IOREG(context, REG_VEBLNK);
-				
-			/* wrap around */
-			if (result > total)
-				result -= total;
-			return result;
+			return scanline_to_vcount(context, cpu_getscanline());
 	
 		case REG_HCOUNT:
 		
@@ -1519,6 +1646,10 @@ static int common_io_register_r(int cpunum, TMS34010_Regs *context, int reg)
 			if (result > total)
 				result -= total;
 			return result;
+		
+		case REG_DPYADR:
+			update_display_address(context, scanline_to_vcount(context, cpu_getscanline()));
+			break;
 	}
 
 	return CONTEXT_IOREG(context, reg);
@@ -1538,17 +1669,6 @@ int TMS34010_io_register_r(int reg)
 **	UTILITY FUNCTIONS
 **#################################################################################################*/
 
-#define FINDCONTEXT(cpu, context)       \
-	if (cpu_is_saving_context(cpu))     \
-	{                                   \
-		context = cpu_getcontext(cpu);  \
-	}                                   \
-	else                                \
-	{                                   \
-		context = &state;               \
-	}                                   \
-
-
 void TMS34010_set_stack_base(int cpu, UINT8* stackbase_p, UINT32 stackoffs_p)
 {
 	stackbase[cpu] = stackbase_p;
@@ -1558,26 +1678,15 @@ void TMS34010_set_stack_base(int cpu, UINT8* stackbase_p, UINT32 stackoffs_p)
 
 int TMS34010_io_display_blanked(int cpu)
 {
-	TMS34010_Regs* context;
-	FINDCONTEXT(cpu, context);
+	TMS34010_Regs* context = FINDCONTEXT(cpu);
 	return (!(context->IOregs[REG_DPYCTL] & 0x8000));
 }
 
 
 int TMS34010_get_DPYSTRT(int cpu)
 {
-	TMS34010_Regs* context;
-	FINDCONTEXT(cpu, context);
+	TMS34010_Regs* context = FINDCONTEXT(cpu);
 	return context->IOregs[REG_DPYSTRT];
-}
-
-
-static void TMS34010_io_intcallback(int param)
-{
-	/* Reset timer for next frame */
-	double interval = TIME_IN_HZ (Machine->drv->frames_per_second);
-	TMS34010_timer[param] = timer_set(interval, param, TMS34010_io_intcallback);
-	cpu_generate_internal_interrupt(param, TMS34010_DI);
 }
 
 
@@ -1587,8 +1696,7 @@ static void TMS34010_io_intcallback(int param)
 
 void TMS34010_State_Save(int cpunum, void *f)
 {
-	TMS34010_Regs* context;
-	FINDCONTEXT(cpunum, context);
+	TMS34010_Regs* context = FINDCONTEXT(cpunum);
 	osd_fwrite(f,context,sizeof(state));
 	osd_fwrite(f,&tms34010_ICount,sizeof(tms34010_ICount));
 	osd_fwrite(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
@@ -1600,8 +1708,7 @@ void TMS34010_State_Load(int cpunum, void *f)
 	/* Don't reload the following */
 	unsigned short* shiftreg_save = state.shiftreg;
 
-	TMS34010_Regs* context;
-	FINDCONTEXT(cpunum, context);
+	TMS34010_Regs* context = FINDCONTEXT(cpunum);
 
 	osd_fread(f,context,sizeof(state));
 	osd_fread(f,&tms34010_ICount,sizeof(tms34010_ICount));
@@ -1623,7 +1730,7 @@ void TMS34010_State_Load(int cpunum, void *f)
 
 void tms34010_host_w(int cpunum, int reg, int data)
 {
-	TMS34010_Regs* context = cpu_getcontext(cpunum);
+	TMS34010_Regs* context = FINDCONTEXT(cpunum);
 	const struct cpu_interface *interface;
 	unsigned int addr;
 	int oldcpu;
@@ -1688,7 +1795,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 
 int tms34010_host_r(int cpunum, int reg)
 {
-	TMS34010_Regs* context = cpu_getcontext(cpunum);
+	TMS34010_Regs* context = FINDCONTEXT(cpunum);
 	const struct cpu_interface *interface;
 	unsigned int addr;
 	int oldcpu, result;

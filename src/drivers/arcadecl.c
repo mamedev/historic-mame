@@ -344,7 +344,7 @@ static struct MachineDriver machine_driver =
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
 	0,
 	arcadecl_vh_start,
 	arcadecl_vh_stop,
@@ -390,7 +390,7 @@ static void sparkz_rom_decode(void)
  *
  *************************************/
 
-ROM_START( arcadecl_rom )
+ROM_START( arcadecl )
 	ROM_REGION(0x100000)
 	ROM_LOAD_EVEN( "pgm0",  0x00000, 0x80000, 0xb5b93623 )
 	ROM_LOAD_ODD ( "prog1", 0x00000, 0x80000, 0xe7efef85 )
@@ -403,7 +403,7 @@ ROM_START( arcadecl_rom )
 ROM_END
 
 
-ROM_START( sparkz_rom )
+ROM_START( sparkz )
 	ROM_REGION(0x100000)
 	ROM_LOAD_EVEN( "sparkzpg.0", 0x00000, 0x80000, 0xa75c331c )
 	ROM_LOAD_ODD ( "sparkzpg.1", 0x00000, 0x80000, 0x1af1fc04 )
@@ -450,7 +450,7 @@ struct GameDriver arcadecl_driver =
 	"1992",
 	"Atari Games",
 	"Aaron Giles (MAME driver)",
-	0,
+	GAME_REQUIRES_16BIT,
 	&machine_driver,
 	arcadecl_init,
 
@@ -477,7 +477,7 @@ struct GameDriver sparkz_driver =
 	"1992",
 	"Atari Games",
 	"Aaron Giles (MAME driver)",
-	0,
+	GAME_REQUIRES_16BIT,
 	&machine_driver,
 	sparkz_init,
 

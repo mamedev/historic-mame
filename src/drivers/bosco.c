@@ -522,7 +522,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bosco_rom )
+ROM_START( bosco )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "bos1_1.bin",   0x0000, 0x1000, 0x0d9920e7 )
 	ROM_LOAD( "bos1_2.bin",   0x1000, 0x1000, 0x2d8f3ebe )
@@ -558,7 +558,7 @@ ROM_START( bosco_rom )
 	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( boscomd_rom )
+ROM_START( boscomd )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "2300.3n",      0x0000, 0x1000, 0xdb6128b0 )
 	ROM_LOAD( "2400.3m",      0x1000, 0x1000, 0x86907614 )
@@ -594,7 +594,7 @@ ROM_START( boscomd_rom )
 	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( boscomd2_rom )
+ROM_START( boscomd2 )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "3n",           0x0000, 0x1000, 0x441b501a )
 	ROM_LOAD( "3m",           0x1000, 0x1000, 0xa3c5c7ef )

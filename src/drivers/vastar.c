@@ -382,7 +382,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( vastar_rom )
+ROM_START( vastar )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "e_f4.rom",     0x0000, 0x1000, 0x45fa5075 )
 	ROM_LOAD( "e_k4.rom",     0x1000, 0x1000, 0x84531982 )
@@ -411,7 +411,7 @@ ROM_START( vastar_rom )
 	ROM_LOAD( "e_j2.rom",     0x1000, 0x1000, 0xe4535442 )
 ROM_END
 
-ROM_START( vastar2_rom )
+ROM_START( vastar2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "3.4f",         0x0000, 0x1000, 0x6741ff9c )
 	ROM_LOAD( "6.4k",         0x1000, 0x1000, 0x5027619b )

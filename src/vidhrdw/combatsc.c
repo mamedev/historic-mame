@@ -521,7 +521,8 @@ void cmbatscb_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		tilemap_set_scrolly( foreground1,0, combatsc_io_ram[0x020] );
 
 		tilemap_update( ALL_TILEMAPS );
-		palette_recalc();
+		if (palette_recalc())
+			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 		tilemap_render( ALL_TILEMAPS );
 
 		if( (combatsc_vflags & 0x20) == 0 )
@@ -586,7 +587,8 @@ void combatsc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		tilemap_set_scrolly( foreground1,0, combatsc_workram1[0x02] );
 
 		tilemap_update( ALL_TILEMAPS );
-		palette_recalc();
+		if (palette_recalc())
+			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 		tilemap_render( ALL_TILEMAPS );
 
 		if( (combatsc_vflags & 0x20) == 0 )

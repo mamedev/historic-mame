@@ -193,7 +193,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cheekyms_rom )
+ROM_START( cheekyms )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cm03.c5",       0x0000, 0x0800, 0x1ad0cb40 )
 	ROM_LOAD( "cm04.c6",       0x0800, 0x0800, 0x2238f607 )

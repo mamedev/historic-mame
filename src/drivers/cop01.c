@@ -403,7 +403,7 @@ static void cop01a_hisave(void)
 ***************************************************************************/
 
 
-ROM_START( cop01_rom )
+ROM_START( cop01 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cop01.2b",     0x0000, 0x4000, 0x5c2734ab )
 	ROM_LOAD( "cop02.4b",     0x4000, 0x4000, 0x9c7336ef )
@@ -434,7 +434,7 @@ ROM_START( cop01_rom )
 	ROM_LOAD( "cop16.18b",    0x4000, 0x4000, 0x56bf6946 )
 ROM_END
 
-ROM_START( cop01a_rom )
+ROM_START( cop01a )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cop01alt.001", 0x0000, 0x4000, 0xa13ee0d3 )
 	ROM_LOAD( "cop01alt.002", 0x4000, 0x4000, 0x20bad28e )

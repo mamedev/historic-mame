@@ -295,7 +295,6 @@ static unsigned char palette[] =
         0x80,0x80,0x80, /* LT GREY - grey cars */
         0xff,0xff,0xff, /* WHITE - track, text, white car */
 };
-
 static unsigned short colortable[] =
 {
         0x01, 0x00, /* Black playfield */
@@ -305,6 +304,11 @@ static unsigned short colortable[] =
         0x01, 0x02, /* Grey car 1 */
         0x01, 0x02  /* Grey car 2 */
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct MachineDriver machine_driver =
@@ -326,8 +330,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 }, /* it's actually 32x28, but we'll leave room for our gear indicator */
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -361,8 +365,8 @@ static struct MachineDriver sprint1_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 }, /* it's actually 32x28, but we'll leave room for our gear indicator */
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -388,7 +392,7 @@ static struct MachineDriver sprint1_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sprint1_rom )
+ROM_START( sprint1 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6290-01.b1",   0x2000, 0x0800, 0x41fc985e )
 	ROM_LOAD( "6291-01.c1",   0x2800, 0x0800, 0x07f7a920 )
@@ -404,7 +408,7 @@ ROM_START( sprint1_rom )
 	ROM_LOAD( "6399-01.j6",   0x0600, 0x0200, 0x63d685b2 )
 ROM_END
 
-ROM_START( sprint2_rom )
+ROM_START( sprint2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6290-01.b1",   0x2000, 0x0800, 0x41fc985e )
 	ROM_LOAD( "6291-01.c1",   0x2800, 0x0800, 0x07f7a920 )
@@ -491,9 +495,10 @@ struct GameDriver sprint1_driver =
 
 	sprint1_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	sprint1_hiload,sprint1_hisave
+
+	sprint1_hiload, sprint1_hisave
 };
 
 struct GameDriver sprint2_driver =
@@ -516,7 +521,8 @@ struct GameDriver sprint2_driver =
 
 	sprint2_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0,0
+
+	0, 0
 };

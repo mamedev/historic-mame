@@ -710,7 +710,7 @@ static struct MachineDriver cclimbr2_machine_driver =
 	}
 };
 
-ROM_START( terraf_rom )
+ROM_START( terraf )
 	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "terrafor.014", 0x00000, 0x10000, 0x8e5f557f )
 	ROM_LOAD_ODD(  "terrafor.011", 0x00000, 0x10000, 0x5320162a )
@@ -732,7 +732,7 @@ ROM_START( terraf_rom )
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
 ROM_END
 
-ROM_START( terrafu_rom )
+ROM_START( terrafu )
 	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "tf.8",         0x00000, 0x10000, 0xfea6dd64 )
 	ROM_LOAD_ODD(  "tf.3",         0x00000, 0x10000, 0x02f9d05a )
@@ -754,7 +754,7 @@ ROM_START( terrafu_rom )
 	ROM_LOAD( "terrafor.001", 0x00000, 0x10000, 0xeb6b4138 )
 ROM_END
 
-ROM_START( armedf_rom )
+ROM_START( armedf )
 	ROM_REGION(0x80000)	/* 68000 code */
 	ROM_LOAD_EVEN( "af_06.rom", 0x00000, 0x10000, 0xc5326603 )
 	ROM_LOAD_ODD(  "af_01.rom", 0x00000, 0x10000, 0x458e9542 )
@@ -776,7 +776,7 @@ ROM_START( armedf_rom )
 	ROM_LOAD( "af_10.rom", 0x00000, 0x10000, 0xc5eacb87 )
 ROM_END
 
-ROM_START( cclimbr2_rom )
+ROM_START( cclimbr2 )
 	ROM_REGION(0x80000)	/* 64K*8 for 68000 code */
 	ROM_LOAD_EVEN( "4.bin", 0x00000, 0x10000, 0x7922ea14 )
 	ROM_LOAD_ODD(  "1.bin", 0x00000, 0x10000, 0x2ac7ed67 )

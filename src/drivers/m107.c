@@ -6,7 +6,6 @@
 	Dream Soccer '94						(c) 1994 Data East Corporation
 
 
-	Dream Soccer has random crashes.. cpu bug?
 	Fire Barrel sprite indexes are wrong - encryption?  There are two
 	unused roms next to the sprite roms.
 	Graphics glitches in both games too.
@@ -46,9 +45,7 @@ static void bankswitch_w(int offset, int data)
 {
 	unsigned char *RAM = Machine->memory_region[0];
 
-	if (errorlog) fprintf(errorlog,"%04x: Bank %04x\n",cpu_get_pc(),data);
 	if (offset==1) return; /* Unused top byte */
-
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
 }
 
@@ -313,6 +310,14 @@ static struct GfxDecodeInfo firebarr_gfxdecodeinfo[] =
 
 /***************************************************************************/
 
+static int m107_interrupt(void)
+{
+	m107_vblank=0;
+	m107_vh_raster_partial_refresh(Machine->scrbitmap,0,248);
+
+	return m107_IRQ_0; /* VBL */
+}
+
 static int m107_raster_interrupt(void)
 {
 	static int last_line=0;
@@ -339,23 +344,17 @@ static int m107_raster_interrupt(void)
 	if (line==118)
 		return m107_IRQ_3;
 
-	/* Redraw screen, we do this *before* the VBL IRQ to ensure no sprite lag or flicker */
+	/* Redraw screen, then set vblank and trigger the VBL interrupt */
 	if (line==248) {
 		if (osd_skip_this_frame()==0)
 			m107_vh_raster_partial_refresh(Machine->scrbitmap,last_line,248);
 		last_line=0;
-
-		return 0;
-	}
-
-	/* Vblank interrupt */
-	if (line==249) {
 		m107_vblank=1;
 		return m107_IRQ_0;
 	}
 
 	/* End of vblank */
-	if (line==254)
+	if (line==255)
 		m107_vblank=0;
 
 	return 0;
@@ -367,7 +366,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			28000000,	/* 28MHz clock? 14 seems too slow */
+			28000000,	/* 28MHz clock */
 			0,
 			readmem,writemem,readport,writeport,
 			m107_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
@@ -409,10 +408,10 @@ static struct MachineDriver dsoccr94_machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-			28000000,	/* 28MHz clock? 14 seems too slow */
+			20000000,	/* Could be 28MHz clock? */
 			0,
 			readmem,writemem,readport,writeport,
-			m107_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
+			m107_interrupt,1
 		},
 #if 0
 		{
@@ -447,7 +446,7 @@ static struct MachineDriver dsoccr94_machine_driver =
 
 /***************************************************************************/
 
-ROM_START( firebarr_rom )
+ROM_START( firebarr )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "f4-h0",  0x000000, 0x40000, 0x2aa5676e )
 	ROM_LOAD_V20_ODD ( "f4-l0",  0x000000, 0x40000, 0x42f75d59 )
@@ -481,7 +480,7 @@ ROM_START( firebarr_rom )
 	ROM_LOAD_ODD ( "f4-drl", 0x000000, 0x20000, 0x08cb7533 ) /* Hmm?? */
 ROM_END
 
-ROM_START( dsoccr94_rom )
+ROM_START( dsoccr94 )
 	ROM_REGION(0x180000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN("ds_h0-c.rom",  0x000000, 0x040000, 0xd01d3fd7 )
 	ROM_LOAD_V20_ODD ("ds_l0-c.rom",  0x000000, 0x040000, 0x8af0afe2 )
@@ -572,7 +571,7 @@ struct GameDriver dsoccr94_driver  =
 	"1994",
 	"Irem (Data East Corporation license)",
 	"Bryan McPhail",
-	GAME_NO_SOUND | GAME_NOT_WORKING,
+	GAME_NO_SOUND,
 	&dsoccr94_machine_driver,
 	0,
 	dsoccr94_rom,

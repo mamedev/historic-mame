@@ -430,7 +430,7 @@ static struct GfxDecodeInfo jumpcoas_gfxdecodeinfo[] =
 static struct AY8910interface fastfred_ay8910_interface =
 {
 	2,             /* 2 chips */
-	CLOCK/6,       /* 3.072 Mhz */
+	CLOCK/12,       /* ? */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -442,7 +442,7 @@ static struct AY8910interface fastfred_ay8910_interface =
 static struct AY8910interface jumpcoas_ay8910_interface =
 {
 	1,             /* 1 chip */
-	CLOCK/6,       /* 3.072 Mhz */
+	CLOCK/12,       /* ? */
 	{ 50 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -543,7 +543,7 @@ static struct MachineDriver jumpcoas_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( fastfred_rom )
+ROM_START( fastfred )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "ffr.01",       0x0000, 0x1000, 0x15032c13 )
 	ROM_LOAD( "ffr.02",       0x1000, 0x1000, 0xf9642744 )
@@ -575,7 +575,7 @@ ROM_START( fastfred_rom )
 	ROM_LOAD( "ffr.10",       0x1000, 0x1000, 0x460ca837 )
 ROM_END
 
-ROM_START( flyboy_rom )
+ROM_START( flyboy )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "flyboy01.cpu", 0x0000, 0x1000, 0xb05aa900 )
 	ROM_LOAD( "flyboy02.cpu", 0x1000, 0x1000, 0x474867f5 )
@@ -607,7 +607,7 @@ ROM_START( flyboy_rom )
 	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
 ROM_END
 
-ROM_START( flyboyb_rom )
+ROM_START( flyboyb )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "rom1.cpu",     0x0000, 0x1000, 0xe9e1f527 )
 	ROM_LOAD( "rom2.cpu",     0x1000, 0x1000, 0x07fbe78c )
@@ -639,7 +639,7 @@ ROM_START( flyboyb_rom )
 	ROM_LOAD( "rom10.cpu",    0x1000, 0x1000, 0x7a28005b )
 ROM_END
 
-ROM_START( jumpcoas_rom )
+ROM_START( jumpcoas )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "jumpcoas.001", 0x0000, 0x2000, 0x0778c953 )
 	ROM_LOAD( "jumpcoas.002", 0x2000, 0x2000, 0x57f59ce1 )

@@ -428,7 +428,7 @@ static struct MachineDriver hyprolyb_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( trackfld_rom )
+ROM_START( trackfld )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "a01_e01.bin",  0x6000, 0x2000, 0x2882f6d4 )
 	ROM_LOAD( "a02_e02.bin",  0x8000, 0x2000, 0x1743b5ee )
@@ -457,7 +457,7 @@ ROM_START( trackfld_rom )
 	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
-ROM_START( trackflc_rom )
+ROM_START( trackflc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "f01.1a",       0x6000, 0x2000, 0x4e32b360 )
 	ROM_LOAD( "f02.2a",       0x8000, 0x2000, 0x4e7ebf07 )
@@ -486,7 +486,7 @@ ROM_START( trackflc_rom )
 	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
-ROM_START( hyprolym_rom )
+ROM_START( hyprolym )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x82257fb7 )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
@@ -515,7 +515,7 @@ ROM_START( hyprolym_rom )
 	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
-ROM_START( hyprolyb_rom )
+ROM_START( hyprolyb )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x9aee2d5a )
 	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )

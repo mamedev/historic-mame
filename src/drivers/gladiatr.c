@@ -639,7 +639,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gladiatr_rom )
+ROM_START( gladiatr )
 	ROM_REGION(0x1c000)
 	ROM_LOAD( "qb0-5",        0x00000, 	0x4000, 0x25b19efb )
 	ROM_LOAD( "qb0-4",        0x04000, 	0x2000, 0x347ec794 )
@@ -672,7 +672,7 @@ ROM_START( gladiatr_rom )
 	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
 ROM_END
 
-ROM_START( ogonsiro_rom )
+ROM_START( ogonsiro )
 	ROM_REGION(0x1c000)
 	ROM_LOAD( "qb0-5",        0x00000, 	0x4000, 0x25b19efb )
 	ROM_LOAD( "qb0-4",        0x04000, 	0x2000, 0x347ec794 )
@@ -705,7 +705,7 @@ ROM_START( ogonsiro_rom )
 	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
 ROM_END
 
-ROM_START( gcastle_rom )
+ROM_START( gcastle )
 	ROM_REGION(0x1c000)
 	ROM_LOAD( "gc0-5",        0x00000, 	0x4000, 0x00000000 )
 	ROM_LOAD( "gc0-4",        0x04000, 	0x2000, 0x00000000 )

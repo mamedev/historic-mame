@@ -284,7 +284,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pengo_rom )
+ROM_START( pengo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic8",          0x0000, 0x1000, 0xf37066a8 )
 	ROM_LOAD( "ic7",          0x1000, 0x1000, 0xbaf48143 )
@@ -308,7 +308,7 @@ ROM_START( pengo_rom )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pengo2_rom )
+ROM_START( pengo2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic8.2",        0x0000, 0x1000, 0xe4924b7b )
 	ROM_LOAD( "ic7.2",        0x1000, 0x1000, 0x72e7775d )
@@ -332,7 +332,7 @@ ROM_START( pengo2_rom )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pengo2u_rom )
+ROM_START( pengo2u )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pengo.u8",     0x0000, 0x1000, 0x3dfeb20e )
 	ROM_LOAD( "pengo.u7",     0x1000, 0x1000, 0x1db341bd )
@@ -356,7 +356,7 @@ ROM_START( pengo2u_rom )
 	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( penta_rom )
+ROM_START( penta )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "008_pn01.bin", 0x0000, 0x1000, 0x22f328df )
 	ROM_LOAD( "007_pn05.bin", 0x1000, 0x1000, 0x15bbc7d3 )

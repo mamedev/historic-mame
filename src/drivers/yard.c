@@ -358,7 +358,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( yard_rom )
+ROM_START( yard )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "yf-a-3p",      0x0000, 0x2000, 0x4586114f )
 	ROM_LOAD( "yf-a-3n",      0x2000, 0x2000, 0x947fa760 )
@@ -390,7 +390,7 @@ ROM_START( yard_rom )
 	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, 0x2490d4c3 )
 ROM_END
 
-ROM_START( vsyard_rom )
+ROM_START( vsyard )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a-3p",         0x0000, 0x2000, 0x1edac08f )
 	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )
@@ -422,7 +422,7 @@ ROM_START( vsyard_rom )
 	ROM_LOAD( "yf-s-1a",      0xe000, 0x2000, 0x2490d4c3 )
 ROM_END
 
-ROM_START( vsyard2_rom )
+ROM_START( vsyard2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "vyf-a-3n",     0x0000, 0x2000, 0x418e01fc )
 	ROM_LOAD( "vyf-a-3m",     0x2000, 0x2000, 0x3b9330f8 )

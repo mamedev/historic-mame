@@ -34,7 +34,6 @@ void mcr_scroll_value_w(int offset, int value);
 void mcr_unknown_w(int offset, int value);
 
 int mcr_port_04_dispatch_r(int offset);
-int mcr_sound_status_r(int offset);
 
 void mcr68_6840_upper_w(int offset, int data);
 void mcr68_6840_lower_w(int offset, int data);
@@ -93,9 +92,9 @@ void mcr_hisave(void);
 /************ Generic character and sprite definition ***************/
 
 /*
- * 	Note that characters are half the 
- *	resolution of sprites in each 
- *	direction, so we generate them at 
+ * 	Note that characters are half the
+ *	resolution of sprites in each
+ *	direction, so we generate them at
  *	double size
  */
 

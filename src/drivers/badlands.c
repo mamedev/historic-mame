@@ -296,7 +296,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( badlands_rom )
+ROM_START( badlands )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "1008.20f",  0x00000, 0x10000, 0xa3da5774 )
 	ROM_LOAD_ODD ( "1006.27f",  0x00000, 0x10000, 0xaa03b4f3 )

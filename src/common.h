@@ -35,7 +35,7 @@ struct RomModule
 #define ROMFLAG_NIBBLE        0x10000000           /* Nibble-wide ROM image */
 
 /* start of table */
-#define ROM_START(name) static struct RomModule name[] = {
+#define ROM_START(name) static struct RomModule name##_rom[] = {
 /* start of memory region */
 #define ROM_REGION(length) { 0, length, 0, 0 },
 /* start of disposable memory region */

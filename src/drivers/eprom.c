@@ -481,7 +481,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( eprom_rom )
+ROM_START( eprom )
 	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "136069.50a",   0x00000, 0x10000, 0x08888dec )
 	ROM_LOAD_ODD ( "136069.40a",   0x00000, 0x10000, 0x29cb1e97 )
@@ -521,7 +521,7 @@ ROM_START( eprom_rom )
 ROM_END
 
 
-ROM_START( eprom2_rom )
+ROM_START( eprom2 )
 	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "1025.50a",   0x00000, 0x10000, 0xb0c9a476 )
 	ROM_LOAD_ODD ( "1024.40a",   0x00000, 0x10000, 0x4cc2c50c )

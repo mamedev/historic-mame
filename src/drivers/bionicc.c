@@ -350,7 +350,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_bionicc[] =
 static struct YM2151interface ym2151_interface =
 {
 	1,                      /* 1 chip */
-	3579580,                /* 3.579580 MHz ? */
+	3579545,                /* 3.579545 MHz ? */
 	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ 0 }
 };
@@ -402,7 +402,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( bionicc_rom )
+ROM_START( bionicc )
 	ROM_REGION(0x40000)      /* 68000 code */
 	ROM_LOAD_EVEN( "tsu_02b.rom",  0x00000, 0x10000, 0xcf965a0a ) /* 68000 code */
 	ROM_LOAD_ODD ( "tsu_04b.rom",  0x00000, 0x10000, 0xc9884bfb ) /* 68000 code */
@@ -434,7 +434,7 @@ ROM_START( bionicc_rom )
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 ROM_END
 
-ROM_START( bionicc2_rom )
+ROM_START( bionicc2 )
 	ROM_REGION(0x40000)      /* 68000 code */
 	ROM_LOAD_EVEN( "02",      0x00000, 0x10000, 0xf2528f08 ) /* 68000 code */
 	ROM_LOAD_ODD ( "04",      0x00000, 0x10000, 0x38b1c7e4 ) /* 68000 code */
@@ -466,7 +466,7 @@ ROM_START( bionicc2_rom )
 	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 ROM_END
 
-ROM_START( topsecrt_rom )
+ROM_START( topsecrt )
 	ROM_REGION(0x40000)      /* 68000 code */
 	ROM_LOAD_EVEN( "ts_02.rom",  0x00000, 0x10000, 0xb2fe1ddb ) /* 68000 code */
 	ROM_LOAD_ODD ( "ts_04.rom",  0x00000, 0x10000, 0x427a003d ) /* 68000 code */

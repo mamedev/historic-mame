@@ -562,7 +562,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gaiden_rom )
+ROM_START( gaiden )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "gaiden.1",     0x00000, 0x20000, 0xe037ff7c )
 	ROM_LOAD_ODD ( "gaiden.2",     0x00000, 0x20000, 0x454f7314 )
@@ -593,7 +593,7 @@ ROM_START( gaiden_rom )
 	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
 ROM_END
 
-ROM_START( shadoww_rom )
+ROM_START( shadoww )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "shadoww.1",    0x00000, 0x20000, 0xfefba387 )
 	ROM_LOAD_ODD ( "shadoww.2",    0x00000, 0x20000, 0x9b9d6b18 )
@@ -626,7 +626,7 @@ ROM_START( shadoww_rom )
 	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
 ROM_END
 
-ROM_START( tknight_rom )
+ROM_START( tknight )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "tkni1.bin",    0x00000, 0x20000, 0x9121daa8 )
 	ROM_LOAD_ODD ( "tkni2.bin",    0x00000, 0x20000, 0x6669cd87 )
@@ -645,7 +645,7 @@ ROM_START( tknight_rom )
 	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
 ROM_END
 
-ROM_START( wildfang_rom )
+ROM_START( wildfang )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "1.3st",    0x00000, 0x20000, 0xab876c9b )
 	ROM_LOAD_ODD ( "2.5st",    0x00000, 0x20000, 0x1dc74b3b )

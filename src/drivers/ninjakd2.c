@@ -620,7 +620,7 @@ static struct MachineDriver ninjak2a_machine_driver =
 
 
 
-ROM_START( ninjakd2_rom )
+ROM_START( ninjakd2 )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "nk2_01.rom",   0x00000, 0x8000, 0x3cdbb906 )
 	ROM_LOAD( "nk2_02.rom",   0x10000, 0x8000, 0xb5ce9a1a )
@@ -657,7 +657,7 @@ ROM_START( ninjakd2_rom )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
-ROM_START( ninjak2a_rom )
+ROM_START( ninjak2a )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, 0xe6adca65 )
 	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, 0xd9284bd1 )
@@ -694,7 +694,7 @@ ROM_START( ninjak2a_rom )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
-ROM_START( ninjak2b_rom )
+ROM_START( ninjak2b )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
 	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
@@ -731,7 +731,7 @@ ROM_START( ninjak2b_rom )
 	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
-ROM_START( rdaction_rom )
+ROM_START( rdaction )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "1.3u",  	  0x00000, 0x8000, 0x5c475611 )
 	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )

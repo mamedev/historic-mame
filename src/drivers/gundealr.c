@@ -462,7 +462,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gundealr_rom )
+ROM_START( gundealr )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
 	ROM_LOAD( "gundealr.1",   0x00000, 0x10000, 0x5797e830 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
@@ -472,7 +472,7 @@ ROM_START( gundealr_rom )
 	ROM_LOAD( "gundealr.2",   0x10000, 0x20000, 0x7874ec41 )
 ROM_END
 
-ROM_START( gundeala_rom )
+ROM_START( gundeala )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
 	ROM_LOAD( "gundeala.1",   0x00000, 0x10000, 0xd87e24f1 )
 	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
@@ -482,7 +482,7 @@ ROM_START( gundeala_rom )
 	ROM_LOAD( "gundeala.2",   0x10000, 0x20000, 0x4b5fb53c )
 ROM_END
 
-ROM_START( yamyam_rom )
+ROM_START( yamyam )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
@@ -492,7 +492,7 @@ ROM_START( yamyam_rom )
 	ROM_LOAD( "b1.a16",       0x10000, 0x20000, 0xb122828d )
 ROM_END
 
-ROM_START( wiseguy_rom )
+ROM_START( wiseguy )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
 	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
 	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */

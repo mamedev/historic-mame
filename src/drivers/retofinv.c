@@ -272,10 +272,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x03, "30k, 80k & every 80k" )
 	PORT_DIPSETTING(    0x02, "30k, 80k" )
 	PORT_DIPSETTING(    0x01, "30k" )
-	PORT_DIPSETTING(    0x03, "30k, 80k & every 80k" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
@@ -295,8 +295,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
-        PORT_START      /* DSW3 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_START      /* DSW3 modified by Shingo Suzuki 1999/11/03 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Push Start to Skip Stage", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -308,9 +308,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Coin Per Play Display" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
@@ -405,7 +405,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,		/* 2 chips */
-	{ 18432000/8, 18432000/8 },
+	{ 3072000, 3072000 },	/* ??? */
 	{ 80, 80 }
 };
 
@@ -467,7 +467,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( retofinv_rom )
+ROM_START( retofinv )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic70.rom", 0x0000, 0x2000, 0xeae7459d )
 	ROM_LOAD( "ic71.rom", 0x2000, 0x2000, 0x72895e37 )
@@ -496,7 +496,7 @@ ROM_START( retofinv_rom )
 	ROM_LOAD( "82s191n",   0x0300, 0x0800, 0x93c891e3 )	/* lookup table */
 ROM_END
 
-ROM_START( retofin1_rom )
+ROM_START( retofin1 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "roi.02",  0x0000, 0x2000, 0xd98fd462 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
@@ -525,7 +525,7 @@ ROM_START( retofin1_rom )
 	ROM_LOAD( "82s191n",   0x0300, 0x0800, 0x93c891e3 )	/* lookup table */
 ROM_END
 
-ROM_START( retofin2_rom )
+ROM_START( retofin2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ri-c.1e", 0x0000, 0x2000, 0xe3c31260 )
 	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )

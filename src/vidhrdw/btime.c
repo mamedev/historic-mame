@@ -52,7 +52,6 @@ void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 	/* Burger Time doesn't have a color PROM, but Hamburge has. */
 	/* This function is also used by Eggs. */
-	if (color_prom == 0) return;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
@@ -583,6 +582,9 @@ static void decode_modified(unsigned char *sprite_ram, int interleave)
 
 void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	if (bnj_scroll1 & 0x10)
 	{
 		int i, start;
@@ -601,7 +603,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			start = (++start & 0x03);
 		}
 
-        drawbackground(bitmap, btime_tilemap);
+		drawbackground(bitmap, btime_tilemap);
 
 		drawchars(bitmap, 0, 1);
 	}
@@ -619,6 +621,9 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	drawchars(bitmap, 0, 0);
 
 	/* copy the temporary bitmap to the screen */
@@ -630,6 +635,9 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	drawchars(bitmap, 0, 0);
 
 	/* copy the temporary bitmap to the screen */
@@ -641,6 +649,9 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	if (bnj_scroll1 & 0x04)
 	{
         drawbackground(bitmap, zoar_scrollram);
@@ -663,6 +674,12 @@ void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+	{
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,bnj_backgroundram_size);
+	}
+
 	/*
 	 *  For each character in the background RAM, check if it has been
 	 *  modified since last time and update it accordingly.
@@ -725,6 +742,9 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	/*
 	 *  For each character in the background RAM, check if it has been
 	 *  modified since last time and update it accordingly.
@@ -758,6 +778,9 @@ void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void disco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	decode_modified(spriteram, 1);
 
 	drawchars(bitmap, btime_palette, 0);
@@ -776,6 +799,9 @@ void disco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	decode_modified(videoram, 0x20);
 
 	drawchars(bitmap, 0, 0);

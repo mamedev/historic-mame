@@ -182,7 +182,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( hexa_rom )
+ROM_START( hexa )
 	ROM_REGION(0x18000)		/* 64k for code + 32k for banked ROM */
 	ROM_LOAD( "hexa.20",      0x00000, 0x8000, 0x98b00586 )
 	ROM_LOAD( "hexa.21",      0x10000, 0x8000, 0x3d5d006c )

@@ -207,6 +207,11 @@ static unsigned short colortable[ARTWORK_COLORS] =
 	0, 1,  /* Draw */
 };
 
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct DACinterface dac_interface =
@@ -236,11 +241,9 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-//	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	ARTWORK_COLORS,ARTWORK_COLORS,		/* Declare extra colors for the overlay */
-	0,
+	init_palette,
 
-//	VIDEO_TYPE_RASTER,
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	sbrkout_vh_start,
@@ -267,7 +270,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sbrkout_rom )
+ROM_START( sbrkout )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "033453.c1",    0x2800, 0x0800, 0xa35d00e3 )
 	ROM_LOAD( "033454.d1",    0x3000, 0x0800, 0xd42ea79a )
@@ -346,7 +349,8 @@ struct GameDriver sbrkout_driver =
 
 	sbrkout_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	hiload,hisave
+
+	hiload, hisave
 };

@@ -303,7 +303,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( circusc_rom )
+ROM_START( circusc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "s05",          0x6000, 0x2000, 0x48feafcf )
 	ROM_LOAD( "q04",          0x8000, 0x2000, 0xc283b887 )
@@ -331,7 +331,7 @@ ROM_START( circusc_rom )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
-ROM_START( circusc2_rom )
+ROM_START( circusc2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "h03_r05.bin",  0x6000, 0x2000, 0xed52c60f )
 	ROM_LOAD( "h04_n04.bin",  0x8000, 0x2000, 0xfcc99e33 )
@@ -359,7 +359,7 @@ ROM_START( circusc2_rom )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
-ROM_START( circuscc_rom )
+ROM_START( circuscc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cc_u05.h3",    0x6000, 0x2000, 0x964c035a )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )
@@ -387,7 +387,7 @@ ROM_START( circuscc_rom )
 	ROM_LOAD( "cd07_l15.bin", 0x2000, 0x2000, 0xa6ad30e1 )
 ROM_END
 
-ROM_START( circusce_rom )
+ROM_START( circusce )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "p05",          0x6000, 0x2000, 0x7ca74494 )
 	ROM_LOAD( "p04",          0x8000, 0x2000, 0xdd0c0ee7 )

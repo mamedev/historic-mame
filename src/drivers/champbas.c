@@ -271,7 +271,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( champbas_rom )
+ROM_START( champbas )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "champbb.1",    0x0000, 0x2000, 0x218de21e )
 	ROM_LOAD( "champbb.2",    0x2000, 0x2000, 0x5ddd872e )
@@ -291,7 +291,7 @@ ROM_START( champbas_rom )
 	ROM_LOAD( "champbb.8",    0x4000, 0x2000, 0x3c911786 )
 ROM_END
 
-ROM_START( champbb2_rom )
+ROM_START( champbb2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr5932",      0x0000, 0x2000, 0x528e3c78 )
 	ROM_LOAD( "epr5929",      0x2000, 0x2000, 0x17b6057e )

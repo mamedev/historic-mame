@@ -325,7 +325,8 @@ void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly( bg_tilemap,0, *contra_bg_horizontal_scroll );
 
 	tilemap_update( ALL_TILEMAPS );
-	//palette_recalc();
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	tilemap_render( ALL_TILEMAPS );
 
 	tilemap_draw( bitmap, bg_tilemap, 0 );

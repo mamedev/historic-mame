@@ -233,11 +233,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
+#if 0
 unsigned char irobot_color_prom[] =
 {
 	0x00, 0x00, 0x00, 0x00, 0xF3, 0x33, 0x0F, 0xC3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0xF3, 0x33, 0x0F, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+#endif
 
 static struct POKEYinterface pokey_interface =
 {
@@ -306,7 +308,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( irobot_rom )
+ROM_START( irobot )
     ROM_REGION(0x20000) /* 64k for code + 48K Banked ROM*/
     ROM_LOAD( "136029.208",   0x6000, 0x2000, 0xb4d0be59 )
     ROM_LOAD( "136029.209",   0x8000, 0x4000, 0xf6be3cd0 )
@@ -384,7 +386,7 @@ struct GameDriver irobot_driver =
 
     irobot_input_ports,
 
-    irobot_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	novram_load, novram_save /* Highscore load, save */
 };

@@ -332,7 +332,7 @@ INPUT_PORTS_START( killcom_input_ports )
 
 	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-	PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+	PORT_DIPNAME(0x03, 0x03, "Coinage P1/P2" )
 	PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
 	PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
 	PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
@@ -402,7 +402,7 @@ INPUT_PORTS_START( megatack_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* unused */
 
 	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
-	PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+	PORT_DIPNAME(0x03, 0x03, "Coinage P1/P2" )
 	PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
 	PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
 	PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
@@ -488,7 +488,7 @@ PORT_START      /* IN2 - from "TEST NO.8 - status locator - player no.1" */
 
 	PORT_START      /* IN4 - from "TEST NO.6 - dip switch A" */
 
-	PORT_DIPNAME(0x03, 0x03, "Coinage 1p/2p" )
+	PORT_DIPNAME(0x03, 0x03, "Coinage P1/P2" )
 	PORT_DIPSETTING(   0x03, "1 Credit/2 Credits" )
 	PORT_DIPSETTING(   0x02, "2 Credits/3 Credits" )
 	PORT_DIPSETTING(   0x01, "2 Credits/4 Credits" )
@@ -537,12 +537,10 @@ static unsigned char palette[] =
 	0xff,0x20,0x20, /* 6 RED     */
 	0x00,0x00,0x00, /* 7 BLACK   */
 };
-
-
-static unsigned short colortable[] =
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	0, 0,	0, 1,	0, 2,	0, 3,	0, 4,	0, 5,	0, 6,	0, 7,
-};
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 static struct AY8910interface ay8910_interface =
@@ -585,8 +583,8 @@ static struct MachineDriver machine_driver =
     32*8, 32*8,					/* screen_width, height */
     { 0, 32*8-1, 0, 32*8-1 },		/* visible_area */
     0,
-    sizeof(palette)/3, sizeof(colortable)/sizeof(short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER, 0,
 	gameplan_vh_start,
@@ -630,7 +628,7 @@ F800 E1 top 2k
 there are three 6522 VIAs, at 2000, 2800, and 3000
 */
 
-ROM_START( kaos_rom )
+ROM_START( kaos )
     ROM_REGION(0x10000)
     ROM_LOAD( "kaosab.g2",    0x9000, 0x0800, 0xb23d858f )
     ROM_CONTINUE(		   0xd000, 0x0800			  )
@@ -654,7 +652,7 @@ ROM_START( kaos_rom )
 ROM_END
 
 
-ROM_START( killcom_rom )
+ROM_START( killcom )
     ROM_REGION(0x10000)
     ROM_LOAD( "killcom.e2",   0xc000, 0x800, 0xa01cbb9a )
     ROM_LOAD( "killcom.f2",   0xc800, 0x800, 0xbb3b4a93 )
@@ -673,7 +671,7 @@ ROM_START( killcom_rom )
 	ROM_LOAD( "killsnd.e1",   0xf800, 0x800, 0x77d4890d )
 ROM_END
 
-ROM_START( megatack_rom )
+ROM_START( megatack )
     ROM_REGION(0x10000)
     ROM_LOAD( "megattac.e2",  0xc000, 0x800, 0x33fa5104 )
     ROM_LOAD( "megattac.f2",  0xc800, 0x800, 0xaf5e96b1 )
@@ -692,7 +690,7 @@ ROM_START( megatack_rom )
 	ROM_LOAD( "megatsnd.e1",  0xf800, 0x800, 0x0c186bdb )
 ROM_END
 
-ROM_START( challeng_rom )
+ROM_START( challeng )
     ROM_REGION(0x10000)
     ROM_LOAD( "chall.6",      0xa000, 0x1000, 0xb30fe7f5 )
     ROM_LOAD( "chall.5",      0xb000, 0x1000, 0x34c6a88e )
@@ -868,7 +866,7 @@ struct GameDriver kaos_driver =
 
 	kaos_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	kaos_hiload, kaos_hisave
@@ -893,7 +891,7 @@ struct GameDriver killcom_driver =
 
 	killcom_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
     killcom_hiload, killcom_hisave
@@ -918,7 +916,7 @@ struct GameDriver megatack_driver =
 
 	megatack_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
     megatack_hiload, megatack_hisave
@@ -942,7 +940,7 @@ struct GameDriver challeng_driver =
 
     challeng_input_ports,
 
-    0, palette, colortable,
+    0, 0, 0,
     ORIENTATION_DEFAULT,
 
     challeng_hiload, challeng_hisave

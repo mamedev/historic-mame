@@ -285,7 +285,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( shootout_rom )
+ROM_START( shootout )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "cu00.b1",        0x08000, 0x8000, 0x090edeb6 ) /* opcodes encrypted */
 	/* banked at 0x4000-0x8000 */

@@ -2598,7 +2598,7 @@ static void rescraid_init(void) { expand_roms(EXPAND_NONE); balsente_shooter = 0
  *
  *************************************/
 
-ROM_START( sentetst_rom )
+ROM_START( sentetst )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "sdiagef.bin",  0x2e000, 0x2000, 0x2a39fc53 )
 
@@ -2610,7 +2610,7 @@ ROM_START( sentetst_rom )
 ROM_END
 
 
-ROM_START( cshift_rom )
+ROM_START( cshift )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "cs-ab0.bin", 0x10000, 0x2000, 0xd2069e75 )
 	ROM_LOAD( "cs-ab1.bin", 0x12000, 0x2000, 0x198f25a8 )
@@ -2633,7 +2633,7 @@ ROM_START( cshift_rom )
 ROM_END
 
 
-ROM_START( gghost_rom )
+ROM_START( gghost )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ggh-ab0.bin", 0x10000, 0x2000, 0xed0fdeac )
 	ROM_LOAD( "ggh-ab1.bin", 0x12000, 0x2000, 0x5bfbae58 )
@@ -2657,7 +2657,7 @@ ROM_START( gghost_rom )
 ROM_END
 
 
-ROM_START( hattrick_rom )
+ROM_START( hattrick )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, 0xf25c1b99 )
 	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, 0xc1df3d1f )
@@ -2674,7 +2674,7 @@ ROM_START( hattrick_rom )
 ROM_END
 
 
-ROM_START( otwalls_rom )
+ROM_START( otwalls )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "otw-ab0.bin", 0x10000, 0x2000, 0x474441c7 )
 	ROM_LOAD( "otw-ab1.bin", 0x12000, 0x2000, 0x2e9e9411 )
@@ -2698,7 +2698,7 @@ ROM_START( otwalls_rom )
 ROM_END
 
 
-ROM_START( snakepit_rom )
+ROM_START( snakepit )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "spit-ab0.bin", 0x10000, 0x2000, 0x5aa86081 )
 	ROM_LOAD( "spit-ab1.bin", 0x12000, 0x2000, 0x588228b8 )
@@ -2722,7 +2722,7 @@ ROM_START( snakepit_rom )
 ROM_END
 
 
-ROM_START( snakjack_rom )
+ROM_START( snakjack )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "rom-ab0.u9a", 0x10000, 0x2000, 0xda2dd119 )
 	ROM_LOAD( "rom-ab1.u8a", 0x12000, 0x2000, 0x657ddf26 )
@@ -2746,7 +2746,7 @@ ROM_START( snakjack_rom )
 ROM_END
 
 
-ROM_START( stocker_rom )
+ROM_START( stocker )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "stkr-ab0.bin", 0x10000, 0x2000, 0x784a00ad )
 	ROM_LOAD( "stkr-ab1.bin", 0x12000, 0x2000, 0xcdae01dc )
@@ -2766,7 +2766,7 @@ ROM_START( stocker_rom )
 ROM_END
 
 
-ROM_START( triviag1_rom )
+ROM_START( triviag1 )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "tpg1-ab0.bin", 0x10000, 0x2000, 0x79fd3ac3 )
 	ROM_LOAD( "tpg1-ab1.bin", 0x12000, 0x2000, 0x0ff677e9 )
@@ -2790,7 +2790,7 @@ ROM_START( triviag1_rom )
 ROM_END
 
 
-ROM_START( triviag2_rom )
+ROM_START( triviag2 )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x4fca20c5 )
 	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x6cf2ddeb )
@@ -2809,7 +2809,7 @@ ROM_START( triviag2_rom )
 ROM_END
 
 
-ROM_START( triviasp_rom )
+ROM_START( triviasp )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "allsport.8a", 0x10000, 0x4000, 0x54b7ff31 )
 	ROM_LOAD( "allsport.7a", 0x14000, 0x4000, 0x59fae9d2 )
@@ -2828,7 +2828,7 @@ ROM_START( triviasp_rom )
 ROM_END
 
 
-ROM_START( triviayp_rom )
+ROM_START( triviayp )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x97d35a85 )
 	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0x2ff67c70 )
@@ -2847,7 +2847,7 @@ ROM_START( triviayp_rom )
 ROM_END
 
 
-ROM_START( triviabb_rom )
+ROM_START( triviabb )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.bin",  0x10000, 0x4000, 0x1b7c439d )
 	ROM_LOAD( "ab23.bin",  0x14000, 0x4000, 0xe4f1e704 )
@@ -2866,7 +2866,7 @@ ROM_START( triviabb_rom )
 ROM_END
 
 
-ROM_START( gimeabrk_rom )
+ROM_START( gimeabrk )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x18cc53db )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x6bd4190a )
@@ -2882,7 +2882,7 @@ ROM_START( gimeabrk_rom )
 ROM_END
 
 
-ROM_START( minigolf_rom )
+ROM_START( minigolf )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x348f827f )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x19a6ff47 )
@@ -2901,7 +2901,7 @@ ROM_START( minigolf_rom )
 ROM_END
 
 
-ROM_START( minigol2_rom )
+ROM_START( minigol2 )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "4a-ver2",  0x10000, 0x10000, 0x97d50493 )
 	ROM_LOAD( "1a-ver2",  0x20000, 0x10000, 0x60b6cd58 )
@@ -2915,7 +2915,7 @@ ROM_START( minigol2_rom )
 ROM_END
 
 
-ROM_START( toggle_rom )
+ROM_START( toggle )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "tgle-ab0.bin", 0x10000, 0x2000, 0x8c7b7fad )
 	ROM_LOAD( "tgle-ab1.bin", 0x12000, 0x2000, 0x771e5434 )
@@ -2935,7 +2935,7 @@ ROM_START( toggle_rom )
 ROM_END
 
 
-ROM_START( nametune_rom )
+ROM_START( nametune )
 	ROM_REGION(0x70000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "nttab01.bin",  0x10000, 0x4000, 0xf99054f1 )
 	ROM_CONTINUE(             0x40000, 0x4000 )
@@ -2962,7 +2962,7 @@ ROM_START( nametune_rom )
 ROM_END
 
 
-ROM_START( nstocker_rom )
+ROM_START( nstocker )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0xa635f973 )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x223acbb2 )
@@ -2984,7 +2984,7 @@ ROM_START( nstocker_rom )
 ROM_END
 
 
-ROM_START( sfootbal_rom )
+ROM_START( sfootbal )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "sfbab01.bin",  0x10000, 0x4000, 0x2a69803f )
 	ROM_LOAD( "sfbab23.bin",  0x14000, 0x4000, 0x89f157c2 )
@@ -3002,7 +3002,7 @@ ROM_START( sfootbal_rom )
 ROM_END
 
 
-ROM_START( spiker_rom )
+ROM_START( spiker )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab01.u8a",  0x10000, 0x4000, 0x2d53d023 )
 	ROM_LOAD( "ab23.u7a",  0x14000, 0x4000, 0x3be87edf )
@@ -3018,7 +3018,7 @@ ROM_START( spiker_rom )
 ROM_END
 
 
-ROM_START( rescraid_rom )
+ROM_START( rescraid )
 	ROM_REGION(0x40000)     /* 64k for code for the first CPU, plus 128k of banked ROMs */
 	ROM_LOAD( "ab1.a10",   0x10000, 0x8000, 0x33a76b47 )
 	ROM_LOAD( "ab12.a12",  0x18000, 0x8000, 0x7c7a9f12 )

@@ -18,6 +18,127 @@ extern int exidy_collision_counter;
 extern unsigned char targ_spec_flag;
 
 
+/* also in drivers/exidy.c */
+#define PALETTE_LEN 8
+#define COLORTABLE_LEN 20
+
+static unsigned char *palette;
+static unsigned short *colortable;
+
+/* Arbitrary starting colors, modified by the game */
+
+static unsigned char sidetrac_palette[3*PALETTE_LEN] =
+{
+	0x00,0x00,0x00,   /* BACKGND */
+	0x00,0x00,0x00,   /* CSPACE0 */
+	0x00,0xff,0x00,   /* CSPACE1 */
+	0xff,0xff,0xff,   /* CSPACE2 */
+	0xff,0xff,0xff,   /* CSPACE3 */
+	0xff,0x00,0xff,   /* 5LINES (unused?) */
+	0xff,0xff,0x00,   /* 5MO2VID  */
+	0xff,0xff,0xff    /* 5MO1VID  */
+};
+
+static unsigned short sidetrac_colortable[COLORTABLE_LEN] =
+{
+	/* one-bit characters */
+	0, 4,  /* chars 0x00-0x3F */
+	0, 3,  /* chars 0x40-0x7F */
+	0, 2,  /* chars 0x80-0xBF */
+	0, 1,  /* chars 0xC0-0xFF */
+
+	/* Motion Object 1 */
+	0, 7,
+
+	/* Motion Object 2 */
+	0, 6,
+
+};
+
+static unsigned char venture_palette[3*PALETTE_LEN] =
+{
+	0x00,0x00,0x00,   /* BACKGND */
+	0x00,0x00,0xff,   /* CSPACE0 */
+	0x00,0xff,0x00,   /* CSPACE1 */
+	0x00,0xff,0xff,   /* CSPACE2 */
+	0xff,0x00,0x00,   /* CSPACE3 */
+	0xff,0x00,0xff,   /* 5LINES (unused?) */
+	0xff,0xff,0x00,   /* 5MO2VID */
+	0xff,0xff,0xff    /* 5MO1VID */
+};
+
+/* Targ doesn't have a color PROM; colors are changed by the means of 8x3 */
+/* dip switches on the board. Here are the colors they map to. */
+static unsigned char targ_palette[3*PALETTE_LEN] =
+{
+					/* color   use                            */
+	0x00,0x00,0xFF, /* blue    background             */
+	0x00,0xFF,0xFF, /* cyan    characters 192-255 */
+	0xFF,0xFF,0x00, /* yellow  characters 128-191 */
+	0xFF,0xFF,0xFF, /* white   characters  64-127 */
+	0xFF,0x00,0x00, /* red     characters   0- 63 */
+	0x00,0xFF,0xFF, /* cyan    not used               */
+	0xFF,0xFF,0xFF, /* white   bullet sprite          */
+	0x00,0xFF,0x00, /* green   wummel sprite          */
+};
+
+/* Spectar has different colors */
+static unsigned char spectar_palette[3*PALETTE_LEN] =
+{
+					/* color   use                            */
+	0x00,0x00,0xFF, /* blue    background             */
+	0x00,0xFF,0x00, /* green   characters 192-255 */
+	0x00,0xFF,0x00, /* green   characters 128-191 */
+	0xFF,0xFF,0xFF, /* white   characters  64-127 */
+	0xFF,0x00,0x00, /* red     characters   0- 63 */
+	0x00,0xFF,0x00, /* green   not used               */
+	0xFF,0xFF,0x00, /* yellow  bullet sprite          */
+	0x00,0xFF,0x00, /* green   wummel sprite          */
+};
+
+
+static unsigned short venture_colortable[COLORTABLE_LEN] =
+{
+	/* one-bit characters */
+	0, 4,  /* chars 0x00-0x3F */
+	0, 3,  /* chars 0x40-0x7F */
+	0, 2,  /* chars 0x80-0xBF */
+	0, 1,  /* chars 0xC0-0xFF */
+
+	/* Motion Object 1 */
+	0, 7,
+
+	/* Motion Object 2 */
+	0, 6,
+
+};
+
+static unsigned short pepper2_colortable[COLORTABLE_LEN] =
+{
+	/* two-bit characters */
+	/* (Because this is 2-bit color, the colorspace is only divided
+		in half instead of in quarters.  That's why 00-3F = 40-7F and
+		80-BF = C0-FF) */
+	0, 0, 4, 3,  /* chars 0x00-0x3F */
+	0, 0, 4, 3,  /* chars 0x40-0x7F */
+	0, 0, 2, 1,  /* chars 0x80-0xBF */
+	0, 0, 2, 1,  /* chars 0xC0-0xFF */
+
+	/* Motion Object 1 */
+	0, 7,
+
+	/* Motion Object 2 */
+	0, 6,
+
+};
+
+void exidy_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,3*PALETTE_LEN);
+	memcpy(game_colortable,colortable,COLORTABLE_LEN * sizeof(unsigned short));
+}
+
+
 unsigned char exidy_collision_mask = 0x00;
 
 void fax_bank_select_w(int offset,int data)
@@ -51,10 +172,22 @@ int exidy_input_port_2_r(int offset)
 	return value;
 }
 
+void sidetrac_driver_init(void) {
+	*exidy_sprite_enable = 0x10;
+	exidy_collision_mask = 0x00;
+	targ_spec_flag = 1;
+
+	palette = sidetrac_palette;
+	colortable = sidetrac_colortable;
+}
+
 void targ_driver_init(void) {
 	*exidy_sprite_enable = 0x10;
 	exidy_collision_mask = 0x00;
 	targ_spec_flag = 1;
+
+	palette = targ_palette;
+	colortable = venture_colortable;
 }
 
 void spectar_driver_init(void) {
@@ -62,6 +195,9 @@ void spectar_driver_init(void) {
 	*exidy_sprite_enable = 0x10;
 	exidy_collision_mask = 0x00;
 	targ_spec_flag = 0;
+
+	palette = spectar_palette;
+	colortable = venture_colortable;
 }
 
 void mtrap_driver_init(void) {
@@ -74,6 +210,9 @@ void mtrap_driver_init(void) {
 	#endif
 
 	exidy_collision_mask = 0x14;
+
+	palette = venture_palette;
+	colortable = venture_colortable;
 }
 
 void pepper2_driver_init(void) {
@@ -86,6 +225,9 @@ void pepper2_driver_init(void) {
 	#endif
 
 	exidy_collision_mask = 0x00;
+
+	palette = venture_palette;
+	colortable = pepper2_colortable;
 }
 
 void venture_driver_init(void) {
@@ -105,6 +247,9 @@ void venture_driver_init(void) {
 	#endif
 
 	exidy_collision_mask = 0x80;
+
+	palette = venture_palette;
+	colortable = venture_colortable;
 }
 
 void fax_driver_init(void) {
@@ -124,6 +269,9 @@ void fax_driver_init(void) {
 
 	/* Initialize our ROM question bank */
 	fax_bank_select_w(0,0);
+
+	palette = venture_palette;
+	colortable = pepper2_colortable;
 }
 
 void exidy_init_machine(void)

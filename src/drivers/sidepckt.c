@@ -265,6 +265,11 @@ static unsigned short colortable[] =
     0,23,13,23,15,21,24,25,       /* Player */
     0,1,2,3,4,5,6,7,              /* ??? */
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 
@@ -302,7 +307,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			3000000,        /* 3 MHz ??? */
+			2000000,        /* 2 MHz ??? */
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
@@ -323,8 +328,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -352,7 +357,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sidepckt_rom )
+ROM_START( sidepckt )
     ROM_REGION(0x10000)     /* 64k for code */
     ROM_LOAD( "dh00",         0x00000, 0x10000, 0x251b316e )
 
@@ -371,7 +376,7 @@ ROM_START( sidepckt_rom )
     ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
 ROM_END
 
-ROM_START( sidepckb_rom )
+ROM_START( sidepckb )
     ROM_REGION(0x10000)     /* 64k for code */
     ROM_LOAD( "sp_09.bin",    0x04000, 0x4000, 0x3c6fe54b )
     ROM_LOAD( "sp_08.bin",    0x08000, 0x8000, 0x347f81cd )
@@ -454,7 +459,7 @@ struct GameDriver sidepckt_driver =
 
 	input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -480,7 +485,7 @@ struct GameDriver sidepckb_driver =
 
 	input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

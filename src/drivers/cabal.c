@@ -469,7 +469,7 @@ static struct MachineDriver cabalbl_machine_driver =
 	}
 };
 
-ROM_START( cabal_rom )
+ROM_START( cabal )
 	ROM_REGION(0x50000)	/* 64k for cpu code */
 	ROM_LOAD_EVEN( "h7_512.bin",      0x00000, 0x10000, 0x8fe16fb4 )
 	ROM_LOAD_ODD ( "h6_512.bin",      0x00000, 0x10000, 0x6968101c )
@@ -506,7 +506,7 @@ ROM_START( cabal_rom )
 	ROM_LOAD( "1-1u",            0x10000, 0x10000, 0x8b3e0789 )
 ROM_END
 
-ROM_START( cabal2_rom )
+ROM_START( cabal2 )
 	ROM_REGION(0x50000)	/* 64k for cpu code */
 	ROM_LOAD_EVEN( "9-7h",            0x00000, 0x10000, 0xebbb9484 )
 	ROM_LOAD_ODD ( "7-6h",            0x00000, 0x10000, 0x51aeb49e )
@@ -543,7 +543,7 @@ ROM_START( cabal2_rom )
 	ROM_LOAD( "1-1u",            0x10000, 0x10000, 0x8b3e0789 )
 ROM_END
 
-ROM_START( cabalbl_rom )
+ROM_START( cabalbl )
 	ROM_REGION(0x50000)	/* 64k for cpu code */
 	ROM_LOAD_EVEN( "cabal_24.bin",    0x00000, 0x10000, 0x00abbe0c )
 	ROM_LOAD_ODD ( "cabal_22.bin",    0x00000, 0x10000, 0x78c4af27 )

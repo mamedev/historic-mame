@@ -219,7 +219,7 @@ static struct MachineDriver machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	galpanic_vh_start,
 	galpanic_vh_stop,
@@ -243,7 +243,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( galpanic_rom )
+ROM_START( galpanic )
 	ROM_REGION(0x400000)	/* 68000 code */
 	ROM_LOAD_EVEN( "pm110.4m2",    0x000000, 0x080000, 0xae6b17a8 )
 	ROM_LOAD_ODD ( "pm109.4m1",    0x000000, 0x080000, 0xb85d792d )
@@ -280,7 +280,7 @@ struct GameDriver galpanic_driver =
 	"1990",
 	"Kaneko",
 	"Nicola Salmoria",
-	0,
+	GAME_REQUIRES_16BIT,
 	&machine_driver,
 	0,
 

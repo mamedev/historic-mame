@@ -1109,24 +1109,24 @@ void YM2151WriteReg(int n, int r, int v)
 
 		/*calc freq begin operator 0*/
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 				/*op->KCindex = kc_oscil;*/
-				/*op->DT1val = PSG->DT1freq[ op->DT1 + kc ];*/  /*DT1 value*/
+				/*op->DT1val = chip->DT1freq[ op->DT1 + kc ];*/  /*DT1 value*/
 		/*calc freq end*/
 				op+=8;
 				op->KC = v;
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 
 				op+=8;
 				op->KC = v;
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 
 				op+=8;
 				op->KC = v;
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 
 				refresh_EG( chip, r&7 );
 			}
@@ -1146,22 +1146,22 @@ void YM2151WriteReg(int n, int r, int v)
 
 		/*calc freq begin operator 0*/
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 		/*calc freq end*/
 				op+=8;
 				op->KF = v;
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 
 				op+=8;
 				op->KF = v;
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 
 				op+=8;
 				op->KF = v;
 				kc_oscil = kc_channel + op->DT2;  /*DT2 offset*/
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 			}
 			break;
 
@@ -1186,7 +1186,7 @@ void YM2151WriteReg(int n, int r, int v)
 				kc_oscil = KC_TO_INDEX[kc] + op->KF + op->DT2;  /*DT2 offset*/
 
 				kc >>=2;
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 			}
 		}
 		break;
@@ -1230,7 +1230,7 @@ void YM2151WriteReg(int n, int r, int v)
 				kc_oscil = KC_TO_INDEX[kc] + op->KF + op->DT2;  /*DT2 offset*/
 
 				kc >>=2;
-				op->freq = ( PSG->freq[ kc_oscil ] + PSG->DT1freq[ op->DT1 + kc ] ) * op->mul;
+				op->freq = ( chip->freq[ kc_oscil ] + chip->DT1freq[ op->DT1 + kc ] ) * op->mul;
 			}
 		}
 		op->D2R = (v&0x1f) << 1;

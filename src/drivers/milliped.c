@@ -306,7 +306,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( milliped_rom )
+ROM_START( milliped )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "milliped.104", 0x4000, 0x1000, 0x40711675 )
 	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0xfb01baf2 )

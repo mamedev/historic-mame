@@ -324,7 +324,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( crbaloon_rom )
+ROM_START( crbaloon )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0x9d4eef0b )
 	ROM_LOAD( "cl02.bin",     0x0800, 0x0800, 0x10f7a6f7 )
@@ -338,7 +338,7 @@ ROM_START( crbaloon_rom )
 	ROM_LOAD( "cl08.bin",     0x0800, 0x0800, 0xba898659 )
 ROM_END
 
-ROM_START( crbalon2_rom )
+ROM_START( crbalon2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0x9d4eef0b )
 	ROM_LOAD( "crazybal.ep2", 0x0800, 0x0800, 0x87572086 )

@@ -1135,7 +1135,7 @@ static struct MachineDriver unkvsys_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pspikes_rom )
+ROM_START( pspikes )
 	ROM_REGION(0xc0000)	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "20",           0x00000, 0x40000, 0x75cdcee2 )
 
@@ -1155,7 +1155,7 @@ ROM_START( pspikes_rom )
 	ROM_LOAD( "a47",          0x00000, 0x40000, 0xc6779dfa )
 ROM_END
 
-ROM_START( turbofrc_rom )
+ROM_START( turbofrc )
 	ROM_REGION(0xc0000)	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tfrc2.bin",    0x00000, 0x40000, 0x721300ee )
 	ROM_LOAD_WIDE_SWAP( "tfrc1.bin",    0x40000, 0x40000, 0x6cd5312b )
@@ -1184,7 +1184,7 @@ ROM_START( turbofrc_rom )
 	ROM_LOAD( "tfrcu180.bin",   0x00000, 0x20000, 0x39c7c7d5 )
 ROM_END
 
-ROM_START( aerofgt_rom )
+ROM_START( aerofgt )
 	ROM_REGION(0x80000)	/* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "1.u4",         0x00000, 0x80000, 0x6fdff0a2 )
 
@@ -1205,7 +1205,7 @@ ROM_START( aerofgt_rom )
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 ROM_END
 
-ROM_START( aerofgtb_rom )
+ROM_START( aerofgtb )
 	ROM_REGION(0x80000)	/* 68000 code */
 	ROM_LOAD_EVEN( "v2",                0x00000, 0x40000, 0x5c9de9f0 )
 	ROM_LOAD_ODD ( "v1",                0x00000, 0x40000, 0x89c1dcf4 )
@@ -1229,7 +1229,7 @@ ROM_START( aerofgtb_rom )
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 ROM_END
 
-ROM_START( aerofgtc_rom )
+ROM_START( aerofgtc )
 	ROM_REGION(0x80000)	/* 68000 code */
 	ROM_LOAD_EVEN( "v2.149",            0x00000, 0x40000, 0xf187aec6 )
 	ROM_LOAD_ODD ( "v1.111",            0x00000, 0x40000, 0x9e684b19 )
@@ -1254,7 +1254,7 @@ ROM_START( aerofgtc_rom )
 	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 ROM_END
 
-ROM_START( unkvsys_rom )
+ROM_START( unkvsys )
 	ROM_REGION(0x60000)	/* 68000 code */
 	ROM_LOAD_EVEN( "v4",           0x00000, 0x10000, 0x1d4240c2 )
 	ROM_LOAD_ODD ( "v7",           0x00000, 0x10000, 0x0fb70066 )

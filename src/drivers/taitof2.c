@@ -1088,7 +1088,7 @@ static struct MachineDriver megab_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( liquidk_rom )
+ROM_START( liquidk )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
@@ -1108,7 +1108,7 @@ ROM_START( liquidk_rom )
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
 ROM_END
 
-ROM_START( liquidku_rom )
+ROM_START( liquidku )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
@@ -1128,7 +1128,7 @@ ROM_START( liquidku_rom )
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
 ROM_END
 
-ROM_START( mizubaku_rom )
+ROM_START( mizubaku )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "lq09.bin",  0x00000, 0x20000, 0x6ae09eb9 )
 	ROM_LOAD_ODD ( "lq11.bin",  0x00000, 0x20000, 0x42d2be6e )
@@ -1252,7 +1252,7 @@ struct GameDriver mizubaku_driver =
 	liquidk_hiload, liquidk_hisave
 };
 
-ROM_START( finalb_rom )
+ROM_START( finalb )
 	ROM_REGION(0x40000)     /* 256k for 68000 code */
 	ROM_LOAD_EVEN( "fb_09.rom",  0x00000, 0x20000, 0x632f1ecd )
 	ROM_LOAD_ODD ( "fb_17.rom",  0x00000, 0x20000, 0xe91b2ec9 )
@@ -1302,7 +1302,7 @@ struct GameDriver finalb_driver =
 	0, 0
 };
 
-ROM_START( growl_rom )
+ROM_START( growl )
 	ROM_REGION(0x100000)     /* 1024k for 68000 code */
 	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
 	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
@@ -1325,7 +1325,7 @@ ROM_START( growl_rom )
 	ROM_LOAD( "growl_05.rom", 0x000000, 0x080000, 0xe29c0828 )
 ROM_END
 
-ROM_START( growlu_rom )
+ROM_START( growlu )
 	ROM_REGION(0x100000)     /* 1024k for 68000 code */
 	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
 	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
@@ -1348,7 +1348,7 @@ ROM_START( growlu_rom )
 	ROM_LOAD( "growl_05.rom", 0x000000, 0x080000, 0xe29c0828 )
 ROM_END
 
-ROM_START( runark_rom )
+ROM_START( runark )
 	ROM_REGION(0x100000)     /* 1024k for 68000 code */
 	ROM_LOAD_EVEN( "growl_10.rom",  0x00000, 0x40000, 0xca81a20b )
 	ROM_LOAD_ODD ( "growl_08.rom",  0x00000, 0x40000, 0xaa35dd9e )
@@ -1477,7 +1477,7 @@ struct GameDriver runark_driver =
 };
 
 
-ROM_START( megab_rom )
+ROM_START( megab )
 	ROM_REGION(0x100000)     /* 256k for 68000 code */
 	ROM_LOAD_EVEN( "c11-07",  0x00000, 0x20000, 0x11d228b6 )
 	ROM_LOAD_ODD ( "c11-08",  0x00000, 0x20000, 0xa79d4dca )

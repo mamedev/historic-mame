@@ -627,7 +627,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( amidar_rom )
+ROM_START( amidar )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "amidarus.2c",  0x0000, 0x1000, 0x951e0792 )
 	ROM_LOAD( "amidarus.2e",  0x1000, 0x1000, 0xa1a3a136 )
@@ -647,7 +647,7 @@ ROM_START( amidar_rom )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
-ROM_START( amidaro_rom )
+ROM_START( amidaro )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "107.2cd",      0x0000, 0x1000, 0xc52536be )
 	ROM_LOAD( "108.2fg",      0x1000, 0x1000, 0x38538b98 )
@@ -667,7 +667,7 @@ ROM_START( amidaro_rom )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
-ROM_START( amidarjp_rom )
+ROM_START( amidarjp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "amidar.2c",    0x0000, 0x1000, 0xc294bf27 )
 	ROM_LOAD( "amidar.2e",    0x1000, 0x1000, 0xe6e96826 )
@@ -686,7 +686,7 @@ ROM_START( amidarjp_rom )
 	ROM_LOAD( "amidar.5d",    0x1000, 0x1000, 0x806785af )
 ROM_END
 
-ROM_START( amigo_rom )
+ROM_START( amigo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2732.a1",      0x0000, 0x1000, 0x930dc856 )
 	ROM_LOAD( "2732.a2",      0x1000, 0x1000, 0x66282ff5 )
@@ -705,7 +705,7 @@ ROM_START( amigo_rom )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
-ROM_START( turtles_rom )
+ROM_START( turtles )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "turt_vid.2c",  0x0000, 0x1000, 0xec5e61fb )
 	ROM_LOAD( "turt_vid.2e",  0x1000, 0x1000, 0xfd10821e )
@@ -725,7 +725,7 @@ ROM_START( turtles_rom )
 	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
-ROM_START( turpin_rom )
+ROM_START( turpin )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "m1",           0x0000, 0x1000, 0x89177473 )
 	ROM_LOAD( "m2",           0x1000, 0x1000, 0x4c6ca5c6 )
@@ -745,7 +745,7 @@ ROM_START( turpin_rom )
 	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
-ROM_START( k600_rom )
+ROM_START( k600 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "600_vid.2c",   0x0000, 0x1000, 0x8ee090ae )
 	ROM_LOAD( "600_vid.2e",   0x1000, 0x1000, 0x45bfaff2 )

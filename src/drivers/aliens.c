@@ -330,7 +330,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( aliens_rom )
+ROM_START( aliens )
 	ROM_REGION( 0x38000 ) /* code + banked roms */
 	ROM_LOAD( "e24_j02.bin", 0x10000, 0x08000, 0x56c20971 )
 	ROM_CONTINUE(            0x08000, 0x08000 )
@@ -362,7 +362,7 @@ ROM_START( aliens_rom )
 	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( aliens2_rom )
+ROM_START( aliens2 )
 	ROM_REGION( 0x38000 ) /* code + banked roms */
 	ROM_LOAD( "e24_p02.bin", 0x10000, 0x08000, 0x4edd707d )
 	ROM_CONTINUE(            0x08000, 0x08000 )
@@ -394,7 +394,7 @@ ROM_START( aliens2_rom )
 	ROM_LOAD( "821a08.h14",  0x0000, 0x0100, 0x7da55800 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( aliensj_rom )
+ROM_START( aliensj )
 	ROM_REGION( 0x38000 ) /* code + banked roms */
 	ROM_LOAD( "875m02.e24",  0x10000, 0x08000, 0x54a774e5 )
 	ROM_CONTINUE(            0x08000, 0x08000 )

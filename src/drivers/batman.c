@@ -329,7 +329,7 @@ static void batman_init(void)
  *
  *************************************/
 
-ROM_START( batman_rom )
+ROM_START( batman )
 	ROM_REGION(0xc0000)	/* 6*128k for 68000 code */
 	ROM_LOAD_EVEN( "085-2030.10r",  0x00000, 0x20000, 0x7cf4e5bf )
 	ROM_LOAD_ODD ( "085-2031.7r",   0x00000, 0x20000, 0x7d7f3fc4 )

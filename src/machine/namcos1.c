@@ -33,7 +33,7 @@ static int key_id;
 static int key_id_query;
 
 static int rev1_key_r( int offset ) {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+//	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
 		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
@@ -183,6 +183,229 @@ static void rev2_key_w( int offset, int data )
 			key[1] = 0x00; key[2] = 0x10;
 			return;
 		}
+	}
+}
+
+/**************************************************************************************
+*	                                                                                  *
+*	Key emulation (CUS136) for Dangerous Seed		                                  *
+*	                                                                                  *
+**************************************************************************************/
+
+static int dangseed_key_r( int offset ) {
+//	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	if(offset >= NAMCOS1_MAX_KEY)
+	{
+		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		return 0;
+	}
+	return key[offset];
+}
+
+static void dangseed_key_w( int offset, int data ) {
+	int i;
+//	if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	if(offset >= NAMCOS1_MAX_KEY)
+	{
+		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		return;
+	}
+
+	key[offset] = data;
+
+	switch ( offset )
+	{
+		case 0x50:
+			for ( i = 0; i < 0x50; i++ ) {
+				key[i] = ( data >> ( ( i >> 4 ) & 0x0f ) ) & 0x0f;
+				key[i] |= ( i & 0x0f ) << 4;
+			}
+			break;
+
+		case 0x57:
+			key[3] = key_id;
+			break;
+	}
+}
+
+/**************************************************************************************
+*	                                                                                  *
+*	Key emulation (CUS136) for Dragon Spirit					                      *
+*	                                                                                  *
+**************************************************************************************/
+
+static int dspirit_key_r( int offset )
+{
+	//if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	if(offset >= NAMCOS1_MAX_KEY)
+	{
+		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		return 0;
+	}
+	return key[offset];
+}
+
+static void dspirit_key_w( int offset, int data )
+{
+	static unsigned short divisor;
+//	if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	if(offset >= NAMCOS1_MAX_KEY)
+	{
+		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		return;
+	}
+	key[offset] = data;
+
+	switch(offset)
+	{
+	case 0x00:
+		if ( data == 1 )
+		{
+			/* fetch key ID */
+			key[3] = key_id;
+		} else
+			divisor = data;
+		break;
+
+	case 0x01:
+		if ( key[3] == 0x01 ) { /* division gets resolved on latch to $1 */
+			unsigned short d, v1, v2;
+
+			d = ( key[1] << 8 ) + key[2];
+
+			if ( divisor == 0 ) {
+				v1 = 0xffff;
+				v2 = 0;
+			} else {
+				v1 = d / divisor;
+				v2 = d % divisor;
+			}
+
+			key[0] = v2 & 0xff;
+			key[1] = v1 >> 8;
+			key[2] = v1 & 0xff;
+
+			return;
+		}
+
+		if ( key[3] != 0xf2 ) { /* if its an invalid mode, clear regs */
+			key[0] = 0;
+			key[1] = 0;
+			key[2] = 0;
+		}
+		break;
+	case 0x02:
+		if ( key[3] == 0xf2 ) { /* division gets resolved on latch to $2 */
+			unsigned short d, v1, v2;
+
+			d = ( key[1] << 8 ) + key[2];
+
+			if ( divisor == 0 ) {
+				v1 = 0xffff;
+				v2 = 0;
+			} else {
+				v1 = d / divisor;
+				v2 = d % divisor;
+			}
+
+			key[0] = v2 & 0xff;
+			key[1] = v1 >> 8;
+			key[2] = v1 & 0xff;
+
+			return;
+		}
+
+		if ( key[3] != 0x01 ) { /* if its an invalid mode, clear regs */
+			key[0] = 0;
+			key[1] = 0;
+			key[2] = 0;
+		}
+		break;
+	case 0x03:
+		if ( key[3] != 0xf2 && key[3] != 0x01 ) /* if the mode is unknown return the id on $3 */
+			key[3] = key_id;
+		break;
+	}
+}
+
+/**************************************************************************************
+*	                                                                                  *
+*	Key emulation (CUS136) for Blazer							                      *
+*	                                                                                  *
+**************************************************************************************/
+
+static int blazer_key_r( int offset )
+{
+	if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,key[offset]);
+	if(offset >= NAMCOS1_MAX_KEY)
+	{
+		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip read %04x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+		return 0;
+	}
+	return key[offset];
+}
+
+static void blazer_key_w( int offset, int data )
+{
+	static unsigned short divisor;
+	if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+	if(offset >= NAMCOS1_MAX_KEY)
+	{
+		if(errorlog) fprintf(errorlog,"CPU #%d PC %08x: unmapped keychip write %04x=%04x\n",cpu_getactivecpu(),cpu_get_pc(),offset,data);
+		return;
+	}
+	key[offset] = data;
+
+	switch(offset)
+	{
+	case 0x00:
+		if ( data == 1 )
+		{
+			/* fetch key ID */
+			key[3] = key_id;
+		} else
+			divisor = data;
+		break;
+
+	case 0x01:
+		if ( key[3] != 0xb7 ) { /* if its an invalid mode, clear regs */
+			key[0] = 0;
+			key[1] = 0;
+			key[2] = 0;
+		}
+		break;
+
+	case 0x02:
+		if ( key[3] == 0xb7 ) { /* division gets resolved on latch to $2 */
+			unsigned short d, v1, v2;
+
+			d = ( key[1] << 8 ) + key[2];
+
+			if ( divisor == 0 ) {
+				v1 = 0xffff;
+				v2 = 0;
+			} else {
+				v1 = d / divisor;
+				v2 = d % divisor;
+			}
+
+			key[0] = v2 & 0xff;
+			key[1] = v1 >> 8;
+			key[2] = v1 & 0xff;
+
+			return;
+		}
+
+		/* if its an invalid mode, clear regs */
+		key[0] = 0;
+		key[1] = 0;
+		key[2] = 0;
+		break;
+	case 0x03:
+		if ( key[3] != 0xb7 ) { /* if the mode is unknown return the id on $3 */
+			key[3] = key_id;
+		}
+		break;
 	}
 }
 
@@ -367,20 +590,24 @@ static int mcu_patch_data;
 
 void namcos1_cpu_control_w( int offset, int data )
 {
-	//if(errorlog) fprintf(errorlog,"reset controll pc=%04x %02x\n",cpu_get_pc(),data);
-	if (data & 1)
+	static int namcos1_reset = 0;
+//	if(errorlog) fprintf(errorlog,"reset controll pc=%04x %02x\n",cpu_get_pc(),data);
+	if( (data&1)^namcos1_reset)
 	{
-		cpu_set_reset_line(1,CLEAR_LINE);
-		cpu_set_reset_line(2,CLEAR_LINE);
-		cpu_set_reset_line(3,CLEAR_LINE);
-
-		mcu_patch_data = 0;
-	}
-	else
-	{
-		cpu_set_reset_line(1,ASSERT_LINE);
-		cpu_set_reset_line(2,ASSERT_LINE);
-		cpu_set_reset_line(3,ASSERT_LINE);
+		namcos1_reset = data&1;
+		if (namcos1_reset)
+		{
+			cpu_set_reset_line(1,CLEAR_LINE);
+			cpu_set_reset_line(2,CLEAR_LINE);
+			cpu_set_reset_line(3,CLEAR_LINE);
+			mcu_patch_data = 0;
+		}
+		else
+		{
+			cpu_set_reset_line(1,ASSERT_LINE);
+			cpu_set_reset_line(2,ASSERT_LINE);
+			cpu_set_reset_line(3,ASSERT_LINE);
+		}
 	}
 }
 
@@ -479,7 +706,7 @@ static int namcos1_setopbase_0 (int pc)
 {
 	int bank = (pc>>13)&7;
 	OP_RAM = OP_ROM = (namcos1_banks[0][bank].bank_pointer) - (bank<<13);
-#if 1
+#if 0 /* EHC 11/08/99 - No longer needed due to correct key emulation */
 	/* hack for escape DragonSpirit lockup after game over */
 	/* b4e0:JSR $0002                                      */
 	if(pc==0x02)
@@ -609,10 +836,9 @@ void namcos1_machine_init( void ) {
 	}
 
 	/* In case we had some cpu's suspended, resume them now */
-	cpu_halt( 1, 0 );
-	cpu_halt( 2, 0 );
-	cpu_halt( 3, 0 );
-
+	cpu_set_reset_line(1,ASSERT_LINE);
+	cpu_set_reset_line(2,ASSERT_LINE);
+	cpu_set_reset_line(3,ASSERT_LINE);
 	/* mcu patch data clear */
 	mcu_patch_data = 0;
 }
@@ -741,7 +967,7 @@ void dspirit_driver_init( void )
 	const struct namcos1_specific dspirit_specific=
 	{
 		0x00,0x36,							/* key query , key id */
-		rev2_key_r,rev2_key_w,				/* key handler */
+		dspirit_key_r,dspirit_key_w,		/* key handler */
 		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
@@ -780,7 +1006,7 @@ void blazer_driver_init( void )
 	const struct namcos1_specific blazer_specific=
 	{
 		0x00,0x13,							/* key query , key id */
-		rev2_key_r,rev2_key_w,				/* key handler */
+		blazer_key_r,blazer_key_w,			/* key handler */
 		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
@@ -998,16 +1224,13 @@ void dangseed_driver_init( void )
 {
 	const struct namcos1_specific dangseed_specific=
 	{
-		0x00,0x00,							/* key query , key id */
-		rev1_key_r,rev1_key_w,				/* key handler */
-		normal_slice,				/* CPU slice normal */
+		0x00,0x34,							/* key query , key id */
+		dangseed_key_r,dangseed_key_w,		/* key handler */
+		normal_slice,						/* CPU slice normal */
 		1									/* use tilemap flag : speedup optimize */
 //		0x03ff,0x03fb						/* start bank   */
 	};
 	namcos1_driver_init(&dangseed_specific);
-	//key[0x67] = ;
-	//key[0x57] = ;
-	key[0x03] = 0x34;
 }
 
 /**************************************************************************************

@@ -270,7 +270,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	3500000,	/* 3.5 MHz ? (hand tuned) */
+	3579545,	/* 3.579 MHz ? (hand tuned) */
 	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -334,7 +334,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( blktiger_rom )
+ROM_START( blktiger )
 	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, 0xa8f98f22 )	/* CODE */
 	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
@@ -363,7 +363,7 @@ ROM_START( blktiger_rom )
 	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
-ROM_START( bktigerb_rom )
+ROM_START( bktigerb )
 	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "btiger1.f6",   0x00000, 0x08000, 0x9d8464e8 )	/* CODE */
 	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
@@ -392,7 +392,7 @@ ROM_START( bktigerb_rom )
 	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
-ROM_START( blkdrgon_rom )
+ROM_START( blkdrgon )
 	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x27ccdfbc )	/* CODE */
 	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
@@ -421,7 +421,7 @@ ROM_START( blkdrgon_rom )
 	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
-ROM_START( blkdrgnb_rom )
+ROM_START( blkdrgnb )
 	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "j1-5e",        0x00000, 0x08000, 0x97e84412 )	/* CODE */
 	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */

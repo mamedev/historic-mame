@@ -257,7 +257,7 @@ static struct MachineDriver suprloco_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( suprloco_rom )
+ROM_START( suprloco )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, 0x57f514dd )	/* encrypted */
 	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */

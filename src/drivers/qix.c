@@ -775,7 +775,7 @@ static struct MachineDriver zoo_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( qix_rom )
+ROM_START( qix )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "u12",          0xC000, 0x0800, 0xaad35508 )
 	ROM_LOAD( "u13",          0xC800, 0x0800, 0x46c13504 )
@@ -799,7 +799,7 @@ ROM_START( qix_rom )
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
-ROM_START( qixa_rom )
+ROM_START( qixa )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "qu12",         0xC000, 0x0800, 0x1c55b44d )
 	ROM_LOAD( "qu13",         0xC800, 0x0800, 0x20279e8c )
@@ -824,7 +824,7 @@ ROM_START( qixa_rom )
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
-ROM_START( qixb_rom )
+ROM_START( qixb )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "lk14.bin",     0xC000, 0x1000, 0x6d164986 )
 	ROM_LOAD( "lk15.bin",     0xD000, 0x1000, 0x16c6ce0f )
@@ -841,7 +841,7 @@ ROM_START( qixb_rom )
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
-ROM_START( qix2_rom )
+ROM_START( qix2 )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "u12.rmb",      0xC000, 0x0800, 0x484280fd )
 	ROM_LOAD( "u13.rmb",      0xC800, 0x0800, 0x3d089fcb )
@@ -866,7 +866,7 @@ ROM_START( qix2_rom )
 	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
-ROM_START( sdungeon_rom )
+ROM_START( sdungeon )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "sd14.u14",     0xA000, 0x1000, 0x7024b55a )
     ROM_LOAD( "sd15.u15",     0xB000, 0x1000, 0xa3ac9040 )
@@ -891,7 +891,7 @@ ROM_START( sdungeon_rom )
 	ROM_LOAD( "sd101",        0x0000, 0x0800, 0xe255af9a )
 ROM_END
 
-ROM_START( elecyoyo_rom )
+ROM_START( elecyoyo )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "yy14",         0xA000, 0x1000, 0x0d2edcb9 )
     ROM_LOAD( "yy15",         0xB000, 0x1000, 0xa91f01e3 )
@@ -915,7 +915,7 @@ ROM_START( elecyoyo_rom )
 	ROM_LOAD( "yy101",        0x0000, 0x0800, 0x3cf13038 )
 ROM_END
 
-ROM_START( elecyoy2_rom )
+ROM_START( elecyoy2 )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "yy14",         0xA000, 0x1000, 0x0d2edcb9 )
     ROM_LOAD( "yy15",         0xB000, 0x1000, 0xa91f01e3 )
@@ -939,7 +939,7 @@ ROM_START( elecyoy2_rom )
 	ROM_LOAD( "yy101",        0x0000, 0x0800, 0x3cf13038 )
 ROM_END
 
-ROM_START( kram_rom )
+ROM_START( kram )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "ks14-1",       0xA000, 0x1000, 0xfe69ac79 )
     ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
@@ -963,7 +963,7 @@ ROM_START( kram_rom )
 	ROM_LOAD( "ks101.dat",    0x0000, 0x0800, 0xe53d97b7 )
 ROM_END
 
-ROM_START( kram2_rom )
+ROM_START( kram2 )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
     ROM_LOAD( "ks14",         0xA000, 0x1000, 0xa2eac1ff )
     ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
@@ -987,7 +987,7 @@ ROM_START( kram2_rom )
 	ROM_LOAD( "ks101.dat",    0x0000, 0x0800, 0xe53d97b7 )
 ROM_END
 
-ROM_START( zookeep_rom )
+ROM_START( zookeep )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
@@ -1018,7 +1018,7 @@ ROM_START( zookeep_rom )
 	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
 ROM_END
 
-ROM_START( zookeep2_rom )
+ROM_START( zookeep2 )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
@@ -1049,7 +1049,7 @@ ROM_START( zookeep2_rom )
 	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
 ROM_END
 
-ROM_START( zookeep3_rom )
+ROM_START( zookeep3 )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
 	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )

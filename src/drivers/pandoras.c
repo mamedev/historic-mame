@@ -431,14 +431,14 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,		/* CPU A */
-			3072000,		/* ? */
+			2000000,		/* ? */
 			0,
 			pandoras_readmem_a,pandoras_writemem_a,0,0,
             pandoras_interrupt_a,1,
         },
 		{
 			CPU_M6809,		/* CPU B */
-			3072000,		/* ? */
+			2000000,		/* ? */
 			3,
 			pandoras_readmem_b,pandoras_writemem_b,0,0,
             pandoras_interrupt_b,1,
@@ -495,7 +495,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pandoras_rom )
+ROM_START( pandoras )
 	ROM_REGION( 0x10000 ) /* 64K for the CPU A */
 	ROM_LOAD( "pand_j13.cpu",	0x08000, 0x02000, 0x7a0fe9c5 )
 	ROM_LOAD( "pand_j12.cpu",	0x0a000, 0x02000, 0x7dc4bfe1 )

@@ -362,7 +362,7 @@ static struct MachineDriver stadhero_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( stadhero_rom )
+ROM_START( stadhero )
 	ROM_REGION(0x20000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ef15.bin",  0x00000, 0x10000, 0xbbba364e )
 	ROM_LOAD_ODD ( "ef13.bin",  0x00000, 0x10000, 0x97c6717a )

@@ -57,7 +57,7 @@ int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
 void locomotn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void jungler_init(void);
-void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* defined in sndhrdw/timeplt.c */
@@ -433,7 +433,6 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 
 #define locomotn_writemem writemem
 #define commsega_writemem writemem
-#define jungler_vh_screenrefresh rallyx_vh_screenrefresh
 MACHINE_DRIVER(locomotn)
 MACHINE_DRIVER(jungler)
 MACHINE_DRIVER(commsega)
@@ -445,7 +444,7 @@ MACHINE_DRIVER(commsega)
 
 ***************************************************************************/
 
-ROM_START( locomotn_rom )
+ROM_START( locomotn )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1a.cpu",       0x0000, 0x1000, 0xb43e689a )
 	ROM_LOAD( "2a.cpu",       0x1000, 0x1000, 0x529c823d )
@@ -468,7 +467,7 @@ ROM_START( locomotn_rom )
 	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
-ROM_START( gutangtn_rom )
+ROM_START( gutangtn )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "3d_1.bin",     0x0000, 0x1000, 0xe9757395 )
 	ROM_LOAD( "3e_2.bin",     0x1000, 0x1000, 0x11d21d2e )
@@ -491,7 +490,7 @@ ROM_START( gutangtn_rom )
 	ROM_LOAD( "1b_s1.bin",    0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
-ROM_START( cottong_rom )
+ROM_START( cottong )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "c1",           0x0000, 0x1000, 0x2c256fe6 )
 	ROM_LOAD( "c2",           0x1000, 0x1000, 0x1de5e6a0 )
@@ -514,7 +513,7 @@ ROM_START( cottong_rom )
 	ROM_LOAD( "c8",           0x1000, 0x1000, 0x323e1937 )
 ROM_END
 
-ROM_START( jungler_rom )
+ROM_START( jungler )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jungr1",       0x0000, 0x1000, 0x5bd6ad15 )
 	ROM_LOAD( "jungr2",       0x1000, 0x1000, 0xdc99f1e3 )
@@ -537,7 +536,7 @@ ROM_START( jungler_rom )
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
-ROM_START( junglers_rom )
+ROM_START( junglers )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "5c",           0x0000, 0x1000, 0xedd71b28 )
 	ROM_LOAD( "5a",           0x1000, 0x1000, 0x61ea4d46 )
@@ -560,7 +559,7 @@ ROM_START( junglers_rom )
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
-ROM_START( commsega_rom )
+ROM_START( commsega )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "csega1",       0x0000, 0x1000, 0x92de3405 )
 	ROM_LOAD( "csega2",       0x1000, 0x1000, 0xf14e2f9a )

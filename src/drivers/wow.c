@@ -382,21 +382,17 @@ static unsigned char palette[] =
      0x00,0x00,0xA6,
      0x00,0x00,0xBB,
 };
-
-enum { BLACK,YELLOW,BLUE,RED,WHITE };
-
-static unsigned short colortable[] =
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-	BLACK,YELLOW,BLUE,RED,
-	BLACK,WHITE,BLACK,RED	/* not used by the game, here only for the dip switch menu */
-};
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 /****************************************************************************
  * Wizard of Wor
  ****************************************************************************/
 
-ROM_START( wow_rom )
+ROM_START( wow )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0xc1295786 )
 	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0x9be93215 )
@@ -549,8 +545,8 @@ static struct MachineDriver wow_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -636,7 +632,7 @@ struct GameDriver wow_driver =
 
 	wow_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	wow_hiload, wow_hisave,
@@ -646,7 +642,7 @@ struct GameDriver wow_driver =
  * Robby Roto
  ****************************************************************************/
 
-ROM_START( robby_rom )
+ROM_START( robby )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0xa431b85a )
 	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0x33cdda83 )
@@ -755,8 +751,8 @@ static struct MachineDriver robby_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -838,7 +834,7 @@ struct GameDriver robby_driver =
 
 	robby_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	robby_hiload, robby_hisave
@@ -848,7 +844,7 @@ struct GameDriver robby_driver =
  * Gorf
  ****************************************************************************/
 
-ROM_START( gorf_rom )
+ROM_START( gorf )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x5b348321 )
 	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0x62d6de77 )
@@ -860,7 +856,7 @@ ROM_START( gorf_rom )
 	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0xfe7b863d )
 ROM_END
 
-ROM_START( gorfpgm1_rom )
+ROM_START( gorfpgm1 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "873a", 0x0000, 0x1000, 0x97cb4a6a )
 	ROM_LOAD( "873b", 0x1000, 0x1000, 0x257236f8 )
@@ -1013,8 +1009,8 @@ static struct MachineDriver gorf_machine_driver =
 
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1098,7 +1094,7 @@ struct GameDriver gorf_driver =
 
 	gorf_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	gorf_hiload, gorf_hisave
@@ -1124,7 +1120,7 @@ struct GameDriver gorfpgm1_driver =
 
 	gorf_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	gorf_hiload, gorf_hisave
@@ -1134,7 +1130,7 @@ struct GameDriver gorfpgm1_driver =
  * Space Zap
  ****************************************************************************/
 
-ROM_START( spacezap_rom )
+ROM_START( spacezap )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xa92de312 )
 	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x4836ebf1 )
@@ -1212,8 +1208,8 @@ static struct MachineDriver spacezap_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1294,7 +1290,7 @@ struct GameDriver spacezap_driver =
 
 	spacezap_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	spacezap_hiload, spacezap_hisave
@@ -1304,7 +1300,7 @@ struct GameDriver spacezap_driver =
  * Seawolf II
  ****************************************************************************/
 
-ROM_START( seawolf2_rom )
+ROM_START( seawolf2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0xad0103f6 )
 	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0xe0430f0a )
@@ -1428,8 +1424,8 @@ static struct MachineDriver seawolf_machine_driver =
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1500,7 +1496,7 @@ struct GameDriver seawolf2_driver =
 
 	seawolf2_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	seawolf_hiload, seawolf_hisave
@@ -1510,7 +1506,7 @@ struct GameDriver seawolf2_driver =
  * Extra Bases (Bally/Midway)
  ****************************************************************************/
 
-ROM_START( ebases_rom )
+ROM_START( ebases )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x34422147 )
 	ROM_LOAD( "m761b", 0x1000, 0x1000, 0x4f28dfd6 )
@@ -1630,8 +1626,8 @@ static struct MachineDriver ebases_machine_driver =
 	/* video hardware */
 	320, 210, { 0, 320-1, 0, 192-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1672,7 +1668,7 @@ struct GameDriver ebases_driver =
 
 	ebases_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

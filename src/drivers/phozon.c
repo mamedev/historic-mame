@@ -316,7 +316,7 @@ static struct MachineDriver phozon_machine_driver =
 	}
 };
 
-ROM_START( phozon_rom )
+ROM_START( phozon )
 	ROM_REGION(0x10000)     /* 64k for code for the MAIN CPU  */
 	ROM_LOAD( "6e.rom", 0x8000, 0x2000, 0xa6686af1 )
 	ROM_LOAD( "6h.rom", 0xa000, 0x2000, 0x72a65ba0 )

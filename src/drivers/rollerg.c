@@ -313,7 +313,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rollerg_rom )
+ROM_START( rollerg )
 	ROM_REGION( 0x28000 ) /* code + banked roms */
 	ROM_LOAD( "999m02.g7",  0x10000, 0x18000, 0x3df8db93 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
@@ -333,7 +333,7 @@ ROM_START( rollerg_rom )
 	ROM_LOAD( "999h09.c5",  0x000000, 0x080000, 0xc5188783 )
 ROM_END
 
-ROM_START( rollergj_rom )
+ROM_START( rollergj )
 	ROM_REGION( 0x28000 ) /* code + banked roms */
 	ROM_LOAD( "999v02.bin", 0x10000, 0x18000, 0x0dd8c3ac )
 	ROM_CONTINUE(           0x08000, 0x08000 )

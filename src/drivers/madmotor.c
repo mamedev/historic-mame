@@ -372,7 +372,7 @@ static struct MachineDriver madmotor_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( madmotor_rom )
+ROM_START( madmotor )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "02", 0x00000, 0x20000, 0x50b554e0 )
 	ROM_LOAD_ODD ( "00", 0x00000, 0x20000, 0x2d6a1b3f )

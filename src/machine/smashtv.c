@@ -7,6 +7,11 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/m6809/m6809.h"
 #include "6821pia.h"
+#include "sndhrdw/williams.h"
+
+
+#define FAST_DMA			1
+
 
 #if LSB_FIRST
 	#define BYTE_XOR_LE(a)  (a)
@@ -33,6 +38,7 @@ void wms_vram_w(int offset, int data);
 void wms_objpalram_w(int offset, int data);
 int wms_vram_r(int offset);
 int wms_objpalram_r(int offset);
+void wms_update_partial(int scanline);
 
 extern unsigned short *wms_videoram;
 
@@ -45,7 +51,6 @@ extern unsigned   int wms_rom_loaded;
 static unsigned   int wms_cmos_page = 0;
                   int wms_objpalram_select = 0;
        unsigned   int wms_autoerase_enable = 0;
-       unsigned   int wms_autoerase_start = 1000;
 
 static unsigned int wms_dma_rows=0;
 static          int wms_dma_write_rows=0;
@@ -201,15 +206,34 @@ static void term2_sound_w (int offset,int data)
 	mk_sound_w(offset, data);
 }
 
-static void dma_callback(int param)
+static int irq_callback(int irqline)
 {
-	wms_dma_stat = 0; /* tell the cpu we're done */
-	cpu_cause_interrupt(0,TMS34010_INT1);
+	tms34010_set_irq_line(0, CLEAR_LINE);
+	return 0;
 }
-static void dma2_callback(int param)
+
+static void dma_callback(int is_in_34010_context)
 {
 	wms_dma_stat = 0; /* tell the cpu we're done */
-	cpu_cause_interrupt(0,TMS34010_INT1);
+	if (is_in_34010_context)
+	{
+		tms34010_set_irq_callback(irq_callback);
+		tms34010_set_irq_line(0, ASSERT_LINE);
+	}
+	else
+		cpu_cause_interrupt(0,TMS34010_INT1);
+}
+
+static void dma2_callback(int is_in_34010_context)
+{
+	wms_dma_stat = 0; /* tell the cpu we're done */
+	if (is_in_34010_context)
+	{
+		tms34010_set_irq_callback(irq_callback);
+		tms34010_set_irq_line(0, ASSERT_LINE);
+	}
+	else
+		cpu_cause_interrupt(0,TMS34010_INT1);
 }
 
 int wms_dma_r(int offset)
@@ -314,8 +338,8 @@ void wms_dma_w(int offset, int data)
 		rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
 		wms_dma_stat = data;
 
-//		if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_get_pc(), data);
-//		if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
+		if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_get_pc(), data);
+		if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
 		/*
 		 * DMA registers
 		 * ------------------
@@ -407,7 +431,10 @@ void wms_dma_w(int offset, int data)
 		/*
 		 * One pixel every 41 ns (1e-9 sec)
 		 */
-		timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma_callback);
+		if (FAST_DMA)
+			dma_callback(1);
+		else
+			timer_set(TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), 0, dma_callback);
 		break;
 	case 2:
 		wms_dma_woffset = data;
@@ -1017,7 +1044,10 @@ void wms_dma2_w(int offset, int data)
 			if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
 			break;
 		}
-		timer_set (TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), data, dma2_callback);
+		if (FAST_DMA)
+			dma_callback(1);
+		else
+			timer_set(TIME_IN_NSEC(41*wms_dma_cols*wms_dma_rows), 0, dma_callback);
 		break;
 	case 4:
 		wms_dma_subbank = data>>3;
@@ -1137,14 +1167,14 @@ void wms_sysreg_w(int offset, int data)
 
 	if (data&0x10) /* turn off auto-erase */
 	{
+		if (wms_autoerase_enable)
+			wms_update_partial(cpu_getscanline());
 		wms_autoerase_enable = 0;
 	}
 	else /* enable auto-erase */
 	{
 		if (!wms_autoerase_enable)
-		{
-			wms_autoerase_start  = cpu_getscanline();
-		}
+			wms_update_partial(cpu_getscanline());
 		wms_autoerase_enable = 1;
 	}
 }
@@ -1263,81 +1293,27 @@ int wms_cmos_r(int offset)
 	return READ_WORD(&wms_cmos_ram[(offset)+wms_cmos_page]);
 }
 
-static void smashtv_sound_nmi(int state)
-{
-	cpu_set_nmi_line(1,state ? ASSERT_LINE : CLEAR_LINE);
-	if (errorlog) fprintf(errorlog, "sound NMI\n");
-}
-static void smashtv_sound_firq(int state)
-{
-	cpu_set_irq_line(1,M6809_FIRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE);
-	if (errorlog) fprintf(errorlog, "sound FIRQ\n");
-}
-
-/* PIA 0, main CPU */
-static struct pia6821_interface smashtv_pia_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
-	/*irqs   : A/B             */ smashtv_sound_firq, smashtv_sound_nmi
-};
-
-void smashtv_sound_bank_select_w (int offset,int data)
-{
-	static int bank[16] = { 0x10000, 0x30000, 0x50000, 0x10000, 0x18000, 0x38000, 0x58000, 0x18000,
-							0x20000, 0x40000, 0x60000, 0x10000, 0x28000, 0x48000, 0x68000, 0x18000 };
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	if (errorlog) fprintf(errorlog, "sound bank sel: %x -> %x\n", data, bank[data & 0x0f]);
-	/* set bank address */
-	cpu_setbank (5, &RAM[bank[data & 0x0f]]);
-}
-
-void narc_music_bank_select_w (int offset,int data)
-{
-	static int bank[8] = { 0x10000, 0x10000, 0x10000, 0x10000, 0x20000, 0x28000, 0x10000, 0x18000 };
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	/* set bank address */
-	cpu_setbank (5, &RAM[bank[data&0x07]]);
-}
-
-void narc_digitizer_bank_select_w (int offset,int data)
-{
-	static int bank[8] = { 0x40000, 0x48000, 0x30000, 0x38000, 0x20000, 0x28000, 0x10000, 0x18000 };
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
-	/* set bank address */
-	cpu_setbank (6, &RAM[bank[data&0x07]]);
-}
-
-void mk_sound_bank_select_w (int offset,int data)
-{
-	static int bank[8] = { 0x10000, 0x18000, 0x20000, 0x28000, 0x30000, 0x38000, 0x40000, 0x48000 };
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	if (errorlog) fprintf(errorlog, "bank sel: %x -> %x\n", data, bank[data & 0x07]);
-	/* set bank address */
-	cpu_setbank (5, &RAM[bank[data&0x07]]);
-	cpu_setbank (6, &RAM[0x4c000]);
-}
-
 void wms_load_code_roms(void)
 {
 	memcpy(CODE_ROM,Machine->memory_region[Machine->drv->cpu[0].memory_region],wms_code_rom_size);
 }
 
-#define DEREF(REG, SIZE)		*(SIZE*)(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
-#define DEREF_INT8(REG)			DEREF(REG, INT8 )
-#define DEREF_INT16(REG)		DEREF(REG, INT16)
-#define DEREF_INT32(REG)		DEREF(REG, INT32)
-#define BURN_TIME(INST_CNT)		tms34010_ICount -= INST_CNT * TMS34010_AVGCYCLES
 
-#define INT32_MOD(x) BIG_DWORD_LE(x)
-#define INT16_MOD(x) (x)
+#define READ_INT8(REG)			(*(INT8 *)BYTE_XOR_LE(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)]))
+#define READ_INT16(REG)			(*(INT16 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
+#define READ_INT32(REG)			BIG_DWORD_LE(*(INT32 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)])
+#define WRITE_INT8(REG,DATA)	(*(INT8 *)BYTE_XOR_LE(&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)]) = (DATA))
+#define WRITE_INT16(REG,DATA)	(*(INT16 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)] = (DATA))
+#define WRITE_INT32(REG,DATA)	(*(INT32 *)&SCRATCH_RAM[TOBYTE((REG) & 0xffffff)] = BIG_DWORD_LE(DATA))
+
+#define BURN_TIME(INST_CNT)		tms34010_ICount -= INST_CNT * TMS34010_AVGCYCLES
 
 /* Speed up loop body */
 
 #define DO_SPEEDUP_LOOP(OFFS1, OFFS2, A8SIZE, A7SIZE)		\
 															\
-	a8 = A8SIZE##_MOD(DEREF(a2+OFFS1, A8SIZE));				\
-	a7 = A7SIZE##_MOD(DEREF(a2+OFFS2, A7SIZE));				\
+	a8 = READ_##A8SIZE(a2+OFFS1);							\
+	a7 = READ_##A7SIZE(a2+OFFS2);							\
 															\
 	if (a8 > a1) 											\
 	{ 														\
@@ -1359,9 +1335,9 @@ void wms_load_code_roms(void)
 		continue; 											\
 	} 														\
 															\
-	DEREF_INT32(a4) = BIG_DWORD_LE(a2);						\
-	DEREF_INT32(a0) = DEREF_INT32(a2);						\
-	DEREF_INT32(a2) = BIG_DWORD_LE(a0);						\
+	WRITE_INT32(a4, a2);									\
+	WRITE_INT32(a0, READ_INT32(a2));						\
+	WRITE_INT32(a2, a0);									\
 	a4 = a2; 												\
 	BURN_TIME(17);
 
@@ -1378,7 +1354,7 @@ void wms_load_code_roms(void)
 	 INT32 a7,a8;											\
 	while (tms34010_ICount > 0) 							\
 	{														\
-		a2 = BIG_DWORD_LE(DEREF_INT32(a0));					\
+		a2 = READ_INT32(a0);								\
 		if (!a2)											\
 		{													\
 			cpu_spinuntil_int();							\
@@ -1398,9 +1374,9 @@ void wms_load_code_roms(void)
 															\
 	while (tms34010_ICount > 0) 							\
 	{														\
-		temp1 = BIG_DWORD_LE(DEREF_INT32(LOC1));			\
-		temp2 = BIG_DWORD_LE(DEREF_INT32(LOC2));			\
-		temp3 = BIG_DWORD_LE(DEREF_INT32(LOC3));			\
+		temp1 = READ_INT32(LOC1);							\
+		temp2 = READ_INT32(LOC2);							\
+		temp3 = READ_INT32(LOC3);							\
 		if (!temp1 && !temp2 && !temp3)						\
 		{													\
 			cpu_spinuntil_int();							\
@@ -1411,7 +1387,7 @@ void wms_load_code_roms(void)
 		a5 = 0x80000000;									\
 		do													\
 		{													\
-			a2 = BIG_DWORD_LE(DEREF_INT32(a0));				\
+			a2 = READ_INT32(a0);							\
 			if (!a2)										\
 			{												\
 				tms34010_ICount -= 20;						\
@@ -1425,7 +1401,7 @@ void wms_load_code_roms(void)
 		a5 = 0x80000000;									\
 		do													\
 		{													\
-			a2 = BIG_DWORD_LE(DEREF_INT32(a0));				\
+			a2 = READ_INT32(a0);							\
 			if (!a2)										\
 			{												\
 				tms34010_ICount -= 20;						\
@@ -1439,7 +1415,7 @@ void wms_load_code_roms(void)
 		a5 = 0x80000000;									\
 		do													\
 		{													\
-			a2 = BIG_DWORD_LE(DEREF_INT32(a0));				\
+			a2 = READ_INT32(a0);							\
 			if (!a2)										\
 			{												\
 				tms34010_ICount -= 20;						\
@@ -1668,25 +1644,25 @@ static int shimpact_speedup_r(int offset)
 }
 
 #define T2_FFC08C40																\
-	a5x = (INT32)(DEREF_INT8(a1+0x2d0));			/* MOVB   *A1(2D0h),A5  */  \
-	DEREF_INT8(a1+0x2d0) = a2 & 0xff;				/* MOVB   A2,*A1(2D0h)  */  \
+	a5x = (INT32)(READ_INT8(a1+0x2d0));				/* MOVB   *A1(2D0h),A5  */  \
+	WRITE_INT8(a1+0x2d0, a2 & 0xff);				/* MOVB   A2,*A1(2D0h)  */  \
 	a3x = 0xf0;										/* MOVI   F0h,A3		*/	\
 	a5x = (UINT32)a5x * (UINT32)a3x;				/* MPYU   A3,A5			*/	\
 	a5x += 0x1008000;								/* ADDI   1008000h,A5	*/  \
 	a3x = (UINT32)a2  * (UINT32)a3x;				/* MPYU   A2,A3			*/	\
 	a3x += 0x1008000;								/* ADDI   1008000h,A3	*/  \
-	a7x = (INT32)(DEREF_INT16(a1+0x190));			/* MOVE   *A1(190h),A7,0*/	\
-	a6x = (INT32)(DEREF_INT16(a5x+0x50));			/* MOVE   *A5(50h),A6,0 */	\
+	a7x = (INT32)(READ_INT16(a1+0x190));			/* MOVE   *A1(190h),A7,0*/	\
+	a6x = (INT32)(READ_INT16(a5x+0x50));			/* MOVE   *A5(50h),A6,0 */	\
 	a7x -= a6x;										/* SUB    A6,A7			*/  \
-	a6x = (INT32)(DEREF_INT16(a3x+0x50));			/* MOVE   *A3(50h),A6,0 */	\
+	a6x = (INT32)(READ_INT16(a3x+0x50));			/* MOVE   *A3(50h),A6,0 */	\
 	a7x += a6x;										/* ADD    A6,A7			*/  \
-	DEREF_INT16(a1+0x190) = a7x & 0xffff;			/* MOVE   A7,*A1(190h),0*/	\
-	a5x = DEREF_INT32(a5x+0xa0);					/* MOVE   *A5(A0h),A5,1 */	\
-	a3x = DEREF_INT32(a3x+0xa0);					/* MOVE   *A3(A0h),A3,1 */	\
-	a6x = DEREF_INT32(a1+0x140);					/* MOVE   *A1(140h),A6,1*/	\
+	WRITE_INT16(a1+0x190, a7x & 0xffff);			/* MOVE   A7,*A1(190h),0*/	\
+	a5x = READ_INT32(a5x+0xa0);						/* MOVE   *A5(A0h),A5,1 */	\
+	a3x = READ_INT32(a3x+0xa0);						/* MOVE   *A3(A0h),A3,1 */	\
+	a6x = READ_INT32(a1+0x140);						/* MOVE   *A1(140h),A6,1*/	\
 	a6xa7x = (INT64)a6x * a3x / a5x;				/* MPYS   A3,A6			*/  \
 													/* DIVS   A5,A6			*/  \
-	DEREF_INT32(a1+0x140) = a6xa7x & 0xffffffff;	/* MOVE   A6,*A1(140h),1*/
+	WRITE_INT32(a1+0x140, a6xa7x & 0xffffffff);		/* MOVE   A6,*A1(140h),1*/
 
 static int term2_speedup_r(int offset)
 {
@@ -1706,7 +1682,7 @@ static int term2_speedup_r(int offset)
 			INT64 a6xa7x;
 
 			b1 = 0;			 									// CLR    B1
-			b2 = (INT32)(DEREF_INT16(0x100F640));				// MOVE   @100F640h,B2,0
+			b2 = (INT32)(READ_INT16(0x100F640));				// MOVE   @100F640h,B2,0
 			if (!b2)											// JREQ   FFC029F0h
 			{
 				cpu_spinuntil_int();
@@ -1726,7 +1702,7 @@ static int term2_speedup_r(int offset)
 				if (b1 < b2)									// JRLT   FFC07800h
 				{
 					// FFC07800
-					a4 = (INT32)(DEREF_INT16(a10+0xc0));		// MOVE   *A10(C0h),A4,0
+					a4 = (INT32)(READ_INT16(a10+0xc0));			// MOVE   *A10(C0h),A4,0
 					a4 <<= 16;									// SLL    10h,A4
 				}
 				else
@@ -1742,9 +1718,9 @@ static int term2_speedup_r(int offset)
 				goto t2_FFC07DD0;								// JR     FFC07DD0h
 
 			t2_FFC078C0:
-				a8  = DEREF_INT32(a1+0x1c0);					// MOVE   *A1(1C0h),A8,1
-				a7  = DEREF_INT32(a1+0x1a0);					// MOVE   *A1(1A0h),A7,1
-				a14 = (INT32)(DEREF_INT16(a1+0x220));			// MOVE   *A1(220h),A14,0
+				a8  = READ_INT32(a1+0x1c0);						// MOVE   *A1(1C0h),A8,1
+				a7  = READ_INT32(a1+0x1a0);						// MOVE   *A1(1A0h),A7,1
+				a14 = (INT32)(READ_INT16(a1+0x220));			// MOVE   *A1(220h),A14,0
 				if (a14 & 0x6000)								// BTST   Eh,A14
 				{												// JRNE   FFC07C50h
 					goto t2_FFC07C50;							// BTST   Dh,A14
@@ -1757,15 +1733,15 @@ static int term2_speedup_r(int offset)
 
 				a2 = b1 - 1;									// MOVE   B1,A2;  DEC    A2
 				T2_FFC08C40										// CALLR  FFC08C40h
-				a14 = DEREF_INT32(a1);							// MOVE   *A1,A14,1
-				DEREF_INT32(a0) = a14;							// MOVE   A14,*A0,1
-				DEREF_INT32(a14+0x20) = a0;						// MOVE   A0,*A14(20h),1
+				a14 = READ_INT32(a1);							// MOVE   *A1,A14,1
+				WRITE_INT32(a0, a14);							// MOVE   A14,*A0,1
+				WRITE_INT32(a14+0x20, a0);						// MOVE   A0,*A14(20h),1
 				a14 = b0 - 0x1e0;								// MOVE   B0,A14; SUBI   1E0h,A14
-				DEREF_INT32(a1+0x20) = a14;						// MOVE   A14,*A1(20h),1
-				a9 = DEREF_INT32(a14);							// MOVE   *A14,A9,1
-				DEREF_INT32(a14) = a1;							// MOVE   A1,*A14,1
-				DEREF_INT32(a9+0x20) = a1;						// MOVE   A1,*A9(20h),1
-				DEREF_INT32(a1) = a9;							// MOVE   A9,*A1,1
+				WRITE_INT32(a1+0x20, a14);						// MOVE   A14,*A1(20h),1
+				a9 = READ_INT32(a14);							// MOVE   *A14,A9,1
+				WRITE_INT32(a14, a1);							// MOVE   A1,*A14,1
+				WRITE_INT32(a9+0x20, a1);						// MOVE   A1,*A9(20h),1
+				WRITE_INT32(a1, a9);							// MOVE   A9,*A1,1
 				goto t2_FFC07DD0;								// JR     FFC07DD0h
 
 			t2_FFC07AE0:
@@ -1776,15 +1752,15 @@ static int term2_speedup_r(int offset)
 
 				a2 = b1 + 1;									// MOVE   B1,A2; INC    A2
 				T2_FFC08C40										// CALLR  FFC08C40h
-				a14 = DEREF_INT32(a1);							// MOVE   *A1,A14,1
-				DEREF_INT32(a0) = a14;							// MOVE   A14,*A0,1
-				DEREF_INT32(a14+0x20) = a0;						// MOVE   A0,*A14(20h),1
+				a14 = READ_INT32(a1);							// MOVE   *A1,A14,1
+				WRITE_INT32(a0, a14);							// MOVE   A14,*A0,1
+				WRITE_INT32(a14+0x20, a0);						// MOVE   A0,*A14(20h),1
 				a14 = b0;										// MOVE   B0,A14
-				a9 = DEREF_INT32(a14+0x20);						// MOVE   *A14(20h),A9,1
-				DEREF_INT32(a1) = a14;							// MOVE   A14,*A1,1
-				DEREF_INT32(a14+0x20) = a1;						// MOVE   A1,*A14(20h),1
-				DEREF_INT32(a9) = a1;							// MOVE   A1,*A9,1
-				DEREF_INT32(a1+0x20) = a9;						// MOVE   A9,*A1(20h),1
+				a9 = READ_INT32(a14+0x20);						// MOVE   *A14(20h),A9,1
+				WRITE_INT32(a1, a14);							// MOVE   A14,*A1,1
+				WRITE_INT32(a14+0x20, a1);						// MOVE   A1,*A14(20h),1
+				WRITE_INT32(a9, a1);							// MOVE   A1,*A9,1
+				WRITE_INT32(a1+0x20, a9);						// MOVE   A9,*A1(20h),1
 				goto t2_FFC07DD0;
 
 			t2_FFC07C50:
@@ -1805,14 +1781,14 @@ static int term2_speedup_r(int offset)
 				}
 
 				// FFC07CC0
-				a14 = DEREF_INT32(a0+0x20);						// MOVE   *A0(20h),A14,1
-				DEREF_INT32(a14) = a1;							// MOVE   A1,*A14,1
-				DEREF_INT32(a1+0x20) = a14;						// MOVE   A14,*A1(20h),1
-				a14 = DEREF_INT32(a1);							// MOVE   *A1,A14,1
-				DEREF_INT32(a0) = a14;							// MOVE   A14,*A0,1
-				DEREF_INT32(a1) = a0;							// MOVE   A0,*A1,1
-				DEREF_INT32(a0 +0x20) = a1;						// MOVE   A1,*A0(20h),1
-				DEREF_INT32(a14+0x20) = a0;						// MOVE   A0,*A14(20h),1
+				a14 = READ_INT32(a0+0x20);						// MOVE   *A0(20h),A14,1
+				WRITE_INT32(a14, a1);							// MOVE   A1,*A14,1
+				WRITE_INT32(a1+0x20, a14);						// MOVE   A14,*A1(20h),1
+				a14 = READ_INT32(a1);							// MOVE   *A1,A14,1
+				WRITE_INT32(a0, a14);							// MOVE   A14,*A0,1
+				WRITE_INT32(a1, a0);							// MOVE   A0,*A1,1
+				WRITE_INT32(a0 +0x20, a1);						// MOVE   A1,*A0(20h),1
+				WRITE_INT32(a14+0x20, a0);						// MOVE   A0,*A14(20h),1
 
 			t2_FFC07DD0:
 				BURN_TIME(50);
@@ -1821,7 +1797,7 @@ static int term2_speedup_r(int offset)
 					break;
 				}
 
-				a1 = DEREF_INT32(a0);							// MOVE   *A0,A1,1
+				a1 = READ_INT32(a0);							// MOVE   *A0,A1,1
 				if (a10 != a1)									// CMP    A1,A10
 				{
 					goto t2_FFC078C0;							// JRNE   FFC078C0h
@@ -1938,19 +1914,6 @@ static int mk_sound_speedup_r (int offset)
 	if ((a==b)&&(cpu_get_pc()==0xf5d2)) cpu_spinuntil_int(); /* term2 */
 	return a;
 }
-static int smashtv_sound_speedup_r (int offset)
-{
-	unsigned char a, b;
-	a = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0218];
-	b = Machine->memory_region[Machine->drv->cpu[1].memory_region][0x0216];
-	if ((a==b)&&(cpu_get_pc()==0x963d)) cpu_spinuntil_int(); /* smashtv */
-	if ((a==b)&&(cpu_get_pc()==0x97d1)) cpu_spinuntil_int(); /* trog, trogp */
-	if ((a==b)&&(cpu_get_pc()==0x97be)) cpu_spinuntil_int(); /* hiimpact */
-	if ((a==b)&&(cpu_get_pc()==0x984c)) cpu_spinuntil_int(); /* shimpact */
-	if ((a==b)&&(cpu_get_pc()==0x9883)) cpu_spinuntil_int(); /* strkforc */
-//	if (errorlog) fprintf(errorlog, "PC: 0x%04x -- smashtv_sound_speedup\n", cpu_get_pc());
-	return a;
-}
 
 static void remove_access_errors(void)
 {
@@ -2025,19 +1988,11 @@ static void load_gfx_roms_8bit(void)
 
 static void load_adpcm_roms_512k(void)
 {
-	unsigned char *mem_reg3;
-	unsigned char *mem_reg4;
-	unsigned char *mem_reg5;
-	mem_reg3 = Machine->memory_region[3];
-	mem_reg4 = Machine->memory_region[4];
-	mem_reg5 = Machine->memory_region[5];
-	memcpy(mem_reg3+0x40000, mem_reg3+0x00000, 0x40000); /* copy u12 */
-	memcpy(mem_reg4+0x60000, mem_reg3+0x00000, 0x20000); /* copy u12 */
-	memcpy(mem_reg4+0x20000, mem_reg3+0x20000, 0x20000); /* copy u12 */
-	memcpy(mem_reg5+0x60000, mem_reg3+0x00000, 0x20000); /* copy u12 */
-	memcpy(mem_reg5+0x20000, mem_reg3+0x20000, 0x20000); /* copy u12 */
-	memcpy(mem_reg5+0x40000, mem_reg4+0x00000, 0x20000); /* copy u13 */
-	memcpy(mem_reg5+0x00000, mem_reg4+0x40000, 0x20000); /* copy u13 */
+	UINT8 *base = Machine->memory_region[3];
+
+	memcpy(base + 0xa0000, base + 0x20000, 0x20000);
+	memcpy(base + 0x80000, base + 0x60000, 0x20000);
+	memcpy(base + 0x60000, base + 0x20000, 0x20000);
 }
 
 static void wms_modify_pen(int i, int rgb)
@@ -2184,8 +2139,8 @@ void narc_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0101b300), TOBYTE(0x0101b31f), narc_speedup_r);
-	install_mem_read_handler(1, 0x0228, 0x0228, narc_music_speedup_r);
-	install_mem_read_handler(2, 0x0228, 0x0228, narc_digitizer_speedup_r);
+//	install_mem_read_handler(1, 0x0228, 0x0228, narc_music_speedup_r);
+//	install_mem_read_handler(2, 0x0228, 0x0228, narc_digitizer_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
 }
@@ -2193,51 +2148,70 @@ void trog_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010a20a0), TOBYTE(0x010a20bf), trog_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 	wms_protect_s = 0xffe47c40;
 	wms_protect_d = 0xffe47af0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+
+	/* expand the sound ROMs */
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 void trog3_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010a2080), TOBYTE(0x010a209f), trog3_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 	wms_protect_s = 0xffe47c70;
 	wms_protect_d = 0xffe47b20;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+
+	/* expand the sound ROMs */
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 void trogp_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010a1ee0), TOBYTE(0x010a1eff), trogp_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+
+	/* expand the sound ROMs */
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 void smashtv_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01086760), TOBYTE(0x0108677f), smashtv_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x01000000));
+
+	/* expand the sound ROMs */
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 void smashtv4_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01086780), TOBYTE(0x0108679f), smashtv4_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x01000000));
+
+	/* expand the sound ROMs */
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 void hiimpact_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01053140), TOBYTE(0x0105315f), hiimpact_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 	wms_protect_s = 0xffe77c20;
 	wms_protect_d = 0xffe77ad0;
 
@@ -2247,7 +2221,6 @@ void shimpact_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01052060), TOBYTE(0x0105207f), shimpact_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 	wms_protect_s = 0xffe07a40;
 	wms_protect_d = 0xffe078f0;
 
@@ -2257,17 +2230,21 @@ void strkforc_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01071dc0), TOBYTE(0x01071ddf), strkforc_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 	wms_protect_s = 0xffe4c100;
 	wms_protect_d = 0xffe4c1d0;
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x1000000));
+
+	/* expand the sound ROMs */
+	memcpy(&Machine->memory_region[2][0x20000], &Machine->memory_region[2][0x10000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x40000], &Machine->memory_region[2][0x30000], 0x10000);
+	memcpy(&Machine->memory_region[2][0x60000], &Machine->memory_region[2][0x50000], 0x10000);
 }
 void mk_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f040), TOBYTE(0x0104f05f), mk_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffc98930;
 	wms_protect_d = 0xffc987f0;
 
@@ -2277,7 +2254,7 @@ void mkla1_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f000), TOBYTE(0x0104f01f), mkla1_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffc96e20;
 	wms_protect_d = 0xffc96ce0;
 
@@ -2287,7 +2264,7 @@ void mkla2_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0104f020), TOBYTE(0x0104f03f), mkla2_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffc96d00;
 	wms_protect_d = 0xffc96bc0;
 
@@ -2297,7 +2274,7 @@ void term2_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x010aa040), TOBYTE(0x010aa05f), term2_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffd64f30;
 	wms_protect_d = 0xffd64de0;
 
@@ -2307,7 +2284,7 @@ void totcarn_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0107dde0), TOBYTE(0x0107ddff), totcarn_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffd1fd30;
 	wms_protect_d = 0xffd1fbf0;
 
@@ -2317,7 +2294,7 @@ void totcarnp_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x0107dde0), TOBYTE(0x0107ddff), totcarn_speedup_r);
-	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
+//	install_mem_read_handler(1, 0x0218, 0x0218, mk_sound_speedup_r);
 	wms_protect_s = 0xffd1edd0;
 	wms_protect_d = 0xffd1ec90;
 
@@ -2374,8 +2351,7 @@ void narc_init_machine(void)
 	remove_access_errors();
 
 	/* set up sound board */
-	narc_music_bank_select_w(0,0);
-	narc_digitizer_bank_select_w(0,0);
+	williams_narc_init(1);
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), narc_sound_w);
 
 	/* special input handler */
@@ -2408,11 +2384,9 @@ void smashtv_init_machine(void)
 	remove_access_errors();
 
 	/* set up sound board */
-	smashtv_sound_bank_select_w(0,0);
 	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &smashtv_pia_intf);
+	williams_cvsd_init(1, 0);
 	pia_reset();
-	pia_0_ca1_w(0, 1);
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), smashtv_sound_w);
 }
 void mk_init_machine(void)
@@ -2440,7 +2414,7 @@ void mk_init_machine(void)
 	remove_access_errors();
 
 	/* set up sound board */
-	mk_sound_bank_select_w(0,0);
+	williams_adpcm_init(1);
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), mk_sound_w);
 }
 void term2_init_machine(void)
@@ -2484,10 +2458,9 @@ void trog_init_machine(void)
 	remove_access_errors();
 
 	/* set up sound board */
-	smashtv_sound_bank_select_w(0,0);
-	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &smashtv_pia_intf);
+	pia_unconfig();
+	williams_cvsd_init(1, 0);
 	pia_reset();
-	pia_0_ca1_w (0, 1);
 	/* fix sound (hack) */
 	install_mem_write_handler(0, TOBYTE(0x01e00000), TOBYTE(0x01e0001f), trog_sound_w);
 }
@@ -2536,7 +2509,7 @@ void nbajam_init_machine(void)
 	wms_videoram_size = 0x80000*2;
 
 	/* set up sound board */
-	mk_sound_bank_select_w(0,0);
+	williams_adpcm_init(1);
 	install_mem_write_handler(0, TOBYTE(0x01d01020), TOBYTE(0x01d0103f), nbajam_sound_w);
 }
 

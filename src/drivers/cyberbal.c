@@ -1128,7 +1128,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_SUPPORTS_16BIT,
+			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberbal_vh_start,
 	cyberbal_vh_stop,
@@ -1182,7 +1182,7 @@ static struct MachineDriver cyberb2p_machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_SUPPORTS_16BIT,
+			VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	cyberbal_vh_start,
 	cyberbal_vh_stop,
@@ -1200,7 +1200,7 @@ static struct MachineDriver cyberb2p_machine_driver =
  *
  *************************************/
 
-ROM_START( cyberbal_rom )
+ROM_START( cyberbal )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "4123.1m", 0x00000, 0x10000, 0xfb872740 )
 	ROM_LOAD_ODD ( "4124.1k", 0x00000, 0x10000, 0x87babad9 )
@@ -1252,7 +1252,7 @@ ROM_START( cyberbal_rom )
 ROM_END
 
 
-ROM_START( cyberbt_rom )
+ROM_START( cyberbt )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "cyb1007.bin", 0x00000, 0x10000, 0xd434b2d7 )
 	ROM_LOAD_ODD ( "cyb1008.bin", 0x00000, 0x10000, 0x7d6c4163 )
@@ -1302,7 +1302,7 @@ ROM_START( cyberbt_rom )
 ROM_END
 
 
-ROM_START( cyberb2p_rom )
+ROM_START( cyberb2p )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "3019.bin", 0x00000, 0x10000, 0x029f8cb6 )
 	ROM_LOAD_ODD ( "3020.bin", 0x00000, 0x10000, 0x1871b344 )
@@ -1437,7 +1437,7 @@ struct GameDriver cyberbal_driver =
 	"1988",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	0,
+	GAME_REQUIRES_16BIT,
 	&machine_driver,
 	cyberbal_init,
 
@@ -1464,7 +1464,7 @@ struct GameDriver cyberbt_driver =
 	"1989",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	0,
+	GAME_REQUIRES_16BIT,
 	&machine_driver,
 	cyberbt_init,
 
@@ -1491,7 +1491,7 @@ struct GameDriver cyberb2p_driver =
 	"1989",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	0,
+	GAME_REQUIRES_16BIT,
 	&cyberb2p_machine_driver,
 	cyberb2p_init,
 

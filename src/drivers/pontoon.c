@@ -249,7 +249,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( pontoon_rom )
+ROM_START( pontoon )
 	ROM_REGION(0x10000)         /* 64k for code */
 	ROM_LOAD( "ponttekh.001",   0x0000, 0x4000, 0x1f8c1b38 )
 	ROM_LOAD( "ponttekh.002",   0x4000, 0x2000, 0xbefb4f48 )

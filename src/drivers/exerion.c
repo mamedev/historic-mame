@@ -290,7 +290,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( exerion_rom )
+ROM_START( exerion )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "exerion.07",   0x0000, 0x2000, 0x4c78d57d )
 	ROM_LOAD( "exerion.08",   0x2000, 0x2000, 0xdcadc1df )
@@ -317,7 +317,7 @@ ROM_START( exerion_rom )
 	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
 ROM_END
 
-ROM_START( exeriont_rom )
+ROM_START( exeriont )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "prom5.4p",     0x0000, 0x4000, 0x58b4dc1b )
 	ROM_LOAD( "prom6.4s",     0x4000, 0x2000, 0xfca18c2d )
@@ -343,7 +343,7 @@ ROM_START( exeriont_rom )
 	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
 ROM_END
 
-ROM_START( exerionb_rom )
+ROM_START( exerionb )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "eb5.bin",      0x0000, 0x4000, 0xda175855 )
 	ROM_LOAD( "eb6.bin",      0x4000, 0x2000, 0x0dbe2eff )

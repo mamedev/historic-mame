@@ -432,7 +432,7 @@ static struct MachineDriver tumblepb_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( tumblepop_rom )
+ROM_START( tumblepop )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_ODD ("hl01-1.f13", 0x00000, 0x40000, 0xd5a62a3f )
 	ROM_LOAD_EVEN("hl00-1.f12", 0x00000, 0x40000, 0xfd697c1b )
@@ -449,11 +449,11 @@ ROM_START( tumblepop_rom )
 	ROM_REGION(0x10000) /* Sound cpu */
 	ROM_LOAD( "hl02-.f16",  0x00000,  0x10000, 0xa5cab888 )
 
-	ROM_REGION(0x80000) /* Oki samples */
-	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, BADCRC(0xfabbf15d) )
+	ROM_REGION(0x20000) /* Oki samples */
+	ROM_LOAD( "hl03-.j15",  0x00000,  0x20000, 0x01b81da0 )
 ROM_END
 
-ROM_START( tumblepb_rom )
+ROM_START( tumblepb )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN ("thumbpop.12", 0x00000, 0x40000, 0x0c984703 )
 	ROM_LOAD_ODD ( "thumbpop.13", 0x00000, 0x40000, 0x864c4053 )
@@ -471,7 +471,7 @@ ROM_START( tumblepb_rom )
 	ROM_LOAD( "thumbpop.snd",  0x00000,  0x80000, 0xfabbf15d )
 ROM_END
 
-ROM_START( tumblepop2_rom )
+ROM_START( tumblepop2 )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN ("thumbpop.2", 0x00000, 0x40000, 0x34b016e1 )
 	ROM_LOAD_ODD ( "thumbpop.3", 0x00000, 0x40000, 0x89501c71 )

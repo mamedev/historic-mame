@@ -211,7 +211,8 @@ static void karnov_control_w(int offset, int data)
 			cpu_cause_interrupt (1, M6502_INT_NMI);
 			break;
 
-		case 4: /* DM (Interrupt for DMA by graphics chips?) */
+		case 4: /* DM (DMA to buffer spriteram) */
+			buffer_spriteram_w(0,0);
 			break;
 
 		case 6: /* SECREQ (Interrupt & Data to i8751) */
@@ -274,7 +275,7 @@ static struct MemoryWriteAddress karnov_writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
 	{ 0x060000, 0x063fff, MWA_BANK1 , &karnov_ram },
-	{ 0x080000, 0x080fff, MWA_BANK2 , &spriteram },
+	{ 0x080000, 0x080fff, MWA_BANK2 , &spriteram, &spriteram_size },
 	{ 0x0a0000, 0x0a07ff, MWA_BANK3 , &videoram, &videoram_size },
 	{ 0x0a0800, 0x0a0fff, videoram_mirror }, /* Wndrplnt only */
 	{ 0x0a1000, 0x0a1fff, karnov_foreground_w },
@@ -593,7 +594,7 @@ static struct MachineDriver karnov_machine_driver =
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	karnov_reset_init,
 
@@ -604,7 +605,7 @@ static struct MachineDriver karnov_machine_driver =
 	1024, 1024,
 	karnov_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	karnov_vh_start,
 	karnov_vh_stop,
@@ -643,7 +644,7 @@ static struct MachineDriver wndrplnt_machine_driver =
 			ignore_interrupt,0	/* Interrupts from OPL chip */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	karnov_reset_init,
 
@@ -654,7 +655,7 @@ static struct MachineDriver wndrplnt_machine_driver =
 	1024, 1024,
 	karnov_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	karnov_vh_start,
 	karnov_vh_stop,
@@ -676,7 +677,7 @@ static struct MachineDriver wndrplnt_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( karnov_rom )
+ROM_START( karnov )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "dn08-5",       0x00000, 0x10000, 0xdb92c264 )
 	ROM_LOAD_ODD ( "dn11-5",       0x00000, 0x10000, 0x05669b4b )
@@ -708,7 +709,7 @@ ROM_START( karnov_rom )
 	ROM_LOAD( "dn05-5",       0x8000, 0x8000, 0xfa1a31a8 )
 ROM_END
 
-ROM_START( karnovj_rom )
+ROM_START( karnovj )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "kar8",         0x00000, 0x10000, 0x3e17e268 )
 	ROM_LOAD_ODD ( "kar11",        0x00000, 0x10000, 0x417c936d )
@@ -740,7 +741,7 @@ ROM_START( karnovj_rom )
 	ROM_LOAD( "kar5",         0x8000, 0x8000, 0x7c9158f1 )
 ROM_END
 
-ROM_START( wndrplnt_rom )
+ROM_START( wndrplnt )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ea08.bin",   0x00000, 0x10000, 0xb0578a14 )
 	ROM_LOAD_ODD ( "ea11.bin",   0x00000, 0x10000, 0x271edc6c )
@@ -772,7 +773,7 @@ ROM_START( wndrplnt_rom )
 	ROM_LOAD( "ea05.bin",     0x8000, 0x8000, 0x8dbb6231 )
 ROM_END
 
-ROM_START( chelnov_rom )
+ROM_START( chelnov )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ee08-a.j15",   0x00000, 0x10000, 0x2f2fb37b )
 	ROM_LOAD_ODD ( "ee11-a.j20",   0x00000, 0x10000, 0xf306d05f )
@@ -801,7 +802,7 @@ ROM_START( chelnov_rom )
 	ROM_LOAD( "ee05-.f3",     0x8000, 0x8000, 0x6a8936b4 )
 ROM_END
 
-ROM_START( chelnovj_rom )
+ROM_START( chelnovj )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "a-j15.bin",    0x00000, 0x10000, 0x1978cb52 )
 	ROM_LOAD_ODD ( "a-j20.bin",    0x00000, 0x10000, 0xe0ed3d99 )
@@ -941,22 +942,22 @@ static void chelnov_hisave(void)
 
 static int karnov_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x8f2) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0x8f2 && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int karnovj_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x8ec) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0x8ec && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int chelnov_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0xdfe) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0xdfe && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static int chelnovj_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0xe06) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
+	if (cpu_get_pc()==0xe06 && (READ_WORD(&karnov_ram[0])&0xff00)!=0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&karnov_ram[0]);
 }
 
 static void karnov_init(void)

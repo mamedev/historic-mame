@@ -486,7 +486,7 @@ static struct MachineDriver madcrash_machine_driver = {
 **
 ***************************************************************************/
 
-ROM_START( marvins_rom )
+ROM_START( marvins )
 	ROM_REGION(0x10000)	/* 64k for CPUA code */
 	ROM_LOAD( "pa1",   0x0000, 0x2000, 0x0008d791 )
 	ROM_LOAD( "pa2",   0x2000, 0x2000, 0x9457003c )
@@ -516,7 +516,7 @@ ROM_START( marvins_rom )
 	ROM_LOAD( "marvmaze.j3",  0x800, 0x400, 0xdf9e6005 )
 ROM_END
 
-ROM_START( madcrash_rom )
+ROM_START( madcrash )
 	ROM_REGION(0x10000)	/* 64k for CPUA code */
 	ROM_LOAD( "p8",    0x0000, 0x2000, 0xecb2fdc9 )
 	ROM_LOAD( "p9",    0x2000, 0x2000, 0x0a87df26 )
@@ -550,7 +550,7 @@ ROM_START( madcrash_rom )
 	ROM_LOAD( "m1-prom.j5",  0x800, 0x400, 0x07678443 )
 ROM_END
 
-ROM_START( vangrd2_rom )
+ROM_START( vangrd2 )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "p1.9a",  0x0000, 0x2000, 0xbc9eeca5 )
 	ROM_LOAD( "p3.11a", 0x2000, 0x2000, 0x3970f69d )
@@ -584,7 +584,7 @@ ROM_START( vangrd2_rom )
 	ROM_LOAD( "mb7054.5j", 0x800, 0x400, 0x2e21a79b )
 ROM_END
 
-ROM_START( hal21_rom )
+ROM_START( hal21 )
 	ROM_REGION(0x10000)	/* 64k for CPUA code */
 	ROM_LOAD( "hal21p1.bin",    0x0000, 0x2000, 0x9d193830 )
 	ROM_LOAD( "hal21p2.bin",    0x2000, 0x2000, 0xc1f00350 )

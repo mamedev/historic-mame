@@ -394,7 +394,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( zodiack_rom )
+ROM_START( zodiack )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "ovg30c.2",     0x0000, 0x2000, 0xa2125e99 )
 	ROM_LOAD( "ovg30c.3",     0x2000, 0x2000, 0xaee2b77f )
@@ -413,7 +413,7 @@ ROM_START( zodiack_rom )
 	ROM_LOAD( "ovg20c.1",     0x0000, 0x1000, 0x2d3c3baf )
 ROM_END
 
-ROM_START( dogfight_rom )
+ROM_START( dogfight )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "df-2",         0x0000, 0x2000, 0xad24b28b )
 	ROM_LOAD( "df-3",         0x2000, 0x2000, 0xcd172707 )
@@ -433,7 +433,7 @@ ROM_START( dogfight_rom )
 	ROM_LOAD( "df-1",         0x0000, 0x1000, 0xdcbb1c5b )
 ROM_END
 
-ROM_START( moguchan_rom )
+ROM_START( moguchan )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "2.5r",         0x0000, 0x1000, 0x85d0cb7e )
 	ROM_LOAD( "4.5m",         0x1000, 0x1000, 0x359ef951 )

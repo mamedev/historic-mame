@@ -423,7 +423,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( firetrap_rom )
+ROM_START( firetrap )
 	ROM_REGION(0x20000)	/* 64k for code + 64k for banked ROMs */
 	ROM_LOAD( "di02.bin",     0x00000, 0x8000, 0x3d1e4bf7 )
 	ROM_LOAD( "di01.bin",     0x10000, 0x8000, 0x9bbae38b )
@@ -455,7 +455,7 @@ ROM_START( firetrap_rom )
 	/* there's also a protected 8751 microcontroller with ROM onboard */
 ROM_END
 
-ROM_START( firetpbl_rom )
+ROM_START( firetpbl )
 	ROM_REGION(0x28000)	/* 64k for code + 96k for banked ROMs */
 	ROM_LOAD( "ft0d.bin",     0x00000, 0x8000, 0x793ef849 )
 	ROM_LOAD( "ft0c.bin",     0x10000, 0x8000, 0x5c8a0562 )

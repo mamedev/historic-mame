@@ -287,7 +287,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( warlord_rom )
+ROM_START( warlord )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "037154.1m",    0x5000, 0x0800, 0x18006c87 )
 	ROM_LOAD( "037153.1k",    0x5800, 0x0800, 0x67758f4c )

@@ -1038,7 +1038,7 @@ static struct MachineDriver machinejp_driver =
 };
 
 
-ROM_START( sf1_rom )
+ROM_START( sf1 )
 	ROM_REGION(0x60000)
 	ROM_LOAD_EVEN("sfe-19", 0x00000, 0x10000, 0x8346c3ca )
 	ROM_LOAD_ODD ("sfe-22", 0x00000, 0x10000, 0x3a4bfaa8 )
@@ -1090,7 +1090,7 @@ ROM_START( sf1_rom )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
 ROM_END
 
-ROM_START( sf1us_rom )
+ROM_START( sf1us )
 	ROM_REGION(0x60000)
 	ROM_LOAD_EVEN("sfd-19", 0x00000, 0x10000, 0xfaaf6255 )
 	ROM_LOAD_ODD ("sfd-22", 0x00000, 0x10000, 0xe1fe3519 )
@@ -1142,7 +1142,7 @@ ROM_START( sf1us_rom )
 	ROM_LOAD( "sf-01.bin", 0x20000, 0x20000, 0x86e0f0d5 )
 ROM_END
 
-ROM_START( sf1jp_rom )
+ROM_START( sf1jp )
 	ROM_REGION(0x60000)
 	ROM_LOAD_EVEN("sf-19.bin", 0x00000, 0x10000, 0x116027d7 )
 	ROM_LOAD_ODD ("sf-22.bin", 0x00000, 0x10000, 0xd3cbd09e )

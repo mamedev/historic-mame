@@ -281,7 +281,7 @@ static void hisave(void)
 
 ***************************************************************************/
 
-ROM_START( pingpong_rom )
+ROM_START( pingpong )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pp_e04.rom",   0x0000, 0x4000, 0x18552f8f )
 	ROM_LOAD( "pp_e03.rom",   0x4000, 0x4000, 0xae5f01e8 )

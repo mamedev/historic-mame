@@ -1091,7 +1091,7 @@ static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
   Game ROMs
 ***************************************************************************/
 
-ROM_START( astrob_rom )
+ROM_START( astrob )
         ROM_REGION(0x10000)     /* 64k for code */
         ROM_LOAD( "829b",         0x0000, 0x0800, 0x14ae953c ) /* U25 */
         ROM_LOAD( "888",          0x0800, 0x0800, 0x42601744 ) /* U1 */
@@ -1126,7 +1126,7 @@ ROM_START( astrob_rom )
         ROM_LOAD( "812a",         0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
 ROM_END
 
-ROM_START( astrob1_rom )
+ROM_START( astrob1 )
         ROM_REGION(0x10000)     /* 64k for code */
         ROM_LOAD( "829",          0x0000, 0x0800, 0x5f66046e ) /* U25 */
         ROM_LOAD( "837",          0x0800, 0x0800, 0xce9c3763 ) /* U1 */
@@ -1158,7 +1158,7 @@ ROM_START( astrob1_rom )
         ROM_LOAD( "812a",         0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
 ROM_END
 
-ROM_START( s005_rom )
+ROM_START( s005 )
         ROM_REGION(0x10000)     /* 64k for code */
         ROM_LOAD( "1346b.u25",    0x0000, 0x0800, 0x8e68533e ) /* U25 */
         ROM_LOAD( "5092.u1",      0x0800, 0x0800, 0x29e10a81 ) /* U1 */
@@ -1190,7 +1190,7 @@ ROM_START( s005_rom )
         ROM_LOAD( "epr-1286.16",  0x0000, 0x0800, 0xfbe0d501 )
 ROM_END
 
-ROM_START( monsterb_rom )
+ROM_START( monsterb )
         ROM_REGION(0x14000)     /* 64k for code + space for background */
         ROM_LOAD( "1778cpu.bin",  0x0000, 0x0800, 0x19761be3 ) /* U25 */
         ROM_LOAD( "1779.bin",     0x0800, 0x0800, 0x5b67dc4c ) /* U1 */
@@ -1235,7 +1235,7 @@ ROM_START( monsterb_rom )
         ROM_LOAD( "pr1512.u31",   0x0000, 0x0020, 0x414ebe9b )  /* U31 */
 ROM_END
 
-ROM_START( spaceod_rom )
+ROM_START( spaceod )
         ROM_REGION(0x10000)     /* 64k for code */
         ROM_LOAD( "so-959.dat",   0x0000, 0x0800, 0xbbae3cd1 ) /* U25 */
         ROM_LOAD( "so-941.dat",   0x0800, 0x0800, 0x8b63585a ) /* U1 */
@@ -1273,7 +1273,7 @@ ROM_START( spaceod_rom )
 
 ROM_END
 
-ROM_START( pignewt_rom )
+ROM_START( pignewt )
         ROM_REGION(0x10000)     /* 64k for code */
         ROM_LOAD( "cpu.u25",    0x0000, 0x0800, 0x00000000 ) /* U25 */
         ROM_LOAD( "1888c",      0x0800, 0x0800, 0xfd18ed09 ) /* U1 */
@@ -1310,7 +1310,7 @@ ROM_START( pignewt_rom )
         /* SOUND ROMS ARE PROBABLY MISSING! */
 ROM_END
 
-ROM_START( pignewta_rom )
+ROM_START( pignewta )
         ROM_REGION(0x10000)     /* 64k for code */
         ROM_LOAD( "cpu.u25",    0x0000, 0x0800, 0x00000000 ) /* U25 */
         ROM_LOAD( "1888a",      0x0800, 0x0800, 0x491c0835 ) /* U1 */
@@ -1349,7 +1349,7 @@ ROM_START( pignewta_rom )
 ROM_END
 
 
-ROM_START( sindbadm_rom )
+ROM_START( sindbadm )
         ROM_REGION(0x10000)     /* 64k for code */
         ROM_LOAD( "epr5393.new",  0x0000, 0x2000, 0x51f2e51e )
         ROM_LOAD( "epr5394.new",  0x2000, 0x2000, 0xd39ce2ee )

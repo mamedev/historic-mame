@@ -459,7 +459,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( offtwall_rom )
+ROM_START( offtwall )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "otw2012.bin", 0x00000, 0x20000, 0xd08d81eb )
 	ROM_LOAD_ODD ( "otw2013.bin", 0x00000, 0x20000, 0x61c2553d )
@@ -478,7 +478,7 @@ ROM_START( offtwall_rom )
 ROM_END
 
 
-ROM_START( offtwalc_rom )
+ROM_START( offtwalc )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "090-2612.rom", 0x00000, 0x20000, 0xfc891a3f )
 	ROM_LOAD_ODD ( "090-2613.rom", 0x00000, 0x20000, 0x805d79d4 )

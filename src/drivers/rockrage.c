@@ -279,7 +279,7 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M6309,
+			CPU_HD6309,
 			3000000,		/* 24MHz/8 (?) */
 			0,
 			rockrage_readmem,rockrage_writemem,0,0,
@@ -287,7 +287,7 @@ static struct MachineDriver machine_driver =
         },
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			3000000,		/* 24MHz/8 (?) */
+			2000000,		/* ? */
 			2,
 			rockrage_readmem_sound, rockrage_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
@@ -330,7 +330,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rockrage_rom )
+ROM_START( rockrage )
 	ROM_REGION( 0x20000 ) /* code + banked roms */
 	ROM_LOAD( "rr-q01.rom", 0x08000, 0x08000, 0x0ddb5ef5 )	/* fixed ROM */
 	ROM_LOAD( "rr-q02.rom", 0x10000, 0x10000, 0xb4f6e346 )	/* banked ROM */
@@ -353,7 +353,7 @@ ROM_START( rockrage_rom )
 	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )
 ROM_END
 
-ROM_START( rockragj_rom )
+ROM_START( rockragj )
 	ROM_REGION( 0x20000 ) /* code + banked roms */
 	ROM_LOAD( "620k01.16c", 0x08000, 0x08000, 0x4f5171f7 )	/* fixed ROM */
 	ROM_LOAD( "620k02.15c", 0x10000, 0x10000, 0x04c4d8f7 )	/* banked ROM */

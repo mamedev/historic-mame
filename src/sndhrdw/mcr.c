@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "machine/mcr.h"
 #include "sndhrdw/mcr.h"
+#include "sndhrdw/williams.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 
@@ -60,10 +61,6 @@ static UINT8 squawkntalk_tms_command;
 static UINT8 squawkntalk_tms_strobes;
 extern struct pia6821_interface squawkntalk_pia0_intf;
 extern struct pia6821_interface squawkntalk_pia1_intf;
-
-/* Advanced Audio-specific globals */
-static UINT8 advaudio_sound_cpu;
-extern struct pia6821_interface advaudio_pia_intf;
 
 
 
@@ -128,13 +125,12 @@ void mcr_sound_init(void)
 	}
 
 	/* Advanced Audio */
-	if (mcr_sound_config & MCR_ADVANCED_AUDIO)
+	if (mcr_sound_config & MCR_WILLIAMS_SOUND)
 	{
-		pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &advaudio_pia_intf);
+		williams_cvsd_init(sound_cpu++, 0);
 		dac_index++;
-		advaudio_sound_cpu = sound_cpu++;
-		advaudio_reset_w(1);
-		advaudio_reset_w(0);
+		williams_cvsd_reset_w(1);
+		williams_cvsd_reset_w(0);
 	}
 
 	/* reset any PIAs */
@@ -622,122 +618,4 @@ struct pia6821_interface squawkntalk_pia1_intf =
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ squawkntalk_porta2_w, squawkntalk_portb2_w, 0, 0,
 	/*irqs   : A/B             */ squawkntalk_irq, squawkntalk_irq
-};
-
-
-
-/*************************************
- *
- *	MCR Advanced Audio communications
- *
- *	MC6809, 1 PIA, YM2151, HC55536 CVSD
- *
- *************************************/
-
-/********* internal interfaces ***********/
-static void advaudio_ym2151_irq(int state)
-{
-	pia_0_ca1_w(0, !state);
-}
-
-static void advaudio_irqa(int state)
-{
-	cpu_set_irq_line(advaudio_sound_cpu, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
-}
-
-static void advaudio_irqb(int state)
-{
-	cpu_set_nmi_line(advaudio_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
-}
-
-static void advaudio_bank_select_w(int offset, int data)
-{
-	UINT8 *RAM = Machine->memory_region[Machine->drv->cpu[advaudio_sound_cpu].memory_region];
-	int bank = data & 3;
-	int half = (data >> 2) & 1;
-	cpu_setbank(1, &RAM[0x10000 + (bank * 0x10000) + (half * 0x8000)]);
-}
-
-static void advaudio_delayed_data_w(int param)
-{
-	pia_0_portb_w(0, param & 0xff);
-	pia_0_cb1_w(0, param & 0x100);
-	pia_0_cb2_w(0, param & 0x200);
-}
-
-
-/********* external interfaces ***********/
-void advaudio_data_w(int offset, int data)
-{
-	timer_set(TIME_NOW, data, advaudio_delayed_data_w);
-}
-
-void advaudio_reset_w(int state)
-{
-	/* going high halts the CPU */
-	if (state)
-	{
-		cpu_set_reset_line(advaudio_sound_cpu,ASSERT_LINE);
-
-		/* IMPORTANT: the bank must be reset here! */
-		advaudio_bank_select_w(0, 0);
-	}
-	/* going low resets and reactivates the CPU */
-	else
-		cpu_set_reset_line(advaudio_sound_cpu,CLEAR_LINE);
-}
-
-
-/********* sound interfaces ***********/
-struct YM2151interface advaudio_ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579580,
-	{ YM3012_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },
-	{ advaudio_ym2151_irq }
-};
-
-struct DACinterface advaudio_dac_interface =
-{
-	1,
-	{ 50 }
-};
-
-struct hc55516_interface advaudio_cvsd_interface =
-{
-	1,			/* 1 chip */
-	{ 80 }
-};
-
-
-/********* memory interfaces ***********/
-struct MemoryReadAddress advaudio_readmem[] =
-{
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x4000, 0x4003, pia_0_r },
-	{ 0x8000, 0xffff, MRA_BANK1 },
-	{ -1 }	/* end of table */
-};
-
-struct MemoryWriteAddress advaudio_writemem[] =
-{
-	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x4000, 0x4003, pia_0_w },
-	{ 0x6000, 0x6000, hc55516_digit_clock_clear_w },
-	{ 0x6800, 0x6800, hc55516_clock_set_w },
-	{ 0x7800, 0x7800, advaudio_bank_select_w },
-	{ 0x8000, 0xffff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
-
-
-/********* PIA interfaces ***********/
-struct pia6821_interface advaudio_pia_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
-	/*irqs   : A/B             */ advaudio_irqa, advaudio_irqb
 };

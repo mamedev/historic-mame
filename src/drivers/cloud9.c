@@ -260,7 +260,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cloud9_rom )
+ROM_START( cloud9 )
 	ROM_REGION(0x14000)	/* 64k for code + extra VRAM space */
 	ROM_LOAD( "c9_6000.bin", 0x6000, 0x2000, 0xb5d95d98 )
 	ROM_LOAD( "c9_8000.bin", 0x8000, 0x2000, 0x49af8f22 )

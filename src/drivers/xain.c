@@ -340,7 +340,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			3000000,	/* 3 Mhz ??? */
+			2000000,	/* 2 Mhz ??? */
 			0,
 			readmem,writemem,0,0,
 			xainA_interrupt,4	/* wrong, this is just a hack */
@@ -352,7 +352,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6809,
-			3000000,	/* 3 Mhz ??? */
+			2000000,	/* 2 Mhz ??? */
 			2,
 			readmemB,writememB,0,0,
 			ignore_interrupt,0	/* IRQs are caused by CPU A */
@@ -400,7 +400,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( xsleena_rom )
+ROM_START( xsleena )
 	ROM_REGION(0x14000)	/* 64k for code */
 	ROM_LOAD( "s-10.7d",      0x08000, 0x8000, 0x370164be )
 	ROM_LOAD( "s-11.7c",      0x04000, 0x4000, 0xd22bf859 )
@@ -445,7 +445,7 @@ ROM_START( xsleena_rom )
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, 0xfed32888 )	/* timing? (not used) */
 ROM_END
 
-ROM_START( xsleenab_rom )
+ROM_START( xsleenab )
 	ROM_REGION(0x14000)	/* 64k for code */
 	ROM_LOAD( "1.rom",        0x08000, 0x8000, 0x79f515a7 )
 	ROM_LOAD( "s-11.7c",      0x04000, 0x4000, 0xd22bf859 )
@@ -490,7 +490,7 @@ ROM_START( xsleenab_rom )
 	ROM_LOAD( "mb7114e.59",   0x0000, 0x0100, 0xfed32888 )	/* timing? (not used) */
 ROM_END
 
-ROM_START( solarwar_rom )
+ROM_START( solarwar )
 	ROM_REGION(0x14000)	/* 64k for code */
 	ROM_LOAD( "p9-0.bin",     0x08000, 0x8000, 0x8ff372a8 )
 	ROM_LOAD( "pa-0.bin",     0x04000, 0x4000, 0x154f946f )

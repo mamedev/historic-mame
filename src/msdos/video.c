@@ -209,7 +209,6 @@ int wait_vsync;
 int use_triplebuf;
 int triplebuf_pos,triplebuf_page_width;
 int vsync_frame_rate;
-int color_depth;
 int skiplines;
 int skipcolumns;
 int scanlines;
@@ -375,6 +374,8 @@ struct mode_adjust  arcade_adjust[] = {
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 
+const int safety = 16;
+
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 980209 */
 {
 	struct osd_bitmap *bitmap;
@@ -393,11 +394,7 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 	{
 		int i,rowlen,rdwidth;
 		unsigned char *bm;
-		int safety;
 
-
-		if (width > 64) safety = 16;
-		else safety = 0;        /* don't create the safety area for GfxElement bitmaps */
 
 		if (depth != 8 && depth != 16) depth = 8;
 
@@ -417,15 +414,16 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 			return 0;
 		}
 
-		if ((bitmap->line = malloc(height * sizeof(unsigned char *))) == 0)
+		if ((bitmap->line = malloc((height + 2 * safety) * sizeof(unsigned char *))) == 0)
 		{
 			free(bm);
 			free(bitmap);
 			return 0;
 		}
 
-		for (i = 0;i < height;i++)
-			bitmap->line[i] = &bm[(i + safety) * rowlen + safety];
+		for (i = 0;i < height + 2 * safety;i++)
+			bitmap->line[i] = &bm[i * rowlen + safety];
+		bitmap->line += safety;
 
 		bitmap->_private = bm;
 
@@ -467,6 +465,7 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 {
 	if (bitmap)
 	{
+		bitmap->line -= safety;
 		free(bitmap->line);
 		free(bitmap->_private);
 		free(bitmap);
@@ -516,7 +515,7 @@ INLINE void swap_dirty(void)
 /*
  * This function tries to find the best display mode.
  */
-static void select_display_mode(void)
+static void select_display_mode(int depth)
 {
 	int width,height, i;
 
@@ -565,7 +564,7 @@ static void select_display_mode(void)
 	use_vesa = -1;
 
 	/* 16 bit color is supported only by VESA modes */
-	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
+	if (depth == 16)
 	{
 		if (errorlog)
 			fprintf (errorlog, "Game needs 16-bit colors. Using VESA\n");
@@ -642,7 +641,6 @@ static void select_display_mode(void)
 				}
 
 				use_vesa = 0;
-				color_depth = 8;
 			}
 			else
 				use_vesa = arcade_tweaked[i].vesa;
@@ -800,7 +798,7 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 
 
 /* center image inside the display based on the visual area */
-static void adjust_display(int xmin, int ymin, int xmax, int ymax)
+static void adjust_display(int xmin, int ymin, int xmax, int ymax, int depth)
 {
 	int temp;
 	int w,h;
@@ -914,7 +912,7 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 		}
 	}
 
-	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
+	if (depth == 16)
 	{
 		if (xmultiply > MAX_X_MULTIPLY16) xmultiply = MAX_X_MULTIPLY16;
 		if (ymultiply > MAX_Y_MULTIPLY16) ymultiply = MAX_Y_MULTIPLY16;
@@ -995,7 +993,7 @@ int game_attributes;
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. Attributes are the ones defined in driver.h. */
 /* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int attributes)
+struct osd_bitmap *osd_create_display(int width,int height,int depth,int attributes)
 {
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
@@ -1023,7 +1021,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	else
 		use_dirty = 0;
 
-	select_display_mode();
+	select_display_mode(depth);
 
 	if (vector_game)
 	{
@@ -1034,7 +1032,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	game_height = height;
 	game_attributes = attributes;
 
-	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
+	if (depth == 16)
 		scrbitmap = osd_new_bitmap(width,height,16);
 	else
 		scrbitmap = osd_new_bitmap(width,height,8);
@@ -1046,11 +1044,11 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 
 	/* center display based on visible area */
 	if (vector_game)
-		adjust_display(0, 0, width-1, height-1);
+		adjust_display(0, 0, width-1, height-1, depth);
 	else
 	{
 		struct rectangle vis = Machine->drv->visible_area;
-		adjust_display(vis.min_x, vis.min_y, vis.max_x, vis.max_y);
+		adjust_display(vis.min_x, vis.min_y, vis.max_x, vis.max_y, depth);
 	}
 
    /*Check for SVGA 15.75KHz mode (req. for 15.75KHz Arcade Monitor Modes)

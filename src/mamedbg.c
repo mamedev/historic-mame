@@ -61,7 +61,7 @@
 #if (HAS_M6805 || HAS_M68705 || HAS_HD63705)
 #include "cpu/m6805/m6805.h"
 #endif
-#if (HAS_M6309 || HAS_M6809)
+#if (HAS_HD6309 || HAS_M6809)
 #include "cpu/m6809/m6809.h"
 #endif
 #if (HAS_M68000 || defined HAS_M68010 || HAS_M68020)

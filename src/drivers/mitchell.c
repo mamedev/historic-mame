@@ -1152,7 +1152,7 @@ static struct MachineDriver marukin_machine_driver =
 
 
 
-ROM_START( mgakuen_rom )
+ROM_START( mgakuen )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "mg-1.1j",      0x00000, 0x08000, 0xbf02ea6b )
 	ROM_LOAD( "mg-2.1l",      0x10000, 0x20000, 0x64141b0c )
@@ -1169,7 +1169,7 @@ ROM_START( mgakuen_rom )
 	ROM_LOAD( "mg-5.1c",      0x00000, 0x80000, 0x170332f1 )	/* banked */
 ROM_END
 
-ROM_START( mgakuen2_rom )
+ROM_START( mgakuen2 )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "mg2-xf.1j",    0x00000, 0x08000, 0xc8165d2d )
 	ROM_LOAD( "mg2-y.1l",     0x10000, 0x20000, 0x75bbcc14 )
@@ -1187,7 +1187,7 @@ ROM_START( mgakuen2_rom )
 	ROM_LOAD( "mg2-e.1c",     0x00000, 0x80000, 0x70fd0809 )	/* banked */
 ROM_END
 
-ROM_START( pkladies_rom )
+ROM_START( pkladies )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "pko-prg1.14f", 0x00000, 0x08000, 0x86585a94 )
 	ROM_LOAD( "pko-prg2.15f", 0x10000, 0x10000, 0x86cbe82d )
@@ -1205,7 +1205,7 @@ ROM_START( pkladies_rom )
 	ROM_LOAD( "pko-voi2.3d",  0x20000, 0x20000, 0x18398bf6 )
 ROM_END
 
-ROM_START( dokaben_rom )
+ROM_START( dokaben )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "db06.11h",     0x00000, 0x08000, 0x413e0886 )
 	ROM_LOAD( "db07.13h",     0x10000, 0x20000, 0x8bdcf49e )
@@ -1225,7 +1225,7 @@ ROM_START( dokaben_rom )
 	ROM_LOAD( "db01.1d",      0x00000, 0x20000, 0x62fa6b81 )
 ROM_END
 
-ROM_START( pang_rom )
+ROM_START( pang )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "pang6.bin",    0x00000, 0x08000, 0x68be52cd )
 	ROM_LOAD( "pang7.bin",    0x10000, 0x20000, 0x4a2e70f6 )
@@ -1244,7 +1244,7 @@ ROM_START( pang_rom )
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
-ROM_START( pangb_rom )
+ROM_START( pangb )
 	ROM_REGION(0x60000)
 	ROM_LOAD( "pang_03.bin",  0x10000, 0x20000, 0x0c8477ae )   /* Decrypted data */
 	ROM_LOAD( "pang_02.bin",  0x30000, 0x20000, 0x3f15bb61 )   /* Decrypted op codes */
@@ -1274,7 +1274,7 @@ static void pangb_decode(void)
 	memcpy(RAM, RAM+0x58000, 0x8000);   /* Data */
 }
 
-ROM_START( bbros_rom )
+ROM_START( bbros )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "bb6.bin",      0x00000, 0x08000, 0xa3041ca4 )
 	ROM_LOAD( "bb7.bin",      0x10000, 0x20000, 0x09231c68 )
@@ -1293,7 +1293,7 @@ ROM_START( bbros_rom )
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
-ROM_START( pompingw_rom )
+ROM_START( pompingw )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "pwj_06.11h",   0x00000, 0x08000, 0x4a0a6426 )
 	ROM_LOAD( "pwj_07.13h",   0x10000, 0x20000, 0xa9402420 )
@@ -1312,7 +1312,7 @@ ROM_START( pompingw_rom )
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
 ROM_END
 
-ROM_START( cworld_rom )
+ROM_START( cworld )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "cw05.bin",     0x00000, 0x08000, 0xd3c1723d )
 	ROM_LOAD( "cw06.bin",     0x10000, 0x20000, 0xd71ed4a3 )
@@ -1334,7 +1334,7 @@ ROM_START( cworld_rom )
 	ROM_LOAD( "cw01.bin",     0x00000, 0x20000, 0xf4368f5b )
 ROM_END
 
-ROM_START( hatena_rom )
+ROM_START( hatena )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "q2-05.rom",    0x00000, 0x08000, 0x66c9e1da )
 	ROM_LOAD( "q2-06.rom",    0x10000, 0x20000, 0x5fc39916 )
@@ -1356,7 +1356,7 @@ ROM_START( hatena_rom )
 	ROM_LOAD( "q2-01.rom",    0x00000, 0x20000, 0x149e7a89 )
 ROM_END
 
-ROM_START( spang_rom )
+ROM_START( spang )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "spe_06.rom",   0x00000, 0x08000, 0x1af106fb )
 	ROM_LOAD( "spe_07.rom",   0x10000, 0x20000, 0x208b5f54 )
@@ -1376,7 +1376,7 @@ ROM_START( spang_rom )
 	ROM_LOAD( "spe_01.rom",   0x00000, 0x20000, 0x2d19c133 )
 ROM_END
 
-ROM_START( sbbros_rom )
+ROM_START( sbbros )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "06.j12",       0x00000, 0x08000, 0x292eee6a )
 	ROM_LOAD( "07.j13",       0x10000, 0x20000, 0xf46b698d )
@@ -1396,7 +1396,7 @@ ROM_START( sbbros_rom )
 	ROM_LOAD( "01.d1",        0x00000, 0x20000, 0xb96ea126 )
 ROM_END
 
-ROM_START( marukin_rom )
+ROM_START( marukin )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "mg3-01.9d",    0x00000, 0x08000, 0x04357973 )
 	ROM_LOAD( "mg3-02.10d",   0x10000, 0x20000, 0x50d08da0 )
@@ -1413,7 +1413,7 @@ ROM_START( marukin_rom )
 	ROM_LOAD( "mg3-e.1d",     0x00000, 0x80000, 0x106c2fa9 )	/* banked */
 ROM_END
 
-ROM_START( qtono1_rom )
+ROM_START( qtono1 )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "q3-05.rom",    0x00000, 0x08000, 0x1dd0a344 )
 	ROM_LOAD( "q3-06.rom",    0x10000, 0x20000, 0xbd6a2110 )
@@ -1435,7 +1435,7 @@ ROM_START( qtono1_rom )
 	ROM_LOAD( "q3-01.rom",    0x00000, 0x20000, 0x6c1be591 )
 ROM_END
 
-ROM_START( qsangoku_rom )
+ROM_START( qsangoku )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "q4-05c.rom",   0x00000, 0x08000, 0xe1d010b4 )
 	ROM_LOAD( "q4-06.rom",    0x10000, 0x20000, 0xa0301849 )
@@ -1457,7 +1457,7 @@ ROM_START( qsangoku_rom )
 	ROM_LOAD( "q4-01.rom",    0x00000, 0x20000, 0x5d0d07d8 )
 ROM_END
 
-ROM_START( block_rom )
+ROM_START( block )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "ble_05.rom",   0x00000, 0x08000, 0xc12e7f4c )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
@@ -1479,7 +1479,7 @@ ROM_START( block_rom )
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
-ROM_START( blockj_rom )
+ROM_START( blockj )
 	ROM_REGION(0x50000)
 	ROM_LOAD( "blj_05.rom",   0x00000, 0x08000, 0x3b55969a )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
@@ -1501,7 +1501,7 @@ ROM_START( blockj_rom )
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
 ROM_END
 
-ROM_START( blockbl_rom )
+ROM_START( blockbl )
 	ROM_REGION(0xa0000)
 	ROM_LOAD( "m6.l5",        0x30000, 0x20000, 0x5768d8eb )   /* Decrypted data */
 	ROM_LOAD( "m7.l6",        0x50000, 0x10000, 0x3b576fd9 )   /* Decrypted opcode + data */

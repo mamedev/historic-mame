@@ -324,7 +324,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( vulgus_rom )
+ROM_START( vulgus )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "v2",           0x0000, 0x2000, 0x3e18ff62 )
 	ROM_LOAD( "v3",           0x2000, 0x2000, 0xb4650d82 )
@@ -357,7 +357,7 @@ ROM_START( vulgus_rom )
 	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
-ROM_START( vulgus2_rom )
+ROM_START( vulgus2 )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "vulgus.002",   0x0000, 0x2000, 0xe49d6c5d )
 	ROM_LOAD( "vulgus.003",   0x2000, 0x2000, 0x51acef76 )
@@ -390,7 +390,7 @@ ROM_START( vulgus2_rom )
 	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
-ROM_START( vulgusj_rom )
+ROM_START( vulgusj )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "1-4n.bin",     0x0000, 0x2000, 0xfe5a5ca5 )
 	ROM_LOAD( "1-5n.bin",     0x2000, 0x2000, 0x847e437f )

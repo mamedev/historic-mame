@@ -683,7 +683,7 @@ INPUT_PORTS_START( theglob_input_ports )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x1c, "Easies" )
+	PORT_DIPSETTING(    0x1c, "Easiest" )
 	PORT_DIPSETTING(    0x18, "Very Easy" )
 	PORT_DIPSETTING(    0x14, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
@@ -1017,7 +1017,7 @@ static struct MachineDriver alibaba_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pacman_rom )
+ROM_START( pacman )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
@@ -1037,7 +1037,7 @@ ROM_START( pacman_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( npacmod_rom )
+ROM_START( npacmod )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
@@ -1057,7 +1057,7 @@ ROM_START( npacmod_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacmanjp_rom )
+ROM_START( pacmanjp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -1079,7 +1079,7 @@ ROM_START( pacmanjp_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacmanm_rom )
+ROM_START( pacmanm )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -1099,7 +1099,7 @@ ROM_START( pacmanm_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacmod_rom )
+ROM_START( pacmod )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pacmanh.6e",   0x0000, 0x1000, 0x3b2ec270 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -1119,7 +1119,7 @@ ROM_START( pacmod_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( hangly_rom )
+ROM_START( hangly )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hangly.6e",    0x0000, 0x1000, 0x5fe8610a )
 	ROM_LOAD( "hangly.6f",    0x1000, 0x1000, 0x73726586 )
@@ -1139,7 +1139,7 @@ ROM_START( hangly_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( hangly2_rom )
+ROM_START( hangly2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hangly.6e",    0x0000, 0x1000, 0x5fe8610a )
 	ROM_LOAD( "hangly2.6f",   0x1000, 0x0800, 0x5ba228bb )
@@ -1161,7 +1161,7 @@ ROM_START( hangly2_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( puckman_rom )
+ROM_START( puckman )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "puckman.6e",   0x0000, 0x1000, 0xa8ae23c5 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -1181,7 +1181,7 @@ ROM_START( puckman_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacheart_rom )
+ROM_START( pacheart )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "pacheart.pg1", 0x0000, 0x0800, 0xd844b679 )
 	ROM_LOAD( "pacheart.pg2", 0x0800, 0x0800, 0xb9152a38 )
@@ -1207,7 +1207,7 @@ ROM_START( pacheart_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
 
-ROM_START( piranha_rom )
+ROM_START( piranha )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pr1.cpu",      0x0000, 0x1000, 0xbc5ad024 )
 	ROM_LOAD( "pacman.6f",    0x1000, 0x1000, 0x1a6fb2d4 )
@@ -1229,7 +1229,7 @@ ROM_START( piranha_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacplus_rom )
+ROM_START( pacplus )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pacplus.6e",   0x0000, 0x1000, 0xd611ef68 )
 	ROM_LOAD( "pacplus.6f",   0x1000, 0x1000, 0xc7207556 )
@@ -1249,7 +1249,7 @@ ROM_START( pacplus_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( mspacman_rom )
+ROM_START( mspacman )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
 	ROM_LOAD( "boot2",        0x1000, 0x1000, 0x0d32de5e )
@@ -1271,7 +1271,7 @@ ROM_START( mspacman_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( mspacatk_rom )
+ROM_START( mspacatk )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
 	ROM_LOAD( "mspacatk.2",   0x1000, 0x1000, 0x0af09d31 )
@@ -1293,7 +1293,7 @@ ROM_START( mspacatk_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( pacgal_rom )
+ROM_START( pacgal )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
 	ROM_LOAD( "boot2",        0x1000, 0x1000, 0x0d32de5e )
@@ -1316,7 +1316,7 @@ ROM_START( pacgal_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( crush_rom )
+ROM_START( crush )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "crushkrl.6e",  0x0000, 0x1000, 0xa8dd8f54 )
 	ROM_LOAD( "crushkrl.6f",  0x1000, 0x1000, 0x91387299 )
@@ -1336,7 +1336,7 @@ ROM_START( crush_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( crush2_rom )
+ROM_START( crush2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tp1",          0x0000, 0x0800, 0xf276592e )
 	ROM_LOAD( "tp5a",         0x0800, 0x0800, 0x3d302abe )
@@ -1362,7 +1362,7 @@ ROM_START( crush2_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( crush3_rom )
+ROM_START( crush3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "unkmol.4e",    0x0000, 0x0800, 0x49150ddf )
 	ROM_LOAD( "unkmol.6e",    0x0800, 0x0800, 0x21f47e17 )
@@ -1388,7 +1388,7 @@ ROM_START( crush3_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( maketrax_rom )
+ROM_START( maketrax )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
 	ROM_LOAD( "maketrax.6f",  0x1000, 0x1000, 0x77531691 )
@@ -1408,7 +1408,7 @@ ROM_START( maketrax_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( mbrush_rom )
+ROM_START( mbrush )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mbrush.6e",    0x0000, 0x1000, 0x750fbff7 )
 	ROM_LOAD( "mbrush.6f",    0x1000, 0x1000, 0x27eb4299 )
@@ -1430,7 +1430,7 @@ ROM_START( mbrush_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( ponpoko_rom )
+ROM_START( ponpoko )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ppokoj1.bin",  0x0000, 0x1000, 0xffa3c004 )
 	ROM_LOAD( "ppokoj2.bin",  0x1000, 0x1000, 0x4a496866 )
@@ -1454,7 +1454,7 @@ ROM_START( ponpoko_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( ponpokov_rom )
+ROM_START( ponpokov )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ppoko1.bin",   0x0000, 0x1000, 0x49077667 )
 	ROM_LOAD( "ppoko2.bin",   0x1000, 0x1000, 0x5101781a )
@@ -1478,7 +1478,7 @@ ROM_START( ponpokov_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( eyes_rom )
+ROM_START( eyes )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "d7",           0x0000, 0x1000, 0x3b09ac89 )
 	ROM_LOAD( "e7",           0x1000, 0x1000, 0x97096855 )
@@ -1498,7 +1498,7 @@ ROM_START( eyes_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( eyes2_rom )
+ROM_START( eyes2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "g38201.7d",    0x0000, 0x1000, 0x2cda7185 )
 	ROM_LOAD( "g38202.7e",    0x1000, 0x1000, 0xb9fe4f59 )
@@ -1518,7 +1518,7 @@ ROM_START( eyes2_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( mrtnt_rom )
+ROM_START( mrtnt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tnt.1",        0x0000, 0x1000, 0x0e836586 )
 	ROM_LOAD( "tnt.2",        0x1000, 0x1000, 0x779c4c5b )
@@ -1538,7 +1538,7 @@ ROM_START( mrtnt_rom )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( lizwiz_rom )
+ROM_START( lizwiz )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6e.cpu",       0x0000, 0x1000, 0x32bc1990 )
 	ROM_LOAD( "6f.cpu",       0x1000, 0x1000, 0xef24b414 )
@@ -1559,7 +1559,7 @@ ROM_START( lizwiz_rom )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
-ROM_START( theglob_rom )
+ROM_START( theglob )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "glob.u2",      0x0000, 0x2000, 0x829d0bea )
 	ROM_LOAD( "glob.u3",      0x2000, 0x2000, 0x31de6628 )
@@ -1576,7 +1576,7 @@ ROM_START( theglob_rom )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
-ROM_START( beastf_rom )
+ROM_START( beastf )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "bf-u2.bin",    0x0000, 0x2000, 0x3afc517b )
 	ROM_LOAD( "bf-u3.bin",    0x2000, 0x2000, 0x8dbd76d0 )
@@ -1593,7 +1593,7 @@ ROM_START( beastf_rom )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 ROM_END
 
-ROM_START( jumpshot_rom )
+ROM_START( jumpshot )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6e",           0x0000, 0x1000, 0xf00def9a )
 	ROM_LOAD( "6f",           0x1000, 0x1000, 0xf70deae2 )
@@ -1613,7 +1613,7 @@ ROM_START( jumpshot_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-ROM_START( vanvan_rom )
+ROM_START( vanvan )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
 	ROM_LOAD( "van2.bin",     0x1000, 0x1000, 0xdf58e1cb )
@@ -1630,7 +1630,7 @@ ROM_START( vanvan_rom )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
 
-ROM_START( vanvanb_rom )
+ROM_START( vanvanb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "vanvan.050",   0x0000, 0x1000, 0xcf1b2df0 )
 	ROM_LOAD( "vanvan.051",   0x1000, 0x1000, 0x80eca6a5 )
@@ -1647,7 +1647,7 @@ ROM_START( vanvanb_rom )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
 
-ROM_START( alibaba_rom )
+ROM_START( alibaba )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6e",           0x0000, 0x1000, 0x38d701aa )
 	ROM_LOAD( "6f",           0x1000, 0x1000, 0x3d0e35f3 )

@@ -464,7 +464,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( ladybug_rom )
+ROM_START( ladybug )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "lb1.cpu",      0x0000, 0x1000, 0xd09e0adb )
 	ROM_LOAD( "lb2.cpu",      0x1000, 0x1000, 0x88bc4a0a )
@@ -485,7 +485,7 @@ ROM_START( ladybug_rom )
 	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
-ROM_START( ladybugb_rom )
+ROM_START( ladybugb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "lb1a.cpu",     0x0000, 0x1000, 0xec135e54 )
 	ROM_LOAD( "lb2a.cpu",     0x1000, 0x1000, 0x3049c5c6 )
@@ -506,7 +506,7 @@ ROM_START( ladybugb_rom )
 	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
-ROM_START( snapjack_rom )
+ROM_START( snapjack )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sj2a.bin",     0x0000, 0x1000, 0x6b30fcda )
 	ROM_LOAD( "sj2b.bin",     0x1000, 0x1000, 0x1f1088d1 )
@@ -527,7 +527,7 @@ ROM_START( snapjack_rom )
 	ROM_LOAD( "sj9h.bin",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
-ROM_START( cavenger_rom )
+ROM_START( cavenger )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1",            0x0000, 0x1000, 0x9e0cc781 )
 	ROM_LOAD( "2",            0x1000, 0x1000, 0x5ce5b950 )

@@ -267,22 +267,21 @@ INPUT_PORTS_START( darwin_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START	/* IN2 */
+	PORT_START	/* IN2 modified by Shingo Suzuki 1999/11/02 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x02, "20k and every 50k" )
+	PORT_DIPSETTING(    0x00, "30k and every 80k" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x0c, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN1, 2 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 2 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN3, 2 )
@@ -426,7 +425,7 @@ static struct MachineDriver brkthru_machine_driver =
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration (not sure) */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -475,7 +474,7 @@ static struct MachineDriver darwin_machine_driver =
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	58, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration / 60->58 tuned by Shingo Suzuki 1999/10/16 */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -512,7 +511,7 @@ static struct MachineDriver darwin_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( brkthru_rom )
+ROM_START( brkthru )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "brkthru.1",    0x04000, 0x4000, 0xcfb4265f )
 	ROM_LOAD( "brkthru.2",    0x08000, 0x8000, 0xfa8246d9 )
@@ -549,7 +548,7 @@ ROM_START( brkthru_rom )
 	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
 ROM_END
 
-ROM_START( brkthruj_rom )
+ROM_START( brkthruj )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "1",            0x04000, 0x4000, 0x09bd60ee )
 	ROM_LOAD( "2",            0x08000, 0x8000, 0xf2b2cd1c )
@@ -586,7 +585,7 @@ ROM_START( brkthruj_rom )
 	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
 ROM_END
 
-ROM_START( darwin_rom )
+ROM_START( darwin )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
 	ROM_LOAD( "darw_04.rom",  0x04000, 0x4000, 0x0eabf21c )
 	ROM_LOAD( "darw_05.rom",  0x08000, 0x8000, 0xe771f864 )

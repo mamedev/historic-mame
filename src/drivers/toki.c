@@ -459,7 +459,7 @@ static struct MachineDriver tokib_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( toki_rom )
+ROM_START( toki )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD_ODD ( "tokijp.004",   0x00000, 0x20000, 0x54a45e12 )
@@ -485,7 +485,7 @@ ROM_START( toki_rom )
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
-ROM_START( toki2_rom )
+ROM_START( toki2 )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "tokijp.006",   0x00000, 0x20000, 0x03d726b1 )
 	ROM_LOAD_ODD ( "4c.10k",       0x00000, 0x20000, 0xb2c345c5 )
@@ -511,7 +511,7 @@ ROM_START( toki2_rom )
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
-ROM_START( toki3_rom )
+ROM_START( toki3 )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "l10_6.bin",    0x00000, 0x20000, 0x94015d91 )
 	ROM_LOAD_ODD ( "k10_4e.bin",   0x00000, 0x20000, 0x531bd3ef )
@@ -537,7 +537,7 @@ ROM_START( toki3_rom )
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
-ROM_START( tokiu_rom )
+ROM_START( tokiu )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "6b.10m",       0x00000, 0x20000, 0x3674d9fe )
 	ROM_LOAD_ODD ( "14.10k",       0x00000, 0x20000, 0xbfdd48af )
@@ -563,7 +563,7 @@ ROM_START( tokiu_rom )
 	ROM_LOAD( "tokijp.007",   0x00000, 0x10000, 0xa67969c4 )
 ROM_END
 
-ROM_START( tokib_rom )
+ROM_START( tokib )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "toki.e3",      0x00000, 0x20000, 0xae9b3da4 )
 	ROM_LOAD_ODD ( "toki.e5",      0x00000, 0x20000, 0x66a5a1d6 )

@@ -341,7 +341,7 @@ static struct MachineDriver popflame_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( naughtyb_rom )
+ROM_START( naughtyb )
 	ROM_REGION(0x10000)      /* 64k for code */
 	ROM_LOAD( "1.30",      0x0000, 0x0800, 0xf6e1178e )
 	ROM_LOAD( "2.29",      0x0800, 0x0800, 0xb803eb8c )
@@ -367,7 +367,7 @@ ROM_START( naughtyb_rom )
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
 
-ROM_START( naughtya_rom )
+ROM_START( naughtya )
 	ROM_REGION(0x10000)      /* 64k for code */
 	ROM_LOAD( "91",        0x0000, 0x0800, 0x42b14bc7 )
 	ROM_LOAD( "92",        0x0800, 0x0800, 0xa24674b4 )
@@ -393,7 +393,7 @@ ROM_START( naughtya_rom )
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
 
-ROM_START( naughtyc_rom )
+ROM_START( naughtyc )
 	ROM_REGION(0x10000)      /* 64k for code */
 	ROM_LOAD( "nb1ic30",   0x0000, 0x0800, 0x3f482fa3 )
 	ROM_LOAD( "nb2ic29",   0x0800, 0x0800, 0x7ddea141 )
@@ -419,7 +419,7 @@ ROM_START( naughtyc_rom )
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
 
-ROM_START( popflame_rom )
+ROM_START( popflame )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic86.pop",     0x0000, 0x1000, 0x5e32bbdf )
 	ROM_LOAD( "ic80.pop",     0x1000, 0x1000, 0xb77abf3d )
@@ -437,7 +437,7 @@ ROM_START( popflame_rom )
 	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
 
-ROM_START( popflama_rom )
+ROM_START( popflama )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "popflama.30",     0x0000, 0x1000, 0xa9bb0e8a )
 	ROM_LOAD( "popflama.28",     0x1000, 0x1000, 0xdebe6d03 )

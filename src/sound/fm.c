@@ -3470,14 +3470,15 @@ static void OPMInitTable( int num )
 		OPM->LFO_wave[          i]= LFO_RATE * i / LFO_ENT /127;
 		OPM->LFO_wave[LFO_ENT  +i]= ( i<LFO_ENT/2 ? 0 : LFO_RATE )/127;
 		OPM->LFO_wave[LFO_ENT*2+i]= LFO_RATE* (i<LFO_ENT/2 ? i : LFO_ENT-i) /(LFO_ENT/2) /127;
-		OPM->LFO_wave[LFO_ENT*3+i]= LFO_RATE * rand() / 32768 /127;
+		OPM->LFO_wave[LFO_ENT*3+i]= LFO_RATE * (rand() & 0x7fff) / 32768 /127;
 	}
 #endif
 	/* NOISE wave table */
 	for(i=0;i<SIN_ENT;i++)
 	{
 		int sign = rand()&1 ? 0 : TL_MAX;
-		pom = 20*log10(32768.0/rand());   /* decibel */
+		int r=rand()&0x7fff;
+		pom = r ? 20*log10(32768.0/r):0;   /* decibel */
 		NOISE_TABLE[i] = &TL_TABLE[sign + (int)(pom / EG_STEP)]; /* TL_TABLE steps */
 	}
 }

@@ -411,7 +411,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mpatrol_rom )
+ROM_START( mpatrol )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mp-a.3l",      0x1000, 0x1000, 0xf4b85974 )
@@ -437,7 +437,7 @@ ROM_START( mpatrol_rom )
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
-ROM_START( mpatrolw_rom )
+ROM_START( mpatrolw )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mpw-a.3m",     0x0000, 0x1000, 0xbaa1a1d4 )
 	ROM_LOAD( "mpw-a.3l",     0x1000, 0x1000, 0x52459e51 )
@@ -463,7 +463,7 @@ ROM_START( mpatrolw_rom )
 	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
-ROM_START( mranger_rom )
+ROM_START( mranger )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
 	ROM_LOAD( "mr-a.3l",      0x1000, 0x1000, 0x217dd431 )

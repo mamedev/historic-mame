@@ -346,7 +346,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( simpsons_rom )
+ROM_START( simpsons )
 	ROM_REGION( 0x8a000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "g02.16c",      0x10000, 0x20000, 0x580ce1d6 )
 	ROM_LOAD( "g01.17c",      0x30000, 0x20000, 0x9f843def )
@@ -373,7 +373,7 @@ ROM_START( simpsons_rom )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
 
-ROM_START( simpsn2p_rom )
+ROM_START( simpsn2p )
 	ROM_REGION( 0x8a000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "g02.16c",      0x10000, 0x20000, 0x580ce1d6 )
 	ROM_LOAD( "simp_p01.rom", 0x30000, 0x20000, 0x07ceeaea )
@@ -400,7 +400,7 @@ ROM_START( simpsn2p_rom )
 	ROM_LOAD( "simp_1d.rom", 0x100000, 0x040000, 0x78778013 )
 ROM_END
 
-ROM_START( simps2pj_rom )
+ROM_START( simps2pj )
 	ROM_REGION( 0x8a000 ) /* code + banked roms + banked ram */
 	ROM_LOAD( "072-s02.16c",  0x10000, 0x20000, 0x265f7a47 )
 	ROM_LOAD( "072-t01.17c",  0x30000, 0x20000, 0x91de5c2d )

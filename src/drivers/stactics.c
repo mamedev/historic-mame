@@ -306,7 +306,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( stactics_rom )
+ROM_START( stactics )
     ROM_REGION(0x10000) /* 64k for code */
     ROM_LOAD( "epr-218x",     0x0000, 0x0800, 0xb1186ad2 )
     ROM_LOAD( "epr-219x",     0x0800, 0x0800, 0x3b86036d )

@@ -702,7 +702,7 @@ static struct MachineDriver mrgoemon_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gberet_rom )
+ROM_START( gberet )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "c10_l03.bin",  0x0000, 0x4000, 0xae29e4ff )
 	ROM_LOAD( "c08_l02.bin",  0x4000, 0x4000, 0x240836a5 )
@@ -721,7 +721,7 @@ ROM_START( gberet_rom )
 	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
 ROM_END
 
-ROM_START( rushatck_rom )
+ROM_START( rushatck )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "rush_h03.10c", 0x0000, 0x4000, 0x4d276b52 )
 	ROM_LOAD( "rush_h02.8c",  0x4000, 0x4000, 0xb5802806 )
@@ -740,7 +740,7 @@ ROM_START( rushatck_rom )
 	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
 ROM_END
 
-ROM_START( gberetb_rom )
+ROM_START( gberetb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2-ic82.10g",   0x0000, 0x8000, 0x6d6fb494 )
 	ROM_LOAD( "3-ic81.10f",   0x8000, 0x4000, 0xf1520a0a )
@@ -758,7 +758,7 @@ ROM_START( gberetb_rom )
 	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
 ROM_END
 
-ROM_START( mrgoemon_rom )
+ROM_START( mrgoemon )
 	ROM_REGION(0x14000)	/* 64k for code + banked ROM */
 	ROM_LOAD( "621d01.10c",   0x00000, 0x8000, 0xb2219c56 )
 	ROM_LOAD( "621d02.12c",   0x08000, 0x4000, 0xc3337a97 )

@@ -90,6 +90,7 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip);
+void plot_pixel(struct osd_bitmap *bitmap,int x,int y,int pen);
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley );

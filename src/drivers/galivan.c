@@ -637,7 +637,7 @@ static struct MachineDriver galivan_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( galivan_rom )
+ROM_START( galivan )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "gv1.1b",      0x00000, 0x08000, 0x5e480bfc )
 	ROM_LOAD( "gv2.3b",      0x08000, 0x04000, 0x0d1b3538 )
@@ -668,7 +668,7 @@ ROM_START( galivan_rom )
 	ROM_LOAD( "gv12.15b",    0x04000, 0x08000, 0x5b7a0d6d )
 ROM_END
 
-ROM_START( galivan2_rom )
+ROM_START( galivan2 )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "e-1",         0x00000, 0x08000, 0xd8cc72b8 )
 	ROM_LOAD( "e-2",         0x08000, 0x04000, 0x9e5b3157 )
@@ -699,7 +699,7 @@ ROM_START( galivan2_rom )
 	ROM_LOAD( "gv12.15b",    0x04000, 0x08000, 0x5b7a0d6d )
 ROM_END
 
-ROM_START( dangar_rom )
+ROM_START( dangar )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "dangar08.1b",     0x00000, 0x8000, 0xe52638f2 )
 	ROM_LOAD( "dangar09.3b",     0x08000, 0x4000, 0x809d280f )
@@ -730,7 +730,7 @@ ROM_START( dangar_rom )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 ROM_END
 
-ROM_START( dangar2_rom )
+ROM_START( dangar2 )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "dangar2.016",     0x00000, 0x8000, 0x743fa2d4 )
 	ROM_LOAD( "dangar2.017",     0x08000, 0x4000, 0x1cdc60a5 )
@@ -761,7 +761,7 @@ ROM_START( dangar2_rom )
 	ROM_LOAD( "dangar14.b15", 0x4000, 0x8000, 0x488e3463 )
 ROM_END
 
-ROM_START( dangarb_rom )
+ROM_START( dangarb )
 	ROM_REGION(0x14000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "8",               0x00000, 0x8000, 0x8136fd10 )
 	ROM_LOAD( "9",               0x08000, 0x4000, 0x3ce5ec11 )

@@ -43,7 +43,7 @@ sprites.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static unsigned char *pf_video,*pf_dirty,*dec8_sprites;
+static unsigned char *pf_video,*pf_dirty;
 static int scroll1[4],scroll2[4],pf1_attr[8],pf2_attr[8];
 static struct osd_bitmap *pf1_bitmap,*pf2_bitmap,*tf2_bitmap;
 unsigned char *dec8_row,*srdarwin_tileram;
@@ -254,10 +254,10 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		y=dec8_sprites[offs+1]+(dec8_sprites[offs]<<8);
+		y=buffered_spriteram[offs+1]+(buffered_spriteram[offs]<<8);
 		if ((y&0x8000) == 0) continue;
 
-        fx=dec8_sprites[offs+3];
+        fx=buffered_spriteram[offs+3];
 
 		if ((fx&0x1) == 0) continue;
 
@@ -265,11 +265,11 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
         fy=fx&0x2;
         fx=fx&0x4;
 
-		x = dec8_sprites[offs+5]+(dec8_sprites[offs+4]<<8);
-		colour = dec8_sprites[offs+6] >> 4;
+		x = buffered_spriteram[offs+5]+(buffered_spriteram[offs+4]<<8);
+		colour = buffered_spriteram[offs+6] >> 4;
 		if (priority==1 && (colour&8)) continue;
 		if (priority==2 && !(colour&8)) continue;
-		sprite = dec8_sprites[offs+7]+(dec8_sprites[offs+6]<<8);
+		sprite = buffered_spriteram[offs+7]+(buffered_spriteram[offs+6]<<8);
 		sprite &= 0x0fff;
 
 		if (extra) {y=y+16;sprite&=0xffe;}
@@ -312,9 +312,9 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash;
 
-		y =spriteram[offs+1]+(spriteram[offs]<<8);
+		y =buffered_spriteram[offs+1]+(buffered_spriteram[offs]<<8);
  		if ((y&0x8000) == 0) continue;
-		x = spriteram[offs+5]+(spriteram[offs+4]<<8);
+		x = buffered_spriteram[offs+5]+(buffered_spriteram[offs+4]<<8);
 		colour = ((x & 0xf000) >> 12);
 		flash=x&0x800;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
@@ -327,7 +327,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
 
 											/* multi = 0   1   3   7 */
-		sprite = spriteram[offs+3]+(spriteram[offs+2]<<8);
+		sprite = buffered_spriteram[offs+3]+(buffered_spriteram[offs+2]<<8);
 		sprite &= 0x0fff;
 
 		x = x & 0x01ff;
@@ -368,18 +368,18 @@ static void srdarwin_drawsprites(struct osd_bitmap *bitmap, int pri)
 	{
 		int multi,fx,sx,sy,sy2,code,color;
 
-		code = spriteram[offs+3] + ( ( spriteram[offs+1] & 0xe0 ) << 3 );
-		sx = (241 - spriteram[offs+2]);
+		code = buffered_spriteram[offs+3] + ( ( buffered_spriteram[offs+1] & 0xe0 ) << 3 );
+		sx = (241 - buffered_spriteram[offs+2]);
 	//if (sx < -7) sx += 256;
 
-		sy = spriteram[offs];
-		color = (spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x08) >> 1);
+		sy = buffered_spriteram[offs];
+		color = (buffered_spriteram[offs+1] & 0x03) + ((buffered_spriteram[offs+1] & 0x08) >> 1);
 
 		if (pri==0 && color!=0) continue;
 		if (pri==1 && color==0) continue;
 
-		fx = spriteram[offs+1] & 0x04;
-		multi = spriteram[offs+1] & 0x10;
+		fx = buffered_spriteram[offs+1] & 0x04;
+		multi = buffered_spriteram[offs+1] & 0x10;
 
 		if (flipscreen) {
 			sy=240-sy;
@@ -612,7 +612,6 @@ void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 /******************************************************************************/
-
 
 void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
@@ -900,17 +899,10 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int scrollx,scrolly,i;
 	int offsetx[4],offsety[4],quarter;
 
-
 	/* Palette stuff */
 	int code;
 	int colmask[16];
 	int pal_base;
-
-
-
-
-
-//if (errorlog) fprintf(errorlog,"Screen update\n");
 
 	palette_init_used_colors();
 
@@ -956,10 +948,6 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
 	palette_used_colors[256]=PALETTE_COLOR_TRANSPARENT;
-
-
-
-
 
 	if (palette_recalc())
     	memset(pf_dirty,1,0x800);
@@ -1008,7 +996,6 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	//draw_sprites1(bitmap,2);
 
-
 	/* Top layer */
 	draw_characters(bitmap,0xf0,6);
 }
@@ -1028,11 +1015,6 @@ void dec8_video_w(int offset, int data)
 		pf_video[offset]=data;
 		pf_dirty[offset/2] = 1;
 	}
-}
-
-void dec8_dma_flag(int offset, int data)
-{
-	memcpy(dec8_sprites,spriteram,0x800);
 }
 
 int dec8_vh_start (void)
@@ -1061,13 +1043,6 @@ int dec8_vh_start (void)
 	if (!strcmp(Machine->gamedrv->name,"breywood")) shackled_priority=1;
 	if (!strcmp(Machine->gamedrv->name,"shackled")) shackled_priority=1;
 
-	/* Sprite buffer for Captain Silver DMA flag */
-	if (!strcmp(Machine->gamedrv->name,"csilver")) {
-		dec8_sprites=malloc(0x800);
-	}
-	else
-		dec8_sprites=spriteram;
-
 	return 0;
 }
 
@@ -1078,11 +1053,6 @@ void dec8_vh_stop (void)
 	osd_free_bitmap(tf2_bitmap);
 	free(pf_video);
 	free(pf_dirty);
-
-	/* Sprite buffer for Captain Silver DMA flag */
-	if (!strcmp(Machine->gamedrv->name,"csilver"))
-		free(dec8_sprites);
-
 }
 
 /* Only use with tilemap games (SRDARWIN) for now */

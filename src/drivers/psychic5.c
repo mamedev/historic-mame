@@ -597,7 +597,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( psychic5_rom )
+ROM_START( psychic5 )
 	ROM_REGION( 0x20000 ) 				/* 2*64K for main CPU, Z80 */
 	ROM_LOAD( "p5d",          0x00000, 0x08000, 0x90259249 )
 	ROM_LOAD( "p5e",          0x10000, 0x10000, 0x72298f34 )

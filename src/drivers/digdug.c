@@ -407,7 +407,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( digdug_rom )
+ROM_START( digdug )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
@@ -441,7 +441,7 @@ ROM_START( digdug_rom )
 	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
-ROM_START( digdugb_rom )
+ROM_START( digdugb )
 	ROM_REGION(0x10000) /* 64k for code for the first CPU  */
 	ROM_LOAD( "dd1a.1",       0x0000, 0x1000, 0xa80ec984 )
 	ROM_LOAD( "dd1a.2",       0x1000, 0x1000, 0x559f00bd )
@@ -475,7 +475,7 @@ ROM_START( digdugb_rom )
 	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
-ROM_START( digdugat_rom )
+ROM_START( digdugat )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )
@@ -509,7 +509,7 @@ ROM_START( digdugat_rom )
 	ROM_LOAD( "digdug.spr",   0x0000, 0x0100, 0x7a2815b4 )
 ROM_END
 
-ROM_START( dzigzag_rom )
+ROM_START( dzigzag )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU  */
 	ROM_LOAD( "136007.101",   0x0000, 0x1000, 0xb9198079 )
 	ROM_LOAD( "136007.102",   0x1000, 0x1000, 0xb2acbe49 )

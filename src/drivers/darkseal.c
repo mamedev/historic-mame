@@ -381,7 +381,7 @@ static struct MachineDriver darkseal_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( darkseal_rom )
+ROM_START( darkseal )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "ga04-3.rom",   0x00000, 0x20000, 0xbafad556 )
 	ROM_LOAD_ODD ( "ga01-3.rom",   0x00000, 0x20000, 0xf409050e )
@@ -407,7 +407,7 @@ ROM_START( darkseal_rom )
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
-ROM_START( darksea1_rom )
+ROM_START( darksea1 )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "ga-04.rom",    0x00000, 0x20000, 0xa1a985a9 )
 	ROM_LOAD_ODD ( "ga-01.rom",    0x00000, 0x20000, 0x98bd2940 )
@@ -433,7 +433,7 @@ ROM_START( darksea1_rom )
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
-ROM_START( gatedoom_rom )
+ROM_START( gatedoom )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "gb04-4",       0x00000, 0x20000, 0x8e3a0bfd )
 	ROM_LOAD_ODD ( "gb01-4",       0x00000, 0x20000, 0x8d0fd383 )
@@ -459,7 +459,7 @@ ROM_START( gatedoom_rom )
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
 ROM_END
 
-ROM_START( gatedom1_rom )
+ROM_START( gatedom1 )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "gb04.bin",     0x00000, 0x20000, 0x4c3bbd2b )
 	ROM_LOAD_ODD ( "gb01.bin",     0x00000, 0x20000, 0x59e367f4 )

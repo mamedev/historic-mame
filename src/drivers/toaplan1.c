@@ -1571,7 +1571,7 @@ static struct MachineDriver vm_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rallybik_rom )
+ROM_START( rallybik )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "rb_02.bin",   0x00000, 0x08000, 0x383386d7 )
 	ROM_LOAD_ODD ( "rb_01.bin",   0x00000, 0x08000, 0x7602f6a7 )
@@ -1599,7 +1599,7 @@ ROM_START( rallybik_rom )
 	ROM_LOAD( "rb_05.bin",  0x00000, 0x04000, 0x10814601 )
 ROM_END
 
-ROM_START( truxton_rom )
+ROM_START( truxton )
 	ROM_REGION(0x40000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "b65_11.bin",  0x00000, 0x20000, 0x1a62379a )
 	ROM_LOAD_ODD ( "b65_10.bin",  0x00000, 0x20000, 0xaff5195d )
@@ -1619,7 +1619,7 @@ ROM_START( truxton_rom )
 	ROM_LOAD( "b65_09.bin",  0x0000, 0x8000, 0xf1c0f410 )
 ROM_END
 
-ROM_START( hellfire_rom )
+ROM_START( hellfire )
 	ROM_REGION(0x40000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "b90-14.bin",  0x00000, 0x20000, 0x101df9f5 )
 	ROM_LOAD_ODD ( "b90-15.bin",  0x00000, 0x20000, 0xe67fd452 )
@@ -1639,7 +1639,7 @@ ROM_START( hellfire_rom )
 	ROM_LOAD( "b90-03.bin",  0x0000, 0x8000, 0x4058fa67 )
 ROM_END
 
-ROM_START( zerowing_rom )
+ROM_START( zerowing )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "o15-11.rom",  0x00000, 0x08000, 0x6ff2b9a0 )
 	ROM_LOAD_ODD ( "o15-12.rom",  0x00000, 0x08000, 0x9773e60b )
@@ -1661,7 +1661,7 @@ ROM_START( zerowing_rom )
 	ROM_LOAD( "o15-13.rom",  0x0000, 0x8000, 0xe7b72383 )
 ROM_END
 
-ROM_START( demonwld_rom )
+ROM_START( demonwld )
 	ROM_REGION(0x40000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "rom10",  0x00000, 0x20000, 0x036ee46c )
 	ROM_LOAD_ODD ( "rom09",  0x00000, 0x20000, 0xbed746e3 )
@@ -1681,7 +1681,7 @@ ROM_START( demonwld_rom )
 	ROM_LOAD( "rom11",  0x00000, 0x08000, 0x397eca1b )
 ROM_END
 
-ROM_START( outzone_rom )
+ROM_START( outzone )
 	ROM_REGION(0x40000)		/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "rom7.bin",  0x00000, 0x20000, 0x936e25d8 )
 	ROM_LOAD_ODD ( "rom8.bin",  0x00000, 0x20000, 0xd19b3ecf )
@@ -1699,7 +1699,7 @@ ROM_START( outzone_rom )
 	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
 ROM_END
 
-ROM_START( outzonep_rom )
+ROM_START( outzonep )
 	ROM_REGION(0x40000)		/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "18.bin",  0x00000, 0x20000, 0x31a171bb )
 	ROM_LOAD_ODD ( "19.bin",  0x00000, 0x20000, 0x804ecfd1 )
@@ -1736,7 +1736,7 @@ ROM_START( outzonep_rom )
 	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, 0x73d8e235 )
 ROM_END
 
-ROM_START( vimana_rom )
+ROM_START( vimana )
 	ROM_REGION(0x40000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "vim07.bin",  0x00000, 0x20000, 0x1efaea84 )
 	ROM_LOAD_ODD ( "vim08.bin",  0x00000, 0x20000, 0xe45b7def )
@@ -1755,7 +1755,7 @@ ROM_START( vimana_rom )
 	ROM_LOAD( "hd647180.snd",  0x00000, 0x08000, 0x00000000 )
 ROM_END
 
-ROM_START( vimana2_rom )
+ROM_START( vimana2 )
 	ROM_REGION(0x40000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "vimana07.bin",  0x00000, 0x20000, 0x5a4bf73e )
 	ROM_LOAD_ODD ( "vimana08.bin",  0x00000, 0x20000, 0x03ba27e8 )

@@ -47,11 +47,11 @@
 
   The palette and the lookup table are initialized to default values by the
   main core, but can be initialized by the driver using the function
-  MachineDriver->vh_convert_color_prom(). For games using palette RAM, that
+  MachineDriver->vh_init_palette(). For games using palette RAM, that
   function is usually not needed, and the lookup table can be set up by
   properly initializing the color_codes_start and total_color_codes fields in
   the GfxDecodeInfo array.
-  When vh_convert_color_prom() initializes the lookup table, it maps gfx codes
+  When vh_init_palette() initializes the lookup table, it maps gfx codes
   to game colors (P1 above). The lookup table will be converted by the core to
   map to OS specific pens (P3 above), and stored in Machine->colortable.
 
@@ -60,7 +60,7 @@
   -------------
   The available display modes can be summarized in four categories:
   1) Static palette. Use this for games which use PROMs for color generation.
-     The palette is initialized by vh_convert_color_prom(), and never changed
+     The palette is initialized by vh_init_palette(), and never changed
      again.
   2) Dynamic palette. Use this for games which use RAM for color generation and
      have no more than MAX_PENS colors in the palette. The palette can be
@@ -87,8 +87,8 @@
   4) 16-bit color. This should only be used for games which use more than
      MAX_PENS colors at a time. It is slower than the other modes, so it should
 	 be avoided whenever possible. Transparency support is limited.
-     MachineDriver->video_attributes must contain both VIDEO_MODIFIES_PALETTE
-	 and VIDEO_SUPPORTS_16BIT.
+     MachineDriver->video_attributes must contain VIDEO_MODIFIES_PALETTE, and
+	 GameDriver->flags GAME_REQUIRES_16BIT.
 
   The dynamic shrinking of the palette works this way: as colors are requested,
   they are associated to a pen. When a color is no longer needed, the pen is
@@ -104,7 +104,7 @@
   requires a screen refresh. The color quality in 3) is also better than in 4)
   if the game uses more than 5 bits per color component. For testing purposes,
   you can switch between the two modes by just adding/removing the
-  VIDEO_SUPPPORTS_16BIT flag (but be warned about the limited transparency
+  GAME_REQUIRES_16BIT flag (but be warned about the limited transparency
   support in 16-bit mode).
 
 ******************************************************************************/
@@ -157,17 +157,16 @@ int palette_start(void)
 	else game_colortable = Machine->colortable = 0;
 
 	/* ASG 980209 - allocate space for the pens */
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
+	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
 		shrinked_pens = malloc(32768 * sizeof (short));
 	else
 		shrinked_pens = malloc(STATIC_MAX_PENS * sizeof (short));
 
 	Machine->pens = malloc(Machine->drv->total_colors * sizeof (short));
 
-	if ((Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE) &&
-			Machine->drv->total_colors > DYNAMIC_MAX_PENS)
+	if ((Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE))
 	{
-		/* if the palette changes dynamically and has more than 256 colors, */
+		/* if the palette changes dynamically, */
 		/* we'll need the usage arrays to help in shrinking. */
 		palette_used_colors = malloc((1+1+1+3+1) * Machine->drv->total_colors * sizeof(unsigned char));
 		pen_visiblecount = malloc(2 * Machine->drv->total_colors * sizeof(int));
@@ -228,9 +227,20 @@ void palette_init(void)
 	int i;
 
 
+	/* We initialize the palette and colortable to some default values so that */
+	/* drivers which dynamically change the palette don't need a vh_init_palette() */
+	/* function (provided the default color table fits their needs). */
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		game_palette[3*i + 0] = ((i & 1) >> 0) * 0xff;
+		game_palette[3*i + 1] = ((i & 2) >> 1) * 0xff;
+		game_palette[3*i + 2] = ((i & 4) >> 2) * 0xff;
+	}
+
 	/* Preload the colortable with a default setting, following the same */
-	/* order of the palette. The driver can overwrite this either in */
-	/* convert_color_prom(), or passing palette and colortable. */
+	/* order of the palette. The driver can overwrite this in */
+	/* vh_init_palette() */
 	for (i = 0;i < Machine->drv->color_table_len;i++)
 		game_colortable[i] = i % Machine->drv->total_colors;
 
@@ -238,52 +248,15 @@ void palette_init(void)
 	/* can modify this. */
 	palette_transparent_color = -1;
 
-	if (Machine->gamedrv->palette)
+	/* now the driver can modify the default values if it wants to. */
+	if (Machine->drv->vh_init_palette)
 	{
-		memcpy(game_palette,Machine->gamedrv->palette,3 * Machine->drv->total_colors * sizeof(unsigned char));
-		if (Machine->gamedrv->colortable)
-			memcpy(game_colortable,Machine->gamedrv->colortable,Machine->drv->color_table_len * sizeof(unsigned short));
-	}
-	else
-	{
-		unsigned char *p = game_palette;
-
-
-		/* We initialize the palette and colortable to some default values so that */
-		/* drivers which dynamically change the palette don't need a convert_color_prom() */
-		/* function (provided the default color table fits their needs). */
-
-		for (i = 0;i < Machine->drv->total_colors;i++)
-		{
-			*(p++) = ((i & 1) >> 0) * 0xff;
-			*(p++) = ((i & 2) >> 1) * 0xff;
-			*(p++) = ((i & 4) >> 2) * 0xff;
-		}
-
-		/* now the driver can modify the default values if it wants to. */
-		if (Machine->drv->vh_convert_color_prom)
-		{
-			const unsigned char *color_prom;
-
-
-			color_prom = Machine->gamedrv->color_prom;
-
-			/* if the special PROM_MEMORY_REGION() macro has been used, make */
-			/* color_prom point to the specified memory region. */
-			for (i = 0;i < MAX_MEMORY_REGIONS;i++)
-			{
-				if (color_prom == PROM_MEMORY_REGION(i))
-				{
-					color_prom = Machine->memory_region[i];
-					break;
-				}
-			}
- 			(*Machine->drv->vh_convert_color_prom)(game_palette,game_colortable,color_prom);
-		}
+		(*Machine->drv->vh_init_palette)(game_palette,game_colortable,
+				Machine->memory_region[Machine->gamedrv->prom_memory_region]);
 	}
 
 
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
+	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
 	{
 		if (Machine->scrbitmap->depth == 16)
 			osd_allocate_colors(32768,0,shrinked_pens);
@@ -324,113 +297,89 @@ void palette_init(void)
 	}
 	else
 	{
-		if (((Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE) &&
-				Machine->drv->total_colors <= DYNAMIC_MAX_PENS) ||
-				(!(Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE) &&
-//				Machine->drv->total_colors <= STATIC_MAX_PENS))
-				Machine->drv->total_colors <= DYNAMIC_MAX_PENS))
-/* I use DYNAMIC_MAX_PENS instead of STATIC_MAX_PENS to leave free pens for the */
-/* user interface whenever possible */
+		if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
 		{
-			for (i = 0;i < Machine->drv->total_colors;i++)
+			/* copy over the default palette... */
+			for (i = 0;i < DYNAMIC_MAX_PENS && i < Machine->drv->total_colors;i++)
 			{
-				palette_map[i] = i;
 				shrinked_palette[3*i + 0] = game_palette[3*i + 0];
 				shrinked_palette[3*i + 1] = game_palette[3*i + 1];
 				shrinked_palette[3*i + 2] = game_palette[3*i + 2];
+
+				pen_usage_count[i] = 0;
+			}
+
+			/* ... but allocate two fixed pens at the beginning: */
+			/*  transparent black */
+			shrinked_palette[3*TRANSPARENT_PEN+0] = 0;
+			shrinked_palette[3*TRANSPARENT_PEN+1] = 0;
+			shrinked_palette[3*TRANSPARENT_PEN+2] = 0;
+			pen_usage_count[TRANSPARENT_PEN] = 1;	/* so the pen will not be reused */
+
+			/* non transparent black */
+			shrinked_palette[3*BLACK_PEN+0] = 0;
+			shrinked_palette[3*BLACK_PEN+1] = 0;
+			shrinked_palette[3*BLACK_PEN+2] = 0;
+			pen_usage_count[BLACK_PEN] = 1;
+
+			/* create some defaults associations of game colors to shrinked pens. */
+			/* They will be dynamically modified at run time. */
+			for (i = 0;i < Machine->drv->total_colors;i++)
+			{
+				palette_map[i] = (i & 7) + 8;
 			}
 
 			osd_allocate_colors(
-					Machine->drv->total_colors,
+					DYNAMIC_MAX_PENS,
 					shrinked_palette,
 					shrinked_pens);
 		}
 		else
 		{
-			if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
-			{
-				/* copy over the default palette... */
-				for (i = 0;i < DYNAMIC_MAX_PENS;i++)
-				{
-					shrinked_palette[3*i + 0] = game_palette[3*i + 0];
-					shrinked_palette[3*i + 1] = game_palette[3*i + 1];
-					shrinked_palette[3*i + 2] = game_palette[3*i + 2];
-
-					pen_usage_count[i] = 0;
-				}
-
-				/* ... but allocate two fixed pens at the beginning: */
-				/*  transparent black */
-				shrinked_palette[3*TRANSPARENT_PEN+0] = 0;
-				shrinked_palette[3*TRANSPARENT_PEN+1] = 0;
-				shrinked_palette[3*TRANSPARENT_PEN+2] = 0;
-				pen_usage_count[TRANSPARENT_PEN] = 1;	/* so the pen will not be reused */
-
-				/* non transparent black */
-				shrinked_palette[3*BLACK_PEN+0] = 0;
-				shrinked_palette[3*BLACK_PEN+1] = 0;
-				shrinked_palette[3*BLACK_PEN+2] = 0;
-				pen_usage_count[BLACK_PEN] = 1;
-
-				/* create some defaults associations of game colors to shrinked pens. */
-				/* They will be dynamically modified at run time. */
-				for (i = 0;i < Machine->drv->total_colors;i++)
-				{
-					palette_map[i] = (i & 7) + 8;
-				}
-
-				osd_allocate_colors(
-						DYNAMIC_MAX_PENS,
-						shrinked_palette,
-						shrinked_pens);
-			}
-			else
-			{
-				int j,used;
+			int j,used;
 
 
 if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->total_colors);
-				/* shrink palette to fit */
-				used = 0;
+			/* shrink palette to fit */
+			used = 0;
 
-				for (i = 0;i < Machine->drv->total_colors;i++)
+			for (i = 0;i < Machine->drv->total_colors;i++)
+			{
+				for (j = 0;j < used;j++)
 				{
-					for (j = 0;j < used;j++)
-					{
-						if (shrinked_palette[3*j + 0] == game_palette[3*i + 0] &&
-								shrinked_palette[3*j + 1] == game_palette[3*i + 1] &&
-								shrinked_palette[3*j + 2] == game_palette[3*i + 2])
-							break;
-					}
+					if (shrinked_palette[3*j + 0] == game_palette[3*i + 0] &&
+							shrinked_palette[3*j + 1] == game_palette[3*i + 1] &&
+							shrinked_palette[3*j + 2] == game_palette[3*i + 2])
+						break;
+				}
 
-					palette_map[i] = j;
+				palette_map[i] = j;
 
-					if (j == used)
+				if (j == used)
+				{
+					used++;
+					if (used > STATIC_MAX_PENS)
 					{
-						used++;
-						if (used > STATIC_MAX_PENS)
-						{
-							used = STATIC_MAX_PENS;
-							palette_map[i] = STATIC_MAX_PENS-1;
-							usrintf_showmessage("cannot shrink static palette");
+						used = STATIC_MAX_PENS;
+						palette_map[i] = STATIC_MAX_PENS-1;
+						usrintf_showmessage("cannot shrink static palette");
 if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palette.\n");
-						}
-						else
-						{
-							shrinked_palette[3*j + 0] = game_palette[3*i + 0];
-							shrinked_palette[3*j + 1] = game_palette[3*i + 1];
-							shrinked_palette[3*j + 2] = game_palette[3*i + 2];
-						}
+					}
+					else
+					{
+						shrinked_palette[3*j + 0] = game_palette[3*i + 0];
+						shrinked_palette[3*j + 1] = game_palette[3*i + 1];
+						shrinked_palette[3*j + 2] = game_palette[3*i + 2];
 					}
 				}
+			}
 
 if (errorlog) fprintf(errorlog,"shrinked palette uses %d colors\n",used);
 
-				osd_allocate_colors(
-						used,
-						shrinked_palette,
-						shrinked_pens);
-			}
+			osd_allocate_colors(
+					used,
+					shrinked_palette,
+					shrinked_pens);
 		}
 
 
@@ -483,34 +432,6 @@ INLINE void palette_change_color_8(int color,unsigned char red,unsigned char gre
 	if (game_palette[3*color + 0] == red &&
 			game_palette[3*color + 1] == green &&
 			game_palette[3*color + 2] == blue)
-		return;
-
-	pen = palette_map[color];
-
-	game_palette[3*color + 0] = red;
-	game_palette[3*color + 1] = green;
-	game_palette[3*color + 2] = blue;
-
-	shrinked_palette[3*pen + 0] = red;
-	shrinked_palette[3*pen + 1] = green;
-	shrinked_palette[3*pen + 2] = blue;
-	osd_modify_pen(Machine->pens[color],red,green,blue);
-}
-
-INLINE void palette_change_color_8_shrink(int color,unsigned char red,unsigned char green,unsigned char blue)
-{
-	int pen;
-
-	if (color == palette_transparent_color)
-	{
-		osd_modify_pen(palette_transparent_pen,red,green,blue);
-
-		if (color == -1) return;	/* by default, palette_transparent_color is -1 */
-	}
-
-	if (game_palette[3*color + 0] == red &&
-			game_palette[3*color + 1] == green &&
-			game_palette[3*color + 2] == blue)
 	{
 		palette_dirty[color] = 0;
 		return;
@@ -549,12 +470,10 @@ if (errorlog) fprintf(errorlog,"error: palette_change_color() called with color 
 		return;
 	}
 
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
+	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
 		palette_change_color_16(color,red,green,blue);
-	else if (old_used_colors == 0)
-		palette_change_color_8(color,red,green,blue);
 	else
-		palette_change_color_8_shrink(color,red,green,blue);
+		palette_change_color_8(color,red,green,blue);
 }
 
 
@@ -1194,7 +1113,7 @@ const unsigned char *palette_recalc(void)
 	/* if we are not dynamically reducing the palette, return immediately. */
 	if (palette_used_colors == 0)
 		return 0;
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
+	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
 		return palette_recalc_16();
 	else
 		return palette_recalc_8();

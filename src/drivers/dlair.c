@@ -265,7 +265,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( dlair_rom )
+ROM_START( dlair )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u45",          0x0000, 0x2000, 0x329b354a )
 	ROM_LOAD( "u46",          0x2000, 0x2000, 0x8479612b )

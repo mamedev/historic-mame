@@ -333,7 +333,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6809,
-			4000000,        /* 4 Mhz ??? */
+			2000000,        /* 2 Mhz ??? */
 			4,
 			sub_readmem,sub_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are caused by the main CPU */
@@ -378,7 +378,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( exprraid_rom )
+ROM_START( exprraid )
     ROM_REGION(0x34000)     /* 64k for code */
 	ROM_LOAD( "cz01",    0x4000, 0x4000, 0xdc8f9fba )
     ROM_LOAD( "cz00",    0x8000, 0x8000, 0xa81290bc )
@@ -409,7 +409,7 @@ ROM_START( exprraid_rom )
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
-ROM_START( wexpress_rom )
+ROM_START( wexpress )
     ROM_REGION(0x34000)     /* 64k for code */
 	ROM_LOAD( "2",       0x4000, 0x4000, 0xea5e5a8f )
     ROM_LOAD( "1",       0x8000, 0x8000, 0xa7daae12 )
@@ -440,7 +440,7 @@ ROM_START( wexpress_rom )
     ROM_LOAD( "cz02",    0x8000, 0x8000, 0x552e6112 )
 ROM_END
 
-ROM_START( wexpresb_rom )
+ROM_START( wexpresb )
     ROM_REGION(0x34000)     /* 64k for code */
 	ROM_LOAD( "wexpress.3", 0x4000, 0x4000, 0xb4dd0fa4 )
     ROM_LOAD( "wexpress.1", 0x8000, 0x8000, 0xe8466596 )

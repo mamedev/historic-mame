@@ -1162,7 +1162,7 @@ static struct MachineDriver carnival_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( depthch_rom )
+ROM_START( depthch )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "50a",          0x0000, 0x0400, 0x56c5ffed )
 	ROM_LOAD( "51a",          0x0400, 0x0400, 0x695eb81f )
@@ -1176,7 +1176,7 @@ ROM_START( depthch_rom )
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
 
-ROM_START( safari_rom )
+ROM_START( safari )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "3160066.u48",  0x0000, 0x0400, 0x2a26b098 )
 	ROM_LOAD( "3160065.u47",  0x0400, 0x0400, 0xb776f7db )
@@ -1195,7 +1195,7 @@ ROM_START( safari_rom )
 
 ROM_END
 
-ROM_START( frogs_rom )
+ROM_START( frogs )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "119a.u48",     0x0000, 0x0400, 0xb1d1fce4 )
 	ROM_LOAD( "118a.u47",     0x0400, 0x0400, 0x12fdcc05 )
@@ -1207,7 +1207,7 @@ ROM_START( frogs_rom )
 	ROM_LOAD( "112a.u41",     0x1c00, 0x0400, 0x0be2a058 )
 ROM_END
 
-ROM_START( sspaceat_rom )
+ROM_START( sspaceat )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "155.u27",      0x0000, 0x0400, 0xba7bb86f )
 	ROM_LOAD( "156.u26",      0x0400, 0x0400, 0x0b3a491c )
@@ -1222,7 +1222,7 @@ ROM_START( sspaceat_rom )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
-ROM_START( sspacatc_rom )
+ROM_START( sspacatc )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "139.u27",      0x0000, 0x0400, 0x9f2112fc )
 	ROM_LOAD( "140.u26",      0x0400, 0x0400, 0xddbeed35 )
@@ -1237,7 +1237,7 @@ ROM_START( sspacatc_rom )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
-ROM_START( headon_rom )
+ROM_START( headon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "163a",         0x0000, 0x0400, 0x4bb51259 )
 	ROM_LOAD( "164a",         0x0400, 0x0400, 0xaeac8c5f )
@@ -1251,7 +1251,7 @@ ROM_START( headon_rom )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
-ROM_START( headonb_rom )
+ROM_START( headonb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "163a",         0x0000, 0x0400, 0x4bb51259 )
 	ROM_LOAD( "164a",         0x0400, 0x0400, 0xaeac8c5f )
@@ -1265,7 +1265,7 @@ ROM_START( headonb_rom )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
-ROM_START( headon2_rom )
+ROM_START( headon2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u27.bin",      0x0000, 0x0400, 0xfa47d2fb )
 	ROM_LOAD( "u26.bin",      0x0400, 0x0400, 0x61c47b15 )
@@ -1280,7 +1280,7 @@ ROM_START( headon2_rom )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
-ROM_START( invho2_rom )
+ROM_START( invho2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "271b.u33",     0x0000, 0x0400, 0x44356a73 )
 	ROM_LOAD( "272b.u32",     0x0400, 0x0400, 0xbd251265 )
@@ -1303,7 +1303,7 @@ ROM_START( invho2_rom )
 	ROM_LOAD( "316-0287.u49", 0x0000, 0x0020, 0xd4374b01 )
 ROM_END
 
-ROM_START( samurai_rom )
+ROM_START( samurai )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr289.u33",   0x0000, 0x0400, 0xa1a9cb03 )
 	ROM_LOAD( "epr290.u32",   0x0400, 0x0400, 0x49fede51 )
@@ -1328,7 +1328,7 @@ ROM_START( samurai_rom )
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
 
-ROM_START( invinco_rom )
+ROM_START( invinco )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "310a.u27",     0x0000, 0x0400, 0xe3931365 )
 	ROM_LOAD( "311a.u26",     0x0400, 0x0400, 0xde1a6c4a )
@@ -1344,7 +1344,7 @@ ROM_START( invinco_rom )
 	ROM_LOAD( "316-246.u44",  0x0000, 0x0020, 0xfe4406cb )
 ROM_END
 
-ROM_START( invds_rom )
+ROM_START( invds )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "367.u33",      0x0000, 0x0400, 0xe6a33eae )
 	ROM_LOAD( "368.u32",      0x0400, 0x0400, 0x421554a8 )
@@ -1370,7 +1370,7 @@ ROM_START( invds_rom )
 	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )	/* control PROM */
 ROM_END
 
-ROM_START( tranqgun_rom )
+ROM_START( tranqgun )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u33.bin",      0x0000, 0x0400, 0x6d50e902 )
 	ROM_LOAD( "u32.bin",      0x0400, 0x0400, 0xf0ba0e60 )
@@ -1397,7 +1397,7 @@ ROM_START( tranqgun_rom )
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
 
-ROM_START( spacetrk_rom )
+ROM_START( spacetrk )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u33.bin",      0x0000, 0x0400, 0x9033fe50 )
 	ROM_LOAD( "u32.bin",      0x0400, 0x0400, 0x08f61f0d )
@@ -1424,7 +1424,7 @@ ROM_START( spacetrk_rom )
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
 
-ROM_START( sptrekct_rom )
+ROM_START( sptrekct )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u33c.bin",     0x0000, 0x0400, 0xb056b928 )
 	ROM_LOAD( "u32c.bin",     0x0400, 0x0400, 0xdffb11d9 )
@@ -1451,7 +1451,7 @@ ROM_START( sptrekct_rom )
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
 
-ROM_START( carnival_rom )
+ROM_START( carnival )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "651u33.cpu",   0x0000, 0x0400, 0x9f2736e6 )
 	ROM_LOAD( "652u32.cpu",   0x0400, 0x0400, 0xa1f58beb )
@@ -1477,7 +1477,7 @@ ROM_START( carnival_rom )
 	ROM_LOAD( "crvl.snd",     0x0000, 0x0400, 0x0dbaa2b0 )
 ROM_END
 
-ROM_START( carnvckt_rom )
+ROM_START( carnvckt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr501",       0x0000, 0x0400, 0x688503d2 )
 	ROM_LOAD( "652u32.cpu",   0x0400, 0x0400, 0xa1f58beb )
@@ -1503,7 +1503,7 @@ ROM_START( carnvckt_rom )
 	ROM_LOAD( "crvl.snd",     0x0000, 0x0400, 0x0dbaa2b0 )
 ROM_END
 
-ROM_START( digger_rom )
+ROM_START( digger )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "684.u27",      0x0000, 0x0400, 0xbba0d7c2 )
 	ROM_LOAD( "685.u26",      0x0400, 0x0400, 0x85210d8b )
@@ -1521,7 +1521,7 @@ ROM_START( digger_rom )
 	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )	/* control PROM */
 ROM_END
 
-ROM_START( pulsar_rom )
+ROM_START( pulsar )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "790.u33",      0x0000, 0x0400, 0x5e3816da )
 	ROM_LOAD( "791.u32",      0x0400, 0x0400, 0xce0aee83 )
@@ -1547,7 +1547,7 @@ ROM_START( pulsar_rom )
 	ROM_LOAD( "316-0206.u14", 0x0000, 0x0020, 0x9617d796 )	/* control PROM */
 ROM_END
 
-ROM_START( heiankyo_rom )
+ROM_START( heiankyo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ha16.u33",     0x0000, 0x0400, 0x1eec8b36 )
 	ROM_LOAD( "ha15.u32",     0x0400, 0x0400, 0xc1b9a1a5 )

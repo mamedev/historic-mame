@@ -1575,7 +1575,7 @@ static void apb_init(void)
  *
  *************************************/
 
-ROM_START( paperboy_rom )
+ROM_START( paperboy )
 	ROM_REGION(0x90000)	/* 9*64k for T11 code */
 	ROM_LOAD_ODD ( "cpu_l07.bin",  0x08000, 0x04000, 0x4024bb9b )
 	ROM_LOAD_EVEN( "cpu_n07.bin",  0x08000, 0x04000, 0x0260901a )
@@ -1612,7 +1612,7 @@ ROM_START( paperboy_rom )
 ROM_END
 
 
-ROM_START( a720_rom )
+ROM_START( a720 )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "3126.rom",     0x08000, 0x04000, 0x43abd367 )
 	ROM_LOAD_EVEN( "3127.rom",     0x08000, 0x04000, 0x772e1e5b )
@@ -1675,7 +1675,7 @@ ROM_START( a720_rom )
 ROM_END
 
 
-ROM_START( a720b_rom )
+ROM_START( a720b )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "2126.7l",      0x08000, 0x04000, 0xd07e731c )
 	ROM_LOAD_EVEN( "2127.7n",      0x08000, 0x04000, 0x2d19116c )
@@ -1738,7 +1738,7 @@ ROM_START( a720b_rom )
 ROM_END
 
 
-ROM_START( ssprint_rom )
+ROM_START( ssprint )
 	ROM_REGION(0x90000)	/* 9*64k for T11 code */
 	ROM_LOAD_ODD ( "136042.330",   0x08000, 0x04000, 0xee312027 )
 	ROM_LOAD_EVEN( "136042.331",   0x08000, 0x04000, 0x2ef15354 )
@@ -1780,7 +1780,7 @@ ROM_START( ssprint_rom )
 ROM_END
 
 
-ROM_START( csprint_rom )
+ROM_START( csprint )
 	ROM_REGION(0x90000)	/* 9*64k for T11 code */
 	ROM_LOAD_ODD ( "045-2126.7l",  0x08000, 0x04000, 0x0ff83de8 )
 	ROM_LOAD_EVEN( "045-1127.7mn", 0x08000, 0x04000, 0xe3e37258 )
@@ -1820,7 +1820,7 @@ ROM_START( csprint_rom )
 ROM_END
 
 
-ROM_START( apb_rom )
+ROM_START( apb )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "2126",    0x08000, 0x04000, 0x8edf4726 )
 	ROM_LOAD_EVEN( "2127",    0x08000, 0x04000, 0xe2b2aff2 )
@@ -1889,7 +1889,7 @@ ROM_START( apb_rom )
 ROM_END
 
 
-ROM_START( apb2_rom )
+ROM_START( apb2 )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "2126",         0x08000, 0x04000, 0x8edf4726 )
 	ROM_LOAD_EVEN( "2127",         0x08000, 0x04000, 0xe2b2aff2 )

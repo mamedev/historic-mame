@@ -468,7 +468,7 @@ static struct MachineDriver pacnpal_machine_driver =
 
 
 
-ROM_START( superpac_rom )
+ROM_START( superpac )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sp1.2",        0xc000, 0x2000, 0x4bb33d9c )
 	ROM_LOAD( "sp1.1",        0xe000, 0x2000, 0x846fbb4a )
@@ -489,7 +489,7 @@ ROM_START( superpac_rom )
 	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-ROM_START( superpcm_rom )
+ROM_START( superpcm )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, 0x1a38c30e )
 	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, 0x730e95a9 )
@@ -510,7 +510,7 @@ ROM_START( superpcm_rom )
 	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-ROM_START( pacnpal_rom )
+ROM_START( pacnpal )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pap13b.cpu",   0xa000, 0x2000, 0xed64a565 )
 	ROM_LOAD( "pap12b.cpu",   0xc000, 0x2000, 0x15308bcf )

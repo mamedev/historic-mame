@@ -277,7 +277,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( formatz_rom )
+ROM_START( formatz )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "format_z.8",   0x4000, 0x4000, 0x81a2416c )
 	ROM_LOAD( "format_z.7",   0x8000, 0x4000, 0x986e6052 )
@@ -297,7 +297,7 @@ ROM_START( formatz_rom )
 	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
 ROM_END
 
-ROM_START( aeroboto_rom )
+ROM_START( aeroboto )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "aeroboto.8",   0x4000, 0x4000, 0x4d3fc049 )
 	ROM_LOAD( "aeroboto.7",   0x8000, 0x4000, 0x522f51c1 )

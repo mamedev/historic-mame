@@ -578,7 +578,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gyruss_rom )
+ROM_START( gyruss )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "gyrussk.1",    0x0000, 0x2000, 0xc673b43d )
 	ROM_LOAD( "gyrussk.2",    0x2000, 0x2000, 0xa4ec03e4 )
@@ -609,7 +609,7 @@ ROM_START( gyruss_rom )
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 ROM_END
 
-ROM_START( gyrussce_rom )
+ROM_START( gyrussce )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "gya-1.bin",    0x0000, 0x2000, 0x85f8b7c2 )
 	ROM_LOAD( "gya-2.bin",    0x2000, 0x2000, 0x1e1a970f )
@@ -640,7 +640,7 @@ ROM_START( gyrussce_rom )
 	ROM_LOAD( "gyrussk.3a",   0x0000, 0x1000, 0x3f9b5dea )
 ROM_END
 
-ROM_START( venus_rom )
+ROM_START( venus )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x2000, 0xd030abb1 )
 	ROM_LOAD( "r2",           0x2000, 0x2000, 0xdbf65d4d )

@@ -27,7 +27,7 @@ Rock 'n Rage /      GX620*1986    6309 007342        007420               007327
 Mr Kabuki/Mr Goemon GX621*1986     Z80           005849
 Jackal              GX631*1986    6809?          005885(x2)
 Contra / Gryzor     GX633*1987    6809?          007121(x2)               007593 (palette)
-Flak Attack         GX669-1987
+Flak Attack         GX669+1987    6309           007121(x2)               007327 (palette) 007452
 Devil World / Dark  GX687*1987 2x68000           TWIN16
   Adventure / Majuu no Oukoku
 Double Dribble      GX690*1986  3x6809           005885(x2)               007327 (palette) 007452

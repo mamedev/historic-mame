@@ -1324,61 +1324,6 @@ static struct MachineDriver alpha68k_V_machine_driver =
 	}
 };
 
-static struct MachineDriver alpha68k_V_16bit_machine_driver =
-{
-	/* basic machine hardware */
-	{
- 		{
-			CPU_M68000,
-			10000000, /* ? */
-			0,
-			alpha68k_V_readmem,alpha68k_V_writemem,0,0,
-			m68_level3_irq,1 /* VBL */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-//			3579545,
-			3579545*2, /* Unlikely but needed to stop nested NMI's */
-			2,
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			nmi_interrupt,112
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-  	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-
-	alpha68k_V_gfxdecodeinfo,
-	4096, 4096,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
-	0,
-	0,
-	alpha68k_V_16bit_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_YM2413,
-			&ym2413_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
-
 static struct MachineDriver alpha68k_V_sb_machine_driver =
 {
 	/* basic machine hardware */
@@ -1436,7 +1381,7 @@ static struct MachineDriver alpha68k_V_sb_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( kyros_rom )
+ROM_START( kyros )
 	ROM_REGION(0x20000)
 	ROM_LOAD_EVEN( "2.10c", 0x0000, 0x4000, 0x4bd030b1 )
 	ROM_CONTINUE ( 0x10000, 0x4000 | ROMFLAG_ALTERNATE )
@@ -1470,7 +1415,7 @@ ROM_START( kyros_rom )
 //	ROM_LOAD( "padlem.c", 0x000200, 0x100, 0xffffffff )
 ROM_END
 
-ROM_START( sstingry_rom )
+ROM_START( sstingry )
 	ROM_REGION(0x10000)     /* 68000 code */
 	ROM_LOAD_EVEN( "ss_05.rom",  0x00000, 0x4000, 0xbfb28d53 )
 	ROM_LOAD_ODD ( "ss_07.rom",  0x00000, 0x4000, 0xeb1b65c5 )
@@ -1497,7 +1442,7 @@ ROM_START( sstingry_rom )
 	ROM_LOAD( "ic93", 0x000200, 0x100, 0x9af8a375 )
 ROM_END
 
-ROM_START( paddlema_rom )
+ROM_START( paddlema )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "padlem.6g", 0x00000, 0x10000, 0xc227a6e8 )
 	ROM_LOAD_ODD ( "padlem.3g", 0x00000, 0x10000, 0xf11a21aa )
@@ -1527,7 +1472,7 @@ ROM_START( paddlema_rom )
 	ROM_LOAD( "padlem.c", 0x000200, 0x100, 0x39ca9b86 )
 ROM_END
 
-ROM_START( timesold_rom )
+ROM_START( timesold )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "bf.3", 0x00000, 0x10000, 0xa491e533 )
 	ROM_LOAD_ODD ( "bf.4", 0x00000, 0x10000, 0x34ebaccc )
@@ -1561,7 +1506,7 @@ ROM_START( timesold_rom )
 	ROM_LOAD( "bf.9", 0x050000, 0x10000, 0x1408416f )
 ROM_END
 
-ROM_START( timesol2_rom )
+ROM_START( timesol2 )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "3",    0x00000, 0x10000, 0xbc069a29 )
 	ROM_LOAD_ODD ( "4",    0x00000, 0x10000, 0xac7dca56 )
@@ -1595,7 +1540,7 @@ ROM_START( timesol2_rom )
 	ROM_LOAD( "bf.9", 0x050000, 0x10000, 0x1408416f )
 ROM_END
 
-ROM_START( btlfield_rom )
+ROM_START( btlfield )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "bfv1_03.bin", 0x00000, 0x10000, 0x8720af0d )
 	ROM_LOAD_ODD ( "bfv1_04.bin", 0x00000, 0x10000, 0x7dcccbe6 )
@@ -1629,7 +1574,7 @@ ROM_START( btlfield_rom )
 	ROM_LOAD( "bf.9", 0x050000, 0x10000, 0x1408416f )
 ROM_END
 
-ROM_START( skysoldr_rom )
+ROM_START( skysoldr )
 	ROM_REGION(0x80000)
 	ROM_LOAD_EVEN( "ss.3",  0x00000, 0x10000, 0x7b88aa2e )
 	ROM_CONTINUE ( 0x40000, 0x10000 | ROMFLAG_ALTERNATE )
@@ -1683,7 +1628,7 @@ ROM_START( skysoldr_rom )
 	ROM_CONTINUE ( 0x60001, 0x10000 | ROMFLAG_ALTERNATE )
 ROM_END
 
-ROM_START( goldmedl_rom )
+ROM_START( goldmedl )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "gm.3", 0x00000, 0x10000, 0xddf0113c )
 	ROM_LOAD_ODD ( "gm.4", 0x00000, 0x10000, 0x16db4326 )
@@ -1704,7 +1649,7 @@ ROM_START( goldmedl_rom )
 	ROM_CONTINUE(            0x18000, 0x78000 )
 ROM_END
 
-ROM_START( goldmedb_rom )
+ROM_START( goldmedb )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "l_3.bin", 0x00000, 0x10000, 0x5e106bcf)
 	ROM_LOAD_ODD ( "l_4.bin", 0x00000, 0x10000, 0xe19966af)
@@ -1732,7 +1677,7 @@ ROM_START( goldmedb_rom )
  	ROM_LOAD_ODD ( "l_2.bin", 0x00000, 0x08000, 0xbf59e4f9)
 ROM_END
 
-ROM_START( skyadvnt_rom )
+ROM_START( skyadvnt )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "sa_v3.1", 0x00000, 0x20000, 0x862393b5 )
 	ROM_LOAD_ODD ( "sa_v3.2", 0x00000, 0x20000, 0xfa7a14d1 )
@@ -1753,7 +1698,7 @@ ROM_START( skyadvnt_rom )
 	ROM_LOAD( "sa.6", 0x70000, 0x08000, 0x237d93fd )
 ROM_END
 
-ROM_START( gangwars_rom )
+ROM_START( gangwars )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "u1", 0x00000, 0x20000, 0x11433507 )
 	ROM_LOAD_ODD ( "u2", 0x00000, 0x20000, 0x44cc375f )
@@ -1827,7 +1772,7 @@ the 128k ones are and match these ones.
 	ROM_LOAD_ODD ( "u4", 0x00000, 0x20000, 0x43f7f5d3 )
 ROM_END
 
-ROM_START( gangwarb_rom )
+ROM_START( gangwarb )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "gwb_ic.m15", 0x00000, 0x20000, 0x7752478e )
 	ROM_LOAD_ODD ( "gwb_ic.m16", 0x00000, 0x20000, 0xc2f3b85e )
@@ -1891,7 +1836,7 @@ ROM_START( gangwarb_rom )
 	ROM_LOAD_ODD ( "gwb_ic.m18", 0x00000, 0x20000, 0xc8b60c53 )
 ROM_END
 
-ROM_START( sbasebal_rom )
+ROM_START( sbasebal )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "snksb1.bin", 0x00000, 0x20000, 0x304fef2d )
 	ROM_LOAD_ODD ( "snksb2.bin", 0x00000, 0x20000, 0x35821339 )
@@ -2255,8 +2200,8 @@ struct GameDriver gangwars_driver =
 	"1989",
 	"Alpha",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
-	&alpha68k_V_16bit_machine_driver,
+	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
+	&alpha68k_V_machine_driver,
 	custom_memory,
 
 	gangwars_rom,
@@ -2280,8 +2225,8 @@ struct GameDriver gangwarb_driver =
 	"1989",
 	"bootleg",
 	"Bryan McPhail",
-	0,
-	&alpha68k_V_16bit_machine_driver,
+	GAME_REQUIRES_16BIT,
+	&alpha68k_V_machine_driver,
 	custom_memory,
 
 	gangwarb_rom,

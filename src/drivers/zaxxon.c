@@ -742,7 +742,7 @@ static const char *zaxxon_sample_names[] =
 	0
 };
 
-ROM_START( zaxxon_rom )
+ROM_START( zaxxon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "zaxxon.3",     0x0000, 0x2000, 0x6e2b4a30 )
 	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
@@ -770,7 +770,7 @@ ROM_START( zaxxon_rom )
 	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
 ROM_END
 
-ROM_START( zaxxon2_rom )
+ROM_START( zaxxon2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "3a",           0x0000, 0x2000, 0xb18e428a )
 	ROM_LOAD( "zaxxon.2",     0x2000, 0x2000, 0x1c9ea398 )
@@ -798,7 +798,7 @@ ROM_START( zaxxon2_rom )
 	ROM_LOAD( "j214a2.72",    0x0100, 0x0100, 0xa9e1fb43 ) /* char lookup table */
 ROM_END
 
-ROM_START( zaxxonb_rom )
+ROM_START( zaxxonb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "zaxxonb.3",    0x0000, 0x2000, 0x125bca1c )
 	ROM_LOAD( "zaxxonb.2",    0x2000, 0x2000, 0xc088df92 )
@@ -826,7 +826,7 @@ ROM_START( zaxxonb_rom )
 	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
 ROM_END
 
-ROM_START( szaxxon_rom )
+ROM_START( szaxxon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "suzaxxon.3",   0x0000, 0x2000, 0xaf7221da )
 	ROM_LOAD( "suzaxxon.2",   0x2000, 0x2000, 0x1b90fb2a )
@@ -854,7 +854,7 @@ ROM_START( szaxxon_rom )
 	ROM_LOAD( "suzaxxon.u72", 0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
 ROM_END
 
-ROM_START( futspy_rom )
+ROM_START( futspy )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "fs_snd.u27",   0x0000, 0x2000, 0x7578fe7f )
 	ROM_LOAD( "fs_snd.u28",   0x2000, 0x2000, 0x8ade203c )
@@ -882,7 +882,7 @@ ROM_START( futspy_rom )
 	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0xf9e26790 ) /* char lookup table */
 ROM_END
 
-ROM_START( razmataz_rom )
+ROM_START( razmataz )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u27",           0x0000, 0x2000, 0x254f350f )
 	ROM_LOAD( "u28",           0x2000, 0x2000, 0x3a1eaa99 )

@@ -321,7 +321,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( rainbow_rom )
+ROM_START( rainbow )
 	ROM_REGION(0x80000)			 /* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "b22-10",     0x00000, 0x10000, 0x3b013495 )
 	ROM_LOAD_ODD ( "b22-11",     0x00000, 0x10000, 0x80041a3d )
@@ -344,7 +344,7 @@ ROM_START( rainbow_rom )
 	ROM_CONTINUE(           	 0x10000, 0xc000 )
 ROM_END
 
-ROM_START( rainbowe_rom )
+ROM_START( rainbowe )
 	ROM_REGION(0x80000)			   /* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "ri_01.rom",    0x00000, 0x10000, 0x50690880 )
 	ROM_LOAD_ODD ( "ri_02.rom",    0x00000, 0x10000, 0x4dead71f )
@@ -601,7 +601,7 @@ static struct MachineDriver jumping_machine_driver =
     0
 };
 
-ROM_START( jumping_rom )
+ROM_START( jumping )
 	ROM_REGION(0xA0000)		/* 8*64k for code, 64k*2 for protection chip */
     ROM_LOAD_EVEN( "jb1_h4",       0x00000, 0x10000, 0x3fab6b31 )
     ROM_LOAD_ODD ( "jb1_h8",       0x00000, 0x10000, 0x8c878827 )

@@ -1,47 +1,108 @@
 /***************************************************************************
 
-Namco System II driver by K.Wilkins Jun 1998
+Namco System II driver by K.Wilkins  (Jun1998, Oct1999)
 
-The Namco System II board is a 4 (I think I've found a 5th!!) CPU system. The
+The Namco System II board is a 5 ( only 4 are emulated ) CPU system. The
 complete system consists of two boards: CPU + GRAPHICS. It contains a large
-number of custom ASICs to perform graphics operations, there is no documentation
-available for these parts. There is an Atari Manual for ASSAULT on spies that
-contains scans of the schematics.
+number of custom ASICs to perform graphics operations, there is no
+documentation available for these parts. There is an Atari Manual for ASSAULT
+on www.spies.com that contains scans of the schematics.
 
-CPU BOARD - Master/Slave CPU, Sound CPU, I/O CPU
+The system is extremely powerful and flexible. A standard CPU board is coupled
+with a number of different graphics boards to produce a system.
+
+
+CPU Board details
+=================
+
+CPU BOARD - Master/Slave CPU, Sound CPU, I/O CPU, Serial I/F CPU
             Text/Scrolling layer generation and video pixel generator.
-GFX BOARD - Sprite and ROZ layer generation.
+            Sound Generation.
 
-CPU1 - Master CPU           (68K)
-CPU2 - Slave CPU            (68K)
-CPU3 - Sound/IO engine      (6809)
-CPU4 - IO Microcontroller   (63705) Dips/input ports
+CPU1 - Master CPU               (68K)
+CPU2 - Slave CPU                (68K)
+CPU3 - Sound/IO engine          (6809)
+CPU4 - IO Microcontroller       (63705) Dips/input ports
+CPU5 - Serial I/F Controller    (??? - Not emulated)
 
-The 4 CPU's are all connected via a central 2KByte dual port SRAM. The two 68000s
-are on one side and the 6809/63705 are on the other side.
+The 4 CPU's are all connected via a central 2KByte dual port SRAM. The two
+68000s are on one side and the 6809/63705 are on the other side.
 
-Each 68000 has its own private bus area AND a common shared area between the two
-devices, which is where the video ram/dual port/Sprite Generation etc logic sits.
+Each 68000 has its own private bus area AND a common shared area between the
+two devices, which is where the video ram/dual port/Sprite Generation etc
+logic sits.
 
-Summary of graphics features:
+So far only 1 CPU board variant has been identified, unlike the GFX board...
 
-2 x Static tile planes
-4 x Scolling tile planes
-1 x Rotate/Zoom tile plane (256x256 tiles)
-Sprite layer
+All sound circuitry is containe don the CPU board, it consists of:
+    YM2151
+    C140 (24 Channel Stereo PCM Sample player)
 
-The system would seem to be capable of a total of 4096 colours based on the layout
-of the palette memory.
+The CPU board also contains the frame timing and video image generation
+circuitry along with text/scroll planes and the palette generator. The system
+has 8192 pens of which 4096+2048 are displayable at any given time. These
+pens refernce a 24 bit colour lookup table (R8:G8:B8).
 
-The Dual 68000 Share memory map area is shown below, this is taken from the memory
-decoding pal from the Cosmo Gang board and so should be accuate.
+The text/tile plane generator has the following capabilities:
+
+2 x Static tile planes (36x28 tiles)
+4 x Scolling tile planes (64x64 tiles)
+
+Each plane has its own colour index (8 total) that is used alongside the
+pen number to be looked up in the pen index and generate a 24 bit pixel. Each
+plane also has its own priority level.
+
+The video image generator receives a pixel stream from the graphics board
+which contains:
+
+	PEN NUMBER
+	COLOUR BANK
+	PIXEL PRIORITY
+
+This stream is then combined with the stream from the text plane pixel
+generator with the highest priority pixel being displayed on screen.
 
 
--------------------------------------------------------------
------       MASTER 68000 PRIVATE MEMORY AREA            -----
--------------------------------------------------------------
-Function                           Address        R/W  DATA
--------------------------------------------------------------
+Graphics Board details
+======================
+
+There are at least 3 known variants of graphics board that all have their own
+unique capabilities and separate memory map definition. The PCB outputs a pixel
+stream to the main PCB board via one of the system connectors.
+
+
+    Standard Namco System 2
+        1 x Rotate/Zoom tile plane (256x256 tiles)
+        128 Sprites (128 Sprites displayable, but 16 banks of 128 sprites)
+
+    Metal Hawk
+        2 x Rotate/Zoom tile planes (256x256 tiles)
+        ??? Sprites
+
+    Steel Gunner 2
+        Capabilities unknown at this time
+
+    Final Lap (1/2/3)
+        Not sure at this time if it has a different board but it is accessing
+        some locations not seen before (i.e $a00000 for the key chip)
+
+
+
+
+Memory Map
+==========
+
+The Dual 68000 Shared memory map area is shown below, this is taken from the memory
+decoding pal from the Cosmo Gang board.
+
+
+#############################################################
+#                                                           #
+#       MASTER 68000 PRIVATE MEMORY AREA (MAIN PCB)         #
+#                                                           #
+#############################################################
+# Function                         Address        R/W  DATA #
+#############################################################
 Program ROM                        000000-03FFFF  R    D00-D15
 
 Program RAM                        100000-10FFFF  R/W  D00-D15
@@ -67,14 +128,16 @@ Interrupt Controller C148          1C0000-1FFFFF  R/W  D00-D02
 	Sound CPU Reset control        1E2XXX           W  D01
 	Slave 68000 & IO CPU Reset     1E4XXX           W  D01
 	Watchdog reset kicker          1E6XXX           W
--------------------------------------------------------------
 
 
--------------------------------------------------------------
------       SLAVE 68000 PRIVATE MEMORY AREA             -----
--------------------------------------------------------------
-Function                           Address        R/W  DATA
--------------------------------------------------------------
+
+#############################################################
+#                                                           #
+#        SLAVE 68000 PRIVATE MEMORY AREA (MAIN PCB)         #
+#                                                           #
+#############################################################
+# Function                         Address        R/W  DATA #
+#############################################################
 Program ROM                        000000-03FFFF  R    D00-D15
 
 Program RAM                        100000-10FFFF  R/W  D00-D15
@@ -97,14 +160,17 @@ Interrupt Controller C148          1C0000-1FFFFF  R/W  D00-D02
 	Acknowledge SCIRQ              1DCXXX
 	Acknowledge VLANK IRQ          1DEXXX
 	Watchdog reset kicker          1E6XXX           W
--------------------------------------------------------------
 
 
--------------------------------------------------------------
------       SHARED 68000 MEMORY AREA (MAIN PCB)         -----
--------------------------------------------------------------
-Function                           Address        R/W  DATA
--------------------------------------------------------------
+
+
+#############################################################
+#                                                           #
+#           SHARED 68000 MEMORY AREA (MAIN PCB)             #
+#                                                           #
+#############################################################
+# Function                         Address        R/W  DATA #
+#############################################################
 Data ROMS 0-1                      200000-2FFFFF  R    D00-D15
 
 Data ROMS 2-3                      300000-3FFFFF  R    D00-D15
@@ -190,6 +256,15 @@ Serial comms processor - Data      4A0000-4BFFFF
 
 Mystery ram (Only used by F-Lap)   880000-88FFFF  R/W  D00-D15
 
+
+#############################################################
+#                                                           #
+#           SHARED 68000 MEMORY AREA (GFX PCB)              #
+#             (STANDARD NAMCO SYSTEM 2 BOARD)               #
+#                                                           #
+#############################################################
+# Function                         Address        R/W  DATA #
+#############################################################
 Sprite RAM - 16 banks x 128 spr.   C00000-C03FFF  R/W  D00-D15
 
 Sprite bank select                 C40000           W  D00-D03
@@ -208,7 +283,37 @@ Rotate/Zoom control                CC000E         R/W  D00-D15
 
 Key generator/Security device      D00000-D0000F  R/W  D00-D15
 
--------------------------------------------------------------
+
+
+#############################################################
+#                                                           #
+#           SHARED 68000 MEMORY AREA (GFX PCB)              #
+#           (METAL HAWK PCB - DUAL ROZ PLANES)              #
+#                                                           #
+#############################################################
+# Function                         Address        R/W  DATA #
+#############################################################
+Sprite RAM - 16 banks x 128 spr.   C00000-C03FFF  R/W  D00-D15
+
+Rotate/Zoom RAM (ROZ1)             C40000-C47FFF  R/W  D00-D15
+
+Rotate/Zoom RAM (ROZ2)             C48000-C4FFFF  R/W  D00-D15
+
+Rotate/Zoom1 - Down dy     (8:8)   D00000         R/W  D00-D15
+Rotate/Zoom1 - Right dy    (8.8)   D00002         R/W  D00-D15
+Rotate/Zoom1 - Down dx     (8.8)   D00004         R/W  D00-D15
+Rotate/Zoom1 - Right dx    (8.8)   D00006         R/W  D00-D15
+Rotate/Zoom1 - Start Ypos  (12.4)  DC0008         R/W  D00-D15
+Rotate/Zoom1 - Start Xpos  (12.4)  D0000A         R/W  D00-D15
+Rotate/Zoom1 - control             D0000E         R/W  D00-D15
+
+Rotate/Zoom2 - Down dy     (8:8)   D00010         R/W  D00-D15
+Rotate/Zoom2 - Right dy    (8.8)   D00012         R/W  D00-D15
+Rotate/Zoom2 - Down dx     (8.8)   D00014         R/W  D00-D15
+Rotate/Zoom2 - Right dx    (8.8)   D00016         R/W  D00-D15
+Rotate/Zoom2 - Start Ypos  (12.4)  DC0018         R/W  D00-D15
+Rotate/Zoom2 - Start Xpos  (12.4)  D0001A         R/W  D00-D15
+Rotate/Zoom2 - control             D0001E         R/W  D00-D15
 
 
 All interrupt handling is done on the 68000s by two identical custom devices (C148),
@@ -288,8 +393,7 @@ $449000-$4497ff     Blue??
 
 Metal Hawk Notes
 ----------------
-From an initial look at the graphics roms and memory access it would appear
-that although this board has a standard System 2 CPU board it has a different
+This board has a standard System 2 CPU board but it has a different
 graphics board, the gfx boards supports sprites & ROZ layer, these are not
 working in Metal Hawk and the gfx ROMs do not decode properly, there also
 appears to be another shape ROM for the ROZ layer.
@@ -298,7 +402,8 @@ If anyone has any schematics for this board please mail the Mame devlist.
 Steel Gunner 2
 --------------
 Again this board has a different graphics layout, also the protection checks
-are done at $a00000 as opposed to $d00000 on a standard board.
+are done at $a00000 as opposed to $d00000 on a standard board. Similar
+$a00000 checks have been seen on the Final Lap boards.
 
 
 ***************************************************************************/
@@ -337,8 +442,8 @@ are done at $a00000 as opposed to $d00000 on a standard board.
 	{ 0x4a0000, 0x4bffff, namcos2_68k_serial_comms_ctrl_r },\
 	{ 0x880000, 0x89ffff, NAMCOS2_68K_MYSTERY_RAM_R }, \
 /*  { 0xc00000, 0xc03fff, namcos2_68k_sprite_ram_r }, CANNOT READ BACK - DEBUG ONLY */  \
-	{ 0xc40000, 0xc47fff, namcos2_68k_sprite_bank_r }, \
-	{ 0xc80000, 0xcbffff, namcos2_68k_roz_ram_r }, \
+	{ 0xc40000, 0xc47fff, namcos2_68k_sprite_bank_r },  \
+ 	{ 0xc80000, 0xcbffff, namcos2_68k_roz_ram_r },  \
 	{ 0xcc0000, 0xcc000f, namcos2_68k_roz_ctrl_r }, \
 	{ 0xd00000, 0xd0000f, namcos2_68k_key_r },
 
@@ -351,9 +456,9 @@ are done at $a00000 as opposed to $d00000 on a standard board.
 	{ 0x4a0000, 0x4bffff, namcos2_68k_serial_comms_ctrl_w },\
 	{ 0x880000, 0x89ffff, NAMCOS2_68K_MYSTERY_RAM_W }, \
 	{ 0xc00000, 0xc03fff, namcos2_68k_sprite_ram_w }, \
-	{ 0xc40000, 0xc7ffff, namcos2_68k_sprite_bank_w },\
+	{ 0xc40000, 0xc7ffff, namcos2_68k_sprite_bank_w }, \
 	{ 0xc80000, 0xcbffff, namcos2_68k_roz_ram_w, &namcos2_68k_roz_ram, &namcos2_68k_roz_ram_size }, \
-	{ 0xcc0000, 0xcc000f, namcos2_68k_roz_ctrl_w },\
+	{ 0xcc0000, 0xcc000f, namcos2_68k_roz_ctrl_w }, \
 	{ 0xd00000, 0xd0000f, namcos2_68k_key_w },
 
 
@@ -409,7 +514,7 @@ static struct MemoryReadAddress readmem_sound[] ={
 	{ 0x0000, 0x3fff, BANKED_SOUND_ROM_R }, /* banked */
 	{ 0x4000, 0x4001, YM2151_status_port_0_r },
 	{ 0x5000, 0x6fff, C140_r },
-	{ 0x7000, 0x77ff, namcos2_dpram_byte_r },
+	{ 0x7000, 0x7fff, namcos2_dpram_byte_r },
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -420,7 +525,7 @@ static struct MemoryWriteAddress writemem_sound[] = {
 	{ 0x4000, 0x4000, YM2151_register_port_0_w },
 	{ 0x4001, 0x4001, YM2151_data_port_0_w },
 	{ 0x5000, 0x6fff, C140_w },
-	{ 0x7000, 0x77ff, namcos2_dpram_byte_w },
+	{ 0x7000, 0x7fff, namcos2_dpram_byte_w },
 	{ 0x8000, 0x9fff, MWA_RAM },
 	{ 0xa000, 0xbfff, MWA_NOP },                    /* Amplifier enable on 1st write */
 	{ 0xc000, 0xc001, namcos2_sound_bankselect_w },
@@ -452,7 +557,7 @@ static struct MemoryReadAddress readmem_mcu[] ={
 	{ 0x3001, 0x3001, input_port_13_r },
 	{ 0x3002, 0x3002, input_port_14_r },
 	{ 0x3003, 0x3003, input_port_15_r },
-	{ 0x5000, 0x57ff, namcos2_dpram_byte_r },
+	{ 0x5000, 0x5fff, namcos2_dpram_byte_r },
 	{ 0x6000, 0x6fff, MRA_NOP },                /* watchdog */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -465,7 +570,7 @@ static struct MemoryWriteAddress writemem_mcu[] ={
 	{ 0x0000, 0x003f, MWA_RAM },            // Fill in register to stop logging
 	{ 0x0040, 0x01bf, MWA_RAM },
 	{ 0x01c0, 0x1fff, MWA_ROM },
-	{ 0x5000, 0x57ff, namcos2_dpram_byte_w },
+	{ 0x5000, 0x5fff, namcos2_dpram_byte_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }
 };
@@ -679,7 +784,10 @@ INPUT_PORTS_END
 #define NAMCOS2_dirtfoxj_PORTS      namcos2_input_ports_dirtfoxj
 #define NAMCOS2_finehour_PORTS      namcos2_input_ports_default
 #define NAMCOS2_finallap_PORTS      namcos2_input_ports_dirtfoxj
+#define NAMCOS2_finalapd_PORTS      namcos2_input_ports_dirtfoxj
+#define NAMCOS2_finalapc_PORTS      namcos2_input_ports_dirtfoxj
 #define NAMCOS2_finalap2_PORTS      namcos2_input_ports_dirtfoxj
+#define NAMCOS2_finalp2j_PORTS      namcos2_input_ports_dirtfoxj
 #define NAMCOS2_finalap3_PORTS      namcos2_input_ports_dirtfoxj
 #define NAMCOS2_fourtrax_PORTS      namcos2_input_ports_dirtfoxj
 #define NAMCOS2_marvland_PORTS      namcos2_input_ports_default
@@ -688,8 +796,9 @@ INPUT_PORTS_END
 #define NAMCOS2_ordyne_PORTS        namcos2_input_ports_default
 #define NAMCOS2_phelios_PORTS       namcos2_input_ports_default
 #define NAMCOS2_rthun2_PORTS        namcos2_input_ports_default
+#define NAMCOS2_rthun2j_PORTS       namcos2_input_ports_default
 #define NAMCOS2_sgunner2_PORTS      namcos2_input_ports_default
-#define NAMCOS2_walkyrie_PORTS      namcos2_input_ports_default
+#define NAMCOS2_valkyrie_PORTS      namcos2_input_ports_default
 
 
 
@@ -863,16 +972,7 @@ static struct MachineDriver machine_driver =
 	8192,8192,
 	namcos2_vh_convert_color_prom,              /* Convert colour prom     */
 
-	/* Note to the wise, this driver MUST use the VIDEO_SUPPORTS_16BIT flag       */
-	/* in 8 bit mode it will use the reduced palette (looks crap) but the palette */
-	/* reduction cannot cope at there are often >>256 colours in 8 bit mode. When */
-	/* the tilemap mgr supports 16 bit mode then things will get pretty again,    */
-
-#ifdef NAMCOS2_USE_REDUCED_PALETTE
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_16BIT,
-#else
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
-#endif
 
 	0,                                          /* Video initialisation    */
 	namcos2_vh_start,                           /* Video start             */
@@ -962,7 +1062,7 @@ static struct MachineDriver machine_driver =
 /*************************************************************/
 /*                     ASSAULT (NAMCO)                       */
 /*************************************************************/
-ROM_START( assault_rom )
+ROM_START( assault )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "at2mp0b.bin" , 0x000000, 0x010000, 0x801f71c5 )
 	ROM_LOAD_ODD(  "at2mp1b.bin" , 0x000000, 0x010000, 0x72312d4f )
@@ -1019,7 +1119,7 @@ ROM_END
 /*************************************************************/
 /*                     ASSAULT (JAPAN)                       */
 /*************************************************************/
-ROM_START( assaultj_rom )
+ROM_START( assaultj )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "at1_mp0.bin" , 0x000000, 0x010000, 0x2d3e5c8c )
 	ROM_LOAD_ODD(  "at1_mp1.bin" , 0x000000, 0x010000, 0x851cec3a )
@@ -1076,7 +1176,7 @@ ROM_END
 /*************************************************************/
 /*                     ASSAULT PLUS (NAMCO)                  */
 /*************************************************************/
-ROM_START( assaultp_rom )
+ROM_START( assaultp )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "mpr0.bin"    , 0x000000, 0x010000, 0x97519f9f )
 	ROM_LOAD_ODD(  "mpr1.bin"    , 0x000000, 0x010000, 0xc7f437c7 )
@@ -1133,7 +1233,7 @@ ROM_END
 /*************************************************************/
 /*                     BURNING FORCE                         */
 /*************************************************************/
-ROM_START( burnforc_rom )
+ROM_START( burnforc )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "bumpr0c.bin" , 0x000000, 0x020000, 0xcc5864c6 )
 	ROM_LOAD_ODD(  "bumpr1c.bin" , 0x000000, 0x020000, 0x3e6b4b1b )
@@ -1189,7 +1289,7 @@ ROM_END
 /*************************************************************/
 /*                     COSMO GANG THE VIDEO                  */
 /*************************************************************/
-ROM_START( cosmogng_rom )
+ROM_START( cosmogng )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "co1mpr0.bin" , 0x000000, 0x020000, 0xd1b4c8db )
 	ROM_LOAD_ODD(  "co1mpr1.bin" , 0x000000, 0x020000, 0x2f391906 )
@@ -1238,7 +1338,7 @@ ROM_END
 /*************************************************************/
 /*                     DIRT FOX (JAPAN)                      */
 /*************************************************************/
-ROM_START( dirtfoxj_rom )
+ROM_START( dirtfoxj )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "df1_mpr0.bin", 0x000000, 0x020000, 0x8386c820 )
 	ROM_LOAD_ODD(  "df1_mpr1.bin", 0x000000, 0x020000, 0x51085728 )
@@ -1293,7 +1393,7 @@ ROM_END
 /*************************************************************/
 /*                     DRAGON SABER                          */
 /*************************************************************/
-ROM_START( dsaber_rom )
+ROM_START( dsaber )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "mpr0.bin"    , 0x000000, 0x020000, 0x45309ddc )
 	ROM_LOAD_ODD(  "mpr1.bin"    , 0x000000, 0x020000, 0xcbfc4cba )
@@ -1306,7 +1406,8 @@ ROM_START( dsaber_rom )
 	ROM_LOAD( "snd0.bin"    , 0x00c000, 0x004000, 0xaf5b1ff8 )
 	ROM_CONTINUE(             0x010000, 0x01c000 )              /* Stops warning message */
 	ROM_RELOAD(               0x010000, 0x020000 )
-	ROM_LOAD( "snd1.bin"    , 0x020000, 0x020000, 0xc4ca6f3f )
+/*	ROM_LOAD( "snd1.bin"    , 0x020000, 0x020000, 0xc4ca6f3f )*/
+	ROM_LOAD( "snd1.bin"    , 0x030000, 0x020000, 0xc4ca6f3f )	/* 991104.CAB */
 
 	ROM_REGION(0x010000)        /* 64K RAM for MCU */
 	ROM_LOAD("sys2mcpu.bin" , 0x000000, 0x002000, 0xa342a97e )
@@ -1341,7 +1442,7 @@ ROM_END
 /*************************************************************/
 /*                     DRAGON SABER (JAPAN)                  */
 /*************************************************************/
-ROM_START( dsaberj_rom )
+ROM_START( dsaberj )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "do1mpr0b.bin", 0x000000, 0x020000, 0x2898e791 )
 	ROM_LOAD_ODD(  "do1mpr1b.bin", 0x000000, 0x020000, 0x5fa9778e )
@@ -1354,7 +1455,8 @@ ROM_START( dsaberj_rom )
 	ROM_LOAD( "snd0.bin"    , 0x00c000, 0x004000, 0xaf5b1ff8 )
 	ROM_CONTINUE(             0x010000, 0x01c000 )              /* Stops warning message */
 	ROM_RELOAD(               0x010000, 0x020000 )
-	ROM_LOAD( "snd1.bin"    , 0x020000, 0x020000, 0xc4ca6f3f )
+/*	ROM_LOAD( "snd1.bin"    , 0x020000, 0x020000, 0xc4ca6f3f ) */
+	ROM_LOAD( "snd1.bin"    , 0x030000, 0x020000, 0xc4ca6f3f )	/* 991104.CAB */
 
 	ROM_REGION(0x010000)        /* 64K RAM for MCU */
 	ROM_LOAD("sys2mcpu.bin" , 0x000000, 0x002000, 0xa342a97e )
@@ -1389,17 +1491,17 @@ ROM_END
 /*************************************************************/
 /*                     FINAL LAP                             */
 /*************************************************************/
-ROM_START( finallap_rom )
+ROM_START( finallap )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "fl2mp0e"     , 0x000000, 0x010000, 0xed805674 )
 	ROM_LOAD_ODD(  "fl2mp1e"     , 0x000000, 0x010000, 0x4c1d523b )
 
 	ROM_REGION(0x040000)
-	ROM_LOAD_EVEN( "fl1sp0"      , 0x000000, 0x010000, 0x2c5ff15d )
-	ROM_LOAD_ODD(  "fl1sp1"      , 0x000000, 0x010000, 0xea9d1a2e )
+	ROM_LOAD_EVEN( "fl1-sp0"     , 0x000000, 0x010000, 0x2c5ff15d )
+	ROM_LOAD_ODD(  "fl1-sp1"     , 0x000000, 0x010000, 0xea9d1a2e )
 
 	ROM_REGION(0x030000)    /* 64K RAM + 128K banked ROM for the audio CPU, load the rom above the ram for paging */
-	ROM_LOAD( "fl1s0b0"     , 0x00c000, 0x004000, 0xf5d76989 )
+	ROM_LOAD( "fl1-s0b"     , 0x00c000, 0x004000, 0xf5d76989 )
 	ROM_CONTINUE(             0x010000, 0x01c000 )              /* Stops warning message */
 	ROM_RELOAD(               0x010000, 0x020000 )
 
@@ -1408,19 +1510,19 @@ ROM_START( finallap_rom )
 	ROM_LOAD("sys2c65c.bin" , 0x008000, 0x008000, BADCRC(0xa5b2a4ff))
 
 	ROM_REGION_DISPOSE(0x400000)    /* Sprites */
-	NAMCOS2_GFXROM_LOAD_256K( "obj0bl"      , 0x000000, 0xda3d6803 )
-	NAMCOS2_GFXROM_LOAD_256K( "obj1bl"      , 0x080000, 0xcbbd03f1 )
-	NAMCOS2_GFXROM_LOAD_256K( "obj2bl"      , 0x100000, 0x3a81c11f )
-	NAMCOS2_GFXROM_LOAD_256K( "obj3bl"      , 0x180000, 0x1b615008 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-0b"      , 0x000000, 0xc6986523 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-1b"      , 0x080000, 0x6af7d284 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-2b"      , 0x100000, 0xde45ca8d )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-3b"      , 0x180000, 0xdba830a2 )
 
 	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
-	NAMCOS2_GFXROM_LOAD_128K( "flchr0"      , 0x000000, 0xcd9d2966 )
-	NAMCOS2_GFXROM_LOAD_128K( "flchr1"      , 0x080000, 0xb0efec87 )
-	NAMCOS2_GFXROM_LOAD_128K( "flchr2"      , 0x100000, 0x263b8e31 )
-	NAMCOS2_GFXROM_LOAD_128K( "flchr3"      , 0x180000, 0xc2c56743 )
-	NAMCOS2_GFXROM_LOAD_128K( "fl2c4"       , 0x200000, 0xdfd6d53b )
-	NAMCOS2_GFXROM_LOAD_128K( "flchr5"      , 0x280000, 0xab89da77 )
-	NAMCOS2_GFXROM_LOAD_128K( "fl2c6"       , 0x300000, 0xf69c209b )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c0"      , 0x000000, 0xcd9d2966 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c1"      , 0x080000, 0xb0efec87 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c2"      , 0x100000, 0x263b8e31 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c3"      , 0x180000, 0xc2c56743 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-c4"      , 0x200000, 0x83c77a50 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c5"      , 0x280000, 0xab89da77 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-c6"      , 0x300000, 0x239bd9a0 )
 
 	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
 	/* No ROZ files present in ZIP archive */
@@ -1429,28 +1531,186 @@ ROM_START( finallap_rom )
 	/* No DAT files present in ZIP archive - Must be wrong */
 
 	ROM_REGION(0x100000)	/* Sound voices */
-	ROM_LOAD( "fl1v1"       , 0x000000, 0x020000, 0x86b21996 )
+	ROM_LOAD( "fl1-v1"      , 0x000000, 0x020000, 0x86b21996 )
 	ROM_RELOAD(               0x020000, 0x020000 )
 	ROM_RELOAD(               0x040000, 0x020000 )
 	ROM_RELOAD(               0x060000, 0x020000 )
-	ROM_LOAD( "fl1v2"       , 0x080000, 0x020000, 0x6a164647 )
+	ROM_LOAD( "fl1-v2"      , 0x080000, 0x020000, 0x6a164647 )
 	ROM_RELOAD(               0x0a0000, 0x020000 )
 	ROM_RELOAD(               0x0c0000, 0x020000 )
 	ROM_RELOAD(               0x0e0000, 0x020000 )
-	/* Size of the voice roms may be wrong, all others are 512K */
 
 	ROM_REGION(0x080000)    /* Shape memory */
-	NAMCOS2_GFXROM_LOAD_128K( "fl1sha"      , 0x000000, 0xd6252c2e )
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha"     , 0x000000, 0x5fda0b6d )
+ROM_END
+
+ROM_START( finalapd )
+	ROM_REGION(0x040000)
+	ROM_LOAD_EVEN( "fl2-mp0d"    , 0x000000, 0x010000, 0x3576d3aa )
+	ROM_LOAD_ODD(  "fl2-mp1d"    , 0x000000, 0x010000, 0x22d3906d )
+
+	ROM_REGION(0x040000)
+	ROM_LOAD_EVEN( "fl1-sp0"     , 0x000000, 0x010000, 0x2c5ff15d )
+	ROM_LOAD_ODD(  "fl1-sp1"     , 0x000000, 0x010000, 0xea9d1a2e )
+
+	ROM_REGION(0x030000)    /* 64K RAM + 128K banked ROM for the audio CPU, load the rom above the ram for paging */
+	ROM_LOAD( "fl1-s0b"     , 0x00c000, 0x004000, 0xf5d76989 )
+	ROM_CONTINUE(             0x010000, 0x01c000 )              /* Stops warning message */
+	ROM_RELOAD(               0x010000, 0x020000 )
+
+	ROM_REGION(0x010000)        /* 64K RAM for MCU */
+	ROM_LOAD("sys2mcpu.bin" , 0x000000, 0x002000, 0xa342a97e )
+	ROM_LOAD("sys2c65c.bin" , 0x008000, 0x008000, BADCRC(0xa5b2a4ff))
+
+	ROM_REGION_DISPOSE(0x400000)    /* Sprites */
+	NAMCOS2_GFXROM_LOAD_512K( "obj-0b"      , 0x000000, 0xc6986523 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-1b"      , 0x080000, 0x6af7d284 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-2b"      , 0x100000, 0xde45ca8d )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-3b"      , 0x180000, 0xdba830a2 )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c0"      , 0x000000, 0xcd9d2966 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c1"      , 0x080000, 0xb0efec87 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c2"      , 0x100000, 0x263b8e31 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c3"      , 0x180000, 0xc2c56743 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-c4"      , 0x200000, 0x83c77a50 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c5"      , 0x280000, 0xab89da77 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-c6"      , 0x300000, 0x239bd9a0 )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	/* No ROZ files present in ZIP archive */
+
+	ROM_REGION(0x200000)    /* Shared data roms */
+	/* No DAT files present in ZIP archive - Must be wrong */
+
+	ROM_REGION(0x100000)	/* Sound voices */
+	ROM_LOAD( "fl1-v1"      , 0x000000, 0x020000, 0x86b21996 )
+	ROM_RELOAD(               0x020000, 0x020000 )
+	ROM_RELOAD(               0x040000, 0x020000 )
+	ROM_RELOAD(               0x060000, 0x020000 )
+	ROM_LOAD( "fl1-v2"      , 0x080000, 0x020000, 0x6a164647 )
+	ROM_RELOAD(               0x0a0000, 0x020000 )
+	ROM_RELOAD(               0x0c0000, 0x020000 )
+	ROM_RELOAD(               0x0e0000, 0x020000 )
+
+	ROM_REGION(0x080000)    /* Shape memory */
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha"     , 0x000000, 0x5fda0b6d )
+ROM_END
+
+ROM_START( finalapc )
+	ROM_REGION(0x040000)
+	ROM_LOAD_EVEN( "fl2-mp0c"    , 0x000000, 0x010000, 0xf667f2c9 )
+	ROM_LOAD_ODD(  "fl2-mp1c"    , 0x000000, 0x010000, 0xb8615d33 )
+
+	ROM_REGION(0x040000)
+	ROM_LOAD_EVEN( "fl1-sp0"     , 0x000000, 0x010000, 0x2c5ff15d )
+	ROM_LOAD_ODD(  "fl1-sp1"     , 0x000000, 0x010000, 0xea9d1a2e )
+
+	ROM_REGION(0x030000)    /* 64K RAM + 128K banked ROM for the audio CPU, load the rom above the ram for paging */
+	ROM_LOAD( "fl1-s0"      , 0x00c000, 0x004000, 0x1f8ff494 )
+	ROM_CONTINUE(             0x010000, 0x01c000 )              /* Stops warning message */
+	ROM_RELOAD(               0x010000, 0x020000 )
+
+	ROM_REGION(0x010000)        /* 64K RAM for MCU */
+	ROM_LOAD("sys2mcpu.bin" , 0x000000, 0x002000, 0xa342a97e )
+	ROM_LOAD("sys2c65c.bin" , 0x008000, 0x008000, BADCRC(0xa5b2a4ff))
+
+	ROM_REGION_DISPOSE(0x400000)    /* Sprites */
+	NAMCOS2_GFXROM_LOAD_512K( "obj-0b"      , 0x000000, 0xc6986523 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-1b"      , 0x080000, 0x6af7d284 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-2b"      , 0x100000, 0xde45ca8d )
+	NAMCOS2_GFXROM_LOAD_512K( "obj-3b"      , 0x180000, 0xdba830a2 )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c0"      , 0x000000, 0xcd9d2966 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c1"      , 0x080000, 0xb0efec87 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c2"      , 0x100000, 0x263b8e31 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c3"      , 0x180000, 0xc2c56743 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-c4"      , 0x200000, 0x83c77a50 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl1-c5"      , 0x280000, 0xab89da77 )
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-c6"      , 0x300000, 0x239bd9a0 )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	/* No ROZ files present in ZIP archive */
+
+	ROM_REGION(0x200000)    /* Shared data roms */
+	/* No DAT files present in ZIP archive - Must be wrong */
+
+	ROM_REGION(0x100000)	/* Sound voices */
+	ROM_LOAD( "fl1-v1"      , 0x000000, 0x020000, 0x86b21996 )
+	ROM_RELOAD(               0x020000, 0x020000 )
+	ROM_RELOAD(               0x040000, 0x020000 )
+	ROM_RELOAD(               0x060000, 0x020000 )
+	ROM_LOAD( "fl1-v2"      , 0x080000, 0x020000, 0x6a164647 )
+	ROM_RELOAD(               0x0a0000, 0x020000 )
+	ROM_RELOAD(               0x0c0000, 0x020000 )
+	ROM_RELOAD(               0x0e0000, 0x020000 )
+
+	ROM_REGION(0x080000)    /* Shape memory */
+	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha"     , 0x000000, 0x5fda0b6d )
 ROM_END
 
 
 /*************************************************************/
 /*                     FINAL LAP 2                           */
 /*************************************************************/
-ROM_START( finalap2_rom )
+ROM_START( finalap2 )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "fls2mp0b"    , 0x000000, 0x020000, 0x97b48aae )
 	ROM_LOAD_ODD(  "fls2mp1b"    , 0x000000, 0x020000, 0xc9f3e0e7 )
+
+	ROM_REGION(0x040000)
+	ROM_LOAD_EVEN( "fls2sp0b"    , 0x000000, 0x020000, 0x8bf15d9c )
+	ROM_LOAD_ODD(  "fls2sp1b"    , 0x000000, 0x020000, 0xc1a31086 )
+
+	ROM_REGION(0x030000)    /* 64K RAM + 128K banked ROM for the audio CPU, load the rom above the ram for paging */
+	ROM_LOAD( "flss0"       , 0x00c000, 0x004000, 0xc07cc10a )
+	ROM_CONTINUE(             0x010000, 0x01c000 )              /* Stops warning message */
+	ROM_RELOAD(               0x010000, 0x020000 )
+
+	ROM_REGION(0x010000)        /* 64K RAM for MCU */
+	ROM_LOAD("sys2mcpu.bin" , 0x000000, 0x002000, 0xa342a97e )
+	ROM_LOAD("sys2c65c.bin" , 0x008000, 0x008000, BADCRC(0xa5b2a4ff))
+
+	ROM_REGION_DISPOSE(0x400000)    /* Sprites */
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj0"     , 0x000000, 0xeab19ec6 )
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj2"     , 0x080000, 0x2a3b7ded )
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj4"     , 0x100000, 0x84aa500c )
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj6"     , 0x180000, 0x33118e63 )
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj1"     , 0x200000, 0x4ef37a51 )
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj3"     , 0x280000, 0xb86dc7cd )
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj5"     , 0x300000, 0x6a53e603 )
+	NAMCOS2_GFXROM_LOAD_512K( "fl3obj7"     , 0x380000, 0xb52a85e2 )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr0"    , 0x000000, 0xb3541a31 )
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr1"    , 0x080000, 0xb92fb6f9 )
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr2"    , 0x100000, 0x2e386ec8 )
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr3"    , 0x180000, 0x970255d3 )
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr4"    , 0x200000, 0x1328d87d )
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr5"    , 0x280000, 0x67f535fd )
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr6"    , 0x300000, 0x6aded8ce )
+	NAMCOS2_GFXROM_LOAD_128K( "fls2chr7"    , 0x380000, 0x742bae28 )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	/* No ROZ files present in ZIP archive */
+
+	ROM_REGION(0x200000)    /* Shared data roms */
+	NAMCOS2_DATA_LOAD_E_256K( "fls2dat0"    , 0x000000, 0xf1af432c )
+	NAMCOS2_DATA_LOAD_O_256K( "fls2dat1"    , 0x000000, 0x8719533e )
+
+	ROM_REGION(0x100000)	/* Sound voices */
+	ROM_LOAD( "flsvoi1"     , 0x000000, 0x080000, 0x590be52f )
+	ROM_LOAD( "flsvoi2"     , 0x080000, 0x080000, 0x204b3c27 )
+
+	ROM_REGION(0x080000)    /* Shape memory */
+	NAMCOS2_GFXROM_LOAD_128K( "fls2sha"     , 0x000000, 0x95a63037 )
+ROM_END
+
+ROM_START( finalp2j )
+	ROM_REGION(0x040000)
+	ROM_LOAD_EVEN( "fls1_mp0.bin", 0x000000, 0x020000, 0x05ea8090 )
+	ROM_LOAD_ODD(  "fls1_mp1.bin", 0x000000, 0x020000, 0xfb189f50 )
 
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "fls2sp0b"    , 0x000000, 0x020000, 0x8bf15d9c )
@@ -1504,7 +1764,7 @@ ROM_END
 /*************************************************************/
 /*                     FINAL LAP 3                           */
 /*************************************************************/
-ROM_START( finalap3_rom )
+ROM_START( finalap3 )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "fltmp0"      , 0x000000, 0x020000, 0x2f2a997a )
 	ROM_LOAD_ODD(  "fltmp1"      , 0x000000, 0x020000, 0xb505ca0b )
@@ -1561,7 +1821,7 @@ ROM_END
 /*************************************************************/
 /*                     FINEST HOUR                           */
 /*************************************************************/
-ROM_START( finehour_rom )
+ROM_START( finehour )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "fh1_mp0.bin" , 0x000000, 0x020000, 0x355d9119 )
 	ROM_LOAD_ODD(  "fh1_mp1.bin" , 0x000000, 0x020000, 0x647eb621 )
@@ -1577,7 +1837,7 @@ ROM_START( finehour_rom )
 
 	ROM_REGION(0x010000)        /* 64K RAM for MCU */
 	ROM_LOAD("sys2mcpu.bin" , 0x000000, 0x002000, 0xa342a97e )
-	ROM_LOAD("sys2c65c.bin" , 0x008000, 0x008000, BADCRC(0xa5b2a4ff))
+	ROM_LOAD("sys2c65c.bin" , 0x008000, 0x008000, 0xa5b2a4ff )
 
 	ROM_REGION_DISPOSE(0x400000)    /* Sprites */
 	NAMCOS2_GFXROM_LOAD_512K( "fh1_ob0.bin" , 0x000000, 0xb1fd86f1 )
@@ -1618,7 +1878,7 @@ ROM_END
 /*************************************************************/
 /*                     FOUR TRAX                             */
 /*************************************************************/
-ROM_START( fourtrax_rom )
+ROM_START( fourtrax )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "fx4mpr0"     , 0x000000, 0x020000, 0xf147cd6b )
 	ROM_LOAD_ODD(  "fx4mpr1"     , 0x000000, 0x020000, 0xd1138c85 )
@@ -1669,7 +1929,7 @@ ROM_END
 /*************************************************************/
 /*                         MARVEL LAND                       */
 /*************************************************************/
-ROM_START( marvland_rom )
+ROM_START( marvland )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "mv1-mpr0.bin", 0x000000, 0x010000, 0x8369120f )
 	ROM_LOAD_ODD(  "mv1-mpr1.bin", 0x000000, 0x010000, 0x6d5442cc )
@@ -1721,7 +1981,7 @@ ROM_END
 /*************************************************************/
 /*                         METAL HAWK                        */
 /*************************************************************/
-ROM_START( metlhawk_rom )
+ROM_START( metlhawk )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "mh2mp0c.11d" , 0x000000, 0x020000, 0xcd7dae6e )
 	ROM_LOAD_ODD(  "mh2mp1c.13d" , 0x000000, 0x020000, 0xe52199fd )
@@ -1781,7 +2041,7 @@ ROM_END
 /*************************************************************/
 /*                         MIRAI NINJA                       */
 /*************************************************************/
-ROM_START( mirninja_rom )
+ROM_START( mirninja )
 	ROM_REGION(0x040000)
 	ROM_LOAD_EVEN( "mn_mpr0e.bin", 0x000000, 0x010000, 0xfa75f977 )
 	ROM_LOAD_ODD(  "mn_mpr1e.bin", 0x000000, 0x010000, 0x58ddd464 )
@@ -1827,9 +2087,9 @@ ROM_START( mirninja_rom )
 	NAMCOS2_DATA_LOAD_E_128K( "mn1_dat0.bin", 0x000000, 0x104bcca8 )
 	NAMCOS2_DATA_LOAD_O_128K( "mn1_dat1.bin", 0x000000, 0xd2a918fb )
 
-	ROM_REGION(0x100000)	/* Sound voices */
-	ROM_LOAD( "mn_voi1.bin" , 0x000000, 0x080000, 0xebfad87b )
-	ROM_LOAD( "mn_voi2.bin" , 0x080000, 0x080000, 0x0db27c0b )
+	ROM_REGION(0x100000)    /* Sound voices */
+	ROM_LOAD( "mn_voi1.bin" , 0x000000, 0x080000, 0x2ca3573c )
+	ROM_LOAD( "mn_voi2.bin" , 0x080000, 0x080000, 0x466c3b47 )
 
 	ROM_REGION(0x080000)    /* Shape memory */
 	NAMCOS2_GFXROM_LOAD_128K( "mn_sha.bin"  , 0x000000, 0xc28af90f )
@@ -1839,7 +2099,7 @@ ROM_END
 /*************************************************************/
 /*                         ORDYNE                            */
 /*************************************************************/
-ROM_START( ordyne_rom )
+ROM_START( ordyne )
 	ROM_REGION(0x080000)
 	ROM_LOAD_EVEN( "or1_mp0.bin" , 0x000000, 0x020000, 0xf5929ed3 )
 	ROM_LOAD_ODD ( "or1_mp1.bin" , 0x000000, 0x020000, 0xc1c8c1e2 )
@@ -1898,7 +2158,7 @@ ROM_END
 /*************************************************************/
 /*                         PHELIOS                           */
 /*************************************************************/
-ROM_START( phelios_rom )
+ROM_START( phelios )
 	ROM_REGION(0x080000)
 	ROM_LOAD_EVEN( "ps1mpr0.bin" , 0x000000, 0x020000, 0xbfbe96c6 )
 	ROM_LOAD_ODD ( "ps1mpr1.bin" , 0x000000, 0x020000, 0xf5c0f883 )
@@ -1959,7 +2219,7 @@ ROM_END
 /*************************************************************/
 /*                     ROLLING THUNDER 2                     */
 /*************************************************************/
-ROM_START( rthun2_rom )
+ROM_START( rthun2 )
 	ROM_REGION(0x040000)        /* Main CPU */
 	ROM_LOAD_EVEN( "mpr0.bin"    , 0x000000, 0x020000, 0xe09a3549 )
 	ROM_LOAD_ODD(  "mpr1.bin"    , 0x000000, 0x020000, 0x09573bff )
@@ -2004,11 +2264,56 @@ ROM_START( rthun2_rom )
 	NAMCOS2_GFXROM_LOAD_512K( "shape.bin"   , 0x000000, 0xcf58fbbe )
 ROM_END
 
+ROM_START( rthun2j )
+	ROM_REGION(0x040000)        /* Main CPU */
+	ROM_LOAD_EVEN( "mpr0j.bin"   , 0x000000, 0x020000, 0x2563b9ee )
+	ROM_LOAD_ODD(  "mpr1j.bin"   , 0x000000, 0x020000, 0x14c4c564 )
+
+	ROM_REGION(0x020000)    /* Sprite/tile engine CPU ? */
+	ROM_LOAD_EVEN( "spr0j.bin"   , 0x000000, 0x010000, 0xf8ef5150 )
+	ROM_LOAD_ODD(  "spr1j.bin"   , 0x000000, 0x010000, 0x52ed3a48 )
+
+	ROM_REGION(0x050000)    /* sound CPU */
+	ROM_LOAD( "snd0.bin"    , 0x00c000, 0x004000, 0x55b7562a )
+	ROM_CONTINUE(             0x010000, 0x01c000 )              /* Stops warning message */
+	ROM_RELOAD(               0x010000, 0x020000 )
+	ROM_LOAD( "snd1.bin"    , 0x030000, 0x020000, 0x00445a4f )
+
+	ROM_REGION(0x010000)        /* 64K RAM for MCU */
+	ROM_LOAD("sys2mcpu.bin" , 0x000000, 0x002000, 0xa342a97e )
+	ROM_LOAD("sys2c65c.bin" , 0x008000, 0x008000, 0xa5b2a4ff )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Sprites */
+	NAMCOS2_GFXROM_LOAD_512K( "obj0.bin"    , 0x000000, 0xe5cb82c1 )
+	NAMCOS2_GFXROM_LOAD_512K( "obj1.bin"    , 0x080000, 0x19ebe9fd )
+	NAMCOS2_GFXROM_LOAD_512K( "obj2.bin"    , 0x100000, 0x455c4a2f )
+	NAMCOS2_GFXROM_LOAD_512K( "obj3.bin"    , 0x180000, 0xfdcae8a9 )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	NAMCOS2_GFXROM_LOAD_512K( "chr0.bin"    , 0x000000, 0x6f0e9a68 )
+	NAMCOS2_GFXROM_LOAD_512K( "chr1.bin"    , 0x080000, 0x15e44adc )
+
+	ROM_REGION_DISPOSE(0x400000)    /* Tiles */
+	NAMCOS2_GFXROM_LOAD_512K( "roz0.bin"    , 0x000000, 0x482d0554 )
+
+	ROM_REGION(0x200000)    /* Shared data roms */
+	NAMCOS2_DATA_LOAD_E_128K( "data0.bin"   , 0x000000, 0x0baf44ee )
+	NAMCOS2_DATA_LOAD_O_128K( "data1.bin"   , 0x000000, 0x58a8daac )
+	NAMCOS2_DATA_LOAD_E_128K( "data2.bin"   , 0x100000, 0x8e850a2a )
+
+	ROM_REGION(0x100000)	/* Sound voices */
+	ROM_LOAD( "voi1.bin"    , 0x000000, 0x080000, 0xe42027cd )
+	ROM_LOAD( "voi2.bin"    , 0x080000, 0x080000, 0x0c4c2b66 )
+
+	ROM_REGION(0x080000)    /* Shape memory */
+	NAMCOS2_GFXROM_LOAD_512K( "shape.bin"   , 0x000000, 0xcf58fbbe )
+ROM_END
+
 
 /*************************************************************/
 /*                     STEEL GUNNER 2                        */
 /*************************************************************/
-ROM_START( sgunner2_rom)
+ROM_START( sgunner2 )
 	ROM_REGION(0x040000)        /* Main CPU */
 	ROM_LOAD_EVEN( "sns_mpr0.bin", 0x000000, 0x020000, 0xe7216ad7 )
 	ROM_LOAD_ODD(  "sns_mpr1.bin", 0x000000, 0x020000, 0x6caef2ee )
@@ -2061,9 +2366,9 @@ ROM_END
 
 
 /*************************************************************/
-/*                     LEGEND OF THE WALKYRIE                */
+/*                     LEGEND OF THE VALKYRIE                */
 /*************************************************************/
-ROM_START( walkyrie_rom )
+ROM_START( valkyrie )
 	ROM_REGION(0x040000)        /* Main CPU */
 	ROM_LOAD_EVEN( "wd1mpr0.bin" , 0x000000, 0x020000, 0x94111a2e )
 	ROM_LOAD_ODD(  "wd1mpr1.bin" , 0x000000, 0x020000, 0x57b5051c )
@@ -2191,6 +2496,9 @@ void finallap_init(void)
 	namcos2_gametype=NAMCOS2_FINAL_LAP;
 }
 
+#define finalapd_init finallap_init
+#define finalapc_init finallap_init
+
 void finalap2_init(void)
 {
 	unsigned char *RAM=Machine->memory_region[MEM_CPU1];
@@ -2199,6 +2507,16 @@ void finalap2_init(void)
 	WRITE_WORD( &RAM[0x00402a], 0x4e71 );
 	WRITE_WORD( &RAM[0x00403e], 0x4e71 );
 	WRITE_WORD( &RAM[0x004040], 0x4e71 );
+}
+
+void finalp2j_init(void)
+{
+	unsigned char *RAM=Machine->memory_region[MEM_CPU1];
+	namcos2_gametype=NAMCOS2_FINAL_LAP_2;
+	WRITE_WORD( &RAM[0x003de2], 0x4e71 );	// Patch some protection checks
+	WRITE_WORD( &RAM[0x003de4], 0x4e71 );
+	WRITE_WORD( &RAM[0x003df8], 0x4e71 );
+	WRITE_WORD( &RAM[0x003dfa], 0x4e71 );
 }
 
 void finalap3_init(void)
@@ -2292,6 +2610,19 @@ void rthun2_init(void)
 	WRITE_WORD( &RAM[0x004268], 0x4e71 );   // move.w #$0001,$100002
 }
 
+void rthun2j_init(void)
+{
+	unsigned char *RAM=Machine->memory_region[MEM_CPU1];
+	namcos2_gametype=NAMCOS2_ROLLING_THUNDER_2;
+	WRITE_WORD( &RAM[0x0040d2], 0x4e71 );   // Patch $d00000 checks
+
+	WRITE_WORD( &RAM[0x004082], 0x33fc );   // Protection patch, replace
+	WRITE_WORD( &RAM[0x004084], 0x0000 );   //
+	WRITE_WORD( &RAM[0x004086], 0x0010 );   // move.w $d00004,$100002
+	WRITE_WORD( &RAM[0x004088], 0x0002 );   //         with
+	WRITE_WORD( &RAM[0x00408a], 0x4e71 );   // move.w #$0001,$100002
+}
+
 void sgunner2_init(void)
 {
 	unsigned char *RAM=Machine->memory_region[MEM_CPU1];
@@ -2299,7 +2630,7 @@ void sgunner2_init(void)
 	WRITE_WORD( &RAM[0x001162], 0x4e71 );   // Patch $a00000 checks
 }
 
-void walkyrie_init(void)
+void valkyrie_init(void)
 {
 	namcos2_gametype=NAMCOS2_WALKYRIE;
 }
@@ -2315,7 +2646,30 @@ void walkyrie_init(void)
 		ENTRYDATE,\
 		ENTRYCOMPANY,\
 		NAMCOS2_CREDITS,\
-		GAME_IMPERFECT_SOUND,\
+		0,\
+		&machine_driver,\
+		DRVNAME##_init,\
+		DRVNAME##_rom,\
+		0, 0,\
+		0,\
+		0,\
+		NAMCOS2_##DRVNAME##_PORTS,\
+		0, 0, 0,\
+		ENTRYROTATE,\
+		namcos2_hiload,namcos2_hisave\
+	};
+
+#define NAMCO_SYSTEM2_DRIVER_16(DRVNAME,DRVCLONE,ENTRYNAME,ENTRYDETAIL,ENTRYDATE,ENTRYCOMPANY,ENTRYROTATE) \
+	struct GameDriver DRVNAME##_driver =\
+	{\
+		__FILE__,\
+		DRVCLONE,\
+		ENTRYNAME,\
+		ENTRYDETAIL,\
+		ENTRYDATE,\
+		ENTRYCOMPANY,\
+		NAMCOS2_CREDITS,\
+		GAME_REQUIRES_16BIT,\
 		&machine_driver,\
 		DRVNAME##_init,\
 		DRVNAME##_rom,\
@@ -2338,7 +2692,7 @@ void walkyrie_init(void)
 		ENTRYDATE,\
 		ENTRYCOMPANY,\
 		NAMCOS2_CREDITS,\
-		GAME_NOT_WORKING | GAME_IMPERFECT_SOUND,\
+		GAME_REQUIRES_16BIT | GAME_NOT_WORKING,\
 		&machine_driver,\
 		DRVNAME##_init,\
 		DRVNAME##_rom,\
@@ -2357,27 +2711,35 @@ void walkyrie_init(void)
 /* from sys2c65b to sys2c65c sometime between 1988 and 1990 as mirai ninja  */
 /* and matel hawk have the B version and dragon saber has the C version     */
 
-NAMCO_SYSTEM2_NWDRVR(finallap, 0               , "finallap","Final Lap"                     ,"1987","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_DRIVER(assault , 0               , "assault" ,"Assault"                       ,"1988","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(assaultj, &assault_driver , "assaultj","Assault (Japan)"               ,"1988","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(assaultp, &assault_driver , "assaultp","Assault Plus (Japan)"          ,"1988","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_NWDRVR(metlhawk, 0               , "metlhawk","Metal Hawk (Japan)"            ,"1988","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(mirninja, 0               , "mirninja","Mirai Ninja (Japan)"           ,"1988","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_DRIVER(ordyne,   0               , "ordyne"  ,"Ordyne (Japan)"                ,"1988","Namco",ORIENTATION_ROTATE_180)
-NAMCO_SYSTEM2_DRIVER(phelios , 0               , "phelios" ,"Phelios (Japan)"               ,"1988","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(burnforc, 0               , "burnforc","Burning Force (Japan)"         ,"1989","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_DRIVER(dirtfoxj, 0               , "dirtfoxj","Dirt Fox (Japan)"              ,"1989","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(finehour, 0               , "finehour","Finest Hour (Japan)"           ,"1989","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_NWDRVR(fourtrax, 0               , "fourtrax","Four Trax"                     ,"1989","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_DRIVER(marvland, 0               , "marvland","Marvel Land (Japan)"           ,"1989","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_DRIVER(walkyrie, 0               , "walkyrie","Legend of the Walkyrie (Japan)","1989","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(dsaber,   0               , "dsaber"  ,"Dragon Saber"                  ,"1990","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(dsaberj,  &dsaber_driver  , "dsaberj" ,"Dragon Saber (Japan)"          ,"1990","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER(rthun2  , 0               , "rthun2"  ,"Rolling Thunder 2"             ,"1990","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_NWDRVR(finalap2, 0               , "finalap2","Final Lap 2"                   ,"1990","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_NWDRVR(sgunner2, 0               , "sgunner2","Steel Gunner 2 (Japan)"        ,"1991","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_DRIVER(cosmogng, 0               , "cosmogng","Cosmo Gang the Video (Japan)"  ,"1991","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_NWDRVR(finalap3, 0               , "finalap3","Final Lap 3 (Japan)"           ,"1992","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finallap, 0               , "finallap","Final Lap (revision E)"        ,"1987","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finalapd, &finallap_driver, "finalapd","Final Lap (revision D)"        ,"1987","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finalapc, &finallap_driver, "finalapc","Final Lap (revision C)"        ,"1987","Namco",ORIENTATION_DEFAULT)
+/* I think this could fit 256 colors in theory */
+NAMCO_SYSTEM2_DRIVER_16(assault , 0               , "assault" ,"Assault"                       ,"1988","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER_16(assaultj, &assault_driver , "assaultj","Assault (Japan)"               ,"1988","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER_16(assaultp, &assault_driver , "assaultp","Assault Plus (Japan)"          ,"1988","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_NWDRVR   (metlhawk, 0               , "metlhawk","Metal Hawk (Japan)"            ,"1988","Namco",ORIENTATION_ROTATE_90)
+/* I think this could fit 256 colors in theory */
+NAMCO_SYSTEM2_DRIVER_16(mirninja, 0               , "mirninja","Mirai Ninja (Japan)"           ,"1988","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_DRIVER_16(ordyne,   0               , "ordyne"  ,"Ordyne (Japan)"                ,"1988","Namco",ORIENTATION_ROTATE_180)
+/* I think this could fit 256 colors in theory */
+NAMCO_SYSTEM2_DRIVER_16(phelios , 0               , "phelios" ,"Phelios (Japan)"               ,"1988","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER_16(burnforc, 0               , "burnforc","Burning Force (Japan)"         ,"1989","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_DRIVER   (dirtfoxj, 0               , "dirtfoxj","Dirt Fox (Japan)"              ,"1989","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER_16(finehour, 0               , "finehour","Finest Hour (Japan)"           ,"1989","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (fourtrax, 0               , "fourtrax","Four Trax"                     ,"1989","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_DRIVER   (marvland, 0               , "marvland","Marvel Land (Japan)"           ,"1989","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_DRIVER   (valkyrie, 0               , "valkyrie","Walkure no Densetsu (Japan)"   ,"1989","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER   (dsaber,   0               , "dsaber"  ,"Dragon Saber"                  ,"1990","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER   (dsaberj,  &dsaber_driver  , "dsaberj" ,"Dragon Saber (Japan)"          ,"1990","Namco",ORIENTATION_ROTATE_90)
+/* I think this could fit 256 colors in theory */
+NAMCO_SYSTEM2_DRIVER_16(rthun2  , 0               , "rthun2"  ,"Rolling Thunder 2"             ,"1990","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_DRIVER_16(rthun2j , &rthun2_driver  , "rthun2j" ,"Rolling Thunder 2 (Japan)"     ,"1990","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finalap2, 0               , "finalap2","Final Lap 2"                   ,"1990","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finalp2j, &finalap2_driver, "finalp2j","Final Lap 2 (Japan)"           ,"1990","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (sgunner2, 0               , "sgunner2","Steel Gunner 2 (Japan)"        ,"1991","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_DRIVER   (cosmogng, 0               , "cosmogng","Cosmo Gang the Video (Japan)"  ,"1991","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_NWDRVR   (finalap3, 0               , "finalap3","Final Lap 3 (Japan)"           ,"1992","Namco",ORIENTATION_DEFAULT)
 
 /* NAMCO_SYSTEM2_DRIVER(bubbletb, 0               , "bubbletb","Bubble Trouble"                ,"19??","Namco",ORIENTATION_DEFAULT) */
 /* NAMCO_SYSTEM2_DRIVER(cosmogus, 0               , "cosmogus","Cosmo Gang the Video (US)"     ,"1991","Namco",ORIENTATION_DEFAULT) */

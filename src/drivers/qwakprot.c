@@ -254,7 +254,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( qwakprot_rom )
+ROM_START( qwakprot )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "qwak8000.bin", 0x8000, 0x1000, 0x4d002d8a )
 	ROM_LOAD( "qwak9000.bin", 0x9000, 0x1000, 0xe0c78fd7 )

@@ -13,10 +13,6 @@ struct ADPCMsample
 	int length;    /* length of the sample */
 };
 
-#define ADPCM_SAMPLES_START(name) struct ADPCMsample name[] = {
-#define ADPCM_SAMPLE(n,o,l) { (n), (o), (l) },
-#define ADPCM_SAMPLES_END { 0, 0, 0, } };
-
 
 /* a generic ADPCM interface, for unknown chips */
 

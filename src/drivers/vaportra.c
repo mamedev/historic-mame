@@ -392,7 +392,7 @@ static struct MachineDriver vaportra_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( vaportra_rom )
+ROM_START( vaportra )
 	ROM_REGION(0x80000) /* 68000 code */
   	ROM_LOAD_EVEN( "fj02",   0x00000, 0x20000, 0xa2affb73 )
   	ROM_LOAD_ODD ( "fj00",   0x00000, 0x20000, 0xef05e07b )
@@ -416,7 +416,7 @@ ROM_START( vaportra_rom )
 	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
 ROM_END
 
-ROM_START( kuhga_rom )
+ROM_START( kuhga )
 	ROM_REGION(0x80000) /* 68000 code */
   	ROM_LOAD_EVEN( "fp02-3.bin", 0x00000, 0x20000, 0xd0705ef4 )
   	ROM_LOAD_ODD ( "fp00-3.bin", 0x00000, 0x20000, 0x1da92e48 )

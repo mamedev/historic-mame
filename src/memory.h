@@ -144,6 +144,11 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 #define ABITS2_16LEW    3
 #define ABITS3_16LEW    0
 #define ABITS_MIN_16LEW 1      /* minimum memory block is 2 bytes */
+/* 16 bits address (big endian word access) */
+#define ABITS1_16BEW   12
+#define ABITS2_16BEW    3
+#define ABITS3_16BEW    0
+#define ABITS_MIN_16BEW 1      /* minimum memory block is 2 bytes */
 /* mask bits */
 #define MHMASK(abits)    (0xffffffff>>(32-abits))
 
@@ -161,6 +166,7 @@ extern unsigned char *OP_ROM;	/* op_code used */
 
 /* ----- memory setting subroutine ---- */
 void cpu_setOPbase16(int pc);
+void cpu_setOPbase16bew(int pc);
 void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
@@ -192,6 +198,8 @@ void *install_port_write_handler(int cpu, int start, int end, void (*handler)(in
 
 /* ----- memory read /write function ----- */
 int cpu_readmem16(int address);
+int cpu_readmem16bew(int address);
+int cpu_readmem16bew_word(int address);
 int cpu_readmem16lew(int address);
 int cpu_readmem16lew_word(int address);
 int cpu_readmem20(int address);
@@ -203,6 +211,8 @@ int cpu_readmem29(int address);        /* AJP 980803 */
 int cpu_readmem29_word(int address);   /* AJP 980803 */
 int cpu_readmem29_dword(int address);  /* AJP 980803 */
 void cpu_writemem16(int address,int data);
+void cpu_writemem16bew(int address, int data);
+void cpu_writemem16bew_word(int address, int data);
 void cpu_writemem16lew(int address,int data);
 void cpu_writemem16lew_word(int address,int data);
 void cpu_writemem20(int address,int data);
@@ -236,6 +246,7 @@ extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
 
 /* ----- op-code region set function ----- */
 #define change_pc16(pc) {if(cur_mrhard[(pc)>>(ABITS2_16+ABITS_MIN_16)]!=ophw)cpu_setOPbase16(pc);}
+#define change_pc16bew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16BEW+ABITS_MIN_16BEW)]!=ophw)cpu_setOPbase16bew(pc);}
 #define change_pc16lew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16LEW+ABITS_MIN_16LEW)]!=ophw)cpu_setOPbase16lew(pc);}
 #define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
 #define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}

@@ -166,7 +166,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x00, 0x04, mcr_port_04_dispatch_r },
-	{ 0x07, 0x07, mcr_sound_status_r },
+	{ 0x07, 0x07, ssio_status_r },
 	{ 0x10, 0x10, mcr_port_04_dispatch_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
 	{ -1 }
@@ -625,7 +625,7 @@ static void journey_init(void)
  *
  *************************************/
 
-ROM_START( shollow_rom )
+ROM_START( shollow )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sh-pro.00",    0x0000, 0x2000, 0x95e2b800 )
 	ROM_LOAD( "sh-pro.01",    0x2000, 0x2000, 0xb99f6ff8 )
@@ -649,7 +649,7 @@ ROM_START( shollow_rom )
 ROM_END
 
 
-ROM_START( shollow2_rom )
+ROM_START( shollow2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sh-pro.00",    0x0000, 0x2000, 0x95e2b800 )
 	ROM_LOAD( "sh-pro.01",    0x2000, 0x2000, 0xb99f6ff8 )
@@ -673,7 +673,7 @@ ROM_START( shollow2_rom )
 ROM_END
 
 
-ROM_START( tron_rom )
+ROM_START( tron )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "scpu_pga.bin", 0x0000, 0x2000, 0x5151770b )
 	ROM_LOAD( "scpu_pgb.bin", 0x2000, 0x2000, 0x8ddf8717 )
@@ -697,7 +697,7 @@ ROM_START( tron_rom )
 ROM_END
 
 
-ROM_START( tron2_rom )
+ROM_START( tron2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pro0.d2",      0x0000, 0x2000, 0x0de0471a )
 	ROM_LOAD( "scpu_pgb.bin", 0x2000, 0x2000, 0x8ddf8717 )
@@ -721,7 +721,7 @@ ROM_START( tron2_rom )
 ROM_END
 
 
-ROM_START( kroozr_rom )
+ROM_START( kroozr )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "kozmkcpu.2d",  0x0000, 0x2000, 0x61e02045 )
 	ROM_LOAD( "kozmkcpu.3d",  0x2000, 0x2000, 0xcaabed57 )
@@ -744,7 +744,7 @@ ROM_START( kroozr_rom )
 ROM_END
 
 
-ROM_START( domino_rom )
+ROM_START( domino )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dmanpg0.bin",  0x0000, 0x2000, 0x3bf3bb1c )
 	ROM_LOAD( "dmanpg1.bin",  0x2000, 0x2000, 0x85cf1d69 )
@@ -767,7 +767,7 @@ ROM_START( domino_rom )
 ROM_END
 
 
-ROM_START( wacko_rom )
+ROM_START( wacko )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "wackocpu.2d",  0x0000, 0x2000, 0xc98e29b6 )
 	ROM_LOAD( "wackocpu.3d",  0x2000, 0x2000, 0x90b89774 )
@@ -789,7 +789,7 @@ ROM_START( wacko_rom )
 ROM_END
 
 
-ROM_START( twotiger_rom )
+ROM_START( twotiger )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2tgrpg0.bin",  0x0000, 0x2000, 0xe77a924b )
 	ROM_LOAD( "2tgrpg1.bin",  0x2000, 0x2000, 0x2699ebdc )
@@ -811,7 +811,7 @@ ROM_START( twotiger_rom )
 ROM_END
 
 
-ROM_START( journey_rom )
+ROM_START( journey )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "d2",           0x0000, 0x2000, 0xf2618913 )
 	ROM_LOAD( "d3",           0x2000, 0x2000, 0x2f290d2e )

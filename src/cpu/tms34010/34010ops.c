@@ -39,13 +39,8 @@
 				    (((INT32)((UINT16)(val.x)))<<state.xytolshiftcount2)) + OFFSET)
 
 
-#if TMS34010_ACCURATE_TIMING
 #define COUNT_CYCLES(x)	tms34010_ICount -= x
 #define COUNT_UNKNOWN_CYCLES(x) COUNT_CYCLES(x)
-#else
-#define COUNT_CYCLES(x)
-#define COUNT_UNKNOWN_CYCLES(x)
-#endif
 
 
 static void unimpl(void)
@@ -55,7 +50,7 @@ static void unimpl(void)
 	RESET_ST();
 	PC = RLONG(0xfffffc20);
   	COUNT_UNKNOWN_CYCLES(16);
-	
+
 	/* extra check to prevent bad things */
 	if (PC == 0 || opcode_table[cpu_readop16(TOBYTE(PC)) >> 4] == unimpl)
 	{
@@ -67,494 +62,6 @@ static void unimpl(void)
 		}
 #endif
 	}
-}
-
-/* Graphics Instructions */
-
-static void clip_xy_to_window(void)
-{
-	/* window clipping mode 3 */
-	INT16 ex  = DADDR_X + DYDX_X;
-	INT16 ey  = DADDR_Y + DYDX_Y;
-	INT16 wex = WEND_X + 1;
-	INT16 wey = WEND_Y + 1;
-
-	DADDR_X = (DADDR_X >= WSTART_X) ? DADDR_X : WSTART_X;
-	DADDR_Y = (DADDR_Y >= WSTART_Y) ? DADDR_Y : WSTART_Y;
-	DYDX_X  = ((ex <= wex) ? ex : wex) - DADDR_X;
-	DYDX_Y  = ((ey <= wey) ? ey : wey) - DADDR_Y;
-}
-
-static void pixblt_b_l(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		/* setup */
-		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-		BREG(13<<4) = SADDR;
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-	}
-
-	do {
-		boundary = WPIXEL(DADDR, (rfield_z_01(SADDR) ? COLOR1 : COLOR0));
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR += IOREG(REG_PSIZE);
-			SADDR++;
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG(10<<4) = (UINT16)DYDX_X;
-			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
-			SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void pixblt_b_xy(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		INT16 oldx, oldy, oldw, oldh;
-
-		switch (state.window_checking)
-		{
-		case 0: break;
-		case 3:
-			oldx = DADDR_X;
-			oldy = DADDR_X;
-			oldw = DYDX_X;
-			oldh = DYDX_X;
-
-			clip_xy_to_window();
-
-			/* clip source array if destination clipping occured */
-			CLR_V;
-			if ((oldw != DYDX_X) || (oldh != DYDX_Y))
-			{
-				V_FLAG = 1;
-
-				SADDR +=  DADDR_X - oldx;
-				SADDR += (DADDR_Y - oldy) * SPTCH;
-			}
-			break;
-
-		default:
-			if (errorlog) fprintf(errorlog, "PIXBLT B,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-			break;
-		}
-
-		/* setup */
-		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-		BREG(13<<4) = SADDR;
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-	}
-
-	do {
-		boundary = WPIXEL(XYTOL(DADDR_XY), (rfield_z_01(SADDR) ? COLOR1 : COLOR0));
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR_X++;
-			SADDR++;
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG(10<<4) = (UINT16)DYDX_X;
-			BREG_Y(12<<4)++;
-			DADDR = BREG(12<<4);
-			SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void pixblt_l_l(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		/* setup */
-		P_FLAG = 1;
-
-		BREG(14<<4) = IOREG(REG_PSIZE);
-		if (PBH)
-		{
-			BREG(14<<4) = -BREG(14<<4);
-			DADDR += BREG(14<<4);
-			SADDR += BREG(14<<4);
-		}
-
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-		BREG(13<<4) = SADDR;
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-	}
-
-	do {
-		boundary = WPIXEL(DADDR,RPIXEL(SADDR));
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR += BREG(14<<4);
-			SADDR += BREG(14<<4);
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG(10<<4) = (UINT16)DYDX_X;
-
-			if (PBV)
-			{
-				DADDR = BREG(12<<4) = BREG(12<<4) - DPTCH;
-				SADDR = BREG(13<<4) = BREG(13<<4) - SPTCH;
-			}
-			else
-			{
-				DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
-				SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
-			}
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void pixblt_l_xy(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		/* setup */
-		if ((PBH || PBV) && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT L,XY  %08X - Corner Adjust not supported\n", PC);
-		}
-
-		if (state.window_checking && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT L,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-		}
-
-		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-		BREG(13<<4) = SADDR;
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-	}
-
-	do {
-		boundary = WPIXEL(XYTOL(DADDR_XY),RPIXEL(SADDR));
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR_X++;
-			SADDR += IOREG(REG_PSIZE);
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG(10<<4) = (UINT16)DYDX_X;
-			BREG_Y(12<<4)++;
-			DADDR = BREG(12<<4);
-			SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void pixblt_xy_l(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		/* setup */
-		if ((PBH || PBV) && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT XY,L  %08X - Corner Adjust not supported\n", PC);
-		}
-
-		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-		BREG(13<<4) = SADDR;
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-	}
-
-	do {
-		boundary = WPIXEL(DADDR,RPIXEL(XYTOL(SADDR_XY)));
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR += IOREG(REG_PSIZE);
-			SADDR_X++;
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG(10<<4) = (UINT16)DYDX_X;
-			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
-			BREG_Y(13<<4)++;
-			SADDR = BREG(13<<4);
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void pixblt_xy_xy(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		if ((PBH || PBV) && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT XY,XY  %08X - Corner Adjust not supported\n", PC);
-		}
-
-		if (state.window_checking && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT XY,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-		}
-
-		/* setup */
-		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-		BREG(13<<4) = SADDR;
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-	}
-
-	do {
-		boundary = WPIXEL(XYTOL(DADDR_XY),RPIXEL(XYTOL(SADDR_XY)));
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR_X++;
-			SADDR_X++;
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG_Y(12<<4)++;
-			DADDR = BREG(12<<4);
-			BREG_Y(13<<4)++;
-			SADDR = BREG(13<<4);
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void fill_l(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		/* setup */
-		P_FLAG = 1;
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-	}
-
-	do {
-		boundary = WPIXEL(DADDR,COLOR1);
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR += IOREG(REG_PSIZE);
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG(10<<4) = (UINT16)DYDX_X;
-			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void fill_xy(void)
-{
-	UINT32 boundary;
-
-	if (!P_FLAG)
-	{
-		switch (state.window_checking)
-		{
-		case 0: break;
-		case 3: clip_xy_to_window(); break;
-		default:
-			if (errorlog) fprintf(errorlog, "FILL XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-			break;
-		}
-
-		/* setup */
-		BREG(10<<4) = (UINT16)DYDX_X;
-		BREG(11<<4) = (UINT16)DYDX_Y;
-		BREG(12<<4) = DADDR;
-
-		if ((INT16)BREG(10<<4)<=0 ||
-			(INT16)BREG(11<<4)<=0)
-		{
-			return;
-		}
-		COUNT_UNKNOWN_CYCLES(BREG(10<<4) * BREG(11<<4));
-
-		P_FLAG = 1;
-	}
-
-	do {
-		boundary = WPIXEL(XYTOL(DADDR_XY),COLOR1);
-		if (--BREG(10<<4))
-		{
-			/* next column */
-			DADDR_X++;
-		}
-		else
-		{
-			/* next row */
-			if (!--BREG(11<<4))
-			{
-				/* done */
-				FINISH_PIX_OP;
-				return;
-			}
-			BREG(10<<4) = (UINT16)DYDX_X;
-			BREG_Y(12<<4)++;
-			DADDR = BREG(12<<4);
-			boundary = 1;
-		}
-	}
-	while (!boundary);
-
-	PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-}
-
-static void line(void)
-{
-	if (!P_FLAG)
-	{
-		if (state.window_checking && errorlog)
-		{
-			fprintf(errorlog, "LINE XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-		}
-
-		P_FLAG = 1;
-		TEMP = (state.op & 0x80) ? 1 : 0;  /* boundary value depends on the algorithm */
-		COUNT_UNKNOWN_CYCLES(COUNT);
-	}
-
-	if (COUNT > 0)
-	{
-		INT16 x1,y1;
-
-		COUNT--;
-		WPIXEL(XYTOL(DADDR_XY),COLOR1);
-		if (SADDR >= TEMP)
-		{
-			SADDR += DYDX_Y*2 - DYDX_X*2;
-			x1 = INC1_X;
-			y1 = INC1_Y;
-		}
-		else
-		{
-			SADDR += DYDX_Y*2;
-			x1 = INC2_X;
-			y1 = INC2_Y;
-		}
-		DADDR_X += x1;
-		DADDR_Y += y1;
-
-		PC -= 0x10;  /* not done yet, check for interrupts and restart instruction */
-		return;
-	}
-	FINISH_PIX_OP;
 }
 
 #define ADD_XY(R)								\
@@ -600,7 +107,7 @@ static void sub_xy_b(void) { SUB_XY(B); }
 	res = a.y-b.y;								\
 	NOTZ_FLAG =  res;							\
 	   C_FLAG = (res & 0x8000);					\
-  	COUNT_CYCLES(3);							\
+  	COUNT_CYCLES(1);							\
 }
 static void cmp_xy_a(void) { CMP_XY(A); }
 static void cmp_xy_b(void) { CMP_XY(B); }
@@ -656,14 +163,17 @@ static void pixt_ri_b(void) { PIXT_RI(B); }
 
 #define PIXT_RIXY(R)		                        \
 {													\
-	if (state.window_checking && errorlog)			\
+	if (state.window_checking != 0 && state.window_checking != 3 && errorlog)			\
 	{												\
 		fprintf(errorlog, "PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
 	}												\
 													\
-	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));	\
+	if (state.window_checking != 3 ||						\
+		(R##REG_X(R##DSTREG) >= WSTART_X && R##REG_X(R##DSTREG) <= WEND_X &&		\
+		 R##REG_Y(R##DSTREG) >= WSTART_Y && R##REG_Y(R##DSTREG) <= WEND_Y))			\
+		WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),R##REG(R##SRCREG));	\
 	FINISH_PIX_OP;									\
-  	COUNT_UNKNOWN_CYCLES(2);						\
+  	COUNT_UNKNOWN_CYCLES(4);						\
 }
 static void pixt_rixy_a(void) { PIXT_RIXY(A); }
 static void pixt_rixy_b(void) { PIXT_RIXY(B); }
@@ -681,7 +191,7 @@ static void pixt_ir_b(void) { PIXT_IR(B); }
 {													\
 	WPIXEL(R##REG(R##DSTREG),RPIXEL(R##REG(R##SRCREG)));	\
 	FINISH_PIX_OP;									\
-  	COUNT_UNKNOWN_CYCLES(2);						\
+  	COUNT_UNKNOWN_CYCLES(4);						\
 }
 static void pixt_ii_a(void) { PIXT_II(A); }
 static void pixt_ii_b(void) { PIXT_II(B); }
@@ -699,7 +209,7 @@ static void pixt_ixyr_b(void) { PIXT_IXYR(B); }
 {																	\
 	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),RPIXEL(XYTOL(R##REG_XY(R##SRCREG))));	\
 	FINISH_PIX_OP;													\
-  	COUNT_UNKNOWN_CYCLES(2);										\
+  	COUNT_UNKNOWN_CYCLES(7);										\
 }
 static void pixt_ixyixy_a(void) { PIXT_IXYIXY(A); }
 static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
@@ -716,7 +226,7 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 	R##REG_X(R##DSTREG) += R##REG_X(R##SRCREG);				\
 	R##REG_Y(R##DSTREG) += R##REG_Y(R##SRCREG);				\
 	FINISH_PIX_OP;											\
-  	COUNT_UNKNOWN_CYCLES(2);								\
+  	COUNT_UNKNOWN_CYCLES(4);								\
 }
 static void drav_a(void) { DRAV(A); }
 static void drav_b(void) { DRAV(B); }
@@ -922,6 +432,7 @@ static void dint(void)
 				SET_NZ(*rd1);								\
 			}												\
 		}													\
+		COUNT_CYCLES(40);									\
 	}														\
 	else													\
 	{														\
@@ -934,8 +445,8 @@ static void dint(void)
 			*rd1 /= *rs;									\
 			SET_NZ(*rd1);									\
 		}													\
+		COUNT_CYCLES(39);									\
 	}														\
-	COUNT_CYCLES(40);										\
 }
 static void divs_a(void) { DIVS(A,1   ); }
 static void divs_b(void) { DIVS(B,0x10); }
@@ -1033,6 +544,7 @@ static void lmo_b(void) { LMO(B); }
 {																\
 	INT32 i;													\
 	UINT16 l = (UINT16) PARAM_WORD();							\
+	COUNT_CYCLES(3);											\
 	if (R##DSTREG == 15*N)										\
 	{															\
 		UINT32 bitaddr1 = SP;									\
@@ -1044,7 +556,7 @@ static void lmo_b(void) { LMO(B); }
 				R##REG(i*N) = READ_WORD(bitaddr2) + (READ_WORD(bitaddr2+2) << 16); \
 				bitaddr1 += 0x20;								\
 				bitaddr2 += 4;									\
-				COUNT_UNKNOWN_CYCLES(1);						\
+				COUNT_CYCLES(4);								\
 			}													\
 			l <<= 1;											\
 		}														\
@@ -1059,7 +571,7 @@ static void lmo_b(void) { LMO(B); }
 			{													\
 				R##REG(i*N) = RLONG(R##REG(rd));				\
 				R##REG(rd) += 0x20;								\
-				COUNT_UNKNOWN_CYCLES(1);						\
+				COUNT_CYCLES(4);								\
 			}													\
 			l <<= 1;											\
 		}														\
@@ -1072,6 +584,7 @@ static void mmfm_b(void) { MMFM(B,0x10); }
 {			  													\
 	UINT32 i;													\
 	UINT16 l = (UINT16) PARAM_WORD();							\
+	COUNT_CYCLES(2);											\
 	if (R##DSTREG == 15*N)										\
 	{															\
 		UINT32 bitaddr1 = SP;									\
@@ -1086,7 +599,7 @@ static void mmfm_b(void) { MMFM(B,0x10); }
 				bitaddr2 -= 4;						 			\
 				WRITE_WORD(bitaddr2  , (UINT16)reg);			\
 				WRITE_WORD(bitaddr2+2, reg >> 16);				\
-				COUNT_UNKNOWN_CYCLES(1);						\
+				COUNT_CYCLES(4);								\
 			}													\
 			l <<= 1;											\
 		}														\
@@ -1102,7 +615,7 @@ static void mmfm_b(void) { MMFM(B,0x10); }
 			{													\
 				R##REG(rd) -= 0x20;								\
 				WLONG(R##REG(rd),R##REG(i*N));					\
-				COUNT_UNKNOWN_CYCLES(1);						\
+				COUNT_CYCLES(4);								\
 			}													\
 			l <<= 1;											\
 		}														\
@@ -1161,7 +674,7 @@ static void modu_b(void) { MODU(B); }
 		*rd1 *= m1;												\
 		SET_NZ(*rd1);											\
 	}															\
-	COUNT_CYCLES(5 + FW(1)/2);									\
+	COUNT_CYCLES(20);											\
 }
 static void mpys_a(void) { MPYS(A,1   ); }
 static void mpys_b(void) { MPYS(B,0x10); }
@@ -1185,7 +698,7 @@ static void mpys_b(void) { MPYS(B,0x10); }
 		*rd1 = (UINT32)*rd1 * m1;								\
 		SET_Z(*rd1);											\
 	}															\
-	COUNT_CYCLES(5 + FW(1)/2);									\
+	COUNT_CYCLES(21);											\
 }
 static void mpyu_a(void) { MPYU(A,1   ); }
 static void mpyu_b(void) { MPYU(B,0x10); }
@@ -1259,7 +772,7 @@ static void setc(void)
 	FE##F##_FLAG = state.op & 0x20;								\
 	FW(F) = state.op & 0x1f;									\
 	SET_FW();													\
-	COUNT_CYCLES(1);											\
+	COUNT_CYCLES(1+F);											\
 }
 static void setf0(void) { SETF(0); }
 static void setf1(void) { SETF(1); }
@@ -1531,7 +1044,7 @@ static void movk_b(void) { MOVK(B); }
 #define MOVB_RN(R)		       		       			    		\
 {																\
 	WBYTE(R##REG(R##DSTREG),R##REG(R##SRCREG));					\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(1);											\
 }
 static void movb_rn_a(void) { MOVB_RN(A); }
 static void movb_rn_b(void) { MOVB_RN(B); }
@@ -1542,7 +1055,7 @@ static void movb_rn_b(void) { MOVB_RN(B); }
 	*rd = RBYTE(R##REG(R##SRCREG));								\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void movb_nr_a(void) { MOVB_NR(A); }
 static void movb_nr_b(void) { MOVB_NR(B); }
@@ -1550,7 +1063,7 @@ static void movb_nr_b(void) { MOVB_NR(B); }
 #define MOVB_NN(R)												\
 {																\
 	WBYTE(R##REG(R##DSTREG),(UINT32)(UINT8)RBYTE(R##REG(R##SRCREG)));	\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void movb_nn_a(void) { MOVB_NN(A); }
 static void movb_nn_b(void) { MOVB_NN(B); }
@@ -1559,7 +1072,7 @@ static void movb_nn_b(void) { MOVB_NN(B); }
 {							  									\
 	INT32 o = PARAM_WORD();										\
 	WBYTE(R##REG(R##DSTREG)+o,R##REG(R##SRCREG));				\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void movb_r_no_a(void) { MOVB_R_NO(A); }
 static void movb_r_no_b(void) { MOVB_R_NO(B); }
@@ -1571,7 +1084,7 @@ static void movb_r_no_b(void) { MOVB_R_NO(B); }
 	*rd = RBYTE(R##REG(R##SRCREG)+o);							\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void movb_no_r_a(void) { MOVB_NO_R(A); }
 static void movb_no_r_b(void) { MOVB_NO_R(B); }
@@ -1581,7 +1094,7 @@ static void movb_no_r_b(void) { MOVB_NO_R(B); }
 	INT32 o1 = PARAM_WORD();									\
 	INT32 o2 = PARAM_WORD();									\
 	WBYTE(R##REG(R##DSTREG)+o2,(UINT32)(UINT8)RBYTE(R##REG(R##SRCREG)+o1));	\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void movb_no_no_a(void) { MOVB_NO_NO(A); }
 static void movb_no_no_b(void) { MOVB_NO_NO(B); }
@@ -1589,7 +1102,7 @@ static void movb_no_no_b(void) { MOVB_NO_NO(B); }
 #define MOVB_RA(R)	       		       			    			\
 {																\
 	WBYTE(PARAM_LONG(),R##REG(R##DSTREG));						\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(1);											\
 }
 static void movb_ra_a(void) { MOVB_RA(A); }
 static void movb_ra_b(void) { MOVB_RA(B); }
@@ -1600,7 +1113,7 @@ static void movb_ra_b(void) { MOVB_RA(B); }
 	*rd = RBYTE(PARAM_LONG());									\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void movb_ar_a(void) { MOVB_AR(A); }
 static void movb_ar_b(void) { MOVB_AR(B); }
@@ -1609,7 +1122,7 @@ static void movb_aa(void)
 {
 	UINT32 bitaddrs=PARAM_LONG();
 	WBYTE(PARAM_LONG(),(UINT32)(UINT8)RBYTE(bitaddrs));
-	COUNT_UNKNOWN_CYCLES(1);
+	COUNT_CYCLES(6);
 }
 
 #define MOVE_RR(RS,RD)	       		       			    		\
@@ -1618,7 +1131,7 @@ static void movb_aa(void)
 	*rd = RS##REG(RS##SRCREG);									\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(1);											\
 }
 static void move_rr_a (void) { MOVE_RR(A,A); }
 static void move_rr_b (void) { MOVE_RR(B,B); }
@@ -1628,7 +1141,7 @@ static void move_rr_bx(void) { MOVE_RR(B,A); }
 #define MOVE_RN(F,R)	       		       			    		\
 {																\
 	WFIELD##F(R##REG(R##DSTREG),R##REG(R##SRCREG));				\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(1);											\
 }
 static void move0_rn_a (void) { MOVE_RN(0,A); }
 static void move0_rn_b (void) { MOVE_RN(0,B); }
@@ -1640,7 +1153,7 @@ static void move1_rn_b (void) { MOVE_RN(1,B); }
 	INT32 *rd = &R##REG(R##DSTREG);								\
 	*rd-=FW_INC(F);												\
 	WFIELD##F(*rd,R##REG(R##SRCREG));							\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(2);											\
 }
 static void move0_r_dn_a (void) { MOVE_R_DN(0,A); }
 static void move0_r_dn_b (void) { MOVE_R_DN(0,B); }
@@ -1652,7 +1165,7 @@ static void move1_r_dn_b (void) { MOVE_R_DN(1,B); }
 	INT32 *rd = &R##REG(R##DSTREG);								\
     WFIELD##F(*rd,R##REG(R##SRCREG));							\
     *rd+=FW_INC(F);												\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(1);											\
 }
 static void move0_r_ni_a (void) { MOVE_R_NI(0,A); }
 static void move0_r_ni_b (void) { MOVE_R_NI(0,B); }
@@ -1665,7 +1178,7 @@ static void move1_r_ni_b (void) { MOVE_R_NI(1,B); }
 	*rd = RFIELD##F(R##REG(R##SRCREG));							\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void move0_nr_a (void) { MOVE_NR(0,A); }
 static void move0_nr_b (void) { MOVE_NR(0,B); }
@@ -1680,7 +1193,7 @@ static void move1_nr_b (void) { MOVE_NR(1,B); }
 	*rd = RFIELD##F(*rs);										\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(4);											\
 }
 static void move0_dn_r_a (void) { MOVE_DN_R(0,A); }
 static void move0_dn_r_b (void) { MOVE_DN_R(0,B); }
@@ -1696,7 +1209,7 @@ static void move1_dn_r_b (void) { MOVE_DN_R(1,B); }
 	*rd = data;													\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void move0_ni_r_a (void) { MOVE_NI_R(0,A); }
 static void move0_ni_r_b (void) { MOVE_NI_R(0,B); }
@@ -1706,7 +1219,7 @@ static void move1_ni_r_b (void) { MOVE_NI_R(1,B); }
 #define MOVE_NN(F,R)	       		       			    		\
 {										  						\
 	WFIELD##F(R##REG(R##DSTREG),RFIELD##F(R##REG(R##SRCREG)));	\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void move0_nn_a (void) { MOVE_NN(0,A); }
 static void move0_nn_b (void) { MOVE_NN(0,B); }
@@ -1722,7 +1235,7 @@ static void move1_nn_b (void) { MOVE_NN(1,B); }
 	data = RFIELD##F(*rs);										\
 	*rd-=FW_INC(F);												\
 	WFIELD##F(*rd,data);										\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(4);											\
 }
 static void move0_dn_dn_a (void) { MOVE_DN_DN(0,A); }
 static void move0_dn_dn_b (void) { MOVE_DN_DN(0,B); }
@@ -1737,7 +1250,7 @@ static void move1_dn_dn_b (void) { MOVE_DN_DN(1,B); }
 	*rs+=FW_INC(F);												\
 	WFIELD##F(*rd,data);										\
 	*rd+=FW_INC(F);												\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(4);											\
 }
 static void move0_ni_ni_a (void) { MOVE_NI_NI(0,A); }
 static void move0_ni_ni_b (void) { MOVE_NI_NI(0,B); }
@@ -1748,7 +1261,7 @@ static void move1_ni_ni_b (void) { MOVE_NI_NI(1,B); }
 {								  								\
 	INT32 o = PARAM_WORD();										\
 	WFIELD##F(R##REG(R##DSTREG)+o,R##REG(R##SRCREG));			\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void move0_r_no_a (void) { MOVE_R_NO(0,A); }
 static void move0_r_no_b (void) { MOVE_R_NO(0,B); }
@@ -1762,7 +1275,7 @@ static void move1_r_no_b (void) { MOVE_R_NO(1,B); }
 	*rd = RFIELD##F(R##REG(R##SRCREG)+o);						\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void move0_no_r_a (void) { MOVE_NO_R(0,A); }
 static void move0_no_r_b (void) { MOVE_NO_R(0,B); }
@@ -1776,7 +1289,7 @@ static void move1_no_r_b (void) { MOVE_NO_R(1,B); }
 	INT32 data = RFIELD##F(R##REG(R##SRCREG)+o);				\
 	WFIELD##F(*rd,data);										\
 	*rd+=FW_INC(F);												\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void move0_no_ni_a (void) { MOVE_NO_NI(0,A); }
 static void move0_no_ni_b (void) { MOVE_NO_NI(0,B); }
@@ -1789,7 +1302,7 @@ static void move1_no_ni_b (void) { MOVE_NO_NI(1,B); }
 	INT32 o2 = PARAM_WORD();									\
 	INT32 data = RFIELD##F(R##REG(R##SRCREG)+o1);				\
 	WFIELD##F(R##REG(R##DSTREG)+o2,data);						\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void move0_no_no_a (void) { MOVE_NO_NO(0,A); }
 static void move0_no_no_b (void) { MOVE_NO_NO(0,B); }
@@ -1799,7 +1312,7 @@ static void move1_no_no_b (void) { MOVE_NO_NO(1,B); }
 #define MOVE_RA(F,R)	       		       			    		\
 {							  									\
 	WFIELD##F(PARAM_LONG(),R##REG(R##DSTREG));					\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(3);											\
 }
 static void move0_ra_a (void) { MOVE_RA(0,A); }
 static void move0_ra_b (void) { MOVE_RA(0,B); }
@@ -1812,7 +1325,7 @@ static void move1_ra_b (void) { MOVE_RA(1,B); }
 	*rd = RFIELD##F(PARAM_LONG());								\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void move0_ar_a (void) { MOVE_AR(0,A); }
 static void move0_ar_b (void) { MOVE_AR(0,B); }
@@ -1824,7 +1337,7 @@ static void move1_ar_b (void) { MOVE_AR(1,B); }
 	INT32 *rd = &R##REG(R##DSTREG);								\
     WFIELD##F(*rd,RFIELD##F(PARAM_LONG()));						\
     *rd+=FW_INC(F);												\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(5);											\
 }
 static void move0_a_ni_a (void) { MOVE_A_NI(0,A); }
 static void move0_a_ni_b (void) { MOVE_A_NI(0,B); }
@@ -1835,7 +1348,7 @@ static void move1_a_ni_b (void) { MOVE_A_NI(1,B); }
 {																\
 	UINT32 bitaddrs=PARAM_LONG();								\
 	WFIELD##F(PARAM_LONG(),RFIELD##F(bitaddrs));				\
-	COUNT_UNKNOWN_CYCLES(1);									\
+	COUNT_CYCLES(7);											\
 }
 static void move0_aa (void) { MOVE_AA(0); }
 static void move1_aa (void) { MOVE_AA(1); }
@@ -1846,7 +1359,7 @@ static void move1_aa (void) { MOVE_AA(1); }
 {																\
 	PUSH(PC);													\
 	PC = R##REG(R##DSTREG);										\
-	COUNT_CYCLES(6);											\
+	COUNT_CYCLES(3);											\
 }
 static void call_a (void) { CALL(A); }
 static void call_b (void) { CALL(B); }
@@ -1855,14 +1368,14 @@ static void callr(void)
 {
 	PUSH(PC+0x10);
 	PC += (PARAM_WORD_NO_INC()<<4)+0x10;
-	COUNT_CYCLES(5);
+	COUNT_CYCLES(3);
 }
 
 static void calla(void)
 {
 	PUSH(PC+0x20);
 	PC = PARAM_LONG_NO_INC();
-	COUNT_CYCLES(6);
+	COUNT_CYCLES(4);
 }
 
 #define DSJ(R)													\

@@ -240,10 +240,12 @@ options:
 -stretch/-nostretch (default: stretch)
               use nostretch to disable pixel doubling in VESA modes (faster,
               but smaller picture).
--depth n      (default: 16)
-              Some games need 65k color modes to get accurate graphics. To
+-depth n      (default: auto)
+              Some games need 16-bit color modes to get accurate graphics. To
               improve speed, you can turn that off using -depth 8, which limits
-              to the standard 256 color modes.
+              to the standard 256 color modes. You can also use -depth 16 to
+              force games to use a 16-bit diplay even if they fit in 256 colors,
+              but this isn't suggested.
 -gamma n      (default: 1.0)
               Set the initial gamma correction value.
 -vgafreq n    where n can be 0 (default) 1, 2 or 3.

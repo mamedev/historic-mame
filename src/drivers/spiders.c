@@ -188,15 +188,15 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0x4000, 0x5bff, MRA_RAM },	// Video ram 1
 //	{ 0x8000, 0x9bff, MRA_RAM },	// Video ram 2
 //	{ 0x7800, 0x7fff, MRA_RAM },	// Stack space
-        { 0xc001, 0xc001, crtc6845_register_r },
+	{ 0xc001, 0xc001, crtc6845_register_r },
 	{ 0xc044, 0xc047, pia_0_r },
 	{ 0xc048, 0xc04b, pia_1_r },
 	{ 0xc050, 0xc053, pia_2_r },
 	{ 0xc060, 0xc060, input_port_2_r },
 	{ 0xc080, 0xc080, input_port_3_r },
 	{ 0xc0a0, 0xc0a0, input_port_4_r },
-        { 0xc100, 0xffff, MRA_ROM },
-        { -1 } /* end of table */
+	{ 0xc100, 0xffff, MRA_ROM },
+	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -206,13 +206,13 @@ static struct MemoryWriteAddress writemem[] =
 //	{ 0x4000, 0x5bff, MWA_RAM },
 //	{ 0x8000, 0x9bff, MWA_RAM },
 //	{ 0x7800, 0x7fff, MWA_RAM },
-        { 0xc000, 0xc000, crtc6845_address_w },
-        { 0xc001, 0xc001, crtc6845_register_w },
+	{ 0xc000, 0xc000, crtc6845_address_w },
+	{ 0xc001, 0xc001, crtc6845_register_w },
 	{ 0xc044, 0xc047, pia_0_w },
 	{ 0xc048, 0xc04b, pia_1_w },
 	{ 0xc050, 0xc053, pia_2_w },
-        { 0xc100, 0xffff, MWA_ROM },
-        { -1 } /* end of table */
+	{ 0xc100, 0xffff, MWA_ROM },
+	{ -1 } /* end of table */
 };
 
 
@@ -320,15 +320,19 @@ INPUT_PORTS_END
 /* The bitmap RAM is directly mapped to colors, no PROM. */
 static unsigned char palette[] =
 {
-        0x00,0x00,0x00,
-        0xff,0x00,0x00,
-        0x00,0xff,0x00,
-        0xff,0xff,0x00,
-        0x00,0x00,0xff,
-        0xff,0x00,0xff,
-        0x00,0xff,0xff,
-        0xff,0xff,0xff,
+	0x00,0x00,0x00,
+	0xff,0x00,0x00,
+	0x00,0xff,0x00,
+	0xff,0xff,0x00,
+	0x00,0x00,0xff,
+	0xff,0x00,0xff,
+	0x00,0xff,0xff,
+	0xff,0xff,0xff,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 
@@ -352,34 +356,33 @@ static struct MachineDriver machine_driver =
 //            0,0,
 //            0,0
 //        }
-    },
-    60,
-    DEFAULT_REAL_60HZ_VBLANK_DURATION,
-    10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-    spiders_init_machine,
+	},
+	60,
+	DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	spiders_init_machine,
 
-    /* video hardware */
-    32*8, 28*8,                         /* Width/Height         */
-    { 0*8, 32*8-1, 0*8, 28*8-1 },       /* Visible area         */
-    0, 	                                /* GfxDecodeInfo        */
-    8,                                  /* Number of colours    */
-    0,                                  /* Colour table length  */
-    0,                                  /* Convert colour prom  */
+	/* video hardware */
+	32*8, 28*8,                         /* Width/Height         */
+	{ 0*8, 32*8-1, 0*8, 28*8-1 },       /* Visible area         */
+	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,                  /* Video attributes     */
-    0,                                  /* Video initialisation */
-    spiders_vh_start,                    /* Video start          */
-    spiders_vh_stop,                     /* Video stop           */
-    spiders_vh_screenrefresh,                   /* Video update         */
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,                  /* Video attributes     */
+	0,                                  /* Video initialisation */
+	spiders_vh_start,                    /* Video start          */
+	spiders_vh_stop,                     /* Video stop           */
+	spiders_vh_screenrefresh,                   /* Video update         */
 
-    /* sound hardware */
-    0,0,0,0
-    /* Sound struct here */
+	/* sound hardware */
+	0,0,0,0
+	/* Sound struct here */
 };
 
 
 
-ROM_START( spiders_rom )
+ROM_START( spiders )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
 	ROM_LOAD( "sp-ic73",      0xd000, 0x1000, 0xd69b2f21 )
@@ -403,7 +406,7 @@ ROM_START( spiders_rom )
 	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
 ROM_END
 
-ROM_START( spiders2_rom )
+ROM_START( spiders2 )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
 	ROM_LOAD( "sp2.bin",      0xd000, 0x1000, 0xcf71d12b )
@@ -450,7 +453,7 @@ struct GameDriver spiders_driver =
 
 	spiders_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0,0
@@ -476,7 +479,7 @@ struct GameDriver spiders2_driver =
 
 	spiders_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0,0

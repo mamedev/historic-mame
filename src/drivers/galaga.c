@@ -448,7 +448,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( galaga_rom )
+ROM_START( galaga )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
 	ROM_LOAD( "04k_g02.bin",  0x1000, 0x1000, 0x43bb0d5c )
@@ -476,7 +476,7 @@ ROM_START( galaga_rom )
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
-ROM_START( galagamw_rom )
+ROM_START( galagamw )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
 	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
@@ -504,7 +504,7 @@ ROM_START( galagamw_rom )
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
-ROM_START( galagads_rom )
+ROM_START( galagads )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
 	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
@@ -532,7 +532,7 @@ ROM_START( galagads_rom )
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
-ROM_START( gallag_rom )
+ROM_START( gallag )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
 	ROM_LOAD( "gallag.2",     0x1000, 0x1000, 0x5eda60a7 )
@@ -563,7 +563,7 @@ ROM_START( gallag_rom )
 	ROM_LOAD( "gallag.6",     0x0000, 0x1000, 0x001b70bc )
 ROM_END
 
-ROM_START( galagab2_rom )
+ROM_START( galagab2 )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
 	ROM_LOAD( "g2",           0x1000, 0x1000, 0xd9232240 )
@@ -594,7 +594,7 @@ ROM_START( galagab2_rom )
 	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
 ROM_END
 
-ROM_START( galaga84_rom )
+ROM_START( galaga84 )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
 	ROM_LOAD( "gal84_u2",     0x1000, 0x1000, 0x4d832a30 )
@@ -625,7 +625,7 @@ ROM_START( galaga84_rom )
 	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
 ROM_END
 
-ROM_START( nebulbee_rom )
+ROM_START( nebulbee )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "nebulbee.01",  0x0000, 0x1000, 0xf405f2c4 )
 	ROM_LOAD( "nebulbee.02",  0x1000, 0x1000, 0x31022b60 )

@@ -301,7 +301,7 @@ static struct MachineDriver prehisle_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( prehisle_rom )
+ROM_START( prehisle )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "gt.2", 0x00000, 0x20000, 0x7083245a )
 	ROM_LOAD_ODD ( "gt.3", 0x00000, 0x20000, 0x6d8cdf58 )
@@ -323,7 +323,7 @@ ROM_START( prehisle_rom )
 	ROM_LOAD( "gt.11",  0x000000, 0x10000, 0xb4f0fcf0 )
 ROM_END
 
-ROM_START( prehislu_rom )
+ROM_START( prehislu )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "gt-u2.2h", 0x00000, 0x20000, 0xa14f49bb )
 	ROM_LOAD_ODD ( "gt-u3.3h", 0x00000, 0x20000, 0xf165757e )
@@ -345,7 +345,7 @@ ROM_START( prehislu_rom )
 	ROM_LOAD( "gt.11",  0x000000, 0x10000, 0xb4f0fcf0 )
 ROM_END
 
-ROM_START( prehislj_rom )
+ROM_START( prehislj )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "gt2j.bin", 0x00000, 0x20000, 0xa2da0b6b )
 	ROM_LOAD_ODD ( "gt3j.bin", 0x00000, 0x20000, 0xc1a0ae8e )

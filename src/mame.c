@@ -142,6 +142,11 @@ int run_game(int game)
 	Machine->drv = drv = gamedrv->drv;
 
 	/* copy configuration */
+	if (options.color_depth == 16 ||
+			(options.color_depth != 8 && (Machine->gamedrv->flags & GAME_REQUIRES_16BIT)))
+		Machine->color_depth = 16;
+	else
+		Machine->color_depth = 8;
 	Machine->sample_rate = options.samplerate;
 	Machine->sample_bits = options.samplebits;
 
@@ -485,6 +490,7 @@ static int vh_open(void)
 	/* create the display bitmap, and allocate the palette */
 	if ((Machine->scrbitmap = osd_create_display(
 			drv->screen_width,drv->screen_height,
+			Machine->color_depth,
 			drv->video_attributes)) == 0)
 	{
 		vh_close();
@@ -606,15 +612,8 @@ int run_machine(void)
 				if (settingsloaded == 0)
 				{
 					/* if there is no saved config, it must be first time we run this game, */
-					/* so show the disclaimer and driver credits. */
-					if (!options.gui_host)
-					{
-						/* LBO - If the host port has a gui, skip this message under the assumption */
-						/* that the host will take care of printing the message once. The best */
-						/* opportunity for a gui to do this is IMHO before the front-end has */
-						/* been displayed. */
-						if (showcopyright()) goto userquit;
-					}
+					/* so show the disclaimer. */
+					if (showcopyright()) goto userquit;
 				}
 
 				if (showgamewarnings() == 0)  /* show info about incorrect behaviour (wrong colors etc.) */

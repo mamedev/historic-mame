@@ -619,7 +619,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gng_rom )
+ROM_START( gng )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "gg3.bin",      0x08000, 0x8000, 0x9e01c65e )
 	ROM_LOAD( "gg4.bin",      0x04000, 0x4000, 0x66606beb )	/* 4000-5fff is page 0 */
@@ -644,7 +644,7 @@ ROM_START( gng_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( gnga_rom )
+ROM_START( gnga )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
 	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
@@ -671,7 +671,7 @@ ROM_START( gnga_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( gngt_rom )
+ROM_START( gngt )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "mm03",         0x08000, 0x8000, 0xfb040b42 )
 	ROM_LOAD( "mm04",         0x04000, 0x4000, 0x652406f6 )	/* 4000-5fff is page 0 */
@@ -696,7 +696,7 @@ ROM_START( gngt_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( makaimur_rom )
+ROM_START( makaimur )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "8n.rom",       0x08000, 0x8000, 0x9612d66c )
 	ROM_LOAD( "10n.rom",      0x04000, 0x4000, 0x81e567e0 )	/* 4000-5fff is page 0 */
@@ -721,7 +721,7 @@ ROM_START( makaimur_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( makaimuc_rom )
+ROM_START( makaimuc )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "mj03c.bin",       0x08000, 0x8000, 0xd343332d )
 	ROM_LOAD( "mj04c.bin",      0x04000, 0x4000, 0x1294edb1 )	/* 4000-5fff is page 0 */
@@ -746,7 +746,7 @@ ROM_START( makaimuc_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( makaimug_rom )
+ROM_START( makaimug )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
 	ROM_LOAD( "mj03g.bin",       0x08000, 0x8000, 0x61b043bb )
 	ROM_LOAD( "mj04g.bin",      0x04000, 0x4000, 0x757c94d3 )	/* 4000-5fff is page 0 */
@@ -771,7 +771,7 @@ ROM_START( makaimug_rom )
 	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( diamond_rom )
+ROM_START( diamond )
 	ROM_REGION(0x1a000)	/* 64k for code * 6 pages (is it really 6?) */
 	ROM_LOAD( "d5",           0x00000, 0x8000, 0x453f3f9e )
 	ROM_LOAD( "d3",           0x08000, 0x8000, 0xf436d6fa )

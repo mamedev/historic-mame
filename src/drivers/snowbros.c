@@ -305,7 +305,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( snowbros_rom )
+ROM_START( snowbros )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "sn6.bin",  0x00000, 0x20000, 0x4899ddcf )
 	ROM_LOAD_ODD ( "sn5.bin",  0x00000, 0x20000, 0xad310d3f )
@@ -320,7 +320,7 @@ ROM_START( snowbros_rom )
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
-ROM_START( snowbroa_rom )
+ROM_START( snowbroa )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3a",  0x00000, 0x20000, 0x10cb37e1 )
 	ROM_LOAD_ODD ( "snowbros.2a",  0x00000, 0x20000, 0xab91cc1e )
@@ -335,7 +335,7 @@ ROM_START( snowbroa_rom )
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
-ROM_START( snowbrob_rom )
+ROM_START( snowbrob )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "sbros3-a",     0x00000, 0x20000, 0x301627d6 )
 	ROM_LOAD_ODD ( "sbros2-a",     0x00000, 0x20000, 0xf6689f41 )
@@ -350,7 +350,7 @@ ROM_START( snowbrob_rom )
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
-ROM_START( snowbroj_rom )
+ROM_START( snowbroj )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3",   0x00000, 0x20000, 0x3f504f9e )
 	ROM_LOAD_ODD ( "snowbros.2",   0x00000, 0x20000, 0x854b02bc )

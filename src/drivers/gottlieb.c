@@ -1251,7 +1251,7 @@ MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecod
 
 ***************************************************************************/
 
-ROM_START( reactor_rom )
+ROM_START( reactor )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rom7",         0x8000, 0x1000, 0xa62d86fd )
 	ROM_LOAD( "rom6",         0x9000, 0x1000, 0x6ed841f3 )
@@ -1279,7 +1279,7 @@ ROM_START( reactor_rom )
 	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
-ROM_START( mplanets_rom )
+ROM_START( mplanets )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rom4",         0x6000, 0x2000, 0x5402077f )
 	ROM_LOAD( "rom3",         0x8000, 0x2000, 0x5d18d740 )
@@ -1302,7 +1302,7 @@ ROM_START( mplanets_rom )
 	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
-ROM_START( qbert_rom )
+ROM_START( qbert )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0xfe434526 )
 	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0x55635447 )
@@ -1323,7 +1323,7 @@ ROM_START( qbert_rom )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
-ROM_START( qbertjp_rom )
+ROM_START( qbertjp )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x67bb1cb2 )
 	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xc61216e7 )
@@ -1344,7 +1344,7 @@ ROM_START( qbertjp_rom )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
-ROM_START( sqbert_rom )
+ROM_START( sqbert )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0x1e3d4038 )
 	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0xeaf3076c )
@@ -1365,7 +1365,7 @@ ROM_START( sqbert_rom )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
-ROM_START( qbertqub_rom )
+ROM_START( qbertqub )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "qq-rom3.bin",  0x8000, 0x2000, 0xc4dbdcd7 )
 	ROM_LOAD( "qq-rom2.bin",  0xa000, 0x2000, 0x21a6c6cc )
@@ -1387,7 +1387,7 @@ ROM_START( qbertqub_rom )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
-ROM_START( krull_rom )
+ROM_START( krull )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ram2.bin",     0x1000, 0x1000, 0x302feadf )
 	ROM_LOAD( "ram4.bin",     0x2000, 0x1000, 0x79355a60 )
@@ -1410,7 +1410,7 @@ ROM_START( krull_rom )
 	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
 ROM_END
 
-ROM_START( mach3_rom )
+ROM_START( mach3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "m3rom4.bin",   0x6000, 0x2000, 0x8bfd5a44 )
 	ROM_LOAD( "m3rom3.bin",   0x8000, 0x2000, 0xb1b045af )
@@ -1433,7 +1433,7 @@ ROM_START( mach3_rom )
 	ROM_LOAD( "m3yrom1.bin",  0xf000, 0x1000, 0xeddf8872 )
 ROM_END
 
-ROM_START( usvsthem_rom )
+ROM_START( usvsthem )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "usvs.rm4",     0x6000, 0x2000, 0x0d7a4072 )
 	ROM_LOAD( "usvs.rm3",     0x8000, 0x2000, 0x6f32a671 )
@@ -1456,7 +1456,7 @@ ROM_START( usvsthem_rom )
 	ROM_LOAD( "usvsyrom.1",   0xe000, 0x2000, 0xc3d245ca )
 ROM_END
 
-ROM_START( stooges_rom )
+ROM_START( stooges )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "gv113ram.4",   0x2000, 0x1000, 0x533bff2a )
 	ROM_LOAD( "gv113rom.4",   0x6000, 0x2000, 0x8b6e52b8 )
@@ -1479,7 +1479,7 @@ ROM_START( stooges_rom )
 	ROM_LOAD( "yrom1",        0xe000, 0x2000, 0x55f8ab30 )
 ROM_END
 
-ROM_START( curvebal_rom )
+ROM_START( curvebal )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x72ad4d45 )
 	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xd46c3db5 )

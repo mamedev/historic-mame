@@ -505,7 +505,11 @@ void leland_vh_stop(void)
 
 ***************************************************************************/
 
-void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
+void leland_draw_bitmap(
+    struct osd_bitmap *bitmap,
+    struct osd_bitmap *bkbitmap,
+    int scrollx,
+    int scrolly)
 {
     int x,y, offs, data, j, value;
     /* Render the bitmap. */
@@ -536,13 +540,13 @@ void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
                     if (Machine->orientation & ORIENTATION_SWAP_XY)
                     {
                         int line=VIDEO_WIDTH*8-1-(x*8+r);
-                        bkvalue=bkbitmap->line[line][y];
+                        bkvalue=bkbitmap->line[line+scrollx][y+scrolly];
                         bitmapvalue=Machine->pens[value*0x40+bkvalue];
                         screen_bitmap->line[line][y]=bitmapvalue;
                     }
                     else
                     {
-                        bkvalue=bkbitmap->line[y][x*8+r];
+                        bkvalue=bkbitmap->line[y+scrolly][x*8+r+scrollx];
                         bitmapvalue=Machine->pens[value*0x40+bkvalue];
                         screen_bitmap->line[y][x*8+r]=bitmapvalue;
                     }
@@ -649,7 +653,7 @@ void leland_screenrefresh(struct osd_bitmap *bitmap,int full_refresh, int bkchar
     }
 
     /* Merge the two bitmaps together */
-    leland_draw_bitmap(bitmap, 0);
+    leland_draw_bitmap(bitmap, 0, 0, 0);
 }
 
 void leland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -671,6 +675,83 @@ void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /***************************************************************************
 
+    SOUND
+
+    2 Onboard DACs driven from the video RAM
+
+***************************************************************************/
+
+static signed char *buffer1,*buffer2;
+static int channel;
+const int buffer_len = 256;
+
+int leland_sh_start(const struct MachineSound *msound)
+{
+	int vol[2];
+
+	/* allocate the buffers */
+	buffer1 = malloc(buffer_len);
+	buffer2 = malloc(buffer_len);
+	if (buffer1 == 0 || buffer2 == 0)
+	{
+		free(buffer1);
+		free(buffer2);
+		return 1;
+	}
+	memset(buffer1,0,buffer_len);
+	memset(buffer2,0,buffer_len);
+
+	/* request a sound channel */
+	vol[0] = vol[1] = 25;
+	channel = mixer_allocate_channels(2,vol);
+	mixer_set_name(channel+0,"streamed DAC #0");
+	mixer_set_name(channel+1,"streamed DAC #1");
+	return 0;
+}
+
+void leland_sh_stop (void)
+{
+	free(buffer1);
+	free(buffer2);
+	buffer1 = buffer2 = 0;
+}
+
+void leland_sh_update(void)
+{
+    /* 8MHZ 8 bit DAC sound stored in program ROMS */
+    int dacpos;
+    int dac1on, dac2on;
+	signed char *buf;
+
+    if (Machine->sample_rate == 0) return;
+
+    dac1on=(~leland_gfx_control)&0x01;
+    dac2on=(~leland_gfx_control)&0x02;
+
+    if (dac1on)
+    {
+		buf = buffer1;
+
+        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
+			*(buf++) = leland_video_ram[dacpos]/2;
+	}
+	else memset(buffer1,0,buffer_len);
+
+    if (dac2on)
+    {
+		buf = buffer2;
+
+        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
+			*(buf++) = leland_video_ram[dacpos+VRAM_HIGH]/2;
+	}
+	else memset(buffer2,0,buffer_len);
+
+	mixer_play_streamed_sample(channel+0,buffer1,buffer_len,buffer_len * Machine->drv->frames_per_second);
+	mixer_play_streamed_sample(channel+1,buffer2,buffer_len,buffer_len * Machine->drv->frames_per_second);
+}
+
+/***************************************************************************
+
   Ataxx
 
   Different from other Leland games.
@@ -680,11 +761,13 @@ void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 ***************************************************************************/
 
-unsigned char * ataxx_tram;         /* Unknown "TRAM" */
+unsigned char * ataxx_tram;         /* Temporay RAM (TRAM) */
 int ataxx_tram_size;
-const int ataxx_qram_size=0x4000;   /* Really 0x2000, but bank is 0x4000 */
-unsigned char * ataxx_qram1;        /* Background RAM # 1 */
-unsigned char * ataxx_qram2;        /* Background RAM # 2 */
+const int ataxx_qram_size=0x8000;   /* 2 banks of 0x4000 */
+unsigned char * ataxx_qram1;        /* Background RAM # 1 - chars */
+unsigned char * ataxx_qram2;        /* Background RAM # 2 - attrib */
+unsigned char * ataxx_qram1dirty;    /* Dirty characters */
+unsigned char * ataxx_qram2dirty;    /* Dirty characters */
 
 int ataxx_vram_port_r(int offset, int num)
 {
@@ -777,7 +860,6 @@ void ataxx_vram_port_w(int offset, int data, int num)
             leland_vram_planar_w(data, num);
             break;
 
-
         default:
             if (errorlog)
             {
@@ -830,7 +912,7 @@ int ataxx_vh_start(void)
     the generic leland driver (when the bitmap renderer supports
     scrolling)
     */
-    background_bitmap = osd_create_bitmap(0x100*8, VIDEO_HEIGHT*8);
+    background_bitmap = osd_create_bitmap(0x800+0x100, 0x400+0x100);
     if (!background_bitmap)
 	{
 		return 1;
@@ -850,6 +932,21 @@ int ataxx_vh_start(void)
         return 1;
     }
     memset(ataxx_qram2, 0, ataxx_qram_size);
+
+    ataxx_qram1dirty=malloc(ataxx_qram_size);
+    if (!ataxx_qram1dirty)
+    {
+        return 1;
+    }
+    memset(ataxx_qram1dirty, 0xff, ataxx_qram_size);
+
+    ataxx_qram2dirty=malloc(ataxx_qram_size);
+    if (!ataxx_qram2dirty)
+    {
+        return 1;
+    }
+    memset(ataxx_qram2dirty, 0xff, ataxx_qram_size);
+
 	return 0;
 }
 
@@ -869,34 +966,56 @@ void ataxx_vh_stop(void)
 	{
         free(ataxx_qram2);
 	}
+    if (ataxx_qram1dirty)
+	{
+        free(ataxx_qram1dirty);
+	}
+    if (ataxx_qram2dirty)
+	{
+        free(ataxx_qram2dirty);
+	}
+
 }
 
 void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    int x, y, offs;
+    int x, y, offs, scrollx, scrolly;
 
     /* Build the palette */
 	palette_recalc();
 
-    /*
-    Rebuild the background bitmap.
-    TODO:
-    - Support scrolling (if it is used)
-    - Dirty tile optimization
-    */
-    for (y=0; y<VIDEO_HEIGHT; y++)
+    /* Scroll position */
+    scrollx=(leland_bk_xlow+256*leland_bk_xhigh) & 0x7ff;
+    scrolly=(leland_bk_ylow+256*leland_bk_yhigh) & 0x3ff;
+
+    /* Build quadrants ( backgrounds ) */
+    for (y=0; y<0x80; y++)
     {
-        for (x=0; x<0x28; x++) /* Should be  */
+        for (x=0; x<0x100; x++)
         {
-            int code;
+            int code, attr;
             offs=(y*0x0100)+x;
-            offs&=0x1fff;
-            code=ataxx_qram1[offs]+(ataxx_qram2[offs]&0x3f)*256;
-            leland_draw_bkchar(x, y, code);
+            offs&=0x7fff;
+            code=ataxx_qram1[offs];
+            attr=ataxx_qram2[offs];
+            if (
+                code != ataxx_qram1dirty[offs] ||
+                attr != ataxx_qram2dirty[offs]
+               )
+            {
+                /*
+                There are no palette issues with the dirty handling
+                of the background RAM
+                */
+                ataxx_qram1dirty[offs]=code;
+                ataxx_qram2dirty[offs]=attr;
+                code+=(attr&0x3f)*256;
+                leland_draw_bkchar(x, y, code);
+            }
         }
     }
     /* Merge the foreground and background layers */
-    leland_draw_bitmap(bitmap, background_bitmap);
+    leland_draw_bitmap(bitmap, background_bitmap, scrollx, scrolly);
 
 #if 0
     if (keyboard_pressed(KEYCODE_B))
@@ -925,72 +1044,3 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 }
 
 
-
-static signed char *buffer1,*buffer2;
-static int channel;
-const int buffer_len = 256;
-
-int leland_sh_start(const struct MachineSound *msound)
-{
-	int vol[2];
-
-	/* allocate the buffers */
-	buffer1 = malloc(buffer_len);
-	buffer2 = malloc(buffer_len);
-	if (buffer1 == 0 || buffer2 == 0)
-	{
-		free(buffer1);
-		free(buffer2);
-		return 1;
-	}
-	memset(buffer1,0,buffer_len);
-	memset(buffer2,0,buffer_len);
-
-	/* request a sound channel */
-	vol[0] = vol[1] = 25;
-	channel = mixer_allocate_channels(2,vol);
-	mixer_set_name(channel+0,"streamed DAC #0");
-	mixer_set_name(channel+1,"streamed DAC #1");
-	return 0;
-}
-
-void leland_sh_stop (void)
-{
-	free(buffer1);
-	free(buffer2);
-	buffer1 = buffer2 = 0;
-}
-
-void leland_sh_update(void)
-{
-    /* 8MHZ 8 bit DAC sound stored in program ROMS */
-    int dacpos;
-    int dac1on, dac2on;
-	signed char *buf;
-
-    if (Machine->sample_rate == 0) return;
-
-    dac1on=(~leland_gfx_control)&0x01;
-    dac2on=(~leland_gfx_control)&0x02;
-
-    if (dac1on)
-    {
-		buf = buffer1;
-
-        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
-			*(buf++) = leland_video_ram[dacpos]/2;
-	}
-	else memset(buffer1,0,buffer_len);
-
-    if (dac2on)
-    {
-		buf = buffer2;
-
-        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
-			*(buf++) = leland_video_ram[dacpos+VRAM_HIGH]/2;
-	}
-	else memset(buffer2,0,buffer_len);
-
-	mixer_play_streamed_sample(channel+0,buffer1,buffer_len,buffer_len * Machine->drv->frames_per_second);
-	mixer_play_streamed_sample(channel+1,buffer2,buffer_len,buffer_len * Machine->drv->frames_per_second);
-}

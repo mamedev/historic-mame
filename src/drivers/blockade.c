@@ -413,19 +413,7 @@ INPUT_PORTS_START( hustle_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-static unsigned char palette[] =
-{
-        0x00,0x00,0x00, /* BLACK */
-        0x00,0xff,0x00, /* GREEN */     /* overlay (Blockade/Hustle) */
-        0xff,0xff,0xff, /* WHITE */     /* Comotion/Blasto */
-        0xff,0x00,0x00, /* RED */       /* for the disclaimer text */
-};
 
-static unsigned short colortable[] =
-{
-        0x00, 0x01,         /* green on black (Blockade/Hustle) */
-        0x00, 0x02,         /* white on black (Comotion/Blasto) */
-};
 
 static struct GfxLayout blockade_layout =
 {
@@ -456,6 +444,27 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
+
+static unsigned char palette[] =
+{
+	0x00,0x00,0x00, /* BLACK */
+	0x00,0xff,0x00, /* GREEN */     /* overlay (Blockade/Hustle) */
+	0xff,0xff,0xff, /* WHITE */     /* Comotion/Blasto */
+	0xff,0x00,0x00, /* RED */       /* for the disclaimer text */
+};
+static unsigned short colortable[] =
+{
+	0x00, 0x01,         /* green on black (Blockade/Hustle) */
+	0x00, 0x02,         /* white on black (Comotion/Blasto) */
+};
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
+
+
+
 static struct Samplesinterface samples_interface =
 {
     1,   /* 1 channel */
@@ -481,8 +490,8 @@ static struct MachineDriver blockade_machine_driver =
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-    0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
     0,
@@ -519,8 +528,8 @@ static struct MachineDriver comotion_machine_driver =
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-    0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
     0,
@@ -557,8 +566,8 @@ static struct MachineDriver blasto_machine_driver =
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-    0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
     0,
@@ -595,8 +604,8 @@ static struct MachineDriver hustle_machine_driver =
     /* video hardware */
     32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
     gfxdecodeinfo,
-    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-    0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
     VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
     0,
@@ -620,7 +629,7 @@ static struct MachineDriver hustle_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( blockade_rom )
+ROM_START( blockade )
     ROM_REGION(0x10000) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
@@ -634,7 +643,7 @@ ROM_START( blockade_rom )
     ROM_LOAD( "316-01.u43", 0x0100, 0x0100, 0x41a00b28 )
 ROM_END
 
-ROM_START( comotion_rom )
+ROM_START( comotion )
     ROM_REGION(0x10000) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
@@ -650,7 +659,7 @@ ROM_START( comotion_rom )
     ROM_LOAD( "316-05.u29", 0x0100, 0x0100, 0x53fb8821 )
 ROM_END
 
-ROM_START( blasto_rom )
+ROM_START( blasto )
     ROM_REGION(0x10000) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
@@ -666,7 +675,7 @@ ROM_START( blasto_rom )
     ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0x104051a4 )
 ROM_END
 
-ROM_START( hustle_rom )
+ROM_START( hustle )
     ROM_REGION(0x10000) /* 64k for code */
     /* Note: These are being loaded into a bogus location, */
     /*       They are nibble wide rom images which will be */
@@ -747,7 +756,7 @@ struct GameDriver blockade_driver =
 
     blockade_input_ports,
 
-    0, palette, colortable,
+    0, 0, 0,
 
     ORIENTATION_DEFAULT,
     0, 0
@@ -774,7 +783,7 @@ struct GameDriver comotion_driver =
 
     comotion_input_ports,
 
-    0, palette, colortable,
+    0, 0, 0,
 
     ORIENTATION_DEFAULT,
     0, 0
@@ -801,7 +810,7 @@ struct GameDriver blasto_driver =
 
     blasto_input_ports,
 
-    0, palette, colortable,
+    0, 0, 0,
 
     ORIENTATION_DEFAULT,
 	hiload, hisave
@@ -828,7 +837,7 @@ struct GameDriver hustle_driver =
 
     hustle_input_ports,
 
-    0, palette, colortable,
+    0, 0, 0,
 
     ORIENTATION_DEFAULT,
     0, 0

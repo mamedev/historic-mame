@@ -380,7 +380,7 @@ static struct MachineDriver machine_driver = {
 	}
 };
 
-ROM_START( lkage_rom )
+ROM_START( lkage )
 	ROM_REGION( 0x14000 ) /* Z80 code (main CPU) */
 	ROM_LOAD( "a54-01-1.37", 0x00000, 0x8000, 0x973da9c5 )
 	ROM_LOAD( "a54-02-1.38", 0x08000, 0x8000, 0x27b509da )
@@ -401,7 +401,7 @@ ROM_START( lkage_rom )
 	ROM_LOAD( "a54-09.53",   0x00000, 0x0800, 0x0e8b8846 )
 ROM_END
 
-ROM_START( lkageb_rom )
+ROM_START( lkageb )
 	ROM_REGION( 0x10000 ) /* Z80 code (main CPU) */
 	ROM_LOAD( "lok.a",     0x0000, 0x8000, 0x866df793 )
 	ROM_LOAD( "lok.b",     0x8000, 0x8000, 0xfba9400f )

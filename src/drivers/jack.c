@@ -437,7 +437,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jack_rom )
+ROM_START( jack )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "j8",           0x0000, 0x1000, 0xc8e73998 )
 	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
@@ -458,7 +458,7 @@ ROM_START( jack_rom )
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( jack2_rom )
+ROM_START( jack2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jgk.j8",       0x0000, 0x1000, 0xfe229e20 )
 	ROM_LOAD( "jgk.j6",       0x1000, 0x1000, 0x36d7810e )
@@ -479,7 +479,7 @@ ROM_START( jack2_rom )
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( jack3_rom )
+ROM_START( jack3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jack8",        0x0000, 0x1000, 0x632151d2 )
 	ROM_LOAD( "jack6",        0x1000, 0x1000, 0xf94f80d9 )
@@ -500,7 +500,7 @@ ROM_START( jack3_rom )
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( treahunt_rom )
+ROM_START( treahunt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "thunt-1.f2",   0x0000, 0x1000, 0x0b35858c )
 	ROM_LOAD( "thunt-2.f3",   0x1000, 0x1000, 0x67305a51 )
@@ -521,7 +521,7 @@ ROM_START( treahunt_rom )
 	ROM_LOAD( "jgk.j9",       0x0000, 0x1000, 0xc2dc1e00 )
 ROM_END
 
-ROM_START( zzyzzyxx_rom )
+ROM_START( zzyzzyxx )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a.2f",         0x0000, 0x1000, 0xa9102e34 )
 	ROM_LOAD( "zzyzzyxx.b",   0x1000, 0x1000, 0xefa9d4c6 )
@@ -543,7 +543,7 @@ ROM_START( zzyzzyxx_rom )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
-ROM_START( zzyzzyx2_rom )
+ROM_START( zzyzzyx2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a.2f",         0x0000, 0x1000, 0xa9102e34 )
 	ROM_LOAD( "b.3f",         0x1000, 0x1000, 0x4277beab )
@@ -565,7 +565,7 @@ ROM_START( zzyzzyx2_rom )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
-ROM_START( brix_rom )
+ROM_START( brix )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0x050e0d70 )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0x668118ae )
@@ -587,7 +587,7 @@ ROM_START( brix_rom )
 	ROM_LOAD( "j.6a",         0x1000, 0x1000, 0x72166ccd )
 ROM_END
 
-ROM_START( freeze_rom )
+ROM_START( freeze )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "freeze.f2",    0x0000, 0x1000, 0x0a431665 )
 	ROM_LOAD( "freeze.f3",    0x1000, 0x1000, 0x1189b8ad )
@@ -608,7 +608,7 @@ ROM_START( freeze_rom )
 	ROM_LOAD( "freeze.a1",    0x0000, 0x1000, 0x7771f5b9 )
 ROM_END
 
-ROM_START( sucasino_rom )
+ROM_START( sucasino )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1",       	  0x0000, 0x1000, 0xe116e979 )
 	ROM_LOAD( "2",      	  0x1000, 0x1000, 0x2a2635f5 )

@@ -376,7 +376,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( flstory_rom )
+ROM_START( flstory )
     ROM_REGION(0x10000)	/* 64k for the first CPU */
     ROM_LOAD( "cpu-a45.15", 0x00000, 0x4000, 0xf03fc969 )
     ROM_LOAD( "cpu-a45.16", 0x04000, 0x4000, 0x311aa82e )

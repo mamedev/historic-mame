@@ -276,7 +276,7 @@ static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
 static struct OKIM6295interface okim6295_interface =
 {
 	2,              /* 2 chip */
-	{ 22050, 22050 },         /* 22050Hz frequency */
+	{ 24000, 24000 },	/* ??? */
 	{ 2,3 },        /* memory region 2,3 */
 	{ 50,50 }
 };
@@ -323,7 +323,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( bjtwin_rom )
+ROM_START( bjtwin )
 	ROM_REGION(0x80000)		/* 68000 code */
 	ROM_LOAD_EVEN( "bjt.77",  0x00000, 0x40000, 0x7830A465 )	/* 68000 code */
 	ROM_LOAD_ODD ( "bjt.76",  0x00000, 0x40000, 0x7CD4E72A )	/* 68000 code */

@@ -578,7 +578,7 @@ static struct MachineDriver weststry_machine_driver = {
 
 };
 
-ROM_START( bloodbro_rom )
+ROM_START( bloodbro )
 	ROM_REGION(0x90000)	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "bb_02.bin" ,   0x00000, 0x20000, 0xc0fdc3e4 )
 	ROM_LOAD_EVEN( "bb_01.bin" ,   0x00000, 0x20000, 0x2d7e0fdf )
@@ -602,7 +602,7 @@ ROM_START( bloodbro_rom )
 	ROM_LOAD( "bb_08.bin" ,   0x00000, 0x20000, 0xdeb1b975 )
 ROM_END
 
-ROM_START( weststry_rom )
+ROM_START( weststry )
 	ROM_REGION(0x90000)	/* 64k for cpu code */
 	ROM_LOAD_ODD ( "ws13.bin" ,   0x00000, 0x20000, 0x158e302a )
 	ROM_LOAD_EVEN( "ws15.bin" ,   0x00000, 0x20000, 0x672e9027 )

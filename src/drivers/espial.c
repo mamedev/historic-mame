@@ -280,7 +280,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( espial_rom )
+ROM_START( espial )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "espial.3",     0x0000, 0x2000, 0x10f1da30 )
 	ROM_LOAD( "espial.4",     0x2000, 0x2000, 0xd2adbe39 )
@@ -302,7 +302,7 @@ ROM_START( espial_rom )
 	ROM_LOAD( "espial.2",     0x1000, 0x1000, 0x3431bb97 )
 ROM_END
 
-ROM_START( espiale_rom )
+ROM_START( espiale )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2764.3",       0x0000, 0x2000, 0x0973c8a4 )
 	ROM_LOAD( "2764.4",       0x2000, 0x2000, 0x6034d7e5 )

@@ -517,7 +517,7 @@ MACHINE_DRIVER(stinger);
 
 ***************************************************************************/
 
-ROM_START( wiz_rom )
+ROM_START( wiz )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ic07_01.bin",  0x0000, 0x4000, 0xc05f2c78 )
 	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
@@ -543,7 +543,7 @@ ROM_START( wiz_rom )
 	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
 ROM_END
 
-ROM_START( stinger_rom )
+ROM_START( stinger )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )
 	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )
@@ -568,7 +568,7 @@ ROM_START( stinger_rom )
 	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
 ROM_END
 
-ROM_START( scion_rom )
+ROM_START( scion )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sc1",          0x0000, 0x2000, 0x8dcad575 )
 	ROM_LOAD( "sc2",          0x2000, 0x2000, 0xf608e0ba )
@@ -593,7 +593,7 @@ ROM_START( scion_rom )
 	ROM_LOAD( "sc6",         0x0000, 0x2000, 0x09f5f9c1 )
 ROM_END
 
-ROM_START( scionc_rom )
+ROM_START( scionc )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1.5j",         0x0000, 0x2000, 0x5aaf571e )
 	ROM_LOAD( "2.6j",         0x2000, 0x2000, 0xd5a66ac9 )

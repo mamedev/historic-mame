@@ -540,7 +540,7 @@ DRIVER(hopprobo, marineb,  marineb, nmi_interrupt);
 
 ***************************************************************************/
 
-ROM_START( marineb_rom )
+ROM_START( marineb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "marineb.1",     0x0000, 0x1000, 0x661d6540 )
 	ROM_LOAD( "marineb.2",     0x1000, 0x1000, 0x922da17f )
@@ -559,7 +559,7 @@ ROM_START( marineb_rom )
 	ROM_LOAD( "marineb.1c",    0x0100, 0x0100, 0x93c69d3e ) /* palette high 4 bits */
 ROM_END
 
-ROM_START( changes_rom )
+ROM_START( changes )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
 	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
@@ -577,7 +577,7 @@ ROM_START( changes_rom )
 	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
 ROM_END
 
-ROM_START( looper_rom )
+ROM_START( looper )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "changes.1",     0x0000, 0x1000, 0x56f83813 )
 	ROM_LOAD( "changes.2",     0x1000, 0x1000, 0x0e627f0b )
@@ -595,7 +595,7 @@ ROM_START( looper_rom )
 	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
 ROM_END
 
-ROM_START( springer_rom )
+ROM_START( springer )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "springer.1",    0x0000, 0x1000, 0x0794103a )
 	ROM_LOAD( "springer.2",    0x1000, 0x1000, 0xf4aecd9a )
@@ -618,7 +618,7 @@ ROM_START( springer_rom )
 	ROM_LOAD( "1c.vid",        0x0100, 0x0100, 0xb95421f4 ) /* palette high 4 bits */
 ROM_END
 
-ROM_START( hoccer_rom )
+ROM_START( hoccer )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hr1.cpu",       0x0000, 0x2000, 0x12e96635 )
 	ROM_LOAD( "hr2.cpu",       0x2000, 0x2000, 0xcf1fc328 )
@@ -635,7 +635,7 @@ ROM_START( hoccer_rom )
 	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
 ROM_END
 
-ROM_START( hoccer2_rom )
+ROM_START( hoccer2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hr.1",          0x0000, 0x2000, 0x122d159f )
 	ROM_LOAD( "hr.2",          0x2000, 0x2000, 0x48e1efc0 )
@@ -652,7 +652,7 @@ ROM_START( hoccer2_rom )
 	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
 ROM_END
 
-ROM_START( wanted_rom )
+ROM_START( wanted )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "prg-1",		   0x0000, 0x2000, 0x2dd90aed )
 	ROM_LOAD( "prg-2",		   0x2000, 0x2000, 0x67ac0210 )
@@ -669,7 +669,7 @@ ROM_START( wanted_rom )
 	ROM_LOAD( "wanted.k6",	   0x0100, 0x0100, 0xa93d87cc )	/* palette high 4 bits */
 ROM_END
 
-ROM_START( hopprobo_rom )
+ROM_START( hopprobo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hopper01.3k",   0x0000, 0x1000, 0xfd7935c0 )
 	ROM_LOAD( "hopper02.3l",   0x1000, 0x1000, 0xdf1a479a )

@@ -330,7 +330,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( exedexes_rom )
+ROM_START( exedexes )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0x44140dbd )
 	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xbf72cfba )
@@ -362,7 +362,7 @@ ROM_START( exedexes_rom )
 	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 ROM_END
 
-ROM_START( savgbees_rom )
+ROM_START( savgbees )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ee04e.11m",    0x0000, 0x4000, 0xc0caf442 )
 	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, 0x9cd70ae1 )

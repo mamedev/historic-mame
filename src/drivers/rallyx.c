@@ -343,7 +343,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rallyx_rom )
+ROM_START( rallyx )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "rallyxn.1e",   0x1000, 0x1000, 0xed1eba2b )
@@ -362,7 +362,7 @@ ROM_START( rallyx_rom )
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 ROM_END
 
-ROM_START( rallyxm_rom )
+ROM_START( rallyxm )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "1e",           0x1000, 0x1000, 0x786585ec )
@@ -381,7 +381,7 @@ ROM_START( rallyxm_rom )
 	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
 ROM_END
 
-ROM_START( nrallyx_rom )
+ROM_START( nrallyx )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "nrallyx.1b",   0x0000, 0x1000, 0x9404c8d6 )
 	ROM_LOAD( "nrallyx.1e",   0x1000, 0x1000, 0xac01bf3f )

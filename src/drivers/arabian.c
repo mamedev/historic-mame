@@ -297,7 +297,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( arabian_rom )
+ROM_START( arabian )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic1rev2.87",       0x0000, 0x2000, 0x5e1c98b8 )
 	ROM_LOAD( "ic2rev2.88",       0x2000, 0x2000, 0x092f587e )
@@ -311,7 +311,7 @@ ROM_START( arabian_rom )
 	ROM_LOAD( "ic87.94",      0x6000, 0x2000, 0x82160b9a )	/* it at runtime - which is SLOW */
 ROM_END
 
-ROM_START( arabiana_rom )
+ROM_START( arabiana )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic1.87",       0x0000, 0x2000, 0x51e9a6b1 )
 	ROM_LOAD( "ic2.88",       0x2000, 0x2000, 0x1cdcc1ab )

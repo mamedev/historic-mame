@@ -63,12 +63,12 @@ Tile format:	fedc------------	Palette
 84208 44208 c2008	Scroll 1 Control
 84008 44008 c2100	Scroll 2 Control		* Note: missing on MS1-Z
 
-Offset:		00					   Scroll X
-			02					   Scroll Y
-			04 fedc ba98 765- ---- ? (unused?)
-			   ---- ---- ---4 ---- 0<->16x16 Tiles	1<->8x8 Tiles
-			   ---- ---- ---- 32-- ? (used, by p47!)
-			   ---- ---- ---- --10 N: Layer H pages = 16 / (2^N)
+Offset:		00						Scroll X
+			02						Scroll Y
+			04 fedc ba98 765- ----	? (unused?)
+			   ---- ---- ---4 ----	0<->16x16 Tiles	1<->8x8 Tiles
+			   ---- ---- ---- 32--	? (used, by p47!)
+			   ---- ---- ---- --10	N: Layer H pages = 16 / (2^N)
 
 
 
@@ -155,7 +155,7 @@ No? No? c2108	Sprite Bank
 84100 44100 c2200 Sprite Control
 
 			fedc ba9- ---- ---- ? (unused?)
-			---- ---8 ---- ---- Enable Sprite Splitting In 2 (Maybe 4?) Groups:
+			---- ---8 ---- ---- Enable Sprite Splitting In 2 Groups:
 								Some Sprite Appear Over, Some Below The Layers
 			---- ---- 765- ---- ? (unused?)
 			---- ---- ---4 ----	Enable Effect (?)
@@ -191,18 +191,13 @@ MS1-C	c2208			c2200
 
 When bit 4 of the Sprite Contol register is set, sprites with color
 code 0-7 and sprites with color 8-f form two groups. Each group can
-appear over or below some layers. Note that there might be 4 groups
+appear over or below some layers.
 
 The 16 values in the Layer Control register determine the order of
-the layers, and of the groups of sprites
+the layers, and of the groups of sprites.
 
-Each game seems to give a different meaning to each of the 16 values,
-so there there is probably a PROM that translates the values in the
-register to the actual code sent to the hardware.
-
-There are regularities though: bit 4 usually performs some swapping
-of two layers, bit 5 swaps the order of the groups of sprites, etc.
-
+There is a PROM that translates the values in the register to the
+actual code sent to the hardware.
 
 
 ***************************************************************************
@@ -500,25 +495,45 @@ Flags: txt always 0011, fg&bg 1, others 0 (unless otherwise stated).
 ***************************************************************************/
 
 #include "vidhrdw/generic.h"
+#include "drivers/megasys1.h"
 
 /* Variables only used here: */
-static struct tilemap *scrollram_0_tilemap, *scrollram_1_tilemap, *scrollram_2_tilemap;
-static int scrollflag[3], scrollx[3], scrolly[3], pages_per_tmap_x[3], pages_per_tmap_y[3];
-static int active_layers, spritebank, screenflag, spriteflag;
+
 /* For debug purposes: */
 int debugsprites;
 
-
-/* Variables that driver has access to: */
+/* Variables defined here, that have to be shared: */
+struct tilemap *megasys1_tmap_0, *megasys1_tmap_1, *megasys1_tmap_2;
 unsigned char *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
 unsigned char *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
-
+int megasys1_scroll_flag[3], megasys1_scrollx[3], megasys1_scrolly[3], megasys1_pages_per_tmap_x[3], megasys1_pages_per_tmap_y[3];
+int megasys1_active_layers, megasys1_sprite_bank;
+int megasys1_screen_flag, megasys1_sprite_flag;
+int megasys1_bits_per_color_code;
 
 /* Variables defined in driver: */
 extern int hardware_type;
 
-extern struct GameDriver avspirit_driver;
 
+
+int megasys1_vh_start(void)
+{
+	int i;
+
+	spriteram = &megasys1_ram[0x8000];
+	megasys1_tmap_0 = megasys1_tmap_1 = megasys1_tmap_2 = NULL;
+
+	megasys1_active_layers = megasys1_sprite_bank = megasys1_screen_flag = megasys1_sprite_flag = 0;
+
+ 	for (i = 0; i < 3; i ++)
+	{
+		megasys1_scroll_flag[i] = megasys1_scrollx[i] = megasys1_scrolly[i] = 0;
+		megasys1_pages_per_tmap_x[i] = megasys1_pages_per_tmap_y[i] = 0;
+	}
+
+ 	megasys1_bits_per_color_code = 4;
+ 	return 0;
+}
 
 /***************************************************************************
 
@@ -569,7 +584,10 @@ void paletteram_RRRRRGGGGGBBBBBx_word_w(int offset, int data)
 
 /***************************************************************************
 
-					  Callbacks for the TileMap code
+							Layers declarations:
+
+					* Read and write handlers for the layer
+					* Callbacks for the TileMap code
 
 ***************************************************************************/
 
@@ -578,40 +596,33 @@ void paletteram_RRRRRGGGGGBBBBBx_word_w(int offset, int data)
 #define TILES_PER_PAGE (TILES_PER_PAGE_X * TILES_PER_PAGE_Y)
 
 #define MEGASYS1_GET_TILE_INFO(_n_) \
-static void get_scroll_##_n_##_tile_info_8x8( int col, int row ) \
+void megasys1_get_scroll_##_n_##_tile_info_8x8( int col, int row ) \
 { \
 	int tile_index = \
 			(col * TILES_PER_PAGE_Y) + \
 \
-			(row / TILES_PER_PAGE_Y) * TILES_PER_PAGE * pages_per_tmap_x[_n_] + \
+			(row / TILES_PER_PAGE_Y) * TILES_PER_PAGE * megasys1_pages_per_tmap_x[_n_] + \
 			(row % TILES_PER_PAGE_Y); \
 \
 	int code = READ_WORD(&megasys1_scrollram_##_n_[tile_index * 2]); \
-	SET_TILE_INFO( _n_ , code & 0xfff, code >> 12); \
+	SET_TILE_INFO( _n_ , code & 0xfff, code >> (16 - megasys1_bits_per_color_code) ); \
 } \
 \
-static void get_scroll_##_n_##_tile_info_16x16( int col, int row ) \
+void megasys1_get_scroll_##_n_##_tile_info_16x16( int col, int row ) \
 { \
 	int tile_index = \
 			((col / 2) * (TILES_PER_PAGE_Y / 2)) + \
 \
-			((row / 2) / (TILES_PER_PAGE_Y / 2)) * (TILES_PER_PAGE / 4) * pages_per_tmap_x[_n_] + \
+			((row / 2) / (TILES_PER_PAGE_Y / 2)) * (TILES_PER_PAGE / 4) * megasys1_pages_per_tmap_x[_n_] + \
 			((row / 2) % (TILES_PER_PAGE_Y / 2)); \
 \
 	int code = READ_WORD(&megasys1_scrollram_##_n_[tile_index * 2]); \
-	SET_TILE_INFO( _n_ , (code & 0xfff) * 4 + (row & 1) + (col & 1) * 2 , code >> 12); \
+	SET_TILE_INFO( _n_ , (code & 0xfff) * 4 + (row & 1) + (col & 1) * 2 , code >> (16-megasys1_bits_per_color_code) ); \
 }
-
-
-MEGASYS1_GET_TILE_INFO(0)
-MEGASYS1_GET_TILE_INFO(1)
-MEGASYS1_GET_TILE_INFO(2)
-
 
 
 #define MEGASYS1_SCROLLRAM_R(_n_) \
 int megasys1_scrollram_##_n_##_r(int offset) {return READ_WORD(&megasys1_scrollram_##_n_[offset]);}
-
 
 #define MEGASYS1_SCROLLRAM_W(_n_) \
 void megasys1_scrollram_##_n_##_w(int offset,int data) \
@@ -623,21 +634,21 @@ int old_data, new_data; \
 	if (old_data != new_data) \
 	{ \
 		WRITE_WORD(&megasys1_scrollram_##_n_[offset], new_data); \
-		if (scrollram_##_n_##_tilemap) \
+		if (megasys1_tmap_##_n_) \
 		{ \
 			int page, tile_index, row, col; \
-			if (scrollflag[_n_] & 0x10)	/* tiles are 8x8 */ \
+			if (megasys1_scroll_flag[_n_] & 0x10)	/* tiles are 8x8 */ \
 			{ \
 				page		=	(offset/2) / TILES_PER_PAGE; \
 				tile_index	=	(offset/2) % TILES_PER_PAGE; \
  \
 				col	=	tile_index / TILES_PER_PAGE_Y + \
-						( page % pages_per_tmap_x[_n_] ) * TILES_PER_PAGE_X; \
+						( page % megasys1_pages_per_tmap_x[_n_] ) * TILES_PER_PAGE_X; \
  \
 				row	=	tile_index % TILES_PER_PAGE_Y + \
-						( page / pages_per_tmap_x[_n_] ) * TILES_PER_PAGE_Y; \
+						( page / megasys1_pages_per_tmap_x[_n_] ) * TILES_PER_PAGE_Y; \
  \
-				tilemap_mark_tile_dirty(scrollram_##_n_##_tilemap, col, row); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col, row); \
 			} \
 			else \
 			{ \
@@ -646,21 +657,25 @@ int old_data, new_data; \
 \
 				/* col and row when tiles are 16x16 .. */ \
 				col	=	tile_index / (TILES_PER_PAGE_Y / 2) + \
-						( page % pages_per_tmap_x[_n_] ) * (TILES_PER_PAGE_X / 2); \
+						( page % megasys1_pages_per_tmap_x[_n_] ) * (TILES_PER_PAGE_X / 2); \
  \
 				row	=	tile_index % (TILES_PER_PAGE_Y / 2) + \
-						( page / pages_per_tmap_x[_n_] ) * (TILES_PER_PAGE_Y / 2); \
+						( page / megasys1_pages_per_tmap_x[_n_] ) * (TILES_PER_PAGE_Y / 2); \
  \
 				/* .. but we draw four 8x8 tiles, so col and row must be scaled */ \
 				col *= 2;	row *= 2; \
-				tilemap_mark_tile_dirty(scrollram_##_n_##_tilemap, col + 0, row + 0); \
-				tilemap_mark_tile_dirty(scrollram_##_n_##_tilemap, col + 1, row + 0); \
-				tilemap_mark_tile_dirty(scrollram_##_n_##_tilemap, col + 0, row + 1); \
-				tilemap_mark_tile_dirty(scrollram_##_n_##_tilemap, col + 1, row + 1); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 0, row + 0); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 1, row + 0); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 0, row + 1); \
+				tilemap_mark_tile_dirty(megasys1_tmap_##_n_, col + 1, row + 1); \
 			} \
 		}\
 	}\
 }
+
+MEGASYS1_GET_TILE_INFO(0)
+MEGASYS1_GET_TILE_INFO(1)
+MEGASYS1_GET_TILE_INFO(2)
 
 MEGASYS1_SCROLLRAM_R(0)
 MEGASYS1_SCROLLRAM_R(1)
@@ -671,114 +686,50 @@ MEGASYS1_SCROLLRAM_W(1)
 MEGASYS1_SCROLLRAM_W(2)
 
 
-int megasys1_vh_start(void)
-{
-	int i;
-
-	spriteram = &megasys1_ram[0x8000];
-	scrollram_0_tilemap = scrollram_1_tilemap = scrollram_2_tilemap = NULL;
-
-	active_layers = spritebank = screenflag = spriteflag = 0;
-
- 	for (i = 0; i < 3; i ++)
-	{
-		scrollflag[i] = scrollx[i] = scrolly[i] = 0;
-		pages_per_tmap_x[i] = pages_per_tmap_y[i] = 0;
-	}
-
-	return 0;
-}
-
-
 /***************************************************************************
 
 							Video registers access
 
 ***************************************************************************/
 
-
-#ifdef MAME_DEBUG
-#define SHOW_READ_ERROR(_format_,_offset_)\
-{\
-	char buf[80];\
-	sprintf(buf,_format_,_offset_);\
-	usrintf_showmessage(buf);\
-	/*	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);*/ \
-}
-
-#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
-{\
-	char buf[80];\
-	sprintf(buf,_format_,_offset_,_data_);\
-	usrintf_showmessage(buf);\
-	/*	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);*/ \
-}
-
-#else
-
-#define SHOW_READ_ERROR(_offset_,_data_)\
-{\
-	char buf[80];\
-	if (errorlog)\
+#define MEGASYS1_SCROLL_FLAG_W(_n_) \
+void megasys1_scroll_##_n_##_flag_w(int data) \
+{ \
+	if ((megasys1_scroll_flag[_n_] != data) || (megasys1_tmap_##_n_ == 0) ) \
 	{ \
-		sprintf(buf,_format_,_offset_);\
-		if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);\
-	} \
-}
-
-#define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
-{\
-	char buf[80];\
-	if (errorlog)\
-	{ \
-		sprintf(buf,_format_,_offset_,_data_); \
-		fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
-	} \
-}
-
-#endif
-
-
-
-
-
-#define VREG_SCROLL(_n_, _dir_) scroll##_dir_[_n_] = new_data; break;
-
-#define VREG_FLAG(_n_) \
-	if ((scrollflag[_n_] != new_data) || (scrollram_##_n_##_tilemap == 0) ) \
-	{ \
-		scrollflag[_n_] = new_data; \
+		megasys1_scroll_flag[_n_] = data; \
 \
-		if (scrollram_##_n_##_tilemap) \
-			tilemap_dispose(scrollram_##_n_##_tilemap); \
+		if (megasys1_tmap_##_n_) \
+			tilemap_dispose(megasys1_tmap_##_n_); \
 \
 		/* number of pages when tiles are 16x16 */ \
-		pages_per_tmap_x[_n_] = 16 / ( 1 << (scrollflag[_n_] & 0x3) ); \
-		pages_per_tmap_y[_n_] = 32 / pages_per_tmap_x[_n_]; \
+		megasys1_pages_per_tmap_x[_n_] = 16 / ( 1 << (megasys1_scroll_flag[_n_] & 0x3) ); \
+		megasys1_pages_per_tmap_y[_n_] = 32 / megasys1_pages_per_tmap_x[_n_]; \
 \
 		/* when tiles are 8x8, divide the number of total pages by 4 */ \
-		if (scrollflag[_n_] & 0x10) \
+		if (megasys1_scroll_flag[_n_] & 0x10) \
 		{ \
-			if (pages_per_tmap_y[_n_] > 4)	{ pages_per_tmap_x[_n_] /= 1;	pages_per_tmap_y[_n_] /= 4;} \
-			else							{ pages_per_tmap_x[_n_] /= 2;	pages_per_tmap_y[_n_] /= 2;} \
+			if (megasys1_pages_per_tmap_y[_n_] > 4)	{ megasys1_pages_per_tmap_x[_n_] /= 1;	megasys1_pages_per_tmap_y[_n_] /= 4;} \
+			else									{ megasys1_pages_per_tmap_x[_n_] /= 2;	megasys1_pages_per_tmap_y[_n_] /= 2;} \
 		} \
 \
-		scrollram_##_n_##_tilemap = \
-			tilemap_create \
-				(	(scrollflag[_n_] & 0x10) ? get_scroll_##_n_##_tile_info_8x8 : get_scroll_##_n_##_tile_info_16x16, \
-					TILEMAP_TRANSPARENT, \
-					8,8, \
-					TILES_PER_PAGE_X * pages_per_tmap_x[_n_], \
-					TILES_PER_PAGE_Y * pages_per_tmap_y[_n_]  \
-				); \
-		scrollram_##_n_##_tilemap->transparent_pen = 15; \
-\
-		if (scrollram_##_n_##_tilemap == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset,data); \
+		if ((megasys1_tmap_##_n_ = \
+				tilemap_create \
+					(	(megasys1_scroll_flag[_n_] & 0x10) ? \
+							megasys1_get_scroll_##_n_##_tile_info_8x8 : \
+							megasys1_get_scroll_##_n_##_tile_info_16x16, \
+						TILEMAP_TRANSPARENT, \
+						8,8, \
+						TILES_PER_PAGE_X * megasys1_pages_per_tmap_x[_n_], \
+						TILES_PER_PAGE_Y * megasys1_pages_per_tmap_y[_n_]  \
+					) \
+			)) megasys1_tmap_##_n_->transparent_pen = 15; \
 	} \
-	break;
+}
 
-
-
+MEGASYS1_SCROLL_FLAG_W(0)
+MEGASYS1_SCROLL_FLAG_W(1)
+MEGASYS1_SCROLL_FLAG_W(2)
 
 
 /* Used by MS1-A/Z, B */
@@ -792,19 +743,23 @@ int old_data, new_data;
 
 	switch (offset)
 	{
-		case 0x000   :	active_layers = new_data;	break;
-		case 0x008+0 :	VREG_SCROLL(2,x)
-		case 0x008+2 :	VREG_SCROLL(2,y)
-		case 0x008+4 :	VREG_FLAG(2)
-		case 0x200+0 :	VREG_SCROLL(0,x)
-		case 0x200+2 :	VREG_SCROLL(0,y)
-		case 0x200+4 :	VREG_FLAG(0)
-		case 0x208+0 :	VREG_SCROLL(1,x)
-		case 0x208+2 :	VREG_SCROLL(1,y)
-		case 0x208+4 :	VREG_FLAG(1)
-		case 0x100   :	spriteflag = new_data;		break;
+		case 0x000   :	megasys1_active_layers = new_data;	break;
 
-		case 0x300   :	screenflag = new_data;
+		case 0x008+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
+		case 0x008+2 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+		case 0x008+4 :	MEGASYS1_VREG_FLAG(2)		break;
+
+		case 0x200+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
+		case 0x200+2 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x200+4 :	MEGASYS1_VREG_FLAG(0)		break;
+
+		case 0x208+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
+		case 0x208+2 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x208+4 :	MEGASYS1_VREG_FLAG(1)		break;
+
+		case 0x100   :	megasys1_sprite_flag = new_data;		break;
+
+		case 0x300   :	megasys1_screen_flag = new_data;
 						if (new_data & 0x10)
 							cpu_set_reset_line(1,ASSERT_LINE);
 						else
@@ -812,7 +767,7 @@ int old_data, new_data;
 						break;
 
 		case 0x308   :	soundlatch_w(0,new_data);	break;
-						/* no cause_interrupt ? */
+						/* no interrupt ? */
 
 		default		 :	SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
 	}
@@ -842,24 +797,29 @@ int old_data, new_data;
 
 	switch (offset)
 	{
-		case 0x2000+0 :	VREG_SCROLL(0,x)
-		case 0x2000+2 :	VREG_SCROLL(0,y)
-		case 0x2000+4 :	VREG_FLAG(0)
-		case 0x2008+0 :	VREG_SCROLL(1,x)
-		case 0x2008+2 :	VREG_SCROLL(1,y)
-		case 0x2008+4 :	VREG_FLAG(1)
-		case 0x2100+0 :	VREG_SCROLL(2,x)
-		case 0x2100+2 :	VREG_SCROLL(2,y)
-		case 0x2100+4 :	VREG_FLAG(2)
-		case 0x2108   :	spritebank = new_data;		break;
-		case 0x2200   :	spriteflag = new_data;		break;
-		case 0x2208   : active_layers = new_data;	break;
-		case 0x2308   :	screenflag = new_data;
+		case 0x2000+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
+		case 0x2000+2 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x2000+4 :	MEGASYS1_VREG_FLAG(0)		break;
+
+		case 0x2008+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
+		case 0x2008+2 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x2008+4 :	MEGASYS1_VREG_FLAG(1)		break;
+
+		case 0x2100+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
+		case 0x2100+2 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+		case 0x2100+4 :	MEGASYS1_VREG_FLAG(2)		break;
+
+		case 0x2108   :	megasys1_sprite_bank   = new_data;	break;
+		case 0x2200   :	megasys1_sprite_flag   = new_data;	break;
+		case 0x2208   : megasys1_active_layers = new_data;	break;
+
+		case 0x2308   :	megasys1_screen_flag = new_data;
 						if (new_data & 0x10)
 							cpu_set_reset_line(1,ASSERT_LINE);
 						else
 							cpu_set_reset_line(1,CLEAR_LINE);
 						break;
+
 		case 0x8000   :	/* Cybattler reads sound latch on irq 2 */
 						soundlatch_w(0,new_data);
 						cpu_cause_interrupt(1,2);
@@ -882,19 +842,20 @@ int old_data, new_data;
 
 	switch (offset)
 	{
-		case 0x2000+0 :	VREG_SCROLL(0,x)
-		case 0x2000+2 :	VREG_SCROLL(0,y)
-		case 0x2000+4 :	VREG_FLAG(0)
-		case 0x2008+0 :	VREG_SCROLL(1,x)
-		case 0x2008+2 :	VREG_SCROLL(1,y)
-		case 0x2008+4 :	VREG_FLAG(1)
-//		case 0x2100+0 :	VREG_SCROLL(2,x)
-//		case 0x2100+2 :	VREG_SCROLL(2,y)
-//		case 0x2100+4 :	VREG_FLAG(2)
-		case 0x2108   :	spritebank = new_data;		break;
-		case 0x2200   :	spriteflag = new_data;		break;
-		case 0x2208   : active_layers = new_data;  break;
-		case 0x2308   :	screenflag = new_data;		break;
+		case 0x2000+0 :	MEGASYS1_VREG_SCROLL(0,x)	break;
+		case 0x2000+2 :	MEGASYS1_VREG_SCROLL(0,y)	break;
+		case 0x2000+4 :	MEGASYS1_VREG_FLAG(0)		break;
+		case 0x2008+0 :	MEGASYS1_VREG_SCROLL(1,x)	break;
+		case 0x2008+2 :	MEGASYS1_VREG_SCROLL(1,y)	break;
+		case 0x2008+4 :	MEGASYS1_VREG_FLAG(1)		break;
+//		case 0x2100+0 :	MEGASYS1_VREG_SCROLL(2,x)	break;
+//		case 0x2100+2 :	MEGASYS1_VREG_SCROLL(2,y)	break;
+//		case 0x2100+4 :	MEGASYS1_VREG_FLAG(2)		break;
+
+		case 0x2108   :	megasys1_sprite_bank	=	new_data;		break;
+		case 0x2200   :	megasys1_sprite_flag	=	new_data;		break;
+		case 0x2208   : megasys1_active_layers	=	new_data;		break;
+		case 0x2308   :	megasys1_screen_flag	=	new_data;		break;
 
 		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset,data);
 	}
@@ -944,7 +905,7 @@ int color,code,sx,sy,flipx,flipy,attr,sprite,offs,color_mask;
 
 	if (hardware_type != 'Z')	/* standard sprite hardware */
 	{
-		color_mask = (spriteflag & 0x100) ? 0x07 : 0x0f;
+		color_mask = (megasys1_sprite_flag & 0x100) ? 0x07 : 0x0f;
 
 		for (offs = 0x000; offs < 0x800 ; offs += 8)
 		{
@@ -972,7 +933,7 @@ if ( (debugsprites) && (((attr & 0x0f)/4) != (debugsprites-1)) ) continue;
 				flipx = attr & 0x40;
 				flipy = attr & 0x80;
 
-				if (screenflag & 1)
+				if (megasys1_screen_flag & 1)
 				{
 					flipx = !flipx;		flipy = !flipy;
 					sx = 240-sx;		sy = 240-sy;
@@ -983,7 +944,7 @@ if ( (debugsprites) && (((attr & 0x0f)/4) != (debugsprites-1)) ) continue;
 				color = (attr & color_mask);
 
 				drawgfx(bitmap,Machine->gfx[3],
-						(code & 0xfff ) + (spritebank << 12),
+						(code & 0xfff ) + ((megasys1_sprite_bank & 1) << 12),
 						color,
 						flipx, flipy,
 						sx, sy,
@@ -1021,7 +982,7 @@ if ( (debugsprites) && (((attr & 0x0f)/4) == (debugsprites-1)) ) continue;
 			flipx = attr & 0x40;
 			flipy = attr & 0x80;
 
-			if (screenflag & 1)
+			if (megasys1_screen_flag & 1)
 			{
 				flipx = !flipx;		flipy = !flipy;
 				sx = 240-sx;		sy = 240-sy;
@@ -1060,7 +1021,7 @@ int color_mask;
 
 	for (color = 0 ; color < 16 ; color++) penmask[color] = 0;
 
-	color_mask = (spriteflag & 0x100) ? 0x07 : 0x0f;
+	color_mask = (megasys1_sprite_flag & 0x100) ? 0x07 : 0x0f;
 
 	if (hardware_type != 'Z')		/* standard sprite hardware */
 	{
@@ -1085,7 +1046,7 @@ int color_mask;
 			if ((sx > xmax) ||(sy > ymax) ||(sx < xmin) ||(sy < ymin)) continue;
 
 			code  = READ_WORD(&spritedata[0x0E]) + READ_WORD(&megasys1_objectram[offs+0x06]);
-			code  =	(code & 0xfff ) + (spritebank << 12);
+			code  =	(code & 0xfff );
 			color = (attr & color_mask);
 
 			penmask[color] |= pen_usage[code % total_elements];
@@ -1135,15 +1096,17 @@ struct priority
 	int priorities[16];
 };
 
-extern struct GameDriver p47_driver;
-extern struct GameDriver plusalph_driver;
-extern struct GameDriver peekaboo_driver;
-extern struct GameDriver street64_driver;
-extern struct GameDriver chimerab_driver;
-extern struct GameDriver edf_driver;
 extern struct GameDriver avspirit_driver;
-extern struct GameDriver hachoo_driver;
+extern struct GameDriver bigstrik_driver;
+extern struct GameDriver chimerab_driver;
 extern struct GameDriver cybattlr_driver;
+extern struct GameDriver hachoo_driver;
+extern struct GameDriver edf_driver;
+extern struct GameDriver p47_driver;
+extern struct GameDriver peekaboo_driver;
+extern struct GameDriver plusalph_driver;
+extern struct GameDriver stdragon_driver;
+extern struct GameDriver street64_driver;
 
 /*
 	0:	Scroll 0
@@ -1158,37 +1121,45 @@ extern struct GameDriver cybattlr_driver;
 
 static struct priority priorities[] =
 {
+	{	&avspirit_driver,
+		{ 0x14032,0x04132,0x13042,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,
+		  0xfffff,0xfffff,0xfffff,0xfffff,0x14302,0xfffff,0x14032,0xfffff }
+	},
+	{	&bigstrik_driver,	/* like 64street */
+		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
+		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
+	},
+	{	&chimerab_driver,
+		{ 0x14032,0x10324,0x14032,0x04132,0xfffff,0xfffff,0xfffff,0xfffff,
+		  0xfffff,0xfffff,0x01324,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
+	},
+	{	&cybattlr_driver,
+		{ 0x04132,0xfffff,0xfffff,0xfffff,0x14032,0xfffff,0xfffff,0xfffff,
+		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0x04132 }
+	},
+	{	&hachoo_driver,
+		{ 0x24130,0xfffff,0xfffff,0xfffff,0x04132,0xfffff,0x24130,0xfffff,
+		  0x24103,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
+	},
 	{	&p47_driver,	/* verified with PROM */
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
+		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
+	},
+	{	&peekaboo_driver, /* verified with PROM */
+		{ 0x0134f,0x034ff,0x0341f,0x3401f,0x1340f,0x3410f,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	&plusalph_driver,	/* verified with PROM (same as p47) */
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&peekaboo_driver,	/* verified with PROM */
-		{ 0x0134f,0x034ff,0x0341f,0x3401f,0x1340f,0x3410f,0xfffff,0xfffff,
+	{	&stdragon_driver,	/* verified with PROM (same as p47) */
+		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	&street64_driver,
 		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&chimerab_driver,	/* like 64street */
-		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&avspirit_driver,
-		{ 0x14032,0x04132,0x13042,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0x14302,0xfffff,0x14032,0xfffff }
-	},
-	{	&hachoo_driver,
-		{ 0x24130,0xfffff,0xfffff,0xfffff,0x04132,0xfffff,0x24130,0xfffff,
-		  0x24103,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&cybattlr_driver,
-		{ 0x04132,0xfffff,0xfffff,0xfffff,0x14032,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0x04132 }
 	},
 	{	0,	/* default: edf .. */
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
@@ -1199,11 +1170,11 @@ static struct priority priorities[] =
 void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,flag,pri;
-	int active_layers1 = active_layers;
+	int megasys1_active_layers1 = megasys1_active_layers;
 
-	if (hardware_type == 'Z') active_layers = 0x020b;
+	if (hardware_type == 'Z') megasys1_active_layers = 0x020b;
 
-	tilemap_set_flip( ALL_TILEMAPS, (screenflag & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0 );
+	tilemap_set_flip( ALL_TILEMAPS, (megasys1_screen_flag & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0 );
 
 #ifdef MAME_DEBUG
 debugsprites = 0;
@@ -1219,26 +1190,13 @@ int msk = 0;
 	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0xfff8; debugsprites = 3;}
 	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0xfff8; debugsprites = 4;}
 
-	if (msk != 0) active_layers &= msk;
+	if (msk != 0) megasys1_active_layers &= msk;
 }
 #endif
-
-#define MEGASYS1_TMAP_SET_SCROLL(_n_) \
-	if (scrollram_##_n_##_tilemap) \
-	{ \
-		tilemap_set_scrollx(scrollram_##_n_##_tilemap, 0, scrollx[_n_]); \
-		tilemap_set_scrolly(scrollram_##_n_##_tilemap, 0, scrolly[_n_]); \
-	}
 
 	MEGASYS1_TMAP_SET_SCROLL(0)
 	MEGASYS1_TMAP_SET_SCROLL(1)
 	MEGASYS1_TMAP_SET_SCROLL(2)
-
-
-
-#define MEGASYS1_TMAP_UPDATE(_n_) \
-	if ( (scrollram_##_n_##_tilemap) && (active_layers & (1 << _n_) ) ) \
-		tilemap_update(scrollram_##_n_##_tilemap);
 
 	MEGASYS1_TMAP_UPDATE(0)
 	MEGASYS1_TMAP_UPDATE(1)
@@ -1250,15 +1208,9 @@ int msk = 0;
 
 	if (palette_recalc())	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-
-#define MEGASYS1_TMAP_RENDER(_n_) \
-	if ( (scrollram_##_n_##_tilemap) && (active_layers & (1 << _n_) ) )\
-		tilemap_render(scrollram_##_n_##_tilemap);
-
 	MEGASYS1_TMAP_RENDER(0)
 	MEGASYS1_TMAP_RENDER(1)
 	MEGASYS1_TMAP_RENDER(2)
-
 
 	for (	i = 0;
 			 priorities[i].driver &&
@@ -1266,13 +1218,14 @@ int msk = 0;
 			(priorities[i].driver != Machine->gamedrv->clone_of);
 			i++ );
 
-	pri = priorities[i].priorities[(active_layers & 0x0f00) >> 8];
+	pri = priorities[i].priorities[(megasys1_active_layers & 0x0f00) >> 8];
 
 #ifdef MAME_DEBUG
 	if (pri == 0xfffff || keyboard_pressed(KEYCODE_Z))
 	{
 		char buf[40];
-		sprintf(buf,"Pri: %04X - Flag: %04X", active_layers1, spriteflag);
+		sprintf(buf,"Pri: %04X - Flag: %04X", megasys1_active_layers1, megasys1_sprite_flag);
+//			sprintf(buf,"%04X", input_port_1_r(0));
 		usrintf_showmessage(buf);
 	}
 #endif
@@ -1280,13 +1233,6 @@ int msk = 0;
 	if (pri == 0xfffff) pri = 0x04132;
 
 	flag = TILEMAP_IGNORE_TRANSPARENCY;
-
-#define MEGASYS1_TMAP_DRAW(_n_) \
-	if ( (scrollram_##_n_##_tilemap) && (active_layers & (1 << _n_) ) ) \
-	{ \
-		tilemap_draw(bitmap, scrollram_##_n_##_tilemap, flag ); \
-		flag = 0; \
-	}
 
 	for (i = 0;i < 5;i++)
 	{
@@ -1306,9 +1252,9 @@ int msk = 0;
 					osd_clearbitmap(bitmap);	/* should use fillbitmap */
 				}
 
-				if (active_layers & 0x08)
+				if (megasys1_active_layers & 0x08)
 				{
-					if (spriteflag & 0x100)	/* sprites are split */
+					if (megasys1_sprite_flag & 0x100)	/* sprites are split */
 						draw_sprites(bitmap, (layer-3) & 1 );
 					else
 						if (layer == 3)	draw_sprites(bitmap, -1 );
@@ -1325,5 +1271,5 @@ int msk = 0;
 
 	}
 
-	active_layers = active_layers1;
+	megasys1_active_layers = megasys1_active_layers1;
 }

@@ -453,7 +453,7 @@ static struct MachineDriver ddrible_machine_driver =
 };
 
 
-ROM_START( ddrible_rom )
+ROM_START( ddrible )
 	ROM_REGION(0x1a000) /* 64K CPU #0 + 40K for Banked ROMS */
 	ROM_LOAD( "690c03.bin",	0x10000, 0x0a000, 0x07975a58 )
 	ROM_CONTINUE(			0x0a000, 0x06000 )

@@ -724,7 +724,7 @@ static struct MachineDriver rk_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( kingofb_rom )
+ROM_START( kingofb )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "d09_22.bin",   0x00000, 0x4000, 0x6220bfa2 )
 	ROM_LOAD( "e09_23.bin",   0x04000, 0x4000, 0x5782fdd8 )
@@ -766,7 +766,7 @@ ROM_START( kingofb_rom )
 ROM_END
 
 /* Ring King */
-ROM_START( ringking_rom )
+ROM_START( ringking )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cx13.9f",      0x00000, 0x8000, 0x93e38c02 )
 	ROM_LOAD( "cx14.11f",     0x08000, 0x4000, 0xa435acb0 )
@@ -797,7 +797,7 @@ ROM_START( ringking_rom )
 	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
-ROM_START( ringkin2_rom )
+ROM_START( ringkin2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rkngm1.bin",   0x00000, 0x8000, 0x086921ea )
 	ROM_LOAD( "rkngm2.bin",   0x08000, 0x4000, 0xc0b636a4 )
@@ -828,7 +828,7 @@ ROM_START( ringkin2_rom )
 	ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
-ROM_START( ringkin3_rom )
+ROM_START( ringkin3 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "14.9d",        0x00000, 0x4000, 0x63627b8b )
 	ROM_LOAD( "15.9e",        0x04000, 0x4000, 0xe7557489 )

@@ -897,7 +897,7 @@ static struct MachineDriver edrandy_machine_driver =
 
 /**********************************************************************************/
 
-ROM_START( cninja_rom )
+ROM_START( cninja )
 	ROM_REGION(0xc0000) /* 68000 code */
 	ROM_LOAD_EVEN( "gn02rev3.bin", 0x00000, 0x20000, 0x39aea12a )
 	ROM_LOAD_ODD ( "gn05rev2.bin", 0x00000, 0x20000, 0x0f4360ef )
@@ -929,7 +929,7 @@ ROM_START( cninja_rom )
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
-ROM_START( cninja0_rom )
+ROM_START( cninja0 )
 	ROM_REGION(0xc0000) /* 68000 code */
 	ROM_LOAD_EVEN( "gn-02.rom", 0x00000, 0x20000, 0xccc59524 )
 	ROM_LOAD_ODD ( "gn-05.rom", 0x00000, 0x20000, 0xa002cbe4 )
@@ -961,7 +961,7 @@ ROM_START( cninja0_rom )
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
-ROM_START( cninjau_rom )
+ROM_START( cninjau )
 	ROM_REGION(0xc0000) /* 68000 code */
 	ROM_LOAD_EVEN( "gm02-3.1k", 0x00000, 0x20000, 0xd931c3b1 )
 	ROM_LOAD_ODD ( "gm05-2.3k", 0x00000, 0x20000, 0x7417d3fb )
@@ -993,7 +993,7 @@ ROM_START( cninjau_rom )
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
-ROM_START( joemac_rom )
+ROM_START( joemac )
 	ROM_REGION(0xc0000) /* 68000 code */
 	ROM_LOAD_EVEN( "gl02-2.k1", 0x00000, 0x20000,  0x80da12e2 )
 	ROM_LOAD_ODD ( "gl05-2.k3", 0x00000, 0x20000,  0xfe4dbbbb )
@@ -1025,7 +1025,7 @@ ROM_START( joemac_rom )
 	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
-ROM_START( stoneage_rom )
+ROM_START( stoneage )
 	ROM_REGION(0xc0000) /* 68000 code */
 	ROM_LOAD_EVEN( "sa_1_019.bin", 0x00000, 0x20000,  0x7fb8c44f )
 	ROM_LOAD_ODD ( "sa_1_033.bin", 0x00000, 0x20000,  0x961c752b )
@@ -1059,7 +1059,7 @@ ROM_START( stoneage_rom )
 	ROM_REGION(0x100) /* No extra Oki samples in the bootleg */
 ROM_END
 
-ROM_START( edrandy_rom )
+ROM_START( edrandy )
 	ROM_REGION(0x100000) /* 68000 code */
   	ROM_LOAD_EVEN( "gg-00-2", 0x00000, 0x20000, 0xce1ba964 )
   	ROM_LOAD_ODD ( "gg-04-2", 0x00000, 0x20000, 0x24caed19 )
@@ -1100,7 +1100,7 @@ ROM_START( edrandy_rom )
 	ROM_LOAD( "mad-13", 0x00000, 0x80000, 0x6ab28eba )	/* banked */
 ROM_END
 
-ROM_START( edrandyj_rom )
+ROM_START( edrandyj )
 	ROM_REGION(0x100000) /* 68000 code */
   	ROM_LOAD_EVEN( "ge-00-2",   0x00000, 0x20000, 0xb3d2403c )
   	ROM_LOAD_ODD ( "ge-04-2",   0x00000, 0x20000, 0x8a9624d6 )

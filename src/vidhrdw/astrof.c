@@ -293,6 +293,8 @@ void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		do_modify_palette = 0;
 	}
 
+	palette_recalc();
+
 	if (!full_refresh && !force_refresh)
 		return;
 

@@ -397,25 +397,6 @@ INPUT_PORTS_START( mhavocp_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_COLOR };
-
 
 
 static struct POKEYinterface pokey_interface =
@@ -467,9 +448,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 300, 0, 260 },
-	gfxdecodeinfo,
+	0,
 	256,256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -497,7 +478,7 @@ static struct MachineDriver machine_driver =
  * Prototype is supported as "mhavocp"
  */
 
-ROM_START( mhavoc_rom )
+ROM_START( mhavoc )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)	/* 152KB for ROMs */
 	/* Vector Generator ROM */
@@ -523,7 +504,7 @@ ROM_START( mhavoc_rom )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
-ROM_START( mhavoc2_rom )
+ROM_START( mhavoc2 )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)
 	/* Vector Generator ROM */
@@ -550,7 +531,7 @@ ROM_START( mhavoc2_rom )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
-ROM_START( mhavocrv_rom )
+ROM_START( mhavocrv )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)	/* 152KB for ROMs */
 	/* Vector Generator ROM */
@@ -576,7 +557,7 @@ ROM_START( mhavocrv_rom )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
-ROM_START( mhavocp_rom )
+ROM_START( mhavocp )
  /* Alpha Processor ROMs */
  ROM_REGION(0x21000)
  /* Vector Generator ROM */
@@ -663,7 +644,7 @@ struct GameDriver mhavoc_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave
@@ -689,7 +670,7 @@ struct GameDriver mhavoc2_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave
@@ -715,7 +696,7 @@ struct GameDriver mhavocrv_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave
@@ -723,27 +704,27 @@ struct GameDriver mhavocrv_driver =
 
 struct GameDriver mhavocp_driver =
 {
- __FILE__,
- &mhavoc_driver,
- "mhavocp",
- "Major Havoc (prototype)",
- "1983",
- "Atari",
- CREDITS,
- 0,
- &machine_driver,
- 0,
+	__FILE__,
+	&mhavoc_driver,
+	"mhavocp",
+	"Major Havoc (prototype)",
+	"1983",
+	"Atari",
+	CREDITS,
+	0,
+	&machine_driver,
+	0,
 
- mhavocp_rom,
- 0, 0,
- 0,
- 0,
+	mhavocp_rom,
+	0, 0,
+	0,
+	0,
 
- mhavocp_input_ports,
+	mhavocp_input_ports,
 
- color_prom, 0, 0,
- ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
- hiload, hisave
+	hiload, hisave
 };
 

@@ -676,7 +676,7 @@ static struct MachineDriver thunderx_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( scontra_rom )
+ROM_START( scontra )
 	ROM_REGION(0x30800)	/* ROMs + banked RAM */
 	ROM_LOAD( "e02.k11",     0x10000, 0x08000, 0xa61c0ead )	/* banked ROM */
 	ROM_CONTINUE(            0x08000, 0x08000 )				/* fixed ROM */
@@ -731,7 +731,7 @@ ROM_START( scontra_rom )
 	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( scontraj_rom )
+ROM_START( scontraj )
 	ROM_REGION(0x30800)	/* ROMs + banked RAM */
 	ROM_LOAD( "775-f02.bin", 0x10000, 0x08000, 0x8d5933a7 )	/* banked ROM */
 	ROM_CONTINUE(            0x08000, 0x08000 )				/* fixed ROM */
@@ -786,7 +786,7 @@ ROM_START( scontraj_rom )
 	ROM_LOAD( "775a09.b19",   0x0000, 0x0100, 0x46d1e0df )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( thunderx_rom )
+ROM_START( thunderx )
 	ROM_REGION(0x29000)	/* ROMs + banked RAM */
 	ROM_LOAD( "873k03.k15", 0x10000, 0x10000, 0x276817ad )
 	ROM_LOAD( "873k02.k13", 0x20000, 0x08000, 0x80cc1c45 )
@@ -819,7 +819,7 @@ ROM_START( thunderx_rom )
 	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, 0xe2d09a1b )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( thnderxj_rom )
+ROM_START( thnderxj )
 	ROM_REGION(0x29000)	/* ROMs + banked RAM */
 	ROM_LOAD( "873-n03.k15", 0x10000, 0x10000, 0xa01e2e3e )
 	ROM_LOAD( "873-n02.k13", 0x20000, 0x08000, 0x55afa2cc )

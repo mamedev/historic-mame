@@ -263,13 +263,17 @@ static struct rectangle foregroundvisiblearea =
 		for (x = 256; x; x--, bgsrc++)						\
 		{													\
 			int data = READ_WORD(bgsrc);					\
-															\
 			FORCOL_TO_PEN(data);							\
-															\
 			*(bg1++) = *(bg2++) = pens[data];				\
-															\
-			*(fg1++) = pens[*(fgsrc1++)];					\
-			*(fg2++) = pens[*(fgsrc2++)];					\
+		}													\
+		for (x = 128; x; x--, fgsrc1++, fgsrc2++)			\
+		{													\
+			int data1 = READ_WORD(fgsrc1);					\
+			int data2 = READ_WORD(fgsrc2);					\
+			*(fg1++) = pens[data1 & 0xff];					\
+			*(fg1++) = pens[data1 >> 8];					\
+			*(fg2++) = pens[data2 & 0xff];					\
+			*(fg2++) = pens[data2 >> 8];					\
 		}													\
 	}
 
@@ -278,7 +282,6 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (TMS34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
-
 		return;
 	}
 
@@ -287,8 +290,8 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* Redraw screen */
 		int x,y;
 		unsigned short *bgsrc  = (unsigned short *)&exterm_master_videoram[0];
-		unsigned char  *fgsrc1 = &exterm_slave_videoram [0];
-		unsigned char  *fgsrc2 = &exterm_slave_videoram [256*256];
+		unsigned short *fgsrc1 = (unsigned short *)&exterm_slave_videoram[0];
+		unsigned short *fgsrc2 = (unsigned short *)&exterm_slave_videoram[256*256];
 
 		if (tmpbitmap1->depth == 16)
 		{

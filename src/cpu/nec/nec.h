@@ -69,29 +69,29 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,IXH,IXL,IYH,IYL } BREGS;
 /* HJB 12/13/98 instead mask address lines with a driver supplied value */
 #define SegBase(Seg) (I.sregs[Seg] << 4)
 
-#define DefaultBase(Seg) ((seg_prefix && (Seg==DS || Seg==SS)) ? prefix_base : I.base[Seg])
+#define DefaultBase(Seg) ((I.seg_prefix && (Seg==DS || Seg==SS)) ? I.prefix_base : I.base[Seg])
 
 /* ASG 971005 -- changed to cpu_readmem20/cpu_writemem20 */
-#define GetMemB(Seg,Off) (nec_ICount-=6,(BYTE)cpu_readmem20((DefaultBase(Seg)+(Off))&I.amask))
+#define GetMemB(Seg,Off) (nec_ICount-=6,(BYTE)cpu_readmem20((DefaultBase(Seg)+(Off))))
 #define GetMemW(Seg,Off) (nec_ICount-=10,(WORD)GetMemB(Seg,Off)+(WORD)(GetMemB(Seg,(Off)+1)<<8))
-#define PutMemB(Seg,Off,x) { nec_ICount-=7; cpu_writemem20((DefaultBase(Seg)+(Off))&I.amask,(x)); }
+#define PutMemB(Seg,Off,x) { nec_ICount-=7; cpu_writemem20((DefaultBase(Seg)+(Off)),(x)); }
 #define PutMemW(Seg,Off,x) { nec_ICount-=11; PutMemB(Seg,Off,(BYTE)(x)); PutMemB(Seg,(Off)+1,(BYTE)((x)>>8)); }
 
-#define ReadByte(ea) (nec_ICount-=6,(BYTE)cpu_readmem20((ea)&I.amask))
-#define ReadWord(ea) (nec_ICount-=10,cpu_readmem20((ea)&I.amask)+(cpu_readmem20(((ea)+1)&I.amask)<<8))
-#define WriteByte(ea,val) { nec_ICount-=7; cpu_writemem20((ea)&I.amask,val); }
-#define WriteWord(ea,val) { nec_ICount-=11; cpu_writemem20((ea)&I.amask,(BYTE)(val)); cpu_writemem20(((ea)+1)&I.amask,(val)>>8); }
+#define ReadByte(ea) (nec_ICount-=6,(BYTE)cpu_readmem20((ea)))
+#define ReadWord(ea) (nec_ICount-=10,cpu_readmem20((ea))+(cpu_readmem20(((ea)+1))<<8))
+#define WriteByte(ea,val) { nec_ICount-=7; cpu_writemem20((ea),val); }
+#define WriteWord(ea,val) { nec_ICount-=11; cpu_writemem20((ea),(BYTE)(val)); cpu_writemem20(((ea)+1),(val)>>8); }
 
 #define read_port(port) cpu_readport(port)
 #define write_port(port,val) cpu_writeport(port,val)
 
 /* no need to go through cpu_readmem for these ones... */
 /* ASG 971222 -- PUSH/POP now use the standard mechanisms; opcode reading is the same */
-#define FETCH ((BYTE)cpu_readop_arg((I.base[CS]+I.ip++)&I.amask))
-#define FETCHOP ((BYTE)cpu_readop((I.base[CS]+I.ip++)&I.amask))
-#define FETCHWORD(var) { var=cpu_readop_arg(((I.base[CS]+I.ip)&I.amask))+(cpu_readop_arg(((I.base[CS]+I.ip+1)&I.amask))<<8); I.ip+=2; }
-#define PUSH(val) { I.regs.w[SP]-=2; WriteWord(((I.base[SS]+I.regs.w[SP])&I.amask),val); }
-#define POP(var) { var = ReadWord(((I.base[SS]+I.regs.w[SP])&I.amask)); I.regs.w[SP]+=2; }
+#define FETCH ((BYTE)cpu_readop_arg((I.base[CS]+I.ip++)))
+#define FETCHOP ((BYTE)cpu_readop((I.base[CS]+I.ip++)))
+#define FETCHWORD(var) { var=cpu_readop_arg(((I.base[CS]+I.ip)))+(cpu_readop_arg(((I.base[CS]+I.ip+1)))<<8); I.ip+=2; }
+#define PUSH(val) { I.regs.w[SP]-=2; WriteWord(((I.base[SS]+I.regs.w[SP])),val); }
+#define POP(var) { var = ReadWord(((I.base[SS]+I.regs.w[SP]))); I.regs.w[SP]+=2; }
 /************************************************************************/
 #define CompressFlags() (WORD)(CF | (PF << 2) | (AF << 4) | (ZF << 6) \
 				| (SF << 7) | (I.TF << 8) | (I.IF << 9) \

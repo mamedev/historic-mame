@@ -792,7 +792,7 @@ static struct MachineDriver slapbtuk_machine_driver =
 
 
 
-ROM_START( tigerh_rom )
+ROM_START( tigerh )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "0.4",          0x00000, 0x4000, 0x4be73246 )
 	ROM_LOAD( "1.4",          0x04000, 0x4000, 0xaad04867 )
@@ -821,7 +821,7 @@ ROM_START( tigerh_rom )
 	/* The 68705 ROM is missing! */
 ROM_END
 
-ROM_START( tigerh2_rom )
+ROM_START( tigerh2 )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "b0.5",         0x00000, 0x4000, 0x6ae7e13c )
 	ROM_LOAD( "a-1.5",        0x04000, 0x4000, 0x65df2152 )
@@ -850,7 +850,7 @@ ROM_START( tigerh2_rom )
 	/* Is there a 68705 ROM missing? */
 ROM_END
 
-ROM_START( tigerhb1_rom )
+ROM_START( tigerhb1 )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "14",           0x00000, 0x4000, 0xca59dd73 )
 	ROM_LOAD( "13",           0x04000, 0x4000, 0x38bd54db )
@@ -877,7 +877,7 @@ ROM_START( tigerhb1_rom )
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 ROM_END
 
-ROM_START( tigerhb2_rom )
+ROM_START( tigerhb2 )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "rom00_09.bin", 0x00000, 0x4000, 0xef738c68 )
 	ROM_LOAD( "a-1.5",        0x04000, 0x4000, 0x65df2152 )
@@ -904,7 +904,7 @@ ROM_START( tigerhb2_rom )
 	ROM_LOAD( "3.4",          0x0000, 0x2000, 0xd105260f )
 ROM_END
 
-ROM_START( slapfigh_rom )
+ROM_START( slapfigh )
 	ROM_REGION(0x18000)
 	ROM_LOAD( "sf_r19.bin",   0x00000, 0x8000, 0x674c0e0f )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
@@ -930,7 +930,7 @@ ROM_START( slapfigh_rom )
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
-ROM_START( slapbtjp_rom )
+ROM_START( slapbtjp )
 	ROM_REGION(0x18000)
 	ROM_LOAD( "sf_r19jb.bin", 0x00000, 0x8000, 0x9a7ac8b3 )
 	ROM_LOAD( "sf_rh.bin",    0x10000, 0x8000, 0x3c42e4a7 )	/* banked at 8000 */
@@ -956,7 +956,7 @@ ROM_START( slapbtjp_rom )
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
-ROM_START( slapbtuk_rom )
+ROM_START( slapbtuk )
 	ROM_REGION(0x18000)
 	ROM_LOAD( "sf_r19eb.bin", 0x00000, 0x4000, 0x2efe47af )
 	ROM_LOAD( "sf_r20eb.bin", 0x04000, 0x4000, 0xf42c7951 )
@@ -983,7 +983,7 @@ ROM_START( slapbtuk_rom )
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
-ROM_START( alcon_rom )
+ROM_START( alcon )
 	ROM_REGION(0x18000)
 	ROM_LOAD( "00",           0x00000, 0x8000, 0x2ba82d60 )
 	ROM_LOAD( "01",           0x10000, 0x8000, 0x18bb2f12 )	/* banked at 8000 */
@@ -1010,7 +1010,7 @@ ROM_START( alcon_rom )
 ROM_END
 
 
-ROM_START( getstar_rom )
+ROM_START( getstar )
 	ROM_REGION(0x18000)		/* Region 0 - main cpu code */
 	ROM_LOAD( "gs_14.rom", 0x00000, 0x4000, 0x1a57a920 )
 	ROM_LOAD( "gs_13.rom", 0x04000, 0x4000, 0x805f8e77 )

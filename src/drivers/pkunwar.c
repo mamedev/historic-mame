@@ -169,7 +169,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface = {
 	2,		/* 2 chips */
-	1250000,	/* 1.25 MHz? */
+	3072000/2, // lax 11/03/1999  (1250000 -> 1536000 ???)
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ input_port_0_r, input_port_2_r },
@@ -226,7 +226,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pkunwar_rom )
+ROM_START( pkunwar )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pkwar.01r",    0x0000, 0x4000, 0xce2d2c7b )
 	ROM_LOAD( "pkwar.02r",    0x4000, 0x4000, 0xabc1f661 )
@@ -242,7 +242,7 @@ ROM_START( pkunwar_rom )
 	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, 0xaf0fc5e2 )
 ROM_END
 
-ROM_START( pkunwarj_rom )
+ROM_START( pkunwarj )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pgunwar.6",    0x0000, 0x4000, 0x357f3ef3 )
 	ROM_LOAD( "pgunwar.5",    0x4000, 0x4000, 0x0092e49e )

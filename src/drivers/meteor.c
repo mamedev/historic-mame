@@ -208,8 +208,6 @@ static unsigned char palette[] =
 	0x00, 0xff, 0xff,
 	0xff, 0xff, 0xff
 };
-
-
 static unsigned short colortable[] =
 {
 	0, 1, 2, 3, 4, 5, 6, 7,
@@ -221,6 +219,11 @@ static unsigned short colortable[] =
 	0, 7, 0, 1, 2, 3, 4, 5,
 	0, 0, 1, 2, 3, 4, 5, 6,
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct SN76496interface sn76496_interface =
@@ -257,8 +260,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	8, 8*8,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -282,7 +285,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( meteor_rom )
+ROM_START( meteor )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "vm1", 	      0x0000, 0x0800, 0x894fe9b1 )
 	ROM_LOAD( "vm2", 	      0x0800, 0x0800, 0x28685a68 )
@@ -327,7 +330,7 @@ struct GameDriver meteor_driver =
 
 	input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0

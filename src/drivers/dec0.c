@@ -1424,7 +1424,7 @@ static struct MachineDriver midres_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( hbarrel_rom )
+ROM_START( hbarrel )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb_ec04.rom",  0x00000, 0x10000, 0xd01bc3db )
 	ROM_LOAD_ODD ( "hb_ec01.rom",  0x00000, 0x10000, 0x6756f8ae )
@@ -1468,7 +1468,7 @@ ROM_START( hbarrel_rom )
 	ROM_LOAD( "hb_ec08.rom",  0x0000, 0x10000, 0x2159a609 )
 ROM_END
 
-ROM_START( hbarrelu_rom )
+ROM_START( hbarrelu )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "hb04.bin",     0x00000, 0x10000, 0x4877b09e )
 	ROM_LOAD_ODD ( "hb01.bin",     0x00000, 0x10000, 0x8b41c219 )
@@ -1512,7 +1512,7 @@ ROM_START( hbarrelu_rom )
 	ROM_LOAD( "hb08.bin",     0x0000, 0x10000, 0x645c5b68 )
 ROM_END
 
-ROM_START( baddudes_rom )
+ROM_START( baddudes )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
 	ROM_LOAD_EVEN( "baddudes.4",   0x00000, 0x10000, 0x4bf158a7 )
 	ROM_LOAD_ODD ( "baddudes.1",   0x00000, 0x10000, 0x74f5110c )
@@ -1564,7 +1564,7 @@ ROM_START( baddudes_rom )
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
-ROM_START( drgninja_rom )
+ROM_START( drgninja )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
 	ROM_LOAD_EVEN( "drgninja.04",  0x00000, 0x10000, 0x41b8b3f8 )
 	ROM_LOAD_ODD ( "drgninja.01",  0x00000, 0x10000, 0xe08e6885 )
@@ -1616,7 +1616,7 @@ ROM_START( drgninja_rom )
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
-ROM_START( birdtry_rom )
+ROM_START( birdtry )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "ek-04.bin",     0x00000, 0x10000, 0x5f0f4686 )
 	ROM_LOAD_ODD ( "ek-01.bin",     0x00000, 0x10000, 0x47f470db )
@@ -1656,7 +1656,7 @@ ROM_START( birdtry_rom )
 	ROM_LOAD( "ek-08.bin",     0x0000, 0x10000, 0xbe3db6cb )
 ROM_END
 
-ROM_START( robocop_rom )
+ROM_START( robocop )
 	ROM_REGION(0x40000) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05-3", 0x00000, 0x10000, 0xba69bf84 )
 	ROM_LOAD_ODD ( "ep01-3", 0x00000, 0x10000, 0x2a9f6e2c )
@@ -1697,7 +1697,7 @@ ROM_START( robocop_rom )
 	/* Filled in later */
 ROM_END
 
-ROM_START( robocopu_rom )
+ROM_START( robocopu )
 	ROM_REGION(0x40000) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05-1", 0x00000, 0x10000, 0x8de5cb3d )
 	ROM_LOAD_ODD ( "ep01-1", 0x00000, 0x10000, 0xb3c6bc02 )
@@ -1738,7 +1738,7 @@ ROM_START( robocopu_rom )
 	/* Filled in later */
 ROM_END
 
-ROM_START( robocpu0_rom )
+ROM_START( robocpu0 )
 	ROM_REGION(0x40000) /* 68000 code */
 	ROM_LOAD_EVEN( "ep05", 0x00000, 0x10000, 0xc465bdd8 )
 	ROM_LOAD_ODD ( "ep01", 0x00000, 0x10000, 0x1352d36e )
@@ -1779,7 +1779,7 @@ ROM_START( robocpu0_rom )
 	/* Filled in later */
 ROM_END
 
-ROM_START( robocopb_rom )
+ROM_START( robocopb )
 	ROM_REGION(0x40000) /* 68000 code */
 	ROM_LOAD_EVEN( "robop_05.rom", 0x00000, 0x10000, 0xbcef3e9b )
 	ROM_LOAD_ODD ( "robop_01.rom", 0x00000, 0x10000, 0xc9803685 )
@@ -1817,7 +1817,7 @@ ROM_START( robocopb_rom )
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 ROM_END
 
-ROM_START( hippodrm_rom )
+ROM_START( hippodrm )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "ew02",         0x00000, 0x10000, 0xdf0d7dc6 )
 	ROM_LOAD_ODD ( "ew01",         0x00000, 0x10000, 0xd5670aa7 )
@@ -1854,7 +1854,7 @@ ROM_START( hippodrm_rom )
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
-ROM_START( ffantasy_rom )
+ROM_START( ffantasy )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "ev02",         0x00000, 0x10000, 0x797a7860 )
 	ROM_LOAD_ODD ( "ev01",         0x00000, 0x10000, 0x0f17184d )
@@ -1891,7 +1891,7 @@ ROM_START( ffantasy_rom )
 	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
-ROM_START( slyspy_rom )
+ROM_START( slyspy )
 	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-3.17l",   0x00000, 0x10000, 0x54353a84 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
@@ -1924,7 +1924,7 @@ ROM_START( slyspy_rom )
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
-ROM_START( slyspy2_rom )
+ROM_START( slyspy2 )
 	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "fa14-2.bin",   0x00000, 0x10000, 0x0e431e39 )
 	ROM_LOAD_ODD ( "fa12-2.9l",    0x00000, 0x10000, 0x1b534294 )
@@ -1968,7 +1968,7 @@ ROM_START( slyspy2_rom )
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
-ROM_START( secretag_rom )
+ROM_START( secretag )
 	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "fb14.bin",   0x00000, 0x10000, 0x9be6ac90 )
 	ROM_LOAD_ODD ( "fb12.bin",   0x00000, 0x10000, 0x28904b6b )
@@ -2013,7 +2013,7 @@ ROM_START( secretag_rom )
 ROM_END
 
 #if 0
-ROM_START( secretab_rom )
+ROM_START( secretab )
 	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "sa_05.bin",    0x00000, 0x10000, 0x54353a84 )
 	ROM_LOAD_ODD ( "sa_03.bin",    0x00000, 0x10000, 0x1b534294 )
@@ -2047,7 +2047,7 @@ ROM_START( secretab_rom )
 ROM_END
 #endif
 
-ROM_START( midres_rom )
+ROM_START( midres )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "fk_14.rom",    0x00000, 0x20000, 0xde7522df )
 	ROM_LOAD_ODD ( "fk_12.rom",    0x00000, 0x20000, 0x3494b8c9 )
@@ -2083,7 +2083,7 @@ ROM_START( midres_rom )
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 ROM_END
 
-ROM_START( midresu_rom )
+ROM_START( midresu )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
 	ROM_LOAD_ODD ( "fl12",         0x00000, 0x20000, 0x3815ad9f )
@@ -2119,7 +2119,7 @@ ROM_START( midresu_rom )
 	ROM_LOAD( "fl17",              0x00000, 0x20000, 0x9029965d )
 ROM_END
 
-ROM_START( midresj_rom )
+ROM_START( midresj )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "fh14",         0x00000, 0x20000, 0x6d632a51 )
 	ROM_LOAD_ODD ( "fh12",         0x00000, 0x20000, 0x45143384 )
@@ -2155,7 +2155,7 @@ ROM_START( midresj_rom )
 	ROM_LOAD( "fh17",              0x00000, 0x20000, 0xc7b0a24e )
 ROM_END
 
-ROM_START( bouldash_rom )
+ROM_START( bouldash )
 	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "fn-15",   0x00000, 0x10000, 0xca19a967 )
 	ROM_LOAD_ODD ( "fn-12",   0x00000, 0x10000, 0x242bdc2a )

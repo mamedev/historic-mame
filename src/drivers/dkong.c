@@ -1030,7 +1030,7 @@ static struct MachineDriver dkong3_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( radarscp_rom )
+ROM_START( radarscp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "trs2c5fc",     0x0000, 0x1000, 0x40949e0d )
 	ROM_LOAD( "trs2c5gc",     0x1000, 0x1000, 0xafa8c49f )
@@ -1067,7 +1067,7 @@ static void radarscp_unprotect(void)
 	RAM[0x1e9d] = 0xbd;
 }
 
-ROM_START( dkong_rom )
+ROM_START( dkong )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dk.5e",        0x0000, 0x1000, 0xba70b88b )
 	ROM_LOAD( "dk.5c",        0x1000, 0x1000, 0x5ec461ec )
@@ -1093,7 +1093,7 @@ ROM_START( dkong_rom )
 	ROM_LOAD( "dk.3f",        0x0800, 0x0800, 0x4743fe92 )
 ROM_END
 
-ROM_START( dkongjp_rom )
+ROM_START( dkongjp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "5f.cpu",       0x0000, 0x1000, 0x424f2b11 )
 	ROM_LOAD( "5g.cpu",       0x1000, 0x1000, 0xd326599b )
@@ -1118,7 +1118,7 @@ ROM_START( dkongjp_rom )
 	ROM_LOAD( "dk.3f",        0x0800, 0x0800, 0x4743fe92 )
 ROM_END
 
-ROM_START( dkongjr_rom )
+ROM_START( dkongjr )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dkj.5b",       0x0000, 0x1000, 0xdea28158 )
 	ROM_CONTINUE(             0x3000, 0x1000 )
@@ -1148,7 +1148,7 @@ ROM_START( dkongjr_rom )
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
-ROM_START( dkngjrjp_rom )
+ROM_START( dkngjrjp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dkjr1",        0x0000, 0x1000, 0xec7e097f )
 	ROM_CONTINUE(             0x3000, 0x1000 )
@@ -1178,7 +1178,7 @@ ROM_START( dkngjrjp_rom )
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
-ROM_START( dkjrjp_rom )
+ROM_START( dkjrjp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dkjp.5b",      0x0000, 0x1000, 0x7b48870b )
 	ROM_CONTINUE(             0x3000, 0x1000 )
@@ -1208,7 +1208,7 @@ ROM_START( dkjrjp_rom )
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
-ROM_START( dkjrbl_rom )
+ROM_START( dkjrbl )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "djr1-c.5b",    0x0000, 0x1000, 0xffe9e1a5 )
 	ROM_CONTINUE(             0x3000, 0x1000 )
@@ -1239,7 +1239,7 @@ ROM_START( dkjrbl_rom )
 	ROM_LOAD( "dkj.3h",       0x0000, 0x1000, 0x715da5f8 )
 ROM_END
 
-ROM_START( dkong3_rom )
+ROM_START( dkong3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, 0x38d5f38e )
 	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, 0xc9134379 )
@@ -1266,7 +1266,34 @@ ROM_START( dkong3_rom )
 	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, 0x36d7200c )
 ROM_END
 
-ROM_START( hunchbkd_rom )
+ROM_START( dkong3j )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dk3c.7b",      0x0000, 0x2000, 0x38d5f38e )
+	ROM_LOAD( "dk3c.7c",      0x2000, 0x2000, 0xc9134379 )
+	ROM_LOAD( "dk3c.7d",      0x4000, 0x2000, 0xd22e2921 )
+	ROM_LOAD( "dk3cj.7e",     0x8000, 0x2000, 0x25b5be23 )
+
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dk3v.3n",      0x0000, 0x1000, 0x415a99c7 )
+	ROM_LOAD( "dk3v.3p",      0x1000, 0x1000, 0x25744ea0 )
+	ROM_LOAD( "dk3v.7c",      0x2000, 0x1000, 0x8ffa1737 )
+	ROM_LOAD( "dk3v.7d",      0x3000, 0x1000, 0x9ac84686 )
+	ROM_LOAD( "dk3v.7e",      0x4000, 0x1000, 0x0c0af3fb )
+	ROM_LOAD( "dk3v.7f",      0x5000, 0x1000, 0x55c58662 )
+
+	ROM_REGION(0x0300)	/* color proms */
+	ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, 0xdf54befc ) /* palette red & green component */
+	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, 0x66a77f40 ) /* palette blue component */
+	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, 0x50e33434 )	/* character color codes on a per-column basis */
+
+	ROM_REGION(0x10000)	/* sound #1 */
+	ROM_LOAD( "dk3c.5l",      0xe000, 0x2000, 0x7ff88885 )
+
+	ROM_REGION(0x10000)	/* sound #2 */
+	ROM_LOAD( "dk3c.6h",      0xe000, 0x2000, 0x36d7200c )
+ROM_END
+
+ROM_START( hunchbkd )
 	ROM_REGION(0x8000)	/* 32k for code */
 	ROM_LOAD( "hb.5e",        0x0000, 0x1000, 0x4c3ac070 )
 	ROM_LOAD( "hbsc-1.5c",    0x2000, 0x1000, 0x9b0e6234 )
@@ -1290,7 +1317,7 @@ ROM_START( hunchbkd_rom )
 	ROM_LOAD( "hb.3h",        0x0000, 0x0800, 0xa3c240d4 )
 ROM_END
 
-ROM_START( herbiedk_rom )
+ROM_START( herbiedk )
 	ROM_REGION(0x8000)	/* 32k for code */
 	ROM_LOAD( "5f.cpu",        0x0000, 0x1000, 0xc7ab3ac6 )
 	ROM_LOAD( "5g.cpu",        0x2000, 0x1000, 0xd1031aa6 )
@@ -1314,7 +1341,7 @@ ROM_START( herbiedk_rom )
 	ROM_LOAD( "3i.snd",        0x0000, 0x0800, 0x20e30406 )
 ROM_END
 
-ROM_START( herocast_rom )
+ROM_START( herocast )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* the loading addresses are most likely wrong */
 	/* the ROMs are probably not conriguous. */
@@ -1764,7 +1791,7 @@ struct GameDriver dkong3_driver =
 	__FILE__,
 	0,
 	"dkong3",
-	"Donkey Kong 3",
+	"Donkey Kong 3 (US)",
 	"1983",
 	"Nintendo of America",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
@@ -1773,6 +1800,32 @@ struct GameDriver dkong3_driver =
 	0,
 
 	dkong3_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	dkong3_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	dkong3_hiload, dkong3_hisave
+};
+
+struct GameDriver dkong3j_driver =
+{
+	__FILE__,
+	&dkong3_driver,
+	"dkong3j",
+	"Donkey Kong 3 (Japan)",
+	"1983",
+	"Nintendo",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
+	&dkong3_machine_driver,
+	0,
+
+	dkong3j_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

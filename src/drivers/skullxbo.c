@@ -347,7 +347,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( skullxbo_rom )
+ROM_START( skullxbo )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "5150", 0x00000, 0x10000, 0x9546d88b )
 	ROM_LOAD_ODD ( "5151", 0x00000, 0x10000, 0xb9ed8bd4 )
@@ -413,7 +413,7 @@ ROM_START( skullxbo_rom )
 ROM_END
 
 
-ROM_START( skullxb2_rom )
+ROM_START( skullxb2 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "sku0h.bin", 0x00000, 0x10000, 0x47083d59 )
 	ROM_LOAD_ODD ( "sku0l.bin", 0x00000, 0x10000, 0x2c03feaf )

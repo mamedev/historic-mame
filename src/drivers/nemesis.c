@@ -1906,7 +1906,7 @@ static struct MachineDriver rf2_gx400_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( nemesis_rom )
+ROM_START( nemesis )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "12a_01.bin",   0x00000, 0x8000, 0x35ff1aaa )
 	ROM_LOAD_ODD  ( "12c_05.bin",   0x00000, 0x8000, 0x23155faa )
@@ -1929,7 +1929,7 @@ ROM_START( nemesis_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( nemesuk_rom )
+ROM_START( nemesuk )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "12a_01.uk",    0x00000, 0x8000, 0xe1993f91 )
 	ROM_LOAD_ODD  ( "12c_05.uk",    0x00000, 0x8000, 0xc9761c78 )
@@ -1952,7 +1952,7 @@ ROM_START( nemesuk_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( konamigt_rom )
+ROM_START( konamigt )
 	ROM_REGION(0x40000)    /* 4 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "c01.rom",      0x00000, 0x8000, 0x56245bfd )
 	ROM_LOAD_ODD  ( "c05.rom",      0x00000, 0x8000, 0x8d651f44 )
@@ -1975,7 +1975,7 @@ ROM_START( konamigt_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( rf2_rom )
+ROM_START( rf2 )
 	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
@@ -1994,7 +1994,7 @@ ROM_START( rf2_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( twinbee_rom )
+ROM_START( twinbee )
 	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
@@ -2013,7 +2013,7 @@ ROM_START( twinbee_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( gradius_rom )
+ROM_START( gradius )
 	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
@@ -2032,7 +2032,7 @@ ROM_START( gradius_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( gwarrior_rom )
+ROM_START( gwarrior )
 	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
 	ROM_LOAD_ODD  ( "400-a04.10l",  0x00000, 0x08000, 0xd02c9552 )
@@ -2051,7 +2051,7 @@ ROM_START( gwarrior_rom )
 	ROM_LOAD  ( "400-a02.fse",  0x0100, 0x0100, 0x2f44f970 )
 ROM_END
 
-ROM_START( salamand_rom )
+ROM_START( salamand )
 	ROM_REGION(0x80000)    /* 64k for code */
 	ROM_LOAD_EVEN ( "18b.bin",  0x00000, 0x10000, 0xa42297f9 )
 	ROM_LOAD_ODD  ( "18c.bin",  0x00000, 0x10000, 0xf9130b0a )
@@ -2072,7 +2072,7 @@ ROM_START( salamand_rom )
 	ROM_LOAD  ( "10a.bin", 0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
-ROM_START( lifefrce_rom )
+ROM_START( lifefrce )
 	ROM_REGION(0x80000)    /* 64k for code */
 	ROM_LOAD_EVEN ( "587-k02.bin",  0x00000, 0x10000, 0x4a44da18 )
 	ROM_LOAD_ODD  ( "587-k05.bin",  0x00000, 0x10000, 0x2f8c1cbd )
@@ -2093,7 +2093,7 @@ ROM_START( lifefrce_rom )
 	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
 ROM_END
 
-ROM_START( lifefrcj_rom )
+ROM_START( lifefrcj )
 	ROM_REGION(0x80000)    /* 64k for code */
 	ROM_LOAD_EVEN ( "587-n02.bin",  0x00000, 0x10000, 0x235dba71 )
 	ROM_LOAD_ODD  ( "587-n05.bin",  0x00000, 0x10000, 0x054e569f )

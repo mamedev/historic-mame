@@ -232,6 +232,8 @@ void tnzs_vh_draw_foreground(struct osd_bitmap *bitmap,
 			sy = 240 - sy;
 			flipx = !flipx;
 			flipy = !flipy;
+			/* hack to hide Chuka Taisens grey line, top left corner */
+			if ((sy == 0) && (code == 0)) sy += 240;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],

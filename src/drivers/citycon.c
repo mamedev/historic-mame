@@ -192,7 +192,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	2000000,	/* 2.0 MHz ??? */
+	1250000,	/* 1.25 MHz */
 	{ YM2203_VOL(20,20), YM2203_VOL(20,20) },
 	{ 0x20, 0x20 },	/* 8910 gain */
 	{ soundlatch_r },
@@ -256,7 +256,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( citycon_rom )
+ROM_START( citycon )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11",          0x8000, 0x8000, 0x139eb1aa )
@@ -279,7 +279,7 @@ ROM_START( citycon_rom )
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
-ROM_START( citycona_rom )
+ROM_START( citycona )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
 	ROM_LOAD( "c11b",         0x8000, 0x8000, 0xd64af468 )
@@ -302,7 +302,7 @@ ROM_START( citycona_rom )
 	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
-ROM_START( cruisin_rom )
+ROM_START( cruisin )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cr10",         0x4000, 0x4000, 0xcc7c52f3 )
 	ROM_LOAD( "cr11",         0x8000, 0x8000, 0x5422f276 )

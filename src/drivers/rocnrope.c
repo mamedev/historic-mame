@@ -279,7 +279,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rocnrope_rom )
+ROM_START( rocnrope )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
 	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
@@ -305,7 +305,7 @@ ROM_START( rocnrope_rom )
 	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
 
-ROM_START( ropeman_rom )
+ROM_START( ropeman )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "j01_rm01.bin", 0x6000, 0x2000, 0x6310a1fe )
 	ROM_LOAD( "j02_rm02.bin", 0x8000, 0x2000, 0x75af8697 )

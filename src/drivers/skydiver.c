@@ -320,6 +320,11 @@ static unsigned short colortable[] =
 	0x00, 0x00, /* used only to draw the SKYDIVER LEDs */
 	0x00, 0x01, /* used only to draw the SKYDIVER LEDs */
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
 
 static struct MachineDriver machine_driver =
@@ -341,8 +346,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 29*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -365,7 +370,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( skydiver_rom )
+ROM_START( skydiver )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "33167-02.f1", 0x2800, 0x0800, 0x25a5c976 )
 	ROM_LOAD( "33164-02.e1", 0x3000, 0x0800, 0xa348ac39 )
@@ -411,7 +416,7 @@ struct GameDriver skydiver_driver =
 
 	skydiver_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0,0
 };

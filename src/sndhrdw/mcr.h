@@ -44,7 +44,7 @@ extern UINT8 mcr_sound_config;
 #define MCR_SOUNDS_GOOD			0x04
 #define MCR_TURBO_CHIP_SQUEAK	0x08
 #define MCR_SQUAWK_N_TALK		0x10
-#define MCR_ADVANCED_AUDIO		0x20
+#define MCR_WILLIAMS_SOUND		0x20
 
 #define MCR_CONFIGURE_SOUND(x) \
 	mcr_sound_config = x
@@ -162,38 +162,4 @@ extern struct TMS5220interface squawkntalk_tms5220_interface;
 	{												\
 		SOUND_TMS5220,								\
 		&squawkntalk_tms5220_interface				\
-	}
-
-
-
-/************ Advanced Audio CPU and sound definitions ***************/
-
-extern struct MemoryReadAddress advaudio_readmem[];
-extern struct MemoryWriteAddress advaudio_writemem[];
-
-extern struct YM2151interface advaudio_ym2151_interface;
-extern struct DACinterface advaudio_dac_interface;
-extern struct hc55516_interface advaudio_cvsd_interface;
-
-#define SOUND_CPU_ADVANCED_AUDIO(mem)				\
-	{												\
-		CPU_M6809 | CPU_AUDIO_CPU,					\
-		8000000/2,	/* 4 Mhz */						\
-		mem,										\
-		advaudio_readmem,advaudio_writemem,0,0,		\
-		ignore_interrupt,1							\
-	}
-
-#define SOUND_ADVANCED_AUDIO						\
-	{												\
-		SOUND_YM2151,								\
-		&advaudio_ym2151_interface					\
-	},												\
-	{												\
-		SOUND_DAC,									\
-		&advaudio_dac_interface						\
-	},												\
-	{												\
-		SOUND_HC55516,								\
-		&advaudio_cvsd_interface					\
 	}

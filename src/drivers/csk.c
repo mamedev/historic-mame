@@ -680,7 +680,7 @@ static struct MachineDriver csk234it_machine_driver =
 /*	ROM Regions definition
  */
 
-ROM_START( csk227it_rom )
+ROM_START( csk227it )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "v227i.bin",   0x0000, 0x10000, 0xdf1ebf49 )
 
@@ -698,7 +698,7 @@ ROM_START( csk227it_rom )
 ROM_END
 
 
-ROM_START( csk234it_rom )
+ROM_START( csk234it )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "v234it.bin",   0x0000, 0x10000, 0x344b7059 )
 

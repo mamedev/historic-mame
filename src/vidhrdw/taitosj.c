@@ -807,6 +807,14 @@ void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs,i;
 
 
+	/* update palette */
+	if (palette_recalc())
+	{
+		memset(dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer2, 1, videoram_size);
+		memset(dirtybuffer3, 1, videoram_size);
+	}
+
 	/* decode modified characters */
 	for (offs = 0;offs < 256;offs++)
 	{

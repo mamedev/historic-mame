@@ -532,7 +532,7 @@ static struct MachineDriver triothep_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( actfan_rom )
+ROM_START( actfan )
 	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "08-1", 0x00000, 0x10000, 0x3bf214a4 )
 	ROM_LOAD( "09-1", 0x10000, 0x10000, 0x13ae78d5 )
@@ -563,7 +563,7 @@ ROM_START( actfan_rom )
 	ROM_LOAD( "18",   0x00000, 0x10000, 0x5c55b242 )
 ROM_END
 
-ROM_START( actfanj_rom )
+ROM_START( actfanj )
 	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "fd08-1.bin", 0x00000, 0x10000, 0x69004b60 )
 	ROM_LOAD( "fd09-1.bin", 0x10000, 0x10000, 0xa455ae3e )
@@ -594,7 +594,7 @@ ROM_START( actfanj_rom )
 	ROM_LOAD( "18",   0x00000, 0x10000, 0x5c55b242 )
 ROM_END
 
-ROM_START( triothep_rom )
+ROM_START( triothep )
 	ROM_REGION(0x200000) /* Need to allow full RAM allocation for now */
 	ROM_LOAD( "ff16",     0x00000, 0x20000, 0x84d7e1b6 )
 	ROM_LOAD( "ff15.bin", 0x20000, 0x10000, 0x6eada47c )

@@ -168,7 +168,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	2000000,	/* 2 MHz ? Main xtal is 12MHz */
+	12000000/8,	/* 1.5 MHz ? Main xtal is 12MHz */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -225,7 +225,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( higemaru_rom )
+ROM_START( higemaru )
 	ROM_REGION(0x1c000)	/* 64k for code */
 	ROM_LOAD( "hg4",          0x0000, 0x2000, 0xdc67a7f9 )
 	ROM_LOAD( "hg5",          0x2000, 0x2000, 0xf65a4b68 )

@@ -987,7 +987,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( twincobr_rom )
+ROM_START( twincobr )
 	ROM_REGION(0x30000)		/* 3*64k for code */
 	ROM_LOAD_EVEN( "tc16",		0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",		0x00000, 0x10000, 0x41be6978 )
@@ -1019,7 +1019,7 @@ ROM_START( twincobr_rom )
 	ROM_LOAD_ODD ( "tc2a",		0x0000, 0x0800, 0xd6d878c9 )
 ROM_END
 
-ROM_START( twincobu_rom )
+ROM_START( twincobu )
 	ROM_REGION(0x30000)		/* 3*64k for code */
 	ROM_LOAD_EVEN( "tc16",			0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",			0x00000, 0x10000, 0x41be6978 )
@@ -1051,7 +1051,7 @@ ROM_START( twincobu_rom )
 	ROM_LOAD_ODD ( "dsp_21.bin",	0x0000, 0x0800, 0x2d135376 )
 ROM_END
 
-ROM_START( ktiger_rom )
+ROM_START( ktiger )
 	ROM_REGION(0x30000)		/* 3*64k for code */
 	ROM_LOAD_EVEN( "tc16",		0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",		0x00000, 0x10000, 0x41be6978 )
@@ -1083,7 +1083,7 @@ ROM_START( ktiger_rom )
 	ROM_LOAD_ODD ( "dsp-21",	0x0000, 0x0800, BADCRC( 0x33d99bc2 ) )
 ROM_END
 
-ROM_START( fshark_rom )
+ROM_START( fshark )
 	ROM_REGION(0x20000)		/* 2*64k for code */
 	ROM_LOAD_EVEN( "b02_18-1.rom",	0x00000, 0x10000, 0x04739e02 )
 	ROM_LOAD_ODD ( "b02_17-1.rom",	0x00000, 0x10000, 0xfd6ef7a8 )
@@ -1117,7 +1117,7 @@ ROM_START( fshark_rom )
 	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
-ROM_START( skyshark_rom )
+ROM_START( skyshark )
 	ROM_REGION(0x20000)		/* 2*64k for code */
 	ROM_LOAD_EVEN( "18-2",		0x00000, 0x10000, 0x888e90f3 )
 	ROM_LOAD_ODD ( "17-2",		0x00000, 0x10000, 0x066d67be )
@@ -1151,7 +1151,7 @@ ROM_START( skyshark_rom )
 	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
-ROM_START( hishouza_rom )
+ROM_START( hishouza )
 	ROM_REGION(0x20000)		/* 2*64k for code */
 	ROM_LOAD_EVEN( "b02-18.rom",	0x00000, 0x10000, 0x4444bb94 )
 	ROM_LOAD_ODD ( "b02-17.rom",	0x00000, 0x10000, 0xcdac7228 )
@@ -1202,7 +1202,7 @@ ROM_START( hishouza_rom )
 #endif
 ROM_END
 
-ROM_START( fsharkbt_rom )
+ROM_START( fsharkbt )
 	ROM_REGION(0x20000)		/* 2*64k for code */
 	ROM_LOAD_EVEN( "r18",		0x00000, 0x10000, 0xef30f563 )
 	ROM_LOAD_ODD ( "r17",		0x00000, 0x10000, 0x0e18d25f )

@@ -546,7 +546,7 @@ Machine_Driver( flashgal )
 
 ***************************************************************************/
 
-ROM_START( gyrodine_rom )
+ROM_START( gyrodine )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "a21.02", 0x0000, 0x2000, 0xc5ec4a50 )
 	ROM_LOAD( "a21.03", 0x2000, 0x2000, 0x4e9323bd )
@@ -582,7 +582,7 @@ ROM_START( gyrodine_rom )
 	ROM_LOAD( "a21.01", 0x0000, 0x2000, 0xb2ce0aa2 )
 ROM_END
 
-ROM_START( sonofphx_rom )
+ROM_START( sonofphx )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "5.f4",   0x0000, 0x2000, 0xe0d2c6cf )
 	ROM_LOAD( "6.h4",   0x2000, 0x2000, 0x3a0d0336 )
@@ -614,7 +614,7 @@ ROM_START( sonofphx_rom )
 	ROM_LOAD( "4.k2",   0x6000, 0x2000, 0x4f3695a1 )
 ROM_END
 
-ROM_START( repulse_rom )
+ROM_START( repulse )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "repulse.b5", 0x0000, 0x2000, 0xfb2b7c9d )
 	ROM_LOAD( "repulse.b6", 0x2000, 0x2000, 0x99129918 )
@@ -646,7 +646,7 @@ ROM_START( repulse_rom )
 	ROM_LOAD( "repulse.b4", 0x6000, 0x2000, 0x86b267f3 )
 ROM_END
 
-ROM_START( c99_rom )
+ROM_START( c99 )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "99.4f",   0x0000, 0x2000, 0xe3cfc09f )
 	ROM_LOAD( "99.4h",   0x2000, 0x2000, 0xfd58c6e1 )
@@ -678,7 +678,7 @@ ROM_START( c99_rom )
 	ROM_LOAD( "repulse.b4", 0x6000, 0x2000, 0x86b267f3 )
 ROM_END
 
-ROM_START( flashgal_rom )
+ROM_START( flashgal )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "15.4f",        0x0000, 0x2000, 0xcf5ad733 )
 	ROM_LOAD( "16.4h",        0x2000, 0x2000, 0x00c4851f )
@@ -711,7 +711,7 @@ ROM_START( flashgal_rom )
 	ROM_LOAD( "14.2k",        0x6000, 0x2000, 0x552ca339 )
 ROM_END
 
-ROM_START( srdmissn_rom )
+ROM_START( srdmissn )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "5.t2",   0x0000, 0x4000, 0xa682b48c )
 	ROM_LOAD( "7.t3",   0x4000, 0x4000, 0x1719c58c )
@@ -740,7 +740,7 @@ ROM_START( srdmissn_rom )
 	ROM_LOAD( "3.t8",   0x4000, 0x4000, 0x216be1e8 )
 ROM_END
 
-ROM_START( airwolf_rom )
+ROM_START( airwolf )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "b.2s",        0x0000, 0x8000, 0x8c993cce )
 
@@ -773,7 +773,7 @@ ROM_START( airwolf_rom )
 	ROM_LOAD( "a.7s",        0x0000, 0x8000, 0xa3c7af5c )
 ROM_END
 
-ROM_START( skywolf_rom )
+ROM_START( skywolf )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "02s_03.bin",  0x0000, 0x4000, 0xa0891798 )
 	ROM_LOAD( "03s_04.bin",  0x4000, 0x4000, 0x5f515d46 )
@@ -802,7 +802,7 @@ ROM_START( skywolf_rom )
 	ROM_LOAD( "08s_02.bin",  0x4000, 0x4000, 0x3d66bf26 )
 ROM_END
 
-ROM_START( skywolf2_rom )
+ROM_START( skywolf2 )
 	ROM_REGION( 0x10000 ) /* 64k for code */
 	ROM_LOAD( "z80_2.bin",   0x0000, 0x8000, 0x34db7bda )
 

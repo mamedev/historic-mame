@@ -337,7 +337,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mystston_rom )
+ROM_START( mystston )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ms0",          0x4000, 0x2000, 0x6dacc05f )
 	ROM_LOAD( "ms1",          0x6000, 0x2000, 0xa3546df7 )

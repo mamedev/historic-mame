@@ -472,26 +472,6 @@ INPUT_PORTS_START( redbaron_input_ports )
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 0, 64, 192 )
 INPUT_PORTS_END
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
-
-static unsigned char bzone_color_prom[]    = { VEC_PAL_BZONE     };
-static unsigned char redbaron_color_prom[] = { VEC_PAL_MONO_AQUA };
 
 
 static int bzone_hiload(void)
@@ -579,9 +559,9 @@ static struct MachineDriver bzone_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 580, 0, 400 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_bzone,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -623,7 +603,7 @@ static const char *bzone_sample_names[] =
     0	/* end of array */
 };
 
-ROM_START( bzone_rom )
+ROM_START( bzone )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036414.01",  0x5000, 0x0800, 0xefbc3fa0 )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
@@ -637,7 +617,7 @@ ROM_START( bzone_rom )
 	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x8ea8f939 )
 ROM_END
 
-ROM_START( bzone2_rom )
+ROM_START( bzone2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x13de36d5 )
 	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
@@ -673,7 +653,7 @@ struct GameDriver bzone_driver =
 
 	bzone_input_ports,
 
-	bzone_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	bzone_hiload, bzone_hisave
@@ -699,7 +679,7 @@ struct GameDriver bzone2_driver =
 
 	bzone_input_ports,
 
-	bzone_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	bzone_hiload, bzone_hisave
@@ -751,9 +731,9 @@ static struct MachineDriver redbaron_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 520, 0, 400 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_aqua,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -791,7 +771,7 @@ static const char *redbaron_sample_names[] =
     0	/* end of array */
 };
 
-ROM_START( redbaron_rom )
+ROM_START( redbaron )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "037587.01",  0x4800, 0x0800, 0x60f23983 )
 	ROM_CONTINUE(           0x5800, 0x0800 )
@@ -826,7 +806,7 @@ struct GameDriver redbaron_driver =
 
 	redbaron_input_ports,
 
-	redbaron_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save

@@ -401,7 +401,7 @@ static struct AY8910interface AY8910_interface =
 {
 	1,
 	3579545 / 2 ,	/* ? */
-	{ 10 },					// Takahiro Nogi. 1999/09/27 (30 -> 10)
+	{ 10 },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -414,7 +414,7 @@ static struct YM3526interface ym3526_interface =
 {
 	1,
 	3579545,	/* ? */
-	{ 63 },					// Takahiro Nogi. 1999/09/27 (50 -> 63)
+	{ 63 },
 	{ 0 }
 };
 
@@ -423,10 +423,10 @@ static struct YM3526interface ym3526_interface =
 static struct ADPCMinterface adpcm_interface =
 {
 	4,			/* ? channels */
-	16000/2,		/* ? Hz */	// Takahiro Nogi. 1999/09/27 (6000 -> 8000)
+	3579545/512,/* ??? */
 	4,			/* memory region */
 	0,			/* init function */
-	{ 10, 10, 10 , 10 }	/* volume(s) */	// Takahiro Nogi. 1999/09/27 (30 -> 10)
+	{ 10, 10, 10 , 10 }	/* volume(s) */
 };
 
 
@@ -489,7 +489,7 @@ static struct MachineDriver ginganin_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( ginganin_rom )
+ROM_START( ginganin )
 
 	ROM_REGION(0x20000)				/* Region 0 - main cpu */
 	ROM_LOAD_EVEN( "gn_02.bin", 0x00000, 0x10000, 0x4a4e012f )

@@ -209,6 +209,19 @@ void jungler_init(void)
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,sx,sy;
+	int scrollx,scrolly;
+
+
+	if (flipscreen)
+	{
+		scrollx = (*rallyx_scrollx - displacement) + 32;
+		scrolly = (*rallyx_scrolly + 16) - 32;
+	}
+	else
+	{
+		scrollx = -(*rallyx_scrollx - 3*displacement);
+		scrolly = -(*rallyx_scrolly + 16);
+	}
 
 
 	/* draw the below sprite priority characters */
@@ -277,23 +290,7 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the temporary bitmap to the screen */
-	{
-		int scrollx,scrolly;
-
-
-		if (flipscreen)
-		{
-			scrollx = (*rallyx_scrollx - displacement) + 32;
-			scrolly = (*rallyx_scrolly + 16) - 32;
-		}
-		else
-		{
-			scrollx = -(*rallyx_scrollx - 3*displacement);
-			scrolly = -(*rallyx_scrolly + 16);
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* draw the sprites */
@@ -335,8 +332,159 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				rallyx_videoram2[offs],
 				rallyx_colorram2[offs] & 0x3f,
 				flipx,flipy,
-				8*sx,8*sy,
+				(8*sx + scrollx) & 0xff,(8*sy + scrolly) & 0xff,
 				0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->gfx[0],
+				rallyx_videoram2[offs],
+				rallyx_colorram2[offs] & 0x3f,
+				flipx,flipy,
+				((8*sx + scrollx) & 0xff) - 256,(8*sy + scrolly) & 0xff,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* radar */
+	if (flipscreen)
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
+	else
+		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
+
+
+	/* draw the cars on the radar */
+	for (offs = 0; offs < rallyx_radarram_size;offs++)
+	{
+		int x,y;
+
+		if (displacement)	/* RallyX */
+		{
+			x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x01) << 8) - 2;
+			y = 235 - rallyx_radary[offs];
+			if (flipscreen)
+			{
+				x -= 1;
+				y += 2;
+			}
+
+			drawgfx(bitmap,Machine->gfx[2],
+					((rallyx_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
+					0,
+					flipscreen,flipscreen,
+					x,y,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+		}
+		else	/* Jungler */
+		{
+			x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5) + 1;
+			y = 238 - rallyx_radary[offs];
+
+			drawgfx(bitmap,Machine->gfx[2],
+					(rallyx_radarattr[offs] & 0x07) ^ 0x07,
+					0,
+					flipscreen,flipscreen,
+					x,y,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+		}
+	}
+}
+
+
+
+void jungler_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs,sx,sy;
+	int scrollx,scrolly;
+
+
+	if (flipscreen)
+	{
+		scrollx = (*rallyx_scrollx - displacement) + 32;
+		scrolly = (*rallyx_scrolly + 16) - 32;
+	}
+	else
+	{
+		scrollx = -(*rallyx_scrollx - 3*displacement);
+		scrolly = -(*rallyx_scrolly + 16);
+	}
+
+
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer2[offs])
+		{
+			int flipx,flipy;
+
+
+			dirtybuffer2[offs] = 0;
+
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = ~rallyx_colorram2[offs] & 0x40;
+			flipy = rallyx_colorram2[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(tmpbitmap1,Machine->gfx[0],
+					rallyx_videoram2[offs],
+					rallyx_colorram2[offs] & 0x3f,
+					flipx,flipy,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	/* update radar */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int flipx,flipy;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = (offs % 32) ^ 4;
+			sy = offs / 32 - 2;
+			flipx = ~colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 7 - sx;
+				sy = 27 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs],
+					colorram[offs] & 0x3f,
+					flipx,flipy,
+					8*sx,8*sy,
+					&radarvisibleareaflip,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the temporary bitmap to the screen */
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+
+	/* draw the sprites */
+	for (offs = 0;offs < spriteram_size;offs += 2)
+	{
+		sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
+		sy = 225 - spriteram_2[offs] - displacement;
+
+		drawgfx(bitmap,Machine->gfx[1],
+				(spriteram[offs] & 0xfc) >> 2,
+				spriteram_2[offs + 1] & 0x3f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx,sy,
+				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
 	}
 
 

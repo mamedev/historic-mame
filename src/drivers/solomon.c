@@ -261,7 +261,7 @@ static struct MachineDriver solomon_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( solomon_rom )
+ROM_START( solomon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "slmn_06.bin",  0x00000, 0x4000, 0xe4d421ff )
 	ROM_LOAD( "slmn_07.bin",  0x08000, 0x4000, 0xd52d7e38 )

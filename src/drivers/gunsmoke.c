@@ -277,7 +277,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gunsmoke_rom )
+ROM_START( gunsmoke )
 	ROM_REGION(0x20000)     /* 2*64k for code */
 	ROM_LOAD( "09n_gs03.bin", 0x00000, 0x8000, 0x40a06cef ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
@@ -319,7 +319,7 @@ ROM_START( gunsmoke_rom )
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb ) /* Background tile map */
 ROM_END
 
-ROM_START( gunsmrom_rom )
+ROM_START( gunsmrom )
 	ROM_REGION(0x20000)     /* 2*64k for code */
 	ROM_LOAD( "9n_gs03.bin",  0x00000, 0x8000, 0x592f211b ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
@@ -361,7 +361,7 @@ ROM_START( gunsmrom_rom )
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb ) /* Background tile map */
 ROM_END
 
-ROM_START( gunsmokj_rom )
+ROM_START( gunsmokj )
 	ROM_REGION(0x20000)     /* 2*64k for code */
 	ROM_LOAD( "gs03_9n.rom",  0x00000, 0x8000, 0xb56b5df6 ) /* Code 0000-7fff */
 	ROM_LOAD( "10n_gs04.bin", 0x10000, 0x8000, 0x8d4b423f ) /* Paged code */
@@ -403,7 +403,7 @@ ROM_START( gunsmokj_rom )
 	ROM_LOAD( "11c_gs14.bin", 0x00000, 0x8000, 0x0af4f7eb ) /* Background tile map */
 ROM_END
 
-ROM_START( gunsmoka_rom )
+ROM_START( gunsmoka )
 	ROM_REGION(0x20000)     /* 2*64k for code */
 	ROM_LOAD( "gs03.9n",      0x00000, 0x8000, 0x51dc3f76 ) /* Code 0000-7fff */
 	ROM_LOAD( "gs04.10n",     0x10000, 0x8000, 0x5ecf31b8 ) /* Paged code */

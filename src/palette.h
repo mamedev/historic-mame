@@ -47,11 +47,11 @@
 
   The palette and the lookup table are initialized to default values by the
   main core, but can be initialized by the driver using the function
-  MachineDriver->vh_convert_color_prom(). For games using palette RAM, that
+  MachineDriver->vh_init_palette(). For games using palette RAM, that
   function is usually not needed, and the lookup table can be set up by
   properly initializing the color_codes_start and total_color_codes fields in
   the GfxDecodeInfo array.
-  When vh_convert_color_prom() initializes the lookup table, it maps gfx codes
+  When vh_init_palette() initializes the lookup table, it maps gfx codes
   to game colors (P1 above). The lookup table will be converted by the core to
   map to OS specific pens (P3 above), and stored in Machine->colortable.
 
@@ -60,7 +60,7 @@
   -------------
   The available display modes can be summarized in four categories:
   1) Static palette. Use this for games which use PROMs for color generation.
-     The palette is initialized by vh_convert_color_prom(), and never changed
+     The palette is initialized by vh_init_palette(), and never changed
      again.
   2) Dynamic palette. Use this for games which use RAM for color generation and
      have no more than MAX_PENS colors in the palette. The palette can be
@@ -87,8 +87,8 @@
   4) 16-bit color. This should only be used for games which use more than
      MAX_PENS colors at a time. It is slower than the other modes, so it should
 	 be avoided whenever possible. Transparency support is limited.
-     MachineDriver->video_attributes must contain both VIDEO_MODIFIES_PALETTE
-	 and VIDEO_SUPPORTS_16BIT.
+     MachineDriver->video_attributes must contain VIDEO_MODIFIES_PALETTE, and
+	 GameDriver->flags must contain GAME_REQUIRES_16BIT.
 
   The dynamic shrinking of the palette works this way: as colors are requested,
   they are associated to a pen. When a color is no longer needed, the pen is
@@ -104,7 +104,7 @@
   requires a screen refresh. The color quality in 3) is also better than in 4)
   if the game uses more than 5 bits per color component. For testing purposes,
   you can switch between the two modes by just adding/removing the
-  VIDEO_SUPPPORTS_16BIT flag (but be warned about the limited transparency
+  GAME_REQUIRES_16BIT flag (but be warned about the limited transparency
   support in 16-bit mode).
 
 ******************************************************************************/

@@ -132,8 +132,8 @@ enum {
 #ifndef HAS_HD63705
 #define HAS_HD63705 	0
 #endif
-#ifndef HAS_M6309
-#define HAS_M6309		0
+#ifndef HAS_HD6309
+#define HAS_HD6309		0
 #endif
 #ifndef HAS_M6809
 #define HAS_M6809		0

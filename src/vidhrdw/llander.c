@@ -39,7 +39,7 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
 {
 	int width, height, i;
 
-	avg_init_colors(palette,colortable,color_prom);
+	avg_init_palette_white(palette,colortable,color_prom);
 
 	llander_lit_panel = NULL;
 	width = Machine->scrbitmap->width;

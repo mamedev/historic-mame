@@ -211,7 +211,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( scregg_rom )
+ROM_START( scregg )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, 0x29226d77 )
 	ROM_LOAD( "scregg.d14",   0x4000, 0x1000, 0xeb143880 )
@@ -233,7 +233,7 @@ ROM_START( scregg_rom )
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
 
-ROM_START( eggs_rom )
+ROM_START( eggs )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
 	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )

@@ -540,7 +540,7 @@ static struct MachineDriver kikcubic_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( vigilant_rom )
+ROM_START( vigilant )
 	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
 	ROM_LOAD( "g07_c03.bin",  0x00000, 0x08000, 0x9dcca081 )
 	ROM_LOAD( "j07_c04.bin",  0x10000, 0x10000, 0xe0159105 )
@@ -568,7 +568,7 @@ ROM_START( vigilant_rom )
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
-ROM_START( vigilntu_rom )
+ROM_START( vigilntu )
 	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
 	ROM_LOAD( "a-8h",  0x00000, 0x08000, 0x8d15109e )
 	ROM_LOAD( "a-8l",  0x10000, 0x10000, 0x7f95799b )
@@ -596,7 +596,7 @@ ROM_START( vigilntu_rom )
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
-ROM_START( vigilntj_rom )
+ROM_START( vigilntj )
 	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
 	ROM_LOAD( "vg_a-8h.rom",  0x00000, 0x08000, 0xba848713 )
 	ROM_LOAD( "vg_a-8l.rom",  0x10000, 0x10000, 0x3b12b1d8 )
@@ -624,7 +624,7 @@ ROM_START( vigilntj_rom )
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
-ROM_START( kikcubic_rom )
+ROM_START( kikcubic )
 	ROM_REGION(0x30000) /* region#0: 64k for code + 128k for bankswitching */
 	ROM_LOAD( "mqj-p0",       0x00000, 0x08000, 0x9cef394a )
 	ROM_LOAD( "mqj-b0",       0x10000, 0x10000, 0xd9bcf4cd )

@@ -437,27 +437,6 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_BW };
-
-
-
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
@@ -500,9 +479,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1020, -10, 1010 },
-	gfxdecodeinfo,
+	0,
 	256,256,
-	avg_init_colors,
+	avg_init_palette_white,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -527,7 +506,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( omegrace_rom )
+ROM_START( omegrace )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "omega.m7",     0x0000, 0x1000, 0x0424d46e )
 	ROM_LOAD( "omega.l7",     0x1000, 0x1000, 0xedcd7a7d )
@@ -590,7 +569,7 @@ struct GameDriver omegrace_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

@@ -6,11 +6,7 @@
 
 ***************************************************************************/
 
-/* uncomment this line to add/remove the tilemap manager support */
-
-#define NAMCOS2_USE_TILEMGR
-#define NAMCOS2_USE_REDUCED_PALETTE
-// #define NAMCOS2_DEBUG_MODE
+//#define NAMCOS2_DEBUG_MODE
 
 /* memory decode regions */
 
@@ -144,8 +140,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data );
 
 extern unsigned char namcos2_68k_vram_ctrl[];
 
-#ifdef NAMCOS2_USE_TILEMGR
-
 extern struct tilemap *namcos2_tilemap0;
 extern struct tilemap *namcos2_tilemap1;
 extern struct tilemap *namcos2_tilemap2;
@@ -159,8 +153,6 @@ extern int namcos2_tilemap2_flip;
 extern int namcos2_tilemap3_flip;
 extern int namcos2_tilemap4_flip;
 extern int namcos2_tilemap5_flip;
-
-#endif
 
 /**************************************************************/
 /*  Shared video palette function handlers                    */

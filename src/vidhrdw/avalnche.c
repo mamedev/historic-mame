@@ -26,6 +26,7 @@ void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	/* Don't bother checking 0x0000-0x01FF since we won't draw it anyways */
@@ -62,4 +63,3 @@ void avalnche_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* copy the character mapped graphics */
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }
-

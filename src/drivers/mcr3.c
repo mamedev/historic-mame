@@ -414,7 +414,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x00, 0x04, mcr_port_04_dispatch_r },
-	{ 0x07, 0x07, mcr_sound_status_r },
+	{ 0x07, 0x07, ssio_status_r },
 	{ 0x10, 0x10, mcr_port_04_dispatch_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
 	{ -1 }
@@ -1638,7 +1638,7 @@ static void crater_init(void)
  *
  *************************************/
 
-ROM_START( tapper_rom )
+ROM_START( tapper )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tappg0.bin",   0x00000, 0x4000, 0x127171d1 )
 	ROM_LOAD( "tappg1.bin",   0x04000, 0x4000, 0x9d6a47f7 )
@@ -1665,7 +1665,7 @@ ROM_START( tapper_rom )
 ROM_END
 
 
-ROM_START( tappera_rom )
+ROM_START( tappera )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pr00_1c.128",   0x00000, 0x4000, 0xbb060bb0 )
 	ROM_LOAD( "pr01_2c.128",   0x04000, 0x4000, 0xfd9acc22 )
@@ -1692,7 +1692,7 @@ ROM_START( tappera_rom )
 ROM_END
 
 
-ROM_START( sutapper_rom )
+ROM_START( sutapper )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "5791",         0x0000, 0x4000, 0x87119cc4 )
 	ROM_LOAD( "5792",         0x4000, 0x4000, 0x4c23ad89 )
@@ -1719,7 +1719,7 @@ ROM_START( sutapper_rom )
 ROM_END
 
 
-ROM_START( rbtapper_rom )
+ROM_START( rbtapper )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "rbtpg0.bin",   0x00000, 0x4000, 0x20b9adf4 )
 	ROM_LOAD( "rbtpg1.bin",   0x04000, 0x4000, 0x87e616c2 )
@@ -1746,7 +1746,7 @@ ROM_START( rbtapper_rom )
 ROM_END
 
 
-ROM_START( timber_rom )
+ROM_START( timber )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "timpg0.bin",   0x00000, 0x4000, 0x377032ab )
 	ROM_LOAD( "timpg1.bin",   0x04000, 0x4000, 0xfd772836 )
@@ -1772,7 +1772,7 @@ ROM_START( timber_rom )
 ROM_END
 
 
-ROM_START( dotron_rom )
+ROM_START( dotron )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "loc-pg0.1c",   0x0000, 0x4000, 0xba0da15f )
 	ROM_LOAD( "loc-pg1.2c",   0x4000, 0x4000, 0xdc300191 )
@@ -1804,7 +1804,7 @@ ROM_START( dotron_rom )
 ROM_END
 
 
-ROM_START( dotrone_rom )
+ROM_START( dotrone )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "loc-cpu1",     0x00000, 0x4000, 0xeee31b8c )
 	ROM_LOAD( "loc-cpu2",     0x04000, 0x4000, 0x75ba6ad3 )
@@ -1836,7 +1836,7 @@ ROM_START( dotrone_rom )
 ROM_END
 
 
-ROM_START( destderb_rom )
+ROM_START( destderb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dd_pro",       0x00000, 0x4000, 0x8781b367 )
 	ROM_LOAD( "dd_pro1",      0x04000, 0x4000, 0x4c713bfe )
@@ -1860,7 +1860,7 @@ ROM_START( destderb_rom )
 ROM_END
 
 
-ROM_START( destderm_rom )
+ROM_START( destderm )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pro0.3b",      0x00000, 0x8000, 0x2e24527b )
 	ROM_LOAD( "pro1.5b",      0x08000, 0x8000, 0x034c00fc )
@@ -1883,7 +1883,7 @@ ROM_START( destderm_rom )
 ROM_END
 
 
-ROM_START( sarge_rom )
+ROM_START( sarge )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cpu_3b.bin",   0x0000, 0x8000, 0xda31a58f )
 	ROM_LOAD( "cpu_5b.bin",   0x8000, 0x8000, 0x6800e746 )
@@ -1902,7 +1902,7 @@ ROM_START( sarge_rom )
 ROM_END
 
 
-ROM_START( rampage_rom )
+ROM_START( rampage )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pro0rev3.3b",  0x00000, 0x08000, 0x2f7ca03c )
 	ROM_LOAD( "pro1rev3.5b",  0x08000, 0x08000, 0xd89bd9a4 )
@@ -1923,7 +1923,7 @@ ROM_START( rampage_rom )
 ROM_END
 
 
-ROM_START( rampage2_rom )
+ROM_START( rampage2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pro0rev2.3b",  0x0000, 0x8000, 0x3f1d0293 )
 	ROM_LOAD( "pro1rev2.5b",  0x8000, 0x8000, 0x58523d75 )
@@ -1944,7 +1944,7 @@ ROM_START( rampage2_rom )
 ROM_END
 
 
-ROM_START( powerdrv_rom )
+ROM_START( powerdrv )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pdrv3b.bin",   0x0000, 0x8000, 0xd870b704 )
 	ROM_LOAD( "pdrv5b.bin",   0x8000, 0x8000, 0xfa0544ad )
@@ -1965,7 +1965,7 @@ ROM_START( powerdrv_rom )
 ROM_END
 
 
-ROM_START( maxrpm_rom )
+ROM_START( maxrpm )
 	ROM_REGION(0x12000)	/* 64k for code */
 	ROM_LOAD( "pro.0",        0x00000, 0x8000, 0x3f9ec35f )
 	ROM_LOAD( "pro.1",        0x08000, 0x6000, 0xf628bb30 )
@@ -1986,7 +1986,7 @@ ROM_START( maxrpm_rom )
 ROM_END
 
 
-ROM_START( spyhunt_rom )
+ROM_START( spyhunt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cpu_pg0.6d",   0x0000, 0x2000, 0x1721b88f )
 	ROM_LOAD( "cpu_pg1.7d",   0x2000, 0x2000, 0x909d044f )
@@ -2022,7 +2022,7 @@ ROM_START( spyhunt_rom )
 ROM_END
 
 
-ROM_START( turbotag_rom )
+ROM_START( turbotag )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ttprog0.bin",  0x0000, 0x2000, 0x6110fd80 )
 	ROM_LOAD( "ttprog1.bin",  0x2000, 0x2000, BADCRC( 0xb0505e18 ))
@@ -2055,7 +2055,7 @@ ROM_START( turbotag_rom )
 ROM_END
 
 
-ROM_START( crater_rom )
+ROM_START( crater )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "crcpu.6d",     0x0000, 0x2000, 0xad31f127 )
 	ROM_LOAD( "crcpu.7d",     0x2000, 0x2000, 0x3743c78f )

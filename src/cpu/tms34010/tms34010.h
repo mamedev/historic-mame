@@ -13,7 +13,6 @@
 #include "osd_cpu.h"
 
 #define TMS34010_AVGCYCLES			1
-#define TMS34010_ACCURATE_TIMING	0
 
 enum {
 	TMS34010_PC=1, TMS34010_SP, TMS34010_ST,
@@ -36,8 +35,10 @@ struct tms34010_config
 {
 	UINT8	halt_on_reset;						/* /HCS pin, which determines HALT state after reset */
 	void	(*output_int)(int state);			/* output interrupt callback */
-	void	(*to_shiftreg  )(UINT32, UINT16 *);	/* shift register write */
+	void	(*to_shiftreg)(UINT32, UINT16 *);	/* shift register write */
 	void	(*from_shiftreg)(UINT32, UINT16 *);	/* shift register read */
+	void	(*display_addr_changed)(UINT32 offs, int rowbytes, int scanline);/* display address changed */
+	void	(*display_int_callback)(int scanline);/* display interrupt callback */
 };
 
 /* PUBLIC FUNCTIONS */

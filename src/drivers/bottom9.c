@@ -308,7 +308,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			3000000, /* ? */
+			2000000, /* ? */
 			0,
 			readmem,writemem,0,0,
 			bottom9_interrupt,1
@@ -355,7 +355,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bottom9_rom )
+ROM_START( bottom9 )
 	ROM_REGION( 0x28000 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891-t02.k15",  0x20000, 0x08000, 0x2c10ced2 )
@@ -412,7 +412,7 @@ ROM_START( bottom9_rom )
 	ROM_LOAD( "891b11.f23",   0x0000, 0x0100, 0xecb854aa )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( bottom9n_rom )
+ROM_START( bottom9n )
 	ROM_REGION( 0x28000 ) /* code + banked roms + space for banked ram */
 	ROM_LOAD( "891n03.k17",   0x10000, 0x10000, 0x8b083ff3 )
     ROM_LOAD( "891n02.k15",   0x20000, 0x08000, 0xd44d9ed4 )

@@ -851,7 +851,7 @@ static struct MachineDriver tokio_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bublbobl_rom )
+ROM_START( bublbobl )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
     ROM_LOAD( "a78_06.bin",   0x00000, 0x8000, 0x32c8305b )
     ROM_LOAD( "a78_05.bin",   0x08000, 0x4000, 0x53f4bc6e )	/* banked at 8000-bfff. I must load */
@@ -883,7 +883,7 @@ ROM_START( bublbobl_rom )
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 ROM_END
 
-ROM_START( bublbobr_rom )
+ROM_START( bublbobr )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
     ROM_LOAD( "25.cpu",       0x00000, 0x8000, 0x2d901c9d )
     ROM_LOAD( "24.cpu",       0x08000, 0x4000, 0xb7afedc4 )	/* banked at 8000-bfff. I must load */
@@ -915,7 +915,7 @@ ROM_START( bublbobr_rom )
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
 ROM_END
 
-ROM_START( boblbobl_rom )
+ROM_START( boblbobl )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
     ROM_LOAD( "bb3",          0x00000, 0x8000, 0x01f81936 )
     ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
@@ -946,7 +946,7 @@ ROM_START( boblbobl_rom )
     ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 ROM_END
 
-ROM_START( sboblbob_rom )
+ROM_START( sboblbob )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
     ROM_LOAD( "bbb-3.rom",    0x00000, 0x8000, 0xf304152a )
     ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
@@ -977,7 +977,7 @@ ROM_START( sboblbob_rom )
     ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 ROM_END
 
-ROM_START( tokio_rom )
+ROM_START( tokio )
     ROM_REGION(0x30000)	/* main CPU */
     ROM_LOAD( "a7127-1.256", 0x00000, 0x8000, 0x8c180896 )
     /* ROMs banked at 8000-bfff */
@@ -1011,7 +1011,7 @@ ROM_START( tokio_rom )
     ROM_LOAD( "a7107.256",   0x0000, 0x08000, 0xf298cc7b )
 ROM_END
 
-ROM_START( tokiob_rom )
+ROM_START( tokiob )
     ROM_REGION(0x30000) /* main CPU */
     ROM_LOAD( "2",           0x00000, 0x8000, 0xf583b1ef )
     /* ROMs banked at 8000-bfff */

@@ -367,7 +367,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( timeplt_rom )
+ROM_START( timeplt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tm1",          0x0000, 0x2000, 0x1551f1b9 )
 	ROM_LOAD( "tm2",          0x2000, 0x2000, 0x58636cb5 )
@@ -388,7 +388,7 @@ ROM_START( timeplt_rom )
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
-ROM_START( timepltc_rom )
+ROM_START( timepltc )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cd1y",         0x0000, 0x2000, 0x83ec72c2 )
 	ROM_LOAD( "cd2y",         0x2000, 0x2000, 0x0dcf5287 )
@@ -409,7 +409,7 @@ ROM_START( timepltc_rom )
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
-ROM_START( spaceplt_rom )
+ROM_START( spaceplt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sp1",          0x0000, 0x2000, 0xac8ca3ae )
 	ROM_LOAD( "sp2",          0x2000, 0x2000, 0x1f0308ef )
@@ -430,7 +430,7 @@ ROM_START( spaceplt_rom )
 	ROM_LOAD( "tm7",          0x0000, 0x1000, 0xd66da813 )
 ROM_END
 
-ROM_START( psurge_rom )
+ROM_START( psurge )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "p1",           0x0000, 0x2000, 0x05f9ba12 )
 	ROM_LOAD( "p2",           0x2000, 0x2000, 0x3ff41576 )

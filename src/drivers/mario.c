@@ -518,7 +518,7 @@ static const char *sample_names[] =
 
 
 
-ROM_START( mario_rom )
+ROM_START( mario )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mario.7f",     0x0000, 0x2000, 0xc0c6e014 )
 	ROM_LOAD( "mario.7e",     0x2000, 0x2000, 0x116b3856 )
@@ -542,7 +542,7 @@ ROM_START( mario_rom )
 	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
-ROM_START( mariojp_rom )
+ROM_START( mariojp )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "tma1c-a1.7f",  0x0000, 0x2000, 0xb64b6330 )
 	ROM_LOAD( "tma1c-a2.7e",  0x2000, 0x2000, 0x290c4977 )
@@ -566,7 +566,7 @@ ROM_START( mariojp_rom )
 	ROM_LOAD( "tma1c-a.6k",   0x0000, 0x1000, 0x06b9ff85 )
 ROM_END
 
-ROM_START( masao_rom )
+ROM_START( masao )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "masao-4.rom",  0x0000, 0x2000, 0x07a75745 )
 	ROM_LOAD( "masao-3.rom",  0x2000, 0x2000, 0x55c629b6 )

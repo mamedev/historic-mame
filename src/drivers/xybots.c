@@ -269,7 +269,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( xybots_rom )
+ROM_START( xybots )
 	ROM_REGION(0x90000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "2112.c17",     0x00000, 0x10000, 0x16d64748 )
 	ROM_LOAD_ODD ( "2113.c19",     0x00000, 0x10000, 0x2677d44a )

@@ -2,26 +2,28 @@
 
 	Irem M92 system games:
 
-	Blademaster								(c) 1991 Irem Corp
-	Gunforce (World set)			M92-B?	(c) 1991 Irem Corp
-	Gunforce (USA set)				M92-B?	(c) 1991 Irem America Corp
-	Lethal Thunder							(c) 1991 Irem Corp
-	Hook (World set)						(c) 1992 Irem Corp
-	Hook (USA set)							(c) 1992 Irem America Corp
+	Blademaster	(World)						(c) 1991 Irem Corp
+	Gunforce (World)				M92-A	(c) 1991 Irem Corp
+	Gunforce (USA)					M92-A	(c) 1991 Irem America Corp
+	Lethal Thunder (World)					(c) 1991 Irem Corp
+	Thunder Blaster (Japan)					(c) 1991 Irem Corp
+	Hook (World)							(c) 1992 Irem Corp
+	Hook (USA)								(c) 1992 Irem America Corp
 	Mystic Riders (World)					(c) 1992 Irem Corp
 	Gun Hohki (Japan)						(c) 1992 Irem Corp
-	Undercover Cops							(c) 1992 Irem Corp
+	Undercover Cops	(World)					(c) 1992 Irem Corp
+	Undercover Cops	(Japan)					(c) 1992 Irem Corp
 	Rtype Leo (Japan)						(c) 1992 Irem Corp
-	Major Title 2  							(c) 1992 Irem Corp
-	The Irem Skins Game (USA Set 1)			(c) 1992 Irem America Corp
-	The Irem Skins Game (USA Set 2)			(c) 1992 Irem America Corp
+	Major Title 2  					M92-F	(c) 1992 Irem Corp
+	The Irem Skins Game (USA set 1)	M92-F	(c) 1992 Irem America Corp
+	The Irem Skins Game (USA set 2)	M92-F	(c) 1992 Irem America Corp
 	In The Hunt						M92-E	(c) 1993 Irem Corp
 	Kaitei Daisensou				M92-E	(c) 1993 Irem Corp
 	Ninja Baseball Batman (Not working)		(c) 1993 Irem America Corp
 	Yakyuu Kakutou League-Man (Japan)		(c) 1993 Irem Corp
+	Perfect Soldiers (Japan)		M92-G	(c) 1993 Irem Corp
 
 	Once decrypted, Irem M97 games will be very close to this hardware.
-
 
 System notes:
 	Each game has an encrypted sound cpu (see m97.c), the sound cpu and
@@ -41,31 +43,17 @@ System notes:
 
 Glitch list!
 
-	Hook:
-		Crashes very soon into the game.
-
 	R-Type Leo:
 		Title screen is incorrect, it uses mask sprites but I can't find
 		how the effect is turned on/off
 		Colour flicker on level 2
-		Crashes fixed via a protection(?) kludge.
-
-	Gunforce:
-		Random crashes
-		Waterfalls on level 3(?) should appear over sprites.
-		^- Bit 0x8 in playfield 3 set - new type of split tilemap?
-
-	Lethal Thunder;
-		Starts with 99 credits (related to memcard?)
+		Crashes fixed via a kludge - cpu bug.
 
 	Irem Skins:
 		Mask sprite on title screen?
 		Sprites & tiles written with bad colour values.
 		Eeprom load/save not yet implemented - when done, MT2EEP should
 		  be removed from the ROM definition.
-
-	In The Hunt:
-		Crash in level 3?
 
 	Blade Master:
 		Sprite list register isn't updated in service mode.
@@ -83,13 +71,13 @@ Glitch list!
 #include "vidhrdw/generic.h"
 #include "m92.h"
 
-static int m92_irq_vectorbase,m92_vblank,raster_enable;
+static int m92_irq_vectorbase,m92_vblank;
 static unsigned char *m92_eeprom,*m92_ram;
 
 #define M92_IRQ_0 ((m92_irq_vectorbase+0)/4)  /* VBL interrupt*/
 #define M92_IRQ_1 ((m92_irq_vectorbase+4)/4)  /* End of VBL interrupt?? */
 #define M92_IRQ_2 ((m92_irq_vectorbase+8)/4)  /* Raster interrupt */
-#define M92_IRQ_3 ((m92_irq_vectorbase+12)/4) /* End of raster interrupt?? */
+#define M92_IRQ_3 ((m92_irq_vectorbase+12)/4) /* Sprite buffer complete interrupt? */
 
 /* From vidhrdw/m92.c */
 void m92_spritecontrol_w(int offset,int data);
@@ -105,10 +93,10 @@ void m92_vh_stop(void);
 void m92_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void m92_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line);
 
-extern int m92_sprite_list,m92_raster_irq_position,m92_spritechip;
-extern unsigned char *m92_vram_data,*m92_spriteram,*m92_spritecontrol;
+extern int m92_raster_irq_position,m92_spritechip,m92_raster_machine,m92_raster_enable;
+extern unsigned char *m92_vram_data,*m92_spritecontrol;
 
-static int protection_kludge;
+extern int m92_game_kludge;
 
 /*****************************************************************************/
 
@@ -129,7 +117,7 @@ static int status_port_r(int offset)
 	R-Type Leo reads it now & again..
 
 */
-	if (protection_kludge)
+	if (m92_game_kludge==1)
 		m92_ram[0x53]=1; /* FIXES RTYPE LEO! */
 
 	return 0xff;
@@ -155,6 +143,14 @@ static void m92_coincounter_w(int offset, int data)
 	if (offset==0) {
 		coin_counter_w(0,data & 0x01);
 		coin_counter_w(1,data & 0x02);
+
+		if (m92_game_kludge==2) {
+			unsigned char *RAM = Machine->memory_region[0];
+			RAM[0x1840]=0x90; /* For Leagueman */
+			RAM[0x1841]=0x90;
+			RAM[0x830]=0x90;
+			RAM[0x831]=0x90;
+		}
 
 		/* Bit 0x8 is Motor(?!), used in Hook, In The Hunt, UCops */
 		/* Bit 0x8 is Memcard related in RTypeLeo */
@@ -186,7 +182,7 @@ static void m92_bankswitch_w(int offset, int data)
 {
 	unsigned char *RAM = Machine->memory_region[0];
 
-	if (errorlog) fprintf(errorlog,"%04x: Bank %04x\n",cpu_get_pc(),data);
+//	if (errorlog) fprintf(errorlog,"%04x: Bank %04x\n",cpu_get_pc(),data);
 	if (offset==1) return; /* Unused top byte */
 
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
@@ -226,7 +222,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd0000, 0xdffff, m92_vram_w, &m92_vram_data },
 	{ 0xe0000, 0xeffff, MWA_RAM, &m92_ram }, /* System ram */
 	{ 0xf0000, 0xf3fff, m92_eeprom_w, &m92_eeprom }, /* Eeprom, Major Title 2 only */
-	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram },
+	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf8800, 0xf8fff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xf9000, 0xf900f, m92_spritecontrol_w, &m92_spritecontrol },
 	{ 0xf9800, 0xf9801, m92_spritebuffer_w },
@@ -250,7 +246,7 @@ static struct MemoryWriteAddress lethalth_writemem[] =
 	{ 0x00000, 0x7ffff, MWA_ROM },
 	{ 0x80000, 0x8ffff, m92_vram_w, &m92_vram_data },
 	{ 0xe0000, 0xeffff, MWA_RAM, &m92_ram }, /* System ram */
-	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram },
+	{ 0xf8000, 0xf87ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf8800, 0xf8fff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0xf9000, 0xf900f, m92_spritecontrol_w, &m92_spritecontrol },
 	{ 0xf9800, 0xf9801, m92_spritebuffer_w },
@@ -863,6 +859,93 @@ INPUT_PORTS_START( nbbatman_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( psoldier_input_ports )
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+
+	PORT_UNUSED
+
+	PORT_START /* Extra connector for kick buttons */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER2 )
+
+	PORT_COINS_VBLANK
+	PORT_SYSTEM_DIPSWITCH
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) /* Probably difficulty */
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* One of these is continue */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /***************************************************************************/
 
 static struct GfxLayout charlayout =
@@ -889,6 +972,18 @@ static struct GfxLayout spritelayout =
 	32*8
 };
 
+static struct GfxLayout spritelayout2 =
+{
+	16,16,
+	0x10000,
+	4,
+	{ 0x600000*8, 0x400000*8, 0x200000*8, 0x000000*8 },
+	{ 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	32*8
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x000000, &charlayout,   0, 64 },
@@ -896,71 +991,65 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo gfxdecodeinfo2[] =
+{
+	{ 1, 0x000000, &charlayout,    0, 64 },
+	{ 1, 0x200000, &spritelayout2, 0, 64 },
+	{ -1 } /* end of array */
+};
+
 /***************************************************************************/
+
+static int m92_interrupt(void)
+{
+	m92_vblank=m92_raster_machine=0;
+	if (osd_skip_this_frame()==0)
+		m92_vh_raster_partial_refresh(Machine->scrbitmap,0,248);
+
+	return M92_IRQ_0; /* VBL */
+}
 
 static int m92_raster_interrupt(void)
 {
-	static int last_line=0,m92_last_raster_irq_position;
+	static int last_line=0;
 	int line = 256 - cpu_getiloops();
-
-	if (keyboard_pressed_memory(KEYCODE_F1)) {
-		raster_enable ^= 1;
-		if (raster_enable)
-			usrintf_showmessage("Raster IRQ enabled");
-		else
-			usrintf_showmessage("Raster IRQ disabled");
-	}
+	m92_raster_machine=1;
 
 	/* Raster interrupt */
-	if (raster_enable && line==m92_raster_irq_position) {
+	if (m92_raster_enable && line==m92_raster_irq_position) {
 		if (osd_skip_this_frame()==0)
 			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,line);
 		last_line=line+1;
-		m92_last_raster_irq_position=m92_raster_irq_position;
 
 		return M92_IRQ_2;
 	}
 
-#if 0
-	/* This is not quite accurate, it should be at the end of the above line? */
-	if (raster_enable && line==m92_last_raster_irq_position+1) {
-		m92_last_raster_irq_position=-2;
-		return M92_IRQ_3;
-	}
-#endif
-
-	/* Redraw screen, we do this *before* the VBL IRQ to ensure no sprite lag or flicker */
+	/* Redraw screen, then set vblank and trigger the VBL interrupt */
 	if (line==248) {
 		if (osd_skip_this_frame()==0)
 			m92_vh_raster_partial_refresh(Machine->scrbitmap,last_line,248);
-		last_line=0;//check
-
-		return 0;
-	}
-
-	/* Vblank interrupt */
-	if (line==249) {
-		/* Get length of the sprite list, before taking the interrupt */
-		if (m92_spritechip==0)
-			m92_sprite_list=(0x10000 - (m92_spritecontrol[0] | (m92_spritecontrol[1]<<8)))&0xff;
+		last_line=248;
 		m92_vblank=1;
 		return M92_IRQ_0;
 	}
 
 	/* End of vblank */
 	if (line==255) {
-		m92_vblank=0;
+		m92_vblank=last_line=0;
 		return 0;
 	}
 
-#if 0 /* Kludge to allow Batman to boot */
-	if (line==256)
+	if (m92_game_kludge==2 && line==250) /* Leagueman */
 		return M92_IRQ_1;
-	if (line==10)
-		return M92_IRQ_3;
-#endif
 
 	return 0;
+}
+
+/* I believe the spritechip interrupts the main CPU once sprite buffering
+is complete, there isn't a whole lot of evidence for this but it's an idea..*/
+void m92_sprite_interrupt(void)
+{
+	cpu_cause_interrupt(0,M92_IRQ_3);
 }
 
 static struct MachineDriver machine_driver =
@@ -969,7 +1058,6 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_V33,	/* NEC V33 */
-//			18000000,	/* 18 MHz */
 			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
 			0,
 			readmem,writemem,readport,writeport,
@@ -996,7 +1084,57 @@ static struct MachineDriver machine_driver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	0,
+	m92_vh_start,
+	m92_vh_stop,
+	m92_vh_screenrefresh,
+
+	/* sound hardware */
+#if 0
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		}
+	}
+#endif
+};
+
+static struct MachineDriver nonraster_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_V33,	/* NEC V33 */
+			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
+			0,
+			readmem,writemem,readport,writeport,
+			m92_interrupt,1
+		},
+#if 0
+		{
+			CPU_V33 | CPU_AUDIO_CPU,
+			14318180,	/* 14.31818 MHz */
+			2,	/* memory region #3 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0
+		}
+#endif
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+
+	gfxdecodeinfo,
+	1024,1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
 	m92_vh_stop,
@@ -1023,7 +1161,7 @@ static struct MachineDriver lethalth_machine_driver =
 			18000000,	/* 18MHz clock */
 			0,
 			lethalth_readmem,lethalth_writemem,readport,writeport,
-			m92_raster_interrupt,256 /* 8 prelines, 240 visible lines, 8 for vblank? */
+			m92_interrupt,1
 		},
 #if 0
 		{
@@ -1046,7 +1184,57 @@ static struct MachineDriver lethalth_machine_driver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
+	0,
+	m92_vh_start,
+	m92_vh_stop,
+	m92_vh_screenrefresh,
+
+	/* sound hardware */
+#if 0
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		}
+	}
+#endif
+};
+
+static struct MachineDriver psoldier_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_V33,	/* NEC V33 */
+			20000000,	/* 18 MHz clock, but cycles in core are for v30 (v33 is faster?) */
+			0,
+			readmem,writemem,readport,writeport,
+			m92_interrupt,1
+		},
+#if 0
+		{
+			CPU_V33 | CPU_AUDIO_CPU,
+			14318180,	/* 14.31818 MHz */
+			2,	/* memory region #3 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0
+		}
+#endif
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	512, 512, { 80, 511-112, 128+8, 511-128-8 }, /* 320 x 240 */
+
+	gfxdecodeinfo2,
+	1024,1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
 	m92_vh_stop,
@@ -1066,7 +1254,7 @@ static struct MachineDriver lethalth_machine_driver =
 
 /***************************************************************************/
 
-ROM_START( bmaster_rom )
+ROM_START( bmaster )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "bm_d-h0.rom",  0x000000, 0x40000, 0x49b257c7 )
 	ROM_LOAD_V20_ODD ( "bm_d-l0.rom",  0x000000, 0x40000, 0xa873523e )
@@ -1092,7 +1280,7 @@ ROM_START( bmaster_rom )
 	ROM_LOAD( "bm_da.rom",       0x000000, 0x80000, 0x62ce5798 )
 ROM_END
 
-ROM_START( skingame_rom )
+ROM_START( skingame )
 	ROM_REGION(0x180000)
 	ROM_LOAD_V20_EVEN( "is-h0-d",  0x000000, 0x40000, 0x80940abb )
 	ROM_LOAD_V20_ODD ( "is-l0-d",  0x000000, 0x40000, 0xb84beed6 )
@@ -1121,7 +1309,7 @@ ROM_START( skingame_rom )
 	ROM_LOAD( "mt2eep",       0x000000, 0x800, 0x208af971 )
 ROM_END
 
-ROM_START( majtitl2_rom )
+ROM_START( majtitl2 )
 	ROM_REGION(0x180000)
 	ROM_LOAD_V20_EVEN( "mt2-ho-b.5m",0x000000, 0x40000, 0xb163b12e )
 	ROM_LOAD_V20_ODD ( "mt2-lo-b.5f",0x000000, 0x40000, 0x6f3b5d9d )
@@ -1150,7 +1338,7 @@ ROM_START( majtitl2_rom )
 	ROM_LOAD( "mt2eep",       0x000000, 0x800, 0x208af971 )
 ROM_END
 
-ROM_START( skingam2_rom )
+ROM_START( skingam2 )
 	ROM_REGION(0x180000)
 	ROM_LOAD_V20_EVEN( "mt2h0a", 0x000000, 0x40000, 0x7c6dbbc7 )
 	ROM_LOAD_V20_ODD ( "mt2l0a", 0x000000, 0x40000, 0x9de5f689 )
@@ -1179,7 +1367,7 @@ ROM_START( skingam2_rom )
 	ROM_LOAD( "mt2eep",       0x000000, 0x800, 0x208af971 )
 ROM_END
 
-ROM_START( gunforce_rom )
+ROM_START( gunforce )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "gf_h0-c.rom",  0x000000, 0x20000, 0xc09bb634 )
 	ROM_LOAD_V20_ODD ( "gf_l0-c.rom",  0x000000, 0x20000, 0x1bef6f7d )
@@ -1205,7 +1393,7 @@ ROM_START( gunforce_rom )
 	ROM_LOAD( "gf-da.rom",	 0x000000, 0x020000, 0x933ba935 )
 ROM_END
 
-ROM_START( gunforcu_rom )
+ROM_START( gunforcu )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "gf_h0-d.5m",  0x000000, 0x20000, 0xa6db7b5c )
 	ROM_LOAD_V20_ODD ( "gf_l0-d.5f",  0x000000, 0x20000, 0x82cf55f6 )
@@ -1231,7 +1419,7 @@ ROM_START( gunforcu_rom )
 	ROM_LOAD( "gf-da.rom",	 0x000000, 0x020000, 0x933ba935 )
 ROM_END
 
-ROM_START( inthunt_rom )
+ROM_START( inthunt )
 	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "ith-h0-d.rom",0x000000, 0x040000, 0x52f8e7a6 )
 	ROM_LOAD_V20_ODD ( "ith-l0-d.rom",0x000000, 0x040000, 0x5db79eb7 )
@@ -1257,7 +1445,7 @@ ROM_START( inthunt_rom )
 	ROM_LOAD( "ith_ic9.rom" ,0x000000, 0x080000, 0x318ee71a )
 ROM_END
 
-ROM_START( kaiteids_rom )
+ROM_START( kaiteids )
 	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "ith-h0j.bin",0x000000, 0x040000, 0xdc1dec36 )
 	ROM_LOAD_V20_ODD ( "ith-l0j.bin",0x000000, 0x040000, 0x8835d704 )
@@ -1283,7 +1471,7 @@ ROM_START( kaiteids_rom )
 	ROM_LOAD( "ith_ic9.rom" ,0x000000, 0x080000, 0x318ee71a )
 ROM_END
 
-ROM_START( hook_rom )
+ROM_START( hook )
 	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "h-h0-d.rom",0x000000, 0x040000, 0x40189ff6 )
 	ROM_LOAD_V20_ODD ( "h-l0-d.rom",0x000000, 0x040000, 0x14567690 )
@@ -1309,7 +1497,7 @@ ROM_START( hook_rom )
 	ROM_LOAD( "hook-da.rom" ,0x000000, 0x080000, 0x88cd0212 )
 ROM_END
 
-ROM_START( hooku_rom )
+ROM_START( hooku )
 	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "h0-c.3h",0x000000, 0x040000, 0x84cc239e )
 	ROM_LOAD_V20_ODD ( "l0-c.5h",0x000000, 0x040000, 0x45e194fe )
@@ -1335,7 +1523,7 @@ ROM_START( hooku_rom )
 	ROM_LOAD( "hook-da.rom" ,0x000000, 0x080000, 0x88cd0212 )
 ROM_END
 
-ROM_START( rtypeleo_rom )
+ROM_START( rtypeleo )
 	ROM_REGION(0x100000) /* Region 0 - v33 main cpu */
 	ROM_LOAD_V20_EVEN( "rtl-h0-d.bin", 0x000000, 0x040000, 0x3dbac89f )
 	ROM_LOAD_V20_ODD ( "rtl-l0-d.bin", 0x000000, 0x040000, 0xf85a2537 )
@@ -1361,7 +1549,7 @@ ROM_START( rtypeleo_rom )
 	ROM_LOAD( "rtl-da.bin" ,0x000000, 0x080000, 0xdbebd1ff )
 ROM_END
 
-ROM_START( mysticri_rom )
+ROM_START( mysticri )
 	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "mr-h0-b.bin",  0x000000, 0x040000, 0xd529f887 )
 	ROM_LOAD_V20_ODD ( "mr-l0-b.bin",  0x000000, 0x040000, 0xa457ab44 )
@@ -1387,7 +1575,7 @@ ROM_START( mysticri_rom )
 	ROM_LOAD( "mr-da.bin" ,0x000000, 0x040000, 0x1a11fc59 )
 ROM_END
 
-ROM_START( gunhohki_rom )
+ROM_START( gunhohki )
 	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "mr-h0.bin",  0x000000, 0x040000, 0x83352270 )
 	ROM_LOAD_V20_ODD ( "mr-l0.bin",  0x000000, 0x040000, 0x9db308ae )
@@ -1413,7 +1601,7 @@ ROM_START( gunhohki_rom )
 	ROM_LOAD( "mr-da.bin" ,0x000000, 0x040000, 0x1a11fc59 )
 ROM_END
 
-ROM_START( uccops_rom )
+ROM_START( uccops )
 	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "uc_h0.rom",  0x000000, 0x040000, 0x240aa5f7 )
 	ROM_LOAD_V20_ODD ( "uc_l0.rom",  0x000000, 0x040000, 0xdf9a4826 )
@@ -1426,20 +1614,46 @@ ROM_START( uccops_rom )
 	ROM_LOAD( "uc-w40m.rom", 0x100000, 0x080000, 0xc2961648 )
 	ROM_LOAD( "uc-w41m.rom", 0x180000, 0x080000, 0xf5334b80 )
 
-	ROM_LOAD( "uc_k16m.rom", 0x200000, 0x100000, 0x4A225F09 )
-	ROM_LOAD( "uc-k17m.rom", 0x300000, 0x100000, 0xE4ED9A54 )
-	ROM_LOAD( "uc-k18m.rom", 0x400000, 0x100000, 0xA626EB12 )
-	ROM_LOAD( "uc-k19m.rom", 0x500000, 0x100000, 0x5DF46549 )
+	ROM_LOAD( "uc_k16m.rom", 0x200000, 0x100000, 0x4a225f09 )
+	ROM_LOAD( "uc-k17m.rom", 0x300000, 0x100000, 0xe4ed9a54 )
+	ROM_LOAD( "uc-k18m.rom", 0x400000, 0x100000, 0xa626eb12 )
+	ROM_LOAD( "uc-k19m.rom", 0x500000, 0x100000, 0x5df46549 )
 
 	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
-	ROM_LOAD_V20_EVEN( "uc_sh0.rom",0x000000, 0x010000, 0xDF90B198 )
-	ROM_LOAD_V20_ODD ( "uc_sl0.rom",0x000000, 0x010000, 0x96C11AAC )
+	ROM_LOAD_V20_EVEN( "uc_sh0.rom", 0x000000, 0x010000, 0xdf90b198 )
+	ROM_LOAD_V20_ODD ( "uc_sl0.rom", 0x000000, 0x010000, 0x96c11aac )
 
 	ROM_REGION(0x80000)	 /* Region 3 ADPCM samples */
-	ROM_LOAD( "uc_w42.rom" ,0x000000, 0x080000, 0xD17D3FD6 )
+	ROM_LOAD( "uc_w42.rom", 0x000000, 0x080000, 0xd17d3fd6 )
 ROM_END
 
-ROM_START( lethalth_rom )
+ROM_START( uccopsj )
+	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_LOAD_V20_EVEN( "uca-h0.bin", 0x000000, 0x040000, 0x9e17cada )
+	ROM_LOAD_V20_ODD ( "uca-l0.bin", 0x000000, 0x040000, 0x4a4e3208 )
+	ROM_LOAD_V20_EVEN( "uca-h1.bin", 0x080000, 0x020000, 0x83f78dea )
+	ROM_LOAD_V20_ODD ( "uca-l1.bin", 0x080000, 0x020000, 0x19628280 )
+
+	ROM_REGION_DISPOSE(0x600000)	/* Region 1 - Graphics */
+	ROM_LOAD( "uca-c0.bin", 0x000000, 0x080000, 0x6a419a36 )
+	ROM_LOAD( "uca-c1.bin", 0x080000, 0x080000, 0xd703ecc7 )
+	ROM_LOAD( "uca-c2.bin", 0x100000, 0x080000, 0x96397ac6 )
+	ROM_LOAD( "uca-c3.bin", 0x180000, 0x080000, 0x5d07d10d )
+
+	ROM_LOAD( "uca-o3.bin", 0x200000, 0x100000, 0x97f7775e )
+	ROM_LOAD( "uca-o2.bin", 0x300000, 0x100000, 0x5e0b1d65 )
+	ROM_LOAD( "uca-o1.bin", 0x400000, 0x100000, 0xbdc224b3 )
+	ROM_LOAD( "uca-o0.bin", 0x500000, 0x100000, 0x7526daec )
+
+	ROM_REGION(0x100000)	/* 1MB for the audio CPU - encrypted V30 = NANAO custom D80001 (?) */
+	ROM_LOAD_V20_EVEN( "uca-sh0.bin", 0x000000, 0x010000, 0xf0ca1b03 )
+	ROM_LOAD_V20_ODD ( "uca-sl0.bin", 0x000000, 0x010000, 0xd1661723 )
+
+	ROM_REGION(0x80000)	 /* Region 3 ADPCM samples */
+	ROM_LOAD( "uca-da.bin", 0x000000, 0x080000, 0x0b2855e9 )
+ROM_END
+
+ROM_START( lethalth )
 	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "lt_d-h0.rom",  0x000000, 0x020000, 0x20c68935 )
 	ROM_LOAD_V20_ODD ( "lt_d-l0.rom",  0x000000, 0x020000, 0xe1432fb3 )
@@ -1465,7 +1679,33 @@ ROM_START( lethalth_rom )
 	ROM_LOAD( "lt_8a.rom" ,0x000000, 0x040000, 0x357762a2 )
 ROM_END
 
-ROM_START( nbbatman_rom )
+ROM_START( thndblst )
+	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_LOAD_V20_EVEN( "lt_d-h0j.rom", 0x000000, 0x020000, 0xdc218a18 )
+	ROM_LOAD_V20_ODD ( "lt_d-l0j.rom", 0x000000, 0x020000, 0xae9a3f81 )
+	ROM_LOAD_V20_EVEN( "lt_d-h1.rom",  0x040000, 0x020000, 0xd7dd3d48 )
+	ROM_LOAD_V20_ODD ( "lt_d-l1.rom",  0x040000, 0x020000, 0xb94b3bd8 )
+
+	ROM_REGION_DISPOSE(0x600000)	/* Region 1 - Graphics */
+	ROM_LOAD( "lt_7a.rom", 0x000000, 0x040000, 0xada0fd50 )
+	ROM_LOAD( "lt_7b.rom", 0x080000, 0x040000, 0xd2596883 )
+	ROM_LOAD( "lt_7d.rom", 0x100000, 0x040000, 0x2de637ef )
+	ROM_LOAD( "lt_7h.rom", 0x180000, 0x040000, 0x9f6585cd )
+
+	ROM_LOAD( "lt_7j.rom", 0x200000, 0x040000, 0xbaf8863e )
+	ROM_LOAD( "lt_7l.rom", 0x300000, 0x040000, 0x40fd50af )
+	ROM_LOAD( "lt_7s.rom", 0x400000, 0x040000, 0xc8e970df )
+	ROM_LOAD( "lt_7y.rom", 0x500000, 0x040000, 0xf5436708 )
+
+	ROM_REGION(0x100000)	/* 1MB for the audio CPU */
+	ROM_LOAD_V20_EVEN( "lt_d-sh0.rom",0x000000, 0x010000, 0xaf5b224f )
+	ROM_LOAD_V20_ODD ( "lt_d-sl0.rom",0x000000, 0x010000, 0xcb3faac3 )
+
+	ROM_REGION(0x40000)	 /* Region 3 ADPCM samples */
+	ROM_LOAD( "lt_8a.rom" ,0x000000, 0x040000, 0x357762a2 )
+ROM_END
+
+ROM_START( nbbatman )
 	ROM_REGION(0x180000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "a1-h0-a.34",  0x000000, 0x040000, 0x24a9b794 )
 	ROM_LOAD_V20_ODD ( "a1-l0-a.31",  0x000000, 0x040000, 0x846d7716 )
@@ -1491,7 +1731,7 @@ ROM_START( nbbatman_rom )
 	ROM_LOAD( "lh534k0k.8" ,0x000000, 0x080000, 0x735e6380 )
 ROM_END
 
-ROM_START( leaguemn_rom )
+ROM_START( leaguemn )
 	ROM_REGION(0x180000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_EVEN( "lma1-h0.34",  0x000000, 0x040000, 0x47c54204 )
 	ROM_LOAD_V20_ODD ( "lma1-l0.31",  0x000000, 0x040000, 0x1d062c82 )
@@ -1517,49 +1757,144 @@ ROM_START( leaguemn_rom )
 	ROM_LOAD( "lh534k0k.8" ,0x000000, 0x080000, 0x735e6380 )
 ROM_END
 
+ROM_START( psoldier )
+	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
+	ROM_LOAD_V20_EVEN( "f3_h0d.h0",  0x000000, 0x040000, 0x38f131fd )
+	ROM_LOAD_V20_ODD ( "f3_l0d.l0",  0x000000, 0x040000, 0x1662969c )
+	ROM_LOAD_V20_EVEN( "f3_h1.h1",   0x080000, 0x040000, 0xc8d1947c )
+	ROM_LOAD_V20_ODD ( "f3_l1.l1",   0x080000, 0x040000, 0x7b9492fc )
+
+	ROM_REGION_DISPOSE(0xa00000)	/* Region 1 - Graphics */
+	ROM_LOAD( "f3_w50.c0",  0x000000, 0x040000, 0x47e788ee )
+	ROM_LOAD( "f3_w51.c1",  0x080000, 0x040000, 0x8e535e3f )
+	ROM_LOAD( "f3_w52.c2",  0x100000, 0x040000, 0xa6eb2e56 )
+	ROM_LOAD( "f3_w53.c3",  0x180000, 0x040000, 0x2f992807 )
+
+	ROM_LOAD_GFX_EVEN( "f3_w37.000", 0x200000, 0x100000, 0xfd4cda03 )
+	ROM_LOAD_GFX_ODD ( "f3_w38.001", 0x200000, 0x100000, 0x755bab10 )
+	ROM_LOAD_GFX_EVEN( "f3_w39.010", 0x400000, 0x100000, 0xb21ced92 )
+	ROM_LOAD_GFX_ODD ( "f3_w40.011", 0x400000, 0x100000, 0x2e906889 )
+	ROM_LOAD_GFX_EVEN( "f3_w41.020", 0x600000, 0x100000, 0x02455d10 )
+	ROM_LOAD_GFX_ODD ( "f3_w42.021", 0x600000, 0x100000, 0x124589b9 )
+	ROM_LOAD_GFX_EVEN( "f3_w43.030", 0x800000, 0x100000, 0xdae7327a )
+	ROM_LOAD_GFX_ODD ( "f3_w44.031", 0x800000, 0x100000, 0xd0fc84ac )
+
+	ROM_REGION(0x100000)	/* 1MB for the audio CPU */
+	ROM_LOAD_V20_EVEN( "f3_sh0.sh0",0x000000, 0x010000, 0x90b55e5e )
+	ROM_LOAD_V20_ODD ( "f3_sl0.sl0",0x000000, 0x010000, 0x77c16d57 )
+
+	ROM_REGION(0x80000)	 /* Region 3 ADPCM samples */
+	ROM_LOAD( "f3_w95.da" ,0x000000, 0x080000, 0xf7ca432b )
+ROM_END
+
 /***************************************************************************/
 
 static int lethalth_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x1f4 && (m92_ram[0x1e])==2 && offset==0)
+	if (cpu_get_pc()==0x1f4 && m92_ram[0x1e]==2 && offset==0)
 		cpu_spinuntil_int();
 
-//if (errorlog && cpu_get_pc()!=0x28913 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x1e]);
 	return m92_ram[0x1e + offset];
 }
 
-#if 0
 static int hook_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x55ba && (m92_ram[0x12])==0 && (m92_ram[0x13])==0 && offset==0)
+	if (cpu_get_pc()==0x55ba && m92_ram[0x12]==0 && m92_ram[0x13]==0 && offset==0)
 		cpu_spinuntil_int();
 
-//if (errorlog && cpu_get_pc()!=0x28913 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x1e]);
 	return m92_ram[0x12 + offset];
 }
 
-static int rtypeleo_cycle_r(int offset)
+static int psoldier_cycle_r(int offset)
 {
-	if (cpu_get_pc()==0x307a3 && m92_ram[0x32]==1)
+	int a=m92_ram[0]+(m92_ram[1]<<8);
+	int b=m92_ram[0x1aec]+(m92_ram[0x1aed]<<8);
+	int c=m92_ram[0x1aea]+(m92_ram[0x1aeb]<<8);
+
+	if (cpu_get_pc()==0x2dae && b!=a && c!=a && offset==0)
 		cpu_spinuntil_int();
 
-//307a3:  POSITION 0000 data 01
-//m92_ram[offset+0x33]=data;
+	return m92_ram[0x1aec + offset];
+}
 
-//if (errorlog && cpu_get_pc()!=0x307a3 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x32]);
-	return m92_ram[0x32 + offset];
+#if 0
+static int inthunt_cycle_r(int offset)
+{
+	if (cpu_get_pc()==0x858 && m92_ram[0x25f]==0 && offset==0) {
+		/* Adjust in-game counter, based on cycles left to run */
+		int old,c=cycles_left_to_run();
+if (errorlog) fprintf(errorlog,"%04x: %06x %04x SKIPPING\n",cpu_get_pc(),cycles_left_to_run(),m92_ram[0x25f]);
+//
+		old=m92_ram[0xb892]+(m92_ram[0xb893]<<8);
+		old=(old+c/82)&0xffff; /* 82 cycles per increment */
+		m92_ram[0xb892]=old&0xff;
+		m92_ram[0xb893]=old>>8;
+
+		cpu_spinuntil_int();
+
+//		return 0x80;
+	}
+
+//if (errorlog) fprintf(errorlog,"%04x: %06x %04x\n",cpu_get_pc(),cycles_left_to_run(),m92_ram[0x25f]);
+//if (errorlog && cpu_get_pc()!=0x28913 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x1e]);
+	return m92_ram[0x25e + offset];
 }
 #endif
 
+#if 0
+static int uccops_cycle_r(int offset)
+{
+	int a=m92_ram[0x3f28]+(m92_ram[0x3f29]<<8);
+	int b=m92_ram[0x3a00]+(m92_ram[0x3a01]<<8);
+	int c=m92_ram[0x3a02]+(m92_ram[0x3a03]<<8);
+
+	if (cpu_get_pc()==0x900ff && b==c && offset==0) {
+		/* Adjust in-game counter, based on cycles left before next interrupt */
+		int d=cycles_left_to_run();
+//
+		a=(a+d/127)&0xffff; /* 127 cycles per loop increment */
+		m92_ram[0x3f28]=a&0xff;
+		m92_ram[0x3f29]=a>>8;
+
+		cpu_spinuntil_int();
+
+//		return 0x80;
+	}
+
+//if (errorlog) fprintf(errorlog,"%04x: %06x %04x\n",cpu_get_pc(),cycles_left_to_run(),m92_ram[0x25f]);
+//if (errorlog && cpu_get_pc()!=0x28913 ) fprintf(errorlog,"%04x: %04x\n",cpu_get_pc(),m92_ram[0x1e]);
+	return m92_ram[0x3a02 + offset];
+}
+#endif
+
+static int rtypeleo_cycle_r(int offset)
+{
+	if (cpu_get_pc()==0x307a3 && offset==0 && m92_ram[0x32]==2 && m92_ram[0x33]==0)
+		cpu_spinuntil_int();
+
+	return m92_ram[0x32 + offset];
+}
+
 static void memory_hooks(void)
 {
-	if (!strcmp(Machine->gamedrv->name,"lethalth"))
+	if (!strcmp(Machine->gamedrv->name,"lethalth")
+		|| !strcmp(Machine->gamedrv->name,"thndblst"))
 		install_mem_read_handler(0, 0xe001e, 0xe001f, lethalth_cycle_r);
-//	if (!strcmp(Machine->gamedrv->name,"hook"))
-//		install_mem_read_handler(0, 0xe0012, 0xe0013, hook_cycle_r);
-//	if (!strcmp(Machine->gamedrv->name,"rtypeleo"))
-//		install_mem_read_handler(0, 0xe0032, 0xe0033, rtypeleo_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"hook")
+		|| !strcmp(Machine->gamedrv->name,"hooku"))
+		install_mem_read_handler(0, 0xe0012, 0xe0013, hook_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"psoldier"))
+		install_mem_read_handler(0, 0xe1aec, 0xe1aed, psoldier_cycle_r);
+//	if (!strcmp(Machine->gamedrv->name,"inthunt")
+//		|| !strcmp(Machine->gamedrv->name,"kaiteids"))
+//		install_mem_read_handler(0, 0xe025e, 0xe025f, inthunt_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"rtypeleo"))
+		install_mem_read_handler(0, 0xe0032, 0xe0033, rtypeleo_cycle_r);
+//	if (!strcmp(Machine->gamedrv->name,"uccops"))
+//		install_mem_read_handler(0, 0xe3a02, 0xe3a03, uccops_cycle_r);
 }
+
+/***************************************************************************/
 
 static void m92_startup(void)
 {
@@ -1575,23 +1910,28 @@ static void m92_startup(void)
 	RAM = Machine->memory_region[2];
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
-	/* This must be to do with the IRQ controller.. */
+	/* These games use M92-A-B motherboard, others are M92-A-A */
 	if (!strcmp(Machine->gamedrv->name,"rtypeleo")
-		|| !strcmp(Machine->gamedrv->name,"lethalth"))
+		|| !strcmp(Machine->gamedrv->name,"psoldier")
+		|| !strcmp(Machine->gamedrv->name,"lethalth")
+		|| !strcmp(Machine->gamedrv->name,"thndblst"))
 		m92_irq_vectorbase=0x20;
 	else
 		m92_irq_vectorbase=0x80;
 
 	/* This game sets the raster IRQ position, but the interrupt routine
 		is just an iret, no need to emulate it */
-	if (!strcmp(Machine->gamedrv->name,"lethalth"))
-		raster_enable=0;
+	if (!strcmp(Machine->gamedrv->name,"lethalth")
+	    || !strcmp(Machine->gamedrv->name,"thndblst"))
+		m92_raster_enable=0;
 	else
-		raster_enable=1;
+		m92_raster_enable=1;
 
 	/* These games seem to have a different sprite chip */
 	if (!strcmp(Machine->gamedrv->name,"rtypeleo")
+		|| !strcmp(Machine->gamedrv->name,"psoldier")
 		|| !strcmp(Machine->gamedrv->name,"lethalth")
+		|| !strcmp(Machine->gamedrv->name,"thndblst")
 		|| !strcmp(Machine->gamedrv->name,"uccops")
 		|| !strcmp(Machine->gamedrv->name,"nbbatman")
 		|| !strcmp(Machine->gamedrv->name,"leaguemn")
@@ -1602,10 +1942,13 @@ static void m92_startup(void)
 		m92_spritechip=0;
 
 	/* Very bad.. */
-	if (!strcmp(Machine->gamedrv->name,"rtypeleo"))
-		protection_kludge=1;
+	if (!strcmp(Machine->gamedrv->name,"nbbatman")
+		|| !strcmp(Machine->gamedrv->name,"leaguemn"))
+		m92_game_kludge=2;
+	else if (!strcmp(Machine->gamedrv->name,"rtypeleo"))
+		m92_game_kludge=1;
 	else
-		protection_kludge=0;
+		m92_game_kludge=0;
 }
 
 static void m92_sound_decrypt(void)
@@ -1639,20 +1982,45 @@ struct GameDriver M92_NAME##_driver  = \
 	0,0  								\
 };
 
-M92DRIVER(bmaster ,"Blade Master (World)","1991","Irem",bmaster_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(gunforce,"Gunforce - Battle Fire Engulfed Terror Island (World)","1991","Irem",gunforce_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(gunforcu,"Gunforce - Battle Fire Engulfed Terror Island (US)","1991","Irem America",gunforce_input_ports,&gunforce_driver,ORIENTATION_DEFAULT)
-M92DRIVER(hook,    "Hook (World)","1992","Irem",hook_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(hooku,   "Hook (US)","1992","Irem America",hook_input_ports,&hook_driver,ORIENTATION_DEFAULT)
-M92DRIVER(mysticri,"Mystic Riders (World)","1992","Irem",gunhohki_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(gunhohki,"Gun Hohki (Japan)","1992","Irem",gunhohki_input_ports,&mysticri_driver,ORIENTATION_DEFAULT)
+/* A version for games with no raster effects - faster, but slightly less accurate */
+#define M92DRIVERNR(M92_NAME,M92_REALNAME,M92_YEAR,M92_MANU,M92_PORTS,M92_CLONE,M92_ROTATION) \
+struct GameDriver M92_NAME##_driver  = \
+{                             		  \
+	__FILE__,                		   \
+	M92_CLONE,               			\
+	#M92_NAME,               		   \
+	M92_REALNAME,            		   \
+	M92_YEAR,                		   \
+	M92_MANU,                   		\
+	"Bryan McPhail",          			\
+	GAME_NO_SOUND, 			       		\
+	&nonraster_machine_driver,          \
+	memory_hooks,						\
+	M92_NAME##_rom,             		\
+	m92_sound_decrypt, 0,     			\
+	0,                          		\
+	0, 	    	                		\
+	M92_PORTS,             				\
+	0, 0, 0,                    		\
+	M92_ROTATION,        				\
+	0,0  								\
+};
+
+M92DRIVERNR(bmaster ,"Blade Master (World)","1991","Irem",bmaster_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(gunforce,"Gunforce - Battle Fire Engulfed Terror Island (World)","1991","Irem",gunforce_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(gunforcu,"Gunforce - Battle Fire Engulfed Terror Island (US)","1991","Irem America",gunforce_input_ports,&gunforce_driver,ORIENTATION_DEFAULT)
+M92DRIVERNR(hook,    "Hook (World)","1992","Irem",hook_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(hooku,   "Hook (US)","1992","Irem America",hook_input_ports,&hook_driver,ORIENTATION_DEFAULT)
+M92DRIVERNR(mysticri,"Mystic Riders (World)","1992","Irem",gunhohki_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(gunhohki,"Gun Hohki (Japan)","1992","Irem",gunhohki_input_ports,&mysticri_driver,ORIENTATION_DEFAULT)
 M92DRIVER(uccops  ,"Undercover Cops (World)","1992","Irem",uccops_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVER(uccopsj ,"Undercover Cops (Japan)","1992","Irem",uccops_input_ports,&uccops_driver,ORIENTATION_DEFAULT)
 M92DRIVER(rtypeleo,"R-Type Leo (Japan)","1992","Irem",rtypeleo_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(majtitl2,"Major Title 2 (World)","1992","Irem",skingame_input_ports,0,ORIENTATION_DEFAULT)
 M92DRIVER(skingame,"The Irem Skins Game (US set 1)","1992","Irem America",skingame_input_ports,&majtitl2_driver,ORIENTATION_DEFAULT)
 M92DRIVER(skingam2,"The Irem Skins Game (US set 2)","1992","Irem America",skingame_input_ports,&majtitl2_driver,ORIENTATION_DEFAULT)
-M92DRIVER(inthunt ,"In The Hunt (World)","1993","Irem",inthunt_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(kaiteids,"Kaitei Daisensou (Japan)","1993","Irem",inthunt_input_ports,&inthunt_driver,ORIENTATION_DEFAULT)
+M92DRIVERNR(inthunt ,"In The Hunt (World)","1993","Irem",inthunt_input_ports,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(kaiteids,"Kaitei Daisensou (Japan)","1993","Irem",inthunt_input_ports,&inthunt_driver,ORIENTATION_DEFAULT)
 
 /* Not working yet */
 M92DRIVER(nbbatman,"Ninja Baseball Batman (US)","1993","Irem America",nbbatman_input_ports,0,ORIENTATION_DEFAULT)
@@ -1664,13 +2032,13 @@ struct GameDriver lethalth_driver  =
 	__FILE__,
 	0,
 	"lethalth",
-	"Lethal Thunder",
+	"Lethal Thunder (World)",
 	"1991",
 	"Irem",
 	"Bryan McPhail",
 	GAME_NO_SOUND,
 	&lethalth_machine_driver,
-	0,
+	memory_hooks,
 	lethalth_rom,
 	m92_sound_decrypt, 0,
 	0,
@@ -1681,6 +2049,50 @@ struct GameDriver lethalth_driver  =
 	0,0
 };
 
+struct GameDriver thndblst_driver  =
+{
+	__FILE__,
+	&lethalth_driver,
+	"thndblst",
+	"Thunder Blaster (Japan)",
+	"1991",
+	"Irem",
+	"Bryan McPhail",
+	GAME_NO_SOUND,
+	&lethalth_machine_driver,
+	memory_hooks,
+	thndblst_rom,
+	m92_sound_decrypt, 0,
+	0,
+	0,
+	lethalth_input_ports,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0,0
+};
+
+/* Different machine driver for this one, it uses different graphics layout */
+struct GameDriver psoldier_driver  =
+{
+	__FILE__,
+	0,
+	"psoldier",
+	"Perfect Soldiers (Japan)",
+	"1993",
+	"Irem",
+	"Bryan McPhail",
+	GAME_NO_SOUND,
+	&psoldier_machine_driver,
+	memory_hooks,
+	psoldier_rom,
+	m92_sound_decrypt, 0,
+	0,
+	0,
+	psoldier_input_ports,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0,0
+};
 
 /*
 
@@ -1694,6 +2106,7 @@ In The Hunt						Irem 	D8000011A1
 Gun Hohki									  16?
 Risky Challenge/Gussun Oyoyo 			D8000019A1
 Shisensho II                 			D8000020A1 023 9320NK700
+Perfect Soldiers						D8000022A1
 
 Nanao Custom parts:
 

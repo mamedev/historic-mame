@@ -366,7 +366,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( dday_rom )
+ROM_START( dday )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "e8_63co.bin",  0x0000, 0x1000, 0x13d53793 )
 	ROM_LOAD( "e7_64co.bin",  0x1000, 0x1000, 0xe1ef2a70 )
@@ -395,7 +395,7 @@ ROM_START( dday_rom )
 	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
 ROM_END
 
-ROM_START( ddayc_rom )
+ROM_START( ddayc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "e8_63-c.bin",  0x0000, 0x1000, 0xd4fa3ae3 )
 	ROM_LOAD( "e7_64-c.bin",  0x1000, 0x1000, 0x9fb8b1a7 )

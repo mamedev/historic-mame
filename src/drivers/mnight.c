@@ -345,7 +345,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	2,	 /* 2 chips */
-	1250000, /* 5000000/4 MHz ???? */
+	12000000/8, // lax 11/03/1999  (1250000 -> 1500000 ???)
 	{ YM2203_VOL(25,25), YM2203_VOL(25,25)},
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
@@ -399,7 +399,7 @@ static struct MachineDriver mnight_machine_driver =
 };
 
 
-ROM_START( mnight_rom )
+ROM_START( mnight )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "mn6-j19.bin",  0x00000, 0x8000, 0x56678d14 )
 	ROM_LOAD( "mn5-j17.bin",  0x10000, 0x8000, 0x2a73f88e )
@@ -441,7 +441,7 @@ ROM_START( mnight_rom )
 	ROM_LOAD( "mn1-j7.bin",   0x00000, 0x10000, 0xa0782a31 )
 ROM_END
 
-ROM_START( arkarea_rom )
+ROM_START( arkarea )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "arkarea.008",  0x00000, 0x8000, 0x1ce1b5b9 )
 	ROM_LOAD( "arkarea.009",  0x10000, 0x8000, 0xdb1c81d1 )

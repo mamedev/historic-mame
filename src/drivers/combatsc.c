@@ -587,7 +587,7 @@ static struct MachineDriver cmbatscb_machine_driver =
 {
 	{
 		{
-			CPU_M6309,
+			CPU_HD6309,
 			5000000,	/* 5 MHz? */
 			0,
 			readmem,writemem,0,0,
@@ -634,7 +634,7 @@ static struct MachineDriver combatsc_machine_driver =
 {
 	{
 		{
-			CPU_M6309,
+			CPU_HD6309,
 			5000000,	/* 5 MHz? */
 			0,
 			combatsc_readmem,combatsc_writemem,0,0,
@@ -678,7 +678,7 @@ static struct MachineDriver combatsc_machine_driver =
 
 
 
-ROM_START( combatscb_rom )
+ROM_START( combatscb )
 	ROM_REGION( 0x48000 ) /* 6809 code */
 	ROM_LOAD( "combat.002",	0x10000, 0x10000, 0x0996755d )
 	ROM_LOAD( "combat.003",	0x20000, 0x10000, 0x229c93b2 )
@@ -720,7 +720,7 @@ ROM_START( combatscb_rom )
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )	/* FAKE - from Konami set! */
 ROM_END
 
-ROM_START( combatsc_rom )
+ROM_START( combatsc )
 	ROM_REGION( 0x48000 ) /* 6309 code */
 	ROM_LOAD( "611g01.rom",	0x10000, 0x10000, 0x857ffffe )
 	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
@@ -745,7 +745,7 @@ ROM_START( combatsc_rom )
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
 ROM_END
 
-ROM_START( combatsct_rom )
+ROM_START( combatsct )
 	ROM_REGION( 0x48000 ) /* 6309 code */
 	ROM_LOAD( "g01.rom",	0x10000, 0x10000, 0x489c132f )
 	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
@@ -771,7 +771,7 @@ ROM_START( combatsct_rom )
 
 ROM_END
 
-ROM_START( combatscj_rom )
+ROM_START( combatscj )
 	ROM_REGION( 0x48000 ) /* 6309 code */
 	ROM_LOAD( "611p01.a14",	0x10000, 0x10000, 0xd748268e )
 	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
@@ -796,7 +796,7 @@ ROM_START( combatscj_rom )
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
 ROM_END
 
-ROM_START( bootcamp_rom )
+ROM_START( bootcamp )
 	ROM_REGION( 0x48000 ) /* 6309 code */
 	ROM_LOAD( "xxx-v01.12a", 0x10000, 0x10000, 0xc10dca64 )
 	ROM_LOAD( "611g02.rom",  0x20000, 0x20000, 0x9ba05327 )

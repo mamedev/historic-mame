@@ -58,7 +58,7 @@ CPUS+=HD63701@
 CPUS+=M6805@
 CPUS+=M68705@
 CPUS+=HD63705@
-CPUS+=M6309@
+CPUS+=HD6309@
 CPUS+=M6809@
 CPUS+=KONAMI@
 CPUS+=M68000@
@@ -320,9 +320,9 @@ CPUOBJS += obj/cpu/m6805/m6805.o
 DBGOBJS += obj/cpu/m6805/6805dasm.o
 endif
 
-CPU=$(strip $(findstring M6309@,$(CPUS)))
+CPU=$(strip $(findstring HD6309@,$(CPUS)))
 ifneq ($(CPU),)
-CPUDEFS += -DHAS_M6309=1
+CPUDEFS += -DHAS_HD6309=1
 CPUOBJS += obj/cpu/m6809/m6809.o
 DBGOBJS += obj/cpu/m6809/6809dasm.o
 endif
@@ -862,7 +862,6 @@ obj/midwz80.a: \
 obj/meadows.a: \
          obj/drivers/lazercmd.o obj/vidhrdw/lazercmd.o \
          obj/drivers/meadows.o obj/sndhrdw/meadows.o obj/vidhrdw/meadows.o \
-         obj/drivers/medlanes.o obj/vidhrdw/medlanes.o \
 
 obj/midway.a: \
          obj/machine/wow.o obj/vidhrdw/wow.o obj/sndhrdw/wow.o obj/drivers/wow.o \
@@ -902,13 +901,15 @@ obj/taito.a: \
          obj/machine/flstory.o obj/vidhrdw/flstory.o obj/drivers/flstory.o \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
-         obj/drivers/mexico86.o \
+         obj/machine/mexico86.o obj/vidhrdw/mexico86.o obj/drivers/mexico86.o \
          obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
+		 obj/drivers/kageki.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
+		 obj/vidhrdw/footchmp.o obj/drivers/footchmp.o \
          obj/drivers/lkage.o obj/vidhrdw/lkage.o \
          obj/vidhrdw/taitol.o obj/drivers/taitol.o \
          obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
@@ -925,7 +926,7 @@ obj/kyugo.a: \
          obj/drivers/kyugo.o obj/vidhrdw/kyugo.o \
 
 obj/williams.a: \
-         obj/machine/williams.o obj/vidhrdw/williams.o obj/drivers/williams.o \
+         obj/machine/williams.o obj/vidhrdw/williams.o obj/sndhrdw/williams.o obj/drivers/williams.o \
 
 obj/capcom.a: \
          obj/vidhrdw/vulgus.o obj/drivers/vulgus.o \
@@ -1062,6 +1063,7 @@ obj/konami.a: \
          obj/vidhrdw/vendetta.o obj/drivers/vendetta.o \
          obj/vidhrdw/twin16.o obj/drivers/twin16.o \
          obj/vidhrdw/tmnt.o obj/drivers/tmnt.o \
+         obj/vidhrdw/xmen.o obj/drivers/xmen.o \
          obj/vidhrdw/wecleman.o obj/drivers/wecleman.o \
 
 obj/exidy.a: \
@@ -1211,6 +1213,7 @@ obj/visco.a: \
 
 obj/leland.a: \
          obj/machine/8254pit.o obj/vidhrdw/leland.o obj/drivers/leland.o \
+         obj/drivers/ataxx.o \
 
 obj/tad.a: \
          obj/vidhrdw/cabal.o obj/drivers/cabal.o \

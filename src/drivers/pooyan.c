@@ -286,7 +286,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pooyan_rom )
+ROM_START( pooyan )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1.4a",         0x0000, 0x2000, 0xbb319c63 )
 	ROM_LOAD( "2.5a",         0x2000, 0x2000, 0xa1463d98 )
@@ -309,7 +309,7 @@ ROM_START( pooyan_rom )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
-ROM_START( pooyans_rom )
+ROM_START( pooyans )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000, 0x916ae7d7 )
 	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000, 0x8fe38c61 )
@@ -332,7 +332,7 @@ ROM_START( pooyans_rom )
 	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
-ROM_START( pootan_rom )
+ROM_START( pootan )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "poo_ic22.bin", 0x0000, 0x2000, 0x41b23a24 )
 	ROM_LOAD( "poo_ic23.bin", 0x2000, 0x2000, 0xc9d94661 )

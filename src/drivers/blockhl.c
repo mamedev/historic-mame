@@ -272,7 +272,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( quarth_rom )
+ROM_START( quarth )
 	ROM_REGION( 0x18800 ) /* code + banked roms + space for banked RAM */
 	ROM_LOAD( "973j02.e21", 0x10000, 0x08000, 0x27a90118 )
 	ROM_CONTINUE(           0x08000, 0x08000 )

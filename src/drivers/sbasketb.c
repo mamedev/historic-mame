@@ -298,7 +298,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sbasketb_rom )
+ROM_START( sbasketb )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "sbb_j13.bin",  0x6000, 0x2000, 0x263ec36b )
 	ROM_LOAD( "sbb_j11.bin",  0x8000, 0x4000, 0x0a4d7a82 )

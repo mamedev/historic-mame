@@ -1058,7 +1058,7 @@ static void roadblst_init(void)
  *
  *************************************/
 
-ROM_START( marble_rom )
+ROM_START( marble )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1098,7 +1098,7 @@ ROM_START( marble_rom )
 ROM_END
 
 
-ROM_START( marble2_rom )
+ROM_START( marble2 )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1138,7 +1138,7 @@ ROM_START( marble2_rom )
 ROM_END
 
 
-ROM_START( marblea_rom )
+ROM_START( marblea )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1182,7 +1182,7 @@ ROM_START( marblea_rom )
 ROM_END
 
 
-ROM_START( peterpak_rom )
+ROM_START( peterpak )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1224,7 +1224,7 @@ ROM_START( peterpak_rom )
 ROM_END
 
 
-ROM_START( indytemp_rom )
+ROM_START( indytemp )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1272,7 +1272,7 @@ ROM_START( indytemp_rom )
 ROM_END
 
 
-ROM_START( indytem2_rom )
+ROM_START( indytem2 )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1320,7 +1320,7 @@ ROM_START( indytem2_rom )
 ROM_END
 
 
-ROM_START( indytem3_rom )
+ROM_START( indytem3 )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1368,7 +1368,7 @@ ROM_START( indytem3_rom )
 ROM_END
 
 
-ROM_START( indytem4_rom )
+ROM_START( indytem4 )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1416,7 +1416,7 @@ ROM_START( indytem4_rom )
 ROM_END
 
 
-ROM_START( roadrunn_rom )
+ROM_START( roadrunn )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
@@ -1477,7 +1477,7 @@ ROM_START( roadrunn_rom )
 ROM_END
 
 
-ROM_START( roadblst_rom )
+ROM_START( roadblst )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )

@@ -486,7 +486,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cclimber_rom )
+ROM_START( cclimber )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cc11",         0x0000, 0x1000, 0x217ec4ff )
 	ROM_LOAD( "cc10",         0x1000, 0x1000, 0xb3c26cef )
@@ -590,7 +590,7 @@ static void cclimber_decode(void)
 	}
 }
 
-ROM_START( cclimbrj_rom )
+ROM_START( cclimbrj )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cc11j.bin",    0x0000, 0x1000, 0x89783959 )
 	ROM_LOAD( "cc10j.bin",    0x1000, 0x1000, 0x14eda506 )
@@ -620,7 +620,7 @@ ROM_START( cclimbrj_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ccboot_rom )
+ROM_START( ccboot )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "m11.bin",      0x0000, 0x1000, 0x5efbe180 )
 	ROM_LOAD( "m10.bin",      0x1000, 0x1000, 0xbe2748c7 )
@@ -650,7 +650,7 @@ ROM_START( ccboot_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ccboot2_rom )
+ROM_START( ccboot2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "11.4k",        0x0000, 0x1000, 0xb2b17e24 )
 	ROM_LOAD( "10.4j",        0x1000, 0x1000, 0x8382bc0f )
@@ -753,7 +753,7 @@ static void cclimbrj_decode(void)
 	}
 }
 
-ROM_START( ckong_rom )
+ROM_START( ckong )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
@@ -780,7 +780,7 @@ ROM_START( ckong_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckonga_rom )
+ROM_START( ckonga )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
@@ -807,7 +807,7 @@ ROM_START( ckonga_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckongjeu_rom )
+ROM_START( ckongjeu )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "d05-07.bin",   0x0000, 0x1000, 0xb27df032 )
 	ROM_LOAD( "f05-08.bin",   0x1000, 0x1000, 0x5dc1aaba )
@@ -834,7 +834,7 @@ ROM_START( ckongjeu_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckongo_rom )
+ROM_START( ckongo )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "o55a-1",       0x0000, 0x1000, 0x8bfb4623 )
 	ROM_LOAD( "o55a-2",       0x1000, 0x1000, 0x9ae8089b )
@@ -866,7 +866,7 @@ ROM_START( ckongo_rom )
 	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
-ROM_START( ckongalc_rom )
+ROM_START( ckongalc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
@@ -893,7 +893,7 @@ ROM_START( ckongalc_rom )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
-ROM_START( monkeyd_rom )
+ROM_START( monkeyd )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ck7.bin",      0x0000, 0x1000, 0x2171cac3 )
 	ROM_LOAD( "ck8.bin",      0x1000, 0x1000, 0x88b83ff7 )
@@ -920,7 +920,7 @@ ROM_START( monkeyd_rom )
 	ROM_LOAD( "ck12.bin",     0x1000, 0x1000, 0x2eb23b60 )
 ROM_END
 
-ROM_START( rpatrolb_rom )
+ROM_START( rpatrolb )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rp1.4l",       0x0000, 0x1000, 0xbfd7ae7a )
 	ROM_LOAD( "rp2.4j",       0x1000, 0x1000, 0x03f53340 )
@@ -951,7 +951,7 @@ ROM_START( rpatrolb_rom )
 	/* not used by this game */
 ROM_END
 
-ROM_START( silvland_rom )
+ROM_START( silvland )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "7.2r",         0x0000, 0x1000, 0x57e6be62 )
 	ROM_LOAD( "8.1n",         0x1000, 0x1000, 0xbbb2b287 )
@@ -1748,7 +1748,7 @@ static struct MachineDriver swimmer_machine_driver =
 
 
 
-ROM_START( swimmer_rom )
+ROM_START( swimmer )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "sw1",          0x0000, 0x1000, 0xf12481e7 )
 	ROM_LOAD( "sw2",          0x1000, 0x1000, 0xa0b6fdd2 )
@@ -1764,11 +1764,11 @@ ROM_START( swimmer_rom )
 	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
 	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
 	ROM_LOAD( "sw23",         0x3000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
-	/* 3800-3fff empty (Guzzler has larger ROMs) */
+	ROM_RELOAD(               0x3800, 0x0800 )	/* Guzzler has larger ROMs */
 	ROM_LOAD( "sw22",         0x4000, 0x0800, 0x02c10992 )
-	/* 4800-4fff empty (Guzzler has larger ROMs) */
+	ROM_RELOAD(               0x4800, 0x0800 )	/* Guzzler has larger ROMs */
 	ROM_LOAD( "sw21",         0x5000, 0x0800, 0x7f4993c1 )
-	/* 5800-5fff empty (Guzzler has larger ROMs) */
+	ROM_RELOAD(               0x5800, 0x0800 )	/* Guzzler has larger ROMs */
 
 	ROM_REGION(0x220)        /* color proms */
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
@@ -1779,7 +1779,7 @@ ROM_START( swimmer_rom )
 	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 ROM_END
 
-ROM_START( swimmera_rom )
+ROM_START( swimmera )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "swa1",         0x0000, 0x1000, 0x42c2b6c5 )
 	ROM_LOAD( "swa2",         0x1000, 0x1000, 0x49bac195 )
@@ -1795,11 +1795,11 @@ ROM_START( swimmera_rom )
 	ROM_LOAD( "sw14",         0x1000, 0x1000, 0x7181c8b4 )
 	ROM_LOAD( "sw13",         0x2000, 0x1000, 0x2eb1af5c )
 	ROM_LOAD( "sw23",         0x3000, 0x0800, 0x9ca67e24 )  /* bigsprite data */
-	/* 3800-3fff empty (Guzzler has larger ROMs) */
+	ROM_RELOAD(               0x3800, 0x0800 )	/* Guzzler has larger ROMs */
 	ROM_LOAD( "sw22",         0x4000, 0x0800, 0x02c10992 )
-	/* 4800-4fff empty (Guzzler has larger ROMs) */
+	ROM_RELOAD(               0x4800, 0x0800 )	/* Guzzler has larger ROMs */
 	ROM_LOAD( "sw21",         0x5000, 0x0800, 0x7f4993c1 )
-	/* 5800-5fff empty (Guzzler has larger ROMs) */
+	ROM_RELOAD(               0x5800, 0x0800 )	/* Guzzler has larger ROMs */
 
 	ROM_REGION(0x220)        /* color proms */
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
@@ -1810,7 +1810,7 @@ ROM_START( swimmera_rom )
 	ROM_LOAD( "sw12",         0x0000, 0x1000, 0x2eee9bcb )
 ROM_END
 
-ROM_START( guzzler_rom )
+ROM_START( guzzler )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "guzz-01.bin",  0x0000, 0x2000, 0x58aaa1e9 )
 	ROM_LOAD( "guzz-02.bin",  0x2000, 0x2000, 0xf80ceb17 )

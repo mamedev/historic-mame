@@ -352,7 +352,7 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M6309,
+			CPU_HD6309,
 			3000000,		/* 24MHz/8 (?) */
 			0,
 			bladestl_readmem,bladestl_writemem,0,0,
@@ -360,7 +360,7 @@ static struct MachineDriver machine_driver =
         },
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			3000000,		/* 24MHz/8 (?) */
+			2000000,		/* ? */
 			2,
 			bladestl_readmem_sound, bladestl_writemem_sound,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
@@ -402,7 +402,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bladestl_rom )
+ROM_START( bladestl )
 	ROM_REGION( 0x18000 ) /* code + banked roms */
 	ROM_LOAD( "797e01", 0x10000, 0x08000, 0xf8472e95 )	/* fixed ROM */
 	ROM_CONTINUE(		0x08000, 0x08000 )				/* banked ROM */

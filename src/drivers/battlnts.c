@@ -243,12 +243,11 @@ INPUT_PORTS_START( thehustj_input_ports )
 //	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* DSW #2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x02, "Balls" )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
@@ -344,7 +343,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3812interface ym3812_interface =
 {
 	2,				/* 2 chips */
-	3579545,		/* 3.57945 MHz */
+	3000000, 		/* ? */
 	{ 50, 50 },
 	{ 0, 0 },
 };
@@ -354,7 +353,7 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M6309,
+			CPU_HD6309,
 			3000000,		/* ? */
 			0,
 			battlnts_readmem,battlnts_writemem,0,0,
@@ -401,7 +400,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( battlnts_rom )
+ROM_START( battlnts )
 	ROM_REGION( 0x20000 ) /* code + banked roms */
 	ROM_LOAD( "g02.7e",     0x08000, 0x08000, 0xdbd8e17e )	/* fixed ROM */
 	ROM_LOAD( "g03.8e",     0x10000, 0x10000, 0x7bd44fef )	/* banked ROM */
@@ -414,7 +413,7 @@ ROM_START( battlnts_rom )
 	ROM_LOAD( "777c01.bin", 0x00000, 0x08000, 0xc21206e9 )
 ROM_END
 
-ROM_START( battlntj_rom )
+ROM_START( battlntj )
 	ROM_REGION( 0x20000 ) /* code + banked roms */
 	ROM_LOAD( "777e02.bin", 0x08000, 0x08000, 0xd631cfcb )	/* fixed ROM */
 	ROM_LOAD( "777e03.bin", 0x10000, 0x10000, 0x5ef1f4ef )	/* banked ROM */
@@ -427,7 +426,7 @@ ROM_START( battlntj_rom )
 	ROM_LOAD( "777c01.bin", 0x00000, 0x08000, 0xc21206e9 )
 ROM_END
 
-ROM_START( thehustl_rom )
+ROM_START( thehustl )
 	ROM_REGION( 0x20000 ) /* code + banked roms */
 	ROM_LOAD( "765-m02.7e",     0x08000, 0x08000, 0x934807b9 )	/* fixed ROM */
 	ROM_LOAD( "765-j03.8e",     0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */
@@ -440,7 +439,7 @@ ROM_START( thehustl_rom )
 	ROM_LOAD( "765-j01.10a", 	0x00000, 0x08000, 0x77ae753e )
 ROM_END
 
-ROM_START( thehustj_rom )
+ROM_START( thehustj )
 	ROM_REGION( 0x20000 ) /* code + banked roms */
 	ROM_LOAD( "765-j02.7e",     0x08000, 0x08000, 0x2ac14c75 )	/* fixed ROM */
 	ROM_LOAD( "765-j03.8e",     0x10000, 0x10000, 0xa13fd751 )	/* banked ROM */

@@ -228,7 +228,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bankp_rom )
+ROM_START( bankp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr6175.bin",  0x0000, 0x4000, 0x044552b8 )
 	ROM_LOAD( "epr6174.bin",  0x4000, 0x4000, 0xd29b1598 )

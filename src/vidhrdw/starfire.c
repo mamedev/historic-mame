@@ -237,6 +237,8 @@ void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         long pnt;
         int d;
 
+		palette_recalc();
+
         pnt = 0x0000;
         xx=0;
 

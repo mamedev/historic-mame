@@ -264,7 +264,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( foodf_rom )
+ROM_START( foodf )
 	ROM_REGION(0x10000)	/* 64k for 68000 code */
 	ROM_LOAD_EVEN( "foodf.9c",     0x00000, 0x02000, 0xef92dc5c )
 	ROM_LOAD_ODD ( "foodf.8c",     0x00000, 0x02000, 0xdfc3d5a8 )

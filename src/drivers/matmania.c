@@ -504,7 +504,7 @@ static struct MachineDriver maniach_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( matmania_rom )
+ROM_START( matmania )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "k0-03",        0x4000, 0x4000, 0x314ab8a4 )
 	ROM_LOAD( "k1-03",        0x8000, 0x4000, 0x3b3c3f08 )
@@ -551,7 +551,7 @@ ROM_START( matmania_rom )
 ROM_END
 
 
-ROM_START( excthour_rom )
+ROM_START( excthour )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "e29",          0x04000, 0x4000, 0xc453e855 )
 	ROM_LOAD( "e28",          0x08000, 0x4000, 0x17b63708 )
@@ -597,7 +597,7 @@ ROM_START( excthour_rom )
 	ROM_LOAD( "k5-0",         0xc000, 0x4000, 0x4c41cdba )
 ROM_END
 
-ROM_START( maniach_rom )
+ROM_START( maniach )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mc-mb2.bin",   0x04000, 0x4000, 0xa6da1ba8 )
 	ROM_LOAD( "mc-ma2.bin",   0x08000, 0x4000, 0x84583323 )
@@ -650,7 +650,7 @@ ROM_START( maniach_rom )
 	ROM_LOAD( "01",           0x0000, 0x0800, 0x00c7f80c )
 ROM_END
 
-ROM_START( maniach2_rom )
+ROM_START( maniach2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic40-mb1",     0x04000, 0x4000, 0xb337a867 )
 	ROM_LOAD( "ic41-ma1",     0x08000, 0x4000, 0x85ec8279 )

@@ -322,7 +322,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( sauro_rom )
+ROM_START( sauro )
 	ROM_REGION(0x10000)          /* 64k for code */
 	ROM_LOAD( "sauro-2.bin",     0x00000, 0x8000, 0x19f8de25 )
 	ROM_LOAD( "sauro-1.bin",     0x08000, 0x8000, 0x0f8b876f )

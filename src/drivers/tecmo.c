@@ -831,7 +831,7 @@ static struct MachineDriver gemini_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rygar_rom )
+ROM_START( rygar )
 	ROM_REGION(0x18000)	/* 64k for code */
 	ROM_LOAD( "5.5p",         0x00000, 0x08000, 0x062cd55d ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
@@ -862,7 +862,7 @@ ROM_START( rygar_rom )
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
-ROM_START( rygar2_rom )
+ROM_START( rygar2 )
 	ROM_REGION(0x18000)	/* 64k for code */
 	ROM_LOAD( "cpu_5p.bin",   0x00000, 0x08000, 0xe79c054a ) /* code */
 	ROM_LOAD( "cpu_5m.bin",   0x08000, 0x04000, 0x7ac5191b ) /* code */
@@ -893,7 +893,7 @@ ROM_START( rygar2_rom )
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
-ROM_START( rygarj_rom )
+ROM_START( rygarj )
 	ROM_REGION(0x18000)	/* 64k for code */
 
 	ROM_LOAD( "cpuj_5p.bin",  0x00000, 0x08000, 0xb39698ba ) /* code */
@@ -925,7 +925,7 @@ ROM_START( rygarj_rom )
 	ROM_LOAD( "cpu_1f.bin",   0x0000, 0x4000, 0x3cc98c5a )
 ROM_END
 
-ROM_START( silkworm_rom )
+ROM_START( silkworm )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "silkworm.4",   0x00000, 0x10000, 0xa5277cce )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
@@ -952,7 +952,7 @@ ROM_START( silkworm_rom )
 	ROM_LOAD( "silkworm.1",   0x0000, 0x8000, 0x5b553644 )
 ROM_END
 
-ROM_START( silkwrm2_rom )
+ROM_START( silkwrm2 )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "r4",           0x00000, 0x10000, 0x6df3df22 )	/* c000-ffff is not used */
 	ROM_LOAD( "silkworm.5",   0x10000, 0x10000, 0xa6c7bb51 )	/* banked at f000-f7ff */
@@ -979,7 +979,7 @@ ROM_START( silkwrm2_rom )
 	ROM_LOAD( "silkworm.1",   0x0000, 0x8000, 0x5b553644 )
 ROM_END
 
-ROM_START( gemini_rom )
+ROM_START( gemini )
 	ROM_REGION(0x20000)	/* 64k for code */
 	ROM_LOAD( "gw04-5s.rom",  0x00000, 0x10000, 0xff9de855 )	/* c000-ffff is not used */
 	ROM_LOAD( "gw05-6s.rom",  0x10000, 0x10000, 0x5a6947a9 )	/* banked at f000-f7ff */

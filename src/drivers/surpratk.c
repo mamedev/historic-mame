@@ -284,7 +284,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( surpratk_rom )
+ROM_START( surpratk )
 	ROM_REGION( 0x51000 ) /* code + banked roms + palette RAM */
 	ROM_LOAD( "911m01.bin", 0x10000, 0x20000, 0xee5b2cc8 )
 	ROM_LOAD( "911m02.bin", 0x30000, 0x18000, 0x5d4148a8 )

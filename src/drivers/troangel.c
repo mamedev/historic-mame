@@ -209,7 +209,7 @@ static struct MachineDriver troangel_machine_driver =
 
 
 
-ROM_START( troangel_rom )
+ROM_START( troangel )
 	ROM_REGION( 0x10000 )	/* main CPU */
 	ROM_LOAD( "ta-a-3k",	0x0000, 0x2000, 0xf21f8196 )
 	ROM_LOAD( "ta-a-3m",	0x2000, 0x2000, 0x58801e55 )

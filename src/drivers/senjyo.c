@@ -561,7 +561,7 @@ MACHINE_DRV(starforc);
 
 ***************************************************************************/
 
-ROM_START( senjyo_rom )
+ROM_START( senjyo )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "08m_05t.bin", 0x0000, 0x2000, 0xb1f3544d )
 	ROM_LOAD( "08k_04t.bin", 0x2000, 0x2000, 0xe34468a8 )
@@ -592,7 +592,7 @@ ROM_START( senjyo_rom )
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
 ROM_END
 
-ROM_START( starforc_rom )
+ROM_START( starforc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "starforc.3",   0x0000, 0x4000, 0x8ba27691 )
 	ROM_LOAD( "starforc.2",   0x4000, 0x4000, 0x0fc4d2d6 )
@@ -621,7 +621,7 @@ ROM_START( starforc_rom )
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
 ROM_END
 
-ROM_START( starfore_rom )
+ROM_START( starfore )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "starfore.005", 0x0000, 0x2000, 0x825f7ebe )
 	ROM_LOAD( "starfore.004", 0x2000, 0x2000, 0xfbcecb65 )
@@ -652,7 +652,7 @@ ROM_START( starfore_rom )
     ROM_LOAD( "07b.bin",    0x0000, 0x0020, 0x68db8300 )	/* unknown - timing? */
 ROM_END
 
-ROM_START( megaforc_rom )
+ROM_START( megaforc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mf3.bin",      0x0000, 0x4000, 0xd3ea82ec )
 	ROM_LOAD( "mf2.bin",      0x4000, 0x4000, 0xaa320718 )

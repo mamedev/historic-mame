@@ -405,7 +405,8 @@ static UINT8 cycles1[] =
 
 INLINE UINT32 RM16( UINT32 Addr )
 {
-	return (RM(Addr) << 8) | RM((Addr+1)&0xffff);
+	UINT32 result = RM(Addr) << 8;
+	return result | RM((Addr+1)&0xffff);
 }
 
 INLINE void WM16( UINT32 Addr, PAIR *p )
@@ -1306,7 +1307,7 @@ INLINE void fetch_effective_address( void )
 /****************************************************************************
  * M6309 section
  ****************************************************************************/
-#if HAS_M6309
+#if HAS_HD6309
 static UINT8 m6309_reg_layout[] = {
 	M6309_PC, M6309_S, M6309_CC, M6309_A, M6309_B, M6309_X, -1,
 	M6309_Y, M6309_U, M6309_DP, M6309_NMI_STATE, M6309_IRQ_STATE, M6309_FIRQ_STATE, 0

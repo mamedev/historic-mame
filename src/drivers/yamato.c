@@ -391,7 +391,7 @@ static struct MachineDriver yamato_machine_driver =
 
 
 
-ROM_START( yamato_rom )
+ROM_START( yamato )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2.5de",        0x0000, 0x2000, 0x20895096 )
 	ROM_LOAD( "3.5f",         0x2000, 0x2000, 0x57a696f9 )
@@ -426,7 +426,7 @@ ROM_START( yamato_rom )
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, 0x3aad9e3c )
 ROM_END
 
-ROM_START( yamato2_rom )
+ROM_START( yamato2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2-2.5de",      0x0000, 0x2000, 0x93da1d52 )
 	ROM_LOAD( "3-2.5f",       0x2000, 0x2000, 0x31e73821 )

@@ -21,9 +21,6 @@
 		Raster interrupts can be triggered at any line of the screen redraw,
 		typically used in games like R-Type Leo to multiplex the top playfield.
 
-	Note: Gunforce sets bit 0x8 in tile flags for the waterfalls and ladders
-		- different type of split bitmap?  (Not implemented yet).
-
 *****************************************************************************
 
 	Master Control registers:
@@ -45,15 +42,24 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_layer;
+static struct tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_wide_layer,*pf1_layer,*pf1_hlayer;
 static int pf1_control[8],pf2_control[8],pf3_control[8],pf4_control[8];
 static int pf1_vram_ptr,pf2_vram_ptr,pf3_vram_ptr;
 static int pf1_enable,pf2_enable,pf3_enable;
 static int pf1_rowscroll,pf2_rowscroll,pf3_rowscroll;
 static int pf1_shape,pf2_shape,pf3_shape;
+static int m92_sprite_list;
 
-int m92_sprite_list,m92_raster_irq_position,m92_spritechip;
-unsigned char *m92_vram_data,*m92_spriteram,*m92_spritecontrol;
+int m92_raster_irq_position,m92_spritechip,m92_raster_machine,m92_raster_enable;
+unsigned char *m92_vram_data,*m92_spritecontrol;
+int m92_game_kludge;
+
+extern void m92_sprite_interrupt(void);
+
+/* This is a kludgey speedup that I consider to be pretty ugly..  But -
+it gets a massive speed increase (~40fps -> ~65fps).  It works by avoiding
+the need to dirty the top playfield twice a frame */
+#define RYPELEO_SPEEDUP m92_game_kludge==1
 
 /*****************************************************************************/
 
@@ -64,8 +70,9 @@ void m92_spritecontrol_w(int offset,int data)
 	/* The games using this sprite chip can autoclear spriteram */
 	if (offset==8 && m92_spritechip==1) {
 //		if (errorlog) fprintf(errorlog,"%04x: cleared spriteram\n",cpu_get_pc());
-		memcpy(m92_spriteram,spriteram,0x800);
+		buffer_spriteram_w(0,0);
 		memset(spriteram,0,0x800);
+		m92_sprite_interrupt();
 	}
 }
 
@@ -73,7 +80,8 @@ void m92_spritebuffer_w(int offset,int data)
 {
 //	if (errorlog) fprintf(errorlog,"%04x: buffered spriteram %d %d\n",cpu_get_pc(),offset,data);
 	if (m92_spritechip==0 && offset==0) {
-		memcpy(m92_spriteram,spriteram,0x800);
+		buffer_spriteram_w(0,0);
+		m92_sprite_interrupt();
 	}
 //	if (m92_spritechip==1)	memset(spriteram,0,0x800);
 }
@@ -85,6 +93,41 @@ static void get_pf1_tile_info( int col, int row )
 	int offs,tile,color,pri;
 	offs=(col*4) + (row*256);
 	offs+=pf1_vram_ptr;
+
+	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
+	color=m92_vram_data[offs+2];
+	SET_TILE_INFO(0,tile,color&0x3f)
+
+	if (m92_vram_data[offs+3]&1) pri = 2;
+	else if (color&0x80) pri = 1;
+	else pri = 0;
+
+	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1) | TILE_SPLIT(pri);
+}
+
+static void get_pf1_htile_info( int col, int row )
+{
+	int offs,tile,color,pri;
+	offs=(col*4) + (row*256);
+	offs+=0xc000;
+
+	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
+	color=m92_vram_data[offs+2];
+	SET_TILE_INFO(0,tile,color&0x3f)
+
+	if (m92_vram_data[offs+3]&1) pri = 2;
+	else if (color&0x80) pri = 1;
+	else pri = 0;
+
+	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1) | TILE_SPLIT(pri);
+}
+
+static void get_pf1_ltile_info( int col, int row )
+{
+	int offs,tile,color,pri;
+	offs=(col*4) + (row*256);
+	if (pf1_vram_ptr==0x4000) offs+=0x4000;
+	else if (pf1_vram_ptr==0x8000) offs+=0x8000;
 
 	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
 	color=m92_vram_data[offs+2];
@@ -122,12 +165,27 @@ static void get_pf3_tile_info( int col, int row )
 	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
 	color=m92_vram_data[offs+2];
 
-	//if (m92_vram_data[offs+3]&1) pri = 2;
-	//else
 	if (color&0x80) pri = 1;
 	else pri = 0;
 
 	SET_TILE_INFO(0,tile,color&0x3f)
+	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1) | TILE_SPLIT(pri);
+}
+
+static void get_pf1_wide_tile_info( int col, int row )
+{
+	int offs,tile,color,pri;
+	offs=(col*4) + (row*512);
+	offs+=pf1_vram_ptr;
+
+	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
+	color=m92_vram_data[offs+2];
+	SET_TILE_INFO(0,tile,color&0x3f)
+
+	if (m92_vram_data[offs+3]&1) pri = 2;
+	else if (color&0x80) pri = 1;
+	else pri = 0;
+
 	tile_info.flags = TILE_FLIPYX((m92_vram_data[offs+3] & 0x6)>>1) | TILE_SPLIT(pri);
 }
 
@@ -140,8 +198,6 @@ static void get_pf3_wide_tile_info( int col, int row )
 	tile=m92_vram_data[offs]+(m92_vram_data[offs+1]<<8);
 	color=m92_vram_data[offs+2];
 
-//	if (m92_vram_data[offs+3]&1) pri = 2;
-//	else
 	if (color&0x80) pri = 1;
 	else pri = 0;
 
@@ -167,8 +223,18 @@ void m92_vram_w(int offset,int data)
 	wide=offset&0x7fff;
 	offset&=0x3fff;
 
-	if (a==pf1_vram_ptr)
+	if (RYPELEO_SPEEDUP) {
+		if (a==0xc000) {
+			tilemap_mark_tile_dirty( pf1_hlayer,(offset/4)%64,(offset/4)/64 );
+			return;
+		}
 		tilemap_mark_tile_dirty( pf1_layer,(offset/4)%64,(offset/4)/64 );
+	}
+	else
+	if (a==pf1_vram_ptr || (a==pf1_vram_ptr+0x4000)) {
+		tilemap_mark_tile_dirty( pf1_layer,(offset/4)%64,(offset/4)/64 );
+		tilemap_mark_tile_dirty( pf1_wide_layer,(wide/4)%128,(wide/4)/128 );
+	}
 
 	if (a==pf2_vram_ptr)
 		tilemap_mark_tile_dirty( pf2_layer,(offset/4)%64,(offset/4)/64 );
@@ -206,12 +272,23 @@ void m92_master_control_w(int offset,int data)
 		case 0: /* Playfield 1 (top layer) */
 			if ((pf4_control[0]&0x10)==0x10) pf1_enable=0; else pf1_enable=1;
 			if ((pf4_control[0]&0x40)==0x40) pf1_rowscroll=1; else pf1_rowscroll=0;
-			tilemap_set_enable(pf1_layer,pf1_enable);
 			pf1_vram_ptr=(pf4_control[0]&3)*0x4000;
 			pf1_shape=(pf4_control[0]&4)>>2;
+
+			if (RYPELEO_SPEEDUP) tilemap_set_enable(pf1_hlayer,pf1_enable);
+			if (pf1_shape) {
+				tilemap_set_enable(pf1_layer,0);
+				tilemap_set_enable(pf1_wide_layer,pf1_enable);
+			}
+			else {
+				tilemap_set_enable(pf1_layer,pf1_enable);
+				tilemap_set_enable(pf1_wide_layer,0);
+			}
 			/* Have to dirty tilemaps if vram pointer has changed */
-			if (last_pf1_ptr!=pf1_vram_ptr)
+			if (m92_game_kludge!=1 && last_pf1_ptr!=pf1_vram_ptr) {
 				tilemap_mark_all_tiles_dirty(pf1_layer);
+				tilemap_mark_all_tiles_dirty(pf1_wide_layer);
+			}
 			last_pf1_ptr=pf1_vram_ptr;
 			break;
 		case 2: /* Playfield 2 (middle layer) */
@@ -229,7 +306,6 @@ void m92_master_control_w(int offset,int data)
 			if ((pf4_control[4]&0x40)==0x40) pf3_rowscroll=1; else pf3_rowscroll=0;
 			pf3_shape=(pf4_control[4]&4)>>2;
 
-			/* Changing shape enabled for pf3 only for now */
 			if (pf3_shape) {
 				tilemap_set_enable(pf3_layer,0);
 				tilemap_set_enable(pf3_wide_layer,pf3_enable);
@@ -248,9 +324,9 @@ void m92_master_control_w(int offset,int data)
 		case 6:
 		case 7:
 			m92_raster_irq_position=((pf4_control[7]<<8) | pf4_control[6])-128;
-	if (errorlog && offset==7) fprintf(errorlog,"%04x: raster %d\n",cpu_get_pc(),m92_raster_irq_position);
-
-		break;
+			if (!m92_raster_machine && m92_raster_enable && m92_raster_irq_position>128)
+				usrintf_showmessage("WARNING!  RASTER IRQ ON NON-RASTER MACHINE DRIVER!");
+			break;
 	}
 }
 
@@ -258,12 +334,32 @@ void m92_master_control_w(int offset,int data)
 
 int m92_vh_start(void)
 {
-	pf1_layer = tilemap_create(
-		get_pf1_tile_info,
-		TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
-		8,8,
-		64,64
-	);
+	if (RYPELEO_SPEEDUP) {
+		pf1_hlayer = tilemap_create(
+			get_pf1_htile_info,
+			TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+			8,8,
+			64,64
+		);
+		pf1_layer = tilemap_create(
+				get_pf1_ltile_info,
+				TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+				8,8,
+				64,64
+			);
+		tilemap_set_scroll_cols(pf1_hlayer,1);
+		pf1_hlayer->transmask[0] = 0xffff;
+		pf1_hlayer->transmask[1] = 0x00ff;
+		pf1_hlayer->transmask[2] = 0x0001;
+		pf1_hlayer->transparent_pen = 0;
+	}
+	else
+		pf1_layer = tilemap_create(
+			get_pf1_tile_info,
+			TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+			8,8,
+			64,64
+		);
 
 	pf2_layer = tilemap_create(
 		get_pf2_tile_info,
@@ -279,6 +375,13 @@ int m92_vh_start(void)
 		64,64
 	);
 
+	pf1_wide_layer = tilemap_create(
+		get_pf1_wide_tile_info,
+		TILEMAP_TRANSPARENT | TILEMAP_SPLIT,
+		8,8,
+		128,64
+	);
+
 	pf3_wide_layer = tilemap_create(
 		get_pf3_wide_tile_info,
 		TILEMAP_SPLIT,
@@ -288,28 +391,30 @@ int m92_vh_start(void)
 
 	pf1_layer->transparent_pen = 0;
 	pf2_layer->transparent_pen = 0;
+	pf1_wide_layer->transparent_pen = 0;
 	/* split type 0 - totally transparent in front half */
 	pf1_layer->transmask[0] = 0xffff;
 	pf2_layer->transmask[0] = 0xffff;
 	pf3_layer->transmask[0] = 0xffff;
+	pf1_wide_layer->transmask[0] = 0xffff;
 	pf3_wide_layer->transmask[0] = 0xffff;
 	/* split type 1 - pens 0-7 transparent in front half */
 	pf1_layer->transmask[1] = 0x00ff;
 	pf2_layer->transmask[1] = 0x00ff;
 	pf3_layer->transmask[1] = 0x00ff;
+	pf1_wide_layer->transmask[1] = 0x00ff;
 	pf3_wide_layer->transmask[1] = 0x00ff;
 	/* split type 2 - pen 0 transparent in front half */
 	pf1_layer->transmask[2] = 0x0001;
 	pf2_layer->transmask[2] = 0x0001;
 	pf3_layer->transmask[2] = 0x0001;
+	pf1_wide_layer->transmask[2] = 0x0001;
 	pf3_wide_layer->transmask[2] = 0x0001;
-
-	m92_spriteram = malloc(0x800);
-	memset(m92_spriteram,0,0x800);
 
 	tilemap_set_scroll_cols(pf1_layer,1);
 	tilemap_set_scroll_cols(pf2_layer,1);
 	tilemap_set_scroll_cols(pf3_layer,1);
+	tilemap_set_scroll_cols(pf1_wide_layer,1);
 	tilemap_set_scroll_cols(pf3_wide_layer,1);
 
 	pf1_vram_ptr=pf2_vram_ptr=pf3_vram_ptr=0;
@@ -318,45 +423,60 @@ int m92_vh_start(void)
 	pf1_shape=pf2_shape=pf3_shape=0;
 
 	m92_sprite_list=0;
+	memset(spriteram,0,0x800);
+	memset(buffered_spriteram,0,0x800);
 
 	return 0;
 }
 
 void m92_vh_stop(void)
 {
-	free(m92_spriteram);
+	/* Nothing */
 }
 
 /*****************************************************************************/
 
 static void mark_sprite_colours(void)
 {
-	int offs,color,i,pal_base,colmask[64];
+	int offs,color,i,j,pal_base,colmask[64];
     unsigned int *pen_usage; /* Save some struct derefs */
+	int sprite_mask;
+
+	sprite_mask=(Machine->drv->gfxdecodeinfo[1].gfxlayout->total)-1;
 
 	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
 	pen_usage=Machine->gfx[1]->pen_usage;
 	for (color = 0;color < 64;color++) colmask[color] = 0;
 
 	if (m92_spritechip==0)
-		m92_sprite_list=(0x10000 - (m92_spritecontrol[0] | (m92_spritecontrol[1]<<8)))&0xff;
-	for (offs = (m92_sprite_list*8)-8;offs >= 0;offs -= 8)
+		m92_sprite_list=(((0x100 - m92_spritecontrol[0])&0xff)*8)-8;
+	for (offs = m92_sprite_list;offs >= 0;offs -= 8)
 	{
-		int sprite,x_multi,multi,x,y;
+		int sprite,x_multi,y_multi,x,y,s_ptr;
 
 		/* Save colours by skipping offscreen sprites */
-		y=(m92_spriteram[offs+0] | (m92_spriteram[offs+1]<<8))&0x1ff;
-		x=(m92_spriteram[offs+6] | (m92_spriteram[offs+7]<<8))&0x1ff;
+		y=(buffered_spriteram[offs+0] | (buffered_spriteram[offs+1]<<8))&0x1ff;
+		x=(buffered_spriteram[offs+6] | (buffered_spriteram[offs+7]<<8))&0x1ff;
 		if (x==0 || y==0) continue;
 
-	    sprite=m92_spriteram[offs+2] | (m92_spriteram[offs+3]<<8);
-		color=m92_spriteram[offs+4]&0x3f;
-		x_multi=(m92_spriteram[offs+1]>>3)&0x3;
-		x_multi=1 << x_multi; /* 1, 2, 4 or 8 */
-		multi=8*x_multi; /* We don't care about Y-multi, use 8 to be safe */
+	    sprite=buffered_spriteram[offs+2] | (buffered_spriteram[offs+3]<<8);
+		color=buffered_spriteram[offs+4]&0x3f;
 
-		for (i=0; i<multi; i++)
-			colmask[color] |= pen_usage[(sprite + i)&0x7fff];
+		y_multi=(buffered_spriteram[offs+1]>>1)&0x3;
+		x_multi=(buffered_spriteram[offs+1]>>3)&0x3;
+
+		y_multi=1 << y_multi; /* 1, 2, 4 or 8 */
+		x_multi=1 << x_multi; /* 1, 2, 4 or 8 */
+
+		for (j=0; j<x_multi; j++)
+		{
+			s_ptr=8 * j;
+			for (i=0; i<y_multi; i++)
+			{
+				colmask[color] |= pen_usage[(sprite + s_ptr)&sprite_mask];
+				s_ptr++;
+			}
+		}
 	}
 
 	for (color = 0;color < 64;color++)
@@ -374,26 +494,26 @@ static void m92_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *c
 	int offs;
 
 	/* The sprite list is now drawn *in reverse* from the control length */
-	for (offs = (m92_sprite_list*8)-8;offs >= 0;offs -= 8) {
+	for (offs = m92_sprite_list;offs >= 0;offs -= 8) {
 		int x,y,sprite,colour,fx,fy,x_multi,y_multi,i,j,s_ptr;
 
-		if (((m92_spriteram[offs+4]&0x80)==0x80) && pri==0) continue;
-		if (((m92_spriteram[offs+4]&0x80)==0x00) && pri==1) continue;
+		if (((buffered_spriteram[offs+4]&0x80)==0x80) && pri==0) continue;
+		if (((buffered_spriteram[offs+4]&0x80)==0x00) && pri==1) continue;
 
-		y=(m92_spriteram[offs+0] | (m92_spriteram[offs+1]<<8))&0x1ff;
-		x=(m92_spriteram[offs+6] | (m92_spriteram[offs+7]<<8))&0x1ff;
+		y=(buffered_spriteram[offs+0] | (buffered_spriteram[offs+1]<<8))&0x1ff;
+		x=(buffered_spriteram[offs+6] | (buffered_spriteram[offs+7]<<8))&0x1ff;
 		if (x==0 || y==0) continue; /* offscreen */
-
-	    sprite=(m92_spriteram[offs+2] | (m92_spriteram[offs+3]<<8))&0x7fff;
 
 		x = x - 16;
 		y = 512 - 16 - y;
 
-		colour=m92_spriteram[offs+4]&0x3f;
-		fx=m92_spriteram[offs+5]&1;
-		fy=m92_spriteram[offs+5]&2;
-		y_multi=(m92_spriteram[offs+1]>>1)&0x3;
-		x_multi=(m92_spriteram[offs+1]>>3)&0x3;
+	    sprite=(buffered_spriteram[offs+2] | (buffered_spriteram[offs+3]<<8));
+		colour=buffered_spriteram[offs+4]&0x3f;
+
+		fx=buffered_spriteram[offs+5]&1;
+		fy=buffered_spriteram[offs+5]&2;
+		y_multi=(buffered_spriteram[offs+1]>>1)&0x3;
+		x_multi=(buffered_spriteram[offs+1]>>3)&0x3;
 
 		y_multi=1 << y_multi; /* 1, 2, 4 or 8 */
 		x_multi=1 << x_multi; /* 1, 2, 4 or 8 */
@@ -423,7 +543,15 @@ static void m92_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *c
 
 void m92_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* Nothing - screen refresh is handled by raster interrupt routine */
+	/* Screen refresh is handled by raster interrupt routine, here
+		we just check the keyboard */
+	if (keyboard_pressed_memory(KEYCODE_F1)) {
+		m92_raster_enable ^= 1;
+		if (m92_raster_enable)
+			usrintf_showmessage("Raster IRQ enabled");
+		else
+			usrintf_showmessage("Raster IRQ disabled");
+	}
 }
 
 static void m92_update_scroll_positions(void)
@@ -443,11 +571,16 @@ static void m92_update_scroll_positions(void)
 
 	if (pf1_rowscroll) {
 		tilemap_set_scroll_rows(pf1_layer,512);
+		tilemap_set_scroll_rows(pf1_wide_layer,512);
 		for (i=0; i<1024; i+=2)
 			tilemap_set_scrollx( pf1_layer,i/2, (m92_vram_data[0xf400+i]+(m92_vram_data[0xf401+i]<<8)));
+		for (i=0; i<1024; i+=2)
+			tilemap_set_scrollx( pf1_wide_layer,i/2, (m92_vram_data[0xf400+i]+(m92_vram_data[0xf401+i]<<8))+256);
 	} else {
 		tilemap_set_scroll_rows(pf1_layer,1);
+		tilemap_set_scroll_rows(pf1_wide_layer,1);
 		tilemap_set_scrollx( pf1_layer,0, (pf1_control[5]<<8)+pf1_control[4] );
+		tilemap_set_scrollx( pf1_wide_layer,0, (pf1_control[5]<<8)+pf1_control[4]+256 );
 	}
 
 	if (pf2_rowscroll) {
@@ -476,11 +609,20 @@ static void m92_update_scroll_positions(void)
 	tilemap_set_scrolly( pf1_layer,0, (pf1_control[1]<<8)+pf1_control[0] );
 	tilemap_set_scrolly( pf2_layer,0, (pf2_control[1]<<8)+pf2_control[0] );
 	tilemap_set_scrolly( pf3_layer,0, (pf3_control[1]<<8)+pf3_control[0] );
+	tilemap_set_scrolly( pf1_wide_layer,0, (pf1_control[1]<<8)+pf1_control[0] );
 	tilemap_set_scrolly( pf3_wide_layer,0, (pf3_control[1]<<8)+pf3_control[0] );
 
 	if (m92_spritechip==1)
-		m92_sprite_list=0x100;
+		m92_sprite_list=0x800-8;
 
+	if (RYPELEO_SPEEDUP) {
+		tilemap_set_scroll_rows(pf1_hlayer,1);
+		tilemap_set_scrollx( pf1_hlayer,0, (pf1_control[5]<<8)+pf1_control[4] );
+		tilemap_set_scrolly( pf1_hlayer,0, (pf1_control[1]<<8)+pf1_control[0] );
+		pf1_hlayer->scrolled=1;
+	}
+
+	pf1_wide_layer->scrolled=1;
 	pf3_wide_layer->scrolled=1;
 	pf3_layer->scrolled=1;
 	pf2_layer->scrolled=1;
@@ -491,13 +633,17 @@ static void m92_update_scroll_positions(void)
 
 static void m92_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
 {
-//	tilemap_update(ALL_TILEMAPS);
 	if (pf3_shape) /* Updating all tilemaps causes palette overflow */
 		tilemap_update(pf3_wide_layer);
 	else
 		tilemap_update(pf3_layer);
 	tilemap_update(pf2_layer);
-	tilemap_update(pf1_layer);
+	if (pf1_shape)
+		tilemap_update(pf1_wide_layer);
+	else
+		tilemap_update(pf1_layer);
+
+	if (RYPELEO_SPEEDUP) tilemap_update(pf1_hlayer);
 
 	/* This should be done once a frame only... but we can almost get away with it */
 	palette_init_used_colors();
@@ -508,22 +654,29 @@ static void m92_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *
 	tilemap_render(ALL_TILEMAPS);
 
 	if (pf3_enable) {
-		if (pf3_shape)
-			tilemap_draw(bitmap,pf3_wide_layer,TILEMAP_BACK);
-		else
-			tilemap_draw(bitmap,pf3_layer,TILEMAP_BACK);
+		tilemap_draw(bitmap,pf3_wide_layer,TILEMAP_BACK);
+		tilemap_draw(bitmap,pf3_layer,TILEMAP_BACK);
 	}
 	else
 		fillbitmap(bitmap,palette_transparent_pen,clip);
 
 	tilemap_draw(bitmap,pf2_layer,TILEMAP_BACK);
-	tilemap_draw(bitmap,pf1_layer,TILEMAP_BACK);
+	tilemap_draw(bitmap,pf1_wide_layer,TILEMAP_BACK);
+	if (RYPELEO_SPEEDUP && pf1_vram_ptr==0xc000)
+		tilemap_draw(bitmap,pf1_hlayer,TILEMAP_BACK);
+	else
+		tilemap_draw(bitmap,pf1_layer,TILEMAP_BACK);
 
 	m92_drawsprites(bitmap,clip,0);
 
+	tilemap_draw(bitmap,pf3_wide_layer,TILEMAP_FRONT);
 	tilemap_draw(bitmap,pf3_layer,TILEMAP_FRONT);
 	tilemap_draw(bitmap,pf2_layer,TILEMAP_FRONT);
-	tilemap_draw(bitmap,pf1_layer,TILEMAP_FRONT);
+	tilemap_draw(bitmap,pf1_wide_layer,TILEMAP_FRONT);
+	if (RYPELEO_SPEEDUP && pf1_vram_ptr==0xc000)
+		tilemap_draw(bitmap,pf1_hlayer,TILEMAP_FRONT);
+	else
+		tilemap_draw(bitmap,pf1_layer,TILEMAP_FRONT);
 
 	m92_drawsprites(bitmap,clip,1); /* These sprites are over all playfields */
 
@@ -608,9 +761,11 @@ void m92_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int 
 	if (clip.max_y > clip.min_y)
 	{
 		m92_update_scroll_positions();
+		if (RYPELEO_SPEEDUP) tilemap_set_clip(pf1_hlayer,&clip);
 		tilemap_set_clip(pf1_layer,&clip);
 		tilemap_set_clip(pf2_layer,&clip);
 		tilemap_set_clip(pf3_layer,&clip);
+		tilemap_set_clip(pf1_wide_layer,&clip);
 		tilemap_set_clip(pf3_wide_layer,&clip);
 		m92_screenrefresh(bitmap,&clip);
 	}

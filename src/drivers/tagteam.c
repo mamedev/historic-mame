@@ -291,7 +291,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( tagteam_rom )
+ROM_START( tagteam )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "prowbf0.bin",  0x08000, 0x2000, 0x6ec3afae )
 	ROM_LOAD( "prowbf1.bin",  0x0a000, 0x2000, 0xb8fdd176 )

@@ -416,21 +416,21 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( megazone_rom )
+ROM_START( megazone )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ic59_cpu.bin",  0x6000, 0x2000, 0xf41922a0 )
-	ROM_LOAD( "ic58_cpu.bin",  0x8000, 0x2000, 0x7fd7277b )
-	ROM_LOAD( "ic57_cpu.bin",  0xa000, 0x2000, 0xa4b33b51 )
-	ROM_LOAD( "ic56_cpu.bin",  0xc000, 0x2000, 0x2aabcfbf )
-	ROM_LOAD( "ic55_cpu.bin",  0xe000, 0x2000, 0xb33a3c37 )
+	ROM_LOAD( "319i07.bin",    0x6000, 0x2000, 0x94b22ea8 )
+	ROM_LOAD( "319i06.bin",    0x8000, 0x2000, 0x0468b619 )
+	ROM_LOAD( "319i05.bin",    0xa000, 0x2000, 0xac59000c )
+	ROM_LOAD( "319i04.bin",    0xc000, 0x2000, 0x1e968603 )
+	ROM_LOAD( "319i03.bin",    0xe000, 0x2000, 0x0888b803 )
 
 	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic40_vid.bin",  0x0000, 0x2000, 0x07b8b24b )
-	ROM_LOAD( "ic58_vid.bin",  0x2000, 0x2000, 0x3d8f3743 )
-	ROM_LOAD( "ic15_vid.bin",  0x4000, 0x2000, 0x965a7ff6 )
-	ROM_LOAD( "ic05_vid.bin",  0x6000, 0x2000, 0x5eaa7f3e )
-	ROM_LOAD( "ic14_vid.bin",  0x8000, 0x2000, 0x7bb1aeee )
-	ROM_LOAD( "ic04_vid.bin",  0xa000, 0x2000, 0x6add71b1 )
+	ROM_LOAD( "319e12.bin",    0x0000, 0x2000, 0xe0fb7835 )
+	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
+	ROM_LOAD( "319e11.bin",    0x4000, 0x2000, 0xf36f19c5 )
+	ROM_LOAD( "319e09.bin",    0x6000, 0x2000, 0x5eaa7f3e )
+	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
+	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
 
 	ROM_REGION(0x260)      /* PROMs */
 	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
@@ -440,11 +440,43 @@ ROM_START( megazone_rom )
 	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "ic25_cpu.bin", 0x0000, 0x2000, 0xd5d45edb )
+	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
 
 	ROM_REGION(0x1000)     /* 4k for the 8039 DAC CPU */
-	ROM_LOAD( "ic02_cpu.bin", 0x0000, 0x1000, 0xed5725a0 )
+	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
 ROM_END
+
+ROM_START( megaznik )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ic59_cpu.bin",  0x6000, 0x2000, 0xf41922a0 )
+	ROM_LOAD( "ic58_cpu.bin",  0x8000, 0x2000, 0x7fd7277b )
+	ROM_LOAD( "ic57_cpu.bin",  0xa000, 0x2000, 0xa4b33b51 )
+	ROM_LOAD( "ic56_cpu.bin",  0xc000, 0x2000, 0x2aabcfbf )
+	ROM_LOAD( "ic55_cpu.bin",  0xe000, 0x2000, 0xb33a3c37 )
+
+	ROM_REGION_DISPOSE(0x10000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic40_vid.bin",  0x0000, 0x2000, 0x07b8b24b )
+	ROM_LOAD( "319e13.bin",    0x2000, 0x2000, 0x3d8f3743 )
+	ROM_LOAD( "ic15_vid.bin",  0x4000, 0x2000, 0x965a7ff6 )
+	ROM_LOAD( "319e09.bin",    0x6000, 0x2000, 0x5eaa7f3e )
+	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
+	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
+
+	ROM_REGION(0x260)      /* PROMs */
+	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
+	ROM_LOAD( "319b16.c6",   0x0020, 0x100, 0x5748e933 ) /* sprite lookup table */
+	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
+	ROM_LOAD( "319b14.e7",   0x0220, 0x020, 0x55044268 ) /* timing (not used) */
+	ROM_LOAD( "319b15.e8",   0x0240, 0x020, 0x31fd7ab9 ) /* timing (not used) */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "319e02.bin",   0x0000, 0x2000, 0xd5d45edb )
+
+	ROM_REGION(0x1000)     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319e01.bin",   0x0000, 0x1000, 0xed5725a0 )
+ROM_END
+
+
 
 /****  Mega Zone high score save routine - RJF (July 24, 1999)  ****/
 static int hiload(void)
@@ -504,6 +536,8 @@ static void megazone_decode(void)
 	}
 }
 
+
+
 struct GameDriver megazone_driver =
 {
 	__FILE__,
@@ -511,13 +545,39 @@ struct GameDriver megazone_driver =
 	"megazone",
 	"Mega Zone",
 	"1983",
-	"Konami / Interlogic + Kosuka",
+	"Konami",
 	"Chris Hardy",
 	0,
 	&machine_driver,
 	0,
 
 	megazone_rom,
+	0, megazone_decode,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+        hiload, hisave
+};
+
+struct GameDriver megaznik_driver =
+{
+	__FILE__,
+	&megazone_driver,
+	"megaznik",
+	"Mega Zone (Kosuka)",
+	"1983",
+	"Konami / Interlogic + Kosuka",
+	"Chris Hardy",
+	0,
+	&machine_driver,
+	0,
+
+	megaznik_rom,
 	0, megazone_decode,
 	0,
 	0,      /* sound_prom */

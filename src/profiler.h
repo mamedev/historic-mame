@@ -16,8 +16,9 @@ enum {
 	PROFILER_BLIT,
 	PROFILER_SOUND,
 	PROFILER_TIMER_CALLBACK,
-	PROFILER_EXTRA,
 	PROFILER_HISCORE,	/* high score load can slow things down if incorrectly written */
+	PROFILER_INPUT,		/* input.c and inptport.c */
+	PROFILER_EXTRA,		/* everything else */
 
 	/* the USER types are available to driver writers to profile */
 	/* custom sections of the code */

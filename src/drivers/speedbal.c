@@ -323,7 +323,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( speedbal_rom )
+ROM_START( speedbal )
 	ROM_REGION(0x10000)     /* 64K for code: main */
 	ROM_LOAD( "sb1.bin",  0x0000,  0x8000, 0x1c242e34 )
 	ROM_LOAD( "sb3.bin",  0x8000,  0x8000, 0x7682326a )

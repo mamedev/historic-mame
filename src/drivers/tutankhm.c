@@ -379,7 +379,7 @@ static struct MachineDriver machine_driver =
 };
 
 
-ROM_START( tutankhm_rom )
+ROM_START( tutankhm )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
@@ -404,7 +404,7 @@ ROM_START( tutankhm_rom )
 ROM_END
 
 
-ROM_START( tutankst_rom )
+ROM_START( tutankst )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
 	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )

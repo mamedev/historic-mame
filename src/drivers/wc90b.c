@@ -442,7 +442,7 @@ static struct MachineDriver wc90b_machine_driver =
 	}
 };
 
-ROM_START( wc90b_rom )
+ROM_START( wc90b )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "a02.bin",      0x00000, 0x10000, 0x192a03dd )	/* c000-ffff is not used */
 	ROM_LOAD( "a03.bin",      0x10000, 0x10000, 0xf54ff17a )	/* banked at f000-f7ff */

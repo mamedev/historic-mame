@@ -200,7 +200,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( atetris_rom )
+ROM_START( atetris )
 	ROM_REGION(0x14000)     /* 80k for code */
 	ROM_LOAD( "1100.45f",     0x0000, 0x10000, 0x2acbdb09 )
 
@@ -208,7 +208,7 @@ ROM_START( atetris_rom )
 	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
-ROM_START( atetrisa_rom )
+ROM_START( atetrisa )
 	ROM_REGION(0x14000)     /* 80k for code */
 	ROM_LOAD( "d1",           0x0000, 0x10000, 0x2bcab107 )
 
@@ -216,7 +216,7 @@ ROM_START( atetrisa_rom )
 	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
-ROM_START( atetrisb_rom )
+ROM_START( atetrisb )
 	ROM_REGION(0x14000)     /* 80k for code */
 	ROM_LOAD( "tetris.01",    0x0000, 0x10000, 0x944d15f6 )
 
@@ -227,7 +227,7 @@ ROM_START( atetrisb_rom )
 	/* however doesn't seem to be required to run the game in this driver. */
 ROM_END
 
-ROM_START( atetcktl_rom )
+ROM_START( atetcktl )
 	ROM_REGION(0x14000)     /* 80k for code */
 	ROM_LOAD( "tetcktl1.rom", 0x0000, 0x10000, 0x9afd1f4a )
 
@@ -235,7 +235,7 @@ ROM_START( atetcktl_rom )
 	ROM_LOAD( "1103.35a",     0x0000, 0x10000, 0xec2a7f93 )
 ROM_END
 
-ROM_START( atetckt2_rom )
+ROM_START( atetckt2 )
 	ROM_REGION(0x14000)     /* 80k for code */
 	ROM_LOAD( "1102.45f",     0x0000, 0x10000, 0x1bd28902 )
 

@@ -374,7 +374,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( wiping_rom )
+ROM_START( wiping )
 	ROM_REGION(0x10000)	/* Region 0 - main cpu code */
 	ROM_LOAD( "1",            0x0000, 0x2000, 0xb55d0d19 )
 	ROM_LOAD( "2",            0x2000, 0x2000, 0xb1f96e47 )
@@ -401,7 +401,7 @@ ROM_START( wiping_rom )
 	ROM_LOAD( "wip-e9.bin",   0x0100, 0x0100, 0x4017a2a6 )	/* high 4 bits */
 ROM_END
 
-ROM_START( rugrats_rom )
+ROM_START( rugrats )
 	ROM_REGION(0x10000)	/* Region 0 - main cpu code */
 	ROM_LOAD( "rugr1d1",      0x0000, 0x2000, 0xe7e1bd6d )
 	ROM_LOAD( "rugr2d2",      0x2000, 0x2000, 0x5f47b9ad )

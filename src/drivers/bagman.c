@@ -470,7 +470,7 @@ static struct MachineDriver pickin_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bagman_rom )
+ROM_START( bagman )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
 	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
@@ -494,7 +494,7 @@ ROM_START( bagman_rom )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
-ROM_START( bagnard_rom )
+ROM_START( bagnard )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
 	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
@@ -518,7 +518,7 @@ ROM_START( bagnard_rom )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
-ROM_START( bagmans_rom )
+ROM_START( bagmans )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
 	ROM_LOAD( "a5-9f",        0x1000, 0x1000, 0x2ddf6bb9 )
@@ -542,7 +542,7 @@ ROM_START( bagmans_rom )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
-ROM_START( bagmans2_rom )
+ROM_START( bagmans2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a4_9e.bin",    0x0000, 0x1000, 0x5fb0a1a3 )
 	ROM_LOAD( "a4_9f.bin",    0x1000, 0x1000, 0x7871206e )
@@ -566,7 +566,7 @@ ROM_START( bagmans2_rom )
 	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
-ROM_START( sbagman_rom )
+ROM_START( sbagman )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "5.9e",         0x0000, 0x1000, 0x1b1d6b0a )
 	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
@@ -600,7 +600,7 @@ ROM_START( sbagman_rom )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
-ROM_START( sbagmans_rom )
+ROM_START( sbagmans )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sbag_9e.bin",  0x0000, 0x1000, 0xc19696f2 )
 	ROM_LOAD( "6.9f",         0x1000, 0x1000, 0xac49cb82 )
@@ -634,7 +634,7 @@ ROM_START( sbagmans_rom )
 	ROM_LOAD( "12.9t",        0x1000, 0x1000, 0xb2120edd )
 ROM_END
 
-ROM_START( pickin_rom )
+ROM_START( pickin )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "9e",           0x0000, 0x1000, 0xefd0bd43 )
 	ROM_LOAD( "9f",           0x1000, 0x1000, 0xb5785a23 )

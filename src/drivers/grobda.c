@@ -292,7 +292,7 @@ static struct MachineDriver grobda_machine_driver =
 	}
 };
 
-ROM_START( grobda_rom )
+ROM_START( grobda )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr1-2.c1",  0xc000, 0x2000, 0x7dcc6e8e )
@@ -315,7 +315,7 @@ ROM_START( grobda_rom )
 	ROM_LOAD( "mb7052.3m", 0x0000, 0x0100, 0x66eb1467 )
 ROM_END
 
-ROM_START( grobda2_rom )
+ROM_START( grobda2 )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr1-3.d1",  0xa000, 0x2000, 0x4ef4a7c1 )
 	ROM_LOAD( "gr2-2.a",   0xc000, 0x2000, 0xf93e82ae )
@@ -338,7 +338,7 @@ ROM_START( grobda2_rom )
 	ROM_LOAD( "mb7052.3m", 0x0000, 0x0100, 0x66eb1467 )
 ROM_END
 
-ROM_START( grobda3_rom )
+ROM_START( grobda3 )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "gr2-3",     0xa000, 0x2000, 0x8e3a23be )
 	ROM_LOAD( "gr2-2",     0xc000, 0x2000, 0x19ffa83d )

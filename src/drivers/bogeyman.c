@@ -293,7 +293,7 @@ static struct MachineDriver bogeyman_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( bogeyman_rom )
+ROM_START( bogeyman )
 	ROM_REGION(0x58000)
  	ROM_LOAD( "j20.c14",  0x04000, 0x04000, 0xea90d637 )
 	ROM_LOAD( "j10.c15",  0x08000, 0x04000, 0x0a8f218d )

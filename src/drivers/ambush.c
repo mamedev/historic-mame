@@ -225,7 +225,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-ROM_START( ambush_rom )
+ROM_START( ambush )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "ambush.h7",    0x0000, 0x2000, 0xce306563 )
 	ROM_LOAD( "ambush.g7",    0x2000, 0x2000, 0x90291409 )

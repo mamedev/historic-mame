@@ -356,7 +356,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pacland_rom )
+ROM_START( pacland )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "pl5_01b.bin",  0x08000, 0x4000, 0xb0ea7631 )
 	ROM_LOAD( "pl5_02.bin",   0x0C000, 0x4000, 0xd903e84e )
@@ -389,7 +389,7 @@ ROM_START( pacland_rom )
 	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
-ROM_START( pacland2_rom )
+ROM_START( pacland2 )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "pl6_01.bin",   0x08000, 0x4000, 0x4c96e11c )
 	ROM_LOAD( "pl6_02.bin",   0x0C000, 0x4000, 0x8cf5bd8d )
@@ -422,7 +422,7 @@ ROM_START( pacland2_rom )
 	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
-ROM_START( pacland3_rom )
+ROM_START( pacland3 )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "pln1-1",       0x08000, 0x4000, 0xf729fb94 )
 	ROM_LOAD( "pln1-2",       0x0C000, 0x4000, 0x5c66eb6f )
@@ -455,7 +455,7 @@ ROM_START( pacland3_rom )
 	ROM_LOAD( "pl-snd",  0x0000, 0x0200, 0xd3aff2df )
 ROM_END
 
-ROM_START( paclandm_rom )
+ROM_START( paclandm )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "pl1-1",        0x08000, 0x4000, 0xa938ae99 )
 	ROM_LOAD( "pl1-2",        0x0C000, 0x4000, 0x3fe43bb5 )

@@ -367,7 +367,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( kangaroo_rom )
+ROM_START( kangaroo )
 	ROM_REGION(0x14000)	/* 64k for code + 16k for banked ROMs */
 	ROM_LOAD( "tvg75.bin",    0x0000, 0x1000, 0x0d18c581 )
 	ROM_LOAD( "tvg76.bin",    0x1000, 0x1000, 0x5978d37a )
@@ -392,7 +392,7 @@ ROM_START( kangaroo_rom )
 	ROM_LOAD( "tvg82.bin",    0x0000, 0x0800, 0x57766f69 )
 ROM_END
 
-ROM_START( kangarob_rom )
+ROM_START( kangarob )
 	ROM_REGION(0x14000)	/* 64k for code + 16k for banked ROMs */
 	ROM_LOAD( "tvg75.bin",    0x0000, 0x1000, 0x0d18c581 )
 	ROM_LOAD( "tvg76.bin",    0x1000, 0x1000, 0x5978d37a )
@@ -458,7 +458,7 @@ struct GameDriver kangaroo_driver =
 	"kangaroo",
 	"Kangaroo",
 	"1982",
-	"Atari",
+	"[Sun Electronics] (Atari license)",
 	"Ville Laitinen (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,

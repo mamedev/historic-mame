@@ -254,7 +254,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mrdo_rom )
+ROM_START( mrdo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
 	ROM_LOAD( "c4-02.bin",    0x2000, 0x2000, 0x0ecdd39c )
@@ -275,7 +275,7 @@ ROM_START( mrdo_rom )
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdot_rom )
+ROM_START( mrdot )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
@@ -296,7 +296,7 @@ ROM_START( mrdot_rom )
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdofix_rom )
+ROM_START( mrdofix )
     ROM_REGION(0x10000) /* 64k for code */
     ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
     ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
@@ -317,7 +317,7 @@ ROM_START( mrdofix_rom )
     ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )  /* sprite color lookup table */
 ROM_END
 
-ROM_START( mrlo_rom )
+ROM_START( mrlo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mrlo01.bin",   0x0000, 0x2000, 0x6f455e7d )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
@@ -338,7 +338,7 @@ ROM_START( mrlo_rom )
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdu_rom )
+ROM_START( mrdu )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
 	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
@@ -359,7 +359,7 @@ ROM_START( mrdu_rom )
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( mrdoy_rom )
+ROM_START( mrdoy )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dosnow.1",     0x0000, 0x2000, 0xd3454e2c )
 	ROM_LOAD( "dosnow.2",     0x2000, 0x2000, 0x5120a6b2 )
@@ -380,7 +380,7 @@ ROM_START( mrdoy_rom )
 	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
-ROM_START( yankeedo_rom )
+ROM_START( yankeedo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
 	ROM_LOAD( "yd_d2.c4",     0x2000, 0x2000, 0x7c9d7ce0 )

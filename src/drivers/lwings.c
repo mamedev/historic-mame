@@ -583,7 +583,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( lwings_rom )
+ROM_START( lwings )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "6c_lw01.bin",  0x00000, 0x8000, 0xb55a7f60 )
 	ROM_LOAD( "7c_lw02.bin",  0x10000, 0x8000, 0xa5efbb1b )
@@ -608,7 +608,7 @@ ROM_START( lwings_rom )
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
 ROM_END
 
-ROM_START( lwings2_rom )
+ROM_START( lwings2 )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "u13-l",        0x00000, 0x8000, 0x3069c01c )
 	ROM_LOAD( "u14-k",        0x10000, 0x8000, 0x5d91c828 )
@@ -633,7 +633,7 @@ ROM_START( lwings2_rom )
 	ROM_LOAD( "11e_lw04.bin", 0x0000, 0x8000, 0xa20337a2 )
 ROM_END
 
-ROM_START( lwingsjp_rom )
+ROM_START( lwingsjp )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "a_06c.rom",    0x00000, 0x8000, 0x2068a738 )
 	ROM_LOAD( "a_07c.rom",    0x10000, 0x8000, 0xd6a2edc4 )
@@ -791,7 +791,7 @@ struct GameDriver lwingsjp_driver =
 ***************************************************************/
 
 
-ROM_START( sectionz_rom )
+ROM_START( sectionz )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "6c_sz01.bin",  0x00000, 0x8000, 0x69585125 )
 	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0x22f161b8 )
@@ -816,7 +816,7 @@ ROM_START( sectionz_rom )
 	ROM_LOAD( "11e_sz04.bin", 0x0000, 0x8000, 0xa6073566 )
 ROM_END
 
-ROM_START( sctionza_rom )
+ROM_START( sctionza )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "sz-01a.bin",   0x00000, 0x8000, 0x98df49fd )
 	ROM_LOAD( "7c_sz02.bin",  0x10000, 0x8000, 0x22f161b8 )
@@ -950,22 +950,28 @@ table is lifted from the code.
 Sample 5 doesn't play properly.
 */
 
-ADPCM_SAMPLES_START(trojan_samples)
-	ADPCM_SAMPLE(0x00, 0x00a7, (0x0aa9-0x00a7)*2 )
-	ADPCM_SAMPLE(0x01, 0x0aa9, (0x12ab-0x0aa9)*2 )
-	ADPCM_SAMPLE(0x02, 0x12ab, (0x17ad-0x12ab)*2 )
-	ADPCM_SAMPLE(0x03, 0x17ad, (0x22af-0x17ad)*2 )
-	ADPCM_SAMPLE(0x04, 0x22af, (0x2db1-0x22af)*2 )
-	ADPCM_SAMPLE(0x05, 0x2db1, (0x310a-0x2db1)*2 )
-	ADPCM_SAMPLE(0x06, 0x310a, (0x3cb3-0x310a)*2 )
-ADPCM_SAMPLES_END
+struct ADPCMsample trojan_samples[] =
+{
+	{ 0x00, 0x00a7, (0x0aa9-0x00a7)*2 },
+	{ 0x01, 0x0aa9, (0x12ab-0x0aa9)*2 },
+	{ 0x02, 0x12ab, (0x17ad-0x12ab)*2 },
+	{ 0x03, 0x17ad, (0x22af-0x17ad)*2 },
+	{ 0x04, 0x22af, (0x2db1-0x22af)*2 },
+	{ 0x05, 0x2db1, (0x310a-0x2db1)*2 },
+	{ 0x06, 0x310a, (0x3cb3-0x310a)*2 }
+};
 
-static struct ADPCMinterface adpcm_interface =
+static void trojan_adpcm_init(const struct ADPCMinterface *adpcm_intf, struct ADPCMsample *sample_list, int max)
+{
+	memcpy(sample_list,trojan_samples,sizeof(trojan_samples));
+}
+
+static struct ADPCMinterface trojan_adpcm_interface =
 {
 	1,                      /* 1 channel */
 	4000,                   /* 4000Hz playback */
 	3,                      /* memory region 3 */
-	0,                      /* init function */
+	trojan_adpcm_init,		/* init function */
 	{ 255 }
 };
 
@@ -1016,14 +1022,14 @@ static struct MachineDriver trojan_machine_driver =
 		},
 		{
 			SOUND_ADPCM,
-			&adpcm_interface
+			&trojan_adpcm_interface
 		}
 	}
 };
 
 
 
-ROM_START( trojan_rom )
+ROM_START( trojan )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "t4",           0x00000, 0x8000, 0xc1bbeb4e )
 	ROM_LOAD( "t6",           0x10000, 0x8000, 0xd49592ef )
@@ -1060,7 +1066,7 @@ ROM_START( trojan_rom )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
 ROM_END
 
-ROM_START( trojanr_rom )
+ROM_START( trojanr )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "tb04.bin",     0x00000, 0x8000, 0x92670f27 )
 	ROM_LOAD( "tb06.bin",     0x10000, 0x8000, 0xa4951173 )
@@ -1097,7 +1103,7 @@ ROM_START( trojanr_rom )
 	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
 ROM_END
 
-ROM_START( trojanj_rom )
+ROM_START( trojanj )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "troj-04.rom",  0x00000, 0x8000, 0x0b5a7f49 )
 	ROM_LOAD( "troj-06.rom",  0x10000, 0x8000, 0xdee6ed92 )
@@ -1192,7 +1198,7 @@ struct GameDriver trojan_driver =
 	trojan_rom,
 	0, 0,
 	0,
-	trojan_samples, /* sound_prom */
+	0, /* sound_prom */
 
 	trojanls_input_ports,
 
@@ -1217,7 +1223,7 @@ struct GameDriver trojanr_driver =
 	trojanr_rom,
 	0, 0,
 	0,
-	trojan_samples, /* sound_prom */
+	0, /* sound_prom */
 
 	trojan_input_ports,
 
@@ -1242,7 +1248,7 @@ struct GameDriver trojanj_driver =
 	trojanj_rom,
 	0, 0,
 	0,
-	trojan_samples, /* sound_prom */
+	0, /* sound_prom */
 
 	trojan_input_ports,
 
@@ -1283,17 +1289,32 @@ int avengers_protection_r(int offset)
 /*
 E2 00 E4 03 E6 0C E8 10 EA 19 EC 25 EE 38 F0 3B F2 3E F4 49 F4 s
 */
-ADPCM_SAMPLES_START(avengers_samples)
-	ADPCM_SAMPLE(0x00, 0x00e2, (0x03e4 -0x00e2)*2 )
-	ADPCM_SAMPLE(0x01, 0x03e4, (0x0ce6 -0x03e4)*2 )
-	ADPCM_SAMPLE(0x02, 0x0ce6, (0x10e8 -0x0ce6)*2 )
-	ADPCM_SAMPLE(0x03, 0x10e8, (0x19ea -0x10e8)*2 )
-	ADPCM_SAMPLE(0x04, 0x19ea, (0x25ec -0x19ea)*2 )
-	ADPCM_SAMPLE(0x05, 0x25ec, (0x38ee -0x25ec)*2 )
-	ADPCM_SAMPLE(0x06, 0x38ee, (0x3bf0 -0x38ee)*2 )
-	ADPCM_SAMPLE(0x07, 0x3bf0, (0x3ef2 -0x3bf0)*2 )
-	ADPCM_SAMPLE(0x08, 0x3ef2, (0x49f4 -0x3ef2)*2 )
-ADPCM_SAMPLES_END
+struct ADPCMsample avengers_samples[] =
+{
+	{ 0x00, 0x00e2, (0x03e4 -0x00e2)*2 },
+	{ 0x01, 0x03e4, (0x0ce6 -0x03e4)*2 },
+	{ 0x02, 0x0ce6, (0x10e8 -0x0ce6)*2 },
+	{ 0x03, 0x10e8, (0x19ea -0x10e8)*2 },
+	{ 0x04, 0x19ea, (0x25ec -0x19ea)*2 },
+	{ 0x05, 0x25ec, (0x38ee -0x25ec)*2 },
+	{ 0x06, 0x38ee, (0x3bf0 -0x38ee)*2 },
+	{ 0x07, 0x3bf0, (0x3ef2 -0x3bf0)*2 },
+	{ 0x08, 0x3ef2, (0x49f4 -0x3ef2)*2 }
+};
+
+static void avengers_adpcm_init(const struct ADPCMinterface *adpcm_intf, struct ADPCMsample *sample_list, int max)
+{
+	memcpy(sample_list,avengers_samples,sizeof(avengers_samples));
+}
+
+static struct ADPCMinterface avengers_adpcm_interface =
+{
+	1,                      /* 1 channel */
+	4000,                   /* 4000Hz playback */
+	3,                      /* memory region 3 */
+	avengers_adpcm_init,	/* init function */
+	{ 255 }
+};
 
 /*
 machine driver is exactly the same as trojan apart from
@@ -1345,7 +1366,7 @@ static struct MachineDriver avengers_machine_driver =
 		},
 		{
 			SOUND_ADPCM,
-			&adpcm_interface
+			&avengers_adpcm_interface
 		}
 	}
 };
@@ -1393,7 +1414,7 @@ INPUT_PORTS_START( avengers_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( avengers_rom )
+ROM_START( avengers )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "04.10n",       0x00000, 0x8000, 0xa94aadcc )
 	ROM_LOAD( "06.13n",       0x10000, 0x8000, 0x39cd80bd )
@@ -1436,7 +1457,7 @@ ROM_START( avengers_rom )
 	ROM_LOAD( "23.9n",        0x0000, 0x08000, 0xc0a93ef6 )  /* Tile Map */
 ROM_END
 
-ROM_START( avenger2_rom )
+ROM_START( avenger2 )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "avg4.bin",     0x00000, 0x8000, 0x0fea7ac5 )
 	ROM_LOAD( "avg6.bin",     0x10000, 0x8000, 0x491a712c )
@@ -1497,7 +1518,7 @@ struct GameDriver avengers_driver =
 	avengers_rom,
 	0, 0,
 	0,
-	avengers_samples, /* sound_prom */
+	0, /* sound_prom */
 
 	avengers_input_ports,
 
@@ -1522,7 +1543,7 @@ struct GameDriver avenger2_driver =
 	avenger2_rom,
 	0, 0,
 	0,
-	avengers_samples, /* sound_prom */
+	0, /* sound_prom */
 
 	avengers_input_ports,
 

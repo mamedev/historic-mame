@@ -388,6 +388,7 @@ static struct GfxDecodeInfo roadf_gfxdecodeinfo[] =
 /* filename for hyper sports sample files */
 static const char *hyperspt_sample_names[] =
 {
+	"*hyperspt",
 	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
 	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
 	"10.wav","11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav",
@@ -514,7 +515,7 @@ static struct MachineDriver roadf_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( hyperspt_rom )
+ROM_START( hyperspt )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
@@ -550,7 +551,7 @@ ROM_START( hyperspt_rom )
 	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
 ROM_END
 
-ROM_START( hpolym84_rom )
+ROM_START( hpolym84 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "c01",          0x4000, 0x2000, 0x0c720eeb )
 	ROM_LOAD( "c02",          0x6000, 0x2000, 0x560258e0 )
@@ -586,7 +587,7 @@ ROM_START( hpolym84_rom )
 	ROM_LOAD( "c08",          0x0000, 0x2000, 0xe8f8ea78 )
 ROM_END
 
-ROM_START( roadf_rom )
+ROM_START( roadf )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "g05_g01.bin",  0x4000, 0x2000, 0xe2492a06 )
 	ROM_LOAD( "g07_f02.bin",  0x6000, 0x2000, 0x0bf75165 )
@@ -612,7 +613,7 @@ ROM_START( roadf_rom )
 	ROM_LOAD( "a17_d10.bin",  0x0000, 0x2000, 0xc33c927e )
 ROM_END
 
-ROM_START( roadf2_rom )
+ROM_START( roadf2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "5g",           0x4000, 0x2000, 0xd8070d30 )
 	ROM_LOAD( "6g",           0x6000, 0x2000, 0x8b661672 )

@@ -116,16 +116,16 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (offs = 0;offs <0x800;offs += 8) {
 		int x,y,sprite,sprite2,colour,fx,fy,extra;
 
-	    y=READ_WORD (&spriteram[offs]);
+	    y=READ_WORD (&buffered_spriteram[offs]);
 	    if (!(y&0x8000)) continue;
 
 	    y=y&0x1ff;
-	    sprite=READ_WORD (&spriteram[offs+6]);
+	    sprite=READ_WORD (&buffered_spriteram[offs+6]);
 	    colour=sprite>>12;
 	    sprite=sprite&0xfff;
-	    x=READ_WORD (&spriteram[offs+4])&0x1ff;
+	    x=READ_WORD (&buffered_spriteram[offs+4])&0x1ff;
 
-		fx=READ_WORD (&spriteram[offs+2]);
+		fx=READ_WORD (&buffered_spriteram[offs+2]);
 	    if ((fx&0x10)) extra=1; else extra=0;
 		fy=fx&0x2;
 		fx=fx&0x4;
@@ -220,16 +220,16 @@ void wndrplnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (offs = 0;offs <0x800;offs += 8) {
 		int x,y,sprite,sprite2,colour,fx,fy,extra;
 
-	    y=READ_WORD (&spriteram[offs]);
+	    y=READ_WORD (&buffered_spriteram[offs]);
 	    if (!(y&0x8000)) continue;
 
 	    y=y&0x1ff;
-	    sprite=READ_WORD (&spriteram[offs+6]);
+	    sprite=READ_WORD (&buffered_spriteram[offs+6]);
 	    colour=sprite>>12;
 	    sprite=sprite&0xfff;
-	    x=READ_WORD (&spriteram[offs+4])&0x1ff;
+	    x=READ_WORD (&buffered_spriteram[offs+4])&0x1ff;
 
-		fx=READ_WORD (&spriteram[offs+2]);
+		fx=READ_WORD (&buffered_spriteram[offs+2]);
 	    if ((fx&0x10)) extra=1; else extra=0;
 		fy=fx&0x2;
 		fx=fx&0x4;
@@ -280,7 +280,7 @@ void wndrplnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void karnov_foreground_w(int offset, int data)
 {
-	WRITE_WORD(&karnov_foreground[offset],data);
+	COMBINE_WORD_MEM(&karnov_foreground[offset],data);
 	dirty_f[offset] = 1;
 }
 

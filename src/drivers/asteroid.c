@@ -481,28 +481,6 @@ INPUT_PORTS_START ( llander1_input_ports )
 	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
-
-
-static unsigned char asteroid_color_prom[] = { VEC_PAL_BW        };
-static unsigned char astdelux_color_prom[] = { VEC_PAL_MONO_AQUA };
-
 
 
 static int asteroid1_hiload(void)
@@ -612,9 +590,9 @@ static struct MachineDriver asteroid_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1040, 70, 950 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_white,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -679,9 +657,9 @@ static struct MachineDriver astdelux_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1040, 70, 950 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_aqua,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -730,7 +708,7 @@ static struct MachineDriver llander_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1050, 0, 900 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
 	llander_init_colors,
 
@@ -773,7 +751,7 @@ static const char *asteroid_sample_names[] =
     0	/* end of array */
 };
 
-ROM_START( asteroi1_rom )
+ROM_START( asteroi1 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "035145.01",    0x6800, 0x0800, 0xe9bfda64 )
 	ROM_LOAD( "035144.01",    0x7000, 0x0800, 0xe53c28a9 )
@@ -783,7 +761,7 @@ ROM_START( asteroi1_rom )
 	ROM_LOAD( "035127.01",    0x5000, 0x0800, 0x99699366 )
 ROM_END
 
-ROM_START( asteroid_rom )
+ROM_START( asteroid )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "035145.02",    0x6800, 0x0800, 0x0cc75459 )
 	ROM_LOAD( "035144.02",    0x7000, 0x0800, 0x096ed35c )
@@ -815,7 +793,7 @@ struct GameDriver asteroid_driver =
 
 	asteroid_input_ports,
 
-	asteroid_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	asteroid_hiload, asteroid_hisave
@@ -841,13 +819,13 @@ struct GameDriver asteroi1_driver =
 
 	asteroid_input_ports,
 
-	asteroid_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	asteroid1_hiload, asteroid1_hisave
 };
 
-ROM_START( astdelux_rom )
+ROM_START( astdelux )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036430.02",    0x6000, 0x0800, 0xa4d7a525 )
 	ROM_LOAD( "036431.02",    0x6800, 0x0800, 0xd4004aae )
@@ -859,7 +837,7 @@ ROM_START( astdelux_rom )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
 
-ROM_START( astdelu1_rom )
+ROM_START( astdelu1 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x8f5dabc6 )
 	ROM_LOAD( "036431.01",    0x6800, 0x0800, 0x157a8516 )
@@ -902,7 +880,7 @@ struct GameDriver astdelux_driver =
 
 	astdelux_input_ports,
 
-	astdelux_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
@@ -928,14 +906,14 @@ struct GameDriver astdelu1_driver =
 
 	astdelux_input_ports,
 
-	astdelux_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
 
-ROM_START( llander_rom )
+ROM_START( llander )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "034572.02",    0x6000, 0x0800, 0xb8763eea )
 	ROM_LOAD( "034571.02",    0x6800, 0x0800, 0x77da4b2f )
@@ -950,7 +928,7 @@ ROM_START( llander_rom )
 	ROM_LOAD( "034597.01",    0x5800, 0x0800, 0x00000000 )
 ROM_END
 
-ROM_START( llander1_rom )
+ROM_START( llander1 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "034572.01",    0x6000, 0x0800, 0x2aff3140 )
 	ROM_LOAD( "034571.01",    0x6800, 0x0800, 0x493e24b7 )
@@ -985,7 +963,7 @@ struct GameDriver llander_driver =
 
 	llander_input_ports,
 
-	asteroid_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0
@@ -1011,7 +989,7 @@ struct GameDriver llander1_driver =
 
 	llander1_input_ports,
 
-	asteroid_color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

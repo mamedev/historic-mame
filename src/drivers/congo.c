@@ -338,7 +338,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( congo_rom )
+ROM_START( congo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "congo1.bin",   0x0000, 0x2000, 0x09355b5b )
 	ROM_LOAD( "congo2.bin",   0x2000, 0x2000, 0x1c5e30ae )
@@ -370,7 +370,7 @@ ROM_START( congo_rom )
 	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
 
-ROM_START( tiptop_rom )
+ROM_START( tiptop )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tiptop1.bin",  0x0000, 0x2000, 0xe19dc77b )
 	ROM_LOAD( "tiptop2.bin",  0x2000, 0x2000, 0x3fcd3b6e )

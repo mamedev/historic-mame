@@ -12,7 +12,14 @@
 #define ROTATE_MASK_HEIGHT  (ROTATE_PIXEL_HEIGHT-1)
 #define get_gfx_pointer(gfxelement,c,line) (gfxelement->gfxdata + (c*gfxelement->height+line) * gfxelement->line_modulo)
 
-#ifdef NAMCOS2_USE_TILEMGR
+#ifdef NAMCOS2_DEBUG_MODE
+static int namcos2_used_colour_count=0;
+static int namcos2_used_colour_cached=0;
+static int namcos2_max_used_colour_count=0;
+static int namcos2_max_used_colour_cached=0;
+extern int palette_max_ran_out;
+extern int palette_ran_out;
+#endif
 
 struct tilemap *namcos2_tilemap0=NULL;
 struct tilemap *namcos2_tilemap1=NULL;
@@ -119,35 +126,6 @@ static void namcos2_tilemap5_get_info(int col,int row)
 	tile_info.flags=namcos2_tilemap5_flip;
 }
 
-void namcos2_display_warnings(void)
-{
-	static int framecount=60*15;
-
-	if(framecount)
-	{
-		if(Machine->scrbitmap->depth==16)
-		{
-			static char message1[]="************************************";
-			static char message2[]=" This game does not work correctly  ";
-			static char message3[]=" in 16bit mode, use 256 colour mode ";
-			static char message4[]="************************************";
-			int	ypos=28;
-			int xpos=36;
-			if (Machine->orientation & ORIENTATION_SWAP_XY) { int tmp=xpos; xpos=ypos; ypos=tmp; }
-			ypos=((ypos/2)-2)*8;
-			xpos=((xpos/2)*8)-((strlen(message1)/2)*6);
-			ui_text(message1,xpos,ypos);
-			ui_text(message2,xpos,ypos+8);
-			ui_text(message3,xpos,ypos+16);
-			ui_text(message4,xpos,ypos+24);
-		}
-		framecount--;
-	}
-}
-
-#endif
-
-#ifdef NAMCOS2_DEBUG
 
 int namcos2_calc_used_pens(int gfx_zone,int tile,char *penused)
 {
@@ -168,17 +146,219 @@ int namcos2_calc_used_pens(int gfx_zone,int tile,char *penused)
 			penused[(gfxdata[pix_x])>>3]|=1<<(gfxdata[pix_x]&0x07);
 		}
 	}
-	for(pix_y=0;pix_y<256;pix_y++) if((penused[pix_y>>3])&(1<<(pix_y&0x07))) pencount++;
+//	for(pix_y=0;pix_y<256;pix_y++) if((penused[pix_y>>3])&(1<<(pix_y&0x07))) pencount++;
 	return pencount;
 }
 
+void namcos2_mark_used_ROZ_colours(void)
+{
+	int tile,coloop,colour_code;
+	/* Array to mark when a particular tile has had its colours marked  */
+	/* so we dont scan it again if its marked in here                   */
+	char pen_array[256/8];
+	char tile_is_visible_array[0x10000/8];
+
+	/* Rather than scan the whole 256x256 tile array marking used colours */
+	/* what we'll do is do a normal rotate of the image and instead of    */
+	/* copying any data we'll just use the pixel position to mark the     */
+	/* tile as being used and more importantly visible. Then scan the     */
+	/* array of visible used tiles and mark the pens of any used tile     */
+
+	/* Blat the used array */
+	memset(tile_is_visible_array,0,0x10000/8);
+
+	/* This is a clone of the drawROZ core code */
+	{
+		int dest_x,dest_x_delta,dest_x_start,dest_x_end,tmp_x;
+		int dest_y,dest_y_delta,dest_y_start,dest_y_end,tmp_y;
+		int right_dx,right_dy,down_dx,down_dy,start_x,start_y;
+
+		/* These need to be sign extended for arithmetic useage */
+		right_dx = namcos2_68k_roz_ctrl_r(0x06);
+		right_dy = namcos2_68k_roz_ctrl_r(0x02);
+		down_dx  = namcos2_68k_roz_ctrl_r(0x04);
+		down_dy  = namcos2_68k_roz_ctrl_r(0x00);
+		start_y  = namcos2_68k_roz_ctrl_r(0x0a);
+		start_x  = namcos2_68k_roz_ctrl_r(0x08);
+
+		/* Sign extend the deltas */
+		if(right_dx&0x8000) right_dx|=0xffff0000;
+		if(right_dy&0x8000) right_dy|=0xffff0000;
+		if(down_dx &0x8000) down_dx |=0xffff0000;
+		if(down_dy &0x8000) down_dy |=0xffff0000;
+
+		/* Correct to 16 bit fixed point from 8/12 bit */
+		right_dx <<=8;
+		right_dy <<=8;
+		down_dx  <<=8;
+		down_dy  <<=8;
+		start_x  <<=12;
+		start_y  <<=12;
+
+		/* Correction factor is needed for the screen offset */
+		start_x+=38*right_dx;
+		start_y+=38*right_dy;
+
+		if(Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			int tmp;
+			tmp=right_dx; right_dx=down_dx; down_dx=tmp;
+			tmp=right_dy; right_dy=down_dy; down_dy=tmp;
+		}
+
+		dest_y_delta=(Machine->orientation & ORIENTATION_FLIP_Y)?-1:1;
+		dest_y_start=(Machine->orientation & ORIENTATION_FLIP_Y)?Machine->scrbitmap->height-1:0;
+		dest_y_end  =(Machine->orientation & ORIENTATION_FLIP_Y)?-1:Machine->scrbitmap->height;
+
+		dest_x_delta=(Machine->orientation & ORIENTATION_FLIP_X)?-1:1;
+		dest_x_start=(Machine->orientation & ORIENTATION_FLIP_X)?Machine->scrbitmap->width-1:0;
+		dest_x_end  =(Machine->orientation & ORIENTATION_FLIP_X)?-1:Machine->scrbitmap->width;
+
+		for( dest_y=dest_y_start; dest_y!=dest_y_end; dest_y+=dest_y_delta )
+		{
+			tmp_x = start_x;
+			tmp_y = start_y;
+
+			for( dest_x=dest_x_start; dest_x!=dest_x_end; dest_x+=dest_x_delta )
+			{
+				int xind=(tmp_x>>16)&ROTATE_MASK_HEIGHT;
+				int yind=(tmp_y>>16)&ROTATE_MASK_WIDTH;
+
+				/* First reduce the x/y to tile & x/y subpixels */
+				int ram_offset=(((yind>>3)<<8)+(xind>>3))<<1;
+				/* Now fetch the tile number from ROZ RAM */
+				tile=READ_WORD(&namcos2_68k_roz_ram[ram_offset]);
+				/* Mark the tile as being visible */
+				tile_is_visible_array[tile>>3]|=1<<(tile&0x07);
+				/* Move on a little */
+				tmp_x += right_dx;
+				tmp_y += right_dy;
+			}
+			start_x += down_dx;
+			start_y += down_dy;
+		}
+	}
+	/* Set the correct colour code */
+	colour_code=(namcos2_68k_sprite_bank_r(0)>>8)&0x000f;
+	colour_code*=256;
+
+	/* Now we have an array with all visible tiles marked, scan it and mark the used colours */
+	for(tile=0;tile<0x10000;tile++)
+	{
+		/* Check if tile has been done before */
+		if( tile_is_visible_array[tile>>3]&(1<<(tile&0x07)) )
+		{
+			/* Clear the temporary pen usage array */
+			memset(pen_array,0,256/8);
+			/* Generate pen usage array for this tile on the fly */
+			namcos2_calc_used_pens(GFX_ROZ,tile,pen_array);
+
+			/* Process tile used colours */
+			for(coloop=0;coloop<256;coloop++)
+			{
+				/* Is this pen marked by the tile as being used ? */
+				if( pen_array[coloop>>3]&(1<<(coloop&0x07)) )
+				{
+					/* Yes so mark it for the palette manager */
+					palette_used_colors[colour_code+coloop] |= PALETTE_COLOR_VISIBLE;
+				}
+			}
+		}
+	}
+}
+
+void namcos2_mark_used_sprite_colours(void)
+{
+	int offset,loop,coloop;
+	/* Array to mark when a particular tile has had its colours marked  */
+	/* so we dont scan it again if its marked in here                   */
+	static char done_array[0x1000/8];
+	static char pen_array[256/8];
+
+	/* Blat the used array */
+	memset(done_array,0,0x1000/8);
+
+	/* Mark off all of the colour codes used by the sprites */
+	offset=(namcos2_68k_sprite_bank_r(0)&0x000f)*(128*8);
+	for(loop=0;loop<128;loop++)
+	{
+		int sizey=(READ_WORD(&namcos2_sprite_ram[offset+(loop*8)+0])>>10)&0x3f;
+
+		/* Sprites are only active if they have a size>0 */
+		if(sizey)
+		{
+			int offset2=READ_WORD(&namcos2_sprite_ram[offset+(loop*8)+2]);
+			int offset6=READ_WORD(&namcos2_sprite_ram[offset+(loop*8)+6]);
+			int sprn,sprn_done,spr_region,colour_code;
+
+			/* Calulate spr number, region, colour code & the done sprite number */
+			sprn=(offset2>>2)&0x7ff;
+			sprn_done=sprn;
+			sprn_done+=(offset2&0x2000)?0x800:0;
+			spr_region=(offset2&0x2000)?GFX_OBJ2:GFX_OBJ1;
+			colour_code=256*((offset6>>4)&0x000f);
+
+			if( (done_array[sprn_done>>3]&(1<<(sprn_done&0x07)))==0 )
+			{
+				/* Clear the temporary pen usage array */
+				memset(pen_array,0,256/8);
+				/* Generate pen usage array for this tile on the fly */
+				namcos2_calc_used_pens(spr_region,sprn,pen_array);
+
+				/* Process tile used colours */
+				for(coloop=0;coloop<256;coloop++)
+				{
+					/* Is this pen marked by the tile as being used ? */
+					if( pen_array[coloop>>3]&(1<<(coloop&0x07)) )
+					{
+						/* Yes so mark it for the palette manager */
+						palette_used_colors[colour_code+coloop] |= PALETTE_COLOR_VISIBLE;
+					}
+				}
+
+				/* Mark the tile as having been done */
+				done_array[sprn_done>>3]|=1<<(sprn_done&0x07);
+			}
+		}
+	}
+}
+
+
+void namcos2_mark_used_colours(void)
+{
+	/* Only mak colours on ROZ and sprites, tilemap Mgr does the rest */
+
+	/* Only process ROZ if she is enabled */
+	if(((namcos2_68k_sprite_bank_r(0)>>12)&0x07)>0) namcos2_mark_used_ROZ_colours();
+
+	/* Finally the sprites */
+	namcos2_mark_used_sprite_colours();
+
+#ifdef NAMCOS2_DEBUG_MODE
+	{
+		int loop;
+		namcos2_used_colour_count=0;
+		namcos2_used_colour_cached=0;
+		for(loop=0;loop<8192;loop++) if(palette_used_colors[loop]&PALETTE_COLOR_VISIBLE) namcos2_used_colour_count++;
+		for(loop=0;loop<8192;loop++) if(palette_used_colors[loop]&PALETTE_COLOR_CACHED) namcos2_used_colour_cached++;
+		if(namcos2_used_colour_count>namcos2_max_used_colour_count) namcos2_max_used_colour_count=namcos2_used_colour_count;
+		if(namcos2_used_colour_cached>namcos2_max_used_colour_cached) namcos2_max_used_colour_cached=namcos2_used_colour_cached;
+	}
 #endif
+}
 
 
 int namcos2_vh_start(void)
 {
 
-#ifdef NAMCOS2_USE_TILEMGR
+#ifdef NAMCOS2_DEBUG_MODE
+	namcos2_used_colour_count=0;
+	namcos2_used_colour_cached=0;
+	namcos2_max_used_colour_count=0;
+	namcos2_max_used_colour_cached=0;
+	palette_max_ran_out=0;
+	palette_ran_out=0;
+#endif
 
 	/* Initialise the tilemaps */
 	if((namcos2_tilemap0=tilemap_create(namcos2_tilemap0_get_info,TILEMAP_BITMASK,8,8,64,64))==NULL) return 0;
@@ -201,7 +381,7 @@ int namcos2_vh_start(void)
 	namcos2_tilemap4_flip=0;
 	namcos2_tilemap5_flip=0;
 
-	tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 
 	/* Rotate/Flip the mask ROM */
 
@@ -298,7 +478,6 @@ int namcos2_vh_start(void)
 		}
 	}
 
-#endif
 #endif
 
 	return 0;
@@ -500,9 +679,12 @@ INLINE unsigned char fetch_rotated_pixel(int xind, int yind)
 
 static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 {
+	const struct GfxElement *rozgfx=Machine->gfx[GFX_ROZ];
 	int dest_x,dest_x_delta,dest_x_start,dest_x_end,tmp_x;
 	int dest_y,dest_y_delta,dest_y_start,dest_y_end,tmp_y;
 	int right_dx,right_dy,down_dx,down_dy,start_x,start_y;
+	unsigned short *paldata;
+	int colour;
 
 	/* These need to be sign extended for arithmetic useage */
 	right_dx = namcos2_68k_roz_ctrl_r(0x06);
@@ -529,6 +711,10 @@ static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 	/* Correction factor is needed for the screen offset */
 	start_x+=38*right_dx;
 	start_y+=38*right_dy;
+
+	/* Pre-calculate the colour palette array pointer */
+	colour=(namcos2_68k_sprite_bank_r(0)>>8)&0x000f;
+	paldata = &rozgfx->colortable[rozgfx->color_granularity * colour];
 
 	/* Select correct drawing code based on destination bitmap pixel depth */
 
@@ -567,11 +753,7 @@ static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 				/* Only process non-transparent pixels */
 				if(pixel!=0xff)
 				{
-					const struct GfxElement *rozgfx=Machine->gfx[GFX_ROZ];
-					/* Now remap the colour space of the pixel */
-					int colour=(namcos2_68k_sprite_bank_r(0)>>8)&0x000f;
-					unsigned short *paldata = &rozgfx->colortable[rozgfx->color_granularity * colour];
-					/* Now finally store the remapped pixel */
+					/* Now remap the colour space of the pixel and store */
 					dest_line[dest_x]=paldata[pixel];
 				}
 				tmp_x += right_dx;
@@ -616,11 +798,7 @@ static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 				/* Only process non-transparent pixels */
 				if(pixel!=0xff)
 				{
-					const struct GfxElement *rozgfx=Machine->gfx[GFX_ROZ];
-					/* Now remap the colour space of the pixel */
-					int colour=(namcos2_68k_sprite_bank_r(0)>>8)&0x000f;
-					unsigned short *paldata = &rozgfx->colortable[rozgfx->color_granularity * colour];
-					/* Now finally store the remapped pixel */
+					/* Now remap the colour space of the pixel and store */
 					dest_line[dest_x]=paldata[pixel];
 				}
 				tmp_x += right_dx;
@@ -632,64 +810,6 @@ static void draw_layerROZ( struct osd_bitmap *dest_bitmap)
 	}
 }
 
-
-#ifndef NAMCOS2_USE_TILEMGR
-
-static void draw_layer64( struct osd_bitmap *bitmap, int mem_offset, int xoff, int yoff, int flipx, int flipy, int colour )
-{
-	int xloop,yloop,addr,tile,tmp;
-
-	/* BEWARE - FUDGE FACTORS IN OPERATION */
-	xoff+=44;
-	yoff+=24;
-
-	for(yloop=0;yloop<64;yloop++)
-	{
-		for(xloop=0;xloop<64;xloop++)
-		{
-			addr=(((yloop<<6) + xloop))<<1;
-			tile=(READ_WORD(&videoram[mem_offset+addr]))&0xffff;
-			/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
-			tmp=((tile&0xc000)>>3) | ((tile&0x3800)<<2);
-			tile=(tile&0x07ff)|tmp;
-
-			drawgfx(bitmap,Machine->gfx[GFX_CHR],
-				tile,
-				colour,
-				flipx,flipy,
-				((((flipx)?(63-xloop):xloop)<<3)-xoff)&0x1ff,
-				((((flipy)?(63-yloop):yloop)<<3)-yoff)&0x1ff,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0x00);
-		}
-	}
-}
-
-static void draw_layer36( struct osd_bitmap *bitmap, int mem_offset, int flipx, int flipy, int colour )
-{
-	int xloop,yloop,addr,tile,tmp,linetot;
-
-	for(yloop=0;yloop<28;yloop++)
-	{
-		linetot=yloop*36;
-		for(xloop=0;xloop<36;xloop++)
-		{
-			addr=(linetot+xloop)<<1;
-			tile=(READ_WORD(&videoram[mem_offset+addr]))&0xffff;
-			/* The order of bits needs to be corrected to index the right tile  14 15 11 12 13 */
-			tmp=((tile&0xc000)>>3) | ((tile&0x3800)<<2);
-			tile=(tile&0x07ff)|tmp;
-
-			drawgfx(bitmap,Machine->gfx[GFX_CHR],
-				tile,
-				colour,
-				flipx,flipy,
-				(flipx)?((35-xloop)<<3):(xloop<<3),(flipy)?((27-yloop)<<3):(yloop<<3),
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0x00);
-		}
-	}
-}
-
-#endif
 
 static void draw_sprites( struct osd_bitmap *bitmap, int priority )
 {
@@ -793,69 +913,40 @@ static void draw_sprites( struct osd_bitmap *bitmap, int priority )
 
 void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int priority,loop,offset,count;
-	int colour_codes_used[NAMCOS2_COLOUR_CODES];
+	int priority;
 	static int show[10] = {1,1,1,1,1,1,1,1,1,1};
 
-#ifdef NAMCOS2_USE_TILEMGR
 	tilemap_update(namcos2_tilemap0);
 	tilemap_update(namcos2_tilemap1);
 	tilemap_update(namcos2_tilemap2);
 	tilemap_update(namcos2_tilemap3);
 	tilemap_update(namcos2_tilemap4);
 	tilemap_update(namcos2_tilemap5);
-#endif
-	palette_init_used_colors();
 
-	for(loop=0;loop<NAMCOS2_COLOUR_CODES;loop++) colour_codes_used[loop]=0;
-
-	/* Mark off all of the colour codes used by the sprites */
-	offset=(namcos2_68k_sprite_bank_r(0)&0x000f)*(128*8);
-	for(loop=0;loop<128;loop++)
+	/* Only piss around with the palette if we are in 8 bit mode as 16 bit */
+	/* mode has a direct mapping and doesnt need palette management        */
 	{
-		int sizey=(READ_WORD(&namcos2_sprite_ram[offset+(loop*8)+0])>>10)&0x3f;
-		if(sizey) colour_codes_used[(READ_WORD(&namcos2_sprite_ram[offset+(loop*8)+6])>>4)&0x000f]=1;
-	}
-	/* Mark off the colour codes used by scroll & ROZ planes */
-#ifndef NAMCOS2_USE_TILEMGR
-	colour_codes_used[0x10+(namcos2_68k_vram_ctrl_r(0x30)&0x0007)]=1;
-	colour_codes_used[0x10+(namcos2_68k_vram_ctrl_r(0x32)&0x0007)]=1;
-	colour_codes_used[0x10+(namcos2_68k_vram_ctrl_r(0x34)&0x0007)]=1;
-	colour_codes_used[0x10+(namcos2_68k_vram_ctrl_r(0x36)&0x0007)]=1;
-	colour_codes_used[0x10+(namcos2_68k_vram_ctrl_r(0x38)&0x0007)]=1;
-	colour_codes_used[0x10+(namcos2_68k_vram_ctrl_r(0x3a)&0x0007)]=1;
-#endif
-	colour_codes_used[(namcos2_68k_sprite_bank_r(0)>>8)&0x000f]=1;
+		/* Initialise palette_used_colors array */
+		palette_init_used_colors();
 
-	/* Mark colour indexes used by text planes/roz/sprites */
-	for(loop=0;loop<NAMCOS2_COLOUR_CODES;loop++)
-	{
-		if(colour_codes_used[loop])
+		/* Mark any colours in the palette_used_colors array */
+		namcos2_mark_used_colours();
+
+		if (palette_recalc())
 		{
-			for(count=0;count<256;count++) palette_used_colors[(loop*256)+count] |= PALETTE_COLOR_VISIBLE;
+			/* Mark all planes as dirty */
+			tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 		}
+		tilemap_render(ALL_TILEMAPS);
 	}
 
-
-#ifdef NAMCOS2_USE_TILEMGR
-	if (palette_recalc())
-	{
-		/* Mark all planes as dirty */
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	}
-	tilemap_render(ALL_TILEMAPS);
-#else
-	palette_recalc();
-#endif
 
 	/* Scrub the bitmap clean */
-	fillbitmap(bitmap,0,0);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 	/* Render the screen */
 	for(priority=0;priority<=7;priority++)
 	{
-#ifdef NAMCOS2_USE_TILEMGR
-
 		if((namcos2_68k_vram_ctrl_r(0x20)&0x07)==priority && show[0]) tilemap_draw(bitmap,namcos2_tilemap0,0);
 		if((namcos2_68k_vram_ctrl_r(0x22)&0x07)==priority && show[1]) tilemap_draw(bitmap,namcos2_tilemap1,0);
 		if((namcos2_68k_vram_ctrl_r(0x24)&0x07)==priority && show[2]) tilemap_draw(bitmap,namcos2_tilemap2,0);
@@ -863,54 +954,12 @@ void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh)
 		if((namcos2_68k_vram_ctrl_r(0x28)&0x07)==priority && show[4]) tilemap_draw(bitmap,namcos2_tilemap4,0);
 		if((namcos2_68k_vram_ctrl_r(0x2a)&0x07)==priority && show[5]) tilemap_draw(bitmap,namcos2_tilemap5,0);
 
-#else
-
-/*1*/	if((namcos2_68k_vram_ctrl_r(0x20)&0x07)==priority && show[0])
-			draw_layer64( bitmap, 0x0000,
-						  (namcos2_68k_vram_ctrl_r(0x02)&0x0fff)+4,namcos2_68k_vram_ctrl_r(0x06)&0x0fff,
-						  namcos2_68k_vram_ctrl_r(0x02)&0x8000,namcos2_68k_vram_ctrl_r(0x06)&0x8000,
-						  namcos2_68k_vram_ctrl_r(0x30)&0x0007 );
-
-/*2*/	if((namcos2_68k_vram_ctrl_r(0x22)&0x07)==priority && show[1])
-			draw_layer64( bitmap, 0x2000,
-						  (namcos2_68k_vram_ctrl_r(0x0a)&0x0fff)+2, namcos2_68k_vram_ctrl_r(0x0e)&0x0fff,
-						  namcos2_68k_vram_ctrl_r(0x0a)&0x8000,namcos2_68k_vram_ctrl_r(0x0e)&0x8000,
-						  namcos2_68k_vram_ctrl_r(0x32)&0x0007 );
-
-/*3*/	if((namcos2_68k_vram_ctrl_r(0x24)&0x07)==priority && show[2])
-			draw_layer64( bitmap, 0x4000,
-						  (namcos2_68k_vram_ctrl_r(0x12)&0x0fff)+1,namcos2_68k_vram_ctrl_r(0x16)&0x0fff,
-						  namcos2_68k_vram_ctrl_r(0x12)&0x8000,namcos2_68k_vram_ctrl_r(0x16)&0x8000,
-						  namcos2_68k_vram_ctrl_r(0x34)&0x0007 );
-
-/*4*/	if((namcos2_68k_vram_ctrl_r(0x26)&0x07)==priority && show[3])
-			draw_layer64( bitmap, 0x6000,
-						  (namcos2_68k_vram_ctrl_r(0x1a)&0x0fff)+0, namcos2_68k_vram_ctrl_r(0x1e)&0x0fff,
-						  namcos2_68k_vram_ctrl_r(0x1a)&0x8000,namcos2_68k_vram_ctrl_r(0x1e)&0x8000,
-						  namcos2_68k_vram_ctrl_r(0x36)&0x0007 );
-
-/*5*/	if((namcos2_68k_vram_ctrl_r(0x28)&0x07)==priority && show[4])
-			draw_layer36( bitmap, 0x8010,
-						  namcos2_68k_vram_ctrl_r(0x02)&0x8000,namcos2_68k_vram_ctrl_r(0x06)&0x8000,
-						  namcos2_68k_vram_ctrl_r(0x38)&0x0007 );
-
-/*6*/	if((namcos2_68k_vram_ctrl_r(0x2a)&0x07)==priority && show[5])
-			draw_layer36( bitmap, 0x8810,
-						  namcos2_68k_vram_ctrl_r(0x02)&0x8000, namcos2_68k_vram_ctrl_r(0x06)&0x8000,
-						  namcos2_68k_vram_ctrl_r(0x3a)&0x0007 );
-
-#endif
-
 		/* Draw ROZ if enabled */
-		if(priority>=1 && ((namcos2_68k_sprite_bank_r(0)>>12)&0x07)==priority && show[6]) draw_layerROZ( bitmap);
+		if(priority>=1 && ((namcos2_68k_sprite_bank_r(0)>>12)&0x07)==priority && show[6]) draw_layerROZ(bitmap);
 
 		/* Sprites */
 		draw_sprites( bitmap,priority );
 	}
-
-#ifdef NAMCOS2_USE_TILEMGR
-	namcos2_display_warnings();
-#endif
 
 #ifdef NAMCOS2_DEBUG_MODE
 	/* NAMCOS2 Video debugging */
@@ -927,6 +976,18 @@ void namcos2_vh_update(struct osd_bitmap *bitmap, int full_refresh)
 		char buffer[256];
 		sprintf(buffer,"Planes %d%d%d%d %d%d %d",show[0],show[1],show[2],show[3],show[4],show[5],show[6]);
 		ui_text(buffer,4,4);
+	}
+
+	{
+		char buffer[256];
+		sprintf(buffer,"Pens   = %03d (%03d)",namcos2_used_colour_count,namcos2_max_used_colour_count);
+		ui_text(buffer,4,12);
+		sprintf(buffer,"Cached = %03d (%03d)",namcos2_used_colour_cached,namcos2_max_used_colour_cached);
+		ui_text(buffer,4,20);
+		sprintf(buffer,"RunOut = %03d (%03d)",palette_ran_out,palette_max_ran_out);
+		ui_text(buffer,4,28);
+		sprintf(buffer,"Depth  = %d",Machine->scrbitmap->depth);
+		ui_text(buffer,4,36);
 	}
 
 	{

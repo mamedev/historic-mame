@@ -110,10 +110,10 @@ static void mcr68_update_background(struct osd_bitmap *bitmap, int overrender)
 			code &= mcr68_char_code_mask;
 
 			if (!overrender)
-				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08, 
+				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 			else if (mcr68_char_code_mask < 0xfff && (attr & 0x80))
-				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08, 
+				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
 			else
 				continue;
@@ -136,16 +136,16 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	struct rectangle sprite_clip = Machine->drv->visible_area;
 	int offs;
-	
+
 	/* adjust for clipping */
 	sprite_clip.min_x += mcr68_sprite_clip;
 	sprite_clip.max_x -= mcr68_sprite_clip;
-	
+
 	/* loop over sprite RAM */
 	for (offs = 0; offs < spriteram_size; offs += 8)
 	{
 		int code, color, flipx, flipy, x, y, sx, sy, xcount, ycount, flags;
-		
+
 		flags = LOW_BYTE(&spriteram[offs + 2]);
 		code = LOW_BYTE(&spriteram[offs + 4]) + 256 * ((flags >> 3) & 0x01) + 512 * ((flags >> 6) & 0x03);
 		code &= mcr68_sprite_code_mask;
@@ -153,7 +153,7 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 		/* skip if zero */
 		if (code == 0)
 			continue;
-		
+
 		/* also skip if this isn't the priority we're drawing right now */
 		if (((flags >> 2) & 1) != priority)
 			continue;
@@ -164,7 +164,7 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 		flipy = flags & 0x20;
 		x = LOW_BYTE(&spriteram[offs + 6]) * 2 + mcr68_sprite_xoffset;
 		y = (241 - LOW_BYTE(&spriteram[offs])) * 2;
-		
+
 		/* allow sprites to clip off the left side */
 		if (x > 0x1f0) x -= 0x200;
 
@@ -193,7 +193,7 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 			sy = y / 16;
 			xcount = (x & 15) ? 3 : 2;
 			ycount = (y & 15) ? 3 : 2;
-	
+
 			for (y = sy; y < sy + ycount; y++)
 				for (x = sx; x < sx + xcount; x++)
 					if (x >= 0 && x < 32 && y >= 0 && y < 30)
@@ -216,12 +216,16 @@ void mcr68_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	mcr68_debug();
 #endif
 
+	/* update palette */
+	if (palette_recalc())
+		memset(dirtybuffer, 1, videoram_size);
+
 	/* draw the background */
 	mcr68_update_background(tmpbitmap, 0);
-	
+
 	/* copy it to the destination */
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-	
+
 	/* draw the low-priority sprites */
 	mcr68_update_sprites(bitmap, 0);
 
@@ -247,7 +251,7 @@ void mcr68_debug(void)
 	if (keyboard_pressed(KEYCODE_9))
 	{
 		int offs;
-		
+
 		if (!f) f = fopen("mcr.log", "w");
 		if (f)
 		{
@@ -260,9 +264,9 @@ void mcr68_debug(void)
 			fprintf(f, "\n\n");
 			for (offs = 0; offs < spriteram_size; offs += 8)
 				fprintf(f, "Sprite %03d: %02X %02X %02X %02X\n", offs / 8,
-					LOW_BYTE(&spriteram[offs + 0]), 
-					LOW_BYTE(&spriteram[offs + 2]), 
-					LOW_BYTE(&spriteram[offs + 4]), 
+					LOW_BYTE(&spriteram[offs + 0]),
+					LOW_BYTE(&spriteram[offs + 2]),
+					LOW_BYTE(&spriteram[offs + 4]),
 					LOW_BYTE(&spriteram[offs + 6]));
 		}
 		fflush(f);
@@ -349,7 +353,7 @@ void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colorta
 	struct GfxElement *gfx0 = Machine->gfx[0];
 	struct GfxElement *gfx2 = Machine->gfx[2];
 	int code, y, x, ix;
-	
+
 	/* "colorize" each code */
 	for (code = 0; code < gfx0->total_elements; code++)
 	{
@@ -364,24 +368,24 @@ void zwackery_convert_color_prom(unsigned char *palette, unsigned short *colorta
 			UINT8 *gd0 = gfxdata0;
 			UINT8 *gd2 = gfxdata2;
 
-			/* 16 colums, in batches of 4 pixels */			
+			/* 16 colums, in batches of 4 pixels */
 			for (x = 0; x < 16; x += 4)
 			{
 				int pen0 = *cd++;
 				int pen1 = *cd++;
 				int tp0, tp1;
-				
+
 				/* every 4 pixels gets its own foreground/background colors */
 				for (ix = 0; ix < 4; ix++, gd0++)
 					*gd0 = *gd0 ? pen1 : pen0;
-				
+
 				/* for gfx 2, we convert all low-priority pens to 0 */
 				tp0 = (pen0 & 0x80) ? pen0 : 0;
 				tp1 = (pen1 & 0x80) ? pen1 : 0;
 				for (ix = 0; ix < 4; ix++, gd2++)
 					*gd2 = *gd2 ? tp1 : tp0;
 			}
-			
+
 			/* advance */
 			if (y % 4 == 3) coldata = cd;
 			gfxdata0 += gfx0->line_modulo;
@@ -442,14 +446,14 @@ static void zwackery_update_background(struct osd_bitmap *bitmap, int overrender
 
 			/* standard case: draw with no transparency */
 			if (!overrender)
-				drawgfx(bitmap, Machine->gfx[0], code, color, data & 0x0800, data & 0x1000, 
+				drawgfx(bitmap, Machine->gfx[0], code, color, data & 0x0800, data & 0x1000,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-						
+
 			/* overrender case: for non-zero colors, draw with transparency pen 0 */
 			/* we use gfx[2] here, which was generated above to have all low-priority */
 			/* colors set to pen 0 */
 			else if (color != 0)
-				drawgfx(bitmap, Machine->gfx[2], code, color, data & 0x0800, data & 0x1000, 
+				drawgfx(bitmap, Machine->gfx[2], code, color, data & 0x0800, data & 0x1000,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
 
 #if DEBUG_VIDEO
@@ -480,20 +484,20 @@ static void zwackery_mark_sprites(void)
 {
 	UINT16 used[32];
 	int offs, i;
-	
+
 	/* clear the usage array */
 	memset(&used, 0, sizeof(used));
-	
+
 	/* loop over spriteram */
 	for (offs = 0; offs < spriteram_size; offs += 8)
 	{
 		int code, color, flags;
-		
+
 		/* get the code and skip if zero */
 		code = LOW_BYTE(&spriteram[offs + 4]);
 		if (code == 0)
 			continue;
-		
+
 		/* extract the flag bits and determine the color */
 		flags = LOW_BYTE(&spriteram[offs + 2]);
 		color = ((~flags >> 2) & 0x0f) | ((flags & 0x02) << 3);
@@ -501,7 +505,7 @@ static void zwackery_mark_sprites(void)
 		/* mark the appropriate pens */
 		used[color] |= Machine->gfx[1]->pen_usage[code];
 	}
-	
+
 	/* use the usage array to mark the global palette_used_colors */
 	for (offs = 0; offs < 32; offs++)
 	{
@@ -520,43 +524,43 @@ static void zwackery_mark_sprites(void)
 static void zwackery_update_sprites(struct osd_bitmap *bitmap, int priority)
 {
 	int offs;
-	
+
 	/* loop over sprite RAM */
 	for (offs = 0; offs < spriteram_size; offs += 8)
 	{
 		int code, color, flipx, flipy, x, y, sx, sy, xcount, ycount, flags;
-		
+
 		/* get the code and skip if zero */
 		code = LOW_BYTE(&spriteram[offs + 4]);
 		if (code == 0)
 			continue;
-		
+
 		/* extract the flag bits and determine the color */
 		flags = LOW_BYTE(&spriteram[offs + 2]);
 		color = ((~flags >> 2) & 0x0f) | ((flags & 0x02) << 3);
-		
+
 		/* for low priority, draw everything but color 7 */
 		if (!priority)
 		{
 			if (color == 7)
 				continue;
 		}
-		
+
 		/* for high priority, only draw color 7 */
 		else
 		{
 			if (color != 7)
 				continue;
 		}
-		
+
 		/* determine flipping and coordinates */
 		flipx = ~flags & 0x40;
 		flipy = flags & 0x80;
 		x = (231 - LOW_BYTE(&spriteram[offs + 6])) * 2;
 		y = (241 - LOW_BYTE(&spriteram[offs])) * 2;
-		
+
 		if (x <= -32) x += 512;
-		
+
 		/* draw the sprite */
 		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
 				&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
@@ -592,7 +596,7 @@ if (show_colors)
 			sy = y / 16;
 			xcount = (x & 15) ? 3 : 2;
 			ycount = (y & 15) ? 3 : 2;
-	
+
 			for (y = sy; y < sy + ycount; y++)
 				for (x = sx; x < sx + xcount; x++)
 					dirtybuffer[(32 * (y & 31) + (x & 31)) * 2] = 1;
@@ -625,16 +629,16 @@ void zwackery_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* draw the background */
 	zwackery_update_background(tmpbitmap, 0);
-	
+
 	/* copy it to the destination */
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-	
+
 	/* draw the low-priority sprites */
 	zwackery_update_sprites(bitmap, 0);
 
 	/* draw the background */
 	zwackery_update_background(bitmap, 1);
-	
+
 	/* draw the high-priority sprites */
 	zwackery_update_sprites(bitmap, 1);
 }
@@ -665,11 +669,11 @@ void zwackery_debug(void)
 		if (show_bg_colors) memset(dirtybuffer, 1, videoram_size);
 		show_bg_colors = 0;
 	}
-	
+
 	if (keyboard_pressed(KEYCODE_9))
 	{
 		int offs;
-		
+
 		if (!f) f = fopen("mcr.log", "w");
 		if (f)
 		{
@@ -682,16 +686,16 @@ void zwackery_debug(void)
 			fprintf(f, "\n\n");
 			for (offs = 0; offs < spriteram_size; offs += 8)
 				fprintf(f, "Sprite %03d: %02X %02X %02X %02X\n", offs / 8,
-					READ_WORD(&spriteram[offs + 0]), 
-					READ_WORD(&spriteram[offs + 2]), 
-					READ_WORD(&spriteram[offs + 4]), 
+					READ_WORD(&spriteram[offs + 0]),
+					READ_WORD(&spriteram[offs + 2]),
+					READ_WORD(&spriteram[offs + 4]),
 					READ_WORD(&spriteram[offs + 6]));
 		}
 		fflush(f);
 	}
-	
+
 	show_colors = keyboard_pressed(KEYCODE_8);
-	
+
 	if (keyboard_pressed(KEYCODE_H))
 	{
 		last_h_state = 1;
@@ -705,20 +709,20 @@ void zwackery_debug(void)
 			if (i & 0x80)
 			{
 				int word = READ_WORD(&paletteram[i * 2]);
-			
+
 				int r = (~word >> 10) & 31;
 				int b = (~word >> 5) & 31;
 				int g = (~word >> 0) & 31;
-			
+
 				/* up to 8 bits */
 				r = (r << 3) | (r >> 2);
 				g = (g << 3) | (g >> 2);
 				b = (b << 3) | (b >> 2);
-			
+
 				palette_change_color(i, r, g, b);
 			}
 	}
-	
+
 	if (keyboard_pressed(KEYCODE_L))
 	{
 		last_l_state = 1;
@@ -732,16 +736,16 @@ void zwackery_debug(void)
 			if (!(i & 0x80))
 			{
 				int word = READ_WORD(&paletteram[i * 2]);
-			
+
 				int r = (~word >> 10) & 31;
 				int b = (~word >> 5) & 31;
 				int g = (~word >> 0) & 31;
-			
+
 				/* up to 8 bits */
 				r = (r << 3) | (r >> 2);
 				g = (g << 3) | (g >> 2);
 				b = (b << 3) | (b >> 2);
-			
+
 				palette_change_color(i, r, g, b);
 			}
 	}

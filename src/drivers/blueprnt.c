@@ -384,7 +384,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( blueprnt_rom )
+ROM_START( blueprnt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1m",           0x0000, 0x1000, 0xb20069a6 )
 	ROM_LOAD( "1n",           0x1000, 0x1000, 0x4a30302e )
@@ -404,7 +404,27 @@ ROM_START( blueprnt_rom )
 	ROM_LOAD( "3v",           0x2000, 0x1000, 0x33d5bf5b )
 ROM_END
 
-ROM_START( saturn_rom )
+ROM_START( blueprnj )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "bp_01.bin",    0x0000, 0x1000, 0x2e746693 )
+	ROM_LOAD( "bp_02.bin",    0x1000, 0x1000, 0xa0eb0b8e )
+	ROM_LOAD( "bp_03.bin",    0x2000, 0x1000, 0xc34981bb )
+	ROM_LOAD( "bp_04.bin",    0x3000, 0x1000, 0x525e77b5 )
+	ROM_LOAD( "bp_05.bin",    0x4000, 0x1000, 0x431a015f )
+
+	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bp_09.bin",    0x0000, 0x0800, 0x43718c34 )
+	ROM_LOAD( "bp_08.bin",    0x1000, 0x0800, 0xd3ce077d )
+	ROM_LOAD( "bp_10.bin",    0x2000, 0x1000, 0x83da108f )
+	ROM_LOAD( "bp_11.bin",    0x3000, 0x1000, 0xb440f32f )
+	ROM_LOAD( "bp_12.bin",    0x4000, 0x1000, 0x23026765 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "3u",           0x0000, 0x1000, 0xfd38777a )
+	ROM_LOAD( "3v",           0x2000, 0x1000, 0x33d5bf5b )
+ROM_END
+
+ROM_START( saturn )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x1000, 0x18a6d68e )
 	ROM_LOAD( "r2",           0x1000, 0x1000, 0xa7dd2665 )
@@ -471,7 +491,7 @@ struct GameDriver blueprnt_driver =
 	__FILE__,
 	0,
 	"blueprnt",
-	"Blue Print",
+	"Blue Print (Midway)",
 	"1982",
 	"[Zilec] Bally Midway",
 	"Nicola Salmoria",
@@ -480,6 +500,32 @@ struct GameDriver blueprnt_driver =
 	0,
 
 	blueprnt_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	blueprnt_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	blueprnt_hiload, blueprnt_hisave
+};
+
+struct GameDriver blueprnj_driver =
+{
+	__FILE__,
+	&blueprnt_driver,
+	"blueprnj",
+	"Blue Print (Jaleco)",
+	"1982",
+	"[Zilec] Jaleco",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	blueprnj_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

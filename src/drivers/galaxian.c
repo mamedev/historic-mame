@@ -111,6 +111,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
 
 extern unsigned char *galaxian_attributesram;
@@ -187,6 +188,30 @@ static int jumpbug_protection_r(int offset)
 	}
 
 	return 0;
+}
+
+static int checkmaj_protection_r(int offset)
+{
+	switch (cpu_get_pc())
+	{
+	case 0x0f15:  return 0xf5;
+	case 0x0f8f:  return 0x7c;
+	case 0x10b3:  return 0x7c;
+	case 0x10e0:  return 0x00;
+	case 0x10f1:  return 0xaa;
+	case 0x1402:  return 0xaa;
+	default:
+		if (errorlog)  fprintf(errorlog, "Unknown protection read. PC=%04X\n",cpu_get_pc());
+	}
+
+	return 0;
+}
+
+/* Send sound data to the sound cpu and cause an nmi */
+static void checkmaj_sound_command_w (int offset, int data)
+{
+	soundlatch_w (0,data);
+	cpu_cause_interrupt (1, Z80_NMI_INT);
 }
 
 
@@ -297,6 +322,38 @@ static struct MemoryWriteAddress jumpbug_writemem[] =
 	{ 0x7007, 0x7007, galaxian_flipy_w },
 	{ 0x8000, 0xafff, MWA_ROM },
 	{ 0xfff0, 0xffff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress checkmaj_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },	/* not all games use all the space */
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
+	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x7001, 0x7001, interrupt_enable_w },
+	{ 0x7006, 0x7006, galaxian_flipx_w },
+	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7800, 0x7800, checkmaj_sound_command_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress checkmaj_sound_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x8000, 0x81ff, MRA_RAM },
+	{ 0xa002, 0xa002, AY8910_read_port_0_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress checkmaj_sound_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x8000, 0x81ff, MWA_RAM },
+	{ 0xa000, 0xa000, AY8910_control_port_0_w },
+	{ 0xa001, 0xa001, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -968,6 +1025,48 @@ INPUT_PORTS_START( orbitron_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( checkmaj_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL) /* p2 tiles right */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL) /* p2 tiles left */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/6" )
+	PORT_DIPSETTING(    0x40, "A 2/1 B 1/3" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START	/* DSW */
+ 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "100000" )
+	PORT_DIPSETTING(    0x04, "200000" )
+	PORT_DIPNAME( 0x08, 0x00, "Difficulty Increases At Level" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* p1 tiles right */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* p1 tiles left */
+INPUT_PORTS_END
+
+
 static struct GfxLayout galaxian_charlayout =
 {
 	8,8,	/* 8*8 characters */
@@ -1131,6 +1230,18 @@ static struct AY8910interface ay8910_interface =
 	{ 50 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct AY8910interface checkmaj_ay8910_interface =
+{
+	1,	/* 1 chip */
+	1620000,	/* 1.62 MHz? (Used the same as Moon Cresta) */
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
+	{ soundlatch_r },
 	{ 0 },
 	{ 0 },
 	{ 0 }
@@ -1302,6 +1413,51 @@ static struct MachineDriver jumpbug_machine_driver =
 	}
 };
 
+static struct MachineDriver checkmaj_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			readmem,checkmaj_writemem,0,0,
+			galaxian_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			1620000,	/* 1.62 MHz? (used the same as Moon Cresta) */
+			3,
+			checkmaj_sound_readmem,checkmaj_sound_writemem,0,0,
+			interrupt,32	/* NMIs are triggered by the main CPU */
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	galaxian_gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	galaxian_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&checkmaj_ay8910_interface
+		}
+	}
+};
+
 
 static const char *mooncrst_sample_names[] =
 {
@@ -1317,7 +1473,7 @@ static const char *mooncrst_sample_names[] =
 
 ***************************************************************************/
 
-ROM_START( galaxian_rom )
+ROM_START( galaxian )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )
 	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )
@@ -1333,7 +1489,7 @@ ROM_START( galaxian_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galmidw_rom )
+ROM_START( galmidw )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "galmidw.u",    0x0000, 0x0800, 0x745e2d61 )
 	ROM_LOAD( "galmidw.v",    0x0800, 0x0800, 0x9c999a40 )
@@ -1349,7 +1505,7 @@ ROM_START( galmidw_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( superg_rom )
+ROM_START( superg )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
@@ -1365,7 +1521,7 @@ ROM_START( superg_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galaxb_rom )
+ROM_START( galaxb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
@@ -1381,7 +1537,7 @@ ROM_START( galaxb_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galapx_rom )
+ROM_START( galapx )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "galx.u",       0x0000, 0x0800, 0x79e4007d )
 	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
@@ -1397,7 +1553,7 @@ ROM_START( galapx_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galap1_rom )
+ROM_START( galap1 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "superg.v",     0x0800, 0x0800, 0xf58283e3 )
@@ -1413,7 +1569,7 @@ ROM_START( galap1_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galap4_rom )
+ROM_START( galap4 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "galnamco.u",   0x0000, 0x0800, 0xacfde501 )
 	ROM_LOAD( "galnamco.v",   0x0800, 0x0800, 0x65cf3c77 )
@@ -1429,7 +1585,7 @@ ROM_START( galap4_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( galturbo_rom )
+ROM_START( galturbo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "superg.u",     0x0000, 0x0800, 0xe8f3aa67 )
 	ROM_LOAD( "galx.v",       0x0800, 0x0800, 0xbc16064e )
@@ -1445,7 +1601,7 @@ ROM_START( galturbo_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( pisces_rom )
+ROM_START( pisces )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pisces.a1",    0x0000, 0x0800, 0x856b8e1f )
 	ROM_LOAD( "pisces.a2",    0x0800, 0x0800, 0x055f9762 )
@@ -1462,7 +1618,7 @@ ROM_START( pisces_rom )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
 ROM_END
 
-ROM_START( uniwars_rom )
+ROM_START( uniwars )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
@@ -1483,7 +1639,7 @@ ROM_START( uniwars_rom )
 	ROM_LOAD( "uniwars.clr",  0x0000, 0x0020, 0x25c79518 )
 ROM_END
 
-ROM_START( gteikoku_rom )
+ROM_START( gteikoku )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
@@ -1504,7 +1660,7 @@ ROM_START( gteikoku_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( spacbatt_rom )
+ROM_START( spacbatt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
 	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
@@ -1525,7 +1681,7 @@ ROM_START( spacbatt_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( warofbug_rom )
+ROM_START( warofbug )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "warofbug.u",   0x0000, 0x0800, 0xb8dfb7e3 )
 	ROM_LOAD( "warofbug.v",   0x0800, 0x0800, 0xfd8854e0 )
@@ -1541,7 +1697,7 @@ ROM_START( warofbug_rom )
 	ROM_LOAD( "warofbug.clr", 0x0000, 0x0020, 0x8688e64b )
 ROM_END
 
-ROM_START( redufo_rom )
+ROM_START( redufo )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ru1a",         0x0000, 0x0800, 0x5a8e4f37 )
 	ROM_LOAD( "ru2a",         0x0800, 0x0800, 0xc624f52d )
@@ -1558,7 +1714,7 @@ ROM_START( redufo_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( pacmanbl_rom )
+ROM_START( pacmanbl )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "blpac1b",      0x0000, 0x0800, 0x6718df42 )
 	ROM_LOAD( "blpac2b",      0x0800, 0x0800, 0x33be3648 )
@@ -1578,7 +1734,7 @@ ROM_START( pacmanbl_rom )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
 ROM_END
 
-ROM_START( devilfsg_rom )
+ROM_START( devilfsg )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "dfish1.7f",    0x2000, 0x0800, 0x2ab19698 )
 	ROM_CONTINUE(             0x0000, 0x0800 )
@@ -1599,7 +1755,7 @@ ROM_START( devilfsg_rom )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 ROM_END
 
-ROM_START( zigzag_rom )
+ROM_START( zigzag )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "zz_d1.bin",    0x0000, 0x1000, 0x8cc08d81 )
 	ROM_LOAD( "zz_d2.bin",    0x1000, 0x1000, 0x326d8d45 )
@@ -1616,7 +1772,7 @@ ROM_START( zigzag_rom )
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
-ROM_START( zigzag2_rom )
+ROM_START( zigzag2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "z1",           0x0000, 0x1000, 0x4c28349a )
 	ROM_LOAD( "zz_d2.bin",    0x1000, 0x1000, 0x326d8d45 )
@@ -1633,7 +1789,7 @@ ROM_START( zigzag2_rom )
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
-ROM_START( mooncrgx_rom )
+ROM_START( mooncrgx )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1",            0x0000, 0x0800, 0x84cf420b )
 	ROM_LOAD( "2",            0x0800, 0x0800, 0x4c2a61a1 )
@@ -1654,7 +1810,7 @@ ROM_START( mooncrgx_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( scramblb_rom )
+ROM_START( scramblb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "scramble.1k",  0x0000, 0x0800, 0x9e025c4a )
 	ROM_LOAD( "scramble.2k",  0x0800, 0x0800, 0x306f783e )
@@ -1673,7 +1829,7 @@ ROM_START( scramblb_rom )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 ROM_END
 
-ROM_START( jumpbug_rom )
+ROM_START( jumpbug )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jb1",          0x0000, 0x1000, 0x415aa1b7 )
 	ROM_LOAD( "jb2",          0x1000, 0x1000, 0xb1c27510 )
@@ -1695,7 +1851,7 @@ ROM_START( jumpbug_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( jumpbugb_rom )
+ROM_START( jumpbugb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jb1",          0x0000, 0x1000, 0x415aa1b7 )
 	ROM_LOAD( "jb2",          0x1000, 0x1000, 0xb1c27510 )
@@ -1717,7 +1873,7 @@ ROM_START( jumpbugb_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( levers_rom )
+ROM_START( levers )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "g96059.a8", 	  0x0000, 0x1000, 0x9550627a )
 	ROM_LOAD( "g96060.d8", 	  0x2000, 0x1000, 0x5ac64646 )
@@ -1738,7 +1894,7 @@ ROM_START( levers_rom )
 	ROM_LOAD( "g960lev.clr",  0x0000, 0x0020, 0x01febbbe )
 ROM_END
 
-ROM_START( azurian_rom )
+ROM_START( azurian )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pgm.1",        0x0000, 0x1000, 0x17a0fca7 )
 	ROM_LOAD( "pgm.2",        0x1000, 0x1000, 0x14659848 )
@@ -1752,7 +1908,7 @@ ROM_START( azurian_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( orbitron_rom )
+ROM_START( orbitron )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "orbitron.3",   0x0600, 0x0200, 0x419f9c9b )
 	ROM_CONTINUE(			  0x0400, 0x0200)
@@ -1778,6 +1934,23 @@ ROM_START( orbitron_rom )
 
 	ROM_REGION(0x0020)	/* color prom */
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( checkmaj )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "cm_1.bin",     0x0000, 0x1000, 0x456a118f )
+	ROM_LOAD( "cm_2.bin",     0x1000, 0x1000, 0x146b2c44 )
+	ROM_LOAD( "cm_3.bin",     0x2000, 0x0800, 0x73e1c945 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cm_6.bin",     0x0000, 0x0800, 0x476a7cc3 )
+	ROM_LOAD( "cm_5.bin",     0x0800, 0x0800, 0xb3df2b5f )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
+
+	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_LOAD( "cm_4.bin",     0x0000, 0x1000, 0x923cffa1 )
 ROM_END
 
 
@@ -2190,9 +2363,16 @@ static void levers_hisave(void)
 	}
 }
 
+
 static void pisces_driver_init(void)
 {
 	install_mem_write_handler(0, 0x6002, 0x6002, pisces_gfxbank_w);
+}
+
+static void checkmaj_driver_init(void)
+{
+    /* for the title screen */
+	install_mem_read_handler(0, 0x3800, 0x3800, checkmaj_protection_r);
 }
 
 
@@ -2796,7 +2976,7 @@ struct GameDriver levers_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-        levers_hiload, levers_hisave
+	levers_hiload, levers_hisave
 };
 
 struct GameDriver azurian_driver =
@@ -2822,7 +3002,7 @@ struct GameDriver azurian_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-        0, 0
+	0, 0
 };
 
 struct GameDriver orbitron_driver =
@@ -2848,5 +3028,32 @@ struct GameDriver orbitron_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
-        0, 0
+	0, 0
+};
+
+extern struct GameDriver checkman_driver;
+struct GameDriver checkmaj_driver =
+{
+	__FILE__,
+	&checkman_driver,
+	"checkmaj",
+	"Checkman (Japan)",
+	"1982",
+	"Jaleco",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili\nZsolt Vasvari",
+	0,
+	&checkmaj_machine_driver,
+	checkmaj_driver_init,
+
+	checkmaj_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	checkmaj_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
 };

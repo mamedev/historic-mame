@@ -97,7 +97,7 @@ INPUT_PORTS_START( astinvad_input_ports )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Extra Live" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "20000" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -114,7 +114,7 @@ INPUT_PORTS_END
 
 
 
-static unsigned char astinvad_palette[] = /* L.T */
+static unsigned char palette[] = /* L.T */
 {
 	0x00,0x00,0x00,
 	0x20,0x20,0xff,
@@ -125,6 +125,10 @@ static unsigned char astinvad_palette[] = /* L.T */
 	0xff,0xff,0x20,
 	0xff,0xff,0xff
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 static struct Samplesinterface samples_interface =
@@ -154,8 +158,8 @@ static struct MachineDriver astinvad_machine_driver = /* LT */
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(astinvad_palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -181,7 +185,7 @@ static struct MachineDriver astinvad_machine_driver = /* LT */
 
 ***************************************************************************/
 
-ROM_START( astinvad_rom )
+ROM_START( astinvad )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0x20e3ec41 )
 	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0xe8f1ab55 )
@@ -192,7 +196,7 @@ ROM_START( astinvad_rom )
 	ROM_LOAD( "ai_cpu_7.rom", 0x1800, 0x0400, 0x16dcfea4 )
 ROM_END
 
-ROM_START( kamikaze_rom )
+ROM_START( kamikaze )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "km01",         0x0000, 0x0800, 0x8aae7414 )
 	ROM_LOAD( "km02",         0x0800, 0x0800, 0x6c7a2beb )
@@ -287,7 +291,7 @@ struct GameDriver astinvad_driver =
 
 	astinvad_input_ports,
 
-	0, astinvad_palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	astinvad_hiload,astinvad_hisave
@@ -314,7 +318,7 @@ struct GameDriver kamikaze_driver =
 
 	astinvad_input_ports,
 
-	0, astinvad_palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0,0
@@ -385,7 +389,7 @@ INPUT_PORTS_START( spaceint_input_ports )
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPNAME( 0x02, 0x00, "Extra Live" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "20000" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -427,8 +431,8 @@ static struct MachineDriver spaceint_machine_driver = /* 20-12-1998 LT */
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(astinvad_palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -447,7 +451,7 @@ static struct MachineDriver spaceint_machine_driver = /* 20-12-1998 LT */
 };
 
 
-ROM_START( spaceint_rom )
+ROM_START( spaceint )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "1", 0x0000, 0x0400, 0x184314d2 )
 	ROM_LOAD( "2", 0x0400, 0x0400, 0x55459aa1 )
@@ -493,9 +497,10 @@ struct GameDriver spaceint_driver =
 
 	spaceint_input_ports,
 
-	0, astinvad_palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	spaceint_hiload,spaceint_hisave
+
+	spaceint_hiload, spaceint_hisave
 };
 
 

@@ -478,6 +478,8 @@ static void liberatr_draw_planet(void)
 
 void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	palette_recalc();
+
 	/* draw the planet */
 	liberatr_draw_planet();
 

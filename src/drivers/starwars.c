@@ -464,26 +464,6 @@ INPUT_PORTS_START( esb_input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_SWARS };
-
-
 
 static struct POKEYinterface pokey_interface =
 {
@@ -544,9 +524,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
-	gfxdecodeinfo,
+	0,
 	256,256, /* Number of colours, length of colour lookup table */
-	avg_init_colors,
+	avg_init_palette_swars,
 
 	VIDEO_TYPE_VECTOR,
 	0,							/* Handler to initialise video handware */
@@ -598,9 +578,9 @@ static struct MachineDriver esb_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 250, 0, 280 },
-	gfxdecodeinfo,
+	0,
 	256,256, /* Number of colours, length of colour lookup table */
-	avg_init_colors,
+	avg_init_palette_swars,
 
 	VIDEO_TYPE_VECTOR,
 	0,							/* Handler to initialise video handware */
@@ -630,7 +610,7 @@ static struct MachineDriver esb_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( starwar1_rom )
+ROM_START( starwar1 )
 	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.114",   0x6000, 0x2000, 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
@@ -660,7 +640,7 @@ ROM_START( starwar1_rom )
 	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
-ROM_START( starwars_rom )
+ROM_START( starwars )
 	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
 	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136021.214",   0x6000, 0x2000, 0x04f1876e )   /* ROM 0 bank pages 0 and 1 */
@@ -690,7 +670,7 @@ ROM_START( starwars_rom )
 	ROM_RELOAD(               0xe000, 0x2000 ) /* proper int vecs */
 ROM_END
 
-ROM_START( esb_rom )
+ROM_START( esb )
 	ROM_REGION(0x22000)     /* 64k for code and a buttload for the banked ROMs */
 	ROM_LOAD( "136031.111",   0x03000, 0x1000, 0xb1f9bd12 )    /* 3000-3fff is 4k vector rom */
 	ROM_LOAD( "136031.101",   0x06000, 0x2000, 0xef1e3ae5 )
@@ -775,9 +755,8 @@ struct GameDriver starwars_driver =
 	0,	/* sound_prom */
 
 	input_ports,
-	color_prom, /* Colour PROM */
-	0,          /* palette */
-	0,          /* colourtable */
+
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	novram_load, novram_save /* Highscore load, save */
@@ -802,9 +781,8 @@ struct GameDriver starwar1_driver =
 	0,	/* sound_prom */
 
 	input_ports,
-	color_prom, /* Colour PROM */
-	0,          /* palette */
-	0,          /* colourtable */
+
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	novram_load, novram_save /* Highscore load, save */
@@ -829,9 +807,8 @@ struct GameDriver esb_driver =
 	0,	/* sound_prom */
 
 	esb_input_ports,
-	color_prom, /* Colour PROM */
-	0,          /* palette */
-	0,          /* colourtable */
+
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0 /* Highscore load, save */

@@ -332,7 +332,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, unsigned char* source, int 
 void ddrible_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	tilemap_update( ALL_TILEMAPS );
-
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	tilemap_render( ALL_TILEMAPS );
 
 	tilemap_draw(bitmap,bg_tilemap,0);

@@ -1172,11 +1172,12 @@ void update_analog_port(int port)
 	input_analog_current_value[port]=current;
 }
 
-void scale_analog_port(int port)
+static void scale_analog_port(int port)
 {
 	struct InputPort *in;
 	int delta,current,sensitivity;
 
+profiler_mark(PROFILER_INPUT);
 	in = input_analog[port];
 	sensitivity = IP_GET_SENSITIVITY(in);
 
@@ -1195,6 +1196,7 @@ void scale_analog_port(int port)
 	if ( net_active() && (default_player != NET_SPECTATOR) )
 		net_analog_sync((unsigned char *) input_port_value, port, analog_player_port, default_player);
 #endif /* MAME_NET */
+profiler_mark(PROFILER_END);
 }
 
 
@@ -1217,6 +1219,9 @@ int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 #ifdef MAME_NET
 int player;
 #endif /* MAME_NET */
+
+
+profiler_mark(PROFILER_INPUT);
 
 	/* clear all the values before proceeding */
 	for (port = 0;port < MAX_INPUT_PORTS;port++)
@@ -1507,6 +1512,8 @@ if (errorlog && IP_GET_IMPULSE(in) == 0)
 	if ( net_active() && (default_player != NET_SPECTATOR) )
 		net_input_sync((unsigned char *) input_port_value, (unsigned char *) input_port_defaults, MAX_INPUT_PORTS);
 #endif /* MAME_NET */
+
+profiler_mark(PROFILER_END);
 }
 
 
@@ -1519,6 +1526,7 @@ void inputport_vblank_end(void)
 	int i;
 
 
+profiler_mark(PROFILER_INPUT);
 	for (port = 0;port < MAX_INPUT_PORTS;port++)
 	{
 		if (input_vblank[port])
@@ -1553,6 +1561,7 @@ void inputport_vblank_end(void)
 			update_analog_port(i);
 		}
 	}
+profiler_mark(PROFILER_END);
 }
 
 

@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/williams.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "6821pia.h"
@@ -41,6 +42,9 @@ UINT8 williams2_bank;
 /* switches controlled by $c900 */
 UINT16 sinistar_clip;
 UINT8 williams_cocktail;
+
+/* other stuff */
+static UINT16 joust2_current_sound_data;
 
 /* older-Williams routines */
 static void williams_main_irq(int state);
@@ -77,11 +81,8 @@ static void tshoot_lamp_w(int offset, int data);
 static void tshoot_maxvol_w(int offset, int data);
 
 /* Joust 2-specific code */
-void joust2_sound_bank_select_w(int offset,int data);
 static void joust2_snd_cmd_w(int offset, int data);
-static void joust2_snd_reset_w(int offset, int data);
-static void joust2_snd_nmi(int state);
-static void joust2_snd_firq(int state);
+static void joust2_pia_3_cb1_w(int offset, int data);
 
 
 
@@ -247,16 +248,8 @@ struct pia6821_interface tshoot_snd_pia_intf =
 struct pia6821_interface joust2_pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, joust2_snd_cmd_w, pia_3_cb1_w, pia_2_ca1_w,
+	/*outputs: A/B,CA/B2       */ 0, joust2_snd_cmd_w, joust2_pia_3_cb1_w, pia_2_ca1_w,
 	/*irqs   : A/B             */ williams_main_irq, williams_main_irq
-};
-
-/* Joust 2 PIA 3 */
-struct pia6821_interface joust2_extsnd_pia_intf =
-{
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
-	/*irqs   : A/B             */ joust2_snd_firq, joust2_snd_nmi
 };
 
 
@@ -922,64 +915,27 @@ void joust2_init_machine(void)
 	williams2_init_machine();
 
 	/* make sure sound board starts out in the reset state */
-	joust2_sound_bank_select_w(0, 0);
-	joust2_snd_reset_w(0, 0);
+	williams_cvsd_init(2, 3);
+	pia_reset();
 }
 
 
 static void joust2_deferred_snd_cmd_w(int param)
 {
-	pia_2_porta_w(0, param);
-	pia_3_portb_w(0, param);
+	pia_2_porta_w(0, param & 0xff);
+}
+
+
+void joust2_pia_3_cb1_w(int offset, int data)
+{
+	joust2_current_sound_data = (joust2_current_sound_data & ~0x100) | ((data << 8) & 0x100);
+	pia_3_cb1_w(offset, data);
 }
 
 
 void joust2_snd_cmd_w(int offset, int cmd)
 {
-	timer_set(TIME_NOW, cmd, joust2_deferred_snd_cmd_w);
-}
-
-
-void joust2_snd_reset_w(int offset, int state)
-{
-	/* going high halts the CPU */
-	if (state)
-	{
-		cpu_set_reset_line(2,ASSERT_LINE);
-
-		/* IMPORTANT: the bank must be reset here! */
-		joust2_sound_bank_select_w(0, 0);
-	}
-
-	/* going low resets and reactivates the CPU */
-	else
-		cpu_set_reset_line(2,CLEAR_LINE);
-}
-
-
-void joust2_ym2151_int(int state)
-{
-	/* the 2151's IRQ line connects to CA1 */
-	pia_3_ca1_w(0, !state);
-}
-
-
-void joust2_sound_bank_select_w(int offset,int data)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
-	static const UINT32 bank[4] = { 0x08000, 0x10000, 0x18000, 0x08000 };
-
-	cpu_setbank(4, &RAM[bank[data & 0x03]]);
-}
-
-
-void joust2_snd_nmi(int state)
-{
-	cpu_set_nmi_line(2, state ? ASSERT_LINE : CLEAR_LINE);
-}
-
-
-void joust2_snd_firq(int state)
-{
-	cpu_set_irq_line(2, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	joust2_current_sound_data = (joust2_current_sound_data & ~0xff) | (cmd & 0xff);
+	williams_cvsd_data_w(0, joust2_current_sound_data);
+	timer_set(TIME_NOW, joust2_current_sound_data, joust2_deferred_snd_cmd_w);
 }

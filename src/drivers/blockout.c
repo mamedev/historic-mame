@@ -276,7 +276,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( blockout_rom )
+ROM_START( blockout )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )
 	ROM_LOAD_ODD ( "bo29a1-2.bin", 0x00000, 0x20000, 0x5984d5a2 )
@@ -295,7 +295,7 @@ ROM_START( blockout_rom )
 	ROM_LOAD( "mb7114h.25",   0x0000, 0x0100, 0xb25bbda7 )	/* unknown */
 ROM_END
 
-ROM_START( blckout2_rom )
+ROM_START( blckout2 )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "29a0",         0x00000, 0x20000, 0x605f931e )
 	ROM_LOAD_ODD ( "29a1",         0x00000, 0x20000, 0x38f07000 )

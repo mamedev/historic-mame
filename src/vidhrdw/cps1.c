@@ -1919,7 +1919,10 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* Blank screen */
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+//	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+// TODO: the draw functions don't clip correctly at the sides of the screen, so
+// for now let's clear the whole bitmap otherwise ctrl-f11 would show wrong counts
+	fillbitmap(bitmap,palette_transparent_pen,0);
 
 
 	/* Draw layers */

@@ -332,7 +332,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( toobin_rom )
+ROM_START( toobin )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "061-3133.bin", 0x00000, 0x10000, 0x79a92d02 )
 	ROM_LOAD_ODD ( "061-3137.bin", 0x00000, 0x10000, 0xe389ef60 )
@@ -384,7 +384,7 @@ ROM_START( toobin_rom )
 ROM_END
 
 
-ROM_START( toobin2_rom )
+ROM_START( toobin2 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "061-2133.1j",  0x00000, 0x10000, 0x2c3382e4 )
 	ROM_LOAD_ODD ( "061-2137.1f",  0x00000, 0x10000, 0x891c74b1 )
@@ -436,7 +436,7 @@ ROM_START( toobin2_rom )
 ROM_END
 
 
-ROM_START( toobinp_rom )
+ROM_START( toobinp )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "pg-0-up.1j",   0x00000, 0x10000, 0xcaeb5d1b )
 	ROM_LOAD_ODD ( "pg-0-lo.1f",   0x00000, 0x10000, 0x9713d9d3 )

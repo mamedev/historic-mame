@@ -632,7 +632,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( c1942_rom )
+ROM_START( c1942 )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "1-n3a.bin",    0x00000, 0x4000, 0x40201bab )
 	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
@@ -665,7 +665,7 @@ ROM_START( c1942_rom )
 	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
-ROM_START( c1942a_rom )
+ROM_START( c1942a )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "1-n3.bin",     0x00000, 0x4000, 0x612975f2 )
 	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
@@ -698,7 +698,7 @@ ROM_START( c1942a_rom )
 	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
-ROM_START( c1942b_rom )
+ROM_START( c1942b )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "srb-03.n3",    0x00000, 0x4000, 0xd9dafcc3 )
 	ROM_LOAD( "srb-04.n4",    0x04000, 0x4000, 0xda0cf924 )

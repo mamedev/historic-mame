@@ -401,7 +401,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( spacefb_rom )
+ROM_START( spacefb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "5e.cpu",       0x0000, 0x0800, 0x2d406678 )         /* Code */
 	ROM_LOAD( "5f.cpu",       0x0800, 0x0800, 0x89f0c34a )
@@ -424,7 +424,7 @@ ROM_START( spacefb_rom )
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
-ROM_START( spacefbg_rom )
+ROM_START( spacefbg )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tst-c.5e",     0x0000, 0x0800, 0x07949110 )         /* Code */
 	ROM_LOAD( "tst-c.5f",     0x0800, 0x0800, 0xce591929 )
@@ -447,7 +447,7 @@ ROM_START( spacefbg_rom )
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
-ROM_START( spcbird_rom )
+ROM_START( spcbird )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sb5e.cpu",     0x0000, 0x0800, 0x232d66b8 )         /* Code */
 	ROM_LOAD( "sb5f.cpu",     0x0800, 0x0800, 0x99504327 )
@@ -470,7 +470,7 @@ ROM_START( spcbird_rom )
     ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 ROM_END
 
-ROM_START( spacedem_rom )
+ROM_START( spacedem )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sd5e.cpu",     0x0000, 0x0800, 0xbe4b9cbb )         /* Code */
 	ROM_LOAD( "sd5f.cpu",     0x0800, 0x0800, 0x0814f964 )

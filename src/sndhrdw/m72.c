@@ -19,7 +19,8 @@ Shisensho                     1989  Rev 2.21
 R-Type II                     1989  Rev 2.21
 Major Title                   1990  Rev 2.21
 Daiku no Gensan               1990  Rev 3.14 M81
-Hammerin' Harry	              1990  Rev 3.15 M81
+Hammerin' Harry               1990  Rev 3.15 M81
+Ken-Go	                      1991  Rev 3.15 M81
 Gallop - Armed Police Unit    1991  Rev 3.15 M72
 Pound for Pound               ????  Rev 3.15 M83
 Bomber Man World              1992  Rev 3.31 M81

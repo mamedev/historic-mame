@@ -278,7 +278,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jailbrek_rom )
+ROM_START( jailbrek )
     ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "jailb11d.bin", 0x8000, 0x4000, 0xa0b88dfd )
 	ROM_LOAD( "jailb9d.bin",  0xc000, 0x4000, 0x444b7d8e )

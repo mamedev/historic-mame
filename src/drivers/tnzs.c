@@ -1213,7 +1213,7 @@ static struct MachineDriver insectx_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( extrmatn_rom )
+ROM_START( extrmatn )
 	ROM_REGION(0x30000)				/* Region 0 - main cpu */
 	ROM_LOAD( "b06-20.bin", 0x00000, 0x08000, 0x04e3fc1f )
 	ROM_CONTINUE(           0x18000, 0x08000 )				/* banked at 8000-bfff */
@@ -1234,7 +1234,7 @@ ROM_START( extrmatn_rom )
 	ROM_LOAD( "b06-08.bin", 0x00200, 0x200, 0x10c9aac3 )	/* lo bytes */
 ROM_END
 
-ROM_START( arkanoi2_rom )
+ROM_START( arkanoi2 )
 	ROM_REGION(0x30000)				/* Region 0 - main cpu */
 	ROM_LOAD( "a2-05.rom",  0x00000, 0x08000, 0x136edf9d )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
@@ -1255,7 +1255,7 @@ ROM_START( arkanoi2_rom )
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
-ROM_START( ark2us_rom )
+ROM_START( ark2us )
 	ROM_REGION(0x30000)				/* Region 0 - main cpu */
 	ROM_LOAD( "b08-11.bin", 0x00000, 0x08000, 0x99555231 )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
@@ -1276,7 +1276,7 @@ ROM_START( ark2us_rom )
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
-ROM_START( ark2jp_rom )
+ROM_START( ark2jp )
 	ROM_REGION(0x30000)				/* Region 0 - main cpu */
 	ROM_LOAD( "a2-05.rom",  0x00000, 0x08000, 0x136edf9d )
 	ROM_CONTINUE(           0x18000, 0x08000 )			/* banked at 8000-bfff */
@@ -1297,7 +1297,7 @@ ROM_START( ark2jp_rom )
 	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
-ROM_START( chukatai_rom )
+ROM_START( chukatai )
 	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "b44.10", 0x00000, 0x08000, 0x8c69e008 )
 	ROM_CONTINUE(       0x18000, 0x08000 )				/* banked at 8000-bfff */
@@ -1318,7 +1318,7 @@ ROM_START( chukatai_rom )
 	ROM_CONTINUE(       0x10000, 0x08000 )	/* banked at 8000-9fff */
 ROM_END
 
-ROM_START( tnzs_rom )
+ROM_START( tnzs )
 	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "nzsb5310.bin", 0x00000, 0x08000, 0xa73745c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
@@ -1339,7 +1339,7 @@ ROM_START( tnzs_rom )
 	ROM_CONTINUE(             0x10000, 0x08000 )		/* banked at 8000-9fff */
 ROM_END
 
-ROM_START( tnzsb_rom )
+ROM_START( tnzsb )
 	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "nzsb5324.bin", 0x00000, 0x08000, 0xd66824c6 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
@@ -1363,7 +1363,7 @@ ROM_START( tnzsb_rom )
 	ROM_LOAD( "nzsb5326.bin", 0x00000, 0x10000, 0xcfd5649c )
 ROM_END
 
-ROM_START( tnzs2_rom )
+ROM_START( tnzs2 )
 	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "ns_c-11.rom",  0x00000, 0x08000, 0x3c1dae7b )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */
@@ -1383,7 +1383,7 @@ ROM_START( tnzs2_rom )
 	ROM_CONTINUE(             0x10000, 0x08000 )
 ROM_END
 
-ROM_START( insectx_rom )
+ROM_START( insectx )
 	ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "insector.u32", 0x00000, 0x08000, 0x18eef387 )
 	ROM_CONTINUE(             0x18000, 0x18000 )		/* banked at 8000-bfff */

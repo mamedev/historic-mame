@@ -47,54 +47,35 @@ void sharkatt_color_map_w(int offset, int data)
 /***************************************************************************
  sharkatt_videoram_w
  **************************************************************************/
-static void plot_pixel (int x, int y, int col)
-{
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = x;
-		x = y;
-		y = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		x = 255 - x;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		y = 255 - y;
-
-	tmpbitmap->line[y][x] = col;
-	Machine->scrbitmap->line[y][x] = col;
-	/* TODO: we should mark 8 bits dirty at a time */
-	osd_mark_dirty (x,y,x,y,0);
-}
-
 void sharkatt_videoram_w(int offset,int data)
 {
-	if ((dirtybuffer[offset]) || (videoram[offset] != data))
+	int i,x,y;
+
+
+	videoram[offset] = data;
+
+	x = offset / 32;
+	y = 8 * (offset % 32);
+
+	for (i = 0;i < 8;i++)
 	{
-		int i,x,y;
+		int col;
 
-		dirtybuffer[offset] = 0;
+		col = Machine->pens[color_plane & 0x0F];
 
-		videoram[offset] = data;
-
-		x = offset / 32;
-		y = 8 * (offset % 32);
-
-		for (i = 0;i < 8;i++)
+		if (data & 0x80)
 		{
-			int col;
-
-			col = Machine->pens[color_plane & 0x0F];
-
-			if (data & 0x80)
-				plot_pixel (x, y, col);
-			else
-				plot_pixel (x, y, Machine->pens[0]);
-
-			y++;
-			data <<= 1;
+			plot_pixel (tmpbitmap, x, y, col);
+			plot_pixel (Machine->scrbitmap, x, y, col);
 		}
+		else
+		{
+			plot_pixel (tmpbitmap, x, y, Machine->pens[0]);
+			plot_pixel (Machine->scrbitmap, x, y, Machine->pens[0]);
+		}
+
+		y++;
+		data <<= 1;
 	}
 }
 
@@ -108,6 +89,14 @@ void sharkatt_videoram_w(int offset,int data)
 ***************************************************************************/
 void sharkatt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+	{
+		int offs;
+
+		for (offs = 0;offs < videoram_size;offs++)
+			sharkatt_videoram_w(offs,videoram[offs]);
+	}
+
 	if (full_refresh)
 		/* copy the character mapped graphics */
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

@@ -16,6 +16,7 @@ Dragon Breed                        M81        Y         Y
 R-Type II                           M82/M84(2) Y         N
 Major Title                         M84        Y         N
 Hammerin' Harry	/ Daiku no Gensan   M82(3)     Y         N
+Ken-Go                              ?          N      Encrypted
 Gallop - Armed Police Unit          M73?(4)    Y         N
 Pound for Pound                     M83?       N(5)      N
 
@@ -780,9 +781,9 @@ INPUT_PORTS_START( rtype_input_ports )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* Probably Bonus Life */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -809,9 +810,11 @@ INPUT_PORTS_START( rtype_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x22, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x22, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
 	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
@@ -821,17 +824,13 @@ INPUT_PORTS_START( rtype_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-/* Demo sound is inverted, other dips still to test */
-INPUT_PORTS_START( rtypej_input_ports )
+INPUT_PORTS_START( rtypeu_input_ports )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -872,9 +871,9 @@ INPUT_PORTS_START( rtypej_input_ports )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* Probably Bonus Life */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -901,9 +900,11 @@ INPUT_PORTS_START( rtypej_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x22, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x22, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
 	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
@@ -913,14 +914,12 @@ INPUT_PORTS_START( rtypej_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( bchopper_input_ports )
 	PORT_START
@@ -958,51 +957,55 @@ INPUT_PORTS_START( bchopper_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+/* Coin Mode 1, todo Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x22, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x22, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -1044,51 +1047,55 @@ INPUT_PORTS_START( nspirit_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* Probably Bonus Life */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+/* Coin Mode 1, todo Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x22, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x22, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* Probably Difficulty */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -1130,49 +1137,53 @@ INPUT_PORTS_START( imgfight_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+/* Coin Mode 1, todo Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x22, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x22, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -1216,51 +1227,55 @@ INPUT_PORTS_START( loht_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+/* Coin Mode 1, todo Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x22, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x22, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -1308,44 +1323,49 @@ INPUT_PORTS_START( xmultipl_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+/* Coin Mode 1, todo Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1388,50 +1408,54 @@ INPUT_PORTS_START( dbreed_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+/* Coin Mode 1, todo Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "5 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen?" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x22, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x22, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x02, "Upright 1 Player" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1514,13 +1538,13 @@ INPUT_PORTS_START( rtype2_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
-	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x28, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Upright 1 Player" )
-	PORT_DIPSETTING(    0x18, "Upright 2 Players" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
-	/* PORT_DIPSETTING(    0x10, "Upright 2 Players" ) */
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, "Upright 2 Players" )
+	PORT_DIPSETTING(    0x28, DEF_STR( Cocktail ) )
+PORT_DIPSETTING(    0x08, "Upright 2 Players" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -2340,69 +2364,7 @@ static struct MachineDriver poundfor_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( rtype_rom )
-	ROM_REGION(0x100000)
-	ROM_LOAD_V20_EVEN( "aud-h0.bin",   0x00000, 0x10000, 0x36008a4e )
-	ROM_LOAD_V20_ODD ( "aud-l0.bin",   0x00000, 0x10000, 0x4aaa668e )
-	ROM_LOAD_V20_EVEN( "aud-h1.bin",   0x20000, 0x10000, 0x7ebb2a53 )
-	ROM_RELOAD_V20_EVEN(               0xe0000, 0x10000 )
-	ROM_LOAD_V20_ODD ( "aud-l1.bin",   0x20000, 0x10000, 0xc28b103b )
-	ROM_RELOAD_V20_ODD (               0xe0000, 0x10000 )
-
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu-a0.bin",   0x00000, 0x08000, 0x4e212fb0 )	/* tiles #1 */
-	ROM_LOAD( "cpu-a1.bin",   0x08000, 0x08000, 0x8a65bdff )
-	ROM_LOAD( "cpu-a2.bin",   0x10000, 0x08000, 0x5a4ae5b9 )
-	ROM_LOAD( "cpu-a3.bin",   0x18000, 0x08000, 0x73327606 )
-	ROM_LOAD( "cpu-b0.bin",   0x20000, 0x08000, 0xa7b17491 )	/* tiles #2 */
-	ROM_LOAD( "cpu-b1.bin",   0x28000, 0x08000, 0xb9709686 )
-	ROM_LOAD( "cpu-b2.bin",   0x30000, 0x08000, 0x433b229a )
-	ROM_LOAD( "cpu-b3.bin",   0x38000, 0x08000, 0xad89b072 )
-	ROM_LOAD( "cpu-00.bin",   0x40000, 0x10000, 0xdad53bc0 )	/* sprites */
-	ROM_LOAD( "cpu-01.bin",   0x50000, 0x10000, 0xb28d1a60 )
-	ROM_LOAD( "cpu-10.bin",   0x60000, 0x10000, 0xd6a66298 )
-	ROM_LOAD( "cpu-11.bin",   0x70000, 0x10000, 0xbb182f1a )
-	ROM_LOAD( "cpu-20.bin",   0x80000, 0x10000, 0xfc247c8a )
-	ROM_LOAD( "cpu-21.bin",   0x90000, 0x10000, 0x5b41f5f3 )
-	ROM_LOAD( "cpu-30.bin",   0xa0000, 0x10000, 0xeb02a1cb )
-	ROM_LOAD( "cpu-31.bin",   0xb0000, 0x10000, 0x2bec510a )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	/* no ROM, program will be copied by the main CPU */
-ROM_END
-
-ROM_START( rtypeb_rom )
-	ROM_REGION(0x100000)
-	ROM_LOAD_V20_EVEN( "r-7.8b",       0x00000, 0x10000, 0xeacc8024 )
-	ROM_LOAD_V20_ODD ( "r-1.7b",       0x00000, 0x10000, 0x2e5fe27b )
-	ROM_LOAD_V20_EVEN( "r-8.8c",       0x20000, 0x10000, 0x22cc4950 )
-	ROM_RELOAD_V20_EVEN(               0xe0000, 0x10000 )
-	ROM_LOAD_V20_ODD ( "r-2.7c",       0x20000, 0x10000, 0xada7b90e )
-	ROM_RELOAD_V20_ODD (               0xe0000, 0x10000 )
-
-	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu-a0.bin",   0x00000, 0x08000, 0x4e212fb0 )	/* tiles #1 */
-	ROM_LOAD( "cpu-a1.bin",   0x08000, 0x08000, 0x8a65bdff )
-	ROM_LOAD( "cpu-a2.bin",   0x10000, 0x08000, 0x5a4ae5b9 )
-	ROM_LOAD( "cpu-a3.bin",   0x18000, 0x08000, 0x73327606 )
-	ROM_LOAD( "cpu-b0.bin",   0x20000, 0x08000, 0xa7b17491 )	/* tiles #2 */
-	ROM_LOAD( "cpu-b1.bin",   0x28000, 0x08000, 0xb9709686 )
-	ROM_LOAD( "cpu-b2.bin",   0x30000, 0x08000, 0x433b229a )
-	ROM_LOAD( "cpu-b3.bin",   0x38000, 0x08000, 0xad89b072 )
-	ROM_LOAD( "cpu-00.bin",   0x40000, 0x10000, 0xdad53bc0 )	/* sprites */
-	ROM_LOAD( "cpu-01.bin",   0x50000, 0x10000, 0xb28d1a60 )
-	ROM_LOAD( "cpu-10.bin",   0x60000, 0x10000, 0xd6a66298 )
-	ROM_LOAD( "cpu-11.bin",   0x70000, 0x10000, 0xbb182f1a )
-	ROM_LOAD( "cpu-20.bin",   0x80000, 0x10000, 0xfc247c8a )
-	ROM_LOAD( "cpu-21.bin",   0x90000, 0x10000, 0x5b41f5f3 )
-	ROM_LOAD( "cpu-30.bin",   0xa0000, 0x10000, 0xeb02a1cb )
-	ROM_LOAD( "cpu-31.bin",   0xb0000, 0x10000, 0x2bec510a )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	/* no ROM, program will be copied by the main CPU */
-ROM_END
-
-ROM_START( rtypej_rom )
+ROM_START( rtype )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "db_b1.bin",   0x00000, 0x10000, 0xc1865141 )
 	ROM_LOAD_V20_ODD ( "db_a1.bin",   0x00000, 0x10000, 0x5ad2bd90 )
@@ -2433,7 +2395,69 @@ ROM_START( rtypej_rom )
 	/* no ROM, program will be copied by the main CPU */
 ROM_END
 
-ROM_START( bchopper_rom )
+ROM_START( rtypeu )
+	ROM_REGION(0x100000)
+	ROM_LOAD_V20_EVEN( "aud-h0.bin",   0x00000, 0x10000, 0x36008a4e )
+	ROM_LOAD_V20_ODD ( "aud-l0.bin",   0x00000, 0x10000, 0x4aaa668e )
+	ROM_LOAD_V20_EVEN( "aud-h1.bin",   0x20000, 0x10000, 0x7ebb2a53 )
+	ROM_RELOAD_V20_EVEN(               0xe0000, 0x10000 )
+	ROM_LOAD_V20_ODD ( "aud-l1.bin",   0x20000, 0x10000, 0xc28b103b )
+	ROM_RELOAD_V20_ODD (               0xe0000, 0x10000 )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpu-a0.bin",   0x00000, 0x08000, 0x4e212fb0 )	/* tiles #1 */
+	ROM_LOAD( "cpu-a1.bin",   0x08000, 0x08000, 0x8a65bdff )
+	ROM_LOAD( "cpu-a2.bin",   0x10000, 0x08000, 0x5a4ae5b9 )
+	ROM_LOAD( "cpu-a3.bin",   0x18000, 0x08000, 0x73327606 )
+	ROM_LOAD( "cpu-b0.bin",   0x20000, 0x08000, 0xa7b17491 )	/* tiles #2 */
+	ROM_LOAD( "cpu-b1.bin",   0x28000, 0x08000, 0xb9709686 )
+	ROM_LOAD( "cpu-b2.bin",   0x30000, 0x08000, 0x433b229a )
+	ROM_LOAD( "cpu-b3.bin",   0x38000, 0x08000, 0xad89b072 )
+	ROM_LOAD( "cpu-00.bin",   0x40000, 0x10000, 0xdad53bc0 )	/* sprites */
+	ROM_LOAD( "cpu-01.bin",   0x50000, 0x10000, 0xb28d1a60 )
+	ROM_LOAD( "cpu-10.bin",   0x60000, 0x10000, 0xd6a66298 )
+	ROM_LOAD( "cpu-11.bin",   0x70000, 0x10000, 0xbb182f1a )
+	ROM_LOAD( "cpu-20.bin",   0x80000, 0x10000, 0xfc247c8a )
+	ROM_LOAD( "cpu-21.bin",   0x90000, 0x10000, 0x5b41f5f3 )
+	ROM_LOAD( "cpu-30.bin",   0xa0000, 0x10000, 0xeb02a1cb )
+	ROM_LOAD( "cpu-31.bin",   0xb0000, 0x10000, 0x2bec510a )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	/* no ROM, program will be copied by the main CPU */
+ROM_END
+
+ROM_START( rtypeb )
+	ROM_REGION(0x100000)
+	ROM_LOAD_V20_EVEN( "r-7.8b",       0x00000, 0x10000, 0xeacc8024 )
+	ROM_LOAD_V20_ODD ( "r-1.7b",       0x00000, 0x10000, 0x2e5fe27b )
+	ROM_LOAD_V20_EVEN( "r-8.8c",       0x20000, 0x10000, 0x22cc4950 )
+	ROM_RELOAD_V20_EVEN(               0xe0000, 0x10000 )
+	ROM_LOAD_V20_ODD ( "r-2.7c",       0x20000, 0x10000, 0xada7b90e )
+	ROM_RELOAD_V20_ODD (               0xe0000, 0x10000 )
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cpu-a0.bin",   0x00000, 0x08000, 0x4e212fb0 )	/* tiles #1 */
+	ROM_LOAD( "cpu-a1.bin",   0x08000, 0x08000, 0x8a65bdff )
+	ROM_LOAD( "cpu-a2.bin",   0x10000, 0x08000, 0x5a4ae5b9 )
+	ROM_LOAD( "cpu-a3.bin",   0x18000, 0x08000, 0x73327606 )
+	ROM_LOAD( "cpu-b0.bin",   0x20000, 0x08000, 0xa7b17491 )	/* tiles #2 */
+	ROM_LOAD( "cpu-b1.bin",   0x28000, 0x08000, 0xb9709686 )
+	ROM_LOAD( "cpu-b2.bin",   0x30000, 0x08000, 0x433b229a )
+	ROM_LOAD( "cpu-b3.bin",   0x38000, 0x08000, 0xad89b072 )
+	ROM_LOAD( "cpu-00.bin",   0x40000, 0x10000, 0xdad53bc0 )	/* sprites */
+	ROM_LOAD( "cpu-01.bin",   0x50000, 0x10000, 0xb28d1a60 )
+	ROM_LOAD( "cpu-10.bin",   0x60000, 0x10000, 0xd6a66298 )
+	ROM_LOAD( "cpu-11.bin",   0x70000, 0x10000, 0xbb182f1a )
+	ROM_LOAD( "cpu-20.bin",   0x80000, 0x10000, 0xfc247c8a )
+	ROM_LOAD( "cpu-21.bin",   0x90000, 0x10000, 0x5b41f5f3 )
+	ROM_LOAD( "cpu-30.bin",   0xa0000, 0x10000, 0xeb02a1cb )
+	ROM_LOAD( "cpu-31.bin",   0xb0000, 0x10000, 0x2bec510a )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	/* no ROM, program will be copied by the main CPU */
+ROM_END
+
+ROM_START( bchopper )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "c-h0-b.rom",   0x00000, 0x10000, 0xf2feab16 )
 	ROM_LOAD_V20_ODD ( "c-l0-b.rom",   0x00000, 0x10000, 0x9f887096 )
@@ -2469,7 +2493,7 @@ ROM_START( bchopper_rom )
 	ROM_LOAD( "c-v0-b.rom",   0x00000, 0x10000, 0xd0c27e58 )
 ROM_END
 
-ROM_START( mrheli_rom )
+ROM_START( mrheli )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "mh-c-h0.bin",  0x00000, 0x10000, 0xe2ca5646 )
 	ROM_LOAD_V20_ODD ( "mh-c-l0.bin",  0x00000, 0x10000, 0x643e23cd )
@@ -2501,7 +2525,7 @@ ROM_START( mrheli_rom )
 	ROM_LOAD( "c-v0-b.rom",   0x00000, 0x10000, 0xd0c27e58 )
 ROM_END
 
-ROM_START( nspirit_rom )
+ROM_START( nspirit )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "nin-c-h0.rom", 0x00000, 0x10000, 0x035692fa )
 	ROM_LOAD_V20_ODD ( "nin-c-l0.rom", 0x00000, 0x10000, 0x9a405898 )
@@ -2535,7 +2559,7 @@ ROM_START( nspirit_rom )
 	ROM_LOAD( "nin-v0.rom",      0x00000, 0x10000, 0xa32e8caf )
 ROM_END
 
-ROM_START( nspiritj_rom )
+ROM_START( nspiritj )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "c-h0",         0x00000, 0x10000, 0x8603fab2 )
 	ROM_LOAD_V20_ODD ( "c-l0",         0x00000, 0x10000, 0xe520fa35 )
@@ -2569,7 +2593,7 @@ ROM_START( nspiritj_rom )
 	ROM_LOAD( "nin-v0.rom",      0x00000, 0x10000, 0xa32e8caf )
 ROM_END
 
-ROM_START( imgfight_rom )
+ROM_START( imgfight )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "if-c-h0.bin",  0x00000, 0x10000, 0x592d2d80 )
 	ROM_LOAD_V20_ODD ( "if-c-l0.bin",  0x00000, 0x10000, 0x61f89056 )
@@ -2600,7 +2624,7 @@ ROM_START( imgfight_rom )
 	ROM_LOAD( "if-c-v1.bin",  0x10000, 0x10000, 0x45b68bf5 )
 ROM_END
 
-ROM_START( loht_rom )
+ROM_START( loht )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "tom_c-h0.rom", 0x00000, 0x20000, 0xa63204b6 )
 	ROM_LOAD_V20_ODD ( "tom_c-l0.rom", 0x00000, 0x20000, 0xe788002f )
@@ -2630,7 +2654,7 @@ ROM_START( loht_rom )
 	ROM_LOAD( "tom_m44.rom",  0x00000, 0x10000, 0x3ed51d1f )
 ROM_END
 
-ROM_START( xmultipl_rom )
+ROM_START( xmultipl )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "ch3.h3",       0x00000, 0x20000, 0x20685021 )
 	ROM_LOAD_V20_ODD ( "cl3.l3",       0x00000, 0x20000, 0x93fdd200 )
@@ -2664,7 +2688,7 @@ ROM_START( xmultipl_rom )
 	ROM_LOAD( "t52.v0",       0x00000, 0x20000, 0x2db1bd80 )
 ROM_END
 
-ROM_START( dbreed_rom )
+ROM_START( dbreed )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "db_c-h3.rom",  0x00000, 0x20000, 0x4bf3063c )
 	ROM_LOAD_V20_ODD ( "db_c-l3.rom",  0x00000, 0x20000, 0xe4b89b79 )
@@ -2694,7 +2718,7 @@ ROM_START( dbreed_rom )
 	ROM_LOAD( "db_c-v0.rom",  0x00000, 0x20000, 0x312f7282 )
 ROM_END
 
-ROM_START( rtype2_rom )
+ROM_START( rtype2 )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "ic54.8d",      0x00000, 0x20000, 0xd8ece6f4 )
 	ROM_LOAD_V20_ODD ( "ic60.9d",      0x00000, 0x20000, 0x32cfb2e4 )
@@ -2724,7 +2748,7 @@ ROM_START( rtype2_rom )
 	ROM_LOAD( "ic14.4c",      0x00000, 0x20000, 0x637172d5 )
 ROM_END
 
-ROM_START( rtype2j_rom )
+ROM_START( rtype2j )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "rt2-a-h0.54",  0x00000, 0x20000, 0x7857ccf6 )
 	ROM_LOAD_V20_ODD ( "rt2-a-l0.60",  0x00000, 0x20000, 0xcb22cd6e )
@@ -2754,7 +2778,7 @@ ROM_START( rtype2j_rom )
 	ROM_LOAD( "ic14.4c",      0x00000, 0x20000, 0x637172d5 )
 ROM_END
 
-ROM_START( majtitle_rom )
+ROM_START( majtitle )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "mt_m0.bin",    0x00000, 0x20000, 0xb9682c70 )
 	ROM_LOAD_V20_ODD ( "mt_l0.bin",    0x00000, 0x20000, 0x702c9fd6 )
@@ -2784,7 +2808,7 @@ ROM_START( majtitle_rom )
 	ROM_LOAD( "mt_vo.bin",    0x00000, 0x20000, 0xeb24bb2c )
 ROM_END
 
-ROM_START( hharry_rom )
+ROM_START( hharry )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "a-h0-v.rom",   0x00000, 0x20000, 0xc52802a5 )
 	ROM_LOAD_V20_ODD ( "a-l0-v.rom",   0x00000, 0x20000, 0xf463074c )
@@ -2810,7 +2834,7 @@ ROM_START( hharry_rom )
 	ROM_LOAD( "a-v0-0.rom",   0x00000, 0x20000, 0xfaaacaff )
 ROM_END
 
-ROM_START( hharryu_rom )
+ROM_START( hharryu )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "a-ho-u.8d",    0x00000, 0x20000, 0xede7f755 )
 	ROM_LOAD_V20_ODD ( "a-lo-u.9d",    0x00000, 0x20000, 0xdf0726ae )
@@ -2836,7 +2860,7 @@ ROM_START( hharryu_rom )
 	ROM_LOAD( "a-v0-0.rom",   0x00000, 0x20000, 0xfaaacaff )
 ROM_END
 
-ROM_START( dkgensan_rom )
+ROM_START( dkgensan )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "gen-a-h0.bin", 0x00000, 0x20000, 0x07a45f6d )
 	ROM_LOAD_V20_ODD ( "gen-a-l0.bin", 0x00000, 0x20000, 0x46478fea )
@@ -2862,7 +2886,31 @@ ROM_START( dkgensan_rom )
 	ROM_LOAD( "gen-vo.bin",   0x00000, 0x20000, 0xd8595c66 )
 ROM_END
 
-ROM_START( gallop_rom )
+ROM_START( kengo )
+	ROM_REGION(0x100000)
+	ROM_LOAD_V20_EVEN( "ken_d-h0.rom", 0x00000, 0x20000, 0xf4ddeea5 )
+	ROM_RELOAD_V20_EVEN(               0xc0000, 0x20000 )
+	ROM_LOAD_V20_ODD ( "ken_d-l0.rom", 0x00000, 0x20000, 0x04dc0f81 )
+	ROM_RELOAD_V20_ODD (               0xc0000, 0x20000 )
+
+	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ken_m51.rom",  0x000000, 0x20000, 0x1646cf4f )	/* tiles */
+	ROM_LOAD( "ken_m57.rom",  0x020000, 0x20000, 0xa9f88d90 )
+	ROM_LOAD( "ken_m66.rom",  0x040000, 0x20000, 0xe9d17645 )
+	ROM_LOAD( "ken_m64.rom",  0x060000, 0x20000, 0xdf46709b )
+	ROM_LOAD( "ken_m21.rom",  0x080000, 0x20000, 0xd7722f87 )	/* sprites */
+	ROM_LOAD( "ken_m22.rom",  0x0a0000, 0x20000, 0xa00dac85 )
+	ROM_LOAD( "ken_m31.rom",  0x0c0000, 0x20000, 0xe00b95a6 )
+	ROM_LOAD( "ken_m32.rom",  0x0e0000, 0x20000, 0x30a844c4 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ken_d-sp.rom", 0x0000, 0x10000, 0x233ca1cf )
+
+	ROM_REGION(0x20000)	/* samples */
+	ROM_LOAD( "ken_m14.rom",  0x00000, 0x20000, 0x6651e9b7 )
+ROM_END
+
+ROM_START( gallop )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "cc-c-h0.bin",  0x00000, 0x20000, 0x2217dcd0 )
 	ROM_LOAD_V20_ODD ( "cc-c-l0.bin",  0x00000, 0x20000, 0xff39d7fb )
@@ -2892,7 +2940,7 @@ ROM_START( gallop_rom )
 	ROM_LOAD( "cc-c-v0.bin",  0x00000, 0x20000, 0x6247bade )
 ROM_END
 
-ROM_START( poundfor_rom )
+ROM_START( poundfor )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "ppa-ho-a.9e",  0x00000, 0x20000, 0xff4c83a4 )
 	ROM_LOAD_V20_ODD ( "ppa-lo-a.9d",  0x00000, 0x20000, 0x3374ce8f )
@@ -2927,9 +2975,9 @@ struct GameDriver rtype_driver =
 	__FILE__,
 	0,
 	"rtype",
-	"R-Type (US)",
+	"R-Type (Japan)",
 	"1987",
-	"Irem (Nintendo of America license)",
+	"Irem",
 	"Nicola Salmoria",
 	0,
 	&rtype_machine_driver,
@@ -2941,6 +2989,32 @@ struct GameDriver rtype_driver =
 	0,	/* sound_prom */
 
 	rtype_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver rtypeu_driver =
+{
+	__FILE__,
+	&rtype_driver,
+	"rtypeu",
+	"R-Type (US)",
+	"1987",
+	"Irem (Nintendo of America license)",
+	"Nicola Salmoria",
+	0,
+	&rtype_machine_driver,
+	0,
+
+	rtypeu_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	rtypeu_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2966,33 +3040,7 @@ struct GameDriver rtypeb_driver =
 	0,
 	0,	/* sound_prom */
 
-	rtype_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0, 0
-};
-
-struct GameDriver rtypej_driver =
-{
-	__FILE__,
-	&rtype_driver,
-	"rtypej",
-	"R-Type (Japan)",
-	"1987",
-	"Irem",
-	"Nicola Salmoria",
-	0,
-	&rtype_machine_driver,
-	0,
-
-	rtypej_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	rtypej_input_ports,
+	rtypeu_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3031,7 +3079,7 @@ struct GameDriver mrheli_driver =
 	__FILE__,
 	&bchopper_driver,
 	"mrheli",
-	"Mr. Heli",
+	"Mr. HELI no Dai-Bouken",
 	"1987",
 	"Irem",
 	"Nicola Salmoria",
@@ -3083,7 +3131,7 @@ struct GameDriver nspiritj_driver =
 	__FILE__,
 	&nspirit_driver,
 	"nspiritj",
-	"Ninja Spirit (Japan)",
+	"Saigo no Nindou (Japan)",
 	"1988",
 	"Irem",
 	"Nicola Salmoria",
@@ -3352,6 +3400,32 @@ struct GameDriver dkgensan_driver =
 	0,
 
 	dkgensan_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	hharry_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver kengo_driver =
+{
+	__FILE__,
+	0,
+	"kengo",
+	"Ken-Go",
+	"1991",
+	"Irem",
+	"Nicola Salmoria",
+	GAME_NOT_WORKING,
+	&hharry_machine_driver,
+	0,
+
+	kengo_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -1395,7 +1395,7 @@ static struct MachineDriver wndrmomo_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( roishtar_rom )
+ROM_START( roishtar )
 	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 + banks */
 	ROM_LOAD( "ri1-1c.9c", 0x08000, 0x8000, 0x14acbacb )
 	ROM_LOAD( "ri1-2.9d",  0x10000, 0x2000, 0xfcd58d91 )
@@ -1440,7 +1440,7 @@ ROM_START( roishtar_rom )
 	/* the expansion board is not present in this game */
 ROM_END
 
-ROM_START( genpeitd_rom )
+ROM_START( genpeitd )
 	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 + banks */
 	ROM_LOAD( "gt1-1b.9c", 0x08000, 0x8000, 0x75396194 )
 	/* 9d empty */
@@ -1491,7 +1491,7 @@ ROM_START( genpeitd_rom )
 	/* m3 empty */
 ROM_END
 
-ROM_START( rthunder_rom )
+ROM_START( rthunder )
 	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 */
 	ROM_LOAD( "rt3-1b.9c",  0x8000, 0x8000, 0x7d252a1b )
 	/* 9d empty */
@@ -1542,7 +1542,7 @@ ROM_START( rthunder_rom )
 	/* m3 empty */
 ROM_END
 
-ROM_START( rthundrb_rom )
+ROM_START( rthundrb )
 	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 */
 	ROM_LOAD( "r1",         0x8000, 0x8000, 0x6f8c1252 )
 	/* 9d empty */
@@ -1593,7 +1593,7 @@ ROM_START( rthundrb_rom )
 	/* m3 empty */
 ROM_END
 
-ROM_START( wndrmomo_rom )
+ROM_START( wndrmomo )
 	ROM_REGION( 0x18000 ) /* 6809 code for CPU1 */
 	ROM_LOAD( "wm1-1.9c", 0x8000, 0x8000, 0x34b50bf0 )
 	/* 9d empty */

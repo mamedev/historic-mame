@@ -569,7 +569,7 @@ static struct MachineDriver machine_driver =
 	64,64,
 	0,//mnchmobl_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	mnchmobl_vh_start,
 	mnchmobl_vh_stop,
@@ -585,7 +585,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( mnchmobl_rom )
+ROM_START( mnchmobl )
 	ROM_REGION(0x10000) /* 64k for CPUA */
 	ROM_LOAD( "m1.10e",	 0x0000, 0x2000, 0xa4bebc6a )
 	ROM_LOAD( "m2.10d",	 0x2000, 0x2000, 0xf502d466 )

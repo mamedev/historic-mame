@@ -29,6 +29,7 @@ struct RunningMachine
 	unsigned short *colortable;	/* lookup table used to map gfx pen numbers to palette pen numbers */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
+	int color_depth;	/* video color depth: 8 or 16 */
 	int sample_rate;	/* the digital audio sample rate; 0 if sound is disabled. */
 						/* This is set to a default value, or a value specified by */
 						/* the user; osd_init() is allowed to change it to the actual */
@@ -62,6 +63,7 @@ struct GameOptions {
 	int use_samples;
 	int use_emulated_ym3812;
 
+	int color_depth;	/* 8 or 16, any other value means auto */
 	int norotate;
 	int ror;
 	int rol;

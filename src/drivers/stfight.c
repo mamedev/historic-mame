@@ -565,7 +565,7 @@ static struct MachineDriver stfight_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( empcity_rom )
+ROM_START( empcity )
 	ROM_REGION(0x18000)	        /* 64k for the first CPU */
 	ROM_LOAD( "ec_01.rom",  0x00000, 0x8000, 0xfe01d9b1 )
 	ROM_LOAD( "ec_02.rom",  0x10000, 0x8000, 0xb3cf1ef7 )	/* bank switched */
@@ -616,7 +616,7 @@ ROM_START( empcity_rom )
 	ROM_LOAD( "82s129.015", 0x0700, 0x0100, 0x0eaf5158 )	/* timing? (not used) */
 ROM_END
 
-ROM_START( stfight_rom )
+ROM_START( stfight )
 	ROM_REGION(0x18000)	        /* 64k for the first CPU */
 	ROM_LOAD( "a-1.4q",     0x00000, 0x8000, 0xff83f316 )
 	ROM_LOAD( "sf02.bin",   0x10000, 0x8000, 0xe626ce9e )	/* bank switched */

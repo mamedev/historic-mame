@@ -426,7 +426,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( srumbler_rom )
+ROM_START( srumbler )
 	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
@@ -468,7 +468,7 @@ ROM_START( srumbler_rom )
 	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
 
-ROM_START( srumblr2_rom )
+ROM_START( srumblr2 )
 	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 
@@ -510,7 +510,7 @@ ROM_START( srumblr2_rom )
 	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
 
-ROM_START( rushcrsh_rom )
+ROM_START( rushcrsh )
 	ROM_REGION(0x10000+0x9000*16)  /* 64k for code + banked ROM images */
 	/* empty, will be filled later */
 

@@ -50,8 +50,6 @@ UINT8 mcr_cocktail_flip;
  *
  *************************************/
 
-static UINT8 mcr_loadnvram;
-
 static UINT8 m6840_status;
 static UINT8 m6840_status_read_since_int;
 static UINT8 m6840_msb_buffer;
@@ -175,8 +173,7 @@ void mcr_init_machine(void)
 	ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
 	z80ctc_init(&ctc_intf);
 
-	/* can't load NVRAM right away, except for games with no SSIO */
-	mcr_loadnvram = !(mcr_sound_config & MCR_SSIO);
+	/* reset cocktail flip */
 	mcr_cocktail_flip = 0;
 
 	/* initialize the sound */
@@ -211,8 +208,7 @@ static void mcr68_common_init(void)
 	/* initialize the clock */
 	m6840_internal_counter_period = TIME_IN_HZ(Machine->drv->cpu[0].cpu_clock / 10);
 
-	/* can't load NVRAM right away, except for games with no SSIO */
-	mcr_loadnvram = !(mcr_sound_config & MCR_SSIO);
+	/* reset cocktail flip */
 	mcr_cocktail_flip = 0;
 
 	/* initialize the sound */
@@ -401,13 +397,6 @@ int mcr_port_04_dispatch_r(int offset)
 }
 
 
-int mcr_sound_status_r(int offset)
-{
-	mcr_loadnvram = 1;
-	return ssio_status_r(offset);
-}
-
-
 
 /*************************************
  *
@@ -419,34 +408,27 @@ int mcr_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[0];
 
-	/* see if it's okay to load */
-	if (mcr_loadnvram)
+	/* don't bother if 0 length */
+	if (mcr_hiscore_length != 0)
 	{
-		/* don't bother if 0 length */
-		if (mcr_hiscore_length != 0)
+		void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+
+		/* read data if we succeed */
+		if (f)
 		{
-			void *f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-
-			/* read data if we succeed */
-			if (f)
-			{
-				osd_fread(f, &RAM[mcr_hiscore_start], mcr_hiscore_length);
-				osd_fclose(f);
-			}
-
-			/* copy data if we failed */
-			else if (mcr_hiscore_init && mcr_hiscore_init_length)
-			{
-				memcpy(&RAM[mcr_hiscore_start], mcr_hiscore_init, mcr_hiscore_init_length);
-			}
+			osd_fread(f, &RAM[mcr_hiscore_start], mcr_hiscore_length);
+			osd_fclose(f);
 		}
 
-		/* don't bother us anymore */
-		return 1;
+		/* copy data if we failed */
+		else if (mcr_hiscore_init && mcr_hiscore_init_length)
+		{
+			memcpy(&RAM[mcr_hiscore_start], mcr_hiscore_init, mcr_hiscore_init_length);
+		}
 	}
 
-	/* we can't load the hi scores yet */
-	return 0;
+	/* don't bother us anymore */
+	return 1;
 }
 
 

@@ -723,7 +723,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 
-ROM_START( wardner_rom )
+ROM_START( wardner )
 	ROM_REGION(0x48000)		/* Banked Z80 code */
 	ROM_LOAD( "wardner.17", 0x00000, 0x08000, 0xc5dd56fd )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom", 0x18000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
@@ -755,7 +755,7 @@ ROM_START( wardner_rom )
 	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
-ROM_START( pyros_rom )
+ROM_START( pyros )
 	ROM_REGION(0x48000)		/* Banked Z80 code */
 	ROM_LOAD( "b25-29.rom", 0x00000, 0x08000, 0xb568294d )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom", 0x18000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */
@@ -787,7 +787,7 @@ ROM_START( pyros_rom )
 	ROM_LOAD_ODD ( "dsp.msb",	0x0000, 0x0800, BADCRC( 0x963ce23d ) )
 ROM_END
 
-ROM_START( wardnerj_rom )
+ROM_START( wardnerj )
 	ROM_REGION(0x48000)		/* Banked Z80 code */
 	ROM_LOAD( "wardnerj.17", 0x00000, 0x08000, 0xc06804ec )	/* Main Z80 code */
 	ROM_LOAD( "b25-18.rom",  0x18000, 0x10000, 0x9aab8ee2 )	/* OBJ ROMs */

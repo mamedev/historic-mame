@@ -156,12 +156,24 @@ static void cache_allocate (unsigned entries)
 
 #endif
 
+/* This function can be called several times with different parameters,
+ * for example by "mame -verifyroms *". */
 void decompose_rom_sample_path (char *rompath, char *samplepath)
 {
-    char *token;
+	char *token;
 
-    roms = malloc( strlen(rompath) + 1);
-    samples = malloc( strlen(samplepath) + 1);
+	/* start with zero path components */
+	rompathc = samplepathc = 0;
+
+	if (!roms)
+		roms = malloc( strlen(rompath) + 1);
+	else
+		roms = realloc( roms, strlen(rompath) + 1);
+
+	if (!samples)
+		samples = malloc( strlen(samplepath) + 1);
+	else
+		samples = realloc( samples, strlen(samplepath) + 1);
 
 	if( !roms || !samples )
 	{

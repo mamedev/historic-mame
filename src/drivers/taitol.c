@@ -1623,7 +1623,7 @@ MCH_SINGLE(cachat)
 
 
 
-ROM_START( fhawk_rom )
+ROM_START( fhawk )
 	ROM_REGION(0xb0000)
 	ROM_LOAD( "b70-07.bin", 0x00000, 0x20000, 0x939114af )
 	ROM_RELOAD(             0x10000, 0x20000 )
@@ -1641,7 +1641,7 @@ ROM_START( fhawk_rom )
 	ROM_LOAD( "b70-09.bin", 0x00000, 0x10000, 0x85cccaa2 )
 ROM_END
 
-ROM_START( raimais_rom )
+ROM_START( raimais )
 	ROM_REGION(0xb0000)
 	ROM_LOAD( "b36-08-1.bin", 0x00000, 0x20000, 0x6cc8f79f )
 	ROM_RELOAD(               0x10000, 0x20000 )
@@ -1658,7 +1658,7 @@ ROM_START( raimais_rom )
 	ROM_LOAD( "b36-06.bin",   0x00000, 0x10000, 0x29bbc4f8 )
 ROM_END
 
-ROM_START( champwr_rom )
+ROM_START( champwr )
 	ROM_REGION(0xf0000)
 	ROM_LOAD( "c01-13.rom", 0x00000, 0x20000, 0x7ef47525 )
 	ROM_RELOAD(             0x10000, 0x20000 )
@@ -1679,7 +1679,7 @@ ROM_START( champwr_rom )
 ROM_END
 
 
-ROM_START( puzznic_rom )
+ROM_START( puzznic )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "u11.rom",  0x00000, 0x20000, 0xa4150b6c )
 	ROM_RELOAD(           0x10000, 0x20000 )
@@ -1692,7 +1692,7 @@ ROM_START( puzznic_rom )
 	ROM_LOAD( "mc68705p", 0x0000, 0x0800, 0x00000000 )
 ROM_END
 
-ROM_START( plotting_rom )
+ROM_START( plotting )
 	ROM_REGION(0x20000)
 	ROM_LOAD( "plot01.bin", 0x00000, 0x10000, 0x5b30bc25 )
 	ROM_RELOAD(             0x10000, 0x10000 )
@@ -1702,7 +1702,7 @@ ROM_START( plotting_rom )
 	ROM_LOAD( "plot08.bin", 0x40000, 0x10000, 0xfb5f3ca4 )
 ROM_END
 
-ROM_START( palamed_rom )
+ROM_START( palamed )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "c63.02", 0x00000, 0x20000, 0x55a82bb2 )
 	ROM_RELOAD(         0x10000, 0x20000 )
@@ -1712,7 +1712,7 @@ ROM_START( palamed_rom )
 	ROM_LOAD( "c63.03", 0x40000, 0x20000, 0xfcd86e44 )
 ROM_END
 
-ROM_START( horshoes_rom )
+ROM_START( horshoes )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "c47.03", 0x00000, 0x20000, 0x37e15b20 )
 	ROM_RELOAD(         0x10000, 0x20000 )
@@ -1728,7 +1728,7 @@ ROM_START( horshoes_rom )
 	ROM_CONTINUE (      0x70000, 0x10000 )
 ROM_END
 
-ROM_START( cachat_rom )
+ROM_START( cachat )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "cac6",  0x00000, 0x20000, 0x8105cf5f )
 	ROM_RELOAD(        0x10000, 0x20000 )

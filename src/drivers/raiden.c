@@ -16,6 +16,8 @@
 
 	Todo: add support for Coin Mode B
 
+	One of the boards is SEI8904 with SEI9008 subboard.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -353,7 +355,7 @@ static void YM3812_irqhandler(int linestate)
 static struct YM3812interface ym3812_interface =
 {
 	1,
-	3600000,
+	14318180/4,
 	{ 50 },
 	{ YM3812_irqhandler },
 };
@@ -377,28 +379,28 @@ static struct MachineDriver raiden_machine_driver =
 	{
 		{
 			CPU_V30, /* NEC V30 CPU */
-			18000000, /* 18MHz?, the old value of 10MHz is certainly wrong */
+			19000000, /* 20MHz is correct, but glitched!? */
 			0,
 			readmem,writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
 			CPU_V30, /* NEC V30 CPU */
-			18000000, /* 18MHz?, the old value of 10MHz is certainly wrong */
+			19000000, /* 20MHz is correct, but glitched!? */
 			3,
 			sub_readmem,sub_writemem,0,0,
 			raiden_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU, /* Also controls coins */
-			4000000,
+			14318180/4,
 			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
-	120,	/* CPU interleave  */
+	70,	/* CPU interleave  */
 	0,
 
 	/* video hardware */
@@ -485,7 +487,7 @@ static struct MachineDriver raidena_machine_driver =
 
 /***************************************************************************/
 
-ROM_START( raiden_rom )
+ROM_START( raiden )
 	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
 	ROM_LOAD_V20_ODD ( "rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
 	ROM_LOAD_V20_EVEN( "rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
@@ -511,7 +513,7 @@ ROM_START( raiden_rom )
 	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
 ROM_END
 
-ROM_START(raidena_rom)
+ROM_START( raidena )
 	ROM_REGION(0x100000) /* Region 0 - v20 main cpu */
 	ROM_LOAD_V20_ODD ( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
 	ROM_LOAD_V20_EVEN( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
@@ -564,7 +566,7 @@ static int sub_cpu_spin(int offset)
 
 static void memory_patch(void)
 {
-	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
+//	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin);
 }
 
 /***************************************************************************/

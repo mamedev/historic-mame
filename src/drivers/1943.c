@@ -312,7 +312,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( c1943_rom )
+ROM_START( c1943 )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943.01",      0x00000, 0x08000, 0xc686cc5c )
 	ROM_LOAD( "1943.02",      0x10000, 0x10000, 0xd8880a41 )
@@ -359,7 +359,7 @@ ROM_START( c1943_rom )
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 ROM_END
 
-ROM_START( c1943j_rom )
+ROM_START( c1943j )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943jap.001",  0x00000, 0x08000, 0xf6935937 )
 	ROM_LOAD( "1943jap.002",  0x10000, 0x10000, 0xaf971575 )
@@ -406,7 +406,7 @@ ROM_START( c1943j_rom )
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 ROM_END
 
-ROM_START( c1943kai_rom )
+ROM_START( c1943kai )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943kai.01",   0x00000, 0x08000, 0x7d2211db )
 	ROM_LOAD( "1943kai.02",   0x10000, 0x10000, 0x2ebbc8c5 )

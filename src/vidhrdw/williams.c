@@ -252,7 +252,7 @@ void williams_vh_update(int counter)
 void williams_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* full refresh forces us to redraw everything */
-	if (full_refresh)
+	if (palette_recalc() || full_refresh)
 		memset(scanline_dirty, 1, 256);
 }
 

@@ -986,7 +986,7 @@ static struct MachineDriver streets2_machine_driver =
 /******************************************************************************/
 
 
-ROM_START( pow_rom )
+ROM_START( pow )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "dg1",   0x000000, 0x20000, 0x8e71a8af )
 	ROM_LOAD_ODD ( "dg2",   0x000000, 0x20000, 0x4287affc )
@@ -1019,7 +1019,7 @@ ROM_START( pow_rom )
 ROM_END
 
 
-ROM_START( powj_rom )
+ROM_START( powj )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "1-2",   0x000000, 0x20000, 0x2f17bfb0 )
 	ROM_LOAD_ODD ( "2-2",   0x000000, 0x20000, 0xbaa32354 )
@@ -1052,7 +1052,7 @@ ROM_START( powj_rom )
 ROM_END
 
 
-ROM_START( searchar_rom )
+ROM_START( searchar )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "bh.2",  0x000000, 0x20000, 0xc852e2e2 )
 	ROM_LOAD_ODD ( "bh.3",  0x000000, 0x20000, 0xbc04a4a1 )
@@ -1080,7 +1080,7 @@ ROM_START( searchar_rom )
 ROM_END
 
 
-ROM_START( streetsm_rom )
+ROM_START( streetsm )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "s2-1ver1.9c",  0x00000, 0x20000, 0xb59354c5 )
 	ROM_LOAD_ODD ( "s2-2ver1.10c", 0x00000, 0x20000, 0xe448b68b )
@@ -1104,7 +1104,7 @@ ROM_START( streetsm_rom )
 ROM_END
 
 
-ROM_START( streets2_rom )
+ROM_START( streets2 )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "s2-1ver2.14h", 0x00000, 0x20000, 0x655f4773 )
 	ROM_LOAD_ODD ( "s2-2ver2.14k", 0x00000, 0x20000, 0xefae4823 )
@@ -1128,7 +1128,7 @@ ROM_START( streets2_rom )
 ROM_END
 
 
-ROM_START( streetsj_rom )
+ROM_START( streetsj )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "s2v1j_01.bin", 0x00000, 0x20000, 0xf031413c )
 	ROM_LOAD_ODD ( "s2v1j_02.bin", 0x00000, 0x20000, 0xe403a40b )
@@ -1152,7 +1152,7 @@ ROM_START( streetsj_rom )
 ROM_END
 
 
-ROM_START( ikari3_rom )
+ROM_START( ikari3 )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "ik3-2.bin", 0x000000, 0x20000, 0xa7b34dcd )
 	ROM_LOAD_ODD ( "ik3-3.bin", 0x000000, 0x20000, 0x50f2b83d )

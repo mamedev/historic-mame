@@ -265,7 +265,7 @@ MACHINE_DRIVER(tomahawk, 32)
 
 ***************************************************************************/
 
-ROM_START( astrof_rom )
+ROM_START( astrof )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "afii.6",       0xd000, 0x0800, 0xd6cd13a4 )
 	ROM_LOAD( "afii.5",       0xd800, 0x0800, 0x6fd3c4df )
@@ -278,7 +278,7 @@ ROM_START( astrof_rom )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
-ROM_START( astrof2_rom )
+ROM_START( astrof2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
@@ -297,7 +297,7 @@ ROM_START( astrof2_rom )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
-ROM_START( astrof3_rom )
+ROM_START( astrof3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
 	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
@@ -316,7 +316,7 @@ ROM_START( astrof3_rom )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
-ROM_START( tomahawk_rom )
+ROM_START( tomahawk )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "l8-1",         0xdc00, 0x0400, 0x7c911661 )
 	ROM_LOAD( "l7-1",         0xe000, 0x0400, 0xadeffb69 )
@@ -332,7 +332,7 @@ ROM_START( tomahawk_rom )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
-ROM_START( tomahaw5_rom )
+ROM_START( tomahaw5 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "thawk.l8",     0xdc00, 0x0400, 0xb01dab4b )
 	ROM_LOAD( "thawk.l7",     0xe000, 0x0400, 0x3a6549e8 )

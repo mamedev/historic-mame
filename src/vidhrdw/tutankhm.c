@@ -40,42 +40,16 @@ static void videowrite(int offset,int data)
 		y2 = 255 - y2;
 	}
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-
-		temp = x1;
-		x1 = y1;
-		y1 = temp;
-		temp = x2;
-		x2 = y2;
-		y2 = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		x1 = 255 - x1;
-		x2 = 255 - x2;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		y1 = 255 - y1;
-		y2 = 255 - y2;
-	}
-
-	tmpbitmap->line[y1][x1] = Machine->pens[data & 0x0f];
-	tmpbitmap->line[y2][x2] = Machine->pens[data >> 4];
+	plot_pixel(tmpbitmap,x1,y1,Machine->pens[data & 0x0f]);
+	plot_pixel(tmpbitmap,x2,y2,Machine->pens[data >> 4]);
 }
 
 
 
 void tutankhm_videoram_w(int offset,int data)
 {
-	if (videoram[offset] != data)
-	{
-		videoram[offset] = data;
-		videowrite(offset,data);
-	}
+	videoram[offset] = data;
+	videowrite(offset,data);
 }
 
 
@@ -105,6 +79,14 @@ void tutankhm_flipscreen_w(int offset,int data)
 ***************************************************************************/
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (palette_recalc())
+	{
+		int offs;
+
+		for (offs = 0;offs < videoram_size;offs++)
+			tutankhm_videoram_w(offs,videoram[offs]);
+	}
+
 	/* copy the temporary bitmap to the screen */
 	{
 		int scroll[32], i;

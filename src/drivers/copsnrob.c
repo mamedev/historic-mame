@@ -181,61 +181,64 @@ static struct GfxLayout trucklayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 1, 0x0000, &charlayout, 0, 3 }, /* offset into colors, # of colors */
-        { 1, 0x0200, &carlayout,  0, 3 },
-        { 1, 0x0a00, &trucklayout,0, 3 },
-        { -1 } /* end of array */
+	{ 1, 0x0000, &charlayout, 0, 3 }, /* offset into colors, # of colors */
+	{ 1, 0x0200, &carlayout,  0, 3 },
+	{ 1, 0x0a00, &trucklayout,0, 3 },
+	{ -1 } /* end of array */
 };
 
 static unsigned char palette[] =
 {
-        0x00,0x00,0x00, /* Black */
-        0x40,0x40,0xc0, /* Blue */
-        0xf0,0xf0,0x30, /* Yellow */
-        0xbd,0x9b,0x13, /* Amber */
+	0x00,0x00,0x00, /* Black */
+	0x40,0x40,0xc0, /* Blue */
+	0xf0,0xf0,0x30, /* Yellow */
+	0xbd,0x9b,0x13, /* Amber */
 
-        0xff,0x00,0x00  /* Red for MAME's use only */
+	0xff,0x00,0x00  /* Red for MAME's use only */
 };
-
 static unsigned short colortable[] =
 {
-        0x00, 0x01,
-        0x00, 0x02,
-        0x00, 0x03
+	0x00, 0x01,
+	0x00, 0x02,
+	0x00, 0x03
 };
-
-
-static
-struct MachineDriver machine_driver =
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
-        /* basic machine hardware */
-        {
-                {
-                        CPU_M6502,
-                        14318180/16, /* 894886.25 kHz */
-                        0,
-                        readmem,writemem,0,0,
-                        ignore_interrupt,1
-                }
-        },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-        1,      /* single CPU, no need for interleaving */
-        0,
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
 
-        /* video hardware */
-        32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-        gfxdecodeinfo,
-        sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-        0,
 
-        VIDEO_TYPE_RASTER,
-        0,
-        generic_vh_start,
-        generic_vh_stop,
-        copsnrob_vh_screenrefresh,
+static struct MachineDriver machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			14318180/16, /* 894886.25 kHz */
+			0,
+			readmem,writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
 
-        /* sound hardware */
-        0,0,0,0
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	copsnrob_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0
 };
 
 
@@ -248,7 +251,7 @@ struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( copsnrob_rom )
+ROM_START( copsnrob )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "5777.l7",      0x1200, 0x0200, 0x2b62d627 )
 	ROM_LOAD( "5776.k7",      0x1400, 0x0200, 0x7fb12a49 )
@@ -289,7 +292,7 @@ struct GameDriver copsnrob_driver =
 
 	copsnrob_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	// This game doesn't keep track of high scores

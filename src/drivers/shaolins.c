@@ -274,7 +274,7 @@ static struct MachineDriver shaolins_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( kicker_rom )
+ROM_START( kicker )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )
@@ -294,7 +294,7 @@ ROM_START( kicker_rom )
 	ROM_LOAD( "kicker.f16",   0x0400, 0x0100, 0x80009cf5 ) /* sprite lookup table */
 ROM_END
 
-ROM_START( shaolins_rom )
+ROM_START( shaolins )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "kikrd8.bin",   0x6000, 0x2000, 0x2598dfdd )
 	ROM_LOAD( "kikrd9.bin",   0x8000, 0x4000, 0x0cf0351a )

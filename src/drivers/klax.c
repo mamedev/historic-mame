@@ -321,7 +321,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( klax_rom )
+ROM_START( klax )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075-6.006", 0x00000, 0x10000, 0xe8991709 )
 	ROM_LOAD_ODD ( "136075-6.005", 0x00000, 0x10000, 0x72b8c510 )
@@ -342,7 +342,7 @@ ROM_START( klax_rom )
 ROM_END
 
 
-ROM_START( klax2_rom )
+ROM_START( klax2 )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075.006",   0x00000, 0x10000, 0x05c98fc0 )
 	ROM_LOAD_ODD ( "136075.005",   0x00000, 0x10000, 0xd461e1ee )
@@ -363,7 +363,7 @@ ROM_START( klax2_rom )
 ROM_END
 
 
-ROM_START( klax3_rom )
+ROM_START( klax3 )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "5006",         0x00000, 0x10000, 0x65eb9a31 )
 	ROM_LOAD_ODD ( "5005",         0x00000, 0x10000, 0x7be27349 )
@@ -384,7 +384,7 @@ ROM_START( klax3_rom )
 ROM_END
 
 
-ROM_START( klaxj_rom )
+ROM_START( klaxj )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075-3.406", 0x00000, 0x10000, 0xab2aa50b )
 	ROM_LOAD_ODD ( "136075-3.405", 0x00000, 0x10000, 0x9dc9a590 )

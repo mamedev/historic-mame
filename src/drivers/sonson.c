@@ -304,7 +304,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sonson_rom )
+ROM_START( sonson )
 	ROM_REGION(0x10000)	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "ss.01e",       0x4000, 0x4000, 0xcd40cc54 )
 	ROM_LOAD( "ss.02e",       0x8000, 0x4000, 0xc3476527 )

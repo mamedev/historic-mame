@@ -583,7 +583,7 @@ static void hisave(void)
 
 ***************************************************************************/
 
-ROM_START( jackal_rom )
+ROM_START( jackal )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "j-v02.rom",    0x04000, 0x8000, 0x0b7e0584 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
@@ -605,7 +605,7 @@ ROM_START( jackal_rom )
 	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
-ROM_START( topgunr_rom )
+ROM_START( topgunr )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xf7e28426 )
 	ROM_CONTINUE(             0x14000, 0x8000 )
@@ -627,7 +627,7 @@ ROM_START( topgunr_rom )
 	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
-ROM_START( jackalj_rom )
+ROM_START( jackalj )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "631t02.bin",   0x04000, 0x8000, 0x14db6b1a )
 	ROM_CONTINUE(             0x14000, 0x8000 )
@@ -649,7 +649,7 @@ ROM_START( jackalj_rom )
 	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
-ROM_START( topgunbl_rom )
+ROM_START( topgunbl )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "t-3.c5",       0x04000, 0x8000, 0x7826ad38 )
 	ROM_LOAD( "t-4.c4",       0x14000, 0x8000, 0x976c8431 )

@@ -675,7 +675,7 @@ MACHINE_DRIVER(suprmous, 8*8)
 
 ***************************************************************************/
 
-ROM_START( thepit_rom )
+ROM_START( thepit )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "p38b",         0x0000, 0x1000, 0x7315e1bc )
 	ROM_LOAD( "p39b",         0x1000, 0x1000, 0xc9cc30fe )
@@ -694,7 +694,7 @@ ROM_START( thepit_rom )
 	ROM_LOAD( "p30",          0x0000, 0x0800, 0x1b79dfb6 )
 ROM_END
 
-ROM_START( roundup_rom )
+ROM_START( roundup )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "roundup.u38",  0x0000, 0x1000, 0xd62c3b7a )
 	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
@@ -714,7 +714,7 @@ ROM_START( roundup_rom )
 	ROM_LOAD( "roundup.u31",  0x0800, 0x0800, 0x76cf4394 )
 ROM_END
 
-ROM_START( fitter_rom )
+ROM_START( fitter )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "ic38.bin",     0x0000, 0x1000, 0x6bf6cca4 )
 	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
@@ -734,7 +734,7 @@ ROM_START( fitter_rom )
 	ROM_LOAD( "ic31.bin",     0x0800, 0x0800, 0xc9d8c1cc )
 ROM_END
 
-ROM_START( intrepid_rom )
+ROM_START( intrepid )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "ic19.1",       0x0000, 0x1000, 0x7d927b23 )
 	ROM_LOAD( "ic18.2",       0x1000, 0x1000, 0xdcc22542 )
@@ -754,7 +754,7 @@ ROM_START( intrepid_rom )
 	ROM_LOAD( "ic23.6",       0x0800, 0x0800, 0x91ca7097 )
 ROM_END
 
-ROM_START( intrepi2_rom )
+ROM_START( intrepi2 )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "intrepid.001", 0x0000, 0x1000, 0x9505df1e )
 	ROM_LOAD( "intrepid.002", 0x1000, 0x1000, 0x27e9f53f )
@@ -774,7 +774,7 @@ ROM_START( intrepi2_rom )
 	ROM_LOAD( "intrepid.006", 0x0800, 0x0800, 0x9eb6c61b )
 ROM_END
 
-ROM_START( portman_rom )
+ROM_START( portman )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "pe1",          0x0000, 0x1000, 0xa5cf6083 )
 	ROM_LOAD( "pe2",          0x1000, 0x1000, 0x0b53d48a )
@@ -794,7 +794,7 @@ ROM_START( portman_rom )
 	ROM_LOAD( "pe6",          0x0800, 0x0800, 0x1cf447f4 )
 ROM_END
 
-ROM_START( suprmous_rom )
+ROM_START( suprmous )
 	ROM_REGION(0x10000)	    /* 64k for main CPU */
 	ROM_LOAD( "sm.1",         0x0000, 0x1000, 0x9db2b786 )
 	ROM_LOAD( "sm.2",         0x1000, 0x1000, 0x0a3d91d3 )
@@ -815,7 +815,7 @@ ROM_START( suprmous_rom )
 	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 ROM_END
 
-ROM_START( suprmou2_rom )
+ROM_START( suprmou2 )
 	ROM_REGION(0x10000)	    /* 64k for main CPU */
 	ROM_LOAD( "suprmous.x1",  0x0000, 0x1000, 0xad72b467 )
 	ROM_LOAD( "suprmous.x2",  0x1000, 0x1000, 0x53f5be5e )
@@ -836,7 +836,7 @@ ROM_START( suprmou2_rom )
 	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 ROM_END
 
-ROM_START( machomou_rom )
+ROM_START( machomou )
 	ROM_REGION(0x10000)	    /* 64k for main CPU */
 	ROM_LOAD( "mm1.2g",       0x0000, 0x1000, 0x91f116be )
 	ROM_LOAD( "mm2.2h",       0x1000, 0x1000, 0x3aa88c9b )

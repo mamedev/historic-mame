@@ -290,7 +290,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( funkybee_rom )
+ROM_START( funkybee )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "funkybee.1",    0x0000, 0x1000, 0x3372cb33 )
 	ROM_LOAD( "funkybee.3",    0x1000, 0x1000, 0x7bf7c62f )
@@ -305,7 +305,7 @@ ROM_START( funkybee_rom )
 	ROM_LOAD( "funkybee.clr",  0x0000, 0x0020, 0xe2cf5fe2 )
 ROM_END
 
-ROM_START( skylancr_rom )
+ROM_START( skylancr )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1.5a",          0x0000, 0x2000, 0x82d55824 )
 	ROM_LOAD( "2.5c",          0x2000, 0x2000, 0xdff3a682 )

@@ -262,7 +262,7 @@ static struct MachineDriver NAME##_machine_driver =			\
 	16*256,16*256,											\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,	\
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
 	0,														\
 	capbowl_vh_start,										\
 	capbowl_vh_stop,										\
@@ -294,7 +294,7 @@ MACHINEDRIVER(bowlrama, 239)
 
 ***************************************************************************/
 
-ROM_START( capbowl_rom )
+ROM_START( capbowl )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
 	ROM_LOAD( "u6",           0x08000, 0x8000, 0x14924c96 )
 	ROM_LOAD( "gr0",          0x10000, 0x8000, 0xef53ca7a )
@@ -309,7 +309,7 @@ ROM_START( capbowl_rom )
 	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
 ROM_END
 
-ROM_START( capbowl2_rom )
+ROM_START( capbowl2 )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
 	ROM_LOAD( "progrev3.u6",  0x08000, 0x8000, 0x9162934a )
 	ROM_LOAD( "gr0",          0x10000, 0x8000, 0xef53ca7a )
@@ -324,7 +324,7 @@ ROM_START( capbowl2_rom )
 	ROM_LOAD( "sound",        0x8000, 0x8000, 0x8c9c3b8a )
 ROM_END
 
-ROM_START( clbowl_rom )
+ROM_START( clbowl )
 	ROM_REGION(0x28000)   /* 160k for code and graphics */
 	ROM_LOAD( "u6.cl",        0x08000, 0x8000, 0x91e06bc4 )
 	ROM_LOAD( "gr0.cl",       0x10000, 0x8000, 0x899c8f15 )
@@ -339,7 +339,7 @@ ROM_START( clbowl_rom )
 	ROM_LOAD( "sound.cl",     0x8000, 0x8000, 0x1eba501e )
 ROM_END
 
-ROM_START( bowlrama_rom )
+ROM_START( bowlrama )
 	ROM_REGION(0x10000)      /* 64k for code */
 	ROM_LOAD( "u6",           0x08000, 0x08000, 0x7103ad55 )
 
@@ -403,7 +403,7 @@ struct GameDriver capbowl_driver =
 	"1988",
 	"Incredible Technologies",
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	0,
+	GAME_REQUIRES_16BIT,
 	&capbowl_machine_driver,
 	0,
 
@@ -429,7 +429,7 @@ struct GameDriver capbowl2_driver =
 	"1988",
 	"Incredible Technologies",
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	0,
+	GAME_REQUIRES_16BIT,
 	&capbowl_machine_driver,
 	0,
 
@@ -455,7 +455,7 @@ struct GameDriver clbowl_driver =
 	"1989",
 	"Incredible Technologies",
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	0,
+	GAME_REQUIRES_16BIT,
 	&capbowl_machine_driver,
 	0,
 
@@ -481,7 +481,7 @@ struct GameDriver bowlrama_driver =
 	"1991",
 	"P & P Marketing",
 	"Michael Appolo\nZsolt Vasvari\nMirko Buffoni\nNicola Salmoria",
-	0,
+	GAME_REQUIRES_16BIT,
 	&bowlrama_machine_driver,
 	0,
 

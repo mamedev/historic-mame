@@ -378,7 +378,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bombjack_rom )
+ROM_START( bombjack )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
 	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
@@ -404,7 +404,7 @@ ROM_START( bombjack_rom )
 	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
 ROM_END
 
-ROM_START( bombjac2_rom )
+ROM_START( bombjac2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
 	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )

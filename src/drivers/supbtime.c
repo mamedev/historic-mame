@@ -345,7 +345,7 @@ static struct MachineDriver supbtime_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( supbtime_rom )
+ROM_START( supbtime )
 	ROM_REGION(0x40000) /* 68000 code */
 	ROM_LOAD_EVEN( "gc03.bin", 0x00000, 0x20000, 0xb5621f6a )
 	ROM_LOAD_ODD ( "gc04.bin", 0x00000, 0x20000, 0x551b2a0c )

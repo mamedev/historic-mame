@@ -315,7 +315,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 
-ROM_START( travrusa_rom )
+ROM_START( travrusa )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "zippyrac.000", 0x0000, 0x2000, 0xbe066c0a )
 	ROM_LOAD( "zippyrac.005", 0x2000, 0x2000, 0x145d6b34 )
@@ -339,7 +339,7 @@ ROM_START( travrusa_rom )
 	ROM_LOAD( "mr10.1a",      0xf000, 0x1000, 0xa02ad8a0 )
 ROM_END
 
-ROM_START( motorace_rom )
+ROM_START( motorace )
 	ROM_REGION(0x12000)	/* 64k for code */
 	ROM_LOAD( "mr.cpu",       0x10000, 0x2000, 0x89030b0c )	/* we load the ROM at 10000-11fff, */
 														/* it will be decrypted at 0000 */

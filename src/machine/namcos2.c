@@ -58,7 +58,7 @@ void namcos2_init_machine(void)
 	for(loop=0;loop<0x40;loop+=2) namcos2_68k_vram_ctrl_w(loop,0);
 
 	/* Initialise ROZ */
-	for(loop=0;loop<0x10;loop++) namcos2_68k_roz_ctrl_w(loop,0);
+	for(loop=0;loop<0x10;loop+=2) namcos2_68k_roz_ctrl_w(loop,0);
 }
 
 
@@ -130,14 +130,10 @@ int namcos2_68k_vram_size=0;
 
 void namcos2_68k_vram_w(int offset, int data)
 {
-#ifdef NAMCOS2_USE_TILEMGR
     int col=(offset>>1)&0x3f;
     int row=(offset>>7)&0x3f;
-#endif
 
     COMBINE_WORD_MEM(&videoram[offset],data);
-
-#ifdef NAMCOS2_USE_TILEMGR
 
 	/* Some games appear to use the 409000 region as SRAM to */
 	/* communicate between master/slave processors ??        */
@@ -195,7 +191,6 @@ void namcos2_68k_vram_w(int offset, int data)
     			break;
     	}
     }
-#endif
 }
 
 int namcos2_68k_vram_r(int offset)
@@ -210,9 +205,11 @@ unsigned char namcos2_68k_vram_ctrl[0x40];
 
 void namcos2_68k_vram_ctrl_w( int offset, int data )
 {
-	COMBINE_WORD_MEM(&namcos2_68k_vram_ctrl[offset&0x3f],data);
+	int olddata=namcos2_68k_vram_ctrl_r(offset&0x3f)&0x0f;
+	int newdata=data&0x0f;
 
-#ifdef NAMCOS2_USE_TILEMGR
+	/* Write word to register */
+	COMBINE_WORD_MEM(&namcos2_68k_vram_ctrl[offset&0x3f],data);
 
 	switch(offset&0x3f)
 	{
@@ -227,7 +224,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				namcos2_tilemap0_flip=flip;
 				namcos2_tilemap4_flip=flip;
 				namcos2_tilemap5_flip=flip;
-//				tilemap_set_scrollx( namcos2_tilemap0, 0, (data+44+4)&0xfff );
 				tilemap_set_scrollx( namcos2_tilemap0, 0, (data+44+4)&0x1ff );
 			}
 			break;
@@ -242,7 +238,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				namcos2_tilemap0_flip=flip;
 				namcos2_tilemap4_flip=flip;
 				namcos2_tilemap5_flip=flip;
-//				tilemap_set_scrolly( namcos2_tilemap0, 0, (data+24)&0xfff );
 				tilemap_set_scrolly( namcos2_tilemap0, 0, (data+24)&0x1ff );
 			}
 			break;
@@ -253,7 +248,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				flip|=(namcos2_68k_vram_ctrl_r(0x0e)&0x8000)?TILEMAP_FLIPY:0;
 				if(namcos2_tilemap1_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
 				namcos2_tilemap1_flip=flip;
-///				tilemap_set_scrollx( namcos2_tilemap1, 0, (data+44+2)&0xfff );
 				tilemap_set_scrollx( namcos2_tilemap1, 0, (data+44+2)&0x1ff );
 			}
 			break;
@@ -264,7 +258,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				flip|=(namcos2_68k_vram_ctrl_r(0x0e)&0x8000)?TILEMAP_FLIPY:0;
 				if(namcos2_tilemap1_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
 				namcos2_tilemap1_flip=flip;
-//				tilemap_set_scrolly( namcos2_tilemap1, 0, (data+24)&0xfff );
 				tilemap_set_scrolly( namcos2_tilemap1, 0, (data+24)&0x1ff );
 			}
 			break;
@@ -275,7 +268,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				flip|=(namcos2_68k_vram_ctrl_r(0x16)&0x8000)?TILEMAP_FLIPY:0;
 				if(namcos2_tilemap2_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
 				namcos2_tilemap2_flip=flip;
-//				tilemap_set_scrollx( namcos2_tilemap2, 0, (data+44+1)&0xfff );
 				tilemap_set_scrollx( namcos2_tilemap2, 0, (data+44+1)&0x1ff );
 			}
 			break;
@@ -286,7 +278,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				flip|=(namcos2_68k_vram_ctrl_r(0x16)&0x8000)?TILEMAP_FLIPY:0;
 				if(namcos2_tilemap2_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
 				namcos2_tilemap2_flip=flip;
-//				tilemap_set_scrolly( namcos2_tilemap2, 0, (data+24)&0xfff );
 				tilemap_set_scrolly( namcos2_tilemap2, 0, (data+24)&0x1ff );
 			}
 			break;
@@ -297,7 +288,6 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				flip|=(namcos2_68k_vram_ctrl_r(0x1e)&0x8000)?TILEMAP_FLIPY:0;
 				if(namcos2_tilemap3_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
 				namcos2_tilemap3_flip=flip;
-//				tilemap_set_scrollx( namcos2_tilemap3, 0, (data+44)&0xfff );
 				tilemap_set_scrollx( namcos2_tilemap3, 0, (data+44)&0x1ff );
 			}
 			break;
@@ -308,15 +298,36 @@ void namcos2_68k_vram_ctrl_w( int offset, int data )
 				flip|=(namcos2_68k_vram_ctrl_r(0x1e)&0x8000)?TILEMAP_FLIPY:0;
 				if(namcos2_tilemap3_flip!=flip) tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
 				namcos2_tilemap3_flip=flip;
-//				tilemap_set_scrolly( namcos2_tilemap3, 0, (data+24)&0xfff );
 				tilemap_set_scrolly( namcos2_tilemap3, 0, (data+24)&0x1ff );
 			}
+			break;
+		case 0x30:
+			/* Change of colour bank needs to force a tilemap redraw */
+			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap0);
+			break;
+		case 0x32:
+			/* Change of colour bank needs to force a tilemap redraw */
+			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap1);
+			break;
+		case 0x34:
+			/* Change of colour bank needs to force a tilemap redraw */
+			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap2);
+			break;
+		case 0x36:
+			/* Change of colour bank needs to force a tilemap redraw */
+			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap3);
+			break;
+		case 0x38:
+			/* Change of colour bank needs to force a tilemap redraw */
+			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap4);
+			break;
+		case 0x3a:
+			/* Change of colour bank needs to force a tilemap redraw */
+			if(newdata!=olddata) tilemap_mark_all_tiles_dirty(namcos2_tilemap5);
 			break;
 		default:
 			break;
 	}
-
-#endif
 }
 
 int namcos2_68k_vram_ctrl_r( int offset )
@@ -369,8 +380,6 @@ void namcos2_68k_video_palette_w( int offset, int data )
 			red  =(READ_WORD(&namcos2_68k_palette_ram[offset&0xcfff]))&0x00ff;
 			green=(READ_WORD(&namcos2_68k_palette_ram[(offset&0xcfff)+0x1000]))&0x00ff;
 			blue =(READ_WORD(&namcos2_68k_palette_ram[(offset&0xcfff)+0x2000]))&0x00ff;
-
-			/* Int color, uchar r/g/b */
 
 			palette_change_color(pen,red,green,blue);
 		}
@@ -438,8 +447,7 @@ int namcos2_68k_serial_comms_ctrl_r(int offset)
 		default:
 			break;
 	}
-
-/*	if (errorlog) fprintf(errorlog,"Serial Comms read  Addr=%08x\n",offset); */
+//	if (errorlog) fprintf(errorlog,"Serial Comms read  Addr=%08x\n",offset);
 
 	return retval;
 }
@@ -447,7 +455,7 @@ int namcos2_68k_serial_comms_ctrl_r(int offset)
 void namcos2_68k_serial_comms_ctrl_w(int offset,int data)
 {
 	COMBINE_WORD_MEM(&namcos2_68k_serial_comms_ctrl[offset&0x0f],data);
-/*	if (errorlog) fprintf(errorlog,"Serial Comms write Addr=%08x, Data=%04x\n",offset,data); */
+//	if (errorlog) fprintf(errorlog,"Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
 }
 
 
@@ -764,7 +772,8 @@ int namcos2_sound_interrupt(void)
 void namcos2_sound_bankselect_w(int offset, int data)
 {
 	unsigned char *RAM = Machine->memory_region[CPU_SOUND];
-	int bank = ( data >> 4 ) & 0x07;
+/*	int bank = ( data >> 4 ) & 0x07;*/
+	int bank = ( data >> 4 ) & 0x0f;	/* 991104.CAB */
 	cpu_setbank( CPU3_ROM1, &RAM[ 0x10000 + ( 0x4000 * bank ) ] );
 }
 

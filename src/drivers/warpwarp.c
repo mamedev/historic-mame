@@ -284,7 +284,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( warpwarp_rom )
+ROM_START( warpwarp )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "g-n9601n.2r",  0x0000, 0x1000, 0xf5262f38 )
 	ROM_LOAD( "g-09602n.2m",  0x1000, 0x1000, 0xde8355dd )
@@ -293,7 +293,7 @@ ROM_START( warpwarp_rom )
 	ROM_LOAD( "g-9611n.4c",   0x4800, 0x0800, 0x380994c8 )
 ROM_END
 
-ROM_START( warpwarr_rom )
+ROM_START( warpwarr )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
@@ -302,7 +302,7 @@ ROM_START( warpwarr_rom )
 	ROM_LOAD( "g-9611.4c",    0x4800, 0x0800, 0x00e6a326 )
 ROM_END
 
-ROM_START( warpwar2_rom )
+ROM_START( warpwar2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
 	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )

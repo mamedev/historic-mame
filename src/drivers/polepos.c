@@ -558,7 +558,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START(polepos_rom)
+ROM_START( polepos )
 	ROM_REGION(0x10000) 			/* #0 64K ROM/RAM Z80 */
 	ROM_LOAD	 ( "014-105.rom",   0x00000, 0x2000, 0xc918c043 )
 	ROM_LOAD	 ( "014-116.rom",   0x02000, 0x1000, 0x7174bcb7 )
@@ -628,7 +628,7 @@ ROM_START(polepos_rom)
 	ROM_LOAD	 ( "014-134.rom",   0xd000, 0x1000, 0x4e97f101 )
 ROM_END
 
-ROM_START(poleposa_rom)
+ROM_START( poleposa )
 	ROM_REGION(0x10000) 			/* #0 64K ROM/RAM Z80 */
 	ROM_LOAD	 ( "7hcpu.rom",     0x00000, 0x2000, 0xf85212c4 )
 	ROM_LOAD	 ( "7fcpu.rom",     0x02000, 0x1000, 0xa9d4c380 )
@@ -697,7 +697,7 @@ ROM_START(poleposa_rom)
 	ROM_LOAD	 ( "014-134.rom",   0xd000, 0x1000, 0x4e97f101 )
 ROM_END
 
-ROM_START(poleps2b_rom)
+ROM_START( poleps2b )
 	ROM_REGION(0x10000) 			/* #0 64K ROM/RAM Z80 */
 	ROM_LOAD	 ( "tr9b.bin",      0x00000, 0x2000, 0x94436b70 )
 	ROM_LOAD	 ( "10.bin",        0x02000, 0x1000, 0x7174bcb7 )

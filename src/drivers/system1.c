@@ -2061,7 +2061,7 @@ static struct MachineDriver wbml_machine_driver =
 
 /* Since the standard System 1 PROM has part # 5317, Star Jacker, whose first */
 /* ROM is #5318, is probably the first or second System 1 game produced */
-ROM_START( starjack_rom )
+ROM_START( starjack )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "5320b",        0x0000, 0x2000, 0x7ab72ecd )
 	ROM_LOAD( "5321a",        0x2000, 0x2000, 0x38b99050 )
@@ -2086,7 +2086,7 @@ ROM_START( starjack_rom )
 	ROM_LOAD( "5332",         0x0000, 0x2000, 0x7a72ab3d )
 ROM_END
 
-ROM_START( starjacs_rom )
+ROM_START( starjacs )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sja1ic29",     0x0000, 0x2000, 0x59a22a1f )
 	ROM_LOAD( "sja1ic30",     0x2000, 0x2000, 0x7f4597dc )
@@ -2114,7 +2114,7 @@ ROM_START( starjacs_rom )
 	ROM_LOAD( "5332",         0x0000, 0x2000, 0x7a72ab3d )
 ROM_END
 
-ROM_START( regulus_rom )
+ROM_START( regulus )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr5640a.29",  0x0000, 0x2000, 0xdafb1528 )	/* encrypted */
 	ROM_LOAD( "epr5641a.30",  0x2000, 0x2000, 0x0fcc850e )	/* encrypted */
@@ -2139,7 +2139,7 @@ ROM_START( regulus_rom )
 	ROM_LOAD( "epr5652.3",    0x0000, 0x2000, 0x74edcb98 )
 ROM_END
 
-ROM_START( regulusu_rom )
+ROM_START( regulusu )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr-5950.129", 0x0000, 0x2000, 0x3b047b67 )
 	ROM_LOAD( "epr-5951.130", 0x2000, 0x2000, 0xd66453ab )
@@ -2164,7 +2164,7 @@ ROM_START( regulusu_rom )
 	ROM_LOAD( "epr5652.3",    0x0000, 0x2000, 0x74edcb98 )
 ROM_END
 
-ROM_START( upndown_rom )
+ROM_START( upndown )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "upnd5679.bin", 0x0000, 0x2000, 0xc4f2f9c2 )
 	ROM_LOAD( "upnd5680.bin", 0x2000, 0x2000, 0x837f021c )
@@ -2189,7 +2189,7 @@ ROM_START( upndown_rom )
 	ROM_LOAD( "upnd5528.bin", 0x0000, 0x2000, 0x00cd44ab )
 ROM_END
 
-ROM_START( mrviking_rom )
+ROM_START( mrviking )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "vepr5873",     0x0000, 0x2000, 0x14d21624 )	/* encrypted */
 	ROM_LOAD( "vepr5874",     0x2000, 0x2000, 0x6df7de87 )	/* encrypted */
@@ -2214,7 +2214,7 @@ ROM_START( mrviking_rom )
 	ROM_LOAD( "vepr5763",     0x0000, 0x2000, 0xd712280d )
 ROM_END
 
-ROM_START( swat_rom )
+ROM_START( swat )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr5807b.29",  0x0000, 0x2000, 0x93db9c9f )	/* encrypted */
 	ROM_LOAD( "epr5808.30",   0x2000, 0x2000, 0x67116665 )	/* encrypted */
@@ -2239,7 +2239,7 @@ ROM_START( swat_rom )
 	ROM_LOAD( "epr5819.3",    0x0000, 0x2000, 0xf6afd0fd )
 ROM_END
 
-ROM_START( flicky_rom )
+ROM_START( flicky )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr5978",      0x0000, 0x4000, 0x296f1492 )	/* encrypted */
 	ROM_LOAD( "epr5979",      0x4000, 0x4000, 0x64b03ef9 )	/* encrypted */
@@ -2257,7 +2257,7 @@ ROM_START( flicky_rom )
 	ROM_LOAD( "epr5869",      0x0000, 0x2000, 0x6d220d4e )
 ROM_END
 
-ROM_START( flicky2_rom )
+ROM_START( flicky2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f_9",          0x0000, 0x2000, 0xa65ac88e )	/* encrypted */
 	ROM_LOAD( "f_10",         0x2000, 0x2000, 0x18b412f4 )	/* encrypted */
@@ -2277,7 +2277,7 @@ ROM_START( flicky2_rom )
 	ROM_LOAD( "epr5869",      0x0000, 0x2000, 0x6d220d4e )
 ROM_END
 
-ROM_START( bullfgtj_rom )
+ROM_START( bullfgtj )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6071",         0x0000, 0x4000, 0x96b57df9 )	/* encrypted */
 	ROM_LOAD( "6072",         0x4000, 0x4000, 0xf7baadd0 )	/* encrypted */
@@ -2299,7 +2299,7 @@ ROM_START( bullfgtj_rom )
 	ROM_LOAD( "6077",         0x0000, 0x2000, 0x02a37602 )
 ROM_END
 
-ROM_START( pitfall2_rom )
+ROM_START( pitfall2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr6456a.116", 0x0000, 0x4000, 0xbcc8406b )	/* encrypted */
 	ROM_LOAD( "epr6457a.109", 0x4000, 0x4000, 0xa016fd2a )	/* encrypted */
@@ -2321,7 +2321,7 @@ ROM_START( pitfall2_rom )
 	ROM_LOAD( "epr6462.120",  0x0000, 0x2000, 0x86bb9185 )
 ROM_END
 
-ROM_START( pitfallu_rom )
+ROM_START( pitfallu )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr6623",      0x0000, 0x4000, 0xbcb47ed6 )
 	ROM_LOAD( "epr6624a",     0x4000, 0x4000, 0x6e8b09c1 )
@@ -2343,7 +2343,7 @@ ROM_START( pitfallu_rom )
 	ROM_LOAD( "epr6462.120",  0x0000, 0x2000, 0x86bb9185 )
 ROM_END
 
-ROM_START( seganinj_rom )
+ROM_START( seganinj )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic116.bin",    0x0000, 0x4000, 0xa5d0c9d0 )	/* encrypted */
 	ROM_LOAD( "ic109.bin",    0x4000, 0x4000, 0xb9e6775c )	/* encrypted */
@@ -2367,7 +2367,7 @@ ROM_START( seganinj_rom )
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
-ROM_START( seganinu_rom )
+ROM_START( seganinu )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "7149.116",     0x0000, 0x4000, 0xcd9fade7 )
 	ROM_LOAD( "7150.109",     0x4000, 0x4000, 0xc36351e2 )
@@ -2391,7 +2391,7 @@ ROM_START( seganinu_rom )
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
-ROM_START( nprinces_rom )
+ROM_START( nprinces )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr6550.116",  0x0000, 0x4000, 0x5f6d59f1 )	/* encrypted */
 	ROM_LOAD( "epr6551.109",  0x4000, 0x4000, 0x1af133b2 )	/* encrypted */
@@ -2415,7 +2415,7 @@ ROM_START( nprinces_rom )
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
-ROM_START( nprincsu_rom )
+ROM_START( nprincsu )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6573.129",     0x0000, 0x2000, 0xd2919c7d )
 	ROM_LOAD( "6574.130",     0x2000, 0x2000, 0x5a132833 )
@@ -2442,7 +2442,7 @@ ROM_START( nprincsu_rom )
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
-ROM_START( nprincsb_rom )
+ROM_START( nprincsb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "nprinces.001", 0x0000, 0x4000, 0xe0de073c )	/* encrypted */
 	ROM_LOAD( "nprinces.002", 0x4000, 0x4000, 0x27219c7f )	/* encrypted */
@@ -2466,7 +2466,7 @@ ROM_START( nprincsb_rom )
 	ROM_LOAD( "6559.120",     0x0000, 0x2000, 0x5a1570ee )
 ROM_END
 
-ROM_START( imsorry_rom )
+ROM_START( imsorry )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr6676.116",  0x0000, 0x4000, 0xeb087d7f )	/* encrypted */
 	ROM_LOAD( "epr6677.109",  0x4000, 0x4000, 0xbd244bee )	/* encrypted */
@@ -2488,7 +2488,7 @@ ROM_START( imsorry_rom )
 	ROM_LOAD( "epr6656.113",  0x0000, 0x2000, 0x25e3d685 )
 ROM_END
 
-ROM_START( imsorryj_rom )
+ROM_START( imsorryj )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6647.116",     0x0000, 0x4000, 0xcc5d915d )	/* encrypted */
 	ROM_LOAD( "6648.109",     0x4000, 0x4000, 0x37574d60 )	/* encrypted */
@@ -2510,7 +2510,7 @@ ROM_START( imsorryj_rom )
 	ROM_LOAD( "epr6656.113",  0x0000, 0x2000, 0x25e3d685 )
 ROM_END
 
-ROM_START( teddybb_rom )
+ROM_START( teddybb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "6768.116",     0x0000, 0x4000, 0x5939817e )	/* encrypted */
 	ROM_LOAD( "6769.109",     0x4000, 0x4000, 0x14a98ddd )	/* encrypted */
@@ -2535,7 +2535,7 @@ ROM_START( teddybb_rom )
 ROM_END
 
 /* This is the first System 1 game to have extended ROM space */
-ROM_START( hvymetal_rom )
+ROM_START( hvymetal )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "epra6790.1",   0x00000, 0x8000, 0x59195bb9 )	/* encrypted */
 	ROM_LOAD( "epra6789.2",   0x10000, 0x8000, 0x83e1d18a )
@@ -2564,7 +2564,7 @@ ROM_START( hvymetal_rom )
 	ROM_LOAD( "pr7034.1",     0x0200, 0x0100, 0xdfb5f139 ) /* palette blue component */
 ROM_END
 
-ROM_START( myhero_rom )
+ROM_START( myhero )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr6963b.116", 0x0000, 0x4000, 0x4daf89d4 )
 	ROM_LOAD( "epr6964a.109", 0x4000, 0x4000, 0xc26188e5 )
@@ -2588,7 +2588,7 @@ ROM_START( myhero_rom )
 	ROM_LOAD( "epr69xx.120",  0x0000, 0x2000, 0x0039e1e9 )
 ROM_END
 
-ROM_START( myheroj_rom )
+ROM_START( myheroj )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mhj_boot.01",  0x0000, 0x4000, 0xff54dcec )
 	ROM_LOAD( "mhj_boot.02",  0x4000, 0x4000, 0x5c41eea8 )
@@ -2609,7 +2609,7 @@ ROM_START( myheroj_rom )
 	ROM_LOAD( "mhj_boot.08",  0x0000, 0x2000, 0xaf467223 )
 ROM_END
 
-ROM_START( myherok_rom )
+ROM_START( myherok )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* all the three program ROMs have bits 0-1 swapped */
 	/* when decoded, they are identical to the Japanese version */
@@ -2677,7 +2677,7 @@ void myherok_unmangle(void)
 }
 
 
-ROM_START( shtngmst_rom )
+ROM_START( shtngmst )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "epr7100",      0x00000, 0x8000, 0x45e64431 )
 	ROM_LOAD( "epr7101",      0x10000, 0x8000, 0xebf5ff72 )
@@ -2706,7 +2706,7 @@ ROM_START( shtngmst_rom )
 	ROM_LOAD( "epr7111",      0x0200, 0x0100, 0x8123b6b9 ) /* palette blue component */
 ROM_END
 
-ROM_START( chplft_rom )
+ROM_START( chplft )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "7124.90",      0x00000, 0x8000, 0x678d5c41 )
 	ROM_LOAD( "7125.91",      0x10000, 0x8000, 0xf5283498 )
@@ -2732,7 +2732,7 @@ ROM_START( chplft_rom )
 	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
 ROM_END
 
-ROM_START( chplftb_rom )
+ROM_START( chplftb )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "7152.90",      0x00000, 0x8000, 0xfe49d83e )
 	ROM_LOAD( "7153.91",      0x10000, 0x8000, 0x48697666 )
@@ -2758,7 +2758,7 @@ ROM_START( chplftb_rom )
 	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
 ROM_END
 
-ROM_START( chplftbl_rom )
+ROM_START( chplftbl )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "7124bl.90",    0x00000, 0x8000, 0x71a37932 )
 	ROM_LOAD( "7125.91",      0x10000, 0x8000, 0xf5283498 )
@@ -2784,7 +2784,7 @@ ROM_START( chplftbl_rom )
 	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
 ROM_END
 
-ROM_START( fdwarrio_rom )
+ROM_START( fdwarrio )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "4d.116",       0x0000, 0x4000, 0x546d1bc7 )	/* encrypted */
 	ROM_LOAD( "4d.109",       0x4000, 0x4000, 0xf1074ec3 )	/* encrypted */
@@ -2808,7 +2808,7 @@ ROM_START( fdwarrio_rom )
 	ROM_LOAD( "4d.120",       0x0000, 0x2000, 0x5241c009 )
 ROM_END
 
-ROM_START( brain_rom )
+ROM_START( brain )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "brain.1",      0x00000, 0x8000, 0x2d2aec31 )
 	ROM_LOAD( "brain.2",      0x10000, 0x8000, 0x810a8ab5 )
@@ -2831,7 +2831,7 @@ ROM_START( brain_rom )
 	/* color PROMs *might* be missing */
 ROM_END
 
-ROM_START( wboy_rom )
+ROM_START( wboy )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "b-1.bin",      0x0000, 0x4000, 0x51d27534 )	/* encrypted */
 	ROM_LOAD( "b-2.bin",      0x4000, 0x4000, 0xe29d1cd1 )	/* encrypted */
@@ -2855,7 +2855,7 @@ ROM_START( wboy_rom )
 	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
 ROM_END
 
-ROM_START( wboy2_rom )
+ROM_START( wboy2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "wb_1",         0x0000, 0x4000, 0xbd6fef49 )	/* encrypted */
 	ROM_LOAD( "wb_2",         0x4000, 0x4000, 0x4081b624 )	/* encrypted */
@@ -2879,7 +2879,7 @@ ROM_START( wboy2_rom )
 	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
 ROM_END
 
-ROM_START( wboy3_rom )
+ROM_START( wboy3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr7489.116",  0x0000, 0x4000, 0x130f4b70 )	/* encrypted */
 	ROM_LOAD( "epr7490.109",  0x4000, 0x4000, 0x9e656733 )	/* encrypted */
@@ -2903,7 +2903,7 @@ ROM_START( wboy3_rom )
 	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
 ROM_END
 
-ROM_START( wboy4_rom )
+ROM_START( wboy4 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic129",        0x0000, 0x2000, 0x1bbb7354 )	/* encrypted */
 	ROM_LOAD( "ic130",        0x2000, 0x2000, 0x21007413 )	/* encrypted */
@@ -2930,7 +2930,7 @@ ROM_START( wboy4_rom )
 	ROM_LOAD( "epr7502",      0x0000, 0x2000, 0xc92484b3 )
 ROM_END
 
-ROM_START( wboyu_rom )
+ROM_START( wboyu )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic116_89.bin", 0x0000, 0x4000, 0x73d8cef0 )
 	ROM_LOAD( "ic109_90.bin", 0x4000, 0x4000, 0x29546828 )
@@ -2954,7 +2954,7 @@ ROM_START( wboyu_rom )
 	ROM_LOAD( "ic120_98.bin", 0x0000, 0x2000, 0x78ae1e7b )
 ROM_END
 
-ROM_START( wboy4u_rom )
+ROM_START( wboy4u )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic129_02.bin", 0x0000, 0x2000, 0x32c4b709 )
 	ROM_LOAD( "ic130_03.bin", 0x2000, 0x2000, 0x56463ede )
@@ -2981,7 +2981,7 @@ ROM_START( wboy4u_rom )
 	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
 ROM_END
 
-ROM_START( wbdeluxe_rom )
+ROM_START( wbdeluxe )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "wbd1.bin",     0x0000, 0x2000, 0xa1bedbd7 )
 	ROM_LOAD( "ic130_03.bin", 0x2000, 0x2000, 0x56463ede )
@@ -3008,7 +3008,7 @@ ROM_START( wbdeluxe_rom )
 	ROM_LOAD( "epra7498.120", 0x0000, 0x2000, 0xc198205c )
 ROM_END
 
-ROM_START( gardia_rom )
+ROM_START( gardia )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "epr10255.1",   0x00000, 0x8000, 0x89282a6b )
 	ROM_LOAD( "epr10254.2",   0x10000, 0x8000, 0x2826b6d8 )
@@ -3034,7 +3034,7 @@ ROM_START( gardia_rom )
 	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
 ROM_END
 
-ROM_START( gardiab_rom )
+ROM_START( gardiab )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "gardiabl.5",   0x00000, 0x8000, 0x207f9cbb )
 	ROM_LOAD( "gardiabl.6",   0x10000, 0x8000, 0xb2ed05dc )
@@ -3060,7 +3060,7 @@ ROM_START( gardiab_rom )
 	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
 ROM_END
 
-ROM_START( blockgal_rom )
+ROM_START( blockgal )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "bg.116",       0x0000, 0x4000, 0xa99b231a )	/* encrypted */
 	ROM_LOAD( "bg.109",       0x4000, 0x4000, 0xa6b573d5 )	/* encrypted */
@@ -3084,7 +3084,7 @@ ROM_START( blockgal_rom )
 	ROM_LOAD( "bg.120",       0x0000, 0x2000, 0xd848faff )
 ROM_END
 
-ROM_START( blckgalb_rom )
+ROM_START( blckgalb )
 	ROM_REGION(0x18000)	/* 64k for code */
 	ROM_LOAD( "ic62",         0x10000, 0x8000, 0x65c47676 )	/* decrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )				/* decrypted data */
@@ -3107,7 +3107,7 @@ ROM_START( blckgalb_rom )
 	ROM_LOAD( "bg.120",       0x0000, 0x2000, 0xd848faff )
 ROM_END
 
-ROM_START( tokisens_rom )
+ROM_START( tokisens )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "epr10961.90",  0x00000, 0x8000, 0x1466b61d )
 	ROM_LOAD( "epr10962.91",  0x10000, 0x8000, 0xa8479f91 )
@@ -3133,7 +3133,7 @@ ROM_START( tokisens_rom )
 	ROM_LOAD( "bprom.8",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
 ROM_END
 
-ROM_START( wbml_rom )
+ROM_START( wbml )
 	ROM_REGION(0x40000)	/* 256k for code */
 	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 )	/* Unencrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )              /* Now load the operands in RAM */
@@ -3162,7 +3162,7 @@ ROM_START( wbml_rom )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
 ROM_END
 
-ROM_START( wbmlj_rom )
+ROM_START( wbmlj )
 	ROM_REGION(0x20000)	/* 256k for code */
 	ROM_LOAD( "epr11031.90",  0x00000, 0x8000, 0x497ebfb4 )	/* encrypted */
 	ROM_LOAD( "epr11032.91",  0x10000, 0x8000, 0x9d03bdb2 )	/* encrypted */
@@ -3188,7 +3188,7 @@ ROM_START( wbmlj_rom )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
 ROM_END
 
-ROM_START( wbmlj2_rom )
+ROM_START( wbmlj2 )
 	ROM_REGION(0x20000)	/* 256k for code */
 	ROM_LOAD( "ep11031a.90",  0x00000, 0x8000, 0xbd3349e5 )	/* encrypted */
 	ROM_LOAD( "epr11032.91",  0x10000, 0x8000, 0x9d03bdb2 )	/* encrypted */
@@ -3214,7 +3214,7 @@ ROM_START( wbmlj2_rom )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
 ROM_END
 
-ROM_START( wbmlju_rom )
+ROM_START( wbmlju )
 	ROM_REGION(0x40000)	/* 256k for code */
 	ROM_LOAD( "wbml.01",      0x20000, 0x8000, 0x66482638 )	/* Unencrypted opcodes */
 	ROM_CONTINUE(             0x00000, 0x8000 )              /* Now load the operands in RAM */
@@ -3243,7 +3243,7 @@ ROM_START( wbmlju_rom )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
 ROM_END
 
-ROM_START( dakkochn_rom )
+ROM_START( dakkochn )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "epr11224.90",  0x00000, 0x8000, 0x9fb1972b )	/* encrypted */
 	ROM_LOAD( "epr11225.91",  0x10000, 0x8000, 0xc540f9e2 )	/* encrypted */
@@ -3269,7 +3269,7 @@ ROM_START( dakkochn_rom )
 	ROM_LOAD( "pr11217.8",    0x0200, 0x0100, 0x49dbde88 ) /* palette blue component */
 ROM_END
 
-ROM_START( ufosensi_rom )
+ROM_START( ufosensi )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "epr11661.90",  0x00000, 0x8000, 0xf3e394e2 )	/* encrypted */
 	ROM_LOAD( "epr11662.91",  0x10000, 0x8000, 0x0c2e4120 )	/* encrypted */

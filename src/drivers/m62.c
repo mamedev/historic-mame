@@ -1245,7 +1245,7 @@ MACHINE_DRIVER(spelunk2, ldrun,  8*8, (64-8)*8-1,  768,spelunk2);
 
 ***************************************************************************/
 
-ROM_START( kungfum_rom )
+ROM_START( kungfum )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a-4e-c.bin",   0x0000, 0x4000, 0xb6e2d083 )
 	ROM_LOAD( "a-4d-c.bin",   0x4000, 0x4000, 0x7532918e )
@@ -1284,7 +1284,7 @@ ROM_START( kungfum_rom )
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
-ROM_START( kungfud_rom )
+ROM_START( kungfud )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a-4e-d",       0x0000, 0x4000, 0xfc330a46 )
 	ROM_LOAD( "a-4d-d",       0x4000, 0x4000, 0x1b2fd32f )
@@ -1323,7 +1323,7 @@ ROM_START( kungfud_rom )
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
-ROM_START( kungfub_rom )
+ROM_START( kungfub )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "c5.5h",        0x0000, 0x4000, 0x5d8e791d )
 	ROM_LOAD( "c4.5k",        0x4000, 0x4000, 0x4000e2b8 )
@@ -1362,7 +1362,7 @@ ROM_START( kungfub_rom )
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
-ROM_START( kungfub2_rom )
+ROM_START( kungfub2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "kf4",          0x0000, 0x4000, 0x3f65313f )
 	ROM_LOAD( "kf5",          0x4000, 0x4000, 0x9ea325f3 )
@@ -1401,7 +1401,7 @@ ROM_START( kungfub2_rom )
 	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
 ROM_END
 
-ROM_START( battroad_rom )
+ROM_START( battroad )
 	ROM_REGION(0x1e000)	/* 64k for code */
 	ROM_LOAD( "br-a-4e.b",	0x00000, 0x2000, 0x9bf14768 )
 	ROM_LOAD( "br-a-4d.b",	0x02000, 0x2000, 0x39ca1627 )
@@ -1445,7 +1445,7 @@ ROM_START( battroad_rom )
 	ROM_LOAD( "br-a-3h",     0xe000, 0x2000, 0xafb3e083 )
 ROM_END
 
-ROM_START( ldrun_rom )
+ROM_START( ldrun )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "lr-a-4e",      0x0000, 0x2000, 0x5d7e2a4d )
 	ROM_LOAD( "lr-a-4d",      0x2000, 0x2000, 0x96f20473 )
@@ -1476,7 +1476,7 @@ ROM_START( ldrun_rom )
 	ROM_LOAD( "lr-a-3h",      0xe000, 0x2000, 0x3f7f3939 )
 ROM_END
 
-ROM_START( ldruna_rom )
+ROM_START( ldruna )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "roma4c",       0x0000, 0x2000, 0x279421e1 )
 	ROM_LOAD( "lr-a-4d",      0x2000, 0x2000, 0x96f20473 )
@@ -1507,7 +1507,7 @@ ROM_START( ldruna_rom )
 	ROM_LOAD( "lr-a-3h",      0xe000, 0x2000, 0x3f7f3939 )
 ROM_END
 
-ROM_START( ldrun2_rom )
+ROM_START( ldrun2 )
 	ROM_REGION(0x14000)	/* 64k for code + 16k for banks */
 	ROM_LOAD( "lr2-a-4e.a",   0x00000, 0x2000, 0x22313327 )
 	ROM_LOAD( "lr2-a-4d",     0x02000, 0x2000, 0xef645179 )
@@ -1544,7 +1544,7 @@ ROM_START( ldrun2_rom )
 	ROM_LOAD( "lr2-a-3h",     0xe000, 0x2000, 0x2a0e83ca )
 ROM_END
 
-ROM_START( ldrun3_rom )
+ROM_START( ldrun3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "lr3-a-4e",     0x0000, 0x4000, 0x5b334e8e )
 	ROM_LOAD( "lr3-a-4d.a",   0x4000, 0x4000, 0xa84bc931 )
@@ -1575,7 +1575,7 @@ ROM_START( ldrun3_rom )
 	ROM_LOAD( "lr3-a-3f",     0xc000, 0x4000, 0xcb7186b7 )
 ROM_END
 
-ROM_START( ldrun4_rom )
+ROM_START( ldrun4 )
 	ROM_REGION(0x18000)	/* 64k for code + 32k for banked ROM */
 	ROM_LOAD( "lr4-a-4e",     0x00000, 0x4000, 0x5383e9bf )
 	ROM_LOAD( "lr4-a-4d.c",   0x04000, 0x4000, 0x298afa36 )
@@ -1609,7 +1609,7 @@ ROM_START( ldrun4_rom )
 	ROM_LOAD( "lr4-a-3f",     0xc000, 0x4000, 0x097c6c0a )
 ROM_END
 
-ROM_START( lotlot_rom )
+ROM_START( lotlot )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "lot-a-4e",     0x0000, 0x4000, 0x2913d08f )
 	ROM_LOAD( "lot-a-4d",     0x4000, 0x4000, 0x0443095f )
@@ -1645,7 +1645,7 @@ ROM_START( lotlot_rom )
 	ROM_LOAD( "lot-a-3h",     0xe000, 0x2000, 0x0781cee7 )
 ROM_END
 
-ROM_START( kidniki_rom )
+ROM_START( kidniki )
 	ROM_REGION( 0x30000 )	/* main CPU */
 	ROM_LOAD( "dr04.4e",      0x00000, 0x04000, 0x80431858 )
 	ROM_LOAD( "dr03.4cd",     0x04000, 0x04000, 0xdba20934 )
@@ -1691,7 +1691,7 @@ ROM_START( kidniki_rom )
 	ROM_LOAD( "dr02.3f",      0xc000, 0x04000, 0xf9e31e26 ) /* 6803 code */
 ROM_END
 
-ROM_START( spelunkr_rom )
+ROM_START( spelunkr )
 	ROM_REGION( 0x18000 )	/* main CPU */
 	ROM_LOAD( "spra.4e",      0x00000, 0x4000, 0xcf811201 )
 	ROM_LOAD( "spra.4d",      0x04000, 0x4000, 0xbb4faa4f )
@@ -1732,7 +1732,7 @@ ROM_START( spelunkr_rom )
 	ROM_LOAD( "spra.3f",      0xc000, 0x04000, 0x67a9d2e6 ) /* 6803 code */
 ROM_END
 
-ROM_START( spelunk2_rom )
+ROM_START( spelunk2 )
 	ROM_REGION( 0x24000 )	/* main CPU */
 	ROM_LOAD( "sp2-a.4e",     0x00000, 0x4000, 0x96c04bbb )
 	ROM_LOAD( "sp2-a.4d",     0x04000, 0x4000, 0xcb38c2ff )

@@ -352,7 +352,7 @@ static struct MachineDriver machine_driver =
 
 /***************************************************************************/
 
-ROM_START( hcastle_rom )
+ROM_START( hcastle )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "768.k03",      0x08000, 0x08000, 0x40ce4f38 )
 	ROM_LOAD( "768.g06",      0x10000, 0x20000, 0xcdade920 )
@@ -377,7 +377,7 @@ ROM_START( hcastle_rom )
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( hcastlea_rom )
+ROM_START( hcastlea )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "m03.k12",      0x08000, 0x08000, 0xd85e743d )
 	ROM_LOAD( "b06.k8",       0x10000, 0x20000, 0xabd07866 )
@@ -402,7 +402,7 @@ ROM_START( hcastlea_rom )
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( hcastlej_rom )
+ROM_START( hcastlej )
 	ROM_REGION(0x30000)
 	ROM_LOAD( "768p03.k12",0x08000, 0x08000, 0xd509e340 )
 	ROM_LOAD( "768j06.k8", 0x10000, 0x20000, 0x42283c3e )

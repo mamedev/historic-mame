@@ -818,7 +818,7 @@ static struct MachineDriver todruaga_machine_driver =
 
 
 /* ROM loader description */
-ROM_START( mappy_rom )
+ROM_START( mappy )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy1d.64",   0xa000, 0x2000, 0x52e6c708 )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
@@ -841,7 +841,7 @@ ROM_START( mappy_rom )
 	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
-ROM_START( mappyjp_rom )
+ROM_START( mappyjp )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mappy3.bin",   0xa000, 0x2000, 0xdb9d5ab5 )
 	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
@@ -865,7 +865,7 @@ ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
 	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
-ROM_START( digdug2_rom )
+ROM_START( digdug2 )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "ddug2-3.bin",  0x8000, 0x4000, 0xbe7ec80b )
 	ROM_LOAD( "ddug2-1.bin",  0xc000, 0x4000, 0x5c77c0d4 )
@@ -887,7 +887,7 @@ ROM_START( digdug2_rom )
 	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
-ROM_START( digdug2a_rom )
+ROM_START( digdug2a )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "ddug2a_3.bin",  0x8000, 0x4000, 0xcc155338 )
 	ROM_LOAD( "ddug2a_1.bin",  0xc000, 0x4000, 0x40e46af8 )
@@ -910,7 +910,7 @@ ROM_START( digdug2a_rom )
 	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
-ROM_START( motos_rom )
+ROM_START( motos )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mts_1d.bin",   0x8000, 0x4000, 0x1104abb2 )
 	ROM_LOAD( "mts_1b.bin",   0xc000, 0x4000, 0x57b157e2 )
@@ -932,7 +932,7 @@ ROM_START( motos_rom )
 	ROM_LOAD( "motos.spr",    0x0000, 0x0100, 0x2accdfb4 )
 ROM_END
 
-ROM_START( todruaga_rom )
+ROM_START( todruaga )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "druaga3.bin",  0x8000, 0x4000, 0x7ab4f5b2 )
 	ROM_LOAD( "druaga1.bin",  0xc000, 0x4000, 0x8c20ef10 )
@@ -957,7 +957,7 @@ ROM_START( todruaga_rom )
 	ROM_LOAD( "todruaga.spr", 0x0000, 0x0100, 0x07104c40 )
 ROM_END
 
-ROM_START( todruagb_rom )
+ROM_START( todruagb )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "druaga3a.bin", 0x8000, 0x4000, 0xfbf16299 )
 	ROM_LOAD( "druaga1a.bin", 0xc000, 0x4000, 0xb238d723 )

@@ -377,7 +377,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gbusters_rom )
+ROM_START( gbusters )
 	ROM_REGION( 0x30800 ) /* code + banked roms + space for banked RAM */
 	ROM_LOAD( "878n02.rom", 0x10000, 0x08000, 0x51697aaa )	/* ROM K13 */
 	ROM_CONTINUE(           0x08000, 0x08000 )

@@ -350,7 +350,7 @@ static struct MachineDriver cbasebal_machine_driver =
 
 
 
-ROM_START( cbasebal_rom )
+ROM_START( cbasebal )
 	ROM_REGION(0x90000)
 	ROM_LOAD( "cbj10.11j",    0x00000, 0x08000, 0xbbff0acc )
 	ROM_LOAD( "cbj07.16f",    0x10000, 0x20000, 0x8111d13f )

@@ -39,6 +39,7 @@ to do:
 
 
 /* from vidhrdw/cinemat.c */
+extern void cinemat_select_artwork (int monitor, int overlay_req, int backdrop_req, struct artwork_element *simple_overlay);
 extern void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern int cinemat_vh_start (void);
 extern void cinemat_vh_stop (void);
@@ -49,6 +50,11 @@ extern void spacewar_init_colors (unsigned char *palette, unsigned short *colort
 extern int spacewar_vh_start (void);
 extern void spacewar_vh_stop (void);
 extern void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
+
+extern struct artwork_element starcas_overlay[];
+extern struct artwork_element tailg_overlay[];
+extern struct artwork_element sundance_overlay[];
+extern struct artwork_element solarq_overlay[];
 
 /* from sndhrdw/cinemat.c */
 extern void cinemat_sound_init (void);
@@ -143,23 +149,6 @@ static void cinemat_writeport (int offset, int data)
 	}
 }
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
 
 
 static struct Samplesinterface cinemat_samples_interface =
@@ -189,7 +178,7 @@ static struct MachineDriver driver##_machine_driver = \
 \
 	/* video hardware */ \
 	400, 300, { minx, maxx, miny, maxy }, \
-	gfxdecodeinfo, \
+	0, \
 	256, 256, \
  	cinemat_init_colors, \
 \
@@ -228,7 +217,7 @@ static struct MachineDriver driver##_machine_driver = \
 \
 	/* video hardware */ \
 	400, 300, { minx, maxx, miny, maxy }, \
-	gfxdecodeinfo, \
+	0, \
 	256, 256, \
  	cinemat_init_colors, \
 \
@@ -292,17 +281,6 @@ void cinemat32k_rom_decode (void)
 {
 	cinemat_interleave (0x1000, 8);
 }
-
-static unsigned char color_prom_bilevel_overlay[] = { CCPU_MONITOR_BILEV | 0x80 };
-static unsigned char color_prom_bilevel_backdrop[] = { CCPU_MONITOR_BILEV | 0x40 };
-//static unsigned char color_prom_bilevel_artwork[] = { CCPU_MONITOR_BILEV | 0xc0 };
-static unsigned char color_prom_bilevel[] = { CCPU_MONITOR_BILEV };
-static unsigned char color_prom_bilevel_sc[] = { CCPU_MONITOR_BILEV | 0xa0 , 1};
-static unsigned char color_prom_bilevel_sd[] = { CCPU_MONITOR_BILEV | 0xa0 , 2};
-static unsigned char color_prom_bilevel_tg[] = { CCPU_MONITOR_BILEV | 0xa0 , 3};
-static unsigned char color_prom_bilevel_sq[] = { CCPU_MONITOR_BILEV | 0xe0 , 4};
-static unsigned char color_prom_wotw[] = { CCPU_MONITOR_WOWCOL };
-
 
 /* switch definitions are all mangled; for ease of use, I created these handy macros */
 
@@ -379,7 +357,7 @@ INPUT_PORTS_START ( spacewar_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( spacewar_rom )
+ROM_START( spacewar )
 	ROM_REGION(0x1000)	/* 4k for code */
 	ROM_LOAD( "spacewar.1l", 0x0000, 0x0800, 0xedf0fd53 )
 	ROM_LOAD( "spacewar.2r", 0x0800, 0x0800, 0x4f21328b )
@@ -424,7 +402,7 @@ static struct MachineDriver spacewar_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 1024, 0, 768 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
  	spacewar_init_colors,
 
@@ -465,7 +443,7 @@ struct GameDriver spacewar_driver =
 
 	spacewar_input_ports,
 
-	color_prom_bilevel, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -517,7 +495,7 @@ INPUT_PORTS_START ( barrier_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( barrier_rom )
+ROM_START( barrier )
 	ROM_REGION(0x1000)	/* 4k for code */
 	ROM_LOAD( "barrier.t7", 0x0000, 0x0800, 0x7c3d68c8 )
 	ROM_LOAD( "barrier.p7", 0x0800, 0x0800, 0xaec142b5 )
@@ -536,6 +514,11 @@ void barrier_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void barrier_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
+}
+
 
 CINEMA_MACHINE (barrier, 0, 0, 1024, 768)
 
@@ -552,7 +535,7 @@ struct GameDriver barrier_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&barrier_machine_driver,
-	0,
+	barrier_init,
 
 	barrier_rom,
 	cinemat4k_rom_decode, 0,
@@ -561,7 +544,7 @@ struct GameDriver barrier_driver =
 
 	barrier_input_ports,
 
-	color_prom_bilevel, 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X,
 
 	0,0
@@ -620,7 +603,7 @@ INPUT_PORTS_START ( starhawk_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( starhawk_rom )
+ROM_START( starhawk )
 	ROM_REGION(0x1000)	/* 4k for code */
 	ROM_LOAD( "u7", 0x0000, 0x0800, 0x376e6c5c )
 	ROM_LOAD( "r7", 0x0800, 0x0800, 0xbb71144f )
@@ -639,6 +622,11 @@ void starhawk_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void starhawk_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
+}
+
 
 CINEMA_MACHINE (starhawk, 0, 0, 1024, 768)
 
@@ -655,7 +643,7 @@ struct GameDriver starhawk_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&starhawk_machine_driver,
-	0,
+	starhawk_init,
 
 	starhawk_rom,
 	cinemat4k_rom_decode, 0,
@@ -664,7 +652,7 @@ struct GameDriver starhawk_driver =
 
 	starhawk_input_ports,
 
-	color_prom_bilevel, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -724,7 +712,7 @@ INPUT_PORTS_START ( starcas_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( starcas_rom )
+ROM_START( starcas )
 	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "starcas3.t7", 0x0000, 0x0800, 0xb5838b5d )
 	ROM_LOAD( "starcas3.p7", 0x0800, 0x0800, 0xf6bc2f4d )
@@ -732,7 +720,7 @@ ROM_START( starcas_rom )
 	ROM_LOAD( "starcas3.r7", 0x1800, 0x0800, 0xc367b69d )
 ROM_END
 
-ROM_START( starcas1_rom )
+ROM_START( starcas1 )
 	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "starcast.t7", 0x0000, 0x0800, 0x65d0a225 )
 	ROM_LOAD( "starcast.p7", 0x0800, 0x0800, 0xd8f58d9a )
@@ -762,6 +750,11 @@ void starcas_init_machine (void)
     cinemat_sound_init ();
 }
 
+void starcas_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, starcas_overlay);
+}
+
 CINEMA_MACHINE (starcas, 0, 0, 1024, 768)
 
 struct GameDriver starcas_driver =
@@ -776,7 +769,7 @@ struct GameDriver starcas_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&starcas_machine_driver,
-	0,
+	starcas_init,
 
 	starcas_rom,
 	cinemat8k_rom_decode, 0,
@@ -785,7 +778,7 @@ struct GameDriver starcas_driver =
 
 	starcas_input_ports,
 
-	color_prom_bilevel_sc, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -803,7 +796,7 @@ struct GameDriver starcas1_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&starcas_machine_driver,
-	0,
+	starcas_init,
 
 	starcas1_rom,
 	cinemat8k_rom_decode, 0,
@@ -812,7 +805,7 @@ struct GameDriver starcas1_driver =
 
 	starcas_input_ports,
 
-	color_prom_bilevel_sc, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -869,7 +862,7 @@ INPUT_PORTS_START ( tgunner_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( tgunner_rom )
+ROM_START( tgunner )
 	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "tgunner.t70", 0x0000, 0x0800, 0x21ec9a04 )
 	ROM_LOAD( "tgunner.p70", 0x0800, 0x0800, 0x8d7410b3 )
@@ -890,6 +883,10 @@ void tgunner_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void tgunner_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, tailg_overlay);
+}
 
 CINEMA_MACHINE (tgunner, 0, 0, 1024, 768)
 
@@ -906,7 +903,7 @@ struct GameDriver tailg_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&tgunner_machine_driver,
-	0,
+	tgunner_init,
 
 	tgunner_rom,
 	cinemat8k_rom_decode, 0,
@@ -915,7 +912,7 @@ struct GameDriver tailg_driver =
 
 	tgunner_input_ports,
 
-	color_prom_bilevel_tg, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -979,7 +976,7 @@ INPUT_PORTS_START ( ripoff_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( ripoff_rom )
+ROM_START( ripoff )
 	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "ripoff.t7", 0x0000, 0x0800, 0x40c2c5b8 )
 	ROM_LOAD( "ripoff.p7", 0x0800, 0x0800, 0xa9208afb )
@@ -1014,6 +1011,11 @@ void ripoff_init_machine (void)
     cinemat_sound_init ();
 }
 
+void ripoff_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
+}
+
 
 CINEMA_MACHINE (ripoff, 0, 0, 1024, 768)
 
@@ -1030,7 +1032,7 @@ struct GameDriver ripoff_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&ripoff_machine_driver,
-	0,
+	ripoff_init,
 
 	ripoff_rom,
 	cinemat8k_rom_decode, 0,
@@ -1039,7 +1041,7 @@ struct GameDriver ripoff_driver =
 
 	ripoff_input_ports,
 
-	color_prom_bilevel, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -1159,7 +1161,7 @@ INPUT_PORTS_START ( speedfrk_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( speedfrk_rom )
+ROM_START( speedfrk )
 	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "speedfrk.t7", 0x0000, 0x0800, 0x3552c03f )
 	ROM_LOAD( "speedfrk.p7", 0x0800, 0x0800, 0x4b90cdec )
@@ -1180,6 +1182,11 @@ void speedfrk_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void speedfrk_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
+}
+
 /* we use custom input ports */
 CINEMA_MACHINEX (speedfrk, 0, 0, 1024, 768)
 
@@ -1196,7 +1203,7 @@ struct GameDriver speedfrk_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&speedfrk_machine_driver,
-	0,
+	speedfrk_init,
 
 	speedfrk_rom,
 	cinemat8k_rom_decode, 0,
@@ -1205,7 +1212,7 @@ struct GameDriver speedfrk_driver =
 
 	speedfrk_input_ports,
 
-	color_prom_bilevel, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -1263,7 +1270,7 @@ INPUT_PORTS_START ( sundance_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( sundance_rom )
+ROM_START( sundance )
 	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "sundance.t7", 0x0000, 0x0800, 0xd5b9cb19 )
 	ROM_LOAD( "sundance.p7", 0x0800, 0x0800, 0x445c4f20 )
@@ -1284,6 +1291,10 @@ void sundance_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void sundance_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_16LEV, 1, 0, sundance_overlay);
+}
 
 CINEMA_MACHINE (sundance, 0, 0, 1024, 768)
 
@@ -1300,7 +1311,7 @@ struct GameDriver sundance_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	GAME_NOT_WORKING,
 	&sundance_machine_driver,
-	0,
+	sundance_init,
 
 	sundance_rom,
 	cinemat8k_rom_decode, 0,
@@ -1309,7 +1320,7 @@ struct GameDriver sundance_driver =
 
 	sundance_input_ports,
 
-	color_prom_bilevel_sd, 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X,
 
 	0,0
@@ -1376,7 +1387,7 @@ INPUT_PORTS_START ( warrior_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( warrior_rom )
+ROM_START( warrior )
 	ROM_REGION(0x2000)	/* 8k for code */
 	ROM_LOAD( "warrior.t7", 0x0000, 0x0800, 0xac3646f9 )
 	ROM_LOAD( "warrior.p7", 0x0800, 0x0800, 0x517d3021 )
@@ -1397,6 +1408,10 @@ void warrior_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void warrior_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 1, 0);
+}
 
 CINEMA_MACHINE (warrior, 0, 0, 1024, 780)
 
@@ -1413,7 +1428,7 @@ struct GameDriver warrior_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&warrior_machine_driver,
-	0,
+	warrior_init,
 
 	warrior_rom,
 	cinemat8k_rom_decode, 0,
@@ -1422,7 +1437,7 @@ struct GameDriver warrior_driver =
 
 	warrior_input_ports,
 
-	color_prom_bilevel_backdrop, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -1484,7 +1499,7 @@ INPUT_PORTS_START ( armora_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( armora_rom )
+ROM_START( armora )
 	ROM_REGION(0x4000)	/* 16k for code */
 	ROM_LOAD( "ar414le.t6", 0x0000, 0x1000, 0xd7e71f84 )
 	ROM_LOAD( "ar414lo.p6", 0x1000, 0x1000, 0xdf1c2370 )
@@ -1505,6 +1520,10 @@ void armora_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void armora_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 0, 0);
+}
 
 CINEMA_MACHINE (armora, 0, 0, 1024, 772)
 
@@ -1521,7 +1540,7 @@ struct GameDriver armora_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&armora_machine_driver,
-	0,
+	armora_init,
 
 	armora_rom,
 	cinemat16k_rom_decode, 0,
@@ -1530,12 +1549,11 @@ struct GameDriver armora_driver =
 
 	armora_input_ports,
 
-	color_prom_bilevel_overlay, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
 };
-
 
 
 /***************************************************************************
@@ -1597,7 +1615,7 @@ INPUT_PORTS_START ( solarq_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( solarq_rom )
+ROM_START( solarq )
 	ROM_REGION(0x4000)	/* 16k for code */
 	ROM_LOAD( "solar.6t", 0x0000, 0x1000, 0x1f3c5333 )
 	ROM_LOAD( "solar.6p", 0x1000, 0x1000, 0xd6c16bcc )
@@ -1631,6 +1649,11 @@ void solarq_init_machine (void)
     cinemat_sound_init();
 }
 
+void solarq_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 1, 1, solarq_overlay);
+}
+
 
 CINEMA_MACHINE (solarq, 0, 0, 1024, 768)
 
@@ -1646,7 +1669,7 @@ struct GameDriver solarq_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&solarq_machine_driver,
-	0,
+	solarq_init,
 
 	solarq_rom,
 	cinemat16k_rom_decode, 0,
@@ -1655,7 +1678,7 @@ struct GameDriver solarq_driver =
 
 	solarq_input_ports,
 
-	color_prom_bilevel_sq, 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_180,
 
 	0,0
@@ -1723,7 +1746,7 @@ INPUT_PORTS_START ( demon_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( demon_rom )
+ROM_START( demon )
 	ROM_REGION(0x4000)	/* 16k for code */
 	ROM_LOAD( "demon.7t", 0x0000, 0x1000, 0x866596c1 )
 	ROM_LOAD( "demon.7p", 0x1000, 0x1000, 0x1109e2f1 )
@@ -1744,6 +1767,10 @@ void demon_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void demon_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_BILEV, 0, 0, 0);
+}
 
 CINEMA_MACHINE (demon, 0, 0, 1024, 800)
 
@@ -1760,7 +1787,7 @@ struct GameDriver demon_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	0,
 	&demon_machine_driver,
-	0,
+	demon_init,
 
 	demon_rom,
 	cinemat16k_rom_decode, 0,
@@ -1769,7 +1796,7 @@ struct GameDriver demon_driver =
 
 	demon_input_ports,
 
-	color_prom_bilevel, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -1828,7 +1855,7 @@ INPUT_PORTS_START ( wotw_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( wotw_rom )
+ROM_START( wotw )
 	ROM_REGION(0x4000)	/* 16k for code */
 	ROM_LOAD( "wow_le.t7", 0x0000, 0x1000, 0xb16440f9 )
 	ROM_LOAD( "wow_lo.p7", 0x1000, 0x1000, 0xbfdf4a5a )
@@ -1849,6 +1876,11 @@ void wotw_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void wotw_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_WOWCOL, 0, 0, 0);
+}
+
 
 CINEMA_MACHINE (wotw, 0, 0, 1024, 768)
 
@@ -1865,7 +1897,7 @@ struct GameDriver wotw_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	GAME_IMPERFECT_COLORS,
 	&wotw_machine_driver,
-	0,
+	wotw_init,
 
 	wotw_rom,
 	cinemat16k_rom_decode, 0,
@@ -1874,7 +1906,7 @@ struct GameDriver wotw_driver =
 
 	wotw_input_ports,
 
-	color_prom_wotw, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -1954,7 +1986,7 @@ INPUT_PORTS_START ( boxingb_input_ports )
 INPUT_PORTS_END
 
 
-ROM_START( boxingb_rom )
+ROM_START( boxingb )
 	ROM_REGION(0x8000)	/* 32k for code */
 	ROM_LOAD( "u1a", 0x0000, 0x1000, 0xd3115b0f )
 	ROM_LOAD( "u1b", 0x1000, 0x1000, 0x3a44268d )
@@ -1979,6 +2011,11 @@ void boxingb_init_machine (void)
     cinemat_sound_handler = 0;
 }
 
+void boxingb_init (void)
+{
+	cinemat_select_artwork (CCPU_MONITOR_WOWCOL, 0, 0, 0);
+}
+
 
 CINEMA_MACHINEX (boxingb, 0, 0, 1024, 768)
 
@@ -1995,7 +2032,7 @@ struct GameDriver boxingb_driver =
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
 	GAME_IMPERFECT_COLORS,
 	&boxingb_machine_driver,
-	0,
+	boxingb_init,
 
 	boxingb_rom,
 	cinemat32k_rom_decode, 0,
@@ -2004,7 +2041,7 @@ struct GameDriver boxingb_driver =
 
 	boxingb_input_ports,
 
-	color_prom_wotw, 0, 0,
+	0, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0

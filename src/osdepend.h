@@ -45,13 +45,13 @@ struct osd_bitmap
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
-#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
+#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),Machine->scrbitmap->depth)		/* ASG 980209 */
 void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. Attributes are the ones defined in driver.h. */
 /* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int attributes);
+struct osd_bitmap *osd_create_display(int width,int height,int depth,int attributes);
 int osd_set_display(int width,int height,int attributes);
 void osd_close_display(void);
 /* palette is an array of 'totalcolors' R,G,B triplets. The function returns */

@@ -325,7 +325,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( pbaction_rom )
+ROM_START( pbaction )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, 0x8d6dcaae )
 	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
@@ -350,7 +350,7 @@ ROM_START( pbaction_rom )
 ROM_END
 
 
-ROM_START( pbactio2_rom )
+ROM_START( pbactio2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pba16.bin",     0x0000, 0x4000, 0x4a239ebd )
 	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, 0x3afef03a )

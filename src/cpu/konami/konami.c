@@ -373,7 +373,8 @@ static UINT8 cycles1[] =
 
 INLINE UINT32 RM16( UINT32 Addr )
 {
-	return (RM(Addr) << 8) | RM((Addr+1)&0xffff);
+	UINT32 result = RM(Addr) << 8;
+	return result | RM((Addr+1)&0xffff);
 }
 
 INLINE void WM16( UINT32 Addr, PAIR *p )

@@ -1,8 +1,8 @@
-//========================================
-//  emulate.h
-//
-//  C Header file for TMS core
-//========================================
+/*========================================
+  tms9900.h
+
+  C Header file for TMS9900 core
+========================================*/
 
 #ifndef TMS9900_H
 #define TMS9900_H
@@ -25,7 +25,6 @@ enum {
 #define TMS9900_NONE  -1
 
 extern	int tms9900_ICount;
-extern	UINT8 lastparity;
 
 extern void tms9900_reset(void *param);
 extern int tms9900_execute(int cycles);

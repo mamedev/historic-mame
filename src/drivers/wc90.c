@@ -477,7 +477,7 @@ static void wc90_hisave(void)
 }
 
 
-ROM_START( wc90_rom )
+ROM_START( wc90 )
 	ROM_REGION(0x20000)	/* 128k for code */
 	ROM_LOAD( "ic87_01.bin",  0x00000, 0x08000, 0x4a1affbc )	/* c000-ffff is not used */
 	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, 0x847d439c )	/* banked at f000-f7ff */

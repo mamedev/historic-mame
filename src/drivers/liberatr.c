@@ -382,7 +382,7 @@ MACHINE_DRIVER(liberat2)
 
 ***************************************************************************/
 
-ROM_START( liberatr_rom )
+ROM_START( liberatr )
 	ROM_REGION(0x10000)	/* 64k for code and data  */
 	ROM_LOAD( "136012.206",   0x8000, 0x1000, 0x1a0cb4a0 )
 	ROM_LOAD( "136012.205",   0x9000, 0x1000, 0x2f071920 )
@@ -400,7 +400,7 @@ ROM_START( liberatr_rom )
 	ROM_LOAD( "136012.109",   0x3000, 0x1000, 0xdda0c0ef )
 ROM_END
 
-ROM_START( liberat2_rom )
+ROM_START( liberat2 )
 	ROM_REGION(0x10000)	/* 64k for code and data  */
 	ROM_LOAD( "l6.bin",       0x6000, 0x1000, 0x78093d06 )
 	ROM_LOAD( "l5.bin",       0x7000, 0x1000, 0x988db636 )

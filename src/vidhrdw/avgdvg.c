@@ -905,8 +905,16 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
 	}
 }
 
+#define VEC_PAL_WHITE	1
+#define VEC_PAL_AQUA	2
+#define VEC_PAL_BZONE	3
+#define VEC_PAL_MULTI	4
+#define VEC_PAL_SWARS	5
 
-void avg_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+/* Helper function to construct the color palette for the Atari vector
+ * games. DO NOT reference this function from the Gamedriver or
+ * MachineDriver. Use "avg_init_palette_XXXXX" instead. */
+void avg_init_palette (int paltype, unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,j,k;
 
@@ -928,16 +936,16 @@ void avg_init_colors (unsigned char *palette, unsigned short *colortable,const u
 		colorram[i] = i & 0x07;
 
 	/* fill the rest of the 256 color entries depending on the game */
-	switch (color_prom[0])
+	switch (paltype)
 	{
 		/* Black and White vector colors (Asteroids,Omega Race) .ac JAN2498 */
-		case  VEC_PAL_BW:
+		case  VEC_PAL_WHITE:
 			shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
 			colorram[1] = 7; /* BW games use only color 1 (== white) */
 			break;
 
 		/* Monochrome Aqua colors (Asteroids Deluxe,Red Baron) .ac JAN2498 */
-		case  VEC_PAL_MONO_AQUA:
+		case  VEC_PAL_AQUA:
 			/* Use backdrop if present MLR OCT0598 */
 			if ((backdrop=artwork_load("astdelux.png", 32, Machine->drv->total_colors-32))!=NULL)
 			{
@@ -966,7 +974,7 @@ void avg_init_colors (unsigned char *palette, unsigned short *colortable,const u
 			break;
 
 		/* Colored games (Major Havoc, Star Wars, Tempest) .ac JAN2498 */
-		case  VEC_PAL_COLOR:
+		case  VEC_PAL_MULTI:
 		case  VEC_PAL_SWARS:
 			/* put in 40 shades for red, blue and magenta */
 			shade_fill (palette, RED       ,   8,  47, 10, 250);
@@ -995,8 +1003,25 @@ void avg_init_colors (unsigned char *palette, unsigned short *colortable,const u
 				}
 			}
 			break;
+		default:
+			if (errorlog)
+				fprintf (errorlog, "Wrong palette type in avgdvg.c");
+			break;
 	}
 }
+
+/* A macro for the palette_init functions */
+#define VEC_PAL_INIT(name, paltype) \
+void avg_init_palette_##name## (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) \
+{ avg_init_palette (##paltype##, palette, colortable, color_prom); }
+
+/* The functions referenced from gamedriver */
+VEC_PAL_INIT(white, VEC_PAL_WHITE)
+VEC_PAL_INIT(aqua , VEC_PAL_AQUA )
+VEC_PAL_INIT(bzone, VEC_PAL_BZONE)
+VEC_PAL_INIT(multi, VEC_PAL_MULTI)
+VEC_PAL_INIT(swars, VEC_PAL_SWARS)
+
 
 /* If you want to use the next two functions, please make sure that you have
  * a fake GfxLayout, otherwise you'll crash */

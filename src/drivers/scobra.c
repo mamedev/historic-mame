@@ -1581,7 +1581,7 @@ static struct MachineDriver calipso_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( scobra_rom )
+ROM_START( scobra )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000, 0xe15ade38 )
 	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000, 0xa270e44d )
@@ -1603,7 +1603,7 @@ ROM_START( scobra_rom )
 	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
 ROM_END
 
-ROM_START( scobrak_rom )
+ROM_START( scobrak )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xa0744b3f )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0x8e7245cd )
@@ -1625,7 +1625,7 @@ ROM_START( scobrak_rom )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0x1628c53f )
 ROM_END
 
-ROM_START( scobrab_rom )
+ROM_START( scobrab )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800, 0xaeddf391 )
 	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800, 0x72b57eb7 )
@@ -1648,7 +1648,7 @@ ROM_START( scobrab_rom )
 	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800, 0xccd7a110 )
 ROM_END
 
-ROM_START( stratgyx_rom )
+ROM_START( stratgyx )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c_1.bin",     0x0000, 0x1000, 0xeec01237 )
 	ROM_LOAD( "2e_2.bin",     0x1000, 0x1000, 0x926cb2d5 )
@@ -1669,7 +1669,7 @@ ROM_START( stratgyx_rom )
 	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
 ROM_END
 
-ROM_START( stratgys_rom )
+ROM_START( stratgys )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c.cpu",       0x0000, 0x1000, 0xf2aaaf2b )
 	ROM_LOAD( "2e.cpu",       0x1000, 0x1000, 0x5873fdc8 )
@@ -1690,7 +1690,7 @@ ROM_START( stratgys_rom )
 	ROM_LOAD( "s2.bin",       0x1000, 0x1000, 0x46079411 )
 ROM_END
 
-ROM_START( armorcar_rom )
+ROM_START( armorcar )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cpu.2c",       0x0000, 0x1000, 0x0d7bfdfb )
 	ROM_LOAD( "cpu.2e",       0x1000, 0x1000, 0x76463213 )
@@ -1710,7 +1710,7 @@ ROM_START( armorcar_rom )
 	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
 ROM_END
 
-ROM_START( armorca2_rom )
+ROM_START( armorca2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xe393bd2f )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xb7d443af )
@@ -1730,7 +1730,7 @@ ROM_START( armorca2_rom )
 	ROM_LOAD( "sound.5d",     0x0800, 0x0800, 0x5218fec0 )
 ROM_END
 
-ROM_START( moonwar2_rom )
+ROM_START( moonwar2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mw2.2c",       0x0000, 0x1000, 0x7c11b4d9 )
 	ROM_LOAD( "mw2.2e",       0x1000, 0x1000, 0x1b6362be )
@@ -1749,7 +1749,7 @@ ROM_START( moonwar2_rom )
 	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
 ROM_END
 
-ROM_START( monwar2a_rom )
+ROM_START( monwar2a )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xbc20b734 )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xdb6ffec2 )
@@ -1768,7 +1768,7 @@ ROM_START( monwar2a_rom )
 	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
 ROM_END
 
-ROM_START( spdcoin_rom )
+ROM_START( spdcoin )
     ROM_REGION(0x10000) /* 64k for code */
     ROM_LOAD( "spdcoin.2c",   0x0000, 0x1000, 0x65cf1e49 )
     ROM_LOAD( "spdcoin.2e",   0x1000, 0x1000, 0x1ee59232 )
@@ -1785,7 +1785,7 @@ ROM_START( spdcoin_rom )
     ROM_LOAD( "spdcoin.5d",   0x0800, 0x0800, 0x92304df0 )
 ROM_END
 
-ROM_START( darkplnt_rom )
+ROM_START( darkplnt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "drkplt2c.dat", 0x0000, 0x1000, 0x5a0ca559 )
 	ROM_LOAD( "drkplt2e.dat", 0x1000, 0x1000, 0x52e2117d )
@@ -1807,7 +1807,7 @@ ROM_START( darkplnt_rom )
 	ROM_LOAD( "5c.snd",       0x0000, 0x1000, 0x672b9454 )
 ROM_END
 
-ROM_START( tazmania_rom )
+ROM_START( tazmania )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c.cpu",       0x0000, 0x1000, 0x932c5a06 )
 	ROM_LOAD( "2e.cpu",       0x1000, 0x1000, 0xef17ce65 )
@@ -1827,7 +1827,7 @@ ROM_START( tazmania_rom )
 	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
 ROM_END
 
-ROM_START( tazmani2_rom )
+ROM_START( tazmani2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2ck.cpu",      0x0000, 0x1000, 0xbf0492bf )
 	ROM_LOAD( "2ek.cpu",      0x1000, 0x1000, 0x6636c4d0 )
@@ -1847,7 +1847,7 @@ ROM_START( tazmani2_rom )
 	ROM_LOAD( "rom0.snd",     0x0000, 0x0800, 0xb8d741f1 )
 ROM_END
 
-ROM_START( calipso_rom )
+ROM_START( calipso )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "calipso.2c",   0x0000, 0x1000, 0x0fcb703c )
 	ROM_LOAD( "calipso.2e",   0x1000, 0x1000, 0xc6622f14 )
@@ -1868,7 +1868,7 @@ ROM_START( calipso_rom )
 	ROM_LOAD( "calipso.5d",   0x0800, 0x0800, 0xa225ee3b )
 ROM_END
 
-ROM_START( anteater_rom )
+ROM_START( anteater )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ra1-2c",       0x0000, 0x1000, 0x58bc9393 )
 	ROM_LOAD( "ra1-2e",       0x1000, 0x1000, 0x574fc6f6 )
@@ -1887,7 +1887,7 @@ ROM_START( anteater_rom )
 	ROM_LOAD( "ra4-5d",       0x0800, 0x0800, 0xaf4e5ffe )
 ROM_END
 
-ROM_START( rescue_rom )
+ROM_START( rescue )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "rb15acpu.bin", 0x0000, 0x1000, 0xd7e654ba )
 	ROM_LOAD( "rb15bcpu.bin", 0x1000, 0x1000, 0xa93ea158 )
@@ -1907,7 +1907,7 @@ ROM_START( rescue_rom )
 	ROM_LOAD( "rb15dsnd.bin", 0x0800, 0x0800, 0xd96e4fb3 )
 ROM_END
 
-ROM_START( minefld_rom )
+ROM_START( minefld )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ma22c",        0x0000, 0x1000, 0x1367a035 )
 	ROM_LOAD( "ma22e",        0x1000, 0x1000, 0x68946d21 )
@@ -1928,7 +1928,7 @@ ROM_START( minefld_rom )
 	ROM_LOAD( "ma15d",        0x0800, 0x0800, 0xf67b3f97 )
 ROM_END
 
-ROM_START( losttomb_rom )
+ROM_START( losttomb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xd6176d2c )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xa5f55f4a )
@@ -1950,7 +1950,7 @@ ROM_START( losttomb_rom )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
 ROM_END
 
-ROM_START( losttmbh_rom )
+ROM_START( losttmbh )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x1000, 0xd6176d2c )
 	ROM_LOAD( "2e",           0x1000, 0x1000, 0xa5f55f4a )
@@ -1972,7 +1972,7 @@ ROM_START( losttmbh_rom )
 	ROM_LOAD( "5d",           0x0800, 0x0800, 0x6907af31 )
 ROM_END
 
-ROM_START( superbon_rom )
+ROM_START( superbon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2d.cpu",       0x0000, 0x1000, 0x60c0ba18 )
 	ROM_LOAD( "2e.cpu",       0x1000, 0x1000, 0xddcf44bf )
@@ -1994,7 +1994,7 @@ ROM_START( superbon_rom )
 	ROM_LOAD( "5d.snd",       0x0800, 0x0800, 0x80640a04 )
 ROM_END
 
-ROM_START( hustler_rom )
+ROM_START( hustler )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hustler.1",    0x0000, 0x1000, 0x94479a3e )
 	ROM_LOAD( "hustler.2",    0x1000, 0x1000, 0x3cc67bcc )
@@ -2013,7 +2013,7 @@ ROM_START( hustler_rom )
 	ROM_LOAD( "hustler.7",    0x0800, 0x0800, 0x3db57351 )
 ROM_END
 
-ROM_START( billiard_rom )
+ROM_START( billiard )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "a",            0x0000, 0x1000, 0xb7eb50c0 )
 	ROM_LOAD( "b",            0x1000, 0x1000, 0x988fe1c5 )
@@ -2033,7 +2033,7 @@ ROM_START( billiard_rom )
 ROM_END
 
 /* this is identical to billiard, but with a different memory map */
-ROM_START( hustlerb_rom )
+ROM_START( hustlerb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hustler.2c",   0x0000, 0x1000, 0x3a1ac6a9 )
 	ROM_LOAD( "hustler.2f",   0x1000, 0x1000, 0xdc6752ec )

@@ -1466,7 +1466,7 @@ static struct MachineDriver hotchase_machine_driver =
 								WEC Le Mans 24
 ***************************************************************************/
 
-ROM_START( wecleman_rom )
+ROM_START( wecleman )
 
 	ROM_REGION(0x40000)				/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "602f08.17h", 0x00000, 0x10000, 0x493b79d3 )
@@ -1631,7 +1631,7 @@ struct GameDriver wecleman_driver =
 ***************************************************************************/
 
 
-ROM_START( hotchase_rom )
+ROM_START( hotchase )
 
 	ROM_REGION(0x40000)			/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "763k05", 0x000000, 0x010000, 0xf34fef0b )

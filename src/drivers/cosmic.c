@@ -430,7 +430,7 @@ int panic_interrupt(void)
     }
 }
 
-ROM_START( panic_rom )
+ROM_START( panic )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "spcpanic.1",   0x0000, 0x0800, 0x405ae6f9 )         /* Code */
 	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
@@ -451,7 +451,7 @@ ROM_START( panic_rom )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
 
-ROM_START( panica_rom )
+ROM_START( panica )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "panica.1",     0x0000, 0x0800, 0x289720ce )         /* Code */
 	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
@@ -472,7 +472,7 @@ ROM_START( panica_rom )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
 
-ROM_START( panicger_rom )
+ROM_START( panicger )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "spacepan.001", 0x0000, 0x0800, 0xa6d9515a )         /* Code */
 	ROM_LOAD( "spacepan.002", 0x0800, 0x0800, 0xcfc22663 )
@@ -782,7 +782,7 @@ static struct MachineDriver cosmicalien_machine_driver =
 	0,0,0,0
 };
 
-ROM_START( cosmicalien_rom )
+ROM_START( cosmicalien )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "r1",           0x0000, 0x0800, 0x535ee0c5 )
 	ROM_LOAD( "r2",           0x0800, 0x0800, 0xed3cf8f7 )
@@ -1030,14 +1030,27 @@ int cosmicguerilla_interrupt(void)
 
     /* Insert Coin */
 
-	if ((readinputport(2) & 1) & (PixelClock == 0))	/* Coin */
-    {
-		return 4;
-    }
-	else
-    {
-      	return ignore_interrupt();
-    }
+	/* R Nabet : fixed to make this piec of code sensible.
+	I assumed that the interrupt request lasted for as long as the coin
+	was "sensed".
+	It makes sense and works fine, but I cannot be 100% sure this is
+	correct,
+	as I have no Cosmic Guerilla console :-) . */
+
+	if (PixelClock == 0)
+	{
+		if ((readinputport(2) & 1)) /* Coin */
+		{
+			cpu_0_irq_line_vector_w(0, 4);
+			cpu_set_irq_line(0, 0, ASSERT_LINE);
+		}
+		else
+		{
+			cpu_set_irq_line(0, 0, CLEAR_LINE);
+		}
+	}
+
+	return ignore_interrupt();
 }
 
 static void cosmicguerilla_decode(void)
@@ -1212,7 +1225,7 @@ static struct MachineDriver cosmicguerilla_machine_driver =
 	}
 };
 
-ROM_START( cosmicguerilla_rom )
+ROM_START( cosmicguerilla )
 	ROM_REGION(0x10000)  /* 8k for code */
 	ROM_LOAD( "cosmicg1.bin",  0x0000, 0x0400, 0xe1b9f894 )
 	ROM_LOAD( "cosmicg2.bin",  0x0400, 0x0400, 0x35c75346 )
@@ -1444,7 +1457,7 @@ static struct MachineDriver magspot2_machine_driver =
 	}
 };
 
-ROM_START( magspot2_rom )
+ROM_START( magspot2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "my1",  0x0000, 0x0800, 0xc0085ade )
 	ROM_LOAD( "my2",  0x0800, 0x0800, 0xd534a68b )
@@ -1645,7 +1658,7 @@ INPUT_PORTS_START( devzone_input_ports )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
 INPUT_PORTS_END
 
-ROM_START( devzone_rom )
+ROM_START( devzone )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "dv1.e3",  0x0000, 0x0800, 0xc70faf00 )
 	ROM_LOAD( "dv2.e4",  0x0800, 0x0800, 0xeacfed61 )
@@ -1799,7 +1812,7 @@ static struct MemoryWriteAddress nomanland_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-ROM_START( nomanland_rom )
+ROM_START( nomanland )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1.bin",  0x0000, 0x0800, 0xba117ba6 )
 	ROM_LOAD( "2.bin",  0x0800, 0x0800, 0xe5ed654f )
@@ -1819,7 +1832,7 @@ ROM_START( nomanland_rom )
 	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
 ROM_END
 
-ROM_START( nomanlandg_rom )
+ROM_START( nomanlandg )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "nml1.e3",  0x0000, 0x0800, 0xe212ed91 )
 	ROM_LOAD( "nml2.e4",  0x0800, 0x0800, 0xf66ef3d8 )

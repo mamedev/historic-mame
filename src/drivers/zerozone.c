@@ -291,7 +291,7 @@ static void hisave(void)
 
 ***************************************************************************/
 
-ROM_START( zerozone_rom )
+ROM_START( zerozone )
 	ROM_REGION(0x20000)     /* 128k for 68000 code */
 	ROM_LOAD_EVEN( "zz-4.rom", 0x0000, 0x10000, 0x83718b9b )
 	ROM_LOAD_ODD ( "zz-5.rom", 0x0000, 0x10000, 0x18557f41 )

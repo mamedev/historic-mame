@@ -470,7 +470,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( crimfght_rom )
+ROM_START( crimfght )
 	ROM_REGION( 0x28000 ) /* code + banked roms */
 	ROM_LOAD( "821l02.f24", 0x10000, 0x18000, 0x588e7da6 )
 	ROM_CONTINUE(           0x08000, 0x08000 )
@@ -493,7 +493,7 @@ ROM_START( crimfght_rom )
 	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
 ROM_END
 
-ROM_START( crimfgtj_rom )
+ROM_START( crimfgtj )
 	ROM_REGION( 0x28000 ) /* code + banked roms */
 	ROM_LOAD( "821p02.bin", 0x10000, 0x18000, 0xf33fa2e1 )
 	ROM_CONTINUE(           0x08000, 0x08000 )

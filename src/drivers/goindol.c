@@ -356,7 +356,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( goindol_rom )
+ROM_START( goindol )
 	ROM_REGION(0x20000)     /* 2*64k for code */
 	ROM_LOAD( "r1", 0x00000, 0x8000, 0x3111c61b ) /* Code 0000-7fff */
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */
@@ -381,7 +381,7 @@ ROM_START( goindol_rom )
 
 ROM_END
 
-ROM_START( homo_rom )
+ROM_START( homo )
 	ROM_REGION(0x20000)     /* 2*64k for code */
 	ROM_LOAD( "homo.01", 0x00000, 0x8000, 0x28c539ad ) /* Code 0000-7fff */
 	ROM_LOAD( "r2", 0x10000, 0x8000, 0x1ff6e3a2 ) /* Paged data */

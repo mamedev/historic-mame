@@ -450,7 +450,7 @@ static struct MachineDriver machine_driver =
 };
 
 
-ROM_START( junofrst_rom )
+ROM_START( junofrst )
 	ROM_REGION( 0x22000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
 	ROM_LOAD( "jfa_b9.bin",   0x0a000, 0x2000, 0xf5a7ab9d ) /* program ROMs */
 	ROM_LOAD( "jfb_b10.bin",  0x0c000, 0x2000, 0xf20626e0 )

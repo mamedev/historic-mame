@@ -313,7 +313,7 @@ MACHINE_DRIVER(stratvox, STRATVOX_AUDIO_INTERFACE)
 
 ***************************************************************************/
 
-ROM_START( route16_rom )
+ROM_START( route16 )
 	ROM_REGION(0x10000)  // 64k for the first CPU
 	ROM_LOAD( "route16.a0",   0x0000, 0x0800, 0x8f9101bd )
 	ROM_LOAD( "route16.a1",   0x0800, 0x0800, 0x389bc077 )
@@ -334,7 +334,7 @@ ROM_START( route16_rom )
 	ROM_LOAD( "route16.b3",   0x1800, 0x0800, 0x3bd8b899 )
 ROM_END
 
-ROM_START( route16b_rom )
+ROM_START( route16b )
 	ROM_REGION(0x10000)  // 64k for the first CPU
 	ROM_LOAD( "rt16.0",       0x0000, 0x0800, 0xb1f0f636 )
 	ROM_LOAD( "rt16.1",       0x0800, 0x0800, 0x3ec52fe5 )
@@ -365,7 +365,7 @@ static const char *stratvox_sample_names[] =
     0   /* end of array */
 };
 
-ROM_START( stratvox_rom )
+ROM_START( stratvox )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
@@ -384,7 +384,7 @@ ROM_START( stratvox_rom )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
-ROM_START( stratvxb_rom )
+ROM_START( stratvxb )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
 	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
@@ -403,7 +403,7 @@ ROM_START( stratvxb_rom )
 	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
-ROM_START( speakres_rom )
+ROM_START( speakres )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "speakres.1",   0x0000, 0x0800, 0x6026e4ea )
 	ROM_LOAD( "speakres.2",   0x0800, 0x0800, 0x93f0d4da )

@@ -137,6 +137,10 @@ static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are
 	0x20,0xff,0xff, /* CYAN */
 	0xff,0x20,0xff  /* PURPLE */
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 static int M79_interrupt(void)
 {
@@ -153,31 +157,31 @@ static void m79_init(void)
 
 static struct MachineDriver machine_driver =
 {
-        /* basic machine hardware */
-        {
-                {
-                    CPU_8080,
-                    1996800,
-                    0,
-                    readmem,writemem,readport,writeport,
-                    M79_interrupt, 1
-                }
-        },
-        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-        1,      /* single CPU, no need for interleaving */
-        0,
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			1996800,
+			0,
+			readmem,writemem,readport,writeport,
+			M79_interrupt, 1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
 
-        /* video hardware */
-        32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-        0,      /* no gfxdecodeinfo - bitmapped display */
-        sizeof(palette)/3, 0,
-        0,
+	/* video hardware */
+	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
-        VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-        0,
-        ramtek_vh_start,
-        ramtek_vh_stop,
-        ramtek_vh_screenrefresh,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	ramtek_vh_start,
+	ramtek_vh_stop,
+	ramtek_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0
@@ -185,7 +189,7 @@ static struct MachineDriver machine_driver =
 
 
 
-ROM_START( m79_rom )
+ROM_START( m79 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "m79.10t",      0x0000, 0x0200, 0xccf30b1e )
 	ROM_LOAD( "m79.9t",       0x0200, 0x0200, 0xdaf807dd )
@@ -275,7 +279,7 @@ struct GameDriver m79amb_driver =
 
 	m79_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave

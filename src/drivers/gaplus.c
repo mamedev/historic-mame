@@ -679,7 +679,7 @@ static struct MachineDriver galaga3_machine_driver =
 	}
 };
 
-ROM_START( gaplus_rom )
+ROM_START( gaplus )
 	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.64",   0xa000, 0x2000, 0x484f11e0 )
 	ROM_LOAD( "gp2-3.64",   0xc000, 0x2000, 0xa74b0266 )
@@ -713,7 +713,7 @@ ROM_START( gaplus_rom )
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
-ROM_START( gaplusa_rom )
+ROM_START( gaplusa )
 	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gp2-4.8d",   0xa000, 0x2000, 0xe525d75d )
 	ROM_LOAD( "gp2-3b.8c",  0xc000, 0x2000, 0xd77840a4 )
@@ -747,7 +747,7 @@ ROM_START( gaplusa_rom )
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
-ROM_START( galaga3_rom )
+ROM_START( galaga3 )
 	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
 	ROM_LOAD( "gal3_9e.bin",   0xa000, 0x2000, 0xf4845e7f )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )
@@ -781,7 +781,7 @@ ROM_START( galaga3_rom )
 	ROM_LOAD( "gp2-3f.bin",   0x0000, 0x0100, 0x2d9fbdd8 )
 ROM_END
 
-ROM_START( galaga3a_rom )
+ROM_START( galaga3a )
 	ROM_REGION(0x10000) /* 64k for the MAIN CPU */
 	ROM_LOAD( "mi.9e",         0xa000, 0x2000, 0xe392704e )
 	ROM_LOAD( "gal3_9d.bin",   0xc000, 0x2000, 0x86fac687 )

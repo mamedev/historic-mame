@@ -433,7 +433,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( tp84_rom )
+ROM_START( tp84 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "tp84_8j.bin",  0xa000, 0x2000, 0x4b4629a4 )
@@ -462,7 +462,7 @@ ROM_START( tp84_rom )
 	ROM_LOAD( "tp84s_6a.bin", 0x0000, 0x2000, 0xc44414da )
 ROM_END
 
-ROM_START( tp84a_rom )
+ROM_START( tp84a )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tp84_7j.bin",  0x8000, 0x2000, 0x605f61c7 )
 	ROM_LOAD( "f05",          0xa000, 0x2000, 0xe97d5093 )

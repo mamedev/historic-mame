@@ -678,24 +678,6 @@ INPUT_PORTS_START( elim4_input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
-};
-
-
 /***************************************************************************
 
   Security Chips
@@ -744,7 +726,7 @@ void tacscan_decode(void)
 
 ***************************************************************************/
 
-ROM_START( spacfury_rom ) /* Revision C */
+ROM_START( spacfury ) /* Revision C */
 	ROM_REGION(0x10000)	/* 64k for code */
         ROM_LOAD( "969c.u25",     0x0000, 0x0800, 0x411207f2 )
         ROM_LOAD( "960c.u1",      0x0800, 0x0800, 0xd071ab7e )
@@ -758,7 +740,7 @@ ROM_START( spacfury_rom ) /* Revision C */
         ROM_LOAD( "968c.u9",      0x4800, 0x0800, 0x8366eadb )
 ROM_END
 
-ROM_START( spacfura_rom ) /* Revision A */
+ROM_START( spacfura ) /* Revision A */
 	ROM_REGION(0x10000)	/* 64k for code */
         ROM_LOAD( "969a.u25",     0x0000, 0x0800, 0x896a615c )
         ROM_LOAD( "960a.u1",      0x0800, 0x0800, 0xe1ea7964 )
@@ -772,7 +754,7 @@ ROM_START( spacfura_rom ) /* Revision A */
         ROM_LOAD( "968a.u9",      0x4800, 0x0800, 0xaea85b6a )
 ROM_END
 
-ROM_START( zektor_rom )
+ROM_START( zektor )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1611.cpu",     0x0000, 0x0800, 0x6245aa23 )
 	ROM_LOAD( "1586.rom",     0x0800, 0x0800, 0xefeb4fb5 )
@@ -798,7 +780,7 @@ ROM_START( zektor_rom )
 	ROM_LOAD( "1606.rom",     0xa800, 0x0800, 0x7965f636 )
 ROM_END
 
-ROM_START( tacscan_rom )
+ROM_START( tacscan )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1711a",        0x0000, 0x0800, 0x0da13158 )
 	ROM_LOAD( "1670c",        0x0800, 0x0800, 0x98de6fd5 )
@@ -824,7 +806,7 @@ ROM_START( tacscan_rom )
 	ROM_LOAD( "1710a",        0xa800, 0x0800, 0x6203be22 )
 ROM_END
 
-ROM_START( elim2_rom )
+ROM_START( elim2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cpu_u25.969",  0x0000, 0x0800, 0x411207f2 )
 	ROM_LOAD( "1333",         0x0800, 0x0800, 0xfd2a2916 )
@@ -842,7 +824,7 @@ ROM_START( elim2_rom )
 	ROM_LOAD( "1345",         0x6800, 0x0800, 0x40597a92 )
 ROM_END
 
-ROM_START( elim2a_rom )
+ROM_START( elim2a )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cpu_u25.969",  0x0000, 0x0800, 0x411207f2 )
 	ROM_LOAD( "1158",         0x0800, 0x0800, 0xa40ac3a5 )
@@ -860,7 +842,7 @@ ROM_START( elim2a_rom )
 	ROM_LOAD( "1170a",        0x6800, 0x0800, 0x8cdacd35 )
 ROM_END
 
-ROM_START( elim4_rom )
+ROM_START( elim4 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1390_cpu.u25", 0x0000, 0x0800, 0x97010c3e )
 	ROM_LOAD( "1347",         0x0800, 0x0800, 0x657d7320 )
@@ -879,7 +861,7 @@ ROM_START( elim4_rom )
 	ROM_LOAD( "1360",         0x7000, 0x0800, 0x96d48238 )
 ROM_END
 
-ROM_START( startrek_rom )
+ROM_START( startrek )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cpu1873",      0x0000, 0x0800, 0xbe46f5d9 )
 	ROM_LOAD( "1848",         0x0800, 0x0800, 0x65e3baf3 )
@@ -1235,7 +1217,7 @@ static struct MachineDriver spacfury_machine_driver =
 
 	/* video hardware */
 	400, 300, { 512, 1536, 552, 1464 },
-	gfxdecodeinfo,
+	0,
 	256,256,
 	sega_init_colors,
 
@@ -1388,7 +1370,7 @@ static struct MachineDriver zektor_machine_driver =
 
 	/* video hardware */
 	400, 300, { 512, 1536, 624, 1432 },
-	gfxdecodeinfo,
+	0,
 	256,256,
 	sega_init_colors,
 
@@ -1511,7 +1493,7 @@ static struct MachineDriver tacscan_machine_driver =
 
 	/* video hardware */
 	400, 300, { 496, 1552, 592, 1456 },
-	gfxdecodeinfo,
+	0,
 	256,256,
 	sega_init_colors,
 
@@ -1612,7 +1594,7 @@ static struct MachineDriver elim2_machine_driver =
 
 	/* video hardware */
 	400, 300, { 512, 1536, 600, 1440 },
-	gfxdecodeinfo,
+	0,
 	256,256,
 	sega_init_colors,
 
@@ -1709,7 +1691,7 @@ static struct MachineDriver elim4_machine_driver =
 
 	/* video hardware */
 	400, 300, { 512, 1536, 600, 1440 },
-	gfxdecodeinfo,
+	0,
 	256,256,
 	sega_init_colors,
 
@@ -1850,7 +1832,7 @@ static struct MachineDriver startrek_machine_driver =
 
 	/* video hardware */
 	400, 300, { 512, 1536, 616, 1464 },
-	gfxdecodeinfo,
+	0,
 	256,256,
 	sega_init_colors,
 

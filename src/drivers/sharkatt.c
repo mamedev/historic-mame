@@ -216,7 +216,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sharkatt_rom )
+ROM_START( sharkatt )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "sharkatt.0",   0x0000, 0x0800, 0xc71505e9 )
 	ROM_LOAD( "sharkatt.1",   0x0800, 0x0800, 0x3e3abf70 )

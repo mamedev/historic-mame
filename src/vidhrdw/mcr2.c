@@ -43,7 +43,7 @@ void mcr2_paletteram_w(int offset,int data)
 	b = (b << 5) | (b << 2) | (b >> 1);
 
 	palette_change_color(offset / 2, r, g, b);
-} 
+}
 
 
 
@@ -73,7 +73,7 @@ void mcr2_videoram_w(int offset,int data)
 static void mcr2_update_background(struct osd_bitmap *bitmap)
 {
 	int offs;
-	
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 2; offs >= 0; offs -= 2)
@@ -82,7 +82,7 @@ static void mcr2_update_background(struct osd_bitmap *bitmap)
 		{
 			int mx = (offs / 2) % 32;
 			int my = (offs / 2) / 32;
-			
+
 			int attr = videoram[offs + 1];
 			int code = videoram[offs] + 256 * (attr & 0x01);
 			int hflip = attr & 0x02;
@@ -112,7 +112,7 @@ static void mcr2_update_background(struct osd_bitmap *bitmap)
 void mcr2_update_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
-	
+
 	for (offs = 0; offs < spriteram_size; offs += 4)
 	{
 		int code, x, y, xcount, ycount, hflip, vflip, sx, sy, flags;
@@ -164,7 +164,7 @@ void mcr2_update_sprites(struct osd_bitmap *bitmap)
 void mcr2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a full refresh or cocktail flip change */
-	if (full_refresh || last_cocktail_flip != mcr_cocktail_flip)
+	if (palette_recalc() || full_refresh || last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -190,7 +190,7 @@ extern void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int c
 void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* mark everything dirty on a cocktail flip change */
-	if (last_cocktail_flip != mcr_cocktail_flip)
+	if (palette_recalc() || last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -199,7 +199,7 @@ void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy it to the destination */
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-	
+
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
 }

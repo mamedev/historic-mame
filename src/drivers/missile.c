@@ -392,7 +392,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( missile_rom )
+ROM_START( missile )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "035820.02",    0x5000, 0x0800, 0x7a62ce6a )
 	ROM_LOAD( "035821.02",    0x5800, 0x0800, 0xdf3bd57f )
@@ -403,7 +403,7 @@ ROM_START( missile_rom )
 	ROM_RELOAD( 		   0xF800, 0x0800 ) 	/* for interrupt vectors  */
 ROM_END
 
-ROM_START( missile2_rom )
+ROM_START( missile2 )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "35820-01.h1",  0x5000, 0x0800, 0x41cbb8f2 )
 	ROM_LOAD( "35821-01.jk1", 0x5800, 0x0800, 0x728702c8 )
@@ -414,7 +414,7 @@ ROM_START( missile2_rom )
 	ROM_RELOAD( 		      0xF800, 0x0800 ) 	/* for interrupt vectors  */
 ROM_END
 
-ROM_START( suprmatk_rom )
+ROM_START( suprmatk )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "035820.sma",   0x5000, 0x0800, 0x75f01b87 )
 	ROM_LOAD( "035821.sma",   0x5800, 0x0800, 0x3320d67e )

@@ -64,7 +64,7 @@ void qwakprot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	if (full_refresh)
+	if (palette_recalc() || full_refresh)
 		memset (dirtybuffer, 1, videoram_size);
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)

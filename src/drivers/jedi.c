@@ -335,7 +335,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jedi_rom )
+ROM_START( jedi )
 	ROM_REGION(0x1C000)	/* 64k for code + 48k for banked ROMs */
 	ROM_LOAD( "14f_221.bin",  0x08000, 0x4000, 0x414d05e3 )
 	ROM_LOAD( "13f_222.bin",  0x0c000, 0x4000, 0x7b3f21be )

@@ -95,7 +95,8 @@ int C140_r(int offset)
 static long find_sample( long adrs, long bank)
 {
 	adrs=(bank<<16)+adrs;
-	return adrs&0xfffff;
+	/*return adrs&0xfffff;*/
+	return ((adrs&0x200000)>>2)|(adrs&0x7ffff);		/* 991104.CAB */
 }
 
 void C140_w(int offset,int data)
@@ -131,6 +132,14 @@ void C140_w(int offset,int data)
 			}
 		}
 	}
+}
+
+/* 991112.CAB */
+INLINE int limit(int in)
+{
+	if(in>0x7fff)		return 0x7fff;
+	else if(in<-0x8000)	return -0x8000;
+	return in;
 }
 
 static void update_stereo(int ch, void **buffer, int length)
@@ -313,8 +322,12 @@ static void update_stereo(int ch, void **buffer, int length)
 			short *dest2 = buffer[1];
 			for (i = 0; i < length; i++)
 			{
+				/*
 				*dest1++ = 8*(*lmix++);
 				*dest2++ = 8*(*rmix++);
+				*/
+				*dest1++ = limit(8*(*lmix++));			/* 991112.CAB */
+				*dest2++ = limit(8*(*rmix++));
 			}
 		}
 		else
@@ -323,7 +336,11 @@ static void update_stereo(int ch, void **buffer, int length)
 			char *dest2 = buffer[1];
 			for (i = 0; i < length; i++)
 			{
-				*dest1++ = ((8*(*lmix++))>>8)&0xff;
+				/*
+				*dest1++ = (limit(8*(*lmix++))>>8)&0xff;
+				*dest2++ = (limit(8*(*rmix++))>>8)&0xff;
+				*/
+				*dest1++ = ((8*(*lmix++))>>8)&0xff;		/* 991112.CAB */
 				*dest2++ = ((8*(*rmix++))>>8)&0xff;
 			}
 		}

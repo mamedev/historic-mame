@@ -462,7 +462,7 @@ static void relief2_init(void)
  *
  *************************************/
 
-ROM_START( relief_rom )
+ROM_START( relief )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "0011d.19e", 0x00000, 0x20000, 0xcb3f73ad )
 	ROM_LOAD_ODD ( "0012d.19j", 0x00000, 0x20000, 0x90655721 )
@@ -482,7 +482,7 @@ ROM_START( relief_rom )
 ROM_END
 
 
-ROM_START( relief2_rom )
+ROM_START( relief2 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "093-0011.19e", 0x00000, 0x20000, 0x794cea33 )
 	ROM_LOAD_ODD ( "093-0012.19j", 0x00000, 0x20000, 0x577495f8 )

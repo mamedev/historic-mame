@@ -515,7 +515,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( rampart_rom )
+ROM_START( rampart )
 	ROM_REGION(0x148000)
 	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
 	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )
@@ -531,7 +531,7 @@ ROM_START( rampart_rom )
 ROM_END
 
 
-ROM_START( ramprt2p_rom )
+ROM_START( ramprt2p )
 	ROM_REGION(0x148000)
 	ROM_LOAD_EVEN( "082-1033.13l", 0x00000, 0x80000, 0x5c36795f )
 	ROM_LOAD_ODD ( "082-1032.13j", 0x00000, 0x80000, 0xec7bc38c )

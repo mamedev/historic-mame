@@ -339,7 +339,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( cloak_rom )
+ROM_START( cloak )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "136023.501",   0x4000, 0x2000, 0xc2dbef1b )
 	ROM_LOAD( "136023.502",   0x6000, 0x2000, 0x316d0c7b )

@@ -865,7 +865,7 @@ static struct MachineDriver kingball_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( mooncrst_rom )
+ROM_START( mooncrst )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mc1",          0x0000, 0x0800, 0x7d954a7a )
 	ROM_LOAD( "mc2",          0x0800, 0x0800, 0x44bb7cfa )
@@ -886,7 +886,7 @@ ROM_START( mooncrst_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( mooncrsg_rom )
+ROM_START( mooncrsg )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr194",       0x0000, 0x0800, 0x0e5582b1 )
 	ROM_LOAD( "epr195",       0x0800, 0x0800, 0x12cb201b )
@@ -907,7 +907,7 @@ ROM_START( mooncrsg_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( smooncrs_rom )
+ROM_START( smooncrs )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "927",          0x0000, 0x0800, 0x55c5b994 )
 	ROM_LOAD( "928a",         0x0800, 0x0800, 0x77ae26d3 )
@@ -928,7 +928,7 @@ ROM_START( smooncrs_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( mooncrsb_rom )
+ROM_START( mooncrsb )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "bepr194",      0x0000, 0x0800, 0x6a23ec6d )
 	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
@@ -949,7 +949,7 @@ ROM_START( mooncrsb_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( mooncrs2_rom )
+ROM_START( mooncrs2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f8.bin",       0x0000, 0x0800, 0xd36003e5 )
 	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
@@ -976,7 +976,7 @@ ROM_START( mooncrs2_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( fantazia_rom )
+ROM_START( fantazia )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f01.bin",      0x0000, 0x0800, 0xd3e23863 )
 	ROM_LOAD( "f02.bin",      0x0800, 0x0800, 0x63fa4149 )
@@ -999,7 +999,7 @@ ROM_START( fantazia_rom )
 	ROM_LOAD( "6l_prom.bin",  0x0000, 0x0020, BADCRC( 0xf5381d3e ) )
 ROM_END
 
-ROM_START( eagle_rom )
+ROM_START( eagle )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "e1",           0x0000, 0x0800, 0x224c9526 )
 	ROM_LOAD( "e2",           0x0800, 0x0800, 0xcc538ebd )
@@ -1026,7 +1026,7 @@ ROM_START( eagle_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( eagle2_rom )
+ROM_START( eagle2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "e1.7f",        0x0000, 0x0800, 0x45aab7a3 )
 	ROM_LOAD( "e2",           0x0800, 0x0800, 0xcc538ebd )
@@ -1053,7 +1053,7 @@ ROM_START( eagle2_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-ROM_START( moonqsr_rom )
+ROM_START( moonqsr )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mq1",          0x0000, 0x0800, 0x132c13ec )
 	ROM_LOAD( "mq2",          0x0800, 0x0800, 0xc8eb74f1 )
@@ -1074,7 +1074,7 @@ ROM_START( moonqsr_rom )
 	ROM_LOAD( "vid_e6.bin",   0x0000, 0x0020, 0x0b878b54 )
 ROM_END
 
-ROM_START( checkman_rom )
+ROM_START( checkman )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "cm1",          0x0000, 0x0800, 0xe8cbdd28 )
 	ROM_LOAD( "cm2",          0x0800, 0x0800, 0xb8432d4d )
@@ -1096,7 +1096,7 @@ ROM_START( checkman_rom )
 	ROM_LOAD( "cm14",         0x0800, 0x0800, 0x47f043be )
 ROM_END
 
-ROM_START( moonal2_rom )
+ROM_START( moonal2 )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "ali1",         0x0000, 0x0400, 0x0dcecab4 )
 	ROM_LOAD( "ali2",         0x0400, 0x0400, 0xc6ee75a7 )
@@ -1120,7 +1120,7 @@ ROM_START( moonal2_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( moonal2b_rom )
+ROM_START( moonal2b )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "ali1",         0x0000, 0x0400, 0x0dcecab4 )
 	ROM_LOAD( "ali2",         0x0400, 0x0400, 0xc6ee75a7 )
@@ -1143,7 +1143,7 @@ ROM_START( moonal2b_rom )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
-ROM_START( kingball_rom )
+ROM_START( kingball )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "prg1.7f",      0x0000, 0x1000, 0x6cb49046 )
 	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
@@ -1165,7 +1165,7 @@ ROM_START( kingball_rom )
 	ROM_LOAD( "kbe2.ic7",     0x1800, 0x0800, 0xbb59e965 )
 ROM_END
 
-ROM_START( kingbalj_rom )
+ROM_START( kingbalj )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "prg1.7f",      0x0000, 0x1000, 0x6cb49046 )
 	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )

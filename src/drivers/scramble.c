@@ -1379,7 +1379,7 @@ static struct MachineDriver hunchbks_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( scramble_rom )
+ROM_START( scramble )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2d",           0x0000, 0x0800, 0xb89207a1 )
 	ROM_LOAD( "2e",           0x0800, 0x0800, 0xe9b4b9eb )
@@ -1403,7 +1403,7 @@ ROM_START( scramble_rom )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
-ROM_START( scramblk_rom )
+ROM_START( scramblk )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2d.k",         0x0000, 0x0800, 0xea35ccaa )
 	ROM_LOAD( "2e.k",         0x0800, 0x0800, 0xe7bba1b3 )
@@ -1427,7 +1427,7 @@ ROM_START( scramblk_rom )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
-ROM_START( atlantis_rom )
+ROM_START( atlantis )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c",           0x0000, 0x0800, 0x0e485b9a )
 	ROM_LOAD( "2e",           0x0800, 0x0800, 0xc1640513 )
@@ -1449,7 +1449,7 @@ ROM_START( atlantis_rom )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
-ROM_START( atlants2_rom )
+ROM_START( atlants2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "rom1",         0x0000, 0x0800, 0xad348089 )
 	ROM_LOAD( "rom2",         0x0800, 0x0800, 0xcaa705d1 )
@@ -1473,7 +1473,7 @@ ROM_START( atlants2_rom )
 	ROM_LOAD( "5e",           0x1000, 0x0800, 0xba2fa933 )
 ROM_END
 
-ROM_START( theend_rom )
+ROM_START( theend )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic13_1t.bin",  0x0000, 0x0800, 0x93e555ba )
 	ROM_LOAD( "ic14_2t.bin",  0x0800, 0x0800, 0x2de7ad27 )
@@ -1494,7 +1494,7 @@ ROM_START( theend_rom )
 	ROM_LOAD( "ic55_2.bin",   0x0800, 0x0800, 0x218497c1 )
 ROM_END
 
-ROM_START( theends_rom )
+ROM_START( theends )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic13",         0x0000, 0x0800, 0x90e5ab14 )
 	ROM_LOAD( "ic14",         0x0800, 0x0800, 0x950f0a07 )
@@ -1515,7 +1515,7 @@ ROM_START( theends_rom )
 	ROM_LOAD( "ic55",         0x0800, 0x0800, 0xe0429e50 )
 ROM_END
 
-ROM_START( froggers_rom )
+ROM_START( froggers )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "vid_d2.bin",   0x0000, 0x0800, 0xc103066e )
 	ROM_LOAD( "vid_e2.bin",   0x0800, 0x0800, 0xf08bc094 )
@@ -1537,7 +1537,7 @@ ROM_START( froggers_rom )
 	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
-ROM_START( amidars_rom )
+ROM_START( amidars )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "am2d",         0x0000, 0x0800, 0x24b79547 )
 	ROM_LOAD( "am2e",         0x0800, 0x0800, 0x4c64161e )
@@ -1560,7 +1560,7 @@ ROM_START( amidars_rom )
 	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
-ROM_START( triplep_rom )
+ROM_START( triplep )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "triplep.2g",   0x0000, 0x1000, 0xc583a93d )
 	ROM_LOAD( "triplep.2h",   0x1000, 0x1000, 0xc03ddc49 )
@@ -1575,7 +1575,7 @@ ROM_START( triplep_rom )
 	ROM_LOAD( "tripprom.6e",  0x0000, 0x0020, 0x624f75df )
 ROM_END
 
-ROM_START( mariner_rom )
+ROM_START( mariner )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "tp1",          0x0000, 0x1000, 0xdac1dfd0 )
 	ROM_LOAD( "tm2",          0x1000, 0x1000, 0xefe7ca28 )
@@ -1592,7 +1592,7 @@ ROM_START( mariner_rom )
 	ROM_LOAD( "tm.t4",        0x0000, 0x0020, 0xca42b6dd )
 ROM_END
 
-ROM_START( ckongs_rom )
+ROM_START( ckongs )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "vid_2c.bin",   0x0000, 0x1000, 0x49a8c234 )
 	ROM_LOAD( "vid_2e.bin",   0x1000, 0x1000, 0xf1b667f1 )
@@ -1613,7 +1613,7 @@ ROM_START( ckongs_rom )
 	ROM_LOAD( "snd_5d.bin",   0x1000, 0x1000, 0x892c9547 )
 ROM_END
 
-ROM_START( mars_rom )
+ROM_START( mars )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u26.3",        0x0000, 0x0800, 0x2f88892c )
 	ROM_LOAD( "u56.4",        0x0800, 0x0800, 0x9e6bcbf7 )
@@ -1635,7 +1635,7 @@ ROM_START( mars_rom )
 	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x72a492da )
 ROM_END
 
-ROM_START( devilfsh_rom )
+ROM_START( devilfsh )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u26.1",        0x0000, 0x0800, 0xec047d71 )
 	ROM_LOAD( "u56.2",        0x0800, 0x0800, 0x0138ade9 )
@@ -1659,7 +1659,7 @@ ROM_START( devilfsh_rom )
 	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x45279aaa )
 ROM_END
 
-ROM_START( newsin7_rom )
+ROM_START( newsin7 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "newsin.1",     0x0000, 0x1000, 0xe6c23fe0 )
 	ROM_LOAD( "newsin.2",     0x1000, 0x1000, 0x3d477b5f )
@@ -1681,7 +1681,7 @@ ROM_START( newsin7_rom )
 	ROM_LOAD( "newsin.11",    0x1000, 0x0800, 0x7ade709b )
 ROM_END
 
-ROM_START( hotshock_rom )
+ROM_START( hotshock )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "hotshock.l10", 0x0000, 0x1000, 0x401078f7 )
 	ROM_LOAD( "hotshock.l9",  0x1000, 0x1000, 0xaf76c237 )
@@ -1700,7 +1700,7 @@ ROM_START( hotshock_rom )
 	ROM_LOAD( "hotshock.b4",  0x1000, 0x1000, 0xc2135a44 )
 ROM_END
 
-ROM_START( hunchbks_rom )
+ROM_START( hunchbks )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "2c_hb01.bin",           0x0000, 0x0800, 0x8bebd834 )
 	ROM_LOAD( "2e_hb02.bin",           0x0800, 0x0800, 0x07de4229 )

@@ -8,13 +8,9 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 
-#define PARTIAL_UPDATING		0
-#define PARTIAL_UPDATE_CHUNK	16
-
-static void partial_update_callback(int scanline);
-
 void wms_stateload(void);
 void wms_statesave(void);
+void wms_update_partial(int scanline);
 
 unsigned short *wms_videoram;
 int wms_videoram_size = 0x80000;
@@ -22,8 +18,13 @@ int wms_videoram_size = 0x80000;
 /* Variables in machine/smashtv.c */
 extern unsigned char *wms_cmos_ram;
 extern unsigned int wms_autoerase_enable;
-extern unsigned int wms_autoerase_start;
 extern unsigned int wms_dma_pal_word;
+
+static int last_update_scanline;
+static int update_status;
+
+static UINT32 current_offset;
+static int current_rowbytes;
 
 void wms_vram_w(int offset, int data)
 {
@@ -56,6 +57,7 @@ void wms_vram_w(int offset, int data)
 	wms_videoram[offset] = (tempwordlo&0x00ff)|(datalo<<8);
 	wms_videoram[offset+1] = (tempwordhi&0x00ff)|(datahi<<8);
 }
+
 void wms_objpalram_w(int offset, int data)
 {
 	unsigned int tempw,tempwb;
@@ -73,10 +75,12 @@ void wms_objpalram_w(int offset, int data)
 	wms_videoram[offset] = (tempwordlo&0x00ff)|(datalo<<8);
 	wms_videoram[offset+1] = (tempwordhi&0x00ff)|(datahi<<8);
 }
+
 int wms_vram_r(int offset)
 {
 	return (wms_videoram[offset]&0x00ff) | (wms_videoram[offset+1]<<8);
 }
+
 int wms_objpalram_r(int offset)
 {
 	return (wms_videoram[offset]>>8) | (wms_videoram[offset+1]&0xff00);
@@ -103,11 +107,10 @@ int wms_vh_start(void)
 		return 1;
 	}
 	memset(wms_cmos_ram,0,0x8000);
-#if PARTIAL_UPDATING
-	timer_set(cpu_getscanlinetime(0), 0, partial_update_callback);
-#endif
+	update_status = 1;
 	return 0;
 }
+
 int wms_t_vh_start(void)
 {
 	if ((wms_cmos_ram = malloc(0x10000)) == 0)
@@ -129,11 +132,10 @@ int wms_t_vh_start(void)
 		return 1;
 	}
 	memset(wms_cmos_ram,0,0x8000);
-#if PARTIAL_UPDATING
-	timer_set(cpu_getscanlinetime(0), 0, partial_update_callback);
-#endif
+	update_status = 1;
 	return 0;
 }
+
 void wms_vh_stop (void)
 {
 	free(wms_cmos_ram);
@@ -141,102 +143,131 @@ void wms_vh_stop (void)
 	free(paletteram);
 }
 
-void wms_update_partial(struct osd_bitmap *bitmap, int min, int max)
+void wms_update_partial(int scanline)
 {
-	int v,h;
-	unsigned short *pens = Machine->pens;
-	unsigned short *rv;
-	int skip,col;
+	struct osd_bitmap *bitmap = Machine->scrbitmap;
+	UINT16 *pens = Machine->pens;
+	UINT32 offset;
+	int v, h, width;
 
-	rv = &wms_videoram[(~TMS34010_get_DPYSTRT(0) & 0x1ff0)<<5];
-	rv = (((rv + 512 * (min - Machine->drv->visible_area.min_y)) - wms_videoram) & 0x3ffff) + wms_videoram;
-	col = Machine->drv->visible_area.max_x;
-	skip = 511 - col;
+	/* don't draw if we're already past the bottom of the screen */
+	if (last_update_scanline >= Machine->drv->visible_area.max_y)
+		return;
 
-	if (bitmap->depth==16)
+	/* don't start before the top of the screen */
+	if (last_update_scanline < Machine->drv->visible_area.min_y)
+		last_update_scanline = Machine->drv->visible_area.min_y;
+
+	/* bail if there's nothing to do */
+	if (last_update_scanline > scanline)
+		return;
+
+	/* determine the base of the videoram */
+	offset = (~TMS34010_get_DPYSTRT(0) & 0x1ff0) << 5;
+	offset += 512 * (last_update_scanline - Machine->drv->visible_area.min_y);
+	offset &= 0x3ffff;
+
+	/* determine how many pixels to copy */
+	width = Machine->drv->visible_area.max_x;
+
+	/* 16-bit refresh case */
+	if (bitmap->depth == 16)
 	{
-		for (v = min; v <= max; v++)
+		/* loop over rows */
+		for (v = last_update_scanline; v <= scanline; v++)
 		{
-			unsigned short *rows = &((unsigned short *)bitmap->line[v])[0];
-			unsigned int diff = rows - rv;
-			h = col;
-			do
-			{
-				*(rv+diff) = pens[*rv];
-				rv++;
-			}
-			while (h--);
+			UINT16 *src = &wms_videoram[offset];
 
-			if (wms_autoerase_enable||(v>=wms_autoerase_start))
+			/* handle the refresh */
+			if (update_status)
 			{
-				memcpy(rv-col-1,&wms_videoram[510*512],(col+1)*sizeof(unsigned short));
+				UINT16 *dst = (UINT16 *)&bitmap->line[v][0];
+				UINT32 diff = dst - src;
+
+				/* copy one row */
+				for (h = 0; h < width; h++, src++)
+					*(src + diff) = pens[*src];
 			}
 
-			rv = (((rv + skip) - wms_videoram) & 0x3ffff) + wms_videoram;
+			/* handle the autoerase */
+			if (wms_autoerase_enable)
+				memcpy(&wms_videoram[offset], &wms_videoram[510 * 512], width * sizeof(UINT16));
+
+			/* point to the next row */
+			offset = (offset + 512) & 0x3ffff;
 		}
 	}
+
+	/* 8-bit refresh case */
 	else
 	{
-		for (v = min; v <= max; v++)
+		/* loop over rows */
+		for (v = last_update_scanline; v <= scanline; v++)
 		{
-			unsigned char *rows = &(bitmap->line[v])[0];
-			h = col;
-			do
-			{
-				*(rows++) = pens[*(rv++)];
-			}
-			while (h--);
+			UINT16 *src = &wms_videoram[offset];
 
-			if (wms_autoerase_enable||(v>=wms_autoerase_start))
+			/* handle the refresh */
+			if (update_status)
 			{
-				memcpy(rv-col-1,&wms_videoram[510*512],(col+1)*sizeof(unsigned short));
+				UINT8 *dst = &bitmap->line[v][0];
+
+				for (h = 0; h < width; h++)
+					*dst++ = pens[*src++];
 			}
 
-			rv = (((rv + skip) - wms_videoram) & 0x3ffff) + wms_videoram;
+			/* handle the autoerase */
+			if (wms_autoerase_enable)
+				memcpy(src, &wms_videoram[510 * 512], width * sizeof(UINT16));
+
+			/* point to the next row */
+			offset = (offset + 512) & 0x3ffff;
 		}
 	}
+
+	/* remember where we left off */
+	last_update_scanline = scanline + 1;
 }
 
-void partial_update_callback(int scanline)
+void wms_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
 {
-	int min, max;
+	wms_update_partial(scanline);
+	current_offset = offs;
+	current_rowbytes = rowbytes;
+}
 
-	if (scanline == 0)
-	{
-		min = (Machine->drv->screen_height / PARTIAL_UPDATE_CHUNK) * PARTIAL_UPDATE_CHUNK;
-		max = Machine->drv->screen_height - 1;
-	}
+void wms_display_interrupt(int scanline)
+{
+	wms_update_partial(scanline);
+}
+
+void wms_vh_eof(void)
+{
+	/* update status == 2: we just updated this frame, don't do any work */
+	if (update_status == 2)
+		update_status = 1;
+
+	/* update status == 1: we've been updating this frame; finish it off */
 	else
 	{
-		min = scanline - PARTIAL_UPDATE_CHUNK;
-		max = scanline - 1;
+		wms_update_partial(Machine->drv->visible_area.max_y);
+		last_update_scanline = 0;
+		if (update_status)
+			update_status--;
 	}
 
-	if (max >= Machine->drv->visible_area.min_y && min <= Machine->drv->visible_area.max_y)
-	{
-		if (min < Machine->drv->visible_area.min_y)
-			min = Machine->drv->visible_area.min_y;
-		if (max > Machine->drv->visible_area.max_y)
-			max = Machine->drv->visible_area.max_y;
-		wms_update_partial(Machine->scrbitmap, min, max);
-	}
-
-	scanline += PARTIAL_UPDATE_CHUNK;
-	if (scanline >= Machine->drv->screen_height) scanline = 0;
-	timer_set(cpu_getscanlinetime(scanline), scanline, partial_update_callback);
+	/* regardless, turn off the autoerase (NARC needs this) */
+	wms_autoerase_enable = 0;
 }
-
 
 void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	wms_update_partial(Machine->drv->visible_area.max_y);
+	last_update_scanline = 0;
+	update_status = 2;
+
 	//if (keyboard_pressed(KEYCODE_Q)) wms_statesave();
 	//if (keyboard_pressed(KEYCODE_W)) wms_stateload();
 
 	if (keyboard_pressed(KEYCODE_E)&&errorlog) fprintf(errorlog, "log spot\n");
 	//if (keyboard_pressed(KEYCODE_R)&&errorlog) fprintf(errorlog, "adpcm: okay\n");
-
-#if !PARTIAL_UPDATING
-	wms_update_partial(bitmap, Machine->drv->visible_area.min_y, Machine->drv->visible_area.max_y);
-#endif
-	wms_autoerase_start=1000;
 }

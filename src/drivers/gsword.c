@@ -637,7 +637,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( gsword_rom )
+ROM_START( gsword )
 	ROM_REGION(0x10000)	/* 64K for main CPU */
 	ROM_LOAD( "gs1",          0x0000, 0x2000, 0x565c4d9e )
 	ROM_LOAD( "gs2",          0x2000, 0x2000, 0xd772accf )

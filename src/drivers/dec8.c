@@ -30,18 +30,10 @@ To do:
 	Slight graphics glitches in Captain Silver, Breywood, Shackled.
 	Weird cpu race condition in Last Mission.
 	Support coinage options for all i8751 emulations.
-	Captain Silver/Cobra Command probably have some sprite/playfield priorities
+	Cobra Command may have some unimplemented sprite/playfield priorities
 	Dips needed to be worked on several games
 	Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
 	Strangely coloured butterfly on Garyo Retsuden water levels!
-
-
-Emulation Notes:
-
-* Dip switches confirmed for Oscar, Ghostbusters & Gondomania, the others seem reasonable.
-* Maze Hunter is using Ghostbusters colour proms for now...
-* Breywood sprites are not currently dumped, a Breywood Rev 2 rom set is known
-to exist..
 
   Thanks to José Miguel Morales Farreras for Super Real Darwin information!
 
@@ -67,7 +59,6 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int dec8_vh_start(void);
 void dec8_vh_stop(void);
-void dec8_dma_flag(int offset, int data);
 void srdarwin_control_w(int offset, int data);
 void gondo_scroll_w(int offset, int data);
 void lastmiss_control_w(int offset, int data);
@@ -83,6 +74,12 @@ void srdarwin_video_w(int offset, int data);
 
 void dec8_flipscreen_w(int offset, int data);
 
+/* Only used by ghostb, gondo, garyoret, other games can control buffering */
+static void dec8_eof_callback(void)
+{
+	buffer_spriteram_w(0,0);
+}
+
 /******************************************************************************/
 
 static unsigned char *dec8_shared_ram,*dec8_shared2_ram;
@@ -90,6 +87,7 @@ extern unsigned char *dec8_row,*srdarwin_tileram;
 
 static int nmi_enable,int_enable;
 static int i8751_return, i8751_value;
+static int msm5205next;
 
 /******************************************************************************/
 
@@ -303,7 +301,7 @@ static void lastmiss_i8751_w(int offset, int data)
 
 	/* Coins are controlled by the i8751 */
  	if ((readinputport(2)&3)==3 && !latch) latch=1;
- 	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x400;}
+ 	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x400;i8751_return=0x400;return;}
 
 	if (i8751_value==0x007b) i8751_return=0x0184; //???
 	if (i8751_value==0x0000) {i8751_return=0x0184; coin=snd=0;}//???
@@ -330,13 +328,12 @@ static void csilver_i8751_w(int offset, int data)
 
 	/* Coins are controlled by the i8751 */
  	if ((readinputport(2)&3)==3 && !latch) latch=1;
- 	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x1200;}
+ 	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x1200; i8751_return=0x1200;return;}
 
 	if (i8751_value==0x054a) {i8751_return=~(0x4a); coin=0; snd=0;} /* Captain Silver ID */
 	if ((i8751_value>>8)==0x01) i8751_return=0; /* Coinage - Not Supported */
 	if ((i8751_value>>8)==0x02) {i8751_return=snd | coin; snd=0; } /* Coin Return */
 	if (i8751_value==0x0003 && coin) {i8751_return=0; coin--;} /* Coin Clear */
-/* Todo:  Coin insert sound doesn't seem to work...*/
 }
 
 static void garyoret_i8751_w(int offset, int data)
@@ -373,7 +370,7 @@ static void dec8_bank_w(int offset, int data)
 {
  	int bankaddress;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-//if (errorlog) fprintf(errorlog,"PC %06x - Bank switch %02x (%02x)\n",cpu_get_pc(),data&0xf,data);
+
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 	cpu_setbank(1,&RAM[bankaddress]);
 }
@@ -424,8 +421,6 @@ static void oscar_sound_w(int offset, int data)
  	soundlatch_w(0,data);
 	cpu_cause_interrupt(2,M6502_INT_NMI);
 }
-
-static int msm5205next;
 
 static void csilver_adpcm_int(int data)
 {
@@ -531,13 +526,13 @@ static struct MemoryWriteAddress cobra_writemem[] =
  	{ 0x0800, 0x17ff, dec8_video_w },
 	{ 0x1800, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },
+	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x31ff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 	{ 0x3200, 0x37ff, MWA_RAM }, /* Unknown, seemingly unused */
 	{ 0x3800, 0x381f, dec8_bac06_0_w },
 	{ 0x3a00, 0x3a1f, dec8_bac06_1_w },
 	{ 0x3c00, 0x3c00, dec8_bank_w },
-	{ 0x3c02, 0x3c02, MWA_NOP }, /* DMA flag? */
+	{ 0x3c02, 0x3c02, buffer_spriteram_w }, /* DMA */
 	{ 0x3e00, 0x3e00, dec8_sound_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -570,7 +565,7 @@ static struct MemoryWriteAddress ghostb_writemem[] =
 	{ 0x2800, 0x2bff, MWA_RAM }, /* Scratch ram for rowscroll? */
 	{ 0x2c00, 0x2dff, MWA_RAM, &dec8_row },
 	{ 0x2e00, 0x2fff, MWA_RAM }, /* Unused */
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram },
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3800, 0x3800, dec8_sound_w },
 	{ 0x3820, 0x3827, dec8_pf2_w },
 	{ 0x3830, 0x3833, dec8_scroll2_w },
@@ -599,13 +594,13 @@ static struct MemoryWriteAddress srdarwin_writemem[] =
 {
 	{ 0x0000, 0x05ff, MWA_RAM },
 	{ 0x0600, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x0800, 0x0fff, MWA_RAM, &videoram },
+	{ 0x0800, 0x0fff, MWA_RAM, &videoram, &spriteram_size },
 	{ 0x1000, 0x13ff, MWA_RAM },
 	{ 0x1400, 0x17ff, srdarwin_video_w, &srdarwin_tileram },
 	{ 0x1800, 0x1801, srdarwin_i8751_w },
 	{ 0x1802, 0x1802, i8751_reset_w },		/* Maybe.. */
 	{ 0x1803, 0x1803, MWA_NOP },            /* NMI ack */
-	{ 0x1804, 0x1804, MWA_NOP },            /* DMA */
+	{ 0x1804, 0x1804, buffer_spriteram_w }, /* DMA */
 	{ 0x1805, 0x1806, srdarwin_control_w }, /* Scroll & Bank */
 	{ 0x2000, 0x2000, dec8_sound_w },       /* Sound */
 	{ 0x2001, 0x2001, dec8_flipscreen_w },  /* Flipscreen */
@@ -642,7 +637,7 @@ static struct MemoryWriteAddress gondo_writemem[] =
 	{ 0x2000, 0x27ff, dec8_video_w },
 	{ 0x2800, 0x2bff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x2c00, 0x2fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram },
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3810, 0x3810, dec8_sound_w },
 	{ 0x3818, 0x382f, gondo_scroll_w },
 	{ 0x3830, 0x3830, ghostb_bank_w }, /* Bank + NMI enable */
@@ -677,13 +672,13 @@ static struct MemoryWriteAddress oscar_writemem[] =
 	{ 0x1000, 0x1fff, dec8_share2_w, &dec8_shared2_ram },
 	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, dec8_video_w },
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram },
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3800, 0x3bff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
 	{ 0x3c10, 0x3c13, dec8_scroll2_w },
-	{ 0x3c80, 0x3c80, MWA_NOP },       /* DMA */
-	{ 0x3d00, 0x3d00, dec8_bank_w },   /* BNKS */
-	{ 0x3d80, 0x3d80, oscar_sound_w }, /* SOUN */
-	{ 0x3e00, 0x3e00, MWA_NOP },       /* COINCL */
+	{ 0x3c80, 0x3c80, buffer_spriteram_w },	/* DMA */
+	{ 0x3d00, 0x3d00, dec8_bank_w },   		/* BNKS */
+	{ 0x3d80, 0x3d80, oscar_sound_w }, 		/* SOUN */
+	{ 0x3e00, 0x3e00, MWA_NOP },       		/* COINCL */
 	{ 0x3e80, 0x3e83, oscar_int_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -735,7 +730,7 @@ static struct MemoryWriteAddress lastmiss_writemem[] =
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
-	{ 0x1805, 0x1805, MWA_NOP }, /* DMA */
+	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x1807, 0x1807, MWA_NOP }, /* Flipscreen */
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
@@ -743,7 +738,7 @@ static struct MemoryWriteAddress lastmiss_writemem[] =
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x180e, 0x180f, lastmiss_i8751_w },
 	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },
+	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
 	{ 0x3800, 0x3fff, dec8_video_w },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -772,7 +767,7 @@ static struct MemoryWriteAddress lastmiss_sub_writemem[] =
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
 	{ 0x1800, 0x1804, shackled_int_w },
-	{ 0x1805, 0x1805, MWA_NOP }, /* DMA */
+	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x1807, 0x1807, MWA_NOP }, /* Flipscreen */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x2000, 0x27ff, shackled_video_w },
@@ -808,7 +803,7 @@ static struct MemoryWriteAddress shackled_writemem[] =
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
-	{ 0x1805, 0x1805, MWA_NOP }, /* DMA */
+	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
@@ -847,14 +842,14 @@ static struct MemoryWriteAddress shackled_sub_writemem[] =
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
 	{ 0x1800, 0x1804, shackled_int_w },
-	{ 0x1805, 0x1805, MWA_NOP }, /* DMA */
+	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x180e, 0x180f, shackled_i8751_w },
 	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },
+	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x37ff, dec8_share2_w },
 	{ 0x3800, 0x3fff, dec8_video_w },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -888,7 +883,7 @@ static struct MemoryWriteAddress csilver_writemem[] =
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
-	{ 0x1805, 0x1805, dec8_dma_flag }, /* DMA */
+	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x1807, 0x1807, MWA_NOP }, /* Flipscreen */
 	{ 0x1808, 0x180b, dec8_scroll2_w },
 	{ 0x180c, 0x180c, oscar_sound_w },
@@ -927,11 +922,11 @@ static struct MemoryWriteAddress csilver_sub_writemem[] =
 	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
 	{ 0x1800, 0x1804, shackled_int_w },
-	{ 0x1805, 0x1805, dec8_dma_flag }, /* DMA */
+	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, MWA_RAM, &spriteram },
+	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x37ff, dec8_share2_w },
 	{ 0x3800, 0x3fff, dec8_video_w },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -964,7 +959,7 @@ static struct MemoryWriteAddress garyoret_writemem[] =
   	{ 0x2000, 0x27ff, dec8_video_w },
 	{ 0x2800, 0x2bff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x2c00, 0x2fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
-	{ 0x3000, 0x37ff, MWA_RAM, &spriteram },
+	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3810, 0x3810, dec8_sound_w },
 	{ 0x3818, 0x382f, gondo_scroll_w },
 	{ 0x3830, 0x3830, ghostb_bank_w }, /* Bank + NMI enable */
@@ -1135,14 +1130,14 @@ INPUT_PORTS_START( ghostb_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START	/* Player 2 controls */
+	PORT_START	/* Player 2 controls */
 	PLAYER2_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-PORT_START	/* Player 3 controls */
+	PORT_START	/* Player 3 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
@@ -1861,37 +1856,35 @@ static struct YM2203interface ym2203_interface =
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
-	//cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,0,linestate); /* M6502_INT_IRQ */
 }
 
 static void oscar_irqhandler(int linestate)
 {
-	cpu_set_irq_line(2,0,linestate);
-	//cpu_cause_interrupt(2,M6502_INT_IRQ);
+	cpu_set_irq_line(2,0,linestate); /* M6502_INT_IRQ */
 }
 
 static struct YM3526interface ym3526_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? */
-	{ 255 },	/* (not supported) */
+	1,			/* 1 chip */
+	3000000,	/* 3 MHz */
+	{ 35 },
 	{ irqhandler },
 };
 
 static struct YM3526interface oscar_ym3526_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? */
-	{ 255 },		/* (not supported) */
+	1,			/* 1 chip */
+	3000000,	/* 3 MHz */
+	{ 35 },
 	{ oscar_irqhandler },
 };
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ? */
-	{ 255 },		/* (not supported) */
+	1,			/* 1 chip */
+	3000000,	/* 3 MHz */
+	{ 35 },
 	{ irqhandler },
 };
 
@@ -1901,7 +1894,7 @@ static struct MSM5205interface msm5205_interface =
 	384000,				/* 384KHz             */
 	{ csilver_adpcm_int },/* interrupt function */
 	{ MSM5205_S48_4B },	/* 8KHz               */
-	{ 60 }
+	{ 88 }
 };
 
 /******************************************************************************/
@@ -1957,14 +1950,14 @@ static struct MachineDriver cobra_machine_driver =
 	{
  		{
 			CPU_M6809,
-			1250000,
+			2000000,
 			0,
 			cobra_readmem,cobra_writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
@@ -1982,7 +1975,7 @@ static struct MachineDriver cobra_machine_driver =
 	256,256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	dec8_vh_start,
 	dec8_vh_stop,
@@ -2007,15 +2000,15 @@ static struct MachineDriver ghostb_machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M6809,  /* Really HD6309 */
-			2000000,
+			CPU_HD6309,
+			3000000,
 			0,
 			ghostb_readmem,ghostb_writemem,0,0,
 			ghostb_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
@@ -2033,8 +2026,8 @@ static struct MachineDriver ghostb_machine_driver =
 	1024,1024,
 	ghostb_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	dec8_eof_callback,
 	dec8_vh_start,
 	dec8_vh_stop,
 	ghostb_vh_screenrefresh,
@@ -2066,7 +2059,7 @@ static struct MachineDriver srdarwin_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
@@ -2084,7 +2077,7 @@ static struct MachineDriver srdarwin_machine_driver =
 	144,144,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	srdarwin_vh_start,
 	0,
@@ -2109,7 +2102,7 @@ static struct MachineDriver gondo_machine_driver =
 	/* basic machine hardware */
 	{
  		{
-			CPU_M6809,
+			CPU_HD6309, /* HD63C09EP */
 			3000000,
 			0,
 			gondo_readmem,gondo_writemem,0,0,
@@ -2117,7 +2110,7 @@ static struct MachineDriver gondo_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
@@ -2135,8 +2128,8 @@ static struct MachineDriver gondo_machine_driver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	dec8_eof_callback,
 	dec8_vh_start,
 	dec8_vh_stop,
 	gondo_vh_screenrefresh,
@@ -2160,14 +2153,14 @@ static struct MachineDriver oscar_machine_driver =
 	/* basic machine hardware */
 	{
 	  	{
-			CPU_M6809,
+			CPU_HD6309,
 			2000000,
 			0,
 			oscar_readmem,oscar_writemem,0,0,
 			oscar_interrupt,1
 		},
 	 	{
-			CPU_M6809,
+			CPU_HD6309,
 			2000000,
 			3,
 			oscar_sub_readmem,oscar_sub_writemem,0,0,
@@ -2175,7 +2168,7 @@ static struct MachineDriver oscar_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
@@ -2183,7 +2176,7 @@ static struct MachineDriver oscar_machine_driver =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100, /* 100 CPU slices per frame */
+	40, /* 40 CPU slices per frame */
 	0,	/* init machine */
 
 	/* video hardware */
@@ -2193,7 +2186,7 @@ static struct MachineDriver oscar_machine_driver =
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	dec8_vh_start,
 	dec8_vh_stop,
@@ -2233,7 +2226,7 @@ static struct MachineDriver lastmiss_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			ym3526_s_readmem,ym3526_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
@@ -2251,7 +2244,7 @@ static struct MachineDriver lastmiss_machine_driver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	dec8_vh_start,
 	dec8_vh_stop,
@@ -2291,7 +2284,7 @@ static struct MachineDriver shackled_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			ym3526_s_readmem,ym3526_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
@@ -2309,7 +2302,7 @@ static struct MachineDriver shackled_machine_driver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	dec8_vh_start,
 	dec8_vh_stop,
@@ -2349,7 +2342,7 @@ static struct MachineDriver csilver_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			csilver_s_readmem,csilver_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the MSM5205 */
@@ -2367,7 +2360,7 @@ static struct MachineDriver csilver_machine_driver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	dec8_vh_start,
 	dec8_vh_stop,
@@ -2396,22 +2389,22 @@ static struct MachineDriver garyoret_machine_driver =
 	/* basic machine hardware */
 	{
  		{
-			CPU_M6809, /* HD63C09EP */
-			4000000, /* 8 MHz clock on board */
+			CPU_HD6309, /* HD63C09EP */
+			3000000,
 			0,
 			garyoret_readmem,garyoret_writemem,0,0,
 			gondo_interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,        /* 1.25 Mhz ? */
+			1500000,
 			2,	/* memory region #2 */
 			dec8_s_readmem,dec8_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION*2,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -2422,8 +2415,8 @@ static struct MachineDriver garyoret_machine_driver =
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
+	dec8_eof_callback,
 	dec8_vh_start,
 	dec8_vh_stop,
 	garyoret_vh_screenrefresh,
@@ -2444,7 +2437,7 @@ static struct MachineDriver garyoret_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( cobracom_rom )
+ROM_START( cobracom )
 	ROM_REGION(0x30000)
  	ROM_LOAD( "eh-11.rom",    0x08000, 0x08000, 0x868637e1 )
  	ROM_LOAD( "eh-12.rom",    0x10000, 0x10000, 0x7c878a83 )
@@ -2469,7 +2462,7 @@ ROM_START( cobracom_rom )
 	ROM_LOAD( "eh-10.rom",    0x8000,  0x8000,  0x62ca5e89 )
 ROM_END
 
-ROM_START( ghostb_rom )
+ROM_START( ghostb )
 	ROM_REGION(0x50000)
  	ROM_LOAD( "dz-01.rom", 0x08000, 0x08000, 0x7c5bb4b1 )
  	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
@@ -2502,7 +2495,7 @@ ROM_START( ghostb_rom )
 	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0xd8fe2d99 )
 ROM_END
 
-ROM_START( ghostb3_rom )
+ROM_START( ghostb3 )
 	ROM_REGION(0x50000)
  	ROM_LOAD( "dz01-3b",   0x08000, 0x08000, 0xc8cc862a )
  	ROM_LOAD( "dz-02.rom", 0x10000, 0x10000, 0x8e117541 )
@@ -2535,7 +2528,7 @@ ROM_START( ghostb3_rom )
 	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0xd8fe2d99 )
 ROM_END
 
-ROM_START( meikyuh_rom )
+ROM_START( meikyuh )
 	ROM_REGION(0x40000)
  	ROM_LOAD( "dw-01.rom", 0x08000, 0x08000, 0x87610c39 )
  	ROM_LOAD( "dw-02.rom", 0x10000, 0x10000, 0x40c9b0b8 )
@@ -2567,7 +2560,7 @@ ROM_START( meikyuh_rom )
 	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0x00000000 ) /* These are from ghostbusters */
 ROM_END
 
-ROM_START( srdarwin_rom )
+ROM_START( srdarwin )
 	ROM_REGION(0x28000)
  	ROM_LOAD( "dy_01.rom", 0x20000, 0x08000, 0x1eeee4ff )
 	ROM_CONTINUE(          0x08000, 0x08000 )
@@ -2597,7 +2590,7 @@ ROM_START( srdarwin_rom )
 	ROM_LOAD( "dy_04.rom", 0x8000, 0x8000, 0x2ae3591c )
 ROM_END
 
-ROM_START( gondo_rom )
+ROM_START( gondo )
 	ROM_REGION(0x40000)
  	ROM_LOAD( "dt-00.256", 0x08000, 0x08000, 0xa8cf9118 )
  	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
@@ -2633,7 +2626,7 @@ ROM_START( gondo_rom )
 	ROM_LOAD( "dt-05.256", 0x8000, 0x8000, 0xec08aa29 )
 ROM_END
 
-ROM_START( makyosen_rom )
+ROM_START( makyosen )
 	ROM_REGION(0x40000)
  	ROM_LOAD( "ds00",      0x08000, 0x08000, 0x33bb16fe )
  	ROM_LOAD( "dt-01.512", 0x10000, 0x10000, 0xc39bb877 )
@@ -2669,7 +2662,7 @@ ROM_START( makyosen_rom )
 	ROM_LOAD( "ds05", 0x8000, 0x8000, 0xe6e28ca9 )
 ROM_END
 
-ROM_START( oscar_rom )
+ROM_START( oscar )
 	ROM_REGION(0x20000)
  	ROM_LOAD( "ed10", 0x08000, 0x08000, 0xf9b0d4d4 )
  	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
@@ -2694,7 +2687,7 @@ ROM_START( oscar_rom )
 	ROM_LOAD( "ed11", 0x0000, 0x10000,  0x10e5d919 )
 ROM_END
 
-ROM_START( oscarj_rom )
+ROM_START( oscarj )
 	ROM_REGION(0x20000)
  	ROM_LOAD( "du10", 0x08000, 0x08000, 0x120040d8 )
  	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
@@ -2719,7 +2712,7 @@ ROM_START( oscarj_rom )
 	ROM_LOAD( "du11", 0x0000, 0x10000, 0xff45c440 )
 ROM_END
 
-ROM_START( lastmiss_rom )
+ROM_START( lastmiss )
 	ROM_REGION(0x20000)
  	ROM_LOAD( "dl03-6",      0x08000, 0x08000, 0x47751a5e ) /* Rev 6 roms */
  	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
@@ -2744,7 +2737,7 @@ ROM_START( lastmiss_rom )
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
 ROM_END
 
-ROM_START( lastmss2_rom )
+ROM_START( lastmss2 )
 	ROM_REGION(0x20000)
  	ROM_LOAD( "lm_dl03.rom", 0x08000, 0x08000, 0x357f5f6b ) /* Rev 5 roms */
  	ROM_LOAD( "lm_dl04.rom", 0x10000, 0x10000, 0x7dea1552 )
@@ -2769,7 +2762,7 @@ ROM_START( lastmss2_rom )
 	ROM_LOAD( "lm_dl02.rom", 0x0000, 0x10000, 0xec9b5daf )
 ROM_END
 
-ROM_START( shackled_rom )
+ROM_START( shackled )
 	ROM_REGION(0x48000)
  	ROM_LOAD( "dk-02.rom", 0x08000, 0x08000, 0x87f8fa85 )
 	ROM_LOAD( "dk-06.rom", 0x10000, 0x10000, 0x69ad62d1 )
@@ -2801,7 +2794,7 @@ ROM_START( shackled_rom )
 	ROM_LOAD( "dk-01.rom", 0x00000, 0x10000, 0x71fe3bda )
 ROM_END
 
-ROM_START( breywood_rom )
+ROM_START( breywood )
 	ROM_REGION(0x48000)
  	ROM_LOAD( "7.bin", 0x08000, 0x08000, 0xc19856b9 )
    	ROM_LOAD( "3.bin", 0x10000, 0x10000, 0x2860ea02 )
@@ -2833,7 +2826,7 @@ ROM_START( breywood_rom )
 	ROM_LOAD( "8.bin", 0x0000, 0x10000,  0x3d9fb623 )
 ROM_END
 
-ROM_START( csilver_rom )
+ROM_START( csilver )
 	ROM_REGION(0x48000)
  	ROM_LOAD( "a4", 0x08000, 0x08000, 0x02dd8cfc )
    	ROM_LOAD( "a2", 0x10000, 0x10000, 0x570fb50c )
@@ -2865,7 +2858,7 @@ ROM_START( csilver_rom )
 	ROM_LOAD( "a5", 0x0000, 0x10000,  0x29432691 )
 ROM_END
 
-ROM_START( garyoret_rom )
+ROM_START( garyoret )
 	ROM_REGION(0x58000)
  	ROM_LOAD( "dv00", 0x08000, 0x08000, 0xcceaaf05 )
 	ROM_LOAD( "dv01", 0x10000, 0x10000, 0xc33fc18a )

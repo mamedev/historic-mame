@@ -279,7 +279,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-ROM_START( tsamurai_rom )
+ROM_START( tsamurai )
 	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "01.3r",	0x0000, 0x4000, 0xd09c8609 )
 	ROM_LOAD( "02.3t",	0x4000, 0x4000, 0xd0f2221c )
@@ -310,7 +310,7 @@ ROM_START( tsamurai_rom )
 	ROM_LOAD( "tbp24s10.2m", 0x200, 0x100, 0x918e4732 )
 ROM_END
 
-ROM_START( nunchaku_rom )
+ROM_START( nunchaku )
 	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "nunchack.p1",	0x0000, 0x4000, 0x4385aca6 )
 	ROM_LOAD( "nunchack.p2",	0x4000, 0x4000, 0xf9beb72c )
@@ -341,7 +341,7 @@ ROM_START( nunchaku_rom )
 	ROM_LOAD( "nunchack.018", 0x200, 0x100, 0xf5ce3c45 )
 ROM_END
 
-ROM_START( yamagchi_rom )
+ROM_START( yamagchi )
 	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "a38-01.3s",	0x0000, 0x4000, 0x1a6c8498 )
 	ROM_LOAD( "a38-02.3t",	0x4000, 0x4000, 0xfa66b396 )

@@ -339,36 +339,6 @@ INPUT_PORTS_END
 
 
 
-/*
- * Tempest does not really have a colorprom, nor any graphics to
- * decode. It has a 16 byte long colorram, but only the lower nibble
- * of each byte is important.
- * The (inverted) meaning of the bits is:
- * 3-green 2-blue 1-red 0-intensity.
- * To dynamically alter the colors, we need access to the colortable.
- * This is what this fakelayout is for.
- */
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_COLOR };
-
-
-
 static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
@@ -409,9 +379,9 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	300, 400, { 0, 550, 0, 580 },
-	gfxdecodeinfo,
+	0,
 	256,256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -444,7 +414,7 @@ static struct MachineDriver machine_driver =
  */
 
 
-ROM_START( tempest_rom ) /* rev 3 */
+ROM_START( tempest ) /* rev 3 */
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
@@ -462,7 +432,7 @@ ROM_START( tempest_rom ) /* rev 3 */
 	ROM_LOAD( "136002.124",   0x3800, 0x0800, 0xc16ec351 )
 ROM_END
 
-ROM_START( tempest1_rom ) /* rev 1 */
+ROM_START( tempest1 ) /* rev 1 */
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
@@ -480,7 +450,7 @@ ROM_START( tempest1_rom ) /* rev 1 */
 	ROM_LOAD( "136002.124",   0x3800, 0x0800, 0xc16ec351 )
 ROM_END
 
-ROM_START( tempest2_rom ) /* rev 2 */
+ROM_START( tempest2 ) /* rev 2 */
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
@@ -498,7 +468,7 @@ ROM_START( tempest2_rom ) /* rev 2 */
 	ROM_LOAD( "136002.124",   0x3800, 0x0800, 0xc16ec351 )
 ROM_END
 
-ROM_START( temptube_rom )
+ROM_START( temptube )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "136002.113",   0x9000, 0x0800, 0x65d61fe7 )
 	ROM_LOAD( "136002.114",   0x9800, 0x0800, 0x11077375 )
@@ -517,7 +487,7 @@ ROM_START( temptube_rom )
 ROM_END
 
 #if 0 /* identical to tempest_rom, only different rom sizes */
-ROM_START( tempest3_rom )
+ROM_START( tempest3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tempest.x",    0x9000, 0x1000, 0x0 )
 	ROM_LOAD( "tempest.1",    0xa000, 0x1000, 0x0 )
@@ -529,6 +499,8 @@ ROM_START( tempest3_rom )
 	ROM_LOAD( "tempest.np3",  0x3000, 0x1000, 0x0 )
 ROM_END
 #endif
+
+
 
 struct GameDriver tempest_driver =
 {
@@ -550,7 +522,7 @@ struct GameDriver tempest_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
@@ -576,7 +548,7 @@ struct GameDriver tempest1_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
@@ -602,7 +574,7 @@ struct GameDriver tempest2_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
@@ -628,7 +600,7 @@ struct GameDriver temptube_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save

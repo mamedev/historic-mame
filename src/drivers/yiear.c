@@ -333,7 +333,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( yiear_rom )
+ROM_START( yiear )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "i08.10d",      0x08000, 0x4000, 0xe2d7458b )
 	ROM_LOAD( "i07.8d",       0x0c000, 0x4000, 0x7db7442e )
@@ -353,7 +353,7 @@ ROM_START( yiear_rom )
 	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 
-ROM_START( yiear2_rom )
+ROM_START( yiear2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "d12_8.bin",    0x08000, 0x4000, 0x49ecd9dd )
 	ROM_LOAD( "d14_7.bin",    0x0c000, 0x4000, 0xbc2e1208 )

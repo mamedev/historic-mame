@@ -78,8 +78,9 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 #include "machine/6821pia.h"
+#include "sndhrdw/williams.h"
 
-#define TMS34010_CLOCK_DIVIDER		2
+#define TMS34010_CLOCK_DIVIDER		8
 
 /* Variables in vidhrdw/smashtv.c */
 extern unsigned char *wms_videoram;
@@ -98,8 +99,11 @@ int wms_vh_start(void);
 int wms_t_vh_start(void);
 void wms_vh_stop (void);
 void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void wms_vh_eof(void);
 void wms_vram_w(int offset, int data);
 int wms_vram_r(int offset);
+void wms_display_addr_changed(UINT32 offs, int rowbytes, int scanline);
+void wms_display_interrupt(int scanline);
 
 /* Functions in machine/smashtv.c */
 void smashtv_init_machine(void);
@@ -133,8 +137,6 @@ int wms_input_r (int offset);
 
 void narc_music_bank_select_w (int offset,int data);
 void narc_digitizer_bank_select_w (int offset,int data);
-void smashtv_sound_bank_select_w (int offset,int data);
-void mk_sound_bank_select_w (int offset,int data);
 
 void narc_driver_init(void);
 void smashtv_driver_init(void);
@@ -156,9 +158,7 @@ void strkforc_driver_init(void);
 void term2_driver_init(void);
 
 /* Functions in sndhrdw/smashtv.c */
-void smashtv_ym2151_int (int irq);
 void narc_ym2151_int (int irq);
-void mk_sound_talkback_w (int offset,int data);
 int  narc_DAC_r(int offset);
 void narc_slave_DAC_w (int offset,int data);
 void narc_slave_cmd_w (int offset,int data);
@@ -250,98 +250,6 @@ static struct MemoryWriteAddress mk2_writemem[] =
 	{ TOBYTE(0x01f00000), TOBYTE(0x01f0001f), wms_sysreg2_w },  /* only nbajam */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
 	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress narc_music_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_RAM},
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2800, 0x2800, soundlatch3_w }, /* talkback port */
-	{ 0x2c00, 0x2c00, narc_slave_cmd_w }, /* COMM (for slave) */
-	{ 0x3000, 0x3000, DAC_data_w },
-	{ 0x3800, 0x3800, narc_music_bank_select_w },
-	{ 0x3c00, 0x3c00, MWA_NOP}, /* SYNC */
-	{ 0x4000, 0xffff, MWA_ROM},
-	{ -1 }
-};
-static struct MemoryReadAddress narc_music_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_RAM},
-	{ 0x2001, 0x2001, YM2151_status_port_0_r },
-	{ 0x3000, 0x3000, narc_DAC_r },
-	{ 0x3400, 0x3400, soundlatch_r},
-	{ 0x4000, 0xbfff, MRA_BANK5},
-	{ 0xc000, 0xffff, MRA_ROM},
-	  { -1 }
-};
-static struct MemoryWriteAddress narc_digitizer_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_RAM},
-	{ 0x2000, 0x2000, hc55516_clock_set_w },
-	{ 0x2400, 0x2400, hc55516_digit_clock_clear_w },
-	{ 0x3000, 0x3000, narc_slave_DAC_w },
-	{ 0x3800, 0x3800, narc_digitizer_bank_select_w },
-	{ 0x3c00, 0x3c00, MWA_NOP}, /* SYNC */
-	{ 0x4000, 0xffff, MWA_ROM},
-	{ -1 }
-};
-static struct MemoryReadAddress narc_digitizer_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_RAM},
-	{ 0x3000, 0x3000, narc_DAC_r },
-	{ 0x3400, 0x3400, soundlatch2_r},
-	{ 0x4000, 0xbfff, MRA_BANK6},
-	{ 0xc000, 0xffff, MRA_ROM},
-	  { -1 }
-};
-
-static struct MemoryReadAddress smashtv_sound_readmem[] =
-{
-	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x2001, 0x2001, YM2151_status_port_0_r },
-	{ 0x4000, 0x4003, pia_0_r },
-	{ 0x8000, 0xffff, MRA_BANK5},
-	  { -1 }
-};
-static struct MemoryWriteAddress smashtv_sound_writemem[] =
-{
-	{ 0x0000, 0x07ff, MWA_RAM},
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x4000, 0x4003, pia_0_w },
-	{ 0x6000, 0x6000, hc55516_digit_clock_clear_w },
-	{ 0x6800, 0x6800, hc55516_clock_set_w },
-	{ 0x7800, 0x7800, smashtv_sound_bank_select_w },
-	{ 0x8000, 0xffff, MWA_ROM},
-	{ -1 }
-};
-
-static struct MemoryReadAddress mk_sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2401, 0x2401, YM2151_status_port_0_r },
-	{ 0x2c00, 0x2c00, OKIM6295_status_0_r },
-	{ 0x3000, 0x3000, soundlatch_r },
-	{ 0x4000, 0xbfff, MRA_BANK5},
-	{ 0xc000, 0xffff, MRA_BANK6},
-	{ -1 }
-};
-
-void mk_adpcm_bs_w(int offset, int data);
-
-static struct MemoryWriteAddress mk_sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_RAM},
-	{ 0x2000, 0x2000, mk_sound_bank_select_w },
-	{ 0x2400, 0x2400, YM2151_register_port_0_w },
-	{ 0x2401, 0x2401, YM2151_data_port_0_w },
-	{ 0x2800, 0x2800, DAC_data_w },
-	{ 0x2c00, 0x2c00, OKIM6295_data_0_w },
-	{ 0x3400, 0x3400, mk_adpcm_bs_w }, /* PCM-BS */
-	{ 0x3c00, 0x3c00, mk_sound_talkback_w }, /* talkback port? */
-	{ 0x4000, 0xffff, MWA_ROM},
-	{ -1 }
 };
 
 INPUT_PORTS_START( narc_input_ports )
@@ -1164,75 +1072,15 @@ INPUT_PORTS_START( nbajam_input_ports )
 
 INPUT_PORTS_END
 
-/*
- *   Sound interface
- */
-
-static struct hc55516_interface cvsd_interface =
-{
-	1,          /* 1 chip */
-	{ 80 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,          /* 1 chip */
-	{ 30 }
-};
-static struct DACinterface narc_dac_interface =
-{
-	2,          /* DAC, DAC2 */
-	{ 30, 30 }
-};
-static struct YM2151interface ym2151_interface =
-{
-	1,          /* 1 chip */
-	3579545,    /* 3.579545 MHz */
-	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
-	{ smashtv_ym2151_int }
-};
-static struct YM2151interface narc_ym2151_interface =
-{
-	1,          /* 1 chip */
-	3579545,    /* 3.579545 MHz */
-	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
-	{ narc_ym2151_int }
-};
-static struct OKIM6295interface okim6295_interface =
-{
-	1,          /* 1 chip */
-	{ 8000 },       /* 8000 Hz frequency */
-	{ 3 },          /* memory region 4 */
-	{ 50 }
-};
-
-void mk_adpcm_bs_w(int offset, int data)
-{
-	if (!(data&0x04))
-	{
-		okim6295_interface.region[0]=3;
-	}
-	else
-	{
-		if (data&0x01)
-		{
-			okim6295_interface.region[0]=4;
-		}
-		else
-		{
-			okim6295_interface.region[0]=5;
-		}
-	}
-	if (errorlog) fprintf(errorlog, "adpcm-bs 0x%x --> 0x%x\n", data, okim6295_interface.region[0]);
-}
-
 
 static struct tms34010_config cpu_config =
 {
-	0,					/* halt on reset */
-	NULL,				/* generate interrupt */
-	wms_to_shiftreg,	/* write to shiftreg function */
-	wms_from_shiftreg	/* read from shiftreg function */
+	0,							/* halt on reset */
+	NULL,						/* generate interrupt */
+	wms_to_shiftreg,			/* write to shiftreg function */
+	wms_from_shiftreg,			/* read from shiftreg function */
+	wms_display_addr_changed,	/* display address changed */
+	wms_display_interrupt		/* display interrupt callback */
 };
 
 
@@ -1249,27 +1097,21 @@ static struct MachineDriver smashtv_machine_driver =
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			4000000,	/* 8 Mhz */
-			2,
-			smashtv_sound_readmem,smashtv_sound_writemem,0,0,
-			ignore_interrupt,0
-		},
+		SOUND_CPU_WILLIAMS_CVSD(2)
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	smashtv_init_machine,
 
 	/* video hardware */
-	512, 288, { 0, 394, 20, 275 },
+	512, 288, { 0, 395, 20, 275 },
 
 	0,
 	65536,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	wms_vh_eof,
 	wms_vh_start,
 	wms_vh_stop,
 	wms_vh_screenrefresh,
@@ -1277,18 +1119,7 @@ static struct MachineDriver smashtv_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_HC55516,
-			&cvsd_interface
-		}
+		SOUND_WILLIAMS_CVSD
 	}
 };
 
@@ -1305,20 +1136,7 @@ static struct MachineDriver narc_machine_driver =
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
-			2,
-			narc_music_readmem,narc_music_writemem,0,0,
-			ignore_interrupt,0
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz */
-			3,
-			narc_digitizer_readmem,narc_digitizer_writemem,0,0,
-			ignore_interrupt,0
-		},
+		SOUND_CPU_WILLIAMS_NARC(2,3)
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1331,8 +1149,8 @@ static struct MachineDriver narc_machine_driver =
 	65536,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	wms_vh_eof,
 	wms_vh_start,
 	wms_vh_stop,
 	wms_vh_screenrefresh,
@@ -1340,18 +1158,7 @@ static struct MachineDriver narc_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_DAC,
-			&narc_dac_interface
-		},
-		{
-			SOUND_YM2151,
-			&narc_ym2151_interface
-		},
-		{
-			SOUND_HC55516,
-			&cvsd_interface
-		}
+		SOUND_WILLIAMS_NARC
 	}
 };
 
@@ -1367,13 +1174,7 @@ static struct MachineDriver trog_machine_driver =
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			4000000,	/* 8 Mhz */
-			2,
-			smashtv_sound_readmem,smashtv_sound_writemem,0,0,
-			ignore_interrupt,0
-		},
+		SOUND_CPU_WILLIAMS_CVSD(2)
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1386,8 +1187,8 @@ static struct MachineDriver trog_machine_driver =
 	65536,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	wms_vh_eof,
 	wms_vh_start,
 	wms_vh_stop,
 	wms_vh_screenrefresh,
@@ -1395,18 +1196,7 @@ static struct MachineDriver trog_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_HC55516,
-			&cvsd_interface
-		}
+		SOUND_WILLIAMS_CVSD
 	}
 };
 
@@ -1417,19 +1207,13 @@ static struct MachineDriver mk_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
+			48000000/TMS34010_CLOCK_DIVIDER,	/* 48 Mhz */
 			0,
 			smashtv_readmem,smashtv_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			4000000,	/* 8 Mhz */
-			2,
-			mk_sound_readmem,mk_sound_writemem,0,0,
-			ignore_interrupt,0
-		},
+		SOUND_CPU_WILLIAMS_ADPCM(2)
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1, /* cpu slices */
@@ -1442,8 +1226,8 @@ static struct MachineDriver mk_machine_driver =
 	65536,0,
     0,
 
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
+    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	wms_vh_eof,
 	wms_vh_start,
 	wms_vh_stop,
 	wms_vh_screenrefresh,
@@ -1451,18 +1235,7 @@ static struct MachineDriver mk_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_YM2151,
-			&narc_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
+		SOUND_WILLIAMS_ADPCM(3)
 	}
 };
 
@@ -1479,13 +1252,7 @@ static struct MachineDriver term2_machine_driver =
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			4000000,	/* 8 Mhz */
-			2,
-			mk_sound_readmem,mk_sound_writemem,0,0,
-			ignore_interrupt,0
-		},
+		SOUND_CPU_WILLIAMS_ADPCM(2)
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1, /* cpu slices */
@@ -1498,8 +1265,8 @@ static struct MachineDriver term2_machine_driver =
 	65536,0,
     0,
 
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
+    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	wms_vh_eof,
 	wms_vh_start,
 	wms_vh_stop,
 	wms_vh_screenrefresh,
@@ -1507,18 +1274,7 @@ static struct MachineDriver term2_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_YM2151,
-			&narc_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
+		SOUND_WILLIAMS_ADPCM(3)
 	}
 };
 
@@ -1547,8 +1303,8 @@ static struct MachineDriver mk2_machine_driver =
 	65536,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	wms_vh_eof,
 	wms_t_vh_start,
 	wms_vh_stop,
 	wms_vh_screenrefresh,
@@ -1564,19 +1320,13 @@ static struct MachineDriver nbajam_machine_driver =
 	{
 		{
 			CPU_TMS34010,
-			50000000/8,	/* 50 Mhz */
+			50000000/TMS34010_CLOCK_DIVIDER,	/* 50 Mhz */
 			0,
 			mk2_readmem,mk2_writemem,0,0,
 			ignore_interrupt,0,
 			0,0,&cpu_config
 		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			4000000,	/* 2 Mhz */
-			2,
-			mk_sound_readmem,mk_sound_writemem,0,0,
-			ignore_interrupt,0
-		},
+		SOUND_CPU_WILLIAMS_ADPCM(2)
 	},
 	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1589,8 +1339,8 @@ static struct MachineDriver nbajam_machine_driver =
 	65536,0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
-	0,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	wms_vh_eof,
 	wms_t_vh_start,
 	wms_vh_stop,
 	wms_vh_screenrefresh,
@@ -1598,18 +1348,7 @@ static struct MachineDriver nbajam_machine_driver =
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		},
-		{
-			SOUND_YM2151,
-			&narc_ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
+		SOUND_WILLIAMS_ADPCM(3)
 	}
 };
 
@@ -1693,7 +1432,7 @@ void wms_statesave(void)
 
 ***************************************************************************/
 
-ROM_START( narc_rom )
+ROM_START( narc )
 	ROM_REGION(0x100000)     /*34010 code */
 	ROM_LOAD_ODD ( "u42",  0x80000, 0x20000, 0xd1111b76 )  /* even */
 	ROM_LOAD_EVEN( "u24",  0x80000, 0x20000, 0xaa0d3082 )  /* odd  */
@@ -1764,20 +1503,17 @@ ROM_START( narc_rom )
 	ROM_LOAD ( "u26",  0x6e0000, 0x10000, 0xcb19f784 )  /* odd  */
 
 	ROM_REGION(0x30000)     /* sound CPU */
-	ROM_LOAD ( "u5-snd", 0x00000, 0x10000, 0xe551e5e3 )
-	ROM_RELOAD (         0x10000, 0x10000 )
-	ROM_LOAD ( "u4-snd", 0x20000, 0x10000, 0x450a591a )
+	ROM_LOAD ( "u4-snd", 0x10000, 0x10000, 0x450a591a )
+	ROM_LOAD ( "u5-snd", 0x20000, 0x10000, 0xe551e5e3 )
 
 	ROM_REGION(0x50000)     /* slave sound CPU */
-	ROM_LOAD ( "u38-snd", 0x00000, 0x10000, 0x09b03b80 )
-	ROM_RELOAD (          0x10000, 0x10000 )
-	ROM_LOAD ( "u37-snd", 0x20000, 0x10000, 0x29dbeffd )
-	ROM_LOAD ( "u36-snd", 0x30000, 0x10000, 0x16cdbb13 )
-	ROM_LOAD ( "u35-snd", 0x40000, 0x10000, 0x81295892 )
-
+	ROM_LOAD ( "u35-snd", 0x10000, 0x10000, 0x81295892 )
+	ROM_LOAD ( "u36-snd", 0x20000, 0x10000, 0x16cdbb13 )
+	ROM_LOAD ( "u37-snd", 0x30000, 0x10000, 0x29dbeffd )
+	ROM_LOAD ( "u38-snd", 0x40000, 0x10000, 0x09b03b80 )
 ROM_END
 
-ROM_START( trog_rom )	/* released version */
+ROM_START( trog )	/* released version */
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "trogu105.bin",  0xc0000, 0x20000, 0xe6095189 ) /* even */
 	ROM_LOAD_EVEN( "trogu89.bin",   0xc0000, 0x20000, 0xfdd7cc65 ) /* odd */
@@ -1801,10 +1537,9 @@ ROM_START( trog_rom )	/* released version */
 	ROM_LOAD (   "trogu4.bin", 0x10000, 0x10000, 0x759d0bf4 )
 	ROM_LOAD (  "trogu19.bin", 0x30000, 0x10000, 0x960c333d )
 	ROM_LOAD (  "trogu20.bin", 0x50000, 0x10000, 0x67f1658a )
-
 ROM_END
 
-ROM_START( trog3_rom )	/* released version */
+ROM_START( trog3 )	/* released version */
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "u105-la3",  0xc0000, 0x20000, 0xd09cea97 ) /* even */
 	ROM_LOAD_EVEN( "u89-la3",   0xc0000, 0x20000, 0xa61e3572 ) /* odd */
@@ -1828,10 +1563,9 @@ ROM_START( trog3_rom )	/* released version */
 	ROM_LOAD (   "trogu4.bin", 0x10000, 0x10000, 0x759d0bf4 )
 	ROM_LOAD (  "trogu19.bin", 0x30000, 0x10000, 0x960c333d )
 	ROM_LOAD (  "trogu20.bin", 0x50000, 0x10000, 0x67f1658a )
-
 ROM_END
 
-ROM_START( trogp_rom )   /* prototype version */
+ROM_START( trogp )   /* prototype version */
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "trog105.dat",  0xc0000, 0x20000, 0x526a3f5b ) /* even */
 	ROM_LOAD_EVEN( "trog89.dat",   0xc0000, 0x20000, 0x38d68685 ) /* odd */
@@ -1855,10 +1589,9 @@ ROM_START( trogp_rom )   /* prototype version */
 	ROM_LOAD (   "trogu4.bin", 0x10000, 0x10000, 0x759d0bf4 )
 	ROM_LOAD (  "trogu19.bin", 0x30000, 0x10000, 0x960c333d )
 	ROM_LOAD (  "trogu20.bin", 0x50000, 0x10000, 0x67f1658a )
-
 ROM_END
 
-ROM_START( smashtv_rom )
+ROM_START( smashtv )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "u105.l8",  0xc0000, 0x20000, 0x48cd793f ) /* even */
 	ROM_LOAD_EVEN( "u89.l8",   0xc0000, 0x20000, 0x8e7fe463 ) /* odd */
@@ -1880,10 +1613,9 @@ ROM_START( smashtv_rom )
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
-
 ROM_END
 
-ROM_START( smashtv6_rom )
+ROM_START( smashtv6 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "la6-u105",  0xc0000, 0x20000, 0xf1666017 ) /* even */
 	ROM_LOAD_EVEN( "la6-u89",   0xc0000, 0x20000, 0x908aca5d ) /* odd */
@@ -1905,10 +1637,9 @@ ROM_START( smashtv6_rom )
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
-
 ROM_END
 
-ROM_START( smashtv5_rom )
+ROM_START( smashtv5 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "u105-v5",  0xc0000, 0x20000, 0x81f564b9 ) /* even */
 	ROM_LOAD_EVEN( "u89-v5",   0xc0000, 0x20000, 0xe5017d25 ) /* odd */
@@ -1930,10 +1661,9 @@ ROM_START( smashtv5_rom )
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
-
 ROM_END
 
-ROM_START( smashtv4_rom )
+ROM_START( smashtv4 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "la4-u105",  0xc0000, 0x20000, 0xa50ccb71 ) /* even */
 	ROM_LOAD_EVEN( "la4-u89",   0xc0000, 0x20000, 0xef0b0279 ) /* odd */
@@ -1955,10 +1685,9 @@ ROM_START( smashtv4_rom )
 	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
 	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
 	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
-
 ROM_END
 
-ROM_START( hiimpact_rom )
+ROM_START( hiimpact )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "la3u105.bin",  0xc0000, 0x20000, 0xb9190c4a ) /* even */
 	ROM_LOAD_EVEN( "la3u89.bin",   0xc0000, 0x20000, 0x1cbc72a5 ) /* odd */
@@ -1983,10 +1712,9 @@ ROM_START( hiimpact_rom )
 	ROM_LOAD (  "sl1u4.bin", 0x10000, 0x20000, 0x28effd6a )
 	ROM_LOAD ( "sl1u19.bin", 0x30000, 0x20000, 0x0ea22c89 )
 	ROM_LOAD ( "sl1u20.bin", 0x50000, 0x20000, 0x4e747ab5 )
-
 ROM_END
 
-ROM_START( shimpact_rom )
+ROM_START( shimpact )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "shiu105.bin",  0xc0000, 0x20000, 0xf2cf8de3 ) /* even */
 	ROM_LOAD_EVEN( "shiu89.bin",   0xc0000, 0x20000, 0xf97d9b01 ) /* odd */
@@ -2011,10 +1739,9 @@ ROM_START( shimpact_rom )
 	ROM_LOAD (   "shiu4.bin", 0x10000, 0x20000, 0x1e5a012c )
 	ROM_LOAD (  "shiu19.bin", 0x30000, 0x20000, 0x10f9684e )
 	ROM_LOAD (  "shiu20.bin", 0x50000, 0x20000, 0x1b4a71c1 )
-
 ROM_END
 
-ROM_START( strkforc_rom )
+ROM_START( strkforc )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "sfu105.bin",  0xc0000, 0x20000, 0x7895e0e3 ) /* even */
 	ROM_LOAD_EVEN( "sfu89.bin",   0xc0000, 0x20000, 0x26114d9e ) /* odd */
@@ -2040,10 +1767,9 @@ ROM_START( strkforc_rom )
 	ROM_LOAD (  "sfu4.bin", 0x10000, 0x10000, 0x8f747312 )
 	ROM_LOAD ( "sfu19.bin", 0x30000, 0x10000, 0xafb29926 )
 	ROM_LOAD ( "sfu20.bin", 0x50000, 0x10000, 0x1bc9b746 )
-
 ROM_END
 
-ROM_START( mk_rom )
+ROM_START( mk )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "mkg-u105.rom",  0x00000, 0x80000, 0x2ce843c5 )  /* even */
 	ROM_LOAD_EVEN(  "mkg-u89.rom",  0x00000, 0x80000, 0x49a46e10 )  /* odd  */
@@ -2067,25 +1793,12 @@ ROM_START( mk_rom )
 	ROM_REGION(0x50000) /* sound CPU */
 	ROM_LOAD (  "mks-u3.rom", 0x10000, 0x40000, 0xc615844c )
 
-	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_REGION(0xc0000) /* ADPCM samples */
 	ROM_LOAD ( "mks-u12.rom", 0x00000, 0x40000, 0x258bd7f9 )
-/*	ROM_LOAD ( "mks-u12.rom", 0x40000, 0x40000, 0x258bd7f9 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "mks-u13.rom", 0x00000, 0x20000, 0x7b7ec3b6 )
-	ROM_CONTINUE            ( 0x40000, 0x20000 )
-/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
-/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-/*	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x20000, 0x7b7ec3b6 ) */
-/*	ROM_CONTINUE            ( 0x00000, 0x20000 ) */
-/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
-/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
-
+	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x40000, 0x7b7ec3b6 )
 ROM_END
 
-ROM_START( mkla1_rom )
+ROM_START( mkla1 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "mkg-u105.la1",  0x00000, 0x80000, 0xe1f7b4c9 )  /* even */
 	ROM_LOAD_EVEN(  "mkg-u89.la1",  0x00000, 0x80000, 0x9d38ac75 )  /* odd  */
@@ -2109,25 +1822,12 @@ ROM_START( mkla1_rom )
 	ROM_REGION(0x50000) /* sound CPU */
 	ROM_LOAD (  "mks-u3.rom", 0x10000, 0x40000, 0xc615844c )
 
-	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_REGION(0xc0000) /* ADPCM samples */
 	ROM_LOAD ( "mks-u12.rom", 0x00000, 0x40000, 0x258bd7f9 )
-/*	ROM_LOAD ( "mks-u12.rom", 0x40000, 0x40000, 0x258bd7f9 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "mks-u13.rom", 0x00000, 0x20000, 0x7b7ec3b6 )
-	ROM_CONTINUE            ( 0x40000, 0x20000 )
-/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
-/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-/*	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x20000, 0x7b7ec3b6 ) */
-/*	ROM_CONTINUE            ( 0x00000, 0x20000 ) */
-/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
-/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
-
+	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x40000, 0x7b7ec3b6 )
 ROM_END
 
-ROM_START( mkla2_rom )
+ROM_START( mkla2 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "mkg-u105.la2",  0x00000, 0x80000, 0x8531d44e )  /* even */
 	ROM_LOAD_EVEN(  "mkg-u89.la2",  0x00000, 0x80000, 0xb88dc26e )  /* odd  */
@@ -2151,25 +1851,12 @@ ROM_START( mkla2_rom )
 	ROM_REGION(0x50000) /* sound CPU */
 	ROM_LOAD (  "mks-u3.rom", 0x10000, 0x40000, 0xc615844c )
 
-	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_REGION(0xc0000) /* ADPCM samples */
 	ROM_LOAD ( "mks-u12.rom", 0x00000, 0x40000, 0x258bd7f9 )
-/*	ROM_LOAD ( "mks-u12.rom", 0x40000, 0x40000, 0x258bd7f9 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "mks-u13.rom", 0x00000, 0x20000, 0x7b7ec3b6 )
-	ROM_CONTINUE            ( 0x40000, 0x20000 )
-/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
-/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-/*	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x20000, 0x7b7ec3b6 ) */
-/*	ROM_CONTINUE            ( 0x00000, 0x20000 ) */
-/*	ROM_LOAD ( "mks-u12.rom", 0x60000, 0x20000, 0x258bd7f9 ) */
-/*	ROM_CONTINUE            ( 0x20000, 0x20000 ) */
-
+	ROM_LOAD ( "mks-u13.rom", 0x40000, 0x40000, 0x7b7ec3b6 )
 ROM_END
 
-ROM_START( term2_rom )
+ROM_START( term2 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "t2.105",  0x00000, 0x80000, 0x34142b28 )  /* even */
 	ROM_LOAD_EVEN( "t2.89",   0x00000, 0x80000, 0x5ffea427 )  /* odd  */
@@ -2194,25 +1881,12 @@ ROM_START( term2_rom )
 	ROM_LOAD (  "t2_snd.3", 0x10000, 0x20000, 0x73c3f5c4 )
 	ROM_RELOAD (            0x30000, 0x20000 )
 
-	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_REGION(0xc0000) /* ADPCM samples */
 	ROM_LOAD ( "t2_snd.12", 0x00000, 0x40000, 0xe192a40d )
-/*	ROM_LOAD ( "t2_snd.12", 0x40000, 0x40000, 0xe192a40d ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "t2_snd.13", 0x00000, 0x20000, 0x956fa80b )
-	ROM_CONTINUE          ( 0x40000, 0x20000             )
-/*	ROM_LOAD ( "t2_snd.12", 0x60000, 0x20000, 0xe192a40d ) */
-/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-/*	ROM_LOAD ( "t2_snd.13", 0x40000, 0x20000, 0x956fa80b ) */
-/*	ROM_CONTINUE          ( 0x00000, 0x20000             ) */
-/*	ROM_LOAD ( "t2_snd.12", 0x60000, 0x20000, 0xe192a40d ) */
-/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
-
+	ROM_LOAD ( "t2_snd.13", 0x40000, 0x40000, 0x956fa80b )
 ROM_END
 
-ROM_START( totcarn_rom )
+ROM_START( totcarn )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "tcu105.bin",  0x80000, 0x40000, 0x7c651047 )  /* even */
 	ROM_LOAD_EVEN( "tcu89.bin",   0x80000, 0x40000, 0x6761daf3 )  /* odd  */
@@ -2237,25 +1911,12 @@ ROM_START( totcarn_rom )
 	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
 	ROM_RELOAD (            0x30000, 0x20000 )
 
-	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_REGION(0xc0000) /* ADPCM samples */
 	ROM_LOAD ( "tcu12.bin", 0x00000, 0x40000, 0xd0000ac7 )
-/*	ROM_LOAD ( "tcu12.bin", 0x40000, 0x40000, 0xd0000ac7 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "tcu13.bin", 0x00000, 0x20000, 0xe48e6f0c )
-	ROM_CONTINUE          ( 0x40000, 0x20000             )
-/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
-/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-/*	ROM_LOAD ( "tcu13.bin", 0x40000, 0x20000, 0xe48e6f0c ) */
-/*	ROM_CONTINUE          ( 0x00000, 0x20000             ) */
-/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
-/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
-
+	ROM_LOAD ( "tcu13.bin", 0x40000, 0x40000, 0xe48e6f0c )
 ROM_END
 
-ROM_START( totcarnp_rom )
+ROM_START( totcarnp )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "u105",  0x80000, 0x40000, 0x7a782cae )  /* even */
 	ROM_LOAD_EVEN( "u89",   0x80000, 0x40000, 0x1c899a8d )  /* odd  */
@@ -2280,25 +1941,12 @@ ROM_START( totcarnp_rom )
 	ROM_LOAD (  "tcu3.bin", 0x10000, 0x20000, 0x5bdb4665 )
 	ROM_RELOAD (            0x30000, 0x20000 )
 
-	ROM_REGION(0x80000) /* ADPCM samples */
+	ROM_REGION(0xc0000) /* ADPCM samples */
 	ROM_LOAD ( "tcu12.bin", 0x00000, 0x40000, 0xd0000ac7 )
-/*	ROM_LOAD ( "tcu12.bin", 0x40000, 0x40000, 0xd0000ac7 ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-	ROM_LOAD ( "tcu13.bin", 0x00000, 0x20000, 0xe48e6f0c )
-	ROM_CONTINUE          ( 0x40000, 0x20000             )
-/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
-/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
-
-	ROM_REGION(0x80000) /* ADPCM samples */
-/*	ROM_LOAD ( "tcu13.bin", 0x40000, 0x20000, 0xe48e6f0c ) */
-/*	ROM_CONTINUE          ( 0x00000, 0x20000             ) */
-/*	ROM_LOAD ( "tcu12.bin", 0x60000, 0x20000, 0xd0000ac7 ) */
-/*	ROM_CONTINUE          ( 0x20000, 0x20000             ) */
-
+	ROM_LOAD ( "tcu13.bin", 0x40000, 0x40000, 0xe48e6f0c )
 ROM_END
 
-ROM_START( mk2_rom )
+ROM_START( mk2 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "uj12.l31",  0x00000, 0x80000, 0xcf100a75 )  /* even */
 	ROM_LOAD_EVEN( "ug12.l31",  0x00000, 0x80000, 0x582c7dfd )  /* odd  */
@@ -2327,10 +1975,9 @@ ROM_START( mk2_rom )
 	ROM_LOAD (   "su5.l1",  0x080000, 0x80000, 0x2b0b7961 )
 	ROM_LOAD (   "su6.l1",  0x000000, 0x80000, 0xf694b27f )
 	ROM_LOAD (   "su7.l1",  0x080000, 0x80000, 0x20387e0a )
-
 ROM_END
 
-ROM_START( mk2r32_rom )
+ROM_START( mk2r32 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "uj12.l32",  0x00000, 0x80000, 0x43f773a6 )  /* even */
 	ROM_LOAD_EVEN( "ug12.l32",  0x00000, 0x80000, 0xdcde9619 )  /* odd  */
@@ -2359,10 +2006,9 @@ ROM_START( mk2r32_rom )
 	ROM_LOAD (   "su5.l1",  0x080000, 0x80000, 0x2b0b7961 )
 	ROM_LOAD (   "su6.l1",  0x000000, 0x80000, 0xf694b27f )
 	ROM_LOAD (   "su7.l1",  0x080000, 0x80000, 0x20387e0a )
-
 ROM_END
 
-ROM_START( mk2r14_rom )
+ROM_START( mk2r14 )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "uj12.l14",  0x00000, 0x80000, 0x6d43bc6d )  /* even */
 	ROM_LOAD_EVEN( "ug12.l14",  0x00000, 0x80000, 0x42b0da21 )  /* odd  */
@@ -2391,7 +2037,6 @@ ROM_START( mk2r14_rom )
 	ROM_LOAD (   "su5.l1",  0x080000, 0x80000, 0x2b0b7961 )
 	ROM_LOAD (   "su6.l1",  0x000000, 0x80000, 0xf694b27f )
 	ROM_LOAD (   "su7.l1",  0x080000, 0x80000, 0x20387e0a )
-
 ROM_END
 
 /*
@@ -2427,7 +2072,7 @@ ROM_END
 */
 
 
-ROM_START( nbajam_rom )
+ROM_START( nbajam )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "nbauj12.bin",  0x00000, 0x80000, 0xb93e271c )  /* even */
 	ROM_LOAD_EVEN( "nbaug12.bin",  0x00000, 0x80000, 0x407d3390 )  /* odd  */
@@ -2460,7 +2105,6 @@ ROM_START( nbajam_rom )
 	ROM_REGION(0x100000)
 	ROM_LOAD ( "nbau12.bin",  0x000000, 0x80000, 0xb94847f1 )
 	ROM_LOAD ( "nbau13.bin",  0x080000, 0x80000, 0xb6fe24bd )
-
 ROM_END
 
 
@@ -2475,7 +2119,7 @@ struct GameDriver narc_driver =
 	"1988",
 	"Williams",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&narc_machine_driver,
 	narc_driver_init,
 
@@ -2500,7 +2144,7 @@ struct GameDriver trog_driver =
 	"1990",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&trog_machine_driver,
 	trog_driver_init,
 
@@ -2525,7 +2169,7 @@ struct GameDriver trog3_driver =
 	"1990",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&trog_machine_driver,
 	trog3_driver_init,
 
@@ -2550,7 +2194,7 @@ struct GameDriver trogp_driver =
 	"1990",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&trog_machine_driver,
 	trogp_driver_init,
 
@@ -2575,7 +2219,7 @@ struct GameDriver smashtv_driver =
 	"1990",
 	"Williams",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&smashtv_machine_driver,
 	smashtv_driver_init,
 
@@ -2600,7 +2244,7 @@ struct GameDriver smashtv6_driver =
 	"1990",
 	"Williams",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&smashtv_machine_driver,
 	smashtv_driver_init,
 
@@ -2625,7 +2269,7 @@ struct GameDriver smashtv5_driver =
 	"1990",
 	"Williams",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&smashtv_machine_driver,
 	smashtv_driver_init,
 
@@ -2650,7 +2294,7 @@ struct GameDriver smashtv4_driver =
 	"1990",
 	"Williams",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&smashtv_machine_driver,
 	smashtv4_driver_init,
 
@@ -2675,7 +2319,7 @@ struct GameDriver hiimpact_driver =
 	"1990",
 	"Williams",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&smashtv_machine_driver,
 	hiimpact_driver_init,
 
@@ -2700,7 +2344,7 @@ struct GameDriver shimpact_driver =
 	"1991",
 	"Midway",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
 	&smashtv_machine_driver,
 	shimpact_driver_init,
 
@@ -2725,7 +2369,7 @@ struct GameDriver strkforc_driver =
 	"1991",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&trog_machine_driver,
 	strkforc_driver_init,
 
@@ -2750,7 +2394,7 @@ struct GameDriver mk_driver =
 	"1992",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&mk_machine_driver,
 	mk_driver_init,
 
@@ -2774,7 +2418,7 @@ struct GameDriver mkla1_driver =
 	"1992",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&mk_machine_driver,
 	mkla1_driver_init,
 
@@ -2798,7 +2442,7 @@ struct GameDriver mkla2_driver =
 	"1992",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&mk_machine_driver,
 	mkla2_driver_init,
 
@@ -2823,7 +2467,7 @@ struct GameDriver term2_driver =
 	"1991",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&term2_machine_driver,
 	term2_driver_init,
 
@@ -2848,7 +2492,7 @@ struct GameDriver totcarn_driver =
 	"1992",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&mk_machine_driver,
 	totcarn_driver_init,
 
@@ -2873,7 +2517,7 @@ struct GameDriver totcarnp_driver =
 	"1992",
 	"Midway",
 	BASE_CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&mk_machine_driver,
 	totcarnp_driver_init,
 
@@ -2898,7 +2542,7 @@ struct GameDriver mk2_driver =
 	"1993",
 	"Midway",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
 	&mk2_machine_driver,
 	mk2_driver_init,
 
@@ -2923,7 +2567,7 @@ struct GameDriver mk2r32_driver =
 	"1993",
 	"Midway",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
 	&mk2_machine_driver,
 	mk2_driver_init,
 
@@ -2948,7 +2592,7 @@ struct GameDriver mk2r14_driver =
 	"1993",
 	"Midway",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
 	&mk2_machine_driver,
 	mk2r14_driver_init,
 
@@ -2973,7 +2617,7 @@ struct GameDriver nbajam_driver =
 	"1993",
 	"Midway",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
 	&nbajam_machine_driver,
 	nbajam_driver_init,
 

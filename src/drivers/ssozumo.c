@@ -232,7 +232,7 @@ static struct DACinterface dac_interface =
 };
 
 
-ROM_START( ssozumo_rom )
+ROM_START( ssozumo )
 	ROM_REGION(0x10000)
 	/* Main Program ROMs */
 	ROM_LOAD( "ic61.g01",	0x06000, 0x2000, 0x86968f46 )	// m1

@@ -386,7 +386,7 @@ static void hisave(void)
 
 ***************************************************************************/
 
-ROM_START( superman_rom )
+ROM_START( superman )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "a10_09.bin", 0x00000, 0x20000, 0x640f1d58 )
 	ROM_LOAD_ODD ( "a05_07.bin", 0x00000, 0x20000, 0xfddb9953 )

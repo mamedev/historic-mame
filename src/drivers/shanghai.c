@@ -756,7 +756,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( shanghai_rom )
+ROM_START( shanghai )
 	ROM_REGION(0x100000)
 	ROM_LOAD_V20_EVEN( "shg-22a.rom", 0xa0000, 0x10000, 0xe0a085be )
 	ROM_LOAD_V20_ODD ( "shg-21a.rom", 0xa0000, 0x10000, 0x4ab06d32 )

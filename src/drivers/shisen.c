@@ -312,7 +312,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( sichuan2_rom )
+ROM_START( sichuan2 )
 	ROM_REGION(0x30000)	/* 64k+128k for main CPU */
 	ROM_LOAD( "ic06.06",      0x00000, 0x10000, 0x98a2459b )
 	ROM_RELOAD(               0x10000, 0x10000 )
@@ -346,7 +346,7 @@ ROM_START( sichuan2_rom )
 	ROM_LOAD( "ic05.05",      0x30000, 0x10000, 0x92ffe22a )
 ROM_END
 
-ROM_START( sichuana_rom )
+ROM_START( sichuana )
 	ROM_REGION(0x30000)	/* 64k+128k for main CPU */
 	ROM_LOAD( "sichuan.a6",      0x00000, 0x10000, 0xf8ac05ef )
 	ROM_RELOAD(               0x10000, 0x10000 )
@@ -382,7 +382,7 @@ ROM_END
 
 
 
-ROM_START( shisen_rom )
+ROM_START( shisen )
 	ROM_REGION(0x30000)	/* 64k+128k for main CPU */
 	ROM_LOAD( "a-27-a.rom",   0x00000, 0x20000, 0xde2ecf05 )
 	ROM_RELOAD(               0x10000, 0x20000 )

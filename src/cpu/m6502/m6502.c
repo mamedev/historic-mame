@@ -36,17 +36,6 @@ extern FILE * errorlog;
 #define LOG(x)
 #endif
 
-#define SUBTYPE_6502	0
-#if HAS_M65C02
-#define SUBTYPE_65C02	1
-#endif
-#if HAS_M6510
-#define SUBTYPE_6510	2
-#endif
-#if HAS_N2A03
-#define SUBTYPE_2A03	3
-#endif
-
 /* Layout of the registers in the debugger */
 static UINT8 m6502_reg_layout[] = {
 	M6502_PC, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y, -1,

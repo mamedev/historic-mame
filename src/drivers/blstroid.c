@@ -301,7 +301,7 @@ static struct MachineDriver machine_driver =
  *
  *************************************/
 
-ROM_START( blstroid_rom )
+ROM_START( blstroid )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "057-4123",  0x00000, 0x10000, 0xd14badc4 )
 	ROM_LOAD_ODD ( "057-4121",  0x00000, 0x10000, 0xae3e93e8 )
@@ -336,7 +336,7 @@ ROM_START( blstroid_rom )
 ROM_END
 
 
-ROM_START( blstroi2_rom )
+ROM_START( blstroi2 )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "blstroid.6c",  0x00000, 0x10000, 0x5a092513 )
 	ROM_LOAD_ODD ( "blstroid.6b",  0x00000, 0x10000, 0x486aac51 )

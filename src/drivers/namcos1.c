@@ -468,73 +468,6 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver machine_driver16 =
-{
-	/* basic machine hardware */
-	{
-		{
-		    CPU_M6809,
-		    49152000/32,        /* Not sure if divided by 32 or 24 */
-		    0,
-		    main_readmem,main_writemem,0,0,
-		    interrupt,1,
-		},
-		{
-		    CPU_M6809,
-		    49152000/32,        /* Not sure if divided by 32 or 24 */
-		    2,
-		    sub_readmem,sub_writemem,0,0,
-		    interrupt,1,
-		},
-		{
-		    CPU_M6809,
-			49152000/32,        /* Not sure if divided by 32 or 24 */
-		    3,
-		    sound_readmem,sound_writemem,0,0,
-		    interrupt,1
-		},
-		{
-		    CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/8/4,
-		    6,
-		    mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-		    interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	0,/* CPU slice timer is made by machine_init */
-	namcos1_machine_init,
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	128*16+6*256+1, 128*16+6*256+1,
-	namcos1_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_16BIT,
-	0,
-	namcos1_vh_start,
-	namcos1_vh_stop,
-	namcos1_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
-
 
 /***************************************************************************
 
@@ -547,7 +480,7 @@ static struct MachineDriver machine_driver16 =
 	ROM_RELOAD(start+length,length)
 
 /* Shadowland */
-ROM_START( shadowld_rom )
+ROM_START( shadowld )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -603,7 +536,7 @@ ROM_START( shadowld_rom )
 ROM_END
 
 /* Youkai Douchuuki (Shadowland Japan) */
-ROM_START( youkaidk_rom )
+ROM_START( youkaidk )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -658,7 +591,7 @@ ROM_START( youkaidk_rom )
 ROM_END
 
 /* Dragon Spirit */
-ROM_START( dspirit_rom )
+ROM_START( dspirit )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -713,7 +646,7 @@ ROM_START( dspirit_rom )
 ROM_END
 
 /* Blazer */
-ROM_START( blazer_rom )
+ROM_START( blazer )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -766,7 +699,7 @@ ROM_START( blazer_rom )
 ROM_END
 
 /* Pacmania */
-ROM_START( pacmania_rom )
+ROM_START( pacmania )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -804,7 +737,7 @@ ROM_START( pacmania_rom )
 ROM_END
 
 /* Pacmania (Japan) deff o1,s0,s1,p7,v0 */
-ROM_START( pacmanij_rom )
+ROM_START( pacmanij )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -842,7 +775,7 @@ ROM_START( pacmanij_rom )
 ROM_END
 
 /* Galaga 88 */
-ROM_START( galaga88_rom )
+ROM_START( galaga88 )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -892,7 +825,7 @@ ROM_START( galaga88_rom )
 ROM_END
 
 /* Galaga 88 japan */
-ROM_START( galag88j_rom )
+ROM_START( galag88j )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -942,7 +875,7 @@ ROM_START( galag88j_rom )
 ROM_END
 
 /* Beraboh Man */
-ROM_START( berabohm_rom )
+ROM_START( berabohm )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -990,7 +923,7 @@ ROM_START( berabohm_rom )
 ROM_END
 
 /* Marchen Maze */
-ROM_START( mmaze_rom )
+ROM_START( mmaze )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1036,7 +969,7 @@ ROM_START( mmaze_rom )
 ROM_END
 
 /* Bakutotsu Kijuutei */
-ROM_START( bakutotu_rom )
+ROM_START( bakutotu )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1081,7 +1014,7 @@ ROM_START( bakutotu_rom )
 ROM_END
 
 /* World Court */
-ROM_START( wldcourt_rom )
+ROM_START( wldcourt )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1121,7 +1054,7 @@ ROM_START( wldcourt_rom )
 ROM_END
 
 /* Splatter House */
-ROM_START( splatter_rom )
+ROM_START( splatter )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1176,7 +1109,7 @@ ROM_START( splatter_rom )
 ROM_END
 
 /* Rompers */
-ROM_START( rompers_rom )
+ROM_START( rompers )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1217,7 +1150,7 @@ ROM_START( rompers_rom )
 ROM_END
 
 /* Blast off */
-ROM_START( blastoff_rom )
+ROM_START( blastoff )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1261,7 +1194,7 @@ ROM_START( blastoff_rom )
 ROM_END
 
 /* Dangerous Sseed */
-ROM_START( dangseed_rom )
+ROM_START( dangseed )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1301,7 +1234,7 @@ ROM_START( dangseed_rom )
 ROM_END
 
 /* World Stadium 90 */
-ROM_START( ws90_rom )
+ROM_START( ws90 )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1346,7 +1279,7 @@ ROM_START( ws90_rom )
 ROM_END
 
 /* Pistol Daimyo no Bouken */
-ROM_START( pistoldm_rom )
+ROM_START( pistoldm )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1388,7 +1321,7 @@ ROM_START( pistoldm_rom )
 ROM_END
 
 /* Soukoban DX */
-ROM_START( soukobdx_rom )
+ROM_START( soukobdx )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1422,7 +1355,7 @@ ROM_START( soukobdx_rom )
 ROM_END
 
 /* Tank Force */
-ROM_START( tankfrce_rom )
+ROM_START( tankfrce )
 	ROM_REGION(0x10000)     /* 64k for the main cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
@@ -1522,8 +1455,8 @@ struct GameDriver NAME##_driver  = \
 	YEAR,             \
 	MANU,             \
 	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
-	0,                \
-	&machine_driver16,  \
+	GAME_REQUIRES_16BIT, \
+	&machine_driver,  \
 	INIT_NAME##_driver_init, \
 	NAME##_rom,       \
 	0, 0,             \
@@ -1547,8 +1480,8 @@ struct GameDriver NAME##_driver  = \
 	YEAR,             \
 	MANU,             \
 	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
-	0,                \
-	&machine_driver16,  \
+	GAME_REQUIRES_16BIT, \
+	&machine_driver,  \
 	INIT_NAME##_driver_init, \
 	NAME##_rom,       \
 	0, 0,             \
@@ -1572,7 +1505,7 @@ struct GameDriver NAME##_driver  = \
 	YEAR,             \
 	MANU,             \
 	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
-	GAME_NOT_WORKING, \
+	GAME_REQUIRES_16BIT | GAME_NOT_WORKING, \
 	&machine_driver,  \
 	INIT_NAME##_driver_init, \
 	NAME##_rom,       \
@@ -1592,8 +1525,8 @@ NAMCOS1_DRIVER(dspirit,"Dragon Spirit","1987","Namco",dspirit,ORIENTATION_ROTATE
 //NAMCOS1_DRIVER(dspirita,"Dragon Spirit (set 2)","1987","Namco",dspirit,ORIENTATION_ROTATE_270)
 NAMCOS1_DRIVER(blazer,"Blazer (Japan)","1987","Namco",blazer,ORIENTATION_ROTATE_270)
 //NAMCOS1_NWDRIVER(quester,"Quester","1987","Namco",quester,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER16(pacmania,"Pacmania","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVER16CLONE(pacmanij,pacmania,"Pacmania (Japan)","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVER16(pacmania,"Pac-Mania","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
+NAMCOS1_DRIVER16CLONE(pacmanij,pacmania,"Pac-Mania (Japan)","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
 /* galaga88 use shadow sprite , and could fit in 256 colors stage 21 */
 NAMCOS1_DRIVER16(galaga88,"Galaga '88","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
 NAMCOS1_DRIVER16CLONE(galag88j,galaga88,"Galaga '88 (Japan)","1987","Namco",galaga88,ORIENTATION_ROTATE_270)

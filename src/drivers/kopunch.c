@@ -206,7 +206,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( kopunch_rom )
+ROM_START( kopunch )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "epr1105.x",    0x0000, 0x1000, 0x34ef5e79 )
 	ROM_LOAD( "epr1106.x",    0x1000, 0x1000, 0x25a5c68b )

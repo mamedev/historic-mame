@@ -27,13 +27,13 @@ void subs_invert2_w(int offset, int data)
 {
 	if ((offset & 0x01) == 1)
 	{
-		palette_change_color(4, 0x00, 0x00, 0x00);
-		palette_change_color(5, 0xFF, 0xFF, 0xFF);
+		palette_change_color(2, 0x00, 0x00, 0x00);
+		palette_change_color(3, 0xFF, 0xFF, 0xFF);
 	}
 	else
 	{
-		palette_change_color(5, 0x00, 0x00, 0x00);
-		palette_change_color(4, 0xFF, 0xFF, 0xFF);
+		palette_change_color(3, 0x00, 0x00, 0x00);
+		palette_change_color(2, 0xFF, 0xFF, 0xFF);
 	}
 }
 
@@ -48,6 +48,9 @@ void subs_invert2_w(int offset, int data)
 void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */

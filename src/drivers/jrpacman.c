@@ -304,7 +304,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( jrpacman_rom )
+ROM_START( jrpacman )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "jrp8d.bin",    0x0000, 0x2000, 0xe3fa972e )
 	ROM_LOAD( "jrp8e.bin",    0x2000, 0x2000, 0xec889e94 )

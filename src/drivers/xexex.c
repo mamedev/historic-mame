@@ -378,7 +378,7 @@ static struct MachineDriver machine_driver =
 };
 
 
-ROM_START( xexex_rom )
+ROM_START( xexex )
 	ROM_REGION(0x180000)
 	ROM_LOAD_EVEN("xex_a01.rom", 0x000000,  0x40000, 0x3ebcb066 )
 	ROM_LOAD_ODD ("xex_a02.rom", 0x000000,  0x40000, 0x36ea7a48 )

@@ -453,12 +453,17 @@ static unsigned char palette[] =
 	0x80,0x80,0x80, /* GREY  */
 	0xff,0xff,0xff, /* WHITE  */
 };
-
 static unsigned short colortable[] =
 {
 	0x02, 0x00,
 	0x01, 0x02
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+	memcpy(game_colortable,colortable,sizeof(colortable));
+}
+
 
 static struct DACinterface dac_interface =
 {
@@ -486,8 +491,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	38*8, 32*8, { 0*8, 38*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -525,8 +530,8 @@ static struct MachineDriver atarifb4_machine_driver =
 	/* video hardware */
 	38*8, 32*8, { 0*8, 38*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, sizeof(colortable) / sizeof(colortable[0]),
+	init_palette,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -569,7 +574,7 @@ void abaseb_init(void)
 	atarifb_game = 3;
 }
 
-ROM_START( atarifb1_rom )
+ROM_START( atarifb1 )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "03302601.m1", 0x6800, 0x0800, 0xf8ce7ed8 )
 	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
@@ -582,7 +587,7 @@ ROM_START( atarifb1_rom )
 	ROM_LOAD( "033031.d5", 0x0600, 0x0200, 0x89d619b8 )
 ROM_END
 
-ROM_START( atarifb_rom )
+ROM_START( atarifb )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "03302602.m1", 0x6800, 0x0800, 0x352e35db )
 	ROM_LOAD( "03302801.p1", 0x7000, 0x0800, 0xa79c79ca )
@@ -595,7 +600,7 @@ ROM_START( atarifb_rom )
 	ROM_LOAD( "033031.d5", 0x0600, 0x0200, 0x89d619b8 )
 ROM_END
 
-ROM_START( atarifb4_rom )
+ROM_START( atarifb4 )
 	ROM_REGION(0x10000) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "34889.m1", 0x6000, 0x0400, 0x5c63974a )
 	ROM_LOAD_NIB_HIGH( "34891.m2", 0x6000, 0x0400, 0x9d03baa1 )
@@ -622,7 +627,7 @@ ROM_START( atarifb4_rom )
 	ROM_LOAD( "033031.d5", 0x0600, 0x0200, 0x89d619b8 )
 ROM_END
 
-ROM_START( abaseb2_rom )
+ROM_START( abaseb2 )
 	ROM_REGION(0x10000) /* 64k for code, the ROMs are nibble-wide */
 	ROM_LOAD_NIB_LOW ( "034725.c0", 0x6000, 0x0400, 0x95912c58 )
 	ROM_LOAD_NIB_HIGH( "034723.m0", 0x6000, 0x0400, 0x5eb1597f )
@@ -649,7 +654,7 @@ ROM_START( abaseb2_rom )
 	ROM_LOAD( "034709.c5", 0x0600, 0x0200, 0x021d1067 )
 ROM_END
 
-ROM_START( abaseb_rom )
+ROM_START( abaseb )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "34738-01.n0", 0x6000, 0x0800, 0xedcfffe8 )
 	ROM_LOAD( "34737-03.m1", 0x6800, 0x0800, 0x7250863f )
@@ -663,29 +668,29 @@ ROM_START( abaseb_rom )
 	ROM_LOAD( "034709.c5", 0x0600, 0x0200, 0x021d1067 )
 ROM_END
 
-ROM_START( soccer_rom )
+ROM_START( soccer )
 	ROM_REGION(0x14000) /* 64k for code, the ROMs are nibble-wide */
-	ROM_LOAD( "35234.m1", 0x10000, 0x0400, 0x5c63974a ) /* low nibbles */
-	ROM_LOAD( "35235.n1", 0x10400, 0x0400, 0x2deb5844 )
-	ROM_LOAD( "35230.k1", 0x10800, 0x0400, 0xfdd272a1 )
-	ROM_LOAD( "35231.l1", 0x10c00, 0x0400, 0xbe912ccb )
-	ROM_LOAD( "35222.e1", 0x11000, 0x0400, 0xfd8832fa )
-	ROM_LOAD( "35223.f1", 0x11400, 0x0400, 0x329eb720 )
-	ROM_LOAD( "35226.h1", 0x11800, 0x0400, 0xd9055541 )
-	ROM_LOAD( "35227.j1", 0x11c00, 0x0400, 0x060c9cdb )
-	ROM_LOAD( "35236.m2", 0x12000, 0x0400, 0x9d03baa1 ) /* high nibbles */
-	ROM_LOAD( "35237.n2", 0x12400, 0x0400, 0xad212d2d )
-	ROM_LOAD( "35232.k2", 0x12800, 0x0400, 0xfa2b8b52 )
-	ROM_LOAD( "35233.l2", 0x12c00, 0x0400, 0x3f8e96c1 )
-	ROM_LOAD( "35224.e2", 0x13000, 0x0400, 0x7053ffbc )
-	ROM_LOAD( "35225.f2", 0x13400, 0x0400, 0xe0c9b4c2 )
-	ROM_LOAD( "35228.h2", 0x13800, 0x0400, 0x8a912448 )
-	ROM_LOAD( "35229.j2", 0x13c00, 0x0400, 0xaa699a3a )
+	ROM_LOAD( "035234.m1", 0x10000, 0x0400, 0x83524bb7 ) /* low nibbles */
+	ROM_LOAD( "035235.n1", 0x10400, 0x0400, 0xd6855b0e )
+	ROM_LOAD( "035230.k1", 0x10800, 0x0400, 0x747f6e4a )
+	ROM_LOAD( "035231.l1", 0x10c00, 0x0400, 0xd584c199 )
+	ROM_LOAD( "035222.e1", 0x11000, 0x0400, 0x03ec6bce )
+	ROM_LOAD( "035223.f1", 0x11400, 0x0400, 0x9c600726 )
+	ROM_LOAD( "035226.h1", 0x11800, 0x0400, 0xd57c0cfb )
+	ROM_LOAD( "035227.j1", 0x11c00, 0x0400, 0x4112b257 )
+	ROM_LOAD( "035236.m2", 0x12000, 0x0400, 0xc53f4d13 ) /* high nibbles */
+	ROM_LOAD( "035237.n2", 0x12400, 0x0400, 0x1d01b054 )
+	ROM_LOAD( "035232.k2", 0x12800, 0x0400, 0x55f43e7f )
+	ROM_LOAD( "035233.l2", 0x12c00, 0x0400, 0xb343f500 )
+	ROM_LOAD( "035224.e2", 0x13000, 0x0400, 0xa1aeaa70 )
+	ROM_LOAD( "035225.f2", 0x13400, 0x0400, 0x2aa06521 )
+	ROM_LOAD( "035228.h2", 0x13800, 0x0400, 0x594574cb )
+	ROM_LOAD( "035229.j2", 0x13c00, 0x0400, 0x412d129c )
 
-	ROM_REGION(0xe00)	  /* 2k for graphics */
-	ROM_LOAD( "035247.n7", 0x0000, 0x0400, 0x12f43dca )
-	ROM_LOAD( "035248.m7", 0x0400, 0x0200, 0xeac9ef90 )
-	ROM_LOAD( "035246.r6", 0x0600, 0x0800, 0x89d619b8 )
+	ROM_REGION(0x1000)	  /* 2k for graphics */
+	ROM_LOAD( "035247.n7", 0x0000, 0x0400, 0x3adb5f4e )
+	ROM_LOAD( "035248.m7", 0x0400, 0x0400, 0xa890cd48 )
+	ROM_LOAD( "035246.r6", 0x0800, 0x0800, 0x4a996136 )
 ROM_END
 
 
@@ -715,9 +720,9 @@ struct GameDriver atarifb_driver =
 
 	atarifb_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0,0
+	0, 0
 };
 
 struct GameDriver atarifb1_driver =
@@ -740,9 +745,9 @@ struct GameDriver atarifb1_driver =
 
 	atarifb_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0,0
+	0, 0
 };
 
 struct GameDriver atarifb4_driver =
@@ -765,9 +770,9 @@ struct GameDriver atarifb4_driver =
 
 	atarifb4_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0,0
+	0, 0
 };
 
 struct GameDriver abaseb_driver =
@@ -790,9 +795,9 @@ struct GameDriver abaseb_driver =
 
 	abaseb_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0,0
+	0, 0
 };
 
 struct GameDriver abaseb2_driver =
@@ -815,9 +820,9 @@ struct GameDriver abaseb2_driver =
 
 	abaseb_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0,0
+	0, 0
 };
 
 struct GameDriver soccer_driver =
@@ -840,8 +845,7 @@ struct GameDriver soccer_driver =
 
 	atarifb_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-	0,0
+	0, 0
 };
-

@@ -948,7 +948,7 @@ static struct MachineDriver armwrest_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( punchout_rom )
+ROM_START( punchout )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "chp1-c.8l",    0x0000, 0x2000, 0xa4003adc )
 	ROM_LOAD( "chp1-c.8k",    0x2000, 0x2000, 0x745ecf40 )
@@ -1001,7 +1001,7 @@ ROM_START( punchout_rom )
 	ROM_LOAD( "chp1-c.6p",    0x0000, 0x4000, 0xea0bbb31 )
 ROM_END
 
-ROM_START( spnchout_rom )
+ROM_START( spnchout )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "chs1-c.8l",    0x0000, 0x2000, 0x703b9780 )
 	ROM_LOAD( "chs1-c.8k",    0x2000, 0x2000, 0xe13719f6 )
@@ -1075,7 +1075,7 @@ ROM_START( spnchout_rom )
 	ROM_LOAD( "chs1-c.6p",    0x0000, 0x4000, 0xad8b64b8 )
 ROM_END
 
-ROM_START( armwrest_rom )
+ROM_START( armwrest )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "chv1-c.8l",    0x0000, 0x2000, 0xb09764c1 )
 	ROM_LOAD( "chv1-c.8k",    0x2000, 0x2000, 0x0e147ff7 )

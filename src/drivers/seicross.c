@@ -484,7 +484,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( friskyt_rom )
+ROM_START( friskyt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ftom.01",      0x0000, 0x1000, 0xbce5d486 )
 	ROM_LOAD( "ftom.02",      0x1000, 0x1000, 0x63157d6e )
@@ -509,7 +509,7 @@ ROM_START( friskyt_rom )
 	/* filled in later */
 ROM_END
 
-ROM_START( radrad_rom )
+ROM_START( radrad )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1.3a",         0x0000, 0x1000, 0xb1e958ca )
 	ROM_LOAD( "2.3b",         0x1000, 0x1000, 0x30ba76b3 )
@@ -534,7 +534,7 @@ ROM_START( radrad_rom )
 	/* filled in later */
 ROM_END
 
-ROM_START( seicross_rom )
+ROM_START( seicross )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "smc1",         0x0000, 0x1000, 0xf6c3aeca )
 	ROM_LOAD( "smc2",         0x1000, 0x1000, 0x0ec6c218 )
@@ -559,7 +559,7 @@ ROM_START( seicross_rom )
 	/* filled in later */
 ROM_END
 
-ROM_START( sectrzon_rom )
+ROM_START( sectrzon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sz1.3a",       0x0000, 0x1000, 0xf0a45cb4 )
 	ROM_LOAD( "sz2.3c",       0x1000, 0x1000, 0xfea68ddb )

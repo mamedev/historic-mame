@@ -378,7 +378,7 @@ static struct MachineDriver bootleg_machine_driver =
 
 /***************************************************************************/
 
-ROM_START( pcktgal_rom )
+ROM_START( pcktgal )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
     ROM_LOAD( "eb04.rom",     0x10000, 0x4000, 0x8215d60d )
 	ROM_CONTINUE(             0x04000, 0xc000)
@@ -399,7 +399,7 @@ ROM_START( pcktgal_rom )
 	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
-ROM_START( pcktgalb_rom )
+ROM_START( pcktgalb )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
     ROM_LOAD( "sexybill.001", 0x10000, 0x4000, 0x4acb3e84 )
 	ROM_CONTINUE(             0x04000, 0xc000)
@@ -421,7 +421,7 @@ ROM_START( pcktgalb_rom )
 	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
-ROM_START( pcktgal2_rom )
+ROM_START( pcktgal2 )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
     ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
 	ROM_CONTINUE(             0x04000, 0xc000)
@@ -442,7 +442,7 @@ ROM_START( pcktgal2_rom )
 	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
-ROM_START( spool3_rom )
+ROM_START( spool3 )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
     ROM_LOAD( "eb04-2.rom",   0x10000, 0x4000, 0x0c7f2905 )
 	ROM_CONTINUE(             0x04000, 0xc000)
@@ -463,7 +463,7 @@ ROM_START( spool3_rom )
 	ROM_LOAD( "eb06.rom",   0x0200, 0x0200, 0x1fbd4b59 ) /* 82s131.101 */
 ROM_END
 
-ROM_START( spool3i_rom )
+ROM_START( spool3i )
     ROM_REGION(0x14000)     /* 64k for code + 16k for banks */
     ROM_LOAD( "de1.bin",      0x10000, 0x4000, 0xa59980fe )
 	ROM_CONTINUE(             0x04000, 0xc000)

@@ -87,9 +87,9 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (offs = 0;offs <0x1000;offs += 4)
 	{
 		color = READ_WORD(&videoram[offs+2]) &0xf;
-		code = READ_WORD(&videoram[offs]);
+		tile = READ_WORD(&videoram[offs])&0xff;
 		tile = tile | ((bank_base)<<8);
-		colmask[color] |= Machine->gfx[0]->pen_usage[code&0xff];
+		colmask[color] |= Machine->gfx[0]->pen_usage[tile];
 	}
 	for (color = 0;color < 16;color++)
 	{
@@ -144,9 +144,9 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			my = 0;
 			mx++;
 		}
-		tile  = READ_WORD(&videoram[offs]);
+		tile  = READ_WORD(&videoram[offs])&0xff;
 		color = READ_WORD(&videoram[offs+2]) &0xf;
-		tile =tile | (bank_base<<8);
+		tile = tile | (bank_base<<8);
 		drawgfx(bitmap,Machine->gfx[0],
 				tile,
 				color,
@@ -202,7 +202,6 @@ void alpha68k_II_video_bank_w(int offset, int data)
 		case 0x70:
 			if (buffer_68) {if (buffer_60) bank_base=7; else bank_base=6; }
 			if (buffer_28) {if (buffer_60) bank_base=5; else bank_base=4; }
-//			if (errorlog) fprintf(errorlog,"Selected %d\n",bank_base);
 			return;
 		case 0x10: /* Graphics flags?  Not related to fix chars anyway */
 		case 0x18:
@@ -286,9 +285,9 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (offs = 0;offs <0x1000;offs += 4)
 	{
 		color = READ_WORD(&videoram[offs+2])&0xf;
-		code = READ_WORD(&videoram[offs]);
+		tile = READ_WORD(&videoram[offs])&0xff;
         tile = tile | ((bank_base)<<8);
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+		colmask[color] |= Machine->gfx[0]->pen_usage[tile];
 	}
 	for (color = 0;color < 16;color++)
 	{
@@ -341,7 +340,7 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			my = 0;
 			mx++;
 		}
-		tile  = READ_WORD(&videoram[offs]);
+		tile  = READ_WORD(&videoram[offs])&0xff;
 		color = READ_WORD(&videoram[offs+2]);
 		tile = tile | ((bank_base)<<8);
 		drawgfx(bitmap,Machine->gfx[0],
@@ -368,9 +367,9 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	for (offs = 0;offs <0x1000;offs += 4)
 	{
 		color = READ_WORD(&videoram[offs+2])&0xf;
-		code = READ_WORD(&videoram[offs]);
+		tile = READ_WORD(&videoram[offs])&0xff;
         tile = tile | ((bank_base)<<8);
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+		colmask[color] |= Machine->gfx[0]->pen_usage[tile];
 	}
 	for (color = 0;color < 16;color++)
 	{

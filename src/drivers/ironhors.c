@@ -395,7 +395,7 @@ static struct MachineDriver farwest_machine_driver =
 	{
 		{
 			CPU_M6809,
-			18432000/6,        /* 3.07MHz? mod by Shingo Suzuki 1999/10/15 */
+			2000000,        /* ? */
 			0,
 			ironhors_readmem,ironhors_writemem,0,0,
 			ironhors_interrupt,8
@@ -442,7 +442,7 @@ static struct MachineDriver farwest_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( ironhors_rom )
+ROM_START( ironhors )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "13c_h03.bin",  0x4000, 0x8000, 0x24539af1 )
 	ROM_LOAD( "12c_h02.bin",  0xc000, 0x4000, 0xfab07f86 )
@@ -464,7 +464,7 @@ ROM_START( ironhors_rom )
 	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 ROM_END
 
-ROM_START( farwest_rom )
+ROM_START( farwest )
 	ROM_REGION(0x12000)	/* 64k for code + 8k for extra ROM */
 	ROM_LOAD( "ironhors.008", 0x04000, 0x4000, 0xb1c8246c )
 	ROM_LOAD( "ironhors.009", 0x08000, 0x8000, 0xea34ecfc )

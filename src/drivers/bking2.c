@@ -390,7 +390,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( bking2_rom )
+ROM_START( bking2 )
 	ROM_REGION(0x10000)
 	ROM_LOAD( "01.13f",       0x0000, 0x1000, 0x078ada3f )
 	ROM_LOAD( "02.11f",       0x1000, 0x1000, 0xc37d110a )

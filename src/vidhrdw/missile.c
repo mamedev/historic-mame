@@ -208,7 +208,7 @@ void missile_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int address;
 
-	if (full_refresh)
+	if (palette_recalc() || full_refresh)
 	{
 		for (address = 0x1900; address <= 0xffff; address++)
 			missile_blit_w (address);

@@ -332,6 +332,8 @@ static void common_videoram_w(int offset,int data,
 ***************************************************************************/
 void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	palette_recalc();
+
 	if (video_remap_1)
 	{
 		osd_mark_dirty(0,0,256,256,0);

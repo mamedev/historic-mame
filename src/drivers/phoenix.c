@@ -328,7 +328,7 @@ static const char *phoenix_sample_names[] =
 
 ***************************************************************************/
 
-ROM_START( phoenix_rom )
+ROM_START( phoenix )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic45",         0x0000, 0x0800, 0x9f68086b )
 	ROM_LOAD( "ic46",         0x0800, 0x0800, 0x273a4a82 )
@@ -350,7 +350,7 @@ ROM_START( phoenix_rom )
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( phoenixt_rom )
+ROM_START( phoenixt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
@@ -372,7 +372,7 @@ ROM_START( phoenixt_rom )
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( phoenix3_rom )
+ROM_START( phoenix3 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "phoenix3.45",  0x0000, 0x0800, 0xa362cda0 )
 	ROM_LOAD( "phoenix3.46",  0x0800, 0x0800, 0x5748f486 )
@@ -394,7 +394,7 @@ ROM_START( phoenix3_rom )
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( phoenixc_rom )
+ROM_START( phoenixc )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
 	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
@@ -416,7 +416,7 @@ ROM_START( phoenixc_rom )
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
-ROM_START( pleiads_rom )
+ROM_START( pleiads )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic47.r1",      0x0000, 0x0800, 0x960212c8 )
 	ROM_LOAD( "ic48.r2",      0x0800, 0x0800, 0xb254217c )
@@ -438,7 +438,7 @@ ROM_START( pleiads_rom )
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )	/* palette high bits */
 ROM_END
 
-ROM_START( pleiadbl_rom )
+ROM_START( pleiadbl )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, 0x93fc2958 )
 	ROM_LOAD( "ic46.bin",     0x0800, 0x0800, 0xe2b5b8cd )
@@ -460,7 +460,7 @@ ROM_START( pleiadbl_rom )
 	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )	/* palette high bits */
 ROM_END
 
-ROM_START( pleiadce_rom )
+ROM_START( pleiadce )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "pleiades.47",  0x0000, 0x0800, 0x711e2ba0 )
 	ROM_LOAD( "pleiades.48",  0x0800, 0x0800, 0x93a36943 )

@@ -301,7 +301,7 @@ static struct MachineDriver popeyebl_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( popeye_rom )
+ROM_START( popeye )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "c-7a",         0x0000, 0x2000, 0x9af7c821 )
 	ROM_LOAD( "c-7b",         0x2000, 0x2000, 0xc3704958 )
@@ -323,7 +323,7 @@ ROM_START( popeye_rom )
 	ROM_LOAD( "prom-vid.7j",  0x0240, 0x0100, 0xa4655e2e ) /* timing for the protection ALU */
 ROM_END
 
-ROM_START( popeye2_rom )
+ROM_START( popeye2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "7a",           0x0000, 0x2000, 0x0bd04389 )
 	ROM_LOAD( "7b",           0x2000, 0x2000, 0xefdf02c3 )
@@ -345,7 +345,7 @@ ROM_START( popeye2_rom )
 	ROM_LOAD( "prom-vid.7j",  0x0240, 0x0100, 0xa4655e2e ) /* timing for the protection ALU */
 ROM_END
 
-ROM_START( popeyebl_rom )
+ROM_START( popeyebl )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "po1",          0x0000, 0x2000, 0xb14a07ca )
 	ROM_LOAD( "po2",          0x2000, 0x2000, 0x995475ff )

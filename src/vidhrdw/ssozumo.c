@@ -112,6 +112,10 @@ void ssozumo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int	sx, sy;
 	int	scrolly;
 
+
+	if (palette_recalc())
+		memset(dirtybuffer,1,videoram_size);
+
 	/* Draw the background layer*/
 	for (offs = (videoram_size - 1) ; offs >= 0 ; offs--)
 	{

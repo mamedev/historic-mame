@@ -785,7 +785,7 @@ static struct MachineDriver airbustr_machine_driver =
 
 ***************************************************************************/
 
-ROM_START( airbustr_rom )
+ROM_START( airbustr )
 
 	ROM_REGION(0x24000)				/* Region 0 - main cpu */
 	ROM_LOAD( "pr-14j.bin", 0x00000, 0x0c000, 0x6b9805bd )

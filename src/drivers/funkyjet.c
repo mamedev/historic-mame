@@ -382,7 +382,7 @@ static struct MachineDriver funkyjet_machine_driver =
 
 /******************************************************************************/
 
-ROM_START( funkyjet_rom )
+ROM_START( funkyjet )
 	ROM_REGION(0x80000) /* 68000 code */
 	ROM_LOAD_EVEN( "jk00.12f", 0x00000, 0x40000, 0x712089c1 )
 	ROM_LOAD_ODD ( "jk01.13f", 0x00000, 0x40000, 0xbe3920d7 )

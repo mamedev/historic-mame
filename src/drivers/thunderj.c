@@ -397,7 +397,7 @@ static void thunderj_init(void)
  *
  *************************************/
 
-ROM_START( thunderj_rom )
+ROM_START( thunderj )
 	ROM_REGION(0xa0000)	/* 10*64k for 68000 code */
 	ROM_LOAD_EVEN( "2001.14e",   0x00000, 0x10000, 0xf6a71532 )
 	ROM_LOAD_ODD ( "2002.14c",   0x00000, 0x10000, 0x173ec10d )

@@ -404,7 +404,7 @@ static void pitfight_init(void)
  *
  *************************************/
 
-ROM_START( hydra_rom )
+ROM_START( hydra )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "hydr3028.bin", 0x00000, 0x10000, 0x43475f73 )
 	ROM_LOAD_ODD ( "hydr3029.bin", 0x00000, 0x10000, 0x886e1de8 )
@@ -458,7 +458,7 @@ ROM_START( hydra_rom )
 ROM_END
 
 
-ROM_START( hydrap_rom )
+ROM_START( hydrap )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "hydhi0.bin", 0x00000, 0x10000, 0xdab2e8a2 )
 	ROM_LOAD_ODD ( "hydlo0.bin", 0x00000, 0x10000, 0xc18d4f16 )
@@ -512,7 +512,7 @@ ROM_START( hydrap_rom )
 ROM_END
 
 
-ROM_START( pitfight_rom )
+ROM_START( pitfight )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "4028", 0x00000, 0x10000, 0xf7cb1a4b )
 	ROM_LOAD_ODD ( "4029", 0x00000, 0x10000, 0x13ae0d4f )
@@ -558,7 +558,7 @@ ROM_START( pitfight_rom )
 ROM_END
 
 
-ROM_START( pitfigh3_rom )
+ROM_START( pitfigh3 )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "3028", 0x00000, 0x10000, 0x99530da4 )
 	ROM_LOAD_ODD ( "3029", 0x00000, 0x10000, 0x78c7afbf )

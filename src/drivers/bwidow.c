@@ -591,25 +591,6 @@ INPUT_PORTS_START( spacduel_input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout fakelayout =
-{
-        1,1,
-        0,
-        1,
-        { 0 },
-        { 0 },
-        { 0 },
-        0
-};
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
-};
-
-static unsigned char color_prom[] = { VEC_PAL_COLOR };
-
 
 static struct POKEYinterface pokey_interface =
 {
@@ -651,9 +632,9 @@ static struct MachineDriver bwidow_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 480, 0, 440 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -689,9 +670,9 @@ static struct MachineDriver gravitar_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 420, 0, 400 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -727,9 +708,9 @@ static struct MachineDriver spacduel_machine_driver =
 
 	/* video hardware */
 	400, 300, { 0, 540, 0, 400 },
-	gfxdecodeinfo,
+	0,
 	256, 256,
-	avg_init_colors,
+	avg_init_palette_multi,
 
 	VIDEO_TYPE_VECTOR,
 	0,
@@ -798,7 +779,7 @@ static void bwidow_hisave(void)
 }
 
 
-ROM_START( bwidow_rom )
+ROM_START( bwidow )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136017.107",   0x2800, 0x0800, 0x97f6000c )
@@ -836,7 +817,7 @@ struct GameDriver bwidow_driver =
 
 	bwidow_input_ports,
 
-	color_prom, 0,0,
+	0, 0,0,
 	ORIENTATION_DEFAULT,
 
 	bwidow_hiload, bwidow_hisave
@@ -855,7 +836,7 @@ struct GameDriver bwidow_driver =
  *		osd_fwrite(f,&RAM[0x041e],3*16);
  */
 
-ROM_START( gravitar_rom )
+ROM_START( gravitar )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
@@ -872,7 +853,7 @@ ROM_START( gravitar_rom )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-ROM_START( gravitr2_rom )
+ROM_START( gravitr2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
@@ -910,7 +891,7 @@ struct GameDriver gravitar_driver =
 
 	gravitar_input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
@@ -936,7 +917,7 @@ struct GameDriver gravitr2_driver =
 
 	gravitar_input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
@@ -954,7 +935,7 @@ struct GameDriver gravitr2_driver =
  *	osd_fwrite(f,&RAM[0x00dd],3*20+3*25);
  */
 
-ROM_START( spacduel_rom )
+ROM_START( spacduel )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
 	ROM_LOAD( "136006.106",   0x2800, 0x0800, 0x691122fe )
@@ -994,7 +975,7 @@ struct GameDriver spacduel_driver =
 
 	spacduel_input_ports,
 
-	color_prom, 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save

@@ -185,8 +185,8 @@ void ccastles_bitmode_w(int offset, int data)
 		y = j/256;
 		if (!flipscreen)
 		{
-			tmpbitmap->line[y][x] = Machine->gfx[1]->colortable[(videoram[addr] & 0xF0) >> 4];
-			tmpbitmap->line[y][x+1] = Machine->gfx[1]->colortable[videoram[addr] & 0x0F];
+			tmpbitmap->line[y][x] = Machine->pens[16 + ((videoram[addr] & 0xF0) >> 4)];
+			tmpbitmap->line[y][x+1] = Machine->pens[16 + (videoram[addr] & 0x0F)];
 
 			/* if bit 3 of the pixel is set, background has priority over sprites when */
 			/* the sprite has the priority bit set. We use a second bitmap to remember */
@@ -200,8 +200,8 @@ void ccastles_bitmode_w(int offset, int data)
 			x = 254-x;
 			if (y >= 0)
 			{
-				tmpbitmap->line[y][x+1] = Machine->gfx[1]->colortable[(videoram[addr] & 0xF0) >> 4];
-				tmpbitmap->line[y][x] = Machine->gfx[1]->colortable[videoram[addr] & 0x0F];
+				tmpbitmap->line[y][x+1] = Machine->pens[16 + ((videoram[addr] & 0xF0) >> 4)];
+				tmpbitmap->line[y][x] = Machine->pens[16 + (videoram[addr] & 0x0F)];
 
 				/* if bit 3 of the pixel is set, background has priority over sprites when */
 				/* the sprite has the priority bit set. We use a second bitmap to remember */
@@ -273,6 +273,8 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned char *spriteaddr;
 	int scrollx,scrolly;
 
+
+	palette_recalc();
 
 	scrollx = 255 - *ccastles_scrollx;
 	scrolly = 255 - *ccastles_scrolly;

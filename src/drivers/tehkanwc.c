@@ -634,7 +634,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	3579545 / 2,	/* 3.579545 / 2 MHz */
+	1536000, 	/* ??? */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0, tehkanwc_portA_r },
@@ -716,7 +716,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( tehkanwc_rom )
+ROM_START( tehkanwc )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "twc-1.bin",    0x0000, 0x4000, 0x34d6d5ff )
 	ROM_LOAD( "twc-2.bin",    0x4000, 0x4000, 0x7017a221 )
@@ -739,7 +739,7 @@ ROM_START( tehkanwc_rom )
 	ROM_LOAD( "twc-5.bin",    0x0000, 0x4000, 0x444b5544 )
 ROM_END
 
-ROM_START( gridiron_rom )
+ROM_START( gridiron )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "gfight1.bin",  0x0000, 0x4000, 0x51612741 )
 	ROM_LOAD( "gfight2.bin",  0x4000, 0x4000, 0xa678db48 )
@@ -765,7 +765,7 @@ ROM_START( gridiron_rom )
 	ROM_LOAD( "gfight6.bin",  0x0000, 0x4000, 0xd05d463d )
 ROM_END
 
-ROM_START( teedoff_rom )
+ROM_START( teedoff )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "to-1.bin",     0x0000, 0x4000, 0xcc2aebc5 )
 	ROM_LOAD( "to-2.bin",     0x4000, 0x4000, 0xf7c9f138 )

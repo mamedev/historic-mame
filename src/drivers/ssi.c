@@ -374,7 +374,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( ssi_rom )
+ROM_START( ssi )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "ssi_15-1.rom", 0x00000, 0x40000, 0xce9308a6 )
 	ROM_LOAD_ODD ( "ssi_16-1.rom", 0x00000, 0x40000, 0x470a483a )
@@ -390,7 +390,7 @@ ROM_START( ssi_rom )
 	ROM_LOAD( "ssi_m02.rom",  0x00000, 0x20000, 0x3cb0b907 )
 ROM_END
 
-ROM_START( majest12_rom )
+ROM_START( majest12 )
 	ROM_REGION(0x80000)     /* 512k for 68000 code */
 	ROM_LOAD_EVEN( "c64-07.bin", 0x00000, 0x20000, 0xf29ed5c9 )
 	ROM_LOAD_EVEN( "c64-06.bin", 0x40000, 0x20000, 0x18dc71ac )

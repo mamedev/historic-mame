@@ -405,7 +405,7 @@ static void rom_decode(void)
  *
  *************************************/
 
-ROM_START( vindictr_rom )
+ROM_START( vindictr )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "vin.d1", 0x00000, 0x10000, 0x2e5135e4 )
 	ROM_LOAD_ODD ( "vin.d3", 0x00000, 0x10000, 0xe357fa79 )

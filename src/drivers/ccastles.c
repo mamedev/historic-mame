@@ -198,24 +198,10 @@ static struct GfxLayout ccastles_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the background color table. */
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	4,	/* 4 bits per pixel */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &ccastles_spritelayout,  0, 1 },
-	{ 0, 0,      &fakelayout,            16, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -289,7 +275,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START(ccastles_rom)
+ROM_START( ccastles )
      ROM_REGION(0x14000)	/* 64k for code */
      ROM_LOAD( "ccastles.303", 0xA000, 0x2000, 0x10e39fce )
      ROM_LOAD( "ccastles.304", 0xC000, 0x2000, 0x74510f72 )
@@ -302,7 +288,7 @@ ROM_START(ccastles_rom)
      ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x9d1d89fc )
 ROM_END
 
-ROM_START(ccastle2_rom)
+ROM_START( ccastle2 )
      ROM_REGION(0x14000)	/* 64k for code */
      ROM_LOAD( "ccastles.203", 0xA000, 0x2000, 0x348a96f0 )
      ROM_LOAD( "ccastles.204", 0xC000, 0x2000, 0xd48d8c1f )

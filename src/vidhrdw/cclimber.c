@@ -607,6 +607,12 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (palette_recalc())
+	{
+		memset(dirtybuffer,1,videoram_size);
+		memset(bsdirtybuffer,1,cclimber_bsvideoram_size);
+	}
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)

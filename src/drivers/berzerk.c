@@ -332,25 +332,29 @@ INPUT_PORTS_END
 
 
 /* Simple 1-bit RGBI palette */
-unsigned char berzerk_palette[16 * 3] =
+static unsigned char palette[16 * 3] =
 {
-        0x00, 0x00, 0x00,
-        0xff, 0x00, 0x00,
-        0x00, 0xff, 0x00,
-        0xff, 0xff, 0x00,
-        0x00, 0x00, 0xff,
-        0xff, 0x00, 0xff,
-        0x00, 0xff, 0xff,
-        0xff, 0xff, 0xff,
-        0x40, 0x40, 0x40,
-        0xff, 0x40, 0x40,
-        0x40, 0xff, 0x40,
-        0xff, 0xff, 0x40,
-        0x40, 0x40, 0xff,
-        0xff, 0x40, 0xff,
-        0x40, 0xff, 0xff,
-        0xff, 0xff, 0xff
+	0x00, 0x00, 0x00,
+	0xff, 0x00, 0x00,
+	0x00, 0xff, 0x00,
+	0xff, 0xff, 0x00,
+	0x00, 0x00, 0xff,
+	0xff, 0x00, 0xff,
+	0x00, 0xff, 0xff,
+	0xff, 0xff, 0xff,
+	0x40, 0x40, 0x40,
+	0xff, 0x40, 0x40,
+	0x40, 0xff, 0x40,
+	0xff, 0xff, 0x40,
+	0x40, 0x40, 0xff,
+	0xff, 0x40, 0xff,
+	0x40, 0xff, 0xff,
+	0xff, 0xff, 0xff
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
 
 
@@ -392,8 +396,8 @@ static struct MachineDriver GAMENAME##_machine_driver =					\
 	/* video hardware */												\
 	256, 256, { 0, 256-1, 32, 256-1 },									\
 	0,																	\
-	sizeof(berzerk_palette)/3, 0,										\
-	0,																	\
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,						\
+	init_palette,														\
 																		\
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,							\
 	0,																	\
@@ -427,7 +431,7 @@ DRIVER(frenzy)
 
 ***************************************************************************/
 
-ROM_START( berzerk_rom )
+ROM_START( berzerk )
         ROM_REGION(0x10000)
         ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
         ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
@@ -437,7 +441,7 @@ ROM_START( berzerk_rom )
         ROM_LOAD( "5c-5",         0x3000, 0x0800, 0xc8c665e5 )
 ROM_END
 
-ROM_START( berzerk1_rom )
+ROM_START( berzerk1 )
         ROM_REGION(0x10000)
         ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
         ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
@@ -447,7 +451,7 @@ ROM_START( berzerk1_rom )
         ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
 ROM_END
 
-ROM_START( frenzy_rom )
+ROM_START( frenzy )
         ROM_REGION(0x10000)
         ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
         ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
@@ -597,7 +601,7 @@ struct GameDriver berzerk_driver =
 
 	berzerk_input_ports,
 
-	0, berzerk_palette, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 
@@ -625,7 +629,7 @@ struct GameDriver berzerk1_driver =
 
 	berzerk_input_ports,
 
-	0, berzerk_palette, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 
@@ -653,7 +657,7 @@ struct GameDriver frenzy_driver =
 
 	frenzy_input_ports,
 
-	0, berzerk_palette, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 

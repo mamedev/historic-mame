@@ -1206,7 +1206,7 @@ static void showdown_init(void)
  *
  *************************************/
 
-ROM_START( crossbow_rom )
+ROM_START( crossbow )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "xbl-2.1a",   0x08000, 0x2000, 0xbd53ac46 )
 	ROM_LOAD( "xbl-2.3a",   0x0a000, 0x2000, 0x703e1376 )
@@ -1263,7 +1263,7 @@ ROM_START( crossbow_rom )
 ROM_END
 
 
-ROM_START( cheyenne_rom )
+ROM_START( cheyenne )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "cyl-1.1a",   0x08000, 0x2000, 0x504c3fa6 )
 	ROM_LOAD( "cyl-1.3a",   0x0a000, 0x2000, 0x09b7903b )
@@ -1317,7 +1317,7 @@ ROM_START( cheyenne_rom )
 ROM_END
 
 
-ROM_START( combat_rom )
+ROM_START( combat )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "1a",   0x08000, 0x2000, 0x159a573b )
 	ROM_LOAD( "3a",   0x0a000, 0x2000, 0x59ae51a7 )
@@ -1365,7 +1365,7 @@ ROM_START( combat_rom )
 ROM_END
 
 
-ROM_START( cracksht_rom )
+ROM_START( cracksht )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "csl2.1a",   0x08000, 0x2000, 0x16fd0171 )
 	ROM_LOAD( "csl2.3a",   0x0a000, 0x2000, 0x906f3209 )
@@ -1411,7 +1411,7 @@ ROM_START( cracksht_rom )
 ROM_END
 
 
-ROM_START( claypign_rom )
+ROM_START( claypign )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "claypige.1a",   0x08000, 0x2000, 0x446d7004 )
 	ROM_LOAD( "claypige.3a",   0x0a000, 0x2000, 0xdf39701b )
@@ -1444,7 +1444,7 @@ ROM_START( claypign_rom )
 ROM_END
 
 
-ROM_START( chiller_rom )
+ROM_START( chiller )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "chl3.1a",   0x08000, 0x2000, 0x996ad02e )
 	ROM_LOAD( "chl3.3a",   0x0a000, 0x2000, 0x17e6f904 )
@@ -1497,7 +1497,7 @@ ROM_START( chiller_rom )
 ROM_END
 
 
-ROM_START( topsecex_rom )
+ROM_START( topsecex )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "tsl1.a1",   0x08000, 0x2000, 0x30ff2142 )
 	ROM_LOAD( "tsl1.a3",   0x0a000, 0x2000, 0x9295e5b7 )
@@ -1557,7 +1557,7 @@ ROM_START( topsecex_rom )
 ROM_END
 
 
-ROM_START( hitnmiss_rom )
+ROM_START( hitnmiss )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "hml3.a1",   0x08000, 0x2000, 0xd79ae18e )
 	ROM_LOAD( "hml3.a3",   0x0a000, 0x2000, 0x61baf38b )
@@ -1604,7 +1604,7 @@ ROM_START( hitnmiss_rom )
 ROM_END
 
 
-ROM_START( hitnmis2_rom )
+ROM_START( hitnmis2 )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "hml2.a1",   0x08000, 0x2000, 0x322f7e83 )
 	ROM_LOAD( "hml2.a3",   0x0a000, 0x2000, 0x0e12a721 )
@@ -1652,7 +1652,7 @@ ROM_START( hitnmis2_rom )
 ROM_END
 
 
-ROM_START( whodunit_rom )
+ROM_START( whodunit )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "wdl8.1a",   0x08000, 0x2000, 0x50658904 )
 	ROM_LOAD( "wdl8.3a",   0x0a000, 0x2000, 0x5d1530f8 )
@@ -1710,7 +1710,7 @@ ROM_START( whodunit_rom )
 ROM_END
 
 
-ROM_START( showdown_rom )
+ROM_START( showdown )
 	ROM_REGION(0x50000)     /* 64k for code for the first CPU, plus lots of banked ROMs */
 	ROM_LOAD( "showda1.bin",   0x08000, 0x2000, 0xe4031507 )
 	ROM_LOAD( "showd3a.bin",   0x0a000, 0x2000, 0xe7de171e )

@@ -1902,7 +1902,7 @@ static struct MachineDriver athena_machine_driver =
 	1024,1024,
 	aso_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT, /* overflows static palette! */
+	VIDEO_TYPE_RASTER,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -1959,7 +1959,7 @@ static struct MachineDriver aso_machine_driver =
 	1024,1024,
 	aso_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	VIDEO_TYPE_RASTER,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -2125,7 +2125,7 @@ static struct MachineDriver bermudat_machine_driver =
 	1024,1024,
 	snk_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT, /* overflows static palette */
+	VIDEO_TYPE_RASTER,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -2180,7 +2180,7 @@ static struct MachineDriver psychos_machine_driver =
 	1024,1024,
 	snk_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT, /* overflows static palette! */
+	VIDEO_TYPE_RASTER,
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -2258,7 +2258,7 @@ static struct MachineDriver tdfever_machine_driver =
 
 /***********************************************************************/
 
-ROM_START( tnk3_rom )
+ROM_START( tnk3 )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "tnk3-p1.bin",  0x0000, 0x4000, 0x0d2a8ca9 )
 	ROM_LOAD( "tnk3-p2.bin",  0x4000, 0x4000, 0x0ae0a483 )
@@ -2292,7 +2292,7 @@ ROM_START( tnk3_rom )
 	ROM_LOAD( "tnk3-p9.bin", 0x10000, 0x4000, 0x872e3fac )
 ROM_END
 
-ROM_START( tnk3j_rom )
+ROM_START( tnk3j )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "p1.4e",  0x0000, 0x4000, 0x03aca147 )
 	ROM_LOAD( "tnk3-p2.bin",  0x4000, 0x4000, 0x0ae0a483 )
@@ -2328,7 +2328,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( aso_rom )
+ROM_START( aso )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "aso.1",    0x0000, 0x8000, 0x3fc9d5e4 )
 	ROM_LOAD( "aso.3",    0x8000, 0x4000, 0x39a666d2 )
@@ -2361,7 +2361,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( athena_rom )
+ROM_START( athena )
 	ROM_REGION( 0x10000 ) /* 64k for cpuA code */
 	ROM_LOAD( "up02_p4.rom",  0x0000, 0x4000,  0x900a113c )
 	ROM_LOAD( "up02_m4.rom",  0x4000, 0x8000,  0x61c69474 )
@@ -2393,7 +2393,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( fitegolf_rom )
+ROM_START( fitegolf )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "gu2",    0x0000, 0x4000, 0x19be7ad6 )
 	ROM_LOAD( "gu1",    0x4000, 0x8000, 0xbc32568f )
@@ -2426,7 +2426,7 @@ ROM_END
 /***********************************************************************/
 
 #if 0
-ROM_START( alphmiss_rom ) /* BAD DUMP! */
+ROM_START( alphmiss ) /* BAD DUMP! */
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "p1.8d",     0x0000, 0x4000, 0x00000000 )
 	ROM_LOAD( "p2.7d",     0x4000, 0x4000, 0x00000000 )
@@ -2463,7 +2463,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( ikarius_rom )
+ROM_START( ikarius )
 	ROM_REGION(0x10000)	/* CPU A */
 	ROM_LOAD( "1.rom",  0x0000, 0x10000, 0x52a8b2dd )
 
@@ -2501,7 +2501,7 @@ ROM_START( ikarius_rom )
 	ROM_LOAD( "16.rom", 0x28000, 0x8000, 0xe9b03e07 )
 ROM_END
 
-ROM_START( ikarijp_rom ) /* unconfirmed */
+ROM_START( ikarijp ) /* unconfirmed */
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "up03_l4.rom",  0x0000, 0x4000, 0xcde006be )
 	ROM_LOAD( "up03_k4.rom",  0x4000, 0x8000, 0x26948850 )
@@ -2542,7 +2542,7 @@ ROM_START( ikarijp_rom ) /* unconfirmed */
 	ROM_LOAD( "16.rom", 0x28000, 0x8000, 0xe9b03e07 )
 ROM_END
 
-ROM_START( ikarijpb_rom )
+ROM_START( ikarijpb )
 	ROM_REGION(0x10000) /* CPU A */
 	ROM_LOAD( "ik1",	  0x00000, 0x4000, 0x2ef87dce )
 	ROM_LOAD( "up03_k4.rom",  0x04000, 0x8000, 0x26948850 )
@@ -2585,7 +2585,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( victroad_rom )
+ROM_START( victroad )
 	ROM_REGION( 0x10000 )	/* CPU A code */
 	ROM_LOAD( "p1",  0x0000, 0x10000,  0xe334acef )
 
@@ -2627,7 +2627,7 @@ ROM_START( victroad_rom )
 	ROM_LOAD( "p5",  0x10000, 0x10000, 0x93e5f110 )
 ROM_END
 
-ROM_START( dogosoke_rom ) /* Victory Road Japan */
+ROM_START( dogosoke ) /* Victory Road Japan */
 	ROM_REGION(0x10000)	/* CPU A code */
 	ROM_LOAD( "up03_p4.rom",  0x0000, 0x10000,  0x37867ad2 )
 
@@ -2671,7 +2671,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( gwar_rom )
+ROM_START( gwar )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "g01",  0x00000, 0x10000, 0xce1d3c80 )
 
@@ -2717,7 +2717,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( bermudat_rom )
+ROM_START( bermudat )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "bt_p1.rom",  0x0000, 0x10000,  0x43dec5e9 )
 
@@ -2766,7 +2766,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( bermudaj_rom )
+ROM_START( bermudaj )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "btj_p01.bin", 0x0000, 0x10000,  0xeda75f36 )
 
@@ -2815,7 +2815,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( psychos_rom )
+ROM_START( psychos )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "p7",  0x00000, 0x10000, 0x562809f4 )
 
@@ -2864,7 +2864,7 @@ ROM_START( psychos_rom )
 	ROM_LOAD( "p4",  0x30000, 0x10000, 0x437d775a )
 ROM_END
 
-ROM_START( psychos_alt_rom ) /* USA set */
+ROM_START( psychos_alt ) /* USA set */
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "up03_m4.rom",  0x0000, 0x10000,  0x05dfb409 )
 
@@ -2915,7 +2915,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( chopper_rom )
+ROM_START( chopper )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "kk_01.rom",  0x0000, 0x10000,  0x8fa2f839 )
 
@@ -2959,7 +2959,7 @@ ROM_START( chopper_rom )
 	ROM_LOAD( "kk_02.rom",  0x00000, 0x10000, 0x06169ae0 )
 ROM_END
 
-ROM_START( legofair_rom ) /* ChopperI (Japan) */
+ROM_START( legofair ) /* ChopperI (Japan) */
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "up03_m4.rom",  0x0000, 0x10000,  0x79a485c0 )
 
@@ -3005,7 +3005,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( ftsoccer_rom )
+ROM_START( ftsoccer )
         ROM_REGION(0x10000)     /* 64k for cpuA code */
         ROM_LOAD( "ft-003.bin",  0x00000, 0x10000, 0x649d4448 )
 
@@ -3045,7 +3045,7 @@ ROM_END
 
 /***********************************************************************/
 
-ROM_START( tdfever_rom ) /* USA set - unconfirmed! */
+ROM_START( tdfever ) /* USA set - unconfirmed! */
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "td2-ver3.6c",  0x0000, 0x10000,  0x92138fe4 )
 
@@ -3087,7 +3087,7 @@ ROM_START( tdfever_rom ) /* USA set - unconfirmed! */
 	ROM_LOAD( "up02_p6.rom",  0x10000, 0x10000, 0x04794557 )
 ROM_END
 
-ROM_START( tdfeverj_rom )
+ROM_START( tdfeverj )
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "up02_c6.rom",  0x0000, 0x10000,  0x88d88ec4 )
 
@@ -3676,7 +3676,7 @@ struct GameDriver aso_driver =
 	"1985",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 	&aso_machine_driver,
 	0,
 
@@ -3702,7 +3702,7 @@ struct GameDriver athena_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 	&athena_machine_driver,
 	0,
 
@@ -3728,7 +3728,7 @@ struct GameDriver fitegolf_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND,
 	&athena_machine_driver,
 	0,
 
@@ -3908,7 +3908,7 @@ struct GameDriver bermudat_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&bermudat_machine_driver,
 	0,
 
@@ -3934,7 +3934,7 @@ struct GameDriver bermudaj_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_REQUIRES_16BIT,
 	&bermudat_machine_driver,
 	0,
 
@@ -3960,7 +3960,7 @@ struct GameDriver psychos_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 	psychos_rom,
@@ -3983,7 +3983,7 @@ struct GameDriver psychosa_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 	psychos_alt_rom,
@@ -4006,7 +4006,7 @@ struct GameDriver chopper_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 
@@ -4032,7 +4032,7 @@ struct GameDriver legofair_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 
@@ -4051,29 +4051,29 @@ struct GameDriver legofair_driver =
 
 struct GameDriver ftsoccer_driver =
 {
-        __FILE__,
-        0,
-        "ftsoccer",
-        "Fighting Soccer",
-        "1988",
-        "SNK",
-        CREDITS,
-        0,
-        &psychos_machine_driver,
+	__FILE__,
+	0,
+	"ftsoccer",
+	"Fighting Soccer",
+	"1988",
+	"SNK",
+	CREDITS,
+	GAME_REQUIRES_16BIT,
+	&psychos_machine_driver,
 
-        0,
+	0,
 
-        ftsoccer_rom,
-        0, 0,
-        0,
-        0, /* sound_prom */
+	ftsoccer_rom,
+	0, 0,
+	0,
+	0, /* sound_prom */
 
-        ftsoccer_input_ports,
+	ftsoccer_input_ports,
 
-        PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-        ORIENTATION_DEFAULT,
+	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
+	ORIENTATION_DEFAULT,
 
-        ftsoccer_hiload, ftsoccer_hisave
+	ftsoccer_hiload, ftsoccer_hisave
 };
 
 struct GameDriver tdfever_driver =

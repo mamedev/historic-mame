@@ -10,25 +10,27 @@ To enter service mode in some games hit 5+F3.
 
 Game						Year	System	Dumped by		Supported ?
 ---------------------------------------------------------------------------
-64th Street	(Japan)			1991	C		J-Rom	 		Yes
-64th Street	(World)			1991	C		AraCORN 		Yes
-Astyanax (World) /			1989	A		?				Yes (encrypted)
-The Lord of King (Japan)	1989	A	 	J-Rom			Yes (encrypted)
+64th Street  (World) /		1991	C		AraCORN 		Yes
+ 64th Street (Japan)		1991	C		J-Rom	 		Yes
+Astyanax          (World) /	1989	A		?				Yes (encrypted)
+ The Lord of King (Japan)	1989	A	 	J-Rom			Yes (encrypted)
 Avenging Spirit (World) /	1991	B		AraCORN 		Yes
-Phantasm (Japan)			1990	A		J-Rom 			Yes (encrypted)
+ Phantasm       (Japan)		1990	A		J-Rom 			Yes (encrypted)
+Big Striker					1992	C		ShinobiZ & COY	Yes
 Chimera Beast				1993	C		J-Rom	 		Yes
 Cybattler					1993	C		AraCORN			Yes
 Earth Defense Force			1991	B		AraCORN			Yes
 Hachoo!						1989	A		AraCORN 		Yes (encrypted)
 Iga Ninjyutsuden (Japan)	1988	A		J-Rom			Yes (encrypted)
+Kick Off (Japan)			1988	A		AraCORN			Yes
 Legend of Makai (World) /	1988	Z		AraCORN			Yes
-Makai Densetsu (Japan)		1988	Z		-				Yes
-P-47 (Japan) /				1988	A		J-rom			Yes
-P-47 (World)				1988	A	 	?				Yes
+ Makai Densetsu (Japan)		1988	Z		-				Yes
+P-47  (World) /				1988	A	 	?				Yes
+ P-47 (Japan)				1988	A		J-rom			Yes
 Peek-a-Boo!					1993	D		Bart			Yes
 Plus Alpha					1989	A		J-Rom 			Yes (encrypted)
-RodLand	(Japan) /			1990	A		?				Yes
-RodLand (World)				1990	A		AraCORN 		Yes (encrypted)
+RodLand  (World) /			1990	A		AraCORN 		Yes (encrypted)
+ RodLand (Japan)			1990	A		?				Yes
 Saint Dragon				1989	A		J-Rom 			Yes (encrypted)
 Soldam						?		?		-				-
 ---------------------------------------------------------------------------
@@ -82,12 +84,12 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
 									To Do
 									-----
 
-- We think there's a PROM in the video section (different for every game)
-  that controls the priorities. It's not been dumped for any game but
-  P47 at the moment, so we have to fake their data. Most notable wrong
-  behaviours are stdargon and iganinju not showing some layers in the
-  title screens or intermission (respectively) because those layers
-  are *not enabled*
+- There's a PROM in the video section (different for every game)
+  that controls the priorities. It's been dumped for only a few
+  games, so we have to fake their data. Most notable wrong
+  behaviours are stdargon and iganinju not showing some layers
+  in the title screens or intermission (respectively) because
+  those layers are *not enabled*
 
 - Sprite / Sprite and Sprite / Layers priorities must be made orthogonal
   (Hachoo! player passes over the portal at the end of level 2 otherwise)
@@ -100,6 +102,8 @@ RAM				RW	0f0000-0f3fff	0e0000-0effff?	<
 ***************************************************************************/
 
 #include "driver.h"
+#include "drivers/megasys1.h"
+#include "vidhrdw/generic.h"
 
 
 /* Variables only used here: */
@@ -109,8 +113,6 @@ static int ip_select, ip_select_values[5];
 int hardware_type;
 
 /* Variables defined in vidhrdw: */
-extern unsigned char *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
-extern unsigned char *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
 
 /* Functions defined in vidhrdw: */
 int  megasys1_vh_start(void);
@@ -121,43 +123,12 @@ void megasys1_vregs_C_w(int offset, int data);
 void megasys1_vregs_D_w(int offset, int data);
 void paletteram_RRRRGGGGBBBBRGBx_word_w(int offset, int data);
 void paletteram_RRRRRGGGGGBBBBBx_word_w(int offset, int data);
-int  megasys1_scrollram_0_r(int offset);
-int  megasys1_scrollram_1_r(int offset);
-int  megasys1_scrollram_2_r(int offset);
-void megasys1_scrollram_0_w(int offset, int data);
-void megasys1_scrollram_1_w(int offset, int data);
-void megasys1_scrollram_2_w(int offset, int data);
-
 
 
 void megasys1_init_machine(void)
 {
 	ip_select = 0;	/* reset protection */
 }
-
-
-/*
- This macro is used to decrypt the code roms:
- the first parameter is the encrypted word, the other parameters specify
- the bits layout to build the word in clear from the encrypted one
-*/
-#define BITSWAP(_x,_f,_e,_d,_c,_b,_a,_9,_8,_7,_6,_5,_4,_3,_2,_1,_0)\
-		(((_x & (1 << _0))?(1<<0x0):0) + \
-		 ((_x & (1 << _1))?(1<<0x1):0) + \
-		 ((_x & (1 << _2))?(1<<0x2):0) + \
-		 ((_x & (1 << _3))?(1<<0x3):0) + \
-		 ((_x & (1 << _4))?(1<<0x4):0) + \
-		 ((_x & (1 << _5))?(1<<0x5):0) + \
-		 ((_x & (1 << _6))?(1<<0x6):0) + \
-		 ((_x & (1 << _7))?(1<<0x7):0) + \
-		 ((_x & (1 << _8))?(1<<0x8):0) + \
-		 ((_x & (1 << _9))?(1<<0x9):0) + \
-		 ((_x & (1 << _a))?(1<<0xa):0) + \
-		 ((_x & (1 << _b))?(1<<0xb):0) + \
-		 ((_x & (1 << _c))?(1<<0xc):0) + \
-		 ((_x & (1 << _d))?(1<<0xd):0) + \
-		 ((_x & (1 << _e))?(1<<0xe):0) + \
-		 ((_x & (1 << _f))?(1<<0xf):0))
 
 
 
@@ -181,16 +152,20 @@ static int dsw2_r(int offset)	 {return input_port_5_r(0);}							//   DSW 2
 static int dsw_r(int offset)	 {return (input_port_4_r(0)<<8)+input_port_5_r(0);}		// < DSW 1 | DSW 2 >
 
 
-#define INTERRUPT_NUM_A		2
+#define INTERRUPT_NUM_A		3
 int interrupt_A(void)
 {
-	switch ( cpu_getiloops() % INTERRUPT_NUM_A )
+	switch ( cpu_getiloops() )
 	{
-		case 0:		return 2;
-		case 1:		return 1;
+		case 0:		return 3;
+		case 1:		return 2;
+		case 2:		return 1;
 		default:	return ignore_interrupt();
 	}
 }
+
+
+
 
 #define INTERRUPT_NUM_Z		INTERRUPT_NUM_A
 #define interrupt_Z			interrupt_A
@@ -235,16 +210,17 @@ static struct MemoryWriteAddress _shortname_##_writemem[] = \
 							[ Main CPU - System B ]
 ***************************************************************************/
 
-#define INTERRUPT_NUM_B		30
+#define INTERRUPT_NUM_B		3
 int interrupt_B(void)
 {
-	if (cpu_getiloops()==0)	return 4; /* Once */
-	else
+	switch (cpu_getiloops())
 	{
-		if (cpu_getiloops()%2)	return 1;
-		else 					return 2;
+		case 0:		return 4;
+		case 1:		return 1;
+		default:	return 2;
 	}
 }
+
 
 
 /*			 Read the input ports, through a protection device:
@@ -263,8 +239,9 @@ int i;
 //	Coins	P1		P2		DSW1	DSW2
 //	57		53		54		55		56		< 64street
 //	37		35		36		33		34		< avspirit
-// 	20		21		22		23		24		< edf
+//	58		54		55		56		57		< bigstrik
 //	56		52		53		54		55		< cybattlr
+// 	20		21		22		23		24		< edf
 
 	/* f(x) = ((x*x)>>4)&0xFF ; f(f($D)) == 6 */
 	if ((ip_select & 0xF0) == 0xF0) return 0x0D;
@@ -285,8 +262,7 @@ int i;
 static void ip_select_w(int offset,int data)
 {
 	ip_select = COMBINE_WORD(ip_select,data);
-
-	cpu_cause_interrupt(0,3);	/* EDF needs it */
+	cpu_cause_interrupt(0,2);
 }
 
 
@@ -519,8 +495,8 @@ static struct MemoryReadAddress sound_readmem_A[] =
 	{ 0x000000, 0x01ffff, MRA_ROM },
 	{ 0x040000, 0x040001, soundlatch_r },
 	{ 0x080002, 0x080003, YM2151_status_port_0_r },
-	{ 0x0a0000, 0x0a0001, OKIM6295_status_0_r },
-	{ 0x0c0000, 0x0c0001, OKIM6295_status_1_r },
+	{ 0x0a0000, 0x0a0001, MRA_NOP /*OKIM6295_status_0_r*/ }, /* temporary - to fix sound */
+	{ 0x0c0000, 0x0c0001, MRA_NOP /*OKIM6295_status_1_r*/ }, /* temporary - to fix sound */
 	{ 0x0e0000, 0x0fffff, MRA_BANK8 },
 	{ -1 }
 };
@@ -619,130 +595,6 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-/***************************************************************************
-
-							Input Ports Macros
-
-***************************************************************************/
-
-
-/* IN0 - COINS */
-#define COINS \
-	PORT_START\
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START1 )\
-	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_START2 )\
-	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_COIN3 )\
-	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_COIN1 )\
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-/* IN1/3 - PLAYER 1/2 */
-#define JOY(_flag_) \
-	PORT_START\
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | _flag_ )\
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | _flag_ )\
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | _flag_ )\
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | _flag_ )\
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | _flag_ )\
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | _flag_ )\
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | _flag_ )\
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | _flag_ )
-
-/* IN2 - RESERVE */
-#define RESERVE \
-	PORT_START\
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Reserve 1P */\
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Reserve 2P */\
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )\
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-/* IN4 - Coinage DSWs */
-//	1]	01-41 02-31 03-21 07-11 06-12 05-13 04-14 00-FC	* 2
-//	2]	04-31 02-21 07-11 03-12 05-13 01-14 06-15 00-FC
-//		00-41 20-31 10-21 38-11 18-12 28-13 08-14 30-15
-
-
-#define COINAGE_6BITS \
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )\
-	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )\
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )\
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )\
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )\
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_5C ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )\
-	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )\
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )\
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )\
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )\
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_5C ) )\
-
-#define COINAGE_6BITS_2 \
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )\
-	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )\
-	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )\
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )\
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )\
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )\
-	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )\
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )\
-	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )\
-	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )\
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
-
-#define COINAGE_8BITS \
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )\
-	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )\
-	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )\
-	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )\
-	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x05, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )\
-	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )\
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )\
-	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )\
-	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )\
-	PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) )\
-	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )\
-	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )\
-	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x50, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) )\
-	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )\
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )\
-	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )\
-	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 
 
 
@@ -753,40 +605,14 @@ static struct IOWritePort sound_writeport[] =
 */
 
 /* Tiles are 8x8 */
-#define LAYOUT_8x8(_name_,_romsize_)\
-static struct GfxLayout _name_ =\
-{\
-	8,8,\
-	(_romsize_)*8/(8*8*4),\
-	4,\
-	{0, 1, 2, 3},\
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4},\
-	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32},\
-	8*8*4\
-};\
+MEGASYS1_LAYOUT_8x8( tilelayout_1, 0x010000 )
+MEGASYS1_LAYOUT_8x8( tilelayout_2, 0x020000 )
+MEGASYS1_LAYOUT_8x8( tilelayout_8, 0x080000 )
 
-/* Sprites are 16x16, formed by four 8x8 tiles  */
-#define LAYOUT_16x16(_name_,_romsize_)\
-static struct GfxLayout _name_ =\
-{\
-	16,16,\
-	(_romsize_)*8/(16*16*4),\
-	4,\
-	{0, 1, 2, 3},\
-	{0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4,\
-	 0*4+32*16,1*4+32*16,2*4+32*16,3*4+32*16,4*4+32*16,5*4+32*16,6*4+32*16,7*4+32*16},\
-	{0*32,1*32,2*32,3*32,4*32,5*32,6*32,7*32,\
-	 8*32,9*32,10*32,11*32,12*32,13*32,14*32,15*32},\
-	16*16*4\
-};\
-
-LAYOUT_8x8( tilelayout_1, 0x010000 )
-LAYOUT_8x8( tilelayout_2, 0x020000 )
-LAYOUT_8x8( tilelayout_8, 0x080000 )
-
-LAYOUT_16x16( spritelayout_Z, 0x020000 )
-LAYOUT_16x16( spritelayout_A, 0x080000 )
-LAYOUT_16x16( spritelayout_C, 0x100000 )
+/* Sprites are 16x16 - formed by four 8x8 tiles */
+MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_Z, 0x020000 )
+MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_A, 0x080000 )
+MEGASYS1_LAYOUT_16x16_QUAD( spritelayout_C, 0x100000 )
 
 
 static struct GfxDecodeInfo gfxdecodeinfo_Z[] =
@@ -932,9 +758,9 @@ static struct MachineDriver _shortname_##_machine_driver = \
 
 /***************************************************************************
 
-						[  Mega System 1 D ]
+							[ Mega System 1 D ]
 
-						   1x68000 1xM6295
+							  1x68000 1xM6295
 
 ***************************************************************************/
 
@@ -1111,9 +937,9 @@ struct GameDriver _shortname_##_driver = \
 	MEGASYS1_CREDITS, \
 	_flags_, \
 	&_shortname_##_machine_driver, \
-	&driver_init_##_type_, \
+	_rom_decode_, \
 	_shortname_##_rom, \
-	_rom_decode_, 0, \
+	&driver_init_##_type_, 0, \
 	0, \
 	0, \
 	input_ports_##_shortname_, \
@@ -1147,9 +973,9 @@ struct GameDriver _shortname_##_driver = \
 	MEGASYS1_CREDITS, \
 	_flags_, \
 	&_parentname_##_machine_driver, \
-	&driver_init_##_type_, \
+	_rom_decode_, \
 	_shortname_##_rom, \
-	_rom_decode_, 0, \
+	&driver_init_##_type_, 0, \
 	0, \
 	0, \
 	input_ports_##_parentname_, \
@@ -1265,7 +1091,7 @@ ff9df8.w	*** level ***
 	ROM_LOAD( "prom",        0x0000, 0x0200, 0x00000000 )
 
 
-ROM_START( street64_rom )
+ROM_START( street64 )
 	ROM_REGION(0x80000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "64th_03.rom", 0x000000, 0x040000, 0xed6c6942 )
 	ROM_LOAD_ODD(  "64th_02.rom", 0x000000, 0x040000, 0x0621ed1d )
@@ -1274,7 +1100,7 @@ ROM_START( street64_rom )
 ROM_END
 
 
-ROM_START( streej64_rom )
+ROM_START( streej64 )
 	ROM_REGION(0x80000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "91105-3.bin", 0x000000, 0x040000, 0xa211a83b )
 	ROM_LOAD_ODD(  "91105-2.bin", 0x000000, 0x040000, 0x27c1f436 )
@@ -1384,7 +1210,7 @@ interrupts:	1] 1aa	2] 1b4
 
 
 
-ROM_START( astyanax_rom )
+ROM_START( astyanax )
 	ROM_REGION(0x60000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "astyan2.bin", 0x00000, 0x20000, 0x1b598dcc )
 	ROM_LOAD_ODD(  "astyan1.bin", 0x00000, 0x20000, 0x1a1ad3cf )
@@ -1394,7 +1220,7 @@ ROM_START( astyanax_rom )
 	ASTYANAX_ROM_LOAD
 ROM_END
 
-ROM_START( lordofk_rom )
+ROM_START( lordofk )
 	ROM_REGION(0x80000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "lokj02.bin", 0x00000, 0x20000, 0x0d7f9b4a )
 	ROM_LOAD_ODD(  "lokj01.bin", 0x00000, 0x20000, 0xbed3cb93 )
@@ -1465,13 +1291,13 @@ INPUT_PORTS_START( input_ports_astyanax )
 INPUT_PORTS_END
 
 
-void astyanax_rom_decode(void)
+void astyanax_rom_decode(int cpu)
 {
 unsigned char *RAM;
 int i,size;
 
-	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	size = Machine->memory_region_length[Machine->drv->cpu[0].memory_region];
+	RAM  = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
+	size = Machine->memory_region_length[Machine->drv->cpu[cpu].memory_region];
 	if (size > 0x40000)	size = 0x40000;
 
 	for (i = 0 ; i < size ; i+=2)
@@ -1507,7 +1333,7 @@ void astyanax_init(void)
 {
 	unsigned char *RAM;
 
-	astyanax_rom_decode();
+	astyanax_rom_decode(0);
 
 	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	WRITE_WORD(&RAM[0x0004e6],0x6040);	// protection
@@ -1560,7 +1386,7 @@ phntsm04.bin                                    NO MATCH
 
 ***************************************************************************/
 
-ROM_START( avspirit_rom )
+ROM_START( avspirit )
 	ROM_REGION(0xc0000)		/* Region 0 - main cpu code - 00000-3ffff & 80000-bffff */
 	ROM_LOAD_EVEN( "spirit05.rom",  0x000000, 0x040000, 0xb26a341a )
 	ROM_LOAD_ODD(  "spirit06.rom",  0x000000, 0x040000, 0x609f71fe )
@@ -1586,7 +1412,7 @@ ROM_START( avspirit_rom )
 ROM_END
 
 
-ROM_START( phantasm_rom )
+ROM_START( phantasm )
 	ROM_REGION(0x60000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "phntsm02.bin", 0x000000, 0x020000, 0xd96a3584 )
 	ROM_LOAD_ODD(  "phntsm01.bin", 0x000000, 0x020000, 0xa54b4b87 )
@@ -1671,13 +1497,14 @@ void avspirit_init(void)
 }
 
 
-static void phantasm_rom_decode(void)
+
+void phantasm_rom_decode(int cpu)
 {
 unsigned char *RAM;
 int i,size;
 
-	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	size = Machine->memory_region_length[Machine->drv->cpu[0].memory_region];
+	RAM  = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
+	size = Machine->memory_region_length[Machine->drv->cpu[cpu].memory_region];
 	if (size > 0x40000)	size = 0x40000;
 
 	for (i = 0 ; i < size ; i+=2)
@@ -1709,6 +1536,11 @@ int i,size;
 }
 
 
+void phantasm_init(void)
+{
+	phantasm_rom_decode(0);
+}
+
 /* OSC:	8,12,7 MHz */
 MEGASYS1_GAME(	avspirit, Avenging Spirit,1991,ORIENTATION_DEFAULT,
 				B,0x070000,0x07ffff,
@@ -1720,7 +1552,141 @@ MEGASYS1_GAME(	avspirit, Avenging Spirit,1991,ORIENTATION_DEFAULT,
 MEGASYS1_GAME_EXT(	phantasm, phantasm, &avspirit_driver, Phantasm (Japan), 1990, ORIENTATION_DEFAULT,
 					A,0xff0000,0xffffff,
 					12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
-					phantasm_rom_decode, 0)
+					phantasm_init, 0)
+
+
+
+/***************************************************************************
+
+							[ Big Striker ]
+
+PCB: RB-91105A EB911009-20045
+
+Note: RAM is ff0000-ffffff while sprites live in 1f8000-1f87ff
+
+interrupts:	1]
+			2]
+			4]
+
+$885c/e.w	*** time (BCD) ***
+
+***************************************************************************/
+
+ROM_START( bigstrik )
+	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
+	ROM_LOAD_EVEN( "91105v11.3", 0x000000, 0x020000, 0x5d6e08ec )
+	ROM_LOAD_ODD(  "91105v11.2", 0x000000, 0x020000, 0x2120f05b )
+
+	ROM_REGION_DISPOSE(0x220000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "91021.01",   0x000000, 0x080000, 0xf1945858 )	// scroll 0
+	ROM_LOAD( "91021.03",   0x080000, 0x080000, 0xe88821e5 )	// scroll 1
+	ROM_LOAD( "91105v11.9", 0x100000, 0x020000, 0x7be1c50c )	// scroll 2
+	ROM_LOAD( "91021.02",   0x120000, 0x080000, 0x199819ca )	// sprites
+
+	ROM_REGION(0x20000)		/* Region 2 - sound cpu code */
+	ROM_LOAD_EVEN( "91105v10.8", 0x000000, 0x010000, 0x7dd69ece )
+	ROM_LOAD_ODD(  "91105v10.7", 0x000000, 0x010000, 0xbc2c1508 )
+
+	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_LOAD( "91105v10.11", 0x000000, 0x040000, BADCRC(0xa1f13dd5) )
+
+	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	ROM_LOAD( "91105v10.10", 0x000000, 0x040000, BADCRC(0xe4f8fc8d) )
+
+	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+ROM_END
+
+
+INPUT_PORTS_START( input_ports_bigstrik )
+	COINS
+	JOY(IPF_PLAYER1)
+	RESERVE
+	JOY(IPF_PLAYER2)
+
+	PORT_START			/* IN4 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+
+	PORT_START			/* IN5 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x06, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x18, 0x18, "Time" )
+	PORT_DIPSETTING(    0x00, "Very Short" )
+	PORT_DIPSETTING(    0x10, "Short" )
+	PORT_DIPSETTING(    0x18, "Normal" )
+	PORT_DIPSETTING(    0x08, "Long" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "1 Credit 2 Play" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+INPUT_PORTS_END
+
+void bigstrik_sprites_w(int offset, int data)
+{
+	WRITE_WORD(&spriteram[offset],data);
+}
+
+void bigstrik_init(void)
+{
+	ip_select_values[0] = 0x58;
+	ip_select_values[1] = 0x54;
+	ip_select_values[2] = 0x55;
+	ip_select_values[3] = 0x56;
+	ip_select_values[4] = 0x57;
+
+	install_mem_write_handler(0, 0x1f8000, 0x1f87ff, bigstrik_sprites_w);
+}
+
+/* OSC: 7.000 MHz + 24.000 MHz */
+MEGASYS1_GAME(	bigstrik,Big Striker,1992,ORIENTATION_DEFAULT,
+				C,0xff0000,0xffffff,
+				12000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				bigstrik_init, 0 )
+
+
 
 
 /***************************************************************************
@@ -1733,7 +1699,7 @@ interrupts:	1,3]
 
 ***************************************************************************/
 
-ROM_START( chimerab_rom )
+ROM_START( chimerab )
 	ROM_REGION(0x80000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "prg3.bin", 0x000000, 0x040000, 0x70f1448f )
 	ROM_LOAD_ODD(  "prg2.bin", 0x000000, 0x040000, 0x821dbb85 )
@@ -1841,7 +1807,7 @@ c2104 <- 1fd060 (scroll 2 ctrl)	c2100 <- 1fd228 (scroll 2 x)	c2102 <- 1fd22a (sc
 
 ***************************************************************************/
 
-ROM_START( cybattlr_rom )
+ROM_START( cybattlr )
 	ROM_REGION(0x80000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "cb_03.rom", 0x000000, 0x040000, 0xbee20587 )
 	ROM_LOAD_ODD(  "cb_02.rom", 0x000000, 0x040000, 0x2ed14c50 )
@@ -1964,7 +1930,7 @@ fc0			(a7)+ -> 58000 (string)
 
 ***************************************************************************/
 
-ROM_START( edf_rom )
+ROM_START( edf )
 	ROM_REGION(0xc0000)		/* Region 0 - main cpu code - 00000-3ffff & 80000-bffff */
 	ROM_LOAD_EVEN( "edf_05.rom",  0x000000, 0x040000, 0x105094d1 )
 	ROM_LOAD_ODD(  "edf_06.rom",  0x000000, 0x040000, 0x94da2f0c )
@@ -2082,7 +2048,7 @@ MEGASYS1_GAME(	edf,Earth Defense Force,1991,ORIENTATION_DEFAULT,
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 
 
-ROM_START( hachoo_rom )
+ROM_START( hachoo )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "hacho02.rom", 0x000000, 0x020000, 0x49489c27 )
 	ROM_LOAD_ODD(  "hacho01.rom", 0x000000, 0x020000, 0x97fc9515 )
@@ -2137,7 +2103,7 @@ void hachoo_init(void)
 {
 	unsigned char *RAM;
 
-	astyanax_rom_decode();
+	astyanax_rom_decode(0);
 
 	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	WRITE_WORD(&RAM[0x0006da],0x6000);	// protection
@@ -2154,7 +2120,7 @@ MEGASYS1_GAME(	hachoo,Hachoo!,1989,ORIENTATION_DEFAULT,
 /* There's another revision, but it's a bad dump (top half of the code is FF) */
 /* There's the (priority?) PROM 82s131.14m in there, all FFs though :( */
 #if 0
-ROM_START( hachoo1_rom )
+ROM_START( hachoo1 )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
 		ROM_LOAD_EVEN( "hacho02.rom", 0x000000, 0x020000, 0x49489c27 )
 		ROM_LOAD_ODD(  "hacho01.rom", 0x000000, 0x020000, 0x97fc9515 )
@@ -2186,7 +2152,7 @@ f010c.w		credits
 ***************************************************************************/
 
 
-ROM_START( iganinju_rom )
+ROM_START( iganinju )
 	ROM_REGION(0x60000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "iga_02.bin", 0x000000, 0x020000, 0xbd00c280 )
 	ROM_LOAD_ODD(  "iga_01.bin", 0x000000, 0x020000, 0xfa416a9e )
@@ -2256,16 +2222,17 @@ INPUT_PORTS_START( input_ports_iganinju )
 
 INPUT_PORTS_END
 
-static void phantasm_rom_decode(void);
-
 static void iganinju_init(void)
 {
 	unsigned char *RAM;
 
-	phantasm_rom_decode();
+	phantasm_rom_decode(0);
 
 	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	WRITE_WORD(&RAM[0x02f000],0x835d);	// protection
+
+	WRITE_WORD(&RAM[0x00006e],0x0420);	// the only game that does
+										// not like lev 3 interrupts
 }
 
 /* OSC:	? */
@@ -2278,11 +2245,131 @@ MEGASYS1_GAME(	iganinju,Iga Ninjyutsuden (Japan),1988,ORIENTATION_DEFAULT,
 
 /***************************************************************************
 
+							[ Kick Off ]
+
+interrupts:	1-2]	rte
+			3]		timer
+			4-7]	loop forever
+
+f0128/a.w	*** Time (minutes/seconds BCD) ***
+f012c/e.w	*** Goals (P1/P2) ***
+
+Notes:	Coin B and Test are ignored. The alternate control method
+		(selectable through a DSW) isn't implemented:
+		the program tests the low 4 bits of the joystick inputs
+		($80002, $80004) but not the buttons. I can't get the
+		players to move.
+
+***************************************************************************/
+
+ROM_START( kickoff )
+	ROM_REGION(0x20000)		/* Region 0 - main cpu code */
+	ROM_LOAD_EVEN( "kioff03.rom", 0x000000, 0x010000, 0x3b01be65 )
+	ROM_LOAD_ODD(  "kioff01.rom", 0x000000, 0x010000, 0xae6e68a1 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "kioff05.rom", 0x000000, 0x020000, 0xe7232103 )	// sroll 0
+	ROM_LOAD( "kioff06.rom", 0x020000, 0x020000, 0xa0b3cb75 )
+	ROM_LOAD( "kioff07.rom", 0x060000, 0x020000, 0xed649919 )
+	ROM_LOAD( "kioff10.rom", 0x080000, 0x020000, 0xfd739fec )
+	// scroll 1 is unused
+	ROM_LOAD( "kioff16.rom", 0x100000, 0x020000, 0x22c46314 )	// scroll 2
+	ROM_LOAD( "kioff27.rom", 0x120000, 0x020000, 0xca221ae2 )	// sprites
+	ROM_LOAD( "kioff18.rom", 0x140000, 0x020000, 0xd7909ada )
+	ROM_LOAD( "kioff17.rom", 0x160000, 0x020000, 0xf171559e )
+	ROM_LOAD( "kioff26.rom", 0x180000, 0x020000, 0x2a90df1b )
+
+	ROM_REGION(0x20000)		/* Region 2 - sound cpu code */
+	ROM_LOAD_EVEN( "kioff09.rom", 0x000000, 0x010000, 0x1770e980 )
+	ROM_LOAD_ODD(  "kioff19.rom", 0x000000, 0x010000, 0x1b03bbe4 )
+
+	ROM_REGION(0x40000)		/* Region 3 - ADPCM sound samples */
+	ROM_LOAD( "kioff20.rom", 0x000000, 0x020000, 0x5c28bd2d )
+	ROM_LOAD( "kioff21.rom", 0x020000, 0x020000, 0x195940cf )
+
+	ROM_REGION(0x40000)		/* Region 4 - ADPCM sound samples */
+	// same rom for 2 oki chips ?? Unlikely
+	ROM_LOAD( "kioff20.rom", 0x000000, 0x020000, 0x5c28bd2d )
+	ROM_LOAD( "kioff21.rom", 0x020000, 0x020000, 0x195940cf )
+
+	ROM_REGION(0x0200)		/* priority PROM */
+	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
+ROM_END
+
+INPUT_PORTS_START( input_ports_kickoff )
+	COINS				/* IN0 0x80001.b ->  !f0008/a.w  */
+	JOY(IPF_PLAYER1)	/* IN1 0x80003.b ->  !f000c/e.w  */
+	RESERVE				/* IN2 0x80004.b --> !f0010/11.w */
+	JOY(IPF_PLAYER2)	/* IN3 0x80005.b /               */
+
+	PORT_START			/* IN4 0x80006.b */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 1-3" )	// unused?
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1-4" )	// unused?
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze Screen", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Text" )
+	PORT_DIPSETTING(    0x80, "Japanese" )
+	PORT_DIPSETTING(    0x00, "English" )	// show "Japan Only" warning
+
+	PORT_START			/* IN5 0x80007.b */
+	PORT_DIPNAME( 0x03, 0x03, "Time" )	// -> !f0082.w
+	PORT_DIPSETTING(    0x03, "3'" )
+	PORT_DIPSETTING(    0x02, "4'" )
+	PORT_DIPSETTING(    0x01, "5'" )
+	PORT_DIPSETTING(    0x00, "6'" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-2" )	// unused?
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 2-3" )	// unused?
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, "?Difficulty?" )	// -> !f0084.w
+	PORT_DIPSETTING(    0x30, "0" )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x40, 0x00, "Controls" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "Joystick" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+INPUT_PORTS_END
+
+
+/* OSC:	4, 7, 12 MHz */
+MEGASYS1_GAME(	kickoff,Kick Off (Japan),1988,ORIENTATION_DEFAULT,
+				A,0x0f0000,0x0fffff,
+				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
+				0, 0 )
+
+
+
+/***************************************************************************
+
 							[ Legend of Makai ]
 
 ***************************************************************************/
 
-ROM_START( lomakai_rom )
+ROM_START( lomakai )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "lom_30.rom", 0x000000, 0x020000, 0xba6d65b8 )
 	ROM_LOAD_ODD(  "lom_20.rom", 0x000000, 0x020000, 0x56a00dc2 )
@@ -2300,7 +2387,7 @@ ROM_START( lomakai_rom )
 	ROM_LOAD( "makaiden.10", 0x0100, 0x0100, 0xe6709c51 )
 ROM_END
 
-ROM_START( makaiden_rom )
+ROM_START( makaiden )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "makaiden.3a", 0x000000, 0x020000, 0x87cf81d1 )
 	ROM_LOAD_ODD(  "makaiden.2a", 0x000000, 0x020000, 0xd40e0fea )
@@ -2350,9 +2437,9 @@ INPUT_PORTS_START( input_ports_lomakai )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2365,7 +2452,9 @@ MEGASYS1_GAME(	lomakai,Legend of Makai (World),1988,ORIENTATION_DEFAULT,
 				Z,0x0f0000,0x0fffff,
 				6000000,3000000,	1200000,0,0,
 				0, 0 )
+
 MEGASYS1_GAME_CLONE( makaiden,lomakai,Makai Densetsu (Japan),1988,ORIENTATION_DEFAULT, Z, 0, 0 )
+
 
 /***************************************************************************
 
@@ -2422,7 +2511,7 @@ f0018.w		*** level ***
 
 ***************************************************************************/
 
-ROM_START( p47_rom )
+ROM_START( p47 )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "p47us3.bin", 0x000000, 0x020000, 0x022e58b8 )
 	ROM_LOAD_ODD(  "p47us1.bin", 0x000000, 0x020000, 0xed926bd8 )
@@ -2457,7 +2546,7 @@ ROM_START( p47_rom )
 ROM_END
 
 
-ROM_START( p47j_rom )
+ROM_START( p47j )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "p47j_3.bin", 0x000000, 0x020000, 0x11c655e5 )
 	ROM_LOAD_ODD(  "p47j_1.bin", 0x000000, 0x020000, 0x0a5998de )
@@ -2548,6 +2637,11 @@ MEGASYS1_GAME_CLONE( p47j, p47, P-47 - The Freedom Fighter (Japan), 1988, ORIENT
 
 							[ Peek-a-Boo! ]
 
+Issues:	the paddle range during play should be restricted to $40-$c0
+		(or the player gets stuck at sides until the value is back
+		within this range). But in order to be able to select every
+		"model", it must be in the $08-$F8 range
+
 interrupts:
 	1] 		506>	rte
 	2] 		50a>	move.w  #$ffff, $1f0006.l
@@ -2577,8 +2671,15 @@ interrupts:
 010000-010001	protection\watchdog;
 	fb -> fb
 	9x ->	0		watchdog reset?
-			else	samples bank? ($1ff014 = sample - $22 = index:
-					0033DC: 0001 0001 0002 0003 0004 0005 0006 0006 0006 0006
+			else	samples bank?
+					$1ff010 = sample
+					$1ff014 = bank = sample - $22 (33DC: 1 1 2 3 4 5 6 6 6 6)
+						samples:	bank:
+						$00-21		0
+						$22-2b		1-6
+000000-01ffff
+020000-03ffff	banked
+
 	51 -> paddle p1
 	52 -> paddle p2
 	4bba waits for 1f000a to go !0, then clears 1f000a (int 4)
@@ -2621,22 +2722,24 @@ c2200<-0
 
 ***************************************************************************/
 
-ROM_START( peekaboo_rom )
+ROM_START( peekaboo )
+
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
-	ROM_LOAD_EVEN( "j3",      0x000000, 0x020000, 0xf5f4cf33 )
-	ROM_LOAD_ODD(  "j2",      0x000000, 0x020000, 0x7b3d430d )
+	ROM_LOAD_EVEN( "j3", 0x000000, 0x020000, 0xf5f4cf33 )
+	ROM_LOAD_ODD(  "j2", 0x000000, 0x020000, 0x7b3d430d )
 
 	ROM_REGION_DISPOSE(0x180000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "5",            0x000000, 0x080000, 0x34fa07bb )	// Background
-	ROM_LOAD( "4",            0x080000, 0x020000, 0xf037794b )	// Text
-	ROM_LOAD( "1",            0x100000, 0x080000, 0x5a444ecf )	// Sprites
+	ROM_LOAD( "5",       0x000000, 0x080000, 0x34fa07bb )	// Background
+	ROM_LOAD( "4",       0x080000, 0x020000, 0xf037794b )	// Text
+	ROM_LOAD( "1",       0x100000, 0x080000, 0x5a444ecf )	// Sprites
 
-	ROM_REGION(0x120000) /* Region 2 - samples */
+	ROM_REGION(0x120000)	/* Region 2 - samples */
 	ROM_LOAD( "peeksamp.124", 0x000000, 0x020000, 0xe1206fa8 )
 	ROM_CONTINUE(             0x040000, 0x0e0000             )
 
 	ROM_REGION(0x0200)		/* priority PROM */
-	ROM_LOAD( "priority.69",  0x0000, 0x0200, 0xb40bff56 )
+	ROM_LOAD( "priority.69",    0x000000, 0x200, 0xb40bff56 )
+
 ROM_END
 
 INPUT_PORTS_START( input_ports_peekaboo )
@@ -2660,7 +2763,7 @@ INPUT_PORTS_START( input_ports_peekaboo )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 #define PEEKABOO_PADDLE(_FLAG_)	\
- PORT_ANALOG( 0x00ff, 0x0080, IPT_PADDLE | _FLAG_, 100, 25, 1, 0x0008, 0x00f8 )
+ PORT_ANALOG( 0x00ff, 0x0080, IPT_PADDLE | _FLAG_, 100, 80, 1, 0x0008, 0x00f8 )
 
 	PORT_START      	/* IN1 - paddle p1 */
 	PEEKABOO_PADDLE(IPF_PLAYER1)
@@ -2760,7 +2863,7 @@ f30a4.l		*** score (BCD) ***
 
 ***************************************************************************/
 
-ROM_START( plusalph_rom )
+ROM_START( plusalph )
 	ROM_REGION(0x60000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "pa-rom2.bin", 0x000000, 0x020000, 0x33244799 )
 	ROM_LOAD_ODD(  "pa-rom1.bin", 0x000000, 0x020000, 0xa32fdcae )
@@ -2843,7 +2946,7 @@ void plusalph_init(void)
 {
 	unsigned char *RAM;
 
-	astyanax_rom_decode();
+	astyanax_rom_decode(0);
 
 	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	WRITE_WORD(&RAM[0x0012b6],0x0000);	// protection
@@ -2875,7 +2978,7 @@ f0012->84204	f0014->8420c	f0016->8400c
 
 ***************************************************************************/
 
-ROM_START( rodland_rom )
+ROM_START( rodland )
 	ROM_REGION(0x60000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "rl_02.rom", 0x000000, 0x020000, 0xc7e00593 )
 	ROM_LOAD_ODD(  "rl_01.rom", 0x000000, 0x020000, 0x2e748ca1 )
@@ -2883,7 +2986,7 @@ ROM_START( rodland_rom )
 	ROM_LOAD_ODD(  "rl_04.rom", 0x040000, 0x010000, 0x44163c86 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 ) // scroll 0
+	ROM_LOAD( "rl_23.rom", 0x000000, 0x020000, 0xac60e771 )	// scroll 0
 	ROM_CONTINUE(          0x030000, 0x010000             )
 	ROM_CONTINUE(          0x050000, 0x010000             )
 	ROM_CONTINUE(          0x020000, 0x010000             )
@@ -2908,7 +3011,7 @@ ROM_START( rodland_rom )
 ROM_END
 
 
-ROM_START( rodlandj_rom )
+ROM_START( rodlandj )
 	ROM_REGION(0x60000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "rl19.bin", 0x000000, 0x010000, 0x028de21f )
 	ROM_LOAD_ODD(  "rl17.bin", 0x000000, 0x010000, 0x9c720046 )
@@ -2987,9 +3090,9 @@ INPUT_PORTS_START( input_ports_rodland )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x00, "Infinite" )
-	PORT_DIPNAME( 0x10, 0x10, "Swap episodes (extra mode)" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Default episode" )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x20, "Easy?" )
 	PORT_DIPSETTING(    0x60, "Normal" )
@@ -3001,13 +3104,14 @@ INPUT_PORTS_START( input_ports_rodland )
 
 INPUT_PORTS_END
 
-static void rodland_rom_decode(void)
+
+void rodland_rom_decode(int cpu)
 {
 unsigned char *RAM;
 int i,size;
 
-	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	size = Machine->memory_region_length[Machine->drv->cpu[0].memory_region];
+	RAM  = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
+	size = Machine->memory_region_length[Machine->drv->cpu[cpu].memory_region];
 	if (size > 0x40000)	size = 0x40000;
 
 	for (i = 0 ; i < size ; i+=2)
@@ -3047,10 +3151,8 @@ static void rodland_init(void)
 	   (is this right ? Otherwise the subtitle is wrong) */
 	memset( &RAM[0x110000], 0xFF , 0x10000);
 
-	rodland_rom_decode();
+	rodland_rom_decode(0);
 }
-
-
 
 
 void rodlandj_init(void)
@@ -3084,7 +3186,7 @@ interrupts:	1] rte	2] 620	3] 5e6
 
 ***************************************************************************/
 
-ROM_START( stdragon_rom )
+ROM_START( stdragon )
 	ROM_REGION(0x40000)		/* Region 0 - main cpu code */
 	ROM_LOAD_EVEN( "jsd-02.bin", 0x000000, 0x020000, 0xcc29ab19 )
 	ROM_LOAD_ODD(  "jsd-01.bin", 0x000000, 0x020000, 0x67429a57 )
@@ -3117,7 +3219,7 @@ ROM_START( stdragon_rom )
 	ROM_LOAD( "jsd-08.bin", 0x020000, 0x020000, 0x40704962 )
 
 	ROM_REGION(0x0200)		/* priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
+	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
 INPUT_PORTS_START( input_ports_stdragon )
@@ -3165,7 +3267,7 @@ void stdragon_init(void)
 {
 	unsigned char *RAM;
 
-	phantasm_rom_decode();
+	phantasm_rom_decode(0);
 
 	RAM  = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	WRITE_WORD(&RAM[0x00045e],0x0098);	// protection
@@ -3176,4 +3278,3 @@ MEGASYS1_GAME(	stdragon,Saint Dragon,1989,ORIENTATION_DEFAULT,
 				A,0x0f0000,0x0fffff,
 				7000000,7000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
 				stdragon_init, 0 )
-

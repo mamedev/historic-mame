@@ -148,8 +148,11 @@ static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are
 	0x20,0xff,0xff, /* CYAN */
 	0xff,0x20,0xff  /* PURPLE */
 };
+static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,palette,sizeof(palette));
+}
 
-enum { BLACK,RED,GREEN,YELLOW,WHITE,CYAN,PURPLE }; /* V.V */
 
 /****************************************************************************/
 /*  mix_hiscoreprint: special thanks to: Mirko , John B., Frank, and Mike B */
@@ -216,7 +219,7 @@ void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,in
 /*                                                     */
 /*******************************************************/
 
-ROM_START( invaders_rom )
+ROM_START( invaders )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0x734f5ad8 )
 	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x6bfaca4a )
@@ -334,8 +337,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -424,7 +427,7 @@ struct GameDriver invaders_driver =
 
 	invaders_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -436,7 +439,7 @@ struct GameDriver invaders_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( invaders2_rom )
+ROM_START( invaders2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "pv.01",        0x0000, 0x0800, 0x7288a511 )
 	ROM_LOAD( "pv.02",        0x0800, 0x0800, 0x097dd8d5 )
@@ -544,8 +547,8 @@ static struct MachineDriver invadpt2_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -626,7 +629,7 @@ struct GameDriver invadpt2_driver =
 
 	invadpt2_input_ports,
 
-	0,palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invadpt2_hiload, invadpt2_hisave
@@ -638,7 +641,7 @@ struct GameDriver invadpt2_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( earthinv_rom )
+ROM_START( earthinv )
 	ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "earthinv.h",   0x0000, 0x0800, 0x58a750c8 )
 	ROM_LOAD( "earthinv.g",   0x0800, 0x0800, 0xb91742f1 )
@@ -670,7 +673,7 @@ INPUT_PORTS_START( earthinv_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_DIPNAME( 0x80, 0x80, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x80, "1 Coin/1 Credit" )
 INPUT_PORTS_END
@@ -696,10 +699,10 @@ struct GameDriver earthinv_driver =
 
 	earthinv_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	invaders_hiload, invaders_hisave
 
+	invaders_hiload, invaders_hisave
 };
 
 /*******************************************************/
@@ -708,7 +711,7 @@ struct GameDriver earthinv_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( spaceatt_rom )
+ROM_START( spaceatt )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "spaceatt.h",   0x0000, 0x0800, 0xa31d0756 )
 	ROM_LOAD( "spaceatt.g",   0x0800, 0x0800, 0xf41241f7 )
@@ -739,7 +742,7 @@ INPUT_PORTS_START( spaceatt_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
 INPUT_PORTS_END
@@ -764,7 +767,7 @@ struct GameDriver spaceatt_driver =
 
 	spaceatt_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -776,7 +779,7 @@ struct GameDriver spaceatt_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( invrvnge_rom )
+ROM_START( invrvnge )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invrvnge.h",   0x0000, 0x0800, 0xaca41bbb )
 	ROM_LOAD( "invrvnge.g",   0x0800, 0x0800, 0xcfe89dad )
@@ -784,7 +787,7 @@ ROM_START( invrvnge_rom )
 	ROM_LOAD( "invrvnge.e",   0x1800, 0x0800, 0x1ec8dfc8 )
 ROM_END
 
-ROM_START( invrvnga_rom )
+ROM_START( invrvnga )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "5m.bin",   0x0000, 0x0800, 0xb145cb71 )
 	ROM_LOAD( "5n.bin",   0x0800, 0x0800, 0x660e8af3 )
@@ -825,7 +828,7 @@ INPUT_PORTS_START( invrvnge_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
 INPUT_PORTS_END
@@ -849,8 +852,8 @@ static struct MachineDriver invrvnge_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -924,7 +927,7 @@ struct GameDriver invrvnge_driver =
 
 	invrvnge_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invrvnge_hiload, invrvnge_hisave
@@ -950,7 +953,7 @@ struct GameDriver invrvnga_driver =
 
 	invrvnge_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invrvnge_hiload, invrvnge_hisave
@@ -963,7 +966,7 @@ struct GameDriver invrvnga_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( invdpt2m_rom )
+ROM_START( invdpt2m )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invdelux.h",   0x0000, 0x0800, 0xe690818f )
 	ROM_LOAD( "invdelux.g",   0x0800, 0x0800, 0x4268c12d )
@@ -1052,8 +1055,8 @@ static struct MachineDriver invdpt2m_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1132,7 +1135,7 @@ struct GameDriver invdpt2m_driver =
 
 	invdpt2m_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invdpt2m_hiload, invdpt2m_hisave
@@ -1145,7 +1148,7 @@ struct GameDriver invdpt2m_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( astlaser_rom )
+ROM_START( astlaser )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "1.u36",        0x0000, 0x0800, 0xb44e2c41 )
 	ROM_LOAD( "2.u35",        0x0800, 0x0800, 0x9876f331 )
@@ -1261,7 +1264,7 @@ struct GameDriver astlaser_driver =
 
 	astlaser_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	astlaser_hiload, astlaser_hisave
@@ -1273,7 +1276,7 @@ struct GameDriver astlaser_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( intruder_rom )
+ROM_START( intruder )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "la01",         0x0000, 0x0800, 0xbedc0078 )
 	ROM_LOAD( "la02",         0x0800, 0x0800, 0x43bc65c5 )
@@ -1343,7 +1346,7 @@ struct GameDriver intruder_driver =
 
 	intruder_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	astlaser_hiload, astlaser_hisave
@@ -1355,7 +1358,7 @@ struct GameDriver intruder_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( galxwars_rom )
+ROM_START( galxwars )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "galxwars.0",   0x0000, 0x0400, 0x608bfe7f )
 	ROM_LOAD( "galxwars.1",   0x0400, 0x0400, 0xa810b258 )
@@ -1389,7 +1392,7 @@ INPUT_PORTS_START( galxwars_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
 INPUT_PORTS_END
@@ -1467,8 +1470,9 @@ struct GameDriver galxwars_driver =
 
 	galxwars_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
+
 	galxwars_hiload, galxwars_hisave
 };
 
@@ -1478,7 +1482,7 @@ struct GameDriver galxwars_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( lrescue_rom )
+ROM_START( lrescue )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
 	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
@@ -1488,7 +1492,7 @@ ROM_START( lrescue_rom )
 	ROM_LOAD( "lrescue.6",    0x4800, 0x0800, 0xbfb0f65d )
 ROM_END
 
-ROM_START( grescue_rom )
+ROM_START( grescue )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
 	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
@@ -1557,8 +1561,8 @@ static struct MachineDriver lrescue_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -1642,7 +1646,7 @@ struct GameDriver lrescue_driver =
 
 	lrescue_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	lrescue_hiload, lrescue_hisave  /* V.V */
@@ -1668,7 +1672,7 @@ struct GameDriver grescue_driver =
 
 	lrescue_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	lrescue_hiload, lrescue_hisave  /* V.V */
@@ -1682,7 +1686,7 @@ struct GameDriver grescue_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( desterth_rom )
+ROM_START( desterth )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "36_h.bin",     0x0000, 0x0800, 0xf86923e5 )
 	ROM_LOAD( "35_g.bin",     0x0800, 0x0800, 0x797f440d )
@@ -1716,7 +1720,7 @@ INPUT_PORTS_START( desterth_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
 INPUT_PORTS_END
@@ -1767,7 +1771,7 @@ struct GameDriver desterth_driver =
 
 	desterth_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	desterth_hiload, lrescue_hisave
@@ -1779,7 +1783,7 @@ struct GameDriver desterth_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( cosmicmo_rom )  /* L.T */
+ROM_START( cosmicmo )  /* L.T */
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cosmicmo.1",   0x0000, 0x0400, 0xd6e4e5da )
 	ROM_LOAD( "cosmicmo.2",   0x0400, 0x0400, 0x8f7988e6 )
@@ -1813,7 +1817,7 @@ INPUT_PORTS_START( cosmicmo_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 INPUT_PORTS_END
@@ -1838,7 +1842,7 @@ struct GameDriver cosmicmo_driver =
 
 	cosmicmo_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -1852,7 +1856,7 @@ struct GameDriver cosmicmo_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( rollingc_rom )
+ROM_START( rollingc )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rc01.bin",     0x0000, 0x0400, 0x66fa50bf )
 	ROM_LOAD( "rc02.bin",     0x0400, 0x0400, 0x61c06ae4 )
@@ -1947,6 +1951,11 @@ static unsigned char rollingc_palette[] =
 	0xff,0x00,0xa0, /* RED */
 	0x00,0x00,0x00  /* BLACK */
 };
+static void rollingc_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+{
+	memcpy(game_palette,rollingc_palette,sizeof(rollingc_palette));
+}
+
 
 static struct MachineDriver rollingc_machine_driver =
 {
@@ -1967,8 +1976,8 @@ static struct MachineDriver rollingc_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(rollingc_palette)/3, 0,
-	0,
+	sizeof(rollingc_palette) / sizeof(rollingc_palette[0]) / 3, 0,
+	rollingc_init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -2047,10 +2056,10 @@ struct GameDriver rollingc_driver =
 
 	rollingc_input_ports,
 
-	0,rollingc_palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	rollingc_hiload,rollingc_hisave
+	rollingc_hiload, rollingc_hisave
 };
 
 /*******************************************************/
@@ -2062,7 +2071,7 @@ struct GameDriver rollingc_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( bandido_rom )                                                                                /* MJC */
+ROM_START( bandido )                                                                                /* MJC */
 	ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "baf1-3",       0x0000, 0x0400, 0xaec94829 )
 	ROM_LOAD( "baf2-1",       0x0400, 0x0400, 0xda67721a )
@@ -2159,7 +2168,7 @@ INPUT_PORTS_START( bandido_input_ports )                        /* MJC */
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPNAME( 0x08, 0x00, "Unknown" )
@@ -2198,8 +2207,8 @@ static struct MachineDriver bandido_machine_driver =                    /* MJC *
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -2267,7 +2276,7 @@ struct GameDriver bandido_driver =                                              
 
 	bandido_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	bandido_hiload, bandido_hisave
@@ -2279,7 +2288,7 @@ struct GameDriver bandido_driver =                                              
 /*                                                     */
 /*******************************************************/
 
-ROM_START( boothill_rom )
+ROM_START( boothill )
 	ROM_REGION(0x10000)     /* 64k for code */
     ROM_LOAD( "romh.cpu",     0x0000, 0x0800, 0x1615d077 )
     ROM_LOAD( "romg.cpu",     0x0800, 0x0800, 0x65a90420 )
@@ -2332,7 +2341,7 @@ INPUT_PORTS_START( boothill_input_ports )                                       
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )                    /* Fire */
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
@@ -2372,8 +2381,8 @@ static struct MachineDriver boothill_machine_driver =                   /* MJC 3
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -2421,7 +2430,7 @@ struct GameDriver boothill_driver =                                             
 
 	boothill_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
@@ -2434,7 +2443,7 @@ struct GameDriver boothill_driver =                                             
 /*                                                     */
 /*******************************************************/
 
-ROM_START( schaser_rom )
+ROM_START( schaser )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "rt13.bin",     0x0000, 0x0400, 0x0dfbde68 )
 	ROM_LOAD( "rt14.bin",     0x0400, 0x0400, 0x5a508a25 )
@@ -2541,7 +2550,7 @@ struct GameDriver schaser_driver =
 
 	schaser_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	schaser_hiload, schaser_hisave
@@ -2555,7 +2564,7 @@ struct GameDriver schaser_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( spcenctr_rom )
+ROM_START( spcenctr )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "4m33.cpu",     0x0000, 0x0800, 0x7458b2db )
 	ROM_LOAD( "4m32.cpu",     0x0800, 0x0800, 0x1b873788 )
@@ -2599,7 +2608,7 @@ INPUT_PORTS_START( spcenctr_input_ports )
 	PORT_DIPSETTING(    0x01, "3000, 6000, 12000" )
 	PORT_DIPSETTING(    0x02, "4000, 8000, 16000" )
 	PORT_DIPSETTING(    0x03, "5000, 10000, 20000" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x0c, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
@@ -2635,8 +2644,8 @@ static struct MachineDriver spcenctr_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -2712,7 +2721,7 @@ struct GameDriver spcenctr_driver =
 
 	spcenctr_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	spcenctr_hiload, spcenctr_hisave
@@ -2724,7 +2733,7 @@ struct GameDriver spcenctr_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( clowns_rom )
+ROM_START( clowns )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "h2.cpu",       0x0000, 0x0400, 0xff4432eb )
 	ROM_LOAD( "g2.cpu",       0x0400, 0x0400, 0x676c934b )
@@ -2752,7 +2761,7 @@ INPUT_PORTS_START( clowns_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 or 2 Players Game" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 or 2 Players Game" )
@@ -2796,8 +2805,8 @@ static struct MachineDriver clowns_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -2885,7 +2894,7 @@ struct GameDriver clowns_driver =
 
 	clowns_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	clowns_hiload, clowns_hisave
@@ -2897,7 +2906,7 @@ struct GameDriver clowns_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( gmissile_rom )
+ROM_START( gmissile )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "gm_623.h",     0x0000, 0x0800, 0xa3ebb792 )
 	ROM_LOAD( "gm_623.g",     0x0800, 0x0800, 0xa5e740bb )
@@ -2927,7 +2936,7 @@ INPUT_PORTS_START( gmissile_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x03, "Coinage" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
@@ -2968,7 +2977,7 @@ struct GameDriver gmissile_driver =
 
 	gmissile_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0
@@ -2980,7 +2989,7 @@ struct GameDriver gmissile_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( seawolf_rom )
+ROM_START( seawolf )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "sw0041.h",     0x0000, 0x0400, 0x8f597323 )
 	ROM_LOAD( "sw0042.g",     0x0400, 0x0400, 0xdb980974 )
@@ -3022,7 +3031,7 @@ INPUT_PORTS_START( seawolf_input_ports )
 	PORT_START      /* IN1 Dips & Coins */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_DIPNAME( 0x0c, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x0c, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
@@ -3058,8 +3067,8 @@ static struct MachineDriver seawolf_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -3146,7 +3155,7 @@ struct GameDriver seawolf_driver =
 
 	seawolf_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	seawolf_hiload, seawolf_hisave
@@ -3158,7 +3167,7 @@ struct GameDriver seawolf_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( gunfight_rom)
+ROM_START( gunfight )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "7609h.bin",    0x0000, 0x0400, 0x0b117d73 )
 	ROM_LOAD( "7609g.bin",    0x0400, 0x0400, 0x57bc3159 )
@@ -3203,7 +3212,7 @@ INPUT_PORTS_START( gunfight_input_ports )
 	PORT_DIPSETTING(    0x10, "70" )
 	PORT_DIPSETTING(    0x20, "80" )
 	PORT_DIPSETTING(    0x30, "90" )
-	PORT_DIPNAME( 0xc0, 0x00, "Coinage" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin - 1 Player" )
 	PORT_DIPSETTING(    0x40, "1 Coin - 2 Players" )
 	PORT_DIPSETTING(    0x80, "1 Coin - 3 Players" )
@@ -3211,7 +3220,7 @@ INPUT_PORTS_START( gunfight_input_ports )
 #endif
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin" )
 	PORT_DIPSETTING(    0x01, "2 Coins" )
 	PORT_DIPSETTING(    0x02, "3 Coins" )
@@ -3255,8 +3264,8 @@ static struct MachineDriver gunfight_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -3294,7 +3303,7 @@ struct GameDriver gunfight_driver =
 
 	gunfight_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0
@@ -3306,7 +3315,7 @@ struct GameDriver gunfight_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( zzzap_rom )
+ROM_START( zzzap )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "zzzaph",       0x0000, 0x0400, 0x1fa86e1c )
 	ROM_LOAD( "zzzapg",       0x0400, 0x0400, 0x9639bc6b )
@@ -3341,7 +3350,7 @@ INPUT_PORTS_START( zzzap_input_ports )
 	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0, 0x01, 0xfe)
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
@@ -3382,8 +3391,8 @@ static struct MachineDriver zzzap_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -3488,7 +3497,7 @@ struct GameDriver zzzap_driver =
 
 	zzzap_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	zzzap_hiload, zzzap_hisave
@@ -3500,7 +3509,7 @@ struct GameDriver zzzap_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( lupin3_rom )
+ROM_START( lupin3 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "lp12.bin",     0x0000, 0x0800, 0x68a7f47a )
 	ROM_LOAD( "lp13.bin",     0x0800, 0x0800, 0xcae9a17b )
@@ -3581,8 +3590,8 @@ static struct MachineDriver lupin3_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -3656,7 +3665,7 @@ struct GameDriver lupin3_driver =
 
 	lupin3_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	lupin3_hiload, lupin3_hisave
@@ -3668,7 +3677,7 @@ struct GameDriver lupin3_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( helifire_rom )                                                                                /* MJC */
+ROM_START( helifire )                                                                                /* MJC */
 	ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "tub.f1b",      0x0000, 0x0400, 0x032f89ca )
 	ROM_LOAD( "tub.f2b",      0x0400, 0x0400, 0x2774e70f )
@@ -3689,7 +3698,7 @@ ROM_START( helifire_rom )                                                       
 #endif
 ROM_END
 
-ROM_START( helifira_rom )
+ROM_START( helifira )
 	ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "f1a.bin",      0x0000, 0x0400, 0x92c9d6c1 )
 	ROM_LOAD( "f2a.bin",      0x0400, 0x0400, 0xa264dde8 )
@@ -3753,7 +3762,7 @@ INPUT_PORTS_START( helifire_input_ports )
         PORT_DIPSETTING(    0x04, "6000" )
         PORT_DIPSETTING(    0x08, "8000" )
         PORT_DIPSETTING(    0x00, "10000" )
-        PORT_DIPNAME( 0x10, 0x00, "Coinage" )
+        PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
         PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
         PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
         PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
@@ -3831,7 +3840,7 @@ struct GameDriver helifire_driver =
 
 	helifire_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	helifire_hiload, helifire_hisave
@@ -3857,7 +3866,7 @@ struct GameDriver helifira_driver =
 
 	helifire_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	helifire_hiload, helifire_hisave
@@ -3870,7 +3879,7 @@ struct GameDriver helifira_driver =
 /*******************************************************/
 
 
-ROM_START( spacefev_rom )                                                                                /* MJC */
+ROM_START( spacefev )                                                                                /* MJC */
 	ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "tsf.f1",       0x0000, 0x0400, 0x35f295bd )
 	ROM_LOAD( "tsf.f2",       0x0400, 0x0400, 0x0c633f4c )
@@ -3980,7 +3989,7 @@ struct GameDriver spacefev_driver =
 
 	spacefev_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	spacefev_hiload, spacefev_hisave
@@ -3991,7 +4000,7 @@ struct GameDriver spacefev_driver =
 /* Nintendo "Space Fever" (B&W)                        */
 /*                                                     */
 /*******************************************************/
-ROM_START( sfeverbw_rom )
+ROM_START( sfeverbw )
 	ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "spacefev.f1", 0x0000, 0x0400, 0xb8887351 )
 	ROM_LOAD( "spacefev.f2", 0x0400, 0x0400, 0xcda933a7 )
@@ -4088,7 +4097,7 @@ struct GameDriver sfeverbw_driver =
 
         spacefev_input_ports,
 
-        0, palette, 0,
+        0, 0, 0,
         ORIENTATION_ROTATE_270,
 
         sfeverbw_hiload, sfeverbw_hisave
@@ -4101,7 +4110,7 @@ struct GameDriver sfeverbw_driver =
 /*******************************************************/
 
 
-ROM_START( polaris_rom )
+ROM_START( polaris )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ps-01",        0x0000, 0x0800, 0xc04ce5a9 )
 	ROM_LOAD( "ps-09",        0x0800, 0x0800, 0x9a5c8cb2 )
@@ -4111,7 +4120,7 @@ ROM_START( polaris_rom )
 	ROM_LOAD( "ps-10",        0x4800, 0x0800, 0x3df77bac )
 ROM_END
 
-ROM_START( polarisa_rom )
+ROM_START( polarisa )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ps01-1",      0x0000, 0x0800, 0x7d41007c )
 	ROM_LOAD( "ps-09",       0x0800, 0x0800, 0x9a5c8cb2 )
@@ -4218,8 +4227,8 @@ static struct MachineDriver polaris_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -4290,7 +4299,7 @@ struct GameDriver polaris_driver =
 
 	polaris_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	polaris_hiload, polaris_hisave
@@ -4316,7 +4325,7 @@ struct GameDriver polarisa_driver =
 
 	polaris_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	polaris_hiload, polaris_hisave
@@ -4330,7 +4339,7 @@ struct GameDriver polarisa_driver =
 /*******************************************************/
 
 
-ROM_START( lagunar_rom )
+ROM_START( lagunar )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "lagunar.h",    0x0000, 0x0800, 0x0cd5a280 )
 	ROM_LOAD( "lagunar.g",    0x0800, 0x0800, 0x824cd6f5 )
@@ -4353,7 +4362,7 @@ INPUT_PORTS_START( lagunar_input_ports )
 	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0, 0x01, 0xfe)
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "2 Coins/3 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
@@ -4438,7 +4447,7 @@ struct GameDriver lagunar_driver =
 
 	lagunar_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	lagunar_hiload, lagunar_hisave
@@ -4451,7 +4460,7 @@ struct GameDriver lagunar_driver =
 /*******************************************************/
 
 
-ROM_START( m4_rom )
+ROM_START( m4 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "m4.h",         0x0000, 0x0800, 0x9ee2a0b5 )
 	ROM_LOAD( "m4.g",         0x0800, 0x0800, 0x0e84b9cb )
@@ -4490,7 +4499,7 @@ INPUT_PORTS_START( m4_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit (or 2 Players)" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
@@ -4525,8 +4534,8 @@ static struct MachineDriver m4_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -4564,7 +4573,7 @@ struct GameDriver m4_driver =
 
 	m4_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
@@ -4580,7 +4589,7 @@ struct GameDriver m4_driver =
 /*******************************************************/
 
 
-ROM_START( phantom2_rom )
+ROM_START( phantom2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "phantom2.h",   0x0000, 0x0800, 0x0e3c2439 )
 	ROM_LOAD( "phantom2.g",   0x0800, 0x0800, 0xe8df3e52 )
@@ -4616,7 +4625,7 @@ INPUT_PORTS_START( phantom2_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x01, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPNAME( 0x06, 0x06, "Time" )
@@ -4647,8 +4656,8 @@ static struct MachineDriver phantom2_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -4727,7 +4736,7 @@ struct GameDriver phantom2_driver =
 
 	phantom2_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 phantom2_hiload, phantom2_hisave
@@ -4781,7 +4790,7 @@ INPUT_PORTS_START( dogpatch_input_ports )
 	PORT_DIPSETTING(    0x02, "15" )
 	PORT_DIPSETTING(    0x01, "20" )
 	PORT_DIPSETTING(    0x00, "25" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x0c, "2 Coins/1 Credit (1 or 2 Players)" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
@@ -4818,8 +4827,8 @@ static struct MachineDriver dogpatch_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -4837,7 +4846,7 @@ static struct MachineDriver dogpatch_machine_driver =
 	}
 };
 
-ROM_START( dogpatch_rom )
+ROM_START( dogpatch )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "dogpatch.h",   0x0000, 0x0800, 0x74ebdf4d )
 	ROM_LOAD( "dogpatch.g",   0x0800, 0x0800, 0xac246f70 )
@@ -4864,7 +4873,7 @@ struct GameDriver dogpatch_driver =
 
 	dogpatch_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
@@ -4895,7 +4904,7 @@ static struct IOWritePort midwbowl_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-ROM_START( midwbowl_rom )
+ROM_START( midwbowl )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "h.cpu",        0x0000, 0x0800, 0x74c29b93 )
 	ROM_LOAD( "g.cpu",        0x0800, 0x0800, 0xca26d8b4 )
@@ -4913,7 +4922,7 @@ INPUT_PORTS_START( midwbowl_input_ports )
 /* 0x03 same as 0x02 */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x10, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -4958,8 +4967,8 @@ static struct MachineDriver midwbowl_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -5029,7 +5038,7 @@ struct GameDriver midwbowl_driver =
 
 	midwbowl_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	midbowl_hiload, midbowl_hisave
@@ -5042,7 +5051,7 @@ struct GameDriver midwbowl_driver =
 /*******************************************************/
 
 
-ROM_START( blueshrk_rom )
+ROM_START( blueshrk )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "blueshrk.h",   0x0000, 0x0800, 0x4ff94187 )
 	ROM_LOAD( "blueshrk.g",   0x0800, 0x0800, 0xe49368fd )
@@ -5107,8 +5116,8 @@ static struct MachineDriver blueshrk_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -5182,7 +5191,7 @@ struct GameDriver blueshrk_driver =
 
 	blueshrk_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	blueshrk_hiload, blueshrk_hisave
@@ -5196,7 +5205,7 @@ struct GameDriver blueshrk_driver =
 /*******************************************************/
 
 
-ROM_START( einnings_rom )
+ROM_START( einnings )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ei.h",         0x0000, 0x0800, 0xeff9c7af )
 	ROM_LOAD( "ei.g",         0x0800, 0x0800, 0x5d1e66cb )
@@ -5232,7 +5241,7 @@ INPUT_PORTS_START( einnings_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x07, 0x00, "Coinage")
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, "2C/1 In (1 or 2 Players)" )
 	PORT_DIPSETTING(    0x03, "2C/1 In 4C/3 In (1 or 2 Pls)" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Inning (1 or 2 Pls)" )
@@ -5268,7 +5277,7 @@ struct GameDriver einnings_driver =
 
 	einnings_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
@@ -5281,7 +5290,7 @@ struct GameDriver einnings_driver =
 /*******************************************************/
 
 
-ROM_START( dplay_rom )
+ROM_START( dplay )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "dplay619.h",   0x0000, 0x0800, 0x6680669b )
 	ROM_LOAD( "dplay619.g",   0x0800, 0x0800, 0x0eec7e01 )
@@ -5309,7 +5318,7 @@ struct GameDriver dplay_driver =
 
 	einnings_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
@@ -5322,7 +5331,7 @@ struct GameDriver dplay_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( maze_rom )
+ROM_START( maze )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0xf2860cff )
 	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x65fad839 )
@@ -5393,8 +5402,8 @@ static struct MachineDriver maze_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -5429,7 +5438,7 @@ struct GameDriver maze_driver =
 
 	maze_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
@@ -5441,7 +5450,7 @@ struct GameDriver maze_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( tornbase_rom )
+ROM_START( tornbase )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "tb.h",         0x0000, 0x0800, 0x653f4797 )
 	ROM_LOAD( "tb.g",         0x0800, 0x0800, 0x33468006 )
@@ -5471,7 +5480,7 @@ INPUT_PORTS_START( tornbase_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x78, 0x40, "Coinage" )
+	PORT_DIPNAME( 0x78, 0x40, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x18, "4 Coins/1 Inning 32/9" )
 	PORT_DIPSETTING(    0x10, "3 Coins/1 Inning 24/9" )
 	PORT_DIPSETTING(    0x38, "4 Coins/2 Innings 16/9" )
@@ -5512,8 +5521,8 @@ static struct MachineDriver tornbase_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -5546,7 +5555,7 @@ struct GameDriver tornbase_driver =
 
 	tornbase_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
@@ -5558,7 +5567,7 @@ struct GameDriver tornbase_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( checkmat_rom )
+ROM_START( checkmat )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "checkmat.h", 0x0000, 0x0400, 0x3481a6d1 )
 	ROM_LOAD( "checkmat.g", 0x0400, 0x0400, 0xdf5fa551 )
@@ -5602,7 +5611,7 @@ INPUT_PORTS_START( checkmat_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
 
 	PORT_START      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x01, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Playera" )
 	PORT_DIPSETTING(    0x01, "1 Coin/1 to 4 Players" )
 	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
@@ -5656,8 +5665,8 @@ static struct MachineDriver checkmat_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -5695,7 +5704,7 @@ struct GameDriver checkmat_driver =
 
 	checkmat_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0
@@ -5707,7 +5716,7 @@ struct GameDriver checkmat_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( ozmawars_rom )
+ROM_START( ozmawars )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mw01", 0x0000, 0x0800, 0x31f4397d )
 	ROM_LOAD( "mw02", 0x0800, 0x0800, 0xd8e77c62 )
@@ -5717,7 +5726,7 @@ ROM_START( ozmawars_rom )
 	ROM_LOAD( "mw06", 0x4800, 0x0800, 0x99ca2eae )
 ROM_END
 
-ROM_START( solfight_rom )
+ROM_START( solfight )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "solfight.m", 0x0000, 0x0800, 0xa4f2814e )
 	ROM_LOAD( "solfight.n", 0x0800, 0x0800, 0x5657ec07 )
@@ -5727,7 +5736,7 @@ ROM_START( solfight_rom )
 	ROM_LOAD( "solfight.t", 0x4800, 0x0800, 0x3b6fb206 )
 ROM_END
 
-ROM_START( spaceph_rom )
+ROM_START( spaceph )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "sv01.bin",     0x0000, 0x0400, 0xde84771d )
 	ROM_LOAD( "sv02.bin",     0x0400, 0x0400, 0x957fc661 )
@@ -5775,7 +5784,7 @@ INPUT_PORTS_START( ozmawars_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 	PORT_START		/* BSR */
@@ -5825,7 +5834,7 @@ INPUT_PORTS_START( solfight_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 	PORT_START		/* BSR */
@@ -5866,7 +5875,7 @@ INPUT_PORTS_START( spaceph_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Fire */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
-	PORT_DIPNAME( 0x80, 0x00, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
 	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
 INPUT_PORTS_END
@@ -5936,10 +5945,10 @@ struct GameDriver ozmawars_driver =
 
 	ozmawars_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	ozmawars_hiload, ozmawars_hisave
 
+	ozmawars_hiload, ozmawars_hisave
 };
 
 struct GameDriver solfight_driver =
@@ -5962,10 +5971,10 @@ struct GameDriver solfight_driver =
 
 	solfight_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	ozmawars_hiload, ozmawars_hisave
 
+	ozmawars_hiload, ozmawars_hisave
 };
 
 struct GameDriver spaceph_driver =
@@ -5988,7 +5997,7 @@ struct GameDriver spaceph_driver =
 
 	spaceph_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ozmawars_hiload, ozmawars_hisave
@@ -6024,7 +6033,7 @@ INPUT_PORTS_START( sinvemag_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x80, 0x00, "Coinage Info" )
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_START		/* BSR */
@@ -6042,7 +6051,7 @@ INPUT_PORTS_START( sinvemag_input_ports )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-ROM_START( sinvemag_rom )
+ROM_START( sinvemag )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
 	ROM_LOAD( "emag_si.b",  0x0400, 0x0400, 0xfebe6d1a )
@@ -6072,7 +6081,7 @@ struct GameDriver sinvemag_driver =
 
 	sinvemag_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -6100,17 +6109,17 @@ INPUT_PORTS_START( alieninv2_input_ports )
 	PORT_DIPNAME( 0x01, 0x01, "Lives" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPNAME( 0x02, 0x02, "Pence Coinage Info" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Pence Coinage" )
 	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) /* Pence Coin */
 	PORT_DIPNAME( 0x08, 0x08, "Unknown" ) /* Not bonus */
-	PORT_DIPSETTING(    0x08, "On" )
 	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x80, 0x80, "Coinage" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "2Cs/1C 50p/3Cs (+1 life)" )
 	PORT_DIPSETTING(    0x80, "1C/1C 50p/5Cs" )
 	PORT_START		/* BSR */
@@ -6128,7 +6137,7 @@ INPUT_PORTS_START( alieninv2_input_ports )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-ROM_START( alieninv2_rom )
+ROM_START( alieninv2 )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "1h.bin",   0x0000, 0x0800, 0xc46df7f4 )
 	ROM_LOAD( "1g.bin",   0x0800, 0x0800, 0x4b1112d6 )
@@ -6156,7 +6165,7 @@ struct GameDriver alieninv2_driver =
 
 	alieninv2_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -6262,8 +6271,8 @@ static struct MachineDriver sitv_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
@@ -6282,7 +6291,7 @@ static struct MachineDriver sitv_machine_driver =
 };
 
 
-ROM_START( sitv_rom )
+ROM_START( sitv )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "tv0h.s1",   0x0000, 0x0800, 0xfef18aad )
 	ROM_LOAD( "tv04.m1",   0x1800, 0x0800, 0xcd2c67f6 )
@@ -6310,7 +6319,7 @@ struct GameDriver sitv_driver =
 
 	sitv_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -6404,8 +6413,8 @@ static struct MachineDriver sicv_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette)/3, 0,
-	0,
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,
+	init_palette,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
@@ -6424,7 +6433,7 @@ static struct MachineDriver sicv_machine_driver =
 };
 
 
-ROM_START( sicv_rom )
+ROM_START( sicv )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "cv17.bin",   0x0000, 0x0800, 0x3dfbe9e6 )
 	ROM_LOAD( "cv18.bin",   0x0800, 0x0800, 0xbc3c82bf )
@@ -6452,7 +6461,7 @@ struct GameDriver sicv_driver =
 
 	sicv_input_ports,
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -6466,7 +6475,7 @@ struct GameDriver sicv_driver =
 /*******************************************************/
 
 /* LT 24-12-1998 */
-ROM_START( sisv_rom )
+ROM_START( sisv )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
 	ROM_LOAD( "sv10.bin",   0x0800, 0x0400, 0x483e651e )
@@ -6498,7 +6507,7 @@ struct GameDriver sisv_driver =
 
 	sicv_input_ports,	/* ?? */
 
-	0, palette, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	invaders_hiload, invaders_hisave
@@ -6514,7 +6523,7 @@ void ballbomb_videoram_w(int offset, int data);
 void ballbomb_sh_port3_w(int offset, int data);
 void ballbomb_vh_convert_color_prom(unsigned char *pallete, unsigned short *colortable,const unsigned char *color_prom);
 
-ROM_START( ballbomb_rom )
+ROM_START( ballbomb )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "tn01",   0x0000, 0x0800, 0x551585b5 )
 	ROM_LOAD( "tn02",   0x0800, 0x0800, 0x7e1f734f )
