@@ -20,7 +20,7 @@ to list them.
 | 64th Street          |  Yes   |  Yes   |  Yes   |   No   |   No   | 64street |
 | 720 Degrees          |   No   |  Yes   |  Yes   |  Yes   |   No   | 720      |
 | APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
-| Adv.Quiz 2 Hatena no Dai-Bouken  Yes   |Partial |   No   |   No   | hatena   |
+| Adv.Quiz 2 Hatena no Dai-Bouken  Yes   |Partial |   No   |  Yes   | hatena   |
 | Adv.of Robby Roto,The|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
 | Aero Fighters        |  Yes   |  Yes   |  Yes   |   No   |   No   | aerofgt  |
 | Air Buster           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | airbustr |
@@ -33,7 +33,8 @@ to list them.
 | Amazing Maze Game,The|  Yes   |  b/w   |   No   |  n/a   |   No   | maze     |
 | Ambush               |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ambush   |
 | Amidar               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | amidar   |
-| Anteater             |  Yes   |   No   |  Yes   |  Yes   |   No   | anteater |
+| Anteater             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | anteater |
+| Appoooh              |  Yes   |  Yes   |  Yes   |   No   |   No   | appoooh  |
 | Arabian              |  Yes   | Close  |  Yes   |  Yes   |   No   | arabian  |
 | Arkanoid             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | arkanoid |
 | Arkanoid 2           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | arkanoi2 |
@@ -52,6 +53,7 @@ to list them.
 | Avalanche            |  Yes   |  b/w   |  Yes   |  Yes   |  n/a   | avalnche |
 | Avengers             |   No   |   No   |  Yes   |   No   |   No   | avengers |
 | Avenging Spirit      |  Yes   |  Yes   |  Yes   |   No   |   No   | avspirit |
+| Azurian Attack       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | azurian  |
 | Bad Dudes            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | baddudes |
 | Bad Lands            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | badlands |
 | Bagman               |  Yes   |  Yes   |No Speech  Yes   |  Yes   | bagman   |
@@ -74,7 +76,7 @@ to list them.
 | Block Gal            |   No   |  Yes   |  Yes   |   No   |   No   | blockgal |
 | Block Out            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blockout |
 | Blockade             |  Yes   |  b/w   |Partl(1)|  n/a   |   No   | blockade |
-| Blue Print           |  Yes   |   No   |  Yes   |  Yes   |  Yes   | blueprnt |
+| Blue Print           |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | blueprnt |
 | Bomb Jack            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bombjack |
 | Boot Hill            |  Yes   |  b/w   | Yes(1) |  n/a   |   No   | boothill |
 | Bosconian            |  Yes   |  Yes   |  Yes   |   No   |   No   | bosco    |
@@ -91,6 +93,7 @@ to list them.
 | Calipso              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | calipso  |
 | Canyon Bomber        |  Yes   |  b/w   |   No   |  Yes   |   No   | canyon   |
 | Capcom Bowling       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | capbowl  |
+| Capcom World         |  Yes   |  Yes   |Partial |  Yes   |  Yes   | cworld   |
 | Captain Commando     |  Yes   |  Yes   |  Yes   |   No   |   No   | captcomm |
 | Captain Silver       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csilver  |
 | Carnival             |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | carnival |
@@ -100,7 +103,7 @@ to list them.
 | Challenger           |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | challeng |
 | Champion Baseball    |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | champbas |
 | Championship Sprint  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csprint  |
-| Changes              |  Yes   |  Yes   |  Yes   |   No   |   No   | changes  |
+| Changes              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | changes  |
 | Checkman             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | checkman |
 | Cheeky Mouse         |  Yes   |   No   |Partial |   No   |  Yes   | cheekyms |
 | Chelnov              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chelnov  |
@@ -149,7 +152,7 @@ to list them.
 | Demolition Derby     |  Yes   |  Yes   |  Yes   |   No   |   No   | destderb |
 | Depth Charge         |  Yes   |  b/w   |   No   |   No   |   No   | depthch  |
 | Devastators          |   No   |  Yes   |   No   |   No   |   No   | devstors |
-| Devil Fish           |  Yes   |   No   |  Yes   |   No   |   No   | devilfsh |
+| Devil Fish           |  Yes   |  Yes   |  Yes   |   No   |   No   | devilfsh |
 | Devil Zone           |  Yes   |   No   |Partial |   No   |   No   | devzone  |
 | Diamond Run          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | diamond  |
 | Dig Dug              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | digdug   |
@@ -200,6 +203,7 @@ to list them.
 | Fly Boy              |  Yes   |   No   |  Yes   |  Yes   |  Yes   | flyboy   |
 | Food Fight           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | foodf    |
 | Formation Z          |   No   |   No   |  Yes   |   No   |   No   | formatz  |
+| Freeze               |  Yes   |  Yes?  |  Yes   |   No   |   No   | freeze   |
 | Frenzy               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | frenzy   |
 | Frisky Tom           |  Yes   |  Yes   |  Yes   |   No   |   No   | friskyt  |
 | Frogger              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | frogger  |
@@ -229,7 +233,7 @@ to list them.
 | Gondomania           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gondo    |
 | Gorf                 |  Yes   |   No   | Yes(1) |  Yes   |  Yes   | gorf     |
 | Gravitar             |  Yes   | Close  |  Yes   |  Yes   |   No   | gravitar |
-| Great Swordsman      |  Yes   |   No   |   No   |  Yes   |   No   | gsword   |
+| Great Swordsman      |  Yes   |   No   |  Yes   |  Yes   |   No   | gsword   |
 | Green Beret          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gberet   |
 | Gridiron Fight       |  Yes   |  Yes   |  Yes   |   No   |   No   | gridiron |
 | Grobda               |  Yes   |  Yes   |  Yes   |   No   |   No   | grobda   |
@@ -252,7 +256,8 @@ to list them.
 | HigeMaru             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | higemaru |
 | Hippodrome           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hippodrm |
 | Hit 'n Miss          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hitnmiss |
-| Hoccer               |  Yes   |  Yes   |  Yes   |   No   |   No   | hoccer   |
+| Hoccer               |  Yes   |  Yes   |  Yes   |   No   |  Yes   | hoccer   |
+| Hot Shocker          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | hotshock |
 | Hustle               |  Yes   |  b/w   |   No   |   No   |   No   | hustle   |
 | Hyper Sports         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | hyperspt |
 | I'm Sorry            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | imsorry  |
@@ -273,7 +278,7 @@ to list them.
 | Journey              |  Yes   |  Yes   |Partial |  Yes   |   No   | journey  |
 | Joust                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | joust    |
 | Joust 2              |  Yes   |  Yes   |Partial |  Yes   |   No   | joust2   |
-| Jr. Pacman           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | jrpacman |
+| Jr. Pacman           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | jrpacman |
 | Jump Bug             |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | jumpbug  |
 | Jump Coaster         |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | jumpcoas |
 | Jump Shot            |   No   |  Yes   |  Yes   |   No   |  Yes   | jumpshot |
@@ -305,9 +310,11 @@ to list them.
 | Last Duel            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lastduel |
 | Last Mission         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lastmiss |
 | Lazer Command        |  Yes   |Overlay |  Yes   |   No   |   No   | lazercmd |
+| Legend of Kage,The   |  Yes   |  Yes   |  Yes   |   No   |   No   | lkage    |
 | Legend of Makaj      |  Yes   |  Yes   |  Yes   |   No   |   No   | lomakaj  |
 | Legendary Wings      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lwings   |
 | Leprechaun           |  Yes   |  Yes?? |  Yes   |  Yes   |  Yes   | leprechn |
+| Levers               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | levers   |
 | Liberator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | liberatr |
 | Liquid Kids          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | liquidk  |
 | Lizard Wizard        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lizwiz   |
@@ -327,6 +334,8 @@ to list them.
 | Mad Planets          |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | mplanets |
 | Magic Sword          |  Yes   |  Yes   |  Yes   |   No   |   No   | msword   |
 | Magical Spot II      |  Yes   |  Yes   |Partial |   No   |   No   | magspot2 |
+| Mahjong Gakuen       |  Yes   |  Yes   |Partial |   No   |  Yes   | mgakuen  |
+| Mahjong Gakuen 2     |  Yes   |  Yes   |Partial |   No   |  Yes   | mgakuen2 |
 | Main Event,The       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mainevt  |
 | Major Havoc          |  Yes   |  Yes   |  Yes   |   No   |   No   | mhavoc   |
 | Major League         |   No   |  Yes   |   No   |   No   |   No   | mjleague |
@@ -334,9 +343,10 @@ to list them.
 | Mania Challenge      |   No   |  Yes?  |  Yes   |  Yes   |   No   | maniach  |
 | Mappy                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mappy    |
 | Marble Madness       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | marble   |
-| Marine Boy           |  Yes   |  Yes   |  Yes   |   No   |   No   | marineb  |
+| Marine Boy           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | marineb  |
 | Mariner              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | mariner  |
 | Mario Bros.          |  Yes   |  Yes   |Partl(1)|  Yes   |   No   | mario    |
+| Mars                 |  Yes   |  Yes   |  Yes   |   No   |   No   | mars     |
 | Mat Mania            |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | matmania |
 | Max RPM              |  Yes   |  Yes   |   No   |  Yes   |  n/a   | maxrpm   |
 | Meadows Lanes        |  Yes   |  b/w   |   No   |   No   |   No   | medlanes |
@@ -380,6 +390,7 @@ to list them.
 | Nemesis              |  Yes   |  Yes   |Partial |  Yes   |   No   | nemesis  |
 | Nemo                 |  Yes   |  Yes   |  Yes   |   No   |   No   | nemo     |
 | New Rally X          |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | nrallyx  |
+| New Sinbad 7         |  Yes   |  Yes   |  Yes   |   No   |   No   | newsin7  |
 | New Zealand Story    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | tnzs     |
 | Nibbler              |  Yes   |  Yes   |Partial |  Yes   |  Yes   | nibbler  |
 | Night Driver         |  Yes   |  b/w   |   No   |   No   |   No   | nitedrvr |
@@ -395,7 +406,7 @@ to list them.
 | Pac Man              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pac Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
 | Pac-Land             |  Yes   |  Yes   |Partial |  Yes   |   No   | pacland  |
-| Pang                 |  Yes   |  Yes   |Partial |   No   |   No   | pang     |
+| Pang                 |  Yes   |  Yes   |Partial |   No   |  Yes   | pang     |
 | Paper Boy            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | paperboy |
 | Passing Shot         |  Yes   |  Yes   |  Yes   |   No   |   No   | passshtb |
 | Pengo                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pengo    |
@@ -415,6 +426,7 @@ to list them.
 | Pleiads              |  Yes   |  Yes   |Limited |  Yes   |   No   | pleiads  |
 | Pnickies             |  Yes   |  Yes   |  Yes   |   No   |   No   | pnickj   |
 | Pocket Gal           |  Yes   |  Yes   |  Yes   |   No   |   No   | pcktgal  |
+| Poker Ladies         |  Yes   |  Yes   |Partial |   No   |  Yes   | pkladies |
 | Polaris              |  Yes   |  b/w   |   No   |   No   |   No   | polaris  |
 | Ponpoko              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ponpoko  |
 | Pontoon              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pontoon  |
@@ -434,7 +446,8 @@ to list them.
 | Qix                  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qix      |
 | Quantum              |  Yes   |   No   |  Yes   |  Yes   |   No   | quantum  |
 | Quartet II           |   No   |  Yes   |   No   |   No   |   No   | quartet2 |
-| Quiz Tonosama no Yabou  Yes   |  Yes   |Partial |  Yes   |   No   | qtono1   |
+| Quiz Sangokushi      |  Yes   |  Yes   |Partial |  Yes   |  Yes   | qsangoku |
+| Quiz Tonosama no Yabou  Yes   |  Yes   |Partial |  Yes   |  Yes   | qtono1   |
 | Qwak                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qwakprot |
 | Radar Scope          |  Yes   |  Yes?  |Partial |  Yes   |   No   | radarscp |
 | Radical Radial       |   No   |  Yes   |  Yes   |   No   |   No   | radrad   |
@@ -476,6 +489,7 @@ to list them.
 | Sasuke vs. Commander |  Yes   |   No   |   No   |   No   |  Yes   | sasuke   |
 | Satan of Saturn      |  Yes   |  Yes?  |Partial |   No   |  Yes   | satansat |
 | Satan's Hollow       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shollow  |
+| Saturn               |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | saturn   |
 | Sauro                |  Yes   | Close  |  Yes   |  Yes   |  Yes   | sauro    |
 | Scion                |  Yes   |   No   | Wrong  |  Yes   |  Yes   | scion    |
 | Scramble             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | scramble |
@@ -527,10 +541,11 @@ to list them.
 | Speed Ball           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | speedbal |
 | Speed Coin           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | spdcoin  |
 | Speed Rumbler        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | srumbler |
+| Spelunker            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | spelunkr |
 | Spelunker II         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | spelunk2 |
 | Spiders              |  Yes   |  Yes   |   No   |   No   |   No   | spiders  |
 | Splat                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | splat    |
-| Springer             |  Yes   |  Yes   |  Yes   |   No   |   No   | springer |
+| Springer             |  Yes   |  Yes   |  Yes   |   No   |  Yes   | springer |
 | Sprint 1             |  Yes   | Maybe  |   No   |  n/a   |  n/a   | sprint1  |
 | Spy Hunter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | spyhunt  |
 | Star Fire            |Partial.|   No   |   No   |   No   |   No   | starfire |
@@ -556,9 +571,10 @@ to list them.
 | Super Cobra          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | scobra   |
 | Super Hi Impact      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shimpact |
 | Super Locomotive     |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | suprloco |
+| Super Marukin-Ban    |  Yes   |  Yes   |Partial |   No   |  Yes   | marukin  |
 | Super Mouse          |  Yes   |   No   |  Yes   |  Yes   |  Yes   | suprmous |
 | Super Pac Man        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superpac |
-| Super Pang           |  Yes   |  Yes   |Partial |  Yes   |   No   | spang    |
+| Super Pang           |  Yes   |  Yes   |Partial |  Yes   |  Yes   | spang    |
 | Super Punch Out      |  Yes   |  Yes   |Partial |  Yes   |  n/a   | spnchout |
 | Super Qix            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superqix |
 | Super Real Darwin    |  Yes   |  Yes   |  Yes   |  Yes   |   No   | srdarwin |
@@ -916,7 +932,7 @@ Known issues:
 - There is a bit in the sprite attributes which I don't know what means:
   it seems to be set only when the (B) materializes.
 - The INITIAL HIGH SCORE setting doesn't only set that, it does something
-  else as well - but I don't know what.
+  else as well - but I don't know what. It seems to affect difficulty.
 
 
 
@@ -1749,7 +1765,6 @@ Known issues:
 King of Boxer ("kingofb")
 =========================
 Clones supported:
-  version with Japanese (?) text ("kingofbj")
   Ring King ("ringking")
   Ring King on King of Boxer hardware ("ringkin2")
 
@@ -2280,11 +2295,6 @@ Known issues:
 
 Punch Out ("punchout")
 ======================
-The game runs on two monitors, positioned one above the other. Since the top
-monitor is mostly informational, you might want to cut it out to enlarge the
-play area. You can do that enforcing a suitable screen size. Good resolutions
-are 400x300 (if your card supports it), or 800x600 with pixel doubling.
-
 Known issues:
 - When you die, a rectangle on the left of the screen blinks.
 

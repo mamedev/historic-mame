@@ -218,7 +218,7 @@ INPUT_PORTS_START( spyhunt2_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
- 	PORT_ANALOGX( 0xff, 0x74, IPT_AD_STICK_X | IPF_CENTER, 100, 0, 0x20, 0xff, OSD_KEY_LEFT, OSD_KEY_RIGHT, IPT_JOYSTICK_LEFT, IPT_JOYSTICK_RIGHT, 2 )
+ 	PORT_ANALOG( 0xff, 0x74, IPT_AD_STICK_X | IPF_CENTER, 100, 10, 0, 0x20, 0xff )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) /* Left Trigger */
@@ -357,7 +357,7 @@ static struct GfxDecodeInfo xenophobe_gfxdecodeinfo[] =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 255 }
+	{ 100 }
 };
 
 /***************************************************************************
@@ -375,7 +375,7 @@ static struct MachineDriver mcr68_machine_driver =
 			8000000,	/* 8 Mhz */
 			0,
 			mcr68_readmem,mcr68_writemem,0,0,
-			mcr68_interrupt,4
+			mcr68_interrupt,8	/* wrong */
 		},
 		{
 			CPU_M68000 | CPU_AUDIO_CPU,

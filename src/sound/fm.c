@@ -3447,6 +3447,8 @@ void OPMWriteReg(int n, int r, int v)
 			OPM->ctw = v&0xff;
 			if( OPM->PortWrite != 0)
 				OPM->PortWrite(0, (OPM->ctw)>>6 ); /* bit0 = CT0,bit1 = CT1 */
+			else
+if (errorlog) fprintf(errorlog,"Write %x to YM2151 output port\n",(OPM->ctw)>>6);
 			break;
 		}
 		break;

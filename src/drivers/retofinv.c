@@ -233,7 +233,6 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 
 INPUT_PORTS_START( input_ports )
-
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -349,7 +348,6 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x60, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
-
 INPUT_PORTS_END
 
 
@@ -462,109 +460,102 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( retofinv_rom )
-
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC70.ROM", 0x0000, 0x2000, 0xeae7459d )
-	ROM_LOAD( "IC71.ROM", 0x2000, 0x2000, 0x72895e37 )
-	ROM_LOAD( "IC72.ROM", 0x4000, 0x2000, 0x505dd20b )
+	ROM_LOAD( "ic70.rom", 0x0000, 0x2000, 0xeae7459d )
+	ROM_LOAD( "ic71.rom", 0x2000, 0x2000, 0x72895e37 )
+	ROM_LOAD( "ic72.rom", 0x4000, 0x2000, 0x505dd20b )
 
 	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC61.ROM", 0x0000, 0x2000, 0x4e3f501c )
-	ROM_LOAD( "IC55.ROM", 0x2000, 0x2000, 0xef7f8651 )
-	ROM_LOAD( "IC56.ROM", 0x4000, 0x2000, 0x03b40905 )
+	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
+	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
+	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
 
-	ROM_LOAD( "IC8.ROM ", 0x6000, 0x2000, 0x6afdeec8 )
-	ROM_LOAD( "IC9.ROM ", 0x8000, 0x2000, 0xd3dc9da3 )
-	ROM_LOAD( "IC10.ROM", 0xA000, 0x2000, 0xd10b2eed )
-	ROM_LOAD( "IC11.ROM", 0xC000, 0x2000, 0x00ca6b3d )
+	ROM_LOAD( "ic8.rom",  0x6000, 0x2000, 0x6afdeec8 )
+	ROM_LOAD( "ic9.rom",  0x8000, 0x2000, 0xd3dc9da3 )
+	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
+	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC62.ROM", 0x0000, 0x2000, 0xd2899cc1 )
+	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "IC17.ROM", 0x0000, 0x2000, 0x9025abea )
+	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
 	ROM_REGION(0x1300)	/* color PROMs */
-	ROM_LOAD( "74S287.P6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
-	ROM_LOAD( "74S287.O6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
-	ROM_LOAD( "74S287.Q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
+	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
+	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
+	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
 
-	ROM_LOAD( "82S137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
-	ROM_LOAD( "82S137.02", 0x0700, 0x0400, 0x6db07bd1 )
-	ROM_LOAD( "82S137.03", 0x0B00, 0x0400, 0x00000000 )
-	ROM_LOAD( "82S137.04", 0x0F00, 0x0400, 0x00000000 )
-
+	ROM_LOAD( "82s137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
+	ROM_LOAD( "82s137.02", 0x0700, 0x0400, 0x6db07bd1 )
+	ROM_LOAD( "82s191n",   0x0b00, 0x0800, 0x93c891e3 )
 ROM_END
 
 ROM_START( retofin1_rom )
-
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ROI.02",  0x0000, 0x2000, 0xd98fd462 )
-	ROM_LOAD( "ROI.01B", 0x2000, 0x2000, 0x3379f930 )
-	ROM_LOAD( "ROI.01",  0x4000, 0x2000, 0x57679062 )
+	ROM_LOAD( "roi.02",  0x0000, 0x2000, 0xd98fd462 )
+	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
+	ROM_LOAD( "roi.01",  0x4000, 0x2000, 0x57679062 )
 
 	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC61.ROM", 0x0000, 0x2000, 0x4e3f501c )
-	ROM_LOAD( "IC55.ROM", 0x2000, 0x2000, 0xef7f8651 )
-	ROM_LOAD( "IC56.ROM", 0x4000, 0x2000, 0x03b40905 )
+	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
+	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
+	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
 
-	ROM_LOAD( "IC8.ROM ", 0x6000, 0x2000, 0x6afdeec8 )
-	ROM_LOAD( "IC9.ROM ", 0x8000, 0x2000, 0xd3dc9da3 )
-	ROM_LOAD( "IC10.ROM", 0xA000, 0x2000, 0xd10b2eed )
-	ROM_LOAD( "IC11.ROM", 0xC000, 0x2000, 0x00ca6b3d )
+	ROM_LOAD( "ic8.rom",  0x6000, 0x2000, 0x6afdeec8 )
+	ROM_LOAD( "ic9.rom",  0x8000, 0x2000, 0xd3dc9da3 )
+	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
+	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC62.ROM", 0x0000, 0x2000, 0xd2899cc1 )
+	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "IC17.ROM", 0x0000, 0x2000, 0x9025abea )
+	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
 	ROM_REGION(0x1300)	/* color PROMs */
-	ROM_LOAD( "74S287.P6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
-	ROM_LOAD( "74S287.O6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
-	ROM_LOAD( "74S287.Q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
+	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
+	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
+	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
 
-	ROM_LOAD( "82S137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
-	ROM_LOAD( "82S137.02", 0x0700, 0x0400, 0x6db07bd1 )
-	ROM_LOAD( "82S137.03", 0x0B00, 0x0400, 0x00000000 )
-	ROM_LOAD( "82S137.04", 0x0F00, 0x0400, 0x00000000 )
-
+	ROM_LOAD( "82s137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
+	ROM_LOAD( "82s137.02", 0x0700, 0x0400, 0x6db07bd1 )
+	ROM_LOAD( "82s191n",   0x0b00, 0x0800, 0x93c891e3 )
 ROM_END
 
 ROM_START( retofin2_rom )
-
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "RI-C.1E", 0x0000, 0x2000, 0xe3c31260 )
-	ROM_LOAD( "ROI.01B", 0x2000, 0x2000, 0x3379f930 )
-	ROM_LOAD( "RI-A.1C", 0x4000, 0x2000, 0x3ae7c530 )
+	ROM_LOAD( "ri-c.1e", 0x0000, 0x2000, 0xe3c31260 )
+	ROM_LOAD( "roi.01b", 0x2000, 0x2000, 0x3379f930 )
+	ROM_LOAD( "ri-a.1c", 0x4000, 0x2000, 0x3ae7c530 )
 
 	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC61.ROM", 0x0000, 0x2000, 0x4e3f501c )
-	ROM_LOAD( "IC55.ROM", 0x2000, 0x2000, 0xef7f8651 )
-	ROM_LOAD( "IC56.ROM", 0x4000, 0x2000, 0x03b40905 )
+	ROM_LOAD( "ic61.rom", 0x0000, 0x2000, 0x4e3f501c )
+	ROM_LOAD( "ic55.rom", 0x2000, 0x2000, 0xef7f8651 )
+	ROM_LOAD( "ic56.rom", 0x4000, 0x2000, 0x03b40905 )
 
-	ROM_LOAD( "IC8.ROM ", 0x6000, 0x2000, 0x6afdeec8 )
-	ROM_LOAD( "IC9.ROM ", 0x8000, 0x2000, 0xd3dc9da3 )
-	ROM_LOAD( "IC10.ROM", 0xA000, 0x2000, 0xd10b2eed )
-	ROM_LOAD( "IC11.ROM", 0xC000, 0x2000, 0x00ca6b3d )
+	ROM_LOAD( "ic8.rom",  0x6000, 0x2000, 0x6afdeec8 )
+	ROM_LOAD( "ic9.rom",  0x8000, 0x2000, 0xd3dc9da3 )
+	ROM_LOAD( "ic10.rom", 0xa000, 0x2000, 0xd10b2eed )
+	ROM_LOAD( "ic11.rom", 0xc000, 0x2000, 0x00ca6b3d )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "IC62.ROM", 0x0000, 0x2000, 0xd2899cc1 )
+	ROM_LOAD( "ic62.rom", 0x0000, 0x2000, 0xd2899cc1 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "IC17.ROM", 0x0000, 0x2000, 0x9025abea )
+	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
 	ROM_REGION(0x1300)	/* color PROMs */
-	ROM_LOAD( "74S287.P6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
-	ROM_LOAD( "74S287.O6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
-	ROM_LOAD( "74S287.Q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
+	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
+	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
+	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
 
-	ROM_LOAD( "82S137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
-	ROM_LOAD( "82S137.02", 0x0700, 0x0400, 0x6db07bd1 )
-	ROM_LOAD( "82S137.03", 0x0B00, 0x0400, 0x00000000 )
-	ROM_LOAD( "82S137.04", 0x0F00, 0x0400, 0x00000000 )
-
+	ROM_LOAD( "82s137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
+	ROM_LOAD( "82s137.02", 0x0700, 0x0400, 0x6db07bd1 )
+	ROM_LOAD( "82s191n",   0x0b00, 0x0800, 0x93c891e3 )
 ROM_END
+
+
 
 static int hiload(void)
 {

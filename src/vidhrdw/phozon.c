@@ -86,6 +86,13 @@ void phozon_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
 		TRANSPARENCY_PEN,0);
 }
 
+void phozon_draw_sprite8(struct osd_bitmap *dest,unsigned int code,unsigned int color,
+	int flipx,int flipy,int sx,int sy)
+{
+	drawgfx(dest,Machine->gfx[3],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
+		TRANSPARENCY_PEN,0);
+}
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -93,50 +100,59 @@ void phozon_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int c
   the main emulation engine.
 
 ***************************************************************************/
-void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	int offs;
 
-	fillbitmap( bitmap, Machine->pens[0], &Machine->drv->visible_area );
 
 	/* for every character in the video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--){
-		int color = colorram[offs];
-		int video = videoram[offs];
-		int sx,sy,mx,my;
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int color = colorram[offs];
+			int video = videoram[offs];
+			int sx,sy,mx,my;
 
-		/* Even if Phozon screen is 28x36, the memory layout is 32x32. We therefore
-        have to convert the memory coordinates into screen coordinates.
-        Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM
-        don't map to a screen position. We don't check that here, however: range
-        checking is performed by drawgfx(). */
 
-        mx = offs / 32;
-		my = offs % 32;
+			dirtybuffer[offs] = 0;
 
-        if (mx <= 1){       /* bottom screen characters */
-			sx = 29 - my;
-			sy = mx + 34;
-		}
-        else if (mx >= 30){	/* top screen characters */
-			sx = 29 - my;
-			sy = mx - 30;
-		}
-        else{               /* middle screen characters */
-			sx = 29 - mx;
-			sy = my + 2;
-		}
+			/* Even if Phozon screen is 28x36, the memory layout is 32x32. We therefore
+			have to convert the memory coordinates into screen coordinates.
+			Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM
+			don't map to a screen position. We don't check that here, however: range
+			checking is performed by drawgfx(). */
 
-	sx = ( ( Machine->drv->screen_height - 1 ) / 8 ) - sx;
-	if (colorram[offs] & 0x80)
-		drawgfx(bitmap,Machine->gfx[1],videoram[offs],
-                colorram[offs] & 0x3f,0,0,8*sy,8*sx,
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,16);
-	else
-		drawgfx(bitmap,Machine->gfx[0],videoram[offs],
-                colorram[offs] & 0x3f,0,0,8*sy,8*sx,
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,16);
+			mx = offs % 32;
+			my = offs / 32;
+
+			if (my <= 1)
+			{       /* bottom screen characters */
+				sx = my + 34;
+				sy = mx - 2;
+			}
+			else if (my >= 30)
+			{	/* top screen characters */
+				sx = my - 30;
+				sy = mx - 2;
+			}
+			else
+			{               /* middle screen characters */
+				sx = mx + 2;
+				sy = my - 2;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x80) ? 1 : 0],
+					videoram[offs],
+					colorram[offs] & 0x3f,
+					0,0,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			}
 	}
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 2){
@@ -149,62 +165,99 @@ void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 			int flipx = spriteram_3[offs] & 1;
 			int flipy = spriteram_3[offs] & 2;
 
-			switch (spriteram_3[offs] & 0x0c){
-				case 0:		/* normal size */
+			switch (spriteram_3[offs] & 0x3c)
+			{
+				case 0x00:		/* 16x16 */
 					phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
 					break;
-				case 4:		/* 2x horizontal */
-					sprite &= ~1;
-					if (!flipx){
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						phozon_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
-					}
-					else{
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
-						phozon_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-					}
+
+				case 0x14:		/* 8x8 */
+					sprite = (sprite << 2) | ((spriteram_3[offs] & 0xc0) >> 6);
+					phozon_draw_sprite8(bitmap,sprite,color,flipx,flipy,x,y+8);
 					break;
 
-				case 8:		/* 2x vertical */
-					sprite &= ~2;
+				case 0x04:		/* 8x16 */
+					sprite = (sprite << 2) | ((spriteram_3[offs] & 0xc0) >> 6);
 					if (!flipy){
-						phozon_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
+						phozon_draw_sprite8(bitmap,2+sprite,color,flipx,flipy,x,y+8);
+						phozon_draw_sprite8(bitmap,sprite,color,flipx,flipy,x,y);
 					}
 					else{
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						phozon_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
+						phozon_draw_sprite8(bitmap,2+sprite,color,flipx,flipy,x,y);
+						phozon_draw_sprite8(bitmap,sprite,color,flipx,flipy,x,y+8);
 					}
 					break;
 
-				case 12:		/* 2x both ways */
-					sprite &= ~3;
-					if (!flipx && !flipy){
-						phozon_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						phozon_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y);
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
-						phozon_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y-16);
+				case 0x24:		/* 8x32 */
+					sprite = (sprite << 2) | ((spriteram_3[offs] & 0xc0) >> 6);
+					if (!flipy){
+						phozon_draw_sprite8(bitmap,10+sprite,color,flipx,flipy,x,y+8);
+						phozon_draw_sprite8(bitmap,8+sprite,color,flipx,flipy,x,y);
+						phozon_draw_sprite8(bitmap,2+sprite,color,flipx,flipy,x,y-8);
+						phozon_draw_sprite8(bitmap,sprite,color,flipx,flipy,x,y-16);
 					}
-					else if (flipx && flipy){
-						phozon_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
-						phozon_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y-16);
-						phozon_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y-16);
+					else{
+						phozon_draw_sprite8(bitmap,10+sprite,color,flipx,flipy,x,y-16);
+						phozon_draw_sprite8(bitmap,8+sprite,color,flipx,flipy,x,y-8);
+						phozon_draw_sprite8(bitmap,2+sprite,color,flipx,flipy,x,y);
+						phozon_draw_sprite8(bitmap,sprite,color,flipx,flipy,x,y+8);
 					}
-					else if (flipy){
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						phozon_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
-						phozon_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
-						phozon_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y-16);
-					}
-					else{/* flipx */
-						phozon_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-						phozon_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y);
-						phozon_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y-16);
-						phozon_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y-16);
-					}
+					break;
+
+				default:
+{
+char buf[40];
+sprintf(buf,"%02x",spriteram_3[offs] & 0x3c);
+usrintf_showmessage(buf);
+					phozon_draw_sprite(bitmap,rand(),color,flipx,flipy,x,y);
+}
 					break;
 			}
 		}
+	}
+
+
+	/* redraw high priority chars */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (colorram[offs] & 0x40)
+		{
+			int color = colorram[offs];
+			int video = videoram[offs];
+			int sx,sy,mx,my;
+
+
+			/* Even if Phozon screen is 28x36, the memory layout is 32x32. We therefore
+			have to convert the memory coordinates into screen coordinates.
+			Note that 32*32 = 1024, while 28*36 = 1008: therefore 16 bytes of Video RAM
+			don't map to a screen position. We don't check that here, however: range
+			checking is performed by drawgfx(). */
+
+			mx = offs % 32;
+			my = offs / 32;
+
+			if (my <= 1)
+			{       /* bottom screen characters */
+				sx = my + 34;
+				sy = mx - 2;
+			}
+			else if (my >= 30)
+			{	/* top screen characters */
+				sx = my - 30;
+				sy = mx - 2;
+			}
+			else
+			{               /* middle screen characters */
+				sx = mx + 2;
+				sy = my - 2;
+			}
+
+			drawgfx(bitmap,Machine->gfx[(colorram[offs] & 0x80) ? 1 : 0],
+					videoram[offs],
+					colorram[offs] & 0x3f,
+					0,0,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
 	}
 }

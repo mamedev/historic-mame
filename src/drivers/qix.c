@@ -777,76 +777,93 @@ static struct MachineDriver zoo_machine_driver =
 
 ROM_START( qix_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "u12",          0xC000, 0x800, 0xaad35508 )
-	ROM_LOAD( "u13",          0xC800, 0x800, 0x46c13504 )
-	ROM_LOAD( "u14",          0xD000, 0x800, 0x5115e896 )
-	ROM_LOAD( "u15",          0xD800, 0x800, 0xccd52a1b )
-	ROM_LOAD( "u16",          0xE000, 0x800, 0xcd1c36ee )
-	ROM_LOAD( "u17",          0xE800, 0x800, 0x1acb682d )
-	ROM_LOAD( "u18",          0xF000, 0x800, 0xde77728b )
-	ROM_LOAD( "u19",          0xF800, 0x800, 0xc0994776 )
+	ROM_LOAD( "u12",          0xC000, 0x0800, 0xaad35508 )
+	ROM_LOAD( "u13",          0xC800, 0x0800, 0x46c13504 )
+	ROM_LOAD( "u14",          0xD000, 0x0800, 0x5115e896 )
+	ROM_LOAD( "u15",          0xD800, 0x0800, 0xccd52a1b )
+	ROM_LOAD( "u16",          0xE000, 0x0800, 0xcd1c36ee )
+	ROM_LOAD( "u17",          0xE800, 0x0800, 0x1acb682d )
+	ROM_LOAD( "u18",          0xF000, 0x0800, 0xde77728b )
+	ROM_LOAD( "u19",          0xF800, 0x0800, 0xc0994776 )
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD( "u4",           0xC800, 0x800, 0x5b906a09 )
-	ROM_LOAD( "u5",           0xD000, 0x800, 0x254a3587 )
-	ROM_LOAD( "u6",           0xD800, 0x800, 0xace30389 )
-	ROM_LOAD( "u7",           0xE000, 0x800, 0x8ebcfa7c )
-	ROM_LOAD( "u8",           0xE800, 0x800, 0xb8a3c8f9 )
-	ROM_LOAD( "u9",           0xF000, 0x800, 0x26cbcd55 )
-	ROM_LOAD( "u10",          0xF800, 0x800, 0x568be942 )
+	ROM_LOAD( "u4",           0xC800, 0x0800, 0x5b906a09 )
+	ROM_LOAD( "u5",           0xD000, 0x0800, 0x254a3587 )
+	ROM_LOAD( "u6",           0xD800, 0x0800, 0xace30389 )
+	ROM_LOAD( "u7",           0xE000, 0x0800, 0x8ebcfa7c )
+	ROM_LOAD( "u8",           0xE800, 0x0800, 0xb8a3c8f9 )
+	ROM_LOAD( "u9",           0xF000, 0x0800, 0x26cbcd55 )
+	ROM_LOAD( "u10",          0xF800, 0x0800, 0x568be942 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "u27",          0xF800, 0x800, 0xf3782bd0 )
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( qixa_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "qu12",         0xC000, 0x800, 0x1c55b44d )
-	ROM_LOAD( "qu13",         0xC800, 0x800, 0x20279e8c )
-	ROM_LOAD( "qu14",         0xD000, 0x800, 0xbafe3ce3 )
+	ROM_LOAD( "qu12",         0xC000, 0x0800, 0x1c55b44d )
+	ROM_LOAD( "qu13",         0xC800, 0x0800, 0x20279e8c )
+	ROM_LOAD( "qu14",         0xD000, 0x0800, 0xbafe3ce3 )
 	/* d800-dfff empty */
-	ROM_LOAD( "qu16",         0xE000, 0x800, 0xdb560753 )
-	ROM_LOAD( "qu17",         0xE800, 0x800, 0x8c7aeed8 )
-	ROM_LOAD( "qu18",         0xF000, 0x800, 0x353be980 )
-	ROM_LOAD( "qu19",         0xF800, 0x800, 0xf46a69ca )
+	ROM_LOAD( "qu16",         0xE000, 0x0800, 0xdb560753 )
+	ROM_LOAD( "qu17",         0xE800, 0x0800, 0x8c7aeed8 )
+	ROM_LOAD( "qu18",         0xF000, 0x0800, 0x353be980 )
+	ROM_LOAD( "qu19",         0xF800, 0x0800, 0xf46a69ca )
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD( "qu3",          0xC000, 0x800, 0x8b4c0ef0 )
-	ROM_LOAD( "qu4",          0xC800, 0x800, 0x66a5c260 )
-	ROM_LOAD( "qu5",          0xD000, 0x800, 0x70160ea3 )
+	ROM_LOAD( "qu3",          0xC000, 0x0800, 0x8b4c0ef0 )
+	ROM_LOAD( "qu4",          0xC800, 0x0800, 0x66a5c260 )
+	ROM_LOAD( "qu5",          0xD000, 0x0800, 0x70160ea3 )
 	/* d800-dfff empty */
-	ROM_LOAD( "qu7",          0xE000, 0x800, 0xd6733019 )
-	ROM_LOAD( "qu8",          0xE800, 0x800, 0x66870dcc )
-	ROM_LOAD( "qu9",          0xF000, 0x800, 0xc99bf94d )
-	ROM_LOAD( "qu10",         0xF800, 0x800, 0x88b45037 )
+	ROM_LOAD( "qu7",          0xE000, 0x0800, 0xd6733019 )
+	ROM_LOAD( "qu8",          0xE800, 0x0800, 0x66870dcc )
+	ROM_LOAD( "qu9",          0xF000, 0x0800, 0xc99bf94d )
+	ROM_LOAD( "qu10",         0xF800, 0x0800, 0x88b45037 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "u27",          0xF800, 0x800, 0xf3782bd0 )
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
+ROM_END
+
+ROM_START( qixb_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_LOAD( "lk14.bin",     0xC000, 0x1000, 0x6d164986 )
+	ROM_LOAD( "lk15.bin",     0xD000, 0x1000, 0x16c6ce0f )
+	ROM_LOAD( "lk16.bin",     0xE000, 0x1000, 0x698b1f9c )
+	ROM_LOAD( "lk17.bin",     0xF000, 0x1000, 0x7e3adde6 )
+
+	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_LOAD( "lk10.bin",     0xC000, 0x1000, 0x7eac67d0 )
+	ROM_LOAD( "lk11.bin",     0xD000, 0x1000, 0x90ccbb6a )
+	ROM_LOAD( "lk12.bin",     0xE000, 0x1000, 0xbe9b9f7d )
+	ROM_LOAD( "lk13.bin",     0xF000, 0x1000, 0x51c9853b )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( qix2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "u12.rmb",      0xC000, 0x800, 0x484280fd )
-	ROM_LOAD( "u13.rmb",      0xC800, 0x800, 0x3d089fcb )
-	ROM_LOAD( "u14.rmb",      0xD000, 0x800, 0x362123a9 )
-	ROM_LOAD( "u15.rmb",      0xD800, 0x800, 0x60f3913d )
-	ROM_LOAD( "u16.rmb",      0xE000, 0x800, 0xcc139e34 )
-	ROM_LOAD( "u17.rmb",      0xE800, 0x800, 0xcf31dc49 )
-	ROM_LOAD( "u18.rmb",      0xF000, 0x800, 0x1f91ed7a )
-	ROM_LOAD( "u19.rmb",      0xF800, 0x800, 0x68e8d5a6 )
+	ROM_LOAD( "u12.rmb",      0xC000, 0x0800, 0x484280fd )
+	ROM_LOAD( "u13.rmb",      0xC800, 0x0800, 0x3d089fcb )
+	ROM_LOAD( "u14.rmb",      0xD000, 0x0800, 0x362123a9 )
+	ROM_LOAD( "u15.rmb",      0xD800, 0x0800, 0x60f3913d )
+	ROM_LOAD( "u16.rmb",      0xE000, 0x0800, 0xcc139e34 )
+	ROM_LOAD( "u17.rmb",      0xE800, 0x0800, 0xcf31dc49 )
+	ROM_LOAD( "u18.rmb",      0xF000, 0x0800, 0x1f91ed7a )
+	ROM_LOAD( "u19.rmb",      0xF800, 0x0800, 0x68e8d5a6 )
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD( "u3.rmb",       0xC000, 0x800, 0x19cebaca )
-	ROM_LOAD( "u4.rmb",       0xC800, 0x800, 0x6cfb4185 )
-	ROM_LOAD( "u5.rmb",       0xD000, 0x800, 0x948f53f3 )
-	ROM_LOAD( "u6.rmb",       0xD800, 0x800, 0x8630120e )
-	ROM_LOAD( "u7.rmb",       0xE000, 0x800, 0xbad037c9 )
-	ROM_LOAD( "u8.rmb",       0xE800, 0x800, 0x3159bc00 )
-	ROM_LOAD( "u9.rmb",       0xF000, 0x800, 0xe80e9b1d )
-	ROM_LOAD( "u10.rmb",      0xF800, 0x800, 0x9a55d360 )
+	ROM_LOAD( "u3.rmb",       0xC000, 0x0800, 0x19cebaca )
+	ROM_LOAD( "u4.rmb",       0xC800, 0x0800, 0x6cfb4185 )
+	ROM_LOAD( "u5.rmb",       0xD000, 0x0800, 0x948f53f3 )
+	ROM_LOAD( "u6.rmb",       0xD800, 0x0800, 0x8630120e )
+	ROM_LOAD( "u7.rmb",       0xE000, 0x0800, 0xbad037c9 )
+	ROM_LOAD( "u8.rmb",       0xE800, 0x0800, 0x3159bc00 )
+	ROM_LOAD( "u9.rmb",       0xF000, 0x0800, 0xe80e9b1d )
+	ROM_LOAD( "u10.rmb",      0xF800, 0x0800, 0x9a55d360 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "u27.rmb",      0xF800, 0x800, 0xf3782bd0 )
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( sdungeon_rom )
@@ -1139,6 +1156,32 @@ struct GameDriver qixa_driver =
 	0,
 
 	qixa_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	qix_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver qixb_driver =
+{
+	__FILE__,
+	&qix_driver,
+	"qixb",
+	"Qix (set 3)",
+	"1981",
+	"Taito America",
+	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	qixb_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,		/* sound_prom */

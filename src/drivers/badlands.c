@@ -59,6 +59,9 @@ static void init_machine(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4155, 0x416d);
+
+	/* display messages */
+	atarigen_show_sound_message();
 }
 
 
@@ -176,11 +179,11 @@ INPUT_PORTS_START( badlands_ports )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 100, 0xff, 0, 0 )
+	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 100, 10, 0xff, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 100, 0xff, 0, 0 )
+	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 100, 10, 0xff, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	ATARI_AUDIO_2_PORT	/* audio board port */

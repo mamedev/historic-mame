@@ -10,10 +10,16 @@
 
   68000 clock speeds are unknown for all games (except where commented)
 
+TODO:
+- 3rd player controls in wof, dino
+- 3rd & 4th player controls, 3rd & 4th coin input, lockout & counter in
+  slammast, mbomber
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/eeprom.h"
 
 #include "cps1.h"       /* External CPS1 definitions */
 
@@ -25,45 +31,56 @@ void slammast_decode(void);
 
 
 
-int cps1_input2_r(int offset)
+static int cps1_input2_r(int offset)
 {
-	  int buttons=readinputport(6);
-	  return buttons << 8 | buttons;
+	int buttons=readinputport(6);
+	return buttons << 8 | buttons;
 }
 
 static int cps1_sound_fade_timer;
 
-void cps1_snd_bankswitch_w(int offset,int data)
+static void cps1_snd_bankswitch_w(int offset,int data)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
 	cpu_setbank (1, &RAM[0x10000+(data&0x01)*0x4000]);
 }
 
-void cps1_sound_fade_w(int offset, int data)
+static void cps1_sound_fade_w(int offset, int data)
 {
 	cps1_sound_fade_timer=data;
 }
 
-int cps1_snd_fade_timer_r(int offset)
+static int cps1_snd_fade_timer_r(int offset)
 {
 	return cps1_sound_fade_timer;
 }
 
-
-int cps1_input_r(int offset)
+static int cps1_input_r(int offset)
 {
-       int control=readinputport (offset/2);
-       return (control<<8) | control;
+	int control=readinputport (offset/2);
+	return (control<<8) | control;
 }
 
-int cps1_player_input_r(int offset)
+static int cps1_player_input_r(int offset)
 {
-       return (readinputport (offset + 4 )+
-		(readinputport (offset+1 + 4 )<<8));
+	return (readinputport(offset + 4) + (readinputport(offset+1 + 4)<<8));
 }
 
-int cps1_interrupt(void)
+static void cps1_coinctrl_w(int offset,int data)
+{
+{
+	char baf[40];
+	sprintf(baf,"%04x",data);
+//	usrintf_showmessage(baf);
+}
+	coin_lockout_w(0,~data & 0x0400);
+	coin_lockout_w(1,~data & 0x0800);
+	coin_counter_w(0,data & 0x0100);
+	coin_counter_w(1,data & 0x0200);
+}
+
+static int cps1_interrupt(void)
 {
 	/* Strider also has a IRQ4 handler. It is input port related, but the game */
 	/* works without it (maybe it's used to multiplex controls). It is the */
@@ -110,124 +127,60 @@ static void qsound_sharedram_w(int offset,int data)
 *
 ********************************************************************/
 
-static unsigned char cps1_eeprom[0x40];
+struct EEPROM_interface qsound_eeprom_interface =
+{
+	7,		/* address bits */
+	8,		/* data bits */
+	"0110",	/*  read command */
+	"0101",	/* write command */
+	"0111"	/* erase command */
+};
 
-static int eeprom_serial_count,eeprom_serial_buffer[27];
-static unsigned char eeprom_data[0x80],eeprom_data_bits;
+struct EEPROM_interface pang3_eeprom_interface =
+{
+	6,		/* address bits */
+	16,		/* data bits */
+	"0110",	/*  read command */
+	"0101",	/* write command */
+	"0111"	/* erase command */
+};
+
+static void qsound_eeprom_init(void)
+{
+	EEPROM_init(&qsound_eeprom_interface);
+}
+
+static void pang3_eeprom_init(void)
+{
+	EEPROM_init(&pang3_eeprom_interface);
+}
 
 int cps1_eeprom_port_r(int offset)
 {
-	int bit;
-
-//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM Read\n", cpu_get_pc());
-	bit = (eeprom_data_bits & 0x80) >> 7;
-	eeprom_data_bits = (eeprom_data_bits << 1) | 1;
-	return bit;
+	return EEPROM_read_bit();
 }
 
-/*
-bit 0 = data
-bit 6 = clock
-bit 7 = start
-*/
 void cps1_eeprom_port_w(int offset, int data)
 {
-	static int last;
-
-	if ((data & 0x40) && !(last & 0x40))
-	{
-		eeprom_data_bits = (eeprom_data_bits << 1) | 1;
-
-		if (!(data & 0x80))
-		{
-//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM reset %02x\n", cpu_get_pc(), data);
-			eeprom_serial_count = 0;
-		}
-		else
-		{
-//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM clock (Write %02x)\n", cpu_get_pc(), data);
-			if (eeprom_serial_count < 27)
-			{
-				eeprom_serial_buffer[eeprom_serial_count++] = data & 1;
-				if (eeprom_serial_count == 11)
-				{
-					if (eeprom_serial_buffer[0] == 0x00 &&
-							eeprom_serial_buffer[1] == 0x01 &&
-							eeprom_serial_buffer[2] == 0x01 &&
-							eeprom_serial_buffer[3] == 0x00)
-					{
-						int i,address;
-
-						address = 0;
-						for (i = 4;i < 11;i++)
-						{
-							address <<= 1;
-							if (eeprom_serial_buffer[i]) address |= 1;
-						}
-if (errorlog) fprintf(errorlog,"EEPROM read %02x from address %02x\n",eeprom_data[address],address);
-						eeprom_data_bits = eeprom_data[address];
-					}
-					else if (eeprom_serial_buffer[0] == 0x00 &&
-							eeprom_serial_buffer[1] == 0x01 &&
-							eeprom_serial_buffer[2] == 0x01 &&
-							eeprom_serial_buffer[3] == 0x01)
-					{
-						int i,address;
-
-						address = 0;
-						for (i = 4;i < 11;i++)
-						{
-							address <<= 1;
-							if (eeprom_serial_buffer[i]) address |= 1;
-						}
-if (errorlog) fprintf(errorlog,"EEPROM erase(?) address %02x\n",address);
-					}
-				}
-				else if (eeprom_serial_count == 27)
-				{
-					if (eeprom_serial_buffer[0] == 0x00 &&
-							eeprom_serial_buffer[1] == 0x01 &&
-							eeprom_serial_buffer[2] == 0x00 &&
-							eeprom_serial_buffer[3] == 0x01)
-					{
-						int i,address,edata;
-
-						address = 0;
-						for (i = 4;i < 11;i++)
-						{
-							address <<= 1;
-							if (eeprom_serial_buffer[i]) address |= 1;
-						}
-						edata = 0;
-						for (i = 11;i < 27;i++)
-						{
-							edata <<= 1;
-							if (eeprom_serial_buffer[i]) edata |= 1;
-						}
-if (errorlog) fprintf(errorlog,"EEPROM write %02x to address %02x\n",edata>>8,address);
-						eeprom_data[address] = edata>>8;
-					}
-				}
-			}
-		}
-	}
-
-	last = data;
+	/*
+	bit 0 = data
+	bit 6 = clock
+	bit 7 = start
+	*/
+	EEPROM_write_bit(data & 0x01);
+	EEPROM_set_reset_line((data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_clock_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static int cps1_eeprom_load(void)
 {
 	void *f;
 
-
-	/* Try loading static RAM */
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		osd_fread(f,eeprom_data,0x80);
+		EEPROM_load(f);
 		osd_fclose(f);
 	}
-	/* Invalidate the static RAM to force reset to factory settings */
-	else memset(eeprom_data,0xff,0x80);
 
 	return 1;
 }
@@ -236,10 +189,9 @@ static void cps1_eeprom_save(void)
 {
 	void *f;
 
-
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,eeprom_data,0x80);	/* EEPROM */
+		EEPROM_save(f);
 		osd_fclose(f);
 	}
 }
@@ -266,9 +218,9 @@ static struct MemoryReadAddress cps1_readmem[] =
 static struct MemoryWriteAddress cps1_writemem[] =
 {
 	{ 0x000000, 0x1fffff, MWA_ROM },      /* ROM */
-	{ 0x800030, 0x800033, MWA_NOP },      /* ??? Unknown ??? */
+	{ 0x800030, 0x800031, cps1_coinctrl_w },
 	{ 0x800180, 0x800181, soundlatch_w },  /* Sound command */
-	{ 0x800188, 0x80018b, cps1_sound_fade_w },
+	{ 0x800188, 0x800189, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
 	{ 0x900000, 0x92ffff, MWA_BANK3, &cps1_gfxram, &cps1_gfxram_size },
 	{ 0xf18000, 0xf19fff, qsound_sharedram_w }, /* Q RAM */
@@ -2540,26 +2492,23 @@ INPUT_PORTS_START( wof_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWA */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWA (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWB (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0xff, 0xff, "" )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -2568,8 +2517,8 @@ INPUT_PORTS_START( wof_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -2578,8 +2527,8 @@ INPUT_PORTS_START( wof_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dino_input_ports )
@@ -2587,26 +2536,23 @@ INPUT_PORTS_START( dino_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWA */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWA (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWB (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0xff, 0xff, "" )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -2615,8 +2561,8 @@ INPUT_PORTS_START( dino_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -2625,8 +2571,8 @@ INPUT_PORTS_START( dino_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( punisher_input_ports )
@@ -2634,26 +2580,23 @@ INPUT_PORTS_START( punisher_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWA */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWA (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWB (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0xff, 0xff, "" )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -2662,8 +2605,8 @@ INPUT_PORTS_START( punisher_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -2672,8 +2615,8 @@ INPUT_PORTS_START( punisher_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( slammast_input_ports )
@@ -2681,26 +2624,23 @@ INPUT_PORTS_START( slammast_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWA */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWA (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWB (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0xff, 0xff, "" )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -2709,8 +2649,8 @@ INPUT_PORTS_START( slammast_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -2719,8 +2659,8 @@ INPUT_PORTS_START( slammast_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( mbomber_input_ports )
@@ -2728,26 +2668,23 @@ INPUT_PORTS_START( mbomber_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWA */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWA (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0xff, 0xff, "" )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_START      /* DSWB (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0xff, 0xff, "" )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_BIT( 0xf7, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -2756,8 +2693,8 @@ INPUT_PORTS_START( mbomber_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -2766,8 +2703,8 @@ INPUT_PORTS_START( mbomber_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( pnickj_input_ports )
@@ -2916,22 +2853,28 @@ INPUT_PORTS_START( qad_input_ports )
 
 	PORT_START      /* DSWB */
 	PORT_DIPNAME( 0x07, 0x06, DEF_STR( Difficulty ) )
+//	PORT_DIPSETTING(    0x07, "Very Easy" )
 	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x05, "Easy" )
 	PORT_DIPSETTING(    0x04, "Normal" )
 	PORT_DIPSETTING(    0x03, "Hard" )
 	PORT_DIPSETTING(    0x02, "Very Hard" )
+//	PORT_DIPSETTING(    0x01, "Very Hard" )
+//	PORT_DIPSETTING(    0x00, "Very Hard" )
 	PORT_DIPNAME( 0x18, 0x18, "Wisdom" )
 	PORT_DIPSETTING(    0x18, "Low" )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x08, "High" )
 	PORT_DIPSETTING(    0x00, "Brilliant" )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x60, "1" )
 	PORT_DIPSETTING(    0x80, "2" )
 	PORT_DIPSETTING(    0xa0, "3" )
 	PORT_DIPSETTING(    0xc0, "4" )
 	PORT_DIPSETTING(    0xe0, "5" )
+//	PORT_DIPSETTING(    0x40, "1" )
+//	PORT_DIPSETTING(    0x20, "1" )
+//	PORT_DIPSETTING(    0x00, "1" )
 
 	PORT_START      /* DSWC */
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
@@ -3012,20 +2955,37 @@ INPUT_PORTS_START( qadj_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
-	PORT_DIPNAME( 0x07, 0x07, "Game Level" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "0" )
 	PORT_DIPSETTING(    0x06, "1" )
 	PORT_DIPSETTING(    0x05, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x03, "4" )
-	PORT_DIPNAME( 0xf8, 0xf8, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0xd8, "2" )
-	PORT_DIPSETTING(    0xf8, "3" )
+//	PORT_DIPSETTING(    0x02, "4" )
+//	PORT_DIPSETTING(    0x01, "4" )
+//	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0xa0, "1" )
+	PORT_DIPSETTING(    0xc0, "2" )
+	PORT_DIPSETTING(    0xe0, "3" )
+//	PORT_DIPSETTING(    0x00, "1" )
+//	PORT_DIPSETTING(    0x20, "1" )
+//	PORT_DIPSETTING(    0x80, "1" )
+//	PORT_DIPSETTING(    0x40, "2" )
+//	PORT_DIPSETTING(    0x60, "3" )
 
 	PORT_START      /* DSWC */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
@@ -3065,6 +3025,159 @@ INPUT_PORTS_START( qadj_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( qtono2_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+
+	PORT_START      /* DSWA */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "2 Coins to Start, 1 to Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSWB */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x07, "1" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x60, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
+	PORT_DIPSETTING(    0xe0, "3" )
+	PORT_DIPSETTING(    0xa0, "4" )
+	PORT_DIPSETTING(    0xc0, "5" )
+//	PORT_DIPSETTING(    0x40, "?" )
+//	PORT_DIPSETTING(    0x20, "?" )
+//	PORT_DIPSETTING(    0x00, "?" )
+
+	PORT_START      /* DSWC */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+
+	PORT_START      /* Player 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pang3_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x40, 0x40, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSWA (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSWB (not used, EEPROM) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSWC */
+	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* Player 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( megaman_input_ports )
@@ -3416,7 +3529,9 @@ QSOUND_MACHINE_DRIVER( slammast, CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( mbomber,  CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( pnickj,    CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( qad,       CPS1_DEFAULT_CPU_SPEED )
+MACHINE_DRIVER( qtono2,    CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( megaman,   CPS1_DEFAULT_CPU_SPEED )
+MACHINE_DRIVER( pang3,     CPS1_DEFAULT_CPU_SPEED )
 
 
 
@@ -3990,7 +4105,7 @@ ROM_START( chikij_rom )
 
 	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "ch_09.rom",    0x00000, 0x10000, 0x4d4255b7 )
-	ROM_RELOAD(            0x08000, 0x10000 )
+	ROM_RELOAD(               0x08000, 0x10000 )
 
 	ROM_REGION(0x40000) /* Samples */
 	ROM_LOAD( "ch_18.rom",    0x00000, 0x20000, 0xf909e8de )
@@ -4481,7 +4596,8 @@ ROM_START( kodb_rom )
 	ROM_CONTINUE(              0x10000, 0x08000 )
 
 	ROM_REGION(0x40000) /* Samples */
-	ROM_LOAD( "kod.16",       0x00000, 0x40000, 0xa2db1575 )
+	ROM_LOAD( "kd18.bin",    0x00000, 0x20000, 0x4c63181d )
+	ROM_LOAD( "kd19.bin",    0x20000, 0x20000, 0x92941b80 )
 ROM_END
 
 ROM_START( captcomm_rom )
@@ -4592,10 +4708,7 @@ ROM_START( knightsj_rom )
 	ROM_LOAD_ODD ( "krj37.bin",   0x00000, 0x20000, 0xe694a491 )
 	ROM_LOAD_EVEN( "krj31.bin",   0x40000, 0x20000, 0x85596094 )
 	ROM_LOAD_ODD ( "krj38.bin",   0x40000, 0x20000, 0x9198bf8f )
-	ROM_LOAD_EVEN( "krj28.bin",   0x80000, 0x20000, 0xfe6eb08d )
-	ROM_LOAD_ODD ( "krj35.bin",   0x80000, 0x20000, 0x1172806d )
-	ROM_LOAD_EVEN( "krj29.bin",   0xc0000, 0x20000, 0xf854b020 )
-	ROM_LOAD_ODD ( "krj36.bin",   0xc0000, 0x20000, 0xeb52e78d )
+	ROM_LOAD_WIDE_SWAP( "kr_22.rom",    0x80000, 0x80000, 0xd0b671a9 )
 
 	ROM_REGION(0x400000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "kr_gfx2.rom",  0x000000, 0x80000, 0xf095be2d )
@@ -4737,6 +4850,35 @@ ROM_START( sf2red_rom )
 	ROM_LOAD_WIDE_SWAP( "sf2red.23",    0x000000, 0x80000, 0x40276abb )
 	ROM_LOAD_WIDE_SWAP( "sf2red.22",    0x080000, 0x80000, 0x18daf387 )
 	ROM_LOAD_WIDE_SWAP( "sf2red.21",    0x100000, 0x80000, 0x52c486bb )
+
+	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
+	ROM_LOAD( "sf2.06",       0x080000, 0x80000, 0x21e3f87d )
+	ROM_LOAD( "sf2.11",       0x100000, 0x80000, 0xd6ec9a0a )
+	ROM_LOAD( "sf2.01",       0x180000, 0x80000, 0x03b0d852 )
+	ROM_LOAD( "sf2.05",       0x200000, 0x80000, 0xba8a2761 )
+	ROM_LOAD( "sf2.10",       0x280000, 0x80000, 0x960687d5 )
+	ROM_LOAD( "sf2.04",       0x300000, 0x80000, 0xe2799472 )
+	ROM_LOAD( "sf2.08",       0x380000, 0x80000, 0xbefc47df )
+	ROM_LOAD( "sf2.13",       0x400000, 0x80000, 0xed2c67f6 )
+	ROM_LOAD( "sf2.03",       0x480000, 0x80000, 0x840289ec )
+	ROM_LOAD( "sf2.07",       0x500000, 0x80000, 0xe584bfb5 )
+	ROM_LOAD( "sf2.12",       0x580000, 0x80000, 0x978ecd18 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sf2.09",       0x00000, 0x08000, 0x08f6b60e )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "sf2.18",       0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "sf2.19",       0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
+ROM_START( sf2accp2_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "sf2ca-23.bin", 0x000000, 0x80000, 0x36c3ba2f )
+	ROM_LOAD_WIDE_SWAP( "sf2ca-22.bin", 0x080000, 0x80000, 0x0550453d )
+	ROM_LOAD_WIDE_SWAP( "sf2ca-21.bin", 0x100000, 0x40000, 0x4c1c43ba )
 
 	ROM_REGION_DISPOSE(0x600000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "sf2.02",       0x000000, 0x80000, 0xcdb5f027 )
@@ -4992,6 +5134,32 @@ ROM_START( dino_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "cde_23a.rom",  0x000000, 0x80000, 0x8f4e585e )
 	ROM_LOAD_WIDE_SWAP( "cde_22a.rom",  0x080000, 0x80000, 0x9278aa12 )
+	ROM_LOAD_WIDE_SWAP( "cde_21a.rom",  0x100000, 0x80000, 0x66d23de2 )
+
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cd_gfx02.rom",   0x000000, 0x80000, 0x09c8fc2d )
+	ROM_LOAD( "cd_gfx06.rom",   0x080000, 0x80000, 0xe7599ac4 )
+	ROM_LOAD( "cd_gfx01.rom",   0x100000, 0x80000, 0x8da4f917 )
+	ROM_LOAD( "cd_gfx05.rom",   0x180000, 0x80000, 0x470befee )
+	ROM_LOAD( "cd_gfx04.rom",   0x200000, 0x80000, 0x637ff38f )
+	ROM_LOAD( "cd_gfx08.rom",   0x280000, 0x80000, 0x211b4b15 )
+	ROM_LOAD( "cd_gfx03.rom",   0x300000, 0x80000, 0x6c40f603 )
+	ROM_LOAD( "cd_gfx07.rom",   0x380000, 0x80000, 0x22bfb7a3 )
+
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "cd_q.rom",       0x00000, 0x20000, 0x605fdb0b )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "cd_q1.rom",      0x00000, 0x80000, 0x60927775 )
+	ROM_LOAD( "cd_q2.rom",      0x00000, 0x80000, 0x770f4c47 )
+	ROM_LOAD( "cd_q3.rom",      0x00000, 0x80000, 0x2f273ffc )
+	ROM_LOAD( "cd_q4.rom",      0x00000, 0x80000, 0x2c67821d )
+ROM_END
+
+ROM_START( dinoj_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "cdj-23a.8f",   0x000000, 0x80000, 0x5f3ece96 )
+	ROM_LOAD_WIDE_SWAP( "cdj-22a.7f",   0x080000, 0x80000, 0xa0d8de29 )
 	ROM_LOAD_WIDE_SWAP( "cde_21a.rom",  0x100000, 0x80000, 0x66d23de2 )
 
 	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
@@ -5270,6 +5438,55 @@ ROM_START( qadj_rom )
 	ROM_LOAD( "qad19.bin",   0x20000, 0x20000, 0x13d3236b )
 ROM_END
 
+ROM_START( qtono2_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_EVEN( "tn2j-30.11e",  0x00000, 0x20000, 0x9226eb5e )
+	ROM_LOAD_ODD ( "tn2j-37.11f",  0x00000, 0x20000, 0xd1d30da1 )
+	ROM_LOAD_EVEN( "tn2j-31.12e",  0x40000, 0x20000, 0x015e6a8a )
+	ROM_LOAD_ODD ( "tn2j-38.12f",  0x40000, 0x20000, 0x1f139bcc )
+	ROM_LOAD_EVEN( "tn2j-28.9e",   0x80000, 0x20000, 0x86d27f71 )
+	ROM_LOAD_ODD ( "tn2j-35.9f",   0x80000, 0x20000, 0x7a1ab87d )
+	ROM_LOAD_EVEN( "tn2j-29.10e",  0xc0000, 0x20000, 0x9c384e99 )
+	ROM_LOAD_ODD ( "tn2j-36.10f",  0xc0000, 0x20000, 0x4c4b2a0a )
+
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tn2-01m.3a",   0x000000, 0x80000, 0xcb950cf9 )
+	ROM_LOAD( "tn2-10m.3c",   0x080000, 0x80000, 0xa34ece70 )
+	ROM_LOAD( "tn2-02m.4a",   0x100000, 0x80000, 0xf2016a34 )
+	ROM_LOAD( "tn2-11m.4c",   0x180000, 0x80000, 0xd0edd30b )
+	ROM_LOAD( "tn2-03m.5a",   0x200000, 0x80000, 0x18a5bf59 )
+	ROM_LOAD( "tn2-12m.5c",   0x280000, 0x80000, 0xe04ff2f4 )
+	ROM_LOAD( "tn2-04m.6a",   0x300000, 0x80000, 0x094e0fb1 )
+	ROM_LOAD( "tn2-13m.6c",   0x380000, 0x80000, 0x426621c3 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "tn2j-09.12a",  0x000000, 0x08000, 0x6d8edcef )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "tn2j-18.11c",  0x00000, 0x20000, 0xa40bf9a7 )
+	ROM_LOAD( "tn2j-19.12c",  0x20000, 0x20000, 0x5b3b931e )
+ROM_END
+
+ROM_START( pang3_rom )
+	ROM_REGION(CODE_SIZE)      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "pa3j-17.11l",  0x00000, 0x80000, 0x21f6e51f )
+	ROM_LOAD_WIDE_SWAP( "pa3j-16.10l",  0x80000, 0x80000, 0xca1d7897 )
+
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pa3-01m.2c",    0x100000, 0x100000, 0x068a152c )
+	ROM_CONTINUE(              0x000000, 0x100000 )
+	ROM_LOAD( "pa3-07m.2f",    0x300000, 0x100000, 0x3a4a619d )
+	ROM_CONTINUE(              0x200000, 0x100000 )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "pa3-11.11f",    0x000000, 0x08000, 0x90a08c46 )
+	ROM_RELOAD(                0x010000, 0x08000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "pa3-05.10d",    0x00000, 0x20000, 0x73a10d5d )
+	ROM_LOAD( "pa3-06.11d",    0x20000, 0x20000, 0xaffa4f82 )
+ROM_END
+
 ROM_START( megaman_rom )
 	ROM_REGION(CODE_SIZE)      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "rcma_23b.rom",   0x00000, 0x80000, 0x61e4a397 )
@@ -5385,6 +5602,29 @@ struct GameDriver NAME##_driver =  \
 	0, 0                           \
 };
 
+#define GAME_DRIVER_CLONEI(NAME,MAIN,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	&MAIN##_driver,                \
+	#NAME,                         \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	0,                             \
+	&MAIN##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, 0,                          \
+	0,                             \
+	0,                             \
+	NAME##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	0, 0                           \
+};
+
 #define GAME_DRIVERX(NAME,REALNAME,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
 struct GameDriver NAME##_driver =  \
 {                                  \
@@ -5443,7 +5683,7 @@ struct GameDriver NAME##_driver =  \
 	CPS1_CREDITS,                  \
 	0,                             \
 	&NAME##_machine_driver,        \
-	0,                             \
+	qsound_eeprom_init,            \
 	NAME##_rom,                    \
 	0, NAME##_decode,              \
 	0,                             \
@@ -5466,7 +5706,7 @@ struct GameDriver NAME##_driver =  \
 	CPS1_CREDITS,                  \
 	0,                             \
 	&MAIN##_machine_driver,        \
-	0,                             \
+	qsound_eeprom_init,            \
 	NAME##_rom,                    \
 	0, MAIN##_decode,              \
 	0,                             \
@@ -5528,6 +5768,7 @@ GAME_DRIVER_CLONE(sf2cea,  sf2ce,    "Street Fighter II' - Champion Edition (US 
 GAME_DRIVER_CLONE(sf2ceb,  sf2ce,    "Street Fighter II' - Champion Edition (US rev B)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2cej,  sf2ce,    "Street Fighter II' - Champion Edition (Japan)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2red,  sf2ce,    "Street Fighter II' - Champion Edition (Red Wave)", "1992","hack",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2accp2,sf2ce,    "Street Fighter II' - Champion Edition (Accelerator Pt.II)", "1992","hack",ORIENTATION_DEFAULT)
 GAME_DRIVER      (varth,             "Varth - Operation Thunderstorm (World)", "1992","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER_CLONE(varthj,  varth,    "Varth - Operation Thunderstorm (Japan)", "1992","Capcom",ORIENTATION_ROTATE_270)
 GAME_DRIVER      (cworld2j,          "Capcom World 2 (Japan)",            "1992","Capcom",ORIENTATION_DEFAULT)
@@ -5536,13 +5777,16 @@ GAME_DRIVER_QSOUND_CLONE(wofj,    wof,      "Tenchi o Kurau 2 (Japan)",        "
 GAME_DRIVER_CLONE(sf2t,    sf2ce,    "Street Fighter II' - Hyper Fighting (US)", "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(sf2tj,   sf2ce,    "Street Fighter II' Turbo - Hyper Fighting (Japan)",   "1992","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (dino,              "Cadillacs and Dinosaurs (World)", "1993","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND_CLONE(dinoj,dino,        "Cadillacs Kyouryuu-Shinseiki (Japan)", "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND      (punisher,          "Punisher (World)",                "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_QSOUND_CLONE(punishrj,punisher, "Punisher (Japan)",                "1993","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (pnickj,            "Pnickies (Japan)",                  "1994","Capcom (Compile license)",ORIENTATION_DEFAULT)
 GAME_DRIVER      (qad,               "Quiz & Dragons (US)",               "1992","Capcom",ORIENTATION_DEFAULT)
-GAME_DRIVER_CLONE(qadj,    qad,      "Quiz & Dragons (Japan)",            "1994","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONEI(qadj,    qad,      "Quiz & Dragons (Japan)",            "1994","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (qtono2,            "Quiz Tonosama no Yabou 2 Zenkoku-ban (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (megaman,           "Mega Man - The Power Battle (Asia)","1995","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(rockmanj,megaman,  "Rockman - The Power Battle (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
+
 
 
 struct GameDriver kodb_driver =
@@ -5606,7 +5850,7 @@ struct GameDriver slammast_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&slammast_machine_driver,
-	0,
+	qsound_eeprom_init,
 
 	slammast_rom,
 	0, slammast_decode,
@@ -5631,7 +5875,7 @@ struct GameDriver mbomber_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&mbomber_machine_driver,
-	0,
+	qsound_eeprom_init,
 
 	mbomber_rom,
 	0, slammast_decode,
@@ -5656,7 +5900,7 @@ struct GameDriver mbomberj_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&mbomber_machine_driver,
-	0,
+	qsound_eeprom_init,
 
 	mbomberj_rom,
 	0, slammast_decode,
@@ -5664,6 +5908,61 @@ struct GameDriver mbomberj_driver =
 	0,      /* sound_prom */
 
 	mbomber_input_ports,
+	0, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	cps1_eeprom_load, cps1_eeprom_save
+};
+
+
+static void pang3_decode(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	int A,src,dst;
+
+	for (A = 0x80000;A < 0x100000;A += 2)
+	{
+		/* only the low 8 bits of each word are encrypted */
+		src = READ_WORD(&RAM[A]);
+		dst = src & 0xff00;
+		if ( src & 0x01) dst ^= 0x04;
+		if ( src & 0x02) dst ^= 0x21;
+		if ( src & 0x04) dst ^= 0x01;
+		if (~src & 0x08) dst ^= 0x50;
+		if ( src & 0x10) dst ^= 0x40;
+		if ( src & 0x20) dst ^= 0x06;
+		if ( src & 0x40) dst ^= 0x08;
+		if (~src & 0x80) dst ^= 0x88;
+		WRITE_WORD(&RAM[A],dst);
+	}
+
+#if 0
+	/* patch out EEPROM test */
+	WRITE_WORD(&RAM[0x20de2], 0x4e71);
+	WRITE_WORD(&RAM[0x20de4], 0x4e71);
+	WRITE_WORD(&RAM[0x20de6], 0x4e71);
+#endif
+}
+
+struct GameDriver pang3_driver =
+{
+	__FILE__,
+	0,
+	"pang3",
+	"Pang! 3 (Japan)",
+	"1995",
+	"Mitchell",
+	CPS1_CREDITS,
+	0,
+	&pang3_machine_driver,
+	pang3_eeprom_init,
+
+	pang3_rom,
+	pang3_decode, 0,
+	0,
+	0,      /* sound_prom */
+
+	pang3_input_ports,
 	0, 0, 0,
 
 	ORIENTATION_DEFAULT,

@@ -767,7 +767,7 @@ ROM_START( dounicorn_rom )
 	ROM_LOAD( "dorev4.bin",   0x6000, 0x2000, 0xe013954d )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dorev5.bin",   0x0000, 0x4000, 0x0636b8f4 )
+	ROM_LOAD( "03a_a5.bin",   0x0000, 0x4000, 0x0636b8f4 )
 	ROM_LOAD( "dorev6.bin",   0x4000, 0x2000, 0x9e335bf8 )
 	ROM_LOAD( "dorev7.bin",   0x6000, 0x2000, 0xf5d5701d )
 	ROM_LOAD( "dorev8.bin",   0x8000, 0x2000, 0x7143ca68 )
@@ -775,7 +775,7 @@ ROM_START( dounicorn_rom )
 
 	ROM_REGION(0x0400)	/* color PROMs */
 	ROM_LOAD( "dorevc9.bin",  0x0000, 0x0200, 0x96624ebe ) /* color prom */
-	ROM_LOAD( "dorevd1.bin",  0x0200, 0x0200, 0x2747ca77 ) /* ??? */
+	ROM_LOAD( "01d.bin",      0x0200, 0x0200, 0x2747ca77 ) /* ??? */
 
 	ROM_REGION(0x10000)	/* 64k for the second CPU */
 	ROM_LOAD( "dorev10.bin",  0x0000, 0x4000, 0x4b1925e3 )

@@ -1532,7 +1532,7 @@ ROM_START( junglek_rom )
 	ROM_LOAD( "kn59-1.bin",   0x2000, 0x1000, 0xcee485fc )
 ROM_END
 
-ROM_START( jhunt_rom )
+ROM_START( jungleh_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
 	ROM_LOAD( "kn41a",        0x00000, 0x1000, 0x6bf118d8 )
 	ROM_LOAD( "kn42.bin",     0x01000, 0x1000, 0xbade53af )
@@ -2104,11 +2104,11 @@ struct GameDriver junglek_driver =
 	junglek_hiload, junglek_hisave
 };
 
-struct GameDriver jhunt_driver =
+struct GameDriver jungleh_driver =
 {
 	__FILE__,
 	&junglek_driver,
-	"jhunt",
+	"jungleh",
 	"Jungle Hunt",
 	"1982",
 	"Taito of America",
@@ -2117,7 +2117,7 @@ struct GameDriver jhunt_driver =
 	&machine_driver,
 	0,
 
-	jhunt_rom,
+	jungleh_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

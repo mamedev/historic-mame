@@ -16,7 +16,7 @@
 
 /* A nice macro which saves us a lot of typing */
 #define M_PLAY_SAMPLE(channel, soundnum, loop) { \
-	if (Machine->samples->sample[soundnum] != 0) \
+	if (Machine->samples != 0 && Machine->samples->sample[soundnum] != 0) \
 		mixer_play_sample(channel, \
 			Machine->samples->sample[soundnum]->data, \
 			Machine->samples->sample[soundnum]->length, \

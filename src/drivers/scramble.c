@@ -33,7 +33,7 @@ write:
 
 
 SOUND BOARD:
-0000-17ff ROM
+0000-1fff ROM
 8000-83ff RAM
 
 I/0 ports:
@@ -81,6 +81,7 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void galaxian_flipx_w(int offset,int data);
 void galaxian_flipy_w(int offset,int data);
+void hotshock_flipscreen_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 void scramble_background_w(int offset, int data);
@@ -88,8 +89,11 @@ void scramble_background_w(int offset, int data);
 int  scramble_vh_start(void);
 int  mariner_vh_start(void);
 int  ckongs_vh_start(void);
+int  pisces_vh_start(void);
 
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void pisces_gfxbank_w(int offset,int data);
 
 int  scramble_vh_interrupt(void);
 int  mariner_vh_interrupt(void);
@@ -97,6 +101,7 @@ void scramble_filter_w(int offset, int data);
 
 int scramble_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
+void hotshock_sh_irqtrigger_w(int offset,int data);
 
 int frogger_portB_r(int offset);
 
@@ -120,8 +125,18 @@ static int ckongs_input_port_2_r(int offset)
 	return (readinputport(2) & 0xf9) | ((readinputport(1) & 0x03) << 1);
 }
 
+static void scramble_coin_counter_2_w(int offset, int data)
+{
+	coin_counter_w(1, data);
+}
 
-static struct MemoryReadAddress readmem[] =
+static void scramble_coin_counter_3_w(int offset, int data)
+{
+	coin_counter_w(2, data);
+}
+
+
+static struct MemoryReadAddress scramble_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
@@ -165,8 +180,39 @@ static struct MemoryReadAddress mariner_readmem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress mars_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x7000, 0x7000, watchdog_reset_r },
+	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
+	{ 0x8102, 0x8102, input_port_1_r },	/* IN1 */
+	{ 0x8108, 0x8108, input_port_2_r },	/* IN2 */
+	{ 0x8208, 0x8208, input_port_3_r },	/* IN3 */
+	{ 0xa000, 0xafff, MRA_ROM },    /* Sinbad 7 */
+	{ 0xc100, 0xc100, input_port_0_r },	/* IN0 - Sinbad 7 */
+	{ 0xc102, 0xc102, input_port_1_r },	/* IN1 - Sinbad 7 */
+	{ 0xc108, 0xc108, input_port_2_r },	/* IN2 - Sinbad 7 */
+	{ -1 }	/* end of table */
+};
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryReadAddress hotshock_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM and Video RAM */
+	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address */
+	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0x8000, 0x8000, input_port_0_r },	/* IN0 */
+	{ 0x8001, 0x8001, input_port_1_r },	/* IN1 */
+	{ 0x8002, 0x8002, input_port_2_r },	/* IN2 */
+	{ 0x8003, 0x8003, input_port_3_r },	/* IN3 */
+	{ -1 }	/* end of table */
+};
+
+
+static struct MemoryWriteAddress scramble_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
@@ -221,6 +267,52 @@ static struct MemoryWriteAddress ckongs_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryWriteAddress mars_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x5080, 0x50ff, MWA_NOP },    /* unused */
+	{ 0x6800, 0x6800, scramble_coin_counter_2_w },
+	{ 0x6801, 0x6801, galaxian_stars_w },
+	{ 0x6802, 0x6802, interrupt_enable_w },
+	{ 0x6808, 0x6808, coin_counter_w },
+	{ 0x6809, 0x6809, galaxian_flipx_w },
+	{ 0x680b, 0x680b, galaxian_flipy_w },
+	{ 0x810a, 0x810a, MWA_NOP },    /* ??? */
+	{ 0x8200, 0x8200, soundlatch_w },
+	{ 0x8202, 0x8202, scramble_sh_irqtrigger_w },
+	{ 0x820a, 0x820a, MWA_NOP },    /* ??? */
+	{ 0xa000, 0xafff, MWA_ROM },    /* Sinbad 7 */
+	{ 0xc10a, 0xc10a, MWA_NOP },    /* ??? - Sinbad 7 */
+	{ 0xc20a, 0xc20a, MWA_NOP },    /* ??? - Sinbad 7 */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress hotshock_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
+	{ 0x5000, 0x503f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x6000, 0x6000, scramble_coin_counter_3_w },
+	{ 0x6002, 0x6002, scramble_coin_counter_2_w },
+	{ 0x6004, 0x6004, hotshock_flipscreen_w },
+	{ 0x6005, 0x6005, coin_counter_w },
+	{ 0x6006, 0x6006, pisces_gfxbank_w },
+	{ 0x6801, 0x6801, interrupt_enable_w },
+	{ 0x7000, 0x7000, watchdog_reset_w },
+	{ 0x8000, 0x8000, soundlatch_w },
+	{ 0x9000, 0x9000, hotshock_sh_irqtrigger_w },
+	{ -1 }	/* end of table */
+};
+
+
 static struct IOReadPort triplep_readport[] =
 {
 	{ 0x01, 0x01, AY8910_read_port_0_r },
@@ -238,16 +330,16 @@ static struct IOWritePort triplep_writeport[] =
 
 
 
-static struct MemoryReadAddress sound_readmem[] =
+static struct MemoryReadAddress scramble_sound_readmem[] =
 {
-	{ 0x0000, 0x17ff, MRA_ROM },
+	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress sound_writemem[] =
+static struct MemoryWriteAddress scramble_sound_writemem[] =
 {
-	{ 0x0000, 0x17ff, MWA_ROM },
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0x9000, 0x9fff, scramble_filter_w },
 	{ -1 }	/* end of table */
@@ -271,14 +363,14 @@ static struct MemoryWriteAddress froggers_sound_writemem[] =
 };
 
 
-static struct IOReadPort sound_readport[] =
+static struct IOReadPort scramble_sound_readport[] =
 {
 	{ 0x20, 0x20, AY8910_read_port_1_r },
 	{ 0x80, 0x80, AY8910_read_port_0_r },
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort sound_writeport[] =
+static struct IOWritePort scramble_sound_writeport[] =
 {
 	{ 0x10, 0x10, AY8910_control_port_1_w },
 	{ 0x20, 0x20, AY8910_write_port_1_w },
@@ -286,6 +378,7 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
+
 
 static struct IOReadPort froggers_sound_readport[] =
 {
@@ -300,6 +393,22 @@ static struct IOWritePort froggers_sound_writeport[] =
 	{ -1 }	/* end of table */
 };
 
+
+static struct IOReadPort hotshock_sound_readport[] =
+{
+	{ 0x20, 0x20, AY8910_read_port_1_r },
+	{ 0x40, 0x40, AY8910_read_port_0_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort hotshock_sound_writeport[] =
+{
+	{ 0x10, 0x10, AY8910_control_port_1_w },
+	{ 0x20, 0x20, AY8910_write_port_1_w },
+	{ 0x40, 0x40, AY8910_write_port_0_w },
+	{ 0x80, 0x80, AY8910_control_port_0_w },
+	{ -1 }	/* end of table */
+};
 
 
 INPUT_PORTS_START( scramble_input_ports )
@@ -599,6 +708,221 @@ INPUT_PORTS_START( ckongs_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mars_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_COCKTAIL )  /* this also control cocktail mode */
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x1f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_COCKTAIL )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( devilfsh_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x01, "15000" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 - unused */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( newsin7_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, " A 1C/1C  B 2C/1C" )
+	PORT_DIPSETTING(    0x01, " A 1C/3C  B 3C/1C" )
+	PORT_DIPSETTING(    0x02, " A 1C/2C  B 1C/1C" )
+	PORT_DIPSETTING(    0x00, " A 1C/4C  B 4C/1C" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )  /* difficulty? */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN3 - unused */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( hotshock_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* pressing this disables the coins */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x09, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0b, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0d, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0x0e, "2 Coins/7 Credits" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0f, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_8C ) )
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x90, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xb0, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xd0, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/7 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xf0, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
+
+	PORT_START	/* IN3 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x04, 0x04, "Language" )
+	PORT_DIPSETTING(    0x04, "English" )
+	PORT_DIPSETTING(    0x00, "Italian" )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "75000" )
+	PORT_DIPSETTING(    0x08, "150000" )
+	PORT_DIPSETTING(    0x10, "200000" )
+	PORT_DIPSETTING(    0x18, "None" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -644,6 +968,50 @@ static struct GfxLayout mariner_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
+static struct GfxLayout devilfsh_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	256,	/* 256 characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 2*256*8*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout devilfsh_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	64,	/* 64 sprites */
+	2,	/* 2 bits per pixel */
+	{ 0, 2*64*16*16 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
+static struct GfxLayout newsin7_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	256,	/* 256 characters */
+	3,	/* 3 bits per pixel */
+	{ 0, 2*256*8*8, 2*2*256*8*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout newsin7_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	64,	/* 64 sprites */
+	3,	/* 3 bits per pixel */
+	{ 0, 2*64*16*16, 2*2*64*16*16 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every sprite takes 32 consecutive bytes */
+};
 static struct GfxLayout bulletlayout =
 {
 	/* there is no gfx ROM for this one, it is generated by the hardware */
@@ -681,19 +1049,19 @@ static struct GfxLayout backgroundlayout =
 
 static struct GfxDecodeInfo scramble_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 1, 0x0000, &bulletlayout, 8*4, 1 },	/* 1 color code instead of 2, so all */
-											/* shots will be yellow */
+	{ 1, 0x0000, &charlayout,             0, 8 },
+	{ 1, 0x0000, &spritelayout,           0, 8 },
+	{ 1, 0x0000, &bulletlayout,         8*4, 1 },	/* 1 color code instead of 2, so all */
+													/* shots will be yellow */
 	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo theend_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
-	{ 1, 0x0000, &spritelayout,   0, 8 },
-	{ 1, 0x0000, &theend_bulletlayout, 8*4, 2 },
+	{ 1, 0x0000, &charlayout,             0, 8 },
+	{ 1, 0x0000, &spritelayout,           0, 8 },
+	{ 1, 0x0000, &theend_bulletlayout,  8*4, 2 },
 	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
@@ -704,6 +1072,26 @@ static struct GfxDecodeInfo mariner_gfxdecodeinfo[] =
 	{ 1, 0x0000, &mariner_spritelayout,   0, 8 },
 	{ 1, 0x0000, &bulletlayout,         8*4, 1 },	/* 1 color code instead of 2, so all */
 													/* shots will be yellow */
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo devilfsh_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &devilfsh_charlayout,    0, 8 },
+	{ 1, 0x0800, &devilfsh_spritelayout,  0, 8 },
+	{ 1, 0x0000, &bulletlayout,         8*4, 1 },	/* 1 color code instead of 2, so all */
+											        /* shots will be yellow */
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo newsin7_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &newsin7_charlayout,     0, 4 },
+	{ 1, 0x0800, &newsin7_spritelayout,   0, 4 },
+	{ 1, 0x0000, &bulletlayout,         8*4, 1 },	/* 1 color code instead of 2, so all */
+											        /* shots will be yellow */
 	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
@@ -731,7 +1119,7 @@ static struct AY8910interface scramble_ay8910_interface =
 	{ 0 }
 };
 
-static struct AY8910interface frogger_ay8910_interface =
+static struct AY8910interface froggers_ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 MHz */
@@ -756,142 +1144,68 @@ static struct AY8910interface triplep_ay8910_interface =
 };
 
 
-static struct MachineDriver scramble_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			0,
-			readmem,writemem,0,0,
-			scramble_vh_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+#define hotshock_sound_readmem	scramble_sound_readmem
+#define hotshock_sound_writemem	scramble_sound_writemem
 
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	scramble_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scramble_ay8910_interface
-		}
-	}
-};
+#define hotshock_ay8910_interface	scramble_ay8910_interface
 
 
-/* same as Scramble, the only difference is gfxdecodeinfo */
-static struct MachineDriver theend_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			0,
-			readmem,writemem,0,0,
-			scramble_vh_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+#define DRIVER_2CPU(NAME, GFXDECODE, MAINMEM, SOUND, VHSTART)	\
+static struct MachineDriver NAME##_machine_driver =				\
+{																\
+	/* basic machine hardware */								\
+	{															\
+		{														\
+			CPU_Z80,											\
+			18432000/6,	/* 3.072 MHz */							\
+			0,													\
+			MAINMEM##_readmem,MAINMEM##_writemem,0,0,			\
+			scramble_vh_interrupt,1								\
+		},														\
+		{														\
+			CPU_Z80 | CPU_AUDIO_CPU,							\
+			14318000/8,	/* 1.78975 MHz */						\
+			3,	/* memory region #3 */							\
+			SOUND##_sound_readmem,SOUND##_sound_writemem,SOUND##_sound_readport,SOUND##_sound_writeport,	\
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */								\
+		}														\
+	},															\
+	60, 2500,	/* frames per second, vblank duration */		\
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */				\
+	0,															\
+																\
+	/* video hardware */										\
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },					\
+	GFXDECODE##_gfxdecodeinfo,									\
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */					\
+	galaxian_vh_convert_color_prom,								\
+																\
+	VIDEO_TYPE_RASTER,											\
+	0,															\
+	VHSTART##_vh_start,											\
+	generic_vh_stop,											\
+	galaxian_vh_screenrefresh,									\
+																\
+	/* sound hardware */										\
+	0,0,0,0,													\
+	{															\
+		{														\
+			SOUND_AY8910,										\
+			&SOUND##_ay8910_interface							\
+		}														\
+	}															\
+}
 
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	theend_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
+/*			NAME      GFXDECODE  MAINMEM   SOUND     VHSTART 	*/
+DRIVER_2CPU(scramble, scramble,  scramble, scramble, scramble);
+DRIVER_2CPU(theend,   theend,    scramble, scramble, scramble);
+DRIVER_2CPU(froggers, scramble,  scramble, froggers, scramble);
+DRIVER_2CPU(mars,     scramble,  mars,     scramble, scramble);
+DRIVER_2CPU(devilfsh, devilfsh,  mars,     scramble, scramble);
+DRIVER_2CPU(newsin7,  newsin7,   mars,     scramble, scramble);
+DRIVER_2CPU(ckongs,   mariner,   ckongs,   scramble, ckongs);
+DRIVER_2CPU(hotshock, mariner,   hotshock, hotshock, pisces);
 
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scramble_ay8910_interface
-		}
-	}
-};
-
-static struct MachineDriver froggers_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			0,
-			readmem,writemem,0,0,
-			scramble_vh_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/8,	/* 1.78975 MHz */
-			3,	/* memory region #3 */
-			froggers_sound_readmem,froggers_sound_writemem,froggers_sound_readport,froggers_sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	scramble_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&frogger_ay8910_interface
-		}
-	}
-};
 
 /* Triple Punch and Mariner are different - only one CPU, one 8910 */
 static struct MachineDriver triplep_machine_driver =
@@ -900,9 +1214,9 @@ static struct MachineDriver triplep_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			18432000/6,	/* 3.072 MHz */
 			0,
-			readmem,triplep_writemem,triplep_readport,triplep_writeport,
+			scramble_readmem,triplep_writemem,triplep_readport,triplep_writeport,
 			scramble_vh_interrupt,1
 		}
 	},
@@ -945,7 +1259,7 @@ static struct MachineDriver mariner_machine_driver =
 		}
 	},
 	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -966,51 +1280,6 @@ static struct MachineDriver mariner_machine_driver =
 		{
 			SOUND_AY8910,
 			&triplep_ay8910_interface
-		}
-	}
-};
-
-static struct MachineDriver ckongs_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
-			0,
-			ckongs_readmem,ckongs_writemem,0,0,
-			scramble_vh_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz */
-			3,	/* memory region #2 */
-			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	mariner_gfxdecodeinfo,
-	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
-	galaxian_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ckongs_vh_start,
-	generic_vh_stop,
-	galaxian_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&scramble_ay8910_interface
 		}
 	}
 };
@@ -1212,6 +1481,92 @@ ROM_START( ckongs_rom )
 	ROM_LOAD( "snd_5d.bin",   0x1000, 0x1000, 0x892c9547 )
 ROM_END
 
+ROM_START( mars_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "u26.3",        0x0000, 0x0800, 0x2f88892c )
+	ROM_LOAD( "u56.4",        0x0800, 0x0800, 0x9e6bcbf7 )
+	ROM_LOAD( "u69.5",        0x1000, 0x0800, 0xdf496e6e )
+	ROM_LOAD( "u98.6",        0x1800, 0x0800, 0x75f274bb )
+	ROM_LOAD( "u114.7",       0x2000, 0x0800, 0x497fd8d0 )
+	ROM_LOAD( "u133.8",       0x2800, 0x0800, 0x3d4cd59f )
+
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "u72.1",        0x0000, 0x0800, 0x279789d0 )
+	ROM_LOAD( "u101.2",       0x0800, 0x0800, 0xc5dc627f )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "u39.9",        0x0000, 0x0800, 0xbb5968b9 )
+	ROM_LOAD( "u51.10",       0x0800, 0x0800, 0x75fd7720 )
+	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x72a492da )
+ROM_END
+
+ROM_START( devilfsh_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "u26.1",        0x0000, 0x0800, 0xec047d71 )
+	ROM_LOAD( "u56.2",        0x0800, 0x0800, 0x0138ade9 )
+	ROM_LOAD( "u69.3",        0x1000, 0x0800, 0x5dd0b3fc )
+	ROM_LOAD( "u98.4",        0x1800, 0x0800, 0xded0b745 )
+	ROM_LOAD( "u114.5",       0x2000, 0x0800, 0x5fd40176 )
+	ROM_LOAD( "u133.6",       0x2800, 0x0800, 0x03538336 )
+	ROM_LOAD( "u143.7",       0x3000, 0x0800, 0x64676081 )
+	ROM_LOAD( "u163.8",       0x3800, 0x0800, 0xbc3d6770 )
+
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "u72.12",       0x0000, 0x1000, 0x5406508e )
+	ROM_LOAD( "u101.13",      0x1000, 0x1000, 0x8c4018b6 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "u39.9",        0x0000, 0x0800, 0x09987e2e )
+	ROM_LOAD( "u51.10",       0x0800, 0x0800, 0x1e2b1471 )
+	ROM_LOAD( "u78.11",       0x1000, 0x0800, 0x45279aaa )
+ROM_END
+
+ROM_START( newsin7_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "newsin.1",     0x0000, 0x1000, 0xe6c23fe0 )
+	ROM_LOAD( "newsin.2",     0x1000, 0x1000, 0x3d477b5f )
+	ROM_LOAD( "newsin.3",     0x2000, 0x1000, 0x7dfa9af0 )
+	ROM_LOAD( "newsin.4",     0x3000, 0x1000, 0xd1b0ba19 )
+	ROM_LOAD( "newsin.5",     0xa000, 0x1000, 0x06275d59 )
+
+	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "newsin.7",     0x2000, 0x1000, 0x6bc5d64f )
+	ROM_LOAD( "newsin.8",     0x1000, 0x1000, 0x0c5b895a )
+	ROM_LOAD( "newsin.9",     0x0000, 0x1000, 0x6b87adff )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "newsin.6",     0x0000, 0x0020, 0x5cf2cd8d )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "newsin.13",    0x0000, 0x0800, 0xd88489a2 )
+	ROM_LOAD( "newsin.12",    0x0800, 0x0800, 0xb154a7af )
+	ROM_LOAD( "newsin.11",    0x1000, 0x0800, 0x7ade709b )
+ROM_END
+
+ROM_START( hotshock_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "hotshock.l10", 0x0000, 0x1000, 0x401078f7 )
+	ROM_LOAD( "hotshock.l9",  0x1000, 0x1000, 0xaf76c237 )
+	ROM_LOAD( "hotshock.l8",  0x2000, 0x1000, 0x30486031 )
+	ROM_LOAD( "hotshock.l7",  0x3000, 0x1000, 0x5bde9312 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hotshock.h4",  0x0000, 0x1000, 0x60bdaea9 )
+	ROM_LOAD( "hotshock.h5",  0x1000, 0x1000, 0x4ef17453 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "hotshock.b3",  0x0000, 0x1000, 0x0092f0e2 )
+	ROM_LOAD( "hotshock.b4",  0x1000, 0x1000, 0xc2135a44 )
+ROM_END
 
 
 static void scramble_driver_init(void)
@@ -1223,6 +1578,13 @@ static void scramble_driver_init(void)
 static void scramblk_driver_init(void)
 {
 	install_mem_read_handler(0, 0x8202, 0x8202, scramblk_protection_r);
+}
+
+static void hotshock_driver_init(void)
+{
+	/* protection??? The game jumps into never-neverland here. I think
+	   it just expects a RET there */
+	ROM[0x2ef9] = 0xc9;
 }
 
 
@@ -1238,6 +1600,32 @@ static void froggers_decode(void)
 		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
 }
 
+static void mars_decode(void)
+{
+	int i;
+	unsigned char *RAM;
+
+	/* Address lines are scrambled on the main CPU:
+
+		A0 -> A2
+		A1 -> A0
+		A2 -> A3
+		A3 -> A1 */
+
+	RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	for (i = 0; i < 0x10000; i += 16)
+	{
+		int j;
+		unsigned char swapbuffer[16];
+
+		for (j = 0; j < 16; j++)
+		{
+			swapbuffer[j] = RAM[i + ((j & 1) << 2) + ((j & 2) >> 1) + ((j & 4) << 1) + ((j & 8) >> 2)];
+		}
+
+		memcpy(&RAM[i], swapbuffer, 16);
+	}
+}
 
 
 static int scramble_hiload(void)
@@ -1696,3 +2084,108 @@ struct GameDriver ckongs_driver =
 
 	ckongs_hiload, ckongs_hisave
 };
+
+struct GameDriver mars_driver =
+{
+	__FILE__,
+	0,
+	"mars",
+	"Mars",
+	"1981",
+	"Artic",
+	"Zsolt Vasvari",
+	0,
+	&mars_machine_driver,
+	0,
+
+	mars_rom,
+	mars_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	mars_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver devilfsh_driver =
+{
+	__FILE__,
+	0,
+	"devilfsh",
+	"Devil Fish",
+	"1982",
+	"Artic",
+	"Zsolt Vasvari",
+	0,
+	&devilfsh_machine_driver,
+	0,
+
+	devilfsh_rom,
+	mars_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	devilfsh_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver newsin7_driver =
+{
+	__FILE__,
+	0,
+	"newsin7",
+	"New Sinbad 7",
+	"1983",
+	"ATW USA, Inc.",
+	"Zsolt Vasvari",
+	GAME_IMPERFECT_COLORS,
+	&newsin7_machine_driver,
+	0,
+
+	newsin7_rom,
+	mars_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	newsin7_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+
+struct GameDriver hotshock_driver =
+{
+	__FILE__,
+	0,
+	"hotshock",
+	"Hot Shocker",
+	"1982",
+	"E.G. Felaco",
+	"Zsolt Vasvari",
+	0,
+	&hotshock_machine_driver,
+	hotshock_driver_init,
+
+	hotshock_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	hotshock_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	0, 0
+};
+

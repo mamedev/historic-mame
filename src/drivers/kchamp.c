@@ -446,9 +446,10 @@ static struct AY8910interface ay8910_interface =
 
 static struct MSM5205interface msm_interface =
 {
-	1,              /* 1 chips */
-	3906,           /* 12Mhz / 16 / 2 / 96 = 3906.25Hz playback */
-	&msmint,        /* irq */
+	1,					/* 1 chip             */
+	375000,				/* 12Mhz / 16 / 2     */
+	{ msmint },/* interrupt function */
+	{ MSM5205_S96_4B},	/* / 96 = 3906.25Hz playback */
 	{ 100 }
 };
 
@@ -668,42 +669,42 @@ ROM_END
 
 ROM_START( kchamp_rom )
         ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "B014.BIN", 0x0000, 0x2000, 0x0000d1a0 )
-        ROM_LOAD( "B015.BIN", 0x2000, 0x2000, 0x03fae67e )
-        ROM_LOAD( "B016.BIN", 0x4000, 0x2000, 0x3b6e1d08 )
-        ROM_LOAD( "B017.BIN", 0x6000, 0x2000, 0xc1848d1a )
-        ROM_LOAD( "B018.BIN", 0x8000, 0x2000, 0xb824abc7 )
-        ROM_LOAD( "B019.BIN", 0xa000, 0x2000, 0x3b487a46 )
+        ROM_LOAD( "b014.bin", 0x0000, 0x2000, 0x0000d1a0 )
+        ROM_LOAD( "b015.bin", 0x2000, 0x2000, 0x03fae67e )
+        ROM_LOAD( "b016.bin", 0x4000, 0x2000, 0x3b6e1d08 )
+        ROM_LOAD( "b017.bin", 0x6000, 0x2000, 0xc1848d1a )
+        ROM_LOAD( "b018.bin", 0x8000, 0x2000, 0xb824abc7 )
+        ROM_LOAD( "b019.bin", 0xa000, 0x2000, 0x3b487a46 )
 
         ROM_REGION_DISPOSE(0x20000)
-        ROM_LOAD( "B013.BIN", 0x00000, 0x2000, 0xeaad4168 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "B004.BIN", 0x02000, 0x2000, 0x10a47e2d )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "B012.BIN", 0x04000, 0x2000, 0xb4842ea9 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "B003.BIN", 0x06000, 0x2000, 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "B011.BIN", 0x08000, 0x2000, 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
-        ROM_LOAD( "B002.BIN", 0x0A000, 0x2000, 0x6be342a6 )  /* bot, plane0 */ /* sprites */
-        ROM_LOAD( "B007.BIN", 0x0C000, 0x2000, 0xcb91d16b )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "B010.BIN", 0x0E000, 0x2000, 0x489c9c04 )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "B006.BIN", 0x10000, 0x2000, 0x7346db8a )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "B009.BIN", 0x12000, 0x2000, 0xb78714fc )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "B005.BIN", 0x14000, 0x2000, 0xb2557102 )  /* top, plane1 */ /* sprites */
-        ROM_LOAD( "B008.BIN", 0x16000, 0x2000, 0xc85aba0e )  /* bot, plane1 */ /* sprites */
-        ROM_LOAD( "B000.BIN", 0x18000, 0x2000, 0xa4fa98a1 )  /* plane0 */ /* tiles */
-        ROM_LOAD( "B001.BIN", 0x1C000, 0x2000, 0xfea09f7c )  /* plane1 */ /* tiles */
+        ROM_LOAD( "b013.bin", 0x00000, 0x2000, 0xeaad4168 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "b004.bin", 0x02000, 0x2000, 0x10a47e2d )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "b012.bin", 0x04000, 0x2000, 0xb4842ea9 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "b003.bin", 0x06000, 0x2000, 0x8cd166a5 )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "b011.bin", 0x08000, 0x2000, 0x4cbd3aa3 )  /* top, plane0 */ /* sprites */
+        ROM_LOAD( "b002.bin", 0x0A000, 0x2000, 0x6be342a6 )  /* bot, plane0 */ /* sprites */
+        ROM_LOAD( "b007.bin", 0x0C000, 0x2000, 0xcb91d16b )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "b010.bin", 0x0E000, 0x2000, 0x489c9c04 )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "b006.bin", 0x10000, 0x2000, 0x7346db8a )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "b009.bin", 0x12000, 0x2000, 0xb78714fc )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "b005.bin", 0x14000, 0x2000, 0xb2557102 )  /* top, plane1 */ /* sprites */
+        ROM_LOAD( "b008.bin", 0x16000, 0x2000, 0xc85aba0e )  /* bot, plane1 */ /* sprites */
+        ROM_LOAD( "b000.bin", 0x18000, 0x2000, 0xa4fa98a1 )  /* plane0 */ /* tiles */
+        ROM_LOAD( "b001.bin", 0x1C000, 0x2000, 0xfea09f7c )  /* plane1 */ /* tiles */
 
         ROM_REGION(0x0300) /* color proms */
-        ROM_LOAD( "BR27", 0x0000, 0x0100, 0xf683c54a ) /* red */
-        ROM_LOAD( "BR26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
-        ROM_LOAD( "BR25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
+        ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
+        ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
+        ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
 
         ROM_REGION(0x10000) /* Sound CPU */ /* 64k for code */
-        ROM_LOAD( "B026.BIN", 0x0000, 0x2000, 0x999ed2c7 )
-		ROM_LOAD( "B025.BIN", 0x2000, 0x2000, 0x33171e07 ) /* adpcm */
-        ROM_LOAD( "B024.BIN", 0x4000, 0x2000, 0x910b48b9 ) /* adpcm */
-		ROM_LOAD( "B023.BIN", 0x6000, 0x2000, 0x47f66aac )
-		ROM_LOAD( "B022.BIN", 0x8000, 0x2000, 0x5928e749 )
-		ROM_LOAD( "B021.BIN", 0xa000, 0x2000, 0xca17e3ba )
-		ROM_LOAD( "B020.BIN", 0xc000, 0x2000, 0xada4f2cd )
+        ROM_LOAD( "b026.bin", 0x0000, 0x2000, 0x999ed2c7 )
+		ROM_LOAD( "b025.bin", 0x2000, 0x2000, 0x33171e07 ) /* adpcm */
+        ROM_LOAD( "b024.bin", 0x4000, 0x2000, 0x910b48b9 ) /* adpcm */
+		ROM_LOAD( "b023.bin", 0x6000, 0x2000, 0x47f66aac )
+		ROM_LOAD( "b022.bin", 0x8000, 0x2000, 0x5928e749 )
+		ROM_LOAD( "b021.bin", 0xa000, 0x2000, 0xca17e3ba )
+		ROM_LOAD( "b020.bin", 0xc000, 0x2000, 0xada4f2cd )
 ROM_END
 
 static void kchamp_decode( void ) {

@@ -76,7 +76,7 @@ struct AY8910interface irem_ay8910_interface =
 {
 	2,	/* 2 chips */
 	910000,	/* .91 MHz ?? */
-	{ 25, 25 },
+	{ 20, 20 },
 	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r, 0 },
 	{ 0 },
@@ -86,10 +86,11 @@ struct AY8910interface irem_ay8910_interface =
 
 struct MSM5205interface irem_msm5205_interface =
 {
-	2,			/* 2 chips */
-	4000,		/* 4000Hz playback */
-	irem_adpcm_int,	/* interrupt function */
-	{ 80, 80 }
+	2,					/* 2 chips            */
+	384000,				/* 384KHz             */
+	{ irem_adpcm_int, 0 },/* interrupt function */
+	{ MSM5205_S96_4B,MSM5205_S96_4B},	/* 4KHz  */
+	{ 100, 100 }
 };
 
 

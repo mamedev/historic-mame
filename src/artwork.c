@@ -849,10 +849,10 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 
 	if (!png_read_file(fp, p))
 	{
-		fclose (fp);
+		osd_fclose (fp);
 		return 0;
 	}
-	fclose (fp);
+	osd_fclose (fp);
 
 	if (p->bit_depth > 8)
 	{

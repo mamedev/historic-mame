@@ -493,7 +493,7 @@ ROM_START( farwest_rom )
 	ROM_LOAD( "ironcol.003",  0x0000, 0x0100, 0x3e3fca11 ) /* palette red */
 	ROM_LOAD( "ironcol.001",  0x0100, 0x0100, 0xdfb13014 ) /* palette green */
 	ROM_LOAD( "ironcol.002",  0x0200, 0x0100, 0x77c88430 ) /* palette blue */
-	ROM_LOAD( "ironcol.004",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
+	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
 	ROM_LOAD( "ironcol.005",  0x0400, 0x0100, 0x15077b9c ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for audio cpu */

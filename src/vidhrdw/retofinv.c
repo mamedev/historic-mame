@@ -56,8 +56,10 @@ void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		color_prom++;
 	}
 
-	/* foreground colors */
+	color_prom += 2*256;
+	/* color_prom now points to the beginning of the lookup tables */
 
+	/* foreground colors */
 	for (i = 0; i<TOTAL_COLORS(0);i++)
 	{
 		if (i % 2)
@@ -119,14 +121,12 @@ void retofinv_fg_videoram_w(int offset,int data)
 {
 	if (retofinv_fg_videoram[offset] != data)
 		retofinv_fg_videoram[offset] = data;
-
 }
 
 void retofinv_bg_colorram_w(int offset,int data)
 {
 	if (retofinv_bg_colorram[offset] != data)
 	{
-
 		bg_dirtybuffer[offset] = 1;
 		retofinv_bg_colorram[offset] = data;
 	}
@@ -254,7 +254,7 @@ void retofinv_draw_background(struct osd_bitmap *bitmap)
 			{
 				bg_dirtybuffer[offs] = 0;
 				tile = retofinv_bg_videoram[offs]+(retofinv_bg_char_bank[0]*256);
-				palette = retofinv_bg_colorram[offs] & 15;
+				palette = retofinv_bg_colorram[offs] & 0x3f;
 
 				drawgfx(bitmap,Machine->gfx[1],
 							tile,

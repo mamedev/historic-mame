@@ -19,34 +19,60 @@
 ***************************************************************************/
 
 #include "driver.h"
+
 #include "vidhrdw/generic.h"
 
-
+//#define NOISY_CONTROLS
 //#define NOISY_CPU
-
+#define NOISY_SLAVE
 
 /* Helps document the input ports. */
 #define IPT_SLAVEHALT IPT_UNKNOWN
 
-#define LELAND "The Leland Corp."
+#define LELAND  "The Leland Corp."
+#define CINEMAT "Cinematronics"
 
 #include "cpu\z80\z80.h"
 
+
+/***********************************************************************
+
+   Slave halt lines.
+
+   Master interrogates the halt status of the slave CPU. This is mainly
+   used in the self test.
+
+   The slave CPU is reset and told to perform a memory test. The master
+   then waits a number of vblanks (sufficient for the slave to
+   do the memory test) and checks to see if the slave has halted. If the
+   slave hasn't halted then it isn't responding.
+
+************************************************************************/
+
+static int leland_slave_halt=0;
+
+void leland_slave_halt_w(int offset, int data)
+{
+	/* Only used for self-test */
+/*
+	char baf[40];
+	sprintf(baf,"Z80 HALT=%d",data);
+	usrintf_showmessage(baf);
+*/
+	if (data)
+		leland_slave_halt=0;
+	else
+		leland_slave_halt=1;
+}
+
 int cpu_get_halt_line(int num)
 {
-    return rand() & 0x01;
-	if (num==1)
-	{
-		int halt=cpunum_get_reg(1, Z80_HALT);
-#ifdef NOISY_CPU
-		if (errorlog && halt)
-		{
-			fprintf(errorlog, "HALT=%d\n", halt);
-		}
-#endif
-		return halt;
-	}
+#if 1
+	return leland_slave_halt;
+#else
+	/* Kludge to return 0 */
 	return 0;
+#endif
 }
 
 void cpu_set_reset_line(int num, int reset)
@@ -96,36 +122,38 @@ void cpu_set_test_line(int num, int test)
 }
 
 /* Video routines */
-extern int leland_vh_start(void);
-extern void leland_vh_stop(void);
-extern void leland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-extern void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int leland_vh_start(void);
+void leland_vh_stop(void);
+void leland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* Video RAM ports */
-extern void leland_master_video_addr_w(int offset, int data);
-extern void leland_slave_video_addr_w(int offset, int data);
-extern void leland_mvram_port_w(int offset, int data);
-extern void leland_svram_port_w(int offset, int data);
-extern int  leland_mvram_port_r(int offset);
-extern int  leland_svram_port_r(int offset);
+void leland_master_video_addr_w(int offset, int data);
+void leland_slave_video_addr_w(int offset, int data);
+void leland_mvram_port_w(int offset, int data);
+void leland_svram_port_w(int offset, int data);
+int  leland_mvram_port_r(int offset);
+int  leland_svram_port_r(int offset);
 
-extern void leland_sound_port_w(int offset, int data);
-extern int  leland_sound_port_r(int offset);
+void leland_sound_port_w(int offset, int data);
+int  leland_sound_port_r(int offset);
 
-extern void leland_bk_xlow_w(int offset, int data);
-extern void leland_bk_xhigh_w(int offset, int data);
-extern void leland_bk_ylow_w(int offset, int data);
-extern void leland_bk_yhigh_w(int offset, int data);
+void leland_gfx_port_w(int offset, int data);
 
-extern unsigned char *leland_palette_ram;
-extern int            leland_palette_ram_size;
-
-extern void leland_palette_ram_w(int offset, int data);
-extern int  leland_palette_ram_r(int offset);
+void leland_bk_xlow_w(int offset, int data);
+void leland_bk_xhigh_w(int offset, int data);
+void leland_bk_ylow_w(int offset, int data);
+void leland_bk_yhigh_w(int offset, int data);
 
 static int  leland_slave_cmd;
 
 void (*leland_update_master_bank)(void);
+
+void leland_onboard_dac(void);
+
+int  leland_sh_start(const struct MachineSound *msound);
+void leland_sh_stop(void);
+void leland_sh_update(void);
 
 
 /***********************************************************************
@@ -143,17 +171,61 @@ extern int  ataxx_svram_port_r(int offset);
 
 /***********************************************************************
 
+   EEPROM
+
+   EEPROM accessed via serial protocol.
+   ATAXX may be different.
+
+************************************************************************/
+
+static int leland_eeprom[0x0100]; /* Unknown size */
+
+/*
+	0x80 = Analog control ready bit. Game sits in tight loop waiting
+		   before reading the control.
+	0x40 = Clock?
+	0x06 = ?
+*/
+
+
+int leland_eeprom_r(int offset)
+{
+	static int s;
+	s=s^0x01;
+#if 0
+	if (errorlog)
+	{
+		fprintf(errorlog, "PC=%04x EEPROM read\n", cpu_get_pc());
+	}
+#endif
+	return s;
+}
+
+void leland_eeprom_w(int offset, int data)
+{
+	/*
+	ATAXX - Routine at 0x5ab9 tests the EEPROM. Appears to be 16 bits.
+	ATAXX - Routine at 0x7587 also does something with the EEPROM
+	*/
+#if 0
+	if (errorlog)
+	{
+		fprintf(errorlog, "PC=%04x EEPROM write = %02x\n",
+			cpu_get_pc(), data);
+	}
+#endif
+}
+
+/***********************************************************************
+
    BATTERY BACKED RAM
 
-   Looks like it may be accessed in different ways by various games.
-
-   (0xa000-0xafff)
+   Usually at 0xa000-0xdfff.
 
 ************************************************************************/
 
 #define leland_battery_ram_size 0x4000
 static unsigned char leland_battery_ram[leland_battery_ram_size];
-
 
 void leland_battery_w(int offset, int data)
 {
@@ -168,7 +240,10 @@ static void leland_hisave (void)
 	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
 	if (f)
 	{
+		/* Battery backed RAM */
 		osd_fwrite (f, leland_battery_ram, leland_battery_ram_size);
+		/* EEPROM */
+		osd_fwrite_msbfirst (f, leland_eeprom, sizeof(leland_eeprom));
 		osd_fclose (f);
 	}
 }
@@ -181,13 +256,21 @@ static int leland_hiload (void)
 	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
 	if (f)
 	{
+		/* Battery backed RAM */
 		osd_fread (f, leland_battery_ram, leland_battery_ram_size);
+		/* EEPROM */
+		osd_fread_msbfirst (f, leland_eeprom, sizeof(leland_eeprom));
 		osd_fclose (f);
 	}
 	else
 	{
 		memset(leland_battery_ram, 0, leland_battery_ram_size);
+		memset(leland_eeprom, 0, sizeof(leland_eeprom));
 	}
+	/*
+	Clear down RAM.
+	*/
+	memset(&RAM[0xe000], 0, 0x1000);
 
 	return 1;
 }
@@ -195,6 +278,17 @@ static int leland_hiload (void)
 #ifdef MAME_DEBUG
 void leland_debug_dump_driver(void)
 {
+	if (osd_key_pressed(OSD_KEY_M))
+	{
+		static int marker=1;
+		while (osd_key_pressed(OSD_KEY_M))       ;
+
+		if (errorlog)
+		{
+			fprintf(errorlog, "Marker %d\n", marker);
+			marker++;
+		}
+	}
 	if (osd_key_pressed(OSD_KEY_F))
 	{
 		FILE *fp=fopen("MASTER.DMP", "w+b");
@@ -205,14 +299,14 @@ void leland_debug_dump_driver(void)
 			fclose(fp);
 		}
 		fp=fopen("SLAVE.DMP", "w+b");
-        if (fp)
+		if (fp)
 		{
 			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 			fwrite(RAM, 0x10000, 1, fp);
 			fclose(fp);
 		}
 		fp=fopen("SOUND.DMP", "w+b");
-        if (fp)
+		if (fp)
 		{
 			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
 			int size=Machine->memory_region_length[Machine->drv->cpu[2].memory_region];
@@ -222,10 +316,10 @@ void leland_debug_dump_driver(void)
 			}
 			fclose(fp);
 		}
-        fp=fopen("BATTERY.DMP", "w+b");
-        if (fp)
+		fp=fopen("BATTERY.DMP", "w+b");
+		if (fp)
 		{
-            fwrite(leland_battery_ram, leland_battery_ram_size, 1, fp);
+			fwrite(leland_battery_ram, leland_battery_ram_size, 1, fp);
 			fclose(fp);
 		}
 
@@ -238,84 +332,90 @@ void leland_debug_dump_driver(void)
 #define MACHINE_DRIVER(DRV, MRP, MWP, MR, MW, INITMAC, GFXD, VRF, SLR, SLW)\
 static struct MachineDriver DRV =    \
 {                                                \
-		{                                          \
-				{                                   \
-						CPU_Z80,        /* Master game processor */ \
-						6000000,        /* 6.000 Mhz  */           \
-						0,                                         \
-						MR,MW,            \
-						MRP,MWP,                                   \
-						leland_master_interrupt,16                 \
-				},                                                 \
-				{                                                  \
-						CPU_Z80, /* Slave graphics processor*/     \
-						6000000, /* 6.000 Mhz */                   \
-						2,       /* memory region #2 */            \
-						SLR,SLW,              \
-						slave_readport,slave_writeport,            \
-						leland_slave_interrupt,1                   \
-				},                                                 \
-				{                                                  \
-						CPU_I86,         /* Sound processor */     \
-						16000000,        /* 16 Mhz  */             \
-						3,                                         \
-						leland_i86_readmem,leland_i86_writemem,\
-						leland_i86_readport,leland_i86_writeport, \
-						leland_i86_interrupt,1,                    \
-						0,0,&leland_addrmask                    \
-				},                                                 \
-		},                                                         \
-		60, 2000,2,                                                \
-		INITMAC,                                       \
-		0x28*8, 0x20*8, { 0*8, 0x28*8-1, 0*8, 0x1e*8-1 },              \
-		GFXD,                                             \
-		1024,1024,                                                 \
-		0,                                                         \
-		VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                \
-		0,                                                         \
-		leland_vh_start,leland_vh_stop,VRF,    \
-		0,0,0,0,\
-		{   \
-			{SOUND_AY8910, &ay8910_interface }, \
-			{SOUND_DAC,    &dac_interface }     \
-		}                 \
+	{                                          \
+		{                                   \
+			CPU_Z80,        /* Master game processor */ \
+			6000000,        /* 6.000 Mhz  */           \
+			0,                                         \
+			MR,MW,            \
+			MRP,MWP,                                   \
+			leland_master_interrupt,17                 \
+		},                                                 \
+		{                                                  \
+			CPU_Z80, /* Slave graphics processor*/     \
+			6000000, /* 6.000 Mhz */                   \
+			2,       /* memory region #2 */            \
+			SLR,SLW,              \
+			slave_readport,slave_writeport,            \
+			leland_slave_interrupt,1                   \
+		},                                                 \
+		{                                                  \
+			CPU_I86,         /* Sound processor */     \
+			16000000,        /* 16 Mhz  */             \
+			3,                                         \
+			leland_i86_readmem,leland_i86_writemem,\
+			leland_i86_readport,leland_i86_writeport, \
+			leland_i86_interrupt,1,                    \
+			0,0,&leland_addrmask                    \
+		},                                                 \
+	},                                                         \
+	60, 2000,2,                                                \
+	INITMAC,                                       \
+	0x28*8, 0x20*8, { 0*8, 0x28*8-1, 0*8, 0x1e*8-1 },              \
+	GFXD,                                             \
+	1024,1024,                                                 \
+	0,                                                         \
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                \
+	0,                                                         \
+	leland_vh_start,leland_vh_stop,VRF,    \
+	0,0,0,0,\
+	{   \
+		{ SOUND_AY8910, &ay8910_interface }, \
+		{ SOUND_DAC,    &dac_interface },     \
+		{ SOUND_CUSTOM, &custom_interface }     \
+	}                 \
 }
+
+/*
+In this context, no sound means no 80186 sound processor.
+*/
 
 #define MACHINE_DRIVER_NO_SOUND(DRV, MRP, MWP, MR, MW, INITMAC, GFXD, VRF, SLR, SLW)\
 static struct MachineDriver DRV =    \
 {                                                \
-		{                                          \
-				{                                   \
-						CPU_Z80,        /* Master game processor */ \
-						6000000,        /* 6.000 Mhz  */           \
-						0,                                         \
-						MR,MW,            \
-						MRP,MWP,                                   \
-						leland_master_interrupt,16                 \
-				},                                                 \
-				{                                                  \
-						CPU_Z80, /* Slave graphics processor*/     \
-						6000000, /* 6.000 Mhz */                   \
-						2,       /* memory region #2 */            \
-						SLR, SLW,               \
-						slave_readport,slave_writeport,            \
-						leland_slave_interrupt,1                   \
-				},                                                 \
-		},                                                         \
-		60, 2000,2,                                                \
-		INITMAC,                                       \
-		0x28*8, 0x20*8, { 0*8, 0x28*8-1, 0*8, 0x1e*8-1 },              \
-		GFXD,                                             \
-		1024,1024,                                                 \
-		0,                                                         \
-		VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                \
-		0,                                                         \
-		leland_vh_start,leland_vh_stop,VRF,    \
-		0,0,0,0,\
-		{   \
-			{SOUND_AY8910, &ay8910_interface }, \
-			{SOUND_DAC,    &dac_interface }     \
-		}                 \
+	{                                          \
+		{                                   \
+			CPU_Z80,        /* Master game processor */ \
+			6000000,        /* 6.000 Mhz  */           \
+			0,                                         \
+			MR,MW,            \
+			MRP,MWP,                                   \
+			leland_master_interrupt,16                 \
+		},                                                 \
+		{                                                  \
+			CPU_Z80, /* Slave graphics processor*/     \
+			6000000, /* 6.000 Mhz */                   \
+			2,       /* memory region #2 */            \
+			SLR, SLW,               \
+			slave_readport,slave_writeport,            \
+			leland_slave_interrupt,1                   \
+		},                                                 \
+	},                                                         \
+	60, 2000,2,                                                \
+	INITMAC,                                       \
+	0x28*8, 0x20*8, { 0*8, 0x28*8-1, 0*8, 0x1e*8-1 },              \
+	GFXD,                                             \
+	1024,1024,                                                 \
+	0,                                                         \
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                \
+	0,                                                         \
+	leland_vh_start,leland_vh_stop,VRF,    \
+	0,0,0,0,\
+	{   \
+		{ SOUND_AY8910, &ay8910_interface }, \
+		{ SOUND_DAC,    &dac_interface },     \
+		{ SOUND_CUSTOM, &custom_interface }     \
+	}                 \
 }
 
 
@@ -323,7 +423,7 @@ static struct MachineDriver DRV =    \
    2 AY8910 chips - Actually, one of these is an 8912
    (8910 with only 1 output port)
 
-   Port A of both chips are connected to a banking control
+   Port A of both chips is connected to a banking control
    register.
 */
 
@@ -349,8 +449,16 @@ There are:
 static struct DACinterface dac_interface =
 {
 	MAX_DAC,  /* 8 chips */
-	{25,25,25,25,},    /* Volume */
+	{255,255,255,255,},    /* Volume */
 };
+
+static struct CustomSound_interface custom_interface =
+{
+	leland_sh_start,
+	leland_sh_stop,
+	leland_sh_update
+};
+
 
 /***********************************************************************
 
@@ -463,7 +571,7 @@ void leland_sound_cpu_control_w(int data)
 
 void leland_dac_w(int offset, int data)
 {
-	int dacnum=(offset/2)+1;
+	int dacnum=(offset/2);
 	if (dacnum >= MAX_DAC)
 	{
 		/* Exceeded DAC */
@@ -472,7 +580,7 @@ void leland_dac_w(int offset, int data)
 	if (offset & 0x01)
 	{
 		/* Writing to volume register */
-//		DAC_set_volume(dacnum, data, 255);
+		//DAC_set_volume(dacnum, data, 255);
 	}
 	else
 	{
@@ -564,12 +672,12 @@ static struct MemoryWriteAddress leland_i86_writemem[] =
 
 ************************************************************************/
 
-int leland_raster_count;
+int leland_raster;
 
 int leland_master_interrupt(void)
 {
-	leland_raster_count++;
-	leland_raster_count&=0x0f;
+	leland_raster++;
+	leland_raster&=0x0f;
 
 	/* Debug dumping */
 	leland_debug_dump_driver();
@@ -580,6 +688,16 @@ int leland_master_interrupt(void)
 
 void leland_slave_cmd_w(int offset, int data)
 {
+#if 0
+	if (errorlog)
+	{
+		fprintf(errorlog, "SLAVECMD=%02x RES=%d NMI=%d IRQ=%d\n", data,
+			data&0x01,
+			data&0x04,
+			data&0x08);
+	}
+#endif
+
 	cpu_set_reset_line(1, data&0x01  ? CLEAR_LINE : HOLD_LINE);
 	/* 0x02=colour write */
 	cpu_set_nmi_line(1,    data&0x04 ? CLEAR_LINE : HOLD_LINE);
@@ -591,6 +709,13 @@ void leland_slave_cmd_w(int offset, int data)
 	*/
 	leland_slave_cmd=data;
 }
+
+/***********************************************************************
+
+ There is a bit in one of the input port registers that indicates
+ the halt status of the slave Z80.
+
+************************************************************************/
 
 INLINE int leland_slavebit_r(int bit)
 {
@@ -614,34 +739,36 @@ int leland_slavebit1_r(int offset)
 	return leland_slavebit_r(0x02);
 }
 
+/***********************************************************************
+
+ Analog ports.
+
+************************************************************************/
+
 static int leland_current_analog;
 
 void leland_analog_w(int offset, int data)
 {
+	/* Set the current analog port number */
 	leland_current_analog=data&0x0f;
-/*
+#ifdef NOISY_CONTROLS
 	if (errorlog)
 	{
 		fprintf(errorlog, "Analog joystick %02x (device#%d)\n", data, leland_current_analog);
 	}
-*/
+#endif
 }
 
 int leland_analog_r(int offset)
 {
+#ifdef NOISY_CONTROLS
+	if (errorlog)
+	{
+		fprintf(errorlog, "Analog joystick (device#%d)\n", leland_current_analog);
+	}
+#endif
 	return readinputport(leland_current_analog+4+offset);
 }
-
-
-int leland_analog_control_r(int offset)
-{
-	/*
-	Game reads this to ensure that the analog/digital converter
-	is ready. Return 0 in the high bit
-	*/
-	return 0x00;
-}
-
 
 /***********************************************************************
 
@@ -653,7 +780,7 @@ int leland_analog_control_r(int offset)
 
 int leland_slave_interrupt(void)
 {
-	/* Slave's interrupts are driven by the master */
+	/* Slave's interrupts are driven by the master CPU */
 	return ignore_interrupt();
 }
 
@@ -667,8 +794,8 @@ void leland_slave_banksw_w(int offset, int data)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	int bankaddress;
 	bankaddress=0x10000+0xc000*(data&0x0f);
-	cpu_setbank(7, &RAM[bankaddress]);
-	cpu_setbank(8, &RAM[bankaddress+0x2000]);
+	cpu_setbank(3, &RAM[bankaddress]);
+
 #ifdef NOISY_CPU
 	if (errorlog)
 	{
@@ -681,10 +808,8 @@ void leland_slave_banksw_w(int offset, int data)
 void leland_slave_large_banksw_w(int offset, int data)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	int bankaddress;
-    bankaddress=0x10000+0x8000*(data&0x0f);
-    cpu_setbank(7, &RAM[0x2000]);
-    cpu_setbank(8, &RAM[bankaddress]);
+	int bankaddress=0x10000+0x8000*(data&0x0f);
+	cpu_setbank(3, &RAM[bankaddress]);
 
 #ifdef NOISY_CPU
 	if (errorlog)
@@ -695,28 +820,134 @@ void leland_slave_large_banksw_w(int offset, int data)
 #endif
 }
 
+void leland_rearrange_bank_swap(int cpu, int startaddr)
+{
+	/*
+	This function is for banks in the following format:
+		ROM       Z80 address range
+		0x0000    0x4000-0x7fff
+		0x8000    0x2000-0x3fff
+		...
+	This is easy for the hardware to decode, but not so easy for MAME.
+	Here, the banks are rearranged so that they are contiguous.
+	*/
+
+	int i;
+	int region=Machine->drv->cpu[cpu].memory_region;
+	unsigned char *RAM = Machine->memory_region[region];
+	/* Calculate the number of banks in the remaining memory */
+	int banks=(Machine->memory_region_length[region]-startaddr)/0x8000;
+	unsigned char *p=malloc(0x8000);
+	if (p)
+	{
+		if (errorlog)
+		{
+			fprintf(errorlog, "Region %d Swapping %d banks (start=0x%04x)\n",
+				region, banks, startaddr);
+		}
+
+		for (i=0; i<banks;i++)
+		{
+			memcpy(p, &RAM[startaddr+0x2000], 0x6000);
+			memcpy(p+0x6000, &RAM[startaddr], 0x2000);
+			memcpy(&RAM[startaddr], p, 0x8000);
+			startaddr+=0x8000;
+		}
+		free(p);
+	}
+	else
+	{
+		/* Should really abort */
+	}
+}
+
+void leland_rearrange_bank(int cpu, int start)
+{
+	/*
+	This function is for banks in the following format:
+		ROM       Z80 address range
+		0x0000    0x2000-0x2fff
+		0x2000    0x2000-0x2fff
+		0x0000    0x4000-0x5fff
+		...
+	Each ROM contains two banks for the same address.
+	Rearrange the banks so that they are contiguous
+	*/
+
+	int i;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
+	unsigned char *p=&RAM[start];
+	char *buffer=malloc(0x18000);
+	if (buffer)
+	{
+		memcpy(buffer, p, 0x18000);
+		for (i=0; i<6; i++)
+		{
+			memcpy(p,         buffer+0x4000*i,         0x2000);
+			memcpy(p+0x0c000, buffer+0x4000*i+0x02000, 0x2000);
+			p+=0x2000;
+		}
+		free(buffer);
+	}
+	else
+	{
+		/* should really abort */
+	}
+}
+
+int leland_unknown_slave_video_r(int offset)
+{
+#if 0
+	if (errorlog)
+	{
+		fprintf(errorlog, "Unknown slave port PC=%04x\n", cpu_get_pc());
+	}
+#endif
+	/* I don't know what to do with this! */
+	return (leland_raster << 4)+15;
+}
 
 static struct MemoryReadAddress slave_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },        /* Resident program ROM */
-	{ 0x2000, 0x3fff, MRA_BANK7 },      /* Paged graphics ROM */
-	{ 0x4000, 0xdfff, MRA_BANK8 },      /* Paged graphics ROM */
+	{ 0x2000, 0xdfff, MRA_BANK3 },      /* Paged graphics ROM */
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf000, 0xf400, leland_palette_ram_r },
-	{ 0xf802, 0xf802, leland_slave_cmd_r },
+	{ 0xf802, 0xf802, leland_unknown_slave_video_r },
+	{ 0xf000, 0xffff, MRA_NOP },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress slave_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0xc000, 0xc000, leland_slave_large_banksw_w }, /* Pigout */
 	{ 0x2000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf000, 0xf400, leland_palette_ram_w },
 	{ 0xf800, 0xf801, leland_slave_video_addr_w },
 	{ 0xf803, 0xf803, leland_slave_banksw_w },
 	{ 0xfffc, 0xfffd, leland_slave_video_addr_w }, /* Ataxx */
+	/*
+	Alley Master's slave routine clears this on startup
+	It might be a bug in the game.
+	*/
+	{ 0xf000, 0xffff, MWA_NOP },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress slave_readmem2[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },        /* Resident program ROM */
+	{ 0x4000, 0xbfff, MRA_BANK3 },      /* Paged graphics ROM */
+	{ 0xe000, 0xefff, MRA_RAM },
+	{ 0xf802, 0xf802, leland_unknown_slave_video_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress slave_writemem2[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc000, leland_slave_large_banksw_w },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ 0xf800, 0xf801, leland_slave_video_addr_w },
 	{ -1 }  /* end of table */
 };
 
@@ -724,7 +955,7 @@ static struct IOReadPort slave_readport[] =
 {
 	{ 0x00, 0x1f, leland_svram_port_r }, /* Video ports (some games) */
 	{ 0x40, 0x5f, leland_svram_port_r }, /* Video ports (other games) */
-	{ 0x60, 0x77, ataxx_svram_port_r },  /* Ataxx ports */
+	{ 0x60, 0x7b, ataxx_svram_port_r },  /* Ataxx ports */
 	{ -1 }  /* end of table */
 };
 
@@ -732,7 +963,8 @@ static struct IOWritePort slave_writeport[] =
 {
 	{ 0x00, 0x1f, leland_svram_port_w }, /* Video ports (some games) */
 	{ 0x40, 0x5f, leland_svram_port_w }, /* Video ports (other games) */
-	{ 0x60, 0x77, ataxx_svram_port_w },  /* Ataxx ports */
+	{ 0x60, 0x7b, ataxx_svram_port_w },  /* Ataxx ports */
+	{ Z80_HALT_PORT, Z80_HALT_PORT, leland_slave_halt_w },
 	{ -1 }  /* end of table */
 };
 
@@ -755,41 +987,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-int leland_rearrange_bank(unsigned char *pData, int count)
-{
-	unsigned char *p;
-	int i;
-	p=malloc(0x8000);
-	if (p)
-	{
-	   for (i=0; i<count; i++)
-	   {
-			memcpy(p, pData+0x2000, 0x6000);
-			memcpy(p+0x6000, pData, 0x2000);
-			memcpy(pData, p, 0x8000);
-			pData+=0x8000;
-		}
-		free(p);
-		return 1;
-	}
-	return 0;
-}
-
 /* 80186 1 MB address mask */
 int leland_addrmask=0x0fffff;
-
-
 
 void leland_init_machine(void)
 {
 	   leland_update_master_bank=NULL;     /* No custom master banking */
+	   leland_slave_halt=0;
 }
-
-
-
-
-
-
 
 
 /***************************************************************************
@@ -810,40 +1015,40 @@ INPUT_PORTS_START( input_ports_strkzone )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* 0x40 */
-	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Extra Base", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Go Back", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START      /* (0x51) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK ) /* Double play */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 | IPF_PLAYER1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER1 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* 0x50 */
-	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1  )
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "R Run/Steal", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "L Run/Steal", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1, "Run/Aim", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1, "Run/Cutoff", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START      /* Analog joystick 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog joystick 2 */
 	PORT_START
 	PORT_START      /* Analog joystick 3 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
-int leland_bank;
+static int leland_bank;
 
 void strkzone_update_bank(void)
 {
@@ -859,6 +1064,17 @@ void strkzone_update_bank(void)
 		{
 			bankaddress=0x28000;
 		}
+
+		if ( leland_sound_port_r(0) & 0x20 )
+		{
+			/* ROM */
+			cpu_setbank(2, &RAM[bankaddress+(0xa000-0x2000)]);
+		}
+		else
+		{
+			/* Battery RAM */
+			cpu_setbank(2, leland_battery_ram);
+		}
 	}
 	else
 	{
@@ -870,31 +1086,10 @@ void strkzone_update_bank(void)
 		{
 			bankaddress=0x10000;
 		}
+
+		cpu_setbank(2, &RAM[bankaddress+(0xa000-0x2000)]);
 	}
 	cpu_setbank(1, &RAM[bankaddress]);
-
-	if (1) // || leland_sound_port_r(0) & 0x20 && !(leland_bank & 0x80))
-	{
-		 cpu_setbank(2, &RAM[bankaddress+(0xa000-0x2000)]);
-	}
-	else
-	{
-#ifdef NOISY_CPU
-		if (errorlog)
-		{
-			fprintf(errorlog, "BATTERY RAM\n");
-		}
-#endif
-		cpu_setbank(2, leland_battery_ram);
-	}
-
-/*
-	{
-		char baf[80];
-		sprintf(baf,"Bank Address=%06x\n", bankaddress);
-		usrintf_showmessage(baf);
-	}
-*/
 }
 
 void strkzone_banksw_w(int offset, int data)
@@ -905,29 +1100,24 @@ void strkzone_banksw_w(int offset, int data)
 
 static struct MemoryReadAddress strkzone_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0xa000, 0xdfff, MRA_BANK2 },
-	{ 0x2000, 0xdfff, MRA_BANK1 },
-	{ 0xf000, 0xf400, leland_palette_ram_r },
-	{ 0xe000, 0xefff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA_ROM },        /* ROM */
+	{ 0x2000, 0x9fff, MRA_BANK1 },      /* Paged ROM */
+	{ 0xa000, 0xdfff, MRA_BANK2 },      /* Battery RAM / ROM */
+	{ 0xf000, 0xf3ff, paletteram_r },   /* Palette RAM */
+	{ 0xe000, 0xefff, MRA_RAM },        /* RAM */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress strkzone_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM   },
-	{ 0xa000, 0xdfff, MWA_BANK2 }, /* Battery RAM */
-	{ 0x2000, 0xdfff, MWA_BANK1 },
-	{ 0xf000, 0xf400, leland_palette_ram_w, &leland_palette_ram, &leland_palette_ram_size },
+	{ 0x2000, 0x9fff, MWA_BANK1 },
+	{ 0xa000, 0xdfff, leland_battery_w }, /* Battery RAM */
+	{ 0xf000, 0xf3ff, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0xf800, 0xf801, leland_master_video_addr_w },
 	{ 0xe000, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
-
-int strkzone_joystick_r(int offset)
-{
-	return 0x34;
-}
 
 static struct IOReadPort strkzone_readport[] =
 {
@@ -937,76 +1127,31 @@ static struct IOReadPort strkzone_readport[] =
 	{ 0x43, 0x43, AY8910_read_port_0_r },
 	{ 0x50, 0x50, input_port_3_r },
 	{ 0x51, 0x51, input_port_2_r },
-
-	{ 0x80, 0x9f, leland_mvram_port_r }, /* Video RAM ports (double play) */
-
 	{ 0xfd, 0xfd, leland_analog_r },
-	{ 0xff, 0xff, leland_analog_control_r },
+	{ 0xff, 0xff, leland_eeprom_r },
 	{ -1 }  /* end of table */
 };
-
-void leland_unknown_w(int offset, int data)
-{
-	/* Unknown port, just toggles a cople of high bits */
-}
 
 static struct IOWritePort strkzone_writeport[] =
 {
 	{ 0x00, 0x1f, leland_mvram_port_w }, /* Video RAM ports */
-
 	{ 0x49, 0x49, leland_slave_cmd_w },
-	{ 0x4a, 0x4a, AY8910_control_port_0_w },
-	{ 0x4b, 0x4b, AY8910_write_port_0_w },
-	{ 0x4c, 0x4c, leland_bk_xlow_w },
-	{ 0x4d, 0x4d, leland_bk_xhigh_w },
-	{ 0x4e, 0x4e, leland_bk_ylow_w },
-	{ 0x4f, 0x4f, leland_bk_yhigh_w },
-
-	{ 0x80, 0x9f, leland_mvram_port_w }, /* Video RAM ports (double play) */
-
+	{ 0x4a, 0x4f, leland_gfx_port_w },   /* Video ports */
 	{ 0xfd, 0xfd, leland_analog_w },
 	{ 0xfe, 0xfe, strkzone_banksw_w },
-	{ 0xff, 0xff, leland_unknown_w },
+	{ 0xff, 0xff, leland_eeprom_w },
 	{ -1 }  /* end of table */
 };
-
-/*
-Rearrange the banks into a more managable
-format
-*/
-
-void leland_rearrange_banks(int cpu)
-{
-	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[cpu].memory_region];
-	unsigned char *p=&RAM[0x10000];
-	char *buffer=malloc(0x18000);
-	if (buffer)
-	{
-		memcpy(buffer, p, 0x18000);
-		for (i=0; i<6; i++)
-		{
-			memcpy(p,         buffer+0x4000*i,         0x2000);
-			memcpy(p+0x0c000, buffer+0x4000*i+0x02000, 0x2000);
-			p+=0x2000;
-		}
-		free(buffer);
-	}
-	else
-	{
-		/* should really abort */
-	}
-}
 
 void strkzone_init_machine(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	leland_update_master_bank=strkzone_update_bank;
-	leland_rearrange_banks(0);
+	leland_rearrange_bank(0, 0x10000);  /* Master bank */
 	/* Chip 4 is banked in */
 	memcpy(&RAM[0x30000], &RAM[0x28000], 0x6000);
 	memcpy(&RAM[0x34000], &RAM[0x2e000], 0x2000);
-	leland_rearrange_banks(1);
+	leland_rearrange_bank(1, 0x10000);  /* Slave bank */
 }
 
 MACHINE_DRIVER_NO_SOUND(strkzone_machine, strkzone_readport, strkzone_writeport,
@@ -1083,11 +1228,44 @@ struct GameDriver strkzone_driver =
 	leland_hiload,leland_hisave
 };
 
+
+
 /***************************************************************************
 
   DblPlay
 
+  Input ports the same as strike zone, apart from the position of the
+  video RAM ports.
+
 ***************************************************************************/
+
+static struct IOReadPort dblplay_readport[] =
+{
+	{ 0x40, 0x40, input_port_1_r },
+	{ 0x41, 0x41, leland_slavebit0_r },
+	{ 0x43, 0x43, AY8910_read_port_0_r },
+	{ 0x50, 0x50, input_port_3_r },
+	{ 0x51, 0x51, input_port_2_r },
+	{ 0x80, 0x9f, leland_mvram_port_r },
+	{ 0xfd, 0xfd, leland_analog_r },
+	{ 0xff, 0xff, leland_eeprom_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort dblplay_writeport[] =
+{
+	{ 0x49, 0x49, leland_slave_cmd_w },
+	{ 0x4a, 0x4f, leland_gfx_port_w },   /* Video ports */
+	{ 0x80, 0x9f, leland_mvram_port_w }, /* Video RAM ports (double play) */
+	{ 0xfd, 0xfd, leland_analog_w },
+	{ 0xfe, 0xfe, strkzone_banksw_w },
+	{ 0xff, 0xff, leland_eeprom_w },
+	{ -1 }  /* end of table */
+};
+
+MACHINE_DRIVER_NO_SOUND(dblplay_machine, dblplay_readport, dblplay_writeport,
+	strkzone_readmem, strkzone_writemem, strkzone_init_machine,gfxdecodeinfo,
+	leland_vh_screenrefresh, slave_readmem,slave_writemem);
 
 ROM_START( dblplay_rom )
 	ROM_REGION(0x03c000)     /* 64k for code + banked ROMs images */
@@ -1137,12 +1315,12 @@ struct GameDriver dblplay_driver =
 	__FILE__,
 	0,
 	"dblplay",
-	"Double Play",
-	"1988",
-	LELAND,
+	"Super Baseball Double Play Home Run Derby",
+	"1987",
+	LELAND "/Tradewest",
 	"Paul Leaman",
-	0,
-	&strkzone_machine,
+	GAME_NOT_WORKING,
+	&dblplay_machine,
 	0,
 
 	dblplay_rom,
@@ -1160,9 +1338,49 @@ struct GameDriver dblplay_driver =
 
 /***************************************************************************
 
-	World Series
+ World Series
+
+ Same IO ports as strkzone (Aim and cutoff buttons switched)
+ Some buttons not used
 
 ***************************************************************************/
+
+INPUT_PORTS_START( input_ports_wseries )
+	PORT_START      /* 0x41 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0x40 */
+	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Extra Base", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Go Back", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+
+	PORT_START      /* (0x51) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK ) /* Double play */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0x50 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1, "Aim", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+
+	PORT_START      /* Analog joystick 1 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
+	PORT_START
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 0, 255 )
+	PORT_START      /* Analog joystick 2 */
+	PORT_START
+	PORT_START      /* Analog joystick 3 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 10, 0, 0, 255 )
+	PORT_START
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 10, 0, 0, 255 )
+INPUT_PORTS_END
+
 
 static struct IOReadPort wseries_readport[] =
 {
@@ -1174,7 +1392,7 @@ static struct IOReadPort wseries_readport[] =
 	{ 0x91, 0x91, input_port_2_r },
 
 	{ 0xfd, 0xfd, leland_analog_r },
-	{ 0xff, 0xff, leland_analog_control_r },
+	{ 0xff, 0xff, leland_eeprom_r },
 	{ -1 }  /* end of table */
 };
 
@@ -1183,19 +1401,12 @@ static struct IOWritePort wseries_writeport[] =
 	{ 0x40, 0x5f, leland_mvram_port_w }, /* Video RAM ports */
 
 	{ 0x89, 0x89, leland_slave_cmd_w },
-	{ 0x8a, 0x8a, AY8910_control_port_0_w },
-	{ 0x8b, 0x8b, AY8910_write_port_0_w },
-	{ 0x8c, 0x8c, leland_bk_xlow_w },
-	{ 0x8d, 0x8d, leland_bk_xhigh_w },
-	{ 0x8e, 0x8e, leland_bk_ylow_w },
-	{ 0x8f, 0x8f, leland_bk_yhigh_w },
-
+	{ 0x8a, 0x8f, leland_gfx_port_w },   /* Video ports */
 	{ 0xfd, 0xfd, leland_analog_w },
 	{ 0xfe, 0xfe, strkzone_banksw_w },
-	{ 0xff, 0xff, leland_unknown_w },
+	{ 0xff, 0xff, leland_eeprom_w },
 	{ -1 }  /* end of table */
 };
-
 
 MACHINE_DRIVER_NO_SOUND(wseries_machine, wseries_readport, wseries_writeport,
 	strkzone_readmem, strkzone_writemem, strkzone_init_machine,gfxdecodeinfo,
@@ -1233,7 +1444,12 @@ ROM_START( wseries_rom )
 	ROM_LOAD( "13404-00.U92",  0x04000, 0x4000, 0x22da40aa )
 	ROM_LOAD( "13405-00.U69",  0x08000, 0x4000, 0x6f65b313 )
 	/* U91 = Empty */
-	ROM_LOAD( "13406-00.U68",  0x10000, 0x4000, 0x00000000 )   /* ??? BAD */
+	/*
+	U68 is a little strange. I would normally expect it to be
+	0x4000 long. There is nothing missing since all the data
+	is in the second half.
+	*/
+	ROM_LOAD( "13406-00.U68",  0x12000, 0x2000, 0xbb568693 )
 	ROM_LOAD( "13407-00.U90",  0x14000, 0x4000, 0xe46ca57f )
 	ROM_LOAD( "13408-00.U67",  0x18000, 0x4000, 0xbe637305 )
 	/* 89 = Empty */
@@ -1245,8 +1461,8 @@ struct GameDriver wseries_driver =
 	0,
 	"wseries",
 	"World Series Baseball",
-	"1988",
-	LELAND,
+	"1985",
+	CINEMAT,
 	"Paul Leaman",
 	0,
 	&wseries_machine,
@@ -1257,13 +1473,15 @@ struct GameDriver wseries_driver =
 	0,
 	0,      /* sound_prom */
 
-	input_ports_strkzone,
+	input_ports_wseries,
 
 	NULL, 0, 0,
 
 	ORIENTATION_DEFAULT,
 	leland_hiload,leland_hisave
 };
+
+
 
 /***************************************************************************
 
@@ -1274,7 +1492,6 @@ struct GameDriver wseries_driver =
 static struct IOReadPort basebal2_readport[] =
 {
 	{ 0x00, 0x1f, leland_mvram_port_r }, /* Video RAM ports */
-
 	{ 0xc0, 0xc0, input_port_1_r },
 	{ 0xc1, 0xc1, leland_slavebit0_r },
 	{ 0xc3, 0xc3, AY8910_read_port_0_r },
@@ -1282,29 +1499,20 @@ static struct IOReadPort basebal2_readport[] =
 	{ 0xd1, 0xd1, input_port_2_r },
 	{ 0xf2, 0xf2, leland_sound_comm_r },
 	{ 0xfd, 0xfd, leland_analog_r },
-	{ 0xff, 0xff, leland_analog_control_r },
+	{ 0xff, 0xff, leland_eeprom_r },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort basebal2_writeport[] =
 {
 	{ 0x00, 0x1f, leland_mvram_port_w }, /* Video RAM ports */
-
 	{ 0xc9, 0xc9, leland_slave_cmd_w },
-	{ 0xca, 0xca, AY8910_control_port_0_w },
-	{ 0xcb, 0xcb, AY8910_write_port_0_w },
-
-	{ 0xcc, 0xcc, leland_bk_xlow_w },
-	{ 0xcd, 0xcd, leland_bk_xhigh_w },
-	{ 0xce, 0xce, leland_bk_ylow_w },
-	{ 0xcf, 0xcf, leland_bk_yhigh_w },
-
+	{ 0xca, 0xcf, leland_gfx_port_w },   /* Video ports */
 	{ 0xf2, 0xf2, leland_sound_comm_w },
 	{ 0xf4, 0xf4, leland_sound_cmd_w },
-
 	{ 0xfe, 0xfe, strkzone_banksw_w },
 	{ 0xfd, 0xfd, leland_analog_w },
-	{ 0xff, 0xff, leland_unknown_w },
+	{ 0xff, 0xff, leland_eeprom_w },
 	{ -1 }  /* end of table */
 };
 
@@ -1361,9 +1569,9 @@ struct GameDriver basebal2_driver =
 	__FILE__,
 	0,
 	"basebal2",
-	"Baseball Season 2",
-	"1988",
-	LELAND,
+	"Baseball The Season II",
+	"19878",
+	CINEMAT,
 	"Paul Leaman",
 	0,
 	&basebal2_machine,
@@ -1384,10 +1592,255 @@ struct GameDriver basebal2_driver =
 
 /***************************************************************************
 
-  Pigout
+  Alley Master
+
+  Uses the same hardware as basebal2
 
 ***************************************************************************/
 
+INPUT_PORTS_START( input_ports_alleymas )
+	PORT_START      /* 0x41 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0x40 */
+	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Man Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER1, "Man Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT)
+
+	PORT_START      /* (0x51) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK ) /* Double play */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0x50 */
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Man Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON6 | IPF_PLAYER1, "Man Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT)
+
+	/*
+	A byte at 0xe0ca determines whether the joystick is
+	available or not.
+	The routine at 0x1825 clears the byte. I can't find anything
+	that sets it.
+	If after bootup, you change the value to non-zero the game will work.
+	*/
+	PORT_START      /* Analog joystick 1 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
+	PORT_START
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 0, 255 )
+INPUT_PORTS_END
+
+void alleymas_init_machine(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	strkzone_init_machine();
+
+	/* HACK!!!! Patch the code to get the controls working */
+	RAM[0x1826]=1;
+}
+
+MACHINE_DRIVER_NO_SOUND(alleymas_machine, basebal2_readport, basebal2_writeport,
+	strkzone_readmem, strkzone_writemem, alleymas_init_machine, gfxdecodeinfo,
+	leland_vh_screenrefresh, slave_readmem,slave_writemem);
+
+
+ROM_START( alleymas_rom )
+	ROM_REGION(0x028000)     /* 64k for code + banked ROMs images */
+	ROM_LOAD("101",   0x00000, 0x02000, 0x4273e260 )
+	ROM_LOAD("102",   0x10000, 0x04000, 0xeb6575aa ) /* 0x2000 */
+	ROM_LOAD("103",   0x14000, 0x04000, 0xcc9d778c ) /* 0x4000 */
+	ROM_LOAD("104",   0x18000, 0x04000, 0x8edb129b ) /* 0x6000 */
+	ROM_LOAD("105",   0x1c000, 0x04000, 0xa342dc8e ) /* 0x8000 */
+	ROM_LOAD("106",   0x20000, 0x04000, 0xb396c254 ) /* 0xA000 */
+	ROM_LOAD("107",   0x24000, 0x04000, 0x3ca13e8c ) /* 0xb000 */
+
+	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD("093", 0x00000, 0x02000, 0x54456e6f )
+	ROM_LOAD("094", 0x08000, 0x02000, 0xedc240da )
+	ROM_LOAD("095", 0x10000, 0x02000, 0x19793ed0 )
+
+	ROM_REGION(0x28000)     /* Z80 slave CPU */
+	ROM_LOAD("003",  0x00000, 0x02000, 0x3fee63ae )
+	ROM_LOAD("004",  0x10000, 0x04000, 0xd302b5d1 )
+	ROM_LOAD("005",  0x14000, 0x04000, 0x79bdb24d )
+	ROM_LOAD("006",  0x18000, 0x04000, 0xf0b15d68 )
+	ROM_LOAD("007",  0x1c000, 0x04000, 0x6974036c )
+	ROM_LOAD("008",  0x20000, 0x04000, 0xa4357b5a )
+	ROM_LOAD("009",  0x24000, 0x04000, 0x6d74274e )
+
+	ROM_REGION(0x1)     /* 80186 CPU */
+
+	ROM_REGION(0x20000)     /* Background PROMS */
+	/*
+	This is a bit strange, the self test claims that the
+	game uses U70, U92, U69, U91
+	*/
+
+	/* 70, 92, 69, 91, 68, 90, 67, 89 */
+	/* U70 = Empty */
+	ROM_LOAD( "092",  0x04000, 0x2000, 0xa020eab5 )
+	ROM_LOAD( "069",  0x08000, 0x2000, 0x79abb979 )
+	/* U91 = Empty */
+	ROM_LOAD( "068",  0x10000, 0x2000, 0x0c583385 )
+	ROM_LOAD( "090",  0x14000, 0x2000, 0x0e1769e3 )
+	/* U67 = Empty */
+	/* U89 = Empty */
+ROM_END
+
+struct GameDriver alleymas_driver =
+{
+	__FILE__,
+	0,
+	"alleymas",
+	"Alley Master",
+	"198?",
+	CINEMAT,
+	"Paul Leaman",
+	0,
+	&alleymas_machine,
+	0,
+
+	alleymas_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports_alleymas,
+
+	NULL, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+	leland_hiload,leland_hisave
+};
+
+/***************************************************************************
+
+  Mayhem 2002
+
+***************************************************************************/
+
+INPUT_PORTS_START( input_ports_mayhem )
+	PORT_START      /* 0x41 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0x40 */
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2, "Shoot", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2, "Check Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "Check Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Shoot", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1, "Check Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "Check Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+
+	PORT_START      /* (0x51) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK ) /* Double play */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 | IPF_PLAYER1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 0x50 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1)
+
+	PORT_START      /* Analog joystick 1 */
+	PORT_START
+	PORT_START      /* Analog joystick 2 */
+	PORT_START
+	PORT_START      /* Analog joystick 3 */
+	PORT_START
+INPUT_PORTS_END
+
+MACHINE_DRIVER_NO_SOUND(mayhem_machine, basebal2_readport, basebal2_writeport,
+	strkzone_readmem, strkzone_writemem, strkzone_init_machine, gfxdecodeinfo,
+	leland_vh_screenrefresh, slave_readmem,slave_writemem);
+
+ROM_START( mayhem_rom )
+	ROM_REGION(0x028000)     /* 64k for code + banked ROMs images */
+	ROM_LOAD("13208.101",   0x00000, 0x04000, 0x04306973 )
+	ROM_LOAD("13215.102",   0x10000, 0x04000, 0x06e689ae ) /* 0x2000 */
+	ROM_LOAD("13216.103",   0x14000, 0x04000, 0x6452a82c ) /* 0x4000 */
+	ROM_LOAD("13217.104",   0x18000, 0x04000, 0x62f6036e ) /* 0x6000 */
+	ROM_LOAD("13218.105",   0x1c000, 0x04000, 0x162f5eb1 ) /* 0x8000 */
+	ROM_LOAD("13219.106",   0x20000, 0x04000, 0xc0a74d6f ) /* 0xA000 */
+
+	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD("13204.93", 0x00000, 0x04000, 0xde183518 )
+	ROM_LOAD("13205.94", 0x08000, 0x04000, 0xc61f63ac )
+	ROM_LOAD("13206.95", 0x10000, 0x04000, 0x8e7bd2fd )
+
+	ROM_REGION(0x28000)     /* Z80 slave CPU */
+	ROM_LOAD("13207.3",  0x00000, 0x04000, 0xbe1df6aa ) /* DO NOT TRIM THIS ROM */
+	ROM_LOAD("13209.4",  0x10000, 0x04000, 0x39fcd7c6 ) /* 0x2000 */
+	ROM_LOAD("13210.5",  0x14000, 0x04000, 0x630ed136 ) /* 0x4000 */
+	ROM_LOAD("13211.6",  0x18000, 0x04000, 0x28b4aecd ) /* 0x6000 */
+	ROM_LOAD("13212.7",  0x1c000, 0x04000, 0x1d6b39ab ) /* 0x8000 */
+	ROM_LOAD("13213.8",  0x20000, 0x04000, 0xf3b2ea05 ) /* 0xa000 */
+	ROM_LOAD("13214.9",  0x24000, 0x04000, 0x96f3e8d9 ) /* 0xc000 */
+
+	ROM_REGION(0x1)     /* 80186 CPU */
+
+	ROM_REGION(0x20000)     /* Background PROMS */
+
+	/* 70, 92, 69, 91, 68, 90, 67, 89 */
+	/* U70 = Empty */
+	ROM_LOAD( "13203.92",  0x04000, 0x4000, 0x121ed5bf )
+	ROM_LOAD( "13201.69",  0x08000, 0x4000, 0x90283e29 )
+	/* U91 = Empty */
+	/* U68 = Empty */
+	/* U90 = Empty */
+	/* U67 = Empty */
+	ROM_LOAD( "13202.89",  0x1c000, 0x4000, 0xc5eaa4e3 )
+ROM_END
+
+struct GameDriver mayhem_driver =
+{
+	__FILE__,
+	0,
+	"mayhem",
+	"Mayhem 2002",
+	"1985",
+	CINEMAT,
+	"Paul Leaman",
+	GAME_NOT_WORKING,
+	&basebal2_machine,
+	0,
+
+	mayhem_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports_mayhem,
+
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	leland_hiload,leland_hisave
+};
+
+/***************************************************************************
+
+  Pigout
+
+***************************************************************************/
 
 INPUT_PORTS_START( input_ports_pigout )
 	PORT_START      /* GIN1 (0x41) */
@@ -1435,15 +1888,12 @@ INPUT_PORTS_START( input_ports_pigout )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1  )
-
-
 INPUT_PORTS_END
 
 void pigout_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	leland_init_machine();
-	leland_rearrange_bank(&RAM[0x10000], 4);
+	leland_rearrange_bank_swap(0, 0x10000);
 }
 
 void pigout_banksw_w(int offset, int data)
@@ -1472,7 +1922,7 @@ void pigout_banksw_w(int offset, int data)
 	}
 
 	cpu_setbank(1,&RAM[bankaddress]);    /* 0x2000-0x9fff */
-	cpu_setbank(3,battery_bank);            /* 0xa000-0xdfff */
+	cpu_setbank(2,battery_bank);            /* 0xa000-0xdfff */
 
 	leland_sound_cpu_control_w(data);
 }
@@ -1481,8 +1931,8 @@ static struct MemoryReadAddress master_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },      /* Resident ROM */
 	{ 0x2000, 0x9fff, MRA_BANK1 },
-	{ 0xa000, 0xdfff, MRA_BANK3 },  /* BATTERY RAM / ROM */
-	{ 0xf000, 0xf400, leland_palette_ram_r },
+	{ 0xa000, 0xdfff, MRA_BANK2 },  /* BATTERY RAM / ROM */
+	{ 0xf000, 0xf3ff, paletteram_r },
 	{ 0xe000, 0xffff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -1492,8 +1942,7 @@ static struct MemoryWriteAddress master_writemem[] =
 	{ 0x0000, 0xdfff, MWA_NOP },
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xdfff, leland_battery_w },  /* BATTERY RAM */
-
-	{ 0xf000, 0xf400, leland_palette_ram_w, &leland_palette_ram, &leland_palette_ram_size },
+	{ 0xf000, 0xf3ff, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0xf800, 0xf801, leland_master_video_addr_w },
 	{ 0xe000, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */
@@ -1522,12 +1971,7 @@ static struct IOWritePort pigout_writeport[] =
 
 	{ 0x40, 0x46, leland_mvram_port_w }, /* (stray) video RAM ports */
 	{ 0x49, 0x49, leland_slave_cmd_w },
-	{ 0x4a, 0x4a, AY8910_control_port_0_w },
-	{ 0x4b, 0x4b, AY8910_write_port_0_w },
-	{ 0x4c, 0x4c, leland_bk_xlow_w },
-	{ 0x4d, 0x4d, leland_bk_xhigh_w },
-	{ 0x4e, 0x4e, leland_bk_ylow_w },
-	{ 0x4f, 0x4f, leland_bk_yhigh_w },
+	{ 0x4a, 0x4f, leland_gfx_port_w },   /* Video ports */
 
 	{ 0x8a, 0x8a, AY8910_control_port_1_w },
 	{ 0x8b, 0x8b, AY8910_write_port_1_w },
@@ -1540,7 +1984,7 @@ static struct IOWritePort pigout_writeport[] =
 
 MACHINE_DRIVER(pigout_machine, pigout_readport, pigout_writeport,
 	master_readmem, master_writemem, pigout_init_machine,gfxdecodeinfo,
-	pigout_vh_screenrefresh, slave_readmem,slave_writemem);
+	pigout_vh_screenrefresh, slave_readmem2,slave_writemem2);
 
 ROM_START( pigout_rom )
 	ROM_REGION(0x040000)     /* 64k for code + banked ROMs images */
@@ -1553,15 +1997,16 @@ ROM_START( pigout_rom )
 	ROM_LOAD("POUTU94.BIN", 0x008000, 0x08000, 0xec63c015 ) /* Plane 2 */
 	ROM_LOAD("POUTU95.BIN", 0x010000, 0x08000, 0xba6e797e ) /* Plane 1 */
 
-	ROM_REGION(0x80000)     /* Z80 slave CPU */
-	ROM_LOAD("POUTU3.BIN",   0x00000, 0x02000, 0xaf213cb7 )
-	ROM_LOAD("POUTU2T.BIN",  0x10000, 0x10000, 0xb23164c6 )
-	ROM_LOAD("POUTU3T.BIN",  0x20000, 0x10000, 0xd93f105f )
-	ROM_LOAD("POUTU4T.BIN",  0x30000, 0x10000, 0xb7c47bfe )
-	ROM_LOAD("POUTU5T.BIN",  0x40000, 0x10000, 0xd9b9dfbf )
-	ROM_LOAD("POUTU6T.BIN",  0x50000, 0x10000, 0x728c7c1a )
-	ROM_LOAD("POUTU7T.BIN",  0x60000, 0x10000, 0x393bd990 )
-	ROM_LOAD("POUTU8T.BIN",  0x70000, 0x10000, 0xcb9ffaad )
+	ROM_REGION(0x080000)     /* Z80 slave CPU */
+	ROM_LOAD("POUTU3.BIN",   0x00000, 0x02000, 0xaf213cb7 ) /* Resident */
+	ROM_LOAD("POUTU2T.BIN",  0x10000, 0x10000, 0xb23164c6 ) /* U2=0 & 1 */
+	ROM_LOAD("POUTU3T.BIN",  0x20000, 0x10000, 0xd93f105f ) /* U3=2 & 3 */
+	ROM_LOAD("POUTU4T.BIN",  0x30000, 0x10000, 0xb7c47bfe ) /* U4=4 & 5 */
+	ROM_LOAD("POUTU5T.BIN",  0x40000, 0x10000, 0xd9b9dfbf ) /* U5=6 & 7 */
+	ROM_LOAD("POUTU6T.BIN",  0x50000, 0x10000, 0x728c7c1a ) /* U6=8 & 9 */
+	ROM_LOAD("POUTU7T.BIN",  0x60000, 0x10000, 0x393bd990 ) /* U7=a & b */
+	ROM_LOAD("POUTU8T.BIN",  0x70000, 0x10000, 0xcb9ffaad ) /* U8=c & d */
+															/* U9=e & f */
 
 	ROM_REGION(0x100000)     /* 80186 CPU */
 	ROM_LOAD_EVEN("POUTU25T.BIN", 0x080000, 0x10000, 0x92cd2617 )
@@ -1588,11 +2033,11 @@ struct GameDriver pigout_driver =
 	__FILE__,
 	0,
 	"pigout",
-	"pigout",
+	"Pigout",
 	"1990",
 	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&pigout_machine,
 	0,
 
@@ -1622,13 +2067,13 @@ ROM_START( pigoutj_rom )
 
 	ROM_REGION(0x80000)     /* Z80 slave CPU */
 	ROM_LOAD("POUTU3.BIN",   0x00000, 0x02000, 0xaf213cb7 )
-	ROM_LOAD("POUTU2T.BIN",  0x10000, 0x10000, 0xb23164c6 )
-	ROM_LOAD("POUTU3T.BIN",  0x20000, 0x10000, 0xd93f105f )
-	ROM_LOAD("POUTU4T.BIN",  0x30000, 0x10000, 0xb7c47bfe )
-	ROM_LOAD("POUTU5T.BIN",  0x40000, 0x10000, 0xd9b9dfbf )
-	ROM_LOAD("POUTU6T.BIN",  0x50000, 0x10000, 0x728c7c1a )
-	ROM_LOAD("POUTU7T.BIN",  0x60000, 0x10000, 0x393bd990 )
-	ROM_LOAD("POUTU8T.BIN",  0x70000, 0x10000, 0xcb9ffaad )
+	ROM_LOAD("POUTU2T.BIN",  0x10000, 0x10000, 0xb23164c6 ) /* U2=0 & 1 */
+	ROM_LOAD("POUTU3T.BIN",  0x20000, 0x10000, 0xd93f105f ) /* U3=2 & 3 */
+	ROM_LOAD("POUTU4T.BIN",  0x30000, 0x10000, 0xb7c47bfe ) /* U4=4 & 5 */
+	ROM_LOAD("POUTU5T.BIN",  0x40000, 0x10000, 0xd9b9dfbf ) /* U5=6 & 7 */
+	ROM_LOAD("POUTU6T.BIN",  0x50000, 0x10000, 0x728c7c1a ) /* U6=8 & 9 */
+	ROM_LOAD("POUTU7T.BIN",  0x60000, 0x10000, 0x393bd990 ) /* U7=a & b */
+	ROM_LOAD("POUTU8T.BIN",  0x70000, 0x10000, 0xcb9ffaad ) /* U8=c & d */
 
 	ROM_REGION(0x100000)     /* 80186 CPU */
 	ROM_LOAD_EVEN("POUTU25T.BIN", 0x080000, 0x10000, 0x92cd2617 )
@@ -1659,7 +2104,7 @@ struct GameDriver pigoutj_driver =
 	"1990",
 	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&pigout_machine,
 	0,
 
@@ -1705,17 +2150,17 @@ INPUT_PORTS_START( input_ports_offroad )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Analog pedal 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog pedal 2 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog pedal 3 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER3, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER3, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog wheel 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog wheel 2 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog wheel 3 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER3, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER3, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1733,23 +2178,18 @@ static struct IOReadPort offroad_readport[] =
 	{ 0xfb, 0xfb, input_port_9_r },
 	{ 0xf8, 0xf8, input_port_8_r },
 	{ 0xfd, 0xfd, leland_analog_r },
-	{ 0xfe, 0xfe, leland_analog_control_r },
+	{ 0xfe, 0xfe, leland_eeprom_r },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort offroad_writeport[] =
 {
 	{ 0x00, 0x1f, leland_mvram_port_w }, /* Video RAM ports */
-
+	{ 0x40, 0x46, leland_mvram_port_w }, /* More video RAM ports */
 	{ 0xc9, 0xc9, leland_slave_cmd_w },
 	{ 0x8a, 0x8a, AY8910_control_port_1_w },
 	{ 0x8b, 0x8b, AY8910_write_port_1_w },
-	{ 0xca, 0xca, AY8910_control_port_0_w },
-	{ 0xcb, 0xcb, AY8910_write_port_0_w },
-	{ 0xcc, 0xcc, leland_bk_xlow_w },
-	{ 0xcd, 0xcd, leland_bk_xhigh_w },
-	{ 0xce, 0xce, leland_bk_ylow_w },
-	{ 0xcf, 0xcf, leland_bk_yhigh_w },
+	{ 0xca, 0xcf, leland_gfx_port_w },   /* Video ports */
 
 	{ 0xf0, 0xf0, pigout_banksw_w },
 	{ 0xf2, 0xf2, leland_sound_comm_w },
@@ -1762,7 +2202,7 @@ static struct IOWritePort offroad_writeport[] =
 
 MACHINE_DRIVER(offroad_machine, offroad_readport, offroad_writeport,
 	master_readmem, master_writemem, pigout_init_machine,gfxdecodeinfo,
-	pigout_vh_screenrefresh, slave_readmem,slave_writemem);
+	pigout_vh_screenrefresh, slave_readmem2,slave_writemem2);
 
 ROM_START( offroad_rom )
 	ROM_REGION(0x040000)     /* 64k for code + banked ROMs images */
@@ -1776,13 +2216,16 @@ ROM_START( offroad_rom )
 	ROM_LOAD("22106-02.U94", 0x08000, 0x08000, 0x687dc1fc )
 	ROM_LOAD("22107-02.U95", 0x10000, 0x08000, 0xcee6ee5f )
 
-	ROM_REGION(0x60000)     /* Z80 slave CPU */
+	ROM_REGION(0x80000)     /* Z80 slave CPU */
 	ROM_LOAD("22100-01.U2",  0x00000, 0x02000, 0x08c96a4b )
-	ROM_LOAD("22108-02.U4",  0x10000, 0x10000, 0x0d72780a )
-	ROM_LOAD("22109-02.U5",  0x20000, 0x10000, 0x5429ce2c )
-	ROM_LOAD("22110-02.U6",  0x30000, 0x10000, 0xf97bad5c )
-	ROM_LOAD("22111-01.U7",  0x40000, 0x10000, 0xf79157a1 )
-	ROM_LOAD("22112-01.U8",  0x50000, 0x10000, 0x3eef38d3 )
+	/* Strange, but two of these aren't accessed in the self test */
+															/* U2=0 & 1 */
+															/* U3=2 & 3 */
+	ROM_LOAD("22108-02.U4",  0x30000, 0x10000, 0x0d72780a ) /* U4=4 & 5 ???NOT USED??? */
+	ROM_LOAD("22109-02.U5",  0x40000, 0x10000, 0x5429ce2c ) /* U5=6 & 7 */
+	ROM_LOAD("22110-02.U6",  0x50000, 0x10000, 0xf97bad5c ) /* U6=8 & 9 */
+	ROM_LOAD("22111-01.U7",  0x60000, 0x10000, 0xf79157a1 ) /* U7=a & b ???NOT USED??? */
+	ROM_LOAD("22112-01.U8",  0x70000, 0x10000, 0x3eef38d3 ) /* U8=c & d */
 
 	ROM_REGION(0x100000)     /* 80186 CPU */
 	ROM_LOAD_EVEN("22116-03.U25", 0x080000, 0x10000, 0x95bb31d3 )
@@ -1810,10 +2253,10 @@ struct GameDriver offroad_driver =
 	0,
 	"offroad",
 	"Super Off-road Racer",
-	"????",
+	"1989",
 	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&offroad_machine,
 	0,
 
@@ -1829,74 +2272,6 @@ struct GameDriver offroad_driver =
 	ORIENTATION_DEFAULT,
 	leland_hiload,leland_hisave
 };
-
-ROM_START( offroada_rom )
-	ROM_REGION(0x040000)     /* 64k for code + banked ROMs images */
-	ROM_LOAD("22121-04.U58",   0x00000, 0x10000, 0xc5790988 )
-	ROM_LOAD("22122-03.U59",   0x10000, 0x10000, 0xae862fdc )
-	ROM_LOAD("22120-01.U57",   0x20000, 0x10000, 0xe9f0f175 )
-	ROM_LOAD("22119-02.U56",   0x30000, 0x10000, 0x38642f22 )
-
-	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("SOF_B.93", 0x00000, 0x04000, 0xa24351bc ) /* Different (length?) */
-	ROM_LOAD("SOF_B.94", 0x08000, 0x04000, 0xc0a44c36 ) /* Different (length?) */
-	ROM_LOAD("SOF_B.95", 0x10000, 0x04000, 0xcf074561 ) /* Different (length?) */
-
-	ROM_REGION(0x60000)     /* Z80 slave CPU */
-	ROM_LOAD("SOF_B.3",      0x00000, 0x04000, 0x7dea667a ) /* Different (length?) */
-	ROM_LOAD("22108-02.U4",  0x10000, 0x10000, 0x0d72780a )
-	ROM_LOAD("22109-02.U5",  0x20000, 0x10000, 0x5429ce2c )
-	ROM_LOAD("22110-02.U6",  0x30000, 0x10000, 0xf97bad5c )
-	ROM_LOAD("22111-01.U7",  0x40000, 0x10000, 0xf79157a1 )
-	ROM_LOAD("22112-01.U8",  0x50000, 0x10000, 0x3eef38d3 )
-
-	ROM_REGION(0x100000)     /* 80186 CPU */
-	ROM_LOAD_EVEN("22116-03.U25", 0x080000, 0x10000, 0x95bb31d3 )
-	ROM_LOAD_ODD ("22113-03.U13", 0x080000, 0x10000, 0x71b28df6 )
-	ROM_LOAD_EVEN("22117-03.U26", 0x0a0000, 0x10000, 0x703d81ce )
-	ROM_LOAD_ODD ("22114-03.U14", 0x0a0000, 0x10000, 0xf8b31bf8 )
-	ROM_LOAD_EVEN("22118-03.U27", 0x0e0000, 0x10000, 0x806ccf8b )
-	ROM_LOAD_ODD ("22115-03.U15", 0x0e0000, 0x10000, 0xc8439a7a )
-
-	ROM_REGION(0x20000)     /* Background PROMS */
-	/* 70, 92, 69, 91, 68, 90, 67, 89 */
-	/* 70 = empty */
-	ROM_LOAD( "22104-01.U92",  0x04000, 0x4000, 0x03e0497d )
-	ROM_LOAD( "22102-01.U69",  0x08000, 0x4000, 0xc3f2e443 )
-	/* 91 = empty */
-	/* 68 = empty */
-	ROM_LOAD( "22103-02.U90",  0x14000, 0x4000, 0x2266757a )
-	ROM_LOAD( "22101-01.U67",  0x18000, 0x4000, 0xecab0527 )
-	/* 89 = empty */
-ROM_END
-
-struct GameDriver offroada_driver =
-{
-	__FILE__,
-	&offroad_driver,
-	"offroada",
-	"Super Off-road Racer (probably bad set)",
-	"????",
-	LELAND,
-	"Paul Leaman",
-	0,
-	&offroad_machine,
-	0,
-
-	offroada_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	input_ports_offroad,
-
-	NULL, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	leland_hiload,leland_hisave
-};
-
-
 
 
 ROM_START( offroadt_rom )
@@ -1948,9 +2323,9 @@ struct GameDriver offroadt_driver =
 	"offroadt",
 	"Super Off-road Racer (Track Pack)",
 	"????",
-	"leland Corp.",
+	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&pigout_machine,
 	0,
 
@@ -1973,11 +2348,11 @@ struct GameDriver offroadt_driver =
   Team QB
 
 ***************************************************************************/
-//
+
 INPUT_PORTS_START( input_ports_teamqb )
 	PORT_START      /* GIN1 (0x81) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1985,28 +2360,28 @@ INPUT_PORTS_START( input_ports_teamqb )
 	PORT_START      /* GIN0 (0x80) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
-	PORT_BIT( 0xee, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* (0x91) */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* GIN1 (0x90) */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Analog spring stick 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog spring stick 2 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog spring stick 3 */
 	PORT_START      /* Analog spring stick 4 */
 	PORT_START      /* Analog spring stick 5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog spring stick 5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 
 	PORT_START      /* GIN3 (0x7c) */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2030,8 +2405,8 @@ static struct IOReadPort teamqb_readport[] =
 	{ 0x83, 0x83, AY8910_read_port_0_r },
 	{ 0x90, 0x90, input_port_3_r },
 	{ 0x91, 0x91, input_port_2_r },
-	{ 0x7c, 0x7c, input_port_7_r },
-	{ 0x7f, 0x7f, input_port_8_r },
+	{ 0x7c, 0x7c, input_port_9_r },
+	{ 0x7f, 0x7f, input_port_10_r },
 	{ 0xf2, 0xf2, leland_sound_comm_r },
 	{ 0xfd, 0xfd, leland_analog_r },
 	{ 0xfe, 0xfe, leland_analog_r },
@@ -2043,12 +2418,7 @@ static struct IOWritePort teamqb_writeport[] =
 	{ 0x40, 0x5f, leland_mvram_port_w }, /* Video RAM ports */
 
 	{ 0x89, 0x89, leland_slave_cmd_w },
-	{ 0x8a, 0x8a, AY8910_control_port_0_w },
-	{ 0x8b, 0x8b, AY8910_write_port_0_w },
-	{ 0x8c, 0x8c, leland_bk_xlow_w },
-	{ 0x8d, 0x8d, leland_bk_xhigh_w },
-	{ 0x8e, 0x8e, leland_bk_ylow_w },
-	{ 0x8f, 0x8f, leland_bk_yhigh_w },
+	{ 0x8a, 0x8f, leland_gfx_port_w },   /* Video ports */
 
 	{ 0xf0, 0xf0, pigout_banksw_w },
 	{ 0xf2, 0xf2, leland_sound_comm_w },
@@ -2061,11 +2431,12 @@ static struct IOWritePort teamqb_writeport[] =
 
 MACHINE_DRIVER(teamqb_machine, teamqb_readport, teamqb_writeport,
 	master_readmem, master_writemem, pigout_init_machine,gfxdecodeinfo,
-	leland_vh_screenrefresh, slave_readmem,slave_writemem);
+	leland_vh_screenrefresh, slave_readmem2,slave_writemem2);
 
 ROM_START( teamqb_rom )
 	ROM_REGION(0x048000)     /* 64k for code + banked ROMs images */
 	ROM_LOAD("15618-03.58T",   0x00000, 0x10000, 0xb32568dc )
+	/* One of these is suspect (or the banking is wrong) */
 	ROM_LOAD("15619-02.59T",   0x10000, 0x10000, 0x6d533714 )
 	ROM_LOAD("15619-03.59T",   0x20000, 0x10000, 0x40b3319f )
 
@@ -2110,10 +2481,10 @@ struct GameDriver teamqb_driver =
 	0,
 	"teamqb",
 	"Team Quaterback",
-	"1988",
+	"198?",
 	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&teamqb_machine,
 	0,
 
@@ -2130,39 +2501,36 @@ struct GameDriver teamqb_driver =
 	leland_hiload,leland_hisave
 };
 
+
+/***************************************************************************
+
+  Redline Racer 2 Player
+
+***************************************************************************/
+
 INPUT_PORTS_START( input_ports_redlin2p )
-	PORT_START      /* IN3 (0xc1)*/
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_START1 )  /* Unused */
+	PORT_START      /* Analog pedal 1 */
+	PORT_ANALOG ( 0xff, 0x00, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 
 	PORT_START      /* IN0 (0xc0)*/
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_BUTTON1 )  /* Unused */
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE|IPF_TOGGLE, "Service", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )  /* Unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )  /* Unused */
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_COIN3 )  /* Unused */
 
 	PORT_START      /* IN1 (0xd1)*/
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK  )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_VBLANK )
+//    PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_START1 )
+//    PORT_ANALOG ( 0xfe, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 
 	PORT_START      /* in2 (0xd0) */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_COIN4 )
 
-	PORT_START      /* Analog pedal 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 0, 0, 255 )
-	PORT_START      /* Analog pedal 2 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 0, 0, 255 )
-	PORT_START      /* Analog pedal 3 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER3, 100, 0, 0, 255 )
 	PORT_START      /* Analog wheel 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog wheel 2 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 0, 0, 255 )
-	PORT_START      /* Analog wheel 3 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER3, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_DIAL|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 void redlin2p_banksw_w(int offset, int data)
@@ -2172,11 +2540,16 @@ void redlin2p_banksw_w(int offset, int data)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	unsigned char *battery_bank=&RAM[0xa000];
 
+/*    char baf[40];
+	sprintf(baf,"Bank=%d",data&0x03);
+	usrintf_showmessage(baf);*/
+
 	bank=data&0x03;
 
-	if (bank==0x02)
+
+	if (bank & 0x02)
 	{
-		/* 0 = resident */
+		/* resident */
 		bankaddress =0x2000;
 	}
 	else
@@ -2185,7 +2558,8 @@ void redlin2p_banksw_w(int offset, int data)
 	}
 
 	cpu_setbank(1,&RAM[bankaddress]);    /* 0x2000-0x9fff */
-	cpu_setbank(3,battery_bank);            /* 0xa000-0xdfff */
+	cpu_setbank(2,&RAM[bankaddress+(0xa000-0x2000)]);    /* 0x2000-0x9fff */
+//    cpu_setbank(2,battery_bank);            /* 0xa000-0xdfff */
 
 	leland_sound_cpu_control_w(data);
 }
@@ -2202,18 +2576,17 @@ static struct IOReadPort redlin2p_readport[] =
 {
 	{ 0x00, 0x1f, leland_mvram_port_r }, /* Video RAM ports */
 
-	{ 0xc0, 0xc0, input_port_1_r },
-	{ 0xc1, 0xc1, leland_slavebit0_r },
+	{ 0xc1, 0xc1, input_port_1_r },
+	{ 0xc0, 0xc0, leland_slavebit0_r },
 	{ 0xc3, 0xc3, AY8910_read_port_0_r },
 	{ 0xd0, 0xd0, input_port_3_r },
 	{ 0xd1, 0xd1, input_port_2_r },
 	{ 0xf2, 0xf2, redlin2p_kludge_r },
 //    { 0xf2, 0xf2, leland_sound_comm_r },
-	{ 0xf9, 0xf9, input_port_7_r },
-	{ 0xfb, 0xfb, input_port_9_r },
-	{ 0xf8, 0xf8, input_port_8_r },
+	{ 0xf8, 0xf8, input_port_4_r },         /* Wheel */
+	{ 0xfb, 0xfb, input_port_4_r },         /* Wheel */
 	{ 0xfd, 0xfd, leland_analog_r },
-	{ 0xfe, 0xfe, leland_analog_control_r },
+	{ 0xfe, 0xfe, leland_eeprom_r },
 	{ -1 }  /* end of table */
 };
 
@@ -2224,12 +2597,7 @@ static struct IOWritePort redlin2p_writeport[] =
 	{ 0xc9, 0xc9, leland_slave_cmd_w },
 	{ 0x8a, 0x8a, AY8910_control_port_1_w },
 	{ 0x8b, 0x8b, AY8910_write_port_1_w },
-	{ 0xca, 0xca, AY8910_control_port_0_w },
-	{ 0xcb, 0xcb, AY8910_write_port_0_w },
-	{ 0xcc, 0xcc, leland_bk_xlow_w },
-	{ 0xcd, 0xcd, leland_bk_xhigh_w },
-	{ 0xce, 0xce, leland_bk_ylow_w },
-	{ 0xcf, 0xcf, leland_bk_yhigh_w },
+	{ 0xca, 0xcf, leland_gfx_port_w },   /* Video ports */
 
 	{ 0xf0, 0xf0, redlin2p_banksw_w },
 	{ 0xf2, 0xf2, leland_sound_comm_w },
@@ -2239,10 +2607,22 @@ static struct IOWritePort redlin2p_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-MACHINE_DRIVER_NO_SOUND(redlin2p_machine, redlin2p_readport, redlin2p_writeport,
-	master_readmem, master_writemem, pigout_init_machine, gfxdecodeinfo,
-	leland_vh_screenrefresh, slave_readmem,slave_writemem);
+void redlin2p_init_machine(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+	leland_init_machine();
+	leland_rearrange_bank_swap(0, 0x10000);
+	leland_rearrange_bank(1, 0x10000);
+
+	/* Kludge ... jump to self test */
+/*    RAM[0x1e]=0x52;
+	RAM[0x1f]=0x9d;*/
+}
+
+MACHINE_DRIVER_NO_SOUND(redlin2p_machine, redlin2p_readport, redlin2p_writeport,
+	master_readmem, master_writemem, redlin2p_init_machine, gfxdecodeinfo,
+	leland_vh_screenrefresh, slave_readmem,slave_writemem);
 
 ROM_START( redlin2p_rom )
 	ROM_REGION(0x048000)     /* 64k for code + banked ROMs images */
@@ -2288,7 +2668,7 @@ struct GameDriver redlin2p_driver =
 	"1987",
 	"Cinematronics",
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&redlin2p_machine,
 	0,
 
@@ -2304,6 +2684,154 @@ struct GameDriver redlin2p_driver =
 	ORIENTATION_ROTATE_270,
 	leland_hiload,leland_hisave
 };
+
+/***************************************************************************
+
+  Danger Zone
+
+***************************************************************************/
+
+INPUT_PORTS_START( input_ports_dangerz )
+	PORT_START      /* IN3 (0x81)*/
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* IN0 (0x80)*/
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_BUTTON2, "Missile", IP_KEY_DEFAULT, IP_JOY_DEFAULT  )
+
+	PORT_START      /* IN1 (0x91)*/
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* in2 (0x90) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* Analog 1 */
+	PORT_ANALOG ( 0x03, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 3 )
+	PORT_START      /* Analog 2 */
+	PORT_ANALOG ( 0x03, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 0, 3 )
+INPUT_PORTS_END
+
+void dangerz_banksw_w(int offset, int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	int bankaddress=(data&0x01)*0x10000;
+	if (errorlog)
+	{
+		fprintf(errorlog, "DANGERZ BANK=%02x\n", data);
+	}
+	cpu_setbank(1, &RAM[0x02000+bankaddress]);
+	cpu_setbank(2, &RAM[0x0a000+bankaddress]);
+}
+
+static struct IOReadPort dangerz_readport[] =
+{
+	{ 0x40, 0x5f, leland_mvram_port_r }, /* Video RAM ports */
+
+	{ 0x80, 0x80, input_port_1_r },
+	{ 0x81, 0x81, leland_slavebit0_r },
+	{ 0x83, 0x83, AY8910_read_port_0_r },
+	{ 0x90, 0x90, input_port_3_r },
+	{ 0x91, 0x91, input_port_2_r },
+//    { 0xf2, 0xf2, redlin2p_kludge_r },
+	{ 0xf4, 0xf4, input_port_4_r },
+	{ 0xf8, 0xf8, input_port_5_r },
+	{ 0xfd, 0xfd, leland_analog_r },
+	{ 0xfe, 0xfe, leland_eeprom_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort dangerz_writeport[] =
+{
+	{ 0x40, 0x5f, leland_mvram_port_w }, /* Video RAM ports */
+
+	{ 0x89, 0x89, leland_slave_cmd_w },
+	{ 0x8a, 0x8f, leland_gfx_port_w },   /* Video ports */
+
+	{ 0xf0, 0xf0, dangerz_banksw_w },
+	{ 0xf2, 0xf2, leland_sound_comm_w },
+	{ 0xf4, 0xf4, leland_sound_cmd_w },
+	{ 0xfd, 0xfd, leland_analog_w },
+	{ -1 }  /* end of table */
+};
+
+
+void dangerz_init_machine(void)
+{
+	leland_init_machine();
+	leland_rearrange_bank(1, 0x10000);
+}
+
+MACHINE_DRIVER_NO_SOUND(dangerz_machine, dangerz_readport, dangerz_writeport,
+	master_readmem, master_writemem, dangerz_init_machine, gfxdecodeinfo,
+	leland_vh_screenrefresh, slave_readmem,slave_writemem);
+
+ROM_START( dangerz_rom )
+	ROM_REGION(0x020000)     /* 64k for code + banked ROMs images */
+	ROM_LOAD("13823.12T",   0x00000, 0x10000, 0x31604634 )
+	ROM_LOAD("13824.13T",   0x10000, 0x10000, 0x381026c6 )
+
+	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD("13801.93", 0x00000, 0x04000, 0xf9ff55ec )
+	ROM_LOAD("13802.94", 0x08000, 0x04000, 0xd4adbcbb )
+	ROM_LOAD("13803.95", 0x10000, 0x04000, 0x9178ed76 )
+
+	ROM_REGION(0x28000)     /* Z80 slave CPU */
+	ROM_LOAD("13818.3",   0x00000, 0x04000, 0x71863c5b )
+	ROM_LOAD("13817.4",   0x10000, 0x04000, 0x924bead3 )
+	ROM_LOAD("13818.5",   0x14000, 0x04000, 0x403bdfea )
+	ROM_LOAD("13819.6",   0x18000, 0x04000, 0x1fee5f10 )
+	ROM_LOAD("13820.7",   0x1c000, 0x04000, 0x42657a1e )
+	ROM_LOAD("13821.8",   0x20000, 0x04000, 0x92f3e006 )
+
+	ROM_REGION(0x1)     /* 80186 CPU */
+
+	ROM_REGION(0x20000)     /* Background PROMS */
+	/* 70, 92, 69, 91, 68, 90, 67, 89 */
+	ROM_LOAD( "13809.70",  0x00000, 0x4000, 0xe44eb9f5 )
+	ROM_LOAD( "13804.92",  0x04000, 0x4000, 0x6c23f1a5 )
+	ROM_LOAD( "13805.69",  0x08000, 0x4000, 0xe9c9f38b )
+	ROM_LOAD( "13808.91",  0x0c000, 0x4000, 0x035534ad )
+	ROM_LOAD( "13806.68",  0x10000, 0x4000, 0x2dbd64d2 )
+	ROM_LOAD( "13808.90",  0x14000, 0x4000, 0xd5b4985d )
+	ROM_LOAD( "13822.67",  0x18000, 0x4000, 0x00ff3033 )
+	ROM_LOAD( "13810.89",  0x1c000, 0x4000, 0x4f645973 )
+ROM_END
+
+struct GameDriver dangerz_driver =
+{
+	__FILE__,
+	0,
+	"dangerz",
+	"Danger Zone",
+	"1986",
+	CINEMAT,
+	"Paul Leaman",
+	GAME_NOT_WORKING,
+	&dangerz_machine,
+	0,
+	dangerz_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports_dangerz,
+
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	leland_hiload,leland_hisave
+};
+
+
+
 
 INPUT_PORTS_START( input_ports_viper )
 	PORT_START      /* IN3 (0xc1)*/
@@ -2327,17 +2855,17 @@ INPUT_PORTS_START( input_ports_viper )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Analog pedal 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog pedal 2 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog pedal 3 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER3, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y|IPF_PLAYER3, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog wheel 1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog wheel 2 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER2, 100, 10, 0, 0, 255 )
 	PORT_START      /* Analog wheel 3 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER3, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X|IPF_PLAYER3, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 void viper_banksw_w(int offset, int data)
@@ -2366,7 +2894,7 @@ void viper_banksw_w(int offset, int data)
 	}
 
 	cpu_setbank(1,&RAM[bankaddress]);    /* 0x2000-0x9fff */
-	cpu_setbank(3,battery_bank);            /* 0xa000-0xdfff */
+	cpu_setbank(2,battery_bank);            /* 0xa000-0xdfff */
 
 	leland_sound_cpu_control_w(data);
 }
@@ -2385,7 +2913,7 @@ static struct IOReadPort viper_readport[] =
 	{ 0xfb, 0xfb, input_port_9_r },
 	{ 0xf8, 0xf8, input_port_8_r },
 	{ 0xfd, 0xfd, leland_analog_r },
-	{ 0xfe, 0xfe, leland_analog_control_r },
+	{ 0xfe, 0xfe, leland_eeprom_r },
 	{ -1 }  /* end of table */
 };
 
@@ -2396,12 +2924,7 @@ static struct IOWritePort viper_writeport[] =
 	{ 0xc9, 0xc9, leland_slave_cmd_w },
 	{ 0x8a, 0x8a, AY8910_control_port_1_w },
 	{ 0x8b, 0x8b, AY8910_write_port_1_w },
-	{ 0xca, 0xca, AY8910_control_port_0_w },
-	{ 0xcb, 0xcb, AY8910_write_port_0_w },
-	{ 0xcc, 0xcc, leland_bk_xlow_w },
-	{ 0xcd, 0xcd, leland_bk_xhigh_w },
-	{ 0xce, 0xce, leland_bk_ylow_w },
-	{ 0xcf, 0xcf, leland_bk_yhigh_w },
+	{ 0xca, 0xcf, leland_gfx_port_w },   /* Video ports */
 
 	{ 0xf0, 0xf0, viper_banksw_w },
 	{ 0xf2, 0xf2, leland_sound_comm_w },
@@ -2411,9 +2934,9 @@ static struct IOWritePort viper_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-MACHINE_DRIVER_NO_SOUND(viper_machine, viper_readport, viper_writeport,
+MACHINE_DRIVER(viper_machine, viper_readport, viper_writeport,
 	master_readmem, master_writemem, pigout_init_machine,gfxdecodeinfo,
-	leland_vh_screenrefresh, slave_readmem,slave_writemem);
+	leland_vh_screenrefresh, slave_readmem2,slave_writemem2);
 
 ROM_START( viper_rom )
 	ROM_REGION(0x050000)     /* 64k for code + banked ROMs images */
@@ -2460,7 +2983,7 @@ struct GameDriver viper_driver =
 	"1988",
 	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&viper_machine,
 	0,
 
@@ -2477,6 +3000,8 @@ struct GameDriver viper_driver =
 	leland_hiload,leland_hisave
 };
 
+
+
 INPUT_PORTS_START( input_ports_aafb )
 	PORT_START      /* GIN1 (0x41) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
@@ -2488,8 +3013,8 @@ INPUT_PORTS_START( input_ports_aafb )
 	PORT_START      /* GIN0 (0x40) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1  ) /* 2U */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2  ) /* 2U */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2545,17 +3070,10 @@ static struct IOWritePort aafb_writeport[] =
 
 	{ 0x40, 0x46, leland_mvram_port_w }, /* (stray) video RAM ports */
 	{ 0x49, 0x49, leland_slave_cmd_w },
-	{ 0x4a, 0x4a, AY8910_control_port_0_w },
-	{ 0x4b, 0x4b, AY8910_write_port_0_w },
-	{ 0x4c, 0x4c, leland_bk_xlow_w },
-	{ 0x4d, 0x4d, leland_bk_xhigh_w },
-	{ 0x4e, 0x4e, leland_bk_ylow_w },
-	{ 0x4f, 0x4f, leland_bk_yhigh_w },
+	{ 0x4a, 0x4f, leland_gfx_port_w },   /* Video ports */
 
 	{ 0x8a, 0x8a, AY8910_control_port_1_w },
 	{ 0x8b, 0x8b, AY8910_write_port_1_w },
-
-
 
 	{ 0xf0, 0xf0, viper_banksw_w },
 	{ 0xf2, 0xf2, leland_sound_comm_w },
@@ -2563,12 +3081,9 @@ static struct IOWritePort aafb_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-
-
 MACHINE_DRIVER(aafb_machine, aafb_readport, aafb_writeport,
 	master_readmem, master_writemem, pigout_init_machine,gfxdecodeinfo,
-	leland_vh_screenrefresh, slave_readmem,slave_writemem);
-
+	pigout_vh_screenrefresh, slave_readmem2,slave_writemem2);
 
 ROM_START( aafb_rom )
 	ROM_REGION(0x048000)     /* 64k for code + banked ROMs images */
@@ -2576,9 +3091,9 @@ ROM_START( aafb_rom )
 	ROM_LOAD("24015-02.U59",   0x10000, 0x10000, 0x00000000 ) /* SUSPECT */
 
 	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("24011-02.U93", 0x00000, 0x08000, 0x011c0235 )  /* SUSPECT */
-	ROM_LOAD("24012-02.U94", 0x08000, 0x08000, 0x376199a2 )  /* SUSPECT */
-	ROM_LOAD("24013-02.U95", 0x10000, 0x08000, 0x0a604e0d )  /* SUSPECT */
+	ROM_LOAD("24011-02.U93", 0x00000, 0x04000, 0x011c0235 )  /* SUSPECT */
+	ROM_LOAD("24012-02.U94", 0x08000, 0x04000, 0x376199a2 )  /* SUSPECT */
+	ROM_LOAD("24013-02.U95", 0x10000, 0x04000, 0x0a604e0d )  /* SUSPECT */
 
 	ROM_REGION(0x80000)     /* Z80 slave CPU */
 	ROM_LOAD("24000-02.U3",   0x00000, 0x02000, 0x52df0354 ) /* SUSPECT */
@@ -2610,8 +3125,6 @@ ROM_START( aafb_rom )
 	/* 89 = empty */
 ROM_END
 
-
-
 struct GameDriver aafb_driver =
 {
 	__FILE__,
@@ -2621,7 +3134,7 @@ struct GameDriver aafb_driver =
 	"????",
 	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&aafb_machine,
 	0,
 
@@ -2640,14 +3153,29 @@ struct GameDriver aafb_driver =
 
 
 ROM_START( aafb2p_rom )
-	ROM_REGION(0x048000)     /* 64k for code + banked ROMs images */
+	ROM_REGION(0x020000)     /* 64k for code + banked ROMs images */
 	ROM_LOAD("aafb2p.58T",   0x00000, 0x10000, 0x79fd14cd )
 	ROM_LOAD("aafb2p.59T",   0x10000, 0x10000, 0x3b0382f0 )
 
 	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("aafb2p.U93", 0x00000, 0x04000, 0x5c333ef3 )
-	ROM_LOAD("aafb2p.U94", 0x08000, 0x04000, 0x2e7a1af0 )
-	ROM_LOAD("aafb2p.U95", 0x10000, 0x04000, 0x7ede8bf2 )
+
+	ROM_LOAD("aafb2p.U93",   0x00000, 0x08000, 0x00000000 )
+	ROM_LOAD("aafb2p.U94",   0x08000, 0x08000, 0x00000000 )
+	ROM_LOAD("aafb2p.U95",   0x10000, 0x08000, 0x00000000 )
+/*
+	ROM_LOAD("24011-02.U93", 0x00000, 0x04000, 0x011c0235 )
+	ROM_LOAD("24012-02.U94", 0x08000, 0x04000, 0x376199a2 )
+	ROM_LOAD("24013-02.U95", 0x10000, 0x04000, 0x0a604e0d )
+
+	ROM_LOAD("aafbu93.bin",   0x00000, 0x04000, 0x00000000 )
+	ROM_LOAD("aafbu94.bin",   0x08000, 0x04000, 0x00000000 )
+	ROM_LOAD("aafbu95.bin",   0x10000, 0x04000, 0x00000000 )
+*/
+/*
+	ROM_LOAD("u93-2.bin",   0x00000, 0x08000, 0x00000000 )
+	ROM_LOAD("u94-2.bin",   0x08000, 0x08000, 0x00000000 )
+	ROM_LOAD("u95-2.bin",   0x10000, 0x08000, 0x00000000 )
+*/
 
 	ROM_REGION(0x80000)     /* Z80 slave CPU */
 	ROM_LOAD("aafb2p.U3",   0x00000, 0x04000, 0x7a8259c4 )
@@ -2688,7 +3216,7 @@ struct GameDriver aafb2p_driver =
 	"????",
 	LELAND,
 	"Paul Leaman",
-	0,
+	GAME_NOT_WORKING,
 	&aafb_machine,
 	0,
 
@@ -2706,6 +3234,157 @@ struct GameDriver aafb2p_driver =
 };
 
 
+INPUT_PORTS_START( input_ports_aafbu )
+	PORT_START      /* GIN1 (0x41) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* GIN0 (0x40) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* (0x51) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN)
+
+	PORT_START      /* GIN1 (0x50) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2  )
+
+	PORT_START      /* GIN3 (0x7c) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+static struct IOReadPort aafbu_readport[] =
+{
+	{ 0x00, 0x1f, leland_mvram_port_r }, /* Video RAM ports */
+
+	{ 0xc0, 0xc0, input_port_1_r },
+	{ 0xc1, 0xc1, leland_slavebit0_r },
+	{ 0xc3, 0xc3, AY8910_read_port_0_r },
+	{ 0xd0, 0xd0, input_port_3_r },
+	{ 0xd1, 0xd1, input_port_2_r },
+	{ 0xdc, 0xdc, input_port_4_r },
+	{ 0xf2, 0xf2, leland_sound_comm_r },
+	{ 0xfd, 0xfd, leland_analog_r },
+	{ 0xfe, 0xfe, leland_eeprom_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort aafbu_writeport[] =
+{
+	{ 0x00, 0x1f, leland_mvram_port_w }, /* Video RAM ports */
+
+	{ 0xc9, 0xc9, leland_slave_cmd_w },
+	{ 0x8a, 0x8a, AY8910_control_port_1_w },
+	{ 0x8b, 0x8b, AY8910_write_port_1_w },
+	{ 0xca, 0xcf, leland_gfx_port_w },   /* Video ports */
+	{ 0xf0, 0xf0, viper_banksw_w },
+	{ 0xf2, 0xf2, leland_sound_comm_w },
+	{ 0xf4, 0xf4, leland_sound_cmd_w },
+	{ 0xfd, 0xfd, MWA_NOP },            /* Reset analog ? */
+	{ 0xfe, 0xfe, leland_analog_w },
+	{ -1 }  /* end of table */
+};
+
+MACHINE_DRIVER(aafbu_machine, aafbu_readport, aafbu_writeport,
+	master_readmem, master_writemem, pigout_init_machine,gfxdecodeinfo,
+	leland_vh_screenrefresh, slave_readmem2,slave_writemem2);
+
+ROM_START( aafbu_rom )
+	ROM_REGION(0x048000)     /* 64k for code + banked ROMs images */
+	ROM_LOAD("aafbu58t.bin",   0x00000, 0x10000, 0xfa75a4a0 )
+	ROM_LOAD("aafbu59t.bin",   0x10000, 0x10000, 0xab6a606f )
+
+	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD("aafbu93.bin",   0x00000, 0x04000, 0x68f8addc )
+	ROM_LOAD("aafbu94.bin",   0x08000, 0x04000, 0x669791ac )
+	ROM_LOAD("aafbu95.bin",   0x10000, 0x04000, 0xbd62aa8a )
+
+	/* Everything from here down may be from the wrong version */
+	ROM_REGION(0x80000)     /* Z80 slave CPU */
+	ROM_LOAD("24000-02.U3",   0x00000, 0x02000, 0x52df0354 )
+	ROM_LOAD("24001-02.U2T",  0x10000, 0x10000, 0x9b20697d )
+	ROM_LOAD("24002-02.U3T",  0x20000, 0x10000, 0xbbb92184 )
+	ROM_LOAD("15603-01.U4T",  0x30000, 0x10000, 0xcdc9c09d )
+	ROM_LOAD("15604-01.U5T",  0x40000, 0x10000, 0x3c03e92e )
+	ROM_LOAD("15605-01.U6T",  0x50000, 0x10000, 0xcdf7d19c )
+	ROM_LOAD("15606-01.U7T",  0x60000, 0x10000, 0x8eeb007c )
+	ROM_LOAD("24002-02.U8T",  0x70000, 0x10000, 0x3d9747c9 )
+
+	ROM_REGION(0x100000)     /* 80186 CPU */
+	ROM_LOAD_EVEN("24019-01.U25", 0x080000, 0x10000, 0x9e344768 )
+	ROM_LOAD_ODD ("24016-01.U13", 0x080000, 0x10000, 0x6997025f )
+	ROM_LOAD_EVEN("24020-01.U26", 0x0a0000, 0x10000, 0x0788f2a5 )
+	ROM_LOAD_ODD ("24017-01.U14", 0x0a0000, 0x10000, 0xa48bd721 )
+	ROM_LOAD_EVEN("24021-01.U27", 0x0e0000, 0x10000, 0x94081899 )
+	ROM_LOAD_ODD ("24018-01.U15", 0x0e0000, 0x10000, 0x76eb6077 )
+
+	ROM_REGION(0x20000)     /* Background PROMS */
+	/* 70, 92, 69, 91, 68, 90, 67, 89 */
+	ROM_LOAD( "24007-01.U70",  0x00000, 0x4000, 0x40e46aa4 )
+	ROM_LOAD( "24010-01.U92",  0x04000, 0x4000, 0x78705f42 )
+	ROM_LOAD( "24006-01.U69",  0x08000, 0x4000, 0x6a576aa9 )
+	ROM_LOAD( "24009-02.U91",  0x0c000, 0x4000, 0xb857a1ad )
+	ROM_LOAD( "24005-02.U68",  0x10000, 0x4000, 0x8ea75319 )
+	ROM_LOAD( "24008-01.U90",  0x14000, 0x4000, 0x4538bc58 )
+	ROM_LOAD( "24004-02.U67",  0x18000, 0x4000, 0xcd7a3338 )
+	/* 89 = empty */
+ROM_END
+
+struct GameDriver aafbu_driver =
+{
+	__FILE__,
+	0,
+	"aafbu",
+	"All American Football (US Version?)",
+	"????",
+	LELAND,
+	"Paul Leaman",
+	GAME_NOT_WORKING,
+	&aafbu_machine,
+	0,
+
+	aafbu_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports_aafbu,
+
+	NULL, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+	leland_hiload,leland_hisave
+};
+
 /***************************************************************************
 
   Ataxx
@@ -2722,6 +3401,8 @@ extern int ataxx_tram_size;
 extern unsigned char *ataxx_qram1;
 extern unsigned char *ataxx_qram2;
 
+static int ataxx_palette_bank=0;    /* Palette / video RAM register bank */
+
 INPUT_PORTS_START( input_ports_ataxx )
 	PORT_START /* (0xf7) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
@@ -2734,23 +3415,22 @@ INPUT_PORTS_START( input_ports_ataxx )
 	PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, "Service", OSD_KEY_F2, IP_JOY_NONE)
 	PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 50, 0, 0, 15 ) /* Sensitivity, clip, min, max */
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 10, 0, 0, 255 ) /* Sensitivity, clip, min, max */
 
 	PORT_START
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y, 50, 0, 0, 15 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 10, 0, 0, 255 )
 
 	PORT_START
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0, 255 ) /* Sensitivity, clip, min, max */
 
 	PORT_START
-    PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 0, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
-
 
 
 static struct GfxLayout ataxx_tilelayout =
@@ -2782,86 +3462,97 @@ void ataxx_banksw_w(int offset, int data)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	int bank=data & 0x03;
-#ifdef NOISY_CPU
-	if (errorlog)
-	{
-        fprintf(errorlog, "Ataxx bank %02x\n", data);
-	}
-#endif
-    /* Program ROM bank */
+	/* Program ROM bank */
 	if (!bank)
 	{
-		cpu_setbank(1, &RAM[0x2000]);
+		cpu_setbank(1, &RAM[0x2000]);   /* First bank */
 	}
 	else
 	{
-        cpu_setbank(1, &RAM[0x8000*bank]);
+		cpu_setbank(1, &RAM[0x8000*bank]);
 	}
 
-    /* Battery / QRAM bank */
-    cpu_setbank(3, &RAM[0xa000]);
-    if (data & 0x10)
-    {
-        cpu_setbank(3, &leland_battery_ram[0]);
-    }
-    else
-    {
-        if (data & 0x20)
-        {
-            cpu_setbank(3, &ataxx_qram1[0]);
-        }
-        if (data & 0x40)
-        {
-            cpu_setbank(3, &ataxx_qram2[0]);
-        }
-    }
+	/* Battery / QRAM bank */
+	cpu_setbank(2, &RAM[0xa000]);
+	if (data & 0x10)
+	{
+		/* Battery RAM */
+		cpu_setbank(2, &leland_battery_ram[0]);
+	}
+	else
+	{
+		if (data & 0x20)
+		{
+			/* QRAM 1 */
+			cpu_setbank(2, &ataxx_qram1[0]);
+		}
+		if (data & 0x40)
+		{
+			/* QRAM 2 */
+			cpu_setbank(2, &ataxx_qram2[0]);
+		}
+	}
+
+	if ((data & 0x30) == 0x30)
+	{
+		ataxx_palette_bank=1;   /* Palette ram write */
+	}
+	else
+	{
+		ataxx_palette_bank=0;
+	}
+
+}
+
+void ataxx_master_video_addr_w(int offset, int data)
+{
+	if (ataxx_palette_bank)
+	{
+		/* Writing to the palette */
+		paletteram_xxxxRRRRGGGGBBBB_w(offset+0x7f8, data);
+	}
+	else
+	{
+		/* Writing to video ram registers */
+		leland_master_video_addr_w(offset, data);
+	}
 }
 
 static struct MemoryReadAddress ataxx_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x9fff, MRA_BANK1 },
-    { 0xa000, 0xdfff, MRA_BANK3 },
+	{ 0xa000, 0xdfff, MRA_BANK2 },
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xfff7, leland_palette_ram_r },
+	{ 0xf800, 0xffff, paletteram_r },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress ataxx_writemem[] =
 {
-    { 0xa000, 0xdfff, MWA_BANK3 },
+	{ 0xa000, 0xdfff, MWA_BANK2 },
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xe000, 0xefff, MWA_RAM },
-    { 0xf000, 0xf7ff, MWA_RAM, &ataxx_tram, &ataxx_tram_size },
-	{ 0xf800, 0xfff7, leland_palette_ram_w, &leland_palette_ram, &leland_palette_ram_size },
-	{ 0xfff8, 0xfff9, leland_master_video_addr_w },
+	{ 0xf000, 0xf7ff, MWA_RAM, &ataxx_tram, &ataxx_tram_size },
+	{ 0xfff8, 0xfff9, ataxx_master_video_addr_w },
+	{ 0xf800, 0xffff, paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
 	{ -1 }  /* end of table */
 };
 
 void ataxx_init_machine(void)
 {
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	leland_init_machine();
 
-    leland_init_machine();
+	leland_rearrange_bank_swap(0, 0x10000);
+	leland_rearrange_bank_swap(1, 0x10000);
 
-    leland_rearrange_bank(&RAM[0x10000], 2);
+	/* Hack!!!! Patch the code to get the game to start */
+	RAM[0x3593]=0;
+	RAM[0x3594]=0;
 }
 
-int ataxx_unknown_port_r(int offset)
-{
-	static int s;
-	s=s^0x01;
-	return s;
-}
-
-
-int ataxx_unknown_r(int offset)
-{
-	static int s;
-	s=~s;
-	return s;
-}
 
 void ataxx_sound_control_w(int offset, int data)
 {
@@ -2876,138 +3567,112 @@ void ataxx_sound_control_w(int offset, int data)
 
 static struct IOReadPort ataxx_readport[] =
 {
-	{ 0x00, 0x00, input_port_2_r },  /* Player 1 Track X */
-	{ 0x00, 0x01, input_port_3_r },  /* Player 1 Track Y */
-	{ 0x00, 0x02, input_port_4_r },  /* Player 2 Track X */
-	{ 0x00, 0x03, input_port_5_r },  /* Player 2 Track Y */
-	{ 0x04, 0x04, leland_sound_comm_r },    /* = 0xf2 */
-	{ 0x20, 0x20, ataxx_unknown_port_r },
-	{ 0xd0, 0xe7, ataxx_mvram_port_r },
-	{ 0xf6, 0xf6, input_port_1_r },
+	{ 0x00, 0x00, input_port_2_r },         /* Player 1 Track X */
+	{ 0x00, 0x01, input_port_3_r },         /* Player 1 Track Y */
+	{ 0x00, 0x02, input_port_4_r },         /* Player 2 Track X */
+	{ 0x00, 0x03, input_port_5_r },         /* Player 2 Track Y */
+	{ 0x04, 0x04, leland_sound_comm_r },    /* Sound comms read port */
+	{ 0x20, 0x20, leland_eeprom_r },         /* EEPROM */
+	{ 0xd0, 0xe7, ataxx_mvram_port_r },     /* Master video RAM ports */
+	{ 0xf6, 0xf6, input_port_1_r },         /* Buttons */
 	{ 0xf7, 0xf7, leland_slavebit0_r },     /* Slave block (slvblk) */
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort ataxx_writeport[] =
 {
-	{ 0x06, 0x06, leland_sound_comm_w },    /* = 0xf2 */
-	{ 0x05, 0x05, leland_sound_cmd_w },     /* = 0xf4 */
-	{ 0x0c, 0x0c, ataxx_sound_control_w },  /* = Sound control register */
-	{ 0x20, 0x20, leland_unknown_w },       /* = Unknown output port (0xff) */
-	{ 0xd0, 0xe7, ataxx_mvram_port_w },
-	{ 0xf0, 0xf0, leland_bk_xlow_w },       /* = Probably ... */
+	{ 0x06, 0x06, leland_sound_comm_w },    /* 0xf2 */
+	{ 0x05, 0x05, leland_sound_cmd_w },     /* 0xf4 */
+	{ 0x0c, 0x0c, ataxx_sound_control_w },  /* Sound control register */
+	{ 0x20, 0x20, leland_eeprom_w },         /* EEPROM */
+	{ 0xd0, 0xe7, ataxx_mvram_port_w },     /* Master video RAM */
+	{ 0xf0, 0xf0, leland_bk_xlow_w },       /* Probably ... always zero */
 	{ 0xf1, 0xf1, leland_bk_xhigh_w },
 	{ 0xf2, 0xf2, leland_bk_ylow_w },
 	{ 0xf3, 0xf3, leland_bk_yhigh_w },
-	{ 0xf4, 0xf4, ataxx_banksw_w },         /* = Bank switch */
-	{ 0xf5, 0xf5, ataxx_slave_cmd_w },      /* = Slave output (slvo) */
-	{ 0xf8, 0xf8, MWA_NOP },                /* = Unknown */
+	{ 0xf4, 0xf4, ataxx_banksw_w },         /* Bank switch */
+	{ 0xf5, 0xf5, ataxx_slave_cmd_w },      /* Slave output (slvo) */
+	{ 0xf8, 0xf8, MWA_NOP },                /* Unknown */
 	{ -1 }  /* end of table */
 };
 
 void ataxx_slave_banksw_w(int offset, int data)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	int bankaddress;
-    int bank;
-    /* This is wrong! */
-
-    switch (data & 0x0f)
-    {
-        case 5:
-            bank=4;
-            break;
-        case 4:
-            bank=3;
-            break;
-        case 3:
-            bank=2;
-            break;
-        case 2:
-            bank=1;
-            break;
-        default:
-            bank=0;
-            break;
-    }
-    bank=2;
-    bankaddress =0x10000*bank;
-    bankaddress+=0x8000*(~data&0x10);
-    cpu_setbank(7, &RAM[bankaddress]);
-    cpu_setbank(8, &RAM[bankaddress+0x2000]);
+	int bankaddress=0x10000*(data&0x07);
+	if (data&0x10)
+	{
+		bankaddress+=0x8000;
+	}
+	cpu_setbank(3, &RAM[bankaddress]);
 }
-
 
 static struct MemoryReadAddress ataxx_slave_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },        /* Resident program ROM */
-    { 0x2000, 0x7fff, MRA_BANK7 },      /* Paged graphics ROM */
-    { 0x8000, 0x9fff, MRA_BANK8 },      /* Paged graphics ROM */
-	{ 0xa000, 0xdfff, MRA_ROM },
+	{ 0x2000, 0x9fff, MRA_BANK3 },      /* Paged graphics ROM */
 	{ 0xe000, 0xefff, MRA_RAM },
-	{ 0xf800, 0xfff7, leland_palette_ram_r },
-	{ 0xfffe, 0xfffe, ataxx_unknown_r },
+	{ 0xfffe, 0xfffe, leland_unknown_slave_video_r },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress ataxx_slave_writemem[] =
 {
-	{ 0x0000, 0xdfff, MWA_ROM },
+	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xf800, 0xfff7, leland_palette_ram_w },
 	{ 0xfffc, 0xfffd, leland_slave_video_addr_w },
-    { 0xffff, 0xffff, ataxx_slave_banksw_w },
+	{ 0xffff, 0xffff, ataxx_slave_banksw_w },
 	{ -1 }  /* end of table */
 };
 
 #if 0
-                {                                                  \
-                        CPU_I86,         /* Sound processor */     \
-                        16000000,        /* 16 Mhz  */             \
-                        3,                                         \
-                        leland_i86_readmem,leland_i86_writemem,\
-                        leland_i86_readport,leland_i86_writeport, \
-                        leland_i86_interrupt,1,                    \
-                        0,0,&leland_addrmask                    \
-                },                                                 \
+				{                                                  \
+						CPU_I86,         /* Sound processor */     \
+						16000000,        /* 16 Mhz  */             \
+						3,                                         \
+						leland_i86_readmem,leland_i86_writemem,\
+						leland_i86_readport,leland_i86_writeport, \
+						leland_i86_interrupt,1,                    \
+						0,0,&leland_addrmask                    \
+				},    \
 
 #endif
 
 #define ATAXX_MACHINE_DRIVER(DRV, MRP, MWP, MR, MW, INITMAC, GFXD, VRF, SLR, SLW)\
 static struct MachineDriver DRV =    \
 {                                                      \
-        {                                           \
-                {                                    \
-                        CPU_Z80,        /* Master game processor */  \
-                        6000000,        /* 6.000 Mhz  */             \
-                        0,                                          \
-                        MR,MW,            \
-                        MRP,MWP,                                   \
-                        leland_master_interrupt,16                 \
-                },                                                 \
-                {                                                  \
-                        CPU_Z80, /* Slave graphics processor*/     \
-                        6000000, /* 6.000 Mhz */                   \
-                        2,       /* memory region #2 */            \
-                        SLR,SLW,              \
-                        slave_readport,slave_writeport,            \
-                        leland_slave_interrupt,1                   \
-                },                                                 \
-        },                                                         \
-        60, 2000,2,                                                \
-        INITMAC,                                       \
-        0x28*8, 0x20*8, { 0*8, 0x28*8-1, 0*8, 0x1e*8-1 },              \
-        GFXD,                                             \
-        1024,1024,                                                 \
-        0,                                                         \
-        VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                \
-        0,                                                         \
-        ataxx_vh_start,ataxx_vh_stop,VRF,    \
-        0,0,0,0,\
-        {   \
-            {SOUND_AY8910, &ay8910_interface }, \
-            {SOUND_DAC,    &dac_interface }     \
-        }                 \
+		{                                           \
+				{                                    \
+						CPU_Z80,        /* Master game processor */  \
+						6000000,        /* 6.000 Mhz  */             \
+						0,                                          \
+						MR,MW,            \
+						MRP,MWP,                                   \
+						leland_master_interrupt,16                 \
+				},                                                 \
+				{                                                  \
+						CPU_Z80, /* Slave graphics processor*/     \
+						6000000, /* 6.000 Mhz */                   \
+						2,       /* memory region #2 */            \
+						SLR,SLW,              \
+						slave_readport,slave_writeport,            \
+						leland_slave_interrupt,1                   \
+				},                                                 \
+		},                                                         \
+		60, 2000,2,                                                \
+		INITMAC,                                       \
+		0x28*8, 0x20*8, { 0*8, 0x28*8-1, 0*8, 0x1e*8-1 },              \
+		GFXD,                                             \
+		1024,1024,                                                 \
+		0,                                                         \
+		VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,                \
+		0,                                                         \
+		ataxx_vh_start,ataxx_vh_stop,VRF,    \
+		0,0,0,0,\
+		{   \
+			{SOUND_AY8910, &ay8910_interface }, \
+			{SOUND_DAC,    &dac_interface }     \
+		}                 \
 }
 
 ATAXX_MACHINE_DRIVER(ataxx_machine,ataxx_readport, ataxx_writeport,
@@ -3045,9 +3710,9 @@ struct GameDriver ataxx_driver =
 	"ataxx",
 	"Ataxx",
 	"1990",
-    LELAND,
+	LELAND,
 	"Paul Leaman\nScott Kelley",
-	0,
+	GAME_NOT_WORKING,
 	&ataxx_machine,
 	0,
 	ataxx_rom,
@@ -3059,11 +3724,5 @@ struct GameDriver ataxx_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
-    leland_hiload, leland_hisave
+	leland_hiload, leland_hisave
 };
-
-
-
-
-
-

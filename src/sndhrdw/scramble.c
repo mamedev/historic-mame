@@ -6,6 +6,7 @@
 
 
 #include "driver.h"
+#include "cpu/z80/z80.h"
 
 
 
@@ -59,10 +60,15 @@ void scramble_sh_irqtrigger_w(int offset,int data)
 	if (last == 0 && (data & 0x08) != 0)
 	{
 		/* setting bit 3 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
+		cpu_cause_interrupt(1, Z80_IRQ_INT);
 	}
 
 	last = data & 0x08;
+}
+
+void hotshock_sh_irqtrigger_w(int offset,int data)
+{
+	cpu_cause_interrupt(1, Z80_IRQ_INT);
 }
 
 

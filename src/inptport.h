@@ -54,8 +54,11 @@ enum { IPT_END=1,IPT_PORT,
 /* input bits to this, the bit will be inverted while a vertical blank is happening. */
 	IPT_VBLANK,
 	IPT_UNKNOWN,
-	IPT_EXTENSION	/* this is an extension on the previous InputPort, not a real inputport. */
+	IPT_EXTENSION,	/* this is an extension on the previous InputPort, not a real inputport. */
 					/* It is used to store additional parameters for analog inputs */
+
+	/* the following are special codes for user interface handling - not to be used by drivers! */
+	IPT_UI_PAUSE
 };
 
 #define IPT_UNUSED     IPF_UNUSED
@@ -146,12 +149,12 @@ enum { IPT_END=1,IPT_PORT,
 /* input bit definition with extended fields */
 #define PORT_BITX(mask,default,type,name,key,joy) { mask, default, type, name, key, joy },
 /* analog input */
-#define PORT_ANALOG(mask,default,type,sensitivity,clip,min,max) \
+#define PORT_ANALOG(mask,default,type,sensitivity,delta,clip,min,max) \
 	{ mask, default, type, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT }, \
-	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(4) | IPF_CLIP(clip), \
+	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), \
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT },
 /* analog input with extended fields for defining default keys & sensitivities */
-#define PORT_ANALOGX(mask,default,type,sensitivity,clip,min,max,keydec,keyinc,joydec,joyinc,delta) \
+#define PORT_ANALOGX(mask,default,type,sensitivity,delta,clip,min,max,keydec,keyinc,joydec,joyinc) \
 	{ mask, default, type, IP_NAME_DEFAULT, keydec, joydec }, \
 	{ min, max, IPT_EXTENSION | IPF_SENSITIVITY(sensitivity) | IPF_DELTA(delta) | IPF_CLIP(clip), \
 			IP_NAME_DEFAULT, keyinc, joyinc },
@@ -218,6 +221,8 @@ int load_input_port_settings(void);
 void save_input_port_settings(void);
 
 const char *input_port_name(const struct InputPort *in);
+int input_port_type_key(int type);
+int input_port_type_joy(int type);
 int input_port_key(const struct InputPort *in);
 int input_port_joy(const struct InputPort *in);
 

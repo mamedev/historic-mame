@@ -22,7 +22,6 @@ Issues:
   Gameplay can jerk sometimes.
   Colours can be wrong when gfx banks are switching.
   End of level 2 is corrupt.
-  Sound is pretty messy.
 
   Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -162,7 +161,7 @@ static struct MemoryWriteAddress cninja_writemem[] =
 
 	{ 0x184000, 0x187fff, MWA_BANK1, &cninja_ram }, /* Main ram */
 	{ 0x190000, 0x190007, MWA_NOP }, /* IRQ Ack + DMA flags? */
-	{ 0x19C000, 0x19dfff, cninja_palette_24bit_w, &paletteram },
+	{ 0x19c000, 0x19dfff, cninja_palette_24bit_w, &paletteram },
 	{ 0x1a4000, 0x1a47ff, MWA_BANK2, &spriteram },
 	{ 0x1b4000, 0x1b4001, MWA_NOP }, /* DMA flag to graphics chips? */
 	{ 0x1bc000, 0x1bc0ff, cninja_loopback_w }, /* Protection writes */
@@ -219,7 +218,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x120000, 0x120001, OKIM6295_data_0_w }, /* Effects  */
 	{ 0x130000, 0x130001, OKIM6295_data_1_w }, /* Music samples */
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 },
-	{ 0x1fe000, 0x1fffff, MWA_NOP },
+	{ 0x1fec00, 0x1fec01, MWA_NOP },	/* ?? */
+	{ 0x1ff402, 0x1ff403, MWA_NOP },	/* ?? */
 	{ -1 }  /* end of table */
 };
 
@@ -392,19 +392,26 @@ static void sound_irq2(int state)
 	cpu_set_irq_line(1,0,state);
 }
 
+static void sound_bankswitch_w(int offset,int data)
+{
+	/* the second OKIM6295 ROM is bank switched */
+	OKIM6295_set_bank_base(1,(data & 1) * 0x40000);
+}
+
 static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* Accurate */
-	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },
-	{ sound_irq }
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
+	{ sound_irq },
+	{ sound_bankswitch_w }
 };
 
 static struct YM2151interface ym2151_interface2 =
 {
 	1,
 	32220000/8, /* Bootleg frequency - who knows.. */
-	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },
+	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ sound_irq2 }
 };
 
@@ -553,7 +560,7 @@ ROM_START( cninja_rom )
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
 	ROM_REGION(0x80000) /* Extra Oki samples */
-	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )
+	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
 ROM_START( cninja0_rom )
@@ -585,7 +592,7 @@ ROM_START( cninja0_rom )
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
 	ROM_REGION(0x80000) /* Extra Oki samples */
-	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )
+	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
 ROM_START( cninjau_rom )
@@ -617,7 +624,7 @@ ROM_START( cninjau_rom )
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
 	ROM_REGION(0x80000) /* Extra Oki samples */
-	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )
+	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
 ROM_START( joemac_rom )
@@ -649,7 +656,7 @@ ROM_START( joemac_rom )
 	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
 
 	ROM_REGION(0x80000) /* Extra Oki samples */
-	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )
+	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )	/* banked */
 ROM_END
 
 ROM_START( stoneage_rom )

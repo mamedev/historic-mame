@@ -459,7 +459,7 @@ ROM_START( frogger2_rom )
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "epr-1036.1k",  0x0000, 0x0800, 0x658745f8 )
-	ROM_LOAD( "epr-1037.1h",  0x0800, 0x0800, 0x05f7d883 )
+	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )

@@ -1288,15 +1288,11 @@ static int compute_mask(int count)
 
 /*--------------------------------------------------------------------------
 
-	General stuff
+	Sound stuff
 
 		atarigen_init_6502_speedup - installs 6502 speedup cheat handler
-		atarigen_get_hblank - returns the current HBLANK state
-		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
-		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
-		atarigen_expanded_666_paletteram_w - byte version of above
-		atarigen_shade_render - Vindicators shading renderer
 		atarigen_set_ym2151_vol - set the volume of the 2151 chip
+		atarigen_set_ym2413_vol - set the volume of the 2151 chip
 		atarigen_set_pokey_vol - set the volume of the POKEY chip(s)
 		atarigen_set_tms5220_vol - set the volume of the 5220 chip
 		atarigen_set_oki6295_vol - set the volume of the OKI6295
@@ -1309,7 +1305,6 @@ static unsigned int speed_pc;
 
 /* prototypes */
 static int m6502_speedup_r(int offset);
-static void unhalt_cpu(int param);
 
 
 /*
@@ -1344,6 +1339,141 @@ void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
 	speed_pc = compare_pc2;
 	install_mem_read_handler(cpunum, address_low, address_low, m6502_speedup_r);
 }
+
+
+/*
+ *	Set the YM2151 volume
+ *
+ *	What it says.
+ *
+ */
+
+void atarigen_set_ym2151_vol(int volume)
+{
+	int ch;
+
+	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+	{
+		const char *name = mixer_get_name(ch);
+		if (name && strstr(name, "2151"))
+			mixer_set_volume(ch, volume);
+	}
+}
+
+
+/*
+ *	Set the YM2413 volume
+ *
+ *	What it says.
+ *
+ */
+
+void atarigen_set_ym2413_vol(int volume)
+{
+	int ch;
+
+	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+	{
+		const char *name = mixer_get_name(ch);
+		if (name && strstr(name, "2413"))
+			mixer_set_volume(ch, volume);
+	}
+}
+
+
+/*
+ *	Set the POKEY volume
+ *
+ *	What it says.
+ *
+ */
+
+void atarigen_set_pokey_vol(int volume)
+{
+	int ch;
+
+	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+	{
+		const char *name = mixer_get_name(ch);
+		if (name && strstr(name, "POKEY"))
+			mixer_set_volume(ch, volume);
+	}
+}
+
+
+/*
+ *	Set the TMS5220 volume
+ *
+ *	What it says.
+ *
+ */
+
+void atarigen_set_tms5220_vol(int volume)
+{
+	int ch;
+
+	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+	{
+		const char *name = mixer_get_name(ch);
+		if (name && strstr(name, "5220"))
+			mixer_set_volume(ch, volume);
+	}
+}
+
+
+/*
+ *	Set the OKI6295 volume
+ *
+ *	What it says.
+ *
+ */
+
+void atarigen_set_oki6295_vol(int volume)
+{
+	int ch;
+
+	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
+	{
+		const char *name = mixer_get_name(ch);
+		if (name && strstr(name, "6295"))
+			mixer_set_volume(ch, volume);
+	}
+}
+
+
+/*
+ *	Generic 6502 CPU speedup handler
+ *
+ *	Special shading renderer that runs any pixels under pen 1 through a lookup table.
+ *
+ */
+
+static int m6502_speedup_r(int offset)
+{
+	int result = speed_b[0];
+
+	if (cpu_getpreviouspc() == speed_pc && speed_a[0] == speed_a[1] && result == speed_b[1])
+		cpu_spinuntil_int();
+
+	return result;
+}
+
+
+
+/*--------------------------------------------------------------------------
+
+	Misc Video stuff
+	
+		atarigen_get_hblank - returns the current HBLANK state
+		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
+		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
+		atarigen_expanded_666_paletteram_w - byte version of above
+		atarigen_shade_render - Vindicators shading renderer
+
+--------------------------------------------------------------------------*/
+
+/* prototypes */
+static void unhalt_cpu(int param);
 
 
 /*
@@ -1497,125 +1627,6 @@ void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *g
 	}
 }
 
-
-/*
- *	Set the YM2151 volume
- *
- *	What it says.
- *
- */
-
-void atarigen_set_ym2151_vol(int volume)
-{
-	int ch;
-
-	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-	{
-		const char *name = mixer_get_name(ch);
-		if (name && strstr(name, "2151"))
-			mixer_set_volume(ch, volume);
-	}
-}
-
-
-/*
- *	Set the YM2413 volume
- *
- *	What it says.
- *
- */
-
-void atarigen_set_ym2413_vol(int volume)
-{
-	int ch;
-
-	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-	{
-		const char *name = mixer_get_name(ch);
-		if (name && strstr(name, "2413"))
-			mixer_set_volume(ch, volume);
-	}
-}
-
-
-/*
- *	Set the POKEY volume
- *
- *	What it says.
- *
- */
-
-void atarigen_set_pokey_vol(int volume)
-{
-	int ch;
-
-	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-	{
-		const char *name = mixer_get_name(ch);
-		if (name && strstr(name, "POKEY"))
-			mixer_set_volume(ch, volume);
-	}
-}
-
-
-/*
- *	Set the TMS5220 volume
- *
- *	What it says.
- *
- */
-
-void atarigen_set_tms5220_vol(int volume)
-{
-	int ch;
-
-	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-	{
-		const char *name = mixer_get_name(ch);
-		if (name && strstr(name, "5220"))
-			mixer_set_volume(ch, volume);
-	}
-}
-
-
-/*
- *	Set the OKI6295 volume
- *
- *	What it says.
- *
- */
-
-void atarigen_set_oki6295_vol(int volume)
-{
-	int ch;
-
-	for (ch = 0; ch < MIXER_MAX_CHANNELS; ch++)
-	{
-		const char *name = mixer_get_name(ch);
-		if (name && strstr(name, "6295"))
-			mixer_set_volume(ch, volume);
-	}
-}
-
-
-/*
- *	Generic 6502 CPU speedup handler
- *
- *	Special shading renderer that runs any pixels under pen 1 through a lookup table.
- *
- */
-
-static int m6502_speedup_r(int offset)
-{
-	int result = speed_b[0];
-
-	if (cpu_getpreviouspc() == speed_pc && speed_a[0] == speed_a[1] && result == speed_b[1])
-		cpu_spinuntil_int();
-
-	return result;
-}
-
-
 /*
  *	CPU unhalter
  *
@@ -1627,4 +1638,121 @@ static void unhalt_cpu(int param)
 {
 	cpu_halt(param, 1);
 }
+
+
+
+/*--------------------------------------------------------------------------
+
+	General stuff
+	
+		atarigen_show_slapstic_message - display warning about slapstic
+		atarigen_show_sound_message - display warning about coins
+		atarigen_update_messages - update messages
+
+--------------------------------------------------------------------------*/
+
+/* statics */
+static char *message_text[10];
+static int message_countdown;
+
+/*
+ *	Display a warning message about slapstic protection
+ *
+ *	What it says.
+ *
+ */
+ 
+void atarigen_show_slapstic_message(void)
+{
+	message_text[0] = "There are known problems with";
+	message_text[1] = "later levels of this game due";
+	message_text[2] = "to incomplete slapstic emulation.";
+	message_text[3] = "You have been warned.";
+	message_text[4] = NULL;
+	message_countdown = 15 * Machine->drv->frames_per_second;
+}
+
+
+/*
+ *	Display a warning message about sound being disabled
+ *
+ *	What it says.
+ *
+ */
+
+void atarigen_show_sound_message(void)
+{
+	if (Machine->sample_rate == 0)
+	{
+		message_text[0] = "This game may have trouble accepting";
+		message_text[1] = "coins, or may even behave strangely,";
+		message_text[2] = "because you have disabled sound.";
+		message_text[3] = NULL;
+		message_countdown = 15 * Machine->drv->frames_per_second;
+	}
+}
+
+
+/*
+ *	Update on-screen messages
+ *
+ *	What it says.
+ *
+ */
+
+void atarigen_update_messages(void)
+{
+	if (message_countdown && message_text[0])
+	{
+		int maxwidth = 0;
+		int lines, x, y, i, j;
+		
+		/* first count lines and determine the maximum width */
+		for (lines = 0; lines < 10; lines++)
+		{
+			if (!message_text[lines]) break;
+			x = strlen(message_text[lines]);
+			if (x > maxwidth) maxwidth = x;
+		}
+		maxwidth += 2;
+
+		/* determine y offset */
+		x = (Machine->uiwidth - Machine->uifontwidth * maxwidth) / 2;
+		y = (Machine->uiheight - Machine->uifontheight * (lines + 2)) / 2;
+
+		/* draw a row of spaces at the top and bottom */
+		for (i = 0; i < maxwidth; i++)
+		{
+			ui_text(" ", x + i * Machine->uifontwidth, y);
+			ui_text(" ", x + i * Machine->uifontwidth, y + (lines + 1) * Machine->uifontheight);
+		}
+		y += Machine->uifontheight;
+
+		/* draw the message */
+		for (i = 0; i < lines; i++)		
+		{
+			int width = strlen(message_text[i]) * Machine->uifontwidth;
+			int dx = (Machine->uifontwidth * maxwidth - width) / 2;
+			
+			for (j = 0; j < dx; j += Machine->uifontwidth)
+			{
+				ui_text(" ", x + j, y);
+				ui_text(" ", x + (maxwidth - 1) * Machine->uifontwidth - j, y);
+			}
+			
+			ui_text(message_text[i], x + dx, y);
+			y += Machine->uifontheight;
+		}
+
+		/* decrement the counter */
+		message_countdown--;
+		
+		/* if a coin is inserted, make the message go away */
+		if (osd_key_pressed(OSD_KEY_3) || osd_key_pressed(OSD_KEY_4))
+			message_countdown = 0;
+	}
+	else
+		message_text[0] = NULL;
+}
+
 

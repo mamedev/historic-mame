@@ -1482,6 +1482,26 @@ ROM_START( eyes_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+ROM_START( eyes2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "g38201.7d",    0x0000, 0x1000, 0x2cda7185 )
+	ROM_LOAD( "g38202.7e",    0x1000, 0x1000, 0xb9fe4f59 )
+	ROM_LOAD( "g38203.7f",    0x2000, 0x1000, 0xd618ba66 )
+	ROM_LOAD( "g38204.7h",    0x3000, 0x1000, 0xcf038276 )
+
+	ROM_REGION_DISPOSE(0x2000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g38205.5d",    0x0000, 0x1000, 0x03b1b4c7 )  /* this one has a (c) sign */
+	ROM_LOAD( "e5",           0x1000, 0x1000, 0xa42b5201 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
 ROM_START( mrtnt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tnt.1",        0x0000, 0x1000, 0x0e836586 )
@@ -1710,7 +1730,6 @@ static void maketrax_rom_decode(void)
 
 }
 
-
 static void ponpoko_decode(void)
 {
 	int i, j;
@@ -1744,7 +1763,6 @@ static void ponpoko_decode(void)
 		}
 	}
 }
-
 
 static void eyes_decode(void)
 {
@@ -1785,7 +1803,6 @@ static void eyes_decode(void)
 		}
 	}
 }
-
 
 
 static void copytoscreen(int mem, int len, int screen, int direction, int numstart)
@@ -2773,7 +2790,7 @@ struct GameDriver eyes_driver =
 	__FILE__,
 	0,
 	"eyes",
-	"Eyes",
+	"Eyes (Digitrex Techstar)",
 	"1982",
 	"Digitrex Techstar (Rock-ola license)",
 	"Zsolt Vasvari\n"BASE_CREDITS,
@@ -2782,6 +2799,32 @@ struct GameDriver eyes_driver =
 	0,
 
 	eyes_rom,
+	eyes_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	eyes_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	eyes_hiload, eyes_hisave
+};
+
+struct GameDriver eyes2_driver =
+{
+	__FILE__,
+	&eyes_driver,
+	"eyes2",
+	"Eyes (Techstar Inc.)",
+	"1982",
+	"Techstar Inc. (Rock-ola license)",
+	"Zsolt Vasvari\n"BASE_CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	eyes2_rom,
 	eyes_decode, 0,
 	0,
 	0,	/* sound_prom */
@@ -3002,3 +3045,4 @@ struct GameDriver alibaba_driver =
 
 	alibaba_hiload, pacman_hisave
 };
+

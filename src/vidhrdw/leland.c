@@ -16,24 +16,31 @@
 //#define NOISY_VIDEO
 /* Filter by video port */
 //#define NOISE_FILTER (offset==0x0b)
-/* Filter by video address */
+/* Filter by video address (Filters out all slave COMMS) */
 #define NOISE_FILTER (leland_video_addr[num] < 0x7800)
+
+//#define NOISE_FILTER (leland_video_addr[num] >= 0x7800)
+
+
+/* DAC */
+//#define NOISE_FILTER ((leland_video_addr[num] & 0x7f) >= 0x50)
+
+/* No filter */
+//#define NOISE_FILTER
+
 
 //#define VIDEO_FIDDLE
 
 
-#define VIDEO_WIDTH 0x28
+#define VIDEO_WIDTH  0x28
 #define VIDEO_HEIGHT 0x1e
 
 static int leland_video_addr[2];
 static int leland_video_plane_count[2];
+static int leland_vram_low_data[2];
 
 /* Callback bank handler */
 extern void (*leland_update_master_bank)(void);
-
-/* Palette RAM */
-unsigned char *leland_palette_ram;
-const int     leland_palette_ram_size=0x0400;
 
 /* Video RAM (internal to gfx chip ???) */
 unsigned char *leland_video_ram;
@@ -47,8 +54,8 @@ static int leland_bk_ylow;
 static int leland_bk_yhigh;
 
 /* Data latches */
-static int leland_vram_high_data;
-static int leland_vram_low_data;
+//static int leland_vram_high_data;
+
 
 /* Background graphics */
 static struct osd_bitmap *background_bitmap;
@@ -76,7 +83,7 @@ void leland_draw_bkchar(int x, int y, int ch)
 
 /* Graphics control register (driven by AY8910 port A) */
 static int leland_gfx_control;
-int leland_sound_port_r(int offset, int data)
+int leland_sound_port_r(int offset)
 {
     return leland_gfx_control;
 }
@@ -112,16 +119,38 @@ void leland_bk_yhigh_w(int offset, int data)
         leland_bk_yhigh=data;
 }
 
-/* Palette RAM */
-void leland_palette_ram_w(int offset, int data)
+void leland_gfx_port_w(int offset, int data)
 {
-        leland_palette_ram[offset]=data;
+    switch (offset)
+    {
+        case 0: /* 0x?a */
+                AY8910_control_port_0_w(0, data);
+                break;
+        case 1: /* 0x?b */
+                AY8910_write_port_0_w(0, data);
+                break;
+        case 2: /* 0x?c */
+                leland_bk_xlow_w(0, data);
+                break;
+        case 3: /* 0x?d */
+                leland_bk_xhigh_w(0,data);
+                break;
+        case 4: /* 0x?e */
+                leland_bk_ylow_w(0,data);
+                break;
+        case 5: /* 0x?f */
+                leland_bk_yhigh_w(0, data);
+                break;
+        default:
+            if (errorlog)
+            {
+                fprintf(errorlog, "CPU #%d %04x Warning: Unknown video port %02x write (%02x)\n",
+                        cpu_getactivecpu(),cpu_get_pc(), offset,
+                        data);
+            }
+    }
 }
 
-int leland_palette_ram_r(int offset)
-{
-        return leland_palette_ram[offset];
-}
 
 /* Word video address */
 
@@ -133,8 +162,11 @@ void leland_video_addr_w(int offset, int data, int num)
     }
 	else
 	{
-        leland_video_addr[num]=(leland_video_addr[num]&0x00ff)|data<<8;
+        leland_video_addr[num]=(leland_video_addr[num]&0x00ff)|(data<<8);
 	}
+
+    /* Mask out irrelevant high bit */
+    leland_video_addr[num]&=0x7fff;
 
     /* Reset the video plane count */
     leland_video_plane_count[num]=0;
@@ -143,33 +175,32 @@ void leland_video_addr_w(int offset, int data, int num)
 
 int leland_vram_low_r(int num)
 {
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     return leland_video_ram[addr];
 }
 
 int leland_vram_high_r(int num)
 {
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     return leland_video_ram[addr+VRAM_HIGH];
 }
 
 void leland_vram_low_w(int data, int num)
 {
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     leland_video_ram[addr]=data;
-    leland_vram_low_data=data;  /* Set data latch */
+    leland_vram_low_data[num]=data;  /* Set data latch */
 }
 
 void leland_vram_high_w(int data, int num)
 {
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     leland_video_ram[addr+VRAM_HIGH]=data;
-    leland_vram_high_data=data; /* Set data latch */
 }
 
 void leland_vram_all_w(int data, int num)
 {
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     leland_video_ram[addr+0x00000]=data;
     leland_video_ram[addr+0x00001]=data;
     leland_video_ram[addr+VRAM_HIGH]=data;
@@ -182,27 +213,38 @@ void leland_vram_fill_w(int data, int num)
     for (i=leland_video_addr[num]&0x7f; i<0x80; i++)
     {
         leland_vram_high_w(data, num);
-        leland_vram_low_w(leland_vram_low_data, num);
+        leland_vram_low_w(data, num);
         leland_video_addr[num]++;
     }
 }
 
 void leland_vram_planar_w(int data, int num)
 {
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
     addr+=(leland_video_plane_count[num])>>1;
     leland_video_ram[addr]=data;
     leland_video_plane_count[num]++;
+/*
+    if (errorlog)
+    {
+        fprintf(errorlog, "WRITE [%04x]=%02x\n", addr, data);
+    }
+ */
+
 }
 
 void leland_vram_planar_masked_w(int data, int num)
 {
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
     addr+=(leland_video_plane_count[num])>>1;
 
 #if 0
+    /*
+    Used to draw sprites with transparency. Some self test
+    text does not draw correctly if this is enabled.
+    */
     if (data&0xf0)
     {
         leland_video_ram[addr] &= 0x0f;
@@ -223,18 +265,24 @@ void leland_vram_planar_masked_w(int data, int num)
 int leland_vram_planar_r(int num)
 {
     int ret;
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
     addr+=(leland_video_plane_count[num])>>1;
     ret= leland_video_ram[addr];
     leland_video_plane_count[num]++;
+
+/*    if (errorlog)
+    {
+        fprintf(errorlog, "READ [%04x] (%02x)\n", addr, ret);
+    }
+ */
     return ret;
 }
 
 int leland_vram_plane_r(int num)
 {
     int ret;
-    int addr=leland_video_addr[num]&0x7fff;
+    int addr=leland_video_addr[num];
     addr+=(leland_video_plane_count[num]&0x01)*VRAM_HIGH;
     addr+=(leland_video_plane_count[num])>>1;
     ret= leland_video_ram[addr];
@@ -250,6 +298,7 @@ int leland_vram_port_r(int offset, int num)
     {
         case 0x03:
             ret=leland_vram_plane_r(num);
+            leland_video_plane_count[num]=0;
             break;
 
         case 0x05:
@@ -300,7 +349,6 @@ void leland_vram_port_w(int offset, int data, int num)
 {
     int ret, i;
 
-
     switch (offset)
     {
         case 0x01:
@@ -317,13 +365,13 @@ void leland_vram_port_w(int offset, int data, int num)
 
         case 0x09:
             leland_vram_high_w(data, num);
-            leland_vram_low_w(leland_vram_low_data, num);
+            leland_vram_low_w(leland_vram_low_data[num], num);
             leland_video_addr[num]++;
             break;
 
         case 0x0a:
             leland_vram_low_w(data, num);
-            leland_vram_high_w(leland_vram_high_data, num);
+            leland_vram_high_w(data, num);
             leland_video_addr[num]++;
             break;
 
@@ -339,6 +387,16 @@ void leland_vram_port_w(int offset, int data, int num)
         case 0x0d: /* High write with latch */
             leland_vram_high_w(data, num);
             leland_video_addr[num]++;
+            break;
+
+        case 0x15:
+            /* Used by Alley master to draw the pins knocked over display */
+            leland_vram_high_w(data, num);
+            break;
+
+        case 0x16:
+            /* Used by Alley master to draw the pins knocked over display */
+            leland_vram_low_w(data, num);
             break;
 
         case 0x1b:
@@ -423,45 +481,7 @@ int leland_vh_start(void)
 	return 0;
 }
 
-void leland_onboard_dac(void)
-{
-    int data, i, offset;
-    int dac1on, dac2on;
-    static int counter;
 
-    dac1on=(~leland_gfx_control)&0x01;
-    dac2on=(~leland_gfx_control)&0x02;
-    if (dac1on || dac2on)
-    {
-        /*
-        Either DAC1 or DAC2 are on.
-        Output sound. Since both DACs are triggered by the video
-        refresh at the same time, we combine the two values and
-        use 1 MAME DAC
-        */
-
-        /* The timing is completely wrong. */
-        for (i=0; i<0x100; i++)
-        {
-            offset=((counter/0x30)*0x080)+counter%0x30+0x50;
-            data=0;
-            if (dac1on)
-            {
-                data =(char)leland_video_ram[offset];
-            }
-            if (dac2on)
-            {
-                data+=(char)leland_video_ram[offset+VRAM_HIGH];
-            }
-            DAC_signed_data_w(0, data);
-            counter++;
-            if (offset == 0x77ff)
-            {
-                counter=0;
-            }
-        }
-    }
-}
 
 /***************************************************************************
 
@@ -480,32 +500,12 @@ void leland_vh_stop(void)
 	}
 }
 
-INLINE void leland_build_palette(void)
-{
-	int offset;
-
-    for (offset = 0; offset < 0x0400; offset++)
-	{
-		int red, green, blue;
-        red   = leland_palette_ram[offset]&0x07;
-        green = (leland_palette_ram[offset]&0x38)>>3;
-        blue  = (leland_palette_ram[offset]&0xc0)>>6;
-        palette_change_color (offset,
-                        red*17*2+red*2,
-                        green*17*2+green*2,
-                        blue*20*2+blue*2);
-        palette_used_colors[offset] = PALETTE_COLOR_USED;
-	}
-	palette_recalc();
-}
 
 /***************************************************************************
 
     Merge background and foreground bitmaps.
 
 ***************************************************************************/
-
-
 
 void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
 {
@@ -526,9 +526,7 @@ void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
 
             for (j=32-4; j>=0; j-=4)
             {
-                value=0;
                 value=(data>>j)&0x0f;
-
                 if (bkbitmap)
                 {
                     /*
@@ -587,12 +585,6 @@ void leland_draw_bitmap(struct osd_bitmap *bitmap, struct osd_bitmap *bkbitmap)
             fwrite(leland_video_ram, leland_video_ram_size, 1, fp);
 			fclose(fp);
 		}
-        fp=fopen("PALETTE.DMP", "w+b");
-		if (fp)
-		{
-            fwrite(leland_palette_ram, leland_palette_ram_size, 1, fp);
-			fclose(fp);
-		}
 	}
 #endif
 }
@@ -627,7 +619,7 @@ void leland_screenrefresh(struct osd_bitmap *bitmap,int full_refresh, int bkchar
     ypos=scrolly/8;
 
     /* Build the palette */
-    leland_build_palette();
+	palette_recalc();
 
     /*
     Render the background graphics
@@ -662,8 +654,6 @@ void leland_screenrefresh(struct osd_bitmap *bitmap,int full_refresh, int bkchar
 
     /* Merge the two bitmaps together */
     leland_draw_bitmap(bitmap, 0);
-
-    leland_onboard_dac();
 }
 
 void leland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -694,7 +684,7 @@ void pigout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 ***************************************************************************/
 
-unsigned char * ataxx_tram;         /* Unknown TRAM */
+unsigned char * ataxx_tram;         /* Unknown "TRAM" */
 int ataxx_tram_size;
 const int ataxx_qram_size=0x4000;   /* Really 0x2000, but bank is 0x4000 */
 unsigned char * ataxx_qram1;        /* Background RAM # 1 */
@@ -755,13 +745,13 @@ void ataxx_vram_port_w(int offset, int data, int num)
     {
         case 0x03:
             leland_vram_high_w(data, num);
-            leland_vram_low_w(leland_vram_low_data, num);
+            leland_vram_low_w(leland_vram_low_data[num], num);
             leland_video_addr[num]++;
             break;
 
         case 0x05:
             leland_vram_low_w(data, num);
-            leland_vram_high_w(leland_vram_high_data, num);
+            leland_vram_high_w(data, num);
             leland_video_addr[num]++;
             break;
 
@@ -785,6 +775,13 @@ void ataxx_vram_port_w(int offset, int data, int num)
         case 0x17:
             leland_vram_planar_masked_w(data, num);
             break;
+
+        case 0x1b:
+            // Not sure about this one
+            leland_vram_planar_w(0, num);
+            leland_vram_planar_w(data, num);
+            break;
+
 
         default:
             if (errorlog)
@@ -826,26 +823,6 @@ int  ataxx_svram_port_r(int offset)
     return ataxx_vram_port_r(offset, 1);
 }
 
-INLINE void ataxx_build_palette(void)
-{
-    int offset, pen;
-    pen=0;
-    for (offset = 0; offset < leland_palette_ram_size; offset+=2)
-	{
-		int red, green, blue;
-        blue  = leland_palette_ram[offset]&0x0f;
-        green = (leland_palette_ram[offset]&0xf0)>>4;
-        red  = (leland_palette_ram[offset+1] & 0x0f);
-        palette_change_color (pen,
-                        red*16+red,
-                        green*16+green,
-                        blue*16+blue);
-        palette_used_colors[pen] = PALETTE_COLOR_USED;
-        pen++;
-	}
-	palette_recalc();
-}
-
 int ataxx_vh_start(void)
 {
     if (leland_vh_start())
@@ -853,7 +830,8 @@ int ataxx_vh_start(void)
         return 1;
     }
 
-    /* This background bitmap technique needs to be moved to
+    /*
+    This background bitmap technique needs to be moved to
     the generic leland driver (when the bitmap renderer supports
     scrolling)
     */
@@ -903,7 +881,7 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     int x, y, offs;
 
     /* Build the palette */
-    ataxx_build_palette();
+	palette_recalc();
 
     /*
     Rebuild the background bitmap.
@@ -953,10 +931,71 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
+static signed char *buffer1,*buffer2;
+static int channel;
+const int buffer_len = 256;
 
+int leland_sh_start(const struct MachineSound *msound)
+{
+	int vol[2];
 
+	/* allocate the buffers */
+	buffer1 = malloc(buffer_len);
+	buffer2 = malloc(buffer_len);
+	if (buffer1 == 0 || buffer2 == 0)
+	{
+		free(buffer1);
+		free(buffer2);
+		return 1;
+	}
+	memset(buffer1,0,buffer_len);
+	memset(buffer2,0,buffer_len);
 
+	/* request a sound channel */
+	vol[0] = vol[1] = 25;
+	channel = mixer_allocate_channels(2,vol);
+	mixer_set_name(channel+0,"streamed DAC #0");
+	mixer_set_name(channel+1,"streamed DAC #1");
+	return 0;
+}
 
+void leland_sh_stop (void)
+{
+	free(buffer1);
+	free(buffer2);
+	buffer1 = buffer2 = 0;
+}
 
+void leland_sh_update(void)
+{
+    /* 8MHZ 8 bit DAC sound stored in program ROMS */
+    int data, dacpos;
+    int dac1on, dac2on;
+	signed char *buf;
 
+    if (Machine->sample_rate == 0) return;
 
+    dac1on=(~leland_gfx_control)&0x01;
+    dac2on=(~leland_gfx_control)&0x02;
+
+    if (dac1on)
+    {
+		buf = buffer1;
+
+        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
+			*(buf++) = leland_video_ram[dacpos]/2;
+	}
+	else memset(buffer1,0,buffer_len);
+
+    if (dac2on)
+    {
+		buf = buffer2;
+
+        for (dacpos = 0x50;dacpos < 0x8000;dacpos += 0x80)
+			*(buf++) = leland_video_ram[dacpos+VRAM_HIGH]/2;
+	}
+	else memset(buffer2,0,buffer_len);
+
+	mixer_play_streamed_sample(channel+0,buffer1,buffer_len,buffer_len * Machine->drv->frames_per_second);
+	mixer_play_streamed_sample(channel+1,buffer2,buffer_len,buffer_len * Machine->drv->frames_per_second);
+}

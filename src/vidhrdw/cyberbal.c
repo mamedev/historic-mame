@@ -267,6 +267,9 @@ void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			int color = (data >> 12) & 7;
 			drawgfx(bitmap, gfx, code, color, hflip, 0, 16 * x, 8 * y, 0, TRANSPARENCY_PEN, 0);
 		}
+
+	/* update onscreen messages */
+	atarigen_update_messages();
 }
 
 

@@ -81,10 +81,10 @@ const unsigned char disasm[0x100][4] = {
 	{bcc,  _rel,_bra},{bcs,  _rel,_bra},{bne,  _rel,_bra},{beq,  _rel,_bra},
 	{bhcc, _rel,_bra},{bhcs, _rel,_bra},{bpl,  _rel,_bra},{bmi,  _rel,_bra},
 	{bmc,  _rel,_bra},{bms,  _rel,_bra},{bil,  _rel,_bra},{bih,  _rel,_bra},
-	{neg,  _dir,_mrw},{ill,  _imp,_0  },{ill,  _imp,_0	},{com,  _dir,_mrw},/* 30 */
-	{lsr,  _dir,_mrw},{ill,  _imp,_0  },{ror,  _dir,_mrw},{asr,  _dir,_mrw},
-	{asl,  _dir,_mrw},{rol,  _dir,_mrw},{dec,  _dir,_mrw},{ill,  _imp,_0  },
-	{inc,  _dir,_mrw},{tst,  _dir,_mrd},{ill,  _imp,_0	},{clr,  _dir,_mwr},
+	{neg,  _dir,_zrw},{ill,  _imp,_0  },{ill,  _imp,_0	},{com,  _dir,_zrw},/* 30 */
+	{lsr,  _dir,_zrw},{ill,  _imp,_0  },{ror,  _dir,_zrw},{asr,  _dir,_zrw},
+	{asl,  _dir,_zrw},{rol,  _dir,_zrw},{dec,  _dir,_zrw},{ill,  _imp,_0  },
+	{inc,  _dir,_zrw},{tst,  _dir,_zrd},{ill,  _imp,_0	},{clr,  _dir,_zwr},
 	{nega, _imp,_0	},{ill,  _imp,_0  },{ill,  _imp,_0	},{coma, _imp,_0  },/* 40 */
 	{lsra, _imp,_0	},{ill,  _imp,_0  },{rora, _imp,_0	},{asra, _imp,_0  },
 	{asla, _imp,_0	},{rola, _imp,_0  },{deca, _imp,_0	},{ill,  _imp,_0  },

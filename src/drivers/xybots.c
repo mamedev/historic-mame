@@ -73,6 +73,10 @@ static void init_machine(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
+	
+	/* display messages */
+	atarigen_show_slapstic_message();
+	atarigen_show_sound_message();
 }
 
 

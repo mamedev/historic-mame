@@ -40,7 +40,7 @@ void wow_interrupt_enable_w(int offset, int data)
 
     if (data & 0x10)
  	{
-  		GorfDelay =(CurrentScan + 10) & 0xFF;
+  		GorfDelay =(CurrentScan + 7) & 0xFF;
 
         /* Gorf Special *MUST* occur before next scanline interrupt */
 

@@ -27,7 +27,7 @@ static int analog_player_port[MAX_INPUT_PORTS];
 
 /* header identifying the version of the game.cfg file */
 #define MAMECFGSTRING "MAMECFG\4"
-#define MAMEDEFSTRING "MAMEDEF\2"
+#define MAMEDEFSTRING "MAMEDEF\3"
 
 extern void *record;
 extern void *playback;
@@ -42,12 +42,10 @@ static unsigned short input_vblank[MAX_INPUT_PORTS];
 
 /* Assuming a maxium of one analog input device per port BW 101297 */
 static struct InputPort *input_analog[MAX_INPUT_PORTS];
-static int input_analog_value[MAX_INPUT_PORTS];
+static int input_analog_current_value[MAX_INPUT_PORTS],input_analog_previous_value[MAX_INPUT_PORTS];
 static int input_analog_init[MAX_INPUT_PORTS];
 
-static int mouse_last_x[OSD_MAX_JOY_ANALOG], mouse_last_y[OSD_MAX_JOY_ANALOG];
-static int mouse_current_x[OSD_MAX_JOY_ANALOG], mouse_current_y[OSD_MAX_JOY_ANALOG];
-static int mouse_previous_x[OSD_MAX_JOY_ANALOG], mouse_previous_y[OSD_MAX_JOY_ANALOG];
+static int mouse_delta_x[OSD_MAX_JOY_ANALOG], mouse_delta_y[OSD_MAX_JOY_ANALOG];
 static int analog_current_x[OSD_MAX_JOY_ANALOG], analog_current_y[OSD_MAX_JOY_ANALOG];
 static int analog_previous_x[OSD_MAX_JOY_ANALOG], analog_previous_y[OSD_MAX_JOY_ANALOG];
 
@@ -105,6 +103,8 @@ char ipdn_defaultstrings[][MAX_DEFSTR_LEN] =
 
 struct ipd inputport_defaults[] =
 {
+	{ IPT_UI_PAUSE, "Pause", OSD_KEY_P, 0 },
+
 	{ IPT_COIN1,  "Coin A",          OSD_KEY_3, 0 },
 	{ IPT_COIN2,  "Coin B",          OSD_KEY_4, 0 },
 	{ IPT_COIN3,  "Coin C",          OSD_KEY_5, 0 },
@@ -176,55 +176,55 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    0,               OSD_JOY4_FIRE4 },
 
 	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",        OSD_KEY_LEFT,  OSD_JOY_LEFT },
-	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        OSD_KEY_RIGHT, OSD_JOY_RIGHT },
-	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",      0, 0 },
-	{ (IPT_PADDLE | IPF_PLAYER2)+IPT_EXTENSION,             "Paddle 2",      0, 0 },
-	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",      0, 0 },
-	{ (IPT_PADDLE | IPF_PLAYER3)+IPT_EXTENSION,             "Paddle 3",      0, 0 },
+	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        OSD_KEY_RIGHT, OSD_JOY_RIGHT  },
+	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",      OSD_KEY_D,     OSD_JOY2_LEFT },
+	{ (IPT_PADDLE | IPF_PLAYER2)+IPT_EXTENSION,             "Paddle 2",      OSD_KEY_G,     OSD_JOY2_RIGHT },
+	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",      OSD_KEY_J,     OSD_JOY3_LEFT },
+	{ (IPT_PADDLE | IPF_PLAYER3)+IPT_EXTENSION,             "Paddle 3",      OSD_KEY_L,     OSD_JOY3_RIGHT },
 	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",      0, 0 },
 	{ (IPT_PADDLE | IPF_PLAYER4)+IPT_EXTENSION,             "Paddle 4",      0, 0 },
 	{ IPT_DIAL | IPF_PLAYER1,    "Dial",          OSD_KEY_LEFT,  OSD_JOY_LEFT },
-	{ (IPT_DIAL | IPF_PLAYER1)+IPT_EXTENSION,             "Dial",          OSD_KEY_RIGHT, OSD_JOY_RIGHT },
-	{ IPT_DIAL | IPF_PLAYER2,    "Dial 2",        0, 0 },
-	{ (IPT_DIAL | IPF_PLAYER2)+IPT_EXTENSION,             "Dial 2",        0, 0 },
-	{ IPT_DIAL | IPF_PLAYER3,    "Dial 3",        0, 0 },
-	{ (IPT_DIAL | IPF_PLAYER3)+IPT_EXTENSION,             "Dial 3",        0, 0 },
+	{ (IPT_DIAL | IPF_PLAYER1)+IPT_EXTENSION,               "Dial",          OSD_KEY_RIGHT, OSD_JOY_RIGHT },
+	{ IPT_DIAL | IPF_PLAYER2,    "Dial 2",        OSD_KEY_D,     OSD_JOY2_LEFT },
+	{ (IPT_DIAL | IPF_PLAYER2)+IPT_EXTENSION,               "Dial 2",      OSD_KEY_G,     OSD_JOY2_RIGHT },
+	{ IPT_DIAL | IPF_PLAYER3,    "Dial 3",        OSD_KEY_J,     OSD_JOY3_LEFT },
+	{ (IPT_DIAL | IPF_PLAYER3)+IPT_EXTENSION,               "Dial 3",      OSD_KEY_L,     OSD_JOY3_RIGHT },
 	{ IPT_DIAL | IPF_PLAYER4,    "Dial 4",        0, 0 },
-	{ (IPT_DIAL | IPF_PLAYER4)+IPT_EXTENSION,             "Dial 4",        0, 0 },
+	{ (IPT_DIAL | IPF_PLAYER4)+IPT_EXTENSION,               "Dial 4",        0, 0 },
 
 	{ IPT_TRACKBALL_X | IPF_PLAYER1, "Track X",   OSD_KEY_LEFT,  OSD_JOY_LEFT },
 	{ (IPT_TRACKBALL_X | IPF_PLAYER1)+IPT_EXTENSION,                 "Track X",   OSD_KEY_RIGHT, OSD_JOY_RIGHT },
-	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", 0, 0 },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER2)+IPT_EXTENSION,                 "Track X 2", 0, 0 },
-	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", 0, 0 },
-	{ (IPT_TRACKBALL_X | IPF_PLAYER3)+IPT_EXTENSION,                 "Track X 3", 0, 0 },
+	{ IPT_TRACKBALL_X | IPF_PLAYER2, "Track X 2", OSD_KEY_D,     OSD_JOY2_LEFT },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER2)+IPT_EXTENSION,                 "Track X 2", OSD_KEY_G,     OSD_JOY2_RIGHT },
+	{ IPT_TRACKBALL_X | IPF_PLAYER3, "Track X 3", OSD_KEY_J,     OSD_JOY3_LEFT },
+	{ (IPT_TRACKBALL_X | IPF_PLAYER3)+IPT_EXTENSION,                 "Track X 3", OSD_KEY_L,     OSD_JOY3_RIGHT },
 	{ IPT_TRACKBALL_X | IPF_PLAYER4, "Track X 4", 0, 0 },
 	{ (IPT_TRACKBALL_X | IPF_PLAYER4)+IPT_EXTENSION,                 "Track X 4", 0, 0 },
 
 	{ IPT_TRACKBALL_Y | IPF_PLAYER1, "Track Y",   OSD_KEY_UP,    OSD_JOY_UP },
 	{ (IPT_TRACKBALL_Y | IPF_PLAYER1)+IPT_EXTENSION,                 "Track Y",   OSD_KEY_DOWN,  OSD_JOY_DOWN },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", 0, 0 },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER2)+IPT_EXTENSION,                 "Track Y 2", 0, 0 },
-	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", 0, 0 },
-	{ (IPT_TRACKBALL_Y | IPF_PLAYER3)+IPT_EXTENSION,                 "Track Y 3", 0, 0 },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER2, "Track Y 2", OSD_KEY_R,     OSD_JOY2_UP },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER2)+IPT_EXTENSION,                 "Track Y 2", OSD_KEY_F,     OSD_JOY2_DOWN },
+	{ IPT_TRACKBALL_Y | IPF_PLAYER3, "Track Y 3", OSD_KEY_I,     OSD_JOY3_UP },
+	{ (IPT_TRACKBALL_Y | IPF_PLAYER3)+IPT_EXTENSION,                 "Track Y 3", OSD_KEY_K,     OSD_JOY3_DOWN },
 	{ IPT_TRACKBALL_Y | IPF_PLAYER4, "Track Y 4", 0, 0 },
 	{ (IPT_TRACKBALL_Y | IPF_PLAYER4)+IPT_EXTENSION,                 "Track Y 4", 0, 0 },
 
 	{ IPT_AD_STICK_X | IPF_PLAYER1, "AD Stick X",   OSD_KEY_LEFT,  OSD_JOY_LEFT },
 	{ (IPT_AD_STICK_X | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick X",   OSD_KEY_RIGHT, OSD_JOY_RIGHT },
-	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", 0, 0 },
-	{ (IPT_AD_STICK_X | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick X 2", 0, 0 },
-	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", 0, 0 },
-	{ (IPT_AD_STICK_X | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick X 3", 0, 0 },
+	{ IPT_AD_STICK_X | IPF_PLAYER2, "AD Stick X 2", OSD_KEY_D,     OSD_JOY2_LEFT },
+	{ (IPT_AD_STICK_X | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick X 2", OSD_KEY_G,     OSD_JOY2_RIGHT },
+	{ IPT_AD_STICK_X | IPF_PLAYER3, "AD Stick X 3", OSD_KEY_J,     OSD_JOY3_LEFT },
+	{ (IPT_AD_STICK_X | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick X 3", OSD_KEY_L,     OSD_JOY3_RIGHT },
 	{ IPT_AD_STICK_X | IPF_PLAYER4, "AD Stick X 4", 0, 0 },
 	{ (IPT_AD_STICK_X | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick X 4", 0, 0 },
 
 	{ IPT_AD_STICK_Y | IPF_PLAYER1, "AD Stick Y",   OSD_KEY_UP,    OSD_JOY_UP },
 	{ (IPT_AD_STICK_Y | IPF_PLAYER1)+IPT_EXTENSION,                "AD Stick Y",   OSD_KEY_DOWN,  OSD_JOY_DOWN },
-	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", 0, 0 },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick Y 2", 0, 0 },
-	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", 0, 0 },
-	{ (IPT_AD_STICK_Y | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Y 3", 0, 0 },
+	{ IPT_AD_STICK_Y | IPF_PLAYER2, "AD Stick Y 2", OSD_KEY_R,     OSD_JOY2_UP },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER2)+IPT_EXTENSION,                "AD Stick Y 2", OSD_KEY_F,     OSD_JOY2_DOWN },
+	{ IPT_AD_STICK_Y | IPF_PLAYER3, "AD Stick Y 3", OSD_KEY_I,     OSD_JOY3_UP },
+	{ (IPT_AD_STICK_Y | IPF_PLAYER3)+IPT_EXTENSION,                "AD Stick Y 3", OSD_KEY_K,     OSD_JOY3_DOWN },
 	{ IPT_AD_STICK_Y | IPF_PLAYER4, "AD Stick Y 4", 0, 0 },
 	{ (IPT_AD_STICK_Y | IPF_PLAYER4)+IPT_EXTENSION,                "AD Stick Y 4", 0, 0 },
 
@@ -464,20 +464,9 @@ int load_input_port_settings(void)
 			if (readip(f,&saved) != 0)
 				goto getout;
 
-			if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-			{
-				/* IPF_MASK contains user-accessable parameters for IPT_EXTENSION fields */
-				if ((in->type & ~IPF_MASK) != (saved.type & ~IPF_MASK))
-					goto getout;	/* the default values are different */
-			}
-			else
-			{
-				if (in->type != saved.type)
-					goto getout;	/* the default values are different */
-			}
-
 			if (in->mask != saved.mask ||
 				in->default_value != saved.default_value ||
+				in->type != saved.type ||
 				in->keyboard != saved.keyboard ||
 				in->joystick != saved.joystick)
 			goto getout;	/* the default values are different */
@@ -848,6 +837,34 @@ const char *input_port_name(const struct InputPort *in)
 		return inputport_defaults[i].name;
 }
 
+int input_port_type_key(int type)
+{
+	int i;
+
+
+	i = 0;
+
+	while (inputport_defaults[i].type != IPT_END &&
+			inputport_defaults[i].type != type)
+		i++;
+
+	return inputport_defaults[i].keyboard;
+}
+
+int input_port_type_joy(int type)
+{
+	int i;
+
+
+	i = 0;
+
+	while (inputport_defaults[i].type != IPT_END &&
+			inputport_defaults[i].type != type)
+		i++;
+
+	return inputport_defaults[i].joystick;
+}
+
 int input_port_key(const struct InputPort *in)
 {
 	int i,type;
@@ -931,7 +948,7 @@ void update_analog_port(int port)
 	int player;
 
 	/* get input definition */
-	in=input_analog[port];
+	in = input_analog[port];
 
 	/* if we're not cheating and this is a cheat-only port, bail */
 	if (!options.cheat && (in->type & IPF_CHEAT)) return;
@@ -979,14 +996,17 @@ void update_analog_port(int port)
 		else min = min - 0x100;
 	}
 
+
+	input_analog_previous_value[port] = input_analog_current_value[port];
+
 	/* if IPF_CENTER go back to the default position, but without */
 	/* throwing away sub-precision movements which might have been done. */
 	/* sticks are handled later... */
 	if ((in->type & IPF_CENTER) && (!is_stick))
-		input_analog_value[port] -=
-				(input_analog_value[port] * sensitivity / 100 - in->default_value) * 100 / sensitivity;
+		input_analog_current_value[port] -=
+				(input_analog_current_value[port] * sensitivity / 100 - in->default_value) * 100 / sensitivity;
 
-	current = input_analog_value[port];
+	current = input_analog_current_value[port];
 
 	delta = 0;
 
@@ -999,21 +1019,9 @@ void update_analog_port(int port)
 	}
 
 	if (axis == X_AXIS)
-	{
-		int now;
-
-		now = cpu_scalebyfcount(mouse_current_x[player] - mouse_previous_x[player]) + mouse_previous_x[player];
-		delta = now - mouse_last_x[player];
-		mouse_last_x[player] = now;
-	}
+		delta = mouse_delta_x[player];
 	else
-	{
-		int now;
-
-		now = cpu_scalebyfcount(mouse_current_y[player] - mouse_previous_y[player]) + mouse_previous_y[player];
-		delta = now - mouse_last_y[player];
-		mouse_last_y[player] = now;
-	}
+		delta = mouse_delta_y[player];
 
 	if (osd_key_pressed(deckey)) delta -= keydelta;
 	if (osd_key_pressed(inckey)) delta += keydelta;
@@ -1068,9 +1076,6 @@ void update_analog_port(int port)
 				prev = -prev;
 			}
 
-			/* scale by time */
-			new = cpu_scalebyfcount(new - prev) + prev;
-
 			/* apply sensitivity using a logarithmic scale */
 			if (in->mask > 0xff)
 			{
@@ -1111,10 +1116,7 @@ void update_analog_port(int port)
 			current=max*100/sensitivity;
 	}
 
-	input_analog_value[port]=current;
-
-	input_port_value[port] &= ~in->mask;
-	input_port_value[port] |= (current * sensitivity / 100) & in->mask;
+	input_analog_current_value[port]=current;
 
 	if (playback)
 		readword(playback,&input_port_value[port]);
@@ -1124,6 +1126,22 @@ void update_analog_port(int port)
 	if ( net_active() && (default_player != NET_SPECTATOR) )
 		net_analog_sync((unsigned char *) input_port_value, port, analog_player_port, default_player);
 #endif /* MAME_NET */
+}
+
+void scale_analog_port(int port)
+{
+	struct InputPort *in;
+	int delta,current,sensitivity;
+
+	in = input_analog[port];
+	sensitivity = IP_GET_SENSITIVITY(in);
+
+	delta = cpu_scalebyfcount(input_analog_current_value[port] - input_analog_previous_value[port]);
+
+	current = input_analog_previous_value[port] + delta;
+
+	input_port_value[port] &= ~in->mask;
+	input_port_value[port] |= (current * sensitivity / 100) & in->mask;
 }
 
 
@@ -1289,7 +1307,8 @@ if (errorlog && Machine->drv->vblank_duration == 0)
 					if (input_analog_init[port])
 					{
 						input_analog_init[port] = 0;
-						input_analog_value[port] = in->default_value * 100 / IP_GET_SENSITIVITY(in);
+						input_analog_current_value[port] = input_analog_previous_value[port]
+							= in->default_value * 100 / IP_GET_SENSITIVITY(in);
 					}
 				}
 				else
@@ -1437,7 +1456,6 @@ if (errorlog && IP_GET_IMPULSE(in) == 0)
 	if ( net_active() && (default_player != NET_SPECTATOR) )
 		net_input_sync((unsigned char *) input_port_value, (unsigned char *) input_port_defaults, MAX_INPUT_PORTS);
 #endif /* MAME_NET */
-
 }
 
 
@@ -1463,23 +1481,27 @@ void inputport_vblank_end(void)
 	osd_poll_joysticks();
 
 	/* update the analog devices */
-	for (i = 0; i < OSD_MAX_JOY_ANALOG; i ++)
+	for (i = 0;i < OSD_MAX_JOY_ANALOG;i++)
 	{
-		int deltax, deltay;
-
 		/* update the analog joystick position */
 		analog_previous_x[i] = analog_current_x[i];
 		analog_previous_y[i] = analog_current_y[i];
 		osd_analogjoy_read (i, &(analog_current_x[i]), &(analog_current_y[i]));
 
 		/* update mouse/trackball position */
-		mouse_previous_x[i] = mouse_current_x[i];
-		mouse_previous_y[i] = mouse_current_y[i];
-		osd_trak_read (i, &deltax, &deltay);
-		mouse_current_x[i] += deltax;
-		mouse_current_y[i] += deltay;
+		osd_trak_read (i, &mouse_delta_x[i], &mouse_delta_y[i]);
 	}
 
+	for (i = 0;i < MAX_INPUT_PORTS;i++)
+	{
+		struct InputPort *in;
+
+		in=input_analog[i];
+		if (in)
+		{
+			update_analog_port(i);
+		}
+	}
 }
 
 
@@ -1492,7 +1514,7 @@ int readinputport(int port)
 	in=input_analog[port];
 	if (in)
 	{
-		update_analog_port(port);
+		scale_analog_port(port);
 	}
 
 	return input_port_value[port];

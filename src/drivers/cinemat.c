@@ -766,10 +766,10 @@ INPUT_PORTS_START ( tgunner_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 	PORT_START /* joystick X */
-	PORT_ANALOG ( 0x6ff, 0x300, IPT_AD_STICK_X, 100, 0, 0, 0x620 )
+	PORT_ANALOG ( 0x6ff, 0x300, IPT_AD_STICK_X, 100, 10, 0, 0, 0x620 )
 
 	PORT_START /* joystick Y */
-	PORT_ANALOG ( 0x6ff, 0x300, IPT_AD_STICK_Y, 100, 0, 0, 0x620 )
+	PORT_ANALOG ( 0x6ff, 0x300, IPT_AD_STICK_Y, 100, 10, 0, 0, 0x620 )
 INPUT_PORTS_END
 
 
@@ -1035,7 +1035,7 @@ INPUT_PORTS_START ( speedfrk_input_ports )
 	PORT_START /* inputs low */
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT ( 0x70, IP_ACTIVE_LOW,  IPT_UNUSED ) /* actually the gear shift, see fake below */
-	PORT_ANALOG ( 0x0f, 0x00, IPT_DIAL, 25, 0, 0x03, 0x0a )
+	PORT_ANALOG ( 0x0f, 0x00, IPT_DIAL, 25, 10, 0, 0x03, 0x0a )
 
 	PORT_START /* joystick X */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1472,9 +1472,11 @@ INPUT_PORTS_START ( solarq_input_ports )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_START1 ) /* also hyperspace */
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW,  IPT_BUTTON3 )	/* alias for hyperspace */
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_START2 ) /* also nova */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON4 ) /* alias for nova */
 
 	PORT_START /* joystick X */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
@@ -1808,10 +1810,10 @@ INPUT_PORTS_START ( boxingb_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 )
 
 	PORT_START /* joystick X */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X, 100, 10, 0, 0, 255 )
 
 	PORT_START /* joystick Y */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 

@@ -387,40 +387,40 @@ Input Ports
 /* This fake input port is used for DIP Switch 2
    For all games except Sindbad Mystery that has different coinage */
 #define COINAGE PORT_START \
-        PORT_DIPNAME( 0x0f, 0x0c, "Coin B" ) \
-        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" ) \
-        PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" ) \
-        PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" ) \
+        PORT_DIPNAME( 0x0f, 0x0c, DEF_STR( Coin_B ) ) \
+        PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+        PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) ) \
+        PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) ) \
         PORT_DIPSETTING(    0x09, "2 Coins/1 Credit 5/3" ) \
         PORT_DIPSETTING(    0x05, "2 Coins/1 Credit 4/3" ) \
+        PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) ) \
         PORT_DIPSETTING(    0x0d, "1 Coin/1 Credit 5/6" ) \
         PORT_DIPSETTING(    0x03, "1 Coin/1 Credit 4/5" ) \
         PORT_DIPSETTING(    0x0b, "1 Coin/1 Credit 2/3" ) \
-        PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" ) \
+        PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) ) \
         PORT_DIPSETTING(    0x0f, "1 Coin/2 Credits 4/9" ) \
         PORT_DIPSETTING(    0x07, "1 Coin/2 Credits 5/11" ) \
-        PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" ) \
-        PORT_DIPSETTING(    0x0a, "1 Coin/3 Credits" ) \
-        PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" ) \
-        PORT_DIPSETTING(    0x0e, "1 Coin/5 Credits" ) \
-        PORT_DIPSETTING(    0x01, "1 Coin/6 Credits" ) \
-        PORT_DIPNAME( 0xf0, 0xc0, "Coin A" ) \
-        PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" ) \
-        PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" ) \
-        PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" ) \
+        PORT_DIPSETTING(    0x0a, DEF_STR( 1C_3C ) ) \
+        PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) ) \
+        PORT_DIPSETTING(    0x0e, DEF_STR( 1C_5C ) ) \
+        PORT_DIPSETTING(    0x01, DEF_STR( 1C_6C ) ) \
+        PORT_DIPNAME( 0xf0, 0xc0, DEF_STR( Coin_A ) ) \
+        PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+        PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) ) \
+        PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
         PORT_DIPSETTING(    0x90, "2 Coins/1 Credit 5/3" ) \
         PORT_DIPSETTING(    0x50, "2 Coins/1 Credit 4/3" ) \
+        PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) ) \
         PORT_DIPSETTING(    0xd0, "1 Coin/1 Credit 5/6" ) \
         PORT_DIPSETTING(    0x30, "1 Coin/1 Credit 4/5" ) \
         PORT_DIPSETTING(    0xb0, "1 Coin/1 Credit 2/3" ) \
-        PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" ) \
+        PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) ) \
         PORT_DIPSETTING(    0xf0, "1 Coin/2 Credits 4/9" ) \
         PORT_DIPSETTING(    0x70, "1 Coin/2 Credits 5/11" ) \
-        PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" ) \
-        PORT_DIPSETTING(    0xa0, "1 Coin/3 Credits" ) \
-        PORT_DIPSETTING(    0x60, "1 Coin/4 Credits" ) \
-        PORT_DIPSETTING(    0xe0, "1 Coin/5 Credits" ) \
-        PORT_DIPSETTING(    0x10, "1 Coin/6 Credits" )
+        PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) ) \
+        PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) ) \
+        PORT_DIPSETTING(    0xe0, DEF_STR( 1C_5C ) ) \
+        PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
 
 
 INPUT_PORTS_START( astrob_input_ports )
@@ -477,16 +477,16 @@ INPUT_PORTS_START( astrob_input_ports )
         PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
         PORT_DIPSETTING(    0x08, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x10, 0x00, "Demo Sound" )
-        PORT_DIPSETTING(    0x10, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+        PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
         PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
         PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
         PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
         PORT_DIPNAME( 0x40, 0x00, "Unknown 5" )
         PORT_DIPSETTING(    0x40, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x80, 0x00, "Lives" )
+        PORT_DIPNAME( 0x80, 0x00, DEF_STR( Lives ) )
         PORT_DIPSETTING(    0x00, "2" )
         PORT_DIPSETTING(    0x80, "3" )
 
@@ -682,14 +682,14 @@ INPUT_PORTS_START( monsterb_input_ports )
         PORT_START      /* FAKE */
         /* This fake input port is used for DIP Switch 1 */
         PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
-        PORT_DIPSETTING(    0x01, "Off" )
-        PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x06, 0x02, "Bonus Life" )
+        PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+        PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+        PORT_DIPNAME( 0x06, 0x02, DEF_STR( Bonus_Life ) )
         PORT_DIPSETTING(    0x04, "10000" )
         PORT_DIPSETTING(    0x02, "20000" )
         PORT_DIPSETTING(    0x06, "40000" )
         PORT_DIPSETTING(    0x00, "None" )
-        PORT_DIPNAME( 0x18, 0x08, "Difficulty" )
+        PORT_DIPNAME( 0x18, 0x08, DEF_STR( Difficulty ) )
         PORT_DIPSETTING(    0x00, "Easy" )
         PORT_DIPSETTING(    0x08, "Medium" )
         PORT_DIPSETTING(    0x10, "Hard" )
@@ -697,7 +697,7 @@ INPUT_PORTS_START( monsterb_input_ports )
         PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
         PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
         PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-        PORT_DIPNAME( 0xc0, 0x00, "Lives" )
+        PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
         PORT_DIPSETTING(    0x00, "3" )
         PORT_DIPSETTING(    0x40, "4" )
         PORT_DIPSETTING(    0x80, "5" )
@@ -758,7 +758,7 @@ INPUT_PORTS_START( spaceod_input_ports )
         PORT_DIPNAME( 0x04, 0x00, "Unknown 2" )
         PORT_DIPSETTING(    0x04, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x18, 0x00, "Bonus" )
+        PORT_DIPNAME( 0x18, 0x00, DEF_STR( Bonus_Life ) )
         PORT_DIPSETTING(    0x00, "20000" )
         PORT_DIPSETTING(    0x08, "40000" )
         PORT_DIPSETTING(    0x10, "60000" )
@@ -766,7 +766,7 @@ INPUT_PORTS_START( spaceod_input_ports )
         PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
         PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
         PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-        PORT_DIPNAME( 0xc0, 0x00, "Lives" )
+        PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
         PORT_DIPSETTING(    0x00, "3" )
         PORT_DIPSETTING(    0x40, "4" )
         PORT_DIPSETTING(    0x80, "5" )
@@ -831,7 +831,7 @@ INPUT_PORTS_START( pignewt_input_ports )
         PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
         PORT_DIPSETTING(    0x08, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x30, 0x00, "Lives" )
+        PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
         PORT_DIPSETTING(    0x00, "3" )
         PORT_DIPSETTING(    0x10, "4" )
         PORT_DIPSETTING(    0x20, "5" )
@@ -899,7 +899,7 @@ INPUT_PORTS_START( pignewta_input_ports )
         PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
         PORT_DIPSETTING(    0x08, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-        PORT_DIPNAME( 0x30, 0x00, "Lives" )
+        PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
         PORT_DIPSETTING(    0x00, "3" )
         PORT_DIPSETTING(    0x10, "4" )
         PORT_DIPSETTING(    0x20, "5" )
@@ -970,7 +970,7 @@ INPUT_PORTS_START( sindbadm_input_ports )
         PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
         PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
         PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-        PORT_DIPNAME( 0xc0, 0x00, "Lives" )
+        PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
         PORT_DIPSETTING(    0x00, "3" )
         PORT_DIPSETTING(    0x40, "4" )
         PORT_DIPSETTING(    0x80, "5" )
@@ -978,41 +978,41 @@ INPUT_PORTS_START( sindbadm_input_ports )
 
         PORT_START      /* FAKE */
         /* This fake input port is used for DIP Switch 2 */
-        PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-        PORT_DIPSETTING(    0x07, "4 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x09, "2 Coins/1 Credit" )
+        PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+        PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )
+        PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+        PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
         PORT_DIPSETTING(    0x05, "2 Coins/1 Credit 5/3" )
         PORT_DIPSETTING(    0x04, "2 Coins/1 Credit 4/3" )
-        PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
         PORT_DIPSETTING(    0x01, "1 Coin/1 Credit 2/3" )
         PORT_DIPSETTING(    0x02, "1 Coin/1 Credit 4/5" )
         PORT_DIPSETTING(    0x03, "1 Coin/1 Credit 5/6" )
-        PORT_DIPSETTING(    0x06, "2 Coins/3 Credits" )
-        PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )
+        PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
         PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 5/11" )
-        PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-        PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-        PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-        PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+        PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+        PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+        PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+        PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
 
-        PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-        PORT_DIPSETTING(    0x70, "4 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
-        PORT_DIPSETTING(    0x90, "2 Coins/1 Credit" )
+        PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+        PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) )
+        PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+        PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
         PORT_DIPSETTING(    0x50, "2 Coins/1 Credit 5/3" )
         PORT_DIPSETTING(    0x40, "2 Coins/1 Credit 4/3" )
-        PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+        PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
         PORT_DIPSETTING(    0x10, "1 Coin/1 Credit 2/3" )
         PORT_DIPSETTING(    0x20, "1 Coin/1 Credit 4/5" )
         PORT_DIPSETTING(    0x30, "1 Coin/1 Credit 5/6" )
-        PORT_DIPSETTING(    0x60, "2 Coins/3 Credits" )
-        PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+        PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) )
+        PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
         PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 5/11" )
-        PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-        PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-        PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-        PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
+        PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+        PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+        PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+        PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 
         PORT_START      /* IN8 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL)

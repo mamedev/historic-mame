@@ -258,8 +258,8 @@ int bosco_customio_data_r_1 (int offset)
 				else if ((in & 0x08) == 0) /* left */
 					dir = 6;
 
-				/* check fire */
-				dir |= (in & 0x10);
+				/* check fire (both impulse and hold, boscomd2 has autofire) */
+				dir |= (in & 0x30);
 
 				return dir;
 			}

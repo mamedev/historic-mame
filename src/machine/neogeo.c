@@ -310,6 +310,39 @@ NEO_CYCLE_R(gururin, 0x0604,0xffff,							READ_WORD(&neogeo_ram[0x1002]))
 //NEO_CYCLE_R(magdrop2,0x1cf3a,0,								READ_WORD(&neogeo_ram[0x0064]))
 //NEO_CYCLE_R(miexchng,0x,,READ_WORD(&neogeo_ram[0x]))
 
+NEO_CYCLE_R(kof98,       0xa146,0xfff,  READ_WORD(&neogeo_ram[0xa784]))
+NEO_CYCLE_R(marukodq,0x070e,0,          READ_WORD(&neogeo_ram[0x0210]))
+static int minasan_cycle_r(int offset)
+{
+        int mem;
+        if (cpu_get_pc()==0x17766)
+        {
+                cpu_spinuntil_int();
+                mem=READ_WORD(&neogeo_ram[0x00ca]);
+                mem--;
+                WRITE_WORD(&neogeo_ram[0x00ca],mem);
+                return mem;
+        }
+        return READ_WORD(&neogeo_ram[0x00ca]);
+}
+NEO_CYCLE_R(stakwin2,0x0b8c,0,          READ_WORD(&neogeo_ram[0x0002]))
+static int bakatono_cycle_r(int offset)
+{
+        int mem;
+        if (cpu_get_pc()==0x197cc)
+        {
+                cpu_spinuntil_int();
+                mem=READ_WORD(&neogeo_ram[0x00fa]);
+                mem--;
+                WRITE_WORD(&neogeo_ram[0x00fa],mem);
+                return mem;
+        }
+        return READ_WORD(&neogeo_ram[0x00fa]);
+}
+NEO_CYCLE_R(quizkof,0x0450,0,           READ_WORD(&neogeo_ram[0x4464]))
+NEO_CYCLE_R(quizdais,   0x0730,0,       READ_WORD(&neogeo_ram[0x59f2]))
+NEO_CYCLE_R(quizdai2,   0x1afa,0xffff,  READ_WORD(&neogeo_ram[0x0960]))
+
 /******************************************************************************/
 /* Routines to speed up the sound processor AVDB 24-10-1998		      */
 /******************************************************************************/
@@ -590,6 +623,14 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"gururin"))  install_mem_read_handler(0, 0x101002, 0x101003, gururin_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"magdrop2")) install_mem_read_handler(0, 0x100064, 0x100065, magdrop2_cycle_r);	// Graphic Glitches
 //	if (!strcmp(Machine->gamedrv->name,"miexchng")) install_mem_read_handler(0, 0x10, 0x10, miexchng_cycle_r);			// Can't do this.
+	if (!strcmp(Machine->gamedrv->name,"kof98"))    install_mem_read_handler(0, 0x10a784, 0x10a785, kof98_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"marukodq")) install_mem_read_handler(0, 0x100210, 0x100211, marukodq_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"minasan"))  install_mem_read_handler(0, 0x1000ca, 0x1000cb, minasan_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"stakwin2")) install_mem_read_handler(0, 0x100002, 0x100003, stakwin2_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"bakatono")) install_mem_read_handler(0, 0x1000fa, 0x1000fb, bakatono_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"quizkof"))  install_mem_read_handler(0, 0x104464, 0x104465, quizkof_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"quizdais")) install_mem_read_handler(0, 0x1059f2, 0x1059f3, quizdais_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"quizdai2")) install_mem_read_handler(0, 0x100960, 0x100961, quizdai2_cycle_r);
 
 //	if (!strcmp(Machine->gamedrv->name,"")) install_mem_read_handler(0, 0x10, 0x10, _cycle_r);
 #endif
@@ -683,7 +724,6 @@ static void neogeo_custom_memory(void)
 		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
 		WRITE_WORD(&RAM[0x0000],0x0010);
 	}
-
 }
 
 

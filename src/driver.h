@@ -265,6 +265,7 @@ struct MachineDriver
 #define VIDEO_PIXEL_ASPECT_RATIO_1_1 0x0000
 #define VIDEO_PIXEL_ASPECT_RATIO_1_2 0x0020
 
+#define VIDEO_DUAL_MONITOR 0x0040
 
 /* flags for sound_attributes */
 #define	SOUND_SUPPORTS_STEREO		0x0001

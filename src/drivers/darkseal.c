@@ -167,9 +167,9 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( darkseal_input_ports )
 	PORT_START	/* Player 1 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -177,9 +177,9 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -198,23 +198,23 @@ INPUT_PORTS_START( darkseal_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -233,13 +233,13 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x30, 0x30, "Energy" )
 	PORT_DIPSETTING(    0x00, "2" )
-  	PORT_DIPSETTING(    0x10, "2.5" )
+	PORT_DIPSETTING(    0x10, "2.5" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-  	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -386,25 +386,25 @@ static struct MachineDriver darkseal_machine_driver =
 
 ROM_START( darkseal_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-  	ROM_LOAD_EVEN( "ga04-3.rom",   0x00000, 0x20000, 0xbafad556 )
-  	ROM_LOAD_ODD ( "ga01-3.rom",   0x00000, 0x20000, 0xf409050e )
+	ROM_LOAD_EVEN( "ga04-3.rom",   0x00000, 0x20000, 0xbafad556 )
+	ROM_LOAD_ODD ( "ga01-3.rom",   0x00000, 0x20000, 0xf409050e )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
- 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
+	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
 
 	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
 	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
 
-  	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
 	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-  	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-  	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
 	ROM_REGION(0x10000)	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
@@ -412,25 +412,25 @@ ROM_END
 
 ROM_START( darksea1_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-  	ROM_LOAD_EVEN( "ga-04.rom",    0x00000, 0x20000, 0xa1a985a9 )
-  	ROM_LOAD_ODD ( "ga-01.rom",    0x00000, 0x20000, 0x98bd2940 )
+	ROM_LOAD_EVEN( "ga-04.rom",    0x00000, 0x20000, 0xa1a985a9 )
+	ROM_LOAD_ODD ( "ga-01.rom",    0x00000, 0x20000, 0x98bd2940 )
 	ROM_LOAD_EVEN( "ga-00.rom",    0x40000, 0x20000, 0xfbf3ac63 )
- 	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
+	ROM_LOAD_ODD ( "ga-05.rom",    0x40000, 0x20000, 0xd5e3ae3f )
 
 	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
 	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
 
-  	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
 	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
-  	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
-  	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
+	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
 	ROM_REGION(0x10000)	/* Sound CPU */
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
@@ -456,7 +456,7 @@ ROM_START( gatedoom_rom )
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )
@@ -476,7 +476,7 @@ ROM_START( gatedom1_rom )
   	/* the following four have not been verified on a real Gate of Doom */
 	/* board - might be different from Dark Seal! */
 	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
-  	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
 	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
  	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
@@ -484,7 +484,7 @@ ROM_START( gatedom1_rom )
 	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fz-07.rom",    0x00000, 0x20000, 0x588dd3cb )

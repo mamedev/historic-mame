@@ -796,6 +796,8 @@ void YM2151WriteReg(int n, int r, int v)
 			chip->CT = v;
 			chip->LFOwave = v & 3;
 			if (chip->porthandler) (*chip->porthandler)(0 , (chip->CT)>>6 );
+			else
+if (errorlog) fprintf(errorlog,"Write %x to YM2151 output port\n",(chip->CT)>>6);
 			break;
 		default:
 			if (errorlog) fprintf(errorlog,"Write %02x to undocumented YM2151 register #%02x\n",v,r);

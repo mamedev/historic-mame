@@ -6,8 +6,8 @@ extern unsigned char * cps1_output;     /* Output ports */
 extern int cps1_gfxram_size;
 extern int cps1_output_size;
 
-int cps1_input_r(int offset);    /* Input ports */
-int cps1_player_input_r(int offset);    /* Input ports */
+int cps1_eeprom_port_r(int offset);
+void cps1_eeprom_port_w(int offset, int data);
 
 int cps1_output_r(int offset);
 void cps1_output_w(int offset, int data);

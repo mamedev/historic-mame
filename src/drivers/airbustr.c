@@ -718,7 +718,7 @@ static struct YM2203interface ym2203_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	22000,		/* ?? */
+	18000,		/* ?? */
 	{ 4  },
 	{ 50 }
 };

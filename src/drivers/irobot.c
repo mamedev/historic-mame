@@ -210,10 +210,10 @@ INPUT_PORTS_START( irobot_input_ports )
     PORT_DIPSETTING(    0x00, "2 min 10 sec" )
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 INPUT_PORTS_END
 

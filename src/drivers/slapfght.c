@@ -983,6 +983,32 @@ ROM_START( slapbtuk_rom )
 	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
 ROM_END
 
+ROM_START( alcon_rom )
+	ROM_REGION(0x18000)
+	ROM_LOAD( "00",           0x00000, 0x8000, 0x2ba82d60 )
+	ROM_LOAD( "01",           0x10000, 0x8000, 0x18bb2f12 )	/* banked at 8000 */
+
+	ROM_REGION_DISPOSE(0x44000)
+	ROM_LOAD( "04",           0x00000, 0x2000, 0x31003483 )  /* Chars */
+	ROM_LOAD( "03",           0x02000, 0x2000, 0x404152c0 )
+	ROM_LOAD( "sf_r06.bin",   0x04000, 0x8000, 0xb6358305 )  /* Tiles */
+	ROM_LOAD( "sf_r09.bin",   0x0c000, 0x8000, 0xe92d9d60 )
+	ROM_LOAD( "sf_r08.bin",   0x14000, 0x8000, 0x5faeeea3 )
+	ROM_LOAD( "sf_r07.bin",   0x1c000, 0x8000, 0x974e2ea9 )
+	ROM_LOAD( "sf_r03.bin",   0x24000, 0x8000, 0x8545d397 )  /* Sprites */
+	ROM_LOAD( "sf_r01.bin",   0x2c000, 0x8000, 0xb1b7b925 )
+	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
+	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
+
+	ROM_REGION(0x0300)
+	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
+	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
+	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "sf_r05.bin",   0x0000, 0x2000, 0x87f4705a )
+ROM_END
+
 
 ROM_START( getstar_rom )
 
@@ -1403,6 +1429,32 @@ struct GameDriver slapbtuk_driver =
 	0,
 
 	slapbtuk_rom,
+	0, 0,
+	0,
+	0,
+
+	slapfigh_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	slapfigh_hiload, slapfigh_hisave
+};
+
+struct GameDriver alcon_driver =
+{
+	__FILE__,
+	&slapfigh_driver,
+	"alcon",
+	"Alcon",
+	"1986",
+	"?????",
+	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
+	GAME_NOT_WORKING,
+	&slapfigh_machine_driver,
+	0,
+
+	alcon_rom,
 	0, 0,
 	0,
 	0,

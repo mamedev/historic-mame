@@ -97,7 +97,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* IN2 - paddle */
-	PORT_ANALOG ( 0xff, 115, IPT_PADDLE, 50, 0, 64, 167 )
+	PORT_ANALOG ( 0xff, 115, IPT_PADDLE, 30, 10, 0, 64, 167 )
 INPUT_PORTS_END
 
 
@@ -185,7 +185,7 @@ INPUT_PORTS_START( ripcord_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START      /* IN2 - paddle */
-	PORT_ANALOG ( 0xff, 115, IPT_PADDLE, 50, 0, 64, 167 )
+	PORT_ANALOG ( 0xff, 115, IPT_PADDLE, 30, 10, 0, 64, 167 )
 INPUT_PORTS_END
 
 static unsigned char palette[] =

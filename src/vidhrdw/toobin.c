@@ -270,7 +270,6 @@ void toobin_moslip_w(int offset, int data)
 
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-
 #if DEBUG_VIDEO
 	if (osd_key_pressed(OSD_KEY_9)) debug();
 #endif
@@ -308,6 +307,9 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				}
 			}
 	}
+
+	/* update onscreen messages */
+	atarigen_update_messages();
 }
 
 

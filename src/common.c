@@ -175,7 +175,7 @@ int readroms(void)
 		Machine->memory_region_length[region] = region_size;
 
 		/* some games (i.e. Pleiades) want the memory clear on startup */
-		if (region_size < 0x100000)	/* don't clear large regions which will be filled anyway */
+		if (region_size <= 0x400000)	/* don't clear large regions which will be filled anyway */
 			memset(Machine->memory_region[region],0,region_size);
 
 		romp++;
@@ -257,29 +257,12 @@ int readroms(void)
 						goto getout;
 					}
 
-					if (romp->length & ROMFLAG_ALTERNATE)
-					{
-						/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
-						/* copy the ROM data */
-					#ifdef LSB_FIRST
-						c = Machine->memory_region[region] + (romp->offset ^ 1);
-					#else
-						c = Machine->memory_region[region] + romp->offset;
-					#endif
-
-						if (osd_fread_scatter(f,c,length,2) != length)
-						{
-							printf("Unable to read ROM %s\n",name);
-							osd_fclose(f);
-							goto printromlist;
-						}
-					}
-					else if (romp->length & ROMFLAG_NIBBLE)
+					if (romp->length & ROMFLAG_NIBBLE)
 					{
 						unsigned char *temp;
 
 
-						temp = malloc (length);
+						temp = malloc(length);
 
 						if (!temp)
 						{
@@ -316,6 +299,23 @@ int readroms(void)
 						}
 
 						free (temp);
+					}
+					else if (romp->length & ROMFLAG_ALTERNATE)
+					{
+						/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
+						/* copy the ROM data */
+					#ifdef LSB_FIRST
+						c = Machine->memory_region[region] + (romp->offset ^ 1);
+					#else
+						c = Machine->memory_region[region] + romp->offset;
+					#endif
+
+						if (osd_fread_scatter(f,c,length,2) != length)
+						{
+							printf("Unable to read ROM %s\n",name);
+							osd_fclose(f);
+							goto printromlist;
+						}
 					}
 					else
 					{

@@ -31,18 +31,18 @@ typedef unsigned char byte;
 #define PTRS_PER_FORMAT 2
 
 char *Formats[] = {
-    FMT("00000011dddddddd", "add a,#%D"),
+    FMT("00000011dddddddd", "add a,#$%X"),
     FMT("01101rrr", "add a,%R"),
     FMT("0110000r", "add a,@%R"),
-    FMT("00010011dddddddd", "adc a,#%D"),
+    FMT("00010011dddddddd", "adc a,#$%X"),
     FMT("01111rrr", "adc a,%R"),
     FMT("0111000r", "adc a,@%R"),
-    FMT("01010011dddddddd", "anl a,#%D"),
+    FMT("01010011dddddddd", "anl a,#$%X"),
     FMT("01011rrr", "anl a,%R"),
     FMT("0101000r", "anl a,@%R"),
-    FMT("10011000dddddddd", "anl bus,#%D"),
-    FMT("10011001dddddddd", "anl P1,#%D"),
-    FMT("10011010dddddddd", "anl P2,#%D"),
+    FMT("10011000dddddddd", "anl bus,#$%X"),
+    FMT("10011001dddddddd", "anl P1,#$%X"),
+    FMT("10011010dddddddd", "anl P2,#$%X"),
     FMT("100111pp", "anld %P,a"),
     FMT("aaa10100aaaaaaaa", "call %A"),
     FMT("00100111", "clr a"),
@@ -83,14 +83,14 @@ char *Formats[] = {
     FMT("bbb10010aaaaaaaa", "jb%B %A"),
     FMT("aaa00100aaaaaaaa", "jmp %A"),
     FMT("10110011", "jmpp @a"),
-    FMT("00100011dddddddd", "mov a,#%D"),
+    FMT("00100011dddddddd", "mov a,#$%X"),
     FMT("11111rrr", "mov a,%R"),
     FMT("1111000r", "mov a,@%R"),
     FMT("11000111", "mov a,psw"),
-    FMT("10111rrrdddddddd", "mov %R,#%D"),
+    FMT("10111rrrdddddddd", "mov %R,#$%X"),
     FMT("10101rrr", "mov %R,a"),
     FMT("1010000r", "mov @%R,a"),
-    FMT("1011000rdddddddd", "mov @%R,#%D"),
+    FMT("1011000rdddddddd", "mov @%R,#$%X"),
     FMT("11010111", "mov psw,a"),
     FMT("000011pp", "movd a,%P"),
     FMT("001111pp", "movd %P,a"),
@@ -102,10 +102,10 @@ char *Formats[] = {
     FMT("1001000r", "movx @%R,a"),
     FMT("0100 1rrr", "orl a,%R"),
     FMT("0100 000r", "orl a,@%R"),
-    FMT("0100 0011dddddddd", "orl a,#%D"),
-    FMT("1000 1000dddddddd", "orl bus,#%D"),
-    FMT("1000 1001dddddddd", "orl P1,#%D"),
-    FMT("1000 1010dddddddd", "orl P2,#%D"),
+    FMT("0100 0011dddddddd", "orl a,#$%X"),
+    FMT("1000 1000dddddddd", "orl bus,#$%X"),
+    FMT("1000 1001dddddddd", "orl P1,#$%X"),
+    FMT("1000 1010dddddddd", "orl P2,#$%X"),
     FMT("1000 11pp", "orld %P,a"),
     FMT("00000010", "outl bus,a"),
     FMT("001110pp", "outl %P,a"),
@@ -126,7 +126,7 @@ char *Formats[] = {
     FMT("00101rrr", "xcha a,%R"),
     FMT("0010000r", "xcha a,@%R"),
     FMT("0011000r", "xchda a,@%R"),
-    FMT("1101 0011dddddddd", "xrl a,#%D"),
+    FMT("1101 0011dddddddd", "xrl a,#$%X"),
     FMT("1101 1rrr", "xrl a,%R"),
     FMT("1101 000r", "xrl a,@%R"),
     FMT("00000000", "nop"),
@@ -267,6 +267,7 @@ int Dasm8039(char *buffer, unsigned pc)
 				case 'A': sprintf(num,"$%04.4X",a); break;
 				case 'B': sprintf(num,"%d",b); break;
 				case 'D': sprintf(num,"%d",d); break;
+				case 'X': sprintf(num,"%X",d); break;
 				case 'R': sprintf(num,"r%d",r); break;
 				case 'P': sprintf(num,"p%d",p); break;
 				default:

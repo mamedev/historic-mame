@@ -837,6 +837,29 @@ ROM_START( digdug2_rom )
 	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
+ROM_START( digdug2a_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "ddug2a_3.bin",  0x8000, 0x4000, 0xcc155338 )
+	ROM_LOAD( "ddug2a_1.bin",  0xc000, 0x4000, 0x40e46af8 )
+
+	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ddug2-3b.bin", 0x0000, 0x1000, 0xafcb4509 )
+	ROM_LOAD( "ddug2-3m.bin", 0x1000, 0x4000, 0xdf1f4ad8 )
+	ROM_LOAD( "ddug2-3n.bin", 0x5000, 0x4000, 0xccadb3ea )
+
+	ROM_REGION(0x0220)      /* color proms */
+	ROM_LOAD( "ddclr-5b.bin", 0x0000, 0x0020, 0x9b169db5 ) /* palette */
+	ROM_LOAD( "ddclr-4c.bin", 0x0020, 0x0100, 0x55a88695 ) /* characters */
+	ROM_LOAD( "ddclr_5k.bin", 0x0120, 0x0100, 0x9c55feda ) /* sprites */
+	/* Can't see the difference on screen, but CRC differs. */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
+
+	ROM_REGION(0x0100)      /* sound prom */
+	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
+ROM_END
+
 ROM_START( motos_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mts_1d.bin",   0x8000, 0x4000, 0x1104abb2 )
@@ -1178,7 +1201,7 @@ struct GameDriver digdug2_driver =
 	__FILE__,
 	0,
 	"digdug2",
-	"Dig Dug II",
+	"Dig Dug II (set 1)",
 	"1985",
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK",
@@ -1187,6 +1210,32 @@ struct GameDriver digdug2_driver =
 	0,
 
 	digdug2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	digdug2_input_ports,
+
+	PROM_MEMORY_REGION(2),0,0,
+	ORIENTATION_ROTATE_90,
+
+	digdug2_hiload, digdug2_hisave
+};
+
+struct GameDriver digdug2a_driver =
+{
+	__FILE__,
+	&digdug2_driver,
+	"digdug2a",
+	"Dig Dug II (set 2)",
+	"1985",
+	"Namco",
+	"Aaron Giles\nMirko Buffoni\nJROK",
+	0,
+	&digdug2_machine_driver,
+	0,
+
+	digdug2a_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -3,15 +3,23 @@
 Credits:
 - Steve Ellenoff: Original emulation and Mame driver
 - Jarek Parchanski: Dip Switch Fixes, Color improvements, ADPCM Interface code
+- Tatsuyuki Satoh: sound improvements, NEC 8741 emulation,adpcm improvements
 
 Special thanks to:
 - Camilty for precious hardware information and screenshots
 
 Issues:
-- Colors are a mess
-- communication to/from sound CPU(s) not yet hooked up
-- CPU speed may not be accurate
+- Sprite colors are a mess
 
+Trick:
+If you want fight with ODILION swordsman patch program for 1st CPU
+at these addresses, otherwise you won't never fight with him.
+
+		ROM[0x2256] = 0
+		ROM[0x2257] = 0
+		ROM[0x2258] = 0
+		ROM[0x2259] = 0
+		ROM[0x225A] = 0
 
 
 There are 3 Z80s and two AY-3-8910s..
@@ -40,7 +48,7 @@ Gs16    2nd z80 Data    (8K)    2000-3FFF
 *Main Z80*
 **********
 
-		9000 - 9fff	Work Ram
+	9000 - 9fff	Work Ram
         982e - 982e Free play
         98e0 - 98e0 Coin Input
         98e1 - 98e1 Player 1 Controls
@@ -50,7 +58,7 @@ Gs16    2nd z80 Data    (8K)    2000-3FFF
         9e00 - 9e7f Sprites in working ram!
         9e80 - 9eff Sprite X & Y in working ram!
 
-		a000 - afff	Sprite RAM & Video Attributes
+	a000 - afff	Sprite RAM & Video Attributes
         a000 - a37F	???
         a380 - a77F	Sprite Tile #s
         a780 - a7FF	Sprite Y & X positions
@@ -58,23 +66,12 @@ Gs16    2nd z80 Data    (8K)    2000-3FFF
         ab00 - ab00	Background Tile Y-Scroll register
         ab80 - abff	Sprite Attributes(X & Y Flip)
 
-		b000 - b7ff	Screen RAM
-		b800 - ffff	not used?!
+	b000 - b7ff	Screen RAM
+	b800 - ffff	not used?!
 
 PORTS:
-7e Read and Written - Communication to 2nd z80(or 8741?)
-7f Read and Written - Communication to 2nd z80(or 8741?)
-*****************************************
-Unknown but written to....
-9820,9821 = ?
-980a = # of Credits?
-980b = COIN SLOT 1?
-980c = COIN SLOT 2?
-980d = ?
-981d = ?
-980e, 980f ?
-982b, 982c, 982d, 982a, 9824, 9825, 9826
-98e3, 9e84 = ?
+7e 8741-#0 data port
+7f 8741-#1 command / status port
 
 *************
 *2nd Z80 CPU*
@@ -82,32 +79,76 @@ Unknown but written to....
 0000 - 3FFF ROM CODE
 4000 - 43FF WORK RAM
 
+write
+6000 adpcm sound command for 3rd CPU
+
 PORTS:
-40 Read and Written - ?
-41 Read and Written - ?
-60 Read and Written - ?
-61 Read and Written - ?
-80 Written - ?
-81 Written - ?
-a0 Written - ?
-e0 Read and Written - ?
+00 8741-#2 data port
+01 8741-#2 command / status port
+20 8741-#3 data port
+21 8741-#3 command / status port
+40 8741-#1 data port
+41 8741-#1 command / status port
+
+read:
+60 fake port #0 ?
+61 ay8910-#0 read port
+data / ay8910-#0 read
+80 fake port #1 ?
+81 ay8910-#1 read port
+
+write:
+60 ay8910-#0 controll port
+61 ay8910-#0 data port
+80 ay8910-#1 controll port
+81 ay8910-#1 data port
+   ay8910-A  : NMI controll ?
+a0 unknown
+e0 unknown (watch dog?)
+
+*************
+*3rd Z80 CPU*
+*************
+0000-5fff ROM
+
+read:
+a000 adpcm sound command
+
+write:
+6000 MSM5205 reset and data
+
+*************
+I8741 communication data
+
+reg: 0->1 (main->2nd) /     : (1->0) 2nd->main :
+ 0 : DSW.2 (port)           : DSW.1(port)
+ 1 : DSW.1                  : DSW.2
+ 2 : IN0 / sound error code :
+ 3 : IN1 / ?                :
+ 4 : IN2                    :
+ 4 : IN3                    :
+ 5 :                        :
+ 6 :                        : DSW0?
+ 7 :                        : ?
+
 ******************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
+#include "machine/tait8741.h"
 
 void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  gsword_vh_start(void);
 void gsword_vh_stop(void);
 void gsword_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void gs_video_attributes_w(int offset, int data);
-void gs_flipscreen_w(int offset, int data);
+void gs_charbank_w(int offset, int data);
+void gs_videoctrl_w(int offset, int data);
 void gs_videoram_w(int offset, int data);
 
 
 extern int gs_videoram_size;
 extern int gs_spritexy_size;
-
 
 extern unsigned char *gs_videoram;
 extern unsigned char *gs_scrolly_ram;
@@ -115,263 +156,156 @@ extern unsigned char *gs_spritexy_ram;
 extern unsigned char *gs_spritetile_ram;
 extern unsigned char *gs_spriteattrib_ram;
 
-/*Cpu 1 Ports*/
-static int port7e_c1=0;
-static int port7f_c1=0,port_select=0,status=0,data_nr=0;
+static int coins;
+static int fake8910_0,fake8910_1;
+static int gsword_nmi_step,gsword_nmi_count;
 
-/*Cpu 2 Ports*/
-static int port40_c2=0;
-static int port41_c2=0;
-static int port60_c2=0;
-static int port61_c2=0;
-static int port80_c2=0;
-static int port81_c2=0;
-static int porte0_c2=0;
-static int porta0_c2=0;
-static int port61_c2_buf[16];
-static int port81_c2_buf[16];
 
-//void gsword_adpcm_data_w(int offset, int data)
-//{
-//	if (data==0x30)
-//	{
-//	  MSM5205_reset_w(1,0);
-//	  return;
-//	}
-//	else if (data==0x20)
-//	{
-//	  MSM5205_reset_w(0,0);
-//	  return;
-//	}
-//	if (data & 0x10)
-//     	 MSM5205_data_w (1, data & 0xf);
-//	else
-//	 MSM5205_data_w (0, data & 0xf);
-//}
-
-//void adpcm_soundcommand_w(int offset,int data)
-//{
-//	soundlatch2_w(0,data);
-//	cpu_cause_interrupt(2, Z80_NMI_INT);
-//}
-
-//void sound_command_w(int offset,int data)
-//{
-//	soundlatch_w(0,data);
-//	cpu_cause_interrupt(1, Z80_NMI_INT);
-//}
-
-int gsword_port_read(int offset)
+static int gsword_coins_in(void)
 {
- 	switch(offset)
+	/* emulate 8741 coin slot */
+	if (readinputport(4)&0xc0)
 	{
-		case 0:
-			return(input_port_4_r(0));
-		case 1:
-			return(input_port_3_r(0));
-		case 2:
-			return(input_port_1_r(0));
-		case 3:
-			return(input_port_0_r(0));
-		case 5:
-			port_select=5;
- 		        data_nr=0;
-			return(0);	// ???
-		case 8:
-			port_select=8;
-			return(0);	// ???
-		case 10:
-			port_select=10;
-			return(0);	// ???
-		default:
-			return 0;
+		if(errorlog ) fprintf(errorlog,"Coin In\n");
+		return 0x80;
 	}
+	if(errorlog ) fprintf(errorlog,"NO Coin\n");
+	return 0x00;
 }
 
-int gsword_port_c1r(int offset)
+static int gsword_8741_2_r(int num)
 {
-	int result=0;
+	int data = 0;
 
-	if (errorlog) fprintf(errorlog,"%x  READ form port: %x\n",cpu_get_pc(),offset);
-
-	switch(offset)
-        {
-        	case 0x7e:
-			if (status & 1)
-			{
-				result = gsword_port_read(port7f_c1);
-			}
-			else
-			{
-				result = status;
-			}
-			status &= 0xfe;
-	                break;
-        	case 0x7f:
-			if (status & 2)
-	                      result = port7e_c1;
-			else
-			      result = 1;
-			status &= 0xfd;
-                break;
-        }
-	return result;
+	switch(num)
+	{
+	case 0x01: /* start button , coins */
+		return readinputport(0);
+	case 0x02: /* Player 1 Controller */
+		return readinputport(1);
+	case 0x04: /* Player 2 Controller */
+		return readinputport(3);
+	default:
+		if(errorlog) fprintf(errorlog,"8741-2 unknown read %d PC=%04x\n",num,cpu_get_pc());
+	}
+	/* unknown */
+	return 0;
 }
 
-void gsword_port_c1w(int offset, int data)
+static int gsword_8741_3_r(int num)
 {
-
-	if (errorlog) fprintf(errorlog,"%x  write to port: %x -> %x      %d     S:%d\n",cpu_get_pc(),offset,data,port_select,data_nr);
-
-	switch(offset)
-        {
-        	case 0x7e:
-                	if (!(status & 2))
-			{
-           	     port7e_c1 = data;
-			     if (port_select==5)
-			     {
-
-//					if(data > 0xdf)
-//						adpcm_soundcommand_w(0,data-0xdf);
-
-//					if(data < 0xdf)
-//						sound_command_w(0,data);
-
-					switch(data_nr)
-			        {
-			        	case 0x0:
-				     		if (data & 0x80)// SOUND COMMANDS
-						{
-							//soundlatch_w(0,data);
-						}
-						break;
-			        	case 0x1:
-						break;
-			        	case 0x2:
-						break;
-			        	case 0x3:
-						break;
-			        	case 0x4:
-						break;
-				 }
-				 data_nr++;
-			     }
-			}
-			status |= 2;  // busy for write
-	                break;
-        	case 0x7f:
-                	if (!(status & 1)) port7f_c1 = data;
-			status |= 1;  // busy for write
-	                break;
-        }
+	switch(num)
+	{
+	case 0x01: /* start button  */
+		return readinputport(2);
+	case 0x02: /* Player 1 Controller? */
+		return readinputport(1);
+	case 0x04: /* Player 2 Controller? */
+		return readinputport(3);
+	}
+	/* unknown */
+	if(errorlog) fprintf(errorlog,"8741-3 unknown read %d PC=%04x\n",num,cpu_get_pc());
+	return 0;
 }
 
-
-
-int gsword_port_c2r(int offset)
+static struct TAITO8741interface gsword_8741interface=
 {
-int result=0;
+	4,         /* 4 chips */
+	{ TAITO8741_MASTER,TAITO8741_SLAVE,TAITO8741_PORT,TAITO8741_PORT },  /* program mode */
+	{ 1,0,0,0 },							     /* serial port connection */
+	{ input_port_7_r,input_port_6_r,gsword_8741_2_r,gsword_8741_3_r }    /* port handler */
+};
 
-if (errorlog)
-      fprintf(errorlog,"%x  read from cpu2 port: %x\n",cpu_get_pc(),offset);
+void machine_init(void)
+{
+	unsigned char *ROM2 = Machine->memory_region[3];
 
-	switch(offset)
-        {
-        case 0x40:
-                result = port40_c2;
-                break;
-        case 0x41:
-                result = port41_c2;
-				port41_c2 = 1;
-                break;
-        case 0x60:
-                result = port61_c2_buf[port60_c2 & 0xF];
-                break;
-        case 0x61:
-                result = port61_c2;
-                break;
-        case 0x80:
-//				result = AY8910_read_port_0_r(offset);
-                result = port81_c2_buf[port80_c2 & 0xF];
-                break;
-        case 0x81:
-//				result = AY8910_read_port_1_r(offset);
-                result = port81_c2;
-                break;
-        case 0xa0:
-                result = porta0_c2;
-                break;
-        case 0xe0:
-                result = porte0_c2;
-				porte0_c2 = 1;
-                break;
-        }
+	ROM2[0x1da] = 0xc3; /* patch for rom self check */
+	ROM2[0x726] = 0;    /* patch for sound protection or time out function */
+	ROM2[0x727] = 0;
 
-	return result;
+	TAITO8741_start(&gsword_8741interface);
 }
 
-void gsword_port_c2w(int offset, int data)
+void gsword_reset(void)
 {
+	int i;
 
-	if (errorlog)
-	   fprintf(errorlog,"%x  Write to cpu2 port: %x -> %x\n",cpu_get_pc(),offset,data);
+	for(i=0;i<4;i++) TAITO8741_reset(i);
+	coins = 0;
+	gsword_nmi_count = 0;
+	gsword_nmi_step  = 0;
+}
 
-	switch(offset)
-        {
-        case 0x40:
-                port40_c2 = data;
-                break;
-        case 0x41:
-                port41_c2 = data;
-                break;
-        case 0x60:
+static int gsword_snd_interrupt(void)
+{
+	if( (gsword_nmi_count+=gsword_nmi_step) >= 4)
+	{
+		gsword_nmi_count = 0;
+		return Z80_NMI_INT;
+	}
+	return Z80_IGNORE_INT;
+}
 
-//				AY8910_control_port_0_w(offset,data);
-                port60_c2 = data;
-                break;
-        case 0x61:
+static void gsword_nmi_set(int offset,int data)
+{
+	switch(data)
+	{
+	case 0x02:
+		/* needed to disable NMI for memory check */
+		gsword_nmi_step  = 0;
+		gsword_nmi_count = 0;
+		break;
+	case 0x0d:
+	case 0x0f:
+		gsword_nmi_step  = 4;
+		break;
+	case 0xfe:
+	case 0xff:
+		gsword_nmi_step  = 4;
+		break;
+	}
+	/* bit1= nmi disable , for ram check */
+	if(errorlog) fprintf(errorlog,"NMI controll %02x\n",data);
+}
 
-//				AY8910_write_port_0_w(offset,data);
+static void gsword_AY8910_control_port_0_w(int offset,int data)
+{
+	AY8910_control_port_0_w(offset,data);
+	fake8910_0 = data;
+}
+static void gsword_AY8910_control_port_1_w(int offset,int data)
+{
+	AY8910_control_port_1_w(offset,data);
+	fake8910_1 = data;
+}
 
-				port61_c2 = data;
-				port61_c2_buf[port60_c2 & 0xF] = data;
-                break;
-        case 0x80:
+static int gsword_fake_0_r(int offset)
+{
+	return fake8910_0+1;
+}
+static int gsword_fake_1_r(int offset)
+{
+	return fake8910_1+1;
+}
 
-//				AY8910_control_port_1_w(offset,data);
+void gsword_adpcm_data_w(int offset, int data)
+{
+	MSM5205_data_w (0,data & 0x0f); /* bit 0..3 */
+	MSM5205_reset_w(0,(data>>5)&1); /* bit 5    */
+	MSM5205_vclk_w(0,(data>>4)&1);  /* bit 4    */
+}
 
-                port80_c2 = data;
-                break;
-        case 0x81:
-
-//				AY8910_write_port_1_w(offset,data);
-
-                port81_c2 = data;
-				port81_c2_buf[port80_c2 & 0xF] = data;
-                break;
-        case 0xa0:
-                porta0_c2 = data;
-                break;
-        case 0xe0:
-                porte0_c2 = data;
-                break;
-        }
+void adpcm_soundcommand_w(int offset,int data)
+{
+	soundlatch_w(0,data);
+	cpu_set_nmi_line(2, PULSE_LINE);
 }
 
 static struct MemoryReadAddress gsword_readmem[] =
 {
 	{ 0x0000, 0x8fff, MRA_ROM },
 	{ 0x9000, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xa37f, MRA_RAM },
-	{ 0xa380, 0xa3ff, MRA_RAM, &gs_spritetile_ram },
-	{ 0xa400, 0xa77f, MRA_RAM },
-	{ 0xa780, 0xa7ff, MRA_RAM, &gs_spritexy_ram, &gs_spritexy_size},
-	{ 0xa800, 0xaaff, MRA_RAM },
-	{ 0xab00, 0xab00, MRA_RAM, &gs_scrolly_ram },
-	{ 0xab01, 0xab7f, MRA_RAM },
-	{ 0xab80, 0xabff, MRA_RAM, &gs_spriteattrib_ram },
-	{ 0xac00, 0xafff, MRA_RAM },
 	{ 0xb000, 0xb7ff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -379,11 +313,13 @@ static struct MemoryReadAddress gsword_readmem[] =
 static struct MemoryWriteAddress gsword_writemem[] =
 {
 	{ 0x0000, 0x8fff, MWA_ROM },
-	{ 0x9000, 0x9834, MWA_RAM },
-	{ 0x9835, 0x9835, gs_flipscreen_w },
-	{ 0x9836, 0xa97f, MWA_RAM },
-	{ 0xa980, 0xa980, gs_video_attributes_w },
-	{ 0xa981, 0xafff, MWA_RAM },
+	{ 0x9000, 0x9fff, MWA_RAM },
+	{ 0xa380, 0xa3ff, MWA_RAM, &gs_spritetile_ram },
+	{ 0xa780, 0xa7ff, MWA_RAM, &gs_spritexy_ram, &gs_spritexy_size },
+	{ 0xa980, 0xa980, gs_charbank_w },
+	{ 0xaa80, 0xaa80, gs_videoctrl_w },	/* flip screen, char palette bank */
+	{ 0xab00, 0xab00, MWA_RAM, &gs_scrolly_ram },
+	{ 0xab80, 0xabff, MWA_RAM, &gs_spriteattrib_ram },
 	{ 0xb000, 0xb7ff, gs_videoram_w, &gs_videoram, &gs_videoram_size },
 	{ -1 }	/* end of table */
 };
@@ -399,71 +335,105 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0x6000, 0x6000, adpcm_soundcommand_w },
 	{ -1 }
 };
 
 static struct MemoryReadAddress readmem_cpu3[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0x6000, 0x9fff, MRA_NOP },
-//	{ 0xa000, 0xa000, soundlatch2_r },
-	{ 0xa001, 0xffff, MRA_NOP },
+	{ 0xa000, 0xa000, soundlatch_r },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress writemem_cpu3[] =
 {
 	{ 0x0000, 0x5fff, MWA_ROM },
-	{ 0x6000, 0x7fff, MWA_NOP },
-//	{ 0x8000, 0x8000, gsword_adpcm_data_w },
-	{ 0x8001, 0xffff, MWA_NOP },
+	{ 0x8000, 0x8000, gsword_adpcm_data_w },
 	{ -1 }
 };
 
 static struct IOReadPort readport[] =
 {
-    { 0x00, 0xff, gsword_port_c1r },
+	{ 0x7e, 0x7f, TAITO8741_0_r },
 	{ -1 }
 };
 
 static struct IOWritePort writeport[] =
 {
-    { 0x00, 0xff, gsword_port_c1w },
+	{ 0x7e, 0x7f, TAITO8741_0_w },
 	{ -1 }
 };
-
 
 static struct IOReadPort readport_cpu2[] =
 {
-	{ 0x00, 0xff, gsword_port_c2r },
+	{ 0x00, 0x01, TAITO8741_2_r },
+	{ 0x20, 0x21, TAITO8741_3_r },
+	{ 0x40, 0x41, TAITO8741_1_r },
+	{ 0x60, 0x60, gsword_fake_0_r },
+	{ 0x61, 0x61, AY8910_read_port_0_r },
+	{ 0x80, 0x80, gsword_fake_1_r },
+	{ 0x81, 0x81, AY8910_read_port_1_r },
+	{ 0xe0, 0xe0, IORP_NOP }, /* ?? */
 	{ -1 }
 };
-
 
 static struct IOWritePort writeport_cpu2[] =
 {
-    { 0x00, 0xFF, gsword_port_c2w },
+	{ 0x00, 0x01, TAITO8741_2_w },
+	{ 0x20, 0x21, TAITO8741_3_w },
+	{ 0x40, 0x41, TAITO8741_1_w },
+	{ 0x60, 0x60, gsword_AY8910_control_port_0_w },
+	{ 0x61, 0x61, AY8910_write_port_0_w },
+	{ 0x80, 0x80, gsword_AY8910_control_port_1_w },
+	{ 0x81, 0x81, AY8910_write_port_1_w },
+	{ 0xa0, 0xa0, IOWP_NOP }, /* ?? */
+	{ 0xe0, 0xe0, IOWP_NOP }, /* watch dog ?*/
 	{ -1 }
 };
 
-
-
 INPUT_PORTS_START( input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START	/* IN1 */
+	PORT_START	/* IN0 (8741-2 port1?) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_START	/* IN1 (8741-2 port2?) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_START	/* IN2 (8741-3 port1?) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_START	/* IN3  (8741-3 port2?) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_START	/* IN4 (coins) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
@@ -482,7 +452,12 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x1c, DEF_STR( 5C_1C ) )
 
 	PORT_START      /* DSW1 */
-	/* NOTE: Switches 0 & 1 not used */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x04, "Stage 1 Difficulty" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x04, "Normal" )
@@ -502,24 +477,30 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* DSW2 */
-	/* NOTE: Switches 0 & 1 not used */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x88, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x88, DEF_STR( Cocktail ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x30, 0x00, "Stage Begins" )
 	PORT_DIPSETTING(    0x00, "Fencing" )
 	PORT_DIPSETTING(    0x10, "Kendo" )
 	PORT_DIPSETTING(    0x20, "Rome" )
 	PORT_DIPSETTING(    0x30, "Kendo" )
-	PORT_DIPNAME( 0x40, 0x00, "Video Flip" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
-
-
 
 static struct GfxLayout gsword_text =
 {
@@ -575,22 +556,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	2,			/* 2 chips */
-	1500000,	/* 1.5 MHZ ?????? */
-	{ 25, 25 },
+	2,		/* 2 chips */
+	1500000,	/* 1.5 MHZ */
+	{ 30, 30 },
 	AY8910_DEFAULT_GAIN,
 	{ 0,0 },
 	{ 0,0 },
-	{ 0,0 },
+	{ 0,gsword_nmi_set }, /* portA write */
 	{ 0,0 }
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	2,		/* 2 chips */
-	4000,	/* 4000Hz playback ? */
-	0,		/* interrupt function */
-	{ 25, 25 }
+	1,					/* 1 chip             */
+	455000,				/* 455KHz ??          */
+	{ 0 },				/* interrupt function */
+	{ MSM5205_SEX_4B},	/* vclk input mode    */
+	{ 60 }
 };
 
 
@@ -601,37 +583,35 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,        /* 3.072 Mhz ? */
+			3000000,
 			0,
 			gsword_readmem,gsword_writemem,
 			readport,writeport,
 			interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3140000,        /* 3.140 Mhz ? */
+			CPU_Z80,
+			3000000,
 			3,
 			readmem_cpu2,writemem_cpu2,
 			readport_cpu2,writeport_cpu2,
-			ignore_interrupt,0
-//			interrupt,1
-
+			gsword_snd_interrupt,4
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3140000,        /* 3.140 Mhz ? */
+			2800000,	/* 2.8 MHz ? */
 			4,
 			readmem_cpu3,writemem_cpu3,
 			0,0,
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-    10,                                 /* Allow time for 2nd cpu to interleave*/
-	0,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	200,                                 /* Allow time for 2nd cpu to interleave*/
+	machine_init,
 
 	/* video hardware */
-    32*8, 32*8,{ 0*8, 32*8-1, 2*8, 30*8-1 },
+	32*8, 32*8,{ 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	gfxdecodeinfo,
 	256, 64*4+64*4,
@@ -657,8 +637,6 @@ static struct MachineDriver machine_driver =
 
 };
 
-
-
 /***************************************************************************
 
   Game driver(s)
@@ -681,8 +659,8 @@ ROM_START( gsword_rom )
 	ROM_LOAD( "gs8",          0x8000, 0x2000, 0x46824b30 )
 
 	ROM_REGION(0x0360)	/* color PROMs */
-	ROM_LOAD( "ac0-2.bpr",    0x0000, 0x0100, 0x966bda66 )	/* palette low bits */
-	ROM_LOAD( "ac0-1.bpr",    0x0100, 0x0100, 0x5c4b2adc )	/* palette high bits */
+	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette low bits */
+	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette high bits */
 	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table */
 	ROM_LOAD( "003",          0x0300, 0x0020, 0x43a548b8 )	/* address decoder? not used */
 	ROM_LOAD( "004",          0x0320, 0x0020, 0x43a548b8 )	/* address decoder? not used */
@@ -697,7 +675,6 @@ ROM_START( gsword_rom )
 	ROM_LOAD( "gs13",         0x2000, 0x2000, 0x4ee79796 )
 	ROM_LOAD( "gs14",         0x4000, 0x2000, 0x455364b6 )
 ROM_END
-
 
 
 static int gsword_hiload(void)
@@ -739,7 +716,6 @@ static void gsword_hisave(void)
 	}
 }
 
-
 struct GameDriver gsword_driver =
 {
 	__FILE__,
@@ -748,21 +724,21 @@ struct GameDriver gsword_driver =
 	"Great Swordsman",
 	"1984",
 	"Taito",
-    "Steve Ellenoff\nJarek Parchanski\n",
+	"Steve Ellenoff\nJarek Parchanski\nTatsuyuki Satoh\nCharlie Miltenberger (hardware info)",
 	GAME_WRONG_COLORS,
 	&machine_driver,
-	0,
+	gsword_reset,
 
-    gsword_rom,
+	gsword_rom,
 	0, 0,
-    0,
+	0,
 	0,	/* sound_prom */
 
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-    ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT,
 
-    gsword_hiload, gsword_hisave
+	gsword_hiload, gsword_hisave
 };
 

@@ -774,47 +774,6 @@ ROM_START( kingofb_rom )
     ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
-ROM_START( kingofbj_rom )
-    ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "d09_22.bin",   0x00000, 0x4000, 0x6220bfa2 )
-    ROM_LOAD( "e09_23.bin",   0x04000, 0x4000, 0x5782fdd8 )
-
-    ROM_REGION_DISPOSE(0x26000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "kob13.bin",    0x00000, 0x2000, 0x988a77bf ) /* characters */
-	/* sprites (top) */
-	ROM_LOAD( "vb01_01.bin",  0x02000, 0x4000, 0xce6580af ) /* plane 0 */
-    ROM_LOAD( "vb04_03.bin",  0x06000, 0x4000, 0xcf74ea50 ) /* plane 1 */
-    ROM_LOAD( "vb07_05.bin",  0x0a000, 0x4000, 0xd8b53975 ) /* plane 2 */
-    /* sprites (bottom) */
-    ROM_LOAD( "vb03_02.bin",  0x0e000, 0x4000, 0x4ab506d2 ) /* plane 0 */
-    ROM_LOAD( "vb05_04.bin",  0x12000, 0x4000, 0xecf95a2c ) /* plane 1 */
-    ROM_LOAD( "vb08_06.bin",  0x16000, 0x4000, 0x8200cb2b ) /* plane 2 */
-    /* tiles (top) */
-    ROM_LOAD( "vd01_07.bin",  0x1a000, 0x2000, 0x3d472a22 ) /* plane 0 */
-    ROM_LOAD( "vd04_09.bin",  0x1c000, 0x2000, 0xcc002ea9 ) /* plane 1 */
-    ROM_LOAD( "vd07_11.bin",  0x1e000, 0x2000, 0x23c1b3ee ) /* plane 2 */
-	/* tiles (bottom) */
-    ROM_LOAD( "vd03_08.bin",  0x20000, 0x2000, 0xd6b1b8fe ) /* plane 0 */
-    ROM_LOAD( "vd05_10.bin",  0x22000, 0x2000, 0xfce71e5a ) /* plane 1 */
-    ROM_LOAD( "vd08_12.bin",  0x24000, 0x2000, 0x3f68b991 ) /* plane 2 */
-
-	ROM_REGION(0x0300)	/* color PROMs */
-	ROM_LOAD( "vb14_col.bin", 0x0000, 0x0100, 0xc58e5121 )	/* red component */
-	ROM_LOAD( "vb15_col.bin", 0x0100, 0x0100, 0x5ab06f25 )	/* green component */
-	ROM_LOAD( "vb16_col.bin", 0x0200, 0x0100, 0x1171743f )	/* blue component */
-
-    ROM_REGION(0x10000)     /* 64k for the video cpu */
-    ROM_LOAD( "b09_21.bin",   0x00000, 0x4000, 0x3fb39489 )
-
-    ROM_REGION(0x10000)     /* 64k for the sprite cpu */
-    ROM_LOAD( "j09_dcr.bin",  0x00000, 0x2000, 0x379f4f84 )
-
-    ROM_REGION(0x10000)     /* 64k for the audio cpu */
-    ROM_LOAD( "f05_18.bin",   0x00000, 0x4000, 0xc057e28e )
-    ROM_LOAD( "h05_19.bin",   0x04000, 0x4000, 0x060253dd )
-    ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
-ROM_END
-
 /* Ring King */
 ROM_START( ringking_rom )
     ROM_REGION(0x10000)     /* 64k for code */
@@ -844,7 +803,7 @@ ROM_START( ringking_rom )
 
     ROM_REGION(0x10000)     /* 64k for the audio cpu */
     ROM_LOAD( "cx12.4ef",     0x00000, 0x8000, 0x1d5d6c6b )
-    ROM_LOAD( "cx11.2ef",     0x08000, 0x4000, 0x64c137a4 )
+    ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
 ROM_START( ringkin2_rom )
@@ -875,7 +834,7 @@ ROM_START( ringkin2_rom )
 
     ROM_REGION(0x10000)     /* 64k for the audio cpu */
     ROM_LOAD( "cx12.4ef",     0x00000, 0x8000, 0x1d5d6c6b )
-    ROM_LOAD( "cx11.2ef",     0x08000, 0x4000, 0x64c137a4 )
+    ROM_LOAD( "j05_20.bin",   0x08000, 0x4000, 0x64c137a4 )
 ROM_END
 
 ROM_START( ringkin3_rom )
@@ -885,7 +844,7 @@ ROM_START( ringkin3_rom )
     ROM_LOAD( "16.9f",        0x08000, 0x4000, 0xa3b3bb16 )
 
     ROM_REGION_DISPOSE(0x26000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "12.15d",       0x00000, 0x2000, 0x988a77bf ) /* characters */
+    ROM_LOAD( "12.15d",       0x00000, 0x2000, 0x988a77bf ) /* characters (Japanese) */
 	/* sprites (top) */
 	ROM_LOAD( "vb01_01.bin",  0x02000, 0x4000, 0xce6580af ) /* plane 0 */
     ROM_LOAD( "vb04_03.bin",  0x06000, 0x4000, 0xcf74ea50 ) /* plane 1 */
@@ -1079,32 +1038,6 @@ struct GameDriver kingofb_driver =
 	0,
 
 	kingofb_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	kingofb_hiload, kingofb_hisave
-};
-
-struct GameDriver kingofbj_driver =
-{
-	__FILE__,
-	&kingofb_driver,
-	"kingofbj",
-	"King of Boxer (Japanese?)",
-	"1985",
-	"Woodplace Inc.",
-	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	kingofbj_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

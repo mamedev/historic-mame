@@ -241,14 +241,9 @@ void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const stru
 
 /*--------------------------------------------------------------------------
 
-	General stuff
+	Sound stuff
 	
 		atarigen_init_6502_speedup - installs 6502 speedup cheat handler
-		atarigen_get_hblank - returns the current HBLANK state
-		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
-		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
-		atarigen_expanded_666_paletteram_w - byte version of above
-		atarigen_shade_render - Vindicators shading renderer
 		atarigen_set_ym2151_vol - set the volume of the 2151 chip
 		atarigen_set_ym2413_vol - set the volume of the 2413 chip
 		atarigen_set_pokey_vol - set the volume of the POKEY chip(s)
@@ -257,16 +252,45 @@ void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const stru
 
 --------------------------------------------------------------------------*/
 void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2);
-int atarigen_get_hblank(void);
-void atarigen_halt_until_hblank_0_w(int offset, int data);
-void atarigen_666_paletteram_w(int offset, int data);
-void atarigen_expanded_666_paletteram_w(int offset, int data);
-void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *gfx, int code, int hflip, int x, int y, const struct rectangle *clip, const unsigned char *shade_table);
 void atarigen_set_ym2151_vol(int volume);
 void atarigen_set_ym2413_vol(int volume);
 void atarigen_set_pokey_vol(int volume);
 void atarigen_set_tms5220_vol(int volume);
 void atarigen_set_oki6295_vol(int volume);
+
+
+
+/*--------------------------------------------------------------------------
+
+	Misc Video stuff
+	
+		atarigen_get_hblank - returns the current HBLANK state
+		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
+		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
+		atarigen_expanded_666_paletteram_w - byte version of above
+		atarigen_shade_render - Vindicators shading renderer
+
+--------------------------------------------------------------------------*/
+int atarigen_get_hblank(void);
+void atarigen_halt_until_hblank_0_w(int offset, int data);
+void atarigen_666_paletteram_w(int offset, int data);
+void atarigen_expanded_666_paletteram_w(int offset, int data);
+void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *gfx, int code, int hflip, int x, int y, const struct rectangle *clip, const unsigned char *shade_table);
+
+
+
+/*--------------------------------------------------------------------------
+
+	General stuff
+	
+		atarigen_show_slapstic_message - display warning about slapstic
+		atarigen_show_sound_message - display warning about coins
+		atarigen_update_messages - update messages
+
+--------------------------------------------------------------------------*/
+void atarigen_show_slapstic_message(void);
+void atarigen_show_sound_message(void);
+void atarigen_update_messages(void);
 
 
 

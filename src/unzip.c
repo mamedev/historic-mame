@@ -1,10 +1,10 @@
 #include "unzip.h"
-#include "inflate.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <zlib.h>
 
 /* public globals */
 int	gUnzipQuiet = 0;		/* flag controls error messages */
@@ -14,6 +14,11 @@ extern FILE *errorlog;
 #define ERROR_CORRUPT "The zipfile seems to be corrupt, please check it"
 #define ERROR_FILESYSTEM "Your filesystem seems to be corrupt, please check it"
 #define ERROR_UNSUPPORTED "The format of this zipfile is not supported, please recompress it"
+
+#define INFLATE_INPUT_BUFFER_MAX 16384
+#ifndef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#endif
 
 /* Print a error message */
 void errormsg(const char* extmsg, const char* usermsg, const char* zipname) {
@@ -440,6 +445,98 @@ int seekcompresszip(ZIP* zip, struct zipent* ent) {
 	return 0;
 }
 
+/* Inflate a file
+   in:
+   in_file stream to inflate
+   in_size size of the compressed data to read
+   out_size size of decompressed data
+   out:
+   out_data buffer for decompressed data
+   return:
+   ==0 ok
+
+   990525 rewritten for use with zlib MLR
+*/
+static int inflate_file(FILE* in_file, unsigned in_size, unsigned char* out_data, unsigned out_size)
+{
+    int err;
+	unsigned char* in_buffer;
+    z_stream d_stream; /* decompression stream */
+
+    d_stream.zalloc = 0;
+    d_stream.zfree = 0;
+    d_stream.opaque = 0;
+
+	d_stream.next_in  = 0;
+	d_stream.avail_in = 0;
+    d_stream.next_out = out_data;
+    d_stream.avail_out = out_size;
+
+    err = inflateInit2(&d_stream, -MAX_WBITS);
+	/* windowBits is passed < 0 to tell that there is no zlib header.
+	 * Note that in this case inflate *requires* an extra "dummy" byte
+	 * after the compressed stream in order to complete decompression and
+	 * return Z_STREAM_END.
+	 */
+    if (err != Z_OK)
+	{
+		if (errorlog)
+			fprintf(errorlog, "inflateInit error: %d\n", err);
+        return -1;
+	}
+
+	in_buffer = (unsigned char*)malloc(INFLATE_INPUT_BUFFER_MAX+1);
+	if (!in_buffer)
+		return -1;
+
+    for (;;)
+	{
+		if (in_size <= 0)
+		{
+			if (errorlog)
+				fprintf(errorlog, "inflate error: compressed size too small\n");
+			free (in_buffer);
+			return -1;
+		}
+		d_stream.next_in  = in_buffer;
+		d_stream.avail_in = fread (in_buffer, 1, MIN(in_size, INFLATE_INPUT_BUFFER_MAX), in_file);
+		in_size -= d_stream.avail_in;
+		if (in_size == 0)
+			d_stream.avail_in++; /* add dummy byte at end of compressed data */
+
+        err = inflate(&d_stream, Z_NO_FLUSH);
+        if (err == Z_STREAM_END)
+			break;
+		if (err != Z_OK)
+		{
+			if (errorlog)
+				fprintf(errorlog, "inflate error: %d\n", err);
+			free (in_buffer);
+			return -1;
+		}
+    }
+
+    err = inflateEnd(&d_stream);
+	if (err != Z_OK)
+	{
+		if (errorlog)
+			fprintf(errorlog, "inflateEnd error: %d\n", err);
+		free (in_buffer);
+		return -1;
+	}
+
+	free (in_buffer);
+
+	if ((d_stream.avail_out > 0) || (in_size > 0))
+	{
+		if (errorlog)
+			fprintf(errorlog, "zip size mismatch. %i\n", in_size);
+		return -1;
+	}
+
+	return 0;
+}
+
 /* Read compressed data
    out:
 	data compressed data read
@@ -501,7 +598,8 @@ int readuncompresszip(ZIP* zip, struct zipent* ent, char* data) {
 		}
 
 		/* configure inflate */
-		if (inflate_file( zip->fp, ent->compressed_size, (unsigned char*)data, ent->uncompressed_size )) {
+		if (inflate_file( zip->fp, ent->compressed_size, (unsigned char*)data, ent->uncompressed_size))
+		{
 			errormsg("Inflating compressed data", ERROR_CORRUPT, zip->zip);
 			return -3;
 		}
@@ -627,7 +725,7 @@ void unzip_cache_clear()
 
 			/* reset cache entry */
 			zip_cache_map[i] = 0;
-//			return;
+/*			return; */
 
 		}
 	}

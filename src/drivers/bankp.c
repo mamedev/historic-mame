@@ -1,6 +1,7 @@
 /***************************************************************************
 
 Bank Panic memory map (preliminary)
+Similar to Appoooh
 
 0000-dfff ROM
 e000-e7ff RAM
@@ -244,7 +245,7 @@ ROM_START( bankp_rom )
 	ROM_LOAD( "epr6168.bin",  0xc000, 0x2000, 0x05f3a867 )
 	ROM_LOAD( "epr6167.bin",  0xe000, 0x2000, 0x3fa337e1 )
 
-	ROM_REGION(0x00220)	/* color proms */
+	ROM_REGION(0x0220)	/* color proms */
 	ROM_LOAD( "pr6177.clr",   0x0000, 0x020, 0xeb70c5ae ) 	/* palette */
 	ROM_LOAD( "pr6178.clr",   0x0020, 0x100, 0x0acca001 ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr6179.clr",   0x0120, 0x100, 0xe53bafdb ) 	/* charset #2 lookup table */

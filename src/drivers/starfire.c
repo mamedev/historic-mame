@@ -128,97 +128,93 @@ static struct MemoryWriteAddress fireone_writemem[] =
 
 
 INPUT_PORTS_START( starfire_input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Time" )
+	PORT_DIPSETTING(    0x00, "90 Sec" )
+	PORT_DIPSETTING(    0x01, "80 Sec" )
+	PORT_DIPSETTING(    0x02, "70 Sec" )
+	PORT_DIPSETTING(    0x03, "60 Sec" )
+	PORT_DIPNAME( 0x04, 0x00, "Coins to Start" )
+	PORT_DIPSETTING(    0x00, "1 Coint" )
+	PORT_DIPSETTING(    0x04, "2 Coins" )
+	PORT_DIPNAME( 0x08, 0x00, "Fuel" )
+	PORT_DIPSETTING(    0x00, "300" )
+	PORT_DIPSETTING(    0x08, "600" )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus" )
+	PORT_DIPSETTING(    0x00, "no bonus" )
+	PORT_DIPSETTING(    0x10, "700 points" )
+	PORT_DIPSETTING(    0x20, "500 points" )
+	PORT_DIPSETTING(    0x30, "300 points" )
+	PORT_DIPNAME( 0x40, 0x00, "Score Table Hold" )
+	PORT_DIPSETTING(    0x00, "fixed length" )
+	PORT_DIPSETTING(    0x40, "fixed length+fire" )
+	PORT_DIPNAME( 0x80, 0x00, "Mode" )
+	PORT_DIPSETTING(    0x80, "Diagnostic" )
+	PORT_DIPSETTING(    0x00, "Normal" )
 
-        PORT_START      /* DSW0 */
-        PORT_DIPNAME( 0x03, 0x00, "Time" )
-        PORT_DIPSETTING(    0x00, "90 Sec" )
-        PORT_DIPSETTING(    0x01, "80 Sec" )
-        PORT_DIPSETTING(    0x02, "70 Sec" )
-        PORT_DIPSETTING(    0x03, "60 Sec" )
-        PORT_DIPNAME( 0x04, 0x00, "Coins to Start" )
-        PORT_DIPSETTING(    0x00, "1 Coint" )
-        PORT_DIPSETTING(    0x04, "2 Coins" )
-        PORT_DIPNAME( 0x08, 0x00, "Fuel" )
-        PORT_DIPSETTING(    0x00, "300" )
-        PORT_DIPSETTING(    0x08, "600" )
-        PORT_DIPNAME( 0x30, 0x00, "Bonus" )
-        PORT_DIPSETTING(    0x00, "no bonus" )
-        PORT_DIPSETTING(    0x10, "700 points" )
-        PORT_DIPSETTING(    0x20, "500 points" )
-        PORT_DIPSETTING(    0x30, "300 points" )
-        PORT_DIPNAME( 0x40, 0x00, "Score Table Hold" )
-        PORT_DIPSETTING(    0x00, "fixed length" )
-        PORT_DIPSETTING(    0x40, "fixed length+fire" )
-        PORT_DIPNAME( 0x80, 0x00, "Mode" )
-        PORT_DIPSETTING(    0x80, "Diagnostic" )
-        PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN)
 
-        PORT_START      /* IN1 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1)
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1)
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1)
-        PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN)
-        PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN)
-        PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN)
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN)
-        PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_START  /* IN2 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0, 0, 255 )
 
-    	PORT_START  /* IN2 */
-	    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 0, 0, 255 )
+	PORT_START  /* IN3 */
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0, 0, 255 )
 
-	    PORT_START  /* IN3 */
-    	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0, 255 )
-
-		PORT_START /* Throttle (IN4) */
-		PORT_BITX( 0xFF, 0x00, IP_ACTIVE_HIGH | IPF_TOGGLE, "Throttle", OSD_KEY_Z, IP_JOY_NONE )
-
+	PORT_START /* Throttle (IN4) */
+	PORT_BITX( 0xFF, 0x00, IP_ACTIVE_HIGH | IPF_TOGGLE, "Throttle", OSD_KEY_Z, IP_JOY_NONE )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( fireone_input_ports )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Coins" )
+	PORT_DIPSETTING(    0x00, "1/2" )
+	PORT_DIPSETTING(    0x01, "1/1" )
+	PORT_DIPSETTING(    0x02, "2/2" )
+	PORT_DIPSETTING(    0x03, "2/4" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
+	PORT_DIPSETTING(    0x00, "75 Sec" )
+	PORT_DIPSETTING(    0x04, "90 Sec" )
+	PORT_DIPSETTING(    0x08, "105 Sec" )
+	PORT_DIPSETTING(    0x0c, "120 Sec" )
+	PORT_DIPNAME( 0x30, 0x00, "Bonus difficulty" )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x10, "Average" )
+	PORT_DIPSETTING(    0x20, "Tough" )
+	PORT_DIPSETTING(    0x30, "Very tough" )
+	PORT_DIPNAME( 0x40, 0x00, "Sound in attract mode" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPNAME( 0x80, 0x00, "Test mode" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-        PORT_START      /* DSW0 */
-        PORT_DIPNAME( 0x03, 0x00, "Coins" )
-        PORT_DIPSETTING(    0x00, "1/2" )
-        PORT_DIPSETTING(    0x01, "1/1" )
-        PORT_DIPSETTING(    0x02, "2/2" )
-        PORT_DIPSETTING(    0x03, "2/4" )
-        PORT_DIPNAME( 0x0c, 0x0c, "Time" )
-        PORT_DIPSETTING(    0x00, "75 Sec" )
-        PORT_DIPSETTING(    0x04, "90 Sec" )
-        PORT_DIPSETTING(    0x08, "105 Sec" )
-        PORT_DIPSETTING(    0x0c, "120 Sec" )
-        PORT_DIPNAME( 0x30, 0x00, "Bonus difficulty" )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPSETTING(    0x10, "Average" )
-        PORT_DIPSETTING(    0x20, "Tough" )
-        PORT_DIPSETTING(    0x30, "Very tough" )
-        PORT_DIPNAME( 0x40, 0x00, "Sound in attract mode" )
-        PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-        PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-        PORT_DIPNAME( 0x80, 0x00, "Test mode" )
-        PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-        PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
-        PORT_START      /* IN1 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1)
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1)
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2)
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-    	PORT_START  /* IN2 */
-	PORT_ANALOG ( 0x3f, 0x20, IPT_AD_STICK_X, 100, 0, 0, 63 )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2)
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1)
+	PORT_START  /* IN2 */
+	PORT_ANALOG ( 0x3f, 0x20, IPT_AD_STICK_X, 100, 10, 0, 0, 63 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1)
 
 	PORT_START  /* IN3 */
-    	PORT_ANALOG ( 0x3f, 0x20, IPT_AD_STICK_Y, 100, 0, 0, 63 )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON4)
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3)
-
+	PORT_ANALOG ( 0x3f, 0x20, IPT_AD_STICK_Y, 100, 10, 0, 0, 63 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON4)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3)
 INPUT_PORTS_END
 
 static struct MachineDriver starfire_machine_driver =

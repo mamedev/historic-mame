@@ -49,11 +49,16 @@ void toki_soundcommand_w(int offset,int data)
 	cpu_cause_interrupt(1,0xff);
 }
 
+static int msm5205next;
+
 void toki_adpcm_int (int data)
 {
-	static int toggle;
+	static int toggle=0;
 
-	toggle = 1 - toggle;
+	MSM5205_data_w (0,msm5205next);
+	msm5205next>>=4;
+
+	toggle ^= 1;
 	if (toggle)
 		cpu_cause_interrupt(1,Z80_NMI_INT);
 }
@@ -73,8 +78,7 @@ void toki_adpcm_control_w(int offset,int data)
 
 void toki_adpcm_data_w(int offset,int data)
 {
-	MSM5205_data_w(offset,data & 0x0f);
-	MSM5205_data_w(offset,data >> 4);
+	msm5205next = data;
 }
 
 static int pip(int offset)
@@ -336,13 +340,12 @@ static struct YM3526interface ym3812_interface =
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 chips */
-	4000,       /* 8000Hz playback? */
-	toki_adpcm_int,	/* interrupt function */
-	{ 255 }
+	1,					/* 1 chip             */
+	384000,				/* 384KHz             */
+	{ toki_adpcm_int },/* interrupt function */
+	{ MSM5205_S96_4B},	/* 4KHz               */
+	{ 70 }
 };
-
-
 
 static struct MachineDriver toki_machine_driver =
 {

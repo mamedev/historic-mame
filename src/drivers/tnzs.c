@@ -443,14 +443,14 @@ INPUT_PORTS_START( arkanoi2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START      /* spinner 1 - read at f000/1 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 100, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
 	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
 
 	PORT_START      /* spinner 2 - read at f002/3 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0, 0 )
 	PORT_BIT   ( 0xf000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -513,14 +513,14 @@ INPUT_PORTS_START( ark2us_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START      /* spinner 1 - read at f000/1 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 100, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL, 70, 15, 0, 0, 0 )
 	PORT_BIT   ( 0x1000, IP_ACTIVE_LOW,  IPT_COIN2 )
 	PORT_BIT   ( 0x2000, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT   ( 0x4000, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT   ( 0x8000, IP_ACTIVE_LOW,  IPT_TILT )	/* arbitrarily assigned, handled by the mcu */
 
 	PORT_START      /* spinner 2 - read at f002/3 */
-	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 0, 0, 0 )
+	PORT_ANALOG( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 70, 15, 0, 0, 0 )
 	PORT_BIT   ( 0xf000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 

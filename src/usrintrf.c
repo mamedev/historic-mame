@@ -841,14 +841,17 @@ static void showcharset(void)
 	struct DisplayText dt[2];
 	char buf[80];
 	int bank,color,firstdrawn;
+	int palpage;
 	int trueorientation;
 	int changed;
 	int game_is_neogeo=0;
+	unsigned char *orig_used_colors;
 
 
-	if ((Machine->drv->gfxdecodeinfo == 0) ||
-			(Machine->drv->gfxdecodeinfo[0].memory_region == -1))
-		return;	/* no gfx sets, return */
+	orig_used_colors = malloc(Machine->drv->total_colors * sizeof(unsigned char));
+	if (!orig_used_colors) return;
+
+	memcpy(orig_used_colors,palette_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
@@ -859,9 +862,10 @@ static void showcharset(void)
 #endif
 #endif
 
-	bank = 0;
+	bank = -1;
 	color = 0;
 	firstdrawn = 0;
+	palpage = 0;
 
 	changed = 1;
 
@@ -869,9 +873,13 @@ static void showcharset(void)
 	{
 		int cpx,cpy,skip_chars;
 
-		cpx = Machine->uiwidth / Machine->gfx[bank]->width;
-		cpy = (Machine->uiheight - Machine->uifontheight) / Machine->gfx[bank]->height;
-		skip_chars = cpx * cpy;
+		if (bank >= 0)
+		{
+			cpx = Machine->uiwidth / Machine->gfx[bank]->width;
+			cpy = (Machine->uiheight - Machine->uifontheight) / Machine->gfx[bank]->height;
+			skip_chars = cpx * cpy;
+		}
+		else cpx = cpy = skip_chars = 0;
 
 		if (changed)
 		{
@@ -880,32 +888,85 @@ static void showcharset(void)
 			osd_clearbitmap(Machine->scrbitmap);
 
 			/* validity chack after char bank change */
-			if (firstdrawn >= Machine->gfx[bank]->total_elements)
+			if (bank >= 0)
 			{
-				firstdrawn = Machine->gfx[bank]->total_elements - skip_chars;
-				if (firstdrawn < 0) firstdrawn = 0;
+				if (firstdrawn >= Machine->gfx[bank]->total_elements)
+				{
+					firstdrawn = Machine->gfx[bank]->total_elements - skip_chars;
+					if (firstdrawn < 0) firstdrawn = 0;
+				}
 			}
 
 			if(bank!=2 || !game_is_neogeo)
 			{
-				/* hack: force the display into standard orientation to avoid */
-				/* rotating the user interface */
-				trueorientation = Machine->orientation;
-				Machine->orientation = Machine->ui_orientation;
-
-				for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
+				if (bank >= 0)
 				{
-					drawgfx(Machine->scrbitmap,Machine->gfx[bank],
-						i+firstdrawn,color,  /*sprite num, color*/
-						0,0,
-						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-						Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-						0,TRANSPARENCY_NONE,0);
+					/* hack: force the display into standard orientation to avoid */
+					/* rotating the user interface */
+					trueorientation = Machine->orientation;
+					Machine->orientation = Machine->ui_orientation;
 
-					lastdrawn = i+firstdrawn;
+					memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
+					memset(palette_used_colors+Machine->gfx[bank]->color_granularity*color,PALETTE_COLOR_USED,Machine->gfx[bank]->color_granularity * sizeof(unsigned char));
+					palette_recalc();
+
+					for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
+					{
+						drawgfx(Machine->scrbitmap,Machine->gfx[bank],
+								i+firstdrawn,color,  /*sprite num, color*/
+								0,0,
+								(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+								Machine->uifontheight + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+								0,TRANSPARENCY_NONE,0);
+
+						lastdrawn = i+firstdrawn;
+					}
+
+					Machine->orientation = trueorientation;
 				}
+				else
+				{
+					int sx,sy,x,y,colors;
 
-				Machine->orientation = trueorientation;
+					colors = Machine->drv->total_colors - 256 * palpage;
+					if (colors > 256) colors = 256;
+					memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+					memset(palette_used_colors+256*palpage,PALETTE_COLOR_USED,colors * sizeof(unsigned char));
+					palette_recalc();
+
+					for (i = 0;i < 16;i++)
+					{
+						char bf[40];
+
+						sx = 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
+						sprintf(bf,"%X",i);
+						ui_text(bf,sx,2*Machine->uifontheight);
+						if (16*i < colors)
+						{
+							sy = 3*Machine->uifontheight + (Machine->uifontheight)*(i % 16);
+							sprintf(bf,"%3X",i+16*palpage);
+							ui_text(bf,0,sy);
+						}
+					}
+
+					for (i = 0;i < colors;i++)
+					{
+						sx = Machine->uixmin + 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
+						sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
+						for (y = 0;y < Machine->uifontheight;y++)
+						{
+							for (x = 0;x < Machine->uifontwidth*3/2;x++)
+							{
+								if (Machine->scrbitmap->depth == 16)
+									((unsigned short *)Machine->scrbitmap->line[sy + y])[sx + x]
+											= Machine->pens[i + 256*palpage];
+								else
+									Machine->scrbitmap->line[sy + y][sx + x]
+											= Machine->pens[i + 256*palpage];
+							}
+						}
+					}
+				}
 			}
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
@@ -917,6 +978,10 @@ static void showcharset(void)
 				clip.max_x = Machine->uixmin + Machine->uiwidth - 1;
 				clip.min_y = Machine->uiymin;
 				clip.max_y = Machine->uiymin + Machine->uiheight - 1;
+
+				memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
+				memset(palette_used_colors+Machine->gfx[bank]->color_granularity*color,PALETTE_COLOR_USED,Machine->gfx[bank]->color_granularity * sizeof(unsigned char));
+				palette_recalc();
 
 				for (i = 0; i+firstdrawn < no_of_tiles && i<cpx*cpy; i++)
 				{
@@ -941,13 +1006,11 @@ static void showcharset(void)
 #endif
 #endif
 
-			sprintf(buf,"GFXSET %d COLOR %d CODE %x-%x",bank,color,firstdrawn,lastdrawn);
-			dt[0].text = buf;
-			dt[0].color = DT_COLOR_RED;
-			dt[0].x = 0;
-			dt[0].y = 0;
-			dt[1].text = 0;
-			displaytext(dt,0,0);
+			if (bank >= 0)
+				sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
+			else
+				strcpy(buf,"PALETTE");
+			ui_text(buf,0,0);
 
 			changed = 0;
 		}
@@ -980,7 +1043,7 @@ static void showcharset(void)
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
 		{
-			if (bank > 0)
+			if (bank > -1)
 			{
 				bank--;
 //				firstdrawn = 0;
@@ -990,26 +1053,51 @@ static void showcharset(void)
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGDN,4))
 		{
-			if (firstdrawn + skip_chars < Machine->gfx[bank]->total_elements)
+			if (bank >= 0)
 			{
-				firstdrawn += skip_chars;
-				changed = 1;
+				if (firstdrawn + skip_chars < Machine->gfx[bank]->total_elements)
+				{
+					firstdrawn += skip_chars;
+					changed = 1;
+				}
+			}
+			else
+			{
+				if (256 * (palpage + 1) < Machine->drv->total_colors)
+				{
+					palpage++;
+					changed = 1;
+				}
 			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGUP,4))
 		{
-			firstdrawn -= skip_chars;
-			if (firstdrawn < 0) firstdrawn = 0;
-			changed = 1;
+			if (bank >= 0)
+			{
+				firstdrawn -= skip_chars;
+				if (firstdrawn < 0) firstdrawn = 0;
+				changed = 1;
+			}
+			else
+			{
+				if (palpage > 0)
+				{
+					palpage--;
+					changed = 1;
+				}
+			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,6))
 		{
-			if (color < Machine->gfx[bank]->total_colors - 1)
+			if (bank >= 0)
 			{
-				color++;
-				changed = 1;
+				if (color < Machine->gfx[bank]->total_colors - 1)
+				{
+					color++;
+					changed = 1;
+				}
 			}
 		}
 
@@ -1032,6 +1120,13 @@ static void showcharset(void)
 
 	/* clear the screen before returning */
 	osd_clearbitmap(Machine->scrbitmap);
+
+	/* this should force a full refresh by the video driver */
+	memset(palette_used_colors,PALETTE_COLOR_TRANSPARENT,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_recalc();
+	/* restore the game used colors array */
+	memcpy(palette_used_colors,orig_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
+	free(orig_used_colors);
 
 	return;
 }
@@ -1945,7 +2040,7 @@ static int settraksettings(int selected)
 			switch (i%ENTRIES)
 			{
 				case 0:
-					strcat (label[i], " Key/Joy Delta");
+					strcat (label[i], " Key/Joy Speed");
 					sprintf(setting[i],"%d",delta);
 					if (i == sel) arrowize = 3;
 					break;
@@ -2145,16 +2240,16 @@ static int mame_stats(int selected)
 int showcopyright(void)
 {
 	int done;
-	char buf[] =
-			"Do not distribute the source code and/or the executable "
-			"application with any rom images.\n"
-			"Doing as such will harm any further development of mame and could "
-			"result in legal action being taken by the lawful copyright holders "
-			"of any rom images.\n"
-			"\n"
-			"IF YOU DON'T AGREE WITH THE ABOVE, PRESS ESC.\n"
-			"If you agree, type OK.";
+	char buf[1000];
 
+
+	sprintf(buf,
+			"Usage of emulators in conjunction with ROMs you don't own "
+			"is forbidden by copyright law.\n\n"
+			"IF YOU ARE NOT LEGALLY ENTITLED TO PLAY \"%s\" ON THIS EMULATOR, "
+			"PRESS ESC.\n\n"
+			"Otherwise, press OK to continue",
+			Machine->gamedrv->description);
 	displaymessagewindow(buf);
 
 	done = 0;
@@ -2711,6 +2806,8 @@ static int displayhistory (int selected)
 }
 
 
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
 int	memcard_menu(int selection)
 {
 	int sel;
@@ -2823,7 +2920,8 @@ int	memcard_menu(int selection)
 
 	return sel + 1;
 }
-
+#endif
+#endif
 
 
 enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
@@ -3045,6 +3143,8 @@ osd_sound_enable(1);
 sel = sel & 0xff;
 				break;
 
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
 			case UI_MEMCARD:
 				res = memcard_menu(sel >> 8);
 				if (res == -1)
@@ -3055,6 +3155,8 @@ sel = sel & 0xff;
 				else
 					sel = (sel & 0xff) | (res << 8);
 				break;
+#endif
+#endif
 		}
 
 		return sel + 1;
@@ -3533,22 +3635,20 @@ int handle_user_interface(void)
 		machine_reset();
 
 
-	if (osd_key_pressed_memory(OSD_KEY_PAUSE)) /* pause the game */
+	if (osd_key_pressed_memory(input_port_type_key(IPT_UI_PAUSE)) /* pause the game */
+			|| osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE)))
 	{
-		float orig_brt;
-		int pressed;
-
-
 /*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
 
 		osd_sound_enable(0);
-		orig_brt = osd_get_brightness();
-		osd_set_brightness(orig_brt * 0.65);
+		osd_pause(1);
 
-		pressed = 1;
+		/* we don't have joy_pressed_memory() so wait for the button to be released */
+		if (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE)))
+			while  (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE))) ;
 
-		while (pressed || osd_key_pressed_memory(OSD_KEY_UNPAUSE) == 0)
+		while (osd_key_pressed_memory(input_port_type_key(IPT_UI_PAUSE)) == 0)
 		{
 #ifdef MAME_NET
 			osd_net_sync();
@@ -3602,12 +3702,14 @@ bitmap_dirty = 0;
 			if (messagecounter > 0) displaymessage(messagetext);
 
 			osd_update_video_and_audio();
-
-			if (!osd_key_pressed(OSD_KEY_PAUSE)) pressed = 0;
 		}
 
+		/* we don't have joy_pressed_memory() so wait for the button to be released */
+		if (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE)))
+			while  (osd_joy_pressed(input_port_type_joy(IPT_UI_PAUSE))) ;
+
+		osd_pause(0);
 		osd_sound_enable(1);
-		osd_set_brightness(orig_brt);
 	}
 
 

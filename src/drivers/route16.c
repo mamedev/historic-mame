@@ -51,8 +51,9 @@ extern unsigned char *route16_sharedram;
 extern unsigned char *route16_videoram1;
 extern unsigned char *route16_videoram2;
 
-void route16_set_machine_type(void);
-void stratvox_set_machine_type(void);
+void route16_init_driver(void);
+void route16b_init_driver(void);
+void stratvox_init_driver(void);
 void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  route16_vh_start(void);
 void route16_vh_stop(void);
@@ -257,7 +258,7 @@ static struct MachineDriver GAMENAME##_machine_driver =		\
 		{													\
 			CPU_Z80,										\
 			2500000,	/* 10Mhz / 4 = 2.5Mhz */			\
-			3,												\
+			2,												\
 			cpu2_readmem,cpu2_writemem,0,0,					\
 			ignore_interrupt,0								\
 		}													\
@@ -316,16 +317,33 @@ MACHINE_DRIVER(stratvox, STRATVOX_AUDIO_INTERFACE)
 
 ROM_START( route16_rom )
 	ROM_REGION(0x10000)  // 64k for the first CPU
+	ROM_LOAD( "route16.a0",   0x0000, 0x0800, 0x8f9101bd )
+	ROM_LOAD( "route16.a1",   0x0800, 0x0800, 0x389bc077 )
+	ROM_LOAD( "route16.a2",   0x1000, 0x0800, 0x1065a468 )
+	ROM_LOAD( "route16.a3",   0x1800, 0x0800, 0x0b1987f3 )
+	ROM_LOAD( "route16.a4",   0x2000, 0x0800, 0xf67d853a )
+	ROM_LOAD( "route16.a5",   0x2800, 0x0800, 0xd85cf758 )
+
+	ROM_REGION(0x0200) /* color proms */
+	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
+
+	ROM_REGION(0x10000)  // 64k for the second CPU
+	ROM_LOAD( "route16.b0",   0x0000, 0x0800, 0x0f9588a7 )
+	ROM_LOAD( "route16.b1",   0x0800, 0x0800, 0x2b326cf9 )
+	ROM_LOAD( "route16.b2",   0x1000, 0x0800, 0x529cad13 )
+	ROM_LOAD( "route16.b3",   0x1800, 0x0800, 0x3bd8b899 )
+ROM_END
+
+ROM_START( route16b_rom )
+	ROM_REGION(0x10000)  // 64k for the first CPU
 	ROM_LOAD( "rt16.0",       0x0000, 0x0800, 0xb1f0f636 )
 	ROM_LOAD( "rt16.1",       0x0800, 0x0800, 0x3ec52fe5 )
 	ROM_LOAD( "rt16.2",       0x1000, 0x0800, 0xa8e92871 )
 	ROM_LOAD( "rt16.3",       0x1800, 0x0800, 0xa0fc9fc5 )
 	ROM_LOAD( "rt16.4",       0x2000, 0x0800, 0x6dcaf8c4 )
 	ROM_LOAD( "rt16.5",       0x2800, 0x0800, 0x63d7b05b )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x0200) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
@@ -358,10 +376,6 @@ ROM_START( stratvox_rom )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION(0x0200) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
@@ -381,10 +395,6 @@ ROM_START( stratvxb_rom )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "a5-1",         0x2800, 0x0800, 0x70c4ef8e )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION(0x0200) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
@@ -403,10 +413,6 @@ ROM_START( speakres_rom )
 	ROM_LOAD( "speakres.4",   0x1800, 0x0800, 0xf484be3a )
 	ROM_LOAD( "speakres.5",   0x2000, 0x0800, 0x61b12a67 )
 	ROM_LOAD( "speakres.6",   0x2800, 0x0800, 0x220e0ab2 )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x0200) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
@@ -555,11 +561,11 @@ struct GameDriver route16_driver =
 	"route16",
 	"Route 16",
 	"1981",
-	"bootleg",
+	"Tehkan/Sun (Centuri license)",
 	"Zsolt Vasvari\nMike Balfour",
 	0,
 	&route16_machine_driver,
-	route16_set_machine_type,
+	route16_init_driver,
 
 	route16_rom,
 	0, 0,
@@ -568,7 +574,33 @@ struct GameDriver route16_driver =
 
 	route16_input_ports,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	PROM_MEMORY_REGION(1), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	route16_hiload, route16_hisave
+};
+
+struct GameDriver route16b_driver =
+{
+	__FILE__,
+	&route16_driver,
+	"route16b",
+	"Route 16 (bootleg)",
+	"1981",
+	"bootleg",
+	"Zsolt Vasvari\nMike Balfour",
+	0,
+	&route16_machine_driver,
+	route16b_init_driver,
+
+	route16b_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	route16_input_ports,
+
+	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	route16_hiload, route16_hisave
@@ -585,7 +617,7 @@ struct GameDriver stratvox_driver =
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
 	&stratvox_machine_driver,
-	stratvox_set_machine_type,
+	stratvox_init_driver,
 
 	stratvox_rom,
 	0, 0,
@@ -594,7 +626,7 @@ struct GameDriver stratvox_driver =
 
 	stratvox_input_ports,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	stratvox_hiload, stratvox_hisave
@@ -611,7 +643,7 @@ struct GameDriver stratvxb_driver =
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
 	&stratvox_machine_driver,
-	stratvox_set_machine_type,
+	stratvox_init_driver,
 
 	stratvxb_rom,
 	0, 0,
@@ -620,7 +652,7 @@ struct GameDriver stratvxb_driver =
 
 	stratvox_input_ports,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	stratvox_hiload, stratvox_hisave
@@ -637,7 +669,7 @@ struct GameDriver speakres_driver =
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
 	&stratvox_machine_driver,
-	stratvox_set_machine_type,
+	stratvox_init_driver,
 
 	speakres_rom,
 	0, 0,
@@ -646,7 +678,7 @@ struct GameDriver speakres_driver =
 
 	stratvox_input_ports,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	PROM_MEMORY_REGION(1), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	speakres_hiload, speakres_hisave

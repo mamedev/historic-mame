@@ -14,7 +14,7 @@
 unsigned char *jrpacman_scroll,*jrpacman_bgpriority;
 unsigned char *jrpacman_charbank,*jrpacman_spritebank;
 unsigned char *jrpacman_palettebank,*jrpacman_colortablebank;
-
+static int flipscreen;
 
 
 /***************************************************************************
@@ -165,6 +165,15 @@ void jrpacman_charbank_w(int offset,int data)
 }
 
 
+void jrpacman_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
 
 /***************************************************************************
 
@@ -201,13 +210,18 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				{
 					sy = my;
 					sx = mx+2;
+					if (flipscreen)
+					{
+						sx = 35 - sx;
+						sy = 55 - sy;
+					}
 
 					drawgfx(tmpbitmap,Machine->gfx[0],
 							videoram[offs] + 256 * *jrpacman_charbank,
 						/* color is set line by line */
 							(videoram[mx] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
 									+ 0x40 * (*jrpacman_palettebank & 1),
-							0,0,
+							flipscreen,flipscreen,
 							8*sx,8*sy,
 							0,TRANSPARENCY_NONE,0);
 				}
@@ -217,12 +231,17 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					{
 						sy = mx - 2;
 						sx = my - 58;
+						if (flipscreen)
+						{
+							sx = 35 - sx;
+							sy = 55 - sy;
+						}
 
 						drawgfx(tmpbitmap,Machine->gfx[0],
 								videoram[offs],
 								(videoram[offs + 4*32] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
 										+ 0x40 * (*jrpacman_palettebank & 1),
-								0,0,
+								flipscreen,flipscreen,
 								8*sx,8*sy,
 								0,TRANSPARENCY_NONE,0);
 					}
@@ -230,12 +249,18 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					{
 						sy = mx - 2;
 						sx = my - 22;
+						if (flipscreen)
+						{
+							sx = 35 - sx;
+							sy = 55 - sy;
+						}
 
 						drawgfx(tmpbitmap,Machine->gfx[0],
 								videoram[offs] + 0x100 * (*jrpacman_charbank & 1),
 								(videoram[offs + 4*32] & 0x1f) + 0x20 * (*jrpacman_colortablebank & 1)
 										+ 0x40 * (*jrpacman_palettebank & 1),
-								0,0,8*sx,8*sy,
+								flipscreen,flipscreen,
+								8*sx,8*sy,
 								0,TRANSPARENCY_NONE,0);
 					}
 				}
@@ -246,17 +271,23 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the temporary bitmap to the screen */
 	{
-		int scroll[36];
+		int scrolly[36];
 
 
 		for (i = 0;i < 2;i++)
-			scroll[i] = 0;
+			scrolly[i] = 0;
 		for (i = 2;i < 34;i++)
-			scroll[i] = -*jrpacman_scroll - 16;
+			scrolly[i] = -*jrpacman_scroll - 16;
 		for (i = 34;i < 36;i++)
-			scroll[i] = 0;
+			scrolly[i] = 0;
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		if (flipscreen)
+		{
+			for (i = 0;i < 36;i++)
+				scrolly[i] = 224 - scrolly[i];
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 

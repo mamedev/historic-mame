@@ -115,7 +115,7 @@ struct osd_bitmap
 #define OSD_KEY_DEL         83
 #define OSD_KEY_RCONTROL    84  /* different from Allegro */
 #define OSD_KEY_ALTGR       85  /* different from Allegro */
-/* 86 */
+#define OSD_KEY_PAUSE       86  /* different from Allegro */
 #define OSD_KEY_F11         87
 #define OSD_KEY_F12         88
 #define OSD_KEY_COMMAND     89
@@ -157,8 +157,6 @@ struct osd_bitmap
 #define OSD_KEY_FAST_EXIT			128
 #define OSD_KEY_CANCEL				129
 #define OSD_KEY_RESET_MACHINE		130
-#define OSD_KEY_PAUSE				131
-#define OSD_KEY_UNPAUSE 			132
 #define OSD_KEY_CONFIGURE			133
 #define OSD_KEY_ON_SCREEN_DISPLAY	134
 #define OSD_KEY_SHOW_GFX			135
@@ -377,6 +375,12 @@ unsigned int osd_fcrc(void *file);
 /* that the ROM loading process is finished. */
 /* return non-zero to abort loading */
 int osd_display_loading_rom_message(const char *name,int current,int total);
+
+/* called when the game is paused/unpaused, so the OS dependant code can do special */
+/* things like changing the title bar or darkening the display. */
+/* Note that the OS dependant code must NOT stop processing input, since the user */
+/* interface is still active while the game is paused. */
+void osd_pause(int paused);
 
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);

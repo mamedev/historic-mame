@@ -1657,27 +1657,6 @@ ROM_START( cookrace_rom )
     ROM_LOAD( "b7",           0x0020, 0x0020, 0xe4268fa6 )	/* unknown */
 ROM_END
 
-ROM_START( eggs_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
-	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )
-	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
-	ROM_LOAD( "b14.bin",      0x6000, 0x1000, 0x5c11c00e )
-	ROM_LOAD( "a14.bin",      0x7000, 0x1000, 0x953faf07 )
-	ROM_RELOAD(               0xf000, 0x1000 )   /* for reset/interrupt vectors */
-
-	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j12.bin",      0x0000, 0x1000, 0xce4a2e46 )
-	ROM_LOAD( "j10.bin",      0x1000, 0x1000, 0xa1bcaffc )
-	ROM_LOAD( "h12.bin",      0x2000, 0x1000, 0x9562836d )
-	ROM_LOAD( "h10.bin",      0x3000, 0x1000, 0x3cfb3a8e )
-	ROM_LOAD( "g12.bin",      0x4000, 0x1000, 0x679f8af7 )
-	ROM_LOAD( "g10.bin",      0x5000, 0x1000, 0x5b58d3b5 )
-
-	ROM_REGION(0x0020)	/* color PROM */
-	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )
-ROM_END
-
 ROM_START( scregg_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "scregg.e14",   0x3000, 0x1000, 0x29226d77 )
@@ -1695,8 +1674,31 @@ ROM_START( scregg_rom )
 	ROM_LOAD( "scregg.g12",   0x4000, 0x1000, 0xff3c2894 )
 	ROM_LOAD( "scregg.g10",   0x5000, 0x1000, 0x9c20214a )
 
-	ROM_REGION(0x0020)	/* color PROM */
-	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )
+	ROM_REGION(0x0040)	/* PROMs */
+	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )	/* palette */
+	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
+ROM_END
+
+ROM_START( eggs_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "e14.bin",      0x3000, 0x1000, 0x4e216f9d )
+	ROM_LOAD( "d14.bin",      0x4000, 0x1000, 0x4edb267f )
+	ROM_LOAD( "c14.bin",      0x5000, 0x1000, 0x15a5c48c )
+	ROM_LOAD( "b14.bin",      0x6000, 0x1000, 0x5c11c00e )
+	ROM_LOAD( "a14.bin",      0x7000, 0x1000, 0x953faf07 )
+	ROM_RELOAD(               0xf000, 0x1000 )   /* for reset/interrupt vectors */
+
+	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "j12.bin",      0x0000, 0x1000, 0xce4a2e46 )
+	ROM_LOAD( "j10.bin",      0x1000, 0x1000, 0xa1bcaffc )
+	ROM_LOAD( "h12.bin",      0x2000, 0x1000, 0x9562836d )
+	ROM_LOAD( "h10.bin",      0x3000, 0x1000, 0x3cfb3a8e )
+	ROM_LOAD( "g12.bin",      0x4000, 0x1000, 0x679f8af7 )
+	ROM_LOAD( "g10.bin",      0x5000, 0x1000, 0x5b58d3b5 )
+
+	ROM_REGION(0x0040)	/* PROMs */
+	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, 0xe8408c81 )	/* palette */
+	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
 
 /* There is a flyer with a screen shot for Lock'n'Chase at:
@@ -2343,20 +2345,20 @@ struct GameDriver cookrace_driver =
 	0, 0
 };
 
-struct GameDriver eggs_driver =
+struct GameDriver scregg_driver =
 {
 	__FILE__,
 	0,
-	"eggs",
-	"Eggs",
+	"scregg",
+	"Scrambled Egg",
 	"1983",
-	"Universal USA",
+	"Technos",
 	"Nicola Salmoria",
 	0,
 	&eggs_machine_driver,
 	0,
 
-	eggs_rom,
+	scregg_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -2369,20 +2371,20 @@ struct GameDriver eggs_driver =
 	eggs_hiload, eggs_hisave
 };
 
-struct GameDriver scregg_driver =
+struct GameDriver eggs_driver =
 {
 	__FILE__,
-	&eggs_driver,
-	"scregg",
-	"Scrambled Egg",
+	&scregg_driver,
+	"eggs",
+	"Eggs",
 	"1983",
-	"Technos",
+	"[Technos] Universal USA",
 	"Nicola Salmoria",
 	0,
 	&eggs_machine_driver,
 	0,
 
-	scregg_rom,
+	eggs_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

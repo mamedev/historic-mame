@@ -340,9 +340,9 @@ int bg, fg, txt;
 extern struct osd_bitmap *scroll_bitmap[3];
 
 /* videohrdw functions */
-int  vh_start(void);
-void vh_stop(void);
-void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int  megasys1_vh_start(void);
+void megasys1_vh_stop(void);
+void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void mark_dirty_all(void);
 void mark_dirty(int n);
@@ -904,9 +904,9 @@ static struct IOWritePort sound_writeport[] =
 #define JOY(_flag_) \
 	PORT_START\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | _flag_ )\
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | _flag_ )\
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | _flag_ )\
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | _flag_ )\
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | _flag_ )\
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | _flag_ )\
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | _flag_ )\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | _flag_ )\
@@ -928,22 +928,22 @@ static struct IOWritePort sound_writeport[] =
 #define COINAGE_A \
 	PORT_START\
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )\
-	PORT_DIPSETTING(    0x01, "4 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x02, "3 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x03, "2 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x07, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x06, "1 Coin / 2 Credits" )\
-	PORT_DIPSETTING(    0x05, "1 Coin / 3 Credits" )\
-	PORT_DIPSETTING(    0x04, "1 Coin / 4 Credits" )\
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )\
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )\
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )\
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )\
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )\
-	PORT_DIPSETTING(    0x08, "4 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x10, "3 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x18, "2 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x38, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x30, "1 Coin / 2 Credits" )\
-	PORT_DIPSETTING(    0x28, "1 Coin / 3 Credits" )\
-	PORT_DIPSETTING(    0x20, "1 Coin / 4 Credits" )\
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )\
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )\
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )\
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )\
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )\
@@ -955,23 +955,23 @@ static struct IOWritePort sound_writeport[] =
 #define COINAGE_A_2 \
 	PORT_START \
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )\
-	PORT_DIPSETTING(    0x04, "3 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x02, "2 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x07, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x03, "1 Coin / 2 Credits" )\
-	PORT_DIPSETTING(    0x05, "1 Coin / 3 Credits" )\
-	PORT_DIPSETTING(    0x01, "1 Coin / 4 Credits" )\
-	PORT_DIPSETTING(    0x06, "1 Coin / 5 Credits" )\
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )\
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )\
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )\
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )\
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_5C ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )\
-	PORT_DIPSETTING(    0x00, "4 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x20, "3 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x10, "2 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x38, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x18, "1 Coin / 2 Credits" )\
-	PORT_DIPSETTING(    0x28, "1 Coin / 3 Credits" )\
-	PORT_DIPSETTING(    0x08, "1 Coin / 4 Credits" )\
-	PORT_DIPSETTING(    0x30, "1 Coin / 5 Credits" )\
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )\
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )\
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )\
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )\
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )\
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_5C ) )\
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )\
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )\
@@ -983,38 +983,38 @@ static struct IOWritePort sound_writeport[] =
 #define COINAGE_C \
 	PORT_START\
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )\
-	PORT_DIPSETTING(    0x07, "4 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x08, "3 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x09, "2 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x0f, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x05, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x04, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x03, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x02, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x01, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x06, "2 Coins / 3 Credits" )\
-	PORT_DIPSETTING(    0x0e, "1 Coin / 2 Credits" )\
-	PORT_DIPSETTING(    0x0d, "1 Coin / 3 Credits" )\
-	PORT_DIPSETTING(    0x0c, "1 Coin / 4 Credits" )\
-	PORT_DIPSETTING(    0x0b, "1 Coin / 5 Credits" )\
-	PORT_DIPSETTING(    0x0a, "1 Coin / 6 Credits" )\
+	PORT_DIPSETTING(    0x07, DEF_STR( 4C_1C ) )\
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )\
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )\
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_3C ) )\
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )\
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )\
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )\
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
 	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )\
-	PORT_DIPSETTING(    0x70, "4 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x80, "3 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0x90, "2 Coins / 1 Credit" )\
-	PORT_DIPSETTING(    0xf0, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x50, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x40, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x30, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x20, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x10, "1 Coin / 1 Credit" )\
-	PORT_DIPSETTING(    0x60, "2 Coins / 3 Credits" )\
-	PORT_DIPSETTING(    0xe0, "1 Coin / 2 Credits" )\
-	PORT_DIPSETTING(    0xd0, "1 Coin / 3 Credits" )\
-	PORT_DIPSETTING(    0xc0, "1 Coin / 4 Credits" )\
-	PORT_DIPSETTING(    0xb0, "1 Coin / 5 Credits" )\
-	PORT_DIPSETTING(    0xa0, "1 Coin / 6 Credits" )\
+	PORT_DIPSETTING(    0x70, DEF_STR( 4C_1C ) )\
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )\
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )\
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_3C ) )\
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )\
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )\
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )\
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )\
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )\
 
 /* IN5 - DSW2 */
@@ -1144,9 +1144,9 @@ static struct MachineDriver machine_driver_##_type_ = \
 	0,\
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,\
 	0,\
-	vh_start,\
-	vh_stop,\
-	vh_screenrefresh,\
+	megasys1_vh_start,\
+	megasys1_vh_stop,\
+	megasys1_vh_screenrefresh,\
 	/* sound hardware */ \
 	0,0,0,0,\
 	{\
@@ -1213,9 +1213,9 @@ static struct MachineDriver machine_driver_Z = \
 	0,\
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,\
 	0,\
-	vh_start,\
-	vh_stop,\
-	vh_screenrefresh,\
+	megasys1_vh_start,\
+	megasys1_vh_stop,\
+	megasys1_vh_screenrefresh,\
 	/* sound hardware */ \
 	0,0,0,0,\
 	{\
@@ -1330,8 +1330,8 @@ INPUT_PORTS_START( input_ports_street64 )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x18, "Normal" )
@@ -1482,8 +1482,8 @@ ROM_END
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
 	PORT_DIPNAME( 0x04, 0x04, "Allow Continue" ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) ) \
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) ) \
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) ) \
 	PORT_DIPSETTING(    0x08, "Easy" ) \
 	PORT_DIPSETTING(    0x18, "Normal" ) \

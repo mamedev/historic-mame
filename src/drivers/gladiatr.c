@@ -1,5 +1,3 @@
-
-
 /*
 Taito Gladiator (1986)
 Known ROM SETS: Golden Castle, Ohgon no Siro
@@ -11,8 +9,7 @@ Credits:
 		  Golden Castle Rom Set Support
 - Phil Stroffolino: palette, sprites, misc video driver fixes
 - Nicola Salmoria: Japaneese Rom Set Support(Ohgon no Siro)
-- Tatsuyuki Satoh: YM2203 sound improvements, NEC 8741 emulation
-
+- Tatsuyuki Satoh: YM2203 sound improvements, NEC 8741 simulation,ADPCM with MC6809
 
 special thanks to:
 - Camilty for precious hardware information and screenshots
@@ -29,7 +26,6 @@ Issues:
 - some sprites linger on later stages (perhaps a sprite enable bit?)
 - Flipscreen not implemented
 - Scrolling issues in Test mode!
-- Sample @ 5500 Hz being used because Mame core doesn't yet support multiple sample rates.
 - The four 8741 ROMs are available but not used.
 
 Preliminary Gladiator Memory Map
@@ -105,6 +101,7 @@ E0     - Comunication port to 6809
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/tait8741.h"
 #include "cpu/z80/z80.h"
 
 /*Video functions*/
@@ -128,27 +125,6 @@ static int port9f;
 void gladiatr_bankswitch_w(int offset,int data);
 int gladiatr_bankswitch_r(int offset);
 
-
-/* NEC 8741 program mode */
-#define GLADIATOR_8741_MASTER 0
-#define GLADIATOR_8741_SLAVE  1
-#define GLADIATOR_8741_PORT   2
-
-typedef struct gladiator_8741_status{
-	unsigned char rdata;
-	unsigned char status;
-	unsigned char mode;
-	unsigned char txd[8];
-	unsigned char rxd[8];
-	unsigned char parallelselect;
-	unsigned char txpoint;
-	unsigned char connect;
-	unsigned char pending_4a;
-	int (*portHandler)(unsigned char num);
-}I8741;
-
-static I8741 gladiator_8741[4];
-
 /*Rom bankswitching*/
 void gladiatr_bankswitch_w(int offset,int data){
 	static int bank1[2] = { 0x10000, 0x12000 };
@@ -163,7 +139,7 @@ int gladiatr_bankswitch_r(int offset){
 	return banka;
 }
 
-static int gladiator_dsw1_r(unsigned char num)
+static int gladiator_dsw1_r(int num)
 {
 	int orig = readinputport(0); /* DSW1 */
 /*Reverse all bits for Input Port 0*/
@@ -174,7 +150,7 @@ return   ((orig&0x01)<<7) | ((orig&0x02)<<5)
        | ((orig&0x40)>>5) | ((orig&0x80)>>7);;
 }
 
-static int gladiator_dsw2_r(unsigned char num)
+static int gladiator_dsw2_r(int num)
 {
 	int orig = readinputport(1); /* DSW2 */
 /*Bits 2-7 are reversed for Input Port 1*/
@@ -185,7 +161,7 @@ return	  (orig&0x01) | (orig&0x02)
 	| ((orig&0x40)>>3) | ((orig&0x80)>>5);
 }
 
-static int gladiator_controll_r(unsigned char num)
+static int gladiator_controll_r(int num)
 {
 	int coins = 0;
 
@@ -203,7 +179,7 @@ static int gladiator_controll_r(unsigned char num)
 	return 0;
 }
 
-static int gladiator_button3_r(unsigned char num)
+static int gladiator_button3_r(int num)
 {
 	switch(num)
 	{
@@ -214,24 +190,24 @@ static int gladiator_button3_r(unsigned char num)
 	return 0;
 }
 
-void gladiator_machine_init(void)
+static struct TAITO8741interface gsword_8741interface=
 {
-	int i;
+	4,         /* 4 chips */
+	{TAITO8741_MASTER,TAITO8741_SLAVE,TAITO8741_PORT,TAITO8741_PORT},/* program mode */
+	{1,0,0,0},	/* serial port connection */
+	{gladiator_dsw1_r,gladiator_dsw2_r,gladiator_button3_r,gladiator_controll_r}	/* port handler */
+};
 
-	memset( gladiator_8741,0,sizeof(gladiator_8741));
-	/* connect I8741 MASTER and SLAVE */
-	gladiator_8741[0].connect = 1;
-	gladiator_8741[1].connect = 0;
-	for(i=0;i<4;i++)
+static void gladiator_machine_init(void)
+{
+	TAITO8741_start(&gsword_8741interface);
+	/* 6809 bank memory set */
 	{
-		gladiator_8741[i].status = 0x00;
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+		cpu_setbank(3,&RAM[0x10000]);
+		cpu_setbank(4,&RAM[0x18000]);
+		cpu_setbank(5,&RAM[0x20000]);
 	}
-	gladiator_8741[0].portHandler = gladiator_dsw1_r; /* DSW1 */
-	gladiator_8741[1].portHandler = gladiator_dsw2_r; /* DSW2 */
-	/* button controller */
-	gladiator_8741[2].portHandler = gladiator_button3_r; /* button3 */
-	/* joystick controller */
-	gladiator_8741[3].portHandler = gladiator_controll_r;
 }
 
 #if 1
@@ -262,226 +238,31 @@ static void gladiator_ym_irq(int irq)
 	/* cpu_cause_interrupt(1,Z80_NMI_INT); */
 }
 
-/* gladiator I8741 emulation */
-
-/* exchange data with serial port MASTER and SLAVE chip */
-static void I8741_exchange_serial_data(int num)
-{
-	I8741 *mst = &gladiator_8741[num];
-	I8741 *sst = &gladiator_8741[mst->connect];
-	int i;
-	int rp,wp;
-
-	/* master -> slave transfer */
-	rp = 0;
-	sst->rxd[rp++] = mst->portHandler ? mst->portHandler(0) : 0;
-	for( wp = 0 ; wp < 6 ; wp++)
-		sst->rxd[rp++] = mst->txd[wp];
-
-	/* slave -> master transfer */
-	rp = 0;
-	mst->rxd[rp++] = sst->portHandler ? sst->portHandler(0) : 0;
-	for( wp = 0 ; wp < 6 ; wp++)
-		mst->rxd[rp++] = sst->txd[wp];
-}
-
-/* read status port */
-int I8741_status_r(int num)
-{
-	I8741 *st = &gladiator_8741[num];
-#if 0
-	if(errorlog) fprintf(errorlog,"8741-%d ST Read %02x PC=%04x\n",num,st->status,cpu_get_pc());
-#endif
-	return st->status;
-}
-
-/* read data port */
-int I8741_data_r(int num)
-{
-	I8741 *st = &gladiator_8741[num];
-	int ret = st->rdata;
-	st->status &= 0xfe;
-#if 0
-	if(errorlog) fprintf(errorlog,"8741-%d DATA Read %02x PC=%04x\n",num,ret,cpu_get_pc());
-#endif
-
-	switch( st->mode )
-	{
-	case GLADIATOR_8741_PORT: /* parallel data */
-		st->rdata = st->portHandler ? st->portHandler(st->parallelselect) : 0;
-		st->status |= 0x01;
-		break;
-	}
-	return ret;
-}
-
-/* Write data port */
-void I8741_data_w(int num, int data)
-{
-	I8741 *st = &gladiator_8741[num];
-#if 0
-	if(errorlog) fprintf(errorlog,"8741-%d DATA Write %02x PC=%04x\n",num,data,cpu_get_pc());
-#endif
-	switch( st->mode )
-	{
-	case GLADIATOR_8741_MASTER:
-	case GLADIATOR_8741_SLAVE:
-		/* buffering transmit data */
-		if( st->txpoint < 8 )
-		{
-			st->txd[st->txpoint++] = data;
-		}
-		break;
-	case GLADIATOR_8741_PORT:
-		st->parallelselect = data;
-		break;
-	}
-}
-
-/* Write command port */
-void I8741_command_w(int num, int data)
-{
-	I8741 *st = &gladiator_8741[num];
-	I8741 *sst;
-
-#if 0
-	if(errorlog) fprintf(errorlog,"8741-%d CMD Write %02x PC=%04x\n",num,data,cpu_get_pc());
-#endif
-	switch( data )
-	{
-	case 0x00: /* read parallel port */
-		st->rdata = st->portHandler ? st->portHandler(0) : 0;
-		st->status |= 0x01;
-		break;
-	case 0x01: /* read receive buffer 0 */
-	case 0x02: /* read receive buffer 1 */
-	case 0x03: /* read receive buffer 2 */
-	case 0x04: /* read receive buffer 3 */
-	case 0x05: /* read receive buffer 4 */
-	case 0x06: /* read receive buffer 5 */
-	case 0x07: /* read receive buffer 6 */
-		st->rdata = st->rxd[data-1];
-		st->status |= 0x01;
-		break;
-	case 0x08:	/* fix up transnit data */
-		if( st->mode == GLADIATOR_8741_SLAVE )
-		{
-			I8741_exchange_serial_data(num);
-			sst = &gladiator_8741[st->connect];
-			/* release MASTER command 4a holding */
-			if( sst->pending_4a )
-			{
-				sst->pending_4a = 0;
-				sst->rdata   = 0x00; /* return code */
-				sst->status |= 0x01;
-			}
-		}
-		st->txpoint = 0;
-		break;
-	case 0x0a:	/* 8741-0 : set serial comminucation mode 'MASTER' */
-		st->mode = GLADIATOR_8741_MASTER;
-		break;
-	case 0x0b:	/* 8741-1 : set serial comminucation mode 'SLAVE'  */
-		st->mode = GLADIATOR_8741_SLAVE;
-		break;
-	case 0x1f:  /* 8741-2,3 : ?? set parallelport mode ?? */
-	case 0x3f:  /* 8741-2,3 : ?? set parallelport mode ?? */
-	case 0xe1:  /* 8741-2,3 : ?? set parallelport mode ?? */
-		st->mode = GLADIATOR_8741_PORT;
-		st->parallelselect = 1; /* preset read number */
-		break;
-	case 0x62:  /* 8741-3   : ? */
-		break;
-	case 0x4a:	/* ?? syncronus with other cpu and return 00H */
-		st->pending_4a = 1;
-		if( st->mode == GLADIATOR_8741_MASTER )
-		{
-			sst = &gladiator_8741[st->connect];
-			/* release SLAVE command 4a holding */
-			if( sst->pending_4a )
-			{
-				sst->pending_4a = 0;
-				sst->rdata   = 0x00; /* return code */
-				sst->status |= 0x01;
-			}
-		}
-		break;
-	case 0x80:	/* 8741-3 : return check code */
-		st->rdata = 0x66;
-		st->status |= 0x01;
-		break;
-	case 0x81:	/* 8741-2 : return check code */
-		st->rdata = 0x48;
-		st->status |= 0x01;
-		break;
-	}
-}
-
-/* Write data port */
-void gladiator_8741_0_w(int offset, int data)
-{
-	if(offset&1) I8741_command_w(0,data);
-	else         I8741_data_w(0,data);
-}
-void gladiator_8741_1_w(int offset, int data)
-{
-	if(offset&1) I8741_command_w(1,data);
-	else         I8741_data_w(1,data);
-}
-void gladiator_8741_2_w(int offset, int data)
-{
-	if(offset&1) I8741_command_w(2,data);
-	else         I8741_data_w(2,data);
-}
-void gladiator_8741_3_w(int offset, int data)
-{
-	if(offset&1) I8741_command_w(3,data);
-	else         I8741_data_w(3,data);
-}
-
-/* read data port */
-int gladiator_8741_0_r(int offset)
-{
-	int ret;
-	if(offset&1) ret = I8741_status_r(0);
-	else         ret = I8741_data_r(0);
-	return ret;
-}
-int gladiator_8741_1_r(int offset)
-{
-	int ret;
-	if(offset&1) ret = I8741_status_r(1);
-	else         ret = I8741_data_r(1);
-	return ret;
-}
-int gladiator_8741_2_r(int offset)
-{
-	int ret;
-	if(offset&1) ret = I8741_status_r(2);
-	else         ret = I8741_data_r(2);
-	return ret;
-}
-int gladiator_8741_3_r(int offset)
-{
-	int ret;
-	if(offset&1) ret = I8741_status_r(3);
-	else         ret = I8741_data_r(3);
-	return ret;
-}
-
 /*Sound Functions*/
-void glad_adpcm_w( int channel, int data ) {
-int command = data-0x03;
-	/*If sample # is 4,7,8 use the samples which playback at 5500Hz*/
-	if( command == 0x04 || command == 0x07 || command == 0x08)
-		sample_start(0,command==0x04?0:command==0x07?1:2,0);
-	else
-		ADPCM_trigger(0,command);
+void glad_adpcm_w( int offset, int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	/* bit6 = bank offset */
+	int bankoffset = data&0x40 ? 0x4000 : 0;
+	cpu_setbank(3,&RAM[0x10000+bankoffset]);
+	cpu_setbank(4,&RAM[0x18000+bankoffset]);
+	cpu_setbank(5,&RAM[0x20000+bankoffset]);
+
+	MSM5205_data_w(0,data);         /* bit0..3  */
+	MSM5205_reset_w(0,(data>>5)&1); /* bit 5    */
+	MSM5205_vclk_w (0,(data>>4)&1); /* bit4     */
 }
 
 void glad_cpu_sound_command_w(int offset,int data)
 {
 	soundlatch_w(0,data);
+	cpu_set_nmi_line(2,ASSERT_LINE);
+}
+
+int glad_cpu_sound_command_r(int offset)
+{
+	cpu_set_nmi_line(2,CLEAR_LINE);
+	return soundlatch_r(0);
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -528,12 +309,16 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x2000, 0x2fff, glad_cpu_sound_command_r },
+	{ 0x4000, 0x7fff, MRA_BANK3 }, /* BANKED ROM */
+	{ 0x8000, 0xbfff, MRA_BANK4 }, /* BANKED ROM */
+	{ 0xc000, 0xffff, MRA_BANK5 }, /* BANKED ROM */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x1000, 0x1fff, glad_adpcm_w },
 	{ -1 }  /* end of table */
 };
 
@@ -541,7 +326,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x02, 0x02, gladiatr_bankswitch_r },
-	{ 0x9e, 0x9f, gladiator_8741_0_r },
+	{ 0x9e, 0x9f, TAITO8741_0_r },
 	{ -1 }	/* end of table */
 };
 
@@ -550,7 +335,7 @@ static struct IOWritePort writeport[] =
 	{ 0x01, 0x01, gladiatr_spritebank_w},
 	{ 0x02, 0x02, gladiatr_bankswitch_w},
 	{ 0x04, 0x04, gladiatr_irq_patch_w}, /* !!! patch to 2nd CPU IRQ !!! */
-	{ 0x9e, 0x9f, gladiator_8741_0_w },
+	{ 0x9e, 0x9f, TAITO8741_0_w },
 	{ 0xbf, 0xbf, IORP_NOP },
 	{ -1 }	/* end of table */
 };
@@ -559,10 +344,10 @@ static struct IOReadPort readport_cpu2[] =
 {
 	{ 0x00, 0x00, YM2203_status_port_0_r },
 	{ 0x01, 0x01, YM2203_read_port_0_r },
-	{ 0x20, 0x21, gladiator_8741_1_r },
+	{ 0x20, 0x21, TAITO8741_1_r },
 	{ 0x40, 0x40, IOWP_NOP },
-	{ 0x60, 0x61, gladiator_8741_2_r },
-	{ 0x80, 0x81, gladiator_8741_3_r },
+	{ 0x60, 0x61, TAITO8741_2_r },
+	{ 0x80, 0x81, TAITO8741_3_r },
 	{ -1 }	/* end of table */
 };
 
@@ -570,11 +355,11 @@ static struct IOWritePort writeport_cpu2[] =
 {
 	{ 0x00, 0x00, YM2203_control_port_0_w },
 	{ 0x01, 0x01, YM2203_write_port_0_w },
-	{ 0x20, 0x21, gladiator_8741_1_w },
-	{ 0x60, 0x61, gladiator_8741_2_w },
-	{ 0x80, 0x81, gladiator_8741_3_w },
+	{ 0x20, 0x21, TAITO8741_1_w },
+	{ 0x60, 0x61, TAITO8741_2_w },
+	{ 0x80, 0x81, TAITO8741_3_w },
 /*	{ 0x40, 0x40, glad_sh_irq_clr }, */
-	{ 0xe0, 0xe0, glad_adpcm_w },
+	{ 0xe0, 0xe0, glad_cpu_sound_command_w },
 	{ -1 }	/* end of table */
 };
 
@@ -783,20 +568,15 @@ static struct YM2203interface ym2203_interface =
 	{ gladiator_ym_irq }          /* NMI request for 2nd cpu */
 };
 
-static struct ADPCMinterface adpcm_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,			/* 1 channel */
-    8000,		       /* 8000Hz playback */
-	4,		       /* memory region 4 */
-	0,			/* init function */
-	{ 255, 255, 255 }
+	1,					/* 1 chip             */
+	455000,				/* 455KHz ??          */
+	{ 0 },				/* interrupt function */
+	{ MSM5205_SEX_4B},	/* vclk input mode    */
+	{ 60 }
 };
 
-static struct Samplesinterface	samples_interface =
-{
-	1,       /* 1 channel */
-	25	/* volume */
-};
 
 
 static struct MachineDriver machine_driver =
@@ -810,7 +590,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_Z80 | CPU_AUDIO_CPU,
+			CPU_Z80,
 			3000000, /* 3 MHz? */
 			2,	/* memory region #2 */
 			readmem_cpu2,writemem_cpu2,readport_cpu2,writeport_cpu2,
@@ -819,10 +599,10 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			3000000, /* 3 MHz? */
+			900000, /* 900 kHz? */
 			3,
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
+			ignore_interrupt,0	/* NMIs are generated by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION, /* fps, vblank duration */
@@ -849,13 +629,9 @@ static struct MachineDriver machine_driver =
 			SOUND_YM2203,
 			&ym2203_interface
 		},
-                {
-			SOUND_ADPCM,
-			&adpcm_interface
-                },
 		{
-			SOUND_SAMPLES,
-			&samples_interface
+			SOUND_MSM5205,
+			&msm5205_interface
 		}
 	}
 };
@@ -893,13 +669,10 @@ ROM_START( gladiatr_rom )
 	ROM_REGION( 0x10000 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
-	ROM_REGION( 0x20000 )  /* QB0-18 contains 6809 Code & some ADPCM samples */
-	ROM_LOAD( "qb0-18",       0x08000, 0x8000, 0xe9591260 )
-
-	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
-	ROM_LOAD( "qb0-18",       0x00000, 0x8000, 0xe9591260 )
-	ROM_LOAD( "qb0-19",       0x08000, 0x8000, 0x79caa7ed )
+	ROM_REGION( 0x28000 )  /* 6809 Code & ADPCM data */
 	ROM_LOAD( "qb0-20",       0x10000, 0x8000, 0x15916eda )
+	ROM_LOAD( "qb0-19",       0x18000, 0x8000, 0x79caa7ed )
+	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
 ROM_END
 
 ROM_START( ogonsiro_rom )
@@ -929,13 +702,10 @@ ROM_START( ogonsiro_rom )
 	ROM_REGION( 0x10000 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
-	ROM_REGION( 0x20000 )  /* QB0-18 contains 6809 Code & some ADPCM samples */
-	ROM_LOAD( "qb0-18",       0x08000, 0x8000, 0xe9591260 )
-
-	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
-	ROM_LOAD( "qb0-18",       0x00000, 0x8000, 0xe9591260 )
-	ROM_LOAD( "qb0-19",       0x08000, 0x8000, 0x79caa7ed )
+	ROM_REGION( 0x28000 )  /* 6809 Code & ADPCM data */
 	ROM_LOAD( "qb0-20",       0x10000, 0x8000, 0x15916eda )
+	ROM_LOAD( "qb0-19",       0x18000, 0x8000, 0x79caa7ed )
+	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
 ROM_END
 
 ROM_START( gcastle_rom )
@@ -965,71 +735,13 @@ ROM_START( gcastle_rom )
 	ROM_REGION( 0x10000 ) /* Code for the 2nd CPU */
 	ROM_LOAD( "qb0-17",       	0x0000, 0x4000, 0xe78be010 )
 
-	ROM_REGION( 0x20000 )  /* QB0-18 contains 6809 Code & some ADPCM samples */
-	ROM_LOAD( "qb0-18",       0x08000, 0x8000, 0xe9591260 )
-
-	ROM_REGION( 0x24600 )	/* Load all ADPCM samples into seperate region */
-	ROM_LOAD( "qb0-18",       0x00000, 0x8000, 0xe9591260 )
-	ROM_LOAD( "qb0-19",       0x08000, 0x8000, 0x79caa7ed )
+	ROM_REGION( 0x28000 )  /* 6809 Code & ADPCM data */
 	ROM_LOAD( "qb0-20",       0x10000, 0x8000, 0x15916eda )
+	ROM_LOAD( "qb0-19",       0x18000, 0x8000, 0x79caa7ed )
+	ROM_LOAD( "qb0-18",       0x20000, 0x8000, 0xe9591260 )
 ROM_END
 
-/*Manually combine samples: lgzaid - p1 with lgzaid p2!*/
-static void gladiatr_decode(void)
-{
-	unsigned char *RAM = Machine->memory_region[4];
 
-	memcpy (&RAM[0x20000], &RAM[0x11d00], 0x2300);	/* copy Part 1 */
-	memcpy (&RAM[0x22300], &RAM[0x8000], 0x2300);	/* copy Part 2 */
-}
-
-/*************************/
-/* Gladiator Samples	 */
-/*************************/
-
-ADPCM_SAMPLES_START( glad_samples )
-	/* samples on ROM 1 */
-	/* dtirene, paw, death, atirene, gong, atirene2  */
-	/* samples on ROM 2 */
-	/* lgzaid-p2, lgirene, dtsolon, irene, solon, zaid, fight  */
-	/* samples on ROM 3 */
-	/* dtzaid, atzaid, lgzaid-p1, lgsolon, atsolon, agadon  */
-	/*NOTES: lgzaid - part 1: 1d00- 4000 - Length = 0x2300 */
-	/*NOTES: lgzaid - part 2: 8000- A300 - Lenght = 0x2300 */
-
-	ADPCM_SAMPLE( 0x000, 0x10000+0x0000, (0x1000-0x0000)*2 )	//DTZAID
-	ADPCM_SAMPLE( 0x001, 0x10000+0x1000, (0x1d00-0x1000)*2 )	//ATZAID
-	ADPCM_SAMPLE( 0x002, 0x20000+0x0000, (0x4600-0x0000)*2 )	//Full LGZAID!
-	ADPCM_SAMPLE( 0x003, 0x8000+0x2200, (0x3e00-0x2300)*2 )		//LGIRENE
-	ADPCM_SAMPLE( 0x004, 0x0000, (0x1300-0x0000)*2 )		//DTIRENE
-	ADPCM_SAMPLE( 0x005, 0x1300, (0x1f00-0x1300)*2 )		//PAW
-	ADPCM_SAMPLE( 0x006, 0x1f00, (0x2C00-0x1f00)*2 )		//DEATH
-	ADPCM_SAMPLE( 0x007, 0x2C00, (0x3000-0x2C00)*2 )		//ATIRENE
-	ADPCM_SAMPLE( 0x008, 0x7000, (0x7c00-0x7000)*2 )		//ATIRENE2
-	ADPCM_SAMPLE( 0x009, 0x10000+0x5e00, (0x6e00-0x5e00)*2 )	//ATSOLON
-	ADPCM_SAMPLE( 0x00a, 0x8000+0x3d00, (0x5400-0x3e00)*2 )		//DTSOLON
-	ADPCM_SAMPLE( 0x00b, 0x10000+0x4000, (0x5e00-0x4000)*2 )	//LGSOLON
-	ADPCM_SAMPLE( 0x00c, 0x3FA0, (0x7000-0x3FA0)*2 )		//GONG
-	ADPCM_SAMPLE( 0x00d, 0x8000+0x5500, (0x6000-0x5500)*2 )		//IRENE
-	ADPCM_SAMPLE( 0x00e, 0x8000+0x6000, (0x6a00-0x6000)*2 )		//SOLON
-	ADPCM_SAMPLE( 0x00f, 0x8000+0x6a00, (0x7100-0x6a00)*2 )		//ZAID
-	ADPCM_SAMPLE( 0x010, 0x10000+0x7000,(0x7B00-0x7000)*2 )		//AGADON
-	ADPCM_SAMPLE( 0x011, 0x8000+0x7100, (0x7A00-0x7100)*2 )		//FIGHT
-//	ADPCM_SAMPLE( 0x012, 0x10000+0x1d00, (0x4000-0x1d00)*2 )	//LGZAID - p1
-//	ADPCM_SAMPLE( 0x013, 0x8000+0x0000, (0x2300-0x0000)*2 )		//LGZAID - p2
-
-ADPCM_SAMPLES_END
-
-/*These samples are played back at 5500Hz since the ADPCM interface can't support
-  multiple sample rates at this time*/
-static const char *gladiatr_samplenames[]=
-{
-	"*gladiatr",
-	"dtirene.wav",  /*data used to request sample = 0xe7*/
-	"atirene.wav",  /*data used to request sample = 0xea*/
-	"atirene2.wav", /*data used to request sample = 0xeb*/
-	0
-};
 
 static int gladiatr_nvram_load(void)
 {
@@ -1074,12 +786,9 @@ struct GameDriver gladiatr_driver =
 	0,
 
 	gladiatr_rom,
-	gladiatr_decode,
+	0, 0,
 	0,
-//	0,
-//	0,
-	gladiatr_samplenames,
-	(void *)glad_samples,
+	0,
 	input_ports,
 
 	0, 0, 0,
@@ -1102,12 +811,9 @@ struct GameDriver ogonsiro_driver =
 	0,
 
 	ogonsiro_rom,
-	gladiatr_decode,
+	0, 0,
 	0,
-//	0,
-//	0,
-	gladiatr_samplenames,
-	(void *)glad_samples,
+	0,
 	input_ports,
 
 	0, 0, 0,
@@ -1130,12 +836,9 @@ struct GameDriver gcastle_driver =
 	0,
 
 	gcastle_rom,
-	gladiatr_decode,
+	0, 0,
 	0,
-//	0,
-//	0,
-	gladiatr_samplenames,
-	(void *)glad_samples,
+	0,
 	input_ports,
 
 	0, 0, 0,

@@ -196,20 +196,17 @@ static void sound2_bank_w(int offset, int data)
 	cpu_setbank(4, Machine->memory_region[4]+0x8000*(data+1));
 }
 
+
 static void msm5205_w(int offset, int data)
 {
-	if(data & 0x80)
-		MSM5205_reset_w(offset, 1);
-	else {
-		MSM5205_reset_w(offset, 0);
-		MSM5205_data_w(offset, data);
-	}
+	MSM5205_reset_w(offset,(data>>7)&1);
+	/* ?? bit 6?? */
+	MSM5205_data_w(offset,data);
+	MSM5205_vclk_w(offset,1);
+	MSM5205_vclk_w(offset,0);
 }
 
-static void msm5205_int(int offset)
-{
-	cpu_cause_interrupt(2,Z80_IRQ_INT);
-}
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -311,23 +308,23 @@ static struct MemoryReadAddress sound2_readmem[] =
 /* Yes, _no_ ram */
 static struct MemoryWriteAddress sound2_writemem[] =
 {
-	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0xffff, MWA_ROM },
+//	{ 0x0000, 0xffff, MWA_ROM },	for some reason (bug in memory.c?) this causes a crash
+	{ 0x0000, 0xffff, MWA_NOP },
 	{ -1 }
 };
 
 static struct IOReadPort sound2_readport[] =
 {
-  { 0x01, 0x01, soundlatch_r },
-  { -1 }
+{ 0x01, 0x01, soundlatch_r },
+{ -1 }
 };
 
 
 static struct IOWritePort sound2_writeport[] =
 {
-  { 0x00, 0x01, msm5205_w },
-  { 0x02, 0x02, sound2_bank_w },
-  { -1 }
+	{ 0x00, 0x01, msm5205_w },
+	{ 0x02, 0x02, sound2_bank_w },
+	{ -1 }
 };
 
 
@@ -860,16 +857,17 @@ static struct YM2151interface ym2151_interface =
 {
 	1,	/* 1 chip */
 	3579545,	/* ? xtal is 3.579545MHz */
-	{ 33 },
+	{ YM3012_VOL(30,MIXER_PAN_LEFT,30,MIXER_PAN_RIGHT) },
 	{ irq_handler }
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	2,		/* 2 chips. Should be stereo */
-	8000,	/* 8000Hz playback ? */
-	msm5205_int,		/* interrupt function */
-	{ 33, 33 }
+	2,		/* 2 chips */
+	384000,				/* 384KHz ?           */
+	{ 0, 0 },/* interrupt function */
+	{ MSM5205_SEX_4B,MSM5205_SEX_4B},	/* 8KHz playback ?    */
+	{ 100, 100 }
 };
 
 static struct MachineDriver machine_driver =
@@ -896,7 +894,8 @@ static struct MachineDriver machine_driver =
 			4,	/* memory region #4 */
 			sound2_readmem, sound2_writemem,
 			sound2_readport, sound2_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the MSM5205 */
+			0,0,
+			interrupt,8000
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -953,7 +952,8 @@ static struct MachineDriver machineus_driver =
 			4,	/* memory region #4 */
 			sound2_readmem, sound2_writemem,
 			sound2_readport, sound2_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the MSM5205 */
+			0,0,
+			interrupt,8000
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1010,7 +1010,8 @@ static struct MachineDriver machinejp_driver =
 			4,	/* memory region #4 */
 			sound2_readmem, sound2_writemem,
 			sound2_readport, sound2_writeport,
-			ignore_interrupt,0	/* IRQs are caused by the MSM5205 */
+			0,0,
+			interrupt,8000
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */

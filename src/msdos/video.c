@@ -12,6 +12,11 @@
 #include "vgafreq.h"
 #include "vidhrdw/vector.h"
 #include "dirty.h"
+/*extra functions for 15.75KHz modes */
+#include "gen15khz.h"
+
+/*15.75KHz SVGA driver (req. for 15.75KHz Arcade Monitor Modes)*/
+SVGA15KHZDRIVER *SVGA15KHzdriver;
 
 BEGIN_GFX_DRIVER_LIST
 	GFX_DRIVER_VGA
@@ -51,15 +56,19 @@ void osd_profiler_display(void);
 
 /* dirty mode 1 (VIDEO_SUPPORTS_DIRTY) */
 void blitscreen_dirty1_vga(void);
+void blitscreen_dirty1_unchained_vga(void);
 void blitscreen_dirty1_vesa_1x_1x_8bpp(void);
 void blitscreen_dirty1_vesa_1x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_1x_2xs_8bpp(void);
+void blitscreen_dirty1_vesa_2x_1x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_2xs_8bpp(void);
 void blitscreen_dirty1_vesa_2x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_2x_3xs_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty1_vesa_3x_2xs_8bpp(void);
+void blitscreen_dirty1_vesa_3x_3x_8bpp(void);
+void blitscreen_dirty1_vesa_3x_3xs_8bpp(void);
 void blitscreen_dirty1_vesa_4x_3x_8bpp(void);
 void blitscreen_dirty1_vesa_4x_3xs_8bpp(void);
 
@@ -71,15 +80,19 @@ void blitscreen_dirty1_vesa_1x_2xs_16bpp(void);
 
 /* dirty mode 0 (no osd_mark_dirty calls) */
 void blitscreen_dirty0_vga(void);
+void blitscreen_dirty0_unchained_vga(void);
 void blitscreen_dirty0_vesa_1x_1x_8bpp(void);
 void blitscreen_dirty0_vesa_1x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_1x_2xs_8bpp(void);
+void blitscreen_dirty0_vesa_2x_1x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_2xs_8bpp(void);
 void blitscreen_dirty0_vesa_2x_3x_8bpp(void);
 void blitscreen_dirty0_vesa_2x_3xs_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2x_8bpp(void);
 void blitscreen_dirty0_vesa_3x_2xs_8bpp(void);
+void blitscreen_dirty0_vesa_3x_3x_8bpp(void);
+void blitscreen_dirty0_vesa_3x_3xs_8bpp(void);
 void blitscreen_dirty0_vesa_4x_3x_8bpp(void);
 void blitscreen_dirty0_vesa_4x_3xs_8bpp(void);
 
@@ -92,6 +105,96 @@ void blitscreen_dirty0_vesa_2x_2xs_16bpp(void);
 static void update_screen_dummy(void);
 void (*update_screen)(void) = update_screen_dummy;
 
+static void (*updaters8[4][3][2][2])(void) =
+{			/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp },
+			{ blitscreen_dirty0_vesa_1x_1x_8bpp, blitscreen_dirty1_vesa_1x_1x_8bpp }
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_8bpp,  blitscreen_dirty1_vesa_1x_2x_8bpp },
+			{ blitscreen_dirty0_vesa_1x_2xs_8bpp, blitscreen_dirty1_vesa_1x_2xs_8bpp }
+		},	/* 1 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy },
+		}
+	},		/* 2 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp },
+			{ blitscreen_dirty0_vesa_2x_1x_8bpp, blitscreen_dirty1_vesa_2x_1x_8bpp }
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_8bpp,  blitscreen_dirty1_vesa_2x_2x_8bpp },
+			{ blitscreen_dirty0_vesa_2x_2xs_8bpp, blitscreen_dirty1_vesa_2x_2xs_8bpp }
+		},	/* 2 x 3 */
+		{	{ blitscreen_dirty0_vesa_2x_3x_8bpp,  blitscreen_dirty1_vesa_2x_3x_8bpp },
+			{ blitscreen_dirty0_vesa_2x_3xs_8bpp, blitscreen_dirty1_vesa_2x_3xs_8bpp }
+		}
+	},		/* 3 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 3 x 2 */
+		{	{ blitscreen_dirty0_vesa_3x_2x_8bpp,  blitscreen_dirty1_vesa_3x_2x_8bpp },
+			{ blitscreen_dirty0_vesa_3x_2xs_8bpp, blitscreen_dirty1_vesa_3x_2xs_8bpp }
+		},	/* 3 x 3 */
+		{	{ blitscreen_dirty0_vesa_3x_3x_8bpp,  blitscreen_dirty1_vesa_3x_3x_8bpp },
+			{ blitscreen_dirty0_vesa_3x_3xs_8bpp, blitscreen_dirty1_vesa_3x_3xs_8bpp }
+		}
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 2 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 3 */
+		{	{ blitscreen_dirty0_vesa_4x_3x_8bpp,  blitscreen_dirty1_vesa_4x_3x_8bpp },
+			{ blitscreen_dirty0_vesa_4x_3xs_8bpp, blitscreen_dirty1_vesa_4x_3xs_8bpp }
+		}
+	}
+};
+
+static void (*updaters16[4][3][2][2])(void) =
+{			/* 1 x 1 */
+	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
+			{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp }
+		},	/* 1 x 2 */
+		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp,  blitscreen_dirty1_vesa_1x_2x_16bpp },
+			{ blitscreen_dirty0_vesa_1x_2xs_16bpp, blitscreen_dirty1_vesa_1x_2xs_16bpp }
+		},	/* 1 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy },
+		}
+	},		/* 2 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 2 x 2 */
+		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp,  blitscreen_dirty1_vesa_2x_2x_16bpp },
+			{ blitscreen_dirty0_vesa_2x_2xs_16bpp, blitscreen_dirty1_vesa_2x_2xs_16bpp }
+		},	/* 2 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy },
+		}
+	},		/* 3 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 3 x 2 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 3 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		}
+	},		/* 4 x 1 */
+	{	{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 2 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		},	/* 4 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy }
+		}
+	}
+};
+
+
+
 struct osd_bitmap *scrbitmap;
 static unsigned char current_palette[256][3];
 static PALETTE adjusted_palette;
@@ -103,8 +206,10 @@ extern unsigned int quadpixel[256]; /* for quadring pixels */
 int frameskip,autoframeskip;
 #define FRAMESKIP_LEVELS 12
 
+/* type of monitor output- */
+/* Standard PC, NTSC, PAL or Arcade */
+int monitor_type;
 
-int ntsc;
 int vgafreq;
 int always_synced;
 int video_sync;
@@ -117,19 +222,24 @@ int skiplines;
 int skipcolumns;
 int scanlines;
 int stretch;
-int use_double;
-int use_triple;
-int use_quadra;
+int use_tweaked;
 int use_vesa;
-int gfx_mode;
 float osd_gamma_correction = 1.0;
-int brightness = 100;
+int brightness;
+float brightness_paused_adjust;
 char *resolution;
 char *mode_desc;
 int gfx_mode;
 int gfx_width;
 int gfx_height;
 int tw256x224_hor;
+
+/*new 'half' flag (req. for 15.75KHz Arcade Monitor Modes)*/
+int half_yres=0;
+/* indicates unchained video mode (req. for 15.75KHz Arcade Monitor Modes)*/
+int unchained;
+/* flags for lowscanrate modes */
+int scanrate15KHz;
 
 static int auto_resolution;
 static int viswidth;
@@ -150,11 +260,7 @@ int gfx_xoffset;
 int gfx_yoffset;
 int gfx_display_lines;
 int gfx_display_columns;
-static int doubling = 0;
-static int vdoubling = 0;
-static int tripling = 0;
-static int quadring = 0;
-static int quadring12 = 0;
+static int xmultiply,ymultiply;
 int throttle = 1;       /* toggled by F10 */
 
 static int gone_to_gfx_mode;
@@ -170,26 +276,77 @@ unsigned char tw256x256ns_hor_h, tw256x256ns_hor_v, tw256x256sc_hor_h, tw256x256
 unsigned char tw256x256ns_57_h, tw256x256ns_57_v, tw256x256sc_57_h, tw256x256sc_57_v;
 unsigned char tw256x256ns_h57_h, tw256x256ns_h57_v, tw256x256sc_h57_h, tw256x256sc_h57_v;
 unsigned char tw288x224ns_h, tw288x224ns_v, tw288x224sc_h, tw288x224sc_v;
+unsigned char tw320x240ns_h, tw320x240ns_v, tw320x240sc_h, tw320x240sc_v;
+unsigned char tw336x240ns_h, tw336x240ns_v, tw336x240sc_h, tw336x240sc_v;
+unsigned char tw384x240ns_h, tw384x240ns_v, tw384x240sc_h, tw384x240sc_v;
+unsigned char tw384x256ns_h, tw384x256ns_v, tw384x256sc_h, tw384x256sc_v;
 
-struct vga_tweak { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines; };
+struct vga_tweak { int x, y; Register *reg; int reglen; int syncvgafreq; int scanlines;
+					int unchained; };
 struct vga_tweak vga_tweaked[] = {
-	{ 256, 256, scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 1, 1},
-	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1},
-	{ 224, 288, scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 2, 1},
-	{ 320, 204, scr320x204, sizeof(scr320x204)/sizeof(Register), -1, 0 },
-	{ 256, 256, scr256x256, sizeof(scr256x256)/sizeof(Register),  1, 0 },
-	{ 288, 224, scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0 },
-	{ 224, 288, scr224x288, sizeof(scr224x288)/sizeof(Register),  1, 0 },
-	{ 200, 320, scr200x320, sizeof(scr200x320)/sizeof(Register), -1, 0 },
+	{ 256, 256, scr256x256scanlines, sizeof(scr256x256scanlines)/sizeof(Register), 1, 1, 0 },
+	{ 288, 224, scr288x224scanlines, sizeof(scr288x224scanlines)/sizeof(Register), 0, 1, 0 },
+	{ 224, 288, scr224x288scanlines, sizeof(scr224x288scanlines)/sizeof(Register), 2, 1, 0 },
+/* 320x204 runs at 70Hz - to get a 60Hz modes, timings would be the same as
+ the 320x240 mode - just more blanking, so might as well just use that */
+//	{ 320, 204, scr320x204, sizeof(scr320x204)/sizeof(Register), -1, 0, 0 },
+	{ 256, 256, scr256x256, sizeof(scr256x256)/sizeof(Register),  1, 0, 0 },
+	{ 288, 224, scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0, 0 },
+	{ 224, 288, scr224x288, sizeof(scr224x288)/sizeof(Register),  1, 0, 0 },
+	{ 200, 320, scr200x320, sizeof(scr200x320)/sizeof(Register), -1, 0, 0 },
+	{ 320, 240, scr320x240scanlines, sizeof(scr320x240scanlines)/sizeof(Register),  0, 1, 1 },
+	{ 320, 240, scr320x240, sizeof(scr320x240)/sizeof(Register),  0, 0, 1 },
+	{ 336, 240, scr336x240scanlines, sizeof(scr336x240scanlines)/sizeof(Register),  0, 1, 1 },
+	{ 336, 240, scr336x240, sizeof(scr336x240)/sizeof(Register),  0, 0, 1 },
+	{ 384, 240, scr384x240scanlines, sizeof(scr384x240scanlines)/sizeof(Register),  1, 1, 1 },
+	{ 384, 240, scr384x240, sizeof(scr384x240)/sizeof(Register),  1, 0, 1 },
+	{ 384, 256, scr384x256scanlines, sizeof(scr384x256scanlines)/sizeof(Register),  1, 1, 1 },
+	{ 384, 256, scr384x256, sizeof(scr384x256)/sizeof(Register),  1, 0, 1 },
 	{ 0, 0 }
 };
 
+/* Tweak values for arcade/ntsc/pal modes */
+unsigned char tw224x288arc_h, tw224x288arc_v, tw288x224arc_h, tw288x224arc_v;
+unsigned char tw256x240arc_h, tw256x240arc_v, tw256x256arc_h, tw256x256arc_v;
+unsigned char tw320x240arc_h, tw320x240arc_v, tw320x256arc_h, tw320x256arc_v;
+unsigned char tw352x240arc_h, tw352x240arc_v, tw352x256arc_h, tw352x256arc_v;
+unsigned char tw368x240arc_h, tw368x240arc_v, tw368x256arc_h, tw368x256arc_v;
+unsigned char tw512x224arc_h, tw512x224arc_v, tw512x256arc_h, tw512x256arc_v;
+unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
+
+/* 15.75KHz Modes */
+struct vga_15KHz_tweak { int x, y; Register *reg; int reglen;
+                          int syncvgafreq; int vesa; int ntsc;
+                          int half_yres; int matchx; };
+struct vga_15KHz_tweak arcade_tweaked[] = {
+	{ 224, 288, scr224x288_15KHz, sizeof(scr224x288_15KHz)/sizeof(Register), 0, 0, 0, 0, 224 },
+	{ 256, 240, scr256x240_15KHz, sizeof(scr256x240_15KHz)/sizeof(Register), 0, 0, 1, 0, 256 },
+	{ 256, 256, scr256x256_15KHz, sizeof(scr256x256_15KHz)/sizeof(Register), 0, 0, 0, 0, 256 },
+	{ 288, 224, scr288x224_NTSC,  sizeof(scr288x224_NTSC) /sizeof(Register), 0, 0, 1, 0, 288 },
+	{ 320, 240, scr320x240_15KHz, sizeof(scr320x240_15KHz)/sizeof(Register), 1, 0, 1, 0, 320 },
+	{ 320, 256, scr320x256_15KHz, sizeof(scr320x256_15KHz)/sizeof(Register), 1, 0, 0, 0, 320 },
+	{ 352, 240, scr352x240_15KHz, sizeof(scr352x240_15KHz)/sizeof(Register), 1, 0, 1, 0, 352 },
+	{ 352, 256, scr352x256_15KHz, sizeof(scr352x256_15KHz)/sizeof(Register), 1, 0, 0, 0, 352 },
+/* force 384 games to match to 368 modes - the standard VGA clock speeds mean we can't go as wide as 384 */
+	{ 368, 240, scr368x240_15KHz, sizeof(scr368x240_15KHz)/sizeof(Register), 1, 0, 1, 0, 384 },
+	{ 368, 256, scr368x256_15KHz, sizeof(scr368x256_15KHz)/sizeof(Register), 1, 0, 0, 0, 384 },
+/* double monitor modes */
+	{ 512, 224, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 0, 512 },
+	{ 512, 256, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 0, 512 },
+/* SVGA Mode (VGA register array not used) */
+	{ 640, 480, NULL            , 0                                        , 0, 1, 1, 0, 640 },
+/* 'half y' VGA modes, used to fake hires if 'tweaked' is on */
+	{ 512, 448, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 512 },
+	{ 512, 512, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 512 },
+	{ 0, 0 }
+};
 
 /* Create a bitmap. Also calls osd_clearbitmap() to appropriately initialize */
 /* it to the background color. */
 /* VERY IMPORTANT: the function must allocate also a "safety area" 8 pixels wide all */
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
+
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 980209 */
 {
 	struct osd_bitmap *bitmap;
@@ -336,6 +493,19 @@ static void select_display_mode(void)
 	int width,height, i;
 
 	auto_resolution = 0;
+	/* assume unchained video mode  */
+	unchained = 0;
+	/* see if it's a low scanrate mode */
+	switch (monitor_type)
+	{
+		case MONITOR_TYPE_NTSC:
+		case MONITOR_TYPE_PAL:
+		case MONITOR_TYPE_ARCADE:
+			scanrate15KHz = 1;
+			break;
+		default:
+			scanrate15KHz = 0;
+	}
 
 	/* initialise quadring table [useful for *all* doubling modes */
 	for (i = 0; i < 256; i++)
@@ -353,75 +523,6 @@ static void select_display_mode(void)
 	{
 		width = Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1;
 		height = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1;
-
-		if (stretch && width <= 256 && height <= 256 &&
-				!(Machine->orientation & ORIENTATION_SWAP_XY))
-		{
-			if (stretch == 1) use_triple = 1;
-			else if (stretch == 2) use_quadra = 1;
-		}
-	}
-
-
-	doubling = use_double;
-	tripling = use_triple;
-	quadring = use_quadra;
-	quadring12 = 0;
-	vdoubling = 0;
-	if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
-			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
-	{
-		if (stretch == 2 && width <= 512 && height <= 256 &&
-				!(Machine->orientation & ORIENTATION_SWAP_XY))
-		{
-			doubling = 0;
-			tripling = 0;
-			quadring = 0;
-			quadring12 = 1;
-			vdoubling = 0;
-			height *= 3;
-
-			gfx_mode = GFX_VESA2L;
-			gfx_width = 1024;
-			gfx_height = 768;
-			color_depth = 8;
-		}
-		else
-		{
-			doubling = 0;
-			vdoubling = 1;
-			height *= 2;
-		}
-	}
-	if (use_triple)
-	{
-		/* set vertical doubling */
-		doubling = 0;
-		tripling = 1;
-		quadring = 0;
-		vdoubling = 1;
-		height *= 2;
-
-		/* set the only useful videomode for tripling */
-		gfx_mode = GFX_VESA2L;
-		gfx_width = 800;
-		gfx_height = 600;
-		color_depth = 8;
-	}
-	if (use_quadra)
-	{
-		/* set vertical doubling */
-		doubling = 0;
-		tripling = 0;
-		quadring = 1;
-		vdoubling = 0;
-		height *= 3;
-
-		/* set the only useful videomode for quadring */
-		gfx_mode = GFX_VESA2L;
-		gfx_width = 1024;
-		gfx_height = 768;
-		color_depth = 8;
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
@@ -433,54 +534,92 @@ static void select_display_mode(void)
 		height = temp;
 	}
 
+	use_vesa = -1;
+
 	/* 16 bit color is supported only by VESA modes */
 	if (color_depth == 16 && (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT))
 	{
 		if (errorlog)
 			fprintf (errorlog, "Game needs 16-bit colors. Using VESA\n");
-		use_vesa = 1;
+		use_tweaked = 0;
 	}
 
-	/* Check for special NTSC mode */
-	if (ntsc == 1)
+
+  /* Check for special 15.75KHz mode (req. for 15.75KHz Arcade Modes) */
+	if (scanrate15KHz == 1)
 	{
 		if (errorlog)
-			fprintf (errorlog, "Using special NTSC video mode.\n");
-		use_vesa = 0; gfx_width = 288; gfx_height = 224;
-	}
+		{
+			switch (monitor_type)
+			{
+				case MONITOR_TYPE_NTSC:
+					fprintf (errorlog, "Using special NTSC video mode.\n");
+					break;
+				case MONITOR_TYPE_PAL:
+					fprintf (errorlog, "Using special PAL video mode.\n");
+					break;
+				case MONITOR_TYPE_ARCADE:
+					fprintf (errorlog, "Using special arcade monitor mode.\n");
+					break;
+			}
+		}
+		scanlines = 0;
+  		/* if no width/height specified, pick one from our tweaked list */
+		if (!gfx_width && !gfx_height)
+		{
+			for (i=0; arcade_tweaked[i].x != 0; i++)
+			{
+				/* find height/width fit */
+				/* only allow VESA modes if vesa explicitly selected */
+				/* only allow PAL / NTSC modes if explicitly selected */
+				/* arcade modes cover 50-60Hz) */
+				if ((use_tweaked == 0 ||!arcade_tweaked[i].vesa) &&
+					(monitor_type == MONITOR_TYPE_ARCADE || /* handles all 15.75KHz modes */
+					(arcade_tweaked[i].ntsc && monitor_type == MONITOR_TYPE_NTSC) ||  /* NTSC only */
+					(!arcade_tweaked[i].ntsc && monitor_type == MONITOR_TYPE_PAL)) &&  /* PAL ONLY */
+					width  <= arcade_tweaked[i].matchx &&
+					height <= arcade_tweaked[i].y)
 
-	/* If a specific resolution was given, reconsider VESA against */
-	/* tweaked VGA modes */
-	if (gfx_width && gfx_height)
-	{
-		if (gfx_width >= 320 && gfx_height >= 240)
-			use_vesa = 1;
-		else
-			use_vesa = 0;
-	}
+				{
+					gfx_width  = arcade_tweaked[i].x;
+					gfx_height = arcade_tweaked[i].y;
+					break;
+				}
+			}
+			/* if it's a vector, and there's isn't an SVGA support we want to avoid the half modes */
+			/* - so force default res. */
+			if (vector_game && (use_vesa == 0 || monitor_type == MONITOR_TYPE_PAL))
+				gfx_width = 0;
 
-	/* Hack for 320x480 and 400x600 "vmame" video modes */
-	if ((gfx_width == 320 && gfx_height == 480) ||
-		(gfx_width == 400 && gfx_height == 600))
-	{
-		use_vesa = 1;
-		doubling = 0;
-		vdoubling = 1;
-		height *= 2;
-	}
+			/* we didn't find a tweaked 15.75KHz mode to fit */
+			if (gfx_width == 0)
+			{
+				/* pick a default resolution for the monitor type */
+				/* something with the right refresh rate + an aspect ratio which can handle vectors */
+				switch (monitor_type)
+				{
+					case MONITOR_TYPE_NTSC:
+					case MONITOR_TYPE_ARCADE:
+						gfx_width = 320; gfx_height = 240;
+						break;
+					case MONITOR_TYPE_PAL:
+						gfx_width = 320; gfx_height = 256;
+						break;
+				}
 
-	/* -autovesa ? */
-	if (use_vesa == -1)
-	{
-		if (width >= 320 && height >= 240)
-			use_vesa = 1;
-		else
-			use_vesa = 0;
+        		use_vesa = 0;
+        		color_depth = 8;
+			}
+			else
+				use_vesa = arcade_tweaked[i].vesa;
+		}
+
 	}
 
 	/* Select desired tweaked mode for 256x224 */
 	/* still no real 256x224 mode supported */
-	if (use_vesa == 0 && width <= 256 && height <= 224)
+	/* changed to not override specific user request */
+	if (!gfx_width && !gfx_height && use_tweaked && width <= 256 && height <= 244)
 	{
 		if (tw256x224_hor)
 		{
@@ -496,11 +635,11 @@ static void select_display_mode(void)
 
 	/* If using tweaked modes, check if there exists one to fit
 	   the screen in, otherwise use VESA */
-	if (use_vesa == 0 && !gfx_width && !gfx_height)
+	if (use_tweaked && !gfx_width && !gfx_height)
 	{
 		for (i=0; vga_tweaked[i].x != 0; i++)
 		{
-			if (width  <= vga_tweaked[i].x &&
+			if (width <= vga_tweaked[i].x &&
 				height <= vga_tweaked[i].y)
 			{
 				gfx_width  = vga_tweaked[i].x;
@@ -509,8 +648,11 @@ static void select_display_mode(void)
 				/* noscanline, we need to reset the scanline global */
 				if (vga_tweaked[i].scanlines == 0)
 					scanlines = 0;
-
+				use_vesa = 0;
 				/* leave the loop on match */
+
+if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
+	use_vesa = 1;
 				break;
 			}
 		}
@@ -526,10 +668,10 @@ static void select_display_mode(void)
 
 	/* If no VESA resolution has been given, we choose a sensible one. */
 	/* 640x480, 800x600 and 1024x768 are common to all VESA drivers. */
-
-	if ((use_vesa == 1) && !gfx_width && !gfx_height)
+	if (!gfx_width && !gfx_height)
 	{
 		auto_resolution = 1;
+		use_vesa = 1;
 
 		/* vector games use 640x480 as default */
 		if (vector_game)
@@ -539,10 +681,7 @@ static void select_display_mode(void)
 		}
 		else
 		{
-			/* turn off pixel doubling if we don't want scanlines */
-			if (scanlines == 0) doubling = 0;
-
-			if (doubling != 0)
+			if (scanlines && stretch)
 			{
 				/* see if pixel doubling can be applied at 640x480 */
 				if (height <= 240 && width <= 320)
@@ -556,14 +695,11 @@ static void select_display_mode(void)
 					gfx_width = 800;
 					gfx_height = 600;
 				}
-				/* we don't want to use pixel doubling at 1024x768 */
-
-				/* no pixel doubled modes fit, revert to not doubled */
-				else
-					doubling = 0;
+				/* don't use 1024x768 right away. If 512x384 is available, it */
+				/* will provide hardware scanlines. */
 			}
 
-			if (doubling == 0)
+			if (!gfx_width && !gfx_height)
 			{
 				if (height <= 240 && width <= 320)
 				{
@@ -603,7 +739,7 @@ static void select_display_mode(void)
 
 
 /* center image inside the display based on the visual area */
-static void adjust_display (int xmin, int ymin, int xmax, int ymax)
+static void adjust_display(int xmin, int ymin, int xmax, int ymax)
 {
 	int temp;
 	int w,h;
@@ -641,66 +777,58 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	viswidth  = xmax - xmin + 1;
 	visheight = ymax - ymin + 1;
 
-	if (doubling == 0 || use_vesa == 0 ||
-			(doubling != 1 && (viswidth > gfx_width/2 || visheight > gfx_height/2)))
-		doubling = 0;
-	else
-		doubling = 1;
+
+	xmultiply = 1;
+	ymultiply = 1;
+
+	if (use_vesa && !vector_game)
+	{
+		if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+		{
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+				xmultiply++;
+			else ymultiply++;
+		}
+
+		/* Hack for 320x480 and 400x600 "vmame" video modes */
+		if ((gfx_width == 320 && gfx_height == 480) ||
+				(gfx_width == 400 && gfx_height == 600))
+			ymultiply++;
+
+		if (stretch)
+		{
+			if ((Machine->orientation & ORIENTATION_SWAP_XY) ||
+					(Machine->drv->video_attributes & VIDEO_DUAL_MONITOR))
+			{
+				/* maintain aspect ratio for vertical games or dual monitor games */
+				while ((xmultiply+1) * viswidth <= gfx_width &&
+						(ymultiply+1) * visheight <= gfx_height)
+				{
+					xmultiply++;
+					ymultiply++;
+				}
+			}
+			else
+			{
+				/* stretch the other games as much as possible */
+				xmultiply = gfx_width / viswidth;
+				ymultiply = gfx_height / visheight;
+			}
+		}
+	}
 
 	gfx_display_lines = visheight;
 	gfx_display_columns = viswidth;
-	if (doubling || vdoubling)
-	{
-		gfx_yoffset = (gfx_height - visheight * 2) / 2;
-		if (gfx_display_lines > gfx_height / 2)
-			gfx_display_lines = gfx_height / 2;
-	}
-	else if (quadring || quadring12)
-	{
-		gfx_yoffset = (gfx_height - visheight * 3) / 2;
-		if (gfx_display_lines > gfx_height / 3)
-			gfx_display_lines = gfx_height / 3;
-	}
-	else
-	{
-		gfx_yoffset = (gfx_height - visheight) / 2;
-		if (gfx_display_lines > gfx_height)
-			gfx_display_lines = gfx_height;
-	}
 
-	if (doubling)
-	{
-		gfx_xoffset = (gfx_width - viswidth * 2) / 2;
-		if (gfx_display_columns > gfx_width / 2)
-			gfx_display_columns = gfx_width / 2;
-	}
-	else if (tripling)
-	{
-		gfx_xoffset = (gfx_width - viswidth * 3) /2;
-		if (gfx_display_columns > gfx_width / 3)
-			gfx_display_columns = gfx_width / 3;
+	gfx_xoffset = (gfx_width - viswidth * xmultiply) / 2;
+	if (gfx_display_columns > gfx_width / xmultiply)
+		gfx_display_columns = gfx_width / xmultiply;
 
-	}
-	else if (quadring)
-	{
-		gfx_xoffset = (gfx_width - viswidth * 4) /2;
-		if (gfx_display_columns > gfx_width / 4)
-			gfx_display_columns = gfx_width / 4;
+	gfx_yoffset = (gfx_height - visheight * ymultiply) / 2;
+		if (gfx_display_lines > gfx_height / ymultiply)
+			gfx_display_lines = gfx_height / ymultiply;
 
-	}
-	else if (quadring12)
-	{
-		gfx_xoffset = (gfx_width - viswidth * 2) /2;
-		if (gfx_display_columns > gfx_width / 2)
-			gfx_display_columns = gfx_width / 2;
-
-	}
-	else
-	{
-		gfx_xoffset = (gfx_width - viswidth) / 2;
-		if (gfx_display_columns > gfx_width)
-			gfx_display_columns = gfx_width;
-	}
 
 	skiplinesmin = ymin;
 	skiplinesmax = visheight - gfx_display_lines + ymin;
@@ -759,9 +887,13 @@ int game_attributes;
 /* Return a osd_bitmap pointer or 0 in case of error. */
 struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 {
+	int	vga_reg_val;
+
 	if (errorlog)
 		fprintf (errorlog, "width %d, height %d\n", width,height);
 
+	brightness = 100;
+	brightness_paused_adjust = 1.0;
 
 	if (frameskip < 0) frameskip = 0;
 	if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
@@ -786,11 +918,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 
 	if (vector_game)
 	{
-		/* for vector games, use_double == 0 means miniaturized. */
-		if (use_double == 0)
-			scale_vectorgames(gfx_width/2,gfx_height/2,&width, &height);
-		else
-			scale_vectorgames(gfx_width,gfx_height,&width, &height);
+		scale_vectorgames(gfx_width,gfx_height,&width, &height);
 	}
 
 	game_width = width;
@@ -807,181 +935,81 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 	if (!osd_set_display(width, height, attributes))
 		return 0;
 
-	if (vector_game)
-	{
-		/* vector games are always non-doubling */
-		doubling = 0;
-		/* center display */
+	/* center display based on visible area */
+ 	if (vector_game)
 		adjust_display(0, 0, width-1, height-1);
-	}
-	else /* center display based on visible area */
+	else
 	{
 		struct rectangle vis = Machine->drv->visible_area;
-		adjust_display (vis.min_x, vis.min_y, vis.max_x, vis.max_y);
+		adjust_display(vis.min_x, vis.min_y, vis.max_x, vis.max_y);
 	}
 
-	if (use_dirty) /* supports dirty ? */
+   /*Check for SVGA 15.75KHz mode (req. for 15.75KHz Arcade Monitor Modes)
+     need to do this here, as the double params will be set up correctly */
+	if (use_vesa == 1 && scanrate15KHz)
 	{
-		if (use_vesa == 0)
+		int dbl;
+		dbl = (ymultiply >= 2);
+		/* find a driver */
+		if (!getSVGA15KHzdriver (&SVGA15KHzdriver))
 		{
-			update_screen = blitscreen_dirty1_vga;
-			if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
+			printf ("\nUnable to find 15.75KHz SVGA driver for %dx%d\n", gfx_width, gfx_height);
+			if (use_triplebuf)
+				printf ("\nTriple buffering is on - turn it off to use Generic 15.75KHz SVGA driver\n");
+			return 0;
 		}
-		else if (scrbitmap->depth == 16)
+		if(errorlog)
+			fprintf (errorlog, "Using %s 15.75KHz SVGA driver\n", SVGA15KHzdriver->name);
+		/*and try to set the mode */
+		if (!SVGA15KHzdriver->setSVGA15KHzmode (dbl, gfx_width, gfx_height))
 		{
-			if (doubling) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty1_vesa_2x_2xs_16bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2xs_16bpp\n");
-				} else {
-					update_screen = blitscreen_dirty1_vesa_2x_2x_16bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2x_16bpp\n");
-				}
-			} else {
-				if (vdoubling) {
-					if (scanlines) {
-						update_screen = blitscreen_dirty1_vesa_1x_2xs_16bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_2xs_16bpp\n");
-					} else {
-						update_screen = blitscreen_dirty1_vesa_1x_2x_16bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_2x_16bpp\n");
-					}
-				} else {
-					update_screen = blitscreen_dirty1_vesa_1x_1x_16bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_1x_16bpp\n");
-				}
-		    }
-		} else {
-			if (doubling) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty1_vesa_2x_2xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty1_vesa_2x_2x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_2x_8bpp\n");
-				}
-			} else if (tripling) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty1_vesa_3x_2xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_3x_2xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty1_vesa_3x_2x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_3x_2x_8bpp\n");
-				}
-			} else if (quadring) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty1_vesa_4x_3xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_4x_3xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty1_vesa_4x_3x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_4x_3x_8bpp\n");
-				}
-			} else if (quadring12) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty1_vesa_2x_3xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_3xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty1_vesa_2x_3x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_2x_3x_8bpp\n");
-				}
-			} else {
-				if (vdoubling) {
-					if (scanlines) {
-						update_screen = blitscreen_dirty1_vesa_1x_2xs_8bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_2xs_8bpp\n");
-					} else {
-						update_screen = blitscreen_dirty1_vesa_1x_2x_8bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_2x_8bpp\n");
-					}
-				} else {
-					update_screen = blitscreen_dirty1_vesa_1x_1x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vesa_1x_1x_8bpp\n");
-				}
+			printf ("\nUnable to set SVGA 15.75KHz mode %dx%d (driver: %s)\n", gfx_width, gfx_height, SVGA15KHzdriver->name);
+			return 0;
+		}
+		/* if we're doubling, we might as well have scanlines */
+		/* the 15.75KHz driver is going to drop every other line anyway -
+			so we can avoid drawing them and save some time */
+		if(dbl)
+			scanlines=1;
+	}
+
+	if (use_vesa == 0)
+	{
+		if (use_dirty) /* supports dirty ? */
+		{
+			if (unchained)
+			{
+				update_screen = blitscreen_dirty1_unchained_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_unchained_vga\n");
+			}
+			else
+			{
+				update_screen = blitscreen_dirty1_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
 			}
 		}
-	}
-	else    /* does not support dirty */
-	{
-		if (use_vesa == 0)
-		{
-			update_screen = blitscreen_dirty0_vga;
-			if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
-	}
 		else
-		if (scrbitmap->depth == 16)
 		{
-			if (doubling) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty0_vesa_2x_2xs_16bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2xs_16bpp\n");
-				} else {
-					update_screen = blitscreen_dirty0_vesa_2x_2x_16bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2x_16bpp\n");
-				}
-			} else {
-				if (vdoubling) {
-					if (scanlines) {
-						update_screen = blitscreen_dirty0_vesa_1x_2xs_16bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_2xs_16bpp\n");
-					} else {
-						update_screen = blitscreen_dirty0_vesa_1x_2x_16bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_2x_16bpp\n");
-					}
-				} else {
-					update_screen = blitscreen_dirty0_vesa_1x_1x_16bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_1x_16bpp\n");
-				}
-	    	}
-		} else {
-			if (doubling) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty0_vesa_2x_2xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty0_vesa_2x_2x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_2x_8bpp\n");
-				}
-			} else if (tripling) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty0_vesa_3x_2xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_3x_2xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty0_vesa_3x_2x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_3x_2x_8bpp\n");
-				}
-			} else if (quadring) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty0_vesa_4x_3xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_4x_3xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty0_vesa_4x_3x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_4x_3x_8bpp\n");
-				}
-			} else if (quadring12) {
-				if (scanlines) {
-					update_screen = blitscreen_dirty0_vesa_2x_3xs_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_3xs_8bpp\n");
-				} else {
-					update_screen = blitscreen_dirty0_vesa_2x_3x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_2x_3x_8bpp\n");
-				}
-			} else {
-				if (vdoubling)
-				{
-					if (scanlines) {
-						update_screen = blitscreen_dirty0_vesa_1x_2xs_8bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_2xs_8bpp\n");
-					} else {
-						update_screen = blitscreen_dirty0_vesa_1x_2x_8bpp;
-						if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_2x_8bpp\n");
-					}
-				} else {
-					update_screen = blitscreen_dirty0_vesa_1x_1x_8bpp;
-					if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vesa_1x_1x_8bpp\n");
-				}
+			/* check for unchained modes */
+			if (unchained)
+			{
+				update_screen = blitscreen_dirty0_unchained_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_unchained_vga\n");
+			}
+			else
+			{
+				update_screen = blitscreen_dirty0_vga;
+				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
 			}
 		}
-    }
+	}
+	else
+	{
+		if (scrbitmap->depth == 16)
+			update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+		else
+			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
+	}
 
     return scrbitmap;
 }
@@ -990,7 +1018,8 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 int osd_set_display(int width,int height, int attributes)
 {
 	int     i;
-
+	/* moved 'found' to here (req. for 15.75KHz Arcade Monitor Modes) */
+	int     found;
 
 	if (!gfx_height || !gfx_width)
 	{
@@ -1023,23 +1052,69 @@ int osd_set_display(int width,int height, int attributes)
 		dirtycolor[i] = 1;
 	}
 	dirtypalette = 1;
+	/* handle special 15.75KHz modes, these now include SVGA modes */
+	found = 0;
+	/*move video freq set to here, as we need to set it explicitly for the 15.75KHz modes */
+	videofreq = vgafreq;
 
-	if (use_vesa == 0)
+	if (scanrate15KHz == 1)
 	{
-		int found;
-
-		/* setup tweaked modes */
-		videofreq = vgafreq;
-		found = 0;
-
-		/* handle special NTSC mode */
-		if (ntsc == 1)
+		/* pick the mode from our 15.75KHz tweaked modes */
+		for (i=0; ((arcade_tweaked[i].x != 0) && !found); i++)
 		{
-			reg = scr288x224_NTSC;
-			reglen = sizeof(scr288x224_NTSC)/sizeof(Register);
-			found = 1;
-		}
+			if (gfx_width  == arcade_tweaked[i].x &&
+				gfx_height == arcade_tweaked[i].y)
+			{
+				/* check for SVGA mode with no vesa flag */
+				if (arcade_tweaked[i].vesa&& use_vesa == 0)
+				{
+					printf ("\n %dx%d SVGA 15.75KHz mode only available if tweaked flag is set to 0\n", gfx_width, gfx_height);
+					return 0;
+				}
+				/* check for a NTSC or PAL mode with no arcade flag */
+				if (monitor_type != MONITOR_TYPE_ARCADE)
+				{
+					if (arcade_tweaked[i].ntsc && monitor_type != MONITOR_TYPE_NTSC)
+					{
+						printf("\n %dx%d 15.75KHz mode only available if -monitor set to 'arcade' or 'ntsc' \n", gfx_width, gfx_height);
+						return 0;
+					}
+					if (!arcade_tweaked[i].ntsc && monitor_type != MONITOR_TYPE_PAL)
+					{
+						printf("\n %dx%d 15.75KHz mode only available if -monitor set to 'arcade' or 'pal' \n", gfx_width, gfx_height);
+						return 0;
+					}
 
+				}
+
+				reg = arcade_tweaked[i].reg;
+				reglen = arcade_tweaked[i].reglen;
+				use_vesa = arcade_tweaked[i].vesa;
+				half_yres = arcade_tweaked[i].half_yres;
+				/* all 15.75KHz VGA modes are unchained */
+				unchained = !use_vesa;
+
+				if (errorlog)
+					fprintf (errorlog, "15.75KHz mode (%dx%d) vesa:%d half:%d unchained:%d\n",
+										gfx_width, gfx_height, use_vesa, half_yres, unchained);
+				/* always use the freq from the structure */
+				videofreq = arcade_tweaked[i].syncvgafreq;
+				found = 1;
+			}
+		}
+		/* explicitly asked for an 15.75KHz mode which doesn't exist , so inform and exit */
+		if (!found)
+		{
+			printf ("\nNo %dx%d 15.75KHz mode available.\n", gfx_width, gfx_height);
+			return 0;
+		}
+		/* center the mode */
+		center15KHz (reg);
+	}
+
+	if (use_vesa != 1)
+	{
+		/* setup tweaked modes */
 		/* handle special noscanlines 256x256 57Hz tweaked mode */
 		if (!found && gfx_width == 256 && gfx_height == 256 &&
 				video_sync && Machine->drv->frames_per_second == 57)
@@ -1087,6 +1162,7 @@ int osd_set_display(int width,int height, int attributes)
 				if (videofreq == -1)
 					videofreq = vga_tweaked[i].syncvgafreq;
 				found = 1;
+				unchained = vga_tweaked[i].unchained;
 			}
 		}
 
@@ -1094,18 +1170,20 @@ int osd_set_display(int width,int height, int attributes)
 		/* can't find a VGA mode, use VESA */
 		if (found == 0)
 		{
-			printf ("\nNo %dx%d tweaked VGA mode available.\n",
-					gfx_width,gfx_height);
-			return 0;
+			use_vesa = 1;
 		}
-
-		if (videofreq < 0) videofreq = 0;
-		else if (videofreq > 3) videofreq = 3;
+		else
+		{
+			use_vesa = 0;
+			if (videofreq < 0) videofreq = 0;
+			else if (videofreq > 3) videofreq = 3;
+		}
 	}
 
-	if (use_vesa == 1)
+	if (use_vesa != 0)
 	{
-		int mode, bits, err, found;
+		/*removed local 'found' */
+		int mode, bits, err;
 
 		mode = gfx_mode;
 		found = 0;
@@ -1128,9 +1206,21 @@ int osd_set_display(int width,int height, int attributes)
 			else
 				triplebuf_page_width = (gfx_width + 0x1ff) & ~0x1ff;
 
-			err = set_gfx_mode(mode,gfx_width,gfx_height,3*triplebuf_page_width,0);
-			if (err)
+			/* don't force triple buffer for 15.75Khz modes */
+			/* the virtual screen width created won't fit into to the 8bit register used */
+			/* by the generic driver*/
+			if (scanrate15KHz && !use_triplebuf)
 				err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
+			else
+			{
+				/* don't ask for a larger screen if triplebuffer not requested - could */
+				/* cause problems in some cases. */
+				err = 1;
+				if (use_triplebuf)
+					err = set_gfx_mode(mode,gfx_width,gfx_height,3*triplebuf_page_width,0);
+				if (err)
+					err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
+			}
 
 			if (errorlog)
 			{
@@ -1190,22 +1280,45 @@ int osd_set_display(int width,int height, int attributes)
 				mode = gfx_mode; /* restart with the mode given in mame.cfg */
 
 			/* try higher resolutions */
-			if (auto_resolution && gfx_width <= 512)
+			if (auto_resolution)
 			{
-				/* low res VESA mode not available, try an high res one */
-				if (use_double == 0)
+				if (stretch && gfx_width <= 512)
 				{
-					/* if pixel doubling disabled use 640x480 */
+					/* low res VESA mode not available, try an high res one */
+					gfx_width *= 2;
+					gfx_height *= 2;
+					continue;
+				}
+
+				/* try next higher resolution */
+				if (gfx_height < 300 && gfx_width < 400)
+				{
+					gfx_width = 400;
+					gfx_height = 300;
+					continue;
+				}
+				else if (gfx_height < 384 && gfx_width < 512)
+				{
+					gfx_width = 512;
+					gfx_height = 384;
+					continue;
+				}
+				else if (gfx_height < 480 && gfx_width < 640)
+				{
 					gfx_width = 640;
 					gfx_height = 480;
 					continue;
 				}
-				else
+				else if (gfx_height < 600 && gfx_width < 800)
 				{
-					/* if pixel doubling enabled, turn it one and use the double resolution */
-					doubling = 1;
-					gfx_width *= 2;
-					gfx_height *= 2;
+					gfx_width = 800;
+					gfx_height = 600;
+					continue;
+				}
+				else if (gfx_height < 768 && gfx_width < 1024)
+				{
+					gfx_width = 1024;
+					gfx_height = 768;
 					continue;
 				}
 			}
@@ -1260,107 +1373,242 @@ int osd_set_display(int width,int height, int attributes)
 	}
 	else
 	{
-		/* big hack: open a mode 13h screen using Allegro, then load the custom screen */
-		/* definition over it. */
-		if (set_gfx_mode(GFX_VGA,320,200,0,0) != 0)
-			return 0;
+
 
 		/* set the VGA clock */
 		if (video_sync || always_synced || wait_vsync)
 			reg[0].value = (reg[0].value & 0xf3) | (videofreq << 2);
 
+
 		/* set the horizontal and vertical total */
-		if ((gfx_width == 224) && (gfx_height == 288))
+		if(scanrate15KHz)
 		{
-			if (scanlines)
+			/*15.75KHz modes*/
+			if ((gfx_width == 224) && (gfx_height == 288))
 			{
-				reg[1].value = tw224x288sc_h;
-				reg[7].value = tw224x288sc_v;
+				reg[1].value = tw224x288arc_h;
+				reg[7].value = tw224x288arc_v;
 			}
-			else
+			else if ((gfx_width == 256) && (gfx_height == 256))
 			{
-				reg[1].value = tw224x288ns_h;
-				reg[7].value = tw224x288ns_v;
+				reg[1].value = tw256x256arc_h;
+				reg[7].value = tw256x256arc_v;
+			}
+			else if ((gfx_width == 256) && (gfx_height == 240))
+			{
+				reg[1].value = tw256x240arc_h;
+				reg[7].value = tw256x240arc_v;
+			}
+			else if ((gfx_width == 288) && (gfx_height == 224))
+			{
+				reg[1].value = tw288x224arc_h;
+				reg[7].value = tw288x224arc_v;
+			}
+			else if ((gfx_width == 320) && (gfx_height == 240))
+			{
+				reg[1].value = tw320x240arc_h;
+				reg[7].value = tw320x240arc_v;
+			}
+			else if ((gfx_width == 320) && (gfx_height == 256))
+			{
+				reg[1].value = tw320x256arc_h;
+				reg[7].value = tw320x256arc_v;
+			}
+			else if ((gfx_width == 352) && (gfx_height == 240))
+			{
+				reg[1].value = tw352x240arc_h;
+				reg[7].value = tw352x240arc_v;
+			}
+			else if ((gfx_width == 352) && (gfx_height == 256))
+			{
+				reg[1].value = tw352x256arc_h;
+				reg[7].value = tw352x256arc_v;
+			}
+			else if ((gfx_width == 368) && (gfx_height == 240))
+			{
+				reg[1].value = tw368x240arc_h;
+				reg[7].value = tw368x240arc_v;
+			}
+			else if ((gfx_width == 368) && (gfx_height == 256))
+			{
+				reg[1].value = tw368x256arc_h;
+				reg[7].value = tw368x256arc_v;
+			}
+			else if ((gfx_width == 512) && (gfx_height == 224))
+			{
+				reg[1].value = tw512x224arc_h;
+				reg[7].value = tw512x224arc_v;
+			}
+			else if ((gfx_width == 512) && (gfx_height == 256))
+			{
+				reg[1].value = tw512x256arc_h;
+				reg[7].value = tw512x256arc_v;
+			}
+			else if ((gfx_width == 512) && (gfx_height == 448))
+			{
+				reg[1].value = tw512x448arc_h;
+				reg[7].value = tw512x448arc_v;
+			}
+			else if ((gfx_width == 512) && (gfx_height == 512))
+			{
+				reg[1].value = tw512x512arc_h;
+				reg[7].value = tw512x512arc_v;
 			}
 		}
-		else if ((gfx_width == 288) && (gfx_height == 224))
+		else
 		{
-			if (scanlines)
+			/* normal PC monitor modes */
+			if ((gfx_width == 224) && (gfx_height == 288))
 			{
-				reg[1].value = tw288x224sc_h;
-				reg[7].value = tw288x224sc_v;
-			}
-			else
-			{
-				reg[1].value = tw288x224ns_h;
-				reg[7].value = tw288x224ns_v;
-			}
-		}
-		else if ((gfx_width == 256) && (gfx_height == 256))
-		{
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-			{
-				/* vertical 256x256 */
-				if (Machine->drv->frames_per_second != 57)
+				if (scanlines)
 				{
-					if (scanlines)
+					reg[1].value = tw224x288sc_h;
+					reg[7].value = tw224x288sc_v;
+				}
+				else
+				{
+					reg[1].value = tw224x288ns_h;
+					reg[7].value = tw224x288ns_v;
+				}
+			}
+			else if ((gfx_width == 288) && (gfx_height == 224))
+			{
+				if (scanlines)
+				{
+					reg[1].value = tw288x224sc_h;
+					reg[7].value = tw288x224sc_v;
+				}
+				else
+				{
+					reg[1].value = tw288x224ns_h;
+					reg[7].value = tw288x224ns_v;
+				}
+			}
+			/* 320x240 mode */
+			else if ((gfx_width == 320) && (gfx_height == 240))
+			{
+				if (scanlines)
+				{
+					reg[1].value = tw320x240sc_h;
+					reg[7].value = tw320x240sc_v;
+				}
+				else
+				{
+					reg[1].value = tw320x240ns_h;
+					reg[7].value = tw320x240ns_v;
+				}
+			}
+			/* 336x240 mode */
+			else if ((gfx_width == 336) && (gfx_height == 240))
+			{
+				if (scanlines)
+				{
+					reg[1].value = tw336x240sc_h;
+					reg[7].value = tw336x240sc_v;
+				}
+				else
+				{
+					reg[1].value = tw336x240ns_h;
+					reg[7].value = tw336x240ns_v;
+				}
+			}
+			/* 384x240 mode */
+			else if ((gfx_width == 384) && (gfx_height == 240))
+			{
+				if (scanlines)
+				{
+					reg[1].value = tw384x240sc_h;
+					reg[7].value = tw384x240sc_v;
+				}
+				else
+				{
+					reg[1].value = tw384x240ns_h;
+					reg[7].value = tw384x240ns_v;
+				}
+			}
+			else if ((gfx_width == 256) && (gfx_height == 256))
+			{
+				if (Machine->orientation & ORIENTATION_SWAP_XY)
+				{
+					/* vertical 256x256 */
+					if (Machine->drv->frames_per_second != 57)
 					{
-						reg[1].value = tw256x256sc_h;
-						reg[7].value = tw256x256sc_v;
+						if (scanlines)
+						{
+							reg[1].value = tw256x256sc_h;
+							reg[7].value = tw256x256sc_v;
+						}
+						else
+						{
+							reg[1].value = tw256x256ns_h;
+							reg[7].value = tw256x256ns_v;
+						}
 					}
 					else
 					{
-						reg[1].value = tw256x256ns_h;
-						reg[7].value = tw256x256ns_v;
+						if (scanlines)
+						{
+							reg[1].value = tw256x256sc_57_h;
+							reg[7].value = tw256x256sc_57_v;
+						}
+						else
+						{
+							reg[1].value = tw256x256ns_57_h;
+							reg[7].value = tw256x256ns_57_v;
+						}
 					}
 				}
 				else
 				{
-					if (scanlines)
+					/* horizontal 256x256 */
+					if (Machine->drv->frames_per_second != 57)
 					{
-						reg[1].value = tw256x256sc_57_h;
-						reg[7].value = tw256x256sc_57_v;
+						if (scanlines)
+						{
+							reg[1].value = tw256x256sc_hor_h;
+							reg[7].value = tw256x256sc_hor_v;
+						}
+						else
+						{
+							reg[1].value = tw256x256ns_hor_h;
+							reg[7].value = tw256x256ns_hor_v;
+						}
 					}
 					else
 					{
-						reg[1].value = tw256x256ns_57_h;
-						reg[7].value = tw256x256ns_57_v;
-					}
-				}
-			}
-			else
-			{
-				/* horizontal 256x256 */
-				if (Machine->drv->frames_per_second != 57)
-				{
-					if (scanlines)
-					{
-						reg[1].value = tw256x256sc_hor_h;
-						reg[7].value = tw256x256sc_hor_v;
-					}
-					else
-					{
-						reg[1].value = tw256x256ns_hor_h;
-						reg[7].value = tw256x256ns_hor_v;
-					}
-				}
-				else
-				{
-					if (scanlines)
-					{
-						reg[1].value = tw256x256sc_h57_h;
-						reg[7].value = tw256x256sc_h57_v;
-					}
-					else
-					{
-						reg[1].value = tw256x256ns_h57_h;
-						reg[7].value = tw256x256ns_h57_v;
+						if (scanlines)
+						{
+							reg[1].value = tw256x256sc_h57_h;
+							reg[7].value = tw256x256sc_h57_v;
+						}
+						else
+						{
+							reg[1].value = tw256x256ns_h57_h;
+							reg[7].value = tw256x256ns_h57_v;
+						}
 					}
 				}
 			}
 		}
 
+		/* big hack: open a mode 13h screen using Allegro, then load the custom screen */
+		/* definition over it. */
+		if (set_gfx_mode(GFX_VGA,320,200,0,0) != 0)
+			return 0;
+		/* tweak the mode */
 		outRegArray(reg,reglen);
+		/* check for unchained mode,  if unchained clear all pages */
+		if (unchained)
+		{
+			unsigned long address;
+			/* turn off any other 'vsync's */
+			video_sync = 0;
+			wait_vsync = 0;
+			/* clear all 4 bit planes */
+			outportw (0x3c4, (0x02 | (0x0f << 0x08)));
+			for (address = 0xa0000; address < 0xb0000; address += 4)
+				_farpokel(screen->seg, address, 0);
+		}
 	}
 
 
@@ -1389,7 +1637,7 @@ int osd_set_display(int width,int height, int attributes)
 		b = uclock();
 		rate = ((float)UCLOCKS_PER_SEC)/(b-a);
 
-if (errorlog) fprintf(errorlog,"target frame rate = %dfps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
+		if (errorlog) fprintf(errorlog,"target frame rate = %dfps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
 
 		/* don't allow more than 8% difference between target and actual frame rate */
 		while (rate > Machine->drv->frames_per_second * 108 / 100)
@@ -1424,7 +1672,15 @@ void osd_close_display(void)
 {
 	if (gone_to_gfx_mode != 0)
 	{
-		set_gfx_mode(GFX_TEXT,0,0,0,0);
+		/* tidy up if 15.75KHz SVGA mode used */
+		if (scanrate15KHz && use_vesa == 1)
+		{
+			/* check we've got a valid driver before calling it */
+			if (SVGA15KHzdriver != NULL)
+				SVGA15KHzdriver->resetSVGA15KHzmode();
+		}
+
+		set_gfx_mode (GFX_TEXT,0,0,0,0);
 
 		if (frames_displayed > FRAMES_TO_SKIP)
 			printf("Average FPS: %f\n",(double)UCLOCKS_PER_SEC/(end_time-start_time)*(frames_displayed-FRAMES_TO_SKIP));
@@ -1458,9 +1714,9 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			{
 				for (b1 = 0; b1 < 32; b1++)
 				{
-					r = 255 * brightness * pow(r1 / 31.0, 1 / osd_gamma_correction) / 100;
-					g = 255 * brightness * pow(g1 / 31.0, 1 / osd_gamma_correction) / 100;
-					b = 255 * brightness * pow(b1 / 31.0, 1 / osd_gamma_correction) / 100;
+					r = 255 * brightness * brightness_paused_adjust * pow(r1 / 31.0, 1 / osd_gamma_correction) / 100;
+					g = 255 * brightness * brightness_paused_adjust * pow(g1 / 31.0, 1 / osd_gamma_correction) / 100;
+					b = 255 * brightness * brightness_paused_adjust * pow(b1 / 31.0, 1 / osd_gamma_correction) / 100;
 					*pens++ = makecol(r,g,b);
 				}
 			}
@@ -1592,59 +1848,7 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 void update_screen_dummy(void)
 {
 	if (errorlog)
-		fprintf(errorlog, "video.c: update_screen called before initialization!\n");
-}
-
-void clear_screen(void)
-{
-	char buf[MAX_GFX_WIDTH * 2];
-
-
-	if (use_vesa == 0)
-	{
-		int columns4,y;
-		unsigned long address;
-
-
-		address = 0xa0000;
-		columns4 = gfx_width/4;
-		for (y = 0; y < gfx_height; y++)
-		{
-			_dosmemputl(buf,columns4,address);
-
-			address+=gfx_width;
-		}
-	}
-	else
-	{
-		short src_seg, dest_seg;
-		int y, columns4;
-		unsigned long address;
-
-		src_seg = _my_ds();
-		dest_seg = screen->seg;
-		columns4 = gfx_width/4;
-		if (scrbitmap->depth == 16)
-		{
-			memset(buf, 0, gfx_width);
-	    for (y = 0; y < gfx_height; y++)
-			{
-				address = bmp_write_line (screen, y);
-				_movedatal(src_seg,(unsigned long)buf,dest_seg,address,columns4);
-			}
-		}
-		else
-		{
-			memset(buf,BACKGROUND,gfx_width);
-	    for (y = 0; y < gfx_height; y++)
-			{
-				address = bmp_write_line (screen, y);
-				_movedatal(src_seg,(unsigned long)buf,dest_seg,address,columns4);
-			}
-		}
-	}
-
-	osd_mark_dirty (0,0,scrbitmap->width-1,scrbitmap->height-1,1);
+		fprintf(errorlog, "msdos/video.c: undefined update_screen() function for %d x %d!\n",xmultiply,ymultiply);
 }
 
 INLINE void pan_display(void)
@@ -1925,9 +2129,9 @@ void osd_update_video_and_audio(void)
 
 						dirtycolor[i] = 0;
 
-						r = 255 * brightness * pow(current_palette[i][0] / 255.0, 1 / osd_gamma_correction) / 100;
-						g = 255 * brightness * pow(current_palette[i][1] / 255.0, 1 / osd_gamma_correction) / 100;
-						b = 255 * brightness * pow(current_palette[i][2] / 255.0, 1 / osd_gamma_correction) / 100;
+						r = 255 * brightness * brightness_paused_adjust * pow(current_palette[i][0] / 255.0, 1 / osd_gamma_correction) / 100;
+						g = 255 * brightness * brightness_paused_adjust * pow(current_palette[i][1] / 255.0, 1 / osd_gamma_correction) / 100;
+						b = 255 * brightness * brightness_paused_adjust * pow(current_palette[i][2] / 255.0, 1 / osd_gamma_correction) / 100;
 
 						adjusted_palette[i].r = r >> 2;
 						adjusted_palette[i].g = g >> 2;
@@ -1944,6 +2148,11 @@ void osd_update_video_and_audio(void)
 		osd_profiler(OSD_PROFILE_BLIT);
 		update_screen();
 		osd_profiler(OSD_PROFILE_END);
+
+		/* see if we need to give the card enough time to draw both odd/even fields of the interlaced display
+			(req. for 15.75KHz Arcade Monitor Modes */
+		interlace_sync();
+
 
 		if (need_to_clear_bitmap)
 			osd_clearbitmap(scrbitmap);
@@ -2119,3 +2328,20 @@ void osd_save_snapshot(void)
 	save_screen_snapshot();
 }
 
+void osd_pause(int paused)
+{
+	if (scrbitmap->depth == 8)
+	{
+		int i;
+
+		if (paused) brightness_paused_adjust = 0.65;
+		else brightness_paused_adjust = 1.0;
+
+		for (i = 0;i < 256;i++)
+		{
+			if (i != Machine->uifont->colortable[1])        /* don't touch the user interface text */
+				dirtycolor[i] = 1;
+		}
+		dirtypalette = 1;
+	}
+}

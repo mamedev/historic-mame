@@ -403,6 +403,7 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 		tnk3_draw_status( bitmap, bank, &ram[0xfc00] );
 	}
 
+#if 0
 	{
 		static int kd = 0;
 		int i;
@@ -419,6 +420,7 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 			print( bitmap, ram[0xc000+i*0x10+kd*0x100],i+4 );
 		}
 	}
+#endif
 }
 
 /**************************************************************************************/

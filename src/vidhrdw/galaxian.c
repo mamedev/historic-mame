@@ -18,16 +18,21 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct rectangle spritevisiblearea =
+
+static struct rectangle _spritevisiblearea =
 {
 	2*8+1, 32*8-1,
 	2*8, 30*8-1
 };
-static struct rectangle spritevisibleareaflipx =
+static struct rectangle _spritevisibleareaflipx =
 {
 	0*8, 30*8-2,
 	2*8, 30*8-1
 };
+
+static struct rectangle* spritevisiblearea;
+static struct rectangle* spritevisibleareaflipx;
+
 
 #define MAX_STARS 250
 #define STARS_COLOR_BASE 32
@@ -35,13 +40,15 @@ static struct rectangle spritevisibleareaflipx =
 unsigned char *galaxian_attributesram;
 unsigned char *galaxian_bulletsram;
 
-int galaxian_bulletsram_size = 0;
+int galaxian_bulletsram_size;
 static int stars_on,stars_blink;
-static int stars_type = 0;	/* 0 = Galaxian stars */
-						    /* 1 = Scramble stars */
-						    /* 2 = Rescue stars (same as Scramble, but only half screen) */
-						    /* 3 = Mariner stars (same as Galaxian, but some parts are blanked */
+static int stars_type;		/* -1 = no stars */
+							/*  0 = Galaxian stars */
+						    /*  1 = Scramble stars */
+						    /*  2 = Rescue stars (same as Scramble, but only half screen) */
+						    /*  3 = Mariner stars (same as Galaxian, but some parts are blanked */
 static unsigned int stars_scroll;
+static int color_mask;
 
 struct star
 {
@@ -49,19 +56,17 @@ struct star
 };
 static struct star stars[MAX_STARS];
 static int total_stars;
-static void (*modify_charcode  )(int*,int)           = 0;  /* function to call to do character banking */
-static void (*modify_spritecode)(int*,int*,int*,int) = 0;  /* function to call to do sprite banking */
+static void (*modify_charcode  )(int*,int);            /* function to call to do character banking */
+static void (*modify_spritecode)(int*,int*,int*,int);  /* function to call to do sprite banking */
 static int mooncrst_gfxextend;
 static int pisces_gfxbank;
 static int jumpbug_gfxbank[5];
 static int flipscreen[2];
 
 static int background_on;
-static unsigned char backcolour[256];
+static unsigned char backcolor[256];
 
 static void mooncrgx_gfxextend_w      (int offset,int data);
-static void   pisces_gfxbank_w        (int offset,int data);
-       void  jumpbug_gfxbank_w        (int offset,int data);
 
 static void mooncrst_modify_charcode  (int *charcode,int offs);
 static void  moonqsr_modify_charcode  (int *charcode,int offs);
@@ -112,7 +117,9 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	/* first, the char acter/sprite palette */
+	color_mask = (Machine->gfx[0]->color_granularity == 4) ? 7 : 3;
+
+	/* first, the character/sprite palette */
 	for (i = 0;i < 32;i++)
 	{
 		int col,bit0,bit1,bit2;
@@ -154,8 +161,8 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* characters and sprites use the same palette */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
-		if (i & 3) COLOR(0,i) = i;
-		else COLOR(0,i) = 0;	/* 00 is always black, regardless of the contents of the PROM */
+		/* 00 is always mapped to pen 0 */
+		if ((i & (Machine->gfx[0]->color_granularity - 1)) == 0)  COLOR(0,i) = 0;
 	}
 
 	/* bullets can be either white or yellow */
@@ -278,7 +285,7 @@ static void decode_background(void)
 		{
 			for (k = 0; k < 8; k++)
 			{
-				tile[i*64 + j*8 + k] = backcolour[i*8+j];
+				tile[i*64 + j*8 + k] = backcolor[i*8+j];
 			}
 		}
 
@@ -294,8 +301,13 @@ static void decode_background(void)
 
 static int common_vh_start(void)
 {
+	extern struct GameDriver newsin7_driver;
 	int generator;
 	int x,y;
+
+
+    modify_charcode   = 0;
+    modify_spritecode = 0;
 
 	mooncrst_gfxextend = 0;
 	stars_on = 0;
@@ -309,7 +321,7 @@ static int common_vh_start(void)
 
     for (x=0; x<256; x++)
 	{
-		backcolour[x] = 0;
+		backcolor[x] = 0;
 	}
 	background_on = 0;
 
@@ -351,6 +363,21 @@ static int common_vh_start(void)
 		}
 	}
 
+
+	/* all the games except New Sinbad 7 clip the sprites at the top of the screen,
+	   New Sinbad 7 does it at the bottom */
+	if (Machine->gamedrv == &newsin7_driver)
+	{
+		spritevisiblearea      = &_spritevisibleareaflipx;
+        spritevisibleareaflipx = &_spritevisiblearea;
+	}
+	else
+	{
+		spritevisiblearea      = &_spritevisiblearea;
+        spritevisibleareaflipx = &_spritevisibleareaflipx;
+	}
+
+
 	return 0;
 }
 
@@ -362,9 +389,11 @@ int galaxian_vh_start(void)
 
 int mooncrst_vh_start(void)
 {
+	int ret = galaxian_vh_start();
+
 	modify_charcode   = mooncrst_modify_charcode;
 	modify_spritecode = mooncrst_modify_spritecode;
-	return galaxian_vh_start();
+	return ret;
 }
 
 int mooncrgx_vh_start(void)
@@ -375,17 +404,20 @@ int mooncrgx_vh_start(void)
 
 int moonqsr_vh_start(void)
 {
+	int ret = galaxian_vh_start();
+
 	modify_charcode   = moonqsr_modify_charcode;
 	modify_spritecode = moonqsr_modify_spritecode;
-	return galaxian_vh_start();
+	return ret;
 }
 
 int pisces_vh_start(void)
 {
-	install_mem_write_handler(0, 0x6002, 0x6002, pisces_gfxbank_w);
+	int ret = galaxian_vh_start();
+
 	modify_charcode   = pisces_modify_charcode;
 	modify_spritecode = pisces_modify_spritecode;
-	return galaxian_vh_start();
+	return ret;
 }
 
 int scramble_vh_start(void)
@@ -396,135 +428,153 @@ int scramble_vh_start(void)
 
 int rescue_vh_start(void)
 {
-	int ans,x;
+	int x;
+
+	int ret = common_vh_start();
 
 	stars_type = 2;
-	ans = common_vh_start();
 
-    /* Setup background colour array (blue sky, blue sea, black bottom line) */
+    /* Setup background color array (blue sky, blue sea, black bottom line) */
 
     for (x=0;x<64;x++)
 	{
-		backcolour[x*2+0] = x;
-		backcolour[x*2+1] = x;
+		backcolor[x*2+0] = x;
+		backcolor[x*2+1] = x;
     }
 
     for (x=0;x<60;x++)
 	{
-		backcolour[128+x*2+0] = x + 4;
-		backcolour[128+x*2+1] = x + 4;
+		backcolor[128+x*2+0] = x + 4;
+		backcolor[128+x*2+1] = x + 4;
     }
 
-    for (x=248;x<256;x++) backcolour[x] = 0;
+    for (x=248;x<256;x++) backcolor[x] = 0;
 
     decode_background();
 
-    return ans;
+    return ret;
 }
 
 int minefld_vh_start(void)
 {
-	int ans,x;
+	int x;
+
+	int ret = common_vh_start();
 
 	stars_type = 2;
-	ans = common_vh_start();
 
-    /* Setup background colour array (blue sky, brown ground, black bottom line) */
+    /* Setup background color array (blue sky, brown ground, black bottom line) */
 
     for (x=0;x<64;x++)
 	{
-		backcolour[x*2+0] = x;
-		backcolour[x*2+1] = x;
+		backcolor[x*2+0] = x;
+		backcolor[x*2+1] = x;
     }
 
     for (x=0;x<60;x++)
 	{
-		backcolour[128+x*2+0] = x + 64;
-		backcolour[128+x*2+1] = x + 64;
+		backcolor[128+x*2+0] = x + 64;
+		backcolor[128+x*2+1] = x + 64;
     }
 
-    for (x=248;x<256;x++) backcolour[x] = 0;
+    for (x=248;x<256;x++) backcolor[x] = 0;
 
     decode_background();
 
-    return ans;
+    return ret;
 }
 
 int stratgyx_vh_start(void)
 {
-	int ans,x;
+	int x;
 
-	stars_type = 0;
-	ans = common_vh_start();
+	int ret = common_vh_start();
 
-    /* Setup background colour array (blue left side, brown ground */
+	stars_type = -1;
+
+    /* Setup background color array (blue left side, brown ground */
 
     for (x=0;x<48;x++)
 	{
-		backcolour[x] = 0;
+		backcolor[x] = 0;
     }
 
     for (x=48;x<256;x++)
 	{
-		backcolour[x] = 1;
+		backcolor[x] = 1;
     }
 
     decode_background();
 
-    return ans;
+    return ret;
 }
 
 int ckongs_vh_start(void)
 {
+	int ret = common_vh_start();
+
 	stars_type = 1;
 	modify_spritecode = ckongs_modify_spritecode;
-	return common_vh_start();
+	return ret;
 }
 
 int calipso_vh_start(void)
 {
+	int ret = common_vh_start();
+
 	stars_type = 1;
 	modify_spritecode = calipso_modify_spritecode;
-	return common_vh_start();
+	return ret;
 }
 
 int mariner_vh_start(void)
 {
-	int ans,x;
+	int x;
 
-	modify_charcode = mariner_modify_charcode;
+	int ret = common_vh_start();
 
 	stars_type = 3;
-	ans = common_vh_start();
+	modify_charcode = mariner_modify_charcode;
 
-    /* Setup background colour array (blue water) */
+    /* Setup background color array (blue water) */
 
-    for (x=0;  x<63; x++) backcolour[x] = 0;
-    for (x=63; x<71; x++) backcolour[x] = 1;
-    for (x=71; x<79; x++) backcolour[x] = 2;
-    for (x=79; x<87; x++) backcolour[x] = 3;
-    for (x=87; x<95; x++) backcolour[x] = 4;
-    for (x=95; x<111;x++) backcolour[x] = 5;
-    for (x=111;x<135;x++) backcolour[x] = 6;
-    for (x=135;x<167;x++) backcolour[x] = 7;
-    for (x=167;x<207;x++) backcolour[x] = 8;
-    for (x=207;x<247;x++) backcolour[x] = 9;
-    for (x=247;x<256;x++) backcolour[x] = 0;
+    for (x=0;  x<63; x++) backcolor[x] = 0;
+    for (x=63; x<71; x++) backcolor[x] = 1;
+    for (x=71; x<79; x++) backcolor[x] = 2;
+    for (x=79; x<87; x++) backcolor[x] = 3;
+    for (x=87; x<95; x++) backcolor[x] = 4;
+    for (x=95; x<111;x++) backcolor[x] = 5;
+    for (x=111;x<135;x++) backcolor[x] = 6;
+    for (x=135;x<167;x++) backcolor[x] = 7;
+    for (x=167;x<207;x++) backcolor[x] = 8;
+    for (x=207;x<247;x++) backcolor[x] = 9;
+    for (x=247;x<256;x++) backcolor[x] = 0;
 
     decode_background();
 
 	/* The background is always on */
     background_on = 1;
 
-	return ans;
+	return ret;
 }
 
 int jumpbug_vh_start(void)
 {
+	int ret = common_vh_start();
+
+	stars_type = 1;
 	modify_charcode   = jumpbug_modify_charcode;
 	modify_spritecode = jumpbug_modify_spritecode;
-	stars_type = 1;
-	return common_vh_start();
+	return ret;
+}
+
+int zigzag_vh_start(void)
+{
+	int ret = galaxian_vh_start();
+
+	/* no bullets RAM */
+	galaxian_bulletsram_size = 0;
+	return ret;
 }
 
 
@@ -547,6 +597,11 @@ void galaxian_flipy_w(int offset,int data)
 	}
 }
 
+void hotshock_flipscreen_w(int offset,int data)
+{
+	galaxian_flipx_w(offset, data);
+	galaxian_flipy_w(offset, data);
+}
 
 
 void galaxian_attributes_w(int offset,int data)
@@ -599,9 +654,13 @@ static void mooncrgx_gfxextend_w(int offset,int data)
 	mooncrst_gfxextend_w(offset, data);
 }
 
-static void pisces_gfxbank_w(int offset,int data)
+void pisces_gfxbank_w(int offset,int data)
 {
-	pisces_gfxbank = data & 1;
+	if (pisces_gfxbank != (data & 1))
+	{
+		pisces_gfxbank = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 void jumpbug_gfxbank_w(int offset,int data)
@@ -618,7 +677,7 @@ INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y, int code)
 {
 	int backcol;
 
-	backcol = backcolour[x];
+	backcol = backcolor[x];
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -807,7 +866,7 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
  			drawgfx(tmpbitmap,Machine->gfx[0],
 				    charcode,
-					galaxian_attributesram[2 * (offs % 32) + 1] & 0x07,
+					galaxian_attributesram[2 * (offs % 32) + 1] & color_mask,
 				    flipscreen[0],flipscreen[1],
 				    8*sx,8*sy,
 				    0, background_on ? TRANSPARENCY_COLOR : TRANSPARENCY_NONE, 0);
@@ -841,8 +900,7 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	/* Draw the bullets. Some games (Zig Zag don't have a bullets_ram. In that case
-	   galaxian_bulletsram_size will be initialized by zero */
+	/* draw the bullets */
 	for (offs = 0;offs < galaxian_bulletsram_size;offs += 4)
 	{
 		int x,y;
@@ -909,10 +967,10 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		drawgfx(bitmap,Machine->gfx[1],
 				spritecode,
-				spriteram[offs + 2] & 0x07,
+				spriteram[offs + 2] & color_mask,
 				flipx,flipy,
 				sx,sy,
-				flipscreen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				flipscreen[0] ? spritevisibleareaflipx : spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -921,6 +979,9 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		switch (stars_type)
 		{
+		case -1: /* no stars */
+			break;
+
 		case 0:	/* Galaxian stars */
 		case 3:	/* Mariner stars */
 			for (offs = 0;offs < total_stars;offs++)
@@ -1021,7 +1082,7 @@ int mariner_vh_interrupt(void)
 	return nmi_interrupt();
 }
 
-int devilfsh_vh_interrupt(void)
+int devilfsg_vh_interrupt(void)
 {
 	stars_scroll++;
 

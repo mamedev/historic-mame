@@ -29,7 +29,7 @@ Unlock EEPROM                      8C0000         W    xx
 Cartridge External                 900000-9FFFFF  R/W  D0-D15
 
 Playfield RAM                      A00000-A01FFF  R/W  D0-D15
-Motion Object Vertical Position    A02000-A0207F  R/W  D0-D15
+Motion Object Vertical Position    A02000-A0207F  R/W  D0-D15
                                    A02200-A0227F  R/W  D0-D15
                                    A02E00-A02E7F  R/W  D0-D15
 Motion Object Picture              A02080-A020FF  R/W  D0-D15
@@ -237,16 +237,16 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 INPUT_PORTS_START( marble_ports )
 	PORT_START      /* IN0 */
-    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER | IPF_PLAYER1, 100, 0x7f, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 32 )
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER | IPF_PLAYER1, 100, 30, 0x7f, 0, 0 )
 
 	PORT_START      /* IN1 */
-    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER1, 100, 0x7f, 0, 0, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 32 )
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER1, 100, 30, 0x7f, 0, 0 )
 
 	PORT_START      /* IN2 */
-    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 100, 0x7f, 0, 0, OSD_KEY_D, OSD_KEY_G, 0, 0, 32 )
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 100, 30, 0x7f, 0, 0 )
 
 	PORT_START      /* IN3 */
-    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 0x7f, 0, 0, OSD_KEY_R, OSD_KEY_F, 0, 0, 32 )
+    PORT_ANALOG( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 30, 0x7f, 0, 0 )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -352,10 +352,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( roadrunn_ports )
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 0, 0x10, 0xf0 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X | IPF_REVERSE | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
 
 	PORT_START	/* IN1 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 0, 0x10, 0xf0 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 0x10, 0xf0 )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -388,7 +388,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( roadblst_ports )
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_REVERSE, 25, 0, 0x00, 0x7f )
+	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0x00, 0x7f )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -612,6 +612,10 @@ static void marble_init(void)
 	/* speed up the 68010 */
 	marble_speedcheck = install_mem_read_handler(0, 0x400014, 0x400015, marble_speedcheck_r);
 	install_mem_write_handler(0, 0x400014, 0x400015, marble_speedcheck_w);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
+	atarigen_show_sound_message();
 }
 
 
@@ -625,6 +629,10 @@ static void peterpak_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x8101, 0x8119);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
+	atarigen_show_sound_message();
 }
 
 
@@ -638,6 +646,10 @@ static void indytemp_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
+	atarigen_show_sound_message();
 }
 
 
@@ -651,6 +663,10 @@ static void roadrunn_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x8106, 0x811e);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
+	atarigen_show_sound_message();
 }
 
 
@@ -664,6 +680,10 @@ static void roadblst_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x410b, 0x4123);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
+	atarigen_show_sound_message();
 }
 
 

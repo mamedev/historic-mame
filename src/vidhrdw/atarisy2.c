@@ -202,7 +202,7 @@ int atarisys2_vh_start(void)
 		free(alpharam);
 		return 1;
 	}
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
@@ -210,7 +210,7 @@ int atarisys2_vh_start(void)
 		free(alpharam);
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -444,17 +444,20 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			{
 				int data = READ_WORD(&alpharam[offs * 2]);
 				int code = data & 0x3ff;
-	
+
 				/* if there's a non-zero code, draw the tile */
 				if (code)
 				{
 					int color = (data >> 13) & 7;
-	
+
 					/* draw the character */
 					drawgfx(bitmap, gfx, code, color, 0, 0, 8 * sx, 8 * sy, 0, TRANSPARENCY_PEN, 0);
 				}
 			}
 	}
+
+	/* update onscreen messages */
+	atarigen_update_messages();
 }
 
 
@@ -511,7 +514,7 @@ static void pf_check_overrender_callback(const struct rectangle *clip, const str
 	struct osd_bitmap *bitmap = overrender_data->bitmap;
 	int mo_priority = overrender_data->mo_priority;
 	int x, y;
-	
+
 	/* if we've already decided, bail */
 	if (mo_priority == -1)
 		return;
@@ -612,7 +615,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	if (hold)
 		xpos = modata->xhold;
 	modata->xhold = xpos + 16;
-	
+
 	/* adjust the final coordinates */
 	xpos &= 0x3ff;
 	ypos &= 0x1ff;
@@ -629,27 +632,27 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	/* determine if we need to overrender */
 	overrender_data.mo_priority = priority;
 	atarigen_pf_process(pf_check_overrender_callback, &overrender_data, &pf_clip);
-	
+
 	/* if not, do it simply */
 	if (overrender_data.mo_priority == priority)
 	{
 		atarigen_mo_draw_16x16_strip(bitmap, gfx, code, color, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 15);
 	}
-	
+
 	/* otherwise, make it tricky */
 	else
 	{
 		/* draw an instance of the object in all transparent pens */
 		atarigen_mo_draw_transparent_16x16_strip(bitmap, gfx, code, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 15);
-		
+
 		/* and then draw it normally on the temp bitmap */
 		atarigen_mo_draw_16x16_strip(atarigen_pf_overrender_bitmap, gfx, code, color, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_NONE, 0);
-	
+
 		/* overrender the playfield on top of that that */
 		overrender_data.mo_priority = priority;
 		overrender_data.bitmap = atarigen_pf_overrender_bitmap;
 		atarigen_pf_process(pf_overrender_callback, &overrender_data, &pf_clip);
-	
+
 		/* finally, copy this chunk to the real bitmap */
 		copybitmap(bitmap, atarigen_pf_overrender_bitmap, 0, 0, 0, 0, &pf_clip, TRANSPARENCY_THROUGH, palette_transparent_pen);
 	}

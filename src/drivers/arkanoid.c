@@ -152,10 +152,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 - spinner Player 1 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 30, 15, 0, 0, 0)
 
 	PORT_START      /* IN3 - spinner Player 2  */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_COCKTAIL, 20, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_COCKTAIL, 30, 15, 0, 0, 0)
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )
@@ -205,10 +205,10 @@ INPUT_PORTS_START( japan_input_ports )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 - spinner (multiplexed for player 1 and 2) */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 30, 15, 0, 0, 0)
 
 	PORT_START      /* IN3 - spinner Player 2  */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_COCKTAIL, 20, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_COCKTAIL, 30, 15, 0, 0, 0)
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Allow Continue" )

@@ -7,8 +7,6 @@
 
 #include "driver.h"
 
-//void adpcm_soundcommand_w(int offset,int data);
-
 unsigned int gs_videoram_size;
 unsigned int gs_spritexy_size;
 
@@ -20,8 +18,8 @@ unsigned char *gs_spriteattrib_ram;
 
 static struct osd_bitmap 	*bitmap_bg;
 static unsigned char 	 	*dirtybuffer;
-static int 			video_attributes=0;
-static int 			flipscreen=0;
+static int charbank,charpalbank;
+static int flipscreen;
 
 
 void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -35,21 +33,20 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	{
 		int bit0,bit1,bit2;
 
-
 		/* red component */
-		bit0 = (color_prom[0] >> 0) & 1;
-		bit1 = (color_prom[0] >> 1) & 1;
-		bit2 = (color_prom[0] >> 2) & 1;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 1;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 1;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 1;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = (color_prom[0] >> 3) & 1;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 1;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 1) & 1;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 3) & 1;
+		bit1 = (color_prom[0] >> 0) & 1;
+		bit2 = (color_prom[0] >> 1) & 1;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 1;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 3) & 1;
+		bit1 = (color_prom[0] >> 2) & 1;
+		bit2 = (color_prom[0] >> 3) & 1;
 		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		color_prom++;
@@ -58,11 +55,13 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	color_prom += Machine->drv->total_colors;
 	/* color_prom now points to the beginning of the sprite lookup table */
 
+	/* characters */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i) = i;
 
+	/* sprites */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = (*(color_prom++) & 0x0f);	/* wrong */
+		COLOR(1,i) = (*(color_prom++) & 0x0f);	/* wrong! */
 }
 
 
@@ -84,28 +83,40 @@ void gsword_vh_stop(void)
 	osd_free_bitmap(bitmap_bg);
 }
 
-void gs_video_attributes_w(int offset, int data)
+void gs_charbank_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if (data != video_attributes)
+	if (charbank != data)
 	{
+		charbank = data;
 		memset(dirtybuffer,1,gs_videoram_size);
-		video_attributes = data;
 	}
-	RAM[0xa980] = data;
 }
 
-void gs_flipscreen_w(int offset, int data)
+void gs_videoctrl_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	if (data != flipscreen)
+if (data & 0x8f)
+{
+	char baf[40];
+	sprintf(baf,"videoctrl %02x",data);
+	usrintf_showmessage(baf);
+}
+	/* bits 5-6 are char palette bank */
+	if (charpalbank != ((data & 0x60) >> 5))
 	{
-	        memset(dirtybuffer,1,gs_videoram_size);
-		flipscreen = data;
+		charpalbank = (data & 0x60) >> 5;
+		memset(dirtybuffer,1,gs_videoram_size);
 	}
-	RAM[0x9835] = data;
+
+	/* bit 4 is flip screen */
+	if (flipscreen != (data & 0x10))
+	{
+		flipscreen = data & 0x10;
+        memset(dirtybuffer,1,gs_videoram_size);
+	}
+
+	/* bit 0 could be used but unknown */
+
+	/* other bits unused */
 }
 
 void gs_videoram_w(int offset,int data)
@@ -124,12 +135,12 @@ void render_background(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
+
 	for (offs = 0; offs < gs_videoram_size ;offs++)
 	{
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,tile,flipx,flipy;
-
 
 			dirtybuffer[offs] = 0;
 
@@ -144,10 +155,11 @@ void render_background(struct osd_bitmap *bitmap)
 				flipy = !flipy;
 			}
 
-			tile = gs_videoram[offs] + ((video_attributes & 0x03) << 8);
+			tile = gs_videoram[offs] + ((charbank & 0x03) << 8);
+
 			drawgfx(bitmap_bg,Machine->gfx[0],
 					tile,
-					(tile & 0x3c0) >> 6,	/* ?? */
+					((tile & 0x3c0) >> 6) + 16 * charpalbank,
 					flipx,flipy,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -188,7 +200,6 @@ void render_sprites(struct osd_bitmap *bitmap)
 				flipx = !flipx;
 				flipy = !flipy;
 			}
-
 			drawgfx(bitmap,Machine->gfx[1+spritebank],
 					tile,
 					gs_spritetile_ram[offs+1] & 0x3f,	/* ?? */
@@ -199,56 +210,12 @@ void render_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-
 void gsword_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int scrollx=0,scrolly;
+	int scrollx=0, scrolly=-(*gs_scrolly_ram);
 
 	render_background(bitmap_bg);
-	scrolly = -(*gs_scrolly_ram);
 	copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	render_sprites(bitmap);
-
-	/* ADPCM SOUND TEST */
-
-//	if (osd_key_pressed(OSD_KEY_Q))
-//	{
-//		adpcm_soundcommand_w(0,9);
-//	        while (osd_key_pressed(OSD_KEY_Q));
-//	}
-//	if (osd_key_pressed(OSD_KEY_W))
-//	{
-//		adpcm_soundcommand_w(0,4);
-//	        while (osd_key_pressed(OSD_KEY_W));
-//	}
-//	if (osd_key_pressed(OSD_KEY_E))
-//	{
-//		adpcm_soundcommand_w(0,6);
-//	        while (osd_key_pressed(OSD_KEY_E));
-//	}
-//	if (osd_key_pressed(OSD_KEY_R))
-//	{
-//		adpcm_soundcommand_w(0,31);
-//	        while (osd_key_pressed(OSD_KEY_R));
-//	}
-
-#if 0
-{
-	int x,y;
-	for (x = 0;x < 16;x++)
-	{
-		for (y = 0;y < 16;y++)
-		{
-			int sx,sy;
-			for (sx = 0;sx < 4;sx++)
-			{
-				for (sy = 0;sy < 4;sy++)
-				{
-					bitmap->line[4*y+16+sy][4*x+sx] = Machine->pens[16*y+x];
-				}
-			}
-		}
-	}
 }
-#endif
-}
+

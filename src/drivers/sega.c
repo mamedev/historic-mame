@@ -396,33 +396,33 @@ INPUT_PORTS_START( zektor_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
-        PORT_DIPSETTING(    0x03, "10000" )
-        PORT_DIPSETTING(    0x01, "20000" )
-        PORT_DIPSETTING(    0x02, "30000" )
-        PORT_DIPSETTING(    0x00, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPSETTING(    0x08, "Normal" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
-        PORT_DIPSETTING(    0x00, "2" )
-        PORT_DIPSETTING(    0x20, "3" )
-        PORT_DIPSETTING(    0x10, "4" )
-        PORT_DIPSETTING(    0x30, "5" )
-        PORT_DIPNAME( 0x40, 0x00, DEF_STR ( Demo_Sounds ) )
-        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
-        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+	PORT_DIPSETTING(    0x03, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x0c, "Very Hard" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR ( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-        COINAGE
+	COINAGE
 
-        PORT_START      /* IN8 - FAKE port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
+	PORT_START      /* IN8 - FAKE port for the dial */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 10, 0, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -457,33 +457,33 @@ INPUT_PORTS_START( startrek_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
-        PORT_DIPSETTING(    0x00, "10000" )
-        PORT_DIPSETTING(    0x02, "20000" )
-        PORT_DIPSETTING(    0x01, "30000" )
-        PORT_DIPSETTING(    0x03, "40000" )
-        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPSETTING(    0x08, "Medium" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x0c, "Tournament" )
-        PORT_DIPNAME( 0x30, 0x30, "Photon Torpedoes" )
-        PORT_DIPSETTING(    0x00, "1" )
-        PORT_DIPSETTING(    0x20, "2" )
-        PORT_DIPSETTING(    0x10, "3" )
-        PORT_DIPSETTING(    0x30, "4" )
-        PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
-        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
-        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_DIPSETTING(    0x01, "30000" )
+	PORT_DIPSETTING(    0x03, "40000" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x0c, "Tournament" )
+	PORT_DIPNAME( 0x30, 0x30, "Photon Torpedoes" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x30, "4" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
+	PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-        COINAGE
+	COINAGE
 
-        PORT_START      /* IN8 - dummy port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
+	PORT_START      /* IN8 - dummy port for the dial */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 10, 0, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -516,34 +516,33 @@ INPUT_PORTS_START( tacscan_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
 
 	PORT_START	/* FAKE */
-        /* This fake input port is used for DIP Switch 1 */
-        PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
-        PORT_DIPSETTING(    0x03, "10000" )
-        PORT_DIPSETTING(    0x01, "20000" )
-        PORT_DIPSETTING(    0x02, "30000" )
-        PORT_DIPSETTING(    0x00, "None" )
-        PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-        PORT_DIPSETTING(    0x00, "Easy" )
-        PORT_DIPSETTING(    0x08, "Normal" )
-        PORT_DIPSETTING(    0x04, "Hard" )
-        PORT_DIPSETTING(    0x0c, "Very Hard" )
-        PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
-        PORT_DIPSETTING(    0x00, "2" )
-        PORT_DIPSETTING(    0x20, "4" )
-        PORT_DIPSETTING(    0x10, "6" )
-        PORT_DIPSETTING(    0x30, "8" )
-        PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
-        PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
-        PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-        PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
-        PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
+	PORT_DIPSETTING(    0x03, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x0c, "Very Hard" )
+	PORT_DIPNAME( 0x30, 0x30, "Number of Ships" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "6" )
+	PORT_DIPSETTING(    0x30, "8" )
+	PORT_DIPNAME( 0x40, 0x00, "Demo Sounds?" )
+	PORT_DIPSETTING(    0x40, DEF_STR ( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( Cocktail ) )
 
-        COINAGE
+	COINAGE
 
-        PORT_START      /* IN8 - FAKE port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
-
+	PORT_START      /* IN8 - FAKE port for the dial */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 10, 0, 0, 0 )
 INPUT_PORTS_END
 
 

@@ -52,7 +52,7 @@ Sprite layer
 static struct YM2151interface ym2151_interface = {
 	1,			/* 1 chip */
 	3579580,	/* 3.58 MHZ ? */
-	{ 100 },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ namcos2_sound_interrupt }
 };
 
@@ -261,7 +261,7 @@ INPUT_PORTS_START( namcos2_input_ports )
 	PORT_DIPSETTING(    0x00, "L" )
 
 	PORT_START      /* 63B05Z0 - $3000 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 10, 0, 0, 0)
 
 	PORT_START  	/* 63B05Z0 - $3001 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -413,7 +413,7 @@ static struct MachineDriver machine_driver =
 	namcos2_vh_update,	/* Video update            */
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	/* Sound struct here */
 	{
 		{

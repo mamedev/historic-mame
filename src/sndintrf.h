@@ -69,8 +69,11 @@ struct MachineSound
 #if (HAS_VLM5030)
 #include "sound/vlm5030.h"
 #endif
-#if (HAS_ADPCM || HAS_OKIM6295 || HAS_MSM5205)
+#if (HAS_ADPCM || HAS_OKIM6295)
 #include "sound/adpcm.h"
+#endif
+#if (HAS_MSM5205)
+#include "sound/msm5205.h"
 #endif
 #if (HAS_UPD7759)
 #include "sound/upd7759.h"

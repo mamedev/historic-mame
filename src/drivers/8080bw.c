@@ -2345,10 +2345,10 @@ INPUT_PORTS_START( boothill_input_ports )                                       
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
     PORT_START                                                                                          /* Player 2 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 7, 1, 255, 0, 0, 0, 0, 1 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
 
     PORT_START                                                                                          /* Player 1 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 7, 1, 255, OSD_KEY_Z, OSD_KEY_A, 0, 0, 1 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, OSD_KEY_Z, OSD_KEY_A, 0, 0 )
 INPUT_PORTS_END
 
 static struct MachineDriver boothill_machine_driver =                   /* MJC 310198 */
@@ -2582,12 +2582,12 @@ static struct IOReadPort spcenctr_readport[] =
 
 INPUT_PORTS_START( spcenctr_input_ports )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 0, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
+	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 10, 0, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )    /* fire */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_Y, 25, 0, 0x01, 0x3e) /* 6 bit vert encoder - Gray's binary? */
+	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_Y, 25, 10, 0, 0x01, 0x3e) /* 6 bit vert encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
@@ -2737,7 +2737,7 @@ ROM_END
  */
 INPUT_PORTS_START( clowns_input_ports )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE, 100, 0, 0x01, 0xfe)
+	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE, 100, 10, 0, 0x01, 0xfe)
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -3004,7 +3004,7 @@ static struct IOWritePort seawolf_writeport[] =
 
 INPUT_PORTS_START( seawolf_input_ports )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0x1f, 0x01, IPT_PADDLE, 100, 0, 0x01, 0xfe)
+	PORT_ANALOG ( 0x1f, 0x01, IPT_PADDLE, 100, 10, 0, 0x01, 0xfe)
 //	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) // x movement
 //	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) // x movement
 //	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) // x movement
@@ -3228,10 +3228,10 @@ INPUT_PORTS_START( gunfight_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
     PORT_START                                                                                          /* Player 2 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 7, 1, 255, 0, 0, 0, 0, 1 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 10, 7, 1, 255, 0, 0, 0, 0 )
 
     PORT_START                                                                                          /* Player 1 Gun */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 7, 1, 255, OSD_KEY_Z, OSD_KEY_A, 0, 0, 1 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 1, 255, OSD_KEY_Z, OSD_KEY_A, 0, 0 )
 INPUT_PORTS_END
 
 static struct MachineDriver gunfight_machine_driver =
@@ -3336,7 +3336,7 @@ INPUT_PORTS_START( zzzap_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
 
 	PORT_START      /* IN1 - Steering Wheel */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 0, 0x01, 0xfe)
+	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0, 0x01, 0xfe)
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
@@ -3869,19 +3869,19 @@ struct GameDriver helifira_driver =
 
 
 ROM_START( spacefev_rom )                                                                                /* MJC */
-ROM_REGION(0x10000)             /* 64k for code */
-        ROM_LOAD( "tsf.f1",       0x0000, 0x0400, 0x35f295bd )
-        ROM_LOAD( "tsf.f2",       0x0400, 0x0400, 0x0c633f4c )
-        ROM_LOAD( "tsf.g1",       0x0800, 0x0400, 0xf3d851cb )
-        ROM_LOAD( "tsf.g2",       0x0C00, 0x0400, 0x1faef63a )
-        ROM_LOAD( "tsf.h1",       0x1000, 0x0400, 0xb365389d )
-        ROM_LOAD( "tsf.h2",       0x1400, 0x0400, 0xa36c61c9 )
-        ROM_LOAD( "tsf.i1",       0x1800, 0x0400, 0xd4f3b50d )
+	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_LOAD( "tsf.f1",       0x0000, 0x0400, 0x35f295bd )
+	ROM_LOAD( "tsf.f2",       0x0400, 0x0400, 0x0c633f4c )
+	ROM_LOAD( "tsf.g1",       0x0800, 0x0400, 0xf3d851cb )
+	ROM_LOAD( "tsf.g2",       0x0C00, 0x0400, 0x1faef63a )
+	ROM_LOAD( "tsf.h1",       0x1000, 0x0400, 0xb365389d )
+	ROM_LOAD( "tsf.h2",       0x1400, 0x0400, 0xa36c61c9 )
+	ROM_LOAD( "tsf.i1",       0x1800, 0x0400, 0xd4f3b50d )
 
 #if 0
 	ROM_REGION(0x0010)              /* Not Used */
-       ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
-       ROM_LOAD( "tsf.snd",      0x0000, 0x0400, 0x0 )
+	ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
+	ROM_LOAD( "tsf.snd",      0x0000, 0x0400, 0x0 )
 #endif
 
 ROM_END
@@ -3990,21 +3990,21 @@ struct GameDriver spacefev_driver =
 /*                                                     */
 /*******************************************************/
 ROM_START( sfeverbw_rom )
-ROM_REGION(0x10000)             /* 64k for code */
-        ROM_LOAD( "spacefev.f1", 0x0000, 0x0400, 0xb8887351 )
-        ROM_LOAD( "spacefev.f2", 0x0400, 0x0400, 0xcda933a7 )
-        ROM_LOAD( "spacefev.g1", 0x0800, 0x0400, 0xde17578a )
-        ROM_LOAD( "spacefev.g2", 0x0C00, 0x0400, 0xf1a90948 )
-        ROM_LOAD( "spacefev.h1", 0x1000, 0x0400, 0xeefb4273 )
-        ROM_LOAD( "spacefev.h2", 0x1400, 0x0400, 0xe91703e8 )
-        ROM_LOAD( "spacefev.i1", 0x1800, 0x0400, 0x41e18df9 )
-        ROM_LOAD( "spacefev.i2", 0x1c00, 0x0400, 0xeff9f82d )
+	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_LOAD( "spacefev.f1", 0x0000, 0x0400, 0xb8887351 )
+	ROM_LOAD( "spacefev.f2", 0x0400, 0x0400, 0xcda933a7 )
+	ROM_LOAD( "spacefev.g1", 0x0800, 0x0400, 0xde17578a )
+	ROM_LOAD( "spacefev.g2", 0x0C00, 0x0400, 0xf1a90948 )
+	ROM_LOAD( "spacefev.h1", 0x1000, 0x0400, 0xeefb4273 )
+	ROM_LOAD( "spacefev.h2", 0x1400, 0x0400, 0xe91703e8 )
+	ROM_LOAD( "spacefev.i1", 0x1800, 0x0400, 0x41e18df9 )
+	ROM_LOAD( "spacefev.i2", 0x1c00, 0x0400, 0xeff9f82d )
 
 #if 0
-        ROM_REGION(0x0010)              /* Not Used */
+	ROM_REGION(0x0010)              /* Not Used */
 
-       ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
-       ROM_LOAD( "TSF.SND", 0x0000, 0x0400, 0x0 )
+	ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
+	ROM_LOAD( "TSF.SND", 0x0000, 0x0400, 0x0 )
 #endif
 
 ROM_END
@@ -4348,7 +4348,7 @@ INPUT_PORTS_START( lagunar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
 
 	PORT_START      /* IN1 - Steering Wheel */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 0, 0x01, 0xfe)
+	PORT_ANALOG ( 0xff, 0x7f, IPT_PADDLE | IPF_REVERSE, 100, 10, 0, 0x01, 0xfe)
 
 	PORT_START      /* IN2 Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, "Coinage" )
@@ -4763,13 +4763,13 @@ INPUT_PORTS_START( dogpatch_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_ANALOG ( 0x38, 0x1f, IPT_AD_STICK_X |IPF_PLAYER2 , 25, 0, 0x05, 0x48)
+	PORT_ANALOG ( 0x38, 0x1f, IPT_AD_STICK_X |IPF_PLAYER2, 25, 10, 0, 0x05, 0x48)
 	/* 6 bit horiz encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 0, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
+	PORT_ANALOG ( 0x3f, 0x1f, IPT_AD_STICK_X, 25, 10, 0, 0x01, 0x3e) /* 6 bit horiz encoder - Gray's binary? */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
@@ -4931,10 +4931,10 @@ INPUT_PORTS_START( midwbowl_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START      /* IN5 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 3, 0, 0)
+	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 10, 3, 0, 0)
 
 	PORT_START      /* IN6 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X, 10, 3, 0, 0)
+	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X, 10, 10, 3, 0, 0)
 INPUT_PORTS_END
 
 static struct MachineDriver midwbowl_machine_driver =
@@ -5083,8 +5083,7 @@ INPUT_PORTS_START( blueshrk_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x7f, 0x45, IPT_PADDLE, 100, 0, 0xf, 0x7f)
-
+	PORT_ANALOG ( 0x7f, 0x45, IPT_PADDLE, 100, 10, 0, 0xf, 0x7f)
 INPUT_PORTS_END
 
 static struct MachineDriver blueshrk_machine_driver =
@@ -6043,12 +6042,12 @@ INPUT_PORTS_END
 
 ROM_START( sinvemag_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "emag_si.a",   0x0000, 0x0400, 0x86bb8cb6 )
-        ROM_LOAD( "emag_si.b",   0x0400, 0x0400, 0xfebe6d1a )
-        ROM_LOAD( "emag_si.c",   0x0800, 0x0400, 0xaafb24f7 )
-        ROM_LOAD( "emag_si.d",   0x1400, 0x0400, 0x68c4b9da )
-        ROM_LOAD( "emag_si.e",   0x1800, 0x0400, 0xc4e80586 )
-        ROM_LOAD( "emag_si.f",   0x1c00, 0x0400, 0x077f5ef2 )
+	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
+	ROM_LOAD( "emag_si.b",  0x0400, 0x0400, 0xfebe6d1a )
+	ROM_LOAD( "emag_si.c",  0x0800, 0x0400, 0xaafb24f7 )
+	ROM_LOAD( "emag_si.d",  0x1400, 0x0400, 0x68c4b9da )
+	ROM_LOAD( "emag_si.e",  0x1800, 0x0400, 0xc4e80586 )
+	ROM_LOAD( "emag_si.f",  0x1c00, 0x0400, 0x077f5ef2 )
 ROM_END
 
 struct GameDriver sinvemag_driver =
@@ -6129,10 +6128,10 @@ INPUT_PORTS_END
 
 ROM_START( alieninv2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "1h.bin",   0x0000, 0x0800, 0xc46df7f4 )
-        ROM_LOAD( "1g.bin",   0x0800, 0x0800, 0x4b1112d6 )
-        ROM_LOAD( "1f.bin",   0x1000, 0x0800, 0Xadca18a5 )
-        ROM_LOAD( "1e.bin",   0x1800, 0x0800, 0x0449CB52 )
+	ROM_LOAD( "1h.bin",   0x0000, 0x0800, 0xc46df7f4 )
+	ROM_LOAD( "1g.bin",   0x0800, 0x0800, 0x4b1112d6 )
+	ROM_LOAD( "1f.bin",   0x1000, 0x0800, 0Xadca18a5 )
+	ROM_LOAD( "1e.bin",   0x1800, 0x0800, 0x0449CB52 )
 ROM_END
 
 struct GameDriver alieninv2_driver =
@@ -6284,10 +6283,10 @@ static struct MachineDriver sitv_machine_driver =
 
 ROM_START( sitv_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "tv0h.s1",   0x0000, 0x0800, 0xfef18aad )
-        ROM_LOAD( "tv04.m1",   0x1800, 0x0800, 0xcd2c67f6 )
-        ROM_LOAD( "tv03.n1",   0x1000, 0x0800, 0x0ad3657f )
-        ROM_LOAD( "tv02.rp1",  0x0800, 0x0800, 0x3c759a90 )
+	ROM_LOAD( "tv0h.s1",   0x0000, 0x0800, 0xfef18aad )
+	ROM_LOAD( "tv04.m1",   0x1800, 0x0800, 0xcd2c67f6 )
+	ROM_LOAD( "tv03.n1",   0x1000, 0x0800, 0x0ad3657f )
+	ROM_LOAD( "tv02.rp1",  0x0800, 0x0800, 0x3c759a90 )
 ROM_END
 
 struct GameDriver sitv_driver =
@@ -6426,10 +6425,10 @@ static struct MachineDriver sicv_machine_driver =
 
 ROM_START( sicv_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "cv17.bin",   0x0000, 0x0800, 0x3dfbe9e6 )
-        ROM_LOAD( "cv18.bin",   0x0800, 0x0800, 0xbc3c82bf )
-        ROM_LOAD( "cv19.bin",   0x1000, 0x0800, 0xd202b41c )
-        ROM_LOAD( "cv20.bin",   0x1800, 0x0800, 0xc74ee7b6 )
+	ROM_LOAD( "cv17.bin",   0x0000, 0x0800, 0x3dfbe9e6 )
+	ROM_LOAD( "cv18.bin",   0x0800, 0x0800, 0xbc3c82bf )
+	ROM_LOAD( "cv19.bin",   0x1000, 0x0800, 0xd202b41c )
+	ROM_LOAD( "cv20.bin",   0x1800, 0x0800, 0xc74ee7b6 )
 ROM_END
 
 struct GameDriver sicv_driver =
@@ -6468,16 +6467,12 @@ struct GameDriver sicv_driver =
 /* LT 24-12-1998 */
 ROM_START( sisv_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-        ROM_LOAD( "SV0H.BIN",   0x0000, 0x0400, 0x86bb8cb6 )
-
-        ROM_LOAD( "SV10.BIN",   0x0800, 0x0400, 0x483e651e )
-        ROM_LOAD( "SV04.BIN",   0x1400, 0x0400, 0x1293b826 )
-        ROM_LOAD( "SV09.BIN",   0x1800, 0x0400, 0xcd80b13f )
-
-        ROM_LOAD( "SV06.BIN",   0x1c00, 0x0400, 0x2c68e0b4 )
-        ROM_LOAD( "SV02.BIN",   0x0400, 0x0400, 0x0e159534 )
-
-
+	ROM_LOAD( "sv0h.bin",   0x0000, 0x0400, 0x86bb8cb6 )
+	ROM_LOAD( "sv10.bin",   0x0800, 0x0400, 0x483e651e )
+	ROM_LOAD( "sv04.bin",   0x1400, 0x0400, 0x1293b826 )
+	ROM_LOAD( "sv09.bin",   0x1800, 0x0400, 0xcd80b13f )
+	ROM_LOAD( "sv06.bin",   0x1c00, 0x0400, 0x2c68e0b4 )
+	ROM_LOAD( "sv02.bin",   0x0400, 0x0400, 0x0e159534 )
 ROM_END
 
 

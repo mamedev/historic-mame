@@ -761,7 +761,7 @@ static struct YM2151interface ym2151_interface_mus =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ 255 },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ rastan_irq_mus_handler }
 };
 
@@ -905,7 +905,7 @@ static struct YM2151interface ymcym_2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ 255 },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ ymcym_2151_irq_handler }
 };
 

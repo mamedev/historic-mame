@@ -62,53 +62,53 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 INPUT_PORTS_START( subs_input_ports )
-	PORT_START		/* OPTIONS */
-		PORT_DIPNAME( 0x01, 0x00, "Attract Sound" )
-		PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-		PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-		PORT_DIPNAME( 0x02, 0x00, "Credit/Time" )
-		PORT_DIPSETTING(	0x00, "Each Coin Buys Time" )
-		PORT_DIPSETTING(	0x02, "Fixed Time" )
-		PORT_DIPNAME( 0x0C, 0x00, "Game Language" )
-		PORT_DIPSETTING(	0x00, "English" )
-		PORT_DIPSETTING(	0x04, "Spanish" )
-		PORT_DIPSETTING(	0x08, "French" )
-		PORT_DIPSETTING(	0x0C, "German" )
-		PORT_DIPNAME( 0x10, 0x00, "Game Cost" )
-		PORT_DIPSETTING(	0x10, DEF_STR( Free_Play ) )
-		PORT_DIPSETTING(	0x00, DEF_STR( Coinage ) )
-		PORT_DIPNAME( 0xE0, 0x40, "Game Length" )
-		PORT_DIPSETTING(	0x00, "0:30 Minutes" )
-		PORT_DIPSETTING(	0x20, "1:00 Minutes" )
-		PORT_DIPSETTING(	0x40, "1:30 Minutes" )
-		PORT_DIPSETTING(	0x60, "2:00 Minutes" )
-		PORT_DIPSETTING(	0x80, "2:30 Minutes" )
-		PORT_DIPSETTING(	0xA0, "3:00 Minutes" )
-		PORT_DIPSETTING(	0xC0, "3:30 Minutes" )
-		PORT_DIPSETTING(	0xE0, "4:00 Minutes" )
+	PORT_START /* OPTIONS */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x02, 0x00, "Credit/Time" )
+	PORT_DIPSETTING(    0x00, "Each Coin Buys Time" )
+	PORT_DIPSETTING(    0x02, "Fixed Time" )
+	PORT_DIPNAME( 0x0c, 0x00, "Game Language" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x04, "Spanish" )
+	PORT_DIPSETTING(    0x08, "French" )
+	PORT_DIPSETTING(    0x0c, "German" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0x40, "Game Length" )
+	PORT_DIPSETTING(    0x00, "0:30 Minutes" )
+	PORT_DIPSETTING(    0x20, "1:00 Minutes" )
+	PORT_DIPSETTING(    0x40, "1:30 Minutes" )
+	PORT_DIPSETTING(    0x60, "2:00 Minutes" )
+	PORT_DIPSETTING(    0x80, "2:30 Minutes" )
+	PORT_DIPSETTING(    0xa0, "3:00 Minutes" )
+	PORT_DIPSETTING(    0xc0, "3:30 Minutes" )
+	PORT_DIPSETTING(    0xe0, "4:00 Minutes" )
 
-	PORT_START				/* IN1 */
-		PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Diag Step */
-		PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Diag Hold */
-		PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )		/* Slam */
-		PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )	/* Spare */
-		PORT_BIT ( 0xF0, IP_ACTIVE_HIGH, IPT_UNUSED )	/* Filled in with steering information */
+PORT_START /* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Diag Step */
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Diag Hold */
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )    /* Slam */
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )  /* Spare */
+	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED ) /* Filled in with steering information */
 
-	PORT_START				/* IN2 */
-		PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )	/* COIN 1 */
-		PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START1 )	/* START 1 */
-		PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )	/* COIN 2 */
-		PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START2 )	/* START 2 */
-		PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )	/* VBLANK */
-		PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )	/* FIRE 1 */
-		PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
-		PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )	/* FIRE 2 */
+	PORT_START /* IN2 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
-	PORT_START      /* IN3 */
-		PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 0, 0, 0 )
+PORT_START      /* IN3 */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 10, 0, 0, 0 )
 
-	PORT_START      /* IN4 */
-		PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 100, 0, 0, 0 )
+PORT_START      /* IN4 */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 100, 10, 0, 0, 0 )
 
 INPUT_PORTS_END
 
@@ -184,7 +184,7 @@ static struct MachineDriver machine_driver =
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_DUAL_MONITOR,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -216,16 +216,16 @@ static void subs_rom_init(void)
 
 ROM_START( subs_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "34190.p1",     	0x2800, 0x0800, 0xa88aef21 )
-	ROM_LOAD( "34191.p2",     	0x3000, 0x0800, 0x2c652e72 )
-	ROM_LOAD( "34192.n2",     	0x3800, 0x0800, 0x3ce63d33 )
-    ROM_RELOAD(              0xF800, 0x0800 )
+	ROM_LOAD( "34190.p1",     0x2800, 0x0800, 0xa88aef21 )
+	ROM_LOAD( "34191.p2",     0x3000, 0x0800, 0x2c652e72 )
+	ROM_LOAD( "34192.n2",     0x3800, 0x0800, 0x3ce63d33 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 	/* Note: These are being loaded into a bogus location, */
 	/*		 They are nibble wide rom images which will be */
 	/*		 merged and loaded into the proper place by    */
 	/*		 subs_rom_init()							   */
-	ROM_LOAD( "34196.e2",     	0x8000, 0x0100, 0x7c7a04c3 )	/* ROM 0 D4-D7 */
-	ROM_LOAD( "34194.e1",     	0x9000, 0x0100, 0x6b1c4acc )	/* ROM 0 D0-D3 */
+	ROM_LOAD( "34196.e2",     0x8000, 0x0100, 0x7c7a04c3 )	/* ROM 0 D4-D7 */
+	ROM_LOAD( "34194.e1",     0x9000, 0x0100, 0x6b1c4acc )	/* ROM 0 D0-D3 */
 
 	ROM_REGION_DISPOSE(0x1000) /* graphics */
 	ROM_LOAD( "34211.m4",     0x0000, 0x0800, 0xfa8d4409 )	/* Playfield */

@@ -221,7 +221,7 @@ int atarisys1_vh_start(void)
 		8, 8,				/* width/height of each tile */
 		64, 64				/* number of tiles in each direction */
 	};
-	
+
 	int i, e;
 
 	/* first decode the graphics */
@@ -270,7 +270,7 @@ int atarisys1_vh_start(void)
 	/* initialize the playfield */
 	if (atarigen_pf_init(&pf_desc))
 		return 1;
-	
+
 	/* initialize the motion objects */
 	if (atarigen_mo_init(&mo_desc))
 	{
@@ -378,7 +378,7 @@ void atarisys1_vscroll_w(int offset, int data)
 	int newword = COMBINE_WORD(oldword, data);
 	WRITE_WORD(&atarigen_vscroll[offset], newword);
 
-	/* because this latches a new value into the scroll base, 
+	/* because this latches a new value into the scroll base,
 	   we need to adjust for the scanline */
 	pf_state.vscroll = newword & 0x1ff;
 	if (scanline < YDIM) pf_state.vscroll -= scanline;
@@ -499,7 +499,7 @@ void atarisys1_scanline_update(int scanline)
 	unsigned char timer[YDIM];
 	int link = 0;
 	int i;
-	
+
 	/* only process if we're still onscreen */
 	if (scanline < YDIM)
 	{
@@ -509,7 +509,7 @@ void atarisys1_scanline_update(int scanline)
 		else
 			atarigen_mo_update(base, 0, scanline + 1);
 	}
-	
+
 	/* visit all the sprites and look for timers */
 	memset(spritevisit, 0, sizeof(spritevisit));
 	memset(timer, 0, sizeof(timer));
@@ -558,7 +558,7 @@ void atarisys1_scanline_update(int scanline)
 void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
-	
+
 #if DEBUG_VIDEO
 	debug();
 #endif
@@ -583,14 +583,14 @@ void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		const struct GfxElement *gfx = Machine->gfx[0];
 		int sx, sy, offs;
-		
+
 		for (sy = 0; sy < YCHARS; sy++)
 			for (sx = 0, offs = sy*64; sx < XCHARS; sx++, offs++)
 			{
 				int data = READ_WORD(&atarigen_alpharam[offs * 2]);
 				int opaque = data & 0x2000;
 				int code = data & 0x3ff;
-	
+
 				if (code || opaque)
 				{
 					int color = (data >> 10) & 7;
@@ -600,15 +600,8 @@ void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 	}
 
-#if TEST
-	{
-		unsigned char *temp = lastvisit;
-		lastvisit = curvisit;
-		curvisit = temp;
-		memset(curvisit, 0, 64*64);
-	}
-#endif
-
+	/* update onscreen messages */
+	atarigen_update_messages();
 }
 
 
@@ -642,7 +635,7 @@ static const unsigned char *update_palette(void)
 	{
 		const unsigned int *usage = Machine->gfx[0]->pen_usage;
 		int sx, sy, offs;
-		
+
 		for (sy = 0; sy < YCHARS; sy++)
 			for (sx = 0, offs = sy * 64; sx < XCHARS; sx++, offs++)
 			{
@@ -703,7 +696,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 	const int *lookup_table = &pf_lookup[state->param[0]];
 	unsigned short *colormap = param;
 	int x, y;
-	
+
 	/* standard loop over tiles */
 	for (y = tiles->min_y; y != tiles->max_y; y = (y + 1) & 63)
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
@@ -716,7 +709,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 			int code = LOOKUP_CODE(lookup) | (data & 0xff);
 			int color = LOOKUP_COLOR(lookup);
 			unsigned int bits;
-			
+
 			/* based on the depth, we need to tweak our pen mapping */
 			if (bpp == 0)
 				colormap[color] |= usage[code];
@@ -735,7 +728,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 				colormap[color * 4 + 2] |= bits;
 				colormap[color * 4 + 3] |= bits >> 16;
 			}
-			
+
 			/* also mark unvisited tiles dirty */
 			if (!atarigen_pf_visit[offs]) atarigen_pf_dirty[offs] = 0xff;
 		}
@@ -775,7 +768,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = bank;
 			}
-			
+
 			/* track the tiles we've visited */
 			atarigen_pf_visit[offs] = 1;
 		}
@@ -817,7 +810,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 			int code = LOOKUP_CODE(lookup) | (data & 0xff);
 			int color = LOOKUP_COLOR(lookup);
 			int hflip = data & 0x8000;
-			
+
 			int sx = (8 * x - state->hscroll) & 0x1ff;
 			if (sx >= XDIM) sx -= 0x200;
 
@@ -847,7 +840,7 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 	unsigned short *colormap = param;
 	unsigned short temp = 0;
 	int i;
-	
+
 	int lookup = mo_lookup[data[1] >> 8];
 	const unsigned int *usage = pen_usage[LOOKUP_GFX(lookup)];
 	int code = LOOKUP_CODE(lookup) | (data[1] & 0xff);
@@ -861,7 +854,7 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 			temp |= usage[code++];
 		colormap[color] |= temp;
 	}
-	
+
 	/* in theory we should support all 3 possible depths, but motion objects are all 4bpp */
 }
 
@@ -889,7 +882,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	int hflip = data[0] & 0x8000;
 	int vsize = (data[0] & 0x000f) + 1;
 	int priority = data[2] >> 15;
-	
+
 	/* adjust for height */
 	ypos -= vsize * 8;
 
@@ -917,12 +910,12 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		{
 			overrender_data.bitmap = bitmap;
 			overrender_data.type = OVERRENDER_PRIORITY;
-	
+
 			/* overrender the playfield */
 			atarigen_pf_process(pf_overrender_callback, &overrender_data, &pf_clip);
 		}
 	}
-	
+
 	/* high priority case? */
 	else
 	{

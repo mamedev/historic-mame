@@ -1095,7 +1095,10 @@ static void Interrupt(void)
 				case I8085_RST65:
 				case I8085_RST55:
 					M_PUSH(PC);
-					I.PC.d = I.IRQ1;
+					if (I.IRQ1 != I8085_RST75)
+						I.PC.d = I.IRQ1;
+					else
+						I.PC.d = 0x3c;
 					change_pc16(I.PC.d);
 					break;
 				default:

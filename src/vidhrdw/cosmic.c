@@ -391,7 +391,7 @@ static const signed short TreePositions[2][2] = {
 	{66,31},{66,127}
 };
 
-static const signed short WaterPositions[7][2] = {
+static const signed short WaterPositions[4][2] = {
 	{160,0},{160,64},{160,96},{160,160}
 };
 
@@ -662,7 +662,10 @@ void cosmic_vh_screenrefresh_sprites(struct osd_bitmap *bitmap,int full_refresh)
 
     if ((MachineID == 6) && (BackGround))
     {
+        static int Animate=0;
     	int y;
+
+        Animate = (++Animate & 255);
 
         if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
         	Sprite = 1;
@@ -689,14 +692,14 @@ void cosmic_vh_screenrefresh_sprites(struct osd_bitmap *bitmap,int full_refresh)
             if (CosmicFlipY == (Machine->orientation & ORIENTATION_FLIP_Y))
         	    y = WaterPositions[offs][0];
             else
-        	    y = 225 - WaterPositions[offs][0];
+        	    y = 241 - WaterPositions[offs][0];
 
     		drawgfx(bitmap,Machine->gfx[2],
-					Sprite,
-					8,
+					(Animate >> 3),
+					9,
 					0,0,
 					y,WaterPositions[offs][1],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
         }
     }
 }

@@ -573,10 +573,10 @@ ROM_END
 
 ROM_START( gauntir2_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "gaun1ir2.9a",  0x00000, 0x08000, 0xfd871f81 )
-	ROM_LOAD_ODD ( "gaun1ir2.9b",  0x00000, 0x08000, 0xbcb2fb1d )
-	ROM_LOAD_EVEN( "gaun1ir2.10a", 0x38000, 0x04000, 0x4642cd95 )
-	ROM_LOAD_ODD ( "gaun1ir2.10b", 0x38000, 0x04000, 0xc8df945e )
+	ROM_LOAD_EVEN( "gaun1ir1.9a",  0x00000, 0x08000, 0xfd871f81 )
+	ROM_LOAD_ODD ( "gaun1ir1.9b",  0x00000, 0x08000, 0xbcb2fb1d )
+	ROM_LOAD_EVEN( "gaun1ir1.10a", 0x38000, 0x04000, 0x4642cd95 )
+	ROM_LOAD_ODD ( "gaun1ir1.10b", 0x38000, 0x04000, 0xc8df945e )
 	ROM_LOAD_EVEN( "gaun1ir2.7a",  0x40000, 0x08000, 0x73e1ad79 )
 	ROM_LOAD_ODD ( "gaun1ir2.7b",  0x40000, 0x08000, 0xfd248cea )
 
@@ -801,6 +801,10 @@ void gauntlet_init(void)
 	/* speed up the 68010 */
 	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
 	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
+
+	/* display messages */
+	atarigen_show_slapstic_message();
+	atarigen_show_sound_message();
 }
 
 
@@ -816,6 +820,10 @@ void gaunt2p_init(void)
 	/* speed up the 68010 */
 	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
 	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
+
+	/* display messages */
+	atarigen_show_slapstic_message();
+	atarigen_show_sound_message();
 }
 
 
@@ -831,6 +839,10 @@ void gauntlet2_init(void)
 	/* speed up the 68010 */
 	gauntlet_speed_check = install_mem_write_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_w);
 	install_mem_read_handler(0, 0x904002, 0x904003, gauntlet_68010_speedup_r);
+
+	/* display messages */
+	atarigen_show_slapstic_message();
+	atarigen_show_sound_message();
 }
 
 
@@ -842,6 +854,10 @@ void vindctr2_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x40ff, 0x4117);
+
+	/* display messages */
+/*	atarigen_show_slapstic_message(); -- no known slapstic problems - yet! */
+	atarigen_show_sound_message();
 }
 
 

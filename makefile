@@ -14,8 +14,8 @@ VPATH=src $(wildcard src/cpu/*)
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = yamyam_driver
-TINY_OBJS = obj/drivers/gundealr.o obj/vidhrdw/gundealr.o
+TINY_NAME = retofinv_driver
+TINY_OBJS = obj/drivers/retofinv.o obj/vidhrdw/retofinv.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -545,7 +545,7 @@ endif
 SOUND=$(strip $(findstring MSM5205@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_MSM5205=1
-SOUNDOBJS += obj/sound/adpcm.o
+SOUNDOBJS += obj/sound/msm5205.o
 endif
 
 SOUND=$(strip $(findstring UPD7759@,$(SOUNDS)))
@@ -609,7 +609,7 @@ LIBS   = -lalleg -laudio -lz \
 
 COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
-         obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
+         obj/inptport.o obj/cheat.o obj/unzip.o \
          obj/audit.o obj/info.o obj/png.o obj/artwork.o \
          obj/tilemap.o obj/sprite.o obj/state.o obj/datafile.o \
          $(sort $(CPUOBJS)) \
@@ -648,6 +648,7 @@ NEOLIBS = obj/neogeo.a \
 MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/vector.o \
          obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o \
          obj/msdos/fronthlp.o obj/msdos/profiler.o \
+         obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
 
 ifdef TINY_COMPILE
 	OBJS = $(TINY_OBJS)
@@ -674,8 +675,8 @@ mame.exe:  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 	$(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -c src/version.c -o obj/version.o
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 
-romcmp.exe: obj/romcmp.o obj/inflate.o obj/unzip.o
-	$(LD) $(LDFLAGS) $^ -o $@
+romcmp.exe: obj/romcmp.o obj/unzip.o
+	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 compress: mame.exe
 	upx mame.exe
@@ -822,9 +823,9 @@ obj/taito.a: \
 
 obj/taito2.a: \
          obj/vidhrdw/bking2.o obj/drivers/bking2.o \
-         obj/vidhrdw/gsword.o obj/drivers/gsword.o \
-         obj/vidhrdw/retofinv.o obj/drivers/retofinv.o \
+         obj/vidhrdw/gsword.o obj/drivers/gsword.o obj/machine/tait8741.o \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
+         obj/vidhrdw/retofinv.o obj/drivers/retofinv.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
          obj/drivers/mexico86.o \
          obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
@@ -835,7 +836,7 @@ obj/taito2.a: \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/vidhrdw/superman.o obj/drivers/superman.o obj/machine/cchip.o \
-         obj/drivers/lkage.o \
+         obj/drivers/lkage.o obj/vidhrdw/lkage.o \
          obj/vidhrdw/taitof2.o obj/drivers/taitof2.o \
          obj/vidhrdw/ssi.o obj/drivers/ssi.o \
 
@@ -860,8 +861,8 @@ obj/capcom.a: \
          obj/vidhrdw/tigeroad.o obj/drivers/tigeroad.o \
          obj/vidhrdw/lastduel.o obj/drivers/lastduel.o \
          obj/vidhrdw/sf1.o obj/drivers/sf1.o \
-         obj/machine/kabuki.o \
-         obj/vidhrdw/pang.o obj/drivers/pang.o \
+         obj/machine/kabuki.o obj/machine/eeprom.o \
+         obj/vidhrdw/mitchell.o obj/drivers/mitchell.o \
          obj/vidhrdw/cps1.o obj/drivers/cps1.o \
 
 obj/capbowl.a: \
@@ -893,6 +894,7 @@ obj/sega.a: \
          obj/drivers/kopunch.o \
          obj/vidhrdw/suprloco.o obj/drivers/suprloco.o \
          obj/vidhrdw/champbas.o obj/drivers/champbas.o \
+         obj/vidhrdw/appoooh.o obj/drivers/appoooh.o \
          obj/vidhrdw/bankp.o obj/drivers/bankp.o \
 
 obj/system16.a: \
@@ -1148,7 +1150,6 @@ obj/other.a: \
          obj/vidhrdw/redalert.o obj/sndhrdw/redalert.o obj/drivers/redalert.o \
          obj/machine/irobot.o obj/vidhrdw/irobot.o obj/drivers/irobot.o \
          obj/machine/spiders.o obj/vidhrdw/crtc6845.o obj/vidhrdw/spiders.o obj/drivers/spiders.o \
-         obj/vidhrdw/wanted.o obj/drivers/wanted.o \
          obj/machine/stactics.o obj/vidhrdw/stactics.o obj/drivers/stactics.o \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
@@ -1164,6 +1165,7 @@ obj/other.a: \
          obj/vidhrdw/sichuan2.o obj/sndhrdw/sichuan2.o obj/drivers/sichuan2.o \
          obj/vidhrdw/goindol.o obj/drivers/goindol.o \
          obj/drivers/dlair.o \
+         obj/drivers/shanghai.o \
 
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h

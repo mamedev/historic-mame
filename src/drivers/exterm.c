@@ -115,8 +115,8 @@ static struct MemoryReadAddress master_readmem[] =
 
 static struct MemoryWriteAddress master_writemem[] =
 {
-  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w },	 OR		*/
-  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w },				*/
+/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w },	 OR		*/
+/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w },				*/
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA_BANK1 },
 	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), TMS34010_HSTADRL_w },
 	{ TOBYTE(0x01100000), TOBYTE(0x011fffff), TMS34010_HSTADRH_w },
@@ -142,8 +142,8 @@ static struct MemoryReadAddress slave_readmem[] =
 
 static struct MemoryWriteAddress slave_writemem[] =
 {
-  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
-  /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
+/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
+/*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
 	{ TOBYTE(0xfffffb90), TOBYTE(0xfffffb90), exterm_slave_speedup_w, &exterm_slave_speedup },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK4 },
@@ -205,9 +205,9 @@ INPUT_PORTS_START( exterm_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1, "Aim Left",  OSD_KEY_Z, IP_JOY_DEFAULT )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1, "Aim Right", OSD_KEY_X, IP_JOY_DEFAULT )
 	PORT_BIT( 0xec, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN1 LO */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -225,24 +225,26 @@ INPUT_PORTS_START( exterm_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )	/* According to the test screen */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) ) /* According to the test screen */
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* Note that the coin settings don't match the setting shown on the test screen,
 	   but instead what the game appears to used. This is either a bug in the game,
 	   or I don't know what else. */
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x06, "1 Credit/Coin" )
-	PORT_DIPSETTING(    0x02, "2 Credits/Coin" )
-	PORT_DIPSETTING(    0x04, "3 Credits/Coin" )
-	PORT_DIPSETTING(    0x00, "4 Credits/Coin" )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x38, "1 Credit/Coin" )
-	PORT_DIPSETTING(    0x18, "2 Credits/Coin" )
-	PORT_DIPSETTING(    0x28, "3 Credits/Coin" )
-	PORT_DIPSETTING(    0x08, "4 Credits/Coin" )
-	PORT_DIPSETTING(    0x30, "5 Credits/Coin" )
-	PORT_DIPSETTING(    0x10, "6 Credits/Coin" )
-	PORT_DIPSETTING(    0x20, "7 Credits/Coin" )
-	PORT_DIPSETTING(    0x00, "8 Credits/Coin" )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_8C ) )
 	PORT_DIPNAME( 0x40, 0x40, "Memory Test" )
 	PORT_DIPSETTING(    0x40, "Single" )
 	PORT_DIPSETTING(    0x00, "Continous" )

@@ -6,32 +6,12 @@ CPU: Z80 (x2), MC68705
 Sound: YM2203 (x2)
 
 Phil Stroffolino
-phil@maya.com
-
-status: playable
+pjstroff@hotmail.com
 
 Known issues:
 
-BACKGROUND LAYERS:
-	The main CPU's Z80 ports seem to serve as a window to a 256 byte banked area.
-	This data (from ROM a54-03.51) is used when drawing the background layers.
-
-	The background layers can render tiles from any of the three character
-	banks:
-	gfx[0]: alphanumerics (used in ending)
-	gfx[1]: trees (stage1)
-	gfx[2]: palace (stage4)
-
-SOUND:
-	Lots of unknown writes to the YM2203 I/O ports
-
-MCU:
-	MCU isn't hooked up, yet.
-	It's a nasty little beast, hard to trace, since it does self-modifying code.
-
-COLORS:
-	There's a 512 byte prom.  Every odd nibble is 0.
-	Is there a missing 256 byte prom for the third color component?
+SOUND: lots of unknown writes to the YM2203 I/O ports
+MCU (used by original version): not hooked up
 
 ***************************************************************************/
 
@@ -39,252 +19,53 @@ COLORS:
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "cpu/m6805/m6805.h"
-#include "machine/6821pia.h"
 
-static int bank_select = 0;
+#define MEM_CPU_MAIN	0
+#define MEM_DATA		1
+#define MEM_CPU_SOUND	2
+#define MEM_GFX			3
+#define MEM_MCU			4
 
-int lkage_video_reg_r( int offset );
-void lkage_video_reg_w( int offset, int data );
+#define CREDITS "Phil Stroffolino"
 
-/***************************************************************************/
-
-static unsigned char video_reg[6];
-/*
-	video_reg[0x00]: unknown (always 0xf7)
-	video_reg[0x01]: unknown (always 0x00)
-	video_reg[0x02]: foreground layer horizontal scroll
-	video_reg[0x03]: foreground layer vertical scroll
-	video_reg[0x04]: background layer horizontal scroll
-	video_reg[0x05]: background layer vertical scroll
-*/
-
-int lkage_video_reg_r( int offset ){
-	return video_reg[offset];
-}
-
-void lkage_video_reg_w( int offset, int data ){
-	video_reg[offset] = data;
-}
-
-int lkage_vh_start(void){
-	return 0;
-}
-
-void lkage_vh_stop(void){
-}
-
-static void draw_background( struct osd_bitmap *bitmap ){
-	unsigned char *source = videoram + 0x800;
-	int xscroll = -video_reg[4]-8;
-	int yscroll = -video_reg[5]-8;
-	int sx,sy;
-
-	static int bank = 2;
-	if( osd_key_pressed( OSD_KEY_F ) ) bank = 0;
-	if( osd_key_pressed( OSD_KEY_G ) ) bank = 1;
-	if( osd_key_pressed( OSD_KEY_H ) ) bank = 2;
-
-	for( sy=0; sy<256; sy+=8 ){
-		for( sx=0; sx<256; sx+=8 ){
-			drawgfx( bitmap,Machine->gfx[bank],
-				source[0],
-				0, /* color */
-				0,0, /* flip */
-				(sx+xscroll)&0xff,(sy+yscroll)&0xff,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_NONE,0 );
-			source++;
-		}
-	}
-}
-
-static void draw_foreground( struct osd_bitmap *bitmap ){
-	unsigned char *source = videoram + 0x400;
-
-	int xscroll = -video_reg[2]-8;
-	int yscroll = -video_reg[3]-8;
-	int sx,sy;
-
-	static int bank = 1;
-	if( osd_key_pressed( OSD_KEY_J ) ) bank = 0;
-	if( osd_key_pressed( OSD_KEY_K ) ) bank = 1;
-	if( osd_key_pressed( OSD_KEY_L ) ) bank = 2;
-
-	for( sy=0; sy<256; sy+=8 ){
-		for( sx=0; sx<256; sx+=8 ){
-			drawgfx( bitmap,Machine->gfx[bank],
-				source[0],
-				0, /* color */
-				0,0, /* flip */
-				(sx+xscroll)&0xff,(sy+yscroll)&0xff,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_PEN,0 );
-			source++;
-		}
-	}
-}
-
-static void draw_sprites( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
-	const unsigned char *finish = spriteram;
-	const unsigned char *source = spriteram+0x60-4;
-	const struct GfxElement *gfx = Machine->gfx[3];
-
-	while( source>=finish ){
-		int attributes = source[2];
-		/* bit 0: horizontal flip */
-		/* bit 1: vertical flip */
-		/* bit 2: bank select */
-		/* bit 3: sprite size */
-
-		int sy = 240-source[1];
-		int sx = source[0] - 16;
-
-		int sprite_number = source[3];
-		if( attributes&0x04 )
-			sprite_number += 128;
-		else
-			sprite_number += 256;
-
-		if( sprite_number!=256 ){ /* enable */
-			if( attributes&0x02 ){ /* vertical flip */
-				if( attributes&0x08 ){ /* tall sprite */
-					sy -= 16;
-					drawgfx( bitmap,gfx,
-						sprite_number^1,
-						0,
-						attributes&1,1, /* flip */
-						sx,sy+16,
-						clip,
-						TRANSPARENCY_PEN,0 );
-				}
-				drawgfx( bitmap,gfx,
-					sprite_number,
-					0,
-					attributes&1,1, /* flip */
-					sx,sy,
-					clip,
-					TRANSPARENCY_PEN,0 );
-			}
-			else {
-				if( attributes&0x08 ){ /* tall sprite */
-					drawgfx( bitmap,gfx,
-						sprite_number^1,
-						0,
-						attributes&1,0, /* flip */
-						sx,sy-16,
-						clip,
-						TRANSPARENCY_PEN,0 );
-				}
-				drawgfx( bitmap,gfx,
-					sprite_number,
-					0,
-					attributes&1,0, /* flip */
-					sx,sy,
-					clip,
-					TRANSPARENCY_PEN,0 );
-			}
-		}
-		source-=4;
-	}
-}
-
-static void draw_text( struct osd_bitmap *bitmap ){
-	const struct GfxElement *gfx = Machine->gfx[0];
-	const unsigned char *source = videoram;
-	int sx,sy;
-
-	for( sy=0; sy<256; sy+=8 ){
-		for( sx=0; sx<256; sx+=8 ){
-			drawgfx( bitmap,gfx,
-				source[0],
-				0, /* color */
-				0,0, /* flip */
-				sx,sy,
-				&Machine->drv->visible_area,
-				TRANSPARENCY_PEN,0 );
-			source++;
-		}
-	}
-}
-
-void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	if( bank_select>0 && osd_key_pressed( OSD_KEY_Z ) ){
-		while( osd_key_pressed( OSD_KEY_Z ) );
-		bank_select--;
-	}
-	if( osd_key_pressed( OSD_KEY_X ) ){
-		while( osd_key_pressed( OSD_KEY_X ) );
-		bank_select++;
-	}
-
-	draw_background( bitmap );
-	draw_foreground( bitmap );
-	draw_sprites( bitmap );
-	draw_text( bitmap );
-
-	{
-		unsigned char value = bank_select;
-		static unsigned char digit[16] = "0123456789abcdef";
-
-		drawgfx( bitmap,Machine->uifont,
-			digit[value>>4],
-			0, /* color */
-			0,0, /* flip */
-			32,8+32,
-			&Machine->drv->visible_area,
-			TRANSPARENCY_NONE,0 );
-		drawgfx( bitmap,Machine->uifont,
-			digit[value&0xf],
-			0, /* color */
-			0,0,
-			32+8,8+32,
-			&Machine->drv->visible_area,
-			TRANSPARENCY_NONE,0 );
-	}
-}
-
-/***************************************************************************/
+extern unsigned char *lkage_scroll, *lkage_vreg;
+extern void lkage_videoram_w( int offset, int data );
+extern int lkage_vh_start(void);
+extern void lkage_vh_stop(void);
+extern void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int sound_nmi_enable,pending_nmi;
 
-static void nmi_callback(int param)
-{
+static void nmi_callback(int param){
 	if (sound_nmi_enable) cpu_cause_interrupt(1,Z80_NMI_INT);
 	else pending_nmi = 1;
 }
 
-void lkage_sound_command_w(int offset,int data)
-{
+void lkage_sound_command_w(int offset,int data){
 	soundlatch_w(offset,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-void lkage_sh_nmi_disable_w(int offset,int data)
-{
+void lkage_sh_nmi_disable_w(int offset,int data){
 	sound_nmi_enable = 0;
 }
 
-void lkage_sh_nmi_enable_w(int offset,int data)
-{
+void lkage_sh_nmi_enable_w(int offset,int data){
 	sound_nmi_enable = 1;
-	if (pending_nmi)	/* probably wrong but commands may go lost otherwise */
-	{
+	if (pending_nmi){ /* probably wrong but commands may go lost otherwise */
 		cpu_cause_interrupt(1,Z80_NMI_INT);
 		pending_nmi = 0;
 	}
 }
 
-static void irqhandler(int irq)
-{
+static void irqhandler(int irq){
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static struct YM2203interface ym2203_interface =
-{
+static struct YM2203interface ym2203_interface = {
 	2,          /* 2 chips */
 	4000000,    /* 4 MHz ? (hand tuned) */
-	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	{ YM2203_VOL(60,60), YM2203_VOL(60,60) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -293,39 +74,29 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-/***************************************************************************/
-
 static int status_r(int offset){
 	return 0x3;
 }
-static int unknown1_r( int offset ){
-	return 0xff;
-}
+
 static int unknown0_r( int offset ){
 	return 0x00;
 }
 
 static struct MemoryReadAddress readmem[] = {
 	{ 0x0000, 0xdfff, MRA_ROM },
-	{ 0xe000, 0xefff, MRA_RAM },
-
-	{ 0xf000, 0xf003, unknown0_r },		/* PIA#1 */
-	{ 0xf062, 0xf062, unknown0_r },
-
-	/* PIA#2? */
+	{ 0xe000, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xefff, paletteram_r },
+	{ 0xf000, 0xf003, MRA_RAM, &lkage_vreg },
+	{ 0xf062, 0xf062, unknown0_r }, /* unknown */
 	{ 0xf080, 0xf080, input_port_0_r }, /* DSW1 */
 	{ 0xf081, 0xf081, input_port_1_r }, /* DSW2 (coinage) */
 	{ 0xf082, 0xf082, input_port_2_r }, /* DSW3 */
 	{ 0xf083, 0xf083, input_port_3_r },	/* start buttons, insert coin, tilt */
-
-	/* PIA#3? */
 	{ 0xf084, 0xf084, input_port_4_r },	/* P1 controls */
 	{ 0xf084, 0xf084, input_port_5_r },	/* P2 controls */
-	{ 0xf087, 0xf087, status_r },
-
+	{ 0xf087, 0xf087, status_r }, /* MCU? */
 	{ 0xf0a3, 0xf0a3, unknown0_r }, /* unknown */
-	{ 0xf0c0, 0xf0c4, lkage_video_reg_r },
-
+	{ 0xf0c0, 0xf0c5, MRA_RAM, &lkage_scroll },
 	{ 0xf100, 0xf15f, MRA_RAM, &spriteram },
 	{ 0xf400, 0xffff, MRA_RAM, &videoram },
 	{ -1 }
@@ -333,29 +104,27 @@ static struct MemoryReadAddress readmem[] = {
 
 static struct MemoryWriteAddress writemem[] = {
 	{ 0x0000, 0xdfff, MWA_ROM },
-	{ 0xe000, 0xefff, MWA_RAM },
-
-	{ 0xf000, 0xf003, MWA_RAM },
+	{ 0xe000, 0xe7ff, MWA_RAM },
+	{ 0xe800, 0xefff, MWA_RAM, &paletteram },
+//	paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
+	{ 0xf000, 0xf003, MWA_RAM }, /* video registers */
 	{ 0xf060, 0xf060, lkage_sound_command_w },
-	{ 0xf061, 0xf062, MWA_NOP },
-
-	{ 0xf0a3, 0xf0a3, MWA_NOP }, /* unknown */
-
-	{ 0xf0c0, 0xf0c5, lkage_video_reg_w },
-
-//	{ 0xf0e1, 0xf0e1, MWA_NOP }, /* unknown */
-
+	{ 0xf061, 0xf063, MWA_NOP }, /* unknown */
+	{ 0xf0a2, 0xf0a3, MWA_NOP }, /* unknown */
+	{ 0xf0c0, 0xf0c5, MWA_RAM }, /* scrolling */
+	{ 0xf0e1, 0xf0e1, MWA_NOP }, /* unknown */
 	{ 0xf100, 0xf15f, MWA_RAM }, /* spriteram */
-	{ 0xf400, 0xffff, MWA_RAM }, /* videoram */
+	{ 0xf400, 0xffff, lkage_videoram_w }, /* videoram */
 	{ -1 }
 };
 
-static int port_fetch_r( int offset ){
-	return Machine->memory_region[0][0x10000+(bank_select&0x3f)*0x100+offset];
+static int port_fetch_r( int offset )
+{
+	return Machine->memory_region[MEM_DATA][offset];
 }
 
 static struct IOReadPort readport[] = {
-	{ 0x00, 0xff, port_fetch_r },
+	{ 0x4000, 0x7fff, port_fetch_r },
 	{ -1 }
 };
 
@@ -422,7 +191,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x18, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x08, "5" )
-	PORT_DIPSETTING(    0x00, "255" )
+	PORT_BITX(0,  0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown DSW A 6" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -471,10 +240,10 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START      /* DSW3 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, "Easiest" )	/* unconfirmed */
-	PORT_DIPSETTING(    0x02, "Easy" ) 		/* unconfirmed */
-	PORT_DIPSETTING(    0x01, "Normal" )	/* unconfirmed */
-	PORT_DIPSETTING(    0x00, "Hard" )		/* unconfirmed */
+	PORT_DIPSETTING(    0x03, "Easiest" ) /* unconfirmed */
+	PORT_DIPSETTING(    0x02, "Easy" )    /* unconfirmed */
+	PORT_DIPSETTING(    0x01, "Normal" )  /* unconfirmed */
+	PORT_DIPSETTING(    0x00, "Hard" )    /* unconfirmed */
 	PORT_DIPNAME( 0x04, 0x04, "Unknown DSW C 3" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -487,18 +256,18 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x20, "Roman Numerals" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME /*| IPF_CHEAT*/, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x80, 0x80, "Coin Slots" )
 	PORT_DIPSETTING(    0x80, "A and B" )
 	PORT_DIPSETTING(    0x00, "A only" )
 
 	PORT_START      /* Service */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,	IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,	IPT_START2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,	IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -507,30 +276,30 @@ INPUT_PORTS_START( input_ports )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 INPUT_PORTS_END
 
-static struct GfxLayout char_layout = {
+static struct GfxLayout tile_layout = {
 	8,8,	/* 8x8 characters */
 	256,	/* number of characters */
 	4,		/* 4 bits per pixel */
-	{ 0*0x20000,1*0x20000,2*0x20000,3*0x20000 },
+	{ 1*0x20000,0*0x20000,3*0x20000,2*0x20000 },
 	{ 7,6,5,4,3,2,1,0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	64 /* offset to next character */
@@ -540,36 +309,7 @@ static struct GfxLayout sprite_layout = {
 	16,16,	/* sprite size */
 	384,	/* number of sprites */
 	4,		/* bits per pixel */
-	{ 0*0x20000,1*0x20000,2*0x20000,3*0x20000 }, /* plane offsets */
-	{ /* x offsets */
-		7,6,5,4,3,2,1,0,
-		64+7,64+6,64+5,64+4,64+3,64+2,64+1,64
-	},
-	{ /* y offsets */
-		0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-		128+0*8, 128+1*8, 128+2*8, 128+3*8, 128+4*8, 128+5*8, 128+6*8, 128+7*8 },
-	256 /* offset to next sprite */
-};
-
-static struct GfxLayout sprite_layout2 = {
-	16,16,	/* sprite size */
-	192,	/* number of sprites */
-	4,		/* bits per pixel */
-	{ 0*0x20000,1*0x20000,2*0x20000,3*0x20000 }, /* plane offsets */
-	{ /* x offsets */
-		7,6,5,4,3,2,1,0,
-		64+7,64+6,64+5,64+4,64+3,64+2,64+1,64
-	},
-	{ /* y offsets */
-		0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-		128+0*8, 128+1*8, 128+2*8, 128+3*8, 128+4*8, 128+5*8, 128+6*8, 128+7*8 },
-	256 /* offset to next sprite */
-};
-static struct GfxLayout sprite_layout3 = {
-	16,16,	/* sprite size */
-	128,	/* number of sprites */
-	4,		/* bits per pixel */
-	{ 0*0x20000,1*0x20000,2*0x20000,3*0x20000 }, /* plane offsets */
+	{ 1*0x20000,0*0x20000,3*0x20000,2*0x20000 }, /* plane offsets */
 	{ /* x offsets */
 		7,6,5,4,3,2,1,0,
 		64+7,64+6,64+5,64+4,64+3,64+2,64+1,64
@@ -581,52 +321,52 @@ static struct GfxLayout sprite_layout3 = {
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] = {
-	{ 3, 0x0000, 	&char_layout,		0, 256 },
-	{ 3, 0x0800, 	&char_layout,		0, 256 },
-	{ 3, 0x0800*5,	&char_layout,		0, 256 },
-	{ 3, 0x1000, 	&sprite_layout,		0, 256 },
-	{ 3, 0x1000, 	&sprite_layout2,		0, 256 },
-	{ 3, 0x0800*6, 	&sprite_layout3,		0, 256 },
+	{ MEM_GFX, 0x0000, 		&tile_layout,	 128, 3 },
+	{ MEM_GFX, 0x0800, 		&tile_layout,	 128, 3 },
+	{ MEM_GFX, 0x0800*5,	&tile_layout,	 128, 3 },
+	{ MEM_GFX, 0x1000, 		&sprite_layout,	 0, 8 },
 	{ -1 }
 };
 
 static struct MachineDriver machine_driver = {
 	{
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_16BIT_PORT,
 			6000000,	/* ??? */
-			0,
+			MEM_CPU_MAIN,
 			readmem,writemem,readport,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			6000000,	/* ??? */
-			1,
+			MEM_CPU_SOUND,
 			readmem_sound,writemem_sound,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
 		},
-#if 0
-		{
-			CPU_M68705,
-			4000000/2,	/* ??? */
-			2,
-			m68705_readmem,m68705_writemem,0,0,
-			ignore_interrupt,1
-		},
-#endif
+//		{
+//			CPU_M68705,
+//			4000000/2,	/* ??? */
+//			MEM_MCU,
+//			m68705_readmem,m68705_writemem,0,0,
+//			ignore_interrupt,1
+//		},
 	},
 	60,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* heavy synching between the MCU and main CPU */
+	1, /* CPU slices */
 	0, /* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
+	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024,1024,
+	176,176,
+		/*
+			there are actually 1024 colors in paletteram, however, we use a 100% correct
+			reduced "virtual palette" to achieve some optimizations in the video driver.
+		*/
 	0,
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	lkage_vh_start,
 	lkage_vh_stop,
@@ -644,25 +384,43 @@ static struct MachineDriver machine_driver = {
 
 ROM_START( lkage_rom )
 	ROM_REGION( 0x14000 ) /* Z80 code (main CPU) */
-	ROM_LOAD( "a54-01-1.37",	0x00000, 0x8000, 0x973da9c5 )
-	ROM_LOAD( "a54-02-1.38",	0x08000, 0x8000, 0x27b509da )
+	ROM_LOAD( "a54-01-1.37", 0x00000, 0x8000, 0x973da9c5 )
+	ROM_LOAD( "a54-02-1.38", 0x08000, 0x8000, 0x27b509da )
 
-	ROM_LOAD( "a54-03.51",		0x10000, 0x4000, 0x493e76d8 ) /* data */
+	ROM_REGION( 0x4000 ) /* data */
+	ROM_LOAD( "a54-03.51",   0x00000, 0x4000, 0x493e76d8 )
 
 	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
-	ROM_LOAD( "a54-04.54",		0x0000, 0x8000, 0x541faf9a )
-
-	ROM_REGION( 0x10000 )	/* 68705 MCU code */
-	ROM_LOAD( "a54-09.53",      0x0000, 0x0800, 0x0e8b8846 )
+	ROM_LOAD( "a54-04.54",   0x00000, 0x8000, 0x541faf9a )
 
 	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
-	ROM_LOAD( "a54-05-1.84",	0x00000, 0x4000, 0x0033c06a )
-	ROM_LOAD( "a54-06-1.85",	0x04000, 0x4000, 0x9f04d9ad )
-	ROM_LOAD( "a54-07-1.86",	0x08000, 0x4000, 0xb20561a4 )
-	ROM_LOAD( "a54-08-1.87",	0x0c000, 0x4000, 0x3ff3b230 )
+	ROM_LOAD( "a54-05-1.84", 0x00000, 0x4000, 0x0033c06a )
+	ROM_LOAD( "a54-06-1.85", 0x04000, 0x4000, 0x9f04d9ad )
+	ROM_LOAD( "a54-07-1.86", 0x08000, 0x4000, 0xb20561a4 )
+	ROM_LOAD( "a54-08-1.87", 0x0c000, 0x4000, 0x3ff3b230 )
 
-	ROM_REGION( 512 ) /* color prom? */
-	ROM_LOAD( "a54-10.prm", 0, 512, 0x17dfbd14 )
+	ROM_REGION( 0x10000 ) /* 68705 MCU code */
+	ROM_LOAD( "a54-09.53",   0x00000, 0x0800, 0x0e8b8846 )
+ROM_END
+
+ROM_START( lkageb_rom )
+	ROM_REGION( 0x10000 ) /* Z80 code (main CPU) */
+	ROM_LOAD( "lok.a",     0x0000, 0x8000, 0x866df793 )
+	ROM_LOAD( "lok.b",     0x8000, 0x8000, 0xfba9400f )
+
+	ROM_REGION( 0x4000 ) /* data */
+	ROM_LOAD( "a54-03.51", 0x0000, 0x4000, 0x493e76d8 ) // LOK.C
+
+	ROM_REGION( 0x10000 ) /* Z80 code (sound CPU) */
+	ROM_LOAD( "a54-04.54", 0x0000, 0x8000, 0x541faf9a ) // LOK.D
+
+	ROM_REGION_DISPOSE( 0x10000 ) /* GFX: tiles & sprites */
+	ROM_LOAD( "lok.f",     0x0000, 0x4000, 0x76753e52 )
+	ROM_LOAD( "lok.e",     0x4000, 0x4000, 0xf33c015c )
+	ROM_LOAD( "lok.h",     0x8000, 0x4000, 0x0e02c2e8 )
+	ROM_LOAD( "lok.g",     0xc000, 0x4000, 0x4ef5f073 )
+
+	ROM_REGION( 0x100 ) /* fake */
 ROM_END
 
 struct GameDriver lkage_driver = {
@@ -672,13 +430,40 @@ struct GameDriver lkage_driver = {
 	"The Legend of Kage",
 	"1984",
 	"Taito",
-	"Phil Stroffolino",
-	0,
+	CREDITS,
+	0, // MCU not hooked up
 	&machine_driver,
-		0,
+	0,
 
 	lkage_rom,
-	0, 0,
+	0,
+	0,
+	0,
+	0,
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver lkageb_driver = {
+	__FILE__,
+	&lkage_driver,
+	"lkageb",
+	"The Legend of Kage (bootleg)",
+	"1984",
+	"bootleg",
+	CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	lkageb_rom,
+	0,
+	0,
 	0,
 	0,
 

@@ -360,6 +360,9 @@ void skullxbo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				drawgfx(bitmap, gfx, code, color, 0, 0, 16 * x, 8 * y, 0, opaque ? TRANSPARENCY_NONE : TRANSPARENCY_PEN, 0);
 			}
 	}
+
+	/* update onscreen messages */
+	atarigen_update_messages();
 }
 
 
@@ -445,10 +448,10 @@ static const unsigned char *update_palette(void)
  *
  *************************************/
 
-static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *cmap)
+static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
-	unsigned short *colormap = (unsigned short *)cmap;
+	unsigned short *colormap = (unsigned short *)param;
 	int x, y;
 
 	/* standard loop over tiles */
@@ -475,10 +478,10 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
  *
  *************************************/
 
-static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *bmap)
+static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
-	struct osd_bitmap *bitmap = bmap;
+	struct osd_bitmap *bitmap = param;
 	int x, y;
 
 	/* standard loop over tiles */

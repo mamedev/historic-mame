@@ -358,9 +358,9 @@ ROM_START( phoenix3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "phoenix3.45",  0x0000, 0x0800, 0xa362cda0 )
 	ROM_LOAD( "phoenix3.46",  0x0800, 0x0800, 0x5748f486 )
-	ROM_LOAD( "phoenix3.47",  0x1000, 0x0800, 0xcbbb8839 )
+	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
 	ROM_LOAD( "phoenix3.48",  0x1800, 0x0800, 0xb5d97a4d )
-	ROM_LOAD( "phoenix3.49",  0x2000, 0x0800, 0xa105e4e7 )
+	ROM_LOAD( "ic49",         0x2000, 0x0800, 0xa105e4e7 )
 	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
 	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
 	ROM_LOAD( "phoenix3.52",  0x3800, 0x0800, 0xd2c5c984 )
@@ -399,6 +399,28 @@ ROM_START( phoenixc_rom )
 ROM_END
 
 ROM_START( pleiads_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic47.r1",      0x0000, 0x0800, 0x960212c8 )
+	ROM_LOAD( "ic48.r2",      0x0800, 0x0800, 0xb254217c )
+	ROM_LOAD( "ic47.bin",     0x1000, 0x0800, 0x87e700bb ) /* IC 49 on real board */
+	ROM_LOAD( "ic48.bin",     0x1800, 0x0800, 0x2d5198d0 ) /* IC 50 on real board */
+	ROM_LOAD( "ic51.r5",      0x2000, 0x0800, 0x49c629bc )
+	ROM_LOAD( "ic50.bin",     0x2800, 0x0800, 0xf1a8a00d ) /* IC 52 on real board */
+	ROM_LOAD( "ic53.r7",      0x3000, 0x0800, 0xb5f07fbc )
+	ROM_LOAD( "ic52.bin",     0x3800, 0x0800, 0xb1b5a8a6 ) /* IC 54 on real board */
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23.bin",     0x0000, 0x0800, 0x4e30f9e7 ) /* IC 45 on real board */
+	ROM_LOAD( "ic24.bin",     0x0800, 0x0800, 0x5188fc29 ) /* IC 44 on real board */
+	ROM_LOAD( "ic39.bin",     0x1000, 0x0800, 0x85866607 ) /* IC 27 on real board */
+	ROM_LOAD( "ic40.bin",     0x1800, 0x0800, 0xa841d511 ) /* IC 26 on real board */
+
+	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_LOAD( "7611-5.26",   0x0000, 0x0100, 0x7a1bcb1e )	/* palette low bits */
+	ROM_LOAD( "7611-5.33",   0x0100, 0x0100, 0xe38eeb83 )	/* palette high bits */
+ROM_END
+
+ROM_START( pleiadbl_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, 0x93fc2958 )
 	ROM_LOAD( "ic46.bin",     0x0800, 0x0800, 0xe2b5b8cd )
@@ -618,7 +640,7 @@ struct GameDriver pleiads_driver =
 	__FILE__,
 	0,
 	"pleiads",
-	"Pleiads (Tehkan, bootleg)",
+	"Pleiads (Tehkan)",
 	"1981",
 	"Tehkan",
 	CREDITS,
@@ -627,6 +649,32 @@ struct GameDriver pleiads_driver =
 	0,
 
 	pleiads_rom,
+	0, 0,
+	phoenix_sample_names,
+	0,	/* sound_prom */
+
+	pleiads_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver pleiadbl_driver =
+{
+	__FILE__,
+	&pleiads_driver,
+	"pleiadbl",
+	"Pleiads (bootleg)",
+	"1981",
+	"bootleg",
+	CREDITS,
+	0,
+	&pleiads_machine_driver,
+	0,
+
+	pleiadbl_rom,
 	0, 0,
 	phoenix_sample_names,
 	0,	/* sound_prom */

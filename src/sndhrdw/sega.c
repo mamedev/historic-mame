@@ -219,7 +219,7 @@ void sega_sh_speech_w (int offset,int data)
 		/* This typically comes immediately after a speech command. Purpose? */
 		return;
 	}
-   	else if (Machine->samples->sample[sound] != 0)
+   	else if (Machine->samples != 0 && Machine->samples->sample[sound] != 0)
    	{
 		int newPtr;
 

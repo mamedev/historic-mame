@@ -478,9 +478,9 @@ INPUT_PORTS_START( punchout_input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -493,11 +493,11 @@ INPUT_PORTS_START( punchout_input_ports )
 	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "0 (Longest)" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x0c, "3 (Shortest)" )
-	PORT_DIPNAME( 0x10, 0x10, "Demo Music" )
+	PORT_DIPSETTING(    0x00, "Longest" )
+	PORT_DIPSETTING(    0x04, "Long" )
+	PORT_DIPSETTING(    0x08, "Short" )
+	PORT_DIPSETTING(    0x0c, "Shortest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, "Rematch at a Discount" )
@@ -513,7 +513,7 @@ INPUT_PORTS_START( punchout_input_ports )
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x0b, "4 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -551,9 +551,9 @@ INPUT_PORTS_START( spnchout_input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -566,11 +566,11 @@ INPUT_PORTS_START( spnchout_input_ports )
 	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "0 (Longest)" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x0c, "3 (Shortest)" )
-	PORT_DIPNAME( 0x10, 0x10, "Demo Music" )
+	PORT_DIPSETTING(    0x00, "Longest" )
+	PORT_DIPSETTING(    0x04, "Long" )
+	PORT_DIPSETTING(    0x08, "Short" )
+	PORT_DIPSETTING(    0x0c, "Shortest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, "Rematch at a Discount" )
@@ -586,7 +586,7 @@ INPUT_PORTS_START( spnchout_input_ports )
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x0b, "4 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -820,7 +820,7 @@ static struct MachineDriver punchout_machine_driver =
 	1024+1, 128*4+128*4+64*8+128*4,
 	punchout_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,
 	0,
 	punchout_vh_start,
 	punchout_vh_stop,
@@ -875,7 +875,7 @@ static struct MachineDriver spnchout_machine_driver =
 	1024+1, 128*4+128*4+64*8+128*4,
 	spnchout_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,
 	0,
 	punchout_vh_start,
 	punchout_vh_stop,
@@ -929,7 +929,7 @@ static struct MachineDriver armwrest_machine_driver =
 	1024+1, 256*4+64*8+64*8+128*4,
 	armwrest_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,
 	0,
 	armwrest_vh_start,
 	punchout_vh_stop,

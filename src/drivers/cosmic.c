@@ -1562,22 +1562,21 @@ static struct GfxLayout nomanland_treelayout =
 
 static struct GfxLayout nomanland_waterlayout =
 {
-	16,32,				/* 16*16 sprites */
-	4,					/* 8 sprites */
+	16,32,				/* 16*32 sprites */
+	32,					/* 16 sprites */
 	2,					/* 2 bits per pixel */
 	{ 0, 8*128*8 },	/* the two bitplanes are separated */
 	{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32, 8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
 	 16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, 24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32 },
-	128*8				/* every sprite takes 128 consecutive bytes */
+	32 				/* To create a set of sprites 1 pixel displaced */
 };
 
 static struct GfxDecodeInfo nomanland_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &cosmicalien_spritelayout16,  0,  8 },
 	{ 1, 0x1000, &nomanland_treelayout,        0,  9 },
-	{ 1, 0x1200, &nomanland_waterlayout,       0,  9 },
-	{ 1, 0x1202, &nomanland_waterlayout,       0,  9 },
+	{ 1, 0x1200, &nomanland_waterlayout,       0,  10 },
 	{ -1 } /* end of array */
 };
 
@@ -1781,20 +1780,19 @@ INPUT_PORTS_START( nomanland_input_ports )
 	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x01, "3000" )
-	PORT_DIPSETTING(    0x02, "5000" )
-	PORT_DIPSETTING(    0x03, "8000" )
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "2000" )
+	PORT_DIPSETTING(    0x02, "3000" )
+	PORT_DIPSETTING(    0x03, "5000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+   	PORT_DIPSETTING(    0x0c, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
@@ -1810,6 +1808,10 @@ INPUT_PORTS_START( nomanland_input_ports )
 	/* Fake port to handle coins */
 	PORT_START	/* IN4 */
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+
+    #if 0
+
+    Although the port is read, the game does not appear to use these
 
 	PORT_START	/* IN5 */
 	PORT_DIPNAME( 0xf0, 0x00, DEF_STR( Coinage ) )
@@ -1829,6 +1831,8 @@ INPUT_PORTS_START( nomanland_input_ports )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+    #endif
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( nomanland2_input_ports )
@@ -1847,19 +1851,19 @@ INPUT_PORTS_START( nomanland2_input_ports )
 	PORT_BIT( 0x55, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x01, "2000" )
-	PORT_DIPSETTING(    0x02, "3000" )
-	PORT_DIPSETTING(    0x03, "5000" )
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x01, "3000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x03, "8000" )
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, "2 Coins/2 Credits" )
+//	PORT_DIPSETTING(    0x0c, "2 Coins/2 Credits" )  Seems to do 1/1 ?
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
@@ -1886,7 +1890,7 @@ struct GameDriver nomnlnd_driver =
 	"1980?",
 	"Universal",
 	"Mike Coates",
-	0,
+	GAME_WRONG_COLORS,
 	&nomanland_machine_driver,
 	0,
 
@@ -1912,7 +1916,7 @@ struct GameDriver nomnlndg_driver =
 	"1980?",
 	"Universal (Gottlieb license)",
 	"Mike Coates",
-	0,
+	GAME_WRONG_COLORS,
 	&nomanland2_machine_driver,
 	0,
 

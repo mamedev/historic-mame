@@ -108,32 +108,32 @@ static void cpu2_nvi_enable_w( int offs, int data ) {
 
 static int z80_interrupt( void ) {
 	static int cnt = 0;
-	
+
 	if ( cnt == 1 )
 		z80_128v = 1;
 	else
 		z80_128v = 0;
-	
+
 	if ( ++cnt == 4 )
 		cnt = 0;
-	
+
 	if ( z80_irq_enabled )
 		return interrupt();
-	
+
 	return ignore_interrupt();
 }
 
 static int cpu1_interrupt( void ) {
 	if ( cpu1_nvi_enabled )
 		cpu_set_irq_line(1,0,PULSE_LINE);
-	
+
 	return ignore_interrupt();
 }
 
 static int cpu2_interrupt( void ) {
 	if ( cpu2_nvi_enabled )
 		cpu_set_irq_line(2,0,PULSE_LINE);
-	
+
 	return ignore_interrupt();
 }
 
@@ -153,32 +153,32 @@ static void z80_ADC_select_w( int offs, int data ) {
 
 static int z80_ADC_r( int offs ) {
 	int ret = 0;
-	
+
 	switch( z80_ADC_input ) {
 		case 0x00:
 			ret = readinputport( 3 );
 			break;
-		
+
 		case 0x01:
 			ret = readinputport( 4 );
 			break;
-		
+
 		default:
 			if ( errorlog )
 				fprintf( errorlog, "Unknown ADC Input select (%02x)!\n", z80_ADC_input );
 		break;
 	}
-	
+
 	return ret;
 }
 
 /* IO */
 static int z80_IO_r( int offs ) {
 	int ret = 0xff;
-	
+
 	if ( z80_128v )
 		ret ^= 0x02;
-	
+
 	ret ^= 0x08; /* ADC End Flag */
 
 	return ret;
@@ -406,7 +406,7 @@ INPUT_PORTS_START(input_ports)
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
     PORT_DIPSETTING(    0x60, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-    PORT_DIPSETTING(    0xa0, DEF_STR( 3C_2C ) )	
+    PORT_DIPSETTING(    0xa0, DEF_STR( 3C_2C ) )
     PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
     PORT_DIPSETTING(    0xe0, DEF_STR( Free_Play ) )
 
@@ -417,7 +417,7 @@ INPUT_PORTS_START(input_ports)
 	PORT_DIPSETTING(    0x40, "C" )
 	PORT_DIPSETTING(    0xc0, "D" )
 	PORT_DIPSETTING(    0x20, "E" )
-	PORT_DIPSETTING(    0xa0, "F" )	
+	PORT_DIPSETTING(    0xa0, "F" )
 	PORT_DIPSETTING(    0x60, "G" )
     PORT_DIPSETTING(    0xe0, "H" )
     PORT_DIPNAME( 0x1c, 0x08, "Extended Rank" )
@@ -435,12 +435,12 @@ INPUT_PORTS_START(input_ports)
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
     PORT_DIPSETTING(    0x00, DEF_STR( Off ))
-    
+
     PORT_START /* IN1 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
-	
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 10, 0, 0, 0)
+
 	PORT_START /* IN2 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL, 20, 10, 0, 0, 0)
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout_2bpp =

@@ -304,6 +304,9 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				}
 			}
 	}
+
+	/* update onscreen messages */
+	atarigen_update_messages();
 }
 
 

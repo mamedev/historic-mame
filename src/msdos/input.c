@@ -132,10 +132,6 @@ static int pseudo_to_key_code(int keycode)
 			else return OSD_KEY_NONE;
 		}
 
-		case OSD_KEY_PAUSE:
-		case OSD_KEY_UNPAUSE:
-			return OSD_KEY_P;
-
 		case OSD_KEY_SNAPSHOT:
 			return OSD_KEY_F12;
 
@@ -177,7 +173,6 @@ int osd_key_invalid(int keycode)
         case OSD_KEY_F11:
         case OSD_KEY_TAB:
         case OSD_KEY_TILDE:
-        case OSD_KEY_P:
 			return 1;
 
 		default:
@@ -203,6 +198,25 @@ int osd_key_pressed(int keycode)
 
 	if (keycode == OSD_KEY_RCONTROL) keycode = KEY_RCONTROL;
 	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
+	if (keycode == OSD_KEY_PAUSE)
+	{
+		static int pressed,counter;
+		int res;
+
+		keycode = KEY_PAUSE;
+		res = key[keycode] ^ pressed;
+		if (res)
+		{
+			if (counter > 0)
+			{
+				if (--counter == 0)
+					pressed = key[keycode];
+			}
+			else counter = 4;
+		}
+
+		return res;
+	}
 
 	return key[keycode];
 }
@@ -346,15 +360,13 @@ const char *osd_key_name(int keycode)
 		"*", "ALT", "SPACE", "CAPSLOCK", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
 		"NUMLOCK", "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD",
 		"LEFT", "5 PAD", "RIGHT", "PLUS PAD", "END", "DOWN",
-		"PGDN", "INS", "DEL", "RCTRL", "ALTGR", "Error",
+		"PGDN", "INS", "DEL", "RCTRL", "ALTGR", "PAUSE",
 		"F11", "F12", "Error", "Error",
 		"Error", "Error", "Error", "Error", "Error",
 		"Error", "Error", "Error", "Error", "Error",
 		"1 PAD", "2 PAD", "3 PAD", "4 PAD", "Error",
 		"6 PAD", "7 PAD", "8 PAD", "9 PAD", "0 PAD",
 		". PAD", "= PAD", "/ PAD", "* PAD", "ENTER PAD",
-		"Error", "Error", "Error", "Error", "Error",
-        "Error", "Error", "PAUSE",
     };
 	static char *nonedefined = "None";
 

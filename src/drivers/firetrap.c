@@ -135,21 +135,24 @@ void firetrap_sound_bankselect_w(int offset,int data)
 	cpu_setbank(2,&RAM[bankaddress]);
 }
 
+static int msm5205next;
+
 void firetrap_adpcm_int (int data)
 {
-	static int toggle;
+	static int toggle=0;
 
-	toggle = 1 - toggle;
+	MSM5205_data_w (0,msm5205next>>4);
+	msm5205next<<=4;
+
+	toggle ^= 1;
 	if (firetrap_irq_enable && toggle)
 		cpu_cause_interrupt (1, M6502_INT_IRQ);
 }
 
 void firetrap_adpcm_data_w (int offset, int data)
 {
-	MSM5205_data_w (offset, data >> 4);
-	MSM5205_data_w (offset, data);
+	msm5205next = data;
 }
-
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -354,10 +357,11 @@ static struct YM3526interface ym3526_interface =
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,		/* 1 chip */
-	8000,	/* 8000Hz playback ? */
-	firetrap_adpcm_int,		/* interrupt function */
-	{ 255 }
+	1,					/* 1 chip             */
+	384000,				/* 384KHz ?           */
+	{ firetrap_adpcm_int },/* interrupt function */
+	{ MSM5205_S48_4B},	/* 8KHz ?             */
+	{ 60 }
 };
 
 

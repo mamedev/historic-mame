@@ -258,73 +258,148 @@ static struct MemoryWriteAddress gamma_writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 - alpha (player_1 = 0) */
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )	/* Right Coin */
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )	/* Left Coin Switch  */
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step/Coin C", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step", OSD_KEY_T, IP_JOY_NONE ) */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step/Coin C", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )	/* Left Coin Switch  */
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )	/* Right Coin */
 
 	PORT_START	/* IN1 - gamma */
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT ( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* IN2 - gamma */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 0, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 8 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 10, 0, 0, 0 )
 
 	PORT_START /* DIP Switch at position 13/14S */
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING( 0x00, "3")
-	PORT_DIPSETTING( 0xc0, "4")
-	PORT_DIPSETTING( 0x80, "5")
-	PORT_DIPSETTING( 0x40, "6")
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING( 0x30, "Hard")
-	PORT_DIPSETTING( 0x00, "Medium")
-	PORT_DIPSETTING( 0x10, "Easy")
-	PORT_DIPSETTING( 0x20, "Demo")
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING( 0x0c, "50,000")
-	PORT_DIPSETTING( 0x00, "100,000")
-	PORT_DIPSETTING( 0x04, "200,000")
-	PORT_DIPSETTING( 0x08, "None")
-	PORT_DIPNAME( 0x02, 0x00, "Attract Mode Sound" )
-	PORT_DIPSETTING( 0x00, DEF_STR( On ))
-	PORT_DIPSETTING( 0x02, DEF_STR( Off ))
 	PORT_DIPNAME( 0x01, 0x00, "Adaptive Difficulty" )
-	PORT_DIPSETTING( 0x00, DEF_STR( On ))
-	PORT_DIPSETTING( 0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "50000")
+	PORT_DIPSETTING(    0x00, "100000")
+	PORT_DIPSETTING(    0x04, "200000")
+	PORT_DIPSETTING(    0x08, "None")
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x10, "Easy")
+	PORT_DIPSETTING(    0x00, "Medium")
+	PORT_DIPSETTING(    0x30, "Hard")
+	PORT_DIPSETTING(    0x20, "Demo")
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3 (2 in Free Play)")
+	PORT_DIPSETTING(    0xc0, "4 (3 in Free Play)")
+	PORT_DIPSETTING(    0x80, "5 (4 in Free Play)")
+	PORT_DIPSETTING(    0x40, "6 (5 in Free Play)")
 
 	PORT_START /* DIP Switch at position 8S */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
-	PORT_DIPSETTING( 0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING( 0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING( 0x01, "FreePlay" )
-	PORT_DIPSETTING( 0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Free_Play ) )
 	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin Mechanism" )
-	PORT_DIPSETTING( 0x0c, "x1" )
-	PORT_DIPSETTING( 0x08, "x4" )
-	PORT_DIPSETTING( 0x04, "x5" )
-	PORT_DIPSETTING( 0x00, "x6" )
+	PORT_DIPSETTING(    0x0c, "x1" )
+	PORT_DIPSETTING(    0x08, "x4" )
+	PORT_DIPSETTING(    0x04, "x5" )
+	PORT_DIPSETTING(    0x00, "x6" )
 	PORT_DIPNAME( 0x10, 0x10, "Left Coin Mechanism" )
-	PORT_DIPSETTING( 0x10, "x1" )
-	PORT_DIPSETTING( 0x00, "x2" )
-	PORT_DIPNAME( 0xe0, 0xe0, "Bonus Coins" )
-	PORT_DIPSETTING( 0xe0, "None" )
-	PORT_DIPSETTING( 0xa0, "1 each 4" )
-	PORT_DIPSETTING( 0x80, "2 each 4" )
-	PORT_DIPSETTING( 0x60, "1 each 5" )
-	PORT_DIPSETTING( 0x40, "1 each 3" )
+	PORT_DIPSETTING(    0x10, "x1" )
+	PORT_DIPSETTING(    0x00, "x2" )
+	PORT_DIPNAME( 0xe0, 0xe0, "Bonus Credits" )
+	PORT_DIPSETTING(    0x80, "2 each 4" )
+	PORT_DIPSETTING(    0x40, "1 each 3" )
+	PORT_DIPSETTING(    0xa0, "1 each 4" )
+	PORT_DIPSETTING(    0x60, "1 each 5" )
+	PORT_DIPSETTING(    0xe0, "None" )
 
 	PORT_START	/* IN5 - dummy for player_1 = 1 on alpha */
-	PORT_BITX(	0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
-	PORT_DIPSETTING(      0x80, DEF_STR( Off ) )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* Cabinet */
 	PORT_BIT ( 0x3f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x40, "Credit to start" )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mhavocp_input_ports )
+	PORT_START	/* IN0 - alpha (player_1 = 0) */
+	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step", OSD_KEY_T, IP_JOY_NONE ) */
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step/Coin C", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )	/* Left Coin Switch  */
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )	/* Right Coin */
+
+	PORT_START	/* IN1 - gamma */
+	PORT_BIT ( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START	/* IN2 - gamma */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 10, 0, 0, 0 )
+
+	PORT_START /* DIP Switch at position 13/14S */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x03, "4" )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "50000")
+	PORT_DIPSETTING(    0x00, "100000")
+	PORT_DIPSETTING(    0x04, "200000")
+	PORT_DIPSETTING(    0x08, "None")
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x10, "Easy")
+	PORT_DIPSETTING(    0x00, "Medium")
+	PORT_DIPSETTING(    0x30, "Hard")
+	PORT_DIPSETTING(    0x20, "Demo")
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3 (2 in Free Play)")
+	PORT_DIPSETTING(    0xc0, "4 (3 in Free Play)")
+	PORT_DIPSETTING(    0x80, "5 (4 in Free Play)")
+	PORT_DIPSETTING(    0x40, "6 (5 in Free Play)")
+
+	PORT_START /* DIP Switch at position 8S */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin Mechanism" )
+	PORT_DIPSETTING(    0x0c, "x1" )
+	PORT_DIPSETTING(    0x08, "x4" )
+	PORT_DIPSETTING(    0x04, "x5" )
+	PORT_DIPSETTING(    0x00, "x6" )
+	PORT_DIPNAME( 0x10, 0x10, "Left Coin Mechanism" )
+	PORT_DIPSETTING(    0x10, "x1" )
+	PORT_DIPSETTING(    0x00, "x2" )
+	PORT_DIPNAME( 0xe0, 0xe0, "Bonus Credits" )
+	PORT_DIPSETTING(    0x80, "2 each 4" )
+	PORT_DIPSETTING(    0x40, "1 each 3" )
+	PORT_DIPSETTING(    0xa0, "1 each 4" )
+	PORT_DIPSETTING(    0x60, "1 each 5" )
+	PORT_DIPSETTING(    0xe0, "None" )
+
+	PORT_START	/* IN5 - dummy for player_1 = 1 on alpha */
+	PORT_BIT ( 0x3f, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x40, 0x40, "Credit to start" )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
 
 INPUT_PORTS_END
 
@@ -423,34 +498,35 @@ static struct MachineDriver machine_driver =
  * Notes:
  * the R3 roms are supported as "mhavoc", the R2 roms (with a bug in gameplay)
  * are supported as "mhavoc2".
- * We'll probably add support for
- *   "Return to Vax" - Jess Askey's souped up version (errors on self test)
+ * "Return to Vax" - Jess Askey's souped up version (errors on self test)
+ * are supported as "mhavocrv".
+ * Prototype is supported as "mhavocp"
  */
 
 ROM_START( mhavoc_rom )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)	/* 152KB for ROMs */
 	/* Vector Generator ROM */
-	ROM_LOAD( "136025.210",   0x5000, 0x2000, 0xc67284ca )
+	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
 	/* Program ROM */
-	ROM_LOAD( "136025.216",   0x8000, 0x4000, 0x522a9cc0 )
-	ROM_LOAD( "136025.217",   0xc000, 0x4000, 0xea3d6877 )
+	ROM_LOAD( "136025.216",   0x08000, 0x4000, 0x522a9cc0 )
+	ROM_LOAD( "136025.217",   0x0c000, 0x4000, 0xea3d6877 )
 
 	/* Paged Program ROM */
-	ROM_LOAD( "136025.215",   0x10000, 0x4000, 0xa4d380ca )   /* page 0+1 */
-	ROM_LOAD( "136025.318",   0x14000, 0x4000, 0xba935067 )	/* page 2+3 */
+	ROM_LOAD( "136025.215",   0x10000, 0x4000, 0xa4d380ca ) /* page 0+1 */
+	ROM_LOAD( "136025.318",   0x14000, 0x4000, 0xba935067 ) /* page 2+3 */
 
 	/* Paged Vector Generator ROM */
-	ROM_LOAD( "136025.106",   0x18000, 0x4000, 0x2ca83c76 )	/* page 0+1 */
-	ROM_LOAD( "136025.107",   0x1c000, 0x4000, 0x5f81c5f3 )	/* page 2+3 */
+	ROM_LOAD( "136025.106",   0x18000, 0x4000, 0x2ca83c76 ) /* page 0+1 */
+	ROM_LOAD( "136025.107",   0x1c000, 0x4000, 0x5f81c5f3 ) /* page 2+3 */
 
-	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
+	ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000)	/* 16k for code */
-	ROM_LOAD( "136025.108",   0x8000, 0x4000, 0x93faf210 )
-	ROM_RELOAD(             0xc000, 0x4000 ) /* reset+interrupt vectors */
+	ROM_REGION(0x10000) /* 16k for code */
+	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
+	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
 ROM_START( mhavoc2_rom )
@@ -476,35 +552,63 @@ ROM_START( mhavoc2_rom )
 
 	/* Gamma Processor ROM */
 	ROM_REGION(0x10000)	/* 16k for code */
-	ROM_LOAD( "136025.108",   0x8000, 0x4000, 0x93faf210 )
-	ROM_RELOAD(             0xc000, 0x4000 )/* reset+interrupt vectors */
+	ROM_LOAD( "136025.108",   0x08000, 0x4000, 0x93faf210 )
+	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
 
-ROM_START( mhavoc_rv_rom )
+ROM_START( mhavocrv_rom )
 	/* Alpha Processor ROMs */
 	ROM_REGION(0x21000)	/* 152KB for ROMs */
 	/* Vector Generator ROM */
-	ROM_LOAD( "136025.210",   0x5000, 0x2000, 0xc67284ca )
+	ROM_LOAD( "136025.210",   0x05000, 0x2000, 0xc67284ca )
 
 	/* Program ROM */
-	ROM_LOAD( "136025.916",   0x8000, 0x4000, 0x1255bd7f )
-	ROM_LOAD( "136025.917",   0xc000, 0x4000, 0x21889079 )
+	ROM_LOAD( "136025.916",   0x08000, 0x4000, 0x1255bd7f )
+	ROM_LOAD( "136025.917",   0x0c000, 0x4000, 0x21889079 )
 
 	/* Paged Program ROM */
-	ROM_LOAD( "136025.915",   0x10000, 0x4000, 0x4c7235dc )   /* page 0+1 */
-	ROM_LOAD( "136025.918",   0x14000, 0x4000, 0x84735445 )	/* page 2+3 */
+	ROM_LOAD( "136025.915",   0x10000, 0x4000, 0x4c7235dc ) /* page 0+1 */
+	ROM_LOAD( "136025.918",   0x14000, 0x4000, 0x84735445 ) /* page 2+3 */
 
 	/* Paged Vector Generator ROM */
-	ROM_LOAD( "136025.106",   0x18000, 0x4000, 0x2ca83c76 )	/* page 0+1 */
-	ROM_LOAD( "136025.907",   0x1c000, 0x4000, 0x4deea2c9 )	/* page 2+3 */
+	ROM_LOAD( "136025.106",   0x18000, 0x4000, 0x2ca83c76 ) /* page 0+1 */
+	ROM_LOAD( "136025.907",   0x1c000, 0x4000, 0x4deea2c9 ) /* page 2+3 */
 
 	ROM_REGION_DISPOSE(0x100)	/* Dummy area to be disposed by engine */
 
 	/* Gamma Processor ROM */
-	ROM_REGION(0x10000)	/* 16k for code */
-	ROM_LOAD( "136025.908",   0x8000, 0x4000, 0xc52ec664 )
-	ROM_RELOAD(             0xc000, 0x4000 ) /* reset+interrupt vectors */
+	ROM_REGION(0x10000) /* 16k for code */
+	ROM_LOAD( "136025.908",   0x08000, 0x4000, 0xc52ec664 )
+	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
 ROM_END
+
+ROM_START( mhavocp_rom )
+ /* Alpha Processor ROMs */
+ ROM_REGION(0x21000)
+ /* Vector Generator ROM */
+ ROM_LOAD( "136025.010",   0x05000, 0x2000, 0x3050c0e6 )
+
+ /* Program ROM */
+ ROM_LOAD( "136025.016",   0x08000, 0x4000, 0x94caf6c0 )
+ ROM_LOAD( "136025.017",   0x0c000, 0x4000, 0x05cba70a )
+
+ /* Paged Program ROM - switched to 2000-3fff */
+ ROM_LOAD( "136025.015",   0x10000, 0x4000, 0xc567c11b )
+ ROM_LOAD( "136025.018",   0x14000, 0x4000, 0xa8c35ccd )
+
+ /* Paged Vector Generator ROM */
+ ROM_LOAD( "136025.006",   0x18000, 0x4000, 0xe272ed41 )
+ ROM_LOAD( "136025.007",   0x1c000, 0x4000, 0xe152c9d8 )
+
+ /* the last 0x1000 is used for the 2 RAM pages */
+ ROM_REGION_DISPOSE(0x100) /* Dummy area to be disposed by engine */
+
+ /* Gamma Processor ROM */
+ ROM_REGION(0x10000) /* 16k for code */
+ ROM_LOAD( "136025.008",   0x8000, 0x4000, 0x22ea7399 )
+ ROM_RELOAD(               0xc000, 0x4000 )/* reset+interrupt vectors */
+ROM_END
+
 
 static int hiload(void)
 {
@@ -610,7 +714,7 @@ struct GameDriver mhavocrv_driver =
 	&machine_driver,
 	0,
 
-	mhavoc_rv_rom,
+	mhavocrv_rom,
 	0, 0,
 	0,
 	0,
@@ -622,3 +726,30 @@ struct GameDriver mhavocrv_driver =
 
 	hiload,hisave
 };
+
+struct GameDriver mhavocp_driver =
+{
+ __FILE__,
+ &mhavoc_driver,
+ "mhavocp",
+ "Major Havoc (prototype)",
+ "1983",
+ "Atari",
+ CREDITS,
+ 0,
+ &machine_driver,
+ 0,
+
+ mhavocp_rom,
+ 0, 0,
+ 0,
+ 0,
+
+ mhavocp_input_ports,
+
+ color_prom, 0, 0,
+ ORIENTATION_DEFAULT,
+
+ hiload, hisave
+};
+

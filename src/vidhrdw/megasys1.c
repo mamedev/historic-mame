@@ -234,7 +234,7 @@ void mark_dirty_all(void)
 	mark_dirty(2);
 }
 
-int vh_start(void)
+int megasys1_vh_start(void)
 {
 int i;
 
@@ -251,7 +251,7 @@ int i;
 	return 0;
 }
 
-void vh_stop(void)
+void megasys1_vh_stop(void)
 {
 int i;
 
@@ -389,8 +389,8 @@ if ( (debugsprites) && (((attr & 0x0f)/4) == (debugsprites-1)) ) continue;
   Draw the game screen in the given osd_bitmap.
 
 ***************************************************************************/
-void paletteram_RRRRGGGGBBBBRGBx_word_w(int offset, int data);
-void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+void megasys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 int offs,code,sx,sy,attr,i,j;
 unsigned char *current_ram, *current_dirty;
@@ -472,11 +472,11 @@ int active_layers1;
 			code  =   READ_WORD(&scrollram[j][offs]) & mask[j];
 
 			if (scrollflag[j] & 0x10)
-					colmask[color] |= pen_usage[code];
-			else{	colmask[color] |= pen_usage[code*4+0];
-					colmask[color] |= pen_usage[code*4+1];
-					colmask[color] |= pen_usage[code*4+2];
-					colmask[color] |= pen_usage[code*4+3];}
+					colmask[color] |= pen_usage[code % Machine->gfx[j]->total_elements];
+			else{	colmask[color] |= pen_usage[(code*4+0)%Machine->gfx[j]->total_elements];
+					colmask[color] |= pen_usage[(code*4+1)%Machine->gfx[j]->total_elements];
+					colmask[color] |= pen_usage[(code*4+2)%Machine->gfx[j]->total_elements];
+					colmask[color] |= pen_usage[(code*4+3)%Machine->gfx[j]->total_elements];}
 		}
 
 		for (color = 0; color < 16; color++)

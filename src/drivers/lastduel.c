@@ -14,6 +14,15 @@
   Trivia ;)  The Mad Gear pcb has an unused pad on the board for an i8751
 microcontroller.
 
+
+1999.06.12 JB
+In current MAME setup (35b13) Mad Gear and Led Storm use the same sound code
+In opposition to Last Duel there is simple bankswitching stuff.
+
+Also Mad Gear and Led Storm sound code uses YM-2203 port A for something.
+At the very beginning it writes 0x01 to this port and seems to never write
+there anything again. Weird !
+
 **************************************************************************/
 
 #include "driver.h"
@@ -169,9 +178,21 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
+
+static void mg_bankswitch_w(int offset, int data)
+{
+	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
+	cpu_setbank(3,&RAM[bankaddress]);
+}
+
+
 static struct MemoryReadAddress mg_sound_readmem[] =
 {
-	{ 0x0000, 0xcfff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xcfff, MRA_BANK3 },
 	{ 0xd000, 0xd7ff, MRA_RAM },
  	{ 0xf000, 0xf000, YM2203_status_port_0_r },
  	{ 0xf002, 0xf002, YM2203_status_port_1_r },
@@ -188,7 +209,7 @@ static struct MemoryWriteAddress mg_sound_writemem[] =
  	{ 0xf002, 0xf002, YM2203_control_port_1_w },
 	{ 0xf003, 0xf003, YM2203_write_port_1_w },
 	{ 0xf004, 0xf004, OKIM6295_data_0_w },
-	{ 0xf00a, 0xf00a, MWA_NOP }, /* IRQ ack? */
+	{ 0xf00a, 0xf00a, mg_bankswitch_w },
 	{ -1 }	/* end of table */
 };
 
@@ -285,14 +306,14 @@ static struct OKIM6295interface okim6295_interface =
 	1,              /* 1 chip */
 	8000,           /* 8000Hz frequency */
 	{ 3 },			/* memory region 3 */
-	{ 41 }
+	{ 80 }
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3579545, /* Accurate */
-	{ YM2203_VOL(40,40), YM2203_VOL(40,40) },
+	{ YM2203_VOL(30,30), YM2203_VOL(30,30) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -752,22 +773,21 @@ ROM_START( madgear_rom )
 	ROM_LOAD_ODD ( "mg_01.rom",    0x40000, 0x20000, 0x1cea2af0 )
 
 	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-
-	/* No tile roms :( :( */
-
-	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 ) /* Interleaved sprites */
-	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )
-	ROM_LOAD( "mg_m08.rom",   0x070000, 0x10000, 0x59709aa3 )
+	ROM_LOAD( "gfx",          0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
+	ROM_LOAD( "mg_m07.rom",   0x050000, 0x10000, 0xe5c0b211 )
 	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
-	ROM_LOAD( "mg_m09.rom",   0x090000, 0x10000, 0x40ee83eb )
+	ROM_LOAD( "mg_m08.rom",   0x070000, 0x10000, 0x59709aa3 )
 	ROM_LOAD( "mg_m13.rom",   0x080000, 0x10000, 0xeae07db4 )
-	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
+	ROM_LOAD( "mg_m09.rom",   0x090000, 0x10000, 0x40ee83eb )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
+	ROM_LOAD( "mg_m10.rom",   0x0b0000, 0x10000, 0xb64afb54 )
+	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b )	/* 8x8 text */
+	ROM_LOAD( "gfx",          0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
 
-	ROM_LOAD( "mg_06.rom",    0x0c0000, 0x08000, 0x382ee59b ) /* 8x8 text */
-
-	ROM_REGION( 0x10000 ) /* audio CPU */
-	ROM_LOAD( "mg_05.rom",    0x0000, 0x10000, 0x2fbfc945 )
+	ROM_REGION( 0x18000 ) /* audio CPU */
+	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
+	ROM_CONTINUE(             0x10000,  0x08000 )
 
 	ROM_REGION( 0x40000 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )
@@ -782,22 +802,21 @@ ROM_START( ledstorm_rom )
 	ROM_LOAD_ODD ( "mg_01.rom", 0x40000, 0x20000, 0x1cea2af0 )
 
 	ROM_REGION_DISPOSE(0x148000) /* temporary space for graphics */
-
- 	/* No tile roms :( :( */
-
-	ROM_LOAD( "07",           0x050000, 0x10000, 0x7152b212 ) /* Interleaved sprites */
-	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )
-	ROM_LOAD( "08",           0x070000, 0x10000, 0x72e5d525 )
+	ROM_LOAD( "gfx",          0x000000, 0x40000, 0x00000000 )	/* No tile roms :( :( */
+	ROM_LOAD( "mg_m11.rom",   0x040000, 0x10000, 0xee319a64 )	/* Interleaved sprites */
+	ROM_LOAD( "07",           0x050000, 0x10000, 0x7152b212 )
 	ROM_LOAD( "mg_m12.rom",   0x060000, 0x10000, 0x887ef120 )
-	ROM_LOAD( "09",           0x090000, 0x10000, 0x7b5175cb )
+	ROM_LOAD( "08",           0x070000, 0x10000, 0x72e5d525 )
 	ROM_LOAD( "mg_m13.rom",   0x080000, 0x10000, 0xeae07db4 )
-	ROM_LOAD( "10",           0x0b0000, 0x10000, 0x6db7ca64 )
+	ROM_LOAD( "09",           0x090000, 0x10000, 0x7b5175cb )
 	ROM_LOAD( "mg_m14.rom",   0x0a0000, 0x10000, 0x21e5424c )
+	ROM_LOAD( "10",           0x0b0000, 0x10000, 0x6db7ca64 )
+	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 )	/* 8x8 text */
+	ROM_LOAD( "gfx",          0x0c8000, 0x80000, 0x00000000 )	/* No tile roms :( :( */
 
-	ROM_LOAD( "06",           0x0c0000, 0x08000, 0x54bfdc02 ) /* 8x8 text */
-
-	ROM_REGION( 0x10000 ) /* audio CPU */
-	ROM_LOAD( "mg_05.rom",    0x0000, 0x10000, 0x2fbfc945 )
+	ROM_REGION( 0x18000 ) /* audio CPU */
+	ROM_LOAD( "mg_05.rom",    0x00000,  0x08000, 0x2fbfc945 )
+	ROM_CONTINUE(             0x10000,  0x08000 )
 
 	ROM_REGION( 0x40000 ) /* ADPCM */
 	ROM_LOAD( "ls-06",        0x00000, 0x20000, 0x88d39a5b )

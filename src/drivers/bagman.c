@@ -553,7 +553,7 @@ ROM_START( bagmans2_rom )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "a2_1e.bin",    0x0000, 0x1000, 0xf217ac09 )
-	ROM_LOAD( "a2_1j.bin",    0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
 	ROM_LOAD( "a2_1c.bin",    0x2000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x3000, 0x1000, 0xd0f7105b )
 

@@ -218,7 +218,7 @@ INPUT_PORTS_START( tron_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN1 -- controls spinner */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0, 4 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 50, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -243,7 +243,7 @@ INPUT_PORTS_START( tron_input_ports )
 	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 50, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 50, 10, 0, 0, 0 )
 
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -290,7 +290,7 @@ INPUT_PORTS_START( kroozr_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* dummy extra port for dial control */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 40, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0, 4 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 40, 10, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( domino_input_ports )
@@ -353,10 +353,10 @@ INPUT_PORTS_START( wacko_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN1 -- controls joystick x-axis */
-	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 50, 0, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 50, 10, 0, 0, 0 )
 
 	PORT_START	/* IN2 -- controls joystick y-axis */
-	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 0, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 10, 0, 0, 0 )
 
 	PORT_START	/* IN3 -- dipswitches */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -392,7 +392,7 @@ INPUT_PORTS_START( twotiger_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* IN1 -- player 1 spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 10, 10, 0, 0, 0 )
 
 	PORT_START	/* IN2 -- buttons for player 1 & player 2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -405,7 +405,7 @@ INPUT_PORTS_START( twotiger_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 -- player 2 spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 10, 0, 0, 0 )
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 10, 10, 0, 0, 0 )
 
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )

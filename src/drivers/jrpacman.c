@@ -106,6 +106,7 @@ void jrpacman_videoram_w(int offset,int data);
 void jrpacman_palettebank_w(int offset,int data);
 void jrpacman_colortablebank_w(int offset,int data);
 void jrpacman_charbank_w(int offset,int data);
+void jrpacman_flipscreen_w(int offset,int data);
 void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
@@ -116,33 +117,33 @@ void pengo_sound_w(int offset,int data);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4000, 0x4fff, MRA_RAM },	/* including video and color RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0xdfff, MRA_ROM },
+	{ 0x4000, 0x4fff, MRA_RAM },	/* including video and color RAM */
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
+	{ 0x8000, 0xdfff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x4800, 0x4fef, MWA_RAM },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, jrpacman_videoram_w, &videoram, &videoram_size },
-	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
+	{ 0x4800, 0x4fef, MWA_RAM },
 	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5000, 0x5000, interrupt_enable_w },
+	{ 0x5001, 0x5001, pengo_sound_enable_w },
+	{ 0x5003, 0x5003, jrpacman_flipscreen_w },
+	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
-	{ 0x5080, 0x5080, MWA_RAM, &jrpacman_scroll },
 	{ 0x5070, 0x5070, jrpacman_palettebank_w, &jrpacman_palettebank },
 	{ 0x5071, 0x5071, jrpacman_colortablebank_w, &jrpacman_colortablebank },
 	{ 0x5073, 0x5073, MWA_RAM, &jrpacman_bgpriority },
 	{ 0x5074, 0x5074, jrpacman_charbank_w, &jrpacman_charbank },
 	{ 0x5075, 0x5075, MWA_RAM, &jrpacman_spritebank },
-	{ 0x5000, 0x5000, interrupt_enable_w },
+	{ 0x5080, 0x5080, MWA_RAM, &jrpacman_scroll },
 	{ 0x50c0, 0x50c0, MWA_NOP },
-	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5007, MWA_NOP },
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0xdfff, MWA_ROM },
 	{ -1 }	/* end of table */
 };

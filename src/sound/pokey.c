@@ -1413,31 +1413,40 @@ static int Read_pokey_regs (int addr, int chip)
     {
         case POT0_C:
 			if (intf->pot0_r[chip]) data = (*intf->pot0_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT0\n",cpu_get_pc(),chip);
             break;
         case POT1_C:
 			if (intf->pot1_r[chip]) data = (*intf->pot1_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT1\n",cpu_get_pc(),chip);
             break;
         case POT2_C:
 			if (intf->pot2_r[chip]) data = (*intf->pot2_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT2\n",cpu_get_pc(),chip);
             break;
         case POT3_C:
 			if (intf->pot3_r[chip]) data = (*intf->pot3_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT3\n",cpu_get_pc(),chip);
             break;
         case POT4_C:
 			if (intf->pot4_r[chip]) data = (*intf->pot4_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT4\n",cpu_get_pc(),chip);
             break;
         case POT5_C:
 			if (intf->pot5_r[chip]) data = (*intf->pot5_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT5\n",cpu_get_pc(),chip);
             break;
         case POT6_C:
 			if (intf->pot6_r[chip]) data = (*intf->pot6_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT6\n",cpu_get_pc(),chip);
             break;
         case POT7_C:
 			if (intf->pot7_r[chip]) data = (*intf->pot7_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d POT7\n",cpu_get_pc(),chip);
             break;
 
         case ALLPOT_C:
 			if (intf->allpot_r[chip]) data = (*intf->allpot_r[chip])(addr);
+else if (errorlog) fprintf(errorlog,"PC %04x: warning - read POKEY #%d ALLPOT\n",cpu_get_pc(),chip);
             break;
 
         case KBCODE_C:

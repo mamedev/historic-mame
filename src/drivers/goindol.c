@@ -141,7 +141,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 
 	PORT_START      /* IN2 - spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL , 40, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL , 40, 10, 0, 0, 0)
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -220,7 +220,7 @@ INPUT_PORTS_START( homo_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN2, 1 )
 
 	PORT_START      /* IN2 - spinner */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL , 40, 0, 0, 0)
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL , 40, 10, 0, 0, 0)
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )

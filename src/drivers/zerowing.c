@@ -20,26 +20,25 @@ int video_ofs3_r(int offset);
 
 int scrollregs_r(int offset);
 void scrollregs_w(int offset, int data);
+void offsetregs_w(int offset, int data);
+void layers_offset_w(int offset, int data);
 
-void zerowing_videoram1_w(int offset, int data);
-void zerowing_videoram2_w(int offset, int data);
-void zerowing_videoram3_w(int offset, int data);
+void toaplan1_videoram1_w(int offset, int data);
+void toaplan1_videoram2_w(int offset, int data);
+void toaplan1_videoram3_w(int offset, int data);
 
-int zerowing_videoram1_r(int offset);
-int zerowing_videoram2_r(int offset);
-int zerowing_videoram3_r(int offset);
+int toaplan1_videoram1_r(int offset);
+int toaplan1_videoram2_r(int offset);
+int toaplan1_videoram3_r(int offset);
 
-void zerowing_colorram1_w(int offset, int data);
-int zerowing_colorram1_r(int offset);
-void zerowing_colorram2_w(int offset, int data);
-int zerowing_colorram2_r(int offset);
+void toaplan1_colorram1_w(int offset, int data);
+int toaplan1_colorram1_r(int offset);
+void toaplan1_colorram2_w(int offset, int data);
+int toaplan1_colorram2_r(int offset);
 
-void zerowing_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void vimana_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void outzone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-void zerowing_vh_stop(void);
-int zerowing_vh_start(void);
+int toaplan1_vh_start(void);
+void toaplan1_vh_stop(void);
+void toaplan1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static unsigned char *ram;
 int unk;
@@ -55,8 +54,8 @@ extern int video_ofs3 ;
 
 unsigned char *shared_ram;
 
-extern unsigned char *zerowing_colorram1;
-extern unsigned char *zerowing_colorram2;
+extern unsigned char *toaplan1_colorram1;
+extern unsigned char *toaplan1_colorram2;
 extern int colorram1_size;
 extern int colorram2_size;
 
@@ -152,71 +151,15 @@ static void toaplan_init_machine (void)
 
 /* Sound Routines */
 
-static void zw_opl_w(int offset, int data)
+static void toaplan_opl_w(int offset, int data)
 {
-	if ( (offset & 0xfe) == 0xa8 )
+	if ( (offset & 1)==0 )
 		{
-		if ( offset == 0xa8 )
-			{
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL control\n",data);
-			YM3812_control_port_0_w( 0, data ) ;
-			}
-		else
-			{
-			YM3812_write_port_0_w(0, data);
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL port_0\n",data);
-			}
+		YM3812_control_port_0_w( 0, data ) ;
 		}
-}
-
-static void hf_opl_w(int offset, int data)
-{
-	if ( (offset & 0xfe) == 0x70 )
+	else
 		{
-		if ( offset == 0x70 )
-			{
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL control\n",data);
-			YM3812_control_port_0_w( 0, data ) ;
-			}
-		else
-			{
-			YM3812_write_port_0_w(0, data);
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL port_0\n",data);
-			}
-		}
-}
-
-static void truxton_opl_w(int offset, int data)
-{
-	if ( (offset & 0xfe) == 0x60 )
-		{
-		if ( offset == 0x60 )
-			{
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL control\n",data);
-			YM3812_control_port_0_w( 0, data ) ;
-			}
-		else
-			{
-			YM3812_write_port_0_w(0, data);
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL port_0\n",data);
-			}
-		}
-}
-
-static void outzone_opl_w(int offset, int data)
-{
-	if ( (offset & 0xfe) == 0x00 )
-		{
-		if ( offset == 0x00 )
-			{
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL control\n",data);
-			YM3812_control_port_0_w( 0, data ) ;
-			}
-		else
-			{
-			YM3812_write_port_0_w(0, data);
-			if (errorlog) fprintf(errorlog,"Writing %02x to OPL port_0\n",data);
-			}
+		YM3812_write_port_0_w(0, data);
 		}
 }
 
@@ -225,11 +168,11 @@ static struct MemoryReadAddress vm_readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x0c0000, 0x0c0001, input_port_6_r },
 	{ 0x0c0002, 0x0c0003, video_ofs_r },
-	{ 0x0c0004, 0x0c0005, zerowing_videoram1_r },		/* sprites info */
-	{ 0x0c0006, 0x0c0007, zerowing_videoram2_r },	/* sprite size ? */
+	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_r },		/* sprites info */
+	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_r },	/* sprite size ? */
 	{ 0x400000, 0x400001, vblank_r },
-	{ 0x404000, 0x4047ff, zerowing_colorram1_r },
-	{ 0x406000, 0x4067ff, zerowing_colorram2_r },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
 	{ 0x440000, 0x440005, vm_mcu_r },
 	{ 0x440006, 0x440007, input_port_2_r },
 	{ 0x440008, 0x440009, vm_input_port_4_r },
@@ -241,7 +184,7 @@ static struct MemoryReadAddress vm_readmem[] =
 	{ 0x480148, 0x487fff, MRA_BANK2 },
 	{ 0x4c0000, 0x4c0001, unk_r },
 	{ 0x4c0002, 0x4c0003, video_ofs3_r },
-	{ 0x4c0004, 0x4c0007, zerowing_videoram3_r },	/* tile layers */
+	{ 0x4c0004, 0x4c0007, toaplan1_videoram3_r },	/* tile layers */
 	{ 0x4c0010, 0x4c001f, scrollregs_r },
 	{ -1 }  /* end of table */
 };
@@ -249,18 +192,19 @@ static struct MemoryReadAddress vm_readmem[] =
 static struct MemoryWriteAddress vm_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
+   { 0x080000, 0x080003, offsetregs_w },
 	{ 0x0c0002, 0x0c0003, video_ofs_w },
-	{ 0x0c0004, 0x0c0005, zerowing_videoram1_w },		/* sprites info */
-	{ 0x0c0006, 0x0c0007, zerowing_videoram2_w },	/* sprite size ? */
-	{ 0x400000, 0x400001, int_enable_w },
-	{ 0x400002, 0x400003, MWA_NOP }, /* IRQACK? */
-	{ 0x404000, 0x4047ff, zerowing_colorram1_w, &zerowing_colorram1, &colorram1_size },
-	{ 0x406000, 0x4067ff, zerowing_colorram2_w, &zerowing_colorram2, &colorram2_size },
+	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_w },		/* sprites info */
+	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_w },	/* sprite size ? */
+	{ 0x400002, 0x400003, int_enable_w }, /* IRQACK? */
+   { 0x400008, 0x40000f, layers_offset_w },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
 	{ 0x440000, 0x440005, vm_mcu_w },
 	{ 0x480000, 0x480147, MWA_BANK1 },
 	{ 0x480148, 0x487fff, MWA_BANK2 },
 	{ 0x4c0002, 0x4c0003, video_ofs3_w },
-	{ 0x4c0004, 0x4c0007, zerowing_videoram3_w },	/* tile layers */
+	{ 0x4c0004, 0x4c0007, toaplan1_videoram3_w },	/* tile layers */
 	{ 0x4c0010, 0x4c001f, scrollregs_w },
 	{ -1 }  /* end of table */
 };
@@ -272,16 +216,16 @@ static struct MemoryReadAddress zw_readmem[] =
 	{ 0x08176e, 0x08176f, framedone_r },
 	{ 0x081770, 0x087fff, MRA_BANK2 },
 	{ 0x400000, 0x400005, unk_r },
-	{ 0x404000, 0x4047ff, zerowing_colorram1_r },
-	{ 0x406000, 0x4067ff, zerowing_colorram2_r },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
 	{ 0x440000, 0x440fff, shared_r },
 	{ 0x480002, 0x480003, video_ofs3_r },
-	{ 0x480004, 0x480007, zerowing_videoram3_r },	/* tile layers */
+	{ 0x480004, 0x480007, toaplan1_videoram3_r },	/* tile layers */
 	{ 0x480010, 0x48001f, scrollregs_r },
 	{ 0x4c0000, 0x4c0001, vblank_r },
 	{ 0x4c0002, 0x4c0003, video_ofs_r },
-	{ 0x4c0004, 0x4c0005, zerowing_videoram1_r },	/* sprites info */
-	{ 0x4c0006, 0x4c0007, zerowing_videoram2_r },	/* sprite size ? */
+	{ 0x4c0004, 0x4c0005, toaplan1_videoram1_r },	/* sprites info */
+	{ 0x4c0006, 0x4c0007, toaplan1_videoram2_r },	/* sprite size ? */
 	{ -1 }  /* end of table */
 };
 
@@ -291,16 +235,18 @@ static struct MemoryWriteAddress zw_writemem[] =
 	{ 0x080000, 0x08176d, MWA_BANK1 },
 	{ 0x08176e, 0x08176f, framedone_w },
 	{ 0x081770, 0x087fff, MWA_BANK2 },
+   { 0x0c0000, 0x0c0003, offsetregs_w },
 	{ 0x400002, 0x400003, int_enable_w },
-	{ 0x404000, 0x4047ff, zerowing_colorram1_w, &zerowing_colorram1, &colorram1_size },
-	{ 0x406000, 0x4067ff, zerowing_colorram2_w, &zerowing_colorram2, &colorram2_size },
+   { 0x400008, 0x40000f, layers_offset_w },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
 	{ 0x440000, 0x440fff, shared_w, &shared_ram },
 	{ 0x480002, 0x480003, video_ofs3_w },
-	{ 0x480004, 0x480007, zerowing_videoram3_w },	/* tile layers */
+	{ 0x480004, 0x480007, toaplan1_videoram3_w },	/* tile layers */
 	{ 0x480010, 0x48001f, scrollregs_w },
 	{ 0x4c0002, 0x4c0003, video_ofs_w },
-	{ 0x4c0004, 0x4c0005, zerowing_videoram1_w },	/* sprites info */
-	{ 0x4c0006, 0x4c0007, zerowing_videoram2_w },	/* sprite size ? */
+	{ 0x4c0004, 0x4c0005, toaplan1_videoram1_w },	/* sprites info */
+	{ 0x4c0006, 0x4c0007, toaplan1_videoram2_w },	/* sprite size ? */
 	{ -1 }  /* end of table */
 };
 
@@ -310,16 +256,16 @@ static struct MemoryReadAddress hf_readmem[] =
 	{ 0x040000, 0x0422f1, MRA_BANK1 },
 	{ 0x0422f2, 0x0422f3, framedone_r },
 	{ 0x0422f4, 0x047fff, MRA_BANK2 },
-	{ 0x084000, 0x0847ff, zerowing_colorram1_r },
-	{ 0x086000, 0x0867ff, zerowing_colorram2_r },
+	{ 0x084000, 0x0847ff, toaplan1_colorram1_r },
+	{ 0x086000, 0x0867ff, toaplan1_colorram2_r },
 	{ 0x0c0000, 0x0c0fff, shared_r },
 	{ 0x100002, 0x100003, video_ofs3_r },
-	{ 0x100004, 0x100007, zerowing_videoram3_r },	/* tile layers */
+	{ 0x100004, 0x100007, toaplan1_videoram3_r },	/* tile layers */
 	{ 0x100010, 0x10001f, scrollregs_r },
 	{ 0x140000, 0x140001, vblank_r },
 	{ 0x140002, 0x140003, video_ofs_r },
-	{ 0x140004, 0x140005, zerowing_videoram1_r },	/* sprites info */
-	{ 0x140006, 0x140007, zerowing_videoram2_r },	/* sprite size ? */
+	{ 0x140004, 0x140005, toaplan1_videoram1_r },	/* sprites info */
+	{ 0x140006, 0x140007, toaplan1_videoram2_r },	/* sprite size ? */
 	{ -1 }  /* end of table */
 };
 
@@ -330,15 +276,17 @@ static struct MemoryWriteAddress hf_writemem[] =
 	{ 0x0422f2, 0x0422f3, framedone_w },
 	{ 0x0422f4, 0x047fff, MWA_BANK2 },
 	{ 0x080002, 0x080003, int_enable_w },
-	{ 0x084000, 0x0847ff, zerowing_colorram1_w, &zerowing_colorram1, &colorram1_size },
-	{ 0x086000, 0x0867ff, zerowing_colorram2_w, &zerowing_colorram2, &colorram2_size },
+   { 0x080008, 0x08000f, layers_offset_w },
+	{ 0x084000, 0x0847ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
+	{ 0x086000, 0x0867ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
 	{ 0x0c0000, 0x0c0fff, shared_w, &shared_ram },
 	{ 0x100002, 0x100003, video_ofs3_w },
-	{ 0x100004, 0x100007, zerowing_videoram3_w },	/* tile layers */
+	{ 0x100004, 0x100007, toaplan1_videoram3_w },	/* tile layers */
 	{ 0x100010, 0x10001f, scrollregs_w },
 	{ 0x140002, 0x140003, video_ofs_w },
-	{ 0x140004, 0x140005, zerowing_videoram1_w },	/* sprites info */
-	{ 0x140006, 0x140007, zerowing_videoram2_w },	/* sprite size ? */
+	{ 0x140004, 0x140005, toaplan1_videoram1_w },	/* sprites info */
+	{ 0x140006, 0x140007, toaplan1_videoram2_w },	/* sprite size ? */
+   { 0x180000, 0x180003, offsetregs_w },
 	{ -1 }  /* end of table */
 };
 
@@ -350,13 +298,13 @@ static struct MemoryReadAddress truxton_readmem[] =
 	{ 0x0819d8, 0x083fff, MRA_BANK1 },
 	{ 0x0c0000, 0x0c0001, input_port_6_r },
 	{ 0x0c0002, 0x0c0003, video_ofs_r },
-	{ 0x0c0004, 0x0c0005, zerowing_videoram1_r },		/* sprites info */
-	{ 0x0c0006, 0x0c0007, zerowing_videoram2_r },	/* sprite size ? */
+	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_r },		/* sprites info */
+	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_r },	/* sprite size ? */
 	{ 0x100002, 0x100003, video_ofs3_r },
-	{ 0x100004, 0x100007, zerowing_videoram3_r },	/* tile layers */
+	{ 0x100004, 0x100007, toaplan1_videoram3_r },	/* tile layers */
 	{ 0x100010, 0x10001f, scrollregs_r },
-	{ 0x144000, 0x1447ff, zerowing_colorram1_r },
-	{ 0x146000, 0x1467ff, zerowing_colorram2_r },
+	{ 0x144000, 0x1447ff, toaplan1_colorram1_r },
+	{ 0x146000, 0x1467ff, toaplan1_colorram2_r },
 	{ 0x180000, 0x180fff, shared_r },
    { -1 }
 };
@@ -368,15 +316,17 @@ static struct MemoryWriteAddress truxton_writemem[] =
 	{ 0x0819d6, 0x0819d7, framedone_w },
 	{ 0x0819d8, 0x083fff, MWA_BANK2 },
 	{ 0x0c0002, 0x0c0003, video_ofs_w },
-	{ 0x0c0004, 0x0c0005, zerowing_videoram1_w },		/* sprites info */
-	{ 0x0c0006, 0x0c0007, zerowing_videoram2_w },	/* sprite size ? */
+	{ 0x0c0004, 0x0c0005, toaplan1_videoram1_w },		/* sprites info */
+	{ 0x0c0006, 0x0c0007, toaplan1_videoram2_w },	/* sprite size ? */
 	{ 0x100002, 0x100003, video_ofs3_w },
-	{ 0x100004, 0x100007, zerowing_videoram3_w },	/* tile layers */
+	{ 0x100004, 0x100007, toaplan1_videoram3_w },	/* tile layers */
 	{ 0x100010, 0x10001f, scrollregs_w },
 	{ 0x140000, 0x140001, int_enable_w },
-	{ 0x144000, 0x1447ff, zerowing_colorram1_w, &zerowing_colorram1, &colorram1_size },
-	{ 0x146000, 0x1467ff, zerowing_colorram2_w, &zerowing_colorram2, &colorram2_size },
+   { 0x140008, 0x14000f, layers_offset_w },
+	{ 0x144000, 0x1447ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
+	{ 0x146000, 0x1467ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
 	{ 0x180000, 0x180fff, shared_w, &shared_ram },
+   { 0x1c0000, 0x1c0003, offsetregs_w },
    { -1 }
 };
 
@@ -385,16 +335,16 @@ static struct MemoryReadAddress outzone_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x100001, input_port_6_r },
 	{ 0x100002, 0x100003, video_ofs_r },
-	{ 0x100004, 0x100005, zerowing_videoram1_r },		/* sprites info */
-	{ 0x100006, 0x100007, zerowing_videoram2_r },
+	{ 0x100004, 0x100005, toaplan1_videoram1_r },		/* sprites info */
+	{ 0x100006, 0x100007, toaplan1_videoram2_r },
 	{ 0x140000, 0x140fff, shared_r },
 	{ 0x200002, 0x200003, video_ofs3_r },
-	{ 0x200004, 0x200007, zerowing_videoram3_r },	/* tile layers */
+	{ 0x200004, 0x200007, toaplan1_videoram3_r },	/* tile layers */
 	{ 0x200010, 0x20001f, scrollregs_r },
 	{ 0x240000, 0x243fff, MRA_BANK1 },
 	{ 0x300000, 0x300001, vblank_r },
-	{ 0x304000, 0x3047ff, zerowing_colorram1_r },
-	{ 0x306000, 0x3067ff, zerowing_colorram2_r },
+	{ 0x304000, 0x3047ff, toaplan1_colorram1_r },
+	{ 0x306000, 0x3067ff, toaplan1_colorram2_r },
    { -1 }
 };
 
@@ -402,17 +352,78 @@ static struct MemoryWriteAddress outzone_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x100002, 0x100003, video_ofs_w },
-	{ 0x100004, 0x100005, zerowing_videoram1_w },		/* sprites info */
-	{ 0x100006, 0x100007, zerowing_videoram2_w },
+	{ 0x100004, 0x100005, toaplan1_videoram1_w },		/* sprites info */
+	{ 0x100006, 0x100007, toaplan1_videoram2_w },
 	{ 0x140000, 0x140fff, shared_w, &shared_ram },
 	{ 0x200002, 0x200003, video_ofs3_w },
-	{ 0x200004, 0x200007, zerowing_videoram3_w },	/* tile layers */
+	{ 0x200004, 0x200007, toaplan1_videoram3_w },	/* tile layers */
 	{ 0x200010, 0x20001f, scrollregs_w },
 	{ 0x240000, 0x243fff, MWA_BANK1 },
 	{ 0x300000, 0x300001, int_enable_w },
-	{ 0x304000, 0x3047ff, zerowing_colorram1_w, &zerowing_colorram1, &colorram1_size },
-	{ 0x306000, 0x3067ff, zerowing_colorram2_w, &zerowing_colorram2, &colorram2_size },
+   { 0x300008, 0x30000f, layers_offset_w },
+	{ 0x304000, 0x3047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
+	{ 0x306000, 0x3067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
+   { 0x340000, 0x340003, offsetregs_w },
    { -1 }
+};
+
+static struct MemoryReadAddress demonwld_readmem[] =
+{
+	{ 0x000000, 0x03ffff, MRA_ROM },
+	{ 0x400000, 0x400001, input_port_6_r },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_r },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_r },
+   { 0x600000, 0x600fff, shared_r },
+	{ 0x800002, 0x800003, video_ofs3_r },
+	{ 0x800004, 0x800007, toaplan1_videoram3_r },	/* tile layers */
+	{ 0x800010, 0x80001f, scrollregs_r },
+	{ 0xa00000, 0xa00001, input_port_6_r },
+	{ 0xa00002, 0xa00003, video_ofs_r },
+	{ 0xa00004, 0xa00005, toaplan1_videoram1_r },		/* sprites info */
+	{ 0xa00006, 0xa00007, toaplan1_videoram2_r },	/* sprite size ? */
+   { 0xc00000, 0xc001ab, MRA_BANK1},
+	{ 0xc001ac, 0xc001ad, framedone_r },
+   { 0xc001ae, 0xc03fff, MRA_BANK2},
+   { -1 }
+};
+
+static struct MemoryWriteAddress demonwld_writemem[] =
+{
+	{ 0x000000, 0x03ffff, MWA_ROM },
+	{ 0x404000, 0x4047ff, toaplan1_colorram1_w, &toaplan1_colorram1, &colorram1_size },
+	{ 0x406000, 0x4067ff, toaplan1_colorram2_w, &toaplan1_colorram2, &colorram2_size },
+	{ 0x600000, 0x600fff, shared_w, &shared_ram },
+	{ 0x800002, 0x800003, video_ofs3_w },
+	{ 0x800004, 0x800007, toaplan1_videoram3_w },	/* tile layers */
+	{ 0x800010, 0x80001f, scrollregs_w },
+	{ 0x400000, 0x400001, int_enable_w },
+   { 0x400008, 0x40000f, layers_offset_w },
+	{ 0xa00002, 0xa00003, video_ofs_w },
+	{ 0xa00004, 0xa00005, toaplan1_videoram1_w },		/* sprites info */
+	{ 0xa00006, 0xa00007, toaplan1_videoram2_w },	/* sprite size ? */
+   { 0xc00000, 0xc001ab, MWA_BANK1},
+	{ 0xc001ac, 0xc001ad, framedone_w },
+   { 0xc001ae, 0xc03fff, MWA_BANK2},
+   { 0xe00000, 0xe00003, offsetregs_w },
+   { -1 }
+};
+
+static struct IOReadPort demonwld_sound_readport[] =
+{
+	{ 0x00, 0x00, YM3812_status_port_0_r },
+	{ 0x60, 0x60, input_port_5_r },
+	{ 0xe0, 0xe0, input_port_0_r },
+	{ 0xa0, 0xa0, input_port_1_r },
+	{ 0x20, 0x20, input_port_4_r },
+	{ 0x80, 0x80, input_port_2_r },
+	{ 0xc0, 0xc0, input_port_3_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort demonwld_sound_writeport[] =
+{
+	{ 0x00, 0x01, toaplan_opl_w },
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
@@ -443,7 +454,7 @@ static struct IOReadPort zw_sound_readport[] =
 
 static struct IOWritePort zw_sound_writeport[] =
 {
-	{ 0x00, 0xff, zw_opl_w },
+	{ 0xa8, 0xa9, toaplan_opl_w },
 	{ -1 }	/* end of table */
 };
 
@@ -461,7 +472,7 @@ static struct IOReadPort hf_sound_readport[] =
 
 static struct IOWritePort hf_sound_writeport[] =
 {
-	{ 0x00, 0xff, hf_opl_w },
+	{ 0x70, 0x71, toaplan_opl_w },
 	{ -1 }	/* end of table */
 };
 
@@ -479,7 +490,7 @@ static struct IOReadPort outzone_sound_readport[] =
 
 static struct IOWritePort outzone_sound_writeport[] =
 {
-	{ 0x00, 0xff, outzone_opl_w },
+	{ 0x00, 0x01, toaplan_opl_w },
 	{ -1 }	/* end of table */
 };
 
@@ -497,7 +508,7 @@ static struct IOReadPort truxton_sound_readport[] =
 
 static struct IOWritePort truxton_sound_writeport[] =
 {
-	{ 0x00, 0xff, truxton_opl_w },
+	{ 0x60, 0x61, toaplan_opl_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1083,9 +1094,9 @@ static struct MachineDriver zw_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	zerowing_vh_start,
-	zerowing_vh_stop,
-	zerowing_vh_screenrefresh,
+	toaplan1_vh_start,
+	toaplan1_vh_stop,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1121,9 +1132,9 @@ static struct MachineDriver vm_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	zerowing_vh_start,
-	zerowing_vh_stop,
-	vimana_vh_screenrefresh,
+	toaplan1_vh_start,
+	toaplan1_vh_stop,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1166,9 +1177,9 @@ static struct MachineDriver hf_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	zerowing_vh_start,
-	zerowing_vh_stop,
-	zerowing_vh_screenrefresh,
+	toaplan1_vh_start,
+	toaplan1_vh_stop,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1211,9 +1222,9 @@ static struct MachineDriver truxton_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	zerowing_vh_start,
-	zerowing_vh_stop,
-	zerowing_vh_screenrefresh,
+	toaplan1_vh_start,
+	toaplan1_vh_stop,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1257,9 +1268,54 @@ static struct MachineDriver outzone_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	zerowing_vh_start,
-	zerowing_vh_stop,
-	outzone_vh_screenrefresh,
+	toaplan1_vh_start,
+	toaplan1_vh_stop,
+	toaplan1_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM3812,
+			&ym3812_interface
+		},
+	}
+};
+
+static struct MachineDriver demonwld_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000,
+			0,
+			demonwld_readmem,demonwld_writemem,0,0,
+			zerowing_interrupt,1
+		},
+		{
+			CPU_Z80 ,
+			3500000,
+			2,
+			sound_readmem,sound_writemem,demonwld_sound_readport,demonwld_sound_writeport,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,
+	toaplan_init_machine,
+
+	/* video hardware */
+	320, 240, { 0, 319, 0, 239 },
+	gfxdecodeinfo,
+	64*16+64*16, 64*16+64*16,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	toaplan1_vh_start,
+	toaplan1_vh_stop,
+	toaplan1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1392,7 +1448,25 @@ ROM_START( vimana2_rom )
 	/* sound CPU is a Z180 (not supported) */
 ROM_END
 
+ROM_START( demonwld_rom )
+	ROM_REGION(0x40000)	/* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "ROM10",  0x00000, 0x20000, 0x036ee46c )
+	ROM_LOAD_ODD ( "ROM09",  0x00000, 0x20000, 0xbed746e3 )
 
+	ROM_REGION_DISPOSE(0x100000)
+	ROM_LOAD( "ROM05", 0x00000, 0x20000, 0x6506c982 )
+	ROM_LOAD( "ROM07", 0x20000, 0x20000, 0xa3a0d993 )
+	ROM_LOAD( "ROM06", 0x40000, 0x20000, 0x4fc5e5f3 )
+	ROM_LOAD( "ROM08", 0x60000, 0x20000, 0xeb53ab09 )
+
+	ROM_LOAD( "ROM01", 0x80000, 0x20000, 0x1b3724e9 )
+	ROM_LOAD( "ROM02", 0xa0000, 0x20000, 0x7b20a44d )
+	ROM_LOAD( "ROM03", 0xc0000, 0x20000, 0x2cacdcd0 )
+	ROM_LOAD( "ROM04", 0xe0000, 0x20000, 0x76fd3201 )
+
+	ROM_REGION(0x10000)	/* 64k for z80 sound code */
+	ROM_LOAD( "ROM11",   0x0000, 0x8000, 0x397eca1b )
+ROM_END
 
 struct GameDriver zerowing_driver =
 {
@@ -1543,3 +1617,30 @@ struct GameDriver vimana2_driver =
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
+
+struct GameDriver demonwld_driver =
+{
+	__FILE__,
+	0,
+	"demonwld",
+	"Demon's World",
+	"1988",
+	"Toaplan",
+	"Darren Olafson (Mame Driver)\nCarl-Henrik Skårstedt (Technical)\nMagnus Danielsson (Technical)\n",
+	0,
+	&demonwld_machine_driver,
+	0,
+
+	demonwld_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	truxton_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+

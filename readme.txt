@@ -189,38 +189,30 @@ MAME mspacman -soundcard 0    will run Ms Pac Man without sound
 
 
 options:
--scanlines/-noscanlines (default: -scanlines)
-              if the default mode doesn't work with your monitor/video card
-              (double image/picture squashed vertically), use -noscanlines
-              or -vesa.
--vesa/-novesa (default: auto)
-              Decides whether to use tweaked VGA modes or standard VESA modes.
-              Note that some hires games require VESA modes, -novesa is
-              ignored in this case.
+-tweak/-notweak (default: notweak)
+              MAME supports a large number of tweaked VGA modes, with
+              resolutions matching the ones of the emulated games. Those modes
+              look MUCH better than VESA modes (and usually faster), but may
+              have compatibility problems with some video cards and monitors,
+              so they are not enabled by default. You should by all means use
+              -tweak if your hardware supports it. Note that some modes might
+              work and other might not, e.g. your card could support 256x256
+			  but not 384x224. In that case you'll have to turn -tweak on or
+              off depending on the game you run. -noscanlines can also solve
+              many compatibility problems.
 -ntsc         a 288x224 mode with standard NTSC frequencies. You need some
               additional hardware (VGA2TV converter) to make use of this.
--vesa1        discontinued. use "-vesa -vesamode vesa1"
--vesa2b       discontinued. use "-vesa -vesamode vesa2b"
--vesa2l       discontinued. use "-vesa -vesamode vesa2l"
 -vesamode vesa1/vesa2b/vesa2l/vesa3
-              In conjunction with "-vesa", selects the VESA modes to try.
-              The default is vesa2l.
+              Forces the VESA mode to use. By default the best available one
+              is used, but some video cards might crash during autodetection,
+              so you should force a lower standard (start with vesa1 and go
+              upwards until it stops working).
 -resolution XxY
               where X and Y are width and height (ex: '-resolution 800x600')
               MAME goes some lengths to autoselect a good resolution. You can
               override MAME's choice with this option.
               You can use -XxY (e.g. -800x600) as a shortcut. Frontend
               authors are advised to use -resolution XxY, however.
--320          discontinued. Use -320x240.
-              If you get an error '320x240 not supported', you probably
-              need Scitech's Display Doctor, which provides the 'de facto'
-              standard VESA implementation (http://www.scitechsoft.com)
-              Note: this is a nice alternative to '-640x480 -noscanlines'
--400          same as above, use -400x300
--512          same as above, use -512x384
--640          same as above, use -640x480
--800          same as above, use -800x600.
--1024         same as above, use -1024x768
 -skiplines N / -skipcolumns N
               if you run a game on a video mode smaller than the visible area,
               you can adjust its position using the PGUP and PGDN keys (alone
@@ -228,26 +220,12 @@ options:
               You can also use these two parameters to set the initial
               position: 0 is the default, menaing that the screen is centered.
               You can specify both positive and negative offsets.
--double/-nodouble (default: auto)
-              use nodouble to disable pixel doubling in VESA modes (faster,
-              but smaller picture). Use double to force pixel doubling when
-              the image doesn't fit in the screen (you'll have to use PGUP and
-              PGDN to scroll).
--stretch XxY  (default: off) stretch low resolution games to fill the screen.
-              -stretch 1024x768 quadruples pixels horizontally and triples
-              vertically, -stretch 800x600 triples horizontally and doubles
-              vertically. 1024x768 will be perfect (for 256x256 games) or
-              almost perfect (for 256x240 and 256x224 games) without monitor
-              adjustment, so it is indicated for LCD displays. However, it is
-              slower than 800x600. 800x600 is faster but the games are
-              stretched to resolutions varying from 768x448 to 768x512, so they
-              don't fill the screen and are squashed vertically.
-              Here's the tip: if your monitor is good enough, you can use the
-              controls to expand the picture and make it fit perfectly in the
-              screen. Note that this tip applies not only to stretched modes,
-              but also to higher resolution games like Lode Runner (384x256)
-              and the CPS1 games (384x224). The CPS1 games in particular are
-              unbearably squashed if you don't adjust the monitor.
+-scanlines/-noscanlines (default: -scanlines)
+              turns on or off visible scanlines, which give an image more
+              similar to that of a real arcade monitor.
+-stretch/-nostretch (default: stretch)
+              use nostretch to disable pixel doubling in VESA modes (faster,
+              but smaller picture).
 -depth n      (default: 16)
               Some games need 65k color modes to get accurate graphics. To
               improve speed, you can turn that off using -depth 8, which limits
@@ -283,6 +261,23 @@ options:
               frequencies compatible with -vsync. By default, the less
               compatible definition is used only when -vsync is requested;
               using this option, you can force it to be used always.
+-triplebuffer/-notriplebuffer (default: -notriplebuffer)
+              Enables triple buffering with VESA modes. This is faster than
+              -vsync, but doesn't work on all cards and, even it does remove
+              tearing during scrolling, it might not be as smooth as vsync.
+-monitor NNNN (default: standard)
+              selects the monitor type:
+              standard: standard PC monitor
+              ntsc:     NTSC monitor
+              pal:      PAL monitor
+              arcade:   arcade monitor
+-centerx N and -centery N
+              each take a signed value (-8 to 8 for centerx, -16 to 16 for
+              centery) and let you shift the low scanrate modes (monitor=ntsc,
+                pal,arcade) around.
+-waitinterlace
+              forces update of both odd and even fields of an interlaced low
+              scanrate display (monitor=ntsc,pal,arcade) for each game loop.
 -ror          rotate the display clockwise by 90 degrees.
 -rol          rotate display anticlockwise
 -flipx        flip display horizontally
@@ -302,12 +297,28 @@ options:
 
 -norotate     This is supposed to disable all internal rotations of the image,
               therefore displaying the video output as it is supposed to be
-              (so you need a vertical monitor to see vertical games). However,
-              many drivers still don't use MAME centralized rotation, but
-              instead rotate the image on their own, so -norotate has no
-              effect on them. In some cases, the image will be upside down. To
-              correct that, use
+              (so you need a vertical monitor to see vertical games). In some
+              cases, the image will be upside down. To correct that, use
               -norotate -flipx -flipy.
+-frameskip n (default: auto)
+              skip frames to speed up the emulation. The argument is the number
+              of frames to skip out of 12. For example, if the game normally
+              runs at 60 fps, "-frameskip 2" will make it run at 50 fps, and
+              "-frameskip 6" at 30 fps. Use F11 to check the speed your
+              computer is actually reaching. If it is below 100%, increase the
+              frameskip value. You can press F9 to change frameskip while
+              running the game.
+			  When set to auto (the default), the frameskip setting is
+              dynamically adjusted at run time to display the maximum possible
+              frames without dropping below 100% speed.
+-antialias/-noantialias (default: -antialias)
+              antialiasing for the vector games.
+-beam n       sets the width in pixels of the vectors. n is a float in the
+              range of 1.00 through 16.00.
+-flicker n    make the vectors flicker. n is an optional argument, a float in
+              the range 0.00 - 100.00 (0=none 100=maximum).
+-translucency/-notranslucency (default: -translucency)
+              enables or disables vector translucency.
 
 -soundcard n  select sound card (if this is not specified, you will be asked
               interactively)
@@ -324,6 +335,12 @@ options:
 -volume n     (default: 0) set the startup volume. It can later be changed
               using the On Screen Display. The volume is an attenuation in dB,
               e.g. "-volume -12" will start with a -12dB attenuation.
+-ym3812opl/-noym3812opl (default: -ym3812opl) use the SoundBlaster OPL chip for
+              music emulation of the YM3812 chip. This is faster, and is
+              reasonably accurate since the chips are 100% compatible. However,
+              the pitch might be wrong. Also note that with -no3812opl you need
+              some external drum samples.
+
 -joy n (default: none) allows joystick input, n can be:
               0/none       - no joystick
               1/standard   - normal 2 button joystick
@@ -350,11 +367,7 @@ options:
               3) Extra buttons of noname joysticks may not work.
 			  4) the "official" Snespad-Support site is
               http://snespad.emulationworld.com
--ym3812opl/-noym3812opl (default: -ym3812opl) use the SoundBlaster OPL chip for
-              music emulation of the YM3812 chip. This is faster, and is
-              reasonably accurate since the chips are 100% compatible. However,
-              the pitch might be wrong. Also note that with -no3812opl you need
-              some external drum samples.
+
 -log          create a log of illegal memory accesses in ERROR.LOG
 -help, -?     display current MAME version and copyright notice
 -list         display a list of currently supported games
@@ -372,25 +385,6 @@ options:
               run the Pac Man driver but load the roms from the "pachack" dir
               or "pachack.zip" archive.
 -mouse/-nomouse (default: -mouse) enable/disable mouse support
--frameskip n (default: auto)
-              skip frames to speed up the emulation. The argument is the number
-              of frames to skip out of 12. For example, if the game normally
-              runs at 60 fps, "-frameskip 2" will make it run at 50 fps, and
-              "-frameskip 6" at 30 fps. Use F11 to check the speed your
-              computer is actually reaching. If it is below 100%, increase the
-              frameskip value. You can press F9 to change frameskip while
-              running the game.
-			  When set to auto (the default), the frameskip setting is
-              dynamically adjusted at run time to display the maximum possible
-              frames without dropping below 100% speed.
--antialias/-noantialias (default: -antialias)
-              antialiasing for the vector games.
--beam n       sets the width in pixels of the vectors. n is a float in the
-              range of 1.00 through 16.00.
--flicker n    make the vectors flicker. n is an optional argument, a float in
-              the range 0.00 - 100.00 (0=none 100=maximum).
--translucency/-notranslucency (default: -translucency)
-              enables or disables vector translucency.
 -cheat        Cheats like the speedup in Pac Man or the level skip in many
               other games are disabled by default. Use this switch to turn
               them on.

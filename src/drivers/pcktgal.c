@@ -48,9 +48,14 @@ static void pcktgal_sound_w(int offset,int data)
 	cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
+static int msm5205next;
+
 static void pcktgal_adpcm_int(int data)
 {
 	static int toggle;
+
+	MSM5205_data_w(0,msm5205next >> 4);
+	msm5205next<<=4;
 
 	toggle = 1 - toggle;
 	if (toggle)
@@ -59,8 +64,7 @@ static void pcktgal_adpcm_int(int data)
 
 static void pcktgal_adpcm_data_w(int offset,int data)
 {
-	MSM5205_data_w(offset,data >> 4);
-	MSM5205_data_w(offset,data);
+	msm5205next=data;
 }
 
 static int pcktgal_adpcm_reset_r(int offset)
@@ -253,9 +257,10 @@ static struct YM3812interface ym3812_interface =
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,		/* 1 chip */
-	8000,	/* 8000Hz playback ? */
-	pcktgal_adpcm_int,		/* interrupt function */
+	1,					/* 1 chip             */
+	384000,				/* 384KHz             */
+	{ pcktgal_adpcm_int },/* interrupt function */
+	{ MSM5205_S48_4B},	/* 8KHz               */
 	{ 70 }
 };
 

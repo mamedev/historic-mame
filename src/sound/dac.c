@@ -1,36 +1,45 @@
 #include "driver.h"
+#include <math.h>
 
 
 static int channel[MAX_DAC];
-static signed char latch[MAX_DAC];
-static signed char UnsignedVolTable[256];
-static signed char SignedVolTable[256];
+static int output[MAX_DAC];
+static int UnsignedVolTable[256];
+static int SignedVolTable[256];
+
 
 
 static void DAC_update(int num,void *buffer,int length)
 {
-	memset(buffer,latch[num],length);
+	short *buf = buffer;
+	int out = output[num];
+
+	while (length--) *(buf++) = out;
 }
 
 
 void DAC_data_w(int num,int data)
 {
-	/* update the output buffer before changing the registers */
-	if (latch[num] != UnsignedVolTable[data])
+	int out = UnsignedVolTable[data];
+
+	if (output[num] != out)
 	{
+		/* update the output buffer before changing the registers */
 		stream_update(channel[num],0);
-		latch[num] = UnsignedVolTable[data];
+		output[num] = out;
 	}
 }
 
 
 void DAC_signed_data_w(int num,int data)
 {
-	/* update the output buffer before changing the registers */
-	if (latch[num] != SignedVolTable[data])
+	int out = SignedVolTable[data];
+
+	if (output[num] != out)
 	{
+		/* update the output buffer before changing the registers */
 		stream_update(channel[num],0);
-		latch[num] = SignedVolTable[data];
+		output[num] = out;
 	}
 }
 
@@ -43,8 +52,8 @@ static void DAC_build_voltable(void)
 	/* build volume table (linear) */
 	for (i = 0;i < 256;i++)
 	{
-		UnsignedVolTable[i] = i / 2;	/* range    0..127 */
-		SignedVolTable[i] = i - 0x80;	/* range -128..127 */
+		UnsignedVolTable[i] = i * 0x101 / 2;	/* range      0..32767 */
+		SignedVolTable[i] = i * 0x101 - 0x8000;	/* range -32768..32767 */
 	}
 }
 
@@ -63,13 +72,13 @@ int DAC_sh_start(const struct MachineSound *msound)
 
 
 		sprintf(name,"DAC #%d",i);
-		channel[i] = stream_init(name,intf->mixing_level[i],Machine->sample_rate,8,
+		channel[i] = stream_init(name,intf->mixing_level[i],Machine->sample_rate,16,
 				i,DAC_update);
 
 		if (channel[i] == -1)
 			return 1;
 
-		latch[i] = 0;
+		output[i] = 0;
 	}
 
 	return 0;

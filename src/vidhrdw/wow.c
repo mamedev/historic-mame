@@ -520,7 +520,7 @@ void Gorf_CopyLine(int Line)
             else
   			    ey = Line;
 
-        	osd_mark_dirty(ey,0,ey,319,0);
+        	osd_mark_dirty(0,ey,319,ey,0);
         }
         else
         {

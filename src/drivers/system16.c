@@ -1664,7 +1664,7 @@ struct GameDriver dduxbl_driver =
 	"1989",
 	"bootleg",
 	SYS16_CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&dduxbl_machine_driver,
 	0,
 	dduxbl_rom,

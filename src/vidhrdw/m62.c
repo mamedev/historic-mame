@@ -236,7 +236,7 @@ int kidniki_vh_start(void)
 	return irem_vh_start(512,256);
 }
 
-int spelunk2_vh_start(void)
+int spelunkr_vh_start(void)
 {
 	return irem_vh_start(512,512);
 }
@@ -343,8 +343,19 @@ void kidniki_background_bank_w( int offset, int data )
 	}
 }
 
-void spelunk2_gfxport_w( int offset, int data ){
-	switch( offset ){
+void spelunkr_palbank_w(int offset, int data)
+{
+	if (spelunk2_palbank != (data & 0x01))
+	{
+		spelunk2_palbank = data & 0x01;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+void spelunk2_gfxport_w(int offset, int data)
+{
+	switch( offset )
+	{
 		case 0:
 		irem_background_vscroll_w(0,data);
 		break;
@@ -833,6 +844,61 @@ static void kidniki_draw_background(struct osd_bitmap *bitmap)
 	}
 }
 
+static void spelunkr_draw_background(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+
+	for (offs = videoram_size-2;offs >= 0;offs -= 2)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs+1])
+		{
+			int sx,sy;
+
+
+			dirtybuffer[offs] = 0;
+			dirtybuffer[offs+1] = 0;
+
+			sx = (offs/2) % 64;
+			sy = (offs/2) / 64;
+
+			if (flipscreen)
+			{
+				sx = 63 - sx;
+				sy = 63 - sy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs]
+							+ ((videoram[offs+1] & 0x10) << 4)
+							+ ((videoram[offs+1] & 0x20) << 6)
+							+ ((videoram[offs+1] & 0xc0) << 3),
+					(videoram[offs+1] & 0x0f) + (spelunk2_palbank << 4),
+					flipscreen,flipscreen,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	{
+		int scrollx,scrolly;
+
+		if (flipscreen)
+		{
+			scrollx = irem_background_hscroll;
+			scrolly = irem_background_vscroll - 128;
+		}
+		else
+		{
+			scrollx = -irem_background_hscroll;
+			scrolly = -irem_background_vscroll - 128;
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+}
+
 static void spelunk2_draw_background(struct osd_bitmap *bitmap)
 {
 	int offs;
@@ -951,7 +1017,7 @@ static void kidniki_draw_text(struct osd_bitmap *bitmap)
 	}
 }
 
-static void spelunk2_draw_text(struct osd_bitmap *bitmap)
+static void spelunkr_draw_text(struct osd_bitmap *bitmap)
 {
 	int offs;
 
@@ -972,7 +1038,7 @@ static void spelunk2_draw_text(struct osd_bitmap *bitmap)
 
 		drawgfx(bitmap,Machine->gfx[(irem_textram[offs + 1] & 0x10) ? 3 : 2],
 				irem_textram[offs],
-				(irem_textram[offs + 1] & 0x0f),
+				(irem_textram[offs + 1] & 0x0f) + (spelunk2_palbank << 4),
 				flipscreen,flipscreen,
 				12*sx + 64,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
@@ -1023,9 +1089,16 @@ void kidniki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	kidniki_draw_text(bitmap);
 }
 
+void spelunkr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
+{
+	spelunkr_draw_background(bitmap);
+	draw_sprites(bitmap);
+	spelunkr_draw_text(bitmap);
+}
+
 void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	spelunk2_draw_background(bitmap);
 	draw_sprites(bitmap);
-	spelunk2_draw_text(bitmap);
+	spelunkr_draw_text(bitmap);
 }

@@ -169,7 +169,8 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x0800, 0x3fff, MRA_ROM }, /* Targ, Spectar only */
-	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x4000, 0x43ff, videoram_r },
+	{ 0x4400, 0x47ff, videoram_r },	/* mirror (sidetrac requires this) */
 	{ 0x4800, 0x4fff, MRA_RAM },
 	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
@@ -275,12 +276,12 @@ static struct MemoryWriteAddress fax_writemem[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-    { 0x0000, 0x07ff, MRA_RAM },
-    { 0x0800, 0x0FFF, exidy_shriot_r },
-    { 0x1000, 0x100F, pia_2_r },
-    { 0x1800, 0x1FFF, exidy_sh8253_r },
-    { 0x2000, 0x27FF, MRA_RAM },
-    { 0x2800, 0x2FFF, exidy_sh6840_r },
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x0800, 0x0FFF, exidy_shriot_r },
+	{ 0x1000, 0x100F, pia_2_r },
+	{ 0x1800, 0x1FFF, exidy_sh8253_r },
+	{ 0x2000, 0x27FF, MRA_RAM },
+	{ 0x2800, 0x2FFF, exidy_sh6840_r },
 	{ 0x5800, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xf7ff, MRA_RAM },
 	{ 0xf800, 0xffff, MRA_ROM },
@@ -289,14 +290,14 @@ static struct MemoryReadAddress sound_readmem[] =
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-    { 0x0000, 0x07FF, MWA_RAM },
-    { 0x0800, 0x0FFF, exidy_shriot_w },
-    { 0x1000, 0x100F, pia_2_w },
-    { 0x1800, 0x1FFF, exidy_sh8253_w },
-    { 0x2000, 0x27FF, MWA_RAM },
+	{ 0x0000, 0x07FF, MWA_RAM },
+	{ 0x0800, 0x0FFF, exidy_shriot_w },
+	{ 0x1000, 0x100F, pia_2_w },
+	{ 0x1800, 0x1FFF, exidy_sh8253_w },
+	{ 0x2000, 0x27FF, MWA_RAM },
 	{ 0x2800, 0x2FFF, exidy_sh6840_w },
 	{ 0x3000, 0x3700, exidy_sfxctrl_w },
-    { 0x5800, 0x7fff, MWA_ROM },
+	{ 0x5800, 0x7fff, MWA_ROM },
 	{ 0x8000, 0xf7ff, MWA_RAM },
 	{ 0xf800, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -309,19 +310,19 @@ Input Ports
 
 INPUT_PORTS_START( sidetrac_input_ports )
 	PORT_START              /* DSW0 */
-	PORT_DIPNAME(0x03, 0x00, "Trains" )
-	PORT_DIPSETTING( 0x00, "01")
-	PORT_DIPSETTING( 0x01, "02")
-	PORT_DIPSETTING( 0x02, "03")
-	PORT_DIPSETTING( 0x03, "04")
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2")
+	PORT_DIPSETTING(    0x01, "3")
+	PORT_DIPSETTING(    0x02, "4")
+	PORT_DIPSETTING(    0x03, "5")
 	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
-    PORT_DIPSETTING(    0x00, "1C / 2P" )
-	PORT_DIPSETTING(        0x04, "1C / 1P" )
-	PORT_DIPSETTING(        0x08, "2C / 1P" )
-	PORT_DIPSETTING(    0x0c, "2C / 1P")
-	PORT_DIPNAME(0x10, 0x10, "Top Score Award" )
-	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(   0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+/* 0x0c 2C_1C */
+	PORT_DIPNAME( 0x10, 0x10, "Top Score Award" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -330,10 +331,10 @@ INPUT_PORTS_START( sidetrac_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
@@ -364,24 +365,24 @@ INPUT_PORTS_START( targ_input_ports )
 	PORT_START              /* DSW0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
 	PORT_DIPNAME( 0x02, 0x00, "P Coinage" )
-	PORT_DIPSETTING(        0x00, "10P/1 C 50P Coin/6 Cs" )
-	PORT_DIPSETTING(        0x02, "2x10P/1 C 50P Coin/3 Cs" )
+	PORT_DIPSETTING(    0x00, "10P/1 C 50P Coin/6 Cs" )
+	PORT_DIPSETTING(    0x02, "2x10P/1 C 50P Coin/3 Cs" )
 	PORT_DIPNAME( 0x04, 0x00, "Top Score Award" )
-	PORT_DIPSETTING(        0x00, "Credit" )
-	PORT_DIPSETTING(        0x04, "Extended Play" )
+	PORT_DIPSETTING(    0x00, "Credit" )
+	PORT_DIPSETTING(    0x04, "Extended Play" )
 	PORT_DIPNAME( 0x18, 0x08, "Q Coinage" )
-	PORT_DIPSETTING(        0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(        0x08, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(        0x00, "1C/1C (no display)" )
-	PORT_DIPSETTING(        0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "1C/1C (no display)" )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Lives ) )
-	PORT_DIPSETTING(        0x60, "2" )
-	PORT_DIPSETTING(        0x40, "3" )
-	PORT_DIPSETTING(        0x20, "4" )
-	PORT_DIPSETTING(        0x00, "5" )
+	PORT_DIPSETTING(    0x60, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x80, 0x80, "Currency" )
-	PORT_DIPSETTING(        0x80, "Quarters" )
-	PORT_DIPSETTING(        0x00, "Pence" )
+	PORT_DIPSETTING(    0x80, "Quarters" )
+	PORT_DIPSETTING(    0x00, "Pence" )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x7F, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -412,42 +413,42 @@ INPUT_PORTS_START( spectar_input_ports )
 	PORT_START              /* DSW0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
 	PORT_DIPNAME( 0x02, 0x00, "P Coinage" )
-	PORT_DIPSETTING(        0x00, "10P/1 C 50P Coin/6 Cs" )
-	PORT_DIPSETTING(        0x02, "2x10P/1 C 50P Coin/3 Cs" )
+	PORT_DIPSETTING(    0x00, "10P/1 C 50P Coin/6 Cs" )
+	PORT_DIPSETTING(    0x02, "2x10P/1 C 50P Coin/3 Cs" )
 	PORT_DIPNAME( 0x04, 0x00, "Top Score Award" )
-	PORT_DIPSETTING(        0x00, "Credit" )
-	PORT_DIPSETTING(        0x04, "Extended Play" )
+	PORT_DIPSETTING(    0x00, "Credit" )
+	PORT_DIPSETTING(    0x04, "Extended Play" )
 	PORT_DIPNAME( 0x18, 0x08, "Q Coinage" )
-	PORT_DIPSETTING(        0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(        0x08, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(        0x00, "1C/1C (no display)" )
-	PORT_DIPSETTING(        0x18, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "1C/1C (no display)" )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Lives ) )
-	PORT_DIPSETTING(        0x60, "2" )
-	PORT_DIPSETTING(        0x40, "3" )
-	PORT_DIPSETTING(        0x20, "4" )
-	PORT_DIPSETTING(        0x00, "5" )
+	PORT_DIPSETTING(    0x60, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x80, 0x80, "Currency" )
-	PORT_DIPSETTING(        0x80, "Quarters" )
-	PORT_DIPSETTING(        0x00, "Pence" )
+	PORT_DIPSETTING(    0x80, "Quarters" )
+	PORT_DIPSETTING(    0x00, "Pence" )
 
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x7F, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(        0x00, "English" )
-	PORT_DIPSETTING(        0x01, "French" )
-	PORT_DIPSETTING(        0x02, "German" )
-	PORT_DIPSETTING(        0x03, "Spanish" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x01, "French" )
+	PORT_DIPSETTING(    0x02, "German" )
+	PORT_DIPSETTING(    0x03, "Spanish" )
 	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -464,33 +465,33 @@ INPUT_PORTS_START( mtrap_input_ports )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(        0x06, "30000" )
-	PORT_DIPSETTING(        0x04, "40000" )
-	PORT_DIPSETTING(        0x02, "50000" )
-	PORT_DIPSETTING(        0x00, "60000" )
+	PORT_DIPSETTING(    0x06, "30000" )
+	PORT_DIPSETTING(    0x04, "40000" )
+	PORT_DIPSETTING(    0x02, "50000" )
+	PORT_DIPSETTING(    0x00, "60000" )
 	PORT_DIPNAME( 0x98, 0x98, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(        0x90, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(        0x98, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(        0x88, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(        0x80, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(        0x00, "Coin A 2/1 Coin B 1/3" )
-	PORT_DIPSETTING(        0x08, "Coin A 1/3 Coin B 2/7" )
-	PORT_DIPSETTING(        0x10, "Coin A 1/1 Coin B 1/4" )
-	PORT_DIPSETTING(        0x18, "Coin A 1/1 Coin B 1/5" )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, "Coin A 2C/1C Coin B 1C/3C" )
+	PORT_DIPSETTING(    0x98, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, "Coin A 1C/1C Coin B 1C/4C" )
+	PORT_DIPSETTING(    0x18, "Coin A 1C/1C Coin B 1C/5C" )
+	PORT_DIPSETTING(    0x88, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "Coin A 1C/3C Coin B 2C/7C" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Lives ) )
-	PORT_DIPSETTING(        0x60, "2" )
-	PORT_DIPSETTING(        0x40, "3" )
-	PORT_DIPSETTING(        0x20, "4" )
-	PORT_DIPSETTING(        0x00, "5" )
+	PORT_DIPSETTING(    0x60, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1, "Dog Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
@@ -499,16 +500,16 @@ INPUT_PORTS_START( mtrap_input_ports )
 	the ROMs to support that claim (as far as I can see):
 
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(        0x00, "English" )
-	PORT_DIPSETTING(        0x01, "French" )
-	PORT_DIPSETTING(        0x02, "German" )
-	PORT_DIPSETTING(        0x03, "Spanish" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x01, "French" )
+	PORT_DIPSETTING(    0x02, "German" )
+	PORT_DIPSETTING(    0x03, "Spanish" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(        0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(        0x08, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 
-	PORT_BIT( 0x1F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -516,9 +517,9 @@ INPUT_PORTS_START( mtrap_input_ports )
 	PORT_START              /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON2, "Yellow Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON3, "Red Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX(        0x04, 0x04, IPT_DIPSWITCH_NAME, DEF_STR( Free_Play ), IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(        0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(        0x00, DEF_STR( On ) )
+	PORT_BITX(0x04, 0x04, IPT_DIPSWITCH_NAME, DEF_STR( Free_Play ), IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x00, DEF_STR( On ) )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON4, "Blue Button", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -530,32 +531,32 @@ INPUT_PORTS_START( venture_input_ports )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(        0x06, "20000" )
-	PORT_DIPSETTING(        0x04, "30000" )
-	PORT_DIPSETTING(        0x02, "40000" )
-	PORT_DIPSETTING(        0x00, "50000" )
+	PORT_DIPSETTING(    0x06, "20000" )
+	PORT_DIPSETTING(    0x04, "30000" )
+	PORT_DIPSETTING(    0x02, "40000" )
+	PORT_DIPSETTING(    0x00, "50000" )
 	PORT_DIPNAME( 0x98, 0x80, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(        0x88, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(        0x80, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(        0x98, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(        0x00, "Pence: LC 2C/1C - RC 1C/3C" )
-	PORT_DIPSETTING(        0x18, "Pence: LC 1C/1C - RC 1C/6C" )
+	PORT_DIPSETTING(    0x88, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x98, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, "Pence: A 2C/1C B 1C/3C" )
+	PORT_DIPSETTING(    0x18, "Pence: A 1C/1C B 1C/6C" )
 	/*0x10 same as 0x00 */
 	/*0x90 same as 0x80 */
 	PORT_DIPNAME( 0x60, 0x20, DEF_STR( Lives ) )
-	PORT_DIPSETTING(        0x00, "2" )
-	PORT_DIPSETTING(        0x20, "3" )
-	PORT_DIPSETTING(        0x40, "4" )
-	PORT_DIPSETTING(        0x60, "5" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x60, "5" )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
@@ -564,16 +565,16 @@ INPUT_PORTS_START( venture_input_ports )
 	the ROMs to support that claim (as far as I can see):
 
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(        0x00, "English" )
-	PORT_DIPSETTING(        0x01, "French" )
-	PORT_DIPSETTING(        0x02, "German" )
-	PORT_DIPSETTING(        0x03, "Spanish" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x01, "French" )
+	PORT_DIPSETTING(    0x02, "German" )
+	PORT_DIPSETTING(    0x03, "Spanish" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(        0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(        0x08, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 
-	PORT_BIT( 0x1F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -582,34 +583,34 @@ INPUT_PORTS_END
 INPUT_PORTS_START( pepper2_input_ports )
 	PORT_START              /* DSW */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_DIPNAME( 0x06, 0x06, "Bonus Turns" )
-	PORT_DIPSETTING(        0x00, "70000" )
-	PORT_DIPSETTING(        0x02, "60000" )
-	PORT_DIPSETTING(        0x04, "50000" )
-	PORT_DIPSETTING(        0x06, "40000" )
-	PORT_DIPNAME( 0x60, 0x20, "Number of Turns" )
-	PORT_DIPSETTING(        0x60, "5 Turns" )
-	PORT_DIPSETTING(        0x40, "4 Turns" )
-	PORT_DIPSETTING(        0x20, "3 Turns" )
-	PORT_DIPSETTING(        0x00, "2 Turns" )
-	PORT_DIPNAME( 0x98, 0x98, "Coins/Credit" )
-	PORT_DIPSETTING(        0x00, "L-2/1 R-1/3" )
-	PORT_DIPSETTING(        0x08, "L-1/1 R-1/4" )
-	PORT_DIPSETTING(        0x10, "L-1/1 R-1/5" )
-	PORT_DIPSETTING(        0x18, "1/3 or 2/7" )
-	PORT_DIPSETTING(        0x90, "1/4" )
-	PORT_DIPSETTING(        0x80, "1/2" )
-	PORT_DIPSETTING(        0x88, "2/1" )
-	PORT_DIPSETTING(        0x98, "1/1" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "40000" )
+	PORT_DIPSETTING(    0x04, "50000" )
+	PORT_DIPSETTING(    0x02, "60000" )
+	PORT_DIPSETTING(    0x00, "70000" )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x60, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x98, 0x98, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, "Coin A 2C/1C Coin B 1C/3C" )
+	PORT_DIPSETTING(    0x98, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, "Coin A 1C/1C Coin B 1C/4C" )
+	PORT_DIPSETTING(    0x18, "Coin A 1C/1C Coin B 1C/5C" )
+	PORT_DIPSETTING(    0x88, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits 2C/7C" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 
 	PORT_START              /* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
@@ -618,13 +619,13 @@ INPUT_PORTS_START( pepper2_input_ports )
 	the ROMs to support that claim (as far as I can see):
 
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(        0x00, "English" )
-	PORT_DIPSETTING(        0x01, "French" )
-	PORT_DIPSETTING(        0x02, "German" )
-	PORT_DIPSETTING(        0x03, "Spanish" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x01, "French" )
+	PORT_DIPSETTING(    0x02, "German" )
+	PORT_DIPSETTING(    0x03, "Spanish" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(        0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(        0x08, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 
 	PORT_BIT( 0x1F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -636,28 +637,28 @@ INPUT_PORTS_END
 INPUT_PORTS_START( fax_input_ports )
 	PORT_START              /* DSW */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_DIPNAME( 0x06, 0x04, "Bonus Time" )
-	PORT_DIPSETTING(        0x06, "8000 pts" )
-	PORT_DIPSETTING(        0x04, "13000 pts" )
-	PORT_DIPSETTING(        0x02, "18000 pts" )
-	PORT_DIPSETTING(        0x00, "25000 pts" )
-	PORT_DIPNAME( 0x60, 0x40, "Game/Bonus Times" )
-	PORT_DIPSETTING(        0x60, ":32/:24" )
-	PORT_DIPSETTING(        0x40, ":48/:36" )
-	PORT_DIPSETTING(        0x20, "1:04/:48" )
-	PORT_DIPSETTING(        0x00, "1:12/1:04" )
-	PORT_DIPNAME( 0x98, 0x98, "Coins/Credit" )
-    PORT_DIPSETTING(    0x00, "L-2/1 R-1/3" )
-	PORT_DIPSETTING(        0x08, "L-1/1 R-1/4" )
-	PORT_DIPSETTING(        0x10, "L-1/1 R-1/5" )
-	PORT_DIPSETTING(        0x18, "1/3 or 2/7" )
-	PORT_DIPSETTING(        0x90, "1/4" )
-	PORT_DIPSETTING(        0x80, "1/2" )
-	PORT_DIPSETTING(        0x88, "2/1" )
-	PORT_DIPSETTING(        0x98, "1/1" )
+	PORT_DIPNAME( 0x06, 0x06, "Bonus Time" )
+	PORT_DIPSETTING(    0x06, "8000" )
+	PORT_DIPSETTING(    0x04, "13000" )
+	PORT_DIPSETTING(    0x02, "18000" )
+	PORT_DIPSETTING(    0x00, "25000" )
+	PORT_DIPNAME( 0x60, 0x60, "Game/Bonus Times" )
+	PORT_DIPSETTING(    0x60, ":32/:24" )
+	PORT_DIPSETTING(    0x40, ":48/:36" )
+	PORT_DIPSETTING(    0x20, "1:04/:48" )
+	PORT_DIPSETTING(    0x00, "1:12/1:04" )
+	PORT_DIPNAME( 0x98, 0x98, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, "Coin A 2C/1C Coin B 1C/3C" )
+	PORT_DIPSETTING(    0x98, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, "Coin A 1C/1C Coin B 1C/4C" )
+	PORT_DIPSETTING(    0x18, "Coin A 1C/1C Coin B 1C/5C" )
+	PORT_DIPSETTING(    0x88, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits 2C/7C" )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 
 	PORT_START              /* IN0 */
-	PORT_BIT ( 0x7F, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT ( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
@@ -666,16 +667,16 @@ INPUT_PORTS_START( fax_input_ports )
 	the ROMs to support that claim (as far as I can see):
 
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
-	PORT_DIPSETTING(        0x00, "English" )
-	PORT_DIPSETTING(        0x01, "French" )
-	PORT_DIPSETTING(        0x02, "German" )
-	PORT_DIPSETTING(        0x03, "Spanish" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x01, "French" )
+	PORT_DIPSETTING(    0x02, "German" )
+	PORT_DIPSETTING(    0x03, "Spanish" )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(        0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(        0x08, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 */
 
-	PORT_BIT( 0x1B, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1b, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* Set when motion object 1 is drawn? */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -692,7 +693,7 @@ INPUT_PORTS_START( fax_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START /* IN3 */
-	PORT_BIT( 0x0F, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
@@ -1241,106 +1242,106 @@ static struct MachineDriver fax_machine_driver =
 
 ROM_START( sidetrac_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "stl8a-1",      0x2800, 0x0800, 0xe41750ff )
-	ROM_LOAD( "stl7a-2",      0x3000, 0x0800, 0x57fb28dc )
-	ROM_LOAD( "stl6a-2",      0x3800, 0x0800, 0x4226d469 )
-	ROM_RELOAD(          0xf800, 0x0800 ) /* for the reset/interrupt vectors */
-	ROM_LOAD( "stl9c-1",      0x4800, 0x0400, 0x08710a84 ) /* prom instead of ram chr gen*/
+	ROM_LOAD( "stl8a-1",     0x2800, 0x0800, 0xe41750ff )
+	ROM_LOAD( "stl7a-2",     0x3000, 0x0800, 0x57fb28dc )
+	ROM_LOAD( "stl6a-2",     0x3800, 0x0800, 0x4226d469 )
+	ROM_RELOAD(              0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_LOAD( "stl9c-1",     0x4800, 0x0400, 0x08710a84 ) /* prom instead of ram chr gen*/
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "stl11d",       0x0000, 0x0200, 0x3bd1acc1 )
+	ROM_LOAD( "stl11d",      0x0000, 0x0200, 0x3bd1acc1 )
 ROM_END
 
 ROM_START( targ_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "targ10a1",     0x1800, 0x0800, 0x969744e1 )
-	ROM_LOAD( "targ09a1",     0x2000, 0x0800, 0xa177a72d )
-	ROM_LOAD( "targ08a1",     0x2800, 0x0800, 0x6e6928a5 )
-	ROM_LOAD( "targ07a4",     0x3000, 0x0800, 0xe2f37f93 )
-	ROM_LOAD( "targ06a3",     0x3800, 0x0800, 0xa60a1bfc )
-	ROM_RELOAD(           0xf800, 0x0800 ) /* for the reset/interrupt vectors */
+	ROM_LOAD( "targ10a1",    0x1800, 0x0800, 0x969744e1 )
+	ROM_LOAD( "targ09a1",    0x2000, 0x0800, 0xa177a72d )
+	ROM_LOAD( "targ08a1",    0x2800, 0x0800, 0x6e6928a5 )
+	ROM_LOAD( "targ07a4",    0x3000, 0x0800, 0xe2f37f93 )
+	ROM_LOAD( "targ06a3",    0x3800, 0x0800, 0xa60a1bfc )
+	ROM_RELOAD(              0xf800, 0x0800 ) /* for the reset/interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "targ11d1",     0x0000, 0x0400, 0x9f03513e )
+	ROM_LOAD( "targ11d1",    0x0000, 0x0400, 0x9f03513e )
 ROM_END
 
 ROM_START( spectar_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "spl11a-3",     0x1000, 0x0800, 0x08880aff )
-	ROM_LOAD( "spl10a-2",     0x1800, 0x0800, 0xfca667c1 )
-	ROM_LOAD( "spl9a-3",      0x2000, 0x0800, 0x9d4ce8ba )
-	ROM_LOAD( "spl8a-2",      0x2800, 0x0800, 0xcfacbadf )
-	ROM_LOAD( "spl7a-2",      0x3000, 0x0800, 0x4c4741ff )
-	ROM_LOAD( "spl6a-2",      0x3800, 0x0800, 0x0cb46b25 )
-	ROM_RELOAD(           0xf800, 0x0800 )  /* for the reset/interrupt vectors */
+	ROM_LOAD( "spl11a-3",    0x1000, 0x0800, 0x08880aff )
+	ROM_LOAD( "spl10a-2",    0x1800, 0x0800, 0xfca667c1 )
+	ROM_LOAD( "spl9a-3",     0x2000, 0x0800, 0x9d4ce8ba )
+	ROM_LOAD( "spl8a-2",     0x2800, 0x0800, 0xcfacbadf )
+	ROM_LOAD( "spl7a-2",     0x3000, 0x0800, 0x4c4741ff )
+	ROM_LOAD( "spl6a-2",     0x3800, 0x0800, 0x0cb46b25 )
+	ROM_RELOAD(              0xf800, 0x0800 )  /* for the reset/interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hrl11d-2",     0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
-	ROM_CONTINUE(         0x0000, 0x0400 )  /* overwrite with the real one */
+	ROM_LOAD( "hrl11d-2",    0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
+	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
 
 ROM_START( spectar1_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "spl12a1",      0x0800, 0x0800, 0x7002efb4 )
-	ROM_LOAD( "spl11a1",      0x1000, 0x0800, 0x8eb8526a )
-	ROM_LOAD( "spl10a1",      0x1800, 0x0800, 0x9d169b3d )
-	ROM_LOAD( "spl9a1",       0x2000, 0x0800, 0x40e3eba1 )
-	ROM_LOAD( "spl8a1",       0x2800, 0x0800, 0x64d8eb84 )
-	ROM_LOAD( "spl7a1",       0x3000, 0x0800, 0xe08b0d8d )
-	ROM_LOAD( "spl6a1",       0x3800, 0x0800, 0xf0e4e71a )
-	ROM_RELOAD(          0xf800, 0x0800 )   /* for the reset/interrupt vectors */
+	ROM_LOAD( "spl12a1",     0x0800, 0x0800, 0x7002efb4 )
+	ROM_LOAD( "spl11a1",     0x1000, 0x0800, 0x8eb8526a )
+	ROM_LOAD( "spl10a1",     0x1800, 0x0800, 0x9d169b3d )
+	ROM_LOAD( "spl9a1",      0x2000, 0x0800, 0x40e3eba1 )
+	ROM_LOAD( "spl8a1",      0x2800, 0x0800, 0x64d8eb84 )
+	ROM_LOAD( "spl7a1",      0x3000, 0x0800, 0xe08b0d8d )
+	ROM_LOAD( "spl6a1",      0x3800, 0x0800, 0xf0e4e71a )
+	ROM_RELOAD(              0xf800, 0x0800 )   /* for the reset/interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hrl11d-2",     0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
-	ROM_CONTINUE(         0x0000, 0x0400 )  /* overwrite with the real one */
+	ROM_LOAD( "hrl11d-2",    0x0000, 0x0400, 0xc55b645d )  /* this is actually not used (all FF) */
+	ROM_CONTINUE(            0x0000, 0x0400 )  /* overwrite with the real one */
 ROM_END
 
 ROM_START( mtrap_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "mtl11a.bin",   0xA000, 0x1000, 0xbd6c3eb5 )
-	ROM_LOAD( "mtl10a.bin",   0xB000, 0x1000, 0x75b0593e )
-	ROM_LOAD( "mtl9a.bin",          0xC000, 0x1000, 0x28dd20ff )
-	ROM_LOAD( "mtl8a.bin",          0xD000, 0x1000, 0xcc09f7a4 )
-	ROM_LOAD( "mtl7a.bin",          0xE000, 0x1000, 0xcaafbb6d )
-	ROM_LOAD( "mtl6a.bin",          0xF000, 0x1000, 0xd85e52ca )
+	ROM_LOAD( "mtl11a.bin",  0xa000, 0x1000, 0xbd6c3eb5 )
+	ROM_LOAD( "mtl10a.bin",  0xb000, 0x1000, 0x75b0593e )
+	ROM_LOAD( "mtl9a.bin",   0xc000, 0x1000, 0x28dd20ff )
+	ROM_LOAD( "mtl8a.bin",   0xd000, 0x1000, 0xcc09f7a4 )
+	ROM_LOAD( "mtl7a.bin",   0xe000, 0x1000, 0xcaafbb6d )
+	ROM_LOAD( "mtl6a.bin",   0xf000, 0x1000, 0xd85e52ca )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
+	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
 
 	ROM_REGION(0x10000) /* 64k for audio */
-	ROM_LOAD( "mta5a.bin",    0x6800, 0x0800, 0xdbe4ec02 )
-	ROM_LOAD( "mta6a.bin",    0x7000, 0x0800, 0xc00f0c05 )
-	ROM_LOAD( "mta7a.bin",    0x7800, 0x0800, 0xf3f16ca7 )
-	ROM_RELOAD(            0xf800, 0x0800 )
+	ROM_LOAD( "mta5a.bin",   0x6800, 0x0800, 0xdbe4ec02 )
+	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
+	ROM_LOAD( "mta7a.bin",   0x7800, 0x0800, 0xf3f16ca7 )
+	ROM_RELOAD(              0xf800, 0x0800 )
 ROM_END
 
 ROM_START( mtrap3_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "mtl-3.11a",   0xA000, 0x1000, 0x4091be6e )
-	ROM_LOAD( "mtl-3.10a",   0xB000, 0x1000, 0x38250c2f )
-	ROM_LOAD( "mtl-3.9a",          0xC000, 0x1000, 0x2eec988e )
-	ROM_LOAD( "mtl-3.8a",          0xD000, 0x1000, 0x744b4b1c )
-	ROM_LOAD( "mtl-3.7a",          0xE000, 0x1000, 0xea8ec479 )
-	ROM_LOAD( "mtl-3.6a",          0xF000, 0x1000, 0xd72ba72d )
+	ROM_LOAD( "mtl-3.11a",   0xa000, 0x1000, 0x4091be6e )
+	ROM_LOAD( "mtl-3.10a",   0xb000, 0x1000, 0x38250c2f )
+	ROM_LOAD( "mtl-3.9a",    0xc000, 0x1000, 0x2eec988e )
+	ROM_LOAD( "mtl-3.8a",    0xd000, 0x1000, 0x744b4b1c )
+	ROM_LOAD( "mtl-3.7a",    0xe000, 0x1000, 0xea8ec479 )
+	ROM_LOAD( "mtl-3.6a",    0xf000, 0x1000, 0xd72ba72d )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
+	ROM_LOAD( "mtl11d.bin",  0x0000, 0x0800, 0xc6e4d339 )
 
 	ROM_REGION(0x10000) /* 64k for audio */
-	ROM_LOAD( "mta5a.bin",    0x6800, 0x0800, 0xdbe4ec02 )
-	ROM_LOAD( "mta6a.bin",    0x7000, 0x0800, 0xc00f0c05 )
-	ROM_LOAD( "mta7a.bin",    0x7800, 0x0800, 0xf3f16ca7 )
-	ROM_RELOAD(            0xf800, 0x0800 )
+	ROM_LOAD( "mta5a.bin",   0x6800, 0x0800, 0xdbe4ec02 )
+	ROM_LOAD( "mta6a.bin",   0x7000, 0x0800, 0xc00f0c05 )
+	ROM_LOAD( "mta7a.bin",   0x7800, 0x0800, 0xf3f16ca7 )
+	ROM_RELOAD(              0xf800, 0x0800 )
 ROM_END
 
 ROM_START( mtrap4_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "mta411a.bin",   0xA000, 0x1000, 0x2879cb8d )
-	ROM_LOAD( "mta410a.bin",   0xB000, 0x1000, 0xd7378af9 )
-	ROM_LOAD( "mta49.bin",          0xC000, 0x1000, 0xbe667e64 )
-	ROM_LOAD( "mta48a.bin",          0xD000, 0x1000, 0xde0442f8 )
-	ROM_LOAD( "mta47a.bin",          0xE000, 0x1000, 0xcdf8c6a8 )
-	ROM_LOAD( "mta46a.bin",          0xF000, 0x1000, 0x77d3f2e6 )
+	ROM_LOAD( "mta411a.bin",  0xa000, 0x1000, 0x2879cb8d )
+	ROM_LOAD( "mta410a.bin",  0xb000, 0x1000, 0xd7378af9 )
+	ROM_LOAD( "mta49.bin",    0xc000, 0x1000, 0xbe667e64 )
+	ROM_LOAD( "mta48a.bin",   0xd000, 0x1000, 0xde0442f8 )
+	ROM_LOAD( "mta47a.bin",   0xe000, 0x1000, 0xcdf8c6a8 )
+	ROM_LOAD( "mta46a.bin",   0xf000, 0x1000, 0x77d3f2e6 )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mtl11d.bin",   0x0000, 0x0800, 0xc6e4d339 )
@@ -1349,19 +1350,19 @@ ROM_START( mtrap4_rom )
 	ROM_LOAD( "mta5a.bin",    0x6800, 0x0800, 0xdbe4ec02 )
 	ROM_LOAD( "mta6a.bin",    0x7000, 0x0800, 0xc00f0c05 )
 	ROM_LOAD( "mta7a.bin",    0x7800, 0x0800, 0xf3f16ca7 )
-	ROM_RELOAD(            0xf800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
 ROM_START( venture_rom )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "13a-cpu",      0x8000, 0x1000, 0xf4e4d991 )
 	ROM_LOAD( "12a-cpu",      0x9000, 0x1000, 0xc6d8cb04 )
-	ROM_LOAD( "11a-cpu",      0xA000, 0x1000, 0x3bdb01f4 )
-	ROM_LOAD( "10a-cpu",      0xB000, 0x1000, 0x0da769e9 )
-	ROM_LOAD( "9a-cpu",       0xC000, 0x1000, 0x0ae05855 )
-	ROM_LOAD( "8a-cpu",       0xD000, 0x1000, 0x4ae59676 )
-	ROM_LOAD( "7a-cpu",       0xE000, 0x1000, 0x48d66220 )
-	ROM_LOAD( "6a-cpu",       0xF000, 0x1000, 0x7b78cf49 )
+	ROM_LOAD( "11a-cpu",      0xa000, 0x1000, 0x3bdb01f4 )
+	ROM_LOAD( "10a-cpu",      0xb000, 0x1000, 0x0da769e9 )
+	ROM_LOAD( "9a-cpu",       0xc000, 0x1000, 0x0ae05855 )
+	ROM_LOAD( "8a-cpu",       0xd000, 0x1000, 0x4ae59676 )
+	ROM_LOAD( "7a-cpu",       0xe000, 0x1000, 0x48d66220 )
+	ROM_LOAD( "6a-cpu",       0xf000, 0x1000, 0x7b78cf49 )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
@@ -1372,19 +1373,19 @@ ROM_START( venture_rom )
 	ROM_LOAD( "5a-ac",        0x6800, 0x0800, 0x1e1e3916 )
 	ROM_LOAD( "6a-ac",        0x7000, 0x0800, 0x80f3357a )
 	ROM_LOAD( "7a-ac",        0x7800, 0x0800, 0x466addc7 )
-	ROM_RELOAD(        0xF800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
 ROM_START( venture2_rom )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "vent_a13.cpu", 0x8000, 0x1000, 0x4c833f99 )
 	ROM_LOAD( "vent_a12.cpu", 0x9000, 0x1000, 0x8163cefc )
-	ROM_LOAD( "vent_a11.cpu", 0xA000, 0x1000, 0x324a5054 )
-	ROM_LOAD( "vent_a10.cpu", 0xB000, 0x1000, 0x24358203 )
-	ROM_LOAD( "vent_a9.cpu",  0xC000, 0x1000, 0x04428165 )
-	ROM_LOAD( "vent_a8.cpu",  0xD000, 0x1000, 0x4c1a702a )
-	ROM_LOAD( "vent_a7.cpu",  0xE000, 0x1000, 0x1aab27c2 )
-	ROM_LOAD( "vent_a6.cpu",  0xF000, 0x1000, 0x767bdd71 )
+	ROM_LOAD( "vent_a11.cpu", 0xa000, 0x1000, 0x324a5054 )
+	ROM_LOAD( "vent_a10.cpu", 0xb000, 0x1000, 0x24358203 )
+	ROM_LOAD( "vent_a9.cpu",  0xc000, 0x1000, 0x04428165 )
+	ROM_LOAD( "vent_a8.cpu",  0xd000, 0x1000, 0x4c1a702a )
+	ROM_LOAD( "vent_a7.cpu",  0xe000, 0x1000, 0x1aab27c2 )
+	ROM_LOAD( "vent_a6.cpu",  0xf000, 0x1000, 0x767bdd71 )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "11d-cpu",      0x0000, 0x0800, 0xb4bb2503 )
@@ -1395,19 +1396,19 @@ ROM_START( venture2_rom )
 	ROM_LOAD( "5a-ac",        0x6800, 0x0800, 0x1e1e3916 )
 	ROM_LOAD( "6a-ac",        0x7000, 0x0800, 0x80f3357a )
 	ROM_LOAD( "7a-ac",        0x7800, 0x0800, 0x466addc7 )
-	ROM_RELOAD(        0xF800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
 ROM_START( venture4_rom )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "vel13a-4",     0x8000, 0x1000, 0x1c5448f9 )
 	ROM_LOAD( "vel12a-4",     0x9000, 0x1000, 0xe62491cc )
-	ROM_LOAD( "vel11a-4",     0xA000, 0x1000, 0xe91faeaf )
-	ROM_LOAD( "vel10a-4",     0xB000, 0x1000, 0xda3a2991 )
-	ROM_LOAD( "vel9a-4",      0xC000, 0x1000, 0xd1887b11 )
-	ROM_LOAD( "vel8a-4",      0xD000, 0x1000, 0x8e8153fc )
-	ROM_LOAD( "vel7a-4",      0xE000, 0x1000, 0x0a091701 )
-	ROM_LOAD( "vel6a-4",      0xF000, 0x1000, 0x7b165f67 )
+	ROM_LOAD( "vel11a-4",     0xa000, 0x1000, 0xe91faeaf )
+	ROM_LOAD( "vel10a-4",     0xb000, 0x1000, 0xda3a2991 )
+	ROM_LOAD( "vel9a-4",      0xc000, 0x1000, 0xd1887b11 )
+	ROM_LOAD( "vel8a-4",      0xd000, 0x1000, 0x8e8153fc )
+	ROM_LOAD( "vel7a-4",      0xe000, 0x1000, 0x0a091701 )
+	ROM_LOAD( "vel6a-4",      0xf000, 0x1000, 0x7b165f67 )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "vel11d-2",     0x0000, 0x0800, 0xea6fd981 )
@@ -1418,18 +1419,18 @@ ROM_START( venture4_rom )
 	ROM_LOAD( "5a-ac",        0x6800, 0x0800, 0x1e1e3916 )
 	ROM_LOAD( "6a-ac",        0x7000, 0x0800, 0x80f3357a )
 	ROM_LOAD( "7a-ac",        0x7800, 0x0800, 0x466addc7 )
-	ROM_RELOAD(          0xF800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
 ROM_START( pepper2_rom )
 	ROM_REGION(0x10000) /* 64k for code */
 	ROM_LOAD( "main_12a",     0x9000, 0x1000, 0x33db4737 )
-	ROM_LOAD( "main_11a",     0xA000, 0x1000, 0xa1f43b1f )
-	ROM_LOAD( "main_10a",     0xB000, 0x1000, 0x4d7d7786 )
-	ROM_LOAD( "main_9a",      0xC000, 0x1000, 0xb3362298 )
-	ROM_LOAD( "main_8a",      0xD000, 0x1000, 0x64d106ed )
-	ROM_LOAD( "main_7a",      0xE000, 0x1000, 0xb1c6f07c )
-	ROM_LOAD( "main_6a",      0xF000, 0x1000, 0x515b1046 )
+	ROM_LOAD( "main_11a",     0xa000, 0x1000, 0xa1f43b1f )
+	ROM_LOAD( "main_10a",     0xb000, 0x1000, 0x4d7d7786 )
+	ROM_LOAD( "main_9a",      0xc000, 0x1000, 0xb3362298 )
+	ROM_LOAD( "main_8a",      0xd000, 0x1000, 0x64d106ed )
+	ROM_LOAD( "main_7a",      0xe000, 0x1000, 0xb1c6f07c )
+	ROM_LOAD( "main_6a",      0xf000, 0x1000, 0x515b1046 )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "main_11d",     0x0000, 0x0800, 0xb25160cd )
@@ -1438,17 +1439,17 @@ ROM_START( pepper2_rom )
 	ROM_LOAD( "audio_5a",     0x6800, 0x0800, 0x90e3c781 )
 	ROM_LOAD( "audio_6a",     0x7000, 0x0800, 0xdd343e34 )
 	ROM_LOAD( "audio_7a",     0x7800, 0x0800, 0xe02b4356 )
-	ROM_RELOAD(           0xF800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
 ROM_START( hardhat_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "hhl-2.11a",    0xA000, 0x1000, 0x7623deea )
-	ROM_LOAD( "hhl-2.10a",    0xB000, 0x1000, 0xe6bf2fb1 )
-	ROM_LOAD( "hhl-2.9a",     0xC000, 0x1000, 0xacc2bce5 )
-	ROM_LOAD( "hhl-2.8a",     0xD000, 0x1000, 0x23c7a2f8 )
-	ROM_LOAD( "hhl-2.7a",     0xE000, 0x1000, 0x6f7ce1c2 )
-	ROM_LOAD( "hhl-2.6a",     0xF000, 0x1000, 0x2a20cf10 )
+	ROM_LOAD( "hhl-2.11a",    0xa000, 0x1000, 0x7623deea )
+	ROM_LOAD( "hhl-2.10a",    0xb000, 0x1000, 0xe6bf2fb1 )
+	ROM_LOAD( "hhl-2.9a",     0xc000, 0x1000, 0xacc2bce5 )
+	ROM_LOAD( "hhl-2.8a",     0xd000, 0x1000, 0x23c7a2f8 )
+	ROM_LOAD( "hhl-2.7a",     0xe000, 0x1000, 0x6f7ce1c2 )
+	ROM_LOAD( "hhl-2.6a",     0xf000, 0x1000, 0x2a20cf10 )
 
 	ROM_REGION_DISPOSE(0x0800) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "hhl-1.11d",    0x0000, 0x0800, 0xdbcdf353 )
@@ -1457,7 +1458,7 @@ ROM_START( hardhat_rom )
 	ROM_LOAD( "hha-1.5a",     0x6800, 0x0800, 0x16a5a183 )
 	ROM_LOAD( "hha-1.6a",     0x7000, 0x0800, 0xbde64021 )
 	ROM_LOAD( "hha-1.7a",     0x7800, 0x0800, 0x505ee5d3 )
-	ROM_RELOAD(           0xF800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
 ROM_START( fax_rom )
@@ -1499,13 +1500,13 @@ ROM_START( fax_rom )
 
 	ROM_REGION_DISPOSE(0x0800)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "fxl1-11d.32",  0x0000, 0x0800, 0x54fc873d )
-	ROM_CONTINUE(            0x0000, 0x0800 )       /* overwrite with the real one - should be a 2716? */
+	ROM_CONTINUE(             0x0000, 0x0800 )       /* overwrite with the real one - should be a 2716? */
 
 	ROM_REGION(0x10000) /* 64k for audio */
 	ROM_LOAD( "fxa2-5a.16",   0x6800, 0x0800, 0x7c525aec )
 	ROM_LOAD( "fxa2-6a.16",   0x7000, 0x0800, 0x2b3bfc44 )
 	ROM_LOAD( "fxa2-7a.16",   0x7800, 0x0800, 0x578c62b7 )
-	ROM_RELOAD(             0xF800, 0x0800 )
+	ROM_RELOAD(               0xf800, 0x0800 )
 ROM_END
 
 

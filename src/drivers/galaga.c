@@ -629,6 +629,34 @@ ROM_START( galaga84_rom )
 	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
 ROM_END
 
+ROM_START( nebulbee_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "nebulbee.01",  0x0000, 0x1000, 0xf405f2c4 )
+	ROM_LOAD( "nebulbee.02",  0x1000, 0x1000, 0x31022b60 )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
+	ROM_LOAD( "nebulbee.04",  0x3000, 0x1000, 0xd76788a5 )
+
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+ROM_END
+
 
 
 static const char *galaga_sample_names[] =
@@ -829,6 +857,32 @@ struct GameDriver galaga84_driver =
 	0,
 
 	galaga84_rom,
+	0, 0,
+	galaga_sample_names,
+	0,	/* sound_prom */
+
+	galaganm_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver nebulbee_driver =
+{
+	__FILE__,
+	&galaga_driver,
+	"nebulbee",
+	"Nebulous Bee",
+	"1984",
+	"hack",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	0,
+	&machine_driver,
+	0,
+
+	nebulbee_rom,
 	0, 0,
 	galaga_sample_names,
 	0,	/* sound_prom */

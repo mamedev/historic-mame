@@ -308,52 +308,52 @@ INPUT_PORTS_START( bzone_input_ports )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME(0x03, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING (   0x00, "2" )
-	PORT_DIPSETTING (   0x01, "3" )
-	PORT_DIPSETTING (   0x02, "4" )
-	PORT_DIPSETTING (   0x03, "5" )
+	PORT_DIPSETTING (  0x00, "2" )
+	PORT_DIPSETTING (  0x01, "3" )
+	PORT_DIPSETTING (  0x02, "4" )
+	PORT_DIPSETTING (  0x03, "5" )
 	PORT_DIPNAME(0x0c, 0x04, "Missile appears at" )
-	PORT_DIPSETTING (   0x00, "5000" )
-	PORT_DIPSETTING (   0x04, "10000" )
-	PORT_DIPSETTING (   0x08, "20000" )
-	PORT_DIPSETTING (   0x0c, "30000" )
-	PORT_DIPNAME(0x30, 0x10, "Bonus Tank" )
-	PORT_DIPSETTING (   0x00, "Never" )
-	PORT_DIPSETTING (   0x10, "15k and 100k" )
-	PORT_DIPSETTING (   0x20, "20k and 100k" )
-	PORT_DIPSETTING (   0x30, "50k and 100k" )
+	PORT_DIPSETTING (  0x00, "5000" )
+	PORT_DIPSETTING (  0x04, "10000" )
+	PORT_DIPSETTING (  0x08, "20000" )
+	PORT_DIPSETTING (  0x0c, "30000" )
+	PORT_DIPNAME(0x30, 0x10, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING (  0x10, "15k and 100k" )
+	PORT_DIPSETTING (  0x20, "20k and 100k" )
+	PORT_DIPSETTING (  0x30, "50k and 100k" )
+	PORT_DIPSETTING (  0x00, "None" )
 	PORT_DIPNAME(0xc0, 0x00, "Language" )
-	PORT_DIPSETTING (   0x00, "English" )
-	PORT_DIPSETTING (   0x40, "German" )
-	PORT_DIPSETTING (   0x80, "French" )
-	PORT_DIPSETTING (   0xc0, "Spanish" )
+	PORT_DIPSETTING (  0x00, "English" )
+	PORT_DIPSETTING (  0x40, "German" )
+	PORT_DIPSETTING (  0x80, "French" )
+	PORT_DIPSETTING (  0xc0, "Spanish" )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )
-	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING (   0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x04, "*4" )
-	PORT_DIPSETTING (   0x08, "*5" )
-	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME(0x10, 0x00, "Left Coin" )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x10, "*2" )
+	PORT_DIPSETTING (  0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (  0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (  0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x04, "*4" )
+	PORT_DIPSETTING (  0x08, "*5" )
+	PORT_DIPSETTING (  0x0c, "*6" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x10, "*2" )
 	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
+	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (  0x80, "6 credits/5 coins" )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_2WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_2WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_2WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP   | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP    | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
@@ -361,9 +361,9 @@ INPUT_PORTS_START( bzone_input_ports )
 
 	PORT_START	/* fake port for single joystick control */
 	/* This fake port is handled via bzone_IN3_r */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_CHEAT )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_CHEAT )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_CHEAT )
 INPUT_PORTS_END
@@ -428,30 +428,30 @@ INPUT_PORTS_START( redbaron_input_ports )
 	PORT_START	/* DSW0 */
 	/* See the table above if you are really interested */
 	PORT_DIPNAME(0xff, 0xfd, DEF_STR( Coinage ) )
-	PORT_DIPSETTING (   0xfd, "Normal" )
+	PORT_DIPSETTING (  0xfd, "Normal" )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME(0x03, 0x03, "Language" )
-	PORT_DIPSETTING (   0x00, "German" )
-	PORT_DIPSETTING (   0x01, "French" )
-	PORT_DIPSETTING (   0x02, "Spanish" )
-	PORT_DIPSETTING (   0x03, "English" )
-	PORT_DIPNAME(0x0c, 0x04, "Bonus Plane" )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x04, "6K 20K 50K" )
-	PORT_DIPSETTING (   0x08, "4K 15K 40K" )
-	PORT_DIPSETTING (   0x0c, "2K 10K 30K" )
+	PORT_DIPSETTING (  0x00, "German" )
+	PORT_DIPSETTING (  0x01, "French" )
+	PORT_DIPSETTING (  0x02, "Spanish" )
+	PORT_DIPSETTING (  0x03, "English" )
+	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING (  0x0c, "2k 10k 30k" )
+	PORT_DIPSETTING (  0x08, "4k 15k 40k" )
+	PORT_DIPSETTING (  0x04, "6k 20k 50k" )
+	PORT_DIPSETTING (  0x00, "None" )
 	PORT_DIPNAME(0x30, 0x20, DEF_STR( Lives ) )
-	PORT_DIPSETTING (   0x00, "5" )
-	PORT_DIPSETTING (   0x10, "4" )
-	PORT_DIPSETTING (   0x20, "3" )
-	PORT_DIPSETTING (   0x30, "2" )
+	PORT_DIPSETTING (  0x30, "2" )
+	PORT_DIPSETTING (  0x20, "3" )
+	PORT_DIPSETTING (  0x10, "4" )
+	PORT_DIPSETTING (  0x00, "5" )
 	PORT_DIPNAME(0x40, 0x40, "One Play Minimum" )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
-	PORT_DIPSETTING (   0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x80, 0x80, "Self Adjust Diff" )
-	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
-	PORT_DIPSETTING (   0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( On ) )
 
 	/* IN3 - the real machine reads either the X or Y axis from this port */
 	/* Instead, we use the two fake 5 & 6 ports and bank-switch the proper */
@@ -470,10 +470,10 @@ INPUT_PORTS_START( redbaron_input_ports )
 	/* These 2 are fake - they are bank-switched from reads to IN3 */
 	/* Red Baron doesn't seem to use the full 0-255 range. */
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 25, 0, 64, 192 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 25, 10, 0, 64, 192 )
 
 	PORT_START	/* IN6 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 25, 0, 64, 192 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 25, 10, 0, 64, 192 )
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -629,30 +629,30 @@ static const char *bzone_sample_names[] =
 
 ROM_START( bzone_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036414.01",    0x5000, 0x0800, 0xefbc3fa0 )
-	ROM_LOAD( "036413.01",    0x5800, 0x0800, 0x5d9d9111 )
-	ROM_LOAD( "036412.01",    0x6000, 0x0800, 0xab55cbd2 )
-	ROM_LOAD( "036411.01",    0x6800, 0x0800, 0xad281297 )
-	ROM_LOAD( "036410.01",    0x7000, 0x0800, 0x0b7bfaa4 )
-	ROM_LOAD( "036409.01",    0x7800, 0x0800, 0x1e14e919 )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "036414.01",  0x5000, 0x0800, 0xefbc3fa0 )
+	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
+	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
+	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xad281297 )
+	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x0b7bfaa4 )
+	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x1e14e919 )
+	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01",    0x3000, 0x0800, 0x7414177b )
-	ROM_LOAD( "036421.01",    0x3800, 0x0800, 0x8ea8f939 )
+	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x7414177b )
+	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x8ea8f939 )
 ROM_END
 
 ROM_START( bzone2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036414a.01",   0x5000, 0x0800, 0x13de36d5 )
-	ROM_LOAD( "036413.01",    0x5800, 0x0800, 0x5d9d9111 )
-	ROM_LOAD( "036412.01",    0x6000, 0x0800, 0xab55cbd2 )
-	ROM_LOAD( "036411.01",    0x6800, 0x0800, 0xad281297 )
-	ROM_LOAD( "036410.01",    0x7000, 0x0800, 0x0b7bfaa4 )
-	ROM_LOAD( "036409.01",    0x7800, 0x0800, 0x1e14e919 )
+	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x13de36d5 )
+	ROM_LOAD( "036413.01",  0x5800, 0x0800, 0x5d9d9111 )
+	ROM_LOAD( "036412.01",  0x6000, 0x0800, 0xab55cbd2 )
+	ROM_LOAD( "036411.01",  0x6800, 0x0800, 0xad281297 )
+	ROM_LOAD( "036410.01",  0x7000, 0x0800, 0x0b7bfaa4 )
+	ROM_LOAD( "036409.01",  0x7800, 0x0800, 0x1e14e919 )
 	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01",    0x3000, 0x0800, 0x7414177b )
-	ROM_LOAD( "036421.01",    0x3800, 0x0800, 0x8ea8f939 )
+	ROM_LOAD( "036422.01",  0x3000, 0x0800, 0x7414177b )
+	ROM_LOAD( "036421.01",  0x3800, 0x0800, 0x8ea8f939 )
 ROM_END
 
 
@@ -662,7 +662,7 @@ struct GameDriver bzone_driver =
 	__FILE__,
 	0,
 	"bzone",
-	"Battle Zone",
+	"Battle Zone (set 1)",
 	"1980",
 	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
@@ -688,7 +688,7 @@ struct GameDriver bzone2_driver =
 	__FILE__,
 	&bzone_driver,
 	"bzone2",
-	"Battle Zone (alternate version)",
+	"Battle Zone (set 2)",
 	"1980",
 	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
@@ -797,17 +797,17 @@ static const char *redbaron_sample_names[] =
 
 ROM_START( redbaron_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "037587.01",    0x4800, 0x0800, 0x60f23983 )
+	ROM_LOAD( "037587.01",  0x4800, 0x0800, 0x60f23983 )
 	ROM_CONTINUE(           0x5800, 0x0800 )
-	ROM_LOAD( "037000.01e",   0x5000, 0x0800, 0x69bed808 )
-	ROM_LOAD( "036998.01e",   0x6000, 0x0800, 0xd1104dd7 )
-	ROM_LOAD( "036997.01e",   0x6800, 0x0800, 0x7434acb4 )
-	ROM_LOAD( "036996.01e",   0x7000, 0x0800, 0xc0e7589e )
-	ROM_LOAD( "036995.01e",   0x7800, 0x0800, 0xad81d1da )
+	ROM_LOAD( "037000.01e", 0x5000, 0x0800, 0x69bed808 )
+	ROM_LOAD( "036998.01e", 0x6000, 0x0800, 0xd1104dd7 )
+	ROM_LOAD( "036997.01e", 0x6800, 0x0800, 0x7434acb4 )
+	ROM_LOAD( "036996.01e", 0x7000, 0x0800, 0xc0e7589e )
+	ROM_LOAD( "036995.01e", 0x7800, 0x0800, 0xad81d1da )
 	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "037006.01e",   0x3000, 0x0800, 0x9fcffea0 )
-	ROM_LOAD( "037007.01e",   0x3800, 0x0800, 0x60250ede )
+	ROM_LOAD( "037006.01e", 0x3000, 0x0800, 0x9fcffea0 )
+	ROM_LOAD( "037007.01e", 0x3800, 0x0800, 0x60250ede )
 ROM_END
 
 struct GameDriver redbaron_driver =

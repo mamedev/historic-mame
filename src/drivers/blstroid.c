@@ -113,11 +113,14 @@ static void init_machine(void)
 
 	atarigen_interrupt_init(update_interrupts, blstroid_scanline_update);
 	ataraud2_init(1, 4, 2, 0x80);
-	
+
 	blstroid_irq_state = 0;
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
+
+	/* display messages */
+	atarigen_show_sound_message();
 }
 
 
@@ -190,11 +193,11 @@ static struct MemoryWriteAddress main_writemem[] =
 
 INPUT_PORTS_START( blstroid_ports )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 100, 0xff, 0, 0 )
+	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 60, 10, 0xff, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 100, 0xff, 0, 0 )
+	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 60, 10, 0xff, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START		/* DSW */

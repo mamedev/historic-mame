@@ -284,7 +284,7 @@ INPUT_PORTS_START( GAMENAME##_input_ports )										\
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )									\
 																				\
 	PORT_START	/* IN2 */														\
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )  \
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )  \
 	/* The lower 4 bits are the input, and bit 7 is the direction. */			\
 	/* The state of bit 7 does not change if the trackball is not moved.*/		\
 																				\
@@ -344,7 +344,7 @@ INPUT_PORTS_START( GAMENAME##_input_ports )										\
 	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )								\
 																				\
 	PORT_START	/* IN6, fake trackball input port. */							\
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )	\
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )	\
 INPUT_PORTS_END
 
 PORTS(centiped, "Spanish")

@@ -473,11 +473,11 @@ static struct MachineDriver pacnpal_machine_driver =
 
 ROM_START( superpac_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, 0x1a38c30e )
-	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, 0x730e95a9 )
+	ROM_LOAD( "sp1.2",        0xc000, 0x2000, 0x4bb33d9c )
+	ROM_LOAD( "sp1.1",        0xe000, 0x2000, 0x846fbb4a )
 
 	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spv-1.3c",     0x0000, 0x1000, 0x78337e74 )
+	ROM_LOAD( "sp1.6",        0x0000, 0x1000, 0x91c5935c )
 	ROM_LOAD( "spv-2.3f",     0x1000, 0x2000, 0x670a42f2 )
 
 	ROM_REGION(0x0220)	/* color proms */
@@ -492,13 +492,13 @@ ROM_START( superpac_rom )
 	ROM_LOAD( "superpac.3m",  0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-ROM_START( superpcn_rom )
+ROM_START( superpcm_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sp1.2",        0xc000, 0x2000, 0x4bb33d9c )
-	ROM_LOAD( "sp1.1",        0xe000, 0x2000, 0x846fbb4a )
+	ROM_LOAD( "spc-2.1c",     0xc000, 0x2000, 0x1a38c30e )
+	ROM_LOAD( "spc-1.1b",     0xe000, 0x2000, 0x730e95a9 )
 
 	ROM_REGION_DISPOSE(0x3000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sp1.6",        0x0000, 0x1000, 0x91c5935c )
+	ROM_LOAD( "spv-1.3c",     0x0000, 0x1000, 0x78337e74 )
 	ROM_LOAD( "spv-2.3f",     0x1000, 0x2000, 0x670a42f2 )
 
 	ROM_REGION(0x0220)	/* color proms */
@@ -661,9 +661,9 @@ struct GameDriver superpac_driver =
 	__FILE__,
 	0,
 	"superpac",
-	"Super Pac-Man (Midway)",
+	"Super Pac-Man",
 	"1982",
-	"[Namco] (Bally Midway license)",
+	"Namco",
 	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
 	0,
 	&superpac_machine_driver, /* MachineDriver */
@@ -684,20 +684,20 @@ struct GameDriver superpac_driver =
 	superpac_hiload, superpac_hisave /* hi score save/load */
 };
 
-struct GameDriver superpcn_driver =
+struct GameDriver superpcm_driver =
 {
 	__FILE__,
 	&superpac_driver,
-	"superpcn",
-	"Super Pac-Man (Namco)",
+	"superpcm",
+	"Super Pac-Man (Midway)",
 	"1982",
-	"Namco",
+	"[Namco] (Bally Midway license)",
 	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
 	0,
 	&superpac_machine_driver, /* MachineDriver */
 	0,
 
-	superpcn_rom,             /* RomModule */
+	superpcm_rom,             /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
 	0,                        /* samplenames */
 	0,                        /* sound_prom */

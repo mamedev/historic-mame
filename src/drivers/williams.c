@@ -1256,10 +1256,10 @@ INPUT_PORTS_START( sinistar_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 0, 0x00, 0x6f )
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 10, 0, 0x00, 0x6f )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0x00, 0x6f )
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0, 0x00, 0x6f )
 INPUT_PORTS_END
 
 
@@ -1363,10 +1363,10 @@ INPUT_PORTS_START( blaster_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 0, 0x00, 0x6f )
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_X, 100, 10, 0, 0x00, 0x6f )
 
 	PORT_START	/* fake, converted by sinistar_input_port_0() */
-	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0x00, 0x6f )
+	PORT_ANALOG ( 0xff, 0x38, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0, 0x00, 0x6f )
 INPUT_PORTS_END
 
 
@@ -1463,7 +1463,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( tshoot_input_ports )
 
 	PORT_START	/* IN0 (muxed with IN3)*/
-	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_Y, 25, 0, 0, 0x3F)
+	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_Y, 25, 10, 0, 0, 0x3F)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BITX(0x80, IP_ACTIVE_LOW,  IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
@@ -1485,7 +1485,7 @@ INPUT_PORTS_START( tshoot_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN3 (muxed with IN0) */
-   	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_X, 25, 0, 0, 0x3F)
+   	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_X, 25, 10, 0, 0, 0x3F)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BITX(0x80, IP_ACTIVE_LOW,  IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
@@ -1661,7 +1661,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3579545,	/* 3.579545 MHz? */
-	{ 20 },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ joust2_ym2151_int },
 	{ 0 }
 };
@@ -2584,7 +2584,7 @@ static struct MachineDriver joust2_machine_driver =
 	williams_vh_screenrefresh,			/* vh_update routine */
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_DAC,
@@ -4081,7 +4081,7 @@ ROM_START( defence_rom )
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the sound CPU */
-    ROM_LOAD( "12",           0xf800, 0x0800, 0xf122d9c9 )
+    ROM_LOAD( "defcmnda.snd", 0xf800, 0x0800, 0xf122d9c9 )
 ROM_END
 
 

@@ -2583,7 +2583,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				}
                 break;
 #endif
-#if (HAS_8085)
+#if (HAS_8085A)
             case CPU_8085A:
 				switch (num)
 				{

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  vidhrdw/atarisy1.c
+  vidhrdw/blstroid.c
 
   Functions to emulate the video hardware of the machine.
 
@@ -247,6 +247,9 @@ void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* render the motion objects */
 	atarigen_mo_process(mo_render_callback, bitmap);
+
+	/* update onscreen messages */
+	atarigen_update_messages();
 }
 
 

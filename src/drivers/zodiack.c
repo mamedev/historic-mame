@@ -485,7 +485,7 @@ struct GameDriver dogfight_driver =
 	__FILE__,
 	0,
 	"dogfight",
-	"Dogfight",
+	"Dog Fight",
 	"1983",
 	"[Orca] Thunderbolt",
 	"Zsolt Vasvari",

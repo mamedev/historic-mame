@@ -247,6 +247,9 @@ int NES_num(const struct MachineSound *msound) { return ((struct NESinterface*)m
 int SN76496_clock(const struct MachineSound *msound) { return ((struct SN76496interface*)msound->sound_interface)->baseclock; }
 int SN76496_num(const struct MachineSound *msound) { return ((struct SN76496interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_MSM5205)
+int MSM5205_clock(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->baseclock; }
+#endif
 #if (HAS_UPD7759)
 int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_interface*)msound->sound_interface)->clock_rate; }
 #endif
@@ -572,11 +575,11 @@ struct snd_interface sndintf[] =
 		SOUND_MSM5205,
 		"MSM5205",
 		MSM5205_num,
-		0,
+		MSM5205_clock,
 		MSM5205_sh_start,
-		MSM5205_sh_stop,
-		MSM5205_sh_update,
-		0
+		0,
+		0,
+		MSM5205_sh_reset,
 	},
 #endif
 #if (HAS_UPD7759)

@@ -72,12 +72,12 @@ extern void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 	/* CPU 1 (MAIN CPU) read addresses */
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_r, &videoram, &videoram_size },			/* video RAM */
+	{ 0x0000, 0x03ff, videoram_r },			/* video RAM */
 	{ 0x0400, 0x07ff, colorram_r },										/* color RAM */
-	{ 0x0800, 0x1fff, phozon_spriteram_r, &phozon_spriteram },			/* shared RAM with CPU #2/sprite RAM*/
-	{ 0x4040, 0x43ff, phozon_snd_sharedram_r, &phozon_snd_sharedram },  /* shared RAM with CPU #3 */
-	{ 0x4800, 0x480f, phozon_customio_r_1, &phozon_customio_1 },		/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, phozon_customio_r_2, &phozon_customio_2 },		/* custom I/O chip #2 interface */
+	{ 0x0800, 0x1fff, phozon_spriteram_r },			/* shared RAM with CPU #2/sprite RAM*/
+	{ 0x4040, 0x43ff, phozon_snd_sharedram_r },  /* shared RAM with CPU #3 */
+	{ 0x4800, 0x480f, phozon_customio_r_1 },		/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, phozon_customio_r_2 },		/* custom I/O chip #2 interface */
 	{ 0x8000, 0xffff, MRA_ROM },										/* ROM */
 	{ -1 }																/* end of table */
 };
@@ -85,13 +85,13 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	/* CPU 1 (MAIN CPU) write addresses */
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_w },				/* video RAM */
+	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_w, &colorram },  /* color RAM */
-	{ 0x0800, 0x1fff, phozon_spriteram_w },		/* shared RAM with CPU #2/sprite RAM*/
+	{ 0x0800, 0x1fff, phozon_spriteram_w, &phozon_spriteram },		/* shared RAM with CPU #2/sprite RAM*/
 	{ 0x4000, 0x403f, MWA_RAM },				/* initialized but probably unused */
-	{ 0x4040, 0x43ff, phozon_snd_sharedram_w }, /* shared RAM with CPU #3 */
-	{ 0x4800, 0x480f, phozon_customio_w_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, phozon_customio_w_2 },	/* custom I/O chip #2 interface */
+	{ 0x4040, 0x43ff, phozon_snd_sharedram_w, &phozon_snd_sharedram }, /* shared RAM with CPU #3 */
+	{ 0x4800, 0x480f, phozon_customio_w_1, &phozon_customio_1 },	/* custom I/O chip #1 interface */
+	{ 0x4810, 0x481f, phozon_customio_w_2, &phozon_customio_2 },	/* custom I/O chip #2 interface */
 	{ 0x4820, 0x483f, MWA_RAM },				/* initialized but probably unused */
 	{ 0x5000, 0x5007, MWA_NOP },				/* ??? */
 	{ 0x5008, 0x5008, phozon_cpu3_reset_w },	/* reset SOUND CPU? */
@@ -238,11 +238,23 @@ static struct GfxLayout spritelayout =
 	64*8                                           /* every sprite takes 64 bytes */
 };
 
+static struct GfxLayout spritelayout8 =
+{
+	8,8,                                         /* 16*16 sprites */
+	512,                                           /* 128 sprites */
+	2,                                             /* 2 bits per pixel */
+	{ 0, 4 },
+	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	16*8                                           /* every sprite takes 64 bytes */
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,		0, 64 },
 	{ 1, 0x1000, &charlayout,		0, 64 },
 	{ 1, 0x2000, &spritelayout,	 64*4, 64 },
+	{ 1, 0x2000, &spritelayout8, 64*4, 64 },
 	{ -1 } /* end of table */
 };
 

@@ -49,7 +49,7 @@ Weaknesses:
   swap_key2. If there is a long stream of 0x00 or 0xff in the original data,
   this can be used to find by brute force all the candidates for swap_key1,
   xor_key, and for the low 8 bits of addr_key. This is a serious weakness
-  which dramatically reduces the security of the encrytion.
+  which dramatically reduces the security of the encryption.
 - A 0x00 is always encrypted as a byte with as many 1s as xor_key; a 0xff is
   always encrypted as a byte with as many 0s as xor_key has 1s. So you just
   need to know one 0x00 or 0xff in the unencrypted data to know how many 1s
@@ -63,18 +63,27 @@ Weaknesses:
 
 
 Known games:
-                                       swap_key1  swap_key2  addr_key  xor_key
-Pang / Buster Bros                     32104567   76540123     6548      24
-Capcom World                                          unknown
-Adventure Quiz 2 Hatena no Dai-Bouken  76540123   45673210     5751      43
-Super Pang                             76540123   45673210     5852      43
-Super Buster Bros                      76540123   45673210     2130      12
-Quiz Tonosama no Yabou                 43215670   12340765     1111      11
-Block Block                            64201357   64201357     0002      01
-Warriors of Fate                       32104567   54162703     5151      51
-Cadillacs and Dinosaurs                45673210   24607531     4343      43
-Punisher                               54762103   75314206     2222      22
-Slam Masters                           23451076   65437012     3131      19
+                                         swap_key1 swap_key2 addr_key xor_key
+Mahjong Gakuen 2 Gakuen-chou no Fukushuu &
+  Poker Ladies                           76543210  01234567    aa55     a5
+Pang / Buster Bros                       01234567  76543210    6548     24
+Dokaben                                               unknown
+Dokaben 2                                             unknown
+Capcom Baseball                                       unknown
+Capcom World                             04152637  40516273    5751     43
+Adventure Quiz 2 Hatena ? no Dai-Bouken  45670123  45670123    5751     43
+Super Pang                               45670123  45670123    5852     43
+Super Buster Bros                        45670123  45670123    2130     12
+Super Marukin-Ban                        54321076  54321076    4854     4f
+Quiz Tonosama no Yabou                   12345670  12345670    1111     11
+Ashita Tenki ni Naare                                 unknown
+Quiz Sangokushi                          23456701  23456701    1828     18
+Block Block                              02461357  64207531    0002     01
+
+Warriors of Fate                         01234567  54163072    5151     51
+Cadillacs and Dinosaurs                  76543210  24601357    4343     43
+Punisher                                 67452103  75316024    2222     22
+Slam Masters                             54321076  65432107    3131     19
 
 ***************************************************************************/
 
@@ -82,7 +91,7 @@ Slam Masters                           23451076   65437012     3131      19
 
 
 
-static int bitswap(int src,int key,int select)
+static int bitswap1(int src,int key,int select)
 {
 	if (select & (1 << ((key >> 0) & 7)))
 		src = (src & 0xfc) | ((src & 0x01) << 1) | ((src & 0x02) >> 1);
@@ -96,16 +105,30 @@ static int bitswap(int src,int key,int select)
 	return src;
 }
 
+static int bitswap2(int src,int key,int select)
+{
+	if (select & (1 << ((key >>12) & 7)))
+		src = (src & 0xfc) | ((src & 0x01) << 1) | ((src & 0x02) >> 1);
+	if (select & (1 << ((key >> 8) & 7)))
+		src = (src & 0xf3) | ((src & 0x04) << 1) | ((src & 0x08) >> 1);
+	if (select & (1 << ((key >> 4) & 7)))
+		src = (src & 0xcf) | ((src & 0x10) << 1) | ((src & 0x20) >> 1);
+	if (select & (1 << ((key >> 0) & 7)))
+		src = (src & 0x3f) | ((src & 0x40) << 1) | ((src & 0x80) >> 1);
+
+	return src;
+}
+
 static int bytedecode(int src,int swap_key1,int swap_key2,int xor_key,int select)
 {
-	src = bitswap(src,swap_key1 & 0xffff,select & 0xff);
+	src = bitswap1(src,swap_key1 & 0xffff,select & 0xff);
 	src = ((src & 0x7f) << 1) | ((src & 0x80) >> 7);
-	src = bitswap(src,swap_key1 >> 16,select & 0xff);
+	src = bitswap2(src,swap_key1 >> 16,select & 0xff);
 	src ^= xor_key;
 	src = ((src & 0x7f) << 1) | ((src & 0x80) >> 7);
-	src = bitswap(src,swap_key2 & 0xffff,select >> 8);
+	src = bitswap2(src,swap_key2 & 0xffff,select >> 8);
 	src = ((src & 0x7f) << 1) | ((src & 0x80) >> 7);
-	src = bitswap(src,swap_key2 >> 16,select >> 8);
+	src = bitswap1(src,swap_key2 >> 16,select >> 8);
 	return src;
 }
 
@@ -128,86 +151,37 @@ void kabuki_decode(unsigned char *src,unsigned char *dest_op,unsigned char *dest
 }
 
 
-extern int encrypted_cpu;
 
-void bbros_decode(void)
+void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
 	int i;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x32104567,0x76540123,0x6548,0x24);
-	for (i = 0x10000;i < 0x30000;i += 0x4000)
-		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x32104567,0x76540123,0x6548,0x24);
-}
-
-void hatena_decode(void)
-{
-	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x76540123,0x45673210,0x5751,0x43);
+	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
 	for (i = 0x10000;i < 0x50000;i += 0x4000)
-		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x76540123,0x45673210,0x5751,0x43);
+		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
 }
 
-void spang_decode(void)
-{
-	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x76540123,0x45673210,0x5852,0x43);
-	for (i = 0x10000;i < 0x50000;i += 0x4000)
-		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x76540123,0x45673210,0x5852,0x43);
-}
+void mgakuen2_decode(void) { mitchell_decode(0x76543210,0x01234567,0xaa55,0xa5); }
+void bbros_decode(void)    { mitchell_decode(0x01234567,0x76543210,0x6548,0x24); }
+void cworld_decode(void)   { mitchell_decode(0x04152637,0x40516273,0x5751,0x43); }
+void hatena_decode(void)   { mitchell_decode(0x45670123,0x45670123,0x5751,0x43); }
+void spang_decode(void)    { mitchell_decode(0x45670123,0x45670123,0x5852,0x43); }
+void sbbros_decode(void)   { mitchell_decode(0x45670123,0x45670123,0x2130,0x12); }
+void marukin_decode(void)  { mitchell_decode(0x54321076,0x54321076,0x4854,0x4f); }
+void qtono1_decode(void)   { mitchell_decode(0x12345670,0x12345670,0x1111,0x11); }
+void qsangoku_decode(void) { mitchell_decode(0x23456701,0x23456701,0x1828,0x18); }
+void block_decode(void)    { mitchell_decode(0x02461357,0x64207531,0x0002,0x01); }
 
-void sbbros_decode(void)
-{
-	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x76540123,0x45673210,0x2130,0x12);
-	for (i = 0x10000;i < 0x50000;i += 0x4000)
-		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x76540123,0x45673210,0x2130,0x12);
-}
 
-void qtono1_decode(void)
+void cps1_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
-	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x43215670,0x12340765,0x1111,0x11);
-	for (i = 0x10000;i < 0x50000;i += 0x4000)
-		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x43215670,0x12340765,0x1111,0x11);
-}
-
-void block_decode(void)
-{
-	int i;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x64201357,0x64201357,0x0002,0x01);
-	for (i = 0x10000;i < 0x50000;i += 0x4000)
-		kabuki_decode(RAM+i,ROM+i,RAM+i,0x8000,0x4000, 0x64201357,0x64201357,0x0002,0x01);
-}
-
-void wof_decode(void)
-{
+	extern int encrypted_cpu;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	encrypted_cpu = 1;
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x32104567,0x54162703,0x5151,0x51);
+	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
 }
 
-void dino_decode(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	encrypted_cpu = 1;
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x45673210,0x24607531,0x4343,0x43);
-}
-
-void punisher_decode(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	encrypted_cpu = 1;
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x54762103,0x75314206,0x2222,0x22);
-}
-
-void slammast_decode(void)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-	encrypted_cpu = 1;
-	kabuki_decode(RAM,ROM,RAM,0x0000,0x8000, 0x23451076,0x65437012,0x3131,0x19);
-}
+void wof_decode(void)      { cps1_decode(0x01234567,0x54163072,0x5151,0x51); }
+void dino_decode(void)     { cps1_decode(0x76543210,0x24601357,0x4343,0x43); }
+void punisher_decode(void) { cps1_decode(0x67452103,0x75316024,0x2222,0x22); }
+void slammast_decode(void) { cps1_decode(0x54321076,0x65432107,0x3131,0x19); }

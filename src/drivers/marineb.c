@@ -21,8 +21,8 @@ write:
 9a00      ??? (set to 0 at beginning)
 9c00      ???
 a000      NMI interrupt acknowledge/enable
-a001      flipx or flipy \ always set together (not implemented)
-a002      flipx or flipy /
+a001      flipy
+a002      flipx
 b800	  ???
 
 
@@ -39,14 +39,31 @@ write
 
 
 extern unsigned char *marineb_column_scroll;
+extern int marineb_active_low_flipscreen;
 
 void espial_init_machine(void);
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+
+void marineb_flipscreen_x_w(int offset, int data);
+void marineb_flipscreen_y_w(int offset, int data);
 
 void marineb_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void changes_vh_screenrefresh (struct osd_bitmap *bitmap,int full_refresh);
 void springer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void hoccer_vh_screenrefresh  (struct osd_bitmap *bitmap,int full_refresh);
+
+
+static void marineb_init_machine(void)
+{
+	marineb_active_low_flipscreen = 0;
+	espial_init_machine();
+}
+
+static void springer_init_machine(void)
+{
+	marineb_active_low_flipscreen = 1;
+	espial_init_machine();
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -70,26 +87,37 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9000, 0x93ff, colorram_w, &colorram },
 	{ 0x9800, 0x9800, MWA_RAM, &marineb_column_scroll },
 	{ 0xa000, 0xa000, interrupt_enable_w },
+	{ 0xa001, 0xa001, marineb_flipscreen_y_w },
+	{ 0xa002, 0xa002, marineb_flipscreen_x_w },
 	{ 0xb800, 0xb800, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
 
-static struct IOWritePort writeport[] =
+static struct IOWritePort marineb_writeport[] =
 {
 	{ 0x08, 0x08, AY8910_control_port_0_w },
 	{ 0x09, 0x09, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
+static struct IOWritePort wanted_writeport[] =
+{
+	{ 0x00, 0x00, AY8910_control_port_0_w },
+	{ 0x01, 0x01, AY8910_write_port_0_w },
+	{ 0x02, 0x02, AY8910_control_port_1_w },
+	{ 0x03, 0x03, AY8910_write_port_1_w },
+	{ -1 }  /* end of table */
+};
+
 
 INPUT_PORTS_START( marineb_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x3c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -129,17 +157,17 @@ INPUT_PORTS_START( marineb_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( changes_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x3c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -182,11 +210,11 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( hoccer_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x3c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -196,11 +224,12 @@ INPUT_PORTS_START( hoccer_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Unknown ) )  /* 4 cabinet types? */
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Unknown ) )  /* difficulty maybe? */
 	PORT_DIPSETTING(    0x00, "0" )
 	PORT_DIPSETTING(    0x04, "1" )
@@ -223,15 +252,93 @@ INPUT_PORTS_START( hoccer_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( wanted_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_COIN1 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0xf0, 0x10, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, " A 3C/1C  B 3C/1C" )
+	PORT_DIPSETTING(    0xe0, " A 3C/1C  B 1C/2C" )
+	PORT_DIPSETTING(    0xf0, " A 3C/1C  B 1C/4C" )
+	PORT_DIPSETTING(    0x20, " A 2C/1C  B 2C/1C" )
+	PORT_DIPSETTING(    0xd0, " A 2C/1C  B 1C/1C" )
+	PORT_DIPSETTING(    0x70, " A 2C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0xb0, " A 2C/1C  B 1C/5C" )
+	PORT_DIPSETTING(    0xc0, " A 2C/1C  B 1C/6C" )
+	PORT_DIPSETTING(    0x60, " A 1C/1C  B 4C/1C" )
+	PORT_DIPSETTING(    0x50, " A 1C/1C  B 2C/1C" )
+	PORT_DIPSETTING(    0x10, " A 1C/1C  B 1C/1C" )
+	PORT_DIPSETTING(    0x30, " A 1C/2C  B 1C/2C" )
+	PORT_DIPSETTING(    0xa0, " A 1C/1C  B 1C/3C" )
+	PORT_DIPSETTING(    0x80, " A 1C/1C  B 1C/5C" )
+	PORT_DIPSETTING(    0x90, " A 1C/1C  B 1C/6C" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
+	1024,	/* 1024 characters */
 	2,	    /* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },	/* bits are packed in groups of four */
@@ -303,32 +410,44 @@ static struct GfxLayout changes_big_spritelayout =
 static struct GfxDecodeInfo marineb_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,                  0, 16 },
-	{ 1, 0x2000, &marineb_small_spritelayout,  0, 64 },
-	{ 1, 0x2000, &marineb_big_spritelayout,    0, 64 },
+	{ 1, 0x4000, &marineb_small_spritelayout,  0, 64 },
+	{ 1, 0x4000, &marineb_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo changes_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,                  0, 16 },
-	{ 1, 0x2000, &changes_small_spritelayout,  0, 64 },
-	{ 1, 0x3000, &changes_big_spritelayout,    0, 64 },
+	{ 1, 0x4000, &changes_small_spritelayout,  0, 64 },
+	{ 1, 0x5000, &changes_big_spritelayout,    0, 64 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo hoccer_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,                  0, 16 },
-	{ 1, 0x2000, &changes_small_spritelayout,  0, 64 },
+	{ 1, 0x4000, &changes_small_spritelayout,  0, 64 },
 	{ -1 } /* end of array */
 };
 
 
-static struct AY8910interface ay8910_interface =
+static struct AY8910interface marineb_ay8910_interface =
 {
 	1,	/* 1 chip */
-	1500000,	/* 1.5 MHZ?????? */
+	1500000,	/* 1.5 MHz ? */
 	{ 50 },
+	AY8910_DEFAULT_GAIN,
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct AY8910interface wanted_ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz ? */
+	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -338,8 +457,11 @@ static struct AY8910interface ay8910_interface =
 
 
 #define springer_gfxdecodeinfo  marineb_gfxdecodeinfo
+#define wanted_gfxdecodeinfo    marineb_gfxdecodeinfo
 
-#define DRIVER(NAME)												\
+#define wanted_vh_screenrefresh  springer_vh_screenrefresh
+
+#define DRIVER(NAME, INITMACHINE, SNDHRDW, INTERRUPT, CONVERT)		\
 static struct MachineDriver NAME##_machine_driver =					\
 {																	\
 	/* basic machine hardware */									\
@@ -348,19 +470,19 @@ static struct MachineDriver NAME##_machine_driver =					\
 			CPU_Z80,												\
 			3072000,	/* 3.072 Mhz */								\
 			0,														\
-			readmem,writemem,0,writeport,							\
-			nmi_interrupt,1											\
+			readmem,writemem,0,SNDHRDW##_writeport,					\
+			INTERRUPT,1	 	                                        \
 		}															\
 	},																\
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
 	1,	/* single CPU game */										\
-	espial_init_machine,											\
+	INITMACHINE##_init_machine,										\
 																	\
 	/* video hardware */											\
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },						\
 	NAME##_gfxdecodeinfo,											\
 	256,256,														\
-	espial_vh_convert_color_prom,									\
+	CONVERT,														\
 																	\
 	VIDEO_TYPE_RASTER,												\
 	0,																\
@@ -373,15 +495,18 @@ static struct MachineDriver NAME##_machine_driver =					\
 	{																\
 		{															\
 			SOUND_AY8910,											\
-			&ay8910_interface										\
+			&SNDHRDW##_ay8910_interface								\
 		}															\
 	}																\
 }
 
-DRIVER(marineb);
-DRIVER(changes);
-DRIVER(springer);
-DRIVER(hoccer);
+
+/*     NAME      INITMACH  SNDHRDW	INTERRUPT      CONVERT_COLOR_PROM */
+DRIVER(marineb,  marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
+DRIVER(changes,  marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
+DRIVER(springer, springer, marineb, nmi_interrupt, espial_vh_convert_color_prom);
+DRIVER(hoccer,   marineb,  marineb, nmi_interrupt, espial_vh_convert_color_prom);
+DRIVER(wanted,   marineb,  wanted,  interrupt,     0);
 
 
 /***************************************************************************
@@ -398,10 +523,11 @@ ROM_START( marineb_rom )
 	ROM_LOAD( "marineb.4",     0x3000, 0x1000, 0xa157a283 )
 	ROM_LOAD( "marineb.5",     0x4000, 0x1000, 0x9ffff9c0 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "marineb.6",     0x0000, 0x2000, 0xee53ec2e )
-	ROM_LOAD( "marineb.8",     0x2000, 0x2000, 0xdc8bc46c )
-	ROM_LOAD( "marineb.7",     0x4000, 0x2000, 0x9d2e19ab )
+	ROM_RELOAD(				   0x2000, 0x2000 )
+	ROM_LOAD( "marineb.8",     0x4000, 0x2000, 0xdc8bc46c )
+	ROM_LOAD( "marineb.7",     0x6000, 0x2000, 0x9d2e19ab )
 
 	ROM_REGION(0x0200)	/* color proms */
 	ROM_LOAD( "marineb.1b",    0x0000, 0x0100, 0xf32d9472 ) /* palette low 4 bits */
@@ -416,9 +542,10 @@ ROM_START( changes_rom )
 	ROM_LOAD( "changes.4",     0x3000, 0x1000, 0xa8e9aa22 )
 	ROM_LOAD( "changes.5",     0x4000, 0x1000, 0xf4198e9e )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "changes.7",     0x0000, 0x2000, 0x2204194e )
-	ROM_LOAD( "changes.6",     0x2000, 0x2000, 0x985c9db4 )
+	ROM_RELOAD(				   0x2000, 0x2000 )
+	ROM_LOAD( "changes.6",     0x4000, 0x2000, 0x985c9db4 )
 
 	ROM_REGION(0x0200)	/* color proms */
 	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
@@ -433,13 +560,15 @@ ROM_START( springer_rom )
 	ROM_LOAD( "springer.4",    0x3000, 0x1000, 0x859d1bf5 )
 	ROM_LOAD( "springer.5",    0x4000, 0x1000, 0x72adbbe3 )
 
-	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "springer.6",    0x0000, 0x1000, 0x6a961833 )
+	ROM_RELOAD(				   0x2000, 0x1000 )
 	ROM_LOAD( "springer.7",    0x1000, 0x1000, 0x95ab8fc0 )
-	ROM_LOAD( "springer.8",    0x2000, 0x1000, 0xa54bafdc )
-							/* 0x3000 -0x3fff empty for my convinience */
-	ROM_LOAD( "springer.9",    0x4000, 0x1000, 0xfa302775 )
+	ROM_RELOAD(				   0x3000, 0x1000 )
+	ROM_LOAD( "springer.8",    0x4000, 0x1000, 0xa54bafdc )
 							/* 0x5000 -0x5fff empty for my convinience */
+	ROM_LOAD( "springer.9",    0x6000, 0x1000, 0xfa302775 )
+							/* 0x7000 -0x7fff empty for my convinience */
 
 	ROM_REGION(0x0200)	/* color proms */
 	ROM_LOAD( "1b.vid",        0x0000, 0x0100, 0xa2f935aa ) /* palette low 4 bits */
@@ -453,9 +582,10 @@ ROM_START( hoccer_rom )
 	ROM_LOAD( "hr3.cpu",       0x4000, 0x2000, 0x048a0659 )
 	ROM_LOAD( "hr4.cpu",       0x6000, 0x2000, 0x9a788a2c )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
-	ROM_LOAD( "hr.c",          0x2000, 0x2000, 0x02808294 )
+	ROM_RELOAD(				   0x2000, 0x2000 )
+	ROM_LOAD( "hr.c",          0x4000, 0x2000, 0x02808294 )
 
 	ROM_REGION(0x0200)  /* color proms */
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
@@ -469,14 +599,72 @@ ROM_START( hoccer2_rom )
 	ROM_LOAD( "hr.3",          0x4000, 0x2000, 0x4e67b0be )
 	ROM_LOAD( "hr.4",          0x6000, 0x2000, 0xd2b44f58 )
 
-	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "hr.d",          0x0000, 0x2000, 0xd33aa980 )
-	ROM_LOAD( "hr.c",          0x2000, 0x2000, 0x02808294 )
+	ROM_RELOAD(				   0x2000, 0x2000 )
+	ROM_LOAD( "hr.c",          0x4000, 0x2000, 0x02808294 )
 
 	ROM_REGION(0x0200)  /* color proms */
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
 	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
 ROM_END
+
+ROM_START( wanted_rom )
+	ROM_REGION(0x10000)       /* 64k for code */
+	ROM_LOAD( "prg-1",		   0x0000, 0x2000, 0x2dd90aed )
+	ROM_LOAD( "prg-2",		   0x2000, 0x2000, 0x67ac0210 )
+	ROM_LOAD( "prg-3",		   0x4000, 0x2000, 0x373c7d82 )
+
+	ROM_REGION_DISPOSE(0x8000)  /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vram-1",		   0x0000, 0x2000, 0xc4226e54 )
+	ROM_LOAD( "vram-2",		   0x2000, 0x2000, 0x2a9b1e36 )
+	ROM_LOAD( "obj-a",		   0x4000, 0x2000, 0x90b60771 )
+	ROM_LOAD( "obj-b",		   0x6000, 0x2000, 0xe14ee689 )
+
+	ROM_REGION(0x0200)  /* color proms - missing */
+	ROM_LOAD( "wanted.1b",	   0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "wanted.1c",	   0x0100, 0x0100, 0x00000000 )
+ROM_END
+
+
+static int wanted_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x81b4],"\x00\x03\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x81b4], 16*5);        /* HS table */
+
+			RAM[0x81b4] = RAM[0x81b4];      /* update high score */
+			RAM[0x81b5] = RAM[0x81b5];      /* on top of screen */
+			RAM[0x81b6] = RAM[0x81b6];
+			RAM[0x81b7] = RAM[0x81b7];
+			RAM[0x81b8] = RAM[0x81b8];
+			RAM[0x81b9] = RAM[0x81b9];
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void wanted_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x81b4], 16*5);       /* HS table */
+		osd_fclose(f);
+	}
+}
 
 
 struct GameDriver marineb_driver =
@@ -607,5 +795,32 @@ struct GameDriver hoccer2_driver =
 	ORIENTATION_ROTATE_90,
 
 	0, 0
+};
+
+struct GameDriver wanted_driver =
+{
+	__FILE__,
+	0,
+	"wanted",
+	"Wanted",
+	"1984",
+	"Sigma Ent. Inc.",
+	"Zsolt Vasvari",
+	GAME_WRONG_COLORS,
+	&wanted_machine_driver,
+	0,
+
+	wanted_rom,
+	0,
+	0,
+	0,
+	0,      /* sound_prom */
+
+	wanted_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	wanted_hiload, wanted_hisave
 };
 

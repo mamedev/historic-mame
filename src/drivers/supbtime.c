@@ -287,7 +287,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* May not be correct, there is another crystal near the ym2151 */
-	{ 45 },
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };
 
@@ -328,7 +328,7 @@ static struct MachineDriver supbtime_machine_driver =
 	supbtime_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
   	{
 		{
 			SOUND_YM2151,

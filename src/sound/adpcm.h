@@ -55,31 +55,12 @@ struct OKIM6295interface
 int OKIM6295_sh_start (const struct MachineSound *msound);
 void OKIM6295_sh_stop (void);
 void OKIM6295_sh_update (void);
-
+void OKIM6295_set_bank_base (int which, int base);
 
 int OKIM6295_status_0_r (int offset);
 int OKIM6295_status_1_r (int offset);
 void OKIM6295_data_0_w (int offset,int data);
 void OKIM6295_data_1_w (int offset,int data);
 
-
-/* an interface for the MSM5205 and similar chips */
-
-#define MAX_MSM5205 8
-
-struct MSM5205interface
-{
-	int num;                  /* total number of chips */
-	int frequency;            /* playback frequency */
-	void (*interrupt)(int);   /* interrupt function (called when chip is active) */
-	int mixing_level[MAX_MSM5205]; /* master volume */
-};
-
-int MSM5205_sh_start (const struct MachineSound *msound);
-void MSM5205_sh_stop (void);
-void MSM5205_sh_update (void);
-
-void MSM5205_reset_w (int num, int reset);
-void MSM5205_data_w (int num, int data);
 
 #endif

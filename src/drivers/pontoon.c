@@ -126,13 +126,13 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x07, "90%" )
 	PORT_DIPSETTING(    0x01, "94%" )
 	PORT_DIPSETTING(    0x00, "98%" )
-	PORT_DIPNAME( 0x08, 0x08, "Dip 1  Switch 3" )   /* Doesn't appear on the test menu */
+	PORT_DIPNAME( 0x08, 0x08, "Unknown" )   /* Doesn't appear on the test menu */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "Dip 1  Switch 4" )   /* Doesn't appear on the test menu */
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )   /* Doesn't appear on the test menu */
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, "Dip 1  Switch 5" )   /* Doesn't appear on the test menu */
+	PORT_DIPNAME( 0x20, 0x20, "Unknown" )   /* Doesn't appear on the test menu */
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x20, "Payment Method" )
@@ -164,8 +164,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
 	PORT_DIPNAME( 0x40, 0x40, "Coin C" )
-	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
@@ -314,7 +314,7 @@ struct GameDriver pontoon_driver =
 	"Pontoon",
 	"1985",
 	"Tehkan",
-	"Zsolt Vasvari/nGerald Coy",
+	"Zsolt Vasvari\nGerald Coy",
 	0,
 	&machine_driver,
 	0,

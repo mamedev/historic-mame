@@ -37,7 +37,7 @@ static int lights_changed[NUM_LIGHTS];
 
 void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int width, height;
+	int width, height, i;
 
 	avg_init_colors(palette,colortable,color_prom);
 
@@ -45,9 +45,9 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
 	width = Machine->scrbitmap->width;
 	height = 0.16 * width;
 
-	if ((llander_panel = artwork_load_size("llander.png", 150, 117, width, height))!=NULL)
+	if ((llander_panel = artwork_load_size("llander.png", 24, 230, width, height))!=NULL)
 	{
-		if ((llander_lit_panel = artwork_load_size("llander1.png", 150 + llander_panel->num_pens_used, 117 - llander_panel->num_pens_used, width, height))==NULL)
+		if ((llander_lit_panel = artwork_load_size("llander1.png", 24 + llander_panel->num_pens_used, 230 - llander_panel->num_pens_used, width, height))==NULL)
 		{
 			artwork_free (llander_panel);
 			llander_panel = NULL;
@@ -56,6 +56,10 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
 	}
 	else
 		return;
+
+	for (i = 0; i < 16; i++)
+		palette[3*(i+8)]=palette[3*(i+8)+1]=palette[3*(i+8)+2]= (255*i)/15;
+
 	memcpy (palette+3*llander_panel->start_pen, llander_panel->orig_palette,
 			3*llander_panel->num_pens_used);
 	memcpy (palette+3*llander_lit_panel->start_pen, llander_lit_panel->orig_palette,

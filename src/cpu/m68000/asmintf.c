@@ -40,11 +40,6 @@ typedef struct
 
     int   previous_pc;      /* last PC used */
 
-    						/* This holds the previous opcode address used */
-                            /* it is currently only updated on RET opcode  */
-                            /* as Indiana Jones needs it for the slapstic  */
-
-
     int vbr;                /* Vector Base Register.  Will be used in 68010 */
     int sfc;                /* Source Function Code.  Will be used in 68010 */
     int dfc;                /* Destination Function Code.  Will be used in 68010 */
@@ -73,7 +68,7 @@ static UINT8 m68k_win_layout[] = {
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
 
-m68k_cpu_context regs;
+extern m68k_cpu_context regs;
 
 extern void CONVENTION M68KRUN(void);
 extern void CONVENTION M68KRESET(void);
@@ -121,7 +116,7 @@ int m68000_execute(int cycles)
 
         skiptrace++;
 
-        if ((skiptrace > 54000000) && (errorlog))
+        if ((skiptrace > 0) && (errorlog))
         {
 			int mycount, areg, dreg;
 
@@ -276,23 +271,50 @@ void m68000_set_reg(int regnum, unsigned val)
     }
 }
 
+void m68k_assert_irq(int int_line)
+{
+	regs.IRQ_level = int_line;
+
+    /* Now check for Interrupt */
+
+	m68000_ICount = -1;
+    M68KRUN();
+}
+
+void m68k_clear_irq(int int_line)
+{
+	regs.IRQ_level = 0;
+}
+
 void m68000_set_nmi_line(int state)
 {
-	/* the 68K does not have a dedicated NMI line */
+	switch(state)
+	{
+		case CLEAR_LINE:
+			m68k_clear_irq(7);
+			return;
+		case ASSERT_LINE:
+			m68k_assert_irq(7);
+			return;
+		default:
+			m68k_assert_irq(7);
+			return;
+	}
 }
 
 void m68000_set_irq_line(int irqline, int state)
 {
-    regs.IRQ_level = 0; /* ASG: remove me to do proper mask setting */
-
-	if (state == CLEAR_LINE)
+	switch(state)
 	{
-		regs.IRQ_level &= ~(1 << (irqline - 1));
-	}
-	else
-	{
-		/* the real IRQ level is retrieved inside interrupt handler */
-        regs.IRQ_level |= (1 << (irqline - 1));
+		case CLEAR_LINE:
+			m68k_clear_irq(irqline);
+			return;
+		case ASSERT_LINE:
+			m68k_assert_irq(irqline);
+			return;
+		default:
+			m68k_assert_irq(irqline);
+			return;
 	}
 }
 
@@ -364,7 +386,7 @@ extern int m68k_disassemble(char* str_buff, int pc);
             break;
 		case CPU_INFO_NAME: return "68000";
 		case CPU_INFO_FAMILY: return "Motorola 68K";
-		case CPU_INFO_VERSION: return "0.14";
+		case CPU_INFO_VERSION: return "0.16";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
 		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;

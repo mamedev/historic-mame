@@ -71,7 +71,7 @@ static struct YM2151interface ym2151_interface =
 {
  	1,			/* 1 chip */
  	3579580,	/* 3.58 MHZ ? */ /* 4 MHZ in raine */
- 	{ 80 },		/* volume */
+	{ YM3012_VOL(80,MIXER_PAN_LEFT,80,MIXER_PAN_RIGHT) },
  	{ 0 }
 };
 
@@ -451,7 +451,7 @@ static struct MachineDriver cabalbl_machine_driver =
 	cabal_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,//_ALT,

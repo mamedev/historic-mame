@@ -20,7 +20,7 @@ void battroad_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 void spelunk2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int ldrun_vh_start( void );
 int kidniki_vh_start( void );
-int spelunk2_vh_start( void );
+int spelunkr_vh_start( void );
 void irem_flipscreen_w(int offset,int data);
 void kungfum_scroll_low_w(int offset,int data);
 void kungfum_scroll_high_w(int offset,int data);
@@ -31,6 +31,7 @@ void irem_background_vscroll_w( int offset, int data );
 void battroad_scroll_w( int offset, int data );
 void kidniki_text_vscroll_w( int offset, int data );
 void kidniki_background_bank_w( int offset, int data );
+void spelunkr_palbank_w( int offset, int data );
 void spelunk2_gfxport_w( int offset, int data );
 void kungfum_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void battroad_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
@@ -38,6 +39,7 @@ void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void ldrun4_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void kidniki_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
+void spelunkr_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void spelunk2_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 
 extern unsigned char *irem_textram;
@@ -139,6 +141,16 @@ static void kidniki_bankswitch_w(int offset,int data)
 }
 
 #define battroad_bankswitch_w kidniki_bankswitch_w
+
+static void spelunkr_bankswitch_w(int offset,int data)
+{
+	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	bankaddress = 0x10000 + (data & 0x03) * 0x2000;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
 
 void spelunk2_bankswitch_w( int offset, int data )
 {
@@ -288,6 +300,30 @@ static struct MemoryWriteAddress kidniki_writemem[] = {
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress spelunkr_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x9fff, MRA_BANK1 },
+	{ 0xa000, 0xbfff, MRA_RAM },
+	{ 0xc800, 0xcfff, MRA_RAM },
+	{ 0xe000, 0xefff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress spelunkr_writemem[] =
+{
+	{ 0x0000, 0x9fff, MWA_ROM },
+	{ 0xa000, 0xbfff, videoram_w, &videoram, &videoram_size },
+	{ 0xc000, 0xc0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xc800, 0xcfff, MWA_RAM, &irem_textram, &irem_textram_size },
+	{ 0xd000, 0xd001, irem_background_vscroll_w },
+	{ 0xd002, 0xd003, irem_background_hscroll_w },
+	{ 0xd004, 0xd004, spelunkr_bankswitch_w },
+	{ 0xd005, 0xd005, spelunkr_palbank_w },
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
 static struct MemoryReadAddress spelunk2_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -385,12 +421,6 @@ static struct IOWritePort kidniki_writeport[] =
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort spelunk2_writeport[] =
-{
-	{ 0x00, 0x00, irem_sound_cmd_w },
-	{ 0x01, 0x01, irem_flipscreen_w },	/* + coin counters */
-	{ -1 }	/* end of table */
-};
 
 
 #define IN0_PORT \
@@ -405,9 +435,9 @@ static struct IOWritePort spelunk2_writeport[] =
 
 #define IN1_PORT \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */ \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */ \
@@ -415,9 +445,9 @@ static struct IOWritePort spelunk2_writeport[] =
 
 #define IN2_PORT \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */ \
@@ -425,44 +455,44 @@ static struct IOWritePort spelunk2_writeport[] =
 
 #define	COINAGE_DSW \
 	/* TODO: support the different settings which happen in Coin Mode 2 */ \
-	PORT_DIPNAME( 0xf0, 0xf0, "Coinage" ) /* mapped on coin mode 1 */ \
-	PORT_DIPSETTING(    0x90, "7 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" ) \
-	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" ) \
-	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" ) \
-	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" ) \
-	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" ) \
-	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" ) \
-	PORT_DIPSETTING(    0x20, "1 Coin/7 Credits" ) \
-	PORT_DIPSETTING(    0x10, "1 Coin/8 Credits" ) \
-	PORT_DIPSETTING(    0x00, "Free Play" ) \
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) ) /* mapped on coin mode 1 */ \
+	PORT_DIPSETTING(    0x90, DEF_STR( 7C_1C ) ) \
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) ) \
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_6C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_7C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_8C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) ) \
 	/* setting 0x80 give 1 Coin/1 Credit */
 
 
 #define	COINAGE2_DSW \
 	/* TODO: support the different settings which happen in Coin Mode 2 */ \
-	PORT_DIPNAME( 0xf0, 0xf0, "Coinage" ) /* mapped on coin mode 1 */ \
-	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" ) \
-	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" ) \
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) ) /* mapped on coin mode 1 */ \
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) ) \
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) ) \
 	PORT_DIPSETTING(    0x10, "8 Coins/3 Credits" ) \
-	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" ) \
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) ) \
 	PORT_DIPSETTING(    0x20, "5 Coins/3 Credits" ) \
-	PORT_DIPSETTING(    0x30, "3 Coins/2 Credits" ) \
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" ) \
-	PORT_DIPSETTING(    0x40, "2 Coins/3 Credits" ) \
-	PORT_DIPSETTING(    0x90, "1 Coin/2 Credits" ) \
-	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" ) \
-	PORT_DIPSETTING(    0x70, "1 Coin/4 Credits" ) \
-	PORT_DIPSETTING(    0x60, "1 Coin/5 Credits" ) \
-	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" ) \
-	PORT_DIPSETTING(    0x00, "Free Play" ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) ) \
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) ) \
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) ) \
 
 
 INPUT_PORTS_START( kungfum_input_ports )
@@ -476,13 +506,13 @@ INPUT_PORTS_START( kungfum_input_ports )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Difficulty" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x02, 0x02, "Energy Loss" )
 	PORT_DIPSETTING(    0x02, "Slow" )
 	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -490,9 +520,9 @@ INPUT_PORTS_START( kungfum_input_ports )
 	COINAGE_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -502,22 +532,22 @@ INPUT_PORTS_START( kungfum_input_ports )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
 	/* In slowmo mode, press 2 to slow game speed */
 	PORT_BITX   ( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Slow Motion Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	/* In freeze mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( battroad_input_ports )
@@ -536,18 +566,18 @@ INPUT_PORTS_START( battroad_input_ports )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x04, 0x04, "Unknown" )
 	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
+	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	COINAGE_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -559,18 +589,18 @@ INPUT_PORTS_START( battroad_input_ports )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun_input_ports )
@@ -589,7 +619,7 @@ INPUT_PORTS_START( ldrun_input_ports )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -597,9 +627,9 @@ INPUT_PORTS_START( ldrun_input_ports )
 	COINAGE_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -611,19 +641,19 @@ INPUT_PORTS_START( ldrun_input_ports )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun2_input_ports )
@@ -643,7 +673,7 @@ INPUT_PORTS_START( ldrun2_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, "Game Speed" )
 	PORT_DIPSETTING(    0x00, "Low" )
 	PORT_DIPSETTING(    0x02, "High" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -651,9 +681,9 @@ INPUT_PORTS_START( ldrun2_input_ports )
 	COINAGE_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -664,20 +694,20 @@ INPUT_PORTS_START( ldrun2_input_ports )
 	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	/* In freeze mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* In level selection mode, press 1 to select and 2 to restart */
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun3_input_ports )
@@ -697,7 +727,7 @@ INPUT_PORTS_START( ldrun3_input_ports )
 	PORT_DIPNAME( 0x02, 0x02, "Game Speed" )
 	PORT_DIPSETTING(    0x00, "Low" )
 	PORT_DIPSETTING(    0x02, "High" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -705,9 +735,9 @@ INPUT_PORTS_START( ldrun3_input_ports )
 	COINAGE_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -719,19 +749,19 @@ INPUT_PORTS_START( ldrun3_input_ports )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	/* In level selection mode, press 1 to select and 2 to restart */
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ldrun4_input_ports )
@@ -759,9 +789,9 @@ INPUT_PORTS_START( ldrun4_input_ports )
 	COINAGE_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "2 Players Lives" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
@@ -773,18 +803,18 @@ INPUT_PORTS_START( ldrun4_input_ports )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow 2 Players Game" )
-	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x10, "Yes" )
+	PORT_DIPSETTING(    0x00, "No" )
 	/* In level selection mode, press 1 to select and 2 to restart */
 	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode (must set 2P game to No)", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( lotlot_input_ports )
@@ -803,7 +833,7 @@ INPUT_PORTS_START( lotlot_input_ports )
 	PORT_DIPSETTING(    0x02, "Slow" )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Very Fast" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
@@ -811,9 +841,9 @@ INPUT_PORTS_START( lotlot_input_ports )
 	COINAGE2_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -824,19 +854,19 @@ INPUT_PORTS_START( lotlot_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds" )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	/* In freeze mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( kidniki_input_ports )
@@ -850,23 +880,23 @@ INPUT_PORTS_START( kidniki_input_ports )
 	IN2_PORT
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x04, "Difficulty" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Normal" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x08, 0x08, "Bonus Life" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "50000" )
 	PORT_DIPSETTING(    0x00, "80000" )
 	COINAGE2_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -874,21 +904,73 @@ INPUT_PORTS_START( kidniki_input_ports )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
 	PORT_DIPNAME( 0x08, 0x08, "Game Repeats" )
-	PORT_DIPSETTING(    0x08, "No" )
 	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPSETTING(    0x08, "No" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x10, "Yes" )
-	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x00, "No" )
+	/* In freeze mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( spelunkr_input_ports )
+	PORT_START	/* IN0 */
+	IN0_PORT
+
+	PORT_START	/* IN1 */
+	IN1_PORT
+
+	PORT_START	/* IN2 */
+	IN2_PORT
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Energy Decrease" )
+	PORT_DIPSETTING(    0x03, "Slow" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Fast" )
+	PORT_DIPSETTING(    0x00, "Fastest" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	COINAGE2_DSW
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+/* This activates a different coin mode. Look at the dip switch setting schematic */
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode" )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPSETTING(    0x08, "No" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
+	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
+	/* In freeze mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spelunk2_input_ports )
@@ -907,7 +989,7 @@ INPUT_PORTS_START( spelunk2_input_ports )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Fast" )
 	PORT_DIPSETTING(    0x00, "Fastest" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
@@ -915,9 +997,9 @@ INPUT_PORTS_START( spelunk2_input_ports )
 	COINAGE2_DSW
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
@@ -926,21 +1008,21 @@ INPUT_PORTS_START( spelunk2_input_ports )
 	PORT_DIPSETTING(    0x04, "Mode 1" )
 	PORT_DIPSETTING(    0x00, "Mode 2" )
 	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPSETTING(    0x08, "Yes" )
+	PORT_DIPSETTING(    0x00, "No" )
 	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	/* In stop mode, press 2 to stop and 1 to restart */
-	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	/* In freeze mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Freeze", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -999,7 +1081,7 @@ static struct GfxLayout spelunk2_charlayout =
 	12,8, /* character size */
 	256, /* number of characters */
 	3, /* bits per pixel */
-	{ 0, 0x2000*8, 2*0x2000*8 },
+	{ 0, 0x4000*8, 2*0x4000*8 },
 	{
 		0,1,2,3,
 		0x800*8+0,0x800*8+1,0x800*8+2,0x800*8+3,
@@ -1087,6 +1169,15 @@ static struct GfxDecodeInfo kidniki_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo spelunkr_gfxdecodeinfo[] =
+{
+	{ 1, 0x00000, &tilelayout_4096,	     0, 32 },	/* use colors   0-255 */
+	{ 1, 0x18000, &spritelayout_1024,  256, 32 },	/* use colors 256-511 */
+	{ 1, 0x30000, &spelunk2_charlayout,  0, 32 },	/* use colors   0-255 */
+	{ 1, 0x31000, &spelunk2_charlayout,  0, 32 },	/* use colors   0-255 */
+	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &tilelayout_4096,	     0, 64 },	/* use colors   0-511 */
@@ -1141,12 +1232,15 @@ static struct MachineDriver GAMENAME##_machine_driver =                         
 #define kungfum_readmem ldrun_readmem
 #define kungfum_writeport ldrun_writeport
 #define lotlot_writeport ldrun_writeport
+#define spelunkr_writeport ldrun_writeport
+#define spelunk2_writeport ldrun_writeport
 #define	kungfum_vh_start kidniki_vh_start
 #define	battroad_vh_start kidniki_vh_start
 #define	ldrun2_vh_start ldrun_vh_start
 #define	ldrun3_vh_start ldrun_vh_start
 #define	ldrun4_vh_start ldrun_vh_start
 #define	lotlot_vh_start ldrun_vh_start
+#define	spelunk2_vh_start spelunkr_vh_start
 #define	ldrun2_vh_screenrefresh ldrun_vh_screenrefresh
 #define	ldrun3_vh_screenrefresh ldrun_vh_screenrefresh
 
@@ -1158,6 +1252,7 @@ MACHINE_DRIVER(ldrun3,   ldrun,  8*8, (64-8)*8-1,  512,irem);
 MACHINE_DRIVER(ldrun4,   ldrun,  8*8, (64-8)*8-1,  512,irem);
 MACHINE_DRIVER(lotlot,   ldrun,  8*8, (64-8)*8-1,  768,irem);
 MACHINE_DRIVER(kidniki,  ldrun,  8*8, (64-8)*8-1,  512,irem);
+MACHINE_DRIVER(spelunkr, ldrun,  8*8, (64-8)*8-1,  512,irem);
 MACHINE_DRIVER(spelunk2, ldrun,  8*8, (64-8)*8-1,  768,spelunk2);
 
 
@@ -1614,15 +1709,56 @@ ROM_START( kidniki_rom )
 	ROM_LOAD( "dr02.3f",      0xc000, 0x04000, 0xf9e31e26 ) /* 6803 code */
 ROM_END
 
+ROM_START( spelunkr_rom )
+	ROM_REGION( 0x18000 )	/* main CPU */
+	ROM_LOAD( "spra.4e",      0x00000, 0x4000, 0xcf811201 )
+	ROM_LOAD( "spra.4d",      0x04000, 0x4000, 0xbb4faa4f )
+	ROM_LOAD( "sprm.7c",      0x10000, 0x4000, 0xfb6197e2 )	/* banked at 8000-9fff */
+	ROM_LOAD( "sprm.7b",      0x14000, 0x4000, 0x26bb25a4 )
+
+	ROM_REGION_DISPOSE(0x3c000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sprm.1d",      0x00000, 0x4000, 0x4ef7ae89 )	/* tiles */
+	ROM_LOAD( "sprm.1e",      0x04000, 0x4000, 0xa3755180 )
+	ROM_LOAD( "sprm.3c",      0x08000, 0x4000, 0xb4008e6a )
+	ROM_LOAD( "sprm.3b",      0x0c000, 0x4000, 0xf61cf012 )
+	ROM_LOAD( "sprm.1c",      0x10000, 0x4000, 0x58b21c76 )
+	ROM_LOAD( "sprm.1b",      0x14000, 0x4000, 0xa95cb3e5 )
+	ROM_LOAD( "sprb.4k",      0x18000, 0x4000, 0xe7f0e861 )	/* sprites */
+	ROM_LOAD( "sprb.4f",      0x1c000, 0x4000, 0x32663097 )
+	ROM_LOAD( "sprb.3p",      0x20000, 0x4000, 0x8fbaf373 )
+	ROM_LOAD( "sprb.4p",      0x24000, 0x4000, 0x37069b76 )
+	ROM_LOAD( "sprb.4c",      0x28000, 0x4000, 0xcfe46a88 )
+	ROM_LOAD( "sprb.4e",      0x2c000, 0x4000, 0x11c48979 )
+	ROM_LOAD( "sprm.4p",      0x30000, 0x4000, 0x4dfe2e63 )	/* chars */
+	ROM_LOAD( "sprm.4l",      0x34000, 0x4000, 0x239f2cd4 )	/* first and second half identical, */
+	ROM_LOAD( "sprm.4m",      0x38000, 0x4000, 0xd6d07d70 )	/* second half not used by the driver */
+
+	ROM_REGION( 0x0920 ) /* color proms */
+	ROM_LOAD( "sprm.2k",      0x0000, 0x0100, 0xfd8fa991 )	/* character palette red component */
+	ROM_LOAD( "sprb.1m",      0x0100, 0x0100, 0x8d8cccad )	/* sprite palette red component */
+	ROM_LOAD( "sprm.2j",      0x0200, 0x0100, 0x0e3890b4 )	/* character palette blue component */
+	ROM_LOAD( "sprb.1n",      0x0300, 0x0100, 0xc40e1cb2 )	/* sprite palette green component */
+	ROM_LOAD( "sprm.2h",      0x0400, 0x0100, 0x0478082b )	/* character palette green component */
+	ROM_LOAD( "sprb.1l",      0x0500, 0x0100, 0x3ec46248 )	/* sprite palette blue component */
+	ROM_LOAD( "sprb.5p",      0x0600, 0x0020, 0x746c6238 )	/* sprite height, one entry per 32 */
+	                                                        /* sprites. Used at run time! */
+	ROM_LOAD( "sprm.8h",      0x0620, 0x0200, 0x875cc442 )	/* unknown */
+	ROM_LOAD( "sprb.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+
+	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_LOAD( "spra.3d",      0x8000, 0x04000, 0x4110363c ) /* adpcm data */
+	ROM_LOAD( "spra.3f",      0xc000, 0x04000, 0x67a9d2e6 ) /* 6803 code */
+ROM_END
+
 ROM_START( spelunk2_rom )
 	ROM_REGION( 0x24000 )	/* main CPU */
-	ROM_LOAD( "sp2-a.4e",     0x0000, 0x4000, 0x96c04bbb )
-	ROM_LOAD( "sp2-a.4d",     0x4000, 0x4000, 0xcb38c2ff )
+	ROM_LOAD( "sp2-a.4e",     0x00000, 0x4000, 0x96c04bbb )
+	ROM_LOAD( "sp2-a.4d",     0x04000, 0x4000, 0xcb38c2ff )
 	ROM_LOAD( "sp2-r.7d",     0x10000, 0x8000, 0x558837ea )	/* banked at 9000-9fff */
 	ROM_LOAD( "sp2-r.7c",     0x18000, 0x8000, 0x4b380162 )	/* banked at 9000-9fff */
 	ROM_LOAD( "sp2-r.7b",     0x20000, 0x4000, 0x7709a1fe )	/* banked at 8000-8fff */
 
-	ROM_REGION_DISPOSE(0x36000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x3c000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "sp2-r.1d",     0x00000, 0x8000, 0xc19fa4c9 )	/* tiles */
 	ROM_LOAD( "sp2-r.3b",     0x08000, 0x8000, 0x366604af )
 	ROM_LOAD( "sp2-r.1b",     0x10000, 0x8000, 0x3a0c4d47 )
@@ -1632,9 +1768,9 @@ ROM_START( spelunk2_rom )
 	ROM_LOAD( "sp2-b.4n",     0x24000, 0x4000, 0xfa65bac9 )
 	ROM_LOAD( "sp2-b.4c",     0x28000, 0x4000, 0x1caf7013 )
 	ROM_LOAD( "sp2-b.4e",     0x2c000, 0x4000, 0x780a463b )
-	ROM_LOAD( "sp2-r.4l",     0x30000, 0x2000, 0xb12f939a )	/* chars */
-	ROM_LOAD( "sp2-r.4m",     0x32000, 0x2000, 0x5591f22c )
-	ROM_LOAD( "sp2-r.4p",     0x34000, 0x2000, 0x32967081 )
+	ROM_LOAD( "sp2-r.4l",     0x30000, 0x4000, 0x6a4b2d8b )	/* chars */
+	ROM_LOAD( "sp2-r.4m",     0x34000, 0x4000, 0xe1368b61 )	/* first and second half identical, */
+	ROM_LOAD( "sp2-r.4p",     0x38000, 0x4000, 0xfc138e13 )	/* second half not used by the driver */
 
 	ROM_REGION( 0x0a20 ) /* color proms */
 	ROM_LOAD( "sp2-r.1k",     0x0000, 0x0200, 0x31c1bcdc )	/* chars red and green component */
@@ -2258,6 +2394,32 @@ struct GameDriver kidniki_driver =
 	ORIENTATION_DEFAULT,
 
 	kidniki_hiload, kidniki_hisave
+};
+
+struct GameDriver spelunkr_driver =
+{
+	__FILE__,
+	0,
+	"spelunkr",
+	"Spelunker",
+	"1985",
+	"Irem (licensed from Broderbund)",
+	"Phil Stroffolino\nAaron Giles (sound)",
+	0,
+	&spelunkr_machine_driver,
+	0,
+
+	spelunkr_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	spelunkr_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };
 
 struct GameDriver spelunk2_driver =

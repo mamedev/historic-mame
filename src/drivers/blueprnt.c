@@ -44,6 +44,9 @@ write:
 
 
 
+extern unsigned char *blueprnt_scrollram;
+
+void blueprnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void blueprnt_flipscreen_w(int offset,int data);
 void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -81,9 +84,11 @@ static void blueprnt_coin_w (int offset, int data)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x4fff, MRA_ROM },
+	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0x9400, 0x97ff, videoram_r },	/* mirror address, I THINK */
+	{ 0xa000, 0xa01f, MRA_RAM },
 	{ 0xb000, 0xb0ff, MRA_RAM },
 	{ 0xc000, 0xc000, input_port_0_r },
 	{ 0xc001, 0xc001, input_port_1_r },
@@ -95,13 +100,14 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x4fff, MWA_ROM },
+	{ 0x0000, 0x5fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0xa000, 0xa01f, MWA_RAM, &blueprnt_scrollram },
 	{ 0xb000, 0xb0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc000, 0xc000, blueprnt_coin_w },
 	{ 0xd000, 0xd000, blueprnt_sound_command_w },
-	{ 0xe000, 0xe000, blueprnt_flipscreen_w },
+	{ 0xe000, 0xe000, blueprnt_flipscreen_w },	/* + gfx bank */
 	{ 0xf000, 0xf3ff, colorram_w, &colorram },
 	{ -1 }	/* end of table */
 };
@@ -132,7 +138,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( blueprnt_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
@@ -205,14 +211,87 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( saturn_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x80, "5" )
+	PORT_DIPSETTING(    0xc0, "6" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/6" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	512,	/* 512 characters (but only 256 are used) */
+	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
-	{ 0, 512*8*8 },	/* the bitplanes are separated */
+	{ 512*8*8, 0 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -222,7 +301,7 @@ static struct GfxLayout spritelayout =
 	8,16,	/* 8*16 sprites */
 	256,	/* 256 sprites */
 	3,	/* 3 bits per pixel */
-	{ 0, 128*16*16, 2*128*16*16 },	/* the bitplanes are separated */
+	{ 2*128*16*16, 128*16*16, 0 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
@@ -232,55 +311,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0, 8 },
-	{ 1, 0x2000, &spritelayout, 8*4, 1 },
+	{ 1, 0x0000, &charlayout,       0, 128 },
+	{ 1, 0x2000, &spritelayout, 128*4,   1 },
 	{ -1 } /* end of array */
-};
-
-
-
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0x00,0x00, /* RED */
-	0x00,0xff,0x00, /* GREEN */
-	0xff,0xff,0x00, /* YELLOW */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0x00,0xff, /* MAGENTA */
-	0x00,0xff,0xff, /* CYAN */
-	0xff,0xff,0xff, /* WHITE */
-
-	0xE0,0xE0,0xE0, /* LTGRAY */
-	0xC0,0xC0,0xC0, /* DKGRAY */
-	0xe0,0xb0,0x70,	/* BROWN */
-	0xd0,0xa0,0x60,	/* BROWN0 */
-	0xc0,0x90,0x50,	/* BROWN1 */
-	0xa3,0x78,0x3a,	/* BROWN2 */
-	0x80,0x60,0x20,	/* BROWN3 */
-	0x54,0x40,0x14,	/* BROWN4 */
-	0x54,0xa8,0xff, /* LTBLUE */
-	0x00,0xa0,0x00, /* DKGREEN */
-	0x00,0xe0,0x00, /* GRASSGREEN */
-	0xff,0xb6,0xdb,	/* PINK */
-	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,96,0x49,	/* DKORANGE */
-	0xff,128,0x00,	/* ORANGE */
-	0xdb,0xdb,0xdb	/* GREY */
-};
-
-
-static unsigned short colortable[] =
-{
-	0,0,0,0,
-	0,7,1,3,
-	0,7,4,4,
-	0,1,4,5,
-	0,1,17,3,
-	0,4,14,7,
-	0,3,3,1,
-	0,4,16,7,
-
-	0,1,2,3,4,5,6,7
 };
 
 
@@ -288,7 +321,7 @@ static unsigned short colortable[] =
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
-	1250000,	/* 1.25 MHz? (hand tuned) */
+	10000000/8,	/* 1.25 MHz (4H) */
 	{ 25, 25 },
 	AY8910_DEFAULT_GAIN,
 	{            0, input_port_2_r },
@@ -305,17 +338,18 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz ? */
+			10000000/4,	/* 2.5 MHz (2H) */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,	/* can't use CPU_AUDIO_CPU because this CPU reads the dip switches */
-			3072000,	/* 3.072 Mhz ? */
+			10000000/4,	/* 2.5 MHz (2H) */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,4	/* NMIs are caused by the main CPU */
+			interrupt,4	/* IRQs connected to 32V */
+						/* NMIs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -325,10 +359,10 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	16,128*4+8,
+	blueprnt_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -363,18 +397,39 @@ ROM_START( blueprnt_rom )
 	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "c3",           0x0000, 0x1000, 0xac2a61bc )
 	ROM_LOAD( "d3",           0x1000, 0x1000, 0x81fe85d7 )
-	ROM_LOAD( "d18",          0x2000, 0x1000, 0x7d622550 )
-	ROM_LOAD( "d20",          0x3000, 0x1000, 0x2fcb4f26 )
-	ROM_LOAD( "d17",          0x4000, 0x1000, 0xa73b6483 )
+	ROM_LOAD( "d17",          0x2000, 0x1000, 0xa73b6483 )
+	ROM_LOAD( "d18",          0x3000, 0x1000, 0x7d622550 )
+	ROM_LOAD( "d20",          0x4000, 0x1000, 0x2fcb4f26 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "3u",           0x0000, 0x1000, 0xfd38777a )
 	ROM_LOAD( "3v",           0x2000, 0x1000, 0x33d5bf5b )
 ROM_END
 
+ROM_START( saturn_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "r1",           0x0000, 0x1000, 0x18a6d68e )
+	ROM_LOAD( "r2",           0x1000, 0x1000, 0xa7dd2665 )
+	ROM_LOAD( "r3",           0x2000, 0x1000, 0xb9cfa791 )
+	ROM_LOAD( "r4",           0x3000, 0x1000, 0xc5a997e7 )
+	ROM_LOAD( "r5",           0x4000, 0x1000, 0x43444d00 )
+	ROM_LOAD( "r6",           0x5000, 0x1000, 0x4d4821f6 )
+
+	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "r10",          0x0000, 0x1000, 0x35987d61 )
+	ROM_LOAD( "r9",           0x1000, 0x1000, 0xca6a7fda )
+	ROM_LOAD( "r11",          0x2000, 0x1000, 0x6e4e6e5d )
+	ROM_LOAD( "r12",          0x3000, 0x1000, 0x46fc049e )
+	ROM_LOAD( "r13",          0x4000, 0x1000, 0x8b3e8c32 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "r7",           0x0000, 0x1000, 0xdd43e02f )
+	ROM_LOAD( "r8",           0x2000, 0x1000, 0x7f9d0877 )
+ROM_END
 
 
-static int hiload(void)
+
+static int blueprnt_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
@@ -397,9 +452,7 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
-static void hisave(void)
+static void blueprnt_hisave(void)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -422,9 +475,9 @@ struct GameDriver blueprnt_driver =
 	"blueprnt",
 	"Blue Print",
 	"1982",
-	"Bally Midway",
+	"[Zilec] Bally Midway",
 	"Nicola Salmoria",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
@@ -433,10 +486,36 @@ struct GameDriver blueprnt_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	blueprnt_input_ports,
 
-	0, palette, colortable,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload, hisave
+	blueprnt_hiload, blueprnt_hisave
+};
+
+struct GameDriver saturn_driver =
+{
+	__FILE__,
+	0,
+	"saturn",
+	"Saturn",
+	"1983",
+	"[Zilec] Jaleco",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	saturn_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	saturn_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
 };

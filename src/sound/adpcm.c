@@ -560,6 +560,7 @@ int ADPCM_playing (int num)
 
 static const struct OKIM6295interface *okim6295_interface;
 static int okim6295_command[MAX_OKIM6295];
+static int okim6295_base[MAX_OKIM6295];
 
 
 
@@ -589,7 +590,10 @@ int OKIM6295_sh_start (const struct MachineSound *msound)
 
 	/* reset the parameters */
 	for (i = 0; i < okim6295_interface->num; i++)
+	{
 		okim6295_command[i] = -1;
+		okim6295_base[i] = 0;
+	}
 
 	/* initialize it in the standard fashion */
 	memcpy(&msound_copy,msound,sizeof(msound));
@@ -619,6 +623,18 @@ void OKIM6295_sh_update (void)
 {
 	/* standard update */
 	ADPCM_sh_update ();
+}
+
+
+
+/*
+ *    Update emulation of an OKIM6295-compatible chip
+ */
+
+void OKIM6295_set_bank_base (int which, int base)
+{
+	/* set the base offset */
+	okim6295_base[which] = base;
 }
 
 
@@ -680,7 +696,7 @@ static void OKIM6295_data_w (int num, int data)
 		unsigned char *base;
 
 		/* determine the start/stop positions */
-		base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_command[num] * 8];
+		base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num] + okim6295_command[num] * 8];
 		start = (base[0] << 16) + (base[1] << 8) + base[2];
 		stop = (base[3] << 16) + (base[4] << 8) + base[5];
 
@@ -698,29 +714,37 @@ static void OKIM6295_data_w (int num, int data)
 				ADPCM_update (voice, buffer_end);
 
 				/* set up the voice to play this sample */
-				voice->playing = 1;
-				voice->base = &Machine->memory_region[okim6295_interface->region[num]][start];
-				voice->sample = 0;
-				voice->count = 2 * (stop - start + 1);
-
-				/* also reset the ADPCM parameters */
-				voice->signal = -2;
-				voice->step = 0;
-
-				/* volume control is entirely guesswork */
+				if (start >= 0x40000 || stop >= 0x40000)	/* validity check */
 				{
-					double out;
-					int vol;
+if (errorlog) fprintf(errorlog,"OKIM6295: requested to play invalid sample %02x\n",okim6295_command[num]);
+					voice->playing = 0;
+				}
+				else
+				{
+					voice->playing = 1;
+					voice->base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_base[num] + start];
+					voice->sample = 0;
+					voice->count = 2 * (stop - start + 1);
+
+					/* also reset the ADPCM parameters */
+					voice->signal = -2;
+					voice->step = 0;
+
+					/* volume control is entirely guesswork */
+					{
+						double out;
+						int vol;
 
 
-					vol = data & 0x0f;
-					out = 256;
+						vol = data & 0x0f;
+						out = 256;
 
-					/* assume 2dB per step (most likely wrong!) */
-					while (vol-- > 0)
-						out /= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
+						/* assume 2dB per step (most likely wrong!) */
+						while (vol-- > 0)
+							out /= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
 
-					voice->volume = out;
+						voice->volume = out;
+					}
 				}
 			}
 			temp >>= 1;
@@ -785,174 +809,3 @@ void OKIM6295_data_1_w (int num, int data)
 {
 	OKIM6295_data_w(1,data);
 }
-
-
-
-
-/*
- *
- *	MSM 5205 ADPCM chip:
- *
- *	Data is streamed from a CPU by means of a clock generated on the chip.
- *
- *	A reset signal is set high or low to determine whether playback (and interrupts) are occuring
- *
- */
-
-
-static const struct MSM5205interface *msm5205_interface;
-
-
-
-/*
- *    Start emulation of an MSM5205-compatible chip
- */
-
-int MSM5205_sh_start (const struct MachineSound *msound)
-{
-	static struct ADPCMinterface generic_interface;
-	struct MachineSound msound_copy;
-	int i, stream_size, result;
-
-	/* save a global pointer to our interface */
-	msm5205_interface = msound->sound_interface;
-
-	/* if there's an interrupt function to be called, set it up */
-	if (msm5205_interface->interrupt)
-		timer_pulse (TIME_IN_HZ (msm5205_interface->frequency), 0, msm5205_interface->interrupt);
-
-	/* create an interface for the generic system here */
-	generic_interface.num = msm5205_interface->num;
-	generic_interface.frequency = msm5205_interface->frequency;
-	generic_interface.region = 0;
-	generic_interface.init = 0;
-	for (i = 0; i < msm5205_interface->num; i++)
-		generic_interface.mixing_level[i] = msm5205_interface->mixing_level[i];
-
-	/* initialize it in the standard fashion */
-	memcpy(&msound_copy,msound,sizeof(msound));
-	msound_copy.sound_interface = &generic_interface;
-	result = ADPCM_sh_start (&msound_copy);
-
-	/* if we succeeded, create streams for everyone */
-	if (!result)
-	{
-		/* stream size is the number of samples per second rounded to the next power of 2 */
-		stream_size = 1;
-		while (stream_size < msm5205_interface->frequency)
-			stream_size <<= 1;
-
-		/* allocate streams for everyone */
-		for (i = 0; i < msm5205_interface->num; i++)
-		{
-			struct ADPCMVoice *voice = adpcm + i;
-
-			/* create the stream memory */
-			voice->stream = malloc (stream_size);
-			if (!voice->stream)
-				return 1;
-
-			/* set the mask value */
-			voice->mask = stream_size - 1;
-		}
-	}
-
-	/* return the result */
-	return result;
-}
-
-
-
-/*
- *    Stop emulation of an MSM5205-compatible chip
- */
-
-void MSM5205_sh_stop (void)
-{
-	/* standard stop */
-	ADPCM_sh_stop ();
-}
-
-
-
-/*
- *    Update emulation of an MSM5205-compatible chip
- */
-
-void MSM5205_sh_update (void)
-{
-	/* standard update */
-	ADPCM_sh_update ();
-}
-
-
-
-/*
- *    Handle an update of the reset status of a chip (1 is reset ON, 0 is reset OFF)
- */
-
-void MSM5205_reset_w (int num, int reset)
-{
-	struct ADPCMVoice *voice = adpcm + num;
-
-	/* range check the numbers */
-	if (num >= msm5205_interface->num)
-	{
-		if (errorlog) fprintf(errorlog,"error: MSM5205_reset_w() called with chip = %d, but only %d chips allocated\n", num, msm5205_interface->num);
-		return;
-	}
-
-	/* see if this is turning on playback */
-	if (!voice->playing && !reset)
-	{
-		/* update the ADPCM voice */
-		ADPCM_update (voice, cpu_scalebyfcount (buffer_len));
-
-		/* mark this voice as playing */
-		voice->playing = 1;
-		voice->base = voice->stream;
-		voice->sample = 0;
-		voice->count = 0;
-
-		/* also reset the ADPCM parameters */
-		voice->signal = -2;
-		voice->step = 0;
-	}
-
-	/* see if this is turning off playback */
-	else if (voice->playing && reset)
-	{
-		/* update the ADPCM voice */
-		ADPCM_update (voice, cpu_scalebyfcount (buffer_len));
-
-		/* mark this voice as not playing */
-		voice->playing = 0;
-	}
-}
-
-
-
-/*
- *    Handle an update of the data to the chip
- */
-
-void MSM5205_data_w (int num, int data)
-{
-	struct ADPCMVoice *voice = adpcm + num;
-
-	/* only do this if we're playing */
-	if (voice->playing)
-	{
-		int count = voice->count;
-
-		/* set the upper or lower half */
-		if (!(count & 1))
-			voice->stream[(count / 2) & voice->mask] = data << 4;
-		else
-			voice->stream[(count / 2) & voice->mask] |= data & 0x0f;
-
-		/* update the count */
-		voice->count = count + 1;
-	}
-}
-

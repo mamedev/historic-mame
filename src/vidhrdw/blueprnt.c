@@ -10,8 +10,53 @@
 #include "vidhrdw/generic.h"
 
 
+unsigned char *blueprnt_scrollram;
 
-static int flipscreen;
+static int gfx_bank,flipscreen;
+
+
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Blue Print doesn't have color PROMs. For sprites, the ROM data is directly
+  converted into colors; for characters, it is converted through the color
+  code (bits 0-2 = RBG for 01 pixels, bits 3-5 = RBG for 10 pixels, 00 pixels
+  always black, 11 pixels use the OR of bits 0-2 and 3-5. Bit 6 is intensity
+  control)
+
+***************************************************************************/
+
+void blueprnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < 16;i++)
+	{
+		(*palette++) = ((i >> 0) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		(*palette++) = ((i >> 2) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		(*palette++) = ((i >> 1) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+	}
+
+
+	/* chars */
+	for (i = 0;i < 128;i++)
+	{
+		int base =  (i & 0x40) ? 8 : 0;
+		COLOR(0,4*i+0) = base + 0;
+		COLOR(0,4*i+1) = base + ((i >> 0) & 7);
+		COLOR(0,4*i+2) = base + ((i >> 3) & 7);
+		COLOR(0,4*i+3) = base + (((i >> 0) & 7) | ((i >> 3) & 7));
+	}
+
+	/* sprites */
+	for (i = 0;i < 8;i++)
+		COLOR(1,i) = i;
+}
 
 
 
@@ -20,6 +65,12 @@ void blueprnt_flipscreen_w(int offset,int data)
 	if (flipscreen != (~data & 2))
 	{
 		flipscreen = ~data & 2;
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	if (gfx_bank != ((data & 4) >> 2))
+	{
+		gfx_bank = ((data & 4) >> 2);
 		memset(dirtybuffer,1,videoram_size);
 	}
 }
@@ -36,6 +87,7 @@ void blueprnt_flipscreen_w(int offset,int data)
 void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+	int scroll[32];
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -58,39 +110,61 @@ void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
+					videoram[offs] + 256 * gfx_bank,
 					colorram[offs] & 0x7f,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	/* copy the temporary bitmap to the screen */
+	{
+		int i;
+
+
+		if (flipscreen)
+		{
+			for (i = 0;i < 32;i++)
+			{
+				scroll[31-i] = blueprnt_scrollram[32-i];	/* mmm... */
+			}
+		}
+		else
+		{
+			for (i = 0;i < 32;i++)
+			{
+				scroll[i] = -blueprnt_scrollram[30-i];	/* mmm... */
+			}
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 
 
 	/* Draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		int sx,sy,flipy;
+		int sx,sy,flipx,flipy;
 
 
 		sx = spriteram[offs + 3];
 		sy = 240 - spriteram[offs + 0];
+		flipx = spriteram[offs + 2] & 0x40;
 		flipy = spriteram[offs + 2 - 4] & 0x80;	/* -4? Awkward, isn't it? */
 		if (flipscreen)
 		{
 			sx = 248 - sx;
 			sy = 240 - sy;
+			flipx = !flipx;
 			flipy = !flipy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 1],
 				0,
-				flipscreen,flipy,
+				flipx,flipy,
 				2+sx,sy-1,	/* sprites are slightly misplaced, regardless of the screen flip */
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
@@ -113,10 +187,10 @@ void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 
 			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs],
+					videoram[offs] + 256 * gfx_bank,
 					colorram[offs] & 0x7f,
 					flipscreen,flipscreen,
-					8*sx,8*sy,
+					8*sx,(8*sy+scroll[sx]) & 0xff,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

@@ -87,12 +87,12 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x0000, 0x03ff, videoram_w },				/* video RAM */
 	{ 0x0400, 0x07ff, colorram_w, &colorram },  /* color RAM */
 	{ 0x0800, 0x1fff, grobda_spriteram_w },		/* RAM & sprite RAM */
-	{ 0x2000, 0x2000, MWA_NOP },				/* ??? */
+//	{ 0x2000, 0x2000, MWA_NOP },				/* ??? */
 	{ 0x4040, 0x43ff, grobda_snd_sharedram_w }, /* shared RAM with CPU #2 */
 	{ 0x4800, 0x480f, grobda_customio_w_1 },	/* custom I/O chip #1 interface */
 	{ 0x4810, 0x481f, grobda_customio_w_2 },	/* custom I/O chip #2 interface */
 	{ 0x5002, 0x5003, grobda_interrupt_ctrl_1_w },/* interrupt enable? */
-	{ 0x5008, 0x5009, MWA_NOP },				/* ??? */
+//	{ 0x5008, 0x5009, MWA_NOP },				/* ??? */
 	{ 0x500a, 0x500b, grobda_cpu2_enable_w },	/* sound CPU enable? */
 	{ 0x8000, 0x8000, watchdog_reset_w },	 	/* watchdog reset */
 	{ 0xa000, 0xffff, MWA_ROM },				/* ROM */

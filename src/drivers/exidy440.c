@@ -505,45 +505,47 @@ ROM_START( crossbow_rom )
 ROM_END
 
 
+#define COINAGE PORT_START /* audio board dips */ \
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" ) \
+	PORT_DIPSETTING(    0x0b, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) ) \
+	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" ) \
+	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" ) \
+	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" ) \
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_4C ) ) \
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" ) \
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+
 /* input from the outside world */
 INPUT_PORTS_START( crossbow_input_ports )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x80, "Free Play" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START				/* start button */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -555,10 +557,10 @@ INPUT_PORTS_START( crossbow_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -664,40 +666,23 @@ INPUT_PORTS_START( cheyenne_input_ports )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x80, "Free Play" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START				/* start button */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -709,10 +694,10 @@ INPUT_PORTS_START( cheyenne_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -812,40 +797,23 @@ INPUT_PORTS_START( combat_input_ports )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x80, "Free Play" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START				/* start button */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -857,10 +825,10 @@ INPUT_PORTS_START( combat_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -963,32 +931,18 @@ INPUT_PORTS_START( cracksht_input_ports )
 	PORT_DIPSETTING(    0x0c, "30" )
 	PORT_DIPSETTING(    0x04, "40" )
 	PORT_DIPSETTING(    0x00, "50" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+COINAGE
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START				/* start button */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -1000,10 +954,10 @@ INPUT_PORTS_START( cracksht_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1089,32 +1043,18 @@ INPUT_PORTS_START( claypign_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+COINAGE
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START				/* start button */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -1126,10 +1066,10 @@ INPUT_PORTS_START( claypign_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1239,31 +1179,14 @@ INPUT_PORTS_START( chiller_input_ports )
 	PORT_DIPSETTING(    0x0c, "45" )
 	PORT_DIPSETTING(    0x04, "60" )
 	PORT_DIPSETTING(    0x00, "70" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* start button */
@@ -1276,10 +1199,10 @@ INPUT_PORTS_START( chiller_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1391,36 +1314,19 @@ INPUT_PORTS_START( topsecex_input_ports )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x0c, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* start button */
@@ -1433,7 +1339,7 @@ INPUT_PORTS_START( topsecex_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 0, -127, 127 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE, 50, 10, 0, -127, 127 )
 
 	PORT_START				/* fake analog Y */
 	PORT_BIT(  0xff, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1597,35 +1503,18 @@ INPUT_PORTS_START( hitnmiss_input_ports )
 	PORT_DIPSETTING(    0x0c, "30" )
 	PORT_DIPSETTING(    0x04, "40" )
 	PORT_DIPSETTING(    0x00, "50" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x80, 0x80, "Free Play" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START				/* start button */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -1637,10 +1526,10 @@ INPUT_PORTS_START( hitnmiss_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1776,36 +1665,19 @@ INPUT_PORTS_START( whodunit_input_ports )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* start button */
@@ -1818,10 +1690,10 @@ INPUT_PORTS_START( whodunit_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -1932,31 +1804,14 @@ INPUT_PORTS_START( showdown_input_ports )
 	PORT_DIPSETTING(    0x0c, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x10, "Hardest" )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* audio board dips */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage" )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "4 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x00, "4 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x05, "3 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x08, "2 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+COINAGE
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* start button */
@@ -1969,10 +1824,10 @@ INPUT_PORTS_START( showdown_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START				/* fake analog X */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 0, 255 )
 
 	PORT_START				/* fake analog Y */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
