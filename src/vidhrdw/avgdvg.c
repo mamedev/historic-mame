@@ -1182,5 +1182,10 @@ void dvg_stop(void)
 	vector_clear_list();
 
 	vector_vh_stop();
+
+	if (backdrop) artwork_free(backdrop);
+	backdrop = NULL;
+	if (overlay) artwork_free(overlay);
+	overlay = NULL;
 }
 

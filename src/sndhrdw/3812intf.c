@@ -28,11 +28,8 @@ int use_emulated_ym3812 = 1;
 /* Emulated YM3812 variables and defines */
 static ym3812* ym = 0;
 static int ym_channel = 0;
-static int emulation_rate;
-static int buffer_len;
 static int sample_bits;
 static FMSAMPLE *buffer;
-static int channel;
 
 
 /* Non-Emulated YM3812 variables and defines */

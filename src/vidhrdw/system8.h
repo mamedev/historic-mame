@@ -18,6 +18,9 @@
 #define SYSTEM8_SPRITE_PIXEL_MODE2	1	// mode in which sprites are always drawing in order (0.1.2...31)
 						// (choplifter,wonder boy in monster land)
 
+#define SYSTEM8_BACKGROUND_MEMORY_SINGLE 0
+#define SYSTEM8_BACKGROUND_MEMORY_BANKED 1
+
 extern unsigned char 	*system8_scroll_y;
 extern unsigned char 	*system8_scroll_x;
 extern unsigned char 	*system8_videoram;
@@ -32,6 +35,7 @@ extern int 	system8_backgroundram_size;
 int  system8_vh_start(void);
 void system8_vh_stop(void);
 void system8_define_sprite_pixelmode(int Mode);
+void system8_define_background_memory(int Mode);
 
 int  wbml_bg_bankselect_r(int offset);
 void wbml_bg_bankselect_w(int offset, int data);

@@ -192,7 +192,7 @@ Terra Cresta (two sets merged) [Carlos A. Lozano]
 Tetris (Cocktail set 1) (merged) [Zsolt Vasvari]
 The Billiards (merged with Video Hustler) [Nicola Salmoria]
 The Empire Strikes Back (not playable) [Brad Oliver]
-The King od Dragons (2 sets) [Paul Leaman]
+The King of Dragons (2 sets) [Paul Leaman]
 The Tin Star (not complete) [Nicola Salmoria]
 Tiger Heli (4 sets merged, only 2 work) [Nicola Salmoria]
 Time Pilot (Centuri) (merged) [Nicola Salmoria]
@@ -435,7 +435,7 @@ the high score table, or otherwise strange behaviour, delete the .hi file.
 
 - Cloak and Dagger, Frenzy, Future Spy, Cop 01, Lode Runner, Kid Niki,
   Spelunker II, Jail Break, The Main Event, King of Boxer, Express Raider,
-  Pac Land, Speed Ball. [Dave W.]
+  Pac Land, Speed Ball, TMNT, Punk Shot. [Dave W.]
 
 - Exciting Soccer. [Jarek Parchanski]
 
@@ -553,7 +553,10 @@ Changes to the main program:
 - When using the SoundBlaster OPL chip, YM3812 commands are converted to play
   at the correct frequency. [Carl-Henrik Skårstedt]
 
-- Joystick calibration is available in the Tab menu.
+- Joystick calibration is available in the Tab menu. [Bernd Wiebelt]
+
+- Fixed bug in the Z80 emulator which caused crashes in Tapper and Tron.
+  [Juergen Buchmueller]
 
 
 

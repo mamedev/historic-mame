@@ -343,7 +343,7 @@ to list them.
 | Psycho-Nics Oscar    |  Yes   |  Yes   |   No   |   No   |   No   | oscar    |
 | Pulsar               |  Yes   |  Yes   |   No   |   No   |   No   | pulsar   |
 | Punch Out            |  Yes   |  Yes   |Partial |  Yes   |  n/a   | punchout |
-| Punk Shot            |  Yes   |  Yes   |Partial |   No   |   No   | punkshot |
+| Punk Shot            |  Yes   |  Yes   |Partial |  Yes   |   No   | punkshot |
 | Q*Bert               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | qbert    |
 | Q*Bert Qubes         |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | qbertqub |
 | Qix                  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qix      |
@@ -456,7 +456,7 @@ to list them.
 | Superman             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superman |
 | SWAT                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | swat     |
 | Swimmer              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | swimmer  |
-| T.M.N.T.             |  Yes   |  Yes   |Partial |   No   |   No   | tmnt     |
+| T.M.N.T.             |  Yes   |  Yes   |Partial |  Yes   |   No   | tmnt     |
 | Tac/Scan             |  Yes   | Close  | Yes(1) |  Yes   |   No   | tacscan  |
 | Tag Team Wrestling   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tagteam  |
 | Tank Battalion       |  Yes   |  Yes?  | Yes(1) |  Yes   |  Yes   | tankbatt |

@@ -666,7 +666,7 @@ struct GameDriver empire_driver =
 	"1985",
 	"Atari",
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
-	0,
+	GAME_NOT_WORKING,
 	&empire_machine_driver,
 	0,
 

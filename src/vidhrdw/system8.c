@@ -35,7 +35,7 @@ static int		scrollx_row[32];
 static struct osd_bitmap *bitmap1;
 static struct osd_bitmap *bitmap2;
 
-static int  system8_pixel_mode = 0,system8_video_mode=0;
+static int  system8_pixel_mode = 0,system8_background_memory,system8_video_mode=0;
 
 static unsigned char palette_lookup[256*3];
 
@@ -213,6 +213,11 @@ void system8_define_sprite_pixelmode(int Mode)
 	system8_pixel_mode = Mode;
 }
 
+void system8_define_background_memory(int Mode)
+{
+	system8_background_memory = Mode;
+}
+
 static int GetSpriteBottomY(int spr_number)
 {
 	return  spriteram[0x10 * spr_number + SPR_Y_BOTTOM];
@@ -275,10 +280,18 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 	/* what's the difference? Bit 7 is used in Choplifter/WBML for extra char bank */
 	/* selection, but it is also set in Pitfall2 */
 
-	/* I have to use cpu_readmem16() to pass through the memory handler which handles */
-	/* RAM banking in games running on WBML hardware */
-	if (cpu_readmem16(2 * (32 * yr + xr) + 1) & 0x10)
-		system8_background_collisionram[0x20 + spr_number] = 0xff;
+	if (system8_background_memory == SYSTEM8_BACKGROUND_MEMORY_SINGLE)
+	{
+		if (system8_backgroundram[2 * (32 * yr + xr) + 1] & 0x10)
+			system8_background_collisionram[0x20 + spr_number] = 0xff;
+	}
+	else
+	{
+		/* TODO: I should handle the paged background memory here. */
+		/* maybe collision detection is not used by the paged games */
+		/* (wbml and tokisens), though tokisens doesn't play very well */
+		/* (you can't seem to fit in gaps where you should fit) */
+	}
 
 	/* TODO: collision should probably be checked with the foreground as well */
 	/* (TeddyBoy Blues, head of the tiger in girl bonus round) */

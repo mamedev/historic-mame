@@ -37,6 +37,7 @@ static void system8_init_machine(void)
 	Machine->memory_region[0][0xefff] = 0x4b;
 
 	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE1);
+	system8_define_background_memory(SYSTEM8_BACKGROUND_MEMORY_SINGLE);
 
 	SN76496_set_clock(1,4000000);
 }
@@ -50,6 +51,21 @@ static void chplft_init_machine(void)
 	Machine->memory_region[0][0xefff] = 0x4b;
 
 	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE2);
+	system8_define_background_memory(SYSTEM8_BACKGROUND_MEMORY_SINGLE);
+
+	SN76496_set_clock(1,4000000);
+}
+
+static void wbml_init_machine(void)
+{
+	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
+	/* this is not a ROM patch, the game checks a RAM location */
+	/* before doing the test */
+	Machine->memory_region[0][0xeffe] = 0x4f;
+	Machine->memory_region[0][0xefff] = 0x4b;
+
+	system8_define_sprite_pixelmode(SYSTEM8_SPRITE_PIXEL_MODE2);
+	system8_define_background_memory(SYSTEM8_BACKGROUND_MEMORY_BANKED);
 
 	SN76496_set_clock(1,4000000);
 }
@@ -1922,7 +1938,7 @@ static struct MachineDriver wbml_machine_driver =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,					/* single CPU, no need for interleaving */
-	chplft_init_machine,
+	wbml_init_machine,
 
 	/* video hardware */
 	256, 256,				/* screen_width, screen_height */

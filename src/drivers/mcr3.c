@@ -2114,9 +2114,11 @@ struct GameDriver powerdrv_driver =
 
 
 ROM_START( maxrpm_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pro.0",        0x0000, 0x8000, 0x3f9ec35f )
-	ROM_LOAD( "pro.1",        0x8000, 0x8000, 0xf628bb30 )
+	ROM_REGION(0x12000)	/* 64k for code */
+	ROM_LOAD( "pro.0",        0x00000, 0x8000, 0x3f9ec35f )
+	ROM_LOAD( "pro.1",        0x08000, 0x6000, 0xf628bb30 )
+	ROM_CONTINUE(             0x10000, 0x2000 )	/* unused? but there seems to be stuff in here */
+								/* loading it at e000 causes rogue sprites to appear on screen */
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xe3fb693a )

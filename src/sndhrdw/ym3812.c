@@ -305,6 +305,8 @@ ym3812* ym3812_Init( int nReplayFrq, int nClock, int f16Bit )
 	pOPL->nYM3812Clk = nClock;
 	pOPL->nYM3812DivClk = nClock/72;
 	pOPL->SetTimer = NULL;
+	pOPL->vTimer1 = 0.01f;
+	pOPL->vTimer2 = 0.01f;
 	pOPL->nSubDivide = 1;
 
 	/* Generate some volume levels.. (ln)*/

@@ -1848,7 +1848,6 @@ static int displaygameinfo(int selected)
 		"NES",
 		"Astrocade 'IO' chip",
 		"Namco",
-		"Namco System 1",
 		"TMS5220",
 		"VLM5030",
 		"ADPCM samples",

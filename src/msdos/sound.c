@@ -545,16 +545,26 @@ void osd_sound_enable(int enable_it)
 
 
 
+/* linux sound driver opl3.c does a so called tenmicrosec() delay */
+static void tenmicrosec(void)
+{
+    int i;
+    for (i = 0; i < 16; i++)
+        inportb(0x80);
+}
+
 void osd_ym3812_control(int reg)
 {
-	if (Machine->sample_rate == 0) return;
+    if (Machine->sample_rate == 0) return;
 
-	outportb(0x388,reg);
+    tenmicrosec();
+    outportb(0x388,reg);
 }
 
 void osd_ym3812_write(int data)
 {
-	if (Machine->sample_rate == 0) return;
+    if (Machine->sample_rate == 0) return;
 
-	outportb(0x389,data);
+    tenmicrosec();
+    outportb(0x389,data);
 }

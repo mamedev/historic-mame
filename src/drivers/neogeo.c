@@ -1145,38 +1145,6 @@ ROM_START( ncombat_rom )
 	ROM_LOAD( "n046001a.278", 0x000000, 0x080000, 0x365f9011 )
 ROM_END
 
-ROM_START( socbrawl_rom )
-	ROM_REGION(0x100000)
-    ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0x9fa17911)
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
-
-	NEO_SFIX_64K( "n046001a.378", 0x2db38c3b )
-
-	ROM_REGION(0x180000)
-    ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0x945bf77c) /* Plane 0,1 */
-	ROM_CONTINUE(             0x0c0000, 0x40000 )
-    ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0x9a210d0d) /* Plane 0,1 */
-	ROM_CONTINUE(             0x100000, 0x40000 )
-    ROM_LOAD( "n046001b.538", 0x080000, 0x40000, 0x057dbb51) /* Plane 0,1 */
-	ROM_CONTINUE(             0x140000, 0x40000 )
-
-	ROM_REGION(0x180000)
-    ROM_LOAD( "n046001a.638", 0x000000, 0x40000, 0x6708fc58) /* Plane 2,3 */
-	ROM_CONTINUE(             0x0c0000, 0x40000 )
-    ROM_LOAD( "n046001a.63c", 0x040000, 0x40000, 0x9a97c680) /* Plane 2,3 */
-	ROM_CONTINUE(             0x100000, 0x40000 )
-    ROM_LOAD( "n046001b.638", 0x080000, 0x40000, 0x434c17c8) /* Plane 2,3 */
-	ROM_CONTINUE(             0x140000, 0x40000 )
-
-	NEO_BIOS_SOUND_128K( "n046001a.4f8", 0xbc45269b )
-
-	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
-	ROM_LOAD( "n046001a.1f8", 0x000000, 0x080000, 0x670dc165 )
-	ROM_LOAD( "n046001a.1fc", 0x080000, 0x080000, 0xabb9537b )
-	ROM_LOAD( "n046001b.1f8", 0x100000, 0x080000, 0x600be43e )
-	ROM_LOAD( "n046001b.1fc", 0x180000, 0x080000, 0x88d30359 )
-ROM_END
-
 /* TODO: verify this dump. I think it's a combination of 2 reads */
 ROM_START( bstars_rom )
 	ROM_REGION(0x100000)
@@ -1950,6 +1918,27 @@ ROM_START( nam_1975_rom )
 	ROM_LOAD( "nam_v21.rom", 0x000000, 0x080000, 0x55e670b3 )
 	ROM_LOAD( "nam_v22.rom", 0x080000, 0x080000, 0xab0d8368 )
 	ROM_LOAD( "nam_v23.rom", 0x100000, 0x080000, 0xdf468e28 )
+ROM_END
+
+ROM_START( socbrawl_rom )
+	ROM_REGION(0x100000)
+    ROM_LOAD_WIDE_SWAP( "sbrl_p1.rom", 0x000000, 0x080000, 0xa2801c24 )
+
+	NEO_SFIX_64K( "sbrl_s1.rom", 0x2db38c3b )
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "sbrl_c1.rom", 0x000000, 0x100000, 0xbd0a4eb8 ) /* Plane 0,1 */
+    ROM_LOAD( "sbrl_c3.rom", 0x100000, 0x080000, 0x580f7f33 ) /* Plane 0,1 */
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "sbrl_c2.rom", 0x000000, 0x100000, 0xefde5382 ) /* Plane 2,3 */
+    ROM_LOAD( "sbrl_c4.rom", 0x100000, 0x080000, 0xed297de8 ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_64K( "sbrl_m1.rom", 0x2f38d5d3 )
+
+	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+	ROM_LOAD( "sbrl_v1.rom", 0x000000, 0x100000, 0xcc78497e )
+	ROM_LOAD( "sbrl_v2.rom", 0x100000, 0x100000, 0xdda043c6 )
 ROM_END
 
 ROM_START( maglord_rom )
@@ -3649,12 +3638,12 @@ ROM_START( kof97_rom )
 	ROM_LOAD( "kof97_c4.rom", 0x0800000, 0x800000, 0x49bb1e68 ) /* Plane 2,3 */
 	ROM_LOAD( "kof97_c6.rom", 0x1000000, 0x400000, 0x4ff4d47b ) /* Plane 2,3 */
 
-	NEO_BIOS_SOUND_128K( "kof97_m1.rom", 0x00000000 )	/* second half is missing */
+	NEO_BIOS_SOUND_128K( "kof97_m1.rom", 0x45348747 )
 
 	ROM_REGION_OPTIONAL(0xc00000) /* sound samples */
-	ROM_LOAD( "kof97_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
-	ROM_LOAD( "kof97_v2.rom", 0x400000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
-	ROM_LOAD( "kof97_v3.rom", 0x800000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
+	ROM_LOAD( "kof97_v1.rom", 0x000000, 0x400000, 0x22a2b5b5 )
+	ROM_LOAD( "kof97_v2.rom", 0x400000, 0x400000, 0x2304e744 )
+	ROM_LOAD( "kof97_v3.rom", 0x800000, 0x400000, 0x759eb954 )
 ROM_END
 
 ROM_START( realbou2_rom )
@@ -3735,8 +3724,8 @@ ROM_START( miexchng_rom )
 
     NEO_BIOS_SOUND_64K( "miex-m1.rom", 0xf5316be1 )
 
-    ROM_REGION_OPTIONAL(0x800000) /* sound samples */
-    ROM_LOAD( "miex-v1.rom", 0x000000, 0x800000, 0x00000000 ) /* bad read */
+    ROM_REGION_OPTIONAL(0x400000) /* sound samples */
+    ROM_LOAD( "miex-v1.rom", 0x000000, 0x400000, 0x00000000 )
 ROM_END
 
 ROM_START( lastblad_rom )
@@ -3873,7 +3862,6 @@ NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu","1991","SNK"
 NEODRIVER(burningf,"Burning Fight","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(kingofm, "King of the Monsters","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(gpilots, "Ghost Pilots","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(socbrawl,"Soccer Brawl","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(sengoku, "Sengoku","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(lresort, "Last Resort","1992","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(fbfrenzy,"Football Frenzy","1992","SNK","",&neogeo_mgd2_machine_driver)
@@ -3979,6 +3967,7 @@ NEODRIVER(mahretsu,"Mahjong Kyo Retsuden","1990","SNK","",&neogeo_mvs_machine_dr
 NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(tpgolf,  "Top Player's Golf","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(legendos,"Legend of Success Joe / Ashita No Joe Densetsu","1991","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
+NEODRIVER(socbrawl,"Soccer Brawl","1991","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfury2,"Fatal Fury 2","1992","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(bstars2, "Baseball Stars 2","1992","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(sidkicks,"Super Sidekicks","1992","SNK","",&neogeo_mvs_machine_driver)

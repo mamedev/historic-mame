@@ -2438,6 +2438,7 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
 	{
 		int j;
 
+
 		if ( R.irq_max )
 		{	/* DaisyChain */
 			/* get interrupt vector and enter interrupt service */
@@ -2448,8 +2449,8 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
 		else
 		{	/* SINGLE INT */
 			j = R.vector;
-			R.pending_irq &= ~INT_IRQ;
 		}
+		R.pending_irq &= ~INT_IRQ;
 #else
 /*  if (j==Z80_NMI_INT)*/
 	if (R.pending_nmi != 0)	/* NS 970904 */
