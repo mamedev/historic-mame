@@ -325,7 +325,7 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 palette_init_used_colors();
 
 /* TODO: we are using the same table for background and foreground tiles, but this */
-/* causes the sly to be black instead of blue. */
+/* causes the sky to be black instead of blue. */
 {
 	int color,code,i;
 	int colmask[128];
@@ -334,11 +334,14 @@ palette_init_used_colors();
 
 	pal_base = 0;
 
-	for (color = 0;color < 128;color++) colmask[color] = 0;
+	for (color = 0;color < 128;color++)
+	{
+		colmask[color] = 0;
+    }
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3fff;
+		code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3FFF;
 		color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
 
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
@@ -363,14 +366,19 @@ palette_init_used_colors();
 			data1 = READ_WORD (&rastan_spriteram[offs]);
 
 			color = (data1 + 0x10) & 0x7f;
-			colmask[color] |= Machine->gfx[1]->pen_usage[code];
+
+            if(code < 4096)
+				colmask[color] |= Machine->gfx[1]->pen_usage[code];
+            else
+				colmask[color] |= Machine->gfx[2]->pen_usage[code-4096];
 		}
 	}
 
 	for (color = 0;color < 128;color++)
 	{
 		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_USED;
+
 		for (i = 1;i < 16;i++)
 		{
 			if (colmask[color] & (1 << i))
@@ -378,6 +386,9 @@ palette_init_used_colors();
 		}
 	}
 
+    /* Make one transparent colour */
+
+    palette_used_colors[pal_base] = PALETTE_COLOR_TRANSPARENT;
 
 	if (palette_recalc())
 	{
@@ -428,23 +439,29 @@ palette_init_used_colors();
 			sx = (offs/4) % 64;
 			sy = (offs/4) / 64;
 
+            /* Colour as Transparent */
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					0,
+					0,
+					0, 0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+
+            /* Draw over with correct Transparency */
+
 			drawgfx(tmpbitmap3, Machine->gfx[0],
 					data2 & 0x3fff,
 					data1 & 0x7f,
 					data1 & 0x4000, data1 & 0x8000,
 					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+					0,TRANSPARENCY_PEN,0);
 		}
 	}
 
 	scrollx = READ_WORD(&rastan_scrollx[0]) - 16;
 	scrolly = READ_WORD(&rastan_scrolly[0]);
 	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-	scrollx = READ_WORD(&rastan_scrollx[2]) - 16;
-	scrolly = READ_WORD(&rastan_scrolly[2]);
-	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
 
 	/* Draw the sprites. 256 sprites in total */
 	for (offs = 0x800-8; offs >= 0; offs -= 8)
@@ -464,14 +481,28 @@ palette_init_used_colors();
 
 			col = (data1 + 0x10) & 0x7f;
 
-			drawgfx(bitmap,Machine->gfx[1],
-					num,
-					col,
-					data1 & 0x4000, data1 & 0x8000,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+            if(num < 4096)
+			    drawgfx(bitmap,Machine->gfx[1],
+					    num,
+					    col,
+					    data1 & 0x4000, data1 & 0x8000,
+					    sx,sy,
+					    &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+            else
+			    drawgfx(bitmap,Machine->gfx[2],
+					    num-4096,
+					    col,
+					    data1 & 0x4000, data1 & 0x8000,
+					    sx,sy,
+					    &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
+
+	scrollx = READ_WORD(&rastan_scrollx[2]) - 16;
+	scrolly = READ_WORD(&rastan_scrolly[2]);
+	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+
+
 }
 
 
@@ -489,12 +520,11 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     palette_init_used_colors();
 
     /* TODO: we are using the same table for background and foreground tiles, but this */
-    /* causes the sly to be black instead of blue. */
+    /* causes the sky to be black instead of blue. */
     {
 	    int color,code,i;
 	    int colmask[128];
-	    int pal_base;
-
+    	int pal_base;
 
 	    pal_base = 0;
 
@@ -502,16 +532,8 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	    {
-		    code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3fff;
+		    code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3FFF;
 		    color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
-
-		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	    }
-
-	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
-	    {
-		    code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3fff;
-		    color = READ_WORD(&rastan_videoram3[offs]) & 0x7f;
 
 		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	    }
@@ -531,10 +553,20 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		    }
 	    }
 
+	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	    {
+		    code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3FFF;
+		    color = READ_WORD(&rastan_videoram3[offs]) & 0x7f;
+
+		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	    }
+
+
 	    for (color = 0;color < 128;color++)
 	    {
 		    if (colmask[color] & (1 << 15))
-			    palette_used_colors[pal_base + 16 * color + 15] = PALETTE_COLOR_TRANSPARENT;
+			    palette_used_colors[pal_base + 16 * color + 15] = PALETTE_COLOR_USED;
+
 		    for (i = 0;i < 15;i++)
 		    {
 			    if (colmask[color] & (1 << i))
@@ -542,12 +574,16 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		    }
 	    }
 
+        /* Make one transparent colour */
+
+        palette_used_colors[pal_base + 15] = PALETTE_COLOR_TRANSPARENT;
 
 	    if (palette_recalc())
 	    {
 		    memset(rastan_dirty1,1,rastan_videoram_size / 4);
 		    memset(rastan_dirty3,1,rastan_videoram_size / 4);
 	    }
+
     }
 
 	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
@@ -566,7 +602,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (offs/4) / 64;
 
 			drawgfx(tmpbitmap1, Machine->gfx[0],
-					data2 & 0x3fff,
+					data2,
 					data1 & 0x7f,
 					data1 & 0x4000, data1 & 0x8000,
 					8*sx,8*sy,
@@ -590,12 +626,23 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = (offs/4) % 64;
 			sy = (offs/4) / 64;
 
+            /* Colour as Transparent */
+
 			drawgfx(tmpbitmap3, Machine->gfx[0],
-					data2 & 0x3fff,
+					0,
+					0,
+					0, 0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+
+            /* Draw over with correct Transparency */
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					data2,
 					data1 & 0x7f,
 					data1 & 0x4000, data1 & 0x8000,
 					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+					0,TRANSPARENCY_PEN,15);
 		}
 	}
 
@@ -633,6 +680,5 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	scrollx = - 16;
 	scrolly = 0;
-	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
+  	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }

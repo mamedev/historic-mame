@@ -154,12 +154,6 @@ int senjyo_vh_start(void)
 		bg2_tilemap->transparent_pen = 0;
 		bg3_tilemap->transparent_pen = 0;
 		tilemap_set_scroll_cols(fg_tilemap,32);
-		tilemap_set_scroll_rows(bg1_tilemap,1);
-		tilemap_set_scroll_cols(bg1_tilemap,1);
-		tilemap_set_scroll_rows(bg2_tilemap,1);
-		tilemap_set_scroll_cols(bg2_tilemap,1);
-		tilemap_set_scroll_rows(bg3_tilemap,1);
-		tilemap_set_scroll_cols(bg3_tilemap,1);
 
 		bgbitmap_dirty = 1;
 
@@ -370,22 +364,22 @@ void senjyo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scrollx,scrolly;
 
 		for (i = 0;i < 32;i++)
-			tilemap_set_scrolly(fg_tilemap,i,-senjyo_fgscroll[i]);
+			tilemap_set_scrolly(fg_tilemap,i,senjyo_fgscroll[i]);
 
-		scrollx = -senjyo_scrollx1[0];
-		scrolly = -senjyo_scrolly1[0] - 256 * senjyo_scrolly1[1];
+		scrollx = senjyo_scrollx1[0];
+		scrolly = senjyo_scrolly1[0] + 256 * senjyo_scrolly1[1];
 		tilemap_set_scrollx(bg1_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg1_tilemap,0,scrolly);
 
-		scrollx = -senjyo_scrollx2[0];
+		scrollx = senjyo_scrollx2[0];
 		if (scrollhack)	/* Star Force, but NOT the encrypted version */
-			scrollx = -senjyo_scrollx1[0];
-		scrolly = -senjyo_scrolly2[0] - 256 * senjyo_scrolly2[1];
+			scrollx = senjyo_scrollx1[0];
+		scrolly = senjyo_scrolly2[0] + 256 * senjyo_scrolly2[1];
 		tilemap_set_scrollx(bg2_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg2_tilemap,0,scrolly);
 
-		scrollx = -senjyo_scrollx3[0];
-		scrolly = -senjyo_scrolly3[0] - 256 * senjyo_scrolly3[1];
+		scrollx = senjyo_scrollx3[0];
+		scrolly = senjyo_scrolly3[0] + 256 * senjyo_scrolly3[1];
 		tilemap_set_scrollx(bg3_tilemap,0,scrollx);
 		tilemap_set_scrolly(bg3_tilemap,0,scrolly);
 	}

@@ -15,6 +15,19 @@ Changes:
 TODO:
 	* Need valid color prom for Fantazia. Current one is slightly damaged.
 
+
+Moon Cresta versions supported:
+------------------------------
+
+mooncrst    Nichibutsu - later revision with better demo mode and
+						 text for docking. Encrypted. No ROM/RAM check
+mooncrs2    Nichibutsu - probably first revision (no patches) and ROM/RAM check code.
+                         This came from a bootleg board, with the logos erased
+						 from the graphics
+mooncrsg    Gremlin    - same docking text as mooncrst
+mooncrsb    bootleg of mooncrs2. ROM/RAM check erased.
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -929,6 +942,33 @@ ROM_START( mooncrsb_rom )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
+ROM_START( mooncrs2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "f8.bin",       0x0000, 0x0800, 0xd36003e5 )
+	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "e5",           0x2000, 0x0800, 0x06d378a6 )
+	ROM_LOAD( "bepr199",      0x2800, 0x0800, 0x6e84a927 )
+	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
+	ROM_LOAD( "m7.bin",       0x3800, 0x0800, 0x957ee078 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
+	ROM_LOAD( "12.chr",       0x0800, 0x0200, 0x5a4b17ea )
+	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
+	ROM_CONTINUE(             0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
+	ROM_CONTINUE(             0x0e00, 0x0200 )
+	ROM_LOAD( "1k_1_11.bin",  0x1000, 0x0800, 0x4e79ff6b )
+	ROM_LOAD( "11.chr",       0x1800, 0x0200, 0xe0edccbd )
+	ROM_CONTINUE(             0x1c00, 0x0200 )
+	ROM_CONTINUE(             0x1a00, 0x0200 )
+	ROM_CONTINUE(             0x1e00, 0x0200 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
 ROM_START( fantazia_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "f01.bin",      0x0000, 0x0800, 0xd3e23863 )
@@ -1515,7 +1555,7 @@ struct GameDriver mooncrsb_driver =
 	__FILE__,
 	&mooncrst_driver,
 	"mooncrsb",
-	"Moon Cresta (bootleg)",
+	"Moon Cresta (bootleg set 1)",
 	"1980",
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
@@ -1524,6 +1564,32 @@ struct GameDriver mooncrsb_driver =
 	0,
 
 	mooncrsb_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	mooncrst_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	mooncrst_hiload, mooncrst_hisave
+};
+
+struct GameDriver mooncrs2_driver =
+{
+	__FILE__,
+	&mooncrst_driver,
+	"mooncrs2",
+	"Moon Cresta (bootleg set 2)",
+	"1980",
+	"Nichibutsu",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
+	0,
+	&mooncrst_machine_driver,
+	0,
+
+	mooncrs2_rom,
 	0, 0,
 	mooncrst_sample_names,
 	0,	/* sound_prom */

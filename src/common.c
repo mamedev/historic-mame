@@ -174,7 +174,8 @@ int readroms(void)
 		Machine->memory_region_length[region] = region_size;
 
 		/* some games (i.e. Pleiades) want the memory clear on startup */
-		memset(Machine->memory_region[region],0,region_size);
+		if (region_size < 0x100000)	/* don't clear large regions which will be filled anyway */
+			memset(Machine->memory_region[region],0,region_size);
 
 		romp++;
 
@@ -255,7 +256,24 @@ int readroms(void)
 						goto getout;
 					}
 
-					if (romp->length & (ROMFLAG_ALTERNATE | ROMFLAG_NIBBLE))
+					if (romp->length & ROMFLAG_ALTERNATE)
+					{
+						/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
+						/* copy the ROM data */
+					#ifdef LSB_FIRST
+						c = Machine->memory_region[region] + (romp->offset ^ 1);
+					#else
+						c = Machine->memory_region[region] + romp->offset;
+					#endif
+
+						if (osd_fread_scatter(f,c,length,2) != length)
+						{
+							printf("Unable to read ROM %s\n",name);
+							osd_fclose(f);
+							goto printromlist;
+						}
+					}
+					else if (romp->length & ROMFLAG_NIBBLE)
 					{
 						unsigned char *temp;
 
@@ -277,47 +295,26 @@ int readroms(void)
 							goto printromlist;
 						}
 
-						if (romp->length & ROMFLAG_NIBBLE)
+						/* ROM_LOAD_NIB_LOW and ROM_LOAD_NIB_HIGH */
+						c = Machine->memory_region[region] + romp->offset;
+						if (romp->length & ROMFLAG_ALTERNATE)
 						{
-							/* ROM_LOAD_NIB_LOW and ROM_LOAD_NIB_HIGH */
-							c = Machine->memory_region[region] + romp->offset;
-							if (romp->length & ROMFLAG_ALTERNATE)
+							/* Load into the high nibble */
+							for (i = 0;i < length;i ++)
 							{
-								/* Load into the high nibble */
-								for (i = 0;i < length;i ++)
-								{
-									c[i] = (c[i] & 0x0f) | ((temp[i] & 0x0f) << 4);
-								}
+								c[i] = (c[i] & 0x0f) | ((temp[i] & 0x0f) << 4);
 							}
-							else
-							{
-								/* Load into the low nibble */
-								for (i = 0;i < length;i ++)
-								{
-									c[i] = (c[i] & 0xf0) | (temp[i] & 0x0f);
-								}
-							}
-
-							free (temp);
 						}
 						else
 						{
-							/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
-							/* copy the ROM data */
-						#ifdef LSB_FIRST
-							c = Machine->memory_region[region] + (romp->offset ^ 1);
-						#else
-							c = Machine->memory_region[region] + romp->offset;
-						#endif
-
-							for (i = 0;i < length;i+=2)
+							/* Load into the low nibble */
+							for (i = 0;i < length;i ++)
 							{
-								c[i*2] = temp[i];
-								c[i*2+2] = temp[i+1];
+								c[i] = (c[i] & 0xf0) | (temp[i] & 0x0f);
 							}
-
-							free(temp);
 						}
+
+						free (temp);
 					}
 					else
 					{
@@ -379,7 +376,7 @@ int readroms(void)
 						int i;
 
 						/* fill space with random data */
-						for (i = 0;i < romp->length;i++)
+						for (i = 0;i < (romp->length & ~ROMFLAG_MASK);i++)
 							Machine->memory_region[region][romp->offset + i] = rand();
 						romp++;
 					} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
@@ -475,7 +472,10 @@ void printromlist(const struct RomModule *romp,const char *basename)
 				romp++;
 			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
-			printf("%-12s  %7d bytes  %08x\n",name,length,expchecksum);
+			if (expchecksum)
+				printf("%-12s  %7d bytes  %08x\n",name,length,expchecksum);
+			else
+				printf("%-12s  %7d bytes  NO GOOD DUMP KNOWN\n",name,length);
 		}
 	}
 }

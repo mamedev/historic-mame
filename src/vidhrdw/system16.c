@@ -225,11 +225,6 @@ int sys16_vh_start( void ){
 		foreground->transparent_pen = 0;
 		text_layer->transparent_pen = 0;
 
-		tilemap_set_scroll_rows(background,1);
-		tilemap_set_scroll_cols(background,1);
-		tilemap_set_scroll_rows(foreground,1);
-		tilemap_set_scroll_cols(foreground,1);
-
 		sys16_tile_bank0 = 0;
 		sys16_tile_bank1 = 1;
 
@@ -436,11 +431,11 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	if( sys16_refreshenable ){
 		update_page();
 
-		tilemap_set_scrollx( background, 0, 320+sys16_bg_scrollx );
-		tilemap_set_scrolly( background, 0, 256-sys16_bg_scrolly );
+		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx );
+		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 
-		tilemap_set_scrollx( foreground, 0, 320+sys16_fg_scrollx );
-		tilemap_set_scrolly( foreground, 0, 256-sys16_fg_scrolly );
+		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx );
+		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
 
 		tilemap_update(  ALL_TILEMAPS  );
 		palette_init_used_colors();

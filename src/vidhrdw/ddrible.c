@@ -173,11 +173,6 @@ int ddrible_vh_start ( void )
 	{
 		fg_tilemap->transparent_pen = 0;
 
-		tilemap_set_scroll_rows(fg_tilemap,1);
-		tilemap_set_scroll_cols(fg_tilemap,1);
-		tilemap_set_scroll_rows(bg_tilemap,1);
-		tilemap_set_scroll_cols(bg_tilemap,1);
-
 		return 0;
 	}
 
@@ -224,12 +219,12 @@ void ddrible_fg_scrollx_w( int offset,int data )
 	else
 		fg_scrollx = (fg_scrollx & 0x100) | data;
 
-	tilemap_set_scrollx(fg_tilemap,0,-fg_scrollx);
+	tilemap_set_scrollx(fg_tilemap,0,fg_scrollx);
 }
 
 void ddrible_fg_scrolly_w( int offset,int data )
 {
-	tilemap_set_scrolly(fg_tilemap,0,-data);
+	tilemap_set_scrolly(fg_tilemap,0,data);
 }
 
 void ddrible_bg_scrollx_w( int offset,int data )
@@ -241,12 +236,12 @@ void ddrible_bg_scrollx_w( int offset,int data )
 	else
 		bg_scrollx = (bg_scrollx & 0x100) | data;
 
-	tilemap_set_scrollx(bg_tilemap,0,-bg_scrollx);
+	tilemap_set_scrollx(bg_tilemap,0,bg_scrollx);
 }
 
 void ddrible_bg_scrolly_w( int offset,int data )
 {
-	tilemap_set_scrolly(bg_tilemap,0,-data);
+	tilemap_set_scrolly(bg_tilemap,0,data);
 }
 
 

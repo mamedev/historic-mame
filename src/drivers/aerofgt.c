@@ -895,8 +895,8 @@ struct YM2610interface ym2610_interface =
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
-	{ 4 },
 	{ 3 },
+	{ 4 },
 	{ YM3012_VOL(50,OSD_PAN_LEFT,50,OSD_PAN_RIGHT) }
 };
 

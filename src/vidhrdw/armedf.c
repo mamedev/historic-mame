@@ -177,11 +177,6 @@ int terraf_vh_start(void){
 		foreground->transparent_pen = 0xf;
 		text_layer->transparent_pen = 0xf;
 
-                tilemap_set_scroll_rows(background,1);
-		tilemap_set_scroll_cols(background,1);
-                tilemap_set_scroll_rows(foreground,1);
-		tilemap_set_scroll_cols(foreground,1);
-
 		return 0;
 	}
 	return 1;
@@ -214,11 +209,6 @@ int armedf_vh_start(void){
 	if( background && foreground && text_layer ){
 		foreground->transparent_pen = 0xf;
 		text_layer->transparent_pen = 0xf;
-
-                tilemap_set_scroll_rows(background,1);
-		tilemap_set_scroll_cols(background,1);
-                tilemap_set_scroll_rows(foreground,1);
-		tilemap_set_scroll_cols(foreground,1);
 
 		return 0;
 	}
@@ -288,16 +278,16 @@ void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_set_enable( foreground, armedf_vreg&0x400 );
 	tilemap_set_enable( text_layer, armedf_vreg&0x100 );
 
-	tilemap_set_scrollx( background, 0, -armedf_bg_scrollx-96 );
-	tilemap_set_scrolly( background, 0, -armedf_bg_scrolly );
+	tilemap_set_scrollx( background, 0, armedf_bg_scrollx+96 );
+	tilemap_set_scrolly( background, 0, armedf_bg_scrolly );
 
 	if( scroll_type ){/* armed formation */
-		tilemap_set_scrollx( foreground, 0, -armedf_fg_scrollx-96 );
-		tilemap_set_scrolly( foreground, 0, -armedf_fg_scrolly );
+		tilemap_set_scrollx( foreground, 0, armedf_fg_scrollx+96 );
+		tilemap_set_scrolly( foreground, 0, armedf_fg_scrolly );
 	}
 	else { /* terra force */
-		tilemap_set_scrollx( foreground, 0, -(armedf_fg_scrolly>>8) - ((terraf_scroll_msb>>12)&3)*256 + 160+256*3);
-		tilemap_set_scrolly( foreground, 0, -(armedf_fg_scrollx>>8) - ((terraf_scroll_msb>>8)&3)*256 );
+		tilemap_set_scrollx( foreground, 0, (armedf_fg_scrolly>>8) + ((terraf_scroll_msb>>12)&3)*256 - 160-256*3);
+		tilemap_set_scrolly( foreground, 0, (armedf_fg_scrollx>>8) + ((terraf_scroll_msb>>8)&3)*256 );
 	}
 
 	tilemap_update(  ALL_TILEMAPS  );

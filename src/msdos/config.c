@@ -44,7 +44,7 @@ extern char *cheatfile;
 
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
-extern char *hidir, *cfgdir, *inpdir, *pcxdir, *stadir, *artworkdir, *alternate_name;
+extern char *hidir, *cfgdir, *inpdir, *pcxdir, *stadir, *memcarddir, *artworkdir, *alternate_name;
 
 /* from profiler.c */
 extern int use_profiler;
@@ -311,7 +311,8 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
-	use_triplebuf  = get_bool("config", "triplebuffer",        NULL,  0);
+//	use_triplebuf  = get_bool("config", "triplebuffer",        NULL,  0);
+use_triplebuf = 1;
 	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);
 	options.translucency = get_bool    ("config", "translucency", NULL, 1);
@@ -368,6 +369,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	hidir      = get_string ("directory", "hi",      NULL, "HI");
 	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
 	pcxdir     = get_string ("directory", "pcx",     NULL, "PCX");
+	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
 

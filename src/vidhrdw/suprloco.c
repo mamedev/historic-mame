@@ -96,7 +96,6 @@ int suprloco_vh_start(void)
 	if (bg_tilemap)
 	{
 		tilemap_set_scroll_rows(bg_tilemap,32);
-		tilemap_set_scroll_cols(bg_tilemap,1);
 
 		return 0;
 	}
@@ -128,7 +127,7 @@ void suprloco_scrollram_w(int offset, int data)
 	int adj = flipscreen ? -8 : 8;
 
 	suprloco_scrollram[offset] = data;
-	tilemap_set_scrollx(bg_tilemap,offset, -data + adj);
+	tilemap_set_scrollx(bg_tilemap,offset, data - adj);
 }
 
 int suprloco_scrollram_r(int offset)
@@ -165,7 +164,7 @@ void suprloco_control_w(int offset,int data)
 
 	flipscreen = data & 0x80;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	tilemap_set_scrolly(bg_tilemap,0,flipscreen ? 32 : 0);
+	tilemap_set_scrolly(bg_tilemap,0,flipscreen ? -32 : 0);
 
 	control = data;
 }

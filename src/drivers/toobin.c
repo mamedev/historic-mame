@@ -110,7 +110,7 @@ static void toobin_update_interrupts(int vblank, int sound)
 void toobin_init_machine(void)
 {
 	atarigen_init_machine(toobin_update_interrupts, 0);
-	ataraud2_reset(1, 2, 1, 0x10);
+	ataraud2_init(1, 2, 1, 0x10);
 
 	scanline_int_state = 0;
 	interrupt_timer = 0;
@@ -374,7 +374,11 @@ static struct MachineDriver toobin_machine_driver =
 	toobin_vh_screenrefresh,
 
 	/* sound hardware */
-	ATARI_AUDIO_2_INTERFACES
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		ATARI_AUDIO_2_YM2151,
+		ATARI_AUDIO_2_POKEY
+	}
 };
 
 

@@ -13,7 +13,8 @@ Avenging Spirit			B		AraCORN 	Yes
 Cybattler				?		AraCORN 	encrypted
 Earth Defense Force		B		AraCORN		Yes
 Hachoo					?		AraCORN 	encrypted
-Legend of Makaj			Z		AraCORN		Yes
+Legend of Makai (World)	Z		AraCORN		Yes
+Makai Densetsu (Japan)
 P-47 (World)			A	 	Yes			Yes
 P-47 (Japan)			A		J-rom		Yes
 Phantasm*				A?		J-Rom 		encrypted
@@ -1670,8 +1671,7 @@ INPUT_PORTS_START( input_ports_lomakaj )
 INPUT_PORTS_END
 
 
-MEGASYS1_GAMEDRIVER(lomakaj,0,Legend of Makaj,1988,Z,0)
-
+MEGASYS1_GAMEDRIVER(lomakaj,0,Legend of Makai,1988,Z,0)
 
 /***************************************************************************
 

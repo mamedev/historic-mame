@@ -26,7 +26,7 @@ enum {
 #endif
 };
 
-#define LAZY_FLAGS  1
+//#define LAZY_FLAGS  1
 
 #define H6280_INT_NONE	0
 #define H6280_INT_NMI	1

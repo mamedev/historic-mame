@@ -1,27 +1,34 @@
 /***************************************************************************
 
-Gun Dealer memory map (preliminary)
+Gun Dealer memory map
 
-0000-bfff ROM
-c400-c7ff Palette RAM
-d000-d1ff foreground (scrollable) video RAM. It might actually be larger than
-          this, however the game leaves the area d200-dfff empty so I have no
-		  way to figure out how it should be displayed.
+Yam! Yam!? runs on the same hardware but has a protection device which can
+           access RAM at e000. Program writes to e000 and expects a value back
+		   at e001, then jumps to subroutines at e010 and e020. Also, the
+		   player and coin inputs appear magically at e004-e006.
+
+0000-7fff ROM
+8000-bfff ROM (banked)
+c400-c7ff palette RAM
 c800-cfff background video RAM
-d000-dfff RAM
-e000-ffff RAM
+d000-dfff foreground (scrollable) video RAM.
+e000-ffff work RAM
 
 read:
 c000      DSW0
 c001      DSW1
-c004      COIN
-c005      IN1
-c006      IN0
+c004      COIN (Gun Dealer only)
+c005      IN1 (Gun Dealer only)
+c006      IN0 (Gun Dealer only)
 
 write:
-c014      flip screen ??
-c020-c021 foreground scroll x
-c022-c023 foreground scroll y
+c010-c011 foreground scroll x lo-hi (Yam Yam)
+c012-c013 foreground scroll y lo-hi (Yam Yam)
+c014      flip screen
+c015      Yam Yam only, maybe reset protection device
+c016      ROM bank selector
+c020-c021 foreground scroll x hi-lo (Gun Dealer)
+c022-c023 foreground scroll y hi-lo (Gun Dealer)
 
 I/O:
 read:
@@ -38,44 +45,147 @@ Runs in interrupt mode 0, the interrupt vectors are 0xcf (RST 08h) and
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
-extern unsigned char *gundealr_bsvideoram;
-extern unsigned char *gundealr_bigspriteram;
+extern unsigned char *gundealr_bg_videoram,*gundealr_fg_videoram;
 
 void gundealr_paletteram_w(int offset,int data);
+void gundealr_bg_videoram_w(int offset,int data);
+void gundealr_fg_videoram_w(int offset,int data);
+void gundealr_fg_scroll_w(int offset,int data);
+void yamyam_fg_scroll_w(int offset,int data);
+void gundealr_flipscreen_w(int offset,int data);
 void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int gundealr_vh_start(void);
 
 
+static int input_ports_hack;
 
-static int gundealr_interrupt(void)
+static int yamyam_interrupt(void)
 {
-	if (cpu_getiloops() == 0) return 0xd7;	/* vblank */
-	if ((cpu_getiloops() & 1) == 1) return 0xcf;	/* sound (hand tuned) */
+	if (cpu_getiloops() == 0)
+	{
+		if (input_ports_hack)
+		{
+			unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+			RAM[0xe004] = readinputport(4);	/* COIN */
+			RAM[0xe005] = readinputport(3);	/* IN1 */
+			RAM[0xe006] = readinputport(2);	/* IN0 */
+		}
+		return 0xd7;	/* RST 10h vblank */
+	}
+	if ((cpu_getiloops() & 1) == 1) return 0xcf;	/* RST 08h sound (hand tuned) */
 	else return ignore_interrupt();
 }
+
+static void yamyam_bankswitch_w(int offset, int data)
+{
+ 	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+static void yamyam_protection_w(int offset,int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+if (errorlog) fprintf(errorlog,"e000 = %02x\n",RAM[0xe000]);
+	RAM[0xe000] = data;
+	if (data == 0x03) RAM[0xe001] = 0x03;
+	if (data == 0x04) RAM[0xe001] = 0x04;
+	if (data == 0x05) RAM[0xe001] = 0x05;
+	if (data == 0x0a) RAM[0xe001] = 0x08;
+	if (data == 0x0d) RAM[0xe001] = 0x07;
+
+	if (data == 0x03)
+	{
+		/*
+		read dip switches
+		3a 00 c0  ld   a,($c000)
+		47        ld   b,a
+		3a 01 c0  ld   a,($c001)
+		c9        ret
+		*/
+		RAM[0xe010] = 0x3a;
+		RAM[0xe011] = 0x00;
+		RAM[0xe012] = 0xc0;
+		RAM[0xe013] = 0x47;
+		RAM[0xe014] = 0x3a;
+		RAM[0xe015] = 0x01;
+		RAM[0xe016] = 0xc0;
+		RAM[0xe017] = 0xc9;
+	}
+	if (data == 0x05)
+	{
+		/*
+		add a to hl
+		c5        push    bc
+		010000    ld      bc,#0000
+		4f        ld      c,a
+		09        add     hl,bc
+		c1        pop     bc
+		c9        ret
+		*/
+		RAM[0xe020] = 0xc5;
+		RAM[0xe021] = 0x01;
+		RAM[0xe022] = 0x00;
+		RAM[0xe023] = 0x00;
+		RAM[0xe024] = 0x4f;
+		RAM[0xe025] = 0x09;
+		RAM[0xe026] = 0xc1;
+		RAM[0xe027] = 0xc9;
+		/*
+		lookup data in table
+		cd20e0    call    #e020
+		7e        ld      a,(hl)
+		c9        ret
+		*/
+		RAM[0xe010] = 0xcd;
+		RAM[0xe011] = 0x20;
+		RAM[0xe012] = 0xe0;
+		RAM[0xe013] = 0x7e;
+		RAM[0xe014] = 0xc9;
+	}
+}
+
+static void gundealr_init(void)
+{
+	input_ports_hack = 0;
+}
+
+static void yamyam_init(void)
+{
+	input_ports_hack = 1;
+	install_mem_write_handler(0, 0xe000, 0xe000, yamyam_protection_w);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc000, input_port_0_r },	/* DSW0 */
 	{ 0xc001, 0xc001, input_port_1_r },	/* DSW1 */
-	{ 0xc004, 0xc004, input_port_2_r },	/* COIN */
-	{ 0xc005, 0xc005, input_port_3_r },	/* IN1 */
-	{ 0xc006, 0xc006, input_port_4_r },	/* IN0 */
-	{ 0xe000, 0xffff, MRA_RAM },
+	{ 0xc004, 0xc004, input_port_2_r },	/* COIN (Gun Dealer only) */
+	{ 0xc005, 0xc005, input_port_3_r },	/* IN1 (Gun Dealer only) */
+	{ 0xc006, 0xc006, input_port_4_r },	/* IN0 (Gun Dealer only) */
+	{ 0xc400, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc020, 0xc023, MWA_RAM, &gundealr_bigspriteram },
-	{ 0xd000, 0xd1ff, MWA_RAM, &gundealr_bsvideoram },
+	{ 0xc010, 0xc013, yamyam_fg_scroll_w },		/* Yam Yam only */
+	{ 0xc014, 0xc014, gundealr_flipscreen_w },
+	{ 0xc016, 0xc016, yamyam_bankswitch_w },
+	{ 0xc020, 0xc023, gundealr_fg_scroll_w },	/* Gun Dealer only */
 	{ 0xc400, 0xc7ff, gundealr_paletteram_w, &paletteram },
-	{ 0xc800, 0xcfff, videoram_w, &videoram, &videoram_size },
+	{ 0xc800, 0xcfff, gundealr_bg_videoram_w, &gundealr_bg_videoram },
+	{ 0xd000, 0xdfff, gundealr_fg_videoram_w, &gundealr_fg_videoram },
 	{ 0xe000, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -95,7 +205,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( gundealr_input_ports )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -108,18 +218,18 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x08, "Medium" )
 	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen?" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, "Flip Screen" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -153,6 +263,88 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( yamyam_input_ports )
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Difficulty?" )
+	PORT_DIPSETTING(    0x00, "Easy?" )
+	PORT_DIPSETTING(    0x04, "Medium?" )
+	PORT_DIPSETTING(    0x08, "Hard?" )
+	PORT_DIPSETTING(    0x0c, "Hardest?" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, "Flip Screen" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+/*	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) ) */
+/*	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) ) */
+/*	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) ) */
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+/*	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) ) */
+/*	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) ) */
+/*	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) ) */
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* COIN */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )	/* "TEST" */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -234,7 +426,7 @@ static struct MachineDriver machine_driver =
 			8000000,	/* 8 Mhz ??? */
 			0,
 			readmem,writemem,readport,writeport,
-			gundealr_interrupt,4	/* ? */
+			yamyam_interrupt,4	/* ? */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -247,10 +439,10 @@ static struct MachineDriver machine_driver =
 	512, 512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	gundealr_vh_start,
+	0,
 	gundealr_vh_screenrefresh,
 
 	/* sound hardware */
@@ -272,22 +464,43 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( gundealr_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gundealr.1",   0x0000, 0x10000, 0x5797e830 )
+	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_LOAD( "gundealr.1",   0x00000, 0x10000, 0x5797e830 )
+	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
 	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gundealr.3",   0x00000, 0x10000, 0x01f99de2 )
 	ROM_LOAD( "gundealr.2",   0x10000, 0x20000, 0x7874ec41 )
 ROM_END
 
-
 ROM_START( gundeala_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-        ROM_LOAD( "gundeala.1",   0x0000, 0x10000, 0xd87e24f1 )
+	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_LOAD( "gundeala.1",   0x00000, 0x10000, 0xd87e24f1 )
+	ROM_RELOAD(               0x10000, 0x10000 )	/* banked at 0x8000-0xbfff */
 
 	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
-        ROM_LOAD( "gundeala.3",   0x00000, 0x10000, 0x836cf1a3 )
-        ROM_LOAD( "gundeala.2",   0x10000, 0x20000, 0x4b5fb53c )
+	ROM_LOAD( "gundeala.3",   0x00000, 0x10000, 0x836cf1a3 )
+	ROM_LOAD( "gundeala.2",   0x10000, 0x20000, 0x4b5fb53c )
+ROM_END
+
+ROM_START( yamyam_rom )
+	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
+	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
+
+	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "b2.d16",       0x00000, 0x10000, 0xcb4f84ee )
+	ROM_LOAD( "b1.a16",       0x10000, 0x20000, 0xb122828d )
+ROM_END
+
+ROM_START( wiseguy_rom )
+	ROM_REGION(0x30000)	/* 64k for code + 128k for banks */
+	ROM_LOAD( "b3.f10",       0x00000, 0x20000, 0x96ae9088 )
+	ROM_RELOAD(               0x10000, 0x20000 )	/* banked at 0x8000-0xbfff */
+
+	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "wguyb2.bin",   0x00000, 0x10000, 0x1c684c46 )
+	ROM_LOAD( "b1.a16",       0x10000, 0x20000, 0xb122828d )
 ROM_END
 
 
@@ -302,14 +515,14 @@ struct GameDriver gundealr_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gundealr_init,
 
 	gundealr_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	gundealr_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -328,17 +541,70 @@ struct GameDriver gundeala_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+	gundealr_init,
 
 	gundeala_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	gundealr_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver yamyam_driver =
+{
+	__FILE__,
+	0,
+	"yamyam",
+	"Yam! Yam!?",
+	"1990",
+	"Dooyong",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	yamyam_init,
+
+	yamyam_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	yamyam_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+/* only gfx are different, code is the same */
+struct GameDriver wiseguy_driver =
+{
+	__FILE__,
+	&yamyam_driver,
+	"wiseguy",
+	"Wise Guy",
+	"1990",
+	"Dooyong",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	yamyam_init,
+
+	wiseguy_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	yamyam_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
 	0, 0
 };

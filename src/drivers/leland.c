@@ -1492,7 +1492,7 @@ static struct MemoryWriteAddress master_writemem[] =
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xa000, 0xdfff, leland_battery_w },  /* BATTERY RAM */
 
-	{ 0xf000, 0xf400, leland_palette_ram_w },
+	{ 0xf000, 0xf400, leland_palette_ram_w, &leland_palette_ram, &leland_palette_ram_size },
 	{ 0xf800, 0xf801, leland_master_video_addr_w },
 	{ 0xe000, 0xffff, MWA_RAM },
 	{ -1 }  /* end of table */

@@ -2787,6 +2787,14 @@ void movecodes(int allowfrom[],int allowto[],int Start,char Size)	/* MJC */
 
                 TimingCycles += 4 ;
 
+                /* Special for F1 Dream - Update Previous PC */
+                if (BaseCode == 0x13fc)
+                {
+                   fprintf(fp, "\t\t mov   eax,esi\n");
+                   fprintf(fp, "\t\t sub   eax,byte 2\n");
+                   fprintf(fp, "\t\t mov   [R_PPC],eax\n");
+                }
+
                 if (Src < 7)
 				{
                 	if (Dest < 7)

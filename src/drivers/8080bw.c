@@ -3710,20 +3710,20 @@ ROM_END
 
 INPUT_PORTS_START( helifire_input_ports )
         PORT_START      /* 00 Main Controls */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY  )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY  )
+        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
         PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
         PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
         PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
         PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
         PORT_START      /* 01 Player 2 Controls */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
         PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
         PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
         PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -3813,7 +3813,7 @@ struct GameDriver helifire_driver =
 	__FILE__,
 	0,
 	"helifire",
-	"Heli Fire (revision B)",
+	"HeliFire (revision B)",
 	"1980",
 	"Nintendo",
 	"The Space Invaders Team",
@@ -3839,7 +3839,7 @@ struct GameDriver helifira_driver =
 	__FILE__,
 	&helifire_driver,
 	"helifira",
-	"Heli Fire (revision A)",
+	"HeliFire (revision A)",
 	"1980",
 	"Nintendo",
 	"The Space Invaders Team",
@@ -3962,7 +3962,7 @@ struct GameDriver spacefev_driver =
 	__FILE__,
 	0,
 	"spacefev",
-	"Space Fever",
+	"Color Space Fever",
 	"1980",
 	"Nintendo",
 	"The Space Invaders Team",
@@ -4070,7 +4070,7 @@ struct GameDriver sfeverbw_driver =
         __FILE__,
         0,
         "sfeverbw",
-        "Space Fever (B&W)",
+        "Space Fever",
         "1980",
         "Nintendo",
         "The Space Invaders Team",
@@ -6506,3 +6506,143 @@ struct GameDriver sisv_driver =
 
 	invaders_hiload, invaders_hisave
 };
+
+/*******************************************************/
+/*                                                     */
+/* Taito "Balloon Bomber"                              */
+/*                                                     */
+/*******************************************************/
+
+void ballbomb_videoram_w(int offset, int data);
+void ballbomb_sh_port3_w(int offset, int data);
+void ballbomb_vh_convert_color_prom(unsigned char *pallete, unsigned short *colortable,const unsigned char *color_prom);
+
+ROM_START( ballbomb_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "tn01",   0x0000, 0x0800, 0x551585b5 )
+	ROM_LOAD( "tn02",   0x0800, 0x0800, 0x7e1f734f )
+	ROM_LOAD( "tn03",   0x1000, 0x0800, 0xd93e20bc )
+	ROM_LOAD( "tn04",   0x1800, 0x0800, 0xd0689a22 )
+	ROM_LOAD( "tn05-1", 0x4000, 0x0800, 0x5d5e94f1 )
+
+    /* The only difference between the 2 colourmaps is the colour */
+    /* of the ships - each player has there own colour!           */
+
+    ROM_REGION(0x800)		/* Colour Maps */
+	ROM_LOAD( "tn06",   0x0000, 0x0400, 0x7ec554c4 )
+    ROM_LOAD( "tn07",   0x0400, 0x0400, 0xdeb0ac82 )
+ROM_END
+
+static struct MemoryWriteAddress ballbomb_writemem[] =
+{
+	{ 0x2000, 0x23ff, MWA_RAM },
+  	{ 0x2400, 0x3fff, ballbomb_videoram_w, &invaders_videoram },
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x4000, 0x57ff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort ballbomb_writeport[] =
+{
+	{ 0x02, 0x02, invaders_shift_amount_w },
+	{ 0x03, 0x03, ballbomb_sh_port3_w },
+	{ 0x04, 0x04, invaders_shift_data_w },
+	{ 0x05, 0x05, invaders_sh_port5_w },
+	{ 0x06, 0x06, invaders_dummy_write },
+	{ -1 }  /* end of table */
+};
+
+INPUT_PORTS_START( ballbomb_input_ports )
+
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* N ? */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
+static struct MachineDriver ballbomb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem, ballbomb_writemem, invadpt2_readport, ballbomb_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	8, 0,
+	ballbomb_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0
+};
+
+struct GameDriver ballbomb_driver =
+{
+	__FILE__,
+	0,
+	"ballbomb",
+	"Balloon Bomber",
+	"1980",
+	"Taito",
+	"The Space Invaders Team",
+	0,
+	&ballbomb_machine_driver,
+	0,
+
+	ballbomb_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	ballbomb_input_ports,
+
+	PROM_MEMORY_REGION(1), 0, 0,
+	ORIENTATION_ROTATE_270,
+	0,0
+};
+

@@ -21,6 +21,7 @@ extern unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 extern unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
 
 void sidearms_c804_w(int offset, int data);
+void sidearms_gfxctrl_w(int offset, int data);
 int  sidearms_vh_start(void);
 void sidearms_vh_stop(void);
 void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -76,12 +77,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc400, 0xc7ff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc801, 0xc801, sidearms_bankswitch_w },
-	{ 0xc802, 0xc802, MWA_NOP },    /* watchdog reset? */
+	{ 0xc802, 0xc802, watchdog_reset_w },
 	{ 0xc804, 0xc804, sidearms_c804_w },
 	{ 0xc805, 0xc805, MWA_RAM, &sidearms_bg2_scrollx },
 	{ 0xc806, 0xc806, MWA_RAM, &sidearms_bg2_scrolly },
 	{ 0xc808, 0xc809, MWA_RAM, &sidearms_bg_scrollx },
 	{ 0xc80a, 0xc80b, MWA_RAM, &sidearms_bg_scrolly },
+	{ 0xc80c, 0xc80c, sidearms_gfxctrl_w },	/* background and sprite enable */
 	{ 0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xd800, 0xdfff, colorram_w, &colorram },
 	{ 0xe000, 0xefff, MWA_RAM },
@@ -142,10 +144,14 @@ static struct MemoryWriteAddress turtship_writemem[] =
 	{ 0xe400, 0xe7ff, paletteram_xxxxBBBBRRRRGGGG_split2_w, &paletteram_2 },
 	{ 0xe800, 0xe800, soundlatch_w },
 	{ 0xe801, 0xe801, sidearms_bankswitch_w },
+	{ 0xe802, 0xe802, watchdog_reset_w },
+	{ 0xe804, 0xe804, sidearms_c804_w },
 	{ 0xe805, 0xe805, MWA_RAM, &sidearms_bg2_scrollx },
 	{ 0xe806, 0xe806, MWA_RAM, &sidearms_bg2_scrolly },
 	{ 0xe808, 0xe809, MWA_RAM, &sidearms_bg_scrollx },
 	{ 0xe80a, 0xe80b, MWA_RAM, &sidearms_bg_scrolly },
+	{ 0xe80a, 0xe80b, MWA_RAM, &sidearms_bg_scrolly },
+	{ 0xe80c, 0xe80c, sidearms_gfxctrl_w },	/* background and sprite enable */
 	{ 0xf000, 0xf7ff, videoram_w, &videoram, &videoram_size },
 	{ 0xf800, 0xffff, colorram_w, &colorram },
 	{ -1 }  /* end of table */
@@ -304,7 +310,7 @@ INPUT_PORTS_START( turtship_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, "Flip Screen?" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
@@ -332,9 +338,93 @@ INPUT_PORTS_START( turtship_input_ports )
 	PORT_DIPSETTING(    0x00, "Every 200000" )
 	PORT_DIPSETTING(    0x0c, "150000 only" )
 	PORT_DIPSETTING(    0x04, "200000 only" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	/* 0xc0 1 Coin/1 Credit */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dyger_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xa0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0xe0, "1" )
+	PORT_DIPSETTING(    0x60, "2" )
+	PORT_DIPSETTING(    0xa0, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0xc0, "5" )
+	PORT_DIPSETTING(    0x40, "6" )
+	PORT_DIPSETTING(    0x80, "7" )
+	PORT_DIPSETTING(    0x00, "8" )
+
+	PORT_START      /* DSW1 */
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING( 0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
@@ -351,7 +441,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,    /* 8*8 characters */
-	1024,   /* 1024 characters */
+	2048,   /* 2048 characters */
 	2,      /* 2 bits per pixel */
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
@@ -487,7 +577,7 @@ static struct MachineDriver sidearms_machine_driver =
 	0,
 
 	/* video hardware */
-	48*8, 32*8, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	1024, 1024,
 	0,
@@ -532,7 +622,7 @@ static struct MachineDriver turtship_machine_driver =
 	0,
 
 	/* video hardware */
-	48*8, 32*8, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 	turtship_gfxdecodeinfo,
 	1024, 1024,
 	0,
@@ -672,14 +762,14 @@ ROM_START( turtship_rom )
 	ROM_LOAD( "turtship.001",    0x18000, 0x08000, 0xa9b64240 )
 
 	ROM_REGION_DISPOSE(0x108000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "turtship.005",    0x00000, 0x4000, 0x651fef75 )      /* characters */
-	ROM_LOAD( "turtship.006",    0x38000, 0x10000, 0xa7cce654 )     /* tiles */     /* 1-1 */
-	ROM_LOAD( "turtship.007",    0x48000, 0x10000, 0x3ccf11b9 ) /* 2-1 */
-	ROM_LOAD( "turtship.009",    0x58000, 0x10000, 0x44762916 ) /* 3-1 */
-	ROM_LOAD( "turtship.008",    0x08000, 0x10000, 0xe0658469 ) /* 1-2 */
-	ROM_LOAD( "turtship.010",    0x18000, 0x10000, 0x76bb73bb ) /* 2-2 */
-	ROM_LOAD( "turtship.011",    0x28000, 0x10000, 0x53da6cb1 ) /* 3-2 */
-	ROM_LOAD( "turtship.013",    0x68000, 0x10000, 0x599f5246 )     /* sprites */
+	ROM_LOAD( "turtship.005",    0x00000, 0x04000, 0x651fef75 )	/* characters */
+	ROM_LOAD( "turtship.008",    0x08000, 0x10000, 0xe0658469 )	/* tiles */
+	ROM_LOAD( "turtship.010",    0x18000, 0x10000, 0x76bb73bb )
+	ROM_LOAD( "turtship.011",    0x28000, 0x10000, 0x53da6cb1 )
+	ROM_LOAD( "turtship.006",    0x38000, 0x10000, 0xa7cce654 )
+	ROM_LOAD( "turtship.007",    0x48000, 0x10000, 0x3ccf11b9 )
+	ROM_LOAD( "turtship.009",    0x58000, 0x10000, 0x44762916 )
+	ROM_LOAD( "turtship.013",    0x68000, 0x10000, 0x599f5246 )	/* sprites */
 	ROM_LOAD( "turtship.015",    0x78000, 0x10000, 0x69fd202f )
 	ROM_LOAD( "turtship.012",    0x88000, 0x10000, 0xfb54cd33 )
 	ROM_LOAD( "turtship.014",    0x98000, 0x10000, 0xb3ea74a3 )
@@ -689,6 +779,33 @@ ROM_START( turtship_rom )
 
 	ROM_REGION(0x08000)     /* 32k tile map */
 	ROM_LOAD( "turtship.016",    0x0000, 0x8000, 0xaffd51dd )
+ROM_END
+
+ROM_START( dyger_rom )
+	ROM_REGION(0x20000)     /* 64k for code + banked ROMs images */
+	ROM_LOAD( "dyger.003",    0x00000, 0x08000, 0xbae9882e )
+	ROM_LOAD( "dyger.002",    0x10000, 0x08000, 0x059ac4dc )
+	ROM_LOAD( "dyger.001",    0x18000, 0x08000, 0xd8440f66 )
+
+	ROM_REGION_DISPOSE(0x108000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dyger.005",    0x04000, 0x04000, 0xc4bc72a5 )	/* characters */
+	ROM_CONTINUE(             0x00000, 0x04000 )	/* is the first half used? */
+	ROM_LOAD( "dyger.010",    0x08000, 0x10000, 0x73ae2b2e )	/* tiles */
+	ROM_LOAD( "dyger.009",    0x18000, 0x10000, 0x628dae72 )
+	ROM_LOAD( "dyger.011",    0x28000, 0x10000, 0x23248db1 )
+	ROM_LOAD( "dyger.006",    0x38000, 0x10000, 0x4ba7a437 )
+	ROM_LOAD( "dyger.008",    0x48000, 0x10000, 0x6c0f0e0c )
+	ROM_LOAD( "dyger.007",    0x58000, 0x10000, 0x2c50a229 )
+	ROM_LOAD( "dyger.014",    0x68000, 0x10000, 0x99c60b26 )	/* sprites */
+	ROM_LOAD( "dyger.015",    0x78000, 0x10000, 0xd6475ecc )
+	ROM_LOAD( "dyger.012",    0x88000, 0x10000, 0xe345705f )
+	ROM_LOAD( "dyger.013",    0x98000, 0x10000, 0xfaf4be3a )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "dyger.004",    0x0000, 0x8000, 0x8a256c09 )
+
+	ROM_REGION(0x08000)     /* 32k tile map */
+	ROM_LOAD( "dyger.016",    0x0000, 0x8000, 0x0792e8f2 )
 ROM_END
 
 
@@ -830,5 +947,30 @@ struct GameDriver turtship_driver =
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
+	0, 0
+};
+
+struct GameDriver dyger_driver =
+{
+	__FILE__,
+	0,
+	"dyger",
+	"Dyger",
+	"1989",
+	"Philko",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nVictor Trucco",
+	0,
+	&turtship_machine_driver,
+	0,
+
+	dyger_rom,
+	0,0,
+	0,
+	0,      /* sound_prom */
+
+	dyger_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
 	0, 0
 };

@@ -193,6 +193,7 @@ static void (*wr_s_handler_w)(PAIR *);
 		if( m6800.wai_state & M6800_WAI )								\
         {                                                               \
 			m6800.extra_cycles += 4;									\
+			m6800.wai_state &= ~M6800_WAI;								\
 		}																\
 		else															\
         {                                                               \
@@ -218,7 +219,8 @@ static void (*wr_s_handler_w)(PAIR *);
 		if( m6800.wai_state & M6800_WAI )								\
 		{																\
 			m6800.extra_cycles += 4;									\
-		}																\
+			m6800.wai_state &= ~M6800_WAI;								\
+        }                                                               \
 		else                                                            \
 		{                                                               \
 			PUSHWORD(pPC);												\
@@ -241,7 +243,8 @@ static void (*wr_s_handler_w)(PAIR *);
 		if( m6800.wai_state & M6800_WAI )								\
 		{																\
 			m6800.extra_cycles += 4;									\
-		}																\
+			m6800.wai_state &= ~M6800_WAI;								\
+        }                                                               \
 		else                                                            \
 		{                                                               \
 			PUSHWORD(pPC);												\
@@ -752,7 +755,8 @@ void m6800_set_nmi_line(int state)
 	if( m6800.wai_state & M6800_WAI )
 	{
 		m6800.extra_cycles += 4;
-	}
+		m6800.wai_state &= ~M6800_WAI;
+    }
 	else
 	{
 		PUSHWORD(m6800.pc);

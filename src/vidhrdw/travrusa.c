@@ -190,7 +190,7 @@ static void set_scroll(void)
 	int i;
 
 	for (i = 0;i < 24;i++)
-		tilemap_set_scrollx(bg_tilemap,i,-(scrollx[0] + 256 * scrollx[1]));
+		tilemap_set_scrollx(bg_tilemap,i,scrollx[0] + 256 * scrollx[1]);
 	for (i = 24;i < 32;i++)
 		tilemap_set_scrollx(bg_tilemap,i,0);
 }

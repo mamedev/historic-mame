@@ -211,14 +211,8 @@ void cpu_writemem29_dword(int address,int data);  /* AJP 980803 */
 
 /* ----- 16-bit memory access macros ----- */
 
-#ifdef ALIGN_SHORTS
-/* Use these to avoid alignment problems on non-x86 hardware. */
-extern int READ_WORD(void *dst);
-extern int WRITE_WORD(void *dst, int d);
-#else
 #define READ_WORD(a)          (*(unsigned short *)(a))
 #define WRITE_WORD(a,d)       (*(unsigned short *)(a) = (d))
-#endif
 
 #define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
 #define COMBINE_WORD_MEM(a,d) (WRITE_WORD ((a), (READ_WORD (a) & ((d) >> 16)) | (d)))

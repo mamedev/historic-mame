@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "machine/neogeo.h"
 #include <time.h>
 
 static unsigned char *biosbank;
@@ -19,13 +20,31 @@ extern int year;
 extern int weekday;
 /* MARTINEZ.F 990209 Calendar End */
 
+/***************** MEMCARD GLOBAL VARIABLES ******************/
+int			mcd_action=0;
+int			mcd_number=0;
+int			memcard_status=1;	/* 1=Inserted 0=No card */
+int			memcard_number=0;	/* 000...999, -1=None */
+int			memcard_manager=0;	/* 0=Normal boot 1=Call memcard manager */
+unsigned char	*neogeo_memcard;	/* Pointer to 2kb RAM zone */
+
+/*************** MEMCARD FUNCTION PROTOTYPES *****************/
+int		neogeo_memcard_r(int);
+void		neogeo_memcard_w(int, int);
+int		neogeo_memcard_load(int);
+void		neogeo_memcard_save(void);
+void		neogeo_memcard_eject(void);
+int		neogeo_memcard_create(int);
+
+
+
 int neogeo_game_fix;
 
 static void neogeo_custom_memory(void);
 
 
 /* This function is called on every reset */
-void neogeo_init_machine (void)
+void neogeo_init_machine(void)
 {
 	int src,res;
 	time_t		ltime;
@@ -43,7 +62,17 @@ void neogeo_init_machine (void)
 	if (src & 0x04)	res |= 0x8000;
 
 	/* write the ID in the system BIOS ROM */
-	WRITE_WORD(&Machine->memory_region[4][0x0400],res);
+	WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x0400],res);
+
+	if (memcard_manager==1)
+	{
+		memcard_manager=0;
+		WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x11b1a], 0x500a);
+	}
+	else
+	{
+		WRITE_WORD(&Machine->memory_region[MEM_BIOS][0x11b1a],0x1b6a);
+	}
 
 	time(&ltime);
 	today = localtime(&ltime);
@@ -61,19 +90,19 @@ void neogeo_init_machine (void)
 /* This function is only called once per game. */
 void neogeo_onetime_init_machine(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU0];
     void *f;
 	extern struct YM2610interface neogeo_ym2610_interface;
 
-	if (Machine->memory_region[7])
+	if (Machine->memory_region_length[MEM_SAMPLE1] > 1)
 	{
-		if (errorlog) fprintf(errorlog,"using memory region 7 for Delta T samples\n");
-		neogeo_ym2610_interface.pcmromb[0] = 7;
+		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE1);
+		neogeo_ym2610_interface.pcmroma[0] = MEM_SAMPLE1;
 	}
 	else
 	{
-		if (errorlog) fprintf(errorlog,"using memory region 6 for Delta T samples\n");
-		neogeo_ym2610_interface.pcmromb[0] = 6;
+		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",MEM_SAMPLE0);
+		neogeo_ym2610_interface.pcmroma[0] = MEM_SAMPLE0;
 	}
 
     /* Allocate ram banks */
@@ -81,11 +110,11 @@ void neogeo_onetime_init_machine(void)
 	cpu_setbank(1, neogeo_ram);
 
 	/* Set the biosbank */
-	cpu_setbank(3, Machine->memory_region[4]);
+	cpu_setbank(3, Machine->memory_region[MEM_BIOS]);
 
 	/* Set the 2nd ROM bank */
-    RAM = Machine->memory_region[0];
-	if (Machine->memory_region_length[0] > 0x100000)
+    RAM = Machine->memory_region[MEM_CPU0];
+	if (Machine->memory_region_length[MEM_CPU0] > 0x100000)
 	{
 		cpu_setbank(4, &RAM[0x100000]);
 	}
@@ -95,22 +124,24 @@ void neogeo_onetime_init_machine(void)
 	}
 
 	/* Set the sound CPU ROM banks */
-	RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	RAM = Machine->memory_region[MEM_CPU1];
 	cpu_setbank(5,&RAM[0x08000]);
 	cpu_setbank(6,&RAM[0x0c000]);
 	cpu_setbank(7,&RAM[0x0e000]);
 	cpu_setbank(8,&RAM[0x0f000]);
 
 	/* Allocate and point to the memcard - bank 5 */
- //	memcard = calloc (0x1000, 1);
- //	cpu_setbank(2, memcard);
+	neogeo_memcard = calloc (0x800, 1);
+	memcard_status=1;
+	memcard_number=0;
 
 
-	RAM = Machine->memory_region[4];
+	RAM = Machine->memory_region[MEM_BIOS];
 
 	if (READ_WORD(&RAM[0x11b00]) == 0x4eba)
 	{
-		/* old bios */
+		/* standard bios */
+
 		/* Remove memory check for now */
 		WRITE_WORD(&RAM[0x11b00],0x4e71);
 		WRITE_WORD(&RAM[0x11b02],0x4e71);
@@ -130,7 +161,10 @@ void neogeo_onetime_init_machine(void)
 	}
 	else
 	{
-		/* new bios */
+		/* special bios with trackball support */
+		/* NOTE: check the memcard manager patch in neogeo_init_machine(), */
+		/* it probably has to be moved as well */
+
 		/* Remove memory check for now */
 		WRITE_WORD(&RAM[0x10c2a],0x4e71);
 		WRITE_WORD(&RAM[0x10c2c],0x4e71);
@@ -288,7 +322,7 @@ NEO_CYCLE_R(gururin, 0x0604,0xffff,							READ_WORD(&neogeo_ram[0x1002]))
  */
 static int cycle_v3_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
 
 	if (cpu_get_pc()==0x0137) {
 		cpu_spinuntil_int();
@@ -302,7 +336,7 @@ static int cycle_v3_sr(int offset)
  */
 static int ssideki_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
 
 	if (cpu_get_pc()==0x015A) {
 		cpu_spinuntil_int();
@@ -313,7 +347,7 @@ static int ssideki_cycle_sr(int offset)
 
 static int aof_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -331,7 +365,7 @@ static int aof_cycle_sr(int offset)
 
 static int cycle_v2_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -342,7 +376,7 @@ static int cycle_v2_sr(int offset)
 
 static int vwpoint_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
 
 	if (cpu_get_pc()==0x0143) {
 		cpu_spinuntil_int();
@@ -360,7 +394,7 @@ static int vwpoint_cycle_sr(int offset)
 /*
 static int cycle_v15_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
 
 	if (cpu_get_pc()==0x013D) {
 		cpu_spinuntil_int();
@@ -377,7 +411,7 @@ static int cycle_v15_sr(int offset)
 
 static int maglord_cycle_sr(int offset)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM = Machine->memory_region[MEM_CPU1];
 
 	if (cpu_get_pc()==0xd487) {
 		cpu_spinuntil_int();
@@ -619,7 +653,7 @@ static void neogeo_custom_memory(void)
 		/* patch out protection check */
 		/* the protection routines are at 0x25dcc and involve reading and writing */
 		/* addresses in the 0x2xxxxx range */
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
 		WRITE_WORD(&RAM[0x2240],0x4e71);
 	}
 
@@ -632,7 +666,7 @@ static void neogeo_custom_memory(void)
 		/* here (or maybe the SRAM location to protect is different), so I patch out */
 		/* the routine which trashes memory. Without this, the game goes nuts after */
 		/* the first bonus stage. */
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
 		WRITE_WORD(&RAM[0xb820],0x4e71);
 		WRITE_WORD(&RAM[0xb822],0x4e71);
 
@@ -641,6 +675,14 @@ static void neogeo_custom_memory(void)
 		install_mem_read_handler (0, 0x200000, 0x2fffff, fatfury2_protection_r);
 		install_mem_write_handler(0, 0x200000, 0x2fffff, fatfury2_protection_w);
 	}
+
+	if (!strcmp(Machine->gamedrv->name,"fatfury3"))
+	{
+		/* patch the first word, it must be 0x0010 not 0x0000 (initial stack pointer) */
+		unsigned char *RAM = Machine->memory_region[MEM_CPU0];
+		WRITE_WORD(&RAM[0x0000],0x0010);
+	}
+
 }
 
 
@@ -692,6 +734,9 @@ int neogeo_sram_load(void)
 		osd_fclose(f);
 	}
 
+	/* load the memory card */
+	neogeo_memcard_load(memcard_number);
+
 	return 1;
 }
 
@@ -706,4 +751,116 @@ void neogeo_sram_save(void)
 		osd_fwrite_msbfirst(f,neogeo_sram,0x2000);
 		osd_fclose(f);
 	}
+
+	/* save the memory card */
+	neogeo_memcard_save();
 }
+
+
+
+/*
+    INFORMATION:
+
+    Memory card is a 2kb battery backed RAM.
+    It is accessed thru 0x800000-0x800FFF.
+    Even bytes are always 0xFF
+    Odd bytes are memcard data (0x800 bytes)
+
+    Status byte at 0x380000: (BITS ARE ACTIVE *LOW*)
+
+    0 PAD1 START
+    1 PAD1 SELECT
+    2 PAD2 START
+    3 PAD2 SELECT
+    4 --\  MEMORY CARD
+    5 --/  INSERTED
+    6 MEMORY CARD WRITE PROTECTION
+    7 UNUSED (?)
+*/
+
+
+
+
+/********************* MEMCARD ROUTINES **********************/
+int	neogeo_memcard_r(int offset)
+{
+	if (memcard_status==1)
+	{
+		return (neogeo_memcard[offset>>1]|0xFF00);
+	}
+	else
+		return 0xFFFF;
+}
+
+void neogeo_memcard_w(int offset, int data)
+{
+	if (memcard_status==1)
+	{
+		neogeo_memcard[offset>>1] = (data&0xFF);
+	}
+}
+
+int	neogeo_memcard_load(int number)
+{
+    char name[16];
+    void *f;
+
+    sprintf(name, "MEMCARD.%03d", number);
+    if ((f=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,0))!=0)
+    {
+        osd_fread(f,neogeo_memcard,0x800);
+        osd_fclose(f);
+        return 1;
+    }
+    return 0;
+}
+
+void	neogeo_memcard_save(void)
+{
+    char name[16];
+    void *f;
+
+    if (memcard_number!=-1)
+    {
+        sprintf(name, "MEMCARD.%03d", memcard_number);
+        if ((f=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,1))!=0)
+        {
+            osd_fwrite(f,neogeo_memcard,0x800);
+            osd_fclose(f);
+        }
+    }
+}
+
+void	neogeo_memcard_eject(void)
+{
+   if (memcard_number!=-1)
+   {
+       neogeo_memcard_save();
+       memset(neogeo_memcard, 0, 0x800);
+       memcard_status=0;
+       memcard_number=-1;
+   }
+}
+
+int neogeo_memcard_create(int number)
+{
+    char buf[0x800];
+    char name[16];
+    void *f1, *f2;
+
+    sprintf(name, "MEMCARD.%03d", number);
+    if ((f1=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,0))==0)
+    {
+        if ((f2=osd_fopen(0, name, OSD_FILETYPE_MEMCARD,1))!=0)
+        {
+            osd_fwrite(f2,buf,0x800);
+            osd_fclose(f2);
+            return 1;
+        }
+    }
+    else
+        osd_fclose(f1);
+
+    return 0;
+}
+

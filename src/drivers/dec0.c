@@ -17,6 +17,10 @@
     * Midnight Resistance                     (Japanese set)
 	* Boulderdash                             (Japanese set?)
 
+	Heavy Barrel, Bad Dudes, Robocop, Birdy Try & Hippodrome use the 'MEC-M1'
+motherboard and varying game boards.  Sly Spy, Midnight Resistance and
+Boulderdash use the same graphics chips but are different pcbs.
+
 To do:
 Add Robocop (Japanese original & 2nd bootleg set), Secret Agent (Sly Spy bootleg),
 Birdy Try
@@ -25,7 +29,6 @@ Figure out weapon placement in Heavy Barrel.
 
 The truck tires in level 2 of Bad Dudes are misplaced (they are sprites).
 
-Missing scroll field in Hippodrome
 
 Dips in Boulderdash (and some others)
 
@@ -53,7 +56,6 @@ Mid res: bpx at c02 for level check, can go straight to credits.
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/h6280/h6280.h"
-
 
 /* Video emulation definitions */
 int  dec0_vh_start(void);
@@ -93,6 +95,10 @@ void dec0_priority_w(int offset,int data);
 void dec0_paletteram_w_rg(int offset,int data);
 void dec0_paletteram_w_b(int offset,int data);
 
+int dec0_pf3_data_8bit_r(int offset);
+void dec0_pf3_data_8bit_w(int offset, int data);
+void dec0_pf3_control_8bit_w(int offset, int data);
+
 /* System prototypes - from machine/dec0.c */
 extern void dec0_custom_memory(void);
 extern int dec0_controls_read(int offset);
@@ -111,7 +117,8 @@ extern void slyspy_24e000_w(int offset,int data);
 
 extern void dec0_i8751_write(int data);
 extern void dec0_i8751_reset(void);
-extern int hippodrm_test_r(int offset);
+extern int hippodrm_prot_r(int offset);
+extern void hippodrm_prot_w(int offset,int data);
 extern int hippodrm_shared_r(int offset);
 extern void hippodrm_shared_w(int offset,int data);
 
@@ -127,7 +134,7 @@ static void dec0_control_w(int offset,int data)
 			dec0_priority_w(0,data);
 			break;
 
-		case 2: /* DMA flag? */
+		case 2: /* DMA flag */
 			break;
 
 		case 4: /* 6502 sound cpu */
@@ -230,12 +237,10 @@ static struct MemoryReadAddress hippodrm_sub_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
 	{ 0x180000, 0x1800ff, hippodrm_shared_r },
-//1a0000 - control 0 1
-//1a1000 - data
-
-	{ 0x1d0000, 0x1d00ff, hippodrm_test_r },
+	{ 0x1a1000, 0x1a17ff, dec0_pf3_data_8bit_r },
+	{ 0x1d0000, 0x1d00ff, hippodrm_prot_r },
 	{ 0x1f0000, 0x1f1fff, MRA_BANK8 }, /* Main ram */
-	{ 0x1ff402, 0x1ff403, H6280_irq_status_r },
+	{ 0x1ff402, 0x1ff403, input_port_5_r }, /* VBL */
 	{ -1 }  /* end of table */
 };
 
@@ -243,6 +248,9 @@ static struct MemoryWriteAddress hippodrm_sub_writemem[] =
 {
 	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x180000, 0x1800ff, hippodrm_shared_w },
+	{ 0x1a0000, 0x1a001f, dec0_pf3_control_8bit_w },
+	{ 0x1a1000, 0x1a17ff, dec0_pf3_data_8bit_w },
+	{ 0x1d0000, 0x1d00ff, hippodrm_prot_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
 	{ -1 }  /* end of table */
@@ -615,40 +623,44 @@ INPUT_PORTS_START( hippodrm_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Opponent Energy" )
-	PORT_DIPSETTING(    0x08, "Low" )
-	PORT_DIPSETTING(    0x0c, "Medium" )
-	PORT_DIPSETTING(    0x04, "High" )
-	PORT_DIPSETTING(    0x00, "Very High" )
-	PORT_DIPNAME( 0x30, 0x30, "Player Energy" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_DIPNAME( 0x30, 0x30, "Player & Enemy Energy" )
 	PORT_DIPSETTING(    0x10, "Low" )
 	PORT_DIPSETTING(    0x20, "Medium" )
 	PORT_DIPSETTING(    0x30, "High" )
 	PORT_DIPSETTING(    0x00, "Very High" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPNAME( 0x40, 0x40, "Enemy Power on Continue" )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
 #define DEC1_PLAYER1_CONTROL \
@@ -893,7 +905,7 @@ static void sound_irq2(void)
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	1500000,	/* 1.50 MHz */
+	1500000,	/* 12MHz clock divided by 8 = 1.50 MHz */
 	{ YM2203_VOL(40,95) },
 	{ 0 },
 	{ 0 },
@@ -904,8 +916,8 @@ static struct YM2203interface ym2203_interface =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3250000,	/* 3.25 MHz ? (hand tuned) */
-	{ 255 },	/* (not supported) */
+	3250000,	/* 3.25 MHz ? Might actually be 3?  (12MHz/4) */
+	{ 40 },
 	sound_irq,
 };
 
@@ -913,7 +925,7 @@ static struct YM3812interface ym3812b_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	3000000,
-	{ 60 },
+	{ 40 },
 	sound_irq2,
 };
 
@@ -922,7 +934,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,              /* 1 chip */
 	8000,           /* 8000Hz frequency */
 	{ 3 },              /* memory region 3 */
-	{ 41 }
+	{ 80 }
 };
 
 /******************************************************************************/
@@ -940,7 +952,7 @@ static struct MachineDriver hbarrel_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			900000,
+			1500000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
@@ -994,7 +1006,7 @@ static struct MachineDriver baddudes_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,
+			1500000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
@@ -1048,7 +1060,7 @@ static struct MachineDriver robocop_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1250000,
+			1500000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
@@ -1102,24 +1114,21 @@ static struct MachineDriver hippodrm_machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1200000,
+			1500000,
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
-		}
-#if 0
-,
+		},
 		{
 			CPU_H6280,
-			2000000,
+			21477200/16, /* 21.4772MHz clock */
 			4,
 			hippodrm_sub_readmem,hippodrm_sub_writemem,0,0,
 			ignore_interrupt,0
 		}
-#endif
 	},
 	57, 1536, /* frames per second, vblank duration taken from Burger Time */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	5,	/* Interleave between H6280 & 68000 */
 	0,
 
 	/* video hardware */
@@ -1455,6 +1464,47 @@ ROM_START( drgninja_rom )
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
+/* Birdy Try here */
+
+
+ROM_START( robocop_rom )
+	ROM_REGION(0x40000) /* 68000 code */
+	ROM_LOAD_EVEN( "ep05-3", 0x00000, 0x10000, 0xbcef3e9b )
+	ROM_LOAD_ODD ( "ep01-3", 0x00000, 0x10000, 0xc9803685 )
+	ROM_LOAD_EVEN( "ep04-3", 0x20000, 0x10000, 0x9d7b79e0 )
+	ROM_LOAD_ODD ( "ep00-3", 0x20000, 0x10000, 0x80ba64ab )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ep23", 0x000000, 0x10000, 0xa77e4ab1 )	/* chars */
+	ROM_LOAD( "ep22", 0x010000, 0x10000, 0x9fbd6903 )
+	ROM_LOAD( "ep20", 0x020000, 0x10000, 0x1d8d38b8 )	/* tiles */
+	ROM_LOAD( "ep21", 0x040000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x060000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x080000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep14", 0x0a0000, 0x08000, 0xca56ceda )	/* tiles */
+	ROM_LOAD( "ep15", 0x0c0000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x0e0000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x100000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep07", 0x120000, 0x10000, 0x495d75cf )	/* sprites */
+	ROM_LOAD( "ep06", 0x130000, 0x08000, 0xa2ae32e2 )
+	/* 98000-9ffff empty */
+	ROM_LOAD( "ep11", 0x140000, 0x10000, 0x62fa425a )
+	ROM_LOAD( "ep10", 0x150000, 0x08000, 0xcce3bd95 )
+	/* b8000-bffff empty */
+	ROM_LOAD( "ep09", 0x160000, 0x10000, 0x11bed656 )
+	ROM_LOAD( "ep08", 0x170000, 0x08000, 0xc45c7b4c )
+	/* d8000-dffff empty */
+	ROM_LOAD( "ep13", 0x180000, 0x10000, 0x8fca9f28 )
+	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
+	/* f8000-fffff empty */
+
+	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
+
+	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
+ROM_END
+
 ROM_START( robocopp_rom )
 	ROM_REGION(0x40000) /* 68000 code */
 	ROM_LOAD_EVEN( "robop_05.rom", 0x00000, 0x10000, 0xbcef3e9b )
@@ -1504,21 +1554,13 @@ ROM_START( hippodrm_rom )
 	ROM_LOAD( "ew14",         0x000000, 0x10000, 0x71ca593d )	/* chars */
 	ROM_LOAD( "ew13",         0x010000, 0x10000, 0x86be5fa7 )
 	ROM_LOAD( "ew19",         0x020000, 0x08000, 0x6b80d7a3 )	/* tiles */
-	/* 28000-3ffff empty */
 	ROM_LOAD( "ew18",         0x040000, 0x08000, 0x78d3d764 )
-	/* 48000-5ffff empty */
 	ROM_LOAD( "ew20",         0x060000, 0x08000, 0xce9f5de3 )
-	/* 68000-7ffff empty */
 	ROM_LOAD( "ew21",         0x080000, 0x08000, 0x487a7ba2 )
-	/* 88000-9ffff empty */
-	ROM_LOAD( "ew23",         0x0a0000, 0x08000, 0x9ecf479e )	/* tiles */
-	/* a8000-bffff empty */
-	ROM_LOAD( "ew22",         0x0c0000, 0x08000, 0xe55669aa )
-	/* c8000-dffff empty */
-	ROM_LOAD( "ew24",         0x0e0000, 0x08000, 0x4e1bc2a4 )
-	/* e8000-fffff empty */
-	ROM_LOAD( "ew25",         0x100000, 0x08000, 0x9eb47dfb )
-	/* 108000-11ffff empty */
+	ROM_LOAD( "ew24",         0x0a0000, 0x08000, 0x4e1bc2a4 )	/* tiles */
+	ROM_LOAD( "ew25",         0x0c0000, 0x08000, 0x9eb47dfb )
+	ROM_LOAD( "ew23",         0x0e0000, 0x08000, 0x9ecf479e )
+	ROM_LOAD( "ew22",         0x100000, 0x08000, 0xe55669aa )
 	ROM_LOAD( "ew15",         0x120000, 0x10000, 0x95423914 )	/* sprites */
 	ROM_LOAD( "ew16",         0x130000, 0x10000, 0x96233177 )
 	ROM_LOAD( "ew10",         0x140000, 0x10000, 0x4c25dfe8 )
@@ -1549,21 +1591,13 @@ ROM_START( ffantasy_rom )
 	ROM_LOAD( "ev14",         0x000000, 0x10000, 0x686f72c1 )	/* chars */
 	ROM_LOAD( "ev13",         0x010000, 0x10000, 0xb787dcc9 )
 	ROM_LOAD( "ew19",         0x020000, 0x08000, 0x6b80d7a3 )	/* tiles */
-	/* 28000-3ffff empty */
 	ROM_LOAD( "ew18",         0x040000, 0x08000, 0x78d3d764 )
-	/* 48000-5ffff empty */
 	ROM_LOAD( "ew20",         0x060000, 0x08000, 0xce9f5de3 )
-	/* 68000-7ffff empty */
 	ROM_LOAD( "ew21",         0x080000, 0x08000, 0x487a7ba2 )
-	/* 88000-9ffff empty */
-	ROM_LOAD( "ew23",         0x0a0000, 0x08000, 0x9ecf479e )	/* tiles */
-	/* a8000-bffff empty */
-	ROM_LOAD( "ew22",         0x0c0000, 0x08000, 0xe55669aa )
-	/* c8000-dffff empty */
-	ROM_LOAD( "ew24",         0x0e0000, 0x08000, 0x4e1bc2a4 )
-	/* e8000-fffff empty */
-	ROM_LOAD( "ew25",         0x100000, 0x08000, 0x9eb47dfb )
-	/* 108000-11ffff empty */
+	ROM_LOAD( "ew24",         0x0a0000, 0x08000, 0x4e1bc2a4 )	/* tiles */
+	ROM_LOAD( "ew25",         0x0c0000, 0x08000, 0x9eb47dfb )
+	ROM_LOAD( "ew23",         0x0e0000, 0x08000, 0x9ecf479e )
+	ROM_LOAD( "ew22",         0x100000, 0x08000, 0xe55669aa )
 	ROM_LOAD( "ev15",         0x120000, 0x10000, 0x1d80f797 )	/* sprites */
 	ROM_LOAD( "ew16",         0x130000, 0x10000, 0x96233177 )
 	ROM_LOAD( "ev10",         0x140000, 0x10000, 0xc4e7116b )
@@ -1862,21 +1896,34 @@ ROM_END
 
 /******************************************************************************/
 
-static void h6280_decrypt(void)
+static void h6280_decrypt(int memory_area)
 {
 	int i;
-	unsigned char *RAM = Machine->memory_region[2];
+	unsigned char *RAM = Machine->memory_region[memory_area];
 
 	/* Read each byte, decrypt it */
 	for (i=0x00000; i<0x10000; i++)
 		RAM[i]=(RAM[i] & 0x7e) | ((RAM[i] & 0x1) << 7) | ((RAM[i] & 0x80) >> 7);
 }
 
+static void hippodrm_patch(void)
+{
+	unsigned char *RAM = Machine->memory_region[4];
+
+	h6280_decrypt(4);
+
+	/* The protection cpu has additional memory mapped protection! */
+	RAM[0x189]=0x60; /* RTS prot area */
+	RAM[0x1af]=0x60; /* RTS prot area */
+	RAM[0x1db]=0x60; /* RTS prot area */
+	RAM[0x21a]=0x60; /* RTS prot area */
+}
+
 static void slyspy_patch(void)
 {
 	unsigned char *RAM = Machine->memory_region[2];
 
-	h6280_decrypt();
+	h6280_decrypt(2);
 
 	/* Slyspy sound cpu has some protection */
 	RAM[0xf2d]=0xea;
@@ -2276,6 +2323,31 @@ struct GameDriver birdtry_driver =
 	0, 0
 };
 
+struct GameDriver robocop_driver =
+{
+	__FILE__,
+	0,
+	"robocop",
+	"Robocop (Rev 3)",
+	"1988",
+	"Data East Corporation",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&robocop_machine_driver,
+	dec0_custom_memory,
+
+	robocop_rom,
+	0, 0,
+	0,
+	0,
+
+	robocop_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	robocopp_hiload, robocopp_hisave
+};
+
 struct GameDriver robocopp_driver =
 {
 	__FILE__,
@@ -2310,12 +2382,12 @@ struct GameDriver hippodrm_driver =
 	"1989",
 	"Data East USA",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	GAME_NOT_WORKING,
+	0,
 	&hippodrm_machine_driver,
 	dec0_custom_memory,
 
 	hippodrm_rom,
-	h6280_decrypt, 0,
+	hippodrm_patch, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -2335,12 +2407,12 @@ struct GameDriver ffantasy_driver =
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	GAME_NOT_WORKING,
+	0,
 	&hippodrm_machine_driver,
 	dec0_custom_memory,
 
 	ffantasy_rom,
-	h6280_decrypt, 0,
+	hippodrm_patch, 0,
 	0,
 	0,	/* sound_prom */
 

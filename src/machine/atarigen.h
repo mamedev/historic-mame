@@ -41,9 +41,11 @@ void atarigen_slapstic_w(int offset, int data);
 
 void atarigen_sound_reset_w(int offset, int data);
 void atarigen_sound_w(int offset, int data);
+void atarigen_sound_upper_w(int offset, int data);
 int atarigen_6502_sound_r(int offset);
 void atarigen_6502_sound_w(int offset, int data);
 int atarigen_sound_r(int offset);
+int atarigen_sound_upper_r(int offset);
 
 void atarigen_update_interrupts(void);
 int atarigen_vblank_gen(void);

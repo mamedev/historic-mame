@@ -15,7 +15,7 @@
 #include "ay8910.h"
 #include "fm.h"
 
-#ifdef BUILD_YM2610
+#if BUILD_YM2610
 
 /* use FM.C with stream system */
 
@@ -154,6 +154,7 @@ int YM2610_sh_start(const struct MachineSound *msound)
 	return 1;
 }
 
+#if BUILD_YM2610B
 int YM2610B_sh_start(const struct MachineSound *msound)
 {
 	int i,j;
@@ -222,6 +223,7 @@ int YM2610B_sh_start(const struct MachineSound *msound)
 	/* error */
 	return 1;
 }
+#endif
 
 /************************************************/
 /* Sound Hardware Stop							*/

@@ -13,14 +13,14 @@
 
 struct RomModule
 {
-	const char *name;			/* name of the file to load */
-	unsigned int offset;		/* offset to load it to */
-	unsigned int length;		/* length of the file */
-	unsigned int crc;			/* standard CRC-32 checksum */
+	const char *name;	/* name of the file to load */
+	UINT32 offset;		/* offset to load it to */
+	UINT32 length;		/* length of the file */
+	UINT32 crc;			/* standard CRC-32 checksum */
 };
 
 /* there are some special cases for the above. name, offset and size all set to 0 */
-/* mark the end of the aray. If name is 0 and the others aren't, that means "continue */
+/* mark the end of the array. If name is 0 and the others aren't, that means "continue */
 /* reading the previous rom from this address". If length is 0 and offset is not 0, */
 /* that marks the start of a new memory region. Confused? Well, don't worry, just use */
 /* the macros below. */

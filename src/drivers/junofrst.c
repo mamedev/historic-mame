@@ -190,7 +190,7 @@ void junofrst_i8039_irq_w(int offset,int data)
 		cpu_cause_interrupt(2,I8039_EXT_INT);
 }
 
-void i8039_irqen_and_status_w(int offset,int data)
+static void i8039_irqen_and_status_w(int offset,int data)
 {
 	i8039_irqenable = data & 0x80;
 	i8039_status = (data & 0x70) >> 4;

@@ -289,7 +289,7 @@ static struct YM2610interface ym2610_interface =
 	{ 0 },
 	{ 0 },
 	{ irqhandler },
-	{ 3 }, /* Does not have Delta T adpcm */
+	{ 3 },
 	{ 3 },
 	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) }
 };

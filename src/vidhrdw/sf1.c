@@ -72,9 +72,6 @@ int sf1_vh_start(void)
 	if(!bgb_tilemap || !bgm_tilemap || !char_tilemap)
 		return 1;
 
-	tilemap_set_scroll_rows(bgb_tilemap, 1);
-	tilemap_set_scroll_rows(bgm_tilemap, 1);
-
 	bgm_tilemap->transparent_pen = 15;
 	char_tilemap->transparent_pen = 3;
 
@@ -108,12 +105,12 @@ void sf1_videoram_w(int offset, int data)
 
 void sf1_deltaxb_w(int offset, int data)
 {
-	tilemap_set_scrollx(bgb_tilemap, 0, -data);
+	tilemap_set_scrollx(bgb_tilemap, 0, data);
 }
 
 void sf1_deltaxm_w(int offset, int data)
 {
-	tilemap_set_scrollx(bgm_tilemap, 0, -data);
+	tilemap_set_scrollx(bgm_tilemap, 0, data);
 }
 
 void sf1_active_w(int data)

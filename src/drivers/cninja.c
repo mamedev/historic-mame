@@ -374,7 +374,7 @@ static struct YM2203interface ym2203_interface =
 {
 	1,
 	32220000/8,	/* Accurate */
-	{ YM2203_VOL(29,29) },
+	{ YM2203_VOL(15,30) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -395,7 +395,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,
 	32220000/8, /* Accurate */
-	{ YM3012_VOL(40,OSD_PAN_LEFT,40,OSD_PAN_RIGHT) },
+	{ YM3012_VOL(40,OSD_PAN_CENTER,40,OSD_PAN_CENTER) },
 	{ sound_irq }
 };
 
@@ -403,7 +403,7 @@ static struct YM2151interface ym2151_interface2 =
 {
 	1,
 	32220000/8, /* Bootleg frequency - who knows.. */
-	{ 50 },
+	{ YM3012_VOL(40,OSD_PAN_CENTER,40,OSD_PAN_CENTER) },
 	{ sound_irq2 }
 };
 
@@ -412,7 +412,7 @@ static struct OKIM6295interface okim6295_interface =
 	2,              /* 2 chips */
 	8000,           /* 8000Hz frequency */
 	{ 3,4 },        /* memory regions 3 & 4 */
-	{ 20,10 }
+	{ 40,20 }
 };
 
 /**********************************************************************************/
@@ -508,7 +508,7 @@ static struct MachineDriver stoneage_machine_driver =
 	cninja_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	0,0,0,0, /* Mono */
 	{
 		{
 			SOUND_YM2151,
@@ -525,11 +525,43 @@ static struct MachineDriver stoneage_machine_driver =
 
 ROM_START( cninja_rom )
 	ROM_REGION(0xc0000) /* 68000 code */
-	ROM_LOAD_EVEN ("gn-02.rom", 0x00000, 0x20000, 0xccc59524 )
+	ROM_LOAD_EVEN( "gn02rev3.bin", 0x00000, 0x20000, 0x39aea12a )
+	ROM_LOAD_ODD ( "gn05rev2.bin", 0x00000, 0x20000, 0x0f4360ef )
+	ROM_LOAD_EVEN( "gn01rev2.bin", 0x40000, 0x20000, 0xf740ef7e )
+	ROM_LOAD_ODD ( "gn04rev2.bin", 0x40000, 0x20000, 0xc98fcb62 )
+	ROM_LOAD_EVEN( "gn-00.rom",    0x80000, 0x20000, 0x0b110b16 )
+	ROM_LOAD_ODD ( "gn-03.rom",    0x80000, 0x20000, 0x1e28e697 )
+
+	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
+	ROM_LOAD( "gl-09.rom",  0x10000,  0x10000,  0x5a2d4752 )
+
+	ROM_LOAD( "mag-00.rom", 0x020000, 0x80000,  0xa8f05d33 ) /* tiles 1 */
+	ROM_LOAD( "mag-01.rom", 0x0a0000, 0x80000,  0x5b399eed ) /* tiles 2 */
+	ROM_LOAD( "mag-02.rom", 0x120000, 0x80000,  0xde89c69a ) /* tiles 3 */
+
+	ROM_LOAD( "mag-03.rom", 0x1a0000, 0x80000,  0x2220eb9f ) /* sprites */
+	ROM_LOAD( "mag-04.rom", 0x220000, 0x80000,  0x144b94cc )
+	ROM_LOAD( "mag-05.rom", 0x2a0000, 0x80000,  0x56a53254 )
+	ROM_LOAD( "mag-06.rom", 0x320000, 0x80000,  0x82d44749 )
+
+	ROM_REGION(0x10000) /* Sound CPU */
+	ROM_LOAD( "gl-07.rom",  0x00000,  0x10000,  0xca8bef96 )
+
+	ROM_REGION(0x20000) /* Oki samples */
+	ROM_LOAD( "gl-06.rom",  0x00000,  0x20000,  0xd92e519d )
+
+	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_LOAD( "mag-07.rom", 0x00000,  0x80000,  0x08eb5264 )
+ROM_END
+
+ROM_START( cninja0_rom )
+	ROM_REGION(0xc0000) /* 68000 code */
+	ROM_LOAD_EVEN( "gn-02.rom", 0x00000, 0x20000, 0xccc59524 )
 	ROM_LOAD_ODD ( "gn-05.rom", 0x00000, 0x20000, 0xa002cbe4 )
-	ROM_LOAD_EVEN ("gn-01.rom", 0x40000, 0x20000, 0x18f0527c )
+	ROM_LOAD_EVEN( "gn-01.rom", 0x40000, 0x20000, 0x18f0527c )
 	ROM_LOAD_ODD ( "gn-04.rom", 0x40000, 0x20000, 0xea4b6d53 )
-	ROM_LOAD_EVEN ("gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
+	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000, 0x1e28e697 )
 
 	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
@@ -557,12 +589,12 @@ ROM_END
 
 ROM_START( cninjau_rom )
 	ROM_REGION(0xc0000) /* 68000 code */
-	ROM_LOAD_EVEN ("gm02-3.1k", 0x00000, 0x20000, 0xd931c3b1 )
-	ROM_LOAD_ODD  ("gm05-2.3k", 0x00000, 0x20000, 0x7417d3fb )
-	ROM_LOAD_EVEN ("gm01-2.1j", 0x40000, 0x20000, 0x72041f7e )
-	ROM_LOAD_ODD  ("gm04-2.3j", 0x40000, 0x20000, 0x2104d005 )
-	ROM_LOAD_EVEN ("gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
-	ROM_LOAD_ODD  ("gn-03.rom", 0x80000, 0x20000, 0x1e28e697 )
+	ROM_LOAD_EVEN( "gm02-3.1k", 0x00000, 0x20000, 0xd931c3b1 )
+	ROM_LOAD_ODD ( "gm05-2.3k", 0x00000, 0x20000, 0x7417d3fb )
+	ROM_LOAD_EVEN( "gm01-2.1j", 0x40000, 0x20000, 0x72041f7e )
+	ROM_LOAD_ODD ( "gm04-2.3j", 0x40000, 0x20000, 0x2104d005 )
+	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000, 0x0b110b16 )
+	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000, 0x1e28e697 )
 
 	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gl-08.rom",  0x00000,  0x10000,  0x33a2b400 )	/* chars */
@@ -589,11 +621,11 @@ ROM_END
 
 ROM_START( joemac_rom )
 	ROM_REGION(0xC0000) /* 68000 code */
-	ROM_LOAD_EVEN ("gl02-2.k1", 0x00000, 0x20000,  0x80da12e2 )
+	ROM_LOAD_EVEN( "gl02-2.k1", 0x00000, 0x20000,  0x80da12e2 )
 	ROM_LOAD_ODD ( "gl05-2.k3", 0x00000, 0x20000,  0xfe4dbbbb )
-	ROM_LOAD_EVEN ("gl01-2.j1", 0x40000, 0x20000,  0x0b245307 )
+	ROM_LOAD_EVEN( "gl01-2.j1", 0x40000, 0x20000,  0x0b245307 )
 	ROM_LOAD_ODD ( "gl04-2.j3", 0x40000, 0x20000,  0x1b331f61 )
-	ROM_LOAD_EVEN ("gn-00.rom", 0x80000, 0x20000,  0x0b110b16 )
+	ROM_LOAD_EVEN( "gn-00.rom", 0x80000, 0x20000,  0x0b110b16 )
 	ROM_LOAD_ODD ( "gn-03.rom", 0x80000, 0x20000,  0x1e28e697 )
 
 	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
@@ -621,11 +653,11 @@ ROM_END
 
 ROM_START( stoneage_rom )
 	ROM_REGION(0xC0000) /* 68000 code */
-	ROM_LOAD_EVEN ("sa_1_019.bin", 0x00000, 0x20000,  0x7fb8c44f )
+	ROM_LOAD_EVEN( "sa_1_019.bin", 0x00000, 0x20000,  0x7fb8c44f )
 	ROM_LOAD_ODD ( "sa_1_033.bin", 0x00000, 0x20000,  0x961c752b )
-	ROM_LOAD_EVEN ("sa_1_018.bin", 0x40000, 0x20000,  0xa4043022 )
+	ROM_LOAD_EVEN( "sa_1_018.bin", 0x40000, 0x20000,  0xa4043022 )
 	ROM_LOAD_ODD ( "sa_1_032.bin", 0x40000, 0x20000,  0xf52a3286 )
-	ROM_LOAD_EVEN ("sa_1_017.bin", 0x80000, 0x20000,  0x08d6397a )
+	ROM_LOAD_EVEN( "sa_1_017.bin", 0x80000, 0x20000,  0x08d6397a )
 	ROM_LOAD_ODD ( "sa_1_031.bin", 0x80000, 0x20000,  0x103079f5 )
 
 	ROM_REGION(0x3a0000) /* temporary space for graphics (disposed after conversion) */
@@ -703,7 +735,7 @@ struct GameDriver cninja_driver =
 	__FILE__,
 	0,
 	"cninja",
-	"Caveman Ninja (World)",
+	"Caveman Ninja (World revision 3)",
 	"1991",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -722,6 +754,32 @@ struct GameDriver cninja_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+
+struct GameDriver cninja0_driver =
+{
+	__FILE__,
+	&cninja_driver,
+	"cninja0",
+	"Caveman Ninja (World revision 0)",
+	"1991",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&cninja_machine_driver,
+	custom_memory,
+
+	cninja0_rom,
+	cninja_patch, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+
 
 struct GameDriver cninjau_driver =
 {

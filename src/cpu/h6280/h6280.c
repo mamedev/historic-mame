@@ -26,6 +26,14 @@
 
 	Internal timer (TIQ) not properly implemented.
 
+
+	Changelog, version 1.02:
+		JMP + indirect X (0x7c) opcode fixed.
+		SMB + RMB opcodes fixed in disassembler.
+		change_pc function calls removed.
+		TSB & TRB now set flags properly.
+		BIT opcode altered.
+
 ******************************************************************************/
 
 #include "memory.h"
@@ -99,7 +107,7 @@ UINT8	H6280_debug_mmr[8];
 
 /* Hardwire zero page memory to Bank 8, only one Hu6280 is supported if this
 is selected */
-#define FAST_ZERO_PAGE
+//#define FAST_ZERO_PAGE
 
 #ifdef FAST_ZERO_PAGE
 unsigned char *ZEROPAGE;
@@ -173,6 +181,8 @@ int h6280_execute(int cycles)
     {
 		h6280.ppc = h6280.pc;
 
+//if (errorlog && (  ((h6280.sp.d)>0x1ff) |  ((h6280.sp.d)<0x100) )) fprintf(errorlog,"SP is %04x\n",h6280.sp.d);
+
 #ifdef  MAME_DEBUG
 	 	{
 			if (mame_debug)
@@ -229,7 +239,6 @@ unsigned h6280_get_pc (void)
 void h6280_set_pc (unsigned val)
 {
 	PCW = val;
-	change_pc(PCD);
 }
 
 unsigned h6280_get_sp (void)
@@ -284,7 +293,7 @@ void h6280_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case H6280_PC: PCW = val; change_pc( PCD ); break;
+		case H6280_PC: PCW = val; break;
 		case H6280_S: S = val; break;
 		case H6280_P: P = val; break;
 		case H6280_A: A = val; break;
@@ -398,7 +407,7 @@ const char *h6280_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "H6280";
 		case CPU_INFO_FAMILY: return "Hudsonsoft 6280";
-		case CPU_INFO_VERSION: return "1.01";
+		case CPU_INFO_VERSION: return "1.02";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net";
 		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;

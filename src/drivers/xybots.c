@@ -64,7 +64,7 @@ static void xybots_update_interrupts(int vblank, int sound)
 void xybots_init_machine(void)
 {
 	atarigen_init_machine(xybots_update_interrupts, 107);
-	ataraud2_reset(1, 2, 1, 0x0100);
+	ataraud2_init(1, 2, 1, 0x0100);
 }
 
 
@@ -188,7 +188,7 @@ INPUT_PORTS_START( xybots_ports )
 	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_VBLANK )	/* VBLANK */
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	ATARI_AUDIO_2_PORT	/* audio port */
+	ATARI_AUDIO_2_PORT_SWAPPED	/* audio port */
 INPUT_PORTS_END
 
 
@@ -283,7 +283,11 @@ static struct MachineDriver xybots_machine_driver =
 	xybots_vh_screenrefresh,
 
 	/* sound hardware */
-	ATARI_AUDIO_2_INTERFACES
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		ATARI_AUDIO_2_YM2151,
+		ATARI_AUDIO_2_POKEY
+	}
 };
 
 

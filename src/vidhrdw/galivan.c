@@ -197,9 +197,6 @@ int galivan_vh_start(void)
 	if (!bg_tilemap || !char_tilemap)
 		return 1;
 
-	tilemap_set_scroll_rows (bg_tilemap, 1);
-	tilemap_set_scroll_cols (bg_tilemap, 1);
-
 	char_tilemap->transparent_pen = 15;
 
 	return 0;
@@ -320,8 +317,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if ( (layers&0x40)==0 ) {
-		tilemap_set_scrollx (bg_tilemap, 0, -(galivan_scrollx[0] + 256 * (galivan_scrollx[1]&0x7)));
-		tilemap_set_scrolly (bg_tilemap, 0, -(galivan_scrolly[0] + 256 * (galivan_scrolly[1]&0x7)));
+		tilemap_set_scrollx (bg_tilemap, 0, galivan_scrollx[0] + 256 * (galivan_scrollx[1]&0x7));
+		tilemap_set_scrolly (bg_tilemap, 0, galivan_scrolly[0] + 256 * (galivan_scrolly[1]&0x7));
 	}
 
 	tilemap_update (ALL_TILEMAPS);

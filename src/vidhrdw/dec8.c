@@ -46,9 +46,12 @@ sprites.
 static unsigned char *pf_video,*pf_dirty,*dec8_sprites;
 static int scroll1[4],scroll2[4],pf1_attr[8],pf2_attr[8];
 static struct osd_bitmap *pf1_bitmap,*pf2_bitmap,*tf2_bitmap;
-unsigned char *dec8_row;
+unsigned char *dec8_row,*srdarwin_tileram;
 
-static int blank_tile,shackled_priority;
+static int blank_tile,shackled_priority,flipscreen;
+
+/* Tilemap.. Only used by Super Real Darwin for now */
+static struct tilemap *background_layer;
 
 /***************************************************************************
 
@@ -348,6 +351,52 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 	}
 }
 
+static void srdarwin_drawsprites(struct osd_bitmap *bitmap, int pri)
+{
+	int offs;
+
+	/* Sprites */
+	for (offs = 0;offs < 0x200;offs += 4)
+	{
+		int multi,fx,sx,sy,sy2,code,color;
+
+		code = spriteram[offs+3] + ( ( spriteram[offs+1] & 0xe0 ) << 3 );
+		sx = (241 - spriteram[offs+2]);
+	//if (sx < -7) sx += 256;
+
+		sy = spriteram[offs];
+		color = (spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x08) >> 1);
+
+		if (pri==0 && color!=0) continue;
+		if (pri==1 && color==0) continue;
+
+		fx = spriteram[offs+1] & 0x04;
+		multi = spriteram[offs+1] & 0x10;
+
+		if (flipscreen) {
+			sy=240-sy;
+			sx=240-sx;
+			if (fx) fx=0; else fx=1;
+			sy2=sy-16;
+		}
+		else sy2=sy+16;
+
+    	drawgfx(bitmap,Machine->gfx[1],
+        		code,
+				color,
+				fx,flipscreen,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+        if (multi)
+    		drawgfx(bitmap,Machine->gfx[1],
+				code+1,
+				color,
+				fx,flipscreen,
+				sx,sy2,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+}
+
 /* Draw character tiles, each game has different colour masks */
 static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
 {
@@ -455,6 +504,8 @@ void dec8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	draw_characters(bitmap,0x70,4);
 }
 
+/******************************************************************************/
+
 void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int my,mx,offs,color,tile,scrollx,scrolly;
@@ -511,76 +562,43 @@ void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	draw_characters(bitmap,0xc,2);
 }
 
+/******************************************************************************/
+
 void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int my,mx,offs,color,tile;
-	int scrollx,scrolly;
-    int bank;
+
+	tilemap_set_scrollx( background_layer,0, (scroll2[0]<<8)+scroll2[1] );
+	tilemap_update(ALL_TILEMAPS);
 
 	if (palette_recalc())
-    	memset(pf_dirty,1,0x400);
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	/* Playfield */
-	mx=-1; my=0;
-	for (offs = 0x000;offs < 0x400; offs += 2) {
-		mx++;
-    	if (mx==32) {mx=0; my++;}
-		if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
+	tilemap_render(ALL_TILEMAPS);
 
-    	tile=pf_video[offs+1]+(pf_video[offs]<<8);
-    	color=tile >> 12;
-    	tile=tile&0xfff;
-        bank=tile/0x100;
-        tile-=(bank*0x100);
+	/* Bottom portion of tilemap */
+	tilemap_draw(bitmap,background_layer,TILEMAP_BACK);
 
-		drawgfx(pf2_bitmap,Machine->gfx[bank+2],tile,
-			color&0x3, 0,0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
+	/* Low priority sprites */
+	srdarwin_drawsprites(bitmap,0);
 
-	scrolly=0;
-	scrollx=-((scroll2[0]<<8)+scroll2[1]);
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
+	/* Top portion of tilemap */
+	tilemap_draw(bitmap,background_layer,TILEMAP_FRONT);
 
-	/* Sprites */
-	for (offs = 0;offs < 0x200;offs += 4)
-	{
-		int multi,fx,sx,sy,code;
-
-		code = spriteram[offs+3] + ( ( spriteram[offs+1] & 0xe0 ) << 3 );
-		sx = (241 - spriteram[offs+2]);
-	//if (sx < -7) sx += 256;
-
-		sy = spriteram[offs];
-		color = (spriteram[offs+1] & 0x03) + ((spriteram[offs+1] & 0x08) >> 1);
-		fx = spriteram[offs+1] & 0x04;
-		multi = spriteram[offs+1] & 0x10;
-
-    	drawgfx(bitmap,Machine->gfx[1],
-        		code,
-				color,
-				fx,0,
-				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-        if (multi)
-    		drawgfx(bitmap,Machine->gfx[1],
-				code+1,
-				color,
-				fx,0,
-				sx,sy+16,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-	}
+	/* High priority sprites */
+	srdarwin_drawsprites(bitmap,1);
 
 	/* Draw character tiles */
-   	mx=-1; my=0;
-	for (offs = 0;offs < 0x400; offs += 1) {
-		mx++;
-    	if (mx==32) {mx=0; my++;}
+	for (offs = 0;offs < 0x400; offs ++)
+	{
+		mx=offs%32;
+		my=offs/32;
+		if (flipscreen) {mx=31-mx; my=31-my;}
         tile=videoram[offs];
 		if (!tile) continue;
-        color=0;      //FIX THIS****************
+        color=0;      /* Not correct! */
        	drawgfx(bitmap,Machine->gfx[0],
-				tile,color,0,0,8*mx,8*my,
+				tile,color,flipscreen,flipscreen,8*mx,8*my,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
     }
 }
@@ -951,4 +969,61 @@ void dec8_vh_stop (void)
 	if (!strcmp(Machine->gamedrv->name,"csilver"))
 		free(dec8_sprites);
 
+}
+
+/* Only use with tilemap games (SRDARWIN) for now */
+void dec8_flipscreen_w(int offset, int data)
+{
+	static int old;
+
+	flipscreen=data;
+	if (flipscreen!=old)
+		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	old=data;
+}
+
+/******************************************************************************/
+
+int srdarwin_video_r(int offset)
+{
+	return srdarwin_tileram[offset];
+}
+
+void srdarwin_video_w(int offset, int data)
+{
+	srdarwin_tileram[offset]=data;
+	tilemap_mark_tile_dirty( background_layer,(offset/2)%32,(offset/2)/32 );
+}
+
+static void get_srdarwin_tile_info( int col, int row )
+{
+	int offs=(col*2) + (row*64);
+	int tile=srdarwin_tileram[offs+1]+(srdarwin_tileram[offs]<<8);
+	int color=tile >> 12;
+	int bank;
+
+	tile=tile&0xfff;
+	bank=(tile/0x100)+2;
+
+	SET_TILE_INFO(bank,tile,color)
+}
+
+int srdarwin_vh_start(void)
+{
+	background_layer = tilemap_create(
+		get_srdarwin_tile_info,
+		TILEMAP_SPLIT,
+		16,16,
+		32,16
+	);
+
+	if (background_layer)
+	{
+		background_layer->transmask[0] = 0x00ff; /* Bottom 8 pens */
+		background_layer->transmask[1] = 0xff00; /* Top 8 pens */
+
+		return 0;
+	}
+
+	return 1;
 }

@@ -5,7 +5,7 @@ Various Data East 8 bit games:
 	Cobra Command               (c) 1988 Data East Corporation (6809)
 	The Real Ghostbusters (2p)  (c) 1987 Data East USA (6809 + I8751)
 	The Real Ghostbusters (3p)  (c) 1987 Data East USA (6809 + I8751)
-	Mazehunter                  (c) 1987 Data East Corporation (6809 + I8751)
+	Meikyuu Hunter G            (c) 1987 Data East Corporation (6809 + I8751)
 	Super Real Darwin           (c) 1987 Data East Corporation (6809 + I8751)
 	Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
 	Psycho-Nics Oscar (Japan)   (c) 1987 Data East Corporation (2*6809 + I8751)
@@ -20,6 +20,8 @@ Various Data East 8 bit games:
 	All games use a 6502 for sound (some are encrypted), all games except Cobracom
 	use an Intel 8751 for protection & coinage.  For these games the coinage dip
 	switch is not currently supported, they are fixed at 1 coin 1 credit.
+
+	Meikyuu Hunter G was formerly known as Mazehunter.
 
 	Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -37,6 +39,8 @@ Emulation Notes:
 * Maze Hunter is using Ghostbusters colour proms for now...
 * Breywood sprites are not currently dumped, a Breywood Rev 2 rom set is known
 to exist..
+
+  Thanks to José Miguel Morales Farreras for Super Real Darwin information!
 
 ***************************************************************************/
 
@@ -69,10 +73,16 @@ void dec8_bac06_0_w(int offset, int data);
 void dec8_bac06_1_w(int offset, int data);
 void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
+int srdarwin_vh_start(void);
+int srdarwin_video_r(int offset);
+void srdarwin_video_w(int offset, int data);
+
+void dec8_flipscreen_w(int offset, int data);
+
 /******************************************************************************/
 
 static unsigned char *dec8_shared_ram,*dec8_shared2_ram;
-extern unsigned char *dec8_row;
+extern unsigned char *dec8_row,*srdarwin_tileram;
 
 static int nmi_enable,int_enable;
 static int i8751_return, i8751_value;
@@ -158,8 +168,8 @@ static void srdarwin_i8751_w(int offset, int data)
  	if (i8751_value==0x5000) i8751_return=((coins / 10) << 4) | (coins % 10); /* Coin request */
  	if (i8751_value==0x6000) {i8751_value=-1; coins--; } /* Coin clear */
 	/* Nb:  Command 0x4000 for setting coinage options is not supported */
- 	if ((readinputport(1)&1)==1) latch=1;
- 	if ((readinputport(1)&1)!=1 && latch) {coins++; latch=0;}
+ 	if ((readinputport(4)&1)==1) latch=1;
+ 	if ((readinputport(4)&1)!=1 && latch) {coins++; latch=0;}
 
 	/* This next value is the index to a series of tables,
 	each table controls the end of level bad guy, wrong values crash the
@@ -193,24 +203,20 @@ bb63           = Square things again
 (40)           = Grey bird
 (42)           = Crash (end of table)
 
-	I'm afraid the table below is probably wrong, I don't know the order the
-bosses should appear in, nor can I play the game well enough to get to the later
-bosses.
+	The table below is hopefully correct thanks to José Miguel Morales Farreras,
+	but Boss #6 is uncomfirmed as correct.
 
 */
-	if (i8751_value==0x8000) i8751_return=0xf580 +  0;
-	if (i8751_value==0x8001) i8751_return=0xf580 + 30; /* 4 Corners */
-	if (i8751_value==0x8002) i8751_return=0xf580 + 26; /* Clock */
-	if (i8751_value==0x8003) i8751_return=0xf580 +  6; /* Pyramid */
-	if (i8751_value==0x8004) i8751_return=0xf580 +  8; /* Bee */
-	if (i8751_value==0x8005) i8751_return=0xf580 + 10; /* Snake */
-	if (i8751_value==0x8006) i8751_return=0xf580 + 12; /* Grey things */
-	if (i8751_value==0x8007) i8751_return=0xf580 + 16; /* Hailstorm */
-	if (i8751_value==0x8008) i8751_return=0xf580 + 20; /* Square */
-	if (i8751_value==0x8009) i8751_return=0xf580 + 28; /* Dragon */
-	if (i8751_value==0x800a) i8751_return=0xf580 + 32; /* Teleport */
-	if (i8751_value==0x800b) i8751_return=0xf580 + 38; /* Pincer */
-	if (i8751_value==0x800c) i8751_return=0xf580 + 40; /* Bird */
+	if (i8751_value==0x8000) i8751_return=0xf580 +  0; /* Boss #1: Snake + Bee */
+	if (i8751_value==0x8001) i8751_return=0xf580 + 30; /* Boss #2: 4 Corners */
+	if (i8751_value==0x8002) i8751_return=0xf580 + 26; /* Boss #3: Clock */
+	if (i8751_value==0x8003) i8751_return=0xf580 +  6; /* Boss #4: Pyramid */
+	if (i8751_value==0x8004) i8751_return=0xf580 + 12; /* Boss #5: Grey things */
+	if (i8751_value==0x8005) i8751_return=0xf580 + 20; /* Boss #6: Ground Base?! */
+	if (i8751_value==0x8006) i8751_return=0xf580 + 28; /* Boss #7: Dragon */
+	if (i8751_value==0x8007) i8751_return=0xf580 + 32; /* Boss #8: Teleport */
+	if (i8751_value==0x8008) i8751_return=0xf580 + 38; /* Boss #9: Octopus (Pincer) */
+	if (i8751_value==0x8009) i8751_return=0xf580 + 40; /* Boss #10: Bird */
 }
 
 static void gondo_i8751_w(int offset, int data)
@@ -541,13 +547,13 @@ static struct MemoryWriteAddress ghostb_writemem[] =
 static struct MemoryReadAddress srdarwin_readmem[] =
 {
 	{ 0x0000, 0x13ff, MRA_RAM },
-	{ 0x1400, 0x17ff, dec8_video_r },
+	{ 0x1400, 0x17ff, srdarwin_video_r },
 	{ 0x2000, 0x2000, i8751_h_r },
 	{ 0x2001, 0x2001, i8751_l_r },
-	{ 0x3800, 0x3800, input_port_2_r }, /* Dip */
-	{ 0x3801, 0x3801, input_port_0_r }, /* Player */
-	{ 0x3802, 0x3802, input_port_1_r }, /* VBL */
-	{ 0x3803, 0x3803, input_port_3_r }, /* Dip */
+	{ 0x3800, 0x3800, input_port_2_r }, /* Dip 1 */
+	{ 0x3801, 0x3801, input_port_0_r }, /* Player 1 */
+	{ 0x3802, 0x3802, input_port_1_r }, /* Player 2 (cocktail) + VBL */
+	{ 0x3803, 0x3803, input_port_3_r }, /* Dip 2 */
  	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -559,14 +565,14 @@ static struct MemoryWriteAddress srdarwin_writemem[] =
 	{ 0x0600, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x0800, 0x0fff, MWA_RAM, &videoram },
 	{ 0x1000, 0x13ff, MWA_RAM },
-	{ 0x1400, 0x17ff, dec8_video_w },
+	{ 0x1400, 0x17ff, srdarwin_video_w, &srdarwin_tileram },
 	{ 0x1800, 0x1801, srdarwin_i8751_w },
-	{ 0x1802, 0x1802, i8751_reset_w },
+	{ 0x1802, 0x1802, i8751_reset_w },		/* Maybe.. */
 	{ 0x1803, 0x1803, MWA_NOP },            /* NMI ack */
 	{ 0x1804, 0x1804, MWA_NOP },            /* DMA */
 	{ 0x1805, 0x1806, srdarwin_control_w }, /* Scroll & Bank */
 	{ 0x2000, 0x2000, dec8_sound_w },       /* Sound */
-	{ 0x2001, 0x2001, MWA_NOP },            /* Flipscreen (not supported) */
+	{ 0x2001, 0x2001, dec8_flipscreen_w },  /* Flipscreen */
 	{ 0x2800, 0x288f, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x3000, 0x308f, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -1142,55 +1148,57 @@ INPUT_PORTS_START( srdarwin_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) /* Fake */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
 	/* The bottom bits of this dip (coinage) are for the i8751 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x03, "Lives" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "28", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Continues" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) /* Fake */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gondo_input_ports )
@@ -1714,7 +1722,7 @@ static struct GfxDecodeInfo lastmiss_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	1500000,	/* Correct for Gondo? */
+	1500000,	/* Should be accurate for all games, derived from 12MHz crystal */
 	{ YM2203_VOL(20,23) },
 	{ 0 },
 	{ 0 },
@@ -1947,8 +1955,8 @@ static struct MachineDriver srdarwin_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
-	dec8_vh_start,
-	dec8_vh_stop,
+	srdarwin_vh_start,
+	0,
 	srdarwin_vh_screenrefresh,
 
 	/* sound hardware */
@@ -3094,7 +3102,7 @@ struct GameDriver mazeh_driver =
 	__FILE__,
 	&ghostb_driver,
 	"mazeh",
-	"Maze Hunter (Japan)",
+	"Meikyuu Hunter G (Japan)",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",

@@ -2485,7 +2485,7 @@ static struct MachineDriver inferno_machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3579000, 				/* 3.579 Mhz */
+			3579000/4, 				/* 3.579 Mhz */
 			2,						/* memory region #2 */
 			williams2_sound_readmem,/* MemoryReadAddress */
 			williams2_sound_writemem,/* MemoryWriteAddress */
@@ -2543,7 +2543,7 @@ static struct MachineDriver joust2_machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3579000, 				/* 3.579 Mhz */
+			3579000/4, 				/* 3.579 Mhz */
 			2,						/* memory region #2 */
 			williams2_sound_readmem,/* MemoryReadAddress */
 			williams2_sound_writemem,/* MemoryWriteAddress */

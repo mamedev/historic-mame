@@ -16,7 +16,7 @@ char *rompathv[MAXPATHC];
 char *samplepathv[MAXPATHC];
 int rompathc;
 int samplepathc;
-char *cfgdir, *hidir, *inpdir, *stadir, *artworkdir;
+char *cfgdir, *hidir, *inpdir, *stadir, *memcarddir, *artworkdir;
 
 
 char *alternate_name; /* for "-romdir" */
@@ -403,12 +403,10 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 			}
 			break;
 		case OSD_FILETYPE_CONFIG:
-			if (!found) {
-				sprintf(name,"%s/%s.cfg",cfgdir,gamename);
-				f->type = kPlainFile;
-				f->file = fopen(name,_write ? "wb" : "rb");
-				found = f->file!=0;
-			}
+			sprintf(name,"%s/%s.cfg",cfgdir,gamename);
+			f->type = kPlainFile;
+			f->file = fopen(name,_write ? "wb" : "rb");
+			found = f->file!=0;
 
 			if (!found) {
 				/* try with a .zip directory (if ZipMagic is installed) */
@@ -427,12 +425,10 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 			}
 			break;
 		case OSD_FILETYPE_INPUTLOG:
-			if (!found) {
-				sprintf(name,"%s/%s.inp", inpdir, gamename);
-				f->type = kPlainFile;
-				f->file = fopen(name,_write ? "wb" : "rb");
-				found = f->file!=0;
-			}
+			sprintf(name,"%s/%s.inp", inpdir, gamename);
+			f->type = kPlainFile;
+			f->file = fopen(name,_write ? "wb" : "rb");
+			found = f->file!=0;
 			break;
 		case OSD_FILETYPE_STATE:
 			sprintf(name,"%s/%s.sta",stadir,gamename);
@@ -459,6 +455,12 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 				break;
 
 			sprintf(name,"%s/%s", artworkdir, filename);
+			f->type = kPlainFile;
+			f->file = fopen(name,_write ? "wb" : "rb");
+			found = f->file!=0;
+			break;
+		case OSD_FILETYPE_MEMCARD:
+			sprintf(name, "%s/%s",memcarddir,filename);
 			f->type = kPlainFile;
 			f->file = fopen(name,_write ? "wb" : "rb");
 			found = f->file!=0;
@@ -562,6 +564,54 @@ int osd_fwrite_swap(void *file,const void *buffer,int length)
 	}
 
 	return res;
+}
+
+int osd_fread_scatter(void *file,void *buffer,int length,int increment)
+{
+	unsigned char *buf = buffer;
+	FakeFileHandle *f = (FakeFileHandle *)file;
+	unsigned char tempbuf[4096];
+	int totread,r,i;
+
+	switch (f->type)
+	{
+		case kPlainFile:
+			totread = 0;
+			while (length)
+			{
+				r = length;
+				if (r > 4096) r = 4096;
+				r = fread(tempbuf,1,r,f->file);
+				if (r == 0) return totread;	/* error */
+				for (i = 0;i < r;i++)
+				{
+					*buf = tempbuf[i];
+					buf += increment;
+				}
+				totread += r;
+				length -= r;
+			}
+			return totread;
+			break;
+		case kZippedFile:
+		case kRAMFile:
+			/* reading from the RAM image of a file */
+			if (f->data)
+			{
+				if (length + f->offset > f->length)
+					length = f->length - f->offset;
+				for (i = 0;i < length;i++)
+				{
+					*buf = f->data[f->offset + i];
+					buf += increment;
+				}
+				f->offset += length;
+				return length;
+			}
+			break;
+	}
+
+	return 0;
 }
 
 

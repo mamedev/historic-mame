@@ -331,7 +331,7 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (flipscreen)
 		{
-			scrollx = (bosco_scrollx - 3*displacement) + 32;
+			scrollx = (bosco_scrollx +32);//- 3*displacement) + 32;
 			scrolly = (bosco_scrolly + 16) - 32;
 		}
 		else
@@ -354,7 +354,8 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
-		sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
+		sx = spriteram[offs + 1] - displacement;
+if (flipscreen) sx += 32;
 		sy = 225 - spriteram_2[offs] - displacement;
 
 		drawgfx(bitmap,Machine->gfx[1],

@@ -692,6 +692,8 @@ int /* error */ load_zipped_file (const char* zipfile, const char* filename, uns
 			*length = ent->uncompressed_size;
 			*buf = (unsigned char*)malloc( *length );
 			if (!*buf) {
+				if (!gUnzipQuiet)
+					printf("load_zipped_file(): Unable to allocate %d bytes of RAM\n",*length);
 				cache_closezip(zip);
 				return -1;
 			}

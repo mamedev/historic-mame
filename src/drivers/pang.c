@@ -22,6 +22,7 @@
 void bbros_decode(void);
 void spang_decode(void);
 void sbbros_decode(void);
+void qtono1_decode(void);
 void block_decode(void);
 
 
@@ -391,19 +392,19 @@ INPUT_PORTS_START( pang_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 
 	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x01, 0x00, "Freeze" )
@@ -412,6 +413,48 @@ INPUT_PORTS_START( pang_input_ports )
 	PORT_BITX(    0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* data from EEPROM */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( qtono1_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode farther down */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+
+	PORT_START      /* DSW */
+	PORT_DIPNAME( 0x01, 0x00, "Freeze" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_BITX( 0x02, 0x02, IPT_SERVICE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
@@ -472,10 +515,10 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,      /* 8*8 characters */
-	16384,  /* 16384 characters */
-	4,        /* 4 bits per pixel */
-	{ 16384*16*8+4, 16384*16*8+0,4, 0 },
+	8,8,	/* 8*8 characters */
+	32768,	/* 32768 characters */
+	4,		/* 4 bits per pixel */
+	{ 32768*16*8+4, 32768*16*8+0,4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8    /* every char takes 16 consecutive bytes */
@@ -496,8 +539,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,     0, 128 }, /* colors  */
-	{ 1, 0x80000, &spritelayout,   0, 128 }, /* colors  */
+	{ 1, 0x000000, &charlayout,     0, 128 }, /* colors  */
+	{ 1, 0x100000, &spritelayout,   0, 128 }, /* colors  */
 	{ -1 } /* end of array */
 };
 
@@ -516,7 +559,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,	/* 1 chip */
 	8000,	/* 8000Hz ??? */
 	{ 2 },	/* memory region 2 */
-	{ 255 }
+	{ 100 }
 };
 
 
@@ -566,13 +609,15 @@ ROM_START( pang_rom )
 	ROM_LOAD( "pang6.bin",    0x00000, 0x08000, 0x68be52cd )
 	ROM_LOAD( "pang7.bin",    0x10000, 0x20000, 0x4a2e70f6 )
 
-	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pang_09.bin",  0x00000, 0x20000, 0x3a5883f5 )
-	ROM_LOAD( "bb3.bin",      0x20000, 0x20000, 0x79a8ed08 )
-	ROM_LOAD( "pang_11.bin",  0x40000, 0x20000, 0x166a16ae )
-	ROM_LOAD( "bb5.bin",      0x60000, 0x20000, 0x2fb3db6c )
-	ROM_LOAD( "bb10.bin",     0x80000, 0x20000, 0xfdba4f6e )
-	ROM_LOAD( "bb9.bin",      0xa0000, 0x20000, 0x39f47a63 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pang_09.bin",  0x000000, 0x20000, 0x3a5883f5 )	/* chars */
+	ROM_LOAD( "bb3.bin",      0x020000, 0x20000, 0x79a8ed08 )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "pang_11.bin",  0x080000, 0x20000, 0x166a16ae )
+	ROM_LOAD( "bb5.bin",      0x0a0000, 0x20000, 0x2fb3db6c )
+	/* c0000-fffff empty */
+	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
+	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
 	ROM_REGION(0x10000)     /* OKIM */
 	ROM_LOAD( "pang_01.bin",  0x00000, 0x10000, 0xb6463907 )
@@ -584,13 +629,15 @@ ROM_START( pangb_rom )
 	ROM_LOAD( "pang_02.bin",  0x30000, 0x20000, 0x3f15bb61 )   /* Decrypted op codes */
 	ROM_LOAD( "pang_04.bin",  0x50000, 0x10000, 0xf68f88a5 )   /* Decrypted opcode + data */
 
-	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pang_09.bin",  0x00000, 0x20000, 0x3a5883f5 )
-	ROM_LOAD( "bb3.bin",      0x20000, 0x20000, 0x79a8ed08 )
-	ROM_LOAD( "pang_11.bin",  0x40000, 0x20000, 0x166a16ae )
-	ROM_LOAD( "bb5.bin",      0x60000, 0x20000, 0x2fb3db6c )
-	ROM_LOAD( "bb10.bin",     0x80000, 0x20000, 0xfdba4f6e )
-	ROM_LOAD( "bb9.bin",      0xa0000, 0x20000, 0x39f47a63 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pang_09.bin",  0x000000, 0x20000, 0x3a5883f5 )	/* chars */
+	ROM_LOAD( "bb3.bin",      0x020000, 0x20000, 0x79a8ed08 )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "pang_11.bin",  0x080000, 0x20000, 0x166a16ae )
+	ROM_LOAD( "bb5.bin",      0x0a0000, 0x20000, 0x2fb3db6c )
+	/* c0000-fffff empty */
+	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
+	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
 	ROM_REGION(0x10000)     /* OKIM */
 	ROM_LOAD( "pang_01.bin",  0x00000, 0x10000, 0xb6463907 )
@@ -611,13 +658,15 @@ ROM_START( bbros_rom )
 	ROM_LOAD( "bb6.bin",      0x00000, 0x08000, 0xa3041ca4 )
 	ROM_LOAD( "bb7.bin",      0x10000, 0x20000, 0x09231c68 )
 
-	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bb2.bin",      0x00000, 0x20000, 0x62f29992 )
-	ROM_LOAD( "bb3.bin",      0x20000, 0x20000, 0x79a8ed08 )
-	ROM_LOAD( "bb4.bin",      0x40000, 0x20000, 0xf705aa89 )
-	ROM_LOAD( "bb5.bin",      0x60000, 0x20000, 0x2fb3db6c )
-	ROM_LOAD( "bb10.bin",     0x80000, 0x20000, 0xfdba4f6e )
-	ROM_LOAD( "bb9.bin",      0xa0000, 0x20000, 0x39f47a63 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bb2.bin",      0x000000, 0x20000, 0x62f29992 )	/* chars */
+	ROM_LOAD( "bb3.bin",      0x020000, 0x20000, 0x79a8ed08 )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "bb4.bin",      0x080000, 0x20000, 0xf705aa89 )
+	ROM_LOAD( "bb5.bin",      0x0a0000, 0x20000, 0x2fb3db6c )
+	/* c0000-fffff empty */
+	ROM_LOAD( "bb10.bin",     0x100000, 0x20000, 0xfdba4f6e )	/* sprites */
+	ROM_LOAD( "bb9.bin",      0x120000, 0x20000, 0x39f47a63 )
 
 	ROM_REGION(0x20000)     /* OKIM */
 	ROM_LOAD( "bb1.bin",      0x00000, 0x20000, 0xc52e5b8e )
@@ -629,13 +678,15 @@ ROM_START( spang_rom )
 	ROM_LOAD( "spe_07.rom",   0x10000, 0x20000, 0x208b5f54 )
 	ROM_LOAD( "spe_08.rom",   0x30000, 0x20000, 0x2bc03ade )
 
-	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spe_02.rom",   0x00000, 0x20000, 0x63c9dfd2 )
-	ROM_LOAD( "03.f2",        0x20000, 0x20000, 0x3ae28bc1 )
-	ROM_LOAD( "spe_04.rom",   0x40000, 0x20000, 0x9d7b225b )
-	ROM_LOAD( "05.g2",        0x60000, 0x20000, 0x4a060884 )
-	ROM_LOAD( "spe_10.rom",   0x80000, 0x20000, 0xeedd0ade )
-	ROM_LOAD( "spe_09.rom",   0xa0000, 0x20000, 0x04b41b75 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "spe_02.rom",   0x000000, 0x20000, 0x63c9dfd2 )	/* chars */
+	ROM_LOAD( "03.f2",        0x020000, 0x20000, 0x3ae28bc1 )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "spe_04.rom",   0x080000, 0x20000, 0x9d7b225b )
+	ROM_LOAD( "05.g2",        0x0a0000, 0x20000, 0x4a060884 )
+	/* c0000-fffff empty */
+	ROM_LOAD( "spe_10.rom",   0x100000, 0x20000, 0xeedd0ade )	/* sprites */
+	ROM_LOAD( "spe_09.rom",   0x120000, 0x20000, 0x04b41b75 )
 
 	ROM_REGION(0x20000)     /* OKIM */
 	ROM_LOAD( "spe_01.rom",   0x00000, 0x20000, 0x2d19c133 )
@@ -647,16 +698,40 @@ ROM_START( sbbros_rom )
 	ROM_LOAD( "07.j13",       0x10000, 0x20000, 0xf46b698d )
 	ROM_LOAD( "08.j14",       0x30000, 0x20000, 0xa75e7fbe )
 
-	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "02.f1",        0x00000, 0x20000, 0x0c22ffc6 )
-	ROM_LOAD( "03.f2",        0x20000, 0x20000, 0x3ae28bc1 )
-	ROM_LOAD( "04.g2",        0x40000, 0x20000, 0xbb3dee5b )
-	ROM_LOAD( "05.g2",        0x60000, 0x20000, 0x4a060884 )
-	ROM_LOAD( "10.l2",        0x80000, 0x20000, 0xd6675d8f )
-	ROM_LOAD( "09.l1",        0xa0000, 0x20000, 0x8f678bc8 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "02.f1",        0x000000, 0x20000, 0x0c22ffc6 )	/* chars */
+	ROM_LOAD( "03.f2",        0x020000, 0x20000, 0x3ae28bc1 )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "04.g2",        0x080000, 0x20000, 0xbb3dee5b )
+	ROM_LOAD( "05.g2",        0x0a0000, 0x20000, 0x4a060884 )
+	/* c0000-fffff empty */
+	ROM_LOAD( "10.l2",        0x100000, 0x20000, 0xd6675d8f )	/* sprites */
+	ROM_LOAD( "09.l1",        0x120000, 0x20000, 0x8f678bc8 )
 
 	ROM_REGION(0x20000)     /* OKIM */
 	ROM_LOAD( "01.d1",        0x00000, 0x20000, 0xb96ea126 )
+ROM_END
+
+ROM_START( qtono1_rom )
+	ROM_REGION(0x50000)
+	ROM_LOAD( "q3-05.rom",    0x00000, 0x08000, 0x1dd0a344 )
+	ROM_LOAD( "q3-06.rom",    0x10000, 0x20000, 0x00000000 )
+	ROM_LOAD( "q3-07.rom",    0x30000, 0x20000, 0x00000000 )
+
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "q3-08.rom",    0x000000, 0x20000, 0x1533b978 )	/* chars */
+	ROM_LOAD( "q3-09.rom",    0x020000, 0x20000, 0xa32db2f2 )
+	ROM_LOAD( "q3-10.rom",    0x040000, 0x20000, 0xed681aa8 )
+	ROM_LOAD( "q3-11.rom",    0x060000, 0x20000, 0x38b2fd10 )
+	ROM_LOAD( "q3-18.rom",    0x080000, 0x20000, 0x9e4292ac )
+	ROM_LOAD( "q3-19.rom",    0x0a0000, 0x20000, 0xb7f6d40f )
+	ROM_LOAD( "q3-20.rom",    0x0c0000, 0x20000, 0x6cd7f38d )
+	ROM_LOAD( "q3-21.rom",    0x0e0000, 0x20000, 0xb4aa6b4b )
+	ROM_LOAD( "q3-16.rom",    0x100000, 0x20000, 0x863d6836 )	/* sprites */
+	ROM_LOAD( "q3-17.rom",    0x120000, 0x20000, 0x459bf59c )
+
+	ROM_REGION(0x20000)     /* OKIM */
+	ROM_LOAD( "q3-01.rom",    0x00000, 0x20000, 0x6c1be591 )
 ROM_END
 
 ROM_START( block_rom )
@@ -665,13 +740,15 @@ ROM_START( block_rom )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, 0xcdb13d55 )
 	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, 0x1d114f13 )
 
-	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bl_08.rom",    0x00000, 0x20000, 0x00000000 )
-	ROM_LOAD( "bl_09.rom",    0x20000, 0x20000, 0x6fa8c186 )
-	ROM_LOAD( "bl_18.rom",    0x40000, 0x20000, 0xc0acafaf )
-	ROM_LOAD( "bl_19.rom",    0x60000, 0x20000, 0x1ae942f5 )
-	ROM_LOAD( "bl_16.rom",    0x80000, 0x20000, 0xfadcaff7 )
-	ROM_LOAD( "bl_17.rom",    0xa0000, 0x20000, 0x5f8cab42 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, 0x00000000 )	/* chars */
+	ROM_LOAD( "bl_09.rom",    0x020000, 0x20000, 0x6fa8c186 )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "bl_18.rom",    0x080000, 0x20000, 0xc0acafaf )
+	ROM_LOAD( "bl_19.rom",    0x0a0000, 0x20000, 0x1ae942f5 )
+	/* c0000-fffff empty */
+	ROM_LOAD( "bl_16.rom",    0x100000, 0x20000, 0xfadcaff7 )	/* sprites */
+	ROM_LOAD( "bl_17.rom",    0x120000, 0x20000, 0x5f8cab42 )
 
 	ROM_REGION(0x20000)     /* OKIM */
 	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, 0xc2ec2abb )
@@ -683,15 +760,17 @@ ROM_START( blockbl_rom )
 	ROM_LOAD( "m7.l6",        0x50000, 0x10000, 0x3b576fd9 )   /* Decrypted opcode + data */
 	ROM_LOAD( "m5.l3",        0x60000, 0x40000, 0x7c988bb7 )   /* Decrypted opcode + data */
 
-	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "m12.o10",      0x00000, 0x20000, 0x963154d9 )
-	ROM_LOAD( "m13.o14",      0x20000, 0x20000, 0x069480bb )
-	ROM_LOAD( "m4.j17",       0x40000, 0x20000, 0x9e3b6f4f )
-	ROM_LOAD( "m3.j20",       0x60000, 0x20000, 0x629d58fe )
-	ROM_LOAD( "m11.o7",       0x80000, 0x10000, 0x255180a5 )
-	ROM_LOAD( "m10.o5",       0x90000, 0x10000, 0x3201c088 )
-	ROM_LOAD( "m9.o3",        0xa0000, 0x10000, 0x29357fe4 )
-	ROM_LOAD( "m8.o2",        0xb0000, 0x10000, 0xabd665d1 )
+	ROM_REGION_DISPOSE(0x140000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "m12.o10",      0x000000, 0x20000, 0x963154d9 )	/* chars */
+	ROM_LOAD( "m13.o14",      0x020000, 0x20000, 0x069480bb )
+	/* 40000-7ffff empty */
+	ROM_LOAD( "m4.j17",       0x080000, 0x20000, 0x9e3b6f4f )
+	ROM_LOAD( "m3.j20",       0x0a0000, 0x20000, 0x629d58fe )
+	/* c0000-fffff empty */
+	ROM_LOAD( "m11.o7",       0x100000, 0x10000, 0x255180a5 )	/* sprites */
+	ROM_LOAD( "m10.o5",       0x110000, 0x10000, 0x3201c088 )
+	ROM_LOAD( "m9.o3",        0x120000, 0x10000, 0x29357fe4 )
+	ROM_LOAD( "m8.o2",        0x130000, 0x10000, 0xabd665d1 )
 
 	ROM_REGION(0x20000)     /* OKIM */
 	ROM_LOAD( "m1.a1",        0x00000, 0x10000, 0xd826c105 )
@@ -834,6 +913,31 @@ struct GameDriver sbbros_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	spang_nvram_load, spang_nvram_save
+};
+
+struct GameDriver qtono1_driver =
+{
+	__FILE__,
+	0,
+	"qtono1",
+	"Quiz Tonosama no Yabou",
+	"1991",
+	"Capcom",
+	"Paul Leaman",
+	0,
+	&machine_driver,
+	0,
+
+	qtono1_rom,
+	0, qtono1_decode,
+	0,
+	0,      /* sound_prom */
+
+	qtono1_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	nvram_load, nvram_save
 };
 
 struct GameDriver block_driver =

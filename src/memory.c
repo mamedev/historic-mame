@@ -124,65 +124,11 @@ MHELE *cur_mrhard;
 MHELE *cur_mwhard;
 
 
-#ifdef macintosh
-#endif
-
-
 /***************************************************************************
 
   Memory handling
 
 ***************************************************************************/
-
-#ifdef ALIGN_SHORTS
-/*
- * Previously READ_WORD and WRITE_WORDS were implemented as macros.
- * However they assumed that unaligned loads are legal, which is not
- * true on most non-x86 hardware.  Even on a Pentium, unaligned loads are
- * slower than aligned loads.
- */
-
-#ifdef LSB_FIRST
-
-int
-READ_WORD(void *dst)
-{
-  unsigned char *p = (unsigned char *) dst;
-  return (p[1] << 8) | p[0];
-}
-
-
-int
-WRITE_WORD(void *dst, int val)
-
-{
-  unsigned char *p = (unsigned char *) dst;
-  p[0] = val & 0xff;
-  p[1] = (val >> 8) & 0xff;
-  return val;
-}
-
-#else
-
-int
-READ_WORD(void *dst)
-{
-  unsigned char *p = (unsigned char *) dst;
-  return (p[0] << 8) | p[1];
-}
-
-
-int
-WRITE_WORD(void *dst, int val)
-
-{
-  unsigned char *p = (unsigned char *) dst;
-  p[1] = val & 0xff;
-  p[0] = (val >> 8) & 0xff;
-  return val;
-}
-#endif
-#endif
 
 int mrh_ram(int address){return RAM[address];}
 int mrh_bank1(int address){return cpu_bankbase[1][address];}

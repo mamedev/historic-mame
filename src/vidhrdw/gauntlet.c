@@ -127,8 +127,6 @@ int gauntlet_vh_start(void)
 	playfield = tilemap_create(playfield_get_info, TILEMAP_OPAQUE, 8,8, 64,64);
 	if (!playfield)
 		return 1;
-	tilemap_set_scroll_cols(playfield, 1);
-	tilemap_set_scroll_rows(playfield, 1);
 
 	/* allocate alpha tilemap */
 	alpha = tilemap_create(alpha_get_info, TILEMAP_TRANSPARENT, 8,8, 64,64);
@@ -175,7 +173,7 @@ void gauntlet_hscroll_w(int offset, int data)
 
 	/* set the new scroll */
 	xscroll = newword & 0x1ff;
-	tilemap_set_scrollx(playfield, 0, -xscroll);
+	tilemap_set_scrollx(playfield, 0, xscroll);
 }
 
 
@@ -190,7 +188,7 @@ void gauntlet_vscroll_w(int offset, int data)
 
 	/* set the new scroll */
 	yscroll = (newword >> 7) & 0x1ff;
-	tilemap_set_scrolly(playfield, 0, -yscroll);
+	tilemap_set_scrolly(playfield, 0, yscroll);
 
 	/* set the new ROM bank */
 	temp = (newword & 3) << 12;

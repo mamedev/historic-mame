@@ -610,7 +610,7 @@ struct GameDriver rastan_driver =
 	__FILE__,
 	0,
 	"rastan",
-	"Rastan (Japan)",
+	"Rastan (World?)",
 	"1987",
 	"Taito Japan",
 	"Jarek Burczynski",

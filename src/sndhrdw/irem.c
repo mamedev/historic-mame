@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "irem.h"
 #include "cpu/m6800/m6800.h"
 
 
@@ -8,13 +9,11 @@ void irem_sound_cmd_w(int offset,int data)
 	if ((data & 0x80) == 0)
 		soundlatch_w(0,data & 0x7f);
 	else
-//		cpu_cause_interrupt(1,M6808_INT_IRQ);
 		cpu_set_irq_line(1,0,HOLD_LINE);
 }
 
 
-static int port1;
-static int port2;
+static int port1,port2;
 
 static void irem_port1_w(int offset,int data)
 {
@@ -69,15 +68,14 @@ static void irem_adpcm_reset_w(int offset,int data)
 
 static void irem_adpcm_int (int data)
 {
-//	  cpu_cause_interrupt(1,M6808_INT_NMI);
-	  cpu_set_nmi_line(1,PULSE_LINE);
+	cpu_set_nmi_line(1,PULSE_LINE);
 }
 
 
 struct AY8910interface irem_ay8910_interface =
 {
 	2,	/* 2 chips */
-	910000,	/* .91 MHZ ?? */
+	910000,	/* .91 MHz ?? */
 	{ 25, 25 },
 	{ soundlatch_r, 0 },
 	{ 0 },
@@ -99,7 +97,7 @@ struct MemoryReadAddress irem_sound_readmem[] =
 {
 	{ 0x0000, 0x001f, m6803_internal_registers_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
+	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -109,7 +107,7 @@ struct MemoryWriteAddress irem_sound_writemem[] =
 	{ 0x0080, 0x00ff, MWA_RAM },
 	{ 0x0801, 0x0802, MSM5205_data_w },
 	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
-	{ 0x8000, 0xffff, MWA_ROM },
+	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 

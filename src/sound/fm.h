@@ -70,7 +70,7 @@ unsigned char OPNReadStatus(int n);
 
 #endif /* BUILD_OPN */
 
-#ifdef BUILD_YM2203
+#if BUILD_YM2203
 /* -------------------- YM2203(OPN) Interface -------------------- */
 
 /*
@@ -111,7 +111,7 @@ int YM2203TimerOver(int n, int c);
 
 #endif /* BUILD_YM2203 */
 
-#ifdef BUILD_YM2608
+#if BUILD_YM2608
 /* -------------------- YM2608(OPNA) Interface -------------------- */
 
 int YM2608Init(int num, int baseclock, int rate,
@@ -127,7 +127,7 @@ int YM2608TimerOver(int n, int c );
 /*int YM2608SetBuffer(int n, FMSAMPLE **buf );*/
 #endif /* BUILD_YM2608 */
 
-#ifdef BUILD_YM2610
+#if BUILD_YM2610
 /* -------------------- YM2610(OPNB) Interface -------------------- */
 
 #define   MAX_2610    (2)
@@ -138,7 +138,9 @@ int YM2610Init(int num, int baseclock, int rate,
 void YM2610Shutdown(void);
 void YM2610ResetChip(int num);
 void YM2610UpdateOne(int num, void **buffer, int length);
+#if BUILD_YM2610B
 void YM2610BUpdateOne(int num, void **buffer, int length);
+#endif
 
 int YM2610Write(int n, int a,int v);
 unsigned char YM2610Read(int n,int a);
@@ -150,7 +152,7 @@ void Set_YM2610_ADPCM_Buffers(int num, UBYTE *bufa, UBYTE *bufb, ULONG sizea, UL
 #endif
 #endif /* BUILD_YM2610 */
 
-#ifdef BUILD_YM2612
+#if BUILD_YM2612
 int YM2612Init(int num, int baseclock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler);
 void YM2612Shutdown(void);
@@ -164,7 +166,7 @@ FMSAMPLE *YM2612Buffer(int n);
 
 #endif /* BUILD_YM2612 */
 
-#ifdef BUILD_YM2151
+#if BUILD_YM2151
 /* -------------------- YM2151(OPM) Interface -------------------- */
 /*
 ** Initialize YM2151 emulator(s).

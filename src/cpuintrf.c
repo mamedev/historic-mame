@@ -2754,7 +2754,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
                 break;
 #endif
 #if HAS_TMS9900
-            case CPU_TMS9900:           irq_line = 0; LOG((errorlog,"TMS9900 IRQ\n")); break;
+			case CPU_TMS9900:	irq_line = 0; LOG((errorlog,"TMS9900 IRQ\n")); break;
 #endif
 #if HAS_Z8000
             case CPU_Z8000:

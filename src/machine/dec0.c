@@ -7,7 +7,6 @@ Data East machine functions - Bryan McPhail, mish@tendril.force9.net
 *******************************************************************************/
 
 #include "driver.h"
-#include "cpu/m6502/m6502.h"
 
 extern unsigned char *dec0_ram;
 static int GAME,i8751_return,slyspy_state;
@@ -270,155 +269,45 @@ void slyspy_24e000_w(int offset,int data)
 
 /******************************************************************************/
 
-static int share[0x20];
+static int share[0xff];
+static int hippodrm_msb,hippodrm_lsb;
 
-
-int hippodrm_test_r(int offset)
+int hippodrm_prot_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_get_pc(),offset+0x1d0000);
-
-	return 0x4e;
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x1d0000);
+	if (hippodrm_lsb==0x45) return 0x4e;
+	if (hippodrm_lsb==0x92) return 0x15;
+	return 0;
 }
 
-
-/*
-
-
-	Values from 6000 (c0):  (e0c6)
-
-	And 3c then shift >> 1
-
-values:
-	0: rts
-
-
-RETURN 0XF TO GO TO E266
-		TAKES VALUE FROM 6001 (MASK 7)
-
-RETURN   TO GO TO E2B0 (MASK 3F FROM 6001 - BACKROUNDS?)
-
-RETURN   TO GO TO E2BA (MAST C0... BACKS?)
-
-
-
-
-	e2ba - real backgrounds?
-
-*/
+void hippodrm_prot_w(int offset,int data)
+{
+	switch (offset) {
+		case 4:	hippodrm_msb=data; break;
+		case 5:	hippodrm_lsb=data; break;
+	}
+//if (errorlog) fprintf(errorlog,"6280 PC %06x - Wrote %06x to %04x\n",cpu_getpc(),data,offset+0x1d0000);
+}
 
 int hippodrm_shared_r(int offset)
 {
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_get_pc(),offset+0x180000);
-
 	return share[offset];
-
-	switch (offset) {
-		case 4:
-			return share[0];
-		case 8:
-			return 3;//share[1];
-		case 12:
-			return share[12];	//pos 8 low mem??
-
-
-	}
-
-return 0;
 }
-
 
 void hippodrm_shared_w(int offset,int data)
 {
 	share[offset]=data;
-
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - write %06x %04x\n",cpu_get_pc(),offset,data);
 }
 
-
-
-
-
-static int hippodrm_protection(int offset)
+static int hippodrm_68000_share_r(int offset)
 {
-	switch (offset) {
-    case 8: return 4;
-    case 0x14: return 0; /* Unknown.. */
-  	case 0x1c: return 4;
-  }
-
-	if (errorlog) fprintf(errorlog,"PC %06x - Read %06x\n",cpu_get_pc(),0x180000+offset);
-  return 0; /* Keep zero */
+	if (offset==0) cpu_spin(); /* A wee helper */
+	return share[offset/2];
 }
 
-/*
-void hippodrm_prot_w(int offset,int data)
+static void hippodrm_68000_share_w(int offset,int data)
 {
 	share[offset/2]=data&0xff;
-
-	if (offset==0) cpu_cause_interrupt(2,M6502_INT_IRQ);
-	if (errorlog) fprintf(errorlog,"PC %06x - write %06x %04x\n",cpu_get_pc(),0x180000+offset,data);
-
-}
-*/
-
-void hippodrm_prot_w(int offset,int data)
-{
-	static int scroll,position,posdata;
-
-		share[offset]=data&0xff;
-
-	switch (offset) {
-
-		case 0:
-//			cpu_cause_interrupt(2,M6502_INT_IRQ);
-			//break;
-		case 0x14:
-		//	share[4]=data&0xff;
-		//	cpu_cause_interrupt(2,M6502_INT_IRQ);
-			return;
-
-		case 0x2: /* Position of floating data window */
-			position=data&0xf;
-			return;
-
-		case 0x4: /* Byte 5 is MSB of window data */
-			posdata=((data&0xff)<<8)+(posdata&0xff);
-
-			if (position<4)
-				dec0_pf3_control_0_w(position<<1,posdata);
-			else
-				dec0_pf3_control_1_w((position-4)<<1,posdata);
-
-			break;
-
-		case 0x6: /* Byte 7 is LSB of window data */
-			posdata=(posdata&0xff00)+(data&0xff);
-
-			if (position<4)
-				dec0_pf3_control_0_w(position<<1,posdata);
-			else
-				dec0_pf3_control_1_w((position-4)<<1,posdata);
-
-			return;
-
-		case 0x8:
-		case 0x16:
-		//cpu_cause_interrupt(2,M6502_INT_IRQ);
-		return;
-
-		case 0x18: /* Scroll MSB, byte 0x19 */
-			scroll=((data&0xff)<<8)+(scroll&0xff);
-			dec0_pf3_control_1_w(0,scroll);
-			return;
-
-		case 0x1a: /* Scroll LSB, byte 0x1b */
-			scroll=(scroll&0xff00)+(data&0xff);
-			dec0_pf3_control_1_w(0,scroll);
-			return;
-
-	}
-
-	if (errorlog) fprintf(errorlog,"PC %06x - write %06x %04x\n",cpu_get_pc(),0x180000+offset,data);
 }
 
 /******************************************************************************/
@@ -675,8 +564,8 @@ static void robocop_custom_memory(void)
 static void hippodrm_custom_memory(void)
 {
 //	install_mem_read_handler(0, 0xff8004, 0xff8005, robocop_skip);
-	install_mem_read_handler(0, 0x180000, 0x180fff, hippodrm_protection);
-	install_mem_write_handler(0, 0x180000, 0x180fff, hippodrm_prot_w);
+	install_mem_read_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_r);
+	install_mem_write_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_w);
 	install_mem_write_handler(0, 0xffc800, 0xffcfff, sprite_mirror);
 }
 

@@ -192,7 +192,7 @@ static struct sprite_info {
  *    0    | ---------------x | flip x
  *         | --------------x- | flip y
  *         | -------------x-- | enable
- *         | ----------x----- | auto-flicker
+ *         | ----------x----- | flicker
  *         | --------xx------ | sprite-tile priority
  *    1    | xxxxxxxxxxxxxxxx | number
  *    2    | --------xxxx---- | palette
@@ -412,13 +412,6 @@ int gaiden_vh_start(void)
 
 	if( text_layer && foreground && background )
 	{
-		tilemap_set_scroll_rows(text_layer,1);
-		tilemap_set_scroll_cols(text_layer,1);
-		tilemap_set_scroll_rows(foreground,1);
-		tilemap_set_scroll_cols(foreground,1);
-		tilemap_set_scroll_rows(background,1);
-		tilemap_set_scroll_cols(background,1);
-
 		sprite_info = (struct sprite_info *)malloc( sizeof(struct sprite_info)*NUMSPRITES );
 		if( sprite_info )
 		{
@@ -441,37 +434,37 @@ void gaiden_vh_stop(void){
 void gaiden_txscrollx_w( int offset,int data ){
 	static int oldword;
 	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrollx( text_layer,0, -oldword );
+	tilemap_set_scrollx( text_layer,0, oldword );
 }
 
 void gaiden_txscrolly_w( int offset,int data ){
 	static int oldword;
 	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrolly( text_layer,0, -oldword );
+	tilemap_set_scrolly( text_layer,0, oldword );
 }
 
 void gaiden_fgscrollx_w( int offset,int data ){
 	static int oldword;
 	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrollx( foreground,0, -oldword );
+	tilemap_set_scrollx( foreground,0, oldword );
 }
 
 void gaiden_fgscrolly_w( int offset,int data ){
 	static int oldword;
 	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrolly( foreground,0, -oldword );
+	tilemap_set_scrolly( foreground,0, oldword );
 }
 
 void gaiden_bgscrollx_w( int offset,int data ){
 	static int oldword;
 	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrollx( background,0, -oldword );
+	tilemap_set_scrollx( background,0, oldword );
 }
 
 void gaiden_bgscrolly_w( int offset,int data ){
 	static int oldword;
 	oldword = COMBINE_WORD(oldword,data);
-	tilemap_set_scrolly( background,0, -oldword );
+	tilemap_set_scrolly( background,0, oldword );
 }
 
 void gaiden_videoram3_w( int offset,int data ){

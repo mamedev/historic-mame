@@ -15,7 +15,7 @@ unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
 static struct osd_bitmap *tmpbitmap2;
 static int flipscreen;
-
+static int bgon,objon;
 
 
 /***************************************************************************
@@ -30,7 +30,7 @@ int sidearms_vh_start(void)
 		return 1;
 
 	/* create a temporary bitmap slightly larger than the screen for the background */
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width + 32,Machine->drv->screen_height + 32)) == 0)
+	if ((tmpbitmap2 = osd_create_bitmap(48*8 + 32,Machine->drv->screen_height + 32)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -56,10 +56,13 @@ void sidearms_vh_stop(void)
 
 void sidearms_c804_w(int offset,int data)
 {
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
+
 	/* bit 4 probably resets the sound CPU */
 
-	/* don't know about the other bits, they probably turn on characters, */
-	/* sprites, background */
+	/* TODO: I don't know about the other bits (all used) */
 
 	/* bit 7 flips screen */
 	if (flipscreen != (data & 0x80))
@@ -70,6 +73,11 @@ void sidearms_c804_w(int offset,int data)
 	}
 }
 
+void sidearms_gfxctrl_w(int offset,int data)
+{
+	objon = data & 0x01;
+	bgon = data & 0x02;
+}
 
 
 /***************************************************************************
@@ -217,74 +225,94 @@ if (palette_recalc())
 #endif
 
 
-	scrollx = sidearms_bg_scrollx[0] + 256 * sidearms_bg_scrollx[1] + 64;
-	scrolly = sidearms_bg_scrolly[0] + 256 * sidearms_bg_scrolly[1];
-	offs = 2 * (scrollx >> 5) + 0x100 * (scrolly >> 5);
-	scrollx = -(scrollx & 0x1f);
-	scrolly = -(scrolly & 0x1f);
-
-	if (offs != lastoffs || dirtypalette)
+	if (bgon)
 	{
-		unsigned char *p=Machine->memory_region[3];
+		scrollx = sidearms_bg_scrollx[0] + 256 * sidearms_bg_scrollx[1] + 64;
+		scrolly = sidearms_bg_scrolly[0] + 256 * sidearms_bg_scrolly[1];
+		offs = 2 * (scrollx >> 5) + 0x100 * (scrolly >> 5);
+		scrollx = -(scrollx & 0x1f);
+		scrolly = -(scrolly & 0x1f);
 
-
-		lastoffs = offs;
-
-		/* Draw the entire background scroll */
-		for (sy = 0;sy < 9;sy++)
+		if (offs != lastoffs || dirtypalette)
 		{
-			for (sx = 0; sx < 13; sx++)
+			unsigned char *p=Machine->memory_region[3];
+
+
+			lastoffs = offs;
+
+			/* Draw the entire background scroll */
+			for (sy = 0;sy < 9;sy++)
 			{
-				int offset;
+				for (sx = 0; sx < 13; sx++)
+				{
+					int offset;
 
 
-				offset = offs + 2 * sx;
+					offset = offs + 2 * sx;
 
-				/* swap bits 1-7 and 8-10 of the address to compensate for the */
-				/* funny layout of the ROM data */
-				offset = (offset & 0xf801) | ((offset & 0x0700) >> 7) | ((offset & 0x00fe) << 3);
+					/* swap bits 1-7 and 8-10 of the address to compensate for the */
+					/* funny layout of the ROM data */
+					offset = (offset & 0xf801) | ((offset & 0x0700) >> 7) | ((offset & 0x00fe) << 3);
 
-				drawgfx(tmpbitmap2,Machine->gfx[1],
-						p[offset] + 256 * (p[offset+1] & 0x01),
-						(p[offset+1] & 0xf8) >> 3,
-						p[offset+1] & 0x02,p[offset+1] & 0x04,
-						32*sx,32*sy,
-						0,TRANSPARENCY_NONE,0);
+					drawgfx(tmpbitmap2,Machine->gfx[1],
+							p[offset] + 256 * (p[offset+1] & 0x01),
+							(p[offset+1] & 0xf8) >> 3,
+							p[offset+1] & 0x02,p[offset+1] & 0x04,
+							32*sx,32*sy,
+							0,TRANSPARENCY_NONE,0);
+				}
+				offs += 0x100;
 			}
-			offs += 0x100;
 		}
-	}
 
-
+	scrollx += 64;
 #if IHAVETHEBACKGROUND
 	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,1);
 #else
 	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 #endif
+	}
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 
 	/* Draw the sprites. */
-	for (offs = spriteram_size - 32;offs >= 0;offs -= 32)
+	if (objon)
 	{
-		drawgfx(bitmap,Machine->gfx[2],
-				spriteram[offs] + 8 * (spriteram[offs + 1] & 0xe0),
-				spriteram[offs + 1] & 0x0f,
-				0,0,
-				spriteram[offs + 3] + ((spriteram[offs + 1] & 0x10) << 4) - 64,
-					spriteram[offs + 2],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+		for (offs = spriteram_size - 32;offs >= 0;offs -= 32)
+		{
+			sx = spriteram[offs + 3] + ((spriteram[offs + 1] & 0x10) << 4);
+			sy = spriteram[offs + 2];
+			if (flipscreen)
+			{
+				sx = 496 - sx;
+				sy = 240 - sy;
+			}
+
+			drawgfx(bitmap,Machine->gfx[2],
+					spriteram[offs] + 8 * (spriteram[offs + 1] & 0xe0),
+					spriteram[offs + 1] & 0x0f,
+					flipscreen,flipscreen,
+					sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+		}
 	}
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
+		sx = offs % 64;
 		sy = offs / 64;
-		sx = offs % 64 - 8;
+
+		if (flipscreen)
+		{
+			sx = 63 - sx;
+			sy = 31 - sy;
+		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs] + 4 * (colorram[offs] & 0xc0),
 				colorram[offs] & 0x3f,
-				0,0,
+				flipscreen,flipscreen,
 				8*sx,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}

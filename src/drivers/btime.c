@@ -51,12 +51,14 @@ extern unsigned char *bnj_backgroundram;
 extern int bnj_backgroundram_size;
 extern unsigned char *zoar_scrollram;
 extern unsigned char *deco_charram;
+extern int lnc_sprite_x_adjust;
 
 void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void lnc_vh_convert_color_prom  (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 void lnc_init_machine (void);
 
+int  btime_vh_start (void);
 int  bnj_vh_start (void);
 
 void bnj_vh_stop (void);
@@ -91,6 +93,7 @@ int lnc_sound_interrupt(void);
 
 static void sound_command_w(int offset,int data);
 
+
 static void btime_decrypt(void)
 {
 	int A,A1;
@@ -120,10 +123,28 @@ static void btime_decrypt(void)
 	}
 }
 
-static void btime_ram_w(int offset,int data)
+static void lnc_w(int offset,int data)
 {
 	extern unsigned char *RAM;
 
+	if      (offset <= 0x3bff)                       RAM[offset] = data;
+	else if (offset >= 0x3c00 && offset <= 0x3fff) { lnc_videoram_w(offset - 0x3c00,data); return; }
+	else if (offset >= 0x7c00 && offset <= 0x7fff) { lnc_mirrorvideoram_w(offset - 0x7c00,data); return; }
+	else if (offset == 0x8000)                     { return; }  /* MWA_NOP */
+	else if (offset == 0x8001)                     { lnc_video_control_w(0,data); return; }
+	else if (offset == 0x8003)                     { RAM[offset] = data; return; }
+	else if (offset == 0x9000)                     { return; }  /* MWA_NOP */
+	else if (offset == 0x9002)                     { sound_command_w(0,data); return; }
+	else if (offset >= 0xb000 && offset <= 0xb1ff)   RAM[offset] = data;
+	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+
+	/* Swap bits 5 & 6 for opcodes */
+	ROM[offset] = (data & 0x9f) | ((data & 0x20) << 1) | ((data & 0x40) >> 1);
+}
+
+static void btime_w(int offset,int data)
+{
+	extern unsigned char *RAM;
 
 	if      (offset <= 0x07ff)                     RAM[offset] = data;
 	else if (offset >= 0x0c00 && offset <= 0x0c0f) btime_paletteram_w(offset - 0x0c00,data);
@@ -139,10 +160,9 @@ static void btime_ram_w(int offset,int data)
 	btime_decrypt();
 }
 
-static void zoar_ram_w(int offset,int data)
+static void zoar_w(int offset,int data)
 {
 	extern unsigned char *RAM;
-
 
 	if      (offset <= 0x07ff) 					   RAM[offset] = data;
 	else if (offset >= 0x8000 && offset <= 0x83ff) videoram_w(offset - 0x8000,data);
@@ -160,10 +180,9 @@ static void zoar_ram_w(int offset,int data)
 
 }
 
-static void disco_ram_w(int offset,int data)
+static void disco_w(int offset,int data)
 {
 	extern unsigned char *RAM;
-
 
 	if      (offset <= 0x04ff)                     RAM[offset] = data;
 	else if (offset >= 0x2000 && offset <= 0x7fff) deco_charram_w(offset - 0x2000,data);
@@ -195,7 +214,7 @@ static struct MemoryReadAddress btime_readmem[] =
 
 static struct MemoryWriteAddress btime_writemem[] =
 {
-	{ 0x0000, 0xffff, btime_ram_w },	/* override the following entries to */
+	{ 0x0000, 0xffff, btime_w },	    /* override the following entries to */
 										/* support ROM decryption */
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0c00, 0x0c0f, btime_paletteram_w, &paletteram },
@@ -265,7 +284,7 @@ static struct MemoryReadAddress zoar_readmem[] =
 
 static struct MemoryWriteAddress zoar_writemem[] =
 {
-	{ 0x0000, 0xffff, zoar_ram_w },	/* override the following entries to */
+	{ 0x0000, 0xffff, zoar_w },	    /* override the following entries to */
 									/* support ROM decryption */
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
@@ -277,7 +296,7 @@ static struct MemoryWriteAddress zoar_writemem[] =
 	{ 0x9805, 0x9805, bnj_scroll2_w },
 	{ 0x9805, 0x9805, bnj_scroll1_w },
 	{ 0x9806, 0x9806, sound_command_w },
-  //{ 0x9807, 0x9807, MWA_RAM },  // Marked as ACK on schematics (Board 2 Pg 5)
+  /*{ 0x9807, 0x9807, MWA_RAM }, */ /* Marked as ACK on schematics (Board 2 Pg 5) */
 	{ -1 }  /* end of table */
 };
 
@@ -323,21 +342,25 @@ static struct MemoryReadAddress lnc_readmem[] =
 	{ 0x9000, 0x9000, input_port_0_r },     /* IN0 */
 	{ 0x9001, 0x9001, input_port_1_r },     /* IN1 */
 	{ 0x9002, 0x9002, input_port_2_r },     /* coin */
+	{ 0xb000, 0xb1ff, MRA_RAM },
 	{ 0xc000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress lnc_writemem[] =
 {
+	{ 0x0000, 0xffff, lnc_w },      /* override the following entries to */
+									/* support ROM decryption */
 	{ 0x0000, 0x3bff, MWA_RAM },
 	{ 0x3c00, 0x3fff, lnc_videoram_w, &videoram, &videoram_size },
-	{ 0x7800, 0x7bff, MWA_RAM, &colorram },  // Dummy
+	{ 0x7800, 0x7bff, colorram_w, &colorram },  /* this is just here to initialize the pointer */
 	{ 0x7c00, 0x7fff, lnc_mirrorvideoram_w },
 	{ 0x8000, 0x8000, MWA_NOP },            /* ??? */
 	{ 0x8001, 0x8001, lnc_video_control_w },
 	{ 0x8003, 0x8003, MWA_RAM, &lnc_charbank },
 	{ 0x9000, 0x9000, MWA_NOP },            /* ??? */
 	{ 0x9002, 0x9002, sound_command_w },
+	{ 0xb000, 0xb1ff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
 
@@ -389,7 +412,7 @@ static struct MemoryReadAddress disco_readmem[] =
 
 static struct MemoryWriteAddress disco_writemem[] =
 {
-	{ 0x0000, 0xffff, disco_ram_w },/* override the following entries to */
+	{ 0x0000, 0xffff, disco_w },    /* override the following entries to */
 									/* support ROM decryption */
 	{ 0x2000, 0x7fff, deco_charram_w, &deco_charram },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
@@ -526,32 +549,32 @@ INPUT_PORTS_START( btime_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH,IPT_COIN2 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Cross Hatch Pattern" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "10000" )
 	PORT_DIPSETTING(    0x04, "15000" )
 	PORT_DIPSETTING(    0x02, "20000"  )
@@ -560,17 +583,17 @@ INPUT_PORTS_START( btime_input_ports )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x10, 0x10, "End of Level Pepper" )
-	PORT_DIPSETTING(    0x10, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( cookrace_input_ports )
@@ -605,32 +628,32 @@ INPUT_PORTS_START( cookrace_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "20000" )
 	PORT_DIPSETTING(    0x04, "30000" )
 	PORT_DIPSETTING(    0x02, "40000"  )
@@ -639,17 +662,17 @@ INPUT_PORTS_START( cookrace_input_ports )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x10, 0x10, "End of Level Pepper" )
-	PORT_DIPSETTING(    0x10, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( zoar_input_ports )
@@ -682,52 +705,52 @@ INPUT_PORTS_START( zoar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )   /* almost certainly unused */
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	// Service mode doesn't work because of missing ROMs
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )    /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	/* Service mode doesn't work because of missing ROMs */
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "5000" )
 	PORT_DIPSETTING(    0x04, "10000" )
 	PORT_DIPSETTING(    0x02, "15000"  )
 	PORT_DIPSETTING(    0x00, "20000"  )
-	PORT_DIPNAME( 0x08, 0x08, "Difficulty" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 	PORT_DIPNAME( 0x10, 0x00, "Weapon Select" )
 	PORT_DIPSETTING(    0x00, "Manual" )
 	PORT_DIPSETTING(    0x10, "Auto" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )  // These 3 switches
-	PORT_DIPSETTING(    0x00, "Off" )					// have to do with
-	PORT_DIPSETTING(    0x20, "On" )					// coinage.
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )	// See code at $d234.
-	PORT_DIPSETTING(    0x00, "Off" )					// Feel free to figure
-	PORT_DIPSETTING(    0x40, "On" )					// them out.
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )    /* These 3 switches     */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )        /* have to do with      */
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )         /* coinage.             */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )    /* See code at $d234.   */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )        /* Feel free to figure  */
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )         /* them out.            */
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( eggs_input_ports )
@@ -752,16 +775,16 @@ INPUT_PORTS_START( eggs_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
 	PORT_BIT( 0x30, 0x30, IPT_UNKNOWN )     /* almost certainly unused */
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -769,16 +792,27 @@ INPUT_PORTS_START( eggs_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x04, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x04, "30000" )
 	PORT_DIPSETTING(    0x02, "50000" )
 	PORT_DIPSETTING(    0x00, "70000"  )
 	PORT_DIPSETTING(    0x06, "Never"  )
-	PORT_BIT( 0x78, 0x78, IPT_UNKNOWN )     /* almost certainly unused */
-	PORT_DIPNAME( 0x80, 0x80, "Difficulty" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )   /* almost certainly unused */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x80, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
 INPUT_PORTS_END
@@ -807,18 +841,18 @@ INPUT_PORTS_START( lnc_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x30, 0x30, "Test Mode" )
-	PORT_DIPSETTING(    0x30, "Off" )
+	PORT_DIPSETTING(    0x30, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, "RAM Test Only" )
 	PORT_DIPSETTING(    0x20, "Watchdog Test Only" )
 	PORT_DIPSETTING(    0x10, "All Tests" )
@@ -828,10 +862,10 @@ INPUT_PORTS_START( lnc_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "15000" )
 	PORT_DIPSETTING(    0x04, "20000" )
 	PORT_DIPSETTING(    0x02, "30000" )
@@ -839,7 +873,89 @@ INPUT_PORTS_START( lnc_input_ports )
 	PORT_DIPNAME( 0x08, 0x08, "Game Speed" )
 	PORT_DIPSETTING(    0x08, "Slow" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )	 // According to the manual
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( wtennis_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
+
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "10000" )
+	PORT_DIPSETTING(    0x04, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x00, "Never" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )   /* definately used */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )    /* These 3 switches     */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )        /* have to do with      */
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )         /* coinage.             */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bnj_input_ports )
@@ -874,22 +990,22 @@ INPUT_PORTS_START( bnj_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_BITX(      0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
@@ -897,29 +1013,29 @@ INPUT_PORTS_START( bnj_input_ports )
 
 	PORT_START      /* DSW2 */
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "Every 30000" )
 	PORT_DIPSETTING(    0x04, "Every 70000" )
 	PORT_DIPSETTING(    0x02, "20000 Only"  )
 	PORT_DIPSETTING(    0x00, "30000 Only"  )
 	PORT_DIPNAME( 0x08, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x08, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x10, 0x10, "Difficulty" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( disco_input_ports )
@@ -947,34 +1063,34 @@ INPUT_PORTS_START( disco_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH,IPT_COIN2 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x00, "Coin A" )
-	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coin B" )
-	PORT_DIPSETTING(    0x0c, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x00, "Lives" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPNAME( 0x06, 0x00, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "20000" )
 	PORT_DIPSETTING(    0x04, "30000" )
@@ -982,18 +1098,18 @@ INPUT_PORTS_START( disco_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Music Weapons" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPSETTING(    0x08, "8" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* VBLANK */
 	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1167,12 +1283,11 @@ static struct AY8910interface ay8910_interface =
 #define zoar_init_machine      0
 #define disco_init_machine     0
 
-#define btime_vh_start     generic_vh_start
-#define cookrace_vh_start  generic_vh_start
-#define zoar_vh_start      generic_vh_start
-#define eggs_vh_start      generic_vh_start
-#define lnc_vh_start       generic_vh_start
-#define disco_vh_start     generic_vh_start
+#define cookrace_vh_start  btime_vh_start
+#define zoar_vh_start      btime_vh_start
+#define eggs_vh_start      btime_vh_start
+#define lnc_vh_start       btime_vh_start
+#define disco_vh_start     btime_vh_start
 
 #define btime_vh_stop      generic_vh_stop
 #define cookrace_vh_stop   generic_vh_stop
@@ -1457,6 +1572,30 @@ ROM_START( lnc_rom )
     ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
 ROM_END
 
+ROM_START( wtennis_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "tx",           0xc000, 0x0800, 0xfd343474 )
+	ROM_LOAD( "t4",           0xd000, 0x1000, 0xe465d82c )
+	ROM_LOAD( "t3",           0xe000, 0x1000, 0x8f090eab )
+	ROM_LOAD( "t2",           0xf000, 0x1000, 0xd2f9dd30 )
+
+	ROM_REGION_DISPOSE(0x6000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "t7",           0x0000, 0x1000, 0xaa935169 )
+	ROM_LOAD( "t10",          0x1000, 0x1000, 0x746be927 )
+	ROM_LOAD( "t5",           0x2000, 0x1000, 0xea1efa5d )
+	ROM_LOAD( "t8",           0x3000, 0x1000, 0x542ace7b )
+	ROM_LOAD( "t6",           0x4000, 0x1000, 0x4fb8565d )
+	ROM_LOAD( "t9",           0x5000, 0x1000, 0x4893286d )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "t1",           0x0000, 0x1000, 0x40737ea7 ) /* starts at 0000, not f000; 0000-01ff is RAM */
+	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
+
+    ROM_REGION(0x0040)	/* PROMs */
+    ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0xf051cb28 )	/* palette */
+    ROM_LOAD( "sb-4c",        0x0020, 0x0020, 0xa29b4204 )	/* RAS/CAS logic - not used */
+ROM_END
+
 ROM_START( bnj_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "bnj12b.bin",   0xa000, 0x2000, 0xba3e3801 )
@@ -1560,6 +1699,32 @@ ROM_START( disco_rom )
 ROM_END
 
 
+static int wtennis_reset_hack_r(int offset)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* Otherwise the game goes into test mode and there is no way out that I
+	   can see.  I'm not sure how it can work, it probably somehow has to do
+	   with the tape system */
+
+	RAM[0xfc30] = 0;
+
+	return RAM[0xc15f];
+}
+
+static void lnc_driver_init(void)
+{
+	lnc_sprite_x_adjust = 1;
+}
+
+static void wtennis_driver_init(void)
+{
+	install_mem_read_handler(0, 0xc15f, 0xc15f, wtennis_reset_hack_r);
+
+	lnc_sprite_x_adjust = 0;
+}
+
+
 static void btime_decode(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1576,16 +1741,16 @@ static void zoar_decode(void)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	// At location 0xD50A is what looks like an undocumented opcode. I tried
-	// implemting it given what opcode 0x23 should do, but it still didn't
-	// work in demo mode. So this could be another protection or a bad ROM read.
-	// I'm NOPing it out for now.
+	/* At location 0xD50A is what looks like an undocumented opcode. I tried
+	   implemting it given what opcode 0x23 should do, but it still didn't
+	   work in demo mode. So this could be another protection or a bad ROM read.
+	   I'm NOPing it out for now. */
 	memset(&RAM[0xd50a],0xea,8);
 
     btime_decode();
 }
 
-static void lnc_decode (void)
+static void lnc_decode(void)
 {
 	int A;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1605,7 +1770,7 @@ static int btime_hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x0036],"\x00\x80\x02",3) == 0 &&
-		memcmp(&RAM[0x0042],"\x50\x48\00",3) == 0)
+		memcmp(&RAM[0x0042],"\x50\x48\x00",3) == 0)
 	{
 		void *f;
 
@@ -1643,7 +1808,7 @@ static int eggs_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x0400],"\x17\x25\x19",3)==0) &&
+	if ((memcmp(&RAM[0x0400],"\x17\x25\x19",3) == 0) &&
 		(memcmp(&RAM[0x041B],"\x00\x47\x00",3) == 0))
 	{
 		void *f;
@@ -1691,8 +1856,8 @@ static int lnc_hiload(void)
 
 	/*   Check if the hi score table has already been initialized.
 	 */
-	if ((memcmp(&RAM[0x0008],"\x00\x00\x00",3)==0) &&
-			(memcmp(&RAM[0x02a6],"\x00\x00\x00",3) == 0))
+	if ((memcmp(&RAM[0x0008],"\x00\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0x02a6],"\x00\x00\x00",3) == 0))
 
 	{
 		void *f;
@@ -1705,8 +1870,8 @@ static int lnc_hiload(void)
 			osd_fread(f,&RAM[0x0294],0x0f);
 			osd_fread(f,&RAM[0x02a6],0x0f);
 
-			// Put high score on screen as we missed when it was done
-			// by the program
+			/* Put high score on screen as we missed when it was done
+			   by the program */
 			banksave = *lnc_charbank;
 			*lnc_charbank = 0;
 
@@ -1718,7 +1883,7 @@ static int lnc_hiload(void)
 			lnc_videoram_w(0x004e, (RAM[0x000a] & 0x0f) + 1);
 			lnc_videoram_w(0x004d, (RAM[0x000a] >> 4) + 1);
 
-			// Remove leading zeros
+			/* Remove leading zeros */
 			for (i = 0; i < 5; i++)
 			{
 				if (videoram_r(0x004d + i) != 0x01) break;
@@ -1763,10 +1928,10 @@ static int bnj_hiload(void)
 
 	/*   Check if the hi score table has already been initialized.
 	 */
-	if ((memcmp(&RAM[0x0500],"\x01\x00\x12",3)==0) &&
+	if ((memcmp(&RAM[0x0500],"\x01\x00\x12",3) == 0) &&
 		(memcmp(&RAM[0x050c],"\x00\x19\x82",3) == 0))
 
-	//if (RAM[0x0640] == 0x4d)
+	/*if (RAM[0x0640] == 0x4d)*/
 	{
 		void *f;
 
@@ -1866,23 +2031,22 @@ static int disco_hiload(void)
 		firsttime = 1;
 	}
 
-        /*  Check if the hi score table has already been initialized. */
-        if ((memcmp(&RAM[0x0006],"\x00\x00\x00",3)==0) &&
-                        (memcmp(&RAM[0x0400],"\x00\x00\x00",3) == 0))
-
+	/*  Check if the hi score table has already been initialized. */
+	if ((memcmp(&RAM[0x0006],"\x00\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0x0400],"\x00\x00\x00",3) == 0))
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        /* the game only show 5 of 6 entries */
-                        osd_fread(f,&RAM[0x0400], 6*6);
-                        osd_fclose(f);
+			/* the game only show 5 of 6 entries */
+			osd_fread(f,&RAM[0x0400], 6*6);
+			osd_fclose(f);
 
-                        /* update the high score to top of screen */
-                        RAM[0x0008] = RAM[0x0400];
-                        RAM[0x0007] = RAM[0x0401];
-                        RAM[0x0006] = RAM[0x0402];
+			/* update the high score to top of screen */
+			RAM[0x0008] = RAM[0x0400];
+			RAM[0x0007] = RAM[0x0401];
+			RAM[0x0006] = RAM[0x0402];
 
 		}
 		firsttime = 0;
@@ -1901,7 +2065,7 @@ static void disco_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x0400], 6*6);
+		osd_fwrite(f,&RAM[0x0400], 6*6);
 		osd_fclose(f);
 	}
 }
@@ -2073,7 +2237,7 @@ struct GameDriver lnc_driver =
 	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&lnc_machine_driver,
-	0,
+	lnc_driver_init,
 
 	lnc_rom,
 	0, lnc_decode,
@@ -2086,6 +2250,32 @@ struct GameDriver lnc_driver =
 	ORIENTATION_ROTATE_270,
 
 	lnc_hiload, lnc_hisave
+};
+
+struct GameDriver wtennis_driver =
+{
+	__FILE__,
+	0,
+	"wtennis",
+	"World Tennis",
+	"1982",
+	"bootleg",
+	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
+	GAME_IMPERFECT_COLORS,
+	&lnc_machine_driver,
+	wtennis_driver_init,
+
+	wtennis_rom,
+	0, lnc_decode,
+	0,
+	0,	/* sound_prom */
+
+	wtennis_input_ports,
+
+    PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
 };
 
 struct GameDriver bnj_driver =
@@ -2242,7 +2432,6 @@ static struct MemoryReadAddress decocass_readmem[] =
 	{ 0xd100, 0xd3ff, MRA_RAM },	/* ? */
 	{ 0xd400, 0xd7ff, MRA_RAM },	/* background? */
 	{ 0xe000, 0xe000, input_port_3_r },     /* DSW1 */
-	{ 0xe001, 0xe001, input_port_4_r },     /* DSW2 */
 	{ 0xe002, 0xe002, input_port_0_r },     /* IN0 */
 	{ 0xe003, 0xe003, input_port_1_r },     /* IN1 */
 	{ 0xe004, 0xe004, input_port_2_r },     /* coin */
@@ -2331,32 +2520,32 @@ INPUT_PORTS_START( decocass_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B" )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )	/* used by the "bios" */
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )	/* used by the "bios" */
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )    /* used by the "bios" */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )    /* used by the "bios" */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK  )
 
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, "Bonus Life" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "20000" )
 	PORT_DIPSETTING(    0x04, "30000" )
 	PORT_DIPSETTING(    0x02, "40000"  )
@@ -2365,17 +2554,17 @@ INPUT_PORTS_START( decocass_input_ports )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x10, 0x10, "End of Level Pepper" )
-	PORT_DIPSETTING(    0x10, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown" )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct GfxDecodeInfo decocass_gfxdecodeinfo[] =
@@ -2417,7 +2606,7 @@ ignore_interrupt,0,//			nmi_interrupt,16   /* IRQs are triggered by the main CPU
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
-	generic_vh_start,
+	btime_vh_start,
 	generic_vh_stop,
 	decocass_vh_screenrefresh,
 

@@ -54,7 +54,7 @@ enum op_names {
 	pulx,	rol,	rola,	rolb,	ror,	rora,	rorb,	rti,
 	rts,	sba,	sbca,	sbcb,	sec,	sev,	sta,	stb,
 	std,	sti,	sts,	stx,	suba,	subb,	subd,	swi,
-	sync,	tab,	tap,	tba,	tim,	tpa,	tst,	tsta,
+	wai,	tab,	tap,	tba,	tim,	tpa,	tst,	tsta,
 	tstb,	tsx,	txs,	asx1,	asx2,	xgdx
 };
 
@@ -73,7 +73,7 @@ static const char *op_name_str[] = {
 	"pulx",  "rol",   "rola",  "rolb",  "ror",   "rora",  "rorb",  "rti",
 	"rts",   "sba",   "sbca",  "sbcb",  "sec",   "sev",   "sta",   "stb",
 	"std",   "sti",   "sts",   "stx",   "suba",  "subb",  "subd",  "swi",
-	"sync",  "tab",   "tap",   "tba",   "tim",   "tpa",   "tst",   "tsta",
+	"wai",   "tab",   "tap",   "tba",   "tim",   "tpa",   "tst",   "tsta",
 	"tstb",  "tsx",   "txs",   "asx1",  "asx2",  "xgdx"
 };
 
@@ -119,7 +119,7 @@ static UINT8 table[0x100][5] = {
 	{tsx, inh,0  ,0,0},{ins, inh,0	,0,0},{pula,inh,0  ,0,0},{pulb,inh,0  ,0,0},/* 30 */
 	{des, inh,0  ,0,0},{txs, inh,0	,0,0},{psha,inh,0  ,0,0},{pshb,inh,0  ,0,0},
 	{pulx,inh,0  ,0,1},{rts, inh,0	,0,0},{abx, inh,0  ,0,1},{rti, inh,0  ,0,0},
-	{pshx,inh,0  ,0,1},{mul, inh,0	,0,1},{sync,inh,0  ,0,0},{swi, inh,0  ,0,0},
+	{pshx,inh,0  ,0,1},{mul, inh,0	,0,1},{wai, inh,0  ,0,0},{swi, inh,0  ,0,0},
 	{nega,inh,0  ,0,0},{ill, inh,0	,0,7},{ill, inh,0  ,0,7},{coma,inh,0  ,0,0},/* 40 */
 	{lsra,inh,0  ,0,0},{ill, inh,0	,0,7},{rora,inh,0  ,0,0},{asra,inh,0  ,0,0},
 	{asla,inh,0  ,0,0},{rola,inh,0	,0,0},{deca,inh,0  ,0,0},{ill, inh,0  ,0,7},

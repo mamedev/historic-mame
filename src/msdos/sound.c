@@ -332,6 +332,7 @@ static int playstreamedsample(int channel,signed char *data,int len,int freq,int
 	/* backwards compatibility with old 0-255 volume range */
 	if (volume > 100) volume = volume * 25 / 255;
 
+	/* SEAL double volume for panned channels, so we have to compensate */
 	if (pan != OSD_PAN_CENTER) volume /= 2;
 
 	if (Machine->sample_rate == 0 || channel >= NUMVOICES) return 1;

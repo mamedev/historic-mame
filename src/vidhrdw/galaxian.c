@@ -292,7 +292,7 @@ static void decode_background(void)
 
 ***************************************************************************/
 
-int galaxian_vh_start(void)
+static int common_vh_start(void)
 {
 	int generator;
 	int x,y;
@@ -354,6 +354,12 @@ int galaxian_vh_start(void)
 	return 0;
 }
 
+int galaxian_vh_start(void)
+{
+	stars_type = 0;
+	return common_vh_start();
+}
+
 int mooncrst_vh_start(void)
 {
 	modify_charcode   = mooncrst_modify_charcode;
@@ -385,7 +391,7 @@ int pisces_vh_start(void)
 int scramble_vh_start(void)
 {
 	stars_type = 1;
-	return galaxian_vh_start();
+	return common_vh_start();
 }
 
 int rescue_vh_start(void)
@@ -393,7 +399,7 @@ int rescue_vh_start(void)
 	int ans,x;
 
 	stars_type = 2;
-	ans = galaxian_vh_start();
+	ans = common_vh_start();
 
     /* Setup background colour array (blue sky, blue sea, black bottom line) */
 
@@ -421,7 +427,7 @@ int minefld_vh_start(void)
 	int ans,x;
 
 	stars_type = 2;
-	ans = galaxian_vh_start();
+	ans = common_vh_start();
 
     /* Setup background colour array (blue sky, brown ground, black bottom line) */
 
@@ -449,7 +455,7 @@ int stratgyx_vh_start(void)
 	int ans,x;
 
 	stars_type = 0;
-	ans = galaxian_vh_start();
+	ans = common_vh_start();
 
     /* Setup background colour array (blue left side, brown ground */
 
@@ -472,14 +478,14 @@ int ckongs_vh_start(void)
 {
 	stars_type = 1;
 	modify_spritecode = ckongs_modify_spritecode;
-	return galaxian_vh_start();
+	return common_vh_start();
 }
 
 int calipso_vh_start(void)
 {
 	stars_type = 1;
 	modify_spritecode = calipso_modify_spritecode;
-	return galaxian_vh_start();
+	return common_vh_start();
 }
 
 int mariner_vh_start(void)
@@ -489,7 +495,7 @@ int mariner_vh_start(void)
 	modify_charcode = mariner_modify_charcode;
 
 	stars_type = 3;
-	ans = galaxian_vh_start();
+	ans = common_vh_start();
 
     /* Setup background colour array (blue water) */
 
@@ -518,7 +524,7 @@ int jumpbug_vh_start(void)
 	modify_charcode   = jumpbug_modify_charcode;
 	modify_spritecode = jumpbug_modify_spritecode;
 	stars_type = 1;
-	return galaxian_vh_start();
+	return common_vh_start();
 }
 
 

@@ -277,6 +277,8 @@ void m68000_set_nmi_line(int state)
 
 void m68000_set_irq_line(int irqline, int state)
 {
+    regs.IRQ_level = 0; /* ASG: remove me to do proper mask setting */
+
 	if (state == CLEAR_LINE)
 	{
 		regs.IRQ_level &= ~(1 << (irqline - 1));
@@ -403,9 +405,8 @@ const char *m68010_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
-unsigned m68010_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m68010_dasm(char *buffer, unsigned pc)
 {
-    (void)base;
 	change_pc24(pc);
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);
@@ -442,9 +443,8 @@ const char *m68020_info(void *context, int regnum)
 	return m68000_info(context,regnum);
 }
 
-unsigned m68020_dasm(UINT8 *base, char *buffer, unsigned pc)
+unsigned m68020_dasm(char *buffer, unsigned pc)
 {
-    (void)base;
 	change_pc24(pc);
 #ifdef MAME_DEBUG
     return m68k_disassemble(buffer, pc);

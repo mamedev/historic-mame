@@ -158,14 +158,6 @@ int rthunder_vh_start(void)
 		tilemap[1]->transparent_pen = 7;
 		tilemap[2]->transparent_pen = 7;
 		tilemap[3]->transparent_pen = 7;
-		tilemap_set_scroll_rows(tilemap[0],1);
-		tilemap_set_scroll_cols(tilemap[0],1);
-		tilemap_set_scroll_rows(tilemap[1],1);
-		tilemap_set_scroll_cols(tilemap[1],1);
-		tilemap_set_scroll_rows(tilemap[2],1);
-		tilemap_set_scroll_cols(tilemap[2],1);
-		tilemap_set_scroll_rows(tilemap[3],1);
-		tilemap_set_scroll_cols(tilemap[3],1);
 
 		return 0;
 	}
@@ -224,23 +216,23 @@ void rthunder_scroll_w( int layer, int offset, int data )
 		case 0:
 			xscroll[layer] = (xscroll[layer]&0xff)|(data<<8);
 			if (flipscreen)
-				tilemap_set_scrollx(tilemap[layer],0,xscroll[layer]+xdisp[layer]-224);
+				tilemap_set_scrollx(tilemap[layer],0,-xscroll[layer]-xdisp[layer]+224);
 			else
-				tilemap_set_scrollx(tilemap[layer],0,-xscroll[layer]-xdisp[layer]);
+				tilemap_set_scrollx(tilemap[layer],0,xscroll[layer]+xdisp[layer]);
 			break;
 		case 1:
 			xscroll[layer] = (xscroll[layer]&0xff00)|data;
 			if (flipscreen)
-				tilemap_set_scrollx(tilemap[layer],0,xscroll[layer]+xdisp[layer]-224);
+				tilemap_set_scrollx(tilemap[layer],0,-xscroll[layer]-xdisp[layer]+224);
 			else
-				tilemap_set_scrollx(tilemap[layer],0,-xscroll[layer]-xdisp[layer]);
+				tilemap_set_scrollx(tilemap[layer],0,xscroll[layer]+xdisp[layer]);
 			break;
 		case 2:
 			yscroll[layer] = data;
 			if (flipscreen)
-				tilemap_set_scrolly(tilemap[layer],0,yscroll[layer]-7);
+				tilemap_set_scrolly(tilemap[layer],0,-yscroll[layer]+7);
 			else
-				tilemap_set_scrolly(tilemap[layer],0,-yscroll[layer]-25);
+				tilemap_set_scrolly(tilemap[layer],0,yscroll[layer]+25);
 			break;
 	}
 }

@@ -2,6 +2,9 @@
 
 /* History:
 
+
+
+ * 4/25/99 Tac-Scan now makes Credit Noises with $2c                    (Jim Hernandez)
  * 4/9/99 Zektor Discrete Sound Support mixed with voice samples.       (Jim Hernandez)
           Zektor uses some Eliminator sounds.
 
@@ -9,7 +12,7 @@
  * 1/29/99 Supports Tac Scan new 44.1Khz sample set.                    (Jim Hernandez)
 
  * -Stuff to do -
- * Find hex bit for credit.wav and warp.wav sound calls.
+ * Find hex bit for warp.wav sound calls.
  *
  * 2/05/98 now using the new sample_*() functions. BW
  *
@@ -26,6 +29,7 @@
         $0e
         $0f
         $1c 1up (Extra Life)
+        $2c Credit
         $30 - $3f  Hex numbers for ship position flight sounds
 	$41
 
@@ -146,11 +150,12 @@ d0      crafts joining
 #define flight3   0x3d
 #define flight4   0x3e
 #define flight5   0x3f
-#define warp      0x35
+#define warp      0x37
 #define formation 0x0b
 #define nothing1  0x1a
 #define nothing2  0x1b
 #define extralife 0x1c
+#define credit    0x2c
 
 
 #define	kVoiceShipRoar 5
@@ -358,6 +363,10 @@ void tacscan_sh_w (int offset,int data)
                 case extralife: voice = kVoiceExtralife;
                                 sound = 20;
                                 break;
+                case credit:    voice = kVoiceExtra;
+                                sound = 21;
+                                break;
+
                 default:
 
 			/* don't play anything */

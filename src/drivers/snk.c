@@ -6,10 +6,23 @@ Known issues:
 - oldest games (Marvin's Maze) don't work yet
 - colors for older SNK games (Athena/TNK3) are wrong (I'm stuck!)
 - there are sound problems.  You can hear music in Athena and Gwar after you die once
-- we need information about YM8950
-- adpcm isn't hooked up ("Q","W",A","E" are hacks to listen to the samples)
-- sound effects (2nd YM3526) not working
-- driver (dips, etc.) stills needs some cleanup
+- sound system needs some work, but we are waiting on dual YM3812 chip emulation anyway
+
+for future reference, SAR dip settings:
+dsw1
+	normal/flip
+	2nd bonus/every bonus
+	coinage1:1/2,2/1,3/1,4/1
+	coinage2:1/2,1/3,1/5,1/6
+	lives:3,2,4,5
+dsw2
+	normal,easy,hard,very hard
+	demo sound:yes/no
+	infinite lives
+	freeze display
+	50K/100K,70K/140K,90K,180K,none
+	allow continue:yes/no
+	test mode:off/on
 
 ----------------------------------------------------------------
 
@@ -71,6 +84,7 @@ Chopper I sound uses YM3812 and YM8950
 #define MEM_SAMPLES			8
 
 extern void snk_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void aso_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void ikari_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 extern int snk_vh_start( void );
@@ -100,37 +114,28 @@ static int snk_soundcommand=0; /* can we just use soundlatch_r/w? */
 static unsigned char *shared_ram, *io_ram, *shared_auxram;
 
 
-static void psychos_voice( int which ){
-	return;
-	if( which<0xc0 ) return;
-//	int offset, len;
-//	which -= 0xc0;
-
-	if( errorlog ) fprintf( errorlog, "adpcm snd#%02x\n", which );
-	switch( which ){
-		case 0xc0: ADPCM_play( 0, 0x0000, 0x2000*2 ); break; //Athena's name is magic
-		case 0xc1: ADPCM_play( 0, 0x3000, 0x1000*2 ); break; //is what you see
-		case 0xc2: ADPCM_play( 0, 0x4000, 0x2000*2 ); break; //her crystal is the answer
-		case 0xc3: ADPCM_play( 0, 0x6000, 0x2000*2 ); break; //fighting fair
-		case 0xc4: ADPCM_play( 0, 0x8000, 0x2000*2 ); break; //She's just a little girl with power inside
-		case 0xc5: break; //burning bright
-		case 0xc6: break; //You'd better hide if you are bad
-		case 0xc7: break; //She'll get you
-		case 0xe4: break; //She'll read your mind and find if
-		case 0xe5: break; //You believe in right or wrong
-		case 0xe6: break; //Fire
-		case 0xe7: break; //Fire
-		case 0xe8: break; //Psycho Soldier
-		case 0xe9: break; //Psycho Soldier
-
-		case 0xea: ADPCM_play( 0, 0x2000, 0x1000*2 ); break; // mystery
-		case 0xeb://To keep us free
-		break;
-	}
+static unsigned char snk_adpcm_control_index;
+static unsigned char snk_adpcm_register[256];
+static int snk_adpcm_status_r( int offset ){
+	return 0xff;
 }
+static void snk_adpcm_control_w( int offset, int data ){
+	snk_adpcm_control_index = data;
+}
+static void snk_adpcm_write_w( int offset, int data ){
+	if( errorlog ) fprintf( errorlog, "sound write:(%02x)%02x\n",
+		snk_adpcm_control_index,data );
 
-void snk_adpcm_play( int which ){
-	ADPCM_play( 0, 0x10000*which, 0x20000 );
+	snk_adpcm_register[snk_adpcm_control_index] = data;
+
+	if( snk_adpcm_control_index==0x0c ){
+		int chan = snk_adpcm_register[0x08];
+		int start = snk_adpcm_register[0x09] + snk_adpcm_register[0x0a]*256;
+		int finish = snk_adpcm_register[0x0b] + snk_adpcm_register[0x0c]*256;
+		int len = finish-start;
+		if( start>=0 && finish<=0x40000 && len>0 )
+			ADPCM_play( chan&3, start*0x20, len*0x40 );
+	}
 }
 
 
@@ -181,9 +186,7 @@ static int cpuA_io_r( int offset ){
 		case 0x600: return input_port_6_r( 0 );
 
 		case 0x700:
-		//if( errorlog ) fprintf( errorlog, "CPUA $c700r\n" );
 		if( cpuB_latch & SNK_NMI_ENABLE ){
-			//if( errorlog ) fprintf( errorlog, "CPUB NMI!\n" );
 			cpu_cause_interrupt( 1, Z80_NMI_INT );
 			cpuB_latch = 0;
 		}
@@ -205,23 +208,17 @@ static int cpuA_io_r( int offset ){
 }
 
 static void cpuA_io_w( int offset, int data ){
-	//if( errorlog ){ if (offset < 0x700) fprintf( errorlog, "CPUA $c%xw %d\n",offset,data);}
-
 	switch( offset ){
 		case 0x000:
-		//if( errorlog ) fprintf( errorlog, "CPUA $c000w\n");
 		break;
 
 		case 0x400:
 		//case 0x500:  //tdfever??
 		io_ram[offset] = snk_soundcommand = data;
-		psychos_voice(data);
 		break;
 
 		case 0x700:
-		//if( errorlog ) fprintf( errorlog, "CPUA $c700w %d\n", data );
 		if( cpuA_latch&SNK_NMI_PENDING ){
-			//if( errorlog ) fprintf( errorlog, "CPUA NMI!\n" );
 			cpu_cause_interrupt( 0, Z80_NMI_INT );
 			cpuA_latch = 0;
 		}
@@ -239,9 +236,7 @@ static void cpuA_io_w( int offset, int data ){
 
 static int cpuB_io_r( int offset ){
 	if( offset==0 || offset==0x700  ){
-		//if( errorlog ) fprintf( errorlog, "CPUB $c%03xr\n",offset );
 		if( cpuA_latch & SNK_NMI_ENABLE ){
-			//if( errorlog ) fprintf( errorlog, "CPUA NMI!\n" );
 			cpu_cause_interrupt( 0, Z80_NMI_INT );
 			cpuA_latch = 0;
 		}
@@ -250,7 +245,6 @@ static int cpuB_io_r( int offset ){
 		}
 		return 0xff;
 	}
-	//if( errorlog ) fprintf( errorlog, "CPUB unk IO R %04x\n", offset );
 	return io_ram[offset];
 }
 
@@ -258,9 +252,7 @@ static void cpuB_io_w( int offset, int data ){
 	unsigned char *RAM = Machine->memory_region[0];
 
 	if( offset==0 || offset==0x700 ){
-		//if( errorlog ) fprintf( errorlog, "CPUB $c%03xw %d (fc41: %02x)\n",offset, data, RAM[0xfc41] );
 		if( cpuB_latch&SNK_NMI_PENDING ){
-			//if( errorlog ) fprintf( errorlog, "CPUB NMI!\n" );
 			cpu_cause_interrupt( 1, Z80_NMI_INT );
 			cpuB_latch = 0;
 		}
@@ -269,7 +261,6 @@ static void cpuB_io_w( int offset, int data ){
 		}
 		return;
 	}
-	//if( errorlog ) fprintf( errorlog, "CPUB unk IO W %04x\n", offset );
 	io_ram[offset] = data;
 }
 
@@ -277,17 +268,17 @@ static void cpuB_io_w( int offset, int data ){
 
 static struct ADPCMinterface adpcm_interface =
 {
-	1,			/* 1 channel */
-	8000,       /* 8000Hz playback */
-	MEM_SAMPLES,
-	0,			/* init function */
-	{ 255 }			/* volume? */
+	4,				/* 4 channels? */
+	8000,			/* 8000Hz playback */
+	MEM_SAMPLES,	/* memory region */
+	0,				/* init function */
+	{ 50,50,50,50 }	/* volume */
 };
 
 static struct YM3526interface ym3526_interface = {
 	1,			/* needs 2, but only 1 supported */
 	4000000,	/* 4 MHz? (hand tuned) */
-	{ 255 }		/* (not supported) */
+	{ 50 }		/* (not supported) */
 };
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
@@ -371,22 +362,16 @@ static struct MemoryWriteAddress writemem_cpuB[] = {
 	{ -1 }
 };
 
-/* until MAME can support two sound chips, we only emulate one */
-#define SOUND_MUSIC	1
-#define SOUND_FX	0
-#define SNDCHIP SOUND_MUSIC
-
-
 static struct MemoryReadAddress readmem_sound[] = {
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 	{ 0xe000, 0xe000, snk_soundcommand_r },
-#if SNDCHIP
+#if 1
 	{ 0xe800, 0xe800, YM3526_status_port_0_r },
-	{ 0xf000, 0xf000, MRA_NOP }, /* YM3526 #2 status port */
+	{ 0xf000, 0xf000, snk_adpcm_status_r }, /* YM3526 #2 status port */
 #else
-	{ 0xe800, 0xe800, MRA_NOP },
-	{ 0xf000, 0xf000, YM3526_status_port_0_r },
+	{ 0xe800, 0xf000, snk_adpcm_status_r }, /* YM3526 #2 status port */
+	{ 0xf000, 0xe800, YM3526_status_port_0_r },
 #endif
 	{ 0xf800, 0xf800, MRA_RAM }, /* IRQ CTRL FOR YM8950  NOT EMULATED */
 	{ -1 }
@@ -395,19 +380,17 @@ static struct MemoryReadAddress readmem_sound[] = {
 static struct MemoryWriteAddress writemem_sound[] = {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
-
-#if SNDCHIP
+#if 1
 	{ 0xe800, 0xe800, YM3526_control_port_0_w },
 	{ 0xec00, 0xec00, YM3526_write_port_0_w },
-	{ 0xf000, 0xf000, MWA_NOP }, /* YM3526 #2 control port */
-	{ 0xf400, 0xf400, MWA_NOP }, /* YM3526 #2 write port   */
+	{ 0xf000, 0xf000, snk_adpcm_control_w }, /* YM3526 #2 control port */
+	{ 0xf400, 0xf400, snk_adpcm_write_w }, /* YM3526 #2 write port   */
 #else
-	{ 0xe800, 0xe800, MWA_NOP },
-	{ 0xec00, 0xec00, MWA_NOP },
-	{ 0xf000, 0xf000, YM3526_control_port_0_w }, /* YM3526 #2 control port */
-	{ 0xf400, 0xf400, YM3526_write_port_0_w }, /* YM3526 #2 write port   */
+	{ 0xe800, 0xe800, snk_adpcm_control_w }, /* YM3526 #2 control port */
+	{ 0xec00, 0xec00, snk_adpcm_write_w }, /* YM3526 #2 write port   */
+	{ 0xf000, 0xf000, YM3526_control_port_0_w },
+	{ 0xf400, 0xf400, YM3526_write_port_0_w },
 #endif
-
 	{ 0xf800, 0xf800, MWA_RAM }, /* wrong */
 	{ -1 }
 };
@@ -1213,15 +1196,98 @@ INPUT_PORTS_START( aso_input_ports )
 
 	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "?" )
-
 	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "?" )
-
 	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "?" )
-
 	PORT_START
 	PORT_DIPNAME( 0xff, 0xff, "?" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( chopper1_input_ports )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related???*/
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* Reset */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START  /* DIPSW 1 */
+	PORT_DIPNAME( 0x01, 0x01, "Video Flip" )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x02, "Cabinet Type" )
+	PORT_DIPSETTING(    0x02, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, "Bonus" )
+	PORT_DIPSETTING(    0x00, "Extra man at every bonus" )
+	PORT_DIPSETTING(    0x04, "1st & 2nd bonus only" )
+	PORT_DIPNAME( 0x08, 0x08, "Number of lives" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, "Coin/Credit" )
+	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coinage 2" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/4 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/6 Credit" )
+
+	PORT_START  /* DIPSW 2 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPNAME( 0x04, 0x04, "Sound Demo" )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze Video" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x30, "Bonus points" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x10, "50K 100K" )
+	PORT_DIPSETTING(    0x20, "75K 140K" )
+	PORT_DIPSETTING(    0x30, "100K 200K" )
+	PORT_DIPNAME( 0x40, 0x40, "Continue" )
+	PORT_DIPSETTING(    0x40, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Invulnerability" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 /*********************************************************************/
@@ -1404,10 +1470,12 @@ static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct GfxDecodeInfo athena_gfxdecodeinfo[] = {
-	{ MEM_GFX_CHARS,      0x0, &char512,			0, 64 },
-	{ MEM_GFX_TILES,      0x0, &char1024,			0, 64 },
-	{ MEM_GFX_SPRITES,    0x0, &sprite1024,			0, 64 },
+static struct GfxDecodeInfo athena_gfxdecodeinfo[] =
+{
+	/* colors 512-1023 are currently unused, I think they are a second bank */
+	{ MEM_GFX_CHARS,      0x0, &char512,	384,  8 },	/* colors 384-511 */
+	{ MEM_GFX_TILES,      0x0, &char1024,	128, 16 },	/* colors 128-383 */
+	{ MEM_GFX_SPRITES,    0x0, &sprite1024,	  0, 16 },	/* colors   0-127 */
 	{ -1 }
 };
 
@@ -1537,7 +1605,7 @@ static struct MachineDriver tnk3_machine_driver = {
 
 	tnk3_gfxdecodeinfo,
 	1024,1024,
-	snk_vh_convert_color_prom,
+	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -1594,9 +1662,9 @@ static struct MachineDriver athena_machine_driver = {
 
 	athena_gfxdecodeinfo,
 	1024,1024,
-	snk_vh_convert_color_prom,
+	aso_vh_convert_color_prom,
 
-        VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT, /* overflows static palette! */
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT, /* overflows static palette! */
 	0,
 	snk_vh_start,
 	snk_vh_stop,
@@ -1651,7 +1719,7 @@ static struct MachineDriver aso_machine_driver = {
 
 	athena_gfxdecodeinfo,
 	1024,1024,
-	snk_vh_convert_color_prom,
+	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
 	0,
@@ -2140,9 +2208,9 @@ ROM_START( athena_rom )
 	ROM_LOAD( "up02_k6.rom",  0x4000, 0x8000, 0x596f1c8a )
 
 	ROM_REGION( 0xC00 )	/* color proms */
-	ROM_LOAD( "up02_b1.rom",  0x000, 0x400, 0xd25c9099 ) /* red? */
-	ROM_LOAD( "up02_c2.rom",  0x400, 0x400, 0x294279ae ) /* green */
-	ROM_LOAD( "up02_c1.rom",  0x800, 0x400, 0xa4a4e7dc ) /* blue? */
+	ROM_LOAD( "up02_c2.rom",  0x000, 0x400, 0x294279ae )
+	ROM_LOAD( "up02_b1.rom",  0x400, 0x400, 0xd25c9099 )
+	ROM_LOAD( "up02_c1.rom",  0x800, 0x400, 0xa4a4e7dc )
 
 	ROM_REGION_DISPOSE( 0x4000 ) /* characters */
 	ROM_LOAD( "up01_d2.rom",  0x0000, 0x4000,  0x18b4bcca )
@@ -2205,9 +2273,9 @@ ROM_START( fitegolf_rom )
 	ROM_LOAD( "gu4",    0x4000, 0x8000, 0x2d998e2b )
 
 	ROM_REGION(0xC00)	/* color PROM */
-	ROM_LOAD( "82s137.1b",  0x00000, 0x00400, 0x29e7986f )
-	ROM_LOAD( "82s137.1c",  0x00400, 0x00400, 0x27ba9ff9 )
-	ROM_LOAD( "82s137.2c",  0x00800, 0x00400, 0x6e4c7836 )
+	ROM_LOAD( "82s137.2c",  0x00000, 0x00400, 0x6e4c7836 )
+	ROM_LOAD( "82s137.1b",  0x00400, 0x00400, 0x29e7986f )
+	ROM_LOAD( "82s137.1c",  0x00800, 0x00400, 0x27ba9ff9 )
 
 	ROM_REGION_DISPOSE(0x4000) /* characters */
 	ROM_LOAD( "gu8",   0x0000, 0x4000, 0xf1628dcf )
@@ -3043,7 +3111,6 @@ static void psychos_decode( void ){
 
 /***********************************************************************/
 
-
 struct GameDriver tnk3_driver =
 {
 	__FILE__,
@@ -3053,7 +3120,7 @@ struct GameDriver tnk3_driver =
 	"1985",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND,
 	&tnk3_machine_driver,
 	0,
 
@@ -3079,7 +3146,7 @@ struct GameDriver aso_driver =
 	"1985",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&aso_machine_driver,
 	0,
 
@@ -3096,7 +3163,6 @@ struct GameDriver aso_driver =
 	0,0
 };
 
-
 struct GameDriver athena_driver =
 {
 	__FILE__,
@@ -3106,7 +3172,7 @@ struct GameDriver athena_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND,
 	&athena_machine_driver,
 	0,
 
@@ -3131,7 +3197,7 @@ struct GameDriver fitegolf_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND,
 	&athena_machine_driver,
 	0,
 
@@ -3148,8 +3214,6 @@ struct GameDriver fitegolf_driver =
 	0,0
 };
 
-
-
 struct GameDriver ikari_driver = {
 	__FILE__,
 	0,
@@ -3158,7 +3222,7 @@ struct GameDriver ikari_driver = {
 	"1986",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&ikari_machine_driver,
 	0,
 
@@ -3175,7 +3239,6 @@ struct GameDriver ikari_driver = {
 	ikari_hiload,ikari_hisave
 };
 
-
 struct GameDriver ikarijp_driver =
 {
 	__FILE__,
@@ -3185,7 +3248,7 @@ struct GameDriver ikarijp_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&ikari_machine_driver,
 	0,
 
@@ -3211,7 +3274,7 @@ struct GameDriver ikarijpb_driver =
 	"1986",
 	"bootleg",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&ikari_machine_driver,
 	0,
 	ikarijpb_rom,
@@ -3235,7 +3298,7 @@ struct GameDriver victroad_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&ikari_machine_driver,
 	0,
 
@@ -3252,7 +3315,6 @@ struct GameDriver victroad_driver =
 	victroad_hiload,victroad_hisave
 };
 
-
 struct GameDriver dogosoke_driver =
 {
 	__FILE__,
@@ -3262,7 +3324,7 @@ struct GameDriver dogosoke_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&ikari_machine_driver,
 	0,
 
@@ -3288,7 +3350,7 @@ struct GameDriver gwar_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&gwar_machine_driver,
 	0,
 
@@ -3314,7 +3376,7 @@ struct GameDriver bermudat_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&gwar_machine_driver,
 	0,
 
@@ -3336,11 +3398,11 @@ struct GameDriver psychos_driver =
 	__FILE__,
 	0,
 	"psychos",
-	"Psycho Soldier (set 1)",
+	"Psycho Soldier (US)",
 	"1987",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 	psychos_rom,
@@ -3358,11 +3420,11 @@ struct GameDriver psychosa_driver =
 	__FILE__,
 	&psychos_driver,
 	"psychosa",
-	"Psycho Soldier (set 2)",
+	"Psycho Soldier (Japan)",
 	"1987",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 	psychos_alt_rom,
@@ -3385,7 +3447,7 @@ struct GameDriver chopper_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 
@@ -3394,7 +3456,7 @@ struct GameDriver chopper_driver =
 	0,
 	0, /* sound_prom */
 
-	psychos_input_ports,
+	chopper1_input_ports,
 
 	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -3411,7 +3473,7 @@ struct GameDriver legofair_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&psychos_machine_driver,
 	0,
 
@@ -3420,15 +3482,13 @@ struct GameDriver legofair_driver =
 	0,
 	0, /* sound_prom */
 
-	psychos_input_ports,
+	chopper1_input_ports,
 
 	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0,0
 };
-
-/***********************************************************************/
 
 struct GameDriver tdfever_driver =
 {
@@ -3439,7 +3499,7 @@ struct GameDriver tdfever_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	0, /* this might be working - I don't have the ROMs to check */
+	GAME_IMPERFECT_SOUND,
 	&tdfever_machine_driver,
 	0,
 
@@ -3456,8 +3516,6 @@ struct GameDriver tdfever_driver =
 	0,0
 };
 
-/***********************************************************************/
-
 struct GameDriver tdfeverj_driver =
 {
 	__FILE__,
@@ -3467,7 +3525,7 @@ struct GameDriver tdfeverj_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	0,
+	GAME_IMPERFECT_SOUND,
 	&tdfever_machine_driver,
 	0,
 
@@ -3484,8 +3542,6 @@ struct GameDriver tdfeverj_driver =
 	0,0
 };
 
-/***********************************************************************/
-
 struct GameDriver marvins_driver =
 {
 	__FILE__,
@@ -3495,7 +3551,7 @@ struct GameDriver marvins_driver =
 	"????",
 	"SNK",
 	CREDITS,
-	0,//GAME_NOT_WORKING,
+	GAME_NOT_WORKING,
 	&marvins_machine_driver,
 	0,
 
@@ -3521,7 +3577,7 @@ struct GameDriver madcrash_driver =
 	"????",
 	"SNK",
 	CREDITS,
-	0,//GAME_NOT_WORKING,
+	GAME_NOT_WORKING,
 	&madcrash_machine_driver,
 	0,
 
@@ -3537,4 +3593,3 @@ struct GameDriver madcrash_driver =
 
 	0,0
 };
-

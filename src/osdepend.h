@@ -344,6 +344,7 @@ typedef struct {
 #define OSD_FILETYPE_INPUTLOG 5
 #define OSD_FILETYPE_STATE 6
 #define OSD_FILETYPE_ARTWORK 7
+#define OSD_FILETYPE_MEMCARD 8
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */
@@ -366,6 +367,7 @@ int osd_fwrite_swap(void *file,const void *buffer,int length);
 #define osd_fread_lsbfirst osd_fread_swap
 #define osd_fwrite_lsbfirst osd_fwrite_swap
 #endif
+int osd_fread_scatter(void *file,void *buffer,int length,int increment);
 int osd_fseek(void *file,int offset,int whence);
 void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);

@@ -1,7 +1,8 @@
 /***************************************************************************
 
+4/25/99 - Tac-Scan sound call for coins now works. (Jim Hernandez)
 2/5/98 - Added input ports support for Tac Scan. Bonus Ships now work.
-         Zektor now uses it's own input port section. - Jim Hernandez
+         Zektor now uses it's own input port section. (Jim Hernandez)
 
 Sega Vector memory map (preliminary)
 
@@ -1286,7 +1287,7 @@ struct GameDriver spacfura_driver =
 	"Space Fury (revision A)",
 	"1981",
 	"Sega",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&spacfury_machine_driver,
 	0,
@@ -1409,7 +1410,7 @@ struct GameDriver zektor_driver =
 	"Zektor",
 	"1982",
 	"Sega",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&zektor_machine_driver,
 	0,
@@ -1458,6 +1459,7 @@ static const char *tacscan_sample_names[] =
         "formatn.wav",
         "warp.wav",
         "credit.wav",
+        "1up.wav",
 
     0	/* end of array */
 };
@@ -1518,7 +1520,7 @@ struct GameDriver tacscan_driver =
 	"Tac/Scan",
 	"1982",
 	"Sega",
-        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nJim Hernandez (Sound & 44.1Khz Sample Pack)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&tacscan_machine_driver,
 	0,
@@ -1617,7 +1619,7 @@ struct GameDriver elim2_driver =
 	"Eliminator (2 Players, set 1)",
 	"1981",
 	"Gremlin",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&elim2_machine_driver,
 	0,
@@ -1643,7 +1645,7 @@ struct GameDriver elim2a_driver =
 	"Eliminator (2 Players, set 2)",
 	"1981",
 	"Gremlin",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&elim2_machine_driver,
 	0,
@@ -1713,7 +1715,7 @@ struct GameDriver elim4_driver =
 	"Eliminator (4 Players)",
 	"1981",
 	"Gremlin",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&elim4_machine_driver,
 	0,
@@ -1798,7 +1800,7 @@ static const char *startrek_sample_names[] =
 
 static struct Samplesinterface startrek_samples_interface =
 {
-        12       /* 6 channels */
+        10       /* 10 channels */
 };
 
 static struct MachineDriver startrek_machine_driver =
@@ -1852,7 +1854,7 @@ struct GameDriver startrek_driver =
 	"Star Trek",
 	"1982",
 	"Sega",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nJim Hernandez (sound)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&startrek_machine_driver,
 	0,

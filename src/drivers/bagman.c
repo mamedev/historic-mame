@@ -172,8 +172,8 @@ INPUT_PORTS_START( bagman_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(    0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x18, "Easy" )
 	PORT_DIPSETTING(    0x10, "Medium" )
@@ -189,6 +189,55 @@ INPUT_PORTS_START( bagman_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
+
+/* EXACTLY the same as bagman, the only difference is that
+Languade dip is replaced by Demo Sounds */
+INPUT_PORTS_START( bagmans_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(    0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, "Easy" )
+	PORT_DIPSETTING(    0x10, "Medium" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR ( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR ( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x40, "30000" )
+	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
 
 /* EXACTLY the same as bagman, the only difference is that the START1 button */
 /* also acts as the shoot button. */
@@ -222,8 +271,8 @@ INPUT_PORTS_START( sbagman_input_ports )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, "2C/1C 1C/1C 1C/3C 1C/7C" )
+	PORT_DIPSETTING(    0x04, "1C/1C 1C/2C 1C/6C 1C/14C" )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x18, "Easy" )
 	PORT_DIPSETTING(    0x10, "Medium" )
@@ -434,6 +483,30 @@ ROM_START( bagman_rom )
 	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
 	ROM_LOAD( "c1_b01.bin",   0x2000, 0x1000, 0x705193b2 )
 	ROM_LOAD( "f1_b03s.bin",  0x3000, 0x1000, 0xdba1eda7 )
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
+	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
+
+	ROM_REGION(0x2000)	/* data for the TMS5110 speech chip */
+	ROM_LOAD( "r9_b11.bin",   0x0000, 0x1000, 0x2e0057ff )
+	ROM_LOAD( "t9_b12.bin",   0x1000, 0x1000, 0xb2120edd )
+ROM_END
+
+ROM_START( bagnard_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "e9_b05.bin",   0x0000, 0x1000, 0xe0156191 )
+	ROM_LOAD( "f9_b06.bin",   0x1000, 0x1000, 0x7b758982 )
+	ROM_LOAD( "f9_b07.bin",   0x2000, 0x1000, 0x302a077b )
+	ROM_LOAD( "k9_b08.bin",   0x3000, 0x1000, 0xf04293cb )
+	ROM_LOAD( "bagnard.009",  0x4000, 0x1000, 0x4f0088ab )
+	ROM_LOAD( "bagnard.010",  0x5000, 0x1000, 0xcd2cac01 )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "e1_b02.bin",   0x0000, 0x1000, 0x4a0a6b55 )
+	ROM_LOAD( "j1_b04.bin",   0x1000, 0x1000, 0xc680ef04 )
+	ROM_LOAD( "bagnard.001",  0x2000, 0x1000, 0x060b044c )
+	ROM_LOAD( "bagnard.003",  0x3000, 0x1000, 0x8043bc1a )
 
 	ROM_REGION(0x0040)	/* color PROMs */
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
@@ -696,6 +769,32 @@ struct GameDriver bagman_driver =
 	hiload, hisave
 };
 
+struct GameDriver bagnard_driver =
+{
+	__FILE__,
+	&bagman_driver,
+	"bagnard",
+	"Le Bagnard",
+	"1982",
+	"Valadon Automation",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nAndrew Deschenes (protection info)",
+	0,
+	&machine_driver,
+	0,
+
+	bagnard_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	bagman_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
 struct GameDriver bagmans_driver =
 {
 	__FILE__,
@@ -714,7 +813,7 @@ struct GameDriver bagmans_driver =
 	0,
 	0,	/* sound_prom */
 
-	bagman_input_ports,
+	bagmans_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -825,3 +924,4 @@ struct GameDriver pickin_driver =
 
 	pickin_hiload,pickin_hisave
 };
+

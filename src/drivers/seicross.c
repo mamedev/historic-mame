@@ -97,12 +97,12 @@ if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data
 
 static unsigned char *sharedram;
 
-int sharedram_r(int offset)
+static int sharedram_r(int offset)
 {
 	return sharedram[offset];
 }
 
-void sharedram_w(int offset,int data)
+static void sharedram_w(int offset,int data)
 {
 	sharedram[offset] = data;
 }
@@ -442,7 +442,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6802,	/* probably a 6802 not sure */
-			6000000,	/* ??? */
+			6000000/4,	/* ??? */
 			3,
 			mcu_readmem,mcu_writemem,0,0,
 			ignore_interrupt,0

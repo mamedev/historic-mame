@@ -60,6 +60,8 @@ void dday_control_w (int offset, int data);
 void dday_AY8910_0_w(int offset, int data);
 void dday_AY8910_1_w(int offset, int data);
 void dday_searchlight_w(int offset, int data);
+void dday_decode(void);
+
 
 // Note: There seems to be no way to reset this timer via hardware.
 //       The game uses a difference method to reset it to 99.
@@ -283,11 +285,23 @@ static struct GfxLayout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
+static struct GfxLayout charlayout_flipx =
+{
+	8,8,    /* 8*8 characters */
+	256,    /* 256 characters */
+	2,      /* 2 bits per pixel */
+	{ 0, 0x0800*8 }, /* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every char takes 8 consecutive bytes */
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,  0, 8 },
-	{ 1, 0x1000, &charlayout, 32, 8 },
-	{ 1, 0x2000, &charlayout, 64, 8 },
+	{ 1, 0x0000, &charlayout,        0, 8 },
+	{ 1, 0x1000, &charlayout,       32, 8 },
+	{ 1, 0x2000, &charlayout,       64, 8 },
+	{ 1, 0x2000, &charlayout_flipx, 64, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -371,9 +385,10 @@ ROM_START( dday_rom )
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
 
-	ROM_REGION(0x1800)      /* search light */
+	ROM_REGION(0x2000)      /* search light */
 	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
 	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
+							/*0x1800 -0x1fff will be filled in dynamically */
 
 	ROM_REGION(0x0800)      /* layer mask */
 	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
@@ -399,9 +414,10 @@ ROM_START( ddayc_rom )
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
 
-	ROM_REGION(0x1800)      /* search light */
+	ROM_REGION(0x2000)      /* search light */
 	ROM_LOAD( "d2_67.bin",    0x0000, 0x1000, 0x2b693e42 )  /* layout */
 	ROM_LOAD( "d4_68.bin",    0x1000, 0x0800, 0xf3649264 )  /* mask */
+							/*0x1800 -0x1fff will be filled in dynamically */
 
 	ROM_REGION(0x0800)      /* layer mask */
 	ROM_LOAD( "k4_73.bin",    0x0000, 0x0800, 0xfa6237e4 )
@@ -465,7 +481,7 @@ struct GameDriver dday_driver =
 	0,
 
 	dday_rom,
-	0, 0,
+	dday_decode, 0,
 	0,
 	0,      /* sound_prom */
 
@@ -491,7 +507,7 @@ struct GameDriver ddayc_driver =
 	0,
 
 	ddayc_rom,
-	0, 0,
+	dday_decode, 0,
 	0,
 	0,      /* sound_prom */
 

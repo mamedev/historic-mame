@@ -187,7 +187,7 @@ INLINE void blit_byte(UINT8 x, UINT8 y, int val, int val2, UINT8 plane)
 {
 	int p1,p2,p3,p4;
 
-	INT8 dx=0,dy=1;
+	INT8 dx=1,dy=0;
 
 
 	p4 =  val        & 0x0f;
@@ -196,43 +196,49 @@ INLINE void blit_byte(UINT8 x, UINT8 y, int val, int val2, UINT8 plane)
 	p1 = (val2 >> 4) & 0x0f;
 
 
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int t;
+
+		t = x; x = y; y = t;
+		t = dx; dx = dy; dy = t;
+	}
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
-		x = ~x;
+		x = x ^ 0xff;
+		dx = -dx;
 	}
 	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
-		y = ~y;
-		dy = -1;
-	}
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		UINT8 temp = x;
-		x = y;
-		y = temp;
-
-		dx = dy;
-		dy = 0;
+		y = y ^ 0xff;
+		dy = -dy;
 	}
 
 
 	if (plane & 0x01)
 	{
-		if (p4 != 8)  tmpbitmap ->line[x     ][y     ] = Machine->pens[p4];
-		if (p3 != 8)  tmpbitmap ->line[x+  dx][y+  dy] = Machine->pens[p3];
-		if (p2 != 8)  tmpbitmap ->line[x+2*dx][y+2*dy] = Machine->pens[p2];
-		if (p1 != 8)  tmpbitmap ->line[x+3*dx][y+3*dy] = Machine->pens[p1];
+		if (p4 != 8)  tmpbitmap ->line[y     ][x     ] = Machine->pens[p4];
+		if (p3 != 8)  tmpbitmap ->line[y+  dy][x+  dx] = Machine->pens[p3];
+		if (p2 != 8)  tmpbitmap ->line[y+2*dy][x+2*dx] = Machine->pens[p2];
+		if (p1 != 8)  tmpbitmap ->line[y+3*dy][x+3*dx] = Machine->pens[p1];
 	}
 
 	if (plane & 0x04)
 	{
-		if (p4 != 8)  tmpbitmap2->line[x     ][y     ] = Machine->pens[16+p4];
-		if (p3 != 8)  tmpbitmap2->line[x+  dx][y+  dy] = Machine->pens[16+p3];
-		if (p2 != 8)  tmpbitmap2->line[x+2*dx][y+2*dy] = Machine->pens[16+p2];
-		if (p1 != 8)  tmpbitmap2->line[x+3*dx][y+3*dy] = Machine->pens[16+p1];
+		if (p4 != 8)  tmpbitmap2->line[y     ][x     ] = Machine->pens[16+p4];
+		if (p3 != 8)  tmpbitmap2->line[y+  dy][x+  dx] = Machine->pens[16+p3];
+		if (p2 != 8)  tmpbitmap2->line[y+2*dy][x+2*dx] = Machine->pens[16+p2];
+		if (p1 != 8)  tmpbitmap2->line[y+3*dy][x+3*dx] = Machine->pens[16+p1];
 	}
 
-	osd_mark_dirty(y,x,y+3*dy,x+3*dx,0);
+	if (dx >= 0 && dy >= 0)
+		osd_mark_dirty(x,y,x+3*dx,y+3*dy,0);
+	else if (dx >= 0)
+		osd_mark_dirty(x,y+3*dy,x+3*dx,y,0);
+	else if (dy >= 0)
+		osd_mark_dirty(x+3*dx,y,x,y+3*dy,0);
+	else
+		osd_mark_dirty(x+3*dx,y+3*dy,x,y,0);
 }
 
 
@@ -240,11 +246,11 @@ void arabian_blit_area(UINT8 plane, UINT16 src, UINT8 x, UINT8 y, UINT8 sx, UINT
 {
 	int i,j;
 
-	for (i = 0; i <= sy; i++, y += 4)
+	for (i = 0; i <= sx; i++, x += 4)
 	{
-		for (j = 0; j <= sx; j++)
+		for (j = 0; j <= sy; j++)
 		{
-			blit_byte(x+j, y, Machine->memory_region[1][src], Machine->memory_region[1][src+0x4000], plane);
+			blit_byte(x, y+j, Machine->memory_region[1][src], Machine->memory_region[1][src+0x4000], plane);
 			src++;
 		}
 	}
@@ -262,10 +268,10 @@ void arabian_blitter_w(int offset,int val)
 
 		plane = spriteram[offset-6];
 		src   = spriteram[offset-5] | (spriteram[offset-4] << 8);
-		x     = spriteram[offset-3];
-		y     = spriteram[offset-2] << 2;
-		sx    = spriteram[offset-1];
-		sy    = spriteram[offset-0];
+		x     = spriteram[offset-2] << 2;
+		y     = spriteram[offset-3];
+		sx    = spriteram[offset-0];
+		sy    = spriteram[offset-1];
 
 		arabian_blit_area(plane,src,x,y,sx,sy);
 	}
@@ -279,7 +285,7 @@ void arabian_videoram_w(int offset, int val)
 	unsigned char *bm;
 
 	UINT8 x,y;
-	INT8 dx=0, dy=1;
+	INT8 dx=1, dy=0;
 
 
 	plane1 = spriteram[0] & 0x01;
@@ -287,58 +293,57 @@ void arabian_videoram_w(int offset, int val)
 	plane3 = spriteram[0] & 0x04;
 	plane4 = spriteram[0] & 0x08;
 
-	x = offset & 0xff;
-	y = (offset >> 8) << 2;
+	x = (offset >> 8) << 2;
+	y = offset & 0xff;
 
 
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int t;
+
+		t = x; x = y; y = t;
+		t = dx; dx = dy; dy = t;
+	}
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
-		x = ~x;
+		x = x ^ 0xff;
+		dx = -dx;
 	}
 	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
-		y = ~y;
-		dy = -1;
-	}
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		UINT8 temp = x;
-		x = y;
-		y = temp;
-
-		dx = dy;
-		dy = 0;
+		y = y ^ 0xff;
+		dy = -dy;
 	}
 
 
 	/* JB 970727 */
-	tmpbitmap ->line[x     ][y     ] = inverse_palette[ tmpbitmap ->line[x     ][y     ] ];
-	tmpbitmap ->line[x+  dx][y+  dy] = inverse_palette[ tmpbitmap ->line[x+  dx][y+  dy] ];
-	tmpbitmap ->line[x+2*dx][y+2*dy] = inverse_palette[ tmpbitmap ->line[x+2*dx][y+2*dy] ];
-	tmpbitmap ->line[x+3*dx][y+3*dy] = inverse_palette[ tmpbitmap ->line[x+3*dx][y+3*dy] ];
-	tmpbitmap2->line[x     ][y     ] = inverse_palette[ tmpbitmap2->line[x     ][y     ] ];
-	tmpbitmap2->line[x+  dx][y+  dy] = inverse_palette[ tmpbitmap2->line[x+  dx][y+  dy] ];
-	tmpbitmap2->line[x+2*dx][y+2*dy] = inverse_palette[ tmpbitmap2->line[x+2*dx][y+2*dy] ];
-	tmpbitmap2->line[x+3*dx][y+3*dy] = inverse_palette[ tmpbitmap2->line[x+3*dx][y+3*dy] ];
+	tmpbitmap ->line[y     ][x     ] = inverse_palette[ tmpbitmap ->line[y     ][x     ] ];
+	tmpbitmap ->line[y+  dy][x+  dx] = inverse_palette[ tmpbitmap ->line[y+  dy][x+  dx] ];
+	tmpbitmap ->line[y+2*dy][x+2*dx] = inverse_palette[ tmpbitmap ->line[y+2*dy][x+2*dx] ];
+	tmpbitmap ->line[y+3*dy][x+3*dx] = inverse_palette[ tmpbitmap ->line[y+3*dy][x+3*dx] ];
+	tmpbitmap2->line[y     ][x     ] = inverse_palette[ tmpbitmap2->line[y     ][x     ] ];
+	tmpbitmap2->line[y+  dy][x+  dx] = inverse_palette[ tmpbitmap2->line[y+  dy][x+  dx] ];
+	tmpbitmap2->line[y+2*dy][x+2*dx] = inverse_palette[ tmpbitmap2->line[y+2*dy][x+2*dx] ];
+	tmpbitmap2->line[y+3*dy][x+3*dx] = inverse_palette[ tmpbitmap2->line[y+3*dy][x+3*dx] ];
 
 	if (plane1)
 	{
-		bm = &tmpbitmap->line[x     ][y     ];
+		bm = &tmpbitmap->line[y     ][x     ];
 		*bm &= 0xf3;
 		if (val & 0x10) *bm |= 8;
 		if (val & 0x01) *bm |= 4;
 
-		bm = &tmpbitmap->line[x+  dx][y+  dy];
+		bm = &tmpbitmap->line[y+  dy][x+  dx];
 		*bm &= 0xf3;
 		if (val & 0x20) *bm |= 8;
 		if (val & 0x02) *bm |= 4;
 
-		bm = &tmpbitmap->line[x+2*dx][y+2*dy];
+		bm = &tmpbitmap->line[y+2*dy][x+2*dx];
 		*bm &= 0xf3;
 		if (val & 0x40) *bm |= 8;
 		if (val & 0x04) *bm |= 4;
 
-		bm = &tmpbitmap->line[x+3*dx][y+3*dy];
+		bm = &tmpbitmap->line[y+3*dy][x+3*dx];
 		*bm &= 0xf3;
 		if (val & 0x80) *bm |= 8;
 		if (val & 0x08) *bm |= 4;
@@ -346,22 +351,22 @@ void arabian_videoram_w(int offset, int val)
 
 	if (plane2)
 	{
-		bm = &tmpbitmap->line[x     ][y     ];
+		bm = &tmpbitmap->line[y     ][x     ];
 		*bm &= 0xfc;
 		if (val & 0x10) *bm |= 2;
 		if (val & 0x01) *bm |= 1;
 
-		bm = &tmpbitmap->line[x+  dx][y+  dy];
+		bm = &tmpbitmap->line[y+  dy][x+  dx];
 		*bm &= 0xfc;
 		if (val & 0x20) *bm |= 2;
 		if (val & 0x02) *bm |= 1;
 
-		bm = &tmpbitmap->line[x+2*dx][y+2*dy];
+		bm = &tmpbitmap->line[y+2*dy][x+2*dx];
 		*bm &= 0xfc;
 		if (val & 0x40) *bm |= 2;
 		if (val & 0x04) *bm |= 1;
 
-		bm = &tmpbitmap->line[x+3*dx][y+3*dy];
+		bm = &tmpbitmap->line[y+3*dy][x+3*dx];
 		*bm &= 0xfc;
 		if (val & 0x80) *bm |= 2;
 		if (val & 0x08) *bm |= 1;
@@ -369,22 +374,22 @@ void arabian_videoram_w(int offset, int val)
 
 	if (plane3)
 	{
-		bm = &tmpbitmap2->line[x     ][y     ];
+		bm = &tmpbitmap2->line[y     ][x     ];
 		*bm &= 0xf3;
 		if (val & 0x10) *bm |= (16+8);
 		if (val & 0x01) *bm |= (16+4);
 
-		bm = &tmpbitmap2->line[x+  dx][y+  dy];
+		bm = &tmpbitmap2->line[y+  dy][x+  dx];
 		*bm &= 0xf3;
 		if (val & 0x20) *bm |= (16+8);
 		if (val & 0x02) *bm |= (16+4);
 
-		bm = &tmpbitmap2->line[x+2*dx][y+2*dy];
+		bm = &tmpbitmap2->line[y+2*dy][x+2*dx];
 		*bm &= 0xf3;
 		if (val & 0x40) *bm |= (16+8);
 		if (val & 0x04) *bm |= (16+4);
 
-		bm = &tmpbitmap2->line[x+3*dx][y+3*dy];
+		bm = &tmpbitmap2->line[y+3*dy][x+3*dx];
 		*bm &= 0xf3;
 		if (val & 0x80) *bm |= (16+8);
 		if (val & 0x08) *bm |= (16+4);
@@ -392,38 +397,45 @@ void arabian_videoram_w(int offset, int val)
 
 	if (plane4)
 	{
-		bm = &tmpbitmap2->line[x     ][y     ];
+		bm = &tmpbitmap2->line[y     ][x     ];
 		*bm &= 0xfc;
 		if (val & 0x10) *bm |= (16+2);
 		if (val & 0x01) *bm |= (16+1);
 
-		bm = &tmpbitmap2->line[x+  dx][y+  dy];
+		bm = &tmpbitmap2->line[y+  dy][x+  dx];
 		*bm &= 0xfc;
 		if (val & 0x20) *bm |= (16+2);
 		if (val & 0x02) *bm |= (16+1);
 
-		bm = &tmpbitmap2->line[x+2*dx][y+2*dy];
+		bm = &tmpbitmap2->line[y+2*dy][x+2*dx];
 		*bm &= 0xfc;
 		if (val & 0x40) *bm |= (16+2);
 		if (val & 0x04) *bm |= (16+1);
 
-		bm = &tmpbitmap2->line[x+3*dx][y+3*dy];
+		bm = &tmpbitmap2->line[y+3*dy][x+3*dx];
 		*bm &= 0xfc;
 		if (val & 0x80) *bm |= (16+2);
 		if (val & 0x08) *bm |= (16+1);
 	}
 
 	/* JB 970727 */
-	tmpbitmap ->line[x     ][y     ] = Machine->pens[ tmpbitmap ->line[x     ][y     ] ];
-	tmpbitmap ->line[x+  dx][y+  dy] = Machine->pens[ tmpbitmap ->line[x+  dx][y+  dy] ];
-	tmpbitmap ->line[x+2*dx][y+2*dy] = Machine->pens[ tmpbitmap ->line[x+2*dx][y+2*dy] ];
-	tmpbitmap ->line[x+3*dx][y+3*dy] = Machine->pens[ tmpbitmap ->line[x+3*dx][y+3*dy] ];
-	tmpbitmap2->line[x     ][y     ] = Machine->pens[ tmpbitmap2->line[x     ][y     ] ];
-	tmpbitmap2->line[x+  dx][y+  dy] = Machine->pens[ tmpbitmap2->line[x+  dx][y+  dy] ];
-	tmpbitmap2->line[x+2*dx][y+2*dy] = Machine->pens[ tmpbitmap2->line[x+2*dx][y+2*dy] ];
-	tmpbitmap2->line[x+3*dx][y+3*dy] = Machine->pens[ tmpbitmap2->line[x+3*dx][y+3*dy] ];
+	tmpbitmap ->line[y     ][x     ] = Machine->pens[ tmpbitmap ->line[y     ][x     ] ];
+	tmpbitmap ->line[y+  dy][x+  dx] = Machine->pens[ tmpbitmap ->line[y+  dy][x+  dx] ];
+	tmpbitmap ->line[y+2*dy][x+2*dx] = Machine->pens[ tmpbitmap ->line[y+2*dy][x+2*dx] ];
+	tmpbitmap ->line[y+3*dy][x+3*dx] = Machine->pens[ tmpbitmap ->line[y+3*dy][x+3*dx] ];
+	tmpbitmap2->line[y     ][x     ] = Machine->pens[ tmpbitmap2->line[y     ][x     ] ];
+	tmpbitmap2->line[y+  dy][x+  dx] = Machine->pens[ tmpbitmap2->line[y+  dy][x+  dx] ];
+	tmpbitmap2->line[y+2*dy][x+2*dx] = Machine->pens[ tmpbitmap2->line[y+2*dy][x+2*dx] ];
+	tmpbitmap2->line[y+3*dy][x+3*dx] = Machine->pens[ tmpbitmap2->line[y+3*dy][x+3*dx] ];
 
-	osd_mark_dirty(y,x,y+3*dy,x+3*dx,0);
+	if (dx >= 0 && dy >= 0)
+		osd_mark_dirty(x,y,x+3*dx,y+3*dy,0);
+	else if (dx >= 0)
+		osd_mark_dirty(x,y+3*dy,x+3*dx,y,0);
+	else if (dy >= 0)
+		osd_mark_dirty(x+3*dx,y,x,y+3*dy,0);
+	else
+		osd_mark_dirty(x+3*dx,y+3*dy,x,y,0);
 }
 
 

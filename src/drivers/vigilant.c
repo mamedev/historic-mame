@@ -44,6 +44,10 @@ void vigilant_out2_w(int offset,int data)
 	/* D0 = FILP = Flip screen? */
 	/* D1 = COA1 = Coin Counter A? */
 	/* D2 = COB1 = Coin Counter B? */
+
+	/* The hardware has both coin counters hooked up to a single meter. */
+	coin_counter_w(0, (data&0x02));
+	coin_counter_w(1, (data&0x04));
 }
 
 
@@ -432,6 +436,33 @@ ROM_START( vigilant_rom )
 	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
 ROM_END
 
+ROM_START( vigilntu_rom )
+	ROM_REGION(0x20000) /* region#0: 64k for code + 64k for bankswitching */
+	ROM_LOAD( "a-8h",  0x00000, 0x08000, 0x8d15109e )
+	ROM_LOAD( "a-8l",  0x10000, 0x10000, 0x7f95799b )
+
+	ROM_REGION_DISPOSE(0xD0000) /* region #1: graphics (disposed after conversion) */
+	ROM_LOAD( "h05_c09.bin",  0x00000, 0x10000, 0x4f5872f0 )
+	ROM_LOAD( "f05_c08.bin",  0x10000, 0x10000, 0x01579d20 )
+	ROM_LOAD( "t07_c16.bin",  0x20000, 0x10000, 0xf5425e42 )
+	ROM_LOAD( "v07_c17.bin",  0x30000, 0x10000, 0x959ba3c7 )
+	ROM_LOAD( "p07_c14.bin",  0x40000, 0x10000, 0xcb50a17c )
+	ROM_LOAD( "s07_c15.bin",  0x50000, 0x10000, 0x7f2e91c5 )
+	ROM_LOAD( "n07_c12.bin",  0x60000, 0x10000, 0x10af8eb2 )
+	ROM_LOAD( "o07_c13.bin",  0x70000, 0x10000, 0xb1d9d4dc )
+	ROM_LOAD( "k07_c10.bin",  0x80000, 0x10000, 0x9576f304 )
+	ROM_LOAD( "l07_c11.bin",  0x90000, 0x10000, 0x4598be4a )
+	ROM_LOAD( "d01_c05.bin",  0xA0000, 0x10000, 0x81b1ee5c )
+	ROM_LOAD( "e01_c06.bin",  0xB0000, 0x10000, 0xd0d33673 )
+	ROM_LOAD( "f01_c07.bin",  0xC0000, 0x10000, 0xaae81695 )
+
+	ROM_REGION(0x10000) /* region#2: 64k for sound */
+	ROM_LOAD( "g05_c02.bin",  0x00000, 0x10000, 0x10582b2d )
+
+	ROM_REGION(0x10000) /* region#3: 64k for sample ROM */
+	ROM_LOAD( "d04_c01.bin",  0x00000, 0x10000, 0x9b85101d )
+ROM_END
+
 ROM_START( vigilntj_rom )
 	ROM_REGION(0x20000) /* region#0: 64k for code + 64k for bankswitching */
 	ROM_LOAD( "vg_a-8h.rom",  0x00000, 0x08000, 0xba848713 )
@@ -502,7 +533,7 @@ struct GameDriver vigilant_driver =
 	__FILE__,
 	0,
 	"vigilant",
-	"Vigilante (US)",
+	"Vigilante (World?)",
 	"1988",
 	"Irem",
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
@@ -511,6 +542,31 @@ struct GameDriver vigilant_driver =
 	0,
 
 	vigilant_rom,
+	0,0,
+	0,
+	0,	/* sound_prom */
+
+	vigilant_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+        vigilant_hiload, vigilant_hisave
+};
+
+struct GameDriver vigilntu_driver =
+{
+	__FILE__,
+	&vigilant_driver,
+	"vigilntu",
+	"Vigilante (US)",
+	"1988",
+	"Irem (Data East USA license)",
+	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	vigilntu_rom,
 	0,0,
 	0,
 	0,	/* sound_prom */

@@ -224,5 +224,46 @@ void boothill_sh_port5_w(int offset, int data)
 	}
 }
 
+/*******************************************************/
+/*                                                     */
+/* Taito "Balloon Bomber"                              */
+/*                                                     */
+/*******************************************************/
+
+/* This only does the colour swap for the explosion */
+/* We do not have correct samples so sound not done */
+
+void ballbomb_sh_port3_w(int offset, int data)
+{
+	static unsigned char colorswap = 0;
+
+	if (data & 0x04 && ~colorswap & 0x04)
+	{
+	    /* turn all colours red here */
+
+        palette_change_color(1,0xff,0x00,0x00);
+        palette_change_color(2,0xff,0x00,0x00);
+        palette_change_color(3,0xff,0x00,0x00);
+        palette_change_color(4,0xff,0x00,0x00);
+        palette_change_color(5,0xff,0x00,0x00);
+        palette_change_color(6,0xff,0x00,0x00);
+        palette_change_color(7,0xff,0x00,0x00);
+    }
+
+	if (~data & 0x04 && colorswap & 0x04)
+	{
+    	/* restore colours here */
+
+        palette_change_color(1,0x20,0xff,0xff);
+        palette_change_color(2,0xff,0x20,0xff);
+        palette_change_color(3,0x20,0x20,0xff);
+        palette_change_color(4,0xff,0xff,0x20);
+        palette_change_color(5,0x20,0xff,0x20);
+        palette_change_color(6,0xff,0x20,0x20);
+        palette_change_color(7,0xff,0xff,0xff);
+    }
+
+	colorswap = data;
+}
 
 

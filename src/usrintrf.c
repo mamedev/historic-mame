@@ -19,6 +19,24 @@ extern char build_version[];
 extern unsigned int dispensed_tickets;
 extern unsigned int coins[COIN_COUNTERS];
 
+/* MARTINEZ.F 990207 Memory Card */
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+int 		memcard_menu(int);
+extern int	mcd_action;
+extern int	mcd_number;
+extern int	memcard_status;
+extern int	memcard_number;
+extern int	memcard_manager;
+#endif
+#endif
+
+extern int neogeo_memcard_load(int);
+extern void neogeo_memcard_save(void);
+extern void neogeo_memcard_eject(void);
+extern int neogeo_memcard_create(int);
+/* MARTINEZ.F 990207 Memory Card End */
+
 
 
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
@@ -810,6 +828,9 @@ extern int no_of_tiles;
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
         int zx,int zy,const struct rectangle *clip);
+void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+        int zx,int zy,const struct rectangle *clip);
 extern struct GameDriver neogeo_bios;
 #endif
 #endif
@@ -831,7 +852,10 @@ static void showcharset(void)
 
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
-	if(Machine->gamedrv->clone_of == &neogeo_bios) game_is_neogeo=1;
+	if (Machine->gamedrv->clone_of == &neogeo_bios ||
+			(Machine->gamedrv->clone_of &&
+				Machine->gamedrv->clone_of->clone_of == &neogeo_bios))
+		game_is_neogeo=1;
 #endif
 #endif
 
@@ -862,15 +886,15 @@ static void showcharset(void)
 			osd_clearbitmap(Machine->scrbitmap);
 
 			/* validity chack after char bank change */
-			if (firstdrawn >= Machine->drv->gfxdecodeinfo[bank].gfxlayout->total)
+			if (firstdrawn >= Machine->gfx[bank]->total_elements)
 			{
-				firstdrawn = Machine->drv->gfxdecodeinfo[bank].gfxlayout->total - skip_chars;
+				firstdrawn = Machine->gfx[bank]->total_elements - skip_chars;
 				if (firstdrawn < 0) firstdrawn = 0;
 			}
 
 			if(bank!=2 || !game_is_neogeo)
 			{
-				for (i = 0; i+firstdrawn < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total && i<cpx*cpy; i++)
+				for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
 				{
 					drawgfx(Machine->scrbitmap,Machine->gfx[bank],
 						i+firstdrawn,color,  /*sprite num, color*/
@@ -895,12 +919,20 @@ static void showcharset(void)
 
 				for (i = 0; i+firstdrawn < no_of_tiles && i<cpx*cpy; i++)
 				{
-					NeoMVSDrawGfx(Machine->scrbitmap->line,Machine->gfx[bank],
-						i+firstdrawn,color,  /*sprite num, color*/
-						0,0,
-						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-						Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-						16,16,&clip);
+					if (Machine->scrbitmap->depth == 16)
+						NeoMVSDrawGfx16(Machine->scrbitmap->line,Machine->gfx[bank],
+							i+firstdrawn,color,  /*sprite num, color*/
+							0,0,
+							(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+							Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+							16,16,&clip);
+					else
+						NeoMVSDrawGfx(Machine->scrbitmap->line,Machine->gfx[bank],
+							i+firstdrawn,color,  /*sprite num, color*/
+							0,0,
+							(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
+							Machine->uifontheight+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+							16,16,&clip);
 
 					lastdrawn = i+firstdrawn;
 				}
@@ -957,7 +989,7 @@ static void showcharset(void)
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGDN,4))
 		{
-			if (firstdrawn + skip_chars < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total)
+			if (firstdrawn + skip_chars < Machine->gfx[bank]->total_elements)
 			{
 				firstdrawn += skip_chars;
 				changed = 1;
@@ -973,7 +1005,7 @@ static void showcharset(void)
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,6))
 		{
-			if (color < Machine->drv->gfxdecodeinfo[bank].total_color_codes - 1)
+			if (color < Machine->gfx[bank]->total_colors - 1)
 			{
 				color++;
 				changed = 1;
@@ -2680,9 +2712,124 @@ static int displayhistory (int selected)
 }
 
 
+int	memcard_menu(int selection)
+{
+	int sel;
+	int menutotal = 0;
+	const char *menuitem[10];
+	char	buffer[300];
+	char	*msg;
+	void	*f;
+
+	sel = selection - 1 ;
+
+	sprintf(buffer, "Load Memory Card %03d", mcd_number);
+	menuitem[menutotal++] = buffer;
+	menuitem[menutotal++] = "Eject Memory Card";
+	menuitem[menutotal++] = "Create Memory Card";
+	menuitem[menutotal++] = "Call Memory Card Manager (RESET)";
+	menuitem[menutotal++] = "Return to Main Menu";
+	menuitem[menutotal] = 0;
+
+	if (mcd_action!=0)
+	{
+		switch(mcd_action)
+		{
+		case	1:
+			msg = "\nFailed To Load Memory Card!\n\n";
+			break;
+		case	2:
+			msg = "\nLoad OK!\n\n";
+			break;
+		case	3:
+			msg = "\nMemory Card Ejected!\n\n";
+			break;
+		case	4:
+			msg = "\nMemory Card Created OK!\n\n";
+			break;
+		case	5:
+			msg = "\nFailed To Create Memory Card!\n(It already exists ?)\n\n";
+			break;
+		default:
+			msg = "\nDAMN!! Internal Error!\n\n";
+		}
+		displaymessagewindow(msg);
+		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+			mcd_action = 0;
+	}
+	else
+	{
+		displaymenu(menuitem,0,0,sel,0);
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
+			mcd_number = (mcd_number + 1) % 1000;
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_LEFT,8))
+			mcd_number = (mcd_number + 999) % 1000;
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,8))
+			sel = (sel + 1) % menutotal;
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,8))
+			sel = (sel + menutotal - 1) % menutotal;
+
+		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+		{
+			switch(sel)
+			{
+			case 0:
+				neogeo_memcard_eject();
+				if (neogeo_memcard_load(mcd_number))
+				{
+					memcard_status=1;
+					memcard_number=mcd_number;
+					mcd_action = 2;
+				}
+				else
+					mcd_action = 1;
+				break;
+			case 1:
+				neogeo_memcard_eject();
+				mcd_action = 3;
+				break;
+			case 2:
+				if (neogeo_memcard_create(mcd_number))
+					mcd_action = 4;
+				else
+					mcd_action = 5;
+				break;
+			case 3:
+				memcard_manager=1;
+				sel=-2;
+				machine_reset();
+				break;
+			case 4:
+				sel=-1;
+				break;
+			}
+		}
+
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+			sel = -2;
+
+		if (sel == -1 || sel == -2)
+		{
+			/* tell updatescreen() to clean after us */
+			need_to_clear_bitmap = 1;
+		}
+	}
+
+	return sel + 1;
+}
+
+
+
 enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
 		UI_STATS,UI_CREDITS,UI_GAMEINFO,UI_HISTORY,
-		UI_CHEAT,UI_RESET,UI_EXIT };
+		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 
 #define MAX_SETUPMENU_ITEMS 20
 static const char *menu_item[MAX_SETUPMENU_ITEMS];
@@ -2737,6 +2884,17 @@ static void setup_menu_init(void)
 	{
 		menu_item[menu_total] = "Cheat"; menu_action[menu_total++] = UI_CHEAT;
 	}
+
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+	if (Machine->gamedrv->clone_of == &neogeo_bios ||
+			(Machine->gamedrv->clone_of &&
+				Machine->gamedrv->clone_of->clone_of == &neogeo_bios))
+	{
+		menu_item[menu_total] = "Memory Card"; menu_action[menu_total++] = UI_MEMCARD;
+	}
+#endif
+#endif
 
 	menu_item[menu_total] = "Reset Game"; menu_action[menu_total++] = UI_RESET;
 	menu_item[menu_total] = "Return to Game"; menu_action[menu_total++] = UI_EXIT;
@@ -2887,6 +3045,17 @@ while (osd_key_pressed(OSD_KEY_UI_SELECT))
 osd_sound_enable(1);
 sel = sel & 0xff;
 				break;
+
+			case UI_MEMCARD:
+				res = memcard_menu(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
 		}
 
 		return sel + 1;
@@ -2917,6 +3086,7 @@ sel = sel & 0xff;
 			case UI_GAMEINFO:
 			case UI_HISTORY:
 			case UI_CHEAT:
+			case UI_MEMCARD:
 				sel |= 0x100;
 				/* tell updatescreen() to clean after us */
 				need_to_clear_bitmap = 1;

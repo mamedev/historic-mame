@@ -106,10 +106,6 @@ int bionicc_vh_start(void)
 		tx_tilemap->transparent_pen = 3;
 		fg_tilemap->transparent_pen = 15;
 		bg_tilemap->transparent_pen = 15;
-		tilemap_set_scroll_rows(fg_tilemap,1);
-		tilemap_set_scroll_cols(fg_tilemap,1);
-		tilemap_set_scroll_rows(bg_tilemap,1);
-		tilemap_set_scroll_cols(bg_tilemap,1);
 
 		return 0;
 	}
@@ -189,16 +185,16 @@ void bionicc_scroll_w(int offset,int data)
 	switch( offset )
 	{
 		case 0:
-			tilemap_set_scrollx(fg_tilemap,0,-data);
+			tilemap_set_scrollx(fg_tilemap,0,data);
 			break;
 		case 2:
-			tilemap_set_scrolly(fg_tilemap,0,-data);
+			tilemap_set_scrolly(fg_tilemap,0,data);
 			break;
 		case 4:
-			tilemap_set_scrollx(bg_tilemap,0,-data);
+			tilemap_set_scrollx(bg_tilemap,0,data);
 			break;
 		case 6:
-			tilemap_set_scrolly(bg_tilemap,0,-data);
+			tilemap_set_scrolly(bg_tilemap,0,data);
 			break;
 	}
 }

@@ -4,9 +4,6 @@
 	Prehistoric Isle in 1930 (USA)			(c) 1989 SNK
 	Genshi-Tou 1930's (Japan)				(c) 1989 SNK
 
-	The background tile map is 16384 pixels by 512 pixels!
-
-	Input ports are not checked (dips)
 
 	Ikari 3 should run on hardware close to this.
 
@@ -20,38 +17,16 @@
 
 void prehisle_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void prehisle_video_w(int offset,int data);
+int prehisle_control_r(int offset);
 void prehisle_control_w(int offset,int data);
 int prehisle_video_r(int offset);
 void prehisle_vh_stop (void);
 int prehisle_vh_start (void);
 
 static unsigned char *prehisle_ram;
+unsigned char *prehisle_video;
 
 /******************************************************************************/
-
-static int prehisle_control_r(int offset)
-{
-	switch (offset) {
-		case 0x10: /* Player 2 */
-			return readinputport(1);
-
-		case 0x20: /* Coins, tilt, service */
-			return readinputport(2);
-
-		case 0x40: /* Player 1 */
-			return readinputport(0);
-
-		case 0x42: /* Dips */
-			return readinputport(3);
-
-		case 0x44: /* Dips + VBL */
-			return readinputport(4);
-
-		default:
-if (errorlog) fprintf(errorlog,"read unknown control %02x\n",offset);
-			return 0;
-	}
-}
 
 static void prehisle_sound_w(int offset, int data)
 {
@@ -79,7 +54,7 @@ static struct MemoryWriteAddress prehisle_writemem[] =
 	{ 0x070000, 0x073fff, MWA_BANK1, &prehisle_ram },
 	{ 0x090000, 0x0907ff, MWA_BANK4, &videoram },
 	{ 0x0a0000, 0x0a07ff, MWA_BANK5, &spriteram },
-	{ 0x0b0000, 0x0b3fff, prehisle_video_w },
+	{ 0x0b0000, 0x0b3fff, prehisle_video_w, &prehisle_video },
 	{ 0x0d0000, 0x0d07ff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x0f0070, 0x0ff071, prehisle_sound_w },
 	{ 0x0f0000, 0x0ff0ff, prehisle_control_w },
@@ -112,17 +87,17 @@ static struct MemoryWriteAddress prehisle_sound_writemem[] =
 
 static struct IOReadPort prehisle_sound_readport[] =
 {
-   { 0x00, 0x00, YM3812_status_port_0_r },
-   { -1 }
+	{ 0x00, 0x00, YM3812_status_port_0_r },
+	{ -1 }
 };
 
 static struct IOWritePort prehisle_sound_writeport[] =
 {
-   { 0x00, 0x00, YM3812_control_port_0_w },
-   { 0x20, 0x20, YM3812_write_port_0_w },
-   { 0x40, 0x40, D7759_write_port_0_w},
-   //{ 0x80, 0x80, }, /* IRQ ack? */
-   { -1 }
+	{ 0x00, 0x00, YM3812_control_port_0_w },
+	{ 0x20, 0x20, YM3812_write_port_0_w },
+	{ 0x40, 0x40, D7759_write_port_0_w},
+	{ 0x80, 0x80, MWA_NOP }, /* IRQ ack? */
+	{ -1 }
 };
 
 /******************************************************************************/
@@ -258,14 +233,14 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
 	4000000,	/* 4 Mhz */
-	{ 40 }		/* (not supported) */
+	{ 20 }		/* (not supported) */
 };
 
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
-	{ 90 }, /* volume */
+	{ 75 }, /* volume */
 	3,		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
@@ -394,6 +369,59 @@ ROM_END
 
 /******************************************************************************/
 
+static int world_cycle_r(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=READ_WORD(&prehisle_ram[0x24]);
+
+	if ((ret&0x8000) && (pc==0x260c || pc==0x268a || pc==0x2b0a || pc==0x34a8 || pc==0x6ae4 || pc==0x83ac || pc==0x25ce || pc==0x29c4)) {
+		cpu_spinuntil_int();
+		return ret&0x7fff;
+	}
+	return ret;
+}
+
+static void world_memory(void)
+{
+	install_mem_read_handler(0, 0x70024, 0x70025, world_cycle_r);
+}
+
+static int usa_cycle_r(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=READ_WORD(&prehisle_ram[0x24]);
+
+	if ((ret&0x8000) && (pc==0x281e || pc==0x28a6 || pc==0x295a || pc==0x2868 || pc==0x8f98 || pc==0x3b1e)) {
+		cpu_spinuntil_int();
+		return ret&0x7fff;
+	}
+	return ret;
+}
+
+static void usa_memory(void)
+{
+	install_mem_read_handler(0, 0x70024, 0x70025, usa_cycle_r);
+}
+
+static int jap_cycle_r(int offset)
+{
+	int pc=cpu_get_pc();
+	int ret=READ_WORD(&prehisle_ram[0x24]);
+
+	if ((ret&0x8000) && (pc==0x34b6 /* Todo! */ )) {
+		cpu_spinuntil_int();
+		return ret&0x7fff;
+	}
+	return ret;
+}
+
+static void jap_memory(void)
+{
+	install_mem_read_handler(0, 0x70024, 0x70025, jap_cycle_r);
+}
+
+/******************************************************************************/
+
 struct GameDriver prehisle_driver =
 {
 	__FILE__,
@@ -405,7 +433,7 @@ struct GameDriver prehisle_driver =
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
 	&prehisle_machine_driver,
-	0,
+	world_memory,
 
 	prehisle_rom,
 	0, 0,
@@ -430,7 +458,7 @@ struct GameDriver prehislu_driver =
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
 	&prehisle_machine_driver,
-	0,
+	usa_memory,
 
 	prehislu_rom,
 	0, 0,
@@ -455,7 +483,7 @@ struct GameDriver prehislj_driver =
 	"Bryan McPhail\nCarlos Alberto Lozano Baides",
 	0,
 	&prehisle_machine_driver,
-	0,
+	jap_memory,
 
 	prehislj_rom,
 	0, 0,
@@ -468,3 +496,4 @@ struct GameDriver prehislj_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+

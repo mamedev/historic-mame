@@ -1,43 +1,33 @@
 /***************************************************************************
-	Nemesis preliminary :
 
-	0x00000 - 0x3ffff       ROM
+	Nemesis (Hacked?)		GX400
+	Nemesis (UK)			GX400
+	Twin Bee				GX412
+	Gradius					GX456
+	Galactic Warriors		GX578
+	Konami GT				GX561
+	RF2						GX561
+	Salamander				GX587
+	Lifeforce (US)			GX587
+	Lifeforce (Japan)		GX587
 
-	0x40000 - 0x4ffff	character RAM + Obj ram
-
-	scroll value is the same for every line in nemesis
-	0x50000 - 0x501ff	scroll index per line layer 1 (low byte)
-	0x50200 - 0x503ff	scroll index per line layer 1 (hi byte)
-	0x50400 - 0x505ff	scroll index per line layer 2 (low byte)
-	0x50600 - 0x507ff	scroll index per line layer 2 (hi byte)
-
-	0x50800 - 0x50fff	??????
-
-	0x52000 - 0x52fff       screen RAM 1
-	0x53000 - 0x53fff       screen RAM 2
-
-	0x54000 - 0x54fff	color ram 1
-	0x55000 - 0x55fff	color ram 2
-
-	0x56000 - 0x56fff       sprite RAM
-
-	0x5c401
-	0x5c403
-
-	0x5cc01
-	0x5cc03
-
-	0x5cc05
-	0x5cc07
-
-	0x5c801			(watchdog ???)
-
-	0x5a000 - 0x5afff       pallette RAM
+To do:
+	Combine video functions for Salamander/other games.
+	Implement sprite/background priority and background/background priority
+	  (lifefrcj title screen, Nemesis later levels).
+	Speech in Salamander, K007232 stuff isn't verified.
+	Possible missing sound channel in Nemesis?
+	Colours in Nemesis/GX400 are calculated wrong.  They are far too bright.
+	Colours in Salamander are fine...
+	Clean up stuff :)
+	Input ports are slightly different between Salamander/Lifeforce.
+	Lifeforce (Japan) needs support for the large sprite size.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
 static unsigned char *ram;
 
@@ -60,7 +50,20 @@ void nemesis_vh_stop(void);
 void salamand_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void nemesis_init_machine(void);
 
+void salamander_palette_w(int offset,int data);
 
+
+void gx400_xscroll1_w(int offset,int data);
+void gx400_xscroll2_w(int offset,int data);
+void gx400_yscroll_w(int offset,int data);
+int  gx400_xscroll1_r(int offset);
+int  gx400_xscroll2_r(int offset);
+int  gx400_yscroll_r(int offset);
+
+extern unsigned char *nemesis_yscroll1, *nemesis_yscroll2;
+
+
+void nemesis_palette_w(int offset,int data);
 
 int irq_on = 0;
 int irq1_on = 0;
@@ -85,7 +88,15 @@ int nemesis_interrupt(void)
 	return 0;
 }
 
+void salamand_soundlatch_w (int offset, int data)
+{
+	soundlatch_w(offset,data & 0xff);
+	cpu_cause_interrupt(1,Z80_IRQ_INT);
 
+//if (errorlog) fprintf(errorlog,"z80 data write\n");
+
+//cpu_cause_interrupt(1,Z80_NMI_INT);
+}
 int konamigt_interrupt(void)
 {
 	if (cpu_getiloops() == 0)
@@ -270,6 +281,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x054000, 0x055fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
 	{ 0x056000, 0x056fff, MWA_BANK5, &spriteram, &spriteram_size },
 	{ 0x05a000, 0x05afff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+//	{ 0x05a000, 0x05afff, nemesis_palette_w, &paletteram },
 
 	{ 0x05c000, 0x05c001, nemesis_soundlatch_w },
 	{ 0x05c800, 0x05c801, watchdog_reset_w },	/* probably */
@@ -487,71 +499,114 @@ static struct MemoryWriteAddress gx400_sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-int zero_r(int o)
-{
-	return 0;
-}
-
-int ff_r(int o)
-{
-	return 0xff;
-}
+/******************************************************************************/
 
 static struct MemoryReadAddress salamand_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },  /* ROM BIOS */
-	{ 0x080000, 0x087fff, MRA_RAM },
-	{ 0x090000, 0x091fff, MRA_RAM },
-
-//	{ 0x0c0000, 0x0c0001, input_port_3_r },	/* TEST */
-//	{ 0x0c0002, 0x0c0003, input_port_4_r },	/* DSW0 */
-
-//	{ 0x0c2000, 0x0c2001, input_port_0_r },	/* IN0 */
-//	{ 0x0c2002, 0x0c2003, input_port_1_r },	/* IN1 */
-//	{ 0x0c2004, 0x0c2005, input_port_2_r },	/* IN2 */
-//	{ 0x0c2006, 0x0c2007, input_port_5_r },	/* DSW1 */
-
-	{ 0x0c0000, 0x0c0001, zero_r },	/* TEST */
-	{ 0x0c0002, 0x0c0003, zero_r },	/* DSW0 */
-
-	{ 0x0c2000, 0x0c2001, input_port_3_r },	/* TEST */
-	{ 0x0c2002, 0x0c2003, zero_r },	/* IN1 */
-	{ 0x0c2004, 0x0c2005, zero_r },	/* IN2 */
-	{ 0x0c2006, 0x0c2007, zero_r },	/* DSW1 */
-
-
+	{ 0x080000, 0x087fff, MRA_BANK1 },
+	{ 0x090000, 0x091fff, paletteram_word_r },
+	{ 0x0c0002, 0x0c0003, input_port_3_r },	/* DSW0 */
+	{ 0x0c2000, 0x0c2001, input_port_0_r },	/* Coins, start buttons, test mode */
+	{ 0x0c2002, 0x0c2003, input_port_1_r },	/* IN1 */
+	{ 0x0c2004, 0x0c2005, input_port_2_r },	/* IN2 */
+	{ 0x0c2006, 0x0c2007, input_port_4_r },	/* DSW1 */
 	{ 0x100000, 0x101fff, nemesis_videoram1_r },
 	{ 0x102000, 0x103fff, nemesis_videoram2_r },
-
 	{ 0x120000, 0x12ffff, nemesis_characterram_r },
-	{ 0x180000, 0x180fff, paletteram_word_r },
-	{ 0x190000, 0x190fff, MRA_RAM },
+	{ 0x180000, 0x180fff, MRA_BANK7 },
+	{ 0x190000, 0x1903ff, gx400_xscroll1_r },
+	{ 0x190400, 0x1907ff, gx400_xscroll2_r },
+	{ 0x190800, 0x191fff, gx400_yscroll_r },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress salamand_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x087fff, MWA_RAM },
-
-	{ 0x290000, 0x2903ff, MWA_RAM, &nemesis_xscroll1 },
-	{ 0x290400, 0x2907ff, MWA_RAM, &nemesis_xscroll2 },
-	{ 0x290800, 0x290bff, MWA_RAM },
-	{ 0x290c00, 0x290fff, MWA_RAM, &nemesis_yscroll },
-
-	{ 0x090000, 0x091fff, MWA_RAM },
+	{ 0x080000, 0x087fff, MWA_BANK1 },
+	{ 0x090000, 0x091fff, salamander_palette_w, &paletteram },
 	{ 0x0A0000, 0x0A0001, nemesis_irq_enable_w },          /* irq enable */
-	{ 0x0C0004, 0x0C0007, MWA_NOP },        /* Watchdog at $c0005 */
+	{ 0x0C0000, 0x0C0001, salamand_soundlatch_w },
+	{ 0x0C0004, 0x0C0005, MWA_NOP },        /* Watchdog at $c0005 */
 	{ 0x100000, 0x101fff, nemesis_videoram1_w, &nemesis_videoram1 },	/* VRAM 1 */
 	{ 0x102000, 0x103fff, nemesis_videoram2_w, &nemesis_videoram2 },	/* VRAM 2 */
-
 	{ 0x120000, 0x12ffff, nemesis_characterram_w, &nemesis_characterram, &nemesis_characterram_size },
-	{ 0x180000, 0x180fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-	{ 0x190000, 0x190fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x191000, 0x191FFF, MWA_RAM },		/* more sprite ram ??? */
+	{ 0x180000, 0x180fff, MWA_BANK7, &spriteram, &spriteram_size },		/* more sprite ram ??? */
+	{ 0x190000, 0x1903ff, gx400_xscroll1_w, &nemesis_xscroll1 },
+	{ 0x190400, 0x1907ff, gx400_xscroll2_w, &nemesis_xscroll2 },
+	{ 0x190800, 0x191fff, gx400_yscroll_w, &nemesis_yscroll },
+	{ -1 }  /* end of table */
+};
+
+static int wd_read(int offset)
+{
+	static int a=1;
+	a^= 1;
+	return a;
+}
+
+static struct MemoryReadAddress sal_sound_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0xa000, 0xa000, soundlatch_r },
+	{ 0xb000, 0xb00d, K007232_ReadReg },
+	{ 0xc001, 0xc001, YM2151_status_port_0_r },
+	{ 0xe000, 0xe000, wd_read }, /* watchdog?? */
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress sal_sound_writemem[] =
+{
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x87ff, MWA_RAM },
+	{ 0xb000, 0xb00d, K007232_WriteReg },
+	{ 0xc000, 0xc000, YM2151_register_port_0_w },
+	{ 0xc001, 0xc001, YM2151_data_port_0_w },
+
+//{ 0xf000, 0xf000, VLM5030_data_w },
 
 	{ -1 }  /* end of table */
 };
+
+/******************************************************************************/
+
+#define GX400_COINAGE_DIP \
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )				\
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )		\
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )		\
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )		\
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )		\
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )		\
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )		\
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )		\
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )		\
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )		\
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )		\
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )		\
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )		\
+	PORT_DIPSETTING(    0x00, "Free Play" )				\
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )				\
+	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )		\
+	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )		\
+	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )		\
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )		\
+	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )		\
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )		\
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )		\
+	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )		\
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )		\
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )		\
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )		\
+	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )		\
+	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )		\
+	PORT_DIPSETTING(    0x00, "Disable" )
 
 INPUT_PORTS_START( nemesis_input_ports )
 	PORT_START	/* IN0 */
@@ -601,40 +656,7 @@ INPUT_PORTS_START( nemesis_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Disable" )
+	GX400_COINAGE_DIP
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, "Lives" )
@@ -708,40 +730,7 @@ INPUT_PORTS_START( nemesuk_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Disable" )
+	GX400_COINAGE_DIP
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x02, "Lives" )
@@ -813,40 +802,7 @@ INPUT_PORTS_START( konamigt_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Disable" )
+	GX400_COINAGE_DIP
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x01, "Unknown" )
@@ -923,40 +879,7 @@ INPUT_PORTS_START( rf2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Disable" )
+	GX400_COINAGE_DIP
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown" )
@@ -986,105 +909,6 @@ INPUT_PORTS_START( rf2_input_ports )
 
 	PORT_START	/* IN6 */
 	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL , 25, 0, 0x00, 0x7f )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( salamand_input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY| IPF_8WAY  )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* TEST */
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode 80", OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Disable" )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives" )
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x18, 0x18, "Bonus Life" )
-	PORT_DIPSETTING(    0x10, "30000" )
-	PORT_DIPSETTING(    0x08, "50000" )
-	PORT_DIPSETTING(    0x18, "50000 100000" )
-	PORT_DIPSETTING(    0x00, "100000" )
-	PORT_DIPNAME( 0x60, 0x60, "Difficulty" )
-	PORT_DIPSETTING(    0x60, "Easy" )
-	PORT_DIPSETTING(    0x40, "Medium" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gwarrior_input_ports )
@@ -1135,40 +959,7 @@ INPUT_PORTS_START( gwarrior_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Disable" )
+	GX400_COINAGE_DIP
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, "Lives" )
@@ -1243,40 +1034,7 @@ INPUT_PORTS_START( gradius_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A" )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Disable" )
+	GX400_COINAGE_DIP
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x01, "Lives" )
@@ -1302,6 +1060,69 @@ INPUT_PORTS_START( gradius_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( salamand_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Mode", OSD_KEY_F2, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY| IPF_8WAY  )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	GX400_COINAGE_DIP
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives" )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Slots" )
+	PORT_DIPSETTING(    0x04, "One" )
+	PORT_DIPSETTING(    0x00, "Two" )
+	PORT_DIPNAME( 0x18, 0x00, "Max Credit" )
+	PORT_DIPSETTING(    0x18, "1" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPSETTING(    0x00, "9" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty" )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+/******************************************************************************/
 
 static struct GfxLayout charlayout =
 {
@@ -1398,7 +1219,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-
+/******************************************************************************/
 
 static struct AY8910interface ay8910_interface =
 {
@@ -1411,7 +1232,35 @@ static struct AY8910interface ay8910_interface =
 	{ 0, 0 }
 };
 
+static void sound_irq(int state)
+{
+/* Interrupts _are_ generated, I wonder where they go.. */
+/*cpu_cause_interrupt(1,Z80_IRQ_INT);*/
+}
 
+static struct YM2151interface ym2151_interface =
+{
+	1,
+	3579545,
+	{ YM3012_VOL(45,OSD_PAN_LEFT,45,OSD_PAN_RIGHT) },
+	{ sound_irq }
+};
+
+static struct VLM5030interface vlm5030_interface =
+{
+    3579545,    /* master clock  */
+    70,        /* volume        */
+    3,         /* memory region  */
+    0,         /* VCU            */
+};
+
+static struct K007232_interface k007232_interface =
+{
+	4,4,  /* memory regions */
+	12 /* volume */
+};
+
+/******************************************************************************/
 
 static struct MachineDriver nemesis_machine_driver =
 {
@@ -1512,14 +1361,21 @@ static struct MachineDriver salamand_machine_driver =
 	{
 		{
 			CPU_M68000,
-			8000000,       /* 8 Mhz?? */
+			10000000,       /* 8 Mhz?? */
 			0,
 			salamand_readmem,salamand_writemem,0,0,
 			salamand_interrupt,1
 		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3579545,	/* 3.579545 MHz */
+			2,
+			sal_sound_readmem,sal_sound_writemem,0,0,
+			ignore_interrupt,0
+		},
 	},
 
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	nemesis_init_machine,
 
@@ -1529,19 +1385,27 @@ static struct MachineDriver salamand_machine_driver =
 	2048, 2048,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	nemesis_vh_start,
 	nemesis_vh_stop,
-//	salamand_vh_screenrefresh,
-	nemesis_vh_screenrefresh,
+	salamand_vh_screenrefresh,
+//	nemesis_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
-			SOUND_AY8910,
-			&ay8910_interface
+			SOUND_VLM5030,
+			&vlm5030_interface
+		},
+		{
+			SOUND_K007232,
+			&k007232_interface,
+		},
+		{
+			SOUND_YM2151,
+			&ym2151_interface
 		}
 	}
 };
@@ -1701,22 +1565,6 @@ ROM_START( konamigt_rom )
 	ROM_LOAD  ( "b09.rom",      0x00000, 0x4000, 0x539d0c49 )
 ROM_END
 
-ROM_START( salamand_rom )
-	ROM_REGION(0x200000)    /* 64k for code */
-	ROM_LOAD_EVEN ( "18b.bin",  0x00000, 0x10000, 0xa42297f9 )
-	ROM_LOAD_ODD  ( "18c.bin",  0x00000, 0x10000, 0xf9130b0a )
-	ROM_LOAD_EVEN ( "17b.bin",    0x40000, 0x20000, 0xe5caf6e6 )
-	ROM_LOAD_ODD  ( "17c.bin",    0x40000, 0x20000, 0xc2f567ea )
-
-//	ROM_LOAD_EVEN ( "18b_d02.bin",  0x00000, 0x10000, 0x0 )
-//	ROM_LOAD_ODD  ( "18c_d05.bin",  0x00000, 0x10000, 0x0 )
-//	ROM_LOAD_EVEN ( "17b_u.bin",    0x20000, 0x10000, 0x0 )
-//	ROM_LOAD_ODD  ( "17c_u.bin",    0x20000, 0x10000, 0x0 )
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-ROM_END
-
 ROM_START( rf2_rom )
 	ROM_REGION(0xc0000)    /* 5 * 64k for code and rom */
 	ROM_LOAD_EVEN ( "400-a06.15l",  0x00000, 0x08000, 0xb99d8cff )
@@ -1777,7 +1625,70 @@ ROM_START( gwarrior_rom )
 	ROM_LOAD  ( "400-e03.5l",       0x00000, 0x2000, 0xa5a8e57d )
 ROM_END
 
+ROM_START( salamand_rom )
+	ROM_REGION(0x80000)    /* 64k for code */
+	ROM_LOAD_EVEN ( "18b.bin",  0x00000, 0x10000, 0xa42297f9 )
+	ROM_LOAD_ODD  ( "18c.bin",  0x00000, 0x10000, 0xf9130b0a )
+	ROM_LOAD_EVEN ( "17b.bin",  0x40000, 0x20000, 0xe5caf6e6 )
+	ROM_LOAD_ODD  ( "17c.bin",  0x40000, 0x20000, 0xc2f567ea )
 
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_LOAD  ( "11j.bin", 0x00000, 0x8000, 0x5020972c )
+
+	ROM_REGION(0x4000)    /* VLM5030 data? */
+	ROM_LOAD  ( "8g.bin",  0x00000, 0x4000, 0xf9ac6b82 )
+
+	ROM_REGION(0x20000)    /* 007232 data */
+	ROM_LOAD  ( "10a.bin", 0x00000, 0x20000, 0x09fe0632 )
+ROM_END
+
+ROM_START( lifefrce_rom )
+	ROM_REGION(0x80000)    /* 64k for code */
+	ROM_LOAD_EVEN ( "587-k02.bin",  0x00000, 0x10000, 0x4a44da18 )
+	ROM_LOAD_ODD  ( "587-k05.bin",  0x00000, 0x10000, 0x2f8c1cbd )
+	ROM_LOAD_EVEN ( "17b.bin",      0x40000, 0x20000, 0xe5caf6e6 )
+	ROM_LOAD_ODD  ( "17c.bin",      0x40000, 0x20000, 0xc2f567ea )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_LOAD  ( "587-k09.bin",      0x00000, 0x8000, 0x2255fe8c )
+
+	ROM_REGION(0x4000)    /* VLM5030 data? */
+	ROM_LOAD  ( "587-k08.bin",      0x00000, 0x4000, 0x7f0e9b41 )
+
+	ROM_REGION(0x20000)    /* 007232 data */
+	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
+ROM_END
+
+ROM_START( lifefrcj_rom )
+	ROM_REGION(0x80000)    /* 64k for code */
+	ROM_LOAD_EVEN ( "587-n02.bin",  0x00000, 0x10000, 0x235dba71 )
+	ROM_LOAD_ODD  ( "587-n05.bin",  0x00000, 0x10000, 0x054e569f )
+	ROM_LOAD_EVEN ( "587-n03.bin",  0x40000, 0x20000, 0x9041f850 )
+	ROM_LOAD_ODD  ( "587-n06.bin",  0x40000, 0x20000, 0xfba8b6aa )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)    /* 64k for sound */
+	ROM_LOAD  ( "587-n09.bin",      0x00000, 0x8000, 0xe8496150 )
+
+	ROM_REGION(0x4000)    /* VLM5030 data? */
+	ROM_LOAD  ( "587-k08.bin",      0x00000, 0x4000, 0x7f0e9b41 )
+
+	ROM_REGION(0x20000)    /* 007232 data */
+	ROM_LOAD  ( "10a.bin",      0x00000, 0x20000, 0x09fe0632 )
+ROM_END
+
+/******************************************************************************/
 
 static int nemesis_hiload(void)
 {
@@ -1811,7 +1722,7 @@ static void nemesis_hisave(void)
 	}
 }
 
-
+/******************************************************************************/
 
 struct GameDriver nemesis_driver =
 {
@@ -1884,32 +1795,6 @@ struct GameDriver konamigt_driver =
 	0,      /* sound_prom */
 
 	konamigt_input_ports,
-
-	0, 0, 0,
-	ORIENTATION_DEFAULT,
-
-	0,0
-};
-
-struct GameDriver salamand_driver =
-{
-	__FILE__,
-	0,
-	"salamand",
-	"Salamander",
-	"????",
-	"?????",
-	"68K test",
-	0,
-	&salamand_machine_driver,
-	0,
-
-	salamand_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	salamand_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2014,6 +1899,84 @@ struct GameDriver gwarrior_driver =
 	0,      /* sound_prom */
 
 	gwarrior_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver salamand_driver =
+{
+	__FILE__,
+	0,
+	"salamand",
+	"Salamander",
+	"1986",
+	"Konami",
+	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)",
+	0,
+	&salamand_machine_driver,
+	0,
+
+	salamand_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	salamand_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver lifefrce_driver =
+{
+	__FILE__,
+	&salamand_driver,
+	"lifefrce",
+	"Lifeforce (US)",
+	"1986",
+	"Konami",
+	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)",
+	0,
+	&salamand_machine_driver,
+	0,
+
+	lifefrce_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	salamand_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver lifefrcj_driver =
+{
+	__FILE__,
+	&salamand_driver,
+	"lifefrcj",
+	"Lifeforce (Japan)",
+	"1986",
+	"Konami",
+	"Bryan McPhail (Salamander)\nAllard van der Bas (GX400 driver)\nNicola Salmoria (GX400 driver)\nAndrew Prime (GX400 driver)",
+	0,
+	&salamand_machine_driver,
+	0,
+
+	lifefrcj_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	salamand_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

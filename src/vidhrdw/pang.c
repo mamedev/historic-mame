@@ -198,6 +198,7 @@ int pang_vh_start(void)
 	pang_palette_bank_w(0,0);
 	pang_video_bank_w(0,0);
 
+	palette_transparent_color = 0; /* background color (Block Block uses this on the title screen) */
 
 	return 0;
 }

@@ -22,86 +22,49 @@ void dday_sound_enable(int enabled);
 
 /* LBO */
 #ifdef LSB_FIRST
-#define intelLong(x) (x)
 #define BL0 0
 #define BL1 1
 #define BL2 2
 #define BL3 3
-#define WL0 0
-#define WL1 1
 #else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 #define BL0 3
 #define BL1 2
 #define BL2 1
 #define BL3 0
-#define WL0 1
-#define WL1 0
 #endif
-
-#define TA
 
 #ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
-INLINE int read_dword(void *address)
+INLINE UINT32 read_dword(void *address)
 {
 	if ((long)address & 3)
 	{
-#ifdef LSB_FIRST  /* little endian version */
-  		return ( *((unsigned char *)address) +
-				(*((unsigned char *)address+1) << 8)  +
-				(*((unsigned char *)address+2) << 16) +
-				(*((unsigned char *)address+3) << 24) );
-#else             /* big endian version */
-  		return ( *((unsigned char *)address+3) +
-				(*((unsigned char *)address+2) << 8)  +
-				(*((unsigned char *)address+1) << 16) +
-				(*((unsigned char *)address)   << 24) );
-#endif
+  		return (*((UINT8 *)address+BL0) +
+			   (*((UINT8 *)address+BL1) << 8)  +
+			   (*((UINT8 *)address+BL2) << 16) +
+			   (*((UINT8 *)address+BL3) << 24) );
 	}
 	else
-		return *(int *)address;
+		return *(UINT32 *)address;
 }
 
 
-INLINE void write_dword(void *address, int data)
-{
-  	if ((long)address & 3)
-	{
-#ifdef LSB_FIRST
-    		*((unsigned char *)address) =    data;
-    		*((unsigned char *)address+1) = (data >> 8);
-    		*((unsigned char *)address+2) = (data >> 16);
-    		*((unsigned char *)address+3) = (data >> 24);
 #else
-    		*((unsigned char *)address+3) =  data;
-    		*((unsigned char *)address+2) = (data >> 8);
-    		*((unsigned char *)address+1) = (data >> 16);
-    		*((unsigned char *)address)   = (data >> 24);
-#endif
-		return;
-  	}
-  	else
-		*(int *)address = data;
-}
-#else
-#define read_dword(address) *(int *)address
-#define write_dword(address,data) *(int *)address=data
+#define read_dword(address) *(UINT32 *)address
 #endif
 
 
 static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
-		unsigned int code,unsigned int color,int flipx,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,
-		unsigned char* shadow_mask, int mask_flip,
-		unsigned char* layer_mask, int layer)
+		unsigned int code,unsigned int color,int sx,int sy,
+		const struct rectangle *clip,int transparency,
+		UINT8* shadow_mask, UINT8* layer_mask, int layer)
 {
 	int ox,oy,ex,ey,y,start;
-	const unsigned char *sd;
-	unsigned char *bm,*bme;
-	int col;
+	const UINT8 *sd;
+	UINT8 *bm,*bme;
+	UINT8 col;
 	int *sd4;
-	int trans4,col4;
+	int col4;
 	int f,shadow=0,l;
 
 
@@ -137,183 +100,93 @@ static void drawgfx_shadow(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 		switch (transparency)
 		{
-			case TRANSPARENCY_NONE:
-				if (flipx)	/* X flip */
+		case TRANSPARENCY_NONE:
+			if (layer_mask)
+			{
+				for (y = sy;y <= ey;y++)
 				{
-				}
-				else		/* normal */
-				{
-					for (y = sy;y <= ey;y++)
+					bm  = dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata->line[start] + (sx-ox);
+					for( bm += sx ; bm <= bme-7 ; bm+=8)
 					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd = gfx->gfxdata->line[start] + (sx-ox);
-						if (mask_flip)
-						{
-							for( bm += sx ; bm <= bme-7 ; bm+=8)
-							{
-								shadow = *(shadow_mask++);
-								l = *(layer_mask++);
+						shadow = *(shadow_mask++);
+						l = *(layer_mask++);
 
-								if (((l & 0x01) >> 0) == layer)  bm[0] = paldata[sd[0]+((shadow & 0x80) << 1)];
-								if (((l & 0x02) >> 1) == layer)  bm[1] = paldata[sd[1]+((shadow & 0x40) << 2)];
-								if (((l & 0x04) >> 2) == layer)  bm[2] = paldata[sd[2]+((shadow & 0x20) << 3)];
-								if (((l & 0x08) >> 3) == layer)  bm[3] = paldata[sd[3]+((shadow & 0x10) << 4)];
-								if (((l & 0x10) >> 4) == layer)  bm[4] = paldata[sd[4]+((shadow & 0x08) << 5)];
-								if (((l & 0x20) >> 5) == layer)  bm[5] = paldata[sd[5]+((shadow & 0x04) << 6)];
-								if (((l & 0x40) >> 6) == layer)  bm[6] = paldata[sd[6]+((shadow & 0x02) << 7)];
-								if (((l & 0x80) >> 7) == layer)  bm[7] = paldata[sd[7]+((shadow & 0x01) << 8)];
-								sd+=8;
-							}
-						}
-						else
-						{
-							for( bm += sx ; bm <= bme-7 ; bm+=8)
-							{
-								shadow = *(shadow_mask++);
-								l = *(layer_mask++);
-
-								if (((l & 0x01) >> 0) == layer)  bm[0] = paldata[sd[0]+((shadow & 0x01) << 8)];
-								if (((l & 0x02) >> 1) == layer)  bm[1] = paldata[sd[1]+((shadow & 0x02) << 7)];
-								if (((l & 0x04) >> 2) == layer)  bm[2] = paldata[sd[2]+((shadow & 0x04) << 6)];
-								if (((l & 0x08) >> 3) == layer)  bm[3] = paldata[sd[3]+((shadow & 0x08) << 5)];
-								if (((l & 0x10) >> 4) == layer)  bm[4] = paldata[sd[4]+((shadow & 0x10) << 4)];
-								if (((l & 0x20) >> 5) == layer)  bm[5] = paldata[sd[5]+((shadow & 0x20) << 3)];
-								if (((l & 0x40) >> 6) == layer)  bm[6] = paldata[sd[6]+((shadow & 0x40) << 2)];
-								if (((l & 0x80) >> 7) == layer)  bm[7] = paldata[sd[7]+((shadow & 0x80) << 1)];
-								sd+=8;
-							}
-						}
-						start+=1;
+						if (((l & 0x01) >> 0) == layer)  bm[0] = paldata[sd[0]+((shadow & 0x01) << 8)];
+						if (((l & 0x02) >> 1) == layer)  bm[1] = paldata[sd[1]+((shadow & 0x02) << 7)];
+						if (((l & 0x04) >> 2) == layer)  bm[2] = paldata[sd[2]+((shadow & 0x04) << 6)];
+						if (((l & 0x08) >> 3) == layer)  bm[3] = paldata[sd[3]+((shadow & 0x08) << 5)];
+						if (((l & 0x10) >> 4) == layer)  bm[4] = paldata[sd[4]+((shadow & 0x10) << 4)];
+						if (((l & 0x20) >> 5) == layer)  bm[5] = paldata[sd[5]+((shadow & 0x20) << 3)];
+						if (((l & 0x40) >> 6) == layer)  bm[6] = paldata[sd[6]+((shadow & 0x40) << 2)];
+						if (((l & 0x80) >> 7) == layer)  bm[7] = paldata[sd[7]+((shadow & 0x80) << 1)];
+						sd+=8;
 					}
+					start+=1;
 				}
-				break;
-
-			case TRANSPARENCY_PEN:
-				trans4 = transparent_color * 0x01010101;
-				if (flipx)	/* X flip */
+			}
+			else
+			{
+				for (y = sy;y <= ey;y++)
 				{
-					for (y = sy;y <= ey;y++)
+					bm  = dest->line[y];
+					bme = bm + ex;
+					sd = gfx->gfxdata->line[start] + (sx-ox);
+					for( bm += sx ; bm <= bme-7 ; bm+=8)
 					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd4 = (int *)(gfx->gfxdata->line[start] + gfx->width -1 - (sx-ox) -3);
-						f = 0;
-						if (mask_flip)
-						{
-							for( bm += sx ; bm <= bme-3 ; bm+=4, f^=1 )
-							{
-								if (f)
-								{
-									shadow <<= 4;
-								}
-								else
-								{
-									shadow = *(shadow_mask++);
-								}
-								if ((col4=read_dword(sd4)) != trans4){
-									col = (col4>>24)&0xff;
-									if (col != transparent_color) bm[BL0] = paldata[col+((shadow & 0x80) << 1)];
-									col = (col4>>16)&0xff;
-									if (col != transparent_color) bm[BL1] = paldata[col+((shadow & 0x40) << 2)];
-									col = (col4>>8)&0xff;
-									if (col != transparent_color) bm[BL2] = paldata[col+((shadow & 0x20) << 3)];
-									col = col4&0xff;
-									if (col != transparent_color) bm[BL3] = paldata[col+((shadow & 0x10) << 4)];
-								}
-								sd4--;
-							}
-						}
-						else
-						{
-							for( bm += sx ; bm <= bme-3 ; bm+=4, f^=1 )
-							{
-								if (f)
-								{
-									shadow >>= 4;
-								}
-								else
-								{
-									shadow = *(shadow_mask++);
-								}
-								if ((col4=read_dword(sd4)) != trans4){
-									col = (col4>>24)&0xff;
-									if (col != transparent_color) bm[BL0] = paldata[col+((shadow & 0x01) << 8)];
-									col = (col4>>16)&0xff;
-									if (col != transparent_color) bm[BL1] = paldata[col+((shadow & 0x02) << 7)];
-									col = (col4>>8)&0xff;
-									if (col != transparent_color) bm[BL2] = paldata[col+((shadow & 0x04) << 6)];
-									col = col4&0xff;
-									if (col != transparent_color) bm[BL3] = paldata[col+((shadow & 0x08) << 5)];
-								}
-								sd4--;
-							}
-						}
-						start+=1;
+						shadow = *(shadow_mask++);
+
+						bm[0] = paldata[sd[0]+((shadow & 0x01) << 8)];
+						bm[1] = paldata[sd[1]+((shadow & 0x02) << 7)];
+						bm[2] = paldata[sd[2]+((shadow & 0x04) << 6)];
+						bm[3] = paldata[sd[3]+((shadow & 0x08) << 5)];
+						bm[4] = paldata[sd[4]+((shadow & 0x10) << 4)];
+						bm[5] = paldata[sd[5]+((shadow & 0x20) << 3)];
+						bm[6] = paldata[sd[6]+((shadow & 0x40) << 2)];
+						bm[7] = paldata[sd[7]+((shadow & 0x80) << 1)];
+						sd+=8;
 					}
+					start+=1;
 				}
-				else		/* normal */
+			}
+			break;
+
+		case TRANSPARENCY_PEN:
+
+			for (y = sy;y <= ey;y++)
+			{
+				bm  = dest->line[y];
+				bme = bm + ex;
+				sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
+				f = 0;
+				for( bm += sx ; bm <= bme-3 ; bm+=4, f^=1 )
 				{
-					for (y = sy;y <= ey;y++)
+					if (f)
 					{
-						bm  = dest->line[y];
-						bme = bm + ex;
-						sd4 = (int *)(gfx->gfxdata->line[start] + (sx-ox));
-						f = 0;
-						if (mask_flip)
-						{
-							for( bm += sx ; bm <= bme-3 ; bm+=4, f^=1 )
-							{
-								if (f)
-								{
-									shadow <<= 4;
-								}
-								else
-								{
-									shadow = *(shadow_mask++);
-								}
-								if ((col4=read_dword(sd4)) != trans4){
-									col = col4&0xff;
-									if (col != transparent_color) bm[BL0] = paldata[col+((shadow & 0x80) << 1)];
-									col = (col4>>8)&0xff;
-									if (col != transparent_color) bm[BL1] = paldata[col+((shadow & 0x40) << 2)];
-									col = (col4>>16)&0xff;
-									if (col != transparent_color) bm[BL2] = paldata[col+((shadow & 0x20) << 3)];
-									col = (col4>>24)&0xff;
-									if (col != transparent_color) bm[BL3] = paldata[col+((shadow & 0x10) << 4)];
-								}
-								sd4++;
-							}
-						}
-						else
-						{
-							for( bm += sx ; bm <= bme-3 ; bm+=4, f^=1 )
-							{
-								if (f)
-								{
-									shadow >>= 4;
-								}
-								else
-								{
-									shadow = *(shadow_mask++);
-								}
-								if ((col4=read_dword(sd4)) != trans4){
-									col = col4&0xff;
-									if (col != transparent_color) bm[BL0] = paldata[col+((shadow & 0x01) << 8)];
-									col = (col4>>8)&0xff;
-									if (col != transparent_color) bm[BL1] = paldata[col+((shadow & 0x02) << 7)];
-									col = (col4>>16)&0xff;
-									if (col != transparent_color) bm[BL2] = paldata[col+((shadow & 0x04) << 6)];
-									col = (col4>>24)&0xff;
-									if (col != transparent_color) bm[BL3] = paldata[col+((shadow & 0x08) << 5)];
-								}
-								sd4++;
-							}
-						}
-						start+=1;
+						shadow >>= 4;
 					}
+					else
+					{
+						shadow = *(shadow_mask++);
+					}
+					col4 = read_dword(sd4);
+					if (col4)
+					{
+						col = col4;
+						if (col)  bm[BL0] = paldata[col+((shadow & 0x01) << 8)];
+						col = col4>>8;
+						if (col)  bm[BL1] = paldata[col+((shadow & 0x02) << 7)];
+						col = col4>>16;
+						if (col)  bm[BL2] = paldata[col+((shadow & 0x04) << 6)];
+						col = col4>>24;
+						if (col)  bm[BL3] = paldata[col+((shadow & 0x08) << 5)];
+					}
+					sd4++;
 				}
-				break;
+				start+=1;
+			}
+			break;
 		}
 	}
 }
@@ -419,6 +292,26 @@ void dday_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 }
 
 
+void dday_decode(void)
+{
+	int i;
+	UINT8 *mask = Machine->memory_region[3];
+	UINT8 data;
+
+
+	/* create x-flipped search light mask */
+	for (i = 0x1000; i < 0x1800; i++)
+	{
+		data = mask[i];
+
+		mask[i + 0x800] = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) |
+			 			  ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
+                          ((data << 1) & 0x10) | ((data << 3) & 0x20) |
+                          ((data << 5) & 0x40) | ((data << 7) & 0x80);
+	}
+}
+
+
 void dday_colorram_w(int offset, int data)
 {
     colorram[offset & 0x3e0] = data;
@@ -468,24 +361,23 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int code, code2, sx, sy, flipx, flipx2;
-		unsigned char* searchlight_bitmap;
-		unsigned char* layer_bitmap;
+		int code, code_background, sx, sy, flipx;
+		UINT8* searchlight_bitmap;
 
 
 		sy = (offs / 32);
 		sx = (offs % 32);
 
-		flipx2 = 0;
+		flipx = 0;
 		code = 0;
 
 		/* draw the search light, if enabled */
 		if (searchlight_enable)
 		{
-			flipx2 = (sx >> 4) & 0x01;
-			code = searchlight_image[(sy << 4) | (flipx2 ? sx ^ 0x1f: sx)];
+			flipx = (sx >> 4) & 0x01;
+			code = searchlight_image[(sy << 4) | (flipx ? sx ^ 0x1f: sx)];
 
-			if (searchlight_flipx != flipx2)
+			if (searchlight_flipx != flipx)
 			{
 				if (code & 0x80)
 				{
@@ -497,62 +389,74 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code &= 0x3f;
 		}
 
-		searchlight_bitmap = &Machine->memory_region[3][0x1000 | (code << 3)];
+		searchlight_bitmap = &Machine->memory_region[3][(flipx ? 0x1800 : 0x1000) | (code << 3)];
 
 		sx *= 8;
 		sy *= 8;
 
-		/* draw part of background appearing behind the vehicles */
-		code2 = videoram[offs];
 
-		layer_bitmap = &Machine->memory_region[4][code2 << 3];
+		code_background = videoram[offs];
 
-		drawgfx_shadow(bitmap,Machine->gfx[0],
-					   code2,
-					   code2 >> 5,
-					   0,
-					   sx,sy,
-					   &Machine->drv->visible_area,TRANSPARENCY_NONE,0,
-					   searchlight_bitmap,flipx2,
-					   layer_bitmap, 1);
-
-
-		/* draw vehicles */
 		flipx  = colorram[sy << 2] & 0x01;
 		code = dday_videoram3[flipx ? offs ^ 0x1f : offs];
 
+		/* is the vehicle layer character non-blank? */
 		if (code)
 		{
-			drawgfx_shadow(bitmap,Machine->gfx[2],
+			UINT8* layer_bitmap;
+
+
+			layer_bitmap = &Machine->memory_region[4][code_background << 3];
+
+			/* draw part of background appearing behind the vehicles
+			   skipping characters totally in the foreground */
+			if (layer_bitmap[0] || layer_bitmap[1] || layer_bitmap[2] || layer_bitmap[3] ||
+				layer_bitmap[4] || layer_bitmap[5] || layer_bitmap[6] || layer_bitmap[7])
+			{
+				drawgfx_shadow(bitmap,Machine->gfx[0],
+							   code_background,
+							   code_background >> 5,
+							   sx,sy,
+							   &Machine->drv->visible_area,TRANSPARENCY_NONE,
+							   searchlight_bitmap,
+							   layer_bitmap, 1);
+			}
+
+
+			/* draw vehicles */
+			drawgfx_shadow(bitmap,Machine->gfx[flipx ? 3 : 2],
 						   code,
 						   code >> 5,
-						   flipx,
 						   sx,sy,
-						   &Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-						   searchlight_bitmap,flipx2,
+						   &Machine->drv->visible_area,TRANSPARENCY_PEN,
+						   searchlight_bitmap,
 						   0, 0);
+
+
+			/* draw part of background appearing in front of the vehicles
+			   skipping characters totally in the background */
+			if (~layer_bitmap[0] || ~layer_bitmap[1] || ~layer_bitmap[2] || ~layer_bitmap[3] ||
+				~layer_bitmap[4] || ~layer_bitmap[5] || ~layer_bitmap[6] || ~layer_bitmap[7])
+			{
+				drawgfx_shadow(bitmap,Machine->gfx[0],
+							   code_background,
+							   code_background >> 5,
+							   sx,sy,
+							   &Machine->drv->visible_area,TRANSPARENCY_NONE,
+							   searchlight_bitmap,
+							   layer_bitmap, 0);
+			}
 		}
-
-
-		/* draw part of background appearing in front of the vehicles
-		   skipping characters totally in the background */
-		if ((layer_bitmap[0] != 0xff) ||
-			(layer_bitmap[1] != 0xff) ||
-			(layer_bitmap[2] != 0xff) ||
-			(layer_bitmap[3] != 0xff) ||
-			(layer_bitmap[4] != 0xff) ||
-			(layer_bitmap[5] != 0xff) ||
-			(layer_bitmap[6] != 0xff) ||
-			(layer_bitmap[7] != 0xff))
+		else
 		{
+			/* draw background, we don't have to worry about the layering */
 			drawgfx_shadow(bitmap,Machine->gfx[0],
-						   code2,
-						   code2 >> 5,
-						   0,
+						   code_background,
+						   code_background >> 5,
 						   sx,sy,
-						   &Machine->drv->visible_area,TRANSPARENCY_NONE,0,
-						   searchlight_bitmap,flipx2,
-						   layer_bitmap, 0);
+						   &Machine->drv->visible_area,TRANSPARENCY_NONE,
+						   searchlight_bitmap,
+						   0, 0);
 		}
 
 
@@ -564,10 +468,9 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx_shadow(bitmap,Machine->gfx[1],
 						   code,
 						   code >> 5,
-						   0,
 						   sx,sy,
-						   &Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-						   searchlight_bitmap,flipx2,
+						   &Machine->drv->visible_area,TRANSPARENCY_PEN,
+						   searchlight_bitmap,
 						   0, 0);
 		}
 	}

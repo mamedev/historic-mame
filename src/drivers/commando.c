@@ -394,6 +394,34 @@ ROM_START( commandj_rom )
 	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, 0xca20aca5 )
 ROM_END
 
+ROM_START( spaceinv_rom )
+	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_LOAD( "u4",           0x0000, 0x8000, 0x834ba0de )
+	ROM_LOAD( "u3",           0x8000, 0x4000, 0x07e4ee3a )
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "u1",           0x00000, 0x4000, 0xf477e13a )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "u5",           0x1c000, 0x4000, 0x2a97c933 )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "u8",           0x28000, 0x4000, 0xd6b4aa2e )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "u2",           0x0000, 0x4000, 0xcbf8c40e )
+ROM_END
 
 
 static void commando_decode(void)
@@ -405,6 +433,22 @@ static void commando_decode(void)
 	/* the first opcode is not encrypted */
 	ROM[0] = RAM[0];
 	for (A = 1;A < 0xc000;A++)
+	{
+		int src;
+
+		src = RAM[A];
+		ROM[A] = src ^ (src & 0xee) ^ ((src & 0xe0) >> 4) ^ ((src & 0x0e) << 4);
+	}
+}
+
+static void spaceinv_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* the first opcode *is* encrypted */
+	for (A = 0;A < 0xc000;A++)
 	{
 		int src;
 
@@ -527,6 +571,32 @@ struct GameDriver commandj_driver =
 
 	commandj_rom,
 	0, commando_decode,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver spaceinv_driver =
+{
+	__FILE__,
+	&commando_driver,
+	"spaceinv",
+	"Space Invasion",
+	"1985",
+	"bootleg",
+	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	spaceinv_rom,
+	0, spaceinv_decode,
 	0,
 	0,	/* sound_prom */
 

@@ -6,7 +6,7 @@
 #	include "mac_dos.h"
 #	include "stat.h"
 #else
-#include <dos.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
 #endif
@@ -391,36 +391,41 @@ static int load_files(int i, int *found, const char *path)
 
 	if (S_ISDIR(st.st_mode))
 	{
-		char buf[256];
-		struct find_t f;
+		DIR *dir;
+		struct dirent *d;
 
 		/* load all files in directory */
-		strcpy(buf,path);
-		strcat(buf,"/*.*");
-		if (_dos_findfirst(buf,_A_NORMAL | _A_RDONLY,&f) == 0)
+		dir = opendir(path);
+		if (dir)
 		{
-			do
+			while((d = readdir(dir)) != NULL)
 			{
-				int size;
+				char buf[255+1];
+				struct stat st_file;
 
-				size = f.size;
-				while (size && (size & 1) == 0) size >>= 1;
-				if (size & ~1)
-					printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : f.name,i ? f.name : "");
-				else
+				sprintf(buf, "%s/%s", path, d->d_name);
+				if(stat(buf, &st_file) == 0 && S_ISREG(st_file.st_mode))
 				{
-					strcpy(files[i][found[i]].name,f.name);
-					files[i][found[i]].size = f.size;
-					readfile(path,&files[i][found[i]]);
-					files[i][found[i]].listed = 0;
-					if (found[i] >= MAX_FILES)
+					unsigned size = st_file.st_size;
+					while (size && (size & 1) == 0) size >>= 1;
+					if (size & ~1)
+						printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d->d_name,i ? d->d_name : "");
+					else
 					{
-						printf("%s: max of %d files exceeded\n",path,MAX_FILES);
-						break;
+						strcpy(files[i][found[i]].name,d->d_name);
+						files[i][found[i]].size = st_file.st_size;
+						readfile(path,&files[i][found[i]]);
+						files[i][found[i]].listed = 0;
+						if (found[i] >= MAX_FILES)
+						{
+							printf("%s: max of %d files exceeded\n",path,MAX_FILES);
+							break;
+						}
+						found[i]++;
 					}
-					found[i]++;
 				}
-			} while (_dos_findnext(&f) == 0);
+			}
+			closedir(dir);
 		}
 	}
 	else
@@ -508,7 +513,7 @@ int main(int argc,char **argv)
 			}
 		}
 
-		if (argc >= 3)
+        if (argc >= 3)
 			printf("%d and %d files\n",found[0],found[1]);
 		else
 			printf("%d files\n",found[0]);

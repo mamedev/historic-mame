@@ -38,12 +38,12 @@ static void *Timer[MAX_2608][2];
 #ifdef YM2608_USE_SAMPLES
 static const char *ym2608_pDrumNames[] =
 {
-	"2608_BD.sam",
-	"2608_SD.sam",
-	"2608_TOP.sam",
-	"2608_HH.sam",
-	"2608_TOM.sam",
-	"2608_RIM.sam",
+	"2608_BD.wav",
+	"2608_SD.wav",
+	"2608_TOP.wav",
+	"2608_HH.wav",
+	"2608_TOM.wav",
+	"2608_RIM.wav",
 	0
 };
 #endif

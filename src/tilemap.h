@@ -1,5 +1,3 @@
-/* tilemap.h */
-
 #ifndef TILEMAP_H
 #define TILEMAP_H
 
@@ -64,6 +62,10 @@ extern struct tile_info {
 */
 
 struct tilemap {
+	int dx, dx_if_flipped;
+	int dy, dy_if_flipped;
+	int scrollx_delta, scrolly_delta;
+
 	int type;
 	int enable;
 	int attributes;
@@ -81,9 +83,17 @@ struct tilemap {
 	unsigned short **paldata;
 	unsigned int *pen_usage;
 
-	char *priority, **priority_row;
-	char *visible, **visible_row;
-	char *dirty_vram;
+	char *priority,	/* priority for each tile */
+		**priority_row;
+
+	char *visible, /* boolean flag for each tile */
+		**visible_row;
+
+	char *dirty_vram, /* boolean flag for each tile */
+		**dirty_vram_row; /* TBA */
+
+	int *span,	/* contains transparency type, and run length, for adjacent tiles of same transparency_type and priority */
+		**span_row;
 
 	char *dirty_pixels;
 	unsigned char *flags;
@@ -102,21 +112,21 @@ struct tilemap {
 	struct osd_bitmap *pixmap;
 	int pixmap_line_offset;
 
-	/* foreground mask */
+	/* foreground mask - for transparent layers, or the front half of a split layer */
 	struct osd_bitmap *fg_mask;
 	unsigned char *fg_mask_data;
 	unsigned char **fg_mask_data_row;
 	int fg_mask_line_offset;
 	unsigned short *fg_span, **fg_span_row;
 
-	/* background mask (for the back half of a split layer) */
+	/* background mask - for the back half of a split layer */
 	struct osd_bitmap *bg_mask;
 	unsigned char *bg_mask_data;
 	unsigned char **bg_mask_data_row;
 	int bg_mask_line_offset;
 	unsigned short *bg_span, **bg_span_row;
 
-	struct tilemap *next; /* resource management */
+	struct tilemap *next; /* resource tracking */
 };
 
 /* don't call these from drivers - they are called from mame.c */
@@ -134,9 +144,9 @@ void tilemap_dispose( struct tilemap *tilemap );
 /* you needn't to call this in vh_close.  It's supplied for games that need to change
 	tile size or cols/rows dynamically */
 
-int tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols );
-int tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows );
-/* these return 1 if there is insufficient memory */
+void tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols );
+void tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows );
+/* scroll_rows and scroll_cols default to 1 for XY scrolling */
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row );
 void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
@@ -144,6 +154,9 @@ void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap );
 
 void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
 void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
+
+void tilemap_set_scrolldx( struct tilemap *tilemap, int dx, int dx_if_flipped );
+void tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped );
 
 //void tilemap_set_screen_linescroll( struct tilemap *tilemap, int row, int value );
 /* not yet supported */
@@ -157,6 +170,5 @@ void tilemap_set_enable( struct tilemap *tilemap, int enable );
 void tilemap_update( struct tilemap *tilemap );
 void tilemap_render( struct tilemap *tilemap );
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priority );
-
 
 #endif

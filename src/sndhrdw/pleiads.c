@@ -9,11 +9,10 @@
 
 #define SAFREQ  1400
 #define SBFREQ  1400
-#define MAXFREQ_A 44100*7
-#define MAXFREQ_B1 44100*4
-#define MAXFREQ_B2 44100*4
+#define MAXFREQ_A 40000
 
-#define MAX_VOLUME 20
+#define VOLUME_A 20
+#define VOLUME_B 80
 
 /* for voice A effects */
 #define SW_INTERVAL 4
@@ -24,20 +23,18 @@
 #define SWEEP_RATE 0.14
 #define SWEEP_DEPTH 0.24
 
-static int sound_play[3];
-static int sound_vol[3];
-static int sound_freq[3];
-
 static int noise_vol;
 static int noise_freq;
-static int pitch_a;
-static int pitch_b1;
-static int pitch_b2;
 
 static int noisemulate;
 static int portBstatus;
 
 /* waveforms for the audio hardware */
+static signed char waveform0[2] =
+{
+	/* flip-flop */
+	-128, 127
+};
 static unsigned char waveform1[32] =
 {
 	/* sine-wave */
@@ -64,23 +61,18 @@ void pleiads_sound_control_a_w (int offset,int data)
 
 	/* voice a */
 	int freq = data & 0x0f;
-	int vol = (data & 0x30) >> 4;
+	/* (data & 0x10), (data & 0x20), other analog stuff which I don't understand */
 
 	/* noise */
 	int noise = (data & 0xc0) >> 6;
 
-	sound_freq[0] = freq;
-	sound_vol[0] = vol;
-
 	if (freq != 0x0f)
 	{
-		osd_adjust_sample (0, MAXFREQ_A/(16-sound_freq[0]), MAX_VOLUME*(3-vol));
-		sound_play[0] = 1;
+		osd_adjust_sample (0, MAXFREQ_A/2/(16-freq), VOLUME_A);
 	}
 	else
 	{
 		osd_adjust_sample (0,SAFREQ,0);
-		sound_play[0] = 0;
 	}
 
 	if (noisemulate)
@@ -124,30 +116,51 @@ void pleiads_sound_control_a_w (int offset,int data)
 
 
 
+#define BASE_FREQ       246.9416506
+#define PITCH_1         BASE_FREQ * 1.0			/* B  */
+#define PITCH_2         BASE_FREQ * 1.059463094		/* C  */
+#define PITCH_3         BASE_FREQ * 1.122462048		/* C# */
+#define PITCH_4         BASE_FREQ * 1.189207115		/* D  */
+#define PITCH_5         BASE_FREQ * 1.259921050		/* D# */
+#define PITCH_6         BASE_FREQ * 1.334839854		/* E  */
+#define PITCH_7         BASE_FREQ * 1.414213562		/* F  */
+#define PITCH_8         BASE_FREQ * 1.498307077		/* F# */
+#define PITCH_9         BASE_FREQ * 1.587401052		/* G  */
+#define PITCH_10        BASE_FREQ * 1.681792830		/* G# */
+#define PITCH_11        BASE_FREQ * 1.781797436		/* A = 440 */
+#define PITCH_12        BASE_FREQ * 1.887748625		/* A# */
+#define PITCH_13        BASE_FREQ * 2.0			/* B  */
+
+#define SHIFT_1 8*1.0
+
+static int TMS3615_freq[] =
+{
+	PITCH_1*SHIFT_1, PITCH_2*SHIFT_1, PITCH_3*SHIFT_1, PITCH_4*SHIFT_1,
+	PITCH_5*SHIFT_1, PITCH_6*SHIFT_1, PITCH_7*SHIFT_1, PITCH_8*SHIFT_1,
+	PITCH_9*SHIFT_1, PITCH_10*SHIFT_1, PITCH_11*SHIFT_1, PITCH_12*SHIFT_1,
+	PITCH_13*SHIFT_1, 0, 0, 0
+};
+
+
 void pleiads_sound_control_b_w (int offset,int data)
 {
 	/* voice b1 & b2 */
 	int freq = data & 0x0f;
-	int vol = (data & 0x30) >> 4;
+	int pitch = (data & 0xc0) >> 6;
+	/* pitch selects one of 4 possible clock inputs (actually 3, because */
+	/* IC2 and IC3 are tied together) */
+	if (pitch == 3) pitch = 2;
 
-	/* melody - osd_play_midi anyone? */
-	/* 0 - no tune, 1 - alarm beep?, 2 - even level tune, 3 - odd level tune */
-	/*int tune = (data & 0xc0) >> 6;*/
-	/* LBO - not sure if the non-phoenix games play a tune. For example, */
-	/* Pop Flamer & Pleiades set bit 0x40 occassionally. */
+	/* (data & 0x30) goes to a 556 */
 
-	sound_freq[portBstatus + 1] = freq;
-	sound_vol[portBstatus + 1] = vol;
-
-	if (freq < 0x0e) /* LBO clip both 0xe and 0xf to get rid of whine in Pop Flamer */
+	/* freq == 0x0d and 0x0e do nothing, 0x0f does something different (SAST BIAS?) */
+	if (freq <= 0x0c)
 	{
-		osd_adjust_sample (portBstatus + 1, MAXFREQ_B1/(16-sound_freq[portBstatus + 1]), MAX_VOLUME*(3-vol));
-		sound_play[portBstatus + 1] = 1;
+		osd_adjust_sample (portBstatus + 1, (1<<pitch) * TMS3615_freq[freq], VOLUME_B);
 	}
 	else
 	{
 		osd_adjust_sample (portBstatus + 1, SBFREQ, 0);
-		sound_play[portBstatus + 1] = 0;
 	}
 	portBstatus ^= 0x01;
 	if (errorlog) fprintf(errorlog,"B:%X freq: %02x vol: %02x\n",data, data & 0x0f, (data & 0x30) >> 4);
@@ -164,20 +177,12 @@ int pleiads_sh_start (void)
 
 	/* Clear all the variables */
 	{
-		int i;
-		for (i = 0; i < 3; i ++)
-		{
-			sound_play[i] = 0;
-			sound_vol[i] = 0;
-			sound_freq[i] = SAFREQ; /* The B voices use the same constant for now */
-		}
 		noise_vol = 0;
 		noise_freq = 1000;
-		pitch_a = pitch_b1 = pitch_b2 = 0;
 		portBstatus = 0;
 	}
 
-	osd_play_sample (0,(signed char *)waveform1,32,1000,0,1);
+	osd_play_sample (0,(signed char *)waveform0,2,1000,0,1);
 	osd_play_sample (1,(signed char *)waveform1,32,1000,0,1);
 	osd_play_sample (2,(signed char *)waveform1,32,1000,0,1);
 	osd_play_sample (3,(signed char *)waveform2,128,1000,0,1);
@@ -189,47 +194,6 @@ int pleiads_sh_start (void)
 
 void pleiads_sh_update (void)
 {
-	pitch_a  = MAXFREQ_A/(16-sound_freq[0]);
-	pitch_b1 = MAXFREQ_B1/(16-sound_freq[1]);
-	pitch_b2 = MAXFREQ_B2/(16-sound_freq[2]);
-/*
-	if (hifreq)
-		pitch_a=pitch_a*5/4;
-
-	pitch_a+=((double)pitch_a*MOD_DEPTH*sin(t));
-
-	sound_a_sw++;
-
-	if (sound_a_sw==SW_INTERVAL)
-	{
-		hifreq=!hifreq;
-		sound_a_sw=0;
-	}
-
-	t+=MOD_RATE;
-
-	if (t>2*PI)
-		t=0;
-
-	pitch_b+=((double)pitch_b*SWEEP_DEPTH*sin(x));
-
-if (sound_b_vol==3 || (last_b_freq==15&&sound_b_freq==12) || (last_b_freq!=14&&sound_b_freq==6))
-		x=0;
-
-	x+=SWEEP_RATE;
-
-	if (x>3*PI/2)
-		x=3*PI/2;
-
-  */
-
-	if (sound_play[0])
-		osd_adjust_sample (0, pitch_a, MAX_VOLUME*(3-sound_vol[0]));
-	if (sound_play[1])
-		osd_adjust_sample (1, pitch_b1, MAX_VOLUME*(3-sound_vol[1]));
-	if (sound_play[2])
-		osd_adjust_sample (2, pitch_b2, MAX_VOLUME*(3-sound_vol[2]));
-
 	if ((noise_vol) && (noisemulate))
 	{
 		osd_adjust_sample (3,noise_freq,noise_vol/4);

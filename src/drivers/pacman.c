@@ -28,7 +28,7 @@ write:
 5003      flip screen
 5004      1 player start lamp
 5005      2 players start lamp
-5006      related to the credits. don't know what it was used for.
+5006      coin lockout
 5007      coin counter
 5040-5044 sound voice 1 accumulator (nibbles) (used by the sound hardware only)
 5045      sound voice 1 waveform (nibble)
@@ -139,6 +139,21 @@ int theglob_decrypt_rom(int offset);
 extern unsigned char *theglob_mem_rom;
 
 
+static void alibaba_sound_w(int offset, int data)
+{
+	/* since the sound region in Ali Baba is not contigous, translate the offset
+	   into the 0-0x1f range */
+	if (offset >= 0x20)  offset -= 0x10;
+
+	pengo_sound_w(offset, data);
+}
+
+
+static void pacman_coin_lockout_global_w(int offset, int data)
+{
+	coin_lockout_global_w(offset, ~data & 0x01);
+}
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -165,7 +180,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5002, 0x5002, MWA_NOP },
 	{ 0x5003, 0x5003, pengo_flipscreen_w },
  	{ 0x5004, 0x5005, osd_led_w },
- 	{ 0x5006, 0x5006, MWA_NOP },
+ 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },
  	{ 0x5007, 0x5007, coin_counter_w },
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
@@ -178,6 +193,46 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
+static struct MemoryReadAddress alibaba_readmem[] =
+	{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ef0-4eff */
+	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
+	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
+	{ 0x8000, 0x8fff, MRA_ROM },
+	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0xa000, 0xa7ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress alibaba_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0x4ef0, 0x4eff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x4c00, 0x4fff, MWA_RAM },
+	{ 0x5000, 0x5000, watchdog_reset_w },
+ 	{ 0x5004, 0x5005, osd_led_w },
+ 	{ 0x5006, 0x5006, pacman_coin_lockout_global_w },
+ 	{ 0x5007, 0x5007, coin_counter_w },
+	{ 0x5050, 0x505f, MWA_RAM, &spriteram_2 },
+	{ 0x5040, 0x506f, alibaba_sound_w, &pengo_soundregs },  /* the sound region is not contiguous */
+	{ 0x50c0, 0x50c0, pengo_sound_enable_w },
+	{ 0x50c1, 0x50c1, pengo_flipscreen_w },
+	{ 0x50c2, 0x50c2, interrupt_enable_w },
+	{ 0x8000, 0x8fff, MWA_ROM },
+	{ 0x9000, 0x93ff, MWA_RAM },
+	{ 0xa000, 0xa7ff, MWA_ROM },
+	{ 0xc000, 0xc3ff, videoram_w }, /* mirror address for video ram, */
+	{ 0xc400, 0xc7ef, colorram_w }, /* used to display HIGH SCORE and CREDITS */
+	{ -1 }	/* end of table */
+};
+
+
 
 static struct IOWritePort writeport[] =
 {
@@ -186,7 +241,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-static struct IOWritePort vanvanport[] =
+static struct IOWritePort vanvan_writeport[] =
 {
 	{ 0x01, 0x01, SN76496_0_w },
 	{ 0x02, 0x02, SN76496_1_w },
@@ -215,10 +270,10 @@ static struct IOReadPort theglob_readport[] =
 
 INPUT_PORTS_START( pacman_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -227,18 +282,18 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
+	PORT_DIPSETTING(0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME(0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(   0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW 1 */
  	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
@@ -278,10 +333,10 @@ INPUT_PORTS_END
 /* the missing Ghost Names dip switch. */
 INPUT_PORTS_START( mspacman_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -290,10 +345,10 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -337,10 +392,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( maketrax_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
@@ -349,14 +404,14 @@ INPUT_PORTS_START( maketrax_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
- 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
- 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
 
 	PORT_START	/* DSW 1 */
  	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
@@ -383,10 +438,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( mbrush_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
@@ -395,14 +450,14 @@ INPUT_PORTS_START( mbrush_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
- 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
- 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
 
 	PORT_START	/* DSW 1 */
  	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
@@ -429,21 +484,21 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( ponpoko_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	/* The 2nd player controls are used even in upright mode */
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
@@ -505,23 +560,23 @@ INPUT_PORTS_START( ponpoko_input_ports )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( eyes_input_ports )
-    PORT_START  /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_START  /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -556,10 +611,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( lizwiz_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BITX(0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), OSD_KEY_F2, IP_JOY_NONE )
 	PORT_DIPSETTING(0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(0x00, DEF_STR( On ) )
@@ -568,10 +623,10 @@ INPUT_PORTS_START( lizwiz_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -606,20 +661,20 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( theglob_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -636,14 +691,14 @@ INPUT_PORTS_START( theglob_input_ports )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x1c, "1 (Easiest)" )
-	PORT_DIPSETTING(    0x18, "2" )
-	PORT_DIPSETTING(    0x14, "3" )
-	PORT_DIPSETTING(    0x10, "4" )
-	PORT_DIPSETTING(    0x0c, "5" )
-	PORT_DIPSETTING(    0x08, "6" )
-	PORT_DIPSETTING(    0x04, "7" )
-	PORT_DIPSETTING(    0x00, "8 (Hardest)" )
+	PORT_DIPSETTING(    0x1c, "Easies" )
+	PORT_DIPSETTING(    0x18, "Very Easy" )
+	PORT_DIPSETTING(    0x14, "Easy" )
+	PORT_DIPSETTING(    0x10, "Normal" )
+	PORT_DIPSETTING(    0x0c, "Difficult" )
+	PORT_DIPSETTING(    0x08, "Very Difficult" )
+	PORT_DIPSETTING(    0x04, "Very Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -660,10 +715,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( vanvan_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -671,10 +726,10 @@ INPUT_PORTS_START( vanvan_input_ports )
 
 	/* The 2nd player controls are used even in upright mode */
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -698,14 +753,67 @@ INPUT_PORTS_START( vanvan_input_ports )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_DIPNAME( 0x40, 0x40, "Coin A" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPNAME( 0x80, 0x80, "Coin B" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( alibaba_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START	/* DSW 1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x10, "15000" )
+	PORT_DIPSETTING(    0x20, "20000" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW 2 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
 
 static struct GfxLayout tilelayout =
@@ -798,7 +906,6 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-
 static struct MachineDriver theglob_machine_driver =
 {
 	/* basic machine hardware */
@@ -837,7 +944,6 @@ static struct MachineDriver theglob_machine_driver =
 	}
 };
 
-
 static struct MachineDriver vanvan_machine_driver =
 {
 	/* basic machine hardware */
@@ -846,13 +952,13 @@ static struct MachineDriver vanvan_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,vanvanport,
+			readmem,writemem,0,vanvan_writeport,
 			nmi_interrupt,1
 		}
 	},
 	60, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	pacman_init_machine,
+	0,
 
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
@@ -876,6 +982,43 @@ static struct MachineDriver vanvan_machine_driver =
 	}
 };
 
+static struct MachineDriver alibaba_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			alibaba_readmem,alibaba_writemem,0,0,
+			interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16, 4*32,
+	pacman_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	pacman_vh_start,
+	generic_vh_stop,
+	pengo_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
+};
 
 /***************************************************************************
 
@@ -908,7 +1051,7 @@ ROM_START( npacmod_rom )
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
 	ROM_LOAD( "namcopac.6f",  0x1000, 0x1000, 0x39d1fc83 )
 	ROM_LOAD( "namcopac.6h",  0x2000, 0x1000, 0x02083b03 )
-	ROM_LOAD( "npacmod.6j",  0x3000, 0x1000, 0x7d98d5f5 )
+	ROM_LOAD( "npacmod.6j",   0x3000, 0x1000, 0x7d98d5f5 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
@@ -1395,36 +1538,60 @@ ROM_END
 
 ROM_START( vanvan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "van1.bin",        0x0000, 0x1000, 0x00f48295 )
-	ROM_LOAD( "van2.bin",        0x1000, 0x1000, 0xdf58e1cb )
-	ROM_LOAD( "van3.bin",        0x2000, 0x1000, 0x15571e24 )
-	ROM_LOAD( "van4.bin",        0x3000, 0x1000, 0xf8b37ed5 )
-	ROM_LOAD( "van5.bin",        0x8000, 0x1000, 0xb8c1e089 )
+	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
+	ROM_LOAD( "van2.bin",     0x1000, 0x1000, 0xdf58e1cb )
+	ROM_LOAD( "van3.bin",     0x2000, 0x1000, 0x15571e24 )
+	ROM_LOAD( "van4.bin",     0x3000, 0x1000, 0xf8b37ed5 )
+	ROM_LOAD( "van5.bin",     0x8000, 0x1000, 0xb8c1e089 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "van20.bin",       0x0000, 0x1000, 0x60efbe66 )
-	ROM_LOAD( "van21.bin",       0x1000, 0x1000, 0x5dd53723 )
+	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
+	ROM_LOAD( "van21.bin",    0x1000, 0x1000, 0x5dd53723 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "6331-1.6",        0x0000, 0x0020, 0xce1d9503 )
-	ROM_LOAD( "6301-1.37",       0x0020, 0x0100, 0x4b803d9f )
+	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
+	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
 
 ROM_START( vanvanb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "vanvan.050",      0x0000, 0x1000, 0xcf1b2df0 )
-	ROM_LOAD( "vanvan.051",      0x1000, 0x1000, 0x80eca6a5 )
-	ROM_LOAD( "van3.bin",        0x2000, 0x1000, 0x15571e24 )
-	ROM_LOAD( "vanvan.053",      0x3000, 0x1000, 0xb1f04006 )
-	ROM_LOAD( "vanvan.039",      0x8000, 0x1000, 0xdb67414c )
+	ROM_LOAD( "vanvan.050",   0x0000, 0x1000, 0xcf1b2df0 )
+	ROM_LOAD( "vanvan.051",   0x1000, 0x1000, 0x80eca6a5 )
+	ROM_LOAD( "van3.bin",     0x2000, 0x1000, 0x15571e24 )
+	ROM_LOAD( "vanvan.053",   0x3000, 0x1000, 0xb1f04006 )
+	ROM_LOAD( "vanvan.039",   0x8000, 0x1000, 0xdb67414c )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "van20.bin",       0x0000, 0x1000, 0x60efbe66 )
-	ROM_LOAD( "van21.bin",       0x1000, 0x1000, 0x5dd53723 )
+	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
+	ROM_LOAD( "van21.bin",    0x1000, 0x1000, 0x5dd53723 )
 
 	ROM_REGION(0x0120)	/* color PROMs */
-	ROM_LOAD( "6331-1.6",        0x0000, 0x0020, 0xce1d9503 )
-	ROM_LOAD( "6301-1.37",       0x0020, 0x0100, 0x4b803d9f )
+	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
+	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
+ROM_END
+
+ROM_START( alibaba_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6e",           0x0000, 0x1000, 0x38d701aa )
+	ROM_LOAD( "6f",           0x1000, 0x1000, 0x3d0e35f3 )
+	ROM_LOAD( "6h",           0x2000, 0x1000, 0x823bee89 )
+	ROM_LOAD( "6k",           0x3000, 0x1000, 0x474d032f )
+	ROM_LOAD( "6l",           0x8000, 0x1000, 0x5ab315c1 )
+	ROM_LOAD( "6m",           0xa000, 0x0800, 0x438d0357 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e",           0x0000, 0x0800, 0x85bcb8f8 )
+	ROM_LOAD( "5h",           0x0800, 0x0800, 0x38e50862 )
+	ROM_LOAD( "5f",           0x1000, 0x0800, 0xb5715c86 )
+	ROM_LOAD( "5k",           0x1800, 0x0800, 0x713086b3 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "alibaba.7f",   0x0000, 0x0020, 0x00000000 )  /* missing */
+	ROM_LOAD( "alibaba.4a",   0x0020, 0x0100, 0x00000000 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 
@@ -1580,7 +1747,7 @@ static void eyes_decode(void)
 
 
 
-static void copytoscreen(int mem, int len, int screen, int direction)
+static void copytoscreen(int mem, int len, int screen, int direction, int numstart)
 {
 	char buf[10];
 	int hi;
@@ -1603,16 +1770,16 @@ static void copytoscreen(int mem, int len, int screen, int direction)
 	if (hi)
 	{
 		sprintf(buf,"%8d",hi);
-		if (buf[2] != ' ') videoram_w(screen + direction*0, buf[2]-'0');
-		if (buf[3] != ' ') videoram_w(screen + direction*1, buf[3]-'0');
-		if (buf[4] != ' ') videoram_w(screen + direction*2, buf[4]-'0');
-		if (buf[5] != ' ') videoram_w(screen + direction*3, buf[5]-'0');
-		if (buf[6] != ' ') videoram_w(screen + direction*4, buf[6]-'0');
-		                   videoram_w(screen + direction*5, buf[7]-'0');
+		if (buf[2] != ' ') videoram_w(screen + direction*0, buf[2]-'0'+numstart);
+		if (buf[3] != ' ') videoram_w(screen + direction*1, buf[3]-'0'+numstart);
+		if (buf[4] != ' ') videoram_w(screen + direction*2, buf[4]-'0'+numstart);
+		if (buf[5] != ' ') videoram_w(screen + direction*3, buf[5]-'0'+numstart);
+		if (buf[6] != ' ') videoram_w(screen + direction*4, buf[6]-'0'+numstart);
+		                   videoram_w(screen + direction*5, buf[7]-'0'+numstart);
 	}
 }
 
-static int pacman_hiload(void)
+static int pacman_alibaba_common_hiload(int numstart)
 {
 	static int resetcount;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1635,7 +1802,7 @@ static int pacman_hiload(void)
 
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			copytoscreen(0x4e8b, 4, 0x3f2, -1);
+			copytoscreen(0x4e8b, 4, 0x3f2, -1, numstart);
 
 			osd_fclose(f);
 		}
@@ -1645,7 +1812,15 @@ static int pacman_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
+static int pacman_hiload(void)
+{
+	return pacman_alibaba_common_hiload(0);
+}
 
+static int alibaba_hiload(void)
+{
+	return pacman_alibaba_common_hiload(0x30);
+}
 
 static void pacman_hisave(void)
 {
@@ -1693,8 +1868,6 @@ static int maketrax_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
 static void maketrax_hisave(void)
 {
 	void *f;
@@ -1708,6 +1881,8 @@ static void maketrax_hisave(void)
 	}
 
 }
+
+
 
 static int crush_hiload(void)
 {
@@ -1732,7 +1907,7 @@ static int crush_hiload(void)
 
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			copytoscreen(0x4c83, 3, 0x3f3, -1);
+			copytoscreen(0x4c83, 3, 0x3f3, -1, 0);
 
 			osd_fclose(f);
 		}
@@ -1741,8 +1916,6 @@ static int crush_hiload(void)
 	}
 	else return 0;	/* we can't load the hi scores yet */
 }
-
-
 
 static void crush_hisave(void)
 {
@@ -1774,7 +1947,7 @@ static int eyes_hiload(void)
 
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			copytoscreen(0x4cfd, 3, 0x3f2, -1);
+			copytoscreen(0x4cfd, 3, 0x3f2, -1, 0);
 
 			osd_fclose(f);
 		}
@@ -1783,7 +1956,6 @@ static int eyes_hiload(void)
 	}
 	else return 0;	/* we can't load the hi scores yet */
 }
-
 
 static void eyes_hisave(void)
 {
@@ -1797,6 +1969,8 @@ static void eyes_hisave(void)
 		osd_fclose(f);
 	}
 }
+
+
 
 static int mrtnt_hiload(void)
 {
@@ -1813,7 +1987,7 @@ static int mrtnt_hiload(void)
 
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			copytoscreen(0x4cb9, 3, 0x3f2, -1);
+			copytoscreen(0x4cb9, 3, 0x3f2, -1, 0);
 
 			osd_fclose(f);
 		}
@@ -1822,7 +1996,6 @@ static int mrtnt_hiload(void)
 	}
 	else return 0;	/* we can't load the hi scores yet */
 }
-
 
 static void mrtnt_hisave(void)
 {
@@ -1836,6 +2009,7 @@ static void mrtnt_hisave(void)
 		osd_fclose(f);
 	}
 }
+
 
 
 static int lizwiz_hiload(void)
@@ -1853,7 +2027,7 @@ static int lizwiz_hiload(void)
 
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			copytoscreen(0x4db5, 3, 0x3f2, -1);
+			copytoscreen(0x4db5, 3, 0x3f2, -1, 0);
 
 			osd_fclose(f);
 		}
@@ -1877,6 +2051,7 @@ static void lizwiz_hisave(void)
 }
 
 
+
 static int ponpoko_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1893,7 +2068,7 @@ static int ponpoko_hiload(void)
 
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated */
-			copytoscreen(0x4e59, 3, 0x6c, 1);
+			copytoscreen(0x4e59, 3, 0x6c, 1, 0);
 
 			osd_fclose(f);
 		}
@@ -1917,11 +2092,11 @@ static void ponpoko_hisave(void)
 }
 
 
-static int theglob_hiload(void)
+
+static int theglob_beastf_common_hiload(int address)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	int address = 0x4c48;
-	if (strcmp(Machine->gamedrv->name, "beastf") == 0) address = 0x4c46;
+
 
 	if (memcmp(&RAM[address],"MOB",3) == 0)
 	{
@@ -1939,12 +2114,10 @@ static int theglob_hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-static void theglob_hisave(void)
+static void theglob_beastf_common_hisave(int address)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	int address = 0x4c48;
-	if (strcmp(Machine->gamedrv->name, "beastf") == 0) address = 0x4c46;
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -1953,6 +2126,27 @@ static void theglob_hisave(void)
 		osd_fclose(f);
 	}
 }
+
+static int theglob_hiload(void)
+{
+    return theglob_beastf_common_hiload(0x4c48);
+}
+
+static int beastf_hiload(void)
+{
+    return theglob_beastf_common_hiload(0x4c46);
+}
+
+static void theglob_hisave(void)
+{
+    theglob_beastf_common_hisave(0x4c48);
+}
+
+static void beastf_hisave(void)
+{
+    theglob_beastf_common_hisave(0x4c46);
+}
+
 
 
 static int vanvan_hiload(void)
@@ -1966,24 +2160,24 @@ static int vanvan_hiload(void)
 	/* we dirty it, then we wait for it to be cleared again */
 	if (firsttime == 0)
 	{
-		memset(&RAM[0x4C60],0xff,240);
+		memset(&RAM[0x4c60],0xff,240);
 		firsttime = 1;
 	}
 
-	if (memcmp(&RAM[0x4C60],"\x00\x00\x00",3) == 0 &&
-	       memcmp(&RAM[0x4CC0],"\x00\x00\x00",3) == 0 &&
-                 memcmp(&RAM[0x4D4C],"\x00\x00\x00",3)==0 )
+	if (memcmp(&RAM[0x4c60],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x4cc0],"\x00\x00\x00",3) == 0 &&
+		memcmp(&RAM[0x4d4c],"\x00\x00\x00",3) == 0 )
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x4C60],240);
-			RAM[0x4809] = RAM[0x4C60];
-			RAM[0x480A] = RAM[0x4C61];
-			RAM[0x480B] = RAM[0x4C62];
-			RAM[0x480C] = RAM[0x4C63];
+			osd_fread(f,&RAM[0x4c60],240);
+			RAM[0x4809] = RAM[0x4c60];
+			RAM[0x480a] = RAM[0x4c61];
+			RAM[0x480b] = RAM[0x4c62];
+			RAM[0x480c] = RAM[0x4c63];
 
 
 			osd_fclose(f);
@@ -2003,10 +2197,11 @@ static void vanvan_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x4C60],240);
+		osd_fwrite(f,&RAM[0x4c60],240);
 		osd_fclose(f);
 	}
 }
+
 
 
 #define BASE_CREDITS "Allard van der Bas (original code)\nNicola Salmoria (MAME driver)"
@@ -2563,7 +2758,7 @@ struct GameDriver theglob_driver =
 	__FILE__,
 	0,
 	"theglob",
-	"The Glob (Pac Man hardware)",
+	"The Glob",
 	"1983",
 	"Epos Corporation",
 	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
@@ -2581,7 +2776,7 @@ struct GameDriver theglob_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	theglob_hiload,theglob_hisave
+	theglob_hiload, theglob_hisave
 };
 
 struct GameDriver beastf_driver =
@@ -2589,7 +2784,7 @@ struct GameDriver beastf_driver =
 	__FILE__,
 	&theglob_driver,
 	"beastf",
-	"Beastie Feastie (Pac Man hardware)",
+	"Beastie Feastie",
 	"1984",
 	"Epos Corporation",
 	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
@@ -2607,7 +2802,7 @@ struct GameDriver beastf_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	theglob_hiload,theglob_hisave
+	beastf_hiload, beastf_hisave
 };
 
 /* not working, encrypted */
@@ -2687,4 +2882,30 @@ struct GameDriver vanvanb_driver =
 	ORIENTATION_ROTATE_270,
 
 	vanvan_hiload, vanvan_hisave
+};
+
+struct GameDriver alibaba_driver =
+{
+	__FILE__,
+	0,
+	"alibaba",
+	"Ali Baba and 40 Thieves",
+	"1982",
+	"Sega",
+	"Zsolt Vasvari\nMarco Cassili\n"BASE_CREDITS,
+	GAME_WRONG_COLORS,
+	&alibaba_machine_driver,
+	0,
+
+	alibaba_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	alibaba_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	alibaba_hiload, pacman_hisave
 };

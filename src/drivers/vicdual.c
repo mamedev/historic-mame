@@ -1132,6 +1132,21 @@ ROM_END
 
 ROM_START( sspaceat_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "155.u27",      0x0000, 0x0400, 0xba7bb86f )
+	ROM_LOAD( "156.u26",      0x0400, 0x0400, 0x0b3a491c )
+	ROM_LOAD( "157.u25",      0x0800, 0x0400, 0x3d3fac3b )
+	ROM_LOAD( "158.u24",      0x0c00, 0x0400, 0x843b80f6 )
+	ROM_LOAD( "159.u23",      0x1000, 0x0400, 0x1eacf60d )
+	ROM_LOAD( "160.u22",      0x1400, 0x0400, 0xe61d482f )
+	ROM_LOAD( "161.u21",      0x1800, 0x0400, 0xeb5e0993 )
+	ROM_LOAD( "162.u20",      0x1c00, 0x0400, 0x5f84d550 )
+
+	ROM_REGION(0x0020) /* Color PROMs */
+	/* missing! */
+ROM_END
+
+ROM_START( sspacatc_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "139.u27",      0x0000, 0x0400, 0x9f2112fc )
 	ROM_LOAD( "140.u26",      0x0400, 0x0400, 0xddbeed35 )
 	ROM_LOAD( "141.u25",      0x0800, 0x0400, 0xb159924d )
@@ -1645,7 +1660,7 @@ struct GameDriver sspaceat_driver =
 	__FILE__,
 	0,
 	"sspaceat",
-	"Sega Space Attack",
+	"Sega Space Attack (Upright)",
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
@@ -1654,6 +1669,32 @@ struct GameDriver sspaceat_driver =
 	0,
 
 	sspaceat_rom,
+	vicdual_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	sspaceat_input_ports,
+
+	sspaceat_color_prom, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver sspacatc_driver =
+{
+	__FILE__,
+	&sspaceat_driver,
+	"sspacatc",
+	"Sega Space Attack (Cocktail)",
+	"1979",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	GAME_IMPERFECT_COLORS,
+	&vicdual_3ports_machine_driver,
+	0,
+
+	sspacatc_rom,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */

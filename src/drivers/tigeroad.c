@@ -87,8 +87,9 @@ static void f1dream_protection_w(void)
 {
 	int indx;
 	int value = 255;
+	int prevpc = cpu_getpreviouspc();
 
-	if (cpu_get_pc() == 0x2450)
+	if (prevpc == 0x244c)
 	{
 		/* Called once, when a race is started.*/
 		indx = READ_WORD(&ram[0x3ff0]);
@@ -97,7 +98,7 @@ static void f1dream_protection_w(void)
 		WRITE_WORD(&ram[0x3fea],f1dream_2450_lookup[++indx]);
 		WRITE_WORD(&ram[0x3fec],f1dream_2450_lookup[++indx]);
 	}
-	else if (cpu_get_pc() == 0x613e)
+	else if (prevpc == 0x613a)
 	{
 		/* Called for every sprite on-screen.*/
 		if ((READ_WORD(&ram[0x3ff6])) < 15)
@@ -113,7 +114,7 @@ static void f1dream_protection_w(void)
 
 		WRITE_WORD(&ram[0x3ff2],value);
 	}
-	else if (cpu_get_pc() == 0x17b74)
+	else if (prevpc == 0x17b70)
 	{
 		/* Called only before a real race, not a time trial.*/
 		if ((READ_WORD(&ram[0x3ff0])) >= 0x04) indx = 128;
@@ -138,7 +139,7 @@ static void f1dream_protection_w(void)
 			WRITE_WORD(&ram[0x3fec],0x00ff);
 		}
 	}
-	else if ((cpu_get_pc() == 0x27fc) || (cpu_get_pc() == 0x511e) || (cpu_get_pc() == 0x5146) || (cpu_get_pc() == 0x516e))
+	else if ((prevpc == 0x27f8) || (prevpc == 0x511a) || (prevpc == 0x5142) || (prevpc == 0x516a))
 	{
 		/* The main CPU stuffs the byte for the soundlatch into 0xfffffd.*/
 		soundlatch_w(2,READ_WORD(&ram[0x3ffc]));

@@ -287,11 +287,15 @@
 	EAL = tmp
 
 /***************************************************************
- *	EA = indirect plus x (only used by 65c02 JMP)
+ *	EA = indirect plus x (only used by JMP)
  ***************************************************************/
 #define EA_IAX                                                  \
-	EA_IND; 													\
-    EAW += X
+	EA_ABS;														\
+	EAD+=X;														\
+	tmp = RDMEM(EAD);											\
+	EAL++; 														\
+	EAH = RDMEM(EAD);											\
+	EAL = tmp
 
 /* read a value into tmp */
 #define RD_IMM	tmp = RDOPARG(); PCW++
@@ -433,22 +437,11 @@
 /* 6280 ********************************************************
  *	BIT Bit test
  ***************************************************************/
-#if LAZY_FLAGS
-
-#define BIT 													\
-	P = (P & ~_fV) | (tmp & _fV);								\
-	NZ = (tmp & _fN) << 8;										\
-	NZ |= tmp & A /* mask to lazy Z */
-
-#else
-
-#define BIT 													\
-	P &= ~(_fN|_fV|_fZ);										\
-	P |= tmp & (_fN|_fV);										\
-	if ((tmp & A) == 0) 										\
-		P |= _fZ
-
-#endif
+#define BIT														\
+	P = (P & ~(_fN|_fV|_fT|_fZ))								\
+		| ((tmp&0x80) ? _fN:0)									\
+		| ((tmp&0x40) ? _fV:0)									\
+		| ((tmp&A)  ? 0:_fZ)
 
 /* 6280 ********************************************************
  *	BMI Branch if minus
@@ -762,7 +755,7 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 #else
 
 #define PLP 													\
-	PULL(P) 													\
+	PULL(P); 													\
 	CHECK_IRQ_LINES
 #endif
 
@@ -1090,16 +1083,22 @@ if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc()); \
 /* 6280 ********************************************************
  * TRB  Test and reset bits
  ***************************************************************/
-#define TRB                                                     \
-    tmp &= ~A;                                                  \
-    SET_NZ(tmp)
+#define TRB                                                   	\
+	P = (P & ~(_fN|_fV|_fT|_fZ))								\
+		| ((tmp&0x80) ? _fN:0)									\
+		| ((tmp&0x40) ? _fV:0)									\
+		| ((tmp&A)  ? 0:_fZ);									\
+    tmp &= ~A
 
 /* 6280 ********************************************************
  * TSB  Test and set bits
  ***************************************************************/
 #define TSB                                                     \
-    tmp |= A;                                                   \
-    SET_NZ(tmp)
+	P = (P & ~(_fN|_fV|_fT|_fZ))								\
+		| ((tmp&0x80) ? _fN:0)									\
+		| ((tmp&0x40) ? _fV:0)									\
+		| ((tmp&A)  ? 0:_fZ);									\
+    tmp |= A
 
 /* 6280 ********************************************************
  *	TSX Transfer stack LSB to index X

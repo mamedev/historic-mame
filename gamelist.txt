@@ -22,7 +22,9 @@ to list them.
 | APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
 | Adv.of Robby Roto,The|  Yes   |   No   |   No   |  Yes   |  Yes   | robby    |
 | Aero Fighters        |  Yes   |  Yes   |  Yes   |   No   |   No   | aerofgt  |
+| Air Buster           |  Yes   |  Yes   |  Yes   |   No   |   No   | airbustr |
 | Alex Kidd            |   No   |  Yes   |   No   |   No   |   No   | alexkidd |
+| Ali Baba and 40 Thieves Yes   |   No   |  Bad   |   No   |  Yes   | alibaba  |
 | Alien Storm          |   No   |  Yes   |   No   |   No   |   No   | astormbl |
 | Alien Syndrome       |Slowdowns  Yes   |  Yes   |   No   |   No   | aliensyn |
 | Alpine Ski           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | alpine   |
@@ -107,9 +109,11 @@ to list them.
 | City Connection      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | citycon  |
 | Clay Pigeon          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | claypign |
 | Cloak & Dagger       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cloak    |
+| Cloud 9              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cloud9   |
 | Cobra Command        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cobracom |
 | Colony 7             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | colony7  |
 | Combat               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | combat   |
+| Combat School        |  Yes   | Close  |  Yes   |  Yes   |   No   | combasc  |
 | Commando (Capcom)    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commando |
 | Commando (Sega)      |  Yes   |   No   |  Yes   |  Yes   |  Yes   | commsega |
 | Comotion             |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | comotion |
@@ -157,6 +161,7 @@ to list them.
 | Double Dragon        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ddragon  |
 | Double Dragon 2      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ddragon2 |
 | Double Dribble       |  Yes   |  Yes   |No Speech   No   |   No   | ddribble |
+| Dyger                |  Yes   |  Yes   |  Yes   |   No   |   NO   | dyger    |
 | Dynamite Dux         |   No   |  Yes   |   No   |   No   |   No   | dduxbl   |
 | Dynasty Wars         |  Yes   |  Yes   |  Yes   |   No   |   No   | dwj      |
 | E-Swat               |   No   |  Yes   |   No   |   No   |   No   | eswatbl  |
@@ -220,7 +225,7 @@ to list them.
 | Green Beret          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gberet   |
 | Gridiron Fight       |  Yes   |  Yes   |  Yes   |   No   |   No   | gridiron |
 | Growl                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | growl    |
-| Gun Dealer           |  Yes   |  Yes   |  Yes   |   No   |   No   | gundealr |
+| Gun Dealer           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | gundealr |
 | Gunsmoke             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | gunsmoke |
 | Guzzler              |  Yes   |  Yes   |  Yes   |   No   |  Yes   | guzzler  |
 | Gypsy Juggler        |  Yes   |Overlay |   No   |   No   |   No   | gypsyjug |
@@ -236,7 +241,7 @@ to list them.
 | Hexa                 |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | hexa     |
 | Hi Impact Football   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hiimpact |
 | HigeMaru             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | higemaru |
-| Hippodrome           |Partial.|  Yes   |  Yes   |  Yes   |   No   | hippodrm |
+| Hippodrome           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hippodrm |
 | Hit 'n Miss          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hitnmiss |
 | Hustle               |  Yes   |  b/w   |   No   |   No   |   No   | hustle   |
 | Hyper Sports         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | hyperspt |
@@ -326,6 +331,7 @@ to list them.
 | Meadows Lanes        |  Yes   |  b/w   |   No   |   No   |   No   | medlanes |
 | Mega Man             |  Yes   |  Yes   |   No   |   No   |   No   | megaman  |
 | Mega Twins           |  Yes   |  Yes   |  Yes   |   No   |   No   | mtwins   |
+| Mega Zone            |  Yes   |  Yes   |  Yes   |   No   |   No   | megazone |
 | MegaTack             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | megatack |
 | Mercs                |  Yes   |  Yes   |  Yes   |   No   |   No   | mercs    |
 | Midnight Resistance  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | midres   |
@@ -351,6 +357,7 @@ to list them.
 | Mr. Do's Wild Ride   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | dowild   |
 | Mr. TNT              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | mrtnt    |
 | Ms Pac Man           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
+| Mutant Night         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mnight   |
 | My Hero              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | myhero   |
 | Mysterious Stones    |  Yes   | Close  |  Yes   |  Yes   |  Yes   | mystston |
 | Mystic Marathon      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mysticm  |
@@ -411,10 +418,11 @@ to list them.
 | Qix                  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qix      |
 | Quantum              |  Yes   |   No   |  Yes   |  Yes   |   No   | quantum  |
 | Quartet II           |   No   |  Yes   |   No   |   No   |   No   | quartet2 |
+| Quiz Tonosama no Yabou  Yes   |  Yes   |Partial |  Yes   |   No   | qtono1   |
 | Qwak                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qwakprot |
 | Radar Scope          |  Yes   |  Yes?  |Partial |  Yes   |   No   | radarscp |
 | Radical Radial       |   No   |  Yes   |  Yes   |   No   |   No   | radrad   |
-| Rainbow Islands      |Partial.|  Yes   |   No   |   No   |   No   | rainbow  |
+| Rainbow Islands      |  Yes   |  Yes   |  Yes   |   No   |   No   | rainbow  |
 | Rally X              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | rallyx   |
 | Rampage              |  Yes   |  Yes   |  Yes   |   No   |   No   | rampage  |
 | Rastan               |  Yes   | Close  |  Yes   |  Yes   |   No   | rastan   |
@@ -443,6 +451,7 @@ to list them.
 | SDI                  |   No   |  Yes   |   No   |   No   |   No   | sdi      |
 | SWAT                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | swat     |
 | Safari               |  Yes   |  b/w   |   No   |   No   |  n/a   | safari   |
+| Salamander           |  Yes   |  Yes   |Partial |   No   |   No   | salamand |
 | Samurai              |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
 | Sarge                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sarge    |
 | Sasuke vs. Commander |  Yes   |   No   |   No   |   No   |  Yes   | sasuke   |
@@ -623,11 +632,13 @@ to list them.
 | Wonder Boy in M.L.   |  Yes   |  Yes   | Wrong  |  Yes   |   No   | wbml     |
 | Wonder Momo          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | wndrmomo |
 | World Cup 90         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | wc90     |
+| World Tennis         |  Yes   |  Yes?  | Wrong  |   No   |   No   | wtennis  |
 | Wrestle War          |   No   |  Yes   |   No   |   No   |   No   | wrestwar |
 | Xain'd Sleena        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xsleena  |
 | Xenophobe            |  Yes   |  Yes   |  Yes   |  n/a   |   No   | xenophob |
 | Xevious              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | xevious  |
 | Xybots               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | xybots   |
+| Yam! Yam!?           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | yamyam   |
 | Yamato               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | yamato   |
 | Yie Ar Kung Fu       |  Yes   |  Yes   |Partial |  Yes   |  Yes   | yiear    |
 | Zaxxon               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | zaxxon   |
@@ -3121,6 +3132,12 @@ Known issues:
 - No ADPCM samples.
 - The second YM2203 starts outputting static after a few seconds. This is in
   the original version, the bootleg doesn't have a second YM2203.
+
+
+
+World Tennis ("wtennis")
+========================
+On startup, you have to reset the game (F3) to make it exit service mode.
 
 
 

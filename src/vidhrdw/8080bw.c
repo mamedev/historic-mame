@@ -447,3 +447,66 @@ void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         	    bitmap->line[middle][x] = Machine->pens[GREEN];
     }
 }
+
+/*******************************************************/
+/*                                                     */
+/* Taito "Balloon Bomber"                              */
+/*                                                     */
+/*******************************************************/
+
+const unsigned char *colourrom;
+
+void ballbomb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+	colourrom = color_prom + 128;
+
+    *(palette++) = 0;
+    *(palette++) = 0;
+    *(palette++) = 0;
+
+	for (i = 1;i < Machine->drv->total_colors-1;i++)
+	{
+		*(palette++) = 0xdf * (((i >> 0) & 1) == 0) + 0x20;
+		*(palette++) = 0xdf * (((i >> 1) & 1) == 0) + 0x20;
+		*(palette++) = 0xdf * (((i >> 2) & 1) == 0) + 0x20;
+	}
+
+    *(palette++) = 0xff;
+    *(palette++) = 0xff;
+    *(palette++) = 0xff;
+}
+
+void ballbomb_videoram_w (int offset,int data)
+{
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
+		int col;
+        int cy;
+
+		invaders_videoram[offset] = data;
+
+		y = offset / 32;
+		x = 8 * (offset % 32);
+
+        /* 32 x 32 colourmap */
+
+        col = colourrom[((y / 8) * 32) + (x / 8)] & 7;
+        col = Machine->pens[col];
+
+		for (i = 0; i < 8; i++)
+		{
+			if (!(data & 0x01))
+				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
+			else
+				plot_pixel_8080 (x, y, col);
+
+			x ++;
+			data >>= 1;
+		}
+	}
+}

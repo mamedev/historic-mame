@@ -19,7 +19,7 @@ extern int gfx_height;
 extern int skiplines;
 extern int skipcolumns;
 extern int use_triplebuf;
-extern int triplebuf_pos;
+extern int triplebuf_pos,triplebuf_page_width;
 
 unsigned int doublepixel[256];
 unsigned int quadpixel[256]; /* for quadring pixels */
@@ -370,17 +370,17 @@ INLINE void copyline_4x_8bpp(unsigned char *src,short seg,unsigned long address,
 	unsigned char *src; \
 	unsigned long address; \
 	dest_seg = screen->seg; \
-	vesa_line = gfx_yoffset + triplebuf_pos; \
+	vesa_line = gfx_yoffset; \
 	line_offs = (scrbitmap->line[1] - scrbitmap->line[0]); \
-	xoffs = (BPP/8)*gfx_xoffset; \
+	xoffs = (BPP/8)*(gfx_xoffset + triplebuf_pos); \
 	width = gfx_display_columns/(4/(BPP/8)); \
 	src = scrbitmap->line[skiplines] + (BPP/8)*skipcolumns;	\
 
 #define TRIPLEBUF_FLIP \
 	if (use_triplebuf) \
 	{ \
-		vesa_scroll_async(0,triplebuf_pos); \
-		triplebuf_pos = (triplebuf_pos + gfx_height) % (3*gfx_height); \
+		vesa_scroll_async(triplebuf_pos,0); \
+		triplebuf_pos = (triplebuf_pos + triplebuf_page_width) % (3*triplebuf_page_width); \
 	}
 
 #define DIRTY0_NXNS(MX,MY,BPP) \

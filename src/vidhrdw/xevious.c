@@ -156,11 +156,6 @@ int xevious_vh_start(void)
 	{
 		fg_tilemap->transparent_pen = 0;
 
-		tilemap_set_scroll_rows(fg_tilemap,1);
-		tilemap_set_scroll_cols(fg_tilemap,1);
-		tilemap_set_scroll_rows(bg_tilemap,1);
-		tilemap_set_scroll_cols(bg_tilemap,1);
-
 		return 0;
 	}
 
@@ -222,18 +217,18 @@ void xevious_vh_latch_w(int offset, int data)
 	{
 	case 0:
 		if (flipscreen)
-			tilemap_set_scrollx(bg_tilemap,0,-data+312);
+			tilemap_set_scrollx(bg_tilemap,0,data-312);
 		else
-			tilemap_set_scrollx(bg_tilemap,0,-data-20);
+			tilemap_set_scrollx(bg_tilemap,0,data+20);
 		break;
 	case 1:
-		tilemap_set_scrollx(fg_tilemap,0,-data-32);
+		tilemap_set_scrollx(fg_tilemap,0,data+32);
 		break;
 	case 2:
-		tilemap_set_scrolly(bg_tilemap,0,-data-16);
+		tilemap_set_scrolly(bg_tilemap,0,data+16);
 		break;
 	case 3:
-		tilemap_set_scrolly(fg_tilemap,0,-data-18);
+		tilemap_set_scrolly(fg_tilemap,0,data+18);
 		break;
 	case 7:		/* DISPLAY XY FLIP ?? */
 		flipscreen = data & 1;

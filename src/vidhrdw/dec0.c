@@ -1097,10 +1097,24 @@ for (i = 0;i < 8;i+=2)
 void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	dec0_update_palette(dec0_pri & 0x01);
-
 	dec0_pf1_update();
-	dec0_pf2_update(0,0); /* This is really the top layer.. */
-	dec0_pf2_draw(bitmap,0);
+
+	if (dec0_pri & 0x01)
+	{
+		dec0_pf2_update(0,0);
+		dec0_pf3_update(1,0);
+
+		dec0_pf2_draw(bitmap,0);
+		dec0_pf3_draw(bitmap,1);
+	}
+	else
+	{
+		dec0_pf3_update(0,0);
+		dec0_pf2_update(1,0);
+
+		dec0_pf3_draw(bitmap,0);
+		dec0_pf2_draw(bitmap,1);
+	}
 
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
@@ -1364,6 +1378,45 @@ int dec0_pf3_data_r(int offset)
 void dec0_priority_w(int offset,int data)
 {
   	dec0_pri = COMBINE_WORD(dec0_pri,data);
+}
+
+void dec0_pf3_control_8bit_w(int offset, int data)
+{
+	static int buffer[0x20];
+	int myword;
+
+	buffer[offset]=data;
+
+	/* Rearrange little endian bytes from H6280 into big endian words for 68k */
+	offset&=0xffe;
+	myword=buffer[offset] + (buffer[offset+1]<<8);
+
+	if (offset<0x10) dec0_pf3_control_0_w(offset,myword);
+	else dec0_pf3_control_1_w(offset-0x10,myword);
+}
+
+void dec0_pf3_data_8bit_w(int offset, int data)
+{
+	if (offset&1) { /* MSB has changed */
+		int lsb=READ_WORD(&dec0_pf3_data[offset&0x7fe]);
+		int newword=(lsb&0xff) | (data<<8);
+		WRITE_WORD(&dec0_pf3_data[offset&0x7fe],newword);
+		dec0_pf3_dirty[offset&0x7fe] = 1;
+	}
+	else { /* LSB has changed */
+		int msb=READ_WORD(&dec0_pf3_data[offset&0x7fe]);
+		int newword=(msb&0xff00) | data;
+		WRITE_WORD(&dec0_pf3_data[offset&0x7fe],newword);
+		dec0_pf3_dirty[offset&0x7fe] = 1;
+	}
+}
+
+int dec0_pf3_data_8bit_r(int offset)
+{
+	if (offset&1) /* MSB */
+		return READ_WORD(&dec0_pf3_data[offset&0x7fe])>>8;
+
+	return READ_WORD(&dec0_pf3_data[offset&0x7fe])&0xff;;
 }
 
 /******************************************************************************/

@@ -66,9 +66,6 @@ int gng_vh_start(void)
 		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
 		bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
 
-		tilemap_set_scroll_rows(bg_tilemap,1);
-		tilemap_set_scroll_cols(bg_tilemap,1);
-
 		return 0;
 	}
 
@@ -108,13 +105,13 @@ void gng_bgcolorram_w(int offset,int data){
 void gng_bgscrollx_w(int offset,int data){
 	static unsigned char scrollx[2];
 	scrollx[offset] = data;
-	tilemap_set_scrollx( bg_tilemap, 0, -(scrollx[0] + 256 * scrollx[1]) );
+	tilemap_set_scrollx( bg_tilemap, 0, scrollx[0] + 256 * scrollx[1] );
 }
 
 void gng_bgscrolly_w(int offset,int data){
 	static unsigned char scrolly[2];
 	scrolly[offset] = data;
-	tilemap_set_scrolly( bg_tilemap, 0, -(scrolly[0] + 256 * scrolly[1]) );
+	tilemap_set_scrolly( bg_tilemap, 0, scrolly[0] + 256 * scrolly[1] );
 }
 
 

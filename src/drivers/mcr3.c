@@ -1200,7 +1200,7 @@ static struct MachineDriver dotron_machine_driver =
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3580000,	/* .8 Mhz */
+			3580000/4,	/* .8 Mhz */
 			3,
 			snt_readmem,snt_writemem,0,0,
 			ignore_interrupt,1

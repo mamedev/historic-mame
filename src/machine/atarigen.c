@@ -216,6 +216,14 @@ void atarigen_sound_w(int offset, int data)
 }
 
 
+void atarigen_sound_upper_w(int offset, int data)
+{
+	/* use a timer to force a resynchronization */
+	if (!(data & 0xff000000))
+		timer_set(TIME_NOW, (data >> 8) & 0xff, atarigen_delayed_sound_w);
+}
+
+
 int atarigen_6502_sound_r(int offset)
 {
 	atarigen_cpu_to_sound_ready = 0;
@@ -254,6 +262,14 @@ int atarigen_sound_r(int offset)
 	atarigen_sound_to_cpu_ready = 0;
 	update_main_irq_states();
 	return atarigen_sound_to_cpu | 0xff00;
+}
+
+
+int atarigen_sound_upper_r(int offset)
+{
+	atarigen_sound_to_cpu_ready = 0;
+	update_main_irq_states();
+	return (atarigen_sound_to_cpu << 8) | 0x00ff;
 }
 
 

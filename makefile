@@ -14,8 +14,8 @@ VPATH=src $(wildcard src/cpu/*)
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = skykid_driver
-TINY_OBJS = obj/drivers/pacland.o obj/vidhrdw/pacland.o
+TINY_NAME = yamyam_driver
+TINY_OBJS = obj/drivers/gundealr.o obj/vidhrdw/gundealr.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -29,9 +29,9 @@ TINY_OBJS = obj/drivers/pacland.o obj/vidhrdw/pacland.o
 # X86_ASM_68K = 1
 
 ifdef NEOMAME
-CPUS+=Z80
-CPUS+=M68000
-SOUNDS+=YM2610
+CPUS+=Z80@
+CPUS+=M68000@
+SOUNDS+=YM2610@
 else
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
@@ -618,12 +618,13 @@ DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a \
          obj/sega.a obj/system16.a obj/btime.a obj/dataeast.a obj/dec8.a \
          obj/dec0.a obj/tehkan.a obj/konami.a obj/nemesis.a \
          obj/tmnt.a obj/exidy.a obj/atarivg.a obj/centiped.a \
-         obj/kangaroo.a obj/missile.a obj/ataribw.a obj/atarisy1.a \
-         obj/atarisy2.a obj/atari.a obj/rockola.a obj/snk.a obj/technos.a \
+         obj/kangaroo.a obj/missile.a obj/ataribw.a obj/atarimsc.a \
+         obj/atarisy1.a obj/atarisy2.a obj/atari.a obj/rockola.a \
+         obj/snk.a obj/technos.a \
          obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
          obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
          obj/valadon.a obj/seibu.a obj/jaleco.a obj/visco.a \
-         obj/toaplan.a obj/leland.a obj/other.a \
+         obj/toaplan.a obj/leland.a obj/tad.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -786,6 +787,7 @@ obj/irem.a: \
          obj/vidhrdw/yard.o obj/drivers/yard.o \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
          obj/vidhrdw/m62.o obj/drivers/m62.o \
+         obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
 
 obj/gottlieb.a: \
          obj/vidhrdw/gottlieb.o obj/sndhrdw/gottlieb.o obj/drivers/gottlieb.o \
@@ -840,7 +842,7 @@ obj/capcom.a: \
          obj/vidhrdw/sf1.o obj/drivers/sf1.o \
          obj/machine/kabuki.o \
          obj/vidhrdw/pang.o obj/drivers/pang.o \
-         obj/machine/cps1.o obj/vidhrdw/cps1.o obj/drivers/cps1.o \
+         obj/vidhrdw/cps1.o obj/drivers/cps1.o \
 
 obj/capbowl.a: \
          obj/machine/capbowl.o obj/vidhrdw/capbowl.o obj/vidhrdw/tms34061.o obj/drivers/capbowl.o \
@@ -889,6 +891,7 @@ obj/dataeast.a: \
          obj/vidhrdw/sidepckt.o obj/drivers/sidepckt.o \
          obj/vidhrdw/exprraid.o obj/drivers/exprraid.o \
          obj/vidhrdw/pcktgal.o obj/drivers/pcktgal.o \
+         obj/vidhrdw/actfancr.o obj/drivers/actfancr.o \
 
 obj/dec8.a: \
          obj/vidhrdw/dec8.o obj/drivers/dec8.o \
@@ -919,6 +922,7 @@ obj/konami.a: \
          obj/drivers/junofrst.o \
          obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
          obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
+         obj/vidhrdw/megazone.o obj/drivers/megazone.o \
          obj/vidhrdw/rocnrope.o obj/drivers/rocnrope.o \
          obj/sndhrdw/gyruss.o obj/vidhrdw/gyruss.o obj/drivers/gyruss.o \
          obj/machine/konami.o obj/vidhrdw/trackfld.o obj/sndhrdw/trackfld.o obj/drivers/trackfld.o \
@@ -937,6 +941,7 @@ obj/konami.a: \
          obj/machine/ddrible.o obj/vidhrdw/ddrible.o obj/drivers/ddrible.o \
          obj/vidhrdw/contra.o obj/drivers/contra.o \
          obj/vidhrdw/mainevt.o obj/drivers/mainevt.o \
+         obj/machine/combatsc.o obj/vidhrdw/combatsc.o obj/drivers/combatsc.o \
 
 obj/nemesis.a: \
          obj/vidhrdw/nemesis.o obj/drivers/nemesis.o \
@@ -990,6 +995,15 @@ obj/ataribw.a: \
          obj/vidhrdw/canyon.o obj/drivers/canyon.o \
          obj/vidhrdw/skydiver.o obj/drivers/skydiver.o \
 
+obj/atarimsc.a: \
+         obj/vidhrdw/polepos.o obj/drivers/polepos.o obj/machine/polepos.o \
+         obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
+         obj/vidhrdw/liberatr.o obj/machine/liberatr.o obj/drivers/liberatr.o \
+         obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
+         obj/machine/cloak.o obj/vidhrdw/cloak.o obj/drivers/cloak.o \
+         obj/vidhrdw/cloud9.o obj/drivers/cloud9.o \
+         obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
+
 obj/atarisy1.a: \
          obj/machine/atarisy1.o obj/vidhrdw/atarisy1.o obj/drivers/atarisy1.o \
 
@@ -1042,6 +1056,7 @@ obj/upl.a: \
          obj/vidhrdw/nova2001.o obj/drivers/nova2001.o \
          obj/vidhrdw/pkunwar.o obj/drivers/pkunwar.o \
          obj/vidhrdw/ninjakd2.o obj/drivers/ninjakd2.o \
+         obj/vidhrdw/mnight.o obj/drivers/mnight.o \
 
 obj/tms.a: \
          obj/machine/exterm.o obj/vidhrdw/exterm.o obj/drivers/exterm.o \
@@ -1079,6 +1094,10 @@ obj/toaplan.a: \
 obj/leland.a: \
          obj/vidhrdw/leland.o obj/drivers/leland.o \
 
+obj/tad.a: \
+         obj/vidhrdw/cabal.o obj/drivers/cabal.o \
+         obj/vidhrdw/toki.o obj/drivers/toki.o \
+
 obj/cinemat.a: \
          obj/vidhrdw/cinemat.o obj/drivers/cinemat.o \
 
@@ -1087,19 +1106,12 @@ obj/neogeo.a: \
 
 obj/other.a: \
          obj/vidhrdw/spacefb.o obj/sndhrdw/spacefb.o obj/drivers/spacefb.o \
-         obj/vidhrdw/ccastles.o obj/drivers/ccastles.o \
          obj/vidhrdw/blueprnt.o obj/drivers/blueprnt.o \
          obj/drivers/omegrace.o \
          obj/machine/espial.o obj/vidhrdw/espial.o obj/drivers/espial.o \
-         obj/machine/cloak.o obj/vidhrdw/cloak.o obj/drivers/cloak.o \
-         obj/machine/foodf.o obj/vidhrdw/foodf.o obj/drivers/foodf.o \
          obj/machine/vastar.o obj/vidhrdw/vastar.o obj/drivers/vastar.o \
-         obj/machine/jedi.o obj/vidhrdw/jedi.o obj/sndhrdw/jedi.o obj/drivers/jedi.o \
          obj/vidhrdw/tankbatt.o obj/drivers/tankbatt.o \
-         obj/vidhrdw/liberatr.o obj/machine/liberatr.o obj/drivers/liberatr.o \
          obj/vidhrdw/dday.o obj/sndhrdw/dday.o obj/drivers/dday.o \
-         obj/vidhrdw/cabal.o obj/drivers/cabal.o \
-         obj/vidhrdw/toki.o obj/drivers/toki.o \
          obj/vidhrdw/gundealr.o obj/drivers/gundealr.o \
          obj/machine/leprechn.o obj/vidhrdw/leprechn.o obj/drivers/leprechn.o \
          obj/vidhrdw/hexa.o obj/drivers/hexa.o \
@@ -1108,7 +1120,6 @@ obj/other.a: \
          obj/machine/spiders.o obj/vidhrdw/crtc6845.o obj/vidhrdw/spiders.o obj/drivers/spiders.o \
          obj/machine/stactics.o obj/vidhrdw/stactics.o obj/drivers/stactics.o \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
-         obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
          obj/vidhrdw/kingobox.o obj/drivers/kingobox.o \
          obj/vidhrdw/zerozone.o obj/drivers/zerozone.o \
@@ -1116,8 +1127,8 @@ obj/other.a: \
          obj/vidhrdw/speedbal.o obj/drivers/speedbal.o \
          obj/vidhrdw/sauro.o obj/drivers/sauro.o \
          obj/vidhrdw/galpanic.o obj/drivers/galpanic.o \
+         obj/vidhrdw/airbustr.o obj/drivers/airbustr.o \
          obj/vidhrdw/ambush.o obj/drivers/ambush.o \
-         obj/vidhrdw/polepos.o obj/drivers/polepos.o obj/machine/polepos.o \
          obj/vidhrdw/starcrus.o obj/drivers/starcrus.o \
          obj/vidhrdw/sichuan2.o obj/sndhrdw/sichuan2.o obj/drivers/sichuan2.o \
          obj/vidhrdw/goindol.o obj/drivers/goindol.o \

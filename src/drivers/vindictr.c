@@ -115,7 +115,7 @@ static void vindictr_update_interrupts(int vblank, int sound)
 void vindictr_init_machine(void)
 {
 	atarigen_init_machine(vindictr_update_interrupts, 0);
-	ataraud2_reset(1, 5, 1, 0x0002);
+	ataraud2_init(1, 5, 1, 0x0002);
 }
 
 
@@ -423,7 +423,11 @@ static struct MachineDriver vindictr_machine_driver =
 	vindictr_vh_screenrefresh,
 
 	/* sound hardware */
-	ATARI_AUDIO_2_INTERFACES
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		ATARI_AUDIO_2_YM2151,
+		ATARI_AUDIO_2_POKEY
+	}
 };
 
 

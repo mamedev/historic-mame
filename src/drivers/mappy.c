@@ -801,7 +801,7 @@ ROM_END
 ROM_START( motos_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "mts_1d.bin",   0x8000, 0x4000, 0x1104abb2 )
-	ROM_LOAD( "mts_1b.bin",   0xc000, 0x4000, 0xb5c1c299 )
+	ROM_LOAD( "mts_1b.bin",   0xc000, 0x4000, 0x57b157e2 )
 
 	ROM_REGION_DISPOSE(0x9000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "mts_3b.bin",   0x0000, 0x1000, 0x5d4a2a22 )

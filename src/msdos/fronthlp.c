@@ -392,7 +392,7 @@ int frontend_help (int argc, char **argv)
 #endif
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
-					char name[80];
+					char name[200];
 
 					printf("%-10s",drivers[i]->name);
 
@@ -557,7 +557,7 @@ int frontend_help (int argc, char **argv)
 #endif
 						) && !strwildcmp(gamename, drivers[i]->description))
 				{
-					char name[80];
+					char name[200];
 
 					printf("%-5s%-36s ",drivers[i]->year,drivers[i]->manufacturer);
 

@@ -112,7 +112,7 @@ static void blstroid_update_interrupts(int vblank, int sound)
 void blstroid_init_machine(void)
 {
 	atarigen_init_machine(blstroid_update_interrupts, 0);
-	ataraud2_reset(1, 4, 2, 0x80);
+	ataraud2_init(1, 4, 2, 0x80);
 
 	blstroid_irq_state = 0;
 }
@@ -316,7 +316,11 @@ static struct MachineDriver blstroid_machine_driver =
 	blstroid_vh_screenrefresh,
 
 	/* sound hardware */
-	ATARI_AUDIO_2_INTERFACES
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		ATARI_AUDIO_2_YM2151,
+		ATARI_AUDIO_2_POKEY
+	}
 };
 
 

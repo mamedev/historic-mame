@@ -158,7 +158,7 @@ static void eprom_update_interrupts(int vblank, int sound)
 void eprom_init_machine(void)
 {
 	atarigen_init_machine(eprom_update_interrupts, 0);
-	ataraud2_reset(1, 6, 1, 0x0002);
+	ataraud2_init(1, 6, 1, 0x0002);
 }
 
 
@@ -464,7 +464,12 @@ static struct MachineDriver eprom_machine_driver =
 	eprom_vh_screenrefresh,
 
 	/* sound hardware */
-	ATARI_AUDIO_2_INTERFACES
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		ATARI_AUDIO_2_YM2151,
+		ATARI_AUDIO_2_POKEY,
+		ATARI_AUDIO_2_TMS5220
+	}
 };
 
 

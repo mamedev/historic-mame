@@ -106,7 +106,7 @@ int always_synced;
 int video_sync;
 int wait_vsync;
 int use_triplebuf;
-int triplebuf_pos;
+int triplebuf_pos,triplebuf_page_width;
 int vsync_frame_rate;
 int color_depth;
 int skiplines;
@@ -1074,7 +1074,18 @@ int osd_set_display(int width,int height, int attributes)
 		{
 			set_color_depth(bits);
 
-			err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
+			/* allocate a wide enough virtual screen if possible */
+			/* we round the width (in dwords) to be an even multiple 256 - that */
+			/* way, during page flipping page only one byte of the video RAM */
+			/* address changes, therefore preventing flickering. */
+			if (bits == 8)
+				triplebuf_page_width = (gfx_width + 0x3ff) & ~0x3ff;
+			else
+				triplebuf_page_width = (gfx_width + 0x1ff) & ~0x1ff;
+
+			err = set_gfx_mode(mode,gfx_width,gfx_height,3*triplebuf_page_width,0);
+			if (err)
+				err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
 
 			if (errorlog)
 			{
@@ -1187,11 +1198,18 @@ int osd_set_display(int width,int height, int attributes)
 			/* disable triple buffering if the screen is not large enough */
 			if (errorlog)
 				fprintf (errorlog, "Virtual screen size %dx%d\n",VIRTUAL_W,VIRTUAL_H);
-			if (VIRTUAL_H < 3*gfx_height)
+			if (VIRTUAL_W < 3*triplebuf_page_width)
 			{
 				use_triplebuf = 0;
 				if (errorlog)
 					fprintf (errorlog, "Triple buffer disabled\n");
+			}
+
+			/* if triple buffering is enabled, turn off vsync */
+			if (use_triplebuf)
+			{
+				wait_vsync = 0;
+				video_sync = 0;
 			}
 		}
 	}

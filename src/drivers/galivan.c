@@ -562,11 +562,11 @@ ROM_START( dangar_rom )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
 	ROM_REGION(0x0500)		/* Region 3 - color proms */
-	ROM_LOAD( "63s141n.001", 0x0000, 0x0100, 0xb29f6a07 )	/* red */
-	ROM_LOAD( "63s141n.002", 0x0100, 0x0100, 0xc6de5ecb )	/* green */
-	ROM_LOAD( "63s141n.003", 0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
-	ROM_LOAD( "63s141n.004", 0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
-	ROM_LOAD( "63s141n.005", 0x0400, 0x0100, 0x00000000 )	/* sprite palette bank */
+	ROM_LOAD( "82s129.9f",   0x0000, 0x0100, 0xb29f6a07 )	/* red */
+	ROM_LOAD( "82s129.10f",  0x0100, 0x0100, 0xc6de5ecb )	/* green */
+	ROM_LOAD( "82s129.11f",  0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
+	ROM_LOAD( "82s129.2d",   0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
+	ROM_LOAD( "82s129.7f",   0x0400, 0x0100, 0x29bc6216 )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )
@@ -593,11 +593,11 @@ ROM_START( dangar2_rom )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
 	ROM_REGION(0x0500)		/* Region 3 - color proms */
-	ROM_LOAD( "63s141n.001", 0x0000, 0x0100, 0xb29f6a07 )	/* red */
-	ROM_LOAD( "63s141n.002", 0x0100, 0x0100, 0xc6de5ecb )	/* green */
-	ROM_LOAD( "63s141n.003", 0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
-	ROM_LOAD( "63s141n.004", 0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
-	ROM_LOAD( "63s141n.005", 0x0400, 0x0100, 0x00000000 )	/* sprite palette bank */
+	ROM_LOAD( "82s129.9f",   0x0000, 0x0100, 0xb29f6a07 )	/* red */
+	ROM_LOAD( "82s129.10f",  0x0100, 0x0100, 0xc6de5ecb )	/* green */
+	ROM_LOAD( "82s129.11f",  0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
+	ROM_LOAD( "82s129.2d",   0x0300, 0x0100, 0xa4ac95a5 )	/* sprite lookup table */
+	ROM_LOAD( "82s129.7f",   0x0400, 0x0100, 0x29bc6216 )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)		/* Region 4 - sound cpu code */
 	ROM_LOAD( "dangar13.b14", 0x0000, 0x4000, 0x3e041873 )

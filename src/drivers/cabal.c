@@ -7,9 +7,6 @@ Cabal Bootleg
 The original uses 2xYM3931 for sound
 The bootleg uses YM2151 + 2xZ80 used as ADPCM players
 
-TODO:
-- fix ADPCM mapping
-
 MEMORY MAP
 0x000000 - 0x03ffff   ROM
 0x040000 - 0x0437ff   RAM
@@ -46,13 +43,12 @@ COLORRAM(Colors)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
+static int cabal_sound_command1, cabal_sound_command2;
+
 extern void cabal_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh );
 
-
-static unsigned char cabal_snd_status;
-
 static void cabal_init_machine( void ) {
-	cabal_snd_status = 0xff;
+	cabal_sound_command1 = cabal_sound_command2 = 0xff;
 }
 
 static int cabal_background_r( int offset ){
@@ -68,18 +64,40 @@ static void cabal_background_w( int offset, int data ){
 	}
 }
 
-static void play_adpcm( int channel, int which ){
-	static int j = 0;
+/******************************************************************************************/
 
-	unsigned char *RAM = Machine->memory_region[3];
-	int offset = channel*0x10000;
-	which+=j;
-	which = which*2+0x100;
-	{
-		int start = RAM[offset+which] + RAM[offset+which+1]*256;
-		int len = (RAM[offset+start]*256 + RAM[offset+start+1])*2;
-		start+=2;
-		ADPCM_play( channel,offset+start,len );
+
+static struct YM2151interface ym2151_interface =
+{
+ 	1,			/* 1 chip */
+ 	3579580,	/* 3.58 MHZ ? */ /* 4 MHZ in raine */
+ 	{ 80 },		/* volume */
+ 	{ 0 }
+};
+
+struct ADPCMinterface adpcm_interface =
+{
+	2,			/* total number of ADPCM decoders in the machine */
+	8000,		/* playback frequency */
+	3,			/* memory region where the samples come from */
+	0,			/* initialization function */
+	{40,40}
+};
+
+static void cabal_play_adpcm( int channel, int which ){
+	if( which!=0xff ){
+		unsigned char *RAM = Machine->memory_region[3];
+		int offset = channel*0x10000;
+		int start, len;
+
+		which = which&0x7f;
+		if( which ){
+			which = which*2+0x100;
+			start = RAM[offset+which] + 256*RAM[offset+which+1];
+			len = (RAM[offset+start]*256 + RAM[offset+start+1])*2;
+			start+=2;
+			ADPCM_play( channel,offset+start,len );
+		}
 	}
 }
 
@@ -87,47 +105,40 @@ static int cabal_coin_r( int offset ) {
 	static int coin = 0;
 	int val = readinputport( 3 );
 
-	if ( !( val & 0x04 ) ) {
-		if ( coin == 0 ) {
+	if ( !( val & 0x04 ) ){
+		if ( coin == 0 ){
 			coin = 1;
 			return val;
 		}
-	} else
+	} else {
 		coin = 0;
+	}
 
  	return val | 0x04;
 }
 
 static int cabal_io_r( int offset ) {
-// if( errorlog ) fprintf( errorlog, "INPUT a000[%02x] \n", offset);
+	// if( errorlog ) fprintf( errorlog, "INPUT a000[%02x] \n", offset);
 	switch (offset){
-		case 0x0:  /* DIPSW */
-			return readinputport(4) + (readinputport(5)<<8);
-
-		case 0x8: /* IN0 */
-			return 0xff + (readinputport(0)<<8);
-
-		case 0x10: /* IN1,IN2 */
-			return readinputport(1) + (readinputport(2)<<8);
-
-		default:
-			return (0xffff);
+		case 0x0: return readinputport(4) + (readinputport(5)<<8); /* DIPSW */
+		case 0x8: return 0xff + (readinputport(0)<<8);/* IN0 */
+		case 0x10: return readinputport(1) + (readinputport(2)<<8); /* IN1,IN2 */
+		default: return (0xffff);
 	}
 }
 
 static void cabal_snd_w( int offset,int data ) {
 	switch (offset) {
 		case 0x0:
-			soundlatch_w(offset,data);
+			cabal_sound_command1 = data;
 			cpu_cause_interrupt( 1, Z80_NMI_INT );
-			//cabal_snd_status = 1;// raine style
 		break;
 
-		case 0x2:
-			cabal_snd_status = data & 0xff;
+		case 0x2: /* ?? */
+			cabal_sound_command2 = data & 0xff;
 		break;
 
-		case 0x8:
+		case 0x8: /* ?? */
 		break;
 	}
 }
@@ -136,12 +147,12 @@ static struct MemoryReadAddress readmem_cpu[] = {
 	{ 0x00000, 0x3ffff, MRA_ROM },
 	{ 0x40000, 0x437ff, MRA_RAM },
 	{ 0x43c00, 0x4ffff, MRA_RAM },
-	{ 0x43800, 0x43bff, MRA_RAM, &spriteram, &spriteram_size },	/* Sprite RAM */
-	{ 0x60000, 0x607ff, MRA_BANK1,&colorram },  /* Text   RAM */
-	{ 0x80000, 0x801ff, cabal_background_r, &videoram, &videoram_size },   /* Background RAM */
+	{ 0x43800, 0x43bff, MRA_RAM, &spriteram, &spriteram_size },
+	{ 0x60000, 0x607ff, MRA_BANK1,&colorram },  /* text layer */
+	{ 0x80000, 0x801ff, cabal_background_r, &videoram, &videoram_size }, /* background layer */
 	{ 0x80200, 0x803ff, MRA_BANK2 },
 	{ 0xa0000, 0xa0012, cabal_io_r },
-	{ 0xe0000, 0xe07ff, paletteram_word_r },    /* Color  RAM */
+	{ 0xe0000, 0xe07ff, paletteram_word_r },
 	{ 0xe8000, 0xe800f, cabal_coin_r },
 	{ -1 }
 };
@@ -163,44 +174,25 @@ static struct MemoryWriteAddress writemem_cpu[] = {
 
 int cabal_snd_read(int offset){
 	switch(offset){
-		case 0x08: return(cabal_snd_status);
-		case 0x0a:
-		//cabal_snd_status = 0xff;// raine style
-		return (soundlatch_r(offset));
-		default:
-		return(0xff);
+		case 0x08: return cabal_sound_command2;
+		case 0x0a: return cabal_sound_command1;
+		default: return(0xff);
 	}
 }
 
 void cabal_snd_write(int offset,int data){
 	switch( offset ){
-		case 0x00:  /* Channel 0 */
-			data = data&0x7f;
-			if ( data != 2 && data > 0 && data < 16 ) {
-				play_adpcm( 0, data );
-				if ( errorlog )
-					fprintf( errorlog, "sound out1: %02x\n", data );
-			}
-		break;
-
-		case 0x02:  /* Channel 1 */
-			data = data&0x7f;
-			if( data > 0 && data < 16 ){
-				play_adpcm( 1, data );
-				if( errorlog ) fprintf( errorlog, "sound out2: %02x\n", data );
-			}
-		break;
+		case 0x00: cabal_play_adpcm( 0, data ); break;
+		case 0x02: cabal_play_adpcm( 1, data ); break;
      }
 }
-
-
 
 static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x2000, 0x2fff, MRA_RAM },
-//	{ 0x4000, 0x400d, cabal_snd_read },
-//	{ 0x400f, 0x400f, YM2151_status_port_0_r },
+	{ 0x4000, 0x400d, cabal_snd_read },
+	{ 0x400f, 0x400f, YM2151_status_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }
 };
@@ -209,10 +201,10 @@ static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x2fff, MWA_RAM },
-//	{ 0x4000, 0x400d, cabal_snd_write },
-//	{ 0x400e, 0x400e, YM2151_register_port_0_w },
-//	{ 0x400f, 0x400f, YM2151_data_port_0_w },
-//	{ 0x6000, 0x6000, MWA_NOP },  /*???*/
+	{ 0x4000, 0x400d, cabal_snd_write },
+	{ 0x400e, 0x400e, YM2151_register_port_0_w },
+	{ 0x400f, 0x400f, YM2151_data_port_0_w },
+	{ 0x6000, 0x6000, MWA_NOP },  /*???*/
 	{ 0x8000, 0xffff, MWA_ROM },
  	{ -1 }
 };
@@ -238,6 +230,18 @@ static struct MemoryWriteAddress cabalbl_writemem_sound[] =
 	{ 0x8000, 0xffff, MWA_ROM },
  	{ -1 }
 };
+
+/* ADPCM CPU (common) */
+
+static struct MemoryReadAddress cabalbl_readmem_adpcm[] = {
+	{ 0x0000, 0xffff, MRA_ROM },
+	{ -1 }
+};
+static struct MemoryWriteAddress cabalbl_writemem_adpcm[] = {
+	{ 0x0000, 0xffff, MWA_NOP },
+	{ -1 }
+};
+
 
 /***************************************************************************/
 
@@ -372,23 +376,6 @@ static struct GfxDecodeInfo cabal_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static struct YM2151interface ym2151_interface =
-{
- 	1,			/* 1 chip */
- 	3579580,	/* 3.58 MHZ ? */ /* 4 MHZ in raine */
- 	{ 40 },
- 	{ 0 }
-};
-
-static struct ADPCMinterface adpcm_interface =
-{
-	2,			/* 2 channel */
-	8000,		/* 8000Hz playback */
-	3,			/* memory region */
-	0,			/* init function */
-	{ 128,128 }		/* volume */
-};
-
 static struct MachineDriver cabal_machine_driver =
 {
 	{
@@ -447,7 +434,7 @@ static struct MachineDriver cabalbl_machine_driver =
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices per frame */
+	10, /* CPU slices per frame */
 	cabal_init_machine, /* init machine */
 
 	/* video hardware */
@@ -467,7 +454,7 @@ static struct MachineDriver cabalbl_machine_driver =
 	0,0,0,0,
 	{
 		{
-			SOUND_YM2151_ALT,
+			SOUND_YM2151,//_ALT,
 			&ym2151_interface
 		},
 		{
@@ -476,8 +463,6 @@ static struct MachineDriver cabalbl_machine_driver =
 		}
 	}
 };
-
-
 
 ROM_START( cabal_rom )
 	ROM_REGION(0x50000)	/* 64k for cpu code */
@@ -582,9 +567,9 @@ ROM_START( cabalbl_rom )
 	ROM_LOAD( "cabal_01.bin",   0x0f0000, 0x10000, 0x55c44764 )
 	ROM_LOAD( "5-6s",           0x100000, 0x04000, 0x6a76955a ) /* characters */
 
-	ROM_REGION(0x20000)	/* ADPCM Samples */
-	ROM_LOAD( "cabal_09.bin",    0x00000, 0x10000, 0x4ffa7fe3 )
-	ROM_LOAD( "cabal_10.bin",    0x10000, 0x10000, 0x958789b6 )
+	ROM_REGION(0x20000)
+	ROM_LOAD( "cabal_09.bin",    0x00000, 0x10000, 0x4ffa7fe3 ) /* Z80 code/adpcm data */
+	ROM_LOAD( "cabal_10.bin",    0x10000, 0x10000, 0x958789b6 ) /* Z80 code/adpcm data */
 ROM_END
 
 

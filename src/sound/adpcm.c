@@ -704,16 +704,27 @@ static void OKIM6295_data_w (int num, int data)
 				voice->signal = -2;
 				voice->step = 0;
 
-#if 0
-				volume=(data&0xf)+1;
-				voice->volume=okim6295_interface->volume[num]/volume;
-#endif
+				/* volume control is entirely guesswork */
+				{
+					double out;
+					int vol;
+
+
+					vol = data & 0x0f;
+					out = 1;
+
+					/* assume 2dB per step (most likely wrong!) */
+					while (vol-- > 0)
+						out /= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
+
+					voice->volume=okim6295_interface->volume[num]*out;
+				}
 			}
 			temp >>= 1;
 		}
 
 #if 0
-if (errorlog) fprintf(errorlog,"oki(2 byte) %02x %02x (Voice %01x - %01x)\n",okim6295_command[num],data,data>>4,data&0xf);
+if (errorlog) fprintf(errorlog,"oki%d(2 byte) %02x %02x (Voice %01x - %01x)\n",num,okim6295_command[num],data,data>>4,data&0xf);
 #endif
 
 		/* reset the command */

@@ -7,14 +7,100 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 
-unsigned char *gundealr_bsvideoram;
-unsigned char *gundealr_bigspriteram;
+unsigned char *gundealr_bg_videoram,*gundealr_fg_videoram;
+
+static struct tilemap *bg_tilemap,*fg_tilemap;
+static int flipscreen;
 
 
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info(int col,int row)
+{
+	int tile_index = 2*(32*col+row);
+	unsigned char attr = gundealr_bg_videoram[tile_index+1];
+	SET_TILE_INFO(0,gundealr_bg_videoram[tile_index] + ((attr & 0x07) << 8),(attr & 0xf0) >> 4)
+}
+
+static void get_fg_tile_info(int col,int row)
+{
+	int tile_index = 2 * ((row & 0x0f) + ((col & 0x3f) << 4) + ((row & 0x10) << 6));
+	unsigned char attr = gundealr_fg_videoram[tile_index+1];
+	SET_TILE_INFO(1,gundealr_fg_videoram[tile_index] + ((attr & 0x03) << 8),(attr & 0xf0) >> 4)
+}
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int gundealr_vh_start(void)
+{
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		TILEMAP_OPAQUE,
+		8,8,
+		32,32
+	);
+	fg_tilemap = tilemap_create(
+		get_fg_tile_info,
+		TILEMAP_TRANSPARENT,
+		16,16,
+		64,32
+	);
+
+	if (bg_tilemap && fg_tilemap)
+	{
+		fg_tilemap->transparent_pen = 15;
+
+		return 0;
+	}
+
+	return 1;
+}
+
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+void gundealr_bg_videoram_w(int offset,int data)
+{
+	if (gundealr_bg_videoram[offset] != data)
+	{
+		gundealr_bg_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,(offset/2)/32,(offset/2)%32);
+	}
+}
+
+void gundealr_fg_videoram_w(int offset,int data)
+{
+	if (gundealr_fg_videoram[offset] != data)
+	{
+		int x,y;
+
+		gundealr_fg_videoram[offset] = data;
+
+		offset /= 2;
+		x = (offset & 0x3f0) >> 4;
+		y = (offset & 0x00f) | ((offset & 0x400) >> 6);
+		tilemap_mark_tile_dirty(fg_tilemap,x,y);
+	}
+}
 
 void gundealr_paletteram_w(int offset,int data)
 {
@@ -38,72 +124,48 @@ void gundealr_paletteram_w(int offset,int data)
 	palette_change_color(offset / 2,r,g,b);
 }
 
+void gundealr_fg_scroll_w(int offset,int data)
+{
+	static unsigned char scroll[4];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(fg_tilemap,0,scroll[1] | ((scroll[0] & 0x03) << 8));
+	tilemap_set_scrolly(fg_tilemap,0,scroll[3] | ((scroll[2] & 0x03) << 8));
+}
+
+void yamyam_fg_scroll_w(int offset,int data)
+{
+	static unsigned char scroll[4];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(fg_tilemap,0,scroll[0] | ((scroll[1] & 0x03) << 8));
+	tilemap_set_scrolly(fg_tilemap,0,scroll[2] | ((scroll[3] & 0x03) << 8));
+}
+
+void gundealr_flipscreen_w(int offset,int data)
+{
+	flipscreen = data;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+}
+
 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
+
 void gundealr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+	tilemap_update(ALL_TILEMAPS);
 
-
+	palette_init_used_colors();
 	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
+	tilemap_render(ALL_TILEMAPS);
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-	{
-		if (dirtybuffer[offs] || dirtybuffer[offs + 1])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-			dirtybuffer[offs + 1] = 0;
-
-			sx = (offs/2) / 32;
-			sy = (offs/2) % 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((videoram[offs + 1] & 0x07) << 8),
-					(videoram[offs + 1] & 0xf0) >> 4,
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* draw the front layer */
-	{
-		int sx,sy,x,y;
-
-
-		sx = 256 * (gundealr_bigspriteram[0] & 0x01) - gundealr_bigspriteram[1];
-		sy = 256 * (gundealr_bigspriteram[2] & 0x01) - gundealr_bigspriteram[3];
-
-		for (y = 0;y < 16;y++)
-		{
-			for (x = 0;x < 16;x++)
-			{
-				drawgfx(bitmap,Machine->gfx[1],
-						gundealr_bsvideoram[2*y + 0x20*x] + ((gundealr_bsvideoram[1 + 2*y + 0x20*x] & 0x03) << 8),
-						(gundealr_bsvideoram[1 + 2*y + 0x20*x] & 0xf0) >> 4,
-						0,0,
-						sx + 16*x,sy + 16*y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-			}
-		}
-	}
+	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }
