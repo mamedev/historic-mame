@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /*----------- defined in machine/turbo.c -----------*/
 
 extern UINT8 turbo_opa, turbo_opb, turbo_opc;

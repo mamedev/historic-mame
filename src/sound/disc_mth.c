@@ -10,8 +10,10 @@
  ************************************************************************
  *
  * DST_ADDDER            - Multichannel adder
+ * DST_CLAMP             - Simple signal clamping circuit
  * DST_COMP_ADDER        - Selectable parallel component circuit
  * DST_DAC_R1            - R1 Ladder DAC with cap filtering
+ * DST_DIODE_MIX         - Diode mixer
  * DST_DIVIDE            - Division function
  * DST_GAIN              - Gain Factor
  * DST_INTEGRATE         - Integration circuits
@@ -24,6 +26,7 @@
  * DST_LOGIC_NXOR        - Logic NXOR gate 2 input
  * DST_LOGIC_DFF         - Logic D-type flip/flop
  * DST_MIXER             - Final Mixer Stage
+ * DST_MULTIPLEX         - 1 of x Multiplexer/switch
  * DST_ONESHOT           - One shot pulse generator
  * DST_RAMP              - Ramp up/down
  * DST_SAMPHOLD          - Sample & Hold Implementation
@@ -90,6 +93,11 @@ struct dst_samphold_context
 {
 	double lastinput;
 	int clocktype;
+};
+
+struct dst_size_context
+{
+	int size;
 };
 
 struct dst_tvca_op_amp_context
@@ -325,6 +333,52 @@ void dst_dac_r1_reset(struct node_description *node)
 		context->exponent = -1.0 / (context->rTotal * info->cFilter  * Machine->sample_rate);
 		context->exponent = 1.0 - exp(context->exponent);
 	}
+}
+
+
+/************************************************************************
+*
+ * DST_DIODE_MIX  - Diode Mixer
+ *
+ * input[0]    - Enable input value
+ * input[1]    - Diode junction voltage drop
+ * input[2]    - Input 0
+ * .....
+ *
+ * Dec 2004, D Renaud.
+ ************************************************************************/
+#define DST_DIODE_MIX__ENABLE		(*(node->input[0]))
+#define DST_DIODE_MIX__VJUNC		(*(node->input[1]))
+#define DST_DIODE_MIX__INP(addr)	(*(node->input[2 + addr]))
+
+void dst_diode_mix_step(struct node_description *node)
+{
+	struct dst_size_context *context = node->context;
+	double max = 0;
+	int addr;
+
+	if (DST_DIODE_MIX__ENABLE)
+	{
+		for (addr = 0; addr < context->size; addr++)
+		{
+			if (DST_DIODE_MIX__INP(addr) > max) max = DST_DIODE_MIX__INP(addr);
+		}
+		node->output = max - DST_DIODE_MIX__VJUNC;
+		if (node->output < 0) node->output = 0;
+	}
+	else
+	{
+		node->output = 0;
+	}
+}
+
+void dst_diode_mix_reset(struct node_description *node)
+{
+	struct dst_size_context *context = node->context;
+
+	context->size = node->active_inputs - 2;
+
+	dst_diode_mix_step(node);
 }
 
 
@@ -986,6 +1040,56 @@ void dst_mixer_reset(struct node_description *node)
 	if ((context->type & DISC_MIXER_TYPE_MASK) == DISC_MIXER_IS_OP_AMP_WITH_RI) context->gain = info->rF / info->rI;
 
 	node->output = 0;
+}
+
+
+/************************************************************************
+ *
+ * DST_MULTIPLEX - 1 of x multiplexer/switch
+ *
+ * input[0]    - Enable input value
+ * input[1]    - switch position
+ * input[2]    - input[0]
+ * input[3]    - input[1]
+ * .....
+ *
+ * Dec 2004, D Renaud.
+ ************************************************************************/
+#define DST_MULTIPLEX__ENABLE		(*(node->input[0]))
+#define DST_MULTIPLEX__ADDR			(*(node->input[1]))
+#define DST_MULTIPLEX__INP(addr)	(*(node->input[2 + addr]))
+
+void dst_multiplex_step(struct node_description *node)
+{
+	struct dst_size_context *context = node->context;
+	int addr;
+
+	if(DST_MULTIPLEX__ENABLE)
+	{
+		addr = DST_MULTIPLEX__ADDR;	// FP to INT
+		if ((addr >= 0)  && (addr < context->size))
+		{
+			node->output = DST_MULTIPLEX__INP(addr);
+		}
+		else
+		{
+			/* Bad address.  We will leave the output alone. */
+			discrete_log("NODE_%02d - Address = %d. Out of bounds\n",node->node-NODE_00, addr);
+		}
+	}
+	else
+	{
+		node->output=0;
+	}
+}
+
+void dst_multiplex_reset(struct node_description *node)
+{
+	struct dst_size_context *context = node->context;
+
+	context->size = node->active_inputs - 2;
+
+	dst_multiplex_step(node);
 }
 
 

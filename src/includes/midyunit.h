@@ -31,6 +31,7 @@ DRIVER_INIT( hiimpact );
 DRIVER_INIT( shimpact );
 DRIVER_INIT( strkforc );
 DRIVER_INIT( mkyunit );
+DRIVER_INIT( mkyawdim );
 DRIVER_INIT( term2 );
 DRIVER_INIT( term2la2 );
 DRIVER_INIT( term2la1 );
@@ -48,6 +49,7 @@ extern size_t	midyunit_gfx_rom_size;
 
 VIDEO_START( midyunit_4bit );
 VIDEO_START( midyunit_6bit );
+VIDEO_START( mkyawdim );
 VIDEO_START( midzunit );
 
 READ16_HANDLER( midyunit_gfxrom_r );

@@ -16,7 +16,7 @@ extern "C" {
 #include "palette.h"
 
 #define MAX_GFX_PLANES 8
-#define MAX_GFX_SIZE 1024
+#define MAX_GFX_SIZE 256
 
 #define RGN_FRAC(num,den) (0x80000000 | (((num) & 0x0f) << 27) | (((den) & 0x0f) << 23))
 #define IS_FRAC(offset) ((offset) & 0x80000000)

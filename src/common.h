@@ -299,6 +299,8 @@ enum
 #define ROM_REGION16_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_BE)
 #define ROM_REGION32_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_LE)
 #define ROM_REGION32_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_BE)
+#define ROM_REGION64_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_64BIT | ROMREGION_LE)
+#define ROM_REGION64_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_64BIT | ROMREGION_BE)
 
 /* ----- core ROM loading macros ----- */
 #define ROMMD5_LOAD(name,offset,length,hash,flags)   { name, offset, length, flags, hash },

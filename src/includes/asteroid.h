@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /*----------- defined in machine/asteroid.c -----------*/
 
 INTERRUPT_GEN( asteroid_interrupt );

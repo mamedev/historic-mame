@@ -703,8 +703,6 @@ void *ay8910_start_ym(int chip_type, int sndindex, int clock, int streams,
 
 void ay8910_stop_ym(void *chip)
 {
-	struct AY8910 *PSG = chip;
-	free(PSG);
 }
 
 void ay8910_reset_ym(void *chip)

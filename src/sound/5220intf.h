@@ -22,5 +22,10 @@ int tms5220_int_r(void);
 
 void tms5220_set_frequency(int frequency);
 
+enum
+{
+	SNDINFO_INT_TMS5220_VARIANT = SNDINFO_INT_CORE_SPECIFIC
+};
+
 #endif
 

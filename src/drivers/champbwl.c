@@ -98,8 +98,8 @@ Notes:
 #include "driver.h"
 #include "sound/x1_010.h"
 
-unsigned char *tnzs_objram, *tnzs_sharedram;
-unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl;
+extern unsigned char *tnzs_objram, *tnzs_sharedram;
+extern unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl;
 
 PALETTE_INIT( arknoid2 );
 VIDEO_UPDATE( tnzs );

@@ -16,6 +16,7 @@
  * DST_RCDISC            - Simple discharging RC
  * DST_RCDISC2           - Simple charge R1/C, discharge R0/C
  * DST_RCDISC3           - Simple charge R1/c, discharge R0*R1/(R0+R1)/C
+ * DST_RCDISC4           - Various charge/discharge circuits
  *
  ************************************************************************/
 
@@ -66,6 +67,15 @@ struct dst_rcdisc_context
 	double step;
 	double exponent0;
 	double exponent1;
+};
+
+struct dst_rcdisc4_context
+{
+	int		type;
+	double	max_out;
+	double	vC1;
+	double	v[2];
+	double	exp[2];
 };
 
 struct dst_rcfilter_context
@@ -134,7 +144,7 @@ void dst_crfilter_reset(struct node_description *node)
 #define DST_FILTER1__TYPE	(*(node->input[3]))
 
 static void calculate_filter1_coefficients(double fc, double type,
-                                           double *a1, double *b0, double *b1)
+										   double *a1, double *b0, double *b1)
 {
 	double den, w, two_over_T;
 
@@ -203,8 +213,8 @@ void dst_filter1_reset(struct node_description *node)
 #define DST_FILTER2__TYPE	(*(node->input[4]))
 
 static void calculate_filter2_coefficients(double fc, double d, double type,
-                                           double *a1, double *a2,
-                                           double *b0, double *b1, double *b2)
+										   double *a1, double *a2,
+										   double *b0, double *b1, double *b2)
 {
 	double w;	/* cutoff freq, in radians/sec */
 	double w_squared;
@@ -255,7 +265,7 @@ void dst_filter2_step(struct node_description *node)
 	}
 
 	node->output = -context->a1*context->y1 - context->a2*context->y2 +
-	                context->b0*gain*DST_FILTER2__IN + context->b1*context->x1 + context->b2*context->x2;
+					context->b0*gain*DST_FILTER2__IN + context->b1*context->x1 + context->b2*context->x2;
 
 	context->x2 = context->x1;
 	context->x1 = gain * DST_FILTER2__IN;
@@ -324,13 +334,13 @@ void dst_op_amp_filt_step(struct node_description *node)
 				break;
 
 			case DISC_OP_AMP_FILTER_IS_HIGH_PASS_1:
-				context->vC1 += (v - context->vC1) * context->exponentC1;
 				node->output = (v - context->vC1) * context->gain + info->vRef;
+				context->vC1 += (v - context->vC1) * context->exponentC1;
 				break;
 
 			case DISC_OP_AMP_FILTER_IS_BAND_PASS_1:
-				context->vC2 += (v - context->vC2) * context->exponentC2;
 				node->output = (v - context->vC2);
+				context->vC2 += (v - context->vC2) * context->exponentC2;
 				context->vC1 += (node->output - context->vC1) * context->exponentC1;
 				node->output = context->vC1 * context->gain + info->vRef;
 				break;
@@ -339,23 +349,23 @@ void dst_op_amp_filt_step(struct node_description *node)
 				context->vC1 += (v - context->vC1) * context->exponentC1;
 				context->vC2 += (context->vC1 - context->vC2) * context->exponentC2;
 				v = context->vC2;
+				node->output = v - context->vC3;
 				context->vC3 += (v - context->vC3) * context->exponentC3;
-				v -= context->vC3;
-				i = v / context->rTotal;
+				i = node->output / context->rTotal;
 				node->output = (context->iFixed - i) * info->rF;
 				break;
 
 			case DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 | DISC_OP_AMP_IS_NORTON:
+				node->output = v - context->vC1;
 				context->vC1 += (v - context->vC1) * context->exponentC1;
-				v -= context->vC1;
-				i = v / context->rTotal;
+				i = node->output / context->rTotal;
 				node->output = (context->iFixed - i) * info->rF;
 				break;
 
 			case DISC_OP_AMP_FILTER_IS_BAND_PASS_1M:
 				node->output = -context->a1*context->y1 - context->a2*context->y2 +
-				                context->b0*v + context->b1*context->x1 + context->b2*context->x2 +
-				                info->vRef;
+								context->b0*v + context->b1*context->x1 + context->b2*context->x2 +
+								info->vRef;
 				context->x2 = context->x1;
 				context->x1 = v;
 				context->y2 = context->y1;
@@ -442,11 +452,11 @@ void dst_op_amp_filt_reset(struct node_description *node)
 			double gain = -info->rF / context->rTotal * info->c2 / (info->c1 + info->c2);
 
 			calculate_filter2_coefficients(fc, d, DISC_FILTER_BANDPASS,
-                                           &context->a1, &context->a2,
-                                           &context->b0, &context->b1, &context->b2);
-            context->b0 *= gain;
-            context->b1 *= gain;
-            context->b2 *= gain;
+										   &context->a1, &context->a2,
+										   &context->b0, &context->b1, &context->b2);
+			context->b0 *= gain;
+			context->b1 *= gain;
+			context->b2 *= gain;
 			break;
 		}
 		case DISC_OP_AMP_FILTER_IS_BAND_PASS_0 | DISC_OP_AMP_IS_NORTON:
@@ -506,7 +516,7 @@ void dst_rcdisc_step(struct node_description *node)
 			if (DST_RCDISC__ENABLE) {
 				node->output = DST_RCDISC__IN * exp(context->t / context->exponent0);
 				context->t += context->step;
-                } else {
+				} else {
 					context->state = 0;
 			}
 		}
@@ -628,6 +638,128 @@ void dst_rcdisc3_reset(struct node_description *node)
 	context->step = 1.0 / Machine->sample_rate;
 	context->exponent0=-1.0 * DST_RCDISC3__R1 * DST_RCDISC3__C;
 	context->exponent1=-1.0 *(DST_RCDISC3__R1 * DST_RCDISC3__R2)/( DST_RCDISC3__R1 + DST_RCDISC3__R2)* DST_RCDISC3__C;
+}
+
+
+/************************************************************************
+ *
+ * DST_RCDISC4 -  Various charge/discharge circuits
+ *
+ * input[0]    - Enable input value
+ * input[1]    - input value
+ * input[2]    - R1 Resistor value (initialization only)
+ * input[2]    - R2 Resistor value (initialization only)
+ * input[4]    - C1 Capacitor Value (initialization only)
+ * input[4]    - vP power source (initialization only)
+ * input[4]    - circuit type (initialization only)
+ *
+ ************************************************************************/
+#define DST_RCDISC4__ENABLE	(*(node->input[0]))
+#define DST_RCDISC4__IN		(*(node->input[1]))
+#define DST_RCDISC4__R1		(*(node->input[2]))
+#define DST_RCDISC4__R2		(*(node->input[3]))
+#define DST_RCDISC4__R3		(*(node->input[4]))
+#define DST_RCDISC4__C1		(*(node->input[5]))
+#define DST_RCDISC4__VP		(*(node->input[6]))
+#define DST_RCDISC4__TYPE	(*(node->input[7]))
+
+void dst_rcdisc4_step(struct node_description *node)
+{
+	struct dst_rcdisc4_context *context = node->context;
+	int inp1 = (DST_RCDISC4__IN == 0) ? 0 : 1;
+
+	if (DST_RCDISC4__ENABLE == 0)
+	{
+		node->output = 0;
+		return;
+	}
+
+	switch (context->type)
+	{
+		case 1:
+		case 3:
+			context->vC1 += ((context->v[inp1] - context->vC1) * context->exp[inp1]);
+			node->output = context->vC1;
+			break;
+	}
+
+	/* clip output */
+	if (node->output > context->max_out) node->output = context->max_out;
+	if (node->output < 0) node->output = 0;
+}
+
+void dst_rcdisc4_reset(struct node_description *node)
+{
+	struct dst_rcdisc4_context *context = node->context;
+	double	v, i, r, rT;
+
+	context->type = 0;
+	/* some error checking. */
+	if (DST_RCDISC4__R1 <= 0 || DST_RCDISC4__R2 <= 0 || DST_RCDISC4__C1 <= 0 || (DST_RCDISC4__R3 <= 0 &&  context->type == 1))
+	{
+		discrete_log("Invalid component values in NODE_%d.\n", node->node - NODE_00);
+		return;
+	}
+	if (DST_RCDISC4__VP < 3)
+	{
+		discrete_log("vP must be >= 3V in NODE_%d.\n", node->node - NODE_00);
+		return;
+	}
+	if (DST_RCDISC4__TYPE < 1 || DST_RCDISC4__TYPE > 3)
+	{
+		discrete_log("Invalid circuit type in NODE_%d.\n", node->node - NODE_00);
+		return;
+	}
+
+	context->vC1 = 0;
+	/* store type as integer */
+	context->type = (int)DST_RCDISC4__TYPE;
+	/* setup the maximum op-amp output. */
+	context->max_out = DST_RCDISC4__VP - OP_AMP_VP_RAIL_OFFSET;
+
+	switch (context->type)
+	{
+		case 1:
+			/* We will simulate this as a voltage divider with 2 states depending
+			 * on the input.  But we have to take the diodes into account.
+			 */
+			v = DST_RCDISC4__VP - .5;	/* diode drop */
+
+			/* When the input is 1, both R1 & R3 are basically in parallel. */
+			r = 1.0 / (1.0 / DST_RCDISC4__R1 + 1.0 / DST_RCDISC4__R3);
+			rT = DST_RCDISC4__R2 + r;
+			i = v / rT;
+			context->v[1] = i * r + .5;
+			rT = 1.0 / (1.0 / DST_RCDISC4__R2 + 1.0 / r);
+			context->exp[1] = -1.0 / (rT * DST_RCDISC4__C1 * Machine->sample_rate);
+			context->exp[1] = 1.0 - exp(context->exp[1]);
+
+			/* When the input is 0, R1 is out of circuit. */
+			rT = DST_RCDISC4__R2 + DST_RCDISC4__R3;
+			i = v / rT;
+			context->v[0] = i * DST_RCDISC4__R3 + .5;
+			rT = 1.0 / (1.0 / DST_RCDISC4__R2 + 1.0 / DST_RCDISC4__R3);
+			context->exp[0] = -1.0 / (rT * DST_RCDISC4__C1 * Machine->sample_rate);
+			context->exp[0] = 1.0 - exp(context->exp[0]);
+			break;
+
+		case 3:
+			/* We will simulate this as a voltage divider with 2 states depending
+			 * on the input.  The 1k pullup is in parallel with the internal TTL
+			 * resistance, so we will just use .5k in series with R1.
+			 */
+			r = 500.0 + DST_RCDISC4__R1;
+			context->v[1] = DST_RCDISC4__R2 / (r + DST_RCDISC4__R2) * (5.0 - 0.5);
+			rT = 1.0 / ( 1.0 / r + 1.0 / DST_RCDISC4__R2);
+			context->exp[1] = -1.0 / (rT * DST_RCDISC4__C1 * Machine->sample_rate);
+			context->exp[1] = 1.0 - exp(context->exp[1]);
+
+			/* When the input is 0, R1 is out of circuit. */
+			context->v[0] = 0;
+			context->exp[0] = -1.0 / (DST_RCDISC4__R2 * DST_RCDISC4__C1 * Machine->sample_rate);
+			context->exp[0] = 1.0 - exp(context->exp[0]);
+			break;
+	}
 }
 
 

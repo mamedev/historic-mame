@@ -14,7 +14,8 @@ data8_t *superqix_bitmapram,*superqix_bitmapram2;
 int pbillian_show_power;
 
 static int gfxbank;
-static struct mame_bitmap *bitmap1,*bitmap2;
+static struct mame_bitmap *fg_bitmap[2];
+static int show_bitmap;
 static struct tilemap *bg_tilemap;
 
 
@@ -64,11 +65,11 @@ VIDEO_START( pbillian )
 
 VIDEO_START( superqix )
 {
-	bitmap1 = auto_bitmap_alloc(256, 256);
-	bitmap2 = auto_bitmap_alloc(256, 256);
+	fg_bitmap[0] = auto_bitmap_alloc(256, 256);
+	fg_bitmap[1] = auto_bitmap_alloc(256, 256);
 	bg_tilemap = tilemap_create(sqix_get_bg_tile_info, tilemap_scan_rows, TILEMAP_SPLIT, 8, 8, 32, 32);
 
-	if (!bitmap1 || !bitmap2 || !bg_tilemap)
+	if (!fg_bitmap[0] || !fg_bitmap[1] || !bg_tilemap)
 		return 1;
 
 	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000); /* split type 0 is totally transparent in front half */
@@ -103,8 +104,8 @@ WRITE8_HANDLER( superqix_bitmapram_w )
 
 		superqix_bitmapram[offset] = data;
 
-		plot_pixel(bitmap1, x,   y, Machine->pens[data >> 4]);
-		plot_pixel(bitmap1, x+1, y, Machine->pens[data & 0x0f]);
+		plot_pixel(fg_bitmap[0], x,   y, Machine->pens[data >> 4]);
+		plot_pixel(fg_bitmap[0], x+1, y, Machine->pens[data & 0x0f]);
 	}
 }
 
@@ -117,8 +118,8 @@ WRITE8_HANDLER( superqix_bitmapram2_w )
 
 		superqix_bitmapram2[offset] = data;
 
-		plot_pixel(bitmap2, x,   y, Machine->pens[data >> 4]);
-		plot_pixel(bitmap2, x+1, y, Machine->pens[data & 0x0f]);
+		plot_pixel(fg_bitmap[1], x,   y, Machine->pens[data >> 4]);
+		plot_pixel(fg_bitmap[1], x+1, y, Machine->pens[data & 0x0f]);
 	}
 }
 
@@ -158,7 +159,8 @@ WRITE8_HANDLER( superqix_0410_w )
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 
-	/* bit 2 unused? (maybe space for one more gfx bank) */
+	/* bit 2 selects which of the two bitmaps to display (for 2 players game) */
+	show_bitmap = (data & 0x04) >> 2;
 
 	/* bit 3 enables NMI */
 	interrupt_enable_w(offset,data & 0x08);
@@ -263,8 +265,7 @@ VIDEO_UPDATE( pbillian )
 VIDEO_UPDATE( superqix )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_BACK, 0);
-	copybitmap(bitmap,bitmap1,flip_screen,flip_screen,0,0,cliprect,TRANSPARENCY_PEN,0);
+	copybitmap(bitmap,fg_bitmap[show_bitmap],flip_screen,flip_screen,0,0,cliprect,TRANSPARENCY_PEN,0);
 	sqix_draw_sprites(bitmap,cliprect);
-	copybitmap(bitmap,bitmap2,flip_screen,flip_screen,0,0,cliprect,TRANSPARENCY_PEN,0);	// not used?
 	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_FRONT, 0);
 }

@@ -14,29 +14,30 @@ J Clegg
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-unsigned char *yard_scroll_x_low;
-unsigned char *yard_scroll_x_high;
-unsigned char *yard_scroll_y_low;
-unsigned char *yard_score_panel_disabled;
+UINT8 *yard_scroll_x_low;
+UINT8 *yard_scroll_x_high;
+UINT8 *yard_scroll_y_low;
+UINT8 *yard_score_panel_disabled;
 static struct mame_bitmap *scroll_panel_bitmap;
 
+static struct tilemap *bg_tilemap;
+
 #define SCROLL_PANEL_WIDTH  (14*4)
-
 #define RADAR_PALETTE_BASE (256+16)
+#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-static struct rectangle panelvisiblearea =
+static struct rectangle clippanel =
 {
 	26*8, 32*8-1,
 	1*8, 31*8-1
 };
 
-static struct rectangle panelvisibleareaflip =
+static struct rectangle clippanelflip =
 {
 	0*8, 6*8-1,
 	1*8, 31*8-1
 };
-
 
 /***************************************************************************
 
@@ -63,15 +64,11 @@ static struct rectangle panelvisibleareaflip =
 PALETTE_INIT( yard )
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
 
 	/* character palette */
 	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
-
 
 		/* red component */
 		bit0 = 0;
@@ -97,12 +94,10 @@ PALETTE_INIT( yard )
 	color_prom += 256;
 	/* color_prom now points to the beginning of the sprite palette */
 
-
 	/* sprite palette */
 	for (i = 0;i < 16;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
-
 
 		/* red component */
 		bit0 = 0;
@@ -128,19 +123,16 @@ PALETTE_INIT( yard )
 	color_prom += 16;
 	/* color_prom now points to the beginning of the sprite lookup table */
 
-
 	/* sprite lookup table */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
 		COLOR(1,i) = 256 + (*(color_prom++) & 0x0f);
 
 	/* color_prom now points to the beginning of the radar palette */
 
-
 	/* radar palette */
 	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
-
 
 		/* red component */
 		bit0 = 0;
@@ -164,42 +156,14 @@ PALETTE_INIT( yard )
 	}
 }
 
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-VIDEO_START( yard )
+WRITE8_HANDLER( yard_videoram_w )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
-
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	if ((scroll_panel_bitmap = auto_bitmap_alloc(SCROLL_PANEL_WIDTH,Machine->drv->screen_height)) == 0)
-		return 1;
-
-	return 0;
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
+	}
 }
-
-
-
-
-WRITE8_HANDLER( yard_flipscreen_w )
-{
-	/* screen flip is handled both by software and hardware */
-	data ^= ~readinputport(4) & 1;
-
-	flip_screen_set(data & 1);
-
-	coin_counter_w(0,data & 0x02);
-	coin_counter_w(1,data & 0x20);
-}
-
 
 WRITE8_HANDLER( yard_scroll_panel_w )
 {
@@ -219,99 +183,63 @@ WRITE8_HANDLER( yard_scroll_panel_w )
 		col = (data >> i) & 0x11;
 		col = ((col >> 3) | col) & 3;
 
-		plot_pixel(scroll_panel_bitmap, sx + i, sy, Machine->pens[RADAR_PALETTE_BASE + (sy & 0xfc) + col]);
+		plot_pixel(scroll_panel_bitmap, sx + i, sy, 
+			Machine->pens[RADAR_PALETTE_BASE + (sy & 0xfc) + col]);
 	}
 }
 
+static void yard_get_bg_tile_info(int tile_index)
+{
+	int offs = tile_index * 2;
+	int attr = videoram[offs + 1];
+	int code = videoram[offs] + ((attr & 0xc0) << 2);
+	int color = attr & 0x1f;
+	int flags = (attr & 0x20) ? TILE_FLIPX : 0;
 
-/***************************************************************************
+	SET_TILE_INFO(0, code, color, flags)
+}
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+static UINT32 yard_tilemap_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	if (col >= 32)
+		return (row+32)*32 + col-32;
+	else
+		return row*32 + col;
+}
 
-***************************************************************************/
-VIDEO_UPDATE( yard )
+VIDEO_START( yard )
+{
+	bg_tilemap = tilemap_create(yard_get_bg_tile_info, yard_tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
+
+	if ( !bg_tilemap )
+		return 1;
+
+	if ((scroll_panel_bitmap = auto_bitmap_alloc(SCROLL_PANEL_WIDTH, Machine->drv->screen_height)) == 0)
+		return 1;
+
+	return 0;
+}
+
+#define DRAW_SPRITE(code, sy) drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_COLOR, 256);
+
+static void yard_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
 
-
-	if (get_vh_global_attribute_changed())
+	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
 	{
-		memset(dirtybuffer,1,videoram_size);
-	}
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size-2;offs >= 0;offs -= 2)
-	{
-		if (dirtybuffer[offs] || dirtybuffer[offs+1])
-		{
-			int sx,sy,flipx;
-
-
-			dirtybuffer[offs] = 0;
-			dirtybuffer[offs+1] = 0;
-
-			sx = (offs/2) % 32;
-			sy = (offs/2) / 32;
-			flipx = videoram[offs+1] & 0x20;
-
-			if (sy >= 32)
-			{
-				sy -= 32;
-				sx += 32;
-			}
-
-			if (flip_screen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((videoram[offs+1] & 0xc0) << 2),
-					videoram[offs+1] & 0x1f,
-					flipx,flip_screen,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll_x,scroll_y;
-
-		scroll_x = (*yard_scroll_x_high * 0x100) + *yard_scroll_x_low;
-
-		if (flip_screen)
-		{
-			scroll_x += 256;
-			scroll_y = *yard_scroll_y_low ;
-		}
-		else
-		{
-			scroll_x = -scroll_x;
-			scroll_y = -*yard_scroll_y_low ;
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int code1,code2,bank,sx,sy1,sy2,flipx,flipy;
-
-
-		bank  = (spriteram[offs + 1] & 0x20) >> 5;
-		code1 =  spriteram[offs + 2] & 0xbf;
-		sx    =  spriteram[offs + 3];
-		sy1   =  241 - spriteram[offs];
-		flipx =  spriteram[offs + 1] & 0x40;
-		flipy =  spriteram[offs + 1] & 0x80;
+		int attr = spriteram[offs + 1];
+		int bank = (attr & 0x20) >> 5;
+		int code1 = spriteram[offs + 2] & 0xbf;
+		int code2 = 0;
+		int color = attr & 0x1f;
+		int flipx = attr & 0x40;
+		int flipy = attr & 0x80;
+		int sx = spriteram[offs + 3];
+		int sy1 = 241 - spriteram[offs];
+		int sy2 = 0;
 
 		if (flipy)
 		{
@@ -325,43 +253,39 @@ VIDEO_UPDATE( yard )
 
 		if (flip_screen)
 		{
-			flipx = !flipx;
-			flipy = !flipy;
-			sx  = 240 - sx;
+			sx = 240 - sx;
 			sy2 = 224 - sy1;
 			sy1 = sy2 + 0x10;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
 		else
 		{
 			sy2 = sy1 + 0x10;
 		}
 
-		drawgfx(bitmap,Machine->gfx[1],
-				code1 + 256 * bank,
-				spriteram[offs + 1] & 0x1f,
-				flipx,flipy,
-				sx, sy1,
-				&Machine->visible_area,TRANSPARENCY_COLOR,256);
-
-		drawgfx(bitmap,Machine->gfx[1],
-				code2 + 256 * bank,
-				spriteram[offs + 1] & 0x1f,
-				flipx,flipy,
-				sx, sy2,
-				&Machine->visible_area,TRANSPARENCY_COLOR,256);
+		DRAW_SPRITE(code1 + 256 * bank, sy1)
+		DRAW_SPRITE(code2 + 256 * bank, sy2)
 	}
+}
 
-
-	/* draw the static bitmapped area to screen */
+static void yard_draw_panel( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
 	if (! *yard_score_panel_disabled)
 	{
-		int xpos;
+		int sx = flip_screen ? cliprect->min_x - 8 : cliprect->max_x + 1 - SCROLL_PANEL_WIDTH;
 
-		xpos = flip_screen ? Machine->visible_area.min_x - 8 :
-		                     Machine->visible_area.max_x + 1 - SCROLL_PANEL_WIDTH;
-
-		copybitmap(bitmap,scroll_panel_bitmap,flip_screen,flip_screen,
-		           xpos,0,
-				   flip_screen ? &panelvisibleareaflip : &panelvisiblearea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap, scroll_panel_bitmap, flip_screen, flip_screen, sx, 0,
+			flip_screen ? &clippanelflip : &clippanel, TRANSPARENCY_NONE, 0);
 	}
+}
+
+VIDEO_UPDATE( yard )
+{
+	tilemap_set_scrollx(bg_tilemap, 0, (*yard_scroll_x_high * 0x100) + *yard_scroll_x_low);
+	tilemap_set_scrolly(bg_tilemap, 0, *yard_scroll_y_low);
+
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	yard_draw_sprites(bitmap, cliprect);
+	yard_draw_panel(bitmap, cliprect);
 }

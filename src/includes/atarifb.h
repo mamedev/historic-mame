@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 #define GAME_IS_FOOTBALL   (atarifb_game == 1)
 #define GAME_IS_FOOTBALL4  (atarifb_game == 2)
 #define GAME_IS_BASEBALL   (atarifb_game == 3)

@@ -8,7 +8,6 @@
 
 	Still to do:
 		* fix drivers that used to use ADPCM
-		* improve downsampling code (currently uses linear interp)
 		* many cores do their own resampling; they should stop
 		* many cores mix to a separate buffer; no longer necessary
 
@@ -508,6 +507,7 @@ static INT16 *finalmix;
 static INT32 *leftmix, *rightmix;
 static int samples_this_frame;
 static int global_sound_enabled;
+static int nosound_mode;
 
 static UINT16 latch_clear_value = 0x00;
 static UINT16 latched_value[4];
@@ -538,6 +538,11 @@ static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t 
 
 int sound_start(void)
 {
+	/* handle -nosound */
+	nosound_mode = (Machine->sample_rate == 0);
+	if (nosound_mode)
+		Machine->sample_rate = 11025;
+	
 	/* initialize the interfaces */
 	VPRINTF(("sndintrf_init\n"));
 	sndintrf_init();
@@ -890,7 +895,11 @@ static int route_sound(void)
 			
 			/* if it's a sound chip, set the input */
 			else
-				stream_set_input(sound->output[0].stream, 0, info->output[mroute->output].stream, info->output[mroute->output].output, mroute->gain);
+			{
+				for (outputnum = 0; outputnum < info->outputs; outputnum++)
+					if (mroute->output == outputnum || mroute->output == ALL_OUTPUTS)
+						stream_set_input(sound->output[0].stream, 0, info->output[outputnum].stream, info->output[outputnum].output, mroute->gain);
+			}
 		}
 	}
 	return 0;
@@ -922,6 +931,12 @@ void sound_stop(void)
 	
 	/* stop the OSD code */
 	osd_stop_audio_stream();
+
+	/* reset variables */
+	totalspeakers = 0;
+	totalsnd = 0;
+	memset(&speaker, 0, sizeof(speaker));
+	memset(&sound, 0, sizeof(sound));
 }
 
 
@@ -1027,7 +1042,7 @@ void sound_frame_update(void)
 			stream_buf = stream_consume_output(spk->mixer_stream, 0, samples_this_frame);
 			
 			/* mix if sound is enabled */
-			if (global_sound_enabled)
+			if (global_sound_enabled && !nosound_mode)
 			{
 				/* if the speaker is centered, send to both left and right */
 				if (spk->speaker->x == 0)
@@ -1042,7 +1057,7 @@ void sound_frame_update(void)
 					for (sample = 0; sample < samples_this_frame; sample++)
 						leftmix[sample] += stream_buf[sample];
 				
-				/* if the speaker is to the right, send only to the left */
+				/* if the speaker is to the right, send only to the right */
 				else
 					for (sample = 0; sample < samples_this_frame; sample++)
 						rightmix[sample] += stream_buf[sample];

@@ -2016,11 +2016,11 @@ static void adsp2104_set_context(void *src)
 void adsp2104_load_boot_data(data8_t *srcdata, data32_t *dstdata)
 {
 	/* see how many words we need to copy */
-	int pagelen = (srcdata[BYTE_XOR_LE(3)] + 1) * 8;
+	int pagelen = (srcdata[(3)] + 1) * 8;
 	int i;
 	for (i = 0; i < pagelen; i++)
 	{
-		UINT32 opcode = (srcdata[BYTE_XOR_LE(i*4+0)] << 16) | (srcdata[BYTE_XOR_LE(i*4+1)] << 8) | srcdata[BYTE_XOR_LE(i*4+2)];
+		UINT32 opcode = (srcdata[(i*4+0)] << 16) | (srcdata[(i*4+1)] << 8) | srcdata[(i*4+2)];
 		ADSP2100_WRPGM(&dstdata[i], opcode);
 	}
 }

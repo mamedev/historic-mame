@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define SPRINT2_SKIDSND1_EN        NODE_01
 #define SPRINT2_SKIDSND2_EN        NODE_02

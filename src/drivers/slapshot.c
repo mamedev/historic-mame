@@ -138,6 +138,7 @@ Region byte at offset 0x031:
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 #include "sound/2610intf.h"
+#include "machine/timekpr.h"
 
 
 VIDEO_EOF( opwolf3_full_buffer_delayed );
@@ -271,7 +272,7 @@ static ADDRESS_MAP_START( slapshot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_READ(TC0480SCP_word_r)	/* tilemaps */
 	AM_RANGE(0x830000, 0x83002f) AM_READ(TC0480SCP_ctrl_word_r)
 	AM_RANGE(0x900000, 0x907fff) AM_READ(color_ram_word_r)	/* 8bpg palette */
-	AM_RANGE(0xa00000, 0xa03fff) AM_READ(MRA16_RAM)	/* nvram (only low bytes used) */
+	AM_RANGE(0xa00000, 0xa03fff) AM_READ(timekeeper_0_msb16_r)	/* nvram (only low bytes used) */
 	AM_RANGE(0xc00000, 0xc0000f) AM_READ(TC0640FIO_halfword_byteswap_r)
 	AM_RANGE(0xc00020, 0xc0002f) AM_READ(slapshot_service_input_r)	/* service mirror */
 	AM_RANGE(0xd00000, 0xd00003) AM_READ(slapshot_msb_sound_r)
@@ -285,7 +286,7 @@ static ADDRESS_MAP_START( slapshot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(TC0480SCP_word_w)	  /* tilemaps */
 	AM_RANGE(0x830000, 0x83002f) AM_WRITE(TC0480SCP_ctrl_word_w)
 	AM_RANGE(0x900000, 0x907fff) AM_WRITE(color_ram_word_w) AM_BASE(&color_ram)
-	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(timekeeper_0_msb16_w)
 	AM_RANGE(0xb00000, 0xb0001f) AM_WRITE(TC0360PRI_halfword_swap_w)	/* priority chip */
 	AM_RANGE(0xc00000, 0xc0000f) AM_WRITE(TC0640FIO_halfword_byteswap_w)
 	AM_RANGE(0xd00000, 0xd00003) AM_WRITE(slapshot_msb_sound_w)
@@ -299,7 +300,7 @@ static ADDRESS_MAP_START( opwolf3_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_READ(TC0480SCP_word_r)	/* tilemaps */
 	AM_RANGE(0x830000, 0x83002f) AM_READ(TC0480SCP_ctrl_word_r)
 	AM_RANGE(0x900000, 0x907fff) AM_READ(color_ram_word_r)	/* 8bpg palette */
-	AM_RANGE(0xa00000, 0xa03fff) AM_READ(MRA16_RAM)	/* nvram (only low bytes used) */
+	AM_RANGE(0xa00000, 0xa03fff) AM_READ(timekeeper_0_msb16_r)	/* nvram (only low bytes used) */
 	AM_RANGE(0xc00000, 0xc0000f) AM_READ(TC0640FIO_halfword_byteswap_r)
 	AM_RANGE(0xc00020, 0xc0002f) AM_READ(slapshot_service_input_r)	/* service mirror */
 	AM_RANGE(0xd00000, 0xd00003) AM_READ(slapshot_msb_sound_r)
@@ -314,7 +315,7 @@ static ADDRESS_MAP_START( opwolf3_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x80ffff) AM_WRITE(TC0480SCP_word_w)	  /* tilemaps */
 	AM_RANGE(0x830000, 0x83002f) AM_WRITE(TC0480SCP_ctrl_word_w)
 	AM_RANGE(0x900000, 0x907fff) AM_WRITE(color_ram_word_w) AM_BASE(&color_ram)
-	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xa00000, 0xa03fff) AM_WRITE(timekeeper_0_msb16_w)
 	AM_RANGE(0xb00000, 0xb0001f) AM_WRITE(TC0360PRI_halfword_swap_w)	/* priority chip */
 	AM_RANGE(0xc00000, 0xc0000f) AM_WRITE(TC0640FIO_halfword_byteswap_w)
 	AM_RANGE(0xd00000, 0xd00003) AM_WRITE(slapshot_msb_sound_w)
@@ -555,7 +556,7 @@ static MACHINE_DRIVER_START( slapshot )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_NVRAM_HANDLER(generic_1fill)
+	MDRV_NVRAM_HANDLER(timekeeper_0)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
@@ -594,7 +595,7 @@ static MACHINE_DRIVER_START( opwolf3 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_NVRAM_HANDLER(generic_1fill)
+	MDRV_NVRAM_HANDLER(timekeeper_0)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
@@ -716,6 +717,8 @@ static DRIVER_INIT( slapshot )
 	UINT8 *gfx = memory_region(REGION_GFX2);
 	int size=memory_region_length(REGION_GFX2);
 	int data;
+
+	timekeeper_init( 0, TIMEKEEPER_MK48T08, NULL );
 
 	offset = size/2;
 	for (i = size/2+size/4; i<size; i++)

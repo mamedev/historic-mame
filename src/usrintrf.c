@@ -1503,9 +1503,10 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_name, UINT32 switch_setting)
 {
-	const char *menu_item[128];
-	const char *menu_subitem[128];
-	struct InputPort *entry[128];
+	#define MAX_DIP_SWITCHES 256
+	const char *menu_item[MAX_DIP_SWITCHES+2];	// 2 more for "return to mainmenu" and end-of-list marker
+	const char *menu_subitem[MAX_DIP_SWITCHES+2];
+	struct InputPort *entry[MAX_DIP_SWITCHES];
 	char flag[40];
 	int i,sel;
 	struct InputPort *in;
@@ -1519,7 +1520,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 	in = Machine->input_ports;
 
 	total = 0;
-	while (in->type != IPT_END)
+	while (in->type != IPT_END && total < MAX_DIP_SWITCHES)
 	{
 		if (in->type == switch_name && input_port_active(in))
 		{
@@ -2461,27 +2462,37 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 	i = 0;
 	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
 	{
+		int type,clock,count;
 
-		if (Machine->drv->cpu[i].cpu_clock >= 1000000)
-			sprintf(&buf[strlen(buf)],"%s %d.%06d MHz",
-					cputype_name(Machine->drv->cpu[i].cpu_type),
-					Machine->drv->cpu[i].cpu_clock / 1000000,
-					Machine->drv->cpu[i].cpu_clock % 1000000);
-		else
-			sprintf(&buf[strlen(buf)],"%s %d.%03d kHz",
-					cputype_name(Machine->drv->cpu[i].cpu_type),
-					Machine->drv->cpu[i].cpu_clock / 1000,
-					Machine->drv->cpu[i].cpu_clock % 1000);
-
-		if (Machine->drv->cpu[i].cpu_flags & CPU_AUDIO_CPU)
-		{
-			sprintf (buf2, " (%s)", ui_getstring (UI_sound_lc));
-			strcat(buf, buf2);
-		}
-
-		strcat(buf,"\n");
+		type = Machine->drv->cpu[i].cpu_type;
+		clock = Machine->drv->cpu[i].cpu_clock;
+		count = 1;
 
 		i++;
+
+		while (i < MAX_CPU
+				&& Machine->drv->cpu[i].cpu_type == type
+				&& Machine->drv->cpu[i].cpu_clock == clock)
+		{
+			count++;
+			i++;
+		}
+
+		if (count > 1)
+			sprintf(&buf[strlen(buf)],"%dx",count);
+
+		sprintf(&buf[strlen(buf)],"%s",cputype_name(type));
+
+		if (clock >= 1000000)
+			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
+					clock / 1000000,
+					clock % 1000000);
+		else
+			sprintf(&buf[strlen(buf)]," %d.%03d kHz",
+					clock / 1000,
+					clock % 1000);
+
+		strcat(buf,"\n");
 	}
 
 	sprintf (buf2, "\n%s", ui_getstring (UI_sound));
@@ -2491,23 +2502,41 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 	i = 0;
 	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
 	{
-		sprintf(&buf[strlen(buf)],"%s",sndnum_name(i));
+		const char *name;
+		int clock,count;
 
-		if (sndnum_clock(i))
+		name = sndnum_name(i);
+		clock = sndnum_clock(i);
+		count = 1;
+
+		i++;
+
+		while (i < MAX_SOUND
+				&& sndnum_name(i) == name
+				&& sndnum_clock(i) == clock)
 		{
-			if (sndnum_clock(i) >= 1000000)
+			count++;
+			i++;
+		}
+
+		if (count > 1)
+			sprintf(&buf[strlen(buf)],"%dx",count);
+
+		sprintf(&buf[strlen(buf)],"%s",name);
+
+		if (clock)
+		{
+			if (clock >= 1000000)
 				sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-						sndnum_clock(i) / 1000000,
-						sndnum_clock(i) % 1000000);
+						clock / 1000000,
+						clock % 1000000);
 			else
 				sprintf(&buf[strlen(buf)]," %d.%03d kHz",
-						sndnum_clock(i) / 1000,
-						sndnum_clock(i) % 1000);
+						clock / 1000,
+						clock % 1000);
 		}
 
 		strcat(buf,"\n");
-
-		i++;
 	}
 
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -3251,7 +3280,8 @@ static void setup_menu_init(void)
 	append_menu(UI_imageinfo, UI_IMAGEINFO);
 	append_menu(UI_filemanager, UI_FILEMANAGER);
 #if HAS_WAVE
-	append_menu(UI_tapecontrol, UI_TAPECONTROL);
+	if (device_find(Machine->devices, IO_CASSETTE))
+		append_menu(UI_tapecontrol, UI_TAPECONTROL);
 #endif /* HAS_WAVE */
 	append_menu(UI_history, UI_HISTORY);
 #endif /* !MESS */
@@ -3725,7 +3755,7 @@ static void onscrd_refresh(struct mame_bitmap *bitmap,int increment,int arg)
 	displayosd(bitmap,buf,(10 + delta) * 5,100/2);
 }
 
-#define MAX_OSD_ITEMS 30
+#define MAX_OSD_ITEMS 50
 static void (*onscrd_fnc[MAX_OSD_ITEMS])(struct mame_bitmap *bitmap,int increment,int arg);
 static int onscrd_arg[MAX_OSD_ITEMS];
 static int onscrd_total_items;

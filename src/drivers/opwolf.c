@@ -43,6 +43,8 @@ Z80 c-chip substitute to blame?).
 
 There are a few unmapped writes for the sound Z80 in the log.
 
+Unknown writes to the MSM5205 control addresses
+
 What number should be returned for the c-chip Z80 interrupt?
 
 Raine source has standard Asuka/Mofflot sprite/tile priority:
@@ -188,8 +190,11 @@ static ADDRESS_MAP_START( z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa001, 0xa001) AM_READ(taitosound_slave_comm_r)
 ADDRESS_MAP_END
 
+
+
 static UINT8 adpcm_b[0x08];
 static UINT8 adpcm_c[0x08];
+static int adpcm_pos[2],adpcm_end[2];
 
 //static unsigned char adpcm_d[0x08];
 //0 - start ROM offset LSB
@@ -200,6 +205,31 @@ static UINT8 adpcm_c[0x08];
 //4 - always zero write (start trigger ?)
 //5 - different values
 //6 - different values
+
+static MACHINE_INIT( opwolf )
+{
+	MSM5205_reset_w(0, 1);
+	MSM5205_reset_w(1, 1);
+}
+
+static void opwolf_msm5205_vck(int chip)
+{
+	static int adpcm_data[2] = { -1, -1 };
+
+	if (adpcm_data[chip] != -1)
+	{
+		MSM5205_data_w(chip, adpcm_data[chip] & 0x0f);
+		adpcm_data[chip] = -1;
+		if (adpcm_pos[chip] == adpcm_end[chip])
+			MSM5205_reset_w(chip, 1);
+	}
+	else
+	{
+		adpcm_data[chip] = memory_region(REGION_SOUND1)[adpcm_pos[chip]];
+		adpcm_pos[chip] = (adpcm_pos[chip] + 1) & 0x7ffff;
+		MSM5205_data_w(chip, adpcm_data[chip] >> 4);
+	}
+}
 
 static WRITE8_HANDLER( opwolf_adpcm_b_w )
 {
@@ -214,10 +244,12 @@ static WRITE8_HANDLER( opwolf_adpcm_b_w )
 		end   = adpcm_b[2] + adpcm_b[3]*256;
 		start *=16;
 		end   *=16;
-//		ADPCM_play(0,start,(end-start)*2);
+		adpcm_pos[0] = start;
+		adpcm_end[0] = end;
+		MSM5205_reset_w(0, 0);
 	}
 
-	/*logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
+//	logerror("CPU #1     b00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 
@@ -234,21 +266,23 @@ static WRITE8_HANDLER( opwolf_adpcm_c_w )
 		end   = adpcm_c[2] + adpcm_c[3]*256;
 		start *=16;
 		end   *=16;
-//		ADPCM_play(1,start,(end-start)*2);
+		adpcm_pos[1] = start;
+		adpcm_end[1] = end;
+		MSM5205_reset_w(1, 0);
 	}
 
-	/*logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
+//	logerror("CPU #1     c00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 
 static WRITE8_HANDLER( opwolf_adpcm_d_w )
 {
-	/*logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
+//	logerror("CPU #1         d00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 static WRITE8_HANDLER( opwolf_adpcm_e_w )
 {
-	/*logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );*/
+//	logerror("CPU #1         e00%i-data=%2x   pc=%4x\n",offset,data,activecpu_get_pc() );
 }
 
 
@@ -435,7 +469,7 @@ static struct YM2151interface ym2151_interface =
 
 static struct MSM5205interface msm5205_interface =
 {
-	NULL,				/* VCK function */
+	opwolf_msm5205_vck,	/* VCK function */
 	MSM5205_S48_4B		/* 8 kHz */
 };
 
@@ -462,6 +496,8 @@ static MACHINE_DRIVER_START( opwolf )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+
+	MDRV_MACHINE_INIT(opwolf)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

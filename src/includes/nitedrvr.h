@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define NITEDRVR_BANG_DATA	NODE_01
 #define NITEDRVR_SKID1_EN	NODE_02

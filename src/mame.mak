@@ -206,7 +206,7 @@ DRVLIBS = \
 	$(OBJ)/midw8080.a $(OBJ)/meadows.a $(OBJ)/cvs.a $(OBJ)/midway.a \
 	$(OBJ)/irem.a $(OBJ)/gottlieb.a $(OBJ)/taito.a $(OBJ)/toaplan.a $(OBJ)/cave.a \
 	$(OBJ)/kyugo.a $(OBJ)/williams.a $(OBJ)/gremlin.a $(OBJ)/vicdual.a \
-	$(OBJ)/capcom.a $(OBJ)/itech.a $(OBJ)/leland.a $(OBJ)/sega.a $(OBJ)/deniam.a \
+	$(OBJ)/capcom.a $(OBJ)/itech.a $(OBJ)/leland.a $(OBJ)/sega.a \
 	$(OBJ)/dataeast.a $(OBJ)/tehkan.a $(OBJ)/konami.a \
 	$(OBJ)/exidy.a $(OBJ)/atari.a $(OBJ)/snk.a $(OBJ)/alpha.a $(OBJ)/technos.a \
 	$(OBJ)/stern.a $(OBJ)/gameplan.a $(OBJ)/zaccaria.a \
@@ -522,10 +522,10 @@ $(OBJ)/sega.a: \
 	$(OBJ)/machine/mc8123.o \
 	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o \
 	$(OBJ)/drivers/segaxbd.o $(OBJ)/vidhrdw/segaxbd.o \
+	$(OBJ)/drivers/segaybd.o $(OBJ)/vidhrdw/segaybd.o \
 	$(OBJ)/drivers/segaorun.o $(OBJ)/vidhrdw/segaorun.o \
 	$(OBJ)/drivers/segahang.o $(OBJ)/vidhrdw/segahang.o \
 	$(OBJ)/drivers/system18.o \
-	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o $(OBJ)/machine/s16math.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/machine/s24fd.o $(OBJ)/vidhrdw/segaic24.o \
 	$(OBJ)/drivers/segas32.o $(OBJ)/machine/segas32.o $(OBJ)/drivers/multi32.o \
@@ -682,7 +682,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/machine/am53cf96.o $(OBJ)/drivers/konamigq.o \
 	$(OBJ)/machine/intelfsh.o $(OBJ)/drivers/konamigv.o \
 	$(OBJ)/drivers/gticlub.o \
-	$(OBJ)/drivers/hornet.o \
+	$(OBJ)/machine/timekpr.o $(OBJ)/drivers/hornet.o \
 	$(OBJ)/drivers/nwk-tr.o \
 	$(OBJ)/drivers/zr107.o \
 

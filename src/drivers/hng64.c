@@ -443,6 +443,7 @@ or fatal fury for example)
 
 #define MASTER_CLOCK	50000000
 #define LOADHNGTEXS 1
+#define DECODETEXS 0
 #include "driver.h"
 #include "cpu/mips/mips3.h"
 #include "machine/random.h"
@@ -811,7 +812,7 @@ WRITE32_HANDLER( dl_w )
 	if (offset == 0x00000017)
 	{
 		flagFlag = 1 ;
-		// a test out of curiosity 
+		// a test out of curiosity
 		hng64_dl[offset] = 1 ;
 	}
 	*/
@@ -903,8 +904,8 @@ READ32_HANDLER( q2_r )
 */
 
 /*
-<ElSemi> d0100000-d011ffff is framebuffer A0 
-<ElSemi> d0120000-d013ffff is framebuffer A1 
+<ElSemi> d0100000-d011ffff is framebuffer A0
+<ElSemi> d0120000-d013ffff is framebuffer A1
 <ElSemi> d0140000-d015ffff is ZBuffer A
 */
 
@@ -1182,7 +1183,7 @@ static struct GfxLayout hng64_16_layout =
 };
 
 #if LOADHNGTEXS
-
+#if DECODETEXS
 /* not really much point in this, but it allows us to see the 1024x1024 texture pages */
 static struct GfxLayout hng64_tex_layout =
 {
@@ -1325,6 +1326,7 @@ static struct GfxLayout hng64_tex_layout =
 	1024*8192
 };
 #endif
+#endif
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -1335,7 +1337,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX2, 0, &hng64_4_16_layout,     0x0, 0x100 }, /* sprite tiles */
 	{ REGION_GFX2, 0, &hng64_16_layout,  0x0, 0x20 }, /* sprite tiles */
 #if LOADHNGTEXS
+#if DECODETEXS
 	{ REGION_GFX3, 0, &hng64_tex_layout, 0x0, 2 }, /* texture pages */
+#endif
 #endif
 	{ -1 } /* end of array */
 };

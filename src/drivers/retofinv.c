@@ -20,7 +20,7 @@ Notes:
   them so we can't verify without schematics.
 
 - We don't have a dump of the original MCU. We have a dump from a bootleg MCU,
-  which however cannot be the same as the original. The gaame works fine with it,
+  which however cannot be the same as the original. The game works fine with it,
   but only when the flip screen dip switch is set to off. If it is set to on, it
   hangs when starting a game because the mcu doesn't answer a command.
   See MCU code at $206 and $435: when the dip switch is on, the lda #$00 should
@@ -240,7 +240,7 @@ INPUT_PORTS_START( retofinv )
 	PORT_DIPSETTING(    0x18, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )	// according to manual
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -313,6 +313,18 @@ INPUT_PORTS_START( retofinv )
 	PORT_DIPSETTING(    0x80, "A and B" )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( retofin2 )
+	PORT_INCLUDE( retofinv )
+
+	PORT_MODIFY( "DSW1" )
+	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x18, "1" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -524,4 +536,4 @@ ROM_END
 
 GAME( 1985, retofinv, 0,        retofinv, retofinv, 0, ROT90, "Taito Corporation", "Return of the Invaders" )
 GAME( 1985, retofin1, retofinv, retofinb, retofinv, 0, ROT90, "bootleg", "Return of the Invaders (bootleg set 1)" )
-GAME( 1985, retofin2, retofinv, retofinb, retofinv, 0, ROT90, "bootleg", "Return of the Invaders (bootleg set 2)" )
+GAME( 1985, retofin2, retofinv, retofinb, retofin2, 0, ROT90, "bootleg", "Return of the Invaders (bootleg set 2)" )

@@ -240,12 +240,22 @@ Notes:
 
 
 Notes:
-- Bubble Bobble: service mode works only if the language switch is set to Japanese.
 - the original bubble bobble board has a 68701 protection MCU, which hasn't been
   read. Its behaviour is simulated and should be a good approximation but not
   100% accurate.
 - The coin inputs are handled by a custom called PC030. It would be responsible of
   handling the coin counters.
+- There is a weird dip switch in Bubble Bobble (SWB #7). When it is on, the game
+  takes the player score and the level number (increased by 1) and writes them,
+  byte by byte, to $F7FE and $F7FF ($F7FF receives the same data but with the
+  bit order reversed). After doing that, it sometimes hangs because it expects
+  the value at $F7FF to change.
+  This is done by routines $0F26 (player 1) and $0F74 (player 2).
+  Frankly I don't know what this could be. The schematics don't show anything
+  special there. A debug feature seems unlikely - why care about the score?
+  Could it be provision for some kind of externally controlled redemption scheme?
+- "Attract Sound" in Tokio is a very relative term - it just plays a veryshort
+  sound every four rounds of demo play.
 
 TODO:
 - bublbobl: the randomization of EXTEND letters is handled by the MCU. The simulation
@@ -382,7 +392,7 @@ static ADDRESS_MAP_START( tokio_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xdd00, 0xdfff) AM_RAM AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
 	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
-	AM_RANGE(0xfa00, 0xfa00) AM_WRITENOP // ???
+	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0xfa03, 0xfa03) AM_READ(input_port_0_r)
 	AM_RANGE(0xfa04, 0xfa04) AM_READ(input_port_1_r)
 	AM_RANGE(0xfa05, 0xfa05) AM_READ(input_port_2_r)
@@ -418,18 +428,22 @@ INPUT_PORTS_START( bublbobl )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SPECIAL )	// output: coin lockout
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SPECIAL )	// output: select 1-way or 2-way coin counter
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )	// output: trigger IRQ on main CPU (jumper switchable to vblank)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	// output: select read or write shared RAM
 
 	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Japanese ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPNAME( 0x05, 0x04, "Mode" )
+	PORT_DIPSETTING(    0x04, "Game, English" )
+	PORT_DIPSETTING(    0x05, "Game, Japanese" )
+	PORT_DIPSETTING(    0x01, "Test (Grid and Inputs)" )
+	PORT_DIPSETTING(    0x00, "Test (RAM and Sound)" )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW ) // works only in Japanese mode
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -451,21 +465,22 @@ INPUT_PORTS_START( bublbobl )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "20K 80K" )
-	PORT_DIPSETTING(    0x0c, "30K 100K" )
-	PORT_DIPSETTING(    0x04, "40K 200K" )
-	PORT_DIPSETTING(    0x00, "50K 250K" )
+	PORT_DIPSETTING(    0x08, "20K 80K 300K" )
+	PORT_DIPSETTING(    0x0c, "30K 100K 400K" )
+	PORT_DIPSETTING(    0x04, "40K 200K 500K" )
+	PORT_DIPSETTING(    0x00, "50K 250K 500K" )
+	// then more bonus lives at 1M 2M 3M 4M 5M - for all dip switch settings
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) // Turning either of these switches on blanks the screen on reset
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )	// must be off (see notes)
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "ROM Type" )	// will hang on startup if set to wrong type
+	PORT_DIPSETTING(    0x80, "IC52=512kb, IC53=none" )
+	PORT_DIPSETTING(    0x00, "IC52=256kb, IC53=256kb" )
 
 	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
@@ -490,13 +505,14 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( boblbobl )
 	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Japanese ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPNAME( 0x05, 0x04, "Mode" )
+	PORT_DIPSETTING(    0x04, "Game, English" )
+	PORT_DIPSETTING(    0x05, "Game, Japanese" )
+	PORT_DIPSETTING(    0x01, "Test (Grid and Inputs)" )
+	PORT_DIPSETTING(    0x00, "Test (RAM and Sound)" )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW ) // works only in Japanese mode
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
@@ -518,10 +534,11 @@ INPUT_PORTS_START( boblbobl )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "20K 80K" )
-	PORT_DIPSETTING(    0x0c, "30K 100K" )
-	PORT_DIPSETTING(    0x04, "40K 200K" )
-	PORT_DIPSETTING(    0x00, "50K 250K" )
+	PORT_DIPSETTING(    0x08, "20K 80K 300K" )
+	PORT_DIPSETTING(    0x0c, "30K 100K 400K" )
+	PORT_DIPSETTING(    0x04, "40K 200K 500K" )
+	PORT_DIPSETTING(    0x00, "50K 250K 500K" )
+	// then more bonus lives at 1M 2M 3M 4M 5M - for all dip switch settings
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -536,8 +553,8 @@ INPUT_PORTS_START( boblbobl )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
@@ -561,6 +578,7 @@ INPUT_PORTS_START( sboblbob )
 	PORT_DIPNAME( 0x01, 0x00, "Game" )
 	PORT_DIPSETTING(    0x01, "Bobble Bobble" )
 	PORT_DIPSETTING(    0x00, "Super Bobble Bobble" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 
 	PORT_MODIFY( "DSW1" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
@@ -594,13 +612,14 @@ INPUT_PORTS_START( tokio )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
-	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x0C, "100K 400K" )
+	PORT_DIPNAME( 0x01, 0x01, "Enemies" )
+	PORT_DIPSETTING(    0x01, "Few (Easy)" )
+	PORT_DIPSETTING(    0x00, "Many (Hard)" )
+	PORT_DIPNAME( 0x02, 0x02, "Enemy Shots" )
+	PORT_DIPSETTING(    0x02, "Few (Easy)" )
+	PORT_DIPSETTING(    0x00, "Many (Hard)" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "100K 400K" )
 	PORT_DIPSETTING(    0x08, "200K 400K" )
 	PORT_DIPSETTING(    0x04, "300K 400K" )
 	PORT_DIPSETTING(    0x00, "400K 400K" )
@@ -608,8 +627,8 @@ INPUT_PORTS_START( tokio )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPSETTING(    0x00, "99 (Cheat)")
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "99 (Cheat)")	// 6 in original version
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Language ) )
@@ -619,28 +638,28 @@ INPUT_PORTS_START( tokio )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	// data ready from MCU
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_2WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_2WAY
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_2WAY PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_2WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )

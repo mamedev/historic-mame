@@ -680,7 +680,7 @@ static void reset_reset(void)
 			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	}
 	if(changed & 4)
-		YM2151ResetChip(0);
+		sndti_reset(SOUND_YM2151, 0);
 	prev_resetcontrol = resetcontrol;
 }
 

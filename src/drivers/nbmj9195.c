@@ -516,15 +516,6 @@ static z80ctc_interface ctc_intf =
 
 static void tmpz84c011_init(void)
 {
-	int i;
-
-	// initialize TMPZ84C011 PIO
-	for (i = 0; i < (5 * 2); i++)
-	{
-		pio_dir[i] = pio_latch[i] = 0;
-		tmpz84c011_pio_w(i, 0);
-	}
-
 	// initialize the CTC
 	ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
 	ctc_intf.baseclock[1] = Machine->drv->cpu[1].cpu_clock;
@@ -533,7 +524,14 @@ static void tmpz84c011_init(void)
 
 static MACHINE_INIT( sailorws )
 {
-	//
+	int i;
+
+	// initialize TMPZ84C011 PIO
+	for (i = 0; i < (5 * 2); i++)
+	{
+		pio_dir[i] = pio_latch[i] = 0;
+		tmpz84c011_pio_w(i, 0);
+	}
 }
 
 static void initialize_driver(void)

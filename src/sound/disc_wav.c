@@ -8,19 +8,18 @@
  *
  ************************************************************************
  *
- * DSS_COUNTER      - External clock Binary Counter
- * DSS_COUNTER_FIX  - Fixed Frequency Binary Counter
- * DSS_LFSR_NOISE        - Linear Feedback Shift Register Noise
- * DSS_NOISE             - Noise Source - Random source
- * DSS_NOTE              - Note/tone generator
- * DSS_OP_AMP_OSC        - Op Amp oscillator circuits
- * DSS_SAWTOOTHWAVE      - Sawtooth waveform generator
- * DSS_SCHMITT_OSC       - Schmitt Feedback Oscillator
- * DSS_SINEWAVE          - Sinewave generator source code
- * DSS_SQUAREWAVE        - Squarewave generator source code
- * DSS_SQUAREWFIX        - Squarewave generator - fixed frequency
- * DSS_SQUAREWAVE2       - Squarewave generator - by tOn/tOff
- * DSS_TRIANGLEWAVE      - Triangle waveform generator
+ * DSS_COUNTER        - External clock Binary Counter
+ * DSS_LFSR_NOISE     - Linear Feedback Shift Register Noise
+ * DSS_NOISE          - Noise Source - Random source
+ * DSS_NOTE           - Note/tone generator
+ * DSS_OP_AMP_OSC     - Op Amp oscillator circuits
+ * DSS_SAWTOOTHWAVE   - Sawtooth waveform generator
+ * DSS_SCHMITT_OSC    - Schmitt Feedback Oscillator
+ * DSS_SINEWAVE       - Sinewave generator source code
+ * DSS_SQUAREWAVE     - Squarewave generator source code
+ * DSS_SQUAREWFIX     - Squarewave generator - fixed frequency
+ * DSS_SQUAREWAVE2    - Squarewave generator - by tOn/tOff
+ * DSS_TRIANGLEWAVE   - Triangle waveform generator
  *
  ************************************************************************/
 
@@ -31,19 +30,20 @@ struct dss_adsr_context
 
 struct dss_counter_context
 {
-	int last;		// Last clock state
-};
-
-struct dss_counterfix_context
-{
-	double sampleStep;	// time taken up by 1 audio sample
-	double tCycle;		// time period of selected frequency
-	double tLeft;		// time left sampling current frequency cycle
+	int		clock_type;
+	int		last;		// Last clock state
+	double	t_sample;	// discrete clock rate in seconds
+	double	t_clock;	// fixed counter clock in seconds
+	double	t_left;		// time unused during last sample in seconds
 };
 
 struct dss_lfsr_context
 {
 	unsigned int	lfsr_reg;
+	int				last;		// Last clock state
+	double			t_sample;	// discrete clock rate in seconds
+	double			t_clock;	// fixed counter clock in seconds
+	double			t_left;		// time unused during last sample in seconds
 	double			sampleStep;
 	double			shiftStep;
 	double			t;
@@ -56,11 +56,13 @@ struct dss_noise_context
 
 struct dss_note_context
 {
-	double	step;	// sample time
-	double	cycle;	// time for 1 cycle of the given frequency
-	double	tLeft;	// time not used up
-	int		max1;	// Max 1 Count stored as int for easy use.
-	int		count;	// current count
+	int		clock_type;
+	int		last;		// Last clock state
+	double	t_sample;	// discrete clock rate in seconds
+	double	t_clock;	// fixed counter clock in seconds
+	double	t_left;		// time unused during last sample in seconds
+	int		max1;		// Max 1 Count stored as int for easy use.
+	int		count;		// current count
 };
 
 struct dss_op_amp_osc_context
@@ -133,7 +135,7 @@ struct dss_trianglewave_context
  * input3    - Max count
  * input4    - Direction - 0=down, 1=up
  * input5    - Reset Value
- * input6    - Clock type (count on 0/1)
+ * input6    - Clock type
  *
  * Jan 2004, D Renaud.
  ************************************************************************/
@@ -143,101 +145,79 @@ struct dss_trianglewave_context
 #define DSS_COUNTER__MAX		(*(node->input[3]))
 #define DSS_COUNTER__DIR		(*(node->input[4]))
 #define DSS_COUNTER__INIT		(*(node->input[5]))
-#define DSS_COUNTER__TYPE		(*(node->input[6]))
+#define DSS_COUNTER__CLOCK_TYPE	(*(node->input[6]))
 
 void dss_counter_step(struct node_description *node)
 {
 	struct dss_counter_context *context = node->context;
-	int clock = (DSS_COUNTER__CLOCK != 0);
+	double cycles;
+	int clock, count = 0;
+
+	if (context->clock_type == DISC_CLK_IS_FREQ)
+	{
+		/* We need to keep clocking the internal clock even if disabled. */
+		cycles = (context->t_left + context->t_sample) / context->t_clock;
+		count = (int)cycles;
+		context->t_left = (cycles - count) * context->t_clock;
+	}
+
+	/* If reset enabled then set output to the reset value. */
+	if (DSS_COUNTER__RESET)
+	{
+		node->output = DSS_COUNTER__INIT;
+		return;
+	}
+
 	/*
-	 * We will count at the selected changeover to high/low, only when enabled.
 	 * We don't count if module is not enabled.
 	 * This has the effect of holding the output at it's current value.
 	 */
-	if ((context->last != clock) && DSS_COUNTER__ENABLE)
+	if (DSS_COUNTER__ENABLE)
 	{
-		/* Toggled */
-		context->last = clock;
-
-		if (DSS_COUNTER__TYPE == clock)
+		switch (context->clock_type)
 		{
-			/* Proper edge */
+			case DISC_CLK_ON_F_EDGE:
+			case DISC_CLK_ON_R_EDGE:
+				/* See if the clock has toggled to the proper edge */
+				clock = (DSS_COUNTER__CLOCK != 0);
+				if (context->last != clock)
+				{
+					context->last = clock;
+					if (context->clock_type == clock)
+					{
+						/* Toggled */
+						count = 1;
+					}
+				}
+				break;
+
+			case DISC_CLK_BY_COUNT:
+				/* Clock number of times specified. */
+				count = (int)DSS_COUNTER__CLOCK;
+				break;
+		}
+
+		for (clock=0; clock<count; clock++)
+		{
 			node->output += DSS_COUNTER__DIR ? 1 : -1; // up/down
 			if (node->output < 0) node->output = DSS_COUNTER__MAX;
 			if (node->output > DSS_COUNTER__MAX) node->output = 0;
 		}
 	}
-
-	/* If reset enabled then set output to the reset value. */
-	if (DSS_COUNTER__RESET) node->output = DSS_COUNTER__INIT;
 }
 
 void dss_counter_reset(struct node_description *node)
 {
 	struct dss_counter_context *context = node->context;
 
+	context->clock_type = (int)DSS_COUNTER__CLOCK_TYPE;
+	if ((context->clock_type < DISC_CLK_ON_F_EDGE) || (context->clock_type > DISC_CLK_IS_FREQ))
+		discrete_log("Invalid clock type passed in NODE_%d\n", node->node - NODE_START);
 	context->last = (DSS_COUNTER__CLOCK != 0);
+	context->t_sample = 1.0 / Machine->sample_rate;
+	if (context->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_COUNTER__CLOCK;
+	context->t_left = 0;
 	node->output = DSS_COUNTER__INIT; /* Output starts at reset value */
-}
-
-
-/************************************************************************
- *
- * DSS_COUNTER_FIX - Fixed Frequency Binary Counter
- *
- * input0    - Enable input value
- * input1    - Reset input (active high)
- * input2    - Frequency
- * input3    - Max count
- * input4    - Direction - 0=up, 1=down
- * input5    - Reset Value
- *
- * Jan 2004, D Renaud.
- ************************************************************************/
-#define DSS_COUNTER_FIX__ENABLE		(*(node->input[0]))
-#define DSS_COUNTER_FIX__RESET		(*(node->input[1]))
-#define DSS_COUNTER_FIX__FREQ		(*(node->input[2]))
-#define DSS_COUNTER_FIX__MAX		(*(node->input[3]))
-#define DSS_COUNTER_FIX__DIR		(*(node->input[4]))
-#define DSS_COUNTER_FIX__INIT		(*(node->input[5]))
-
-void dss_counterfix_step(struct node_description *node)
-{
-	struct dss_counterfix_context *context = node->context;
-
-	context->tLeft -= context->sampleStep;
-
-	/* The enable input only curtails output, phase rotation still occurs. */
-	while (context->tLeft <= 0)
-	{
-
-		/*
-		 * We will count when enabled.
-		 * We don't count if module is not enabled.
-		 * This has the effect of holding the output at it's current value.
-		 */
-		if (DSS_COUNTER_FIX__ENABLE)
-		{
-			node->output += DSS_COUNTER_FIX__DIR ? 1 : -1; // up/down
-			if (node->output < 0) node->output = DSS_COUNTER_FIX__MAX;
-			if (node->output > DSS_COUNTER_FIX__MAX) node->output = 0;
-		}
-
-		context->tLeft += context->tCycle;
-	}
-
-	/* If reset enabled then set output to the reset value. */
-	if (DSS_COUNTER_FIX__RESET) node->output = DSS_COUNTER_FIX__INIT;
-}
-
-void dss_counterfix_reset(struct node_description *node)
-{
-	struct dss_counterfix_context *context = node->context;
-
-	context->sampleStep = 1.0 / Machine->sample_rate;
-	context->tCycle = 1.0 / DSS_COUNTER_FIX__FREQ;
-	context->tLeft = context->tCycle;
-	node->output = DSS_COUNTER_FIX__INIT; /* Output starts at reset value */
 }
 
 
@@ -247,15 +227,17 @@ void dss_counterfix_reset(struct node_description *node)
  *
  * input0    - Enable input value
  * input1    - Register reset
- * input2    - Noise sample frequency
+ * input2    - Clock Input
  * input3    - Amplitude input value
  * input4    - Input feed bit
  * input5    - Bias
  *
+ * also passed dss_lfsr_context structure
+ *
  ************************************************************************/
 #define DSS_LFSR_NOISE__ENABLE	(*(node->input[0]))
 #define DSS_LFSR_NOISE__RESET	(*(node->input[1]))
-#define DSS_LFSR_NOISE__FREQ	(*(node->input[2]))
+#define DSS_LFSR_NOISE__CLOCK	(*(node->input[2]))
 #define DSS_LFSR_NOISE__AMP		(*(node->input[3]))
 #define DSS_LFSR_NOISE__FEED	(*(node->input[4]))
 #define DSS_LFSR_NOISE__BIAS	(*(node->input[5]))
@@ -321,24 +303,50 @@ void dss_lfsr_step(struct node_description *node)
 {
 	const struct discrete_lfsr_desc *lfsr_desc = node->custom;
 	struct dss_lfsr_context *context = node->context;
-	double shiftAmount;
-	int fb0,fb1,fbresult,i;
+	double cycles;
+	int clock, count = 0;
+	int fb0,fb1,fbresult;
+
+	if (lfsr_desc->clock_type == DISC_CLK_IS_FREQ)
+	{
+		/* We need to keep clocking the internal clock even if disabled. */
+		cycles = (context->t_left + context->t_sample) / context->t_clock;
+		count = (int)cycles;
+		context->t_left = (cycles - count) * context->t_clock;
+	}
 
 	/* Reset everything if necessary */
 	if((DSS_LFSR_NOISE__RESET ? 1 : 0) == ((lfsr_desc->flags & DISC_LFSR_FLAG_RESET_TYPE_H) ? 1 : 0))
 	{
 		dss_lfsr_reset(node);
+		return;
 	}
 
-	i=0;
-	/* Calculate the number of full shift register cycles since last machine sample. */
-	shiftAmount = ((context->sampleStep + context->t) / context->shiftStep);
-	context->t = (shiftAmount - (int)shiftAmount) * context->shiftStep;    /* left over amount of time */
-	while(i<(int)shiftAmount)
+	switch (lfsr_desc->clock_type)
 	{
-		i++;
-		/* Now clock the LFSR by 1 cycle and output */
+		case DISC_CLK_ON_F_EDGE:
+		case DISC_CLK_ON_R_EDGE:
+			/* See if the clock has toggled to the proper edge */
+			clock = (DSS_LFSR_NOISE__CLOCK != 0);
+			if (context->last != clock)
+			{
+				context->last = clock;
+				if (lfsr_desc->clock_type == clock)
+				{
+					/* Toggled */
+					count = 1;
+				}
+			}
+			break;
 
+		case DISC_CLK_BY_COUNT:
+			/* Clock number of times specified. */
+			count = (int)DSS_LFSR_NOISE__CLOCK;
+			break;
+	}
+
+	for (clock=0; clock<count; clock++)
+	{
 		/* Fetch the last feedback result */
 		fbresult=((context->lfsr_reg)>>(lfsr_desc->bitlength))&0x01;
 
@@ -384,9 +392,12 @@ void dss_lfsr_reset(struct node_description *node)
 	struct dss_lfsr_context *context = node->context;
 	int fb0,fb1,fbresult;
 
-	context->t = 0;
-	context->sampleStep = 1.0 / Machine->sample_rate;
-	context->shiftStep = 1.0 / DSS_LFSR_NOISE__FREQ;
+	if ((lfsr_desc->clock_type < DISC_CLK_ON_F_EDGE) || (lfsr_desc->clock_type > DISC_CLK_IS_FREQ))
+		discrete_log("Invalid clock type passed in NODE_%d\n", node->node - NODE_START);
+	context->last = (DSS_COUNTER__CLOCK != 0);
+	context->t_sample = 1.0 / Machine->sample_rate;
+	if (lfsr_desc->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_LFSR_NOISE__CLOCK;
+	context->t_left = 0;
 
 	context->lfsr_reg=lfsr_desc->reset_value;
 
@@ -471,34 +482,62 @@ void dss_noise_reset(struct node_description *node)
  * DSS_NOTE - Note/tone generator
  *
  * input0    - Enable input value
- * input1    - Frequency value
+ * input1    - Clock Input
  * input2    - data value
  * input3    - Max count 1
  * input4    - Max count 2
+ * input5    - Clock type
  *
  * Mar 2004, D Renaud.
  ************************************************************************/
- #define DSS_NOTE__ENABLE	(*(node->input[0]))
- #define DSS_NOTE__FREQ		(*(node->input[1]))
- #define DSS_NOTE__DATA		(*(node->input[2]))
- #define DSS_NOTE__MAX1		(*(node->input[3]))
- #define DSS_NOTE__MAX2		(*(node->input[4]))
+ #define DSS_NOTE__ENABLE		(*(node->input[0]))
+ #define DSS_NOTE__CLOCK		(*(node->input[1]))
+ #define DSS_NOTE__DATA			(*(node->input[2]))
+ #define DSS_NOTE__MAX1			(*(node->input[3]))
+ #define DSS_NOTE__MAX2			(*(node->input[4]))
+ #define DSS_NOTE__CLOCK_TYPE	(*(node->input[5]))
 
 void dss_note_step(struct node_description *node)
 {
 	struct dss_note_context *context = node->context;
 
-	double	t;	// time to process in this step
-	int		i, countsThisStep;
+	double cycles;
+	int clock, count = 0;
+
+	if (context->clock_type == DISC_CLK_IS_FREQ)
+	{
+		/* We need to keep clocking the internal clock even if disabled. */
+		cycles = (context->t_left + context->t_sample) / context->t_clock;
+		count = (int)cycles;
+		context->t_left = (cycles - count) * context->t_clock;
+	}
 
 	if (DSS_NOTE__ENABLE)
 	{
-		t = context->step + context->tLeft;
-		countsThisStep = (int)(t / context->cycle);
+		switch (context->clock_type)
+		{
+			case DISC_CLK_ON_F_EDGE:
+			case DISC_CLK_ON_R_EDGE:
+				/* See if the clock has toggled to the proper edge */
+				clock = (DSS_NOTE__CLOCK != 0);
+				if (context->last != clock)
+				{
+					context->last = clock;
+					if (context->clock_type == clock)
+					{
+						/* Toggled */
+						count = 1;
+					}
+				}
+				break;
 
-		/* This code could probably speed up by using a bunch of compares instead of
-		 * a loop.  But the loop is much more readable. */
-		for (i=0; i<countsThisStep; i++)
+			case DISC_CLK_BY_COUNT:
+				/* Clock number of times specified. */
+				count = (int)DSS_NOTE__CLOCK;
+				break;
+		}
+
+		for (clock=0; clock<count; clock++)
 		{
 			context->count++;
 			if (context->count >= context->max1)
@@ -513,7 +552,6 @@ void dss_note_step(struct node_description *node)
 				}
 			}
 		}
-		context->tLeft = t - context->cycle * countsThisStep;
 	}
 	else
 		node->output = 0;
@@ -523,11 +561,16 @@ void dss_note_reset(struct node_description *node)
 {
 	struct dss_note_context *context = node->context;
 
-	context->step = 1.0 / Machine->sample_rate;
-	context->cycle = 1.0 / DSS_NOTE__FREQ;
+	context->clock_type = (int)DSS_NOTE__CLOCK_TYPE;
+	if ((context->clock_type < DISC_CLK_ON_F_EDGE) || (context->clock_type > DISC_CLK_IS_FREQ))
+		discrete_log("Invalid clock type passed in NODE_%d\n", node->node - NODE_START);
+	context->last = (DSS_COUNTER__CLOCK != 0);
+	context->t_sample = 1.0 / Machine->sample_rate;
+	if (context->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_NOTE__CLOCK;
+	context->t_left = 0;
+
 	context->count = (int)DSS_NOTE__DATA;
 	context->max1 = (int)DSS_NOTE__MAX1;
-	context->tLeft = 0;
 	node->output = 0;
 }
 
@@ -741,7 +784,6 @@ void dss_op_amp_osc_reset(struct node_description *node)
 
 	context->vCap = 0;
 	context->step = 1.0 / Machine->sample_rate;
-logerror("type=%d, 0c=%f, 1c=%f, tL=%f, tH=%f, i1=%f, i2=%f\n",context->type,context->iCharge[0],context->iCharge[1],context->thresholdLow,context->thresholdHigh,i1,i2);
 
 	dss_op_amp_osc_step(node);
 }
@@ -1116,7 +1158,7 @@ void dss_squarewfix_reset(struct node_description *node)
 	context->tOff = 1.0 / DSS_SQUAREWFIX__FREQ;	/* cycle time */
 	context->tLeft = DSS_SQUAREWFIX__PHASE / 360.0;	/* convert start phase to % */
 	context->tLeft = context->tLeft - (int)context->tLeft;	/* keep % between 0 & 1 */
-	context->tLeft = context->tLeft < 0 ? 1.0 + context->tLeft : context->tLeft;	/* if - then flip to + phase */
+	context->tLeft = (context->tLeft < 0) ? 1.0 + context->tLeft : context->tLeft;	/* if - then flip to + phase */
 	context->tLeft *= context->tOff;
 	context->tOn = context->tOff * (DSS_SQUAREWFIX__DUTY / 100.0);
 	context->tOff -= context->tOn;

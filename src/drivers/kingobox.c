@@ -80,7 +80,7 @@ static WRITE8_HANDLER( sound_command_w ) {
 
 
 static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-    AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+    AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
     AM_RANGE(0xc000, 0xc3ff) AM_READ(MRA8_RAM) /* work ram */
     AM_RANGE(0xe000, 0xe7ff) AM_READ(sprite_shared_r)
     AM_RANGE(0xe800, 0xefff) AM_READ(video_shared_r)
@@ -94,7 +94,7 @@ static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-    AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+    AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
     AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM) /* work ram */
     AM_RANGE(0xe000, 0xe7ff) AM_WRITE(sprite_shared_w) /* shared with sprite cpu */
     AM_RANGE(0xe800, 0xefff) AM_WRITE(video_shared_w) /* shared with video cpu */
@@ -803,7 +803,7 @@ ROM_START( ringkin3 )
 	ROM_LOAD( "11.7d",        0x04000, 0x2000, CRC(3cc7bdc5) SHA1(31f3fd5892232701f375822a146853b71bad804b) )
 	ROM_LOAD( "8.3d",         0x06000, 0x2000, CRC(65f1281b) SHA1(a7db40464d52c615ffa40a577edf09fd6b1a677a) )
 	ROM_LOAD( "10.5d",        0x08000, 0x2000, CRC(af5013e7) SHA1(26e737138ab0e8dc28bea1f81d1f83345419e611) )
-	ROM_LOAD( "12.8d",        0x0a000, 0x2000, NO_DUMP )
+	ROM_LOAD( "12.8d",        0x0a000, 0x2000, CRC(1f6654d6) SHA1(edd234b6daeaeaad335c8c725380bebd5c11063e) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	/* we load the ringking PROMs and then expand the first to look like the kingofb ones... */
@@ -811,6 +811,47 @@ ROM_START( ringkin3 )
 	ROM_LOAD( "82s129.1a",    0x0200, 0x0100, CRC(d345cbb3) SHA1(6318022ebbbe59d4c0a207801fffed1167b98a66) )	/* blue component */
 ROM_END
 
+ROM_START( ringkinw )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "15.9d",        0x00000, 0x4000, CRC(8263f517) SHA1(942012bfcc98dd2cd0437e015a164933c99d0f36) )
+	ROM_LOAD( "16.9e",        0x04000, 0x4000, CRC(daadd700) SHA1(2405e954a28d18ae8c30955d0ad7c25c9abb2bd3) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the video cpu */
+	ROM_LOAD( "14.9b",        0x00000, 0x4000, CRC(76a73c95) SHA1(ca47917d8843b2867b66f74c6bc2f29bb90e11dc) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )     /* 64k for the sprite cpu */
+	ROM_LOAD( "17.xx",        0x00000, 0x2000, CRC(379f4f84) SHA1(c8171e15fe243857b6ca8f32c1cc09f12fa4c07c) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )     /* 64k for the audio cpu */
+	ROM_LOAD( "18.4f",        0x00000, 0x4000, CRC(c057e28e) SHA1(714d8f14d55a070efcf205f8946269181bf2198b) )
+	ROM_LOAD( "19.4h",        0x04000, 0x4000, CRC(060253dd) SHA1(9a24fc6aca64262e935971f96b3a103df9711f20) )
+	ROM_LOAD( "20.4j",        0x08000, 0x4000, CRC(64c137a4) SHA1(e38adeb19e24357cc5581f0a3097c1d24914e25c) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "13.14d",       0x00000, 0x2000, CRC(e36d4f4f) SHA1(059799b04a7d3e02c1a7f9a5b878d06afef305df) ) /* characters */
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "1.1b",         0x00000, 0x4000, CRC(ce6580af) SHA1(9a94c681d4c54ca6c2f41ba1e51c61f54e844c77) )
+	ROM_LOAD( "3.3b",         0x04000, 0x4000, CRC(cf74ea50) SHA1(9b0bdf636f9b31e6c7074d606d431a849a51e518) )
+	ROM_LOAD( "5.5b",         0x08000, 0x4000, CRC(d8b53975) SHA1(52ad0b26fef7bb20d1bf953c5ebd519656682bac) )
+	ROM_LOAD( "2.2b",         0x0c000, 0x4000, CRC(4ab506d2) SHA1(8c293d38429a1462f49462d623c47c402e3372f0) )
+	ROM_LOAD( "4.4b",         0x10000, 0x4000, CRC(ecf95a2c) SHA1(b93d0ebdbde9311194a91fb3d6e5d5f33cc87e9d) )
+	ROM_LOAD( "6.6b",         0x14000, 0x4000, CRC(8200cb2b) SHA1(c9e66027d796dd523eddf378d0e9a62ebcc8f6c8) )
+
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD( "7.1d",         0x00000, 0x2000, CRC(019a88b0) SHA1(9c2d4bb643b7bd14c4f347906707854d7a5cd340) )
+	ROM_LOAD( "9.1d",         0x02000, 0x2000, CRC(bfdc741a) SHA1(2b874ef61eae8fab99d08a0273d69b90bb52b3f1) )
+	ROM_LOAD( "11.1d",        0x04000, 0x2000, CRC(3cc7bdc5) SHA1(31f3fd5892232701f375822a146853b71bad804b) )
+	ROM_LOAD( "8.1d",         0x06000, 0x2000, CRC(65f1281b) SHA1(a7db40464d52c615ffa40a577edf09fd6b1a677a) )
+	ROM_LOAD( "10.1d",        0x08000, 0x2000, CRC(af5013e7) SHA1(26e737138ab0e8dc28bea1f81d1f83345419e611) )
+	ROM_LOAD( "12.1d",        0x0a000, 0x2000, CRC(1f6654d6) SHA1(edd234b6daeaeaad335c8c725380bebd5c11063e) )
+
+	/* NOT dumped for this set, but the gfx roms are the same in ringkin3 */
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	/* we load the ringking PROMs and then expand the first to look like the kingofb ones... */
+	ROM_LOAD( "82s135.2a",    0x0100, 0x0100, CRC(0e723a83) SHA1(51d2274be70506308b3bfa9c2d23606290f8b3b5) )	/* red and green component */
+	ROM_LOAD( "82s129.1a",    0x0200, 0x0100, CRC(d345cbb3) SHA1(6318022ebbbe59d4c0a207801fffed1167b98a66) )	/* blue component */
+ROM_END
 
 static DRIVER_INIT( ringkin3 )
 {
@@ -828,3 +869,4 @@ GAME( 1985, kingofb,  0,       kingofb,  kingofb,  0,        ROT90, "Woodplace",
 GAME( 1985, ringking, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (US set 1)" )
 GAME( 1985, ringkin2, kingofb, ringking, ringking, 0,        ROT90, "Data East USA", "Ring King (US set 2)" )
 GAME( 1985, ringkin3, kingofb, kingofb,  kingofb,  ringkin3, ROT90, "Data East USA", "Ring King (US set 3)" )
+GAME( 1985, ringkinw, kingofb, kingofb,  kingofb,  ringkin3, ROT90, "Woodplace", "Ring King (US, Woodplace license)" )

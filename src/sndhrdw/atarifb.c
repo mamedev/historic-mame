@@ -24,6 +24,7 @@ const struct discrete_555_desc atarifbWhistl555 =
 
 const struct discrete_lfsr_desc atarifb_lfsr =
 {
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	0,			/* Use Bit 0 as XOR input 0 */

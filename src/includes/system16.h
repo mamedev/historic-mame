@@ -35,6 +35,10 @@ VIDEO_START( xboard );
 VIDEO_UPDATE( xboard );
 void xboard_set_road_priority(int priority);
 
+/* from vidhrdw/segaybd.c */
+VIDEO_START( yboard );
+VIDEO_UPDATE( yboard );
+
 
 
 /******************** OLD STUFF *******************/

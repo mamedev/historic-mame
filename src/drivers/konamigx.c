@@ -1157,12 +1157,12 @@ static ADDRESS_MAP_START( gx_base_memmap, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xd4e000, 0xd4e01f) AM_WRITENOP
 	AM_RANGE(0xd50000, 0xd500ff) AM_WRITE(K055555_long_w)
 	AM_RANGE(0xd52000, 0xd5200f) AM_WRITE(sound020_w)
-	AM_RANGE(0xd52010, 0xd5201f) AM_READ(sound020_r)	
+	AM_RANGE(0xd52010, 0xd5201f) AM_READ(sound020_r)
 	AM_RANGE(0xd56000, 0xd56003) AM_WRITE(eeprom_w)
 	AM_RANGE(0xd58000, 0xd58003) AM_WRITE(control_w)
-	AM_RANGE(0xd5a000, 0xd5a003) AM_READ(eeprom_r)		
-	AM_RANGE(0xd5c000, 0xd5c003) AM_READ(players_r)		
-	AM_RANGE(0xd5e000, 0xd5e003) AM_READ(service_r)		
+	AM_RANGE(0xd5a000, 0xd5a003) AM_READ(eeprom_r)
+	AM_RANGE(0xd5c000, 0xd5c003) AM_READ(players_r)
+	AM_RANGE(0xd5e000, 0xd5e003) AM_READ(service_r)
 	AM_RANGE(0xd80000, 0xd8001f) AM_WRITE(K054338_long_w)
 	AM_RANGE(0xda0000, 0xda1fff) AM_READWRITE(K056832_ram_long_r, K056832_ram_long_w)
 	AM_RANGE(0xda2000, 0xda3fff) AM_READWRITE(K056832_ram_long_r, K056832_ram_long_w)
@@ -1181,7 +1181,7 @@ static ADDRESS_MAP_START( gx_type1_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xdda000, 0xddafff) AM_WRITE(adc0834_w)
 	AM_RANGE(0xddc000, 0xddcfff) AM_READ(adc0834_r)
 	AM_RANGE(0xdde000, 0xdde003) AM_WRITE(type1_cablamps_w)
-	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((data32_t**)&K053936_1_ctrl) 
+	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((data32_t**)&K053936_1_ctrl)
 	AM_RANGE(0xe20000, 0xe2000f) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xe40000, 0xe40003) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xe80000, 0xe81fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl) 	// chips 21L+19L / S
@@ -1203,7 +1203,7 @@ static ADDRESS_MAP_START( gx_type3_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((data32_t**)&K053936_1_ctrl)
 	AM_RANGE(0xe20000, 0xe20003) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xe40000, 0xe40003) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl) 
+	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl)
 	AM_RANGE(0xe80000, 0xe87fff) AM_RAM AM_WRITE(konamigx_555_palette_w) AM_BASE(&paletteram32) 	// main monitor palette (twice as large as reality)
 	AM_RANGE(0xea0000, 0xea3fff) AM_RAM AM_WRITE(konamigx_555_palette2_w) AM_BASE(&gx_subpaletteram32) // sub monitor palette
 	AM_RANGE(0xec0000, 0xec0003) AM_READ(type3_sync_r)
@@ -1216,11 +1216,11 @@ static ADDRESS_MAP_START( gx_type4_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((data32_t**)&K053936_1_ctrl)
 	AM_RANGE(0xe20000, 0xe20003) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xe40000, 0xe40003) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl)  // 29C & 29G (PSAC2 line control) 
+	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl)  // 29C & 29G (PSAC2 line control)
 	AM_RANGE(0xe80000, 0xe8ffff) AM_RAM AM_WRITE(konamigx_palette_w) AM_BASE(&paletteram32) // 11G/13G/15G (main screen palette RAM) (twice as large as reality)
 	AM_RANGE(0xea0000, 0xea7fff) AM_RAM AM_WRITE(konamigx_palette2_w) AM_BASE(&gx_subpaletteram32) // 5G/7G/9G (sub screen palette RAM)
 	AM_RANGE(0xec0000, 0xec0003) AM_READ(type3_sync_r)		// type 4 polls this too
-	AM_RANGE(0xf00000, 0xf07fff) AM_RAM AM_WRITE(konamigx_t4_psacmap_w) AM_BASE(&gx_psacram)	// PSAC2 tilemap       
+	AM_RANGE(0xf00000, 0xf07fff) AM_RAM AM_WRITE(konamigx_t4_psacmap_w) AM_BASE(&gx_psacram)	// PSAC2 tilemap
 ADDRESS_MAP_END
 
 /**********************************************************************************/
@@ -3224,6 +3224,8 @@ ROM_END
 
 MACHINE_INIT(konamigx)
 {
+	int i;
+
 	konamigx_wrport1_0 = konamigx_wrport1_1 = 0;
 	konamigx_wrport2 = 0;
 
@@ -3243,6 +3245,21 @@ MACHINE_INIT(konamigx)
 
 	// sound CPU initially disabled?
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+
+	if (!strcmp(Machine->gamedrv->name, "tkmmpzdm"))
+	{
+		// boost voice(chip 1 channel 3-7)
+		for (i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
+	}
+	else if ((!strcmp(Machine->gamedrv->name, "dragoonj")) || (!strcmp(Machine->gamedrv->name, "dragoona")))
+	{
+		// soften percussions(chip 1 channel 0-3), boost voice(chip 1 channel 4-7)
+		for (i=0; i<=3; i++)
+		{
+			K054539_set_gain(1, i, 0.8);
+			K054539_set_gain(1, i+4, 2.0);
+		}
+	}
 }
 
 static DRIVER_INIT(konamigx)
@@ -3251,7 +3268,7 @@ static DRIVER_INIT(konamigx)
 #define BPP6  2
 #define BPP66 3
 
-	int i;
+//	int i;
 	int readback = 0;
 
 	konamigx_cfgport = -1;
@@ -3342,22 +3359,12 @@ static DRIVER_INIT(konamigx)
 		esc_cb = tkmmpzdm_esc;
 		readback = BPP6;
 		konamigx_cfgport = 7;
-
-		// boost voice(chip 1 channel 3-7)
-		for (i=3; i<=7; i++) K054539_set_gain(1, i, 2.0);
 	}
 
 	else if ((!strcmp(Machine->gamedrv->name, "dragoonj")) || (!strcmp(Machine->gamedrv->name, "dragoona")))
 	{
 		esc_cb = dragoonj_esc;
 		konamigx_cfgport = 7;
-
-		// soften percussions(chip 1 channel 0-3), boost voice(chip 1 channel 4-7)
-		for (i=0; i<=3; i++)
-		{
-			K054539_set_gain(1, i, 0.8);
-			K054539_set_gain(1, i+4, 2.0);
-		}
 	}
 
 	else if (!strcmp(Machine->gamedrv->name, "sexyparo"))

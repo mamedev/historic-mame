@@ -1,6 +1,7 @@
 /* Dallas DS2404 RTC/NVRAM */
 
 #include "driver.h"
+#include <time.h>
 
 typedef enum {
 	DS2404_STATE_IDLE = 1,				/* waiting for ROM command, in 1-wire mode */
@@ -24,6 +25,7 @@ typedef struct {
 	UINT8 ram[32];		/* scratchpad ram, 256 bits */
 	UINT64 rtc;			/* 40-bit RTC counter */
 	UINT64 timer;		/* 40-bit interval timer */
+	UINT64 clock_adjust;	/* How many seconds to adjust the clock to match PC clock */
 	DS2404_STATE state[8];
 	int state_ptr;
 } DS2404;
@@ -88,21 +90,23 @@ static UINT8 ds2404_readmem(void)
 		value = ds2404.sram[ds2404.address];
 		return value;
 	} else {
+		time_t current_time;
+		
+		time( &current_time );
+		current_time -= ds2404.clock_adjust;
 
 		switch( ds2404.address )
 		{
 			case 0x200:
 				return 0;
-			case 0x202:
-				return (ds2404.rtc >> 8) & 0xff;
 			case 0x203:
-				return (ds2404.rtc >> 16) & 0xff;
+				return (current_time & 0xff);
 			case 0x204:
-				return (ds2404.rtc >> 24) & 0xff;
+				return (current_time >> 8) & 0xff;
 			case 0x205:
-				return (ds2404.rtc >> 32) & 0xff;
+				return (current_time >> 16) & 0xff;
 			case 0x206:
-				return ds2404.rtc & 0xff;
+				return (current_time >> 24) & 0xff;
 			default:
 				return 0;
 		}
@@ -251,7 +255,7 @@ WRITE8_HANDLER( DS2404_data_w )
 
 			case DS2404_STATE_READ_MEMORY:
 				ds2404.address = (ds2404.a2 << 8) | ds2404.a1;
-				ds2404.address -= 2;
+				ds2404.address -= 1;
 				break;
 
 			case DS2404_STATE_WRITE_SCRATCHPAD:
@@ -266,7 +270,8 @@ WRITE8_HANDLER( DS2404_data_w )
 
 			case DS2404_STATE_COPY_SCRATCHPAD:
 				ds2404.address = (ds2404.a2 << 8) | ds2404.a1;
-				for( i=0; i < ds2404.end_offset; i++ ) {
+
+				for( i=0; i <= ds2404.end_offset; i++ ) {
 					ds2404_writemem( ds2404.ram[i] );
 					ds2404.address++;
 				}
@@ -303,19 +308,23 @@ WRITE8_HANDLER( DS2404_clk_w )
 	}
 }
 
-void DS2404_init(void)
+void DS2404_init(int ref_year, int ref_month, int ref_day)
 {
+	int years = ref_year - 1970;
+	int leap_days = years / 4;
+	int month = ref_month - 1;
+	int day = ref_day - 1;
 
+	ds2404.clock_adjust = (years * 365 * 24 * 60 * 60) + (leap_days * 24 * 60 * 60) +
+						  (month * 30 * 24 * 60 * 60) + (day * 24 * 60 * 60);
 }
 
 void DS2404_load(mame_file *file)
 {
 	mame_fread(file, ds2404.sram, 512);
-	mame_fread(file, &ds2404.rtc, 8);
 }
 
 void DS2404_save(mame_file *file)
 {
 	mame_fwrite(file, ds2404.sram, 512);
-	mame_fwrite(file, &ds2404.rtc, 8);
 }

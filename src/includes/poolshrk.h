@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 
 /*----------- defined in sndhrdw/poolshrk.c -----------*/

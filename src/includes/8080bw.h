@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /*----------- defined in machine/8080bw.c -----------*/
 
 WRITE8_HANDLER( c8080bw_shift_amount_w );

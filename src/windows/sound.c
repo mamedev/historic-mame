@@ -393,7 +393,7 @@ int osd_update_audio_stream(INT16 *buffer)
 	}
 
 	if( Machine->sample_rate != 0 && wavptr != NULL )
-		wav_add_data_16( wavptr, buffer, samples_this_frame );
+		wav_add_data_16( wavptr, buffer, samples_this_frame * 2 );
 
 	// reset underflow/overflow tracking
 	if (++total_frames == INGORE_UNDERFLOW_FRAMES)

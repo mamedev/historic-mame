@@ -1,6 +1,7 @@
 /*	Konami Hornet */
 
 #include "driver.h"
+#include "machine/timekpr.h"
 
 static data8_t led_reg0;
 static data8_t led_reg1;
@@ -344,7 +345,7 @@ static ADDRESS_MAP_START( hornet_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x780c0000, 0x780c0003) AM_READ(video_r)
 	AM_RANGE(0x7d000000, 0x7d00ffff) AM_READ(sysreg_r)
 	AM_RANGE(0x7d010000, 0x7d01ffff) AM_WRITE(sysreg_w)
-	AM_RANGE(0x7d020000, 0x7d021fff) AM_RAM				/* M48T58Y RTC/NVRAM */
+	AM_RANGE(0x7d020000, 0x7d021fff) AM_READWRITE(timekeeper_0_32be_r,timekeeper_0_32be_w)
 	AM_RANGE(0x7d030000, 0x7d030007) AM_READ(ppc_sound_r)
 	AM_RANGE(0x7d042000, 0x7d043fff) AM_RAM				/* COMM BOARD 0 */
 	AM_RANGE(0x7d044000, 0x7d044007) AM_READ(comm0_unk_r)
@@ -368,7 +369,7 @@ static ADDRESS_MAP_START( gradius4_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x780c0000, 0x780c0003) AM_READ(video_r)
 	AM_RANGE(0x7d000000, 0x7d00ffff) AM_READ(sysreg_r)
 	AM_RANGE(0x7d010000, 0x7d01ffff) AM_WRITE(sysreg_w)
-	AM_RANGE(0x7d020000, 0x7d021fff) AM_RAM				/* M48T58Y RTC/NVRAM */
+	AM_RANGE(0x7d020000, 0x7d021fff) AM_READWRITE(timekeeper_0_32be_r,timekeeper_0_32be_w)
 	AM_RANGE(0x7d030000, 0x7d030007) AM_READ(ppc_sound_r)
 	AM_RANGE(0x7d042000, 0x7d043fff) AM_RAM				/* COMM BOARD 0 */
 	AM_RANGE(0x7d044000, 0x7d044007) AM_READ(comm0_unk_r)
@@ -426,6 +427,11 @@ static MACHINE_INIT( hornet )
 	cpu_setbank(1, memory_region(REGION_USER3));
 }
 
+static DRIVER_INIT( hornet )
+{
+	timekeeper_init( 0, TIMEKEEPER_M48T58, NULL );
+}
+
 static MACHINE_DRIVER_START( hornet )
 
 	/* basic machine hardware */
@@ -440,6 +446,7 @@ static MACHINE_DRIVER_START( hornet )
 	MDRV_VBLANK_DURATION(0)
 
 	MDRV_MACHINE_INIT( hornet )
+	MDRV_NVRAM_HANDLER( timekeeper_0 )
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
@@ -538,6 +545,6 @@ ROM_END
 
 /*************************************************************************/
 
-GAMEX( 1999, gradius4,	0,		gradius4, hornet,	0,		ROT0,	"Konami",	"Gradius 4: Fukkatsu", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1999, sscope,	0,		hornet,	hornet,	0,		ROT0,	"Konami",	"Silent Scope", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 2000, sscope2,	0,		hornet,	hornet,	0,		ROT0,	"Konami",	"Silent Scope 2", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1999, gradius4, 0, gradius4, hornet, hornet, ROT0, "Konami", "Gradius 4: Fukkatsu", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1999, sscope,   0, hornet,   hornet, hornet, ROT0, "Konami", "Silent Scope", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 2000, sscope2,  0, hornet,   hornet, hornet, ROT0, "Konami", "Silent Scope 2", GAME_NOT_WORKING|GAME_NO_SOUND )

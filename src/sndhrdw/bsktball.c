@@ -32,6 +32,7 @@ WRITE8_HANDLER( bsktball_noise_reset_w )
 /************************************************************************/
 
 const struct discrete_lfsr_desc bsktball_lfsr={
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	0,			/* Use Bit 0 as XOR input 0 */
@@ -121,7 +122,7 @@ DISCRETE_SOUND_START(bsktball_discrete_interface)
 	/* When there is no music, the game sets the    */
 	/* oscillator to 0Hz.  (OUT30 = FF)             */
 	/************************************************/
-	DISCRETE_NOTE(NODE_30, 1, BSKTBALL_32H, BSKTBALL_NOTE_DATA, 255, 1)
+	DISCRETE_NOTE(NODE_30, 1, BSKTBALL_32H, BSKTBALL_NOTE_DATA, 255, 1, DISC_CLK_IS_FREQ)
 	DISCRETE_GAIN(BSKTBALL_NOTE_SND, NODE_30, DEFAULT_TTL_V_LOGIC_1)
 
 

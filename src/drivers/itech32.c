@@ -114,6 +114,7 @@
 #include "vidhrdw/generic.h"
 #include "itech32.h"
 #include "sound/es5506.h"
+#include "machine/timekpr.h"
 #include <math.h>
 
 
@@ -719,7 +720,11 @@ static NVRAM_HANDLER( itech020 )
 			((UINT8 *)nvram)[i] = rand();
 }
 
-
+static NVRAM_HANDLER( gt3dt )
+{
+	nvram_handler_itech020( file, read_or_write );
+	nvram_handler_timekeeper_0( file, read_or_write );
+}
 
 /*************************************
  *
@@ -818,7 +823,9 @@ static ADDRESS_MAP_START( itech020_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x578000, 0x57ffff) AM_READNOP				/* touched by protection */
 	AM_RANGE(0x580000, 0x59ffff) AM_READWRITE(MRA32_RAM, itech020_paletteram_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x600000, 0x603fff) AM_RAM AM_BASE(&nvram) AM_SIZE(&nvram_size)
+/* ? */	AM_RANGE(0x61ff00, 0x61ffff) AM_WRITENOP			/* Unknown Writes */
 	AM_RANGE(0x680000, 0x680003) AM_READWRITE(itech020_prot_result_r, MWA32_NOP)
+/* ! */	AM_RANGE(0x680800, 0x68083f) AM_READWRITE(MRA32_RAM, MWA32_NOP) /* Serial DUART Channel A/B & Top LED sign - To Do! */
 	AM_RANGE(0x700000, 0x700003) AM_WRITE(itech020_plane_w)
 	AM_RANGE(0x800000, 0xbfffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE((data32_t **)&main_rom)
 ADDRESS_MAP_END
@@ -1504,6 +1511,13 @@ static MACHINE_DRIVER_START( gt3d )
 	MDRV_VISIBLE_AREA(0, 383, 0, 239)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( gt3dt )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gt3d)
+
+	MDRV_NVRAM_HANDLER( gt3dt )
+MACHINE_DRIVER_END
 
 
 /*************************************
@@ -3363,6 +3377,15 @@ static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
 	init_shuffle_bowl_common(0x1116);
 }
 
+static DRIVER_INIT( wcbowlt )
+{
+	/* Tournament Version */
+	init_shuffle_bowl_common(0x1116);
+
+	timekeeper_init( 0, TIMEKEEPER_M48T02, NULL );
+	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_w);
+}
 
 static void init_gt_common(void)
 {
@@ -3400,6 +3423,18 @@ static DRIVER_INIT( aama )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x180800, 0x180803, 0, 0, trackball32_4bit_r);
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x181000, 0x181003, 0, 0, trackball32_4bit_p2_r);
 	init_gt_common();
+}
+
+
+static DRIVER_INIT( aamat )
+{
+	/*
+		Tournament Version
+	*/
+	init_aama();
+	timekeeper_init( 0, TIMEKEEPER_M48T02, NULL );
+	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_w);
 }
 
 
@@ -3472,7 +3507,7 @@ GAMEX(1994, drivedge, 0,        drivedge, drivedge, drivedge, ROT0, "Strata/Incr
 GAME( 1995, wcbowl,   0,        sftm,     wcbowln,  wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.66)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl165, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.65)" ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl161, wcbowl,   sftm,     shufbowl, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling (v1.61)" ) /* PIC 16C54 labeled as ITBWL-3 */
-GAMEX(1997, wcbwl140, wcbowldx, sftm,     wcbowldx, wcbowln,  ROT0, "Incredible Technologies", "World Class Bowling Tournament (v1.40)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITBWL-3 */
+GAMEX(1997, wcbwl140, wcbowldx, sftm,     wcbowldx, wcbowlt,  ROT0, "Incredible Technologies", "World Class Bowling Tournament (v1.40)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITBWL-3 */
 GAME( 1995, wcbwl12,  wcbowl,   wcbowl,   wcbowl,   wcbowl,   ROT0, "Incredible Technologies", "World Class Bowling (v1.2)" ) /* PIC 16C54 labeled as ITBWL-1 */
 GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12)" )	/* PIC 16C54 labeled as ITSF-1 */
 GAME( 1995, sftm111,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.11)" )	/* PIC 16C54 labeled as ITSF-1 */
@@ -3522,27 +3557,27 @@ GAME( 1995, gt3dv17,  gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Tech
 GAME( 1995, gt3dv16,  gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Technologies", "Golden Tee 3D Golf (v1.6)" ) /* PIC 16C54 labeled as ITGF-1 */
 GAME( 1995, gt3dv15,  gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Technologies", "Golden Tee 3D Golf (v1.5)" ) /* PIC 16C54 labeled as ITGF-1 */
 GAME( 1995, gt3dv14,  gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Technologies", "Golden Tee 3D Golf (v1.4)" ) /* PIC 16C54 labeled as ITGF-1 */
-GAMEX(1995, gt3dt231, gt3d,     gt3d,    gt3d,  gt3d,     ROT0, "Incredible Technologies", "Golden Tee 3D Golf Tournament (v2.31)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITGF-2 */
+GAME( 1995, gt3dt231, gt3d,     gt3dt,   gt3d,  aamat,    ROT0, "Incredible Technologies", "Golden Tee 3D Golf Tournament (v2.31)" ) /* PIC 16C54 labeled as ITGF-2 */
 
 GAME( 1997, gt97,     0,        gt3d,    gt97,  aama,     ROT0, "Incredible Technologies", "Golden Tee '97 (v1.30)" ) /* PIC 16C54 labeled as ITGFS-3 */
 GAME( 1997, gt97v122, gt97,     gt3d,    gt97o, aama,     ROT0, "Incredible Technologies", "Golden Tee '97 (v1.22)" ) /* PIC 16C54 labeled as ITGFS-3 */
 GAME( 1997, gt97v121, gt97,     gt3d,    gt97o, aama,     ROT0, "Incredible Technologies", "Golden Tee '97 (v1.21)" ) /* PIC 16C54 labeled as ITGFS-3 */
 GAME( 1997, gt97s121, gt97,     gt3d,    gt97s, s_ver,    ROT0, "Incredible Technologies", "Golden Tee '97 (v1.21S)" ) /* PIC 16C54 labeled as ITGFM-3 */
 GAME( 1997, gt97v120, gt97,     gt3d,    gt97o, aama,     ROT0, "Incredible Technologies", "Golden Tee '97 (v1.20)" ) /* PIC 16C54 labeled as ITGFS-3 */
-GAMEX(1997, gt97t240, gt97,     gt3d,    gt97o, aama,     ROT0, "Incredible Technologies", "Golden Tee '97 Tournament (v2.40)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITGFS-3 */
+GAME( 1997, gt97t240, gt97,     gt3dt,   gt97o, aamat,    ROT0, "Incredible Technologies", "Golden Tee '97 Tournament (v2.40)" ) /* PIC 16C54 labeled as ITGFS-3 */
 
 GAME( 1998, gt98,     0,        gt3d,    aama,  aama,     ROT0, "Incredible Technologies", "Golden Tee '98 (v1.10)" ) /* PIC 16C54 labeled as ITGF98 */
 GAME( 1998, gt98v100, gt98,     gt3d,    gt98,  aama,     ROT0, "Incredible Technologies", "Golden Tee '98 (v1.00)" ) /* PIC 16C54 labeled as ITGF98 */
 GAME( 1998, gt98s100, gt98,     gt3d,    gt98s, s_ver,    ROT0, "Incredible Technologies", "Golden Tee '98 (v1.00S)" ) /* PIC 16C54 labeled as ITGF98-M */
-GAMEX(1998, gt98t303, gt98,     gt3d,    gt98s, aama,     ROT0, "Incredible Technologies", "Golden Tee '98 Tournament (v3.03)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITGF98 */
+GAME( 1998, gt98t303, gt98,     gt3dt,   gt98s, aamat,    ROT0, "Incredible Technologies", "Golden Tee '98 Tournament (v3.03)" ) /* PIC 16C54 labeled as ITGF98 */
 
 GAME( 1999, gt99,     0,        gt3d,    aama,  aama,     ROT0, "Incredible Technologies", "Golden Tee '99 (v1.00)" ) /* PIC 16C54 labeled as ITGF99 */
 GAME( 1999, gt99s100, gt99,     gt3d,    s_ver, s_ver,    ROT0, "Incredible Technologies", "Golden Tee '99 (v1.00S)" ) /* PIC 16C54 labeled as ITGF99-M */
-GAMEX(1999, gt99t400, gt99,     gt3d,    gt98s, aama,     ROT0, "Incredible Technologies", "Golden Tee '99 Tournament (v4.00)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITGF99 */
+GAME( 1999, gt99t400, gt99,     gt3dt,   gt98s, aamat,    ROT0, "Incredible Technologies", "Golden Tee '99 Tournament (v4.00)" ) /* PIC 16C54 labeled as ITGF99 */
 
 GAME( 2000, gt2k,     0,        gt3d,    aama,  aama,     ROT0, "Incredible Technologies", "Golden Tee 2K (v1.00)" ) /* PIC 16C54 labeled as ITGF2K */
 GAME( 2000, gt2ks100, gt2k,     gt3d,    s_ver, s_ver,    ROT0, "Incredible Technologies", "Golden Tee 2K (v1.00S)" ) /* PIC 16C54 labeled as ITGF2K-M */
-GAMEX(2000, gt2kt500, gt2k,     gt3d,    gt98s, aama,     ROT0, "Incredible Technologies", "Golden Tee 2K Tournament (v5.00)", GAME_NOT_WORKING ) /* PIC 16C54 labeled as ITGF2K */
+GAME( 2000, gt2kt500, gt2k,     gt3dt,   gt98s, aamat,    ROT0, "Incredible Technologies", "Golden Tee 2K Tournament (v5.00)" ) /* PIC 16C54 labeled as ITGF2K */
 
 GAME( 2001, gtclassc, 0,        gt3d,    aama,  aama,     ROT0, "Incredible Technologies", "Golden Tee Classic (v1.00)" ) /* PIC 16C54 labeled as ITGFCL */
 GAME( 2001, gtclassp, gtclassc, gt3d,    aama,  gtclassp, ROT0, "Incredible Technologies", "Golden Tee Classic (v1.00) Alt" ) /* PIC 16C54 labeled as ITGFCL */

@@ -13,6 +13,7 @@
 /* Feb 2004, Derrick Renaud                                             */
 /************************************************************************/
 const struct discrete_lfsr_desc triplhnt_lfsr={
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	0,			/* Use Bit 0 as XOR input 0 */
@@ -59,9 +60,7 @@ const struct discrete_555_cc_desc triplhnt_bear_roar_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
-	5.0 - 1.7,	// High output voltage of 555 (Usually v555 - 1.7)
-	5.0 * 2 / 3,	// threshold
-	5.0 /3,	// trigger
+	DEFAULT_555_VALUES,
 	5,		// B+ voltage of the Constant Current source
 	0.7		// Q2 junction voltage
 };
@@ -73,7 +72,7 @@ const struct discrete_schmitt_osc_desc triplhnt_screech_osc =
 	1.e-6,	// C59
 	1.7,	// Rise Threshold of 7414
 	0.9,	// Fall Threshold of 7414
-	3.4,	// Output high voltage of 7414
+	DEFAULT_TTL_V_LOGIC_1,	// Output high voltage of 7414
 	1		// invert output using 7400 gate E7
 };
 
@@ -114,7 +113,7 @@ DISCRETE_SOUND_START(triplhnt_discrete_interface)
 	DISCRETE_LFSR_NOISE(TRIPLHNT_NOISE,			// Output A7 pin 13
 				TRIPLHNT_LAMP_EN, TRIPLHNT_LAMP_EN,	// From gate A8 pin 10
 				12096000.0/2/256,		// 256H signal
-				3.4, 0, 3.4/2, &triplhnt_lfsr)	// TTL voltage level
+				DEFAULT_TTL_V_LOGIC_1, 0, DEFAULT_TTL_V_LOGIC_1/2, &triplhnt_lfsr)
 
 	/************************************************/
 	/* Bear Roar is a VCO with noise mixed in.      */
@@ -125,27 +124,27 @@ DISCRETE_SOUND_START(triplhnt_discrete_interface)
 				DISC_LOGADJ, 10)
 	DISCRETE_DAC_R1(NODE_21, 1,			// base of Q2
 			TRIPLHNT_BEAR_ROAR_DATA,	// IC B10, Q0-Q3
-			3.4,				// TTL ON level
+			DEFAULT_TTL_V_LOGIC_1,		// TTL ON level
 			&triplhnt_bear_roar_v_dac)
 	DISCRETE_555_CC(NODE_22, 1,	// IC C11 pin 3, always enabled
-			NODE_21,	// vIn
-			NODE_20,	// current adjust
-			1.e-8,		// C58
+			NODE_21,		// vIn
+			NODE_20,		// current adjust
+			1.e-8,			// C58
 			0, 390000, 0,	// no rBias, R87, no rDis
 			&triplhnt_bear_roar_vco)
 	DISCRETE_COUNTER(NODE_23, 1, TRIPLHNT_BEAR_EN,	// IC B6, QB-QD
-			NODE_22,			// from IC C11, pin 3
-			5, 1, 0, 1)			// /6 counter on rising edge
+			NODE_22,								// from IC C11, pin 3
+			5, 1, 0, DISC_CLK_ON_R_EDGE)			// /6 counter on rising edge
 	DISCRETE_TRANSFORM2(NODE_24, 1, NODE_23, 2, "01>")	// IC B6, pin 8
-	DISCRETE_LOGIC_INVERT(NODE_25, 1, NODE_22)	// IC D9, pin 3
+	DISCRETE_LOGIC_INVERT(NODE_25, 1, NODE_22)			// IC D9, pin 3
 	DISCRETE_LOGIC_NAND(NODE_26, 1, NODE_25, TRIPLHNT_NOISE)	// IC D9, pin 11
 	DISCRETE_LOGIC_XOR(NODE_27, 1, NODE_24, NODE_26)	// IC B8, pin 6
 	DISCRETE_COUNTER(NODE_28, 1, TRIPLHNT_BEAR_EN,	// IC B6, pin 12
-			NODE_27,	// from IC B8, pin 6
-			1, 1, 0, 1)	// /2 counter on rising edge
+			NODE_27,								// from IC B8, pin 6
+			1, 1, 0, DISC_CLK_ON_R_EDGE)			// /2 counter on rising edge
 	DISCRETE_TRANSFORM5(NODE_29, 1, NODE_24, NODE_28, NODE_26, 2, 4, "13*24*+0+")	// Mix the mess together in binary
 	DISCRETE_DAC_R1(TRIPLHNT_BEAR_ROAR_SND, 1, NODE_29,
-			3.4,				// TTL ON level
+			DEFAULT_TTL_V_LOGIC_1,
 			&triplhnt_bear_roar_out_dac)
 
 	/************************************************/
@@ -157,7 +156,7 @@ DISCRETE_SOUND_START(triplhnt_discrete_interface)
 			1, TRIPLHNT_SHOT_DATA)	// the data has been previously inverted for ease of use
 	DISCRETE_DAC_R1(TRIPLHNT_SHOT_SND, 1,
 			NODE_40,
-			3.4,			// TTL ON level
+			DEFAULT_TTL_V_LOGIC_1,
 			&triplhnt_shot_dac)
 
 	/************************************************/

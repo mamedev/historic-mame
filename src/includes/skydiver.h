@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define SKYDIVER_RANGE_DATA		NODE_01
 #define SKYDIVER_NOTE_DATA		NODE_02

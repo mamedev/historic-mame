@@ -55,9 +55,6 @@ TODO:
   at the end of a game without it. Note that the bootleg replaces that call with
   something else.
 
-- bitmapram2 is uncertain, it is tested during startup but never actually used
-  to draw anything during the game.
-
 
 Prebillian :
 ------------
@@ -880,11 +877,11 @@ static MACHINE_DRIVER_START( pbillian )
 	MDRV_VIDEO_UPDATE(pbillian)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_CONFIG(pbillian_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
-	
+
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
@@ -920,11 +917,11 @@ static MACHINE_DRIVER_START( sqix )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_CONFIG(sqix_ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	
+
 	MDRV_SOUND_ADD(AY8910, 12000000/8)
 	MDRV_SOUND_CONFIG(sqix_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)

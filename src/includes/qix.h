@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/discrete.h"
 
 
 /*----------- defined in machine/qix.c -----------*/

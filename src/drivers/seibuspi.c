@@ -28,7 +28,7 @@
 
 	  Raiden Fighters : Game pauses for a brief second when bosses are encountered
 	  Senkyu / BBalls : ---
-	  Viper Phase 1   : OLD version (viperp1o) Game locks up / crashes after a few attract loops
+	  Viper Phase 1   : OLD version (viprp1o) Game locks up / crashes after a few attract loops
 	                (386 writes to z80 fifo with data read from unmapped addresses in steps of 0x20000
 	                 past the end of z80 ram)
 	                  : lockups / pauses if you keep hold of fire before continue appears
@@ -596,11 +596,16 @@ void rf2_set_layer_banks(int banks);
 READ32_HANDLER( spi_layer_enable_r );
 WRITE32_HANDLER( spi_layer_enable_w );
 
-extern UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
-extern UINT32 *back_rowscroll_ram, *mid_rowscroll_ram, *fore_rowscroll_ram;
+WRITE32_HANDLER( tilemap_dma_start_w );
+WRITE32_HANDLER( palette_dma_start_w );
+WRITE32_HANDLER( video_dma_length_w );
+WRITE32_HANDLER( video_dma_address_w );
+WRITE32_HANDLER( sprite_dma_start_w );
+
+UINT32 *scroll_ram;
 extern int old_vidhw;
 extern int bg_size;
-static data32_t *spimainram;
+data32_t *spimainram;
 
 /********************************************************************/
 static int z80_fifo_pos = 0;
@@ -627,8 +632,12 @@ WRITE32_HANDLER( sound_com_w )
 	}
 }
 
+
 READ32_HANDLER( sound_semaphore_r )
 {
+	/* prevent z80 timeout and game hangs?.. */
+	cpu_spinuntil_time(TIME_IN_USEC(30));
+
 	return i386_semaphore;
 }
 
@@ -808,8 +817,7 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_com_r)
 	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_semaphore_r)
 	AM_RANGE(0x000006dc, 0x000006df) AM_READ(ds2404_data_r)
-	AM_RANGE(0x00000800, 0x0003efff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x0003f000, 0x0003ffff) AM_READ(MRA32_RAM)	 	/* Stack */
+	AM_RANGE(0x00000800, 0x0003ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00200000, 0x003fffff) AM_ROM AM_SHARE(2)
 	AM_RANGE(0x00a00000, 0x013fffff) AM_READ(soundrom_r)
 	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)		/* ROM location in real-mode */
@@ -820,18 +828,18 @@ static ADDRESS_MAP_START( spi_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000418, 0x0000041b) AM_WRITE(spi_layer_bank_w)
 	AM_RANGE(0x0000041c, 0x0000041f) AM_WRITE(spi_layer_enable_w)
 	AM_RANGE(0x00000420, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
-	AM_RANGE(0x0000042c, 0x000005ff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000480, 0x00000483) AM_WRITE(tilemap_dma_start_w)
+	AM_RANGE(0x00000484, 0x00000487) AM_WRITE(palette_dma_start_w)
+	AM_RANGE(0x00000490, 0x00000493) AM_WRITE(video_dma_length_w)
+	AM_RANGE(0x00000494, 0x00000497) AM_WRITE(video_dma_address_w)
+	AM_RANGE(0x0000050c, 0x0000050f) AM_WRITE(sprite_dma_start_w)
 	AM_RANGE(0x00000600, 0x00000603) AM_WRITE(MWA32_NOP)		/* Unknown */
 	AM_RANGE(0x00000680, 0x00000683) AM_WRITE(sound_com_w)
 	AM_RANGE(0x00000684, 0x00000687) AM_WRITE(MWA32_NOP)		/* Unknown */
 	AM_RANGE(0x000006d0, 0x000006d3) AM_WRITE(ds2404_reset_w)
 	AM_RANGE(0x000006d4, 0x000006d7) AM_WRITE(ds2404_data_w)
 	AM_RANGE(0x000006d8, 0x000006db) AM_WRITE(ds2404_clk_w)
-	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
-	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
-	AM_RANGE(0x00038000, 0x0003bfff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x0003c000, 0x0003efff) AM_WRITE(spi_paletteram32_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x0003f000, 0x0003ffff) AM_WRITE(MWA32_RAM)			/* Stack */
+	AM_RANGE(0x00000800, 0x0003ffff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( spisound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -901,17 +909,7 @@ static ADDRESS_MAP_START( seibu386_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000604, 0x00000607) AM_READ(spi_controls1_r)	/* Player controls */
 	AM_RANGE(0x00000608, 0x0000060b) AM_READ(eeprom_r)
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
-	AM_RANGE(0x00000800, 0x00036fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x00037000, 0x00037fff) AM_READ(MRA32_RAM)		/* Sprites */
-	AM_RANGE(0x00038000, 0x000387ff) AM_READ(MRA32_RAM)		/* Background layer */
-	AM_RANGE(0x00038800, 0x00038fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x00039000, 0x000397ff) AM_READ(MRA32_RAM)		/* Foreground layer */
-	AM_RANGE(0x00039800, 0x00039fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x0003a000, 0x0003a7ff) AM_READ(MRA32_RAM)		/* Middle layer */
-	AM_RANGE(0x0003a800, 0x0003afff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x0003b000, 0x0003bfff) AM_READ(MRA32_RAM)	 	/* Text layer */
-	AM_RANGE(0x0003c000, 0x0003efff) AM_READ(MRA32_RAM)	 	/* Palette */
-	AM_RANGE(0x0003f000, 0x0003ffff) AM_READ(MRA32_RAM)	 	/* Stack */
+	AM_RANGE(0x00000800, 0x0003ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00200000, 0x003fffff) AM_ROM AM_SHARE(2)
 	AM_RANGE(0x01200000, 0x01200003) AM_READ(spi_6295_0_r)
 	AM_RANGE(0x01200004, 0x01200007) AM_READ(spi_6295_1_r)
@@ -924,19 +922,13 @@ static ADDRESS_MAP_START( seibu386_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000418, 0x0000041b) AM_WRITE(spi_layer_bank_w)
 	AM_RANGE(0x0000041c, 0x0000041f) AM_WRITE(spi_layer_enable_w)
 	AM_RANGE(0x00000420, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
-	AM_RANGE(0x0000042c, 0x00000603) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000480, 0x00000483) AM_WRITE(tilemap_dma_start_w)
+	AM_RANGE(0x00000484, 0x00000487) AM_WRITE(palette_dma_start_w)
+	AM_RANGE(0x00000490, 0x00000493) AM_WRITE(video_dma_length_w)
+	AM_RANGE(0x00000494, 0x00000497) AM_WRITE(video_dma_address_w)
+	AM_RANGE(0x0000050c, 0x0000050f) AM_WRITE(sprite_dma_start_w)
 	AM_RANGE(0x0000068c, 0x0000068f) AM_WRITE(eeprom_w)
-	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
-	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
-	AM_RANGE(0x00038000, 0x000387ff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
-	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM) AM_BASE(&back_rowscroll_ram)
-	AM_RANGE(0x00039000, 0x000397ff) AM_WRITE(spi_fore_layer_w) AM_BASE(&fore_ram)	/* Foreground layer */
-	AM_RANGE(0x00039800, 0x00039fff) AM_WRITE(MWA32_RAM) AM_BASE(&mid_rowscroll_ram)
-	AM_RANGE(0x0003a000, 0x0003a7ff) AM_WRITE(spi_mid_layer_w) AM_BASE(&mid_ram)	/* Middle layer */
-	AM_RANGE(0x0003a800, 0x0003afff) AM_WRITE(MWA32_RAM) AM_BASE(&fore_rowscroll_ram)
-	AM_RANGE(0x0003b000, 0x0003bfff) AM_WRITE(spi_textlayer_w) AM_BASE(&videoram32)	/* Text layer */
-	AM_RANGE(0x0003c000, 0x0003efff) AM_WRITE(spi_paletteram32_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x0003f000, 0x0003ffff) AM_WRITE(MWA32_RAM)			/* Stack */
+	AM_RANGE(0x00000800, 0x0003ffff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
 	AM_RANGE(0x01200000, 0x01200003) AM_WRITE(spi_6295_0_w)
 	AM_RANGE(0x01200004, 0x01200007) AM_WRITE(spi_6295_1_w)
 ADDRESS_MAP_END
@@ -1426,19 +1418,21 @@ static struct GfxDecodeInfo spi_gfxdecodeinfo[] =
 
 /********************************************************************************/
 
-#if 0
 static NVRAM_HANDLER( spi )
 {
 	if( read_or_write ) {
+		nvram_handler_intelflash_0(file, read_or_write);
 		DS2404_save(file);
 	} else {
-		DS2404_init();
+		intelflash_init(0);
+		DS2404_init(1995, 1, 1);
 
-		if(file)
+		if(file) {
+			nvram_handler_intelflash_0(file, read_or_write);
 			DS2404_load(file);
+		}
 	}
 }
-#endif
 
 static NVRAM_HANDLER( sxx2f )
 {
@@ -1462,37 +1456,15 @@ static INTERRUPT_GEN( spi_interrupt )
 static MACHINE_INIT( spi )
 {
 	UINT8* rom = memory_region(REGION_USER1);
-	UINT8* ram = memory_region(REGION_CPU1);
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_fifo_w);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, z80_enable_w);
 
-	if( !old_vidhw ) {
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, 0, spi_back_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, 0, spi_fore_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003a000, 0x0003a7ff, 0, 0, spi_mid_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003b000, 0x0003bfff, 0, 0, spi_textlayer_w);
-		back_ram = (UINT32*)&ram[0x38000];
-		back_rowscroll_ram = (UINT32*)&ram[0x38800];
-		fore_ram = (UINT32*)&ram[0x39000];
-		fore_rowscroll_ram = (UINT32*)&ram[0x39800];
-		mid_ram = (UINT32*)&ram[0x3a000];
-		mid_rowscroll_ram = (UINT32*)&ram[0x3a800];
-		videoram32 = (UINT32*)&ram[0x3b000];
-	} else {
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, 0, spi_back_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038800, 0x00038fff, 0, 0, spi_fore_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, 0, spi_mid_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039800, 0x0003a7ff, 0, 0, spi_textlayer_w);
-		back_ram = (UINT32*)&ram[0x38000];
-		fore_ram = (UINT32*)&ram[0x38800];
-		mid_ram = (UINT32*)&ram[0x39000];
-		videoram32 = (UINT32*)&ram[0x39800];
-	}
-
 	cpu_setbank(4, memory_region(REGION_CPU2));
+
+	intelflash_set_ids_0(0xaa, 0x89);
 
 	/* If the first value doesn't match, the game shows a checksum error */
 	/* If any of the other values are wrong, the game goes to update mode */
@@ -1523,7 +1495,7 @@ static MACHINE_DRIVER_START( spi )
 	MDRV_INTERLEAVE(200)
 
 	MDRV_MACHINE_INIT(spi)
-	MDRV_NVRAM_HANDLER(intelflash_0)
+	MDRV_NVRAM_HANDLER(spi)
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
@@ -1545,19 +1517,6 @@ MACHINE_DRIVER_END
 
 static MACHINE_INIT( sxx2f )
 {
-	UINT8* ram = memory_region(REGION_CPU1);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, 0, spi_back_layer_w);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, 0, spi_fore_layer_w);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003a000, 0x0003a7ff, 0, 0, spi_mid_layer_w);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003b000, 0x0003bfff, 0, 0, spi_textlayer_w);
-	back_ram = (UINT32*)&ram[0x38000];
-	back_rowscroll_ram = (UINT32*)&ram[0x38800];
-	fore_ram = (UINT32*)&ram[0x39000];
-	fore_rowscroll_ram = (UINT32*)&ram[0x39800];
-	mid_ram = (UINT32*)&ram[0x3a000];
-	mid_rowscroll_ram = (UINT32*)&ram[0x3a800];
-	videoram32 = (UINT32*)&ram[0x3b000];
-
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, eeprom_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, eeprom_w);
 }
@@ -1596,21 +1555,36 @@ READ32_HANDLER ( rdft_speedup_r )
 	/* rdftau */
 	if (activecpu_get_pc()==0x0203f16) cpu_spinuntil_int(); // idle
 
-	//printf("%08x\n",activecpu_get_pc());
+	/* rdftj */
+	if (activecpu_get_pc()==0x0203f22) cpu_spinuntil_int(); // idle
+
+//	printf("%08x\n",activecpu_get_pc());
 
 	return spimainram[(0x00298d0-0x800)/4];
 }
 
-READ32_HANDLER ( viperp1_speedup_r )
+READ32_HANDLER ( viprp1_speedup_r )
 {
- if (activecpu_get_pc()==0x0202769) cpu_spinuntil_int(); // idle
- return spimainram[(0x001e2e0-0x800)/4];
+	/* viprp1 */
+	if (activecpu_get_pc()==0x0202769) cpu_spinuntil_int(); // idle
+
+	/* viprp1s */
+	if (activecpu_get_pc()==0x02027e9) cpu_spinuntil_int(); // idle
+
+	/* viprp1ot */
+	if (activecpu_get_pc()==0x02026bd) cpu_spinuntil_int(); // idle
+
+//	printf("%08x\n",activecpu_get_pc());
+
+	return spimainram[(0x001e2e0-0x800)/4];
 }
 
-READ32_HANDLER ( viperp1o_speedup_r )
+READ32_HANDLER ( viprp1o_speedup_r )
 {
- if (activecpu_get_pc()==0x0201f99) cpu_spinuntil_int(); // idle
- return spimainram[(0x001d49c-0x800)/4];
+	/* viperp1o */
+	if (activecpu_get_pc()==0x0201f99) cpu_spinuntil_int(); // idle
+//	printf("%08x\n",activecpu_get_pc());
+	return spimainram[(0x001d49c-0x800)/4];
 }
 
 /*
@@ -1629,11 +1603,14 @@ READ32_HANDLER ( rf2_speedup_r )
 	/* rdft22kc */
 	if (activecpu_get_pc()==0x0203926) cpu_spinuntil_int(); // idle
 
-	/* rdft2 */
+	/* rdft2, rdft2j */
 	if (activecpu_get_pc()==0x0204372) cpu_spinuntil_int(); // idle
 
 	/* rdft2us */
 	if (activecpu_get_pc()==0x020420e) cpu_spinuntil_int(); // idle
+
+	/* rdft2a */
+	if (activecpu_get_pc()==0x0204366) cpu_spinuntil_int(); // idle
 
 //	printf("%08x\n",activecpu_get_pc());
 
@@ -1647,6 +1624,12 @@ READ32_HANDLER ( rfjet_speedup_r )
 
 	/* rfjetus */
 	if (activecpu_get_pc()==0x0205b39) cpu_spinuntil_int(); // idle
+
+	/* rfjetj */
+	if (activecpu_get_pc()==0x0205f2e) cpu_spinuntil_int(); // idle
+
+//	printf("%08x\n",activecpu_get_pc());
+
 
 	return spimainram[(0x002894c-0x800)/4];
 }
@@ -1705,18 +1688,18 @@ static DRIVER_INIT( ejanhs )
 	bg_size = 1;
 }
 
-static DRIVER_INIT( viperp1 )
+static DRIVER_INIT( viprp1 )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001e2e0, 0x001e2e3, 0, 0, viperp1_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001e2e0, 0x001e2e3, 0, 0, viprp1_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
 	bg_size = 1;
 }
 
-static DRIVER_INIT( viperp1o )
+static DRIVER_INIT( viprp1o )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001d49c, 0x001d49f, 0, 0, viperp1o_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001d49c, 0x001d49f, 0, 0, viprp1o_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
@@ -1731,6 +1714,8 @@ static DRIVER_INIT( rf2 )
 	seibuspi_rise10_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_rise10_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
 	seibuspi_rise10_sprite_decrypt(memory_region(REGION_GFX3), 0x600000);
+
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x560, 0x563, 0, 0, sprite_dma_start_w);
 }
 
 static DRIVER_INIT( rdft2 )
@@ -1754,6 +1739,8 @@ static DRIVER_INIT( rfjet )
 	seibuspi_rise11_text_decrypt(memory_region(REGION_GFX1));
 	seibuspi_rise11_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
 	seibuspi_rise11_sprite_decrypt(memory_region(REGION_GFX3), 0x800000);
+
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x560, 0x563, 0, 0, sprite_dma_start_w);
 
 	old_vidhw = 0;
 	bg_size = 2;
@@ -1957,7 +1944,7 @@ ROM_START(ejanhs)
 ROM_END
 
 
-ROM_START(viperp1)
+ROM_START(viprp1)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
 	ROM_LOAD32_BYTE("v_1-n.211", 0x000000, 0x80000, CRC(55f10b72) SHA1(2a1ebaa969f346bf3659ed8b0f469dce9eaf3b4b) )
@@ -1986,7 +1973,36 @@ ROM_START(viperp1)
 	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
 ROM_END
 
-ROM_START(viperp1o)
+ROM_START(viprp1s)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("viper_prg0.bin", 0x000000, 0x80000, CRC(ed9980b8) SHA1(bc324e9121ee1e55237bd91681f163ec7790de4c) )
+	ROM_LOAD32_BYTE("viper_prg1.bin", 0x000001, 0x80000, CRC(9d4d3486) SHA1(ded6fa32b973046e50c40c40c446590b5f6d0b76) )
+	ROM_LOAD32_BYTE("viper_prg2.bin", 0x000002, 0x80000, CRC(d7ea460b) SHA1(aed10adacd073f7d2b35f12ba4b7876e5c99d142) )
+	ROM_LOAD32_BYTE("viper_prg3.bin", 0x000003, 0x80000, CRC(ca6df094) SHA1(921eec141ce2d449047172fa9cdf39d459b5cc7b) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_WORD("v_5-n.413", 0x000000, 0x20000, CRC(5ece677c) SHA1(b782cf3296f866f79fafa69ff719211c9d4026df) )
+	ROM_LOAD24_BYTE("v_6-n.48",  0x000002, 0x10000, CRC(44844ef8) SHA1(bcbe24d2ffb64f9165ba4ab7de27f44b99b5ff5a) )
+
+	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("v_bg-11.415",  0x000000, 0x200000, CRC(6fc96736) SHA1(12df47d8af2c1febc1bce5bcf3218766447885bd) )
+	ROM_LOAD24_BYTE("v_bg-12.415",  0x000002, 0x100000, CRC(d3c7281c) SHA1(340bca1f31486609b3c34dd7830362a216ff648e) )
+	ROM_LOAD24_WORD("v_bg-21.410",  0x300000, 0x100000, CRC(d65b4318) SHA1(6522970d95ffa7fa2f32e0b5b4f0eb69e0286b36) )
+	ROM_LOAD24_BYTE("v_bg-22.416",  0x300002, 0x080000, CRC(24a0a23a) SHA1(0b0330717620e3f3274a25845d9edaf8023b9db2) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("v_obj-1.322",  0x000000, 0x400000, CRC(3be5b631) SHA1(fd1064428d28ca166a9267b968c0ba846cfed656) )
+	ROM_LOAD("v_obj-2.324",  0x400000, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
+	ROM_LOAD("v_obj-3.323",  0x800000, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
+	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+ROM_END
+
+ROM_START(viprp1o)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
 	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
 	ROM_LOAD32_BYTE("v_1-o.211", 0x000000, 0x80000, CRC(4430be64) SHA1(96501a490042c289060d8510f6f79fbf64f79c1a) )
@@ -2014,6 +2030,36 @@ ROM_START(viperp1o)
 	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
 	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
 ROM_END
+
+ROM_START(viprp1ot)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("ov1.bin", 0x000000, 0x80000, CRC(cbad0e28) SHA1(fbc9b3b243ae0d556f41e8bef5f09489bb9e302b) )
+	ROM_LOAD32_BYTE("ov2.bin", 0x000001, 0x80000, CRC(0e2bbcb5) SHA1(5e53d60357fb0f9efa441261fac79e153eb35f3d) )
+	ROM_LOAD32_BYTE("ov3.bin", 0x000002, 0x80000, CRC(0e86686b) SHA1(0af207ea77ef378364d80d20ecbfba2f043f2405) )
+	ROM_LOAD32_BYTE("ov4.bin", 0x000003, 0x80000, CRC(9d7dd325) SHA1(550a8b5ed60e7ac50c40ec3eaa2cd6462be4a619) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_WORD("v_5-o.413", 0x000000, 0x20000, CRC(6d863acc) SHA1(3e3e14f51b9394b24d7cbf562f1cfffc9ec2216d) )
+	ROM_LOAD24_BYTE("v_6-o.48",  0x000002, 0x10000, CRC(fe7cb8f7) SHA1(55c7ab977c3666c8770deb62718d535673ffd4f8) )
+
+	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("v_bg-11.415",  0x000000, 0x200000, CRC(6fc96736) SHA1(12df47d8af2c1febc1bce5bcf3218766447885bd) )
+	ROM_LOAD24_BYTE("v_bg-12.415",  0x000002, 0x100000, CRC(d3c7281c) SHA1(340bca1f31486609b3c34dd7830362a216ff648e) )
+	ROM_LOAD24_WORD("v_bg-21.410",  0x300000, 0x100000, CRC(d65b4318) SHA1(6522970d95ffa7fa2f32e0b5b4f0eb69e0286b36) )
+	ROM_LOAD24_BYTE("v_bg-22.416",  0x300002, 0x080000, CRC(24a0a23a) SHA1(0b0330717620e3f3274a25845d9edaf8023b9db2) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("v_obj-1.322",  0x000000, 0x400000, CRC(3be5b631) SHA1(fd1064428d28ca166a9267b968c0ba846cfed656) )
+	ROM_LOAD("v_obj-2.324",  0x400000, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
+	ROM_LOAD("v_obj-3.323",  0x800000, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0) /* samples?*/
+	ROM_LOAD("v_pcm.215",  0x000000, 0x100000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+ROM_END
+
 
 ROM_START(rdft)
 	ROM_REGION(0x40000, REGION_CPU1, 0)
@@ -2044,7 +2090,37 @@ ROM_START(rdft)
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
 	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
 	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
+ROM_END
 
+ROM_START(rdftj)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("rf1.bin", 0x000000, 0x80000, CRC(46861b75) SHA1(079c589c490d49f7ec97a7e68c5b6e7e37872827) )
+	ROM_LOAD32_BYTE("rf2.bin", 0x000001, 0x80000, CRC(6388ed11) SHA1(aebbccfb0f704cdceb45ea71216275dd83880e15) )
+	ROM_LOAD32_BYTE("rf3.bin", 0x000002, 0x80000, CRC(beafcd24) SHA1(2dbc47ecef6f898a371a841df2c72151da9c5a8d) )
+	ROM_LOAD32_BYTE("rf4.bin",  0x000003, 0x80000, CRC(5236f45f) SHA1(8b05d977d3d07796007a00a52d2396475dc2f7dc) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)	/* text layer roms */
+	ROM_LOAD24_BYTE("gd_5.423", 0x000000, 0x10000, CRC(8f8d4e14) SHA1(06c803975767ae98f40ba7ac5764a5bc8baa3a30) )
+	ROM_LOAD24_BYTE("gd_6.424", 0x000001, 0x10000, CRC(6ac64968) SHA1(ec395205c24c4f864a1f805bb0d4641562d4faa9) )
+	ROM_LOAD24_BYTE("gd_7.48",	0x000002, 0x10000, CRC(4d87e1ea) SHA1(3230e9b643fad773e61ab8ce09c0cd7d4d0558e3) )
+
+	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("gd_bg1-d.415", 0x000000, 0x200000, CRC(6a68054c) SHA1(5cbfc4ac90045f1401c2dda7a51936558c9de07e) )
+	ROM_LOAD24_BYTE("gd_bg1-p.410", 0x000002, 0x100000, CRC(3400794a) SHA1(719808f7442bac612cefd7b7fffcd665e6337ad0) )
+	ROM_LOAD24_WORD("gd_bg2-d.416", 0x300000, 0x200000, CRC(61cd2991) SHA1(bb608e3948bf9ea35b5e1615d2ba6858d029dcbe) )
+	ROM_LOAD24_BYTE("gd_bg2-p.49",  0x300002, 0x100000, CRC(502d5799) SHA1(c3a0e1a4f5a7b35572ae1ff31315da4ed08aa2fe) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("gd_obj-1.322", 0x000000, 0x400000, CRC(59d86c99) SHA1(d3c9241e7b51fe21f8351051b063f91dc69bf905))
+	ROM_LOAD("gd_obj-2.324", 0x400000, 0x400000, CRC(1ceb0b6f) SHA1(97225a9b3e7be18080aa52f6570af2cce8f25c06) )
+	ROM_LOAD("gd_obj-3.323", 0x800000, 0x400000, CRC(36e93234) SHA1(51917a80b7da5c32a9434a1076fc2916d62e6a3e) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data, music ? */
+	ROM_LOAD("gd_pcm.217", 0x000000, 0x200000, CRC(31253ad7) SHA1(c81c8d50f8f287f5cbfaec77b30d969b01ce11a9) )
+	ROM_LOAD("gd_8.216",  0x200000, 0x80000, CRC(f88cb6e4) SHA1(fb35b41307b490d5d08e4b8a70f8ff4ce2ca8105) )
 ROM_END
 
 ROM_START(rdftau)
@@ -2175,7 +2251,78 @@ ROM_START(rdft2)
 
 	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
 	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
+ROM_END
 
+ROM_START(rdft2a)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("rf2_1.bin", 0x000000, 0x80000, CRC(72198410) SHA1(ca4bc858f6bf247a343b0fdae1d1a3cdabc4a3c3) )
+	ROM_LOAD32_BYTE("rf2_2.bin", 0x000001, 0x80000, CRC(ec73a767) SHA1(83f3905afe49401793c0ea0193cb31d3ba1e1739) )
+	ROM_LOAD32_BYTE("rf2_3.bin", 0x000002, 0x80000, CRC(e66243b2) SHA1(54e67af37a4586fd1afc79085ed433d599e1bb87) )
+	ROM_LOAD32_BYTE("rf2_4.bin", 0x000003, 0x80000, CRC(92b7b73e) SHA1(128649b2a6a0616113bd0f9846fb6cf814ae326d) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_BYTE("rf2_5.bin", 0x000001, 0x10000, CRC(377cac2f) SHA1(f7c9323d79b77f6c8c02ba2c6cdca127d6e5cb5c) )
+	ROM_LOAD24_BYTE("rf2_6.bin", 0x000000, 0x10000, CRC(42bd5372) SHA1(c38df85b25070db9640eac541f71c0511bab0c98) )
+	ROM_LOAD24_BYTE("rf2_7.bin", 0x000002, 0x10000, CRC(1efaac7e) SHA1(8252af56dcb7a6306dc3422070176778e3c511c2) )
+
+	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
+	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
+	ROM_LOAD24_WORD("bg-1d.535", 0x000000, 0x400000, BAD_DUMP CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
+	ROM_LOAD24_BYTE("bg-1p.544", 0x000002, 0x200000, BAD_DUMP CRC(55e64ef7) SHA1(aae991268948d07342ee8ba1b3761bd180aab8ec) )
+	ROM_LOAD24_WORD("bg-2d.536", 0x600000, 0x400000, BAD_DUMP CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
+	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, BAD_DUMP CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
+
+	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
+	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
+	ROM_LOAD("obj3.075",  0x0000000, 0x400000, BAD_DUMP CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
+	ROM_LOAD("obj6.078",  0x0400000, 0x200000, BAD_DUMP CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
+	ROM_LOAD("obj2.074",  0x0600000, 0x400000, BAD_DUMP CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
+	ROM_LOAD("obj5.077",  0x0a00000, 0x200000, BAD_DUMP CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
+	ROM_LOAD("obj1.073",  0x0c00000, 0x400000, BAD_DUMP CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
+	ROM_LOAD("obj4.076",  0x1000000, 0x200000, BAD_DUMP CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
+
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
+ROM_END
+
+ROM_START(rdft2j)
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("prg0.bin",  0x000000, 0x80000, CRC(a60c4e7c) SHA1(7789b029d0ac084c7e5e662a7168edaed8f11633) )
+	ROM_LOAD32_BYTE("prg1e.bin", 0x000001, 0x80000, CRC(cab55d88) SHA1(246e13880d34b6c7c3f4ab5e18fa8a0547c03d9d) )
+	ROM_LOAD32_BYTE("prg2e.bin", 0x000002, 0x80000, CRC(83758b0e) SHA1(63adb2d09e7bd7dba47a55b3b579d543dfb553e3) )
+	ROM_LOAD32_BYTE("prg3e.bin", 0x000003, 0x80000, CRC(084fb5e4) SHA1(588bfe091662b88f02f528181a2f1d9c67c7b280) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_BYTE("fix0.bin", 0x000001, 0x10000, CRC(6fdf4cf6) SHA1(7e9d4a49e829dfdc373c0f5acfbe8c7a91ac115b) )
+	ROM_LOAD24_BYTE("fix1.bin", 0x000000, 0x10000, CRC(69b7899b) SHA1(d3cacd4ef4d2c95d803403101beb9d4be75fae61) )
+	ROM_LOAD24_BYTE("fixp.bin", 0x000002, 0x10000, CRC(99a5fece) SHA1(44ae95d650ed6e00202d3438f5f91a5e52e319cb) )
+
+	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
+	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
+	ROM_LOAD24_WORD("bg-1d.535", 0x000000, 0x400000, BAD_DUMP CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
+	ROM_LOAD24_BYTE("bg-1p.544", 0x000002, 0x200000, BAD_DUMP CRC(55e64ef7) SHA1(aae991268948d07342ee8ba1b3761bd180aab8ec) )
+	ROM_LOAD24_WORD("bg-2d.536", 0x600000, 0x400000, BAD_DUMP CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
+	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, BAD_DUMP CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
+
+	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
+	// ROMs were not dumped, using the rdft22kc ones (which are likely not identical)
+	ROM_LOAD("obj3.075",  0x0000000, 0x400000, BAD_DUMP CRC(e08f42dc) SHA1(5188d71d4355eaf43ea8893b4cfc4fe80cc24f41) )
+	ROM_LOAD("obj6.078",  0x0400000, 0x200000, BAD_DUMP CRC(1b6a523c) SHA1(99a420dbc8e22e7832ccda7cec9fa661a2a2687a) )
+	ROM_LOAD("obj2.074",  0x0600000, 0x400000, BAD_DUMP CRC(7aeadd8e) SHA1(47103c0579240c5b1add4d0b164eaf76f5fa97f0) )
+	ROM_LOAD("obj5.077",  0x0a00000, 0x200000, BAD_DUMP CRC(5d790a5d) SHA1(1ed5d4ad4c9a7e505ce35dcc90d184c26ce891dc) )
+	ROM_LOAD("obj1.073",  0x0c00000, 0x400000, BAD_DUMP CRC(c2c50f02) SHA1(b81397b5800c6d49f58b7ac7ff6eac56da3c5257) )
+	ROM_LOAD("obj4.076",  0x1000000, 0x200000, BAD_DUMP CRC(5259321f) SHA1(3c70c1147e49f81371d0f60f7108d9718d56faf4) )
+
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("rf2_8_sound1.bin", 0x200000, 0x80000, CRC(b7bd3703) SHA1(6427a7e6de10d6743d6e64b984a1d1c647f5643a) ) // different?
 ROM_END
 
 ROM_START(rfjet) /* SPI Cart, Europe */
@@ -2208,6 +2355,38 @@ ROM_START(rfjet) /* SPI Cart, Europe */
 	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
 	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
 ROM_END
+
+ROM_START(rfjetj) /* SPI Cart, Japan */
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("prg0.bin", 0x000000, 0x80000, CRC(d82fb71f) SHA1(63a458fd007c353f4fae54a4882f5c565fe1efa4) )
+	ROM_LOAD32_BYTE("prg1.bin", 0x000001, 0x80000, CRC(7e21c669) SHA1(731852e5925dccc9d0d1ae4bcafa238f157f4079) )
+	ROM_LOAD32_BYTE("prg2.bin", 0x000002, 0x80000, CRC(2f402d55) SHA1(d0d852239abb6f4d73e263de5544fc0893e7a7ab) )
+	ROM_LOAD32_BYTE("prg3.bin", 0x000003, 0x80000, CRC(d619e2ad) SHA1(9dbff1babf62c3c5478a84d2a82a428de5949154) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000001, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) )
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000000, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) )
+	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) )
+
+	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
+	ROM_LOAD24_WORD("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
+
+	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("obj-1.u0442", 0x0000000, 0x800000, CRC(58a59896) SHA1(edeaaa69987bd5d08c47ed9bf47a3901e2dcc892) )
+	ROM_LOAD("obj-2.u0443", 0x0800000, 0x800000, CRC(a121d1e3) SHA1(1851ae81f2ae9d3404aadd9fbc0ed7f9230290b9) )
+	ROM_LOAD("obj-3.u0444", 0x1000000, 0x800000, CRC(bc2c0c63) SHA1(c8d395722f7012c3be366a0fc9b224c537afabae) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
+	ROM_LOAD("sound1.u0222", 0x200000, 0x80000, CRC(d4fc3da1) SHA1(a03bd97e36a21d27a834b9691b27a7eb7ac51ff2) )
+ROM_END
+
 
 ROM_START(rfjetu) /* SPI Cart, US */
 	ROM_REGION(0x40000, REGION_CPU1, 0)
@@ -2349,19 +2528,26 @@ GAMEX( 1995, senkyua,   senkyu,  spi,      spi_3button, senkyua,  ROT0,   "Seibu
 GAMEX( 1995, batlball,  senkyu,  spi,      spi_3button, batlball, ROT0,   "Seibu Kaihatsu (Tuning License)", "Battle Balls (Germany)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1995, batlbala,  senkyu,  spi,      spi_3button, batlball, ROT0,   "Seibu Kaihatsu (Metrotainment License)", "Battle Balls (Asia)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
-GAMEX( 1995, viperp1,   0,       spi,      spi_3button, viperp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (New Version)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
-GAMEX( 1995, viperp1o,  viperp1, spi,      spi_3button, viperp1o, ROT270, "Seibu Kaihatsu", "Viper Phase 1",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1995, viprp1,    0,       spi,      spi_3button, viprp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (Japan, New Version)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1995, viprp1s,   viprp1,  spi,      spi_3button, viprp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (Switzerland, New Version)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+
+GAMEX( 1995, viprp1o,   viprp1,  spi,      spi_3button, viprp1o, ROT270, "Seibu Kaihatsu", "Viper Phase 1 (Japan)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1995, viprp1ot,  viprp1,  spi,      spi_3button, viprp1,  ROT270, "Seibu Kaihatsu (Tuning License)", "Viper Phase 1 (Germany)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
 GAMEX( 1996, ejanhs,    0,       spi,      spi_ejanhs,  ejanhs,   ROT0,   "Seibu Kaihatsu", "E-Jan High School (Japan)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
-GAMEX( 1996, rdft,      0,       spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Japan)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1996, rdft,      0,       spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Japan set 1)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1996, rdftau,    rdft,    spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Australia)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1996, rdftj,     rdft,    spi,      spi_3button, rdft,     ROT270, "Seibu Kaihatsu", "Raiden Fighters (Japan set 2)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
-GAMEX( 1997, rdft2,     0,       spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 (Europe, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1997, rdft2,     0,       spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu (Metrotainment license)", "Raiden Fighters 2 (Asia, Metrotainment license, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1997, rdft2a,    rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu (Dream Island license)", "Raiden Fighters 2 (Asia, Dream Island license, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1997, rdft2j,    rdft2,   spi,      spi_2button, rdft2,  ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 (Japan, SPI)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
 GAMEX( 1998, rfjet,     0,       spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Tuning license)", "Raiden Fighters Jet",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1998, rfjetu,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu", "Raiden Fighters Jet (US)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAMEX( 1998, rfjeta,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Dream Island license)", "Raiden Fighters Jet (Asia)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAMEX( 1998, rfjetj,    rfjet,   spi,      spi_2button, rfjet,    ROT270, "Seibu Kaihatsu", "Raiden Fighters Jet (Japan)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
 /* there is another rf dump rf_spi_asia.zip but it seems strange, 1 program rom, cart pic seems to show others as a different type of rom */
 

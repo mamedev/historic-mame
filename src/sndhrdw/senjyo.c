@@ -62,7 +62,7 @@ void senjyo_sh_start(void)
 	/* z80 pio init */
 	z80pio_init (&pio_intf);
 
-	_single = (INT16 *)auto_malloc(SINGLE_LENGTH);
+	_single = (INT16 *)auto_malloc(SINGLE_LENGTH*2);
 
 	for (i = 0;i < SINGLE_LENGTH;i++)		/* freq = ctc2 zco / 8 */
 		_single[i] = ((i/SINGLE_DIVIDER)&0x01)*127*256;

@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define ORBIT_NOTE_FREQ		NODE_01
 #define ORBIT_ANOTE1_AMP	NODE_02

@@ -6379,15 +6379,19 @@ static void neo_pcm2_snk_1999(int value) /* 8=mslug4, 16=rotd */
 
 	if( rom != NULL )
 	{	/* swap address lines on the whole ROMs */
+		data16_t *buffer = malloc((value / 2) * sizeof(data16_t));
+		if (!buffer)
+			return;
+
 		for( i = 0; i < size / 2; i += ( value / 2 ) )
 		{
-			data16_t buffer[ (value / 2) ];
 			memcpy( buffer, &rom[ i ], value );
 			for( j = 0; j < (value / 2); j++ )
 			{
 				rom[ i + j ] = buffer[ j ^ (value/4) ];
 			}
 		}
+		free(buffer);
 	}
 }
 

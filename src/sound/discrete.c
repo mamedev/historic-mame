@@ -153,11 +153,11 @@ struct discrete_module module_list[] =
 	{ DSS_INPUT_LOGIC ,"DSS_INPUT_LOGIC" ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
 	{ DSS_INPUT_NOT   ,"DSS_INPUT_NOT"   ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_step       },
 	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,sizeof(struct dss_input_context)       ,dss_input_reset       ,dss_input_pulse_step },
+	{ DSS_INPUT_STREAM,"DSS_INPUT_STREAM",0                                      ,NULL                  ,NULL                 },
 
 	/* from disc_wav.c */
 	/* Generic modules */
 	{ DSS_COUNTER     ,"DSS_COUNTER"     ,sizeof(struct dss_counter_context)     ,dss_counter_reset     ,dss_counter_step     },
-	{ DSS_COUNTER_FIX ,"DSS_COUNTER_FIX" ,sizeof(struct dss_counterfix_context)  ,dss_counterfix_reset  ,dss_counterfix_step  },
 	{ DSS_LFSR_NOISE  ,"DSS_LFSR_NOISE"  ,sizeof(struct dss_lfsr_context)        ,dss_lfsr_reset        ,dss_lfsr_step        },
 	{ DSS_NOISE       ,"DSS_NOISE"       ,sizeof(struct dss_noise_context)       ,dss_noise_reset       ,dss_noise_step       },
 	{ DSS_NOTE        ,"DSS_NOTE"        ,sizeof(struct dss_note_context)        ,dss_note_reset        ,dss_note_step        },
@@ -187,7 +187,7 @@ struct discrete_module module_list[] =
 	{ DST_LOGIC_XOR   ,"DST_LOGIC_XOR"   ,0                                      ,NULL                  ,dst_logic_xor_step   },
 	{ DST_LOGIC_NXOR  ,"DST_LOGIC_NXOR"  ,0                                      ,NULL                  ,dst_logic_nxor_step  },
 	{ DST_LOGIC_DFF   ,"DST_LOGIC_DFF"   ,sizeof(struct dst_dflipflop_context)   ,dst_logic_dff_reset   ,dst_logic_dff_step   },
-	{ DST_MULTIPLEX   ,"DST_MULTIPLEX"   ,0                                      ,NULL                  ,NULL                 },
+	{ DST_MULTIPLEX   ,"DST_MULTIPLEX"   ,sizeof(struct dst_size_context)        ,dst_multiplex_reset   ,dst_multiplex_step   },
 	{ DST_ONESHOT     ,"DST_ONESHOT"     ,sizeof(struct dst_oneshot_context)     ,dst_oneshot_reset     ,dst_oneshot_step     },
 	{ DST_RAMP        ,"DST_RAMP"        ,sizeof(struct dss_ramp_context)        ,dst_ramp_reset        ,dst_ramp_step        },
 	{ DST_SAMPHOLD    ,"DST_SAMPHOLD"    ,sizeof(struct dst_samphold_context)    ,dst_samphold_reset    ,dst_samphold_step    },
@@ -196,6 +196,7 @@ struct discrete_module module_list[] =
 	/* Component specific */
 	{ DST_COMP_ADDER  ,"DST_COMP_ADDER"  ,0                                      ,NULL                  ,dst_comp_adder_step  },
 	{ DST_DAC_R1      ,"DST_DAC_R1"      ,sizeof(struct dst_dac_r1_context)      ,dst_dac_r1_reset      ,dst_dac_r1_step      },
+	{ DST_DIODE_MIX   ,"DST_DIODE_MIX"   ,sizeof(struct dst_size_context)        ,dst_diode_mix_reset   ,dst_diode_mix_step   },
 	{ DST_INTEGRATE   ,"DST_INTEGRATE"   ,sizeof(struct dst_integrate_context)   ,dst_integrate_reset   ,dst_integrate_step   },
 	{ DST_MIXER       ,"DST_MIXER"       ,sizeof(struct dst_mixer_context)       ,dst_mixer_reset       ,dst_mixer_step       },
 	{ DST_TVCA_OP_AMP ,"DST_TVCA_OP_AMP" ,sizeof(struct dst_tvca_op_amp_context) ,dst_tvca_op_amp_reset ,dst_tvca_op_amp_step },
@@ -211,6 +212,7 @@ struct discrete_module module_list[] =
 	{ DST_RCDISC      ,"DST_RCDISC"      ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc_reset      ,dst_rcdisc_step      },
 	{ DST_RCDISC2     ,"DST_RCDISC2"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
 	{ DST_RCDISC3     ,"DST_RCDISC3"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc3_reset     ,dst_rcdisc3_step     },
+	{ DST_RCDISC4     ,"DST_RCDISC4"     ,sizeof(struct dst_rcdisc4_context)     ,dst_rcdisc4_reset     ,dst_rcdisc4_step     },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_rcfilter_reset    ,dst_rcfilter_step    },
 	/* For testing - seem to be buggered.  Use versions not ending in N. */
 	{ DST_RCFILTERN   ,"DST_RCFILTERN"   ,sizeof(struct dss_filter1_context)     ,dst_rcfilterN_reset   ,dst_filter1_step     },

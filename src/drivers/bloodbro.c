@@ -529,7 +529,7 @@ static struct GfxDecodeInfo weststry_gfxdecodeinfo[] =
 /* Sound Interfaces */
 
 // Parameters: YM3812 frequency, Oki frequency, Oki memory region
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE
 
 /* Machine Drivers */
 

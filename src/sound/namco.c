@@ -22,15 +22,11 @@
 
 /* quality parameter: internal sample rate is 192 KHz, output is 48 KHz */
 #define INTERNAL_RATE	192000
-#define OUTPUT_RATE	48000
-
-/* oversampling rate */
-#define OVERSAMPLING_RATE	(INTERNAL_RATE / OUTPUT_RATE)
 
 /* 16 bits:	sample bits of the stream buffer	*/
 /* 4 bits:	volume					*/
 /* 4 bits:	prom sample bits			*/
-#define MIXLEVEL	((1 << (16 - 4 - 4)) / OVERSAMPLING_RATE)
+#define MIXLEVEL	(1 << (16 - 4 - 4))
 
 /* stream output level */
 #define OUTPUT_LEVEL(n)		((n) * MIXLEVEL / chip->num_voices)
@@ -154,16 +150,8 @@ INLINE UINT32 namco_update_one(struct namco_sound *chip, stream_sample_t *buffer
 {
 	while (length-- > 0)
 	{
-		INT16 data = 0;
-		int i;
-
-		for (i = 0; i < OVERSAMPLING_RATE; i++)
-		{
-			data += wave[WAVEFORM_POSITION(counter)];
-			counter += freq;
-		}
-
-		*buffer++ += data;
+		*buffer++ += wave[WAVEFORM_POSITION(counter)];
+		counter += freq;
 	}
 
 	return counter;
@@ -197,9 +185,9 @@ static void namco_update_mono(void *param, stream_sample_t **inputs, stream_samp
 			/* only update if we have non-zero volume and frequency */
 			if (v && f)
 			{
-				UINT32 delta = (f << (chip->f_fracbits - 15 + 4)) * OVERSAMPLING_RATE;
+				UINT32 delta = f << (chip->f_fracbits - 15 + 4);
 				UINT32 c = voice->noise_counter;
-				INT16 noise_data = OUTPUT_LEVEL(0x07 * (v >> 1) * OVERSAMPLING_RATE);
+				INT16 noise_data = OUTPUT_LEVEL(0x07 * (v >> 1));
 				int i;
 
 				/* add our contribution */
@@ -271,10 +259,10 @@ static void namco_update_stereo(void *param, stream_sample_t **inputs, stream_sa
 			/* only update if we have non-zero volume and frequency */
 			if ((lv || rv) && f)
 			{
-				UINT32 delta = (f << (chip->f_fracbits - 15 + 4)) * OVERSAMPLING_RATE;
+				UINT32 delta = f << (chip->f_fracbits - 15 + 4);
 				UINT32 c = voice->noise_counter;
-				INT16 l_noise_data = OUTPUT_LEVEL(0x07 * (lv >> 1) * OVERSAMPLING_RATE);
-				INT16 r_noise_data = OUTPUT_LEVEL(0x07 * (rv >> 1) * OVERSAMPLING_RATE);
+				INT16 l_noise_data = OUTPUT_LEVEL(0x07 * (lv >> 1));
+				INT16 r_noise_data = OUTPUT_LEVEL(0x07 * (rv >> 1));
 				int i;
 
 				/* add our contribution */
@@ -365,7 +353,7 @@ static void *namco_start(int sndindex, int clock, const void *config)
 	chip->f_fracbits = clock_multiple + 15;
 
 	/* adjust output clock */
-	chip->sample_rate = chip->namco_clock / OVERSAMPLING_RATE;
+	chip->sample_rate = chip->namco_clock;
 
 	logerror("Namco: freq fractional bits = %d: internal freq = %d, output freq = %d\n", chip->f_fracbits, chip->namco_clock, chip->sample_rate);
 

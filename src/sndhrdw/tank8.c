@@ -14,6 +14,7 @@
 /************************************************************************/
 
 const struct discrete_lfsr_desc tank8_lfsr={
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	10,			/* Use Bit 10 as F0 input 0 */
@@ -22,7 +23,7 @@ const struct discrete_lfsr_desc tank8_lfsr={
 	DISC_LFSR_XOR,		/* F1 is F0 XOR with external feed. External feed is (address line) A2 */
 	DISC_LFSR_REPLACE,	/* F2 replaces the shifted register contents */
 	0x000001,		/* Everything is shifted into the first bit only */
-	0,			/* Output is not inverted */
+	1,			/* Output is inverted by Q20 */
 	12			/* Output bit */
 };
 
@@ -33,7 +34,7 @@ const struct discrete_integrate_info tank8_op1_integrate_info = {
 	RES_K(47),		/* R96 */
 	CAP_U(0.22),	/* C60 */
 	5,
-	15,
+	12,				// B+ is 12V, not 15V shown in the schematic.
 	0,
 	0,
 	0,
@@ -46,7 +47,7 @@ const struct discrete_integrate_info tank8_op2_integrate_info = {
 	RES_K(47),		/* R96 */
 	CAP_U(0.1),		/* C59 */
 	5,
-	15,
+	12,				// B+ is 12V, not 15V shown in the schematic.
 	0,
 	0,
 	0,
@@ -69,13 +70,13 @@ const struct discrete_555_desc tank8_555_m =
 
 const struct discrete_op_amp_filt_info tank8_filt =
 {
-	RES_K(18), // R56
+	RES_K(18),		// R56
 	0,
-	RES_K(0.820), //R57
+	RES_K(0.820),	//R57
 	0,
-	RES_K(330),	//R58
-	CAP_U(.047), //C42
-	CAP_U(.047), //C43
+	RES_K(330),		//R58
+	CAP_U(.047),	//C42
+	CAP_U(.047),	//C43
 	0,
 	2.5,
 	5, /* VCC */
@@ -85,11 +86,11 @@ const struct discrete_op_amp_filt_info tank8_filt =
 struct discrete_dac_r1_ladder tank8_dac =
 {
 	1,
-	{RES_K(4.7)}, // R89
-	5, // 555 internal (VCC)
-	RES_K(5), // 555 internal
-	RES_K(10), // 555 internal
-	CAP_U(100) // C26
+	{RES_K(4.7)},	// R89
+	5,				// 555 Vcc
+	RES_K(5),		// 555 internal
+	RES_K(10),		// 555 internal
+	CAP_U(100)		// C26
 };
 
 /* Nodes - Sounds */
@@ -220,18 +221,18 @@ DISCRETE_SOUND_START(tank8_discrete_interface)
 	/* The A2 address line is also mixed in to the noise generator,
 	 * but that is currently not implemented. */
 	DISCRETE_CONSTANT(TANK8_A2_LINE,1)
-	DISCRETE_LFSR_NOISE(NODE_120, TANK8_ATTRACT_EN, TANK8_ATTRACT_EN, 15750.0/4, 2.5, TANK8_A2_LINE, 0, &tank8_lfsr)
+	DISCRETE_LFSR_NOISE(NODE_120, TANK8_ATTRACT_EN, TANK8_ATTRACT_EN, 15750.0/4, 1, TANK8_A2_LINE, 0, &tank8_lfsr)
 
 	/************************************************/
 	/* Explosion envelope is created by integrating */
-	/* an constant voltage                          */
+	/* a constant voltage                           */
 	/************************************************/
 	DISCRETE_INTEGRATE(NODE_121, TANK8_EXPLOSION_EN, 0, &tank8_op1_integrate_info)
 	DISCRETE_GAIN(NODE_122, NODE_121, RES_K(2.2)/(RES_K(1.0)+RES_K(2.2)))
 
 	/************************************************/
 	/* Crash envelope is created by integrating     */
-	/* an constant voltage                          */
+	/* a constant voltage                           */
 	/************************************************/
 	DISCRETE_INTEGRATE(NODE_123, TANK8_CRASH_EN, 0, &tank8_op2_integrate_info)
 	DISCRETE_GAIN(NODE_124, NODE_123, RES_K(1)/(RES_K(1.0)+RES_K(2.2)))
@@ -242,7 +243,13 @@ DISCRETE_SOUND_START(tank8_discrete_interface)
 	/************************************************/
 	DISCRETE_ADDER2(NODE_125, 1 , NODE_122, NODE_124 )
 	DISCRETE_MULTIPLY(NODE_126, 1, NODE_120, NODE_125 )
-	DISCRETE_RCFILTER(TANK8_CRASHEXPL, 1, NODE_126, RES_K(47), CAP_U(0.1))
+	DISCRETE_RCFILTER(NODE_127, 1, NODE_126, RES_K(47), CAP_U(0.1))
+	DISCRETE_ADJUSTMENT(NODE_128, 1,
+				1.0,				// min gain of E5
+				1.0 + 100.0/22,		// max gain of E5 = 1 + r132/r101
+				DISC_LINADJ, 12)
+	DISCRETE_MULTIPLY(NODE_129, 1, NODE_127, NODE_128 )
+	DISCRETE_CLAMP(TANK8_CRASHEXPL, 1, NODE_129, -(12.0 - OP_AMP_VP_RAIL_OFFSET)/2, (12.0 - OP_AMP_VP_RAIL_OFFSET)/2, 0)
 
 	/************************************************/
 	/* Combine all 10 sound sources.                */
@@ -262,7 +269,7 @@ DISCRETE_SOUND_START(tank8_discrete_interface)
 	/* Add some final gain to get to a good sound   */
 	/* level.                                       */
 	/************************************************/
-	DISCRETE_GAIN(TANK8_FINAL_MIX, NODE_135, 65534.0/10.0)
+	DISCRETE_GAIN(TANK8_FINAL_MIX, NODE_135, 5000)
 
 	DISCRETE_OUTPUT(TANK8_FINAL_MIX, 100)
 DISCRETE_SOUND_END

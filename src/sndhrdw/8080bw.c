@@ -425,6 +425,7 @@ static WRITE8_HANDLER( ballbomb_sh_port5_w )
 // I have noted some differences from a real board.
 
 const struct discrete_lfsr_desc polaris_lfsr={
+	DISC_CLK_IS_FREQ,
 	17,			/* Bit Length */
 	0,			/* Reset Value */
 	4,			/* Use Bit 4 as XOR input 0 */
@@ -583,7 +584,7 @@ DISCRETE_SOUND_START(polaris_discrete_interface)
  * sets the oscillator to 0Hz.  (Port 2 = FF)
  *
  ******************************************************************************/
-	DISCRETE_NOTE(NODE_30, 1, 23396, POLARIS_MUSIC_DATA, 255, 3)
+	DISCRETE_NOTE(NODE_30, 1, 23396, POLARIS_MUSIC_DATA, 255, 3, DISC_CLK_IS_FREQ)
 	DISCRETE_DAC_R1(NODE_31, 1, NODE_30, 3.4, &polaris_music_dac)
 	DISCRETE_OP_AMP_FILTER(NODE_32, 1, NODE_31, 0, DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 | DISC_OP_AMP_IS_NORTON, &polaris_music_op_amp_filt_info)
 	DISCRETE_MULTIPLY(POLARIS_MUSIC, 1, NODE_32, POLARIS_ADJ_VR3)
@@ -604,7 +605,7 @@ DISCRETE_SOUND_START(polaris_discrete_interface)
  *
  ******************************************************************************/
 	DISCRETE_SQUAREWFIX(NODE_40, 1, 60.0/16, 1, 50, 1.0/2, 0)	// IC 5L, pin 6
-	DISCRETE_COUNTER(NODE_41, 1, 0, NODE_40, 31, 1, 0, 0)		// IC 5L & 5F
+	DISCRETE_COUNTER(NODE_41, 1, 0, NODE_40, 31, 1, 0, DISC_CLK_ON_F_EDGE)	// IC 5L & 5F
 	DISCRETE_TRANSFORM2(NODE_42, 1, NODE_41, 4, "01&")			// IC 5L, pin 9
 	DISCRETE_TRANSFORM2(NODE_43, 1, NODE_41, 16, "01&!")		// IC 5F, pin 8
 	DISCRETE_ONESHOT(NODE_44, NODE_43, 1, TIME_IN_MSEC(15), DISC_ONESHOT_REDGE | DISC_ONESHOT_NORETRIG | DISC_OUT_ACTIVE_HIGH)

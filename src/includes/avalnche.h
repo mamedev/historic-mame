@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define AVALNCHE_AUD0_EN			NODE_01
 #define AVALNCHE_AUD1_EN			NODE_02

@@ -14,6 +14,7 @@
 /************************************************************************/
 
 const struct discrete_lfsr_desc asteroid_lfsr={
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	6,			/* Use Bit 6 as XOR input 0 */

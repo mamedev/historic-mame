@@ -12,8 +12,6 @@
 
 #define SOUND_CLOCK (XTAL/6/2)			/* 1.536 MHz */
 
-#define SAMPLES 1
-
 #define RNG_RATE	(XTAL/3)			/* RNG clock is XTAL/3 */
 #define NOISE_RATE	(XTAL/3/192/2/2)	/* 2V = 8kHz */
 #define NOISE_LENGTH (NOISE_RATE*4) 	/* four seconds of noise */
@@ -54,11 +52,6 @@ static int shoot_length;
 static int shoot_rate;
 #endif
 
-#if SAMPLES
-static int shootsampleloaded = 0;
-static int deathsampleloaded = 0;
-static int last_port1=0;
-#endif
 static int last_port2=0;
 
 static INT16 tonewave[4][TOOTHSAW_LENGTH];
@@ -142,28 +135,17 @@ static void noise_timer_cb(int param)
 
 WRITE8_HANDLER( galaxian_noise_enable_w )
 {
-#if SAMPLES
-	if (deathsampleloaded)
+	if( data & 1 )
 	{
-		if (data & 1 && !(last_port1 & 1))
-			sample_start(CHANNEL_NOISE,1,0);
-		last_port1=data;
+		timer_adjust(noisetimer, TIME_NEVER, 0, 0);
+		noisevolume = 100;
+		sample_set_volume(CHANNEL_NOISE,noisevolume / 100.0);
 	}
 	else
-#endif
 	{
-		if( data & 1 )
-		{
-			timer_adjust(noisetimer, TIME_NEVER, 0, 0);
-			noisevolume = 100;
-			sample_set_volume(CHANNEL_NOISE,noisevolume / 100.0);
-		}
-		else
-		{
-			/* discharge C21, 22uF via 150k+22k R35/R36 */
-			if (noisevolume == 100)
-				timer_adjust(noisetimer, TIME_IN_USEC(0.693*(155000+22000)*22 / 100), 0, TIME_IN_USEC(0.693*(155000+22000)*22 / 100));
-		}
+		/* discharge C21, 22uF via 150k+22k R35/R36 */
+		if (noisevolume == 100)
+			timer_adjust(noisetimer, TIME_IN_USEC(0.693*(155000+22000)*22 / 100), 0, TIME_IN_USEC(0.693*(155000+22000)*22 / 100));
 	}
 }
 
@@ -171,35 +153,16 @@ WRITE8_HANDLER( galaxian_shoot_enable_w )
 {
 	if( data & 1 && !(last_port2 & 1) )
 	{
-#if SAMPLES
-		if( shootsampleloaded )
-		{
-			sample_start(CHANNEL_SHOOT,0,0);
-		}
-		else
-#endif
-		{
 #if NEW_SHOOT
-			sample_start_raw(CHANNEL_SHOOT, shootwave, shoot_length, shoot_rate, 0);
+		sample_start_raw(CHANNEL_SHOOT, shootwave, shoot_length, shoot_rate, 0);
 #else
-			sample_start_raw(CHANNEL_SHOOT, shootwave, SHOOT_LENGTH, 10*SHOOT_RATE, 0);
+		sample_start_raw(CHANNEL_SHOOT, shootwave, SHOOT_LENGTH, 10*SHOOT_RATE, 0);
 #endif
-			sample_set_volume(CHANNEL_SHOOT,SHOOT_VOLUME);
-		}
+		sample_set_volume(CHANNEL_SHOOT,SHOOT_VOLUME);
 	}
 	last_port2=data;
 }
 
-
-#if SAMPLES
-static const char *galaxian_sample_names[] =
-{
-	"*galaxian",
-	"shot.wav",
-	"death.wav",
-	0	/* end of array */
-};
-#endif
 
 static void galaxian_sh_start(void)
 {
@@ -210,11 +173,6 @@ static void galaxian_sh_start(void)
 	sample_set_volume(CHANNEL_LFO+0, LFO_VOLUME);
 	sample_set_volume(CHANNEL_LFO+1, LFO_VOLUME);
 	sample_set_volume(CHANNEL_LFO+2, LFO_VOLUME);
-
-#if SAMPLES
-	shootsampleloaded = sample_loaded(0);
-	deathsampleloaded = sample_loaded(1);
-#endif
 
 	noisewave = auto_malloc(NOISE_LENGTH * sizeof(INT16));
 
@@ -450,20 +408,11 @@ static void galaxian_sh_start(void)
 	tone_stream = stream_create(0,1,SOUND_CLOCK/STEPS,NULL,tone_update);
 	stream_set_output_gain(tone_stream, 0, TOOTHSAW_VOLUME / 100.0);
 
-#if SAMPLES
-	if (!deathsampleloaded)
-#endif
-	{
-		sample_set_volume(CHANNEL_NOISE,0);
-		sample_start_raw(CHANNEL_NOISE,noisewave,NOISE_LENGTH,NOISE_RATE,1);
-	}
-#if SAMPLES
-	if (!shootsampleloaded)
-#endif
-	{
-		sample_set_volume(CHANNEL_SHOOT,0);
-		sample_start_raw(CHANNEL_SHOOT,shootwave,SHOOT_LENGTH,SHOOT_RATE,1);
-	}
+	sample_set_volume(CHANNEL_NOISE,0);
+	sample_start_raw(CHANNEL_NOISE,noisewave,NOISE_LENGTH,NOISE_RATE,1);
+
+	sample_set_volume(CHANNEL_SHOOT,0);
+	sample_start_raw(CHANNEL_SHOOT,shootwave,SHOOT_LENGTH,SHOOT_RATE,1);
 
 	sample_set_volume(CHANNEL_LFO+0,0);
 	sample_start_raw(CHANNEL_LFO+0,backgroundwave,sizeof(backgroundwave)/2,1000,1);
@@ -628,10 +577,6 @@ static void galaxian_sh_update(int dummy)
 struct Samplesinterface galaxian_custom_interface =
 {
 	5,
-#if SAMPLES
-	galaxian_sample_names,
-#else
 	NULL,
-#endif
 	galaxian_sh_start
 };

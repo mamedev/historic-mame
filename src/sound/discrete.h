@@ -117,10 +117,9 @@
  * DISCRETE_INPUT_PULSE(NODE,INIT)
  *
  * DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)
- * DISCRETE_COUNTER_FIX(NODE,ENAB,RESET,FREQ,MAX,DIR,INIT0)
- * DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,FREQ,AMPL,FEED,BIAS,LFSRTB)
+ * DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,CLK,AMPL,FEED,BIAS,LFSRTB)
  * DISCRETE_NOISE(NODE,ENAB,FREQ,AMP,BIAS)
- * DISCRETE_NOTE(NODE,ENAB,FREQ,DATA,MAX1,MAX2)
+ * DISCRETE_NOTE(NODE,ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE)
  * DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMP,BIAS,GRADIENT,PHASE)
  * DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMP,BIAS,PHASE)
  * DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMP,DUTY,BIAS,PHASE)
@@ -155,6 +154,9 @@
  *
  * DISCRETE_COMP_ADDER(NODE,ENAB,DATA,TABLE)
  * DISCRETE_DAC_R1(NODE,ENAB,DATA,VDATA,LADDER)
+ * DISCRETE_DIODE_MIXER2(NODE,ENAB,VJUNC,IN0,IN1)
+ * DISCRETE_DIODE_MIXER3(NODE,ENAB,VJUNC,IN0,IN1,IN2)
+ * DISCRETE_DIODE_MIXER4(NODE,ENAB,VJUNC,IN0,IN1,IN2,IN3)
  * DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)
  * DISCRETE_MIXER2(NODE,ENAB,IN0,IN1,INFO)
  * DISCRETE_MIXER3(NODE,ENAB,IN0,IN1,IN2,INFO)
@@ -181,6 +183,9 @@
  * DISCRETE_LOGIC_XOR(NODE,ENAB,INP0,INP1)
  * DISCRETE_LOGIC_NXOR(NODE,ENAB,INP0,INP1)
  * DISCRETE_LOGIC_DFLIPFLOP(NODE,RESET,SET,CLK,INP)
+ * DISCRETE_MULTIPLEX2(NODE,ENAB,ADDR,INP0,INP1)
+ * DISCRETE_MULTIPLEX4(NODE,ENAB,ADDR,INP0,INP1,INP2,INP3)
+ * DISCRETE_MULTIPLEX8(NODE,ENAB,ADDR,INP0,INP1,INP2,INP3,INP4,INP5,INP6,INP7)
  *
  * DISCRETE_FILTER1(NODE,ENAB,INP0,FREQ,TYPE)
  * DISCRETE_FILTER2(NODE,ENAB,INP0,FREQ,DAMP,TYPE)
@@ -191,6 +196,7 @@
  * DISCRETE_RCDISC(NODE,ENAB,IN0,RVAL,CVAL)
  * DISCRETE_RCDISC2(NODE,IN0,RVAL0,IN1,RVAL1,CVAL)
  * DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL)
+ * DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE)
  * DISCRETE_RCFILTER(NODE,ENAB,IN0,RVAL,CVAL)
  * DISCRETE_RCFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
  *
@@ -295,34 +301,31 @@
  =======================================================================
  ***********************************************************************
  *
- * DISCRETE_COUNTER     - up/down counter clocked externally.
- * DISCRETE_COUNTER_FIX - up/down counter clocked internally.
+ * DISCRETE_COUNTER     - up/down counter.
  *
- *  These counters count up/down from 0 to MAX.  When the enable is
- *  low, the output held at it's last value.  When reset is high,
- *  the reset value is loaded into the output.
+ *  This counter counts up/down from 0 to MAX.  When the enable is low, the output
+ *  is held at it's last value.  When reset is high, the reset value is loaded
+ *  into the output.  The counter can be clocked internally or externally.
  *
  *  Declaration syntax
  *
- *       where:         direction: 0 = down, 1 = up
- *                      clock type: toggle on 0/1 (falling/rising edge)
+ *       where:  direction: 0 = down, 1 = up
+ *
+ *               clock type: DISC_CLK_ON_F_EDGE - toggle on falling edge.
+ *                           DISC_CLK_ON_R_EDGE - toggle on rising edge.
+ *                           DISC_CLK_BY_COUNT  - toggle specified number of times.
+ *                           DISC_CLK_IS_FREQ   - internally clock at this frequency.
+ *                                                Clock node must be static if
+ *                                                DISC_CLK_IS_FREQ is used.
  *
  *     DISCRETE_COUNTER(name of node,
  *                      enable node or static value,
  *                      reset node or static value,
- *                      ext clock node,
+ *                      clock node or static value,
  *                      max count static value,
  *                      direction node or static value,
  *                      reset value node or static value,
  *                      clock type static value)
- *
- *     DISCRETE_COUNTER_FIX(name of node,
- *                          enable node or static value,
- *                          reset node or static value,
- *                          clock frequency static value
- *                          max count static value,
- *                          direction node or static value
- *                          reset value node or static value)
  *
  * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug, Polaris
  *
@@ -330,20 +333,21 @@
  *
  * DISCRETE_LFSR_NOISE - Noise waveform generator node, generates
  *                       psuedo random digital stream at the requested
- *                       clock frequency. Output is 0 or AMPLITUDE.
+ *                       clock frequency.
  *
  *  Declaration syntax
  *
  *     DISCRETE_LFSR_NOISE(name of node,
  *                         enable node or static value,
  *                         reset node or static value,
- *                         frequency node or static value,
+ *                         clock node or static value,
  *                         amplitude node or static value,
  *                         forced infeed bit to shift reg,
  *                         bias node or static value,
  *                         LFSR noise descriptor structure)
  *
- *     discrete_lfsr_desc = {bitlength, reset_value,
+ *     discrete_lfsr_desc = {clock type,  (see DISCRETE_COUNTER)
+ *                           bitlength, reset_value,
  *                           feedback_bitsel0, feedback_bitsel1,
  *                           feedback_function0, feedback_function1, feedback_function2,
  *                           feedback_function2_mask, flags, output_bit}
@@ -404,7 +408,7 @@
  *
  ***********************************************************************
  *
- * DISCRETE_NOTE - Note generator.  This takes a fixed frequency, and
+ * DISCRETE_NOTE - Note generator.  This takes a chosen clock, and
  *                 clocks an up counter that is preloaded with the data
  *                 value at every max 1 count.  Every time max 1 count
  *                 is reached, the output counts up one and rolls over
@@ -412,12 +416,15 @@
  *                 When the data value is the same as max count 1, the
  *                 counter no longer counts.
  *
+ *  Declaration syntax
+ *
  *     DISCRETE_NOTE(name of node,
  *                   enable node or static value,
- *                   frequency static value,
+ *                   clock node or static value,
  *                   data node or static value,
  *                   max 1 count static value,
- *                   max 2 count static value)
+ *                   max 2 count static value,
+ *                   clock type  (see DISCRETE_COUNTER))
  *
  * EXAMPLES: see Polaris
  *
@@ -978,6 +985,36 @@
  *
  ***********************************************************************
  *
+ * DISCRETE_MULTIPLEX - 1 of 2/4/8 multiplexer
+ *
+ *                 .-------------.
+ *   Input 0 >-----|>-<.         |
+ *                 |    \        |
+ *   Input 1 >-----|>-   \       |
+ *                 |      \      |
+ *   Input 2 >-----|>-    |\     |
+ *                 |      | \    |
+ *   Input 3 >-----|>-    |  o-->|------> Netlist Node
+ *                 |      |      |
+ *   Input 4 >-----|>-    |      |
+ *                 |      |      |
+ *   Input 5 >-----|>-    '------|----< Address
+ *                 |             |     (0 shown)
+ *   Input 6 >-----|>-           |
+ *                 |             |
+ *   Input 7 >-----|>-           |
+ *                 '-------------'
+ *
+ *  Declaration syntax
+ *
+ *       DISCRETE_MULTIPLEXx(name of node,
+ *           (x=2/4/8)       enable node or static value,
+ *                           address node,
+ *                           input 0 node or static value,
+ *                           input 1 node or static value, ...)
+ *
+ ***********************************************************************
+ *
  * DISCRETE_GAIN       - Node multiplication function output is equal
  * DISCRETE_MULTIPLY     to INPUT0 * INPUT1
  * DISCRETE_MULTADD      to (INPUT0 * INPUT1) + INPUT 2
@@ -1294,6 +1331,32 @@
  *     discrete_dac_r1_ladder = {ladderLength, r{}, vBias, rBias, rGnd, cFilter}
  *
  * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug, Polaris
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_DIODE_MIXER - mixes inputs through diodes
+ *
+ *
+ *    input 0 >----|>|---.
+ *                       |
+ *    input 1 >----|>|---+----------> Netlist Node
+ *                       |
+ *    input 2 >----|>|---+
+ *                       |
+ *    input 3 >----|>|---+--/\/\/\--.
+ *                                  |
+ *                                 gnd
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_DIODE_MIXERx(name of node,
+ *         (x = 2/3/4)       enable node or static value,
+ *                           voltage drop of the diode junction (static value),
+ *                           input 0 node,
+ *                           input 1 node,
+ *                           ...)
+ *
+ * EXAMPLES: see
  *
  ***********************************************************************
  *
@@ -1698,6 +1761,8 @@
  *                               |  | /
  *  vRef >-----------------------'  |/
  *
+ * EXAMPLES: see Tank 8, Atari Baseball, Monte Carlo
+ *
  *          --------------------------------------------------
  *
  *     DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 | DISC_OP_AMP_IS_NORTON
@@ -1807,7 +1872,7 @@
  *
  ***********************************************************************
  *
- * DISCRETE_RCDISC3 - Simple single pole RC discharge network
+ * DISCRETE_RCDISC3 - RC discharge network
  *
  *                        .-----------------.
  *                        |                 |
@@ -1840,6 +1905,85 @@
  *  of 100R & 1uF.
  *
  * EXAMPLES: see Tank8
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_RCDISC4 - RC discharge networks triggered by logic levels
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_RCDISC4(name of node,
+ *                      enable,
+ *                      logic input node,
+ *                      R1 resistor static value in OHMS,
+ *                      R2 resistor static value in OHMS,
+ *                      R3 resistor static value in OHMS,
+ *                      C1 capacitor static value in FARADS,
+ *                      vP static value in VOLTS,
+ *                      circuit type static value)
+ *
+ *  Type: 1
+ *
+ *                             vP >---.
+ *                                    |              .------.
+ *                                    Z              |      |
+ *                                    Z R2           | |\   |
+ *             O.C.                   Z              '-|-\  |
+ *             |\    Diode      R1    |                |  >-+---> node
+ *   Input >---| o----|<|------ZZZZ---+--------+-------|+/
+ *             |/                     |        |       |/
+ *                                   ---     -----
+ *                                C1 ---      \ / Diode
+ *                                    |        V
+ *                                   gnd      ---
+ *                                             |
+ *                                             Z
+ *                                             Z R3
+ *                                             Z
+ *                                             |
+ *                                            gnd
+ *
+ * EXAMPLES: see 
+ *
+ *          --------------------------------------------------
+ *
+ *  Type: 2
+ *
+ *      5V >---.                                    .------.
+ *             Z                                    |      |
+ *             Z 1k                                 | |\   |
+ *             Z                                    '-|-\  |
+ *             |   R1     C1         Diode            |  >-+---> node
+ *   Input >---+--ZZZZ----||----+-----|>|----+--------|+/
+ *                              |            |        |/
+ *                            -----          Z
+ *                              ^            Z R2
+ *                             / \ Diode     Z
+ *                            -----          |
+ *                              |           gnd
+ *                             gnd
+ *
+ * EXAMPLES: see 
+ *
+ *          --------------------------------------------------
+ *
+ *  Type: 3
+ *
+ *      5V >---.                                     .------.
+ *             Z                                     |      |
+ *             Z 1k                                  | |\   |
+ *             Z                                     '-|-\  |
+ *             |   R1     Diode                        |  >-+---> node
+ *   Input >---+--ZZZZ-----|>|------+---------+--------|+/
+ *                                  |         |        |/
+ *                                 --- C1     Z
+ *                                 ---        Z R2
+ *                                  |         Z
+ *                                 gnd        |
+ *                                           gnd
+ *
+ *
+ * EXAMPLES: see 
  *
  ***********************************************************************
  *
@@ -1929,8 +2073,15 @@
  *                          R1 node (or value) in ohms,
  *                          R2 node (or value) in ohms,
  *                          C node (or value) in farads,
- *                          Control Voltage node (or value),
  *                          address of discrete_555_desc structure)
+ *
+ *     DISCRETE_555_ASTABLE_CV(name of node,
+ *                            reset node (or value),
+ *                            R1 node (or value) in ohms,
+ *                            R2 node (or value) in ohms,
+ *                            C node (or value) in farads,
+ *                            Control Voltage node (or value),
+ *                            address of discrete_555_desc structure)
  *
  *    discrete_555_desc =
  *    {
@@ -1954,23 +2105,16 @@
  *     DISC_555_OUT_AC - A cheat to make the waveform AC.
  *
  *  Waveform Types: (ORed with output types)
- *     DISC_555_OUT_SQW       - Output is Squarewave.  0 or v555high. (DEFAULT)
- *     DISC_555_OUT_CAP       - Output is Timing Capacitor 'C' voltage.
- *     DISC_555_OUT_CAP_CLAMP - During a sample period, the high/low
- *                              threshold may be reached, causing the
- *                              voltage to change direction.  This will
- *                              make varing peaks on the cap out signal.
- *                              This may cause an alaised noise to be
- *                              heard.  Using this clamp option will
- *                              force the output to be the threshold
- *                              voltage during a change.  While not
- *                              affecting the actual cap voltage.  This
- *                              may cause a high freq alaised noise
- *                              that is less noticeable then the noise
- *                              without the option.  Try without CLAMP
- *                              first, as it is more accurate.
- *                              This option may be removed soon, as the
- *                              filters help clear things up.
+ *     DISC_555_OUT_SQW     - Output is Squarewave.  0 or v555high. (DEFAULT)
+ *     DISC_555_OUT_CAP     - Output is Timing Capacitor 'C' voltage.
+ *     DISC_555_OUT_COUNT_F - If the 555 frequency is greater then half the sample
+ *                            rate, then the output may change state more then once
+ *                            during the sample.  Using this flag will cause
+ *                            the output to be the number of falling edges that
+ *                            happened during the sample.  This is usefull to feed
+ *                            to counter circuits.  The Output Type flag is ingnored
+ *                            when this flag is used.
+ *     DISC_555_OUT_COUNT_R - Same as DISC_555_OUT_COUNT_F but with rising edges.
  *
  *  other options - DISCRETE_555_ASTABLE only:
  *     DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE - diode used to bypass rDischarge
@@ -2098,8 +2242,6 @@
  *
  *  Waveform Types: (ORed with output types)
  *     See DISCRETE_555_ASTABLE for description.
- *     Note that DISC_555_OUT_CAP_CLAMP does not work well with
- *     type 0 circuit.
  *
  * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug
  *
@@ -2201,6 +2343,12 @@
 /* DISCRETE_COMP_ADDER types */
 #define DISC_COMP_P_CAPACITOR			0x00
 #define DISC_COMP_P_RESISTOR			0x01
+
+/* clk types */
+#define DISC_CLK_ON_F_EDGE		0x00
+#define DISC_CLK_ON_R_EDGE		0x01
+#define DISC_CLK_BY_COUNT		0x02
+#define DISC_CLK_IS_FREQ		0x03
 
 /* Function possibilities for the LFSR feedback nodes */
 /* 2 inputs, one output                               */
@@ -2307,9 +2455,8 @@ enum
 
 #define DISC_555_OUT_SQW				0x00	/* Squarewave */
 #define DISC_555_OUT_CAP				0x10	/* Cap charge waveform */
-#define DISC_555_OUT_CAP_CLAMP			0x20	/* When outputting the cap voltage, it is forced
-												 * to the threshold/trigger levels to help eliminate
-												 * alaising. */
+#define DISC_555_OUT_COUNT_F			0x20	/* Falling count */
+#define DISC_555_OUT_COUNT_R			0x30	/* Rising count */
 
 #define DISC_555_OUT_MASK				0x30	/* Bits that define output type.
 												 * Used only internally in module. */
@@ -2406,6 +2553,7 @@ struct node_description
 
 struct discrete_lfsr_desc
 {
+	int clock_type;
 	int bitlength;
 	int reset_value;
 
@@ -2559,7 +2707,7 @@ struct discrete_555_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555
-	double	v555high;		// High output voltage of 555 (Usually v555 - 1.7)
+	double	v555high;		// High output voltage of 555 (Usually v555 - 1.4)
 	double	threshold555;	// normally 2/3 of v555
 	double	trigger555;		// normally 1/3 of v555
 };
@@ -2670,6 +2818,7 @@ enum
 	DSS_INPUT_LOGIC,	/* Input node */
 	DSS_INPUT_NOT,		/* Input node */
 	DSS_INPUT_PULSE,	/* Input node, single pulsed version */
+	DSS_INPUT_STREAM,	/* Stream Input */
 
 	/* from disc_wav.c */
 	/* generic modules */
@@ -2713,6 +2862,7 @@ enum
 	/* Component specific */
 	DST_COMP_ADDER,		/* Selectable Parallel Component Adder */
 	DST_DAC_R1,			/* R1 Ladder DAC with cap smoothing */
+	DST_DIODE_MIX,		/* Diode mixer */
 	DST_INTEGRATE,		/* Various Integration circuits */
 	DST_MIXER,			/* Final Mixing Stage */
 	DST_TVCA_OP_AMP,	/* Triggered Op Amp Voltage controlled  amplifier circuits */
@@ -2729,6 +2879,7 @@ enum
 	DST_RCDISC,			/* Simple RC discharge */
 	DST_RCDISC2,		/* Switched 2 Input RC discharge */
 	DST_RCDISC3,		/* Charge/discharge with diode */
+	DST_RCDISC4,		/* various Charge/discharge circuits */
 	DST_RCFILTER,		/* Simple RC Filter network */
 	/* For testing - seem to be buggered.  Use versions not ending in N. */
 	DST_RCFILTERN,		/* Simple RC Filter network */
@@ -2772,14 +2923,15 @@ enum
 #define DISCRETE_INPUT_NOT(NODE)                                        { NODE, DSS_INPUT_NOT   , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,0 }, NULL, "Input Not" },
 #define DISCRETE_INPUTX_NOT(NODE,GAIN,OFFSET,INIT)                      { NODE, DSS_INPUT_NOT   , 3, { NODE_NC,NODE_NC,NODE_NC }, { GAIN,OFFSET,INIT }, NULL, "InputX Not" },
 #define DISCRETE_INPUT_PULSE(NODE,INIT)                                 { NODE, DSS_INPUT_PULSE , 3, { NODE_NC,NODE_NC,NODE_NC }, { 1,0,INIT }, NULL, "Input Pulse" },
+#define DISCRETE_INPUT_STREAM(NODE,STREAM,CHANNEL)                      { NODE, DSS_INPUT_STREAM, 4, { NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { STREAM,CHANNEL,1,0 }, NULL, "Input Stream" },
+#define DISCRETE_INPUTX_STREAM(NODE,STREAM,CHANNEL,GAIN,OFFSET)         { NODE, DSS_INPUT_STREAM, 4, { NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { STREAM,CHANNEL,GAIN,OFFSET }, NULL, "InputX Stream" },
 
 /* from disc_wav.c */
 /* generic modules */
 #define DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)     { NODE, DSS_COUNTER     , 7, { ENAB,RESET,CLK,NODE_NC,DIR,INIT0,NODE_NC }, { ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE }, NULL, "External clock Binary Counter" },
-#define DISCRETE_COUNTER_FIX(NODE,ENAB,RESET,FREQ,MAX,DIR,INIT0)        { NODE, DSS_COUNTER_FIX , 6, { ENAB,RESET,FREQ,NODE_NC,DIR,INIT0 }, { ENAB,RESET,FREQ,MAX,DIR,INIT0 }, NULL, "Fixed Freq Binary Counter" },
-#define DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,FREQ,AMPL,FEED,BIAS,LFSRTB) { NODE, DSS_LFSR_NOISE  , 6, { ENAB,RESET,FREQ,AMPL,FEED,BIAS }, { ENAB,RESET,FREQ,AMPL,FEED,BIAS }, LFSRTB, "LFSR Noise Source" },
+#define DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,CLK,AMPL,FEED,BIAS,LFSRTB)  { NODE, DSS_LFSR_NOISE  , 6, { ENAB,RESET,CLK,AMPL,FEED,BIAS }, { ENAB,RESET,CLK,AMPL,FEED,BIAS }, LFSRTB, "LFSR Noise Source" },
 #define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL,BIAS)                        { NODE, DSS_NOISE       , 4, { ENAB,FREQ,AMPL,BIAS }, { ENAB,FREQ,AMPL,BIAS }, NULL, "Noise Source" },
-#define DISCRETE_NOTE(NODE,ENAB,FREQ,DATA,MAX1,MAX2)                    { NODE, DSS_NOTE        , 5, { ENAB,NODE_NC,DATA,NODE_NC,NODE_NC }, { ENAB,FREQ,DATA,MAX1,MAX2 }, NULL, "Note Generator" },
+#define DISCRETE_NOTE(NODE,ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE)             { NODE, DSS_NOTE        , 6, { ENAB,CLK,DATA,NODE_NC,NODE_NC,NODE_NC }, { ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE }, NULL, "Note Generator" },
 #define DISCRETE_SAWTOOTHWAVE(NODE,ENAB,FREQ,AMPL,BIAS,GRAD,PHASE)      { NODE, DSS_SAWTOOTHWAVE, 6, { ENAB,FREQ,AMPL,BIAS,NODE_NC,NODE_NC }, { ENAB,FREQ,AMPL,BIAS,GRAD,PHASE }, NULL, "Saw Tooth Wave" },
 #define DISCRETE_SINEWAVE(NODE,ENAB,FREQ,AMPL,BIAS,PHASE)               { NODE, DSS_SINEWAVE    , 5, { ENAB,FREQ,AMPL,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,BIAS,PHASE }, NULL, "Sine Wave" },
 #define DISCRETE_SQUAREWAVE(NODE,ENAB,FREQ,AMPL,DUTY,BIAS,PHASE)        { NODE, DSS_SQUAREWAVE  , 6, { ENAB,FREQ,AMPL,DUTY,BIAS,NODE_NC }, { ENAB,FREQ,AMPL,DUTY,BIAS,PHASE }, NULL, "Square Wave" },
@@ -2837,6 +2989,9 @@ enum
 /* Component specific */
 #define DISCRETE_COMP_ADDER(NODE,ENAB,DATA,TABLE)                       { NODE, DST_COMP_ADDER  , 2, { ENAB,DATA }, { ENAB,DATA }, TABLE, "Selectable R or C component Adder" },
 #define DISCRETE_DAC_R1(NODE,ENAB,DATA,VDATA,LADDER)                    { NODE, DST_DAC_R1      , 3, { ENAB,DATA,VDATA }, { ENAB,DATA,VDATA }, LADDER, "DAC with R1 Ladder" },
+#define DISCRETE_DIODE_MIXER2(NODE,ENAB,VJUNC,IN0,IN1)                  { NODE, DST_DIODE_MIX, 4,  { ENAB,NODE_NC,IN0,IN1 }, { ENAB,VJUNC,IN0,IN1 }, INFO, "Diode Mixer 2 Stage" },
+#define DISCRETE_DIODE_MIXER3(NODE,ENAB,VJUNC,IN0,IN1,IN2)              { NODE, DST_DIODE_MIX, 5,  { ENAB,NODE_NC,IN0,IN1,IN2 }, { ENAB,VJUNC,IN0,IN1,IN2 }, INFO, "Diode Mixer 3 Stage" },
+#define DISCRETE_DIODE_MIXER4(NODE,ENAB,VJUNC,IN0,IN1,IN2,IN3)          { NODE, DST_DIODE_MIX, 6,  { ENAB,NODE_NC,IN0,IN1,IN2,IN3 }, { ENAB,VJUNC,IN0,IN1,IN2,IN3 }, INFO, "Diode Mixer 4 Stage" },
 #define DISCRETE_INTEGRATE(NODE,TRG0,TRG1,INFO)                         { NODE, DST_INTEGRATE   , 2, { TRG0,TRG1 }, { TRG0,TRG1 }, INFO, "Various Integraton Circuit" },
 #define DISCRETE_MIXER2(NODE,ENAB,IN0,IN1,INFO)                         { NODE, DST_MIXER       , 3, { ENAB,IN0,IN1 }, { ENAB,IN0,IN1 }, INFO, "Final Mixer 2 Stage" },
 #define DISCRETE_MIXER3(NODE,ENAB,IN0,IN1,IN2,INFO)                     { NODE, DST_MIXER       , 4, { ENAB,IN0,IN1,IN2 }, { ENAB,IN0,IN1,IN2 }, INFO, "Final Mixer 3 Stage" },
@@ -2859,6 +3014,7 @@ enum
 #define DISCRETE_RCDISC(NODE,ENAB,INP0,RVAL,CVAL)                       { NODE, DST_RCDISC      , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Discharge" },
 #define DISCRETE_RCDISC2(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)        { NODE, DST_RCDISC2     , 6, { SWITCH,INP0,NODE_NC,INP1,NODE_NC,NODE_NC }, { SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL }, NULL, "RC Discharge 2" },
 #define DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL)               { NODE, DST_RCDISC3     , 5, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL0,RVAL1,CVAL }, NULL, "RC Discharge 3" },
+#define DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE) { NODE, DST_RCDISC4     , 8, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE }, NULL, "RC Discharge 4" },
 #define DISCRETE_RCFILTER(NODE,ENAB,INP0,RVAL,CVAL)                     { NODE, DST_RCFILTER    , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Filter" },
 #define DISCRETE_RCFILTER_VREF(NODE,ENAB,INP0,RVAL,CVAL,VREF)           { NODE, DST_RCFILTER    , 5, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL,VREF }, NULL, "RC Filter to VREF" },
 /* For testing - seem to be buggered.  Use versions not ending in N. */

@@ -71,7 +71,7 @@ VIDEO_UPDATE(st0016);
 extern int st0016_game;
 void st0016_save_init(void);
 //static int mux_port;
-int st0016_rom_bank;
+extern int st0016_rom_bank;
 //static int rambank=0;
 
 static int extraram[0x2000];

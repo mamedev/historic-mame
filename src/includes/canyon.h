@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define CANYON_MOTOR1_DATA		NODE_01
 #define CANYON_MOTOR2_DATA		NODE_02

@@ -1,9 +1,10 @@
 /*
-	Flash ROM emulation 
+	Flash ROM emulation
 
 	Explicitly supports:
-	Intel 28F016S5 (byte-wide, found in Simpsons Bowling)
-	Sharp LH28F400 (word-wide, found in Beat the Champ)
+	Intel 28F016S5 (byte-wide)
+	AMD/Fujitsu 29F016 (byte-wide)
+	Sharp LH28F400 (word-wide)
 
 	Flash ROMs use a standardized command set accross manufacturers,
 	so this emulation should work even for non-Intel and non-Sharp chips
@@ -20,19 +21,24 @@ enum
 	FM_READSTATUS,	// read status
 	FM_WRITEPART1,	// first half of programming, awaiting second
 	FM_CLEARPART1,	// first half of clear, awaiting second
-	FM_SETMASTER	// first half of set master lock, awaiting on/off
+	FM_SETMASTER,	// first half of set master lock, awaiting on/off
+	FM_READAMDID1,	// part 1 of alt ID sequence
+	FM_READAMDID2,	// part 2 of alt ID sequence
+	FM_READAMDID3,	// part 3 of alt ID sequence
 };
 
-struct flash_chip 
+struct flash_chip
 {
 	int flash_mode;
 	int flash_master_lock;
+	int device_id;
+	int maker_id;
 	data8_t *flash_memory;
 };
 
 static struct flash_chip chips[FLASH_CHIPS_MAX];
 
-static void intelflash_init(int chip)
+void intelflash_init(int chip)
 {
 	chips[chip].flash_mode = FM_NORMAL;
 	chips[chip].flash_master_lock = 0;
@@ -65,6 +71,25 @@ void nvram_handler_intelflash_0(mame_file *file,int read_or_write) { nvram_handl
 void nvram_handler_intelflash_1(mame_file *file,int read_or_write) { nvram_handler_intelflash( 1, file, read_or_write ); }
 void nvram_handler_intelflash_2(mame_file *file,int read_or_write) { nvram_handler_intelflash( 2, file, read_or_write ); }
 void nvram_handler_intelflash_3(mame_file *file,int read_or_write) { nvram_handler_intelflash( 3, file, read_or_write ); }
+void nvram_handler_intelflash_4(mame_file *file,int read_or_write) { nvram_handler_intelflash( 4, file, read_or_write ); }
+void nvram_handler_intelflash_5(mame_file *file,int read_or_write) { nvram_handler_intelflash( 5, file, read_or_write ); }
+void nvram_handler_intelflash_6(mame_file *file,int read_or_write) { nvram_handler_intelflash( 6, file, read_or_write ); }
+void nvram_handler_intelflash_7(mame_file *file,int read_or_write) { nvram_handler_intelflash( 7, file, read_or_write ); }
+
+static void internal_intelflash_set_ids(int chip, int device, int maker)
+{
+	chips[chip].device_id = device;
+	chips[chip].maker_id = maker;
+}
+
+void intelflash_set_ids_0(int device, int maker) { internal_intelflash_set_ids(0, device, maker); }
+void intelflash_set_ids_1(int device, int maker) { internal_intelflash_set_ids(1, device, maker); }
+void intelflash_set_ids_2(int device, int maker) { internal_intelflash_set_ids(2, device, maker); }
+void intelflash_set_ids_3(int device, int maker) { internal_intelflash_set_ids(3, device, maker); }
+void intelflash_set_ids_4(int device, int maker) { internal_intelflash_set_ids(4, device, maker); }
+void intelflash_set_ids_5(int device, int maker) { internal_intelflash_set_ids(5, device, maker); }
+void intelflash_set_ids_6(int device, int maker) { internal_intelflash_set_ids(6, device, maker); }
+void intelflash_set_ids_7(int device, int maker) { internal_intelflash_set_ids(7, device, maker); }
 
 data8_t intelflash_read_byte(int chip, data32_t address)
 {
@@ -84,14 +109,24 @@ data8_t intelflash_read_byte(int chip, data32_t address)
 //			chips[chip].flash_mode = FM_NORMAL;
 			return 0x80;
 			break;
+		case FM_READAMDID3:
+			if (address & 1)
+			{
+				return chips[chip].device_id;
+			}
+			else
+			{
+				return chips[chip].maker_id;
+			}
+			break;
 		case FM_READID:
 			switch (address)
 			{
 				case 0:	// maker ID
-					return 0x89;	// Intel
+					return chips[chip].maker_id;
 					break;
 				case 1:	// chip ID
-					return 0xaa;	// 16 Mbit
+					return chips[chip].device_id;
 					break;
 				case 2:	// block lock config
 					return 0;	// we don't support this yet
@@ -125,6 +160,7 @@ void intelflash_write_byte(int chip, data32_t address, data8_t data)
 		case FM_NORMAL:
 		case FM_READSTATUS:
 		case FM_READID:
+		case FM_READAMDID3:
 			switch (data & 0xff)
 			{
 				case 0xff:	// reset chip mode
@@ -146,12 +182,38 @@ void intelflash_write_byte(int chip, data32_t address, data8_t data)
 				case 0x60:	// set master lock
 					chips[chip].flash_mode = FM_SETMASTER;
 					break;
-				case 0x70:	// read status	
+				case 0x70:	// read status
 					chips[chip].flash_mode = FM_READSTATUS;
+					break;
+				case 0xaa:	// AMD ID select part 1
+					if (address == 0x555)
+					{
+						chips[chip].flash_mode = FM_READAMDID1;
+					}
 					break;
 				default:
 					printf("Unknown flash mode byte %x\n", data & 0xff);
 					break;
+			}
+			break;
+		case FM_READAMDID1:
+			if ((address == 0x2aa) && (data == 0x55))
+			{
+				chips[chip].flash_mode = FM_READAMDID2;
+			}
+			else
+			{
+				chips[chip].flash_mode = FM_NORMAL;
+			}
+			break;
+		case FM_READAMDID2:
+			if ((address == 0x555) && (data == 0x90))
+			{
+				chips[chip].flash_mode = FM_READAMDID3;
+			}
+			else
+			{
+				chips[chip].flash_mode = FM_NORMAL;
 			}
 			break;
 		case FM_WRITEPART1:
@@ -175,7 +237,7 @@ void intelflash_write_byte(int chip, data32_t address, data8_t data)
 			{
 				chips[chip].flash_master_lock = 1;
 			}
-			else if ((data & 0xff) == 0xd0) 
+			else if ((data & 0xff) == 0xd0)
 			{
 				chips[chip].flash_master_lock = 0;
 			}
@@ -206,10 +268,10 @@ data16_t intelflash_read_word(int chip, data32_t address)
 			switch (address)
 			{
 				case 0:	// maker ID
-					return 0xb0;	// Sharp
+					return chips[chip].maker_id;
 					break;
 				case 1:	// chip ID
-					return 0xed;	// LH28F400
+					return chips[chip].device_id;
 					break;
 				case 2:	// block lock config
 					return 0;	// we don't support this yet
@@ -264,7 +326,7 @@ void intelflash_write_word(int chip, data32_t address, data16_t data)
 				case 0x60:	// set master lock
 					chips[chip].flash_mode = FM_SETMASTER;
 					break;
-				case 0x70:	// read status	
+				case 0x70:	// read status
 					chips[chip].flash_mode = FM_READSTATUS;
 					break;
 				default:
@@ -294,7 +356,7 @@ void intelflash_write_word(int chip, data32_t address, data16_t data)
 			{
 				chips[chip].flash_master_lock = 1;
 			}
-			else if ((data & 0xff) == 0xd0) 
+			else if ((data & 0xff) == 0xd0)
 			{
 				chips[chip].flash_master_lock = 0;
 			}

@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define VIDEOPIN_OCTAVE_DATA	NODE_01
 #define VIDEOPIN_NOTE_DATA		NODE_02

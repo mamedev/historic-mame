@@ -11,6 +11,7 @@ extern data16_t *segaic16_textram_0;
 extern data16_t *segaic16_spriteram_0;
 extern data16_t *segaic16_spriteram_1;
 extern data16_t *segaic16_roadram_0;
+extern data16_t *segaic16_rotateram_0;
 
 /* misc functions */
 void segaic16_set_display_enable(int enable);
@@ -52,6 +53,7 @@ WRITE16_HANDLER( segaic16_textram_0_w );
 #define SEGAIC16_SPRITES_OUTRUN		4
 #define SEGAIC16_SPRITES_XBOARD		5
 #define SEGAIC16_SPRITES_YBOARD		6
+#define SEGAIC16_SPRITES_YBOARD_16B	7
 
 int segaic16_sprites_init(int which, int type, int colorbase, int xoffs);
 void segaic16_sprites_draw(int which, struct mame_bitmap *bitmap, const struct rectangle *cliprect);
@@ -75,3 +77,12 @@ int segaic16_road_init(int which, int type, int colorbase1, int colorbase2, int 
 void segaic16_road_draw(int which, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority);
 READ16_HANDLER( segaic16_road_control_0_r );
 WRITE16_HANDLER( segaic16_road_control_0_w );
+
+/* rotation systems */
+#define SEGAIC16_MAX_ROTATE			1
+
+#define SEGAIC16_ROTATE_YBOARD		0
+
+int segaic16_rotate_init(int which, int type, int colorbase);
+void segaic16_rotate_draw(int which, struct mame_bitmap *bitmap, const struct rectangle *cliprect, struct mame_bitmap *srcbitmap);
+READ16_HANDLER( segaic16_rotate_control_0_r );

@@ -1,3 +1,4 @@
+#include "sound/discrete.h"
 
 /*----------- defined in vidhrdw/blockade.c -----------*/
 

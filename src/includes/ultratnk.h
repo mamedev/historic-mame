@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define ULTRATNK_FIRE1_EN			NODE_01
 #define ULTRATNK_FIRE2_EN			NODE_02

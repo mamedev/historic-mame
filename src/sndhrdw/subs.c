@@ -44,6 +44,7 @@ WRITE8_HANDLER( subs_noise_reset_w )
 /************************************************************************/
 
 const struct discrete_lfsr_desc subs_lfsr={
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	13,			/* Use Bit 13 as XOR input 0 */

@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define BSKTBALL_NOTE_DATA		NODE_01
 #define BSKTBALL_CROWD_DATA		NODE_02

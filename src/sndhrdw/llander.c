@@ -24,6 +24,7 @@
 #define LLANDER_THRUST_EXPLOD_SND	NODE_13
 
 const struct discrete_lfsr_desc llander_lfsr={
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	6,			/* Use Bit 6 as XOR input 0 */

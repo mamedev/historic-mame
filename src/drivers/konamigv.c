@@ -530,6 +530,12 @@ static MACHINE_INIT( simpbowl )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c8, 0x1f6800cb, 0, 0, unknown_r ); /* ?? */
 
 	psx_machine_init();
+
+	// Intel (0x89) 29F016 (0xaa)
+	intelflash_set_ids_0(0xaa, 0x89);
+	intelflash_set_ids_1(0xaa, 0x89);
+	intelflash_set_ids_2(0xaa, 0x89);
+	intelflash_set_ids_3(0xaa, 0x89);
 }
 
 static MACHINE_DRIVER_START( simpbowl )
@@ -677,6 +683,9 @@ static MACHINE_INIT( btchamp )
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f4fffff, 0, 0, btcflash_w );
 
 	psx_machine_init();
+
+	// Sharp (0xb0) LH28F400 (0xed)
+	intelflash_set_ids_0(0xb0, 0x3d);
 }
 
 static MACHINE_DRIVER_START( btchamp )

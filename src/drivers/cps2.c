@@ -161,7 +161,7 @@ Notes:
               Player 1 Up  18    V  Player 2 Up
             Player 1 Down  19    W  Player 2 Down
             Player 1 Left  20    X  Player 2 Left                  Pins 07 to 29 can be configured to anything
-           Player 1 Right  21    Y  Player 2 Righ                  as games require. This includes coin inputs,
+           Player 1 Right  21    Y  Player 2 Right                 as games require. This includes coin inputs,
         Player 1 Button 1  22    Z  Player 2 Button 1              coin lockouts, joysticks and buttons. There
         Player 1 Button 2  23    a  Player 2 Button 2              are at least 2 known configurations seen in
         Player 1 Button 3  24    b  Player 2 Button 3              CPS-2 games released so far (see below).
@@ -175,27 +175,41 @@ Notes:
 
       Known Extra Button Connector configurations -
 
-         Most fighting type games                       More than 2 Player games
-         ------------------------                       ------------------------
-               TOP    BOTTOM                                  TOP    BOTTOM
-       ----------------------------                   ----------------------------
-           GND  01    02  GND                             GND  01    02  GND
-           +5V  03    04  +5V                             +5V  03    04  +5V
-          +12V  05    06  +12V                           +12V  05    06  +12V
-            NC  07    08  NC                    3Up Coin Lock  07    08  4Up Coin Lock
-  2Up Button 6  09    10  NC                         3Up Coin  09    10  4Up Coin
-            NC  11    12  NC                        3Up Start  11    12  4Up Start
-            NC  13    14  NC                           3Up Up  13    14  4Up Up
-  1Up Button 6  15    16  NC                         3Up Down  15    16  4Up Down
-  1Up Button 5  17    18  NC                         3Up Left  17    18  4Up Left
-  1Up Button 4  19    20  NC                        3Up Right  19    20  4Up Right
-  2Up Button 4  21    22  NC                     3Up Button 1  21    22  4Up Button 1
-  2Up Button 5  23    24  NC                     3Up Button 2  23    24  4Up Button 2
-            NC  25    26  NC                     3Up Button 3  25    26  4Up Button 3
-            NC  27    28  NC                     3Up Button 4  27    28  4Up Button 4
-   Volume Down  29    30  Volume UP               Volume Down  29    30  Volume UP
-           GND  31    32  GND                             GND  31    32  GND
-           GND  33    34  GND                             GND  33    34  GND
+             Most fighting type games                       More than 2 Player games
+             ------------------------                       ------------------------
+                   TOP    BOTTOM                                  TOP    BOTTOM
+           ----------------------------                   ----------------------------
+               GND  01    02  GND                             GND  01    02  GND
+               +5V  03    04  +5V                             +5V  03    04  +5V
+              +12V  05    06  +12V                           +12V  05    06  +12V
+                NC  07    08  NC                    3Up Coin Lock  07    08  4Up Coin Lock
+      2Up Button 6  09    10  NC                         3Up Coin  09    10  4Up Coin
+                NC  11    12  NC                        3Up Start  11    12  4Up Start
+                NC  13    14  NC                           3Up Up  13    14  4Up Up
+      1Up Button 6  15    16  NC                         3Up Down  15    16  4Up Down
+      1Up Button 5  17    18  NC                         3Up Left  17    18  4Up Left
+      1Up Button 4  19    20  NC                        3Up Right  19    20  4Up Right
+      2Up Button 4  21    22  NC                     3Up Button 1  21    22  4Up Button 1
+      2Up Button 5  23    24  NC                     3Up Button 2  23    24  4Up Button 2
+                NC  25    26  NC                     3Up Button 3  25    26  4Up Button 3
+                NC  27    28  NC                     3Up Button 4  27    28  4Up Button 4
+       Volume Down  29    30  Volume UP               Volume Down  29    30  Volume UP
+               GND  31    32  GND                             GND  31    32  GND
+               GND  33    34  GND                             GND  33    34  GND
+
+      Spinners -
+
+      There are 2 known games which use spinners, Puzz Loop 2 and Eco Fighters.
+
+      Puzz Loop 2 can come with an extra PCB that sits between the JAMMA harness and A-Board.
+      The spinners plug into this board and there is an option in the games settings to enable
+      it. If the extra PCB board is missing its not a problem because the game is still fully
+      playable using normal joysticks.
+
+      Eco Fighters has a special limited version of the game (not currently dumped) that uses
+      spinners. This version of the game did not support joysticks (only the normal version of
+      the game does). Not much more is known about how the spinners used here hook up to the
+      system or if the hardware required is the same as that used with Puzz Loop 2.
 
 
 B-Board
@@ -500,58 +514,58 @@ of data if the watchdog isn't triggered at least once every few seconds.
 The trigger varies from game to game (some games do use the same) and is
 basically a 68000 opcode/s instruction. Below is a list of those known;
 
-  	cmpi.l	#$7B5D94F1,D6		1944: The Loop Master
-	cmpi.l	#$00951101,D1		19xx: The War Against Destiny
-	cmpi.l	#$12345678,D0		Alien Vs. Predator
-	cmpi.l	#$00970131,D1		Battle Circuit
-	cmpi.l	#$00970310,D1		Capcom Sports Club
-	 unknown 					Choko
-	cmpi.b	#$FF,$0C38			Cyberbots
-	cmpi.w	#$1019,$4000		Dungeons & Dragons: Tower of Doom
-  	cmpi.l	#$19660419,D1		Dungeons & Dragons: Shadow over Mystara
-	 unknown 					Galum Pa!
-	cmpi.l	#$19721027,D1		Giga Wing
+  	cmpi.l	#$7B5D94F1,D6       1944: The Loop Master
+  	cmpi.l	#$00951101,D1       19xx: The War Against Destiny
+  	cmpi.l	#$12345678,D0       Alien Vs. Predator
+  	cmpi.l	#$00970131,D1       Battle Circuit
+  	cmpi.l	#$00970310,D1       Capcom Sports Club
+  	 unknown                    Choko
+  	cmpi.b	#$FF,$0C38          Cyberbots
+  	cmpi.w	#$1019,$4000        Dungeons & Dragons: Tower of Doom
+  	cmpi.l	#$19660419,D1       Dungeons & Dragons: Shadow over Mystara
+  	 unknown                    Galum Pa!
+  	cmpi.l	#$19721027,D1       Giga Wing
 
   	cmp.w	A4,D7 \
-	cmp.w	D4,D1  }-			Great Mahou Daisakusen
-	cmpa.w	D5,A3 /
+  	cmp.w	D4,D1  }-           Great Mahou Daisakusen
+  	cmpa.w	D5,A3 /
 
-  	 unknown 					Hyper Street Fighter II
-  	 unknown 					Jyangokushi
-  	 unknown 					Ken Sei Mogura (may not be a CPS2 game)
+  	 unknown                    Hyper Street Fighter II
+  	 unknown                    Jyangokushi
+  	 unknown                    Ken Sei Mogura (may not be a CPS2 game)
 
   	cmpa.w	D0,A3 \
-	cmp.w	D7,D2  }-			Mars Matrix
-	cmpa.w	A7,A5 /
+  	cmp.w	D7,D2  }-           Mars Matrix
+  	cmpa.w	A7,A5 /
 
-  	cmpi.l	#$19660419,D1		Marvel Super Heroes
-	cmpi.l	#$19721027,D1		Marvel Super Heroes Vs. Street Fighter
-	cmpi.l	#$19720121,D1		Marvel Vs. Capcom
-	cmpi.l	#$347D89A3,D4		Mighty! Pang
-  	 unknown 					Pnickies
-	cmpi.l	#$1F740D12,D0		Pocket Fighters
-	move.w	$00804020,D0		Powered Gear
-  	cmpi.l	#$63A1B8D3,D1		Progear no Arashi
-  	 unknown 					Puzz Loop 2
-	cmpi.l	#$19730827,D1		Quiz Nanairo Dreams
-  	cmpi.l	#$05642194,D0		Rockman					(found in CPS1 version)
-	cmpi.l	#$01647101,D0		Rockman2
-	cmpi.l	#$05642194,D0		Street Fighter Zero
-	cmpi.l	#$30399783,D0		Street Fighter Zero 2
-	cmpi.l	#$8E739110,D0		Street Fighter Zero 2 Alpha
-	cmpi.l	#$1C62F5A8,D0		Street Fighter Zero 3
-	move.w	$00804020,D0		Super Muscle Bomber
-	cmpi.l	#$30399819,D0		Super Puzzle Fighter II X
-	btst	#7,$2000			Super Street Fighter II
-	btst	#7,$2000			Super Street Fighter II X
-	btst	#3,$7345			Ultimate Ecology
-	btst	#0,$6160			Vampire
-	btst	#0,$6160			Vampire Hunter
-	cmpi.l	#$06920760,D0		Vampire Hunter 2
-	cmpi.l	#$726A4BAF,D0		Vampire Savior
-	cmpi.l	#$06920760,D0		Vampire Savior 2
-	cmpi.l	#$19720301,D0		X-Men, Children of the Atom
-	cmpi.l	#$19720327,D1		X-Men Vs. Street Fighter
+  	cmpi.l	#$19660419,D1       Marvel Super Heroes
+  	cmpi.l	#$19721027,D1       Marvel Super Heroes Vs. Street Fighter
+  	cmpi.l	#$19720121,D1       Marvel Vs. Capcom
+  	cmpi.l	#$347D89A3,D4       Mighty! Pang
+  	 unknown                    Pnickies
+  	cmpi.l	#$1F740D12,D0       Pocket Fighters
+  	move.w	$00804020,D0        Powered Gear
+   	cmpi.l	#$63A1B8D3,D1       Progear no Arashi
+  	cmpi.l	#$9A7315F1,D2       Puzz Loop 2
+  	cmpi.l	#$19730827,D1       Quiz Nanairo Dreams
+  	cmpi.l	#$05642194,D0       Rockman                (found in CPS1 version)
+  	cmpi.l	#$01647101,D0       Rockman2
+  	cmpi.l	#$05642194,D0       Street Fighter Zero
+  	cmpi.l	#$30399783,D0       Street Fighter Zero 2
+  	cmpi.l	#$8E739110,D0       Street Fighter Zero 2 Alpha
+  	cmpi.l	#$1C62F5A8,D0       Street Fighter Zero 3
+  	move.w	$00804020,D0        Super Muscle Bomber
+  	cmpi.l	#$30399819,D0       Super Puzzle Fighter II X
+  	btst	#7,$2000            Super Street Fighter II
+  	btst	#7,$2000            Super Street Fighter II X
+  	btst	#3,$7345            Ultimate Ecology
+  	btst	#0,$6160            Vampire
+  	btst	#0,$6160            Vampire Hunter
+  	cmpi.l	#$06920760,D0       Vampire Hunter 2
+  	cmpi.l	#$726A4BAF,D0       Vampire Savior
+  	cmpi.l	#$06920760,D0       Vampire Savior 2
+  	cmpi.l	#$19720301,D0       X-Men, Children of the Atom
+  	cmpi.l	#$19720327,D1       X-Men Vs. Street Fighter
 
 Encryption
 
@@ -564,14 +578,38 @@ lower 17 bits of the possible 24 address lines, this basically means
 the encryption loops on 0x20000 boundries.
 
 
-***************************************************************************/
+***************************************************************************
 
-// SPECIAL NOTE
-// Dimahoo requires the C 68k core for attract mode to sync collectly with mucic.
-// If the ASM 68k core is used GFX slow at the point where the blue pictures fade
-// in and out. This bug also seems to change the speed of the medallion fade out
-// at the start of Giga Wing's attract mode. This could be the same bug in the
-// ASM core that causes the NeoGeo game view point to stop working.
+Known problems with this driver.
+
+  - Rasters are not correctly emulated in places where more than one split happens
+    per frame. A known place where this problem happens is during Shuma-Gorath's
+    Chaos Dimension super move in both MSH and MSHVSF. The screen should split into
+    around 6 or more strips and then scroll the gfx inside those strips up and down
+    alternatly (as one stip moves gfx up the next strip moves the gfx down).
+
+  - The network adapter used in Super Street Fighter II: The Tournament Battle is
+    not currently emulated though the ports it uses are setup in the memory map.
+
+  - Giga Wing's attract mode seems to loose sync with music. The problem seems to
+    happen due to gfx drawing slowing to much when screen colors fade out. This
+    problem could be due to the 68k being clocked at 11.8mhz when the hardware
+    has a 16mhz crystal on it. Various timing loops show 11.8 being the average
+    speed of the cpu and this does run true when comparing emulation and real
+    hardware when timing is not based on Vsync (ssf2 and ssf2t for example). It is
+    possible that what is slowing the cpu is read/write wait states when accessing
+    RAM areas. This would mean that in places where lots of opcodes are being used
+    in connetion with data registers only the code would end up running to slow.
+
+  - Giga Wing's sprites are 1 frame out when compared to background scrolling. See
+    the explenation above for the most likley cause of this problem.
+
+  - Progear slows down more that it should when compared to real hardware. See
+    the explenation above for the most likley cause of this problem.
+
+  - The spinner in Puzz Loop 2 is not emulated.
+
+***************************************************************************/
 
 #include "driver.h"
 #include "machine/eeprom.h"
@@ -607,6 +645,8 @@ extern int scanline2;
 extern int scancalls;
 void cps2_objram_latch(void);
 void cps2_set_sprite_priorities(void);
+
+static int readpaddle;
 
 
 static INTERRUPT_GEN( cps2_interrupt )
@@ -651,7 +691,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 //			usrintf_showmessage("IRQ4 scancounter = %04i",scancount);
 	}
 
-	if(scancount == 240)  /* VBlank */
+	if(scancount == 256)  /* VBlank */
 	{
 		cps1_output[0x50/2] = scanline1;
 		cps1_output[0x52/2] = scanline2;
@@ -659,7 +699,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 		if(scancalls)
 		{
 			cps2_set_sprite_priorities();
-			force_partial_update(240);
+			force_partial_update(256);
 		}
 		cps2_objram_latch();
 	}
@@ -729,7 +769,10 @@ WRITE16_HANDLER( cps2_eeprom_port_w )
 		cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x0008) ? CLEAR_LINE : ASSERT_LINE);
 
 	coin_counter_w(0, data & 0x0001);
-	coin_counter_w(1, data & 0x0002);
+	if(strncmp(Machine->gamedrv->name,"pzloop2j",8)==0) // Puzz Loop 2 uses coin counter 2 input to switch between stick and paddle controls
+		readpaddle = data & 0x0002;
+	else
+		coin_counter_w(1, data & 0x0002);
 
 	if(strncmp(Machine->gamedrv->name,"mmatrix",7)==0)		// Mars Matrix seems to require the coin lockout bit to be reversed
 	{
@@ -1252,6 +1295,71 @@ INPUT_PORTS_START( cps2 )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( puzloop2 )
+    PORT_START      /* IN0 (0x00) */
+    PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+    PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+    PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+    PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+    PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+    PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+    PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+    PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+    PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+    PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+    PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+    PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+    PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+    PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+    PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+    PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+
+    PORT_START      /* IN1 (0x10) */
+    PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START      /* IN2 (0x20) */
+    PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SPECIAL )   /* EEPROM bit */
+	PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+    PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+    PORT_BIT( 0x00f8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+    PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+    PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_COIN1 )
+    PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN2 )
+    PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START  /* Paddles */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(2)
+
+INPUT_PORTS_END
+
+static READ16_HANDLER( pl2_port_0_word_r )
+{
+	if(readpaddle != 0)
+		return readinputport(0);
+	else
+		return readinputport(3) + (readinputport(4) << 8);
+}
+
+static DRIVER_INIT ( puzloop2 )
+{
+	init_cps2();
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x804000, 0x804001, 0, 0, pl2_port_0_word_r);
+}
 
 static struct GfxLayout layout8x8 =
 {
@@ -1986,6 +2094,34 @@ ROM_START( batcira )
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
 	ROM_LOAD16_WORD_SWAP( "btc.11m",   0x000000, 0x200000, CRC(c27f2229) SHA1(df2459493af40937b6656a16fad43ff51bed2204) )
 	ROM_LOAD16_WORD_SWAP( "btc.12m",   0x200000, 0x200000, CRC(418a2e33) SHA1(0642ddff2ab9255f154419da24ba644ed63f34ab) )
+ROM_END
+
+ROM_START( choko )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "tkoj.03", 0x000000, 0x80000, CRC(11f5452f) SHA1(1575729cdbb857a3a780df6e3e0efd6968926fb8) )
+	ROM_LOAD16_WORD_SWAP( "tkoj.04", 0x080000, 0x80000, CRC(68655378) SHA1(a2d82996394cc28622e93f6c338f9b78aa798775) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "tkojx.03", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "tkojx.04", 0x080000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
+	ROMX_LOAD( "tko-simm.01c",   0x0000000, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "tko-simm.01d",   0x0000001, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "tko-simm.01a",   0x0000002, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "tko-simm.01b",   0x0000003, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "tko-simm.03c",   0x0000004, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "tko-simm.03d",   0x0000005, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "tko-simm.03a",   0x0000006, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "tko-simm.03b",   0x0000007, 0x200000, NO_DUMP , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "tko.01",   0x00000, 0x08000, CRC(6eda50c2) SHA1(7e67c104094a3ced8b3fdd81f52ee42483b30fc5) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "tko-simm.05a",   0x000000, 0x200000, NO_DUMP ) // ROM on a simm
+	ROM_LOAD16_WORD_SWAP( "tko-simm.05b",   0x200000, 0x200000, NO_DUMP ) // ROM on a simm
 ROM_END
 
 ROM_START( csclubj )
@@ -4440,7 +4576,7 @@ ROM_START( progeara )
 	ROM_LOAD16_WORD_SWAP( "pga-simm.06b",   0x600000, 0x200000, CRC(8b39489a) SHA1(fd790efaf37dc2c4c16f657941044e3e2d3c2711) ) // ROM on a simm
 ROM_END
 
-ROM_START( puzloop2 )
+ROM_START( pzloop2j )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "pl2j.03a", 0x000000, 0x80000, CRC(0a751bd0) SHA1(a5a0b60387aacdafdf46ecd1acd764c9cb086b90) )
 	ROM_LOAD16_WORD_SWAP( "pl2j.04a", 0x080000, 0x80000, CRC(c3f72afe) SHA1(597a302e4bba50193c53f239e715962fcc4e3e5e) )
@@ -4448,8 +4584,10 @@ ROM_START( puzloop2 )
 	ROM_LOAD16_WORD_SWAP( "pl2j.06a", 0x180000, 0x80000, CRC(0f14848d) SHA1(94a3ee00d65cd9a310b3a330e2c37467b5863c64) )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "pl2jx.03a", 0x000000, 0x80000, NO_DUMP )
-//	ROM_LOAD16_WORD_SWAP( "pl2jx.04a", 0x080000, 0x80000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "pl2jx.03a", 0x000000, 0x80000, CRC(3c9bdc30) SHA1(c66823c8a18d4bf29ec166e98848362738de2eef) )
+	ROM_LOAD16_WORD_SWAP( "pl2jx.04a", 0x080000, 0x80000, CRC(aa1b28f4) SHA1(ff048d4a2b1de12b6648c26cfc9b10979be1b2fa) )
+	ROM_LOAD16_WORD_SWAP( "pl2jx.05a", 0x100000, 0x80000, CRC(cd27c17d) SHA1(b837d209a1485d3af224cdb1fb7abbb9bea89f2b) )
+	ROM_LOAD16_WORD_SWAP( "pl2jx.06a", 0x180000, 0x80000, CRC(48f3ac5f) SHA1(f05bb8790a92a6964850f8f22e2bc3cd4301a466) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "pl2-simm.01c",   0x0000000, 0x200000, CRC(137b13a7) SHA1(a1ca1bc8699ddfc54d5de1b39a9db9a5ac8b12e5) , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
@@ -4905,7 +5043,34 @@ ROM_START( sfzb )
 	ROM_LOAD16_WORD_SWAP( "sfz.06",  0x180000,  0x80000, CRC(806e8f38) SHA1(b6d6912aa8f2f590335d7ff9a8214648e7131ebb) )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-//	ROM_LOAD16_WORD_SWAP( "sfzbx.03", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "sfzbx.03g", 0x000000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
+	ROM_FILL(              0x000000, 0x800000, 0 )
+	ROMX_LOAD( "sfz.14m",   0x800000, 0x200000, CRC(90fefdb3) SHA1(5eb28c8de57acfeaefebdd01509c7d9ba5244705) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz.16m",   0x800002, 0x200000, CRC(5354c948) SHA1(07588f1ba6addc04fef3274c971174aaf3e632ab) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz.18m",   0x800004, 0x200000, CRC(41a1e790) SHA1(ce25dad542308691dbe9606b26279bbd59ea4b81) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sfz.20m",   0x800006, 0x200000, CRC(a549df98) SHA1(f054e95df650a891ef56da8bfb31cb2c945a9aed) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sfz.01",   0x00000, 0x08000, CRC(ffffec7d) SHA1(75b4aef001b72a0f571b51b2b97803facc1832dd) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+	ROM_LOAD( "sfz.02",   0x28000, 0x20000, CRC(45f46a08) SHA1(e32dbd27b52ab708278045b5a829376e55a4ca81) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "sfz.11m",   0x000000, 0x200000, CRC(c4b093cd) SHA1(256526bb693a0b72443f047e060304c9b739acd1) )
+	ROM_LOAD16_WORD_SWAP( "sfz.12m",   0x200000, 0x200000, CRC(8bdbc4b4) SHA1(0e21c9a75a17a7e7dfd8bb51098c2b9dc4c933ec) )
+ROM_END
+
+ROM_START( sfzbr1 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "sfzb.03e", 0x000000, 0x80000, CRC(ecba89a3) SHA1(5a3d7a978b6dc1f334eddf8e065318d60501f223) )
+	ROM_LOAD16_WORD_SWAP( "sfz.04b",  0x080000, 0x80000, CRC(8b73b0e5) SHA1(5318761f615c21395366b5333e75eaaa73ef2073) )
+	ROM_LOAD16_WORD_SWAP( "sfz.05a", 0x100000,  0x80000, CRC(0810544d) SHA1(5f39bda3e7b16508eb58e5a2e0cc58c09cf428ce) )
+	ROM_LOAD16_WORD_SWAP( "sfz.06",  0x180000,  0x80000, CRC(806e8f38) SHA1(b6d6912aa8f2f590335d7ff9a8214648e7131ebb) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "sfzbx.03e", 0x000000, 0x80000, NO_DUMP )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
 	ROM_FILL(              0x000000, 0x800000, 0 )
@@ -5068,6 +5233,39 @@ ROM_START( sfz2br1 )
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
 //	ROM_LOAD16_WORD_SWAP( "sz2bx.03", 0x000000, 0x80000, NO_DUMP )
 //	ROM_LOAD16_WORD_SWAP( "sz2bx.04", 0x080000, 0x80000, NO_DUMP )
+
+	ROM_REGION( 0x1400000, REGION_GFX1, 0 )
+	ROMX_LOAD( "sz2.13m",   0x0000000, 0x400000, CRC(4d1f1f22) SHA1(659fb4305bcf0cbbbbec97ede6e68a8323b13308) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sz2.15m",   0x0000002, 0x400000, CRC(19cea680) SHA1(4cb88963a0fbcef191c8419b6379387c01b4c81e) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sz2.17m",   0x0000004, 0x400000, CRC(e01b4588) SHA1(c2936608fd75ff6cd5fa94c6d6d6f0c77c44a450) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sz2.19m",   0x0000006, 0x400000, CRC(0feeda64) SHA1(f5b350601437bd94b70d97feb23d791df19da6b3) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sz2.14m",   0x1000000, 0x100000, CRC(0560c6aa) SHA1(f2bed3a8efef18052b51a7f0f6a888a18db813a1) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sz2.16m",   0x1000002, 0x100000, CRC(ae940f87) SHA1(39ee26333abbe302ba76dced0196a2e6b3b1d02a) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sz2.18m",   0x1000004, 0x100000, CRC(4bc3c8bc) SHA1(6256963c515bf56f39b6e559afefd653ead56c54) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "sz2.20m",   0x1000006, 0x100000, CRC(39e674c0) SHA1(8e771a2d8c2accad0463bccd21d7b23af0c895a1) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sz2.01a",   0x00000, 0x08000, CRC(1bc323cf) SHA1(83fbd6e9b327700dc9f1c59700b7385bc3705749) )
+	ROM_CONTINUE(         0x10000, 0x18000 )
+	ROM_LOAD( "sz2.02a",   0x28000, 0x20000, CRC(ba6a5013) SHA1(7814f3e56b69529b9860dd61c3b1e8d700244b03) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
+	ROM_LOAD16_WORD_SWAP( "sz2.11m",   0x000000, 0x200000, CRC(aa47a601) SHA1(a4d1ee89c84a3b9db06469bb66e85293b5aa9ac9) )
+	ROM_LOAD16_WORD_SWAP( "sz2.12m",   0x200000, 0x200000, CRC(2237bc53) SHA1(96d5693047e4cf1ed10a8ee1905cea267a278e92) )
+ROM_END
+
+ROM_START( sfz2h )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "sz2h.03", 0x000000, 0x80000, CRC(bfeddf5b) SHA1(dd4a748ba8674725a399b78e721ff9c7adaaf890) )
+	ROM_LOAD16_WORD_SWAP( "sz2h.04", 0x080000, 0x80000, CRC(ea5009fb) SHA1(9186c702994f99488d52d4dbccb3823d2b9a6dd9) )
+	ROM_LOAD16_WORD_SWAP( "sz2b.05", 0x100000, 0x80000, CRC(4b442a7c) SHA1(a0d7d229cff8efb2a253ff06270258b0b4d2761e) )
+	ROM_LOAD16_WORD_SWAP( "sz2.06",  0x180000, 0x80000, CRC(5b1d49c0) SHA1(f0a0c894c9cbe2b18e7f59058665949ee0025732) )
+	ROM_LOAD16_WORD_SWAP( "sz2b.07", 0x200000, 0x80000, CRC(947e8ac6) SHA1(da82be7cba9cd557da3ee35be9194130a959d5cb) )
+	ROM_LOAD16_WORD_SWAP( "sz2b.08", 0x280000, 0x80000, CRC(92b66e01) SHA1(f09cb38aa49b22a9c98219fb2ad8a66b11fa5872) )
+
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+//	ROM_LOAD16_WORD_SWAP( "sz2hx.03", 0x000000, 0x80000, NO_DUMP )
+//	ROM_LOAD16_WORD_SWAP( "sz2hx.04", 0x080000, 0x80000, NO_DUMP )
 
 	ROM_REGION( 0x1400000, REGION_GFX1, 0 )
 	ROMX_LOAD( "sz2.13m",   0x0000000, 0x400000, CRC(4d1f1f22) SHA1(659fb4305bcf0cbbbbec97ede6e68a8323b13308) , ROM_GROUPWORD | ROM_SKIP(6) )
@@ -7176,6 +7374,7 @@ GAME( 1995, sfzjr1,   sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAME( 1995, sfzjr2,   sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Japan 950605)" )
 GAMEX(1995, sfzh,     sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Hispanic 950627)", GAME_NOT_WORKING )
 GAMEX(1995, sfzb,     sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Brazil 951109)", GAME_NOT_WORKING )
+GAMEX(1995, sfzbr1,   sfa,     cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero (Brazil 950727)", GAME_NOT_WORKING )
 GAMEX(1995, rckmanj,  0,       cps2, sgemf,   cps2, ROT0,   "Capcom", "Rockman: The Power Battle (Japan 950922)", GAME_NOT_WORKING )
 GAME( 1996, 19xx,     0,       cps2, 19xx,    cps2, ROT270, "Capcom", "19XX: The War Against Destiny (US 951207)" )
 GAME( 1996, 19xxa,    19xx,    cps2, 19xx,    cps2, ROT270, "Capcom", "19XX: The War Against Destiny (Asia 951207)" )
@@ -7198,6 +7397,7 @@ GAME( 1996, sfz2j,    sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAME( 1996, sfz2a,    sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 2 (Asia 960227)" )
 GAMEX(1996, sfz2b,    sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 2 (Brazil 960531)", GAME_NOT_WORKING )
 GAMEX(1996, sfz2br1,  sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 2 (Brazil 960304)", GAME_NOT_WORKING )
+GAMEX(1996, sfz2h,    sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 2 (Hispanic 960304)", GAME_NOT_WORKING )
 GAMEX(1996, sfz2n,    sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 2 (Oceania 960229)", GAME_NOT_WORKING )
 GAME( 1996, sfz2aj,   sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 2 Alpha (Japan 960805)" )
 GAMEX(1996, sfz2ah,   sfa2,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 2 Alpha (Hispanic 960813)", GAME_NOT_WORKING )
@@ -7269,7 +7469,8 @@ GAME( 2000, mmatrixj, mmatrix, cps2, 19xx,    cps2, ROT0,   "Capcom, supported b
 /* Games released on CPS-2 hardware by Mitchell */
 
 GAME( 2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Mighty! Pang (Japan 001011)" )
-GAMEX(2001, puzloop2, 0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Puzz Loop 2 (Japan 010205)", GAME_NOT_WORKING )
+GAME( 2001, pzloop2j, 0,       cps2, puzloop2, puzloop2, ROT0,   "Mitchell, distributed by Capcom", "Puzz Loop 2 (Japan 010205)" )
+GAMEX(2001, choko,    0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Choko (Japan 010820)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Eighting/Raizing */
 

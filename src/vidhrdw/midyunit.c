@@ -49,6 +49,7 @@ static UINT8	videobank_select;
 static int		last_update_scanline;
 
 /* DMA-related variables */
+static UINT8	yawdim_dma;
 static data16_t dma_register[16];
 static struct
 {
@@ -94,6 +95,7 @@ static VIDEO_START( common )
 	midyunit_cmos_page = 0;
 	autoerase_enable = 0;
 	last_update_scanline = 0;
+	yawdim_dma = 0;
 
 	/* reset DMA state */
 	memset(dma_register, 0, sizeof(dma_register));
@@ -138,6 +140,14 @@ VIDEO_START( midyunit_6bit )
 	palette_mask = 0x0fff;
 
 	return 0;
+}
+
+
+VIDEO_START( mkyawdim )
+{
+	int result = video_start_midyunit_6bit();
+	yawdim_dma = 1;
+	return result;
 }
 
 
@@ -339,7 +349,7 @@ typedef void (*dma_draw_func)(void);
 {																				\
 	int height = dma_state.height;												\
 	int width = dma_state.width;												\
-	UINT8 *base = midyunit_gfx_rom;													\
+	UINT8 *base = midyunit_gfx_rom;												\
 	UINT32 offset = dma_state.offset >> 3;										\
 	UINT16 pal = dma_state.palette;												\
 	UINT16 color = pal | dma_state.color;										\
@@ -356,6 +366,10 @@ typedef void (*dma_draw_func)(void);
 		/* determine Y position */												\
 		ty = (ty + y) & 0x1ff;													\
 		offset += dma_state.rowbytes;											\
+																				\
+		/* check for over/underrun */											\
+		if (o >= 0x06000000)													\
+			continue;															\
 																				\
 		/* determine destination pointer */										\
 		dest = &local_videoram[ty * 512];										\
@@ -584,10 +598,10 @@ WRITE16_HANDLER( midyunit_dma_w )
 		logerror("----\n");
 		logerror("DMA command %04X: (xflip=%d yflip=%d)\n",
 				command, (command >> 4) & 1, (command >> 5) & 1);
-		logerror("  offset=%08X pos=(%d,%d) w=%d h=%d\n",
+		logerror("  offset=%08X pos=(%d,%d) w=%d h=%d rb=%d\n",
 				dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16),
 				(INT16)dma_register[DMA_XSTART], (INT16)dma_register[DMA_YSTART],
-				dma_register[DMA_WIDTH], dma_register[DMA_HEIGHT]);
+				dma_register[DMA_WIDTH], dma_register[DMA_HEIGHT], (INT16)dma_register[DMA_ROWBYTES]);
 		logerror("  palette=%04X color=%04X\n",
 				dma_register[DMA_PALETTE], dma_register[DMA_COLOR]);
 	}
@@ -608,8 +622,13 @@ WRITE16_HANDLER( midyunit_dma_w )
 	gfxoffset = dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16);
 	if (command & 0x10)
 	{
-		gfxoffset -= (dma_state.width - 1) * 8;
-		dma_state.rowbytes = (dma_state.rowbytes - dma_state.width + 3) & ~3;
+		if (!yawdim_dma)
+		{
+			gfxoffset -= (dma_state.width - 1) * 8;
+			dma_state.rowbytes = (dma_state.rowbytes - dma_state.width + 3) & ~3;
+		}
+		else
+			dma_state.rowbytes = (dma_state.rowbytes + dma_state.width + 3) & ~3;
 		dma_state.xpos += dma_state.width - 1;
 	}
 	else

@@ -41,7 +41,6 @@ struct ADPCMVoice
 {
 	UINT8 playing;			/* 1 if we are actively playing */
 
-	UINT8 *region_base;		/* pointer to the base of the region */
 	UINT32 base_offset;		/* pointer to the base memory location */
 	UINT32 sample;			/* current sample number */
 	UINT32 count;			/* total samples to play */
@@ -61,7 +60,8 @@ struct okim6295
 	#define OKIM6295_VOICES		4
 	struct ADPCMVoice voice[OKIM6295_VOICES];
 	INT32 command;
-	INT32 base[OKIM6295_VOICES];
+	INT32 bank_offset;
+	UINT8 *region_base;		/* pointer to the base of the region */
 	sound_stream *stream;	/* which stream are we playing on? */
 };
 
@@ -138,12 +138,12 @@ static void compute_tables(void)
 
 ***********************************************************************************************/
 
-static void generate_adpcm(struct ADPCMVoice *voice, INT16 *buffer, int samples)
+static void generate_adpcm(struct okim6295 *chip, struct ADPCMVoice *voice, INT16 *buffer, int samples)
 {
 	/* if this voice is active */
 	if (voice->playing)
 	{
-		UINT8 *base = voice->region_base + voice->base_offset;
+		UINT8 *base = chip->region_base + chip->bank_offset + voice->base_offset;
 		int sample = voice->sample;
 		int signal = voice->signal;
 		int count = voice->count;
@@ -252,7 +252,7 @@ static void okim6295_update(void *param, stream_sample_t **inputs, stream_sample
 			if (voice->source_pos >= FRAC_ONE)
 				voice->source_pos -= FRAC_ONE;
 			else
-				break;
+				continue;
 		}
 
 		/* compute how many new samples we need */
@@ -262,7 +262,7 @@ static void okim6295_update(void *param, stream_sample_t **inputs, stream_sample
 			new_samples = MAX_SAMPLE_CHUNK;
 
 		/* generate them into our buffer */
-		generate_adpcm(voice, sample_data, new_samples);
+		generate_adpcm(chip, voice, sample_data, new_samples);
 		prev = curr;
 		curr = *curr_data++;
 
@@ -324,19 +324,13 @@ static void okim6295_state_save_register(struct okim6295 *info, int sndindex)
 {
 	int j;
 	char buf[20];
-	char buf2[20];
 
 	sprintf(buf,"OKIM6295");
 
-	{
-		state_save_register_INT32  (buf, sndindex, "command", &info->command, 1);
-		for (j = 0; j < OKIM6295_VOICES; j++)
-		{
-			adpcm_state_save_register(&info->voice[j], sndindex * 4 + j);
-			sprintf(buf2,"base_voice_%1i",j);
-			state_save_register_INT32  (buf, sndindex, buf2, &info->base[j], 1);
-		}
-	}
+	state_save_register_INT32  (buf, sndindex, "command", &info->command, 1);
+	state_save_register_INT32  (buf, sndindex, "bank_offset", &info->bank_offset, 1);
+	for (j = 0; j < OKIM6295_VOICES; j++)
+		adpcm_state_save_register(&info->voice[j], sndindex * 4 + j);
 }
 
 
@@ -359,6 +353,8 @@ static void *okim6295_start(int sndindex, int clock, const void *config)
 	compute_tables();
 
 	info->command = -1;
+	info->bank_offset = 0;
+	info->region_base = memory_region(intf->region);
 
 	/* generate the name and create the stream */
 	info->stream = stream_create(0, 1, Machine->sample_rate, info, okim6295_update);
@@ -366,11 +362,7 @@ static void *okim6295_start(int sndindex, int clock, const void *config)
 	/* initialize the voices */
 	for (voice = 0; voice < OKIM6295_VOICES; voice++)
 	{
-		/* reset the OKI-specific parameters */
-		info->base[voice] = 0;
-
 		/* initialize the rest of the structure */
-		info->voice[voice].region_base = memory_region(intf->region);
 		info->voice[voice].volume = 255;
 		info->voice[voice].signal = -2;
 		if (Machine->sample_rate)
@@ -413,11 +405,8 @@ static void okim6295_reset(void *chip)
 void OKIM6295_set_bank_base(int which, int base)
 {
 	struct okim6295 *info = sndti_token(SOUND_OKIM6295, which);
-	int channel;
-
 	stream_update(info->stream, 0);
-	for (channel = 0; channel < OKIM6295_VOICES; channel++)
-		info->base[channel] = base;
+	info->bank_offset = base;
 }
 
 
@@ -503,7 +492,7 @@ static void OKIM6295_data_w(int num, int data)
 				if (Machine->sample_rate == 0) return;
 
 				/* determine the start/stop positions */
-				base = &voice->region_base[info->base[i] + info->command * 8];
+				base = &info->region_base[info->bank_offset + info->command * 8];
 				start = ((base[0] << 16) + (base[1] << 8) + base[2]) & 0x3ffff;
 				stop  = ((base[3] << 16) + (base[4] << 8) + base[5]) & 0x3ffff;
 
@@ -513,7 +502,7 @@ static void OKIM6295_data_w(int num, int data)
 					if (!voice->playing) /* fixes Got-cha and Steel Force */
 					{
 						voice->playing = 1;
-						voice->base_offset = info->base[i] + start;
+						voice->base_offset = start;
 						voice->sample = 0;
 						voice->count = 2 * (stop - start + 1);
 

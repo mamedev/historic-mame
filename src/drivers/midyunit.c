@@ -29,7 +29,22 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 #include "sndhrdw/williams.h"
+#include "sound/okim6295.h"
 #include "midyunit.h"
+
+
+
+/*************************************
+ *
+ *	Yawdim sound banking
+ *
+ *************************************/
+
+static WRITE8_HANDLER( yawdim_oki_bank_w )
+{
+	if (data & 4)
+		OKIM6295_set_bank_base(0, 0x40000 * (data & 3));
+}
 
 
 
@@ -70,6 +85,15 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x02000000, 0x05ffffff) AM_READ(midyunit_gfxrom_r) AM_BASE((data16_t **)&midyunit_gfx_rom) AM_SIZE(&midyunit_gfx_rom_size)
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, midyunit_io_register_w)
 	AM_RANGE(0xff800000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( yawdim_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
+	AM_RANGE(0x9000, 0x97ff) AM_WRITE(yawdim_oki_bank_w)
+	AM_RANGE(0x9800, 0x9fff) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 
@@ -931,6 +955,27 @@ static MACHINE_DRIVER_START( yunit_adpcm )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( mkyawdim )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(yunit_core)
+	
+	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_PROGRAM_MAP(yawdim_sound_map,0)
+	
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(4096)
+	MDRV_VIDEO_START(mkyawdim)
+	
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
+
 /*
 	individual machine drivers with tweaked areas and VBLANK timing
 	based on these video params:
@@ -1712,6 +1757,42 @@ ROM_START( mkla4 )
 ROM_END
 
 
+ROM_START( mkyawdim )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
+	ROM_LOAD (  "1.u67", 0x00000, 0x10000, CRC(b58d229e) SHA1(3ed14ef650dfa7f9d460611b19e9233a022cbea6) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM */
+	ROM_LOAD( "2.u59",  0x00000, 0x20000, CRC(a72ad81e) SHA1(7be4285b28755bd48acce670f34d6a7f043dda96) )
+	ROM_CONTINUE(       0x40000, 0x20000 )
+	ROM_CONTINUE(       0x80000, 0x20000 )
+	ROM_CONTINUE(       0xc0000, 0x20000 )
+	ROM_LOAD( "3.u60",  0x20000, 0x20000, CRC(6e68e0b0) SHA1(edb7aa6507452ffa5ce7097e3b1855a69542971c) )
+	ROM_CONTINUE(       0x60000, 0x20000 )
+	ROM_CONTINUE(       0xa0000, 0x20000 )
+	ROM_CONTINUE(       0xe0000, 0x20000 )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )	/* 34010 code */
+	ROM_LOAD16_BYTE( "4.u25",  0x00000, 0x80000, CRC(b12b3bf2) SHA1(deb7755e8407d9de25124b3fdbc4c834a25d8252) )
+	ROM_LOAD16_BYTE( "5.u26",  0x00001, 0x80000, CRC(7a37dc5c) SHA1(c4fc6933d8b990c5c56c65282b1f72b90b5d5435) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD ( "mkg-u111.rom",  0x000000, 0x80000, CRC(d17096c4) SHA1(01ef390a372c9d94adf138f9543ebb88b89f4c38) )
+	ROM_LOAD ( "mkg-u112.rom",  0x080000, 0x80000, CRC(993bc2e4) SHA1(7791edbec2b4b8971a3e790346dd7564ecf16d5c) )
+	ROM_LOAD ( "mkg-u113.rom",  0x100000, 0x80000, CRC(6fb91ede) SHA1(a3735b49f93b08c44fbc97e2b5aad394628fbe90) )
+	ROM_LOAD ( "mkg-u114.rom",  0x180000, 0x80000, CRC(ed1ff88a) SHA1(6b090b658ee6148af953bd0c9216f37162b6460f) )
+
+ 	ROM_LOAD (  "mkg-u95.rom",  0x200000, 0x80000, CRC(a002a155) SHA1(3cf7909e92bcd428063596fc5b9953e0000d6eca) )
+ 	ROM_LOAD (  "mkg-u96.rom",  0x280000, 0x80000, CRC(dcee8492) SHA1(a912b74d3b26ebd1b1613cc631080f83ececeaf8) )
+	ROM_LOAD (  "mkg-u97.rom",  0x300000, 0x80000, CRC(de88caef) SHA1(a7927b504dc56ca5c9048373977fe5743b0a3f0b) )
+	ROM_LOAD (  "mkg-u98.rom",  0x380000, 0x80000, CRC(37eb01b4) SHA1(06092460bd137e08d0f8df8560942ed877d40e09) )
+
+	ROM_LOAD ( "mkg-u106.rom",  0x400000, 0x80000, CRC(45acaf21) SHA1(5edd36c55f4e5d3c74fb85171728ec0a58284b12) )
+ 	ROM_LOAD ( "mkg-u107.rom",  0x480000, 0x80000, CRC(2a6c10a0) SHA1(cc90923c44f2961b945a0fd0f85ecc2ba04af2cb) )
+  	ROM_LOAD ( "mkg-u108.rom",  0x500000, 0x80000, CRC(23308979) SHA1(0b36788624a1cf0d3f4c895be5ba967b8dfcf85e) )
+ 	ROM_LOAD ( "mkg-u109.rom",  0x580000, 0x80000, CRC(cafc47bb) SHA1(8610af6e52f7089ff4acd850c53ab8b4119e4445) )
+ROM_END
+
+
 ROM_START( term2 )
 	ROM_REGION( 0x50000, REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD (  "t2_snd.3", 0x10000, 0x20000, CRC(73c3f5c4) SHA1(978dd974590e77294dbe9a647aebd3d24af6397f) )
@@ -1773,6 +1854,7 @@ ROM_START( term2la2 )
  	ROM_LOAD ( "t2.109",  0x580000, 0x80000, CRC(306a9366) SHA1(b94c23c033221f7f7fddd2911b8cec9549929768) )
 ROM_END
 
+
 ROM_START( term2la1 )
 	ROM_REGION( 0x10, REGION_CPU1, 0 ) /* 34010 dummy region */
 
@@ -1804,6 +1886,7 @@ ROM_START( term2la1 )
 	ROM_LOAD ( "t2.108", 0x500000, 0x80000, CRC(379fdaed) SHA1(408df6702c8ea8d3dce0b231955c6a60f3f5f22b) )
 	ROM_LOAD ( "t2.109", 0x580000, 0x80000, CRC(306a9366) SHA1(b94c23c033221f7f7fddd2911b8cec9549929768) )
 ROM_END
+
 
 ROM_START( totcarn )
 	ROM_REGION( 0x50000, REGION_CPU2, 0 )	/* sound CPU */
@@ -1901,5 +1984,6 @@ GAME( 1992, mkla1,    mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "M
 GAME( 1992, mkla2,    mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )
 GAME( 1992, mkla3,    mk,      mk,       mkla4,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 3.0 08/31/92)" )
 GAME( 1992, mkla4,    mk,      mk,       mkla4,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 4.0 09/28/92)" )
+GAME( 1992, mkyawdim, mk,      mkyawdim, mkla4,   mkyawdim, ROT0, "Midway",   "Mortal Kombat (Yawdim bootleg)" )
 GAME( 1992, totcarn,  0,       totcarn,  totcarn, totcarn,  ROT0, "Midway",   "Total Carnage (rev LA1 03/10/92)" )
 GAME( 1992, totcarnp, totcarn, totcarn,  totcarn, totcarn,  ROT0, "Midway",   "Total Carnage (prototype, rev 1.0 01/25/92)" )

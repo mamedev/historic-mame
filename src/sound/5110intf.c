@@ -58,6 +58,7 @@ static void *tms5110_start(int sndindex, int clock, const void *config)
 	info->intf = config ? config : &dummy;
 	
 	info->chip = tms5110_create();
+	memset(info, 0, sizeof(*info));
 	if (!info->chip)
 		return NULL;
 	sound_register_token(info);
@@ -195,7 +196,7 @@ static void tms5110_update(void *param, stream_sample_t **inputs, stream_sample_
 		/* interpolate */
 		while (length > 0 && info->source_pos < FRAC_ONE)
 		{
-			*buffer++ = (((INT32)prev * (FRAC_ONE - info->source_pos)) + ((INT32)curr * info->source_pos)) >> FRAC_BITS;
+			*buffer++ = (((INT32)prev * (INT32)(FRAC_ONE - info->source_pos)) + ((INT32)curr * (INT32)info->source_pos)) >> FRAC_BITS;
 			info->source_pos += info->source_step;
 			length--;
 		}
@@ -227,7 +228,7 @@ static void tms5110_update(void *param, stream_sample_t **inputs, stream_sample_
 		/* interpolate */
 		while (length > 0 && info->source_pos < FRAC_ONE)
 		{
-			*buffer++ = (((INT32)prev * (FRAC_ONE - info->source_pos)) + ((INT32)curr * info->source_pos)) >> FRAC_BITS;
+			*buffer++ = (((INT32)prev * (INT32)(FRAC_ONE - info->source_pos)) + ((INT32)curr * (INT32)info->source_pos)) >> FRAC_BITS;
 			info->source_pos += info->source_step;
 			length--;
 		}

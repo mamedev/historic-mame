@@ -817,6 +817,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( propcycl )	/* (c) 1996 */
 
 	/* Namco System 23 */
+	DRIVER( timecrs2 )
 	DRIVER( gp500 )
 
 
@@ -1915,9 +1916,10 @@ const struct GameDriver *drivers[] =
 	/* SemiCom games on snowbros like hardware */
 	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
 	DRIVER( hyperpcb )	/* bootleg */
-	DRIVER( hyperpaa )	/* (c) 1995 SemiCom */
+	DRIVER( twinkle )	/* (c) 1997 SemiCom */
 	DRIVER( cookbib2 )	/* (c) 1996 SemiCom */
 	DRIVER( 3in1semi )	/* (c) 1998 SemiCom */
+	DRIVER( moremore )	/* (c) 1999 SemiCom + Exit */
 	DRIVER( moremorp )	/* (c) 1999 SemiCom + Exit */
 	DRIVER( 4in1boot )	/* (c) 2002 but bootleg of 1999 release? */
 	DRIVER( snowbro3 )	/* (c) 2002 but hack / bootleg of snowbros? */
@@ -2360,6 +2362,7 @@ V-V                           TP-027
 	DRIVER( sfzjr2 )	/* 05/06/1995 (c) 1995 (Japan) */
 	DRIVER( sfzh )		/* 27/06/1995 (c) 1995 (Hispanic) */
 	DRIVER( sfzb )		/* 09/11/1995 (c) 1995 (Brazil) */
+	DRIVER( sfzbr1 )	/* 27/07/1995 (c) 1995 (Brazil) */
 	DRIVER( rckmanj )	/* 22/09/1995 Rockman: The Power Battle (Japan) */
 	DRIVER( msh )		/* 24/10/1995 (c) 1995 (Euro) */
 	DRIVER( mshu )		/* 24/10/1995 (c) 1995 (US) */
@@ -2385,6 +2388,7 @@ V-V                           TP-027
 	DRIVER( sfz2a )		/* 27/02/1996 (c) 1996 (Asia) */
 	DRIVER( sfz2b )		/* 31/05/1996 (c) 1996 (Brazil) */
 	DRIVER( sfz2br1 )	/* 04/03/1996 (c) 1996 (Brazil) */
+	DRIVER( sfz2h )		/* 04/03/1996 (c) 1996 (Hispanic) */
 	DRIVER( sfz2n )		/* 29/02/1996 (c) 1996 (Oceania) */
 	DRIVER( spf2t )		/* 20/06/1996 (c) 1996 (US) */
 	DRIVER( spf2xj )	/* 31/05/1996 (c) 1996 (Japan) */
@@ -2462,7 +2466,8 @@ V-V                           TP-027
 	DRIVER( progear )	/* 17/01/2001 (c) 2001 Cave (US) */
 	DRIVER( progearj )	/* 17/01/2001 (c) 2001 Cave (Japan) */
 	DRIVER( progeara )	/* 17/01/2001 (c) 2001 Cave (Asia) */
-	DRIVER( puzloop2 )	/* 05/02/2001 (c) 2001 (Mitchell) */
+	DRIVER( pzloop2j )	/* 05/02/2001 (c) 2001 (Mitchell) */
+	DRIVER( choko )		/* 20/08/2001 (c) 2001 (Mitchell) */
 
 	/* Capcom CPS3 games */
 	DRIVER( warzard )	/* 10/1996 Warzard */
@@ -4578,6 +4583,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hydrap )	/* (proto)			(c) 1990 */
 	DRIVER( hydrap2 )	/* (proto)			(c) 1990 */
 	DRIVER( pitfight )	/* 136081			(c) 1990 */
+	DRIVER( pitfigh4 )	/* 136081			(c) 1990 */
 	DRIVER( pitfigh3 )	/* 136081			(c) 1990 */
 	DRIVER( pitfighj )	/* Japan */
 	DRIVER( pitfighb )	/* bootleg */
@@ -5155,6 +5161,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mkla2 )		/* (c) 1992 Midway */
 	DRIVER( mkla3 )		/* (c) 1992 Midway */
 	DRIVER( mkla4 )		/* (c) 1992 Midway */
+	DRIVER( mkyawdim )
 	DRIVER( term2 )		/* (c) 1992 Midway */
 	DRIVER( term2la2 )	/* (c) 1992 Midway */
 	DRIVER( term2la1 )	/* (c) 1992 Midway */
@@ -5359,17 +5366,27 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( senkyua )
 	DRIVER( batlball )
 	DRIVER( batlbala )
-	DRIVER( viperp1 )
-	DRIVER( viperp1o )
+
+	DRIVER( viprp1 )
+	DRIVER( viprp1s )
+	DRIVER( viprp1o )
+	DRIVER( viprp1ot )
+
 	DRIVER( ejanhs )
+
 	DRIVER( rdft )
 	DRIVER( rdftau )
+	DRIVER( rdftj )
 	DRIVER( rdft2 )
+	DRIVER( rdft2a )
+	DRIVER( rdft2j )
 	DRIVER( rdft2us )
 	DRIVER( rdft22kc )
+
 	DRIVER( rfjet )
 	DRIVER( rfjetu )
 	DRIVER( rfjeta )
+	DRIVER( rfjetj )
 	DRIVER( rfjetus )
 
 	/* Tad games (Tad games run on Seibu hardware) */
@@ -6277,6 +6294,7 @@ Other Sun games
 	DRIVER( ringking )	/* (c) 1985 Data East USA */
 	DRIVER( ringkin2 )	/* (c) 1985 Data East USA */
 	DRIVER( ringkin3 )	/* (c) 1985 Data East USA */
+	DRIVER( ringkinw )	/* (c) 1985 Woodplace Inc. */
 	DRIVER( ambush )	/* (c) 1983 Nippon Amuse Co-Ltd */
 	DRIVER( ambusht )	/* (c) 1983 Tecfri */
 	DRIVER( homo )		/* bootleg */

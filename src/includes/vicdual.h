@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /*----------- defined in drivers/vicdual.c -----------*/
 
 extern mame_timer *croak_timer;

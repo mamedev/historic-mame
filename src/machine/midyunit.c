@@ -17,6 +17,7 @@
 #define SOUND_CVSD_SMALL			2
 #define SOUND_CVSD					3
 #define SOUND_ADPCM					4
+#define SOUND_YAWDIM				5
 
 
 /* protection data types */
@@ -305,6 +306,9 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 		case SOUND_NARC:
 			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, MWA8_RAM);
 			break;
+		
+		case SOUND_YAWDIM:
+			break;
 	}
 }
 
@@ -444,6 +448,12 @@ DRIVER_INIT( mkyunit )
 	init_generic(6, SOUND_ADPCM, 0xfb9c, 0xfbc6);
 }
 
+DRIVER_INIT( mkyawdim )
+{
+	/* common init */
+	init_generic(6, SOUND_YAWDIM, 0, 0);
+}
+
 
 /********************** Terminator 2 **********************/
 
@@ -519,6 +529,9 @@ MACHINE_INIT( midyunit )
 		case SOUND_ADPCM:
 			williams_adpcm_init(1);
 			break;
+		
+		case SOUND_YAWDIM:
+			break;
 	}
 }
 
@@ -554,6 +567,11 @@ WRITE16_HANDLER( midyunit_sound_w )
 
 			case SOUND_ADPCM:
 				williams_adpcm_data_w(data);
+				break;
+		
+			case SOUND_YAWDIM:
+				soundlatch_w(0, data);
+				cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 				break;
 		}
 }

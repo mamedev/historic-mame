@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define DRAGRACE_SCREECH1_EN	NODE_01
 #define DRAGRACE_SCREECH2_EN	NODE_02

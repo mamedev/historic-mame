@@ -281,12 +281,11 @@ VIDEO_UPDATE( ppking )
 	/* the fg layer just selects the upper palette bank on underlying pixels */
 	{
 		struct mame_bitmap *transparency_bitmap;
+		int sx = cliprect->min_x;
+		int sy = cliprect->min_y;
 
 		tilemap_get_pixmap( fg_tilemap );
 		transparency_bitmap = tilemap_get_transparency_bitmap( fg_tilemap );
-
-		int sx = cliprect->min_x;
-		int sy = cliprect->min_y;
 
 		while( sy <= cliprect->max_y )
 		{

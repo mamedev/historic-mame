@@ -13,6 +13,7 @@
 /************************************************************************/
 
 const struct discrete_lfsr_desc ultratnk_lfsr={
+	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
 	0,			/* Use Bit 0 as XOR input 0 */

@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define SUBS_SONAR1_EN			NODE_01
 #define SUBS_SONAR2_EN			NODE_02

@@ -1031,7 +1031,7 @@ ROM_START( hyperpcb )
 	ROM_LOAD( "hyperpac.a6", 0x080000, 0x40000, CRC(61d86e63) SHA1(974c634607993924fa098eff106b1b288bec1e26) )
 ROM_END
 
-ROM_START( hyperpaa )
+ROM_START( twinkle )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "uh12.bin", 0x00001, 0x20000, CRC(a99626fe) SHA1(489098a2ceb36df97b6b1d59b7b696300deee3ab) )
 	ROM_LOAD16_BYTE( "ui12.bin", 0x00000, 0x20000, CRC(5af73684) SHA1(9be43e5c71152d515366e422eb077a41dbb3fe62) )
@@ -1042,11 +1042,42 @@ ROM_START( hyperpaa )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200, CRC(00d3e4b4) SHA1(afa359a8b48605ff034133bad2a0a182429dec71) )
+
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "uj15.bin", 0x00000, 0x40000, CRC(0a534b37) SHA1(b7d780eb4668f1f757a60884c022f5bbc424dc97) )
 
 	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* Sprites */
 	ROM_LOAD( "ua4.bin", 0x000000, 0x80000, CRC(6b64bb09) SHA1(547eac1ad931a6b937dff0b922d06af92cc7ab73) )
+ROM_END
+
+ROM_START( moremore )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "u52.bin",  0x00001, 0x40000, CRC(cea4b246) SHA1(5febcb5dda6581caccfe9079b28c2366dfc1db2b) )
+	ROM_LOAD16_BYTE( "u74.bin",  0x00000, 0x40000, CRC(2acdcb88) SHA1(74d661d07752bbccab7eab151209a414e9bf7675) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "u35.bin", 0x00000, 0x10000 , CRC(92dc95fc) SHA1(f04e63cc680835458246989532faf5657e28db13) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(782dd2aa) SHA1(2587734271e0c85cb76bcdee171366c4e6fc9f81) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "u14.bin", 0x00000, 0x40000, CRC(90580088) SHA1(c64de2c0db95ab4ce06fc0a29c0cc8b7f3deeb28) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "u75.bin", 0x000000, 0x80000, CRC(d671815c) SHA1(a7e8d3bf688ce51b5d9a2b306cc557974328c322) )
+	ROM_LOAD( "u76.bin", 0x080000, 0x80000, CRC(e0d479e8) SHA1(454b53949664aca07a86229d3b6c9ce4e9449ea6) )
+	ROM_LOAD( "u77.bin", 0x100000, 0x80000, CRC(60a281da) SHA1(3f268f8b1cd8efd3e32d0fcdba5483c93122800e) )
+	ROM_LOAD( "u78.bin", 0x180000, 0x80000, CRC(e2723b4e) SHA1(6b4ba1e2e937b3231d76526af3f5a4a67144e4d5) )
 ROM_END
 
 ROM_START( moremorp )
@@ -1082,6 +1113,14 @@ ROM_START( 3in1semi )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
 	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(e40481da) SHA1(1c1fabcb67693235eaa6ff59ae12a35854b5564a) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+	   shared ram, the MCU puts it there */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x200 , CRC(85deba7c) SHA1(44c6d9306b4f8e47182f4740a18971c49a8df8db) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(c83c11be) SHA1(c05d96d61e5b8245232c85cbbcb7cc1e4e066492) )
@@ -1582,6 +1621,16 @@ static DRIVER_INIT(snowbro3)
 	}
 }
 
+static READ16_HANDLER( _3in1_read )
+{
+	return 0x0a0a;
+}
+
+static DRIVER_INIT( 3in1semi )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200001, 0, 0, _3in1_read );
+}
+
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )
 GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 2)" )
 GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 3)" )
@@ -1591,12 +1640,10 @@ GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Win
 /* SemiCom Games */
 GAME( 1995, hyperpac, 0,        semicom, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
 GAME( 1995, hyperpcb, hyperpac, semicom, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
-GAMEX(1995, hyperpaa, hyperpac, semicom, hyperpac, hyperpac, ROT0, "bootleg", "Hyper Pacman (set 2)", GAME_NOT_WORKING )
 GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" )
+GAME( 1997, 3in1semi, 0,        semiprot, hyperpac, 3in1semi, ROT0, "SemiCom", "XESS - The New Revolution (SemiCom 3-in-1)" )
+GAME( 1997, twinkle,  0,        semiprot, hyperpac, 0,        ROT0, "SemiCom", "Twinkle" )
+GAME( 1999, moremore, 0,        semiprot, hyperpac, moremorp, ROT0, "SemiCom / Exit", "More More" )
 GAME( 1999, moremorp, 0,        semiprot, hyperpac, moremorp, ROT0, "SemiCom / Exit", "More More Plus" )
 GAME( 1999, 4in1boot, 0,        _4in1,    snowbros, 4in1boot, ROT0, "bootleg", "Puzzle King (bootleg)" ) // original is 1999, bootleg 2002?
 GAMEX(2002, snowbro3, snowbros, snowbro3, snowbroj, snowbro3, ROT0, "bootleg", "Snow Brothers 3 - Magical Adventure", GAME_IMPERFECT_SOUND ) // its basically snowbros code?...
-
-/* the following don't work, they either point the interrupts at an area of ram probably shared by
-   some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
-GAMEX(1997, 3in1semi, 0,        semicom, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

@@ -106,12 +106,14 @@ static void *segapcm_start(int sndindex, int clock, const void *config)
 WRITE8_HANDLER( SegaPCM_w )
 {
 	struct segapcm *spcm = sndti_token(SOUND_SEGAPCM, 0);
+	stream_update(spcm->stream, 0);
 	spcm->ram[offset & 0x07ff] = data;
 }
 
 READ8_HANDLER( SegaPCM_r )
 {
 	struct segapcm *spcm = sndti_token(SOUND_SEGAPCM, 0);
+	stream_update(spcm->stream, 0);
 	return spcm->ram[offset & 0x07ff];
 }
 

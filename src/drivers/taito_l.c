@@ -27,8 +27,6 @@ Notes:
   be a prototype. It also doesn't have service mode (or has it disabled).
 
 TODO:
-- champwr ADPCM interface is not entirely understood, it involves also addresses
-  0xd000 and 0xe000, and maybe also YM2203 port B.
 - slowdowns in fhawk, probably the interrupts have to be generated at a
   different time.
 - plgirls doesn't work without a kludge because of an interrupt issue. This
@@ -263,20 +261,37 @@ static MACHINE_INIT( horshoes )
 }
 
 
+static int last_irq_level;
+
+static int irq_callback(int irqline)
+{
+	return irq_adr_table[last_irq_level];
+}
 
 static INTERRUPT_GEN( vbl_interrupt )
 {
+	cpu_set_irq_callback(0, irq_callback);
+
 	/* kludge to make plgirls boot */
 	if (cpunum_get_reg(0,Z80_IM) != 2) return;
 
 	// What is really generating interrupts 0 and 1 is still to be found
 
 	if (cpu_getiloops() == 1 && (irq_enable & 1))
-		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[0]);
+	{
+		last_irq_level = 0;
+		cpunum_set_input_line(0, 0, HOLD_LINE);
+	}
 	else if (cpu_getiloops() == 2 && (irq_enable & 2))
-		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[1]);
+	{
+		last_irq_level = 1;
+		cpunum_set_input_line(0, 0, HOLD_LINE);
+	}
 	else if (cpu_getiloops() == 0 && (irq_enable & 4))
-		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[2]);
+	{
+		last_irq_level = 2;
+		cpunum_set_input_line(0, 0, HOLD_LINE);
+	}
 }
 
 static WRITE8_HANDLER( irq_adr_w )
@@ -294,6 +309,10 @@ static WRITE8_HANDLER( irq_enable_w )
 {
 //logerror("irq_enable = %02x\n",data);
 	irq_enable = data;
+
+	// fix Plotting test mode
+	if ((irq_enable & (1 << last_irq_level)) == 0)
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 static READ8_HANDLER( irq_enable_r )
@@ -556,27 +575,49 @@ static WRITE8_HANDLER( mux_ctrl_w )
 
 
 
-static int champwr_adpcm_start;
+static int adpcm_pos;
 
-static WRITE8_HANDLER( champwr_adpcm_lo_w )
+static void champwr_msm5205_vck(int chip)
 {
-	champwr_adpcm_start = (champwr_adpcm_start & 0xff00ff) | (data << 8);
+	static int adpcm_data = -1;
+
+	if (adpcm_data != -1)
+	{
+		MSM5205_data_w(0, adpcm_data & 0x0f);
+		adpcm_data = -1;
+	}
+	else
+	{
+		adpcm_data = memory_region(REGION_SOUND1)[adpcm_pos];
+		adpcm_pos = (adpcm_pos + 1) & 0x1ffff;
+		MSM5205_data_w(0, adpcm_data >> 4);
+	}
 }
 
-static WRITE8_HANDLER( champwr_adpcm_hi_w )
+static WRITE8_HANDLER( champwr_msm5205_lo_w )
 {
-	UINT8 *rom = memory_region(REGION_SOUND1);
-	int romlen = memory_region_length(REGION_SOUND1);
-	int length;
-	int i;
+	adpcm_pos = (adpcm_pos & 0xff00ff) | (data << 8);
+}
 
-	champwr_adpcm_start = ((champwr_adpcm_start & 0x00ffff) | (data << 16)) & (romlen-1);
-	i = champwr_adpcm_start + 0x20;
-	while (i < romlen && (rom[i] || rom[i+1] || rom[i+2] || rom[i+3]))
-		i += 4;
-	length = i - champwr_adpcm_start;
+static WRITE8_HANDLER( champwr_msm5205_hi_w )
+{
+	adpcm_pos = ((adpcm_pos & 0x00ffff) | (data << 16)) & 0x1ffff;
+}
 
-//	ADPCM_play(0,champwr_adpcm_start,length*2);
+static WRITE8_HANDLER( champwr_msm5205_start_w )
+{
+	MSM5205_reset_w(0, 0);
+}
+
+static WRITE8_HANDLER( champwr_msm5205_stop_w )
+{
+	MSM5205_reset_w(0, 1);
+	adpcm_pos &= 0x1ff00;
+}
+
+static WRITE8_HANDLER( champwr_msm5205_volume_w )
+{
+	sndti_set_output_gain(SOUND_MSM5205, 0, 0, data / 255.0);
 }
 
 
@@ -836,10 +877,10 @@ static ADDRESS_MAP_START( champwr_3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9001, 0x9001) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(taitosound_slave_port_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(taitosound_slave_comm_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(champwr_adpcm_hi_w)
-	AM_RANGE(0xc000, 0xc000) AM_WRITE(champwr_adpcm_lo_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(MWA8_NOP)	/* ADPCM related */
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)	/* ADPCM related */
+	AM_RANGE(0xb000, 0xb000) AM_WRITE(champwr_msm5205_hi_w)
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(champwr_msm5205_lo_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(champwr_msm5205_start_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(champwr_msm5205_stop_w)
 ADDRESS_MAP_END
 
 
@@ -2170,10 +2211,19 @@ static struct YM2203interface ym2203_interface_triple =
 	irqhandler
 };
 
+static struct YM2203interface ym2203_interface_champwr =
+{
+	0,
+	0,
+	portA_w,
+	champwr_msm5205_volume_w,
+	irqhandler
+};
+
 
 static struct MSM5205interface msm5205_interface =
 {
-	NULL,				/* VCK function */
+	champwr_msm5205_vck,/* VCK function */
 	MSM5205_S48_4B		/* 8 kHz */
 };
 
@@ -2225,7 +2275,7 @@ static MACHINE_DRIVER_START( fhawk )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
 	MDRV_SOUND_CONFIG(ym2203_interface_triple)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -2251,6 +2301,13 @@ static MACHINE_DRIVER_START( champwr )
 	MDRV_MACHINE_INIT(champwr)
 
 	/* sound hardware */
+	MDRV_SOUND_MODIFY("2203")
+	MDRV_SOUND_CONFIG(ym2203_interface_champwr)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
+
 	MDRV_SOUND_ADD(MSM5205, 384000)
 	MDRV_SOUND_CONFIG(msm5205_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
@@ -2312,7 +2369,7 @@ static MACHINE_DRIVER_START( kurikint )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
 	MDRV_SOUND_ROUTE(1, "mono", 0.20)
@@ -2356,7 +2413,7 @@ static MACHINE_DRIVER_START( plotting )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
 	MDRV_SOUND_CONFIG(ym2203_interface_single)
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
@@ -2439,7 +2496,7 @@ static MACHINE_DRIVER_START( evilston )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	
+
 	MDRV_SOUND_ADD_TAG("2203", YM2203, 3000000)
 	MDRV_SOUND_ROUTE(0, "mono", 0.00)
 	MDRV_SOUND_ROUTE(1, "mono", 0.00)

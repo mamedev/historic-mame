@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+#include "sound/discrete.h"
+
 /* Discrete Sound Input Nodes */
 #define HITME_DOWNCOUNT_VAL		NODE_01
 #define HITME_OUT0				NODE_02
