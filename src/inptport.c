@@ -377,6 +377,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 1, IPG_PLAYER1,	BUTTON8,			"P1 Button 8",			SEQ_DEF_3(KEYCODE_V, CODE_OR, JOYCODE_1_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 1, IPG_PLAYER1,	BUTTON9,			"P1 Button 9",			SEQ_DEF_3(KEYCODE_B, CODE_OR, JOYCODE_1_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 1, IPG_PLAYER1,	BUTTON10,			"P1 Button 10",			SEQ_DEF_3(KEYCODE_N, CODE_OR, JOYCODE_1_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 1, IPG_PLAYER1, START,				"P1 Start",				SEQ_DEF_3(KEYCODE_1, CODE_OR, JOYCODE_1_START) )
+	INPUT_PORT_DIGITAL_DEF( 1, IPG_PLAYER1, SELECT,				"P1 Select",			SEQ_DEF_3(KEYCODE_5, CODE_OR, JOYCODE_1_SELECT) )
 
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	JOYSTICK_UP,		"P2 Up",				SEQ_DEF_3(KEYCODE_R, CODE_OR, JOYCODE_2_UP) )
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	JOYSTICK_DOWN,      "P2 Down",    			SEQ_DEF_3(KEYCODE_F, CODE_OR, JOYCODE_2_DOWN) )
@@ -400,6 +402,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	BUTTON8,			"P2 Button 8",			SEQ_DEF_1(JOYCODE_2_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	BUTTON9,			"P2 Button 9",			SEQ_DEF_1(JOYCODE_2_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2,	BUTTON10,			"P2 Button 10",			SEQ_DEF_1(JOYCODE_2_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2, START,				"P2 Start",				SEQ_DEF_3(KEYCODE_2, CODE_OR, JOYCODE_2_START) )
+	INPUT_PORT_DIGITAL_DEF( 2, IPG_PLAYER2, SELECT,				"P2 Select",			SEQ_DEF_3(KEYCODE_6, CODE_OR, JOYCODE_2_SELECT) )
 
 	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3,	JOYSTICK_UP,		"P3 Up",				SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_3_UP) )
 	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3,	JOYSTICK_DOWN,      "P3 Down",    			SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_3_DOWN) )
@@ -423,6 +427,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3,	BUTTON8,			"P3 Button 8",			SEQ_DEF_1(JOYCODE_3_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3,	BUTTON9,			"P3 Button 9",			SEQ_DEF_1(JOYCODE_3_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3,	BUTTON10,			"P3 Button 10",			SEQ_DEF_1(JOYCODE_3_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3, START,				"P3 Start",				SEQ_DEF_3(KEYCODE_3, CODE_OR, JOYCODE_3_START) )
+	INPUT_PORT_DIGITAL_DEF( 3, IPG_PLAYER3, SELECT,				"P3 Select",			SEQ_DEF_3(KEYCODE_7, CODE_OR, JOYCODE_3_SELECT) )
 
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	JOYSTICK_UP,		"P4 Up",				SEQ_DEF_3(KEYCODE_8_PAD, CODE_OR, JOYCODE_4_UP) )
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	JOYSTICK_DOWN,      "P4 Down",    			SEQ_DEF_3(KEYCODE_2_PAD, CODE_OR, JOYCODE_4_DOWN) )
@@ -446,6 +452,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	BUTTON8,			"P4 Button 8",			SEQ_DEF_1(JOYCODE_4_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	BUTTON9,			"P4 Button 9",			SEQ_DEF_1(JOYCODE_4_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4,	BUTTON10,			"P4 Button 10",			SEQ_DEF_1(JOYCODE_4_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4, START,				"P4 Start",				SEQ_DEF_3(KEYCODE_3, CODE_OR, JOYCODE_3_START) )
+	INPUT_PORT_DIGITAL_DEF( 4, IPG_PLAYER4, SELECT,				"P4 Select",			SEQ_DEF_3(KEYCODE_7, CODE_OR, JOYCODE_3_SELECT) )
 
 	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5,	JOYSTICK_UP,		"P5 Up",				SEQ_DEF_1(JOYCODE_5_UP) )
 	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5,	JOYSTICK_DOWN,      "P5 Down",    			SEQ_DEF_1(JOYCODE_5_DOWN) )
@@ -469,6 +477,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5,	BUTTON8,			"P5 Button 8",			SEQ_DEF_1(JOYCODE_5_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5,	BUTTON9,			"P5 Button 9",			SEQ_DEF_1(JOYCODE_5_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5,	BUTTON10,			"P5 Button 10",			SEQ_DEF_1(JOYCODE_5_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5, START,				"P5 Start",				SEQ_DEF_0 )
+	INPUT_PORT_DIGITAL_DEF( 5, IPG_PLAYER5, SELECT,				"P5 Select",			SEQ_DEF_0 )
 
 	INPUT_PORT_DIGITAL_DEF( 6, IPG_PLAYER6,	JOYSTICK_UP,		"P6 Up",				SEQ_DEF_1(JOYCODE_6_UP) )
 	INPUT_PORT_DIGITAL_DEF( 6, IPG_PLAYER6,	JOYSTICK_DOWN,      "P6 Down",    			SEQ_DEF_1(JOYCODE_6_DOWN) )
@@ -492,6 +502,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 6, IPG_PLAYER6,	BUTTON8,			"P6 Button 8",			SEQ_DEF_1(JOYCODE_6_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 6, IPG_PLAYER6,	BUTTON9,			"P6 Button 9",			SEQ_DEF_1(JOYCODE_6_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 6, IPG_PLAYER6,	BUTTON10,			"P6 Button 10",			SEQ_DEF_1(JOYCODE_6_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 6, IPG_PLAYER6, START,				"P6 Start",				SEQ_DEF_0 )
+	INPUT_PORT_DIGITAL_DEF( 6, IPG_PLAYER6, SELECT,				"P6 Select",			SEQ_DEF_0 )
 
 	INPUT_PORT_DIGITAL_DEF( 7, IPG_PLAYER7,	JOYSTICK_UP,		"P7 Up",				SEQ_DEF_1(JOYCODE_7_UP) )
 	INPUT_PORT_DIGITAL_DEF( 7, IPG_PLAYER7,	JOYSTICK_DOWN,      "P7 Down",    			SEQ_DEF_1(JOYCODE_7_DOWN) )
@@ -515,6 +527,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 7, IPG_PLAYER7,	BUTTON8,			"P7 Button 8",			SEQ_DEF_1(JOYCODE_7_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 7, IPG_PLAYER7,	BUTTON9,			"P7 Button 9",			SEQ_DEF_1(JOYCODE_7_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 7, IPG_PLAYER7,	BUTTON10,			"P7 Button 10",			SEQ_DEF_1(JOYCODE_7_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 7, IPG_PLAYER7, START,				"P7 Start",				SEQ_DEF_0 )
+	INPUT_PORT_DIGITAL_DEF( 7, IPG_PLAYER7, SELECT,				"P7 Select",			SEQ_DEF_0 )
 
 	INPUT_PORT_DIGITAL_DEF( 8, IPG_PLAYER8,	JOYSTICK_UP,		"P8 Up",				SEQ_DEF_1(JOYCODE_8_UP) )
 	INPUT_PORT_DIGITAL_DEF( 8, IPG_PLAYER8,	JOYSTICK_DOWN,      "P8 Down",				SEQ_DEF_1(JOYCODE_8_DOWN) )
@@ -538,6 +552,8 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 8, IPG_PLAYER8,	BUTTON8,			"P8 Button 8",			SEQ_DEF_1(JOYCODE_8_BUTTON8) )
 	INPUT_PORT_DIGITAL_DEF( 8, IPG_PLAYER8,	BUTTON9,			"P8 Button 9",			SEQ_DEF_1(JOYCODE_8_BUTTON9) )
 	INPUT_PORT_DIGITAL_DEF( 8, IPG_PLAYER8,	BUTTON10,			"P8 Button 10",			SEQ_DEF_1(JOYCODE_8_BUTTON10) )
+	INPUT_PORT_DIGITAL_DEF( 8, IPG_PLAYER8, START,				"P8 Start",				SEQ_DEF_0 )
+	INPUT_PORT_DIGITAL_DEF( 8, IPG_PLAYER8, SELECT,				"P8 Select",			SEQ_DEF_0 )
 
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   START1,				"1 Player Start",		SEQ_DEF_3(KEYCODE_1, CODE_OR, JOYCODE_1_START) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   START2,				"2 Players Start",		SEQ_DEF_3(KEYCODE_2, CODE_OR, JOYCODE_2_START) )
@@ -556,7 +572,7 @@ static const struct InputPortDefinition inputport_list_defaults[] =
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   COIN6,				"Coin 6",				SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   COIN7,				"Coin 7",				SEQ_DEF_0 )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   COIN8,				"Coin 8",				SEQ_DEF_0 )
-	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   BILL1,				"BIll 1",				SEQ_DEF_1(KEYCODE_BACKSPACE) )
+	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   BILL1,				"Bill 1",				SEQ_DEF_1(KEYCODE_BACKSPACE) )
 
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   SERVICE1,			"Service 1",    		SEQ_DEF_1(KEYCODE_9) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   SERVICE2,			"Service 2",    		SEQ_DEF_1(KEYCODE_0) )
@@ -810,7 +826,9 @@ int load_input_port_settings(void)
 	memcpy(inputport_list_backup, inputport_list_defaults, sizeof(inputport_list_backup));
 	osd_customize_inputport_list(inputport_list_backup);
 	
-	/* load the controller-specific info */
+	/* load the controller-specific info -- note that even though we are still modifying */
+	/* the inputport_list_backup, token_to_port_type relies on inputport_list being valid */
+	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
 	if (options.controller != NULL)
 	{
 		loaded = config_load_controller(options.controller, inputport_list_backup);
@@ -1067,6 +1085,9 @@ struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *p
 	
 	/* construct the ports */
  	construct_ipt(&iip);
+ 	
+	/* append final IPT_END */
+	input_port_initialize(&iip, IPT_END);
  	
 #ifdef MESS
 	/* process MESS specific extensions to the port */
@@ -1735,10 +1756,10 @@ static void update_analog_port(int portnum)
 			keypressed = info->lastdigital = 1;
 		}
 		
-		/* if centering is requested, reset the accumulated position to 0 before */
+		/* if resetting is requested, clear the accumulated position to 0 before */
 		/* applying the deltas so that we only return this frame's delta */
 		/* note that centering only works for relative controls */
-		if (port->analog.center && !info->absolute)
+		if (port->analog.reset && !info->absolute)
 			info->accum = 0;
 
 		/* apply the delta to the accumulated value */
@@ -1799,7 +1820,7 @@ profiler_mark(PROFILER_INPUT);
 		INT32 value;
 
 		/* interpolate or not */
-		if (info->interpolate && !info->port->analog.center)
+		if (info->interpolate && !info->port->analog.reset)
 			current = info->previous + cpu_scalebyfcount(info->accum - info->previous);
 		else
 			current = info->accum;

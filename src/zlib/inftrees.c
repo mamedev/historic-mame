@@ -114,7 +114,15 @@ unsigned short FAR *work;
     for (max = MAXBITS; max >= 1; max--)
         if (count[max] != 0) break;
     if (root > max) root = max;
-    if (max == 0) return -1;            /* no codes! */
+    if (max == 0) {                     /* no symbols to code at all */
+        this.op = (unsigned char)64;    /* invalid code marker */
+        this.bits = (unsigned char)1;
+        this.val = (unsigned short)0;
+        *(*table)++ = this;           /* make a table to force an error */
+        *(*table)++ = this;
+        *bits = 1;
+        return 0;     /* no symbols, but wait for decoding to report error */
+    }
     for (min = 1; min <= MAXBITS; min++)
         if (count[min] != 0) break;
     if (root < min) root = min;

@@ -31,7 +31,7 @@ static data8_t difficulty_input_port_r(int bit)
 	data8_t ret = 0;
 
 	/* read fake port and remap the buttons to 2 bits */
-	data8_t	raw = readinputport(6);
+	data8_t	raw = readinputportbytag("FAKE");
 
 	if (raw & (1 << (bit + 1)))
 		ret = 0x03;		/* expert */
@@ -51,15 +51,15 @@ static READ8_HANDLER( input_port_r )
 
 	switch (input_port_select)
 	{
-	case 0x01:	ret = readinputport(0); break;
-	case 0x02:	ret = readinputport(1); break;
-	case 0x04:	ret = (readinputport(2) & 0xf0) |
+	case 0x01:	ret = readinputportbytag("IN0"); break;
+	case 0x02:	ret = readinputportbytag("IN1"); break;
+	case 0x04:	ret = (readinputportbytag("IN2") & 0xf0) |
 					   difficulty_input_port_r(0) |
 					  (difficulty_input_port_r(3) << 2); break;
-	case 0x08:	ret = readinputport(3); break;
+	case 0x08:	ret = readinputportbytag("IN3"); break;
 	case 0x10:
 	case 0x20:	break;	/* these two are not really used */
-	default: logerror("Unexcepted port read: %02X\n", input_port_select);
+	default: logerror("Unexpected port read: %02X\n", input_port_select);
 	}
 
 	return ret;
@@ -113,8 +113,8 @@ WRITE8_HANDLER( clayshoo_analog_reset_w )
 
 	analog_port_val = 0xff;
 
-	timer_set(compute_duration(readinputport(4)), 0x02, reset_analog_bit);
-	timer_set(compute_duration(readinputport(5)), 0x01, reset_analog_bit);
+	timer_set(compute_duration(readinputportbytag("AN1")), 0x02, reset_analog_bit);
+	timer_set(compute_duration(readinputportbytag("AN2")), 0x01, reset_analog_bit);
 }
 
 

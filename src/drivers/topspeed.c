@@ -763,7 +763,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
-	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
+	{ YM3012_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },
 	{ irq_handler },
 	{ sound_bankswitch_w }
 };

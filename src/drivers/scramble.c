@@ -2263,7 +2263,7 @@ GAME( 1984, mrkougar, 0,        mrkougar, mrkougar, mrkougar,     ROT90, "ATW", 
 GAME( 1983, mrkougr2, mrkougar, mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar (earlier)" )
 GAME( 1983, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)" )
 GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. Felaco", "Hot Shocker" )
-GAMEX(1982, conquer,  0,        hotshock, hotshock, 0,            ROT90, "unknown", "Conquer", GAME_NOT_WORKING )
+GAMEX(1982, conquer,  0,        hotshock, hotshock, 0,            ROT90, "<unknown>", "Conquer", GAME_NOT_WORKING )
 GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century Electronics", "Hunchback (Scramble hardware)" )
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon" )
 GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X" )

@@ -1664,19 +1664,6 @@ UINT64 mame_chd_length(struct chd_interface_file *file)
 
 ***************************************************************************/
 
-INLINE int my_stricmp(const char *dst, const char *src)
-{
-	while (*src && *dst)
-	{
-		if (tolower(*src) != tolower(*dst))
-			return *dst - *src;
-		src++;
-		dst++;
-	}
-	return *dst - *src;
-}
-
-
 int mame_validitychecks(void)
 {
 	int i,j,cpu;
@@ -2099,7 +2086,7 @@ int mame_validitychecks(void)
 
 					if (inp->name >= DEF_STR( 9C_1C ) && inp->name <= DEF_STR( Free_Play )
 							&& (inp+1)->name >= DEF_STR( 9C_1C ) && (inp+1)->name <= DEF_STR( Free_Play )
-							&& inp->name >= (inp+1)->name && !memcmp(&inp->dipsetting.condition, &(inp+1)->dipsetting.condition, sizeof(inp->dipsetting.condition)))
+							&& inp->name >= (inp+1)->name && !memcmp(&inp->dipsetting, &(inp+1)->dipsetting, sizeof(inp->dipsetting)))
 					{
 						printf("%s: %s has unsorted coinage %s > %s\n",drivers[i]->source_file,drivers[i]->name,inp->name,(inp+1)->name);
 						error = 1;

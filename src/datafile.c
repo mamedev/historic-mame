@@ -41,7 +41,6 @@ enum
 /****************************************************************************
  *      datafile constants
  ****************************************************************************/
-#define MAX_DATAFILE_ENTRIES 5000
 #define DATAFILE_TAG '$'
 
 const char *DATAFILE_TAG_KEY = "$info";
@@ -100,9 +99,6 @@ static int GetGameNameIndex(const char *name)
 	{
 		/* initialize array of game names/indices */
 		int i;
-		num_games = 0;
-		while (drivers[num_games] != NULL)
-			num_games++;
 
 		sorted_drivers = (driver_data_type *)malloc(sizeof(driver_data_type) * num_games);
 		for (i=0;i<num_games;i++)
@@ -431,16 +427,18 @@ static int index_datafile (struct tDatafileIndex **_index)
         struct tDatafileIndex *idx;
         int count = 0;
         UINT32 token = TOKEN_SYMBOL;
-
+		num_games = 0;
+		while (drivers[num_games] != NULL)
+			num_games++;
         /* rewind file */
         if (ParseSeek (0L, SEEK_SET)) return 0;
 
         /* allocate index */
-        idx = *_index = malloc (MAX_DATAFILE_ENTRIES * sizeof (struct tDatafileIndex));
+        idx = *_index = malloc (num_games * sizeof (struct tDatafileIndex));
         if (NULL == idx) return 0;
 
         /* loop through datafile */
-        while ((count < (MAX_DATAFILE_ENTRIES - 1)) && TOKEN_INVALID != token)
+        while ((count < (num_games - 1)) && TOKEN_INVALID != token)
         {
                 long tell;
                 char *s;

@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 
   #ifndef MESS
 		sprintf(message_text, APPLONGNAME " v%s - Multiple Arcade Machine Emulator\n"
-							  "Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n"
+							  "Copyright (C) 1997-2004 by Nicola Salmoria and the MAME Team\n"
 							  "\n"
 							  APPLONGNAME " is a console application, you should launch it from a command prompt.\n"
 							  "\n"
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 	output_symbol_list(stderr);
 #endif
 
-	exit(res);
+	return res;
 }
 
 

@@ -149,7 +149,7 @@ To Do:
 
 - Priorities!
 - Use the Tilemap Manager for the road layers (when this kind of layers
-  will be supported) for perfomance and better priority support.
+  will be supported) for performance and better priority support.
   A line based zooming is additionally needed for f1gpstar.
 - Force feedback :)
 
@@ -892,9 +892,9 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( bigrun )
 	PORT_START_TAG("FAKE")	// IN0 - Fake input port - Buttons status
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) \
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("P1 Accelerator")\
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("P1 Low Gear")\
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("P1 High Gear")\
 
 	PORT_START_TAG("IN1")	// Coins - $80000.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1    )
@@ -907,14 +907,14 @@ INPUT_PORTS_START( bigrun )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 	PORT_START_TAG("IN2")	//Controls - $80002.w
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )	// Brake
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("P1 Brake")	// Brake
 //	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON4 )	// Shift - We handle it using buttons 3&4
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON5 )	// Horn
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("P1 Horn")	// Horn
 
 	PORT_START_TAG("IN3")	// Motor Control? - $80004.w
 	PORT_DIPNAME( 0x01, 0x01, "Up Limit SW"  	)	// Limit the Cockpit movements?
@@ -1015,8 +1015,8 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( cischeat )
 	PORT_START_TAG("IN0")	// Fake input port - Buttons status
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("P1 Low Gear")\
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("P1 High Gear")\
 
 	PORT_START_TAG("IN1")	// Coins - $80000.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1    )
@@ -1029,14 +1029,14 @@ INPUT_PORTS_START( cischeat )
 	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 	PORT_START_TAG("IN2")	// Controls - $80002.w
-	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )	// Brake
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("P1 Brake")	// Brake
 //	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON4 )	// Shift - We handle it using buttons 3&4
 	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )	// Accel
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("P1 Accelerator")	// Accel
 	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON5 )	// Horn
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("P1 Horn")	// Horn
 
 	PORT_START_TAG("IN3")	// Motor Control? - $80004.w
 	PORT_DIPNAME( 0x01, 0x01, "Up Limit SW"  	)	// Limit the Cockpit movements?
@@ -1117,9 +1117,9 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( f1gpstar )
 	PORT_START_TAG("IN0")	// Fake input port - Buttons status
-    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) \
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("P1 Accelerator")\
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("P1 Low Gear")\
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("P1 High Gear")\
 
 /*	[Country]
 	Japan		"race together" in Test Mode, Always Choose Race
@@ -1167,7 +1167,7 @@ INPUT_PORTS_START( f1gpstar )
 	PORT_SERVICE_NO_TOGGLE( 0x0008, IP_ACTIVE_LOW) // -> f0100 (called "Test")
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_START1   )
 //	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON4  ) // Shift -> !f900e - We handle it with 2 buttons
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON2  ) // Brake -> !f9010
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_NAME("P1 Brake")// Brake -> !f9010
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2   ) // "Race Together"
 
 	PORT_START_TAG("IN3")	// ? Read at boot only - $80006.w

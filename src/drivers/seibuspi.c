@@ -43,7 +43,7 @@
 #include "machine/intelfsh.h"
 
 void seibuspi_text_decrypt(unsigned char *rom);
-void seibuspi_bg_decrypt(unsigned char *rom);
+void seibuspi_bg_decrypt(unsigned char *rom, int size);
 void seibuspi_sprite_decrypt(data16_t* src, int romsize);
 
 VIDEO_START( spi );
@@ -162,7 +162,7 @@ WRITE32_HANDLER( z80_enable_w )
 READ32_HANDLER( spi_controls1_r )
 {
 	if( ACCESSING_LSB32 ) {
-		return (readinputport(1) << 8) | readinputport(0) | 0xffff0000;
+		return (readinputportbytag("IN1") << 8) | readinputportbytag("IN0") | 0xffff0000;
 	}
 	return 0xffffffff;
 }
@@ -173,7 +173,7 @@ READ32_HANDLER( spi_controls2_r )
 {
 	if( ACCESSING_LSB32 ) {
 		control_bit40 ^= 0x40;
-		return ((readinputport(2) | 0xffffff00) & ~0x40 ) | control_bit40;
+		return ((readinputportbytag("IN2") | 0xffffff00) & ~0x40 ) | control_bit40;
 	}
 	return 0xffffffff;
 }
@@ -235,7 +235,7 @@ static WRITE8_HANDLER( z80_bank_w )
 
 static READ8_HANDLER( z80_unk_r )
 {
-	return readinputport(3);
+	return readinputportbytag("JP1");
 }
 
 static READ32_HANDLER( soundrom_r )
@@ -406,7 +406,7 @@ static struct OKIM6295interface adpcm_6295_interface =
 /********************************************************************/
 
 INPUT_PORTS_START( spi_2button )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -415,7 +415,7 @@ INPUT_PORTS_START( spi_2button )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -425,14 +425,14 @@ INPUT_PORTS_START( spi_2button )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START		/* JP1 */
+	PORT_START_TAG("JP1")		/* JP1 */
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -440,7 +440,7 @@ INPUT_PORTS_START( spi_2button )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spi_3button )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -449,7 +449,7 @@ INPUT_PORTS_START( spi_3button )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -459,14 +459,14 @@ INPUT_PORTS_START( spi_3button )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START		/* JP1 */
+	PORT_START_TAG("JP1")
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -498,7 +498,7 @@ INPUT_PORTS_END
 */
 
 INPUT_PORTS_START( spi_ejanhs )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 A") PORT_CODE(KEYCODE_A)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 B") PORT_CODE(KEYCODE_B)
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 E") PORT_CODE(KEYCODE_E)
@@ -511,7 +511,7 @@ INPUT_PORTS_START( spi_ejanhs )
 	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Reach") PORT_CODE(KEYCODE_LSHIFT)
 	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_START1 ) PORT_PLAYER(1)
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 C") PORT_CODE(KEYCODE_C)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 D") PORT_CODE(KEYCODE_D)
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 G") PORT_CODE(KEYCODE_G)
@@ -522,12 +522,12 @@ INPUT_PORTS_START( spi_ejanhs )
 	PORT_BIT( 0x28, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Pon") PORT_CODE(KEYCODE_LALT)
 	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Ron") PORT_CODE(KEYCODE_Z)
 
-	PORT_START
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
+	PORT_START_TAG("IN2")
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf3, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START		/* JP1 */
+	PORT_START_TAG("JP1")
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -540,8 +540,9 @@ static struct GfxLayout spi_charlayout =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
-	6,			/* 6 bits per pixel */
-	{ 0, 4, 8, 12, 16, 20 },
+	5,			/* 6 bits per pixel */
+	//{ 0, 4, 8, 12, 16, 20 },
+	{ 0, 4, 16, 16, 20 },
 	{ 0, 1, 2, 3, 24, 25, 26, 27 },
 	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
 	6*8*8
@@ -550,9 +551,10 @@ static struct GfxLayout spi_charlayout =
 static struct GfxLayout spi_tilelayout =
 {
 	16,16,
-	32768,
+	RGN_FRAC(1,1),
 	6,
-	{ 0, 4, 8, 12, 16, 20 },
+	//{ 0, 4, 8, 12, 16, 20 },
+	{ 0, 4, 16, 20, 16, 20 },
 	{
 		 0, 1, 2, 3,
 	    24,25,26,27,
@@ -874,7 +876,7 @@ READ32_HANDLER ( ejanhs_speedup_r )
 static DRIVER_INIT( spi )
 {
 	seibuspi_text_decrypt(memory_region(REGION_GFX1));
-	seibuspi_bg_decrypt(memory_region(REGION_GFX2));
+	seibuspi_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
 	seibuspi_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x400000);
 
 }

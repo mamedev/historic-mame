@@ -24,6 +24,7 @@
 /* absolute values should range min..max in its entirety */
 #define ANALOG_VALUE_MIN	-65536
 #define ANALOG_VALUE_MAX	65536
+#define ANALOG_VALUE_INVALID (ANALOG_VALUE_MAX*2)
 
 /* types of analog controls */
 enum

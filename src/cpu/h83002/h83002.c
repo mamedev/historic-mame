@@ -2145,7 +2145,7 @@ static void h8_cmp32(INT32 src, INT32 dst)
 {
 	UINT64 res = (UINT64)(((UINT64)dst&0xffffffff)-((UINT64)src&0xffffffff));
 
-	h8.h8cflag = (res & (UINT64)0x100000000ULL) ? 1 : 0;
+	h8.h8cflag = (res & (UINT64)U64(0x100000000)) ? 1 : 0;
 	h8.h8vflag = (((dst) ^ (src)) & ((dst) ^ (res)) & 0x80000000) ? 1 : 0;
 	h8.h8zflag = (res == 0) ? 1 : 0;
 	h8.h8nflag = (res & 0x80000000) ? 1 : 0;

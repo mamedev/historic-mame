@@ -11,31 +11,38 @@ extern unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag);
 
 /* Memory access */
 /* read byte */
-#define READ_B(addr)          (program_read_byte_32be(addr))
+#define READ_B(addr)           (program_read_byte_32be(addr))
 /* read half-word */
-#define READ_HW(addr)         (program_read_word_32be((addr) & ~1))
+#define READ_HW(addr)          (program_read_word_32be((addr) & ~1))
 /* read word */
-#define READ_W(addr)          (program_read_dword_32be((addr) & ~2))
+#define READ_W(addr)           (program_read_dword_32be((addr) & ~3))
 
 /* write byte */
-#define WRITE_B(addr, val)    (program_write_byte_32be(addr, val))
+#define WRITE_B(addr, data)    (program_write_byte_32be(addr, data))
 /* write half-word */
-#define WRITE_HW(addr, val)   (program_write_word_32be((addr) & ~1, val))
+#define WRITE_HW(addr, data)   (program_write_word_32be((addr) & ~1, data))
 /* write word */
-#define WRITE_W(addr, val)    (program_write_dword_32be((addr) & ~2, val))
+#define WRITE_W(addr, data)    (program_write_dword_32be((addr) & ~3, data))
+
 
 /* I/O access */
 /* read word */
-#define IO_READ_W(addr)       (io_read_dword_32be(addr))
+#define IO_READ_W(addr)        (io_read_dword_32be(((addr) >> 13) & 0x1fff))
 /* write word */
-#define IO_WRITE_W(addr, val) (io_write_dword_32be(addr, val))
+#define IO_WRITE_W(addr, data) (io_write_dword_32be(((addr) >> 13) & 0x1fff, data))
 
 
 #define READ_OP(addr)	       READ_HW(addr)
 
 
-#define PC_CODE			 0
-#define SR_CODE			 1
+/* Registers Number	*/
+#define PC_REGISTER			 0
+#define SR_REGISTER			 1
+#define BCR_REGISTER		20
+#define TPR_REGISTER		21
+#define ISR_REGISTER		25
+#define FCR_REGISTER		26
+#define MCR_REGISTER		27
 
 #define X_CODE(val)		 ((val & 0x7000) >> 12)
 #define E_BIT(val)		 ((val & 0x8000) >> 15)

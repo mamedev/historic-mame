@@ -96,13 +96,13 @@ ADDRESS_MAP_END
 ***************************************************************************/
 static INTERRUPT_GEN( astrof_interrupt )
 {
-	if (readinputport(2) & 1)	/* Coin */
+	if (readinputportbytag("FAKE") & 1)	/* Coin */
 		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
 INPUT_PORTS_START( astrof )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 /* Player 1 Controls */
@@ -114,7 +114,7 @@ INPUT_PORTS_START( astrof )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 
-	PORT_START      /* DSW0 */
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
@@ -139,7 +139,7 @@ INPUT_PORTS_START( astrof )
 
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("FAKE")
 	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
 	/* This fake input port is used by the interrupt */
 	/* handler to be notified of coin insertions. We use IMPULSE to */
@@ -155,7 +155,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( tomahawk )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
@@ -165,7 +165,7 @@ INPUT_PORTS_START( tomahawk )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* DSW0 */
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
@@ -190,7 +190,7 @@ INPUT_PORTS_START( tomahawk )
 
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("FAKE")
 	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
 	/* This fake input port is used by the interrupt */
 	/* handler to be notified of coin insertions. We use IMPULSE to */

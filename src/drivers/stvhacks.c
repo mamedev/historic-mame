@@ -466,7 +466,7 @@ static READ32_HANDLER( danchih_hack_r )
 {
 	if (activecpu_get_pc()==0x06028b2a) return 0x0e0c0000;
 
-	return stv_workram_h[0x60ffcbc/4];
+	return stv_workram_h[0x0ffcbc/4];
 }
 
 DRIVER_INIT( danchih )

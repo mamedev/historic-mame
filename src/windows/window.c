@@ -200,6 +200,7 @@ static struct win_effect_data effect_table[] =
 	{ "sharp",   EFFECT_SHARP,       2, 2, 2, 2 },
 };
 
+static struct mame_bitmap *last_bitmap;
 
 
 //============================================================
@@ -462,6 +463,7 @@ int win_init_window(void)
 			if (!RegisterClass(&wc))
 				return 1;
 		}
+		classes_created = 1;
 	}
 
 	// make the window title
@@ -500,7 +502,9 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 	int i, result = 0;
 
 	// clear the initial state
+	last_bitmap = NULL;
 	visible_area_set = 0;
+	win_trying_to_quit = 0;
 
 	// extract useful parameters from the attributes
 	pixel_aspect_ratio	= (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK);
@@ -707,11 +711,9 @@ void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle 
 
 static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
 {
-	static struct mame_bitmap *last;
-
 	// if no bitmap, use the last one we got
 	if (bitmap == NULL)
-		bitmap = last;
+		bitmap = last_bitmap;
 
 	// if no bitmap, just fill
 	if (bitmap == NULL)
@@ -721,7 +723,7 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 		FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));
 		return;
 	}
-	last = bitmap;
+	last_bitmap = bitmap;
 
 	// if we're iconic, don't bother
 	if (IsIconic(win_video_window))

@@ -23,10 +23,6 @@
       NC    |U|17|    NC
     1P "1"  |V|18|  1P "2"
 
-TODO:
-
-- Keys for player 2
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -41,16 +37,26 @@ extern PALETTE_INIT( hanaawas );
 extern VIDEO_START( hanaawas );
 extern VIDEO_UPDATE( hanaawas );
 
+static int mux;
 
 static READ8_HANDLER( hanaawas_input_port_0_r )
 {
 	int i,ordinal = 0;
-	UINT16 buttons;
+	UINT16 buttons = 0;
 
-	/* as to which player's jeys are read are probably selected via port 0, but
-	   it's not obvious to me how */
-
-	buttons = readinputport(2);
+	switch( mux )
+	{
+	case 1: /* start buttons */
+		buttons = readinputport(4);
+		break;
+	case 2: /* player 1 buttons */
+		buttons = readinputport(2);
+		break;
+	case 4: /* player 2 buttons */
+		buttons = readinputport(3);
+		break;
+	}
+	
 
 	/* map button pressed into 1-10 range */
 
@@ -66,6 +72,10 @@ static READ8_HANDLER( hanaawas_input_port_0_r )
 	return (input_port_0_r(0) & 0xf0) | ordinal;
 }
 
+static WRITE8_HANDLER( hanaawas_inputs_mux_w )
+{
+	mux = data;
+}
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
@@ -85,10 +95,12 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(hanaawas_input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READNOP /* it must return 0 */
 	AM_RANGE(0x10, 0x10) AM_READ(AY8910_read_port_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(hanaawas_inputs_mux_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x11, 0x11) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
@@ -97,6 +109,9 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( hanaawas )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
 
 	PORT_START      /* DSW0 */
@@ -125,18 +140,33 @@ INPUT_PORTS_START( hanaawas )
 
 	/* fake port.  The button depressed gets converted to an integer in the 1-10 range */
 	PORT_START      /* IN2 */
-	PORT_BIT( 0x001, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x001, IP_ACTIVE_HIGH, IPT_START1 )		/* same as button 1 */
-	PORT_BIT( 0x002, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x002, IP_ACTIVE_HIGH, IPT_START2 )		/* same as button 2 */
-	PORT_BIT( 0x004, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x008, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_BUTTON5 )
-	PORT_BIT( 0x020, IP_ACTIVE_HIGH, IPT_BUTTON6 )
-	PORT_BIT( 0x040, IP_ACTIVE_HIGH, IPT_BUTTON7 )
-	PORT_BIT( 0x080, IP_ACTIVE_HIGH, IPT_BUTTON8 )
-	PORT_BIT( 0x100, IP_ACTIVE_HIGH, IPT_BUTTON9 )
-	PORT_BIT( 0x200, IP_ACTIVE_HIGH, IPT_BUTTON10 )
+	PORT_BIT( 0x001, IP_ACTIVE_HIGH, IPT_BUTTON1  ) PORT_PLAYER(1)
+	PORT_BIT( 0x002, IP_ACTIVE_HIGH, IPT_BUTTON2  ) PORT_PLAYER(1)
+	PORT_BIT( 0x004, IP_ACTIVE_HIGH, IPT_BUTTON3  ) PORT_PLAYER(1)
+	PORT_BIT( 0x008, IP_ACTIVE_HIGH, IPT_BUTTON4  ) PORT_PLAYER(1)
+	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_BUTTON5  ) PORT_PLAYER(1)
+	PORT_BIT( 0x020, IP_ACTIVE_HIGH, IPT_BUTTON6  ) PORT_PLAYER(1)
+	PORT_BIT( 0x040, IP_ACTIVE_HIGH, IPT_BUTTON7  ) PORT_PLAYER(1)
+	PORT_BIT( 0x080, IP_ACTIVE_HIGH, IPT_BUTTON8  ) PORT_PLAYER(1)
+	PORT_BIT( 0x100, IP_ACTIVE_HIGH, IPT_BUTTON9  ) PORT_PLAYER(1)
+	PORT_BIT( 0x200, IP_ACTIVE_HIGH, IPT_BUTTON10 ) PORT_PLAYER(1)
+
+	/* fake port.  The button depressed gets converted to an integer in the 1-10 range */
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x001, IP_ACTIVE_HIGH, IPT_BUTTON1  ) PORT_PLAYER(2)
+	PORT_BIT( 0x002, IP_ACTIVE_HIGH, IPT_BUTTON2  ) PORT_PLAYER(2)
+	PORT_BIT( 0x004, IP_ACTIVE_HIGH, IPT_BUTTON3  ) PORT_PLAYER(2)
+	PORT_BIT( 0x008, IP_ACTIVE_HIGH, IPT_BUTTON4  ) PORT_PLAYER(2)
+	PORT_BIT( 0x010, IP_ACTIVE_HIGH, IPT_BUTTON5  ) PORT_PLAYER(2)
+	PORT_BIT( 0x020, IP_ACTIVE_HIGH, IPT_BUTTON6  ) PORT_PLAYER(2)
+	PORT_BIT( 0x040, IP_ACTIVE_HIGH, IPT_BUTTON7  ) PORT_PLAYER(2)
+	PORT_BIT( 0x080, IP_ACTIVE_HIGH, IPT_BUTTON8  ) PORT_PLAYER(2)
+	PORT_BIT( 0x100, IP_ACTIVE_HIGH, IPT_BUTTON9  ) PORT_PLAYER(2)
+	PORT_BIT( 0x200, IP_ACTIVE_HIGH, IPT_BUTTON10 ) PORT_PLAYER(2)
+
+	PORT_START      /* IN4 */
+	PORT_BIT( 0x001, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x002, IP_ACTIVE_HIGH, IPT_START2 )
 INPUT_PORTS_END
 
 
@@ -189,7 +219,7 @@ static MACHINE_DRIVER_START( hanaawas )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
 	MDRV_COLORTABLE_LENGTH(32*8)

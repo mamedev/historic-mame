@@ -365,6 +365,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( kodure )	/* (c) 1987 (Japan) */
 	DRIVER( armedf )	/* (c) 1988 */
 	DRIVER( cclimbr2 )	/* (c) 1988 (Japan) */
+	DRIVER( bigfghtr )	/* (c) 1989 */
 
 	/* Nichibutsu Mahjong games */
 	DRIVER( hyhoo )		/* (c) 1987 */
@@ -1365,6 +1366,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( kikstart )	/* A20 */
 
 	/* other Taito games */
+	DRIVER( fgoal )		/*     (c) 1979 Taito Corporation */
+	DRIVER( fgoala )	/*     (c) 1979 Taito Corporation */
 	DRIVER( crbaloon )	/* CL  (c) 1980 Taito Corporation */
 	DRIVER( crbalon2 )	/* CL  (c) 1980 Taito Corporation */
 	DRIVER( sbowling )	/* KB  (c) 1982 Taito Corporation */
@@ -1738,6 +1741,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( pbobbl2u )	/* E10 (c) 1995 Taito America Corporation (US) */
 	DRIVER( pbobbl2x )	/* E10 (c) 1995 Taito Corporation (Japan) */
 	DRIVER( gekirido )	/* E11 (c) 1995 Taito Corporation (Japan) */
+	DRIVER( tcobra2 )	/* E15 (c) 1995 Taito Corporation (Japan) */
+	DRIVER( tcobra2u )	/* E15 (c) 1995 Taito Corporation (Japan) */
 	DRIVER( ktiger2 )	/* E15 (c) 1995 Taito Corporation (Japan) */
 	DRIVER( bubblem )	/* E21 (c) 1995 Taito Corporation Japan (World) */
 	DRIVER( bubblemj )	/* E21 (c) 1995 Taito Corporation (Japan) */
@@ -2948,6 +2953,9 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( swa )
 	DRIVER( wingwar )
 
+	/* Sega H1 games */
+	DRIVER( coolridr )
+
 	/* Sega ST-V games */
 	DRIVER( astrass )
 	DRIVER( bakubaku )
@@ -3395,6 +3403,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* MBY ?? */
 	DRIVER( backfire )	/* MBZ (c) 1995 */
 	/* MCA ?? */
+	DRIVER( prtytime )	/* (c) 1995 Mitchell */
 	DRIVER( gangonta )	/* MCB (c) 1995 Mitchell */
 	DRIVER( chainrec )	/* MCC (c) 1994 */
 	/* MCD ?? */
@@ -3773,6 +3782,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* GX Type 4 */
 	DRIVER( vsnetscr )	/* GX627 */
+	DRIVER( vsnetscj )	/* GX627 */
 	DRIVER( rungun2 )	/* GX505 */
 	DRIVER( slamdnk2 )	/* GX505 */
 	DRIVER( rushhero )	/* GX605 */
@@ -3793,6 +3803,17 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bmdct )		/* GX995 (c) 2000 (Japan) */
 	DRIVER( hmcompm2 )	/* GX988 (c) 2000 (Japan) */
 	DRIVER( bm6thmix )	/* GxA21 (c) 2001 (Japan) */
+
+	/* PowerPC based Konami games */
+	DRIVER( gticlub )	/* GX688 (c)1996 */
+	DRIVER( gradius4 )	/* GX837 (c)1999 */
+	DRIVER( sscope )	/* GX830 (c)1999 */
+	DRIVER( sscope2 )	/* GX931 (c)2000 */
+	DRIVER( racingj )	/* GX676 (c)1998 */
+	DRIVER( racingj2 )	/* GX888 (c)1999 */
+	DRIVER( thrilld )	/* GX713 (c)1998 */
+	DRIVER( midnrun )	/* GX??? (c)1995 */
+	DRIVER( windheat )	/* GX677 (c)1996 */
 
 	/* Exidy games */
 	DRIVER( carpolo )	/* (c) 1977 */
@@ -4354,6 +4375,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( btlfield )  /* Alpha-68K96II 'BT' (c) 1987 */
 	DRIVER( skysoldr )	/* Alpha-68K96II 'SS' (c) 1988 SNK (Romstar with dip switch) */
 	DRIVER( goldmedl )	/* Alpha-68K96II 'GM' (c) 1988 SNK */
+	DRIVER( goldmeda )	/* Alpha-68K96II 'GM' (c) 1988 SNK */
 	DRIVER( goldmedb )	/* Alpha-68K96II bootleg */
 	DRIVER( skyadvnt )	/* Alpha-68K96V  'SA' (c) 1989 Alpha Denshi Co. */
 	DRIVER( skyadvnu )	/* Alpha-68K96V  'SA' (c) 1989 SNK of America licensed from Alpha */
@@ -5487,6 +5509,8 @@ Other Sun games
 	DRIVER( rougien )	/* (c) 1982 Sanritsu */
 	DRIVER( drmicro )	/* (c) 1983 Sanritsu */
 	DRIVER( appoooh )	/* (c) 1984 Sega */	/* made by Sanritsu */
+	DRIVER( robowres )	/* (c) 1986 Sega */
+	DRIVER( robowrb )	/* bootleg */
 	DRIVER( bankp )		/* (c) 1984 Sega */	/* made by Sanritsu */
 	DRIVER( mjkjidai )	/* (c) 1986 Sanritsu */
 	DRIVER( mayumi )	/* (c) 1988 Victory L.L.C. */	/* made by Sanritsu */
@@ -5510,6 +5534,7 @@ Other Sun games
 	DRIVER( freekckb )	/* (c) 1987 Nihon System (+ optional Sega) */
 	DRIVER( countrun )
 	DRIVER( countrnb )
+	DRIVER( countrb2 )
 
 	/* Alba games */
 	DRIVER( rmhaihai )	/* (c) 1985 Alba */
@@ -5686,6 +5711,7 @@ Other Sun games
 	DRIVER( racoon )	/* Eolith */
 	DRIVER( xfiles )	/* DfPix */
 	DRIVER( misncrft )	/* (c) 2000 Sun */
+	DRIVER( coolmini )	/* (c) ???? Semicom */
 	DRIVER( strvmstr )	/* (c) 1986 Enerdyne Technologies Inc */
 	DRIVER( dorachan )	/* (c) 1980 Craul Denshi */
 	DRIVER( ladyfrog )	/* (c) 1990 Mondial Games */
@@ -5712,6 +5738,11 @@ Other Sun games
 	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
 	DRIVER( trvgns )	/* ? */
+	DRIVER( phrcraze )	/* (c) 1986 Merit */
+	DRIVER( tictac )	/* (c) 198? Merit */
+	DRIVER( pitboss )	/* (c) 198? Merit */
+	DRIVER( trvwhiz )	/* (c) 198? Merit */
+	DRIVER( trvwhzii )	/* (c) 198? Merit */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

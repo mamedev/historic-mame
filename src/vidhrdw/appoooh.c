@@ -76,6 +76,45 @@ PALETTE_INIT( appoooh )
 	/* to use them somewhere in the game. */
 }
 
+PALETTE_INIT( robowres )
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
+		color_prom++;
+	}
+
+	/* color_prom now points to the beginning of the lookup table */
+
+	for (i = 0;i < 32*8;i++)
+		colortable[i]=(*(color_prom++) & 0x0f);
+
+}
+
+
+
 /***************************************************************************
 
   Callbacks for the TileMap code
@@ -227,6 +266,39 @@ static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
 	 }
 }
 
+static void robowres_draw_sprites(struct mame_bitmap *dest_bmp,
+		const struct rectangle *cliprect,
+        const struct GfxElement *gfx,
+        unsigned char *sprite)
+{
+	int offs;
+
+	for (offs = 0x20 - 4;offs >= 0;offs -= 4)
+	{
+		int sy    = 240 - sprite[offs+0];
+		int code  = 0x200 + (sprite[offs+1]>>2) + ((sprite[offs+2]>>5) & 0x07)*0x40;
+		int color = sprite[offs+2]&0x0f;	/* TODO: bit 4 toggles continuously, what is it? */
+		int sx    = sprite[offs+3];
+		int flipx = sprite[offs+1]&0x01;
+
+		if(sx>=248) sx -= 256;
+
+		if (flip_screen)
+		{
+			sx = 239 - sx;
+			sy = 239 - sy;
+			flipx = !flipx;
+		}
+		drawgfx( dest_bmp, gfx,
+				code,
+				color,
+				flipx,flip_screen,
+				sx, sy,
+				cliprect,
+				TRANSPARENCY_PEN , 0);
+	 }
+}
+
 /***************************************************************************
 
   Draw the game screen in the given mame_bitmap.
@@ -255,6 +327,33 @@ VIDEO_UPDATE( appoooh )
 		appoooh_draw_sprites( bitmap, cliprect, Machine->gfx[3],spriteram_2);
 		/* sprite set #1 */
 		appoooh_draw_sprites( bitmap, cliprect, Machine->gfx[2],spriteram);
+	}
+
+	if (priority != 0)	/* fg in front of sprites */
+		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+}
+
+VIDEO_UPDATE( robowres )
+{
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+
+	if (priority == 0)	/* fg behind sprites */
+		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+
+	/* draw sprites */
+	if (priority == 1)
+	{
+		/* sprite set #1 */
+		robowres_draw_sprites( bitmap, cliprect, Machine->gfx[2],spriteram);
+		/* sprite set #2 */
+		robowres_draw_sprites( bitmap, cliprect, Machine->gfx[3],spriteram_2);
+	}
+	else
+	{
+		/* sprite set #2 */
+		robowres_draw_sprites( bitmap, cliprect, Machine->gfx[3],spriteram_2);
+		/* sprite set #1 */
+		robowres_draw_sprites( bitmap, cliprect, Machine->gfx[2],spriteram);
 	}
 
 	if (priority != 0)	/* fg in front of sprites */

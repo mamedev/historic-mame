@@ -420,23 +420,23 @@ INPUT_PORTS_START( edrandy )
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )	/* Listed as "Don't Change" in the manual */
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0300, 0x0300, "Energy" )
-	PORT_DIPSETTING(      0x0100, "2.5" )
-	PORT_DIPSETTING(      0x0000, "3" )
-	PORT_DIPSETTING(      0x0300, "3.5" )
-	PORT_DIPSETTING(      0x0200, "4.5" )
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) ) /* Not confirmed */
+	PORT_DIPNAME( 0x0300, 0x0300, "Player's Power" )	/* Energy */
+	PORT_DIPSETTING(      0x0100, DEF_STR( Very_Low ) )	/* 2.5 */
+	PORT_DIPSETTING(      0x0000, DEF_STR( Low ) )		/* 3 */
+	PORT_DIPSETTING(      0x0300, DEF_STR( Medium ) )	/* 3.5 */
+	PORT_DIPSETTING(      0x0200, DEF_STR( High ) )		/* 4.5 */
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )	/* Listed as "Don't Change" in the manual */
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )	/* Listed as "Don't Change" in the manual */
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Continues ) )
@@ -494,9 +494,9 @@ INPUT_PORTS_START( cninja )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )	/* If DS #1-#6 are all ON */
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )		/*	Standard Coin Credit */
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )		/*	2 Coins to Start / 1 Coin to Continue */
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0100, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
@@ -507,13 +507,13 @@ INPUT_PORTS_START( cninja )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )	/* Listed as "Don't Change" in the manual */
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )	/* Listed as "Don't Change" in the manual */
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Restore Life Meter" )	/* Life Meter Restored when Big Boss is Defeated */
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Demo_Sounds ) )

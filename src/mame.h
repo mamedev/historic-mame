@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "fileio.h"
 #include "osdepend.h"
@@ -35,13 +36,19 @@ extern int gbPriorityBitmapIsDirty;
 #ifndef MESS
 #define APPNAME					"MAME"
 #define APPLONGNAME				"M.A.M.E."
+#define CAPGAMENOUN				"GAME"
+#define CAPSTARTGAMENOUN		"Game"
 #define GAMENOUN				"game"
 #define GAMESNOUN				"games"
+#define HISTORYNAME				"History"
 #else
 #define APPNAME					"MESS"
 #define APPLONGNAME				"M.E.S.S."
+#define CAPGAMENOUN				"SYSTEM"
+#define CAPSTARTGAMENOUN		"System"
 #define GAMENOUN				"system"
 #define GAMESNOUN				"systems"
+#define HISTORYNAME				"System Info"
 #endif
 
 
@@ -387,6 +394,19 @@ int mame_find_cpu_index(const char *tag);
 
 /* runs validity checks */
 int mame_validitychecks(void);
+
+/* Compare strings case insensitive */
+INLINE int my_stricmp(const char *dst, const char *src)
+{
+	while (*src && *dst)
+	{
+		if (tolower(*src) != tolower(*dst))
+			return *dst - *src;
+		src++;
+		dst++;
+	}
+	return *dst - *src;
+}
 
 #ifdef MESS
 #include "mess.h"

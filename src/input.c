@@ -414,6 +414,23 @@ static struct
 	STANDARD_CODE_STRING(MOUSECODE_8_ANALOG_X)
 	STANDARD_CODE_STRING(MOUSECODE_8_ANALOG_Y)
 	STANDARD_CODE_STRING(MOUSECODE_8_ANALOG_Z)
+
+	STANDARD_CODE_STRING(GUNCODE_1_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_1_ANALOG_Y)
+	STANDARD_CODE_STRING(GUNCODE_2_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_2_ANALOG_Y)
+	STANDARD_CODE_STRING(GUNCODE_3_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_3_ANALOG_Y)
+	STANDARD_CODE_STRING(GUNCODE_4_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_4_ANALOG_Y)
+	STANDARD_CODE_STRING(GUNCODE_5_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_5_ANALOG_Y)
+	STANDARD_CODE_STRING(GUNCODE_6_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_6_ANALOG_Y)
+	STANDARD_CODE_STRING(GUNCODE_7_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_7_ANALOG_Y)
+	STANDARD_CODE_STRING(GUNCODE_8_ANALOG_X)
+	STANDARD_CODE_STRING(GUNCODE_8_ANALOG_Y)
 };
 
 
@@ -550,7 +567,7 @@ void code_close(void)
 
 INT32 code_analog_value(input_code_t code)
 {
-	INT32 value = 0;
+	INT32 value = ANALOG_VALUE_INVALID;
 
 	profiler_mark(PROFILER_INPUT);
 	if (code_map[code].osinfo != NULL && ANALOG_TYPE(code) != ANALOG_TYPE_NONE)
@@ -1007,9 +1024,13 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 					/* for analog codes, that becomes the result (only one analog code per OR section) */
 					if (ANALOG_TYPE(code) != ANALOG_TYPE_NONE)
 					{
-						result = code_analog_value(code);
-						type = ANALOG_TYPE(code);
-						count++;
+						INT32 value = code_analog_value(code);
+						if (value != ANALOG_VALUE_INVALID)
+						{
+							result = value;
+							type = ANALOG_TYPE(code);
+							count++;
+						}
 					}
 					
 					/* for digital codes, update the enable state */
@@ -1257,11 +1278,14 @@ int seq_read_async(input_seq_t *seq, int first)
 			if (ANALOG_TYPE(newcode) != ANALOG_TYPE_NONE)
 			{
 				INT32 diff = code_analog_value(newcode);
-				if (ANALOG_TYPE(newcode) == ANALOG_TYPE_ABSOLUTE)
-					diff = code_map[newcode].memory - diff;
-				if (diff < 0) diff = -diff;
-				if (diff > (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / 4)
-					break;
+				if (diff != ANALOG_VALUE_INVALID)
+				{
+					if (ANALOG_TYPE(newcode) == ANALOG_TYPE_ABSOLUTE)
+						diff = code_map[newcode].memory - diff;
+					if (diff < 0) diff = -diff;
+					if (diff > (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / 4)
+						break;
+				}
 			}
 		
 		/* if we got one, add it to the sequence and force an update next time round */

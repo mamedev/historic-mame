@@ -10,7 +10,7 @@
 static struct tilemap *fix_tilemap;
 static int bank_base,flipscreen;
 
-void (*alpha68k_video_banking)(int *bank, int data);
+extern void (*alpha68k_video_banking)(int *bank, int data);
 
 extern int microcontroller_id;
 

@@ -50,35 +50,38 @@ static void get_gx_psac3_tile_info(int tile_index)
 }
 
 /* PSAC4 */
+/* these tilemaps are weird in both format and content, one of them
+   doesn't really look like it should be displayed? */
 static void get_gx_psac1a_tile_info(int tile_index)
 {
-	int tileno, colour, flip;
-	data8_t *map = (data8_t *)&gx_psacram[tile_index*2];	// *8 / 4 (gx_psacram is data32_t)
+	int tileno, colour, flipx,flipy;
+	int flip;
+	flip=0;
+	colour = 0;
 
-	// this should be &0x7f for opengolf, except that makes the tilemaps unrecognizable.  huh?
-	tileno = (map[1]&0x3f)<<8 | map[0];
+	tileno = (gx_psacram[tile_index*2] & 0x00003fff)>>0;
+	flipx  = (gx_psacram[tile_index*2+1] & 0x00800000)>>23;
+	flipy  = (gx_psacram[tile_index*2+1] & 0x00400000)>>22;
 
-	colour = 0; //(psac_colorbase << 4);
-
-	flip = 0;
-	if (map[7] & 0x80) flip |= TILE_FLIPX;
-	if (map[7] & 0x40) flip |= TILE_FLIPY;
+	if (flipx) flip |= TILE_FLIPX;
+	if (flipy) flip |= TILE_FLIPY;
 
 	SET_TILE_INFO(1, tileno, colour, flip)
-}		 
+}
 
 static void get_gx_psac1b_tile_info(int tile_index)
 {
-	int tileno, colour, flip;
-	data8_t *map = (data8_t *)&gx_psacram[tile_index*2];
+	int tileno, colour, flipx,flipy;
+	int flip;
+	flip=0;
 
-	tileno = (map[5]&0x3f)<<8 | map[4];
+	colour = 0;
+	tileno = (gx_psacram[tile_index*2+1] & 0x00003fff)>>0;
+	flipx  = (gx_psacram[tile_index*2+1] & 0x00200000)>>21;
+	flipy  = (gx_psacram[tile_index*2+1] & 0x00100000)>>20;
 
-	colour = 0; //(psac_colorbase << 4);
-
-	flip = 0;
-	if (map[7] & 0x20) flip |= TILE_FLIPX;
-	if (map[7] & 0x10) flip |= TILE_FLIPY;
+	if (flipx) flip |= TILE_FLIPX;
+	if (flipy) flip |= TILE_FLIPY;
 
 	SET_TILE_INFO(0, tileno, colour, flip)
 }
@@ -544,7 +547,7 @@ WRITE32_HANDLER( konamigx_555_palette2_w )
 	offset += (0x4000/4);
 
 	COMBINE_DATA(&paletteram32[offset]);
-	
+
 	paletteram16 = (data16_t *)paletteram32;
 	if (ACCESSING_MSW32)
 		paletteram16_xRRRRRGGGGGBBBBB_word_w(offset*2, data >> 16, mem_mask >> 16);

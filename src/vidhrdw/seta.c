@@ -601,7 +601,6 @@ PALETTE_INIT( zingzip )
 
 
 
-/* 6 bit layer. The colors are still WRONG */
 PALETTE_INIT( usclssic )
 {
 	int color, pen;
@@ -609,7 +608,7 @@ PALETTE_INIT( usclssic )
 	int x;
 
 	/* DECODE PROM - we don't use the colours yet */
-	for (x = 0; x < 0x200 ; x++)
+	for (x = 0x000; x < 0x200 ; x++)
 	{
 		int r,g,b;
 		int data;
@@ -624,16 +623,16 @@ PALETTE_INIT( usclssic )
 		g = (g << 3) | (g >> 2);
 		b = (b << 3) | (b >> 2);
 
-		palette_set_color(x+0x200,r,g,b);
+		if (x>=0x100) palette_set_color(x,r,g,b);
+		else palette_set_color(x+0x300,r,g,b);
 	}
 
 	for( color = 0; color < 32; color++ )
 		for( pen = 0; pen < 64; pen++ )
-			colortable[color * 64 + pen + 512] = (((color & 0xf) * 16 + pen)%(512));
-
-
+			colortable[color * 64 + pen + 512] =  ((((color & 0x1f) * 16 + pen)%512)+512);
 
 }
+
 
 
 

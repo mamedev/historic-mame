@@ -197,7 +197,7 @@ MACHINE_DRIVER_END
 
 INPUT_PORTS_START( sitv )
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -682,9 +682,9 @@ INPUT_PORTS_START( sstrangr )
 
 	PORT_START_TAG("EXT")      /* External switches */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed" )
+	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed (Cheat)" )
 	PORT_DIPSETTING(    0x00, "Slow" )
-	PORT_BIT(0,  0x02, IPT_DIPSWITCH_SETTING ) PORT_NAME("Fast (Cheat)")
+	PORT_DIPSETTING(    0x02, "Fast" )
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( sstrangr )
@@ -767,9 +767,9 @@ INPUT_PORTS_START( sstrngr2 )
 
 	PORT_START_TAG("EXT")      /* External switches */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed" )
+	PORT_DIPNAME( 0x02, 0x00, "Player's Bullet Speed (Cheat)" )
 	PORT_DIPSETTING(    0x00, "Slow" )
-	PORT_BIT(0,  0x02, IPT_DIPSWITCH_SETTING ) PORT_NAME("Fast (Cheat)")
+	PORT_DIPSETTING(    0x02, "Fast" )
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( sstrngr2 )
@@ -1270,14 +1270,14 @@ INPUT_PORTS_START( gunfight )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)        /* Move Man */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)              /* Fire */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 Fire")             /* Fire */
 
 	PORT_START_TAG("IN1")      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY              /* Move Man */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )                    /* Fire */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("P1 Fire")                   /* Fire */
 
 #ifdef NOTDEF
 	PORT_START_TAG("IN2")      /* IN2 Dips & Coins */
@@ -1350,8 +1350,8 @@ INPUT_PORTS_START( m4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(2) /* left trigger */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_PLAYER(2) /* left reload */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 Trigger")/* left trigger */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_PLAYER(2) PORT_NAME("P2 Reload")/* left reload */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 
@@ -1360,8 +1360,8 @@ INPUT_PORTS_START( m4 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_2WAY
 	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_2WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 ) /* right trigger */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 ) /* right reload */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_NAME("P1 Trigger")/* right trigger */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_NAME("P1 Reload")/* right reload */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 
@@ -1406,14 +1406,14 @@ INPUT_PORTS_START( boothill )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)        /* Move Man */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) /* Fire */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 Fire")/* Fire */
 
 	PORT_START_TAG("IN1")      /* Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY /* Move Man */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* Fire */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("P1 Fire")/* Fire */
 
 	PORT_START_TAG("IN2")      /* Dips & Coins */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
@@ -1569,7 +1569,7 @@ INPUT_PORTS_START( schasrcv )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
 
-	PORT_START_TAG("IN2")
+	PORT_START_TAG("DSW0")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
@@ -1830,7 +1830,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( 280zzzap )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x0f, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0x0f) PORT_SENSITIVITY(100) PORT_KEYDELTA(64)	/* accelerator */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_TOGGLE  /* shift */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_TOGGLE PORT_NAME("P1 Shift") /* shift */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
@@ -1916,7 +1916,7 @@ INPUT_PORTS_START( lupin3 )
 	PORT_DIPSETTING(    0x10, DEF_STR( Japanese ) )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH,  IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH,  IPT_UNUSED )
-	PORT_BIT(0x80,     0x00, IPT_DIPSWITCH_NAME ) PORT_NAME("Invulnerability (Cheat)")
+	PORT_DIPNAME(0x80,  0x00, "Invulnerability (Cheat)")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -2044,7 +2044,7 @@ MACHINE_DRIVER_END
 INPUT_PORTS_START( lagunar )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x0f, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0x0f) PORT_SENSITIVITY(100) PORT_KEYDELTA(64)	/* accelerator */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_TOGGLE  /* shift */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_TOGGLE  PORT_NAME ("P1 Shift")/* shift */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
@@ -2469,23 +2469,23 @@ MACHINE_DRIVER_END
  */
 INPUT_PORTS_START( einnings )
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)			/* home bat */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)	/* home fielders left */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)	/* home fielders right */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)		/* home pitch left */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)	/* home pitch right */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)			/* home pitch slow */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3) PORT_PLAYER(2)			/* home pitch fast */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Bat")	/* home bat */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Fielders Left")	/* home fielders left */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Fielders Right")	/* home fielders right */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)	PORT_NAME("P2 (Home) Pitch Left")	/* home pitch left */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Pitch Right")	/* home pitch right */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Pitch Slow")			/* home pitch slow */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3) PORT_PLAYER(2) PORT_NAME("P2 (Home) Pitch Fast")			/* home pitch fast */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )		/* visitor bat */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )	/* visitor fielders left */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )	/* visitor fielders right */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )	/* visitor pitch left */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )	/* visitor pitch right */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )		/* visitor pitch slow */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )		/* visitor pitch fast */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("P1 (Visitor) Bat")		/* visitor bat */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_NAME("P1 (Visitor) Fielders Left")	/* visitor fielders left */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )	PORT_NAME("P1 (Visitor) Fielders Right")/* visitor fielders right */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )	PORT_NAME("P1 (Visitor) Pitch Left")/* visitor pitch left */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )	PORT_NAME("P1 (Visitor) Pitch Right")/* visitor pitch right */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )		PORT_NAME("P1 (Visitor) Pitch Slow")/* visitor pitch slow */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )		PORT_NAME("P1 (Visitor) Pitch Fast")/* visitor pitch fast */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START_TAG("IN2")
@@ -2662,10 +2662,10 @@ INPUT_PORTS_START( checkmat )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x60, 0x00, "Language?" )
-	PORT_DIPSETTING(    0x00, "English?" )
-	PORT_DIPSETTING(    0x20, "German?" )
-	PORT_DIPSETTING(    0x40, "French?" )
-	PORT_DIPSETTING(    0x60, "Spanish?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( German ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( French ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( Spanish ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START_TAG("IN3")
@@ -2867,7 +2867,7 @@ INPUT_PORTS_START( jspecter )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) ) //Bug reports imply this is a toggle switch, confirm?
 	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
 	
@@ -3954,8 +3954,8 @@ ROM_END
 	  GAME( 1978, sstrangr, 0,		  sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger" )
 	  GAME( 1979, sstrngr2, 0,        sstrngr2, sstrngr2, sstrngr2, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger 2" )
 	  GAME( 1979, moonbase, invadpt2, invadpt2, invadpt2, invadpt2, ROT270, "Nichibutsu", "Moon Base" )
-	  GAMEX(19??, invrvnge, 0,        invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec Ltd.", "Invader's Revenge",  GAME_NO_SOUND )
-	  GAMEX(19??, invrvnga, invrvnge, invrvnge, invrvnge, invrvnge, ROT270, "Zenitone Microsec Ltd. (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
+	  GAMEX(19??, invrvnge, 0,        invrvnge, invrvnge, invrvnge, ROT270, "Zenitone-Microsec Ltd.", "Invader's Revenge",  GAME_NO_SOUND )
+	  GAMEX(19??, invrvnga, invrvnge, invrvnge, invrvnge, invrvnge, ROT270, "Zenitone-Microsec Ltd. (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND )
 	  GAME( 1980, spclaser, 0,        invaders, spclaser, invaddlx, ROT270, "GamePlan (Taito)", "Space Laser" )
 	  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, "<unknown>", "Laser" )
 	  GAME( 1979, spcewarl, spclaser, invaders, spclaser, invaddlx, ROT270, "Leijac (Konami)","Space War (Leijac)" )

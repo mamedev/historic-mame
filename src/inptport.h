@@ -413,10 +413,10 @@ struct InputPort
 		INT32	min;			/* minimum value for absolute axes */
 		INT32	max;			/* maximum value for absolute axes */
 		INT32	sensitivity;	/* sensitivity (100=normal) */
-		UINT8	delta;			/* delta to apply each frame a digital inc/dec key is pressed */
-		UINT8	centerdelta;	/* delta to apply each frame no digital inputs are pressed */
+		INT32	delta;			/* delta to apply each frame a digital inc/dec key is pressed */
+		INT32	centerdelta;	/* delta to apply each frame no digital inputs are pressed */
 		UINT8	reverse;		/* reverse the sense of the analog axis */
-		UINT8	center;			/* always preload in->default for relative axes, returning only deltas */
+		UINT8	reset;			/* always preload in->default for relative axes, returning only deltas */
 		input_seq_t incseq;		/* increment sequence */
 		input_seq_t decseq;		/* decrement sequence */
 	} analog;
@@ -466,7 +466,6 @@ struct InputPort
 
 /* end of table */
 #define INPUT_PORTS_END												\
- 		port = input_port_initialize(param, IPT_END);				\
 	}																\
 
 /* aliasing */
@@ -540,8 +539,8 @@ struct InputPort
 #define PORT_REVERSE												\
 	port->analog.reverse = 1;										\
 
-#define PORT_CENTER													\
-	port->analog.center = 1;										\
+#define PORT_RESET													\
+	port->analog.reset = 1;											\
 
 #define PORT_MINMAX(min_,max_)										\
 	port->analog.min = (min_);										\
@@ -552,6 +551,10 @@ struct InputPort
 
 #define PORT_KEYDELTA(delta_)										\
 	port->analog.delta = port->analog.centerdelta = (delta_);		\
+
+/* note that PORT_CENTERDELTA must appear after PORT_KEYDELTA */
+#define PORT_CENTERDELTA(delta_)									\
+	port->analog.centerdelta = (delta_);							\
 	
 #define PORT_UNUSED													\
 	port->unused = 1;												\

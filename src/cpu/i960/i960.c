@@ -1884,6 +1884,7 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 
 		// CPU main state
 	case CPUINFO_INT_PC:                 info->i = i960.IP;                               break;
+	case CPUINFO_INT_SP:		     info->i = i960.r[I960_SP];                       break;
 	case CPUINFO_INT_PREVIOUSPC:         info->i = i960.PIP;                              break;
 
 	case CPUINFO_INT_REGISTER + I960_SAT:  info->i = i960.SAT;                            break;

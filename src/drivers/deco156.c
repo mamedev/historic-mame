@@ -522,6 +522,29 @@ EEPROM 93C45
 
 */
 
+ROM_START( prtytime )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* DE156 code (encrypted) */
+	ROM_LOAD( "pz_00-0.1e",    0x000000, 0x080000, CRC(ec715c87) SHA1(c9f28399d59b37977f31a5c67cb97af6c58947ae) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mcb-00.9a",    0x000000, 0x080000, CRC(c48a4f2b) SHA1(2dee5f8507b2a7e6f7e44b14f9abca36d0ebf78b) )
+	ROM_CONTINUE( 0x100000, 0x080000)
+	ROM_CONTINUE( 0x080000, 0x080000)
+	ROM_CONTINUE( 0x180000, 0x080000)
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mcb-02.14a",    0x000000, 0x200000, CRC(423cfb38) SHA1(b8c772a8ab471c365a11a88c85e1c8c7d2ad6e80) )
+	ROM_LOAD16_BYTE( "mcb-05.14h",    0x000001, 0x200000, CRC(81540cfb) SHA1(6f7bc62c3c4d4a29eb1e0cfb261ace461bbca57c) )
+	ROM_LOAD16_BYTE( "mcb-01.13a",    0x400000, 0x200000, CRC(06f40a57) SHA1(896f1d373e911dcff7223bf21756ad35b28b4c5d) )
+	ROM_LOAD16_BYTE( "mcb-03.14d",    0x400001, 0x200000, CRC(0aef73af) SHA1(76cf13f53da5202da80820f98660edee1eef7f1a) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_LOAD( "pz_01-0.13h",    0x00000, 0x40000,  CRC(8925bce2) SHA1(0ff2d5db7a24a2af30bd753eba274572c32cc2e7) )
+
+	ROM_REGION( 0x200000, REGION_SOUND2, 0 ) /* samples? (banked?) */
+	ROM_LOAD( "mcb-04.12f",    0x00000, 0x200000, CRC(e23d3590) SHA1(dc8418edc525f56e84f26e9334d5576000b14e5f) )
+ROM_END
+
 ROM_START( gangonta )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* DE156 code (encrypted) */
 	ROM_LOAD( "rd_00-0.1e",    0x000000, 0x080000, CRC(f80f43bb) SHA1(f9d26829eb90d41a6c410d4d673fe9595f814868) )
@@ -778,7 +801,8 @@ GAMEX(1995, magdropp,chainrec, deco156_1,      deco156, deco156_1,      ROT0, "D
 GAMEX(1995, charlien,0,        deco156_1,      deco156, deco156_1,      ROT0, "Mitchell", "Charlie Ninja", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
 GAMEX(1994, joemacr, 0,        deco156_1,      deco156, deco156_1,      ROT0, "Data East", "Joe & Mac Returns", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
 GAMEX(1994, joemacra,joemacr,  deco156_1,      deco156, deco156_1,      ROT0, "Data East", "Joe & Mac Returns (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(1995, gangonta,0,        deco156_1,      deco156, deco156_1,      ROT90,"Mitchell", "Ganbare! Gonta!! 2", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(1995, prtytime, 0,        deco156_1,      deco156, deco156_1,      ROT90,"Mitchell", "Party Time: Gonta the Diver II", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAMEX(1995, gangonta, prtytime, deco156_1,      deco156, deco156_1,      ROT90,"Mitchell", "Ganbare! Gonta!! 2", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
 
 /* similar but different? */
 GAMEX(1993, hvysmsh, 0,        deco156_1,      deco156, deco156_1,      ROT0, "Data East", "Heavy Smash", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)

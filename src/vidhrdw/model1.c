@@ -233,7 +233,7 @@ static void fill_slope(struct mame_bitmap *bitmap, int color, INT32 x1, INT32 x2
 					xx1 = view.x1;
 				if(xx2 > view.x2)
 					xx2 = view.x2;
-				
+
 				if(color & MOIRE)
 					draw_hline_moired(bitmap, xx1, xx2, y1, color);
 				else
@@ -469,7 +469,7 @@ static void draw_quads(struct mame_bitmap *bitmap, const struct rectangle *clipr
 	int i;
 	for(i=0; i<count; i++) {
 		struct quad *q = quadind[i];
-		
+
 		fill_quad(bitmap, q);
 #if 0
 		draw_line(bitmap, get_black_pen(), q->p[0]->s.x, q->p[0]->s.y, q->p[1]->s.x, q->p[1]->s.y);
@@ -1046,7 +1046,7 @@ static UINT16 *push_direct(UINT16 *list)
 					 p1->s.x, p1->s.y);
 
 #endif
-	
+
 		if(!link)
 			goto next;
 
@@ -1465,7 +1465,7 @@ VIDEO_START(model1)
 VIDEO_UPDATE(model1)
 {
 	sys24_tile_update();
-#if 1
+#if 0
 	{
 		int mod = 0;
 		double delta;

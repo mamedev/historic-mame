@@ -812,11 +812,12 @@ static void palette_set_rgb_brightness (int offset, UINT8 brightness_r, UINT8 br
 }
 
 // This ignores the alpha values atm.
-static int spc_changed=0, v3_changed=0;
+static int spc_changed=0, v3_changed=0, palette_updated=0;
 
 static WRITE32_HANDLER ( skns_pal_regs_w )
 {
 	COMBINE_DATA(&skns_pal_regs[offset]);
+	palette_updated =1;
 
 	switch ( offset )
 	{
@@ -876,13 +877,17 @@ void skns_palette_update(void)
 {
 	int i;
 
-	if(spc_changed)
-		for(i=0; i<=((0x40*256)-1); i++)
-			palette_set_rgb_brightness (i, bright_spc_r, bright_spc_g, bright_spc_b);
+	if (palette_updated)
+	{
+		if(spc_changed)
+			for(i=0; i<=((0x40*256)-1); i++)
+				palette_set_rgb_brightness (i, bright_spc_r, bright_spc_g, bright_spc_b);
 
-	if(v3_changed)
-		for(i=(0x40*256); i<=((0x80*256)-1); i++)
-			palette_set_rgb_brightness (i, bright_v3_r, bright_v3_g, bright_v3_b);
+		if(v3_changed)
+			for(i=(0x40*256); i<=((0x80*256)-1); i++)
+				palette_set_rgb_brightness (i, bright_v3_r, bright_v3_g, bright_v3_b);
+		palette_updated =0;
+	}
 }
 
 

@@ -153,12 +153,12 @@ READ8_HANDLER( sega_IN4_r ) {
 	static int spinner;
 
 	if (ioSwitch & 1) /* ioSwitch = 0x01 or 0xff */
-		return readinputport (4);
+		return readinputportbytag("IN4");
 
 	/* else ioSwitch = 0xfe */
 
 	/* I'm sure this can be further simplified ;-) BW */
-	delta = readinputport(8);
+	delta = readinputportbytag("FAKE2");
 	if (delta != 0)
 	{
 		sign = delta >> 7;
@@ -175,9 +175,9 @@ READ8_HANDLER( elim4_IN4_r )
 	/* If the ioPort ($f8) is 0x1e, we're reading player 3 & 4 controls.*/
 
 	if (ioSwitch == 0x1e)
-		return readinputport (4);
+		return readinputportbytag ("IN4");
 	if (ioSwitch == 0x1f)
-		return readinputport (8);
+		return readinputportbytag ("FAKE2");
 	return (0);
 }
 

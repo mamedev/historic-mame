@@ -98,7 +98,6 @@ static struct mixer_channel_data mixer_channel[MIXER_MAX_CHANNELS];
 static unsigned config_mixing_level[MIXER_MAX_CHANNELS];
 static unsigned config_default_mixing_level[MIXER_MAX_CHANNELS];
 static int first_free_channel = 0;
-static int is_config_invalid;
 static int is_stereo;
 
 /* 32-bit accumulators */
@@ -854,7 +853,7 @@ int mixer_allocate_channel(int default_mixing_level)
 
 int mixer_allocate_channels(int channels, const int *default_mixing_levels)
 {
-	int i, j;
+	int i;
 
 	mixerlogerror(("Mixer:mixer_allocate_channels(%d)\n",channels));
 
@@ -884,20 +883,10 @@ int mixer_allocate_channels(int channels, const int *default_mixing_levels)
 
 		/* attempt to load in the configuration data for this channel */
 		channel->mixing_level = channel->default_mixing_level;
-		if (!is_config_invalid)
-		{
-			/* if the defaults match, set the mixing level from the config */
-			if (channel->default_mixing_level == channel->config_default_mixing_level && channel->config_mixing_level <= 100)
-				channel->mixing_level = channel->config_mixing_level;
 
-			/* otherwise, invalidate all channels that have been created so far */
-			else
-			{
-				is_config_invalid = 1;
-				for (j = 0; j < first_free_channel + i; j++)
-					mixer_set_mixing_level(j, mixer_channel[j].default_mixing_level);
-			}
-		}
+		/* if the defaults match, set the mixing level from the config */
+		if (channel->default_mixing_level == channel->config_default_mixing_level && channel->config_mixing_level <= 100)
+			channel->mixing_level = channel->config_mixing_level;
 
 		/* set the default name */
 		mixer_set_name(first_free_channel + i, 0);
@@ -1021,7 +1010,6 @@ void mixer_load_config(const struct mixer_config *config)
 		config_default_mixing_level[i] = config->default_levels[i];
 		config_mixing_level[i] = config->mixing_levels[i];
 	}
-	is_config_invalid = 0;
 }
 
 

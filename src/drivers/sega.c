@@ -202,7 +202,7 @@ ADDRESS_MAP_END
 
 /* This fake input port is used for DIP Switch 2
    for all games except Eliminato 4 players */
-#define COINAGE PORT_START \
+#define COINAGE PORT_START_TAG("DSW2") \
 		PORT_DIPNAME( 0x0f, 0x0c, DEF_STR ( Coin_B ) ) \
 		PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) ) \
 		PORT_DIPSETTING(	0x08, DEF_STR ( 3C_1C ) ) \
@@ -240,36 +240,36 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( spacfury )
-	PORT_START	/* IN0 - port 0xf8 */
+	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
 
-	PORT_START	/* IN1 - port 0xf9 */
+	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 - port 0xfa */
+	PORT_START_TAG("IN2")	/* IN2 - port 0xfa */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 - port 0xfb */
+	PORT_START_TAG("IN3")	/* IN3 - port 0xfb */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 - FAKE - lazy way to move the self-test fake input port to 5 */
+	PORT_START_TAG("IN4")	/* IN4 - FAKE - lazy way to move the self-test fake input port to 5 */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN5 - FAKE */
+	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_SERVICE_NO_TOGGLE(0x01, IP_ACTIVE_HIGH)
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("DSW1")	/* FAKE */
 		/* This fake input port is used for DIP Switch 1 */
 		PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
 		PORT_DIPSETTING(	0x00, "10000" )
@@ -295,7 +295,7 @@ INPUT_PORTS_START( spacfury )
 
 		COINAGE
 
-	PORT_START	/* IN8 - port 0xfc */
+	PORT_START_TAG("IN8")	/* IN8 - port 0xfc */
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
@@ -304,34 +304,34 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( zektor )
-	PORT_START	/* IN0 - port 0xf8 */
+	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
 
-	PORT_START	/* IN1 - port 0xf9 */
+	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 - port 0xfa */
+	PORT_START_TAG("IN2")	/* IN2 - port 0xfa */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 - port 0xfb */
+	PORT_START_TAG("IN3")	/* IN3 - port 0xfb */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
+	PORT_START_TAG("IN4")	/* IN4 - port 0xfc - read in machine/sega.c */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN5 - FAKE */
+	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_SERVICE_NO_TOGGLE(0x01, IP_ACTIVE_HIGH)
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("DSW1")	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
 	PORT_DIPSETTING(	0x03, "10000" )
@@ -357,28 +357,28 @@ INPUT_PORTS_START( zektor )
 
 	COINAGE
 
-	PORT_START		/* IN8 - FAKE port for the dial */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTER
+	PORT_START_TAG("FAKE2")		/* IN8 - FAKE port for the dial */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( startrek )
-	PORT_START	/* IN0 - port 0xf8 */
+	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
 
-	PORT_START	/* IN1 - port 0xf9 */
+	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 - port 0xfa */
+	PORT_START_TAG("IN2")	/* IN2 - port 0xfa */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 - port 0xfb */
+	PORT_START_TAG("IN3")	/* IN3 - port 0xfb */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
+	PORT_START_TAG("IN4")	/* IN4 - port 0xfc - read in machine/sega.c */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -387,12 +387,12 @@ INPUT_PORTS_START( startrek )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON4 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN5 - FAKE */
+	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_SERVICE_NO_TOGGLE(0x01, IP_ACTIVE_HIGH)
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("DSW1")
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
 	PORT_DIPSETTING(	0x00, "10000" )
@@ -418,40 +418,40 @@ INPUT_PORTS_START( startrek )
 
 	COINAGE
 
-	PORT_START		/* IN8 - dummy port for the dial */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTER
+	PORT_START_TAG("FAKE2")		/* IN8 - dummy port for the dial */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( tacscan )
-	PORT_START	/* IN0 - port 0xf8 */
+	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
 
-	PORT_START	/* IN1 - port 0xf9 */
+	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 - port 0xfa */
+	PORT_START_TAG("IN2")	/* IN2 - port 0xfa */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 - port 0xfb */
+	PORT_START_TAG("IN3")	/* IN3 - port 0xfb */
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
+	PORT_START_TAG("IN4")	/* IN4 - port 0xfc - read in machine/sega.c */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN5 - FAKE */
+	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_SERVICE_NO_TOGGLE(0x01, IP_ACTIVE_HIGH)
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("DSW1")	/* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR ( Bonus_Life ) )
 	PORT_DIPSETTING(	0x03, "10000" )
@@ -477,46 +477,46 @@ INPUT_PORTS_START( tacscan )
 
 	COINAGE
 
-	PORT_START		/* IN8 - FAKE port for the dial */
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTER
+	PORT_START_TAG("FAKE2")		/* IN8 - FAKE port for the dial */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( elim2 )
-	PORT_START	/* IN0 - port 0xf8 */
+	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
 
-	PORT_START	/* IN1 - port 0xf9 */
+	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 - port 0xfa */
+	PORT_START_TAG("IN2")	/* IN2 - port 0xfa */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 - port 0xfb */
+	PORT_START_TAG("IN3")	/* IN3 - port 0xfb */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
+	PORT_START_TAG("IN4")	/* IN4 - port 0xfc - read in machine/sega.c */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1		 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2		 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
 	PORT_BIT ( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START	/* IN5 - FAKE */
+	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_SERVICE_NO_TOGGLE(0x01, IP_ACTIVE_HIGH)
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("DSW1")
 		/* This fake input port is used for DIP Switch 1 */
 		PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
 		PORT_DIPSETTING(	0x01, "10000" )
@@ -542,30 +542,30 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( elim4 )
-	PORT_START	/* IN0 - port 0xf8 */
+	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
 
-	PORT_START	/* IN1 - port 0xf9 */
+	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 		 ) PORT_PLAYER(2)
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 - port 0xfa */
+	PORT_START_TAG("IN2")	/* IN2 - port 0xfa */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 		 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN3 - port 0xfb */
+	PORT_START_TAG("IN3")	/* IN3 - port 0xfb */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	 ) PORT_PLAYER(2)
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
+	PORT_START_TAG("IN4")	/* IN4 - port 0xfc - read in machine/sega.c */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1		 ) PORT_PLAYER(3)
 	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2		 ) PORT_PLAYER(3)
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
@@ -575,12 +575,12 @@ INPUT_PORTS_START( elim4 )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT	 ) PORT_PLAYER(4)
 
-	PORT_START	/* IN5 - FAKE */
+	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
 	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 
-	PORT_START	/* FAKE */
+	PORT_START_TAG("DSW1")
 		/* This fake input port is used for DIP Switch 1 */
 		PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
 		PORT_DIPSETTING(	0x01, "10000" )
@@ -601,10 +601,10 @@ INPUT_PORTS_START( elim4 )
 		PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
 		PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
-		PORT_START /* That is the coinage port in all the other games */
+		PORT_START_TAG("IN7") /* That is the coinage port in all the other games */
 		PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-		PORT_START		/* IN8 - FAKE - port 0xfc - read in machine/sega.c */
+		PORT_START_TAG("FAKE2")		/* IN8 - FAKE - port 0xfc - read in machine/sega.c */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3)

@@ -49,6 +49,8 @@ extern int win_window_mode;
 #define MAX_BUTTONS			32
 #define MAX_POV				4
 
+#define HISTORY_LENGTH		16
+
 enum
 {
 	ANALOG_TYPE_PADDLE = 0,
@@ -71,6 +73,13 @@ enum
 	SELECT_TYPE_LIGHTGUN
 };
 
+enum
+{
+	AXIS_TYPE_INVALID = 0,
+	AXIS_TYPE_DIGITAL,
+	AXIS_TYPE_ANALOG
+};
+
 
 
 //============================================================
@@ -80,6 +89,18 @@ enum
 #define STRUCTSIZE(x)		((dinput_version == 0x0300) ? sizeof(x##_DX3) : sizeof(x))
 
 #define ELEMENTS(x)			(sizeof(x) / sizeof((x)[0]))
+
+
+
+//============================================================
+//	TYPEDEFS
+//============================================================
+
+struct axis_history
+{
+	LONG		value;
+	INT32		count;
+};
 
 
 
@@ -151,6 +172,8 @@ static DIJOYSTATE			joystick_state[MAX_JOYSTICKS];
 static DIPROPRANGE			joystick_range[MAX_JOYSTICKS][MAX_AXES];
 static UINT8				joystick_digital[MAX_JOYSTICKS][MAX_AXES];
 static char					joystick_name[MAX_JOYSTICKS][MAX_PATH];
+static struct axis_history	joystick_history[MAX_JOYSTICKS][MAX_AXES][HISTORY_LENGTH];
+static UINT8				joystick_type[MAX_JOYSTICKS][MAX_AXES];
 
 // gun states
 static INT32				gun_axis[MAX_LIGHTGUNS][2];
@@ -186,12 +209,12 @@ struct rc_option input_opts[] =
 	{ "led_mode", NULL, rc_string, &ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
 	{ "ctrlr", NULL, rc_string, &options.controller, 0, 0, 0, NULL, "preconfigure for specified controller" },
-	{ "paddle_device", "paddle", rc_string, &dummy[0], "joystick", ANALOG_TYPE_PADDLE, 0, decode_analog_select, "enable (keyboard|mouse|joystick) if a paddle control is present" },
-	{ "adstick_device", "adstick", rc_string, &dummy[1], "joystick", ANALOG_TYPE_ADSTICK, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if an analog joystick control is present" },
-	{ "pedal_device", "pedal", rc_string, &dummy[2], "joystick", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
-	{ "dial_device", "dial", rc_string, &dummy[3], "mouse", ANALOG_TYPE_DIAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a dial control is present" },
-	{ "trackball_device", "trackball", rc_string, &dummy[4], "mouse", ANALOG_TYPE_TRACKBALL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a trackball control is present" },
-	{ "lightgun_device", NULL, rc_string, &dummy[5], "mouse", ANALOG_TYPE_LIGHTGUN, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a lightgun control is present" },
+	{ "paddle_device", "paddle", rc_string, &dummy[0], "keyboard", ANALOG_TYPE_PADDLE, 0, decode_analog_select, "enable (keyboard|mouse|joystick) if a paddle control is present" },
+	{ "adstick_device", "adstick", rc_string, &dummy[1], "keyboard", ANALOG_TYPE_ADSTICK, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if an analog joystick control is present" },
+	{ "pedal_device", "pedal", rc_string, &dummy[2], "keyboard", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
+	{ "dial_device", "dial", rc_string, &dummy[3], "keyboard", ANALOG_TYPE_DIAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a dial control is present" },
+	{ "trackball_device", "trackball", rc_string, &dummy[4], "keyboard", ANALOG_TYPE_TRACKBALL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a trackball control is present" },
+	{ "lightgun_device", NULL, rc_string, &dummy[5], "keyboard", ANALOG_TYPE_LIGHTGUN, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a lightgun control is present" },
 #ifdef MESS
 	{ "mouse_device", NULL, rc_string, &dummy[6], "mouse", ANALOG_TYPE_MOUSE, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a mouse control is present" },
 #endif // MESS
@@ -206,6 +229,7 @@ struct rc_option input_opts[] =
 //============================================================
 
 static void updatekeyboard(void);
+static void update_joystick_axes(void);
 static void init_keycodes(void);
 static void init_joycodes(void);
 static void poll_lightguns(void);
@@ -512,6 +536,7 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_1_BUTTON2 },
 	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_1_BUTTON3 },
 	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_1_BUTTON4 },
+	{ JOYCODE(0, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_1_BUTTON5 },
 	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_1_ANALOG_X },
 	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_1_ANALOG_Y },
 	{ JOYCODE(0, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_1_ANALOG_Z },
@@ -520,6 +545,7 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_2_BUTTON2 },
 	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_2_BUTTON3 },
 	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_2_BUTTON4 },
+	{ JOYCODE(1, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_2_BUTTON5 },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_2_ANALOG_X },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_2_ANALOG_Y },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_2_ANALOG_Z },
@@ -979,6 +1005,8 @@ int win_init_input(void)
 			goto cant_init_joystick;
 	}
 
+	total_codes = 0;
+
 	// init the keyboard list
 	init_keycodes();
 
@@ -1177,6 +1205,9 @@ void win_poll_input(void)
 				result = IDirectInputDevice_GetDeviceState(joystick_device[i], sizeof(joystick_state[i]), &joystick_state[i]);
 		}
 	}
+	
+	// update joystick axis history
+	update_joystick_axes();
 
 	// poll all our mice if active
 	if (mouse_active && !win_has_menu())
@@ -1362,6 +1393,79 @@ static void init_keycodes(void)
 
 
 //============================================================
+//	update_joystick_axes
+//============================================================
+
+static void update_joystick_axes(void)
+{
+	int joynum, axis;
+	
+	for (joynum = 0; joynum < joystick_count; joynum++)
+		for (axis = 0; axis < MAX_AXES; axis++)
+		{
+			struct axis_history *history = &joystick_history[joynum][axis][0];
+			LONG curval = ((LONG *)&joystick_state[joynum].lX)[axis];
+			int newtype;
+			
+			/* if same as last time (within a small tolerance), update the count */
+			if (history[0].count > 0 && (history[0].value - curval) > -4 && (history[0].value - curval) < 4)
+				history[0].count++;
+			
+			/* otherwise, update the history */
+			else
+			{
+				memmove(&history[1], &history[0], sizeof(history[0]) * (HISTORY_LENGTH - 1));
+				history[0].count = 1;
+				history[0].value = curval;
+			}
+			
+			/* if we've only ever seen one value here, or if we've been stuck at the same value for a long */
+			/* time (1 minute), mark the axis as dead or invalid */
+			if (history[1].count == 0 || history[0].count > Machine->refresh_rate * 60)
+				newtype = AXIS_TYPE_INVALID;
+			
+			/* scan the history and count unique values; if we get more than 3, it's analog */
+			else
+			{
+				int bucketsize = (joystick_range[joynum][axis].lMax - joystick_range[joynum][axis].lMin) / 3;
+				LONG uniqueval[3] = { 1234567890, 1234567890, 1234567890 };
+				int histnum;
+				
+				/* assume digital unless we figure out otherwise */
+				newtype = AXIS_TYPE_DIGITAL;
+				
+				/* loop over the whole history, bucketing the values */
+				for (histnum = 0; histnum < HISTORY_LENGTH; histnum++)
+					if (history[histnum].count > 0)
+					{
+						int bucket = (history[histnum].value - joystick_range[joynum][axis].lMin) / bucketsize;
+
+						/* if we already have an entry in this bucket, we're analog */
+						if (uniqueval[bucket] != 1234567890 && uniqueval[bucket] != history[histnum].value)
+						{
+							newtype = AXIS_TYPE_ANALOG;
+							break;
+						}
+						
+						/* remember this value */
+						uniqueval[bucket] = history[histnum].value;
+					}
+			}
+			
+			/* if the type doesn't match, switch it */
+			if (joystick_type[joynum][axis] != newtype)
+			{
+				static const char *axistypes[] = { "invalid", "digital", "analog" };
+				joystick_type[joynum][axis] = newtype;
+				if (verbose)
+					fprintf(stderr, "Joystick %d axis %d is now %s\n", joynum, axis, axistypes[newtype]);
+			}
+		}
+}
+
+
+
+//============================================================
 //	add_joylist_entry
 //============================================================
 
@@ -1433,10 +1537,10 @@ static void init_joycodes(void)
 	for (gun = 0; gun < lightgun_count; gun++)
 	{
 		// add lightgun axes (fix me -- should enumerate these)
-		sprintf(tempname, "Lightgun %d X", mouse + 1);
-		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_GUNAXIS, 0), CODE_OTHER_ANALOG_ABSOLUTE);
-		sprintf(tempname, "Lightgun %d Y", mouse + 1);
-		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_GUNAXIS, 1), CODE_OTHER_ANALOG_ABSOLUTE);
+		sprintf(tempname, "Lightgun %d X", gun + 1);
+		add_joylist_entry(tempname, JOYCODE(gun, CODETYPE_GUNAXIS, 0), CODE_OTHER_ANALOG_ABSOLUTE);
+		sprintf(tempname, "Lightgun %d Y", gun + 1);
+		add_joylist_entry(tempname, JOYCODE(gun, CODETYPE_GUNAXIS, 1), CODE_OTHER_ANALOG_ABSOLUTE);
 	}
 
 	// now map joysticks
@@ -1451,6 +1555,9 @@ static void init_joycodes(void)
 		{
 			DIDEVICEOBJECTINSTANCE instance = { 0 };
 			HRESULT result;
+			
+			// reset the type
+			joystick_type[stick][axis] = AXIS_TYPE_INVALID;
 
 			// attempt to get the object info
 			instance.dwSize = STRUCTSIZE(DIDEVICEOBJECTINSTANCE);
@@ -1617,16 +1724,21 @@ static INT32 get_joycode_value(os_code_t joycode)
 		// analog joystick axis
 		case CODETYPE_JOYAXIS:
 		{
-			LONG val = ((LONG *)&joystick_state[joynum].lX)[joyindex];
-			LONG top = joystick_range[joynum][joyindex].lMax;
-			LONG bottom = joystick_range[joynum][joyindex].lMin;
+			if (joystick_type[joynum][joyindex] != AXIS_TYPE_ANALOG)
+				return ANALOG_VALUE_INVALID;
+			else
+			{
+				LONG val = ((LONG *)&joystick_state[joynum].lX)[joyindex];
+				LONG top = joystick_range[joynum][joyindex].lMax;
+				LONG bottom = joystick_range[joynum][joyindex].lMin;
 
-			if (!use_joystick)
-				return 0;
-			val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
-			if (val < ANALOG_VALUE_MIN) val = ANALOG_VALUE_MIN;
-			if (val > ANALOG_VALUE_MAX) val = ANALOG_VALUE_MAX;
-			return val;
+				if (!use_joystick)
+					return 0;
+				val = (INT64)val * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
+				if (val < ANALOG_VALUE_MIN) val = ANALOG_VALUE_MIN;
+				if (val > ANALOG_VALUE_MAX) val = ANALOG_VALUE_MAX;
+				return val;
+			}
 		}
 
 		// analog mouse axis

@@ -14,8 +14,10 @@
 * in attract and fixing the questions so it actually asked more  *
 * than one per category.                                         *
 *                                                                *
-* Colours are wrong, what should they be?                        *
 * Game Speed too fast?                                           *
+*                                                                *
+* SJ: Fixed colours based on screen shots, they're probably OK,  *
+*     but more shots would be good for verification              *
 *                                                                *
 * MG: Dave seems to think that the AY is hooked up wrong since   *
 *     it generates lots of errors in error.log, even though the  *
@@ -97,7 +99,7 @@ static struct tilemap* statriv2_tilemap;
 static void get_statriv2_tile_info(int tile_index)
 {
 	int code = statriv2_videoram[0x400+tile_index];
-	int attr = statriv2_videoram[tile_index];
+	int attr = statriv2_videoram[tile_index] & 0x3f;
 
 	SET_TILE_INFO(0, code, attr, 0)
 }
@@ -125,28 +127,21 @@ VIDEO_UPDATE (statriv2)
 
 PALETTE_INIT(statriv2)
 {
-	int j;
+	int i;
 
-	for (j = 0;j < 16;j++)
+	for (i = 0; i < 8; i++)
 	{
-		int r = (j & 1) >> 0;
-		int g = (j & 2) >> 1;
-		int b = (j & 4) >> 2;
-		int i = (j & 8) >> 3;
-
-		r = 0xff * r;
-		g = 0x7f * g * (i + 1);
-		b = 0x7f * b * (i + 1);
-
-		palette_set_color(j,r,g,b);
+		palette_set_color(i,
+			0xff * ((i >> 2) & 1),
+			0xff * ((i >> 0) & 1),
+			0xff * ((i >> 1) & 1));
 	}
 
-	for (j = 0;j < 256;j++)
+	for (i = 0; i < 64; i++)
 	{
-		colortable[2*j] = j & 0x0f;
-		colortable[2*j+1] = j >> 4;
+		colortable[2*i+0] = i % 8;
+		colortable[2*i+1] = i / 8;
 	}
-        palette_set_color(8,0xFF,0xFF,0xFF);
 }
 
 /* end video related */
@@ -568,7 +563,7 @@ static struct GfxLayout statriv2_tiles8x16_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &statriv2_tiles8x16_layout, 0, 16 },
+	{ REGION_GFX1, 0, &statriv2_tiles8x16_layout, 0, 64 },
 	{ -1 }
 };
 
@@ -606,8 +601,8 @@ static MACHINE_DRIVER_START( statriv2 )
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(4*8, 38*8-1, 0, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(16)
-	MDRV_COLORTABLE_LENGTH(2*256)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(2*64)
 
 	MDRV_PALETTE_INIT(statriv2)
 	MDRV_VIDEO_START(statriv2)
@@ -826,10 +821,10 @@ ROM_START( hangman )
 	ROM_LOAD( "main_74s288.u17", 0x0000, 0x0020, CRC(63b8a63e) SHA1(d59ad84edd583f7befce73b79e12dfb58a204c4f) )
 ROM_END
 
-GAMEX( 1984, hangman,  0, hangman,  hangman,  0, ROT0, "Status Games", "Hangman",        GAME_WRONG_COLORS )
-GAMEX( 1984, trivquiz, 0, trivquiz, statriv2, 0, ROT0, "Status Games", "Triv Quiz",      GAME_WRONG_COLORS )
-GAMEX( 1984, statriv2, 0, statriv2, statriv2, 0, ROT0, "Status Games", "Triv Two",       GAME_WRONG_COLORS )
-GAMEX( 1985, statriv4, 0, statriv4, statriv4, 0, ROT0, "Status Games", "Triv Four",      GAME_WRONG_COLORS )
-GAMEX( 1985, quaquiz2, 0, quaquiz2, quaquiz2, 0, ROT0, "Status Games", "Quadro Quiz II", GAME_WRONG_COLORS | GAME_NOT_WORKING )
-GAMEX( 1986, supertr2, 0, supertr2, supertr2, 0, ROT0, "Status Games", "Super Triv II",  GAME_WRONG_COLORS )
-GAMEX( 1988, supertr3, 0, supertr3, supertr2, 0, ROT0, "Status Games", "Super Triv III", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS)
+GAME ( 1984, hangman,  0, hangman,  hangman,  0, ROT0, "Status Games", "Hangman" )
+GAME ( 1984, trivquiz, 0, trivquiz, statriv2, 0, ROT0, "Status Games", "Triv Quiz" )
+GAME ( 1984, statriv2, 0, statriv2, statriv2, 0, ROT0, "Status Games", "Triv Two" )
+GAME ( 1985, statriv4, 0, statriv4, statriv4, 0, ROT0, "Status Games", "Triv Four" )
+GAMEX( 1985, quaquiz2, 0, quaquiz2, quaquiz2, 0, ROT0, "Status Games", "Quadro Quiz II", GAME_NOT_WORKING )
+GAME ( 1986, supertr2, 0, supertr2, supertr2, 0, ROT0, "Status Games", "Super Triv II" )
+GAMEX( 1988, supertr3, 0, supertr3, supertr2, 0, ROT0, "Status Games", "Super Triv III", GAME_IMPERFECT_GRAPHICS)

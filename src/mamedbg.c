@@ -1311,21 +1311,6 @@ INLINE char *kilobyte( unsigned bytes )
 }
 
 /**************************************************************************
- * my_stricmp
- * Compare strings case insensitive
- **************************************************************************/
-INLINE int my_stricmp( const char *dst, const char *src)
-{
-	while( *src && *dst )
-	{
-		if( tolower(*src) != tolower(*dst) ) return *dst - *src;
-		src++;
-		dst++;
-	}
-	return *dst - *src;
-}
-
-/**************************************************************************
  * get_boolean
  * Get a boolean argument (on/off, yes/no, y/n, 1/0)
  **************************************************************************/

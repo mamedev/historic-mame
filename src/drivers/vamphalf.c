@@ -1,60 +1,133 @@
 /********************************************************************
-
- Vampire 1/2 and other Hyperstone-based games
-
- ***VERY WIP***
-
- To be used only for testing Hyperstone CPU core, probably the only correct
- thing in the driver so far is the ROM loading and graphics decoding.
-
- These will be split into separate drivers later.
-
- CHANGELOG:
-
- MooglyGuy - 10/25/03
-    - Changed prelim driver to only load the ROM in the upper part of mem,
-      loading the ROM at 0x00000000 and setting the bank to point there was
-      completely wrong since apparently there's RAM at 0x00000000.
+	Hyperstone-based games
+	 ***VERY PRELIMINARY***
 
 *********************************************************************/
 #include "driver.h"
+#include "machine/eeprom.h"
+#include "machine/random.h"
+
+static data32_t hyperstone_iram[0x1000/*4000*/];
+static data32_t *vamp_tiles;
+static data32_t *eo_vram;
+
+PALETTE_INIT( eo )
+{
+	int i;
+
+	for (i = 0; i < 32768; i++)
+	{
+		int r,g,b;
+
+		r = (i >>  5) & 0x1f;
+		g = (i >> 10) & 0x1f;
+		b = (i >>  0) & 0x1f;
+
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(i,r,g,b);
+	}
+
+}
+
+
+static INTERRUPT_GEN(test_interrupt)
+{
+	if(cpu_getiloops())
+	{
+		cpunum_set_input_line(0, 4, PULSE_LINE);	//vamphlaf =int4 +something else
+	}
+	else
+	{
+		cpunum_set_input_line(0, 7, PULSE_LINE);	//vamphlaf =int4 +something else
+	}
+}
+
+
+static WRITE32_HANDLER( hyperstone_iram_w )
+{
+// 	COMBINE_DATA(&hyperstone_iram[offset&0x3fff]);
+	COMBINE_DATA(&hyperstone_iram[offset&0xfff]);
+}
+
+static READ32_HANDLER( hyperstone_iram_r )
+{
+// 	return hyperstone_iram[offset&0x3fff];
+	return hyperstone_iram[offset&0xfff];
+}
+
+
+static READ32_HANDLER( iohack_r )
+{
+ 	return mame_rand();
+}
+static data32_t iodata;
+
+static WRITE32_HANDLER( io_w )
+{
+ 	COMBINE_DATA(&iodata);
+}
+
+static READ32_HANDLER( io_r )
+{
+ 	return iodata;
+}
+
+
+static ADDRESS_MAP_START( iomap, ADDRESS_SPACE_IO, 32 )
+	AM_RANGE(0x00000, 0x00ffffff) AM_READ(iohack_r)
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x40000000, 0x4007ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x40000000, 0x400fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x80000000, 0x800fffff) AM_READ(MRA32_RAM)
+//	AM_RANGE(0x90000000, 0x9003ffff) AM_READ(MRA32_RAM)//racoon
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r)
+	//AM_RANGE(0xfcc00000, 0xfccfffff) AM_READ(MRA32_RAM)
+	//AM_RANGE(0xfd000000, 0xfff7ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x40000000, 0x4007ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x40000000, 0x400fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x80000000, 0x800fffff) AM_WRITE(MWA32_RAM)
+	//AM_RANGE(0x90000000, 0x9003ffff) AM_WRITE(MWA32_RAM)//racoon
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_WRITE(hyperstone_iram_w)
+	//AM_RANGE(0xfcc00000, 0xfccfffff) AM_WRITE(MWA32_RAM)//racoon
+	//AM_RANGE(0xfd000000, 0xfff7ffff) AM_WRITE(MWA32_RAM)//racoon
 	AM_RANGE(0xfff80000, 0xffffffff) AM_WRITE(MWA32_ROM)
 ADDRESS_MAP_END
 
+
 static ADDRESS_MAP_START( xfiles_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x40000000, 0x4007ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x80000000, 0x800fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r)
+	AM_RANGE(0xe0000000, 0xe1f00003) AM_READ(MRA32_RAM)
 	AM_RANGE(0xffc00000, 0xffffffff) AM_READ(MRA32_BANK1)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( xfiles_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x40000000, 0x4007ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x80000000, 0x800fffff) AM_WRITE(MWA32_RAM) AM_BASE( &vamp_tiles )
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_WRITE(hyperstone_iram_w)
+	AM_RANGE(0xe0000000, 0xe1f00003) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0xffc00000, 0xffffffff) AM_WRITE(MWA32_ROM)
 ADDRESS_MAP_END
 
-INPUT_PORTS_START( vamphalf )
-INPUT_PORTS_END
 
+
+/* vamphalf */
 
 VIDEO_START( vamphalf )
 {
 	return 0;
-}
-
-VIDEO_UPDATE( vamphalf )
-{
-	int x;
-	for (x=0;x<256;x++)
-		palette_set_color(x^0xff,x,x,x);
 }
 
 static struct GfxLayout vamphalf_layout =
@@ -74,9 +147,76 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static WRITE32_HANDLER(vamp_eeprom_w )
+{
+	/* BAD */
+	data^=0xf;
+	EEPROM_write_bit(data & 0x01);
+	EEPROM_set_cs_line((data & 0x04) ? CLEAR_LINE : ASSERT_LINE );
+	EEPROM_set_clock_line((data & 0x02) ? ASSERT_LINE : CLEAR_LINE );
+}
+
+
+static ADDRESS_MAP_START( iomapvamp, ADDRESS_SPACE_IO, 32 )
+//	AM_RANGE(0x180,0x183) 	AM_WRITE(vamp_eeprom_w)
+	AM_RANGE(0x00000, 0x00ffffff) AM_READ(iohack_r)
+
+//	AM_RANGE(0x00,0x03) AM_READWRITE(io_r,io_w)
+//	AM_RANGE(0x04,0x07) AM_READWRITE(io_r,io_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( vampreadmem, ADDRESS_SPACE_PROGRAM, 32 )
+//	AM_RANGE(0x00000000, 0x000bffff) AM_READ(MRA32_RAM)
+//	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x00000000, 0x00ffffff) AM_READ(MRA32_RAM)
+//	AM_RANGE(0x40000000, 0x40007fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x40000000, 0x4003ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x80000000, 0x8000bfff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r)
+//	AM_RANGE(0xe0000000, 0xfff7ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( vampwritemem, ADDRESS_SPACE_PROGRAM, 32 )
+//	AM_RANGE(0x00000000, 0x000bffff) AM_WRITE(MWA32_RAM)
+//	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000000, 0x00ffffff) AM_WRITE(MWA32_RAM)
+//	AM_RANGE(0x40000000, 0x40007fff) AM_WRITE(MWA32_RAM) AM_BASE( &vamp_tiles )
+	AM_RANGE(0x40000000, 0x4003ffff) AM_WRITE(MWA32_RAM) AM_BASE( &vamp_tiles )
+	AM_RANGE(0x80000000, 0x8000bfff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_WRITE(hyperstone_iram_w)
+//	AM_RANGE(0xe0000000, 0xfff7ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xfff80000, 0xffffffff) AM_WRITE(MWA32_ROM)
+ADDRESS_MAP_END
+
+VIDEO_UPDATE( vamphalf )
+{
+	int x,y;
+	int cnt;
+	const struct GfxElement *gfx = Machine->gfx[0];
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
+
+	cnt = 0;
+	for (y=0; y<128;y++)
+	{
+		for (x=0;x<128;x++)
+		{
+			int dat;
+			dat = vamp_tiles[cnt]&0xff;
+			drawgfx(bitmap,gfx,dat,0,0,0,x*8,y*8,cliprect,TRANSPARENCY_PEN,0);
+			cnt+=2;
+		}
+	}
+}
+
 static MACHINE_DRIVER_START( vamphalf )
-	MDRV_CPU_ADD(E132XS,10000000)		 /* ?? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_ADD(E132XS,10000000*5)		 /* ?? */
+	MDRV_CPU_PROGRAM_MAP(vampreadmem,vampwritemem)
+	MDRV_CPU_IO_MAP(iomapvamp,0)
+//	MDRV_CPU_VBLANK_INT(test_interrupt, 8)
+	MDRV_CPU_VBLANK_INT(test_interrupt, 2)
+//	MDRV_CPU_VBLANK_INT(test_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -84,20 +224,75 @@ static MACHINE_DRIVER_START( vamphalf )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0, 255, 0, 255)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
-
+//	MDRV_PALETTE_INIT( eo )
 	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_NVRAM_HANDLER(93C46)
 
 	MDRV_VIDEO_START(vamphalf)
 	MDRV_VIDEO_UPDATE(vamphalf)
 MACHINE_DRIVER_END
 
+
+static ADDRESS_MAP_START( misnreadmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA32_RAM)
+//	AM_RANGE(0x00000000, 0x000cffff) AM_READ(MRA32_RAM)
+//	AM_RANGE(0x40000000, 0x403fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x40000000, 0x40007fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x80000000, 0x80001fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r)
+//	AM_RANGE(0xe0000000, 0xfff7ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( misnwritemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA32_RAM)
+//	AM_RANGE(0x00000000, 0x000cffff) AM_WRITE(MWA32_RAM)
+//	AM_RANGE(0x40000000, 0x403fffff) AM_WRITE(MWA32_RAM) AM_BASE( &vamp_tiles )
+	AM_RANGE(0x40000000, 0x40007fff) AM_WRITE(MWA32_RAM) AM_BASE( &vamp_tiles )
+	AM_RANGE(0x80000000, 0x80001fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_WRITE(hyperstone_iram_w)
+//	AM_RANGE(0xe0000000, 0xfff7ffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xfff80000, 0xffffffff) AM_WRITE(MWA32_ROM)
+ADDRESS_MAP_END
+
+VIDEO_UPDATE( misncrft )
+{
+}
+
+static MACHINE_DRIVER_START( misncrft )
+	MDRV_CPU_ADD(E132XS,10000000*5)		 /* ?? */
+	MDRV_CPU_PROGRAM_MAP(misnreadmem,misnwritemem)
+	MDRV_CPU_IO_MAP(iomapvamp,0)
+//	MDRV_CPU_VBLANK_INT(test_interrupt, 8)
+	MDRV_CPU_VBLANK_INT(test_interrupt, 2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 0, 255)
+
+	MDRV_GFXDECODE(gfxdecodeinfo)
+//	MDRV_PALETTE_INIT( eo )
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_NVRAM_HANDLER(93C46)
+
+	MDRV_VIDEO_START(vamphalf)
+//	MDRV_VIDEO_UPDATE(misncrft)
+	MDRV_VIDEO_UPDATE(vamphalf)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( xfiles )
-	MDRV_CPU_ADD(E132XS,10000000)		 /* ?? */
+	MDRV_CPU_ADD(E132XS,10000000*5)		 /* ?? */
 	MDRV_CPU_PROGRAM_MAP(xfiles_readmem,xfiles_writemem)
+	MDRV_CPU_IO_MAP(iomap,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -115,11 +310,166 @@ static MACHINE_DRIVER_START( xfiles )
 	MDRV_VIDEO_UPDATE(vamphalf)
 MACHINE_DRIVER_END
 
-/* f2 systems hardware */
+static ADDRESS_MAP_START( eo_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x0c000000, 0x0c00ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x40000000, 0x400fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x80000000, 0x800fffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x90000000, 0x9003ffff) AM_READ(MRA32_RAM)//racoon
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r)
+	AM_RANGE(0xfc000000, 0xfccfffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0xfd000000, 0xfff7ffff) AM_READ(MRA32_BANK2)
+	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( eo_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x40000000, 0x400fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x80000000, 0x800fffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x90000000, 0x9003ffff) AM_WRITE(MWA32_RAM)	AM_BASE( &eo_vram)
+	AM_RANGE(0xc0000000, 0xdfffffff) AM_WRITE(hyperstone_iram_w)
+	AM_RANGE(0xfc000000, 0xfccfffff) AM_WRITE(MWA32_RAM)//racoon
+	//AM_RANGE(0xfd000000, 0xfeffffff) AM_WRITE(MWA32_RAM)//racoon
+	AM_RANGE(0xfff80000, 0xffffffff) AM_WRITE(MWA32_ROM)
+ADDRESS_MAP_END
+
+VIDEO_UPDATE( eolith )
+{
+#define XSIZE 320
+	int x,y;
+	for(y=0;y<200;y++)
+		for(x=0;x<XSIZE;x+=2)
+		{
+			plot_pixel(bitmap,x,y,(eo_vram[y*XSIZE+x]>>16)&0x7fff);
+			plot_pixel(bitmap,x+1,y,eo_vram[y*XSIZE+x]&0x7fff);
+		}
+
+
+}
+
+INPUT_PORTS_START( vamphalf )
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, "Test 0" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, "Test 1" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, "Test 2" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Test 3" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Test 4" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Test 5" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Test 6" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Test 7" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, "Test 8" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, "Test 9" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, "Test 10" )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, "Test 11" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, "Test 12" )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, "Test 13" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, "Test 14" )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "Test 15" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
+static MACHINE_DRIVER_START( eolith )
+	MDRV_CPU_ADD(E132XS,10000000*5)		 /* ?? */
+	MDRV_CPU_PROGRAM_MAP(eo_readmem,eo_writemem)
+	MDRV_CPU_IO_MAP(iomap,0)
+	MDRV_CPU_VBLANK_INT(test_interrupt, 8)
+
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 0, 255)
+
+	MDRV_GFXDECODE(gfxdecodeinfo)
+
+	MDRV_PALETTE_LENGTH(32768)
+	MDRV_PALETTE_INIT(eo)
+
+	MDRV_VIDEO_START(vamphalf)
+	MDRV_VIDEO_UPDATE(eolith)
+MACHINE_DRIVER_END
+
+/*
+
+Vamp 1/2 (Semi Vamp)
+Danbi, 1999
+
+Official page here...
+http://f2.co.kr/eng/product/intro1-17.asp
+
+
+PCB Layout
+----------
+             KA12    VROM1.
+
+             BS901   AD-65    ROML01.   ROMU01.
+                              ROML00.   ROMU00.
+                 62256
+                 62256
+
+T2316162A  E1-16T  PROM1.          QL2003-XPL84C
+
+                 62256
+                 62256       62256
+                             62256
+    93C46.IC3                62256
+                             62256
+    50.000MHz  QL2003-XPL84C
+B1 B2 B3                     28.000MHz
+
+
+
+Notes
+-----
+B1 B2 B3:      Push buttons for SERV, RESET, TEST
+T2316162A:     Main program RAM
+E1-16T:        Hyperstone E1-16T CPU
+QL2003-XPL84C: QuickLogic PLCC84 PLD
+AD-65:         Compatible to OKI M6295
+KA12:          Compatible to Y3012 or Y3014
+BS901          Compatible to YM2151
+PROM1:         Main program
+VROM1:         OKI samples
+ROML* / U*:    Graphics, device is MX29F1610ML (surface mounted SOP44 MASK ROM)
+
+*/
+
 
 ROM_START( vamphalf )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-
 	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("prom1", 0x00000000,    0x00080000,   CRC(f05e8e96) SHA1(c860e65c811cbda2dc70300437430fb4239d3e2d))
 
@@ -155,8 +505,6 @@ hc_u111.bin    32768  0x79012474  AMIC 275308 dumped as 27256
 */
 
 ROM_START( hidnctch )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-
 	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("hc_u43.bin", 0x00000000,    0x080000,  CRC(635b4478) SHA1(31ea4a9725e0c329447c7d221c22494c905f6940) )
 
@@ -205,8 +553,6 @@ lb_3.u97      524288  0x5b34dff0  27C040
 */
 
 ROM_START( landbrk )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-
 	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("lb_1.u43", 0x00000000,    0x080000,   CRC(f8bbcf44) SHA1(ad85a890ae2f921cd08c1897b4d9a230ccf9e072) )
 
@@ -260,9 +606,7 @@ U107 and U97 are mostlikely sound roms but not sure
 */
 
 ROM_START( racoon )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-
-	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
+ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("racoon-u.43", 0x00000000,    0x080000,  CRC(711ee026) SHA1(c55dfaa24cbaa7a613657cfb25e7f0085f1e4cbf) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 ) /* GFX (not tile based) */
@@ -343,8 +687,6 @@ SEC KM6161002    : Graphics RAM (SOJ44)
 */
 
 ROM_START( xfiles )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 )
-
 	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD16_WORD_SWAP("u9.bin", 0x00000000,    0x400000,   CRC(ebdb75c0) SHA1(9aa5736bbf3215c35d62b424c2e5e40223227baf) )
 
@@ -407,8 +749,6 @@ Notes:
 */
 
 ROM_START( misncrft )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 )
-
 	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD("prg-rom2.bin", 0x00000,    0x80000,   CRC(059ae8c1) SHA1(2c72fcf560166cb17cd8ad665beae302832d551c) )
 
@@ -429,15 +769,53 @@ ROM_START( misncrft )
 ROM_END
 
 
+ROM_START( coolmini )
+	ROM_REGION32_BE( 0x80000*2, REGION_USER1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD("cm-rom1.040", 0x00080000,    0x00080000,   CRC(9688fa98) SHA1(d5ebeb1407980072f689c3b3a5161263c7082e9a) )
+	ROM_LOAD("cm-rom2.040", 0x00000000,    0x00080000,   CRC(9d588fef) SHA1(7b6b0ba074c7fa0aecda2b55f411557b015522b6) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 ) /* 16x16x8 Sprites? */
+	/* missing . these roms are from vamphalf */
+//	ROM_LOAD32_WORD( "roml00",       0x000000, 0x200000, CRC(cc075484) SHA1(6496d94740457cbfdac3d918dce2e52957341616) )
+//	ROM_LOAD32_WORD( "roml01",       0x400000, 0x200000, CRC(626c9925) SHA1(c90c72372d145165a8d3588def12e15544c6223b) )
+//	ROM_LOAD32_WORD( "romu00",       0x000002, 0x200000, CRC(711c8e20) SHA1(1ef7f500d6f5790f5ae4a8b58f96ee9343ef8d92) )
+//	ROM_LOAD32_WORD( "romu01",       0x400002, 0x200000, CRC(d5be3363) SHA1(dbdd0586909064e015f190087f338f37bbf205d2) )
+
+	/* 8x flash roms? */
+	ROM_LOAD( "coolmini.gfx",        0x000000, 0x800000, NO_DUMP )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Oki Samples */
+	ROM_LOAD( "cm-vrom1.020",        0x000000, 0x040000, CRC(fcc28081) SHA1(44031df0ee28ca49df12bcb73c83299fac205e21)  )
+ROM_END
+
+
 DRIVER_INIT( vamphalf )
 {
 	cpu_setbank(1, memory_region(REGION_USER1));
 }
 
+DRIVER_INIT( coolmini )
+{
+	cpu_setbank(1, memory_region(REGION_USER1));
+
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff00000, 0xfff7ffff, 0, 0, MRA32_BANK2);
+
+	cpu_setbank(2, memory_region(REGION_USER1)+0x80000);
+}
+
+DRIVER_INIT( eolith )
+{
+	cpu_setbank(1, memory_region(REGION_USER1));
+	cpu_setbank(2, memory_region(REGION_GFX1));
+}
+
+
+
 /*           rom       parent    machine   inp       init */
 GAMEX( 19??, vamphalf, 0,        vamphalf, vamphalf, vamphalf, ROT0, "Danbi", "Vamp 1/2", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, hidnctch, 0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Hidden Catch", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, landbrk,  0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Land Breaker", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, racoon,   0,        vamphalf, vamphalf, vamphalf, ROT0, "Eolith", "Racoon World", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, hidnctch, 0,        eolith, vamphalf, eolith, ROT0, "Eolith", "Hidden Catch", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, landbrk,  0,        eolith, vamphalf, eolith, ROT0, "Eolith", "Land Breaker", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, racoon,   0,        eolith, vamphalf, eolith, ROT0, "Eolith", "Racoon World", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 19??, xfiles,   0,        xfiles,   vamphalf, vamphalf, ROT0, "dfPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 2000, misncrft, 0,        vamphalf, vamphalf, vamphalf, ROT90, "Sun", "Mission Craft", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 2000, misncrft, 0,        misncrft, vamphalf, vamphalf, ROT90, "Sun", "Mission Craft", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 19??, coolmini, 0,        vamphalf, vamphalf, coolmini, ROT0, "Semicom", "Cool Mini", GAME_NO_SOUND | GAME_NOT_WORKING )

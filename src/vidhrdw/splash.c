@@ -14,10 +14,9 @@ data16_t *splash_vregs;
 data16_t *splash_videoram;
 data16_t *splash_spriteram;
 data16_t *splash_pixelram;
-
+data16_t *roldfrog_bitmap_mode;
+int splash_bitmap_type;
 static struct tilemap *screen[2];
-static struct mame_bitmap *screen2;
-
 
 /***************************************************************************
 
@@ -94,26 +93,86 @@ WRITE16_HANDLER( splash_vram_w )
 		tilemap_mark_tile_dirty(screen[offset >> 11],((offset << 1) & 0x0fff) >> 1);
 }
 
-READ16_HANDLER( splash_pixelram_r )
+static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	return splash_pixelram[offset];
+	int sx,sy,color,count,colxor,bitswap;
+	colxor = 0; /* splash and some bitmap modes in roldfrog */
+	bitswap = 0;
+
+	if (splash_bitmap_type==1) /* roldfrog */
+	{
+		if (roldfrog_bitmap_mode[0]==0x0000)
+		{
+			colxor = 0x7f;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0100)
+		{
+			bitswap = 1;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0200)
+		{
+			colxor = 0x55;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0300)
+		{
+			bitswap = 2;
+			colxor = 0x7f;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0400)
+		{
+			bitswap = 3;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0500)
+		{
+			bitswap = 4;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0600)
+		{
+			bitswap = 5;
+			colxor = 0x7f;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0700)
+		{
+			bitswap = 6;
+			colxor = 0x55;
+		}
+	}
+
+	count = 0;
+	for (sy=0;sy<256;sy++)
+	{
+		for (sx=0;sx<512;sx++)
+		{
+			color = splash_pixelram[count]&0xff;
+			count++;
+
+			switch( bitswap )
+			{
+			case 1:
+				color = BITSWAP8(color,7,0,1,2,3,4,5,6);
+				break;
+			case 2:
+				color = BITSWAP8(color,7,4,6,5,1,0,3,2);
+				break;
+			case 3:
+				color = BITSWAP8(color,7,3,2,1,0,6,5,4);
+				break;
+			case 4:
+				color = BITSWAP8(color,7,6,4,2,0,5,3,1);
+				break;
+			case 5:
+				color = BITSWAP8(color,7,0,6,5,4,3,2,1);
+				break;
+			case 6:
+				color = BITSWAP8(color,7,4,3,2,1,0,6,5);
+				break;
+			}
+
+			plot_pixel(bitmap, sx-9, sy, Machine->pens[0x300+(color^colxor)]);
+		}
+	}
+
 }
-
-WRITE16_HANDLER( splash_pixelram_w )
-{
-	int sx,sy,color;
-
-	COMBINE_DATA(&splash_pixelram[offset]);
-
-	sx = offset & 0x1ff;
-	sy = (offset >> 9);
-
-	color = splash_pixelram[offset];
-
-	plot_pixel(screen2, sx-9, sy, Machine->pens[0x300 + (color & 0xff)]);
-}
-
-
 /***************************************************************************
 
 	Start the video hardware emulation.
@@ -124,9 +183,8 @@ VIDEO_START( splash )
 {
 	screen[0] = tilemap_create(get_tile_info_splash_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	screen[1] = tilemap_create(get_tile_info_splash_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	screen2 = auto_bitmap_alloc (512, 256);
 
-	if (!screen[0] || !screen[1] || !screen2)
+	if (!screen[0] || !screen[1])
 		return 1;
 
 	tilemap_set_transparent_pen(screen[0],0);
@@ -199,7 +257,7 @@ VIDEO_UPDATE( splash )
 	tilemap_set_scrolly(screen[0], 0, splash_vregs[0]);
 	tilemap_set_scrolly(screen[1], 0, splash_vregs[1]);
 
-	copybitmap(bitmap,screen2,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
+	splash_draw_bitmap(bitmap,cliprect);
 
 	tilemap_draw(bitmap,cliprect,screen[1],0,0);
 	splash_draw_sprites(bitmap,cliprect);

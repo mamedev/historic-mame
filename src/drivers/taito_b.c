@@ -2118,19 +2118,19 @@ INPUT_PORTS_START( silentd )	/* World Version */
 /*  Manual Shows "1 Coin Slot (Shared)" and "4 Coin Slot (1 Per Player)"
 
 	You can play the game with 2, 3, or 4 players and the last option is a linked 4 players.
-	Using bit6 and bit7&8 you end up with 1, 2 or 4 seperate "Credits" on the demo screens.
+	Using bit6 and bit7&8 you end up with 1, 2 or 4 separate "Credits" on the demo screens.
 	Using bits7&8 you can have 2-4 players as shown at the top of the game screens.
 
 */
 
-	PORT_DIPNAME( 0x20, 0x20, "Credits" )			/* Only shows 4 seperate credits with 4p/1m below */
+	PORT_DIPNAME( 0x20, 0x20, "Credits" )			/* Only shows 4 separate credits with 4p/1m below */
 	PORT_DIPSETTING(    0x20, "Combined" )
-	PORT_DIPSETTING(    0x00, "Seperate" )			/* When multiple credits show, Coin B will affect p2 credits */
+	PORT_DIPSETTING(    0x00, "Separate" )			/* When multiple credits show, Coin B will affect p2 credits */
 	PORT_DIPNAME( 0xc0, 0x80, "Cabinet Style" )
 	PORT_DIPSETTING(    0xc0, "3 Players")
 	PORT_DIPSETTING(    0x80, "2 Players")
-	PORT_DIPSETTING(    0x40, "4 Players/1 Machine")	/* with bit6, shows 4 seperate credits */
-	PORT_DIPSETTING(    0x00, "4 Players/2 Machines")	/* with bit6 shows 2 seperate credits */
+	PORT_DIPSETTING(    0x40, "4 Players/1 Machine")	/* with bit6, shows 4 separate credits */
+	PORT_DIPSETTING(    0x00, "4 Players/2 Machines")	/* with bit6 shows 2 separate credits */
 
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
@@ -2218,14 +2218,14 @@ INPUT_PORTS_START( silentdj )
 	PORT_DIPNAME( 0x10, 0x10, "Regain Power" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x20, 0x20, "Credits" )			/* Only shows 4 seperate credits with 4p/1m below */
+	PORT_DIPNAME( 0x20, 0x20, "Credits" )			/* Only shows 4 separate credits with 4p/1m below */
 	PORT_DIPSETTING(    0x20, "Combined" )
-	PORT_DIPSETTING(    0x00, "Seperate" )			/* When multiple credits show, Coin B will affect p2 credits */
+	PORT_DIPSETTING(    0x00, "Separate" )			/* When multiple credits show, Coin B will affect p2 credits */
 	PORT_DIPNAME( 0xc0, 0x80, "Cabinet Style" )
 	PORT_DIPSETTING(    0xc0, "3 Players")
 	PORT_DIPSETTING(    0x80, "2 Players")
-	PORT_DIPSETTING(    0x40, "4 Players/1 Machine")	/* with bit6, shows 4 seperate credits */
-	PORT_DIPSETTING(    0x00, "4 Players/2 Machines")	/* with bit6 shows 2 seperate credits */
+	PORT_DIPSETTING(    0x40, "4 Players/1 Machine")	/* with bit6, shows 4 separate credits */
+	PORT_DIPSETTING(    0x00, "4 Players/2 Machines")	/* with bit6 shows 2 separate credits */
 
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)

@@ -1213,6 +1213,36 @@ else
 CPUDEFS += -DHAS_V810=0
 endif
 
+CPU=$(strip $(findstring M37710@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/m37710
+CPUDEFS += -DHAS_M37710=1
+CPUOBJS += $(OBJ)/cpu/m37710/m37710.o 
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o0.o 
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o1.o 
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o2.o 
+CPUOBJS += $(OBJ)/cpu/m37710/m37710o3.o 
+CPUOBJS += $(OBJ)/cpu/m37710/m7700ds.o
+$(OBJ)/cpu/m37710/m37710.o: m37710.c m37710.h m37710o0.c m37710o1.c m37710o2.c m37710o3.c m37710op.h m7700ds.h
+$(OBJ)/cpu/m37710/m37710o0.o: m37710.h m37710o0.c m37710op.h m7700ds.h
+$(OBJ)/cpu/m37710/m37710o1.o: m37710.h m37710o1.c m37710op.h m7700ds.h
+$(OBJ)/cpu/m37710/m37710o2.o: m37710.h m37710o2.c m37710op.h m7700ds.h
+$(OBJ)/cpu/m37710/m37710o3.o: m37710.h m37710o3.c m37710op.h m7700ds.h
+$(OBJ)/cpu/m37710/m7700ds.o: m7700ds.c m7700ds.h
+else
+CPUDEFS += -DHAS_M37710=0
+endif
+
+CPU=$(strip $(findstring PPC403@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/powerpc
+CPUDEFS += -DHAS_PPC403=1
+CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
+DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc403.c
+else
+CPUDEFS += -DHAS_PPC403=0
+endif
 
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)

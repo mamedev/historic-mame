@@ -187,6 +187,7 @@ ROM_END
 
 static DRIVER_INIT( hexa )
 {
+#if 0
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
@@ -194,9 +195,11 @@ static DRIVER_INIT( hexa )
 	/* 0x07 of the AY8910, to read the input ports. This causes clicks in the */
 	/* music since the output channels are continuously disabled and reenabled. */
 	/* To avoid that, we just NOP out the 0x3f write. */
+
 	RAM[0x0124] = 0x00;
 	RAM[0x0125] = 0x00;
 	RAM[0x0126] = 0x00;
+#endif
 }
 
 

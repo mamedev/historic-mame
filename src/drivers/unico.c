@@ -130,7 +130,7 @@ static WRITE16_HANDLER( zeropnt_sound_bank_w )
 /* Light Gun - need to wiggle the input slightly otherwise fire doesn't work */
 static READ16_HANDLER( unico_gunx_0_msb_r )
 {
-	int x=readinputport(4);
+	int x=readinputportbytag("X0");
 
 	x=x*384/256; /* On screen pixel X */
 	if (x<0x160) x=0x30 + (x*0xd0/0x15f);
@@ -141,7 +141,7 @@ static READ16_HANDLER( unico_gunx_0_msb_r )
 
 static READ16_HANDLER( unico_guny_0_msb_r )
 {
-	int y=readinputport(3);
+	int y=readinputportbytag("Y0");
 
 	y=0x18+((y*0xe0)/0xff);
 
@@ -150,7 +150,7 @@ static READ16_HANDLER( unico_guny_0_msb_r )
 
 static READ16_HANDLER( unico_gunx_1_msb_r )
 {
-	int x=readinputport(6);
+	int x=readinputportbytag("X1");
 
 	x=x*384/256; /* On screen pixel X */
 	if (x<0x160) x=0x30 + (x*0xd0/0x15f);
@@ -161,7 +161,7 @@ static READ16_HANDLER( unico_gunx_1_msb_r )
 
 static READ16_HANDLER( unico_guny_1_msb_r )
 {
-	int y=readinputport(5);
+	int y=readinputportbytag("Y1");
 
 	y=0x18+((y*0xe0)/0xff);
 
@@ -216,10 +216,10 @@ ADDRESS_MAP_END
 								Zero Point 2
 ***************************************************************************/
 
-static READ32_HANDLER( zeropnt2_coins_r )			{ return (readinputport(0) << 16) | 0xffff; }
-static READ32_HANDLER( zeropnt2_dsw1_r )			{ return (readinputport(1) << 16) | 0xffff; }
-static READ32_HANDLER( zeropnt2_dsw2_r )			{ return (readinputport(2) << 16) | 0xffff; }
-static READ32_HANDLER( zeropnt2_buttons_r )			{ return ((readinputport(7) | ((EEPROM_read_bit() & 0x01) << 7)) << 16) | 0xffff; }
+static READ32_HANDLER( zeropnt2_coins_r )			{ return (readinputportbytag("IN0") << 16) | 0xffff; }
+static READ32_HANDLER( zeropnt2_dsw1_r )			{ return (readinputportbytag("DSW1") << 16) | 0xffff; }
+static READ32_HANDLER( zeropnt2_dsw2_r )			{ return (readinputportbytag("DSW2") << 16) | 0xffff; }
+static READ32_HANDLER( zeropnt2_buttons_r )			{ return ((readinputportbytag("IN7") | ((EEPROM_read_bit() & 0x01) << 7)) << 16) | 0xffff; }
 
 static READ32_HANDLER( zeropnt2_gunx_0_msb_r )		{ return (unico_gunx_0_msb_r(0,0)-0x0800) << 16; }
 static READ32_HANDLER( zeropnt2_guny_0_msb_r )		{ return (unico_guny_0_msb_r(0,0)+0x0800) << 16; }
@@ -331,7 +331,7 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( burglarx )
 
-	PORT_START	// IN0 - $800000.w
+	PORT_START_TAG("IN0")	//$800000.w
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
@@ -350,7 +350,7 @@ INPUT_PORTS_START( burglarx )
 	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	// IN1 - $800019.b
+	PORT_START_TAG("IN1")	//$800019.b
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN1    )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_COIN2    )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -361,7 +361,7 @@ INPUT_PORTS_START( burglarx )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
-	PORT_START	// IN2 - $80001a.b
+	PORT_START_TAG("DSW1")	//$80001a.b
 	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Free_Play ) )
@@ -386,7 +386,7 @@ INPUT_PORTS_START( burglarx )
 	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_4C ) )
 
-	PORT_START	// IN3 - $80001c.b
+	PORT_START_TAG("DSW2")	//$80001c.b
 	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x0200, DEF_STR( None ) )
@@ -420,10 +420,10 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( zeropnt )
 
-	PORT_START	// IN0 - $800018.w
+	PORT_START_TAG("IN0")	//$800018.w
 	PORT_BIT(  0x0001, IP_ACTIVE_HIGH, IPT_COIN1    )
 	PORT_BIT(  0x0002, IP_ACTIVE_HIGH, IPT_COIN2    )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_SERVICE_NO_TOGGLE( 0x0004, IP_ACTIVE_HIGH)
 	PORT_BIT(  0x0008, IP_ACTIVE_HIGH, IPT_UNKNOWN  )
 	PORT_BIT(  0x0010, IP_ACTIVE_HIGH, IPT_START1   )
 	PORT_BIT(  0x0020, IP_ACTIVE_HIGH, IPT_START2   )
@@ -440,7 +440,7 @@ INPUT_PORTS_START( zeropnt )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 
-	PORT_START	// IN1 - $80001a.b
+	PORT_START_TAG("DSW1")	//$80001a.b
 	PORT_BIT(     0x00ff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x0100, 0x0000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
@@ -467,7 +467,7 @@ INPUT_PORTS_START( zeropnt )
 	PORT_DIPSETTING(      0x4000, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_4C ) )
 
-	PORT_START	// IN2 - $80001c.b
+	PORT_START_TAG("DSW2")	//$80001c.b
 	PORT_BIT(     0x00ff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x0100, 0x0000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
@@ -491,16 +491,16 @@ INPUT_PORTS_START( zeropnt )
 	PORT_DIPSETTING(      0x8000, "4" )
 	PORT_DIPSETTING(      0xc000, "5" )
 
-	PORT_START	// IN3 - $800170.b
+	PORT_START_TAG("Y0")	//$800170.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(2)
 
-	PORT_START	// IN4 - $800174.b
+	PORT_START_TAG("X0")	//$800174.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(2)
 
-	PORT_START	// IN5 - $800178.b
+	PORT_START_TAG("Y1")	//$800178.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
-	PORT_START	// IN6 - $80017c.b
+	PORT_START_TAG("X1")	//$80017c.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
 INPUT_PORTS_END
@@ -512,10 +512,10 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 INPUT_PORTS_START( zeropnt2 )
-	PORT_START	// IN0 - $800019.b
+	PORT_START_TAG("IN0")	//$800019.b
 	PORT_BIT(  0x0001, IP_ACTIVE_HIGH, IPT_COIN1    )
 	PORT_BIT(  0x0002, IP_ACTIVE_HIGH, IPT_COIN2    )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_SERVICE_NO_TOGGLE( 0x0004, IP_ACTIVE_HIGH)
 	PORT_BIT(  0x0008, IP_ACTIVE_HIGH, IPT_UNKNOWN  )
 	PORT_BIT(  0x0010, IP_ACTIVE_HIGH, IPT_START1   )
 	PORT_BIT(  0x0020, IP_ACTIVE_HIGH, IPT_START2   )
@@ -523,7 +523,7 @@ INPUT_PORTS_START( zeropnt2 )
 	PORT_BIT(  0x0080, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT(  0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	// IN1 - $800150.b
+	PORT_START_TAG("IN1")	//$800150.b
 	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
@@ -549,7 +549,7 @@ INPUT_PORTS_START( zeropnt2 )
 	PORT_DIPSETTING(      0xa000, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_4C ) )
 
-	PORT_START	// IN2 - $800154.b
+	PORT_START_TAG("IN2")	//$800154.b
 	PORT_BIT(     0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_DIPNAME( 0x0100, 0x0100, "Korean Language" )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
@@ -575,19 +575,19 @@ INPUT_PORTS_START( zeropnt2 )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Harder ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 
-	PORT_START	// IN3 - $800140.b
+	PORT_START_TAG("Y0")	//$800140.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(2)
 
-	PORT_START	// IN4 - $800144.b
+	PORT_START_TAG("X0")	//$800144.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(2)
 
-	PORT_START	// IN5 - $800148.b
+	PORT_START_TAG("Y1")	//$800148.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
-	PORT_START	// IN6 - $80014c.b
+	PORT_START_TAG("X1")	//$80014c.b
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
-	PORT_START	// IN7 - $80015c.b
+	PORT_START_TAG("IN7")	//$80015c.b
 	PORT_BIT(  0x00ff, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(2)

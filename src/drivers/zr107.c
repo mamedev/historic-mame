@@ -1,0 +1,335 @@
+/*	Konami ZR107 */
+
+#include "driver.h"
+#include "vidhrdw/konamiic.h"
+#include "sound/k054539.h"
+
+
+
+static WRITE32_HANDLER( paletteram32_w )
+{
+	int r,g,b;
+	int r2,g2,b2;
+
+	COMBINE_DATA(&paletteram32[offset]);
+	data = paletteram32[offset];
+
+	b = ((data >> 16) & 0x1f);
+	g = ((data >> 21) & 0x1f);
+	r = ((data >> 26) & 0x1f);
+	b2 = ((data >> 0) & 0x1f);
+	g2 = ((data >> 5) & 0x1f);
+	r2 = ((data >> 10) & 0x1f);
+
+	b = (b << 3) | (b >> 2);
+	g = (g << 3) | (g >> 2);
+	r = (r << 3) | (r >> 2);
+	b2 = (b2 << 3) | (b2 >> 2);
+	g2 = (g2 << 3) | (g2 >> 2);
+	r2 = (r2 << 3) | (r2 >> 2);
+
+	palette_set_color((offset * 2) + 0, r, g, b);
+	palette_set_color((offset * 2) + 1, r2, g2, b2);
+}
+
+#define NUM_LAYERS	2
+
+static void game_tile_callback(int layer, int *code, int *color)
+{
+}
+
+VIDEO_START( zr107 )
+{
+	static int scrolld[NUM_LAYERS][4][2] = {
+	 	{{ 0, 0}, {0, 0}, {0, 0}, {0, 0}},
+	 	{{ 0, 0}, {0, 0}, {0, 0}, {0, 0}}
+	};
+
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4dj, 1, scrolld, game_tile_callback))
+		return 1;
+
+	return 0;
+}
+
+VIDEO_UPDATE( zr107 )
+{
+	fillbitmap(bitmap, Machine->remapped_colortable[0], cliprect);
+
+	K056832_tilemap_draw_dj(bitmap, cliprect, 0, 0, 1);
+}
+
+/******************************************************************/
+
+static READ32_HANDLER( sysreg_r )
+{
+	//printf("sysreg_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
+	return 0x80;
+}
+
+static WRITE32_HANDLER( sysreg_w )
+{
+	if( offset == 1 )
+		return;
+	printf("sysreg_w: %08X, %08X, %08X\n", offset, data, mem_mask);
+}
+
+static data8_t sndto68k[16], sndtoppc[16];	/* read/write split mapping */
+
+static READ32_HANDLER( ppc_sound_r )
+{
+	data32_t reg, w[4], rv = 0;
+
+	reg = offset * 4;
+
+	if (!(mem_mask & 0xff000000))
+	{
+		w[0] = sndtoppc[reg];
+		if (reg == 2) w[0] &= ~3; // supress VOLWR busy flags
+		rv |= w[0]<<24;
+	}
+
+	if (!(mem_mask & 0x00ff0000))
+	{
+		w[1] = sndtoppc[reg+1];
+		rv |= w[1]<<16;
+	}
+
+	if (!(mem_mask & 0x0000ff00))
+	{
+		w[2] = sndtoppc[reg+2];
+		rv |= w[2]<<8;
+	}
+
+	if (!(mem_mask & 0x000000ff))
+	{
+		w[3] = sndtoppc[reg+3];
+		rv |= w[3]<<0;
+	}
+
+	return(rv);
+}
+
+INLINE void write_snd_ppc(int reg, int val)
+{
+	sndto68k[reg] = val;
+
+	if (reg == 7)
+	{
+		cpunum_set_input_line(1, 1, HOLD_LINE);
+	}
+}
+
+static WRITE32_HANDLER( ppc_sound_w )
+{
+	int reg=0, val=0;
+
+	if (!(mem_mask & 0xff000000))
+	{
+		reg = offset * 4;
+		val = data >> 24;
+		write_snd_ppc(reg, val);
+	}
+
+	if (!(mem_mask & 0x00ff0000))
+	{
+		reg = (offset * 4) + 1;
+		val = (data >> 16) & 0xff;
+		write_snd_ppc(reg, val);
+	}
+
+	if (!(mem_mask & 0x0000ff00))
+	{
+		reg = (offset * 4) + 2;
+		val = (data >> 8) & 0xff;
+		write_snd_ppc(reg, val);
+	}
+
+	if (!(mem_mask & 0x000000ff))
+	{
+		reg = (offset * 4) + 3;
+		val = (data >> 0) & 0xff;
+		write_snd_ppc(reg, val);
+	}
+}
+
+static READ32_HANDLER( lanc_r )
+{
+	return 0;
+}
+
+static WRITE32_HANDLER( lanc_w )
+{
+
+}
+
+static data32_t video_reg = 0;
+
+static READ32_HANDLER( video_r )
+{
+	video_reg ^= 0x80;
+	return video_reg;
+}
+
+/******************************************************************/
+
+static ADDRESS_MAP_START( zr107_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0x74000000, 0x74001fff) AM_READWRITE(K056832_ram_long_r, K056832_ram_long_w)
+	AM_RANGE(0x74020000, 0x7402003f) AM_READWRITE(K056832_long_r, K056832_long_w)
+	AM_RANGE(0x74080000, 0x74081fff) AM_READWRITE(paletteram32_r, paletteram32_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x78000000, 0x7800ffff) AM_RAM				/* 21N 21K 23N 23K */
+	AM_RANGE(0x780c0000, 0x780c0007) AM_READ(video_r)
+	AM_RANGE(0x7e000000, 0x7e003fff) AM_READWRITE(sysreg_r, sysreg_w)
+	AM_RANGE(0x7e008000, 0x7e009fff) AM_READWRITE(lanc_r, lanc_w)	/* LANC registers */
+	AM_RANGE(0x7e00a000, 0x7e00bfff) AM_RAM							/* LANC Buffer RAM (27E) */
+	AM_RANGE(0x7e00c000, 0x7e00c007) AM_WRITE(ppc_sound_w)
+	AM_RANGE(0x7e00c008, 0x7e00c00f) AM_READ(ppc_sound_r)
+	AM_RANGE(0x80000000, 0x800fffff) AM_RAM	AM_SHARE(3)	/* Work RAM */
+	AM_RANGE(0xff800000, 0xff9fffff) AM_ROM AM_SHARE(2)
+	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)
+ADDRESS_MAP_END
+
+
+
+/**********************************************************************/
+
+static READ16_HANDLER( dual539_r )
+{
+	data16_t ret = 0;
+
+	if (ACCESSING_LSB16)
+		ret |= K054539_1_r(offset);
+	if (ACCESSING_MSB16)
+		ret |= K054539_0_r(offset)<<8;
+
+	return ret;
+}
+
+static WRITE16_HANDLER( dual539_w )
+{
+	if (ACCESSING_LSB16)
+		K054539_1_w(offset, data);
+	if (ACCESSING_MSB16)
+		K054539_0_w(offset, data>>8);
+}
+
+static READ16_HANDLER( sndcomm68k_r )
+{
+	return sndto68k[offset];
+}
+
+static WRITE16_HANDLER( sndcomm68k_w )
+{
+//	logerror("68K: write %x to %x\n", data, offset);
+	sndtoppc[offset] = data;
+}
+
+static ADDRESS_MAP_START( sound_memmap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM		/* Work RAM */
+	AM_RANGE(0x200000, 0x2004ff) AM_READWRITE(dual539_r, dual539_w)
+	AM_RANGE(0x400000, 0x40000f) AM_WRITE(sndcomm68k_w)
+	AM_RANGE(0x400010, 0x40001f) AM_READ(sndcomm68k_r)
+	AM_RANGE(0x580000, 0x580001) AM_WRITENOP
+ADDRESS_MAP_END
+
+static struct K054539interface k054539_interface =
+{
+	2,			/* 2 chips */
+	48000,
+	{ REGION_SOUND1, REGION_SOUND1 },
+	{ { 100, 100 }, { 100, 100 } },
+	{ NULL }
+};
+
+/********************************************************************/
+
+
+
+INPUT_PORTS_START( zr107 )
+INPUT_PORTS_END
+
+static MACHINE_DRIVER_START( zr107 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
+	MDRV_CPU_PROGRAM_MAP(zr107_map, 0)
+
+	MDRV_CPU_ADD(M68000, 64000000/8)	/* 8MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(sound_memmap, 0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)
+
+ 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(64*8, 48*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 48*8-1)
+	MDRV_PALETTE_LENGTH(65536)
+
+	MDRV_VIDEO_START(zr107)
+	MDRV_VIDEO_UPDATE(zr107)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(K054539, k054539_interface)
+MACHINE_DRIVER_END
+
+/*************************************************************************/
+
+ROM_START(midnrun)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* PowerPC program roms */
+	ROM_LOAD32_BYTE("midnight.20u", 0x000003, 0x80000, CRC(ea70edf2) SHA1(51c882383a150ba118ccd39eb869525fcf5eee3c))
+	ROM_LOAD32_BYTE("midnight.17u", 0x000002, 0x80000, CRC(1462994f) SHA1(c8614c6c416f81737cc77c46eea6d8d440bc8cf3))
+	ROM_LOAD32_BYTE("midnight.15u", 0x000001, 0x80000, CRC(b770ae46) SHA1(c61daa8353802957eb1c2e2c6204c3a98569627e))
+	ROM_LOAD32_BYTE("midnight.13u", 0x000000, 0x80000, CRC(9644b277) SHA1(b9cb812b6035dfd93032d277c8aa0037cf6b3dbe))
+
+	ROM_REGION(0x20000, REGION_CPU2, 0)		/* M68K program */
+	ROM_LOAD16_WORD_SWAP("midnight.19l", 0x000000, 0x20000, CRC(a82c0ba1) SHA1(dad69f2e5e75009d70cc2748477248ec47627c30))
+
+	ROM_REGION(0x100000, REGION_GFX1, 0)	/* Tilemap */
+	ROM_LOAD("midnight.35b", 0x000000, 0x80000, CRC(85eef04b) SHA1(02e26d2d4a8b29894370f28d2a49fdf5c7d23f95))
+	ROM_LOAD("midnight.35a", 0x080000, 0x80000, CRC(451d7777) SHA1(0bf280ca475100778bbfd3f023547bf0413fc8b7))
+
+	ROM_REGION(0x800000, REGION_GFX2, 0)	/* Texture data */
+	ROM_LOAD32_BYTE("midnight.m9h", 0x000003, 0x200000, CRC(b1ee901d) SHA1(b1432cb1379b35d99d3f2b7f6409db6f7e88121d))
+	ROM_LOAD32_BYTE("midnight.7h",  0x000002, 0x200000, CRC(9ffa8cc5) SHA1(eaa19e26df721bec281444ca1c5ccc9e48df1b0b))
+	ROM_LOAD32_BYTE("midnight.5h",  0x000001, 0x200000, CRC(e337fce7) SHA1(c84875f3275efd47273508b340231721f5a631d2))
+	ROM_LOAD32_BYTE("midnight.m2h", 0x000000, 0x200000, CRC(2c03ee63) SHA1(6b74d340dddf92bb4e4b1e037f003d58c65d8d9b))
+
+	ROM_REGION(0x600000, REGION_SOUND1, 0)	/* Sound data */
+	ROM_LOAD("midnight.m3r", 0x000000, 0x200000, CRC(f431e29f) SHA1(e6082d88f86abb63d02ac34e70873b58f88b0ddc))
+	ROM_LOAD("midnight.m5n", 0x200000, 0x200000, CRC(8db31bd4) SHA1(d662d3bb6e8b44a01ffa158f5d7425454aad49a3))
+	ROM_LOAD("midnight.m5r", 0x400000, 0x200000, CRC(d320dbde) SHA1(eb602cad6ac7c7151c9f29d39b10041d5a354164))
+ROM_END
+
+ROM_START(windheat)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* PowerPC program roms */
+        ROM_LOAD32_BYTE( "677ubc01.20u", 0x000003, 0x080000, CRC(63198721) SHA1(7f34131bf51d573d0c683b28df2567a0b911c98c) )
+        ROM_LOAD32_BYTE( "677ubc02.17u", 0x000002, 0x080000, CRC(bdb00e2d) SHA1(c54b2250047576e12e9936300989e40494b4659d) )
+        ROM_LOAD32_BYTE( "677ubc03.15u", 0x000001, 0x080000, CRC(0f7d8c1f) SHA1(63de03c7be794b6dae8d0af69e894ac573dbbc11) )
+        ROM_LOAD32_BYTE( "677ubc04.13u", 0x000000, 0x080000, CRC(4e42791c) SHA1(a53c6374c6b46db578be4ced2ee7c2af7062d961) )
+
+	ROM_REGION(0x20000, REGION_CPU2, 0)		/* M68K program */
+        ROM_LOAD16_WORD_SWAP( "677a07.19l",   0x000000, 0x020000, CRC(05b14f2d) SHA1(3753f71173594ee741980e08eed0f7c3fc3588c9) )
+
+	ROM_REGION(0x100000, REGION_GFX1, 0)	/* Tilemap */
+        ROM_LOAD( "677a11.35b",   0x000000, 0x080000, CRC(bf34f00f) SHA1(ca0d390c8b30d0cfdad4cfe5a601cc1f6e8c263d) )
+        ROM_LOAD( "677a12.35a",   0x080000, 0x080000, CRC(458f0b1d) SHA1(8e11023c75c80b496dfc62b6645cfedcf2a80db4) )
+
+	ROM_REGION(0x800000, REGION_GFX2, 0)	/* Texture data */
+        ROM_LOAD32_BYTE( "677a13.9h",    0x000003, 0x200000, CRC(7937d226) SHA1(c2ba777292c293e31068eeb3a27353ad2595b413) )
+        ROM_LOAD32_BYTE( "677a14.7h",    0x000002, 0x200000, CRC(2568cf41) SHA1(6ed01922943486dafbdc863b76b2036c1fbe5281) )
+        ROM_LOAD32_BYTE( "677a15.5h",    0x000001, 0x200000, CRC(62e2c3dd) SHA1(c9127ed70bdff947c3da2908a08974091615a685) )
+        ROM_LOAD32_BYTE( "677a16.2h",    0x000000, 0x200000, CRC(7cc75539) SHA1(4bd8d88debf7489f30008bd4cbded67cb1a20ab0) )
+
+	ROM_REGION(0x600000, REGION_SOUND1, 0)	/* Sound data */
+        ROM_LOAD( "677a09.3r",    0x000000, 0x200000, CRC(4dfc1ea9) SHA1(4ab264c1902b522bc0589766e42f2b6ca276808d) )
+        ROM_LOAD( "677a10.5n",    0x200000, 0x200000, CRC(d8f77a68) SHA1(ff251863ef096f0864f6cbe6caa43b0aa299d9ee) )
+        ROM_LOAD( "677a08.5r",    0x400000, 0x200000, CRC(bde38850) SHA1(aaf1bdfc25ecdffc1f6076c9c1b2edbe263171d2) )
+ROM_END
+
+/*************************************************************************/
+
+GAMEX( 1995, midnrun,	0,		zr107,	zr107,	0,		ROT0,	"Konami",	"Midnight Run", GAME_NOT_WORKING )
+GAMEX( 1996, windheat,	0,		zr107,	zr107,	0,		ROT0,	"Konami",	"Winding Heat", GAME_NOT_WORKING )

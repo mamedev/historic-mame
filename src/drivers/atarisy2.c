@@ -128,6 +128,7 @@
 #include "machine/atarigen.h"
 #include "slapstic.h"
 #include "atarisy2.h"
+#include <math.h>
 
 
 
@@ -381,10 +382,47 @@ static READ8_HANDLER( leta_r )
 {
     if (pedal_count == -1)   /* 720 */
 	{
+		/* special thanks to MAME Analog+ for the mapping code */
 		switch (offset & 3)
 		{
-			case 0: return readinputport(7) >> 8;
-			case 1: return readinputport(7) & 0xff;
+			case 0:
+			case 1:
+			{
+				static double last_angle;
+				static int rotations;
+
+				int analogx = readinputport(7) - 128;
+				int analogy = readinputport(8) - 128;
+				double angle;
+				
+				/* if the joystick is centered, leave the rest of this alone */
+				angle = last_angle;
+				if (analogx < -32 || analogx > 32 || analogy < -32 || analogy > 32)
+					angle = atan2(analogx, analogy) * 360 / (2 * M_PI);
+
+				/* detect when we pass the 0 point in either direction */
+				if (last_angle < -90 && angle > 90)
+					rotations--;
+				else if (last_angle > 90 && angle < -90)
+					rotations++;
+				last_angle = angle;
+				
+				/* offset 0 returns 0xff when the controller blocks one of two gaps */
+				if ((offset & 3) == 0)
+				{
+					/* original controller had two gaps 10 degrees apart, each 2.5 degrees wide */
+					/* we fake it a little to make it possible to hit the zeroed state with a digital controller */
+					return (angle >= -5.0 && angle <= 5.0) ? 0xff : 0x00;
+				}
+				
+				/* offset 1 returns dial value; 144 units = 1 full rotation */
+				else
+				{
+					/* take the rotations * 144 plus the current angle */
+					return (rotations * 144 + (int)(angle * 144.0 / 360.0)) & 0xff;
+				}
+				break;
+			}
 			case 2: return 0xff;
 			case 3: return 0xff;
 		}
@@ -541,7 +579,7 @@ static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-#define SYS2_1840 \
+
 
 /*************************************
  *
@@ -688,11 +726,11 @@ INPUT_PORTS_START( 720 )
 	PORT_START_TAG("ADC3")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("LETA0/1")
-	PORT_BIT( 0xffff, 0x0000, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(10) PORT_PLAYER(1)
+	PORT_START_TAG("LETA0")	/* not direct mapped */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 
-	PORT_START_TAG("FILLER")
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START_TAG("LETA1")	/* not direct mapped */
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
 
 	PORT_START_TAG("LETA2")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )

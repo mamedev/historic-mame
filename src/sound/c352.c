@@ -473,8 +473,6 @@ int c352_sh_start(const struct MachineSound *msound)
 
 	intf = msound->sound_interface;
 
-	printf("region = %d\n", intf->region);
-
 	c352_rom_samples = memory_region(intf->region);
 	c352_region = intf->region;
 
@@ -517,3 +515,4 @@ WRITE16_HANDLER( c352_0_w )
 		logerror("C352: byte-wide write unsupported at this time!\n");
 	}
 }
+

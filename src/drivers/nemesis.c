@@ -1995,33 +1995,15 @@ static struct YM3812interface ym3812_interface =
 {
 	1,
 	3579545,
-	{ 35 },
+	{ 100 },
 	{ sound_irq },
 };
-
-/* adjusted chip */
-static struct YM3812interface nyanpani_ym3812_interface =
-{
-	1,
-	3579545,
-	{ 100 },	/* volume */
-	{ sound_irq },
-};
-/* end */
 
 static struct k051649_interface k051649_interface =
 {
 	3579545/2,	/* Clock */
-	45,			/* Volume */
+	38,			/* Volume */
 };
-
-/* adjusted chip */
-static struct k051649_interface nyanpani_k051649_interface =
-{
-	3579545/2,	/* Clock */
-	40,			/* Volume */
-};
-/* end */
 
 static struct VLM5030interface vlm5030_interface =
 {
@@ -2054,16 +2036,14 @@ static struct K007232_interface k007232_interface =
 	{ volume_callback }	/* external port callback */
 };
 
-/* adjusted chip */
 static struct K007232_interface nyanpani_k007232_interface =
 {
 	1,		/* number of chips */
 	3579545,	/* clock */
 	{ REGION_SOUND2 },	/* memory regions */
-	{ K007232_VOL(20,MIXER_PAN_CENTER,20,MIXER_PAN_CENTER) },	/* volume */
+	{ K007232_VOL(30,MIXER_PAN_CENTER,30,MIXER_PAN_CENTER) },	/* volume */
 	{ volume_callback }	/* external port callback */
 };
-/* end */
 
 /******************************************************************************/
 
@@ -2228,9 +2208,9 @@ static MACHINE_DRIVER_START( citybomb )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K007232, nyanpani_k007232_interface)		/* adjusted */
-	MDRV_SOUND_ADD(YM3812, nyanpani_ym3812_interface)		/* adjusted */
-	MDRV_SOUND_ADD(K051649, nyanpani_k051649_interface)		/* adjusted */
+	MDRV_SOUND_ADD(K007232, nyanpani_k007232_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(K051649, k051649_interface)
 MACHINE_DRIVER_END
 
 
@@ -2262,7 +2242,7 @@ static MACHINE_DRIVER_START( nyanpani )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(K007232, nyanpani_k007232_interface)
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)
 	MDRV_SOUND_ADD(K051649, k051649_interface)
 MACHINE_DRIVER_END

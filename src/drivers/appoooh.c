@@ -43,10 +43,13 @@ write:
 Credits:
 - Tatsuyuki Satoh: MAME driver
 
+16.08.2004 - TS - Added 'Robo Wres 2001'
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "appoooh.h"
+#include "machine/segacrpt.h"
 
 static unsigned char *adpcmptr = 0;
 static int appoooh_adpcm_data;
@@ -255,7 +258,239 @@ static MACHINE_DRIVER_START( appoooh )
 	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
 MACHINE_DRIVER_END
 
+/*
 
+Robo Wres 2001
+Sega, (198x, possibly 1986?)
+
+Top Board
+---------
+PCB No: 834-5990 SEGA 1986
+CPU   : NEC D315-5179 (Z80?)
+SOUND : OKI MSM5205 + Resonator 384kHz, SN76489 (x3)
+RAM   : MB8128 (x1)
+OTHER : Volume Pot (x2, labelled VOICE and SOUND)
+PALs  : (x1, near EPR-7542.15D, labelled 315-5056)
+PROMs : (x1, near EPR-7543.12B, labelled PR7571)
+DIPSW : 8 position (x1)
+DIPSW Info:
+
+			1	2	3	4	5	6	7	8
+-----------------------------------------------------------------------------------
+Coin1  
+        1Coin 1Credit	OFF	OFF	OFF
+	2Coin 1Credit	ON	OFF	OFF
+	3Coin 1Credit	OFF	ON	OFF
+	4Coin 1Credit	ON	ON	OFF
+	1Coin 2Credit	OFF	OFF	ON
+	1Coin 3Credit	ON	OFF	ON
+	1Coin 4Credit	OFF	ON	ON
+	2Coin 3Credit	ON	ON	ON
+-----------------------------------------------------------------------------------
+Coin2
+	1Coin 1Credit				OFF	OFF
+	1Coin 2Credit				ON	OFF
+	2Coin 1Credit				OFF	ON
+	3Coin 1Credit				ON	ON
+-----------------------------------------------------------------------------------
+Demo Sound
+	Off							OFF
+	On							ON
+-----------------------------------------------------------------------------------
+Not Used								OFF	
+-----------------------------------------------------------------------------------
+Language
+	Japanese								OFF
+	English									ON
+-----------------------------------------------------------------------------------
+
+
+
+
+PCB Edge Connector Pinout		
+-------------------------
+
+Parts               Solder
+Side                Side
+--------------------------------
+GND         A  1    GND 
+GND         B  2    GND 
+COIN 2      C  3    -
+1P HOLD     D  4    2P HOLD
+1P PUNCH    E  5    2P PUNCH
+-           F  6    -
+1P START    H  7    2P START
+1P KICK     J  8    2P KICK
+1P UP       K  9    2P UP
+1P DOWN     L  10   2P DOWN
+1P LEFT     M  11   2P LEFT
+1P RIGHT    N  12   2P RIGHT
+COUNTER 1   P  13   COIN 1
+COUNTER 2   R  14   SERVICE
+RED         S  15   GREEN
+BLUE        T  16   SYNC
+-           U  17   -
++5          V  18   +5
++5          W  19   +5
++12         X  20   +12
+SPEAKER 1   Y  21   SPEAKER 2
+SPEAKER GND Z  22   SPEAKER GND
+
+
+
+Controls via 8-way Joystick and 3 buttons (Punch, Hold, Kick)
+
+
+
+			Byte
+ROMs  : 		C'sum (for Mike ;-)
+----------------------------------------
+EPR-7540.13D    27C256	6A13h
+EPR-7541.14D      "	2723h
+EPR-7542.15D      "	01E7h
+EPR-7543.12B      "	6558h	
+
+PR7571.10A      82s123	0A9Fh
+
+
+
+
+Lower Board
+-----------
+
+PCB No: 837-5992
+XTAL  : 18.432MHz
+RAM   : MB8128 (x2), SONY CXK5813D-55 (x2)
+PALs  : (x3, labelled 315-5054, 315-5053, 315-5203)
+PROMs : (x2, one near EPR-7547.7D labelled PR7572, one near EPR-7544.7H labelled PR7573)
+
+				Byte
+ROMs  : 			C'Sum
+-------------------------------------
+EPR-7544.7H    27C256  \ 	ED1Ah
+EPR-7545.6H      "      |	E6CAh
+EPR-7546.5H      "      |	55EAh
+EPR-7547.7D      "      | Gfx	EA3Fh
+EPR-7548.6D      "      |	5D1Fh
+EPR-7549.5D      "     /	16D1h
+
+PR7572.7F      82s129		06F1h  \ Both have
+PR7573.7G      82s129		06F1h  / identical contents
+
+*/
+
+INPUT_PORTS_START( robowres )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_COCKTAIL
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START_TAG("DSW")
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
+INPUT_PORTS_END
+
+static struct GfxLayout robowres_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 7,6,5,4, 3,2,1,0 },
+	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
+	8*8
+};
+
+static struct GfxLayout robowres_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3),RGN_FRAC(1,3),RGN_FRAC(0,3) },
+	{ 7, 6, 5, 4, 3, 2, 1, 0 ,
+	  8*8+7,8*8+6,8*8+5,8*8+4,8*8+3,8*8+2,8*8+1,8*8+0},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every char takes 8 consecutive bytes */
+};
+
+
+static struct GfxDecodeInfo robowres_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &robowres_charlayout,        0, 32 },
+	{ REGION_GFX2, 0, &robowres_charlayout,     	 0, 32 },
+	{ REGION_GFX1, 0, &robowres_spritelayout,      0, 32 },
+	{ REGION_GFX2, 0, &robowres_spritelayout,   	 0, 32 },
+	{ -1 } /* end of array */
+};
+
+static MACHINE_DRIVER_START( robowres )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,18432000/6)	/* ??? the main xtal is 18.432 MHz */
+	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(robowres_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32*8+32*8)
+
+	MDRV_PALETTE_INIT(robowres)
+	MDRV_VIDEO_START(appoooh)
+	MDRV_VIDEO_UPDATE(robowres)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -298,6 +533,76 @@ ROM_START( appoooh )
 	ROM_LOAD( "epr-5905.bin", 0x8000, 0x2000, CRC(fb5cd70e) SHA1(c2b069ca29b78b845d0c35c7f7452b70c93cb867) )
 ROM_END
 
+ROM_START( robowres )
+	ROM_REGION( 0x1c000*2, REGION_CPU1, 0 )	/* 64k for code + 16k bank */
+	ROM_LOAD( "epr-7540.13d", 0x00000, 0x8000, CRC(a2a54237) SHA1(06c80fe6725582d19aa957728977e871e79e79e1) )
+	ROM_LOAD( "epr-7541.14d", 0x08000, 0x6000, CRC(cbf7d1a8) SHA1(5eb6d2130d4e5401a332df6db5cad07f3131e8e4) )
+	ROM_CONTINUE(             0x10000, 0x2000 )
+	ROM_LOAD( "epr-7542.15d", 0x14000, 0x8000, CRC(3475fbd4) SHA1(96b28d6492d2e6e8ca9c57abdc5ad4df3777894b) )
+	ROM_COPY( REGION_CPU1, 0x16000, 0x10000, 0x4000 )
+	
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr-7544.7h", 0x000000, 0x8000, CRC(07b846ce) SHA1(6d214fbb43003d2ab35340d5b9fece5f637cadc6) )
+	ROM_LOAD( "epr-7545.6h", 0x008000, 0x8000, CRC(e99897be) SHA1(663f32b5290db7ab273e32510583f1aa8d8d4f46) )
+	ROM_LOAD( "epr-7546.5h", 0x010000, 0x8000, CRC(1559235a) SHA1(eb0384248f900dcde2d2ca29c58344781dd20500) )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr-7547.7d", 0x00000, 0x8000, CRC(b87ad4a4) SHA1(6e886a4939de19e0dc3ce702cc70701efd28ddf2) )
+	ROM_LOAD( "epr-7548.6d", 0x08000, 0x8000, CRC(8b9c75b3) SHA1(ebc026374aac83b24bf5f6a241d8f15c1e682513) )
+	ROM_LOAD( "epr-7549.5d", 0x10000, 0x8000, CRC(f640afbb) SHA1(3aa563866f7160038ce6b1aa3204bd9d286e0a46) )
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "pr7571.10a",   0x00000, 0x0020, CRC(e82c6d5c) SHA1(de3090bf922171abd1c30f20ca163f387adc60e1) )
+	ROM_LOAD( "pr7572.7f",   0x00020, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
+	ROM_LOAD( "pr7573.7g",   0x00120, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
+	
+	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* adpcm voice data */
+	ROM_LOAD( "epr-7543.12b", 0x00000, 0x8000, CRC(4d108c49) SHA1(a7c3c5a5ad36917ea7f6d917377c2392fa9beea3) )
+ROM_END
+
+ROM_START( robowrb )
+	ROM_REGION( 0x1c000*2, REGION_CPU1, 0 )	/* 64k for code + 16k bank */
+	ROM_LOAD( "dg4.e13",      0x00000, 0x8000, CRC(f7585d4f) SHA1(718879f8262681b6b66968eb49a0fb04fda5160b) )
+	ROM_LOAD( "epr-7541.14d", 0x08000, 0x6000, CRC(cbf7d1a8) SHA1(5eb6d2130d4e5401a332df6db5cad07f3131e8e4) )
+	ROM_CONTINUE(             0x10000, 0x2000 )
+	ROM_LOAD( "epr-7542.15d", 0x14000, 0x8000, CRC(3475fbd4) SHA1(96b28d6492d2e6e8ca9c57abdc5ad4df3777894b) )
+	ROM_COPY( REGION_CPU1, 0x16000, 0x10000, 0x4000 )
+	
+	ROM_LOAD( "dg1.f13",      0x1c000, 0x8000, CRC(b724968d) SHA1(36618fb81da919d578c2aa1c62d964871903c49f) )
+	ROM_COPY( REGION_CPU1,    0x08000, 0x24000, 0x14000 )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr-7544.7h", 0x000000, 0x8000, CRC(07b846ce) SHA1(6d214fbb43003d2ab35340d5b9fece5f637cadc6) )
+	ROM_LOAD( "epr-7545.6h", 0x008000, 0x8000, CRC(e99897be) SHA1(663f32b5290db7ab273e32510583f1aa8d8d4f46) )
+	ROM_LOAD( "epr-7546.5h", 0x010000, 0x8000, CRC(1559235a) SHA1(eb0384248f900dcde2d2ca29c58344781dd20500) )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr-7547.7d", 0x00000, 0x8000, CRC(b87ad4a4) SHA1(6e886a4939de19e0dc3ce702cc70701efd28ddf2) )
+	ROM_LOAD( "epr-7548.6d", 0x08000, 0x8000, CRC(8b9c75b3) SHA1(ebc026374aac83b24bf5f6a241d8f15c1e682513) )
+	ROM_LOAD( "epr-7549.5d", 0x10000, 0x8000, CRC(f640afbb) SHA1(3aa563866f7160038ce6b1aa3204bd9d286e0a46) )
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "pr7571.10a",   0x00000, 0x0020, CRC(e82c6d5c) SHA1(de3090bf922171abd1c30f20ca163f387adc60e1) )
+	ROM_LOAD( "pr7572.7f",   0x00020, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
+	ROM_LOAD( "pr7573.7g",   0x00120, 0x0100, CRC(2b083d0c) SHA1(5b39bd4297bec788caac9e9de5128d43932a24e2) )
+	
+	ROM_REGION( 0x8000, REGION_SOUND1, 0 )	/* adpcm voice data */
+	ROM_LOAD( "epr-7543.12b", 0x00000, 0x8000, CRC(4d108c49) SHA1(a7c3c5a5ad36917ea7f6d917377c2392fa9beea3) )
+ROM_END
+
+
+
+static DRIVER_INIT(robowres){
+	robowres_decode();
+}
+
+static DRIVER_INIT(robowrb){
+	unsigned char *rom = memory_region(REGION_CPU1);
+	int diff = memory_region_length(REGION_CPU1) / 2;
+	memory_set_opcode_base(0,rom+diff);
+}
 
 
 GAME( 1984, appoooh, 0, appoooh, appoooh, 0, ROT0, "[Sanritsu] Sega", "Appoooh" )
+GAME( 1986, robowres, 0, 				robowres, robowres, robowres,	ROT0, "Sega", "Robo Wres 2001" )
+GAME( 1986, robowrb,  robowres, robowres, robowres, robowrb,  ROT0, "bootleg", "Robo Wres 2001 (bootleg)" )

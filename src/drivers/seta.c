@@ -1667,6 +1667,31 @@ WRITE16_HANDLER( usclssic_lockout_w )
 	}
 }
 
+/* palette can probably be handled in a better way (better colortable / palette init..) */
+
+INLINE void usc_changecolor_xRRRRRGGGGGBBBBB(pen_t color,int data)
+{
+	int r,g,b;
+
+
+	r = (data >> 10) & 0x1f;
+	g = (data >>  5) & 0x1f;
+	b = (data >>  0) & 0x1f;
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	if (color>=0x100) palette_set_color(color-0x100,r,g,b);
+	else palette_set_color(color+0x200,r,g,b);
+}
+
+WRITE16_HANDLER( usc_paletteram16_xRRRRRGGGGGBBBBB_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	usc_changecolor_xRRRRRGGGGGBBBBB(offset,paletteram16[offset]);
+}
+
 
 static ADDRESS_MAP_START( usclssic_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
@@ -1693,7 +1718,7 @@ static ADDRESS_MAP_START( usclssic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800000, 0x800607) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16		)	// Sprites Y
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_RAM						)	// ? $4000
 	AM_RANGE(0xa00000, 0xa00005) AM_WRITE(MWA16_RAM) AM_BASE(&seta_vctrl_0		)	// VRAM Ctrl
-	AM_RANGE(0xb00000, 0xb003ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0xb00000, 0xb003ff) AM_WRITE(usc_paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16	)	// Palette
 	AM_RANGE(0xb40000, 0xb40001) AM_WRITE(usclssic_lockout_w			)	// Coin Lockout + Tiles Banking
 	AM_RANGE(0xb40010, 0xb40011) AM_WRITE(calibr50_soundlatch_w			)	// To Sub CPU
 	AM_RANGE(0xb40018, 0xb40019) AM_WRITE(watchdog_reset16_w			)	// Watchdog
@@ -3834,8 +3859,8 @@ INPUT_PORTS_START( zombraid )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(1)	// Trigger
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(1)	// Reload
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(1)	PORT_NAME("P1 Trigger")
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(1)	PORT_NAME("P1 Reload")
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1   )
 
@@ -3844,8 +3869,8 @@ INPUT_PORTS_START( zombraid )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(2)	// Trigger
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(2)	// Reload
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1  ) PORT_PLAYER(2)	PORT_NAME("P2 Trigger")
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2  ) PORT_PLAYER(2)	PORT_NAME("P2 Reload")
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2   )
 
@@ -5542,7 +5567,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 #define TRACKBALL(_dir_) \
-	PORT_BIT( 0x0fff, 0x0000, IPT_TRACKBALL_##_dir_ ) PORT_SENSITIVITY(70) PORT_KEYDELTA(30) PORT_CENTER
+	PORT_BIT( 0x0fff, 0x0000, IPT_TRACKBALL_##_dir_ ) PORT_SENSITIVITY(70) PORT_KEYDELTA(30) PORT_RESET
 
 INPUT_PORTS_START( usclssic )
 	PORT_START_TAG("IN0")
@@ -6116,15 +6141,13 @@ static struct GfxDecodeInfo wiggie_gfxdecodeinfo[] =
 								U.S. Classic
 ***************************************************************************/
 
-/* 6 bit layer. The colors are still WRONG.
-   Remember there's a vh_init_palette function */
-
 static struct GfxDecodeInfo usclssic_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout_planes_2roms,       512*0+256, 32/2 }, // [0] Sprites
-	{ REGION_GFX2, 0, &layout_packed_6bits_3roms, 512*1, 32 }, // [1] Layer 1
+	{ REGION_GFX1, 0, &layout_planes_2roms,       0, 32 }, // [0] Sprites
+	{ REGION_GFX2, 0, &layout_packed_6bits_3roms, 512, 32 }, // [1] Layer 1
 	{ -1 }
 };
+
 
 /***************************************************************************
 								Zing Zing Zip
@@ -8590,7 +8613,7 @@ GAME( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270, "[Seta] (T
 GAME( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother" ) // Country/License: DSW
 GAME( 1989, downtown, 0,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown" ) // Country/License: DSW
 GAME( 1989, downtowp, downtown,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown (prototype)" ) // Country/License: DSW
-GAMEX(1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270, "Seta",                   "U.S. Classic", GAME_WRONG_COLORS ) // Country/License: DSW
+GAME( 1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270, "Seta",                   "U.S. Classic" ) // Country/License: DSW
 GAME( 1989, calibr50, 0,        calibr50, calibr50, 0,        ROT270, "Athena / Seta",          "Caliber 50" ) // Country/License: DSW
 GAME( 1989, arbalest, 0,        metafox,  arbalest, arbalest, ROT270, "Seta",                   "Arbalester" ) // Country/License: DSW
 GAME( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270, "Seta",                   "Meta Fox" ) // Country/License: DSW

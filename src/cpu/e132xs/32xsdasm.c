@@ -1,6 +1,6 @@
 /*
 
- Hyperstone E1-32XS disassembler
+ Hyperstone disassembler
  written by Pierpaolo Prazzoli
 
 
@@ -16,15 +16,10 @@
 #include "mamedbg.h"
 #include "e132xs.h"
 
-const char *L_REG[] =
+const char *CL_REG[] =
 {
-  "L0",  "L1",  "L2",  "L3",  "L4",  "L5",  "L6",  "L7",  "L8",  "L9",
-  "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19",
-  "L20", "L21", "L22", "L23", "L24", "L25", "L26", "L27", "L28", "L29",
-  "L30", "L31", "L32", "L33", "L34", "L35", "L36", "L37", "L38", "L39",
-  "L40", "L41", "L42", "L43", "L44", "L45", "L46", "L47", "L48", "L49",
-  "L50", "L51", "L52", "L53", "L54", "L55", "L56", "L57", "L58", "L59",
-  "L60", "L61", "L62", "L63"
+  "CL0",  "CL1",  "CL2",  "CL3",  "CL4",  "CL5",  "CL6",  "CL7",  "CL8",  "CL9",
+  "CL10", "CL11", "CL12", "CL13", "CL14", "CL15"
 };
 
 const char *G_REG[] =
@@ -55,29 +50,29 @@ static int size;
 
 void LL_format(char *source, char *dest, UINT16 op)
 {
-	strcpy(source, L_REG[SOURCECODE(op)]);
-	strcpy(dest, L_REG[DESTCODE(op)]);
+	strcpy(source, CL_REG[SOURCECODE(op)]);
+	strcpy(dest, CL_REG[DESTCODE(op)]);
 }
 
 void LR_format(char *source, char *dest, UINT16 op)
 {
 	if( SOURCEBIT(op) )
 	{
-		strcpy(source, L_REG[SOURCECODE(op)]);
+		strcpy(source, CL_REG[SOURCECODE(op)]);
 	}
 	else
 	{
 		strcpy(source, G_REG[SOURCECODE(op)]);
 	}
 
-	strcpy(dest, L_REG[DESTCODE(op)]);
+	strcpy(dest, CL_REG[DESTCODE(op)]);
 }
 
 void RR_format(char *source, char *dest, UINT16 op, unsigned h_flag)
 {
 	if( SOURCEBIT(op) )
 	{
-		strcpy(source, L_REG[SOURCECODE(op)]);
+		strcpy(source, CL_REG[SOURCECODE(op)]);
 	}
 	else
 	{
@@ -86,7 +81,7 @@ void RR_format(char *source, char *dest, UINT16 op, unsigned h_flag)
 
 	if( DESTBIT(op) )
 	{
-		strcpy(dest, L_REG[DESTCODE(op)]);
+		strcpy(dest, CL_REG[DESTCODE(op)]);
 	}
 	else
 	{
@@ -101,14 +96,14 @@ UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 
 	if( SOURCEBIT(op) )
 	{
-		strcpy(source, L_REG[SOURCECODE(op)]);
+		strcpy(source, CL_REG[SOURCECODE(op)]);
 	}
 	else
 	{
 		strcpy(source, G_REG[SOURCECODE(op)]);
 	}
 
-	strcpy(dest, L_REG[DESTCODE(op)]);
+	strcpy(dest, CL_REG[DESTCODE(op)]);
 
 	size = 4;
 
@@ -151,7 +146,7 @@ UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 
 	if( SOURCEBIT(op) )
 	{
-		strcpy(source, L_REG[SOURCECODE(op)]);
+		strcpy(source, CL_REG[SOURCECODE(op)]);
 	}
 	else
 	{
@@ -160,7 +155,7 @@ UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 
 	if( DESTBIT(op) )
 	{
-		strcpy(dest, L_REG[DESTCODE(op)]);
+		strcpy(dest, CL_REG[DESTCODE(op)]);
 	}
 	else
 	{
@@ -201,7 +196,7 @@ UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 	return const_val;
 }
 
-INT32 RRimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
+INT32 Rimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
 {
 	UINT16 imm1, imm2;
 	INT32 ret;
@@ -210,7 +205,7 @@ INT32 RRimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
 
 	if( DESTBIT(op) )
 	{
-		strcpy(dest, L_REG[DESTCODE(op)]);
+		strcpy(dest, CL_REG[DESTCODE(op)]);
 	}
 	else
 	{
@@ -291,7 +286,7 @@ INT32 RRimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
 
 UINT8 Ln_format(char *dest, UINT16 op)
 {
-	strcpy(dest, L_REG[DESTCODE(op)]);
+	strcpy(dest, CL_REG[DESTCODE(op)]);
 
 	return N_VALUE(op);
 }
@@ -300,7 +295,7 @@ UINT8 Rn_format(char *dest, UINT16 op)
 {
 	if( DESTBIT(op) )
 	{
-		strcpy(dest, L_REG[DESTCODE(op)]);
+		strcpy(dest, CL_REG[DESTCODE(op)]);
 	}
 	else
 	{
@@ -348,7 +343,7 @@ UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, unsigne
 
 	if( SOURCEBIT(op) )
 	{
-		strcpy(source, L_REG[SOURCECODE(op)]);
+		strcpy(source, CL_REG[SOURCECODE(op)]);
 	}
 	else
 	{
@@ -357,7 +352,7 @@ UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, unsigne
 
 	if( DESTBIT(op) )
 	{
-		strcpy(dest, L_REG[DESTCODE(op)]);
+		strcpy(dest, CL_REG[DESTCODE(op)]);
 	}
 	else
 	{
@@ -399,7 +394,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 	UINT8 source_code, dest_code, source_bit, dest_bit;
 
-	char source[4] = "\0", dest[4] = "\0";
+	char source[5] = "\0", dest[5] = "\0";
 
 	op = READ_OP(pc);
 
@@ -409,8 +404,6 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 	dest_code = DESTCODE(op);
 	source_bit = SOURCEBIT(op);
 	dest_bit = DESTBIT(op);
-
-//	logerror( "Disassembling opcode %04x at PC %08x\n", op, pc );
 
 	op_num = (op & 0xff00) >> 8;
 
@@ -427,7 +420,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 			{
 				RR_format(source, dest, op, 0);
 
-				if( !source_bit && source_code == SR_CODE )
+				if( !source_bit && source_code == SR_REGISTER )
 				{
 					buffer += sprintf(buffer, "CHKZ %s, 0", dest);
 				}
@@ -444,11 +437,11 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( dest_code == PC_CODE && !dest_bit )
+			if( dest_code == PC_REGISTER && !dest_bit )
 			{
 				buffer += sprintf(buffer, "RET PC, %s", source);
 			}
-			else if( source_code == SR_CODE && !source_bit )
+			else if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "MOVD %s, 0", dest);
 			}
@@ -535,7 +528,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		{
 			UINT32 const_val = RRconst_format(source, dest, op, &pc);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "SUM %s, C, %x", dest, const_val);
 			}
@@ -552,7 +545,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		{
 			UINT32 const_val = RRconst_format(source, dest, op, &pc);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "SUMS %s, C, %x", dest, const_val);
 			}
@@ -569,7 +562,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "CMP %s, C", dest);
 			}
@@ -593,7 +586,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "ADD %s, C", dest);
 			}
@@ -609,7 +602,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "ADDS %s, C", dest);
 			}
@@ -657,7 +650,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "SUBC %s, C", dest);
 			}
@@ -682,7 +675,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "SUB %s, C", dest);
 			}
@@ -698,7 +691,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "SUBS %s, C", dest);
 			}
@@ -714,7 +707,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "ADDC %s, C", dest);
 			}
@@ -738,7 +731,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "NEG %s, C", dest);
 			}
@@ -754,7 +747,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			RR_format(source, dest, op, 0);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "NEGS %s, C", dest);
 			}
@@ -768,7 +761,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// CMPI
 		case 0x60: case 0x61: case 0x62: case 0x63:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, 0);
+			UINT32 imm = Rimm_format(dest, op, &pc, 0);
 
 			buffer += sprintf(buffer, "CMPI %s, %x", dest, imm);
 
@@ -778,7 +771,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// MOVI
 		case 0x64: case 0x65: case 0x66: case 0x67:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, h_flag);
+			UINT32 imm = Rimm_format(dest, op, &pc, h_flag);
 
 			buffer += sprintf(buffer, "MOVI %s, %x", dest, imm);
 
@@ -788,7 +781,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// ADDI
 		case 0x68: case 0x69: case 0x6a: case 0x6b:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, 0);
+			UINT32 imm = Rimm_format(dest, op, &pc, 0);
 
 			if( !N_VALUE(op) )
 			{
@@ -805,7 +798,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// ADDSI
 		case 0x6c: case 0x6d: case 0x6e: case 0x6f:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, 0);
+			UINT32 imm = Rimm_format(dest, op, &pc, 0);
 
 			if( !N_VALUE(op) )
 			{
@@ -822,7 +815,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// CMPBI
 		case 0x70: case 0x71: case 0x72: case 0x73:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, 0);
+			UINT32 imm = Rimm_format(dest, op, &pc, 0);
 
 			if( !N_VALUE(op) )
 			{
@@ -842,7 +835,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// ANDNI
 		case 0x74: case 0x75: case 0x76: case 0x77:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, 0);
+			UINT32 imm = Rimm_format(dest, op, &pc, 0);
 
 			if( N_VALUE(op) == 31 )
 				imm = 0x7fffffff; //bit 31 = 0, others = 1
@@ -855,7 +848,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// ORI
 		case 0x78: case 0x79: case 0x7a: case 0x7b:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, 0);
+			UINT32 imm = Rimm_format(dest, op, &pc, 0);
 
 			buffer += sprintf(buffer, "ORI %s, %x", dest, imm);
 
@@ -865,7 +858,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// XORI
 		case 0x7c: case 0x7d: case 0x7e: case 0x7f:
 		{
-			UINT32 imm = RRimm_format(dest, op, &pc, 0);
+			UINT32 imm = Rimm_format(dest, op, &pc, 0);
 
 			buffer += sprintf(buffer, "XORI %s, %x", dest, imm);
 
@@ -991,7 +984,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 			if( size == 2 )
 				size = 4;
 
-			if( dest_code == SR_CODE && !source_bit )
+			if( dest_code == SR_REGISTER && !dest_bit )
 			{
 				switch( DD( next_op ) )
 				{
@@ -1109,7 +1102,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 			if( size == 2 )
 				size = 4;
 
-			if( (dest_code == PC_CODE && !dest_bit) || (dest_code == SR_CODE && !dest_bit) )
+			if( (dest_code == PC_REGISTER && !dest_bit) || (dest_code == SR_REGISTER && !dest_bit) )
 			{
 				buffer += sprintf(buffer, "Reserved");
 				break;
@@ -1178,7 +1171,10 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 			if( size == 2 )
 				size = 4;
 
-			if( dest_code == SR_CODE && !dest_bit )
+			if( source_code == SR_REGISTER && !source_bit )
+				strcpy(source,"0");
+
+			if( dest_code == SR_REGISTER && !dest_bit )
 			{
 				switch( DD( next_op ) )
 				{
@@ -1296,7 +1292,10 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 			if( size == 2 )
 				size = 4;
 
-			if( (dest_code == PC_CODE && !dest_bit) || (dest_code == SR_CODE && !dest_bit) )
+			if( source_code == SR_REGISTER && !source_bit )
+				strcpy(source,"0");
+
+			if( (dest_code == PC_REGISTER && !dest_bit) || (dest_code == SR_REGISTER && !dest_bit) )
 			{
 				buffer += sprintf(buffer, "Reserved");
 				break;
@@ -1409,11 +1408,11 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		{
 			UINT8 n = Rn_format(dest, op);
 
-			if( dest_code == PC_CODE && !dest_bit )
+			if( dest_code == PC_REGISTER && !dest_bit )
 			{
 				buffer += sprintf(buffer, "Illegal PC: %x OP: %x", pc, op);
 			}
-			else if( dest_code == SR_CODE && !dest_bit )
+			else if( dest_code == SR_REGISTER && !dest_bit )
 			{
 				buffer += sprintf(buffer, "FETCH %x", (n / 2) + 1);
 			}
@@ -1659,6 +1658,9 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			LR_format(source, dest, op);
 
+			if( source_code == SR_REGISTER && !source_bit )
+				strcpy(source,"0");
+
 			buffer += sprintf(buffer, "STW.R %s, %s", dest, source);
 
 			break;
@@ -1667,6 +1669,9 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		case 0xda: case 0xdb:
 
 			LR_format(source, dest, op);
+
+			if( source_code == SR_REGISTER && !source_bit )
+				strcpy(source,"0");
 
 			buffer += sprintf(buffer, "STD.R %s, %s", dest, source);
 
@@ -1677,6 +1682,9 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			LR_format(source, dest, op);
 
+			if( source_code == SR_REGISTER && !source_bit )
+				strcpy(source,"0");
+
 			buffer += sprintf(buffer, "STW.P %s, %s", dest, source);
 
 			break;
@@ -1686,6 +1694,9 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 			LR_format(source, dest, op);
 
+			if( source_code == SR_REGISTER && !source_bit )
+				strcpy(source,"0");
+
 			buffer += sprintf(buffer, "STD.P %s, %s", dest, source);
 
 			break;
@@ -1693,7 +1704,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBV
 		case 0xe0:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBV %x", rel);
 
@@ -1703,7 +1714,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBNV
 		case 0xe1:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBNV %x", rel);
 
@@ -1713,7 +1724,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBE
 		case 0xe2:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBE %x", rel);
 
@@ -1723,7 +1734,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBNE
 		case 0xe3:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBNE %x", rel);
 
@@ -1733,7 +1744,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBC
 		case 0xe4:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBC %x", rel);
 
@@ -1743,7 +1754,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBNC
 		case 0xe5:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBNC %x", rel);
 
@@ -1753,7 +1764,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBSE
 		case 0xe6:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBSE %x", rel);
 
@@ -1763,7 +1774,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBHT
 		case 0xe7:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBHT %x", rel);
 
@@ -1773,7 +1784,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBN
 		case 0xe8:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBN %x", rel);
 
@@ -1783,7 +1794,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBNN
 		case 0xe9:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBNN %x", rel);
 
@@ -1793,7 +1804,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBLE
 		case 0xea:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBLE %x", rel);
 
@@ -1803,7 +1814,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBGT
 		case 0xeb:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBGT %x", rel);
 
@@ -1813,7 +1824,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// DBR
 		case 0xec:
 		{
-			INT32 rel = PCrel_format(op, pc);
+			INT32 rel = PCrel_format(op, pc) + 2;
 
 			buffer += sprintf(buffer, "DBR %x", rel);
 
@@ -1832,9 +1843,9 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 		// CALL
 		case 0xee: case 0xef:
 		{
-			UINT32 const_val = RRconst_format(source, dest, op, &pc);
+			UINT32 const_val = LRconst_format(source, dest, op, &pc);
 
-			if( source_code == SR_CODE && !source_bit )
+			if( source_code == SR_REGISTER && !source_bit )
 			{
 				buffer += sprintf(buffer, "CALL %s, 0, %x", dest, const_val);
 			}
@@ -1986,7 +1997,7 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 			{
 				case TRAPLE:
 					buffer += sprintf(buffer, "TRAPLE %d", trapno);
-					
+
 					break;
 
 				case TRAPGT:
@@ -2001,47 +2012,47 @@ unsigned dasm_e132xs(char *buffer, unsigned pc, unsigned h_flag)
 
 				case TRAPGE:
 					buffer += sprintf(buffer, "TRAPGE %d", trapno);
-					
+
 					break;
 
 				case TRAPSE:
 					buffer += sprintf(buffer, "TRAPSE %d", trapno);
-					
+
 					break;
 
 				case TRAPHT:
 					buffer += sprintf(buffer, "TRAPHT %d", trapno);
-					
+
 					break;
 
 				case TRAPST:
 					buffer += sprintf(buffer, "TRAPST %d", trapno);
-					
+
 					break;
 
 				case TRAPHE:
 					buffer += sprintf(buffer, "TRAPHE %d", trapno);
-					
+
 					break;
 
 				case TRAPE:
 					buffer += sprintf(buffer, "TRAPE %d", trapno);
-					
+
 					break;
 
 				case TRAPNE:
 					buffer += sprintf(buffer, "TRAPNE %d", trapno);
-					
+
 					break;
 
 				case TRAPV:
 					buffer += sprintf(buffer, "TRAPV %d", trapno);
-					
+
 					break;
 
 				case TRAP:
 					buffer += sprintf(buffer, "TRAP %d", trapno);
-					
+
 					break;
 			}
 

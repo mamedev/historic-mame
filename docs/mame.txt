@@ -12,10 +12,7 @@ list, too, may be incomplete. We apologize for any omission.
 All trademarks cited in this document are property of their respective owners.
 
 
-For usage instructions, please consult the corresponding readme.
-
-MS-DOS:   msdos.txt
-Windows:  windows.txt
+For usage instructions, please consult the file windows.txt
 
 
 Usage and Distribution License

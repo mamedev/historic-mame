@@ -195,14 +195,14 @@ ADDRESS_MAP_END
  *************************************/
 
 INPUT_PORTS_START( atarifb )
-	PORT_START		/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT ( 0x0F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_TILT )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_COIN1 )
 
-	PORT_START		/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_DIPNAME( 0x03, 0x00, "Time per coin" )
 	PORT_DIPSETTING(	0x00, "1:30" )
 	PORT_DIPSETTING(	0x01, "2:00" )
@@ -219,29 +219,29 @@ INPUT_PORTS_START( atarifb )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START	/* IN2 - Player 1 trackball, y */
+	PORT_START_TAG("IN2")	/* IN2 - Player 1 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN3 - Player 1 trackball, x */
+	PORT_START_TAG("IN3")	/* IN3 - Player 1 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN4 - Player 2 trackball, y */
+	PORT_START_TAG("IN4")	/* IN4 - Player 2 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN5 - Player 2 trackball, x */
+	PORT_START_TAG("IN5")	/* IN5 - Player 2 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( atarifb4 )
-	PORT_START		/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
-	PORT_START		/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_COIN2 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_COIN3 )
@@ -249,7 +249,7 @@ INPUT_PORTS_START( atarifb4 )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START		/* IN2 */
+	PORT_START_TAG("IN2")
 	PORT_DIPNAME( 0x03, 0x00, "Time per coin" )
 	PORT_DIPSETTING(	0x00, "1:30" )
 	PORT_DIPSETTING(	0x01, "2:00" )
@@ -266,49 +266,49 @@ INPUT_PORTS_START( atarifb4 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-	PORT_START	/* IN3 - Player 1 trackball, y */
+	PORT_START_TAG("IN3")	/* IN3 - Player 1 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN4 - Player 1 trackball, x */
+	PORT_START_TAG("IN4")	/* IN4 - Player 1 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN5 - Player 2 trackball, y */
+	PORT_START_TAG("IN5")	/* IN5 - Player 2 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN6 - Player 2 trackball, x */
+	PORT_START_TAG("IN6")	/* IN6 - Player 2 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN7 - Player 3 trackball, y */
+	PORT_START_TAG("IN7")	/* IN7 - Player 3 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(3)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN8 - Player 3 trackball, x */
+	PORT_START_TAG("IN8")	/* IN8 - Player 3 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(3)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN9 - Player 4 trackball, y */
+	PORT_START_TAG("IN9")	/* IN9 - Player 4 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(4)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN10 - Player 4 trackball, x */
+	PORT_START_TAG("IN10")	/* IN10 - Player 4 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(4)
 	/* The lower 4 bits are the input */
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( abaseb )
-	PORT_START		/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT ( 0x0F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW,  IPT_TILT )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW,  IPT_COIN1 )
 
-	PORT_START		/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Hardest ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Hard ) )
@@ -325,29 +325,29 @@ INPUT_PORTS_START( abaseb )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START	/* IN2 - Player 1 trackball, y */
+	PORT_START_TAG("IN2")	/* IN2 - Player 1 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN3 - Player 1 trackball, x */
+	PORT_START_TAG("IN3")	/* IN3 - Player 1 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN4 - Player 2 trackball, y */
+	PORT_START_TAG("IN4")	/* IN4 - Player 2 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN5 - Player 2 trackball, x */
+	PORT_START_TAG("IN5")	/* IN5 - Player 2 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( soccer )
-	PORT_START		/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
-	PORT_START		/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW,  IPT_UNKNOWN ) /* unused on schematics */
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW,  IPT_COIN2 )
@@ -357,7 +357,7 @@ INPUT_PORTS_START( soccer )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-	PORT_START		/* IN2 */
+	PORT_START_TAG("IN2")
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("2/4 Player Toggle")
 	PORT_DIPNAME( 0x02, 0x00, "Rule Switch" )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
@@ -372,39 +372,39 @@ INPUT_PORTS_START( soccer )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 
-	PORT_START	/* IN3 - Player 1 trackball, y */
+	PORT_START_TAG("IN3")	/* IN3 - Player 1 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN4 - Player 1 trackball, x */
+	PORT_START_TAG("IN4")	/* IN4 - Player 1 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN5 - Player 2 trackball, y */
+	PORT_START_TAG("IN5")	/* IN5 - Player 2 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN6 - Player 2 trackball, x */
+	PORT_START_TAG("IN6")	/* IN6 - Player 2 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(2)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN7 - Player 3 trackball, y */
+	PORT_START_TAG("IN7")	/* IN7 - Player 3 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(3)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN8 - Player 3 trackball, x */
+	PORT_START_TAG("IN8")	/* IN8 - Player 3 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(3)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN9 - Player 4 trackball, y */
+	PORT_START_TAG("IN9")	/* IN9 - Player 4 trackball, y */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE PORT_PLAYER(4)
 	/* The lower 4 bits are the input */
 
-	PORT_START	/* IN10 - Player 4 trackball, x */
+	PORT_START_TAG("IN10")	/* IN10 - Player 4 trackball, x */
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_PLAYER(4)
 	/* The lower 4 bits are the input */
 
-	PORT_START		/* IN11 */
+	PORT_START_TAG("IN11")
 	PORT_DIPNAME( 0x07, 0x00, "Time per coin" )
 	PORT_DIPSETTING(	0x00, "1:00" )
 	PORT_DIPSETTING(	0x01, "1:20" )

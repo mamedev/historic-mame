@@ -2797,7 +2797,7 @@ ROM_START( soccersa )
 	ROM_LOAD( "427a16.9r", 0x000000, 2*1024*1024,  CRC(39547265) SHA1(c0efd68c0c1ea59141045150842f36d43e1f01d8) )
 ROM_END
 
-/* Vs. Net Soccer */
+/* Vs. Net Soccer (US ver UAB) */
 ROM_START(vsnetscr)
 	/* main program */
 	ROM_REGION( 0x600000, REGION_CPU1, 0 )
@@ -2834,8 +2834,47 @@ ROM_START(vsnetscr)
 
 	/* sound data */
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
-	// probably should be 4M byte mode like Rushing Heroes
-	ROM_LOAD( "627a23.7r", 0x000000, 0x200000, BAD_DUMP CRC(b0266eb6) SHA1(65fafcee4b8f9a6e9f05df6f1fb4db519e97f776) )
+	ROM_LOAD( "627a23.7r", 0x000000, 0x400000, CRC(0917d7de) SHA1(f2447637b396a9c92553b2c1dbf4edecc55ccc24) )
+ROM_END
+
+/* Vs. Net Soccer (Japan ver JAB) */
+ROM_START(vsnetscj)
+	/* main program */
+	ROM_REGION( 0x600000, REGION_CPU1, 0 )
+	GX_BIOS
+	ROM_LOAD32_WORD_SWAP( "627jab03.29m", 0x200000, 512*1024, CRC(68c4bb17) SHA1(db109998221d0cc41d3fd5c9339773c7077edbf4) )
+	ROM_LOAD32_WORD_SWAP( "627jab02.31m", 0x200002, 512*1024, CRC(f10929d7) SHA1(304001d44ed762682a4606a849305a9352e9bec3) )
+
+	/* data roms */
+	ROM_LOAD32_WORD_SWAP( "627a05.31r", 0x400000, 1024*1024, CRC(be4e7b3c) SHA1(f44e7b1913aa54f759bd31bb86fdedbb9747b2d5) )
+	ROM_LOAD32_WORD_SWAP( "627a04.29r", 0x400002, 1024*1024, CRC(17334e9a) SHA1(82cdba016c29160550c43feee7a4feff6e1184aa) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("627b06.9m", 0x000000, 128*1024, CRC(c8337b9d) SHA1(574c674676f493ca4b5a135728ce01e664d1293d) )
+	ROM_LOAD16_BYTE("627b07.7m", 0x000001, 128*1024, CRC(d7d92579) SHA1(929b8e90cfef2ef14d84173267b637e4efdb6867) )
+
+	/* tiles */
+	ROM_REGION( 0x500000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "627a21.11r", 0x000000, 1024*1024, CRC(d0755fb8) SHA1(de37ea2a7969a97b6f2abccb7dc2a58950482bf0) )
+	ROM_LOAD16_BYTE( "627a20.11m", 0x000001, 1024*1024, CRC(f68b28f2) SHA1(1463717ed581494fcab77a80dc6ffd3ab82ab1fa) )
+
+	/* sprites */
+	ROM_REGION( 0xc00000, REGION_GFX2, ROMREGION_ERASE00 )
+	ROM_LOAD32_WORD( "627a19.14r", 0x000000, 2*1024*1024, CRC(5efaa3bc) SHA1(95314c1054ccf5b9626f0b06f9e1c857a127e2ca) )
+	ROM_LOAD32_WORD( "627a15.18r", 0x000002, 2*1024*1024, CRC(5180ca06) SHA1(d5569f6fc6b0374cd111f8313f635e4b7c49351f) )
+	ROM_LOAD32_WORD( "627a13.21r", 0x400000, 2*1024*1024, CRC(af48849d) SHA1(c43981883ef042968444b6d993a640edc429daae) )
+	ROM_LOAD32_WORD( "627a17.16r", 0x400002, 2*1024*1024, CRC(ca99d29c) SHA1(919dfb029dbc7d2c5e420d54df36eef3ec3bb1a2) )
+	ROM_LOAD32_WORD( "627a11.23r", 0x800000, 2*1024*1024, CRC(a2e507f2) SHA1(ceaaccbac22fecef32fa34f887568bb18464265d) )
+	ROM_LOAD32_WORD( "627a09.25r", 0x800002, 2*1024*1024, CRC(312cf8a4) SHA1(107456fc1a1906a60b5b50f4ca6b7e8cd258e6ee) )
+
+	/* PSAC2 tiles */
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_ERASE00)
+	ROM_LOAD( "627a24.22h", 0x000000, 0x200000, CRC(2cd73305) SHA1(5a46148c08198499639adc4b6936af0b2b530bc9) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "627a23.7r", 0x000000, 0x400000, CRC(0917d7de) SHA1(f2447637b396a9c92553b2c1dbf4edecc55ccc24) )
 ROM_END
 
 /* Lethal Enforcers II */
@@ -3341,7 +3380,7 @@ static DRIVER_INIT(konamigx)
 		konamigx_cfgport = 7;
 	}
 
-	else if (!strcmp(Machine->gamedrv->name, "vsnetscr"))
+	else if ((!strcmp(Machine->gamedrv->name, "vsnetscr")) || (!strcmp(Machine->gamedrv->name, "vsnetscj")))
 	{
 		snd020_hack = 5;
 		konamigx_cfgport = 7;
@@ -3430,6 +3469,7 @@ GAMEX( 1994, soccersa, soccerss, gxtype3,  type3, konamigx, ROT0, "Konami", "Soc
 
 /* Type 4: dual monitor output and 53936 on the ROM board, external palette RAM, DMA protection */
 GAMEX( 1996, vsnetscr, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver UAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAMEX( 1996, vsnetscj, vsnetscr, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver JAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 GAMEX( 1996, rungun2,  konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Run and Gun 2 (ver UAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 GAMEX( 1996, slamdnk2, rungun2,  gxtype4, type3, konamigx, ROT0, "Konami", "Slam Dunk 2 (ver JAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 GAMEX( 1996, rushhero, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Rushing Heroes (ver UAB)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING  )

@@ -56,7 +56,7 @@ Stephh's additional notes (based on the games M68000 code and some tests) :
 
  3)  'paddlema'
 
-  - DEF_STR( Game_Time ) Dip Switch is the time for match type A. Here is what you
+  - "Game Time" Dip Switch is the time for match type A. Here is what you
     have to add for games B to E :
 
       Match Type       B        C        D        E

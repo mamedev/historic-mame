@@ -28,7 +28,7 @@ MACHINE_DRIVER_EXTERN( jsa_iiis_stereo );
 
 /* Board-specific port definitions */
 #define JSA_I_PORT											\
-	PORT_START												\
+	PORT_START_TAG("JSAI")									\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )				\
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )				\
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )				\
@@ -40,7 +40,7 @@ MACHINE_DRIVER_EXTERN( jsa_iiis_stereo );
 
 /* used by Xybots */
 #define JSA_I_PORT_SWAPPED									\
-	PORT_START												\
+	PORT_START_TAG("JSAI")									\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )				\
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )				\
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )				\
@@ -51,7 +51,7 @@ MACHINE_DRIVER_EXTERN( jsa_iiis_stereo );
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )	/* self test */
 
 #define JSA_II_PORT											\
-	PORT_START												\
+	PORT_START_TAG("JSAII")									\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )				\
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )				\
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )				\
@@ -62,7 +62,7 @@ MACHINE_DRIVER_EXTERN( jsa_iiis_stereo );
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )	/* self test */
 
 #define JSA_III_PORT										\
-	PORT_START												\
+	PORT_START_TAG("JSAIII")								\
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )				\
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )				\
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_TILT )				\

@@ -50,6 +50,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	int width, height;
 	int flip_x = 0, flip_y = 0;
 	int a;
+	int priority;
 	int x,y, x1, y1;
 	const struct GfxElement *gfx = Machine->gfx[2];
 
@@ -57,6 +58,10 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		tile_num = (spriteram32[a + 0] >> 16) & 0xffff;
 
 		if( !tile_num )
+			continue;
+
+		priority = (spriteram32[a + 0] >> 6) & 0x3;
+		if( pri_mask != priority )
 			continue;
 
 		xpos = spriteram32[a + 1] & 0xffff;
@@ -150,7 +155,7 @@ static void get_text_tile_info( int tile_index )
 
 	tile &= 0xfff;
 
-	SET_TILE_INFO(0, tile, color/2, 0)
+	SET_TILE_INFO(0, tile, color, 0)
 }
 
 static void get_back_tile_info( int tile_index )
@@ -200,7 +205,7 @@ VIDEO_START( spi )
 	mid_layer	= tilemap_create( get_mid_tile_info, tilemap_scan_cols, TILEMAP_TRANSPARENT, 16,16,32,32 );
 	fore_layer	= tilemap_create( get_fore_tile_info, tilemap_scan_cols, TILEMAP_TRANSPARENT, 16,16,32,32 );
 
-	tilemap_set_transparent_pen(text_layer, 63);
+	tilemap_set_transparent_pen(text_layer, 31);
 	tilemap_set_transparent_pen(mid_layer, 63);
 	tilemap_set_transparent_pen(fore_layer, 63);
 	return 0;
@@ -242,11 +247,21 @@ VIDEO_UPDATE( spi )
 		fillbitmap(bitmap, 0, cliprect);
 
 	tilemap_draw(bitmap, cliprect, back_layer, 0,0);
-	tilemap_draw(bitmap, cliprect, mid_layer, 0,0);
-	tilemap_draw(bitmap, cliprect, fore_layer, 0,0);
 
 	if( (layer_enable & 0x10) == 0 )
 		draw_sprites(bitmap, cliprect, 0);
+
+	tilemap_draw(bitmap, cliprect, mid_layer, 0,0);
+
+	if( (layer_enable & 0x10) == 0 )
+		draw_sprites(bitmap, cliprect, 1);
+	if( (layer_enable & 0x10) == 0 )
+		draw_sprites(bitmap, cliprect, 2);
+
+	tilemap_draw(bitmap, cliprect, fore_layer, 0,0);
+
+	if( (layer_enable & 0x10) == 0 )
+		draw_sprites(bitmap, cliprect, 3);
 
 	tilemap_draw(bitmap, cliprect, text_layer, 0,0);
 }

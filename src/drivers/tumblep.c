@@ -21,6 +21,7 @@
   Catch
 
   Emulation by Bryan McPhail, mish@tendril.co.uk
+  Jumping Pop sound emulation by R. Belmont
 
 
 Stephh's notes (based on the games M68000 code and some tests) :
@@ -195,6 +196,12 @@ static WRITE16_HANDLER( tumblep_sound_w )
 	cpunum_set_input_line(1,0,HOLD_LINE);
 }
 
+static WRITE16_HANDLER( jumppop_sound_w )
+{
+	soundlatch_w(0,data & 0xff);
+	cpunum_set_input_line( 1, 0, ASSERT_LINE );
+}
+
 /******************************************************************************/
 
 static READ16_HANDLER( tumblepop_controls_r )
@@ -367,11 +374,13 @@ static ADDRESS_MAP_START( jumppop_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&tumblep_mainram)
 	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x160000, 0x160fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Bootleg sprite buffer */
+	AM_RANGE(0x180000, 0x180001) AM_NOP	/* IRQ ack? */
+	AM_RANGE(0x18000c, 0x18000d) AM_WRITE(jumppop_sound_w)
 	AM_RANGE(0x1a0000, 0x1a7fff) AM_WRITE(MWA16_RAM)
 
-//	AM_RANGE(0x300000, 0x303fff) AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
+	AM_RANGE(0x300000, 0x303fff) AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
 	AM_RANGE(0x320000, 0x323fff) AM_WRITE(tumblep_pf1_data_w) AM_BASE(&tumblep_pf1_data)
-	AM_RANGE(0x300000, 0x303fff) AM_WRITE(MWA16_RAM)
+//	AM_RANGE(0x300000, 0x303fff) AM_WRITE(MWA16_RAM)
 //  AM_RANGE(0x320000, 0x323fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x380000, 0x38000f) AM_WRITE(MWA16_RAM) AM_BASE(&jumppop_control)
 
@@ -433,6 +442,33 @@ static ADDRESS_MAP_START( semicom_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
 //	AM_RANGE(0xf006, 0xf006) ???
+ADDRESS_MAP_END
+
+static WRITE8_HANDLER(jumppop_z80_bank_w)
+{
+	cpu_setbank(1, memory_region(REGION_CPU2) + 0x10000 + (0x4000 * data));
+}
+
+static ADDRESS_MAP_START( jumppop_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xf800, 0xffff) AM_RAM
+ADDRESS_MAP_END
+
+static READ8_HANDLER(jumppop_z80latch_r)
+{
+	cpunum_set_input_line(1, 0, CLEAR_LINE);
+	return soundlatch_r(0);
+}
+
+static ADDRESS_MAP_START( jumppop_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(YM3812_write_port_0_w)
+	AM_RANGE(0x02, 0x02) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0x03, 0x03) AM_READ(jumppop_z80latch_r)
+	AM_RANGE(0x04, 0x04) AM_NOP
+	AM_RANGE(0x05, 0x05) AM_WRITE(jumppop_z80_bank_w)
+	AM_RANGE(0x06, 0x06) AM_NOP
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -773,10 +809,10 @@ INPUT_PORTS_START( jumppop )
 	PORT_DIPNAME( 0x0100, 0x0000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0400, 0x0400, "Picture Viewer" )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0800, 0x0800, "BG Type" )
@@ -858,6 +894,17 @@ static struct GfxLayout tcharlayout =
 	16*8
 };
 
+static struct GfxLayout jumppop_tcharlayout =
+{
+	8,8,
+	RGN_FRAC(1,2),
+	8,
+	{ 0,1,2,3,4,5,6,7 },
+	{RGN_FRAC(1,2)+0,RGN_FRAC(1,2)+8,0,8,RGN_FRAC(1,2)+16,RGN_FRAC(1,2)+24,16,24 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8
+};
+
 static struct GfxLayout tlayout =
 {
 	16,16,
@@ -871,19 +918,21 @@ static struct GfxLayout tlayout =
 	64*8
 };
 
-/* its possible the real sprite roms just have reversed data */
 static struct GfxLayout jumpop_tlayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
-	4,
-	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0, 32*8+7, 32*8+6, 32*8+5, 32*8+4, 32*8+3, 32*8+2, 32*8+1, 32*8+0,
-			 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
+	8,
+	{ 0,1,2,3,4,5,6,7 },
+	{RGN_FRAC(1,2)+0,RGN_FRAC(1,2)+8,0,8,RGN_FRAC(1,2)+16,RGN_FRAC(1,2)+24,16,24,
+	256+RGN_FRAC(1,2)+0,256+RGN_FRAC(1,2)+8,256+0,256+8,256+RGN_FRAC(1,2)+16,256+RGN_FRAC(1,2)+24,256+16,256+24
+	},
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+	512+0*32, 512+1*32, 512+2*32, 512+3*32, 512+4*32, 512+5*32, 512+6*32, 512+7*32
+	},
+	128*8
 };
+
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -906,15 +955,23 @@ static struct GfxDecodeInfo fncywld_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo jumppop_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tcharlayout, 0x100, 0x40 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tlayout,     0x100, 0x40 },	/* Tiles 16x16 */
-	{ REGION_GFX1, 0, &tlayout,     0x100, 0x40 },	/* Tiles 16x16 */
-	{ REGION_GFX2, 0, &jumpop_tlayout,       0, 0x40 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &jumppop_tcharlayout, 0x100, 0x40 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &jumpop_tlayout,     0x100, 0x40 },	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &jumpop_tlayout,     0x100, 0x40 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tlayout,       0, 0x40 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
 
 /******************************************************************************/
+
+static struct OKIM6295interface okim6295_interface3 =
+{
+	1,          		/* 1 chip */
+	{ 875000/132 },		/* Frequency */
+	{ REGION_SOUND1 },	/* memory region */
+	{ 50 }
+};
 
 static struct OKIM6295interface okim6295_interface2 =
 {
@@ -936,6 +993,14 @@ static void sound_irq(int state)
 {
 	cpunum_set_input_line(1,1,state); /* IRQ 2 */
 }
+
+static struct YM3812interface ym3812_interface =
+{
+	1,
+	3500000,	/* verified */
+	{ 70 },
+	{ 0 },
+};
 
 static struct YM2151interface ym2151_interface =
 {
@@ -1125,11 +1190,15 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( jumppop )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_PROGRAM_MAP(jumppop_readmem,jumppop_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	/* z80 */
+	MDRV_CPU_ADD(Z80, 3500000) /* verified */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(jumppop_sound_map, 0)
+	MDRV_CPU_IO_MAP(jumppop_sound_io_map, 0)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse, 1953)	/* measured */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)
@@ -1145,7 +1214,8 @@ static MACHINE_DRIVER_START( jumppop )
 	MDRV_VIDEO_UPDATE(jumppop)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(OKIM6295, semicom_okim6295_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface3)
 MACHINE_DRIVER_END
 
 /******************************************************************************/
@@ -1358,33 +1428,79 @@ ROM_START( bcstry )
 
 ROM_END
 
+/*
+
+Jumping Pop
+ESD, 2001
+
+PCB Layout
+----------
+
+|------------------------------------------------------|
+| TDA1519A                62256         PAL            |
+| SAMPLES.BIN YM3014      62256         BG0.BIN        |
+|             YM3812    |---------|     BG1.BIN        |
+|6295   Z80   6116      |         |                    |
+|          Z80_PRG.BIN  |A40MX04  |PAL                 |
+|                       |         |                    |
+|J                      |         |                    |
+|A PAL                  |---------|                    |
+|M                           6116                      |
+|M                           6116                      |
+|A     14MHz                 6116                      |
+|      16MHz                 6116|---------|           |
+|      68K_PRG.BIN        PAL    |         |           |
+|                         PAL    |A40MX04  |           |
+|              |-----|    PAL    |         |  SP0.BIN  |
+|      62256   |68000|           |         |  SP1.BIN  |
+|DIP1  62256   |     |           |---------|           |
+|      PAL     |-----|           6116  6116            |
+|DIP2  PAL                       6116  6116            |
+|------------------------------------------------------|
+Notes:
+      68000   - Motorola MC68EC000FU10, running at 16.000MHz (QFP64)
+      YM3812  - Yamaha YM3812, running at 3.500MHz [14 / 4] (DIP24)
+      YM3012  - Yamaha YM3012 16bit Serial DAC (DIP8)
+      Z80     - Zilog Z84C0006FEC, running at 3.500MHz [14 / 4] (QFP44)
+      6295    - Oki M6295, running at 875kHz [14 / 16], samples rate 6.628787879kHz [875000 /132] (QFP44)
+      A40MX04 - Actel A40MX04-F FPGA (x2, PLCC84)
+      TDA1519A- Philips TDA1519A Dual 6W Power Amplifier
+      DIP1/2  - 8 Position Dip Switch
+      62256   - 8K x8 SRAM (x4, DIP28)
+      6116    - 2K x8 SRAM (x9, DIP24)
+      VSync   - 60Hz
+
+      ROMs -
+              Filename      Type                                      Use
+              ---------------------------------------------------------------------------
+              68K_PRG.BIN   Hitachi HN27C4096 256K x16 EPROM          68000 Program
+              Z80_PRG.BIN   Atmel AT27C020 256K x8 OTP MASKROM        Z80 Program
+              SAMPLES.BIN   Atmel AT27C020 256K x8 OTP MASKROM        Oki M6295 Samples
+              BG0/1.BIN     Macronix 29F8100MC 1M x8 SOP44 FlashROM   Background Graphics
+              SP0/1.BIN     Macronix 29F8100MC 1M x8 SOP44 FlashROM   Sprite Graphics
+
+              Note there are no IC locations on the PCB, so the extension of the ROMs is just 'BIN'
+
+*/
+
 ROM_START( jumppop )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_WORD_SWAP ("27c4096.4", 0x00000, 0x80000, CRC(123536b9) SHA1(3597dec81e98d7bdf4ea9053983e62f127defcb7) )
+	ROM_LOAD16_WORD_SWAP ("68k_prg.bin", 0x00000, 0x80000, CRC(123536b9) SHA1(3597dec81e98d7bdf4ea9053983e62f127defcb7) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* Z80 code */
-	ROM_LOAD( "at27c020.2", 0x00000, 0x40000, CRC(a88d4424) SHA1(eefb5ac79632931a36f360713c482cd079891f91) )
+	ROM_LOAD( "z80_prg.bin", 0x00000, 0x40000, CRC(a88d4424) SHA1(eefb5ac79632931a36f360713c482cd079891f91) )
+	ROM_RELOAD( 0x10000, 0x40000)
 
-	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
-	/* BG GFX (missing) */
-	ROM_LOAD( "jp_bg0.rom", 0x00000, 0x80000, NO_DUMP )
-	ROM_LOAD( "jp_bg1.rom", 0x00000, 0x80000, NO_DUMP )
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bg0.bin", 0x000000, 0x100000, CRC(35a1363d) SHA1(66c550b0bdea7c8b079f186f5e044f731d31bc58) )
+	ROM_LOAD( "bg1.bin", 0x100000, 0x100000, CRC(5b37f943) SHA1(fe73b839f29d4c32823418711b22f85a5f583ec2) )
 
-	/* these are from tumble pop, they are wrong */
-//	ROM_LOAD16_BYTE( "thumbpop.19",  0x00000, 0x40000, CRC(0795aab4) SHA1(85b38804446f6b0b4d8c3a59a8958d520c567a4e) )
-//	ROM_LOAD16_BYTE( "thumbpop.18",  0x00001, 0x40000, CRC(ad58df43) SHA1(2e562bfffb42543af767dd9e82a1d2465dfcd8b8) )
-
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	/* SP GFX (missing ) */
-	ROM_LOAD( "jp_sp0.rom", 0x00000, 0x80000, NO_DUMP )
-	ROM_LOAD( "jp_sp1.rom", 0x00000, 0x80000, NO_DUMP )
-
-	/* these are from tumble pop, they work but are probably wrong */
-//	ROM_LOAD( "map-01.rom",   0x00000, 0x80000, CRC(e81ffa09) SHA1(01ada9557ead91eb76cf00db118d6c432104a398) )
-//	ROM_LOAD( "map-00.rom",   0x80000, 0x80000, CRC(8c879cfe) SHA1(a53ef7811f14a8b105749b1cf29fe8a3a33bab5e) )
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "sp0.bin", 0x000000, 0x100000, CRC(7c5d0633) SHA1(1fba60073d1d5d4dbd217fde181fa73a9d92bdc6) )
+	ROM_LOAD( "sp1.bin", 0x100000, 0x100000, CRC(7eae782e) SHA1(a33c544ad9516ec409c209968e72f63e7cdb934b) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
-	ROM_LOAD( "at27c020.1", 0x00000, 0x40000, CRC(066f30a7) SHA1(6bdd0210001c597819f7132ffa1dc1b1d55b4e0a) )
+	ROM_LOAD( "samples.bin", 0x00000, 0x40000, CRC(066f30a7) SHA1(6bdd0210001c597819f7132ffa1dc1b1d55b4e0a) )
 ROM_END
 
 
@@ -1724,4 +1840,4 @@ GAMEX(1993, jumpkids, 0,       jumpkids,  tumblep,  jumpkids, ROT0, "Comad", "Ju
 GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" ) // game says 1996, testmode 1995?
 GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" )
 GAMEX(1997, bcstry,   0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "BC Story", GAME_NOT_WORKING)
-GAMEX(2001, jumppop,  0,       jumppop,   jumppop,  jumpkids, ORIENTATION_FLIP_X, "ESD", "Jumping Pop", GAME_NOT_WORKING ) // incomplete dump
+GAME (2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop" )
