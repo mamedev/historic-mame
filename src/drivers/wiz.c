@@ -351,26 +351,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( wiz_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ic07_01.bin", 0x0000, 0x4000, 0x019b9eb9 , 0xc05f2c78 )
-	ROM_LOAD( "ic05_03.bin", 0x4000, 0x4000, 0xb78c7fa4 , 0x7978d879 )
-	ROM_LOAD( "ic06_02.bin", 0x8000, 0x4000, 0xa89e0fce , 0x9c406ad2 )
+	ROM_LOAD( "ic07_01.bin",  0x0000, 0x4000, 0xc05f2c78 )
+	ROM_LOAD( "ic05_03.bin",  0x4000, 0x4000, 0x7978d879 )
+	ROM_LOAD( "ic06_02.bin",  0x8000, 0x4000, 0x9c406ad2 )
 
 	ROM_REGION_DISPOSE(0x12000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic14_06.bin", 0x0000, 0x2000, 0xe5b8ac60 , 0xb398e142 )
-	ROM_LOAD( "ic13_05.bin", 0x2000, 0x2000, 0x335e3134 , 0x2868e6a5 )
-	ROM_LOAD( "ic12_04.bin", 0x4000, 0x2000, 0xbc752b01 , 0x8969acdd )
-	ROM_LOAD( "ic01_09.bin", 0x6000, 0x4000, 0x453571e3 , 0x4d86b041 )
-	ROM_LOAD( "ic02_08.bin", 0xa000, 0x4000, 0xd100a462 , 0xede77d37 )
-	ROM_LOAD( "ic03_07.bin", 0xe000, 0x4000, 0x33ff2095 , 0x297c02fc )
+	ROM_LOAD( "ic14_06.bin",  0x0000, 0x2000, 0xb398e142 )
+	ROM_LOAD( "ic13_05.bin",  0x2000, 0x2000, 0x2868e6a5 )
+	ROM_LOAD( "ic12_04.bin",  0x4000, 0x2000, 0x8969acdd )
+	ROM_LOAD( "ic01_09.bin",  0x6000, 0x4000, 0x4d86b041 )
+	ROM_LOAD( "ic02_08.bin",  0xa000, 0x4000, 0xede77d37 )
+	ROM_LOAD( "ic03_07.bin",  0xe000, 0x4000, 0x297c02fc )
 
 	ROM_REGION(0x0400)      /* color proms */
 	/* These proms are all $200 bytes but only the first $100 is used */
-	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0200, 0xe888070e , 0x09b3c4bf ) /* palette red component */
-	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0200, 0x42a50a09 , 0x241f2769 ) /* palette green component */
-	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0200, 0x40560304 , 0x3ea24f09 ) /* palette blue component */
+	ROM_LOAD( "ic23_3-1.bin", 0x0000, 0x0200, 0x09b3c4bf ) /* palette red component */
+	ROM_LOAD( "ic23_3-2.bin", 0x0100, 0x0200, 0x241f2769 ) /* palette green component */
+	ROM_LOAD( "ic23_3-3.bin", 0x0200, 0x0200, 0x3ea24f09 ) /* palette blue component */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "ic57_10.bin", 0x0000, 0x2000, 0x9001a9d1 , 0x8a7575bd )
+	ROM_LOAD( "ic57_10.bin",  0x0000, 0x2000, 0x8a7575bd )
 ROM_END
 
 

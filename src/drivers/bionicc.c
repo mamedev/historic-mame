@@ -389,34 +389,66 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bionicc_rom )
 	ROM_REGION(0x40000)      /* 68000 code */
-	ROM_LOAD_EVEN( "tsu_02b.rom", 0x00000, 0x10000, 0x2cfa1b7c , 0xcf965a0a ) /* 68000 code */
-	ROM_LOAD_ODD ( "tsu_04b.rom", 0x00000, 0x10000, 0xb8683c02 , 0xc9884bfb ) /* 68000 code */
-	ROM_LOAD_EVEN( "tsu_03b.rom", 0x20000, 0x10000, 0x00fc7968 , 0x4e157ae2 ) /* 68000 code */
-	ROM_LOAD_ODD ( "tsu_05b.rom", 0x20000, 0x10000, 0x9752acdc , 0xe66ca0f9 ) /* 68000 code */
+	ROM_LOAD_EVEN( "tsu_02b.rom",  0x00000, 0x10000, 0xcf965a0a ) /* 68000 code */
+	ROM_LOAD_ODD ( "tsu_04b.rom",  0x00000, 0x10000, 0xc9884bfb ) /* 68000 code */
+	ROM_LOAD_EVEN( "tsu_03b.rom",  0x20000, 0x10000, 0x4e157ae2 ) /* 68000 code */
+	ROM_LOAD_ODD ( "tsu_05b.rom",  0x20000, 0x10000, 0xe66ca0f9 ) /* 68000 code */
 
 	ROM_REGION_DISPOSE(0x098000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tsu_10.rom", 0x000000, 0x08000, 0x11537a11 , 0xf1180d02 )	/* Sprites */
-	ROM_LOAD( "tsu_09.rom", 0x008000, 0x08000, 0xc102ed0e , 0x6a049292 )
-	ROM_LOAD( "tsu_15.rom", 0x010000, 0x08000, 0x9df09b68 , 0xea912701 )
-	ROM_LOAD( "tsu_14.rom", 0x018000, 0x08000, 0x4bebdef5 , 0x46b2ad83 )
-	ROM_LOAD( "tsu_20.rom", 0x020000, 0x08000, 0xe03c8ca6 , 0x17857ad2 )
-	ROM_LOAD( "tsu_19.rom", 0x028000, 0x08000, 0xcc55b54f , 0xb5c82722 )
-	ROM_LOAD( "tsu_22.rom", 0x030000, 0x08000, 0x21628a8e , 0x5ee1ae6a )
-	ROM_LOAD( "tsu_21.rom", 0x038000, 0x08000, 0x2b4ea408 , 0x98777006 )
-	ROM_LOAD( "tsu_08.rom", 0x040000, 0x08000, 0x8eda0000 , 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
-	ROM_LOAD( "tsu_07.rom", 0x048000, 0x08000, 0x137a62ce , 0x9469efa4 )	/* SCROLL2 Layer Tiles */
-	ROM_LOAD( "tsu_06.rom", 0x050000, 0x08000, 0xecc9ec5d , 0x40bf0eb4 )
-	ROM_LOAD( "ts_12.rom", 0x058000, 0x08000, 0x49c23374 , 0xe4b4619e )	/* SCROLL1 Layer Tiles */
-	ROM_LOAD( "ts_11.rom", 0x060000, 0x08000, 0x452733d9 , 0xab30237a )
-	ROM_LOAD( "ts_17.rom", 0x068000, 0x08000, 0xfecf91af , 0xdeb657e4 )
-	ROM_LOAD( "ts_16.rom", 0x070000, 0x08000, 0x130bc553 , 0xd363b5f9 )
-	ROM_LOAD( "ts_13.rom", 0x078000, 0x08000, 0xf8498663 , 0xa8f5a004 )
-	ROM_LOAD( "ts_18.rom", 0x080000, 0x08000, 0xb356a558 , 0x3b36948c )
-	ROM_LOAD( "ts_23.rom", 0x088000, 0x08000, 0x5d62bc70 , 0xbbfbe58a )
-	ROM_LOAD( "ts_24.rom", 0x090000, 0x08000, 0x00296253 , 0xf156e564 )
+	ROM_LOAD( "tsu_10.rom",   0x000000, 0x08000, 0xf1180d02 )	/* Sprites */
+	ROM_LOAD( "tsu_09.rom",   0x008000, 0x08000, 0x6a049292 )
+	ROM_LOAD( "tsu_15.rom",   0x010000, 0x08000, 0xea912701 )
+	ROM_LOAD( "tsu_14.rom",   0x018000, 0x08000, 0x46b2ad83 )
+	ROM_LOAD( "tsu_20.rom",   0x020000, 0x08000, 0x17857ad2 )
+	ROM_LOAD( "tsu_19.rom",   0x028000, 0x08000, 0xb5c82722 )
+	ROM_LOAD( "tsu_22.rom",   0x030000, 0x08000, 0x5ee1ae6a )
+	ROM_LOAD( "tsu_21.rom",   0x038000, 0x08000, 0x98777006 )
+	ROM_LOAD( "tsu_08.rom",   0x040000, 0x08000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
+	ROM_LOAD( "tsu_07.rom",   0x048000, 0x08000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
+	ROM_LOAD( "tsu_06.rom",   0x050000, 0x08000, 0x40bf0eb4 )
+	ROM_LOAD( "ts_12.rom",    0x058000, 0x08000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
+	ROM_LOAD( "ts_11.rom",    0x060000, 0x08000, 0xab30237a )
+	ROM_LOAD( "ts_17.rom",    0x068000, 0x08000, 0xdeb657e4 )
+	ROM_LOAD( "ts_16.rom",    0x070000, 0x08000, 0xd363b5f9 )
+	ROM_LOAD( "ts_13.rom",    0x078000, 0x08000, 0xa8f5a004 )
+	ROM_LOAD( "ts_18.rom",    0x080000, 0x08000, 0x3b36948c )
+	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
+	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
 
 	ROM_REGION(0x10000) /* 64k for the audio CPU */
-	ROM_LOAD( "tsu_01b.rom", 0x00000, 0x8000, 0x0ae40f4a , 0xa9a6cafa )
+	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
+ROM_END
+
+ROM_START( bionicc2_rom )
+	ROM_REGION(0x40000)      /* 68000 code */
+	ROM_LOAD_EVEN( "02",      0x00000, 0x10000, 0xf2528f08 ) /* 68000 code */
+	ROM_LOAD_ODD ( "04",      0x00000, 0x10000, 0x38b1c7e4 ) /* 68000 code */
+	ROM_LOAD_EVEN( "03",      0x20000, 0x10000, 0x72c3b76f ) /* 68000 code */
+	ROM_LOAD_ODD ( "05",      0x20000, 0x10000, 0x70621f83 ) /* 68000 code */
+
+	ROM_REGION_DISPOSE(0x098000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tsu_10.rom",   0x000000, 0x08000, 0xf1180d02 )	/* Sprites */
+	ROM_LOAD( "tsu_09.rom",   0x008000, 0x08000, 0x6a049292 )
+	ROM_LOAD( "tsu_15.rom",   0x010000, 0x08000, 0xea912701 )
+	ROM_LOAD( "tsu_14.rom",   0x018000, 0x08000, 0x46b2ad83 )
+	ROM_LOAD( "tsu_20.rom",   0x020000, 0x08000, 0x17857ad2 )
+	ROM_LOAD( "tsu_19.rom",   0x028000, 0x08000, 0xb5c82722 )
+	ROM_LOAD( "tsu_22.rom",   0x030000, 0x08000, 0x5ee1ae6a )
+	ROM_LOAD( "tsu_21.rom",   0x038000, 0x08000, 0x98777006 )
+	ROM_LOAD( "tsu_08.rom",   0x040000, 0x08000, 0x9bf0b7a2 )	/* VIDEORAM (text layer) tiles */
+	ROM_LOAD( "tsu_07.rom",   0x048000, 0x08000, 0x9469efa4 )	/* SCROLL2 Layer Tiles */
+	ROM_LOAD( "tsu_06.rom",   0x050000, 0x08000, 0x40bf0eb4 )
+	ROM_LOAD( "ts_12.rom",    0x058000, 0x08000, 0xe4b4619e )	/* SCROLL1 Layer Tiles */
+	ROM_LOAD( "ts_11.rom",    0x060000, 0x08000, 0xab30237a )
+	ROM_LOAD( "ts_17.rom",    0x068000, 0x08000, 0xdeb657e4 )
+	ROM_LOAD( "ts_16.rom",    0x070000, 0x08000, 0xd363b5f9 )
+	ROM_LOAD( "ts_13.rom",    0x078000, 0x08000, 0xa8f5a004 )
+	ROM_LOAD( "ts_18.rom",    0x080000, 0x08000, 0x3b36948c )
+	ROM_LOAD( "ts_23.rom",    0x088000, 0x08000, 0xbbfbe58a )
+	ROM_LOAD( "ts_24.rom",    0x090000, 0x08000, 0xf156e564 )
+
+	ROM_REGION(0x10000) /* 64k for the audio CPU */
+	ROM_LOAD( "tsu_01b.rom",  0x00000, 0x8000, 0xa9a6cafa )
 ROM_END
 
 
@@ -426,7 +458,7 @@ struct GameDriver bionicc_driver =
 	__FILE__,
 	0,
 	"bionicc",
-	"Bionic Commando",
+	"Bionic Commando (set 1)",
 	"1987",
 	"Capcom",
 	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
@@ -445,3 +477,26 @@ struct GameDriver bionicc_driver =
 	NULL, NULL
 };
 
+struct GameDriver bionicc2_driver =
+{
+	__FILE__,
+	&bionicc_driver,
+	"bionicc2",
+	"Bionic Commando (set 2)",
+	"1987",
+	"Capcom",
+	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
+	0,
+	&machine_driver,
+
+	bionicc2_rom,
+	0,
+	0,0,
+	0,
+
+	bionicc_input_ports,
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	NULL, NULL
+};

@@ -1,5 +1,3 @@
-
-
 #ifndef DAC_H
 #define DAC_H
 
@@ -7,15 +5,13 @@
 
 struct DACinterface
 {
-	int num;			/* total number of 8910 in the machine */
-	int rate;			/* DAC sampling rate  */
-	int volume[MAX_DAC];/* master volume rate */
-	int filter[MAX_DAC];/* filter rate (rate = Register(ohm)*Capaciter(F)*1000000) */
+	int num;	/* total number of DACs */
+	int volume[MAX_DAC];
 };
 
 int DAC_sh_start(struct DACinterface *interface);
 void DAC_sh_stop(void);
 void DAC_sh_update(void);
-void DAC_data_w(int num , int newdata);
-void DAC_volume(int num,int vol );
+void DAC_data_w(int num,int data);
+void DAC_set_volume(int num,int volume,int gain);
 #endif

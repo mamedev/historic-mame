@@ -299,26 +299,26 @@ ROM_START( darkseal_rom )
   /* Nothing :) */
 
 	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fz-02.rom", 0x000000, 0x10000, 0x02943b50 , 0x3c9c3012 )	/* chars */
-	ROM_LOAD( "fz-03.rom", 0x010000, 0x10000, 0x3d340de8 , 0x264b90ed )
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
 
-  	ROM_LOAD( "mac-03.rom", 0x020000, 0x80000, 0xbf723db0 , 0x9996f3dc ) /* tiles 1 */
-	ROM_LOAD( "mac-02.rom", 0x0a0000, 0x80000, 0xf569389f , 0x49504e89 ) /* tiles 2 */
-  	ROM_LOAD( "mac-00.rom", 0x120000, 0x80000, 0xc3b334d9 , 0x52acf1d6 ) /* sprites */
-  	ROM_LOAD( "mac-01.rom", 0x1a0000, 0x80000, 0xf008741a , 0xb28f7584 )
+  	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+  	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+  	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
 	ROM_REGION(0x10000)	/* Unknown sound CPU */
-	ROM_LOAD( "fz-06.rom", 0x00000, 0x10000, 0x056f1917 , 0xc4828a6d )
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
-  	ROM_LOAD( "fz-08.rom", 0x00000, 0x20000, 0xb396ecbc , 0xc9bf68e1 )
-	ROM_LOAD( "fz-07.rom", 0x20000, 0x20000, 0x50a9aa7b , 0x588dd3cb )
+  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+	ROM_LOAD( "fz-07.rom",    0x20000, 0x20000, 0x588dd3cb )
 
 	ROM_REGION(0x80000) /* Encrypted code */
-  	ROM_LOAD( "ga-04.rom", 0x00000, 0x20000, 0xfac64176 , 0xa1a985a9 ) /* Paired with 1 */
-	ROM_LOAD( "ga-00.rom", 0x20000, 0x20000, 0xf629a245 , 0xfbf3ac63 ) /* Paired with 5 */
-  	ROM_LOAD( "ga-01.rom", 0x40000, 0x20000, 0x425d705b , 0x98bd2940 )
- 	ROM_LOAD( "ga-05.rom", 0x60000, 0x20000, 0xd6800cc8 , 0xd5e3ae3f )
+  	ROM_LOAD( "ga-04.rom",    0x00000, 0x20000, 0xa1a985a9 ) /* Paired with 1 */
+	ROM_LOAD( "ga-00.rom",    0x20000, 0x20000, 0xfbf3ac63 ) /* Paired with 5 */
+  	ROM_LOAD( "ga-01.rom",    0x40000, 0x20000, 0x98bd2940 )
+ 	ROM_LOAD( "ga-05.rom",    0x60000, 0x20000, 0xd5e3ae3f )
 ROM_END
 
 ROM_START( gatedoom_rom )
@@ -326,28 +326,28 @@ ROM_START( gatedoom_rom )
   	/* Nothing :) */
 
 	ROM_REGION_DISPOSE(0x220000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fz-02.rom", 0x000000, 0x10000, 0x02943b50 , 0x3c9c3012 )	/* chars */
-	ROM_LOAD( "fz-03.rom", 0x010000, 0x10000, 0x3d340de8 , 0x264b90ed )
+	ROM_LOAD( "fz-02.rom",    0x000000, 0x10000, 0x3c9c3012 )	/* chars */
+	ROM_LOAD( "fz-03.rom",    0x010000, 0x10000, 0x264b90ed )
 
   	/* the following four have not been verified on a real Gate of Doom */
 	/* board - might be different from Dark Seal! */
-	ROM_LOAD( "mac-03.rom", 0x020000, 0x80000, 0xbf723db0 , 0x9996f3dc ) /* tiles 1 */
-  	ROM_LOAD( "mac-02.rom", 0x0a0000, 0x80000, 0xf569389f , 0x49504e89 ) /* tiles 2 */
-	ROM_LOAD( "mac-00.rom", 0x120000, 0x80000, 0xc3b334d9 , 0x52acf1d6 ) /* sprites */
- 	ROM_LOAD( "mac-01.rom", 0x1a0000, 0x80000, 0xf008741a , 0xb28f7584 )
+	ROM_LOAD( "mac-03.rom",   0x020000, 0x80000, 0x9996f3dc ) /* tiles 1 */
+  	ROM_LOAD( "mac-02.rom",   0x0a0000, 0x80000, 0x49504e89 ) /* tiles 2 */
+	ROM_LOAD( "mac-00.rom",   0x120000, 0x80000, 0x52acf1d6 ) /* sprites */
+ 	ROM_LOAD( "mac-01.rom",   0x1a0000, 0x80000, 0xb28f7584 )
 
 	ROM_REGION(0x10000)	/* Unknown sound CPU */
-	ROM_LOAD( "fz-06.rom", 0x00000, 0x10000, 0x056f1917 , 0xc4828a6d )
+	ROM_LOAD( "fz-06.rom",    0x00000, 0x10000, 0xc4828a6d )
 
 	ROM_REGION(0x40000)	/* ADPCM samples */
-  	ROM_LOAD( "fz-08.rom", 0x00000, 0x20000, 0xb396ecbc , 0xc9bf68e1 )
-	ROM_LOAD( "fz-07.rom", 0x20000, 0x20000, 0x50a9aa7b , 0x588dd3cb )
+  	ROM_LOAD( "fz-08.rom",    0x00000, 0x20000, 0xc9bf68e1 )
+	ROM_LOAD( "fz-07.rom",    0x20000, 0x20000, 0x588dd3cb )
 
 	ROM_REGION(0x80000) /* Encrypted code */
-	ROM_LOAD( "gb04.bin", 0x00000, 0x20000, 0xf14bd47f , 0x4c3bbd2b ) /* Paired with 1 */
-	ROM_LOAD( "gb00.bin", 0x20000, 0x20000, 0xb2e90ed5 , 0xa88c16a1 ) /* Paired with 5 */
-	ROM_LOAD( "gb01.bin", 0x40000, 0x20000, 0xf6c5800b , 0x59e367f4 )
- 	ROM_LOAD( "gb05.bin", 0x60000, 0x20000, 0x861a3588 , 0x252d7e14 )
+	ROM_LOAD( "gb04.bin",     0x00000, 0x20000, 0x4c3bbd2b ) /* Paired with 1 */
+	ROM_LOAD( "gb00.bin",     0x20000, 0x20000, 0xa88c16a1 ) /* Paired with 5 */
+	ROM_LOAD( "gb01.bin",     0x40000, 0x20000, 0x59e367f4 )
+ 	ROM_LOAD( "gb05.bin",     0x60000, 0x20000, 0x252d7e14 )
 ROM_END
 
 /******************************************************************************/

@@ -5,7 +5,9 @@
 extern unsigned char *stinger_videoram2;
 extern unsigned char *stinger_fg_attributesram,*stinger_bg_attributesram;
 
+void stinger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void stinger_attributes_w(int offset,int data);
+void stinger_palettebank_w(int offset,int data);
 void stinger_charbank_w(int offset,int data);
 void stinger_flipscreen_w(int offset,int data);
 void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -52,8 +54,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe800, 0xe83f, stinger_attributes_w, &stinger_bg_attributesram },
 	{ 0xe840, 0xe85f, MWA_RAM, &spriteram_2 },
 	{ 0xf001, 0xf001, interrupt_enable_w },
-	{ 0xf002, 0xf002, MWA_NOP },	/* ??? */
-	{ 0xf003, 0xf003, MWA_NOP },	/* ??? */
+	{ 0xf002, 0xf003, stinger_palettebank_w },	/* ??? guess! */
 	{ 0xf004, 0xf005, stinger_charbank_w },
 	{ 0xf006, 0xf007, stinger_flipscreen_w },
 	{ 0xf800, 0xf800, sound_command_w },
@@ -89,8 +90,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
     PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
     PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -122,13 +123,13 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x18, "5" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 
@@ -136,13 +137,13 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x01, 0x00, "Free Play", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x70, 0x70, "Coin B", IP_KEY_NONE )
@@ -166,7 +167,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 chars */
 	512,	/* 512 characters */
 	3,		/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },
+	{ 2*1024*8*8, 1024*8*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
@@ -177,7 +178,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprintes */
 	128,	/* 128 sprites */
 	3,		/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },
+	{ 2*1024*8*8, 1024*8*8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -187,52 +188,13 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 8 },
-	{ 1, 0x6000, &charlayout,   0, 8 },
-	{ 1, 0x1000, &spritelayout, 0, 8 },
-	{ 1, 0x7000, &spritelayout, 0, 8 },
+	{ 1, 0x0000, &charlayout,   0, 32 },
+	{ 1, 0x6000, &charlayout,   0, 32 },
+	{ 1, 0x1000, &spritelayout, 0, 32 },
+	{ 1, 0x7000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
-static unsigned char palette[] =
-{
-	0x00,0x00,0x00,	/* BLACK */
-	0xff,0x00,0x00, /* RED */
-	0x00,0xff,0x00, /* GREEN */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0xff,0x00, /* YELLOW */
-	0xff,0x00,0xff, /* MAGENTA */
-	0x00,0xff,0xff, /* CYAN */
-	0xff,0xff,0xff, /* WHITE */
-	0xE0,0xE0,0xE0, /* LTGRAY */
-	0xC0,0xC0,0xC0, /* DKGRAY */
-	0xe0,0xb0,0x70,	/* BROWN */
-	0xd0,0xa0,0x60,	/* BROWN0 */
-	0xc0,0x90,0x50,	/* BROWN1 */
-	0xa3,0x78,0x3a,	/* BROWN2 */
-	0x80,0x60,0x20,	/* BROWN3 */
-	0x54,0x40,0x14,	/* BROWN4 */
-	0x54,0xa8,0xff, /* LTBLUE */
-	0x00,0xa0,0x00, /* DKGREEN */
-	0x00,0xe0,0x00, /* GRASSGREEN */
-	0xff,0xb6,0xdb,	/* PINK */
-	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,96,0x49,	/* DKORANGE */
-	0xff,128,0x00,	/* ORANGE */
-	0xdb,0xdb,0xdb	/* GREY */
-};
-
-static unsigned short colortable[] =
-{
-	0,1,2,3,4,5,6,7,
-	0,8,9,10,11,12,13,14,
-	0,15,16,17,18,19,20,21,
-	0,1,3,5,7,9,11,13,
-	0,2,4,6,8,10,12,14,
-	0,9,11,13,15,17,19,21,
-	0,10,12,14,16,18,20,22,
-	0,3,6,9,12,15,18,21
-};
 
 
 static struct AY8910interface ay8910_interface =
@@ -262,7 +224,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			3072000,	/* 3.072 Mhz ? */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			nmi_interrupt,2	/* ??? */
 		}
@@ -274,8 +236,8 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
-	0,
+	256, 256,
+	stinger_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
@@ -297,22 +259,27 @@ static struct MachineDriver machine_driver =
 
 ROM_START( stinger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "n1.bin", 0x0000, 0x2000, 0xc77108dd , 0xf2d2790c )
-	ROM_LOAD( "n2.bin", 0x2000, 0x2000, 0x341e5efa , 0x8fd2d8d8 )
-	ROM_LOAD( "n3.bin", 0x4000, 0x2000, 0x4cf890e6 , 0xf1794d36 )
-	ROM_LOAD( "n4.bin", 0x6000, 0x2000, 0xc425ac41 , 0x230ba682 )
-	ROM_LOAD( "n5.bin", 0x8000, 0x2000, 0x6d64fc2c , 0xa03a01da )
+	ROM_LOAD( "n1.bin",       0x0000, 0x2000, 0xf2d2790c )
+	ROM_LOAD( "n2.bin",       0x2000, 0x2000, 0x8fd2d8d8 )
+	ROM_LOAD( "n3.bin",       0x4000, 0x2000, 0xf1794d36 )
+	ROM_LOAD( "n4.bin",       0x6000, 0x2000, 0x230ba682 )
+	ROM_LOAD( "n5.bin",       0x8000, 0x2000, 0xa03a01da )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "7.bin", 0x0000, 0x2000, 0x6ba1acc1 , 0x775489be )
-	ROM_LOAD( "8.bin", 0x2000, 0x2000, 0x8aade881 , 0x43c61b3f )
-	ROM_LOAD( "9.bin", 0x4000, 0x2000, 0xa915ca6b , 0xc9ed8fc7 )
-	ROM_LOAD( "10.bin", 0x6000, 0x2000, 0xb2a907a9 , 0xf6721930 )
-	ROM_LOAD( "11.bin", 0x8000, 0x2000, 0xae748954 , 0xa4404e63 )
-	ROM_LOAD( "12.bin", 0xa000, 0x2000, 0xda96fdde , 0xb60fa88c )
+	ROM_LOAD( "7.bin",        0x0000, 0x2000, 0x775489be )
+	ROM_LOAD( "8.bin",        0x2000, 0x2000, 0x43c61b3f )
+	ROM_LOAD( "9.bin",        0x4000, 0x2000, 0xc9ed8fc7 )
+	ROM_LOAD( "10.bin",       0x6000, 0x2000, 0xf6721930 )
+	ROM_LOAD( "11.bin",       0x8000, 0x2000, 0xa4404e63 )
+	ROM_LOAD( "12.bin",       0xa000, 0x2000, 0xb60fa88c )
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "stinger.a7",   0x0000, 0x0100, 0x92e5a16d )	/* red component */
+	ROM_LOAD( "stinger.b7",   0x0100, 0x0100, 0xc60229a5 )	/* green component */
+	ROM_LOAD( "stinger.a8",   0x0200, 0x0100, 0x76b57629 )	/* blue component */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "6.bin", 0x0000, 0x2000, 0xe112ef6a , 0x79757f0c )
+	ROM_LOAD( "6.bin",        0x0000, 0x2000, 0x79757f0c )
 ROM_END
 
 
@@ -383,7 +350,7 @@ struct GameDriver stinger_driver =
 
 	input_ports,
 
-	0, palette, colortable,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 	0, 0
 };

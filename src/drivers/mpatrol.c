@@ -473,80 +473,80 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mpatrol_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x0440639c , 0x5873a860 )
-	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000, 0x15d6639c , 0xf4b85974 )
-	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000, 0x2f2a0bf4 , 0x2e1a598c )
-	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000, 0xf5377887 , 0xdd05b587 )
+	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
+	ROM_LOAD( "mp-a.3l",      0x1000, 0x1000, 0xf4b85974 )
+	ROM_LOAD( "mp-a.3k",      0x2000, 0x1000, 0x2e1a598c )
+	ROM_LOAD( "mp-a.3j",      0x3000, 0x1000, 0xdd05b587 )
 
 	ROM_REGION_DISPOSE(0x7000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xefe9bb1d , 0xe3ee7f75 )       /* chars */
-	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000, 0x796d8525 , 0xcca6d023 )
-	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 , 0x707ace5e )       /* sprites */
-	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000, 0x974b35c3 , 0x9b72133a )
-	ROM_LOAD( "mp-e.3l", 0x4000, 0x1000, 0x48b86bb0 , 0xc46a7f72 )       /* background graphics */
-	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000, 0x48d8cace , 0xc7aa1fb0 )
-	ROM_LOAD( "mp-e.3h", 0x6000, 0x1000, 0x89ce19a8 , 0xa0919392 )
+	ROM_LOAD( "mp-e.3e",      0x0000, 0x1000, 0xe3ee7f75 )       /* chars */
+	ROM_LOAD( "mp-e.3f",      0x1000, 0x1000, 0xcca6d023 )
+	ROM_LOAD( "mp-b.3m",      0x2000, 0x1000, 0x707ace5e )       /* sprites */
+	ROM_LOAD( "mp-b.3n",      0x3000, 0x1000, 0x9b72133a )
+	ROM_LOAD( "mp-e.3l",      0x4000, 0x1000, 0xc46a7f72 )       /* background graphics */
+	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
+	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
 	ROM_REGION(0x0240)     /* color proms */
-	ROM_LOAD( "2a", 0x0000, 0x0100, 0x9800670c , 0x0f193a50 ) /* character palette */
-	ROM_LOAD( "1m", 0x0100, 0x0020, 0xa0000000 , 0x6a57eff2 ) /* background palette */
-	ROM_LOAD( "1c1j", 0x0120, 0x0020, 0x06c0092e , 0x26979b13 ) /* sprite palette */
-	ROM_LOAD( "2hx", 0x0140, 0x0100, 0x488c0202 , 0x7ae4cd97 ) /* sprite lookup table */
+	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
+	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
+	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
+	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mp-snd.1a", 0xf000, 0x1000, 0x506d76fb , 0x561d3108 )
+	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 ROM_START( mpatrolw_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mpw-a.3m", 0x0000, 0x1000, 0x138439c6 , 0xbaa1a1d4 )
-	ROM_LOAD( "mpw-a.3l", 0x1000, 0x1000, 0x0c1bc43b , 0x52459e51 )
-	ROM_LOAD( "mpw-a.3k", 0x2000, 0x1000, 0x56b4c738 , 0x9b249fe5 )
-	ROM_LOAD( "mpw-a.3j", 0x3000, 0x1000, 0x9e598a75 , 0xfee76972 )
+	ROM_LOAD( "mpw-a.3m",     0x0000, 0x1000, 0xbaa1a1d4 )
+	ROM_LOAD( "mpw-a.3l",     0x1000, 0x1000, 0x52459e51 )
+	ROM_LOAD( "mpw-a.3k",     0x2000, 0x1000, 0x9b249fe5 )
+	ROM_LOAD( "mpw-a.3j",     0x3000, 0x1000, 0xfee76972 )
 
 	ROM_REGION_DISPOSE(0x7000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mpw-e.3e", 0x0000, 0x1000, 0xc8e818a2 , 0xf56e01fe )       /* chars */
-	ROM_LOAD( "mpw-e.3f", 0x1000, 0x1000, 0x080d9163 , 0xcaaba2d9 )
-	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 , 0x707ace5e )       /* sprites */
-	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000, 0x974b35c3 , 0x9b72133a )
-	ROM_LOAD( "mp-e.3l", 0x4000, 0x1000, 0x48b86bb0 , 0xc46a7f72 )       /* background graphics */
-	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000, 0x48d8cace , 0xc7aa1fb0 )
-	ROM_LOAD( "mp-e.3h", 0x6000, 0x1000, 0x89ce19a8 , 0xa0919392 )
+	ROM_LOAD( "mpw-e.3e",     0x0000, 0x1000, 0xf56e01fe )       /* chars */
+	ROM_LOAD( "mpw-e.3f",     0x1000, 0x1000, 0xcaaba2d9 )
+	ROM_LOAD( "mp-b.3m",      0x2000, 0x1000, 0x707ace5e )       /* sprites */
+	ROM_LOAD( "mp-b.3n",      0x3000, 0x1000, 0x9b72133a )
+	ROM_LOAD( "mp-e.3l",      0x4000, 0x1000, 0xc46a7f72 )       /* background graphics */
+	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
+	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
 	ROM_REGION(0x0240)     /* color proms */
-	ROM_LOAD( "2a", 0x0000, 0x0100, 0x9800670c , 0x0f193a50 ) /* character palette */
-	ROM_LOAD( "1m", 0x0100, 0x0020, 0xa0000000 , 0x6a57eff2 ) /* background palette */
-	ROM_LOAD( "1c1j", 0x0120, 0x0020, 0x06c0092e , 0x26979b13 ) /* sprite palette */
-	ROM_LOAD( "2hx", 0x0140, 0x0100, 0x488c0202 , 0x7ae4cd97 ) /* sprite lookup table */
+	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
+	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
+	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
+	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mp-snd.1a", 0xf000, 0x1000, 0x506d76fb , 0x561d3108 )
+	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 ROM_START( mranger_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x0440639c , 0x5873a860 )
-	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000, 0xf25e07f8 , 0x217dd431 )
-	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000, 0x6e686d92 , 0x9f0af7b2 )
-	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000, 0x39412cd3 , 0x7fe8e2cd )
+	ROM_LOAD( "mp-a.3m",      0x0000, 0x1000, 0x5873a860 )
+	ROM_LOAD( "mr-a.3l",      0x1000, 0x1000, 0x217dd431 )
+	ROM_LOAD( "mr-a.3k",      0x2000, 0x1000, 0x9f0af7b2 )
+	ROM_LOAD( "mr-a.3j",      0x3000, 0x1000, 0x7fe8e2cd )
 
 	ROM_REGION_DISPOSE(0x7000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xefe9bb1d , 0xe3ee7f75 )       /* chars */
-	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000, 0x796d8525 , 0xcca6d023 )
-	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 , 0x707ace5e )       /* sprites */
-	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000, 0x974b35c3 , 0x9b72133a )
-	ROM_LOAD( "mp-e.3l", 0x4000, 0x1000, 0x48b86bb0 , 0xc46a7f72 )       /* background graphics */
-	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000, 0x48d8cace , 0xc7aa1fb0 )
-	ROM_LOAD( "mp-e.3h", 0x6000, 0x1000, 0x89ce19a8 , 0xa0919392 )
+	ROM_LOAD( "mp-e.3e",      0x0000, 0x1000, 0xe3ee7f75 )       /* chars */
+	ROM_LOAD( "mp-e.3f",      0x1000, 0x1000, 0xcca6d023 )
+	ROM_LOAD( "mp-b.3m",      0x2000, 0x1000, 0x707ace5e )       /* sprites */
+	ROM_LOAD( "mp-b.3n",      0x3000, 0x1000, 0x9b72133a )
+	ROM_LOAD( "mp-e.3l",      0x4000, 0x1000, 0xc46a7f72 )       /* background graphics */
+	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
+	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
 	ROM_REGION(0x0240)     /* color proms */
-	ROM_LOAD( "2a", 0x0000, 0x0100, 0x9800670c , 0x0f193a50 ) /* character palette */
-	ROM_LOAD( "1m", 0x0100, 0x0020, 0xa0000000 , 0x6a57eff2 ) /* background palette */
-	ROM_LOAD( "1c1j", 0x0120, 0x0020, 0x06c0092e , 0x26979b13 ) /* sprite palette */
-	ROM_LOAD( "2hx", 0x0140, 0x0100, 0x488c0202 , 0x7ae4cd97 ) /* sprite lookup table */
+	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
+	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
+	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
+	ROM_LOAD( "2hx",          0x0140, 0x0100, 0x7ae4cd97 ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "mp-snd.1a", 0xf000, 0x1000, 0x506d76fb , 0x561d3108 )
+	ROM_LOAD( "mp-snd.1a",    0xf000, 0x1000, 0x561d3108 )
 ROM_END
 
 

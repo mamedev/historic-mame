@@ -9,7 +9,7 @@
 
 #include "driver.h"
 #include "atarigen.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 
 
 void slapstic_init (int chip);

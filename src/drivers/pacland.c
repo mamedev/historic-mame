@@ -373,92 +373,92 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pacland_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
-	ROM_LOAD( "pl1-1", 0x08000, 0x4000, 0x1d7d3475 , 0xa938ae99 )
-	ROM_LOAD( "pl1-2", 0x0C000, 0x4000, 0x1a30a372 , 0x3fe43bb5 )
+	ROM_LOAD( "pl1-1",        0x08000, 0x4000, 0xa938ae99 )
+	ROM_LOAD( "pl1-2",        0x0C000, 0x4000, 0x3fe43bb5 )
 	/* all the following are banked at 0x4000-0x5fff */
-	ROM_LOAD( "pl1-3", 0x10000, 0x4000, 0x8ef26c48 , 0xaa9fa739 )
-	ROM_LOAD( "pl1-4", 0x14000, 0x4000, 0xef74074a , 0x2b895a90 )
-	ROM_LOAD( "pl1-5", 0x18000, 0x4000, 0x25793897 , 0x7af66200 )
-	ROM_LOAD( "pl1-6", 0x1c000, 0x4000, 0x2ef401f4 , 0xb01e59a9 )
+	ROM_LOAD( "pl1-3",        0x10000, 0x4000, 0xaa9fa739 )
+	ROM_LOAD( "pl1-4",        0x14000, 0x4000, 0x2b895a90 )
+	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
+	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pl1-12", 0x00000, 0x2000, 0x802ca90a , 0xc159fbce )	/* chars */
-	ROM_LOAD( "pl1-13", 0x02000, 0x2000, 0xcfc9c4bf , 0x6c5ed9ae )
-	ROM_LOAD( "pl1-9", 0x10000, 0x4000, 0xa3d7bce5 , 0xf5d5962b )	/* sprites */
-	ROM_LOAD( "pl1-10", 0x14000, 0x4000, 0xb17bd389 , 0xc7cf1904 )
-	ROM_LOAD( "pl1-8", 0x18000, 0x4000, 0xd1bc0d84 , 0xa2ebfa4a )
-	ROM_LOAD( "pl1-11", 0x1c000, 0x4000, 0xbce2ba90 , 0x6621361a )
+	ROM_LOAD( "pl1-12",       0x00000, 0x2000, 0xc159fbce )	/* chars */
+	ROM_LOAD( "pl1-13",       0x02000, 0x2000, 0x6c5ed9ae )
+	ROM_LOAD( "pl1-9",        0x10000, 0x4000, 0xf5d5962b )	/* sprites */
+	ROM_LOAD( "pl1-10",       0x14000, 0x4000, 0xc7cf1904 )
+	ROM_LOAD( "pl1-8",        0x18000, 0x4000, 0xa2ebfa4a )
+	ROM_LOAD( "pl1-11",       0x1c000, 0x4000, 0x6621361a )
 
 	ROM_REGION(0x1400)	/* color PROMs */
-	ROM_LOAD( "pl1-2.bin", 0x0000, 0x0400, 0x4ed4264c , 0x472885de )	/* red and green component */
-	ROM_LOAD( "pl1-1.bin", 0x0400, 0x0400, 0xed2d0207 , 0xa78ebdaf )	/* blue component */
-	ROM_LOAD( "pl1-3.bin", 0x0800, 0x0400, 0x33ee2f50 , 0x80558da8 )	/* sprites lookup table */
-	ROM_LOAD( "pl1-5.bin", 0x0c00, 0x0400, 0x02009f70 , 0x4b7ee712 )	/* foreground lookup table */
-	ROM_LOAD( "pl1-4.bin", 0x1000, 0x0400, 0xcbe6b46e , 0x3a7be418 )	/* background lookup table */
+	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
+	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
+	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
+	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
+	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pl1-7", 0x8000, 0x2000, 0xc9845a56 , 0x8c5becae ) /* sub program for the mcu */
-	ROM_LOAD( "pl1-mcu.bin", 0xf000, 0x1000, 0x03a8c424 , 0x6ef08fb3 ) /* microcontroller */
+	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
+	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( paclandn_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
-	ROM_LOAD( "pln1-1", 0x08000, 0x4000, 0x5b6b6889 , 0xf729fb94 )
-	ROM_LOAD( "pln1-2", 0x0C000, 0x4000, 0xd84eb166 , 0x5c66eb6f )
+	ROM_LOAD( "pln1-1",       0x08000, 0x4000, 0xf729fb94 )
+	ROM_LOAD( "pln1-2",       0x0C000, 0x4000, 0x5c66eb6f )
 	/* all the following are banked at 0x4000-0x5fff */
-	ROM_LOAD( "pl1-3", 0x10000, 0x4000, 0x8ef26c48 , 0xaa9fa739 )
-	ROM_LOAD( "pl1-4", 0x14000, 0x4000, 0xef74074a , 0x2b895a90 )
-	ROM_LOAD( "pl1-5", 0x18000, 0x4000, 0x25793897 , 0x7af66200 )
-	ROM_LOAD( "pl1-6", 0x1c000, 0x4000, 0x2ef401f4 , 0xb01e59a9 )
+	ROM_LOAD( "pl1-3",        0x10000, 0x4000, 0xaa9fa739 )
+	ROM_LOAD( "pl1-4",        0x14000, 0x4000, 0x2b895a90 )
+	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
+	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pl1-12", 0x00000, 0x2000, 0x802ca90a , 0xc159fbce )	/* chars */
-	ROM_LOAD( "pl1-13", 0x02000, 0x2000, 0xcfc9c4bf , 0x6c5ed9ae )
-	ROM_LOAD( "pl1_09b.bin", 0x10000, 0x4000, 0xb7c9b1ef , 0x80768a87 )	/* sprites */
-	ROM_LOAD( "pl1_10b.bin", 0x14000, 0x4000, 0xe1ef547f , 0xffd9d66e )
-	ROM_LOAD( "pl1_08.bin", 0x18000, 0x4000, 0xe1983c42 , 0x2b20e46d )
-	ROM_LOAD( "pl1_11.bin", 0x1c000, 0x4000, 0x8bdb3de1 , 0xc59775d8 )
+	ROM_LOAD( "pl1-12",       0x00000, 0x2000, 0xc159fbce )	/* chars */
+	ROM_LOAD( "pl1-13",       0x02000, 0x2000, 0x6c5ed9ae )
+	ROM_LOAD( "pl1_09b.bin",  0x10000, 0x4000, 0x80768a87 )	/* sprites */
+	ROM_LOAD( "pl1_10b.bin",  0x14000, 0x4000, 0xffd9d66e )
+	ROM_LOAD( "pl1_08.bin",   0x18000, 0x4000, 0x2b20e46d )
+	ROM_LOAD( "pl1_11.bin",   0x1c000, 0x4000, 0xc59775d8 )
 
 	ROM_REGION(0x1400)	/* color PROMs */
-	ROM_LOAD( "pl1-2.bin", 0x0000, 0x0400, 0x4ed4264c , 0x472885de )	/* red and green component */
-	ROM_LOAD( "pl1-1.bin", 0x0400, 0x0400, 0xed2d0207 , 0xa78ebdaf )	/* blue component */
-	ROM_LOAD( "pl1-3.bin", 0x0800, 0x0400, 0x33ee2f50 , 0x80558da8 )	/* sprites lookup table */
-	ROM_LOAD( "pl1-5.bin", 0x0c00, 0x0400, 0x02009f70 , 0x4b7ee712 )	/* foreground lookup table */
-	ROM_LOAD( "pl1-4.bin", 0x1000, 0x0400, 0xcbe6b46e , 0x3a7be418 )	/* background lookup table */
+	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
+	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
+	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
+	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
+	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pl1-7", 0x8000, 0x2000, 0xc9845a56 , 0x8c5becae ) /* sub program for the mcu */
-	ROM_LOAD( "pl1-mcu.bin", 0xf000, 0x1000, 0x03a8c424 , 0x6ef08fb3 ) /* microcontroller */
+	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
+	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 ROM_START( paclanda_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
-	ROM_LOAD( "pl6_01.bin", 0x08000, 0x4000, 0xd9d023da , 0x4c96e11c )
-	ROM_LOAD( "pl6_02.bin", 0x0C000, 0x4000, 0xc6801902 , 0x8cf5bd8d )
+	ROM_LOAD( "pl6_01.bin",   0x08000, 0x4000, 0x4c96e11c )
+	ROM_LOAD( "pl6_02.bin",   0x0C000, 0x4000, 0x8cf5bd8d )
 	/* all the following are banked at 0x4000-0x5fff */
-	ROM_LOAD( "pl1-3", 0x10000, 0x4000, 0x8ef26c48 , 0xaa9fa739 )
-	ROM_LOAD( "pl1-4", 0x14000, 0x4000, 0xef74074a , 0x2b895a90 )
-	ROM_LOAD( "pl1-5", 0x18000, 0x4000, 0x25793897 , 0x7af66200 )
-	ROM_LOAD( "pl1-6", 0x1c000, 0x4000, 0x2ef401f4 , 0xb01e59a9 )
+	ROM_LOAD( "pl1-3",        0x10000, 0x4000, 0xaa9fa739 )
+	ROM_LOAD( "pl1-4",        0x14000, 0x4000, 0x2b895a90 )
+	ROM_LOAD( "pl1-5",        0x18000, 0x4000, 0x7af66200 )
+	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, 0xb01e59a9 )
 
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pl0_12.bin", 0x00000, 0x2000, 0x01bda807 , 0xc8cb61ab )	/* chars */
-	ROM_LOAD( "pl1-13", 0x02000, 0x2000, 0xcfc9c4bf , 0x6c5ed9ae )
-	ROM_LOAD( "pl1_09b.bin", 0x10000, 0x4000, 0xb7c9b1ef , 0x80768a87 )	/* sprites */
-	ROM_LOAD( "pl1_10b.bin", 0x14000, 0x4000, 0xe1ef547f , 0xffd9d66e )
-	ROM_LOAD( "pl1_08.bin", 0x18000, 0x4000, 0xe1983c42 , 0x2b20e46d )
-	ROM_LOAD( "pl1_11.bin", 0x1c000, 0x4000, 0x8bdb3de1 , 0xc59775d8 )
+	ROM_LOAD( "pl0_12.bin",   0x00000, 0x2000, 0xc8cb61ab )	/* chars */
+	ROM_LOAD( "pl1-13",       0x02000, 0x2000, 0x6c5ed9ae )
+	ROM_LOAD( "pl1_09b.bin",  0x10000, 0x4000, 0x80768a87 )	/* sprites */
+	ROM_LOAD( "pl1_10b.bin",  0x14000, 0x4000, 0xffd9d66e )
+	ROM_LOAD( "pl1_08.bin",   0x18000, 0x4000, 0x2b20e46d )
+	ROM_LOAD( "pl1_11.bin",   0x1c000, 0x4000, 0xc59775d8 )
 
 	ROM_REGION(0x1400)	/* color PROMs */
-	ROM_LOAD( "pl1-2.bin", 0x0000, 0x0400, 0x4ed4264c , 0x472885de )	/* red and green component */
-	ROM_LOAD( "pl1-1.bin", 0x0400, 0x0400, 0xed2d0207 , 0xa78ebdaf )	/* blue component */
-	ROM_LOAD( "pl1-3.bin", 0x0800, 0x0400, 0x33ee2f50 , 0x80558da8 )	/* sprites lookup table */
-	ROM_LOAD( "pl1-5.bin", 0x0c00, 0x0400, 0x02009f70 , 0x4b7ee712 )	/* foreground lookup table */
-	ROM_LOAD( "pl1-4.bin", 0x1000, 0x0400, 0xcbe6b46e , 0x3a7be418 )	/* background lookup table */
+	ROM_LOAD( "pl1-2.bin",    0x0000, 0x0400, 0x472885de )	/* red and green component */
+	ROM_LOAD( "pl1-1.bin",    0x0400, 0x0400, 0xa78ebdaf )	/* blue component */
+	ROM_LOAD( "pl1-3.bin",    0x0800, 0x0400, 0x80558da8 )	/* sprites lookup table */
+	ROM_LOAD( "pl1-5.bin",    0x0c00, 0x0400, 0x4b7ee712 )	/* foreground lookup table */
+	ROM_LOAD( "pl1-4.bin",    0x1000, 0x0400, 0x3a7be418 )	/* background lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pl1-7", 0x8000, 0x2000, 0xc9845a56 , 0x8c5becae ) /* sub program for the mcu */
-	ROM_LOAD( "pl1-mcu.bin", 0xf000, 0x1000, 0x03a8c424 , 0x6ef08fb3 ) /* microcontroller */
+	ROM_LOAD( "pl1-7",        0x8000, 0x2000, 0x8c5becae ) /* sub program for the mcu */
+	ROM_LOAD( "pl1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 ) /* microcontroller */
 ROM_END
 
 

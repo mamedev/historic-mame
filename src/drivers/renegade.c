@@ -100,7 +100,7 @@ $8000 - $ffff	ROM
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "m6502/m6502.h"
+#include "M6502/m6502.h"
 #include "m6809/m6809.h"
 
 static void Write68705( int data );
@@ -484,8 +484,8 @@ static struct MachineDriver renegade_machine_driver =
 			0,
 			main_readmem,main_writemem,0,0,
 			renegade_interrupt,2
-		}
-		,{
+		},
+		{
  			CPU_M6809 | CPU_AUDIO_CPU,
 			1200000,	/* ? */
 			2,
@@ -528,93 +528,93 @@ static struct MachineDriver renegade_machine_driver =
 
 ROM_START( renegade_rom )
 	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
-	ROM_LOAD( "nb-5.bin", 0x8000, 0x8000, 0x6d1f3113 , 0xba683ddf )
-	ROM_LOAD( "na-5.bin", 0x4000, 0x4000, 0x6b5ecea0 , 0xde7e7df4 )
+	ROM_LOAD( "nb-5.bin",     0x8000, 0x8000, 0xba683ddf )
+	ROM_LOAD( "na-5.bin",     0x4000, 0x4000, 0xde7e7df4 )
 	ROM_CONTINUE( 0x10000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0x98000) /* temporary space for graphics (disposed after conversion) */
 
 	/* characters */
-	ROM_LOAD( "nc-5.bin", 0x00000, 0x8000, 0xd69c081e , 0x9adfaa5d )	/* 4 bitplanes */
+	ROM_LOAD( "nc-5.bin",     0x00000, 0x8000, 0x9adfaa5d )	/* 4 bitplanes */
 
 	/* tiles */
-	ROM_LOAD( "n1-5.bin", 0x08000, 0x8000, 0xf4b647ce , 0x4a9f47f3 )	/* bitplane 3 */
-	ROM_LOAD( "n6-5.bin", 0x10000, 0x8000, 0x1b1d27db , 0xd62a0aa8 )	/* bitplanes 1,2 */
-	ROM_LOAD( "n7-5.bin", 0x18000, 0x8000, 0xcf04d9a0 , 0x7ca5a532 )	/* bitplanes 1,2 */
+	ROM_LOAD( "n1-5.bin",     0x08000, 0x8000, 0x4a9f47f3 )	/* bitplane 3 */
+	ROM_LOAD( "n6-5.bin",     0x10000, 0x8000, 0xd62a0aa8 )	/* bitplanes 1,2 */
+	ROM_LOAD( "n7-5.bin",     0x18000, 0x8000, 0x7ca5a532 )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "n2-5.bin", 0x20000, 0x8000, 0x458feab7 , 0x8d2e7982 )	/* bitplane 3 */
-	ROM_LOAD( "n8-5.bin", 0x28000, 0x8000, 0xef22bb06 , 0x0dba31d3 )	/* bitplanes 1,2 */
-	ROM_LOAD( "n9-5.bin", 0x30000, 0x8000, 0x77f07e56 , 0x5b621b6a )	/* bitplanes 1,2 */
+	ROM_LOAD( "n2-5.bin",     0x20000, 0x8000, 0x8d2e7982 )	/* bitplane 3 */
+	ROM_LOAD( "n8-5.bin",     0x28000, 0x8000, 0x0dba31d3 )	/* bitplanes 1,2 */
+	ROM_LOAD( "n9-5.bin",     0x30000, 0x8000, 0x5b621b6a )	/* bitplanes 1,2 */
 
 	/* sprites */
-	ROM_LOAD( "nh-5.bin", 0x38000, 0x8000, 0x7f9d5463 , 0xdcd7857c )	/* bitplane 3 */
-	ROM_LOAD( "nd-5.bin", 0x40000, 0x8000, 0xdbc54395 , 0x2de1717c )	/* bitplanes 1,2 */
-	ROM_LOAD( "nj-5.bin", 0x48000, 0x8000, 0xeee3d7ef , 0x0f96a18e )	/* bitplanes 1,2 */
+	ROM_LOAD( "nh-5.bin",     0x38000, 0x8000, 0xdcd7857c )	/* bitplane 3 */
+	ROM_LOAD( "nd-5.bin",     0x40000, 0x8000, 0x2de1717c )	/* bitplanes 1,2 */
+	ROM_LOAD( "nj-5.bin",     0x48000, 0x8000, 0x0f96a18e )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "ni-5.bin", 0x50000, 0x8000, 0x2792480c , 0x6f597ed2 )	/* bitplane 3 */
-	ROM_LOAD( "nf-5.bin", 0x58000, 0x8000, 0x5ca5d811 , 0x0efc8d45 )	/* bitplanes 1,2 */
-	ROM_LOAD( "nl-5.bin", 0x60000, 0x8000, 0x7d932607 , 0x14778336 )	/* bitplanes 1,2 */
+	ROM_LOAD( "ni-5.bin",     0x50000, 0x8000, 0x6f597ed2 )	/* bitplane 3 */
+	ROM_LOAD( "nf-5.bin",     0x58000, 0x8000, 0x0efc8d45 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nl-5.bin",     0x60000, 0x8000, 0x14778336 )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "nn-5.bin", 0x68000, 0x8000, 0xf918fb7a , 0x1bf15787 )	/* bitplane 3 */
-	ROM_LOAD( "ne-5.bin", 0x70000, 0x8000, 0x5b800b36 , 0x924c7388 )	/* bitplanes 1,2 */
-	ROM_LOAD( "nk-5.bin", 0x78000, 0x8000, 0xbd328ea8 , 0x69499a94 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nn-5.bin",     0x68000, 0x8000, 0x1bf15787 )	/* bitplane 3 */
+	ROM_LOAD( "ne-5.bin",     0x70000, 0x8000, 0x924c7388 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nk-5.bin",     0x78000, 0x8000, 0x69499a94 )	/* bitplanes 1,2 */
 
-	ROM_LOAD( "no-5.bin", 0x80000, 0x8000, 0x43b494d0 , 0x147dd23b )	/* bitplane 3 */
-	ROM_LOAD( "ng-5.bin", 0x88000, 0x8000, 0x6943ff3b , 0xa8ee3720 )	/* bitplanes 1,2 */
-	ROM_LOAD( "nm-5.bin", 0x90000, 0x8000, 0xffd47a0a , 0xc100258e )	/* bitplanes 1,2 */
+	ROM_LOAD( "no-5.bin",     0x80000, 0x8000, 0x147dd23b )	/* bitplane 3 */
+	ROM_LOAD( "ng-5.bin",     0x88000, 0x8000, 0xa8ee3720 )	/* bitplanes 1,2 */
+	ROM_LOAD( "nm-5.bin",     0x90000, 0x8000, 0xc100258e )	/* bitplanes 1,2 */
 
 	ROM_REGION(0x10000) /* audio CPU (M6809) */
-	ROM_LOAD( "n0-5.bin", 0x08000, 0x08000, 	0xb6094bf9 , 0x3587de3b )
+	ROM_LOAD( "n0-5.bin",     0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
-	ROM_LOAD( "n5-5.bin", 0x00000, 0x8000, 0xc4184c92 , 0x7ee43a3c )
-	ROM_LOAD( "n4-5.bin", 0x10000, 0x8000, 0x0937575b , 0x6557564c )
-	ROM_LOAD( "n3-5.bin", 0x18000, 0x8000, 0x7f35d81d , 0x78fd6190 )
+	ROM_LOAD( "n5-5.bin",     0x00000, 0x8000, 0x7ee43a3c )
+	ROM_LOAD( "n4-5.bin",     0x10000, 0x8000, 0x6557564c )
+	ROM_LOAD( "n3-5.bin",     0x18000, 0x8000, 0x78fd6190 )
 ROM_END
 
 ROM_START( kuniokun_rom )
 	ROM_REGION(0x14000)	/* 64k for code + bank switched ROM */
-	ROM_LOAD( "ta18-10.bin", 0x8000, 0x8000, 0x2e0e998e , 0xa90cf44a )
-	ROM_LOAD( "ta18-11.bin", 0x4000, 0x4000, 0xd6362034 , 0xf240f5cd )
+	ROM_LOAD( "ta18-10.bin",  0x8000, 0x8000, 0xa90cf44a )
+	ROM_LOAD( "ta18-11.bin",  0x4000, 0x4000, 0xf240f5cd )
 	ROM_CONTINUE( 0x10000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0x98000) /* temporary space for graphics (disposed after conversion) */
 
 	/* characters */
-	ROM_LOAD( "ta18-25.bin", 0x00000, 0x8000, 0x67cd0a2b , 0x9bd2bea3 )	/* 4 bitplanes */
+	ROM_LOAD( "ta18-25.bin",  0x00000, 0x8000, 0x9bd2bea3 )	/* 4 bitplanes */
 
-	ROM_LOAD( "ta18-01.bin", 0x08000, 0x8000, 0x134b2dd1 , 0xdaf15024 )
-	ROM_LOAD( "ta18-06.bin", 0x10000, 0x8000, 0x6a47d299 , 0x1f59a248 )
-	ROM_LOAD( "ta18-05.bin", 0x18000, 0x8000, 0xcf04d9a0 , 0x7ca5a532 )
+	ROM_LOAD( "ta18-01.bin",  0x08000, 0x8000, 0xdaf15024 )
+	ROM_LOAD( "ta18-06.bin",  0x10000, 0x8000, 0x1f59a248 )
+	ROM_LOAD( "ta18-05.bin",  0x18000, 0x8000, 0x7ca5a532 )
 
-	ROM_LOAD( "ta18-02.bin", 0x20000, 0x8000, 0x4c3d1cd5 , 0x994c0021 )
-	ROM_LOAD( "ta18-04.bin", 0x28000, 0x8000, 0 , 0x1b43eabd )
-	ROM_LOAD( "ta18-03.bin", 0x30000, 0x8000, 0x75efad31 , 0x0475c99a )
+	ROM_LOAD( "ta18-02.bin",  0x20000, 0x8000, 0x994c0021 )
+	ROM_LOAD( "ta18-04.bin",  0x28000, 0x8000, 0x00000000 )
+	ROM_LOAD( "ta18-03.bin",  0x30000, 0x8000, 0x0475c99a )
 
 	/* sprites */
-	ROM_LOAD( "ta18-20.bin", 0x38000, 0x8000, 0x9b1d3b5b , 0xc7d54139 )
-	ROM_LOAD( "ta18-24.bin", 0x40000, 0x8000, 0x77c9072f , 0x84677d45 )
-	ROM_LOAD( "ta18-18.bin", 0x48000, 0x8000, 0xab207ec0 , 0x1c770853 )
+	ROM_LOAD( "ta18-20.bin",  0x38000, 0x8000, 0xc7d54139 )
+	ROM_LOAD( "ta18-24.bin",  0x40000, 0x8000, 0x84677d45 )
+	ROM_LOAD( "ta18-18.bin",  0x48000, 0x8000, 0x1c770853 )
 
-	ROM_LOAD( "ta18-19.bin", 0x50000, 0x8000, 0xeb9dfbef , 0xc8795fd7 )
-	ROM_LOAD( "ta18-22.bin", 0x58000, 0x8000, 0xc6d659a8 , 0xdf3a2ff5 )
-	ROM_LOAD( "ta18-16.bin", 0x60000, 0x8000, 0x9dacf54e , 0x7244bad0 )
+	ROM_LOAD( "ta18-19.bin",  0x50000, 0x8000, 0xc8795fd7 )
+	ROM_LOAD( "ta18-22.bin",  0x58000, 0x8000, 0xdf3a2ff5 )
+	ROM_LOAD( "ta18-16.bin",  0x60000, 0x8000, 0x7244bad0 )
 
-	ROM_LOAD( "ta18-14.bin", 0x68000, 0x8000, 0x4b8853b6 , 0xaf656017 )
-	ROM_LOAD( "ta18-23.bin", 0x70000, 0x8000, 0x1855745b , 0x3fd19cf7 )
-	ROM_LOAD( "ta18-17.bin", 0x78000, 0x8000, 0x83d283e4 , 0x74c64c6e )
+	ROM_LOAD( "ta18-14.bin",  0x68000, 0x8000, 0xaf656017 )
+	ROM_LOAD( "ta18-23.bin",  0x70000, 0x8000, 0x3fd19cf7 )
+	ROM_LOAD( "ta18-17.bin",  0x78000, 0x8000, 0x74c64c6e )
 
-	ROM_LOAD( "ta18-13.bin", 0x80000, 0x8000, 0x61a0bfaa , 0xb6b14d46 )
-	ROM_LOAD( "ta18-21.bin", 0x88000, 0x8000, 0xa2487992 , 0xc95e009b )
-	ROM_LOAD( "ta18-15.bin", 0x90000, 0x8000, 0xf42e859c , 0xa5d61d01 )
+	ROM_LOAD( "ta18-13.bin",  0x80000, 0x8000, 0xb6b14d46 )
+	ROM_LOAD( "ta18-21.bin",  0x88000, 0x8000, 0xc95e009b )
+	ROM_LOAD( "ta18-15.bin",  0x90000, 0x8000, 0xa5d61d01 )
 
 	ROM_REGION(0x10000) /* audio CPU (M6809) */
-	ROM_LOAD( "ta18-00.bin", 0x08000, 0x08000, 0xb6094bf9 , 0x3587de3b )
+	ROM_LOAD( "ta18-00.bin",  0x08000, 0x08000, 0x3587de3b )
 
 	ROM_REGION(0x20000) /* adpcm */
-	ROM_LOAD( "ta18-07.bin", 0x00000, 0x8000, 0xdb1f09d7 , 0x02e3f3ed )
-	ROM_LOAD( "ta18-08.bin", 0x10000, 0x8000, 0xa6e4c8aa , 0xc9312613 )
-	ROM_LOAD( "ta18-09.bin", 0x18000, 0x8000, 0xc121b46f , 0x07ed4705 )
+	ROM_LOAD( "ta18-07.bin",  0x00000, 0x8000, 0x02e3f3ed )
+	ROM_LOAD( "ta18-08.bin",  0x10000, 0x8000, 0xc9312613 )
+	ROM_LOAD( "ta18-09.bin",  0x18000, 0x8000, 0x07ed4705 )
 ROM_END
 
 /*

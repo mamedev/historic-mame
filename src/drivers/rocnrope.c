@@ -369,54 +369,54 @@ static struct MachineDriver machine_driver =
 
 ROM_START( rocnrope_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "rnr_h1.vid", 0x6000, 0x2000, 0x431c1ca0 , 0x0fddc1f6 )
-	ROM_LOAD( "rnr_h2.vid", 0x8000, 0x2000, 0x2e1a952e , 0xce9db49a )
-	ROM_LOAD( "rnr_h3.vid", 0xA000, 0x2000, 0x6fae29fa , 0x6d278459 )
-	ROM_LOAD( "rnr_h4.vid", 0xC000, 0x2000, 0x1a2852cc , 0x9b2e5f2a )
-	ROM_LOAD( "rnr_h5.vid", 0xE000, 0x2000, 0x474255f6 , 0x150a6264 )
+	ROM_LOAD( "rnr_h1.vid",   0x6000, 0x2000, 0x0fddc1f6 )
+	ROM_LOAD( "rnr_h2.vid",   0x8000, 0x2000, 0xce9db49a )
+	ROM_LOAD( "rnr_h3.vid",   0xA000, 0x2000, 0x6d278459 )
+	ROM_LOAD( "rnr_h4.vid",   0xC000, 0x2000, 0x9b2e5f2a )
+	ROM_LOAD( "rnr_h5.vid",   0xE000, 0x2000, 0x150a6264 )
 
 	ROM_REGION_DISPOSE(0xc000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rnr_h12.vid", 0x0000, 0x2000, 0xc1895bf3 , 0xe2114539 )
-	ROM_LOAD( "rnr_h11.vid", 0x2000, 0x2000, 0x854f7d6d , 0x169a8f3f )
-	ROM_LOAD( "rnr_a11.vid", 0x4000, 0x2000, 0xccd353a1 , 0xafdaba5e )
-	ROM_LOAD( "rnr_a12.vid", 0x6000, 0x2000, 0x7918ecd6 , 0x054cafeb )
-	ROM_LOAD( "rnr_a9.vid", 0x8000, 0x2000, 0xbbdb0eef , 0x9d2166b2 )
-	ROM_LOAD( "rnr_a10.vid", 0xa000, 0x2000, 0xa087b117 , 0xaff6e22f )
+	ROM_LOAD( "rnr_h12.vid",  0x0000, 0x2000, 0xe2114539 )
+	ROM_LOAD( "rnr_h11.vid",  0x2000, 0x2000, 0x169a8f3f )
+	ROM_LOAD( "rnr_a11.vid",  0x4000, 0x2000, 0xafdaba5e )
+	ROM_LOAD( "rnr_a12.vid",  0x6000, 0x2000, 0x054cafeb )
+	ROM_LOAD( "rnr_a9.vid",   0x8000, 0x2000, 0x9d2166b2 )
+	ROM_LOAD( "rnr_a10.vid",  0xa000, 0x2000, 0xaff6e22f )
 
 	ROM_REGION(0x0220)    /* color proms */
-	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x46312425 , 0x22ad2c3e )
-	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0xd3d20404 , 0x9beb0783 )
-	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0x63300308 , 0xb5c75a27 )
+	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
+	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
+	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rnr_7a.snd", 0x0000, 0x1000, 0x2c7ea8d8 , 0x75d2c4e2 )
-	ROM_LOAD( "rnr_8a.snd", 0x1000, 0x1000, 0x172f0eab , 0xca4325ae )
+	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
+	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
 
 ROM_START( ropeman_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "j01_rm01.bin", 0x6000, 0x2000, 0x64a5efa5 , 0x6310a1fe )
-	ROM_LOAD( "j02_rm02.bin", 0x8000, 0x2000, 0xfebda671 , 0x75af8697 )
-	ROM_LOAD( "j03_rm03.bin", 0xA000, 0x2000, 0xbb34d17a , 0xb21372b1 )
-	ROM_LOAD( "j04_rm04.bin", 0xC000, 0x2000, 0x0d68c368 , 0x7acb2a05 )
-	ROM_LOAD( "rnr_h5.vid", 0xE000, 0x2000, 0x474255f6 , 0x150a6264 )
+	ROM_LOAD( "j01_rm01.bin", 0x6000, 0x2000, 0x6310a1fe )
+	ROM_LOAD( "j02_rm02.bin", 0x8000, 0x2000, 0x75af8697 )
+	ROM_LOAD( "j03_rm03.bin", 0xA000, 0x2000, 0xb21372b1 )
+	ROM_LOAD( "j04_rm04.bin", 0xC000, 0x2000, 0x7acb2a05 )
+	ROM_LOAD( "rnr_h5.vid",   0xE000, 0x2000, 0x150a6264 )
 
 	ROM_REGION_DISPOSE(0xc000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j12_rm07.bin", 0x0000, 0x2000, 0x9dd6694a , 0xcd8ac4bf )
-	ROM_LOAD( "j11_rm06.bin", 0x2000, 0x2000, 0x60afcded , 0x35891835 )
-	ROM_LOAD( "rnr_a11.vid", 0x4000, 0x2000, 0xccd353a1 , 0xafdaba5e )
-	ROM_LOAD( "rnr_a12.vid", 0x6000, 0x2000, 0x7918ecd6 , 0x054cafeb )
-	ROM_LOAD( "rnr_a9.vid", 0x8000, 0x2000, 0xbbdb0eef , 0x9d2166b2 )
-	ROM_LOAD( "rnr_a10.vid", 0xa000, 0x2000, 0xa087b117 , 0xaff6e22f )
+	ROM_LOAD( "j12_rm07.bin", 0x0000, 0x2000, 0xcd8ac4bf )
+	ROM_LOAD( "j11_rm06.bin", 0x2000, 0x2000, 0x35891835 )
+	ROM_LOAD( "rnr_a11.vid",  0x4000, 0x2000, 0xafdaba5e )
+	ROM_LOAD( "rnr_a12.vid",  0x6000, 0x2000, 0x054cafeb )
+	ROM_LOAD( "rnr_a9.vid",   0x8000, 0x2000, 0x9d2166b2 )
+	ROM_LOAD( "rnr_a10.vid",  0xa000, 0x2000, 0xaff6e22f )
 
 	ROM_REGION(0x0220)    /* color proms */
-	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x46312425 , 0x22ad2c3e )
-	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0xd3d20404 , 0x9beb0783 )
-	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0x63300308 , 0xb5c75a27 )
+	ROM_LOAD( "a17_prom.bin", 0x0000, 0x0020, 0x22ad2c3e )
+	ROM_LOAD( "b16_prom.bin", 0x0020, 0x0100, 0x750a9677 )
+	ROM_LOAD( "rocnrope.pr3", 0x0120, 0x0100, 0xb5c75a27 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rnr_7a.snd", 0x0000, 0x1000, 0x2c7ea8d8 , 0x75d2c4e2 )
-	ROM_LOAD( "rnr_8a.snd", 0x1000, 0x1000, 0x172f0eab , 0xca4325ae )
+	ROM_LOAD( "rnr_7a.snd",   0x0000, 0x1000, 0x75d2c4e2 )
+	ROM_LOAD( "rnr_8a.snd",   0x1000, 0x1000, 0xca4325ae )
 ROM_END
 
 

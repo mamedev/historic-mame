@@ -8,10 +8,8 @@ void dday_sound_enable(int enabled)
 	   otherwise the Morse sound would become one continous tone */
 	if (sound_enabled && !enabled)
 	{
-		AYResetChip(0);
-		AYResetChip(1);
-
-		AY8910_sh_update();
+		AY8910_reset(0);
+		AY8910_reset(1);
 	}
 
 	sound_enabled = enabled;

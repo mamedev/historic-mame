@@ -1,6 +1,6 @@
 /*** TMS34010: Portable Texas Instruments TMS34010 emulator **************
 
-	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1988
+	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
 	 Parts based on code by Aaron Giles
 
 	System dependencies:	int/long must be at least 32 bits
@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include "osd_dbg.h"
 #include "tms34010.h"
+#include "34010ops.h"
 #include "driver.h"
 
 #ifdef MAME_DEBUG
@@ -197,14 +198,14 @@ INLINE void PUSH (int val)
 {
 	SP -= 0x20;
 	WLONG (SP, val);
-	BREG(15) = AREG(15);
+	COPY_ASP;
 }
 
 INLINE int POP (void)
 {
 	int result = RLONG (SP);
 	SP += 0x20;
-	BREG(15) = AREG(15);
+	COPY_ASP;
 	return result;
 }
 
@@ -426,26 +427,36 @@ static int read_pixel_16(unsigned int address)
 	P_FLAG = 0;
 
 
-/* Not sure how correct this is */
 static int write_pixel_shiftreg (unsigned int address, unsigned int value)
 {
-	int addressend;
-
-	int data = (state.shiftreg << 16) | state.shiftreg;
-	address = (address&0xfffffff0)>>3;
-	addressend = address + (BREG(3) >> 3);
-
-	for (; address < addressend; address+=4)
+	if (state.from_shiftreg)
 	{
-		TMS34010_WRMEM_DWORD(address, data);			
+		state.from_shiftreg(address, &state.shiftreg[0]);		
+	}
+	else
+	{
+		if (errorlog)
+		{
+			fprintf(errorlog, "From ShiftReg function not set. PC = %08X\n", PC);			
+		}
 	}
 	return 1;
 }
 
 static int read_pixel_shiftreg (unsigned int address)
 {
-	state.shiftreg = TMS34010_RDMEM_WORD((address&0xfffffff0)>>3);
-	return state.shiftreg;
+	if (state.to_shiftreg)
+	{
+		state.to_shiftreg(address, &state.shiftreg[0]);		
+	}
+	else
+	{
+		if (errorlog)
+		{
+			fprintf(errorlog, "To ShiftReg function not set. PC = %08X\n", PC);			
+		}
+	}
+	return state.shiftreg[0];
 }
 
 /* includes the static function prototypes and the master opcode table */
@@ -608,6 +619,8 @@ void TMS34010_Reset(void)
 	PC = RLONG(0xffffffe0);
 	change_pc29(PC)
 	RESET_ST();
+
+	state.shiftreg = malloc(SHIFTREG_SIZE);
 
 	/* The slave CPU starts out halted */
 	if (cpu_getactivecpu() == CPU_SLAVE)
@@ -815,6 +828,10 @@ static int (*raster_ops[32]) (int newpix, int oldpix) =
 	           0,            0,            0,            0,
 };
 
+static void set_raster_op(void)
+{
+	state.raster_op = raster_ops[(IOREG(REG_CONTROL) >> 10) & 0x1f];
+}
 
 void TMS34010_io_register_w(int reg, int data)
 {
@@ -822,7 +839,7 @@ void TMS34010_io_register_w(int reg, int data)
 							
 	/* Set register */
 	reg >>= 1;
-	IOREG(reg) = data;
+	IOREG(reg) = data;		
 
 	switch (reg)
 	{
@@ -838,8 +855,8 @@ void TMS34010_io_register_w(int reg, int data)
 
 	case REG_CONTROL:
 		state.transparency = data & 0x20;
-		state.raster_op = raster_ops[(data >> 10) & 0x1f];
 		state.window_checking = (data >> 6) & 0x03;
+		set_raster_op();
 		set_pixel_function();
 		break;
 
@@ -866,40 +883,17 @@ void TMS34010_io_register_w(int reg, int data)
 		break;
 
 	case REG_HSTCTLH:
-		if ((PC != 0) && (data & 0x8000))
+		if (data & 0x8000)
 		{
 			/* CPU is halting itself, stop execution right away */
 			TMS34010_ICount = 0;
 		}
-		cpu = ((PC == 0) ? CPU_SLAVE : cpu_getactivecpu());
-		cpu_halt(cpu, !(data & 0x8000));
+		cpu_halt(cpu_getactivecpu(), !(data & 0x8000));
 
 		if (data & 0x0100)
 		{
 			/* NMI issued */
-			cpu_cause_interrupt((PC == 0) ? CPU_SLAVE : cpu_getactivecpu(), TMS34010_NMI);
-		}
-		break;
-
-	case REG_HSTADRL:
-		/* Force the low 4-bits to zero */
-		IOREG(reg) &= 0xfff0;
-		break;
-
-	case REG_HSTDATA:
-		if (PC == 0)
-		{
-			unsigned int addr = (IOREG(REG_HSTADRH) << 16) | IOREG(REG_HSTADRL);
-
-            TMS34010_WRMEM_WORD(addr>>3, data);
-
-			/* Postincrement? */
-			if (IOREG(REG_HSTCTLH) & 0x0800)
-			{
-				addr += 0x10;
-				IOREG(REG_HSTADRH) = addr >> 16;
-				IOREG(REG_HSTADRL) = addr & 0xffff;
-			}
+			cpu_cause_interrupt(cpu_getactivecpu(), TMS34010_NMI);
 		}
 		break;
 
@@ -920,25 +914,6 @@ int TMS34010_io_register_r(int reg)
 	reg >>=1;
 	switch (reg)
 	{
-	case REG_HSTDATA:
-		if (PC == 0)
-		{
-			int data;
-
-			unsigned int addr = (IOREG(REG_HSTADRH) << 16) | IOREG(REG_HSTADRL);
-
-			/* Preincrement? */
-			if (IOREG(REG_HSTCTLH) & 0x1000)
-			{
-				addr += 0x10;
-				IOREG(REG_HSTADRH) = addr >> 16;
-				IOREG(REG_HSTADRL) = addr & 0xffff;
-			}
-			
-            return TMS34010_RDMEM_WORD(addr>>3);
-		}
-		break;
-
 	case REG_VCOUNT:
 		return cpu_getscanline();
 
@@ -947,6 +922,15 @@ int TMS34010_io_register_r(int reg)
 	}
 
 	return IOREG(reg);
+}
+
+void TMS34010_set_shiftreg_functions(int cpu,
+									 void (*to_shiftreg  )(unsigned int, unsigned short*),
+									 void (*from_shiftreg)(unsigned int, unsigned short*))
+{
+	TMS34010_Regs* context = cpu_getcontext(cpu);
+	context->to_shiftreg   = to_shiftreg;		
+	context->from_shiftreg = from_shiftreg;		
 }
 
 int TMS34010_io_display_blanked(int cpu)
@@ -981,97 +965,107 @@ void TMS34010_State_Save(int cpunum, void *f)
 {
 	osd_fwrite(f,cpu_getcontext(cpunum),sizeof(state));
 	osd_fwrite(f,&TMS34010_ICount,sizeof(int));
+	osd_fwrite(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
 
 void TMS34010_State_Load(int cpunum, void *f)
 {
+	/* Don't reload the following */
+	unsigned short* shiftreg_save = state.shiftreg;
+	void (*to_shiftreg_save)  (unsigned int, unsigned short*) = state.to_shiftreg;
+	void (*from_shiftreg_save)(unsigned int, unsigned short*) = state.from_shiftreg;
+
 	osd_fread(f,cpu_getcontext(cpunum),sizeof(state));
 	osd_fread(f,&TMS34010_ICount,sizeof(int));
 	change_pc29(PC);
 	SET_FW();
 	TMS34010_io_register_w(REG_DPYINT<<1,IOREG(REG_DPYINT));
-	TMS34010_io_register_w(REG_CONTROL<<1,IOREG(REG_CONTROL));
-	TMS34010_io_register_w(REG_PSIZE<<1,IOREG(REG_PSIZE));
+	set_raster_op();
+	set_pixel_function();
+
+	state.shiftreg      = shiftreg_save;
+	state.to_shiftreg   = to_shiftreg_save;
+	state.from_shiftreg = from_shiftreg_save;
+
+	osd_fread(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
 
 
 /* Host interface */
-
-static TMS34010_Regs* mastercontext;
 static TMS34010_Regs* slavecontext;			
-
-#define HSTREG_WRITE(HSTREG)					\
-	unsigned int PCsave;						\
-	*mastercontext = state;						\
-	memorycontextswap (CPU_SLAVE);				\
-	state = *slavecontext;						\
-	cpu_setactivecpu(CPU_SLAVE);				\
-												\
-	PCsave = PC;								\
-	PC = 0;										\
-	TMS34010_io_register_w(HSTREG<<1, data);	\
-	PC = PCsave;								\
-												\
-	*slavecontext = state;						\
-	memorycontextswap (CPU_MASTER);				\
-	state = *mastercontext;						\
-	cpu_setactivecpu(CPU_MASTER);				\
-	change_pc29(PC);							
-
-
-#define HSTREG_READ(HSTREG)						\
-	int data;									\
-	unsigned int PCsave;						\
-	*mastercontext = state;						\
-	memorycontextswap (CPU_SLAVE);				\
-	state = *slavecontext;						\
-	cpu_setactivecpu(CPU_SLAVE);				\
-												\
-	PCsave = PC;								\
-	PC = 0;										\
-	data = TMS34010_io_register_r(HSTREG<<1);	\
-	PC = PCsave;								\
-												\
-	*slavecontext = state;						\
-	memorycontextswap (CPU_MASTER);				\
-	state = *mastercontext;						\
-	cpu_setactivecpu(CPU_MASTER);	  			\
-	change_pc29(PC);							\
-	 											\
-	return data
-
 
 void TMS34010_HSTADRL_w (int offset, int data)
 {
-	mastercontext = cpu_getcontext(CPU_MASTER);	
-	slavecontext  = cpu_getcontext(CPU_SLAVE);
-	{
-	HSTREG_WRITE(REG_HSTADRL);		
-	}
+	slavecontext = cpu_getcontext(CPU_SLAVE);
+
+    SLAVE_IOREG(REG_HSTADRL) = data & 0xfff0;
 }
 
 void TMS34010_HSTADRH_w (int offset, int data)
 {
-	HSTREG_WRITE(REG_HSTADRH);
+	slavecontext = cpu_getcontext(CPU_SLAVE);
+
+    SLAVE_IOREG(REG_HSTADRH) = data;
 }
 
 void TMS34010_HSTDATA_w (int offset, int data)
 {
-	HSTREG_WRITE(REG_HSTDATA);
+	unsigned int addr;
+
+	memorycontextswap (CPU_SLAVE);				
+												
+	addr = (SLAVE_IOREG(REG_HSTADRH) << 16) | SLAVE_IOREG(REG_HSTADRL);
+
+    TMS34010_WRMEM_WORD(addr>>3, data);
+
+	/* Postincrement? */
+	if (SLAVE_IOREG(REG_HSTCTLH) & 0x0800)
+	{
+		addr += 0x10;
+		SLAVE_IOREG(REG_HSTADRH) = addr >> 16;
+		SLAVE_IOREG(REG_HSTADRL) = addr & 0xffff;
+	}
+												
+	memorycontextswap (CPU_MASTER);				
+	change_pc29(PC);							
 }
 
 int  TMS34010_HSTDATA_r (int offset)
 {
-	HSTREG_READ(REG_HSTDATA);
+	unsigned int addr;
+	int data;									
+												
+	memorycontextswap (CPU_SLAVE);				
+												
+	addr = (SLAVE_IOREG(REG_HSTADRH) << 16) | SLAVE_IOREG(REG_HSTADRL);
+
+	/* Preincrement? */
+	if (SLAVE_IOREG(REG_HSTCTLH) & 0x1000)
+	{
+		addr += 0x10;
+		SLAVE_IOREG(REG_HSTADRH) = addr >> 16;
+		SLAVE_IOREG(REG_HSTADRL) = addr & 0xffff;
+	}
+	
+    data = TMS34010_RDMEM_WORD(addr>>3);
+												
+	memorycontextswap (CPU_MASTER);				
+	change_pc29(PC);							
+	 											
+	return data;
 }
 
 void TMS34010_HSTCTLH_w (int offset, int data)
 {
-	mastercontext = cpu_getcontext(CPU_MASTER);	
-	slavecontext  = cpu_getcontext(CPU_SLAVE);
+	slavecontext = cpu_getcontext(CPU_SLAVE);
+
+    SLAVE_IOREG(REG_HSTCTLH) = data;
+
+	cpu_halt(CPU_SLAVE, !(data & 0x8000));
+
+	if (data & 0x0100)
 	{
-		HSTREG_WRITE(REG_HSTCTLH);		
+		/* Issue NMI */
+		cpu_cause_interrupt(CPU_SLAVE, TMS34010_NMI);
 	}
 }
-
-

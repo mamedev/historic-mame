@@ -314,45 +314,45 @@ static struct MachineDriver machine_driver =
 
 ROM_START( popeye_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "c-7a", 0x0000, 0x2000, 0x5f13584d , 0x9af7c821 )
-	ROM_LOAD( "c-7b", 0x2000, 0x2000, 0xf99a528a , 0xc3704958 )
-	ROM_LOAD( "c-7c", 0x4000, 0x2000, 0x71cf5be9 , 0x5882ebf9 )
-	ROM_LOAD( "c-7e", 0x6000, 0x2000, 0x31de0626 , 0xef8649ca )
+	ROM_LOAD( "c-7a",         0x0000, 0x2000, 0x9af7c821 )
+	ROM_LOAD( "c-7b",         0x2000, 0x2000, 0xc3704958 )
+	ROM_LOAD( "c-7c",         0x4000, 0x2000, 0x5882ebf9 )
+	ROM_LOAD( "c-7e",         0x6000, 0x2000, 0xef8649ca )
 
 	ROM_REGION_DISPOSE(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "v-5n", 0x0000, 0x1000, 0x27406a96 , 0xcca61ddd )
-	ROM_LOAD( "v-1e", 0x1000, 0x2000, 0x034f71a7 , 0x0f2cd853 )
-	ROM_LOAD( "v-1f", 0x3000, 0x2000, 0x0d9053e2 , 0x888f3474 )
-	ROM_LOAD( "v-1j", 0x5000, 0x2000, 0x8568d90c , 0x7e864668 )
-	ROM_LOAD( "v-1k", 0x7000, 0x2000, 0xe2b9685f , 0x49e1d170 )
+	ROM_LOAD( "v-5n",         0x0000, 0x1000, 0xcca61ddd )
+	ROM_LOAD( "v-1e",         0x1000, 0x2000, 0x0f2cd853 )
+	ROM_LOAD( "v-1f",         0x3000, 0x2000, 0x888f3474 )
+	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
+	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
 
 	ROM_REGION(0x0240)	/* color proms */
-	ROM_LOAD( "popeye.pr1", 0x0000, 0x0020, 0xda51a083 , 0xd138e8a4 ) /* background palette */
-	ROM_LOAD( "popeye.pr2", 0x0020, 0x0020, 0x6ad20000 , 0x0f364007 ) /* char palette */
-	ROM_LOAD( "popeye.pr3", 0x0040, 0x0100, 0xa15c0000 , 0xca4d7b6a ) /* sprite palette - low 4 bits */
-	ROM_LOAD( "popeye.pr4", 0x0140, 0x0100, 0xf4bc0e00 , 0xcab9bc53 ) /* sprite palette - high 4 bits */
+	ROM_LOAD( "popeye.pr1",   0x0000, 0x0020, 0xd138e8a4 ) /* background palette */
+	ROM_LOAD( "popeye.pr2",   0x0020, 0x0020, 0x0f364007 ) /* char palette */
+	ROM_LOAD( "popeye.pr3",   0x0040, 0x0100, 0xca4d7b6a ) /* sprite palette - low 4 bits */
+	ROM_LOAD( "popeye.pr4",   0x0140, 0x0100, 0xcab9bc53 ) /* sprite palette - high 4 bits */
 ROM_END
 
 ROM_START( popeyebl_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "po1", 0x0000, 0x2000, 0x85dcf3d2 , 0xb14a07ca )
-	ROM_LOAD( "po2", 0x2000, 0x2000, 0xdbef4a97 , 0x995475ff )
-	ROM_LOAD( "po3", 0x4000, 0x2000, 0x912ec99c , 0x99d6a04a )
-	ROM_LOAD( "po4", 0x6000, 0x2000, 0x76663258 , 0x548a6514 )
-	ROM_LOAD( "po_d1-e1.bin", 0xe000, 0x0020, 0x64007604 , 0x8de22998 )	/* protection PROM */
+	ROM_LOAD( "po1",          0x0000, 0x2000, 0xb14a07ca )
+	ROM_LOAD( "po2",          0x2000, 0x2000, 0x995475ff )
+	ROM_LOAD( "po3",          0x4000, 0x2000, 0x99d6a04a )
+	ROM_LOAD( "po4",          0x6000, 0x2000, 0x548a6514 )
+	ROM_LOAD( "po_d1-e1.bin", 0xe000, 0x0020, 0x8de22998 )	/* protection PROM */
 
 	ROM_REGION_DISPOSE(0x9000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "v-5n", 0x0000, 0x1000, 0x27406a96 , 0xcca61ddd )
-	ROM_LOAD( "v-1e", 0x1000, 0x2000, 0x034f71a7 , 0x0f2cd853 )
-	ROM_LOAD( "v-1f", 0x3000, 0x2000, 0x0d9053e2 , 0x888f3474 )
-	ROM_LOAD( "v-1j", 0x5000, 0x2000, 0x8568d90c , 0x7e864668 )
-	ROM_LOAD( "v-1k", 0x7000, 0x2000, 0xe2b9685f , 0x49e1d170 )
+	ROM_LOAD( "v-5n",         0x0000, 0x1000, 0xcca61ddd )
+	ROM_LOAD( "v-1e",         0x1000, 0x2000, 0x0f2cd853 )
+	ROM_LOAD( "v-1f",         0x3000, 0x2000, 0x888f3474 )
+	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
+	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
 
 	ROM_REGION(0x0240)	/* color proms */
-	ROM_LOAD( "popeye.pr1", 0x0000, 0x0020, 0xda51a083 , 0xd138e8a4 ) /* background palette */
-	ROM_LOAD( "popeye.pr2", 0x0020, 0x0020, 0x6ad20000 , 0x0f364007 ) /* char palette */
-	ROM_LOAD( "popeye.pr3", 0x0040, 0x0100, 0xa15c0000 , 0xca4d7b6a ) /* sprite palette - low 4 bits */
-	ROM_LOAD( "popeye.pr4", 0x0140, 0x0100, 0xf4bc0e00 , 0xcab9bc53 ) /* sprite palette - high 4 bits */
+	ROM_LOAD( "popeye.pr1",   0x0000, 0x0020, 0xd138e8a4 ) /* background palette */
+	ROM_LOAD( "popeye.pr2",   0x0020, 0x0020, 0x0f364007 ) /* char palette */
+	ROM_LOAD( "popeye.pr3",   0x0040, 0x0100, 0xca4d7b6a ) /* sprite palette - low 4 bits */
+	ROM_LOAD( "popeye.pr4",   0x0140, 0x0100, 0xcab9bc53 ) /* sprite palette - high 4 bits */
 ROM_END
 
 

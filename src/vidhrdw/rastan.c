@@ -357,14 +357,3 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 }
-
-
-
-/* CUT HERE ->  YM2151 TEST */
-#if 0
-void rastan_vhmus_screenrefresh(struct osd_bitmap *bitmap)
-{
-	int i=1;
-	i++;
-}
-#endif

@@ -444,7 +444,7 @@ static unsigned cycles_main[256]=
 	1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	2, 2, 1, 0, 2, 1, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
 	2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
-	1, 1, 1, 2, 2, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+	1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2,
 	1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 	1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -568,12 +568,11 @@ static int Ext_IRQ(void)
 {
 	if (R.xirq_en)
 	{
-                if (errorlog) fprintf(errorlog, "I8039:  EXT INTERRUPT\n");
-                R.irq_executing = I8039_EXT_INT;
-                push(R.PC.B.l);
+//if (errorlog) fprintf(errorlog, "I8039:  EXT INTERRUPT\n");
+		R.irq_executing = I8039_EXT_INT;
+		push(R.PC.B.l);
 		push((R.PC.B.h & 0x0f) | (R.PSW & 0xf0));
-		R.PC.W = 0x09;
-		/*change_pc(0x09);*/
+		R.PC.W = 0x03;
 		R.A11ff = R.A11;
 		R.A11   = 0;
 		return 2;		/* 2 clock cycles used */

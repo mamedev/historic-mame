@@ -628,30 +628,30 @@ static const char *bzone_sample_names[] =
 
 ROM_START( bzone_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036414.01", 0x5000, 0x0800, 0xc40b04fb , 0xefbc3fa0 )
-	ROM_LOAD( "036413.01", 0x5800, 0x0800, 0x9f3aa956 , 0x5d9d9111 )
-	ROM_LOAD( "036412.01", 0x6000, 0x0800, 0x5c3bda25 , 0xab55cbd2 )
-	ROM_LOAD( "036411.01", 0x6800, 0x0800, 0xa40bfa05 , 0xad281297 )
-	ROM_LOAD( "036410.01", 0x7000, 0x0800, 0x364b14eb , 0x0b7bfaa4 )
-	ROM_LOAD( "036409.01", 0x7800, 0x0800, 0x7a21b649 , 0x1e14e919 )
+	ROM_LOAD( "036414.01",    0x5000, 0x0800, 0xefbc3fa0 )
+	ROM_LOAD( "036413.01",    0x5800, 0x0800, 0x5d9d9111 )
+	ROM_LOAD( "036412.01",    0x6000, 0x0800, 0xab55cbd2 )
+	ROM_LOAD( "036411.01",    0x6800, 0x0800, 0xad281297 )
+	ROM_LOAD( "036410.01",    0x7000, 0x0800, 0x0b7bfaa4 )
+	ROM_LOAD( "036409.01",    0x7800, 0x0800, 0x1e14e919 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01", 0x3000, 0x0800, 0x5c8342bd , 0x7414177b )
-	ROM_LOAD( "036421.01", 0x3800, 0x0800, 0x16a742bd , 0x8ea8f939 )
+	ROM_LOAD( "036422.01",    0x3000, 0x0800, 0x7414177b )
+	ROM_LOAD( "036421.01",    0x3800, 0x0800, 0x8ea8f939 )
 ROM_END
 
 ROM_START( bzone2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036414a.01", 0x5000, 0x0800, 0x1fe91ce3 , 0x13de36d5 )
-	ROM_LOAD( "036413.01", 0x5800, 0x0800, 0x9f3aa956 , 0x5d9d9111 )
-	ROM_LOAD( "036412.01", 0x6000, 0x0800, 0x5c3bda25 , 0xab55cbd2 )
-	ROM_LOAD( "036411.01", 0x6800, 0x0800, 0xa40bfa05 , 0xad281297 )
-	ROM_LOAD( "036410.01", 0x7000, 0x0800, 0x364b14eb , 0x0b7bfaa4 )
-	ROM_LOAD( "036409.01", 0x7800, 0x0800, 0x7a21b649 , 0x1e14e919 )
+	ROM_LOAD( "036414a.01",   0x5000, 0x0800, 0x13de36d5 )
+	ROM_LOAD( "036413.01",    0x5800, 0x0800, 0x5d9d9111 )
+	ROM_LOAD( "036412.01",    0x6000, 0x0800, 0xab55cbd2 )
+	ROM_LOAD( "036411.01",    0x6800, 0x0800, 0xad281297 )
+	ROM_LOAD( "036410.01",    0x7000, 0x0800, 0x0b7bfaa4 )
+	ROM_LOAD( "036409.01",    0x7800, 0x0800, 0x1e14e919 )
 	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "036422.01", 0x3000, 0x0800, 0x5c8342bd , 0x7414177b )
-	ROM_LOAD( "036421.01", 0x3800, 0x0800, 0x16a742bd , 0x8ea8f939 )
+	ROM_LOAD( "036422.01",    0x3000, 0x0800, 0x7414177b )
+	ROM_LOAD( "036421.01",    0x3800, 0x0800, 0x8ea8f939 )
 ROM_END
 
 
@@ -793,17 +793,17 @@ static const char *redbaron_sample_names[] =
 
 ROM_START( redbaron_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "037587.01", 0x4800, 0x0800, 0x8e42eeee , 0x60f23983 )
+	ROM_LOAD( "037587.01",    0x4800, 0x0800, 0x60f23983 )
 	ROM_CONTINUE(           0x5800, 0x0800 )
-	ROM_LOAD( "037000.01e", 0x5000, 0x0800, 0x6dea3bc4 , 0x69bed808 )
-	ROM_LOAD( "036998.01e", 0x6000, 0x0800, 0x0c59f20d , 0xd1104dd7 )
-	ROM_LOAD( "036997.01e", 0x6800, 0x0800, 0x31e948b7 , 0x7434acb4 )
-	ROM_LOAD( "036996.01e", 0x7000, 0x0800, 0xd2c126d9 , 0xc0e7589e )
-	ROM_LOAD( "036995.01e", 0x7800, 0x0800, 0x2d259e61 , 0xad81d1da )
+	ROM_LOAD( "037000.01e",   0x5000, 0x0800, 0x69bed808 )
+	ROM_LOAD( "036998.01e",   0x6000, 0x0800, 0xd1104dd7 )
+	ROM_LOAD( "036997.01e",   0x6800, 0x0800, 0x7434acb4 )
+	ROM_LOAD( "036996.01e",   0x7000, 0x0800, 0xc0e7589e )
+	ROM_LOAD( "036995.01e",   0x7800, 0x0800, 0xad81d1da )
 	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "037006.01e", 0x3000, 0x0800, 0xbd8f807f , 0x9fcffea0 )
-	ROM_LOAD( "037007.01e", 0x3800, 0x0800, 0xd59dec13 , 0x60250ede )
+	ROM_LOAD( "037006.01e",   0x3000, 0x0800, 0x9fcffea0 )
+	ROM_LOAD( "037007.01e",   0x3800, 0x0800, 0x60250ede )
 ROM_END
 
 struct GameDriver redbaron_driver =

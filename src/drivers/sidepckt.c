@@ -35,7 +35,7 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "M6809/M6809.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 
 /* from vidhrdw */
 extern void sidepocket_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -293,19 +293,19 @@ static struct MachineDriver machine_driver =
 
 ROM_START( sidepckt_rom )
     ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "sp_09.bin", 0x04000, 0x4000, 0x11b0aaa4, 0x3c6fe54b )
-    ROM_LOAD( "sp_08.bin", 0x08000, 0x8000, 0xb4d631cc, 0x347f81cd )
+    ROM_LOAD( "sp_09.bin",    0x04000, 0x4000, 0x3c6fe54b )
+    ROM_LOAD( "sp_08.bin",    0x08000, 0x8000, 0x347f81cd )
 
     ROM_REGION_DISPOSE(0x30000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "sp_05.bin", 0x00000, 0x8000, 0x2e6417da, 0x05ab71d2 ) /* characters */
-    ROM_LOAD( "sp_06.bin", 0x08000, 0x8000, 0x01855b33, 0x580e4e43 ) /* characters */
-    ROM_LOAD( "sp_07.bin", 0x10000, 0x8000, 0xcbeeeec8, 0x9d6f7969 ) /* characters */
-    ROM_LOAD( "sp_01.bin", 0x18000, 0x8000, 0xd6e534f5, 0xa2cdfbea ) /* sprites */
-    ROM_LOAD( "sp_02.bin", 0x20000, 0x8000, 0xe9bde2b9, 0xeeb5c3e7 ) /* sprites */
-    ROM_LOAD( "sp_03.bin", 0x28000, 0x8000, 0x04820416, 0x8e18d21d ) /* sprites */
+    ROM_LOAD( "sp_05.bin",    0x00000, 0x8000, 0x05ab71d2 ) /* characters */
+    ROM_LOAD( "sp_06.bin",    0x08000, 0x8000, 0x580e4e43 ) /* characters */
+    ROM_LOAD( "sp_07.bin",    0x10000, 0x8000, 0x9d6f7969 ) /* characters */
+    ROM_LOAD( "sp_01.bin",    0x18000, 0x8000, 0xa2cdfbea ) /* sprites */
+    ROM_LOAD( "sp_02.bin",    0x20000, 0x8000, 0xeeb5c3e7 ) /* sprites */
+    ROM_LOAD( "sp_03.bin",    0x28000, 0x8000, 0x8e18d21d ) /* sprites */
 
     ROM_REGION(0x10000)     /* 64k for the audio cpu */
-    ROM_LOAD( "sp_04.bin", 0x08000, 0x8000, 0x3c36920a, 0xd076e62e )
+    ROM_LOAD( "sp_04.bin",    0x08000, 0x8000, 0xd076e62e )
 ROM_END
 
 struct GameDriver sidepckt_driver =

@@ -231,9 +231,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{255,255 },
-	{  1,  1 }
+	{ 255, 255 }
 };
 
 
@@ -297,43 +295,43 @@ static struct MachineDriver machine_driver =
 
 ROM_START( champbas_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "champbb.1", 0x0000, 0x2000, 0x052682ae , 0x218de21e )
-	ROM_LOAD( "champbb.2", 0x2000, 0x2000, 0x3a7cece2 , 0x5ddd872e )
-	ROM_LOAD( "champbb.3", 0x4000, 0x2000, 0xd19d277d , 0xf39a7046 )
+	ROM_LOAD( "champbb.1",    0x0000, 0x2000, 0x218de21e )
+	ROM_LOAD( "champbb.2",    0x2000, 0x2000, 0x5ddd872e )
+	ROM_LOAD( "champbb.3",    0x4000, 0x2000, 0xf39a7046 )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "champbb.4", 0x0000, 0x2000, 0xf7e29c04 , 0x1930fb52 )
-	ROM_LOAD( "champbb.5", 0x2000, 0x2000, 0xf55fadd5 , 0xa4cef5a1 )
+	ROM_LOAD( "champbb.4",    0x0000, 0x2000, 0x1930fb52 )
+	ROM_LOAD( "champbb.5",    0x2000, 0x2000, 0xa4cef5a1 )
 
 	ROM_REGION(0x120)	/* color proms */
-	ROM_LOAD( "champbb.pr2", 0x0000, 0x020, 0xe37c8400 , 0x2585ffb0 ) /* palette */
-	ROM_LOAD( "champbb.pr1", 0x0020, 0x100, 0x6102030c , 0x872dd450 ) /* look-up table */
+	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, 0x2585ffb0 ) /* palette */
+	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
 
 	ROM_REGION(0x10000)	/* 64k for the speech CPU */
-	ROM_LOAD( "champbb.6", 0x0000, 0x2000, 0x167773f3 , 0x26ab3e16 )
-	ROM_LOAD( "champbb.7", 0x2000, 0x2000, 0xf75960a1 , 0x7c01715f )
-	ROM_LOAD( "champbb.8", 0x4000, 0x2000, 0x43e7a47b , 0x3c911786 )
+	ROM_LOAD( "champbb.6",    0x0000, 0x2000, 0x26ab3e16 )
+	ROM_LOAD( "champbb.7",    0x2000, 0x2000, 0x7c01715f )
+	ROM_LOAD( "champbb.8",    0x4000, 0x2000, 0x3c911786 )
 ROM_END
 
 ROM_START( champbb2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "epr5932", 0x0000, 0x2000, 0x5d3f4129 , 0x0 )
-	ROM_LOAD( "epr5929", 0x2000, 0x2000, 0xfe71f977 , 0x0 )
-	ROM_LOAD( "epr5930", 0x4000, 0x2000, 0x626721b1 , 0x0 )
-	ROM_LOAD( "epr5931", 0x7800, 0x0800, 0xd9978263 , 0x0 )
+	ROM_LOAD( "epr5932",      0x0000, 0x2000, 0x0 )
+	ROM_LOAD( "epr5929",      0x2000, 0x2000, 0x0 )
+	ROM_LOAD( "epr5930",      0x4000, 0x2000, 0x0 )
+	ROM_LOAD( "epr5931",      0x7800, 0x0800, 0x0 )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "epr5936", 0x0000, 0x2000, 0x5d994951 , 0x0 )
-	ROM_LOAD( "epr5937", 0x2000, 0x2000, 0x8494cd1c , 0x0 )
+	ROM_LOAD( "epr5936",      0x0000, 0x2000, 0x0 )
+	ROM_LOAD( "epr5937",      0x2000, 0x2000, 0x0 )
 
 	ROM_REGION(0x120)	/* color proms */
-	ROM_LOAD( "pr5957", 0x0000, 0x020, 0x00000000 , 0x0 ) /* palette */
-	ROM_LOAD( "pr5956", 0x0020, 0x100, 0x00000000 , 0x0 ) /* look-up table */
+	ROM_LOAD( "pr5957",       0x0000, 0x020, 0x0 ) /* palette */
+	ROM_LOAD( "pr5956",       0x0020, 0x100, 0x0 ) /* look-up table */
 
 	ROM_REGION(0x10000)	/* 64k for the speech CPU */
-	ROM_LOAD( "epr5933", 0x0000, 0x2000, 0x167773f3 , 0x0 )
-	ROM_LOAD( "epr5934", 0x2000, 0x2000, 0xf75960a1 , 0x0 )
-	ROM_LOAD( "epr5935", 0x4000, 0x2000, 0x43e7a47b , 0x0 )
+	ROM_LOAD( "epr5933",      0x0000, 0x2000, 0x0 )
+	ROM_LOAD( "epr5934",      0x2000, 0x2000, 0x0 )
+	ROM_LOAD( "epr5935",      0x4000, 0x2000, 0x0 )
 ROM_END
 
 

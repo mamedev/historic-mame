@@ -333,66 +333,66 @@ static struct MachineDriver machine_driver =
 
 ROM_START( exedexes_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0xde80ac08 , 0x44140dbd )
-	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xe52f8109 , 0xbf72cfba )
-	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0xe7ee4e3e , 0x7ad95e2f )
+	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0x44140dbd )
+	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xbf72cfba )
+	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0x7ad95e2f )
 
 	ROM_REGION_DISPOSE(0x16000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0x21890673 , 0xcadb75bd ) /* Characters */
-	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x92c19717 , 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x2cd31109 , 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xc3ef9bc9 , 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
-	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0x9fa65502 , 0xbc83e265 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x06151a97 , 0x0e0f300d ) /* Sprites planes 2-3 */
+	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0xcadb75bd ) /* Characters */
+	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x734e0306 , 0x8d0d5935 )	/* red component */
-	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0x39190109 , 0xd3c17efc )	/* green component */
-	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x7a7c0904 , 0x58ba964c )	/* blue component */
-	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x4661090d , 0x35a03579 )	/* char lookup table */
-	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x65920708 , 0x1dfad87a )	/* 32x32 tile lookup table */
-	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0xc23c0f00 , 0x850064e0 )	/* 16x16 tile lookup table */
-	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x3c0f0d0d , 0x2bb68710 )	/* sprite lookup table */
-	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x5f610303 , 0x173184ef )	/* sprite palette bank */
+	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
+	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
+	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
+	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x35a03579 )	/* char lookup table */
+	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x1dfad87a )	/* 32x32 tile lookup table */
+	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
+	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
+	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x65d4f412 , 0x73cdf3b2 )
+	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x73cdf3b2 )
 
 	ROM_REGION(0x6000)      /* For Tile background */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x1ffca036 , 0x3625a68d )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0xbff79735 , 0x6057c907 )	/* Back Tile map */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 ROM_END
 
 ROM_START( savgbees_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ee04e.11m", 0x0000, 0x4000, 0xdbe9544d , 0xc0caf442 )
-	ROM_LOAD( "ee03e.10m", 0x4000, 0x4000, 0x72b30c5b , 0x9cd70ae1 )
-	ROM_LOAD( "ee02e.9m", 0x8000, 0x4000, 0x7c31db8d , 0xa04e6368 )
+	ROM_LOAD( "ee04e.11m",    0x0000, 0x4000, 0xc0caf442 )
+	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, 0x9cd70ae1 )
+	ROM_LOAD( "ee02e.9m",     0x8000, 0x4000, 0xa04e6368 )
 
 	ROM_REGION_DISPOSE(0x16000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ee00e.5c", 0x00000, 0x2000, 0xf26a4292 , 0x5972f95f ) /* Characters */
-	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x92c19717 , 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x2cd31109 , 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xc3ef9bc9 , 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
-	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0x9fa65502 , 0xbc83e265 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x06151a97 , 0x0e0f300d ) /* Sprites planes 2-3 */
+	ROM_LOAD( "ee00e.5c",     0x00000, 0x2000, 0x5972f95f ) /* Characters */
+	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x734e0306 , 0x8d0d5935 )	/* red component */
-	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0x39190109 , 0xd3c17efc )	/* green component */
-	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x7a7c0904 , 0x58ba964c )	/* blue component */
-	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x4661090d , 0x35a03579 )	/* char lookup table */
-	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x65920708 , 0x1dfad87a )	/* 32x32 tile lookup table */
-	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0xc23c0f00 , 0x850064e0 )	/* 16x16 tile lookup table */
-	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x3c0f0d0d , 0x2bb68710 )	/* sprite lookup table */
-	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x5f610303 , 0x173184ef )	/* sprite palette bank */
+	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
+	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
+	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
+	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x35a03579 )	/* char lookup table */
+	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x1dfad87a )	/* 32x32 tile lookup table */
+	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
+	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
+	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ee01e.11e", 0x00000, 0x4000, 0xe725cdeb , 0x93d3f952 )
+	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, 0x93d3f952 )
 
 	ROM_REGION(0x6000)      /* For Tile background */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x1ffca036 , 0x3625a68d )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0xbff79735 , 0x6057c907 )	/* Back Tile map */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 ROM_END
 
 

@@ -69,7 +69,8 @@ static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x7fff, MRA_ROM },
     { 0x8000, 0xbfff, MRA_BANK1 },
-    { 0xc000, 0xf9ff, bublbobl_sharedram1_r },
+    { 0xc000, 0xf7ff, bublbobl_sharedram1_r },
+	{ 0xf800, 0xf9ff, paletteram_r },
     { 0xfc01, 0xfdff, bublbobl_sharedram2_r },
     { 0xff00, 0xff00, input_port_0_r },
     { 0xff01, 0xff01, input_port_1_r },
@@ -83,8 +84,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xdcff, bublbobl_videoram_w, &videoram, &videoram_size },
 	{ 0xdd00, 0xdfff, bublbobl_objectram_w, &bublbobl_objectram, &bublbobl_objectram_size },	/* handled by bublbobl_sharedram_w() */
+	{ 0xc000, 0xf7ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
 	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
-	{ 0xc000, 0xf9ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
 	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
 	{ 0xfa80, 0xfa80, MWA_NOP },
 	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
@@ -95,7 +96,8 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress readmem_lvl[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-    { 0xc000, 0xf9ff, bublbobl_sharedram1_r },
+    { 0xc000, 0xf7ff, bublbobl_sharedram1_r },
+	{ 0xf800, 0xf9ff, paletteram_r },
     { 0xfc01, 0xfdff, bublbobl_sharedram2_r },
 	{ -1 }  /* end of table */
 };
@@ -104,7 +106,8 @@ static struct MemoryWriteAddress writemem_lvl[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xcd00, 0xd4ff, bublbobl_videoram_w },
-    { 0xc000, 0xf9ff, bublbobl_sharedram1_w },
+    { 0xc000, 0xf7ff, bublbobl_sharedram1_w },
+	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w },
     { 0xfc01, 0xfdff, bublbobl_sharedram2_w },
 	{ -1 }  /* end of table */
 };
@@ -520,87 +523,87 @@ static struct MachineDriver boblbobl_machine_driver =
 
 ROM_START( bublbobl_rom )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
-    ROM_LOAD( "a78_06.bin", 0x00000, 0x8000, 0x54bbd2ad , 0x32c8305b )
-    ROM_LOAD( "a78_05.bin", 0x08000, 0x4000, 0x366354e5 , 0x53f4bc6e )	/* banked at 8000-bfff. I must load */
+    ROM_LOAD( "a78_06.bin",   0x00000, 0x8000, 0x32c8305b )
+    ROM_LOAD( "a78_05.bin",   0x08000, 0x4000, 0x53f4bc6e )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(           0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
 															/* it from 7fff, so bank switching wouldn't work */
     ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "a78_09.bin", 0x00000, 0x8000, 0x4c2d6dc7 , 0x20358c22 )
-    ROM_LOAD( "a78_10.bin", 0x08000, 0x8000, 0x58e234c8 , 0x930168a9 )
-    ROM_LOAD( "a78_11.bin", 0x10000, 0x8000, 0x12787a3c , 0x9773e512 )
-    ROM_LOAD( "a78_12.bin", 0x18000, 0x8000, 0xcb0e4600 , 0xd045549b )
-    ROM_LOAD( "a78_13.bin", 0x20000, 0x8000, 0x08e59a77 , 0xd0af35c5 )
-    ROM_LOAD( "a78_14.bin", 0x28000, 0x8000, 0xda100c26 , 0x7b5369a8 )
-    ROM_LOAD( "a78_15.bin", 0x30000, 0x8000, 0xe24b0f79 , 0x6b61a413 )
-    ROM_LOAD( "a78_16.bin", 0x38000, 0x8000, 0x82f9f47b , 0xb5492d97 )
-    ROM_LOAD( "a78_17.bin", 0x40000, 0x8000, 0x02935fdb , 0xd69762d5 )
-    ROM_LOAD( "a78_18.bin", 0x48000, 0x8000, 0x41e639be , 0x9f243b68 )
-    ROM_LOAD( "a78_19.bin", 0x50000, 0x8000, 0xd7b322af , 0x66e9438c )
-    ROM_LOAD( "a78_20.bin", 0x58000, 0x8000, 0xd2704b1e , 0x9ef863ad )
+    ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )
+    ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
+    ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
+    ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
+    ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
+    ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+    ROM_LOAD( "a78_15.bin",   0x30000, 0x8000, 0x6b61a413 )
+    ROM_LOAD( "a78_16.bin",   0x38000, 0x8000, 0xb5492d97 )
+    ROM_LOAD( "a78_17.bin",   0x40000, 0x8000, 0xd69762d5 )
+    ROM_LOAD( "a78_18.bin",   0x48000, 0x8000, 0x9f243b68 )
+    ROM_LOAD( "a78_19.bin",   0x50000, 0x8000, 0x66e9438c )
+    ROM_LOAD( "a78_20.bin",   0x58000, 0x8000, 0x9ef863ad )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "a78_08.bin", 0x0000, 0x08000, 0xa11cdcf4 , 0xae11a07b )
+    ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
 
     ROM_REGION(0x10000)	/* 64k for the third CPU */
-    ROM_LOAD( "a78_07.bin", 0x0000, 0x08000, 0x3eaa10b8 , 0x4f9a26e8 )
+    ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 ROM_END
 
 ROM_START( boblbobl_rom )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
-    ROM_LOAD( "bb3", 0x00000, 0x8000, 0x9202336e , 0x01f81936 )
-    ROM_LOAD( "bb5", 0x08000, 0x4000, 0x0d5aa1e0 , 0x13118eb1 )	/* banked at 8000-bfff. I must load */
+    ROM_LOAD( "bb3",          0x00000, 0x8000, 0x01f81936 )
+    ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(    0x10000, 0x4000 )				/* bank 0 at 8000 because the code falls into */
 													/* it from 7fff, so bank switching wouldn't work */
-    ROM_LOAD( "bb4", 0x14000, 0x8000, 0xc6fc6192 , 0xafda99d8 )	/* banked at 8000-bfff */
+    ROM_LOAD( "bb4",          0x14000, 0x8000, 0xafda99d8 )	/* banked at 8000-bfff */
 
     ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "a78_09.bin", 0x00000, 0x8000, 0x4c2d6dc7 , 0x20358c22 )
-    ROM_LOAD( "a78_10.bin", 0x08000, 0x8000, 0x58e234c8 , 0x930168a9 )
-    ROM_LOAD( "a78_11.bin", 0x10000, 0x8000, 0x12787a3c , 0x9773e512 )
-    ROM_LOAD( "a78_12.bin", 0x18000, 0x8000, 0xcb0e4600 , 0xd045549b )
-    ROM_LOAD( "a78_13.bin", 0x20000, 0x8000, 0x08e59a77 , 0xd0af35c5 )
-    ROM_LOAD( "a78_14.bin", 0x28000, 0x8000, 0xda100c26 , 0x7b5369a8 )
-    ROM_LOAD( "a78_15.bin", 0x30000, 0x8000, 0xe24b0f79 , 0x6b61a413 )
-    ROM_LOAD( "a78_16.bin", 0x38000, 0x8000, 0x82f9f47b , 0xb5492d97 )
-    ROM_LOAD( "a78_17.bin", 0x40000, 0x8000, 0x02935fdb , 0xd69762d5 )
-    ROM_LOAD( "a78_18.bin", 0x48000, 0x8000, 0x41e639be , 0x9f243b68 )
-    ROM_LOAD( "a78_19.bin", 0x50000, 0x8000, 0xd7b322af , 0x66e9438c )
-    ROM_LOAD( "a78_20.bin", 0x58000, 0x8000, 0xd2704b1e , 0x9ef863ad )
+    ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )
+    ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
+    ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
+    ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
+    ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
+    ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+    ROM_LOAD( "a78_15.bin",   0x30000, 0x8000, 0x6b61a413 )
+    ROM_LOAD( "a78_16.bin",   0x38000, 0x8000, 0xb5492d97 )
+    ROM_LOAD( "a78_17.bin",   0x40000, 0x8000, 0xd69762d5 )
+    ROM_LOAD( "a78_18.bin",   0x48000, 0x8000, 0x9f243b68 )
+    ROM_LOAD( "a78_19.bin",   0x50000, 0x8000, 0x66e9438c )
+    ROM_LOAD( "a78_20.bin",   0x58000, 0x8000, 0x9ef863ad )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "a78_08.bin", 0x0000, 0x08000, 0xa11cdcf4 , 0xae11a07b )
+    ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
 
     ROM_REGION(0x10000)	/* 64k for the third CPU */
-    ROM_LOAD( "a78_07.bin", 0x0000, 0x08000, 0x3eaa10b8 , 0x4f9a26e8 )
+    ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 ROM_END
 
 ROM_START( sboblbob_rom )
     ROM_REGION(0x1c000)	/* 64k+64k for the first CPU */
-    ROM_LOAD( "bbb-3.rom", 0x00000, 0x8000, 0xcbbab03c , 0xf304152a )
-    ROM_LOAD( "bbb-5.rom", 0x08000, 0x4000, 0x0d5aa1e0 , 0x13118eb1 )	/* banked at 8000-bfff. I must load */
+    ROM_LOAD( "bbb-3.rom",    0x00000, 0x8000, 0xf304152a )
+    ROM_LOAD( "bbb-5.rom",    0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
 	ROM_CONTINUE(    0x10000, 0x4000 )				/* bank 0 at 8000 because the code falls into */
 													/* it from 7fff, so bank switching wouldn't work */
-    ROM_LOAD( "bbb-4.rom", 0x14000, 0x8000, 0x8e95270d , 0x94c75591 )	/* banked at 8000-bfff */
+    ROM_LOAD( "bbb-4.rom",    0x14000, 0x8000, 0x94c75591 )	/* banked at 8000-bfff */
 
     ROM_REGION_DISPOSE(0x60000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "a78_09.bin", 0x00000, 0x8000, 0x4c2d6dc7 , 0x20358c22 )
-    ROM_LOAD( "a78_10.bin", 0x08000, 0x8000, 0x58e234c8 , 0x930168a9 )
-    ROM_LOAD( "a78_11.bin", 0x10000, 0x8000, 0x12787a3c , 0x9773e512 )
-    ROM_LOAD( "a78_12.bin", 0x18000, 0x8000, 0xcb0e4600 , 0xd045549b )
-    ROM_LOAD( "a78_13.bin", 0x20000, 0x8000, 0x08e59a77 , 0xd0af35c5 )
-    ROM_LOAD( "a78_14.bin", 0x28000, 0x8000, 0xda100c26 , 0x7b5369a8 )
-    ROM_LOAD( "a78_15.bin", 0x30000, 0x8000, 0xe24b0f79 , 0x6b61a413 )
-    ROM_LOAD( "a78_16.bin", 0x38000, 0x8000, 0x82f9f47b , 0xb5492d97 )
-    ROM_LOAD( "a78_17.bin", 0x40000, 0x8000, 0x02935fdb , 0xd69762d5 )
-    ROM_LOAD( "a78_18.bin", 0x48000, 0x8000, 0x41e639be , 0x9f243b68 )
-    ROM_LOAD( "a78_19.bin", 0x50000, 0x8000, 0xd7b322af , 0x66e9438c )
-    ROM_LOAD( "a78_20.bin", 0x58000, 0x8000, 0xd2704b1e , 0x9ef863ad )
+    ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )
+    ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
+    ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
+    ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
+    ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
+    ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+    ROM_LOAD( "a78_15.bin",   0x30000, 0x8000, 0x6b61a413 )
+    ROM_LOAD( "a78_16.bin",   0x38000, 0x8000, 0xb5492d97 )
+    ROM_LOAD( "a78_17.bin",   0x40000, 0x8000, 0xd69762d5 )
+    ROM_LOAD( "a78_18.bin",   0x48000, 0x8000, 0x9f243b68 )
+    ROM_LOAD( "a78_19.bin",   0x50000, 0x8000, 0x66e9438c )
+    ROM_LOAD( "a78_20.bin",   0x58000, 0x8000, 0x9ef863ad )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "a78_08.bin", 0x0000, 0x08000, 0xa11cdcf4 , 0xae11a07b )
+    ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
 
     ROM_REGION(0x10000)	/* 64k for the third CPU */
-    ROM_LOAD( "a78_07.bin", 0x0000, 0x08000, 0x3eaa10b8 , 0x4f9a26e8 )
+    ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
 ROM_END
 
 

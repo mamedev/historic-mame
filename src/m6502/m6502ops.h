@@ -30,16 +30,16 @@
 #define _fN 0x80
 
 /* some shortcuts for improved readability */
-#define A   m6502.A
-#define X	m6502.X
-#define Y	m6502.Y
-#define P	m6502.P
-#define S   m6502.SP.B.l
-#define SPD m6502.SP.D
+#define A	m6502.a
+#define X	m6502.x
+#define Y	m6502.y
+#define P	m6502.p
+#define S	m6502.sp.B.l
+#define SPD m6502.sp.D
 
 #if LAZY_FLAGS
 
-#define NZ	m6502.NZ
+#define NZ	m6502.nz
 #define SET_NZ(n)				\
     NZ = ((n & _fN) << 8) | n
 
@@ -50,20 +50,20 @@
 
 #endif
 
-#define EAL m6502.EA.B.l
-#define EAH m6502.EA.B.h
-#define EAW m6502.EA.W.l
-#define EAD m6502.EA.D
+#define EAL m6502.ea.B.l
+#define EAH m6502.ea.B.h
+#define EAW m6502.ea.W.l
+#define EAD m6502.ea.D
 
-#define ZPL m6502.ZP.B.l
-#define ZPH m6502.ZP.B.h
-#define ZPW m6502.ZP.W.l
-#define ZPD m6502.ZP.D
+#define ZPL m6502.zp.B.l
+#define ZPH m6502.zp.B.h
+#define ZPW m6502.zp.W.l
+#define ZPD m6502.zp.D
 
-#define PCL m6502.PC.B.l
-#define PCH m6502.PC.B.h
-#define PCW m6502.PC.W.l
-#define PCD m6502.PC.D
+#define PCL m6502.pc.B.l
+#define PCH m6502.pc.B.h
+#define PCW m6502.pc.W.l
+#define PCD m6502.pc.D
 
 #if FAST_MEMORY
 extern  MHELE   *cur_mwhard;

@@ -119,7 +119,7 @@ void Exception(int nr, CPTR oldpc)
 
 INLINE void Interrupt68k(int level)
 {
-   int ipl=(regs.sr&0xf00)>>8;
+   int ipl=regs.intmask;
    if(level>ipl)
    {
    	Exception(24+level,0);
@@ -176,6 +176,7 @@ void MC68000_SetRegs(MC68000_Regs *src)
 
 void MC68000_GetRegs(MC68000_Regs *dst)
 {
+   MakeSR();
 	regs.sr = (regs.sr & 0xfff0) | (NFLG << 3) | (ZFLG << 2) | (VFLG << 1) | CFLG;
 	dst->regs = regs;
 	dst->pending_interrupts = pending_interrupts;

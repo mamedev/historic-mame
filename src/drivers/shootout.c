@@ -18,7 +18,7 @@ static int encrypttable[] = { 0x00, 0x10, 0x40, 0x50, 0x20, 0x30, 0x60, 0x70,
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 
 /* externals: from vidhrdw */
 extern void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -287,26 +287,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( shootout_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "cu00.b1", 	0x08000, 0x8000, 0x1a815601 , 0x090edeb6 ) /* opcodes encrypted */
+	ROM_LOAD( "cu00.b1",      	0x08000, 0x8000, 0x090edeb6 ) /* opcodes encrypted */
 	/* banked at 0x4000-0x8000 */
-	ROM_LOAD( "cu02.c3", 	0x10000, 0x8000, 0x23425dde , 0x2a913730 ) /* opcodes encrypted */
-	ROM_LOAD( "cu01.c1", 	0x18000, 0x4000, 0x883ee60e , 0x8843c3ae ) /* opcodes encrypted */
+	ROM_LOAD( "cu02.c3",      	0x10000, 0x8000, 0x2a913730 ) /* opcodes encrypted */
+	ROM_LOAD( "cu01.c1",      	0x18000, 0x4000, 0x8843c3ae ) /* opcodes encrypted */
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cu11.h19", 	0x00000, 0x4000, 0x069bf629 , 0xeff00460 ) /* characters (foreground) */
-	ROM_LOAD( "cu03.c5", 	0x10000, 0x8000, 0x04bf34c1 , 0xb786bb3e ) /* sprites */
-	ROM_LOAD( "cu05.c9", 	0x18000, 0x8000, 0x71b15fdb , 0xdd038b85 ) /* sprites */
-	ROM_LOAD( "cu07.c12", 	0x20000, 0x8000, 0xeec3acf7 , 0x19b6b94f ) /* sprites */
-	ROM_LOAD( "cu04.c7", 	0x28000, 0x8000, 0xdf4860ca , 0xceea6b20 ) /* sprites */
-	ROM_LOAD( "cu06.c10", 	0x30000, 0x8000, 0xb0337269 , 0x2ec1d17f ) /* sprites */
-	ROM_LOAD( "cu08.c13", 	0x38000, 0x8000, 0x7576679c , 0x91290933 ) /* sprites */
-	ROM_LOAD( "cu10.h17", 	0x40000, 0x8000, 0x88958319 , 0x3854c877 ) /* characters (background) */
+	ROM_LOAD( "cu11.h19",     	0x00000, 0x4000, 0xeff00460 ) /* characters (foreground) */
+	ROM_LOAD( "cu03.c5",      	0x10000, 0x8000, 0xb786bb3e ) /* sprites */
+	ROM_LOAD( "cu05.c9",      	0x18000, 0x8000, 0xdd038b85 ) /* sprites */
+	ROM_LOAD( "cu07.c12",     	0x20000, 0x8000, 0x19b6b94f ) /* sprites */
+	ROM_LOAD( "cu04.c7",      	0x28000, 0x8000, 0xceea6b20 ) /* sprites */
+	ROM_LOAD( "cu06.c10",     	0x30000, 0x8000, 0x2ec1d17f ) /* sprites */
+	ROM_LOAD( "cu08.c13",     	0x38000, 0x8000, 0x91290933 ) /* sprites */
+	ROM_LOAD( "cu10.h17",     	0x40000, 0x8000, 0x3854c877 ) /* characters (background) */
 
 	ROM_REGION(0x0100) /* color prom */
-	ROM_LOAD( "gb08.k10", 	0x0000, 0x0100, 0xcda1f163 , 0x509c65b6 )
+	ROM_LOAD( "gb08.k10",     	0x0000, 0x0100, 0x509c65b6 )
 
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "cu09.j1", 	0x0c000, 0x4000, 0x32f96449 , 0xc4cbd558 ) /* Sound CPU */
+	ROM_LOAD( "cu09.j1",      	0x0c000, 0x4000, 0xc4cbd558 ) /* Sound CPU */
 ROM_END
 
 

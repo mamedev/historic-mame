@@ -43,6 +43,47 @@ struct fileinfo files[2][MAX_FILES];
 float matchscore[MAX_FILES][MAX_FILES][TOTAL_MODES];
 
 
+void checkintegrity(const struct fileinfo *file,int side)
+{
+	int i;
+	int mask0,mask1;
+
+
+	if (file->buf == 0) return;
+
+	mask0 = 0x00;
+	mask1 = 0xff;
+
+	for (i = 0;i < file->size;i++)
+	{
+		mask0 |= file->buf[i];
+		mask1 &= file->buf[i];
+	}
+
+	if (mask0 != 0xff || mask1 != 0x00)
+	{
+		printf("%-23s %-23s SOME FIXED BITS (",side ? "" : file->name,side ? file->name : "");
+		for (i = 0;i < 8;i++)
+		{
+			if ((mask0 & 0x80) == 0) printf("0");
+			else if (mask1 & 0x80) printf("1");
+			else printf("x");
+			mask0 <<= 1;
+			mask1 <<= 1;
+		}
+		printf(")\n");
+	}
+
+	for (i = 0;i < file->size/2;i++)
+	{
+		if (file->buf[i] != file->buf[file->size/2 + i]) break;
+	}
+
+	if (i == file->size/2)
+		printf("%-23s %-23s FIRST AND SECOND HALF IDENTICAL\n",side ? "" : file->name,side ? file->name : "",mask0);
+}
+
+
 float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int mode)
 {
 	int i;
@@ -179,9 +220,9 @@ int main(int argc,char **argv)
 	struct stat s1,s2;
 
 
-	if (argc < 3)
+	if (argc < 2)
 	{
-		printf("usage: romcmp dir1 dir2\n");
+		printf("usage: romcmp dir1 [dir2]\n");
 		return 0;
 	}
 
@@ -191,22 +232,25 @@ int main(int argc,char **argv)
 		return 10;
 	}
 
-	if (stat(argv[2],&s2) != 0)
-	{
-		printf("%s: %s\n",argv[2],strerror(errno));
-		return 10;
-	}
-
 	if (!S_ISDIR(s1.st_mode))
 	{
 		printf("%s not a directory\n",argv[1]);
 		return 10;
 	}
 
-	if (!S_ISDIR(s2.st_mode))
+	if (argc >= 3)
 	{
-		printf("%s not a directory\n",argv[2]);
-		return 10;
+		if (stat(argv[2],&s2) != 0)
+		{
+			printf("%s: %s\n",argv[2],strerror(errno));
+			return 10;
+		}
+
+		if (!S_ISDIR(s2.st_mode))
+		{
+			printf("%s not a directory\n",argv[2]);
+			return 10;
+		}
 	}
 
 	{
@@ -220,120 +264,163 @@ int main(int argc,char **argv)
 		found[0] = found[1] = 0;
 		for (i = 0;i < 2;i++)
 		{
-			strcpy(buf,argv[i+1]);
-			strcat(buf,"/*.*");
-			if (_dos_findfirst(buf,_A_NORMAL | _A_RDONLY,&f) == 0)
+			if (argc > i+1)
 			{
-				do
+				strcpy(buf,argv[i+1]);
+				strcat(buf,"/*.*");
+				if (_dos_findfirst(buf,_A_NORMAL | _A_RDONLY,&f) == 0)
 				{
-					strcpy(files[i][found[i]].name,f.name);
-					files[i][found[i]].size = f.size;
-					readfile(argv[i+1],&files[i][found[i]]);
-					files[i][found[i]].listed = 0;
-					if (found[i] >= MAX_FILES)
+					do
 					{
-						printf("%s: max of %d files exceeded\n",argv[i+1],MAX_FILES);
-						break;
-					}
-					found[i]++;
-				} while (_dos_findnext(&f) == 0);
+						int size;
+
+						size = f.size;
+						while (size && (size & 1) == 0) size >>= 1;
+						if (size & ~1)
+							printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : f.name,i ? f.name : "");
+						else
+						{
+							strcpy(files[i][found[i]].name,f.name);
+							files[i][found[i]].size = f.size;
+							readfile(argv[i+1],&files[i][found[i]]);
+							files[i][found[i]].listed = 0;
+							if (found[i] >= MAX_FILES)
+							{
+								printf("%s: max of %d files exceeded\n",argv[i+1],MAX_FILES);
+								break;
+							}
+							found[i]++;
+						}
+					} while (_dos_findnext(&f) == 0);
+				}
 			}
 		}
 
-		printf("%d and %d files\n",found[0],found[1]);
+		if (argc >= 3)
+			printf("%d and %d files\n",found[0],found[1]);
+		else
+			printf("%d files\n",found[0]);
 
 		for (i = 0;i < found[0];i++)
 		{
-			for (j = 0;j < found[1];j++)
+			checkintegrity(&files[0][i],0);
+		}
+
+		for (j = 0;j < found[1];j++)
+		{
+			checkintegrity(&files[1][j],1);
+		}
+
+		if (argc < 3)
+		{
+			/* find duplicates in one dir */
+			for (i = 0;i < found[0];i++)
 			{
-				for (mode = 0;mode < TOTAL_MODES;mode++)
+				for (j = i+1;j < found[0];j++)
 				{
-					matchscore[i][j][mode] = filecompare(&files[0][i],&files[1][j],mode);
+					for (mode = 0;mode < TOTAL_MODES;mode++)
+					{
+						if (filecompare(&files[0][i],&files[0][j],mode) == 1.0)
+							printname(&files[0][i],&files[0][j],1.0,mode);
+					}
 				}
 			}
 		}
-
-
-		do
+		else
 		{
-			float bestscore;
-			int bestmode;
-
-			besti = -1;
-			bestj = -1;
-			bestscore = 0.0;
-			bestmode = -1;
-
-			for (mode = 0;mode < TOTAL_MODES;mode++)
+			/* compare two dirs */
+			for (i = 0;i < found[0];i++)
 			{
-				for (i = 0;i < found[0];i++)
+				for (j = 0;j < found[1];j++)
 				{
-					for (j = 0;j < found[1];j++)
+					for (mode = 0;mode < TOTAL_MODES;mode++)
 					{
-						if (matchscore[i][j][mode] > bestscore)
-						{
-							bestscore = matchscore[i][j][mode];
-							besti = i;
-							bestj = j;
-							bestmode = mode;
-						}
+						matchscore[i][j][mode] = filecompare(&files[0][i],&files[1][j],mode);
 					}
 				}
 			}
 
-			if (besti != -1)
+			do
 			{
-				printname(&files[0][besti],&files[1][bestj],bestscore,bestmode);
-				files[0][besti].listed = 1;
-				files[1][bestj].listed = 1;
+				float bestscore;
+				int bestmode;
 
-				matchscore[besti][bestj][bestmode] = 0.0;
+				besti = -1;
+				bestj = -1;
+				bestscore = 0.0;
+				bestmode = -1;
+
 				for (mode = 0;mode < TOTAL_MODES;mode++)
 				{
-					if (bestmode == MODE_A_A || mode == bestmode ||
-							((mode-1)&~1) != ((bestmode-1)&~1))
-					{
-						for (i = 0;i < found[0];i++)
-						{
-							if (matchscore[i][bestj][mode] < bestscore)
-								matchscore[i][bestj][mode] = 0.0;
-						}
-						for (j = 0;j < found[1];j++)
-						{
-							if (matchscore[besti][j][mode] < bestscore)
-								matchscore[besti][j][mode] = 0.0;
-						}
-					}
-					if (files[0][besti].size > files[1][bestj].size)
-					{
-						for (i = 0;i < found[0];i++)
-						{
-							if (matchscore[i][bestj][mode] < bestscore)
-								matchscore[i][bestj][mode] = 0.0;
-						}
-					}
-					else
+					for (i = 0;i < found[0];i++)
 					{
 						for (j = 0;j < found[1];j++)
 						{
-							if (matchscore[besti][j][mode] < bestscore)
-								matchscore[besti][j][mode] = 0.0;
+							if (matchscore[i][j][mode] > bestscore)
+							{
+								bestscore = matchscore[i][j][mode];
+								besti = i;
+								bestj = j;
+								bestmode = mode;
+							}
 						}
 					}
 				}
+
+				if (besti != -1)
+				{
+					printname(&files[0][besti],&files[1][bestj],bestscore,bestmode);
+					files[0][besti].listed = 1;
+					files[1][bestj].listed = 1;
+
+					matchscore[besti][bestj][bestmode] = 0.0;
+					for (mode = 0;mode < TOTAL_MODES;mode++)
+					{
+						if (bestmode == MODE_A_A || mode == bestmode ||
+								((mode-1)&~1) != ((bestmode-1)&~1))
+						{
+							for (i = 0;i < found[0];i++)
+							{
+								if (matchscore[i][bestj][mode] < bestscore)
+									matchscore[i][bestj][mode] = 0.0;
+							}
+							for (j = 0;j < found[1];j++)
+							{
+								if (matchscore[besti][j][mode] < bestscore)
+									matchscore[besti][j][mode] = 0.0;
+							}
+						}
+						if (files[0][besti].size > files[1][bestj].size)
+						{
+							for (i = 0;i < found[0];i++)
+							{
+								if (matchscore[i][bestj][mode] < bestscore)
+									matchscore[i][bestj][mode] = 0.0;
+							}
+						}
+						else
+						{
+							for (j = 0;j < found[1];j++)
+							{
+								if (matchscore[besti][j][mode] < bestscore)
+									matchscore[besti][j][mode] = 0.0;
+							}
+						}
+					}
+				}
+			} while (besti != -1);
+
+
+			for (i = 0;i < found[0];i++)
+			{
+				if (files[0][i].listed == 0) printname(&files[0][i],0,0.0,0);
+				freefile(&files[0][i]);
 			}
-		} while (besti != -1);
-
-
-		for (i = 0;i < found[0];i++)
-		{
-			if (files[0][i].listed == 0) printname(&files[0][i],0,0.0,0);
-			freefile(&files[0][i]);
-		}
-		for (i = 0;i < found[1];i++)
-		{
-			if (files[1][i].listed == 0) printname(0,&files[1][i],0.0,0);
-			freefile(&files[1][i]);
+			for (i = 0;i < found[1];i++)
+			{
+				if (files[1][i].listed == 0) printname(0,&files[1][i],0.0,0);
+				freefile(&files[1][i]);
+			}
 		}
 	}
 

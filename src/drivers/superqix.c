@@ -251,29 +251,29 @@ static struct MachineDriver machine_driver =
 
 ROM_START( superqix_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "sq01.97", 0x00000, 0x08000, 0x1a65d6a9 , 0x0888b7de )
-	ROM_LOAD( "sq02.96", 0x10000, 0x10000, 0x25dd66f5 , 0x9c23cb64 )
+	ROM_LOAD( "sq01.97",      0x00000, 0x08000, 0x0888b7de )
+	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
 	ROM_REGION_DISPOSE(0x38000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sq04.2", 0x00000, 0x08000, 0x165430fc , 0xf815ef45 )
-	ROM_LOAD( "sq03.3", 0x08000, 0x10000, 0xfa8039c6 , 0x6e8b6a67 )
-	ROM_LOAD( "sq06.14", 0x18000, 0x10000, 0xfbb4714c , 0x38154517 )
-	ROM_LOAD( "sq05.1", 0x28000, 0x10000, 0x03c81564 , 0xdf326540 )
+	ROM_LOAD( "sq04.2",       0x00000, 0x08000, 0xf815ef45 )
+	ROM_LOAD( "sq03.3",       0x08000, 0x10000, 0x6e8b6a67 )
+	ROM_LOAD( "sq06.14",      0x18000, 0x10000, 0x38154517 )
+	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
 
 	ROM_REGION(0x1000)	/* Unknown (protection related?) */
-	ROM_LOAD( "sq07.108", 0x00000, 0x1000, 0x708cf304 , 0x071a598c )
+	ROM_LOAD( "sq07.108",     0x00000, 0x1000, 0x071a598c )
 ROM_END
 
 ROM_START( sqixbl_rom )
 	ROM_REGION(0x20000)	/* 64k for code */
-	ROM_LOAD( "cpu.2", 0x00000, 0x08000, 0x8cf43590 , 0x682e28e3 )
-	ROM_LOAD( "sq02.96", 0x10000, 0x10000, 0x25dd66f5 , 0x9c23cb64 )
+	ROM_LOAD( "cpu.2",        0x00000, 0x08000, 0x682e28e3 )
+	ROM_LOAD( "sq02.96",      0x10000, 0x10000, 0x9c23cb64 )
 
 	ROM_REGION_DISPOSE(0x38000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sq04.2", 0x00000, 0x08000, 0x165430fc , 0xf815ef45 )
-	ROM_LOAD( "sq03.3", 0x08000, 0x10000, 0xfa8039c6 , 0x6e8b6a67 )
-	ROM_LOAD( "sq06.14", 0x18000, 0x10000, 0xfbb4714c , 0x38154517 )
-	ROM_LOAD( "sq05.1", 0x28000, 0x10000, 0x03c81564 , 0xdf326540 )
+	ROM_LOAD( "sq04.2",       0x00000, 0x08000, 0xf815ef45 )
+	ROM_LOAD( "sq03.3",       0x08000, 0x10000, 0x6e8b6a67 )
+	ROM_LOAD( "sq06.14",      0x18000, 0x10000, 0x38154517 )
+	ROM_LOAD( "sq05.1",       0x28000, 0x10000, 0xdf326540 )
 ROM_END
 
 static int superqix_hiload(void)

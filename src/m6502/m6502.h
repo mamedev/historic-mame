@@ -94,20 +94,20 @@ typedef 	union {
  ****************************************************************************/
 typedef struct
 {
-	m6502_pair PC;					/* program counter */
-    m6502_pair SP;                  /* stack pointer (always 100 - 1FF) */
-	m6502_pair ZP;					/* zero page address */
-    m6502_pair EA;                  /* effective address */
-    int A;                          /* Accumulator */
-	int X;							/* X index register */
-	int Y;							/* Y index register */
-	int P;							/* Processor status */
-    int HALT;                       /* nonzero if the CPU is halted */
+	m6502_pair pc;					/* program counter */
+	m6502_pair sp;					/* stack pointer (always 100 - 1FF) */
+	m6502_pair zp;					/* zero page address */
+	m6502_pair ea;					/* effective address */
+	int a;							/* Accumulator */
+	int x;							/* X index register */
+	int y;							/* Y index register */
+	int p;							/* Processor status */
+	int halt;						/* nonzero if the CPU is halted */
 	int pending_irq;				/* nonzero if an IRQ is pending */
 	int pending_nmi;				/* nonzero if a NMI is pending */
 	int after_cli;					/* pending IRQ and last insn cleared I */
 #if LAZY_FLAGS
-	int NZ; 						/* last value (lazy N and Z flag) */
+	int nz; 						/* last value (lazy N and Z flag) */
 #endif
 }   M6502_Regs;
 

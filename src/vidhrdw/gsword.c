@@ -27,46 +27,42 @@ static int 			flipscreen=0;
 void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
+
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3,val;
+		int bit0,bit1,bit2;
+
 
 		/* red component */
-		val = color_prom[256+144+i*3+2];
-                bit0 = (val >> 0) & 0x01;
-                bit1 = (val >> 1) & 0x01;
-                bit2 = (val >> 2) & 0x01;
-                bit3 = (val >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 1;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 1;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 1;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		val = color_prom[256+144+i*3+1];
-                bit0 = (val >> 0) & 0x01;
-                bit1 = (val >> 1) & 0x01;
-                bit2 = (val >> 2) & 0x01;
-                bit3 = (val >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 3) & 1;
+		bit1 = (color_prom[0] >> 0) & 1;
+		bit2 = (color_prom[0] >> 1) & 1;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		val = color_prom[256+144+i*3+0];
-                bit0 = (val >> 0) & 0x01;
-                bit1 = (val >> 1) & 0x01;
-                bit2 = (val >> 2) & 0x01;
-                bit3 = (val >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = 0;
+		bit1 = (color_prom[0] >> 2) & 1;
+		bit2 = (color_prom[0] >> 3) & 1;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
 	}
 
-	for (i = 0;i < TOTAL_COLORS(2);i++)
-		COLOR(2,i) = color_prom[i];
+	color_prom += Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the sprite lookup table */
 
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = color_prom[256+i];
+		COLOR(0,i) = i;
 
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = color_prom[512+i];
-
+		COLOR(1,i) = (*(color_prom++) & 0x0f);	/* wrong! */
 }
 
 
@@ -94,7 +90,7 @@ void gs_video_attributes_w(int offset, int data)
 
 	if (data != video_attributes)
 	{
-	        memset(dirtybuffer,1,gs_videoram_size);
+		memset(dirtybuffer,1,gs_videoram_size);
 		video_attributes = data;
 	}
 	RAM[0xa980] = data;
@@ -124,26 +120,21 @@ void gs_videoram_w(int offset,int data)
 void render_background(struct osd_bitmap *bitmap)
 {
 	int offs;
-        int tileoffs=0,tilebank=0;
 
-        /*Swap Tile Bank & Offset*/
 
-        tileoffs = (video_attributes & 1) ? 256 : 0;
-        tilebank = (video_attributes > 1) ?   1 : 0;
-
-        /* for every character in the Video RAM, check if it has been modified */
+	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-
-        for (offs = 0; offs < gs_videoram_size ;offs++)
+	for (offs = 0; offs < gs_videoram_size ;offs++)
 	{
-                if (dirtybuffer[offs])
+		if (dirtybuffer[offs])
 		{
-			int sx,sy,tile,flipx,flipy,color;
+			int sx,sy,tile,flipx,flipy;
 
-                        dirtybuffer[offs] = 0;
 
-                        sx = offs % 32;
-                        sy = offs / 32;
+			dirtybuffer[offs] = 0;
+
+			sx = offs % 32;
+			sy = offs / 32;
 			flipx = 0;
 			flipy = 0;
 
@@ -152,16 +143,14 @@ void render_background(struct osd_bitmap *bitmap)
 				flipx = !flipx;
 				flipy = !flipy;
 			}
-			tile = gs_videoram[offs]+tileoffs;
-			color = (tile>>6);
 
-			drawgfx(bitmap_bg, Machine->gfx[0+tilebank],
-					   tile,
-                                           color,
-					   flipx,flipy,
-                                           8*sx,
-                                           8*sy,
-					   0,TRANSPARENCY_NONE,0);
+			tile = gs_videoram[offs] + ((video_attributes & 0x03) << 8);
+			drawgfx(bitmap_bg,Machine->gfx[0],
+					tile,
+					(tile & 0x3c0) >> 6,	/* ?? */
+					flipx,flipy,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 }
@@ -169,46 +158,30 @@ void render_background(struct osd_bitmap *bitmap)
 
 void render_sprites(struct osd_bitmap *bitmap)
 {
-        int offs;
+	int offs;
 
-        for (offs = 0; offs < gs_spritexy_size - 1; offs+=2)
+	for (offs = 0; offs < gs_spritexy_size - 1; offs+=2)
 	{
-                int sx,sy,flipx,flipy,spritebank,tile,color;
+		int sx,sy,flipx,flipy,spritebank,tile;
 
-                // Dump sprite tile, x,y, and attribute
-
-                if (osd_key_pressed(OSD_KEY_S))
-                {
-                        fprintf(errorlog,"tile=%x  sx=%x  sy=%x  attr1=%x  attr2=%x  color=%x\n",
-			gs_spritetile_ram[offs],
-			gs_spritexy_ram[offs+1],
-			gs_spritexy_ram[offs],
-			gs_spriteattrib_ram[offs],
-			gs_spriteattrib_ram[offs+1],
-			gs_spritetile_ram[offs+1]);
-
-		}
 		if (gs_spritexy_ram[offs]!=0xf1)
 		{
-	                spritebank = 0;
-        	        tile = gs_spritetile_ram[offs];
-                	sy = 241-gs_spritexy_ram[offs];
-	                sx = gs_spritexy_ram[offs+1]-56;
-	                flipx = gs_spriteattrib_ram[offs] & 0x02;
-        	        flipy = gs_spriteattrib_ram[offs] & 0x01;
+			spritebank = 0;
+			tile = gs_spritetile_ram[offs];
+			sy = 241-gs_spritexy_ram[offs];
+			sx = gs_spritexy_ram[offs+1]-56;
+			flipx = gs_spriteattrib_ram[offs] & 0x02;
+			flipy = gs_spriteattrib_ram[offs] & 0x01;
 
-        	        // Adjust sprites that should be far far right!
-	                if (sx<0) sx+=256;
+			// Adjust sprites that should be far far right!
+			if (sx<0) sx+=256;
 
-	                // Color select?
-        	        color = (gs_spritetile_ram[offs+1] & 0x3f);
-
-	                // Adjuste for 32x32 tiles(#128-256)
-        	        if (tile > 127)
+			// Adjuste for 32x32 tiles(#128-256)
+			if (tile > 127)
 			{
-                        	spritebank = 1;
-	                        tile -= 128;
-	                        sy-=16;
+				spritebank = 1;
+				tile -= 128;
+				sy-=16;
 			}
 			if (flipscreen)
 			{
@@ -216,12 +189,12 @@ void render_sprites(struct osd_bitmap *bitmap)
 				flipy = !flipy;
 			}
 
-	                drawgfx(bitmap, Machine->gfx[2+spritebank],
+			drawgfx(bitmap,Machine->gfx[1+spritebank],
 					tile,
-					color,
+					gs_spritetile_ram[offs+1] & 0x3f,	/* ?? */
 					flipx,flipy,
 					sx,sy,
-					0,TRANSPARENCY_PEN,0);
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

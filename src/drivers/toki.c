@@ -14,6 +14,7 @@ extern int toki_background1_videoram_size;
 extern int toki_background2_videoram_size;
 extern int toki_sprites_dataram_size;
 
+int toki_interrupt(void);
 int  toki_vh_start(void);
 void toki_vh_stop(void);
 void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -39,11 +40,6 @@ int toki_read_ports(int offset)
 		default:
 			return 0;
     }
-}
-
-int toki_interrupt(void)
-{
-	return 1;  /*Interrupt vector 1*/
 }
 
 void toki_soundcommand_w(int offset,int data)
@@ -116,7 +112,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x07180e, 0x071e45, MWA_BANK3, &toki_sprites_dataram, &toki_sprites_dataram_size },
 	{ 0x075000, 0x075001, toki_soundcommand_w },
 	{ 0x075004, 0x07500b, MWA_BANK4, &toki_scrollram },
-	{ 0x0a002a, 0x0a002d, toki_linescroll_w },	/* scroll registers used to waggle the title screen */
+	{ 0x0a002a, 0x0a002d, toki_linescroll_w },	/* scroll register used to waggle the title screen */
 	{ -1 }  /* end of table */
 };
 
@@ -306,7 +302,9 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			14000000,	/* the real speed should be 8MHz or less (68000-8 CPU) */
+			16000000,	/* the real speed should be 8MHz or less (68000-8 CPU), */
+						/* but with less than 14MHz there are slowdowns and the */
+						/* title screen doesn't wave correctly */
 			0,
 			readmem,writemem,
 			0,0,
@@ -361,46 +359,46 @@ static struct MachineDriver machine_driver =
 
 ROM_START( toki_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "toki.e3", 0x00000, 0x20000, 0xe2f5431f , 0xae9b3da4 )
-	ROM_LOAD_ODD ( "toki.e5", 0x00000, 0x20000, 0x4404439e , 0x66a5a1d6 )
-	ROM_LOAD_EVEN( "toki.e2", 0x40000, 0x10000, 0x1fe23624 , 0xd6a82808 )
-	ROM_LOAD_ODD ( "toki.e4", 0x40000, 0x10000, 0x1678f760 , 0xa01a5b10 )
+	ROM_LOAD_EVEN( "toki.e3",      0x00000, 0x20000, 0xae9b3da4 )
+	ROM_LOAD_ODD ( "toki.e5",      0x00000, 0x20000, 0x66a5a1d6 )
+	ROM_LOAD_EVEN( "toki.e2",      0x40000, 0x10000, 0xd6a82808 )
+	ROM_LOAD_ODD ( "toki.e4",      0x40000, 0x10000, 0xa01a5b10 )
 
 	ROM_REGION_DISPOSE(0x220000)	/* 2*64k for foreground tiles */
-	ROM_LOAD( "toki.e21", 0x000000, 0x08000, 0x62bbb4d3 , 0x65605ed2 )
-	ROM_LOAD( "toki.e13", 0x008000, 0x08000, 0x47775ce5 , 0xca999b93 )
-	ROM_LOAD( "toki.e22", 0x010000, 0x08000, 0xf6e030fc , 0x99f26449 )
-	ROM_LOAD( "toki.e7", 0x018000, 0x08000, 0xc2a6d2f0 , 0xd98812d1 )
+	ROM_LOAD( "toki.e21",     0x000000, 0x08000, 0xbb8cacbd )
+	ROM_LOAD( "toki.e13",     0x008000, 0x08000, 0x052ad275 )
+	ROM_LOAD( "toki.e22",     0x010000, 0x08000, 0x04dcdc21 )
+	ROM_LOAD( "toki.e7",      0x018000, 0x08000, 0x70729106 )
 							/* 16*64k for sprites */
-	ROM_LOAD( "toki.e26", 0x020000, 0x20000, 0xf240d60a , 0xa8ba71fc )
-	ROM_LOAD( "toki.e28", 0x040000, 0x20000, 0x1525bd97 , 0x29784948 )
-	ROM_LOAD( "toki.e34", 0x060000, 0x20000, 0x93776021 , 0xe5f6e19b )
-	ROM_LOAD( "toki.e36", 0x080000, 0x20000, 0x14d49b24 , 0x96e8db8b )
-	ROM_LOAD( "toki.e30", 0x0a0000, 0x20000, 0x0b00822e , 0x770d2b1b )
-	ROM_LOAD( "toki.e32", 0x0c0000, 0x20000, 0x625a59fa , 0xc289d246 )
-	ROM_LOAD( "toki.e38", 0x0e0000, 0x20000, 0xf062260c , 0x87f4e7fb )
-	ROM_LOAD( "toki.e40", 0x100000, 0x20000, 0xb78b0da3 , 0x96e87350 )
+	ROM_LOAD( "toki.e26",     0x020000, 0x20000, 0xa8ba71fc )
+	ROM_LOAD( "toki.e28",     0x040000, 0x20000, 0x29784948 )
+	ROM_LOAD( "toki.e34",     0x060000, 0x20000, 0xe5f6e19b )
+	ROM_LOAD( "toki.e36",     0x080000, 0x20000, 0x96e8db8b )
+	ROM_LOAD( "toki.e30",     0x0a0000, 0x20000, 0x770d2b1b )
+	ROM_LOAD( "toki.e32",     0x0c0000, 0x20000, 0xc289d246 )
+	ROM_LOAD( "toki.e38",     0x0e0000, 0x20000, 0x87f4e7fb )
+	ROM_LOAD( "toki.e40",     0x100000, 0x20000, 0x96e87350 )
 							/* 8*64k for background #1 tiles */
-	ROM_LOAD( "toki.e23", 0x120000, 0x10000, 0xeafea71c, 0xfeb13d35 )
-	ROM_LOAD( "toki.e24", 0x130000, 0x10000, 0x1515fcb5, 0x5b365637 )
-	ROM_LOAD( "toki.e15", 0x140000, 0x10000, 0x63200f60 , 0x617c32e6 )
-	ROM_LOAD( "toki.e16", 0x150000, 0x10000, 0x328cb95c , 0x2a11c0f0 )
-	ROM_LOAD( "toki.e17", 0x160000, 0x10000, 0xa4908982 , 0xfbc3d456 )
-	ROM_LOAD( "toki.e18", 0x170000, 0x10000, 0xe5de7236 , 0x4c2a72e1 )
-	ROM_LOAD( "toki.e8", 0x180000, 0x10000, 0x12e1d7f9 , 0x46a1b821 )
-	ROM_LOAD( "toki.e9", 0x190000, 0x10000, 0x14318607 , 0x82ce27f6 )
+	ROM_LOAD( "toki.e23",     0x120000, 0x10000, 0xfeb13d35 )
+	ROM_LOAD( "toki.e24",     0x130000, 0x10000, 0x5b365637 )
+	ROM_LOAD( "toki.e15",     0x140000, 0x10000, 0x617c32e6 )
+	ROM_LOAD( "toki.e16",     0x150000, 0x10000, 0x2a11c0f0 )
+	ROM_LOAD( "toki.e17",     0x160000, 0x10000, 0xfbc3d456 )
+	ROM_LOAD( "toki.e18",     0x170000, 0x10000, 0x4c2a72e1 )
+	ROM_LOAD( "toki.e8",      0x180000, 0x10000, 0x46a1b821 )
+	ROM_LOAD( "toki.e9",      0x190000, 0x10000, 0x82ce27f6 )
 							/* 8*64k for background #2 tiles */
-	ROM_LOAD( "toki.e25", 0x1a0000, 0x10000, 0x7f2775f5 , 0x63026cad )
-	ROM_LOAD( "toki.e20", 0x1b0000, 0x10000, 0x82ed13fd , 0xa7f2ce26 )
-	ROM_LOAD( "toki.e11", 0x1c0000, 0x10000, 0x262c3c66 , 0x48989aa0 )
-	ROM_LOAD( "toki.e12", 0x1d0000, 0x10000, 0xe2f714a9 , 0xc2ad9342 )
-	ROM_LOAD( "toki.e19", 0x1e0000, 0x10000, 0x8d6314f9 , 0x6cd22b18 )
-	ROM_LOAD( "toki.e14", 0x1f0000, 0x10000, 0xdf55f5cb , 0x859e313a )
-	ROM_LOAD( "toki.e10", 0x200000, 0x10000, 0xa06d2c4d , 0xe15c1d0f )
-	ROM_LOAD( "toki.e6", 0x210000, 0x10000, 0xa5a88cec , 0x6f4b878a )
+	ROM_LOAD( "toki.e25",     0x1a0000, 0x10000, 0x63026cad )
+	ROM_LOAD( "toki.e20",     0x1b0000, 0x10000, 0xa7f2ce26 )
+	ROM_LOAD( "toki.e11",     0x1c0000, 0x10000, 0x48989aa0 )
+	ROM_LOAD( "toki.e12",     0x1d0000, 0x10000, 0xc2ad9342 )
+	ROM_LOAD( "toki.e19",     0x1e0000, 0x10000, 0x6cd22b18 )
+	ROM_LOAD( "toki.e14",     0x1f0000, 0x10000, 0x859e313a )
+	ROM_LOAD( "toki.e10",     0x200000, 0x10000, 0xe15c1d0f )
+	ROM_LOAD( "toki.e6",      0x210000, 0x10000, 0x6f4b878a )
 
 	ROM_REGION(0x18000)	/* 64k for code + 32k for banked data */
-	ROM_LOAD( "toki.e1", 0x00000, 0x8000, 0x391e1c32 , 0x2832ef75 )
+	ROM_LOAD( "toki.e1",      0x00000, 0x8000, 0x2832ef75 )
 	ROM_CONTINUE(        0x10000, 0x8000 )	/* banked at 8000-bfff */
 ROM_END
 

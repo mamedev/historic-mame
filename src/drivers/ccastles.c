@@ -293,28 +293,28 @@ static struct MachineDriver machine_driver =
 
 ROM_START(ccastles_rom)
      ROM_REGION(0x14000)	/* 64k for code */
-     ROM_LOAD( "ccastles.303", 0xA000, 0x2000, 0xe3d3d32d , 0x10e39fce )
-     ROM_LOAD( "ccastles.304", 0xC000, 0x2000, 0x31eab944 , 0x74510f72 )
-     ROM_LOAD( "ccastles.305", 0xE000, 0x2000, 0xd765a559 , 0x9418cf8a )
-     ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0x5bbb3ac1 , 0xf6ccfbd4 )	/* Bank switched ROMs */
-     ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2aa8e74 , 0xe2e17236 )	/* containing level data. */
+     ROM_LOAD( "ccastles.303", 0xA000, 0x2000, 0x10e39fce )
+     ROM_LOAD( "ccastles.304", 0xC000, 0x2000, 0x74510f72 )
+     ROM_LOAD( "ccastles.305", 0xE000, 0x2000, 0x9418cf8a )
+     ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0xf6ccfbd4 )	/* Bank switched ROMs */
+     ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2e17236 )	/* containing level data. */
 
      ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics */
-     ROM_LOAD( "ccastles.107", 0x0000, 0x2000, 0x399cc984 , 0x39960b7d )
-     ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x8b4c0208 , 0x9d1d89fc )
+     ROM_LOAD( "ccastles.107", 0x0000, 0x2000, 0x39960b7d )
+     ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x9d1d89fc )
 ROM_END
 
 ROM_START(ccastle2_rom)
      ROM_REGION(0x14000)	/* 64k for code */
-     ROM_LOAD( "ccastles.203", 0xA000, 0x2000, 0xe45bfb05 , 0x348a96f0 )
-     ROM_LOAD( "ccastles.204", 0xC000, 0x2000, 0x82ef54a9 , 0xd48d8c1f )
-     ROM_LOAD( "ccastles.205", 0xE000, 0x2000, 0xd72c06fa , 0x0e4883cc )
-     ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0x5bbb3ac1 , 0xf6ccfbd4 )	/* Bank switched ROMs */
-     ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2aa8e74 , 0xe2e17236 )	/* containing level data. */
+     ROM_LOAD( "ccastles.203", 0xA000, 0x2000, 0x348a96f0 )
+     ROM_LOAD( "ccastles.204", 0xC000, 0x2000, 0xd48d8c1f )
+     ROM_LOAD( "ccastles.205", 0xE000, 0x2000, 0x0e4883cc )
+     ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0xf6ccfbd4 )	/* Bank switched ROMs */
+     ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2e17236 )	/* containing level data. */
 
      ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics */
-     ROM_LOAD( "ccastles.107", 0x0000, 0x2000, 0x399cc984 , 0x39960b7d )
-     ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x8b4c0208 , 0x9d1d89fc )
+     ROM_LOAD( "ccastles.107", 0x0000, 0x2000, 0x39960b7d )
+     ROM_LOAD( "ccastles.106", 0x2000, 0x2000, 0x9d1d89fc )
 ROM_END
 
 

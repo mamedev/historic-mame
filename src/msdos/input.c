@@ -76,7 +76,10 @@ int osd_key_pressed(int keycode)
                 return key[OSD_KEY_F10];
 
             case OSD_KEY_SHOW_FPS:
-                return key[OSD_KEY_F11];
+                return key[OSD_KEY_F11] && !key[OSD_KEY_LSHIFT];
+
+            case OSD_KEY_SHOW_PROFILE:
+                return key[OSD_KEY_F11] && key[OSD_KEY_LSHIFT];
 
             case OSD_KEY_CONFIGURE:
                 return key[OSD_KEY_F12];
@@ -122,7 +125,10 @@ int osd_key_pressed(int keycode)
                 return key[OSD_KEY_F10];
 
             case OSD_KEY_SHOW_FPS:
-                return key[OSD_KEY_F11];
+                return key[OSD_KEY_F11] && !key[OSD_KEY_LSHIFT];
+
+            case OSD_KEY_SHOW_PROFILE:
+                return key[OSD_KEY_F11] && key[OSD_KEY_LSHIFT];
 
             case OSD_KEY_CONFIGURE:
 				return key[OSD_KEY_TAB];
@@ -233,6 +239,8 @@ static int key_to_pseudo_code(int k)
             return OSD_KEY_THROTTLE;
 
         case OSD_KEY_F11:
+            if (key[OSD_KEY_LSHIFT])
+                return OSD_KEY_SHOW_PROFILE;
             return OSD_KEY_SHOW_FPS;
 
         case OSD_KEY_F12:
@@ -273,6 +281,8 @@ static int key_to_pseudo_code(int k)
             return OSD_KEY_THROTTLE;
 
         case OSD_KEY_F11:
+            if (key[OSD_KEY_LSHIFT])
+                return OSD_KEY_SHOW_PROFILE;
             return OSD_KEY_SHOW_FPS;
 
         case OSD_KEY_TAB:

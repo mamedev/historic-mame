@@ -324,37 +324,69 @@ static struct MachineDriver machine_driver =
 
 ROM_START( vulgus_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "1-4n.bin", 0x0000, 0x2000, 0xcf6bd29f , 0xfe5a5ca5 )
-	ROM_LOAD( "1-5n.bin", 0x2000, 0x2000, 0x9013468d , 0x847e437f )
-	ROM_LOAD( "1-6n.bin", 0x4000, 0x2000, 0x85bdcab7 , 0x4666c436 )
-	ROM_LOAD( "1-7n.bin", 0x6000, 0x2000, 0x453dd763 , 0xff2097f9 )
-	ROM_LOAD( "1-8n.bin", 0x8000, 0x2000, 0x0064819a , 0x6ca5ca41 )
+	ROM_LOAD( "1-4n.bin",     0x0000, 0x2000, 0xfe5a5ca5 )
+	ROM_LOAD( "1-5n.bin",     0x2000, 0x2000, 0x847e437f )
+	ROM_LOAD( "1-6n.bin",     0x4000, 0x2000, 0x4666c436 )
+	ROM_LOAD( "1-7n.bin",     0x6000, 0x2000, 0xff2097f9 )
+	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
 
 	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-3d.bin", 0x00000, 0x2000, 0x59855ce9 , 0x8bc5d7a5 )	/* characters */
-	ROM_LOAD( "2-2a.bin", 0x02000, 0x2000, 0xd2b3db63 , 0xe10aaca1 )	/* tiles */
-	ROM_LOAD( "2-3a.bin", 0x04000, 0x2000, 0x3f9b35fd , 0x8da520da )
-	ROM_LOAD( "2-4a.bin", 0x06000, 0x2000, 0x87b39e71 , 0x206a13f1 )
-	ROM_LOAD( "2-5a.bin", 0x08000, 0x2000, 0x5a2aca94 , 0xb6d81984 )
-	ROM_LOAD( "2-6a.bin", 0x0a000, 0x2000, 0x8634d056 , 0x5a26b38f )
-	ROM_LOAD( "2-7a.bin", 0x0c000, 0x2000, 0x9b4c25fc , 0x1e1ca773 )
-	ROM_LOAD( "2-2n.bin", 0x0e000, 0x2000, 0x550197fd , 0x6db1b10d )	/* sprites */
-	ROM_LOAD( "2-3n.bin", 0x10000, 0x2000, 0x09ff7dd9 , 0x5d8c34ec )
-	ROM_LOAD( "2-4n.bin", 0x12000, 0x2000, 0x588e8088 , 0x0071a2e3 )
-	ROM_LOAD( "2-5n.bin", 0x14000, 0x2000, 0x62e1457f , 0x4023a1ec )
+	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
+	ROM_LOAD( "2-2a.bin",     0x02000, 0x2000, 0xe10aaca1 )	/* tiles */
+	ROM_LOAD( "2-3a.bin",     0x04000, 0x2000, 0x8da520da )
+	ROM_LOAD( "2-4a.bin",     0x06000, 0x2000, 0x206a13f1 )
+	ROM_LOAD( "2-5a.bin",     0x08000, 0x2000, 0xb6d81984 )
+	ROM_LOAD( "2-6a.bin",     0x0a000, 0x2000, 0x5a26b38f )
+	ROM_LOAD( "2-7a.bin",     0x0c000, 0x2000, 0x1e1ca773 )
+	ROM_LOAD( "2-2n.bin",     0x0e000, 0x2000, 0x6db1b10d )	/* sprites */
+	ROM_LOAD( "2-3n.bin",     0x10000, 0x2000, 0x5d8c34ec )
+	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
+	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
 
 	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "e8.bin", 0x0000, 0x0100, 0x87b70d0b , 0x06a83606 )	/* red component */
-	ROM_LOAD( "e9.bin", 0x0100, 0x0100, 0x088b0009 , 0xbeacf13c )	/* green component */
-	ROM_LOAD( "e10.bin", 0x0200, 0x0100, 0x60b10601 , 0xde1fb621 )	/* blue component */
-	ROM_LOAD( "d1.bin", 0x0300, 0x0100, 0x82cd0907 , 0x7179080d )	/* char lookup table */
-	ROM_LOAD( "j2.bin", 0x0400, 0x0100, 0x269d0703 , 0xd0842029 )	/* sprite lookup table */
-	ROM_LOAD( "c9.bin", 0x0500, 0x0100, 0x41120506 , 0x7a1f0bd6 )	/* tile lookup table */
+	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
+	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
+	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
+	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
+	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
+	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "1-11c.bin", 0x0000, 0x2000, 0x208ab38a , 0x3bd2acf4 )
+	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
+ROM_START( vulgus2_rom )
+	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_LOAD( "v2",           0x0000, 0x2000, 0x3e18ff62 )
+	ROM_LOAD( "v3",           0x2000, 0x2000, 0xb4650d82 )
+	ROM_LOAD( "v4",           0x4000, 0x2000, 0x5b26355c )
+	ROM_LOAD( "v5",           0x6000, 0x2000, 0x4ca7f10e )
+	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
+
+	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1-3d.bin",     0x00000, 0x2000, 0x8bc5d7a5 )	/* characters */
+	ROM_LOAD( "2-2a.bin",     0x02000, 0x2000, 0xe10aaca1 )	/* tiles */
+	ROM_LOAD( "2-3a.bin",     0x04000, 0x2000, 0x8da520da )
+	ROM_LOAD( "2-4a.bin",     0x06000, 0x2000, 0x206a13f1 )
+	ROM_LOAD( "2-5a.bin",     0x08000, 0x2000, 0xb6d81984 )
+	ROM_LOAD( "2-6a.bin",     0x0a000, 0x2000, 0x5a26b38f )
+	ROM_LOAD( "2-7a.bin",     0x0c000, 0x2000, 0x1e1ca773 )
+	ROM_LOAD( "2-2n.bin",     0x0e000, 0x2000, 0x6db1b10d )	/* sprites */
+	ROM_LOAD( "2-3n.bin",     0x10000, 0x2000, 0x5d8c34ec )
+	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
+	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
+	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
+	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
+	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
+	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
+	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
+ROM_END
 
 
 static int hiload(void)
@@ -405,7 +437,7 @@ struct GameDriver vulgus_driver =
 	__FILE__,
 	0,
 	"vulgus",
-	"Vulgus",
+	"Vulgus (set 1)",
 	"1984",
 	"Capcom",
 	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
@@ -413,6 +445,31 @@ struct GameDriver vulgus_driver =
 	&machine_driver,
 
 	vulgus_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver vulgus2_driver =
+{
+	__FILE__,
+	&vulgus_driver,
+	"vulgus2",
+	"Vulgus (set 2)",
+	"1984",
+	"Capcom",
+	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+
+	vulgus2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

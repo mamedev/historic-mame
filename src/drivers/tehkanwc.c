@@ -10,8 +10,10 @@ Roberto Juan Fresca
 robbiex@rocketmail.com
 
 TODO:
-- ADPCM samples for Gridiron and Tee'd Off
 - dip switches and input ports for Gridiron and Tee'd Off
+
+NOTES:
+- Samples MUST be on Memory Region 4
 
 ***************************************************************************/
 
@@ -108,37 +110,54 @@ static void sound_answer_w(int offset,int data)
 }
 
 
-static int sound_num = 0;
+/* Emulate MSM sound samples with counters */
+
+static int msm_data_offs;
 
 static int tehkanwc_portA_r(int offset)
 {
-	if (!ADPCM_playing(0) && sound_num == 0x2000)
-		ADPCM_trigger(0,sound_num);
-
-	return ADPCM_playing(0);
+	return msm_data_offs & 0xff;
 }
 
 static int tehkanwc_portB_r( int offset )
 {
-	return ADPCM_playing( 0 );
+	return (msm_data_offs >> 8) & 0xff;
 }
 
 static void tehkanwc_portA_w(int offset,int data)
 {
-	sound_num = data & 0xff;
+	msm_data_offs = (msm_data_offs & 0xff00) | data;
 }
 
 static void tehkanwc_portB_w(int offset,int data)
 {
-	sound_num |= data << 8;
-
-	if (sound_num == 0x2000)
-		ADPCM_setvol(0,255);
-	else
-		ADPCM_setvol(0,128);
-
-	ADPCM_trigger(0,sound_num);
+	msm_data_offs = (msm_data_offs & 0x00ff) | (data << 8);
 }
+
+static void msm_reset_w(int offset,int data)
+{
+	MSM5205_reset_w(0,data ? 0 : 1);
+}
+
+void tehkanwc_adpcm_int (int data)
+{
+	static int toggle;
+
+	unsigned char *SAMPLES = Machine->memory_region[4];
+	int msm_data = SAMPLES[msm_data_offs & 0x7fff];
+
+	if (toggle == 0)
+		MSM5205_data_w(0,(msm_data >> 4) & 0x0f);
+	else
+	{
+		MSM5205_data_w(0,msm_data & 0x0f);
+		msm_data_offs++;
+	}
+
+	toggle ^= 1;
+}
+
+/* End of MSM with counters emulation */
 
 
 
@@ -235,7 +254,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
-	{ 0x8001, 0x8001, MWA_NOP },	/* ???? */
+	{ 0x8001, 0x8001, msm_reset_w },/* MSM51xx reset */
 	{ 0x8002, 0x8002, MWA_NOP },	/* ?? written in the IRQ handler */
 	{ 0x8003, 0x8003, MWA_NOP },	/* ?? written in the NMI handler */
 	{ 0xc000, 0xc000, sound_answer_w },	/* answer for main CPU */
@@ -436,7 +455,13 @@ static struct AY8910interface ay8910_interface =
 	{ tehkanwc_portB_w, 0 }
 };
 
-
+static struct MSM5205interface msm5205_interface =
+{
+	1,		/* 1 chip */
+	8000,	/* 8000Hz playback ? */
+	tehkanwc_adpcm_int,		/* interrupt function */
+	{ 255 }
+};
 
 static struct MachineDriver machine_driver =
 {
@@ -488,8 +513,8 @@ static struct MachineDriver machine_driver =
 			&ay8910_interface
 		},
 		{
-			SOUND_ADPCM,
-			&adpcm_interface
+			SOUND_MSM5205,
+            &msm5205_interface
 		}
 	}
 };
@@ -504,93 +529,75 @@ static struct MachineDriver machine_driver =
 
 ROM_START( tehkanwc_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "twc-1.bin", 0x0000, 0x4000, 0xbf8ac078 , 0x34d6d5ff )
-	ROM_LOAD( "twc-2.bin", 0x4000, 0x4000, 0x75a41fb0 , 0x7017a221 )
-	ROM_LOAD( "twc-3.bin", 0x8000, 0x4000, 0xf0e98f11 , 0x8b662902 )
+	ROM_LOAD( "twc-1.bin",    0x0000, 0x4000, 0x34d6d5ff )
+	ROM_LOAD( "twc-2.bin",    0x4000, 0x4000, 0x7017a221 )
+	ROM_LOAD( "twc-3.bin",    0x8000, 0x4000, 0x8b662902 )
 
 	ROM_REGION_DISPOSE(0x24000)	/* 64k for graphics (disposed after conversion) */
-	ROM_LOAD( "twc-12.bin", 0x00000, 0x4000, 0xaa4b72a3 , 0xa9e274f8 )	/* fg tiles */
-	ROM_LOAD( "twc-8.bin", 0x04000, 0x8000, 0x75636cf3 , 0x055a5264 )	/* sprites */
-	ROM_LOAD( "twc-7.bin", 0x0c000, 0x8000, 0x769572b5 , 0x59faebe7 )
-	ROM_LOAD( "twc-11.bin", 0x14000, 0x8000, 0xeea545a1 , 0x669389fc )	/* bg tiles */
-	ROM_LOAD( "twc-9.bin", 0x1c000, 0x8000, 0x6d4f0a05 , 0x347ef108 )
+	ROM_LOAD( "twc-12.bin",   0x00000, 0x4000, 0xa9e274f8 )	/* fg tiles */
+	ROM_LOAD( "twc-8.bin",    0x04000, 0x8000, 0x055a5264 )	/* sprites */
+	ROM_LOAD( "twc-7.bin",    0x0c000, 0x8000, 0x59faebe7 )
+	ROM_LOAD( "twc-11.bin",   0x14000, 0x8000, 0x669389fc )	/* bg tiles */
+	ROM_LOAD( "twc-9.bin",    0x1c000, 0x8000, 0x347ef108 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "twc-4.bin", 0x0000, 0x8000, 0xff8f3651 , 0x70a9f883 )
+	ROM_LOAD( "twc-4.bin",    0x0000, 0x8000, 0x70a9f883 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "twc-6.bin", 0x0000, 0x4000, 0xccbc61e8 , 0xe3112be2 )
+	ROM_LOAD( "twc-6.bin",    0x0000, 0x4000, 0xe3112be2 )
 
-	ROM_REGION(0x4000)	/* 64k for adpcm sounds */
-	ROM_LOAD( "twc-5.bin", 0x0000, 0x4000, 0x425783fb , 0x444b5544 )
+	ROM_REGION(0x8000)	/* 32k for adpcm sounds */
+	ROM_LOAD( "twc-5.bin",    0x0000, 0x4000, 0x444b5544 )
 ROM_END
 
 ROM_START( gridiron_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gfight1.bin", 0x0000, 0x4000, 0xd620e7e0 , 0x51612741 )
-	ROM_LOAD( "gfight2.bin", 0x4000, 0x4000, 0x1a9d4459 , 0xa678db48 )
-	ROM_LOAD( "gfight3.bin", 0x8000, 0x4000, 0x4f3af468 , 0x8c227c33 )
+	ROM_LOAD( "gfight1.bin",  0x0000, 0x4000, 0x51612741 )
+	ROM_LOAD( "gfight2.bin",  0x4000, 0x4000, 0xa678db48 )
+	ROM_LOAD( "gfight3.bin",  0x8000, 0x4000, 0x8c227c33 )
 
 	ROM_REGION_DISPOSE(0x24000)	/* 64k for graphics (disposed after conversion) */
-	ROM_LOAD( "gfight7.bin", 0x00000, 0x4000, 0x3937e885 , 0x04390cca )	/* fg tiles */
-	ROM_LOAD( "gfight8.bin", 0x04000, 0x4000, 0xd38a3450 , 0x5de6a70f )	/* sprites */
-	ROM_LOAD( "gfight9.bin", 0x08000, 0x4000, 0xa01e61fc , 0xeac9dc16 )
-	ROM_LOAD( "gfight10.bin", 0x0c000, 0x4000, 0xac85ae41 , 0x61d0690f )
+	ROM_LOAD( "gfight7.bin",  0x00000, 0x4000, 0x04390cca )	/* fg tiles */
+	ROM_LOAD( "gfight8.bin",  0x04000, 0x4000, 0x5de6a70f )	/* sprites */
+	ROM_LOAD( "gfight9.bin",  0x08000, 0x4000, 0xeac9dc16 )
+	ROM_LOAD( "gfight10.bin", 0x0c000, 0x4000, 0x61d0690f )
 	/* 10000-13fff empty */
-	ROM_LOAD( "gfight11.bin", 0x14000, 0x4000, 0x6fc495e4 , 0x80b09c03 )	/* bg tiles */
-	ROM_LOAD( "gfight12.bin", 0x18000, 0x4000, 0xe071fec3 , 0x1b615eae )
+	ROM_LOAD( "gfight11.bin", 0x14000, 0x4000, 0x80b09c03 )	/* bg tiles */
+	ROM_LOAD( "gfight12.bin", 0x18000, 0x4000, 0x1b615eae )
 	/* 1c000-23fff empty */
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gfight4.bin", 0x0000, 0x4000, 0xce164204 , 0x8821415f )
+	ROM_LOAD( "gfight4.bin",  0x0000, 0x4000, 0x8821415f )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gfight5.bin", 0x0000, 0x4000, 0x4986b4ca , 0x92ca3c07 )
+	ROM_LOAD( "gfight5.bin",  0x0000, 0x4000, 0x92ca3c07 )
 
-	ROM_REGION(0x8000)	/* 64k for adpcm sounds */
-	ROM_LOAD( "gfight6.bin", 0x0000, 0x4000, 0x1a15a82b , 0xd05d463d )
+	ROM_REGION(0x8000)	/* 32k for adpcm sounds */
+	ROM_LOAD( "gfight6.bin",  0x0000, 0x4000, 0xd05d463d )
 ROM_END
 
 ROM_START( teedoff_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "to-1.bin", 0x0000, 0x4000, 0xaaa9ebd7 , 0xcc2aebc5 )
-	ROM_LOAD( "to-2.bin", 0x4000, 0x4000, 0x0132ca22 , 0xf7c9f138 )
-	ROM_LOAD( "to-3.bin", 0x8000, 0x4000, 0x05a337a1 , 0xa0f0a6da )
+	ROM_LOAD( "to-1.bin",     0x0000, 0x4000, 0xcc2aebc5 )
+	ROM_LOAD( "to-2.bin",     0x4000, 0x4000, 0xf7c9f138 )
+	ROM_LOAD( "to-3.bin",     0x8000, 0x4000, 0xa0f0a6da )
 
 	ROM_REGION_DISPOSE(0x24000)	/* 64k for graphics (disposed after conversion) */
-	ROM_LOAD( "to-12.bin", 0x00000, 0x4000, 0x6ba92983 , 0x4f44622c )	/* fg tiles */
-	ROM_LOAD( "to-8.bin", 0x04000, 0x8000, 0x7f159985 , 0x363bd1ba )	/* sprites */
-	ROM_LOAD( "to-7.bin", 0x0c000, 0x8000, 0x125ba6ef , 0x6583fa5b )
-	ROM_LOAD( "to-11.bin", 0x14000, 0x8000, 0x3e826868 , 0x1ec00cb5 )	/* bg tiles */
-	ROM_LOAD( "to-9.bin", 0x1c000, 0x8000, 0x30a3b693 , 0xa14347f0 )
+	ROM_LOAD( "to-12.bin",    0x00000, 0x4000, 0x4f44622c )	/* fg tiles */
+	ROM_LOAD( "to-8.bin",     0x04000, 0x8000, 0x363bd1ba )	/* sprites */
+	ROM_LOAD( "to-7.bin",     0x0c000, 0x8000, 0x6583fa5b )
+	ROM_LOAD( "to-11.bin",    0x14000, 0x8000, 0x1ec00cb5 )	/* bg tiles */
+	ROM_LOAD( "to-9.bin",     0x1c000, 0x8000, 0xa14347f0 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "to-4.bin", 0x0000, 0x8000, 0x9cafeca9 , 0xe922cbd2 )
+	ROM_LOAD( "to-4.bin",     0x0000, 0x8000, 0xe922cbd2 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "to-6.bin", 0x0000, 0x4000, 0xa6e01ccc , 0xd8dfe1c8 )
+	ROM_LOAD( "to-6.bin",     0x0000, 0x4000, 0xd8dfe1c8 )
 
-	ROM_REGION(0x8000)	/* 64k for adpcm sounds */
-	ROM_LOAD( "to-5.bin", 0x0000, 0x8000, 0x379b170b , 0xe5e4246b )
+	ROM_REGION(0x8000)	/* 32k for adpcm sounds */
+	ROM_LOAD( "to-5.bin",     0x0000, 0x8000, 0xe5e4246b )
 ROM_END
-
-
-/* This table was recreated from the sound rom */
-/* Originally it uses a OKI M51xx with counters */
-ADPCM_SAMPLES_START( twc_samples )
-	ADPCM_SAMPLE( 0x0000, 0x0000, (0x01f8-0x0000)*2 )
-	ADPCM_SAMPLE( 0x0200, 0x0200, (0x04f8-0x0200)*2 )
-	ADPCM_SAMPLE( 0x0500, 0x0500, (0x06f8-0x0500)*2 )
-	ADPCM_SAMPLE( 0x0700, 0x0700, (0x08f8-0x0700)*2 )
-	ADPCM_SAMPLE( 0x0900, 0x0900, (0x0af8-0x0900)*2 )
-	ADPCM_SAMPLE( 0x0b00, 0x0b00, (0x0cf8-0x0b00)*2 )
-	ADPCM_SAMPLE( 0x0d00, 0x0d00, (0x0ef8-0x0d00)*2 )
-	ADPCM_SAMPLE( 0x0f00, 0x0f00, (0x10f8-0x0f00)*2 )
-	ADPCM_SAMPLE( 0x1100, 0x1100, (0x12f8-0x1100)*2 )
-	ADPCM_SAMPLE( 0x1300, 0x1300, (0x1ff8-0x1300)*2 )
-	ADPCM_SAMPLE( 0x2000, 0x2000, (0x2ff8-0x2000)*2 )
-ADPCM_SAMPLES_END
-
 
 
 static int tehkanwc_hiload(void)
@@ -645,7 +652,7 @@ struct GameDriver tehkanwc_driver =
 	tehkanwc_rom,
 	0, 0,
 	0,
-	(void*)twc_samples,	/* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports,
 
@@ -670,7 +677,7 @@ struct GameDriver gridiron_driver =
 	gridiron_rom,
 	0, 0,
 	0,
-	(void*)twc_samples,	/* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports,
 
@@ -695,7 +702,7 @@ struct GameDriver teedoff_driver =
 	teedoff_rom,
 	0, 0,
 	0,
-	(void*)twc_samples,	/* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports,
 

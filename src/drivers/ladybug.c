@@ -472,86 +472,86 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ladybug_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "lb1.cpu", 0x0000, 0x1000, 0x00e5eaaf , 0xd09e0adb )
-	ROM_LOAD( "lb2.cpu", 0x1000, 0x1000, 0x758e9c98 , 0x88bc4a0a )
-	ROM_LOAD( "lb3.cpu", 0x2000, 0x1000, 0x4295ccd7 , 0x53e9efce )
-	ROM_LOAD( "lb4.cpu", 0x3000, 0x1000, 0xad30c2b6 , 0xffc424d7 )
-	ROM_LOAD( "lb5.cpu", 0x4000, 0x1000, 0xc4da41d6 , 0xad6af809 )
-	ROM_LOAD( "lb6.cpu", 0x5000, 0x1000, 0x18aaf1ec , 0xcf1acca4 )
+	ROM_LOAD( "lb1.cpu",      0x0000, 0x1000, 0xd09e0adb )
+	ROM_LOAD( "lb2.cpu",      0x1000, 0x1000, 0x88bc4a0a )
+	ROM_LOAD( "lb3.cpu",      0x2000, 0x1000, 0x53e9efce )
+	ROM_LOAD( "lb4.cpu",      0x3000, 0x1000, 0xffc424d7 )
+	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
+	ROM_LOAD( "lb6.cpu",      0x5000, 0x1000, 0xcf1acca4 )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lb9.vid", 0x0000, 0x1000, 0x80bd96ef , 0x77b1da1e )
-	ROM_LOAD( "lb10.vid", 0x1000, 0x1000, 0xec7c93c8 , 0xaa82e00b )
-	ROM_LOAD( "lb8.cpu", 0x2000, 0x1000, 0x2d4d4821 , 0x8b99910b )
-	ROM_LOAD( "lb7.cpu", 0x3000, 0x1000, 0xf685434d , 0x86a5b448 )
+	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
+	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
+	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
+	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
 
 	ROM_REGION(0x0060)	/* color proms */
-	ROM_LOAD( "10-2.vid", 0x0000, 0x0020, 0x1a9a9474 , 0xdf091e52 ) /* palette */
-	ROM_LOAD( "10-1.vid", 0x0020, 0x0020, 0x8d829b62 , 0x40640d8f ) /* sprite color lookup table */
-	ROM_LOAD( "10-3.vid", 0x0040, 0x0020, 0x1f1c2020 , 0x27fa3a50 ) /* ?? */
+	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
+	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
+	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( ladybugb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "lb1a.cpu", 0x0000, 0x1000, 0x900b9dd5 , 0xec135e54 )
-	ROM_LOAD( "lb2a.cpu", 0x1000, 0x1000, 0x05ff6851 , 0x3049c5c6 )
-	ROM_LOAD( "lb3a.cpu", 0x2000, 0x1000, 0xf8943316 , 0xb0fef837 )
-	ROM_LOAD( "lb4.cpu", 0x3000, 0x1000, 0xad30c2b6 , 0xffc424d7 )
-	ROM_LOAD( "lb5.cpu", 0x4000, 0x1000, 0xc4da41d6 , 0xad6af809 )
-	ROM_LOAD( "lb6a.cpu", 0x5000, 0x1000, 0x18b2f1e4 , 0x88c8002a )
+	ROM_LOAD( "lb1a.cpu",     0x0000, 0x1000, 0xec135e54 )
+	ROM_LOAD( "lb2a.cpu",     0x1000, 0x1000, 0x3049c5c6 )
+	ROM_LOAD( "lb3a.cpu",     0x2000, 0x1000, 0xb0fef837 )
+	ROM_LOAD( "lb4.cpu",      0x3000, 0x1000, 0xffc424d7 )
+	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
+	ROM_LOAD( "lb6a.cpu",     0x5000, 0x1000, 0x88c8002a )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lb9.vid", 0x0000, 0x1000, 0x80bd96ef , 0x77b1da1e )
-	ROM_LOAD( "lb10.vid", 0x1000, 0x1000, 0xec7c93c8 , 0xaa82e00b )
-	ROM_LOAD( "lb8.cpu", 0x2000, 0x1000, 0x2d4d4821 , 0x8b99910b )
-	ROM_LOAD( "lb7.cpu", 0x3000, 0x1000, 0xf685434d , 0x86a5b448 )
+	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
+	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
+	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
+	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
 
 	ROM_REGION(0x0060)	/* color proms */
-	ROM_LOAD( "10-2.vid", 0x0000, 0x0020, 0x1a9a9474 , 0xdf091e52 ) /* palette */
-	ROM_LOAD( "10-1.vid", 0x0020, 0x0020, 0x8d829b62 , 0x40640d8f ) /* sprite color lookup table */
-	ROM_LOAD( "10-3.vid", 0x0040, 0x0020, 0x1f1c2020 , 0x27fa3a50 ) /* ?? */
+	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
+	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
+	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( snapjack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sj2a.bin", 0x0000, 0x1000, 0x37ef057b , 0x6b30fcda )
-	ROM_LOAD( "sj2b.bin", 0x1000, 0x1000, 0x5f6a17c6 , 0x1f1088d1 )
-	ROM_LOAD( "sj2c.bin", 0x2000, 0x1000, 0x3cf098fc , 0xedd65f3a )
-	ROM_LOAD( "sj2d.bin", 0x3000, 0x1000, 0x06fa91f2 , 0xf4481192 )
-	ROM_LOAD( "sj2e.bin", 0x4000, 0x1000, 0x135d2527 , 0x1bff7d05 )
-	ROM_LOAD( "sj2f.bin", 0x5000, 0x1000, 0x734f0213 , 0x21793edf )
+	ROM_LOAD( "sj2a.bin",     0x0000, 0x1000, 0x6b30fcda )
+	ROM_LOAD( "sj2b.bin",     0x1000, 0x1000, 0x1f1088d1 )
+	ROM_LOAD( "sj2c.bin",     0x2000, 0x1000, 0xedd65f3a )
+	ROM_LOAD( "sj2d.bin",     0x3000, 0x1000, 0xf4481192 )
+	ROM_LOAD( "sj2e.bin",     0x4000, 0x1000, 0x1bff7d05 )
+	ROM_LOAD( "sj2f.bin",     0x5000, 0x1000, 0x21793edf )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sj2i.bin", 0x0000, 0x1000, 0xffa6a2ec , 0xff2011c7 )
-	ROM_LOAD( "sj2j.bin", 0x1000, 0x1000, 0x2506c6f0 , 0xf097babb )
-	ROM_LOAD( "sj2h.bin", 0x2000, 0x1000, 0xdd2fa07f , 0xb7f105b6 )
-	ROM_LOAD( "sj2g.bin", 0x3000, 0x1000, 0x888dec19 , 0x1cdb03a8 )
+	ROM_LOAD( "sj2i.bin",     0x0000, 0x1000, 0xff2011c7 )
+	ROM_LOAD( "sj2j.bin",     0x1000, 0x1000, 0xf097babb )
+	ROM_LOAD( "sj2h.bin",     0x2000, 0x1000, 0xb7f105b6 )
+	ROM_LOAD( "sj2g.bin",     0x3000, 0x1000, 0x1cdb03a8 )
 
 	ROM_REGION(0x0060)	/* color proms */
-	ROM_LOAD( "sj8t.bin", 0x0000, 0x0020, 0x2737d1d1 , 0xcbbd9dd1 ) /* palette */
-	ROM_LOAD( "sj9k.bin", 0x0020, 0x0020, 0xb426633a , 0x5b16fbd2 ) /* sprite color lookup table */
-	ROM_LOAD( "sj9h.bin", 0x0040, 0x0020, 0x1f1c2020 , 0x27fa3a50 ) /* ?? */
+	ROM_LOAD( "sj8t.bin",     0x0000, 0x0020, 0xcbbd9dd1 ) /* palette */
+	ROM_LOAD( "sj9k.bin",     0x0020, 0x0020, 0x5b16fbd2 ) /* sprite color lookup table */
+	ROM_LOAD( "sj9h.bin",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( cavenger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "1", 0x0000, 0x1000, 0x8851691b , 0x9e0cc781 )
-	ROM_LOAD( "2", 0x1000, 0x1000, 0xfc637e8b , 0x5ce5b950 )
-	ROM_LOAD( "3", 0x2000, 0x1000, 0x46fcdaba , 0xbc28218d )
-	ROM_LOAD( "4", 0x3000, 0x1000, 0xbc747536 , 0x2b32e9f5 )
-	ROM_LOAD( "5", 0x4000, 0x1000, 0x25f39d9f , 0xd117153e )
-	ROM_LOAD( "6", 0x5000, 0x1000, 0x38961b88 , 0xc7d366cb )
+	ROM_LOAD( "1",            0x0000, 0x1000, 0x9e0cc781 )
+	ROM_LOAD( "2",            0x1000, 0x1000, 0x5ce5b950 )
+	ROM_LOAD( "3",            0x2000, 0x1000, 0xbc28218d )
+	ROM_LOAD( "4",            0x3000, 0x1000, 0x2b32e9f5 )
+	ROM_LOAD( "5",            0x4000, 0x1000, 0xd117153e )
+	ROM_LOAD( "6",            0x5000, 0x1000, 0xc7d366cb )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9", 0x0000, 0x1000, 0x6522fd1a , 0x63357785 )
-	ROM_LOAD( "0", 0x1000, 0x1000, 0x6132e3d8 , 0x52ad1133 )
-	ROM_LOAD( "8", 0x2000, 0x1000, 0x366d7ec1 , 0xb022bf2d )
+	ROM_LOAD( "9",            0x0000, 0x1000, 0x63357785 )
+	ROM_LOAD( "0",            0x1000, 0x1000, 0x52ad1133 )
+	ROM_LOAD( "8",            0x2000, 0x1000, 0xb022bf2d )
 /*	ROM_LOAD( "7", 0x3000, 0x1000, 0x )	empty socket */
 
 	ROM_REGION(0x0060)	/* color proms */
-	ROM_LOAD( "t8.bpr", 0x0000, 0x0020, 0x1a9080d4 , 0x42a24dd5 ) /* palette */
-	ROM_LOAD( "k9.bpr", 0x0020, 0x0020, 0xc099a20f , 0xd736b8de ) /* sprite color lookup table */
-	ROM_LOAD( "h9.bpr", 0x0040, 0x0020, 0x1f1c2020 , 0x27fa3a50 ) /* ?? */
+	ROM_LOAD( "t8.bpr",       0x0000, 0x0020, 0x42a24dd5 ) /* palette */
+	ROM_LOAD( "k9.bpr",       0x0020, 0x0020, 0xd736b8de ) /* sprite color lookup table */
+	ROM_LOAD( "h9.bpr",       0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 

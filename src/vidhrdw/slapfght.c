@@ -9,19 +9,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int flipscreen;
+unsigned char *slapfight_videoram;
+unsigned char *slapfight_colorram;
+int slapfight_videoram_size;
+unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi;
 
-extern unsigned char *slapfight_bg_ram1;
-extern unsigned char *slapfight_bg_ram2;
-extern int slapfight_bg_ram_size;
-
-extern unsigned char *spriteram;
-extern int spriteram_size;
-
-extern int slapfight_scroll_pixel_x;
-extern int slapfight_scroll_pixel_y;
-extern int slapfight_scroll_char_x;
-extern int slapfight_scroll_char_y;
 
 /***************************************************************************
 
@@ -69,26 +61,6 @@ void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *col
 }
 
 
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int slapfight_vh_start(void)
-{
-	if (generic_vh_start() != 0) return 1; else return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void slapfight_vh_stop(void)
-{
-	generic_vh_stop();
-}
 
 
 /***************************************************************************
@@ -97,110 +69,74 @@ void slapfight_vh_stop(void)
   Do NOT call osd_update_display() from this function, it will be called by
   the main emulation engine.
 
-  BG Scroll area byte decode
-  --------------------------
-  Tile Word  BG_RAM1 Tile7  Tile6  Tile5  Tile4  Tile3  Tile2  Tile1  Tile0
-             BG_RAM2 Colr7  Colr6  Colr5  Colr4  Tile11 Tile10 Tile9  Tile8
-
-             Lower 4 colour bits are taken from the tile pixel
-
-//  Sprite ram byte decode
-//  ----------------------
-//  Byte 0 : NNNN NNNN   Number of tile
-//  Byte 1 : XXXX XXXX   X
-//  Byte 2 : NN?C CCCO   Hi-Number + Upper 4 colour bits + Sprite On/Off
-//  Byte 3 : YYYY YYYY   Y
-
-  Sprite ram byte decode
-  ----------------------
-  Byte 0 : NNNN NNNN   Number of sprite
-  Byte 1 : XXXX XXXX   X
-  Byte 2 : NN?C CCCX   Hi-Number + Upper 4 colour bits + X high bit
-  Byte 3 : YYYY YYYY   Y
-
 ***************************************************************************/
 void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-	int addr,scrx,scry,scrollx;
 
-	/* Draw the background layer */
 
-	for (scry = 2 ; scry < 32 ; scry++)
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		for (scrx = 0 ; scrx < 37 ; scrx++)
+		if (dirtybuffer[offs])
 		{
-			scrollx=slapfight_scroll_char_x+27;
-			scrollx=(scrollx+scrx) % 64;
+			int sx,sy;
 
-			if(flipscreen) addr =((31-(scry-2))*64)+(63-scrollx) ; else addr = ((scry-2)*64)+scrollx;
 
-			drawgfx(bitmap,Machine->gfx[1],
-				slapfight_bg_ram1[addr]+((slapfight_bg_ram2[addr]&0x0f)<<8) ,
-				(slapfight_bg_ram2[addr]>>4)&0x0f,
-				flipscreen,flipscreen,
-				(8*scrx)-slapfight_scroll_pixel_x,8*scry,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			dirtybuffer[offs] = 0;
+
+			sx = offs % 64;
+			sy = offs / 64;
+
+			drawgfx(tmpbitmap,Machine->gfx[1],
+					videoram[offs] + ((colorram[offs] & 0x0f) << 8),
+					(colorram[offs] & 0xf0) >> 4,
+					0,0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
-	/* Draw the sprite layer */
 
-	for (offs = 0 ; offs<spriteram_size ;  offs+=4)
+	/* copy the temporary bitmap to the screen */
+	{
+		int scrollx,scrolly;
+
+
+		scrollx = -(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi);
+		scrolly = 16;
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* Draw the sprites */
+	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
 		drawgfx(bitmap,Machine->gfx[2],
-			spriteram[offs] + ((spriteram[offs+2]&0xC0)<<2),
-			(spriteram[offs+2]>>1)&0x0f,
-			flipscreen,flipscreen,  /* flip not found*/
-			(spriteram[offs+1]-12+((spriteram[offs+2] & 0x01)<<8)), spriteram[offs+3],		/* Mysterious fudge factor sprite offset */
+			spriteram[offs] + ((spriteram[offs+2] & 0xc0) << 2),
+			(spriteram[offs+2] & 0x1e) >>1,
+			0,0,
+		/* Mysterious fudge factor sprite offset */
+			(spriteram[offs+1] + ((spriteram[offs+2] & 0x01) << 8)) - 13,spriteram[offs+3],
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
+
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-
-	for (scry = 2 ; scry < 32 ; scry++)
+	for (offs = slapfight_videoram_size - 1;offs >= 0;offs--)
 	{
-		for (scrx = 0 ; scrx < 37 ; scrx++)
-		{
-			if(flipscreen) addr =((31-(scry))*64)+(63-scrx) ; else addr = (scry*64)+scrx;
+		int sx,sy;
 
-			drawgfx(bitmap,Machine->gfx[0],
-				videoram[addr] + ((colorram[addr]&0x03)<<8) ,
-				(colorram[addr]&0xFC)>>2,	// Was 0x7f
-				flipscreen,flipscreen,
-				8*scrx,8*scry,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
+
+		sx = offs % 64;
+		sy = offs / 64;
+
+		drawgfx(bitmap,Machine->gfx[0],
+			slapfight_videoram[offs] + ((slapfight_colorram[offs] & 0x03) << 8),
+			(slapfight_colorram[offs] & 0xfc) >> 2,
+			0,0,
+			8*sx,8*sy,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-
-// Debug output for scrolling
-
-#if 0
-	{
-		char debugstr[256];
-		int x,i;
-		sprintf(debugstr,"Char=%02d Pixel=%02d",slapfight_scroll_char_x,slapfight_scroll_pixel_x);
-
-		x = (Machine->uiwidth - 16*Machine->uifont->width)/2;
-
-		for (i = 0;i < 16;i++)
-		{
-			drawgfx(bitmap,Machine->uifont,
-				(unsigned int)debugstr[i],
-				DT_COLOR_WHITE,
-				0,0,
-				64,64+(i*8),
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-#endif
-
-#if 0
-	if (osd_key_pressed(OSD_KEY_N))
-	 {
-	  while(osd_key_pressed(OSD_KEY_N));
-	  while(!osd_key_pressed(OSD_KEY_N));
-	 }
-#endif
-
 }

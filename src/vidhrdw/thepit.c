@@ -125,8 +125,7 @@ void thepit_sound_enable_w(int offset, int data)
 {
 	if (sound_enabled && !data)
 	{
-		AYResetChip(0);
-		AY8910_sh_update();
+		AY8910_reset(0);
 	}
 
 	sound_enabled = data;

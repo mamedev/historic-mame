@@ -68,6 +68,8 @@ void digdug_sharedram_w(int offset,int data)
 
 ***************************************************************************/
 static int customio_command;
+static int leftcoinpercred,leftcredpercoin;
+static int rightcoinpercred,rightcredpercoin;
 static unsigned char customio[16];
 static int mode;
 
@@ -76,6 +78,19 @@ void digdug_customio_data_w(int offset,int data)
 	customio[offset] = data;
 
 if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_getpc(),offset,data);
+
+	switch (customio_command)
+	{
+		case 0xc1:
+			if (offset == 8)
+			{
+				leftcoinpercred = customio[2] & 0x0f;
+				leftcredpercoin = customio[3] & 0x0f;
+				rightcoinpercred = customio[4] & 0x0f;
+				rightcredpercoin = customio[5] & 0x0f;
+			}
+			break;
+	}
 }
 
 
@@ -86,28 +101,55 @@ int digdug_customio_data_r(int offset)
 		case 0x71:
 			if (offset == 0)
 			{
-				int p3 = readinputport (3);
-
-				/* check if the user inserted a coin */
-				if ((p3 & 0x01) == 0 && credits < 99)
-					credits++;
-
-				/* check if the user inserted a coin */
-				if ((p3 & 0x02) == 0 && credits < 99)
-					credits++;
-
-				/* check for 1 player start button */
-				if ((p3 & 0x10) == 0 && credits >= 1)
-					credits--;
-
-				/* check for 2 players start button */
-				if ((p3 & 0x20) == 0 && credits >= 2)
-					credits -= 2;
-
 				if (mode)	/* switch mode */
-					return (p3 & 0x80);
+				{
+					/* bit 7 is the service switch */
+					return readinputport(3);
+				}
 				else	/* credits mode: return number of credits in BCD format */
+				{
+					int in;
+					static int leftcoininserted;
+					static int rightcoininserted;
+
+
+					in = readinputport(3);
+
+					/* check if the user inserted a coin */
+					if (leftcoinpercred > 0)
+					{
+						if ((in & 0x01) == 0 && credits < 99)
+						{
+							leftcoininserted++;
+							if (leftcoininserted >= leftcoinpercred)
+							{
+								credits += leftcredpercoin;
+								leftcoininserted = 0;
+							}
+						}
+						if ((in & 0x02) == 0 && credits < 99)
+						{
+							rightcoininserted++;
+							if (rightcoininserted >= rightcoinpercred)
+							{
+								credits += rightcredpercoin;
+								rightcoininserted = 0;
+							}
+						}
+					}
+					else credits = 2;
+
+
+					/* check for 1 player start button */
+					if ((in & 0x10) == 0)
+						if (credits >= 1) credits--;
+
+					/* check for 2 players start button */
+					if ((in & 0x20) == 0)
+						if (credits >= 2) credits -= 2;
+
 					return (credits / 10) * 16 + credits % 10;
+				}
 			}
 			else if (offset == 1)
 			{

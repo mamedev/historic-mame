@@ -317,22 +317,22 @@ static struct MachineDriver machine_driver =
 
 ROM_START( stactics_rom )
     ROM_REGION(0x10000) /* 64k for code */
-    ROM_LOAD( "epr-218x", 0x0000, 0x0800, 0x7576d5ae , 0xb1186ad2 )
-    ROM_LOAD( "epr-219x", 0x0800, 0x0800, 0xf1aa5280 , 0x3b86036d )
-    ROM_LOAD( "epr-220x", 0x1000, 0x0800, 0x2b6ef590 , 0xc58702da )
-    ROM_LOAD( "epr-221x", 0x1800, 0x0800, 0x1ada4576 , 0xe327639e )
-    ROM_LOAD( "epr-222y", 0x2000, 0x0800, 0xb3905aae , 0x24dd2bcc )
-    ROM_LOAD( "epr-223x", 0x2800, 0x0800, 0x3c700510 , 0x7fef0940 )
+    ROM_LOAD( "epr-218x",     0x0000, 0x0800, 0xb1186ad2 )
+    ROM_LOAD( "epr-219x",     0x0800, 0x0800, 0x3b86036d )
+    ROM_LOAD( "epr-220x",     0x1000, 0x0800, 0xc58702da )
+    ROM_LOAD( "epr-221x",     0x1800, 0x0800, 0xe327639e )
+    ROM_LOAD( "epr-222y",     0x2000, 0x0800, 0x24dd2bcc )
+    ROM_LOAD( "epr-223x",     0x2800, 0x0800, 0x7fef0940 )
 
     ROM_REGION_DISPOSE(0x1060)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "epr-217", 0x0000, 0x0800, 0x6ae1c181 , 0x38259f5f )      /* LED fire beam data      */
-    ROM_LOAD( "pr55", 0x0800, 0x0800, 0x81500606 , 0xf162673b )      /* timing PROM (unused)    */
-    ROM_LOAD( "pr65", 0x1000, 0x0020, 0x59c440c0 , 0xa1506b9d )      /* timing PROM (unused)    */
-    ROM_LOAD( "pr66", 0x1020, 0x0020, 0x8ed2742c , 0x78dcf300 )      /* timing PROM (unused)    */
-    ROM_LOAD( "pr67", 0x1040, 0x0020, 0xb11e0f00 , 0xb27874e7 )      /* LED timing ROM (unused) */
+    ROM_LOAD( "epr-217",      0x0000, 0x0800, 0x38259f5f )      /* LED fire beam data      */
+    ROM_LOAD( "pr55",         0x0800, 0x0800, 0xf162673b )      /* timing PROM (unused)    */
+    ROM_LOAD( "pr65",         0x1000, 0x0020, 0xa1506b9d )      /* timing PROM (unused)    */
+    ROM_LOAD( "pr66",         0x1020, 0x0020, 0x78dcf300 )      /* timing PROM (unused)    */
+    ROM_LOAD( "pr67",         0x1040, 0x0020, 0xb27874e7 )      /* LED timing ROM (unused) */
 
     ROM_REGION(0x0800)  /* color prom */
-    ROM_LOAD( "pr54", 0x0000, 0x0800, 0xde780000 , 0x9640bd6e )         /* color/priority prom */
+    ROM_LOAD( "pr54",         0x0000, 0x0800, 0x9640bd6e )         /* color/priority prom */
 
 
 ROM_END

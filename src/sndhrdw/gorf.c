@@ -49,25 +49,37 @@ static const char *PhonemeTable[65] =
 
 static const char *GorfWordTable[] =
 {
- "A2AYY1","A2E1","UH1GEH1I3N","AE1EH2M","AEM","and.sam","UH1NAH2I1YLA2SHUH2N","AH2NUHTHER","AH1NUHTHVRR",
- "AH1R","UHR","UH1TAEEH3K","avenger.sam","BAEEH3D","BAEEH1D","be.sam",
- "been.sam","BAH2I3Y1T","but.sam","BUH1DTTEH2NN","KUHDEH2T",
- "KAE1NUH1T","captain.sam","chronicles.sam","KO1UH3I3E1N","KO1UH3I3E1NS","colonel.sam",
- "KAH1NKER","KAH1NCHEHSNEHS","DE1FEH1NDER","destroy.sam","DE1STRO1I1Y1D","DYVAH1U1ER",
- "DU1UM","DRAW1S","DUHST","empire.sam","EHND",
- "EH1NEH1MY","EH1SKA1E1P","flagship.sam","FO1R","GUH1LAEKTI1K",
- "GAE1LUH1KSY","general.sam","GDTO1O1RRFF","GDTO1RFYA2N","GDTO1RFE1EH2N","GDTO1RFYA2NS",
- "GAH1EH3T","hahahahu.sam","hahaher.sam","harder.sam","have.sam",
- "hitting.sam","AH1I1Y", "AH1I1Y1","I1MPAH1SI1BL","in.sam","insert.sam",
- "I1S","LI1V","LAWNG","MEE1T","MUU1V",
- "MAH2I1Y","NIR","next.sam","nice.sam","NO",
- "now.sam","PA1","PAH1I1R","PLA1AYER","PRE1PAE1ER","PRI1SI3NEH3RS",
- "promoted.sam","POO1IUSH","RO1U1BAH1T","RO1U1BAH1TS","seek.sam",
- "SHIP","shot.sam","SUHM","SPA2I3YS","PA0",
- "SERVAH2I1Y1VUH3L","TAK","THVUH","THVUH1","time.sam",
- "TU","TRAH2I1Y","UH2NBE1AYTUH3BUH3L","warrior.sam","warriors.sam","WI1L",
- "Y1I3U1","YIUU1U1","YI1U1U1","Y1IUU1U1","Y1I1U1U1","YOR","YU1O1RSEH1LF",
- 0
+ "A2AYY1","A2E1","UH1GEH1I3N","AE1EH2M","AEM",
+ "AE1EH3ND","UH1NAH2I1YLA2SHUH2N","AH2NUHTHER","AH1NUHTHVRR",
+ "AH1R","UHR","UH1VEH1EH3NNDJER","BAEEH3D","BAEEH1D","BE",
+ "BEH3EH1N","buht","BUH1DTTEH2NN","KUHDEH2T",
+ "KAE1NUH1T","KAE1EH3PTI3N",
+ "KRAH2UH3NI3KUH3O2LZ","KO1UH3I3E1N","KO1UH3I3E1NS",
+ "KERNAH2L","KAH1NCHEHSNEHS","DE1FEH1NDER",
+ "DE1STRO1I1Y","DE1STRO1I1Y1D",
+ "DU1UM","DRAW1S","EHMPAH2I3YR","EHND",
+ "EH1NEH1MY","EH1SKA1E1P","FLEHGSHIP",
+ "FOR","GUH1LAEKTI1K",
+ "DJEH2NERUH3L","GDTO1O1RRFF","GDTO1RFYA2N","GDTO1RFE1EH2N","GDTO1RFYA2NS",
+ "HAH1HAH1HAH1HAH1","hahaher.sam","HUHRDER",
+ "HAE1EH3V","HI1TI1NG","AH1I1Y", "AH1I1Y1","I1MPAH1SI1BL",
+ "IN*","INSERT","I1S","LI1V","LAWNG","MEE1T","MUU1V",
+ "MAH2I1Y","MAH2I3Y","NIR","NEHKST","NUH3AH2YS","NO",
+ "NAH1O1U1W","PA1","PLA1AYER","PRE1PAE1ER","PRI1SI3NEH3RS",
+ "PRUH2MOTEH3D","POO1IUSH","RO1U1BAH1T","RO1U1BAH1TS",
+ "RO1U1BAH1UH3TS","SEK", "SHIP","SHAH1UH3T","SUHM","SPA2I3YS","PA0",
+ "SERVAH2I1Y1VUH3L","TAK","THVUH","THVUH1",
+ "THUH","TAH1EH3YM","TU","TIUU1",
+ "UH2NBE1AYTUH3BUH3L",
+ "WORAYY1EH3R","WORAYY1EH3RS","WI1L",
+ "Y1I3U1","YIUU1U1","YI1U1U1","Y1IUU1U1","Y1I1U1U1","YOR","YU1O1RSEH1LF","s.sam",
+ "FO1R","FO2R","WIL","GDTO1RVYA2N",
+
+ "KO1UH3I3AYNN",
+ "UH1TAEEH3K","BAH2I3Y1T","KAH1NKER","DYVAH1U1ER","DUHST","GAE1LUH1KSY","GAH1EH3T",
+ "PAH1I1R","TRAH2I1Y","SU1PRE1N","AWL","HA2AYL",
+ "EH1MPAH1I1R",
+0
 };
 
 #define num_samples (sizeof(GorfWordTable)/sizeof(char *))
@@ -96,11 +108,11 @@ int gorf_speech_r(int offset)
     int i = 0;
 
     Z80_Regs regs;
-    int data;
+	 int data;
 
     totalword_ptr = totalword;
 
-    Z80_GetRegs(&regs);
+	 Z80_GetRegs(&regs);
     data = regs.BC.B.h;
 
     Phoneme = data & 0x3F;
@@ -108,41 +120,41 @@ int gorf_speech_r(int offset)
 
     if(errorlog) fprintf(errorlog,"Date : %d Speech : %s at intonation %d\n",Phoneme, PhonemeTable[Phoneme],Intonation);
 
-    if(Phoneme==63) {
+	 if(Phoneme==63) {
    		sample_stop(GorfChannel);
-                if (errorlog) fprintf(errorlog,"Clearing sample %s\n",totalword);
+                if (errorlog && strlen(totalword)>2) fprintf(errorlog,"Clearing sample %s\n",totalword);
                 totalword[0] = 0;				   /* Clear the total word stack */
-                return data;
+					 return data;
     }
 
 /* Phoneme to word translation */
 
-    if (strlen(totalword) == 0) {
-       strcpy(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
-       if (plural != 0) {
-          if (errorlog) fprintf(errorlog,"found a possible plural at %d\n",plural-1);
-          if (!strcmp("S",totalword)) {		   /* Plural check */
-             sample_start(GorfChannel, num_samples-2, 0);	   /* play the sample at position of word */
-             sample_adjust(GorfChannel, GorfBaseFrequency, -1);    /* play at correct rate */
-             totalword[0] = 0;				   /* Clear the total word stack */
-             oldword[0] = 0;				   /* Clear the total word stack */
-             return data;
-          } else {
-             plural=0;
-          }
-       }
-    } else
-       strcat(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
+	 if (strlen(totalword) == 0) {
+		 strcpy(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
+		 if (plural != 0) {
+			 if (errorlog) fprintf(errorlog,"found a possible plural at %d\n",plural-1);
+			 if (!strcmp("S",totalword)) {		   /* Plural check */
+				 sample_start(GorfChannel, num_samples-2, 0);	   /* play the sample at position of word */
+				 sample_adjust(GorfChannel, GorfBaseFrequency, -1);    /* play at correct rate */
+				 totalword[0] = 0;				   /* Clear the total word stack */
+				 oldword[0] = 0;				   /* Clear the total word stack */
+				 return data;
+			 } else {
+				 plural=0;
+			 }
+		 }
+	 } else
+		 strcat(totalword,PhonemeTable[Phoneme]);	                   /* Copy over the first phoneme */
 
-    if(errorlog) fprintf(errorlog,"Total word = %s\n",totalword);
+	 if(errorlog) fprintf(errorlog,"Total word = %s\n",totalword);
 
-    for (i=0; GorfWordTable[i]; i++) {
-       if (!strcmp(GorfWordTable[i],totalword)) {		   /* Scan the word (sample) table for the complete word */
-          if ((!strcmp("GDTO1RFYA2N",totalword)) || (!strcmp("RO1U1BAH1T",totalword)) || (!strcmp("KO1UH3I3E1N",totalword))) {		   /* May be plural */
-             plural=i+1;
-             strcpy(oldword,totalword);
-	     if (errorlog) fprintf(errorlog,"Storing sample position %d and copying string %s\n",plural,oldword);
-          } else {
+	 for (i=0; GorfWordTable[i]; i++) {
+		 if (!strcmp(GorfWordTable[i],totalword)) {		   /* Scan the word (sample) table for the complete word */
+			 if ((!strcmp("GDTO1RFYA2N",totalword)) || (!strcmp("RO1U1BAH1T",totalword)) || (!strcmp("KO1UH3I3E1N",totalword)) || (!strcmp("WORAYY1EH3R",totalword)) || (!strcmp("IN",totalword)) ) {              /* May be plural */
+				 plural=i+1;
+				 strcpy(oldword,totalword);
+		  if (errorlog) fprintf(errorlog,"Storing sample position %d and copying string %s\n",plural,oldword);
+			 } else {
              plural=0;
           }
           sample_start(GorfChannel, i, 0);	                   /* play the sample at position of word */
@@ -154,7 +166,7 @@ int gorf_speech_r(int offset)
     }
 
     /* Note : We should really also use volume in this as well as frequency */
-    return data;				                   /* Return nicely */
+	 return data;				                   /* Return nicely */
 }
 
 int gorf_status_r(void)

@@ -458,128 +458,128 @@ static struct MachineDriver machine_driver =
 
 ROM_START( twincobr_rom )
 	ROM_REGION(0x30000)	/* 3*64k for code */
-	ROM_LOAD_EVEN( "tc16", 0x00000, 0x10000, 0x0f9aa12e , 0x07f64d13 )
-	ROM_LOAD_ODD ( "tc14", 0x00000, 0x10000, 0x1f34c798 , 0x41be6978 )
-	ROM_LOAD_EVEN( "tc15", 0x20000, 0x08000, 0x1b87c579 , 0x3a646618 )
-	ROM_LOAD_ODD ( "tc13", 0x20000, 0x08000, 0x114ed0b6 , 0xd7d1e317 )
+	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
+	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
+	ROM_LOAD_EVEN( "tc15",         0x20000, 0x08000, 0x3a646618 )
+	ROM_LOAD_ODD ( "tc13",         0x20000, 0x08000, 0xd7d1e317 )
 
 	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tc11", 0x00000, 0x04000, 0x1efa4632 , 0x0a254133 )	/* chars */
-	ROM_LOAD( "tc03", 0x04000, 0x04000, 0xed03dae7 , 0xe9e2d4b1 )
-	ROM_LOAD( "tc04", 0x08000, 0x04000, 0x2901e06f , 0xa599d845 )
-	ROM_LOAD( "tc01", 0x0c000, 0x10000, 0x977e859c , 0x15b3991d )	/* fg tiles */
-	ROM_LOAD( "tc02", 0x1c000, 0x10000, 0x99f6aed8 , 0xd9e2e55d )
-	ROM_LOAD( "tc05", 0x2c000, 0x10000, 0x0ab22680 , 0x8cc79357 )
-	ROM_LOAD( "tc06", 0x3c000, 0x10000, 0xe0022950 , 0x13daeac8 )
-	ROM_LOAD( "tc07", 0x4c000, 0x08000, 0x0a073c15 , 0xb5d48389 )	/* bg tiles */
-	ROM_LOAD( "tc08", 0x54000, 0x08000, 0x4ac424d4 , 0x97f20fdc )
-	ROM_LOAD( "tc09", 0x5c000, 0x08000, 0xa8ef725f , 0x170c01db )
-	ROM_LOAD( "tc10", 0x64000, 0x08000, 0xa3acafa4 , 0x44f5accd )
-	ROM_LOAD( "tc20", 0x6c000, 0x10000, 0x72f448d6 , 0xcb4092b8 )	/* sprites */
-	ROM_LOAD( "tc19", 0x7c000, 0x10000, 0xd4dccef2 , 0x9cb8675e )
-	ROM_LOAD( "tc18", 0x8c000, 0x10000, 0x3a5d943b , 0x806fb374 )
-	ROM_LOAD( "tc17", 0x9c000, 0x10000, 0x0f78e36e , 0x4264bff8 )
+	ROM_LOAD( "tc11",         0x00000, 0x04000, 0x0a254133 )	/* chars */
+	ROM_LOAD( "tc03",         0x04000, 0x04000, 0xe9e2d4b1 )
+	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
+	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
+	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
+	ROM_LOAD( "tc05",         0x2c000, 0x10000, 0x8cc79357 )
+	ROM_LOAD( "tc06",         0x3c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
+	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
+	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
+	ROM_LOAD( "tc10",         0x64000, 0x08000, 0x44f5accd )
+	ROM_LOAD( "tc20",         0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
+	ROM_LOAD( "tc19",         0x7c000, 0x10000, 0x9cb8675e )
+	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
+	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
 
 	ROM_REGION(0x10000)     /* 32k for second CPU */
-	ROM_LOAD( "tc12", 0x00000, 0x08000, 0x1603fba3 , 0xe37b3c44 )	/* slightly different from the other two sets */
+	ROM_LOAD( "tc12",         0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
 
 	ROM_REGION(0x01000)     /* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "tc1b", 0x0000, 0x0800, 0x4bf1a997 , 0x1757cc33 )
-	ROM_LOAD_ODD ( "tc2a", 0x0000, 0x0800, 0x3ae27676 , 0xd6d878c9 )
+	ROM_LOAD_EVEN( "tc1b",         0x0000, 0x0800, 0x1757cc33 )
+	ROM_LOAD_ODD ( "tc2a",         0x0000, 0x0800, 0xd6d878c9 )
 ROM_END
 
 ROM_START( twincobu_rom )
 	ROM_REGION(0x30000)	/* 3*64k for code */
-	ROM_LOAD_EVEN( "tc16", 0x00000, 0x10000, 0x0f9aa12e , 0x07f64d13 )
-	ROM_LOAD_ODD ( "tc14", 0x00000, 0x10000, 0x1f34c798 , 0x41be6978 )
-	ROM_LOAD_EVEN( "tcbra26.bin", 0x20000, 0x08000, 0x4b0a4484 , 0xbdd00ba4 )
-	ROM_LOAD_ODD ( "tcbra27.bin", 0x20000, 0x08000, 0x023f2e69 , 0xed600907 )
+	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
+	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
+	ROM_LOAD_EVEN( "tcbra26.bin",  0x20000, 0x08000, 0xbdd00ba4 )
+	ROM_LOAD_ODD ( "tcbra27.bin",  0x20000, 0x08000, 0xed600907 )
 
 	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tc11", 0x00000, 0x04000, 0x1efa4632 , 0x0a254133 )	/* chars */
-	ROM_LOAD( "tc03", 0x04000, 0x04000, 0xed03dae7 , 0xe9e2d4b1 )
-	ROM_LOAD( "tc04", 0x08000, 0x04000, 0x2901e06f , 0xa599d845 )
-	ROM_LOAD( "tc01", 0x0c000, 0x10000, 0x977e859c , 0x15b3991d )	/* fg tiles */
-	ROM_LOAD( "tc02", 0x1c000, 0x10000, 0x99f6aed8 , 0xd9e2e55d )
-	ROM_LOAD( "tc05", 0x2c000, 0x10000, 0x0ab22680 , 0x8cc79357 )
-	ROM_LOAD( "tc06", 0x3c000, 0x10000, 0xe0022950 , 0x13daeac8 )
-	ROM_LOAD( "tc07", 0x4c000, 0x08000, 0x0a073c15 , 0xb5d48389 )	/* bg tiles */
-	ROM_LOAD( "tc08", 0x54000, 0x08000, 0x4ac424d4 , 0x97f20fdc )
-	ROM_LOAD( "tc09", 0x5c000, 0x08000, 0xa8ef725f , 0x170c01db )
-	ROM_LOAD( "tc10", 0x64000, 0x08000, 0xa3acafa4 , 0x44f5accd )
-	ROM_LOAD( "tc20", 0x6c000, 0x10000, 0x72f448d6 , 0xcb4092b8 )	/* sprites */
-	ROM_LOAD( "tc19", 0x7c000, 0x10000, 0xd4dccef2 , 0x9cb8675e )
-	ROM_LOAD( "tc18", 0x8c000, 0x10000, 0x3a5d943b , 0x806fb374 )
-	ROM_LOAD( "tc17", 0x9c000, 0x10000, 0x0f78e36e , 0x4264bff8 )
+	ROM_LOAD( "tc11",         0x00000, 0x04000, 0x0a254133 )	/* chars */
+	ROM_LOAD( "tc03",         0x04000, 0x04000, 0xe9e2d4b1 )
+	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
+	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
+	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
+	ROM_LOAD( "tc05",         0x2c000, 0x10000, 0x8cc79357 )
+	ROM_LOAD( "tc06",         0x3c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
+	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
+	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
+	ROM_LOAD( "tc10",         0x64000, 0x08000, 0x44f5accd )
+	ROM_LOAD( "tc20",         0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
+	ROM_LOAD( "tc19",         0x7c000, 0x10000, 0x9cb8675e )
+	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
+	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
 
 	ROM_REGION(0x10000)     /* 32k for second CPU */
-	ROM_LOAD( "b30-05", 0x00000, 0x08000, 0x6cadad29 , 0x1a8f1e10 )
+	ROM_LOAD( "b30-05",       0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION(0x01000)     /* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "tc1b", 0x0000, 0x0800, 0x4bf1a997 , 0x1757cc33 )
-	ROM_LOAD_ODD ( "tc2a", 0x0000, 0x0800, 0x3ae27676 , 0xd6d878c9 )
+	ROM_LOAD_EVEN( "tc1b",         0x0000, 0x0800, 0x1757cc33 )
+	ROM_LOAD_ODD ( "tc2a",         0x0000, 0x0800, 0xd6d878c9 )
 ROM_END
 
 ROM_START( ktiger_rom )
 	ROM_REGION(0x30000)	/* 3*64k for code */
-	ROM_LOAD_EVEN( "tc16", 0x00000, 0x10000, 0x0f9aa12e , 0x07f64d13 )
-	ROM_LOAD_ODD ( "tc14", 0x00000, 0x10000, 0x1f34c798 , 0x41be6978 )
-	ROM_LOAD_EVEN( "b30-02", 0x20000, 0x08000, 0xfc0cd1cc , 0x1d63e9c4 )
-	ROM_LOAD_ODD ( "b30-04", 0x20000, 0x08000, 0xb8630adb , 0x03957a30 )
+	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
+	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
+	ROM_LOAD_EVEN( "b30-02",       0x20000, 0x08000, 0x1d63e9c4 )
+	ROM_LOAD_ODD ( "b30-04",       0x20000, 0x08000, 0x03957a30 )
 
 	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tc11", 0x00000, 0x04000, 0x1efa4632 , 0x0a254133 )	/* chars */
-	ROM_LOAD( "tc03", 0x04000, 0x04000, 0xed03dae7 , 0xe9e2d4b1 )
-	ROM_LOAD( "tc04", 0x08000, 0x04000, 0x2901e06f , 0xa599d845 )
-	ROM_LOAD( "tc01", 0x0c000, 0x10000, 0x977e859c , 0x15b3991d )	/* fg tiles */
-	ROM_LOAD( "tc02", 0x1c000, 0x10000, 0x99f6aed8 , 0xd9e2e55d )
-	ROM_LOAD( "tc05", 0x2c000, 0x10000, 0x0ab22680 , 0x8cc79357 )
-	ROM_LOAD( "tc06", 0x3c000, 0x10000, 0xe0022950 , 0x13daeac8 )
-	ROM_LOAD( "tc07", 0x4c000, 0x08000, 0x0a073c15 , 0xb5d48389 )	/* bg tiles */
-	ROM_LOAD( "tc08", 0x54000, 0x08000, 0x4ac424d4 , 0x97f20fdc )
-	ROM_LOAD( "tc09", 0x5c000, 0x08000, 0xa8ef725f , 0x170c01db )
-	ROM_LOAD( "tc10", 0x64000, 0x08000, 0xa3acafa4 , 0x44f5accd )
-	ROM_LOAD( "tc20", 0x6c000, 0x10000, 0x72f448d6 , 0xcb4092b8 )	/* sprites */
-	ROM_LOAD( "tc19", 0x7c000, 0x10000, 0xd4dccef2 , 0x9cb8675e )
-	ROM_LOAD( "tc18", 0x8c000, 0x10000, 0x3a5d943b , 0x806fb374 )
-	ROM_LOAD( "tc17", 0x9c000, 0x10000, 0x0f78e36e , 0x4264bff8 )
+	ROM_LOAD( "tc11",         0x00000, 0x04000, 0x0a254133 )	/* chars */
+	ROM_LOAD( "tc03",         0x04000, 0x04000, 0xe9e2d4b1 )
+	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
+	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
+	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
+	ROM_LOAD( "tc05",         0x2c000, 0x10000, 0x8cc79357 )
+	ROM_LOAD( "tc06",         0x3c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
+	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
+	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
+	ROM_LOAD( "tc10",         0x64000, 0x08000, 0x44f5accd )
+	ROM_LOAD( "tc20",         0x6c000, 0x10000, 0xcb4092b8 )	/* sprites */
+	ROM_LOAD( "tc19",         0x7c000, 0x10000, 0x9cb8675e )
+	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
+	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
 
 	ROM_REGION(0x10000)     /* 32k for second CPU */
-	ROM_LOAD( "b30-05", 0x00000, 0x08000, 0x6cadad29 , 0x1a8f1e10 )
+	ROM_LOAD( "b30-05",       0x00000, 0x08000, 0x1a8f1e10 )
 
 	ROM_REGION(0x01000)     /* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "tc1b", 0x0000, 0x0800, 0x4bf1a997 , 0x1757cc33 )
-	ROM_LOAD_ODD ( "tc2a", 0x0000, 0x0800, 0x3ae27676 , 0xd6d878c9 )
+	ROM_LOAD_EVEN( "tc1b",         0x0000, 0x0800, 0x1757cc33 )
+	ROM_LOAD_ODD ( "tc2a",         0x0000, 0x0800, 0xd6d878c9 )
 ROM_END
 
 ROM_START( fshark_rom )
 	ROM_REGION(0x20000)     /* 2*64k for code */
-	ROM_LOAD_EVEN( "b02_18-1.rom", 0x00000, 0x10000, 0x125a2dae , 0x0 )
-	ROM_LOAD_ODD ( "b02_17-1.rom", 0x00000, 0x10000, 0xaebd0b07 , 0x0 )
+	ROM_LOAD_EVEN( "b02_18-1.rom", 0x00000, 0x10000, 0x0 )
+	ROM_LOAD_ODD ( "b02_17-1.rom", 0x00000, 0x10000, 0x0 )
 
 	ROM_REGION_DISPOSE(0xac000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "b02_05-1.rom", 0x00000, 0x04000, 0x716a9426 , 0x0 )        /* chars */
-	ROM_LOAD( "b02_06-1.rom", 0x04000, 0x04000, 0x55040000 , 0x0 )
-	ROM_LOAD( "b02_07-1.rom", 0x08000, 0x04000, 0xe8e2d372 , 0x0 )
-	ROM_LOAD( "b02_01.256", 0x0c000, 0x08000, 0x52ae0142 , 0x0 )        /* fg tiles */
-	ROM_LOAD( "b02_02.256", 0x14000, 0x08000, 0xb6f2c628 , 0x0 )
-	ROM_LOAD( "b02_03.256", 0x1c000, 0x08000, 0x8d9682e8 , 0x0 )
-	ROM_LOAD( "b02_04.256", 0x24000, 0x08000, 0x77df5a25 , 0x0 )
-	ROM_LOAD( "b02_08.rom", 0x2c000, 0x08000, 0x0ee15665 , 0x0 )
-	ROM_LOAD( "b02_09.rom", 0x34000, 0x08000, 0xbfc3720f , 0x0 )
-	ROM_LOAD( "b02_10.rom", 0x3c000, 0x08000, 0x8a7ca980 , 0x0 )
-	ROM_LOAD( "b02_11.rom", 0x44000, 0x08000, 0xc707ab9f , 0x0 )
-	ROM_LOAD( "b02_12.rom", 0x4c000, 0x08000, 0x2dfc311a , 0x0 )        /* bg tiles */
-	ROM_LOAD( "b02_13.rom", 0x54000, 0x08000, 0xaf89d6fb , 0x0 )
-	ROM_LOAD( "b02_14.rom", 0x5c000, 0x08000, 0xd8009198 , 0x0 )
-	ROM_LOAD( "b02_15.rom", 0x64000, 0x08000, 0x98a87e46 , 0x0 )
-	ROM_LOAD( "b02_01.512", 0x6c000, 0x10000, 0x307a7f5e , 0x0 )        /* sprites */
-	ROM_LOAD( "b02_02.512", 0x7c000, 0x10000, 0xb32a71fc , 0x0 )
-	ROM_LOAD( "b02_03.512", 0x8c000, 0x10000, 0x8d396f49 , 0x0 )
-	ROM_LOAD( "b02_04.512", 0x9c000, 0x10000, 0xb218e12e , 0x0 )
+	ROM_LOAD( "b02_05-1.rom", 0x00000, 0x04000, 0x0 )        /* chars */
+	ROM_LOAD( "b02_06-1.rom", 0x04000, 0x04000, 0x0 )
+	ROM_LOAD( "b02_07-1.rom", 0x08000, 0x04000, 0x0 )
+	ROM_LOAD( "b02_01.256",   0x0c000, 0x08000, 0x0 )        /* fg tiles */
+	ROM_LOAD( "b02_02.256",   0x14000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_03.256",   0x1c000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_04.256",   0x24000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_08.rom",   0x2c000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_09.rom",   0x34000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_10.rom",   0x3c000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_11.rom",   0x44000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_12.rom",   0x4c000, 0x08000, 0x0 )        /* bg tiles */
+	ROM_LOAD( "b02_13.rom",   0x54000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_14.rom",   0x5c000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_15.rom",   0x64000, 0x08000, 0x0 )
+	ROM_LOAD( "b02_01.512",   0x6c000, 0x10000, 0x0 )        /* sprites */
+	ROM_LOAD( "b02_02.512",   0x7c000, 0x10000, 0x0 )
+	ROM_LOAD( "b02_03.512",   0x8c000, 0x10000, 0x0 )
+	ROM_LOAD( "b02_04.512",   0x9c000, 0x10000, 0x0 )
 
 	ROM_REGION(0x10000)     /* 64k for second CPU */
-	ROM_LOAD( "b02_16.rom", 0x0000, 0x8000, 0xfbf9ebeb , 0x0 )
+	ROM_LOAD( "b02_16.rom",   0x0000, 0x8000, 0x0 )
 ROM_END
 
 

@@ -180,24 +180,25 @@ struct MachineCPU
 								/* greater precision you can give the period in nanoseconds */
 };
 
-#define CPU_Z80    1
-#define CPU_8085A  2
-#define CPU_8080   CPU_8085A
-#define CPU_M6502  3
-#define CPU_I86    4
-#define CPU_I8039  5
-#define CPU_I8035  CPU_I8039
-#define CPU_M6803  6
-#define CPU_M6802  CPU_M6803
-#define CPU_M6808  CPU_M6803
+#define CPU_Z80       1
+#define CPU_8085A     2
+#define CPU_8080     CPU_8085A
+#define CPU_M6502     3
+#define CPU_I86       4
+#define CPU_I8039     5
+#define CPU_I8035    CPU_I8039
+#define CPU_M6803     6
+#define CPU_M6802    CPU_M6803
+#define CPU_M6808    CPU_M6803
 #define CPU_HD63701  CPU_M6803	/* 6808 with some additional opcodes */
-#define CPU_M6805  7
-#define CPU_M6809  8
-#define CPU_M6309  CPU_M6809	/* actually it's not 100% compatible */
-#define CPU_M68000 9
-#define CPU_T11    10	/* ASG 030598 */
-#define CPU_S2650  11	/* HJB 070598 */
-#define CPU_TMS34010  12	/* AJP 080398 */
+#define CPU_M6805     7
+#define CPU_M68705   CPU_M6805
+#define CPU_M6809     8
+#define CPU_M6309    CPU_M6809	/* actually it's not 100% compatible */
+#define CPU_M68000    9
+#define CPU_T11      10
+#define CPU_S2650    11
+#define CPU_TMS34010 12
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -220,25 +221,26 @@ struct MachineSound
 	void *sound_interface;
 };
 
-#define SOUND_CUSTOM   1
-#define SOUND_SAMPLES  2
-#define SOUND_DAC      3
-#define SOUND_AY8910   4
-#define SOUND_YM2203   5
-#define SOUND_YM2151   6
+#define SOUND_CUSTOM     1
+#define SOUND_SAMPLES    2
+#define SOUND_DAC        3
+#define SOUND_AY8910     4
+#define SOUND_YM2203     5
+#define SOUND_YM2151     6
 #define SOUND_YM2151_ALT 7
-#define SOUND_YM3812   8
-#define SOUND_YM3526   SOUND_YM3812	/* 100% compatible, less features */
-#define SOUND_SN76496  9
-#define SOUND_POKEY    10
-#define SOUND_NAMCO    11
-#define SOUND_NES      12
-#define SOUND_TMS5220  13
-#define SOUND_VLM5030  14
-#define SOUND_ADPCM    15
-#define SOUND_OKIM6295 16	/* ROM-based ADPCM system */
-#define SOUND_MSM5205  17	/* CPU-based ADPCM system */
-#define	SOUND_HC55516  18	/* Harris family of CVSD CODECs */
+#define SOUND_YM3812     8
+#define SOUND_YM3526    SOUND_YM3812	/* 100% compatible, less features */
+#define SOUND_SN76496    9
+#define SOUND_POKEY     10
+#define SOUND_NAMCO     11
+#define SOUND_NES       12
+#define SOUND_TMS5220   13
+#define SOUND_VLM5030   14
+#define SOUND_ADPCM     15
+#define SOUND_OKIM6295  16	/* ROM-based ADPCM system */
+#define SOUND_MSM5205   17	/* CPU-based ADPCM system */
+#define SOUND_HC55516   18	/* Harris family of CVSD CODECs */
+#define SOUND_ASTROCADE 19	/* Custom I/O chip from Bally/Midway */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */

@@ -1,3 +1,6 @@
+#ifndef CYCLETBL_H
+#define CYCLETBL_H
+
 /********************************************************************/
 /* cycletbl.h                                        *BETA RELEASE*	*/
 /* Instruction timing table for the MC68000              Revision 0	*/
@@ -4127,3 +4130,5 @@ static const unsigned char exception_cycles[48] =
 	0, 0, 0, 0, 0, 0, 0, 0, 46, 46, 46, 46, 46, 46, 46, 46,
 	38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38
 };
+
+#endif

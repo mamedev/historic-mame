@@ -323,14 +323,14 @@ static struct MachineDriver machine_driver =
 
 ROM_START( goldstar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gs4-cpu.bin", 0x0000, 0x10000, 0x13264804 , 0x73e47d4d )
+	ROM_LOAD( "gs4-cpu.bin",  0x0000, 0x10000, 0x73e47d4d )
 
 	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gs2.bin", 0x00000, 0x20000, 0xe2f8263c , 0xa2d5b898 )
-	ROM_LOAD( "gs3.bin", 0x20000, 0x08000, 0xa3600a0a , 0x8454ce3c )
+	ROM_LOAD( "gs2.bin",      0x00000, 0x20000, 0xa2d5b898 )
+	ROM_LOAD( "gs3.bin",      0x20000, 0x08000, 0x8454ce3c )
 
 	ROM_REGION(0x20000) /* Audio ADPCM */
-	ROM_LOAD( "gs1-snd.bin", 0x0000, 0x20000, 0xc9872331 , 0x9d58960f )
+	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, 0x9d58960f )
 ROM_END
 
 

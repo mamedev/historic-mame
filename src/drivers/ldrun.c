@@ -484,94 +484,94 @@ static struct MachineDriver ldrun2p_machine_driver =
 
 ROM_START( ldrun_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "lr-a-4e", 0x0000, 0x2000, 0x164ba7a5 , 0x5d7e2a4d )
-	ROM_LOAD( "lr-a-4d", 0x2000, 0x2000, 0x6dfb93ed , 0x96f20473 )
-	ROM_LOAD( "lr-a-4b", 0x4000, 0x2000, 0x85c12e55 , 0xb041c4a9 )
-	ROM_LOAD( "lr-a-4a", 0x6000, 0x2000, 0xdf829188 , 0x645e42aa )
+	ROM_LOAD( "lr-a-4e",      0x0000, 0x2000, 0x5d7e2a4d )
+	ROM_LOAD( "lr-a-4d",      0x2000, 0x2000, 0x96f20473 )
+	ROM_LOAD( "lr-a-4b",      0x4000, 0x2000, 0xb041c4a9 )
+	ROM_LOAD( "lr-a-4a",      0x6000, 0x2000, 0x645e42aa )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lr-e-2d", 0x0000, 0x2000, 0x48d59ac3 , 0x24f9b58d )	/* characters */
-	ROM_LOAD( "lr-e-2j", 0x2000, 0x2000, 0x30f168c5 , 0x43175e08 )
-	ROM_LOAD( "lr-e-2f", 0x4000, 0x2000, 0x45820080 , 0xe0317124 )
-	ROM_LOAD( "lr-b-4k", 0x6000, 0x2000, 0xd0fb93b3 , 0x8141403e )	/* sprites */
-	ROM_LOAD( "lr-b-3n", 0x8000, 0x2000, 0xd2282fc6 , 0x55154154 )
-	ROM_LOAD( "lr-b-4c", 0xa000, 0x2000, 0x0655cce1 , 0x924e34d0 )
+	ROM_LOAD( "lr-e-2d",      0x0000, 0x2000, 0x24f9b58d )	/* characters */
+	ROM_LOAD( "lr-e-2j",      0x2000, 0x2000, 0x43175e08 )
+	ROM_LOAD( "lr-e-2f",      0x4000, 0x2000, 0xe0317124 )
+	ROM_LOAD( "lr-b-4k",      0x6000, 0x2000, 0x8141403e )	/* sprites */
+	ROM_LOAD( "lr-b-3n",      0x8000, 0x2000, 0x55154154 )
+	ROM_LOAD( "lr-b-4c",      0xa000, 0x2000, 0x924e34d0 )
 
 	ROM_REGION(0x0620)	/* color proms */
-	ROM_LOAD( "lr-e-3m", 0x0000, 0x0100, 0x9a120c08 , 0x53040416 )	/* character palette red component */
-	ROM_LOAD( "lr-b-1m", 0x0100, 0x0100, 0x44d20000 , 0x4bae1c25 )	/* sprite palette red component */
-	ROM_LOAD( "lr-e-3l", 0x0200, 0x0100, 0x94b6080e , 0x67786037 )	/* character palette green component */
-	ROM_LOAD( "lr-b-1n", 0x0300, 0x0100, 0x50780000 , 0x9cd3db94 )	/* sprite palette green component */
-	ROM_LOAD( "lr-e-3n", 0x0400, 0x0100, 0x6af0070e , 0x5b716837 )	/* character palette blue component */
-	ROM_LOAD( "lr-b-1l", 0x0500, 0x0100, 0x73100000 , 0x08d8cf9a )	/* sprite palette blue component */
-	ROM_LOAD( "lr-b-5p", 0x0600, 0x0020, 0x08080000 , 0xe01f69e2 )	/* sprite height, one entry per 32 */
+	ROM_LOAD( "lr-e-3m",      0x0000, 0x0100, 0x53040416 )	/* character palette red component */
+	ROM_LOAD( "lr-b-1m",      0x0100, 0x0100, 0x4bae1c25 )	/* sprite palette red component */
+	ROM_LOAD( "lr-e-3l",      0x0200, 0x0100, 0x67786037 )	/* character palette green component */
+	ROM_LOAD( "lr-b-1n",      0x0300, 0x0100, 0x9cd3db94 )	/* sprite palette green component */
+	ROM_LOAD( "lr-e-3n",      0x0400, 0x0100, 0x5b716837 )	/* character palette blue component */
+	ROM_LOAD( "lr-b-1l",      0x0500, 0x0100, 0x08d8cf9a )	/* sprite palette blue component */
+	ROM_LOAD( "lr-b-5p",      0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 														/*   sprites. Used at run time! */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "lr-a-3f", 0xc000, 0x2000, 0xf5158e6d , 0x7a96accd )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "lr-a-3h", 0xe000, 0x2000, 0xc3f198a5 , 0x3f7f3939 )
+	ROM_LOAD( "lr-a-3f",      0xc000, 0x2000, 0x7a96accd )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "lr-a-3h",      0xe000, 0x2000, 0x3f7f3939 )
 ROM_END
 
 ROM_START( ldruna_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "roma4c", 0x0000, 0x2000, 0x0246614e , 0x279421e1 )
-	ROM_LOAD( "lr-a-4d", 0x2000, 0x2000, 0x6dfb93ed , 0x96f20473 )
-	ROM_LOAD( "roma4b", 0x4000, 0x2000, 0x6c27aa39 , 0x3c464bad )
-	ROM_LOAD( "roma4a", 0x6000, 0x2000, 0x81c14dd9 , 0x899df8e0 )
+	ROM_LOAD( "roma4c",       0x0000, 0x2000, 0x279421e1 )
+	ROM_LOAD( "lr-a-4d",      0x2000, 0x2000, 0x96f20473 )
+	ROM_LOAD( "roma4b",       0x4000, 0x2000, 0x3c464bad )
+	ROM_LOAD( "roma4a",       0x6000, 0x2000, 0x899df8e0 )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lr-e-2d", 0x0000, 0x2000, 0x48d59ac3 , 0x24f9b58d )	/* characters */
-	ROM_LOAD( "lr-e-2j", 0x2000, 0x2000, 0x30f168c5 , 0x43175e08 )
-	ROM_LOAD( "lr-e-2f", 0x4000, 0x2000, 0x45820080 , 0xe0317124 )
-	ROM_LOAD( "lr-b-4k", 0x6000, 0x2000, 0xd0fb93b3 , 0x8141403e )	/* sprites */
-	ROM_LOAD( "lr-b-3n", 0x8000, 0x2000, 0xd2282fc6 , 0x55154154 )
-	ROM_LOAD( "lr-b-4c", 0xa000, 0x2000, 0x0655cce1 , 0x924e34d0 )
+	ROM_LOAD( "lr-e-2d",      0x0000, 0x2000, 0x24f9b58d )	/* characters */
+	ROM_LOAD( "lr-e-2j",      0x2000, 0x2000, 0x43175e08 )
+	ROM_LOAD( "lr-e-2f",      0x4000, 0x2000, 0xe0317124 )
+	ROM_LOAD( "lr-b-4k",      0x6000, 0x2000, 0x8141403e )	/* sprites */
+	ROM_LOAD( "lr-b-3n",      0x8000, 0x2000, 0x55154154 )
+	ROM_LOAD( "lr-b-4c",      0xa000, 0x2000, 0x924e34d0 )
 
 	ROM_REGION(0x0620)	/* color proms */
-	ROM_LOAD( "lr-e-3m", 0x0000, 0x0100, 0x9a120c08 , 0x53040416 )	/* character palette red component */
-	ROM_LOAD( "lr-b-1m", 0x0100, 0x0100, 0x44d20000 , 0x4bae1c25 )	/* sprite palette red component */
-	ROM_LOAD( "lr-e-3l", 0x0200, 0x0100, 0x94b6080e , 0x67786037 )	/* character palette green component */
-	ROM_LOAD( "lr-b-1n", 0x0300, 0x0100, 0x50780000 , 0x9cd3db94 )	/* sprite palette green component */
-	ROM_LOAD( "lr-e-3n", 0x0400, 0x0100, 0x6af0070e , 0x5b716837 )	/* character palette blue component */
-	ROM_LOAD( "lr-b-1l", 0x0500, 0x0100, 0x73100000 , 0x08d8cf9a )	/* sprite palette blue component */
-	ROM_LOAD( "lr-b-5p", 0x0600, 0x0020, 0x08080000 , 0xe01f69e2 )	/* sprite height, one entry per 32 */
+	ROM_LOAD( "lr-e-3m",      0x0000, 0x0100, 0x53040416 )	/* character palette red component */
+	ROM_LOAD( "lr-b-1m",      0x0100, 0x0100, 0x4bae1c25 )	/* sprite palette red component */
+	ROM_LOAD( "lr-e-3l",      0x0200, 0x0100, 0x67786037 )	/* character palette green component */
+	ROM_LOAD( "lr-b-1n",      0x0300, 0x0100, 0x9cd3db94 )	/* sprite palette green component */
+	ROM_LOAD( "lr-e-3n",      0x0400, 0x0100, 0x5b716837 )	/* character palette blue component */
+	ROM_LOAD( "lr-b-1l",      0x0500, 0x0100, 0x08d8cf9a )	/* sprite palette blue component */
+	ROM_LOAD( "lr-b-5p",      0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 														/*   sprites. Used at run time! */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "lr-a-3f", 0xc000, 0x2000, 0xf5158e6d , 0x7a96accd )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "lr-a-3h", 0xe000, 0x2000, 0xc3f198a5 , 0x3f7f3939 )
+	ROM_LOAD( "lr-a-3f",      0xc000, 0x2000, 0x7a96accd )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "lr-a-3h",      0xe000, 0x2000, 0x3f7f3939 )
 ROM_END
 
 ROM_START( ldrun2p_rom )
 	ROM_REGION(0x18000)	/* 64k for code + 32k for banked ROM */
-	ROM_LOAD( "lr4-a-4e", 0x00000, 0x4000, 0xefafcabb , 0x5383e9bf )
-	ROM_LOAD( "lr4-a-4d.c", 0x04000, 0x4000, 0x148fe185 , 0x298afa36 )
-	ROM_LOAD( "lr4-v-4k", 0x10000, 0x8000, 0xeae67c8c , 0x8b248abd )	/* banked at 8000-bfff */
+	ROM_LOAD( "lr4-a-4e",     0x00000, 0x4000, 0x5383e9bf )
+	ROM_LOAD( "lr4-a-4d.c",   0x04000, 0x4000, 0x298afa36 )
+	ROM_LOAD( "lr4-v-4k",     0x10000, 0x8000, 0x8b248abd )	/* banked at 8000-bfff */
 
 	ROM_REGION_DISPOSE(0x24000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lr4-v-2b", 0x00000, 0x4000, 0x65de6004 , 0x4118e60a )	/* characters */
-	ROM_LOAD( "lr4-v-2d", 0x04000, 0x4000, 0xd5963614 , 0x542bb5b5 )
-	ROM_LOAD( "lr4-v-2c", 0x08000, 0x4000, 0x5a62b042 , 0xc765266c )
-	ROM_LOAD( "lr4-b-4k", 0x0c000, 0x4000, 0x7ed9aacd , 0xe7fe620c )	/* sprites */
-	ROM_LOAD( "lr4-b-4f", 0x10000, 0x4000, 0x7c6a3092 , 0x6f0403db )
-	ROM_LOAD( "lr4-b-3n", 0x14000, 0x4000, 0x171f1283 , 0xad1fba1b )
-	ROM_LOAD( "lr4-b-4n", 0x18000, 0x4000, 0x377e20fe , 0x0e568fab )
-	ROM_LOAD( "lr4-b-4c", 0x1c000, 0x4000, 0x6599496f , 0x82c53669 )
-	ROM_LOAD( "lr4-b-4e", 0x20000, 0x4000, 0xc15c7fd4 , 0x767a1352 )
+	ROM_LOAD( "lr4-v-2b",     0x00000, 0x4000, 0x4118e60a )	/* characters */
+	ROM_LOAD( "lr4-v-2d",     0x04000, 0x4000, 0x542bb5b5 )
+	ROM_LOAD( "lr4-v-2c",     0x08000, 0x4000, 0xc765266c )
+	ROM_LOAD( "lr4-b-4k",     0x0c000, 0x4000, 0xe7fe620c )	/* sprites */
+	ROM_LOAD( "lr4-b-4f",     0x10000, 0x4000, 0x6f0403db )
+	ROM_LOAD( "lr4-b-3n",     0x14000, 0x4000, 0xad1fba1b )
+	ROM_LOAD( "lr4-b-4n",     0x18000, 0x4000, 0x0e568fab )
+	ROM_LOAD( "lr4-b-4c",     0x1c000, 0x4000, 0x82c53669 )
+	ROM_LOAD( "lr4-b-4e",     0x20000, 0x4000, 0x767a1352 )
 
 	ROM_REGION(0x0620)	/* color proms */
-	ROM_LOAD( "lr4-v-1m", 0x0000, 0x0100, 0xc8720b04 , 0xfe51bf1d ) /* character palette red component */
-	ROM_LOAD( "lr4-b-1m", 0x0100, 0x0100, 0xe7500f04 , 0x5d8d17d0 ) /* sprite palette red component */
-	ROM_LOAD( "lr4-v-1n", 0x0200, 0x0100, 0x93db0303 , 0xda0658e5 ) /* character palette green component */
-	ROM_LOAD( "lr4-b-1n", 0x0300, 0x0100, 0x3b06010c , 0xda1129d2 ) /* sprite palette green component */
-	ROM_LOAD( "lr4-v-1p", 0x0400, 0x0100, 0xc5c70607 , 0x0df23ebe ) /* character palette blue component */
-	ROM_LOAD( "lr4-b-1l", 0x0500, 0x0100, 0xb8c00304 , 0x0d89b692 ) /* sprite palette blue component */
-	ROM_LOAD( "lr4-b-5p", 0x0600, 0x0020, 0x08080000 , 0xe01f69e2 )	/* sprite height, one entry per 32 */
+	ROM_LOAD( "lr4-v-1m",     0x0000, 0x0100, 0xfe51bf1d ) /* character palette red component */
+	ROM_LOAD( "lr4-b-1m",     0x0100, 0x0100, 0x5d8d17d0 ) /* sprite palette red component */
+	ROM_LOAD( "lr4-v-1n",     0x0200, 0x0100, 0xda0658e5 ) /* character palette green component */
+	ROM_LOAD( "lr4-b-1n",     0x0300, 0x0100, 0xda1129d2 ) /* sprite palette green component */
+	ROM_LOAD( "lr4-v-1p",     0x0400, 0x0100, 0x0df23ebe ) /* character palette blue component */
+	ROM_LOAD( "lr4-b-1l",     0x0500, 0x0100, 0x0d89b692 ) /* sprite palette blue component */
+	ROM_LOAD( "lr4-b-5p",     0x0600, 0x0020, 0xe01f69e2 )	/* sprite height, one entry per 32 */
 														/*   sprites. Used at run time! */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "lr4-a-3d", 0x8000, 0x4000, 0xe95a0aec , 0x86c6d445 )
-	ROM_LOAD( "lr4-a-3f", 0xc000, 0x4000, 0xf17f9051 , 0x097c6c0a )
+	ROM_LOAD( "lr4-a-3d",     0x8000, 0x4000, 0x86c6d445 )
+	ROM_LOAD( "lr4-a-3f",     0xc000, 0x4000, 0x097c6c0a )
 ROM_END
 
 
@@ -631,7 +631,7 @@ struct GameDriver ldrun2p_driver =
 	__FILE__,
 	0,
 	"ldrun2p",
-	"Lode Runner (2 Players)",
+	"Lode Runner IV - Teikoku Karano Dasshutsu",
 	"1986",
 	"Irem (licensed from Broderbund)",
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nNicola Salmoria",

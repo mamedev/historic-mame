@@ -12,7 +12,7 @@ Memory Address              (Upper/Lower)
 xxx1 xxxx aaaa aaaa     RAM              R/W     256 bytes
 1xx0 xxaa aaaa aaaa    VRAM                      1K playfield
 
-                    SPRITE ROM  U29/U43          256 bytes for Blockade/Comotion
+                    CHAR ROM  U29/U43            256 bytes for Blockade/Comotion
                                                  512 for Blasto/Hustle
 
 Ports    In            Out
@@ -23,17 +23,10 @@ Ports    In            Out
 8        N/A           Noise Off
 
 
-Notes:  Blockade/Comotion support is complete with the exception of
-        the square wave generator.  I have not created a sample for
-        the noise generator, but any BOOM sound will do for now.
-
-        Blasto Support is preliminary.  This game is way too fast,
-		And I think I know why.  Accesses to VRAM outside of the VBLANK
-		interval should cause the 8080 to halt until the VBLANK interval
-		starts again.  This form of speed throuttling is not implemented.
-
-		(Specifically, I believe this is the access to $E000 from
-		program ROM location $40F6)
+Notes:  Support is complete with the exception of the square wave generator
+        and noise generator.  I have not created a sample for the noise
+		generator, but any BOOM sound as a sample will do for now for
+		Blockade & Comotion, at least.
 
 ****************************************************************************/
 
@@ -47,6 +40,7 @@ Notes:  Blockade/Comotion support is complete with the exception of
 void blockade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void comotion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void blasto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void hustle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void blockade_coin_latch_w(int offset, int data);
 void blockade_sound_freq_w(int offset, int data);
@@ -119,6 +113,9 @@ void comotion_init(void)
 
 int blockade_interrupt(void)
 {
+	/* release the cpu in case it's been halted */
+	timer_suspendcpu(0, 0);
+
     if ((input_port_0_r(0) & 0x80) == 0)
     {
         just_been_reset = 1;
@@ -193,6 +190,16 @@ void blockade_env_off_w(int offset, int data)
     return;
 }
 
+static void blockade_videoram_w(int offset, int data)
+{
+	videoram_w(offset, data);
+	if (input_port_3_r(0) & 0x80)
+	{
+		if (errorlog) fprintf(errorlog, "blockade_videoram_w: scanline %d\n", cpu_getscanline());
+		cpu_spinuntil_int();
+	}
+}
+
 static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x07ff, MRA_ROM },
@@ -206,7 +213,7 @@ static struct MemoryWriteAddress writemem[] =
 {
     { 0x0000, 0x07ff, MWA_ROM },
     { 0x4000, 0x47ff, MWA_ROM },  /* same image */
-    { 0xe000, 0xe3ff, videoram_w, &videoram, &videoram_size },
+    { 0xe000, 0xe3ff, blockade_videoram_w, &videoram, &videoram_size },
     { 0xff00, 0xffff, MWA_RAM },
     { -1 }  /* end of table */
 };
@@ -270,6 +277,10 @@ INPUT_PORTS_START( blockade_input_ports )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( comotion_input_ports )
@@ -310,6 +321,10 @@ INPUT_PORTS_START( comotion_input_ports )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER4 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER4 )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER4 )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( blasto_input_ports )
@@ -355,6 +370,10 @@ INPUT_PORTS_START( blasto_input_ports )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hustle_input_ports )
@@ -397,21 +416,22 @@ INPUT_PORTS_START( hustle_input_ports )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 
-
-
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 static unsigned char palette[] =
 {
         0x00,0x00,0x00, /* BLACK */
-        0x00,0xff,0x00, /* GREEN */     /* overlay (Blockade) */
+        0x00,0xff,0x00, /* GREEN */     /* overlay (Blockade/Hustle) */
         0xff,0xff,0xff, /* WHITE */     /* Comotion/Blasto */
         0xff,0x00,0x00, /* RED */       /* for the disclaimer text */
 };
 
 static unsigned short colortable[] =
 {
-        0x00, 0x01,         /* green on black (Blockade) */
+        0x00, 0x01,         /* green on black (Blockade/Hustle) */
         0x00, 0x02,         /* white on black (Comotion/Blasto) */
 };
 
@@ -461,7 +481,7 @@ static struct MachineDriver blockade_machine_driver =
             blockade_interrupt,1
         },
     },
-        60, DEFAULT_60HZ_VBLANK_DURATION,
+        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
         1,
     0,
 
@@ -499,7 +519,7 @@ static struct MachineDriver comotion_machine_driver =
             blockade_interrupt,1
         },
     },
-        60, DEFAULT_60HZ_VBLANK_DURATION,
+        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
         1,
     0,
 
@@ -537,7 +557,7 @@ static struct MachineDriver blasto_machine_driver =
             blockade_interrupt,1
         },
     },
-        60, DEFAULT_60HZ_VBLANK_DURATION,
+        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
         1,
     0,
 
@@ -563,6 +583,44 @@ static struct MachineDriver blasto_machine_driver =
     }
 };
 
+static struct MachineDriver hustle_machine_driver =
+{
+    /* basic machine hardware */
+    {
+        {
+            CPU_8080,
+            2079000,
+            0,
+            readmem,writemem,readport,writeport,
+            blockade_interrupt,1
+        },
+    },
+        60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+        1,
+    0,
+
+    /* video hardware */
+    32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
+    gfxdecodeinfo,
+    sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+    0,
+
+    VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+    0,
+    generic_vh_start,
+    generic_vh_stop,
+    hustle_vh_screenrefresh,
+
+    /* sound hardware */
+    0,0,0,0,
+    {
+        {
+            SOUND_SAMPLES,
+            &samples_interface
+        }
+    }
+};
+
 /***************************************************************************
 
   Game driver(s)
@@ -575,11 +633,12 @@ ROM_START( blockade_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       blockade_rom_init()                           */
-    ROM_LOAD( "316-04.u2", 0x1000, 0x0400, 0xb4090e07 , 0xa93833e9 )
-    ROM_LOAD( "316-03.u3", 0x1400, 0x0400, 0xff5a0c08 , 0x85960d3b )
+    ROM_LOAD( "316-04.u2", 0x1000, 0x0400, 0xa93833e9 )
+    ROM_LOAD( "316-03.u3", 0x1400, 0x0400, 0x85960d3b )
+
     ROM_REGION_DISPOSE(0x200)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "316-02.u29", 0x0000, 0x0100, 0x2c2b0a0d , 0x409f610f )
-    ROM_LOAD( "316-01.u43", 0x0100, 0x0100, 0x35720802 , 0x41a00b28 )
+    ROM_LOAD( "316-02.u29", 0x0000, 0x0100, 0x409f610f )
+    ROM_LOAD( "316-01.u43", 0x0100, 0x0100, 0x41a00b28 )
 ROM_END
 
 ROM_START( comotion_rom )
@@ -588,13 +647,14 @@ ROM_START( comotion_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "316-07.u2", 0x1000, 0x0400, 0x434a0d04 , 0x5b9bd054 )
-    ROM_LOAD( "316-08.u3", 0x1400, 0x0400, 0x45a40d0e , 0x1a856042 )
-    ROM_LOAD( "316-09.u4", 0x1800, 0x0400, 0x2d060906 , 0x2590f87c )
-    ROM_LOAD( "316-10.u5", 0x1c00, 0x0400, 0x43b9040d , 0xfb49a69b )
+    ROM_LOAD( "316-07.u2", 0x1000, 0x0400, 0x5b9bd054 )
+    ROM_LOAD( "316-08.u3", 0x1400, 0x0400, 0x1a856042 )
+    ROM_LOAD( "316-09.u4", 0x1800, 0x0400, 0x2590f87c )
+    ROM_LOAD( "316-10.u5", 0x1c00, 0x0400, 0xfb49a69b )
+
     ROM_REGION_DISPOSE(0x200)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "316-06.u43", 0x0000, 0x0100, 0x6fcc050e , 0x8f071297 )  /* Note: these are reversed */
-    ROM_LOAD( "316-05.u29", 0x0100, 0x0100, 0x7ee00a0a , 0x53fb8821 )
+    ROM_LOAD( "316-06.u43", 0x0000, 0x0100, 0x8f071297 )  /* Note: these are reversed */
+    ROM_LOAD( "316-05.u29", 0x0100, 0x0100, 0x53fb8821 )
 ROM_END
 
 ROM_START( blasto_rom )
@@ -603,13 +663,14 @@ ROM_START( blasto_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "blasto.u2", 0x1000, 0x0400, 0x6c2e0106 , 0xec99d043 )
-    ROM_LOAD( "blasto.u3", 0x1400, 0x0400, 0x9c780f06 , 0xbe333415 )
-    ROM_LOAD( "blasto.u4", 0x1800, 0x0400, 0x36220b08 , 0x1c889993 )
-    ROM_LOAD( "blasto.u5", 0x1c00, 0x0400, 0xe8df0a09 , 0xefb640cb )
+    ROM_LOAD( "blasto.u2", 0x1000, 0x0400, 0xec99d043 )
+    ROM_LOAD( "blasto.u3", 0x1400, 0x0400, 0xbe333415 )
+    ROM_LOAD( "blasto.u4", 0x1800, 0x0400, 0x1c889993 )
+    ROM_LOAD( "blasto.u5", 0x1c00, 0x0400, 0xefb640cb )
+
     ROM_REGION_DISPOSE(0x400)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "blasto.u29", 0x0000, 0x0200, 0xfd1c0904 , 0x4dd69499 )
-    ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0xc00f0b05 , 0x104051a4 )
+    ROM_LOAD( "blasto.u29", 0x0000, 0x0200, 0x4dd69499 )
+    ROM_LOAD( "blasto.u43", 0x0200, 0x0200, 0x104051a4 )
 ROM_END
 
 ROM_START( hustle_rom )
@@ -618,13 +679,14 @@ ROM_START( hustle_rom )
     /*       They are nibble wide rom images which will be */
     /*       merged and loaded into the proper place by    */
     /*       comotion_rom_init()                           */
-    ROM_LOAD( "3160016.u2", 0x1000, 0x0400, 0x33200108 , 0xd983de7c )
-    ROM_LOAD( "3160017.u3", 0x1400, 0x0400, 0xf456010c , 0xedec9cb9 )
-    ROM_LOAD( "3160018.u4", 0x1800, 0x0400, 0x50540300 , 0xf599b9c0 )
-    ROM_LOAD( "3160019.u5", 0x1c00, 0x0400, 0xeb7b0d05 , 0x7794bc7e )
+    ROM_LOAD( "3160016.u2", 0x1000, 0x0400, 0xd983de7c )
+    ROM_LOAD( "3160017.u3", 0x1400, 0x0400, 0xedec9cb9 )
+    ROM_LOAD( "3160018.u4", 0x1800, 0x0400, 0xf599b9c0 )
+    ROM_LOAD( "3160019.u5", 0x1c00, 0x0400, 0x7794bc7e )
+
     ROM_REGION_DISPOSE(0x400)  /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "3160020.u29", 0x0000, 0x0200, 0xeaf60700 , 0x541d2c67 )
-    ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0x6e1c0808 , 0xb5083128 )
+    ROM_LOAD( "3160020.u29", 0x0000, 0x0200, 0x541d2c67 )
+    ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0xb5083128 )
 ROM_END
 
 static const char *blockade_sample_name[] =
@@ -694,8 +756,8 @@ struct GameDriver blasto_driver =
     "Blasto",
 	"1978",
 	"Gremlin",
-    "Frank Palazzolo",
-	GAME_NOT_WORKING,
+    "Frank Palazzolo\nJuergen Buchmueller",
+	0,
     &blasto_machine_driver,
 
     blasto_rom,
@@ -722,7 +784,7 @@ struct GameDriver hustle_driver =
 	"Gremlin",
     "Frank Palazzolo",
 	0,
-    &blasto_machine_driver,
+    &hustle_machine_driver,
 
     hustle_rom,
     comotion_init,

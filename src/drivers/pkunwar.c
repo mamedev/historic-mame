@@ -229,34 +229,34 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pkunwar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pkwar.01r", 0x0000, 0x4000, 0x795011a6 , 0xce2d2c7b )
-	ROM_LOAD( "pkwar.02r", 0x4000, 0x4000, 0xec6bfef7 , 0xabc1f661 )
-	ROM_LOAD( "pkwar.03r", 0xE000, 0x2000, 0xc3647004 , 0x56faebea )
+	ROM_LOAD( "pkwar.01r",    0x0000, 0x4000, 0xce2d2c7b )
+	ROM_LOAD( "pkwar.02r",    0x4000, 0x4000, 0xabc1f661 )
+	ROM_LOAD( "pkwar.03r",    0xE000, 0x2000, 0x56faebea )
 
 	ROM_REGION_DISPOSE(0x10000)	/* 64K for graphics */
-	ROM_LOAD( "pkwar.01y", 0x0000, 0x4000, 0x564539f7 , 0x428d3b92 )
-	ROM_LOAD( "pkwar.02y", 0x4000, 0x4000, 0x853a77ae , 0xce1da7bc )
-	ROM_LOAD( "pkwar.03y", 0x8000, 0x4000, 0xd2650e69 , 0x63204400 )
-	ROM_LOAD( "pkwar.04y", 0xC000, 0x4000, 0xd6dc280a , 0x061dfca8 )
+	ROM_LOAD( "pkwar.01y",    0x0000, 0x4000, 0x428d3b92 )
+	ROM_LOAD( "pkwar.02y",    0x4000, 0x4000, 0xce1da7bc )
+	ROM_LOAD( "pkwar.03y",    0x8000, 0x4000, 0x63204400 )
+	ROM_LOAD( "pkwar.04y",    0xC000, 0x4000, 0x061dfca8 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pkwar.col", 0x0000, 0x0020, 0x433329b3 , 0xaf0fc5e2 )
+	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, 0xaf0fc5e2 )
 ROM_END
 
 ROM_START( pkunwarj_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pgunwar.6", 0x0000, 0x4000, 0x851d5739 , 0x357f3ef3 )
-	ROM_LOAD( "pgunwar.5", 0x4000, 0x4000, 0xafa2dab8 , 0x0092e49e )
-	ROM_LOAD( "pkwar.03r", 0xE000, 0x2000, 0xc3647004 , 0x56faebea )
+	ROM_LOAD( "pgunwar.6",    0x0000, 0x4000, 0x357f3ef3 )
+	ROM_LOAD( "pgunwar.5",    0x4000, 0x4000, 0x0092e49e )
+	ROM_LOAD( "pkwar.03r",    0xE000, 0x2000, 0x56faebea )
 
 	ROM_REGION_DISPOSE(0x10000)	/* 64K for graphics */
-	ROM_LOAD( "pkwar.01y", 0x0000, 0x4000, 0x564539f7 , 0x428d3b92 )
-	ROM_LOAD( "pkwar.02y", 0x4000, 0x4000, 0x853a77ae , 0xce1da7bc )
-	ROM_LOAD( "pgunwar.2", 0x8000, 0x4000, 0xf99fd4a3 , 0xa2a43443 )
-	ROM_LOAD( "pkwar.04y", 0xC000, 0x4000, 0xd6dc280a , 0x061dfca8 )
+	ROM_LOAD( "pkwar.01y",    0x0000, 0x4000, 0x428d3b92 )
+	ROM_LOAD( "pkwar.02y",    0x4000, 0x4000, 0xce1da7bc )
+	ROM_LOAD( "pgunwar.2",    0x8000, 0x4000, 0xa2a43443 )
+	ROM_LOAD( "pkwar.04y",    0xC000, 0x4000, 0x061dfca8 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pkwar.col", 0x0000, 0x0020, 0x433329b3 , 0xaf0fc5e2 )
+	ROM_LOAD( "pkwar.col",    0x0000, 0x0020, 0xaf0fc5e2 )
 ROM_END
 
 

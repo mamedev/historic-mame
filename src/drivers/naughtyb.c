@@ -376,46 +376,46 @@ static struct MachineDriver popflame_machine_driver =
 
 ROM_START( naughtyb_rom )
 	ROM_REGION(0x10000)      /* 64k for code */
-	ROM_LOAD( "nb1ic30", 0x0000, 0x0800, 0xe786dfc2 , 0x3f482fa3 )
-	ROM_LOAD( "nb2ic29", 0x0800, 0x0800, 0x3529d2bd , 0x7ddea141 )
-	ROM_LOAD( "nb3ic28", 0x1000, 0x0800, 0xc2f542bd , 0x8c72a069 )
-	ROM_LOAD( "nb4ic27", 0x1800, 0x0800, 0xcfbf8b5b , 0x30feae51 )
-	ROM_LOAD( "nb5ic26", 0x2000, 0x0800, 0x9974a746 , 0x05242fd0 )
-	ROM_LOAD( "nb6ic25", 0x2800, 0x0800, 0x3f95af23 , 0x7a12ffea )
-	ROM_LOAD( "nb7ic24", 0x3000, 0x0800, 0xc0994fa1 , 0x9cc287df )
-	ROM_LOAD( "nb8ic23", 0x3800, 0x0800, 0x22d97209 , 0x4d84ff2c )
+	ROM_LOAD( "nb1ic30",      0x0000, 0x0800, 0x3f482fa3 )
+	ROM_LOAD( "nb2ic29",      0x0800, 0x0800, 0x7ddea141 )
+	ROM_LOAD( "nb3ic28",      0x1000, 0x0800, 0x8c72a069 )
+	ROM_LOAD( "nb4ic27",      0x1800, 0x0800, 0x30feae51 )
+	ROM_LOAD( "nb5ic26",      0x2000, 0x0800, 0x05242fd0 )
+	ROM_LOAD( "nb6ic25",      0x2800, 0x0800, 0x7a12ffea )
+	ROM_LOAD( "nb7ic24",      0x3000, 0x0800, 0x9cc287df )
+	ROM_LOAD( "nb8ic23",      0x3800, 0x0800, 0x4d84ff2c )
 
 	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nb15ic44", 0x0000, 0x0800, 0x57092643 , 0xd692f9c7 )
-	ROM_LOAD( "nb16ic43", 0x0800, 0x0800, 0x88e94dcf , 0xd3ba8b27 )
-	ROM_LOAD( "nb13ic46", 0x1000, 0x0800, 0xa7e78c51 , 0xc1669cd5 )
-	ROM_LOAD( "nb14ic45", 0x1800, 0x0800, 0xc07b7ad3 , 0xeef2c8e5 )
-	ROM_LOAD( "nb11ic48", 0x2000, 0x0800, 0xc7130b4d , 0x23271a13 )
-	ROM_LOAD( "nb12ic47", 0x2800, 0x0800, 0x5e0eaa60 , 0xef0706c3 )
-	ROM_LOAD( "nb9ic50", 0x3000, 0x0800, 0x56e6b6e8 , 0xd6949c27 )
-	ROM_LOAD( "nb10ic49", 0x3800, 0x0800, 0x874eec76 , 0xc97c97b9 )
+	ROM_LOAD( "nb15ic44",     0x0000, 0x0800, 0xd692f9c7 )
+	ROM_LOAD( "nb16ic43",     0x0800, 0x0800, 0xd3ba8b27 )
+	ROM_LOAD( "nb13ic46",     0x1000, 0x0800, 0xc1669cd5 )
+	ROM_LOAD( "nb14ic45",     0x1800, 0x0800, 0xeef2c8e5 )
+	ROM_LOAD( "nb11ic48",     0x2000, 0x0800, 0x23271a13 )
+	ROM_LOAD( "nb12ic47",     0x2800, 0x0800, 0xef0706c3 )
+	ROM_LOAD( "nb9ic50",      0x3000, 0x0800, 0xd6949c27 )
+	ROM_LOAD( "nb10ic49",     0x3800, 0x0800, 0xc97c97b9 )
 
 	ROM_REGION(0x0200)      /* color proms */
-	ROM_LOAD( "naughtyb.633", 0x0000, 0x0100, 0x44380702 , 0x7838b973 ) /* palette low bits */
-	ROM_LOAD( "naughtyb.h4", 0x0100, 0x0100, 0x6e760704 , 0x70043706 ) /* palette high bits */
+	ROM_LOAD( "naughtyb.633", 0x0000, 0x0100, 0x7838b973 ) /* palette low bits */
+	ROM_LOAD( "naughtyb.h4",  0x0100, 0x0100, 0x70043706 ) /* palette high bits */
 ROM_END
 
 ROM_START( popflame_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic86.pop", 0x0000, 0x1000, 0x3874201e , 0x5e32bbdf )
-	ROM_LOAD( "ic80.pop", 0x1000, 0x1000, 0x62c9e875 , 0xb77abf3d )
-	ROM_LOAD( "ic94.pop", 0x2000, 0x1000, 0xef0139a5 , 0x945a3c0f )
-	ROM_LOAD( "ic100.pop", 0x3000, 0x1000, 0x782f7f4d , 0xf9f2343b )
+	ROM_LOAD( "ic86.pop",     0x0000, 0x1000, 0x5e32bbdf )
+	ROM_LOAD( "ic80.pop",     0x1000, 0x1000, 0xb77abf3d )
+	ROM_LOAD( "ic94.pop",     0x2000, 0x1000, 0x945a3c0f )
+	ROM_LOAD( "ic100.pop",    0x3000, 0x1000, 0xf9f2343b )
 
 	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic13.pop", 0x0000, 0x1000, 0xb40c561a , 0x2367131e )
-	ROM_LOAD( "ic3.pop", 0x1000, 0x1000, 0xde7c7614 , 0xdeed0a8b )
-	ROM_LOAD( "ic29.pop", 0x2000, 0x1000, 0x8244c820 , 0x7b54f60f )
-	ROM_LOAD( "ic38.pop", 0x3000, 0x1000, 0x19ed84eb , 0xdd2d9601 )
+	ROM_LOAD( "ic13.pop",     0x0000, 0x1000, 0x2367131e )
+	ROM_LOAD( "ic3.pop",      0x1000, 0x1000, 0xdeed0a8b )
+	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
 
 	ROM_REGION(0x0200)      /* color proms */
-	ROM_LOAD( "ic53", 0x0000, 0x0100, 0x68670705 , 0x6e66057f ) /* palette low bits */
-	ROM_LOAD( "ic54", 0x0100, 0x0100, 0x34240304 , 0x236bc771 ) /* palette high bits */
+	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
+	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
 
 

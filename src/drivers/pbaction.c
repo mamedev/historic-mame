@@ -323,26 +323,26 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pbaction_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "b-p7.bin", 0x0000, 0x4000, 0x2458fd9a , 0x8d6dcaae )
-	ROM_LOAD( "b-n7.bin", 0x4000, 0x4000, 0x431e9dea , 0xd54d5402 )
-	ROM_LOAD( "b-l7.bin", 0x8000, 0x2000, 0x8203095b , 0xe7412d68 )
+	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, 0x8d6dcaae )
+	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
+	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, 0xe7412d68 )
 
 	ROM_REGION_DISPOSE(0x1c000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a-s6.bin", 0x00000, 0x2000, 0x85fb19bf , 0x9a74a8e1 )
-	ROM_LOAD( "a-s7.bin", 0x02000, 0x2000, 0x94ea0412 , 0x5ca6ad3c )
-	ROM_LOAD( "a-s8.bin", 0x04000, 0x2000, 0xbdb591db , 0x9f00b757 )
+	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
+	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
+	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
 
-	ROM_LOAD( "a-j5.bin", 0x06000, 0x4000, 0x0160bf76 , 0x21efe866 )
-	ROM_LOAD( "a-j6.bin", 0x0a000, 0x4000, 0x0758a878 , 0x7f984c80 )
-	ROM_LOAD( "a-j7.bin", 0x0e000, 0x4000, 0x2b2f8ed3 , 0xdf69e51b )
-	ROM_LOAD( "a-j8.bin", 0x12000, 0x4000, 0xe5da76b0 , 0x0094cb8b )
+	ROM_LOAD( "a-j5.bin",     0x06000, 0x4000, 0x21efe866 )
+	ROM_LOAD( "a-j6.bin",     0x0a000, 0x4000, 0x7f984c80 )
+	ROM_LOAD( "a-j7.bin",     0x0e000, 0x4000, 0xdf69e51b )
+	ROM_LOAD( "a-j8.bin",     0x12000, 0x4000, 0x0094cb8b )
 
-	ROM_LOAD( "b-c7.bin", 0x16000, 0x2000, 0x9266049c , 0xd1795ef5 )
-	ROM_LOAD( "b-d7.bin", 0x18000, 0x2000, 0x7f9d2741 , 0xf28df203 )
-	ROM_LOAD( "b-f7.bin", 0x1a000, 0x2000, 0x62735677 , 0xaf6e9817 )
+	ROM_LOAD( "b-c7.bin",     0x16000, 0x2000, 0xd1795ef5 )
+	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
+	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
 
 	ROM_REGION(0x10000)	/* 64k for sound board */
-	ROM_LOAD( "a-e3.bin", 0x0000, 0x2000, 0x1b9c25e0 , 0x0e53a91f )
+	ROM_LOAD( "a-e3.bin",     0x0000, 0x2000, 0x0e53a91f )
 ROM_END
 
 

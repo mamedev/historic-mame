@@ -108,6 +108,26 @@
 |*|			require the user to know what (s)he is doing.
 |*|
 |*|	James R. Twine (JRT)
+|*|
+|*|  Modifications by JCK from The Ultimate Patchers
+|*|
+|*|	JCK 980917:	Possibility of "circular" values in search method 1 :
+|*|			  - if you press OSD_KEY_LEFT or OSD_KEY_DOWN when value is 0,
+|*|			    it turns to 0xFF
+|*|			  - if you press OSD_KEY_RIGHT or OSD_KEY_UP when value is 0xFF,
+|*|			    it turns to 0.
+|*|			Added new #define (MAX_LOADEDCHEATS, MAX_ACTIVECHEATS, MAX_DISPLAYCHEATS,
+|*|			  MAX_MATCHES and MAX_WATCHES) to improve readability and upgradibility
+|*|			  (changes where it was needed)
+|*|			Added the possibility of toggling the watches display
+|*|			  ON (OSD_KEY_INSERT) and OFF (OSD_KEY_DEL) .
+|*|			Possibility to work on another cheat file (CHEAT.DAT is just the default one)
+|*|			  (have a look in confic.c)
+|*|			Added new types of cheats : 20 to 24 and 40 to 44 (see below)
+|*|
+|*|	Questions : Why are the watches wrong (on display) when they are coded on 20 or 24 bits ?
+|*|			How can you use a #define (which is a number) in a string ?
+|*|
 \*|*/
 
 #include "driver.h"
@@ -171,6 +191,10 @@ Special codes:
 10-Do not change if value decrease by 3 each frames
 11-Do not change if value decrease by 4 each frames
 
+JCK 980917
+20 to 24 set the specified bits (force bits to 1); same as 0 to 4 otherwize
+40 to 44 reset the specified bits (force bits to 0); same as 0 to 4 otherwize
+
 */
 
 struct cheat_struct {
@@ -183,12 +207,20 @@ struct cheat_struct {
   char Name[80];
 };
 
-static int CheatTotal;
-static struct cheat_struct CheatTable[11];
-static int LoadedCheatTotal;
-static struct cheat_struct LoadedCheatTable[101];
+/* JCK 980917 BEGIN */
+#define MAX_LOADEDCHEATS 150
+#define MAX_ACTIVECHEATS 10
+#define MAX_DISPLAYCHEATS 10
+#define MAX_MATCHES 10
+#define MAX_WATCHES 10
+/* JCK 980917 END */
 
-static unsigned int Watches[10];
+static int CheatTotal;
+static struct cheat_struct CheatTable[MAX_ACTIVECHEATS+1];    /* JCK 980917 */
+static int LoadedCheatTotal;
+static struct cheat_struct LoadedCheatTable[MAX_LOADEDCHEATS+1];    /* JCK 980917 */
+
+static unsigned int Watches[MAX_WATCHES];    /* JCK 980917 */
 static int WatchesFlag;
 static int WatchX,WatchY;
 
@@ -218,6 +250,10 @@ char		*pShortAddrTemplate = "  $%04X";		/* removed JB 980424 */
 
 static int CheatEnabled;
 int he_did_cheat;
+
+static int WatchEnabled;    /* JCK 980917 */
+
+char *cheatfile;    /* JCK 980917 */
 
 /* START JB 980506 */
 static unsigned char osd_key_chars[] =
@@ -485,6 +521,8 @@ void InitCheat(void)
   he_did_cheat = 0;
   CheatEnabled = 0;
 
+  WatchEnabled = 0;    /* JCK 980917 */
+
   CheatTotal = 0;
   LoadedCheatTotal = 0;
   CurrentMethod = 0;
@@ -501,7 +539,7 @@ void InitCheat(void)
 #endif
 
 /* JRT6	- modified JB 980424 */
-	for(i=0;i<10;i++)
+	for(i=0;i<MAX_WATCHES;i++)    /* JCK 980917 */
 		Watches[ i ] = MAX_ADDRESS(0);			/* Set Unused Value For Watch*/
 /* JRT6 */
 
@@ -511,7 +549,7 @@ void InitCheat(void)
 
 /* Load the cheats for that game */
 /* Ex.: pacman:0:4e14:6:0:Infinite Lives  */
-  if ((f = fopen("CHEAT.DAT","r")) != 0){
+  if ((f = fopen(cheatfile,"r")) != 0){    /* JCK 980917 */
     for(;;){
 
       if(fgets(str,80,f) == NULL)
@@ -531,9 +569,14 @@ void InitCheat(void)
       if(str[0] == ';') /*Comments line*/
         continue;
 
-      if(LoadedCheatTotal >= 99){
+      if(LoadedCheatTotal >= MAX_LOADEDCHEATS-1){    /* JCK 980917 */
         break;
       }
+
+/* JCK 980917 BEGIN*/
+/*Reset the counter*/
+	LoadedCheatTable[LoadedCheatTotal].Count=0;
+/* JCK 980917 END */
 
 /*Extract the fields from the string*/
       ptr = strtok(str, ":");
@@ -593,7 +636,7 @@ void DoCheat(int CurrentVolume)
 	char buf2[10];
 
 	/* Display watches if there is some */
-	if(WatchesFlag != 0)
+	if( (WatchesFlag != 0) && (WatchEnabled != 0) )    /* JCK 980917 */
 	{
 		int trueorientation;
 
@@ -602,7 +645,7 @@ void DoCheat(int CurrentVolume)
 		Machine->orientation = ORIENTATION_DEFAULT;
 
 		buf[0] = 0;
-		for (i=0;i<10;i++)
+		for (i=0;i<MAX_WATCHES;i++)    /* JCK 980917 */
 		{
 			if( Watches[ i ] != MAX_ADDRESS(0)) 		/* If Watch Is In Use*/
 			{
@@ -742,6 +785,85 @@ void DoCheat(int CurrentVolume)
 						}
 						break;
 
+					/* JCK 980917 BEGIN */
+					case 20:
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) | CheatTable[i].Data);
+						break;
+					case 21:
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) | CheatTable[i].Data);
+
+						/*Delete this cheat from the table*/
+						for(j = i;j<CheatTotal-1;j++)
+						{
+							CheatTable[j].CpuNo = CheatTable[j+1].CpuNo;
+							CheatTable[j].Address = CheatTable[j+1].Address;
+							CheatTable[j].Data = CheatTable[j+1].Data;
+							CheatTable[j].Special = CheatTable[j+1].Special;
+							CheatTable[j].Count = CheatTable[j+1].Count;
+							strcpy(CheatTable[j].Name,CheatTable[j+1].Name);
+						}
+						CheatTotal--;
+						break;
+					case 22:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) | CheatTable[i].Data);
+						CheatTable[i].Count = 1*60;
+						break;
+					case 23:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) | CheatTable[i].Data);
+						CheatTable[i].Count = 2*60;
+						break;
+					case 24:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) | CheatTable[i].Data);
+						CheatTable[i].Count = 5*60;
+						break;
+					case 40:
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) & ~CheatTable[i].Data);
+						break;
+					case 41:
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) & ~CheatTable[i].Data);
+
+						/*Delete this cheat from the table*/
+						for(j = i;j<CheatTotal-1;j++)
+						{
+							CheatTable[j].CpuNo = CheatTable[j+1].CpuNo;
+							CheatTable[j].Address = CheatTable[j+1].Address;
+							CheatTable[j].Data = CheatTable[j+1].Data;
+							CheatTable[j].Special = CheatTable[j+1].Special;
+							CheatTable[j].Count = CheatTable[j+1].Count;
+							strcpy(CheatTable[j].Name,CheatTable[j+1].Name);
+						}
+						CheatTotal--;
+						break;
+					case 42:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) & ~CheatTable[i].Data);
+						CheatTable[i].Count = 1*60;
+						break;
+					case 43:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) & ~CheatTable[i].Data);
+						CheatTable[i].Count = 2*60;
+						break;
+					case 44:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) & ~CheatTable[i].Data);
+						CheatTable[i].Count = 5*60;
+						break;
+					/* JCK 980917 END */
+
 						/*Special case, linked with 5,6,7 */
 					case 100:
 						/* JB 980407 */
@@ -829,6 +951,19 @@ void DoCheat(int CurrentVolume)
 /* JRT3 10-23-97 END */
   }
 
+/* JCK 980917 BEGIN */
+/* Ins toggles the Watch display ON */
+  if( osd_key_pressed( OSD_KEY_INSERT ) && (WatchEnabled == 0) ){
+    WatchEnabled = 1;
+    while (osd_key_pressed(OSD_KEY_INSERT)) ;  /* wait for key release */
+  }
+/* Del toggles the Watch display OFF */
+  if( osd_key_pressed( OSD_KEY_DEL ) && (WatchEnabled != 0) ){
+    WatchEnabled = 0;
+    while (osd_key_pressed(OSD_KEY_DEL)) ;  /* wait for key release */
+  }
+/* JCK 980917 END */
+
 }
 
 
@@ -910,7 +1045,7 @@ void EditCheat(int CheatNo)
 {
 /* JRT5 BEGIN Constants, And Menu Text Changes */
 #define		EDIT_CHEAT_LINES	11		/* Lines In Blurb*/
-#define		TOTAL_CHEAT_TYPES	11		/* Cheat Type Values*/
+#define		TOTAL_CHEAT_TYPES	44		/* Cheat Type Values*/		    /* JCK 980917 */
 #define		CHEAT_NAME_MAXLEN	25		/* Cheat (Edit) Name MaxLen*/
 
  char	*paDisplayText[] = {
@@ -1074,10 +1209,25 @@ void EditCheat(int CheatNo)
 				sprintf(str2[3], "Value:    %03d  (0x%02X)", LoadedCheatTable[CheatNo].Data, LoadedCheatTable[CheatNo].Data);
 				break;
 			case 4:	/* Special*/
+				/*
 				if (LoadedCheatTable[CheatNo].Special <= 0)
 					LoadedCheatTable[CheatNo].Special = TOTAL_CHEAT_TYPES;
 				else
 					LoadedCheatTable[CheatNo].Special --;
+				*/
+
+				/* JCK 980917 BEGIN */
+				if (LoadedCheatTable[CheatNo].Special <= 0)
+					LoadedCheatTable[CheatNo].Special = TOTAL_CHEAT_TYPES;
+				else
+					if (LoadedCheatTable[CheatNo].Special == 20)
+						LoadedCheatTable[CheatNo].Special = 11;
+					else
+						if (LoadedCheatTable[CheatNo].Special == 40)
+							LoadedCheatTable[CheatNo].Special = 24;
+						else
+							LoadedCheatTable[CheatNo].Special --;
+				/* JCK 980917 END */
 
 				sprintf(str2[4],"Type:      %02d",LoadedCheatTable[CheatNo].Special);
 				break;
@@ -1118,9 +1268,25 @@ void EditCheat(int CheatNo)
 				sprintf(str2[3],"Value:    %03d  (0x%02X)",LoadedCheatTable[CheatNo].Data,LoadedCheatTable[CheatNo].Data);
 				break;
 			case 4: /* Special*/
+				/*
 				LoadedCheatTable[CheatNo].Special ++;
 				if(LoadedCheatTable[CheatNo].Special > TOTAL_CHEAT_TYPES)
 					LoadedCheatTable[CheatNo].Special = 0;
+				*/
+
+				/* JCK 980917 BEGIN */
+				if (LoadedCheatTable[CheatNo].Special > TOTAL_CHEAT_TYPES)
+					LoadedCheatTable[CheatNo].Special = 0;
+				else
+					if (LoadedCheatTable[CheatNo].Special == 11)
+						LoadedCheatTable[CheatNo].Special = 20;
+					else
+						if (LoadedCheatTable[CheatNo].Special == 24)
+							LoadedCheatTable[CheatNo].Special = 40;
+						else
+							LoadedCheatTable[CheatNo].Special ++;
+				/* JCK 980917 END */
+
 				sprintf(str2[4],"Type:      %02d",LoadedCheatTable[CheatNo].Special);
 				break;
       	}
@@ -1292,8 +1458,8 @@ HardRefresh:
   y += 6*Machine->uifont->height; /* Keep space for menu */
 
 /* No more than 10 cheat displayed */
-  if(LoadedCheatTotal > 10)
-    total = 10;
+  if(LoadedCheatTotal > MAX_DISPLAYCHEATS)    /* JCK 980917 */
+    total = MAX_DISPLAYCHEATS;
   else
     total = LoadedCheatTotal;
 
@@ -1362,21 +1528,21 @@ HardRefresh:
 
           s = 0;
 
-          if(LoadedCheatTotal <= 10)
+          if(LoadedCheatTotal <= MAX_DISPLAYCHEATS)    /* JCK 980917 */
             break;
 /*
 End of list
  -Increment index
  -Redo the list
 */
-          if(LoadedCheatTotal > Index+10)
-            Index += 10;
+          if(LoadedCheatTotal > Index+MAX_DISPLAYCHEATS)    /* JCK 980917 */
+            Index += MAX_DISPLAYCHEATS;
           else
             Index = 0;
 
 /* Make the list */
           total = 0;
-          for (i = 0;i < 10;i++){
+          for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
             if(Index+i >= LoadedCheatTotal)
               break;
             dt[i].text = LoadedCheatTable[i+Index].Name;
@@ -1398,7 +1564,7 @@ End of list
           s = total - 1;
 /* JRT5 Fixes Blank List When <UP> Hit With Exactly 10 Entries */
 /*          if(LoadedCheatTotal < 10)*/
-          if(LoadedCheatTotal <= 10)
+          if(LoadedCheatTotal <= MAX_DISPLAYCHEATS)    /* JCK 980917 */
 /* JRT5 */
             break;
 
@@ -1406,16 +1572,17 @@ End of list
           if(Index == 0)
 /* JRT5 Fixes Blank List When <UP> Hit With Exactly 10 Entries */
 /*            Index = (LoadedCheatTotal/10)*10;*/
-            Index = ( LoadedCheatTotal - 1 );
+              /* Index = ( LoadedCheatTotal - 1 ); */
+		Index = ((LoadedCheatTotal-1)/MAX_DISPLAYCHEATS)*MAX_DISPLAYCHEATS;    /* JCK 980917 */
 /* JRT5 */
-          else if(Index > 10)
-            Index -= 10;
+          else if(Index > MAX_DISPLAYCHEATS)    /* JCK 980917 */
+            Index -= MAX_DISPLAYCHEATS;
           else
             Index = 0;
 
 /* Refresh the list */
           total = 0;
-          for (i = 0;i < 10;i++){
+          for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
             if(Index+i >= LoadedCheatTotal)
               break;
             dt[i].text = LoadedCheatTable[i+Index].Name;
@@ -1434,7 +1601,7 @@ End of list
       case OSD_KEY_INSERT:
 /* Add a new empty cheat */
 /* JRT5 Print Message If Cheat List Is Full */
-        if(LoadedCheatTotal > 99){
+        if(LoadedCheatTotal > MAX_LOADEDCHEATS-1){    /* JCK 980917 */
 					xprintf( 0, ( ( EndY - Machine->uifont->height ) - 4 ),
 						"(Cheat List Is Full.)" );
           break;
@@ -1454,7 +1621,7 @@ End of list
       case OSD_KEY_F1:
         if(LoadedCheatTotal == 0)
           break;
-        if ((f = fopen("CHEAT.DAT","a")) != 0)
+        if ((f = fopen(cheatfile,"a")) != 0)    /* JCK 981607 */
         {
 			/* JRT6 - modified JB 980424 */
         	char	fmt[32];
@@ -1491,7 +1658,7 @@ End of list
       case OSD_KEY_F2:	/* Add to watch list */
       	if (LoadedCheatTable[s+Index].CpuNo==0)	/* watches are for cpu 0 only */ /* JB 980424 */
       	{
-	        for (i=0;i<10;i++)
+	        for (i=0;i<MAX_WATCHES;i++)    /* JCK 980917 */
 	        {
 				if (Watches[i] == MAX_ADDRESS(0))	/* JRT6/JB */
 				{
@@ -1499,6 +1666,7 @@ End of list
             		xprintf(dt[s].x+(strlen(LoadedCheatTable[s+Index].Name) *
             			Machine->uifont->width)+Machine->uifont->width,dt[s].y,"(Watch)");
             		WatchesFlag = 1;
+				WatchEnabled = 1;    /* JCK 980917 */
             		break;
           		}
         	}
@@ -1558,7 +1726,7 @@ End of list
 
 /* Refresh the list */
         total = 0;
-        for (i = 0;i < 10;i++){
+        for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
           if(Index+i >= LoadedCheatTotal)
             break;
           dt[i].text = LoadedCheatTable[i+Index].Name;
@@ -1572,15 +1740,16 @@ End of list
           if(Index != 0){
 /* The page is empty so backup one page */
             if(Index == 0)
-              Index = (LoadedCheatTotal/10)*10;
-            else if(Index > 10)
-              Index -= 10;
+              /* Index = (LoadedCheatTotal/10)*10; */
+              Index = ((LoadedCheatTotal-1)/MAX_DISPLAYCHEATS)*MAX_DISPLAYCHEATS;
+            else if(Index > MAX_DISPLAYCHEATS)    /* JCK 980917 */
+              Index -= MAX_DISPLAYCHEATS;
             else
               Index = 0;
 
 /* Make the list */
             total = 0;
-            for (i = 0;i < 10;i++){
+            for (i = 0;i < MAX_DISPLAYCHEATS;i++){    /* JCK 980917 */
               if(Index+i >= LoadedCheatTotal)
                 break;
               dt[i].text = LoadedCheatTable[i+Index].Name;
@@ -1621,7 +1790,7 @@ End of list
         }
 
 /* No more than 10 cheat at the time */
-        if(CheatTotal > 9){
+        if(CheatTotal > MAX_ACTIVECHEATS-1){    /* JCK 980917 */
 					xprintf( 0, ( ( EndY - Machine->uifont->height ) - 4 ),
 						"(Limit Of 10 Active Cheats)" );
           break;
@@ -1837,12 +2006,20 @@ if(CurrentMethod == Method_1){
         if(s < 0xFF)
 /* JRT2 10-23-97 END */
           s++;
+/* JCK 980917 BEGIN */
+	  else
+	    s=0;
+/* JCK 980917 END */
         break;
 
       case OSD_KEY_LEFT:
       case OSD_KEY_DOWN:
         if(s != 0)
           s--;
+/* JCK 980917 BEGIN */
+	  else
+	    s=0xFF;
+/* JCK 980917 END */
         break;
       case OSD_KEY_ENTER:
       case OSD_KEY_ESC:
@@ -2601,7 +2778,7 @@ void ContinueCheat(void)
   y += 2*Machine->uifont->height;
   xprintf(0,y,"Matches Found: %d",count);
 
-  if(count > 10)
+  if(count > MAX_MATCHES)    /* JCK 980917 */
     str = "Here Are 10 Matches:";
   else if(count != 0)
     str = "Here Is The List:";
@@ -2631,7 +2808,7 @@ void ContinueCheat(void)
 				total++;
 
 				y += Machine->uifont->height;
-				if (total >= 10)
+				if (total >= MAX_MATCHES)    /* JCK 980917 */
 				{
 					Continue = i+ext->start;
 					break;
@@ -2651,7 +2828,7 @@ void ContinueCheat(void)
       total++;
 
       y += Machine->uifont->height;
-      if(total >= 10){
+      if(total >= MAX_MATCHES){    /* JCK 980917 */
         Continue = i;
         break;
       }
@@ -2690,7 +2867,7 @@ void ContinueCheat(void)
           s = 0;
 
 /* Scroll down in the list */
-          if(total < 10)
+          if(total < MAX_MATCHES)    /* JCK 980917 */
             break;
           total = 0;
 
@@ -2708,7 +2885,7 @@ void ContinueCheat(void)
 
 							total++;
 
-							if (total >= 10)
+							if (total >= MAX_MATCHES)    /* JCK 980917 */
 							{
 								Continue = i+ext->start;
 								break;
@@ -2724,7 +2901,7 @@ void ContinueCheat(void)
 
 	              total++;
 
-	              if(total >= 10){
+	              if(total >= MAX_MATCHES){    /* JCK 980917 */
 	                Continue = i;
 	                break;
 	              }
@@ -2755,7 +2932,7 @@ void ContinueCheat(void)
 					dt[total].text = str2[total];
 
 					total++;
-					if (total >= 10)
+					if (total >= MAX_MATCHES)    /* JCK 980917 */
 					{
 						Continue = i+ext->start;
 						break;
@@ -2770,7 +2947,7 @@ void ContinueCheat(void)
 
 	            total++;
 
-	            if(total >= 10){
+	            if(total >= MAX_MATCHES){    /* JCK 980917 */
 	              Continue = i;
 	              break;
 	            }
@@ -2783,7 +2960,7 @@ void ContinueCheat(void)
       case OSD_KEY_PGDN:
         if(total == 0)
           break;
-        if(total < 10)
+        if(total < MAX_MATCHES)    /* JCK 980917 */
           Continue = -1;
         total = 0;
 
@@ -2801,7 +2978,7 @@ void ContinueCheat(void)
 
 						total++;
 
-						if (total >= 10)
+						if (total >= MAX_MATCHES)    /* JCK 980917 */
 						{
 							Continue = i+ext->start;
 							break;
@@ -2817,7 +2994,7 @@ void ContinueCheat(void)
 
 	            total++;
 
-	            if(total >= 10){
+	            if(total >= MAX_MATCHES){    /* JCK 980917 */
 	              Continue = i;
 	              break;
 	            }
@@ -2831,14 +3008,14 @@ void ContinueCheat(void)
         if(total == 0)
           break;
 /* Add all the list to the LoadedCheatTable */
-        if(LoadedCheatTotal > 99){
+        if(LoadedCheatTotal > MAX_LOADEDCHEATS-1){    /* JCK 980917 */
           xprintf(0,y,"Not Added: Cheat List Is Full.");
           break;
         }
         count = 0;
 
-		/* JB 980407 */
-		for (ext = FlagTable, ext_sr = StartRam; ext->data && count<100; ext++, ext_sr++)
+		/* JB 980407 and JCK 980917 */
+		for (ext = FlagTable, ext_sr = StartRam; ext->data && count<MAX_LOADEDCHEATS; ext++, ext_sr++)
 		{
 			for (i = 0; i <= ext->end - ext->start; i++)
 				if (ext->data[i] != 0)
@@ -2853,7 +3030,7 @@ void ContinueCheat(void)
 					strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
 					LoadedCheatTotal++;
 				}
-				if(LoadedCheatTotal > 99)
+				if(LoadedCheatTotal > MAX_LOADEDCHEATS-1)    /* JCK 980917 */
 				break;
 		}
 
@@ -2870,14 +3047,14 @@ void ContinueCheat(void)
 	            strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
 	            LoadedCheatTotal++;
 	          }
-	          if(LoadedCheatTotal > 99)
+	          if(LoadedCheatTotal > MAX_LOADEDCHEATS-1)    /* JCK 980917 */
 	            break;
 	        }
         #endif
         xprintf(0,y,"%d Added",count);
 
 /* JRT5 Print Message If Cheat List Is Full */
-        if(LoadedCheatTotal > 99){
+        if(LoadedCheatTotal > MAX_LOADEDCHEATS-1){    /* JCK 980917 */
 					y += Machine->uifont->height;
 					xprintf(0,y,"(Cheat List Is Full.)");
 				}
@@ -2890,7 +3067,7 @@ void ContinueCheat(void)
           break;
 
 /* Add the selected address to the LoadedCheatTable */
-        if(LoadedCheatTotal > 99){
+        if(LoadedCheatTotal > MAX_LOADEDCHEATS-1){    /* JCK 980917 */
           xprintf(0,y,"Not Added: Cheat List Is Full.");
           break;
         }
@@ -2979,7 +3156,7 @@ void ChooseWatch(void)
   total = 8;                        /* Start Of Watch DT Locations*/
 /* JRT1 10-23-97 END */
 
-  for (i=0;i<10;i++){
+  for (i=0;i<MAX_WATCHES;i++){    /* JCK 980917 */
 
 /* JRT1 10-23-97 BEGIN */
 /* JRT6/JB - modified JB 980424 */
@@ -3008,7 +3185,7 @@ void ChooseWatch(void)
   {
 /* Display a test to see where the watches are */
     buf[0] = 0;
-    for(i=0;i<10;i++)
+    for(i=0;i<MAX_WATCHES;i++)    /* JCK 980917 */
 /* JRT6/JB - modified JB 980424 */
       if (Watches[i] != MAX_ADDRESS(0)){
 /* JRT6/JB */
@@ -3178,9 +3355,10 @@ void ChooseWatch(void)
 
 /* Set Watch Flag */
   WatchesFlag = 0;
-  for(i=0;i<10;i++)
+  for(i=0;i<MAX_WATCHES;i++)    /* JCK 980917 */
     if(Watches[i] != MAX_ADDRESS(0))	/* JB 980424 */
       WatchesFlag = 1;
+	WatchEnabled = 1;    /* JCK 980917 */
 
   osd_clearbitmap(Machine->scrbitmap);
 

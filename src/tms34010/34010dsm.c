@@ -838,13 +838,13 @@ int Dasm34010 (unsigned char *pBase, char *buff, int _pc)
 
 
 	case 0x5c00:
-		sprintf (buffer, "MPYS ? ");
+		sprintf (buffer, "MPYS   ");
 		print_src_des_reg();
 		break;
 
 
 	case 0x5e00:
-		sprintf (buffer, "MPYU ? ");
+		sprintf (buffer, "MPYU   ");
 		print_src_des_reg();
 		break;
 

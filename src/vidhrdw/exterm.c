@@ -10,6 +10,18 @@
 #include "vidhrdw/generic.h"
 #include "TMS34010/tms34010.h"
 
+
+#define FORCOL_TO_PEN(COL)	\
+	if ((COL) & 0x8000)		\
+	{						\
+		(COL) &= 0x0fff;	\
+	}						\
+	else					\
+	{						\
+		(COL) += 0x1000;	\
+	}
+
+
 static struct osd_bitmap *tmpbitmap1, *tmpbitmap2;
 unsigned char *exterm_master_videoram, *exterm_slave_videoram;
 
@@ -75,14 +87,7 @@ void exterm_master_videoram_w(int offset, int data)
 {
 	COMBINE_WORD_MEM(&exterm_master_videoram[offset], data);
 
-	if (data & 0x8000)
-	{
-		data &= 0x0fff;
-	}
-	else
-	{
-		data += 0x1000;
-	}
+	FORCOL_TO_PEN(data);
 
 	if (tmpbitmap->depth == 16)
 		((unsigned short *)tmpbitmap->line[offset >> 9])[(offset >> 1) & 0xff] = Machine->pens[data];
@@ -130,10 +135,118 @@ void exterm_paletteram_w(int offset, int data)
 	paletteram_xRRRRRGGGGGBBBBB_word_w(offset, data);
 }
 
+
+#define FROM_SHIFTREG_MASTER(TYPE)										\
+	unsigned TYPE *line = &((unsigned TYPE *)tmpbitmap->line[y])[0];	\
+																		\
+    for (i = 0; i < 256; i++)											\
+	{																	\
+		data = shiftreg[i];			                                    \
+																		\
+		FORCOL_TO_PEN(data);											\
+																		\
+		*(line++) = Machine->pens[data];	 							\
+	}
+
+static void to_shiftreg_master(unsigned int address, unsigned short* shiftreg)
+{
+	memcpy(shiftreg, &exterm_master_videoram[address>>3], 256*sizeof(unsigned short));
+}
+
+static void from_shiftreg_master(unsigned int address, unsigned short* shiftreg)
+{
+	int i, y, data;
+
+	address >>= 3;
+
+	memcpy(&exterm_master_videoram[address], shiftreg, 256*sizeof(unsigned short));
+
+	y = (address >> 9);
+
+	if (tmpbitmap1->depth == 16)
+	{
+		FROM_SHIFTREG_MASTER(short);
+	}
+	else
+	{
+		FROM_SHIFTREG_MASTER(char);
+	}
+}
+
+
+#define FROM_SHIFTREG_SLAVE(TYPE)										\
+	unsigned TYPE *line1, *line2;										\
+	if (address & 0x10000)												\
+	{																	\
+		line1 = &((unsigned TYPE *)tmpbitmap2->line[y  ])[0];			\
+		line2 = &((unsigned TYPE *)tmpbitmap2->line[y+1])[0];			\
+	}																	\
+	else																\
+	{																	\
+		line1 = &((unsigned TYPE *)tmpbitmap1->line[y  ])[0];			\
+		line2 = &((unsigned TYPE *)tmpbitmap1->line[y+1])[0];			\
+	}																	\
+																		\
+    for (i = 0; i < 256; i++)											\
+	{																	\
+		*(line1++) = Machine->pens[((unsigned char*)shiftreg)[i    ]];	\
+		*(line2++) = Machine->pens[((unsigned char*)shiftreg)[i+256]];	\
+	}
+
+static void to_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
+{
+	memcpy(shiftreg, &exterm_slave_videoram[address>>3], 256*2*sizeof(unsigned char));
+}
+
+static void from_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
+{
+	int i, y;
+
+	address >>= 3;
+
+	memcpy(&exterm_slave_videoram[address], shiftreg, 256*2*sizeof(unsigned char));
+
+	y = (address >> 8) & 0xff;
+
+	if (tmpbitmap1->depth == 16)
+	{
+		FROM_SHIFTREG_SLAVE(short);
+	}
+	else
+	{
+		FROM_SHIFTREG_SLAVE(char);
+	}
+}
+
+
 static struct rectangle foregroundvisiblearea =
 {
 	0, 255, 40, 238
 };
+
+
+#define REFRESH(TYPE)										\
+	unsigned TYPE *bg1, *bg2, *fg1, *fg2;					\
+															\
+	for (y = 0; y < 256; y++)								\
+	{														\
+		bg1  = &((unsigned TYPE *)   bitmap ->line[y])[0];	\
+		bg2  = &((unsigned TYPE *)tmpbitmap ->line[y])[0];	\
+		fg1  = &((unsigned TYPE *)tmpbitmap1->line[y])[0];	\
+		fg2  = &((unsigned TYPE *)tmpbitmap2->line[y])[0];	\
+															\
+		for (x = 256; x; x--, bgsrc++)						\
+		{													\
+			data = READ_WORD(bgsrc);						\
+															\
+			FORCOL_TO_PEN(data);							\
+															\
+			*(bg1++) = *(bg2++) = Machine->pens[data];		\
+															\
+			*(fg1++) = Machine->pens[*(fgsrc1++)];			\
+			*(fg2++) = Machine->pens[*(fgsrc2++)];			\
+		}													\
+	}
 
 void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
@@ -144,101 +257,30 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		return;
 	}
 
+	TMS34010_set_shiftreg_functions(0, to_shiftreg_master, from_shiftreg_master);
+	TMS34010_set_shiftreg_functions(1, to_shiftreg_slave,  from_shiftreg_slave);
+
 	if (palette_recalc() != 0)
 	{
 		/* Redraw screen */
-
-		int offset;
+		int data,x,y;
+		unsigned short *bgsrc  = (unsigned short *)&exterm_master_videoram[0];
+		unsigned char  *fgsrc1 = &exterm_slave_videoram [0];
+		unsigned char  *fgsrc2 = &exterm_slave_videoram [256*256];
 
 		if (tmpbitmap1->depth == 16)
 		{
-			for (offset = 0; offset < 256*256; offset+=2)
-			{
-				int data1,data2,data3,data4,x1,y1,x2,y2;
-
-				data3 = READ_WORD(&exterm_master_videoram[offset]);
-				if (data3 & 0x8000)
-				{
-					data3 &= 0x0fff;
-				}
-				else
-				{
-					data3 += 0x1000;
-				}
-
-				x1 = offset & 0xff;
-				y1 = (offset >> 8) & 0xff;
-
-				x2 = (offset >> 1) & 0xff;
-				y2 = offset >> 9;
-
-				data4 = READ_WORD(&exterm_master_videoram[offset+256*256]);
-				if (data4 & 0x8000)
-				{
-					data4 &= 0x0fff;
-				}
-				else
-				{
-					data4 += 0x1000;
-				}
-
-				data1 = READ_WORD(&exterm_slave_videoram[offset]);
-				data2 = READ_WORD(&exterm_slave_videoram[offset+256*256]);
-
-				((unsigned short *)tmpbitmap ->line[y2     ])[x2  ] = Machine->pens[data3];
-				((unsigned short *)tmpbitmap ->line[y2|0x80])[x2  ] = Machine->pens[data4];
-				((unsigned short *)tmpbitmap1->line[y1     ])[x1  ] = Machine->pens[ (data1       & 0xff)];
-				((unsigned short *)tmpbitmap1->line[y1     ])[x1+1] = Machine->pens[((data1 >> 8) & 0xff)];
-				((unsigned short *)tmpbitmap2->line[y1     ])[x1  ] = Machine->pens[ (data2       & 0xff)];
-				((unsigned short *)tmpbitmap2->line[y1     ])[x1+1] = Machine->pens[((data2 >> 8) & 0xff)];
-			}
+			REFRESH(short);
 		}
 		else
 		{
-			for (offset = 0; offset < 256*256; offset+=2)
-			{
-				int data1,data2,data3,data4,x1,y1,x2,y2;
-
-				x1 = offset & 0xff;
-				y1 = (offset >> 8) & 0xff;
-
-				x2 = (offset >> 1) & 0xff;
-				y2 = offset >> 9;
-
-				data3 = READ_WORD(&exterm_master_videoram[offset]);
-				if (data3 & 0x8000)
-				{
-					data3 &= 0x0fff;
-				}
-				else
-				{
-					data3 += 0x1000;
-				}
-
-				data4 = READ_WORD(&exterm_master_videoram[offset+256*256]);
-				if (data4 & 0x8000)
-				{
-					data4 &= 0x0fff;
-				}
-				else
-				{
-					data4 += 0x1000;
-				}
-
-				data1 = READ_WORD(&exterm_slave_videoram[offset]);
-				data2 = READ_WORD(&exterm_slave_videoram[offset+256*256]);
-
-				tmpbitmap ->line[y2     ][x2  ] = Machine->pens[data3];
-				tmpbitmap ->line[y2|0x80][x2  ] = Machine->pens[data4];
-				tmpbitmap1->line[y1     ][x1  ] = Machine->pens[ (data1       & 0xff)];
-				tmpbitmap1->line[y1     ][x1+1] = Machine->pens[((data1 >> 8) & 0xff)];
-				tmpbitmap2->line[y1     ][x1  ] = Machine->pens[ (data2       & 0xff)];
-				tmpbitmap2->line[y1     ][x1+1] = Machine->pens[((data2 >> 8) & 0xff)];
-			}
+			REFRESH(char);
 		}
 	}
-
-	copybitmap(bitmap,tmpbitmap, 0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	else
+	{
+		copybitmap(bitmap,tmpbitmap, 0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);		
+	}
 
     if (TMS34010_get_DPYSTRT(1) & 0x800)
 	{

@@ -12,8 +12,8 @@
 /* SSGClk   : Set Clock          */
 /* int n    = chip number        */
 /* int clk  = MasterClock(Hz)    */
-/* int rate = Emuration rate(Hz) */
-#define SSGClk(n,clk,rate) AYSetClock(n,clk,rate)
+/* int rate = sample rate(Hz) */
+#define SSGClk(chip,clock) AY8910_set_clock(chip,clock)
 
 /* SSGWrite : Write SSG port     */
 /* int n    = chip number        */
@@ -23,13 +23,12 @@
 
 /* SSGRead  : Read SSG port */
 /* int n    = chip number   */
-/* int a    = address       */
 /* return   = Read data     */
-#define SSGRead(n,a) AY8910Read(n,a)
+#define SSGRead(n) AY8910Read(n)
 
 /* SSGReset : Reset SSG chip */
 /* int n    = chip number   */
-#define SSGReset(n) AYResetChip(n)
+#define SSGReset(chip) AY8910_reset(chip)
 
 /* -------------------- Timer Interface ---------------------*/
 #ifndef INTERNAL_TIMER

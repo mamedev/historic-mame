@@ -454,49 +454,49 @@ static struct MachineDriver farwest_machine_driver =
 
 ROM_START( ironhors_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "13c_h03.bin", 0x4000, 0x8000, 0xda405692 , 0x24539af1 )
-	ROM_LOAD( "12c_h02.bin", 0xc000, 0x4000, 0x08faa46e , 0xfab07f86 )
+	ROM_LOAD( "13c_h03.bin",  0x4000, 0x8000, 0x24539af1 )
+	ROM_LOAD( "12c_h02.bin",  0xc000, 0x4000, 0xfab07f86 )
 
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "09f_h07.bin", 0x00000, 0x8000, 0xc6b59885 , 0xc761ec73 )
-	ROM_LOAD( "06f_h04.bin", 0x08000, 0x8000, 0xb57060e6 , 0xc1486f61 )
-	ROM_LOAD( "08f_h06.bin", 0x10000, 0x8000, 0xe182a082 , 0xf21d8c93 )
-	ROM_LOAD( "07f_h05.bin", 0x18000, 0x8000, 0xf688cb60 , 0x60107859 )
+	ROM_LOAD( "09f_h07.bin",  0x00000, 0x8000, 0xc761ec73 )
+	ROM_LOAD( "06f_h04.bin",  0x08000, 0x8000, 0xc1486f61 )
+	ROM_LOAD( "08f_h06.bin",  0x10000, 0x8000, 0xf21d8c93 )
+	ROM_LOAD( "07f_h05.bin",  0x18000, 0x8000, 0x60107859 )
 
 	ROM_REGION(0x500)	/* color/lookup proms */
-	ROM_LOAD( "03f_h08.bin", 0x0000, 0x0100, 0x5e910301 , 0x9f6ddf83 ) /* palette red */
-	ROM_LOAD( "04f_h09.bin", 0x0100, 0x0100, 0x69c10305 , 0xe6773825 ) /* palette green */
-	ROM_LOAD( "05f_h10.bin", 0x0200, 0x0100, 0x44900c04 , 0x30a57860 ) /* palette blue */
-	ROM_LOAD( "10f_h12.bin", 0x0300, 0x0100, 0xfb100906 , 0x5eb33e73 ) /* character lookup table */
-	ROM_LOAD( "10f_h11.bin", 0x0400, 0x0100, 0xed1f0b0d , 0xa63e37d8 ) /* sprite lookup table */
+	ROM_LOAD( "03f_h08.bin",  0x0000, 0x0100, 0x9f6ddf83 ) /* palette red */
+	ROM_LOAD( "04f_h09.bin",  0x0100, 0x0100, 0xe6773825 ) /* palette green */
+	ROM_LOAD( "05f_h10.bin",  0x0200, 0x0100, 0x30a57860 ) /* palette blue */
+	ROM_LOAD( "10f_h12.bin",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
+	ROM_LOAD( "10f_h11.bin",  0x0400, 0x0100, 0xa63e37d8 ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for audio cpu */
-	ROM_LOAD( "10c_h01.bin", 0x0000, 0x4000, 0x3ba31251 , 0x2b17930f )
+	ROM_LOAD( "10c_h01.bin",  0x0000, 0x4000, 0x2b17930f )
 ROM_END
 
 ROM_START( farwest_rom )
 	ROM_REGION(0x12000)	/* 64k for code + 8k for extra ROM */
-	ROM_LOAD( "ironhors.008", 0x04000, 0x4000, 0x6c2af69e , 0xb1c8246c )
-	ROM_LOAD( "ironhors.009", 0x08000, 0x8000, 0xb81879b4 , 0xea34ecfc )
-	ROM_LOAD( "ironhors.007", 0x10000, 0x2000, 0xa6b044ee , 0x471182b7 )	/* don't know what this is for */
+	ROM_LOAD( "ironhors.008", 0x04000, 0x4000, 0xb1c8246c )
+	ROM_LOAD( "ironhors.009", 0x08000, 0x8000, 0xea34ecfc )
+	ROM_LOAD( "ironhors.007", 0x10000, 0x2000, 0x471182b7 )	/* don't know what this is for */
 
 	ROM_REGION_DISPOSE(0x20000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ironhors.005", 0x00000, 0x8000, 0x9c1ebc00 , 0xf77e5b83 )
-	ROM_LOAD( "ironhors.006", 0x08000, 0x8000, 0xf188bee2 , 0x7bbc0b51 )
-	ROM_LOAD( "ironhors.001", 0x10000, 0x4000, 0x0744405c , 0xa8fc21d3 )
-	ROM_LOAD( "ironhors.002", 0x14000, 0x4000, 0x199b5181 , 0x9c1e5593 )
-	ROM_LOAD( "ironhors.003", 0x18000, 0x4000, 0x8c9b7cc1 , 0x3a0bf799 )
-	ROM_LOAD( "ironhors.004", 0x1c000, 0x4000, 0x611a143a , 0x1fab18a3 )
+	ROM_LOAD( "ironhors.005", 0x00000, 0x8000, 0xf77e5b83 )
+	ROM_LOAD( "ironhors.006", 0x08000, 0x8000, 0x7bbc0b51 )
+	ROM_LOAD( "ironhors.001", 0x10000, 0x4000, 0xa8fc21d3 )
+	ROM_LOAD( "ironhors.002", 0x14000, 0x4000, 0x9c1e5593 )
+	ROM_LOAD( "ironhors.003", 0x18000, 0x4000, 0x3a0bf799 )
+	ROM_LOAD( "ironhors.004", 0x1c000, 0x4000, 0x1fab18a3 )
 
 	ROM_REGION(0x500)	/* color/lookup proms */
-	ROM_LOAD( "ironcol.003", 0x0000, 0x0100, 0x79760406 , 0x3e3fca11 ) /* palette red */
-	ROM_LOAD( "ironcol.001", 0x0100, 0x0100, 0x909a0006 , 0xdfb13014 ) /* palette green */
-	ROM_LOAD( "ironcol.002", 0x0200, 0x0100, 0x498b0f07 , 0x77c88430 ) /* palette blue */
-	ROM_LOAD( "ironcol.004", 0x0300, 0x0100, 0xfb100906 , 0x5eb33e73 ) /* character lookup table */
-	ROM_LOAD( "ironcol.005", 0x0400, 0x0100, 0xe40e060c , 0x15077b9c ) /* sprite lookup table */
+	ROM_LOAD( "ironcol.003",  0x0000, 0x0100, 0x3e3fca11 ) /* palette red */
+	ROM_LOAD( "ironcol.001",  0x0100, 0x0100, 0xdfb13014 ) /* palette green */
+	ROM_LOAD( "ironcol.002",  0x0200, 0x0100, 0x77c88430 ) /* palette blue */
+	ROM_LOAD( "ironcol.004",  0x0300, 0x0100, 0x5eb33e73 ) /* character lookup table */
+	ROM_LOAD( "ironcol.005",  0x0400, 0x0100, 0x15077b9c ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for audio cpu */
-	ROM_LOAD( "ironhors.010", 0x0000, 0x4000, 0xe8305144 , 0xa28231a6 )
+	ROM_LOAD( "ironhors.010", 0x0000, 0x4000, 0xa28231a6 )
 ROM_END
 
 

@@ -353,7 +353,7 @@ static int memory_allocate_ext (void)
 		while (romp->name || romp->offset || romp->length)
 		{
 			/* headers are all zeros except from the offset */
-			if (!romp->name && !romp->length && !romp->checksum)
+			if (!romp->name && !romp->length && !romp->crc)
 			{
 				/* got a header; break if this is the match */
 				if (curr++ == region)

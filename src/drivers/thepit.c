@@ -560,81 +560,81 @@ MACHINE_DRIVER(suprmous, 8*8)
 
 ROM_START( thepit_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "p38b", 0x0000, 0x1000, 0xe4348d92 , 0x7315e1bc )
-	ROM_LOAD( "p39b", 0x1000, 0x1000, 0x8d281512 , 0xc9cc30fe )
-	ROM_LOAD( "p40b", 0x2000, 0x1000, 0x8123601b , 0x986738b5 )
-	ROM_LOAD( "p41b", 0x3000, 0x1000, 0x8d962efe , 0x31ceb0a1 )
-	ROM_LOAD( "p33b", 0x4000, 0x1000, 0x04776851 , 0x614ec454 )
+	ROM_LOAD( "p38b",         0x0000, 0x1000, 0x7315e1bc )
+	ROM_LOAD( "p39b",         0x1000, 0x1000, 0xc9cc30fe )
+	ROM_LOAD( "p40b",         0x2000, 0x1000, 0x986738b5 )
+	ROM_LOAD( "p41b",         0x3000, 0x1000, 0x31ceb0a1 )
+	ROM_LOAD( "p33b",         0x4000, 0x1000, 0x614ec454 )
 
 	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "p8", 0x0000, 0x0800, 0x878e996c , 0x2ddd5045 )
-	ROM_LOAD( "p9", 0x1000, 0x0800, 0x57841574 , 0x69502afc )
+	ROM_LOAD( "p8",           0x0000, 0x0800, 0x2ddd5045 )
+	ROM_LOAD( "p9",           0x1000, 0x0800, 0x69502afc )
 
 	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "pitclr.ic4", 0x0000, 0x0020, 0x480d8e59 , 0xa758b567 )
+	ROM_LOAD( "pitclr.ic4",   0x0000, 0x0020, 0xa758b567 )
 
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
-	ROM_LOAD( "p30", 0x0000, 0x0800, 0xc01d290d , 0x1b79dfb6 )
+	ROM_LOAD( "p30",          0x0000, 0x0800, 0x1b79dfb6 )
 ROM_END
 
 ROM_START( roundup_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "roundup.u38", 0x0000, 0x1000, 0xcb0ec56c , 0xd62c3b7a )
-	ROM_LOAD( "roundup.u39", 0x1000, 0x1000, 0xc327c76b , 0x37bf554b )
-	ROM_LOAD( "roundup.u40", 0x2000, 0x1000, 0x3f57c585 , 0x5109d0c5 )
-	ROM_LOAD( "roundup.u41", 0x3000, 0x1000, 0x3bd6e3ce , 0x1c5ed660 )
-	ROM_LOAD( "roundup.u33", 0x4000, 0x1000, 0xde80606e , 0x2fa711f3 )
+	ROM_LOAD( "roundup.u38",  0x0000, 0x1000, 0xd62c3b7a )
+	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
+	ROM_LOAD( "roundup.u40",  0x2000, 0x1000, 0x5109d0c5 )
+	ROM_LOAD( "roundup.u41",  0x3000, 0x1000, 0x1c5ed660 )
+	ROM_LOAD( "roundup.u33",  0x4000, 0x1000, 0x2fa711f3 )
 
 	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "roundup.u10", 0x0000, 0x0800, 0xbc970d0d , 0xa38d708d )
-	ROM_LOAD( "roundup.u9", 0x1000, 0x0800, 0xe9351d81 , 0x394676a2 )
+	ROM_LOAD( "roundup.u10",  0x0000, 0x0800, 0xa38d708d )
+	ROM_LOAD( "roundup.u9",   0x1000, 0x0800, 0x394676a2 )
 
 	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "roundup.clr", 0x0000, 0x0020, 0x480d8e59 , 0xa758b567 )
+	ROM_LOAD( "roundup.clr",  0x0000, 0x0020, 0xa758b567 )
 
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
-	ROM_LOAD( "roundup.u30", 0x0000, 0x0800, 0xf51031e2 , 0x1b18faee )
-	ROM_LOAD( "roundup.u31", 0x0800, 0x0800, 0xfcb31285 , 0x76cf4394 )
+	ROM_LOAD( "roundup.u30",  0x0000, 0x0800, 0x1b18faee )
+	ROM_LOAD( "roundup.u31",  0x0800, 0x0800, 0x76cf4394 )
 ROM_END
 
 ROM_START( intrepid_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "ic19.1", 0x0000, 0x1000, 0x06858f25 , 0x7d927b23 )
-	ROM_LOAD( "ic18.2", 0x1000, 0x1000, 0x4ed85476 , 0xdcc22542 )
-	ROM_LOAD( "ic17.3", 0x2000, 0x1000, 0x63fb89a7 , 0xfd11081e )
-	ROM_LOAD( "ic16.4", 0x3000, 0x1000, 0xb2416897 , 0x74a51841 )
-	ROM_LOAD( "ic15.5", 0x4000, 0x1000, 0x3a8fe683 , 0x4fef643d )
+	ROM_LOAD( "ic19.1",       0x0000, 0x1000, 0x7d927b23 )
+	ROM_LOAD( "ic18.2",       0x1000, 0x1000, 0xdcc22542 )
+	ROM_LOAD( "ic17.3",       0x2000, 0x1000, 0xfd11081e )
+	ROM_LOAD( "ic16.4",       0x3000, 0x1000, 0x74a51841 )
+	ROM_LOAD( "ic15.5",       0x4000, 0x1000, 0x4fef643d )
 
 	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic8.8", 0x0000, 0x1000, 0x26d682a4 , 0x04d067d3 )
-	ROM_LOAD( "ic9.9", 0x1000, 0x1000, 0x70ca7462 , 0x8c70d18d )
+	ROM_LOAD( "ic8.8",        0x0000, 0x1000, 0x04d067d3 )
+	ROM_LOAD( "ic9.9",        0x1000, 0x1000, 0x8c70d18d )
 
 	ROM_REGION(0x0020)      /* Color PROM */
-	ROM_LOAD( "ic3.prm", 0x0000, 0x0020, 0xcfdfb04b , 0x927ff40a )
+	ROM_LOAD( "ic3.prm",      0x0000, 0x0020, 0x927ff40a )
 
 	ROM_REGION(0x10000)     /* 64k for audio CPU */
-	ROM_LOAD( "ic22.7", 0x0000, 0x0800, 0x31d27c00 , 0x1a7cc392 )
-	ROM_LOAD( "ic23.6", 0x0800, 0x0800, 0x8016223e , 0x91ca7097 )
+	ROM_LOAD( "ic22.7",       0x0000, 0x0800, 0x1a7cc392 )
+	ROM_LOAD( "ic23.6",       0x0800, 0x0800, 0x91ca7097 )
 ROM_END
 
 ROM_START( suprmous_rom )
 	ROM_REGION(0x10000)	    /* 64k for main CPU */
-	ROM_LOAD( "sm.1", 0x0000, 0x1000, 0xe2160eb0 , 0x9db2b786 )
-	ROM_LOAD( "sm.2", 0x1000, 0x1000, 0xad39e245 , 0x0a3d91d3 )
-	ROM_LOAD( "sm.3", 0x2000, 0x1000, 0xe6851c6d , 0x32af6285 )
-	ROM_LOAD( "sm.4", 0x3000, 0x1000, 0xa571d335 , 0x46091524 )
-	ROM_LOAD( "sm.5", 0x4000, 0x1000, 0x6571e1ed , 0xf15fd5d2 )
+	ROM_LOAD( "sm.1",         0x0000, 0x1000, 0x9db2b786 )
+	ROM_LOAD( "sm.2",         0x1000, 0x1000, 0x0a3d91d3 )
+	ROM_LOAD( "sm.3",         0x2000, 0x1000, 0x32af6285 )
+	ROM_LOAD( "sm.4",         0x3000, 0x1000, 0x46091524 )
+	ROM_LOAD( "sm.5",         0x4000, 0x1000, 0xf15fd5d2 )
 
 	ROM_REGION_DISPOSE(0x3000)	    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sm.7", 0x0000, 0x1000, 0x3a4d8b6b , 0x1d476696 )
-	ROM_LOAD( "sm.8", 0x1000, 0x1000, 0x3b88e0ae , 0x2f81ab5f )
-	ROM_LOAD( "sm.9", 0x2000, 0x1000, 0xb4d332c3 , 0x8463af89 )
+	ROM_LOAD( "sm.7",         0x0000, 0x1000, 0x1d476696 )
+	ROM_LOAD( "sm.8",         0x1000, 0x1000, 0x2f81ab5f )
+	ROM_LOAD( "sm.9",         0x2000, 0x1000, 0x8463af89 )
 
 	ROM_REGION(0x0040)      /* Color PROM */
 	/* We don't have this yet */
 
 	ROM_REGION(0x10000)	   /* 64k for audio CPU */
-	ROM_LOAD( "sm.6", 0x0000, 0x1000, 0xcba9ee97 , 0xfba71785 )
+	ROM_LOAD( "sm.6",         0x0000, 0x1000, 0xfba71785 )
 ROM_END
 
 

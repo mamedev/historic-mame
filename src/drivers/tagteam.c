@@ -17,7 +17,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 
 void tagteam_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
@@ -226,9 +226,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{ 255,255 },
-	{ 1,1 }
+	{ 255 }
 };
 
 static struct MachineDriver machine_driver =
@@ -282,34 +280,34 @@ static struct MachineDriver machine_driver =
 
 ROM_START( tagteam_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "prowbf0.bin", 0x08000, 0x2000, 0xdab693d0 , 0x6ec3afae )
-	ROM_LOAD( "prowbf1.bin", 0x0a000, 0x2000, 0x7b12cfb2 , 0xb8fdd176 )
-	ROM_LOAD( "prowbf2.bin", 0x0c000, 0x2000, 0x6b14401e , 0x3d33a923 )
-	ROM_LOAD( "prowbf3.bin", 0x0e000, 0x2000, 0xb0ce42d0 , 0x518475d2 )
+	ROM_LOAD( "prowbf0.bin",  0x08000, 0x2000, 0x6ec3afae )
+	ROM_LOAD( "prowbf1.bin",  0x0a000, 0x2000, 0xb8fdd176 )
+	ROM_LOAD( "prowbf2.bin",  0x0c000, 0x2000, 0x3d33a923 )
+	ROM_LOAD( "prowbf3.bin",  0x0e000, 0x2000, 0x518475d2 )
 
 	ROM_REGION_DISPOSE(0x12000) /* temporary space for graphics (disposed after conversion) */
 	/* Character ROMs - 1024 chars in 3 banks, 3 bpp */
-	ROM_LOAD( "prowbf10.bin", 0x00000, 0x2000, 0x502e77e6 , 0x48165902 )
-	ROM_LOAD( "prowbf11.bin", 0x02000, 0x2000, 0xb1a8b86e , 0xc3fe99c1 )
-	ROM_LOAD( "prowbf12.bin", 0x04000, 0x2000, 0x7ee6898c , 0x69de1ea2 )
-	ROM_LOAD( "prowbf13.bin", 0x06000, 0x2000, 0xa2d185c1 , 0xecfa581d )
-	ROM_LOAD( "prowbf14.bin", 0x08000, 0x2000, 0x1c2ed1fe , 0xa6721142 )
-	ROM_LOAD( "prowbf15.bin", 0x0a000, 0x2000, 0xb1cb214b , 0xd0de7e03 )
-	ROM_LOAD( "prowbf16.bin", 0x0c000, 0x2000, 0xc38fa36b , 0x75ee5705 )
-	ROM_LOAD( "prowbf17.bin", 0x0e000, 0x2000, 0x7c7f1483 , 0xccf42380 )
-	ROM_LOAD( "prowbf18.bin", 0x10000, 0x2000, 0x9bf4a268 , 0xe73a4bba )
+	ROM_LOAD( "prowbf10.bin", 0x00000, 0x2000, 0x48165902 )
+	ROM_LOAD( "prowbf11.bin", 0x02000, 0x2000, 0xc3fe99c1 )
+	ROM_LOAD( "prowbf12.bin", 0x04000, 0x2000, 0x69de1ea2 )
+	ROM_LOAD( "prowbf13.bin", 0x06000, 0x2000, 0xecfa581d )
+	ROM_LOAD( "prowbf14.bin", 0x08000, 0x2000, 0xa6721142 )
+	ROM_LOAD( "prowbf15.bin", 0x0a000, 0x2000, 0xd0de7e03 )
+	ROM_LOAD( "prowbf16.bin", 0x0c000, 0x2000, 0x75ee5705 )
+	ROM_LOAD( "prowbf17.bin", 0x0e000, 0x2000, 0xccf42380 )
+	ROM_LOAD( "prowbf18.bin", 0x10000, 0x2000, 0xe73a4bba )
 
 	ROM_REGION(0x10000)	/* 64k for audio code */
-	ROM_LOAD( "prowbf4.bin", 0x04000, 0x2000, 0x28774ca1 , 0x0558e1d8 )
-	ROM_LOAD( "prowbf5.bin", 0x06000, 0x2000, 0x3ddd6559 , 0xc1073f24 )
-	ROM_LOAD( "prowbf6.bin", 0x08000, 0x2000, 0x993620de , 0x208cd081 )
-	ROM_LOAD( "prowbf7.bin", 0x0a000, 0x2000, 0xad40f2a8 , 0x34a033dc )
-	ROM_LOAD( "prowbf8.bin", 0x0c000, 0x2000, 0x170a2b7a , 0xeafe8056 )
-	ROM_LOAD( "prowbf9.bin", 0x0e000, 0x2000, 0xb428b546 , 0xd589ce1b )
+	ROM_LOAD( "prowbf4.bin",  0x04000, 0x2000, 0x0558e1d8 )
+	ROM_LOAD( "prowbf5.bin",  0x06000, 0x2000, 0xc1073f24 )
+	ROM_LOAD( "prowbf6.bin",  0x08000, 0x2000, 0x208cd081 )
+	ROM_LOAD( "prowbf7.bin",  0x0a000, 0x2000, 0x34a033dc )
+	ROM_LOAD( "prowbf8.bin",  0x0c000, 0x2000, 0xeafe8056 )
+	ROM_LOAD( "prowbf9.bin",  0x0e000, 0x2000, 0xd589ce1b )
 
 	ROM_REGION(0x40)    /* color PROMs */
-	ROM_LOAD( "fko-76.bin", 0x0000, 0x0020, 0x0c0c0000 , 0xb6ee1483 )
-	ROM_LOAD( "fjo-25.bin", 0x0020, 0x0020, 0x3b620300 , 0x24da2b63 ) /* What is this prom for? */
+	ROM_LOAD( "fko-76.bin",   0x0000, 0x0020, 0xb6ee1483 )
+	ROM_LOAD( "fjo-25.bin",   0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
 ROM_END
 
 

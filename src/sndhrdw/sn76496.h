@@ -18,6 +18,6 @@ void SN76496_2_w(int offset,int data);
 void SN76496_3_w(int offset,int data);
 void SN76496_sh_update(void);
 
-void SN76496_change_clock( int num, int clock );
+void SN76496_set_clock(int chip,int clock);
 
 #endif

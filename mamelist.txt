@@ -12,6 +12,7 @@ mspacman  pacman.c    Z80                     Namco                         Ms. 
 mspacatk  pacman.c    Z80                     Namco                         Miss Pac Plus
 crush     pacman.c    Z80                     Namco                         Crush Roller
 eyes      pacman.c    Z80                     Namco                         Eyes
+mrtnt     pacman.c    Z80                     Namco                         Mr. TNT
 ponpoko   pacman.c    Z80                     Namco                         Ponpoko
 lizwiz    pacman.c    Z80                     Namco                         Lizard Wizard
 theglob   pacman.c    Z80                     Namco                         The Glob (Pac Man hardware)
@@ -35,7 +36,7 @@ japirem   galaxian.c  Z80                     Custom                        Ging
 uniwars   galaxian.c  Z80                     Custom                        Uniwars
 warofbug  galaxian.c  Z80                     Custom                        War of the Bugs
 redufo    galaxian.c  Z80                     Custom                        Defend the Terra Attack on the Red UFO
-pacmanbl  galaxian.c  Z80                     Custom                        Pac Man (bootleg on Galaxian hardware)
+pacmanbl  galaxian.c  Z80                     Custom                        Pac Man (bootleg on Pisces hardware)
 zigzag    galaxian.c  Z80                     1xAY-8910                     Zig Zag (set 1)
 zigzag2   galaxian.c  Z80                     1xAY-8910                     Zig Zag (set 2)
 mooncrgx  galaxian.c  Z80                     Custom                        Moon Cresta (bootleg on Galaxian hardware)
@@ -97,6 +98,8 @@ ckonga    cclimber.c  Z80                     1xAY-8910 Custom              Craz
 ckongjeu  cclimber.c  Z80                     1xAY-8910 Custom              Crazy Kong (Jeutel bootleg)
 ckongalc  cclimber.c  Z80                     1xAY-8910 Custom              Crazy Kong (Alca bootleg)
 monkeyd   cclimber.c  Z80                     1xAY-8910 Custom              Monkey Donkey
+rpatrolb  cclimber.c  Z80                     1xAY-8910 Custom              River Patrol (bootleg)
+silvland  cclimber.c  Z80                     1xAY-8910 Custom              Silver Land
 swimmer   cclimber.c  Z80     [Z80]           2xAY-8910                     Swimmer (set 1)
 swimmera  cclimber.c  Z80     [Z80]           2xAY-8910                     Swimmer (set 2)
 guzzler   cclimber.c  Z80     [Z80]           2xAY-8910                     Guzzler
@@ -172,6 +175,7 @@ popeye    popeye.c    Z80                     1xAY-8910                     Pope
 popeyebl  popeye.c    Z80                     1xAY-8910                     Popeye (bootleg)
 punchout  punchout.c  Z80     [M6502]         1xNES     1xDAC     VLM5030   Punch Out
 spnchout  punchout.c  Z80     [M6502]         1xNES     1xDAC     VLM5030   Super Punch Out
+armwrest  punchout.c  Z80     [M6502]         1xNES     1xDAC     VLM5030   Arm Wrestling
 seawolf   8080bw.c    I8085                   Samples                       Sea Wolf
 gunfight  8080bw.c    I8085                   Samples                       Gunfight
 tornbase  8080bw.c    I8085                                                 Tornado Baseball
@@ -215,18 +219,19 @@ kamikaze  z80bw.c     Z80                     Samples                       Kami
 lazercmd  lazercmd.c  S2650                   1xDAC                         Lazer Command
 deadeye   meadows.c   S2650   [S2650]         1xDAC                         Dead Eye
 gypsyjug  meadows.c   S2650   [S2650]         1xDAC                         Gypsy Juggler
-wow       wow.c       Z80                     Samples                       Wizard of Wor
-robby     wow.c       Z80                                                   Robby Roto
-gorf      wow.c       Z80                     Samples                       Gorf
-gorfpgm1  wow.c       Z80                     Samples                       Gorf (Program 1)
+wow       wow.c       Z80                     Samples   2xASTRCADE          Wizard of Wor
+robby     wow.c       Z80                     2xASTRCADE                    Robby Roto
+gorf      wow.c       Z80                     Samples   2xASTRCADE          Gorf
+gorfpgm1  wow.c       Z80                     Samples   2xASTRCADE          Gorf (Program 1)
 seawolf2  wow.c       Z80                                                   Sea Wolf II
-spacezap  wow.c       Z80                                                   Space Zap
-ebases    wow.c       Z80                                                   Extra Bases
+spacezap  wow.c       Z80                     2xASTRCADE                    Space Zap
+ebases    wow.c       Z80                     1xASTRCADE                    Extra Bases
 solarfox  mcr1.c      Z80     [Z80]           2xAY-8910                     Solar Fox
 kick      mcr1.c      Z80     [Z80]           2xAY-8910                     Kick (mirror version)
 kicka     mcr1.c      Z80     [Z80]           2xAY-8910                     Kick (upright version)
 shollow   mcr2.c      Z80     [Z80]           2xAY-8910                     Satan's Hollow
-tron      mcr2.c      Z80     [Z80]           2xAY-8910                     Tron
+tron      mcr2.c      Z80     [Z80]           2xAY-8910                     Tron (set 1)
+tron2     mcr2.c      Z80     [Z80]           2xAY-8910                     Tron (set 2)
 kroozr    mcr2.c      Z80     [Z80]           2xAY-8910                     Kozmik Kroozr
 domino    mcr2.c      Z80     [Z80]           2xAY-8910                     Domino Man
 wacko     mcr2.c      Z80     [Z80]           2xAY-8910                     Wacko
@@ -235,7 +240,8 @@ journey   mcr2.c      Z80     [Z80]           2xAY-8910                     Jour
 tapper    mcr3.c      Z80     [Z80]           2xAY-8910                     Tapper (Budweiser)
 sutapper  mcr3.c      Z80     [Z80]           2xAY-8910                     Tapper (Suntory)
 rbtapper  mcr3.c      Z80     [Z80]           2xAY-8910                     Tapper (Root Beer)
-dotron    mcr3.c      Z80     [Z80]   [M6808] 2xAY-8910 TMS5520             Discs of Tron
+dotron    mcr3.c      Z80     [Z80]   [M6808] 2xAY-8910 TMS5520             Discs of Tron (Upright)
+dotrone   mcr3.c      Z80     [Z80]   [M6808] 2xAY-8910 TMS5520             Discs of Tron (Environmental)
 destderb  mcr3.c      Z80     [Z80]           2xAY-8910                     Demolition Derby
 timber    mcr3.c      Z80     [Z80]           2xAY-8910                     Timber
 spyhunt   mcr3.c      Z80     [Z80]   [M68000]2xAY-8910 1xDAC               Spy Hunter
@@ -255,7 +261,7 @@ travrusa  travrusa.c  Z80     [M6808]         2xAY-8910 2xMSM5205           Trav
 motorace  travrusa.c  Z80     [M6808]         2xAY-8910 2xMSM5205           MotoRace USA
 ldrun     ldrun.c     Z80     [M6808]         2xAY-8910 2xMSM5205           Lode Runner (set 1)
 ldruna    ldrun.c     Z80     [M6808]         2xAY-8910 2xMSM5205           Lode Runner (set 2)
-ldrun2p   ldrun.c     Z80     [M6808]         2xAY-8910 2xMSM5205           Lode Runner (2 Players)
+ldrun2p   ldrun.c     Z80     [M6808]         2xAY-8910 2xMSM5205           Lode Runner IV - Teikoku Karano Dasshutsu
 vigilant  vigilant.c  Z80     [Z80]           1xYM-2151 1xDAC               Vigilante (US)
 vigilntj  vigilant.c  Z80     [Z80]           1xYM-2151 1xDAC               Vigilante (Japan)
 reactor   gottlieb.c  I86     [M6502]         1xDAC     Samples             Reactor
@@ -287,11 +293,15 @@ wwestern  taito.c     Z80     [Z80]           4xAY-8910 1xDAC               Wild
 frontlin  taito.c     Z80     [Z80]   M6805   4xAY-8910 1xDAC               Front Line
 tinstar   taito.c     Z80     [Z80]   M6805   4xAY-8910 1xDAC               The Tin Star
 waterski  taito.c     Z80     [Z80]           4xAY-8910 1xDAC               Water Ski
+alpine    taito.c     Z80     [Z80]           4xAY-8910 1xDAC               Alpine Ski (set 1)
+alpinea   taito.c     Z80     [Z80]           4xAY-8910 1xDAC               Alpine Ski (set 2)
 bking2    bking2.c    Z80                                                   Birdie King 2
 gsword    gsword.c    Z80     [Z80]   [Z80]   2xAY-8910 2xMSM5205           Great Swordsman
 gladiatr  gladiatr.c  Z80     [Z80]   [M6809] 1xYM-2203 1xADPCM   Samples   Gladiator
 ogonsiro  gladiatr.c  Z80     [Z80]   [M6809] 1xYM-2203 1xADPCM   Samples   Ohgon no Siro
 gcastle   gladiatr.c  Z80     [Z80]   [M6809] 1xYM-2203 1xADPCM   Samples   Golden Castle
+tokio     tokio.c     Z80     Z80     [Z80]   1xYM-2203                     Tokio / Scramble Formation
+tokiob    tokio.c     Z80     Z80     [Z80]   1xYM-2203                     Tokio / Scramble Formation (bootleg)
 bublbobl  bublbobl.c  Z80     Z80     [Z80]   1xYM-2203 1xYM-3812           Bubble Bobble
 boblbobl  bublbobl.c  Z80     Z80     [Z80]   1xYM-2203 1xYM-3812           Bobble Bobble
 sboblbob  bublbobl.c  Z80     Z80     [Z80]   1xYM-2203 1xYM-3812           Super Bobble Bobble
@@ -309,11 +319,16 @@ sqixbl    superqix.c  Z80                     2xAY-8910                     Supe
 twincobr  twincobr.c  M68000  Z80             1xYM-3812                     Twin Cobra (Taito)
 twincobu  twincobr.c  M68000  Z80             1xYM-3812                     Twin Cobra (Romstar)
 ktiger    twincobr.c  M68000  Z80             1xYM-3812                     Kyukyoku Tiger
+arkanoi2  arkanoi2.c  Z80     Z80             1xYM-2203                     Arkanoid 2 - Revenge of DOH!
 tnzs      tnzs.c      Z80     Z80             1xYM-2203                     The New Zealand Story
 tnzs2     tnzs.c      Z80     Z80             1xYM-2203                     The New Zealand Story 2
-slapfigh  slapfght.c  Z80     [Z80]           2xAY-8910                     Slap Fight
-slapbtjp  slapfght.c  Z80     [Z80]           2xAY-8910                     Slap Fight (Japanese Bootleg)
-slapbtuk  slapfght.c  Z80     [Z80]           2xAY-8910                     Slap Fight (English Bootleg)
+tigerh    slapfght.c  Z80     Z80             2xAY-8910                     Tiger Heli (set 1)
+tigerh2   slapfght.c  Z80     Z80             2xAY-8910                     Tiger Heli (set 2)
+tigerhb1  slapfght.c  Z80     Z80             2xAY-8910                     Tiger Heli (bootleg 1)
+tigerhb2  slapfght.c  Z80     Z80             2xAY-8910                     Tiger Heli (bootleg 2)
+slapfigh  slapfght.c  Z80     Z80             2xAY-8910                     Slap Fight
+slapbtjp  slapfght.c  Z80     Z80             2xAY-8910                     Slap Fight (Japanese bootleg)
+slapbtuk  slapfght.c  Z80     Z80             2xAY-8910                     Slap Fight (English bootleg)
 ssi       ssi.c       M68000                                                Super Space Invaders '91
 robotron  williams.c  M6809   [M6808]         1xDAC                         Robotron (Solid Blue label)
 robotryo  williams.c  M6809   [M6808]         1xDAC                         Robotron (Yellow/Orange label)
@@ -331,16 +346,20 @@ blaster   williams.c  M6809   [M6808]         1xDAC                         Blas
 colony7   williams.c  M6809   [M6808]         1xDAC                         Colony 7 (set 1)
 colony7a  williams.c  M6809   [M6808]         1xDAC                         Colony 7 (set 2)
 lottofun  williams.c  M6809   [M6808]         1xDAC                         Lotto Fun
-vulgus    vulgus.c    Z80     [Z80]           2xAY-8910                     Vulgus
+vulgus    vulgus.c    Z80     [Z80]           2xAY-8910                     Vulgus (set 1)
+vulgus2   vulgus.c    Z80     [Z80]           2xAY-8910                     Vulgus (set 2)
 sonson    sonson.c    M6809   [M6809]         2xAY-8910                     Son Son
 higemaru  higemaru.c  Z80                     2xAY-8910                     HigeMaru
 1942      1942.c      Z80     [Z80]           2xAY-8910                     1942 (set 1)
 1942a     1942.c      Z80     [Z80]           2xAY-8910                     1942 (set 2)
+1942b     1942.c      Z80     [Z80]           2xAY-8910                     1942 (set 3)
 exedexes  exedexes.c  Z80     [Z80]           2xAY-8910 2xSN76496           Exed Exes
 savgbees  exedexes.c  Z80     [Z80]           2xAY-8910 2xSN76496           Savage Bees
-commando  commando.c  Z80     [Z80]           2xYM-2203                     Commando (US)
+commando  commando.c  Z80     [Z80]           2xYM-2203                     Commando (World)
+commandu  commando.c  Z80     [Z80]           2xYM-2203                     Commando (US)
 commandj  commando.c  Z80     [Z80]           2xYM-2203                     Commando (Japan)
-gng       gng.c       M6809   [Z80]           2xYM-2203                     Ghosts'n Goblins (US)
+gng       gng.c       M6809   [Z80]           2xYM-2203                     Ghosts'n Goblins (World?)
+gngt      gng.c       M6809   [Z80]           2xYM-2203                     Ghosts'n Goblins (US)
 gngcross  gng.c       M6809   [Z80]           2xYM-2203                     Ghosts'n Goblins (Cross)
 gngjap    gng.c       M6809   [Z80]           2xYM-2203                     Makai-mura (Japan)
 diamond   gng.c       M6809   [Z80]           2xYM-2203                     Diamond Run
@@ -358,7 +377,8 @@ sidearms  sidearms.c  Z80     [Z80]           2xYM-2203                     Side
 sidearjp  sidearms.c  Z80     [Z80]           2xYM-2203                     Sidearms (Japan)
 avengers  lwings.c    Z80     [Z80]           2xYM-2203 1xADPCM             Avengers (set 1)
 avenger2  lwings.c    Z80     [Z80]           2xYM-2203 1xADPCM             Avengers (set 2)
-bionicc   bionicc.c   M68000  [Z80]           1xYM-2151                     Bionic Commando
+bionicc   bionicc.c   M68000  [Z80]           1xYM-2151                     Bionic Commando (set 1)
+bionicc2  bionicc.c   M68000  [Z80]           1xYM-2151                     Bionic Commando (set 2)
 1943      1943.c      Z80     [Z80]           2xYM-2203                     1943 (US)
 1943jap   1943.c      Z80     [Z80]           2xYM-2203                     1943 (Japan)
 blktiger  blktiger.c  Z80     [Z80]           2xYM-2203                     Black Tiger
@@ -374,10 +394,10 @@ ghoulsj   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Ghou
 madgear   lastduel.c  M68000  [Z80]           2xYM-2203                     Mad Gear
 strider   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Strider (US)
 striderj  cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Strider (Japan)
-dynwarsj  cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Dynasty Wars (Japanese)
+dynwarsj  cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Dynsaty Wars (Japanese)
 willow    cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Willow (Japan, English)
 willowj   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Willow (Japan, Japanese)
-unsquad   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           UN Squadron
+unsquad   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           UN Squadron (US)
 area88    cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Area 88
 ffight    cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Final Fight (World)
 ffightj   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Final Fight (Japan)
@@ -390,9 +410,11 @@ mswordj   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Magi
 cawingj   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Carrier Air Wing (Japan)
 nemo      cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Nemo (World)
 nemoj     cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Nemo (Japan)
+captcomm  cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Captain Commando (World)
 knights   cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Knights of the Round (World)
-varth     cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Varth
+varth     cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Varth (World)
 pnickj    cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Pnickies (Japan)
+rockmanj  cps1.c      M68000  [Z80]           1xYM-2151 1xOKI6295           Rockman - The Power Battle (Japan)
 capbowl   capbowl.c   M6809   [M6809]         1xYM-2203 1xDAC               Capcom Bowling
 clbowl    capbowl.c   M6809   [M6809]         1xYM-2203 1xDAC               Coors Light Bowling
 bowlrama  capbowl.c   M6809   [M6809]         1xYM-2203 1xDAC               Bowl-O-Rama
@@ -470,12 +492,27 @@ tokisens  system8.c   Z80     [Z80]           2xSN76496                     Toki
 dakkochn  system8.c   Z80     [Z80]           2xSN76496                     DakkoChan Jansoh
 ufosensi  system8.c   Z80     [Z80]           2xSN76496                     Ufo Senshi Yohko Chan
 wbml      system8.c   Z80     [Z80]           2xSN76496                     Wonder Boy in Monster Land
-shinobi   system16.c  M68000  [Z80]           1xYM-2151                     Shinobi
+alexkidd  system16.c  M68000  [Z80]           1xYM-2151                     Alex Kidd (bootleg)
 aliensyn  system16.c  M68000  [Z80]           1xYM-2151                     Alien Syndrome
-tetrisbl  system16.c  M68000  [Z80]           1xYM-2151                     Tetris (Sega, bootleg)
+altbeast  system16.c  M68000  [Z80]           1xYM-2151                     Altered Beast
+astormbl  system16.c  M68000  [Z80]           1xYM-2151                     Alien Storm (bootleg)
+aurail    system16.c  M68000  [Z80]           1xYM-2151                     Aurail (bootleg)
+dduxbl    system16.c  M68000  [Z80]           1xYM-2151                     Dynamite Dux (bootleg)
+eswatbl   system16.c  M68000  [Z80]           1xYM-2151                     E-Swat (bootleg)
+fantzone  system16.c  M68000  [Z80]           1xYM-2151                     Fantasy Zone
+fpointbl  system16.c  M68000  [Z80]           1xYM-2151                     Flash Point (bootleg)
+goldnaxe  system16.c  M68000  [Z80]           1xYM-2151                     Golden Axe
+hwchamp   system16.c  M68000  [Z80]           1xYM-2151                     Heavyweight Champ
+mjleague  system16.c  M68000  [Z80]           1xYM-2151                     Major League
 passshtb  system16.c  M68000  [Z80]           1xYM-2151                     Passing Shot (bootleg)
-altbeast  system16.c  M68000                                                Altered Beast
-goldnaxe  system16.c  M68000                                                Golden Axe
+quartet2  system16.c  M68000  [Z80]           1xYM-2151                     Quartet II
+sdi       system16.c  M68000  [Z80]           1xYM-2151                     SDI
+shinobi   system16.c  M68000  [Z80]           1xYM-2151                     Shinobi
+tetrisbl  system16.c  M68000  [Z80]           1xYM-2151                     Tetris (Sega bootleg)
+timescan  system16.c  M68000  [Z80]           1xYM-2151                     Time Scanner
+tturfbl   system16.c  M68000  [Z80]           1xYM-2151                     Tough Turf (bootleg)
+wb3bl     system16.c  M68000  [Z80]           1xYM-2151                     Wonder Boy Monster Lair (bootleg)
+wrestwar  system16.c  M68000  [Z80]           1xYM-2151                     Wrestle War
 lnc       btime.c     M6502   [M6502]         2xAY-8910                     Lock'n'Chase
 zoar      btime.c     M6502   [M6502]         2xAY-8910                     Zoar
 btime     btime.c     M6502   [M6502]         2xAY-8910                     Burger Time (Midway)
@@ -492,14 +529,17 @@ astrof2   astrof.c    M6502                                                 Astr
 astrof3   astrof.c    M6502                                                 Astro Fighter (set 3)
 tomahawk  astrof.c    M6502                                                 Tomahawk 777 (Revision 1)
 tomahaw5  astrof.c    M6502                                                 Tomahawk 777 (Revision 5)
+kchamp    kchamp.c    Z80     [Z80]           2xAY-8910 1xDAC               Karate Champ
 kchampvs  kchamp.c    Z80     [Z80]           2xAY-8910 1xMSM5205           Karate Champ (VS version)
-karatedo  kchamp.c    Z80     [Z80]           2xAY-8910 1xMSM5205           Karate Champ (JAP version)
+karatedo  kchamp.c    Z80     [Z80]           2xAY-8910 1xMSM5205           Karate Champ (VS Version - Japanese)
 firetrap  firetrap.c  Z80     [M6502]         1xYM-3812 1xMSM5205           Fire Trap
 firetpbl  firetrap.c  Z80     [M6502]         1xYM-3812 1xMSM5205           Fire Trap (Japan bootleg)
 brkthru   brkthru.c   M6809   [M6809]         1xYM-2203 1xYM-3812           Break Thru
 darwin    brkthru.c   M6809   [M6809]         1xYM-2203 1xYM-3812           Darwin 4078 (Japan)
 shootout  shootout.c  M6502   [M6502]         1xYM-2203                     Shoot Out
 sidepckt  sidepckt.c  M6809   [M6502]         1xYM-2203 1xYM-3812           Side Pocket
+exprraid  exprraid.c  M6502   M6809           1xYM-2203 1xYM-3812           Express Raider
+exprraib  exprraid.c  M6502   M6809           1xYM-2203 1xYM-3812           Express Raider (bootleg)
 cobracom  dec8.c      M6809   [M6502]         1xYM-2203 1xYM-3812           Cobra Command
 karnov    karnov.c    M68000  [M6502]         1xYM-2203 1xYM-3812           Karnov (US)
 karnovj   karnov.c    M68000  [M6502]         1xYM-2203 1xYM-3812           Karnov (Japan)
@@ -520,14 +560,15 @@ bombjack  bombjack.c  Z80     [Z80]           3xAY-8910                     Bomb
 starforc  starforc.c  Z80     [Z80]                                         Star Force
 megaforc  starforc.c  Z80     [Z80]                                         Mega Force
 pbaction  pbaction.c  Z80     [Z80]           3xAY-8910                     Pinball Action
-tehkanwc  tehkanwc.c  Z80     Z80     Z80     2xAY-8910 1xADPCM             Tehkan World Cup
-gridiron  tehkanwc.c  Z80     Z80     Z80     2xAY-8910 1xADPCM             Gridiron
-teedoff   tehkanwc.c  Z80     Z80     Z80     2xAY-8910 1xADPCM             Tee'd Off
+tehkanwc  tehkanwc.c  Z80     Z80     Z80     2xAY-8910 1xMSM5205           Tehkan World Cup
+gridiron  tehkanwc.c  Z80     Z80     Z80     2xAY-8910 1xMSM5205           Gridiron
+teedoff   tehkanwc.c  Z80     Z80     Z80     2xAY-8910 1xMSM5205           Tee'd Off
 solomon   solomon.c   Z80     [Z80]           3xAY-8910                     Solomon's Key (Japan)
 rygar     tecmo.c     Z80     [Z80]           1xYM-3812 1xADPCM             Rygar (US)
 rygarj    tecmo.c     Z80     [Z80]           1xYM-3812 1xADPCM             Rygar (Japan)
 gemini    tecmo.c     Z80     [Z80]           1xYM-3812 1xADPCM             Gemini Wing
-silkworm  tecmo.c     Z80     [Z80]           1xYM-3812 1xADPCM             Silkworm
+silkworm  tecmo.c     Z80     [Z80]           1xYM-3812 1xADPCM             Silkworm (set 1)
+silkwrm2  tecmo.c     Z80     [Z80]           1xYM-3812 1xADPCM             Silkworm (set 2)
 gaiden    gaiden.c    M68000  [Z80]           2xYM-2203 1xOKI6295           Ninja Gaiden
 shadoww   gaiden.c    M68000  [Z80]           2xYM-2203 1xOKI6295           Shadow Warriors
 tknight   gaiden.c    M68000  [Z80]           2xYM-2203 1xOKI6295           Tecmo Knight
@@ -578,7 +619,7 @@ tmntj     tmnt.c      M68000  [Z80]           1xYM-2151 Samples             TMNT
 tmht2p    tmnt.c      M68000  [Z80]           1xYM-2151 Samples             TMHT (2 Players UK)
 tmnt2pj   tmnt.c      M68000  [Z80]           1xYM-2151 Samples             TMNT (2 Players Japanese)
 punkshot  tmnt.c      M68000  [Z80]           1xYM-2151                     Punk Shot
-sidetrac  exidy.c     M6502                                                 Side Track
+sidetrac  exidy.c     M6502                   Custom    Samples   1xDAC     Side Track
 targ      exidy.c     M6502                   Custom    Samples   1xDAC     Targ
 spectar   exidy.c     M6502                   Custom    Samples   1xDAC     Spectar (revision 3)
 spectar1  exidy.c     M6502                   Custom    Samples   1xDAC     Spectar (revision 1?)
@@ -668,9 +709,10 @@ xybots    xybots.c    M68000  M6502           1xYM-2151 TMS5520   1xPokey   Xybo
 sasuke    rockola.c   M6502                                                 Sasuke vs. Commander
 satansat  rockola.c   M6502                                                 Satan of Saturn
 zarzon    rockola.c   M6502                                                 Zarzon
-vanguard  rockola.c   M6502                                                 Vanguard
+vanguard  rockola.c   M6502                                                 Vanguard (SNK)
+vangrdce  rockola.c   M6502                                                 Vanguard (Centuri)
 fantasy   rockola.c   M6502                                                 Fantasy
-pballoon  rockola.c   M6502                                                 Pioner Balloon
+pballoon  rockola.c   M6502                                                 Pioneer Balloon
 nibbler   rockola.c   M6502                                                 Nibbler (set 1)
 nibblera  rockola.c   M6502                                                 Nibbler (set 2)
 mystston  mystston.c  M6502                   2xAY-8910                     Mysterious Stones
@@ -704,53 +746,58 @@ pkunwarj  pkunwar.c   Z80                     2xAY-8910                     Peng
 ninjakd2  ninjakd2.c  Z80                     2xYM-2203                     Ninja Kid II
 ninjak2a  ninjakd2.c  [Z80]   Z80             2xYM-2203                     Ninja Kid II (alternate)
 joyjoy    neogeo.c    M68000                                                Joy Joy Kid/Puzzled
-gpilots   neogeo.c    M68000                                                Ghost Pilots
-nam_1975  neogeo.c    M68000                                                NAM 1975
-puzzledp  neogeo.c    M68000                                                Puzzle de Pon
-pbobble   neogeo.c    M68000                                                Puzzle Bobble
-sidkicks  neogeo.c    M68000                                                Super Sidekicks
-maglord   neogeo.c    M68000                                                Magician Lord
-fatfury1  neogeo.c    M68000                                                Fatal Fury - King of Fighters
-3countb   neogeo.c    M68000                                                3 Count Bout
-superspy  neogeo.c    M68000                                                Super Spy
-lresort   neogeo.c    M68000                                                Last Resort
-artfight  neogeo.c    M68000                                                Art of Fighting
-mutnat    neogeo.c    M68000                                                Mutation Nation
-eightman  neogeo.c    M68000                                                Eight Man
-androdun  neogeo.c    M68000                                                Andro Dunos
 ridhero   neogeo.c    M68000                                                Riding Hero
 2020bb    neogeo.c    M68000                                                2020 Baseball
+lresort   neogeo.c    M68000                                                Last Resort
+fbfrenzy  neogeo.c    M68000                                                Football Frenzy
 alpham2   neogeo.c    M68000                                                Alpha Mission 2
+eightman  neogeo.c    M68000                                                Eight Man
+ararmy    neogeo.c    M68000                                                Robo Army
+ncombat   neogeo.c    M68000                                                Ninja Combat
+socbrawl  neogeo.c    M68000                                                Soccer Brawl
+bstars    neogeo.c    M68000                                                Baseball Stars
+fatfury1  neogeo.c    M68000                                                Fatal Fury - King of Fighters
+mutnat    neogeo.c    M68000                                                Mutation Nation
 burningf  neogeo.c    M68000                                                Burning Fight
 crsword   neogeo.c    M68000                                                Crossed Swords
 cyberlip  neogeo.c    M68000                                                Cyber Lip
-fbfrenzy  neogeo.c    M68000                                                Football Frenzy
 kingofm   neogeo.c    M68000                                                King of the Monsters
+gpilots   neogeo.c    M68000                                                Ghost Pilots
 trally    neogeo.c    M68000                                                Thrash Rally
-ararmy    neogeo.c    M68000                                                Robo Army
-ncombat   neogeo.c    M68000                                                Ninja Combat
-bjourney  neogeo.c    M68000                                                Blues Journey
-pspikes2  neogeo.c    M68000                                                Power Spikes 2
 lbowling  neogeo.c    M68000                                                League Bowling
 ncommand  neogeo.c    M68000                                                Ninja Command
 sengoku   neogeo.c    M68000                                                Sengoku
-socbrawl  neogeo.c    M68000                                                Soccer Brawl
-wjammers  neogeo.c    M68000                                                Wind Jammers
+3countb   neogeo.c    M68000                                                3 Count Bout
+androdun  neogeo.c    M68000                                                Andro Dunos
+artfight  neogeo.c    M68000                                                Art of Fighting
+superspy  neogeo.c    M68000                                                Super Spy
+wheroes   neogeo.c    M68000                                                World Heroes
+sengoku2  neogeo.c    M68000                                                Sengoku 2
+puzzledp  neogeo.c    M68000                                                Puzzle de Pon
+bjourney  neogeo.c    M68000                                                Blues Journey
+nam_1975  neogeo.c    M68000                                                NAM 1975
+maglord   neogeo.c    M68000                                                Magician Lord
 cybrlipa  neogeo.c    M68000                                                Cyber Lip (alt)
 tpgolf    neogeo.c    M68000                                                Top Player's Golf
-viewpoin  neogeo.c    M68000                                                Viewpoint
-wheroes   neogeo.c    M68000                                                World Heroes
-kotm2     neogeo.c    M68000                                                King of the Monsters 2
+wjammers  neogeo.c    M68000                                                Wind Jammers
 janshin   neogeo.c    M68000                                                Quest of Jongmaster
-bstars    neogeo.c    M68000                                                Baseball Stars
+pbobble   neogeo.c    M68000                                                Puzzle Bobble
+sidkicks  neogeo.c    M68000                                                Super Sidekicks
+pspikes2  neogeo.c    M68000                                                Power Spikes 2
+viewpoin  neogeo.c    M68000                                                Viewpoint
+kotm2     neogeo.c    M68000                                                King of the Monsters 2
+tophuntr  neogeo.c    M68000                                                Top Hunter
 samsho    neogeo.c    M68000                                                Samurai Shodown
 karnov_r  neogeo.c    M68000                                                Karnov's Revenge
+mslug     neogeo.c    M68000                                                Metal Slug
 goalx3    neogeo.c    M68000                                                Goal! Goal! Goal!
 samsho2   neogeo.c    M68000                                                Samurai Shodown 2
 neomrdo   neogeo.c    M68000                                                Neo Mr Do!
-tophuntr  neogeo.c    M68000                                                Top Hunter
-sengoku2  neogeo.c    M68000                                                Sengoku 2
-mslug     neogeo.c    M68000                                                Metal Slug
+neobombe  neogeo.c    M68000                                                Neo Bomberman
+mahretsu  neogeo.c    M68000                                                Mahjong Kyo Retsuden
+sonicwi2  neogeo.c    M68000                                                Aero Fighters 2
+doubledr  neogeo.c    M68000                                                Double Dragon
+tws96     neogeo.c    M68000                                                Tecmo World Soccer 96
 bagman    bagman.c    Z80                     1xAY-8910                     Bagman
 bagmans   bagman.c    Z80                     1xAY-8910                     Bagman (Stern)
 sbagman   bagman.c    Z80                     1xAY-8910                     Super Bagman
@@ -774,6 +821,7 @@ jack      jack.c      Z80     [Z80]           1xAY-8910                     Jack
 zzyzzyxx  jack.c      Z80     [Z80]           1xAY-8910                     Zzyzzyxx
 brix      jack.c      Z80     [Z80]           1xAY-8910                     Brix
 vastar    vastar.c    Z80     Z80             1xAY-8910                     Vastar
+formatz   aeroboto.c  M6809   [M6809]         2xAY-8910                     Formation Z
 aeroboto  aeroboto.c  M6809   [M6809]         2xAY-8910                     Aeroboto
 citycon   citycon.c   M6809   [M6809]         2xYM-2203                     City Connection
 psychic5  psychic5.c  Z80     [Z80]           2xYM-2203                     Psychic 5
@@ -798,9 +846,11 @@ spiders   spiders.c   M6809                                                 Spid
 stactics  stactics.c  I8085                                                 Space Tactics
 goldstar  goldstar.c  Z80                     1xAY-8910 1xOKI6295           Golden Star
 exterm    exterm.c    TMS34010TMS34010[M6502] 2xDAC     1xYM-2151           Exterminator
-cop01     cop01.c     Z80     [Z80]           3xAY-8910                     COP 01
+cop01     cop01.c     Z80     [Z80]           3xAY-8910                     Cop 01 (set 1)
+cop01a    cop01.c     Z80     [Z80]           3xAY-8910                     Cop 01 (set 2)
 terracre  terracre.c  M68000  [Z80]           1xYM-3812 2xDAC               Terra Cresta (YM3526)
 terracra  terracre.c  M68000  [Z80]           1xYM-2203 2xDAC               Terra Cresta (YM2203)
 sharkatt  sharkatt.c  Z80                     2xAY-8910                     Shark Attack
-rpatrolb  cclimber.c  Z80                     1xAY-8910 Custom              River Patrol (bootleg)
-silvland  cclimber.c  Z80                     1xAY-8910 Custom              Silver Land
+turbo     turbo.c     Z80                     Samples                       Turbo
+turboa    turbo.c     Z80                     Samples                       Turbo (encrypted set 1)
+turbob    turbo.c     Z80                     Samples                       Turbo (encrypted set 2)

@@ -118,9 +118,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct DACinterface dac_interface =
 {
 	2,
-	441000,
 	{ 255, 255 },
-	{  1,  1 } /* filter rate (rate = Register(ohm)*Capaciter(F)*1000000) */
 };
 
 
@@ -191,13 +189,13 @@ ROM_START( avalnche_rom )
 	/*		 They are nibble wide rom images which will be */
 	/*		 merged and loaded into the proper place by    */
 	/*		 orbit_rom_init()							   */
-	ROM_LOAD( "30612.d2", 	 0x8800, 0x0800, 0x68a50c03 , 0x3f975171 )
-	ROM_LOAD( "30613.e2", 	 0x9000, 0x0800, 0xa7050a03 , 0x47a224d3 )
-	ROM_LOAD( "30611.c2", 	 0x9800, 0x0800, 0x34300c00 , 0x0ad07f85 )
+	ROM_LOAD( "30612.d2",     	0x8800, 0x0800, 0x3f975171 )
+	ROM_LOAD( "30613.e2",     	0x9000, 0x0800, 0x47a224d3 )
+	ROM_LOAD( "30611.c2",     	0x9800, 0x0800, 0x0ad07f85 )
 
-	ROM_LOAD( "30615.d3", 	 0xa800, 0x0800, 0xc9b6090c , 0x3e1a86b4 )
-	ROM_LOAD( "30616.e3", 	 0xb000, 0x0800, 0x12230c03 , 0xf620f0f8 )
-	ROM_LOAD( "30614.c3", 	 0xb800, 0x0800, 0x01c50605 , 0xa12d5d64 )
+	ROM_LOAD( "30615.d3",     	0xa800, 0x0800, 0x3e1a86b4 )
+	ROM_LOAD( "30616.e3",     	0xb000, 0x0800, 0xf620f0f8 )
+	ROM_LOAD( "30614.c3",     	0xb800, 0x0800, 0xa12d5d64 )
 ROM_END
 
 /***************************************************************************

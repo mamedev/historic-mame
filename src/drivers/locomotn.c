@@ -530,57 +530,57 @@ MACHINE_DRIVER(commsega)
 
 ROM_START( locomotn_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "1a.cpu", 0x0000, 0x1000, 0x35669192 , 0xb43e689a )
-	ROM_LOAD( "2a.cpu", 0x1000, 0x1000, 0x868e21f8 , 0x529c823d )
-	ROM_LOAD( "3.cpu", 0x2000, 0x1000, 0xff78e538 , 0xc9dbfbd1 )
-	ROM_LOAD( "4.cpu", 0x3000, 0x1000, 0x549b7a73 , 0xcaf6431c )
-	ROM_LOAD( "5.cpu", 0x4000, 0x1000, 0x75b145dd , 0x64cf8dd6 )
+	ROM_LOAD( "1a.cpu",       0x0000, 0x1000, 0xb43e689a )
+	ROM_LOAD( "2a.cpu",       0x1000, 0x1000, 0x529c823d )
+	ROM_LOAD( "3.cpu",        0x2000, 0x1000, 0xc9dbfbd1 )
+	ROM_LOAD( "4.cpu",        0x3000, 0x1000, 0xcaf6431c )
+	ROM_LOAD( "5.cpu",        0x4000, 0x1000, 0x64cf8dd6 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c1.cpu", 0x0000, 0x1000, 0x3a668900 , 0x5732eda9 )
-	ROM_LOAD( "c2.cpu", 0x1000, 0x1000, 0xfd68fc8c , 0xc3035300 )
+	ROM_LOAD( "c1.cpu",       0x0000, 0x1000, 0x5732eda9 )
+	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
 
 	ROM_REGION(0x0120)	/* color proms */
-	ROM_LOAD( "8b.cpu", 0x0000, 0x0020, 0x9078cf70 , 0x75b05da0 ) /* palette */
-	ROM_LOAD( "9d.cpu", 0x0020, 0x0100, 0xd6e50501 , 0xaa6cf063 ) /* loookup table */
+	ROM_LOAD( "8b.cpu",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
+	ROM_LOAD( "9d.cpu",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "s1.snd", 0x0000, 0x1000, 0xf8aff0dd , 0xa1105714 )
+	ROM_LOAD( "s1.snd",       0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
 ROM_START( jungler_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "jungr1", 0x0000, 0x1000, 0x3812cf30 , 0x5bd6ad15 )
-	ROM_LOAD( "jungr2", 0x1000, 0x1000, 0x08085594 , 0xdc99f1e3 )
-	ROM_LOAD( "jungr3", 0x2000, 0x1000, 0x1c2e03d0 , 0x3dcc03da )
-	ROM_LOAD( "jungr4", 0x3000, 0x1000, 0x20f051b8 , 0xf92e9940 )
+	ROM_LOAD( "jungr1",       0x0000, 0x1000, 0x5bd6ad15 )
+	ROM_LOAD( "jungr2",       0x1000, 0x1000, 0xdc99f1e3 )
+	ROM_LOAD( "jungr3",       0x2000, 0x1000, 0x3dcc03da )
+	ROM_LOAD( "jungr4",       0x3000, 0x1000, 0xf92e9940 )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "jungr9", 0x0000, 0x1000, 0x7c800000 , 0x4190c6c0 )
-	ROM_LOAD( "jungr10", 0x1000, 0x1000, 0xb07a0000 , 0x5c001c66 )
+	ROM_LOAD( "jungr9",       0x0000, 0x1000, 0x4190c6c0 )
+	ROM_LOAD( "jungr10",      0x1000, 0x1000, 0x5c001c66 )
 
 	ROM_REGION(0x0120)	/* color proms */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "jungb1t", 0x0000, 0x1000, 0x42b75fa9 , 0xf86999c3 )
+	ROM_LOAD( "jungb1t",      0x0000, 0x1000, 0xf86999c3 )
 ROM_END
 
 ROM_START( commsega_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "csega1", 0x0000, 0x1000, 0xe97e5790 , 0x92de3405 )
-	ROM_LOAD( "csega2", 0x1000, 0x1000, 0xb3a8652a , 0xf14e2f9a )
-	ROM_LOAD( "csega3", 0x2000, 0x1000, 0x57a057dc , 0x941dbf48 )
-	ROM_LOAD( "csega4", 0x3000, 0x1000, 0xc0955a85 , 0xe0ac69b4 )
-	ROM_LOAD( "csega5", 0x4000, 0x1000, 0x8131612b , 0xbc56ebd0 )
+	ROM_LOAD( "csega1",       0x0000, 0x1000, 0x92de3405 )
+	ROM_LOAD( "csega2",       0x1000, 0x1000, 0xf14e2f9a )
+	ROM_LOAD( "csega3",       0x2000, 0x1000, 0x941dbf48 )
+	ROM_LOAD( "csega4",       0x3000, 0x1000, 0xe0ac69b4 )
+	ROM_LOAD( "csega5",       0x4000, 0x1000, 0xbc56ebd0 )
 
 	ROM_REGION_DISPOSE(0x2000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "csega7", 0x0000, 0x1000, 0xdae5dd0b , 0xe8e374f9 )
-	ROM_LOAD( "csega6", 0x1000, 0x1000, 0xfda0a576 , 0xcf07fd5e )
+	ROM_LOAD( "csega7",       0x0000, 0x1000, 0xe8e374f9 )
+	ROM_LOAD( "csega6",       0x1000, 0x1000, 0xcf07fd5e )
 
 	ROM_REGION(0x0120)	/* color proms */
 
 	ROM_REGION(0x10000) /* 64k for the audio CPU */
-	ROM_LOAD( "csega8", 0x0000, 0x1000, 0x5ec17f47 , 0x588b4210 )
+	ROM_LOAD( "csega8",       0x0000, 0x1000, 0x588b4210 )
 ROM_END
 
 

@@ -47,7 +47,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include "driver.h"
-#include "psg.h"
+#include "ay8910.h"
 #include "fm.h"
 
 #ifndef PI
@@ -1148,7 +1148,7 @@ void OPNSetPris(int num , int pris , int SSGpris)
 	else OPN->ST.freqbase = 0;
 
 	/* SSG part  priscaler set */
-	if( SSGpris ) SSGClk( num, OPN->ST.clock * 2 / SSGpris , OPN->ST.rate );
+	if( SSGpris ) SSGClk( num, OPN->ST.clock * 2 / SSGpris );
 	/* make time tables */
 	init_timetables( &OPN->ST , OPN_DTTABLE , OPN_ARRATE , OPN_DRRATE );
 	/* make fnumber -> increment counter table */
@@ -1481,17 +1481,6 @@ void YM2203Update(void)
     }
 }
 
-#if 0
-/* ---------- read status port ---------- */
-unsigned char YM2203ReadStatus(int n,int a)
-{
-	if( FMOPN[n].ST.address < 16 )
-	{
-		return SSGRead(n,FMOPN[n].ST.address);
-	}
-	return FMOPN[n].ST.status;
-}
-#endif
 
 /* ---------- return the buffer ---------- */
 FMSAMPLE *YM2203Buffer(int n)
@@ -1556,7 +1545,7 @@ unsigned char YM2203Read(int n,int a)
 	}
 	else
 	{	/* data port (ONLY SSG) */
-		if( addr < 16 ) ret = SSGRead(n,a);
+		if( addr < 16 ) ret = SSGRead(n);
 	}
 	return ret;
 }
@@ -2085,7 +2074,7 @@ unsigned char YM2608Read(int n,int a)
 		ret = F2203->ST.status & 0x83;
 		break;
 	case 1:	/* status 0 */
-		if( addr < 16 ) ret = SSGRead(n,a);
+		if( addr < 16 ) ret = SSGRead(n);
 		break;
 	case 2:	/* status 1 : + ADPCM status */
 		ret = F2203->ST.status;

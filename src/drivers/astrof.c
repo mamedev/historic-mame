@@ -234,107 +234,107 @@ MACHINE_DRIVER(tomahawk, 32)
 
 ROM_START( astrof_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "kei2", 0xd000, 0x0400, 0x9dd4c3bc , 0x9f0bd355 )
-	ROM_LOAD( "keii", 0xd400, 0x0400, 0xc5cecd8e , 0x71f229f0 )
-	ROM_LOAD( "kei0", 0xd800, 0x0400, 0xdd55dbfd , 0x88114f7c )
-	ROM_LOAD( "ke9", 0xdc00, 0x0400, 0xbefe8e64 , 0x29cbaea6 )
-	ROM_LOAD( "ke8", 0xe000, 0x0400, 0x68650103 , 0x08e44b12 )
-	ROM_LOAD( "ke7", 0xe400, 0x0400, 0x1bf36e8f , 0x8a42d62c )
-	ROM_LOAD( "ke6", 0xe800, 0x0400, 0xb07844ec , 0x3e9aa743 )
-	ROM_LOAD( "ke5", 0xec00, 0x0400, 0x6af05984 , 0x712a4557 )
-	ROM_LOAD( "ke4", 0xf000, 0x0400, 0xedcb5d21 , 0xad06f306 )
-	ROM_LOAD( "ke3", 0xf400, 0x0400, 0x9fff5faf , 0x680b91b4 )
-	ROM_LOAD( "ke2", 0xf800, 0x0400, 0x7d41186b , 0x2c4cab1a )
-	ROM_LOAD( "kei", 0xfc00, 0x0400, 0x4e92741a , 0xfce4718d )
+	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
+	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
+	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
+	ROM_LOAD( "ke9",          0xdc00, 0x0400, 0x29cbaea6 )
+	ROM_LOAD( "ke8",          0xe000, 0x0400, 0x08e44b12 )
+	ROM_LOAD( "ke7",          0xe400, 0x0400, 0x8a42d62c )
+	ROM_LOAD( "ke6",          0xe800, 0x0400, 0x3e9aa743 )
+	ROM_LOAD( "ke5",          0xec00, 0x0400, 0x712a4557 )
+	ROM_LOAD( "ke4",          0xf000, 0x0400, 0xad06f306 )
+	ROM_LOAD( "ke3",          0xf400, 0x0400, 0x680b91b4 )
+	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
+	ROM_LOAD( "kei",          0xfc00, 0x0400, 0xfce4718d )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
-	ROM_LOAD( "astrf.clr", 0x0000, 0x0020, 0x82060000 , 0x61329fd1 )
+	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
 ROM_START( astrof2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "afii.6", 0xd000, 0x0800, 0x63a20e32 , 0xd6cd13a4 )
-	ROM_LOAD( "afii.5", 0xd800, 0x0800, 0x6fbe2d94 , 0x6fd3c4df )
-	ROM_LOAD( "afii.4", 0xe000, 0x0800, 0x84586f8c , 0x9612dae3 )
-	ROM_LOAD( "afii.3", 0xe800, 0x0800, 0x0f581d68 , 0x5a0fef42 )
-	ROM_LOAD( "afii.2", 0xf000, 0x0800, 0x8dca028e , 0x69f8a4fc )
-	ROM_LOAD( "afii.1", 0xf800, 0x0800, 0xf85d14a5 , 0x322c09d2 )
+	ROM_LOAD( "afii.6",       0xd000, 0x0800, 0xd6cd13a4 )
+	ROM_LOAD( "afii.5",       0xd800, 0x0800, 0x6fd3c4df )
+	ROM_LOAD( "afii.4",       0xe000, 0x0800, 0x9612dae3 )
+	ROM_LOAD( "afii.3",       0xe800, 0x0800, 0x5a0fef42 )
+	ROM_LOAD( "afii.2",       0xf000, 0x0800, 0x69f8a4fc )
+	ROM_LOAD( "afii.1",       0xf800, 0x0800, 0x322c09d2 )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
-	ROM_LOAD( "astrf.clr", 0x0000, 0x0020, 0x82060000 , 0x61329fd1 )
+	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
 /* The difference between this set and the astrof is that this displays 60
    when a bomb is shot */
 ROM_START( astrof3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "kei2", 0xd000, 0x0400, 0x9dd4c3bc , 0x9f0bd355 )
-	ROM_LOAD( "keii", 0xd400, 0x0400, 0xc5cecd8e , 0x71f229f0 )
-	ROM_LOAD( "kei0", 0xd800, 0x0400, 0xdd55dbfd , 0x88114f7c )
-	ROM_LOAD( "af579.08", 0xdc00, 0x0400, 0x9269f669 , 0x9793c124 )
-	ROM_LOAD( "ke8", 0xe000, 0x0400, 0x68650103 , 0x08e44b12 )
-	ROM_LOAD( "ke7", 0xe400, 0x0400, 0x1bf36e8f , 0x8a42d62c )
-	ROM_LOAD( "ke6", 0xe800, 0x0400, 0xb07844ec , 0x3e9aa743 )
-	ROM_LOAD( "ke5", 0xec00, 0x0400, 0x6af05984 , 0x712a4557 )
-	ROM_LOAD( "ke4", 0xf000, 0x0400, 0xedcb5d21 , 0xad06f306 )
-	ROM_LOAD( "ke3", 0xf400, 0x0400, 0x9fff5faf , 0x680b91b4 )
-	ROM_LOAD( "ke2", 0xf800, 0x0400, 0x7d41186b , 0x2c4cab1a )
-	ROM_LOAD( "af583.00", 0xfc00, 0x0400, 0x7b1c0cce , 0xf699dda3 )
+	ROM_LOAD( "kei2",         0xd000, 0x0400, 0x9f0bd355 )
+	ROM_LOAD( "keii",         0xd400, 0x0400, 0x71f229f0 )
+	ROM_LOAD( "kei0",         0xd800, 0x0400, 0x88114f7c )
+	ROM_LOAD( "af579.08",     0xdc00, 0x0400, 0x9793c124 )
+	ROM_LOAD( "ke8",          0xe000, 0x0400, 0x08e44b12 )
+	ROM_LOAD( "ke7",          0xe400, 0x0400, 0x8a42d62c )
+	ROM_LOAD( "ke6",          0xe800, 0x0400, 0x3e9aa743 )
+	ROM_LOAD( "ke5",          0xec00, 0x0400, 0x712a4557 )
+	ROM_LOAD( "ke4",          0xf000, 0x0400, 0xad06f306 )
+	ROM_LOAD( "ke3",          0xf400, 0x0400, 0x680b91b4 )
+	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
+	ROM_LOAD( "af583.00",     0xfc00, 0x0400, 0xf699dda3 )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
-	ROM_LOAD( "astrf.clr", 0x0000, 0x0020, 0x82060000 , 0x61329fd1 )
+	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
 ROM_START( tomahawk_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "l8-1", 0xdc00, 0x0400, 0x1f9d5dbd , 0x7c911661 )
-	ROM_LOAD( "l7-1", 0xe000, 0x0400, 0x2ca9af97 , 0xadeffb69 )
-	ROM_LOAD( "l6-1", 0xe400, 0x0400, 0x3559f9f7 , 0x9116e59d )
-	ROM_LOAD( "l5-1", 0xe800, 0x0400, 0x7066076a , 0x01e4c7c4 )
-	ROM_LOAD( "l4-1", 0xec00, 0x0400, 0xf89321f5 , 0xd9f69cb0 )
-	ROM_LOAD( "l3-1", 0xf000, 0x0400, 0x16f6c1b6 , 0x7ce7183f )
-	ROM_LOAD( "l2-1", 0xf400, 0x0400, 0x787246fc , 0x43fea29d )
-	ROM_LOAD( "l1-1", 0xf800, 0x0400, 0xc01986b9 , 0xf2096ba9 )
-	ROM_LOAD( "l0-1", 0xfc00, 0x0400, 0xa2426528 , 0x42edbc28 )
+	ROM_LOAD( "l8-1",         0xdc00, 0x0400, 0x7c911661 )
+	ROM_LOAD( "l7-1",         0xe000, 0x0400, 0xadeffb69 )
+	ROM_LOAD( "l6-1",         0xe400, 0x0400, 0x9116e59d )
+	ROM_LOAD( "l5-1",         0xe800, 0x0400, 0x01e4c7c4 )
+	ROM_LOAD( "l4-1",         0xec00, 0x0400, 0xd9f69cb0 )
+	ROM_LOAD( "l3-1",         0xf000, 0x0400, 0x7ce7183f )
+	ROM_LOAD( "l2-1",         0xf400, 0x0400, 0x43fea29d )
+	ROM_LOAD( "l1-1",         0xf800, 0x0400, 0xf2096ba9 )
+	ROM_LOAD( "l0-1",         0xfc00, 0x0400, 0x42edbc28 )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
-	ROM_LOAD( "t777.clr", 0x0000, 0x0020, 0xa2060000 , 0xd6a528fd )
+	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
 ROM_START( tomahaw5_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "thawk.l8", 0xdc00, 0x0400, 0x9e468bf2 , 0x8daf3969 )
-	ROM_LOAD( "thawk.l7", 0xe000, 0x0400, 0x3fab25ff , 0x4ccc3145 )
-	ROM_LOAD( "thawk.l6", 0xe400, 0x0400, 0x6b3e2284 , 0x981d8bc0 )
-	ROM_LOAD( "thawk.l5", 0xe800, 0x0400, 0xdcba4eea , 0xb05568e5 )
-	ROM_LOAD( "thawk.l4", 0xec00, 0x0400, 0x44a0b1de , 0x767e8de3 )
-	ROM_LOAD( "thawk.l3", 0xf000, 0x0400, 0xee250acf , 0x6b1c932f )
-	ROM_LOAD( "thawk.l2", 0xf400, 0x0400, 0x34e3feef , 0x742e69c5 )
-	ROM_LOAD( "thawk.l1", 0xf800, 0x0400, 0x49d1bb19 , 0x675c6a01 )
-	ROM_LOAD( "thawk.l0", 0xfc00, 0x0400, 0x296b227d , 0x1d7ac91a )
+	ROM_LOAD( "thawk.l8",     0xdc00, 0x0400, 0xb01dab4b )
+	ROM_LOAD( "thawk.l7",     0xe000, 0x0400, 0x3a6549e8 )
+	ROM_LOAD( "thawk.l6",     0xe400, 0x0400, 0x863e47f7 )
+	ROM_LOAD( "thawk.l5",     0xe800, 0x0400, 0xde0183bc )
+	ROM_LOAD( "thawk.l4",     0xec00, 0x0400, 0x11e9c7ea )
+	ROM_LOAD( "thawk.l3",     0xf000, 0x0400, 0xec44d388 )
+	ROM_LOAD( "thawk.l2",     0xf400, 0x0400, 0xdc0a0f54 )
+	ROM_LOAD( "thawk.l1",     0xf800, 0x0400, 0x1d9dab9c )
+	ROM_LOAD( "thawk.l0",     0xfc00, 0x0400, 0xd21a1eba )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
-	ROM_LOAD( "t777.clr", 0x0000, 0x0020, 0xa2060000 , 0xd6a528fd )
+	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
 

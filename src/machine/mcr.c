@@ -19,6 +19,7 @@
 #include "machine/6821pia.h"
 #include "timer.h"
 
+
 int pedal_sensitivity = 4;			/* Amount of change to read each time the pedal keys are pulsed */
 int weighting_factor = 0;			/* Progressive weighting factor */
 
@@ -229,6 +230,17 @@ void dotron_init_machine (void)
 
 int mcr_interrupt (void)
 {
+	/* once per frame, pulse the CTC line 3 */
+	z80ctc_0_trg3_w (0, 1);
+	z80ctc_0_trg3_w (0, 0);
+	return ignore_interrupt ();
+}
+
+int dotron_interrupt (void)
+{
+	/* pulse the CTC line 2 to enable Platform Poles */
+	z80ctc_0_trg2_w (0, 1);
+	z80ctc_0_trg2_w (0, 0);
 	/* once per frame, pulse the CTC line 3 */
 	z80ctc_0_trg3_w (0, 1);
 	z80ctc_0_trg3_w (0, 0);
@@ -529,6 +541,7 @@ void dotron_writeport(int port,int value)
 		case 0x05:
 		case 0x06:
 		case 0x07:
+			if (errorlog) fprintf(errorlog,"Write to port %02X = %02X\n",port,value);
 		   break;
 
 		default:
@@ -688,6 +701,48 @@ int kroozr_trakball_y_r(int data)
 	if (val & 0x04)		/* down */
 		return 0x64 + 0x34;
 	return 0x64;
+}
+
+/* Discs of Tron -- remap up and down on the mouse to aim up and down */
+int dotron_IN2_r(int offset)
+{
+	int data;
+	static int delta = 0;
+	char fake;
+	static char lastfake = 0;
+	static int mask = 0x00FF;
+	static int count = 0;
+
+	data = input_port_2_r(offset);
+	fake = input_port_6_r(offset);
+
+	delta += (fake - lastfake);
+	lastfake = fake;
+
+	/* Map to "aim up" */
+	if (delta > 5)
+	{
+		mask = 0x00EF;
+		count = 5;
+		delta = 0;
+	}
+	/* Map to "aim down" */
+	else if (delta < -5)
+	{
+		mask = 0x00DF;
+		count = 5;
+		delta = 0;
+	}
+
+	if ((count--) <= 0)
+	{
+		count = 0;
+		mask = 0x00FF;
+	}
+
+	data &= mask;
+
+	return data;
 }
 
 

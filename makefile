@@ -10,7 +10,7 @@ ASMFLAGS = -f coff
 VPATH=src src/Z80 src/M6502 src/I86 src/M6809 src/TMS34010
 
 # uncomment next line to use Assembler 6808 engine
-X86_ASM_6808 = 1
+#X86_ASM_6808 = 1
 # uncomment next line to use Assembler 68k engine
 #X86_ASM_68K = 1
 
@@ -75,16 +75,16 @@ LIBS   = -lalleg $(DJDIR)/lib/audiodjf.a \
 OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o obj/gfxlayer.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
-         obj/audit.o obj/crc32.o \
+         obj/audit.o obj/crc32.o obj/png.o obj/artwork.o \
          obj/sndhrdw/adpcm.o \
-         obj/sndhrdw/ym2203.opm obj/sndhrdw/psg.o obj/sndhrdw/psgintf.o \
+         obj/sndhrdw/ym2203.opm obj/sndhrdw/ay8910.o obj/sndhrdw/psgintf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
          obj/sndhrdw/ym2151.o obj/sndhrdw/ym3812.o \
 		 obj/sndhrdw/tms5220.o obj/sndhrdw/5220intf.o obj/sndhrdw/vlm5030.o \
 		 obj/sndhrdw/pokey.o obj/sndhrdw/pokyintf.o obj/sndhrdw/sn76496.o \
-		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o \
+		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o obj/sndhrdw/astrocde.o \
 		 obj/sndhrdw/votrax.o obj/sndhrdw/dac.o obj/sndhrdw/samples.o \
-		 obj/sndhrdw/rcfilter.o \
+		 obj/sndhrdw/streams.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
          obj/vidhrdw/vector.o obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
@@ -93,7 +93,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/atarigen.o \
          obj/machine/slapstic.o \
          obj/machine/ticket.o \
-         obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/I8039/I8039.o obj/I8085/I8085.o \
+         obj/Z80/Z80.o obj/M6502/m6502.o obj/I86/I86.o obj/I8039/I8039.o obj/I8085/I8085.o \
          obj/M6809/m6809.o obj/M6805/m6805.o \
          obj/S2650/s2650.o obj/T11/t11.o \
          obj/TMS34010/tms34010.o obj/TMS34010/34010fld.o \
@@ -103,7 +103,8 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/M6809/6809dasm.o obj/M6805/6805dasm.o  obj/I8039/8039dasm.o \
          obj/S2650/2650dasm.o obj/T11/t11dasm.o obj/TMS34010/34010dsm.o obj/M68000/m68kdasm.o \
          obj/msdos/msdos.o obj/msdos/video.o obj/msdos/vector.o obj/msdos/sound.o \
-         obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o obj/msdos/fronthlp.o
+         obj/msdos/input.o obj/msdos/fileio.o obj/msdos/config.o obj/msdos/fronthlp.o \
+		 obj/msdos/profiler.o
 
 
 all: mame.exe
@@ -223,6 +224,7 @@ obj/taito2.a: \
          obj/vidhrdw/bking2.o obj/drivers/bking2.o \
          obj/vidhrdw/gsword.o obj/drivers/gsword.o \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
+         obj/vidhrdw/tokio.o obj/drivers/tokio.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
          obj/machine/rastan.o obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
@@ -230,6 +232,7 @@ obj/taito2.a: \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
          obj/vidhrdw/twincobr.o obj/drivers/twincobr.o \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
+         obj/drivers/arkanoi2.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
          obj/vidhrdw/ssi.o obj/drivers/ssi.o
 
@@ -295,6 +298,7 @@ obj/dataeast.a: \
          obj/vidhrdw/brkthru.o obj/drivers/brkthru.o \
          obj/vidhrdw/shootout.o obj/drivers/shootout.o \
          obj/vidhrdw/sidepckt.o obj/drivers/sidepckt.o \
+         obj/vidhrdw/exprraid.o obj/drivers/exprraid.o \
 
 obj/dec8.a: \
          obj/vidhrdw/dec8.o obj/drivers/dec8.o \
@@ -466,14 +470,15 @@ obj/other.a: \
          obj/machine/stactics.o obj/vidhrdw/stactics.o obj/drivers/stactics.o \
          obj/vidhrdw/goldstar.o obj/drivers/goldstar.o \
          obj/vidhrdw/vigilant.o obj/drivers/vigilant.o \
+         obj/machine/exterm.o obj/vidhrdw/exterm.o obj/drivers/exterm.o \
          obj/vidhrdw/cop01.o obj/drivers/cop01.o \
          obj/vidhrdw/terracre.o obj/drivers/terracre.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
-         obj/machine/exterm.o obj/vidhrdw/exterm.o obj/drivers/exterm.o
+         obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o
 
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
-obj/M6502/M6502.o: M6502.c M6502.h M6502ops.h tbl6502.c tbl65c02.c tbl6510.c
+obj/M6502/m6502.o: m6502.c m6502.h m6502ops.h tbl6502.c tbl65c02.c tbl6510.c
 obj/I86/I86.o:  I86.c I86.h I86intrf.h ea.h host.h instr.h modrm.h
 obj/M6809/m6809.o:  m6809.c m6809.h 6809ops.c
 obj/M6808/M6808.o:  m6808.c m6808.h
@@ -481,24 +486,24 @@ obj/TMS34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
 
 
 makedir:
-	mkdir obj
-	mkdir obj\Z80
-	mkdir obj\M6502
-	mkdir obj\I86
-	mkdir obj\I8039
-	mkdir obj\I8085
-	mkdir obj\M6809
-	mkdir obj\M6808
-	mkdir obj\M6805
-	mkdir obj\M68000
-	mkdir obj\S2650
-	mkdir obj\T11
-	mkdir obj\TMS34010
-	mkdir obj\drivers
-	mkdir obj\machine
-	mkdir obj\vidhrdw
-	mkdir obj\sndhrdw
-	mkdir obj\msdos
+	md obj
+	md obj\Z80
+	md obj\M6502
+	md obj\I86
+	md obj\I8039
+	md obj\I8085
+	md obj\M6809
+	md obj\M6808
+	md obj\M6805
+	md obj\M68000
+	md obj\S2650
+	md obj\T11
+	md obj\TMS34010
+	md obj\drivers
+	md obj\machine
+	md obj\vidhrdw
+	md obj\sndhrdw
+	md obj\msdos
 
 clean:
 	del obj\*.o

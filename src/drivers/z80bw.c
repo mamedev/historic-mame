@@ -171,21 +171,21 @@ static struct MachineDriver astinvad_machine_driver = /* LT */
 
 ROM_START( astinvad_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0xfea7ea35 , 0x20e3ec41 )
-	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0x90bc4412 , 0xe8f1ab55 )
-	ROM_LOAD( "ai_cpu_3.rom", 0x0800, 0x0400, 0x4ef7a34d , 0xa0092553 )
-	ROM_LOAD( "ai_cpu_4.rom", 0x0c00, 0x0400, 0xb49ad24c , 0xbe14185c )
-	ROM_LOAD( "ai_cpu_5.rom", 0x1000, 0x0400, 0x2e35e513 , 0xfee681ec )
-	ROM_LOAD( "ai_cpu_6.rom", 0x1400, 0x0400, 0x83a0c7c8 , 0xeb338863 )
-	ROM_LOAD( "ai_cpu_7.rom", 0x1800, 0x0400, 0xd9259ef3 , 0x16dcfea4 )
+	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0x20e3ec41 )
+	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0xe8f1ab55 )
+	ROM_LOAD( "ai_cpu_3.rom", 0x0800, 0x0400, 0xa0092553 )
+	ROM_LOAD( "ai_cpu_4.rom", 0x0c00, 0x0400, 0xbe14185c )
+	ROM_LOAD( "ai_cpu_5.rom", 0x1000, 0x0400, 0xfee681ec )
+	ROM_LOAD( "ai_cpu_6.rom", 0x1400, 0x0400, 0xeb338863 )
+	ROM_LOAD( "ai_cpu_7.rom", 0x1800, 0x0400, 0x16dcfea4 )
 ROM_END
 
 ROM_START( kamikaze_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "km01", 0x0000, 0x0800, 0xc0183e5c , 0x8aae7414 )
-	ROM_LOAD( "km02", 0x0800, 0x0800, 0xd8397221 , 0x6c7a2beb )
-	ROM_LOAD( "km03", 0x1000, 0x0800, 0x15f835c0 , 0x3e8dedb6 )
-	ROM_LOAD( "km04", 0x1800, 0x0800, 0x856b59e5 , 0x494e1f6d )
+	ROM_LOAD( "km01",         0x0000, 0x0800, 0x8aae7414 )
+	ROM_LOAD( "km02",         0x0800, 0x0800, 0x6c7a2beb )
+	ROM_LOAD( "km03",         0x1000, 0x0800, 0x3e8dedb6 )
+	ROM_LOAD( "km04",         0x1800, 0x0800, 0x494e1f6d )
 ROM_END
 
 static const char *astinvad_sample_names[] =

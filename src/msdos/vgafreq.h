@@ -3,6 +3,7 @@
 ** for your video card by making subtle changes
 ** to the provided values */
 
+/* #define G200 */
 /* #define S3 */
 #define SYNC
 
@@ -30,6 +31,28 @@
 #define SY_FREQ288SH 0x5f
 #define SY_FREQ288SV 0x03
 
+#elif defined G200
+/* Tested by V.V on a Matrox Millennium G200 */
+
+/* 224x288 noscanlines - 59.96 Hz at vgafreq 1 */
+#define SY_FREQ224NH 0x5f
+#define SY_FREQ224NV 0x4d
+/* 256x256 noscanlines - 59.95 Hz at vgafreq 1 */
+#define SY_FREQ256NH 0x64
+#define SY_FREQ256NV 0x31
+/* 288x224 noscanlines - 60.03 Hz at vgafreq 0 */
+#define SY_FREQ288NH 0x5f
+#define SY_FREQ288NV 0x08
+
+/* 224x288 scanlines - vgafreq 2 not working here */
+#define SY_FREQ224SH 0x5f
+#define SY_FREQ224SV 0x43
+/* 256x256 scanlines - 119.79 Hz at vgafreq 1 */
+#define SY_FREQ256SH 0x61
+#define SY_FREQ256SV 0x20
+/* 288x224 scanlines - 120.07 Hz at vgafreq 0 */
+#define SY_FREQ288SH 0x5f
+#define SY_FREQ288SV 0x03
 
 #elif defined SYNC
 /* Tested by V.V on a Diamond Stealth 3240 - S3 Vision 968

@@ -15,7 +15,42 @@ unsigned char *stinger_videoram2;
 unsigned char *stinger_fg_attributesram,*stinger_bg_attributesram;
 
 static unsigned char charbank[2];
+static unsigned char palbank[2];
+static int palette_bank;
 static int flipscreen[2];
+
+
+
+void stinger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,bit3;
+
+
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		color_prom++;
+	}
+}
+
 
 
 void stinger_attributes_w(int offset,int data)
@@ -30,6 +65,17 @@ void stinger_attributes_w(int offset,int data)
 	}
 
 	stinger_bg_attributesram[offset] = data;
+}
+
+void stinger_palettebank_w(int offset,int data)
+{
+	if (palbank[offset] != (data & 1))
+	{
+		palbank[offset] = data & 1;
+		palette_bank = palbank[0] + 2 * palbank[1];
+
+		memset(dirtybuffer,1,videoram_size);
+	}
 }
 
 void stinger_charbank_w(int offset,int data)
@@ -81,7 +127,7 @@ void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs] + 256 * charbank[0],
-					stinger_bg_attributesram[2 * (offs % 32) + 1],
+					(stinger_bg_attributesram[2 * (offs % 32) + 1] & 0x07) + 8 * palette_bank,
 					flipscreen[0],flipscreen[1],
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -121,7 +167,7 @@ void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		drawgfx(bitmap,Machine->gfx[0],
 				stinger_videoram2[offs] + 256 * charbank[1],
-				stinger_fg_attributesram[2 * (offs % 32) + 1],
+				(stinger_fg_attributesram[2 * (offs % 32) + 1] & 0x07) + 8 * palette_bank,
 				flipscreen[0],flipscreen[1],
 				8*sx,(8*sy - stinger_fg_attributesram[2 * (offs % 32)]) & 0xff,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -141,7 +187,7 @@ void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		drawgfx(bitmap,Machine->gfx[2],
 				spriteram[offs + 1],
-				spriteram[offs + 2],
+				(spriteram[offs + 2] & 0x07) + 8 * palette_bank,
 				flipscreen[0],flipscreen[1],
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -158,7 +204,7 @@ void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		drawgfx(bitmap,Machine->gfx[3],
 				spriteram_2[offs + 1],
-				spriteram_2[offs + 2],
+				(spriteram_2[offs + 2] & 0x07) + 8 * palette_bank,
 				flipscreen[0],flipscreen[1],
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

@@ -266,21 +266,37 @@ void taito_characterram_w(int offset,int data)
 }
 
 
-
 /***************************************************************************
 
   As if the hardware weren't complicated enough, it also has built-in
   collision detection.
 
+  For Alpine Ski, hack offset 1 to return collision half of the time. Otherwise
+  offset 3 will be ignored, because all collision detection registers are read
+  and copied by the game in order, then the values checked, starting with offset 1.
+
 ***************************************************************************/
 int taito_collision_detection_r(int offset)
 {
+	static int alternate_hack = 0;
 	extern struct GameDriver frontlin_driver;
+	extern struct GameDriver alpine_driver;
+	extern struct GameDriver alpinea_driver;
 
-	if (Machine->gamedrv == &frontlin_driver && (offset == 1 || offset == 2))
+	if (Machine->gamedrv == &alpine_driver || Machine->gamedrv == &alpinea_driver)
+	{
+		if (offset == 1)	/* simulate collision with other skiers, snowmobile */
+			if ((alternate_hack ^= 1) == 1)
+				return 0x0f;
+		if (offset == 3)	/* simulate collision with rocks, trees, ice, flags, points */
+				return 0x0f;
+	}
+	else if (Machine->gamedrv == &frontlin_driver && (offset == 1 || offset == 2))
 		return 0xff;	/* simulate collision for Front Line */
-	else return 0;
+
+	return 0;
 }
+
 
 void taito_collision_detection_w(int offset,int data)
 {

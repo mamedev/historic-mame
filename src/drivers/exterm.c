@@ -264,9 +264,7 @@ INPUT_PORTS_END
 static struct DACinterface dac_interface =
 {
 	2, 			/* 2 channels on 1 chip */
-	441000,
-	{255,255},
-	{  0,  0}
+	{ 255, 255 },
 };
 
 static struct YM2151interface ym2151_interface =
@@ -392,36 +390,36 @@ static void hisave (void)
 
 ROM_START( exterm_rom )
 	ROM_REGION(0x200000)     /* 2MB for 34010 code */
-	ROM_LOAD_ODD(  "v101bg0", 0x000000, 0x10000, 0xc3d768f5 , 0x8c8e72cf )
-	ROM_LOAD_EVEN( "v101bg1", 0x000000, 0x10000, 0x64945e6c , 0xcc2da0d8 )
-	ROM_LOAD_ODD(  "v101bg2", 0x020000, 0x10000, 0xa16ea1ac , 0x2dcb3653 )
-	ROM_LOAD_EVEN( "v101bg3", 0x020000, 0x10000, 0xd1647492 , 0x4aedbba0 )
-	ROM_LOAD_ODD(  "v101bg4", 0x040000, 0x10000, 0x4f59ad2f , 0x576922d4 )
-	ROM_LOAD_EVEN( "v101bg5", 0x040000, 0x10000, 0x1efdf203 , 0xa54a4bc2 )
-	ROM_LOAD_ODD(  "v101bg6", 0x060000, 0x10000, 0x08128942 , 0x7584a676 )
-	ROM_LOAD_EVEN( "v101bg7", 0x060000, 0x10000, 0xbb4cc998 , 0xa4f24ff6 )
-	ROM_LOAD_ODD(  "v101bg8", 0x080000, 0x10000, 0x37d21406 , 0xfda165d6 )
-	ROM_LOAD_EVEN( "v101bg9", 0x080000, 0x10000, 0x88be2d1e , 0xe112a4c4 )
-	ROM_LOAD_ODD(  "v101bg10", 0x0a0000, 0x10000, 0xb7c0fd40 , 0xf1a5cf54 )
-	ROM_LOAD_EVEN( "v101bg11", 0x0a0000, 0x10000, 0x7e7fb8a3 , 0x8677e754 )
-	ROM_LOAD_ODD(  "v101fg0", 0x180000, 0x10000, 0xcafea36e , 0x38230d7d )
-	ROM_LOAD_EVEN( "v101fg1", 0x180000, 0x10000, 0xd647a0cf , 0x22a2bd61 )
-	ROM_LOAD_ODD(  "v101fg2", 0x1a0000, 0x10000, 0xcbf2ccd8 , 0x9420e718 )
-	ROM_LOAD_EVEN( "v101fg3", 0x1a0000, 0x10000, 0x44e4a5e8 , 0x84992aa2 )
-	ROM_LOAD_ODD(  "v101fg4", 0x1c0000, 0x10000, 0x1b6f6dff , 0x38da606b )
-	ROM_LOAD_EVEN( "v101fg5", 0x1c0000, 0x10000, 0x48a7184f , 0x842de63a )
-	ROM_LOAD_ODD(  "v101p0", 0x1e0000, 0x10000, 0x07aa7a1a , 0x6c8ee79a )
-	ROM_LOAD_EVEN( "v101p1", 0x1e0000, 0x10000, 0x04680a42 , 0x557bfc84 )
+	ROM_LOAD_ODD(  "v101bg0",  0x000000, 0x10000, 0x8c8e72cf )
+	ROM_LOAD_EVEN( "v101bg1",  0x000000, 0x10000, 0xcc2da0d8 )
+	ROM_LOAD_ODD(  "v101bg2",  0x020000, 0x10000, 0x2dcb3653 )
+	ROM_LOAD_EVEN( "v101bg3",  0x020000, 0x10000, 0x4aedbba0 )
+	ROM_LOAD_ODD(  "v101bg4",  0x040000, 0x10000, 0x576922d4 )
+	ROM_LOAD_EVEN( "v101bg5",  0x040000, 0x10000, 0xa54a4bc2 )
+	ROM_LOAD_ODD(  "v101bg6",  0x060000, 0x10000, 0x7584a676 )
+	ROM_LOAD_EVEN( "v101bg7",  0x060000, 0x10000, 0xa4f24ff6 )
+	ROM_LOAD_ODD(  "v101bg8",  0x080000, 0x10000, 0xfda165d6 )
+	ROM_LOAD_EVEN( "v101bg9",  0x080000, 0x10000, 0xe112a4c4 )
+	ROM_LOAD_ODD(  "v101bg10", 0x0a0000, 0x10000, 0xf1a5cf54 )
+	ROM_LOAD_EVEN( "v101bg11", 0x0a0000, 0x10000, 0x8677e754 )
+	ROM_LOAD_ODD(  "v101fg0",  0x180000, 0x10000, 0x38230d7d )
+	ROM_LOAD_EVEN( "v101fg1",  0x180000, 0x10000, 0x22a2bd61 )
+	ROM_LOAD_ODD(  "v101fg2",  0x1a0000, 0x10000, 0x9420e718 )
+	ROM_LOAD_EVEN( "v101fg3",  0x1a0000, 0x10000, 0x84992aa2 )
+	ROM_LOAD_ODD(  "v101fg4",  0x1c0000, 0x10000, 0x38da606b )
+	ROM_LOAD_EVEN( "v101fg5",  0x1c0000, 0x10000, 0x842de63a )
+	ROM_LOAD_ODD(  "v101p0",   0x1e0000, 0x10000, 0x6c8ee79a )
+	ROM_LOAD_EVEN( "v101p1",   0x1e0000, 0x10000, 0x557bfc84 )
 
 	ROM_REGION_DISPOSE(0x1000)   /* temporary space for graphics (disposed after conversion) */
 
 	ROM_REGION(0x1000)	 /* Slave CPU memory space. There are no ROMs mapped here */
 
 	ROM_REGION(0x10000)	 /* 64k for DAC code */
-	ROM_LOAD     ( "v101d1", 0x08000, 0x08000, 0x647b33f5 , 0x83268b7d )
+	ROM_LOAD( "v101d1", 0x08000, 0x08000, 0x83268b7d )
 
 	ROM_REGION(0x10000)	 /* 64k for YM2151 code */
-	ROM_LOAD     ( "v101y1", 0x08000, 0x08000, 0xca7fbd3d , 0xcbeaa837 )
+	ROM_LOAD( "v101y1", 0x08000, 0x08000, 0xcbeaa837 )
 ROM_END
 
 
@@ -449,5 +447,3 @@ struct GameDriver exterm_driver =
 
 	hiload, hisave
 };
-
-

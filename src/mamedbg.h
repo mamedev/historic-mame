@@ -31,7 +31,7 @@
 #include "cpuintrf.h"
 #include "Z80/Z80.h"
 #include "Z80/Z80Dasm.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 #include "I86/i86intrf.h"
 #include "I8039/i8039.h"
 #include "I8085/i8085.h"
@@ -272,11 +272,11 @@ static tBackupReg BackupRegisters[] =
 	/* #define CPU_M6502  3 */
 	{
 		{
-			{ "A", (int *)&((M6502_Regs *)bckrgs)->A, 1, 2, 1 },
-			{ "X", (int *)&((M6502_Regs *)bckrgs)->X, 1, 7, 1 },
-			{ "Y", (int *)&((M6502_Regs *)bckrgs)->Y, 1, 12, 1 },
-			{ "S", (int *)&((M6502_Regs *)bckrgs)->SP.D, 1, 17, 1 },
-			{ "PC", (int *)&((M6502_Regs *)bckrgs)->PC.W.l, 2, 22, 1 },
+			{ "A", (int *)&((M6502_Regs *)bckrgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((M6502_Regs *)bckrgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((M6502_Regs *)bckrgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((M6502_Regs *)bckrgs)->sp.D, 1, 17, 1 },
+			{ "PC", (int *)&((M6502_Regs *)bckrgs)->pc.W.l, 2, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
     },
@@ -511,17 +511,17 @@ static tDebugCpuInfo DebugInfo[] =
 		"6502", 14,
 		DrawDebugScreen8,
 		Dasm6502, Temp6502Trace, 15, 8,
-		"NVRBDIZC", (int *)&((M6502_Regs *)rgs)->P, 8,
+		"NVRBDIZC", (int *)&((M6502_Regs *)rgs)->p, 8,
 		"%04X:", 0xffff,
 		25, 31, 77, 16,
 		3, 1,
-		(int *)&((M6502_Regs *)rgs)->SP.B.l, 1,
+		(int *)&((M6502_Regs *)rgs)->sp.B.l, 1,
 		{
-			{ "A", (int *)&((M6502_Regs *)rgs)->A, 1, 2, 1 },
-			{ "X", (int *)&((M6502_Regs *)rgs)->X, 1, 7, 1 },
-			{ "Y", (int *)&((M6502_Regs *)rgs)->Y, 1, 12, 1 },
-			{ "S", (int *)&((M6502_Regs *)rgs)->SP.B.l, 1, 17, 1 },
-			{ "PC", (int *)&((M6502_Regs *)rgs)->PC.W.l, 2, 22, 1 },
+			{ "A", (int *)&((M6502_Regs *)rgs)->a, 1, 2, 1 },
+			{ "X", (int *)&((M6502_Regs *)rgs)->x, 1, 7, 1 },
+			{ "Y", (int *)&((M6502_Regs *)rgs)->y, 1, 12, 1 },
+			{ "S", (int *)&((M6502_Regs *)rgs)->sp.B.l, 1, 17, 1 },
+			{ "PC", (int *)&((M6502_Regs *)rgs)->pc.W.l, 2, 22, 1 },
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},

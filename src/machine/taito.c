@@ -12,9 +12,11 @@
 #include "vidhrdw/generic.h"
 
 
-static unsigned char voltable[255];
 static unsigned char fromz80,toz80;
 static int zaccept,zready;
+
+unsigned char *alpine1_protection;
+unsigned char *alpine2_protection;
 
 
 void taito_init_machine(void)
@@ -29,68 +31,62 @@ void taito_init_machine(void)
 	cpu_setbank(1,&RAM[0x6000]);
 
 
-	/* reproduce the resistor ladder for the DAC output
-
-	   -- 30 -+
-	          15
-	   -- 30 -+
-	          15
-	   -- 30 -+
-	          15
-	   -- 30 -+
-	          15
-	   -- 30 -+
-	          15
-	   -- 30 -+
-	          15
-	   -- 30 -+
-	          15
-	   -- 30 -+-------- out
-	*/
-
-	totweight = 0;
-	for (i = 0;i < 8;i++)
-	{
-		weight[i] = 75600 / (30 + (7-i) * 15);
-		totweight += weight[i];
-	}
-
-	for (i = 0;i < 8;i++)
-		weight[i] = (255 * weight[i] + totweight / 2) / totweight;
-
-	for (i = 0;i < 256;i++)
-	{
-		voltable[i] = 0;
-
-		for (j = 0;j < 8;j++)
-		{
-			if ((i >> j) & 1)
-				voltable[i] += weight[j];
-		}
-	}
-
 	zaccept = 1;
 	zready = 0;
 }
 
 
 
+void alpine1_protection_w(int offset, int data)
+{
+	switch (data)
+	{
+		case 0x05:
+			*alpine1_protection = 0x18;
+			break;
+		case 0x07:
+		case 0x0c:
+		case 0x0f:
+			*alpine1_protection = 0x00;		/* not used as far as I can tell */
+			break;
+		case 0x16:
+			*alpine1_protection = 0x08;
+			break;
+		case 0x1d:
+			*alpine1_protection = 0x18;
+			break;
+		default:
+			*alpine1_protection = data;		/* not used as far as I can tell */
+			break;
+	}
+}
+
+
 void taito_bankswitch_w(int offset,int data)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	extern struct GameDriver alpinea_driver;
 
 
 	if (data & 0x80) { cpu_setbank(1,&RAM[0x10000]); }
 	else cpu_setbank(1,&RAM[0x6000]);
+
+	if (Machine->gamedrv == &alpinea_driver)
+		*alpine2_protection = data >> 2;
 }
 
 
 
-void taito_digital_out(int offset,int data)
+int taito_port_2_r(int offset)
 {
-	DAC_data_w(0,voltable[data]);
-}
+	extern struct GameDriver alpine_driver;
 
+
+	if (Machine->gamedrv == &alpine_driver)
+		return input_port_2_r(offset) | *alpine1_protection;
+	else
+		return input_port_2_r(offset) | *alpine2_protection;
+}
 
 
 

@@ -4,7 +4,6 @@ Blue Print memory map (preliminary)
 
 CPU #1
 0000-4fff ROM
-5000-7fff Space for other ROMs, but which ones?
 8000-87ff RAM
 9000-93ff Video RAM
 b000-b0ff Sprite RAM
@@ -12,41 +11,14 @@ f000-f3ff Color RAM
 
 read:
 c000      IN0
-          bit 7 = DOWN
-          bit 6 = UP
-          bit 5 = RIGHT
-          bit 4 = LEFT
-          bit 3 = FIRE
-          bit 2 = TILT
-          bit 1 = START 1
-          bit 0 = COIN
 c001      IN1
-          bit 3-7 = ?
-          bit 2 = TEST (1 = do the test)
-          bit 1 = START 2
-          bit 0 = SERVICE?
-c003      read two dip switches from 8910 #0 port A
-          bit 7 = ?
-          bit 6 = ?
-          bit 5 = coins per play
-          bit 4 = Maze monster appears in 2nd (0) or 3rd (1) maze
-          bit 3 = free play
-          bit 1-2 = bonus
-          bit 0 = ?
-
-          when d000 = 0x13: DSW2
-          bit 7 = ?
-          bit 6 = ?
-          bit 4-5 = difficulty
-          bit 3 = UPRIGHT or COCKTAIL select (0 = UPRIGHT) (?)
-          bit 2 = ?
-          bit 0-1 = lives
+c003      read dip switches from the second CPU
 
 e000      Watchdog reset
 
 write:
 c000      bit 0,1 = coin counters
-d000      sound command
+d000      command for the second CPU
 e000      bit 1 = flip screen
 
 CPU #2
@@ -104,6 +76,8 @@ static void blueprnt_coin_w (int offset, int data)
 	coin_counter_w (1, data & 0x02);
 	lastval = data;
 }
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -251,8 +225,8 @@ static struct GfxLayout spritelayout =
 	{ 0, 128*16*16, 2*128*16*16 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-		8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	16*8	/* every sprite takes 32 consecutive bytes */
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	16*8	/* every sprite takes 16 consecutive bytes */
 };
 
 
@@ -270,11 +244,12 @@ static unsigned char palette[] =
 	0x00,0x00,0x00,	/* BLACK */
 	0xff,0x00,0x00, /* RED */
 	0x00,0xff,0x00, /* GREEN */
-	0x00,0x00,0xff, /* BLUE */
 	0xff,0xff,0x00, /* YELLOW */
+	0x00,0x00,0xff, /* BLUE */
 	0xff,0x00,0xff, /* MAGENTA */
 	0x00,0xff,0xff, /* CYAN */
 	0xff,0xff,0xff, /* WHITE */
+
 	0xE0,0xE0,0xE0, /* LTGRAY */
 	0xC0,0xC0,0xC0, /* DKGRAY */
 	0xe0,0xb0,0x70,	/* BROWN */
@@ -297,15 +272,15 @@ static unsigned char palette[] =
 static unsigned short colortable[] =
 {
 	0,0,0,0,
-	0,7,1,4,
-	0,7,3,3,
-	0,1,3,5,
-	0,1,17,4,
-	0,3,14,7,
-	0,4,4,1,
-	0,3,16,7,
+	0,7,1,3,
+	0,7,4,4,
+	0,1,4,5,
+	0,1,17,3,
+	0,4,14,7,
+	0,3,3,1,
+	0,4,16,7,
 
-	0,2,3,6,1,4,5,7
+	0,1,2,3,4,5,6,7
 };
 
 
@@ -335,11 +310,11 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_Z80,	/* can't use CPU_AUDIO_CPU because the second CPU reads the dip switches */
+			CPU_Z80,	/* can't use CPU_AUDIO_CPU because this CPU reads the dip switches */
 			3072000,	/* 3.072 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,4
+			interrupt,4	/* NMIs are caused by the main CPU */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -378,22 +353,22 @@ static struct MachineDriver machine_driver =
 
 ROM_START( blueprnt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "1m", 0x0000, 0x1000, 0x24058e7b , 0xb20069a6 )
-	ROM_LOAD( "1n", 0x1000, 0x1000, 0x0b2382d7 , 0x4a30302e )
-	ROM_LOAD( "1p", 0x2000, 0x1000, 0xc8efb4af , 0x6866ca07 )
-	ROM_LOAD( "1r", 0x3000, 0x1000, 0xec63fbb5 , 0x5d3cfac3 )
-	ROM_LOAD( "1s", 0x4000, 0x1000, 0x3b24f9f6 , 0xa556cac4 )
+	ROM_LOAD( "1m",           0x0000, 0x1000, 0xb20069a6 )
+	ROM_LOAD( "1n",           0x1000, 0x1000, 0x4a30302e )
+	ROM_LOAD( "1p",           0x2000, 0x1000, 0x6866ca07 )
+	ROM_LOAD( "1r",           0x3000, 0x1000, 0x5d3cfac3 )
+	ROM_LOAD( "1s",           0x4000, 0x1000, 0xa556cac4 )
 
 	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c3", 0x0000, 0x1000, 0xf081e14f , 0xac2a61bc )
-	ROM_LOAD( "d3", 0x1000, 0x1000, 0xa48e0a9e , 0x81fe85d7 )
-	ROM_LOAD( "d17", 0x2000, 0x1000, 0xc334fbe2 , 0xa73b6483 )
-	ROM_LOAD( "d18", 0x3000, 0x1000, 0x5451da09 , 0x7d622550 )
-	ROM_LOAD( "d20", 0x4000, 0x1000, 0x966ee1d4 , 0x2fcb4f26 )
+	ROM_LOAD( "c3",           0x0000, 0x1000, 0xac2a61bc )
+	ROM_LOAD( "d3",           0x1000, 0x1000, 0x81fe85d7 )
+	ROM_LOAD( "d18",          0x2000, 0x1000, 0x7d622550 )
+	ROM_LOAD( "d20",          0x3000, 0x1000, 0x2fcb4f26 )
+	ROM_LOAD( "d17",          0x4000, 0x1000, 0xa73b6483 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "3u", 0x0000, 0x1000, 0xfd126e6a , 0xfd38777a )
-	ROM_LOAD( "3v", 0x2000, 0x1000, 0x22ab6921 , 0x33d5bf5b )
+	ROM_LOAD( "3u",           0x0000, 0x1000, 0xfd38777a )
+	ROM_LOAD( "3v",           0x2000, 0x1000, 0x33d5bf5b )
 ROM_END
 
 

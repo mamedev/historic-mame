@@ -407,86 +407,86 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 ROM_START( xain_rom )
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "1.rom", 0x08000, 0x8000, 0x3ec33443 , 0x79f515a7 )
-	ROM_LOAD( "2.rom", 0x04000, 0x4000, 0xdb85edf1 , 0xd22bf859 )
+	ROM_LOAD( "1.rom",        0x08000, 0x8000, 0x79f515a7 )
+	ROM_LOAD( "2.rom",        0x04000, 0x4000, 0xd22bf859 )
 	ROM_CONTINUE(      0x10000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0xc8000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "12.rom", 0x00000, 0x8000, 0x332dd307 , 0x83c00dd8 ) /* Characters */
-	ROM_LOAD( "21.rom", 0x08000, 0x8000, 0xc5ffe72d , 0x11eb4247 ) /* Characters */
-	ROM_LOAD( "13.rom", 0x10000, 0x8000, 0x8149446f , 0x8f0aa1a7 ) /* Characters */
-	ROM_LOAD( "22.rom", 0x18000, 0x8000, 0xd98cbc6e , 0x422b536e ) /* Characters */
-	ROM_LOAD( "14.rom", 0x20000, 0x8000, 0x9541a9e5 , 0x45681910 ) /* Characters */
-	ROM_LOAD( "23.rom", 0x28000, 0x8000, 0x8de2d670 , 0x828c1b0c ) /* Characters */
-	ROM_LOAD( "15.rom", 0x30000, 0x8000, 0x982dcaa3 , 0xa8eeabc8 ) /* Characters */
-	ROM_LOAD( "24.rom", 0x38000, 0x8000, 0xa7e87156 , 0xf10f7dd9 ) /* Characters */
-	ROM_LOAD( "16.rom", 0x40000, 0x8000, 0xfc3769e7 , 0xe59a2f27 ) /* Characters */
+	ROM_LOAD( "12.rom",       0x00000, 0x8000, 0x83c00dd8 ) /* Characters */
+	ROM_LOAD( "21.rom",       0x08000, 0x8000, 0x11eb4247 ) /* Characters */
+	ROM_LOAD( "13.rom",       0x10000, 0x8000, 0x8f0aa1a7 ) /* Characters */
+	ROM_LOAD( "22.rom",       0x18000, 0x8000, 0x422b536e ) /* Characters */
+	ROM_LOAD( "14.rom",       0x20000, 0x8000, 0x45681910 ) /* Characters */
+	ROM_LOAD( "23.rom",       0x28000, 0x8000, 0x828c1b0c ) /* Characters */
+	ROM_LOAD( "15.rom",       0x30000, 0x8000, 0xa8eeabc8 ) /* Characters */
+	ROM_LOAD( "24.rom",       0x38000, 0x8000, 0xf10f7dd9 ) /* Characters */
+	ROM_LOAD( "16.rom",       0x40000, 0x8000, 0xe59a2f27 ) /* Characters */
 
-	ROM_LOAD( "6.rom", 0x48000, 0x8000, 0xe557058d , 0x5c6c453c ) /* Characters */
-	ROM_LOAD( "7.rom", 0x50000, 0x8000, 0x89af64ff , 0x8d637639 ) /* Characters */
-	ROM_LOAD( "5.rom", 0x58000, 0x8000, 0x547824e6 , 0x59d87a9a ) /* Characters */
-	ROM_LOAD( "8.rom", 0x60000, 0x8000, 0x16f96c2d , 0x71eec4e6 ) /* Characters */
-	ROM_LOAD( "4.rom", 0x68000, 0x8000, 0x6ce496ca , 0x84884a2e ) /* Characters */
-	ROM_LOAD( "9.rom", 0x70000, 0x8000, 0xfdac576e , 0x7fc9704f ) /* Characters */
+	ROM_LOAD( "6.rom",        0x48000, 0x8000, 0x5c6c453c ) /* Characters */
+	ROM_LOAD( "7.rom",        0x50000, 0x8000, 0x8d637639 ) /* Characters */
+	ROM_LOAD( "5.rom",        0x58000, 0x8000, 0x59d87a9a ) /* Characters */
+	ROM_LOAD( "8.rom",        0x60000, 0x8000, 0x71eec4e6 ) /* Characters */
+	ROM_LOAD( "4.rom",        0x68000, 0x8000, 0x84884a2e ) /* Characters */
+	ROM_LOAD( "9.rom",        0x70000, 0x8000, 0x7fc9704f ) /* Characters */
 
-	ROM_LOAD( "25.rom", 0x88000, 0x8000, 0x5d057a13 , 0x252976ae ) /* Sprites */
-	ROM_LOAD( "17.rom", 0x90000, 0x8000, 0xcdb1eac9 , 0x4d977f33 ) /* Sprites */
-	ROM_LOAD( "26.rom", 0x98000, 0x8000, 0x08031ddd , 0xe6f1e8d5 ) /* Sprites */
-	ROM_LOAD( "18.rom", 0xa0000, 0x8000, 0x778ecaa8 , 0x3f3b62a0 ) /* Sprites */
-	ROM_LOAD( "27.rom", 0xa8000, 0x8000, 0xd65c0e86 , 0x785381ed ) /* Sprites */
-	ROM_LOAD( "19.rom", 0xb0000, 0x8000, 0xb92747b1 , 0x76641ee3 ) /* Sprites */
-	ROM_LOAD( "28.rom", 0xb8000, 0x8000, 0xbc3c6520 , 0x59754e3d ) /* Sprites */
-	ROM_LOAD( "20.rom", 0xc0000, 0x8000, 0x12ec4e96 , 0x37671f36 ) /* Sprites */
+	ROM_LOAD( "25.rom",       0x88000, 0x8000, 0x252976ae ) /* Sprites */
+	ROM_LOAD( "17.rom",       0x90000, 0x8000, 0x4d977f33 ) /* Sprites */
+	ROM_LOAD( "26.rom",       0x98000, 0x8000, 0xe6f1e8d5 ) /* Sprites */
+	ROM_LOAD( "18.rom",       0xa0000, 0x8000, 0x3f3b62a0 ) /* Sprites */
+	ROM_LOAD( "27.rom",       0xa8000, 0x8000, 0x785381ed ) /* Sprites */
+	ROM_LOAD( "19.rom",       0xb0000, 0x8000, 0x76641ee3 ) /* Sprites */
+	ROM_LOAD( "28.rom",       0xb8000, 0x8000, 0x59754e3d ) /* Sprites */
+	ROM_LOAD( "20.rom",       0xc0000, 0x8000, 0x37671f36 ) /* Sprites */
 
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "10.rom", 0x08000, 0x8000, 0x27cac38c , 0xa1a860e2 )
-	ROM_LOAD( "11.rom", 0x04000, 0x4000, 0x153a4f82 , 0x948b9757 )
+	ROM_LOAD( "10.rom",       0x08000, 0x8000, 0xa1a860e2 )
+	ROM_LOAD( "11.rom",       0x04000, 0x4000, 0x948b9757 )
 	ROM_CONTINUE(       0x10000, 0x4000 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "3.rom", 0x8000, 0x8000, 0x1e173e1f , 0xa5318cb8 )
+	ROM_LOAD( "3.rom",        0x8000, 0x8000, 0xa5318cb8 )
 ROM_END
 
 ROM_START( solarwar_rom )
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "p9-0.bin", 0x08000, 0x8000, 0xb3e69da0 , 0x8ff372a8 )
-	ROM_LOAD( "pa-0.bin", 0x04000, 0x4000, 0x778e908e , 0x154f946f )
+	ROM_LOAD( "p9-0.bin",     0x08000, 0x8000, 0x8ff372a8 )
+	ROM_LOAD( "pa-0.bin",     0x04000, 0x4000, 0x154f946f )
 	ROM_CONTINUE(         0x10000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0xc8000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "12.rom", 0x00000, 0x8000, 0x332dd307 , 0x83c00dd8 ) /* Characters */
-	ROM_LOAD( "21.rom", 0x08000, 0x8000, 0xc5ffe72d , 0x11eb4247 ) /* Characters */
-	ROM_LOAD( "13.rom", 0x10000, 0x8000, 0x8149446f , 0x8f0aa1a7 ) /* Characters */
-	ROM_LOAD( "22.rom", 0x18000, 0x8000, 0xd98cbc6e , 0x422b536e ) /* Characters */
-	ROM_LOAD( "14.rom", 0x20000, 0x8000, 0x9541a9e5 , 0x45681910 ) /* Characters */
-	ROM_LOAD( "23.rom", 0x28000, 0x8000, 0x8de2d670 , 0x828c1b0c ) /* Characters */
-	ROM_LOAD( "15.rom", 0x30000, 0x8000, 0x982dcaa3 , 0xa8eeabc8 ) /* Characters */
-	ROM_LOAD( "pn-0.bin", 0x38000, 0x8000, 0x624d8eeb , 0xd2ed6f94 ) /* Characters */
-	ROM_LOAD( "pf-0.bin", 0x40000, 0x8000, 0xa4919a67 , 0x6e627a77 ) /* Characters */
+	ROM_LOAD( "12.rom",       0x00000, 0x8000, 0x83c00dd8 ) /* Characters */
+	ROM_LOAD( "21.rom",       0x08000, 0x8000, 0x11eb4247 ) /* Characters */
+	ROM_LOAD( "13.rom",       0x10000, 0x8000, 0x8f0aa1a7 ) /* Characters */
+	ROM_LOAD( "22.rom",       0x18000, 0x8000, 0x422b536e ) /* Characters */
+	ROM_LOAD( "14.rom",       0x20000, 0x8000, 0x45681910 ) /* Characters */
+	ROM_LOAD( "23.rom",       0x28000, 0x8000, 0x828c1b0c ) /* Characters */
+	ROM_LOAD( "15.rom",       0x30000, 0x8000, 0xa8eeabc8 ) /* Characters */
+	ROM_LOAD( "pn-0.bin",     0x38000, 0x8000, 0xd2ed6f94 ) /* Characters */
+	ROM_LOAD( "pf-0.bin",     0x40000, 0x8000, 0x6e627a77 ) /* Characters */
 
-	ROM_LOAD( "6.rom", 0x48000, 0x8000, 0xe557058d , 0x5c6c453c ) /* Characters */
-	ROM_LOAD( "7.rom", 0x50000, 0x8000, 0x89af64ff , 0x8d637639 ) /* Characters */
-	ROM_LOAD( "5.rom", 0x58000, 0x8000, 0x547824e6 , 0x59d87a9a ) /* Characters */
-	ROM_LOAD( "8.rom", 0x60000, 0x8000, 0x16f96c2d , 0x71eec4e6 ) /* Characters */
-	ROM_LOAD( "4.rom", 0x68000, 0x8000, 0x6ce496ca , 0x84884a2e ) /* Characters */
-	ROM_LOAD( "9.rom", 0x70000, 0x8000, 0xfdac576e , 0x7fc9704f ) /* Characters */
+	ROM_LOAD( "6.rom",        0x48000, 0x8000, 0x5c6c453c ) /* Characters */
+	ROM_LOAD( "7.rom",        0x50000, 0x8000, 0x8d637639 ) /* Characters */
+	ROM_LOAD( "5.rom",        0x58000, 0x8000, 0x59d87a9a ) /* Characters */
+	ROM_LOAD( "8.rom",        0x60000, 0x8000, 0x71eec4e6 ) /* Characters */
+	ROM_LOAD( "4.rom",        0x68000, 0x8000, 0x84884a2e ) /* Characters */
+	ROM_LOAD( "9.rom",        0x70000, 0x8000, 0x7fc9704f ) /* Characters */
 
-	ROM_LOAD( "25.rom", 0x88000, 0x8000, 0x5d057a13 , 0x252976ae ) /* Sprites */
-	ROM_LOAD( "17.rom", 0x90000, 0x8000, 0xcdb1eac9 , 0x4d977f33 ) /* Sprites */
-	ROM_LOAD( "26.rom", 0x98000, 0x8000, 0x08031ddd , 0xe6f1e8d5 ) /* Sprites */
-	ROM_LOAD( "18.rom", 0xa0000, 0x8000, 0x778ecaa8 , 0x3f3b62a0 ) /* Sprites */
-	ROM_LOAD( "27.rom", 0xa8000, 0x8000, 0xd65c0e86 , 0x785381ed ) /* Sprites */
-	ROM_LOAD( "19.rom", 0xb0000, 0x8000, 0xb92747b1 , 0x76641ee3 ) /* Sprites */
-	ROM_LOAD( "28.rom", 0xb8000, 0x8000, 0xbc3c6520 , 0x59754e3d ) /* Sprites */
-	ROM_LOAD( "20.rom", 0xc0000, 0x8000, 0x12ec4e96 , 0x37671f36 ) /* Sprites */
+	ROM_LOAD( "25.rom",       0x88000, 0x8000, 0x252976ae ) /* Sprites */
+	ROM_LOAD( "17.rom",       0x90000, 0x8000, 0x4d977f33 ) /* Sprites */
+	ROM_LOAD( "26.rom",       0x98000, 0x8000, 0xe6f1e8d5 ) /* Sprites */
+	ROM_LOAD( "18.rom",       0xa0000, 0x8000, 0x3f3b62a0 ) /* Sprites */
+	ROM_LOAD( "27.rom",       0xa8000, 0x8000, 0x785381ed ) /* Sprites */
+	ROM_LOAD( "19.rom",       0xb0000, 0x8000, 0x76641ee3 ) /* Sprites */
+	ROM_LOAD( "28.rom",       0xb8000, 0x8000, 0x59754e3d ) /* Sprites */
+	ROM_LOAD( "20.rom",       0xc0000, 0x8000, 0x37671f36 ) /* Sprites */
 
 	ROM_REGION(0x14000)	/* 64k for code */
-	ROM_LOAD( "p1-0.bin", 0x08000, 0x8000, 0x87f5f6d3 , 0xf5f235a3 )
-	ROM_LOAD( "p0-0.bin", 0x04000, 0x4000, 0xbcc8a8da , 0x51ae95ae )
+	ROM_LOAD( "p1-0.bin",     0x08000, 0x8000, 0xf5f235a3 )
+	ROM_LOAD( "p0-0.bin",     0x04000, 0x4000, 0x51ae95ae )
 	ROM_CONTINUE(         0x10000, 0x4000 )
 
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "3.rom", 0x8000, 0x8000, 0x1e173e1f , 0xa5318cb8 )
+	ROM_LOAD( "3.rom",        0x8000, 0x8000, 0xa5318cb8 )
 ROM_END
 
 

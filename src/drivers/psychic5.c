@@ -588,18 +588,18 @@ static struct MachineDriver machine_driver =
 
 ROM_START( psychic5_rom )
 	ROM_REGION( 0x20000 ) 				/* 2*64K for main CPU, Z80 */
-	ROM_LOAD( "p5d", 0x00000, 0x08000, 0x1ccae1dc , 0x90259249 )
-	ROM_LOAD( "p5e", 0x10000, 0x10000, 0x11a40886 , 0x72298f34 )
+	ROM_LOAD( "p5d",          0x00000, 0x08000, 0x90259249 )
+	ROM_LOAD( "p5e",          0x10000, 0x10000, 0x72298f34 )
 
 	ROM_REGION_DISPOSE( 0x48000 )   			/* graphics (disposed after conversion) */
-	ROM_LOAD( "p5b", 0x00000, 0x10000, 0x9ae2b9cc , 0x7e3f87d4 )	/* sprite tiles */
-	ROM_LOAD( "p5c", 0x10000, 0x10000, 0x5a0d6411 , 0x8710fedb )
-	ROM_LOAD( "p5g", 0x20000, 0x10000, 0x2e7a2dd4 , 0xf9262f32 )	/* background tiles */
-	ROM_LOAD( "p5h", 0x30000, 0x10000, 0x2631df25 , 0xc411171a )
-	ROM_LOAD( "p5f", 0x40000, 0x08000, 0xb957cea9 , 0x04d7e21c ) /* foreground tiles */
+	ROM_LOAD( "p5b",          0x00000, 0x10000, 0x7e3f87d4 )	/* sprite tiles */
+	ROM_LOAD( "p5c",          0x10000, 0x10000, 0x8710fedb )
+	ROM_LOAD( "p5g",          0x20000, 0x10000, 0xf9262f32 )	/* background tiles */
+	ROM_LOAD( "p5h",          0x30000, 0x10000, 0xc411171a )
+	ROM_LOAD( "p5f",          0x40000, 0x08000, 0x04d7e21c ) /* foreground tiles */
 
 	ROM_REGION( 0x10000 ) 				/*64K for 2nd z80 CPU*/
-	ROM_LOAD( "p5a", 0x00000, 0x08000, 0x12e2f076 , 0x25bb04e4 )
+	ROM_LOAD( "p5a",          0x00000, 0x08000, 0x50060ecd )
 ROM_END
 
 static int hiload(void)

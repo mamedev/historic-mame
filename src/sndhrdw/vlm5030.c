@@ -581,7 +581,7 @@ void VLM5030_ST(int pin )
 				/* sampling mode */
 				int num = table>>1;
 
-				osd_play_sample(channel,
+				osd_play_sample(channel+1,
 					Machine->samples->sample[num]->data,
 					Machine->samples->sample[num]->length,
 					Machine->samples->sample[num]->smpfreq,
@@ -619,7 +619,7 @@ int VLM5030_sh_start( struct VLM5030interface *interface )
 	}
 	memset(outbuffer,0x80,buffer_len);
 
-	channel = get_play_channels(1);
+	channel = get_play_channels(2);	/* one for stream, one for samples */
 	return 0;
 }
 

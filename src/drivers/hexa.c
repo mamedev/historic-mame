@@ -183,18 +183,18 @@ static struct MachineDriver machine_driver =
 
 ROM_START( hexa_rom )
 	ROM_REGION(0x18000)		/* 64k for code + 32k for banked ROM */
-	ROM_LOAD( "hexa.20", 0x00000, 0x8000, 0xe3dadfe2 , 0x98b00586 )
-	ROM_LOAD( "hexa.21", 0x10000, 0x8000, 0x6f9727b7 , 0x3d5d006c )
+	ROM_LOAD( "hexa.20",      0x00000, 0x8000, 0x98b00586 )
+	ROM_LOAD( "hexa.21",      0x10000, 0x8000, 0x3d5d006c )
 
 	ROM_REGION_DISPOSE(0x18000)		/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hexa.17", 0x00000, 0x8000, 0x97ee32e2 , 0xf6911dd6 )
-	ROM_LOAD( "hexa.18", 0x08000, 0x8000, 0xa32a141c , 0x6e3d95d2 )
-	ROM_LOAD( "hexa.19", 0x10000, 0x8000, 0xce17ce79 , 0xffe97a31 )
+	ROM_LOAD( "hexa.17",      0x00000, 0x8000, 0xf6911dd6 )
+	ROM_LOAD( "hexa.18",      0x08000, 0x8000, 0x6e3d95d2 )
+	ROM_LOAD( "hexa.19",      0x10000, 0x8000, 0xffe97a31 )
 
 	ROM_REGION(0x0300)		/* color proms */
-	ROM_LOAD( "hexa.001", 0x0000, 0x0100, 0x8efe070e , 0x88a055b4 )
-	ROM_LOAD( "hexa.003", 0x0100, 0x0100, 0x7de90603 , 0x3e9d4932 )
-	ROM_LOAD( "hexa.002", 0x0200, 0x0100, 0x4ebb0b0f , 0xff15366c )
+	ROM_LOAD( "hexa.001",     0x0000, 0x0100, 0x88a055b4 )
+	ROM_LOAD( "hexa.003",     0x0100, 0x0100, 0x3e9d4932 )
+	ROM_LOAD( "hexa.002",     0x0200, 0x0100, 0xff15366c )
 ROM_END
 
 static int hexa_hiload(void)

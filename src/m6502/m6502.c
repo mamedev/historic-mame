@@ -86,7 +86,7 @@ void M6502_Reset(void)
 	P = _fT | _fI | _fZ;
 
     /* stack starts at 0x01ff */
-    m6502.SP.D = 0x1ff;
+	m6502.sp.D = 0x1ff;
 
     /* read the reset vector into PC */
 	PCL = RDMEM(M6502_RST_VEC);
@@ -120,7 +120,7 @@ int M6502_Execute(int cycles)
 			previouspc = PCW;
 		}
 
-        if (m6502.HALT)
+		if (m6502.halt)
             break;
 
         insn[RDOP()]();
@@ -142,7 +142,7 @@ int M6502_Execute(int cycles)
 				EAD = M6502_IRQ_VEC;
             }
 			M6502_ICount -= 7;
-			m6502.HALT = 0;
+			m6502.halt = 0;
 			PUSH(PCH);
 			PUSH(PCL);
 			COMPOSE_P;

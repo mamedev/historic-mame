@@ -415,28 +415,28 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bombjack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "09_j01b.bin", 0x0000, 0x2000, 0xb263429f , 0xc668dc30 )
-	ROM_LOAD( "10_l01b.bin", 0x2000, 0x2000, 0x8dd024fa , 0x52a1e5fb )
-	ROM_LOAD( "11_m01b.bin", 0x4000, 0x2000, 0x4464856c , 0xb68a062a )
-	ROM_LOAD( "12_n01b.bin", 0x6000, 0x2000, 0x0018672a , 0x1d3ecee5 )
-	ROM_LOAD( "13_r01b.bin", 0xc000, 0x2000, 0x3500e950 , 0xbcafdd29 )
+	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
+	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
+	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000, 0xb68a062a )
+	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000, 0x1d3ecee5 )
+	ROM_LOAD( "13_r01b.bin",  0xc000, 0x2000, 0xbcafdd29 )
 
 	ROM_REGION_DISPOSE(0xf000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "03_e08t.bin", 0x0000, 0x1000, 0xd79cfb42 , 0x9f0470d5 )	/* chars */
-	ROM_LOAD( "04_h08t.bin", 0x1000, 0x1000, 0x16a78377 , 0x81ec12e6 )
-	ROM_LOAD( "05_k08t.bin", 0x2000, 0x1000, 0x8aa5777d , 0xe87ec8b1 )
-	ROM_LOAD( "06_l08t.bin", 0x3000, 0x2000, 0x4d9c13d2 , 0x51eebd89 )	/* background tiles */
-	ROM_LOAD( "07_n08t.bin", 0x5000, 0x2000, 0x98f83bce , 0x9dd98e9d )
-	ROM_LOAD( "08_r08t.bin", 0x7000, 0x2000, 0x428b73d9 , 0x3155ee7d )
-	ROM_LOAD( "16_m07b.bin", 0x9000, 0x2000, 0x5fea2266 , 0x94694097 )	/* sprites */
-	ROM_LOAD( "15_l07b.bin", 0xb000, 0x2000, 0x2f490ac1 , 0x013f58f2 )
-	ROM_LOAD( "14_j07b.bin", 0xd000, 0x2000, 0x9674c1bc , 0x101c858d )
+	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000, 0x9f0470d5 )	/* chars */
+	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000, 0x81ec12e6 )
+	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000, 0xe87ec8b1 )
+	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000, 0x51eebd89 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000, 0x9dd98e9d )
+	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000, 0x3155ee7d )
+	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000, 0x94694097 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000, 0x013f58f2 )
+	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000, 0x101c858d )
 
 	ROM_REGION(0x1000)	/* background graphics */
-	ROM_LOAD( "02_p04t.bin", 0x0000, 0x1000, 0x1af71029 , 0x398d4a02 )
+	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
 
 	ROM_REGION(0x10000)	/* 64k for sound board */
-	ROM_LOAD( "01_h03t.bin", 0x0000, 0x2000, 0xe89c2656 , 0x8407917d )
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
 ROM_END
 
 

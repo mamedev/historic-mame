@@ -692,68 +692,101 @@ static struct MachineDriver machine_driver =
 
 ROM_START( c1942_rom )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "1-n3a.bin", 0x00000, 0x4000, 0x74bf56a3 , 0x40201bab )
-	ROM_LOAD( "1-n4.bin", 0x04000, 0x4000, 0xd492925e , 0xa60ac644 )
-	ROM_LOAD( "1-n5.bin", 0x10000, 0x4000, 0xf2525fe2 , 0x835f7b24 )
-	ROM_LOAD( "1-n6.bin", 0x14000, 0x2000, 0x659736b3 , 0x821c6481 )
-	ROM_LOAD( "1-n7.bin", 0x18000, 0x4000, 0xc9728db2 , 0x5df525e1 )
+	ROM_LOAD( "1-n3a.bin",    0x00000, 0x4000, 0x40201bab )
+	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
+	ROM_LOAD( "1-n5.bin",     0x10000, 0x4000, 0x835f7b24 )
+	ROM_LOAD( "1-n6.bin",     0x14000, 0x2000, 0x821c6481 )
+	ROM_LOAD( "1-n7.bin",     0x18000, 0x4000, 0x5df525e1 )
 
 	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-f2.bin", 0x00000, 0x2000, 0x90e7df87 , 0x6ebca191 )	/* characters */
-	ROM_LOAD( "2-a1.bin", 0x02000, 0x2000, 0x144b5325 , 0x3884d9eb )	/* tiles */
-	ROM_LOAD( "2-a2.bin", 0x04000, 0x2000, 0xbeecefb2 , 0x999cf6e0 )
-	ROM_LOAD( "2-a3.bin", 0x06000, 0x2000, 0x6649e7e3 , 0x8edb273a )
-	ROM_LOAD( "2-a4.bin", 0x08000, 0x2000, 0x33e7a52d , 0x3a2726c3 )
-	ROM_LOAD( "2-a5.bin", 0x0a000, 0x2000, 0x606bfaa1 , 0x1bd3d8bb )
-	ROM_LOAD( "2-a6.bin", 0x0c000, 0x2000, 0xcb9343fd , 0x658f02c4 )
-	ROM_LOAD( "2-l1.bin", 0x0e000, 0x4000, 0x3de5e617 , 0x2528bec6 )	/* sprites */
-	ROM_LOAD( "2-l2.bin", 0x12000, 0x4000, 0x900c4178 , 0xf89287aa )
-	ROM_LOAD( "2-n1.bin", 0x16000, 0x4000, 0x8b02cefe , 0x024418f8 )
-	ROM_LOAD( "2-n2.bin", 0x1a000, 0x4000, 0x0fb73451 , 0xe2c7e489 )
+	ROM_LOAD( "1-f2.bin",     0x00000, 0x2000, 0x6ebca191 )	/* characters */
+	ROM_LOAD( "2-a1.bin",     0x02000, 0x2000, 0x3884d9eb )	/* tiles */
+	ROM_LOAD( "2-a2.bin",     0x04000, 0x2000, 0x999cf6e0 )
+	ROM_LOAD( "2-a3.bin",     0x06000, 0x2000, 0x8edb273a )
+	ROM_LOAD( "2-a4.bin",     0x08000, 0x2000, 0x3a2726c3 )
+	ROM_LOAD( "2-a5.bin",     0x0a000, 0x2000, 0x1bd3d8bb )
+	ROM_LOAD( "2-a6.bin",     0x0c000, 0x2000, 0x658f02c4 )
+	ROM_LOAD( "2-l1.bin",     0x0e000, 0x4000, 0x2528bec6 )	/* sprites */
+	ROM_LOAD( "2-l2.bin",     0x12000, 0x4000, 0xf89287aa )
+	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
+	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
 
 	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x0d250409 , 0x93ab8153 )	/* red component */
-	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x4a770701 , 0x8ab44f7d )	/* green component */
-	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xca1d0b0b , 0xf4ade9a4 )	/* blue component */
-	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x067c0808 , 0x6047d91b )	/* char lookup table */
-	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0xb9380404 , 0x4858968d )	/* tile lookup table */
-	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0x37b70803 , 0xf6fad943 )	/* sprite lookup table */
+	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
+	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
+	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
+	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
+	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
+	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "1-c11.bin", 0x0000, 0x4000, 0xb16cd20e , 0xbd87f06b )
+	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
 ROM_START( c1942a_rom )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "1-n3.bin", 0x00000, 0x4000, 0x33ff9663 , 0x612975f2 )
-	ROM_LOAD( "1-n4.bin", 0x04000, 0x4000, 0xd492925e , 0xa60ac644 )
-	ROM_LOAD( "1-n5.bin", 0x10000, 0x4000, 0xf2525fe2 , 0x835f7b24 )
-	ROM_LOAD( "1-n6.bin", 0x14000, 0x2000, 0x659736b3 , 0x821c6481 )
-	ROM_LOAD( "1-n7.bin", 0x18000, 0x4000, 0xc9728db2 , 0x5df525e1 )
+	ROM_LOAD( "1-n3.bin",     0x00000, 0x4000, 0x612975f2 )
+	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
+	ROM_LOAD( "1-n5.bin",     0x10000, 0x4000, 0x835f7b24 )
+	ROM_LOAD( "1-n6.bin",     0x14000, 0x2000, 0x821c6481 )
+	ROM_LOAD( "1-n7.bin",     0x18000, 0x4000, 0x5df525e1 )
 
 	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-f2.bin", 0x00000, 0x2000, 0x90e7df87 , 0x6ebca191 )	/* characters */
-	ROM_LOAD( "2-a1.bin", 0x02000, 0x2000, 0x144b5325 , 0x3884d9eb )	/* tiles */
-	ROM_LOAD( "2-a2.bin", 0x04000, 0x2000, 0xbeecefb2 , 0x999cf6e0 )
-	ROM_LOAD( "2-a3.bin", 0x06000, 0x2000, 0x6649e7e3 , 0x8edb273a )
-	ROM_LOAD( "2-a4.bin", 0x08000, 0x2000, 0x33e7a52d , 0x3a2726c3 )
-	ROM_LOAD( "2-a5.bin", 0x0a000, 0x2000, 0x606bfaa1 , 0x1bd3d8bb )
-	ROM_LOAD( "2-a6.bin", 0x0c000, 0x2000, 0xcb9343fd , 0x658f02c4 )
-	ROM_LOAD( "2-l1.bin", 0x0e000, 0x4000, 0x3de5e617 , 0x2528bec6 )	/* sprites */
-	ROM_LOAD( "2-l2.bin", 0x12000, 0x4000, 0x900c4178 , 0xf89287aa )
-	ROM_LOAD( "2-n1.bin", 0x16000, 0x4000, 0x8b02cefe , 0x024418f8 )
-	ROM_LOAD( "2-n2.bin", 0x1a000, 0x4000, 0x0fb73451 , 0xe2c7e489 )
+	ROM_LOAD( "1-f2.bin",     0x00000, 0x2000, 0x6ebca191 )	/* characters */
+	ROM_LOAD( "2-a1.bin",     0x02000, 0x2000, 0x3884d9eb )	/* tiles */
+	ROM_LOAD( "2-a2.bin",     0x04000, 0x2000, 0x999cf6e0 )
+	ROM_LOAD( "2-a3.bin",     0x06000, 0x2000, 0x8edb273a )
+	ROM_LOAD( "2-a4.bin",     0x08000, 0x2000, 0x3a2726c3 )
+	ROM_LOAD( "2-a5.bin",     0x0a000, 0x2000, 0x1bd3d8bb )
+	ROM_LOAD( "2-a6.bin",     0x0c000, 0x2000, 0x658f02c4 )
+	ROM_LOAD( "2-l1.bin",     0x0e000, 0x4000, 0x2528bec6 )	/* sprites */
+	ROM_LOAD( "2-l2.bin",     0x12000, 0x4000, 0xf89287aa )
+	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
+	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
 
 	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x0d250409 , 0x93ab8153 )	/* red component */
-	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x4a770701 , 0x8ab44f7d )	/* green component */
-	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xca1d0b0b , 0xf4ade9a4 )	/* blue component */
-	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x067c0808 , 0x6047d91b )	/* char lookup table */
-	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0xb9380404 , 0x4858968d )	/* tile lookup table */
-	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0x37b70803 , 0xf6fad943 )	/* sprite lookup table */
+	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
+	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
+	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
+	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
+	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
+	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "1-c11.bin", 0x0000, 0x4000, 0xb16cd20e , 0xbd87f06b )
+	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
+ROM_END
+
+ROM_START( c1942b_rom )
+	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "srb-03.n3",    0x00000, 0x4000, 0xd9dafcc3 )
+	ROM_LOAD( "srb-04.n4",    0x04000, 0x4000, 0xda0cf924 )
+	ROM_LOAD( "srb-05.n5",    0x10000, 0x4000, 0xd102911c )
+	ROM_LOAD( "srb-06.n6",    0x14000, 0x2000, 0x466f8248 )
+	ROM_LOAD( "srb-07.n7",    0x18000, 0x4000, 0x0d31038c )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1-f2.bin",     0x00000, 0x2000, 0x6ebca191 )	/* characters */
+	ROM_LOAD( "2-a1.bin",     0x02000, 0x2000, 0x3884d9eb )	/* tiles */
+	ROM_LOAD( "2-a2.bin",     0x04000, 0x2000, 0x999cf6e0 )
+	ROM_LOAD( "2-a3.bin",     0x06000, 0x2000, 0x8edb273a )
+	ROM_LOAD( "2-a4.bin",     0x08000, 0x2000, 0x3a2726c3 )
+	ROM_LOAD( "2-a5.bin",     0x0a000, 0x2000, 0x1bd3d8bb )
+	ROM_LOAD( "2-a6.bin",     0x0c000, 0x2000, 0x658f02c4 )
+	ROM_LOAD( "2-l1.bin",     0x0e000, 0x4000, 0x2528bec6 )	/* sprites */
+	ROM_LOAD( "2-l2.bin",     0x12000, 0x4000, 0xf89287aa )
+	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
+	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
+
+	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
+	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
+	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
+	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
+	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
+	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
 
@@ -858,6 +891,31 @@ struct GameDriver c1942a_driver =
 	&machine_driver,
 
 	c1942a_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver c1942b_driver =
+{
+	__FILE__,
+	&c1942_driver,
+	"1942b",
+	"1942 (set 3)",
+	"1984",
+	"Capcom",
+	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+
+	c1942b_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

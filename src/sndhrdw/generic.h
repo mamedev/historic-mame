@@ -1,3 +1,4 @@
+#include "streams.h"
 #include "samples.h"
 #include "dac.h"
 #include "8910intf.h"
@@ -11,6 +12,7 @@
 #include "5220intf.h"
 #include "vlm5030.h"
 #include "adpcm.h"
+#include "astrocde.h"
 
 
 void soundlatch_w(int offset,int data);

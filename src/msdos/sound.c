@@ -256,7 +256,9 @@ void osd_update_audio(void)
 {
 	if (Machine->sample_rate == 0) return;
 
+	osd_profiler(OSD_PROFILE_SOUND_MIX);
 	AUpdateAudio();
+	osd_profiler(OSD_PROFILE_END);
 }
 
 
@@ -381,6 +383,7 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 
 		if (throttle)   /* sync with audio only when speed throttling is not turned off */
 		{
+			osd_profiler(OSD_PROFILE_SOUND_SYNC);
 			for(;;)
 			{
 				AGetVoicePosition(hVoice[channel],&pos);
@@ -389,6 +392,7 @@ static void playstreamedsample(int channel,signed char *data,int len,int freq,in
 				if (c[channel] == 2 && pos < 2*len) break;
 				osd_update_audio();
 			}
+			osd_profiler(OSD_PROFILE_END);
 		}
 
 		memcpy(&lpWave[channel]->lpData[len * c[channel]],data,len);

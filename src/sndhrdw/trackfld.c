@@ -18,9 +18,7 @@ struct SN76496interface konami_sn76496_interface =
 struct DACinterface konami_dac_interface =
 {
 	1,
-	441000,
-	{ 100 },
-	{  1 }
+	{ 100 }
 };
 
 struct ADPCMinterface hyprolyb_adpcm_interface =

@@ -1,7 +1,6 @@
 #include "driver.h"
 
 
-
 /***************************************************************************
 
   Many games use a master-slave CPU setup. Typically, the main CPU writes
@@ -168,6 +167,9 @@ int sound_start(void)
 
 	reset_play_channels();
 
+	if (streams_sh_start() != 0)
+		return 1;
+
 	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
 		return 1;
 
@@ -246,6 +248,10 @@ int sound_start(void)
 				break;
 			case SOUND_MSM5205:
 				if( MSM5205_sh_start( Machine->drv->sound[totalsound].sound_interface ) != 0)
+					goto getout;
+				break;
+			case SOUND_ASTROCADE:
+				if( astrocade_sh_start( Machine->drv->sound[totalsound].sound_interface ) != 0)
 					goto getout;
 				break;
 		}
@@ -328,11 +334,16 @@ void sound_stop(void)
 			case SOUND_MSM5205:
 				MSM5205_sh_stop();
 				break;
+			case SOUND_ASTROCADE:
+				astrocade_sh_stop();
+				break;
 		}
 		totalsound++;
 	}
 
 	if (Machine->drv->sh_stop) (*Machine->drv->sh_stop)();
+
+	streams_sh_stop();
 }
 
 
@@ -341,6 +352,8 @@ void sound_update(void)
 {
 	int totalsound = 0;
 
+
+	osd_profiler(OSD_PROFILE_SOUND);
 
 	if (Machine->drv->sh_update) (*Machine->drv->sh_update)();
 
@@ -404,10 +417,17 @@ void sound_update(void)
 			case SOUND_MSM5205:
 				MSM5205_sh_update();
 				break;
+			case SOUND_ASTROCADE:
+				astrocade_sh_update();
+				break;
 		}
 
 		totalsound++;
 	}
 
+	streams_sh_update();
+
 	osd_update_audio();
+
+	osd_profiler(OSD_PROFILE_END);
 }

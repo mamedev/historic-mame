@@ -32,10 +32,11 @@ void drawgfxpicture(
 	int zoom,
 	const struct rectangle *clip
 ){
-	int ypos, ycount = 0;
+	int xpos,ypos;
+	int ycount = 0;
 	int xcount0 = 0;
 
-	int delta = (1<<10)+zoom;
+	int delta = (1<<10)+zoom; /* 10000000000 .. 11111111111 */
 	/*
 		xcount0, xcount, ycount, and delta are fixed point
 
@@ -92,18 +93,35 @@ void drawgfxpicture(
 		}
 
 		if( bitmap->depth!=16 ){
-			for( ypos = sy; ypos < sy+screenheight; ypos++ ){
-				unsigned char *dest = &bitmap->line[ypos][0];
-				const unsigned char *src = source + width*(ycount>>10);
+			if( delta==(1<<10) ){
+				source += width*(ycount>>10) + (xcount0>>10);
 
-				int xcount = xcount0;
-				int xpos;
-				for( xpos = x1; xpos!=x2; xpos+=dx ){
-					unsigned char pen = src[xcount>>10];
-					if( IS_OPAQUE(pen) ) dest[xpos] = pal[pen];
-					xcount += delta;
+				for( ypos = sy; ypos < sy+screenheight; ypos++ ){
+					unsigned char *dest = &bitmap->line[ypos][0];
+					int xcount = 0;
+
+					for( xpos = x1; xpos!=x2; xpos+=dx ){
+						unsigned char pen = source[xcount];
+						if( IS_OPAQUE(pen) ) dest[xpos] = pal[pen];
+						xcount++;
+					}
+					source+=width;
 				}
-				ycount+=delta;
+			}
+			else {
+				for( ypos = sy; ypos < sy+screenheight; ypos++ ){
+					unsigned char *dest = &bitmap->line[ypos][0];
+					const unsigned char *src = source + width*(ycount>>10);
+
+					int xcount = xcount0;
+
+					for( xpos = x1; xpos!=x2; xpos+=dx ){
+						unsigned char pen = src[xcount>>10];
+						if( IS_OPAQUE(pen) ) dest[xpos] = pal[pen];
+						xcount += delta;
+					}
+					ycount+=delta;
+				}
 			}
 		}
 		else { /* 16 bit color */
@@ -112,7 +130,7 @@ void drawgfxpicture(
 				const unsigned char *src = source + width*(ycount>>10);
 
 				int xcount = xcount0;
-				int xpos;
+
 				for( xpos = x1; xpos!=x2; xpos+=dx ){
 					unsigned char pen = src[xcount>>10];
 					if( IS_OPAQUE(pen) ) dest[xpos] = pal[pen];

@@ -339,17 +339,17 @@ ROM_START( liberator_rom )
 	/* note: the Planet Picture ROMs are not in the address space of the
 	         processor on the real board, but it is convenient to allow
 	         the built-in routines to load the files into memory.         */
-	ROM_LOAD( "136012.110", 0x0000, 0x1000, 0x945d8b0d , 0x6eb11221 )	/* Planet Picture ROM */
-	ROM_LOAD( "136012.107", 0x1000, 0x1000, 0xceb9b03f , 0x8a616a63 )	/* Planet Picture ROM */
-	ROM_LOAD( "136012.108", 0x2000, 0x1000, 0x700d8185 , 0x3f8e4cf6 )	/* Planet Picture ROM */
-	ROM_LOAD( "136012.109", 0x3000, 0x1000, 0x9ed4a3d8 , 0xdda0c0ef )	/* Planet Picture ROM */
-	ROM_LOAD( "136012.206", 0x8000, 0x1000, 0x112a41be , 0x1a0cb4a0 )	/* code ROM */
-	ROM_LOAD( "136012.205", 0x9000, 0x1000, 0x4b0df20d , 0x2f071920 )	/* code ROM */
-	ROM_LOAD( "136012.204", 0xa000, 0x1000, 0xd6c6dd22 , 0xbcc91827 )	/* code ROM */
-	ROM_LOAD( "136012.203", 0xb000, 0x1000, 0xa7fe3bc4 , 0xb558c3d4 )	/* code ROM */
-	ROM_LOAD( "136012.202", 0xc000, 0x1000, 0x0893649b , 0x569ba7ea )	/* code ROM */
-	ROM_LOAD( "136012.201", 0xd000, 0x1000, 0xaee415ea , 0xd12cd6d0 )	/* code ROM */
-	ROM_LOAD( "136012.200", 0xe000, 0x1000, 0xe8d57887 , 0x1e98d21a )	/* code ROM */
+	ROM_LOAD( "136012.110",   0x0000, 0x1000, 0x6eb11221 )	/* Planet Picture ROM */
+	ROM_LOAD( "136012.107",   0x1000, 0x1000, 0x8a616a63 )	/* Planet Picture ROM */
+	ROM_LOAD( "136012.108",   0x2000, 0x1000, 0x3f8e4cf6 )	/* Planet Picture ROM */
+	ROM_LOAD( "136012.109",   0x3000, 0x1000, 0xdda0c0ef )	/* Planet Picture ROM */
+	ROM_LOAD( "136012.206",   0x8000, 0x1000, 0x1a0cb4a0 )	/* code ROM */
+	ROM_LOAD( "136012.205",   0x9000, 0x1000, 0x2f071920 )	/* code ROM */
+	ROM_LOAD( "136012.204",   0xa000, 0x1000, 0xbcc91827 )	/* code ROM */
+	ROM_LOAD( "136012.203",   0xb000, 0x1000, 0xb558c3d4 )	/* code ROM */
+	ROM_LOAD( "136012.202",   0xc000, 0x1000, 0x569ba7ea )	/* code ROM */
+	ROM_LOAD( "136012.201",   0xd000, 0x1000, 0xd12cd6d0 )	/* code ROM */
+	ROM_LOAD( "136012.200",   0xe000, 0x1000, 0x1e98d21a )	/* code ROM */
 	ROM_RELOAD(             0xf000, 0x1000 )		/* for interrupt vectors  */
 ROM_END
 

@@ -7,7 +7,7 @@
 #include "machine/atarigen.h"
 #include "sndhrdw/5220intf.h"
 #include "vidhrdw/generic.h"
-#include "m6502/m6502.h"
+#include "M6502/m6502.h"
 
 int gauntlet_update_display_list (int scanline);
 

@@ -5,44 +5,6 @@
 /*#define USE_SAMPLES*/
 
 
-static unsigned char soundcommand = 0;
-
-
-
-void gyruss_i8039_irq_w(int offset,int data)
-{
-	cpu_cause_interrupt(2,I8039_EXT_INT);
-}
-
-void gyruss_i8039_command_w(int offset,int data)
-{
-	soundcommand = data;
-
-#ifdef USE_SAMPLES
-	if (data) sample_start(0,data-1,0);
-	else sample_stop(0);
-#endif
-}
-
-int gyruss_i8039_command_r(int offset)
-{
-	/* kludge: the code actually does
-	00000013: ba 00       	mov r2,#0
-	00000015: 05          	en  i
-	00000016: fa          	mov a,r2
-	and expects r2 to retrieve the command from an external latch. Since the
-	8039 emulator doesn't allow that, we kick in later, when the code does
-	00000062: 53 0f       	anl a,#$0f
-	00000064: 03 32       	add a,#$32
-	00000066: b3          	jmpp @a
-	since r2 is always 0, it always fetches the first byte of the jump table,
-	so we wedge in there and return the correct jump address */
-
-	return ROM[0x32+(soundcommand&0x0f)];
-}
-
-
-
 /* The timer clock which feeds the lower 4 bits of    */
 /* AY-3-8910 port A is based on the same clock        */
 /* feeding the sound CPU Z80.  It is a divide by      */
@@ -82,7 +44,6 @@ int gyruss_portA_r(int offset)
 static void filter_w(int chip,int data)
 {
 	int i;
-void set_RC_filter(int channel,int R1,int R2,int R3,int C);
 
 
 	for (i = 0;i < 3;i++)
@@ -114,4 +75,9 @@ void gyruss_sh_irqtrigger_w(int offset,int data)
 {
 	/* writing to this register triggers IRQ on the sound CPU */
 	cpu_cause_interrupt(1,0xff);
+}
+
+void gyruss_i8039_irq_w(int offset,int data)
+{
+	cpu_cause_interrupt(2,I8039_EXT_INT);
 }

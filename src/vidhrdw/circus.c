@@ -344,7 +344,7 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				y2 = 255 - y2;
 
 			/* Remap to overlay color */
-			if (tmpbitmap->line[y2][x2] == basecol)
+			if (bitmap->line[y2][x2] == basecol)
 			{
 				bitmap->line[y2][x2] = tmpbitmap->line[y2][x2] = currentcol;
 			}

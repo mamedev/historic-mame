@@ -14,9 +14,8 @@
 
 #include "driver.h"
 
-//#define DEBUG_PITCH
 
-#define MIN_SLICE 1		/* minimum update step */
+//#define DEBUG_PITCH
 
 #ifdef SIGNED_SAMPLES
 	#define MAX_OUTPUT 0x7fff
@@ -48,9 +47,8 @@
 
 struct SN76496
 {
-	int Clock;			/* chip clock in Hz     */
-						/* set this before calling SN76496Reset() */
-
+	int Channel;
+	int SampleRate;
 	unsigned int UpdateStep;
 	int VolTable[16];	/* volume table         */
 	int Register[8];	/* registers */
@@ -63,109 +61,15 @@ struct SN76496
 	int Output[4];
 };
 
-static int emulation_rate;
-static int buffer_len;
-static int sample_16bit;
-
-static struct SN76496interface *intf;
 
 static struct SN76496 sn[MAX_76496];
-static void *output_buffer[MAX_76496];
-static int sample_pos[MAX_76496];
-static int volume[MAX_76496];
-
-static int channel;
 
 
 
-static void SN76496Reset(struct SN76496 *R,int rate)
+static void SN76496Write(int chip,int data)
 {
-	int i;
-	double divdr;
+	struct SN76496 *R = &sn[chip];
 
-
-	/* the base clock for the tone generators is the chip clock divided by 16; */
-	/* for the noise generator, it is clock / 256. */
-	/* Here we calculate the number of steps which happen during one sample */
-	/* at the given sample rate. No. of events = sample rate / (clock/16). */
-	/* STEP is a multiplier used to turn the fraction into a fixed point */
-	/* number. */
-	R->UpdateStep = ((double)STEP * rate * 16) / R->Clock;
-
-	for (i = 0;i < 4;i++) R->Volume[i] = 0;
-
-	R->LastRegister = 0;
-	for (i = 0;i < 8;i+=2)
-	{
-		R->Register[i] = 0;
-		R->Register[i + 1] = 0x0f;	/* volume = 0 */
-	}
-
-	for (i = 0;i < 4;i++)
-	{
-		R->Output[i] = 0;
-		R->Period[i] = R->Count[i] = R->UpdateStep;
-	}
-	R->RNG = NG_PRESET;
-	R->Output[3] = R->RNG & 1;
-
-	/* build volume table (2dB per step) */
-	divdr = 1;
-	R->VolTable[0] = MAX_OUTPUT / 4;
-	for (i = 1;i <= 14;i++)
-	{
-		R->VolTable[i] = R->VolTable[0] / divdr;
-		divdr *= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
-	}
-	R->VolTable[15] = 0;
-}
-
-int SN76496_sh_start(struct SN76496interface *interface)
-{
-	int i;
-
-	intf = interface;
-
-	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
-	emulation_rate = buffer_len * Machine->drv->frames_per_second;
-
-	if( Machine->sample_bits == 16 ) sample_16bit = 1;
-	else                             sample_16bit = 0;
-
-	channel = get_play_channels( intf->num );
-
-	for (i = 0;i < MAX_76496;i++)
-	{
-		sample_pos[i] = 0;
-		output_buffer[i] = 0;
-	}
-
-	for (i = 0;i < intf->num;i++)
-	{
-		if ((output_buffer[i] = malloc((Machine->sample_bits/8)*buffer_len)) == 0)
-		{
-			while (--i >= 0) free(output_buffer[i]);
-			return 1;
-		}
-		memset(output_buffer[i],0,(Machine->sample_bits/8)*buffer_len);
-
-		sn[i].Clock = intf->clock;
-		SN76496Reset(&sn[i],emulation_rate);
-		/* volume gain controll */
-		volume[i] = intf->volume[i];
-	}
-	return 0;
-}
-
-void SN76496_sh_stop(void)
-{
-	int i;
-
-	for (i = 0;i < intf->num;i++) free(output_buffer[i]);
-}
-
-static void SN76496Write(struct SN76496 *R,int data)
-{
 #ifdef DEBUG_PITCH
 static int base = 5000;
 if (osd_key_pressed(OSD_KEY_Z))
@@ -178,6 +82,10 @@ if (osd_key_pressed(OSD_KEY_X))
 }
 osd_on_screen_display("PITCH",base/100);
 #endif
+
+	/* update the output buffer before changing the registers */
+	stream_update(R->Channel);
+
 	if (data & 0x80)
 	{
 		int r = (data & 0x70) >> 4;
@@ -254,159 +162,138 @@ if ((R->Register[6]&4)==0) R->Period[3] = R->Period[3] * (50+(base/100))/100;
 	}
 }
 
-static void SN76496UpdateB(struct SN76496 *R , char *buffer , int start , int end)
+
+void SN76496_0_w(int offset,int data) {	SN76496Write(0,data); }
+void SN76496_1_w(int offset,int data) {	SN76496Write(1,data); }
+void SN76496_2_w(int offset,int data) {	SN76496Write(2,data); }
+void SN76496_3_w(int offset,int data) {	SN76496Write(3,data); }
+
+
+
+static void SN76496Update_8(int chip,void *buffer,int length)
+{
+#define DATATYPE unsigned char
+#define DATACONV(A) AUDIO_CONV((A) / (STEP * 256))
+#include "sn76496u.c"
+#undef DATATYPE
+#undef DATACONV
+}
+
+static void SN76496Update_16(int chip,void *buffer,int length)
+{
+#define DATATYPE unsigned short
+#define DATACONV(A) ((A) / STEP)
+#include "sn76496u.c"
+#undef DATATYPE
+#undef DATACONV
+}
+
+
+
+void SN76496_set_clock(int chip,int clock)
+{
+	struct SN76496 *R = &sn[chip];
+
+
+	/* the base clock for the tone generators is the chip clock divided by 16; */
+	/* for the noise generator, it is clock / 256. */
+	/* Here we calculate the number of steps which happen during one sample */
+	/* at the given sample rate. No. of events = sample rate / (clock/16). */
+	/* STEP is a multiplier used to turn the fraction into a fixed point */
+	/* number. */
+	R->UpdateStep = ((double)STEP * R->SampleRate * 16) / clock;
+}
+
+
+
+static void SN76496_set_volume(int chip,int volume,int gain)
+{
+	struct SN76496 *R = &sn[chip];
+	int i;
+	double out;
+
+
+	stream_set_volume(R->Channel,volume);
+
+	gain &= 0xff;
+
+	/* increase max output basing on gain (0.2 dB per step) */
+	out = MAX_OUTPUT;
+	while (gain-- > 0)
+		out *= 1.023292992;	/* = (10 ^ (0.2/20)) */
+
+	/* build volume table (2dB per step) */
+	for (i = 0;i < 15;i++)
+	{
+		/* limit volume to avoid clipping */
+		if (out > MAX_OUTPUT / 4) R->VolTable[i] = MAX_OUTPUT / 4;
+		else R->VolTable[i] = out;
+
+		out /= 1.258925412;	/* = 10 ^ (2/20) = 2dB */
+	}
+	R->VolTable[15] = 0;
+}
+
+
+
+static int SN76496_init(int chip,int clock,int sample_rate,int sample_bits)
 {
 	int i;
-	unsigned char  *buffer_8;
-	unsigned short *buffer_16;
-	int length = end - start;
+	struct SN76496 *R = &sn[chip];
 
-	if (length <= 0) return;
 
-	buffer_8  = &((unsigned char  *)buffer)[start];
-	buffer_16 = &((unsigned short *)buffer)[start];
+	R->Channel = stream_init(
+			sample_rate,sample_bits,
+			chip,(sample_bits == 16) ? SN76496Update_16 : SN76496Update_8);
 
-	/* If the volume is 0, increase the counter */
+	if (R->Channel == -1)
+		return 1;
+
+	R->SampleRate = sample_rate;
+	SN76496_set_clock(chip,clock);
+	SN76496_set_volume(chip,255,0);
+
+	for (i = 0;i < 4;i++) R->Volume[i] = 0;
+
+	R->LastRegister = 0;
+	for (i = 0;i < 8;i+=2)
+	{
+		R->Register[i] = 0;
+		R->Register[i + 1] = 0x0f;	/* volume = 0 */
+	}
+
 	for (i = 0;i < 4;i++)
 	{
-		if (R->Volume[i] == 0)
-		{
-			/* note that I do count += length, NOT count = length + 1. You might think */
-			/* it's the same since the volume is 0, but doing the latter could cause */
-			/* interferencies when the program is rapidly modulating the volume. */
-			if (R->Count[i] <= length*STEP) R->Count[i] += length*STEP;
-		}
+		R->Output[i] = 0;
+		R->Period[i] = R->Count[i] = R->UpdateStep;
 	}
+	R->RNG = NG_PRESET;
+	R->Output[3] = R->RNG & 1;
 
-	while (length)
+	return 0;
+}
+
+
+
+int SN76496_sh_start(struct SN76496interface *interface)
+{
+	int chip;
+
+
+	for (chip = 0;chip < interface->num;chip++)
 	{
-		int vol[4];
-		unsigned int out;
-		int left;
+		if (SN76496_init(chip,interface->clock,Machine->sample_rate,Machine->sample_bits) != 0)
+			return 1;
 
-
-		/* vol[] keeps track of how long each square wave stays */
-		/* in the 1 position during the sample period. */
-		vol[0] = vol[1] = vol[2] = vol[3] = 0;
-
-		for (i = 0;i < 3;i++)
-		{
-			if (R->Output[i]) vol[i] += R->Count[i];
-			R->Count[i] -= STEP;
-			/* Period[i] is the half period of the square wave. Here, in each */
-			/* loop I add Period[i] twice, so that at the end of the loop the */
-			/* square wave is in the same status (0 or 1) it was at the start. */
-			/* vol[i] is also incremented by Period[i], since the wave has been 1 */
-			/* exactly half of the time, regardless of the initial position. */
-			/* If we exit the loop in the middle, Output[i] has to be inverted */
-			/* and vol[i] incremented only if the exit status of the square */
-			/* wave is 1. */
-			while (R->Count[i] <= 0)
-			{
-				R->Count[i] += R->Period[i];
-				if (R->Count[i] > 0)
-				{
-					R->Output[i] ^= 1;
-					if (R->Output[i]) vol[i] += R->Period[i];
-					break;
-				}
-				R->Count[i] += R->Period[i];
-				vol[i] += R->Period[i];
-			}
-			if (R->Output[i]) vol[i] -= R->Count[i];
-		}
-
-		left = STEP;
-		do
-		{
-			int nextevent;
-
-
-			if (R->Count[3] < left) nextevent = R->Count[3];
-			else nextevent = left;
-
-			if (R->Output[3]) vol[3] += R->Count[3];
-			R->Count[3] -= nextevent;
-			if (R->Count[3] <= 0)
-			{
-				if (R->RNG & 1) R->RNG ^= R->NoiseFB;
-				R->RNG >>= 1;
-				R->Output[3] = R->RNG & 1;
-				R->Count[3] += R->Period[3];
-				if (R->Output[3]) vol[3] += R->Period[3];
-			}
-			if (R->Output[3]) vol[3] -= R->Count[3];
-
-			left -= nextevent;
-		} while (left > 0);
-
-		out = vol[0] * R->Volume[0] + vol[1] * R->Volume[1] +
-				vol[2] * R->Volume[2] + vol[3] * R->Volume[3];
-
-		if( sample_16bit ) *(buffer_16++) = out / STEP;
-		else               *(buffer_8++) = AUDIO_CONV(out / (STEP * 256));
-
-		length--;
+		SN76496_set_volume(chip,interface->volume[chip] & 0xff,(interface->volume[chip] >> 8) & 0xff);
 	}
+	return 0;
 }
 
-static void doupdate(int chip)
+void SN76496_sh_stop(void)
 {
-	int newpos;
-
-
-	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
-
-	if( newpos - sample_pos[chip] < MIN_SLICE ) return;
-	SN76496UpdateB(&sn[chip],output_buffer[chip] ,sample_pos[chip],newpos);
-	sample_pos[chip] = newpos;
-}
-
-void SN76496_0_w(int offset,int data)
-{
-	doupdate(0);
-	SN76496Write(&sn[0],data);
-}
-
-void SN76496_1_w(int offset,int data)
-{
-	doupdate(1);
-	SN76496Write(&sn[1],data);
-}
-
-void SN76496_2_w(int offset,int data)
-{
-	doupdate(2);
-	SN76496Write(&sn[2],data);
-}
-
-void SN76496_3_w(int offset,int data)
-{
-	doupdate(3);
-	SN76496Write(&sn[3],data);
 }
 
 void SN76496_sh_update(void)
 {
-	int i;
-
-
-	if (Machine->sample_rate == 0) return;
-
-	for (i = 0;i < intf->num;i++)
-	{
-		SN76496UpdateB(&sn[i],output_buffer[i],sample_pos[i],buffer_len);
-		sample_pos[i] = 0;
-	}
-
-	for (i = 0;i < intf->num;i++)
-		if( sample_16bit ) osd_play_streamed_sample_16(channel+i,output_buffer[i],2*buffer_len,emulation_rate,volume[i]);
-		else               osd_play_streamed_sample(channel+i,output_buffer[i],buffer_len,emulation_rate,volume[i]);
 }
-
-/**********************************************/
-void SN76496_change_clock( int num, int clock ){
-  sn[num].Clock = clock;
-  SN76496Reset(&sn[num],emulation_rate);
-}
-/*********************************************/

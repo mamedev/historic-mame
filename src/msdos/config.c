@@ -5,6 +5,14 @@
  * 980402 moved out of msdos.c (N.S.), generalized routines (BW)
  */
 
+/*|*\
+|*|
+|*|  Modifications by JCK from The Ultimate Patchers
+|*|
+|*|	JCK 980917:	Added a "-cheatfile" option (misc) in MAME.CFG
+|*|
+\*|*/
+
 #include "driver.h"
 #include <allegro.h>
 #include <ctype.h>
@@ -28,9 +36,17 @@ extern int usefm, soundcard;
 /* from input.c */
 extern int use_mouse, joystick;
 
+/* JCK 980917 BEGIN */
+/* from cheat.c */
+extern char *cheatfile;
+/* JCK 980917 END */
+
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
-extern char *hidir, *cfgdir, *inpdir, *pcxdir, *alternate_name;
+extern char *hidir, *cfgdir, *inpdir, *pcxdir, *stadir, *artworkdir, *alternate_name;
+
+/* from profiler.c */
+extern int use_profiler;
 
 
 static int mame_argc;
@@ -287,6 +303,8 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	/* misc configuration */
 	options->cheat      = get_bool ("config", "cheat", NULL, 0);
 	options->mame_debug = get_bool ("config", "debug", NULL, 0);
+	cheatfile  = get_string ("config", "cheatfile", NULL, "CHEAT.DAT");    /* JCK 980917 */
+	use_profiler        = get_bool ("config", "profiler", NULL,  0);
 
 	/* get resolution */
 	resolution  = get_string ("config", "resolution", NULL, "auto");
@@ -296,6 +314,8 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
 	pcxdir     = get_string ("directory", "pcx",     NULL, "PCX");
 	inpdir     = get_string ("directory", "inp",     NULL, "INP");
+	stadir     = get_string ("directory", "sta",     NULL, "STA");
+	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
 
 	/* this is handled externally cause the audit stuff needs it, too */
 	get_rom_sample_path (argc, argv, game_index);

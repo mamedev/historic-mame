@@ -273,18 +273,18 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 ROM_START( blockout_rom )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
-	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0x86d58153 , 0xb0103427 )
-	ROM_LOAD_ODD ( "bo29a1-2.bin", 0x00000, 0x20000, 0x3eb5a6ff , 0x5984d5a2 )
+	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )
+	ROM_LOAD_ODD ( "bo29a1-2.bin", 0x00000, 0x20000, 0x5984d5a2 )
 
 	ROM_REGION_DISPOSE(0x800)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x23ddb08d , 0x3ea01f78 )
+	ROM_LOAD( "bo29e3-0.bin", 0x0000, 0x8000, 0x3ea01f78 )
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0xb2dfe67b , 0x15c5a99d )
+	ROM_LOAD( "bo29e2-0.bin", 0x0000, 0x20000, 0x15c5a99d )
 ROM_END
 
 

@@ -31,7 +31,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 #include "I8085/I8085.h"
 
 static int AY8910_A_input_data = 0;

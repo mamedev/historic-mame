@@ -384,34 +384,34 @@ static struct MachineDriver sprint1_machine_driver =
 
 ROM_START( sprint1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "6290-01.b1", 0x2000, 0x0800, 0xf185762d , 0x41fc985e )
-	ROM_LOAD( "6291-01.c1", 0x2800, 0x0800, 0x52b14383 , 0x07f7a920 )
-	ROM_LOAD( "6442-01.d1", 0x3000, 0x0800, 0x7b5209cc , 0xe9ff0124 )
+	ROM_LOAD( "6290-01.b1",   0x2000, 0x0800, 0x41fc985e )
+	ROM_LOAD( "6291-01.c1",   0x2800, 0x0800, 0x07f7a920 )
+	ROM_LOAD( "6442-01.d1",   0x3000, 0x0800, 0xe9ff0124 )
 	ROM_RELOAD(             0xF000, 0x0800 )
-	ROM_LOAD( "6443-01.e1", 0x3800, 0x0800, 0x1ce6dace , 0xd6bb00d0 )
+	ROM_LOAD( "6443-01.e1",   0x3800, 0x0800, 0xd6bb00d0 )
 	ROM_RELOAD(             0xF800, 0x0800 )
 
 	ROM_REGION_DISPOSE(0x800)     /* 2k for graphics */
-	ROM_LOAD( "6396-01.p4", 0x0000, 0x0200, 0x84d00708 , 0x801b42dd )
-	ROM_LOAD( "6397-01.r4", 0x0200, 0x0200, 0x98fa080e , 0x135ba1aa )
-	ROM_LOAD( "6398-01.k6", 0x0400, 0x0200, 0x5fea0402 , 0xc9e1017e )
-	ROM_LOAD( "6399-01.j6", 0x0600, 0x0200, 0x18d60900 , 0x63d685b2 )
+	ROM_LOAD( "6396-01.p4",   0x0000, 0x0200, 0x801b42dd )
+	ROM_LOAD( "6397-01.r4",   0x0200, 0x0200, 0x135ba1aa )
+	ROM_LOAD( "6398-01.k6",   0x0400, 0x0200, 0xc9e1017e )
+	ROM_LOAD( "6399-01.j6",   0x0600, 0x0200, 0x63d685b2 )
 ROM_END
 
 ROM_START( sprint2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "6290-01.b1", 0x2000, 0x0800, 0xf185762d , 0x41fc985e )
-	ROM_LOAD( "6291-01.c1", 0x2800, 0x0800, 0x52b14383 , 0x07f7a920 )
-	ROM_LOAD( "6404sp2.d1", 0x3000, 0x0800, 0xd6c1d621 , 0xd2878ff6 )
+	ROM_LOAD( "6290-01.b1",   0x2000, 0x0800, 0x41fc985e )
+	ROM_LOAD( "6291-01.c1",   0x2800, 0x0800, 0x07f7a920 )
+	ROM_LOAD( "6404sp2.d1",   0x3000, 0x0800, 0xd2878ff6 )
 	ROM_RELOAD(             0xF000, 0x0800 )
-	ROM_LOAD( "6405sp2.e1", 0x3800, 0x0800, 0x33c55e21 , 0x6c991c80 )
+	ROM_LOAD( "6405sp2.e1",   0x3800, 0x0800, 0x6c991c80 )
 	ROM_RELOAD(             0xF800, 0x0800 )
 
 	ROM_REGION_DISPOSE(0x800)     /* 2k for graphics */
-	ROM_LOAD( "6396-01.p4", 0x0000, 0x0200, 0x84d00708 , 0x801b42dd )
-	ROM_LOAD( "6397-01.r4", 0x0200, 0x0200, 0x98fa080e , 0x135ba1aa )
-	ROM_LOAD( "6398-01.k6", 0x0400, 0x0200, 0x5fea0402 , 0xc9e1017e )
-	ROM_LOAD( "6399-01.j6", 0x0600, 0x0200, 0x18d60900 , 0x63d685b2 )
+	ROM_LOAD( "6396-01.p4",   0x0000, 0x0200, 0x801b42dd )
+	ROM_LOAD( "6397-01.r4",   0x0200, 0x0200, 0x135ba1aa )
+	ROM_LOAD( "6398-01.k6",   0x0400, 0x0200, 0xc9e1017e )
+	ROM_LOAD( "6399-01.j6",   0x0600, 0x0200, 0x63d685b2 )
 ROM_END
 
 /***************************************************************************

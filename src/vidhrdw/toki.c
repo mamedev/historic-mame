@@ -24,7 +24,7 @@ unsigned char *toki_background1_videoram;
 unsigned char *toki_background2_videoram;
 unsigned char *toki_sprites_dataram;
 unsigned char *toki_scrollram;
-unsigned int toki_linescroll[256];
+signed char toki_linescroll[256];
 
 int toki_foreground_videoram_size;
 int toki_background1_videoram_size;
@@ -424,14 +424,16 @@ void toki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
+static int lastline,lastdata;
+
 void toki_linescroll_w(int offset,int data)
 {
-	if (offset == 2)	/* x scroll; we ignore y scroll at offset 0 */
+	if (offset == 2)
 	{
-		static int lastline,lastdata;
 		int currline;
 
 		currline = cpu_getscanline();
+
 		if (currline < lastline)
 		{
 			while (lastline < 256)
@@ -441,6 +443,20 @@ void toki_linescroll_w(int offset,int data)
 		while (lastline < currline)
 			toki_linescroll[lastline++] = lastdata;
 
-		lastdata = data;
+		lastdata = data & 0x7f;
 	}
+	else
+	{
+		/* this is the sign, it is either 0x00 or 0xff */
+		if (data) lastdata |= 0x80;
+	}
+}
+
+int toki_interrupt(void)
+{
+	while (lastline < 256)
+		toki_linescroll[lastline++] = lastdata;
+	lastline = 0;
+
+	return 1;  /*Interrupt vector 1*/
 }

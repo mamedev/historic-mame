@@ -247,20 +247,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( nova2001_rom )
 	ROM_REGION(0x10000)
-	ROM_LOAD( "nova2001.1", 0x0000, 0x2000, 0xbef2eb06 , 0xb79461bd )
-	ROM_LOAD( "nova2001.2", 0x2000, 0x2000, 0xc6c0e464 , 0xfab87144 )
-	ROM_LOAD( "nova2001.3", 0x4000, 0x2000, 0x0b3acdac , 0xb2849038 )
-	ROM_LOAD( "nova2001.4", 0x6000, 0x1000, 0x49a5f67d , 0x6b5bb12d )
+	ROM_LOAD( "nova2001.1",   0x0000, 0x2000, 0xb79461bd )
+	ROM_LOAD( "nova2001.2",   0x2000, 0x2000, 0xfab87144 )
+	ROM_LOAD( "nova2001.3",   0x4000, 0x2000, 0xb2849038 )
+	ROM_LOAD( "nova2001.4",   0x6000, 0x1000, 0x6b5bb12d )
 	ROM_RELOAD(             0x7000, 0x1000 )
 
 	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nova2001.5", 0x0000, 0x2000, 0x9cee7550 , 0x8ea576e8 )
-	ROM_LOAD( "nova2001.6", 0x2000, 0x2000, 0x81dc834e , 0x0c61656c )
-	ROM_LOAD( "nova2001.7", 0x4000, 0x2000, 0xeb669c62 , 0x9ebd8806 )
-	ROM_LOAD( "nova2001.8", 0x6000, 0x2000, 0xe3583068 , 0xd1b18389 )
+	ROM_LOAD( "nova2001.5",   0x0000, 0x2000, 0x8ea576e8 )
+	ROM_LOAD( "nova2001.6",   0x2000, 0x2000, 0x0c61656c )
+	ROM_LOAD( "nova2001.7",   0x4000, 0x2000, 0x9ebd8806 )
+	ROM_LOAD( "nova2001.8",   0x6000, 0x2000, 0xd1b18389 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0x0bfceca4 , 0xa2fac5cd )
+	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0xa2fac5cd )
 ROM_END
 
 

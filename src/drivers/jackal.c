@@ -471,36 +471,36 @@ static void hisave(void)
 
 ROM_START( jackal_rom )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
-	ROM_LOAD( "j-v02.rom", 0x04000, 0x8000, 0x878231ee , 0x0b7e0584 )
+	ROM_LOAD( "j-v02.rom",    0x04000, 0x8000, 0x0b7e0584 )
 	ROM_CONTINUE(          0x14000, 0x8000 )
-	ROM_LOAD( "j-v03.rom", 0x0c000, 0x4000, 0x3601373b , 0x3e0dfb83 )
+	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
 	ROM_RELOAD(            0x1c000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j-t04.rom", 0x00000, 0x20000, 0x127ef77a , 0x57d3d00c )
-	ROM_LOAD( "j-t06.rom", 0x20000, 0x20000, 0x4591834b , 0x5c8f9325 )
-	ROM_LOAD( "j-t05.rom", 0x40000, 0x20000, 0xe4211e89 , 0xae7737da )
-	ROM_LOAD( "j-t07.rom", 0x60000, 0x20000, 0x78666330 , 0xcf077092 )
+	ROM_LOAD( "j-t04.rom",    0x00000, 0x20000, 0x57d3d00c )
+	ROM_LOAD( "j-t06.rom",    0x20000, 0x20000, 0x5c8f9325 )
+	ROM_LOAD( "j-t05.rom",    0x40000, 0x20000, 0xae7737da )
+	ROM_LOAD( "j-t07.rom",    0x60000, 0x20000, 0xcf077092 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "j-t01.rom", 0x8000, 0x8000, 0x94425eba , 0xb189af6a )
+	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
 ROM_END
 
 ROM_START( topgunr_rom )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
-	ROM_LOAD( "tgnr15d.bin", 0x04000, 0x8000, 0x93752b7d , 0xd4a120f3 )
+	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xd4a120f3 )
 	ROM_CONTINUE(            0x14000, 0x8000 )
-	ROM_LOAD( "tgnr16d.bin", 0x0c000, 0x4000, 0x12247cd0 , 0xc086844e )
+	ROM_LOAD( "tgnr16d.bin",  0x0c000, 0x4000, 0xc086844e )
 	ROM_RELOAD(              0x1c000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tgnr7h.bin", 0x00000, 0x20000, 0xa18bc69d , 0x50122a12 )
-	ROM_LOAD( "tgnr12h.bin", 0x20000, 0x20000, 0xf0dc327e , 0x37dbbdb0 )
-	ROM_LOAD( "tgnr8h.bin", 0x40000, 0x20000, 0x4948dda6 , 0x6943b1a4 )
-	ROM_LOAD( "tgnr13h.bin", 0x60000, 0x20000, 0x94fa1442 , 0x22effcc8 )
+	ROM_LOAD( "tgnr7h.bin",   0x00000, 0x20000, 0x50122a12 )
+	ROM_LOAD( "tgnr12h.bin",  0x20000, 0x20000, 0x37dbbdb0 )
+	ROM_LOAD( "tgnr8h.bin",   0x40000, 0x20000, 0x6943b1a4 )
+	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "tgnr11d.bin", 0x8000, 0x8000, 0x94425eba , 0xb189af6a )
+	ROM_LOAD( "tgnr11d.bin",  0x8000, 0x8000, 0xb189af6a )
 ROM_END
 
 

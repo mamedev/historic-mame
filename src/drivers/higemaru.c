@@ -226,20 +226,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( higemaru_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "hg4", 0x0000, 0x2000, 0xb08e7e22 , 0xdc67a7f9 )
-	ROM_LOAD( "hg5", 0x2000, 0x2000, 0x17e539af , 0xf65a4b68 )
-	ROM_LOAD( "hg6", 0x4000, 0x2000, 0x88baad76 , 0x5f5296aa )
-	ROM_LOAD( "hg7", 0x6000, 0x2000, 0x1e905354 , 0xdc5d455d )
+	ROM_LOAD( "hg4",          0x0000, 0x2000, 0xdc67a7f9 )
+	ROM_LOAD( "hg5",          0x2000, 0x2000, 0xf65a4b68 )
+	ROM_LOAD( "hg6",          0x4000, 0x2000, 0x5f5296aa )
+	ROM_LOAD( "hg7",          0x6000, 0x2000, 0xdc5d455d )
 
 	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hg3", 0x00000, 0x2000, 0xf9397b3b , 0xb37b88c8 )	/* characters */
-	ROM_LOAD( "hg1", 0x02000, 0x2000, 0x447c9074 , 0xef4c2f5d )	/* tiles */
-	ROM_LOAD( "hg2", 0x04000, 0x2000, 0x8a37a96b , 0x9133f804 )
+	ROM_LOAD( "hg3",          0x00000, 0x2000, 0xb37b88c8 )	/* characters */
+	ROM_LOAD( "hg1",          0x02000, 0x2000, 0xef4c2f5d )	/* tiles */
+	ROM_LOAD( "hg2",          0x04000, 0x2000, 0x9133f804 )
 
 	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "hgb3", 0x0000, 0x0020, 0xfe99c64b , 0x629cebd8 )	/* palette */
-	ROM_LOAD( "hgb5", 0x0020, 0x0100, 0x397b0409 , 0xdbaa4443 )	/* char lookup table */
-	ROM_LOAD( "hgb1", 0x0120, 0x0100, 0xc23c0e08 , 0x07c607ce )	/* sprite lookup table */
+	ROM_LOAD( "hgb3",         0x0000, 0x0020, 0x629cebd8 )	/* palette */
+	ROM_LOAD( "hgb5",         0x0020, 0x0100, 0xdbaa4443 )	/* char lookup table */
+	ROM_LOAD( "hgb1",         0x0120, 0x0100, 0x07c607ce )	/* sprite lookup table */
 ROM_END
 
 static int higemaru_hiload(void)

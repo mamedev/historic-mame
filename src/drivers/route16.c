@@ -229,9 +229,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{ 255 },
-	{ 1 }
+	{ 255 }
 };
 
 
@@ -316,12 +314,12 @@ MACHINE_DRIVER(stratvox, STRATVOX_AUDIO_INTERFACE)
 
 ROM_START( route16_rom )
 	ROM_REGION(0x10000)  // 64k for the first CPU
-	ROM_LOAD( "rt16.0", 0x0000, 0x0800, 0xe997d36b , 0xb1f0f636 )
-	ROM_LOAD( "rt16.1", 0x0800, 0x0800, 0x46fdd75f , 0x3ec52fe5 )
-	ROM_LOAD( "rt16.2", 0x1000, 0x0800, 0xfa13051d , 0xa8e92871 )
-	ROM_LOAD( "rt16.3", 0x1800, 0x0800, 0x459e3926 , 0xa0fc9fc5 )
-	ROM_LOAD( "rt16.4", 0x2000, 0x0800, 0x8b700e7a , 0x6dcaf8c4 )
-	ROM_LOAD( "rt16.5", 0x2800, 0x0800, 0x629f0ab7 , 0x63d7b05b )
+	ROM_LOAD( "rt16.0",       0x0000, 0x0800, 0xb1f0f636 )
+	ROM_LOAD( "rt16.1",       0x0800, 0x0800, 0x3ec52fe5 )
+	ROM_LOAD( "rt16.2",       0x1000, 0x0800, 0xa8e92871 )
+	ROM_LOAD( "rt16.3",       0x1800, 0x0800, 0xa0fc9fc5 )
+	ROM_LOAD( "rt16.4",       0x2000, 0x0800, 0x6dcaf8c4 )
+	ROM_LOAD( "rt16.5",       0x2800, 0x0800, 0x63d7b05b )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
@@ -329,14 +327,14 @@ ROM_START( route16_rom )
 
 	ROM_REGION(0x0200) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09", 0x0000, 0x0100, 0x82db0201 , 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10", 0x0100, 0x0100, 0x82db0201 , 0x08793ef7 ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
 	ROM_REGION(0x10000)  // 64k for the second CPU
-	ROM_LOAD( "rt16.6", 0x0000, 0x0800, 0x534957bd , 0xfef605f3 )
-	ROM_LOAD( "rt16.7", 0x0800, 0x0800, 0xa48435cc , 0xd0d6c189 )
-	ROM_LOAD( "rt16.8", 0x1000, 0x0800, 0x3ad22b58 , 0xdefc5797 )
-	ROM_LOAD( "rt16.9", 0x1800, 0x0800, 0x13f7b5ab , 0x88d94a66 )
+	ROM_LOAD( "rt16.6",       0x0000, 0x0800, 0xfef605f3 )
+	ROM_LOAD( "rt16.7",       0x0800, 0x0800, 0xd0d6c189 )
+	ROM_LOAD( "rt16.8",       0x1000, 0x0800, 0xdefc5797 )
+	ROM_LOAD( "rt16.9",       0x1800, 0x0800, 0x88d94a66 )
 ROM_END
 
 
@@ -351,12 +349,12 @@ static const char *stratvox_sample_names[] =
 
 ROM_START( stratvox_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ls01.bin", 0x0000, 0x0800, 0x2128ac32 , 0xbf4d582e )
-	ROM_LOAD( "ls02.bin", 0x0800, 0x0800, 0x7ff83536 , 0x16739dd4 )
-	ROM_LOAD( "ls03.bin", 0x1000, 0x0800, 0x39532473 , 0x083c28de )
-	ROM_LOAD( "ls04.bin", 0x1800, 0x0800, 0x126f1c33 , 0xb0927e3b )
-	ROM_LOAD( "ls05.bin", 0x2000, 0x0800, 0x771da163 , 0xccd25c4e )
-	ROM_LOAD( "ls06.bin", 0x2800, 0x0800, 0xd007d1fd , 0x07a907a7 )
+	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
+	ROM_LOAD( "ls02.bin",     0x0800, 0x0800, 0x16739dd4 )
+	ROM_LOAD( "ls03.bin",     0x1000, 0x0800, 0x083c28de )
+	ROM_LOAD( "ls04.bin",     0x1800, 0x0800, 0xb0927e3b )
+	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
+	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
@@ -364,22 +362,22 @@ ROM_START( stratvox_rom )
 
 	ROM_REGION(0x0200) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09", 0x0000, 0x0100, 0x82db0201 , 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10", 0x0100, 0x0100, 0x82db0201 , 0x08793ef7 ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "ls07.bin", 0x0000, 0x0800, 0x759bff3d , 0x4d333985 )
-	ROM_LOAD( "ls08.bin", 0x0800, 0x0800, 0x74dd1ce5 , 0x35b753fc )
+	ROM_LOAD( "ls07.bin",     0x0000, 0x0800, 0x4d333985 )
+	ROM_LOAD( "ls08.bin",     0x0800, 0x0800, 0x35b753fc )
 ROM_END
 
 ROM_START( speakres_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "speakres.1", 0x0000, 0x0800, 0x5e358977 , 0x6026e4ea )
-	ROM_LOAD( "speakres.2", 0x0800, 0x0800, 0xf057be61 , 0x93f0d4da )
-	ROM_LOAD( "speakres.3", 0x1000, 0x0800, 0x63b8b21e , 0xa3874304 )
-	ROM_LOAD( "speakres.4", 0x1800, 0x0800, 0xd20d162f , 0xf484be3a )
-	ROM_LOAD( "speakres.5", 0x2000, 0x0800, 0xe611e255 , 0x61b12a67 )
-	ROM_LOAD( "speakres.6", 0x2800, 0x0800, 0xc4c0bc7a , 0x220e0ab2 )
+	ROM_LOAD( "speakres.1",   0x0000, 0x0800, 0x6026e4ea )
+	ROM_LOAD( "speakres.2",   0x0800, 0x0800, 0x93f0d4da )
+	ROM_LOAD( "speakres.3",   0x1000, 0x0800, 0xa3874304 )
+	ROM_LOAD( "speakres.4",   0x1800, 0x0800, 0xf484be3a )
+	ROM_LOAD( "speakres.5",   0x2000, 0x0800, 0x61b12a67 )
+	ROM_LOAD( "speakres.6",   0x2800, 0x0800, 0x220e0ab2 )
 
 	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
@@ -387,12 +385,12 @@ ROM_START( speakres_rom )
 
 	ROM_REGION(0x0200) /* color proms */
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
-	ROM_LOAD( "pr09", 0x0000, 0x0100, 0x82db0201 , 0x08793ef7 ) /* top bitmap */
-	ROM_LOAD( "pr10", 0x0100, 0x0100, 0x82db0201 , 0x08793ef7 ) /* bottom bitmap */
+	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
+	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "speakres.7", 0x0000, 0x0800, 0xb8bb6613 , 0xd417be13 )
-	ROM_LOAD( "speakres.8", 0x0800, 0x0800, 0x2148d22e , 0x52485d60 )
+	ROM_LOAD( "speakres.7",   0x0000, 0x0800, 0xd417be13 )
+	ROM_LOAD( "speakres.8",   0x0800, 0x0800, 0x52485d60 )
 ROM_END
 
 

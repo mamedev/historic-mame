@@ -242,7 +242,7 @@ void mainevt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		tile=bg_videoram[offs];
 		fx=mainevt_bg_attr_ram[offs]&0x2;
-		bank=((((mainevt_bg_attr_ram[offs]>>1)&0xe)+(mainevt_bg_attr_ram[offs]&0x1))*0x100);
+		bank=((((mainevt_bg_attr_ram[offs]>>1)&0x1e)+(mainevt_bg_attr_ram[offs]&0x1))*0x100);
 		color=mainevt_bg_attr_ram[offs]>>6;
 
 		drawgfx(back_bitmap,Machine->gfx[0],
@@ -275,7 +275,7 @@ NO_BACK_DRAW:
 		fx=mainevt_fg_attr_ram[offs]&0x2;
 		color=mainevt_fg_attr_ram[offs]>>6;
 
-		bank=((((mainevt_fg_attr_ram[offs]>>1)&0xe)+(mainevt_fg_attr_ram[offs]&0x1))*0x100);
+		bank=((((mainevt_fg_attr_ram[offs]>>1)&0x1e)+(mainevt_fg_attr_ram[offs]&0x1))*0x100);
 
 		drawgfx(front_bitmap,Machine->gfx[0],
 				tile+bank,color+4,fx,0,8*mx,8*my,
@@ -301,7 +301,7 @@ NO_FORE_DRAW:
     	if (mx<14 || mx>50) continue; /* Clipped areas */
 
     	tile=videoram[offs];
-    	bank=((((mainevt_attr_ram[offs]>>1)&0xe)+(mainevt_attr_ram[offs]&0x1))*0x100);
+    	bank=((((mainevt_attr_ram[offs]>>1)&0x1e)+(mainevt_attr_ram[offs]&0x1))*0x100);
 
     	/* Simple speedup */
     	if (tile==0xfe && bank==0x100) continue;

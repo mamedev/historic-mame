@@ -292,23 +292,23 @@ MACHINE_DRIVER(machine_driver_pang, gfxdecodeinfo_pang)
 
 ROM_START( pang_rom )
 	ROM_REGION(0x60000)     /* 64k for code */
-	ROM_LOAD( "pang_02.bin", 0x10000, 0x20000, 0x416d8771 , 0x3f15bb61 )   /* Decrypted op codes */
-	ROM_LOAD( "pang_03.bin", 0x30000, 0x20000, 0x8f23ed1b , 0x0c8477ae )   /* Decrypted data */
-	ROM_LOAD( "pang_04.bin", 0x50000, 0x10000, 0x3df42bf4 , 0xf68f88a5 )   /* Decrypted opcode + data */
+	ROM_LOAD( "pang_02.bin",  0x10000, 0x20000, 0x3f15bb61 )   /* Decrypted op codes */
+	ROM_LOAD( "pang_03.bin",  0x30000, 0x20000, 0x0c8477ae )   /* Decrypted data */
+	ROM_LOAD( "pang_04.bin",  0x50000, 0x10000, 0xf68f88a5 )   /* Decrypted opcode + data */
 
 	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "pang_09.bin", 0x00000, 0x20000, 0xe3d65458 , 0x3a5883f5 )
-	ROM_LOAD( "pang_10.bin", 0x20000, 0x20000, 0xf88398d7 , 0x79a8ed08 )
-	ROM_LOAD( "pang_08.bin", 0x40000, 0x10000, 0xeece3644 , 0xf3188aa1 )
-	ROM_LOAD( "pang_07.bin", 0x50000, 0x10000, 0x0c0930d3 , 0x011da14b )
+	ROM_LOAD( "pang_09.bin",  0x00000, 0x20000, 0x3a5883f5 )
+	ROM_LOAD( "pang_10.bin",  0x20000, 0x20000, 0x79a8ed08 )
+	ROM_LOAD( "pang_08.bin",  0x40000, 0x10000, 0xf3188aa1 )
+	ROM_LOAD( "pang_07.bin",  0x50000, 0x10000, 0x011da14b )
 
-	ROM_LOAD( "pang_11.bin", 0x60000, 0x20000, 0xccfaff16 , 0x166a16ae )
-	ROM_LOAD( "pang_12.bin", 0x80000, 0x20000, 0xc15b2c57 , 0x2fb3db6c )
-	ROM_LOAD( "pang_06.bin", 0xa0000, 0x10000, 0xc59f48c1 , 0x0e25e797 )
-	ROM_LOAD( "pang_05.bin", 0xb0000, 0x10000, 0xe9861aae , 0x6daa4e27 )
+	ROM_LOAD( "pang_11.bin",  0x60000, 0x20000, 0x166a16ae )
+	ROM_LOAD( "pang_12.bin",  0x80000, 0x20000, 0x2fb3db6c )
+	ROM_LOAD( "pang_06.bin",  0xa0000, 0x10000, 0x0e25e797 )
+	ROM_LOAD( "pang_05.bin",  0xb0000, 0x10000, 0x6daa4e27 )
 
 	ROM_REGION(0x10000)     /* OKIM */
-	ROM_LOAD( "pang_01.bin", 0x00000, 0x10000, 0x419a37c8 , 0xb6463907 )
+	ROM_LOAD( "pang_01.bin",  0x00000, 0x10000, 0xb6463907 )
 ROM_END
 
 static void pang_decode(void)
@@ -422,20 +422,20 @@ ROM_START( bbros_rom )
 	ROM_REGION(0x30000)     /* 64k for code */
 
 	/* Encrypted!!!! */
-	ROM_LOAD( "bb7.bin", 0x10000, 0x20000, 0xd228e558 , 0x0 )
-	ROM_LOAD( "bb6.bin", 0x10000, 0x08000, 0x4ca4c8d0 , 0x0 )
+	ROM_LOAD( "bb7.bin",      0x10000, 0x20000, 0x0 )
+	ROM_LOAD( "bb6.bin",      0x10000, 0x08000, 0x0 )
 
 	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bb2.bin", 0x00000, 0x20000, 0x5b9137f1 , 0x0 )
-	ROM_LOAD( "bb3.bin", 0x20000, 0x20000, 0xf88398d7 , 0x0 )
-	ROM_LOAD( "bb10.bin", 0x40000, 0x20000, 0xfad70697 , 0x0 )
+	ROM_LOAD( "bb2.bin",      0x00000, 0x20000, 0x0 )
+	ROM_LOAD( "bb3.bin",      0x20000, 0x20000, 0x0 )
+	ROM_LOAD( "bb10.bin",     0x40000, 0x20000, 0x0 )
 
-	ROM_LOAD( "bb4.bin", 0x60000, 0x20000, 0x8ab5fdc3 , 0x0 )
-	ROM_LOAD( "bb5.bin", 0x80000, 0x20000, 0xc15b2c57 , 0x0 )
-	ROM_LOAD( "bb9.bin", 0xa0000, 0x20000, 0xaf25526f , 0x0 )
+	ROM_LOAD( "bb4.bin",      0x60000, 0x20000, 0x0 )
+	ROM_LOAD( "bb5.bin",      0x80000, 0x20000, 0x0 )
+	ROM_LOAD( "bb9.bin",      0xa0000, 0x20000, 0x0 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "bb1.bin", 0x0000, 0x20000, 0xc19a37c8 , 0x0 )
+	ROM_LOAD( "bb1.bin",      0x0000, 0x20000, 0x0 )
 ROM_END
 
 static void bbros_decode(void)
@@ -500,21 +500,21 @@ ROM_START( spang_rom )
 	ROM_REGION(0x60000)     /* 64k for code */
 
 	/* Encrypted!!!! */
-	ROM_LOAD( "spe_08.rom", 0x10000, 0x20000, 0x6e202f9c , 0x0 )
-	ROM_LOAD( "spe_07.rom", 0x30000, 0x20000, 0xe6b9c603 , 0x0 )
-	ROM_LOAD( "spe_06.rom", 0x50000, 0x08000, 0x34ad7595 , 0x0 )
+	ROM_LOAD( "spe_08.rom",   0x10000, 0x20000, 0x0 )
+	ROM_LOAD( "spe_07.rom",   0x30000, 0x20000, 0x0 )
+	ROM_LOAD( "spe_06.rom",   0x50000, 0x08000, 0x0 )
 
 	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spe_04.rom", 0x00000, 0x20000, 0xc57d2b7f , 0x0 )
-	ROM_LOAD( "spe_03.rom", 0x20000, 0x20000, 0xc51460ca , 0x0 )
-	ROM_LOAD( "spe_09.rom", 0x40000, 0x20000, 0x50d3dc59 , 0x0 )
+	ROM_LOAD( "spe_04.rom",   0x00000, 0x20000, 0x0 )
+	ROM_LOAD( "spe_03.rom",   0x20000, 0x20000, 0x0 )
+	ROM_LOAD( "spe_09.rom",   0x40000, 0x20000, 0x0 )
 
-	ROM_LOAD( "spe_02.rom", 0x60000, 0x20000, 0xaec0d78e , 0x0 )
-	ROM_LOAD( "spe_05.rom", 0x80000, 0x20000, 0x5fc5f9df , 0x0 )
-	ROM_LOAD( "spe_10.rom", 0xa0000, 0x20000, 0xa78d0beb , 0x0 )
+	ROM_LOAD( "spe_02.rom",   0x60000, 0x20000, 0x0 )
+	ROM_LOAD( "spe_05.rom",   0x80000, 0x20000, 0x0 )
+	ROM_LOAD( "spe_10.rom",   0xa0000, 0x20000, 0x0 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "spe_01.rom", 0x0000, 0x20000, 0x5d617e19 , 0x0 )
+	ROM_LOAD( "spe_01.rom",   0x0000, 0x20000, 0x0 )
 ROM_END
 
 
@@ -592,21 +592,21 @@ ROM_START( block_rom )
 	ROM_REGION(0x60000)
 
 	/* Encrypted!!!! */
-	ROM_LOAD( "ble_07.rom", 0x10000, 0x20000, 0xc2b54ea7 , 0x0 )
-	ROM_LOAD( "ble_06.rom", 0x30000, 0x20000, 0x6e149906 , 0x0 )
-	ROM_LOAD( "ble_05.rom", 0x00000, 0x08000, 0x11fa6de8 , 0x0 )
+	ROM_LOAD( "ble_07.rom",   0x10000, 0x20000, 0x0 )
+	ROM_LOAD( "ble_06.rom",   0x30000, 0x20000, 0x0 )
+	ROM_LOAD( "ble_05.rom",   0x00000, 0x08000, 0x0 )
 
 	ROM_REGION_DISPOSE(0xc0000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bl_18.rom", 0x00000, 0x20000, 0x9483f0d9 , 0x0 )
-	ROM_LOAD( "bl_17.rom", 0x20000, 0x20000, 0x4a8b7547 , 0x0 )
-	ROM_LOAD( "bl_19.rom", 0x40000, 0x20000, 0x84324744 , 0x0 )
+	ROM_LOAD( "bl_18.rom",    0x00000, 0x20000, 0x0 )
+	ROM_LOAD( "bl_17.rom",    0x20000, 0x20000, 0x0 )
+	ROM_LOAD( "bl_19.rom",    0x40000, 0x20000, 0x0 )
 
-	ROM_LOAD( "bl_08.rom", 0x60000, 0x20000, 0x66ce706e , 0x0 )
-	ROM_LOAD( "bl_16.rom", 0x80000, 0x20000, 0x5ccf8823 , 0x0 )
-	ROM_LOAD( "bl_09.rom", 0xa0000, 0x20000, 0xa4abab1f , 0x0 )
+	ROM_LOAD( "bl_08.rom",    0x60000, 0x20000, 0x0 )
+	ROM_LOAD( "bl_16.rom",    0x80000, 0x20000, 0x0 )
+	ROM_LOAD( "bl_09.rom",    0xa0000, 0x20000, 0x0 )
 
 	ROM_REGION(0x20000)     /* OKIM */
-	ROM_LOAD( "bl_01.rom", 0x0000, 0x20000, 0x8b495435 , 0x0 )
+	ROM_LOAD( "bl_01.rom",    0x0000, 0x20000, 0x0 )
 ROM_END
 
 

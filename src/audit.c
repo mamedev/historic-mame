@@ -7,58 +7,11 @@ static tAuditRecord *gAudits = NULL;
 static tMissingSample *gMissingSamples = NULL;
 
 
-/* returns nonzero on error */
-static int CalcCheckSum (void *f, const struct RomModule *romp, tAuditRecord *aud)
-{
-	int sum;
-	int xor;
-	unsigned int i;
-	int j;
-	unsigned char *temp;
-
-	sum = 0;
-	xor = 0;
-
-	do
-	{
-		int length = romp->length & ~ROMFLAG_MASK;
-
-		if (romp->name != (char *)-1) /* ignore ROM_RELOAD */
-		{
-			temp = malloc (length);
-
-			if (osd_fread (f, temp, length) != length)
-			{
-				aud->status = AUD_LENGTH_MISMATCH;
-				free (temp);
-				return 1;
-			}
-
-			for (i = 0;i < (length & ~1);i += 2)
-			{
-				j = 256 * temp[i] + temp[i+1];
-				sum += j;
-				xor ^= j;
-			}
-
-			free (temp);
-		}
-		romp++;
-	} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-
-	aud->checksum = ((sum & 0xffff) << 16) | (xor & 0xffff);
-
-	return 0;
-}
-
-
-/* JB 980803 - modified to use CRC-32 if crc is non-zero. */
 /* Fills in an audit record for each rom in the romset. Sets 'audit' to
    point to the list of audit records. Returns total number of roms
    in the romset (same as number of audit records), 0 if romset missing. */
-int AuditRomSet (int game, tAuditRecord **audit, int crc)
+int AuditRomSet (int game, tAuditRecord **audit)
 {
-	void *f;
 	const struct RomModule *romp;
 	const char *name;
 	const struct GameDriver *gamedrv;
@@ -79,9 +32,10 @@ int AuditRomSet (int game, tAuditRecord **audit, int crc)
 	gamedrv = drivers[game];
 	romp = gamedrv->rom;
 
+	/* check for existence of romset */
 	if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM))
 	{
-		/* if the game is a clone, try loading the ROM from the main version */
+		/* if the game is a clone, check for parent */
 		if (gamedrv->clone_of == 0 ||
 				!osd_faccess(gamedrv->clone_of->name,OSD_FILETYPE_ROM))
 			return 0;
@@ -102,65 +56,38 @@ int AuditRomSet (int game, tAuditRecord **audit, int crc)
 
 			name = romp->name;
 			strcpy (aud->rom, name);
-			aud->length = romp->length & ~ROMFLAG_MASK;
-			aud->checksum = 0;
+			aud->explength = 0;
+			aud->length = 0;
+			aud->expchecksum = romp->crc;
+			/* NS981003: support for "load by CRC" */
+			aud->checksum = romp->crc;
 			count++;
 
-			if (crc)
+			/* obtain CRC-32 and length of ROM file */
+			err = osd_fchecksum (gamedrv->name, name, &aud->length, &aud->checksum);
+			if (err && gamedrv->clone_of)
 			{
-				aud->expchecksum = romp->crc;
-
-				/* obtain CRC-32 of ROM file */
-				err = osd_fchecksum (gamedrv->name, name, &aud->checksum);
-				if (err && gamedrv->clone_of)
-				{
-					/* if the game is a clone, try the parent */
-					err = osd_fchecksum (gamedrv->clone_of->name, name, &aud->checksum);
-				}
-
-				if (err)
-					aud->status = AUD_ROM_NOT_FOUND;
-				else
-				{
-					if (aud->checksum != aud->expchecksum)
-						aud->status = AUD_BAD_CHECKSUM;
-					else
-						aud->status = AUD_ROM_GOOD;
-				}
-			}
-			else
-			{
-				aud->expchecksum = romp->checksum;
-
-				/* look if we can open it */
-				f = osd_fopen (gamedrv->name, name, OSD_FILETYPE_ROM, 0);
-				if (f == 0 && gamedrv->clone_of)
-				{
-					/* if the game is a clone, try loading the ROM from the main version */
-					f = osd_fopen (gamedrv->clone_of->name, name, OSD_FILETYPE_ROM, 0);
-				}
-
-				if (!f)
-					aud->status = AUD_ROM_NOT_FOUND;
-				else
-				{
-					if (!CalcCheckSum (f, romp, aud))
-					{
-						if (aud->checksum != aud->expchecksum)
-							aud->status = AUD_BAD_CHECKSUM;
-						else
-							aud->status = AUD_ROM_GOOD;
-					}
-					osd_fclose (f);
-				}
+				/* if the game is a clone, try the parent */
+				err = osd_fchecksum (gamedrv->clone_of->name, name, &aud->length, &aud->checksum);
 			}
 
-			/* go to next entry, skipping ROM_CONTINUE and ROM_RELOAD */
+			/* spin through ROM_CONTINUEs and ROM_RELOADs, totaling length */
 			do
 			{
+				if (romp->name != (char *)-1) /* ROM_RELOAD */
+					aud->explength += romp->length & ~ROMFLAG_MASK;
 				romp++;
 			}
 			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+
+			if (err)
+				aud->status = AUD_ROM_NOT_FOUND;
+			else if (aud->explength != aud->length)
+				aud->status = AUD_LENGTH_MISMATCH;
+			else if (aud->checksum != aud->expchecksum)
+				aud->status = AUD_BAD_CHECKSUM;
+			else
+				aud->status = AUD_ROM_GOOD;
 
 			aud++;
 		}
@@ -172,13 +99,13 @@ int AuditRomSet (int game, tAuditRecord **audit, int crc)
 
 /* Generic function for evaluating a romset. Some platforms may wish to
    call AuditRomSet() instead and implement their own reporting (like MacMAME). */
-int VerifyRomSet (int game, verify_printf_proc verify_printf, int crc)
+int VerifyRomSet (int game, verify_printf_proc verify_printf)
 {
 	tAuditRecord	*aud;
 	int				count;
 	int				badarchive = 0;
 
-	if ((count = AuditRomSet (game, &aud, crc)) == 0)
+	if ((count = AuditRomSet (game, &aud)) == 0)
 		return NOTFOUND;
 
 	while (count--)
@@ -187,12 +114,12 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf, int crc)
 		{
 			case AUD_ROM_NOT_FOUND:
 				verify_printf ("%-8s: %-12s %7d bytes %08x NOT FOUND\n",
-					drivers[game]->name, aud->rom, aud->length, aud->expchecksum);
+					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
 				badarchive = 1;
 				break;
 			case AUD_BAD_CHECKSUM:
-				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM %08x\n",
-					drivers[game]->name, aud->rom, aud->length, aud->expchecksum, aud->checksum);
+				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM: %08x\n",
+					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->checksum);
 				badarchive = 1;
 				break;
 			case AUD_MEM_ERROR:
@@ -200,10 +127,12 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf, int crc)
 				badarchive = 1;
 				break;
 			case AUD_LENGTH_MISMATCH:
-				verify_printf ("Error reading ROM %s (length mismatch)\n", aud->rom);
+				verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT LENGTH: %8d\n",
+					drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->length);
 				badarchive = 1;
 				break;
 			case AUD_ROM_GOOD:
+				/* put something here if you want a full accounting of roms */
 				break;
 		}
 		aud++;

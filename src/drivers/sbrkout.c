@@ -220,9 +220,7 @@ static unsigned short colortable[] =
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{ 255, 255 },
-	{  1,  1 } /* filter rate (rate = Register(ohm)*Capaciter(F)*1000000) */
+	{ 255, 255 }
 };
 
 
@@ -277,15 +275,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( sbrkout_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "033453.c1", 0x2800, 0x0800, 0xb2744780 , 0xa35d00e3 )
-	ROM_LOAD( "033454.d1", 0x3000, 0x0800, 0x01667872 , 0xd42ea79a )
-	ROM_LOAD( "033455.e1", 0x3800, 0x0800, 0xc6ac940a , 0xe0a6871c )
+	ROM_LOAD( "033453.c1",    0x2800, 0x0800, 0xa35d00e3 )
+	ROM_LOAD( "033454.d1",    0x3000, 0x0800, 0xd42ea79a )
+	ROM_LOAD( "033455.e1",    0x3800, 0x0800, 0xe0a6871c )
 	ROM_RELOAD( 			0xF800, 0x0800 )
 
 	ROM_REGION_DISPOSE(0x420)	  /* 2k for graphics */
-	ROM_LOAD( "033280.p4", 0x0000, 0x0200, 0xba84070c , 0x5a69ce85 )
-	ROM_LOAD( "033281.r4", 0x0200, 0x0200, 0x775a0300 , 0x066bd624 )
-	ROM_LOAD( "033282.k6", 0x0400, 0x0020, 0xc0e000e0 , 0x6228736b )
+	ROM_LOAD( "033280.p4",    0x0000, 0x0200, 0x5a69ce85 )
+	ROM_LOAD( "033281.r4",    0x0200, 0x0200, 0x066bd624 )
+	ROM_LOAD( "033282.k6",    0x0400, 0x0020, 0x6228736b )
 ROM_END
 
 

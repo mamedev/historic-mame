@@ -370,49 +370,49 @@ static struct MachineDriver machine_driver =
 
 ROM_START( kangaroo_rom )
 	ROM_REGION(0x14000)	/* 64k for code + 16k for banked ROMs */
-	ROM_LOAD( "tvg75.bin", 0x0000, 0x1000, 0xc79eeb0a , 0x0d18c581 )
-	ROM_LOAD( "tvg76.bin", 0x1000, 0x1000, 0x1f254c59 , 0x5978d37a )
-	ROM_LOAD( "tvg77.bin", 0x2000, 0x1000, 0x84cf6cd7 , 0x522d1097 )
-	ROM_LOAD( "tvg78.bin", 0x3000, 0x1000, 0xfec4c312 , 0x063da970 )
-	ROM_LOAD( "tvg79.bin", 0x4000, 0x1000, 0x55d4a740 , 0x82a26c7d )
-	ROM_LOAD( "tvg80.bin", 0x5000, 0x1000, 0xf47576eb , 0x3dead542 )
+	ROM_LOAD( "tvg75.bin",    0x0000, 0x1000, 0x0d18c581 )
+	ROM_LOAD( "tvg76.bin",    0x1000, 0x1000, 0x5978d37a )
+	ROM_LOAD( "tvg77.bin",    0x2000, 0x1000, 0x522d1097 )
+	ROM_LOAD( "tvg78.bin",    0x3000, 0x1000, 0x063da970 )
+	ROM_LOAD( "tvg79.bin",    0x4000, 0x1000, 0x82a26c7d )
+	ROM_LOAD( "tvg80.bin",    0x5000, 0x1000, 0x3dead542 )
 
-	ROM_LOAD( "tvg83.bin", 0x10000, 0x1000, 0x5da33f11 , 0xc0446ca6 )	/* graphics ROMs */
-	ROM_LOAD( "tvg85.bin", 0x11000, 0x1000, 0x6450024c , 0x72c52695 )
-	ROM_LOAD( "tvg84.bin", 0x12000, 0x1000, 0x6d872ead , 0xe4cb26c2 )
-	ROM_LOAD( "tvg86.bin", 0x13000, 0x1000, 0x9048077c , 0x9e6a599f )
+	ROM_LOAD( "tvg83.bin",    0x10000, 0x1000, 0xc0446ca6 )	/* graphics ROMs */
+	ROM_LOAD( "tvg85.bin",    0x11000, 0x1000, 0x72c52695 )
+	ROM_LOAD( "tvg84.bin",    0x12000, 0x1000, 0xe4cb26c2 )
+	ROM_LOAD( "tvg86.bin",    0x13000, 0x1000, 0x9e6a599f )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* sound */
-	ROM_LOAD( "tvg81.bin", 0x0000, 0x1000, 0x03a6e98a , 0xfb449bfd )
+	ROM_LOAD( "tvg81.bin",    0x0000, 0x1000, 0xfb449bfd )
 
 	ROM_REGION(0x0800)	/* 8k for the MB8841 custom microcontroller (currently not emulated) */
-	ROM_LOAD( "tvg82.bin", 0x0000, 0x0800, 0x7aa20000 , 0x57766f69 )
+	ROM_LOAD( "tvg82.bin",    0x0000, 0x0800, 0x57766f69 )
 ROM_END
 
 ROM_START( kangarob_rom )
 	ROM_REGION(0x14000)	/* 64k for code + 16k for banked ROMs */
-	ROM_LOAD( "tvg75.bin", 0x0000, 0x1000, 0xc79eeb0a , 0x0d18c581 )
-	ROM_LOAD( "tvg76.bin", 0x1000, 0x1000, 0x1f254c59 , 0x5978d37a )
-	ROM_LOAD( "tvg77.bin", 0x2000, 0x1000, 0x84cf6cd7 , 0x522d1097 )
-	ROM_LOAD( "tvg78.bin", 0x3000, 0x1000, 0xfec4c312 , 0x063da970 )
-	ROM_LOAD( "k5", 0x4000, 0x1000, 0x5ed6ac4e , 0x9e5cf8ca )
-	ROM_LOAD( "k6", 0x5000, 0x1000, 0xfc065432 , 0x7644504a )
+	ROM_LOAD( "tvg75.bin",    0x0000, 0x1000, 0x0d18c581 )
+	ROM_LOAD( "tvg76.bin",    0x1000, 0x1000, 0x5978d37a )
+	ROM_LOAD( "tvg77.bin",    0x2000, 0x1000, 0x522d1097 )
+	ROM_LOAD( "tvg78.bin",    0x3000, 0x1000, 0x063da970 )
+	ROM_LOAD( "k5",           0x4000, 0x1000, 0x9e5cf8ca )
+	ROM_LOAD( "k6",           0x5000, 0x1000, 0x7644504a )
 
-	ROM_LOAD( "tvg83.bin", 0x10000, 0x1000, 0x5da33f11 , 0xc0446ca6 )	/* graphics ROMs */
-	ROM_LOAD( "tvg85.bin", 0x11000, 0x1000, 0x6450024c , 0x72c52695 )
-	ROM_LOAD( "tvg84.bin", 0x12000, 0x1000, 0x6d872ead , 0xe4cb26c2 )
-	ROM_LOAD( "tvg86.bin", 0x13000, 0x1000, 0x9048077c , 0x9e6a599f )
+	ROM_LOAD( "tvg83.bin",    0x10000, 0x1000, 0xc0446ca6 )	/* graphics ROMs */
+	ROM_LOAD( "tvg85.bin",    0x11000, 0x1000, 0x72c52695 )
+	ROM_LOAD( "tvg84.bin",    0x12000, 0x1000, 0xe4cb26c2 )
+	ROM_LOAD( "tvg86.bin",    0x13000, 0x1000, 0x9e6a599f )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000) /* sound */
-	ROM_LOAD( "tvg81.bin", 0x0000, 0x1000, 0x03a6e98a , 0xfb449bfd )
+	ROM_LOAD( "tvg81.bin",    0x0000, 0x1000, 0xfb449bfd )
 ROM_END
 
 

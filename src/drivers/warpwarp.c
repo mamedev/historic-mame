@@ -236,11 +236,11 @@ static struct MachineDriver machine_driver =
 
 ROM_START( warpwarp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "warp_2r.bin", 0x0000, 0x1000, 0x9a51d92b , 0x916ffa35 )
-	ROM_LOAD( "warp_2m.bin", 0x1000, 0x1000, 0xdeb96ecf , 0x398bb87b )
-	ROM_LOAD( "warp_1p.bin", 0x2000, 0x1000, 0x30ad0f77 , 0x6b962fc4 )
-	ROM_LOAD( "warp_1t.bin", 0x3000, 0x0800, 0x3426c0b0 , 0x60a67e76 )
-	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800, 0xb0468bf8 , 0x00e6a326 )
+	ROM_LOAD( "warp_2r.bin",  0x0000, 0x1000, 0x916ffa35 )
+	ROM_LOAD( "warp_2m.bin",  0x1000, 0x1000, 0x398bb87b )
+	ROM_LOAD( "warp_1p.bin",  0x2000, 0x1000, 0x6b962fc4 )
+	ROM_LOAD( "warp_1t.bin",  0x3000, 0x0800, 0x60a67e76 )
+	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800, 0x00e6a326 )
 ROM_END
 
 

@@ -48,7 +48,6 @@ Known issues:
 
 * Destruction Derby has no sound
 * Destruction Derby player 3 and 4 steering wheels are not properly muxed
-* Discs of Tron halts between levels 6? and 7?
 
 ***************************************************************************/
 
@@ -74,6 +73,7 @@ int crater_vh_start(void);
 
 void mcr_init_machine(void);
 int mcr_interrupt(void);
+int dotron_interrupt(void);
 extern int mcr_loadnvram;
 
 void mcr_writeport(int port,int value);
@@ -102,6 +102,10 @@ int sarge_IN1_r(int offset);
 int sarge_IN2_r(int offset);
 void sarge_writeport(int port,int value);
 
+int dotron_vh_start(void);
+void dotron_vh_stop(void);
+int dotron_IN2_r(int offset);
+void dotron_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void dotron_init_machine(void);
 void dotron_writeport(int port,int value);
 
@@ -349,7 +353,7 @@ INPUT_PORTS_START( dotron_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -365,18 +369,26 @@ INPUT_PORTS_START( dotron_input_ports )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON3, "Aim Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON4, "Aim Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* this needs to be low to allow 1 player games? */
+	/* we default to Environmental otherwise speech is disabled */
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Environmental" )
 
 	PORT_START	/* IN3 -- dipswitches */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x01, 0x01, "Coin Meters", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
 
+	PORT_START	/* fake port to make aiming up & down easier */
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y, 100, 0, 0, 0 )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( destderb_input_ports )
 	PORT_START	/* IN0 */
@@ -762,12 +774,22 @@ INPUT_PORTS_START( crater_input_ports )
 INPUT_PORTS_END
 
 
-
 static struct IOReadPort readport[] =
 {
    { 0x00, 0x00, input_port_0_r },
    { 0x01, 0x01, input_port_1_r },
    { 0x02, 0x02, input_port_2_r },
+   { 0x03, 0x03, input_port_3_r },
+   { 0x04, 0x04, input_port_4_r },
+   { 0x05, 0xff, mcr_readport },
+   { -1 }
+};
+
+static struct IOReadPort dt_readport[] =
+{
+   { 0x00, 0x00, input_port_0_r },
+   { 0x01, 0x01, input_port_1_r },
+   { 0x02, 0x02, dotron_IN2_r },
    { 0x03, 0x03, input_port_3_r },
    { 0x04, 0x04, input_port_4_r },
    { 0x05, 0xff, mcr_readport },
@@ -1074,9 +1096,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{ 255 },
-	{ 0 },
+	{ 255 }
 };
 
 static struct TMS5220interface tms5220_interface =
@@ -1147,8 +1167,8 @@ static struct MachineDriver dotron_machine_driver =
 			CPU_Z80,
 			5000000,	/* 5 Mhz */
 			0,
-			readmem,writemem,readport,dt_writeport,
-			mcr_interrupt,1
+			readmem,writemem,dt_readport,dt_writeport,
+			dotron_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -1170,16 +1190,17 @@ static struct MachineDriver dotron_machine_driver =
 	dotron_init_machine,
 
 	/* video hardware */
-	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+/*	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 }, - MAB 09/30/98, changed the screen size for the backdrop */
+	800, 600, { 0, 800-1, 0, 600-1 },
 	dotron_gfxdecodeinfo,
-	8*16, 8*16,
+	254, 4*16,		/* The extra colors are for the backdrop */
 	mcr3_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
-	mcr3_vh_screenrefresh,
+	dotron_vh_start,
+	dotron_vh_stop,
+	dotron_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1614,80 +1635,80 @@ static void spyhunt_decode (void)
 
 ROM_START( tapper_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "tappg0.bin", 0x0000, 0x4000, 0xcb048516 , 0x127171d1 )
-	ROM_LOAD( "tappg1.bin", 0x4000, 0x4000, 0x4f5f9141 , 0x9d6a47f7 )
-	ROM_LOAD( "tappg2.bin", 0x8000, 0x4000, 0x88f856dc , 0x3a1f8778 )
-	ROM_LOAD( "tappg3.bin", 0xc000, 0x2000, 0x2bb09d80 , 0xe8dcdaa4 )
+	ROM_LOAD( "tappg0.bin",   0x0000, 0x4000, 0x127171d1 )
+	ROM_LOAD( "tappg1.bin",   0x4000, 0x4000, 0x9d6a47f7 )
+	ROM_LOAD( "tappg2.bin",   0x8000, 0x4000, 0x3a1f8778 )
+	ROM_LOAD( "tappg3.bin",   0xc000, 0x2000, 0xe8dcdaa4 )
 
 	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tapbg1.bin", 0x00000, 0x4000, 0xea6a7c78 , 0x2a30238c )
-	ROM_LOAD( "tapbg0.bin", 0x04000, 0x4000, 0x5dde8902 , 0x394ab576 )
-	ROM_LOAD( "tapfg7.bin", 0x08000, 0x4000, 0x9cfc4174 , 0x070b4c81 )
-	ROM_LOAD( "tapfg6.bin", 0x0c000, 0x4000, 0x54a41abe , 0xa37aef36 )
-	ROM_LOAD( "tapfg5.bin", 0x10000, 0x4000, 0xbdbb4c45 , 0x800f7c8a )
-	ROM_LOAD( "tapfg4.bin", 0x14000, 0x4000, 0xed4ff871 , 0x32674ee6 )
-	ROM_LOAD( "tapfg3.bin", 0x18000, 0x4000, 0xcd14ce26 , 0x818fffd4 )
-	ROM_LOAD( "tapfg2.bin", 0x1c000, 0x4000, 0xfaa1aaa1 , 0x67e37690 )
-	ROM_LOAD( "tapfg1.bin", 0x20000, 0x4000, 0xf2cde3f3 , 0x32509011 )
-	ROM_LOAD( "tapfg0.bin", 0x24000, 0x4000, 0xbe24e6b8 , 0x8412c808 )
+	ROM_LOAD( "tapbg1.bin",   0x00000, 0x4000, 0x2a30238c )
+	ROM_LOAD( "tapbg0.bin",   0x04000, 0x4000, 0x394ab576 )
+	ROM_LOAD( "tapfg7.bin",   0x08000, 0x4000, 0x070b4c81 )
+	ROM_LOAD( "tapfg6.bin",   0x0c000, 0x4000, 0xa37aef36 )
+	ROM_LOAD( "tapfg5.bin",   0x10000, 0x4000, 0x800f7c8a )
+	ROM_LOAD( "tapfg4.bin",   0x14000, 0x4000, 0x32674ee6 )
+	ROM_LOAD( "tapfg3.bin",   0x18000, 0x4000, 0x818fffd4 )
+	ROM_LOAD( "tapfg2.bin",   0x1c000, 0x4000, 0x67e37690 )
+	ROM_LOAD( "tapfg1.bin",   0x20000, 0x4000, 0x32509011 )
+	ROM_LOAD( "tapfg0.bin",   0x24000, 0x4000, 0x8412c808 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "tapsnda7.bin", 0x0000, 0x1000, 0x2a3cef68 , 0x0e8bb9d5 )
-	ROM_LOAD( "tapsnda8.bin", 0x1000, 0x1000, 0x1b700dfa , 0x0cf0e29b )
-	ROM_LOAD( "tapsnda9.bin", 0x2000, 0x1000, 0xb4de31ba , 0x31eb6dc6 )
-	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x5700e3bc , 0x01a9be6a )
+	ROM_LOAD( "tapsnda7.bin", 0x0000, 0x1000, 0x0e8bb9d5 )
+	ROM_LOAD( "tapsnda8.bin", 0x1000, 0x1000, 0x0cf0e29b )
+	ROM_LOAD( "tapsnda9.bin", 0x2000, 0x1000, 0x31eb6dc6 )
+	ROM_LOAD( "tapsda10.bin", 0x3000, 0x1000, 0x01a9be6a )
 ROM_END
 
 ROM_START( sutapper_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "5791", 0x0000, 0x4000, 0xa2e24a48 , 0x87119cc4 )
-	ROM_LOAD( "5792", 0x4000, 0x4000, 0x6747c235 , 0x4c23ad89 )
-	ROM_LOAD( "5793", 0x8000, 0x4000, 0x2d32407c , 0xfecbf683 )
-	ROM_LOAD( "5794", 0xc000, 0x2000, 0x97ac03a4 , 0x0ea74f51 )
+	ROM_LOAD( "5791",         0x0000, 0x4000, 0x87119cc4 )
+	ROM_LOAD( "5792",         0x4000, 0x4000, 0x4c23ad89 )
+	ROM_LOAD( "5793",         0x8000, 0x4000, 0xfecbf683 )
+	ROM_LOAD( "5794",         0xc000, 0x2000, 0x5bdc1916 )
 
 	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5790", 0x00000, 0x4000, 0x45206b3a , 0xac1558c1 )
-	ROM_LOAD( "5789", 0x04000, 0x4000, 0xb4f2f8a6 , 0xfa66cab5 )
-	ROM_LOAD( "5801", 0x08000, 0x4000, 0x05652719 , 0xd70defa7 )
-	ROM_LOAD( "5802", 0x0c000, 0x4000, 0x4d701a98 , 0xd4f114b9 )
-	ROM_LOAD( "5799", 0x10000, 0x4000, 0x4f493201 , 0x02c69432 )
-	ROM_LOAD( "5800", 0x14000, 0x4000, 0x76a9f89b , 0xebf1f948 )
-	ROM_LOAD( "5797", 0x18000, 0x4000, 0xae2a03c0 , 0xf10a1d05 )
-	ROM_LOAD( "5798", 0x1c000, 0x4000, 0x0ca30a7b , 0x614990cd )
-	ROM_LOAD( "5795", 0x20000, 0x4000, 0x436ecbb8 , 0x5d987c92 )
-	ROM_LOAD( "5796", 0x24000, 0x4000, 0x1b70e618 , 0xde5700b4 )
+	ROM_LOAD( "5790",         0x00000, 0x4000, 0xac1558c1 )
+	ROM_LOAD( "5789",         0x04000, 0x4000, 0xfa66cab5 )
+	ROM_LOAD( "5801",         0x08000, 0x4000, 0xd70defa7 )
+	ROM_LOAD( "5802",         0x0c000, 0x4000, 0xd4f114b9 )
+	ROM_LOAD( "5799",         0x10000, 0x4000, 0x02c69432 )
+	ROM_LOAD( "5800",         0x14000, 0x4000, 0xebf1f948 )
+	ROM_LOAD( "5797",         0x18000, 0x4000, 0xf10a1d05 )
+	ROM_LOAD( "5798",         0x1c000, 0x4000, 0x614990cd )
+	ROM_LOAD( "5795",         0x20000, 0x4000, 0x5d987c92 )
+	ROM_LOAD( "5796",         0x24000, 0x4000, 0xde5700b4 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "5788", 0x0000, 0x1000, 0x7deadcee , 0x5c1d0982 )
-	ROM_LOAD( "5787", 0x1000, 0x1000, 0x3fd4b634 , 0x09e74ed8 )
-	ROM_LOAD( "5786", 0x2000, 0x1000, 0xd39ced7e , 0xc3e98284 )
-	ROM_LOAD( "5785", 0x3000, 0x1000, 0xff9f449d , 0xced2fd47 )
+	ROM_LOAD( "5788",         0x0000, 0x1000, 0x5c1d0982 )
+	ROM_LOAD( "5787",         0x1000, 0x1000, 0x09e74ed8 )
+	ROM_LOAD( "5786",         0x2000, 0x1000, 0xc3e98284 )
+	ROM_LOAD( "5785",         0x3000, 0x1000, 0xced2fd47 )
 ROM_END
 
 ROM_START( rbtapper_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rbtpg0.bin", 0x0000, 0x4000, 0xe244a760 , 0x20b9adf4 )
-	ROM_LOAD( "rbtpg1.bin", 0x4000, 0x4000, 0x9d396be1 , 0x87e616c2 )
-	ROM_LOAD( "rbtpg2.bin", 0x8000, 0x4000, 0xb5754c6f , 0x0b332c97 )
-	ROM_LOAD( "rbtpg3.bin", 0xc000, 0x2000, 0xe4d2f90c , 0x698c06f2 )
+	ROM_LOAD( "rbtpg0.bin",   0x0000, 0x4000, 0x20b9adf4 )
+	ROM_LOAD( "rbtpg1.bin",   0x4000, 0x4000, 0x87e616c2 )
+	ROM_LOAD( "rbtpg2.bin",   0x8000, 0x4000, 0x0b332c97 )
+	ROM_LOAD( "rbtpg3.bin",   0xc000, 0x2000, 0x698c06f2 )
 
 	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rbtbg1.bin", 0x00000, 0x4000, 0xf4a6a6c2 , 0x44dfa483 )
-	ROM_LOAD( "rbtbg0.bin", 0x04000, 0x4000, 0xb2c39a07 , 0x510b13de )
-	ROM_LOAD( "rbtfg7.bin", 0x08000, 0x4000, 0x13b5cd63 , 0x8dbf0c36 )
-	ROM_LOAD( "rbtfg6.bin", 0x0c000, 0x4000, 0x13e3ace7 , 0x441201a0 )
-	ROM_LOAD( "rbtfg5.bin", 0x10000, 0x4000, 0xb7fc8fa2 , 0x9eeca46e )
-	ROM_LOAD( "rbtfg4.bin", 0x14000, 0x4000, 0x96a7dc3f , 0x8c79e7d7 )
-	ROM_LOAD( "rbtfg3.bin", 0x18000, 0x4000, 0x2b5f23af , 0x3e725e77 )
-	ROM_LOAD( "rbtfg2.bin", 0x1c000, 0x4000, 0x83483c84 , 0x4ee8b624 )
-	ROM_LOAD( "rbtfg1.bin", 0x20000, 0x4000, 0x2640bc88 , 0x1c0b8791 )
-	ROM_LOAD( "rbtfg0.bin", 0x24000, 0x4000, 0xbf6680b0 , 0xe99f6018 )
+	ROM_LOAD( "rbtbg1.bin",   0x00000, 0x4000, 0x44dfa483 )
+	ROM_LOAD( "rbtbg0.bin",   0x04000, 0x4000, 0x510b13de )
+	ROM_LOAD( "rbtfg7.bin",   0x08000, 0x4000, 0x8dbf0c36 )
+	ROM_LOAD( "rbtfg6.bin",   0x0c000, 0x4000, 0x441201a0 )
+	ROM_LOAD( "rbtfg5.bin",   0x10000, 0x4000, 0x9eeca46e )
+	ROM_LOAD( "rbtfg4.bin",   0x14000, 0x4000, 0x8c79e7d7 )
+	ROM_LOAD( "rbtfg3.bin",   0x18000, 0x4000, 0x3e725e77 )
+	ROM_LOAD( "rbtfg2.bin",   0x1c000, 0x4000, 0x4ee8b624 )
+	ROM_LOAD( "rbtfg1.bin",   0x20000, 0x4000, 0x1c0b8791 )
+	ROM_LOAD( "rbtfg0.bin",   0x24000, 0x4000, 0xe99f6018 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "rbtsnda7.bin", 0x0000, 0x1000, 0x7deadcee , 0x5c1d0982 )
-	ROM_LOAD( "rbtsnda8.bin", 0x1000, 0x1000, 0x3fd4b634 , 0x09e74ed8 )
-	ROM_LOAD( "rbtsnda9.bin", 0x2000, 0x1000, 0xd39ced7e , 0xc3e98284 )
-	ROM_LOAD( "rbtsda10.bin", 0x3000, 0x1000, 0xff9f449d , 0xced2fd47 )
+	ROM_LOAD( "rbtsnda7.bin", 0x0000, 0x1000, 0x5c1d0982 )
+	ROM_LOAD( "rbtsnda8.bin", 0x1000, 0x1000, 0x09e74ed8 )
+	ROM_LOAD( "rbtsnda9.bin", 0x2000, 0x1000, 0xc3e98284 )
+	ROM_LOAD( "rbtsda10.bin", 0x3000, 0x1000, 0xced2fd47 )
 ROM_END
 
 struct GameDriver tapper_driver =
@@ -1768,44 +1789,76 @@ struct GameDriver rbtapper_driver =
 
 ROM_START( dotron_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "loc-cpu1", 0x0000, 0x4000, 0x2b48866e , 0xeee31b8c )
-	ROM_LOAD( "loc-cpu2", 0x4000, 0x4000, 0xfa50f58a , 0x75ba6ad3 )
-	ROM_LOAD( "loc-cpu3", 0x8000, 0x4000, 0x9c8ca44a , 0x94bb1a0e )
-	ROM_LOAD( "loc-cpu4", 0xc000, 0x2000, 0x12811315 , 0x0477e9a2 )
+	ROM_LOAD( "loc-pg0.1c",   0x0000, 0x4000, 0xba0da15f )
+	ROM_LOAD( "loc-pg1.2c",   0x4000, 0x4000, 0xdc300191 )
+	ROM_LOAD( "loc-pg2.3c",   0x8000, 0x4000, 0xab0b3800 )
+	ROM_LOAD( "loc-pg1.4c",   0xc000, 0x2000, 0xf98c9f8e )
 
 	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "loc-bg2", 0x00000, 0x2000, 0x42dc6d00 , 0x40167124 )
-	ROM_LOAD( "loc-bg1", 0x02000, 0x2000, 0x02fce9a8 , 0xbb2d7a5d )
-	ROM_LOAD( "vgaloc-a", 0x04000, 0x2000, 0xd1d760a7 , 0xb35f5374 )
-	ROM_LOAD( "vgaloc-b", 0x06000, 0x2000, 0x33fc94b0 , 0x565a5c48 )
-	ROM_LOAD( "vgaloc-c", 0x08000, 0x2000, 0x36de3db6 , 0xef45d146 )
-	ROM_LOAD( "vgaloc-d", 0x0a000, 0x2000, 0x61ee7c48 , 0x5e8a3ef3 )
-	ROM_LOAD( "fga-5", 0x0c000, 0x2000, 0x54eeaaf6 , 0xce957f1a )
-	ROM_LOAD( "fga-6", 0x0e000, 0x2000, 0x66e6b362 , 0xd26053ce )
-	ROM_LOAD( "fga-7", 0x10000, 0x2000, 0xf0b6e286 , 0x57a2b1ff )
-	ROM_LOAD( "fga-8", 0x12000, 0x2000, 0xd6847bd4 , 0x3bb4d475 )
+	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
+	ROM_LOAD( "loc-bg1.5f",   0x02000, 0x2000, 0xbb2d7a5d )
+	ROM_LOAD( "loc-a.cp0",    0x04000, 0x2000, 0xb35f5374 )
+	ROM_LOAD( "loc-b.cp9",    0x06000, 0x2000, 0x565a5c48 )
+	ROM_LOAD( "loc-c.cp8",    0x08000, 0x2000, 0xef45d146 )
+	ROM_LOAD( "loc-d.cp7",    0x0a000, 0x2000, 0x5e8a3ef3 )
+	ROM_LOAD( "loc-e.cp6",    0x0c000, 0x2000, 0xce957f1a )
+	ROM_LOAD( "loc-f.cp5",    0x0e000, 0x2000, 0xd26053ce )
+	ROM_LOAD( "loc-g.cp4",    0x10000, 0x2000, 0x57a2b1ff )
+	ROM_LOAD( "loc-h.cp3",    0x12000, 0x2000, 0x3bb4d475 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "loc-a", 0x0000, 0x1000, 0xf24a3842 , 0x2de6a8a8 )
-	ROM_LOAD( "loc-b", 0x1000, 0x1000, 0xe06bfdad , 0x4097663e )
-	ROM_LOAD( "loc-c", 0x2000, 0x1000, 0x4eb9e1c9 , 0xf576b9e7 )
-	ROM_LOAD( "loc-d", 0x3000, 0x1000, 0x33985af4 , 0x74b0059e )
+	ROM_LOAD( "sound0.a7",    0x0000, 0x1000, 0x6d39bf19 )
+	ROM_LOAD( "sound1.a8",    0x1000, 0x1000, 0xac872e1d )
+	ROM_LOAD( "sound2.a9",    0x2000, 0x1000, 0xe8ef6519 )
+	ROM_LOAD( "sound3.a10",   0x3000, 0x1000, 0x6b5aeb02 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "pre-u3", 0xd000, 0x1000, 0x530b2539 , 0xc3d0f762 )
-	ROM_LOAD( "pre-u4", 0xe000, 0x1000, 0x21a4f27e , 0x7ca79b43 )
-	ROM_LOAD( "pre-u5", 0xf000, 0x1000, 0x022b5f5d , 0x24e9618e )
+	ROM_LOAD( "pre.u3",       0xd000, 0x1000, 0xc3d0f762 )
+	ROM_LOAD( "pre.u4",       0xe000, 0x1000, 0x7ca79b43 )
+	ROM_LOAD( "pre.u5",       0xf000, 0x1000, 0x24e9618e )
 ROM_END
+
+ROM_START( dotrone_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "loc-cpu1",     0x0000, 0x4000, 0xeee31b8c )
+	ROM_LOAD( "loc-cpu2",     0x4000, 0x4000, 0x75ba6ad3 )
+	ROM_LOAD( "loc-cpu3",     0x8000, 0x4000, 0x94bb1a0e )
+	ROM_LOAD( "loc-cpu4",     0xc000, 0x2000, 0xc137383c )
+
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
+	ROM_LOAD( "loc-bg1.5f",   0x02000, 0x2000, 0xbb2d7a5d )
+	ROM_LOAD( "loc-a.cp0",    0x04000, 0x2000, 0xb35f5374 )
+	ROM_LOAD( "loc-b.cp9",    0x06000, 0x2000, 0x565a5c48 )
+	ROM_LOAD( "loc-c.cp8",    0x08000, 0x2000, 0xef45d146 )
+	ROM_LOAD( "loc-d.cp7",    0x0a000, 0x2000, 0x5e8a3ef3 )
+	ROM_LOAD( "loc-e.cp6",    0x0c000, 0x2000, 0xce957f1a )
+	ROM_LOAD( "loc-f.cp5",    0x0e000, 0x2000, 0xd26053ce )
+	ROM_LOAD( "loc-g.cp4",    0x10000, 0x2000, 0x57a2b1ff )
+	ROM_LOAD( "loc-h.cp3",    0x12000, 0x2000, 0x3bb4d475 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "loc-a",        0x0000, 0x1000, 0x2de6a8a8 )
+	ROM_LOAD( "loc-b",        0x1000, 0x1000, 0x4097663e )
+	ROM_LOAD( "loc-c",        0x2000, 0x1000, 0xf576b9e7 )
+	ROM_LOAD( "loc-d",        0x3000, 0x1000, 0x74b0059e )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "pre.u3",       0xd000, 0x1000, 0xc3d0f762 )
+	ROM_LOAD( "pre.u4",       0xe000, 0x1000, 0x7ca79b43 )
+	ROM_LOAD( "pre.u5",       0xf000, 0x1000, 0x24e9618e )
+ROM_END
+
 
 struct GameDriver dotron_driver =
 {
 	__FILE__,
 	0,
 	"dotron",
-	"Discs of Tron",
+	"Discs of Tron (Upright)",
 	"1983",
 	"Bally Midway",
-	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)\nMathis Rosenhauer(backdrop support)\nMike Balfour(backdrop support)\nBrandon Kirkpatrick (backdrop)",
 	0,
 	&dotron_machine_driver,
 
@@ -1822,28 +1875,54 @@ struct GameDriver dotron_driver =
 	dotron_hiload, dotron_hisave
 };
 
+struct GameDriver dotrone_driver =
+{
+	__FILE__,
+	&dotron_driver,
+	"dotrone",
+	"Discs of Tron (Environmental)",
+	"1983",
+	"Bally Midway",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)\nMathis Rosenhauer(backdrop support)\nMike Balfour(backdrop support)\nBrandon Kirkpatrick (backdrop)",
+	0,
+	&dotron_machine_driver,
+
+	dotrone_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	dotron_input_ports,
+
+	0, 0,0,
+	ORIENTATION_FLIP_X,
+
+	dotron_hiload, dotron_hisave
+};
+
+
 
 ROM_START( destderb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "dd_pro", 0x0000, 0x4000, 0x92df12bf , 0x8781b367 )
-	ROM_LOAD( "dd_pro1", 0x4000, 0x4000, 0x87f5f32b , 0x4c713bfe )
-	ROM_LOAD( "dd_pro2", 0x8000, 0x4000, 0xf7d3cba3 , 0xc2cbd2a4 )
+	ROM_LOAD( "dd_pro",       0x0000, 0x4000, 0x8781b367 )
+	ROM_LOAD( "dd_pro1",      0x4000, 0x4000, 0x4c713bfe )
+	ROM_LOAD( "dd_pro2",      0x8000, 0x4000, 0xc2cbd2a4 )
 
 	ROM_REGION_DISPOSE(0x24000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "dd_bg0.6f", 0x00000, 0x2000, 0xaca450be , 0xcf80be19 )
-	ROM_LOAD( "dd_bg1.5f", 0x02000, 0x2000, 0xc6416501 , 0x4e173e52 )
-	ROM_LOAD( "dd_fg-3.a10", 0x04000, 0x4000, 0xef11eb4f , 0x801d9b86 )
-	ROM_LOAD( "dd_fg-7.a9", 0x08000, 0x4000, 0x34d19e2f , 0x0ec3f60a )
-	ROM_LOAD( "dd_fg-2.a8", 0x0c000, 0x4000, 0x39702db0 , 0x6cab7b95 )
-	ROM_LOAD( "dd_fg-6.a7", 0x10000, 0x4000, 0x1f76977e , 0xabfb9a8b )
-	ROM_LOAD( "dd_fg-1.a6", 0x14000, 0x4000, 0x154a3f9c , 0x70259651 )
-	ROM_LOAD( "dd_fg-5.a5", 0x18000, 0x4000, 0xa895e3f7 , 0x5fe99007 )
-	ROM_LOAD( "dd_fg-0.a4", 0x1c000, 0x4000, 0x113e4f22 , 0xe57a4de6 )
-	ROM_LOAD( "dd_fg-4.a3", 0x20000, 0x4000, 0x2cbae0ce , 0x55aa667f )
+	ROM_LOAD( "dd_bg0.6f",    0x00000, 0x2000, 0xcf80be19 )
+	ROM_LOAD( "dd_bg1.5f",    0x02000, 0x2000, 0x4e173e52 )
+	ROM_LOAD( "dd_fg-3.a10",  0x04000, 0x4000, 0x801d9b86 )
+	ROM_LOAD( "dd_fg-7.a9",   0x08000, 0x4000, 0x0ec3f60a )
+	ROM_LOAD( "dd_fg-2.a8",   0x0c000, 0x4000, 0x6cab7b95 )
+	ROM_LOAD( "dd_fg-6.a7",   0x10000, 0x4000, 0xabfb9a8b )
+	ROM_LOAD( "dd_fg-1.a6",   0x14000, 0x4000, 0x70259651 )
+	ROM_LOAD( "dd_fg-5.a5",   0x18000, 0x4000, 0x5fe99007 )
+	ROM_LOAD( "dd_fg-0.a4",   0x1c000, 0x4000, 0xe57a4de6 )
+	ROM_LOAD( "dd_fg-4.a3",   0x20000, 0x4000, 0x55aa667f )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "dd_ssio.a7", 0x0000, 0x1000, 0xd920c104 , 0xc95cf31e )
-	ROM_LOAD( "dd_ssio.a8", 0x1000, 0x1000, 0x241e9f44 , 0x12aaa48e )
+	ROM_LOAD( "dd_ssio.a7",   0x0000, 0x1000, 0xc95cf31e )
+	ROM_LOAD( "dd_ssio.a8",   0x1000, 0x1000, 0x12aaa48e )
 ROM_END
 
 struct GameDriver destderb_driver =
@@ -1874,27 +1953,27 @@ struct GameDriver destderb_driver =
 
 ROM_START( timber_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "timpg0.bin", 0x0000, 0x4000, 0x2a48e890 , 0x377032ab )
-	ROM_LOAD( "timpg1.bin", 0x4000, 0x4000, 0xb4fa87d0 , 0xfd772836 )
-	ROM_LOAD( "timpg2.bin", 0x8000, 0x4000, 0x4df6b19a , 0x632989f9 )
-	ROM_LOAD( "timpg3.bin", 0xc000, 0x2000, 0xfb590c8f , 0xdae8a0dc )
+	ROM_LOAD( "timpg0.bin",   0x0000, 0x4000, 0x377032ab )
+	ROM_LOAD( "timpg1.bin",   0x4000, 0x4000, 0xfd772836 )
+	ROM_LOAD( "timpg2.bin",   0x8000, 0x4000, 0x632989f9 )
+	ROM_LOAD( "timpg3.bin",   0xc000, 0x2000, 0xdae8a0dc )
 
 	ROM_REGION_DISPOSE(0x28000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "timbg1.bin", 0x00000, 0x4000, 0x5b0ff893 , 0xb1cb2651 )
-	ROM_LOAD( "timbg0.bin", 0x04000, 0x4000, 0xcbece7a8 , 0x2ae352c4 )
-	ROM_LOAD( "timfg7.bin", 0x08000, 0x4000, 0x5ed46eae , 0xd9c27475 )
-	ROM_LOAD( "timfg6.bin", 0x0c000, 0x4000, 0x31c7f47f , 0x244778e8 )
-	ROM_LOAD( "timfg5.bin", 0x10000, 0x4000, 0x01ac936c , 0xeb636216 )
-	ROM_LOAD( "timfg4.bin", 0x14000, 0x4000, 0x8c437a91 , 0xb7105eb7 )
-	ROM_LOAD( "timfg3.bin", 0x18000, 0x4000, 0xf4aaa2fa , 0x37c03272 )
-	ROM_LOAD( "timfg2.bin", 0x1c000, 0x4000, 0x4cfe5f16 , 0xe2c2885c )
-	ROM_LOAD( "timfg1.bin", 0x20000, 0x4000, 0x08963712 , 0x81de4a73 )
-	ROM_LOAD( "timfg0.bin", 0x24000, 0x4000, 0x567d8457 , 0x7f3a4f59 )
+	ROM_LOAD( "timbg1.bin",   0x00000, 0x4000, 0xb1cb2651 )
+	ROM_LOAD( "timbg0.bin",   0x04000, 0x4000, 0x2ae352c4 )
+	ROM_LOAD( "timfg7.bin",   0x08000, 0x4000, 0xd9c27475 )
+	ROM_LOAD( "timfg6.bin",   0x0c000, 0x4000, 0x244778e8 )
+	ROM_LOAD( "timfg5.bin",   0x10000, 0x4000, 0xeb636216 )
+	ROM_LOAD( "timfg4.bin",   0x14000, 0x4000, 0xb7105eb7 )
+	ROM_LOAD( "timfg3.bin",   0x18000, 0x4000, 0x37c03272 )
+	ROM_LOAD( "timfg2.bin",   0x1c000, 0x4000, 0xe2c2885c )
+	ROM_LOAD( "timfg1.bin",   0x20000, 0x4000, 0x81de4a73 )
+	ROM_LOAD( "timfg0.bin",   0x24000, 0x4000, 0x7f3a4f59 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "tima7.bin", 0x0000, 0x1000, 0x607ed3b8 , 0xc615dc3e )
-	ROM_LOAD( "tima8.bin", 0x1000, 0x1000, 0x85853a95 , 0x83841c87 )
-	ROM_LOAD( "tima9.bin", 0x2000, 0x1000, 0x49e515b1 , 0x22bcdcd3 )
+	ROM_LOAD( "tima7.bin",    0x0000, 0x1000, 0xc615dc3e )
+	ROM_LOAD( "tima8.bin",    0x1000, 0x1000, 0x83841c87 )
+	ROM_LOAD( "tima9.bin",    0x2000, 0x1000, 0x22bcdcd3 )
 ROM_END
 
 struct GameDriver timber_driver =
@@ -1925,22 +2004,22 @@ struct GameDriver timber_driver =
 
 ROM_START( rampage_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pro-0.rv3", 0x0000, 0x8000, 0x471a3c00 , 0x2f7ca03c )
-	ROM_LOAD( "pro-1.rv3", 0x8000, 0x6000, 0x54429658 , 0xd89bd9a4 )
+	ROM_LOAD( "pro-0.rv3",    0x0000, 0x8000, 0x2f7ca03c )
+	ROM_LOAD( "pro-1.rv3",    0x8000, 0x8000, 0xd89bd9a4 )
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg-0", 0x00000, 0x4000, 0xefa953c5 , 0xc0d8b7a5 )
-	ROM_LOAD( "bg-1", 0x04000, 0x4000, 0x88fe2998 , 0x2f6e3aa1 )
-	ROM_LOAD( "fg-3", 0x08000, 0x10000, 0x06033763 , 0x81e1de40 )
-	ROM_LOAD( "fg-2", 0x18000, 0x10000, 0xdf6c8714 , 0x9489f714 )
-	ROM_LOAD( "fg-1", 0x28000, 0x10000, 0xa0449c5e , 0x8728532b )
-	ROM_LOAD( "fg-0", 0x38000, 0x10000, 0xf9f7bf39 , 0x0974be5d )
+	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xc0d8b7a5 )
+	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x2f6e3aa1 )
+	ROM_LOAD( "fg-3",         0x08000, 0x10000, 0x81e1de40 )
+	ROM_LOAD( "fg-2",         0x18000, 0x10000, 0x9489f714 )
+	ROM_LOAD( "fg-1",         0x28000, 0x10000, 0x8728532b )
+	ROM_LOAD( "fg-0",         0x38000, 0x10000, 0x0974be5d )
 
 	ROM_REGION(0x20000)  /* 128k for the Sounds Good board */
-	ROM_LOAD_EVEN( "ramp_u7.snd", 0x00000, 0x8000, 0xcaa4cb94 , 0xcffd7fa5 )
-	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xc05b8501 , 0xe92c596b )
-	ROM_LOAD_EVEN( "ramp_u8.snd", 0x10000, 0x8000, 0xf12ce7b2 , 0x11f787e4 )
-	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0xbc884046 , 0x6b8bf5e1 )
+	ROM_LOAD_EVEN( "ramp_u7.snd",  0x00000, 0x8000, 0xcffd7fa5 )
+	ROM_LOAD_ODD ( "ramp_u17.snd", 0x00000, 0x8000, 0xe92c596b )
+	ROM_LOAD_EVEN( "ramp_u8.snd",  0x10000, 0x8000, 0x11f787e4 )
+	ROM_LOAD_ODD ( "ramp_u18.snd", 0x10000, 0x8000, 0x6b8bf5e1 )
 ROM_END
 
 void rampage_rom_decode (void)
@@ -1980,16 +2059,16 @@ struct GameDriver rampage_driver =
 
 ROM_START( maxrpm_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pro.0", 0x0000, 0x8000, 0x2f9e7072 , 0x3f9ec35f )
-	ROM_LOAD( "pro.1", 0x8000, 0x6000, 0x76c31e97 , 0xf628bb30 )
+	ROM_LOAD( "pro.0",        0x0000, 0x8000, 0x3f9ec35f )
+	ROM_LOAD( "pro.1",        0x8000, 0x8000, 0xf628bb30 )
 
 	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "bg-0", 0x00000, 0x4000, 0x2d713ab1 , 0xe3fb693a )
-	ROM_LOAD( "bg-1", 0x04000, 0x4000, 0xf0edd9cb , 0x50d1db6c )
-	ROM_LOAD( "fg-3", 0x08000, 0x8000, 0x359a200c , 0x9ae3eb52 )
-	ROM_LOAD( "fg-2", 0x18000, 0x8000, 0x70bf1f8f , 0x38be8505 )
-	ROM_LOAD( "fg-1", 0x28000, 0x8000, 0x66780952 , 0xe54b7f2a )
-	ROM_LOAD( "fg-0", 0x38000, 0x8000, 0xf09fe6f3 , 0x1d1435c1 )
+	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xe3fb693a )
+	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x50d1db6c )
+	ROM_LOAD( "fg-3",         0x08000, 0x8000, 0x9ae3eb52 )
+	ROM_LOAD( "fg-2",         0x18000, 0x8000, 0x38be8505 )
+	ROM_LOAD( "fg-1",         0x28000, 0x8000, 0xe54b7f2a )
+	ROM_LOAD( "fg-0",         0x38000, 0x8000, 0x1d1435c1 )
 ROM_END
 
 struct GameDriver maxrpm_driver =
@@ -2020,20 +2099,20 @@ struct GameDriver maxrpm_driver =
 
 ROM_START( sarge_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cpu_3b.bin", 0x0000, 0x8000, 0xe4ccb988 , 0xda31a58f )
-	ROM_LOAD( "cpu_5b.bin", 0x8000, 0x8000, 0xfcfd8a55 , 0x6800e746 )
+	ROM_LOAD( "cpu_3b.bin",   0x0000, 0x8000, 0xda31a58f )
+	ROM_LOAD( "cpu_5b.bin",   0x8000, 0x8000, 0x6800e746 )
 
 	ROM_REGION_DISPOSE(0x24000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "til_15a.bin", 0x00000, 0x2000, 0x9fbe8040 , 0x685001b8 )
-	ROM_LOAD( "til_14b.bin", 0x02000, 0x2000, 0xf1d8588e , 0x8449eb45 )
-	ROM_LOAD( "spr_4e.bin", 0x04000, 0x8000, 0xbeb5a087 , 0xc382267d )
-	ROM_LOAD( "spr_5e.bin", 0x0c000, 0x8000, 0x8656a6b0 , 0xc832375c )
-	ROM_LOAD( "spr_6e.bin", 0x14000, 0x8000, 0x77fcd1fa , 0x7cc6fb28 )
-	ROM_LOAD( "spr_8e.bin", 0x1c000, 0x8000, 0x03a20ad4 , 0x93fac29d )
+	ROM_LOAD( "til_15a.bin",  0x00000, 0x2000, 0x685001b8 )
+	ROM_LOAD( "til_14b.bin",  0x02000, 0x2000, 0x8449eb45 )
+	ROM_LOAD( "spr_4e.bin",   0x04000, 0x8000, 0xc382267d )
+	ROM_LOAD( "spr_5e.bin",   0x0c000, 0x8000, 0xc832375c )
+	ROM_LOAD( "spr_6e.bin",   0x14000, 0x8000, 0x7cc6fb28 )
+	ROM_LOAD( "spr_8e.bin",   0x1c000, 0x8000, 0x93fac29d )
 
 	ROM_REGION(0x10000)  /* 64k for the Turbo Cheap Squeak */
-	ROM_LOAD( "tcs_u5.bin", 0xc000, 0x2000, 0xee7518d3 , 0xa894ef8a )
-	ROM_LOAD( "tcs_u4.bin", 0xe000, 0x2000, 0x9b3a062e , 0x6ca6faf3 )
+	ROM_LOAD( "tcs_u5.bin",   0xc000, 0x2000, 0xa894ef8a )
+	ROM_LOAD( "tcs_u4.bin",   0xe000, 0x2000, 0x6ca6faf3 )
 ROM_END
 
 void sarge_rom_decode (void)
@@ -2073,37 +2152,37 @@ struct GameDriver sarge_driver =
 
 ROM_START( spyhunt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cpu_pg0.6d", 0x0000, 0x2000, 0x69818221 , 0x1721b88f )
-	ROM_LOAD( "cpu_pg1.7d", 0x2000, 0x2000, 0xb2695673 , 0x909d044f )
-	ROM_LOAD( "cpu_pg2.8d", 0x4000, 0x2000, 0xbbf9e30f , 0xafeeb8bd )
-	ROM_LOAD( "cpu_pg3.9d", 0x6000, 0x2000, 0x256011f6 , 0x5e744381 )
-	ROM_LOAD( "cpu_pg4.10d", 0x8000, 0x2000, 0xf5a5e14b , 0xa3033c15 )
-	ROM_LOAD( "cpu_pg5.11d", 0xA000, 0x4000, 0x8d0af17c , 0x88aa1e99 )
+	ROM_LOAD( "cpu_pg0.6d",   0x0000, 0x2000, 0x1721b88f )
+	ROM_LOAD( "cpu_pg1.7d",   0x2000, 0x2000, 0x909d044f )
+	ROM_LOAD( "cpu_pg2.8d",   0x4000, 0x2000, 0xafeeb8bd )
+	ROM_LOAD( "cpu_pg3.9d",   0x6000, 0x2000, 0x5e744381 )
+	ROM_LOAD( "cpu_pg4.10d",  0x8000, 0x2000, 0xa3033c15 )
+	ROM_LOAD( "cpu_pg5.11d",  0xA000, 0x4000, 0x88aa1e99 )
 
 	ROM_REGION_DISPOSE(0x29000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cpu_bg2.5a", 0x0000, 0x2000, 0x6d2296e2 , 0xba0fd626 )
-	ROM_LOAD( "cpu_bg3.6a", 0x2000, 0x2000, 0x113ff55b , 0x7b482d61 )
-	ROM_LOAD( "cpu_bg0.3a", 0x4000, 0x2000, 0x0d0f68b7 , 0xdea34fed )
-	ROM_LOAD( "cpu_bg1.4a", 0x6000, 0x2000, 0x6d113309 , 0x8f64525f )
-	ROM_LOAD( "vid_6fg.a2", 0x8000, 0x4000, 0x80d21978 , 0x8cb8a066 )
-	ROM_LOAD( "vid_7fg.a1", 0xc000, 0x4000, 0x1a41cab7 , 0x940fe17e )
-	ROM_LOAD( "vid_4fg.a4", 0x10000, 0x4000, 0x0fdc474c , 0x7ca4941b )
-	ROM_LOAD( "vid_5fg.a3", 0x14000, 0x4000, 0x638c1f46 , 0x2d9fbcec )
-	ROM_LOAD( "vid_2fg.a6", 0x18000, 0x4000, 0xa9e6820c , 0x62c8bfa5 )
-	ROM_LOAD( "vid_3fg.a5", 0x1c000, 0x4000, 0xd87b5e19 , 0xb894934d )
-	ROM_LOAD( "vid_0fg.a8", 0x20000, 0x4000, 0x3a09c10f , 0x292c5466 )
-	ROM_LOAD( "vid_1fg.a7", 0x24000, 0x4000, 0xd6383ff6 , 0x9fe286ec )
-	ROM_LOAD( "cpu_alph.10g", 0x28000, 0x1000, 0xf22c49b2 , 0x936dc87f )
+	ROM_LOAD( "cpu_bg2.5a",   0x0000, 0x2000, 0xba0fd626 )
+	ROM_LOAD( "cpu_bg3.6a",   0x2000, 0x2000, 0x7b482d61 )
+	ROM_LOAD( "cpu_bg0.3a",   0x4000, 0x2000, 0xdea34fed )
+	ROM_LOAD( "cpu_bg1.4a",   0x6000, 0x2000, 0x8f64525f )
+	ROM_LOAD( "vid_6fg.a2",   0x8000, 0x4000, 0x8cb8a066 )
+	ROM_LOAD( "vid_7fg.a1",   0xc000, 0x4000, 0x940fe17e )
+	ROM_LOAD( "vid_4fg.a4",   0x10000, 0x4000, 0x7ca4941b )
+	ROM_LOAD( "vid_5fg.a3",   0x14000, 0x4000, 0x2d9fbcec )
+	ROM_LOAD( "vid_2fg.a6",   0x18000, 0x4000, 0x62c8bfa5 )
+	ROM_LOAD( "vid_3fg.a5",   0x1c000, 0x4000, 0xb894934d )
+	ROM_LOAD( "vid_0fg.a8",   0x20000, 0x4000, 0x292c5466 )
+	ROM_LOAD( "vid_1fg.a7",   0x24000, 0x4000, 0x9fe286ec )
+	ROM_LOAD( "cpu_alph.10g", 0x28000, 0x1000, 0x936dc87f )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "snd_0sd.a8", 0x0000, 0x1000, 0xd920c104 , 0xc95cf31e )
-	ROM_LOAD( "snd_1sd.a7", 0x1000, 0x1000, 0x241e9f44 , 0x12aaa48e )
+	ROM_LOAD( "snd_0sd.a8",   0x0000, 0x1000, 0xc95cf31e )
+	ROM_LOAD( "snd_1sd.a7",   0x1000, 0x1000, 0x12aaa48e )
 
 	ROM_REGION(0x8000)  /* 32k for the Chip Squeak Deluxe */
-	ROM_LOAD_EVEN( "csd_u7a.u7", 0x00000, 0x2000, 0xf002e3b0 , 0x6e689fe7 )
-	ROM_LOAD_ODD ( "csd_u17b.u17", 0x00000, 0x2000, 0x34b0f16a , 0x0d9ddce6 )
-	ROM_LOAD_EVEN( "csd_u8c.u8", 0x04000, 0x2000, 0x333128c7 , 0x35563cd0 )
-	ROM_LOAD_ODD ( "csd_u18d.u18", 0x04000, 0x2000, 0x14d2cc46 , 0x63d3f5b1 )
+	ROM_LOAD_EVEN( "csd_u7a.u7",   0x00000, 0x2000, 0x6e689fe7 )
+	ROM_LOAD_ODD ( "csd_u17b.u17", 0x00000, 0x2000, 0x0d9ddce6 )
+	ROM_LOAD_EVEN( "csd_u8c.u8",   0x04000, 0x2000, 0x35563cd0 )
+	ROM_LOAD_ODD ( "csd_u18d.u18", 0x04000, 0x2000, 0x63d3f5b1 )
 ROM_END
 
 
@@ -2136,32 +2215,32 @@ struct GameDriver spyhunt_driver =
 
 ROM_START( crater_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "crcpu.6d", 0x0000, 0x2000, 0x52e72fb3 , 0xad31f127 )
-	ROM_LOAD( "crcpu.7d", 0x2000, 0x2000, 0x585fdd1b , 0x3743c78f )
-	ROM_LOAD( "crcpu.8d", 0x4000, 0x2000, 0x1903a325 , 0xc95f9088 )
-	ROM_LOAD( "crcpu.9d", 0x6000, 0x2000, 0x0941415d , 0xa03c4b11 )
-	ROM_LOAD( "crcpu.10d", 0x8000, 0x2000, 0x916b8f89 , 0x44ae4cbd )
+	ROM_LOAD( "crcpu.6d",     0x0000, 0x2000, 0xad31f127 )
+	ROM_LOAD( "crcpu.7d",     0x2000, 0x2000, 0x3743c78f )
+	ROM_LOAD( "crcpu.8d",     0x4000, 0x2000, 0xc95f9088 )
+	ROM_LOAD( "crcpu.9d",     0x6000, 0x2000, 0xa03c4b11 )
+	ROM_LOAD( "crcpu.10d",    0x8000, 0x2000, 0x44ae4cbd )
 
 	ROM_REGION_DISPOSE(0x29000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "crcpu.5a", 0x00000, 0x2000, 0xe9c0af68 , 0x2fe4a6e1 )
-	ROM_LOAD( "crcpu.6a", 0x02000, 0x2000, 0x698aedde , 0xd0659042 )
-	ROM_LOAD( "crcpu.3a", 0x04000, 0x2000, 0xfa35b81b , 0x9d73504a )
-	ROM_LOAD( "crcpu.4a", 0x06000, 0x2000, 0xf4430c0f , 0x42a47dff )
-	ROM_LOAD( "crvid.a9", 0x08000, 0x4000, 0x8a6fe711 , 0x811f152d )
-	ROM_LOAD( "crvid.a10", 0x0c000, 0x4000, 0xd2b5ee37 , 0x7a22d6bc )
-	ROM_LOAD( "crvid.a7", 0x10000, 0x4000, 0xb578fbbe , 0x9fa307d5 )
-	ROM_LOAD( "crvid.a8", 0x14000, 0x4000, 0x5f411bc7 , 0x4b913498 )
-	ROM_LOAD( "crvid.a5", 0x18000, 0x4000, 0x65ae38ea , 0x9bdec312 )
-	ROM_LOAD( "crvid.a6", 0x1c000, 0x4000, 0xa607b3dd , 0x5bf954e0 )
-	ROM_LOAD( "crvid.a3", 0x20000, 0x4000, 0x43c180d9 , 0x2c2f5b29 )
-	ROM_LOAD( "crvid.a4", 0x24000, 0x4000, 0xccf0d768 , 0x579a8e36 )
-	ROM_LOAD( "crcpu.10g", 0x28000, 0x1000, 0xa710e958 , 0x6fe53c8d )
+	ROM_LOAD( "crcpu.5a",     0x00000, 0x2000, 0x2fe4a6e1 )
+	ROM_LOAD( "crcpu.6a",     0x02000, 0x2000, 0xd0659042 )
+	ROM_LOAD( "crcpu.3a",     0x04000, 0x2000, 0x9d73504a )
+	ROM_LOAD( "crcpu.4a",     0x06000, 0x2000, 0x42a47dff )
+	ROM_LOAD( "crvid.a9",     0x08000, 0x4000, 0x811f152d )
+	ROM_LOAD( "crvid.a10",    0x0c000, 0x4000, 0x7a22d6bc )
+	ROM_LOAD( "crvid.a7",     0x10000, 0x4000, 0x9fa307d5 )
+	ROM_LOAD( "crvid.a8",     0x14000, 0x4000, 0x4b913498 )
+	ROM_LOAD( "crvid.a5",     0x18000, 0x4000, 0x9bdec312 )
+	ROM_LOAD( "crvid.a6",     0x1c000, 0x4000, 0x5bf954e0 )
+	ROM_LOAD( "crvid.a3",     0x20000, 0x4000, 0x2c2f5b29 )
+	ROM_LOAD( "crvid.a4",     0x24000, 0x4000, 0x579a8e36 )
+	ROM_LOAD( "crcpu.10g",    0x28000, 0x1000, 0x6fe53c8d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "crsnd4.a7", 0x0000, 0x1000, 0x7153391f , 0xfd666cb5 )
-	ROM_LOAD( "crsnd1.a8", 0x1000, 0x1000, 0x9e274f01 , 0x90bf2c4c )
-	ROM_LOAD( "crsnd2.a9", 0x2000, 0x1000, 0x950dd477 , 0x3b8deef1 )
-	ROM_LOAD( "crsnd3.a10", 0x3000, 0x1000, 0xd4807ed0 , 0x05803453 )
+	ROM_LOAD( "crsnd4.a7",    0x0000, 0x1000, 0xfd666cb5 )
+	ROM_LOAD( "crsnd1.a8",    0x1000, 0x1000, 0x90bf2c4c )
+	ROM_LOAD( "crsnd2.a9",    0x2000, 0x1000, 0x3b8deef1 )
+	ROM_LOAD( "crsnd3.a10",   0x3000, 0x1000, 0x05803453 )
 ROM_END
 
 struct GameDriver crater_driver =

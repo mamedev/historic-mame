@@ -555,21 +555,21 @@ static struct MachineDriver darwin_machine_driver =
 
 ROM_START( brkthru_rom )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
-	ROM_LOAD( "brkthru.1", 0x04000, 0x4000, 0x1badf6d3 , 0xcfb4265f )
-	ROM_LOAD( "brkthru.2", 0x08000, 0x8000, 0x463d0ead , 0xfa8246d9 )
-	ROM_LOAD( "brkthru.4", 0x10000, 0x8000, 0xc76c007a , 0x8cabf252 )
-	ROM_LOAD( "brkthru.3", 0x18000, 0x8000, 0x3273003d , 0x2f2c40c2 )
+	ROM_LOAD( "brkthru.1",    0x04000, 0x4000, 0xcfb4265f )
+	ROM_LOAD( "brkthru.2",    0x08000, 0x8000, 0xfa8246d9 )
+	ROM_LOAD( "brkthru.4",    0x10000, 0x8000, 0x8cabf252 )
+	ROM_LOAD( "brkthru.3",    0x18000, 0x8000, 0x2f2c40c2 )
 
 	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
-	ROM_LOAD( "brkthru.12", 0x00000, 0x2000, 0x1b793a0b , 0x58c0b29b )	/* characters */
+	ROM_LOAD( "brkthru.12",   0x00000, 0x2000, 0x58c0b29b )	/* characters */
 	/* background */
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
-	ROM_LOAD( "brkthru.7", 0x02000, 0x4000, 0xac8d4d91 , 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_LOAD( "brkthru.7",    0x02000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
 	ROM_CONTINUE(           0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
-	ROM_LOAD( "brkthru.6", 0x12000, 0x4000, 0xf4d950bd , 0xfd3cee40 )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_LOAD( "brkthru.6",    0x12000, 0x4000, 0xfd3cee40 )	/* bitplanes 1,2 for bank 5,6 */
 	ROM_CONTINUE(           0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
-	ROM_LOAD( "brkthru.8", 0x06000, 0x1000, 0x20ca0802 , 0xf67ee64e )	/* bitplane 3 for bank 1,2 */
+	ROM_LOAD( "brkthru.8",    0x06000, 0x1000, 0xf67ee64e )	/* bitplane 3 for bank 1,2 */
 	ROM_CONTINUE(           0x08000, 0x1000 )
 	ROM_CONTINUE(           0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
 	ROM_CONTINUE(           0x10000, 0x1000 )
@@ -578,35 +578,35 @@ ROM_START( brkthru_rom )
 	ROM_CONTINUE(           0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
 	ROM_CONTINUE(           0x20000, 0x1000 )
 	/* sprites */
-	ROM_LOAD( "brkthru.9", 0x22000, 0x8000, 0xe7ca5c28 , 0xf54e50a7 )
-	ROM_LOAD( "brkthru.10", 0x2a000, 0x8000, 0x50691d89 , 0xfd156945 )
-	ROM_LOAD( "brkthru.11", 0x32000, 0x8000, 0x92f174b5 , 0xc152a99b )
+	ROM_LOAD( "brkthru.9",    0x22000, 0x8000, 0xf54e50a7 )
+	ROM_LOAD( "brkthru.10",   0x2a000, 0x8000, 0xfd156945 )
+	ROM_LOAD( "brkthru.11",   0x32000, 0x8000, 0xc152a99b )
 
 	ROM_REGION(0x200)	/* color proms */
-	ROM_LOAD( "brkthru.13", 0x0000, 0x100, 0x086024c4 , 0xaae44269 ) /* red and green component */
-	ROM_LOAD( "brkthru.14", 0x0100, 0x100, 0xe2f60e06 , 0xf2d4822a ) /* blue component */
+	ROM_LOAD( "brkthru.13",   0x0000, 0x100, 0xaae44269 ) /* red and green component */
+	ROM_LOAD( "brkthru.14",   0x0100, 0x100, 0xf2d4822a ) /* blue component */
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "brkthru.5", 0x8000, 0x8000, 0x364efd26 , 0xc309435f )
+	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
 ROM_END
 
 ROM_START( darwin_rom )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
-	ROM_LOAD( "darw_04.rom", 0x04000, 0x4000, 0x44937a5d , 0x0eabf21c )
-	ROM_LOAD( "darw_05.rom", 0x08000, 0x8000, 0x4eb1fe09 , 0xe771f864 )
-	ROM_LOAD( "darw_07.rom", 0x10000, 0x8000, 0xaf168464 , 0x97ac052c )
-	ROM_LOAD( "darw_06.rom", 0x18000, 0x8000, 0x6e650107 , 0x2a9fb208 )
+	ROM_LOAD( "darw_04.rom",  0x04000, 0x4000, 0x0eabf21c )
+	ROM_LOAD( "darw_05.rom",  0x08000, 0x8000, 0xe771f864 )
+	ROM_LOAD( "darw_07.rom",  0x10000, 0x8000, 0x97ac052c )
+	ROM_LOAD( "darw_06.rom",  0x18000, 0x8000, 0x2a9fb208 )
 
 	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
-	ROM_LOAD( "darw_09.rom", 0x00000, 0x2000, 0x812801e6 , 0x067b4cf5 )   /* characters */
+	ROM_LOAD( "darw_09.rom",  0x00000, 0x2000, 0x067b4cf5 )   /* characters */
 	/* background */
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
-	ROM_LOAD( "darw_03.rom", 0x02000, 0x4000, 0x531c2446 , 0x57d0350d )   /* bitplanes 1,2 for bank 1,2 */
+	ROM_LOAD( "darw_03.rom",  0x02000, 0x4000, 0x57d0350d )   /* bitplanes 1,2 for bank 1,2 */
 	ROM_CONTINUE(           0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
-	ROM_LOAD( "darw_02.rom", 0x12000, 0x4000, 0xffd1f7fb , 0x559a71ab )   /* bitplanes 1,2 for bank 5,6 */
+	ROM_LOAD( "darw_02.rom",  0x12000, 0x4000, 0x559a71ab )   /* bitplanes 1,2 for bank 5,6 */
 	ROM_CONTINUE(           0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
-	ROM_LOAD( "darw_01.rom", 0x06000, 0x1000, 0xdfac73f0 , 0x15a16973 )   /* bitplane 3 for bank 1,2 */
+	ROM_LOAD( "darw_01.rom",  0x06000, 0x1000, 0x15a16973 )   /* bitplane 3 for bank 1,2 */
 	ROM_CONTINUE(           0x08000, 0x1000 )
 	ROM_CONTINUE(           0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
 	ROM_CONTINUE(           0x10000, 0x1000 )
@@ -615,14 +615,14 @@ ROM_START( darwin_rom )
 	ROM_CONTINUE(           0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
 	ROM_CONTINUE(           0x20000, 0x1000 )
 	/* sprites */
-	ROM_LOAD( "darw_10.rom", 0x22000, 0x8000, 0x445ed6c4 , 0x487a014c )
-	ROM_LOAD( "darw_11.rom", 0x2a000, 0x8000, 0xb3db09a3 , 0x548ce2d1 )
-	ROM_LOAD( "darw_12.rom", 0x32000, 0x8000, 0xebb10a19 , 0xfaba5fef )
+	ROM_LOAD( "darw_10.rom",  0x22000, 0x8000, 0x487a014c )
+	ROM_LOAD( "darw_11.rom",  0x2a000, 0x8000, 0x548ce2d1 )
+	ROM_LOAD( "darw_12.rom",  0x32000, 0x8000, 0xfaba5fef )
 
 	ROM_REGION(0x200)	/* color proms - missing! */
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "darw_08.rom", 0x8000, 0x8000, 0x5ad39fb7 , 0x6b580d58 )
+	ROM_LOAD( "darw_08.rom",  0x8000, 0x8000, 0x6b580d58 )
 ROM_END
 
 

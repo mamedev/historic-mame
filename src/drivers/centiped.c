@@ -394,28 +394,28 @@ static struct MachineDriver machine_driver =
 
 ROM_START( centiped_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "centiped.307", 0x2000, 0x0800, 0x2409fc03 , 0x5ab0d9de )
-	ROM_LOAD( "centiped.308", 0x2800, 0x0800, 0x209922dd , 0x4c07fd3e )
-	ROM_LOAD( "centiped.309", 0x3000, 0x0800, 0x57cee11e , 0xff69b424 )
-	ROM_LOAD( "centiped.310", 0x3800, 0x0800, 0xb959c639 , 0x44e40fa4 )
+	ROM_LOAD( "centiped.307", 0x2000, 0x0800, 0x5ab0d9de )
+	ROM_LOAD( "centiped.308", 0x2800, 0x0800, 0x4c07fd3e )
+	ROM_LOAD( "centiped.309", 0x3000, 0x0800, 0xff69b424 )
+	ROM_LOAD( "centiped.310", 0x3800, 0x0800, 0x44e40fa4 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x704a2608 , 0x880acfb9 )
-	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xc9016e3f , 0xb1397029 )
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
 ROM_START( centipd2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0x45b4d32c , 0xb2909e2f )
-	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0xb7c2dd22 , 0x110e04ff )
-	ROM_LOAD( "centiped.209", 0x3000, 0x0800, 0xc4549966 , 0xcc2edb26 )
-	ROM_LOAD( "centiped.210", 0x3800, 0x0800, 0xd6b0956a , 0x93999153 )
+	ROM_LOAD( "centiped.207", 0x2000, 0x0800, 0xb2909e2f )
+	ROM_LOAD( "centiped.208", 0x2800, 0x0800, 0x110e04ff )
+	ROM_LOAD( "centiped.209", 0x3000, 0x0800, 0xcc2edb26 )
+	ROM_LOAD( "centiped.210", 0x3800, 0x0800, 0x93999153 )
 	ROM_RELOAD(               0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x704a2608 , 0x880acfb9 )
-	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xc9016e3f , 0xb1397029 )
+	ROM_LOAD( "centiped.211", 0x0000, 0x0800, 0x880acfb9 )
+	ROM_LOAD( "centiped.212", 0x0800, 0x0800, 0xb1397029 )
 ROM_END
 
 

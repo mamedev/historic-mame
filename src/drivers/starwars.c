@@ -345,21 +345,21 @@ ROM_START( starwars_rom )
 #if(EMPIRE==0)
 
 	ROM_REGION(0x12000)     /* 2 64k ROM spaces */
-	ROM_LOAD( "136021.105", 0x3000, 0x1000, 0x46f9a4f9 , 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
-	ROM_LOAD( "136021.114", 0x6000, 0x2000, 0x8fddcf2b , 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
+	ROM_LOAD( "136021.105",   0x3000, 0x1000, 0x538e7d2f ) /* 3000-3fff is 4k vector rom */
+	ROM_LOAD( "136021.114",   0x6000, 0x2000, 0xe75ff867 )   /* ROM 0 bank pages 0 and 1 */
 	ROM_CONTINUE(          0x10000, 0x2000 )
-	ROM_LOAD( "136021.102", 0x8000, 0x2000, 0x7ad298ba , 0xf725e344 ) /*  8k ROM 1 bank */
-	ROM_LOAD( "136021.203", 0xa000, 0x2000, 0x58c5d6a1 , 0xf6da0a00 ) /*  8k ROM 2 bank */
-	ROM_LOAD( "136021.104", 0xc000, 0x2000, 0x38d07312 , 0x7e406703 ) /*  8k ROM 3 bank */
-	ROM_LOAD( "136021.206", 0xe000, 0x2000, 0x199428a2 , 0xc7e51237 ) /*  8k ROM 4 bank */
+	ROM_LOAD( "136021.102",   0x8000, 0x2000, 0xf725e344 ) /*  8k ROM 1 bank */
+	ROM_LOAD( "136021.203",   0xa000, 0x2000, 0xf6da0a00 ) /*  8k ROM 2 bank */
+	ROM_LOAD( "136021.104",   0xc000, 0x2000, 0x7e406703 ) /*  8k ROM 3 bank */
+	ROM_LOAD( "136021.206",   0xe000, 0x2000, 0xc7e51237 ) /*  8k ROM 4 bank */
 
 	/* Load the Mathbox PROM's temporarily into the Vector RAM area */
 	/* During initialisation they will be converted into useable form */
 	/* and stored elsewhere. */
-	ROM_LOAD( "136021.110", 0x0000, 0x0400, 0x3757bfd5 , 0x01061762 ) /* PROM 0 */
-	ROM_LOAD( "136021.111", 0x0400, 0x0400, 0x465db5db , 0x2e619b70 ) /* PROM 1 */
-	ROM_LOAD( "136021.112", 0x0800, 0x0400, 0xcb5ab0da , 0x6cfa3544 ) /* PROM 2 */
-	ROM_LOAD( "136021.113", 0x0c00, 0x0400, 0x4d20bcd2 , 0x03f6acb2 ) /* PROM 3 */
+	ROM_LOAD( "136021.110",   0x0000, 0x0400, 0x01061762 ) /* PROM 0 */
+	ROM_LOAD( "136021.111",   0x0400, 0x0400, 0x2e619b70 ) /* PROM 1 */
+	ROM_LOAD( "136021.112",   0x0800, 0x0400, 0x6cfa3544 ) /* PROM 2 */
+	ROM_LOAD( "136021.113",   0x0c00, 0x0400, 0x03f6acb2 ) /* PROM 3 */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
@@ -367,9 +367,9 @@ ROM_START( starwars_rom )
 
 	/* Sound ROMS */
 	ROM_REGION(0x10000)     /* Really only 32k, but it looks like 64K */
-	ROM_LOAD( "136021.107", 0x4000, 0x2000, 0xc0006994, 0xdbf3aea2 ) /* Sound ROM 0 */
+	ROM_LOAD( "136021.107",   0x4000, 0x2000, 0xdbf3aea2 ) /* Sound ROM 0 */
 	ROM_RELOAD(           0xc000,0x2000) /* Copied again for */
-	ROM_LOAD( "136021.208", 0x6000, 0x2000, 0xa000bc38, 0xe38070a8 ) /* Sound ROM 0 */
+	ROM_LOAD( "136021.208",   0x6000, 0x2000, 0xe38070a8 ) /* Sound ROM 0 */
 	ROM_RELOAD(           0xe000,0x2000) /* proper int vecs */
 ROM_END
 #endif
@@ -379,13 +379,13 @@ ROM_END
 #if(EMPIRE==1)
         ROM_REGION(0x14000)     /* 64k for code, and another 16k on the end for banked ROMS */
 
-        ROM_LOAD( "136031.111", 0x3000, 0x1000, 0 , 0x0 )    /* 3000-3fff is 4k vector rom */
+        ROM_LOAD( "136031.111",   0x3000, 0x1000, 0x0 )    /* 3000-3fff is 4k vector rom */
 
 /* Expansion board location   ROM_LOAD( "136021.102", 0x8000, 0x2000, 0 )   8k ROM 1 bank */
-        ROM_LOAD( "136031.102", 0xa000, 0x2000, 0 , 0x0 ) /*  8k ROM 2 bank */
-        ROM_LOAD( "136021.103", 0xc000, 0x2000, 0 , 0x0 ) /*  8k ROM 3 bank */
-        ROM_LOAD( "136031.104", 0xe000, 0x2000, 0 , 0x0 ) /*  8k ROM 4 bank */
-        ROM_LOAD( "136031.101", 0x10000, 0x4000, 0 , 0x0 )   /* Paged ROM 0 */
+        ROM_LOAD( "136031.102",   0xa000, 0x2000, 0x0 ) /*  8k ROM 2 bank */
+        ROM_LOAD( "136021.103",   0xc000, 0x2000, 0x0 ) /*  8k ROM 3 bank */
+        ROM_LOAD( "136031.104",   0xe000, 0x2000, 0x0 ) /*  8k ROM 4 bank */
+        ROM_LOAD( "136031.101",   0x10000, 0x4000, 0x0 )   /* Paged ROM 0 */
 ROM_END
 #endif
 

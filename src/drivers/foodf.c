@@ -322,19 +322,19 @@ static void hisave (void)
 
 ROM_START( foodf_rom )
 	ROM_REGION(0x10000)	/* 64k for 68000 code */
-	ROM_LOAD_EVEN( "foodf.9c", 0x00000, 0x02000, 0x428f3769 , 0xef92dc5c )
-	ROM_LOAD_ODD ( "foodf.8c", 0x00000, 0x02000, 0x073c9d32 , 0xdfc3d5a8 )
-	ROM_LOAD_EVEN( "foodf.9d", 0x04000, 0x02000, 0xce746fa0 , 0xea596480 )
-	ROM_LOAD_ODD ( "foodf.8d", 0x04000, 0x02000, 0x689c7232 , 0x64b93076 )
-	ROM_LOAD_EVEN( "foodf.9e", 0x08000, 0x02000, 0xbe570453 , 0x95159a3e )
-	ROM_LOAD_ODD ( "foodf.8e", 0x08000, 0x02000, 0x827981db , 0xe6cff1b1 )
-	ROM_LOAD_EVEN( "foodf.9f", 0x0c000, 0x02000, 0x294af2da , 0x608690c9 )
-	ROM_LOAD_ODD ( "foodf.8f", 0x0c000, 0x02000, 0x02a55787 , 0x17828dbb )
+	ROM_LOAD_EVEN( "foodf.9c",     0x00000, 0x02000, 0xef92dc5c )
+	ROM_LOAD_ODD ( "foodf.8c",     0x00000, 0x02000, 0xdfc3d5a8 )
+	ROM_LOAD_EVEN( "foodf.9d",     0x04000, 0x02000, 0xea596480 )
+	ROM_LOAD_ODD ( "foodf.8d",     0x04000, 0x02000, 0x64b93076 )
+	ROM_LOAD_EVEN( "foodf.9e",     0x08000, 0x02000, 0x95159a3e )
+	ROM_LOAD_ODD ( "foodf.8e",     0x08000, 0x02000, 0xe6cff1b1 )
+	ROM_LOAD_EVEN( "foodf.9f",     0x0c000, 0x02000, 0x608690c9 )
+	ROM_LOAD_ODD ( "foodf.8f",     0x0c000, 0x02000, 0x17828dbb )
 
 	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "foodf.4d", 0x0000, 0x2000, 0x0a70cc90 , 0x8870e3d6 )
-	ROM_LOAD( "foodf.4e", 0x2000, 0x2000, 0x87997597 , 0x84372edf )
-	ROM_LOAD( "foodf.6lm", 0x4000, 0x2000, 0x1ed008ec , 0xc13c90eb )
+	ROM_LOAD( "foodf.4d",     0x0000, 0x2000, 0x8870e3d6 )
+	ROM_LOAD( "foodf.4e",     0x2000, 0x2000, 0x84372edf )
+	ROM_LOAD( "foodf.6lm",    0x4000, 0x2000, 0xc13c90eb )
 ROM_END
 
 struct GameDriver foodf_driver =

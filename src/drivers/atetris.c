@@ -205,26 +205,26 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 ROM_START( atetris_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "1100.45f", 0x0000, 0x10000, 0xaf18a152 , 0x2acbdb09 )
+	ROM_LOAD( "1100.45f",     0x0000, 0x10000, 0x2acbdb09 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1101.35a", 0x0000, 0x10000, 0x4bdf7ba5 , 0x84a1939f )
+	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
 ROM_START( atetrisa_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "d1", 0x0000, 0x10000, 0x4112e26c , 0x2bcab107 )
+	ROM_LOAD( "d1",           0x0000, 0x10000, 0x2bcab107 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1101.35a", 0x0000, 0x10000, 0x4bdf7ba5 , 0x84a1939f )
+	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
 ROM_START( atetrisb_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "tetris.01", 0x0000, 0x10000, 0x813ea036 , 0x944d15f6 )
+	ROM_LOAD( "tetris.01",    0x0000, 0x10000, 0x944d15f6 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tetris.02", 0x0000, 0x10000, 0x366e8d7a , 0x5c4e7258 )
+	ROM_LOAD( "tetris.02",    0x0000, 0x10000, 0x5c4e7258 )
 
 	/* there's an extra EEPROM, maybe used for protection crack, which */
 	/* however doesn't seem to be required to run the game in this driver. */
@@ -232,10 +232,10 @@ ROM_END
 
 ROM_START( atetcktl_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "1102.45f", 0x0000, 0x10000, 0xcb2f88b3 , 0x1bd28902 )
+	ROM_LOAD( "1102.45f",     0x0000, 0x10000, 0x1bd28902 )
 
 	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1103.35a", 0x0000, 0x10000, 0x010956c1 , 0xec2a7f93 )
+	ROM_LOAD( "1103.35a",     0x0000, 0x10000, 0xec2a7f93 )
 ROM_END
 
 

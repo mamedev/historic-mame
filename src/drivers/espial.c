@@ -294,46 +294,46 @@ static struct MachineDriver machine_driver =
 
 ROM_START( espial_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "espial.3", 0x0000, 0x2000, 0x0317ae6d , 0x10f1da30 )
-	ROM_LOAD( "espial.4", 0x2000, 0x2000, 0xd76ccd4e , 0xd2adbe39 )
-	ROM_LOAD( "espial.6", 0x4000, 0x1000, 0x472e9fd4 , 0xbaa60bc1 )
-	ROM_LOAD( "espial.5", 0xc000, 0x1000, 0xa295f697 , 0x6d7bbfc1 )
+	ROM_LOAD( "espial.3",     0x0000, 0x2000, 0x10f1da30 )
+	ROM_LOAD( "espial.4",     0x2000, 0x2000, 0xd2adbe39 )
+	ROM_LOAD( "espial.6",     0x4000, 0x1000, 0xbaa60bc1 )
+	ROM_LOAD( "espial.5",     0xc000, 0x1000, 0x6d7bbfc1 )
 
 	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "espial.8", 0x0000, 0x2000, 0xc2dfd8e7 , 0x2f43036f )
-	ROM_LOAD( "espial.7", 0x2000, 0x1000, 0x868c222c , 0xebfef046 )
-	ROM_LOAD( "espial.10", 0x3000, 0x1000, 0x43808b36 , 0xde80fbc1 )
-	ROM_LOAD( "espial.9", 0x4000, 0x1000, 0x04efcefb , 0x48c258a0 )
+	ROM_LOAD( "espial.8",     0x0000, 0x2000, 0x2f43036f )
+	ROM_LOAD( "espial.7",     0x2000, 0x1000, 0xebfef046 )
+	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
+	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
 
 	ROM_REGION(0x0200)	/* color proms */
-	ROM_LOAD( "espial.1f", 0x0000, 0x0100, 0x11a90b05 , 0xd12de557 ) /* palette low 4 bits */
-	ROM_LOAD( "espial.1h", 0x0100, 0x0100, 0xbcae050e , 0x4c84fe70 ) /* palette high 4 bits */
+	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
+	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "espial.1", 0x0000, 0x1000, 0xb3acb1b0 , 0x1e5ec20b )
-	ROM_LOAD( "espial.2", 0x1000, 0x1000, 0xeec42d68 , 0x3431bb97 )
+	ROM_LOAD( "espial.1",     0x0000, 0x1000, 0x1e5ec20b )
+	ROM_LOAD( "espial.2",     0x1000, 0x1000, 0x3431bb97 )
 ROM_END
 
 ROM_START( espiale_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2764.3", 0x0000, 0x2000, 0xf57f05b9 , 0x0973c8a4 )
-	ROM_LOAD( "2764.4", 0x2000, 0x2000, 0x2fc1446b , 0x6034d7e5 )
-	ROM_LOAD( "2732.6", 0x4000, 0x1000, 0x147f9035 , 0x357025b4 )
-	ROM_LOAD( "2732.5", 0xc000, 0x1000, 0x25bff16d , 0xd03a2fc4 )
+	ROM_LOAD( "2764.3",       0x0000, 0x2000, 0x0973c8a4 )
+	ROM_LOAD( "2764.4",       0x2000, 0x2000, 0x6034d7e5 )
+	ROM_LOAD( "2732.6",       0x4000, 0x1000, 0x357025b4 )
+	ROM_LOAD( "2732.5",       0xc000, 0x1000, 0xd03a2fc4 )
 
 	ROM_REGION_DISPOSE(0x5000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "espial.8", 0x0000, 0x2000, 0xc2dfd8e7 , 0x2f43036f )
-	ROM_LOAD( "espial.7", 0x2000, 0x1000, 0x868c222c , 0xebfef046 )
-	ROM_LOAD( "espial.10", 0x3000, 0x1000, 0x43808b36 , 0xde80fbc1 )
-	ROM_LOAD( "espial.9", 0x4000, 0x1000, 0x04efcefb , 0x48c258a0 )
+	ROM_LOAD( "espial.8",     0x0000, 0x2000, 0x2f43036f )
+	ROM_LOAD( "espial.7",     0x2000, 0x1000, 0xebfef046 )
+	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
+	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
 
 	ROM_REGION(0x0200)	/* color proms */
-	ROM_LOAD( "espial.1f", 0x0000, 0x0100, 0x11a90b05 , 0xd12de557 ) /* palette low 4 bits */
-	ROM_LOAD( "espial.1h", 0x0100, 0x0100, 0xbcae050e , 0x4c84fe70 ) /* palette high 4 bits */
+	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
+	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "2732.1", 0x0000, 0x1000, 0x13b5696d , 0xfc7729e9 )
-	ROM_LOAD( "2732.2", 0x1000, 0x1000, 0xd690636c , 0xe4e256da )
+	ROM_LOAD( "2732.1",       0x0000, 0x1000, 0xfc7729e9 )
+	ROM_LOAD( "2732.2",       0x1000, 0x1000, 0xe4e256da )
 ROM_END
 
 

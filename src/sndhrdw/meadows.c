@@ -105,9 +105,9 @@ int preset, amp;
 	if (latched_0c03 != meadows_0c03)
 	{
 		if ((meadows_0c03 & ENABLE_DAC) == 0)
-			DAC_volume(0,0);
+			DAC_set_volume(0,0,0);
 		else
-			DAC_volume(0,255);
+			DAC_set_volume(0,255,0);
     }
 
     latched_0c01 = meadows_0c01;

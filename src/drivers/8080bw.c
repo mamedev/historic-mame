@@ -148,10 +148,10 @@ enum { BLACK,RED,GREEN,YELLOW,WHITE,CYAN,PURPLE }; /* V.V */
 
 ROM_START( invaders_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "invaders.h", 0x0000, 0x0800, 0x50d4f038 , 0x734f5ad8 )
-	ROM_LOAD( "invaders.g", 0x0800, 0x0800, 0x0d20437a , 0x6bfaca4a )
-	ROM_LOAD( "invaders.f", 0x1000, 0x0800, 0x5175f639 , 0x0ccead96 )
-	ROM_LOAD( "invaders.e", 0x1800, 0x0800, 0x1206db68 , 0x14e538b0 )
+	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0x734f5ad8 )
+	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x6bfaca4a )
+	ROM_LOAD( "invaders.f",   0x1000, 0x0800, 0x0ccead96 )
+	ROM_LOAD( "invaders.e",   0x1800, 0x0800, 0x14e538b0 )
 ROM_END
 
 /* invaders, earthinv, spaceatt, invrvnge, invdelux, invadpt2, galxwars, lrescue, */
@@ -363,11 +363,11 @@ struct GameDriver invaders_driver =
 
 ROM_START( invaders2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "pv.01", 0x0000, 0x0800, 0x8b00eeba , 0x7288a511 )
-	ROM_LOAD( "pv.02", 0x0800, 0x0800, 0x0c7adc30 , 0x097dd8d5 )
-	ROM_LOAD( "pv.03", 0x1000, 0x0800, 0xb2384c12 , 0x1766337e )
-	ROM_LOAD( "pv.04", 0x1800, 0x0800, 0x14411f47 , 0x8f0e62e0 )
-	ROM_LOAD( "pv.05", 0x4000, 0x0800, 0x2990da7a , 0x19b505e9 )
+	ROM_LOAD( "pv.01",        0x0000, 0x0800, 0x7288a511 )
+	ROM_LOAD( "pv.02",        0x0800, 0x0800, 0x097dd8d5 )
+	ROM_LOAD( "pv.03",        0x1000, 0x0800, 0x1766337e )
+	ROM_LOAD( "pv.04",        0x1800, 0x0800, 0x8f0e62e0 )
+	ROM_LOAD( "pv.05",        0x4000, 0x0800, 0x19b505e9 )
 ROM_END
 
 static struct IOReadPort invadpt2_readport[] =
@@ -563,10 +563,10 @@ struct GameDriver invadpt2_driver =
 
 ROM_START( earthinv_rom )
 	ROM_REGION(0x10000)             /* 64k for code */
-	ROM_LOAD( "earthinv.h", 0x0000, 0x0800, 0xec409c20 , 0x58a750c8 )
-	ROM_LOAD( "earthinv.g", 0x0800, 0x0800, 0x46a1b083 , 0xb91742f1 )
-	ROM_LOAD( "earthinv.f", 0x1000, 0x0800, 0xfcb8d54c , 0x4acbbc60 )
-	ROM_LOAD( "earthinv.e", 0x1800, 0x0800, 0x38dff747 , 0xdf397b12 )
+	ROM_LOAD( "earthinv.h",   0x0000, 0x0800, 0x58a750c8 )
+	ROM_LOAD( "earthinv.g",   0x0800, 0x0800, 0xb91742f1 )
+	ROM_LOAD( "earthinv.f",   0x1000, 0x0800, 0x4acbbc60 )
+	ROM_LOAD( "earthinv.e",   0x1800, 0x0800, 0xdf397b12 )
 ROM_END
 
 INPUT_PORTS_START( earthinv_input_ports )
@@ -631,10 +631,10 @@ struct GameDriver earthinv_driver =
 
 ROM_START( spaceatt_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "spaceatt.h", 0x0000, 0x0800, 0x607fceab , 0xa31d0756 )
-	ROM_LOAD( "spaceatt.g", 0x0800, 0x0800, 0x47146b7c , 0xf41241f7 )
-	ROM_LOAD( "spaceatt.f", 0x1000, 0x0800, 0xf7306b0a , 0x4c060223 )
-	ROM_LOAD( "spaceatt.e", 0x1800, 0x0800, 0xb362b53c , 0x7cf6f604 )
+	ROM_LOAD( "spaceatt.h",   0x0000, 0x0800, 0xa31d0756 )
+	ROM_LOAD( "spaceatt.g",   0x0800, 0x0800, 0xf41241f7 )
+	ROM_LOAD( "spaceatt.f",   0x1000, 0x0800, 0x4c060223 )
+	ROM_LOAD( "spaceatt.e",   0x1800, 0x0800, 0x7cf6f604 )
 ROM_END
 
 INPUT_PORTS_START( spaceatt_input_ports )
@@ -698,10 +698,10 @@ struct GameDriver spaceatt_driver =
 
 ROM_START( invrvnge_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "invrvnge.h", 0x0000, 0x0800, 0xe6a7b0ab , 0xaca41bbb )
-	ROM_LOAD( "invrvnge.g", 0x0800, 0x0800, 0xc3355da1 , 0xcfe89dad )
-	ROM_LOAD( "invrvnge.f", 0x1000, 0x0800, 0x81b0bac0 , 0xe350de2c )
-	ROM_LOAD( "invrvnge.e", 0x1800, 0x0800, 0xe90b9c6f , 0x1ec8dfc8 )
+	ROM_LOAD( "invrvnge.h",   0x0000, 0x0800, 0xaca41bbb )
+	ROM_LOAD( "invrvnge.g",   0x0800, 0x0800, 0xcfe89dad )
+	ROM_LOAD( "invrvnge.f",   0x1000, 0x0800, 0xe350de2c )
+	ROM_LOAD( "invrvnge.e",   0x1800, 0x0800, 0x1ec8dfc8 )
 ROM_END
 
 static struct MemoryWriteAddress invrvnge_writemem[] =
@@ -849,11 +849,11 @@ struct GameDriver invrvnge_driver =
 
 ROM_START( invdelux_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "invdelux.h", 0x0000, 0x0800, 0x5b009eba , 0xe690818f )
-	ROM_LOAD( "invdelux.g", 0x0800, 0x0800, 0x5f0db2f5 , 0x4268c12d )
-	ROM_LOAD( "invdelux.f", 0x1000, 0x0800, 0x0204561c , 0xf4aa1880 )
-	ROM_LOAD( "invdelux.e", 0x1800, 0x0800, 0x8a364d1a , 0x408849c1 )
-	ROM_LOAD( "invdelux.d", 0x4000, 0x0800, 0x5239e87f , 0xe8d5afcd )
+	ROM_LOAD( "invdelux.h",   0x0000, 0x0800, 0xe690818f )
+	ROM_LOAD( "invdelux.g",   0x0800, 0x0800, 0x4268c12d )
+	ROM_LOAD( "invdelux.f",   0x1000, 0x0800, 0xf4aa1880 )
+	ROM_LOAD( "invdelux.e",   0x1800, 0x0800, 0x408849c1 )
+	ROM_LOAD( "invdelux.d",   0x4000, 0x0800, 0xe8d5afcd )
 ROM_END
 
 static struct IOReadPort invdelux_readport[] =
@@ -1020,10 +1020,10 @@ struct GameDriver invdelux_driver =
 
 ROM_START( astlaser_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "1.u36", 0x0000, 0x0800, 0xeada1922 , 0xb44e2c41 )
-	ROM_LOAD( "2.u35", 0x0800, 0x0800, 0x2a011857 , 0x9876f331 )
-	ROM_LOAD( "3.u34", 0x1000, 0x0800, 0x77693c09 , 0xed79000b )
-	ROM_LOAD( "4.u33", 0x1800, 0x0800, 0xe83fc1e1 , 0x10a160a1 )
+	ROM_LOAD( "1.u36",        0x0000, 0x0800, 0xb44e2c41 )
+	ROM_LOAD( "2.u35",        0x0800, 0x0800, 0x9876f331 )
+	ROM_LOAD( "3.u34",        0x1000, 0x0800, 0xed79000b )
+	ROM_LOAD( "4.u33",        0x1800, 0x0800, 0x10a160a1 )
 ROM_END
 
 struct GameDriver astlaser_driver =
@@ -1059,10 +1059,10 @@ struct GameDriver astlaser_driver =
 
 ROM_START( intruder_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "la01", 0x0000, 0x0800, 0x1317576b , 0xbedc0078 )
-	ROM_LOAD( "la02", 0x0800, 0x0800, 0x64dc1868 , 0x43bc65c5 )
-	ROM_LOAD( "la03", 0x1000, 0x0800, 0x10ce7edc , 0x1083e9cc )
-	ROM_LOAD( "la04", 0x1800, 0x0800, 0x2c72977e , 0x5116b234 )
+	ROM_LOAD( "la01",         0x0000, 0x0800, 0xbedc0078 )
+	ROM_LOAD( "la02",         0x0800, 0x0800, 0x43bc65c5 )
+	ROM_LOAD( "la03",         0x1000, 0x0800, 0x1083e9cc )
+	ROM_LOAD( "la04",         0x1800, 0x0800, 0x5116b234 )
 ROM_END
 
 struct GameDriver intruder_driver =
@@ -1098,12 +1098,12 @@ struct GameDriver intruder_driver =
 
 ROM_START( galxwars_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "galxwars.0", 0x0000, 0x0400, 0x3ad5521b , 0x608bfe7f )
-	ROM_LOAD( "galxwars.1", 0x0400, 0x0400, 0xce40024c , 0xa810b258 )
-	ROM_LOAD( "galxwars.2", 0x0800, 0x0400, 0xe3dff58d , 0x74f31781 )
-	ROM_LOAD( "galxwars.3", 0x0c00, 0x0400, 0x93490efd , 0xc88f886c )
-	ROM_LOAD( "galxwars.4", 0x4000, 0x0400, 0x83edc2fd , 0xae4fe8fb )
-	ROM_LOAD( "galxwars.5", 0x4400, 0x0400, 0xc1234a3d , 0x37708a35 )
+	ROM_LOAD( "galxwars.0",   0x0000, 0x0400, 0x608bfe7f )
+	ROM_LOAD( "galxwars.1",   0x0400, 0x0400, 0xa810b258 )
+	ROM_LOAD( "galxwars.2",   0x0800, 0x0400, 0x74f31781 )
+	ROM_LOAD( "galxwars.3",   0x0c00, 0x0400, 0xc88f886c )
+	ROM_LOAD( "galxwars.4",   0x4000, 0x0400, 0xae4fe8fb )
+	ROM_LOAD( "galxwars.5",   0x4400, 0x0400, 0x37708a35 )
 ROM_END
 
 INPUT_PORTS_START( galxwars_input_ports )
@@ -1202,12 +1202,12 @@ struct GameDriver galxwars_driver =
 
 ROM_START( lrescue_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "lrescue.1", 0x0000, 0x0800, 0x9fa38d01 , 0x2bbc4778 )
-	ROM_LOAD( "lrescue.2", 0x0800, 0x0800, 0x3d00e2b8 , 0x49e79706 )
-	ROM_LOAD( "lrescue.3", 0x1000, 0x0800, 0x2fc56073 , 0x1ac969be )
-	ROM_LOAD( "lrescue.4", 0x1800, 0x0800, 0xc2170fa3 , 0x782fee3c )
-	ROM_LOAD( "lrescue.5", 0x4000, 0x0800, 0x238ce80c , 0x58fde8bc )
-	ROM_LOAD( "lrescue.6", 0x4800, 0x0800, 0x464afa4a , 0xbfb0f65d )
+	ROM_LOAD( "lrescue.1",    0x0000, 0x0800, 0x2bbc4778 )
+	ROM_LOAD( "lrescue.2",    0x0800, 0x0800, 0x49e79706 )
+	ROM_LOAD( "lrescue.3",    0x1000, 0x0800, 0x1ac969be )
+	ROM_LOAD( "lrescue.4",    0x1800, 0x0800, 0x782fee3c )
+	ROM_LOAD( "lrescue.5",    0x4000, 0x0800, 0x58fde8bc )
+	ROM_LOAD( "lrescue.6",    0x4800, 0x0800, 0xbfb0f65d )
 ROM_END
 
 /* lrescue, invadpt2, spaceph */
@@ -1364,13 +1364,13 @@ struct GameDriver lrescue_driver =
 
 ROM_START( desterth_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "36_h.bin", 0x0000, 0x0800, 0x386b443d , 0xf86923e5 )
-	ROM_LOAD( "35_g.bin", 0x0800, 0x0800, 0x838c80be , 0x797f440d )
-	ROM_LOAD( "34_f.bin", 0x1000, 0x0800, 0x1fc49074 , 0x993d0846 )
-	ROM_LOAD( "33_e.bin", 0x1800, 0x0800, 0x7bb1a60f , 0x8d155fc5 )
-	ROM_LOAD( "32_d.bin", 0x4000, 0x0800, 0x5a2d5195 , 0x3f531b6f )
-	ROM_LOAD( "31_c.bin", 0x4800, 0x0800, 0x8c9da1e1 , 0xab019c30 )
-	ROM_LOAD( "42_b.bin", 0x5000, 0x0800, 0xcea0bb2c , 0xed9dbac6 )
+	ROM_LOAD( "36_h.bin",     0x0000, 0x0800, 0xf86923e5 )
+	ROM_LOAD( "35_g.bin",     0x0800, 0x0800, 0x797f440d )
+	ROM_LOAD( "34_f.bin",     0x1000, 0x0800, 0x993d0846 )
+	ROM_LOAD( "33_e.bin",     0x1800, 0x0800, 0x8d155fc5 )
+	ROM_LOAD( "32_d.bin",     0x4000, 0x0800, 0x3f531b6f )
+	ROM_LOAD( "31_c.bin",     0x4800, 0x0800, 0xab019c30 )
+	ROM_LOAD( "42_b.bin",     0x5000, 0x0800, 0xed9dbac6 )
 ROM_END
 
 INPUT_PORTS_START( desterth_input_ports )
@@ -1460,13 +1460,13 @@ struct GameDriver desterth_driver =
 
 ROM_START( cosmicmo_rom )  /* L.T */
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "cosmicmo.1", 0x0000, 0x0400, 0x3ccca2e4 , 0xd6e4e5da )
-	ROM_LOAD( "cosmicmo.2", 0x0400, 0x0400, 0xc8ecbfbc , 0x8f7988e6 )
-	ROM_LOAD( "cosmicmo.3", 0x0800, 0x0400, 0xd9e97659 , 0x2d2e9dc8 )
-	ROM_LOAD( "cosmicmo.4", 0x0c00, 0x0400, 0xa1c2ead0 , 0x26cae456 )
-	ROM_LOAD( "cosmicmo.5", 0x4000, 0x0400, 0xff83f719 , 0xb13f228e )
-	ROM_LOAD( "cosmicmo.6", 0x4400, 0x0400, 0x79df7b39 , 0x4ae1b9c4 )
-	ROM_LOAD( "cosmicmo.7", 0x4800, 0x0400, 0x95dd75a7 , 0x6a13b15b )
+	ROM_LOAD( "cosmicmo.1",   0x0000, 0x0400, 0xd6e4e5da )
+	ROM_LOAD( "cosmicmo.2",   0x0400, 0x0400, 0x8f7988e6 )
+	ROM_LOAD( "cosmicmo.3",   0x0800, 0x0400, 0x2d2e9dc8 )
+	ROM_LOAD( "cosmicmo.4",   0x0c00, 0x0400, 0x26cae456 )
+	ROM_LOAD( "cosmicmo.5",   0x4000, 0x0400, 0xb13f228e )
+	ROM_LOAD( "cosmicmo.6",   0x4400, 0x0400, 0x4ae1b9c4 )
+	ROM_LOAD( "cosmicmo.7",   0x4800, 0x0400, 0x6a13b15b )
 ROM_END
 
 INPUT_PORTS_START( cosmicmo_input_ports )
@@ -1531,18 +1531,18 @@ struct GameDriver cosmicmo_driver =
 
 ROM_START( spaceph_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "sv01.bin", 0x0000, 0x0400, 0x5e769e98 , 0xde84771d )
-	ROM_LOAD( "sv02.bin", 0x0400, 0x0400, 0xaaacc506 , 0x957fc661 )
-	ROM_LOAD( "sv03.bin", 0x0800, 0x0400, 0x734dec43 , 0xdbda38b9 )
-	ROM_LOAD( "sv04.bin", 0x0c00, 0x0400, 0xf16661e4 , 0xf51544a5 )
-	ROM_LOAD( "sv05.bin", 0x1000, 0x0400, 0x02ba1408 , 0x98d02683 )
-	ROM_LOAD( "sv06.bin", 0x1400, 0x0400, 0xcab9ea59 , 0x4ec390fd )
-	ROM_LOAD( "sv07.bin", 0x1800, 0x0400, 0xc8f1c563 , 0x170862fd )
-	ROM_LOAD( "sv08.bin", 0x1c00, 0x0400, 0x923d6d79 , 0x511b12cf )
-	ROM_LOAD( "sv09.bin", 0x4000, 0x0400, 0xae6f21e9 , 0xaf1cd1af )
-	ROM_LOAD( "sv10.bin", 0x4400, 0x0400, 0x1176e23a , 0x31b7692e )
-	ROM_LOAD( "sv11.bin", 0x4800, 0x0400, 0xbbb49a42 , 0x50257351 )
-	ROM_LOAD( "sv12.bin", 0x4c00, 0x0400, 0xca632a7b , 0xa2a3366a )
+	ROM_LOAD( "sv01.bin",     0x0000, 0x0400, 0xde84771d )
+	ROM_LOAD( "sv02.bin",     0x0400, 0x0400, 0x957fc661 )
+	ROM_LOAD( "sv03.bin",     0x0800, 0x0400, 0xdbda38b9 )
+	ROM_LOAD( "sv04.bin",     0x0c00, 0x0400, 0xf51544a5 )
+	ROM_LOAD( "sv05.bin",     0x1000, 0x0400, 0x98d02683 )
+	ROM_LOAD( "sv06.bin",     0x1400, 0x0400, 0x4ec390fd )
+	ROM_LOAD( "sv07.bin",     0x1800, 0x0400, 0x170862fd )
+	ROM_LOAD( "sv08.bin",     0x1c00, 0x0400, 0x511b12cf )
+	ROM_LOAD( "sv09.bin",     0x4000, 0x0400, 0xaf1cd1af )
+	ROM_LOAD( "sv10.bin",     0x4400, 0x0400, 0x31b7692e )
+	ROM_LOAD( "sv11.bin",     0x4800, 0x0400, 0x50257351 )
+	ROM_LOAD( "sv12.bin",     0x4c00, 0x0400, 0xa2a3366a )
 ROM_END
 
 INPUT_PORTS_START( spaceph_input_ports )
@@ -1607,18 +1607,18 @@ struct GameDriver spaceph_driver =
 
 ROM_START( rollingc_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "rc01.bin", 0x0000, 0x0400, 0x6fcfc861 , 0x66fa50bf )
-	ROM_LOAD( "rc02.bin", 0x0400, 0x0400, 0xaa7205d8 , 0x61c06ae4 )
-	ROM_LOAD( "rc03.bin", 0x0800, 0x0400, 0xb1d8f7c8 , 0x77e39fa0 )
-	ROM_LOAD( "rc04.bin", 0x0c00, 0x0400, 0x2637f611 , 0x3fdfd0f3 )
-	ROM_LOAD( "rc05.bin", 0x1000, 0x0400, 0x82c0fb70 , 0xc26a8f5b )
-	ROM_LOAD( "rc06.bin", 0x1400, 0x0400, 0x52da00c8 , 0x0b98dbe5 )
-	ROM_LOAD( "rc07.bin", 0x1800, 0x0400, 0xf0c569f7 , 0x6242145c )
-	ROM_LOAD( "rc08.bin", 0x1c00, 0x0400, 0x033ac1a8 , 0xd23c2ef1 )
-	ROM_LOAD( "rc09.bin", 0x4000, 0x0800, 0x4c3b8fe3 , 0x2e2c5b95 )
-	ROM_LOAD( "rc10.bin", 0x4800, 0x0800, 0xceebaefd , 0xef94c502 )
-	ROM_LOAD( "rc11.bin", 0x5000, 0x0800, 0x68228d74 , 0xa3164b18 )
-	ROM_LOAD( "rc12.bin", 0x5800, 0x0800, 0xdd2c4d68 , 0x2052f6d9 )
+	ROM_LOAD( "rc01.bin",     0x0000, 0x0400, 0x66fa50bf )
+	ROM_LOAD( "rc02.bin",     0x0400, 0x0400, 0x61c06ae4 )
+	ROM_LOAD( "rc03.bin",     0x0800, 0x0400, 0x77e39fa0 )
+	ROM_LOAD( "rc04.bin",     0x0c00, 0x0400, 0x3fdfd0f3 )
+	ROM_LOAD( "rc05.bin",     0x1000, 0x0400, 0xc26a8f5b )
+	ROM_LOAD( "rc06.bin",     0x1400, 0x0400, 0x0b98dbe5 )
+	ROM_LOAD( "rc07.bin",     0x1800, 0x0400, 0x6242145c )
+	ROM_LOAD( "rc08.bin",     0x1c00, 0x0400, 0xd23c2ef1 )
+	ROM_LOAD( "rc09.bin",     0x4000, 0x0800, 0x2e2c5b95 )
+	ROM_LOAD( "rc10.bin",     0x4800, 0x0800, 0xef94c502 )
+	ROM_LOAD( "rc11.bin",     0x5000, 0x0800, 0xa3164b18 )
+	ROM_LOAD( "rc12.bin",     0x5800, 0x0800, 0x2052f6d9 )
 ROM_END
 
 static struct MemoryReadAddress rollingc_readmem[] =
@@ -1773,22 +1773,22 @@ struct GameDriver rollingc_driver =
 
 ROM_START( bandido_rom )                                                                                /* MJC */
 	ROM_REGION(0x10000)             /* 64k for code */
-	ROM_LOAD( "baf1-3", 0x0000, 0x0400, 0xc62cf9c2 , 0xaec94829 )
-	ROM_LOAD( "baf2-1", 0x0400, 0x0400, 0xcc34ebda , 0xda67721a )
-	ROM_LOAD( "bag1-1", 0x0800, 0x0400, 0x23f48c36 , 0x3fb7888e )
-	ROM_LOAD( "bag2-1", 0x0C00, 0x0400, 0x2d832c93 , 0x585fcfee )
-	ROM_LOAD( "bah1-1", 0x1000, 0x0400, 0x7be81f76 , 0x5cb63677 )
-	ROM_LOAD( "bah2-1", 0x1400, 0x0400, 0x853c7eca , 0x79e69a6a )
-	ROM_LOAD( "bai1-1", 0x1800, 0x0400, 0x0a903e90 , 0xdda7d1e8 )
-	ROM_LOAD( "bai2-1", 0x1C00, 0x0400, 0x7158d760 , 0x5c5f3f86 )
-	ROM_LOAD( "baj1-1", 0x2000, 0x0400, 0xd563f205 , 0x0aa8b79a )
-	ROM_LOAD( "baj2-2", 0x2400, 0x0400, 0x4d14b20a , 0xa10b848a )
+	ROM_LOAD( "baf1-3",       0x0000, 0x0400, 0xaec94829 )
+	ROM_LOAD( "baf2-1",       0x0400, 0x0400, 0xda67721a )
+	ROM_LOAD( "bag1-1",       0x0800, 0x0400, 0x3fb7888e )
+	ROM_LOAD( "bag2-1",       0x0C00, 0x0400, 0x585fcfee )
+	ROM_LOAD( "bah1-1",       0x1000, 0x0400, 0x5cb63677 )
+	ROM_LOAD( "bah2-1",       0x1400, 0x0400, 0x79e69a6a )
+	ROM_LOAD( "bai1-1",       0x1800, 0x0400, 0xdda7d1e8 )
+	ROM_LOAD( "bai2-1",       0x1C00, 0x0400, 0x5c5f3f86 )
+	ROM_LOAD( "baj1-1",       0x2000, 0x0400, 0x0aa8b79a )
+	ROM_LOAD( "baj2-2",       0x2400, 0x0400, 0xa10b848a )
 
 #if 0
 	ROM_REGION_DISPOSE(0x0010)              /* Not Used */
 
     ROM_REGION(0x0800)                  /* Sound 8035 + 76477 Sound Generator */
-    ROM_LOAD( "basnd.u2", 0x0000, 0x0400, 0x0 , 0x0 )
+    ROM_LOAD( "basnd.u2",     0x0000, 0x0400, 0x0 )
 #endif
 
 ROM_END
@@ -1938,10 +1938,10 @@ struct GameDriver bandido_driver =                                              
 
 ROM_START( boothill_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-    ROM_LOAD( "romh.cpu", 0x0000, 0x0800, 0xec5fd9d3 , 0x1615d077 )
-    ROM_LOAD( "romg.cpu", 0x0800, 0x0800, 0x4cfcd35e , 0x65a90420 )
-    ROM_LOAD( "romf.cpu", 0x1000, 0x0800, 0x61543dac , 0x3fdafd79 )
-    ROM_LOAD( "rome.cpu", 0x1800, 0x0800, 0xe00189af , 0x374529f4 )
+    ROM_LOAD( "romh.cpu",     0x0000, 0x0800, 0x1615d077 )
+    ROM_LOAD( "romg.cpu",     0x0800, 0x0800, 0x65a90420 )
+    ROM_LOAD( "romf.cpu",     0x1000, 0x0800, 0x3fdafd79 )
+    ROM_LOAD( "rome.cpu",     0x1800, 0x0800, 0x374529f4 )
 ROM_END
 
 static struct MemoryWriteAddress boothill_writemem[] =
@@ -2092,16 +2092,16 @@ struct GameDriver boothill_driver =                                             
 
 ROM_START( schaser_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "rt13.bin", 0x0000, 0x0400, 0x8f508fda , 0x0dfbde68 )
-	ROM_LOAD( "rt14.bin", 0x0400, 0x0400, 0xc45e9dae , 0x5a508a25 )
-	ROM_LOAD( "rt15.bin", 0x0800, 0x0400, 0x222fdee9 , 0x2ac43a93 )
-	ROM_LOAD( "rt16.bin", 0x0c00, 0x0400, 0xfac11b19 , 0xf5583afc )
-	ROM_LOAD( "rt17.bin", 0x1000, 0x0400, 0xa7e3889b , 0x51cf1155 )
-	ROM_LOAD( "rt18.bin", 0x1400, 0x0400, 0x1a453dcf , 0x3f0fc73a )
-	ROM_LOAD( "rt19.bin", 0x1800, 0x0400, 0x711544dd , 0xb66ea369 )
-	ROM_LOAD( "rt20.bin", 0x1c00, 0x0400, 0xec27aa4b , 0xe3a7466a )
-	ROM_LOAD( "rt21.bin", 0x4000, 0x0400, 0x1965c393 , 0xb368ac98 )
-	ROM_LOAD( "rt22.bin", 0x4400, 0x0400, 0x2d0388f7 , 0x6e060dfb )
+	ROM_LOAD( "rt13.bin",     0x0000, 0x0400, 0x0dfbde68 )
+	ROM_LOAD( "rt14.bin",     0x0400, 0x0400, 0x5a508a25 )
+	ROM_LOAD( "rt15.bin",     0x0800, 0x0400, 0x2ac43a93 )
+	ROM_LOAD( "rt16.bin",     0x0c00, 0x0400, 0xf5583afc )
+	ROM_LOAD( "rt17.bin",     0x1000, 0x0400, 0x51cf1155 )
+	ROM_LOAD( "rt18.bin",     0x1400, 0x0400, 0x3f0fc73a )
+	ROM_LOAD( "rt19.bin",     0x1800, 0x0400, 0xb66ea369 )
+	ROM_LOAD( "rt20.bin",     0x1c00, 0x0400, 0xe3a7466a )
+	ROM_LOAD( "rt21.bin",     0x4000, 0x0400, 0xb368ac98 )
+	ROM_LOAD( "rt22.bin",     0x4400, 0x0400, 0x6e060dfb )
 ROM_END
 
 INPUT_PORTS_START( schaser_input_ports )
@@ -2174,14 +2174,14 @@ struct GameDriver schaser_driver =
 
 ROM_START( spcenctr_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "4m33.cpu", 0x0000, 0x0800, 0xe5255fef , 0x7458b2db )
-	ROM_LOAD( "4m32.cpu", 0x0800, 0x0800, 0xc361eda7 , 0x1b873788 )
-	ROM_LOAD( "4m31.cpu", 0x1000, 0x0800, 0x9fc06fb2 , 0xd4319c91 )
-	ROM_LOAD( "4m30.cpu", 0x1800, 0x0800, 0x9e8cbddc , 0x9b9a1a45 )
-	ROM_LOAD( "4m29.cpu", 0x4000, 0x0800, 0xf8daad3a , 0x294d52ce )
-	ROM_LOAD( "4m28.cpu", 0x4800, 0x0800, 0x569c2aa8 , 0xce44c923 )
-	ROM_LOAD( "4m27.cpu", 0x5000, 0x0800, 0xd2562fae , 0x098070ab )
-	ROM_LOAD( "4m26.cpu", 0x5800, 0x0800, 0x04b5b7d3 , 0x7f1d1f44 )
+	ROM_LOAD( "4m33.cpu",     0x0000, 0x0800, 0x7458b2db )
+	ROM_LOAD( "4m32.cpu",     0x0800, 0x0800, 0x1b873788 )
+	ROM_LOAD( "4m31.cpu",     0x1000, 0x0800, 0xd4319c91 )
+	ROM_LOAD( "4m30.cpu",     0x1800, 0x0800, 0x9b9a1a45 )
+	ROM_LOAD( "4m29.cpu",     0x4000, 0x0800, 0x294d52ce )
+	ROM_LOAD( "4m28.cpu",     0x4800, 0x0800, 0xce44c923 )
+	ROM_LOAD( "4m27.cpu",     0x5000, 0x0800, 0x098070ab )
+	ROM_LOAD( "4m26.cpu",     0x5800, 0x0800, 0x7f1d1f44 )
 ROM_END
 
 static struct IOWritePort spcenctr_writeport[] =
@@ -2304,12 +2304,12 @@ struct GameDriver spcenctr_driver =
 
 ROM_START( clowns_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "h2.cpu", 0x0000, 0x0400, 0x1393b03d , 0xff4432eb )
-	ROM_LOAD( "g2.cpu", 0x0400, 0x0400, 0xa7b119c7 , 0x676c934b )
-	ROM_LOAD( "f2.cpu", 0x0800, 0x0400, 0xebc03102 , 0x00757962 )
-	ROM_LOAD( "e2.cpu", 0x0c00, 0x0400, 0x4cabcfc1 , 0x9e506a36 )
-	ROM_LOAD( "d2.cpu", 0x1000, 0x0400, 0xf2954e57 , 0xd61b5b47 )
-	ROM_LOAD( "c2.cpu", 0x1400, 0x0400, 0x503b9331 , 0x154d129a )
+	ROM_LOAD( "h2.cpu",       0x0000, 0x0400, 0xff4432eb )
+	ROM_LOAD( "g2.cpu",       0x0400, 0x0400, 0x676c934b )
+	ROM_LOAD( "f2.cpu",       0x0800, 0x0400, 0x00757962 )
+	ROM_LOAD( "e2.cpu",       0x0c00, 0x0400, 0x9e506a36 )
+	ROM_LOAD( "d2.cpu",       0x1000, 0x0400, 0xd61b5b47 )
+	ROM_LOAD( "c2.cpu",       0x1400, 0x0400, 0x154d129a )
 ROM_END
 
 /*
@@ -2425,10 +2425,10 @@ struct GameDriver clowns_driver =
 
 ROM_START( gmissile_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "gm_623.h", 0x0000, 0x0800, 0x3f23e571 , 0xa3ebb792 )
-	ROM_LOAD( "gm_623.g", 0x0800, 0x0800, 0xd193bded , 0xa5e740bb )
-	ROM_LOAD( "gm_623.f", 0x1000, 0x0800, 0x9e921c20 , 0xda381025 )
-	ROM_LOAD( "gm_623.e", 0x1800, 0x0800, 0x255c2470 , 0xf350146b )
+	ROM_LOAD( "gm_623.h",     0x0000, 0x0800, 0xa3ebb792 )
+	ROM_LOAD( "gm_623.g",     0x0800, 0x0800, 0xa5e740bb )
+	ROM_LOAD( "gm_623.f",     0x1000, 0x0800, 0xda381025 )
+	ROM_LOAD( "gm_623.e",     0x1800, 0x0800, 0xf350146b )
 ROM_END
 
 INPUT_PORTS_START( gmissile_input_ports )
@@ -2505,10 +2505,10 @@ struct GameDriver gmissile_driver =
 
 ROM_START( seawolf_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "sw0041.h", 0x0000, 0x0400, 0xca098b6f , 0x8f597323 )
-	ROM_LOAD( "sw0042.g", 0x0400, 0x0400, 0xfcd42f68 , 0xdb980974 )
-	ROM_LOAD( "sw0043.f", 0x0800, 0x0400, 0xa7b7e2af , 0xe6ffa008 )
-	ROM_LOAD( "sw0044.e", 0x0c00, 0x0400, 0xd2aa5148 , 0xc3557d6a )
+	ROM_LOAD( "sw0041.h",     0x0000, 0x0400, 0x8f597323 )
+	ROM_LOAD( "sw0042.g",     0x0400, 0x0400, 0xdb980974 )
+	ROM_LOAD( "sw0043.f",     0x0800, 0x0400, 0xe6ffa008 )
+	ROM_LOAD( "sw0044.e",     0x0c00, 0x0400, 0xc3557d6a )
 ROM_END
 
 static struct IOReadPort seawolf_readport[] =
@@ -2633,10 +2633,10 @@ struct GameDriver seawolf_driver =
 
 ROM_START( gunfight_rom)
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "7609h.bin", 0x0000, 0x0400, 0x74032d05 , 0x0b117d73 )
-	ROM_LOAD( "7609g.bin", 0x0400, 0x0400, 0x96a82fca , 0x57bc3159 )
-	ROM_LOAD( "7609f.bin", 0x0800, 0x0400, 0x4d46f1b4 , 0x8049a6bd )
-	ROM_LOAD( "7609e.bin", 0x0c00, 0x0400, 0x1153af95 , 0x773264e2 )
+	ROM_LOAD( "7609h.bin",    0x0000, 0x0400, 0x0b117d73 )
+	ROM_LOAD( "7609g.bin",    0x0400, 0x0400, 0x57bc3159 )
+	ROM_LOAD( "7609f.bin",    0x0800, 0x0400, 0x8049a6bd )
+	ROM_LOAD( "7609e.bin",    0x0c00, 0x0400, 0x773264e2 )
 ROM_END
 
 static struct IOWritePort gunfight_writeport[] =
@@ -2780,12 +2780,12 @@ struct GameDriver gunfight_driver =
 
 ROM_START( zzzap_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "zzzaph", 0x0000, 0x0400, 0xb41c108e , 0x1fa86e1c )
-	ROM_LOAD( "zzzapg", 0x0400, 0x0400, 0xd9dbdfc5 , 0x9639bc6b )
-	ROM_LOAD( "zzzapf", 0x0800, 0x0400, 0xb201f13d , 0xadc6ede1 )
-	ROM_LOAD( "zzzape", 0x0c00, 0x0400, 0x3e746ae4 , 0x472493d6 )
-	ROM_LOAD( "zzzapd", 0x1000, 0x0400, 0xbcdfbd65 , 0x4c240ee1 )
-	ROM_LOAD( "zzzapc", 0x1400, 0x0400, 0x5d3e3644 , 0x6e85aeaf )
+	ROM_LOAD( "zzzaph",       0x0000, 0x0400, 0x1fa86e1c )
+	ROM_LOAD( "zzzapg",       0x0400, 0x0400, 0x9639bc6b )
+	ROM_LOAD( "zzzapf",       0x0800, 0x0400, 0xadc6ede1 )
+	ROM_LOAD( "zzzape",       0x0c00, 0x0400, 0x472493d6 )
+	ROM_LOAD( "zzzapd",       0x1000, 0x0400, 0x4c240ee1 )
+	ROM_LOAD( "zzzapc",       0x1400, 0x0400, 0x6e85aeaf )
 ROM_END
 
 static struct IOWritePort zzzap_writeport[] =
@@ -2900,13 +2900,13 @@ struct GameDriver zzzap_driver =
 
 ROM_START( lupin3_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "lp12.bin", 0x0000, 0x0800, 0xe2966d2a , 0x68a7f47a )
-	ROM_LOAD( "lp13.bin", 0x0800, 0x0800, 0x86e37465 , 0xcae9a17b )
-	ROM_LOAD( "lp14.bin", 0x1000, 0x0800, 0x365c8a54 , 0x3553b9e4 )
-	ROM_LOAD( "lp15.bin", 0x1800, 0x0800, 0xd962c436 , 0xacbeef64 )
-	ROM_LOAD( "lp16.bin", 0x4000, 0x0800, 0x3258ce90 , 0x19fcdc54 )
-	ROM_LOAD( "lp17.bin", 0x4800, 0x0800, 0x4178a84a , 0x66289ab2 )
-	ROM_LOAD( "lp18.bin", 0x5000, 0x0800, 0xfe15569b , 0x2f07b4ba )
+	ROM_LOAD( "lp12.bin",     0x0000, 0x0800, 0x68a7f47a )
+	ROM_LOAD( "lp13.bin",     0x0800, 0x0800, 0xcae9a17b )
+	ROM_LOAD( "lp14.bin",     0x1000, 0x0800, 0x3553b9e4 )
+	ROM_LOAD( "lp15.bin",     0x1800, 0x0800, 0xacbeef64 )
+	ROM_LOAD( "lp16.bin",     0x4000, 0x0800, 0x19fcdc54 )
+	ROM_LOAD( "lp17.bin",     0x4800, 0x0800, 0x66289ab2 )
+	ROM_LOAD( "lp18.bin",     0x5000, 0x0800, 0x2f07b4ba )
 ROM_END
 
 static struct MemoryWriteAddress lupin3_writemem[] =
@@ -3030,22 +3030,22 @@ struct GameDriver lupin3_driver =
 
 ROM_START( helifire_rom )                                                                                /* MJC */
 ROM_REGION(0x10000)             /* 64k for code */
-        ROM_LOAD( "tub.f1b", 0x0000, 0x0400, 0x78696e01 , 0x36173911 )
-        ROM_LOAD( "tub.f2b", 0x0400, 0x0400, 0x9d67bfa9 , 0x459dcaec )
-        ROM_LOAD( "tub.g1b", 0x0800, 0x0400, 0xd422f2ea , 0x3f1ec7a5 )
-        ROM_LOAD( "tub.g2b", 0x0C00, 0x0400, 0xaedbe96d , 0xd219f860 )
-        ROM_LOAD( "tub.h1b", 0x1000, 0x0400, 0x3002ea6e , 0x99c2380d )
-        ROM_LOAD( "tub.h2b", 0x1400, 0x0400, 0x830d55e1 , 0x9e8b0aef )
-        ROM_LOAD( "tub.i1b", 0x1800, 0x0400, 0x89f92b4b , 0x01b500fa )
-        ROM_LOAD( "tub.i2b", 0x1C00, 0x0400, 0x0c01fe39 , 0xfb43c74d )
-        ROM_LOAD( "tub.j1b", 0x2000, 0x0400, 0x99a598cd , 0xab2a9158 )
-        ROM_LOAD( "tub.j2b", 0x2400, 0x0400, 0x687c46a8 , 0xb102be9b )
+	ROM_LOAD( "tub.f1b",      0x0000, 0x0400, 0x032f89ca )
+	ROM_LOAD( "tub.f2b",      0x0400, 0x0400, 0x2774e70f )
+	ROM_LOAD( "tub.g1b",      0x0800, 0x0400, 0xb5ad6e8a )
+	ROM_LOAD( "tub.g2b",      0x0C00, 0x0400, 0x5e015bf4 )
+	ROM_LOAD( "tub.h1b",      0x1000, 0x0400, 0x23bb4e5a )
+	ROM_LOAD( "tub.h2b",      0x1400, 0x0400, 0x358227c6 )
+	ROM_LOAD( "tub.i1b",      0x1800, 0x0400, 0x0c679f44 )
+	ROM_LOAD( "tub.i2b",      0x1C00, 0x0400, 0xd8b7a398 )
+	ROM_LOAD( "tub.j1b",      0x2000, 0x0400, 0x98ef24db )
+	ROM_LOAD( "tub.j2b",      0x2400, 0x0400, 0x5e2b5877 )
 
 #if 0
 	ROM_REGION_DISPOSE(0x0010)              /* Not Used */
 
-        ROM_REGION(0x0800)   /* Sound 8035 + 76477 Sound Generator */
-        ROM_LOAD( "tub.snd", 0x0000, 0x0400, 0x0 , 0x0 )
+	ROM_REGION(0x0800)   /* Sound 8035 + 76477 Sound Generator */
+	ROM_LOAD( "tub.snd",      0x0000, 0x0400, 0x0 )
 #endif
 ROM_END
 
@@ -3134,19 +3134,19 @@ struct GameDriver helifire_driver =
 
 ROM_START( spacefev_rom )                                                                                /* MJC */
 ROM_REGION(0x10000)             /* 64k for code */
-        ROM_LOAD( "tsf.f1", 0x0000, 0x0400, 0x63752d87 , 0x35f295bd )
-        ROM_LOAD( "tsf.f2", 0x0400, 0x0400, 0xa6251123 , 0x0c633f4c )
-        ROM_LOAD( "tsf.g1", 0x0800, 0x0400, 0x7ddec16a , 0xf3d851cb )
-        ROM_LOAD( "tsf.g2", 0x0C00, 0x0400, 0xf4ec1bdc , 0x1faef63a )
-        ROM_LOAD( "tsf.h1", 0x1000, 0x0400, 0x95cb6bb7 , 0xb365389d )
-        ROM_LOAD( "tsf.h2", 0x1400, 0x0400, 0x4024227c , 0xa36c61c9 )
-        ROM_LOAD( "tsf.i1", 0x1800, 0x0400, 0x523d359b , 0xd4f3b50d )
+        ROM_LOAD( "tsf.f1",       0x0000, 0x0400, 0x35f295bd )
+        ROM_LOAD( "tsf.f2",       0x0400, 0x0400, 0x0c633f4c )
+        ROM_LOAD( "tsf.g1",       0x0800, 0x0400, 0xf3d851cb )
+        ROM_LOAD( "tsf.g2",       0x0C00, 0x0400, 0x1faef63a )
+        ROM_LOAD( "tsf.h1",       0x1000, 0x0400, 0xb365389d )
+        ROM_LOAD( "tsf.h2",       0x1400, 0x0400, 0xa36c61c9 )
+        ROM_LOAD( "tsf.i1",       0x1800, 0x0400, 0xd4f3b50d )
 
 #if 0
 	ROM_REGION_DISPOSE(0x0010)              /* Not Used */
 
        ROM_REGION(0x0800)    /* Sound 8035 + 76477 Sound Generator */
-       ROM_LOAD( "tsf.snd", 0x0000, 0x0400, 0x0 , 0x0 )
+       ROM_LOAD( "tsf.snd",      0x0000, 0x0400, 0x0 )
 #endif
 
 ROM_END
@@ -3218,12 +3218,12 @@ struct GameDriver spacefev_driver =
 
 ROM_START( polaris_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ps-01", 0x0000, 0x0800, 0x5aa7c985 , 0xc04ce5a9 )
-	ROM_LOAD( "ps-09", 0x0800, 0x0800, 0x77363310 , 0x9a5c8cb2 )
-	ROM_LOAD( "ps-08", 0x1000, 0x0800, 0x00769af6 , 0x8680d7ea )
-	ROM_LOAD( "ps-04", 0x1800, 0x0800, 0x00a0c624 , 0x65694948 )
-	ROM_LOAD( "ps-05", 0x4000, 0x0800, 0x3602c8f6 , 0x772e31f3 )
-	ROM_LOAD( "ps-10", 0x4800, 0x0800, 0x7eebdc49 , 0x3df77bac )
+	ROM_LOAD( "ps-01",        0x0000, 0x0800, 0xc04ce5a9 )
+	ROM_LOAD( "ps-09",        0x0800, 0x0800, 0x9a5c8cb2 )
+	ROM_LOAD( "ps-08",        0x1000, 0x0800, 0x8680d7ea )
+	ROM_LOAD( "ps-04",        0x1800, 0x0800, 0x65694948 )
+	ROM_LOAD( "ps-05",        0x4000, 0x0800, 0x772e31f3 )
+	ROM_LOAD( "ps-10",        0x4800, 0x0800, 0x3df77bac )
 ROM_END
 
 static struct MemoryReadAddress polaris_readmem[] =
@@ -3368,10 +3368,10 @@ struct GameDriver polaris_driver =
 
 ROM_START( lagunar_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "lagunar.h", 0x0000, 0x0800, 0xba4fa2e9 , 0x0cd5a280 )
-	ROM_LOAD( "lagunar.g", 0x0800, 0x0800, 0x2805c827 , 0x824cd6f5 )
-	ROM_LOAD( "lagunar.f", 0x1000, 0x0800, 0x7d1db18b , 0x62692ca7 )
-	ROM_LOAD( "lagunar.e", 0x1800, 0x0800, 0xae6e4a0c , 0x20e098ed )
+	ROM_LOAD( "lagunar.h",    0x0000, 0x0800, 0x0cd5a280 )
+	ROM_LOAD( "lagunar.g",    0x0800, 0x0800, 0x824cd6f5 )
+	ROM_LOAD( "lagunar.f",    0x1000, 0x0800, 0x62692ca7 )
+	ROM_LOAD( "lagunar.e",    0x1800, 0x0800, 0x20e098ed )
 ROM_END
 
 INPUT_PORTS_START( lagunar_input_ports )
@@ -3445,10 +3445,10 @@ struct GameDriver lagunar_driver =
 
 ROM_START( m4_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "m4.h", 0x0000, 0x0800, 0x108cb28c , 0x9ee2a0b5 )
-	ROM_LOAD( "m4.g", 0x0800, 0x0800, 0xd14beb73 , 0x0e84b9cb )
-	ROM_LOAD( "m4.f", 0x1000, 0x0800, 0x835e5ea2 , 0x9ded9956 )
-	ROM_LOAD( "m4.e", 0x1800, 0x0800, 0x728dfb2b , 0xb6983238 )
+	ROM_LOAD( "m4.h",         0x0000, 0x0800, 0x9ee2a0b5 )
+	ROM_LOAD( "m4.g",         0x0800, 0x0800, 0x0e84b9cb )
+	ROM_LOAD( "m4.f",         0x1000, 0x0800, 0x9ded9956 )
+	ROM_LOAD( "m4.e",         0x1800, 0x0800, 0xb6983238 )
 ROM_END
 
 static struct IOReadPort m4_readport[] =                                  /* MJC 310198 */
@@ -3572,10 +3572,10 @@ struct GameDriver m4_driver =
 
 ROM_START( phantom2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "phantom2.h", 0x0000, 0x0800, 0xb79c5ae8 , 0x0e3c2439 )
-	ROM_LOAD( "phantom2.g", 0x0800, 0x0800, 0xe26cf606 , 0xe8df3e52 )
-	ROM_LOAD( "phantom2.f", 0x1000, 0x0800, 0xbca599dd , 0x30e83c6d )
-	ROM_LOAD( "phantom2.e", 0x1800, 0x0800, 0x86ac9c28 , 0x8c641cac )
+	ROM_LOAD( "phantom2.h",   0x0000, 0x0800, 0x0e3c2439 )
+	ROM_LOAD( "phantom2.g",   0x0800, 0x0800, 0xe8df3e52 )
+	ROM_LOAD( "phantom2.f",   0x1000, 0x0800, 0x30e83c6d )
+	ROM_LOAD( "phantom2.e",   0x1800, 0x0800, 0x8c641cac )
 ROM_END
 
 static struct IOReadPort phantom2_readport[] =                                  /* MJC 310198 */
@@ -3785,10 +3785,10 @@ static struct MachineDriver dogpatch_machine_driver =
 
 ROM_START( dogpatch_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "dogpatch.h", 0x0000, 0x0800, 0x8ccfbdc1 , 0x74ebdf4d )
-	ROM_LOAD( "dogpatch.g", 0x0800, 0x0800, 0xb0a54573 , 0xac246f70 )
-	ROM_LOAD( "dogpatch.f", 0x1000, 0x0800, 0x482757fb , 0xa975b011 )
-	ROM_LOAD( "dogpatch.e", 0x1800, 0x0800, 0x53eb8b79 , 0xc12b1f60 )
+	ROM_LOAD( "dogpatch.h",   0x0000, 0x0800, 0x74ebdf4d )
+	ROM_LOAD( "dogpatch.g",   0x0800, 0x0800, 0xac246f70 )
+	ROM_LOAD( "dogpatch.f",   0x1000, 0x0800, 0xa975b011 )
+	ROM_LOAD( "dogpatch.e",   0x1800, 0x0800, 0xc12b1f60 )
 ROM_END
 
 struct GameDriver dogpatch_driver =
@@ -3842,11 +3842,11 @@ static struct IOWritePort midwbowl_writeport[] =
 
 ROM_START( midwbowl_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "h.cpu", 0x0000, 0x0800, 0x5600082e , 0x74c29b93 )
-	ROM_LOAD( "g.cpu", 0x0800, 0x0800, 0x796cd88e , 0xca26d8b4 )
-	ROM_LOAD( "f.cpu", 0x1000, 0x0800, 0x9d8d4183 , 0xba8a0bfa )
-	ROM_LOAD( "e.cpu", 0x1800, 0x0800, 0x1b418df5 , 0x4da65a40 )
-	ROM_LOAD( "d.cpu", 0x4000, 0x0800, 0x122f0db1 , 0xe7dbc9d9 )
+	ROM_LOAD( "h.cpu",        0x0000, 0x0800, 0x74c29b93 )
+	ROM_LOAD( "g.cpu",        0x0800, 0x0800, 0xca26d8b4 )
+	ROM_LOAD( "f.cpu",        0x1000, 0x0800, 0xba8a0bfa )
+	ROM_LOAD( "e.cpu",        0x1800, 0x0800, 0x4da65a40 )
+	ROM_LOAD( "d.cpu",        0x4000, 0x0800, 0xe7dbc9d9 )
 ROM_END
 
 INPUT_PORTS_START( midwbowl_input_ports )
@@ -3950,9 +3950,9 @@ struct GameDriver midwbowl_driver =
 
 ROM_START( blueshrk_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "blueshrk.h", 0x0000, 0x0800, 0x06bc9fde , 0x4ff94187 )
-	ROM_LOAD( "blueshrk.g", 0x0800, 0x0800, 0xf263595b , 0xe49368fd )
-	ROM_LOAD( "blueshrk.f", 0x1000, 0x0800, 0x9d262302 , 0x86cca79d )
+	ROM_LOAD( "blueshrk.h",   0x0000, 0x0800, 0x4ff94187 )
+	ROM_LOAD( "blueshrk.g",   0x0800, 0x0800, 0xe49368fd )
+	ROM_LOAD( "blueshrk.f",   0x1000, 0x0800, 0x86cca79d )
 ROM_END
 
 INPUT_PORTS_START( blueshrk_input_ports )
@@ -4057,11 +4057,11 @@ struct GameDriver blueshrk_driver =
 
 ROM_START( einnings_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ei.h", 0x0000, 0x0800, 0xbabc2556 , 0xeff9c7af )
-	ROM_LOAD( "ei.g", 0x0800, 0x0800, 0x1671923d , 0x5d1e66cb )
-	ROM_LOAD( "ei.f", 0x1000, 0x0800, 0x1a16c90a , 0xed96785d )
-	ROM_LOAD( "ei.e", 0x1800, 0x0800, 0x8cb3c289 , 0xad096a5d )
-	ROM_LOAD( "ei.b", 0x5000, 0x0800, 0xb25116b9 , 0x56b407d4 )
+	ROM_LOAD( "ei.h",         0x0000, 0x0800, 0xeff9c7af )
+	ROM_LOAD( "ei.g",         0x0800, 0x0800, 0x5d1e66cb )
+	ROM_LOAD( "ei.f",         0x1000, 0x0800, 0xed96785d )
+	ROM_LOAD( "ei.e",         0x1800, 0x0800, 0xad096a5d )
+	ROM_LOAD( "ei.b",         0x5000, 0x0800, 0x56b407d4 )
 ROM_END
 
 /*
@@ -4135,10 +4135,10 @@ struct GameDriver einnings_driver =
 
 ROM_START( dplay_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "dplay619.h", 0x0000, 0x0800, 0xa5e4d700 , 0x6680669b )
-	ROM_LOAD( "dplay619.g", 0x0800, 0x0800, 0xd7a41b56 , 0x0eec7e01 )
-	ROM_LOAD( "dplay619.f", 0x1000, 0x0800, 0xcc87b48b , 0x3af4b719 )
-	ROM_LOAD( "dplay619.e", 0x1800, 0x0800, 0x741f64f3 , 0x65cab4fc )
+	ROM_LOAD( "dplay619.h",   0x0000, 0x0800, 0x6680669b )
+	ROM_LOAD( "dplay619.g",   0x0800, 0x0800, 0x0eec7e01 )
+	ROM_LOAD( "dplay619.f",   0x1000, 0x0800, 0x3af4b719 )
+	ROM_LOAD( "dplay619.e",   0x1800, 0x0800, 0x65cab4fc )
 ROM_END
 
 
@@ -4175,8 +4175,8 @@ struct GameDriver dplay_driver =
 
 ROM_START( maze_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "invaders.h", 0x0000, 0x0800, 0xa96063c2 , 0xf2860cff )
-	ROM_LOAD( "invaders.g", 0x0800, 0x0800, 0x784e056a , 0x65fad839 )
+	ROM_LOAD( "invaders.h",   0x0000, 0x0800, 0xf2860cff )
+	ROM_LOAD( "invaders.g",   0x0800, 0x0800, 0x65fad839 )
 ROM_END
 
 INPUT_PORTS_START( maze_input_ports )
@@ -4291,9 +4291,9 @@ struct GameDriver maze_driver =
 
 ROM_START( tornbase_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "tb.h", 0x0000, 0x0800, 0x00ee84b4 , 0x653f4797 )
-	ROM_LOAD( "tb.g", 0x0800, 0x0800, 0xb9fedbe4 , 0x33468006 )
-	ROM_LOAD( "tb.f", 0x1000, 0x0800, 0xd512b59c , 0x215e070c )
+	ROM_LOAD( "tb.h",         0x0000, 0x0800, 0x653f4797 )
+	ROM_LOAD( "tb.g",         0x0800, 0x0800, 0x33468006 )
+	ROM_LOAD( "tb.f",         0x1000, 0x0800, 0x215e070c )
 ROM_END
 
 INPUT_PORTS_START( tornbase_input_ports )

@@ -364,19 +364,19 @@ static struct MachineDriver machine_driver =
 
 ROM_START( dday_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "e8_63-c.bin", 0x0000, 0x1000, 0xd98d8133 , 0xd4fa3ae3 )
-	ROM_LOAD( "e7_64-c.bin", 0x1000, 0x1000, 0xb7a2e008 , 0x9fb8b1a7 )
-	ROM_LOAD( "e6_65-c.bin", 0x2000, 0x1000, 0xb96d198b , 0x4c210686 )
-	ROM_LOAD( "e5_66-c.bin", 0x3000, 0x1000, 0x462fc99b , 0xe7e832f9 )
+	ROM_LOAD( "e8_63-c.bin",  0x0000, 0x1000, 0xd4fa3ae3 )
+	ROM_LOAD( "e7_64-c.bin",  0x1000, 0x1000, 0x9fb8b1a7 )
+	ROM_LOAD( "e6_65-c.bin",  0x2000, 0x1000, 0x4c210686 )
+	ROM_LOAD( "e5_66-c.bin",  0x3000, 0x1000, 0xe7e832f9 )
 
 	ROM_REGION_DISPOSE(0x3800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j8_70-c.bin", 0x0000, 0x0800, 0xeb906e16 , 0xa0c6b86b )
-	ROM_LOAD( "j9_69-c.bin", 0x0800, 0x0800, 0xcbf2783c , 0xd352a3d6 )
-	ROM_LOAD( "k2_71.bin", 0x1000, 0x0800, 0xc1045ebc , 0xf85461de )
-	ROM_LOAD( "k3_72.bin", 0x1800, 0x0800, 0x4ceb70af , 0xfdfe88b6 )
-	ROM_LOAD( "k4_73.bin", 0x2000, 0x0800, 0x64539441 , 0xfa6237e4 )
-	ROM_LOAD( "k6_74.bin", 0x2800, 0x0800, 0x11150ecf , 0xd21a3e22 )
-	ROM_LOAD( "k7_75.bin", 0x3000, 0x0800, 0xc763dbc1 , 0xa5e5058c )
+	ROM_LOAD( "j8_70-c.bin",  0x0000, 0x0800, 0xa0c6b86b )
+	ROM_LOAD( "j9_69-c.bin",  0x0800, 0x0800, 0xd352a3d6 )
+	ROM_LOAD( "k2_71.bin",    0x1000, 0x0800, 0xf85461de )
+	ROM_LOAD( "k3_72.bin",    0x1800, 0x0800, 0xfdfe88b6 )
+	ROM_LOAD( "k4_73.bin",    0x2000, 0x0800, 0xfa6237e4 )
+	ROM_LOAD( "k6_74.bin",    0x2800, 0x0800, 0xd21a3e22 )
+	ROM_LOAD( "k7_75.bin",    0x3000, 0x0800, 0xa5e5058c )
 
 	// There are also 2 unused ROMs in this ROM set. Don't know what they do
 ROM_END

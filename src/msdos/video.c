@@ -26,6 +26,8 @@ DECLARE_COLOR_DEPTH_LIST(
 
 void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
 void joy_calibration(void);
+void osd_profiler_init(void);
+void osd_profiler_display(void);
 
 
 static struct osd_bitmap *scrbitmap;
@@ -975,10 +977,10 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 	}
 }
 
-/* Writes messages in the middle of the screen. */
-void my_textout(char *buf)
+/* Writes messages on the screen. */
+void my_textout(char *buf,int x,int y)
 {
-	int trueorientation,l,x,y,i;
+	int trueorientation,l,i;
 
 
 	pick_uifont_colors();
@@ -989,8 +991,6 @@ void my_textout(char *buf)
 	Machine->orientation = ORIENTATION_DEFAULT;
 
 	l = strlen(buf);
-	x = (gfx_display_columns - Machine->uifont->width * l) / 2;
-	y = (gfx_display_lines   - Machine->uifont->height) * 9 / 10;
 	for (i = 0;i < l;i++)
 		drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
 				x + i*Machine->uifont->width + skipcolumns,
@@ -1379,8 +1379,8 @@ void osd_update_display(void)
 {
 	int i;
 	static float gamma_update = 0.00;
-	static int showfps,showfpstemp;
-	static int frameskip_pressed,throttle_pressed,show_fps_pressed;
+	static int showfps,showfpstemp,showprofile;
+	static int frameskip_pressed,throttle_pressed,showfps_pressed,showprofile_pressed;
 	uclock_t curr;
 	#define MEMORY 10
 	static uclock_t prev[MEMORY];
@@ -1427,7 +1427,7 @@ void osd_update_display(void)
 
 	if (osd_key_pressed(OSD_KEY_SHOW_FPS))
 	{
-		if (show_fps_pressed == 0)
+		if (showfps_pressed == 0)
 		{
 			showfps ^= 1;
 			if (showfps == 0)
@@ -1435,9 +1435,24 @@ void osd_update_display(void)
 				need_to_clear_bitmap = 1;
 			}
 		}
-		show_fps_pressed = 1;
+		showfps_pressed = 1;
 	}
-	else show_fps_pressed = 0;
+	else showfps_pressed = 0;
+
+	if (osd_key_pressed(OSD_KEY_SHOW_PROFILE))
+	{
+		if (showprofile_pressed == 0)
+		{
+			showprofile ^= 1;
+			if (showprofile == 0)
+			{
+				need_to_clear_bitmap = 1;
+			}
+			else osd_profiler_init();	/* reset the counters */
+		}
+		showprofile_pressed = 1;
+	}
+	else showprofile_pressed = 0;
 
 	if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
 	{
@@ -1451,6 +1466,7 @@ void osd_update_display(void)
 	/* now wait until it's time to update the screen */
 	if (throttle)
 	{
+		osd_profiler(OSD_PROFILE_VIDEO_SYNC);
 		if (video_sync)
 		{
 			static uclock_t last;
@@ -1471,6 +1487,7 @@ void osd_update_display(void)
 				curr = uclock();
 			} while ((curr - prev[memory]) < (frameskip+1) * UCLOCKS_PER_SEC/Machine->drv->frames_per_second);
 		}
+		osd_profiler(OSD_PROFILE_END);
 	}
 	else curr = uclock();
 
@@ -1506,7 +1523,7 @@ void osd_update_display(void)
 		vector_updates = 0;
 	}
 
-	if (showfps || showfpstemp) /* MAURY: nuove opzioni */
+	if (showfps || showfpstemp)
 	{
 		int trueorientation;
 		int fps,l;
@@ -1536,6 +1553,7 @@ void osd_update_display(void)
 		Machine->orientation = trueorientation;
 	}
 
+	if (showprofile) osd_profiler_display();
 
 	if (osd_key_pressed(OSD_KEY_JOY_CALIBRATE))
 		joy_calibration();
@@ -1635,7 +1653,10 @@ void osd_update_display(void)
 	{
 		on_screen_display_timer -= (frameskip+1);
 		if (on_screen_display_timer > 0)
-			my_textout(on_screen_display_text);
+			my_textout(
+					on_screen_display_text,
+					(gfx_display_columns - Machine->uifont->width * strlen(on_screen_display_text)) / 2,
+					(gfx_display_lines   - Machine->uifont->height) * 9 / 10);
 		else
 		{
 			on_screen_display_timer = 0;
@@ -1645,7 +1666,9 @@ void osd_update_display(void)
 
 
 	/* copy the bitmap to screen memory */
+	osd_profiler(OSD_PROFILE_BLIT);
 	update_screen();
+	osd_profiler(OSD_PROFILE_END);
 
 	if (need_to_clear_bitmap)
 		osd_clearbitmap(scrbitmap);

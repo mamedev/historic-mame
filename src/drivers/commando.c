@@ -309,60 +309,89 @@ static struct MachineDriver machine_driver =
 
 ROM_START( commando_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, 0xf44b9f43 , 0x8438b694 )
-	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, 0x6e158a17 , 0x35486542 )
+	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, 0x8438b694 )
+	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, 0x35486542 )
 
 	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x9c3344b3 , 0x505726e0 )	/* characters */
-	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x0babe1d9 , 0x7b2e1b48 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x0ef15ee7 , 0x81b417d3 )
-	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x8244ea38 , 0x5612dbd2 )
-	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x91390ad1 , 0x2b2dee36 )
-	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0x755876be , 0xde70babf )
-	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x8c6d8225 , 0x14178237 )
-	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x4eda8b78 , 0x79f16e3d )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x280b34f9 , 0x26fee521 )
-	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0x2ab5880f , 0xca88bdfd )
-	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x48696aa7 , 0x2019c883 )
-	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0xab521082 , 0x98703982 )
-	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0x998c53a6 , 0xf069d2f8 )
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x79f16e3d )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x2019c883 )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0200, 0x524d0207 , 0x3fca61a8 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0200, 0x0200, 0xfb20050e , 0x484680c6 )
-	ROM_LOAD( "03d_vtb3.bin", 0x0400, 0x0200, 0x1e8b0b07 , 0x48bd81af )
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0x07fced60 , 0xf9cc4a74 )
+	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
+ROM_END
+
+ROM_START( commandu_rom )
+	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_LOAD( "u4-f",         0x0000, 0x8000, 0xa6118935 )
+	ROM_LOAD( "u3-f",         0x8000, 0x4000, 0x24f49684 )
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x79f16e3d )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x2019c883 )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
 ROM_END
 
 ROM_START( commandj_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "09m_so04.bin", 0x0000, 0x8000, 0xf5dffe09 , 0xd3f2bfb3 )
-	ROM_LOAD( "08m_so03.bin", 0x8000, 0x4000, 0xf8463efe , 0xed01f472 )
+	ROM_LOAD( "09m_so04.bin", 0x0000, 0x8000, 0xd3f2bfb3 )
+	ROM_LOAD( "08m_so03.bin", 0x8000, 0x4000, 0xed01f472 )
 
 	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x9c3344b3 , 0x505726e0 )	/* characters */
-	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x0babe1d9 , 0x7b2e1b48 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x0ef15ee7 , 0x81b417d3 )
-	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x8244ea38 , 0x5612dbd2 )
-	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x91390ad1 , 0x2b2dee36 )
-	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0x755876be , 0xde70babf )
-	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x8c6d8225 , 0x14178237 )
-	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x4eda8b78 , 0x79f16e3d )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x280b34f9 , 0x26fee521 )
-	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0x2ab5880f , 0xca88bdfd )
-	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x48696aa7 , 0x2019c883 )
-	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0xab521082 , 0x98703982 )
-	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0x998c53a6 , 0xf069d2f8 )
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x79f16e3d )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x2019c883 )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0200, 0x524d0207 , 0x3fca61a8 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0200, 0x0200, 0xfb20050e , 0x484680c6 )
-	ROM_LOAD( "03d_vtb3.bin", 0x0400, 0x0200, 0x1e8b0b07 , 0x48bd81af )
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, 0xfda056a2 , 0xca20aca5 )
+	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, 0xca20aca5 )
 ROM_END
 
 
@@ -435,7 +464,7 @@ struct GameDriver commando_driver =
 	__FILE__,
 	0,
 	"commando",
-	"Commando (US)",
+	"Commando (World)",
 	"1985",
 	"Capcom",
 	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
@@ -443,6 +472,31 @@ struct GameDriver commando_driver =
 	&machine_driver,
 
 	commando_rom,
+	0, commando_decode,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver commandu_driver =
+{
+	__FILE__,
+	&commando_driver,
+	"commandu",
+	"Commando (US)",
+	"1985",
+	"Capcom (Data East USA license)",
+	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+
+	commandu_rom,
 	0, commando_decode,
 	0,
 	0,	/* sound_prom */

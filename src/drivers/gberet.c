@@ -289,40 +289,40 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gberet_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "c10_l03.bin", 0x0000, 0x4000, 0xe77699e2 , 0xae29e4ff )
-	ROM_LOAD( "c08_l02.bin", 0x4000, 0x4000, 0x6c2df979 , 0x240836a5 )
-	ROM_LOAD( "c07_l01.bin", 0x8000, 0x4000, 0x96c963ab , 0x41fa3e1f )
+	ROM_LOAD( "c10_l03.bin",  0x0000, 0x4000, 0xae29e4ff )
+	ROM_LOAD( "c08_l02.bin",  0x4000, 0x4000, 0x240836a5 )
+	ROM_LOAD( "c07_l01.bin",  0x8000, 0x4000, 0x41fa3e1f )
 
 	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "f03_l07.bin", 0x00000, 0x4000, 0x7f70cdc4 , 0x4da7bd1b )
-	ROM_LOAD( "e05_l06.bin", 0x04000, 0x4000, 0x023e4fbc , 0x0f1cb0ca )
-	ROM_LOAD( "e04_l05.bin", 0x08000, 0x4000, 0x9496cc60 , 0x523a8b66 )
-	ROM_LOAD( "f04_l08.bin", 0x0c000, 0x4000, 0x69b3d78b , 0x883933a4 )
-	ROM_LOAD( "e03_l04.bin", 0x10000, 0x4000, 0x6f1e4796 , 0xccecda4c )
+	ROM_LOAD( "f03_l07.bin",  0x00000, 0x4000, 0x4da7bd1b )
+	ROM_LOAD( "e05_l06.bin",  0x04000, 0x4000, 0x0f1cb0ca )
+	ROM_LOAD( "e04_l05.bin",  0x08000, 0x4000, 0x523a8b66 )
+	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
+	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
 
 	ROM_REGION(0x220)	/* color/lookup proms */
-	ROM_LOAD( "577h09", 0x00000, 0x0020, 0x6e0aa662 , 0xc15e7c80 ) /* palette */
-	ROM_LOAD( "577h10", 0x00020, 0x0100, 0xf5c40200 , 0xe9de1e53 ) /* sprites */
-	ROM_LOAD( "577h11", 0x00120, 0x0100, 0x1ec60000 , 0x2a1a992b ) /* characters */
+	ROM_LOAD( "577h09",       0x00000, 0x0020, 0xc15e7c80 ) /* palette */
+	ROM_LOAD( "577h10",       0x00020, 0x0100, 0xe9de1e53 ) /* sprites */
+	ROM_LOAD( "577h11",       0x00120, 0x0100, 0x2a1a992b ) /* characters */
 ROM_END
 
 ROM_START( rushatck_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rush_h03.10c", 0x0000, 0x4000, 0xf32c1d1e , 0x4d276b52 )
-	ROM_LOAD( "rush_h02.8c", 0x4000, 0x4000, 0xea94b072 , 0xb5802806 )
-	ROM_LOAD( "rush_h01.7c", 0x8000, 0x4000, 0x9579d71f , 0xda7c8f3d )
+	ROM_LOAD( "rush_h03.10c", 0x0000, 0x4000, 0x4d276b52 )
+	ROM_LOAD( "rush_h02.8c",  0x4000, 0x4000, 0xb5802806 )
+	ROM_LOAD( "rush_h01.7c",  0x8000, 0x4000, 0xda7c8f3d )
 
 	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "rush_h07.3f", 0x00000, 0x4000, 0x42cc0d1a , 0x03f9815f )
-	ROM_LOAD( "e05_l06.bin", 0x04000, 0x4000, 0x023e4fbc , 0x0f1cb0ca )
-	ROM_LOAD( "rush_h05.4e", 0x08000, 0x4000, 0x4b711f89 , 0x9d028e8f )
-	ROM_LOAD( "f04_l08.bin", 0x0c000, 0x4000, 0x69b3d78b , 0x883933a4 )
-	ROM_LOAD( "e03_l04.bin", 0x10000, 0x4000, 0x6f1e4796 , 0xccecda4c )
+	ROM_LOAD( "rush_h07.3f",  0x00000, 0x4000, 0x03f9815f )
+	ROM_LOAD( "e05_l06.bin",  0x04000, 0x4000, 0x0f1cb0ca )
+	ROM_LOAD( "rush_h05.4e",  0x08000, 0x4000, 0x9d028e8f )
+	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
+	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
 
 	ROM_REGION(0x220)	/* color/lookup proms */
-	ROM_LOAD( "577h09", 0x00000, 0x0020, 0x6e0aa662 , 0xc15e7c80 ) /* palette */
-	ROM_LOAD( "577h10", 0x00020, 0x0100, 0xf5c40200 , 0xe9de1e53 ) /* sprites */
-	ROM_LOAD( "577h11", 0x00120, 0x0100, 0x1ec60000 , 0x2a1a992b ) /* characters */
+	ROM_LOAD( "577h09",       0x00000, 0x0020, 0xc15e7c80 ) /* palette */
+	ROM_LOAD( "577h10",       0x00020, 0x0100, 0xe9de1e53 ) /* sprites */
+	ROM_LOAD( "577h11",       0x00120, 0x0100, 0x2a1a992b ) /* characters */
 ROM_END
 
 

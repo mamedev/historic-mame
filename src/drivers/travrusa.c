@@ -276,51 +276,51 @@ static struct MachineDriver machine_driver =
 
 ROM_START( travrusa_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "zippyrac.000", 0x0000, 0x2000, 0x25468936 , 0xbe066c0a )
-	ROM_LOAD( "zippyrac.005", 0x2000, 0x2000, 0x772f4069 , 0x145d6b34 )
-	ROM_LOAD( "zippyrac.006", 0x4000, 0x2000, 0xd92b9f27 , 0xe1b51383 )
-	ROM_LOAD( "zippyrac.007", 0x6000, 0x2000, 0x1ebe2522 , 0x85cd1a51 )
+	ROM_LOAD( "zippyrac.000", 0x0000, 0x2000, 0xbe066c0a )
+	ROM_LOAD( "zippyrac.005", 0x2000, 0x2000, 0x145d6b34 )
+	ROM_LOAD( "zippyrac.006", 0x4000, 0x2000, 0xe1b51383 )
+	ROM_LOAD( "zippyrac.007", 0x6000, 0x2000, 0x85cd1a51 )
 
 	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "zippyrac.001", 0x00000, 0x2000, 0x080c2eea , 0xaa8994dd )
-	ROM_LOAD( "mr8.3c", 0x02000, 0x2000, 0x822f3c4d , 0x3a046dd1 )
-	ROM_LOAD( "mr9.3a", 0x04000, 0x2000, 0x4dff1a15 , 0x1cc3d3f4 )
-	ROM_LOAD( "zippyrac.008", 0x06000, 0x2000, 0xd6c5bd0d , 0x3e2c7a6b )
-	ROM_LOAD( "zippyrac.009", 0x08000, 0x2000, 0x6372812a , 0x13be6a14 )
-	ROM_LOAD( "zippyrac.010", 0x0a000, 0x2000, 0x76e982c9 , 0x6fcc9fdb )
+	ROM_LOAD( "zippyrac.001", 0x00000, 0x2000, 0xaa8994dd )
+	ROM_LOAD( "mr8.3c",       0x02000, 0x2000, 0x3a046dd1 )
+	ROM_LOAD( "mr9.3a",       0x04000, 0x2000, 0x1cc3d3f4 )
+	ROM_LOAD( "zippyrac.008", 0x06000, 0x2000, 0x3e2c7a6b )
+	ROM_LOAD( "zippyrac.009", 0x08000, 0x2000, 0x13be6a14 )
+	ROM_LOAD( "zippyrac.010", 0x0a000, 0x2000, 0x6fcc9fdb )
 
 	ROM_REGION(0x0220)	/* color proms */
-	ROM_LOAD( "mmi6349.ij", 0x0000, 0x0200, 0xb03a28b8 , 0xc9724350 ) /* character palette - last $100 are unused */
-	ROM_LOAD( "tbp18s.2", 0x0100, 0x0020, 0x2fe70dd5 , 0xa1130007 ) /* sprite palette */
-	ROM_LOAD( "tbp24s10.3", 0x0120, 0x0100, 0xc7230a0d , 0x76062638 ) /* sprite lookup table */
+	ROM_LOAD( "mmi6349.ij",   0x0000, 0x0200, 0xc9724350 ) /* character palette - last $100 are unused */
+	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
+	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "mr10.1a", 0xf000, 0x1000, 0x91c75683 , 0xa02ad8a0 )
+	ROM_LOAD( "mr10.1a",      0xf000, 0x1000, 0xa02ad8a0 )
 ROM_END
 
 ROM_START( motorace_rom )
 	ROM_REGION(0x12000)	/* 64k for code */
-	ROM_LOAD( "mr.cpu", 0x10000, 0x2000, 0xa0e6631c , 0x89030b0c )	/* we load the ROM at 10000-11fff, */
+	ROM_LOAD( "mr.cpu",       0x10000, 0x2000, 0x89030b0c )	/* we load the ROM at 10000-11fff, */
 														/* it will be decrypted at 0000 */
-	ROM_LOAD( "mr1.3l", 0x2000, 0x2000, 0x33a87d00 , 0x0904ed58 )
-	ROM_LOAD( "mr2.3k", 0x4000, 0x2000, 0x7897130f , 0x8a2374ec )
-	ROM_LOAD( "mr3.3j", 0x6000, 0x2000, 0x78dfc871 , 0x2f04c341 )
+	ROM_LOAD( "mr1.3l",       0x2000, 0x2000, 0x0904ed58 )
+	ROM_LOAD( "mr2.3k",       0x4000, 0x2000, 0x8a2374ec )
+	ROM_LOAD( "mr3.3j",       0x6000, 0x2000, 0x2f04c341 )
 
 	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mr7.3e", 0x00000, 0x2000, 0x78bc5e5a , 0x492a60be )
-	ROM_LOAD( "mr8.3c", 0x02000, 0x2000, 0x822f3c4d , 0x3a046dd1 )
-	ROM_LOAD( "mr9.3a", 0x04000, 0x2000, 0x4dff1a15 , 0x1cc3d3f4 )
-	ROM_LOAD( "mr4.3n", 0x06000, 0x2000, 0x9227b5d3 , 0x5cf1a0d6 )
-	ROM_LOAD( "mr5.3m", 0x08000, 0x2000, 0x46da07c2 , 0xf75f2aad )
-	ROM_LOAD( "mr6.3k", 0x0a000, 0x2000, 0xe3678ca5 , 0x518889a0 )
+	ROM_LOAD( "mr7.3e",       0x00000, 0x2000, 0x492a60be )
+	ROM_LOAD( "mr8.3c",       0x02000, 0x2000, 0x3a046dd1 )
+	ROM_LOAD( "mr9.3a",       0x04000, 0x2000, 0x1cc3d3f4 )
+	ROM_LOAD( "mr4.3n",       0x06000, 0x2000, 0x5cf1a0d6 )
+	ROM_LOAD( "mr5.3m",       0x08000, 0x2000, 0xf75f2aad )
+	ROM_LOAD( "mr6.3k",       0x0a000, 0x2000, 0x518889a0 )
 
 	ROM_REGION(0x0220)	/* color proms */
-	ROM_LOAD( "mmi6349.ij", 0x0000, 0x0200, 0xb03a28b8 , 0xc9724350 ) /* character palette - last $100 are unused */
-	ROM_LOAD( "tbp18s.2", 0x0100, 0x0020, 0x2fe70dd5 , 0xa1130007 ) /* sprite palette */
-	ROM_LOAD( "tbp24s10.3", 0x0120, 0x0100, 0xc7230a0d , 0x76062638 ) /* sprite lookup table */
+	ROM_LOAD( "mmi6349.ij",   0x0000, 0x0200, 0xc9724350 ) /* character palette - last $100 are unused */
+	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
+	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "mr10.1a", 0xf000, 0x1000, 0x91c75683 , 0xa02ad8a0 )
+	ROM_LOAD( "mr10.1a",      0xf000, 0x1000, 0xa02ad8a0 )
 ROM_END
 
 

@@ -584,141 +584,141 @@ static struct MachineDriver gauntlet2_machine_driver =
 
 ROM_START( gauntlet_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "gauntlt1.9a", 0x00000, 0x08000, 0xf0e62fde , 0x46fe8743 )
-	ROM_LOAD_ODD ( "gauntlt1.9b", 0x00000, 0x08000, 0xdf7c4044 , 0x276e15c4 )
-	ROM_LOAD_EVEN( "gauntlt1.10a", 0x38000, 0x04000, 0x3ccbead5 , 0x6d99ed51 )
-	ROM_LOAD_ODD ( "gauntlt1.10b", 0x38000, 0x04000, 0xdd2387c5 , 0x545ead91 )
-	ROM_LOAD_EVEN( "gauntlt1.7a", 0x40000, 0x08000, 0x54702330 , 0x6fb8419c )
-	ROM_LOAD_ODD ( "gauntlt1.7b", 0x40000, 0x08000, 0x6f769cc4 , 0x931bd2a0 )
+	ROM_LOAD_EVEN( "gauntlt1.9a",  0x00000, 0x08000, 0x46fe8743 )
+	ROM_LOAD_ODD ( "gauntlt1.9b",  0x00000, 0x08000, 0x276e15c4 )
+	ROM_LOAD_EVEN( "gauntlt1.10a", 0x38000, 0x04000, 0x6d99ed51 )
+	ROM_LOAD_ODD ( "gauntlt1.10b", 0x38000, 0x04000, 0x545ead91 )
+	ROM_LOAD_EVEN( "gauntlt1.7a",  0x40000, 0x08000, 0x6fb8419c )
+	ROM_LOAD_ODD ( "gauntlt1.7b",  0x40000, 0x08000, 0x931bd2a0 )
 
 	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a", 0x00000, 0x08000, 0xc39784c3 , 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b", 0x08000, 0x08000, 0x7d468690 , 0x869330be )
-	ROM_LOAD( "gauntlt1.1l", 0x18000, 0x08000, 0x61312119 , 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0xf1f0618c , 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a", 0x30000, 0x08000, 0x9306abfc , 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b", 0x38000, 0x08000, 0xae5eded2 , 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l", 0x48000, 0x08000, 0x24614385 , 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x063a7d0c , 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p", 0x60000, 0x04000, 0xd0cae034 , 0x6c276a1d )        /* alpha font */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
+	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
+	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
+	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
-	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x5e94f5c8 , 0x6ee7f3cc )
-	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0x051bc3d3 , 0xfa19861f )
+	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
+	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 ROM_END
 
 
 ROM_START( gauntir1_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "gaun1ir1.9a", 0x00000, 0x08000, 0x70ba8384 , 0xfd871f81 )
-	ROM_LOAD_ODD ( "gaun1ir1.9b", 0x00000, 0x08000, 0x32b5699d , 0xbcb2fb1d )
-	ROM_LOAD_EVEN( "gaun1ir1.10a", 0x38000, 0x04000, 0x71980136 , 0x4642cd95 )
-	ROM_LOAD_ODD ( "gaun1ir1.10b", 0x38000, 0x04000, 0xcf467ac6 , 0xc8df945e )
-	ROM_LOAD_EVEN( "gaun1ir1.7a", 0x40000, 0x08000, 0x7a76071e , 0xc57377b3 )
-	ROM_LOAD_ODD ( "gaun1ir1.7b", 0x40000, 0x08000, 0xbe4bb1c3 , 0x1cac2071 )
+	ROM_LOAD_EVEN( "gaun1ir1.9a",  0x00000, 0x08000, 0xfd871f81 )
+	ROM_LOAD_ODD ( "gaun1ir1.9b",  0x00000, 0x08000, 0xbcb2fb1d )
+	ROM_LOAD_EVEN( "gaun1ir1.10a", 0x38000, 0x04000, 0x4642cd95 )
+	ROM_LOAD_ODD ( "gaun1ir1.10b", 0x38000, 0x04000, 0xc8df945e )
+	ROM_LOAD_EVEN( "gaun1ir1.7a",  0x40000, 0x08000, 0xc57377b3 )
+	ROM_LOAD_ODD ( "gaun1ir1.7b",  0x40000, 0x08000, 0x1cac2071 )
 
 	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a", 0x00000, 0x08000, 0xc39784c3 , 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b", 0x08000, 0x08000, 0x7d468690 , 0x869330be )
-	ROM_LOAD( "gauntlt1.1l", 0x18000, 0x08000, 0x61312119 , 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0xf1f0618c , 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a", 0x30000, 0x08000, 0x9306abfc , 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b", 0x38000, 0x08000, 0xae5eded2 , 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l", 0x48000, 0x08000, 0x24614385 , 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x063a7d0c , 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p", 0x60000, 0x04000, 0xd0cae034 , 0x6c276a1d )        /* alpha font */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
+	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
+	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
+	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
-	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x5e94f5c8 , 0x6ee7f3cc )
-	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0x051bc3d3 , 0xfa19861f )
+	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
+	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 ROM_END
 
 
 ROM_START( gauntir2_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "gaun1ir2.9a", 0x00000, 0x08000, 0x70ba8384 , 0xfd871f81 )
-	ROM_LOAD_ODD ( "gaun1ir2.9b", 0x00000, 0x08000, 0x32b5699d , 0xbcb2fb1d )
-	ROM_LOAD_EVEN( "gaun1ir2.10a", 0x38000, 0x04000, 0x71980136 , 0x4642cd95 )
-	ROM_LOAD_ODD ( "gaun1ir2.10b", 0x38000, 0x04000, 0xcf467ac6 , 0xc8df945e )
-	ROM_LOAD_EVEN( "gaun1ir2.7a", 0x40000, 0x08000, 0x7642eb0e , 0x73e1ad79 )
-	ROM_LOAD_ODD ( "gaun1ir2.7b", 0x40000, 0x08000, 0x6247fb0d , 0xfd248cea )
+	ROM_LOAD_EVEN( "gaun1ir2.9a",  0x00000, 0x08000, 0xfd871f81 )
+	ROM_LOAD_ODD ( "gaun1ir2.9b",  0x00000, 0x08000, 0xbcb2fb1d )
+	ROM_LOAD_EVEN( "gaun1ir2.10a", 0x38000, 0x04000, 0x4642cd95 )
+	ROM_LOAD_ODD ( "gaun1ir2.10b", 0x38000, 0x04000, 0xc8df945e )
+	ROM_LOAD_EVEN( "gaun1ir2.7a",  0x40000, 0x08000, 0x73e1ad79 )
+	ROM_LOAD_ODD ( "gaun1ir2.7b",  0x40000, 0x08000, 0xfd248cea )
 
 	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a", 0x00000, 0x08000, 0xc39784c3 , 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b", 0x08000, 0x08000, 0x7d468690 , 0x869330be )
-	ROM_LOAD( "gauntlt1.1l", 0x18000, 0x08000, 0x61312119 , 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0xf1f0618c , 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a", 0x30000, 0x08000, 0x9306abfc , 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b", 0x38000, 0x08000, 0xae5eded2 , 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l", 0x48000, 0x08000, 0x24614385 , 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x063a7d0c , 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p", 0x60000, 0x04000, 0xd0cae034 , 0x6c276a1d )        /* alpha font */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
+	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
+	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
+	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
-	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x5e94f5c8 , 0x6ee7f3cc )
-	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0x051bc3d3 , 0xfa19861f )
+	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
+	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 ROM_END
 
 
 ROM_START( gaunt2p_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "gaunt2p.9a", 0x00000, 0x08000, 0x034caf48 , 0x8784133f )
-	ROM_LOAD_ODD ( "gaunt2p.9b", 0x00000, 0x08000, 0x303161ab , 0x2843bde3 )
-	ROM_LOAD_EVEN( "gauntlt1.10a", 0x38000, 0x04000, 0x3ccbead5 , 0x6d99ed51 )
-	ROM_LOAD_ODD ( "gauntlt1.10b", 0x38000, 0x04000, 0xdd2387c5 , 0x545ead91 )
-	ROM_LOAD_EVEN( "gaunt2p.7a", 0x40000, 0x08000, 0x0ea79849 , 0x5b4ee415 )
-	ROM_LOAD_ODD ( "gaunt2p.7b", 0x40000, 0x08000, 0x9c246c0e , 0x41f5c9e2 )
+	ROM_LOAD_EVEN( "gaunt2p.9a",   0x00000, 0x08000, 0x8784133f )
+	ROM_LOAD_ODD ( "gaunt2p.9b",   0x00000, 0x08000, 0x2843bde3 )
+	ROM_LOAD_EVEN( "gauntlt1.10a", 0x38000, 0x04000, 0x6d99ed51 )
+	ROM_LOAD_ODD ( "gauntlt1.10b", 0x38000, 0x04000, 0x545ead91 )
+	ROM_LOAD_EVEN( "gaunt2p.7a",   0x40000, 0x08000, 0x5b4ee415 )
+	ROM_LOAD_ODD ( "gaunt2p.7b",   0x40000, 0x08000, 0x41f5c9e2 )
 
 	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt1.1a", 0x00000, 0x08000, 0xc39784c3 , 0x91700f33 )
-	ROM_LOAD( "gauntlt1.1b", 0x08000, 0x08000, 0x7d468690 , 0x869330be )
-	ROM_LOAD( "gauntlt1.1l", 0x18000, 0x08000, 0x61312119 , 0xd497d0a8 )
-	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0xf1f0618c , 0x29ef9882 )
-	ROM_LOAD( "gauntlt1.2a", 0x30000, 0x08000, 0x9306abfc , 0x9510b898 )
-	ROM_LOAD( "gauntlt1.2b", 0x38000, 0x08000, 0xae5eded2 , 0x11e0ac5b )
-	ROM_LOAD( "gauntlt1.2l", 0x48000, 0x08000, 0x24614385 , 0x29a5db41 )
-	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x063a7d0c , 0x8bf3b263 )
-	ROM_LOAD( "gauntlt1.6p", 0x60000, 0x04000, 0xd0cae034 , 0x6c276a1d )        /* alpha font */
+	ROM_LOAD( "gauntlt1.1a",  0x00000, 0x08000, 0x91700f33 )
+	ROM_LOAD( "gauntlt1.1b",  0x08000, 0x08000, 0x869330be )
+	ROM_LOAD( "gauntlt1.1l",  0x18000, 0x08000, 0xd497d0a8 )
+	ROM_LOAD( "gauntlt1.1mn", 0x20000, 0x08000, 0x29ef9882 )
+	ROM_LOAD( "gauntlt1.2a",  0x30000, 0x08000, 0x9510b898 )
+	ROM_LOAD( "gauntlt1.2b",  0x38000, 0x08000, 0x11e0ac5b )
+	ROM_LOAD( "gauntlt1.2l",  0x48000, 0x08000, 0x29a5db41 )
+	ROM_LOAD( "gauntlt1.2mn", 0x50000, 0x08000, 0x8bf3b263 )
+	ROM_LOAD( "gauntlt1.6p",  0x60000, 0x04000, 0x6c276a1d )        /* alpha font */
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
-	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x5e94f5c8 , 0x6ee7f3cc )
-	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0x051bc3d3 , 0xfa19861f )
+	ROM_LOAD( "gauntlt1.16r", 0x4000, 0x4000, 0x6ee7f3cc )
+	ROM_LOAD( "gauntlt1.16s", 0x8000, 0x8000, 0xfa19861f )
 ROM_END
 
 
 ROM_START( gaunt2_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "gauntlt2.9a", 0x00000, 0x08000, 0xf0e62fde , 0x46fe8743 )
-	ROM_LOAD_ODD ( "gauntlt2.9b", 0x00000, 0x08000, 0xdf7c4044 , 0x276e15c4 )
-	ROM_LOAD_EVEN( "gauntlt2.10a", 0x38000, 0x04000, 0x685f5aaf , 0x45dfda47 )
-	ROM_LOAD_ODD ( "gauntlt2.10b", 0x38000, 0x04000, 0x89522898 , 0x343c029c )
-	ROM_LOAD_EVEN( "gauntlt2.7a", 0x40000, 0x08000, 0x8065942b , 0x58a0a9a3 )
-	ROM_LOAD_ODD ( "gauntlt2.7b", 0x40000, 0x08000, 0x79789e8e , 0x658f0da8 )
-	ROM_LOAD_EVEN( "gauntlt2.6a", 0x50000, 0x08000, 0xa2c7e013 , 0xae301bba )
-	ROM_LOAD_ODD ( "gauntlt2.6b", 0x50000, 0x08000, 0xa07ed244 , 0xe94aaa8a )
+	ROM_LOAD_EVEN( "gauntlt2.9a",  0x00000, 0x08000, 0x46fe8743 )
+	ROM_LOAD_ODD ( "gauntlt2.9b",  0x00000, 0x08000, 0x276e15c4 )
+	ROM_LOAD_EVEN( "gauntlt2.10a", 0x38000, 0x04000, 0x45dfda47 )
+	ROM_LOAD_ODD ( "gauntlt2.10b", 0x38000, 0x04000, 0x343c029c )
+	ROM_LOAD_EVEN( "gauntlt2.7a",  0x40000, 0x08000, 0x58a0a9a3 )
+	ROM_LOAD_ODD ( "gauntlt2.7b",  0x40000, 0x08000, 0x658f0da8 )
+	ROM_LOAD_EVEN( "gauntlt2.6a",  0x50000, 0x08000, 0xae301bba )
+	ROM_LOAD_ODD ( "gauntlt2.6b",  0x50000, 0x08000, 0xe94aaa8a )
 
 	ROM_REGION_DISPOSE(0x64000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gauntlt2.1a", 0x00000, 0x08000, 0xc49a61f0 , 0x09df6e23 )
-	ROM_LOAD( "gauntlt2.1b", 0x08000, 0x08000, 0x7d468690 , 0x869330be )
-	ROM_LOAD( "gauntlt2.1c", 0x10000, 0x04000, 0x6d83303b , 0xe4c98f01 )
+	ROM_LOAD( "gauntlt2.1a",  0x00000, 0x08000, 0x09df6e23 )
+	ROM_LOAD( "gauntlt2.1b",  0x08000, 0x08000, 0x869330be )
+	ROM_LOAD( "gauntlt2.1c",  0x10000, 0x04000, 0xe4c98f01 )
 	ROM_RELOAD(               0x14000, 0x04000 )
-	ROM_LOAD( "gauntlt2.1l", 0x18000, 0x08000, 0xbf7d1bc3 , 0x33cb476e )
-	ROM_LOAD( "gauntlt2.1mn", 0x20000, 0x08000, 0xf1f0618c , 0x29ef9882 )
-	ROM_LOAD( "gauntlt2.1p", 0x28000, 0x04000, 0x51f65028 , 0xc4857879 )
+	ROM_LOAD( "gauntlt2.1l",  0x18000, 0x08000, 0x33cb476e )
+	ROM_LOAD( "gauntlt2.1mn", 0x20000, 0x08000, 0x29ef9882 )
+	ROM_LOAD( "gauntlt2.1p",  0x28000, 0x04000, 0xc4857879 )
 	ROM_RELOAD(               0x2c000, 0x04000 )
-	ROM_LOAD( "gauntlt2.2a", 0x30000, 0x08000, 0xec274b73 , 0xf71e2503 )
-	ROM_LOAD( "gauntlt2.2b", 0x38000, 0x08000, 0xae5eded2 , 0x11e0ac5b )
-	ROM_LOAD( "gauntlt2.2c", 0x40000, 0x04000, 0x9dbb2f8b , 0xd9c2c2d1 )
+	ROM_LOAD( "gauntlt2.2a",  0x30000, 0x08000, 0xf71e2503 )
+	ROM_LOAD( "gauntlt2.2b",  0x38000, 0x08000, 0x11e0ac5b )
+	ROM_LOAD( "gauntlt2.2c",  0x40000, 0x04000, 0xd9c2c2d1 )
 	ROM_RELOAD(               0x44000, 0x04000 )
-	ROM_LOAD( "gauntlt2.2l", 0x48000, 0x08000, 0x1e07bcbd , 0x9e30b2e9 )
-	ROM_LOAD( "gauntlt2.2mn", 0x50000, 0x08000, 0x063a7d0c , 0x8bf3b263 )
-	ROM_LOAD( "gauntlt2.2p", 0x58000, 0x04000, 0xc32da49d , 0xa32c732a )
+	ROM_LOAD( "gauntlt2.2l",  0x48000, 0x08000, 0x9e30b2e9 )
+	ROM_LOAD( "gauntlt2.2mn", 0x50000, 0x08000, 0x8bf3b263 )
+	ROM_LOAD( "gauntlt2.2p",  0x58000, 0x04000, 0xa32c732a )
 	ROM_RELOAD(               0x5c000, 0x04000 )
-	ROM_LOAD( "gauntlt2.6p", 0x60000, 0x04000, 0xe379811d , 0xd101905d )        /* alpha font */
+	ROM_LOAD( "gauntlt2.6p",  0x60000, 0x04000, 0xd101905d )        /* alpha font */
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
-	ROM_LOAD( "gauntlt2.16r", 0x4000, 0x4000, 0x8b4770d1 , 0x5c731006 )
-	ROM_LOAD( "gauntlt2.16s", 0x8000, 0x8000, 0x480179d5 , 0xdc3591e7 )
+	ROM_LOAD( "gauntlt2.16r", 0x4000, 0x4000, 0x5c731006 )
+	ROM_LOAD( "gauntlt2.16s", 0x8000, 0x8000, 0xdc3591e7 )
 ROM_END
 
 

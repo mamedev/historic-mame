@@ -283,38 +283,38 @@ static void panic_hisave(void)
 
 ROM_START( panic_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "spcpanic.1", 0x0000, 0x0800, 0x3ba9160d , 0x405ae6f9 )         /* Code */
-	ROM_LOAD( "spcpanic.2", 0x0800, 0x0800, 0x0ed18545 , 0xb6a286c5 )
-	ROM_LOAD( "spcpanic.3", 0x1000, 0x0800, 0x44a22274 , 0x85ae8b2e )
-	ROM_LOAD( "spcpanic.4", 0x1800, 0x0800, 0x633ea97e , 0xb6d4f52f )
-	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800, 0xf16ac644 , 0x5b80f277 )
-	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800, 0xd0aaa828 , 0xb73babf0 )
-	ROM_LOAD( "spcpanic.7", 0x3000, 0x0800, 0x5e6a5212 , 0xfc27f4e5 )
-	ROM_LOAD( "spcpanic.8", 0x3800, 0x0800, 0xc6f90207 , 0x7da0b321 )         /* Colour Table */
+	ROM_LOAD( "spcpanic.1",   0x0000, 0x0800, 0x405ae6f9 )         /* Code */
+	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
+	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
+	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
+	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
+	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
+	ROM_LOAD( "spcpanic.7",   0x3000, 0x0800, 0xfc27f4e5 )
+	ROM_LOAD( "spcpanic.8",   0x3800, 0x0800, 0x7da0b321 )         /* Colour Table */
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spcpanic.9", 0x0000, 0x0800, 0x0fcc7c26 , 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10", 0x0800, 0x0800, 0xed78581a , 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12", 0x1000, 0x0800, 0x983751ab , 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11", 0x1800, 0x0800, 0x7d28fa66 , 0xacea9df4 )
+	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
+	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
+	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
+	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 ROM_END
 
 ROM_START( panica_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "panica.1", 0x0000, 0x0800, 0x49cd1801 , 0x289720ce )         /* Code */
-	ROM_LOAD( "spcpanic.2", 0x0800, 0x0800, 0x0ed18545 , 0xb6a286c5 )
-	ROM_LOAD( "spcpanic.3", 0x1000, 0x0800, 0x44a22274 , 0x85ae8b2e )
-	ROM_LOAD( "spcpanic.4", 0x1800, 0x0800, 0x633ea97e , 0xb6d4f52f )
-	ROM_LOAD( "spcpanic.5", 0x2000, 0x0800, 0xf16ac644 , 0x5b80f277 )
-	ROM_LOAD( "spcpanic.6", 0x2800, 0x0800, 0xd0aaa828 , 0xb73babf0 )
-	ROM_LOAD( "panica.7", 0x3000, 0x0800, 0x04fe6428 , 0x3641cb7f )
-	ROM_LOAD( "spcpanic.8", 0x3800, 0x0800, 0xc6f90207 , 0x7da0b321 )         /* Colour Table */
+	ROM_LOAD( "panica.1",     0x0000, 0x0800, 0x289720ce )         /* Code */
+	ROM_LOAD( "spcpanic.2",   0x0800, 0x0800, 0xb6a286c5 )
+	ROM_LOAD( "spcpanic.3",   0x1000, 0x0800, 0x85ae8b2e )
+	ROM_LOAD( "spcpanic.4",   0x1800, 0x0800, 0xb6d4f52f )
+	ROM_LOAD( "spcpanic.5",   0x2000, 0x0800, 0x5b80f277 )
+	ROM_LOAD( "spcpanic.6",   0x2800, 0x0800, 0xb73babf0 )
+	ROM_LOAD( "panica.7",     0x3000, 0x0800, 0x3641cb7f )
+	ROM_LOAD( "spcpanic.8",   0x3800, 0x0800, 0x7da0b321 )         /* Colour Table */
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "spcpanic.9", 0x0000, 0x0800, 0x0fcc7c26 , 0xeec78b4c )
-	ROM_LOAD( "spcpanic.10", 0x0800, 0x0800, 0xed78581a , 0xc9631c2d )
-	ROM_LOAD( "spcpanic.12", 0x1000, 0x0800, 0x983751ab , 0xe83423d0 )
-	ROM_LOAD( "spcpanic.11", 0x1800, 0x0800, 0x7d28fa66 , 0xacea9df4 )
+	ROM_LOAD( "spcpanic.9",   0x0000, 0x0800, 0xeec78b4c )
+	ROM_LOAD( "spcpanic.10",  0x0800, 0x0800, 0xc9631c2d )
+	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
+	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 ROM_END
 
 

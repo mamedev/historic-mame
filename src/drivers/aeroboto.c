@@ -232,29 +232,71 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( aeroboto_rom )
+ROM_START( formatz_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "aeroboto.8", 0x4000, 0x4000, 0x34ce3000 , 0x4d3fc049 )
-	ROM_LOAD( "aeroboto.7", 0x8000, 0x4000, 0xa97571c3 , 0x522f51c1 )
-	ROM_LOAD( "aeroboto.6", 0xC000, 0x4000, 0xc435f7dd , 0x1a295ffb )
+	ROM_LOAD( "format_z.8",   0x4000, 0x4000, 0x81a2416c )
+	ROM_LOAD( "format_z.7",   0x8000, 0x4000, 0x986e6052 )
+	ROM_LOAD( "format_z.6",   0xc000, 0x4000, 0xbaa0d745 )
 
 	ROM_REGION_DISPOSE(0x7000)	/* temporary space for graphics */
-	ROM_LOAD( "aeroboto.5", 0x0000, 0x2000, 0xcdf85fa4 , 0x32fc00f9 )	/* characters */
-	ROM_LOAD( "aeroboto.4", 0x2000, 0x2000, 0xae97d893 , 0x910375a0 )	/* characters */
-	ROM_LOAD( "aeroboto.1", 0x4000, 0x1000, 0x36dbf4bb , 0x7820eeaf )	/* sprites */
-	ROM_LOAD( "aeroboto.2", 0x5000, 0x1000, 0xada29ee6 , 0xc7f81a3c )	/* sprites */
-	ROM_LOAD( "aeroboto.3", 0x6000, 0x1000, 0xedaa5368 , 0x5203ad04 )	/* sprites */
+	ROM_LOAD( "format_z.5",   0x0000, 0x2000, 0xba50be57 )	/* characters */
+	ROM_LOAD( "format_z.4",   0x2000, 0x2000, 0x910375a0 )	/* characters */
+	ROM_LOAD( "format_z.1",   0x4000, 0x1000, 0x5739afd2 )	/* sprites */
+	ROM_LOAD( "format_z.2",   0x5000, 0x1000, 0x3a821391 )	/* sprites */
+	ROM_LOAD( "format_z.3",   0x6000, 0x1000, 0x7d1aec79 )	/* sprites */
 
 	ROM_REGION(0x10000)     /* 64k for sound CPU */
-	ROM_LOAD( "aeroboto.9", 0xf000, 0x1000, 0x36f5b5b3 , 0x6b9215ad )
+	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
+ROM_END
+
+ROM_START( aeroboto_rom )
+	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_LOAD( "aeroboto.8",   0x4000, 0x4000, 0x4d3fc049 )
+	ROM_LOAD( "aeroboto.7",   0x8000, 0x4000, 0x522f51c1 )
+	ROM_LOAD( "aeroboto.6",   0xc000, 0x4000, 0x1a295ffb )
+
+	ROM_REGION_DISPOSE(0x7000)	/* temporary space for graphics */
+	ROM_LOAD( "aeroboto.5",   0x0000, 0x2000, 0x32fc00f9 )	/* characters */
+	ROM_LOAD( "format_z.4",   0x2000, 0x2000, 0x910375a0 )	/* characters */
+	ROM_LOAD( "aeroboto.1",   0x4000, 0x1000, 0x7820eeaf )	/* sprites */
+	ROM_LOAD( "aeroboto.2",   0x5000, 0x1000, 0xc7f81a3c )	/* sprites */
+	ROM_LOAD( "aeroboto.3",   0x6000, 0x1000, 0x5203ad04 )	/* sprites */
+
+	ROM_REGION(0x10000)     /* 64k for sound CPU */
+	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
 ROM_END
 
 
 
-struct GameDriver aeroboto_driver =
+struct GameDriver formatz_driver =
 {
 	__FILE__,
 	0,
+	"formatz",
+	"Formation Z",
+	"1984",
+	"Jaleco",
+	"Carlos A. Lozano",
+	GAME_NOT_WORKING,
+	&machine_driver,
+
+	formatz_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver aeroboto_driver =
+{
+	__FILE__,
+	&formatz_driver,
 	"aeroboto",
 	"Aeroboto",
 	"1984",

@@ -12,7 +12,7 @@
 #include "Z80/Z80.h"
 #include "I8039/I8039.h"
 #include "I8085/I8085.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 #include "M6809/M6809.h"
 #include "M6808/M6808.h"
 #include "M6805/M6805.h"
@@ -480,6 +480,9 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		{
 			int ran;
 
+
+			osd_profiler(OSD_PROFILE_CPU1 + cpunum);
+
 			/* switch memory and CPU contexts */
 			activecpu = cpunum;
 			memorycontextswap (activecpu);
@@ -501,6 +504,8 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 
 			/* update the timer with how long we actually ran */
 			timer_update_cpu (cpunum, ran);
+
+			osd_profiler(OSD_PROFILE_END);
 		}
 	}
 
@@ -574,7 +579,9 @@ void cpu_halt(int cpunum,int _running)
 {
 	if (cpunum >= MAX_CPU) return;
 
-	timer_suspendcpu (cpunum, !_running);
+	/* don't resume audio CPUs if sound is disabled */
+	if (!(Machine->drv->cpu[cpunum].cpu_type & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
+		timer_suspendcpu (cpunum, !_running);
 }
 
 
@@ -1250,13 +1257,13 @@ static void cpu_vblankcallback (int param)
 ***************************************************************************/
 static void cpu_updatecallback (int param)
 {
+	/* update the sound system */
+	sound_update();
+
 	/* update the screen if we didn't before */
 	if (!(Machine->drv->video_attributes & VIDEO_UPDATE_BEFORE_VBLANK))
 		usres = updatescreen();
 	vblank = 0;
-
-	/* update the sound system */
-	sound_update();
 
 	/* update IPT_VBLANK input ports */
 	inputport_vblank_end();

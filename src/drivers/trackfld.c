@@ -421,94 +421,94 @@ static struct MachineDriver hyprolyb_machine_driver =
 
 ROM_START( trackfld_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "a01_e01.bin", 0x6000, 0x2000, 0xca01e553 , 0x2882f6d4 )
-	ROM_LOAD( "a02_e02.bin", 0x8000, 0x2000, 0x21213565 , 0x1743b5ee )
-	ROM_LOAD( "a03_k03.bin", 0xA000, 0x2000, 0xfb67e07f , 0x6c0d1ee9 )
-	ROM_LOAD( "a04_e04.bin", 0xC000, 0x2000, 0x33b1674b , 0x21d6c448 )
-	ROM_LOAD( "a05_e05.bin", 0xE000, 0x2000, 0xf6600ba4 , 0xf08c7b7e )
+	ROM_LOAD( "a01_e01.bin",  0x6000, 0x2000, 0x2882f6d4 )
+	ROM_LOAD( "a02_e02.bin",  0x8000, 0x2000, 0x1743b5ee )
+	ROM_LOAD( "a03_k03.bin",  0xA000, 0x2000, 0x6c0d1ee9 )
+	ROM_LOAD( "a04_e04.bin",  0xC000, 0x2000, 0x21d6c448 )
+	ROM_LOAD( "a05_e05.bin",  0xE000, 0x2000, 0xf08c7b7e )
 
 	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "h16_e12.bin", 0x0000, 0x2000, 0xeee82d14 , 0x50075768 )
-	ROM_LOAD( "h15_e11.bin", 0x2000, 0x2000, 0x9fd214e8 , 0xdda9e29f )
-	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 , 0xc2166a5c )
-	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd , 0x82e2185a )
-	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 , 0x800ff1f1 )
-	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 , 0xd9faf183 )
-	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 , 0x5886c802 )
+	ROM_LOAD( "h16_e12.bin",  0x0000, 0x2000, 0x50075768 )
+	ROM_LOAD( "h15_e11.bin",  0x2000, 0x2000, 0xdda9e29f )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
 	ROM_REGION(0x0220)    /* color/lookup proms */
-	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 , 0xd55f30b5 ) /* palette */
-	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 , 0xd2ba4d32 ) /* sprite lookup table */
-	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 , 0x053e5861 ) /* char lookup table */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 , 0x95bf79b6 )
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
-	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 , 0xf546a56b )
+	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
 ROM_START( hyprolym_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x16be0b86 , 0x82257fb7 )
-	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f , 0x15b83099 )
-	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0x32591b7b , 0xe54cc960 )
-	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 , 0xd099b1e8 )
-	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 , 0x974ff815 )
+	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x82257fb7 )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
+	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0xe54cc960 )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0xd099b1e8 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x974ff815 )
 
 	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c , 0x768bb63d )
-	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 , 0x3af0e2a8 )
-	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 , 0xc2166a5c )
-	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd , 0x82e2185a )
-	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 , 0x800ff1f1 )
-	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 , 0xd9faf183 )
-	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 , 0x5886c802 )
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0x768bb63d )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x3af0e2a8 )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
 	ROM_REGION(0x0220)    /* color/lookup proms */
-	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 , 0xd55f30b5 ) /* palette */
-	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 , 0xd2ba4d32 ) /* sprite lookup table */
-	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 , 0x053e5861 ) /* char lookup table */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 , 0x95bf79b6 )
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
-	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 , 0xf546a56b )
+	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
 ROM_START( hyprolyb_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "a1.1", 0x6000, 0x2000, 0x26ce1b96 , 0x9aee2d5a )
-	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f , 0x15b83099 )
-	ROM_LOAD( "a3.3", 0xA000, 0x2000, 0x0e8be755 , 0x2d6fc308 )
-	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 , 0xd099b1e8 )
-	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 , 0x974ff815 )
+	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x9aee2d5a )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
+	ROM_LOAD( "a3.3",         0xA000, 0x2000, 0x2d6fc308 )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0xd099b1e8 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x974ff815 )
 
 	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c , 0x768bb63d )
-	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 , 0x3af0e2a8 )
-	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 , 0xc2166a5c )
-	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd , 0x82e2185a )
-	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 , 0x800ff1f1 )
-	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 , 0xd9faf183 )
-	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 , 0x5886c802 )
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0x768bb63d )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x3af0e2a8 )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
 	ROM_REGION(0x0220)    /* color/lookup proms */
-	ROM_LOAD( "tfprom.1", 0x0000, 0x0020, 0x858033e0 , 0xd55f30b5 ) /* palette */
-	ROM_LOAD( "tfprom.3", 0x0020, 0x0100, 0xaafe0604 , 0xd2ba4d32 ) /* sprite lookup table */
-	ROM_LOAD( "tfprom.2", 0x0120, 0x0100, 0x903f0603 , 0x053e5861 ) /* char lookup table */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 , 0x95bf79b6 )
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for the 6802 which plays ADPCM samples */
 	/* this bootleg uses a 6802 to "emulate" the VLM5030 speech chip */
 	/* I didn't bother to emulate the 6802, I just play the samples. */
-	ROM_LOAD( "2764.1", 0x8000, 0x2000, 0xd0ac8e38 , 0xa4cddeb8 )
-	ROM_LOAD( "2764.2", 0xa000, 0x2000, 0xc03975f7 , 0xe9919365 )
-	ROM_LOAD( "2764.3", 0xc000, 0x2000, 0xede0316c , 0xc3ec42e1 )
-	ROM_LOAD( "2764.4", 0xe000, 0x2000, 0xb1323462 , 0x76998389 )
+	ROM_LOAD( "2764.1",       0x8000, 0x2000, 0xa4cddeb8 )
+	ROM_LOAD( "2764.2",       0xa000, 0x2000, 0xe9919365 )
+	ROM_LOAD( "2764.3",       0xc000, 0x2000, 0xc3ec42e1 )
+	ROM_LOAD( "2764.4",       0xe000, 0x2000, 0x76998389 )
 ROM_END
 
 

@@ -56,6 +56,7 @@ INLINE int read_dword(int *address)
 		return *(int *)address;
 }
 
+
 INLINE void write_dword(int *address, int data)
 {
   	if ((int)address & 3)
@@ -96,6 +97,7 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 		 "authors so that appropriate legal action can be taken.\n\n");
 }                           /* MAURY_END: dichiarazione */
 
+
 /***************************************************************************
 
   Read ROMs into memory.
@@ -104,18 +106,15 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
   const struct RomModule *romp - pointer to an array of Rommodule structures,
                                  as defined in common.h.
 
-  const char *basename - Name of the directory where the files are
-                         stored.
-
 ***************************************************************************/
 int readroms(void)
 {
 	int region;
 	const struct RomModule *romp;
-	int checksumwarning;
+	int checksumwarning = 0;
+	int lengthwarning = 0;
 
 
-	checksumwarning = 0;
 	romp = Machine->gamedrv->rom;
 
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
@@ -127,7 +126,6 @@ int readroms(void)
 	{
 		unsigned int region_size;
 		const char *name;
-
 
 		if (romp->name || romp->length)
 		{
@@ -151,7 +149,8 @@ int readroms(void)
 		while (romp->length)
 		{
 			void *f;
-			int sum,xor,expchecksum;
+			int expchecksum = romp->crc;
+			int	explength = 0;
 
 
 			if (romp->name == 0)
@@ -172,20 +171,29 @@ int readroms(void)
 				/* if the game is a clone, try loading the ROM from the main version */
 				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
 			}
+			if (f == 0)
+			{
+				/* NS981003: support for "load by CRC" */
+				char crc[9];
+
+				sprintf(crc,"%08x",romp->crc);
+				f = osd_fopen(Machine->gamedrv->name,crc,OSD_FILETYPE_ROM,0);
+				if (f == 0 && Machine->gamedrv->clone_of)
+				{
+					/* if the game is a clone, try loading the ROM from the main version */
+					f = osd_fopen(Machine->gamedrv->clone_of->name,crc,OSD_FILETYPE_ROM,0);
+				}
+			}
 
 			if (f == 0)
 			{
-				#ifdef macintosh	/* JB 971005 */
+				#ifdef macintosh
 					printf ("Unable to open ROM %s\n", name);
 				#else
-				fprintf(stderr, "Unable to open ROM %s\n",name);
+					fprintf(stderr, "Unable to open ROM %s\n",name);
 				#endif
 				goto printromlist;
 			}
-
-			sum = 0;
-			xor = 0;
-			expchecksum = romp->checksum;
 
 			do
 			{
@@ -194,14 +202,10 @@ int readroms(void)
 				int length = romp->length & ~ROMFLAG_MASK;
 
 
-				/* ROM_RELOAD */
 				if (romp->name == (char *)-1)
-				{
-					osd_fseek(f,0,SEEK_SET);
-					/* reinitialize checksum counters as well */
-					sum = 0;
-					xor = 0;
-				}
+					osd_fseek(f,0,SEEK_SET);	/* ROM_RELOAD */
+				else
+					explength += length;
 
 				if (romp->offset + length > region_size)
 				{
@@ -212,6 +216,7 @@ int readroms(void)
 
 				if (romp->length & ROMFLAG_ALTERNATE)
 				{
+					/* ROM_LOAD_EVEN and ROM_LOAD_ODD */
 					unsigned char *temp;
 
 
@@ -232,21 +237,15 @@ int readroms(void)
 						goto printromlist;
 					}
 
-					/* copy the ROM data and calculate the checksum */
-					#ifdef LSB_FIRST
+					/* copy the ROM data */
+				#ifdef LSB_FIRST
 					c = Machine->memory_region[region] + (romp->offset ^ 1);
-					#else
+				#else
 					c = Machine->memory_region[region] + romp->offset;
-					#endif
+				#endif
+
 					for (i = 0;i < length;i+=2)
 					{
-						int j;
-
-
-						j = 256 * temp[i] + temp[i+1];
-						sum += j;
-						xor ^= j;
-
 						c[i*2] = temp[i];
 						c[i*2+2] = temp[i+1];
 					}
@@ -256,32 +255,16 @@ int readroms(void)
 				else
 				{
 					int wide = romp->length & ROMFLAG_WIDE;
-					#ifdef LSB_FIRST
+				#ifdef LSB_FIRST
 					int swap = (romp->length & ROMFLAG_SWAP) ^ ROMFLAG_SWAP;
-					#else
+				#else
 					int swap = romp->length & ROMFLAG_SWAP;
-					#endif
+				#endif
 
-					if (osd_fread(f,Machine->memory_region[region] + romp->offset,length) != length)
-					{
-						printf("Unable to read ROM %s\n",name);
-						osd_fclose(f);
-						goto printromlist;
-					}
-
-					/* calculate the checksum */
-					c = Machine->memory_region[region] + romp->offset;
-					for (i = 0;i < (length & ~1);i+=2)
-					{
-						int j;
-
-
-						j = 256 * c[i] + c[i+1];
-						sum += j;
-						xor ^= j;
-					}
+					osd_fread(f,Machine->memory_region[region] + romp->offset,length);
 
 					/* apply swappage */
+					c = Machine->memory_region[region] + romp->offset;
 					if (wide && swap)
 					{
 						for (i = 0; i < length; i += 2)
@@ -296,20 +279,26 @@ int readroms(void)
 				romp++;
 			} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 
-			sum = ((sum & 0xffff) << 16) | (xor & 0xffff);
-			if (expchecksum != sum)
+			if (explength != osd_fsize (f))
 			{
-				#ifdef macintosh	/* JB 971005 */
-					printf("The checksum of ROM '%-12s' does not match the one MacMAME was tested with.\r"
-					"WARNING: the game might not run correctly.\r"
-					"Expected:%08x  Found:%08x\r",name,expchecksum,sum);
+				printf ("Length mismatch on ROM '%s'. (Expected: %08x  Found: %08x)\n",
+					name, explength, osd_fsize (f));
+				lengthwarning++;
+			}
+
+			if (expchecksum != osd_fcrc (f))
+			{
+				#ifdef macintosh
+					printf ("The checksum of ROM '%s' does not match the one MacMAME was tested with.\r"
+							"WARNING: the game might not run correctly.\r"
+							"Expected:%08x  Found:%08x\r", name, expchecksum, osd_fcrc (f));
 				#else
 				if (checksumwarning == 0)
-					printf("The checksum of some ROMs does not match that of the ones MAME was tested with.\n"
+					printf ("The checksum of some ROMs does not match that of the ones MAME was tested with.\n"
 							"WARNING: the game might not run correctly.\n"
 							"Name         Expected  Found\n");
 				checksumwarning++;
-				printf("%-12s %08x %08x\n",name,expchecksum,sum);
+				printf("%-12s %08x %08x\n", name, expchecksum, osd_fcrc (f));
 				#endif
 			}
 
@@ -319,27 +308,27 @@ int readroms(void)
 		region++;
 	}
 
-	#ifndef macintosh	/* JB 971005 */
-	if (checksumwarning > 0)
+#ifndef macintosh
+	if ((checksumwarning > 0) || (lengthwarning > 0))
 	{
 		printf("Press return to continue\n");
 		getchar();
 	}
-	#endif
+#endif
 
 	return 0;
 
 
 printromlist:
-	#ifndef macintosh	/* JB 971005 */
+
+#ifndef macintosh
 	printf("\n");                         /* MAURY_BEGIN: dichiarazione */
 	showdisclaimer();
 	printf("Press return to continue\n"); /* MAURY_END: dichiarazione */
 	getchar();
 
 	printromlist(Machine->gamedrv->rom,Machine->gamedrv->name);
-	#endif
-
+#endif
 
 getout:
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
@@ -351,11 +340,9 @@ getout:
 }
 
 
-
 void printromlist(const struct RomModule *romp,const char *basename)
 {
-	printf("This is the list of the ROMs required.\n"
-			"All the ROMs must reside in a subdirectory called \"ROMS\\%s\".\n"
+	printf("This is the list of the ROMs required for driver \"%s\".\n"
 			"Name              Size       Checksum\n",basename);
 	while (romp->name || romp->offset || romp->length)
 	{
@@ -368,7 +355,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 
 
 			name = romp->name;
-			expchecksum = romp->checksum;
+			expchecksum = romp->crc;
 
 			length = 0;
 
@@ -387,7 +374,6 @@ void printromlist(const struct RomModule *romp,const char *basename)
 		}
 	}
 }
-
 
 
 /***************************************************************************
@@ -470,7 +456,6 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 }
 
 
-
 void freesamples(struct GameSamples *samples)
 {
 	int i;
@@ -484,6 +469,7 @@ void freesamples(struct GameSamples *samples)
 	free(samples);
 }
 
+
 /* LBO 042898 - added coin counters */
 void coin_counter_w (int offset, int data)
 {
@@ -495,6 +481,7 @@ void coin_counter_w (int offset, int data)
 	}
 	lastcoin[offset] = data;
 }
+
 
 /***************************************************************************
 
@@ -556,7 +543,6 @@ static int readbit(const unsigned char *src,int bitnum)
 {
 	return (src[bitnum / 8] >> (7 - bitnum % 8)) & 1;
 }
-
 
 
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl)
@@ -628,7 +614,6 @@ void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const st
 }
 
 
-
 struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl)
 {
 	int c;
@@ -676,7 +661,6 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 
 	return gfx;
 }
-
 
 
 void freegfx(struct GfxElement *gfx)
@@ -1277,6 +1261,7 @@ static void drawgfx_core8(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 }
 
+
 static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int dirty)
@@ -1841,6 +1826,7 @@ static void drawgfx_core16(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	}
 }
 
+
 /* ASG 971011 - this is the real draw gfx now */
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -1852,6 +1838,7 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	else
 		drawgfx_core16(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,1);
 }
+
 
 /***************************************************************************
 
@@ -1879,6 +1866,7 @@ void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int fli
 		drawgfx_core16(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color,0);	/* ASG 971011 */
 }
 
+
 void copybitmapzoom(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley)
 {
@@ -1897,7 +1885,6 @@ mygfx.colortable = hacktable;
 for (i = 0;i < 256;i++) hacktable[i] = i;
 	drawgfxzoom(dest,&mygfx,0,0,flipx,flipy,sx,sy,clip,transparency,transparent_color,scalex,scaley);	/* ASG 971011 */
 }
-
 
 
 /***************************************************************************
@@ -2127,7 +2114,6 @@ void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 }
 
 
-
 /* fill a bitmap using the specified pen */
 void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 {
@@ -2217,7 +2203,6 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 			memset(&dest->line[y][sx],pen,ex-sx+1);
 	}
 }
-
 
 
 void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,

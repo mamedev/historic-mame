@@ -292,9 +292,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{255,255 },
-	{  1,  1 }
+	{ 255 }
 };
 
 static struct MachineDriver machine_driver =
@@ -347,25 +345,25 @@ static struct MachineDriver machine_driver =
 
 ROM_START( spacefb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "5e.cpu", 0x0000, 0x0800, 0xc1d7a67b , 0x2d406678 )         /* Code */
-	ROM_LOAD( "5f.cpu", 0x0800, 0x0800, 0x5f06218a , 0x89f0c34a )
-	ROM_LOAD( "5h.cpu", 0x1000, 0x0800, 0x78ffa2af , 0xc4bcac3e )
-	ROM_LOAD( "5i.cpu", 0x1800, 0x0800, 0xf95a50b8 , 0x61c00a65 )
-	ROM_LOAD( "5j.cpu", 0x2000, 0x0800, 0x30672a65 , 0x598420b9 )
-	ROM_LOAD( "5k.cpu", 0x2800, 0x0800, 0xeb8086de , 0x1713300c )
-	ROM_LOAD( "5m.cpu", 0x3000, 0x0800, 0x2c696757 , 0x6286f534 )
-	ROM_LOAD( "5n.cpu", 0x3800, 0x0800, 0x79e64f86 , 0x1c9f91ee )
+	ROM_LOAD( "5e.cpu",       0x0000, 0x0800, 0x2d406678 )         /* Code */
+	ROM_LOAD( "5f.cpu",       0x0800, 0x0800, 0x89f0c34a )
+	ROM_LOAD( "5h.cpu",       0x1000, 0x0800, 0xc4bcac3e )
+	ROM_LOAD( "5i.cpu",       0x1800, 0x0800, 0x61c00a65 )
+	ROM_LOAD( "5j.cpu",       0x2000, 0x0800, 0x598420b9 )
+	ROM_LOAD( "5k.cpu",       0x2800, 0x0800, 0x1713300c )
+	ROM_LOAD( "5m.cpu",       0x3000, 0x0800, 0x6286f534 )
+	ROM_LOAD( "5n.cpu",       0x3800, 0x0800, 0x1c9f91ee )
 
 	ROM_REGION_DISPOSE(0x1100)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "5k.vid", 0x0000, 0x0800, 0xe945e879 , 0x236e1ff7 )
-	ROM_LOAD( "6k.vid", 0x0800, 0x0800, 0x5076d18e , 0xbf901a4e )
-	ROM_LOAD( "4i.vid", 0x1000, 0x0100, 0x75c90c07 , 0x528e8533 )
+	ROM_LOAD( "5k.vid",       0x0000, 0x0800, 0x236e1ff7 )
+	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
+	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
 	ROM_REGION(0x0020)	/* color proms */
-	ROM_LOAD( "spacefb.clr", 0x0000, 0x0020, 0xa99ce744 , 0x465d07af )
+	ROM_LOAD( "spacefb.clr",  0x0000, 0x0020, 0x465d07af )
 
 	ROM_REGION(0x1000)	/* sound */
-    ROM_LOAD( "ic20.snd", 0x0000, 0x0400, 0x3ee4a80c , 0x1c8670b3 )
+    ROM_LOAD( "ic20.snd",     0x0000, 0x0400, 0x1c8670b3 )
 
 ROM_END
 

@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 
 
 

@@ -76,7 +76,7 @@ Reads:  $01C8, $01D2, $0260, $030E, $040E, $0416, $046E, $0474,
 void pacman_init_machine(void);
 int pacman_interrupt(void);
 
-void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pengo_updatehook0(int offset);
 int pacman_vh_start(void);
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -381,7 +381,7 @@ static struct MachineDriver maketrax_machine_driver =
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	16, 4*32,
-	pengo_vh_convert_color_prom,
+	pacman_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	machine_layers,
@@ -409,21 +409,22 @@ static struct MachineDriver maketrax_machine_driver =
 
 ROM_START( maketrax_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "maketrax.6e", 0x0000, 0x1000, 0xb25ba5a5 , 0x0150fb4a )
-	ROM_LOAD( "maketrax.6f", 0x1000, 0x1000, 0xbe0c6060 , 0x77531691 )
-	ROM_LOAD( "maketrax.6h", 0x2000, 0x1000, 0x59fca6a6 , 0xa2cdc51e )
-	ROM_LOAD( "maketrax.6j", 0x3000, 0x1000, 0xc5ad1d1d , 0x0b4b5e0a )
+	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
+	ROM_LOAD( "maketrax.6f",  0x1000, 0x1000, 0x77531691 )
+	ROM_LOAD( "maketrax.6h",  0x2000, 0x1000, 0xa2cdc51e )
+	ROM_LOAD( "maketrax.6j",  0x3000, 0x1000, 0x0b4b5e0a )
 
 	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "maketrax.5e", 0x0000, 0x1000, 0xf4366ee0 , 0x91bad2da )
-	ROM_LOAD( "maketrax.5f", 0x1000, 0x1000, 0x4a383bfc , 0xaea79f55 )
+	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
+	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
 
-	ROM_REGION(0x0090)	/* color proms */
-	ROM_LOAD( "maketrax.pr1", 0x0000, 0x0010, 0x3c051bd5 , 0x3c495fae )
-	ROM_LOAD( "maketrax.pr2", 0x0010, 0x0080, 0x0f38090c , 0xa8596d01 )
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "crush.7f",     0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
-	ROM_REGION(0x0100)	/* sound prom */
-	ROM_LOAD( "maketrax.spr", 0x0000, 0x0100, 0x5be8060e , 0xa9cc86bf )
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "crush.1m",     0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "crush.3m",     0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 

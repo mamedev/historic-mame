@@ -160,9 +160,10 @@ struct osd_bitmap
 #define OSD_KEY_FRAMESKIP		139
 #define OSD_KEY_THROTTLE		140
 #define OSD_KEY_SHOW_FPS		141
-#define OSD_KEY_SNAPSHOT		142
+#define OSD_KEY_SHOW_PROFILE	142
+#define OSD_KEY_SNAPSHOT		143
 
-#define OSD_MAX_PSEUDO			142
+#define OSD_MAX_PSEUDO			143
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -293,6 +294,8 @@ void osd_analogjoy_read(int *analog_x, int *analog_y);
 #define OSD_FILETYPE_HIGHSCORE 3
 #define OSD_FILETYPE_CONFIG 4
 #define OSD_FILETYPE_INPUTLOG 5
+#define OSD_FILETYPE_STATE 6
+#define OSD_FILETYPE_ARTWORK 7
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */
@@ -304,7 +307,9 @@ int osd_fread (void *file,void *buffer,int length);
 int osd_fwrite (void *file,const void *buffer,int length);
 int osd_fseek (void *file,int offset,int whence);
 void osd_fclose (void *file);
-int osd_fchecksum (const char *gamename, const char *filename, int *sum);
+int osd_fchecksum (const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
+int osd_fsize (void *file);
+unsigned int osd_fcrc (void *file);
 
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);
@@ -316,4 +321,28 @@ int osd_get_config_samplerate(int def_samplerate);
 int osd_get_config_samplebits(int def_samplebits);
 int osd_get_config_frameskip(int def_frameskip);
 
+/* profiling */
+enum {
+	OSD_PROFILE_END = -1,
+	OSD_PROFILE_CPU1 = 0,
+	OSD_PROFILE_CPU2,
+	OSD_PROFILE_CPU3,
+	OSD_PROFILE_CPU4,
+	OSD_PROFILE_VIDEO,
+	OSD_PROFILE_BLIT,
+	OSD_PROFILE_VIDEO_SYNC,
+	OSD_PROFILE_SOUND,
+	OSD_PROFILE_SOUND_MIX,
+	OSD_PROFILE_SOUND_SYNC,
+	OSD_TOTAL_PROFILES
+};
+
+/*
+To start profiling a certain section, e.g. video:
+osd_profiler(OSD_PROFILE_VIDEO);
+to end profiling of the current section:
+osd_profiler(OSD_PROFILE_END);
+*/
+
+void osd_profiler(int type);
 #endif

@@ -261,23 +261,23 @@ static struct MachineDriver solomon_machine_driver =
 
 ROM_START( solomon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "slmn_06.bin", 0x00000, 0x4000, 0x9211c53d , 0xe4d421ff )
-	ROM_LOAD( "slmn_07.bin", 0x08000, 0x4000, 0x35d3a0dd , 0xd52d7e38 )
-	ROM_CONTINUE(            0x04000, 0x4000 )
-	ROM_LOAD( "slmn_08.bin", 0x0f000, 0x1000, 0xe026fd64 , 0x0a6cdefc )
+	ROM_LOAD( "slmn_06.bin",  0x00000, 0x4000, 0xe4d421ff )
+	ROM_LOAD( "slmn_07.bin",  0x08000, 0x4000, 0xd52d7e38 )
+	ROM_CONTINUE(             0x04000, 0x4000 )
+	ROM_LOAD( "slmn_08.bin",  0x0f000, 0x1000, 0xb924d162 )
 
 	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "slmn_12.bin", 0x00000, 0x08000, 0x92abe6f5 , 0xaa26dfcb )	/* characters */
-	ROM_LOAD( "slmn_11.bin", 0x08000, 0x08000, 0x5139f6c1 , 0x6f94d2af )
-	ROM_LOAD( "slmn_10.bin", 0x10000, 0x08000, 0x515e3a4a , 0x8310c2a1 )
-	ROM_LOAD( "slmn_09.bin", 0x18000, 0x08000, 0xfb92016e , 0xab7e6c42 )
-	ROM_LOAD( "slmn_02.bin", 0x20000, 0x04000, 0x15ad4397 , 0x80fa2be3 )	/* sprites */
-	ROM_LOAD( "slmn_03.bin", 0x24000, 0x04000, 0xb9936b79 , 0x236106b4 )
-	ROM_LOAD( "slmn_04.bin", 0x28000, 0x04000, 0xb916d26c , 0x088fe5d9 )
-	ROM_LOAD( "slmn_05.bin", 0x2c000, 0x04000, 0x86ac094c , 0x8366232a )
+	ROM_LOAD( "slmn_12.bin",  0x00000, 0x08000, 0xaa26dfcb )	/* characters */
+	ROM_LOAD( "slmn_11.bin",  0x08000, 0x08000, 0x6f94d2af )
+	ROM_LOAD( "slmn_10.bin",  0x10000, 0x08000, 0x8310c2a1 )
+	ROM_LOAD( "slmn_09.bin",  0x18000, 0x08000, 0xab7e6c42 )
+	ROM_LOAD( "slmn_02.bin",  0x20000, 0x04000, 0x80fa2be3 )	/* sprites */
+	ROM_LOAD( "slmn_03.bin",  0x24000, 0x04000, 0x236106b4 )
+	ROM_LOAD( "slmn_04.bin",  0x28000, 0x04000, 0x088fe5d9 )
+	ROM_LOAD( "slmn_05.bin",  0x2c000, 0x04000, 0x8366232a )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "slmn_01.bin", 0x0000, 0x4000, 0xd893aff5 , 0xfa6e562e )
+	ROM_LOAD( "slmn_01.bin",  0x0000, 0x4000, 0xfa6e562e )
 ROM_END
 
 

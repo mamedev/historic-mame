@@ -52,7 +52,7 @@ To do:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502/M6502.h"
+#include "M6502/m6502.h"
 
 /* Hi-score definitions */
 static unsigned char *ram_robo;
@@ -1293,402 +1293,402 @@ static struct MachineDriver slyspy_machine_driver =
 
 ROM_START( hbarrel_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "hb04.bin", 0x00000, 0x10000, 0x3a3a153a , 0x4877b09e )
-	ROM_LOAD_ODD ( "hb01.bin", 0x00000, 0x10000, 0x94922044 , 0x8b41c219 )
-	ROM_LOAD_EVEN( "hb05.bin", 0x20000, 0x10000, 0x78b2245c , 0x2087d570 )
-	ROM_LOAD_ODD ( "hb02.bin", 0x20000, 0x10000, 0x2d180d42 , 0x815536ae )
-	ROM_LOAD_EVEN( "hb06.bin", 0x40000, 0x10000, 0xa32aebea , 0xda4e3fbc )
-	ROM_LOAD_ODD ( "hb03.bin", 0x40000, 0x10000, 0x68e7b4f7 , 0x7fed7c46 )
+	ROM_LOAD_EVEN( "hb04.bin",     0x00000, 0x10000, 0x4877b09e )
+	ROM_LOAD_ODD ( "hb01.bin",     0x00000, 0x10000, 0x8b41c219 )
+	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
+	ROM_LOAD_ODD ( "hb02.bin",     0x20000, 0x10000, 0x815536ae )
+	ROM_LOAD_EVEN( "hb06.bin",     0x40000, 0x10000, 0xda4e3fbc )
+	ROM_LOAD_ODD ( "hb03.bin",     0x40000, 0x10000, 0x7fed7c46 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hb25.bin", 0x000000, 0x10000, 0x6ce711ab , 0x8649762c )	/* chars */
-	ROM_LOAD( "hb26.bin", 0x010000, 0x10000, 0x438de025 , 0xf8189bbd )
-	ROM_LOAD( "hb18.bin", 0x020000, 0x10000, 0xb7fd55af , 0xef664373 )	/* tiles */
-	ROM_LOAD( "hb17.bin", 0x030000, 0x10000, 0x3c3a5e24 , 0xa4f186ac )
-	ROM_LOAD( "hb20.bin", 0x040000, 0x10000, 0x7f1adece , 0x2fc13be0 )
-	ROM_LOAD( "hb19.bin", 0x050000, 0x10000, 0xdb6d548f , 0xd6b47869 )
-	ROM_LOAD( "hb22.bin", 0x060000, 0x10000, 0xa86f2849 , 0x50d6a1ad )
-	ROM_LOAD( "hb21.bin", 0x070000, 0x10000, 0x5c30dfa8 , 0xf01d75c5 )
-	ROM_LOAD( "hb24.bin", 0x080000, 0x10000, 0x36dd8003 , 0xae377361 )
-	ROM_LOAD( "hb23.bin", 0x090000, 0x10000, 0xc3744af2 , 0xbbdaf771 )
-	ROM_LOAD( "hb29.bin", 0x0a0000, 0x10000, 0xecc05140 , 0x5514b296 )	/* tiles */
+	ROM_LOAD( "hb25.bin",     0x000000, 0x10000, 0x8649762c )	/* chars */
+	ROM_LOAD( "hb26.bin",     0x010000, 0x10000, 0xf8189bbd )
+	ROM_LOAD( "hb18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
+	ROM_LOAD( "hb17.bin",     0x030000, 0x10000, 0xa4f186ac )
+	ROM_LOAD( "hb20.bin",     0x040000, 0x10000, 0x2fc13be0 )
+	ROM_LOAD( "hb19.bin",     0x050000, 0x10000, 0xd6b47869 )
+	ROM_LOAD( "hb22.bin",     0x060000, 0x10000, 0x50d6a1ad )
+	ROM_LOAD( "hb21.bin",     0x070000, 0x10000, 0xf01d75c5 )
+	ROM_LOAD( "hb24.bin",     0x080000, 0x10000, 0xae377361 )
+	ROM_LOAD( "hb23.bin",     0x090000, 0x10000, 0xbbdaf771 )
+	ROM_LOAD( "hb29.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
 	/* b0000-bfff empty */
-	ROM_LOAD( "hb30.bin", 0x0c0000, 0x10000, 0x64394369 , 0x5855e8ef )
+	ROM_LOAD( "hb30.bin",     0x0c0000, 0x10000, 0x5855e8ef )
 	/* d0000-dfff empty */
-	ROM_LOAD( "hb27.bin", 0x0e0000, 0x10000, 0x37f5c863 , 0x99db7b9c )
+	ROM_LOAD( "hb27.bin",     0x0e0000, 0x10000, 0x99db7b9c )
 	/* f0000-ffff empty */
-	ROM_LOAD( "hb28.bin", 0x100000, 0x10000, 0xd5ccead8 , 0x33ce2b1a )
+	ROM_LOAD( "hb28.bin",     0x100000, 0x10000, 0x33ce2b1a )
 	/* 110000-11fff empty */
-	ROM_LOAD( "hb15.bin", 0x120000, 0x10000, 0x30b6bb34 , 0x21816707 )	/* sprites */
-	ROM_LOAD( "hb16.bin", 0x130000, 0x10000, 0x19bcf8ec , 0xa5684574 )
-	ROM_LOAD( "hb11.bin", 0x140000, 0x10000, 0xa2817053 , 0x5c768315 )
-	ROM_LOAD( "hb12.bin", 0x150000, 0x10000, 0x7de7b9f7 , 0x8b64d7a4 )
-	ROM_LOAD( "hb13.bin", 0x160000, 0x10000, 0xcea5802b , 0x56e3ed65 )
-	ROM_LOAD( "hb14.bin", 0x170000, 0x10000, 0x4d942794 , 0xbedfe7f3 )
-	ROM_LOAD( "hb09.bin", 0x180000, 0x10000, 0x4c370c4d , 0x26240ea0 )
-	ROM_LOAD( "hb10.bin", 0x190000, 0x10000, 0x46722c8a , 0x47d95447 )
+	ROM_LOAD( "hb15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
+	ROM_LOAD( "hb16.bin",     0x130000, 0x10000, 0xa5684574 )
+	ROM_LOAD( "hb11.bin",     0x140000, 0x10000, 0x5c768315 )
+	ROM_LOAD( "hb12.bin",     0x150000, 0x10000, 0x8b64d7a4 )
+	ROM_LOAD( "hb13.bin",     0x160000, 0x10000, 0x56e3ed65 )
+	ROM_LOAD( "hb14.bin",     0x170000, 0x10000, 0xbedfe7f3 )
+	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
+	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
 
 	ROM_REGION(0x10000)	/* 6502 Sound */
-	ROM_LOAD( "hb07.bin", 0x8000, 0x8000, 0x0063a9fb , 0xa127f0f7 )
+	ROM_LOAD( "hb07.bin",     0x8000, 0x8000, 0xa127f0f7 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "hb08.bin", 0x0000, 0x10000, 0x3743341b , 0x645c5b68 )
+	ROM_LOAD( "hb08.bin",     0x0000, 0x10000, 0x645c5b68 )
 ROM_END
 
 ROM_START( hbarrelj_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "hb_ec04.rom", 0x00000, 0x10000, 0x17e8d870 , 0xd01bc3db )
-	ROM_LOAD_ODD ( "hb_ec01.rom", 0x00000, 0x10000, 0x041e5e7c , 0x6756f8ae )
-	ROM_LOAD_EVEN( "hb05.bin", 0x20000, 0x10000, 0x78b2245c , 0x2087d570 )
-	ROM_LOAD_ODD ( "hb02.bin", 0x20000, 0x10000, 0x2d180d42 , 0x815536ae )
-	ROM_LOAD_EVEN( "hb_ec06.rom", 0x40000, 0x10000, 0xcc5be9df , 0x61ec20d8 )
-	ROM_LOAD_ODD ( "hb_ec03.rom", 0x40000, 0x10000, 0x0582257c , 0x720c6b13 )
+	ROM_LOAD_EVEN( "hb_ec04.rom",  0x00000, 0x10000, 0xd01bc3db )
+	ROM_LOAD_ODD ( "hb_ec01.rom",  0x00000, 0x10000, 0x6756f8ae )
+	ROM_LOAD_EVEN( "hb05.bin",     0x20000, 0x10000, 0x2087d570 )
+	ROM_LOAD_ODD ( "hb02.bin",     0x20000, 0x10000, 0x815536ae )
+	ROM_LOAD_EVEN( "hb_ec06.rom",  0x40000, 0x10000, 0x61ec20d8 )
+	ROM_LOAD_ODD ( "hb_ec03.rom",  0x40000, 0x10000, 0x720c6b13 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hb_ec25.rom", 0x000000, 0x10000, 0x31a223b0 , 0x2e5732a2 )	/* chars */
-	ROM_LOAD( "hb_ec26.rom", 0x010000, 0x10000, 0x4409e027 , 0x161a2c4d )
-	ROM_LOAD( "hb18.bin", 0x020000, 0x10000, 0xb7fd55af , 0xef664373 )	/* tiles */
-	ROM_LOAD( "hb17.bin", 0x030000, 0x10000, 0x3c3a5e24 , 0xa4f186ac )
-	ROM_LOAD( "hb20.bin", 0x040000, 0x10000, 0x7f1adece , 0x2fc13be0 )
-	ROM_LOAD( "hb19.bin", 0x050000, 0x10000, 0xdb6d548f , 0xd6b47869 )
-	ROM_LOAD( "hb22.bin", 0x060000, 0x10000, 0xa86f2849 , 0x50d6a1ad )
-	ROM_LOAD( "hb21.bin", 0x070000, 0x10000, 0x5c30dfa8 , 0xf01d75c5 )
-	ROM_LOAD( "hb24.bin", 0x080000, 0x10000, 0x36dd8003 , 0xae377361 )
-	ROM_LOAD( "hb23.bin", 0x090000, 0x10000, 0xc3744af2 , 0xbbdaf771 )
-	ROM_LOAD( "hb29.bin", 0x0a0000, 0x10000, 0xecc05140 , 0x5514b296 )	/* tiles */
+	ROM_LOAD( "hb_ec25.rom",  0x000000, 0x10000, 0x2e5732a2 )	/* chars */
+	ROM_LOAD( "hb_ec26.rom",  0x010000, 0x10000, 0x161a2c4d )
+	ROM_LOAD( "hb18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
+	ROM_LOAD( "hb17.bin",     0x030000, 0x10000, 0xa4f186ac )
+	ROM_LOAD( "hb20.bin",     0x040000, 0x10000, 0x2fc13be0 )
+	ROM_LOAD( "hb19.bin",     0x050000, 0x10000, 0xd6b47869 )
+	ROM_LOAD( "hb22.bin",     0x060000, 0x10000, 0x50d6a1ad )
+	ROM_LOAD( "hb21.bin",     0x070000, 0x10000, 0xf01d75c5 )
+	ROM_LOAD( "hb24.bin",     0x080000, 0x10000, 0xae377361 )
+	ROM_LOAD( "hb23.bin",     0x090000, 0x10000, 0xbbdaf771 )
+	ROM_LOAD( "hb29.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
 	/* b0000-bfff empty */
-	ROM_LOAD( "hb30.bin", 0x0c0000, 0x10000, 0x64394369 , 0x5855e8ef )
+	ROM_LOAD( "hb30.bin",     0x0c0000, 0x10000, 0x5855e8ef )
 	/* d0000-dfff empty */
-	ROM_LOAD( "hb27.bin", 0x0e0000, 0x10000, 0x37f5c863 , 0x99db7b9c )
+	ROM_LOAD( "hb27.bin",     0x0e0000, 0x10000, 0x99db7b9c )
 	/* f0000-ffff empty */
-	ROM_LOAD( "hb28.bin", 0x100000, 0x10000, 0xd5ccead8 , 0x33ce2b1a )
+	ROM_LOAD( "hb28.bin",     0x100000, 0x10000, 0x33ce2b1a )
 	/* 110000-11fff empty */
-	ROM_LOAD( "hb15.bin", 0x120000, 0x10000, 0x30b6bb34 , 0x21816707 )	/* sprites */
-	ROM_LOAD( "hb16.bin", 0x130000, 0x10000, 0x19bcf8ec , 0xa5684574 )
-	ROM_LOAD( "hb11.bin", 0x140000, 0x10000, 0xa2817053 , 0x5c768315 )
-	ROM_LOAD( "hb12.bin", 0x150000, 0x10000, 0x7de7b9f7 , 0x8b64d7a4 )
-	ROM_LOAD( "hb13.bin", 0x160000, 0x10000, 0xcea5802b , 0x56e3ed65 )
-	ROM_LOAD( "hb14.bin", 0x170000, 0x10000, 0x4d942794 , 0xbedfe7f3 )
-	ROM_LOAD( "hb09.bin", 0x180000, 0x10000, 0x4c370c4d , 0x26240ea0 )
-	ROM_LOAD( "hb10.bin", 0x190000, 0x10000, 0x46722c8a , 0x47d95447 )
+	ROM_LOAD( "hb15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
+	ROM_LOAD( "hb16.bin",     0x130000, 0x10000, 0xa5684574 )
+	ROM_LOAD( "hb11.bin",     0x140000, 0x10000, 0x5c768315 )
+	ROM_LOAD( "hb12.bin",     0x150000, 0x10000, 0x8b64d7a4 )
+	ROM_LOAD( "hb13.bin",     0x160000, 0x10000, 0x56e3ed65 )
+	ROM_LOAD( "hb14.bin",     0x170000, 0x10000, 0xbedfe7f3 )
+	ROM_LOAD( "hb09.bin",     0x180000, 0x10000, 0x26240ea0 )
+	ROM_LOAD( "hb10.bin",     0x190000, 0x10000, 0x47d95447 )
 
 	ROM_REGION(0x10000)	/* 6502 Sound */
-	ROM_LOAD( "hb_ec07.rom", 0x8000, 0x8000, 0x7eefbddf , 0x16a5a1aa )
+	ROM_LOAD( "hb_ec07.rom",  0x8000, 0x8000, 0x16a5a1aa )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "hb_ec08.rom", 0x0000, 0x10000, 0xffb3d08b , 0x2159a609 )
+	ROM_LOAD( "hb_ec08.rom",  0x0000, 0x10000, 0x2159a609 )
 ROM_END
 
 ROM_START( baddudes_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
-	ROM_LOAD_EVEN( "baddudes.4", 0x00000, 0x10000, 0xa188e4a2 , 0x4bf158a7 )
-	ROM_LOAD_ODD ( "baddudes.1", 0x00000, 0x10000, 0x38832ed3 , 0x74f5110c )
-	ROM_LOAD_EVEN( "baddudes.6", 0x40000, 0x10000, 0x765062f6 , 0x3ff8da57 )
-	ROM_LOAD_ODD ( "baddudes.3", 0x40000, 0x10000, 0x65b58a61 , 0xf8f2bd94 )
+	ROM_LOAD_EVEN( "baddudes.4",   0x00000, 0x10000, 0x4bf158a7 )
+	ROM_LOAD_ODD ( "baddudes.1",   0x00000, 0x10000, 0x74f5110c )
+	ROM_LOAD_EVEN( "baddudes.6",   0x40000, 0x10000, 0x3ff8da57 )
+	ROM_LOAD_ODD ( "baddudes.3",   0x40000, 0x10000, 0xf8f2bd94 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "baddudes.25", 0x000000, 0x04000, 0xd051f18f , 0xbcf59a69 )	/* chars */
+	ROM_LOAD( "baddudes.25",  0x000000, 0x04000, 0xbcf59a69 )	/* chars */
 	/* 04000-07fff empty */
 	ROM_CONTINUE(            0x008000, 0x04000 )
 	/* 0c000-0ffff empty */
-	ROM_LOAD( "baddudes.26", 0x010000, 0x04000, 0xf0479c51 , 0x9aff67b8 )
+	ROM_LOAD( "baddudes.26",  0x010000, 0x04000, 0x9aff67b8 )
 	/* 14000-17fff empty */
 	ROM_CONTINUE(            0x018000, 0x04000 )
 	/* 1c000-1ffff empty */
-	ROM_LOAD( "baddudes.18", 0x020000, 0x10000, 0x595c307a , 0x05cfc3e5 )	/* tiles */
+	ROM_LOAD( "baddudes.18",  0x020000, 0x10000, 0x05cfc3e5 )	/* tiles */
 	/* 30000-3ffff empty */
-	ROM_LOAD( "baddudes.20", 0x040000, 0x10000, 0x6cfb821b , 0xe11e988f )
+	ROM_LOAD( "baddudes.20",  0x040000, 0x10000, 0xe11e988f )
 	/* 50000-5ffff empty */
-	ROM_LOAD( "baddudes.22", 0x060000, 0x10000, 0xeef0ab94 , 0xb893d880 )
+	ROM_LOAD( "baddudes.22",  0x060000, 0x10000, 0xb893d880 )
 	/* 70000-7ffff empty */
-	ROM_LOAD( "baddudes.24", 0x080000, 0x10000, 0x0ff71667 , 0x6f226dda )
+	ROM_LOAD( "baddudes.24",  0x080000, 0x10000, 0x6f226dda )
 	/* 90000-9ffff empty */
-	ROM_LOAD( "baddudes.30", 0x0c0000, 0x08000, 0x4ceaddbc , 0x982da0d1 )	/* tiles */
+	ROM_LOAD( "baddudes.30",  0x0c0000, 0x08000, 0x982da0d1 )	/* tiles */
 	/* c8000-dffff empty */
 	ROM_CONTINUE(            0x0a0000, 0x08000 )	/* the two halves are swapped */
 	/* a8000-bffff empty */
-	ROM_LOAD( "baddudes.28", 0x100000, 0x08000, 0xab40b480 , 0xf01ebb3b )
+	ROM_LOAD( "baddudes.28",  0x100000, 0x08000, 0xf01ebb3b )
 	/* 108000-11ffff empty */
 	ROM_CONTINUE(            0x0e0000, 0x08000 )
 	/* e8000-fffff empty */
-	ROM_LOAD( "baddudes.15", 0x120000, 0x10000, 0xddd97537 , 0xa38a7d30 )	/* sprites */
-	ROM_LOAD( "baddudes.16", 0x130000, 0x08000, 0x5b301cea , 0x17e42633 )
+	ROM_LOAD( "baddudes.15",  0x120000, 0x10000, 0xa38a7d30 )	/* sprites */
+	ROM_LOAD( "baddudes.16",  0x130000, 0x08000, 0x17e42633 )
 	/* 138000-13ffff empty */
-	ROM_LOAD( "baddudes.11", 0x140000, 0x10000, 0xecd3ef13 , 0x3a77326c )
-	ROM_LOAD( "baddudes.12", 0x150000, 0x08000, 0x0f5cc24a , 0xfea2a134 )
+	ROM_LOAD( "baddudes.11",  0x140000, 0x10000, 0x3a77326c )
+	ROM_LOAD( "baddudes.12",  0x150000, 0x08000, 0xfea2a134 )
 	/* 158000-15ffff empty */
-	ROM_LOAD( "baddudes.13", 0x160000, 0x10000, 0xf51c75f8 , 0xe5ae2751 )
-	ROM_LOAD( "baddudes.14", 0x170000, 0x08000, 0x794562c5 , 0xe83c760a )
+	ROM_LOAD( "baddudes.13",  0x160000, 0x10000, 0xe5ae2751 )
+	ROM_LOAD( "baddudes.14",  0x170000, 0x08000, 0xe83c760a )
 	/* 178000-17ffff empty */
-	ROM_LOAD( "baddudes.9", 0x180000, 0x10000, 0x038c40a0 , 0x6901e628 )
-	ROM_LOAD( "baddudes.10", 0x190000, 0x08000, 0x6ba86872 , 0xeeee8a1a )
+	ROM_LOAD( "baddudes.9",   0x180000, 0x10000, 0x6901e628 )
+	ROM_LOAD( "baddudes.10",  0x190000, 0x08000, 0xeeee8a1a )
 	/* 198000-19ffff empty */
 
 	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "baddudes.7", 0x8000, 0x8000, 0xb737c5b3 , 0x9fb1ef4b )
+	ROM_LOAD( "baddudes.7",   0x8000, 0x8000, 0x9fb1ef4b )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "baddudes.8", 0x0000, 0x10000, 0xa90d88b7 , 0x3c87463e )
+	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
 ROM_START( drgninja_rom )
 	ROM_REGION(0x60000)	/* 6*64k for 68000 code, middle 0x20000 unused */
-	ROM_LOAD_EVEN( "drgninja.04", 0x00000, 0x10000, 0x0cb7f35b , 0x41b8b3f8 )
-	ROM_LOAD_ODD ( "drgninja.01", 0x00000, 0x10000, 0x53e293c8 , 0xe08e6885 )
-	ROM_LOAD_EVEN( "drgninja.06", 0x40000, 0x10000, 0x0c45aabf , 0x2b81faf7 )
-	ROM_LOAD_ODD ( "drgninja.03", 0x40000, 0x10000, 0x9c8b7d75 , 0xc52c2e9d )
+	ROM_LOAD_EVEN( "drgninja.04",  0x00000, 0x10000, 0x41b8b3f8 )
+	ROM_LOAD_ODD ( "drgninja.01",  0x00000, 0x10000, 0xe08e6885 )
+	ROM_LOAD_EVEN( "drgninja.06",  0x40000, 0x10000, 0x2b81faf7 )
+	ROM_LOAD_ODD ( "drgninja.03",  0x40000, 0x10000, 0xc52c2e9d )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "drgninja.25", 0x000000, 0x04000, 0x0c62789a , 0x6791bc20 )	/* chars */
+	ROM_LOAD( "drgninja.25",  0x000000, 0x04000, 0x6791bc20 )	/* chars */
 	/* 04000-07fff empty */
 	ROM_CONTINUE(            0x008000, 0x04000 )
 	/* 0c000-0ffff empty */
-	ROM_LOAD( "drgninja.26", 0x010000, 0x04000, 0x52e003ec , 0x5d75fc8f )
+	ROM_LOAD( "drgninja.26",  0x010000, 0x04000, 0x5d75fc8f )
 	/* 14000-17fff empty */
 	ROM_CONTINUE(            0x018000, 0x04000 )
 	/* 1c000-1ffff empty */
-	ROM_LOAD( "baddudes.18", 0x020000, 0x10000, 0x595c307a , 0x05cfc3e5 )	/* tiles */
+	ROM_LOAD( "baddudes.18",  0x020000, 0x10000, 0x05cfc3e5 )	/* tiles */
 	/* 30000-3ffff empty */
-	ROM_LOAD( "baddudes.20", 0x040000, 0x10000, 0x6cfb821b , 0xe11e988f )
+	ROM_LOAD( "baddudes.20",  0x040000, 0x10000, 0xe11e988f )
 	/* 50000-5ffff empty */
-	ROM_LOAD( "baddudes.22", 0x060000, 0x10000, 0xeef0ab94 , 0xb893d880 )
+	ROM_LOAD( "baddudes.22",  0x060000, 0x10000, 0xb893d880 )
 	/* 70000-7ffff empty */
-	ROM_LOAD( "baddudes.24", 0x080000, 0x10000, 0x0ff71667 , 0x6f226dda )
+	ROM_LOAD( "baddudes.24",  0x080000, 0x10000, 0x6f226dda )
 	/* 90000-9ffff empty */
-	ROM_LOAD( "drgninja.30", 0x0c0000, 0x08000, 0x198036ce , 0x2438e67e )	/* tiles */
+	ROM_LOAD( "drgninja.30",  0x0c0000, 0x08000, 0x2438e67e )	/* tiles */
 	/* c8000-dffff empty */
 	ROM_CONTINUE(            0x0a0000, 0x08000 )	/* the two halves are swapped */
 	/* a8000-bffff empty */
-	ROM_LOAD( "drgninja.28", 0x100000, 0x08000, 0x33e12307 , 0x5c692ab3 )
+	ROM_LOAD( "drgninja.28",  0x100000, 0x08000, 0x5c692ab3 )
 	/* 108000-11ffff empty */
 	ROM_CONTINUE(            0x0e0000, 0x08000 )
 	/* e8000-fffff empty */
-	ROM_LOAD( "drgninja.15", 0x120000, 0x10000, 0x6f32c34c , 0x5617d67f )	/* sprites */
-	ROM_LOAD( "baddudes.16", 0x130000, 0x08000, 0x5b301cea , 0x17e42633 )
+	ROM_LOAD( "drgninja.15",  0x120000, 0x10000, 0x5617d67f )	/* sprites */
+	ROM_LOAD( "baddudes.16",  0x130000, 0x08000, 0x17e42633 )
 	/* 138000-13ffff empty */
-	ROM_LOAD( "drgninja.11", 0x140000, 0x10000, 0xf2adc1b9 , 0xba83e8d8 )
-	ROM_LOAD( "baddudes.12", 0x150000, 0x08000, 0x0f5cc24a , 0xfea2a134 )
+	ROM_LOAD( "drgninja.11",  0x140000, 0x10000, 0xba83e8d8 )
+	ROM_LOAD( "baddudes.12",  0x150000, 0x08000, 0xfea2a134 )
 	/* 158000-15ffff empty */
-	ROM_LOAD( "drgninja.13", 0x160000, 0x10000, 0xc75036bc , 0xfd91e08e )
-	ROM_LOAD( "baddudes.14", 0x170000, 0x08000, 0x794562c5 , 0xe83c760a )
+	ROM_LOAD( "drgninja.13",  0x160000, 0x10000, 0xfd91e08e )
+	ROM_LOAD( "baddudes.14",  0x170000, 0x08000, 0xe83c760a )
 	/* 178000-17ffff empty */
-	ROM_LOAD( "baddudes.9", 0x180000, 0x10000, 0x038c40a0 , 0x6901e628 )
-	ROM_LOAD( "baddudes.10", 0x190000, 0x08000, 0x6ba86872 , 0xeeee8a1a )
+	ROM_LOAD( "baddudes.9",   0x180000, 0x10000, 0x6901e628 )
+	ROM_LOAD( "baddudes.10",  0x190000, 0x08000, 0xeeee8a1a )
 	/* 198000-19ffff empty */
 
 	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "drgninja.07", 0x8000, 0x8000, 0x1b146c98 , 0x001d2f51 )
+	ROM_LOAD( "drgninja.07",  0x8000, 0x8000, 0x001d2f51 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "baddudes.8", 0x0000, 0x10000, 0xa90d88b7 , 0x3c87463e )
+	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
 ROM_START( robocopp_rom )
 	ROM_REGION(0x40000) /* 68000 code */
-	ROM_LOAD_EVEN( "robop_05.rom", 0x00000, 0x10000, 0xd56d97e9 , 0xbcef3e9b )
-	ROM_LOAD_ODD ( "robop_01.rom", 0x00000, 0x10000, 0x6e59da83 , 0xc9803685 )
-	ROM_LOAD_EVEN( "robop_04.rom", 0x20000, 0x10000, 0x55a44a9c , 0x9d7b79e0 )
-	ROM_LOAD_ODD ( "robop_00.rom", 0x20000, 0x10000, 0xaf9255ce , 0x80ba64ab )
+	ROM_LOAD_EVEN( "robop_05.rom", 0x00000, 0x10000, 0xbcef3e9b )
+	ROM_LOAD_ODD ( "robop_01.rom", 0x00000, 0x10000, 0xc9803685 )
+	ROM_LOAD_EVEN( "robop_04.rom", 0x20000, 0x10000, 0x9d7b79e0 )
+	ROM_LOAD_ODD ( "robop_00.rom", 0x20000, 0x10000, 0x80ba64ab )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "robop_23.rom", 0x000000, 0x10000, 0xc350f776 , 0xa77e4ab1 )	/* chars */
-	ROM_LOAD( "robop_22.rom", 0x010000, 0x10000, 0x434ccb9e , 0x9fbd6903 )
-	ROM_LOAD( "robop_20.rom", 0x020000, 0x10000, 0xfbe48598 , 0x1d8d38b8 )	/* tiles */
-	ROM_LOAD( "robop_21.rom", 0x040000, 0x10000, 0xb754fb0e , 0x187929b2 )
-	ROM_LOAD( "robop_18.rom", 0x060000, 0x10000, 0x51d51535 , 0xb6580b5e )
-	ROM_LOAD( "robop_19.rom", 0x080000, 0x10000, 0xa7e7e665 , 0x9bad01c7 )
-	ROM_LOAD( "robop_14.rom", 0x0a0000, 0x08000, 0x624fb18d , 0xca56ceda )	/* tiles */
-	ROM_LOAD( "robop_15.rom", 0x0c0000, 0x08000, 0x94ca2b74 , 0xa945269c )
-	ROM_LOAD( "robop_16.rom", 0x0e0000, 0x08000, 0x2f773ecb , 0xe7fa4d58 )
-	ROM_LOAD( "robop_17.rom", 0x100000, 0x08000, 0x690681a0 , 0x84aae89d )
-	ROM_LOAD( "robop_07.rom", 0x120000, 0x10000, 0x2d646366 , 0x495d75cf )	/* sprites */
-	ROM_LOAD( "robop_06.rom", 0x130000, 0x08000, 0xfb1985fd , 0xa2ae32e2 )
+	ROM_LOAD( "robop_23.rom", 0x000000, 0x10000, 0xa77e4ab1 )	/* chars */
+	ROM_LOAD( "robop_22.rom", 0x010000, 0x10000, 0x9fbd6903 )
+	ROM_LOAD( "robop_20.rom", 0x020000, 0x10000, 0x1d8d38b8 )	/* tiles */
+	ROM_LOAD( "robop_21.rom", 0x040000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "robop_18.rom", 0x060000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "robop_19.rom", 0x080000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "robop_14.rom", 0x0a0000, 0x08000, 0xca56ceda )	/* tiles */
+	ROM_LOAD( "robop_15.rom", 0x0c0000, 0x08000, 0xa945269c )
+	ROM_LOAD( "robop_16.rom", 0x0e0000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "robop_17.rom", 0x100000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "robop_07.rom", 0x120000, 0x10000, 0x495d75cf )	/* sprites */
+	ROM_LOAD( "robop_06.rom", 0x130000, 0x08000, 0xa2ae32e2 )
 	/* 98000-9ffff empty */
-	ROM_LOAD( "robop_11.rom", 0x140000, 0x10000, 0xda1d3fb1 , 0x62fa425a )
-	ROM_LOAD( "robop_10.rom", 0x150000, 0x08000, 0xe2808b6a , 0xcce3bd95 )
+	ROM_LOAD( "robop_11.rom", 0x140000, 0x10000, 0x62fa425a )
+	ROM_LOAD( "robop_10.rom", 0x150000, 0x08000, 0xcce3bd95 )
 	/* b8000-bffff empty */
-	ROM_LOAD( "robop_09.rom", 0x160000, 0x10000, 0x9e9d36e9 , 0x11bed656 )
-	ROM_LOAD( "robop_08.rom", 0x170000, 0x08000, 0xb9a109d5 , 0xc45c7b4c )
+	ROM_LOAD( "robop_09.rom", 0x160000, 0x10000, 0x11bed656 )
+	ROM_LOAD( "robop_08.rom", 0x170000, 0x08000, 0xc45c7b4c )
 	/* d8000-dffff empty */
-	ROM_LOAD( "robop_13.rom", 0x180000, 0x10000, 0xed07f363 , 0x8fca9f28 )
-	ROM_LOAD( "robop_12.rom", 0x190000, 0x08000, 0xe777b73d , 0x3cd1d0c3 )
+	ROM_LOAD( "robop_13.rom", 0x180000, 0x10000, 0x8fca9f28 )
+	ROM_LOAD( "robop_12.rom", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
 	ROM_REGION(0x10000)	/* 6502 Sound */
-	ROM_LOAD( "robop_03.rom", 0x08000, 0x08000, 0x1adde131 , 0x5b164b24 )
+	ROM_LOAD( "robop_03.rom", 0x08000, 0x08000, 0x5b164b24 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "robop_02.rom", 0x00000, 0x10000, 0x513686c6 , 0x711ce46f )
+	ROM_LOAD( "robop_02.rom", 0x00000, 0x10000, 0x711ce46f )
 ROM_END
 
 ROM_START( hippodrm_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
-	ROM_LOAD_EVEN( "ew02", 0x00000, 0x10000, 0x2d322dde , 0xdf0d7dc6 )
-	ROM_LOAD_ODD ( "ew01", 0x00000, 0x10000, 0xfe0f3859 , 0xd5670aa7 )
-	ROM_LOAD_EVEN( "ew05", 0x20000, 0x10000, 0x8e892251 , 0xc76d65ec )
-	ROM_LOAD_ODD ( "ew00", 0x20000, 0x10000, 0x486c7b5a , 0xe9b427a6 )
+	ROM_LOAD_EVEN( "ew02",         0x00000, 0x10000, 0xdf0d7dc6 )
+	ROM_LOAD_ODD ( "ew01",         0x00000, 0x10000, 0xd5670aa7 )
+	ROM_LOAD_EVEN( "ew05",         0x20000, 0x10000, 0xc76d65ec )
+	ROM_LOAD_ODD ( "ew00",         0x20000, 0x10000, 0xe9b427a6 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ew14", 0x000000, 0x10000, 0x4b7bc501 , 0x71ca593d )	/* chars */
-	ROM_LOAD( "ew13", 0x010000, 0x10000, 0x45a2f302 , 0x86be5fa7 )
-	ROM_LOAD( "ew19", 0x020000, 0x08000, 0x68e172bb , 0x6b80d7a3 )	/* tiles */
+	ROM_LOAD( "ew14",         0x000000, 0x10000, 0x71ca593d )	/* chars */
+	ROM_LOAD( "ew13",         0x010000, 0x10000, 0x86be5fa7 )
+	ROM_LOAD( "ew19",         0x020000, 0x08000, 0x6b80d7a3 )	/* tiles */
 	/* 28000-3ffff empty */
-	ROM_LOAD( "ew18", 0x040000, 0x08000, 0xadc9d98f , 0x78d3d764 )
+	ROM_LOAD( "ew18",         0x040000, 0x08000, 0x78d3d764 )
 	/* 48000-5ffff empty */
-	ROM_LOAD( "ew20", 0x060000, 0x08000, 0x383f60fb , 0xce9f5de3 )
+	ROM_LOAD( "ew20",         0x060000, 0x08000, 0xce9f5de3 )
 	/* 68000-7ffff empty */
-	ROM_LOAD( "ew21", 0x080000, 0x08000, 0xb8e29600 , 0x487a7ba2 )
+	ROM_LOAD( "ew21",         0x080000, 0x08000, 0x487a7ba2 )
 	/* 88000-9ffff empty */
-	ROM_LOAD( "ew23", 0x0a0000, 0x08000, 0x8ed64ca2 , 0x9ecf479e )	/* tiles */
+	ROM_LOAD( "ew23",         0x0a0000, 0x08000, 0x9ecf479e )	/* tiles */
 	/* a8000-bffff empty */
-	ROM_LOAD( "ew22", 0x0c0000, 0x08000, 0xf1794dcb , 0xe55669aa )
+	ROM_LOAD( "ew22",         0x0c0000, 0x08000, 0xe55669aa )
 	/* c8000-dffff empty */
-	ROM_LOAD( "ew24", 0x0e0000, 0x08000, 0xdaf2c428 , 0x4e1bc2a4 )
+	ROM_LOAD( "ew24",         0x0e0000, 0x08000, 0x4e1bc2a4 )
 	/* e8000-fffff empty */
-	ROM_LOAD( "ew25", 0x100000, 0x08000, 0x529d4bed , 0x9eb47dfb )
+	ROM_LOAD( "ew25",         0x100000, 0x08000, 0x9eb47dfb )
 	/* 108000-11ffff empty */
-	ROM_LOAD( "ew15", 0x120000, 0x10000, 0x5c239191 , 0x95423914 )	/* sprites */
-	ROM_LOAD( "ew16", 0x130000, 0x10000, 0x7a161cbc , 0x96233177 )
-	ROM_LOAD( "ew10", 0x140000, 0x10000, 0x6dee825a , 0x4c25dfe8 )
-	ROM_LOAD( "ew11", 0x150000, 0x10000, 0x20b53a27 , 0xf2e007fc )
-	ROM_LOAD( "ew06", 0x160000, 0x10000, 0x70f2733c , 0xe4bb8199 )
-	ROM_LOAD( "ew07", 0x170000, 0x10000, 0x867c30d4 , 0x470b6989 )
-	ROM_LOAD( "ew17", 0x180000, 0x10000, 0xe573f8d7 , 0x8c97c757 )
-	ROM_LOAD( "ew12", 0x190000, 0x10000, 0x4d39404d , 0xa2d244bc )
+	ROM_LOAD( "ew15",         0x120000, 0x10000, 0x95423914 )	/* sprites */
+	ROM_LOAD( "ew16",         0x130000, 0x10000, 0x96233177 )
+	ROM_LOAD( "ew10",         0x140000, 0x10000, 0x4c25dfe8 )
+	ROM_LOAD( "ew11",         0x150000, 0x10000, 0xf2e007fc )
+	ROM_LOAD( "ew06",         0x160000, 0x10000, 0xe4bb8199 )
+	ROM_LOAD( "ew07",         0x170000, 0x10000, 0x470b6989 )
+	ROM_LOAD( "ew17",         0x180000, 0x10000, 0x8c97c757 )
+	ROM_LOAD( "ew12",         0x190000, 0x10000, 0xa2d244bc )
 
 	ROM_REGION(0x10000)	/* 6502 sound */
-	ROM_LOAD( "ew04", 0x8000, 0x8000, 0xb8a3b86b , 0x9871b98d )
+	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
 	ROM_REGION(0x10000)	/* ADPCM sounds */
-	ROM_LOAD( "ew03", 0x0000, 0x10000, 0x3d50a8dc , 0xb606924d )
+	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
 	ROM_REGION(0x10000) /* Encrypted code bank */
-	ROM_LOAD( "ew08", 0x00000, 0x10000, 0xcf010573 , 0x53010534 )
+	ROM_LOAD( "ew08",         0x00000, 0x10000, 0x53010534 )
 ROM_END
 
 ROM_START( ffantasy_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
-	ROM_LOAD_EVEN( "ev02", 0x00000, 0x10000, 0x24fe7c9c , 0x797a7860 )
-	ROM_LOAD_ODD ( "ev01", 0x00000, 0x10000, 0xbbb03ff4 , 0x0f17184d )
-	ROM_LOAD_EVEN( "ew05", 0x20000, 0x10000, 0x8e892251 , 0xc76d65ec )
-	ROM_LOAD_ODD ( "ew00", 0x20000, 0x10000, 0x486c7b5a , 0xe9b427a6 )
+	ROM_LOAD_EVEN( "ev02",         0x00000, 0x10000, 0x797a7860 )
+	ROM_LOAD_ODD ( "ev01",         0x00000, 0x10000, 0x0f17184d )
+	ROM_LOAD_EVEN( "ew05",         0x20000, 0x10000, 0xc76d65ec )
+	ROM_LOAD_ODD ( "ew00",         0x20000, 0x10000, 0xe9b427a6 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ev14", 0x000000, 0x10000, 0xdf57f8d7 , 0x686f72c1 )	/* chars */
-	ROM_LOAD( "ev13", 0x010000, 0x10000, 0x7b13d21b , 0xb787dcc9 )
-	ROM_LOAD( "ew19", 0x020000, 0x08000, 0x68e172bb , 0x6b80d7a3 )	/* tiles */
+	ROM_LOAD( "ev14",         0x000000, 0x10000, 0x686f72c1 )	/* chars */
+	ROM_LOAD( "ev13",         0x010000, 0x10000, 0xb787dcc9 )
+	ROM_LOAD( "ew19",         0x020000, 0x08000, 0x6b80d7a3 )	/* tiles */
 	/* 28000-3ffff empty */
-	ROM_LOAD( "ew18", 0x040000, 0x08000, 0xadc9d98f , 0x78d3d764 )
+	ROM_LOAD( "ew18",         0x040000, 0x08000, 0x78d3d764 )
 	/* 48000-5ffff empty */
-	ROM_LOAD( "ew20", 0x060000, 0x08000, 0x383f60fb , 0xce9f5de3 )
+	ROM_LOAD( "ew20",         0x060000, 0x08000, 0xce9f5de3 )
 	/* 68000-7ffff empty */
-	ROM_LOAD( "ew21", 0x080000, 0x08000, 0xb8e29600 , 0x487a7ba2 )
+	ROM_LOAD( "ew21",         0x080000, 0x08000, 0x487a7ba2 )
 	/* 88000-9ffff empty */
-	ROM_LOAD( "ew23", 0x0a0000, 0x08000, 0x8ed64ca2 , 0x9ecf479e )	/* tiles */
+	ROM_LOAD( "ew23",         0x0a0000, 0x08000, 0x9ecf479e )	/* tiles */
 	/* a8000-bffff empty */
-	ROM_LOAD( "ew22", 0x0c0000, 0x08000, 0xf1794dcb , 0xe55669aa )
+	ROM_LOAD( "ew22",         0x0c0000, 0x08000, 0xe55669aa )
 	/* c8000-dffff empty */
-	ROM_LOAD( "ew24", 0x0e0000, 0x08000, 0xdaf2c428 , 0x4e1bc2a4 )
+	ROM_LOAD( "ew24",         0x0e0000, 0x08000, 0x4e1bc2a4 )
 	/* e8000-fffff empty */
-	ROM_LOAD( "ew25", 0x100000, 0x08000, 0x529d4bed , 0x9eb47dfb )
+	ROM_LOAD( "ew25",         0x100000, 0x08000, 0x9eb47dfb )
 	/* 108000-11ffff empty */
-	ROM_LOAD( "ev15", 0x120000, 0x10000, 0x7a187868 , 0x1d80f797 )	/* sprites */
-	ROM_LOAD( "ew16", 0x130000, 0x10000, 0x7a161cbc , 0x96233177 )
-	ROM_LOAD( "ev10", 0x140000, 0x10000, 0x8be36ba3 , 0xc4e7116b )
-	ROM_LOAD( "ew11", 0x150000, 0x10000, 0x20b53a27 , 0xf2e007fc )
-	ROM_LOAD( "ev06", 0x160000, 0x10000, 0x8ee79ac5 , 0x6c794f1a )
-	ROM_LOAD( "ew07", 0x170000, 0x10000, 0x867c30d4 , 0x470b6989 )
-	ROM_LOAD( "ev17", 0x180000, 0x10000, 0x0368112e , 0x045509d4 )
-	ROM_LOAD( "ew12", 0x190000, 0x10000, 0x4d39404d , 0xa2d244bc )
+	ROM_LOAD( "ev15",         0x120000, 0x10000, 0x1d80f797 )	/* sprites */
+	ROM_LOAD( "ew16",         0x130000, 0x10000, 0x96233177 )
+	ROM_LOAD( "ev10",         0x140000, 0x10000, 0xc4e7116b )
+	ROM_LOAD( "ew11",         0x150000, 0x10000, 0xf2e007fc )
+	ROM_LOAD( "ev06",         0x160000, 0x10000, 0x6c794f1a )
+	ROM_LOAD( "ew07",         0x170000, 0x10000, 0x470b6989 )
+	ROM_LOAD( "ev17",         0x180000, 0x10000, 0x045509d4 )
+	ROM_LOAD( "ew12",         0x190000, 0x10000, 0xa2d244bc )
 
 	ROM_REGION(0x10000)	/* 6502 sound */
-	ROM_LOAD( "ew04", 0x8000, 0x8000, 0xb8a3b86b , 0x9871b98d )
+	ROM_LOAD( "ew04",         0x8000, 0x8000, 0x9871b98d )
 
 	ROM_REGION(0x10000)	/* ADPCM sounds */
-	ROM_LOAD( "ew03", 0x0000, 0x10000, 0x3d50a8dc , 0xb606924d )
+	ROM_LOAD( "ew03",         0x0000, 0x10000, 0xb606924d )
 
     ROM_REGION(0x10000) /* Encrypted code bank */
-	ROM_LOAD( "ew08", 0x000000, 0x10000, 0xcf010573 , 0x53010534 )
+	ROM_LOAD( "ew08",         0x000000, 0x10000, 0x53010534 )
 ROM_END
 
 ROM_START( slyspy_rom )
 	ROM_REGION(0x40000) /* 68000 code */
-	ROM_LOAD_EVEN( "fa14-2.bin", 0x00000, 0x10000, 0xdc199611 , 0x0e431e39 )
-	ROM_LOAD_ODD ( "fa12-2.bin", 0x00000, 0x10000, 0x9c925d90 , 0x1b534294 )
-	ROM_LOAD_EVEN( "fa15-.bin", 0x20000, 0x10000, 0xf2ad9ce9 , 0x04a79266 )
-	ROM_LOAD_ODD ( "fa13-.bin", 0x20000, 0x10000, 0xe89a147a , 0x641cc4b3 )
+	ROM_LOAD_EVEN( "fa14-2.bin",   0x00000, 0x10000, 0x0e431e39 )
+	ROM_LOAD_ODD ( "fa12-2.bin",   0x00000, 0x10000, 0x1b534294 )
+	ROM_LOAD_EVEN( "fa15-.bin",    0x20000, 0x10000, 0x04a79266 )
+	ROM_LOAD_ODD ( "fa13-.bin",    0x20000, 0x10000, 0x641cc4b3 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fa05-.bin", 0x008000, 0x04000, 0x775763bf , 0x09802924 )	/* chars */
+	ROM_LOAD( "fa05-.bin",    0x008000, 0x04000, 0x09802924 )	/* chars */
 	/* 0c000-0ffff empty */
 	ROM_CONTINUE(          0x000000, 0x04000 )	/* the two halves are swapped */
 	/* 04000-07fff empty */
-	ROM_LOAD( "fa04-.bin", 0x018000, 0x04000, 0x1b99c003 , 0xec25b895 )
+	ROM_LOAD( "fa04-.bin",    0x018000, 0x04000, 0xec25b895 )
 	/* 1c000-1ffff empty */
 	ROM_CONTINUE(          0x010000, 0x04000 )
 	/* 14000-17fff empty */
-	ROM_LOAD( "fa07-.bin", 0x020000, 0x08000, 0xa54b6467 , 0xe932268b )	/* tiles */
+	ROM_LOAD( "fa07-.bin",    0x020000, 0x08000, 0xe932268b )	/* tiles */
 	/* 28000-3ffff empty */
 	ROM_CONTINUE(          0x040000, 0x08000 )
 	/* 48000-5ffff empty */
-	ROM_LOAD( "fa06-.bin", 0x060000, 0x08000, 0x3ad165b3 , 0xc4dd38c0 )
+	ROM_LOAD( "fa06-.bin",    0x060000, 0x08000, 0xc4dd38c0 )
 	/* 68000-7ffff empty */
 	ROM_CONTINUE(          0x080000, 0x08000 )
 	/* 88000-9ffff empty */
-	ROM_LOAD( "fa09-.bin", 0x0a0000, 0x10000, 0x49dc0cd2 , 0x1395e9be )	/* tiles */
+	ROM_LOAD( "fa09-.bin",    0x0a0000, 0x10000, 0x1395e9be )	/* tiles */
 	/* b0000-bffff empty */
 	ROM_CONTINUE(          0x0c0000, 0x10000 )
 	/* d0000-dffff empty */
-	ROM_LOAD( "fa08-.bin", 0x0e0000, 0x10000, 0x86def798 , 0x4d7464db )
+	ROM_LOAD( "fa08-.bin",    0x0e0000, 0x10000, 0x4d7464db )
 	/* f0000-fffff empty */
 	ROM_CONTINUE(          0x100000, 0x10000 )
 	/* 110000-11ffff empty */
-	ROM_LOAD( "fa01-.bin", 0x120000, 0x20000, 0x352b25d5 , 0x99b0cd92 )	/* sprites */
-	ROM_LOAD( "fa03-.bin", 0x140000, 0x20000, 0xf51c58bc , 0x0e7ea74d )
-	ROM_LOAD( "fa00-.bin", 0x160000, 0x20000, 0x26b47612 , 0xf7df3fd7 )
-	ROM_LOAD( "fa02-.bin", 0x180000, 0x20000, 0x31ad4955 , 0x84e8da9d )
+	ROM_LOAD( "fa01-.bin",    0x120000, 0x20000, 0x99b0cd92 )	/* sprites */
+	ROM_LOAD( "fa03-.bin",    0x140000, 0x20000, 0x0e7ea74d )
+	ROM_LOAD( "fa00-.bin",    0x160000, 0x20000, 0xf7df3fd7 )
+	ROM_LOAD( "fa02-.bin",    0x180000, 0x20000, 0x84e8da9d )
 
 	ROM_REGION (0x10000)	/* Unknown sound CPU */
-	ROM_LOAD( "fa10-.bin", 0x00000, 0x10000, 0xc9e40514 , 0xdfd2ff25 )
+	ROM_LOAD( "fa10-.bin",    0x00000, 0x10000, 0xdfd2ff25 )
 
 	ROM_REGION (0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fa11-.bin", 0x00000, 0x20000, 0x58497c71 , 0x4e547bad )
+	ROM_LOAD( "fa11-.bin",    0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
 ROM_START( midres_rom )
 	ROM_REGION(0x80000) /* 68000 code */
-	ROM_LOAD_EVEN ( "fl14", 0x00000, 0x20000, 0x35b0ed92 , 0x2f9507a2 )
-	ROM_LOAD_ODD ( "fl12", 0x00000, 0x20000, 0x189ab686 , 0x3815ad9f )
-	ROM_LOAD_EVEN ( "fl15", 0x40000, 0x20000, 0xfd56c2aa , 0x1328354e )
-	ROM_LOAD_ODD  ( "fl13", 0x40000, 0x20000, 0xa23a451a , 0xe3b3955e )
+	ROM_LOAD_EVEN ( "fl14",         0x00000, 0x20000, 0x2f9507a2 )
+	ROM_LOAD_ODD ( "fl12",         0x00000, 0x20000, 0x3815ad9f )
+	ROM_LOAD_EVEN ( "fl15",         0x40000, 0x20000, 0x1328354e )
+	ROM_LOAD_ODD  ( "fl13",         0x40000, 0x20000, 0xe3b3955e )
 
 	ROM_REGION_DISPOSE(0x1a0000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "fl05", 0x008000, 0x08000, 0x68a502ff , 0xd75aba06 )	/* chars */
+	ROM_LOAD( "fl05",         0x008000, 0x08000, 0xd75aba06 )	/* chars */
 	ROM_CONTINUE(     0x000000, 0x08000 )	/* the two halves are swapped */
-	ROM_LOAD( "fl04", 0x018000, 0x08000, 0x64be5ec2 , 0x8f5bbb79 )
+	ROM_LOAD( "fl04",         0x018000, 0x08000, 0x8f5bbb79 )
 	ROM_CONTINUE(     0x010000, 0x08000 )
-	ROM_LOAD( "fl09", 0x020000, 0x20000, 0x2460122c , 0x907d5910 )	/* tiles */
-	ROM_LOAD( "fl08", 0x040000, 0x20000, 0x2f70347e , 0xa936c03c )
-	ROM_LOAD( "fl07", 0x060000, 0x20000, 0x3a8e3efe , 0x2068c45c )
-	ROM_LOAD( "fl06", 0x080000, 0x20000, 0x1c50e2f4 , 0xb7241ab9 )
-	ROM_LOAD( "fl11", 0x0a0000, 0x10000, 0xb939aea9 , 0xb86b73b4 )	/* tiles */
+	ROM_LOAD( "fl09",         0x020000, 0x20000, 0x907d5910 )	/* tiles */
+	ROM_LOAD( "fl08",         0x040000, 0x20000, 0xa936c03c )
+	ROM_LOAD( "fl07",         0x060000, 0x20000, 0x2068c45c )
+	ROM_LOAD( "fl06",         0x080000, 0x20000, 0xb7241ab9 )
+	ROM_LOAD( "fl11",         0x0a0000, 0x10000, 0xb86b73b4 )	/* tiles */
 	/* 0d0000-0dffff empty */
 	ROM_CONTINUE(     0x0c0000, 0x10000 )
 	/* 110000-11ffff empty */
-	ROM_LOAD( "fl10", 0x0e0000, 0x10000, 0x280e7b06 , 0x92245b29 )
+	ROM_LOAD( "fl10",         0x0e0000, 0x10000, 0x92245b29 )
 	/* 0b0000-0bffff empty */
 	ROM_CONTINUE(     0x100000, 0x10000 )
 	/* 0f0000-0fffff empty */
-	ROM_LOAD( "fl01", 0x120000, 0x20000, 0xccf643f2 , 0x2c8b35a7 )	/* sprites */
-	ROM_LOAD( "fl03", 0x140000, 0x20000, 0x5c7da3a9 , 0x1eefed3c )
-	ROM_LOAD( "fl00", 0x160000, 0x20000, 0x14f493e8 , 0x756fb801 )
-	ROM_LOAD( "fl02", 0x180000, 0x20000, 0xd223c495 , 0x54d2c120 )
+	ROM_LOAD( "fl01",         0x120000, 0x20000, 0x2c8b35a7 )	/* sprites */
+	ROM_LOAD( "fl03",         0x140000, 0x20000, 0x1eefed3c )
+	ROM_LOAD( "fl00",         0x160000, 0x20000, 0x756fb801 )
+	ROM_LOAD( "fl02",         0x180000, 0x20000, 0x54d2c120 )
 
 	ROM_REGION(0x10000)	/* Unknown or corrupt sound CPU */
-	ROM_LOAD( "fl16", 0x00000, 0x10000, 0xf43804e2 , 0x66360bdf )
+	ROM_LOAD( "fl16",         0x00000, 0x10000, 0x66360bdf )
 
 	ROM_REGION(0x20000)	/* ADPCM samples */
-	ROM_LOAD( "fl17", 0x00000, 0x20000, 0x16d7aeff , 0x9029965d )
+	ROM_LOAD( "fl17",         0x00000, 0x20000, 0x9029965d )
 ROM_END
 
 /******************************************************************************/

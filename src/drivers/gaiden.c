@@ -555,85 +555,85 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gaiden_rom )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
-	ROM_LOAD_EVEN( "gaiden.1", 0x00000, 0x20000, 0x0b92d014 , 0xe037ff7c )
-	ROM_LOAD_ODD ( "gaiden.2", 0x00000, 0x20000, 0xb0a2e242 , 0x454f7314 )
+	ROM_LOAD_EVEN( "gaiden.1",     0x00000, 0x20000, 0xe037ff7c )
+	ROM_LOAD_ODD ( "gaiden.2",     0x00000, 0x20000, 0x454f7314 )
 
 	ROM_REGION_DISPOSE(0x210000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gaiden.5", 0x000000, 0x10000, 0xf3653a0f , 0x8d4035f7 )	/* 8x8 tiles */
-	ROM_LOAD( "14.bin", 0x010000, 0x20000, 0x00d6531c , 0x1ecfddaa )
-	ROM_LOAD( "15.bin", 0x030000, 0x20000, 0xae21271b , 0x1291a696 )
-	ROM_LOAD( "16.bin", 0x050000, 0x20000, 0x4dee5eec , 0x140b47ca )
-	ROM_LOAD( "17.bin", 0x070000, 0x20000, 0x9e0c7684 , 0x7638cccb )
-	ROM_LOAD( "18.bin", 0x090000, 0x20000, 0xc76c8d20 , 0x3fadafd6 )
-	ROM_LOAD( "19.bin", 0x0b0000, 0x20000, 0xc3845b96 , 0xddae9d5b )
-	ROM_LOAD( "20.bin", 0x0d0000, 0x20000, 0x40e78ca5 , 0x08cf7a93 )
-	ROM_LOAD( "21.bin", 0x0f0000, 0x20000, 0xccdcbd02 , 0x1ac892f5 )
-	ROM_LOAD( "gaiden.6", 0x110000, 0x20000, 0xde50047a , 0xe7ccdf9f )	/* sprites A1 */
-	ROM_LOAD( "gaiden.8", 0x130000, 0x20000, 0xc0d813a6 , 0x7ef7f880 )	/* sprites B1 */
-	ROM_LOAD( "gaiden.10", 0x150000, 0x20000, 0xfc2e2818 , 0xa6451dec )	/* sprites C1 */
-	ROM_LOAD( "gaiden.12", 0x170000, 0x20000, 0xe7739fed , 0x90f1e13a )	/* sprites D1 */
-	ROM_LOAD( "gaiden.7", 0x190000, 0x20000, 0x9f40c78e , 0x016bec95 )	/* sprites A2 */
-	ROM_LOAD( "gaiden.9", 0x1b0000, 0x20000, 0xdeea0a22 , 0x6e9b7fd3 )	/* sprites B2 */
-	ROM_LOAD( "gaiden.11", 0x1d0000, 0x20000, 0xfb2d2641 , 0x7fbfdf5e )	/* sprites C2 */
-	ROM_LOAD( "gaiden.13", 0x1f0000, 0x20000, 0xbd928520 , 0x7d9f5c5e )	/* sprites D2 */
+	ROM_LOAD( "gaiden.5",     0x000000, 0x10000, 0x8d4035f7 )	/* 8x8 tiles */
+	ROM_LOAD( "14.bin",       0x010000, 0x20000, 0x1ecfddaa )
+	ROM_LOAD( "15.bin",       0x030000, 0x20000, 0x1291a696 )
+	ROM_LOAD( "16.bin",       0x050000, 0x20000, 0x140b47ca )
+	ROM_LOAD( "17.bin",       0x070000, 0x20000, 0x7638cccb )
+	ROM_LOAD( "18.bin",       0x090000, 0x20000, 0x3fadafd6 )
+	ROM_LOAD( "19.bin",       0x0b0000, 0x20000, 0xddae9d5b )
+	ROM_LOAD( "20.bin",       0x0d0000, 0x20000, 0x08cf7a93 )
+	ROM_LOAD( "21.bin",       0x0f0000, 0x20000, 0x1ac892f5 )
+	ROM_LOAD( "gaiden.6",     0x110000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
+	ROM_LOAD( "gaiden.8",     0x130000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.10",    0x150000, 0x20000, 0xa6451dec )	/* sprites C1 */
+	ROM_LOAD( "gaiden.12",    0x170000, 0x20000, 0x90f1e13a )	/* sprites D1 */
+	ROM_LOAD( "gaiden.7",     0x190000, 0x20000, 0x016bec95 )	/* sprites A2 */
+	ROM_LOAD( "gaiden.9",     0x1b0000, 0x20000, 0x6e9b7fd3 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.11",    0x1d0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
+	ROM_LOAD( "gaiden.13",    0x1f0000, 0x20000, 0x7d9f5c5e )	/* sprites D2 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gaiden.3", 0x0000, 0x10000, 0x1db13fc3 , 0x75fd3e6a )   /* Audio CPU is a Z80  */
+	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "gaiden.4", 0x0000, 0x20000, 0xb8e72ccf , 0xb0e0faf9 ) /* samples */
+	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
 ROM_END
 
 ROM_START( shadoww_rom )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
-	ROM_LOAD_EVEN( "shadoww.1", 0x00000, 0x20000, 0x5e4e90c2 , 0xfefba387 )
-	ROM_LOAD_ODD ( "shadoww.2", 0x00000, 0x20000, 0x33f84e7e , 0x9b9d6b18 )
+	ROM_LOAD_EVEN( "shadoww.1",    0x00000, 0x20000, 0xfefba387 )
+	ROM_LOAD_ODD ( "shadoww.2",    0x00000, 0x20000, 0x9b9d6b18 )
 
 	ROM_REGION_DISPOSE(0x210000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gaiden.5", 0x000000, 0x10000, 0xf3653a0f , 0x8d4035f7 )	/* 8x8 tiles */
-	ROM_LOAD( "14.bin", 0x010000, 0x20000, 0x00d6531c , 0x1ecfddaa )
-	ROM_LOAD( "15.bin", 0x030000, 0x20000, 0xae21271b , 0x1291a696 )
-	ROM_LOAD( "16.bin", 0x050000, 0x20000, 0x4dee5eec , 0x140b47ca )
-	ROM_LOAD( "17.bin", 0x070000, 0x20000, 0x9e0c7684 , 0x7638cccb )
-	ROM_LOAD( "18.bin", 0x090000, 0x20000, 0xc76c8d20 , 0x3fadafd6 )
-	ROM_LOAD( "19.bin", 0x0b0000, 0x20000, 0xc3845b96 , 0xddae9d5b )
-	ROM_LOAD( "20.bin", 0x0d0000, 0x20000, 0x40e78ca5 , 0x08cf7a93 )
-	ROM_LOAD( "21.bin", 0x0f0000, 0x20000, 0xccdcbd02 , 0x1ac892f5 )
-	ROM_LOAD( "gaiden.6", 0x110000, 0x20000, 0xde50047a , 0xe7ccdf9f )	/* sprites A1 */
-	ROM_LOAD( "gaiden.8", 0x130000, 0x20000, 0xc0d813a6 , 0x7ef7f880 )	/* sprites B1 */
-	ROM_LOAD( "gaiden.10", 0x150000, 0x20000, 0xfc2e2818 , 0xa6451dec )	/* sprites C1 */
-	ROM_LOAD( "shadoww.12a", 0x170000, 0x10000, 0xb9da7f3c , 0x9bb07731 )	/* sprites D1 */
-	ROM_LOAD( "shadoww.12b", 0x180000, 0x10000, 0xe2915fb7 , 0xa4a950a2 )	/* sprites D1 */
-	ROM_LOAD( "gaiden.7", 0x190000, 0x20000, 0x9f40c78e , 0x016bec95 )	/* sprites A2 */
-	ROM_LOAD( "gaiden.9", 0x1b0000, 0x20000, 0xdeea0a22 , 0x6e9b7fd3 )	/* sprites B2 */
-	ROM_LOAD( "gaiden.11", 0x1d0000, 0x20000, 0xfb2d2641 , 0x7fbfdf5e )	/* sprites C2 */
-	ROM_LOAD( "shadoww.13a", 0x1f0000, 0x10000, 0x5e66bed4 , 0x996d2fa5 )	/* sprites D2 */
-	ROM_LOAD( "shadoww.13b", 0x200000, 0x10000, 0x8a0508d7 , 0xb8df8a34 )	/* sprites D2 */
+	ROM_LOAD( "gaiden.5",     0x000000, 0x10000, 0x8d4035f7 )	/* 8x8 tiles */
+	ROM_LOAD( "14.bin",       0x010000, 0x20000, 0x1ecfddaa )
+	ROM_LOAD( "15.bin",       0x030000, 0x20000, 0x1291a696 )
+	ROM_LOAD( "16.bin",       0x050000, 0x20000, 0x140b47ca )
+	ROM_LOAD( "17.bin",       0x070000, 0x20000, 0x7638cccb )
+	ROM_LOAD( "18.bin",       0x090000, 0x20000, 0x3fadafd6 )
+	ROM_LOAD( "19.bin",       0x0b0000, 0x20000, 0xddae9d5b )
+	ROM_LOAD( "20.bin",       0x0d0000, 0x20000, 0x08cf7a93 )
+	ROM_LOAD( "21.bin",       0x0f0000, 0x20000, 0x1ac892f5 )
+	ROM_LOAD( "gaiden.6",     0x110000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
+	ROM_LOAD( "gaiden.8",     0x130000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.10",    0x150000, 0x20000, 0xa6451dec )	/* sprites C1 */
+	ROM_LOAD( "shadoww.12a",  0x170000, 0x10000, 0x9bb07731 )	/* sprites D1 */
+	ROM_LOAD( "shadoww.12b",  0x180000, 0x10000, 0xa4a950a2 )	/* sprites D1 */
+	ROM_LOAD( "gaiden.7",     0x190000, 0x20000, 0x016bec95 )	/* sprites A2 */
+	ROM_LOAD( "gaiden.9",     0x1b0000, 0x20000, 0x6e9b7fd3 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.11",    0x1d0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
+	ROM_LOAD( "shadoww.13a",  0x1f0000, 0x10000, 0x996d2fa5 )	/* sprites D2 */
+	ROM_LOAD( "shadoww.13b",  0x200000, 0x10000, 0xb8df8a34 )	/* sprites D2 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gaiden.3", 0x0000, 0x10000, 0x1db13fc3 , 0x75fd3e6a )   /* Audio CPU is a Z80  */
+	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "gaiden.4", 0x0000, 0x20000, 0xb8e72ccf , 0xb0e0faf9 ) /* samples */
+	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
 ROM_END
 
 ROM_START( tknight_rom )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
-	ROM_LOAD_EVEN( "tkni1.bin", 0x00000, 0x20000, 0xf9df4597 , 0x9121daa8 )
-	ROM_LOAD_ODD ( "tkni2.bin", 0x00000, 0x20000, 0x354ec882 , 0x6669cd87 )
+	ROM_LOAD_EVEN( "tkni1.bin",    0x00000, 0x20000, 0x9121daa8 )
+	ROM_LOAD_ODD ( "tkni2.bin",    0x00000, 0x20000, 0x6669cd87 )
 
 	ROM_REGION_DISPOSE(0x210000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tkni5.bin", 0x000000, 0x10000, 0xeda2959c , 0x5ed15896 )	/* 8x8 tiles */
-	ROM_LOAD( "tkni7.bin", 0x010000, 0x80000, 0xb678d5a4 , 0x4b4d4286 )
-	ROM_LOAD( "tkni6.bin", 0x090000, 0x80000, 0xf9162a62 , 0xf68fafb1 )
-	ROM_LOAD( "tkni9.bin", 0x110000, 0x80000, 0xba0e1e88 , 0xd22f4239 )	/* sprites */
-	ROM_LOAD( "tkni8.bin", 0x190000, 0x80000, 0xe64f1921 , 0x4931b184 )	/* sprites */
+	ROM_LOAD( "tkni5.bin",    0x000000, 0x10000, 0x5ed15896 )	/* 8x8 tiles */
+	ROM_LOAD( "tkni7.bin",    0x010000, 0x80000, 0x4b4d4286 )
+	ROM_LOAD( "tkni6.bin",    0x090000, 0x80000, 0xf68fafb1 )
+	ROM_LOAD( "tkni9.bin",    0x110000, 0x80000, 0xd22f4239 )	/* sprites */
+	ROM_LOAD( "tkni8.bin",    0x190000, 0x80000, 0x4931b184 )	/* sprites */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "tkni3.bin", 0x0000, 0x10000, 0x29949050 , 0x15623ec7 )   /* Audio CPU is a Z80  */
+	ROM_LOAD( "tkni3.bin",    0x0000, 0x10000, 0x15623ec7 )   /* Audio CPU is a Z80  */
 
 	ROM_REGION(0x20000)	/* 128k for ADPCM samples - sound chip is OKIM6295 */
-	ROM_LOAD( "tkni4.bin", 0x0000, 0x20000, 0x7767d549 , 0xa7a1dbcf ) /* samples */
+	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
 ROM_END
 
 

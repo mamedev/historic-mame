@@ -407,25 +407,25 @@ static struct MachineDriver tnzs_machine_driver =
 ROM_START( tnzs_rom )
     ROM_REGION(0x28000)	/* 64k+64k for the first CPU */
 #if 1
-    ROM_LOAD( "nzsb5310.bin", 0x00000, 0x08000, 0x935a36b4 , 0xa73745c6 )
+    ROM_LOAD( "nzsb5310.bin", 0x00000, 0x08000, 0xa73745c6 )
     ROM_CONTINUE(            0x10000, 0x18000 )
 #else
-    ROM_LOAD( "nzsb5310.bin", 0x00000, 0x20000, 0x935a36b4 , 0xa73745c6 )
+    ROM_LOAD( "nzsb5310.bin", 0x00000, 0x20000, 0xa73745c6 )
 #endif
 
     ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
 	/* ROMs taken from another set (the ones from this set were read incorrectly) */
-	ROM_LOAD( "nzsb5316.bin", 0x00000, 0x20000, 0x29e31231 , 0xc3519c2a )
-	ROM_LOAD( "nzsb5317.bin", 0x20000, 0x20000, 0x0b69d21b , 0x2bf199e8 )
-	ROM_LOAD( "nzsb5318.bin", 0x40000, 0x20000, 0x9f5d4531 , 0x92f35ed9 )
-	ROM_LOAD( "nzsb5319.bin", 0x60000, 0x20000, 0x045a4abc , 0xedbb9581 )
-	ROM_LOAD( "nzsb5322.bin", 0x80000, 0x20000, 0xa390cc10 , 0x59d2aef6 )
-	ROM_LOAD( "nzsb5323.bin", 0xa0000, 0x20000, 0xc8841c06 , 0x74acfb9b )
-	ROM_LOAD( "nzsb5320.bin", 0xc0000, 0x20000, 0x1325159d , 0x095d0dc0 )
-	ROM_LOAD( "nzsb5321.bin", 0xe0000, 0x20000, 0xd29db545 , 0x9800c54d )
+	ROM_LOAD( "nzsb5316.bin", 0x00000, 0x20000, 0xc3519c2a )
+	ROM_LOAD( "nzsb5317.bin", 0x20000, 0x20000, 0x2bf199e8 )
+	ROM_LOAD( "nzsb5318.bin", 0x40000, 0x20000, 0x92f35ed9 )
+	ROM_LOAD( "nzsb5319.bin", 0x60000, 0x20000, 0xedbb9581 )
+	ROM_LOAD( "nzsb5322.bin", 0x80000, 0x20000, 0x59d2aef6 )
+	ROM_LOAD( "nzsb5323.bin", 0xa0000, 0x20000, 0x74acfb9b )
+	ROM_LOAD( "nzsb5320.bin", 0xc0000, 0x20000, 0x095d0dc0 )
+	ROM_LOAD( "nzsb5321.bin", 0xe0000, 0x20000, 0x9800c54d )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "nzsb5311.bin", 0x00000, 0x10000, 0xcc5f8183 , 0x9784d443 )
+    ROM_LOAD( "nzsb5311.bin", 0x00000, 0x10000, 0x9784d443 )
 ROM_END
 
 
@@ -434,24 +434,24 @@ ROM_END
 ROM_START( tnzs2_rom )
     ROM_REGION(0x28000)	/* 64k+64k+32k for the first CPU */
 #if 1
-    ROM_LOAD( "ns_c-11.rom", 0x00000, 0x08000, 0x6134e9ee , 0x3c1dae7b )
+    ROM_LOAD( "ns_c-11.rom",  0x00000, 0x08000, 0x3c1dae7b )
     ROM_CONTINUE(            0x10000, 0x18000 )
 #else
-    ROM_LOAD( "ns_c-11.rom", 0x00000, 0x20000, 0x6134e9ee , 0x3c1dae7b )
+    ROM_LOAD( "ns_c-11.rom",  0x00000, 0x20000, 0x3c1dae7b )
 #endif
 
     ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD( "ns_a13.rom", 0x00000, 0x20000, 0x635a5412 , 0x7e0bd5bb )
-    ROM_LOAD( "ns_a12.rom", 0x20000, 0x20000, 0x68bed40a , 0x95880726 )
-    ROM_LOAD( "ns_a10.rom", 0x40000, 0x20000, 0x274c4100 , 0x2bc4c053 )
-    ROM_LOAD( "ns_a08.rom", 0x60000, 0x20000, 0x6d0de83d , 0x8ff8d88c )
-    ROM_LOAD( "ns_a07.rom", 0x80000, 0x20000, 0x453ad1f8 , 0x291bcaca )
-    ROM_LOAD( "ns_a05.rom", 0xa0000, 0x20000, 0x186f4b07 , 0x6e762e20 )
-    ROM_LOAD( "ns_a04.rom", 0xc0000, 0x20000, 0x7c65f6df , 0xe1fd1b9d )
-    ROM_LOAD( "ns_a02.rom", 0xe0000, 0x20000, 0x2377128b , 0x2ab06bda )
+    ROM_LOAD( "ns_a13.rom",   0x00000, 0x20000, 0x7e0bd5bb )
+    ROM_LOAD( "ns_a12.rom",   0x20000, 0x20000, 0x95880726 )
+    ROM_LOAD( "ns_a10.rom",   0x40000, 0x20000, 0x2bc4c053 )
+    ROM_LOAD( "ns_a08.rom",   0x60000, 0x20000, 0x8ff8d88c )
+    ROM_LOAD( "ns_a07.rom",   0x80000, 0x20000, 0x291bcaca )
+    ROM_LOAD( "ns_a05.rom",   0xa0000, 0x20000, 0x6e762e20 )
+    ROM_LOAD( "ns_a04.rom",   0xc0000, 0x20000, 0xe1fd1b9d )
+    ROM_LOAD( "ns_a02.rom",   0xe0000, 0x20000, 0x2ab06bda )
 
     ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "ns_e-3.rom", 0x00000, 0x10000, 0x244e8a60 , 0xc7662e96 )
+    ROM_LOAD( "ns_e-3.rom",   0x00000, 0x10000, 0xc7662e96 )
 ROM_END
 
 static int tnzs_hiload(void)

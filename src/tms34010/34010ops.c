@@ -29,11 +29,8 @@
 #define SET_C_SUB(a,b)  (C_FLAG = (((unsigned int)  (b)) >((unsigned int)(a))))
 #define SET_C_ADD(a,b)  (C_FLAG = (((unsigned int)(~(a)))<((unsigned int)(b))))
 #define SET_NZV_SUB(a,b,r)   {SET_NZ(r);SET_V_SUB(a,b,r);}
-#define SET_NZCV_SUB(a,b,r)  {SET_NZ(r);SET_V_SUB(a,b,r);SET_C_SUB(a,b);}
+#define SET_NZCV_SUB(a,b,r)  {SET_NZV_SUB(a,b,r);SET_C_SUB(a,b);}
 #define SET_NZCV_ADD(a,b,r)  {SET_NZ(r);SET_V_ADD(a,b,r);SET_C_ADD(a,b);}
-
-#define ASP_TO_BSP   (BREG(15) = AREG(15))
-#define BSP_TO_ASP   (AREG(15) = BREG(15))
 
 /* XY manipulation macros */
 
@@ -120,6 +117,7 @@ static void pixblt_b_l(void)
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void pixblt_b_xy(void)
 {
 	int boundary;
@@ -164,12 +162,14 @@ static void pixblt_b_xy(void)
 			y = GET_Y(BREG(12)) + 1;
 			DADDR = BREG(12) = COMBINE_XY(x,y);
 			SADDR = BREG(13) = BREG(13) + SPTCH;
+
 		}
 	}
 	while (!boundary);
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void pixblt_l_l(void)
 {
 	int boundary;
@@ -228,6 +228,7 @@ static void pixblt_l_l(void)
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void pixblt_l_xy(void)
 {
 	int boundary;
@@ -287,6 +288,7 @@ static void pixblt_l_xy(void)
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void pixblt_xy_l(void)
 {
 	int boundary;
@@ -341,6 +343,7 @@ static void pixblt_xy_l(void)
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void pixblt_xy_xy(void)
 {
 	int boundary;
@@ -404,6 +407,7 @@ static void pixblt_xy_xy(void)
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void fill_l(void)
 {
 	int boundary;
@@ -441,6 +445,7 @@ static void fill_l(void)
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void fill_xy(void)
 {
 	int boundary;
@@ -499,6 +504,7 @@ static void fill_xy(void)
 
 	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
 }
+
 static void line(void)
 {
 	int algorithm = state.op & 0x80;
@@ -542,2520 +548,1384 @@ static void line(void)
 	}
 	FINISH_PIX_OP;
 }
-static void add_xy_a(void)
-{
-	signed short x1 = GET_X(AREG(DSTREG));
-	signed short y1 = GET_Y(AREG(DSTREG));
-	signed short x2 = GET_X(AREG(SRCREG));
-	signed short y2 = GET_Y(AREG(SRCREG));
-	signed short newx = x1+x2;
-	signed short newy = y1+y2;
-	AREG(DSTREG) = COMBINE_XY(newx,newy);
-	   N_FLAG = !newx;
-	NOTZ_FLAG =  newy;
-	   V_FLAG = (newx & 0x8000);
-  	   C_FLAG = (newy & 0x8000);
-	ASP_TO_BSP;
-}
-static void add_xy_b(void)
-{
-	signed short x1 = GET_X(BREG(DSTREG));
-	signed short y1 = GET_Y(BREG(DSTREG));
-	signed short x2 = GET_X(BREG(SRCREG));
-	signed short y2 = GET_Y(BREG(SRCREG));
-	signed short newx = x1+x2;
-	signed short newy = y1+y2;
-	BREG(DSTREG) = COMBINE_XY(newx,newy);
-	   N_FLAG = !newx;
-	NOTZ_FLAG =  newy;
-	   V_FLAG = (newx & 0x8000);
-	   C_FLAG = (newy & 0x8000);
-	BSP_TO_ASP;
-}
-static void sub_xy_a(void)
-{
-	signed short x1 = GET_X(AREG(DSTREG));
-	signed short y1 = GET_Y(AREG(DSTREG));
-	signed short x2 = GET_X(AREG(SRCREG));
-	signed short y2 = GET_Y(AREG(SRCREG));
-	signed short newx = x1-x2;
-	signed short newy = y1-y2;
-	AREG(DSTREG) = COMBINE_XY(newx,newy);
-	   N_FLAG = (x2 == x1);
-	   C_FLAG = (y2 >  y1);
-	NOTZ_FLAG = (y2 != y1);
-	   V_FLAG = (x2 >  x1);
-	ASP_TO_BSP;
-}
-static void sub_xy_b(void)
-{
-	signed short x1 = GET_X(BREG(DSTREG));
-	signed short y1 = GET_Y(BREG(DSTREG));
-	signed short x2 = GET_X(BREG(SRCREG));
-	signed short y2 = GET_Y(BREG(SRCREG));
-	signed short newx = x1-x2;
-	signed short newy = y1-y2;
-	BREG(DSTREG) = COMBINE_XY(newx,newy);
-	   N_FLAG = (x2 == x1);
-	   C_FLAG = (y2 >  y1);
-	NOTZ_FLAG = (y2 != y1);
-	   V_FLAG = (x2 >  x1);
-	BSP_TO_ASP;
-}
-static void cmp_xy_a(void)
-{
-	signed short x1 = GET_X(AREG(DSTREG));
-	signed short y1 = GET_Y(AREG(DSTREG));
-	signed short x2 = GET_X(AREG(SRCREG));
-	signed short y2 = GET_Y(AREG(SRCREG));
-	signed short newx = x1-x2;
-	signed short newy = y1-y2;
-	   N_FLAG = !newx;
-	NOTZ_FLAG =  newy;
-	   V_FLAG = (newx & 0x8000);
-	   C_FLAG = (newy & 0x8000);
-}
-static void cmp_xy_b(void)
-{
-	signed short x1 = GET_X(BREG(DSTREG));
-	signed short y1 = GET_Y(BREG(DSTREG));
-	signed short x2 = GET_X(BREG(SRCREG));
-	signed short y2 = GET_Y(BREG(SRCREG));
-	signed short newx = x1-x2;
-	signed short newy = y1-y2;
-	   N_FLAG = !newx;
-	NOTZ_FLAG =  newy;
- 	   V_FLAG = (newx & 0x8000);
-	   C_FLAG = (newy & 0x8000);
-}
-static void cpw_a(void)
-{
-	int res = 0;
-	signed short x       = GET_X(AREG(SRCREG));
-	signed short y       = GET_Y(AREG(SRCREG));
-	signed short wstartx = GET_X(WSTART);
-	signed short wstarty = GET_Y(WSTART);
-	signed short wendx   = GET_X(WEND);
-	signed short wendy   = GET_Y(WEND);
 
-	res |= ((wstartx > x) ? 0x20  : 0);
-	res |= ((x > wendx)   ? 0x40  : 0);
-	res |= ((wstarty > y) ? 0x80  : 0);
-	res |= ((y > wendy)   ? 0x100 : 0);
-	AREG(DSTREG) = V_FLAG = res;
-	ASP_TO_BSP;
+#define ADD_XY(R)								\
+{												\
+	signed short x1 = GET_X(R##REG(DSTREG));	\
+	signed short y1 = GET_Y(R##REG(DSTREG));	\
+	signed short x2 = GET_X(R##REG(SRCREG));	\
+	signed short y2 = GET_Y(R##REG(SRCREG));	\
+	signed short newx = x1+x2;					\
+	signed short newy = y1+y2;					\
+	R##REG(DSTREG) = COMBINE_XY(newx,newy);		\
+	   N_FLAG = !newx;							\
+	NOTZ_FLAG =  newy;							\
+	   V_FLAG = (newx & 0x8000);				\
+  	   C_FLAG = (newy & 0x8000);				\
+	COPY_##R##SP;								\
 }
-static void cpw_b(void)
-{
-	int res = 0;
-	signed short x       = GET_X(BREG(SRCREG));
-	signed short y       = GET_Y(BREG(SRCREG));
-	signed short wstartx = GET_X(WSTART);
-	signed short wstarty = GET_Y(WSTART);
-	signed short wendx   = GET_X(WEND);
-	signed short wendy   = GET_Y(WEND);
+static void add_xy_a(void) { ADD_XY(A); }
+static void add_xy_b(void) { ADD_XY(B); }
 
-	res |= ((wstartx > x) ? 0x20  : 0);
-	res |= ((x > wendx)   ? 0x40  : 0);
-	res |= ((wstarty > y) ? 0x80  : 0);
-	res |= ((y > wendy)   ? 0x100 : 0);
-	BREG(DSTREG) = V_FLAG = res;
-	BSP_TO_ASP;
+#define SUB_XY(R)								\
+{												\
+	signed short x1 = GET_X(R##REG(DSTREG));	\
+	signed short y1 = GET_Y(R##REG(DSTREG));	\
+	signed short x2 = GET_X(R##REG(SRCREG));	\
+	signed short y2 = GET_Y(R##REG(SRCREG));	\
+	signed short newx = x1-x2;					\
+	signed short newy = y1-y2;					\
+	R##REG(DSTREG) = COMBINE_XY(newx,newy);		\
+	   N_FLAG = (x2 == x1);						\
+	   C_FLAG = (y2 >  y1);						\
+	NOTZ_FLAG = (y2 != y1);						\
+	   V_FLAG = (x2 >  x1);						\
+	COPY_##R##SP;								\
 }
-static void cvxyl_a(void)
-{
-    AREG(DSTREG) = XYTOL(AREG(SRCREG));
-	ASP_TO_BSP;
-}
-static void cvxyl_b(void)
-{
-    BREG(DSTREG) = XYTOL(BREG(SRCREG));
-	BSP_TO_ASP;
-}
-static void movx_a(void)
-{
-	signed short x = GET_X(AREG(SRCREG));
-	signed short y = GET_Y(AREG(DSTREG));
-	AREG(DSTREG) = COMBINE_XY(x,y);
-	ASP_TO_BSP;
-}
-static void movx_b(void)
-{
-	signed short x = GET_X(BREG(SRCREG));
-	signed short y = GET_Y(BREG(DSTREG));
-	BREG(DSTREG) = COMBINE_XY(x,y);
-	BSP_TO_ASP;
-}
-static void movy_a(void)
-{
-	signed short x = GET_X(AREG(DSTREG));
-	signed short y = GET_Y(AREG(SRCREG));
-	AREG(DSTREG) = COMBINE_XY(x,y);
-	ASP_TO_BSP;
-}
-static void movy_b(void)
-{
-	signed short x = GET_X(BREG(DSTREG));
-	signed short y = GET_Y(BREG(SRCREG));
-	BREG(DSTREG) = COMBINE_XY(x,y);
-	BSP_TO_ASP;
-}
-static void pixt_ri_a(void)
-{
-	WPIXEL(AREG(DSTREG),AREG(SRCREG));
-	FINISH_PIX_OP;
-}
-static void pixt_ri_b(void)
-{
-	WPIXEL(BREG(DSTREG),BREG(SRCREG));
-	FINISH_PIX_OP;
-}
-static void pixt_rixy_a(void)
-{
-	if (state.window_checking && errorlog)
-	{
-		fprintf(errorlog, "PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-	}
+static void sub_xy_a(void) { SUB_XY(A); }
+static void sub_xy_b(void) { SUB_XY(B); }
 
-	WPIXEL(XYTOL(AREG(DSTREG)),AREG(SRCREG));
-	FINISH_PIX_OP;
+#define CMP_XY(R)								\
+{												\
+	signed short x1 = GET_X(R##REG(DSTREG));	\
+	signed short y1 = GET_Y(R##REG(DSTREG));	\
+	signed short x2 = GET_X(R##REG(SRCREG));	\
+	signed short y2 = GET_Y(R##REG(SRCREG));	\
+	signed short newx = x1-x2;					\
+	signed short newy = y1-y2;					\
+	   N_FLAG = !newx;							\
+	NOTZ_FLAG =  newy;							\
+	   V_FLAG = (newx & 0x8000);				\
+	   C_FLAG = (newy & 0x8000);				\
 }
-static void pixt_rixy_b(void)
-{
-	WPIXEL(XYTOL(BREG(DSTREG)),BREG(SRCREG));
-	FINISH_PIX_OP;
-}
-static void pixt_ir_a(void)
-{
-	AREG(DSTREG) = V_FLAG = RPIXEL(AREG(SRCREG));
-	ASP_TO_BSP;
-	FINISH_PIX_OP;
-}
-static void pixt_ir_b(void)
-{
-	BREG(DSTREG) = V_FLAG = RPIXEL(BREG(SRCREG));
-	BSP_TO_ASP;
-	FINISH_PIX_OP;
-}
-static void pixt_ii_a(void)
-{
-	WPIXEL(AREG(DSTREG),RPIXEL(AREG(SRCREG)));
-	FINISH_PIX_OP;
-}
-static void pixt_ii_b(void)
-{
-	WPIXEL(BREG(DSTREG),RPIXEL(BREG(SRCREG)));
-	FINISH_PIX_OP;
-}
-static void pixt_ixyr_a(void)
-{
-	AREG(DSTREG) = V_FLAG = RPIXEL(XYTOL(AREG(SRCREG)));
-	ASP_TO_BSP;
-	FINISH_PIX_OP;
-}
-static void pixt_ixyr_b(void)
-{
-	BREG(DSTREG) = V_FLAG = RPIXEL(XYTOL(BREG(SRCREG)));
-	BSP_TO_ASP;
-	FINISH_PIX_OP;
-}
-static void pixt_ixyixy_a(void)
-{
-	WPIXEL(XYTOL(AREG(DSTREG)),RPIXEL(XYTOL(AREG(SRCREG))));
-	FINISH_PIX_OP;
-}
-static void pixt_ixyixy_b(void)
-{
-	WPIXEL(XYTOL(BREG(DSTREG)),RPIXEL(XYTOL(BREG(SRCREG))));
-	FINISH_PIX_OP;
-}
-static void drav_a(void)
-{
-	signed short x1,y1,x2,y2,newx,newy;
+static void cmp_xy_a(void) { CMP_XY(A); }
+static void cmp_xy_b(void) { CMP_XY(B); }
 
-	if (state.window_checking && errorlog)
-	{
-		fprintf(errorlog, "DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-	}
-
-	WPIXEL(XYTOL(AREG(DSTREG)),COLOR1);
-
-	x1 = GET_X(AREG(DSTREG));
-	y1 = GET_Y(AREG(DSTREG));
-	x2 = GET_X(AREG(SRCREG));
-	y2 = GET_Y(AREG(SRCREG));
-	newx = x1+x2;
-	newy = y1+y2;
-	AREG(DSTREG) = COMBINE_XY(newx,newy);
-	ASP_TO_BSP;
-	FINISH_PIX_OP;
+#define CPW(R)										\
+{													\
+	int res = 0;									\
+	signed short x       = GET_X(R##REG(SRCREG));	\
+	signed short y       = GET_Y(R##REG(SRCREG));	\
+	signed short wstartx = GET_X(WSTART);			\
+	signed short wstarty = GET_Y(WSTART);			\
+	signed short wendx   = GET_X(WEND);				\
+	signed short wendy   = GET_Y(WEND);				\
+													\
+	res |= ((wstartx > x) ? 0x20  : 0);				\
+	res |= ((x > wendx)   ? 0x40  : 0);				\
+	res |= ((wstarty > y) ? 0x80  : 0);				\
+	res |= ((y > wendy)   ? 0x100 : 0);				\
+	R##REG(DSTREG) = V_FLAG = res;					\
+	COPY_##R##SP;									\
 }
-static void drav_b(void)
-{
-	signed short x1,y1,x2,y2,newx,newy;
+static void cpw_a(void) { CPW(A); }
+static void cpw_b(void) { CPW(B); }
 
-	if (state.window_checking && errorlog)
-	{
-		fprintf(errorlog, "DARV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
-	}
-
-	WPIXEL(XYTOL(BREG(DSTREG)),COLOR1);
-
-	x1 = GET_X(BREG(DSTREG));
-	y1 = GET_Y(BREG(DSTREG));
-	x2 = GET_X(BREG(SRCREG));
-	y2 = GET_Y(BREG(SRCREG));
-	newx = x1+x2;
-	newy = y1+y2;
-	BREG(DSTREG) = COMBINE_XY(newx,newy);
-	BSP_TO_ASP;
-	FINISH_PIX_OP;
+#define CVXYL(R)									\
+{													\
+    R##REG(DSTREG) = XYTOL(R##REG(SRCREG));			\
+	COPY_##R##SP;									\
 }
+static void cvxyl_a(void) { CVXYL(A); }
+static void cvxyl_b(void) { CVXYL(B); }
+
+#define MOVX(R)										\
+{													\
+	signed short x = GET_X(R##REG(SRCREG));			\
+	signed short y = GET_Y(R##REG(DSTREG));			\
+	R##REG(DSTREG) = COMBINE_XY(x,y);				\
+	COPY_##R##SP;									\
+}
+static void movx_a(void) { MOVX(A); }
+static void movx_b(void) { MOVX(B); }
+
+#define MOVY(R)										\
+{													\
+	signed short x = GET_X(R##REG(DSTREG));			\
+	signed short y = GET_Y(R##REG(SRCREG));			\
+	R##REG(DSTREG) = COMBINE_XY(x,y);				\
+	COPY_##R##SP;									\
+}
+static void movy_a(void) { MOVY(A); }
+static void movy_b(void) { MOVY(B); }
+
+#define PIXT_RI(R)			                        \
+{							 						\
+	WPIXEL(R##REG(DSTREG),R##REG(SRCREG));			\
+	FINISH_PIX_OP;									\
+}
+static void pixt_ri_a(void) { PIXT_RI(A); }
+static void pixt_ri_b(void) { PIXT_RI(B); }
+
+#define PIXT_RIXY(R)		                        \
+{													\
+	if (state.window_checking && errorlog)			\
+	{												\
+		fprintf(errorlog, "PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
+	}												\
+													\
+	WPIXEL(XYTOL(R##REG(DSTREG)),R##REG(SRCREG));	\
+	FINISH_PIX_OP;									\
+}
+static void pixt_rixy_a(void) { PIXT_RIXY(A); }
+static void pixt_rixy_b(void) { PIXT_RIXY(B); }
+
+#define PIXT_IR(R)			                        	\
+{														\
+	R##REG(DSTREG) = V_FLAG = RPIXEL(R##REG(SRCREG));	\
+	COPY_##R##SP;										\
+	FINISH_PIX_OP;										\
+}
+static void pixt_ir_a(void) { PIXT_IR(A); }
+static void pixt_ir_b(void) { PIXT_IR(B); }
+
+#define PIXT_II(R)			                       	\
+{													\
+	WPIXEL(R##REG(DSTREG),RPIXEL(R##REG(SRCREG)));	\
+	FINISH_PIX_OP;									\
+}
+static void pixt_ii_a(void) { PIXT_II(A); }
+static void pixt_ii_b(void) { PIXT_II(B); }
+
+#define PIXT_IXYR(R)			              			      	\
+{																\
+	R##REG(DSTREG) = V_FLAG = RPIXEL(XYTOL(R##REG(SRCREG)));	\
+	COPY_##R##SP;												\
+	FINISH_PIX_OP;												\
+}
+static void pixt_ixyr_a(void) { PIXT_IXYR(A); }
+static void pixt_ixyr_b(void) { PIXT_IXYR(B); }
+
+#define PIXT_IXYIXY(R)			              			      		\
+{																	\
+	WPIXEL(XYTOL(R##REG(DSTREG)),RPIXEL(XYTOL(R##REG(SRCREG))));	\
+	FINISH_PIX_OP;													\
+}
+static void pixt_ixyixy_a(void) { PIXT_IXYIXY(A); }
+static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
+
+#define DRAV(R)			              			      		\
+{															\
+	signed short x1,y1,x2,y2,newx,newy;						\
+															\
+	if (state.window_checking && errorlog)					\
+	{														\
+		fprintf(errorlog, "DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
+	}														\
+															\
+	WPIXEL(XYTOL(R##REG(DSTREG)),COLOR1);					\
+															\
+	x1 = GET_X(R##REG(DSTREG));								\
+	y1 = GET_Y(R##REG(DSTREG));								\
+	x2 = GET_X(R##REG(SRCREG));								\
+	y2 = GET_Y(R##REG(SRCREG));								\
+	newx = x1+x2;											\
+	newy = y1+y2;											\
+	R##REG(DSTREG) = COMBINE_XY(newx,newy);					\
+	COPY_##R##SP;											\
+	FINISH_PIX_OP;											\
+}															
+static void drav_a(void) { DRAV(A); }
+static void drav_b(void) { DRAV(B); }
 
 
 /* General Instructions */
-static void abs_a(void)
-{
-	int r;
-	r = 0 - AREG(DSTREG);
-	SET_NZV_SUB(0,AREG(DSTREG),r);
-	if (!N_FLAG)
-	{
-		AREG(DSTREG) = r;
-		ASP_TO_BSP;
-	}
+#define ABS(R)			              			      		\
+{															\
+	int r;		  											\
+	r = 0 - R##REG(DSTREG);									\
+	SET_NZV_SUB(0,R##REG(DSTREG),r);						\
+	if (!N_FLAG)											\
+	{														\
+		R##REG(DSTREG) = r;									\
+		COPY_##R##SP;										\
+	}														\
 }
-static void abs_b(void)
-{
-	int r;
-	r = 0 - BREG(DSTREG);
-	SET_NZV_SUB(0,BREG(DSTREG),r);
-	if (!N_FLAG)
-	{
-		BREG(DSTREG) = r;
-		BSP_TO_ASP;
-	}
+static void abs_a(void) { ABS(A); }
+static void abs_b(void) { ABS(B); }
+
+#define ADD(R)			              			      		\
+{							 								\
+	int t,r;												\
+	t = R##REG(SRCREG);										\
+	r = t + R##REG(DSTREG);									\
+	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
+	R##REG(DSTREG) = r;										\
+	COPY_##R##SP;											\
 }
-static void add_a(void)
-{
-	int t,r;
-	t = AREG(SRCREG);
-	r = t + AREG(DSTREG);
-	SET_NZCV_ADD(t,AREG(DSTREG),r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
+static void add_a(void) { ADD(A); }
+static void add_b(void) { ADD(B); }
+
+#define ADDC(R)			              			      		\
+{			  												\
+	/* I'm not sure to which side the carry is added to, should	*/	\
+	/* verify it against the examples */					\
+	int t,r;												\
+	t = R##REG(SRCREG) + (C_FLAG?1:0);						\
+	r = t + R##REG(DSTREG);									\
+	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
+	R##REG(DSTREG) = r;										\
+	COPY_##R##SP;											\
 }
-static void add_b(void)
-{
-	int t,r;
-	t = BREG(SRCREG);
-	r = t + BREG(DSTREG);
-	SET_NZCV_ADD(t,BREG(DSTREG),r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
+static void addc_a(void) { ADDC(A); }
+static void addc_b(void) { ADDC(B); }
+
+#define ADDI_W(R)			              			      	\
+{			  												\
+	int t,r;												\
+	t = PARAM_WORD;											\
+	EXTEND_W(t);											\
+	r = t + R##REG(DSTREG);									\
+	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
+	R##REG(DSTREG) = r;										\
+	COPY_##R##SP;											\
 }
-static void addc_a(void)
-{
-	/* I'm not sure to which side the carry is added to, should
-	   verify it against the examples */
-	int t,r;
-	t = AREG(SRCREG) + (C_FLAG?1:0);
-	r = t + AREG(DSTREG);
-	SET_NZCV_ADD(t,AREG(DSTREG),r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
+static void addi_w_a(void) { ADDI_W(A); }
+static void addi_w_b(void) { ADDI_W(B); }
+
+#define ADDI_L(R)			              			      	\
+{			  												\
+	int t,r;												\
+	t = PARAM_LONG();										\
+	r = t + R##REG(DSTREG);									\
+	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
+	R##REG(DSTREG) = r;										\
+	COPY_##R##SP;											\
 }
-static void addc_b(void)
-{
-	int t,r;
-	t = BREG(SRCREG) + (C_FLAG?1:0);
-	r = t + BREG(DSTREG);
-	SET_NZCV_ADD(t,BREG(DSTREG),r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
+static void addi_l_a(void) { ADDI_L(A); }
+static void addi_l_b(void) { ADDI_L(B); }
+
+#define ADDK(R)				              			      	\
+{			  												\
+	int t,r;												\
+	t = PARAM_K; if (!t) t = 32;							\
+	r = t + R##REG(DSTREG);									\
+	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
+	R##REG(DSTREG) = r;										\
+	COPY_##R##SP;											\
 }
-static void addi_w_a(void)
-{
-	int t,r;
-	t = PARAM_WORD;
-	EXTEND_W(t);
-	r = t + AREG(DSTREG);
-	SET_NZCV_ADD(t,AREG(DSTREG),r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
+static void addk_a(void) { ADDK(A); }
+static void addk_b(void) { ADDK(B); }
+
+#define AND(R)				              			      	\
+{			  												\
+	R##REG(DSTREG) &= R##REG(SRCREG);						\
+	SET_Z(R##REG(DSTREG));									\
+	COPY_##R##SP;											\
 }
-static void addi_w_b(void)
-{
-	int t,r;
-	t = PARAM_WORD;
-	EXTEND_W(t);
-	r = t + BREG(DSTREG);
-	SET_NZCV_ADD(t,BREG(DSTREG),r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
+static void and_a(void) { AND(A); }
+static void and_b(void) { AND(B); }
+
+#define ANDI(R)				              			      	\
+{			  												\
+	R##REG(DSTREG) &= ~PARAM_LONG();						\
+	SET_Z(R##REG(DSTREG));									\
+	COPY_##R##SP;											\
 }
-static void addi_l_a(void)
-{
-	int t,r;
-	t = PARAM_LONG();
-	r = t + AREG(DSTREG);
-	SET_NZCV_ADD(t,AREG(DSTREG),r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
+static void andi_a(void) { ANDI(A); }
+static void andi_b(void) { ANDI(B); }
+
+#define ANDN(R)				              			      	\
+{			  												\
+	R##REG(DSTREG) &= ~R##REG(SRCREG);						\
+	SET_Z(R##REG(DSTREG));									\
+	COPY_##R##SP;											\
 }
-static void addi_l_b(void)
-{
-	int t,r;
-	t = PARAM_LONG();
-	r = t + BREG(DSTREG);
-	SET_NZCV_ADD(t,BREG(DSTREG),r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
+static void andn_a(void) { ANDN(A); }
+static void andn_b(void) { ANDN(B); }
+
+#define BTST_K(R)				              			    \
+{							 								\
+	SET_Z(R##REG(DSTREG) & (1<<(31-PARAM_K)));				\
 }
-static void addk_a(void)
-{
-	int t,r;
-	t = PARAM_K; if (!t) t = 32;
-	r = t + AREG(DSTREG);
-	SET_NZCV_ADD(t,AREG(DSTREG),r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
+static void btst_k_a(void) { BTST_K(A); }
+static void btst_k_b(void) { BTST_K(B); }
+
+#define BTST_R(R)				              			    \
+{															\
+	SET_Z(R##REG(DSTREG) & (1<<(R##REG(SRCREG)&0x1f)));		\
 }
-static void addk_b(void)
-{
-	int t,r;
-	t = PARAM_K; if (!t) t = 32;
-	r = t + BREG(DSTREG);
-	SET_NZCV_ADD(t,BREG(DSTREG),r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
-static void and_a(void)
-{
-	AREG(DSTREG) &= AREG(SRCREG);
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void and_b(void)
-{
-	BREG(DSTREG) &= BREG(SRCREG);
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void andi_a(void)
-{
-	AREG(DSTREG) &= ~PARAM_LONG();
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void andi_b(void)
-{
-	BREG(DSTREG) &= ~PARAM_LONG();
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void andn_a(void)
-{
-	AREG(DSTREG) &= ~AREG(SRCREG);
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void andn_b(void)
-{
-	BREG(DSTREG) &= ~BREG(SRCREG);
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void btst_k_a(void)
-{
-	SET_Z(AREG(DSTREG) & (1<<(31-PARAM_K)));
-}
-static void btst_k_b(void)
-{
-	SET_Z(BREG(DSTREG) & (1<<(31-PARAM_K)));
-}
-static void btst_r_a(void)
-{
-	SET_Z(AREG(DSTREG) & (1<<(AREG(SRCREG)&0x1f)));
-}
-static void btst_r_b(void)
-{
-	SET_Z(BREG(DSTREG) & (1<<(BREG(SRCREG)&0x1f)));
-}
+static void btst_r_a(void) { BTST_R(A); }
+static void btst_r_b(void) { BTST_R(B); }
+
 static void clrc(void)
 {
 	C_FLAG = 0;
 }
-static void cmp_a(void)
-{
-	int r;
-	r = AREG(DSTREG) - AREG(SRCREG);
-	SET_NZCV_SUB(AREG(DSTREG),AREG(SRCREG),r);
+
+#define CMP(R)				       		       			    \
+{															\
+	int r;													\
+	r = R##REG(DSTREG) - R##REG(SRCREG);					\
+	SET_NZCV_SUB(R##REG(DSTREG),R##REG(SRCREG),r);			\
 }
-static void cmp_b(void)
-{
-	int r;
-	r = BREG(DSTREG) - BREG(SRCREG);
-	SET_NZCV_SUB(BREG(DSTREG),BREG(SRCREG),r);
+static void cmp_a(void) { CMP(A); }
+static void cmp_b(void) { CMP(B); }
+
+#define CMPI_W(R)			       		       			    \
+{															\
+	int t,r;												\
+	t = ~PARAM_WORD;										\
+	EXTEND_W(t);											\
+	r = R##REG(DSTREG) - t;									\
+	SET_NZCV_SUB(R##REG(DSTREG),t,r);						\
 }
-static void cmpi_w_a(void)
-{
-	int t,r;
-	t = ~PARAM_WORD;
-	EXTEND_W(t);
-	r = AREG(DSTREG) - t;
-	SET_NZCV_SUB(AREG(DSTREG),t,r);
+static void cmpi_w_a(void) { CMPI_W(A); }
+static void cmpi_w_b(void) { CMPI_W(B); }
+
+#define CMPI_L(R)			       		       			    \
+{															\
+	int t,r;												\
+	t = ~PARAM_LONG();										\
+	r = R##REG(DSTREG) - t;									\
+	SET_NZCV_SUB(R##REG(DSTREG),t,r);						\
 }
-static void cmpi_w_b(void)
-{
-	int t,r;
-	t = ~PARAM_WORD;
-	EXTEND_W(t);
-	r = BREG(DSTREG) - t;
-	SET_NZCV_SUB(BREG(DSTREG),t,r);
-}
-static void cmpi_l_a(void)
-{
-	int t,r;
-	t = ~PARAM_LONG();
-	r = AREG(DSTREG) - t;
-	SET_NZCV_SUB(AREG(DSTREG),t,r);
-}
-static void cmpi_l_b(void)
-{
-	int t,r;
-	t = ~PARAM_LONG();
-	r = BREG(DSTREG) - t;
-	SET_NZCV_SUB(BREG(DSTREG),t,r);
-}
+static void cmpi_l_a(void) { CMPI_L(A); }
+static void cmpi_l_b(void) { CMPI_L(B); }
+
 static void dint(void)
 {
 	IE_FLAG = 0;
 }
-static void divs_a(void)
-{
-	if (!(DSTREG & 0x01))
-	{
-		if (errorlog) fprintf(errorlog,"64-bit signed divides are not implemented!\n");
-        unimpl();
-#ifdef MAME_DEBUG
-		debug_key_pressed=1;
-#endif
-	}
-	else
-	{
-		if (!AREG(SRCREG))
-		{
-			V_FLAG = NOTZ_FLAG = 1;
-			N_FLAG = 0;
-		}
-		else
-		{
-			AREG(DSTREG) /= AREG(SRCREG);
-			if (AREG(DSTREG) == 0x80000000) // Can this happen in C?
-			{
-				N_FLAG = NOTZ_FLAG = 1;
-				V_FLAG = 0;
-			}
-			else
-			{
-				SET_NZ(AREG(DSTREG));
-			}
-			ASP_TO_BSP;
-		}
-	}
+
+#define DIVS(R)			       		       			    	\
+{															\
+	if (!(DSTREG & 0x01))									\
+	{														\
+		if (errorlog) fprintf(errorlog,"64-bit signed divides are not implemented!\n");	\
+        unimpl();											\
+	}														\
+	else													\
+	{														\
+		if (!R##REG(SRCREG))								\
+		{													\
+			V_FLAG = NOTZ_FLAG = 1;							\
+			N_FLAG = 0;										\
+		}													\
+		else												\
+		{													\
+			R##REG(DSTREG) /= R##REG(SRCREG);				\
+			if (R##REG(DSTREG) == 0x80000000) /* Can this happen in C? */ \
+			{												\
+				N_FLAG = NOTZ_FLAG = 1;						\
+				V_FLAG = 0;									\
+			}												\
+			else											\
+			{												\
+				SET_NZ(R##REG(DSTREG));						\
+			}												\
+			COPY_##R##SP;									\
+		}													\
+	}														\
 }
-static void divs_b(void)
-{
-	if (!(DSTREG & 0x01))
-	{
-		if (errorlog) fprintf(errorlog,"64-bit signed divides are not implemented!\n");
-        unimpl();
-#ifdef MAME_DEBUG
-		debug_key_pressed=1;
-#endif
-	}
-	else
-	{
-		if (!BREG(SRCREG))
-		{
-			V_FLAG = NOTZ_FLAG = 1;
-			N_FLAG = 0;
-		}
-		else
-		{
-			BREG(DSTREG) /= BREG(SRCREG);
-			if (BREG(DSTREG) == 0x80000000) // Can this happen in C?
-			{
-				N_FLAG = NOTZ_FLAG = 1;
-				V_FLAG = 0;
-			}
-			else
-			{
-				SET_NZ(BREG(DSTREG));
-			}
-			BSP_TO_ASP;
-		}
-	}
-}
+static void divs_a(void) { DIVS(A); }
+static void divs_b(void) { DIVS(B); }
+
 #define TO32  (4294967296.0)
-static void divu_a(void)
-{
-	if (!(DSTREG & 0x01))
-	{
-		if (!AREG(SRCREG))
-		{
-			V_FLAG = NOTZ_FLAG = 1;			
-		}
-		else
-		{
-			double dividend = (double)((unsigned int) AREG(DSTREG+1) + ((unsigned int) AREG(DSTREG))*TO32);
-			double quotient = dividend / AREG(SRCREG);
-			if (quotient >= TO32)
-			{
-				V_FLAG = NOTZ_FLAG = 1;
-			}
-			else
-			{
-				AREG(DSTREG)   = (unsigned int)quotient;
-				AREG(DSTREG+1) = (unsigned int)(dividend - (double)AREG(SRCREG) * AREG(DSTREG));
-				SET_Z(AREG(DSTREG));
-				ASP_TO_BSP;
-			}
-		}
-	}
-	else
-	{
-		if (!AREG(SRCREG))
-		{
-			V_FLAG = NOTZ_FLAG = 1;
-		}
-		else
-		{
-			AREG(DSTREG) = (unsigned int)AREG(DSTREG) / (unsigned int)AREG(SRCREG);
-			SET_Z(AREG(DSTREG));
-			ASP_TO_BSP;
-		}
-	}
+
+#define DIVU(R)			       		       			    						\
+{										  										\
+	if (!(DSTREG & 0x01))														\
+	{																			\
+		if (!R##REG(SRCREG))													\
+		{																		\
+			V_FLAG = NOTZ_FLAG = 1;												\
+		}																		\
+		else																	\
+		{																		\
+			double dividend = (double)((unsigned int) R##REG(DSTREG+1) +		\
+							          ((unsigned int) R##REG(DSTREG))*TO32);	\
+			double quotient = dividend / R##REG(SRCREG);						\
+			if (quotient >= TO32)												\
+			{																	\
+				V_FLAG = NOTZ_FLAG = 1;											\
+			}																	\
+			else																\
+			{																	\
+				R##REG(DSTREG)   = (unsigned int)quotient;						\
+				R##REG(DSTREG+1) = (unsigned int)(dividend - (double)R##REG(SRCREG) * R##REG(DSTREG));	\
+				SET_Z(R##REG(DSTREG));											\
+				COPY_##R##SP;													\
+			}																	\
+		}																		\
+	}																			\
+	else																		\
+	{																			\
+		if (!R##REG(SRCREG))													\
+		{																		\
+			V_FLAG = NOTZ_FLAG = 1;												\
+		}																		\
+		else																	\
+		{																		\
+			R##REG(DSTREG) = (unsigned int)R##REG(DSTREG) / (unsigned int)R##REG(SRCREG);  \
+			SET_Z(R##REG(DSTREG));												\
+			COPY_##R##SP;														\
+		}																		\
+	}																			\
 }
-static void divu_b(void)
-{
-	if (!(DSTREG & 0x01))
-	{
-		if (!BREG(SRCREG))
-		{
-			V_FLAG = NOTZ_FLAG = 1;
-		}
-		else
-		{
-			double dividend = (double)((unsigned int) BREG(DSTREG+1) + ((unsigned int) BREG(DSTREG))*TO32);
-			double quotient = dividend / BREG(SRCREG);
-			if (quotient >= TO32)
-			{
-				V_FLAG = NOTZ_FLAG = 1;
-			}
-			else
-			{
-				BREG(DSTREG)   = (unsigned int)quotient;
-				BREG(DSTREG+1) = (unsigned int)(dividend - (double)BREG(SRCREG) * BREG(DSTREG));
-				SET_Z(BREG(DSTREG));
-				BSP_TO_ASP;
-			}
-		}
-	}
-	else
-	{
-		if (!BREG(SRCREG))
-		{
-			V_FLAG = NOTZ_FLAG = 1;
-		}
-		else
-		{
-			BREG(DSTREG) = (unsigned int)BREG(DSTREG) / (unsigned int)BREG(SRCREG);
-			SET_Z(BREG(DSTREG));
-			BSP_TO_ASP;
-		}
-	}
-}
+static void divu_a(void) { DIVU(A); }
+static void divu_b(void) { DIVU(B); }
+
 static void eint(void)
 {
 	IE_FLAG = 1;
 }
-static void exgf0_a(void)
-{
-	int temp = (FE0_FLAG ? 0x20 : 0) | FW(0);
-	FE0_FLAG = (AREG(DSTREG)&0x20);
-	FW(0) = (AREG(DSTREG)&0x1f);
-	SET_FW();
-	AREG(DSTREG) = temp;
-	ASP_TO_BSP;
-}
-static void exgf0_b(void)
-{
-	int temp = (FE0_FLAG ? 0x20 : 0) | FW(0);
-	FE0_FLAG = (BREG(DSTREG)&0x20);
-	FW(0) = (BREG(DSTREG)&0x1f);
-	SET_FW();
-	BREG(DSTREG) = temp;
-	BSP_TO_ASP;
-}
-static void exgf1_a(void)
-{
-	int temp = (FE1_FLAG ? 0x20 : 0) | FW(1);
-	FE1_FLAG = (AREG(DSTREG)&0x20);
-	FW(1) = (AREG(DSTREG)&0x1f);
-	SET_FW();
-	AREG(DSTREG) = temp;
-	ASP_TO_BSP;
-}
-static void exgf1_b(void)
-{
-	int temp = (FE1_FLAG ? 0x20 : 0) | FW(1);
-	FE1_FLAG = (BREG(DSTREG)&0x20);
-	FW(1) = (BREG(DSTREG)&0x1f);
-	SET_FW();
-	BREG(DSTREG) = temp;
-	BSP_TO_ASP;
-}
-static void lmo_a(void)
-{
-	int r,i;
-	r = AREG(SRCREG);
-	SET_Z(r);
-	if (r)
-	{
-		for	(i = 0; i < 32; i++)
-		{
-			if (r & 0x80000000)
-			{
-				AREG(DSTREG) = i;
-				break;
-			}
 
-			r <<= 1;
-		}
-	}
-	else
-	{
-		AREG(DSTREG) = 0;
-	}
-	ASP_TO_BSP;
+#define EXGF(F,R)			       		       			    	\
+{																\
+	int temp = (FE##F##_FLAG ? 0x20 : 0) | FW(F);				\
+	FE##F##_FLAG = (R##REG(DSTREG)&0x20);						\
+	FW(F) = (R##REG(DSTREG)&0x1f);								\
+	SET_FW();													\
+	R##REG(DSTREG) = temp;										\
+	COPY_##R##SP;												\
 }
-static void lmo_b(void)
-{
-	int r,i;
-	r = BREG(SRCREG);
-	SET_Z(r);
-	if (r)
-	{
-		for	(i = 0; i < 32; i++)
-		{
-			if (r & 0x80000000)
-			{
-				BREG(DSTREG) = i;
-				break;
-			}
+static void exgf0_a(void) { EXGF(0,A); }
+static void exgf0_b(void) { EXGF(0,B); }
+static void exgf1_a(void) { EXGF(1,A); }
+static void exgf1_b(void) { EXGF(1,B); }
 
-			r <<= 1;
-		}
-	}
-	else
-	{
-		BREG(DSTREG) = 0;
-	}
-	BSP_TO_ASP;
+#define LMO(R)			       		       			    		\
+{																\
+	int r,i;													\
+	r = R##REG(SRCREG);											\
+	SET_Z(r);													\
+	if (r)														\
+	{															\
+		for	(i = 0; i < 32; i++)								\
+		{														\
+			if (r & 0x80000000)									\
+			{													\
+				R##REG(DSTREG) = i;								\
+				break;											\
+			}													\
+			r <<= 1;											\
+		}														\
+	}															\
+	else														\
+	{															\
+		R##REG(DSTREG) = 0;										\
+	}															\
+	COPY_##R##SP;												\
 }
-static void mmfm_a(void)
-{
-	int i;
-	unsigned int l = (unsigned int) PARAM_WORD;
-  	for (i = 15; i >= 0 ; i--)
-	{
-		if (l & 0x8000)
-		{
-			AREG(i) = RLONG(AREG(DSTREG));
-			AREG(DSTREG)+=0x20;
-		}
-		l <<= 1;
-	}
-	ASP_TO_BSP;
-}
-static void mmfm_b(void)
-{
-	int i;
-	unsigned int l = (unsigned int) PARAM_WORD;
-  	for (i = 15; i >= 0 ; i--)
-	{
-		if (l & 0x8000)
-		{
-			BREG(i) = RLONG(BREG(DSTREG));
-			BREG(DSTREG)+=0x20;
-		}
-		l <<= 1;
-	}
-	BSP_TO_ASP;
-}
-static void mmtm_a(void)
-{
-	int i;
-	unsigned int l = (unsigned int) PARAM_WORD;
-	int bitaddr = AREG(DSTREG);
-	SET_N(l^0x80000000);
-  	for (i = 0; i  < 16; i++)
-	{
-		if (l & 0x8000)
-		{
-			bitaddr-=0x20;
-			WLONG(bitaddr,AREG(i));
-			AREG(DSTREG)=bitaddr;
-		}
-		l <<= 1;
-	}
-	ASP_TO_BSP;
-}
-static void mmtm_b(void)
-{
-	int i;
-	unsigned int l = (unsigned int) PARAM_WORD;
-	int bitaddr = BREG(DSTREG);
-	SET_N(l^0x80000000);
-  	for (i = 0; i  < 16; i++)
-	{
-		if (l & 0x8000)
-		{
-			bitaddr-=0x20;
-			WLONG(bitaddr,BREG(i));
-			BREG(DSTREG)=bitaddr;
-		}
-		l <<= 1;
-	}
-	BSP_TO_ASP;
-}
-static void mods_a(void)
-{
-	if (AREG(SRCREG) != 0)
-	{
-		CLR_V;
-		AREG(DSTREG) = AREG(DSTREG) % AREG(SRCREG);
-		SET_Z(AREG(DSTREG));
-		ASP_TO_BSP;
-	}
-	else
-	{
-		V_FLAG = 1;
-	}
-}
-static void mods_b(void)
-{
-	if (BREG(SRCREG) != 0)
-	{
-		CLR_V;
-		BREG(DSTREG) = BREG(DSTREG) % BREG(SRCREG);
-		SET_Z(BREG(DSTREG));
-		BSP_TO_ASP;
-	}
-	else
-	{
-		V_FLAG = 1;
-	}
-}
-static void modu_a(void)
-{
-	if (AREG(SRCREG) != 0)
-	{
-		CLR_V;
-		AREG(DSTREG) = (unsigned int)AREG(DSTREG) % (unsigned int)AREG(SRCREG);
-		SET_Z(AREG(DSTREG));
-		ASP_TO_BSP;
-	}
-	else
-	{
-		V_FLAG = 1;
-	}
-}
-static void modu_b(void)
-{
-	if (BREG(SRCREG) != 0)
-	{
-		CLR_V;
-		BREG(DSTREG) = (unsigned int)BREG(DSTREG) % (unsigned int)BREG(SRCREG);
-		SET_Z(BREG(DSTREG));
-		BSP_TO_ASP;
-	}
-	else
-	{
-		V_FLAG = 1;
-	}
-}
-static void mpys_a(void)
-{
-	int m1;
+static void lmo_a(void) { LMO(A); }
+static void lmo_b(void) { LMO(B); }
 
-	m1 = AREG(SRCREG);
-	EXTEND(m1, FW(1));
+#define MMFM(R)			       		       			    		\
+{																\
+	int i;														\
+	unsigned int l = (unsigned int) PARAM_WORD;					\
+  	for (i = 15; i >= 0 ; i--)									\
+	{															\
+		if (l & 0x8000)											\
+		{														\
+			R##REG(i) = RLONG(R##REG(DSTREG));					\
+			R##REG(DSTREG)+=0x20;								\
+		}														\
+		l <<= 1;												\
+	}															\
+	COPY_##R##SP;												\
+}
+static void mmfm_a(void) { MMFM(A); }
+static void mmfm_b(void) { MMFM(B); }
 
-	if (!(DSTREG & 0x01))
-	{
-		double factor1 = (double)m1;
-		double factor2 = (double)AREG(DSTREG);
-		double product = factor1 * factor2;
-		AREG(DSTREG) = (int)(product/TO32);
-		AREG(DSTREG+1) = (int)product;
-		SET_NZ(AREG(DSTREG)|AREG(DSTREG+1)); /* FIXME this is not right */
-		ASP_TO_BSP;
-	}
-	else
-	{
-		AREG(DSTREG) *= m1;
-		SET_NZ(AREG(DSTREG));
-		ASP_TO_BSP;
-	}
+#define MMTM(R)			       		       			    		\
+{			  													\
+	int i;														\
+	unsigned int l = (unsigned int) PARAM_WORD;					\
+	int bitaddr = R##REG(DSTREG);								\
+	SET_N(bitaddr^0x80000000);									\
+  	for (i = 0; i  < 16; i++)									\
+	{															\
+		if (l & 0x8000)											\
+		{														\
+			bitaddr-=0x20;										\
+			WLONG(bitaddr,R##REG(i));							\
+			R##REG(DSTREG)=bitaddr;								\
+		}														\
+		l <<= 1;												\
+	}															\
+	COPY_##R##SP;												\
 }
-static void mpys_b(void)
-{
-	int m1;
+static void mmtm_a(void) { MMTM(A); }
+static void mmtm_b(void) { MMTM(B); }
 
-	m1 = BREG(SRCREG);
-	EXTEND(m1, FW(1));
+#define MODS(R)			       		       			    		\
+{				  												\
+	if (R##REG(SRCREG) != 0)									\
+	{															\
+		CLR_V;													\
+		R##REG(DSTREG) = R##REG(DSTREG) % R##REG(SRCREG);		\
+		SET_Z(R##REG(DSTREG));									\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		V_FLAG = 1;												\
+	}															\
+}
+static void mods_a(void) { MODS(A); }
+static void mods_b(void) { MODS(B); }
 
-	if (!(DSTREG & 0x01))
-	{
-		double factor1 = (double)m1;
-		double factor2 = (double)BREG(DSTREG);
-		double product = factor1 * factor2;
-		BREG(DSTREG) = (int)(product/TO32);
-		BREG(DSTREG+1) = (int)product;
-		SET_NZ(BREG(DSTREG)|BREG(DSTREG+1)); /* FIXME this is not right */
-		BSP_TO_ASP;
-	}
-	else
-	{
-		BREG(DSTREG) *= m1;
-		SET_NZ(BREG(DSTREG));
-		BSP_TO_ASP;
-	}
+#define MODU(R)			       		       			    		\
+{				  												\
+	if (R##REG(SRCREG) != 0)									\
+	{															\
+		CLR_V;													\
+		R##REG(DSTREG) = (unsigned int)R##REG(DSTREG) % (unsigned int)R##REG(SRCREG);	\
+		SET_Z(R##REG(DSTREG));									\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		V_FLAG = 1;												\
+	}															\
 }
-static void mpyu_a(void)
-{
-	unsigned int m1;
+static void modu_a(void) { MODU(A); }
+static void modu_b(void) { MODU(B); }
 
-	m1 = AREG(SRCREG);
-	ZEXTEND(m1, FW(1));
+#define MPYS(R)			       		       			    		\
+{																\
+	int m1;														\
+																\
+	m1 = R##REG(SRCREG);										\
+	EXTEND(m1, FW(1));											\
+																\
+	if (!(DSTREG & 0x01))										\
+	{															\
+		double factor1 = (double)m1;							\
+		double factor2 = (double)R##REG(DSTREG);				\
+		double product = factor1 * factor2;						\
+		R##REG(DSTREG) = (int)(product/TO32);					\
+		R##REG(DSTREG+1) = (int)product;						\
+		SET_Z(R##REG(DSTREG)|R##REG(DSTREG+1));					\
+		SET_N(R##REG(DSTREG));									\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		R##REG(DSTREG) *= m1;									\
+		SET_NZ(R##REG(DSTREG));									\
+		COPY_##R##SP;											\
+	}															\
+}
+static void mpys_a(void) { MPYS(A); }
+static void mpys_b(void) { MPYS(B); }
 
-	if (!(DSTREG & 0x01))
-	{
-		double factor1 = (double)m1;
-		double factor2 = (double)AREG(DSTREG);
-		double product = factor1 * factor2;
-		AREG(DSTREG) = (unsigned int)(product/TO32);
-		AREG(DSTREG+1) = (unsigned int)product;
-		SET_Z(AREG(DSTREG)|AREG(DSTREG+1));
-		ASP_TO_BSP;
-	}
-	else
-	{
-		AREG(DSTREG) = (unsigned int)AREG(DSTREG) * m1;
-		SET_Z(AREG(DSTREG));
-		ASP_TO_BSP;
-	}
+#define MPYU(R)			       		       			    		\
+{				  												\
+	unsigned int m1;											\
+																\
+	m1 = R##REG(SRCREG);										\
+	ZEXTEND(m1, FW(1));											\
+																\
+	if (!(DSTREG & 0x01))										\
+	{															\
+		double factor1 = (double)m1;							\
+		double factor2 = (double)(unsigned int)R##REG(DSTREG);	\
+		double product = factor1 * factor2;						\
+		R##REG(DSTREG) = (unsigned int)(product/TO32);			\
+		R##REG(DSTREG+1) = (unsigned int)product;				\
+		SET_Z(R##REG(DSTREG)|R##REG(DSTREG+1));					\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		R##REG(DSTREG) = (unsigned int)R##REG(DSTREG) * m1;		\
+		SET_Z(R##REG(DSTREG));									\
+		COPY_##R##SP;											\
+	}															\
 }
-static void mpyu_b(void)
-{
-	unsigned int m1;
+static void mpyu_a(void) { MPYU(A); }
+static void mpyu_b(void) { MPYU(B); }
 
-	m1 = BREG(SRCREG);
-	ZEXTEND(m1, FW(1));
+#define NEG(R)			       		       			    		\
+{			  													\
+	int r;														\
+	r = 0 - R##REG(DSTREG);										\
+	SET_NZCV_SUB(0,R##REG(DSTREG),r);							\
+	R##REG(DSTREG) = r;											\
+	COPY_##R##SP;												\
+}
+static void neg_a(void) { NEG(A); }
+static void neg_b(void) { NEG(B); }
 
-	if (!(DSTREG & 0x01))
-	{
-		double factor1 = (double)m1;
-		double factor2 = (double)BREG(DSTREG);
-		double product = factor1 * factor2;
-		BREG(DSTREG) = (unsigned int)(product/TO32);
-		BREG(DSTREG+1) = (unsigned int)product;
-		SET_Z(BREG(DSTREG)|BREG(DSTREG+1));
-		BSP_TO_ASP;
-	}
-	else
-	{
-		BREG(DSTREG) = (unsigned int)BREG(DSTREG) * m1;
-		SET_Z(BREG(DSTREG));
-		BSP_TO_ASP;
-	}
+#define NEGB(R)			       		       			    		\
+{			  													\
+	int r,t;													\
+	t = R##REG(DSTREG) + (C_FLAG?1:0);							\
+	r = 0 - t;													\
+	SET_NZCV_SUB(0,t,r);										\
+	R##REG(DSTREG) = r;											\
+	COPY_##R##SP;												\
 }
-static void neg_a(void)
-{
-	int r;
-	r = 0 - AREG(DSTREG);
-	SET_NZV_SUB(0,AREG(DSTREG),r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
-}
-static void neg_b(void)
-{
-	int r;
-	r = 0 - BREG(DSTREG);
-	SET_NZV_SUB(0,BREG(DSTREG),r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
-static void negb_a(void)
-{
-	int r,t;
-	t = AREG(DSTREG) + (C_FLAG?1:0);
-	r = 0 - t;
-	SET_NZV_SUB(0,t,r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
-}
-static void negb_b(void)
-{
-	int r,t;
-	t = BREG(DSTREG) + (C_FLAG?1:0);
-	r = 0 - t;
-	SET_NZV_SUB(0,t,r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
+static void negb_a(void) { NEGB(A); }
+static void negb_b(void) { NEGB(B); }
+
 static void nop(void)
 {
 }
-static void not_a(void)
-{
-	AREG(DSTREG) ^= 0xffffffff;
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
+
+#define NOT(R)			       		       			    		\
+{								 								\
+	R##REG(DSTREG) ^= 0xffffffff;								\
+	SET_Z(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void not_b(void)
-{
-	BREG(DSTREG) ^= 0xffffffff;
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
+static void not_a(void) { NOT(A); }
+static void not_b(void) { NOT(B); }
+
+#define OR(R)			       		       			    		\
+{			  													\
+	R##REG(DSTREG) |= R##REG(SRCREG);							\
+	SET_Z(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void or_a(void)
-{
-	AREG(DSTREG) |= AREG(SRCREG);
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
+static void or_a(void) { OR(A); }
+static void or_b(void) { OR(B); }
+
+#define ORI(R)			       		       			    		\
+{			  													\
+	R##REG(DSTREG) |= PARAM_LONG();								\
+	SET_Z(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void or_b(void)
-{
-	BREG(DSTREG) |= BREG(SRCREG);
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
+static void ori_a(void) { ORI(A); }
+static void ori_b(void) { ORI(B); }
+
+#define RL(R,K)			       		       			    		\
+{			 													\
+	int k = K;													\
+	if (k)														\
+	{															\
+		int b = ((unsigned int)R##REG(DSTREG))>>(32-k);			\
+		C_FLAG = (R##REG(DSTREG)&(1<<(32-k)));					\
+		R##REG(DSTREG)<<=k;										\
+		R##REG(DSTREG)|=b;										\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		C_FLAG = 0;												\
+	}															\
+	SET_Z(R##REG(DSTREG));										\
 }
-static void ori_a(void)
-{
-	AREG(DSTREG) |= PARAM_LONG();
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void ori_b(void)
-{
-	BREG(DSTREG) |= PARAM_LONG();
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void rl_k_a(void)
-{
-	int k = PARAM_K;
-	if (k)
-	{
-		int b = ((unsigned int)AREG(DSTREG))>>(32-k);
-		C_FLAG = (AREG(DSTREG)&(1<<(32-k)));
-		AREG(DSTREG)<<=k;
-		AREG(DSTREG)|=b;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(AREG(DSTREG));
-}
-static void rl_r_a(void)
-{
-	int k = AREG(SRCREG)&0x1f;
-	if (k)
-	{
-		int b = ((unsigned int)AREG(DSTREG))>>(32-k);
-		C_FLAG = (AREG(DSTREG)&(1<<(32-k)));
-		AREG(DSTREG)<<=k;
-		AREG(DSTREG)|=b;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(AREG(DSTREG));
-}
-static void rl_k_b(void)
-{
-	int k = PARAM_K;
-	if (k)
-	{
-		int b = ((unsigned int)BREG(DSTREG))>>(32-k);
-		C_FLAG = (BREG(DSTREG)&(1<<(32-k)));
-		BREG(DSTREG)<<=k;
-		BREG(DSTREG)|=b;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(BREG(DSTREG));
-}
-static void rl_r_b(void)
-{
-	int k = BREG(SRCREG)&0x1f;
-	if (k)
-	{
-		int b = ((unsigned int)BREG(DSTREG))>>(32-k);
-		C_FLAG = (BREG(DSTREG)&(1<<(32-k)));
-		BREG(DSTREG)<<=k;
-		BREG(DSTREG)|=b;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(BREG(DSTREG));
-}
+static void rl_k_a(void) { RL(A,PARAM_K); }
+static void rl_k_b(void) { RL(B,PARAM_K); }
+static void rl_r_a(void) { RL(A,AREG(SRCREG)&0x1f); }
+static void rl_r_b(void) { RL(B,BREG(SRCREG)&0x1f); }
+
 static void setc(void)
 {
 	C_FLAG = 1;
 }
-static void setf0(void)
-{
-	FE0_FLAG = state.op & 0x20;
-	FW(0) = state.op & 0x1f;
-	SET_FW();
+
+#define SETF(F)													\
+{																\
+	FE##F##_FLAG = state.op & 0x20;								\
+	FW(F) = state.op & 0x1f;									\
+	SET_FW();													\
 }
-static void setf1(void)
-{
-	FE1_FLAG = state.op & 0x20;
-	FW(1) = state.op & 0x1f;
-	SET_FW();
+static void setf0(void) { SETF(0); }
+static void setf1(void) { SETF(1); }
+
+#define SEXT(F,R)												\
+{							   									\
+	EXTEND(R##REG(DSTREG),FW(F));								\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void sext0_a(void)
-{
-	EXTEND(AREG(DSTREG),FW(0));
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
+static void sext0_a(void) { SEXT(0,A); }
+static void sext0_b(void) { SEXT(0,B); }
+static void sext1_a(void) { SEXT(1,A); }
+static void sext1_b(void) { SEXT(1,B); }
+
+#define SLA(R,K)												\
+{				 												\
+	int k = K;													\
+	if (k)														\
+	{															\
+		int res = 0;											\
+		int mask = (0xffffffff<<(31-k))&0x7fffffff;				\
+		if (SIGN(R##REG(DSTREG))) res = mask;					\
+		V_FLAG = ((R##REG(DSTREG) & mask) != res);				\
+		C_FLAG =  (R##REG(DSTREG)&(1<<(32-k)));					\
+		R##REG(DSTREG)<<=k;										\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		C_FLAG = V_FLAG = 0;									\
+	}															\
+	SET_NZ(R##REG(DSTREG));										\
 }
-static void sext0_b(void)
-{
-	EXTEND(BREG(DSTREG),FW(0));
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
+static void sla_k_a(void) { SLA(A,PARAM_K); }
+static void sla_k_b(void) { SLA(B,PARAM_K); }
+static void sla_r_a(void) { SLA(A,AREG(SRCREG)&0x1f); }
+static void sla_r_b(void) { SLA(B,BREG(SRCREG)&0x1f); }
+
+#define SLL(R,K)												\
+{			 													\
+	int k = K;													\
+	if (k)														\
+	{															\
+		C_FLAG = (R##REG(DSTREG)&(1<<(32-k)));					\
+		R##REG(DSTREG)<<=k;										\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		C_FLAG = 0;												\
+	}															\
+	SET_Z(R##REG(DSTREG));										\
 }
-static void sext1_a(void)
-{
-	EXTEND(AREG(DSTREG),FW(1));
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
+static void sll_k_a(void) { SLL(A,PARAM_K); }
+static void sll_k_b(void) { SLL(B,PARAM_K); }
+static void sll_r_a(void) { SLL(A,AREG(SRCREG)&0x1f); }
+static void sll_r_b(void) { SLL(B,BREG(SRCREG)&0x1f); }
+
+#define SRA(R,K)												\
+{			  													\
+	int k = (32-(K)) & 0x1f;									\
+	if (k)														\
+	{															\
+		C_FLAG = (R##REG(DSTREG)&(1<<(k-1)));					\
+		R##REG(DSTREG) >>= k;									\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		C_FLAG = 0;												\
+	}															\
+	SET_NZ(R##REG(DSTREG));										\
 }
-static void sext1_b(void)
-{
-	EXTEND(BREG(DSTREG),FW(1));
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
+static void sra_k_a(void) { SRA(A,PARAM_K); }
+static void sra_k_b(void) { SRA(B,PARAM_K); }
+static void sra_r_a(void) { SRA(A,AREG(SRCREG)); }
+static void sra_r_b(void) { SRA(B,BREG(SRCREG)); }
+
+#define SRL(R,K)												\
+{																\
+	int k = (32-(K)) & 0x1f;									\
+	if (k)														\
+	{															\
+		C_FLAG = (R##REG(DSTREG)&(1<<(k-1)));					\
+		R##REG(DSTREG) = ((unsigned int)R##REG(DSTREG)) >> k;	\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		C_FLAG = 0;												\
+	}															\
+	SET_Z(R##REG(DSTREG));										\
 }
-static void sla_k_a(void)
-{
-	int k = PARAM_K;
-	if (k)
-	{
-		int res = 0;
-		int mask = (0xffffffff<<(31-k))&0x7fffffff;
-		if (SIGN(AREG(DSTREG))) res = mask;
-		V_FLAG = ((AREG(DSTREG) & mask) != res);
-		C_FLAG =  (AREG(DSTREG)&(1<<(32-k)));
-		AREG(DSTREG)<<=k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = V_FLAG = 0;
-	}
-	SET_NZ(AREG(DSTREG));
+static void srl_k_a(void) { SRL(A,PARAM_K); }
+static void srl_k_b(void) { SRL(B,PARAM_K); }
+static void srl_r_a(void) { SRL(A,AREG(SRCREG)); }
+static void srl_r_b(void) { SRL(B,BREG(SRCREG)); }
+
+#define SUB(R)			       		       			    		\
+{			  													\
+	int r;														\
+	r = R##REG(DSTREG) - R##REG(SRCREG);						\
+	SET_NZCV_SUB(R##REG(DSTREG),R##REG(SRCREG),r);				\
+	R##REG(DSTREG) = r;											\
+	COPY_##R##SP;												\
 }
-static void sla_k_b(void)
-{
-	int k = PARAM_K;
-	if (k)
-	{
-		int res = 0;
-		int mask = (0xffffffff<<(31-k))&0x7fffffff;
-		if (SIGN(BREG(DSTREG))) res = mask;
-		V_FLAG = ((BREG(DSTREG) & mask) != res);
-		C_FLAG =  (BREG(DSTREG)&(1<<(32-k)));
-		BREG(DSTREG)<<=k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = V_FLAG = 0;
-	}
-	SET_NZ(BREG(DSTREG));
+static void sub_a(void) { SUB(A); }
+static void sub_b(void) { SUB(B); }
+
+#define SUBB(R)			       		       			    		\
+{			  													\
+	int r,t;													\
+	t = R##REG(SRCREG) + (C_FLAG?1:0);							\
+	r = R##REG(DSTREG) - t;										\
+	SET_NZCV_SUB(R##REG(DSTREG),t,r);							\
+	R##REG(DSTREG) = r;											\
+	COPY_##R##SP;												\
 }
-static void sla_r_a(void)
-{
-	int k = AREG(SRCREG)&0x1f;
-	if (k)
-	{
-		int res = 0;
-		int mask = (0xffffffff<<(31-k))&0x7fffffff;
-		if (SIGN(AREG(DSTREG))) res = mask;
-		V_FLAG = ((AREG(DSTREG) & mask) != res);
-		C_FLAG =  (AREG(DSTREG)&(1<<(32-k)));
-		AREG(DSTREG)<<=k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = V_FLAG = 0;
-	}
-	SET_NZ(AREG(DSTREG));
+static void subb_a(void) { SUBB(A); }
+static void subb_b(void) { SUBB(B); }
+
+#define SUBI_W(R)			       		       			    	\
+{			  													\
+	int t,r;													\
+	t = ~PARAM_WORD;											\
+	EXTEND_W(t);												\
+	r = R##REG(DSTREG) - t;										\
+	SET_NZCV_SUB(R##REG(DSTREG),t,r);							\
+	R##REG(DSTREG) = r;											\
+	COPY_##R##SP;												\
 }
-static void sla_r_b(void)
-{
-	int k = BREG(SRCREG)&0x1f;
-	if (k)
-	{
-		int res = 0;
-		int mask = (0xffffffff<<(31-k))&0x7fffffff;
-		if (SIGN(BREG(DSTREG))) res = mask;
-		V_FLAG = ((BREG(DSTREG) & mask) != res);
-		C_FLAG =  (BREG(DSTREG)&(1<<(32-k)));
-		BREG(DSTREG)<<=k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = V_FLAG = 0;
-	}
-	SET_NZ(BREG(DSTREG));
+static void subi_w_a(void) { SUBI_W(A); }
+static void subi_w_b(void) { SUBI_W(B); }
+
+#define SUBI_L(R)			       		       			    	\
+{			  													\
+	int t,r;													\
+	t = ~PARAM_LONG();											\
+	r = R##REG(DSTREG) - t;										\
+	SET_NZCV_SUB(R##REG(DSTREG),t,r);							\
+	R##REG(DSTREG) = r;											\
+	COPY_##R##SP;												\
 }
-static void sll_k_a(void)
-{
-	int k = PARAM_K;
-	if (k)
-	{
-		C_FLAG = (AREG(DSTREG)&(1<<(32-k)));
-		AREG(DSTREG)<<=k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(AREG(DSTREG));
+static void subi_l_a(void) { SUBI_L(A); }
+static void subi_l_b(void) { SUBI_L(B); }
+
+#define SUBK(R)			       		       			    		\
+{			  													\
+	int t,r;													\
+	t = PARAM_K; if (!t) t = 32;								\
+	r = R##REG(DSTREG) - t;										\
+	SET_NZCV_SUB(R##REG(DSTREG),t,r);							\
+	R##REG(DSTREG) = r;											\
+	COPY_##R##SP;												\
 }
-static void sll_k_b(void)
-{
-	int k = PARAM_K;
-	if (k)
-	{
-		C_FLAG = (BREG(DSTREG)&(1<<(32-k)));
-		BREG(DSTREG)<<=k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(BREG(DSTREG));
+static void subk_a(void) { SUBK(A); }
+static void subk_b(void) { SUBK(B); }
+
+#define XOR(R)			       		       			    		\
+{			  													\
+	R##REG(DSTREG) ^= R##REG(SRCREG);							\
+	SET_Z(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void sll_r_a(void)
-{
-	int k = AREG(SRCREG)&0x1f;
-	if (k)
-	{
-		C_FLAG = (AREG(DSTREG)&(1<<(32-k)));
-		AREG(DSTREG)<<=k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(AREG(DSTREG));
+static void xor_a(void) { XOR(A); }
+static void xor_b(void) { XOR(B); }
+
+#define XORI(R)			       		       			    		\
+{			  													\
+	R##REG(DSTREG) ^= PARAM_LONG();								\
+	SET_Z(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void sll_r_b(void)
-{
-	int k = BREG(SRCREG)&0x1f;
-	if (k)
-	{
-		C_FLAG = (BREG(DSTREG)&(1<<(32-k)));
-		BREG(DSTREG)<<=k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(BREG(DSTREG));
+static void xori_a(void) { XORI(A); }
+static void xori_b(void) { XORI(B); }
+
+#define ZEXT(F,R)												\
+{																\
+	ZEXTEND(R##REG(DSTREG),FW(F));								\
+	SET_Z(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void sra_k_a(void)
-{
-	int k = (32-PARAM_K) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (AREG(DSTREG)&(1<<(k-1)));
-		AREG(DSTREG) >>= k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_NZ(AREG(DSTREG));
-}
-static void sra_k_b(void)
-{
-	int k = (32-PARAM_K) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (BREG(DSTREG)&(1<<(k-1)));
-		BREG(DSTREG) >>= k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_NZ(BREG(DSTREG));
-}
-static void sra_r_a(void)
-{
-	int k = (-AREG(SRCREG)) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (AREG(DSTREG)&(1<<(k-1)));
-		AREG(DSTREG) >>= k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_NZ(AREG(DSTREG));
-}
-static void sra_r_b(void)
-{
-	int k = (-BREG(SRCREG)) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (BREG(DSTREG)&(1<<(k-1)));
-		BREG(DSTREG) >>= k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_NZ(BREG(DSTREG));
-}
-static void srl_k_a(void)
-{
-	int k = (32-PARAM_K) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (AREG(DSTREG)&(1<<(k-1)));
-		AREG(DSTREG) = ((unsigned int)AREG(DSTREG)) >> k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(AREG(DSTREG));
-}
-static void srl_k_b(void)
-{
-	int k = (32-PARAM_K) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (BREG(DSTREG)&(1<<(k-1)));
-		BREG(DSTREG) = ((unsigned int)BREG(DSTREG)) >> k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(BREG(DSTREG));
-}
-static void srl_r_a(void)
-{
-	int k = (-AREG(SRCREG)) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (AREG(DSTREG)&(1<<(k-1)));
-		AREG(DSTREG) = ((unsigned int)AREG(DSTREG)) >> k;
-		ASP_TO_BSP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(AREG(DSTREG));
-}
-static void srl_r_b(void)
-{
-	int k = (-BREG(SRCREG)) & 0x1f;
-	if (k)
-	{
-		C_FLAG = (BREG(DSTREG)&(1<<(k-1)));
-		BREG(DSTREG) = ((unsigned int)BREG(DSTREG)) >> k;
-		BSP_TO_ASP;
-	}
-	else
-	{
-		C_FLAG = 0;
-	}
-	SET_Z(BREG(DSTREG));
-}
-static void sub_a(void)
-{
-	int r;
-	r = AREG(DSTREG) - AREG(SRCREG);
-	SET_NZCV_SUB(AREG(DSTREG),AREG(SRCREG),r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
-}
-static void sub_b(void)
-{
-	int r;
-	r = BREG(DSTREG) - BREG(SRCREG);
-	SET_NZCV_SUB(BREG(DSTREG),BREG(SRCREG),r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
-static void subb_a(void)
-{
-	int r,t;
-	t = AREG(SRCREG) + (C_FLAG?1:0);
-	r = AREG(DSTREG) - t;
-	SET_NZCV_SUB(AREG(DSTREG),t,r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
-}
-static void subb_b(void)
-{
-	int r,t;
-	t = BREG(SRCREG) + (C_FLAG?1:0);
-	r = BREG(DSTREG) - t;
-	SET_NZCV_SUB(BREG(DSTREG),t,r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
-static void subi_w_a(void)
-{
-	int t,r;
-	t = ~PARAM_WORD;
-	EXTEND_W(t);
-	r = AREG(DSTREG) - t;
-	SET_NZCV_SUB(AREG(DSTREG),t,r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
-}
-static void subi_w_b(void)
-{
-	int t,r;
-	t = ~PARAM_WORD;
-	EXTEND_W(t);
-	r = BREG(DSTREG) - t;
-	SET_NZCV_SUB(BREG(DSTREG),t,r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
-static void subi_l_a(void)
-{
-	int t,r;
-	t = ~PARAM_LONG();
-	r = AREG(DSTREG) - t;
-	SET_NZCV_SUB(AREG(DSTREG),t,r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
-}
-static void subi_l_b(void)
-{
-	int t,r;
-	t = ~PARAM_LONG();
-	r = BREG(DSTREG) - t;
-	SET_NZCV_SUB(BREG(DSTREG),t,r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
-static void subk_a(void)
-{
-	int t,r;
-	t = PARAM_K; if (!t) t = 32;
-	r = AREG(DSTREG) - t;
-	SET_NZCV_SUB(AREG(DSTREG),t,r);
-	AREG(DSTREG) = r;
-	ASP_TO_BSP;
-}
-static void subk_b(void)
-{
-	int t,r;
-	t = PARAM_K; if (!t) t = 32;
-	r = BREG(DSTREG) - t;
-	SET_NZCV_SUB(BREG(DSTREG),t,r);
-	BREG(DSTREG) = r;
-	BSP_TO_ASP;
-}
-static void xor_a(void)
-{
-	AREG(DSTREG) ^= AREG(SRCREG);
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void xor_b(void)
-{
-	BREG(DSTREG) ^= BREG(SRCREG);
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void xori_a(void)
-{
-	AREG(DSTREG) ^= PARAM_LONG();
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void xori_b(void)
-{
-	BREG(DSTREG) ^= PARAM_LONG();
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void zext0_a(void)
-{
-	ZEXTEND(AREG(DSTREG),FW(0));
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void zext0_b(void)
-{
-	ZEXTEND(BREG(DSTREG),FW(0));
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void zext1_a(void)
-{
-	ZEXTEND(AREG(DSTREG),FW(1));
-	SET_Z(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void zext1_b(void)
-{
-	ZEXTEND(BREG(DSTREG),FW(1));
-	SET_Z(BREG(DSTREG));
-	BSP_TO_ASP;
-}
+static void zext0_a(void) { ZEXT(0,A); }
+static void zext0_b(void) { ZEXT(0,B); }
+static void zext1_a(void) { ZEXT(1,A); }
+static void zext1_b(void) { ZEXT(1,B); }
 
 
 /* Move Instructions */
-static void movi_w_a(void)
-{
-	AREG(DSTREG)=PARAM_WORD;
-	CLR_V;
-	EXTEND_W(AREG(DSTREG));
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
+#define MOVI_W(R)		       		       			    		\
+{			  													\
+	R##REG(DSTREG)=PARAM_WORD;									\
+	CLR_V;														\
+	EXTEND_W(R##REG(DSTREG));									\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void movi_w_b(void)
-{
-	BREG(DSTREG)=PARAM_WORD;
-	CLR_V;
-	EXTEND_W(BREG(DSTREG));
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void movi_l_a(void)
-{
-	AREG(DSTREG)=PARAM_LONG();
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void movi_l_b(void)
-{
-	BREG(DSTREG)=PARAM_LONG();
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void movk_a(void)
-{
-	int k = PARAM_K; if (!k) k = 32;
-	AREG(DSTREG) = k;
-	ASP_TO_BSP;
-}
-static void movk_b(void)
-{
-	int k = PARAM_K; if (!k) k = 32;
-	BREG(DSTREG) = k;
-	BSP_TO_ASP;
-}
-static void movb_rn_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	WBYTE(bitaddr,AREG(SRCREG));
-}
-static void movb_rn_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	WBYTE(bitaddr,BREG(SRCREG));
-}
-static void movb_nr_a(void)
-{
-	AREG(DSTREG) = RBYTE(AREG(SRCREG));
-	CLR_V;
-	EXTEND_B(AREG(DSTREG));
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void movb_nr_b(void)
-{
-	BREG(DSTREG) = RBYTE(BREG(SRCREG));
-	CLR_V;
-	EXTEND_B(BREG(DSTREG));
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void movb_nn_a(void)  /* could be sped by splitting function */
-{
-	int bitaddr=AREG(DSTREG);
-	int data = RBYTE(AREG(SRCREG));
-	WBYTE(bitaddr,data);
-}
-static void movb_nn_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int data = RBYTE(BREG(SRCREG));
-	WBYTE(bitaddr,data);
-}
-static void movb_r_no_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	WBYTE(bitaddr+o,AREG(SRCREG));
-}
-static void movb_r_no_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	WBYTE(bitaddr+o,BREG(SRCREG));
-}
-static void movb_no_r_a(void)  /* could be sped by splitting function */
-{
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	AREG(DSTREG) = RBYTE(AREG(SRCREG)+o);
-	CLR_V;
-	EXTEND_B(AREG(DSTREG));
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void movb_no_r_b(void)
-{
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	BREG(DSTREG) = RBYTE(BREG(SRCREG)+o);
-	CLR_V;
-	EXTEND_B(BREG(DSTREG));
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void movb_no_no_a(void)  /* could be sped by splitting function */
-{
-	int bitaddr,data,o1,o2;
-	o1 = PARAM_WORD;
-	EXTEND_W(o1);
-	data = RBYTE(AREG(SRCREG)+o1);
-	o2 = PARAM_WORD;
-	EXTEND_W(o2);
-	bitaddr=AREG(DSTREG)+o2;
-	WBYTE(bitaddr,data);
-}
-static void movb_no_no_b(void)
-{
-	int bitaddr,data,o1,o2;
-	o1 = PARAM_WORD;
-	EXTEND_W(o1);
-	data = RBYTE(BREG(SRCREG)+o1);
-	o2 = PARAM_WORD;
-	EXTEND_W(o2);
-	bitaddr=BREG(DSTREG)+o2;
-	WBYTE(bitaddr,data);
-}
-static void movb_ra_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	WBYTE(bitaddr,AREG(DSTREG));
-}
+static void movi_w_a(void) { MOVI_W(A); }
+static void movi_w_b(void) { MOVI_W(B); }
 
-static void movb_ra_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	WBYTE(bitaddr,BREG(DSTREG));
+#define MOVI_L(R)		       		       			    		\
+{			  													\
+	R##REG(DSTREG)=PARAM_LONG();								\
+	CLR_V;														\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
 }
-static void movb_ar_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	AREG(DSTREG) = RBYTE(bitaddr);
-	CLR_V;
-	EXTEND_B(AREG(DSTREG));
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
+static void movi_l_a(void) { MOVI_L(A); }
+static void movi_l_b(void) { MOVI_L(B); }
 
-static void movb_ar_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	BREG(DSTREG) = RBYTE(bitaddr);
-	CLR_V;
-	EXTEND_B(BREG(DSTREG));
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
+#define MOVK(R)		       		       			    			\
+{																\
+	int k = PARAM_K; if (!k) k = 32;							\
+	R##REG(DSTREG) = k;											\
+	COPY_##R##SP;												\
 }
+static void movk_a(void) { MOVK(A); }
+static void movk_b(void) { MOVK(B); }
+
+#define MOVB_RN(R)		       		       			    		\
+{																\
+	WBYTE(R##REG(DSTREG),R##REG(SRCREG));						\
+}
+static void movb_rn_a(void) { MOVB_RN(A); }
+static void movb_rn_b(void) { MOVB_RN(B); }
+
+#define MOVB_NR(R)		       		       			    		\
+{			  													\
+	R##REG(DSTREG) = RBYTE(R##REG(SRCREG));						\
+	CLR_V;														\
+	EXTEND_B(R##REG(DSTREG));									\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}
+static void movb_nr_a(void) { MOVB_NR(A); }
+static void movb_nr_b(void) { MOVB_NR(B); }
+
+#define MOVB_NN(R)												\
+{																\
+	WBYTE(R##REG(DSTREG),RBYTE(R##REG(SRCREG)));				\
+}
+static void movb_nn_a(void) { MOVB_NN(A); }
+static void movb_nn_b(void) { MOVB_NN(B); }
+
+#define MOVB_R_NO(R)	       		       			    		\
+{							  									\
+	int o = PARAM_WORD;											\
+	EXTEND_W(o);												\
+	WBYTE(R##REG(DSTREG)+o,R##REG(SRCREG));						\
+}
+static void movb_r_no_a(void) { MOVB_R_NO(A); }
+static void movb_r_no_b(void) { MOVB_R_NO(B); }
+
+#define MOVB_NO_R(R)	       		       			    		\
+{			  													\
+	int o = PARAM_WORD;											\
+	EXTEND_W(o);												\
+	R##REG(DSTREG) = RBYTE(R##REG(SRCREG)+o);					\
+	CLR_V;														\
+	EXTEND_B(R##REG(DSTREG));									\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}
+static void movb_no_r_a(void) { MOVB_NO_R(A); }
+static void movb_no_r_b(void) { MOVB_NO_R(B); }
+
+#define MOVB_NO_NO(R)	       		       			    		\
+{																\
+	int o1,o2;													\
+	o1 = PARAM_WORD;											\
+	EXTEND_W(o1);												\
+	o2 = PARAM_WORD;											\
+	EXTEND_W(o2);												\
+	WBYTE(R##REG(DSTREG)+o2,RBYTE(R##REG(SRCREG)+o1));			\
+}
+static void movb_no_no_a(void) { MOVB_NO_NO(A); }
+static void movb_no_no_b(void) { MOVB_NO_NO(B); }
+
+#define MOVB_RA(R)	       		       			    			\
+{																\
+	WBYTE(PARAM_LONG(),R##REG(DSTREG));							\
+}
+static void movb_ra_a(void) { MOVB_RA(A); }
+static void movb_ra_b(void) { MOVB_RA(B); }
+
+#define MOVB_AR(R)	       		       			    			\
+{			  													\
+	R##REG(DSTREG) = RBYTE(PARAM_LONG());						\
+	CLR_V;														\
+	EXTEND_B(R##REG(DSTREG));									\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}
+static void movb_ar_a(void) { MOVB_AR(A); }
+static void movb_ar_b(void) { MOVB_AR(B); }
+
 static void movb_aa(void)
 {
-	int bitaddr=PARAM_LONG();
-	int bitaddrd=PARAM_LONG();
-	WBYTE(bitaddrd,RBYTE(bitaddr));
-}
-static void move_rr_a(void)  /* could gain speed by splitting */
-{
-	AREG(DSTREG) = AREG(SRCREG);
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move_rr_b(void)
-{
-	BREG(DSTREG) = BREG(SRCREG);
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move_rr_ax(void)
-{
-	BREG(DSTREG) = AREG(SRCREG);
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move_rr_bx(void)
-{
-	AREG(DSTREG) = BREG(SRCREG);
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move0_rn_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	WFIELD0(bitaddr,AREG(SRCREG));
-}
-static void move0_rn_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	WFIELD0(bitaddr,BREG(SRCREG));
-}
-static void move1_rn_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	WFIELD1(bitaddr,AREG(SRCREG));
-}
-static void move1_rn_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	WFIELD1(bitaddr,BREG(SRCREG));
-}
-static void move0_r_dn_a(void)
-{
-	int bitaddr;
-	AREG(DSTREG)-=FW_INC(0);
-	bitaddr=AREG(DSTREG);
-	WFIELD0(bitaddr,AREG(SRCREG));
-	ASP_TO_BSP;
-}
-static void move0_r_dn_b(void)
-{
-	int bitaddr;
-	BREG(DSTREG)-=FW_INC(0);
-	bitaddr=BREG(DSTREG);
-	WFIELD0(bitaddr,BREG(SRCREG));
-	BSP_TO_ASP;
-}
-static void move1_r_dn_a(void)
-{
-	int bitaddr;
-	AREG(DSTREG)-=FW_INC(1);
-	bitaddr=AREG(DSTREG);
-	WFIELD1(bitaddr,AREG(SRCREG));
-	ASP_TO_BSP;
-}
-static void move1_r_dn_b(void)
-{
-	int bitaddr;
-	BREG(DSTREG)-=FW_INC(1);
-	bitaddr=BREG(DSTREG);
-	WFIELD1(bitaddr,BREG(SRCREG));
-	BSP_TO_ASP;
-}
-static void move0_r_ni_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-    WFIELD0(bitaddr,AREG(SRCREG));
-    AREG(DSTREG)+=FW_INC(0);
-	ASP_TO_BSP;
-}
-static void move0_r_ni_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-    WFIELD0(bitaddr,BREG(SRCREG));
-    BREG(DSTREG)+=FW_INC(0);
-	BSP_TO_ASP;
-}
-static void move1_r_ni_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-    WFIELD1(bitaddr,AREG(SRCREG));
-    AREG(DSTREG)+=FW_INC(1);
-	ASP_TO_BSP;
-}
-static void move1_r_ni_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-    WFIELD1(bitaddr,BREG(SRCREG));
-    BREG(DSTREG)+=FW_INC(1);
-	BSP_TO_ASP;
-}
-static void move0_nr_a(void)  /* could be sped by splitting function */
-{
-	AREG(DSTREG) = RFIELD0(AREG(SRCREG));
-	EXTEND_F0(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move0_nr_b(void)
-{
-	BREG(DSTREG) = RFIELD0(BREG(SRCREG));
-	EXTEND_F0(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move1_nr_a(void)
-{
-	AREG(DSTREG) = RFIELD1(AREG(SRCREG));
-	EXTEND_F1(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move1_nr_b(void)
-{
-	BREG(DSTREG) = RFIELD1(BREG(SRCREG));
-	EXTEND_F1(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move0_dn_r_a(void)  /* could be sped by splitting function */
-{
-	AREG(SRCREG)-=FW_INC(0);
-	AREG(DSTREG) = RFIELD0(AREG(SRCREG));
-	EXTEND_F0(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move0_dn_r_b(void)
-{
-	BREG(SRCREG)-=FW_INC(0);
-	BREG(DSTREG) = RFIELD0(BREG(SRCREG));
-	EXTEND_F0(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move1_dn_r_a(void)
-{
-	AREG(SRCREG)-=FW_INC(1);
-	AREG(DSTREG) = RFIELD1(AREG(SRCREG));
-	EXTEND_F1(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move1_dn_r_b(void)
-{
-	BREG(SRCREG)-=FW_INC(1);
-	BREG(DSTREG) = RFIELD1(BREG(SRCREG));
-	EXTEND_F1(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move0_ni_r_a(void)  /* could be sped by splitting function */
-{
-	AREG(DSTREG) = RFIELD0(AREG(SRCREG));
-	AREG(SRCREG)+=FW_INC(0);
-	EXTEND_F0(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move0_ni_r_b(void)
-{
-	BREG(DSTREG) = RFIELD0(BREG(SRCREG));
-	BREG(SRCREG)+=FW_INC(0);
-	EXTEND_F0(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move1_ni_r_a(void)
-{
-	AREG(DSTREG) = RFIELD1(AREG(SRCREG));
-	AREG(SRCREG)+=FW_INC(1);
-	EXTEND_F1(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move1_ni_r_b(void)
-{
-	BREG(DSTREG) = RFIELD1(BREG(SRCREG));
-	BREG(SRCREG)+=FW_INC(1);
-	EXTEND_F1(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move0_nn_a(void)  /* could be sped by splitting function */
-{
-	int bitaddr=AREG(DSTREG);
-	int data = RFIELD0(AREG(SRCREG));
-	WFIELD0(bitaddr,data);
-}
-static void move0_nn_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int data = RFIELD0(BREG(SRCREG));
-	WFIELD0(bitaddr,data);
-}
-static void move1_nn_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	int data = RFIELD1(AREG(SRCREG));
-	WFIELD1(bitaddr,data);
-}
-static void move1_nn_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int data = RFIELD1(BREG(SRCREG));
-	WFIELD1(bitaddr,data);
-}
-static void move0_dn_dn_a(void)  /* could be sped by splitting function */
-{
-	int bitaddr;
-	int data;
-	AREG(SRCREG)-=FW_INC(0);
-	AREG(DSTREG)-=FW_INC(0);
-	bitaddr=AREG(DSTREG);
-	data = RFIELD0(AREG(SRCREG));
-	WFIELD0(bitaddr,data);
-	ASP_TO_BSP;
-}
-static void move0_dn_dn_b(void)
-{
-	int bitaddr;
-	int data;
-	BREG(SRCREG)-=FW_INC(0);
-	BREG(DSTREG)-=FW_INC(0);
-	bitaddr=BREG(DSTREG);
-	data = RFIELD0(BREG(SRCREG));
-	WFIELD0(bitaddr,data);
-	BSP_TO_ASP;
-}
-static void move1_dn_dn_a(void)
-{
-	int bitaddr;
-	int data;
-	AREG(SRCREG)-=FW_INC(1);
-	AREG(DSTREG)-=FW_INC(1);
-	bitaddr=AREG(DSTREG);
-	data = RFIELD1(AREG(SRCREG));
-	WFIELD1(bitaddr,data);
-	ASP_TO_BSP;
-}
-static void move1_dn_dn_b(void)
-{
-	int bitaddr;
-	int data;
-	BREG(SRCREG)-=FW_INC(1);
-	BREG(DSTREG)-=FW_INC(1);
-	bitaddr=BREG(DSTREG);
-	data = RFIELD1(BREG(SRCREG));
-	WFIELD1(bitaddr,data);
-	BSP_TO_ASP;
-}
-static void move0_ni_ni_a(void)  /* could be sped by splitting function */
-{
-	int bitaddr=AREG(DSTREG);
-	int data = RFIELD0(AREG(SRCREG));
-	WFIELD0(bitaddr,data);
-	AREG(SRCREG)+=FW_INC(0);
-	AREG(DSTREG)+=FW_INC(0);
-	ASP_TO_BSP;
-}
-static void move0_ni_ni_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int data = RFIELD0(BREG(SRCREG));
-	WFIELD0(bitaddr,data);
-	BREG(SRCREG)+=FW_INC(0);
-	BREG(DSTREG)+=FW_INC(0);
-	BSP_TO_ASP;
-}
-static void move1_ni_ni_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	int data = RFIELD1(AREG(SRCREG));
-	WFIELD1(bitaddr,data);
-	AREG(SRCREG)+=FW_INC(1);
-	AREG(DSTREG)+=FW_INC(1);
-	ASP_TO_BSP;
-}
-static void move1_ni_ni_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int data = RFIELD1(BREG(SRCREG));
-	WFIELD1(bitaddr,data);
-	BREG(SRCREG)+=FW_INC(1);
-	BREG(DSTREG)+=FW_INC(1);
-	BSP_TO_ASP;
-}
-static void move0_r_no_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	WFIELD0(bitaddr+o,AREG(SRCREG));
-}
-static void move0_r_no_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	WFIELD0(bitaddr+o,BREG(SRCREG));
-}
-static void move1_r_no_a(void)
-{
-	int bitaddr=AREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	WFIELD1(bitaddr+o,AREG(SRCREG));
-}
-static void move1_r_no_b(void)
-{
-	int bitaddr=BREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	WFIELD1(bitaddr+o,BREG(SRCREG));
-}
-static void move0_no_r_a(void)  /* could be sped by splitting function */
-{
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	AREG(DSTREG) = RFIELD0(AREG(SRCREG)+o);
-	EXTEND_F0(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move0_no_r_b(void)
-{
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	BREG(DSTREG) = RFIELD0(BREG(SRCREG)+o);
-	EXTEND_F0(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move1_no_r_a(void)
-{
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	AREG(DSTREG) = RFIELD1(AREG(SRCREG)+o);
-	EXTEND_F1(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move1_no_r_b(void)
-{
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	BREG(DSTREG) = RFIELD1(BREG(SRCREG)+o);
-	EXTEND_F1(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move0_no_ni_a(void)  /* could be sped by splitting function */
-{
-	int data;
-	int bitaddr=AREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	data = RFIELD0(AREG(SRCREG)+o);
-	WFIELD0(bitaddr,data);
-	AREG(DSTREG)+=FW_INC(0);
-	ASP_TO_BSP;
-}
-static void move0_no_ni_b(void)
-{
-	int data;
-	int bitaddr=BREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	data = RFIELD0(BREG(SRCREG)+o);
-	WFIELD0(bitaddr,data);
-	BREG(DSTREG)+=FW_INC(0);
-	BSP_TO_ASP;
-}
-static void move1_no_ni_a(void)
-{
-	int data;
-	int bitaddr=AREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	data = RFIELD1(AREG(SRCREG)+o);
-	WFIELD1(bitaddr,data);
-	AREG(DSTREG)+=FW_INC(1);
-	ASP_TO_BSP;
-}
-static void move1_no_ni_b(void)
-{
-	int data;
-	int bitaddr=BREG(DSTREG);
-	int o = PARAM_WORD;
-	EXTEND_W(o);
-	data = RFIELD1(BREG(SRCREG)+o);
-	WFIELD1(bitaddr,data);
-	BREG(DSTREG)+=FW_INC(1);
-	BSP_TO_ASP;
-}
-static void move0_no_no_a(void)  /* could be sped by splitting function */
-{
-	int data;
-	int bitaddr;
-	int o1 = PARAM_WORD;
-	int o2 = PARAM_WORD;
-	EXTEND_W(o1);
-	EXTEND_W(o2);
-	data = RFIELD0(AREG(SRCREG)+o1);
-	bitaddr=AREG(DSTREG)+o2;
-	WFIELD0(bitaddr,data);
-}
-static void move0_no_no_b(void)
-{
-	int data;
-	int bitaddr;
-	int o1 = PARAM_WORD;
-	int o2 = PARAM_WORD;
-	EXTEND_W(o1);
-	EXTEND_W(o2);
-	data = RFIELD0(BREG(SRCREG)+o1);
-	bitaddr=BREG(DSTREG)+o2;
-	WFIELD0(bitaddr,data);
-}
-static void move1_no_no_a(void)
-{
-	int data;
-	int bitaddr;
-	int o1 = PARAM_WORD;
-	int o2 = PARAM_WORD;
-	EXTEND_W(o1);
-	EXTEND_W(o2);
-	data = RFIELD1(AREG(SRCREG)+o1);
-	bitaddr=AREG(DSTREG)+o2;
-	WFIELD1(bitaddr,data);
-}
-static void move1_no_no_b(void)
-{
-	int data;
-	int bitaddr;
-	int o1 = PARAM_WORD;
-	int o2 = PARAM_WORD;
-	EXTEND_W(o1);
-	EXTEND_W(o2);
-	data = RFIELD1(BREG(SRCREG)+o1);
-	bitaddr=BREG(DSTREG)+o2;
-	WFIELD1(bitaddr,data);
-}
-static void move0_ra_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	WFIELD0(bitaddr,AREG(DSTREG));
-}
-static void move0_ra_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	WFIELD0(bitaddr,BREG(DSTREG));
-}
-static void move1_ra_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	WFIELD1(bitaddr,AREG(DSTREG));
-}
-static void move1_ra_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	WFIELD1(bitaddr,BREG(DSTREG));
-}
-static void move0_ar_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	AREG(DSTREG) = RFIELD0(bitaddr);
-	EXTEND_F0(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move0_ar_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	BREG(DSTREG) = RFIELD0(bitaddr);
-	EXTEND_F0(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move1_ar_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	AREG(DSTREG) = RFIELD1(bitaddr);
-	EXTEND_F1(AREG(DSTREG));
-	CLR_V;
-	SET_NZ(AREG(DSTREG));
-	ASP_TO_BSP;
-}
-static void move1_ar_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	BREG(DSTREG) = RFIELD1(bitaddr);
-	EXTEND_F1(BREG(DSTREG));
-	CLR_V;
-	SET_NZ(BREG(DSTREG));
-	BSP_TO_ASP;
-}
-static void move0_a_ni_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	int bitaddrd=AREG(DSTREG);
-    WFIELD0(bitaddrd,RFIELD0(bitaddr));
-    AREG(DSTREG)+=FW_INC(0);
-	ASP_TO_BSP;
-}
-static void move0_a_ni_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	int bitaddrd=BREG(DSTREG);
-    WFIELD0(bitaddrd,RFIELD0(bitaddr));
-    BREG(DSTREG)+=FW_INC(0);
-	BSP_TO_ASP;
-}
-static void move1_a_ni_a(void)
-{
-	int bitaddr=PARAM_LONG();
-	int bitaddrd=AREG(DSTREG);
-    WFIELD1(bitaddrd,RFIELD1(bitaddr));
-    AREG(DSTREG)+=FW_INC(1);
-	ASP_TO_BSP;
-}
-static void move1_a_ni_b(void)
-{
-	int bitaddr=PARAM_LONG();
-	int bitaddrd=BREG(DSTREG);
-    WFIELD1(bitaddrd,RFIELD1(bitaddr));
-    BREG(DSTREG)+=FW_INC(1);
-	BSP_TO_ASP;
-}
-static void move0_aa(void)
-{
-	int bitaddr=PARAM_LONG();
-	int bitaddrd=PARAM_LONG();
-	WFIELD0(bitaddrd,RFIELD0(bitaddr));
-}
-static void move1_aa(void)
-{
-	int bitaddr=PARAM_LONG();
-	int bitaddrd=PARAM_LONG();
-	WFIELD1(bitaddrd,RFIELD1(bitaddr));
-}
+	int bitaddrs=PARAM_LONG();
+	WBYTE(PARAM_LONG(),RBYTE(bitaddrs));
+}
+
+#define MOVE_RR(RS,RD)	       		       			    		\
+{																\
+	RD##REG(DSTREG) = RS##REG(SRCREG);							\
+	CLR_V;														\
+	SET_NZ(RD##REG(DSTREG));									\
+	COPY_##RD##SP;												\
+}
+static void move_rr_a (void) { MOVE_RR(A,A); }
+static void move_rr_b (void) { MOVE_RR(B,B); }
+static void move_rr_ax(void) { MOVE_RR(A,B); }
+static void move_rr_bx(void) { MOVE_RR(B,A); }
+
+#define MOVE_RN(F,R)	       		       			    		\
+{																\
+	WFIELD##F(R##REG(DSTREG),R##REG(SRCREG));					\
+}
+static void move0_rn_a (void) { MOVE_RN(0,A); }
+static void move0_rn_b (void) { MOVE_RN(0,B); }
+static void move1_rn_a (void) { MOVE_RN(1,A); }
+static void move1_rn_b (void) { MOVE_RN(1,B); }
+
+#define MOVE_R_DN(F,R)	       		       			    		\
+{																\
+	R##REG(DSTREG)-=FW_INC(F);									\
+	WFIELD##F(R##REG(DSTREG),R##REG(SRCREG));					\
+	COPY_##R##SP;												\
+}
+static void move0_r_dn_a (void) { MOVE_R_DN(0,A); }
+static void move0_r_dn_b (void) { MOVE_R_DN(0,B); }
+static void move1_r_dn_a (void) { MOVE_R_DN(1,A); }
+static void move1_r_dn_b (void) { MOVE_R_DN(1,B); }
+
+#define MOVE_R_NI(F,R)	       		       			    		\
+{			  													\
+    WFIELD##F(R##REG(DSTREG),R##REG(SRCREG));					\
+    R##REG(DSTREG)+=FW_INC(F);									\
+	COPY_##R##SP;												\
+}
+static void move0_r_ni_a (void) { MOVE_R_NI(0,A); }
+static void move0_r_ni_b (void) { MOVE_R_NI(0,B); }
+static void move1_r_ni_a (void) { MOVE_R_NI(1,A); }
+static void move1_r_ni_b (void) { MOVE_R_NI(1,B); }
+
+#define MOVE_NR(F,R)	       		       			    		\
+{																\
+	R##REG(DSTREG) = RFIELD##F(R##REG(SRCREG));					\
+	EXTEND_F##F(R##REG(DSTREG));								\
+	CLR_V;														\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}
+static void move0_nr_a (void) { MOVE_NR(0,A); }
+static void move0_nr_b (void) { MOVE_NR(0,B); }
+static void move1_nr_a (void) { MOVE_NR(1,A); }
+static void move1_nr_b (void) { MOVE_NR(1,B); }
+
+#define MOVE_DN_R(F,R)	       		       			    		\
+{			  													\
+	R##REG(SRCREG)-=FW_INC(F);									\
+	R##REG(DSTREG) = RFIELD##F(R##REG(SRCREG));					\
+	EXTEND_F##F(R##REG(DSTREG));								\
+	CLR_V;														\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}																
+static void move0_dn_r_a (void) { MOVE_DN_R(0,A); }
+static void move0_dn_r_b (void) { MOVE_DN_R(0,B); }
+static void move1_dn_r_a (void) { MOVE_DN_R(1,A); }
+static void move1_dn_r_b (void) { MOVE_DN_R(1,B); }
+
+#define MOVE_NI_R(F,R)	       		       			    		\
+{			  													\
+	int data = RFIELD##F(R##REG(SRCREG));						\
+	R##REG(SRCREG)+=FW_INC(F);									\
+	R##REG(DSTREG) = data;										\
+	EXTEND_F##F(R##REG(DSTREG));								\
+	CLR_V;														\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}
+static void move0_ni_r_a (void) { MOVE_NI_R(0,A); }
+static void move0_ni_r_b (void) { MOVE_NI_R(0,B); }
+static void move1_ni_r_a (void) { MOVE_NI_R(1,A); }
+static void move1_ni_r_b (void) { MOVE_NI_R(1,B); }
+
+#define MOVE_NN(F,R)	       		       			    		\
+{										  						\
+	WFIELD##F(R##REG(DSTREG),RFIELD##F(R##REG(SRCREG)));		\
+}
+static void move0_nn_a (void) { MOVE_NN(0,A); }
+static void move0_nn_b (void) { MOVE_NN(0,B); }
+static void move1_nn_a (void) { MOVE_NN(1,A); }
+static void move1_nn_b (void) { MOVE_NN(1,B); }
+
+#define MOVE_DN_DN(F,R)	       		       			    		\
+{			  													\
+	int data;													\
+	R##REG(SRCREG)-=FW_INC(F);									\
+	data = RFIELD##F(R##REG(SRCREG));							\
+	R##REG(DSTREG)-=FW_INC(F);									\
+	WFIELD##F(R##REG(DSTREG),data);								\
+	COPY_##R##SP;												\
+}
+static void move0_dn_dn_a (void) { MOVE_DN_DN(0,A); }
+static void move0_dn_dn_b (void) { MOVE_DN_DN(0,B); }
+static void move1_dn_dn_a (void) { MOVE_DN_DN(1,A); }
+static void move1_dn_dn_b (void) { MOVE_DN_DN(1,B); }
+
+#define MOVE_NI_NI(F,R)	       		       			    		\
+{			  													\
+	int data = RFIELD##F(R##REG(SRCREG));						\
+	R##REG(SRCREG)+=FW_INC(F);									\
+	WFIELD##F(R##REG(DSTREG),data);								\
+	R##REG(DSTREG)+=FW_INC(F);									\
+	COPY_##R##SP;												\
+}
+static void move0_ni_ni_a (void) { MOVE_NI_NI(0,A); }
+static void move0_ni_ni_b (void) { MOVE_NI_NI(0,B); }
+static void move1_ni_ni_a (void) { MOVE_NI_NI(1,A); }
+static void move1_ni_ni_b (void) { MOVE_NI_NI(1,B); }
+
+#define MOVE_R_NO(F,R)	       		       			    		\
+{								  								\
+	int o = PARAM_WORD;											\
+	EXTEND_W(o);												\
+	WFIELD##F(R##REG(DSTREG)+o,R##REG(SRCREG));					\
+}
+static void move0_r_no_a (void) { MOVE_R_NO(0,A); }
+static void move0_r_no_b (void) { MOVE_R_NO(0,B); }
+static void move1_r_no_a (void) { MOVE_R_NO(1,A); }
+static void move1_r_no_b (void) { MOVE_R_NO(1,B); }
+
+#define MOVE_NO_R(F,R)	       		       			    		\
+{			  													\
+	int o = PARAM_WORD;											\
+	EXTEND_W(o);												\
+	R##REG(DSTREG) = RFIELD##F(R##REG(SRCREG)+o);				\
+	EXTEND_F##F(R##REG(DSTREG));								\
+	CLR_V;														\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}
+static void move0_no_r_a (void) { MOVE_NO_R(0,A); }
+static void move0_no_r_b (void) { MOVE_NO_R(0,B); }
+static void move1_no_r_a (void) { MOVE_NO_R(1,A); }
+static void move1_no_r_b (void) { MOVE_NO_R(1,B); }
+
+#define MOVE_NO_NI(F,R)	       		       			    		\
+{			  													\
+	int data;													\
+	int o = PARAM_WORD;											\
+	EXTEND_W(o);												\
+	data = RFIELD##F(R##REG(SRCREG)+o);							\
+	WFIELD##F(R##REG(DSTREG),data);								\
+	R##REG(DSTREG)+=FW_INC(F);									\
+	COPY_##R##SP;												\
+}
+static void move0_no_ni_a (void) { MOVE_NO_NI(0,A); }
+static void move0_no_ni_b (void) { MOVE_NO_NI(0,B); }
+static void move1_no_ni_a (void) { MOVE_NO_NI(1,A); }
+static void move1_no_ni_b (void) { MOVE_NO_NI(1,B); }
+
+#define MOVE_NO_NO(F,R)	       		       			    		\
+{				 												\
+	int data;													\
+	int o1 = PARAM_WORD;										\
+	int o2 = PARAM_WORD;										\
+	EXTEND_W(o1);												\
+	EXTEND_W(o2);												\
+	data = RFIELD##F(R##REG(SRCREG)+o1);						\
+	WFIELD##F(R##REG(DSTREG)+o2,data);							\
+}
+static void move0_no_no_a (void) { MOVE_NO_NO(0,A); }
+static void move0_no_no_b (void) { MOVE_NO_NO(0,B); }
+static void move1_no_no_a (void) { MOVE_NO_NO(1,A); }
+static void move1_no_no_b (void) { MOVE_NO_NO(1,B); }
+
+#define MOVE_RA(F,R)	       		       			    		\
+{							  									\
+	WFIELD##F(PARAM_LONG(),R##REG(DSTREG));						\
+}
+static void move0_ra_a (void) { MOVE_RA(0,A); }
+static void move0_ra_b (void) { MOVE_RA(0,B); }
+static void move1_ra_a (void) { MOVE_RA(1,A); }
+static void move1_ra_b (void) { MOVE_RA(1,B); }
+
+#define MOVE_AR(F,R)	       		       			    		\
+{			  													\
+	R##REG(DSTREG) = RFIELD##F(PARAM_LONG());					\
+	EXTEND_F##F(R##REG(DSTREG));								\
+	CLR_V;														\
+	SET_NZ(R##REG(DSTREG));										\
+	COPY_##R##SP;												\
+}
+static void move0_ar_a (void) { MOVE_AR(0,A); }
+static void move0_ar_b (void) { MOVE_AR(0,B); }
+static void move1_ar_a (void) { MOVE_AR(1,A); }
+static void move1_ar_b (void) { MOVE_AR(1,B); }
+
+#define MOVE_A_NI(F,R)	       		       			    		\
+{			  													\
+    WFIELD##F(R##REG(DSTREG),RFIELD##F(PARAM_LONG()));			\
+    R##REG(DSTREG)+=FW_INC(F);									\
+	COPY_##R##SP;												\
+}
+static void move0_a_ni_a (void) { MOVE_A_NI(0,A); }
+static void move0_a_ni_b (void) { MOVE_A_NI(0,B); }
+static void move1_a_ni_a (void) { MOVE_A_NI(1,A); }
+static void move1_a_ni_b (void) { MOVE_A_NI(1,B); }
+
+#define MOVE_AA(F)		       		       			    		\
+{																\
+	int bitaddrs=PARAM_LONG();									\
+	WFIELD##F(PARAM_LONG(),RFIELD##F(bitaddrs));				\
+}
+static void move0_aa (void) { MOVE_AA(0); }
+static void move1_aa (void) { MOVE_AA(1); }
 
 
 /* Program Control and Context Switching */
-static void call_a(void)
-{
-	int NewPC = AREG(DSTREG) & 0xfffffff0;
-	PUSH(PC);
-	PC = NewPC;
+#define CALL(R)													\
+{																\
+	PUSH(PC);													\
+	PC = R##REG(DSTREG);										\
 }
-static void call_b(void)
-{
-	int NewPC = BREG(DSTREG) & 0xfffffff0;
-	PUSH(PC);
-	PC = NewPC;
-}
+static void call_a (void) { CALL(A); }
+static void call_b (void) { CALL(B); }
+
 static void callr(void)
 {
-	int ls = (signed short)PARAM_WORD;
-
-	PUSH(PC);
-	PC += (ls<<4);
+	PUSH(PC+0x10);
+	PC += (((signed short)PARAM_WORD)<<4);
 }
+
 static void calla(void)
 {
-	int address = PARAM_LONG() & 0xfffffff0;
-	PUSH(PC);
-	PC = address;
+	PUSH(PC+0x20);
+	PC = PARAM_LONG();
 }
-static void dsj_a(void)
-{
-	AREG(DSTREG)--;
-	if (AREG(DSTREG))
-	{
-		int ls = (signed short)PARAM_WORD;
-		PC += (ls<<4);
-	}
-	else
-	{
-		SKIP_WORD;
-	}
-	ASP_TO_BSP;
+
+#define DSJ(R)													\
+{																\
+	if (--R##REG(DSTREG))										\
+	{															\
+		PC += (((signed short)PARAM_WORD)<<4);					\
+	}															\
+	else														\
+	{															\
+		SKIP_WORD;												\
+	}															\
+	COPY_##R##SP;												\
 }
-static void dsj_b(void)
-{
-	BREG(DSTREG)--;
-	if (BREG(DSTREG))
-	{
-		int ls = (signed short)PARAM_WORD;
-		PC += (ls<<4);
-	}
-	else
-	{
-		SKIP_WORD;
-	}
-	BSP_TO_ASP;
+static void dsj_a (void) { DSJ(A); }
+static void dsj_b (void) { DSJ(B); }
+
+#define DSJEQ(R)												\
+{																\
+	if (!NOTZ_FLAG)												\
+	{															\
+		if (--R##REG(DSTREG))									\
+		{														\
+			PC += (((signed short)PARAM_WORD)<<4);				\
+		}														\
+		else													\
+		{														\
+			SKIP_WORD;											\
+		}														\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		SKIP_WORD;												\
+	}															\
 }
-static void dsjeq_a(void)
-{
-	if (!NOTZ_FLAG)
-	{
-		AREG(DSTREG)--;
-		if (AREG(DSTREG))
-		{
-			int ls = (signed short)PARAM_WORD;
-			PC += (ls<<4);
-		}
-		else
-		{
-			SKIP_WORD;
-		}
-		ASP_TO_BSP;
-	}
-	else
-	{
-		SKIP_WORD;
-	}
+static void dsjeq_a (void) { DSJEQ(A); }
+static void dsjeq_b (void) { DSJEQ(B); }
+
+#define DSJNE(R)												\
+{																\
+	if (NOTZ_FLAG)												\
+	{															\
+		if (--R##REG(DSTREG))									\
+		{														\
+			PC += (((signed short)PARAM_WORD)<<4);				\
+		}														\
+		else													\
+		{														\
+			SKIP_WORD;											\
+		}														\
+		COPY_##R##SP;											\
+	}															\
+	else														\
+	{															\
+		SKIP_WORD;												\
+	}															\
 }
-static void dsjeq_b(void)
-{
-	if (!NOTZ_FLAG)
-	{
-		BREG(DSTREG)--;
-		if (BREG(DSTREG))
-		{
-			int ls = (signed short)PARAM_WORD;
-			PC += (ls<<4);
-		}
-		else
-		{
-			SKIP_WORD;
-		}
-		BSP_TO_ASP;
-	}
-	else
-	{
-		SKIP_WORD;
-	}
+static void dsjne_a (void) { DSJNE(A); }
+static void dsjne_b (void) { DSJNE(B); }
+
+#define DSJS(R)													\
+{									   							\
+	if (state.op & 0x0400)										\
+	{															\
+		if (--R##REG(DSTREG)) PC -= ((PARAM_K)<<4);				\
+	}															\
+	else														\
+	{															\
+		if (--R##REG(DSTREG)) PC += ((PARAM_K)<<4);				\
+	}															\
+	COPY_##R##SP;												\
 }
-static void dsjne_a(void)
-{
-	if (NOTZ_FLAG)
-	{
-		AREG(DSTREG)--;
-		if (AREG(DSTREG))
-		{
-			int ls = (signed short)PARAM_WORD;
-			PC += (ls<<4);
-		}
-		else
-		{
-			SKIP_WORD;
-		}
-		ASP_TO_BSP;
-	}
-	else
-	{
-		SKIP_WORD;
-	}
-}
-static void dsjne_b(void)
-{
-	if (NOTZ_FLAG)
-	{
-		BREG(DSTREG)--;
-		if (BREG(DSTREG))
-		{
-			int ls = (signed short)PARAM_WORD;
-			PC += (ls<<4);
-		}
-		else
-		{
-			SKIP_WORD;
-		}
-		BSP_TO_ASP;
-	}
-	else
-	{
-		SKIP_WORD;
-	}
-}
-static void dsjs_a(void)
-{
-	int ls = PARAM_K;
-	if (state.op & 0x0400) ls = -ls;
-	AREG(DSTREG)--;
-	if (AREG(DSTREG)) PC += (ls<<4);
-	ASP_TO_BSP;
-}
-static void dsjs_b(void)
-{
-	int ls = PARAM_K;
-	if (state.op & 0x0400) ls = -ls;
-	BREG(DSTREG)--;
-	if (BREG(DSTREG)) PC += (ls<<4);
-	BSP_TO_ASP;
-}
+static void dsjs_a (void) { DSJS(A); }
+static void dsjs_b (void) { DSJS(B); }
+
 static void emu(void)
 {
 	/* In RUN state, this instruction is a NOP */
 }
-static void exgpc_a(void)
-{
-	int temppc = AREG(DSTREG);
-	AREG(DSTREG) = PC;
-	PC = temppc;
-	ASP_TO_BSP;
+
+#define EXGPC(R)												\
+{			  													\
+	int temppc = R##REG(DSTREG);								\
+	R##REG(DSTREG) = PC;										\
+	PC = temppc;												\
+	COPY_##R##SP;												\
 }
-static void exgpc_b(void)
-{
-	int temppc = BREG(DSTREG);
-	BREG(DSTREG) = PC;
-	PC = temppc;
-	BSP_TO_ASP;
+static void exgpc_a (void) { EXGPC(A); }
+static void exgpc_b (void) { EXGPC(B); }
+
+#define GETPC(R)												\
+{																\
+	R##REG(DSTREG) = PC;										\
+	COPY_##R##SP;												\
 }
-static void getpc_a(void)
-{
-	AREG(DSTREG) = PC;
-	ASP_TO_BSP;
+static void getpc_a (void) { GETPC(A); }
+static void getpc_b (void) { GETPC(B); }
+
+#define GETST(R)												\
+{			  													\
+	R##REG(DSTREG) = GET_ST();									\
+	COPY_##R##SP;												\
 }
-static void getpc_b(void)
-{
-	BREG(DSTREG) = PC;
-	BSP_TO_ASP;
+static void getst_a (void) { GETST(A); }
+static void getst_b (void) { GETST(B); }
+
+#define j_xx_8(TAKE)			  								\
+{	   															\
+	if (DSTREG)													\
+	{															\
+		if (TAKE)												\
+		{														\
+			PC += (PARAM_REL8 << 4);							\
+		}														\
+	}															\
+	else														\
+	{															\
+		if (TAKE)												\
+		{														\
+			PC = PARAM_LONG();									\
+		}														\
+		else													\
+		{														\
+			SKIP_LONG;											\
+		}														\
+	}															\
 }
-static void getst_a(void)
-{
-	AREG(DSTREG) = GET_ST();
-	ASP_TO_BSP;
+
+#define j_xx_0(TAKE)											\
+{																\
+	if (DSTREG)													\
+	{															\
+		if (TAKE)												\
+		{														\
+			PC += (PARAM_REL8 << 4);							\
+		}														\
+	}															\
+	else														\
+	{															\
+		if (TAKE)												\
+		{														\
+			signed short ls = (signed short) PARAM_WORD;		\
+			PC += (ls << 4);									\
+		}														\
+		else													\
+		{														\
+			SKIP_WORD;											\
+		}														\
+	}															\
 }
-static void getst_b(void)
-{
-	BREG(DSTREG) = GET_ST();
-	BSP_TO_ASP;
+
+#define j_xx_x(TAKE)											\
+{																\
+	if (TAKE)													\
+	{															\
+		PC += (PARAM_REL8 << 4);								\
+	}															\
 }
-INLINE void j_xx_8(int take)
-{
-	if (DSTREG)
-	{
-		if (take)
-		{
-			signed char ls = PARAM_REL8;
-			PC += (ls << 4);
-		}
-	}
-	else
-	{
-		if (take)
-		{
-			PC = PARAM_LONG();
-		}
-		else
-		{
-			SKIP_LONG;
-		}
-	}
-}
-INLINE void j_xx_0(int take)
-{
-	if (DSTREG)
-	{
-		if (take)
-		{
-			signed char ls = PARAM_REL8;
-			PC += (ls << 4);
-		}
-	}
-	else
-	{
-		if (take)
-		{
-			signed short ls = (signed short) PARAM_WORD;
-			PC += (ls << 4);
-		}
-		else
-		{
-			SKIP_WORD;
-		}
-	}
-}
-INLINE void j_xx_x(int take)
-{
-	if (take)
-	{
-		signed char ls = PARAM_REL8;
-		PC += (ls << 4);
-	}
-}
+
 static void j_UC_0(void)
 {
 	j_xx_0(1);
@@ -3248,51 +2118,52 @@ static void j_NN_x(void)
 {
 	j_xx_x(!N_FLAG);
 }
-static void jump_a(void)
-{
-	PC = AREG(DSTREG);
+
+#define JUMP(R)													\
+{																\
+	PC = R##REG(DSTREG);										\
 }
-static void jump_b(void)
-{
-	PC = BREG(DSTREG);
-}
+static void jump_a (void) { JUMP(A); }
+static void jump_b (void) { JUMP(B); }
+
 static void popst(void)
 {
 	SET_ST(POP());
 }
+
 static void pushst(void)
 {
 	PUSH(GET_ST());
 }
-static void putst_a(void)
-{
-	SET_ST(AREG(DSTREG));
+
+#define PUTST(R)												\
+{																\
+	SET_ST(R##REG(DSTREG));										\
 }
-static void putst_b(void)
-{
-	SET_ST(BREG(DSTREG));
-}
+static void putst_a (void) { PUTST(A); }
+static void putst_b (void) { PUTST(B); }
+
 static void reti(void)
 {
 	SET_ST(POP());
 	PC = POP();
 	SET_FW();
 }
+
 static void rets(void)
 {
 	PC = POP();
 	SP+=((PARAM_N)<<4);
 }
-static void rev_a(void)
-{
-    AREG(DSTREG) = 0x0008;
-	ASP_TO_BSP;
+
+#define REV(R)													\
+{																\
+    R##REG(DSTREG) = 0x0008;									\
+	COPY_##R##SP;												\
 }
-static void rev_b(void)
-{
-    BREG(DSTREG) = 0x0008;
-	BSP_TO_ASP;
-}
+static void rev_a (void) { REV(A); }
+static void rev_b (void) { REV(B); }
+
 static void trap(void)
 {
 	int t = PARAM_N;

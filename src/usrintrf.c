@@ -37,31 +37,31 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 static int findbestcolor(unsigned char r,unsigned char g,unsigned char b,unsigned short current)
 {
 	int i;
+	int d1,d2,d3,dist;
 	int best,mindist;
 	unsigned char r1,g1,b1;
 
-
-	/* 4 bits per gun are enough for our needs */
-	r &= 0xf0;
-	g &= 0xf0;
-	b &= 0xf0;
 
 	mindist = 200000;
 	best = 0;
 
 	osd_get_pen(current,&r1,&g1,&b1);
 	/* keep the current pen if it is close enough */
-	if ((r1 & 0xc0) == (r & 0xc0) && (g1 & 0xc0) == (g & 0xc0) && (b1 & 0xc0) == (b & 0xc0))
-		return current;
+	/* don't pick black for non-black colors */
+	if (r1+g1+b1 > 0 || r+g+b == 0)
+	{
+		d1 = (int)r1 - r;
+		d2 = (int)g1 - g;
+		d3 = (int)b1 - b;
+		dist = d1*d1 + d2*d2 + d3*d3;
+
+		if (dist < 20000)
+			return current;
+	}
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int d1,d2,d3,dist;
-
 		osd_get_pen(Machine->pens[i],&r1,&g1,&b1);
-		r1 &= 0xf0;
-		g1 &= 0xf0;
-		b1 &= 0xf0;
 
 		/* don't pick black for non-black colors */
 		if (r1+g1+b1 > 0 || r+g+b == 0)
@@ -1374,7 +1374,8 @@ int showgameinfo(void)
 		"ADPCM samples",
 		"OKIM6295 ADPCM",
 		"MSM5205 ADPCM",
-		"HC-55516 CVSD"
+		"HC-55516 CVSD",
+		"Astrocade 'IO' chip"
 	};
 
 
@@ -1468,7 +1469,7 @@ int showgameinfo(void)
 	{
 		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
 				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
-			sprintf(&buf[strlen(buf)],"%d x ",((struct PSGinterface *)Machine->drv->sound[i].sound_interface)->num);
+			sprintf(&buf[strlen(buf)],"%d x ",((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->num);
 
 		sprintf(&buf[strlen(buf)],"%s",
 				soundnames[Machine->drv->sound[i].sound_type]);
@@ -1476,8 +1477,8 @@ int showgameinfo(void)
 		if (Machine->drv->sound[i].sound_type >= SOUND_AY8910 &&
 				Machine->drv->sound[i].sound_type <= SOUND_POKEY)
 			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-					((struct PSGinterface *)Machine->drv->sound[i].sound_interface)->clock / 1000000,
-					((struct PSGinterface *)Machine->drv->sound[i].sound_interface)->clock % 1000000);
+					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock / 1000000,
+					((struct AY8910interface *)Machine->drv->sound[i].sound_interface)->clock % 1000000);
 
 		strcat(buf,"\n");
 

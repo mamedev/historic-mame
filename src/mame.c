@@ -476,7 +476,10 @@ int updatescreen(void)
 			need_to_clear_bitmap = 0;
 		}
 
+		osd_profiler(OSD_PROFILE_VIDEO);
 		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
+		osd_profiler(OSD_PROFILE_END);
+
 		bitmap_dirty = 0;
 
 		/* This call is for the cheat, it must be called at least each frames */
