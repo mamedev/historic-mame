@@ -997,13 +997,35 @@ ROM_START( kingball_rom )
 	/* 1800-1fff empty */
 
 	ROM_REGION(0x20)	/* color PROMs */
-	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x72551251 )
+	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "kbe1.ic4",     0x0000, 0x0800, 0x5be2c80a )
 	ROM_LOAD( "kbe2.ic5",     0x0800, 0x0800, 0xbb59e965 )
 	ROM_LOAD( "kbe3.ic6",     0x1000, 0x0800, 0x1c94dd31 )
 	ROM_LOAD( "kbe2.ic7",     0x1800, 0x0800, 0xbb59e965 )
+ROM_END
+
+ROM_START( kingbalj_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "prg1.7f",      0x0000, 0x1000, 0x6cb49046 )
+	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
+	ROM_LOAD( "prg3.7l",      0x2000, 0x0800, 0x453634c0 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "chg1.1h",      0x0000, 0x0800, 0x9cd550e7 )
+	/* 0800-0fff empty */
+	ROM_LOAD( "chg2.1k",      0x1000, 0x0800, 0xa206757d )
+	/* 1800-1fff empty */
+
+	ROM_REGION(0x20)	/* color PROMs */
+	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
+
+	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_LOAD( "kbj1.ic4",     0x0000, 0x0800, 0xba16beb7 )
+	ROM_LOAD( "kbj2.ic5",     0x0800, 0x0800, 0x56686a63 )
+	ROM_LOAD( "kbj3.ic6",     0x1000, 0x0800, 0xfbc570a5 )
+	ROM_LOAD( "kbj2.ic7",     0x1800, 0x0800, 0x56686a63 )
 ROM_END
 
 
@@ -1565,7 +1587,7 @@ struct GameDriver kingball_driver =
 	__FILE__,
 	0,
 	"kingball",
-	"King & Balloon",
+	"King & Balloon (US)",
 	"1980",
 	"Namco",
 	"Brad Oliver",
@@ -1574,6 +1596,32 @@ struct GameDriver kingball_driver =
 	0,
 
 	kingball_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	kingball_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	kingball_hiload, kingball_hisave
+};
+
+struct GameDriver kingbalj_driver =
+{
+	__FILE__,
+	&kingball_driver,
+	"kingbalj",
+	"King & Balloon (Japan)",
+	"1980",
+	"Namco",
+	"Brad Oliver",
+	0,
+	&kingball_machine_driver,
+	0,
+
+	kingbalj_rom,
 	0, 0,
 	mooncrst_sample_names,
 	0,	/* sound_prom */

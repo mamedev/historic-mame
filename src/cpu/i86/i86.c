@@ -11,6 +11,20 @@
 #include "I86.h"
 #include "I86intrf.h"
 
+static UINT8 i86_reg_layout[] = {
+	I86_IP,I86_SP,I86_FLAGS,I86_AX,I86_CX,I86_DX,I86_BX,I86_BP,I86_SI,I86_DI, -1,
+	I86_ES,I86_CS,I86_SS,I86_DS,I86_VECTOR,I86_NMI_STATE,I86_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 i86_win_layout[] = {
+     0, 0,80, 2,    /* register window (top rows) */
+	 0, 3,34,19,	/* disassembler window (left colums) */
+	35, 3,45, 9,	/* memory #1 window (right, upper middle) */
+	35,13,45, 9,	/* memory #2 window (right, lower middle) */
+     0,23,80, 1,    /* command line window (bottom rows) */
+};
+
 /* I86 registers */
 typedef union
 {                   /* eight general registers */
@@ -21,13 +35,14 @@ typedef union
 typedef struct
 {
     i86basicregs regs;
-	int 	ip;
+	int 	amask;			/* HJB 990320 Address mask moved into the registers */
+    int     ip;
 	UINT16	flags;
 	UINT32	base[4];
 	UINT16	sregs[4];
     int     (*irq_callback)(int irqline);
     int     AuxVal, OverVal, SignVal, ZeroVal, CarryVal, ParityVal; /* 0 or non-0 valued flags */
-	UINT8	TF, IF, DF;   /* 0 or 1 valued flags */
+	UINT8	TF, IF, DF; 	/* 0 or 1 valued flags */
 	UINT8	int_vector;
 	UINT8	pending_irq;
 	INT8	nmi_state;
@@ -40,7 +55,6 @@ typedef struct
 /***************************************************************************/
 
 int i86_ICount;
-int i86_AddrMask = 0x0000ffff;  /* HJB 12/13/98 default mask 64K for MAME */
 
 static i86_Regs I;
 static unsigned prefix_base;	/* base address of the latest prefix segment */
@@ -67,25 +81,16 @@ void i86_reset (void *param)
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
 
-	I.int_vector = 0;
-	I.pending_irq = 0;
-	I.nmi_state = CLEAR_LINE;
-	I.irq_state = CLEAR_LINE;
-	I.irq_callback = NULL;
-	for (i = 0; i < 4; i++)
-		I.sregs[i] = 0;
-	I.sregs[CS]=0xFFFF;
+	memset( &I, 0, sizeof(I) );
 
-	I.base[CS] = SegBase(CS);
-	I.base[DS] = SegBase(DS);
-	I.base[ES] = SegBase(ES);
-	I.base[SS] = SegBase(SS);
+	/* If a reset parameter is given, take it as pointer to an address mask */
+    if( param )             
+		I.amask = *(unsigned*)param;
+	else
+		I.amask = 0x00ffff;
+    I.sregs[CS] = 0xffff;
 
-	for (i=0; i < 8; i++)
-		I.regs.w[i] = 0;
-	I.ip = 0;
-
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20( (I.base[CS] + I.ip) & I.amask);
 
     for (i = 0;i < 256; i++)
     {
@@ -95,20 +100,18 @@ void i86_reset (void *param)
 		parity_table[i] = !(c & 1);
     }
 
-	I.TF = I.IF = I.DF = 0;
-	I.SignVal = I.CarryVal = I.AuxVal = I.OverVal = 0;
 	I.ZeroVal = I.ParityVal = 1;
 
     for (i = 0; i < 256; i++)
     {
-	Mod_RM.reg.b[i] = reg_name[(i & 0x38) >> 3];
-	Mod_RM.reg.w[i] = (WREGS) ( (i & 0x38) >> 3) ;
+		Mod_RM.reg.b[i] = reg_name[(i & 0x38) >> 3];
+		Mod_RM.reg.w[i] = (WREGS) ( (i & 0x38) >> 3) ;
     }
 
     for (i = 0xc0; i < 0x100; i++)
     {
-	Mod_RM.RM.w[i] = (WREGS)( i & 7 );
-	Mod_RM.RM.b[i] = (BREGS)reg_name[i & 7];
+		Mod_RM.RM.w[i] = (WREGS)( i & 7 );
+		Mod_RM.RM.b[i] = (BREGS)reg_name[i & 7];
     }
 }
 
@@ -135,7 +138,7 @@ static void i86_interrupt(unsigned int_num)
 	I.ip = (WORD)dest_off;
 	I.sregs[CS] = (WORD)dest_seg;
 	I.base[CS] = SegBase(CS);
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 
 }
 
@@ -1028,7 +1031,7 @@ static void i_jo(void)    /* Opcode 0x70 */
 	{
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1038,7 +1041,7 @@ static void i_jno(void)    /* Opcode 0x71 */
 	if (!OF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1048,7 +1051,7 @@ static void i_jb(void)    /* Opcode 0x72 */
 	if (CF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1058,7 +1061,7 @@ static void i_jnb(void)    /* Opcode 0x73 */
 	if (!CF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1068,7 +1071,7 @@ static void i_jz(void)    /* Opcode 0x74 */
 	if (ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1078,7 +1081,7 @@ static void i_jnz(void)    /* Opcode 0x75 */
 	if (!ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1088,7 +1091,7 @@ static void i_jbe(void)    /* Opcode 0x76 */
     if (CF || ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1098,7 +1101,7 @@ static void i_jnbe(void)    /* Opcode 0x77 */
     if (!(CF || ZF)) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1108,7 +1111,7 @@ static void i_js(void)    /* Opcode 0x78 */
     if (SF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1118,7 +1121,7 @@ static void i_jns(void)    /* Opcode 0x79 */
     if (!SF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1128,7 +1131,7 @@ static void i_jp(void)    /* Opcode 0x7a */
     if (PF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1138,7 +1141,7 @@ static void i_jnp(void)    /* Opcode 0x7b */
     if (!PF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1148,7 +1151,7 @@ static void i_jl(void)    /* Opcode 0x7c */
     if ((SF!=OF)&&!ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1158,7 +1161,7 @@ static void i_jnl(void)    /* Opcode 0x7d */
     if (ZF||(SF==OF)) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1168,7 +1171,7 @@ static void i_jle(void)    /* Opcode 0x7e */
     if (ZF||(SF!=OF)) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1178,7 +1181,7 @@ static void i_jnle(void)    /* Opcode 0x7f */
     if ((SF==OF)&&!ZF) {
 		I.ip = (WORD)(I.ip+tmp);
 		i86_ICount-=16;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=4;
 }
 
@@ -1558,7 +1561,7 @@ static void i_call_far(void)
 	I.sregs[CS] = (WORD)tmp2;
 	I.base[CS] = SegBase(CS);
 	i86_ICount-=14;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_wait(void)    /* Opcode 0x9b */
@@ -2190,14 +2193,14 @@ static void i_ret_d16(void)    /* Opcode 0xc2 */
 	POP(I.ip);
 	I.regs.w[SP]+=count;
 	i86_ICount-=14;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_ret(void)    /* Opcode 0xc3 */
 {
 	POP(I.ip);
 	i86_ICount-=10;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_les_dw(void)    /* Opcode 0xc4 */
@@ -2270,7 +2273,7 @@ static void i_retf_d16(void)    /* Opcode 0xca */
 	I.base[CS] = SegBase(CS);
 	I.regs.w[SP]+=count;
 	i86_ICount-=13;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_retf(void)    /* Opcode 0xcb */
@@ -2279,7 +2282,7 @@ static void i_retf(void)    /* Opcode 0xcb */
 	POP(I.sregs[CS]);
 	I.base[CS] = SegBase(CS);
 	i86_ICount-=14;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_int3(void)    /* Opcode 0xcc */
@@ -2310,7 +2313,7 @@ static void i_iret(void)    /* Opcode 0xcf */
 	POP(I.sregs[CS]);
 	I.base[CS] = SegBase(CS);
     i_popf();
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_rotshft_b(void)    /* Opcode 0xd0 */
@@ -2390,7 +2393,7 @@ static void i_loopne(void)    /* Opcode 0xe0 */
     if (!ZF && tmp) {
 	i86_ICount-=19;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=5;
 }
 
@@ -2404,7 +2407,7 @@ static void i_loope(void)    /* Opcode 0xe1 */
     if (ZF && tmp) {
 	i86_ICount-=18;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=6;
 }
 
@@ -2418,7 +2421,7 @@ static void i_loop(void)    /* Opcode 0xe2 */
     if (tmp) {
 	i86_ICount-=17;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=5;
 }
 
@@ -2429,7 +2432,7 @@ static void i_jcxz(void)    /* Opcode 0xe3 */
 	if (I.regs.w[CX] == 0) {
 	i86_ICount-=18;
 	I.ip = (WORD)(I.ip+disp);
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 	} else i86_ICount-=6;
 }
 
@@ -2475,7 +2478,7 @@ static void i_call_d16(void)    /* Opcode 0xe8 */
 	PUSH(I.ip);
 	I.ip = (WORD)(I.ip+(INT16)tmp);
 	i86_ICount-=12;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 
@@ -2486,7 +2489,7 @@ static void i_jmp_d16(void)    /* Opcode 0xe9 */
 
 	I.ip = (WORD)(I.ip+(INT16)tmp);
 	i86_ICount-=15;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_jmp_far(void)    /* Opcode 0xea */
@@ -2503,7 +2506,7 @@ static void i_jmp_far(void)    /* Opcode 0xea */
 	I.base[CS] = SegBase(CS);
 	I.ip = (WORD)tmp;
 	i86_ICount-=15;
-	change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+	change_pc20((I.base[CS]+I.ip) & I.amask);
 }
 
 static void i_jmp_d8(void)    /* Opcode 0xeb */
@@ -3050,7 +3053,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		tmp = GetRMWord(ModRM);
 		PUSH(I.ip);
 		I.ip = (WORD)tmp;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 		break;
 
 	case 0x18:  /* CALL FAR ea */
@@ -3062,13 +3065,13 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		PUSH(tmp);
 		PUSH(I.ip);
 		I.ip = tmp1;
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 		break;
 
     case 0x20:  /* JMP ea */
 		i86_ICount-=11; /* 8 if address in memory */
 		I.ip = GetRMWord(ModRM);
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 		break;
 
     case 0x28:  /* JMP FAR ea */
@@ -3076,7 +3079,7 @@ static void i_ffpre(void)    /* Opcode 0xff */
 		I.ip = GetRMWord(ModRM);
 		I.sregs[CS] = GetnextRMWord;
 		I.base[CS] = SegBase(CS);
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 		break;
 
     case 0x30:  /* PUSH ea */
@@ -3114,39 +3117,45 @@ void i86_set_context(void *src)
 		I.base[DS] = SegBase(DS);
 		I.base[ES] = SegBase(ES);
 		I.base[SS] = SegBase(SS);
-		change_pc20((I.base[CS]+I.ip) & i86_AddrMask);
+		change_pc20((I.base[CS]+I.ip) & I.amask);
 	}
 }
 
 unsigned i86_get_pc(void)
 {
-	return (SegBase(CS)+(WORD)I.ip) & i86_AddrMask;
+	return I.base[CS] + (WORD)I.ip;
 }
 
 void i86_set_pc(unsigned val)
 {
-	if( val - SegBase(CS) < 0x10000 )
-		I.ip = val - SegBase(CS);
+	if( val - I.base[CS] < 0x10000 )
+	{
+		I.ip = val - I.base[CS];
+	}
 	else
 	{
-		I.base[CS] = (val & 0xff0000) >> 4;
-		I.ip = val & 0x0ffff;
+		I.base[CS] = val & 0xffff0;
+		I.sregs[CS] = I.base[CS] >> 4;
+		I.ip = val & 0x0000f;
 	}
 }
 
 unsigned i86_get_sp(void)
 {
-	return (SegBase(SS)+I.regs.w[SP]) & i86_AddrMask;
+	return I.base[SS] + I.regs.w[SP];
 }
 
 void i86_set_sp(unsigned val)
 {
-	if( val - SegBase(SS) < 0x10000 )
-		I.regs.w[SP] = val - SegBase(SS);
+	if( val - I.base[SS] < 0x10000 )
+	{
+		I.regs.w[SP] = val - I.base[SS];
+	}
 	else
 	{
-		I.base[SS] = (val & 0xff0000) >> 4;
-		I.regs.w[SP] = val & 0x0ffff;
+		I.base[SS] = val & 0xffff0;
+		I.sregs[SS] = I.base[SS] >> 4;
+		I.regs.w[SP] = val & 0x0000f;
 	}
 }
 
@@ -3155,15 +3164,15 @@ unsigned i86_get_reg(int regnum)
 	switch( regnum )
 	{
 		case I86_IP: return I.ip;
-		case I86_AX: return I.regs.w[AX];
+		case I86_SP: return I.regs.w[SP];
+		case I86_FLAGS: CompressFlags(); return I.flags;
+        case I86_AX: return I.regs.w[AX];
 		case I86_CX: return I.regs.w[CX];
 		case I86_DX: return I.regs.w[DX];
 		case I86_BX: return I.regs.w[BX];
-		case I86_SP: return I.regs.w[SP];
 		case I86_BP: return I.regs.w[BP];
 		case I86_SI: return I.regs.w[SI];
 		case I86_DI: return I.regs.w[DI];
-		case I86_FLAGS: CompressFlags(); return I.flags;
 		case I86_ES: return I.sregs[ES];
 		case I86_CS: return I.sregs[CS];
 		case I86_SS: return I.sregs[SS];
@@ -3172,6 +3181,13 @@ unsigned i86_get_reg(int regnum)
 		case I86_PENDING: return I.pending_irq;
 		case I86_NMI_STATE: return I.nmi_state;
 		case I86_IRQ_STATE: return I.irq_state;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = ((SegBase(SS) + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < I.amask )
+					return cpu_readmem20( offset ) | ( cpu_readmem20( offset + 1) << 8 );
+			}
 	}
 	return 0;
 }
@@ -3181,23 +3197,33 @@ void i86_set_reg(int regnum, unsigned val)
 	switch( regnum )
 	{
 		case I86_IP: I.ip = val; break;
-		case I86_AX: I.regs.w[AX] = val; break;
+		case I86_SP: I.regs.w[SP] = val; break;
+		case I86_FLAGS: I.flags = val; ExpandFlags(val); break;
+        case I86_AX: I.regs.w[AX] = val; break;
 		case I86_CX: I.regs.w[CX] = val; break;
 		case I86_DX: I.regs.w[DX] = val; break;
 		case I86_BX: I.regs.w[BX] = val; break;
-		case I86_SP: I.regs.w[SP] = val; break;
 		case I86_BP: I.regs.w[BP] = val; break;
 		case I86_SI: I.regs.w[SI] = val; break;
 		case I86_DI: I.regs.w[DI] = val; break;
-		case I86_FLAGS: I.flags = val; ExpandFlags(val); break;
 		case I86_ES: I.sregs[ES] = val; break;
 		case I86_CS: I.sregs[CS] = val; break;
 		case I86_SS: I.sregs[SS] = val; break;
 		case I86_DS: I.sregs[DS] = val; break;
 		case I86_VECTOR: I.int_vector = val; break;
 		case I86_PENDING: I.pending_irq = val; break;
-		case I86_NMI_STATE: I.nmi_state = val; break;
-		case I86_IRQ_STATE: I.irq_state = val; break;
+		case I86_NMI_STATE: i86_set_nmi_line(val); break;
+		case I86_IRQ_STATE: i86_set_irq_line(0,val); break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = ((SegBase(SS) + I.regs.w[SP]) & I.amask) + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < I.amask - 1 )
+				{
+					cpu_writemem20( offset, val & 0xff );
+					cpu_writemem20( offset+1, (val >> 8) & 0xff );
+				}
+			}
     }
 }
 
@@ -3526,7 +3552,7 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],I.ip,G
  ****************************************************************************/
 const char *i86_info(void *context, int regnum)
 {
-	static char buffer[32][47+1];
+	static char buffer[32][63+1];
 	static int which = 0;
 	i86_Regs *r = context;
 
@@ -3542,16 +3568,45 @@ const char *i86_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.4";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)";
-		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", (r->sregs[CS] + r->ip) & 0xffffff); break;
-		case CPU_INFO_SP: sprintf(buffer[which], "%06X", (r->sregs[SS] + r->regs.w[4]) & 0xffffff); break;
+		case CPU_INFO_REG_LAYOUT: return (const char*)i86_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)i86_win_layout;
+
+		case CPU_INFO_PC: sprintf(buffer[which], "%05X:", ((r->sregs[CS]<<4) + r->ip) & 0xffffff); break;
+		case CPU_INFO_SP: sprintf(buffer[which], "%05X", ((r->sregs[SS]<<4) + r->regs.w[4]) & 0xffffff); break;
 #ifdef	MAME_DEBUG
 		case CPU_INFO_DASM:
-			r->ip += DasmI86(&ROM[r->ip],buffer[which],r->ip);
+			{
+				unsigned pc = r->base[CS] + (WORD)r->ip;
+				pc += DasmI86(&ROM[pc & r->amask], buffer[which], pc & r->amask);
+				if( pc - r->base[CS] < 0x10000 )
+				{
+					r->ip = pc - r->base[CS];
+				}
+				else
+				{
+					r->base[CS] = pc & 0xffff0;
+					r->sregs[CS] = r->base[CS] >> 4;
+					r->ip = pc & 0x0000f;
+				}
+			}
 			break;
 #else
 		case CPU_INFO_DASM:
-			sprintf(buffer[which],"$%02x",ROM[r->ip]);
-			r->ip++;
+			{
+				unsigned pc = r->base[CS] + (WORD)r->ip;
+				sprintf(buffer[which], "$%02x", ROM[pc & r->amask]);
+				pc++;
+				if( pc - r->base[CS] < 0x10000 )
+				{
+					r->ip = pc - r->base[CS];
+				}
+				else
+				{
+					r->base[CS] = pc & 0xffff0;
+					r->sregs[CS] = r->base[CS] >> 4;
+					r->ip = pc & 0x0000f;
+                }
+            }
 			break;
 #endif
 		case CPU_INFO_FLAGS:
@@ -3575,20 +3630,21 @@ const char *i86_info(void *context, int regnum)
 				r->flags & 0x0001 ? 'C':'.');
 			break;
 		case CPU_INFO_REG+I86_IP: sprintf(buffer[which], "IP:%04X", r->ip); break;
-		case CPU_INFO_REG+I86_AX: sprintf(buffer[which], "AX:%04X", r->regs.w[0]); break;
-		case CPU_INFO_REG+I86_CX: sprintf(buffer[which], "CX:%04X", r->regs.w[1]); break;
-		case CPU_INFO_REG+I86_DX: sprintf(buffer[which], "DX:%04X", r->regs.w[2]); break;
-		case CPU_INFO_REG+I86_BX: sprintf(buffer[which], "BX:%04X", r->regs.w[3]); break;
-		case CPU_INFO_REG+I86_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[4]); break;
-		case CPU_INFO_REG+I86_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[5]); break;
-		case CPU_INFO_REG+I86_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[6]); break;
-		case CPU_INFO_REG+I86_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[7]); break;
-		case CPU_INFO_REG+I86_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
+		case CPU_INFO_REG+I86_SP: sprintf(buffer[which], "SP:%04X", r->regs.w[SP]); break;
+		case CPU_INFO_REG+I86_FLAGS: sprintf(buffer[which], "F:%04X", r->flags); break;
+		case CPU_INFO_REG+I86_AX: sprintf(buffer[which], "AX:%04X", r->regs.w[AX]); break;
+		case CPU_INFO_REG+I86_CX: sprintf(buffer[which], "CX:%04X", r->regs.w[CX]); break;
+		case CPU_INFO_REG+I86_DX: sprintf(buffer[which], "DX:%04X", r->regs.w[DX]); break;
+		case CPU_INFO_REG+I86_BX: sprintf(buffer[which], "BX:%04X", r->regs.w[BX]); break;
+		case CPU_INFO_REG+I86_BP: sprintf(buffer[which], "BP:%04X", r->regs.w[BP]); break;
+		case CPU_INFO_REG+I86_SI: sprintf(buffer[which], "SI:%04X", r->regs.w[SI]); break;
+		case CPU_INFO_REG+I86_DI: sprintf(buffer[which], "DI:%04X", r->regs.w[DI]); break;
+        case CPU_INFO_REG+I86_ES: sprintf(buffer[which], "ES:%04X", r->sregs[ES]); break;
         case CPU_INFO_REG+I86_CS: sprintf(buffer[which], "CS:%04X", r->sregs[CS]); break;
         case CPU_INFO_REG+I86_SS: sprintf(buffer[which], "SS:%04X", r->sregs[SS]); break;
         case CPU_INFO_REG+I86_DS: sprintf(buffer[which], "DS:%04X", r->sregs[DS]); break;
-        case CPU_INFO_REG+I86_VECTOR: sprintf(buffer[which], "vector:%02X", r->int_vector); break;
-		case CPU_INFO_REG+I86_PENDING: sprintf(buffer[which], "pending:%X", r->pending_irq); break;
+        case CPU_INFO_REG+I86_VECTOR: sprintf(buffer[which], "V:%02X", r->int_vector); break;
+		case CPU_INFO_REG+I86_PENDING: sprintf(buffer[which], "P:%X", r->pending_irq); break;
 		case CPU_INFO_REG+I86_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 		case CPU_INFO_REG+I86_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
 	}

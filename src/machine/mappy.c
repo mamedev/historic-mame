@@ -482,7 +482,7 @@ int todruaga_customio_r_1(int offset)
 	int val, temp, mode = mappy_customio_1[8];
 
 	if (errorlog)
-		fprintf (errorlog, "I/O read 1: mode %d offset %d\n", mode, offset);
+		fprintf (errorlog, "%04x: I/O read 1: mode %d offset %d\n", cpu_get_pc(), mode, offset);
 
 	/* mode 3 is the standard, and returns actual important values */
 	if (mode == 1 || mode == 3)
@@ -507,6 +507,7 @@ int todruaga_customio_r_1(int offset)
 
 				temp = (readinputport (0) >> 6) & 3;
 				val = readinputport (5) >> 4;
+				val |= (readinputport (3) & 0x80) >> 7;	/* player 1 start */
 
 				/* bit 0 is a trigger for the 1 player start */
 				if ((val & 1) && ((val ^ lastval) & 1))
@@ -550,7 +551,7 @@ int todruaga_customio_r_2(int offset)
 	int mode = mappy_customio_2[8];
 
 	if (errorlog)
-		fprintf (errorlog, "I/O read 2: mode %d, offset %d\n", mode, offset);
+		fprintf (errorlog, "%04x: I/O read 2: mode %d, offset %d\n", cpu_get_pc(), mode, offset);
 
 	/* mode 4 is the standard, and returns actual important values */
 	if (mode == 4)

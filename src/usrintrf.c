@@ -40,12 +40,6 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 		w = Machine->drv->screen_width;
 		h = Machine->drv->screen_height;
 	}
-	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = xmin; xmin = ymin; ymin = temp;
-		temp = xmax; xmax = ymax; ymax = temp;
-		temp = w; w = h; h = temp;
-	}
 	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
 	{
 		temp = w - xmin - 1;
@@ -57,6 +51,11 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 		temp = h - ymin - 1;
 		ymin = h - ymax - 1;
 		ymax = temp;
+	}
+	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		temp = xmin; xmin = ymin; ymin = temp;
+		temp = xmax; xmax = ymax; ymax = temp;
 	}
 
 	Machine->uiwidth = xmax-xmin+1;
@@ -2410,9 +2409,394 @@ int showgamewarnings(void)
 }
 
 
+struct tHistoryIndex
+{
+	long offset;
+	const struct GameDriver *driver;
+};
+
+/* returns 0 on error, or the number of index entries created */
+int index_history_file (FILE *f, struct tHistoryIndex **_index)
+{
+	struct tHistoryIndex *idx;
+	int max = 0;
+	char buf[1024];
+	int count = 0;
+
+	/* rewind file */
+	if (fseek (f, 0L, SEEK_SET)) return 0;
+
+	/* calculate max size of index */
+	{
+		const struct GameDriver **drv = drivers;
+		while (*drv++) max++;	/* count supported drivers */
+		max += 20;				/* allow some slop */
+	}
+
+	/* allocate index */
+	idx = *_index = malloc (max * sizeof (struct tHistoryIndex));
+	if (NULL == idx) return 0;
+
+	/* loop through history file */
+	while ((count < (max-1)) && (!feof (f)))
+	{
+		char *s = fgets (buf, 510, f);
+		#ifdef macintosh
+			/* remove extraneous LF if it exists */
+			if (s[0] == '\r') strcpy (s, &s[1]);
+		#endif
+
+		/* lines identifying the driver begin with '[' */
+		if (s && s[0] == '[')
+		{
+			char name[32];
+			int	i;
+
+			/* shorten string -- needs max 10 characters to hold [drivername] */
+			s[12] = '\0';
+
+			/* extract driver name from between [] brackets */
+			strcpy (name, &s[1]);
+			if (name[1])
+				name[strlen(name) - 2] = '\0';
+
+			/* search for driver */
+			for (i = 0; drivers[i]; i++)
+			{
+				if (!stricmp (name, drivers[i]->name))
+				{
+					/* found correct driver -- fill in history index entry */
+					idx->driver = drivers[i];
+					idx->offset = ftell (f);
+					idx++;
+					count++;
+					break;
+				}
+			}
+		}
+	}
+
+	/* mark end of index */
+	idx->offset = ftell (f);
+	idx->driver = 0;
+	return count;
+}
+
+/* Loads history entry for driver into the buffer specified. Specify the driver,
+   a pointer to the buffer, the buffer size, the history file stream, and the
+   index created by index_history_file().
+   Returns 0 if successful. */
+int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize,
+	FILE *f, struct tHistoryIndex *idx)
+{
+	char buf[1024];
+	int	offset = 0;
+
+	/* find driver in history index */
+	while (idx->driver)
+	{
+		if (idx->driver == drv) break;
+		idx++;
+	}
+	if (idx->driver == 0) return 1;	/* driver not found in history index */
+
+	/* seek to correct point in history file */
+	if (fseek (f, idx->offset, SEEK_SET)) return 1;
+
+	/* read lines until buffer is full or end of entry is encountered */
+	while (!feof (f))
+	{
+		char *s;
+		int len;
+
+		s = fgets (buf, 1022, f);
+		if (NULL == s) break;
+		#ifdef macintosh
+			/* remove extraneous LF if it exists */
+			if (s[0] == '\r')
+				strcpy (s, &s[1]);
+		#endif
+
+		/* end entry when next entry is encountered, or a line beginning with . */
+		if (s[0] == '[' || s[0] == '.') break;
+
+		/* ignore comments */
+		if (s[0] == '#') continue;
+
+		len = strlen (s);
+		if ((len + offset) >= bufsize) break;
+		strcpy (buffer, s);
+		buffer += len;
+		offset += len;
+	}
+	return 0;
+}
+
+/* Word-wraps the text in the specified buffer to fit in maxwidth characters per line.
+   The contents of the buffer are modified.
+   Known limitations: Words longer than maxwidth cause the function to fail. */
+static void wordwrap_text_buffer (char *buffer, int maxwidth)
+{
+	int width = 0;
+
+	while (*buffer)
+	{
+		if (*buffer == '\n')
+		{
+			buffer++;
+			width = 0;
+			continue;
+		}
+
+		width++;
+
+		if (width > maxwidth)
+		{
+			/* backtrack until a space is found */
+			while (*buffer != ' ')
+			{
+				buffer--;
+				width--;
+			}
+			if (width < 1) return;	/* word too long */
+
+			/* replace space with a newline */
+			*buffer = '\n';
+		}
+		else
+			buffer++;
+	}
+}
+
+static int count_lines_in_buffer (char *buffer)
+{
+	int lines = 0;
+	char c;
+
+	while ( (c = *buffer++) )
+		if (c == '\n') lines++;
+
+	return lines;
+}
+
+/* Display lines from buffer, starting with line 'scroll', in a width x height text window */
+static void display_scroll_message (int *scroll, int width, int height, char *buf)
+{
+	struct DisplayText dt[256];
+	int curr_dt = 0;
+	char uparrow[2] = "\x18";
+	char downarrow[2] = "\x19";
+	char textcopy[2048];
+	char *copy;
+	int leftoffs,topoffs;
+	int first = *scroll;
+	int buflines,showlines;
+	int i;
+
+
+	/* draw box */
+	leftoffs = (Machine->uiwidth - Machine->uifontwidth * (width + 1)) / 2;
+	if (leftoffs < 0) leftoffs = 0;
+	topoffs = (Machine->uiheight - (3 * height + 1) * Machine->uifontheight / 2) / 2;
+	drawbox(leftoffs,topoffs,(width + 1) * Machine->uifontwidth,(3 * height + 1) * Machine->uifontheight / 2);
+
+	buflines = count_lines_in_buffer (buf);
+	if (first > 0)
+	{
+		if (buflines <= height)
+			first = 0;
+		else
+		{
+			height--;
+			if (first > (buflines - height))
+				first = buflines - height;
+		}
+		*scroll = first;
+	}
+
+	if (first != 0)
+	{
+		/* indicate that scrolling upward is possible */
+		dt[curr_dt].text = uparrow;
+		dt[curr_dt].color = DT_COLOR_WHITE;
+		dt[curr_dt].x = (Machine->uiwidth - Machine->uifontwidth * strlen(uparrow)) / 2;
+		dt[curr_dt].y = topoffs + (3*curr_dt+1)*Machine->uifontheight/2;
+		curr_dt++;
+	}
+
+	if ((buflines - first) > height)
+		showlines = height - 1;
+	else
+		showlines = height;
+
+	/* skip to first line */
+	while (first > 0)
+	{
+		char c;
+
+		while ( (c = *buf++) )
+		{
+			if (c == '\n')
+			{
+				first--;
+				break;
+			}
+		}
+	}
+
+	/* copy 'showlines' lines from buffer, starting with line 'first' */
+	copy = textcopy;
+	for (i = 0; i < showlines; i++)
+	{
+		char *copystart = copy;
+
+		while (*buf && *buf != '\n')
+		{
+			*copy = *buf;
+			copy++;
+			buf++;
+		}
+		*copy = '\0';
+		copy++;
+		if (*buf == '\n')
+			buf++;
+
+		if (*copystart == '\t')	/* center text */
+		{
+			copystart++;
+			dt[curr_dt].x = (Machine->uiwidth - Machine->uifontwidth * (copy - copystart)) / 2;
+		}
+		else
+			dt[curr_dt].x = leftoffs + Machine->uifontwidth/2;
+
+		dt[curr_dt].text = copystart;
+		dt[curr_dt].color = DT_COLOR_WHITE;
+		dt[curr_dt].y = topoffs + (3*curr_dt+1)*Machine->uifontheight/2;
+		curr_dt++;
+	}
+
+	if (showlines == (height - 1))
+	{
+		/* indicate that scrolling downward is possible */
+		dt[curr_dt].text = downarrow;
+		dt[curr_dt].color = DT_COLOR_WHITE;
+		dt[curr_dt].x = (Machine->uiwidth - Machine->uifontwidth * strlen(downarrow)) / 2;
+		dt[curr_dt].y = topoffs + (3*curr_dt+1)*Machine->uifontheight/2;
+		curr_dt++;
+	}
+
+	dt[curr_dt].text = 0;	/* terminate array */
+
+	displaytext(dt,0,0);
+}
+
+/* display entry for current driver from history.dat file */
+/* note: for efficiency's sake, the index is never disposed (intentional leak) */
+static int displayhistory (int selected)
+{
+	char *msg = "\tHistory not available\n\n\t\x1a Return to Main Menu \x1b";
+	static int scroll = 0;
+	static int lines = 0;
+	static struct tHistoryIndex *idx = 0;
+	static char *buf = 0;
+	int	maxcols,maxrows;
+	FILE *f;
+	int sel;
+
+
+	sel = selected - 1;
+
+
+	maxcols = (Machine->uiwidth / Machine->uifontwidth) - 1;
+	maxrows = (2 * Machine->uiheight - Machine->uifontheight) / (3 * Machine->uifontheight);
+	maxcols -= 2;
+	maxrows -= 8;
+
+	if (!buf)
+	{
+		/* try to open history file */
+		/* TODO: create another filetype and use osd_fopen() instead */
+		f = fopen ("history.dat", "r");
+		if (f)
+		{
+			/* create index if necessary */
+			if (!idx)
+				(void)index_history_file (f, &idx);
+
+			if (idx)
+			{
+				/* allocate a buffer for history text */
+				buf = malloc (8192);
+				if (buf)
+				{
+					/* try to read driver history */
+					if (!load_driver_history (Machine->gamedrv, buf, 8192, f, idx) ||
+						(Machine->gamedrv->clone_of &&
+							!load_driver_history (Machine->gamedrv->clone_of, buf, 8192, f, idx)))
+					{
+						scroll = 0;
+						wordwrap_text_buffer (buf, maxcols);
+						strcat(buf,"\n\t\x1a Return to Main Menu \x1b\n");
+					}
+					else
+					{
+						free (buf);
+						buf = 0;
+					}
+				}
+			}
+			fclose (f);
+		}
+	}
+
+	{
+		if (buf)
+			display_scroll_message (&scroll, maxcols, maxrows, buf);
+		else
+			displaymessagewindow (msg);
+
+		if ((scroll > 0) && osd_key_pressed_memory_repeat(OSD_KEY_UI_UP,4))
+		{
+			if (scroll == 2) scroll = 0;	/* 1 would be the same as 0, but with arrow on top */
+			else scroll--;
+		}
+
+		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_DOWN,4))
+		{
+			if (scroll == 0) scroll = 2;	/* 1 would be the same as 0, but with arrow on top */
+			else scroll++;
+		}
+
+		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
+			sel = -1;
+
+		if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+			sel = -2;
+	}
+
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+
+		/* force buffer to be recreated */
+		if (buf)
+		{
+			free (buf);
+			buf = 0;
+		}
+	}
+
+	return sel + 1;
+
+}
+
 
 enum { UI_SWITCH = 0,UI_DEFKEY, UI_KEY, UI_JOY,UI_ANALOG, UI_CALIBRATE,
-		UI_STATS,UI_CREDITS,UI_GAMEINFO,
+		UI_STATS,UI_CREDITS,UI_GAMEINFO,UI_HISTORY,
 		UI_CHEAT,UI_RESET,UI_EXIT };
 
 #define MAX_SETUPMENU_ITEMS 20
@@ -2461,6 +2845,7 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = "Stats"; menu_action[menu_total++] = UI_STATS;
 	menu_item[menu_total] = "Credits"; menu_action[menu_total++] = UI_CREDITS;
 	menu_item[menu_total] = "Game Information"; menu_action[menu_total++] = UI_GAMEINFO;
+	menu_item[menu_total] = "Game History"; menu_action[menu_total++] = UI_HISTORY;
 
 	if (nocheat == 0)
 	{
@@ -2586,6 +2971,16 @@ static int setup_menu(int selected)
 				else
 					sel = (sel & 0xff) | (res << 8);
 				break;
+			case UI_HISTORY:
+				res = displayhistory(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
 
 			case UI_CHEAT:
 osd_sound_enable(0);
@@ -2622,6 +3017,7 @@ sel = sel & 0xff;
 			case UI_STATS:
 			case UI_CREDITS:
 			case UI_GAMEINFO:
+			case UI_HISTORY:
 			case UI_CHEAT:
 				sel |= 0x100;
 				/* tell updatescreen() to clean after us */

@@ -480,7 +480,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct AY8910interface ay8910_interface =
 {
 	5,	/* 5 chips */
-	1789772,	/* 1.789772727 MHz */
+	14318180/8,	/* 1.789772727 MHz */
 	{ 0x2012, 0x2012, 0x3014, 0x3014, 0x3014 },
 	/*  R       L   |   R       R       L */
 	/*   effects    |         music       */
@@ -517,7 +517,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.5795454 Mhz */
+			14318180/4,	/* 3.579545 Mhz */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */

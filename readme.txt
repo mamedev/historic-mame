@@ -175,6 +175,8 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
 Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
    to mention them all.
 
+Thanks to Brian Deuel, Neil Bradley and the Retrocade dev team for allowing us
+to use Retrocade's game history database. [John Butler]
 
 
 Usage
@@ -233,8 +235,8 @@ options:
               the image doesn't fit in the screen (you'll have to use PGUP and
               PGDN to scroll).
 -stretch XxY  (default: off) stretch low resolution games to fill the screen.
-              -stretch=1024x768 quadruples pixels horizontally and triples
-              vertically, -stretch=800x600 triples horizontally and doubles
+              -stretch 1024x768 quadruples pixels horizontally and triples
+              vertically, -stretch 800x600 triples horizontally and doubles
               vertically. 1024x768 will be perfect (for 256x256 games) or
               almost perfect (for 256x240 and 256x224 games) without monitor
               adjustment, so it is indicated for LCD displays. However, it is

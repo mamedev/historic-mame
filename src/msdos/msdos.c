@@ -46,10 +46,14 @@ char **__crt0_glob_function(void)
 
 static void signal_handler(int num)
 {
-   allegro_exit();
+	allegro_exit();
+	ScreenClear();
+	ScreenSetCursor( 0, 0 );
+	if( num == SIGINT )
+		cpu_dump_states();
 
-   signal(num, SIG_DFL);
-   raise(num);
+	signal(num, SIG_DFL);
+	raise(num);
 }
 
 /* put here anything you need to do when the program is started. Return 0 if */

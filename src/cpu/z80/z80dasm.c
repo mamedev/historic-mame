@@ -278,7 +278,8 @@ int DasmZ80(char *dest,int PC)
 		case 0xfd:
 			r="iy";
 			op1 = cpu_readop(pc++);
-			switch (op1) {
+			switch (op1)
+			{
 				case 0xcb:
 					offset = (INT8) cpu_readop_arg(pc++);
 					op1 = cpu_readop(pc++);
@@ -306,7 +307,11 @@ int DasmZ80(char *dest,int PC)
 					pc++;
 					break;
 				case 'R':
-					dest += sprintf( dest, "$%04x", (PC+2+(INT8)cpu_readop_arg(pc))&0xffff);
+					offset = (INT8) cpu_readop_arg(pc++);
+					if( offset == -2 )
+						dest += sprintf( dest, "$ (%04x)", PC);
+					else
+						dest += sprintf( dest, "$%+d (%04x)", offset+2, (PC+2+offset)&0xffff);
 					pc++;
 					break;
 				case 'W':

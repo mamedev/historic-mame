@@ -398,7 +398,7 @@ int active_layers1;
 
 /* Palette stuff */
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 /* We consider whole layers, redraw whole layers: worst case is slow! */
 

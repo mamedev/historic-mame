@@ -8,6 +8,8 @@
 
 #include "driver.h"
 
+int use_samples;
+
 /* These globals are only kept on a machine basis - LBO 042898 */
 extern unsigned int dispensed_tickets;
 unsigned int coins[COIN_COUNTERS];
@@ -468,6 +470,7 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 	struct GameSamples *samples;
 	int skipfirst = 0;
 
+	if (!use_samples) return 0;
 	if (samplenames == 0 || samplenames[0] == 0) return 0;
 
 	if (samplenames[0][0] == '*')
@@ -2362,7 +2365,7 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 	}
 	if (Machine->orientation & ORIENTATION_FLIP_X)
 	{
-		sx = dest_bmp->width - ((gfx->width * scalex) >> 16) - sx;
+		sx = dest_bmp->width - ((gfx->width * scalex + 0x7fff) >> 16) - sx;
 		if (clip)
 		{
 			int temp;
@@ -2379,7 +2382,7 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 	}
 	if (Machine->orientation & ORIENTATION_FLIP_Y)
 	{
-		sy = dest_bmp->height - ((gfx->height * scaley) >> 16) - sy;
+		sy = dest_bmp->height - ((gfx->height * scaley + 0x7fff) >> 16) - sy;
 		if (clip)
 		{
 			int temp;
@@ -2522,8 +2525,8 @@ void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
 			struct osd_bitmap *source_bmp = gfx->gfxdata;
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
-			int sprite_screen_height = (scaley*gfx->height)>>16;
-			int sprite_screen_width = (scalex*gfx->width)>>16;
+			int sprite_screen_height = (scaley*gfx->height+0x7fff)>>16;
+			int sprite_screen_width = (scalex*gfx->width+0x7fff)>>16;
 
 			/* compute sprite increment per screen pixel */
 			int dx = (gfx->width<<16)/sprite_screen_width;

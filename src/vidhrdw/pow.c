@@ -61,7 +61,7 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int colmask[0x80],code,pal_base;
 
 	/* Build the dynamic palette */
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,2048 * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	/* Text layer */
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;

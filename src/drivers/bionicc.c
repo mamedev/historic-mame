@@ -5,7 +5,14 @@
 
 
 ToDo:
-- optimize the video driver (it currently doesn't use tmpbitmaps)
+- finish video driver
+	Some attributes are unknown. I don't remember the original game but
+	seems there are some problems:
+	- misplaced sprites ? ( see beginning of level 1 or 2 for example )
+	- sprite / sprite priority ? ( see level 2 the reflectors )
+	- sprite / background priority ? ( see level 1: birds walk through
+		branches of different trees )
+	- see the beginning of level 3: is the background screwed ?
 
 - get rid of input port hack
 
@@ -36,21 +43,28 @@ ToDo:
 static unsigned char *ram_bc; /* used by high scores */
 static unsigned char *ram_bcvid; /* used by high scores */
 
-extern int bionicc_videoreg_r( int offset );
-extern void bionicc_videoreg_w( int offset, int value );
+void bionicc_fgvideoram_w(int offset,int data);
+void bionicc_bgvideoram_w(int offset,int data);
+void bionicc_txvideoram_w(int offset,int data);
+int  bionicc_fgvideoram_r(int offset);
+int  bionicc_bgvideoram_r(int offset);
+int  bionicc_txvideoram_r(int offset);
+void bionicc_paletteram_w(int offset,int data);
+void bionicc_scroll_w(int offset,int data);
+void bionicc_gfxctrl_w(int offset,int data);
 
-extern unsigned char *bionicc_scroll2;
-extern unsigned char *bionicc_scroll1;
-extern unsigned char *bionicc_palette;
+extern unsigned char *bionicc_bgvideoram;
+extern unsigned char *bionicc_fgvideoram;
+extern unsigned char *bionicc_txvideoram;
 extern unsigned char *spriteram;
-extern unsigned char *videoram;
+extern int spriteram_size;
 
-extern int bionicc_vh_start(void);
-extern void bionicc_vh_stop(void);
-extern void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int bionicc_vh_start(void);
+void bionicc_vh_stop(void);
+void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-static void bionicc_readinputs(void);
-static void bionicc_sound_cmd(int data);
+void bionicc_readinputs(void);
+void bionicc_sound_cmd(int data);
 
 
 
@@ -121,7 +135,6 @@ int bionicc_interrupt(void)
 	if (cpu_getiloops() == 0) return 2;
 	else return 4;
 }
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },                /* 68000 ROM */
@@ -129,11 +142,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfe0800, 0xfe0cff, MRA_BANK2 },              /* sprites */
 	{ 0xfe0d00, 0xfe3fff, MRA_BANK3 },              /* RAM? */
 	{ 0xfe4000, 0xfe4003, bionicc_inputs_r },       /* dipswitches */
-	{ 0xfe8010, 0xfe8017, bionicc_videoreg_r },     /* scroll registers */
-	{ 0xfec000, 0xfecfff, MRA_BANK4, &ram_bcvid },              /* fixed text layer */
-	{ 0xff0000, 0xff3fff, MRA_BANK5 },              /* SCROLL1 layer */
-	{ 0xff4000, 0xff7fff, MRA_BANK6 },              /* SCROLL2 layer */
-	{ 0xff8000, 0xff86ff, MRA_BANK7 },              /* palette RAM */
+	{ 0xfec000, 0xfecfff, bionicc_txvideoram_r },
+	{ 0xff0000, 0xff3fff, bionicc_fgvideoram_r },
+	{ 0xff4000, 0xff7fff, bionicc_bgvideoram_r },
+	{ 0xff8000, 0xff87ff, paletteram_word_r },
 	{ 0xffc000, 0xfffff7, MRA_BANK8, &ram_bc },               /* working RAM */
 	{ 0xfffff8, 0xfffff9, hacked_soundcommand_r },      /* hack */
 	{ 0xfffffa, 0xffffff, hacked_controls_r },      /* hack */
@@ -144,18 +156,21 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0xfe0000, 0xfe07ff, MWA_BANK1 },	/* RAM? */
-	{ 0xfe0800, 0xfe3fff, MWA_BANK2, &spriteram },
-	{ 0xfe8010, 0xfe8017, bionicc_videoreg_w },
+	{ 0xfe0800, 0xfe0cff, MWA_BANK2, &spriteram, &spriteram_size },
+	{ 0xfe0d00, 0xfe3fff, MWA_BANK3 },              /* RAM? */
+	{ 0xfe4000, 0xfe4001, bionicc_gfxctrl_w },	/* + coin counters */
+	{ 0xfe8010, 0xfe8017, bionicc_scroll_w },
 	{ 0xfe801a, 0xfe801b, bionicc_mpu_trigger_w },	/* ??? not sure, but looks like it */
-	{ 0xfec000, 0xfecfff, MWA_BANK4, &videoram },
-	{ 0xff0000, 0xff3fff, MWA_BANK5, &bionicc_scroll1 },
-	{ 0xff4000, 0xff7fff, MWA_BANK6, &bionicc_scroll2 },
-	{ 0xff8000, 0xff86ff, MWA_BANK7, &bionicc_palette },
+	{ 0xfec000, 0xfecfff, bionicc_txvideoram_w, &bionicc_txvideoram },
+	{ 0xff0000, 0xff3fff, bionicc_fgvideoram_w, &bionicc_fgvideoram },
+	{ 0xff4000, 0xff7fff, bionicc_bgvideoram_w, &bionicc_bgvideoram },
+	{ 0xff8000, 0xff87ff, bionicc_paletteram_w, &paletteram },
 	{ 0xffc000, 0xfffff7, MWA_BANK8 },	/* working RAM */
 	{ 0xfffff8, 0xfffff9, hacked_soundcommand_w },      /* hack */
 	{ 0xfffffa, 0xffffff, hacked_controls_w },	/* hack */
 	{ -1 }
 };
+
 
 static struct MemoryReadAddress sound_readmem[] =
 {
@@ -288,7 +303,7 @@ static struct GfxLayout spritelayout_bionicc=
 static struct GfxLayout vramlayout_bionicc=
 {
 	8,8,    /* 8*8 characters */
-	2048,   /* 2048 character */
+	1024,   /* 1024 character */
 	2,      /* 2 bitplanes */
 	{ 4,0 },
 	{ 0,1,2,3,8,9,10,11 },
@@ -327,13 +342,12 @@ static struct GfxLayout scroll1layout_bionicc=
 
 static struct GfxDecodeInfo gfxdecodeinfo_bionicc[] =
 {
-	{ 1, 0x48000, &scroll2layout_bionicc, 0,    4 },
-	{ 1, 0x58000, &scroll1layout_bionicc, 64,   4 },
-	{ 1, 0x00000, &spritelayout_bionicc,  128, 16 },
-	{ 1, 0x40000, &vramlayout_bionicc,    384, 16 },
+	{ 1, 0x48000, &scroll2layout_bionicc,   0,  4 },	/* colors   0-  63 */
+	{ 1, 0x58000, &scroll1layout_bionicc, 256,  4 },	/* colors 256- 319 */
+	{ 1, 0x00000, &spritelayout_bionicc,  512, 16 },	/* colors 512- 767 */
+	{ 1, 0x40000, &vramlayout_bionicc,    768, 64 },	/* colors 768-1023 */
 	{ -1 }
 };
-
 
 
 static struct YM2151interface ym2151_interface =
@@ -343,7 +357,6 @@ static struct YM2151interface ym2151_interface =
 	{ YM3012_VOL(60,OSD_PAN_LEFT,60,OSD_PAN_RIGHT) },
 	{ 0 }
 };
-
 
 
 static struct MachineDriver machine_driver =
@@ -372,8 +385,7 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo_bionicc,
-	64*3+256, /* colours */
-	64*3+256, /* Colour table length */
+	1024, 1024,	/* but a lot are not used */
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,

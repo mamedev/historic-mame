@@ -164,7 +164,7 @@ static void dec0_update_palette(int pf23priority)
 	int pal_base;
 
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
@@ -1035,6 +1035,7 @@ void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	dec0_pf1_draw(bitmap);
 
 
+#if 0
 {
 
 	int i,j;
@@ -1090,7 +1091,7 @@ for (i = 0;i < 8;i+=2)
 	Machine->orientation = trueorientation;
 
 }
-
+#endif
 }
 
 void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)

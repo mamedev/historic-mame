@@ -13,6 +13,10 @@ read/write the main memory area, provide a "base" pointer: it will be
 initialized by the main engine to point to the beginning of the memory block
 assigned to the handler. You may also provided a pointer to "size": it
 will be set to the length of the memory area processed by the handler.
+You are also encouraged to give (short) names to memory areas,
+if they point to a non standard memory handler. That way you can see
+how a memory region is mapped in the MAME debugger. The memory dump
+windows and the disassembler display this information in the caption.
 
 ***************************************************************************/
 struct MemoryReadAddress
@@ -21,6 +25,7 @@ struct MemoryReadAddress
 	int (*handler)(int offset);   /* see special values below */
 	unsigned char **base;         /* optional (see explanation above) */
 	int *size;                    /* optional (see explanation above) */
+	const char *description;	  /* optional (see explanation above) */
 };
 
 #define MRA_NOP   0	              /* don't care, return 0 */
@@ -41,6 +46,7 @@ struct MemoryWriteAddress
 	void (*handler)(int offset,int data);	/* see special values below */
 	unsigned char **base;	/* optional (see explanation above) */
 	int *size;	/* optional (see explanation above) */
+	const char *description;	  /* optional (see explanation above) */
 };
 
 #define MWA_NOP 0	                  /* do nothing */

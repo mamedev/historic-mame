@@ -1630,7 +1630,7 @@ static struct MachineDriver monsterb_machine_driver =
 			segar_interrupt,1
 		},
 		{
-			CPU_N7751 | CPU_AUDIO_CPU, /* Actually a NEC 7751 */
+			CPU_N7751 | CPU_AUDIO_CPU,
 			6000000/15,        /* 6Mhz crystal */
 			2,
 			monsterb_7751_readmem,monsterb_7751_writemem,monsterb_7751_readport,monsterb_7751_writeport,

@@ -1613,7 +1613,7 @@ static struct GfxLayout joust2_layout =
 
 static struct GfxDecodeInfo inferno_gfxdecodeinfo[] =
 {
-	{ 1, 0, &layout, 16, 1 },
+	{ 1, 0, &layout, 16, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -2474,7 +2474,7 @@ static struct MachineDriver inferno_machine_driver =
 	{
 		{
 			CPU_M6809,
-			1100000,				/* 1 Mhz (1.1Mhz timing hack) */
+			1200000,				/* 1 Mhz (1.2Mhz timing hack) */
 			0,						/* memory region */
 			inferno_readmem,		/* MemoryReadAddress */
 			inferno_writemem,		/* MemoryWriteAddress */
@@ -2502,8 +2502,8 @@ static struct MachineDriver inferno_machine_driver =
 	288, 256,							/* screen_width, screen_height */
 	{ 4, 288-1, 8, 248-1 }, 			/* struct rectangle visible_area */
 	inferno_gfxdecodeinfo,				/* GfxDecodeInfo * */
-	16 + (1 * 16),						/* total colors (palette is 3*total_colors bytes long) */
-	16 + (1 * 16),						/* color table length (length in shorts of the color lookup table) */
+	16 + (8 * 16),						/* total colors (palette is 3*total_colors bytes long) */
+	16 + (8 * 16),						/* color table length (length in shorts of the color lookup table) */
 	williams_vh_convert_color_prom, 	/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,

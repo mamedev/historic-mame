@@ -476,14 +476,15 @@ void m68k_pulse_reset(void *param)
    m68ki_set_pc(m68ki_read_32(4));
    m68k_clks_left = 0;
 
+   if (CPU_MODE == 0) CPU_MODE = M68K_DEFAULT_CPU_MODE;	/* KW 990319 */
    /* The first call to this function initializes the opcode handler jump table */
    if(m68k_emulation_initialized)
       return;
    else
    {
       m68ki_build_opcode_table();
-      if(CPU_MODE == 0)
-         CPU_MODE = M68K_DEFAULT_CPU_MODE;
+//      if(CPU_MODE == 0)
+//         CPU_MODE = M68K_DEFAULT_CPU_MODE;
       m68k_set_int_ack_callback(NULL);
       m68k_set_bkpt_ack_callback(NULL);
       m68k_set_reset_instr_callback(NULL);

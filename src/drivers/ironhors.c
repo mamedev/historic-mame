@@ -344,7 +344,7 @@ static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	1500000,	/* 1.5 MHz ? */
+	3000000,	/* 3 MHz ? */
 	{ YM2203_VOL(255,255) },
 	{ 0 },
 	{ 0 },

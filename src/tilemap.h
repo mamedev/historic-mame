@@ -44,6 +44,7 @@ extern struct tile_info {
 /* TILE_SPLIT is for use with TILEMAP_SPLIT layers.  It selects transparency type. */
 
 #define TILE_FLIPYX(YX)			(YX)
+#define TILE_FLIPXY(XY)			((((XY)>>1)|((XY)<<1))&3)
 /*
 	TILE_FLIPYX is a shortcut that can be used by approx 80% of games,
 	since yflip frequently occurs one bit higher than xflip within a
@@ -104,8 +105,7 @@ struct tilemap {
 	unsigned short *bg_span, **bg_span_row;
 };
 
-int tilemap_start( void );
-void tilemap_stop( void );
+void tilemap_init( void );
 
 struct tilemap *tilemap_create(
 	int type,
@@ -130,6 +130,5 @@ void tilemap_set_attributes( struct tilemap *tilemap, int attributes );
 void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
 
 void tilemap_update( struct tilemap *tilemap );
-void tilemap_mark_palette( void );
 void tilemap_render( struct tilemap *tilemap );
 void tilemap_draw( struct osd_bitmap *dest, struct tilemap *tilemap, int priority );

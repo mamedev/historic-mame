@@ -42,9 +42,21 @@ extern  FILE * errorlog;
 #define LOG(x)
 #endif
 
-#ifndef INLINE
-#define INLINE static inline
-#endif
+/* Layout of the registers in the debugger */
+static UINT8 i8085_reg_layout[] = {
+	I8085_PC,I8085_SP,I8085_AF,I8085_BC,I8085_DE,I8085_HL, -1,
+	I8085_HALT,I8085_IM,I8085_IREQ,I8085_ISRV,I8085_VECTOR, -1,
+	I8085_TRAP_STATE,I8085_INTR_STATE,I8085_RST55_STATE,I8085_RST65_STATE,I8085_RST75_STATE,
+	0 };
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 i8085_win_layout[] = {
+	25, 0,55, 3,	/* register window (top, right rows) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
+	25, 4,55, 9,	/* memory #1 window (right, upper middle) */
+	25,14,55, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
 
 
 int i8085_ICount = 0;
@@ -1231,12 +1243,12 @@ unsigned i8085_get_reg(int regnum)
 {
 	switch( regnum )
 	{
+		case I8085_PC: return I.PC.w.l;
+		case I8085_SP: return I.SP.w.l;
 		case I8085_AF: return I.AF.w.l;
 		case I8085_BC: return I.BC.w.l;
 		case I8085_DE: return I.DE.w.l;
 		case I8085_HL: return I.HL.w.l;
-		case I8085_SP: return I.SP.w.l;
-		case I8085_PC: return I.PC.w.l;
 		case I8085_IM: return I.IM;
 		case I8085_HALT: return I.HALT;
 		case I8085_IREQ: return I.IREQ;
@@ -1247,6 +1259,13 @@ unsigned i8085_get_reg(int regnum)
 		case I8085_RST55_STATE: return I.irq_state[I8085_RST55_LINE];
 		case I8085_RST65_STATE: return I.irq_state[I8085_RST65_LINE];
 		case I8085_RST75_STATE: return I.irq_state[I8085_RST75_LINE];
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = I.SP.w.l + 2 + (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+					return RM( offset ) + ( RM( offset+1 ) << 8 );
+			}
 	}
 	return 0;
 }
@@ -1258,12 +1277,12 @@ void i8085_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case I8085_PC: I.PC.w.l = val; break;
+		case I8085_SP: I.SP.w.l = val; break;
 		case I8085_AF: I.AF.w.l = val; break;
 		case I8085_BC: I.BC.w.l = val; break;
 		case I8085_DE: I.DE.w.l = val; break;
 		case I8085_HL: I.HL.w.l = val; break;
-		case I8085_SP: I.SP.w.l = val; break;
-		case I8085_PC: I.PC.w.l = val; break;
 		case I8085_IM: I.IM = val; break;
 		case I8085_HALT: I.HALT = val; break;
 		case I8085_IREQ: I.IREQ = val; break;
@@ -1274,6 +1293,16 @@ void i8085_set_reg(int regnum, unsigned val)
 		case I8085_RST55_STATE: I.irq_state[I8085_RST55_LINE] = val; break;
 		case I8085_RST65_STATE: I.irq_state[I8085_RST65_LINE] = val; break;
 		case I8085_RST75_STATE: I.irq_state[I8085_RST75_LINE] = val; break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = 2 + (REG_SP_CONTENTS - regnum);
+				if( I.SP.w.l + offset < 0xfffe )
+				{
+					WM( offset, val&0xff );
+					WM( offset+1, (val>>8)&0xff );
+				}
+			}
     }
 }
 
@@ -1507,7 +1536,10 @@ const char *i8085_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC.w.l); break;
+		case CPU_INFO_REG_LAYOUT: return (const char *)i8085_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)i8085_win_layout;
+
+        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC.w.l); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->SP.w.l); break;
 #ifdef MAME_DEBUG
 		case CPU_INFO_DASM: r->PC.w.l += Dasm8085(buffer[which], r->PC.w.l); break;
@@ -1533,14 +1565,14 @@ const char *i8085_info(void *context, int regnum)
 		case CPU_INFO_REG+I8085_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
 		case CPU_INFO_REG+I8085_IM: sprintf(buffer[which], "IM:%02X", r->IM); break;
 		case CPU_INFO_REG+I8085_HALT: sprintf(buffer[which], "HALT:%d", r->HALT); break;
-		case CPU_INFO_REG+I8085_IREQ: sprintf(buffer[which], "%02X", I.IREQ); break;
-		case CPU_INFO_REG+I8085_ISRV: sprintf(buffer[which], "%02X", I.ISRV); break;
-		case CPU_INFO_REG+I8085_VECTOR: sprintf(buffer[which], "%02X", I.INTR); break;
-		case CPU_INFO_REG+I8085_TRAP_STATE: sprintf(buffer[which], "%X", I.nmi_state); break;
-		case CPU_INFO_REG+I8085_INTR_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_INTR_LINE]); break;
-		case CPU_INFO_REG+I8085_RST55_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_RST55_LINE]); break;
-		case CPU_INFO_REG+I8085_RST65_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_RST65_LINE]); break;
-		case CPU_INFO_REG+I8085_RST75_STATE: sprintf(buffer[which], "%X", I.irq_state[I8085_RST75_LINE]); break;
+		case CPU_INFO_REG+I8085_IREQ: sprintf(buffer[which], "IREQ:%02X", I.IREQ); break;
+		case CPU_INFO_REG+I8085_ISRV: sprintf(buffer[which], "ISRV:%02X", I.ISRV); break;
+		case CPU_INFO_REG+I8085_VECTOR: sprintf(buffer[which], "VEC:%02X", I.INTR); break;
+		case CPU_INFO_REG+I8085_TRAP_STATE: sprintf(buffer[which], "TRAP:%X", I.nmi_state); break;
+		case CPU_INFO_REG+I8085_INTR_STATE: sprintf(buffer[which], "INTR:%X", I.irq_state[I8085_INTR_LINE]); break;
+		case CPU_INFO_REG+I8085_RST55_STATE: sprintf(buffer[which], "RST55:%X", I.irq_state[I8085_RST55_LINE]); break;
+		case CPU_INFO_REG+I8085_RST65_STATE: sprintf(buffer[which], "RST65:%X", I.irq_state[I8085_RST65_LINE]); break;
+		case CPU_INFO_REG+I8085_RST75_STATE: sprintf(buffer[which], "RST75:%X", I.irq_state[I8085_RST75_LINE]); break;
     }
 	return buffer[which];
 }
@@ -1548,6 +1580,23 @@ const char *i8085_info(void *context, int regnum)
 /**************************************************************************
  * 8080 section
  **************************************************************************/
+
+/* Layout of the registers in the debugger */
+static UINT8 i8080_reg_layout[] = {
+	I8080_AF, I8080_BC, I8080_DE, I8080_HL, I8080_SP, I8080_PC, -1,
+	I8080_HALT, I8080_IREQ, I8080_ISRV, I8080_VECTOR, I8080_TRAP_STATE, I8080_INTR_STATE,
+	0 };
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 i8080_win_layout[] = {
+	25, 0,55, 2,	/* register window (top, right rows) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
+	25, 3,55,10,	/* memory #1 window (right, upper middle) */
+	25,14,55, 8,	/* memory #2 window (right, lower middle) */
+     0,23,80, 1,    /* command line window (bottom rows) */
+};
+
+
 void i8080_reset(void *param)
 {
 	i8085_reset(param);
@@ -1624,7 +1673,9 @@ const char *i8080_info(void *context, int regnum)
     {
 		case CPU_INFO_NAME: return "8080";
 		case CPU_INFO_VERSION: return "1.0";
-	}
+		case CPU_INFO_REG_LAYOUT: return (const char *)i8080_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)i8080_win_layout;
+    }
 	return i8085_info(context,regnum);
 }
 

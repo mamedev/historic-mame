@@ -596,16 +596,6 @@ INLINE void m68ki_set_pc(uint address);                  /* set the program coun
 INLINE void m68ki_service_interrupt(void);               /* service a pending interrupt */
 INLINE void m68ki_exception(uint vector);                /* process an exception */
 
-/* Default callbacks used if no callback is defined or it is set to NULL */
-static int  default_int_ack_callback(int int_line);
-static void default_bkpt_ack_callback(int data);
-static void default_reset_instr_callback(void);
-static void default_pc_changed_callback(int new_pc);
-static void default_set_fc_callback(int new_fc);
-static void default_instr_hook_callback(void);
-
-
-
 /* ======================================================================== */
 /* =========================== UTILITY FUNCTIONS ========================== */
 /* ======================================================================== */
@@ -885,7 +875,6 @@ INLINE void m68ki_set_sr(uint value)
    /* Now set the status register */
    CPU_T1 = BIT_F(value);
    CPU_T0 = BIT_E(value);
-   CPU_S = BIT_D(value);
    CPU_INT_MASK = (value >> 8) & 7;
    CPU_X = BIT_4(value);
    CPU_N = BIT_3(value);

@@ -11,7 +11,7 @@
 
 
 
-static int palettebank;
+static int palettebank,flipscreen;
 
 
 
@@ -101,6 +101,15 @@ void mikie_palettebank_w(int offset,int data)
 	}
 }
 
+void mikie_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
 
 
 /***************************************************************************
@@ -113,25 +122,35 @@ void mikie_palettebank_w(int offset,int data)
 void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-	int sx,sy;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
+		int sx,sy,flipx,flipy;
+
 		if (dirtybuffer[offs])
 		{
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - (offs % 32));
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((colorram[offs] & 0x20) << 3),
 					(colorram[offs] & 0x0f) + 16 * palettebank,
-					!(colorram[offs] & 0x80),0,
-					sx,sy,
+					flipx,flipy,
+					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -143,12 +162,23 @@ void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
+		int sx,sy,flipx,flipy;
+
+		sx = spriteram[offs + 3];
+		sy = 244 - spriteram[offs + 1];
+		flipx = ~spriteram[offs] & 0x10;
+		flipy = spriteram[offs] & 0x20;
+		if (flipscreen)
+		{
+			sy -= 2;
+		}
+
 		drawgfx(bitmap,Machine->gfx[(spriteram[offs+2] & 0x40) ? 2 : 1],
 				(spriteram[offs + 2] & 0x3f) + ((spriteram[offs + 2] & 0x80) >> 1)
 						+ ((spriteram[offs] & 0x40) << 1),
 				(spriteram[offs] & 0x0f) + 16 * palettebank,
-				!(spriteram[offs] & 0x20),spriteram[offs] & 0x10,
-				244 - spriteram[offs + 1], 240 - spriteram[offs + 3],
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -51,7 +51,7 @@ int starforc_vh_start(void)
 	memset(dirtybuffer3,1,starforc_bgvideoram_size);
 
 	/* the background area is twice as large as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer3);
 		free(dirtybuffer2);
@@ -59,7 +59,7 @@ int starforc_vh_start(void)
 		return 1;
 	}
 
-	if ((tmpbitmap3 = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap3 = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		osd_free_bitmap(tmpbitmap2);
 		free(dirtybuffer3);
@@ -69,7 +69,7 @@ int starforc_vh_start(void)
 	}
 
 	/* initialize the palette used structure */
-	memset (palette_used_colors, PALETTE_COLOR_UNUSED, 48*8);
+	palette_init_used_colors();
 	for (i = 0; i < 64; i++)
 	{
 		if (i % 8 == 0)
@@ -172,8 +172,8 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer2[offs] = 0;
 
-			sx = 31 - offs / 16;
-			sy = offs % 16;
+			sx = offs % 16;
+			sy = offs / 16;
 
 			drawgfx(tmpbitmap2,Machine->gfx[3],
 					starforc_tilebackground2[offs],
@@ -194,21 +194,21 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer3[offs] = 0;
 
-			sx = 16 * (31 - offs / 16);
-			sy = 16 * (offs % 16);
+			sx = offs % 16;
+			sy = offs / 16;
 
 			drawgfx(tmpbitmap3,Machine->gfx[1],
 					starforc_tilebackground3[offs],
 					starforc_tilebackground3[offs] >> 5,
 					0,0,
-					sx,sy,
+					16*sx,16*sy,
 					0,TRANSPARENCY_NONE,0);
 
 			drawgfx(tmpbitmap3,Machine->gfx[2],
 					code,
 					col,
 					0,0,
-					sx,sy,
+					16*sx,16*sy,
 					0,TRANSPARENCY_PEN,0);
 		}
 	}
@@ -218,12 +218,12 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scrollx,scrolly;
 
 
-		scrollx = starforc_scrollx2[0] + 256 * starforc_scrollx2[1] + 256;
-		scrolly = -starforc_scrolly2[0];
+		scrollx = -starforc_scrolly2[0];
+		scrolly = -starforc_scrollx2[0] - 256 * starforc_scrollx2[1];
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		scrollx = starforc_scrollx3[0] + 256 * starforc_scrollx3[1] + 256;
-		scrolly = -starforc_scrolly3[0];
+		scrollx = -starforc_scrolly3[0];
+		scrolly = -starforc_scrollx3[0] - 256 * starforc_scrollx3[1];
 		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
@@ -232,11 +232,21 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* order, to have the correct priorities. */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int sx,sy,flipx,flipy;
+
+		sx = spriteram[offs+3];
+		if ((spriteram[offs] & 0xc0) == 0xc0)
+			sy = 224-spriteram[offs+2];
+		else
+			sy = 240-spriteram[offs+2];
+		flipx = spriteram[offs+1] & 0x40;
+		flipy =	spriteram[offs+1] & 0x80;
+
 		drawgfx(bitmap,Machine->gfx[((spriteram[offs] & 0xc0) == 0xc0) ? 5 : 4],
 				spriteram[offs],
 				spriteram[offs + 1] & 0x07,
-				spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-				spriteram[offs + 2],spriteram[offs + 3],
+				flipx,flipy,
+				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
@@ -247,14 +257,14 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int sx,sy;
 
 
-		sx = 8 * (31 - offs / 32);
-		sy = 8 * (offs % 32);
+		sx = offs % 32;
+		sy = offs / 32;
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs] + 0x10 * (colorram[offs] & 0x10),
 				colorram[offs] & 0x07,
 				0,0,
-				sx,sy,
+				8*sx,8*sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

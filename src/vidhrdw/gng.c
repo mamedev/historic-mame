@@ -61,36 +61,35 @@ static void get_bg_tile_info( int col, int row )
   Start the video hardware emulation.
 
 ***************************************************************************/
-void gng_vh_stop(void){
+void gng_vh_stop(void)
+{
 	tilemap_dispose(bg_tilemap);
 	tilemap_dispose(fg_tilemap);
-	tilemap_stop();
 }
 
-int gng_vh_start(void){
-	if (tilemap_start() == 0){
-		fg_tilemap = tilemap_create(
-			TILEMAP_TRANSPARENT,
-			8,8, /* tile width, tile height */
-			32,32, /* number of columns, number of rows */
-			0,0	/* scroll rows, scroll columns */
-		);
+int gng_vh_start(void)
+{
+	fg_tilemap = tilemap_create(
+		TILEMAP_TRANSPARENT,
+		8,8, /* tile width, tile height */
+		32,32, /* number of columns, number of rows */
+		0,0	/* scroll rows, scroll columns */
+	);
 
-		bg_tilemap = tilemap_create(TILEMAP_SPLIT,16,16,32,32,1,1);
+	bg_tilemap = tilemap_create(TILEMAP_SPLIT,16,16,32,32,1,1);
 
-		if (fg_tilemap && bg_tilemap){
-			fg_tilemap->tile_get_info = get_fg_tile_info;
-			fg_tilemap->transparent_pen = 3;
+	if (fg_tilemap && bg_tilemap){
+		fg_tilemap->tile_get_info = get_fg_tile_info;
+		fg_tilemap->transparent_pen = 3;
 
-			bg_tilemap->tile_get_info = get_bg_tile_info;
-			bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
-			bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
+		bg_tilemap->tile_get_info = get_bg_tile_info;
+		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
+		bg_tilemap->transmask[1] = 0x01; /* split type 1 has pen 1 transparent in front half */
 
-			return 0;
-		}
-
-		gng_vh_stop();
+		return 0;
 	}
+
+	gng_vh_stop();
 
 	return 1;
 }

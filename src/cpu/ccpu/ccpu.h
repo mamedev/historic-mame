@@ -27,7 +27,8 @@
 /* added these includes */
 #include "osd_cpu.h"
 
-enum { CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG, CCPU_PC,
+enum {
+	CCPU_PC=1, CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG, 
 	CCPU_A, CCPU_B, CCPU_I, CCPU_J, CCPU_P, CCPU_CSTATE };
 
 #ifndef FALSE
@@ -81,6 +82,10 @@ void ccpu_SetInputs(int inputs, int switches);
 /* nicer config function */
 void ccpu_Config (int jmi, int msize, int monitor);
 
+#ifdef MAME_DEBUG
+extern int mame_debug;
+extern void MAME_Debug(void);
+#endif
 
 /*============================================================================================*
 

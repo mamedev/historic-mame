@@ -43,17 +43,12 @@ sprites.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static unsigned char *pf_video,*pf_dirty;
+static unsigned char *pf_video,*pf_dirty,*dec8_sprites;
 static int scroll1[4],scroll2[4],pf1_attr[8],pf2_attr[8];
 static struct osd_bitmap *pf1_bitmap,*pf2_bitmap,*tf2_bitmap;
 unsigned char *dec8_row;
 
-extern int ghost_prot;
 static int blank_tile,shackled_priority;
-
-int dec8_dma;
-
-//static struct osd_bitmap *dma_bitmap;
 
 /***************************************************************************
 
@@ -233,7 +228,7 @@ void lastmiss_scrolly_w(int offset, int data)
 void gondo_scroll_w(int offset, int data)
 {
 	switch (offset) {
-		case 0x0: scroll2[1]=data; break; //scroll2[1]=data; break;
+		case 0x0: scroll2[1]=data; break;
 		case 0x8: scroll2[3]=data; break;
 		case 0x10:  scroll2[0]=data;break;
 	}
@@ -248,10 +243,10 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		y=spriteram[offs+1]+(spriteram[offs]<<8);
+		y=dec8_sprites[offs+1]+(dec8_sprites[offs]<<8);
 		if ((y&0x8000) == 0) continue;
 
-        fx=spriteram[offs+3];
+        fx=dec8_sprites[offs+3];
 
 		if ((fx&0x1) == 0) continue;
 
@@ -259,11 +254,11 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
         fy=fx&0x2;
         fx=fx&0x4;
 
-		x = spriteram[offs+5]+(spriteram[offs+4]<<8);
-		colour = spriteram[offs+6] >> 4;
+		x = dec8_sprites[offs+5]+(dec8_sprites[offs+4]<<8);
+		colour = dec8_sprites[offs+6] >> 4;
 		if (priority==1 && (colour&8)) continue;
 		if (priority==2 && !(colour&8)) continue;
-		sprite = spriteram[offs+7]+(spriteram[offs+6]<<8);
+		sprite = dec8_sprites[offs+7]+(dec8_sprites[offs+6]<<8);
 		sprite &= 0x0fff;
 
 		if (extra) {y=y+16;sprite&=0xffe;}
@@ -602,7 +597,7 @@ void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int colmask[16];
 	int pal_base;
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 8;color++) colmask[color] = 0;
@@ -785,7 +780,7 @@ void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 //if (errorlog) fprintf(errorlog,"Screen update\n");
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 8;color++) colmask[color] = 0;
@@ -903,6 +898,11 @@ void dec8_video_w(int offset, int data)
 	}
 }
 
+void dec8_dma_flag(int offset, int data)
+{
+	memcpy(dec8_sprites,spriteram,0x800);
+}
+
 int dec8_vh_start (void)
 {
 	int i;
@@ -911,8 +911,6 @@ int dec8_vh_start (void)
 	pf1_bitmap=osd_create_bitmap(512,512);
 	pf2_bitmap=osd_create_bitmap(512,512);
 	tf2_bitmap=osd_create_bitmap(512,512);
-
-//dma_bitmap=osd_create_bitmap(256,256);
 
 	pf_video=malloc(0x1000);
 	pf_dirty=malloc(0x800);
@@ -931,36 +929,26 @@ int dec8_vh_start (void)
 	if (!strcmp(Machine->gamedrv->name,"breywood")) shackled_priority=1;
 	if (!strcmp(Machine->gamedrv->name,"shackled")) shackled_priority=1;
 
-dec8_dma=1;
+	/* Sprite buffer for Captain Silver DMA flag */
+	if (!strcmp(Machine->gamedrv->name,"csilver")) {
+		dec8_sprites=malloc(0x800);
+	}
+	else
+		dec8_sprites=spriteram;
 
 	return 0;
 }
 
 void dec8_vh_stop (void)
 {
-/*
-{
-FILE *fp;
-
-fp=fopen("sprite.ram","wb");
-fwrite(spriteram,1,0x800,fp);
-fclose(fp);
-
-fp=fopen("video.ram","wb");
-fwrite(pf_video,1,0x800,fp);
-fclose(fp);
-
-}*/
-
 	osd_free_bitmap(pf1_bitmap);
 	osd_free_bitmap(pf2_bitmap);
 	osd_free_bitmap(tf2_bitmap);
 	free(pf_video);
 	free(pf_dirty);
-}
 
-void dec8_dma_flag(int offset, int data)
-{
-	dec8_dma=1;
+	/* Sprite buffer for Captain Silver DMA flag */
+	if (!strcmp(Machine->gamedrv->name,"csilver"))
+		free(dec8_sprites);
 
 }

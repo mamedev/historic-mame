@@ -18,12 +18,12 @@ int sdwGameYSize;
 int sdwXOffset;
 int sdwYOffset;
 
-
 static int lastx, lasty;
 static int inited = 0;
 static struct artwork *backdrop;
 static struct artwork *overlay;
 
+static int vgColor;
 
 void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 {
@@ -34,7 +34,7 @@ void CinemaVectorData (int fromx, int fromy, int tox, int toy, int color)
 	}
 	if (fromx != lastx || fromx != lasty)
 		vector_add_point (fromx << VEC_SHIFT, fromy << VEC_SHIFT, 0, 0);
-	vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, 7, color * 12);
+	vector_add_point (tox << VEC_SHIFT, toy << VEC_SHIFT, vgColor, color * 12);
 	lastx = tox;
 	lasty = toy;
 }
@@ -82,6 +82,8 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 		palette[3*i+2] = (i & BLUE ) ? 0xff : 0;
 	}
 
+	vgColor = RED|GREEN|BLUE;
+
 	/* fill the rest of the 256 color entries depending on the game */
 	switch (color_prom[0] & 0x0f)
 	{
@@ -114,7 +116,25 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 					shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
 			}
 			else
-				shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
+			{
+				if (color_prom[0] & 0x10)
+				{
+					vgColor = RED|GREEN;
+					/* Shades of yellow for Sundance */
+					shade_fill (palette, RED|GREEN, 8, 128+8, 0, 255);
+				}
+				else if (color_prom[0] & 0x20)
+				{
+					vgColor = BLUE;
+					/* Shades of blue for Tailgunner */
+					shade_fill (palette, BLUE, 8, 128+8, 0, 255);
+				}
+				else
+				{
+					/* Shades of grey for everything else */
+					shade_fill (palette, RED|GREEN|BLUE, 8, 128+8, 0, 255);
+				}
+			}
 			break;
 
 		case  CCPU_MONITOR_64COL:
@@ -123,6 +143,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 			break;
 
 		case  CCPU_MONITOR_WOWCOL:
+			/* TODO: support real color */
 			/* put in 40 shades for red, blue and magenta */
 			shade_fill (palette, RED       ,   8,  47, 10, 250);
 			shade_fill (palette, BLUE      ,  48,  87, 10, 250);
@@ -181,7 +202,7 @@ void cinemat_vh_stop (void)
 
 void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-	if (inited)
+	if (inited || full_refresh)
 	{
 		if (backdrop)
 			vector_vh_update_backdrop(bitmap, backdrop, full_refresh);

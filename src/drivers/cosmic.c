@@ -52,6 +52,7 @@ int PixelClock = 0;
 extern unsigned char *cosmic_videoram;
 
 void cosmic_videoram_w(int offset,int data);
+void cosmic_flipscreen_w(int offset, int data);
 int  cosmic_vh_start(void);
 void cosmic_vh_stop(void);
 void cosmic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -219,10 +220,7 @@ static struct MachineDriver panic_machine_driver =
 	cosmic_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0
 };
 
 
@@ -1127,7 +1125,7 @@ static int magspot2_interrupt(void)
 	/* Coin 1 causes an IRQ, Coin 2 an NMI */
 	if (input_port_4_r(0) & 0x01)
 	{
-		return interrupt();
+  		return interrupt();
 	}
 
 	if (input_port_4_r(0) & 0x02)
@@ -1162,7 +1160,7 @@ static struct MemoryWriteAddress magspot2_writemem[] =
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4800, 0x4800, DAC_data_w },
     { 0x480D, 0x480D, magspot2_colourmap_w },
-  //{ 0x480f, 0x480f, flipscreen_w },
+    { 0x480F, 0x480F, cosmic_flipscreen_w },
 	{ 0x6000, 0x63ff, MWA_RAM },
 	{ 0x6400, 0x7bff, cosmic_videoram_w, &cosmic_videoram, &videoram_size},
     { 0x7c00, 0x7fff, MWA_RAM },
@@ -1257,14 +1255,6 @@ INPUT_PORTS_START( magspot2_input_ports )
 	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo magspot2_gfxdecodeinfo[] =
-{
-
-	{ 1, 0x0000, &cosmicalien_spritelayout16, 0, 8 },
-	{ 1, 0x0000, &cosmicalien_spritelayout32, 0, 8 },
-	{ -1 } /* end of array */
-};
-
 static struct MachineDriver magspot2_machine_driver =
 {
 	/* basic machine hardware */
@@ -1283,7 +1273,7 @@ static struct MachineDriver magspot2_machine_driver =
 
 	/* video hardware */
   	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	magspot2_gfxdecodeinfo,
+	cosmicalien_gfxdecodeinfo,
 	16, 16*4,
 	magspot2_vh_convert_color_prom,
 
@@ -1356,6 +1346,32 @@ struct GameDriver magspot2_driver =
 
 void devzone_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
+static struct MemoryReadAddress devzone_readmem[] =
+{
+	{ 0x0000, 0x2fff, MRA_ROM },
+	{ 0x5000, 0x5000, input_port_0_r },
+	{ 0x5001, 0x5001, input_port_1_r },
+	{ 0x5002, 0x5002, input_port_2_r },
+	{ 0x5003, 0x5003, input_port_3_r },
+    { 0x6000, 0x6001, MRA_RAM },
+	{ 0x6002, 0x6002, input_port_5_r },
+	{ 0x6003, 0x7fff, MRA_RAM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress devzone_writemem[] =
+{
+	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
+	{ 0x4800, 0x4800, DAC_data_w },
+    { 0x480D, 0x480D, magspot2_colourmap_w },
+    { 0x480F, 0x480F, cosmic_flipscreen_w },
+	{ 0x6000, 0x63ff, MWA_RAM },
+	{ 0x6400, 0x7bff, cosmic_videoram_w, &cosmic_videoram, &videoram_size},
+    { 0x7c00, 0x7fff, MWA_RAM },
+	{ -1 }	/* end of table */
+};
+
+
 static struct MachineDriver devzone_machine_driver =
 {
 	/* basic machine hardware */
@@ -1364,7 +1380,7 @@ static struct MachineDriver devzone_machine_driver =
 			CPU_Z80,
 			18432000/6,	/* 3.072 Mhz ???? */
 			0,
-			magspot2_readmem,magspot2_writemem,0,0,
+			devzone_readmem,devzone_writemem,0,0,
 			magspot2_interrupt,1
 		},
 	},
@@ -1374,7 +1390,7 @@ static struct MachineDriver devzone_machine_driver =
 
 	/* video hardware */
   	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	magspot2_gfxdecodeinfo,
+	cosmicalien_gfxdecodeinfo,
 	16, 16*4,
 	devzone_vh_convert_color_prom,
 
@@ -1393,6 +1409,93 @@ static struct MachineDriver devzone_machine_driver =
 		}
 	}
 };
+
+INPUT_PORTS_START( devzone_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_DIPNAME( 0x03, 0x01, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x01, "4000" )
+	PORT_DIPSETTING(    0x02, "6000" )
+	PORT_DIPSETTING(    0x03, "8000" )
+
+    PORT_DIPNAME( 0x0C, 0x0C, "Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0C, "Use Coin A & B" )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+
+	PORT_DIPNAME( 0x10, 0x10, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+  	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	/* Fake port to handle coins */
+	PORT_START	/* IN4 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1)
+
+	PORT_START	/* IN5 */
+	PORT_DIPNAME( 0x0f, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0d, "4 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x09, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0e, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "4 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x0a, "3 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0b, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0xf0, 0x10, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "4 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x50, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x90, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xe0, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xf0, "4 Coins/4 Credits" )
+	PORT_DIPSETTING(    0xa0, "3 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x60, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+INPUT_PORTS_END
 
 ROM_START( devzone_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -1429,7 +1532,7 @@ struct GameDriver devzone_driver =
 	0,
 	0,	/* sound_prom */
 
-	magspot2_input_ports,
+	devzone_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,

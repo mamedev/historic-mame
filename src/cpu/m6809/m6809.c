@@ -75,6 +75,20 @@
 
 extern FILE *errorlog;
 
+static UINT8 m6809_reg_layout[] = {
+	M6809_PC, M6809_S, M6809_CC, M6809_A, M6809_B, M6809_X, -1,
+	M6809_Y, M6809_U, M6809_DP, M6809_NMI_STATE, M6809_IRQ_STATE, M6809_FIRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 m6809_win_layout[] = {
+	27, 0,53, 4,	/* register window (top, right rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
 INLINE UINT8 fetch_effective_address( void );
 
 /* 6809 Registers */
@@ -640,17 +654,25 @@ unsigned m6809_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case M6809_A: return m6809.d.b.h;
-		case M6809_B: return m6809.d.b.l;
-		case M6809_PC: return m6809.pc.w.l;
-		case M6809_S: return m6809.s.w.l;
-		case M6809_U: return m6809.u.w.l;
-		case M6809_X: return m6809.x.w.l;
-		case M6809_Y: return m6809.y.w.l;
-		case M6809_CC: return m6809.cc;
+		case M6809_PC: return PC;
+		case M6809_S: return S;
+		case M6809_CC: return CC;
+		case M6809_U: return U;
+		case M6809_A: return A;
+		case M6809_B: return B;
+		case M6809_X: return X;
+		case M6809_Y: return Y;
+		case M6809_DP: return DP;
 		case M6809_NMI_STATE: return m6809.nmi_state;
 		case M6809_IRQ_STATE: return m6809.irq_state[M6809_IRQ_LINE];
 		case M6809_FIRQ_STATE: return m6809.irq_state[M6809_FIRQ_LINE];
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+					return ( RM( offset ) << 8 ) | RM( offset + 1 );
+			}
 	}
 	return 0;
 }
@@ -663,17 +685,28 @@ void m6809_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case M6809_A: m6809.d.b.h = val; break;
-		case M6809_B: m6809.d.b.l = val; break;
-		case M6809_PC: m6809.pc.w.l = val; break;
-		case M6809_S: m6809.s.w.l = val; break;
-		case M6809_U: m6809.u.w.l = val; break;
-		case M6809_X: m6809.x.w.l = val; break;
-		case M6809_Y: m6809.y.w.l = val; break;
-		case M6809_CC: m6809.cc = val; break;
+		case M6809_PC: PC = val; change_pc(PC); break;
+		case M6809_S: S = val; break;
+		case M6809_CC: CC = val; CHECK_IRQ_LINES; break;
+		case M6809_U: U = val; break;
+		case M6809_A: A = val; break;
+		case M6809_B: B = val; break;
+		case M6809_X: X = val; break;
+		case M6809_Y: Y = val; break;
+		case M6809_DP: DP = val; break;
 		case M6809_NMI_STATE: m6809.nmi_state = val; break;
 		case M6809_IRQ_STATE: m6809.irq_state[M6809_IRQ_LINE] = val; break;
 		case M6809_FIRQ_STATE: m6809.irq_state[M6809_FIRQ_LINE] = val; break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = S + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+				{
+					WM( offset, (val >> 8) & 0xff );
+					WM( offset+1, val & 0xff );
+				}
+			}
     }
 }
 
@@ -692,6 +725,11 @@ void m6809_reset(void *param)
 	wr_u_handler_w = wr_u_slow_w;
 	wr_s_handler_b = wr_s_slow_b;
 	wr_s_handler_w = wr_s_slow_w;
+
+	m6809.int_state = 0;
+	m6809.nmi_state = CLEAR_LINE;
+	m6809.irq_state[0] = CLEAR_LINE;
+	m6809.irq_state[0] = CLEAR_LINE;
 
 	DP = 0; 			/* Reset direct page register */
 
@@ -787,16 +825,17 @@ void m6809_set_irq_callback(int (*callback)(int irqline))
 static void state_save(void *file, const char *module)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file, module, cpu, "PC", &m6809.pc.w.l, 1);
-	state_save_UINT16(file, module, cpu, "U", &m6809.u.w.l, 1);
-	state_save_UINT16(file, module, cpu, "S", &m6809.s.w.l, 1);
-	state_save_UINT16(file, module, cpu, "X", &m6809.x.w.l, 1);
-	state_save_UINT16(file, module, cpu, "Y", &m6809.y.w.l, 1);
-	state_save_UINT8(file, module, cpu, "DP", &m6809.dp, 1);
-	state_save_UINT8(file, module, cpu, "CC", &m6809.cc, 1);
-	state_save_UINT8(file, module, cpu, "INT_STATE", &m6809.int_state, 1);
-	state_save_UINT8(file, module, cpu, "NMI_STATE", &m6809.nmi_state, 1);
-	state_save_UINT8(file, module, cpu, "IRQ_STATE", m6809.irq_state, 2);
+	state_save_UINT16(file, module, cpu, "PC", &PC, 1);
+	state_save_UINT16(file, module, cpu, "U", &U, 1);
+	state_save_UINT16(file, module, cpu, "S", &S, 1);
+	state_save_UINT16(file, module, cpu, "X", &X, 1);
+	state_save_UINT16(file, module, cpu, "Y", &Y, 1);
+	state_save_UINT8(file, module, cpu, "DP", &DP, 1);
+	state_save_UINT8(file, module, cpu, "CC", &CC, 1);
+	state_save_UINT8(file, module, cpu, "INT", &m6809.int_state, 1);
+	state_save_UINT8(file, module, cpu, "NMI", &m6809.nmi_state, 1);
+	state_save_UINT8(file, module, cpu, "IRQ", &m6809.irq_state[0], 1);
+	state_save_UINT8(file, module, cpu, "FIRQ", &m6809.irq_state[1], 1);
 }
 
 /****************************************************************************
@@ -805,16 +844,17 @@ static void state_save(void *file, const char *module)
 static void state_load(void *file, const char *module)
 {
 	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file, module, cpu, "PC", &m6809.pc.w.l, 1);
-	state_load_UINT16(file, module, cpu, "U", &m6809.u.w.l, 1);
-	state_load_UINT16(file, module, cpu, "S", &m6809.s.w.l, 1);
-	state_load_UINT16(file, module, cpu, "X", &m6809.x.w.l, 1);
-	state_load_UINT16(file, module, cpu, "Y", &m6809.y.w.l, 1);
-	state_load_UINT8(file, module, cpu, "DP", &m6809.dp, 1);
-	state_load_UINT8(file, module, cpu, "CC", &m6809.cc, 1);
-	state_load_UINT8(file, module, cpu, "INT_STATE", &m6809.int_state, 1);
-	state_load_UINT8(file, module, cpu, "NMI_STATE", &m6809.nmi_state, 1);
-	state_load_UINT8(file, module, cpu, "IRQ_STATE", m6809.irq_state, 2);
+	state_load_UINT16(file, module, cpu, "PC", &PC, 1);
+	state_load_UINT16(file, module, cpu, "U", &U, 1);
+	state_load_UINT16(file, module, cpu, "S", &S, 1);
+	state_load_UINT16(file, module, cpu, "X", &X, 1);
+	state_load_UINT16(file, module, cpu, "Y", &Y, 1);
+	state_load_UINT8(file, module, cpu, "DP", &DP, 1);
+	state_load_UINT8(file, module, cpu, "CC", &CC, 1);
+	state_load_UINT8(file, module, cpu, "INT", &m6809.int_state, 1);
+	state_load_UINT8(file, module, cpu, "NMI", &m6809.nmi_state, 1);
+	state_load_UINT8(file, module, cpu, "IRQ", &m6809.irq_state[0], 1);
+	state_load_UINT8(file, module, cpu, "FIRQ", &m6809.irq_state[1], 1);
 }
 
 void m6809_state_save(void *file) { state_save(file, "m6809"); }
@@ -841,7 +881,10 @@ const char *m6809_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) John Butler 1997";
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
+		case CPU_INFO_REG_LAYOUT: return (const char*)m6809_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m6809_win_layout;
+
+        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->pc.w.l); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->s.w.l); break;
 #if MAME_DEBUG
 		case CPU_INFO_DASM: r->pc.w.l += Dasm6809(buffer[which], r->pc.w.l); break;
@@ -859,17 +902,18 @@ const char *m6809_info(void *context, int regnum)
                 r->cc & 0x02 ? 'V':'.',
                 r->cc & 0x01 ? 'C':'.');
             break;
-		case CPU_INFO_REG+M6809_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
-		case CPU_INFO_REG+M6809_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
 		case CPU_INFO_REG+M6809_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
 		case CPU_INFO_REG+M6809_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
+		case CPU_INFO_REG+M6809_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
 		case CPU_INFO_REG+M6809_U: sprintf(buffer[which], "U:%04X", r->u.w.l); break;
+		case CPU_INFO_REG+M6809_A: sprintf(buffer[which], "A:%02X", r->d.b.h); break;
+		case CPU_INFO_REG+M6809_B: sprintf(buffer[which], "B:%02X", r->d.b.l); break;
 		case CPU_INFO_REG+M6809_X: sprintf(buffer[which], "X:%04X", r->x.w.l); break;
 		case CPU_INFO_REG+M6809_Y: sprintf(buffer[which], "Y:%04X", r->y.w.l); break;
-		case CPU_INFO_REG+M6809_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
-		case CPU_INFO_REG+M6809_NMI_STATE: sprintf(buffer[which], "NMI:%d", r->nmi_state); break;
-		case CPU_INFO_REG+M6809_IRQ_STATE: sprintf(buffer[which], "IRQ:%d", r->irq_state[M6809_IRQ_LINE]); break;
-		case CPU_INFO_REG+M6809_FIRQ_STATE: sprintf(buffer[which], "FIRQ:%d", r->irq_state[M6809_FIRQ_LINE]); break;
+		case CPU_INFO_REG+M6809_DP: sprintf(buffer[which], "DP:%02X", r->dp); break;
+		case CPU_INFO_REG+M6809_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+M6809_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state[M6809_IRQ_LINE]); break;
+		case CPU_INFO_REG+M6809_FIRQ_STATE: sprintf(buffer[which], "FIRQ:%X", r->irq_state[M6809_FIRQ_LINE]); break;
 	}
 	return buffer[which];
 }
@@ -1226,6 +1270,20 @@ INLINE UINT8 fetch_effective_address( void )
 /****************************************************************************
  * M6309 section
  ****************************************************************************/
+static UINT8 m6309_reg_layout[] = {
+	M6309_PC, M6309_S, M6309_CC, M6309_A, M6309_B, M6309_X, -1,
+	M6309_Y, M6309_U, M6309_DP, M6309_NMI_STATE, M6309_IRQ_STATE, M6309_FIRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 m6309_win_layout[] = {
+	27, 0,53, 4,	/* register window (top, right rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
+     0,23,80, 1,    /* command line window (bottom rows) */
+};
+
 void m6309_reset(void *param) { m6809_reset(param); }
 void m6309_exit(void) { m6809_exit(); }
 int m6309_execute(int cycles) { return m6809_execute(cycles); }
@@ -1247,6 +1305,8 @@ const char *m6309_info(void *context, int regnum)
     switch( regnum )
     {
         case CPU_INFO_NAME: return "M6309";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m6309_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)m6309_win_layout;
     }
     return m6809_info(context,regnum);
 }

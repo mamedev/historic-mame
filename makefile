@@ -7,9 +7,7 @@ LD = gcc
 #ASM = nasm
 ASM = nasmw
 ASMFLAGS = -f coff
-VPATH=src src/cpu/z80 src/cpu/i8085 src/cpu/m6502 src/cpu/h6280 src/cpu/i86 \
-      src/cpu/m6800 src/cpu/m6805 src/cpu/m6809 src/cpu/m68000 src/cpu/tms34010 \
-      src/cpu/tms9900 src/cpu/z8000 src/cpu/tms32010 src/cpu/ccpu
+VPATH=src $(wildcard src/cpu/*)
 
 # uncomment next line to include the debugger
 # DEBUG = 1
@@ -30,34 +28,308 @@ TINY_OBJS = obj/drivers/rthunder.o obj/vidhrdw/rthunder.o
 # uncomment next line to use Assembler 68k engine
 # X86_ASM_68K = 1
 
-# uncomment next line to use Assembler Z80 engine
-# X86_ASM_Z80 = 1
-
 # uncomment next line to use Assembler 6800 engine
 # X86_ASM_6800 = 1
 
+# uncomment the following lines to include a CPU core
+CPUS+=Z80
+CPUS+=8080
+CPUS+=8085A
+CPUS+=M6502
+CPUS+=M65C02
+# CPUS+=M6510
+CPUS+=H6280
+CPUS+=I86
+CPUS+=I8035
+CPUS+=I8039
+# CPUS+=I8048
+CPUS+=N7751
+# CPUS+=M6800
+# CPUS+=M6801
+CPUS+=M6802
+CPUS+=M6803
+CPUS+=M6808
+CPUS+=HD63701
+# CPUS+=M6805
+CPUS+=M68705
+CPUS+=HD63705
+CPUS+=M6309
+CPUS+=M6809
+CPUS+=M68000
+# CPUS+=M68010
+# CPUS+=M68020
+CPUS+=T11
+CPUS+=S2650
+CPUS+=TMS34010
+CPUS+=TMS9900
+# CPUS+=Z8000
+CPUS+=TMS320C10
+CPUS+=CCPU
+# CPUS+=PDP1
+
+# List of CPU core (and, for a debug build, disassembler) object files
+CPUDEFS =
+CPUOBJS =
+DBGOBJS =
+ASMDEFS =
+
+CPU=$(strip $(findstring Z80,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_Z80=1
+CPUOBJS += obj/cpu/z80/z80.o
+DBGOBJS += obj/cpu/z80/z80dasm.o
+endif
+
+CPU=$(strip $(findstring 8080,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_8080=1
+CPUOBJS += obj/cpu/i8085/i8085.o
+DBGOBJS += obj/cpu/i8085/8085dasm.o
+endif
+
+CPU=$(strip $(findstring 8085A,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_8085A=1
+CPUOBJS += obj/cpu/i8085/i8085.o
+DBGOBJS += obj/cpu/i8085/8085dasm.o
+endif
+
+CPU=$(strip $(findstring M6502,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6502=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M65C02,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M65C02=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M6510,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6510=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring H6280,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_H6280=1
+CPUOBJS += obj/cpu/h6280/h6280.o
+DBGOBJS += obj/cpu/h6280/6280dasm.o
+endif
+
+CPU=$(strip $(findstring I86,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I86=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I8035,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I8035=1
+CPUOBJS += obj/cpu/i8039/i8039.o
+DBGOBJS += obj/cpu/i8039/8039dasm.o
+endif
+
+CPU=$(strip $(findstring I8039,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I8039=1
+CPUOBJS += obj/cpu/i8039/i8039.o
+DBGOBJS += obj/cpu/i8039/8039dasm.o
+endif
+
+CPU=$(strip $(findstring I8048,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I8048=1
+CPUOBJS += obj/cpu/i8039/i8039.o
+DBGOBJS += obj/cpu/i8039/8039dasm.o
+endif
+
+CPU=$(strip $(findstring N7751,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_N7751=1
+CPUOBJS += obj/cpu/i8039/i8039.o
+DBGOBJS += obj/cpu/i8039/8039dasm.o
+endif
+
+CPU=$(strip $(findstring M6800,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6800=1
+CPUOBJS += obj/cpu/m6800/m6800.o
+DBGOBJS += obj/cpu/m6800/6800dasm.o
+endif
+
+CPU=$(strip $(findstring M6801,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6801=1
+CPUOBJS += obj/cpu/m6800/m6800.o
+DBGOBJS += obj/cpu/m6800/6800dasm.o
+endif
+
+CPU=$(strip $(findstring M6802,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6802=1
+CPUOBJS += obj/cpu/m6800/m6800.o
+DBGOBJS += obj/cpu/m6800/6800dasm.o
+endif
+
+CPU=$(strip $(findstring M6803,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6803=1
+CPUOBJS += obj/cpu/m6800/m6800.o
+DBGOBJS += obj/cpu/m6800/6800dasm.o
+endif
+
+CPU=$(strip $(findstring M6808,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6808=1
+CPUOBJS += obj/cpu/m6800/m6800.o
+DBGOBJS += obj/cpu/m6800/6800dasm.o
+endif
+
+CPU=$(strip $(findstring HD63701,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_HD63701=1
+CPUOBJS += obj/cpu/m6800/m6800.o
+DBGOBJS += obj/cpu/m6800/6800dasm.o
+endif
+
+CPU=$(strip $(findstring M6805,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6805=1
+CPUOBJS += obj/cpu/m6805/m6805.o
+DBGOBJS += obj/cpu/m6805/6805dasm.o
+endif
+
+CPU=$(strip $(findstring M68705,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M68705=1
+CPUOBJS += obj/cpu/m6805/m6805.o
+DBGOBJS += obj/cpu/m6805/6805dasm.o
+endif
+
+CPU=$(strip $(findstring HD63705,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_HD63705=1
+CPUOBJS += obj/cpu/m6805/m6805.o
+DBGOBJS += obj/cpu/m6805/6805dasm.o
+endif
+
+CPU=$(strip $(findstring M6309,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6309=1
+CPUOBJS += obj/cpu/m6809/m6809.o
+DBGOBJS += obj/cpu/m6809/6809dasm.o
+endif
+
+CPU=$(strip $(findstring M6809,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6809=1
+CPUOBJS += obj/cpu/m6809/m6809.o
+DBGOBJS += obj/cpu/m6809/6809dasm.o
+endif
+
+CPU=$(strip $(findstring M68000,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M68000=1
 ifdef X86_ASM_68K
-M68KOBJS = obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
-M68KDEF  = -DA68KEM
+CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
+ASMDEFS += -DA68KEM
 else
-M68KOBJS = obj/cpu/m68000/m68kops.o obj/cpu/m68000/m68kcpu.o \
+CPUOBJS += obj/cpu/m68000/m68kops.o obj/cpu/m68000/m68kcpu.o \
            obj/cpu/m68000/m68kopac.o obj/cpu/m68000/m68kopdm.o \
            obj/cpu/m68000/m68kopnz.o obj/cpu/m68000/m68kmame.o
-M68KDEF  =
+endif
+DBGOBJS += obj/cpu/m68000/d68k.o
 endif
 
-ifdef X86_ASM_Z80
-Z80OBJS = obj/cpu/z80/z80.oa
-Z80DEF = -nasm -verbose 0
+CPU=$(strip $(findstring M68010,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M68010=1
+ifdef X86_ASM_68K
+CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
+ASMDEFS += -DA68KEM
 else
-Z80OBJS = obj/cpu/z80/z80.o
-Z80DEF =
+CPUOBJS += obj/cpu/m68000/m68kops.o obj/cpu/m68000/m68kcpu.o \
+           obj/cpu/m68000/m68kopac.o obj/cpu/m68000/m68kopdm.o \
+           obj/cpu/m68000/m68kopnz.o obj/cpu/m68000/m68kmame.o
+endif
+DBGOBJS += obj/cpu/m68000/d68k.o
 endif
 
-ifdef X86_ASM_6800
-M6800OBJS = obj/cpu/m6800/m6800.oa
+CPU=$(strip $(findstring M68020,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M68020=1
+ifdef X86_ASM_68K
+CPUOBJS += obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
+ASMDEFS += -DA68KEM
 else
-M6800OBJS = obj/cpu/m6800/m6800.o
+CPUOBJS += obj/cpu/m68000/m68kops.o obj/cpu/m68000/m68kcpu.o \
+           obj/cpu/m68000/m68kopac.o obj/cpu/m68000/m68kopdm.o \
+           obj/cpu/m68000/m68kopnz.o obj/cpu/m68000/m68kmame.o
+endif
+DBGOBJS += obj/cpu/m68000/d68k.o
+endif
+
+CPU=$(strip $(findstring T11,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_T11=1
+CPUOBJS += obj/cpu/t11/t11.o
+DBGOBJS += obj/cpu/t11/t11dasm.o
+endif
+
+CPU=$(strip $(findstring S2650,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_S2650=1
+CPUOBJS += obj/cpu/s2650/s2650.o
+DBGOBJS += obj/cpu/s2650/2650dasm.o
+endif
+
+CPU=$(strip $(findstring TMS34010,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS34010=1
+CPUOBJS += obj/cpu/tms34010/tms34010.o obj/cpu/tms34010/34010fld.o
+DBGOBJS += obj/cpu/tms34010/34010dsm.o
+endif
+
+CPU=$(strip $(findstring TMS9900,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS9900=1
+CPUOBJS += obj/cpu/tms9900/tms9900.o
+DBGOBJS += obj/cpu/tms9900/9900dasm.o
+endif
+
+CPU=$(strip $(findstring Z8000,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_Z8000=1
+CPUOBJS += obj/cpu/z8000/z8000.o
+DBGOBJS += obj/cpu/z8000/9900dasm.o
+endif
+
+CPU=$(strip $(findstring TMS320C10,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_TMS320C10=1
+CPUOBJS += obj/cpu/tms32010/tms32010.o
+DBGOBJS += obj/cpu/tms32010/32010dsm.o
+endif
+
+CPU=$(strip $(findstring CCPU,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_CCPU=1
+CPUOBJS += obj/cpu/ccpu/ccpu.o obj/vidhrdw/cinemat.o
+#DBGOBJS += obj/cpu/ccpu/ccpudasm.o
+endif
+
+CPU=$(strip $(findstring PDP1,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_PDP1=1
+CPUOBJS += obj/cpu/pdp1/pdp1.o
+DBGOBJS += obj/cpu/pdp1/pdp1dasm.o
 endif
 
 ifdef DEBUG
@@ -66,11 +338,12 @@ else
 DEBUGDEF =
 endif
 
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DINLINE="static __inline__" -Dasm=__asm__
-CDEFS = $(DEFS) $(M68KDEF) $(DEBUGDEF)
+DEFS = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -DINLINE="static __inline__" -Dasm=__asm__
+CDEFS = $(DEFS) $(CPUDEFS) $(ASMDEFS) $(DEBUGDEF)
 
 ifdef SYMBOLS
-CFLAGS = -Isrc -Isrc/msdos -O -mpentium -Wall -Werror -g
+# Sorry for the -Wno-unused, but I was tired ;)
+CFLAGS = -Isrc -Isrc/msdos -O0 -pedantic -Wall -Werror -Wno-unused -g
 else
 CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium \
 	-Werror -Wall -W -Wno-sign-compare -Wno-unused \
@@ -99,7 +372,8 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
          obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
-         obj/tilemap.o obj/state.o \
+	 obj/tilemap.o obj/state.o \
+	 $(sort $(CPUOBJS)) \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ay8910.o obj/sndhrdw/2203intf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
@@ -114,24 +388,11 @@ COREOBJS = obj/version.o obj/driver.o obj/mame.o obj/common.o obj/usrintrf.o \
          obj/sndhrdw/namco.o \
 		 obj/sndhrdw/streams.o obj/sndhrdw/exvolume.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
-         obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
-         obj/vidhrdw/vector.o obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
+	 obj/vidhrdw/generic.o obj/sndhrdw/generic.o obj/vidhrdw/vector.o \
+	 obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
          obj/machine/ticket.o \
-         $(Z80OBJS) obj/cpu/m6502/m6502.o obj/cpu/h6280/h6280.o \
-         obj/cpu/i86/i86.o obj/cpu/i8039/i8039.o obj/cpu/i8085/i8085.o \
-         $(M6800OBJS) obj/cpu/m6805/m6805.o obj/cpu/m6809/m6809.o \
-         $(M68KOBJS) obj/cpu/s2650/s2650.o obj/cpu/t11/t11.o \
-         obj/cpu/tms34010/tms34010.o obj/cpu/tms34010/34010fld.o \
-         obj/cpu/tms9900/tms9900.o obj/cpu/z8000/z8000.o \
-         obj/cpu/ccpu/ccpu.o obj/vidhrdw/cinemat.o \
-         obj/mamedbg.o \
-         obj/cpu/m68000/d68k.o \
-         obj/cpu/z80/z80dasm.o	obj/cpu/i8085/8085dasm.o obj/cpu/m6502/6502dasm.o \
-         obj/cpu/h6280/6280dasm.o obj/cpu/i86/i86dasm.o obj/cpu/i8039/8039dasm.o \
-         obj/cpu/m6800/6800dasm.o obj/cpu/m6805/6805dasm.o obj/cpu/m6809/6809dasm.o \
-         obj/cpu/t11/t11dasm.o obj/cpu/s2650/2650dasm.o obj/cpu/tms34010/34010dsm.o \
-         obj/cpu/tms9900/9900dasm.o obj/cpu/z8000/8000dasm.o \
-         obj/cpu/tms32010/tms32010.o obj/cpu/tms32010/32010dsm.o \
+         obj/mamedbg.o obj/window.o \
+	 $(sort $(DBGOBJS)) \
 
 DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
@@ -222,7 +483,6 @@ obj/galaxian.a: \
 obj/scramble.a: \
          obj/machine/scramble.o obj/sndhrdw/scramble.o obj/drivers/scramble.o \
          obj/vidhrdw/frogger.o obj/sndhrdw/frogger.o obj/drivers/frogger.o \
-         obj/drivers/ckongs.o \
          obj/drivers/scobra.o \
          obj/vidhrdw/amidar.o obj/drivers/amidar.o \
          obj/vidhrdw/jumpbug.o obj/drivers/jumpbug.o \
@@ -287,6 +547,7 @@ obj/mcr.a: \
          obj/machine/mcr68.o obj/vidhrdw/mcr68.o obj/drivers/mcr68.o \
 
 obj/irem.a: \
+         obj/vidhrdw/skychut.o obj/drivers/skychut.o \
          obj/sndhrdw/irem.o \
          obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
          obj/vidhrdw/troangel.o obj/drivers/troangel.o \
@@ -398,6 +659,8 @@ obj/dec0.a: \
          obj/vidhrdw/karnov.o obj/drivers/karnov.o \
          obj/machine/dec0.o obj/vidhrdw/dec0.o obj/drivers/dec0.o \
          obj/vidhrdw/darkseal.o obj/drivers/darkseal.o \
+         obj/vidhrdw/cninja.o obj/drivers/cninja.o \
+         obj/vidhrdw/tumblep.o obj/drivers/tumblep.o \
 
 obj/tehkan.a: \
          obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
@@ -412,6 +675,7 @@ obj/tehkan.a: \
          obj/vidhrdw/wc90b.o obj/drivers/wc90b.o \
 
 obj/konami.a: \
+         obj/sndhrdw/timeplt.o \
          obj/vidhrdw/tutankhm.o obj/drivers/tutankhm.o \
          obj/drivers/junofrst.o \
          obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \

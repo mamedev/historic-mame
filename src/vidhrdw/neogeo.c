@@ -232,7 +232,7 @@ static const unsigned char *neogeo_palette(void)
 		return palette_recalc();
 	}
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096);
+	palette_init_used_colors();
 
 	/* character foreground */
     pen_usage= Machine->gfx[fix_bank]->pen_usage;

@@ -77,7 +77,7 @@ int capbowl_vh_start(void)
 
 	// Initialize color areas. The screen is blank
 	memset(raw_video_ram, 0, 256*256);
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 	memset(color_count, 0, sizeof(color_count));
 	memset(dirty_row, 1, sizeof(dirty_row));
 

@@ -30,13 +30,12 @@ to do:
 
 	1)	set each tilemap's scroll registers
 
-	2)	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors);
-		call tilemap_update for each tilemap.
-		call tilemap_mark_palette
-		mark the colors used by sprites.
+	2)	call tilemap_update for each tilemap.
 
-	3)	call palette recalc.  If the palette manager has compressed the palette,
-		call tilemap_mark_all_pixels_dirty for each tilemap.
+	3)	call palette_init_used_colors.
+		mark the colors used by sprites.
+		call palette recalc.  If the palette manager has compressed the palette,
+			call tilemap_mark_all_pixels_dirty for each tilemap.
 
 	4)	call tilemap_render for each tilemap.
 
@@ -46,7 +45,6 @@ to do:
 
 static int orientation, screen_width, screen_height;
 struct tile_info tile_info;
-static int *pen_refcount;
 
 #define SWAP(X,Y) {int temp=X; X=Y; Y=temp; }
 
@@ -96,49 +94,10 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 	if( errorlog ) fprintf( errorlog, "clip: %d,%d,%d,%d\n", left,top,right,bottom );
 }
 
-extern unsigned short *game_colortable;	/* in palette.c */
-
-static void use_color( int base_pen, unsigned int pen_usage ){
-	while( pen_usage ){
-		if( pen_usage&1 ) pen_refcount[game_colortable[base_pen]]++;
-		base_pen++;
-		pen_usage >>= 1;
-	}
-}
-
-static void unuse_color( int base_pen, unsigned int pen_usage ){
-	while( pen_usage ){
-		if( pen_usage&1 ) pen_refcount[game_colortable[base_pen]]--;
-		base_pen++;
-		pen_usage >>= 1;
-	}
-}
-
-int tilemap_start( void ){
-	int total_colors = Machine->drv->total_colors;
+void tilemap_init( void ){
 	orientation = Machine->orientation;
 	screen_width = Machine->scrbitmap->width;
 	screen_height = Machine->scrbitmap->height;
-	pen_refcount = (int *)malloc(sizeof(int)*total_colors);
-	if( pen_refcount ){
-		int pen;
-		for( pen=0; pen<total_colors; pen++ ) pen_refcount[pen] = 0;
-		return 0;
-	}
-	return 1; /* error */
-}
-
-void tilemap_stop( void ){
-	free( pen_refcount );
-}
-
-void tilemap_mark_palette( void ){
-	if( palette_used_colors ){ /* this needn't be called for static palette games */
-		int pen;
-		for( pen=0; pen<Machine->drv->total_colors; pen++ ){
-			if( pen_refcount[pen] ) palette_used_colors[pen] = PALETTE_COLOR_USED;
-		}
-	}
 }
 
 /***********************************************************************************/
@@ -1175,29 +1134,30 @@ void tilemap_update( struct tilemap *tilemap ){
 			if( visible[tile_index] && dirty_vram[tile_index] ){
 				int row = tile_index/tilemap->num_cols;
 				int col = tile_index%tilemap->num_cols;
+				int flags;
 
 				if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
 				if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
 				if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
 
-				unuse_color( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
+				palette_decrease_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
 
 				tilemap->tile_get_info( col, row );
 
-				tile_info.flags ^= tile_flip;
+				flags = tile_info.flags ^ tile_flip;
 				if( orientation & ORIENTATION_SWAP_XY ){
-					tile_info.flags =
-						(tile_info.flags&0xfc) |
-						((tile_info.flags&1)<<1) | ((tile_info.flags&2)>>1);
+					flags =
+						(flags&0xfc) |
+						((flags&1)<<1) | ((flags&2)>>1);
 				}
 
 				pen_usage[tile_index] = tile_info.pen_usage;
 				pendata[tile_index] = tile_info.pen_data;
 				paldata[tile_index] = tile_info.pal_data;
-				tilemap->flags[tile_index] = tile_info.flags;
+				tilemap->flags[tile_index] = flags;
 				tilemap->priority[tile_index] = tile_info.priority;
 
-				use_color( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
+				palette_increase_usage_count( (paldata[tile_index]-Machine->colortable), pen_usage[tile_index] );
 
 				dirty_pixels[tile_index] = 1;
 				dirty_vram[tile_index] = 0;
@@ -1209,7 +1169,7 @@ void tilemap_update( struct tilemap *tilemap ){
 void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value ){
 	if( orientation & ORIENTATION_SWAP_XY ){
 		if( orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
-		if( orientation & ORIENTATION_FLIP_Y ) value = -screen_height-value;
+		if( orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->height-value;
 		if( tilemap->colscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->colscroll[which] = value;
@@ -1217,7 +1177,7 @@ void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value ){
 	}
 	else {
 		if( orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
-		if( orientation & ORIENTATION_FLIP_X ) value = -screen_width-value;
+		if( orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->width-value;
 		if( tilemap->rowscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->rowscroll[which] = value;
@@ -1227,7 +1187,7 @@ void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value ){
 void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value ){
 	if( orientation & ORIENTATION_SWAP_XY ){
 		if( orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
-		if( orientation & ORIENTATION_FLIP_X ) value = -screen_width-value;
+		if( orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->width-value;
 		if( tilemap->rowscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->rowscroll[which] = value;
@@ -1235,7 +1195,7 @@ void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value ){
 	}
 	else {
 		if( orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
-		if( orientation & ORIENTATION_FLIP_Y ) value = -screen_height-value;
+		if( orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->height-value;
 		if( tilemap->colscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->colscroll[which] = value;

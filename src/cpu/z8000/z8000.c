@@ -555,6 +555,13 @@ unsigned z8000_get_reg(int regnum)
 		case Z8000_NMI_STATE: return Z.nmi_state;
 		case Z8000_NVI_STATE: return Z.irq_state[0];
 		case Z8000_VI_STATE: return Z.irq_state[1];
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = NSP + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+					return RDMEM_W( offset ); 
+			}
 	}
     return 0;
 }
@@ -590,6 +597,13 @@ void z8000_set_reg(int regnum, unsigned val)
 		case Z8000_NMI_STATE: Z.nmi_state = val; break;
 		case Z8000_NVI_STATE: Z.irq_state[0] = val; break;
 		case Z8000_VI_STATE: Z.irq_state[1] = val; break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = NSP + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+					WRMEM_W( offset, val & 0xffff );
+			}
     }
 }
 

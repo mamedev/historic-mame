@@ -865,7 +865,33 @@ struct GameDriver amidar_driver =
 	__FILE__,
 	0,
 	"amidar",
-	"Amidar (US)",
+	"Amidar",
+	"1981",
+	"Konami",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	amidarjp_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	amidarjp_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	amidar_hiload, amidar_hisave
+};
+
+struct GameDriver amidaru_driver =
+{
+	__FILE__,
+	&amidar_driver,
+	"amidaru",
+	"Amidar (Stern)",
 	"1982",
 	"Konami (Stern license)",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
@@ -912,32 +938,6 @@ struct GameDriver amidaro_driver =
 	amidar_hiload, amidar_hisave
 };
 
-struct GameDriver amidarjp_driver =
-{
-	__FILE__,
-	&amidar_driver,
-	"amidarjp",
-	"Amidar (Japan)",
-	"1981",
-	"Konami",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-	0,
-
-	amidarjp_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	amidarjp_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	amidar_hiload, amidar_hisave
-};
-
 struct GameDriver amigo_driver =
 {
 	__FILE__,
@@ -971,7 +971,7 @@ struct GameDriver turtles_driver =
 	"turtles",
 	"Turtles",
 	"1981",
-	"Stern",
+	"[Konami] (Stern license)",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
@@ -997,7 +997,7 @@ struct GameDriver turpin_driver =
 	"turpin",
 	"Turpin",
 	"1981",
-	"Sega",
+	"[Konami] (Sega license)",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,

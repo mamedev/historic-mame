@@ -7,7 +7,8 @@
 #include "memory.h"
 #include "cpuintrf.h"
 
-enum { M6800_A, M6800_B, M6800_PC, M6800_S, M6800_X, M6800_CC,
+enum {
+	M6800_PC=1, M6800_S, M6800_A, M6800_B, M6800_X, M6800_CC,
 	M6800_WAI_STATE, M6800_NMI_STATE, M6800_IRQ_STATE, M6800_OCI_STATE };
 
 #define M6800_INT_NONE  0           /* No interrupt required */

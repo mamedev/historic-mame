@@ -152,7 +152,7 @@ static void darkseal_update_palette(void)
 	int offs,color,code,i,pal_base;
 	int colmask[32];
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 

@@ -24,20 +24,17 @@ write:
 c000      command for the audio CPU
 c200      watchdog reset
 c300      interrupt enable
-c301      ?
 c302      flip screen
-c303      ?
 c304      trigger interrupt on audio CPU
-c305-c307 ?
+c308	  Protection ???  Stuffs in some values computed from ROM content
+c30a	  coin counter 1
+c30c	  coin counter 2
 
 interrupts:
 standard NMI at 0x66
 
-
 SOUND BOARD:
 same as Pooyan
-
-TODO: support RC filters on the sound output (should be similar to Scramble)
 
 ***************************************************************************/
 
@@ -47,73 +44,27 @@ TODO: support RC filters on the sound output (should be similar to Scramble)
 
 extern unsigned char *timeplt_videoram,*timeplt_colorram;
 
+int timeplt_scanline_r(int offset);
 void timeplt_videoram_w(int offset,int data);
 void timeplt_colorram_w(int offset,int data);
 void timeplt_flipscreen_w(int offset,int data);
-int timeplt_scanline_r(int offset);
-int timeplt_vh_start(void);
+int  timeplt_vh_start(void);
 void timeplt_vh_stop(void);
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+/* defined in sndhrdw/timeplt.c */
+extern struct MemoryReadAddress timeplt_sound_readmem[];
+extern struct MemoryWriteAddress timeplt_sound_writemem[];
+extern struct AY8910interface timeplt_ay8910_interface;
+void timeplt_sh_irqtrigger_w(int offset,int data);
 
-/* I am not 100% sure that this timer is correct, but */
-/* I'm using the Gyruss wired to the higher 4 bits    */
-/* instead of the lower ones, so there is a good      */
-/* chance it's the right one. */
-/* I had to change one value in _timer to avoid the */
-/* tempo being twice what it should be. */
 
-/* The timer clock which feeds the lower 4 bits of    */
-/* AY-3-8910 port A is based on the same clock        */
-/* feeding the sound CPU Z80.  It is a divide by      */
-/* 10240, formed by a standard divide by 1024,        */
-/* followed by a divide by 10 using a 4 bit           */
-/* bi-quinary count sequence. (See LS90 data sheet    */
-/* for an example).                                   */
-/* Bits 1-3 come directly from the upper three bits   */
-/* of the bi-quinary counter. Bit 0 comes from the    */
-/* output of the divide by 1024.                      */
 
-static int timeplt_timer[20] = {
-0x00, 0x01, 0x02, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
-/*            ^^ changed this to make tempo correct */
-/* the code waits until (timer & 0xf0) == 0 so we must return 0 only once */
-0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
-};
-
-static int timeplt_portB_r(int offset)
+static void timeplt_coin_counter_w(int offset, int data)
 {
-	/* need to protect from totalcycles overflow */
-	static int last_totalcycles = 0;
-
-	/* number of Z80 clock cycles to count */
-	static int clock;
-
-	int current_totalcycles;
-
-	current_totalcycles = cpu_gettotalcycles();
-	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
-
-	last_totalcycles = current_totalcycles;
-
-	return timeplt_timer[clock/512] << 4;
+	coin_counter_w(offset >> 1, data);
 }
-
-void timeplt_sh_irqtrigger_w(int offset,int data)
-{
-	static int last;
-
-
-	if (last == 1 && data == 0)
-	{
-		/* setting bit 0 high then low triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
-	}
-
-	last = data;
-}
-
 
 
 static struct MemoryReadAddress readmem[] =
@@ -138,33 +89,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb010, 0xb03f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb410, 0xb43f, MWA_RAM, &spriteram_2 },
 	{ 0xc000, 0xc000, soundlatch_w },
-	{ 0xc200, 0xc200, MWA_NOP },
+	{ 0xc200, 0xc200, watchdog_reset_w },
 	{ 0xc300, 0xc300, interrupt_enable_w },
 	{ 0xc302, 0xc302, timeplt_flipscreen_w },
 	{ 0xc304, 0xc304, timeplt_sh_irqtrigger_w },
+	{ 0xc30a, 0xc30c, timeplt_coin_counter_w },  /* c30b is not used */
 	{ -1 }	/* end of table */
 };
-
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-	{ 0x6000, 0x6000, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-	{ 0x5000, 0x5000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x7000, 0x7000, AY8910_control_port_1_w },
-	{ -1 }	/* end of table */
-};
-
 
 
 INPUT_PORTS_START( input_ports )
@@ -199,7 +130,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
@@ -216,7 +147,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
 	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
 	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
 	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
@@ -294,19 +225,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x20ff, 0x20ff },
-	{ soundlatch_r },
-	{ timeplt_portB_r },
-	{ 0 },
-	{ 0 }
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -320,9 +238,9 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
+			14318180/8,	/* 1.789772727 MHz */						\
 			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,0,0,
+			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
@@ -347,7 +265,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&timeplt_ay8910_interface
 		}
 	}
 };

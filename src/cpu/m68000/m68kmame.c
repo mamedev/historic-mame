@@ -1,6 +1,28 @@
+#include <stdio.h>
 #include "m68000.h"
 #include "memory.h"
-#include <stdio.h>
+#include "osd_cpu.h"
+
+static UINT8 m68k_reg_layout[] = {
+	M68K_PC, M68K_ISP, -1,
+	M68K_SR, M68K_USP, -1,
+	M68K_D0, M68K_A0, -1,
+	M68K_D1, M68K_A1, -1,
+	M68K_D2, M68K_A2, -1,
+	M68K_D3, M68K_A3, -1,
+	M68K_D4, M68K_A4, -1,
+	M68K_D5, M68K_A5, -1,
+	M68K_D6, M68K_A6, -1,
+	M68K_D7, M68K_A7, 0
+};
+
+static UINT8 m68k_win_layout[] = {
+	48, 0,32,13,	/* register window (top right) */
+	 0, 0,47,13,	/* disassembler window (top left) */
+	 0,14,47, 8,	/* memory #1 window (left, middle) */
+	48,14,32, 8,	/* memory #2 window (right, middle) */
+	 0,23,80, 1 	/* command line window (bottom rows) */
+};
 
 void m68000_reset(void *param)
 {
@@ -77,6 +99,14 @@ unsigned m68000_get_reg(int regnum)
 		case M68K_A5: return m68k_peek_ar(5);
 		case M68K_A6: return m68k_peek_ar(6);
 		case M68K_A7: return m68k_peek_ar(7);
+/* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = m68k_peek_isp() + 4 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xfffffd )
+					return cpu_readmem24_dword( offset );
+			}
     }
     return 0;
 }
@@ -108,6 +138,14 @@ void m68000_set_reg(int regnum, unsigned val)
 		case M68K_A5: m68k_poke_ar(5,val); break;
 		case M68K_A6: m68k_poke_ar(6,val); break;
 		case M68K_A7: m68k_poke_ar(7,val); break;
+/* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = m68k_peek_isp() + 4 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xfffffd )
+					cpu_writemem24_dword( offset, val );
+			}
     }
 }
 
@@ -176,17 +214,26 @@ const char *m68000_info(void *context, int regnum)
 		case CPU_INFO_CREDITS: return "Copyright 1999 Karl Stenerud.  All rights reserved.";
 		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", r->pc); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->isp); break;
+		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
+
 #ifdef MAME_DEBUG
 		case CPU_INFO_DASM:
 			change_pc24(r->pc);
 			r->pc += Dasm68000(buffer[which], r->pc);
+			/* need to update PC in the core's context */
+			if( !context)
+				m68k_poke_pc(r->pc);
 			break;
 #else
 		case CPU_INFO_DASM:
 			change_pc24(r->pc);
 			sprintf(buffer[which],"$%02x", ROM[r->pc]);
 			r->pc++;
-			break;
+			/* need to update PC in the core's context */
+			if( !context)
+				m68k_poke_pc(r->pc);
+            break;
 #endif
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
@@ -207,28 +254,29 @@ const char *m68000_info(void *context, int regnum)
 				r->sr & 0x0002 ? 'V':'.',
 				r->sr & 0x0001 ? 'C':'.');
             break;
-		case CPU_INFO_REG+M68K_PC:	sprintf(buffer[which], "PC:%08X", r->pc); break;
+		case CPU_INFO_REG+M68K_PC:	sprintf(buffer[which], "PC :%06X", r->pc); break;
 		case CPU_INFO_REG+M68K_ISP: sprintf(buffer[which], "ISP:%08X", r->isp); break;
+		case CPU_INFO_REG+M68K_SR:  sprintf(buffer[which], "SR :%08X", r->sr); break;
 		case CPU_INFO_REG+M68K_USP: sprintf(buffer[which], "USP:%08X", r->usp); break;
 		case CPU_INFO_REG+M68K_VBR: sprintf(buffer[which], "VBR:%08X", r->vbr); break;
 		case CPU_INFO_REG+M68K_SFC: sprintf(buffer[which], "SFC:%08X", r->sfc); break;
 		case CPU_INFO_REG+M68K_DFC: sprintf(buffer[which], "DFC:%08X", r->dfc); break;
-		case CPU_INFO_REG+M68K_D0:	sprintf(buffer[which], "D0:%08X", r->d[0]); break;
-		case CPU_INFO_REG+M68K_D1:	sprintf(buffer[which], "D1:%08X", r->d[1]); break;
-		case CPU_INFO_REG+M68K_D2:	sprintf(buffer[which], "D2:%08X", r->d[2]); break;
-		case CPU_INFO_REG+M68K_D3:	sprintf(buffer[which], "D3:%08X", r->d[3]); break;
-		case CPU_INFO_REG+M68K_D4:	sprintf(buffer[which], "D4:%08X", r->d[4]); break;
-		case CPU_INFO_REG+M68K_D5:	sprintf(buffer[which], "D5:%08X", r->d[5]); break;
-		case CPU_INFO_REG+M68K_D6:	sprintf(buffer[which], "D6:%08X", r->d[6]); break;
-		case CPU_INFO_REG+M68K_D7:	sprintf(buffer[which], "D7:%08X", r->d[7]); break;
-		case CPU_INFO_REG+M68K_A0:	sprintf(buffer[which], "A0:%08X", r->a[0]); break;
-		case CPU_INFO_REG+M68K_A1:	sprintf(buffer[which], "A1:%08X", r->a[1]); break;
-		case CPU_INFO_REG+M68K_A2:	sprintf(buffer[which], "A2:%08X", r->a[2]); break;
-		case CPU_INFO_REG+M68K_A3:	sprintf(buffer[which], "A3:%08X", r->a[3]); break;
-		case CPU_INFO_REG+M68K_A4:	sprintf(buffer[which], "A4:%08X", r->a[4]); break;
-		case CPU_INFO_REG+M68K_A5:	sprintf(buffer[which], "A5:%08X", r->a[5]); break;
-		case CPU_INFO_REG+M68K_A6:	sprintf(buffer[which], "A6:%08X", r->a[6]); break;
-		case CPU_INFO_REG+M68K_A7:	sprintf(buffer[which], "A7:%08X", r->a[7]); break;
+		case CPU_INFO_REG+M68K_D0:	sprintf(buffer[which], "D0 :%08X", r->d[0]); break;
+		case CPU_INFO_REG+M68K_D1:	sprintf(buffer[which], "D1 :%08X", r->d[1]); break;
+		case CPU_INFO_REG+M68K_D2:	sprintf(buffer[which], "D2 :%08X", r->d[2]); break;
+		case CPU_INFO_REG+M68K_D3:	sprintf(buffer[which], "D3 :%08X", r->d[3]); break;
+		case CPU_INFO_REG+M68K_D4:	sprintf(buffer[which], "D4 :%08X", r->d[4]); break;
+		case CPU_INFO_REG+M68K_D5:	sprintf(buffer[which], "D5 :%08X", r->d[5]); break;
+		case CPU_INFO_REG+M68K_D6:	sprintf(buffer[which], "D6 :%08X", r->d[6]); break;
+		case CPU_INFO_REG+M68K_D7:	sprintf(buffer[which], "D7 :%08X", r->d[7]); break;
+		case CPU_INFO_REG+M68K_A0:	sprintf(buffer[which], "A0 :%08X", r->a[0]); break;
+		case CPU_INFO_REG+M68K_A1:	sprintf(buffer[which], "A1 :%08X", r->a[1]); break;
+		case CPU_INFO_REG+M68K_A2:	sprintf(buffer[which], "A2 :%08X", r->a[2]); break;
+		case CPU_INFO_REG+M68K_A3:	sprintf(buffer[which], "A3 :%08X", r->a[3]); break;
+		case CPU_INFO_REG+M68K_A4:	sprintf(buffer[which], "A4 :%08X", r->a[4]); break;
+		case CPU_INFO_REG+M68K_A5:	sprintf(buffer[which], "A5 :%08X", r->a[5]); break;
+		case CPU_INFO_REG+M68K_A6:	sprintf(buffer[which], "A6 :%08X", r->a[6]); break;
+		case CPU_INFO_REG+M68K_A7:	sprintf(buffer[which], "A7 :%08X", r->a[7]); break;
     }
 	return buffer[which];
 }

@@ -6,8 +6,9 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-enum { M6809_A, M6809_B, M6809_PC, M6809_S, M6809_U, M6809_X, M6809_Y, M6809_CC,
-	M6809_NMI_STATE, M6809_IRQ_STATE, M6809_FIRQ_STATE };
+enum {
+	M6809_PC=1, M6809_S, M6809_CC ,M6809_A, M6809_B, M6809_U, M6809_X, M6809_Y,
+	M6809_DP, M6809_NMI_STATE, M6809_IRQ_STATE, M6809_FIRQ_STATE };
 
 #define M6809_INT_NONE  0   /* No interrupt required */
 #define M6809_INT_IRQ	1	/* Standard IRQ interrupt */
@@ -42,6 +43,19 @@ extern const char *m6809_info(void *context,int regnum);
 /****************************************************************************/
 /* For now the 6309 is using the functions of the 6809						*/
 /****************************************************************************/
+#define M6309_A 				M6809_A
+#define M6309_B 				M6809_B
+#define M6309_PC				M6809_PC
+#define M6309_S 				M6809_S
+#define M6309_U 				M6809_U
+#define M6309_X 				M6809_X
+#define M6309_Y 				M6809_Y
+#define M6309_CC				M6809_CC
+#define M6309_DP				M6809_DP
+#define M6309_NMI_STATE 		M6809_NMI_STATE
+#define M6309_IRQ_STATE 		M6809_IRQ_STATE
+#define M6309_FIRQ_STATE		M6809_FIRQ_STATE
+
 #define M6309_INT_NONE                  M6809_INT_NONE
 #define M6309_INT_IRQ					M6809_INT_IRQ
 #define M6309_INT_FIRQ					M6809_INT_FIRQ

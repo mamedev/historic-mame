@@ -9,7 +9,6 @@
  *
  * Neil Bradley    Neil Bradley   (lots of optimisation help & ideas)
  * Aaron Giles     Dissassembler  (used to comment each routine)
- * Brian Verre     Cycle timings  (timings taken from this table)
  *
  *---------------------------------------------------------------
  * History (so we know what bugs have been fixed)
@@ -32,6 +31,7 @@
  *                DIVU - Overflow not being set correctly
  *                ASL/ASR - Flag Handling now correct
  *                some minor optimisations
+ * 13.03.99 DEO - Added new cycle timing
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -48,7 +48,6 @@
  *
  * Future Changes
  *
- * correct timing where known to be wrong
  * fix flags where found to be incorrect
  * 68010 & 68020 instructions to be completed
  * assembler memory routines                                          +
@@ -63,8 +62,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
-#include "cycletbl.h"
 
 /* New Disassembler */
 
@@ -85,7 +82,7 @@ int 		DisOp;
 /* needed for NEW_INTERRUPT_SYSTEM */
 #include "cpuintrf.h"
 
-#define VERSION 	"0.10"
+#define VERSION 	"0.11"
 
 #define TRUE -1
 #define FALSE 0
@@ -102,7 +99,7 @@ int 		DisOp;
 
 /* Register Location Offsets */
 
-#define ICOUNT		"_m68000_ICount"
+#define ICOUNT      "_m68000_ICount"
 #define REG_DAT     "R_D0"
 #define REG_DAT_EBX "[R_D0+ebx*4]"
 #define REG_ADD     "R_A0"
@@ -145,6 +142,7 @@ int  FlagProcess    = 0;
 int  CheckInterrupt = 0;
 int  Opcount        = 0;
 int  TimingCycles   = 0;
+int  AddEACycles    = 0;
 
 #ifdef DOS
 
@@ -269,6 +267,7 @@ char *GenerateLabel(int ID,int Type)
     {
 		CheckInterrupt=0;			/* No need to check for Interrupts */
 		TimingCycles=0;				/* No timing info for this command */
+        AddEACycles=1;              /* default to add in EA timing */
 		Opcount++;					/* for screen display */
 
 		DisOp = ID;
@@ -306,9 +305,14 @@ void Align(void)
 
 void CopyX(void)
 {
-	/* Copy bit 1 from X flag store into Carry */
+	/* Copy bit 0 from X flag store into Carry */
 
     fprintf(fp, "\t\t bt    dword [%s],0\n",REG_X);
+
+	#if 0
+	fprintf(fp, "\t\t mov   edx,[%s]\n",REG_X);
+	fprintf(fp, "\t\t rcr   edx,1\n");
+    #endif
 }
 
 /*
@@ -443,12 +447,15 @@ void Completed(void)
 
 	/* Use assembler timing routines */
 
-	if (TimingCycles > 0)
+	if (TimingCycles != 0)
 	{
 		if (TimingCycles > 127)
 			fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
 		else
-			fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
+        {
+        	if (TimingCycles != -1)
+				fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
+        }
 	}
 	else
 	{
@@ -469,9 +476,8 @@ void Completed(void)
 
     	/* Check for Debug Active */
 
-	    fprintf(fp, "\n\t\t or    dword [_mame_debug],0\n");
-    	fprintf(fp, "\t\t jnz   near MainExit\n\n");
-
+	fprintf(fp, "\n\t\t or    dword [_mame_debug],0\n");
+	fprintf(fp, "\t\t jnz   near MainExit\n\n");
 	#endif
 
     if (CheckInterrupt)
@@ -613,11 +619,6 @@ void Exception(int Number, int BaseCode)
        Completed();
 }
 
-
-void Timing(int BaseCode)
-{
-	TimingCycles = cycletbl[BaseCode];
-}
 
 /********************/
 /* Address Routines */
@@ -1268,6 +1269,46 @@ void ExtensionDecode(int SaveEDX)
 
 void EffectiveAddressCalculate(int mode,char Size,int Rreg,int SaveEDX)
 {
+	/* timing */
+
+   	if ((TimingCycles > 0) && (AddEACycles!=0))
+   	{
+    	switch(mode)
+       	{
+	    	case 2:     /* (An) */
+       		case 3:     /* (An)+ */
+       		case 11:    /* #x,SR,CCR */
+       		case 19:    /* (A7)+ */
+           		TimingCycles += 4 ;
+           		break ;
+
+       		case 4:     /* -(An) */
+       		case 20:    /* -(A7) */
+           		TimingCycles += 6 ;
+           		break ;
+
+       		case 5:     /* x(An) */
+       		case 7:     /* x.w */
+       		case 9:     /* x(PC) */
+           		TimingCycles += 8 ;
+           		break ;
+
+       		case 6:     /* x(An,xr.s) */
+       		case 10:    /* x(PC,xr.s) */
+           		TimingCycles += 10 ;
+           		break ;
+
+       		case 8:     /* x.l */
+           		TimingCycles += 12 ;
+           		break ;
+   		}
+
+    	/* long w/r adds 4 cycles */
+
+    	if ((mode>1) && (Size == 'L'))
+       		TimingCycles += 4 ;
+    }
+
     switch(mode)
 	{
 
@@ -1936,38 +1977,38 @@ void ConditionCheck(int mode, char *SetWhat)
 
       case 1:   /* F - Never */
            if (SetWhat == "AL")
-           {
-   	           fprintf(fp, "\t\t xor   eax,eax\n");
-           }
+              {
+   	      fprintf(fp, "\t\t xor   eax,eax\n");
+              }
            else
-           {
-   	           fprintf(fp, "\t\t mov   %s,byte 0h\n",SetWhat);
-           }
+              {
+   	      fprintf(fp, "\t\t mov   %s,byte 0h\n",SetWhat);
+              }
            break;
 
       case 2:   /* Hi */
       	   fprintf(fp, "\t\t mov   ah,dl\n");
       	   fprintf(fp, "\t\t sahf\n");
-   	   	   fprintf(fp, "\t\t seta  %s\n",SetWhat);
+   	   fprintf(fp, "\t\t seta  %s\n",SetWhat);
            fprintf(fp, "\t\t neg   byte %s\n",SetWhat);
            break;
 
       case 3:   /* Ls */
       	   fprintf(fp, "\t\t mov   ah,dl\n");
       	   fprintf(fp, "\t\t sahf\n");
-   	       fprintf(fp, "\t\t setbe %s\n",SetWhat);
+   	   fprintf(fp, "\t\t setbe %s\n",SetWhat);
            fprintf(fp, "\t\t neg   byte %s\n",SetWhat);
            break;
 
       case 4:   /* CC */
-		   fprintf(fp, "\t\t test  dl,1\t\t;Check Carry\n");
-		   fprintf(fp, "\t\t setz  %s\n",SetWhat);
+	   fprintf(fp, "\t\t test  dl,1\t\t;Check Carry\n");
+	   fprintf(fp, "\t\t setz  %s\n",SetWhat);
            fprintf(fp, "\t\t neg   byte %s\n",SetWhat);
            break;
 
       case 5:   /* CS */
-		   fprintf(fp, "\t\t test  dl,1\t\t;Check Carry\n");
-		   fprintf(fp, "\t\t setnz %s\n",SetWhat);
+	   fprintf(fp, "\t\t test  dl,1\t\t;Check Carry\n");
+	   fprintf(fp, "\t\t setnz %s\n",SetWhat);
            fprintf(fp, "\t\t neg   byte %s\n",SetWhat);
            break;
 
@@ -2115,7 +2156,34 @@ void dump_imm( int type, int leng, int mode, int sreg )
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-                Timing(BaseCode);
+                if  (mode < 2)
+                {
+                	if (Size != 'L' )
+                        TimingCycles += 8;
+                    else
+                    {
+                        TimingCycles += 14;
+                        if ((type != 1) && (type!=6))
+                            TimingCycles += 2 ;
+                    }
+                }
+                else
+                {
+                    if (type != 6)
+                    {
+                        if (Size != 'L')
+                            TimingCycles += 12 ;
+                        else
+                            TimingCycles += 20 ;
+                    }
+                    else
+                    {
+                        if (Size != 'L')
+                            TimingCycles += 8 ;
+                        else
+                            TimingCycles += 12 ;
+                    }
+                }
 
 		        fprintf(fp, "\t\t and   ecx,byte 7\n");
 
@@ -2146,7 +2214,7 @@ void dump_imm( int type, int leng, int mode, int sreg )
 
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-                Timing(BaseCode);
+                TimingCycles += 20 ;
 
                 if (Size=='W')
                 {
@@ -2254,7 +2322,29 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            if (mode<2)
+            {
+            	switch (type)
+                {
+                    case 0:
+                        TimingCycles += 6 ;
+                        break;
+                    case 1:
+                    case 3:
+                        TimingCycles += 8 ;
+                        break;
+                    case 2:
+                        TimingCycles += 10;
+                        break;
+                }
+            }
+            else
+            {
+            	if (type==0)
+                    TimingCycles += 4;
+                else
+                    TimingCycles += 8;
+            }
 
             /* Only need this sorted out if a register is involved */
 
@@ -2379,7 +2469,29 @@ void dump_bit_static(int type, int mode, int dreg )
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            if (mode<2)
+            {
+                switch ( type )
+                {
+                    case 0:
+                        TimingCycles += 10 ;
+                        break ;
+                    case 1:
+                    case 3:
+                        TimingCycles += 12 ;
+                        break ;
+                    case 2:
+                        TimingCycles += 14 ;
+                        break ;
+                }
+            }
+            else
+            {
+                if ( type != 0 )
+                    TimingCycles += 12 ;
+                else
+                    TimingCycles += 8 ;
+            }
 
             /* Only need this sorted out if a register is involved */
 
@@ -2482,7 +2594,10 @@ void movep(void)
 						Align();
 						fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-		                Timing(BaseCode);
+                        if (leng == 0 ) /* word */
+                            TimingCycles += 16 ;
+                        else
+                            TimingCycles += 24 ;
 
                         /* Save Flags Register (so we only do it once) */
 
@@ -2585,7 +2700,7 @@ void movereg(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(Opcode,0));
 
-            Timing(Opcode);
+            TimingCycles += 4 ;
 
             /* Always read 32 bits - no prefix, no partial stalls */
 
@@ -2673,7 +2788,7 @@ void movecodes(int allowfrom[],int allowto[],int Start,char Size)	/* MJC */
                 Align();
 		        fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-                Timing(BaseCode);
+                TimingCycles += 4 ;
 
                 if (Src < 7)
 				{
@@ -2759,13 +2874,14 @@ void moveinstructions(void)
 
 void opcode5(void)
 {
-    /* ADDQ,SUBQ,Scc and DBcc */
+	/* ADDQ,SUBQ,Scc and DBcc */
 
 	int allowtoScc[]   = {1,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0};
 	int allowtoADDQ[]  = {1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0};
 	int Opcode,BaseCode;
     int Counter;
-    char *Label;
+    char Label[32];
+    char Label2[32];
     char Size=' ';
     char* Regname="";
     char* RegnameECX="";
@@ -2798,9 +2914,10 @@ void opcode5(void)
 	                Align();
 			        fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	                Timing(BaseCode);
+                    TimingCycles += 10 ;
 
-                    Label = ConditionDecode((Opcode >> 8) & 0x0F,TRUE);
+                    strcpy(Label,GenerateLabel(BaseCode,1)) ;
+                    strcpy(Label2,ConditionDecode((Opcode >> 8) & 0x0F,TRUE));
 
                     /* False - Decrement Counter - Loop if not -1 */
 
@@ -2815,9 +2932,13 @@ void opcode5(void)
 			        Completed();
 
                     /* True - Exit Loop */
-
                     fprintf(fp, "%s:\n",Label);
+//                  fprintf(fp, "\t\t sub   dword [%s],byte 2\n",ICOUNT);
+
+                    fprintf(fp, "%s:\n",Label2);
                     fprintf(fp, "\t\t add   esi,byte 2\n");
+                    TimingCycles += 2 ;
+
 			        Completed();
                 }
                 else
@@ -2832,7 +2953,10 @@ void opcode5(void)
 		                Align();
 				        fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-		                Timing(BaseCode);
+                        if ( Dest > 1 )
+                           TimingCycles += 8 ;
+                        else
+                           TimingCycles += 4 ;
 
                         if (Dest < 7)
                         {
@@ -2841,13 +2965,26 @@ void opcode5(void)
 
                         if (Dest > 1)
                         {
-						   EffectiveAddressCalculate(Dest,'B',ECX,TRUE);
+			   			   EffectiveAddressCalculate(Dest,'B',ECX,TRUE);
                            fprintf(fp,"\t\t and   edi,0FFFFFFh\n");
                         }
 
                         ConditionCheck((Opcode >> 8) & 0x0F,"AL");
-    				    EffectiveAddressWrite(Dest,'B',ECX,FALSE,"---DS-B",TRUE);
-				        Completed();
+
+                        EffectiveAddressWrite(Dest,'B',ECX,FALSE,"---DS-B",TRUE);
+
+                        /* take advantage of AL being 0 for false, 0xff for true */
+                        /* need to add 2 cycles if register and condition is true */
+
+                        if ( Dest == 0 )
+                        {
+                           fprintf(fp, "\t\t and   eax,byte 2\n");
+                           fprintf(fp, "\t\t add   eax,byte %d\n",TimingCycles);
+                           fprintf(fp, "\t\t sub   dword [%s],eax\n",ICOUNT);
+
+                           TimingCycles = -1;
+                        }
+						Completed();
                     }
                     else
                     {
@@ -2920,7 +3057,29 @@ void opcode5(void)
                     Align();
 		            fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	                Timing(BaseCode);
+                    if ( Dest == 0 ) /* write to Dx */
+                    {
+                        if ( Size != 'L' )
+                           TimingCycles += 4 ;
+                        else
+                           TimingCycles += 8 ;
+                    }
+
+                    if ( Dest == 1 )
+                    {
+                        if ((Size == 'L') || (Opcode & 0x100)) /* if long or SUBQ */
+                           TimingCycles += 8 ;
+                        else
+                           TimingCycles += 4 ;
+                    }
+
+                    if ( Dest > 1 ) /* write to mem */
+                    {
+                        if ( Size != 'L' )
+                           TimingCycles += 8 ;
+                        else
+                           TimingCycles += 12 ;
+                    }
 
                     if (Dest < 7)
                     {
@@ -3024,7 +3183,7 @@ void branchinstructions(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-        Timing(BaseCode);
+        TimingCycles += 10 ;
 
         if (Opcode > 0x60)
         {
@@ -3034,6 +3193,7 @@ void branchinstructions(void)
 
                 /* Code for Failed branch */
 
+                fprintf(fp, "\t\t sub   dword [%s],byte 2\n",ICOUNT);
 			    fprintf(fp, "\t\t add   esi,byte 2\n");
                 Completed();
 
@@ -3045,7 +3205,9 @@ void branchinstructions(void)
             {
         	    /* BSR - Special Case */
 
-                fprintf(fp, "\t\t mov   edi,[%s]      ; Get A7\n",REG_A7);
+                TimingCycles += 8 ;
+
+                fprintf(fp, "\t\t mov   edi,[%s]      	   ; Get A7\n",REG_A7);
                 fprintf(fp, "\t\t mov   eax,esi            ; Get PC\n");
                 fprintf(fp, "\t\t sub   edi,byte 4         ; Decrement A7\n");
                 fprintf(fp, "\t\t add   eax,byte 2         ; Skip Displacement\n");
@@ -3066,7 +3228,7 @@ void branchinstructions(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode+1,0));
 
-        Timing(BaseCode+1);
+        TimingCycles += 10 ;
 
         if (Opcode > 0x60)
         {
@@ -3076,6 +3238,7 @@ void branchinstructions(void)
 
                 /* Code for Failed branch */
 
+                fprintf(fp, "\t\t add   dword [%s],byte 2\n",ICOUNT);
 		        Completed();
 
                 /* Successful Branch */
@@ -3085,6 +3248,8 @@ void branchinstructions(void)
             else
             {
         	    /* BSR - Special Case */
+
+                TimingCycles += 8 ;
 
                 fprintf(fp, "\t\t mov   edi,[%s]      ; Get A7\n",REG_A7);
                 fprintf(fp, "\t\t sub   edi,byte 4         ; Decrement\n");
@@ -3110,7 +3275,7 @@ void branchinstructions(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode+0xff,0));
 
-        Timing(BaseCode+0xff);
+        TimingCycles += 10 ;
 
         if (Opcode > 0x60)
         {
@@ -3120,6 +3285,7 @@ void branchinstructions(void)
 
                 /* Code for Failed branch */
 
+                fprintf(fp, "\t\t add   dword [%s],byte 2\n",ICOUNT);
 			    fprintf(fp, "\t\t add   esi,byte 4\n");
 		        Completed();
 
@@ -3130,6 +3296,8 @@ void branchinstructions(void)
             else
             {
         	    /* BSR - Special Case */
+
+                TimingCycles += 8 ;
 
                 fprintf(fp, "\t\t mov   edi,[%s]      ; Get A7\n",REG_A7);
                 fprintf(fp, "\t\t mov   eax,esi            ; Get PC\n");
@@ -3166,7 +3334,7 @@ void moveq(void)
 	Align();
 	fprintf(fp, "%s:\n",GenerateLabel(0x7000,0));
 
-    Timing(0x7000);
+    TimingCycles += 4 ;
 
     fprintf(fp, "\t\t movsx eax,cl\n");
     fprintf(fp, "\t\t shr   ecx,9\n");
@@ -3242,7 +3410,24 @@ void addx_subx(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            /* don't add in EA timing for ADDX,SUBX */
+
+            AddEACycles = 0 ;
+
+            if ( rm == 0 ) /* reg to reg */
+            {
+                if ( Size != 'L' )
+                    TimingCycles += 4 ;
+                else
+                    TimingCycles += 8 ;
+            }
+            else
+            {
+                if ( Size != 'L' )
+                    TimingCycles += 18 ;
+                else
+                    TimingCycles += 30 ;
+            }
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx, byte 7\n");
@@ -3411,7 +3596,26 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 		    Align();
 		    fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            if (dir==0)
+            {
+                if ( Size != 'L' )
+                    TimingCycles += 4;
+                else
+                    TimingCycles += 6;
+            }
+            else
+            {
+                if ( Size != 'L' )
+                    TimingCycles += 8;
+                else
+                    TimingCycles += 12;
+            }
+
+            if ((mode == 0) && (dir==0) && (Size == 'L'))
+               TimingCycles += 2 ;
+
+            if ((mode == 1) && (dir==0) && (Size != 'L'))
+               TimingCycles += 4 ;
 
 		    if (Dest < 7) 	/* Others do not need reg.no. */
 		    {
@@ -3571,7 +3775,7 @@ void mul(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                TimingCycles += 70 ;
 
 				if ( mode < 7 )
 				{
@@ -3660,7 +3864,10 @@ void not(void)
 			    Align();
 			    fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                if (Size != 'L')
+                    TimingCycles += 4;
+                else
+                    TimingCycles += 6;
 
                 if (Dest < 7)
 					fprintf(fp, "\t\t and   ecx,byte 7\n");
@@ -3734,7 +3941,7 @@ void moveusp(void)
 			Label = GenerateLabel(BaseCode,0);
 			fprintf(fp, "%s\n", Label );
 
-            Timing(BaseCode);
+            TimingCycles += 4;
 
 			fprintf(fp, "\t\t test  byte [%s],20h \t\t\t; Supervisor Mode ?\n",REG_SRH);
 			fprintf(fp, "\t\t jz    short OP_%4.4x_Trap\n",BaseCode);
@@ -3796,7 +4003,7 @@ void chk(void)
 			Label = GenerateLabel(BaseCode,0);
 			fprintf(fp, "%s:\n", Label );
 
-            Timing(BaseCode);
+            TimingCycles += 10;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t shr   ebx,byte 9\n");
@@ -3865,7 +4072,22 @@ void LoadEffectiveAddress(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                switch ( mode )
+                {
+                    case 2:
+                        TimingCycles += 4;
+                        break;
+                    case 5:
+                    case 7:
+                    case 9:
+                        TimingCycles += 8;
+                        break;
+                    case 6:
+                    case 8:
+                    case 10:
+                        TimingCycles += 12;
+                        break;
+                }
 
 				if ( mode < 7 )
 				{
@@ -3915,7 +4137,10 @@ void nbcd(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                if (mode < 2)
+                    TimingCycles += 6;
+                else
+                    TimingCycles += 8;
 
 				fprintf(fp, "\t\t and   ecx, byte 7\n");
 
@@ -3961,7 +4186,10 @@ void tas(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                if (mode < 2)
+                    TimingCycles += 4;
+                else
+                    TimingCycles += 14;
 
 				fprintf(fp, "\t\t and   ecx, byte 7\n");
 
@@ -4008,7 +4236,22 @@ void PushEffectiveAddress(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                switch ( mode )
+                {
+                    case 2:
+                        TimingCycles += 12;
+                        break;
+                    case 5:
+                    case 7:
+                    case 9:
+                        TimingCycles += 16;
+                        break;
+                    case 6:
+                    case 8:
+                    case 10:
+                        TimingCycles += 20;
+                        break;
+                }
 
 				if ( mode < 7 )
 				{
@@ -4084,7 +4327,7 @@ void tst(void)
 			   	Align();
 			   	fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                TimingCycles += 4;
 
                 if (Dest < 7)
  				    fprintf(fp, "\t\t and   ecx,byte 7\n");
@@ -4140,7 +4383,21 @@ void movem_reg_ea(void)
 				Align();
 				Label = GenerateLabel(BaseCode,0);
 
-    	        Timing(BaseCode);
+                switch (mode)
+                {
+                    case 2:
+                    case 4:
+                        TimingCycles += 8 ;
+                        break;
+                    case 5:
+                    case 7:
+                        TimingCycles += 12 ;
+                        break;
+                    case 6:
+                    case 8:
+                        TimingCycles += 14 ;
+                        break;
+                }
 
 				fprintf(fp, "%s:\n",Label ) ;
 
@@ -4266,7 +4523,21 @@ void movem_ea_reg(void)
 
 				fprintf(fp, "%s:\n",Label ) ;
 
-	            Timing(BaseCode);
+                switch (mode)
+                {
+                    case 2:
+                    case 4:
+                        TimingCycles += 8 ;
+                        break;
+                    case 5:
+                    case 7:
+                        TimingCycles += 12 ;
+                        break;
+                    case 6:
+                    case 8:
+                        TimingCycles += 14 ;
+                        break;
+                }
 
 				fprintf(fp, "\t\t push  edx\n");				/* save edx because sr is unaffected */
 
@@ -4358,7 +4629,7 @@ void link(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            TimingCycles += 16;
 
 			fprintf(fp, "\t\t sub   dword [%s],byte 4\n",REG_A7);
 
@@ -4395,7 +4666,7 @@ void unlinkasm(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            TimingCycles += 12;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx, byte 7\n");
@@ -4423,8 +4694,6 @@ void trap(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-        Timing(BaseCode);
-
         fprintf(fp, "\t\t and   ecx,byte 15\n");
         fprintf(fp, "\t\t mov   eax,32\n");
         fprintf(fp, "\t\t add   eax,ecx\n");
@@ -4447,7 +4716,7 @@ void reset(void)
 		Align();
 		Label = GenerateLabel(BaseCode,0);
 
-        Timing(BaseCode);
+        TimingCycles += 132;
 
 		fprintf(fp, "%s:\n", Label );
 		fprintf(fp, "\t\t test  byte [%s],20h \t\t\t; Supervisor Mode ?\n",REG_SRH);
@@ -4469,7 +4738,7 @@ void nop(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-        Timing(BaseCode);
+        TimingCycles += 4;
 
 		Completed();
 		OpcodeArray[BaseCode] = BaseCode ;
@@ -4486,7 +4755,7 @@ void stop(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-        Timing(BaseCode);
+        TimingCycles += 4;
 
 	    /* Must be in Supervisor Mode */
 
@@ -4527,7 +4796,7 @@ void ReturnFromException(void)
   	Align();
   	fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-    Timing(BaseCode);
+    TimingCycles += 20;
 
     /* Check in Supervisor Mode */
 
@@ -4573,7 +4842,7 @@ void trapv(void)
 		Label = GenerateLabel(BaseCode,0);
 		fprintf(fp, "%s\n", Label );
 
-        Timing(BaseCode);
+        TimingCycles += 4;
 
         fprintf(fp, "\t\t test  edx,0800h\n");
         fprintf(fp, "\t\t jz    near OP_%4.4x_Clear\n",BaseCode);
@@ -4608,7 +4877,7 @@ void ReturnandRestore(void)
   	Align();
   	fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-    Timing(BaseCode);
+    TimingCycles += 20;
 
     /* Get SR into ESI */
 
@@ -4648,9 +4917,9 @@ void rts(void)
 		Align();
 		fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-        Timing(BaseCode);
+        TimingCycles += 16;
 
-		/* Previous PC (Indy & Temple of Doom) */
+		/* Previous PC (Indy & Temple of Doom need this) */
 
         fprintf(fp, "\t\t sub   esi,byte 2\n");
 	    fprintf(fp, "\t\t mov   [_previouspc],esi\n");
@@ -4690,7 +4959,27 @@ void jmp_jsr(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                switch ( mode )
+                {
+                    case 2:
+                        TimingCycles += 8;
+                        break;
+                    case 5:
+                    case 7:
+                    case 9:
+                        TimingCycles += 10;
+                        break;
+                    case 8:
+                        TimingCycles += 12;
+                        break;
+                    case 6:
+                    case 10:
+                        TimingCycles += 14;
+                        break;
+                }
+
+                if ( type == 0 ) /* jsr takes 8 more than jmp */
+                    TimingCycles += 8;
 
 				if ( mode < 7 )
 				{
@@ -4759,7 +5048,12 @@ void cmpm(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            AddEACycles = 0 ;
+
+            if ( Size != 'L' )
+                TimingCycles += 12 ;
+            else
+                TimingCycles += 20 ;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx, byte 7\n");
@@ -4796,7 +5090,7 @@ void exg(void)
 		    Align();
 		    fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            TimingCycles += 6 ;
 
 		    fprintf(fp, "\t\t mov   ebx,ecx\n");
 		    fprintf(fp, "\t\t and   ebx,byte 7\n");
@@ -4848,7 +5142,7 @@ void ext(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            TimingCycles += 4 ;
 
 			fprintf(fp, "\t\t and   ecx, byte 7\n");
 
@@ -4886,7 +5180,7 @@ void swap(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            TimingCycles += 4 ;
 
 			fprintf(fp, "\t\t and   ecx, byte 7\n");
 			fprintf(fp, "\t\t ror   dword [%s+ECX*4],16\n",REG_DAT);
@@ -4988,7 +5282,15 @@ void movesr(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                if ( type > 1 ) /* move to */
+                    TimingCycles += 12 ;
+                else
+                {
+                    if ( mode < 2 )
+                        TimingCycles += 6 ;
+                    else
+                        TimingCycles += 8 ;
+                }
 
                 /* If Move to SR then must be in Supervisor Mode */
 
@@ -5066,7 +5368,12 @@ void abcd_sbcd(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            AddEACycles = 0 ;
+
+            if ( rm == 0 )
+                TimingCycles += 6 ;
+            else
+                TimingCycles += 18 ;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx, byte 7\n");
@@ -5161,7 +5468,10 @@ void rol_ror(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            if ( Size != 'L' )
+                TimingCycles += 6 ;
+            else
+                TimingCycles += 8 ;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx,byte 7\n");
@@ -5177,6 +5487,10 @@ void rol_ror(void)
 				EffectiveAddressRead(0,'L',ECX,ECX,"-B--S-B",FALSE);
 				fprintf(fp, "\t\t and   ecx,byte 63\n");
 			}
+
+            fprintf(fp, "\t\t shl   ecx,1\n"); /* and 2 cycles per shift */
+            fprintf(fp, "\t\t sub   dword [%s],ecx\n",ICOUNT);
+            fprintf(fp, "\t\t shr   ecx,1\n"); /* and 2 cycles per shift */
 
 			EffectiveAddressRead(0,Size,EBX,EAX,"-BC-S-B",FALSE);
 
@@ -5238,7 +5552,7 @@ void rol_ror_ea(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
 				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
@@ -5311,7 +5625,10 @@ void lsl_lsr(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            if ( Size != 'L' )
+                TimingCycles += 6 ;
+            else
+                TimingCycles += 8 ;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx,byte 7\n");
@@ -5327,6 +5644,10 @@ void lsl_lsr(void)
 				EffectiveAddressRead(0,'L',ECX,ECX,"-B--S-B",FALSE);
 				fprintf(fp, "\t\t and   ecx,byte 63\n");
 			}
+
+            fprintf(fp, "\t\t shl   ecx,1\n"); /* and 2 cycles per shift */
+            fprintf(fp, "\t\t sub   dword [%s],ecx\n",ICOUNT);
+            fprintf(fp, "\t\t shr   ecx,1\n"); /* and 2 cycles per shift */
 
 			EffectiveAddressRead(0,Size,EBX,EAX,"-BC-S-B",FALSE);
 
@@ -5392,7 +5713,7 @@ void lsl_lsr_ea(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
 				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
@@ -5461,7 +5782,10 @@ void roxl_roxr(void)
 			Align();
 			fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-            Timing(BaseCode);
+            if ( Size != 'L' )
+                TimingCycles += 6 ;
+            else
+                TimingCycles += 8 ;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx,byte 7\n");
@@ -5477,6 +5801,10 @@ void roxl_roxr(void)
 				EffectiveAddressRead(0,'L',ECX,ECX,"-B--S-B",FALSE);
 				fprintf(fp, "\t\t and   ecx,byte 63\n");
 			}
+
+            fprintf(fp, "\t\t shl   ecx,1\n"); /* and 2 cycles per shift */
+            fprintf(fp, "\t\t sub   dword [%s],ecx\n",ICOUNT);
+            fprintf(fp, "\t\t shr   ecx,1\n"); /* and 2 cycles per shift */
 
 			EffectiveAddressRead(0,Size,EBX,EAX,"-BC-S-B",FALSE);
 
@@ -5550,7 +5878,7 @@ void roxl_roxr_ea(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
 				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
@@ -5638,7 +5966,10 @@ void asl_asr(void)
 
 			Label = GenerateLabel(0,1);
 
-            Timing(BaseCode);
+            if ( Size != 'L' )
+                TimingCycles += 6 ;
+            else
+                TimingCycles += 8 ;
 
 			fprintf(fp, "\t\t mov   ebx,ecx\n");
 			fprintf(fp, "\t\t and   ebx,byte 7\n");
@@ -5658,6 +5989,9 @@ void asl_asr(void)
                 fprintf(fp, "\t\t jz	short %s\n",Label);
 			}
 
+            fprintf(fp, "\t\t shl   ecx,1\n"); /* and 2 cycles per shift */
+            fprintf(fp, "\t\t sub   dword [%s],ecx\n",ICOUNT);
+            fprintf(fp, "\t\t shr   ecx,1\n"); /* and 2 cycles per shift */
 
 			if ( dr == 0 )
             {
@@ -5768,7 +6102,10 @@ void asl_asr(void)
 
 			Label = GenerateLabel(0,1);
 
-            Timing(BaseCode);
+            if ( Size != 'L' )
+                TimingCycles += 6 ;
+            else
+                TimingCycles += 8 ;
 
 			fprintf(fp, "\t\t and   ecx,byte 7\n");
 			fprintf(fp, "\t\t sal   %s [%s+ecx*4],1\n",Sizename,REG_DAT);
@@ -5811,7 +6148,7 @@ void asl_asr_ea(void)
 				Align();
 				fprintf(fp, "%s:\n",GenerateLabel(BaseCode,0));
 
-	            Timing(BaseCode);
+                TimingCycles += 8 ;
 
 				fprintf(fp, "\t\t and   ecx,byte 7\n");
 				EffectiveAddressRead(Dest&0xf,'W',ECX,EAX,"--C-S-B",FALSE);
@@ -6005,7 +6342,7 @@ void CodeSegmentBegin(void)
     fprintf(fp, "\t\t BITS 32\n\n");
     fprintf(fp, "\t\t GLOBAL _M68KRUN\n");
     fprintf(fp, "\t\t GLOBAL _M68KRESET\n");
-	fprintf(fp, "\t\t GLOBAL _m68000_ICount\n");
+    fprintf(fp, "\t\t GLOBAL _m68000_ICount\n");
     fprintf(fp, "\t\t GLOBAL _regs\n");
 
     fprintf(fp, "\t\t EXTERN %s\n",name_cpu_readmem24);
@@ -6063,7 +6400,7 @@ void CodeSegmentBegin(void)
 	Align();
 
 	fprintf(fp, "_M68KRUN:\n");
-	fprintf(fp, "\t\t pusha\n");
+	fprintf(fp, "\t\t pushad\n");
 	fprintf(fp, "\t\t mov   esi,[%s]\n",REG_PC);
     fprintf(fp, "\t\t mov   edx,[%s]\n",REG_CCR);
     fprintf(fp, "\t\t mov   ebp,dword [_OP_ROM]\n");
@@ -6105,7 +6442,7 @@ void CodeSegmentBegin(void)
 
     #endif
 
-	fprintf(fp, "\t\t popa\n");
+	fprintf(fp, "\t\t popad\n");
 	fprintf(fp, "\t\t ret\n");
 
 /* Check for Pending Interrupts */
@@ -6280,7 +6617,7 @@ void CodeSegmentEnd(void)
 
     fprintf(fp, "\n\n; Register Structure\n\n");
 
-	fprintf(fp, "_m68000_ICount\t DD 0\n\n");
+    fprintf(fp, "_m68000_ICount\t DD 0\n\n");
 
     fprintf(fp, "_regs\n");
     fprintf(fp, "R_D0\t DD 0\t\t\t ; Data Registers\n");

@@ -26,6 +26,21 @@
 /* define this to expand all EA calculations inline */
 #define INLINE_EA	1
 
+static UINT8 s2650_reg_layout[] = {
+	S2650_PC, S2650_PS, S2650_R0, S2650_R1, S2650_R2, S2650_R3, -1,
+	S2650_SI, S2650_FO, S2650_R1A, S2650_R2A, S2650_R3A, -1,
+	S2650_HALT, S2650_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 s2650_win_layout[] = {
+	32, 0,48, 4,	/* register window (top rows) */
+	 0, 0,31,22,	/* disassembler window (left colums) */
+	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
+	32,14,48, 8,	/* memory #2 window (right, lower middle) */
+     0,23,80, 1,    /* command line window (bottom rows) */
+};
+
 int s2650_ICount = 0;
 
 typedef struct {
@@ -752,9 +767,8 @@ unsigned s2650_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case S2650_IAR: return S.page + S.iar;
-		case S2650_PSL: return S.psl;
-		case S2650_PSU: return S.psu;
+		case S2650_PC: return S.page + S.iar;
+		case S2650_PS: return (S.psu << 8) | S.psl;
 		case S2650_R0: return S.reg[0];
 		case S2650_R1: return S.reg[1];
 		case S2650_R2: return S.reg[2];
@@ -764,6 +778,14 @@ unsigned s2650_get_reg(int regnum)
 		case S2650_R3A: return S.reg[6];
 		case S2650_HALT: return S.halt;
 		case S2650_IRQ_STATE: return S.irq_state;
+		case S2650_SI: return s2650_get_sense(); break;
+		case S2650_FO: return s2650_get_flag(); break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				if( (REG_SP_CONTENTS - regnum) < 8 )
+					return S.ras[(REG_SP_CONTENTS - regnum)];
+			}
 	}
 	return 0;
 }
@@ -772,9 +794,8 @@ void s2650_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case S2650_IAR: S.page = val & PAGE; S.iar = val & PMSK; break;
-		case S2650_PSL: S.psl = val; break;
-		case S2650_PSU: S.psu = val; break;
+		case S2650_PC: S.page = val & PAGE; S.iar = val & PMSK; break;
+		case S2650_PS: S.psl = val & 0xff; S.psu = val >> 8; break;
 		case S2650_R0: S.reg[0] = val; break;
 		case S2650_R1: S.reg[1] = val; break;
 		case S2650_R2: S.reg[2] = val; break;
@@ -783,7 +804,15 @@ void s2650_set_reg(int regnum, unsigned val)
 		case S2650_R2A: S.reg[5] = val; break;
 		case S2650_R3A: S.reg[6] = val; break;
 		case S2650_HALT: S.halt = val; break;
-		case S2650_IRQ_STATE: S.irq_state = val; break;
+		case S2650_IRQ_STATE: s2650_set_irq_line(0, val); break;
+		case S2650_SI: s2650_set_sense(val); break;
+		case S2650_FO: s2650_set_flag(val); break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				if( (REG_SP_CONTENTS - regnum) < 8 )
+					S.ras[(REG_SP_CONTENTS - regnum)] = val;
+			}
     }
 }
 
@@ -1431,7 +1460,10 @@ const char *s2650_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.1";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Written by Juergen Buchmueller for use with MAME";
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", (r->page + r->iar) & 0x7fff); break;
+		case CPU_INFO_REG_LAYOUT: return (const char *)s2650_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)s2650_win_layout;
+
+        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", (r->page + r->iar) & 0x7fff); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%X", r->psu & SP); break;
 #ifdef MAME_DEBUG
 		case CPU_INFO_DASM:
@@ -1472,18 +1504,19 @@ const char *s2650_info(void *context, int regnum)
 				r->psl & 0x02 ? '2':'.',
 				r->psl & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_REG+S2650_IAR: sprintf(buffer[which], "IAR:%04X", r->iar); break;
-		case CPU_INFO_REG+S2650_PSL: sprintf(buffer[which], "PSL:%02X", r->psl); break;
-		case CPU_INFO_REG+S2650_PSU: sprintf(buffer[which], "PSU:%02X", r->psu); break;
-		case CPU_INFO_REG+S2650_R0: sprintf(buffer[which], "R0:%04X", r->reg[0]); break;
-		case CPU_INFO_REG+S2650_R1: sprintf(buffer[which], "R1:%04X", r->reg[1]); break;
-		case CPU_INFO_REG+S2650_R2: sprintf(buffer[which], "R2:%04X", r->reg[2]); break;
-		case CPU_INFO_REG+S2650_R3: sprintf(buffer[which], "R3:%04X", r->reg[3]); break;
-		case CPU_INFO_REG+S2650_R1A: sprintf(buffer[which], "R1'%04X", r->reg[4]); break;
-		case CPU_INFO_REG+S2650_R2A: sprintf(buffer[which], "R2'%04X", r->reg[5]); break;
+		case CPU_INFO_REG+S2650_PC: sprintf(buffer[which], "PC:%04X", r->page + r->iar); break;
+		case CPU_INFO_REG+S2650_PS: sprintf(buffer[which], "PS:%02X%02X", r->psu, r->psl); break;
+		case CPU_INFO_REG+S2650_R0: sprintf(buffer[which], "R0:%02X", r->reg[0]); break;
+		case CPU_INFO_REG+S2650_R1: sprintf(buffer[which], "R1:%02X", r->reg[1]); break;
+		case CPU_INFO_REG+S2650_R2: sprintf(buffer[which], "R2:%02X", r->reg[2]); break;
+		case CPU_INFO_REG+S2650_R3: sprintf(buffer[which], "R3:%02X", r->reg[3]); break;
+		case CPU_INFO_REG+S2650_R1A: sprintf(buffer[which], "R1'%02X", r->reg[4]); break;
+		case CPU_INFO_REG+S2650_R2A: sprintf(buffer[which], "R2'%02X", r->reg[5]); break;
 		case CPU_INFO_REG+S2650_R3A: sprintf(buffer[which], "R3'%02X", r->reg[6]); break;
 		case CPU_INFO_REG+S2650_HALT: sprintf(buffer[which], "HALT:%X", r->halt); break;
 		case CPU_INFO_REG+S2650_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+		case CPU_INFO_REG+S2650_SI: sprintf(buffer[which], "SI:%X", (r->psu & SI) ? 1 : 0); break;
+		case CPU_INFO_REG+S2650_FO: sprintf(buffer[which], "FO:%X", (r->psu & FO) ? 1 : 0); break;
 	}
 	return buffer[which];
 }

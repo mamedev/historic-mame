@@ -36,7 +36,6 @@ int msdos_init_seal (void)
 int msdos_init_sound(void)
 {
 	int i;
-	char *blaster_env;
 
 	/* Ask the user if no soundcard was chosen */
 	if (soundcard == -1)
@@ -181,6 +180,8 @@ int msdos_init_sound(void)
 
 
 #if 0
+	{
+		char *blaster_env;
 		/* Get Soundblaster base address from environment variabler BLASTER   */
 		/* Soundblaster OPL base port, at some compatibles this must be 0x388 */
 
@@ -198,6 +199,7 @@ int msdos_init_sound(void)
 				BaseSb = (BaseSb << 4) + (blaster_env[i]-0x30);
 			}
 		}
+	}
 #endif
 	used_3812 = 0;
 

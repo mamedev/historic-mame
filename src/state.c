@@ -36,13 +36,13 @@ INLINE unsigned xtoul(char **p, int *size)
 	while( isxdigit(**p) )
 	{
 		digit = toupper(**p) - '0';
-		if( digit > 9 ) digit -= 6;
+		if( digit > 9 ) digit -= 7;
 		val = (val << 4) | digit;
-		if( size ) *size++;
+		if( size ) (*size)++;
 		*p += 1;
 	}
 	while( isspace(**p) ) *p += 1;
-    if (size) *size >>= 1;
+	if (size) (*size) >>= 1;
 	return val;
 }
 

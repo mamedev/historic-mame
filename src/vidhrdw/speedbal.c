@@ -288,7 +288,7 @@ void speedbal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+palette_init_used_colors();
 
 {
 	int color,code,i;

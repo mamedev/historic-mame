@@ -1298,9 +1298,6 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 			int bestblackscore,bestwhitescore;
 
 
-			for (i = 0;i < totalcolors;i++)
-				pens[i] = i;
-
 			bestblack = bestwhite = 0;
 			bestblackscore = 3*255*255;
 			bestwhitescore = 0;
@@ -1324,6 +1321,13 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 					bestwhitescore = score;
 				}
 			}
+
+			for (i = 0;i < totalcolors;i++)
+				pens[i] = i;
+
+			/* map black to pen 0, otherwise the screen border will not be black */
+			pens[bestblack] = 0;
+			pens[0] = bestblack;
 
 			Machine->uifont->colortable[0] = pens[bestblack];
 			Machine->uifont->colortable[1] = pens[bestwhite];
@@ -1629,10 +1633,6 @@ void osd_update_video_and_audio(void)
 
 	if (osd_skip_this_frame() == 0)
 	{
-		/* Check for PGUP, PGDN and pan screen */
-		if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
-			pan_display();
-
 		if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
 		{
 			showfpstemp--;
@@ -1861,6 +1861,9 @@ void osd_update_video_and_audio(void)
 		}
 	}
 
+	/* Check for PGUP, PGDN and pan screen */
+	if (osd_key_pressed(OSD_KEY_PGDN) || osd_key_pressed(OSD_KEY_PGUP))
+		pan_display();
 
 	if (osd_key_pressed_memory(OSD_KEY_FRAMESKIP))
 	{

@@ -8,30 +8,65 @@
 
 ***************************************************************************/
 
+#include <signal.h>
 #include "driver.h"
 #include "state.h"
-#include "cpu/z80/z80.h"
-#include "cpu/i8085/i8085.h"
-#include "cpu/m6502/m6502.h"
-#include "cpu/h6280/h6280.h"
-#include "cpu/i86/i86intrf.h"
-#include "cpu/i8039/i8039.h"
-#include "cpu/m6800/m6800.h"
-#include "cpu/m6805/m6805.h"
-#include "cpu/m6809/m6809.h"
-#include "cpu/m68000/m68000.h"
-#include "cpu/t11/t11.h"
-#include "cpu/s2650/s2650.h"
-#include "cpu/tms34010/tms34010.h"
-#include "cpu/tms9900/tms9900.h"
-#include "cpu/z8000/z8000.h"
-#include "cpu/tms32010/tms32010.h"
-#include "cpu/ccpu/ccpu.h"
-#ifdef MESS
-#include "cpu/pdp1/pdp1.h"
-#endif
 #include "timer.h"
 
+#if (HAS_Z80)
+#include "cpu/z80/z80.h"
+#endif
+#if (HAS_8080 || HAS_8085A)
+#include "cpu/i8085/i8085.h"
+#endif
+#if (HAS_M6502 || HAS_M65C02 || HAS_M6510)
+#include "cpu/m6502/m6502.h"
+#endif
+#if (HAS_H6280)
+#include "cpu/h6280/h6280.h"
+#endif
+#if (HAS_I86)
+#include "cpu/i86/i86intrf.h"
+#endif
+#if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
+#include "cpu/i8039/i8039.h"
+#endif
+#if (HAS_M6800 || HAS_M6801 || HAS_M6802 || HAS_M6803 || HAS_M6808 || HAS_HD63701)
+#include "cpu/m6800/m6800.h"
+#endif
+#if (HAS_M6805 || HAS_M68705 || HAS_HD63705)
+#include "cpu/m6805/m6805.h"
+#endif
+#if (HAS_M6309 || HAS_M6809)
+#include "cpu/m6809/m6809.h"
+#endif
+#if (HAS_M68000 || defined HAS_M68010 || HAS_M68020)
+#include "cpu/m68000/m68000.h"
+#endif
+#if (HAS_T11)
+#include "cpu/t11/t11.h"
+#endif
+#if (HAS_S2650)
+#include "cpu/s2650/s2650.h"
+#endif
+#if (HAS_TMS34010)
+#include "cpu/tms34010/tms34010.h"
+#endif
+#if (HAS_TMS9900)
+#include "cpu/tms9900/tms9900.h"
+#endif
+#if (HAS_Z8000)
+#include "cpu/z8000/z8000.h"
+#endif
+#if (HAS_TMS320C10)
+#include "cpu/tms32010/tms32010.h"
+#endif
+#if (HAS_CCPU)
+#include "cpu/ccpu/ccpu.h"
+#endif
+#if (HAS_PDP1)
+#include "cpu/pdp1/pdp1.h"
+#endif
 
 /* these are triggers sent to the timer system for various interrupt events */
 #define TRIGGER_TIMESLICE       -1000
@@ -39,7 +74,7 @@
 #define TRIGGER_YIELDTIME       -3000
 #define TRIGGER_SUSPENDTIME     -4000
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
@@ -47,30 +82,27 @@
 #define LOG(x)
 #endif
 
-#define CPUINFO_FIXED   (3*sizeof(void*)+5*sizeof(int)+2*sizeof(double))
-#define CPUINFO_SIZE	(CPU_CONTEXT_SIZE-CPUINFO_FIXED)
+#define CPUINFO_SIZE	(5*sizeof(int)+4*sizeof(void*)+2*sizeof(double))
+/* How do I calculate the next power of two from CPUINFO_SIZE using a macro? */
+#define CPUINFO_ALIGN	(64-CPUINFO_SIZE)
 
 struct cpuinfo
 {
-	struct cpu_interface *intf;                /* pointer to the interface functions */
-	int iloops;                                /* number of interrupts remaining this frame */
-	int totalcycles;                           /* total CPU cycles executed */
-	int vblankint_countdown;                   /* number of vblank callbacks left until we interrupt */
-	int vblankint_multiplier;                  /* number of vblank callbacks per interrupt */
-	void *vblankint_timer;                     /* reference to elapsed time counter */
-	double vblankint_period;                   /* timing period of the VBLANK interrupt */
-	void *timedint_timer;                      /* reference to this CPU's timer */
-	double timedint_period;                    /* timing period of the timed interrupt */
-	int save_context;                          /* need to context switch this CPU? yes or no */
-#ifdef __LP64__
-	unsigned char context[CPUINFO_SIZE] __attribute__ ((__aligned__ (8)));
-#else
-	unsigned char context[CPUINFO_SIZE];	   /* this CPU's context */
-#endif
+	struct cpu_interface *intf; 	/* pointer to the interface functions */
+	int iloops; 					/* number of interrupts remaining this frame */
+	int totalcycles;				/* total CPU cycles executed */
+	int vblankint_countdown;		/* number of vblank callbacks left until we interrupt */
+	int vblankint_multiplier;		/* number of vblank callbacks per interrupt */
+	void *vblankint_timer;			/* reference to elapsed time counter */
+	double vblankint_period;		/* timing period of the VBLANK interrupt */
+	void *timedint_timer;			/* reference to this CPU's timer */
+	double timedint_period; 		/* timing period of the timed interrupt */
+	int save_context;				/* need to context switch this CPU? yes or no */
+	void *context;					/* dynamically allocated context buffer */
+	UINT8 filler[CPUINFO_ALIGN];	/* make the array aligned to next power of 2 */
 };
 
 static struct cpuinfo cpu[MAX_CPU];
-
 
 static int activecpu,totalcpu;
 static int running;	/* number of cycles that the CPU emulation was requested to run */
@@ -139,6 +171,15 @@ static int (*cpu_irq_callbacks[MAX_CPU])(int) = {
     cpu_3_irq_callback
 };
 
+/* Default window layout for the debugger */
+UINT8 default_win_layout[] = {
+	 0, 0,80, 5,	/* register window (top rows) */
+	 0, 5,24,17,	/* disassembler window (left, middle columns) */
+	25, 5,55, 8,	/* memory #1 window (right, upper middle) */
+	25,14,55, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1 	/* command line window (bottom row) */
+};
+
 /* Dummy interfaces for non-CPUs */
 static void Dummy_reset(void *param);
 static void Dummy_exit(void);
@@ -157,9 +198,6 @@ static void Dummy_set_irq_callback(int (*callback)(int irqline));
 static int dummy_icount;
 static const char *Dummy_info(void *context, int regnum);
 
-/* pointers of daisy chain link */
-static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
-
 /* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
 #define CPU_FAMILY(index)				(cpu[index].intf->cpu_family)
 #define RESET(index)                    ((*cpu[index].intf->reset)(Machine->drv->cpu[index].reset_param))
@@ -171,16 +209,18 @@ static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
 #define GETSP(index)					((*cpu[index].intf->get_sp)())
 #define SETSP(index,val)				((*cpu[index].intf->set_sp)(val))
 #define GETREG(index,regnum)            ((*cpu[index].intf->get_reg)(regnum))
-#define SETREG(index,regnum,value)		((*cpu[index].intf->get_reg)(regnum,value))
-#define SET_NMI_LINE(index,state)       ((*cpu[index].intf->set_nmi_line)(state))
-#define SET_IRQ_LINE(index,line,state)	((*cpu[index].intf->set_irq_line)(line,state))
-#define SET_IRQ_CALLBACK(index,callback) ((*cpu[index].intf->set_irq_callback)(callback))
+#define SETREG(index,regnum,value)		((*cpu[index].intf->set_reg)(regnum,value))
+#define SETNMILINE(index,state) 		((*cpu[index].intf->set_nmi_line)(state))
+#define SETIRQLINE(index,line,state)	((*cpu[index].intf->set_irq_line)(line,state))
+#define SETIRQCALLBACK(index,callback)	((*cpu[index].intf->set_irq_callback)(callback))
 #define INTERNAL_INTERRUPT(index,type)	if( cpu[index].intf->internal_interrupt ) ((*cpu[index].intf->internal_interrupt)(type))
-#define CPU_INFO(index,context,regnum)	((*cpu[index].intf->cpu_info)(context,regnum))
+#define CPUINFO(index,context,regnum)	((*cpu[index].intf->cpu_info)(context,regnum))
 #define ICOUNT(index)                   (*cpu[index].intf->icount)
 #define INT_TYPE_NONE(index)            (cpu[index].intf->no_int)
 #define INT_TYPE_IRQ(index) 			(cpu[index].intf->irq_int)
 #define INT_TYPE_NMI(index)             (cpu[index].intf->nmi_int)
+#define READMEM(index,offset)           ((*cpu[index].intf->memory_read)(offset))
+#define WRITEMEM(index,offset,data)     ((*cpu[index].intf->memory_write)(offset,data))
 #define SET_OP_BASE(index,pc)           ((*cpu[index].intf->set_op_base)(pc))
 
 #define CPU_TYPE(index) 				(Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK)
@@ -188,14 +228,12 @@ static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
 
 #define IFC_INFO(cpu,context,regnum)	((cpuintf[cpu].cpu_info)(context,regnum))
 
-#define MAX_CPU_TYPE	(sizeof(cpuintf)/sizeof(cpuintf[0]))
-
 /* warning these must match the defines in driver.h! */
 struct cpu_interface cpuintf[] =
 {
 	/* Dummy CPU -- placeholder for type 0 */
 	{
-		0,0,								/* CPU number and family cores sharing resources */
+		CPU_DUMMY,0,						/* CPU number and family cores sharing resources */
 		Dummy_reset,						/* Reset CPU */
 		Dummy_exit, 						/* Shut down the CPU */
 		Dummy_execute,						/* Execute a number of cycles */
@@ -222,10 +260,11 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	{
+#if (HAS_Z80)
+    {
 		CPU_Z80,1,							/* CPU number and family cores sharing resources */
         z80_reset,                          /* Reset CPU */
 		z80_exit,							/* Shut down the CPU */
@@ -253,10 +292,12 @@ struct cpu_interface cpuintf[] =
         cpu_readmem16,                      /* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_8080)
+    {
 		CPU_8080,2, 						/* CPU number and family cores sharing resources */
         i8080_reset,                        /* Reset CPU */
 		i8080_exit, 						/* Shut down the CPU */
@@ -284,10 +325,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		16,                                 /* CPU address bits */
+		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_8085A)
+    {
 		CPU_8085A,2,						/* CPU number and family cores sharing resources */
         i8085_reset,                        /* Reset CPU */
 		i8085_exit, 						/* Shut down the CPU */
@@ -315,10 +358,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		16,                                 /* CPU address bits */
+		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_M6502)
+    {
 		CPU_M6502,3,						/* CPU number and family cores sharing resources */
         m6502_reset,                        /* Reset CPU */
 		m6502_exit, 						/* Shut down the CPU */
@@ -346,10 +391,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_M65C02)
+    {
 		CPU_M65C02,3,						/* CPU number and family cores sharing resources */
         m65c02_reset,                       /* Reset CPU */
 		m65c02_exit,						/* Shut down the CPU */
@@ -377,10 +424,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M6510)
+    {
 		CPU_M6510,3,						/* CPU number and family cores sharing resources */
         m6510_reset,                        /* Reset CPU */
 		m6510_exit, 						/* Shut down the CPU */
@@ -408,10 +457,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_H6280)
+    {
 		CPU_H6280,4,						/* CPU number and family cores sharing resources */
         h6280_reset,                        /* Reset CPU */
 		h6280_exit, 						/* Shut down the CPU */
@@ -439,10 +490,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem21,						/* Memory read */
 		cpu_writemem21, 					/* Memory write */
 		cpu_setOPbase21,					/* Update CPU opcode base */
-		21, 								/* CPU address bits */
+		21,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_21,ABITS2_21,ABITS_MIN_21	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_I86)
+    {
 		CPU_I86,5,							/* CPU number and family cores sharing resources */
         i86_reset,                          /* Reset CPU */
 		i86_exit,							/* Shut down the CPU */
@@ -470,9 +523,11 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem20,						/* Memory read */
 		cpu_writemem20, 					/* Memory write */
 		cpu_setOPbase20,					/* Update CPU opcode base */
-		20, 								/* CPU address bits */
+		20,CPU_IS_LE,1,5,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_20,ABITS2_20,ABITS_MIN_20	/* Address bits, for the memory system */
     },
+#endif
+#if (HAS_I8035)
     {
 		CPU_I8035,6,						/* CPU number and family cores sharing resources */
         i8035_reset,                        /* Reset CPU */
@@ -501,10 +556,12 @@ struct cpu_interface cpuintf[] =
         cpu_readmem16,                      /* Memory read */
         cpu_writemem16,                     /* Memory write */
         cpu_setOPbase16,                    /* Update CPU opcode base */
-        16,                                 /* CPU address bits */
+		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
         ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_I8039)
+    {
 		CPU_I8039,6,						/* CPU number and family cores sharing resources */
         i8039_reset,                        /* Reset CPU */
 		i8039_exit, 						/* Shut down the CPU */
@@ -532,10 +589,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_I8048)
+    {
 		CPU_I8048,6,						/* CPU number and family cores sharing resources */
         i8048_reset,                        /* Reset CPU */
 		i8048_exit, 						/* Shut down the CPU */
@@ -563,10 +622,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_N7751)
+    {
 		CPU_N7751,6,						/* CPU number and family cores sharing resources */
         n7751_reset,                        /* Reset CPU */
 		n7751_exit, 						/* Shut down the CPU */
@@ -594,10 +655,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,1,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M6800)
+    {
 		CPU_M6800,7,						/* CPU number and family cores sharing resources */
         m6800_reset,                        /* Reset CPU */
 		m6800_exit, 						/* Shut down the CPU */
@@ -625,10 +688,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M6801)
+    {
 		CPU_M6801,7,						/* CPU number and family cores sharing resources */
         m6801_reset,                        /* Reset CPU */
 		m6801_exit, 						/* Shut down the CPU */
@@ -656,10 +721,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M6802)
+    {
 		CPU_M6802,7,						/* CPU number and family cores sharing resources */
         m6802_reset,                        /* Reset CPU */
 		m6802_exit, 						/* Shut down the CPU */
@@ -687,10 +754,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M6803)
+    {
 		CPU_M6803,7,						/* CPU number and family cores sharing resources */
         m6803_reset,                        /* Reset CPU */
 		m6803_exit, 						/* Shut down the CPU */
@@ -718,10 +787,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M6808)
+    {
 		CPU_M6808,7,						/* CPU number and family cores sharing resources */
         m6808_reset,                        /* Reset CPU */
 		m6808_exit, 						/* Shut down the CPU */
@@ -749,10 +820,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_HD63701)
+    {
 		CPU_HD63701,7,						/* CPU number and family cores sharing resources */
         hd63701_reset,                      /* Reset CPU */
 		hd63701_exit,						/* Shut down the CPU */
@@ -780,10 +853,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M6805)
+    {
 		CPU_M6805,8,						/* CPU number and family cores sharing resources */
         m6805_reset,                        /* Reset CPU */
 		m6805_exit, 						/* Shut down the CPU */
@@ -811,10 +886,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		11,CPU_IS_BE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M68705)
+    {
 		CPU_M68705,8,						/* CPU number and family cores sharing resources */
         m68705_reset,                       /* Reset CPU */
 		m68705_exit,						/* Shut down the CPU */
@@ -842,10 +919,45 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		11,CPU_IS_BE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_HD63705)
+    {
+		CPU_HD63705,8,						/* CPU number and family cores sharing resources */
+		hd63705_reset,						/* Reset CPU */
+		hd63705_exit,						/* Shut down the CPU */
+		hd63705_execute,					/* Execute a number of cycles */
+		hd63705_get_context,				/* Get the contents of the registers */
+		hd63705_set_context,				/* Set the contents of the registers */
+		hd63705_get_pc, 					/* Return the current program counter */
+		hd63705_set_pc, 					/* Set the current program counter */
+		hd63705_get_sp, 					/* Return the current stack pointer */
+		hd63705_set_sp, 					/* Set the current stack pointer */
+		hd63705_get_reg,					/* Get a specific register value */
+		hd63705_set_reg,					/* Set a specific register value */
+		hd63705_set_nmi_line,				/* Set state of the NMI line */
+		hd63705_set_irq_line,				/* Set state of the IRQ line */
+		hd63705_set_irq_callback,			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		hd63705_state_save, 				/* Save CPU state */
+		hd63705_state_load, 				/* Load CPU state */
+		hd63705_info,						/* Get formatted string for a specific register */
+        1,                                  /* Number of IRQ lines */
+		&hd63705_ICount,					/* Pointer to the instruction count */
+		HD63705_INT_NONE,					/* Interrupt types: none, IRQ, NMI */
+		HD63705_INT_IRQ,
+		-1,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		16,CPU_IS_BE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+#endif
+#if (HAS_M6309)
+    {
 		CPU_M6309,9,						/* CPU number and family cores sharing resources */
         m6309_reset,                        /* Reset CPU */
 		m6309_exit, 						/* Shut down the CPU */
@@ -873,10 +985,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_M6809)
+    {
 		CPU_M6809,9,						/* CPU number and family cores sharing resources */
         m6809_reset,                        /* Reset CPU */
 		m6809_exit, 						/* Shut down the CPU */
@@ -904,10 +1018,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_BE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M68000)
+    {
 		CPU_M68000,10,						/* CPU number and family cores sharing resources */
         m68000_reset,                       /* Reset CPU */
 		m68000_exit,						/* Shut down the CPU */
@@ -935,10 +1051,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem24,						/* Memory read */
 		cpu_writemem24, 					/* Memory write */
 		cpu_setOPbase24,					/* Update CPU opcode base */
-		24, 								/* CPU address bits */
+		24,CPU_IS_BE,2,10,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_M68010)
+    {
 		CPU_M68010,10,						/* CPU number and family cores sharing resources */
         m68010_reset,                       /* Reset CPU */
 		m68010_exit,						/* Shut down the CPU */
@@ -966,10 +1084,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem24,						/* Memory read */
 		cpu_writemem24, 					/* Memory write */
 		cpu_setOPbase24,					/* Update CPU opcode base */
-		24, 								/* CPU address bits */
+		24,CPU_IS_BE,2,10,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_M68020)
+    {
 		CPU_M68020,10,						/* CPU number and family cores sharing resources */
         m68020_reset,                       /* Reset CPU */
 		m68020_exit,						/* Shut down the CPU */
@@ -997,10 +1117,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem24,						/* Memory read */
 		cpu_writemem24, 					/* Memory write */
 		cpu_setOPbase24,					/* Update CPU opcode base */
-		24, 								/* CPU address bits */
+		24,CPU_IS_BE,2,10,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_24,ABITS2_24,ABITS_MIN_24	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_T11)
+    {
 		CPU_T11,11, 						/* CPU number and family cores sharing resources */
         t11_reset,                          /* Reset CPU */
 		t11_exit,							/* Shut down the CPU */
@@ -1028,10 +1150,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16lew,					/* Memory read */
 		cpu_writemem16lew,					/* Memory write */
 		cpu_setOPbase16lew, 				/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,2,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16LEW,ABITS2_16LEW,ABITS_MIN_16LEW  /* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_S2650)
+    {
 		CPU_S2650,12,						/* CPU number and family cores sharing resources */
         s2650_reset,                        /* Reset CPU */
 		s2650_exit, 						/* Shut down the CPU */
@@ -1059,10 +1183,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		15,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_TMS34010)
+    {
 		CPU_TMS34010,13,					/* CPU number and family cores sharing resources */
         tms34010_reset,                     /* Reset CPU */
 		tms34010_exit,						/* Shut down the CPU */
@@ -1090,10 +1216,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem29,						/* Memory read */
 		cpu_writemem29, 					/* Memory write */
 		cpu_setOPbase29,					/* Update CPU opcode base */
-		29, 								/* CPU address bits */
+		29,CPU_IS_LE,16,80, 				/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_29,ABITS2_29,ABITS_MIN_29	/* Address bits, for the memory system */
 	},
-	{
+#endif
+#if (HAS_TMS9900)
+    {
 		CPU_TMS9900,14, 					/* CPU number and family cores sharing resources */
         tms9900_reset,                      /* Reset CPU */
 		tms9900_exit,						/* Shut down the CPU */
@@ -1121,11 +1249,13 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
-		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+		29,CPU_IS_BE,2,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
+        ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
         /* Were all ...LEW */
 	},
-	{
+#endif
+#if (HAS_Z8000)
+    {
 		CPU_Z8000,15,						/* CPU number and family cores sharing resources */
         z8000_reset,                        /* Reset CPU */
 		z8000_exit, 						/* Shut down the CPU */
@@ -1153,10 +1283,12 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,6,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
-	{
+#endif
+#if (HAS_TMS320C10)
+    {
 		CPU_TMS320C10,16,					/* CPU number and family cores sharing resources */
         tms320c10_reset,                    /* Reset CPU */
 		tms320c10_exit, 					/* Shut down the CPU */
@@ -1184,9 +1316,11 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
-		16, 								/* CPU address bits */
+		16,CPU_IS_LE,1,4,					/* CPU address bits, endianess, align unit, max. instruction length  */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
+#endif
+#if (HAS_CCPU)
     {
 		CPU_CCPU,17,						/* CPU number and family cores sharing resources */
         ccpu_reset,                         /* Reset CPU  */
@@ -1213,10 +1347,11 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,						/* Memory read	*/
 		cpu_writemem16, 					/* Memory write  */
 		cpu_setOPbase16,					/* Update CPU opcode base  */
-		16, 								/* CPU address bits  */
+		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length   */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
 	},
-#ifdef MESS
+#endif
+#if (HAS_PDP1)
     {
 		CPU_PDP1,18,						/* CPU number and family cores sharing resources */
         pdp1_reset,                         /* Reset CPU  */
@@ -1237,19 +1372,16 @@ struct cpu_interface cpuintf[] =
 		NULL,								/* Save CPU state */
 		NULL,								/* Load CPU state */
 		pdp1_info,							/* Get formatted string for a specific register */
-        2,                                  /* Number of IRQ lines */
+		0,									/* Number of IRQ lines */
 		&pdp1_ICount,						/* Pointer to the instruction count  */
 		0,-1,-1,							/* Interrupt types: none, IRQ, NMI	*/
 		cpu_readmem16,						/* Memory read	*/
 		cpu_writemem16, 					/* Memory write  */
 		cpu_setOPbase16,					/* Update CPU opcode base  */
-		16, 								/* CPU address bits  */
+		16,CPU_IS_LE,1,3,					/* CPU address bits, endianess, align unit, max. instruction length   */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
     },
 #endif
-	{
-		-1,0,								/* End of list marker */
-	}
 };
 
 void cpu_init(void)
@@ -1257,10 +1389,13 @@ void cpu_init(void)
 	int i;
 
 	/* Verify the order of entries in the cpuintf[] array */
-	for( i = 0; cpuintf[i].cpu_num >= 0; i++ )
+	for( i = 0; i < CPU_COUNT; i++ )
 	{
 		if( cpuintf[i].cpu_num != i )
-			if( errorlog ) fprintf(errorlog, "CPU #%d wrong ID %d! Check enum CPU_... in driver.h\n", i, cpuintf[i].cpu_num);
+		{
+			fprintf( stderr, "CPU #%d [%s] wrong ID %d: check enum CPU_... in src/driver.h!\n", i, cputype_name(i), cpuintf[i].cpu_num);
+			exit(1);
+		}
 	}
 
     /* count how many CPUs we have to emulate */
@@ -1268,18 +1403,16 @@ void cpu_init(void)
 
 	while (totalcpu < MAX_CPU)
 	{
-		if (CPU_TYPE(totalcpu) == 0) break;
-		totalcpu++;
+		if( CPU_TYPE(totalcpu) == CPU_DUMMY ) break;
+        totalcpu++;
 	}
 
 	/* zap the CPU data structure */
 	memset (cpu, 0, sizeof (cpu));
 
 	/* Set up the interface functions */
-	for (i = 0; i < MAX_CPU; i++)
-		cpu[i].intf = &cpuintf[CPU_TYPE(i)];
-	for (i = 0; i < MAX_CPU; i++)
-		Z80_daisychain[i] = 0;
+    for (i = 0; i < MAX_CPU; i++)
+        cpu[i].intf = &cpuintf[CPU_TYPE(i)];
 
 	/* reset the timer system */
 	timer_init ();
@@ -1290,12 +1423,32 @@ void cpu_run(void)
 {
 	int i;
 
-	/* determine which CPUs need a context switch */
+    /* determine which CPUs need a context switch */
 	for (i = 0; i < totalcpu; i++)
 	{
-		int j;
+		int j, size;
 
-		/* Save if there is another CPU of the same type */
+        /* allocate a context buffer for the CPU */
+		size = GETCONTEXT(i,NULL);
+        if( size == 0 )
+        {
+            /* That can't really be true */
+			fprintf( stderr, "CPU #%d claims to need no context buffer!\n", i);
+            raise( SIGABRT );
+        }
+
+        cpu[i].context = malloc( size );
+        if( cpu[i].context == NULL )
+        {
+            /* That's really bad :( */
+			fprintf( stderr, "CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
+            raise( SIGABRT );
+        }
+
+		/* Zap the context buffer */
+		memset(cpu[i].context, 0, size );
+
+        /* Save if there is another CPU of the same type */
 		cpu[i].save_context = 0;
 
 		for (j = 0; j < totalcpu; j++)
@@ -1351,7 +1504,7 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		RESET (i);
 
         /* Set the irq callback for the cpu */
-		SET_IRQ_CALLBACK(i,cpu_irq_callbacks[i]);
+		SETIRQCALLBACK(i,cpu_irq_callbacks[i]);
 
         /* save the CPU context if necessary */
 		if (cpu[i].save_context) GETCONTEXT (i, cpu[i].context);
@@ -1475,8 +1628,16 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 	/* shut down the CPU cores */
 	for (i = 0; i < totalcpu; i++)
 	{
-		if( cpu[i].intf->exit )
+		/* if the CPU core defines an exit function, call it now */
+        if( cpu[i].intf->exit )
 			(*cpu[i].intf->exit)();
+
+        /* free the context buffer for that CPU */
+        if( cpu[i].context )
+		{
+			free( cpu[i].context );
+			cpu[i].context = NULL;
+		}
 	}
 }
 
@@ -1624,55 +1785,7 @@ void cpu_set_sp(unsigned val)
 ***************************************************************************/
 int cpu_getpreviouspc(void)  /* -RAY- */
 {
-	int cpunum = (activecpu < 0) ? 0 : activecpu;
-
-	switch(CPU_TYPE(cpunum))
-	{
-		case CPU_Z80:
-		case CPU_I8039:
-		case CPU_M6502:
-		case CPU_M6809:
-		case CPU_M68000:	/* ASG 980413 */
-		case CPU_TMS320C10:
-			return previouspc;
-			break;
-
-		default:
-	if (errorlog) fprintf(errorlog,"cpu_getpreviouspc: unsupported CPU type %02x\n",CPU_TYPE(cpunum));
-			return -1;
-			break;
-	}
-}
-
-
-/***************************************************************************
-
-  This is similar to cpu_get_pc(), but instead of returning the current PC,
-  it returns the address stored on the top of the stack, which usually is
-  the address where execution will resume after the current subroutine.
-  Note that the returned value will be wrong if the program has PUSHed
-  registers on the stack.
-
-***************************************************************************/
-int cpu_getreturnpc(void)
-{
-	int cpunum = (activecpu < 0) ? 0 : activecpu;
-
-	switch(CPU_TYPE(cpunum))
-    {
-		case CPU_Z80:
-			{
-				extern unsigned char *RAM;
-				return RAM[cpu_get_reg(Z80_SP)] + (RAM[cpu_get_reg(Z80_SP)+1] << 8);
-			}
-			break;
-
-		default:
-			if (errorlog)
-				fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x [%s]\n",CPU_TYPE(cpunum),CPU_INFO(CPU_TYPE(cpunum),0,0));
-			return -1;
-			break;
-	}
+	return previouspc;
 }
 
 
@@ -1877,7 +1990,7 @@ static int cpu_0_irq_callback(int irqline)
 {
 	if( irq_line_state[0 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
 	{
-        SET_IRQ_LINE(0, irqline, CLEAR_LINE);
+		SETIRQLINE(0, irqline, CLEAR_LINE);
 		irq_line_state[0 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
     }
 	LOG((errorlog, "cpu_0_irq_callback(%d) $%04x\n", irqline, irq_line_vector[0 * MAX_IRQ_LINES + irqline]));
@@ -1888,7 +2001,7 @@ static int cpu_1_irq_callback(int irqline)
 {
 	if( irq_line_state[1 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
 	{
-        SET_IRQ_LINE(1, irqline, CLEAR_LINE);
+		SETIRQLINE(1, irqline, CLEAR_LINE);
 		irq_line_state[1 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
     }
 	LOG((errorlog, "cpu_1_irq_callback(%d) $%04x\n", irqline, irq_line_vector[1 * MAX_IRQ_LINES + irqline]));
@@ -1899,7 +2012,7 @@ static int cpu_2_irq_callback(int irqline)
 {
 	if( irq_line_state[2 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
 	{
-        SET_IRQ_LINE(2, irqline, CLEAR_LINE);
+		SETIRQLINE(2, irqline, CLEAR_LINE);
 		irq_line_state[2 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
 	LOG((errorlog, "cpu_2_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
@@ -1910,7 +2023,7 @@ static int cpu_3_irq_callback(int irqline)
 {
 	if( irq_line_state[3 * MAX_IRQ_LINES + irqline] == HOLD_LINE )
 	{
-        SET_IRQ_LINE(3, irqline, CLEAR_LINE);
+		SETIRQLINE(3, irqline, CLEAR_LINE);
 		irq_line_state[3 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
 	LOG((errorlog, "cpu_3_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
@@ -2227,15 +2340,15 @@ static void cpu_manualnmicallback(int param)
 	switch (state)
 	{
         case PULSE_LINE:
-			SET_NMI_LINE(cpunum,ASSERT_LINE);
-			SET_NMI_LINE(cpunum,CLEAR_LINE);
+			SETNMILINE(cpunum,ASSERT_LINE);
+			SETNMILINE(cpunum,CLEAR_LINE);
             break;
         case HOLD_LINE:
         case ASSERT_LINE:
-			SET_NMI_LINE(cpunum,ASSERT_LINE);
+			SETNMILINE(cpunum,ASSERT_LINE);
             break;
         case CLEAR_LINE:
-			SET_NMI_LINE(cpunum,CLEAR_LINE);
+			SETNMILINE(cpunum,CLEAR_LINE);
             break;
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
@@ -2270,15 +2383,15 @@ static void cpu_manualirqcallback(int param)
 	switch (state)
 	{
         case PULSE_LINE:
-			SET_IRQ_LINE(cpunum,irqline,ASSERT_LINE);
-			SET_IRQ_LINE(cpunum,irqline,CLEAR_LINE);
+			SETIRQLINE(cpunum,irqline,ASSERT_LINE);
+			SETIRQLINE(cpunum,irqline,CLEAR_LINE);
             break;
         case HOLD_LINE:
         case ASSERT_LINE:
-			SET_IRQ_LINE(cpunum,irqline,ASSERT_LINE);
+			SETIRQLINE(cpunum,irqline,ASSERT_LINE);
             break;
         case CLEAR_LINE:
-			SET_IRQ_LINE(cpunum,irqline,CLEAR_LINE);
+			SETIRQLINE(cpunum,irqline,CLEAR_LINE);
             break;
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
@@ -2354,15 +2467,19 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 
 			switch (CPU_TYPE(cpunum))
 			{
-			case CPU_Z80:				irq_line = 0; LOG((errorlog,"Z80 IRQ\n")); break;
-
-			case CPU_8080:
+#if (HAS_Z80)
+            case CPU_Z80:               irq_line = 0; LOG((errorlog,"Z80 IRQ\n")); break;
+#endif
+#if (HAS_8080)
+            case CPU_8080:
 				switch (num)
 				{
 				case I8080_INTR:		irq_line = 0; LOG((errorlog,"I8080 INTR\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"I8080 unknown\n"));
 				}
                 break;
+#endif
+#if (HAS_8085)
             case CPU_8085A:
 				switch (num)
 				{
@@ -2373,12 +2490,18 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"I8085 unknown\n"));
 				}
 				break;
-
-			case CPU_M6502: 			irq_line = 0; LOG((errorlog,"M6502 IRQ\n")); break;
-			case CPU_M65C02:			irq_line = 0; LOG((errorlog,"M65C02 IRQ\n")); break;
-			case CPU_M6510: 			irq_line = 0; LOG((errorlog,"M6510 IRQ\n")); break;
-
-			case CPU_H6280:
+#endif
+#if (HAS_M6502)
+            case CPU_M6502:             irq_line = 0; LOG((errorlog,"M6502 IRQ\n")); break;
+#endif
+#if (HAS_M65C02)
+            case CPU_M65C02:            irq_line = 0; LOG((errorlog,"M65C02 IRQ\n")); break;
+#endif
+#if (HAS_M6510)
+            case CPU_M6510:             irq_line = 0; LOG((errorlog,"M6510 IRQ\n")); break;
+#endif
+#if (HAS_H6280)
+            case CPU_H6280:
                 switch (num)
                 {
 				case H6280_INT_IRQ1:	irq_line = 0; LOG((errorlog,"H6280 INT 1\n")); break;
@@ -2387,15 +2510,44 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"H6280 unknown\n"));
                 }
                 break;
-
-			case CPU_I86:				irq_line = 0; LOG((errorlog,"I86 IRQ\n")); break;
-
-			case CPU_I8035: 			irq_line = 0; LOG((errorlog,"I8035 IRQ\n")); break;
+#endif
+#if (HAS_I86)
+            case CPU_I86:               irq_line = 0; LOG((errorlog,"I86 IRQ\n")); break;
+#endif
+#if (HAS_I8035)
+            case CPU_I8035:             irq_line = 0; LOG((errorlog,"I8035 IRQ\n")); break;
+#endif
+#if (HAS_I8039)
             case CPU_I8039:             irq_line = 0; LOG((errorlog,"I8039 IRQ\n")); break;
-			case CPU_I8048: 			irq_line = 0; LOG((errorlog,"I8048 IRQ\n")); break;
-			case CPU_N7751: 			irq_line = 0; LOG((errorlog,"N7751 IRQ\n")); break;
-
-			case CPU_M6802:
+#endif
+#if (HAS_I8048)
+            case CPU_I8048:             irq_line = 0; LOG((errorlog,"I8048 IRQ\n")); break;
+#endif
+#if (HAS_N7751)
+            case CPU_N7751:             irq_line = 0; LOG((errorlog,"N7751 IRQ\n")); break;
+#endif
+#if (HAS_M6800)
+			case CPU_M6800:
+				switch (num)
+				{
+				case M6800_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6800 IRQ\n")); break;
+				case M6800_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6800 OCI\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M6800 unknown\n"));
+                }
+                break;
+#endif
+#if (HAS_M6801)
+			case CPU_M6801:
+				switch (num)
+				{
+				case M6801_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6801 IRQ\n")); break;
+				case M6801_INT_OCI: 	irq_line = 1; LOG((errorlog,"M6801 OCI\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M6801 unknown\n"));
+                }
+                break;
+#endif
+#if (HAS_M6802)
+            case CPU_M6802:
 				switch (num)
 				{
 				case M6802_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6802 IRQ\n")); break;
@@ -2403,7 +2555,9 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"M6802 unknown\n"));
                 }
                 break;
-			case CPU_M6803:
+#endif
+#if (HAS_M6803)
+            case CPU_M6803:
 				switch (num)
 				{
 				case M6803_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6803 IRQ\n")); break;
@@ -2411,6 +2565,8 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"M6803 unknown\n"));
                 }
                 break;
+#endif
+#if (HAS_M6808)
             case CPU_M6808:
 				switch (num)
 				{
@@ -2419,7 +2575,9 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"M6808 unknown\n"));
                 }
 				break;
-			case CPU_HD63701:
+#endif
+#if (HAS_HD63701)
+            case CPU_HD63701:
 				switch (num)
 				{
 				case HD63701_INT_IRQ:	irq_line = 0; LOG((errorlog,"HD63701 IRQ\n")); break;
@@ -2427,11 +2585,18 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"HD63701 unknown\n"));
                 }
                 break;
-
-			case CPU_M6805: 			irq_line = 0; LOG((errorlog,"M6805 IRQ\n")); break;
-			case CPU_M68705:			irq_line = 0; LOG((errorlog,"M68705 IRQ\n")); break;
-
-			case CPU_M6309:
+#endif
+#if (HAS_M6805)
+            case CPU_M6805:             irq_line = 0; LOG((errorlog,"M6805 IRQ\n")); break;
+#endif
+#if (HAS_M68705)
+            case CPU_M68705:            irq_line = 0; LOG((errorlog,"M68705 IRQ\n")); break;
+#endif
+#if (HAS_HD63705)
+			case CPU_HD63705:			irq_line = 0; LOG((errorlog,"HD68705 IRQ\n")); break;
+#endif
+#if (HAS_M6309)
+            case CPU_M6309:
 				switch (num)
 				{
 				case M6309_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6309 IRQ\n")); break;
@@ -2439,6 +2604,8 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"M6309 unknown\n"));
 				}
                 break;
+#endif
+#if (HAS_M6809)
             case CPU_M6809:
 				switch (num)
 				{
@@ -2447,25 +2614,59 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"M6809 unknown\n"));
 				}
 				break;
-
+#endif
+#if (HAS_M68000)
             case CPU_M68000:
-			case CPU_M68010:
+				switch (num)
+                {
+                case MC68000_IRQ_1:     irq_line = 1; LOG((errorlog,"M68K IRQ1\n")); break;
+                case MC68000_IRQ_2:     irq_line = 2; LOG((errorlog,"M68K IRQ2\n")); break;
+                case MC68000_IRQ_3:     irq_line = 3; LOG((errorlog,"M68K IRQ3\n")); break;
+                case MC68000_IRQ_4:     irq_line = 4; LOG((errorlog,"M68K IRQ4\n")); break;
+                case MC68000_IRQ_5:     irq_line = 5; LOG((errorlog,"M68K IRQ5\n")); break;
+                case MC68000_IRQ_6:     irq_line = 6; LOG((errorlog,"M68K IRQ6\n")); break;
+                case MC68000_IRQ_7:     irq_line = 7; LOG((errorlog,"M68K IRQ7\n")); break;
+                default:                irq_line = 0; LOG((errorlog,"M68K unknown\n"));
+                }
+                /* until now only auto vector interrupts supported */
+                num = MC68000_INT_ACK_AUTOVECTOR;
+                break;
+#endif
+#if (HAS_M68010)
+            case CPU_M68010:
+                switch (num)
+                {
+                case MC68010_IRQ_1:     irq_line = 1; LOG((errorlog,"M68010 IRQ1\n")); break;
+                case MC68010_IRQ_2:     irq_line = 2; LOG((errorlog,"M68010 IRQ2\n")); break;
+                case MC68010_IRQ_3:     irq_line = 3; LOG((errorlog,"M68010 IRQ3\n")); break;
+                case MC68010_IRQ_4:     irq_line = 4; LOG((errorlog,"M68010 IRQ4\n")); break;
+                case MC68010_IRQ_5:     irq_line = 5; LOG((errorlog,"M68010 IRQ5\n")); break;
+                case MC68010_IRQ_6:     irq_line = 6; LOG((errorlog,"M68010 IRQ6\n")); break;
+                case MC68010_IRQ_7:     irq_line = 7; LOG((errorlog,"M68010 IRQ7\n")); break;
+                default:                irq_line = 0; LOG((errorlog,"M68010 unknown\n"));
+                }
+                /* until now only auto vector interrupts supported */
+                num = MC68000_INT_ACK_AUTOVECTOR;
+                break;
+#endif
+#if (HAS_M68020)
 			case CPU_M68020:
 				switch (num)
-				{
-				case MC68000_IRQ_1: 	irq_line = 1; LOG((errorlog,"M68K IRQ1\n")); break;
-				case MC68000_IRQ_2: 	irq_line = 2; LOG((errorlog,"M68K IRQ2\n")); break;
-				case MC68000_IRQ_3: 	irq_line = 3; LOG((errorlog,"M68K IRQ3\n")); break;
-				case MC68000_IRQ_4: 	irq_line = 4; LOG((errorlog,"M68K IRQ4\n")); break;
-				case MC68000_IRQ_5: 	irq_line = 5; LOG((errorlog,"M68K IRQ5\n")); break;
-				case MC68000_IRQ_6: 	irq_line = 6; LOG((errorlog,"M68K IRQ6\n")); break;
-				case MC68000_IRQ_7: 	irq_line = 7; LOG((errorlog,"M68K IRQ7\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M68K unknown\n"));
+                {
+				case MC68020_IRQ_1: 	irq_line = 1; LOG((errorlog,"M68020 IRQ1\n")); break;
+				case MC68020_IRQ_2: 	irq_line = 2; LOG((errorlog,"M68020 IRQ2\n")); break;
+				case MC68020_IRQ_3: 	irq_line = 3; LOG((errorlog,"M68020 IRQ3\n")); break;
+				case MC68020_IRQ_4: 	irq_line = 4; LOG((errorlog,"M68020 IRQ4\n")); break;
+				case MC68020_IRQ_5: 	irq_line = 5; LOG((errorlog,"M68020 IRQ5\n")); break;
+				case MC68020_IRQ_6: 	irq_line = 6; LOG((errorlog,"M68020 IRQ6\n")); break;
+				case MC68020_IRQ_7: 	irq_line = 7; LOG((errorlog,"M68020 IRQ7\n")); break;
+				default:				irq_line = 0; LOG((errorlog,"M68020 unknown\n"));
                 }
-				/* until now only auto vector interrupts supported */
+                /* until now only auto vector interrupts supported */
                 num = MC68000_INT_ACK_AUTOVECTOR;
-				break;
-
+                break;
+#endif
+#if HAS_T11
             case CPU_T11:
 				switch (num)
 				{
@@ -2476,9 +2677,11 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"T11 unknown\n"));
                 }
                 break;
-
-			case CPU_S2650: 			irq_line = 0; LOG((errorlog,"S2650 IRQ\n")); break;
-
+#endif
+#if HAS_S2650
+            case CPU_S2650:             irq_line = 0; LOG((errorlog,"S2650 IRQ\n")); break;
+#endif
+#if HAS_TMS34010
             case CPU_TMS34010:
 				switch (num)
 				{
@@ -2487,9 +2690,11 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"TMS34010 unknown\n"));
                 }
                 break;
-
-			case CPU_TMS9900:			irq_line = 0; LOG((errorlog,"TMS9900 IRQ\n")); break;
-
+#endif
+#if HAS_TMS9900
+            case CPU_TMS9900:           irq_line = 0; LOG((errorlog,"TMS9900 IRQ\n")); break;
+#endif
+#if HAS_Z8000
             case CPU_Z8000:
 				switch (num)
 				{
@@ -2498,7 +2703,8 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:				irq_line = 0; LOG((errorlog,"Z8000 unknown\n"));
                 }
                 break;
-
+#endif
+#if HAS_TMS320C10
             case CPU_TMS320C10:
 				switch (num)
 				{
@@ -2507,7 +2713,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				default:					irq_line = 0; LOG((errorlog,"TMS32010 unknown\n"));
                 }
                 break;
-
+#endif
 			default:
 				irq_line = 0;
 				/* else it should be an IRQ type; assume line 0 and store vector */
@@ -2537,11 +2743,11 @@ static void cpu_clear_interrupts (int cpunum)
 	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
 
 	/* clear NMI line */
-    SET_NMI_LINE(activecpu,CLEAR_LINE);
+	SETNMILINE(activecpu,CLEAR_LINE);
 
     /* clear all IRQ lines */
     for (i = 0; i < cpu[activecpu].intf->num_irqs; i++)
-		SET_IRQ_LINE(activecpu,i,CLEAR_LINE);
+		SETIRQLINE(activecpu,i,CLEAR_LINE);
 
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
@@ -2563,7 +2769,7 @@ static void cpu_reset_cpu (int cpunum)
 	RESET (cpunum);
 
     /* Set the irq callback for the cpu */
-	SET_IRQ_CALLBACK(cpunum,cpu_irq_callbacks[cpunum]);
+	SETIRQCALLBACK(cpunum,cpu_irq_callbacks[cpunum]);
 
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
@@ -2897,84 +3103,32 @@ void* cpu_getcontext (int _activecpu)
 }
 
 
-/*
- * This function is obsolete. Put the daisy_chain pointer into the
- * reset_param of your machine driver instead.
- */
-#if 0
-void cpu_setdaisychain(int cpunum, Z80_DaisyChain *daisy_chain)
+/***************************************************************************
+  Retrieve or set the entire context of the active CPU
+***************************************************************************/
+
+unsigned cpu_get_context(void *context)
 {
-	if( CPU_TYPE(cpunum) != CPU_Z80 )
-	{
-		if( errorlog ) fprintf(errorlog,"cpu_setdaisychain called for CPU #%d [%s]!\n", cpunum, CPU_INFO(CPU_TYPE(cpunum),0,0));
-		return;
-	}
-	z80_reset(daisy_chain);
+    return GETCONTEXT(activecpu,context);
 }
-#endif
+
+void cpu_set_context(void *context)
+{
+    SETCONTEXT(activecpu,context);
+}
 
 /***************************************************************************
-
-  Retrieve or set the value of a specific register
-
+  Retrieve or set the value of a specific register of the active CPU
 ***************************************************************************/
 
 unsigned cpu_get_reg(int regnum)
 {
-	return (*cpu[activecpu].intf->get_reg)(regnum);
-}
-
-unsigned cpu_n_get_reg(int cpunum, int regnum)
-{
-    int oldactive;
-    unsigned val = 0;
-
-    if( cpunum == activecpu )
-        return cpu_get_reg(regnum);
-
-    /* swap to the CPU's context */
-    oldactive = activecpu;
-    activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
-
-    val = (*cpu[activecpu].intf->get_reg)(regnum);
-
-    /* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
-    activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
-
-    return val;
+	return GETREG(activecpu,regnum);
 }
 
 void cpu_set_reg(int regnum, unsigned val)
 {
-	(*cpu[activecpu].intf->set_reg)(regnum,val);
-}
-
-void cpu_n_set_reg(int cpunum, int regnum, unsigned val)
-{
-	int oldactive;
-
-	if( cpunum == activecpu )
-	{
-		cpu_set_reg(regnum,val);
-		return;
-	}
-
-    /* swap to the CPU's context */
-	oldactive = activecpu;
-    activecpu = cpunum;
-    memorycontextswap (activecpu);
-	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
-
-	(*cpu[activecpu].intf->set_reg)(regnum,val);
-
-	/* update the CPU's context */
-	if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
-	activecpu = oldactive;
-    if (activecpu >= 0) memorycontextswap (activecpu);
+	SETREG(activecpu,regnum,val);
 }
 
 /***************************************************************************
@@ -2984,244 +3138,564 @@ void cpu_n_set_reg(int cpunum, int regnum, unsigned val)
 ***************************************************************************/
 
 /***************************************************************************
-  Return the name for the current CPU
+  Returns the number of address bits for the active CPU
+***************************************************************************/
+unsigned cpu_address_bits(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpuintf[CPU_TYPE(cpunum)].address_bits;
+}
+
+/***************************************************************************
+  Returns the address bit mask for the active CPU
+***************************************************************************/
+unsigned cpu_address_mask(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return (1 << cpuintf[CPU_TYPE(cpunum)].address_bits) - 1;
+}
+
+/***************************************************************************
+  Returns the endianess for the active CPU
+***************************************************************************/
+unsigned cpu_endianess(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpuintf[CPU_TYPE(cpunum)].endianess;
+}
+
+/***************************************************************************
+  Returns the code align unit for the active CPU (1 byte, 2 word, ...)
+***************************************************************************/
+unsigned cpu_align_unit(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpuintf[CPU_TYPE(cpunum)].align_unit;
+}
+
+/***************************************************************************
+  Returns the max. instruction length for the active CPU
+***************************************************************************/
+unsigned cpu_max_inst_len(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpuintf[CPU_TYPE(cpunum)].max_inst_len;
+}
+
+/***************************************************************************
+  Returns the name for the active CPU
 ***************************************************************************/
 const char *cpu_name(void)
 {
 	if( activecpu >= 0 )
-		return CPU_INFO(activecpu,NULL,CPU_INFO_NAME);
+		return CPUINFO(activecpu,NULL,CPU_INFO_NAME);
 	return "";
 }
 
 /***************************************************************************
-  Return the family name for the current CPU
+  Returns the family name for the active CPU
 ***************************************************************************/
 const char *cpu_core_family(void)
 {
 	if( activecpu >= 0 )
-		return CPU_INFO(activecpu,NULL,CPU_INFO_FAMILY);
+		return CPUINFO(activecpu,NULL,CPU_INFO_FAMILY);
     return "";
 }
 
 /***************************************************************************
-  Return the version number for the current CPU
+  Returns the version number for the active CPU
 ***************************************************************************/
 const char *cpu_core_version(void)
 {
 	if( activecpu >= 0 )
-		return CPU_INFO(activecpu,NULL,CPU_INFO_VERSION);
+		return CPUINFO(activecpu,NULL,CPU_INFO_VERSION);
     return "";
 }
 
 /***************************************************************************
-  Return the core filename for the current CPU
+  Returns the core filename for the active CPU
 ***************************************************************************/
 const char *cpu_core_file(void)
 {
 	if( activecpu >= 0 )
-		return CPU_INFO(activecpu,NULL,CPU_INFO_FILE);
+		return CPUINFO(activecpu,NULL,CPU_INFO_FILE);
     return "";
 }
 
 /***************************************************************************
-  Return the credits for the current CPU
+  Returns the credits for the active CPU
 ***************************************************************************/
 const char *cpu_core_credits(void)
 {
 	if( activecpu >= 0 )
-		return CPU_INFO(activecpu,NULL,CPU_INFO_CREDITS);
+		return CPUINFO(activecpu,NULL,CPU_INFO_CREDITS);
     return "";
 }
 
 /***************************************************************************
-  Return the current program counter for the current CPU
+  Returns the register layout for the active CPU (debugger)
+***************************************************************************/
+const char *cpu_reg_layout(void)
+{
+	if( activecpu >= 0 )
+		return CPUINFO(activecpu,NULL,CPU_INFO_REG_LAYOUT);
+    return "";
+}
+
+/***************************************************************************
+  Returns the window layout for the active CPU (debugger)
+***************************************************************************/
+const char *cpu_win_layout(void)
+{
+	if( activecpu >= 0 )
+		return CPUINFO(activecpu,NULL,CPU_INFO_WIN_LAYOUT);
+    return "";
+}
+
+/***************************************************************************
+  Returns the current program counter for the active CPU
 ***************************************************************************/
 const char *cpu_pc(void)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
-
 	if( activecpu >= 0 )
-	{
-		GETCONTEXT (activecpu, temp_context);
-		return CPU_INFO(activecpu,temp_context,CPU_INFO_PC);
-	}
+		return CPUINFO(activecpu,NULL,CPU_INFO_PC);
 	return "";
 }
 
 /***************************************************************************
-  Return the current stack pointer for the current CPU
+  Returns the current stack pointer for the active CPU
 ***************************************************************************/
 const char *cpu_sp(void)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
-
 	if( activecpu >= 0 )
-	{
-		GETCONTEXT (activecpu, temp_context);
-		return CPU_INFO(activecpu,temp_context,CPU_INFO_SP);
-	}
+		return CPUINFO(activecpu,NULL,CPU_INFO_SP);
 	return "";
 }
 
 /***************************************************************************
-  Return a dissassembled instruction for the current CPU
+  Returns a dissassembled instruction for the active CPU
 ***************************************************************************/
 const char *cpu_dasm(void)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
-
-	if( activecpu >= 0 )
-	{
-		GETCONTEXT (activecpu, temp_context);
-		return CPU_INFO(activecpu,temp_context,CPU_INFO_DASM);
-	}
-	return "";
+    if( activecpu >= 0 )
+		return CPUINFO(activecpu,NULL,CPU_INFO_DASM);
+    return "";
 }
 
 /***************************************************************************
-  Return a flags (state, condition codes) string for the current CPU
+  Returns a flags (state, condition codes) string for the active CPU
 ***************************************************************************/
 const char *cpu_flags(void)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
-
 	if( activecpu >= 0 )
-	{
-		GETCONTEXT (activecpu, temp_context);
-		return CPU_INFO(activecpu,temp_context,CPU_INFO_FLAGS);
-	}
+		return CPUINFO(activecpu,NULL,CPU_INFO_FLAGS);
 	return "";
 }
 
 /***************************************************************************
-  Return a specific register string for a specific CPU
+  Returns a specific register string for the currently active CPU
 ***************************************************************************/
 const char *cpu_dump_reg(int regnum)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
-
 	if( activecpu >= 0 )
-	{
-		GETCONTEXT (activecpu, temp_context);
-		return CPU_INFO(activecpu,temp_context,CPU_INFO_REG+regnum);
-	}
+		return CPUINFO(activecpu,NULL,CPU_INFO_REG+regnum);
 	return "";
 }
 
 /***************************************************************************
-  Return a state dump for the current CPU
+  Returns a state dump for the currently active CPU
 ***************************************************************************/
 const char *cpu_dump_state(void)
 {
 	static char buffer[1024+1];
 	char *dst = buffer;
-	const char *src;
+	const char *src, *regs;
 	int regnum, width;
 
-	dst += sprintf(dst, "CPU #%d [%s]", activecpu, cputype_name(CPU_TYPE(activecpu)));
-	dst += sprintf(dst, " program counter %s %s\n", cpu_pc(), cpu_dasm());
-	regnum = 0;
+	dst += sprintf(dst, "\nCPU #%d [%s]\n", activecpu, cputype_name(CPU_TYPE(activecpu)));
 	width = 0;
-	src = cpu_dump_reg(regnum);
-	while (*src)
+	regs = cpu_reg_layout();
+	while( *regs )
 	{
-		if( width + strlen(src) + 1 >= 80 )
+		if( *regs == -1 )
 		{
 			dst += sprintf(dst, "\n");
 			width = 0;
 		}
-		dst += sprintf(dst, "%s ", src);
-		width += strlen(src) + 1;
-		regnum++;
-		src = cpu_dump_reg(regnum);
+		else
+		{
+			src = cpu_dump_reg( *regs );
+			if( *src )
+			{
+				if( width + strlen(src) + 1 >= 80 )
+				{
+					dst += sprintf(dst, "\n");
+					width = 0;
+				}
+				dst += sprintf(dst, "%s ", src);
+				width += strlen(src) + 1;
+			}
+		}
+		regs++;
 	}
+	dst += sprintf(dst, "\n%s %s\n", cpu_pc(), cpu_dasm());
 
     return buffer;
 }
 
 /***************************************************************************
-  Return the name for a CPU
+  Returns the number of address bits for a specific CPU type
+***************************************************************************/
+unsigned cputype_address_bits(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return cpuintf[cpu_type].address_bits;
+	return 0;
+}
+
+/***************************************************************************
+  Returns the address bit mask for a specific CPU type
+***************************************************************************/
+unsigned cputype_address_mask(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return (1 << cpuintf[cpu_type].address_bits) - 1;
+    return 0;
+}
+
+/***************************************************************************
+  Returns the endianess for a specific CPU type
+***************************************************************************/
+unsigned cputype_endianess(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return cpuintf[cpu_type].endianess;
+    return 0;
+}
+
+/***************************************************************************
+  Returns the code align unit for a speciific CPU type (1 byte, 2 word, ...)
+***************************************************************************/
+unsigned cputype_align_unit(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return cpuintf[cpu_type].align_unit;
+    return 0;
+}
+
+/***************************************************************************
+  Returns the max. instruction length for a specific CPU type
+***************************************************************************/
+unsigned cputype_max_inst_len(int cpu_type)
+{
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return cpuintf[cpu_type].max_inst_len;
+    return 0;
+}
+
+/***************************************************************************
+  Returns the name for a specific CPU type
 ***************************************************************************/
 const char *cputype_name(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
-	if( cpu_type < MAX_CPU_TYPE )
+	if( cpu_type < CPU_COUNT )
 		return IFC_INFO(cpu_type,NULL,CPU_INFO_NAME);
 	return "";
 }
 
 /***************************************************************************
-  Return the family name for a CPU
+  Returns the family name for a specific CPU type
 ***************************************************************************/
 const char *cputype_core_family(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
-	if( cpu_type < MAX_CPU_TYPE )
+	if( cpu_type < CPU_COUNT )
 		return IFC_INFO(cpu_type,NULL,CPU_INFO_FAMILY);
     return "";
 }
 
 /***************************************************************************
-  Return the version number for a CPU
+  Returns the version number for a specific CPU type
 ***************************************************************************/
 const char *cputype_core_version(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
-	if( cpu_type < MAX_CPU_TYPE )
+	if( cpu_type < CPU_COUNT )
 		return IFC_INFO(cpu_type,NULL,CPU_INFO_VERSION);
     return "";
 }
 
 /***************************************************************************
-  Return the core filename for a CPU
+  Returns the core filename for a specific CPU type
 ***************************************************************************/
 const char *cputype_core_file(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
-	if( cpu_type < MAX_CPU_TYPE )
+	if( cpu_type < CPU_COUNT )
 		return IFC_INFO(cpu_type,NULL,CPU_INFO_FILE);
     return "";
 }
 
 /***************************************************************************
-  Return the credits for a CPU
+  Returns the credits for a specific CPU type
 ***************************************************************************/
 const char *cputype_core_credits(int cpu_type)
 {
 	cpu_type &= ~CPU_FLAGS_MASK;
-	if( cpu_type < MAX_CPU_TYPE )
+	if( cpu_type < CPU_COUNT )
 		return IFC_INFO(cpu_type,NULL,CPU_INFO_CREDITS);
     return "";
 }
 
 /***************************************************************************
-  Return the current program counter for a specific CPU
+  Returns the register layout for a specific CPU type (debugger)
 ***************************************************************************/
-const char *cpunum_pc(int cpunum)
+const char *cputype_reg_layout(int cpu_type)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
+	cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return IFC_INFO(cpu_type,NULL,CPU_INFO_REG_LAYOUT);
+    return "";
+}
 
-	if( cpunum < MAX_CPU )
-    {
-		GETCONTEXT (cpunum, temp_context);
-		return CPU_INFO(cpunum,temp_context,CPU_INFO_PC);
-	}
+/***************************************************************************
+  Returns the window layout for a specific CPU type (debugger)
+***************************************************************************/
+const char *cputype_win_layout(int cpu_type)
+{
+    cpu_type &= ~CPU_FLAGS_MASK;
+	if( cpu_type < CPU_COUNT )
+		return IFC_INFO(cpu_type,NULL,CPU_INFO_WIN_LAYOUT);
+
+    /* just in case... */
+	return (const char *)default_win_layout;
+}
+
+/***************************************************************************
+  Returns the number of address bits for a specific CPU number
+***************************************************************************/
+unsigned cpunum_address_bits(int cpunum)
+{
+	if( cpunum < totalcpu )
+		return cputype_address_bits(CPU_TYPE(cpunum));
+	return 0;
+}
+
+/***************************************************************************
+  Returns the address bit mask for a specific CPU number
+***************************************************************************/
+unsigned cpunum_address_mask(int cpunum)
+{
+    if( cpunum < totalcpu )
+		return cputype_address_mask(CPU_TYPE(cpunum));
+	return 0;
+}
+
+/***************************************************************************
+  Returns the endianess for a specific CPU number
+***************************************************************************/
+unsigned cpunum_endianess(int cpunum)
+{
+    if( cpunum < totalcpu )
+		return cputype_endianess(CPU_TYPE(cpunum));
+	return 0;
+}
+
+/***************************************************************************
+  Returns the code align unit for the active CPU (1 byte, 2 word, ...)
+***************************************************************************/
+unsigned cpunum_align_unit(int cpunum)
+{
+    if( cpunum < totalcpu )
+		return cputype_align_unit(CPU_TYPE(cpunum));
+	return 0;
+}
+
+/***************************************************************************
+  Returns the max. instruction length for a specific CPU number
+***************************************************************************/
+unsigned cpunum_max_inst_len(int cpunum)
+{
+    if( cpunum < totalcpu )
+		return cputype_max_inst_len(CPU_TYPE(cpunum));
+	return 0;
+}
+
+/***************************************************************************
+  Returns the name for a specific CPU number
+***************************************************************************/
+const char *cpunum_name(int cpunum)
+{
+    if( cpunum < totalcpu )
+        return cputype_name(CPU_TYPE(cpunum));
+    return "";
+}
+
+/***************************************************************************
+  Returns the family name for a specific CPU number
+***************************************************************************/
+const char *cpunum_core_family(int cpunum)
+{
+    if( cpunum < totalcpu )
+        return cputype_core_family(CPU_TYPE(cpunum));
+    return "";
+}
+
+/***************************************************************************
+  Returns the core version for a specific CPU number
+***************************************************************************/
+const char *cpunum_core_version(int cpunum)
+{
+    if( cpunum < totalcpu )
+        return cputype_core_version(CPU_TYPE(cpunum));
+    return "";
+}
+
+/***************************************************************************
+  Returns the core filename for a specific CPU number
+***************************************************************************/
+const char *cpunum_core_file(int cpunum)
+{
+    if( cpunum < totalcpu )
+        return cputype_core_version(CPU_TYPE(cpunum));
+    return "";
+}
+
+/***************************************************************************
+  Returns the credits for a specific CPU number
+***************************************************************************/
+const char *cpunum_core_credits(int cpunum)
+{
+    if( cpunum < totalcpu )
+        return cputype_core_version(CPU_TYPE(cpunum));
+    return "";
+}
+
+/***************************************************************************
+  Returns (debugger) register layout for a specific CPU number
+***************************************************************************/
+const char *cpunum_reg_layout(int cpunum)
+{
+    if( cpunum < totalcpu )
+		return cputype_reg_layout(CPU_TYPE(cpunum));
 	return "";
 }
 
 /***************************************************************************
-  Return the current stack pointer for a specific CPU
+  Returns (debugger) window layout for a specific CPU number
+***************************************************************************/
+const char *cpunum_win_layout(int cpunum)
+{
+    if( cpunum < totalcpu )
+		return cputype_win_layout(CPU_TYPE(cpunum));
+	return (const char *)default_win_layout;
+}
+
+/***************************************************************************
+  Return a register value for a specific CPU number of the running machine
+***************************************************************************/
+unsigned cpunum_get_reg(int cpunum, int regnum)
+{
+    int oldactive;
+    unsigned val = 0;
+
+    /* swap to the CPU's context */
+    oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+    if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+    val = GETREG(activecpu,regnum);
+
+    /* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+    return val;
+}
+
+/***************************************************************************
+  Set a register value for a specific CPU number of the running machine
+***************************************************************************/
+void cpunum_set_reg(int cpunum, int regnum, unsigned val)
+{
+    int oldactive;
+
+    /* swap to the CPU's context */
+    oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+    if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+    SETREG(activecpu,regnum,val);
+
+    /* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+    activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+}
+
+/***************************************************************************
+  Return the current program counter, formatted as a hex string with a
+  colon, for a specific CPU number of the running machine
+***************************************************************************/
+const char *cpunum_pc(int cpunum)
+{
+	const char *result;
+	int oldactive;
+
+	if( cpunum == activecpu )
+		return cpu_pc();
+
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+	result = CPUINFO(activecpu,NULL,CPU_INFO_PC);
+
+    /* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+    return result;
+}
+
+/***************************************************************************
+  Return the current stack pointer, formatted as a hex string,
+  for a specific CPU number of the running machine
 ***************************************************************************/
 const char *cpunum_sp(int cpunum)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
+	const char *result;
+	int oldactive;
 
-	if( cpunum < MAX_CPU )
-	{
-		GETCONTEXT (cpunum, temp_context);
-		return CPU_INFO(cpunum,temp_context,CPU_INFO_SP);
-	}
-	return "";
+	if( cpunum == activecpu )
+		return cpu_sp();
+
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+	result = CPUINFO(activecpu,NULL,CPU_INFO_SP);
+
+    /* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+    return result;
 }
 
 /***************************************************************************
@@ -3229,14 +3703,26 @@ const char *cpunum_sp(int cpunum)
 ***************************************************************************/
 const char *cpunum_dasm(int cpunum)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
+	const char *result;
+	int oldactive;
 
-	if( cpunum < MAX_CPU )
-	{
-		GETCONTEXT (cpunum, temp_context);
-		return CPU_INFO(cpunum,temp_context,CPU_INFO_DASM);
-	}
-	return "";
+	if( cpunum == activecpu )
+		return cpu_dasm();
+
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+	result = CPUINFO(activecpu,NULL,CPU_INFO_DASM);
+
+	/* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+    return result;
 }
 
 /***************************************************************************
@@ -3244,14 +3730,26 @@ const char *cpunum_dasm(int cpunum)
 ***************************************************************************/
 const char *cpunum_flags(int cpunum)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
+	const char *result;
+	int oldactive;
 
-	if( cpunum < MAX_CPU )
-	{
-		GETCONTEXT (cpunum, temp_context);
-		return CPU_INFO(cpunum,temp_context,CPU_INFO_FLAGS);
-	}
-	return "";
+	if( cpunum == activecpu )
+		return cpu_flags();
+
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+	result = CPUINFO(activecpu,NULL,CPU_INFO_FLAGS);
+
+	/* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+    return result;
 }
 
 /***************************************************************************
@@ -3259,14 +3757,26 @@ const char *cpunum_flags(int cpunum)
 ***************************************************************************/
 const char *cpunum_dump_reg(int cpunum, int regnum)
 {
-	UINT8 temp_context[CPU_CONTEXT_SIZE];
+	const char *result;
+	int oldactive;
 
-	if( cpunum < MAX_CPU )
-	{
-		GETCONTEXT (cpunum, temp_context);
-		return CPU_INFO(cpunum,temp_context,CPU_INFO_REG+regnum);
-	}
-	return "";
+	if( cpunum == activecpu )
+		return cpu_dump_reg(regnum);
+
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETCONTEXT (activecpu, cpu[activecpu].context);
+
+	result = CPUINFO(activecpu,NULL,CPU_INFO_REG+regnum);
+
+	/* update the CPU's context */
+    if (cpu[activecpu].save_context) GETCONTEXT (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+    return result;
 }
 
 /***************************************************************************
@@ -3276,27 +3786,36 @@ const char *cpunum_dump_state(int cpunum)
 {
 	static char buffer[1024+1];
 	char *dst = buffer;
-	const char *src;
-	int regnum, width;
+	const char *src, *regs;
+	int width;
 
-	dst += sprintf(dst, "CPU #%d [%s]", cpunum, cputype_name(CPU_TYPE(cpunum)));
-	dst += sprintf(dst, " program counter %s %s\n", cpunum_pc(cpunum), cpunum_dasm(cpunum));
-	regnum = 0;
+	dst += sprintf(dst, "\nCPU #%d [%s]\n", cpunum, cpunum_name(cpunum));
 	width = 0;
-	src = cpunum_dump_reg(cpunum,regnum);
-	while (*src)
+	regs = cpunum_reg_layout(cpunum);
+	while( *regs )
 	{
-		if( width + strlen(src) + 1 >= 80 )
+		if( *regs == -1 )
 		{
 			dst += sprintf(dst, "\n");
 			width = 0;
 		}
-		dst += sprintf(dst, "%s ", src);
-        width += strlen(src) + 1;
-        width += strlen(src);
-		regnum++;
-		src = cpunum_dump_reg(cpunum,regnum);
-	}
+		else
+		{
+			src = cpunum_dump_reg( cpunum, *regs );
+			if( *src )
+			{
+				if( width + strlen(src) + 1 >= 80 )
+				{
+					dst += sprintf(dst, "\n");
+					width = 0;
+				}
+				dst += sprintf(dst, "%s ", src);
+				width += strlen(src) + 1;
+			}
+		}
+		regs++;
+    }
+	dst += sprintf(dst, "\n%s %s\n", cpunum_pc(cpunum), cpunum_dasm(cpunum));
 
     return buffer;
 }
@@ -3309,8 +3828,8 @@ void cpu_dump_states(void)
 	int i;
 	for( i = 0; i < MAX_CPU; i++ )
 	{
-		if( CPU_TYPE(i) != 0 )
-			fprintf(stderr, "%s\n\n", cpunum_dump_state(i));
+		if( CPU_TYPE(i) != CPU_DUMMY )
+			fprintf(stderr, "%s\n", cpunum_dump_state(i));
 	}
 }
 

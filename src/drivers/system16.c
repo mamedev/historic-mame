@@ -255,7 +255,7 @@ static struct MachineDriver GAMENAME = \
 	GFXSIZE, \
 	2048,2048, \
 	0, \
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY, \
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE, \
 	0, \
 	sys16_vh_start, \
 	sys16_vh_stop, \

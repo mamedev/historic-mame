@@ -1063,11 +1063,14 @@ int tshoot_vh_start(void)
 
 int inferno_vh_start(void)
 {
+	int i;
+
 	if (williams2_vh_start() != 0)
 		return 1;
 
 	/* set up array to map from row to palette */
-	memset(row_to_palette, 0, 16 * sizeof(int));
+	for (i = 0; i < 16; i++)
+		row_to_palette[i] = i / 2;
 
 	M7_flip    = 1;
 	videoshift = - 2;
@@ -1077,7 +1080,7 @@ int inferno_vh_start(void)
 
 /***************************************************************************
 
-	Inferno specific routines
+	Joust2 specific routines
 
 ***************************************************************************/
 

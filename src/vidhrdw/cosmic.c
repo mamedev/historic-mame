@@ -27,6 +27,8 @@ const unsigned char *colourrom;
 
 int ColourRegisters[3];
 int ColourMap=0;
+int CosmicFlipX;
+int CosmicFlipY;
 int	MachineID;
 
 int ColourRomLookup(int ScreenX,int ScreenY)
@@ -87,14 +89,14 @@ void ColourBankSwitch(void)
     {
         for(x=0;x<192;x++)
 		{
-			if (Machine->orientation & ORIENTATION_FLIP_X)
+			if (CosmicFlipX)
 				ex = 191 - x;
             else
                 ex = x;
 
             for(y=0;y<255;y++)
             {
-				if (Machine->orientation & ORIENTATION_FLIP_Y)
+				if (CosmicFlipY)
                     ey = y;
                 else
                     ey = 255 - y;
@@ -106,22 +108,22 @@ void ColourBankSwitch(void)
             }
         }
 
- 		osd_mark_dirty(0,0,255,192,0);	/* ASG 971015 */
+ 		osd_mark_dirty(0,0,255,191,0);	/* ASG 971015 */
     }
     else
     {
         /* Normal */
 
-        for(x=0;x<193;x++)
+        for(x=0;x<192;x++)
 		{
-			if ((Machine->orientation & ORIENTATION_FLIP_X))
-				ex = 192 - x;
+			if (CosmicFlipX)
+				ex = 191 - x;
             else
                 ex = x;
 
-            for(y=0;y<256;y++)
+            for(y=0;y<255;y++)
             {
-				if (Machine->orientation & ORIENTATION_FLIP_Y)
+				if (CosmicFlipY)
                     ey = y;
                 else
                     ey = 255 - y;
@@ -133,7 +135,7 @@ void ColourBankSwitch(void)
             }
         }
 
-		osd_mark_dirty(0,0,192,255,0);	/* ASG 971015 */
+		osd_mark_dirty(0,0,191,255,0);	/* ASG 971015 */
     }
 }
 
@@ -370,6 +372,59 @@ void devzone_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 /* Common Routines                                */
 /**************************************************/
 
+void cosmic_flipscreen_w(int offset, int data)
+{
+ static int LastMode=0;
+ int x,y,Safe;
+
+    if (data != LastMode)
+ {
+     LastMode = data;
+
+     if (data)
+        {
+      CosmicFlipX = ((Machine->orientation & ORIENTATION_FLIP_X) == 0);
+      CosmicFlipY = ((Machine->orientation & ORIENTATION_FLIP_Y) == 0);
+        }
+        else
+        {
+      CosmicFlipX = (Machine->orientation & ORIENTATION_FLIP_X);
+      CosmicFlipY = (Machine->orientation & ORIENTATION_FLIP_Y);
+        }
+
+        /* Flip Bitmap */
+
+        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+        {
+            for(x=0;x<96;x++)
+      {
+                for(y=0;y<255;y++)
+                {
+                 Safe = tmpbitmap->line[x][y];
+                    tmpbitmap->line[x][y] = tmpbitmap->line[191-x][255-y];
+                    tmpbitmap->line[191-x][255-y] = Safe;
+                }
+            }
+
+       osd_mark_dirty(0,0,255,191,0);
+        }
+        else
+        {
+            for(x=0;x<96;x++)
+      {
+                for(y=0;y<255;y++)
+                {
+                 Safe = tmpbitmap->line[y][x];
+                    tmpbitmap->line[y][x] = tmpbitmap->line[255-y][191-x];
+                    tmpbitmap->line[255-y][191-x] = Safe;
+                }
+            }
+
+      osd_mark_dirty(0,0,191,255,0);
+        }
+    }
+}
+
 void cosmic_videoram_w(int offset,int data)
 {
     int i,x,y;
@@ -388,10 +443,10 @@ void cosmic_videoram_w(int offset,int data)
 
         if (!(Machine->orientation & ORIENTATION_SWAP_XY))
         {
-			if (Machine->orientation & ORIENTATION_FLIP_X)
+			if (CosmicFlipX)
 				x = 191 - x;
 
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
+			if (CosmicFlipY)
             {
 				osd_mark_dirty(y,x,y+7,x,0);
 
@@ -423,10 +478,10 @@ void cosmic_videoram_w(int offset,int data)
         {
             /* Normal */
 
-			if (Machine->orientation & ORIENTATION_FLIP_X)
+			if (CosmicFlipX)
 				x = 191 - x;
 
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
+			if (CosmicFlipY)
             {
 				osd_mark_dirty(x,y,x,y+7,0);
 
@@ -466,6 +521,11 @@ int cosmic_vh_start(void)
 	/* initialize the bitmap to our background color */
 
 	fillbitmap(tmpbitmap,Machine->pens[0],&Machine->drv->visible_area);
+
+    /* Initialise Bitmap orientation */
+
+	CosmicFlipX = (Machine->orientation & ORIENTATION_FLIP_X);
+	CosmicFlipY = (Machine->orientation & ORIENTATION_FLIP_Y);
 
 	return 0;
 }
@@ -525,7 +585,6 @@ void cosmic_vh_screenrefresh_sprites(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the character mapped graphics */
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
 
     /* Draw the sprites () */
 

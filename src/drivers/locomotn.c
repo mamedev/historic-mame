@@ -60,61 +60,11 @@ void jungler_init(void);
 void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void commsega_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-
-
-/* I am not 100% sure that this timer is correct, but */
-/* I'm using the Gyruss wired to the higher 4 bits    */
-/* instead of the lower ones, so there is a good      */
-/* chance it's the right one. */
-
-/* The timer clock which feeds the lower 4 bits of    */
-/* AY-3-8910 port A is based on the same clock        */
-/* feeding the sound CPU Z80.  It is a divide by      */
-/* 10240, formed by a standard divide by 1024,        */
-/* followed by a divide by 10 using a 4 bit           */
-/* bi-quinary count sequence. (See LS90 data sheet    */
-/* for an example).                                   */
-/* Bits 1-3 come directly from the upper three bits   */
-/* of the bi-quinary counter. Bit 0 comes from the    */
-/* output of the divide by 1024.                      */
-
-static int locomotn_timer[20] = {
-0x00, 0x01, 0x00, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
-0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
-};
-
-static int locomotn_portB_r(int offset)
-{
-	/* need to protect from totalcycles overflow */
-	static int last_totalcycles = 0;
-
-	/* number of Z80 clock cycles to count */
-	static int clock;
-
-	int current_totalcycles;
-
-	current_totalcycles = cpu_gettotalcycles();
-	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
-
-	last_totalcycles = current_totalcycles;
-
-	return locomotn_timer[clock/512] << 4;
-}
-
-void locomotn_sh_irqtrigger_w(int offset,int data)
-{
-	static int last;
-
-
-	if (last == 0 && data == 1)
-	{
-		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
-	}
-
-	last = data;
-}
-
+/* defined in sndhrdw/timeplt.c */
+extern struct MemoryReadAddress timeplt_sound_readmem[];
+extern struct MemoryWriteAddress timeplt_sound_writemem[];
+extern struct AY8910interface timeplt_ay8910_interface;
+void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -143,7 +93,7 @@ static struct MemoryWriteAddress jungler_writemem[] =
 	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
 	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
 	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
-	{ 0xa180, 0xa180, locomotn_sh_irqtrigger_w },
+	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa185, osd_led_w },
@@ -169,7 +119,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
 	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
 	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
-	{ 0xa180, 0xa180, locomotn_sh_irqtrigger_w },
+	{ 0xa180, 0xa180, timeplt_sh_irqtrigger_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa185, osd_led_w },
@@ -180,29 +130,6 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8820, 0x883f, MWA_RAM, &rallyx_radarcary },
 	{ -1 }	/* end of table */
 };
-
-
-
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x2000, 0x23ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-	{ 0x6000, 0x6000, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-	{ 0x5000, 0x5000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x7000, 0x7000, AY8910_control_port_1_w },
-	{ -1 }	/* end of table */
-};
-
 
 
 INPUT_PORTS_START( locomotn_input_ports )
@@ -484,19 +411,6 @@ static unsigned char wrong_color_prom[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x20ff, 0x20ff },
-	{ soundlatch_r },
-	{ locomotn_portB_r },
-	{ 0 },
-	{ 0 }
-};
-
-
-
 #define MACHINE_DRIVER(GAMENAME)   \
 																	\
 static struct MachineDriver GAMENAME##_machine_driver =             \
@@ -512,9 +426,9 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 		},                                                          \
 		{                                                           \
 			CPU_Z80 | CPU_AUDIO_CPU,                                \
-			14318180/4,	/* ???? same as other Konami games */       \
+			14318180/8,	/* 1.789772727 MHz */						\
 			3,	/* memory region #3 */                              \
-			sound_readmem,sound_writemem,0,0,                       \
+			timeplt_sound_readmem,timeplt_sound_writemem,0,0,       \
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */ \
 		}                                                           \
 	},                                                              \
@@ -539,7 +453,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	{                                                               \
 		{                                                           \
 			SOUND_AY8910,                                           \
-			&ay8910_interface                                       \
+			&timeplt_ay8910_interface                               \
 		}                                                           \
 	}                                                               \
 };
@@ -557,6 +471,26 @@ MACHINE_DRIVER(commsega)
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( locomotn_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1a.cpu",       0x0000, 0x1000, 0xb43e689a )
+	ROM_LOAD( "2a.cpu",       0x1000, 0x1000, 0x529c823d )
+	ROM_LOAD( "3.cpu",        0x2000, 0x1000, 0xc9dbfbd1 )
+	ROM_LOAD( "4.cpu",        0x3000, 0x1000, 0xcaf6431c )
+	ROM_LOAD( "5.cpu",        0x4000, 0x1000, 0x64cf8dd6 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "c1.cpu",       0x0000, 0x1000, 0x5732eda9 )
+	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
+
+	ROM_REGION(0x0120)	/* color proms */
+	ROM_LOAD( "8b.cpu",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
+	ROM_LOAD( "9d.cpu",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "s1.snd",       0x0000, 0x1000, 0xa1105714 )
+ROM_END
 
 ROM_START( jungler_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -579,26 +513,6 @@ ROM_START( jungler_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0xf86999c3 )
-ROM_END
-
-ROM_START( locomotn_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "1a.cpu",       0x0000, 0x1000, 0xb43e689a )
-	ROM_LOAD( "2a.cpu",       0x1000, 0x1000, 0x529c823d )
-	ROM_LOAD( "3.cpu",        0x2000, 0x1000, 0xc9dbfbd1 )
-	ROM_LOAD( "4.cpu",        0x3000, 0x1000, 0xcaf6431c )
-	ROM_LOAD( "5.cpu",        0x4000, 0x1000, 0x64cf8dd6 )
-
-	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c1.cpu",       0x0000, 0x1000, 0x5732eda9 )
-	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
-
-	ROM_REGION(0x0120)	/* color proms */
-	ROM_LOAD( "8b.cpu",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
-	ROM_LOAD( "9d.cpu",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "s1.snd",       0x0000, 0x1000, 0xa1105714 )
 ROM_END
 
 ROM_START( junglers_rom )
@@ -637,6 +551,8 @@ ROM_START( commsega_rom )
 	ROM_LOAD( "csega6",       0x1000, 0x1000, 0xcf07fd5e )
 
 	ROM_REGION(0x0120)	/* color proms */
+	ROM_LOAD( "commsega.8b",  0x0000, 0x0020, 0x00000000 ) /* palette */
+	ROM_LOAD( "commsega.9d",  0x0020, 0x0100, 0x00000000 ) /* loookup table */
 
 	ROM_REGION(0x10000) /* 64k for the audio CPU */
 	ROM_LOAD( "csega8",       0x0000, 0x1000, 0x588b4210 )
@@ -770,12 +686,38 @@ static void commsega_hisave(void)
 
 
 
+struct GameDriver locomotn_driver =
+{
+	__FILE__,
+	0,
+	"locomotn",
+	"Loco-Motion",
+	"1982",
+	"Konami (Centuri license)",
+	"Nicola Salmoria\nKevin Klopp (color info)",
+	0,
+	&locomotn_machine_driver,
+	0,
+
+	locomotn_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	locomotn_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	locomotn_hiload, locomotn_hisave
+};
+
 struct GameDriver jungler_driver =
 {
 	__FILE__,
 	0,
 	"jungler",
-	"Jungler (Konami)",
+	"Jungler",
 	"1981",
 	"Konami",
 	"Nicola Salmoria",
@@ -803,7 +745,7 @@ struct GameDriver junglers_driver =
 	"junglers",
 	"Jungler (Stern)",
 	"1981",
-	"Stern",
+	"[Konami] (Stern license)",
 	"Nicola Salmoria",
 	0,
 	&jungler_machine_driver,
@@ -822,32 +764,6 @@ struct GameDriver junglers_driver =
 	jungler_hiload, jungler_hisave
 };
 
-struct GameDriver locomotn_driver =
-{
-	__FILE__,
-	0,
-	"locomotn",
-	"Loco-Motion",
-	"1982",
-	"Konami (Centuri license)",
-	"Nicola Salmoria\nKevin Klopp (color info)",
-	0,
-	&locomotn_machine_driver,
-	0,
-
-	locomotn_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	locomotn_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	locomotn_hiload, locomotn_hisave
-};
-
 struct GameDriver commsega_driver =
 {
 	__FILE__,
@@ -857,7 +773,7 @@ struct GameDriver commsega_driver =
 	"1983",
 	"Sega",
 	"Nicola Salmoria\nBrad Oliver",
-	GAME_WRONG_COLORS,
+	GAME_WRONG_COLORS | GAME_NOT_WORKING,
 	&commsega_machine_driver,
 	0,
 

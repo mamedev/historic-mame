@@ -765,15 +765,18 @@ static int pick_cpu(int *cpunum, int *cycles, double end)
 			*cpunum = cpu->index;
 			*cycles = (int)((double)(end - cpu->time) * cpu->sec_to_cycles);
 
-			#if VERBOSE
-				verbose_print("T=%.6g: CPU %d runs %d cycles\n", cpu->time + global_offset, *cpunum, *cycles);
-			#endif
+			if (*cycles > 0)
+			{
+				#if VERBOSE
+					verbose_print("T=%.6g: CPU %d runs %d cycles\n", cpu->time + global_offset, *cpunum, *cycles);
+				#endif
 
-			/* remember the base time for this CPU */
-			base_time = cpu->time + ((double)*cycles * cpu->cycles_to_sec);
+				/* remember the base time for this CPU */
+				base_time = cpu->time + ((double)*cycles * cpu->cycles_to_sec);
 
-			/* success */
-			return 1;
+				/* success */
+				return 1;
+			}
 		}
 	}
 	while (cpu != last_activecpu);

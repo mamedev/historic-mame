@@ -114,6 +114,7 @@
   315-5010 Pengo                  unencrypted version available
   315-5013 Super Zaxxon           used Zaxxon for known plaintext attack
   315-5018 Yamato                 not decoded yet
+  ???-???? Super Locomotion       not decoded yet
   315-5028 Sinbad Mystery         not decoded yet
   315-5033 Regulus
   ???-???? Mister Viking
@@ -155,11 +156,12 @@
 
   Some text found in the ROMs:
 
-  Yamato        SECULITY BY M,MIZUNAGA
-  Regulus       SECULITY BY SYUICHI,KATAGI
-  Mister Viking SECURITY BY S.KATAGI  CONTROL CHIP M140
-  SWAT          SECURITY BY S.KATAGI
-  Flicky        SECURITY BY S.KATAGI
+  Yamato           SECULITY BY M,MIZUNAGA
+  Super Locomotion SEGA FUKUMURA MIZUNAGA
+  Regulus          SECULITY BY SYUICHI,KATAGI
+  Mister Viking    SECURITY BY S.KATAGI  CONTROL CHIP M140
+  SWAT             SECURITY BY S.KATAGI
+  Flicky           SECURITY BY S.KATAGI
 
 ******************************************************************************/
 
@@ -205,7 +207,7 @@ static void lfkp(int mask)
 				(RAM[A+1] & mask) == (0xc5 & mask) &&	/* PUSH BC */
 				(RAM[A+2] & mask) == (0xd5 & mask) &&	/* PUSH DE */
 				(RAM[A+3] & mask) == (0xe5 & mask))		/* PUSH HL */
-			fprintf(errorlog,"%04x: push af bd de hl\n",A);
+			fprintf(errorlog,"%04x: push af bc de hl\n",A);
 
 		if (	(RAM[A+0] & mask) == (0xe1 & mask) &&	/* POP HL */
 				(RAM[A+1] & mask) == (0xd1 & mask) &&	/* POP DE */
@@ -375,6 +377,49 @@ void szaxxon_decode(void)
 		{ 0x88,0xa0,0xa0,0x88 }, { 0x28,0x28,0x88,0x88 }	/* ...1...1...1...1 */
 	};
 
+
+	sega_decode(xortable);
+}
+
+
+void suprloco_decode(void)
+{
+	static const unsigned char xortable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0x20,0x08,0x80,0xa8 }, { 0xa8,0xff,0xff,0xff },	/* ...0...0...0...0 */
+		{ 0x20,0x08,0x80,0xa8 }, { 0xa8,0xff,0xff,0xff },	/* ...0...0...0...1 */
+		{ 0x20,0x08,0x80,0xa8 }, { 0xff,0xa8,0xff,0xff },	/* ...0...0...1...0 */
+		{ 0x88,0x00,0xa0,0x28 }, { 0xff,0xff,0xff,0xa0 },	/* ...0...0...1...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...0...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...0...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...1...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...0...1...1...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...1...0...0...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...1...0...0...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...1...0...1...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...1...0...1...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...1...1...0...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...1...1...0...1 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff },	/* ...1...1...1...0 */
+		{ 0xff,0xff,0xff,0xff }, { 0xff,0xff,0xff,0xff }	/* ...1...1...1...1 */
+	};
+
+#if 0
+0fe4: hl de bc (hl),xx ldir
+0ff4: hl de bc (hl),a ldir
+100b: hl de bc (hl),a ldir
+150a: hl de bc ldir
+1557: hl de bc ldir
+1585: hl de bc ldir
+19a7: hl de bc ldir
+1fd8: hl de bc ldir
+1fe3: hl de bc ldir
+#endif
+
+//look_for_known_plaintext();
+//read_table_from_disk((unsigned char *)xortable);
 
 	sega_decode(xortable);
 }

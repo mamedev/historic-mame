@@ -144,36 +144,32 @@ void rthunder_vh_stop(void)
 	tilemap_dispose(tilemap[1]);
 	tilemap_dispose(tilemap[2]);
 	tilemap_dispose(tilemap[3]);
-	tilemap_stop();
 
 	rt_stop_mcu_timer();
 }
 
 int rthunder_vh_start(void)
 {
-	if (tilemap_start() == 0)
+	tilemap[0] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[1] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[2] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	tilemap[3] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+
+	if (tilemap[0] && tilemap[1] && tilemap[2] && tilemap[3])
 	{
-		tilemap[0] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-		tilemap[1] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-		tilemap[2] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-		tilemap[3] = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+		tilemap[0]->tile_get_info = get_tile_info;
+		tilemap[1]->tile_get_info = get_tile_info;
+		tilemap[2]->tile_get_info = get_tile_info;
+		tilemap[3]->tile_get_info = get_tile_info;
+		tilemap[0]->transparent_pen = 7;
+		tilemap[1]->transparent_pen = 7;
+		tilemap[2]->transparent_pen = 7;
+		tilemap[3]->transparent_pen = 7;
 
-		if (tilemap[0] && tilemap[1] && tilemap[2] && tilemap[3])
-		{
-			tilemap[0]->tile_get_info = get_tile_info;
-			tilemap[1]->tile_get_info = get_tile_info;
-			tilemap[2]->tile_get_info = get_tile_info;
-			tilemap[3]->tile_get_info = get_tile_info;
-			tilemap[0]->transparent_pen = 7;
-			tilemap[1]->transparent_pen = 7;
-			tilemap[2]->transparent_pen = 7;
-			tilemap[3]->transparent_pen = 7;
-
-			return 0;
-		}
-
-		rthunder_vh_stop();
+		return 0;
 	}
+
+	rthunder_vh_stop();
 
 	return 1;
 }

@@ -1,12 +1,7 @@
 #ifndef CPUINTRF_H
 #define CPUINTRF_H
 
-/* Maximum size that a CPU structre can be:
- * HJB 01/02/98 changed to the next power of two
- * the real context size is evaluated by subtracting
- * the fixed part of struct cpuinfo
- */
-#define CPU_CONTEXT_SIZE    2048
+#include "timer.h"
 
 /* The old system is obsolete and no longer supported by the core */
 #define NEW_INTERRUPT_SYSTEM    1
@@ -18,12 +13,147 @@
 #define HOLD_LINE       2       /* hold interrupt line until enable is true */
 #define PULSE_LINE		3		/* pulse interrupt line for one instruction */
 
-#include "timer.h"
+/* Values passed to the cpu_info function of a core to retrieve information */
+enum {
+    CPU_INFO_NAME,
+    CPU_INFO_FAMILY,
+    CPU_INFO_VERSION,
+    CPU_INFO_FILE,
+    CPU_INFO_CREDITS,
+    CPU_INFO_REG_LAYOUT,
+    CPU_INFO_WIN_LAYOUT,
+    CPU_INFO_PC,
+    CPU_INFO_SP,
+    CPU_INFO_DASM,
+    CPU_INFO_FLAGS,
+    CPU_INFO_REG
+};
+
+#define CPU_IS_LE	0	/* emulated CPU is little endian */
+#define CPU_IS_BE	1	/* emulated CPU is big endian */
+
+/*
+ * This value is passed to cpu_get_reg/cpu_set_reg instead of one of
+ * the names from the enum a CPU core defines for it's registers,
+ * to get or set the contents of the memory pointed to by a stack pointer.
+ * You can specify the n'th element on the stack by (REG_SP_CONTENTS-n),
+ * ie. lower negative values. The actual element size (word or dword)
+ * depends on the CPU core.
+ * This is also used to replace the cpu_geturnpc() function.
+ */
+#define REG_SP_CONTENTS -1
+
+/*
+ * These flags can be defined in the makefile (or project) to
+ * exclude (zero) or include (non zero) specific CPU cores
+ */
+#ifndef HAS_Z80
+#define HAS_Z80 		0
+#endif
+#ifndef HAS_8080
+#define HAS_8080		0
+#endif
+#ifndef HAS_8085A
+#define HAS_8085A		0
+#endif
+#ifndef HAS_M6502
+#define HAS_M6502		0
+#endif
+#ifndef HAS_M65C02
+#define HAS_M65C02		0
+#endif
+#ifndef HAS_M6510
+#define HAS_M6510		0
+#endif
+#ifndef HAS_H6280
+#define HAS_H6280		0
+#endif
+#ifndef HAS_I86
+#define HAS_I86 		0
+#endif
+#ifndef HAS_I8035
+#define HAS_I8035		0
+#endif
+#ifndef HAS_I8039
+#define HAS_I8039		0
+#endif
+#ifndef HAS_I8048
+#define HAS_I8048		0
+#endif
+#ifndef HAS_N7751
+#define HAS_N7751		0
+#endif
+#ifndef HAS_M6800
+#define HAS_M6800		0
+#endif
+#ifndef HAS_M6801
+#define HAS_M6801		0
+#endif
+#ifndef HAS_M6802
+#define HAS_M6802		0
+#endif
+#ifndef HAS_M6803
+#define HAS_M6803		0
+#endif
+#ifndef HAS_M6808
+#define HAS_M6808		0
+#endif
+#ifndef HAS_HD63701
+#define HAS_HD63701 	0
+#endif
+#ifndef HAS_M6805
+#define HAS_M6805		0
+#endif
+#ifndef HAS_M68705
+#define HAS_M68705		0
+#endif
+#ifndef HAS_HD63705
+#define HAS_HD63705 	0
+#endif
+#ifndef HAS_M6309
+#define HAS_M6309		0
+#endif
+#ifndef HAS_M6809
+#define HAS_M6809		0
+#endif
+#ifndef HAS_M68000
+#define HAS_M68000		0
+#endif
+#ifndef HAS_M68010
+#define HAS_M68010		0
+#endif
+#ifndef HAS_M68020
+#define HAS_M68020		0
+#endif
+#ifndef HAS_T11
+#define HAS_T11 		0
+#endif
+#ifndef HAS_S2650
+#define HAS_S2650		0
+#endif
+#ifndef HAS_TMS34010
+#define HAS_TMS34010	0
+#endif
+#ifndef HAS_TMS9900
+#define HAS_TMS9900 	0
+#endif
+#ifndef HAS_Z8000
+#define HAS_Z8000		0
+#endif
+#ifndef HAS_TMS320C10
+#define HAS_TMS320C10	0
+#endif
+#ifndef HAS_CCPU
+#define HAS_CCPU		0
+#endif
+#ifndef HAS_PDP1
+#define HAS_PDP1		0
+#endif
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
 {
-	int cpu_num, cpu_family;
+	unsigned cpu_num, cpu_family;
 	void (*reset)(void *param);
 	void (*exit)(void);
 	int (*execute)(int cycles);
@@ -42,21 +172,17 @@ struct cpu_interface
 	void (*cpu_state_save)(void *file);
 	void (*cpu_state_load)(void *file);
 	const char* (*cpu_info)(void *context,int regnum);
-
-    int num_irqs;
+	unsigned num_irqs;
     int *icount;
 	int no_int, irq_int, nmi_int;
-
 	int (*memory_read)(int offset);
 	void (*memory_write)(int offset, int data);
 	void (*set_op_base)(int pc);
-	int address_bits;
-	int abits1, abits2, abitsmin;
+	unsigned address_bits, endianess, align_unit, max_inst_len;
+	unsigned abits1, abits2, abitsmin;
 };
 
 extern struct cpu_interface cpuintf[];
-
-
 
 void cpu_init(void);
 void cpu_run(void);
@@ -87,21 +213,24 @@ unsigned cpu_get_sp(void);
 /* Set the current stack pointer */
 void cpu_set_sp(unsigned val);
 
+/* Get the active CPUs context and return it's size */
+unsigned cpu_get_context(void *context);
+/* Set the active CPUs context */
+void cpu_set_context(void *context);
+
 /* Returns a specific register value (mamedbg) */
 unsigned cpu_get_reg(int regnum);
 /* Sets a specific register value (mamedbg) */
 void cpu_set_reg(int regnum, unsigned val);
 
-/* Returns a specific register value for the active CPU (mamedbg) */
-unsigned cpunum_get_reg(int cpunum, int regnum);
-/* Sets a specific register value for the active CPU (mamedbg) */
-void cpunum_set_reg(int cpunum, int regnum, unsigned val);
-
 /* Returns previous pc (start of opcode causing read/write) */
 int cpu_getpreviouspc(void);  /* -RAY- */
 
 /* Returns the return address from the top of the stack (Z80 only) */
-int cpu_getreturnpc(void);
+/* int cpu_getreturnpc(void); */
+/* This can now be handled with a generic function */
+#define cpu_geturnpc() cpu_get_reg(REG_SP_CONTENTS)
+
 int cycles_currently_ran(void);
 int cycles_left_to_run(void);
 
@@ -183,7 +312,7 @@ void cpu_1_irq_line_vector_w(int offset, int data);
 void cpu_2_irq_line_vector_w(int offset, int data);
 void cpu_3_irq_line_vector_w(int offset, int data);
 
-/* Obsolete functions: avoid to use them for new drivers if possible! */
+/* Obsolete functions: avoid to use them in new drivers if possible. */
 
 /* cause an interrupt on a CPU */
 void cpu_cause_interrupt(int cpu,int type);
@@ -205,48 +334,119 @@ int ignore_interrupt(void);
 void* cpu_getcontext (int _activecpu);
 int cpu_is_saving_context(int _activecpu);
 
-/* CPU info interface */
+/***************************************************************************
+ * Get information for the currently active CPU
+ * cputype is a value from the CPU enum in driver.h
+ ***************************************************************************/
+/* Return number of address bits */
+unsigned cpu_address_bits(void);
+/* Return address mask */
+unsigned cpu_address_mask(void);
+/* Return endianess of the emulated CPU (CPU_IS_LE or CPU_IS_BE) */
+unsigned cpu_endianess(void);
+/* Return opcode align unit (1 byte, 2 word, 4 dword) */
+unsigned cpu_align_unit(void);
+/* Return maximum instruction length */
+unsigned cpu_max_inst_len(void);
 
-/* get information for the active CPU */
+/* Return name of the active CPU */
 const char *cpu_name(void);
+/* Return family name of the active CPU */
 const char *cpu_core_family(void);
+/* Return core version of the active CPU */
 const char *cpu_core_version(void);
+/* Return core filename of the active CPU */
 const char *cpu_core_file(void);
+/* Return credits info for of the active CPU */
 const char *cpu_core_credits(void);
+/* Return register layout definition for the active CPU */
+const char *cpu_reg_layout(void);
+/* Return (debugger) window layout definition for the active CPU */
+const char *cpu_win_layout(void);
 
+/* Return the active CPU program counter formatted as a hex number with a colon */
 const char *cpu_pc(void);
+/* Return the CPU stack pointer formatted as a hex number */
 const char *cpu_sp(void);
-const char *cpu_flags(void);
+/* Return a disassembled string for the instruction at the active CPU program counter */
 const char *cpu_dasm(void);
+/* Return a string describing the currently set flag (status) bits of the active CPU */
+const char *cpu_flags(void);
+/* Return a string with a register name and hex value for the active CPU */
+/* regnum is a value defined in the CPU cores header files */
 const char *cpu_dump_reg(int regnum);
+/* Return a string describing the active CPUs current state */
 const char *cpu_dump_state(void);
 
-/* get information for a specific CPU */
-const char *cputype_name(int cputype);
-const char *cputype_core_family(int cputype);
-const char *cputype_core_version(int cputype);
-const char *cputype_core_file(int cputype);
-const char *cputype_core_credits(int cputype);
+/***************************************************************************
+ * Get information for a specific CPU type
+ * cputype is a value from the CPU enum in driver.h
+ ***************************************************************************/
+/* Return number of address bits */
+unsigned cputype_address_bits(int cputype);
+/* Return address mask */
+unsigned cputype_address_mask(int cputype);
+/* Return endianess of the emulated CPU (CPU_IS_LE or CPU_IS_BE) */
+unsigned cputype_endianess(int cputype);
+/* Return opcode align unit (1 byte, 2 word, 4 dword) */
+unsigned cputype_align_unit(int cputype);
+/* Return maximum instruction length */
+unsigned cputype_max_inst_len(int cputype);
 
+/* Return name of the CPU */
+const char *cputype_name(int cputype);
+/* Return family name of the CPU */
+const char *cputype_core_family(int cputype);
+/* Return core version number of the CPU */
+const char *cputype_core_version(int cputype);
+/* Return core filename of the CPU */
+const char *cputype_core_file(int cputype);
+/* Return credits for the CPU core */
+const char *cputype_core_credits(int cputype);
+/* Return register layout definition for the CPU core */
+const char *cputype_reg_layout(int cputype);
+/* Return (debugger) window layout definition for the CPU core */
+const char *cputype_win_layout(int cputype);
+
+/***************************************************************************
+ * Get (or set) information for a numbered CPU of the running machine
+ * cpunum is a value between 0 and cpu_gettotalcpu() - 1
+ ***************************************************************************/
+/* Return number of address bits */
+unsigned cpunum_address_bits(int cputype);
+/* Return address mask */
+unsigned cpunum_address_mask(int cputype);
+/* Return endianess of the emulated CPU (CPU_LSB_FIRST or CPU_MSB_FIRST) */
+unsigned cpunum_endianess(int cputype);
+/* Return opcode align unit (1 byte, 2 word, 4 dword) */
+unsigned cpunum_align_unit(int cputype);
+/* Return maximum instruction length */
+unsigned cpunum_max_inst_len(int cputype);
+
+/* Get a register value for the specified CPU number of the running machine */
+unsigned cpunum_get_reg(int cpunum, int regnum);
+/* Set a register value for the specified CPU number of the running machine */
+void cpunum_set_reg(int cpunum, int regnum, unsigned val);
+
+/* Return (debugger) register layout definition for the CPU core */
+const char *cpunum_reg_layout(int cpunum);
+/* Return (debugger) window layout definition for the CPU core */
+const char *cpunum_win_layout(int cpunum);
+/* Return the CPU program counter formatted as a hex number with a colon */
 const char *cpunum_pc(int cpunum);
+/* Return the CPU stack pointer formatted as a hex number */
 const char *cpunum_sp(int cpunum);
+/* Return a disassembled string for the instruction at the CPU program counter */
 const char *cpunum_dasm(int cpunum);
+/* Return a string describing the currently set flag (status) bits of the CPU */
 const char *cpunum_flags(int cpunum);
+/* Return a string with a register name and value */
+/* regnum is a value defined in the CPU cores header files */
 const char *cpunum_dump_reg(int cpunum, int regnum);
+/* Return a string describing the CPUs current state */
 const char *cpunum_dump_state(int cpunum);
 
-/* this is the 'low level' interface call for the active cpu */
-#define CPU_INFO_NAME		0
-#define CPU_INFO_FAMILY     1
-#define CPU_INFO_VERSION    2
-#define CPU_INFO_FILE       3
-#define CPU_INFO_CREDITS    4
-#define CPU_INFO_PC 		10
-#define CPU_INFO_SP 		11
-#define CPU_INFO_DASM		12
-#define CPU_INFO_FLAGS		13
-#define CPU_INFO_REG		14
-
+/* Dump all of the running machines CPUs state to stderr */
 void cpu_dump_states(void);
 
 /* daisy-chain link */

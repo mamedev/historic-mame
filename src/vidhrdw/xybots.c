@@ -289,7 +289,7 @@ if (osd_key_pressed (OSD_KEY_9))
 	memset (mo_map, 0, sizeof (mo_map));
 	memset (pf_map, 0, sizeof (pf_map));
 	memset (al_map, 0, sizeof (al_map));
-	memset (palette_used_colors, PALETTE_COLOR_UNUSED, Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	/* update color usage for the playfield */
 	for (y = 0; y < YCHARS; y++)

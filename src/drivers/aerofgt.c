@@ -8,6 +8,26 @@ Notes:
 - Turbo Force bg1 tile maps are screwed. I have to offset the char code by
   0x9c to get the title screen right...
 
+pspikes/turbofrc/aerofgtb write to two addresses which look like control
+registers for a video generator. Maybe they control the display size/position.
+aerofgt is different, it writes to consecutive memory addresses and the values
+it writes don't seem to be related to these ones.
+
+reg  pspikes/turbofrc  aerofgtb
+ 0       57              4f
+ 1       63              5d
+ 2       69              63
+ 3       71              71
+ 4       1f              1f
+ 5       00              00
+
+ 8       77              6f
+ 9       79              70
+ a       7b              72
+ b       7f              7c
+ c       1f              1f
+ d       00              02
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -37,6 +57,7 @@ void pspikes_palette_bank_w(int offset,int data);
 int pspikes_vh_start(void);
 int turbofrc_vh_start(void);
 int aerofgt_vh_start(void);
+int aerofgtb_vh_start(void);
 void aerofgt_vh_stop(void);
 void pspikes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -130,7 +151,7 @@ static struct MemoryWriteAddress pspikes_writemem[] =
 static struct MemoryReadAddress turbofrc_readmem[] =
 {
 	{ 0x000000, 0x0bffff, MRA_ROM },
-	{ 0x0c0000, 0x0cffff, MRA_BANK6 },
+	{ 0x0c0000, 0x0cffff, MRA_BANK6 },	/* work RAM */
 	{ 0x0d0000, 0x0d1fff, aerofgt_bg1videoram_r },
 	{ 0x0d2000, 0x0d3fff, aerofgt_bg2videoram_r },
 	{ 0x0e0000, 0x0e7fff, MRA_BANK4 },
@@ -169,6 +190,44 @@ static struct MemoryWriteAddress turbofrc_writemem[] =
 	{ 0xfff008, 0xfff00b, turbofrc_gfxbank_w },	/* different from aero */
 	{ 0xfff00c, 0xfff00d, MWA_NOP },	/* related to bg2 (written together with the scroll registers) */
 	{ 0xfff00e, 0xfff00f, turbofrc_sound_command_w },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress aerofgtb_readmem[] =
+{
+	{ 0x000000, 0x07ffff, MRA_ROM },
+	{ 0x0c0000, 0x0cffff, MRA_BANK6 },	/* work RAM */
+	{ 0x0d0000, 0x0d1fff, aerofgt_bg1videoram_r },
+	{ 0x0d2000, 0x0d3fff, aerofgt_bg2videoram_r },
+	{ 0x0e0000, 0x0e7fff, MRA_BANK4 },
+	{ 0x0f8000, 0x0fbfff, aerofgt_workram_r },	/* work RAM */
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_r },
+	{ 0x0fd000, 0x0fd7ff, paletteram_word_r },
+	{ 0x0fe000, 0x0fe001, input_port_0_r },
+	{ 0x0fe002, 0x0fe003, input_port_1_r },
+	{ 0x0fe004, 0x0fe005, input_port_2_r },
+	{ 0x0fe006, 0x0fe007, pending_command_r },
+	{ 0x0fe008, 0x0fe009, input_port_3_r },
+	{ 0x0ff000, 0x0fffff, aerofgt_rasterram_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress aerofgtb_writemem[] =
+{
+	{ 0x000000, 0x07ffff, MWA_ROM },
+	{ 0x0c0000, 0x0cffff, MWA_BANK6 },	/* work RAM */
+	{ 0x0d0000, 0x0d1fff, aerofgt_bg1videoram_w, &aerofgt_bg1videoram, &aerofgt_bg1videoram_size },
+	{ 0x0d2000, 0x0d3fff, aerofgt_bg2videoram_w, &aerofgt_bg2videoram, &aerofgt_bg2videoram_size },
+	{ 0x0e0000, 0x0e7fff, MWA_BANK4, &spriteram },
+	{ 0x0f8000, 0x0fbfff, aerofgt_workram_w, &aerofgt_workram },	/* work RAM */
+	{ 0x0fc000, 0x0fc7ff, aerofgt_spriteram_2_w, &spriteram_2, &spriteram_2_size },
+	{ 0x0fd000, 0x0fd7ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
+	{ 0x0fe002, 0x0fe003, aerofgt_bg1scrolly_w },
+	{ 0x0fe004, 0x0fe005, turbofrc_bg2scrollx_w },
+	{ 0x0fe006, 0x0fe007, aerofgt_bg2scrolly_w },
+	{ 0x0fe008, 0x0fe00b, turbofrc_gfxbank_w },	/* different from aero */
+	{ 0x0fe00e, 0x0fe00f, turbofrc_sound_command_w },
+	{ 0x0ff000, 0x0fffff, aerofgt_rasterram_w, &aerofgt_rasterram },	/* used only for the scroll registers */
 	{ -1 }  /* end of table */
 };
 
@@ -213,6 +272,7 @@ static struct MemoryWriteAddress aerofgt_writemem[] =
 	{ 0xffffc0, 0xffffc1, sound_command_w },
 	{ -1 }  /* end of table */
 };
+
 
 static struct MemoryReadAddress sound_readmem[] =
 {
@@ -437,6 +497,91 @@ INPUT_PORTS_START( turbofrc_input_ports )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( aerofgtb_input_ports )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, "Coin Slot", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0001, "Same" )
+	PORT_DIPSETTING(      0x0000, "Individual" )
+	PORT_DIPNAME( 0x000e, 0x000e, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x000a, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(      0x000c, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(      0x000e, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(      0x0008, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(      0x0006, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(      0x0004, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(      0x0002, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(      0x0000, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x0070, 0x0070, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0050, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(      0x0060, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(      0x0070, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(      0x0040, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(      0x0030, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(      0x0020, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(      0x0010, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(      0x0000, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x0080, 0x0080, "2 Coins to Start, 1 to Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0080, "Off" )
+	PORT_DIPSETTING(      0x0000, "On" )
+	PORT_DIPNAME( 0x0100, 0x0100, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0100, "Off" )
+	PORT_DIPSETTING(      0x0000, "On" )
+	PORT_DIPNAME( 0x0200, 0x0000, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0200, "Off" )
+	PORT_DIPSETTING(      0x0000, "On" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0800, "Easy" )
+	PORT_DIPSETTING(      0x0c00, "Normal" )
+	PORT_DIPSETTING(      0x0400, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x3000, 0x3000, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x2000, "1" )
+	PORT_DIPSETTING(      0x1000, "2" )
+	PORT_DIPSETTING(      0x3000, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x4000, "200000" )
+	PORT_DIPSETTING(      0x0000, "300000" )
+	PORT_BITX(    0x8000, 0x8000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(      0x8000, "Off" )
+	PORT_DIPSETTING(      0x0000, "On" )
+
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0000, "Country", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0000, "Japan" )
+	PORT_DIPSETTING(      0x0001, "Taiwan" )
+	/* TODO: there are others in the table at 11910 */
+	/* this port is checked at 1b080 */
+INPUT_PORTS_END
+
 INPUT_PORTS_START( aerofgt_input_ports )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -590,6 +735,52 @@ static struct GfxDecodeInfo turbofrc_gfxdecodeinfo[] =
 	{ 1, 0x000000, &turbofrc_charlayout,      0, 32 },	/* I could split this one, first half is bg1 second half bg2 */
 	{ 1, 0x140000, &turbofrc_spritelayout,  512, 16 },
 	{ 1, 0x2c0000, &pspikes_spritelayout,   768, 16 },
+	{ -1 } /* end of array */
+};
+
+
+static struct GfxLayout aerofgtb_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	32768,	/* 32768 characters */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every char takes 32 consecutive bytes */
+};
+
+static struct GfxLayout aerofgtb_spritelayout1 =
+{
+	16,16,	/* 16*16 sprites */
+	8192,	/* 8192 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 3*4, 2*4, 1*4, 0*4, 8192*64*8+3*4, 8192*64*8+2*4, 8192*64*8+1*4, 8192*64*8+0*4,
+			7*4, 6*4, 5*4, 4*4, 8192*64*8+7*4, 8192*64*8+6*4, 8192*64*8+5*4, 8192*64*8+4*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	64*8	/* every sprite takes 64 consecutive bytes */
+};
+
+static struct GfxLayout aerofgtb_spritelayout2 =
+{
+	16,16,	/* 16*16 sprites */
+	4096,	/* 4096 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 3*4, 2*4, 1*4, 0*4, 4096*64*8+3*4, 4096*64*8+2*4, 4096*64*8+1*4, 4096*64*8+0*4,
+			7*4, 6*4, 5*4, 4*4, 4096*64*8+7*4, 4096*64*8+6*4, 4096*64*8+5*4, 4096*64*8+4*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	64*8	/* every sprite takes 64 consecutive bytes */
+};
+
+static struct GfxDecodeInfo aerofgtb_gfxdecodeinfo[] =
+{
+	{ 1, 0x000000, &aerofgtb_charlayout,      0, 32 },	/* I could split this one, first half is bg1 second half bg2 */
+	{ 1, 0x100000, &aerofgtb_spritelayout1, 512, 16 },
+	{ 1, 0x200000, &aerofgtb_spritelayout2, 768, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -803,6 +994,53 @@ static struct MachineDriver turbofrc_machine_driver =
 	}
 };
 
+static struct MachineDriver aerofgtb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000,	/* 10 MHz ??? (slows down a lot at 8MHz) */
+			0,
+			aerofgtb_readmem,aerofgtb_writemem,0,0,
+			m68_level1_irq,1	/* all irq vectors are the same */
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,	/* 4 Mhz ??? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
+			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+								/* IRQs are triggered by the YM2610 */
+		}
+	},
+	60, 500,	/* frames per second, vblank duration */
+				/* wrong but improves sprite-background synchronization */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	64*8, 32*8, { 0*8+12, 40*8-1+12, 0*8, 28*8-1 },
+	aerofgtb_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	aerofgtb_vh_start,
+	aerofgt_vh_stop,
+	turbofrc_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2610,
+			&ym2610_interface,
+		}
+	}
+};
+
 static struct MachineDriver aerofgt_machine_driver =
 {
 	/* basic machine hardware */
@@ -968,36 +1206,34 @@ ROM_START( aerofgt_rom )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
 	ROM_REGION(0x100000) /* sound samples */
-	ROM_LOAD( "it1906.137",   0x000000, 0x80000, 0x748b7e9e )
-	ROM_LOAD( "1ti1906.137",  0x080000, 0x80000, 0xd39ced76 )
+	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 
 	ROM_REGION(0x40000) /* sound samples */
-	ROM_LOAD( "it1901.104",   0x00000, 0x40000, 0x6d42723d )
+	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 ROM_END
 
-ROM_START( sonicwi_rom )
-	/* all ROMs apart from V1, V2 and V3 were soldered, I'm using the ones from */
-	/* aerofgt which are very likely different! */
+ROM_START( aerofgtb_rom )
 	ROM_REGION(0x80000)	/* 68000 code */
 	ROM_LOAD_EVEN( "v2",                0x00000, 0x40000, 0x5c9de9f0 )
 	ROM_LOAD_ODD ( "v1",                0x00000, 0x40000, 0x89c1dcf4 )
 
 	ROM_REGION_DISPOSE(0x280000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "538a54.124",   0x000000, 0x080000, 0x4d2c4df2 )
-	ROM_LOAD( "1538a54.124",  0x080000, 0x080000, 0x286d109e )
-	ROM_LOAD( "538a53.u9",    0x100000, 0x100000, 0x630d8e0b )
-	ROM_LOAD( "534g8f.u18",   0x200000, 0x080000, 0x76ce0926 )
+	ROM_LOAD( "it-19-03",     0x000000, 0x080000, 0x85eba1a4 )
+	ROM_LOAD( "it-19-02",     0x080000, 0x080000, 0x4f57f8ba )
+	ROM_LOAD( "it-19-04",     0x100000, 0x080000, 0x3b329c1f )
+	ROM_LOAD( "it-19-05",     0x180000, 0x080000, 0x02b525af )
+	ROM_LOAD( "g27",          0x200000, 0x040000, 0x4d89cbc8 )
+	ROM_LOAD( "g26",          0x240000, 0x040000, 0x8072c1d2 )
 
 	ROM_REGION(0x30000)	/* 64k for the audio CPU + banks */
 	ROM_LOAD( "v3",           0x00000, 0x20000, 0xcbb18cf4 )
 	ROM_RELOAD(               0x10000, 0x20000 )
 
 	ROM_REGION(0x100000) /* sound samples */
-	ROM_LOAD( "it1906.137",   0x000000, 0x80000, 0x748b7e9e )
-	ROM_LOAD( "1ti1906.137",  0x080000, 0x80000, 0xd39ced76 )
+	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 
 	ROM_REGION(0x40000) /* sound samples */
-	ROM_LOAD( "it1901.104",   0x00000, 0x40000, 0x6d42723d )
+	ROM_LOAD( "it-19-01",     0x00000, 0x40000, 0x6d42723d )
 ROM_END
 
 ROM_START( unkvsys_rom )
@@ -1104,32 +1340,32 @@ struct GameDriver aerofgt_driver =
 	0, 0
 };
 
-/* TODO: this runs on different hardware from aerofgt */
-struct GameDriver sonicwi_driver =
+struct GameDriver aerofgtb_driver =
 {
 	__FILE__,
 	&aerofgt_driver,
-	"sonicwi",
-	"Sonic Wings",
+	"aerofgtb",
+	"Aero Fighters (Turbo Force hardware)",
 	"1992",
 	"Video System Co.",
 	"Nicola Salmoria",
 	0,
-	&aerofgt_machine_driver,
+	&aerofgtb_machine_driver,
 	0,
 
-	sonicwi_rom,
+	aerofgtb_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	aerofgt_input_ports,
+	aerofgtb_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
+/* note: this one has a 2608, not a 2610 */
 struct GameDriver unkvsys_driver =
 {
 	__FILE__,

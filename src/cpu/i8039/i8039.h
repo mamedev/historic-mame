@@ -16,7 +16,7 @@
 
 #include "osd_cpu.h"
 
-enum { I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE };
+enum { I8039_PC=1, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE };
 
 extern int i8039_ICount;        /* T-state count                          */
 
@@ -73,6 +73,12 @@ const char *i8039_info(void *context, int regnum);
 #define I8035_SP				I8039_SP
 #define I8035_PSW				I8039_PSW
 #define I8035_A 				I8039_A
+#define I8035_IRQ_STATE 		I8039_IRQ_STATE
+
+#define I8035_REG_LAYOUT \
+{	CPU_I8035, \
+	I8035_PC, I8035_SP, I8035_PSW, I8035_A, I8035_IRQ_STATE, \
+    DBG_END }
 
 #define I8035_IGNORE_INT        I8039_IGNORE_INT
 #define I8035_EXT_INT           I8039_EXT_INT
@@ -107,6 +113,11 @@ extern const char *i8035_info(void *context, int regnum);
 #define I8048_A 				I8039_A
 #define I8048_IRQ_STATE 		I8039_IRQ_STATE
 
+#define I8048_REG_LAYOUT \
+{	CPU_I8048, \
+	I8048_PC, I8048_SP, I8048_PSW, I8048_A, I8048_IRQ_STATE, \
+    DBG_END }
+
 #define I8048_IGNORE_INT        I8039_IGNORE_INT
 #define I8048_EXT_INT           I8039_EXT_INT
 #define I8048_TIMER_INT         I8039_TIMER_INT
@@ -138,6 +149,11 @@ const char *i8048_info(void *context, int regnum);
 #define N7751_PSW				I8039_PSW
 #define N7751_A 				I8039_A
 #define N7751_IRQ_STATE 		I8039_IRQ_STATE
+
+#define N7751_REG_LAYOUT \
+{	CPU_N7751, \
+	N7751_PC, N7751_SP, N7751_PSW, N7751_A, N7751_IRQ_STATE, \
+    DBG_END }
 
 #define N7751_IGNORE_INT        I8039_IGNORE_INT
 #define N7751_EXT_INT           I8039_EXT_INT

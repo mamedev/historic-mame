@@ -52,18 +52,19 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
    if (png_read_artwork("llander.png",&llander_panel,&orig_palette,&num_pens_used, &trans, &num_trans) == 0)
       llander_panel = NULL;
 
-   if (llander_panel->width > Machine->scrbitmap->width)
-   {
-      if (errorlog) fprintf(errorlog,"Bitmap is too wide for the resolution\n");
-      osd_free_bitmap(llander_panel);
-      llander_panel = NULL;
-   }
+   if (llander_panel != NULL)
+	if (llander_panel->width > Machine->scrbitmap->width)
+	{
+		if (errorlog) fprintf(errorlog,"Bitmap is too wide for the resolution\n");
+		osd_free_bitmap(llander_panel);
+		llander_panel = NULL;
+	}
 
    if (llander_panel != NULL)
    {
       if (png_read_artwork("llander1.png",&llander_lit_panel,&orig_lit_palette,&num_lit_pens_used, &trans, &num_trans)
-          == 0)
-         llander_lit_panel = NULL;
+	  == 0)
+	 llander_lit_panel = NULL;
    }
 
    if (llander_panel != NULL && num_pens_used > 50)
@@ -88,15 +89,15 @@ void llander_init_colors (unsigned char *palette, unsigned short *colortable,con
       /* Load colors into the palette */
       for (i = 0; i < panel_colors; i++)
       {
-         palette[3*(150+i)] = orig_palette[i*3];
-         palette[3*(150+i)+1] = orig_palette[i*3+1];
-         palette[3*(150+i)+2] = orig_palette[i*3+2];
+	 palette[3*(150+i)] = orig_palette[i*3];
+	 palette[3*(150+i)+1] = orig_palette[i*3+1];
+	 palette[3*(150+i)+2] = orig_palette[i*3+2];
       }
       for (i = 0; i < num_lit_pens_used; i++)
       {
-         palette[3*(150+panel_colors+i)] = orig_lit_palette[i*3];
-         palette[3*(150+panel_colors+i)+1] = orig_lit_palette[i*3+1];
-         palette[3*(150+panel_colors+i)+2] = orig_lit_palette[i*3+2];
+	 palette[3*(150+panel_colors+i)] = orig_lit_palette[i*3];
+	 palette[3*(150+panel_colors+i)+1] = orig_lit_palette[i*3+1];
+	 palette[3*(150+panel_colors+i)+2] = orig_lit_palette[i*3+2];
       }
    }
 }
@@ -120,9 +121,9 @@ int llander_start(void)
    for ( j=0; j<llander_panel->height; j++)
       for (i=0; i<llander_panel->width; i++)
       {
-         llander_panel->line[j][i] = Machine->pens[llander_panel->line[j][i]+150];
-         llander_lit_panel->line[j][i] =
-            Machine->pens[llander_lit_panel->line[j][i]+150+panel_colors];
+	 llander_panel->line[j][i] = Machine->pens[llander_panel->line[j][i]+150];
+	 llander_lit_panel->line[j][i] =
+	    Machine->pens[llander_lit_panel->line[j][i]+150+panel_colors];
 
       }
 
@@ -172,7 +173,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
       rect.max_y = bitmap->height - 1;
 
       copybitmap(bitmap,llander_panel,0,0,
-                 0,bitmap->height - llander_panel->height,&rect,TRANSPARENCY_NONE,0);
+		 0,bitmap->height - llander_panel->height,&rect,TRANSPARENCY_NONE,0);
       osd_mark_dirty (rect.min_x,rect.min_y,rect.max_x,rect.max_y,0);
    }
 
@@ -181,21 +182,21 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
    {
       if (lights_changed[i] || full_refresh)
       {
-         rect.min_x = light_areas[i].min_x;
-         rect.max_x = light_areas[i].max_x;
-         rect.min_y = bitmap->height - llander_panel->height + light_areas[i].min_y;
-         rect.max_y = bitmap->height - llander_panel->height + light_areas[i].max_y;
+	 rect.min_x = light_areas[i].min_x;
+	 rect.max_x = light_areas[i].max_x;
+	 rect.min_y = bitmap->height - llander_panel->height + light_areas[i].min_y;
+	 rect.max_y = bitmap->height - llander_panel->height + light_areas[i].max_y;
 
-         if (lights[i])
-            copybitmap(bitmap,llander_lit_panel,0,0,
-                       0,bitmap->height - llander_panel->height,&rect,TRANSPARENCY_NONE,0);
-         else
-            copybitmap(bitmap,llander_panel,0,0,
-                       0,bitmap->height - llander_panel->height,&rect,TRANSPARENCY_NONE,0);
+	 if (lights[i])
+	    copybitmap(bitmap,llander_lit_panel,0,0,
+		       0,bitmap->height - llander_panel->height,&rect,TRANSPARENCY_NONE,0);
+	 else
+	    copybitmap(bitmap,llander_panel,0,0,
+		       0,bitmap->height - llander_panel->height,&rect,TRANSPARENCY_NONE,0);
 
-         osd_mark_dirty (rect.min_x,rect.min_y,rect.max_x,rect.max_y,0);
+	 osd_mark_dirty (rect.min_x,rect.min_y,rect.max_x,rect.max_y,0);
 
-         lights_changed[i] = 0;
+	 lights_changed[i] = 0;
       }
    }
 }
@@ -216,7 +217,7 @@ void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void llander_led_w (int offset,int data)
 {
-//	if (errorlog) fprintf (errorlog, "LANDER LED: %02x\n",data);
+//      if (errorlog) fprintf (errorlog, "LANDER LED: %02x\n",data);
 
     int i;
 
@@ -225,8 +226,8 @@ void llander_led_w (int offset,int data)
        int new_light = (data & (1 << (4-i))) != 0;
        if (lights[i] != new_light)
        {
-          lights[i] = new_light;
-          lights_changed[i] = 1;
+	  lights[i] = new_light;
+	  lights_changed[i] = 1;
        }
     }
 

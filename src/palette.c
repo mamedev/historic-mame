@@ -119,10 +119,11 @@ static unsigned char *palette_dirty;
 /* arrays which keep track of colors actually used, to help in the palette shrinking. */
 unsigned char *palette_used_colors;
 static unsigned char *old_used_colors;
+static int *pen_refcount;
 static unsigned char *just_remapped;	/* colors which have been remapped in this frame, */
 										/* returned by palette_recalc() */
 
-unsigned short *game_colortable;	/* lookup table as set up by the driver */
+static unsigned short *game_colortable;	/* lookup table as set up by the driver */
 static unsigned char shrinked_palette[3 * 256];
 unsigned short *shrinked_pens;
 static unsigned short *palette_map;	/* map indexes from game_palette to shrinked_palette */
@@ -167,8 +168,9 @@ int palette_start(void)
 		/* if the palette changes dynamically and has more than 256 colors, */
 		/* we'll need the usage arrays to help in shrinking. */
 		palette_used_colors = malloc((1+1+1+3+1) * Machine->drv->total_colors * sizeof(unsigned char));
+		pen_refcount = malloc(Machine->drv->total_colors * sizeof(int));
 
-		if (palette_used_colors == 0)
+		if (palette_used_colors == 0 || pen_refcount == 0)
 		{
 			palette_stop();
 			return 1;
@@ -181,6 +183,7 @@ int palette_start(void)
 		memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors * sizeof(unsigned char));
 		memset(old_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 		memset(palette_dirty,0,Machine->drv->total_colors * sizeof(unsigned char));
+		memset(pen_refcount,0,Machine->drv->total_colors * sizeof(int));
 	}
 	else palette_used_colors = old_used_colors = just_remapped = new_palette = palette_dirty = 0;
 
@@ -198,6 +201,8 @@ void palette_stop(void)
 {
 	free(palette_used_colors);
 	palette_used_colors = old_used_colors = just_remapped = new_palette = palette_dirty = 0;
+	free(pen_refcount);
+	pen_refcount = 0;
 	free(game_palette);
 	game_palette = 0;
 	free(palette_map);
@@ -403,6 +408,7 @@ if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->
 						{
 							used = STATIC_MAX_PENS;
 							palette_map[i] = STATIC_MAX_PENS-1;
+							usrintf_showmessage("cannot shrink static palette");
 if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palette.\n");
 						}
 						else
@@ -546,6 +552,52 @@ if (errorlog) fprintf(errorlog,"error: palette_change_color() called with color 
 	else
 		palette_change_color_8_shrink(color,red,green,blue);
 }
+
+
+
+
+void palette_increase_usage_count(int table_offset,unsigned int usage_mask)
+{
+	/* if we are not dynamically reducing the palette, return immediately. */
+	if (palette_used_colors == 0) return;
+
+	while (usage_mask)
+	{
+		if (usage_mask & 1) pen_refcount[game_colortable[table_offset]]++;
+		table_offset++;
+		usage_mask >>= 1;
+	}
+}
+
+void palette_decrease_usage_count(int table_offset,unsigned int usage_mask)
+{
+	/* if we are not dynamically reducing the palette, return immediately. */
+	if (palette_used_colors == 0) return;
+
+	while (usage_mask)
+	{
+		if (usage_mask & 1) pen_refcount[game_colortable[table_offset]]--;
+		table_offset++;
+		usage_mask >>= 1;
+	}
+}
+
+void palette_init_used_colors(void)
+{
+	int pen;
+
+
+	/* if we are not dynamically reducing the palette, return immediately. */
+	if (palette_used_colors == 0) return;
+
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+
+	for (pen = 0;pen < Machine->drv->total_colors;pen++)
+	{
+		if (pen_refcount[pen]) palette_used_colors[pen] = PALETTE_COLOR_USED;
+	}
+}
+
 
 
 

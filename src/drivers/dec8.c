@@ -163,7 +163,7 @@ static void srdarwin_i8751_w(int offset, int data)
 	if (i8751_value==0x0000) {i8751_return=0;coins=0;}
 	if (i8751_value==0x3063) i8751_return=0x9c; /* Protection */
 	if ((i8751_value&0xff00)==0x4000) i8751_return=i8751_value; /* Coinage settings */
- 	if (i8751_value==0x5000) i8751_return=coins; /* Coin request */
+ 	if (i8751_value==0x5000) i8751_return=((coins / 10) << 4) | (coins % 10); /* Coin request */
  	if (i8751_value==0x6000) {i8751_value=-1; coins--; } /* Coin clear */
 
 	/* Nb:  Command 0x4000 for setting coinage options is not supported */
@@ -215,9 +215,9 @@ static void gondo_i8751_w(int offset, int data)
 	if (i8751_value==0x038a)  i8751_return=0x375; /* Makyou Senshi ID */
 	if (i8751_value==0x038b)  i8751_return=0x374; /* Gondomania ID */
 	if ((i8751_value>>8)==0x04)  i8751_return=0x40f; /* Coinage settings (Not supported) */
-	if ((i8751_value>>8)==0x05) {i8751_return=0x500 | coin1;  } /* Coin 1 */
+	if ((i8751_value>>8)==0x05) {i8751_return=0x500 | ((coin1 / 10) << 4) | (coin1 % 10);  } /* Coin 1 */
 	if ((i8751_value>>8)==0x06 && coin1 && !offset) {i8751_return=0x600; coin1--; } /* Coin 1 clear */
-	if ((i8751_value>>8)==0x07) {i8751_return=0x700 | coin2;  } /* Coin 2 */
+	if ((i8751_value>>8)==0x07) {i8751_return=0x700 | ((coin2 / 10) << 4) | (coin2 % 10);  } /* Coin 2 */
 	if ((i8751_value>>8)==0x08 && coin2 && !offset) {i8751_return=0x800; coin2--; } /* Coin 2 clear */
 	/* Commands 0x9xx do nothing */
 	if ((i8751_value>>8)==0x0a) {i8751_return=0xa00 | snd; if (snd) snd=0; }
@@ -249,7 +249,8 @@ static void shackled_i8751_w(int offset, int data)
 	if (i8751_value==0x0051) i8751_return=0; /* Shackled ID */
 	if (i8751_value==0x0102) i8751_return=0; /* ?? */
 	if (i8751_value==0x0101) i8751_return=0; /* ?? */
-	if (i8751_value==0x8101) i8751_return=coin2 | (coin1<<8); /* Coins */
+	if (i8751_value==0x8101) i8751_return=((coin2 / 10) << 4) | (coin2 % 10) |
+			((((coin1 / 10) << 4) | (coin1 % 10))<<8); /* Coins */
 }
 
 static void lastmiss_i8751_w(int offset, int data)
@@ -275,7 +276,7 @@ static void lastmiss_i8751_w(int offset, int data)
 	if (i8751_value==0x0000) {i8751_return=0x0184; coin=snd=0;}//???
 	if (i8751_value==0x0401) i8751_return=0x0184; //???
 	if ((i8751_value>>8)==0x01) i8751_return=0x0184; /* Coinage setup */
-	if ((i8751_value>>8)==0x02) {i8751_return=snd | coin; snd=0;} /* Coin return */
+	if ((i8751_value>>8)==0x02) {i8751_return=snd | ((coin / 10) << 4) | (coin % 10); snd=0;} /* Coin return */
 	if ((i8751_value>>8)==0x03) {i8751_return=0; coin--; } /* Coin clear */
 }
 
@@ -1101,9 +1102,9 @@ INPUT_PORTS_START( ghostb_input_ports )
 	PORT_DIPNAME( 0x80, 0x80, "Beam Energy Pickup", IP_KEY_NONE ) /* Ghostb only */
 	PORT_DIPSETTING(    0x00, "Up 1.5%" )
 	PORT_DIPSETTING(    0x80, "Normal" )
-//	PORT_DIPNAME( 0x80, 0x80, "Video Hold", IP_KEY_NONE ) /* Mazeh only */
-//	PORT_DIPSETTING(    0x00, "On" )
+//	PORT_DIPNAME( 0x80, 0x80, "Freeze", IP_KEY_NONE ) /* Mazeh only */
 //	PORT_DIPSETTING(    0x80, "Off" )
+//	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( srdarwin_input_ports )
@@ -1422,9 +1423,9 @@ INPUT_PORTS_START( shackled_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
@@ -1474,7 +1475,7 @@ INPUT_PORTS_START( csilver_input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* Dip switch bank 1 */
 	/* Coinage not supported */
@@ -1534,7 +1535,7 @@ static struct GfxLayout chars_3bpp =
 	8,8,
 	1024,
 	3,
-	{ 0x2000*8,0x4000*8,0x6000*8 },
+	{ 0x6000*8,0x4000*8,0x2000*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every sprite takes 8 consecutive bytes */
@@ -1646,11 +1647,11 @@ static struct GfxDecodeInfo ghostb_gfxdecodeinfo[] =
 
 static struct GfxDecodeInfo srdarwin_gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout_16k,128, 32  },
-	{ 1, 0x08000, &sr_sprites,     64, 8 }, //was 64 8
+	{ 1, 0x00000, &charlayout_16k,128, 4 }, /* Only 1 used so far :/ */
+	{ 1, 0x08000, &sr_sprites,     64, 8 },
 	{ 1, 0x38000, &srdarwin_tiles,  0, 8 },
   	{ 1, 0x48000, &srdarwin_tiles,  0, 8 },
-    { 1, 0x58000, &srdarwin_tiles,  0, 8 }, // 8 or 4?!?!
+    { 1, 0x58000, &srdarwin_tiles,  0, 8 },
     { 1, 0x68000, &srdarwin_tiles,  0, 8 },
 	{ -1 } /* end of array */
 };
@@ -1671,6 +1672,14 @@ static struct GfxDecodeInfo oscar_gfxdecodeinfo[] =
  	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo shackled_gfxdecodeinfo[] =
+{
+	{ 1, 0x00000, &chars_3bpp,0, 4 },
+	{ 1, 0x08000, &tiles,  256, 16 },
+	{ 1, 0x88000, &tiles,  768, 16 },
+ 	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo lastmiss_gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &lastmiss_chars_3bpp,0, 4 },
@@ -1684,7 +1693,7 @@ static struct GfxDecodeInfo lastmiss_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,
-	4000000,	/* Correct for Gondo? */
+	1500000,	/* Correct for Gondo? */
 	{ YM2203_VOL(20,23) },
 	{ 0 },
 	{ 0 },
@@ -1706,7 +1715,7 @@ static void oscar_irqhandler(void)
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3 MHz ? */
+	3000000,	/* 3 MHz ? */
 	{ 255 },	/* (not supported) */
 	irqhandler,
 };
@@ -1714,7 +1723,7 @@ static struct YM3526interface ym3526_interface =
 static struct YM3526interface oscar_ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3 MHz ? */
+	3000000,	/* 3 MHz ? */
 	{ 255 },		/* (not supported) */
 	oscar_irqhandler,
 };
@@ -1722,7 +1731,7 @@ static struct YM3526interface oscar_ym3526_interface =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3 MHz ? */
+	3000000,	/* 3 MHz ? */
 	{ 255 },		/* (not supported) */
 	irqhandler,
 };
@@ -2136,7 +2145,7 @@ static struct MachineDriver shackled_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
-	lastmiss_gfxdecodeinfo,
+	shackled_gfxdecodeinfo,
 	1024,1024,
 	0,
 
@@ -2188,17 +2197,17 @@ static struct MachineDriver csilver_machine_driver =
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	80,
+	60,
 	0,	/* init machine */
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 
-	lastmiss_gfxdecodeinfo,
+	shackled_gfxdecodeinfo,
 	1024,1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE ,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dec8_vh_start,
 	dec8_vh_stop,
@@ -2947,8 +2956,7 @@ static int breywood_hiload(void)
 /* Captain Silver high score save - RJF (Feb 16, 1999) */
 static int csilver_hiload(void)
 {
-
-      unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	static int firsttime;
 
 

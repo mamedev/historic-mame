@@ -50,6 +50,8 @@ extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned 
 #define PNG_PF_Average  3
 #define PNG_PF_Paeth    4
 
+int use_artwork;
+
 struct png_info {
 	UINT32 width, height;
 	UINT32 xoffset, yoffset;
@@ -411,6 +413,8 @@ static int read_png(const char *file_name, struct png_info *p)
 	p->num_trans = 0;
 	p->trans = NULL;
 	p->palette = NULL;
+
+        if (!use_artwork) return 0;
 
 	if (!(png = osd_fopen(Machine->gamedrv->name, file_name, OSD_FILETYPE_ARTWORK, 0)))
 	{

@@ -322,12 +322,13 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
+
 ROM_START( vulgus_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "1-4n.bin",     0x0000, 0x2000, 0xfe5a5ca5 )
-	ROM_LOAD( "1-5n.bin",     0x2000, 0x2000, 0x847e437f )
-	ROM_LOAD( "1-6n.bin",     0x4000, 0x2000, 0x4666c436 )
-	ROM_LOAD( "1-7n.bin",     0x6000, 0x2000, 0xff2097f9 )
+	ROM_LOAD( "v2",           0x0000, 0x2000, 0x3e18ff62 )
+	ROM_LOAD( "v3",           0x2000, 0x2000, 0xb4650d82 )
+	ROM_LOAD( "v4",           0x4000, 0x2000, 0x5b26355c )
+	ROM_LOAD( "v5",           0x6000, 0x2000, 0x4ca7f10e )
 	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
 
 	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
@@ -355,12 +356,12 @@ ROM_START( vulgus_rom )
 	ROM_LOAD( "1-11c.bin",    0x0000, 0x2000, 0x3bd2acf4 )
 ROM_END
 
-ROM_START( vulgus2_rom )
+ROM_START( vulgusj_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "v2",           0x0000, 0x2000, 0x3e18ff62 )
-	ROM_LOAD( "v3",           0x2000, 0x2000, 0xb4650d82 )
-	ROM_LOAD( "v4",           0x4000, 0x2000, 0x5b26355c )
-	ROM_LOAD( "v5",           0x6000, 0x2000, 0x4ca7f10e )
+	ROM_LOAD( "1-4n.bin",     0x0000, 0x2000, 0xfe5a5ca5 )
+	ROM_LOAD( "1-5n.bin",     0x2000, 0x2000, 0x847e437f )
+	ROM_LOAD( "1-6n.bin",     0x4000, 0x2000, 0x4666c436 )
+	ROM_LOAD( "1-7n.bin",     0x6000, 0x2000, 0xff2097f9 )
 	ROM_LOAD( "1-8n.bin",     0x8000, 0x2000, 0x6ca5ca41 )
 
 	ROM_REGION_DISPOSE(0x16000)	/* temporary space for graphics (disposed after conversion) */
@@ -437,7 +438,7 @@ struct GameDriver vulgus_driver =
 	__FILE__,
 	0,
 	"vulgus",
-	"Vulgus (set 1)",
+	"Vulgus (US?)",
 	"1984",
 	"Capcom",
 	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
@@ -458,12 +459,12 @@ struct GameDriver vulgus_driver =
 	hiload, hisave
 };
 
-struct GameDriver vulgus2_driver =
+struct GameDriver vulgusj_driver =
 {
 	__FILE__,
 	&vulgus_driver,
-	"vulgus2",
-	"Vulgus (set 2)",
+	"vulgusj",
+	"Vulgus (Japan?)",
 	"1984",
 	"Capcom",
 	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
@@ -471,7 +472,7 @@ struct GameDriver vulgus2_driver =
 	&machine_driver,
 	0,
 
-	vulgus2_rom,
+	vulgusj_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

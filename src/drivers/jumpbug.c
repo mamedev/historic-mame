@@ -52,33 +52,33 @@ void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },	/* RAM, Video RAM */
 	{ 0x4c00, 0x4fff, videoram_r },	/* mirror address for Video RAM*/
 	{ 0x5000, 0x507f, MRA_RAM },	/* screen attributes, sprites */
-	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0xafff, MRA_ROM },
 	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
 	{ 0x7000, 0x7000, input_port_2_r },	/* DSW0 */
-	{ 0xeff0, 0xefff, MRA_RAM },
+	{ 0xfff0, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4bff, videoram_w, &videoram, &videoram_size },
 	{ 0x4c00, 0x4fff, videoram_w },	/* mirror address for Video RAM */
 	{ 0x5000, 0x503f, jumpbug_attributes_w, &jumpbug_attributesram },
 	{ 0x5040, 0x505f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7004, 0x7004, MWA_RAM, &jumpbug_stars },
-	{ 0x6002, 0x6006, jumpbug_gfxbank_w, &jumpbug_gfxbank },
 	{ 0x5900, 0x5900, AY8910_control_port_0_w },
 	{ 0x5800, 0x5800, AY8910_write_port_0_w },
-	{ 0xeff0, 0xefff, MWA_RAM },
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x6002, 0x6006, jumpbug_gfxbank_w, &jumpbug_gfxbank },
+	{ 0x7001, 0x7001, interrupt_enable_w },
+	{ 0x7004, 0x7004, MWA_RAM, &jumpbug_stars },
 	{ 0x8000, 0xafff, MWA_ROM },
+	{ 0xfff0, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 

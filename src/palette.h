@@ -126,6 +126,14 @@ void palette_change_color(int color,unsigned char red,unsigned char green,unsign
 /* PALETTE_COLOR_USED for all colors; this is enough in some cases. */
 extern unsigned char *palette_used_colors;
 
+void palette_increase_usage_count(int table_offset,unsigned int usage_mask);
+void palette_decrease_usage_count(int table_offset,unsigned int usage_mask);
+
+/* If you want to dynamically change the usage array, call palette_init_used_colors() */
+/* before setting used entries to PALETTE_COLOR_USED/PALETTE_COLOR_TRANSPARENT. */
+/* The function automatically marks colors used by the TileMap system. */
+void palette_init_used_colors(void);
+
 const unsigned char *palette_recalc(void);
 
 #define PALETTE_COLOR_UNUSED 0		/* This color is not needed for this frame */

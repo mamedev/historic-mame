@@ -254,8 +254,8 @@ static struct GfxLayout charlayout1 =
 	512,	/* 512 characters */
 	3,	/* 3 bits per pixel */
 	{ 0, 512*8*8, 2*512*8*8 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout charlayout2 =
@@ -264,10 +264,10 @@ static struct GfxLayout charlayout2 =
 	256,	/* 256 characters */
 	3,	/* 3 bits per pixel */
 	{ 2*256*16*16, 256*16*16, 0 },	/* the bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every character takes 32 consecutive bytes */
 };
 static struct GfxLayout charlayout3 =
@@ -276,10 +276,10 @@ static struct GfxLayout charlayout3 =
 	128,	/* 128 characters */
 	3,	/* 3 bits per pixel */
 	{ 2*128*16*16, 128*16*16, 0 },	/* the bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every character takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout1 =
@@ -288,10 +288,10 @@ static struct GfxLayout spritelayout1 =
 	256,	/* 256 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*512*16*16, 512*16*16, 0 },	/* the bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout2 =
@@ -300,14 +300,14 @@ static struct GfxLayout spritelayout2 =
 	64,	/* 64 sprites */
 	3,	/* 3 bits per pixel */
 	{ 2*128*32*32, 128*32*32, 0 },	/* the bitplanes are separated */
-	{ 87*8, 86*8, 85*8, 84*8, 83*8, 82*8, 81*8, 80*8,
-			71*8, 70*8, 69*8, 68*8, 67*8, 66*8, 65*8, 64*8,
-			23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 			40*8+0, 40*8+1, 40*8+2, 40*8+3, 40*8+4, 40*8+5, 40*8+6, 40*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8,
+			64*8, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8,
+			80*8, 81*8, 82*8, 83*8, 84*8, 85*8, 86*8, 87*8 },
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
@@ -324,6 +324,13 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+static Z80_DaisyChain daisy_chain[] =
+{
+	{ z80pio_reset , z80pio_interrupt, z80pio_reti , 0 }, /* device 0 = PIO_0 , low  priority */
+	{ z80ctc_reset , z80ctc_interrupt, z80ctc_reti , 0 }, /* device 1 = CTC_0 , high priority */
+	{ 0,0,0,-1} 	   /* end mark */
+};
 
 
 static struct MachineDriver machine_driver =
@@ -343,7 +350,8 @@ static struct MachineDriver machine_driver =
 			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			0,0 /* interrupts are made by z80 daisy chain system */
+			0,0, /* interrupts are made by z80 daisy chain system */
+			0,0,daisy_chain
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -351,7 +359,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	384, 384,
 	0,
@@ -528,7 +536,7 @@ struct GameDriver starforc_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -554,7 +562,7 @@ struct GameDriver megaforc_driver =
 	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

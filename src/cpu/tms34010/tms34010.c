@@ -30,6 +30,33 @@ extern int debug_key_pressed;
 #define CPU_MASTER  0
 #define CPU_SLAVE   1
 
+static UINT8 tms34010_reg_layout[] = {
+	TMS34010_PC, TMS34010_SP, -1,
+	TMS34010_A0, TMS34010_B0, -1,
+	TMS34010_A1, TMS34010_B1, -1,
+	TMS34010_A2, TMS34010_B2, -1,
+	TMS34010_A3, TMS34010_B3, -1,
+	TMS34010_A4, TMS34010_B4, -1,
+	TMS34010_A5, TMS34010_B5, -1,
+	TMS34010_A6, TMS34010_B6, -1,
+	TMS34010_A7, TMS34010_B7, -1,
+	TMS34010_A8, TMS34010_B8, -1,
+	TMS34010_A9, TMS34010_B9, -1,
+	TMS34010_A10,TMS34010_B10,-1,
+	TMS34010_A11,TMS34010_B11,-1,
+	TMS34010_A12,TMS34010_B12,-1,
+	TMS34010_A13,TMS34010_B13,-1,
+	TMS34010_A14,TMS34010_B14, 0
+};
+
+static UINT8 tms34010_win_layout[] = {
+	46, 0,34,22,	/* register window (top right) */
+	 0, 0,45, 8,	/* disassembler window (left, upper) */
+	 0, 9,45, 8,	/* memory #1 window (left, middle) */
+	 0,18,45, 4,	/* memory #2 window (lower) */
+	 0,23,80, 1 	/* command line window (bottom rows) */
+};
+
 /* TMS34010 State */
 typedef struct
 {
@@ -828,6 +855,13 @@ unsigned tms34010_get_reg(int regnum)
         case TMS34010_B12: return state.regs.Bregs[12<<4];
         case TMS34010_B13: return state.regs.Bregs[13<<4];
         case TMS34010_B14: return state.regs.Bregs[14<<4];
+/* TODO: return contents of [SP + wordsize * (CPU_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = state.regs.a.Aregs[15] + 4 * (REG_SP_CONTENTS - regnum);
+				return cpu_readmem29_dword( offset >> 3 );
+			}
     }
     return 0;
 }
@@ -873,7 +907,14 @@ void tms34010_set_reg(int regnum, unsigned val)
         case TMS34010_B12: state.regs.Bregs[12<<4] = val; break;
         case TMS34010_B13: state.regs.Bregs[13<<4] = val; break;
         case TMS34010_B14: state.regs.Bregs[14<<4] = val; break;
-    }
+/* TODO: set contents of [SP + wordsize * (CPU_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = state.regs.a.Aregs[15] + 4 * (REG_SP_CONTENTS - regnum);
+				cpu_writemem29_word( offset >> 3, val ); /* ??? */
+			}
+	}
 }
 
 
@@ -1066,7 +1107,7 @@ int tms34010_execute(int cycles)
  ****************************************************************************/
 const char *tms34010_info(void *context, int regnum)
 {
-	static char buffer[32][47+1];
+	static char buffer[32][63+1];
 	static int which = 0;
 	TMS34010_Regs *r = context;
 
@@ -1082,17 +1123,21 @@ const char *tms34010_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998\nParts based on code by Aaron Giles";
+		case CPU_INFO_REG_LAYOUT: return (const char *)tms34010_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)tms34010_win_layout;
 
 		case CPU_INFO_PC: sprintf(buffer[which], "%08X:", r->pc); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->regs.a.Aregs[15]); break;
 #ifdef MAME_DEBUG
 		case CPU_INFO_DASM:
-			r->pc += Dasm34010(&ROM[r->pc>>3], buffer[which], r->pc);
+			r->pc += Dasm34010(&OP_ROM[r->pc>>3], buffer[which], r->pc);
 			break;
 #else
 		case CPU_INFO_DASM:
-			sprintf(buffer[which], "$%02x", ROM[r->pc >> 3]);
-			r->pc += 8;
+			sprintf(buffer[which], "$%02x%02x%02x%02x",
+				OP_ROM[(r->pc >> 3)+0], OP_ROM[(r->pc >> 3)+1],
+				OP_ROM[(r->pc >> 3)+2], OP_ROM[(r->pc >> 3)+3]);
+			r->pc += 32;
 			break;
 #endif
 		case CPU_INFO_FLAGS:
@@ -1130,9 +1175,9 @@ const char *tms34010_info(void *context, int regnum)
 				r->st & 0x00000002 ? 'F':'.',
 				r->st & 0x00000001 ? 'F':'.');
             break;
-		case CPU_INFO_REG+TMS34010_PC: sprintf(buffer[which], "PC:%08X", r->pc); break;
-		case CPU_INFO_REG+TMS34010_SP: sprintf(buffer[which], "SP:%08X", r->regs.a.Aregs[15]); break;
-		case CPU_INFO_REG+TMS34010_ST: sprintf(buffer[which], "ST:%08X", r->st); break;
+		case CPU_INFO_REG+TMS34010_PC: sprintf(buffer[which], "PC :%08X", r->pc); break;
+		case CPU_INFO_REG+TMS34010_SP: sprintf(buffer[which], "SP :%08X", r->regs.a.Aregs[15]); break;
+		case CPU_INFO_REG+TMS34010_ST: sprintf(buffer[which], "ST :%08X", r->st); break;
 		case CPU_INFO_REG+TMS34010_A0: sprintf(buffer[which], "A0 :%08X", r->regs.a.Aregs[ 0]); break;
 		case CPU_INFO_REG+TMS34010_A1: sprintf(buffer[which], "A1 :%08X", r->regs.a.Aregs[ 1]); break;
 		case CPU_INFO_REG+TMS34010_A2: sprintf(buffer[which], "A2 :%08X", r->regs.a.Aregs[ 2]); break;
@@ -1143,11 +1188,11 @@ const char *tms34010_info(void *context, int regnum)
 		case CPU_INFO_REG+TMS34010_A7: sprintf(buffer[which], "A7 :%08X", r->regs.a.Aregs[ 7]); break;
 		case CPU_INFO_REG+TMS34010_A8: sprintf(buffer[which], "A8 :%08X", r->regs.a.Aregs[ 8]); break;
 		case CPU_INFO_REG+TMS34010_A9: sprintf(buffer[which], "A9 :%08X", r->regs.a.Aregs[ 9]); break;
-		case CPU_INFO_REG+TMS34010_A10: sprintf(buffer[which], "A10:%08X", r->regs.a.Aregs[10]); break;
-		case CPU_INFO_REG+TMS34010_A11: sprintf(buffer[which], "A11:%08X", r->regs.a.Aregs[11]); break;
-		case CPU_INFO_REG+TMS34010_A12: sprintf(buffer[which], "A12:%08X", r->regs.a.Aregs[12]); break;
-		case CPU_INFO_REG+TMS34010_A13: sprintf(buffer[which], "A13:%08X", r->regs.a.Aregs[13]); break;
-		case CPU_INFO_REG+TMS34010_A14: sprintf(buffer[which], "A14:%08X", r->regs.a.Aregs[14]); break;
+		case CPU_INFO_REG+TMS34010_A10: sprintf(buffer[which],"A10:%08X", r->regs.a.Aregs[10]); break;
+		case CPU_INFO_REG+TMS34010_A11: sprintf(buffer[which],"A11:%08X", r->regs.a.Aregs[11]); break;
+		case CPU_INFO_REG+TMS34010_A12: sprintf(buffer[which],"A12:%08X", r->regs.a.Aregs[12]); break;
+		case CPU_INFO_REG+TMS34010_A13: sprintf(buffer[which],"A13:%08X", r->regs.a.Aregs[13]); break;
+		case CPU_INFO_REG+TMS34010_A14: sprintf(buffer[which],"A14:%08X", r->regs.a.Aregs[14]); break;
 		case CPU_INFO_REG+TMS34010_B0: sprintf(buffer[which], "B0 :%08X", r->regs.Bregs[ 0<<4]); break;
 		case CPU_INFO_REG+TMS34010_B1: sprintf(buffer[which], "B1 :%08X", r->regs.Bregs[ 1<<4]); break;
 		case CPU_INFO_REG+TMS34010_B2: sprintf(buffer[which], "B2 :%08X", r->regs.Bregs[ 2<<4]); break;
@@ -1158,11 +1203,11 @@ const char *tms34010_info(void *context, int regnum)
 		case CPU_INFO_REG+TMS34010_B7: sprintf(buffer[which], "B7 :%08X", r->regs.Bregs[ 7<<4]); break;
 		case CPU_INFO_REG+TMS34010_B8: sprintf(buffer[which], "B8 :%08X", r->regs.Bregs[ 8<<4]); break;
 		case CPU_INFO_REG+TMS34010_B9: sprintf(buffer[which], "B9 :%08X", r->regs.Bregs[ 9<<4]); break;
-		case CPU_INFO_REG+TMS34010_B10: sprintf(buffer[which], "B10:%08X", r->regs.Bregs[10<<4]); break;
-		case CPU_INFO_REG+TMS34010_B11: sprintf(buffer[which], "B11:%08X", r->regs.Bregs[11<<4]); break;
-		case CPU_INFO_REG+TMS34010_B12: sprintf(buffer[which], "B12:%08X", r->regs.Bregs[12<<4]); break;
-		case CPU_INFO_REG+TMS34010_B13: sprintf(buffer[which], "B13:%08X", r->regs.Bregs[13<<4]); break;
-		case CPU_INFO_REG+TMS34010_B14: sprintf(buffer[which], "B14:%08X", r->regs.Bregs[14<<4]); break;
+		case CPU_INFO_REG+TMS34010_B10: sprintf(buffer[which],"B10:%08X", r->regs.Bregs[10<<4]); break;
+		case CPU_INFO_REG+TMS34010_B11: sprintf(buffer[which],"B11:%08X", r->regs.Bregs[11<<4]); break;
+		case CPU_INFO_REG+TMS34010_B12: sprintf(buffer[which],"B12:%08X", r->regs.Bregs[12<<4]); break;
+		case CPU_INFO_REG+TMS34010_B13: sprintf(buffer[which],"B13:%08X", r->regs.Bregs[13<<4]); break;
+		case CPU_INFO_REG+TMS34010_B14: sprintf(buffer[which],"B14:%08X", r->regs.Bregs[14<<4]); break;
 	}
 	return buffer[which];
 }

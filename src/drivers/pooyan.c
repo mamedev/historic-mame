@@ -1,5 +1,10 @@
 /***************************************************************************
 
+Notes:
+- Several people claim that colors are wrong, but the way the color PROMs
+  are used seems correct.
+
+
 Pooyan memory map (preliminary)
 
 Thanks must go to Mike Cuddy for providing information on this one.
@@ -63,60 +68,11 @@ void pooyan_flipscreen_w(int offset,int data);
 void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-
-/* I am not 100% sure that this timer is correct, but */
-/* I'm using the Gyruss wired to the higher 4 bits    */
-/* instead of the lower ones, so there is a good      */
-/* chance it's the right one. */
-
-/* The timer clock which feeds the lower 4 bits of    */
-/* AY-3-8910 port A is based on the same clock        */
-/* feeding the sound CPU Z80.  It is a divide by      */
-/* 10240, formed by a standard divide by 1024,        */
-/* followed by a divide by 10 using a 4 bit           */
-/* bi-quinary count sequence. (See LS90 data sheet    */
-/* for an example).                                   */
-/* Bits 1-3 come directly from the upper three bits   */
-/* of the bi-quinary counter. Bit 0 comes from the    */
-/* output of the divide by 1024.                      */
-
-static int pooyan_timer[20] = {
-0x00, 0x01, 0x00, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
-0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
-};
-
-static int pooyan_portB_r(int offset)
-{
-	/* need to protect from totalcycles overflow */
-	static int last_totalcycles = 0;
-
-	/* number of Z80 clock cycles to count */
-	static int clock;
-
-	int current_totalcycles;
-
-	current_totalcycles = cpu_gettotalcycles();
-	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
-
-	last_totalcycles = current_totalcycles;
-
-	return pooyan_timer[clock/512] << 4;
-}
-
-void pooyan_sh_irqtrigger_w(int offset,int data)
-{
-	static int last;
-
-
-	if (last == 1 && data == 0)
-	{
-		/* setting bit 0 high then low triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
-	}
-
-	last = data;
-}
-
+/* defined in sndhrdw/timeplt.c */
+extern struct MemoryReadAddress timeplt_sound_readmem[];
+extern struct MemoryWriteAddress timeplt_sound_writemem[];
+extern struct AY8910interface timeplt_ay8910_interface;
+void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -142,30 +98,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa000, 0xa000, MWA_NOP },	/* watchdog reset? */
 	{ 0xa100, 0xa100, soundlatch_w },
 	{ 0xa180, 0xa180, interrupt_enable_w },
-	{ 0xa181, 0xa181, pooyan_sh_irqtrigger_w },
+	{ 0xa181, 0xa181, timeplt_sh_irqtrigger_w },
 	{ 0xa187, 0xa187, pooyan_flipscreen_w },
-	{ -1 }	/* end of table */
-};
-
-
-
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-	{ 0x6000, 0x6000, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-	{ 0x5000, 0x5000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x7000, 0x7000, AY8910_control_port_1_w },
 	{ -1 }	/* end of table */
 };
 
@@ -299,19 +233,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x30ff, 0x30ff },
-	{ soundlatch_r },
-	{ pooyan_portB_r },
-	{ 0 },
-	{ 0 }
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -325,9 +246,9 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
+			14318180/8,	/* 1.789772727 MHz */						\
 			3,	/* memory region #3 */
-			sound_readmem,sound_writemem,0,0,
+			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
@@ -352,7 +273,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&timeplt_ay8910_interface
 		}
 	}
 };
@@ -494,7 +415,7 @@ struct GameDriver pooyan_driver =
 	__FILE__,
 	0,
 	"pooyan",
-	"Pooyan (Konami)",
+	"Pooyan",
 	"1982",
 	"Konami",
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
@@ -522,7 +443,7 @@ struct GameDriver pooyans_driver =
 	"pooyans",
 	"Pooyan (Stern)",
 	"1982",
-	"Stern",
+	"[Konami] (Stern license)",
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,

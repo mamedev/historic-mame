@@ -1486,6 +1486,7 @@ static void Z0E_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: ext0e  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
 	}
 }
 
@@ -1499,6 +1500,7 @@ static void Z0F_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: ext0f  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -2228,7 +2230,8 @@ static void Z36_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvd36 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
-	}
+		(void)imm8;
+    }
 }
 
 /******************************************
@@ -2265,6 +2268,7 @@ static void Z38_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvd38 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -4302,6 +4306,7 @@ static void Z78_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvd78 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -4487,6 +4492,7 @@ static void Z7E_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvd7e $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -4780,6 +4786,7 @@ static void Z8E_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: ext8e  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -4793,6 +4800,7 @@ static void Z8F_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: ext8f  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -4950,6 +4958,7 @@ static void Z9D_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvd9d $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -4991,6 +5000,7 @@ static void Z9F_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvd9f $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
+		(void)imm8;
     }
 }
 
@@ -5687,7 +5697,8 @@ static void ZB9_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvdb9 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
-	}
+		(void)imm8;
+    }
 	(void)imm8;
 }
 
@@ -6344,7 +6355,8 @@ static void ZBF_imm8(void)
 	LOG((errorlog, "Z8K#%d %04x: rsvdbf $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
-	}
+		(void)imm8;
+    }
 	(void)imm8;
 }
 

@@ -5,215 +5,250 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
-#include "osdepend.h"
+#include "tilemap.h"
 
-int bionicc_scroll1_size;
-int bionicc_scroll2_size;
-unsigned char *bionicc_scroll1;
-unsigned char *bionicc_scroll2;
-unsigned char *bionicc_palette;
+unsigned char *bionicc_fgvideoram;
+unsigned char *bionicc_bgvideoram;
+unsigned char *bionicc_txvideoram;
+extern unsigned char *spriteram;
+extern int spriteram_size;
 
-
-
-static int scroll1x, scroll1y, scroll2x, scroll2y;
+static struct tilemap *tx_tilemap, *bg_tilemap, *fg_tilemap;
+static int flipscreen,fg_enable,bg_enable;
 
 
-int bionicc_videoreg_r( int offset )
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static const unsigned short *videoram1,*videoram2;
+
+static void bg_preupdate(void)
 {
-	switch( offset )
-	{
-		case 0x0: return scroll1x;
-		case 0x2: return scroll1y;
-		case 0x4: return scroll2x;
-		case 0x6: return scroll2y;
-	}
-	return 0;
+	videoram1 = (const unsigned short *)bionicc_bgvideoram;
 }
 
-void bionicc_videoreg_w( int offset, int data )
+static void get_bg_tile_info(int col,int row)
 {
-	switch( offset )
+	int offset = 2*(row*64+col);
+	int attr = videoram1[offset+1];
+	SET_TILE_INFO(0,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
+	tile_info.flags = TILE_FLIPXY((attr & 0xc0) >> 6);
+}
+
+static void fg_preupdate(void)
+{
+	videoram1 = (const unsigned short *)bionicc_fgvideoram;
+}
+
+static void get_fg_tile_info( int col, int row )
+{
+	int offset = 2*(row*64 + col);
+	int attr = videoram1[offset+1];
+	SET_TILE_INFO(1,(videoram1[offset] & 0xff) + ((attr & 0x07) << 8),(attr & 0x18) >> 3);
+	if ((attr & 0xc0) == 0xc0)
 	{
-		case 0x0: scroll1x = data; break;
-		case 0x2: scroll1y = data; break;
-		case 0x4: scroll2x = data; break;
-		case 0x6: scroll2y = data; break;
+		tile_info.priority = 2;
+		tile_info.flags = 0;
+	}
+	else
+	{
+		tile_info.priority = (attr & 0x20) >> 5;
+		tile_info.flags = TILE_FLIPXY((attr & 0xc0) >> 6);
 	}
 }
 
-#define COLORTABLE_START(gfxn,color_code) Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + \
-				color_code * Machine->gfx[gfxn]->color_granularity
-#define GFX_COLOR_CODES(gfxn) Machine->gfx[gfxn]->total_colors
-#define GFX_ELEM_COLORS(gfxn) Machine->gfx[gfxn]->color_granularity
-
-
-int bionicc_vh_start(void)
+static void tx_preupdate(void)
 {
-	int i,j;
-	scroll1x = scroll1y = scroll2x = scroll2y = 0;
-
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
-
-	for (j=0; j<4; j++)
-	{
-		for (i = 0;i < GFX_COLOR_CODES(j);i++)
-		{
-			memset(&palette_used_colors[COLORTABLE_START(j,i)],
-				PALETTE_COLOR_USED,
-				GFX_ELEM_COLORS(j));
-		}
-	}
-	return 0;
+	videoram1 = (const unsigned short *)bionicc_txvideoram;
+	videoram2 = (const unsigned short *)&bionicc_txvideoram[0x800];
 }
 
+static void get_tx_tile_info( int col, int row )
+{
+	int offset = row*32+col;
+	int attr = videoram2[offset];
+	SET_TILE_INFO(3,(videoram1[offset] & 0xff) + ((attr & 0x00c0) << 2),attr & 0x3f);
+}
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
 
 void bionicc_vh_stop(void)
 {
+	tilemap_dispose(tx_tilemap);
+	tilemap_dispose(fg_tilemap);
+	tilemap_dispose(bg_tilemap);
 }
 
-
-INLINE void bionicc_refresh_palette( void )
+int bionicc_vh_start(void)
 {
-	/* rebuild the colour lookup table from RAM palette */
-	int bank;
-	int n=0;
+	tx_tilemap = tilemap_create(TILEMAP_TRANSPARENT, 8, 8,32,32,0,0);
+	fg_tilemap = tilemap_create(TILEMAP_TRANSPARENT,16,16,64,64,1,1);
+	bg_tilemap = tilemap_create(TILEMAP_TRANSPARENT, 8, 8,64,64,1,1);
 
-	/* sprite palette RAM area describes 256 colors; all others describe 64 colors */
-	int counts[4]={64,64,256,64};
-	for( bank=0; bank<4; bank++ ){
-		const unsigned char *source = &bionicc_palette[0x200*bank];
-		int indx;
-		int count=counts[bank];
-		for( indx=0; indx < count; indx++ ){
-			int palette, red, green, blue, bright;
-			palette=READ_WORD(source);
-			bright= (palette&0x0f);
-                        if (bright != 0x0f)
-                        {
-                              bright <<= 1;
-                        }
-                        if (bright) bright += 2;
-			red   = ((palette>>12)&0x0f) * bright;
-			green = ((palette>>8 )&0x0f) * bright;
-			blue  = ((palette>>4 )&0x0f) * bright;
-			palette_change_color(n+indx, red, green, blue);
-			source+=2;
-		}
-		n+=count;
-	}
-	palette_recalc();
-}
-
-
-/* Only call drawgfx for visible tiles */
-INLINE void bionicc_draw_scroll2( struct osd_bitmap *bitmap, int priority )
-{
-	static int bank = 0;
-        int transparency = priority?0x8000:0x8000;
-	const struct GfxElement *gfx = Machine->gfx[0];
-	const struct rectangle *clip = &Machine->drv->visible_area;
-
-	unsigned char *source;
-
-	int scrollx = scroll2x >> 3;
-	int scrolly = scroll2y >> 3;
-
-	int x,y, sx, sy;
-
-	sy=-(scroll2y&0x07);
-	for( y=0; y<0x21; y++ )
+	if (fg_tilemap && bg_tilemap && tx_tilemap)
 	{
-		source = &bionicc_scroll2[((scrolly+y)*0x100)&0x3fff];
-		sx=-(scroll2x&0x07);
-		for( x=0; x<0x21; x++ )
-		{
-			int offset=(((scrollx+x)*4) & 0xff);
-			int attributes = READ_WORD( &source[offset+2] );
-			int flipx = attributes&0x80;
-			int flipy = attributes&0x40;
-			int tile_number = (READ_WORD(&source[offset])&0xff) +
-					  256*(attributes&0x7);
-			int color = (attributes>>3)&0x3;
-			drawgfx( bitmap,gfx,
-				tile_number,
-				color,
-				flipx, flipy,
-				sx,sy,
-                                clip,TRANSPARENCY_PENS,transparency);
-			sx+=8;
-		}
-		sy+=8;
+		fg_tilemap->tile_get_info = get_fg_tile_info;
+		fg_tilemap->transparent_pen = 15;
+
+		bg_tilemap->tile_get_info = get_bg_tile_info;
+		bg_tilemap->transparent_pen = 15;
+
+		tx_tilemap->tile_get_info = get_tx_tile_info;
+		tx_tilemap->transparent_pen = 3;
+
+		return 0;
 	}
+
+	bionicc_vh_stop();
+	return 1;
 }
 
-INLINE void bionicc_draw_scroll1( struct osd_bitmap *bitmap, int priority )
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+void bionicc_bgvideoram_w(int offset,int data)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	int oldword = READ_WORD(&bionicc_bgvideoram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
 
-	unsigned char *source;
-
-	int scrollx = scroll1x >> 4;
-	int scrolly = scroll1y >> 4;
-
-	int x,y, sx, sy;
-
-	sy=-(scroll1y&0x0f);
-
-	for( y=0; y<0x12; y++ )
+	if (oldword != newword)
 	{
-		source = &bionicc_scroll1[((scrolly+y)*0x100)&0x3fff];
-		sx=-(scroll1x&0x0f);
-		for( x=0; x<0x12; x++ )
-		{
-			int offset=(((scrollx+x)*4) & 0xff);
-			int attributes = READ_WORD(&source[offset+2]);
-			int flipx = attributes&0x80;
-			int flipy = attributes&0x40;
-			int tile_priority;
-
-			if( flipx && flipy ){
-				tile_priority = 2;
-				flipx = flipy = 0;
-			}
-			else {
-				tile_priority = (attributes>>5)&0x1;
-			}
-
-			if( tile_priority == priority ){
-				int tile_number = (READ_WORD(&source[offset])&0xFF) + 256*(attributes&0x7);
-				int color = (attributes>>3)&0x3;
-
-				drawgfx( bitmap, gfx,
-					tile_number,
-					color,
-					flipx,flipy,
-					sx,sy,
-					clip,TRANSPARENCY_PEN,15);
-			}
-			sx+=16;
-		}
-		sy+=16;
+		int tile_index = offset/4;
+		WRITE_WORD(&bionicc_bgvideoram[offset],newword);
+		tilemap_mark_tile_dirty(bg_tilemap,tile_index%64,tile_index/64);
 	}
 }
 
-INLINE void bionicc_draw_sprites( struct osd_bitmap *bitmap )
+void bionicc_fgvideoram_w(int offset,int data)
 {
+	int oldword = READ_WORD(&bionicc_fgvideoram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+	if (oldword != newword)
+	{
+		int tile_index = offset/4;
+		WRITE_WORD(&bionicc_fgvideoram[offset],newword);
+		tilemap_mark_tile_dirty(fg_tilemap,tile_index%64,tile_index/64);
+	}
+}
+
+void bionicc_txvideoram_w(int offset,int data)
+{
+	int oldword = READ_WORD(&bionicc_txvideoram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+	if (oldword != newword)
+	{
+		int tile_index = (offset&0x7ff)/2;
+		WRITE_WORD(&bionicc_txvideoram[offset],newword);
+		tilemap_mark_tile_dirty(tx_tilemap,tile_index%32,tile_index/32);
+	}
+}
+
+int bionicc_bgvideoram_r(int offset)
+{
+	return READ_WORD(&bionicc_bgvideoram[offset]);
+}
+
+int bionicc_fgvideoram_r(int offset)
+{
+	return READ_WORD(&bionicc_fgvideoram[offset]);
+}
+
+int bionicc_txvideoram_r(int offset)
+{
+	return READ_WORD(&bionicc_txvideoram[offset]);
+}
+
+void bionicc_paletteram_w(int offset,int data)
+{
+	paletteram_RRRRGGGGBBBBIIII_word_w(offset,(data & 0xfff1) | ((data & 0x0007) << 1));
+}
+
+void bionicc_scroll_w(int offset,int data)
+{
+	switch( offset )
+	{
+		case 0:
+			tilemap_set_scrollx(fg_tilemap,0,-data);
+			break;
+		case 2:
+			tilemap_set_scrolly(fg_tilemap,0,-data);
+			break;
+		case 4:
+			tilemap_set_scrollx(bg_tilemap,0,-data);
+			break;
+		case 6:
+			tilemap_set_scrolly(bg_tilemap,0,-data);
+			break;
+	}
+}
+
+void bionicc_gfxctrl_w(int offset,int data)
+{
+	int attr;
+
+	data >>= 8;
+
+	flipscreen = data & 1;
+	attr = flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0;
+	tilemap_set_attributes(bg_tilemap,attr);
+	tilemap_set_attributes(fg_tilemap,attr);
+	tilemap_set_attributes(tx_tilemap,attr);
+
+	bg_enable = data & 0x20;	/* guess */
+	fg_enable = data & 0x10;	/* guess */
+
+	coin_counter_w(0,data & 0x80);
+	coin_counter_w(1,data & 0x40);
+}
+
+
+
+/***************************************************************************
+
+  Display refresh
+
+***************************************************************************/
+
+static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
+{
+	int offs;
 	const struct GfxElement *gfx = Machine->gfx[2];
 	const struct rectangle *clip = &Machine->drv->visible_area;
-	unsigned char *source = &spriteram[0x4F8];
 
-	while( source>=spriteram ){
-		int tile_number = READ_WORD(&source[0])&0x7ff;
+	for (offs = spriteram_size-8;offs >= 0;offs -= 8)
+	{
+		int tile_number = READ_WORD(&spriteram[offs])&0x7ff;
 		if( tile_number!=0x7FF ){
-			int attributes = READ_WORD(&source[2]);
-			int color = (attributes&0x1C)>>2;
-			int flipx = attributes&0x02;
+			int attr = READ_WORD(&spriteram[offs+2]);
+			int color = (attr&0x3C)>>2;
+			int flipx = attr&0x02;
 			int flipy = 0;
-			int sx= (signed short)READ_WORD(&source[6]);
-			int sy= ((signed short)READ_WORD(&source[4]));
+			int sx= (signed short)READ_WORD(&spriteram[offs+6]);
+			int sy= (signed short)READ_WORD(&spriteram[offs+4]);
 			if(sy>512-16) sy-=512;
+			if (flipscreen)
+			{
+				sx = 240 - sx;
+				sy = 240 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx( bitmap, gfx,
 				tile_number,
@@ -222,48 +257,62 @@ INLINE void bionicc_draw_sprites( struct osd_bitmap *bitmap )
 				sx,sy,
 				clip,TRANSPARENCY_PEN,15);
 		}
-		source -= 8;
 	}
 }
 
-INLINE void bionicc_draw_text( struct osd_bitmap *bitmap )
+void mark_sprite_colors( void )
 {
-	const struct GfxElement *gfx = Machine->gfx[3];
-	const unsigned char *source = videoram;
-	int sx,sy;
+	int offs, code, color, i, pal_base;
+	int colmask[16];
 
-	for( sy=0; sy<256; sy+=8 ){
-		for( sx=0; sx<256; sx+=8 ){
-			int attributes = READ_WORD(&source[0x0800]);
-			int tile_number = (READ_WORD(&source[0]) & 0xff)|((attributes&0x01c0)<<2);
-			if( tile_number != 0x20)
-			{
-				int color = attributes&0xf;
+	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
+	for(i=0;i<16;i++) colmask[i] = 0;
 
-				drawgfx(bitmap,gfx,
-					tile_number,
-					color,
-					0,0, /* no flip */
-					sx,sy,
-					0, /* no need to clip */
-					TRANSPARENCY_PEN,3);
-			}
-			source+=2;
+	for (offs = 0; offs < 0x500;offs += 8)
+	{
+
+		code = READ_WORD(&spriteram[offs]) & 0x7ff;
+		if( code != 0x7FF ) {
+			color = (READ_WORD(&spriteram[offs+2]) & 0x3c) >> 2;
+			colmask[color] |= Machine->gfx[2]->pen_usage[code];
+		}
+	}
+
+	for (color = 0;color < 16;color++)
+	{
+		for (i = 0;i < 15;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
 		}
 	}
 }
 
 void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	bionicc_refresh_palette();
+	fg_preupdate(); tilemap_update(fg_tilemap);
+	bg_preupdate(); tilemap_update(bg_tilemap);
+	tx_preupdate(); tilemap_update(tx_tilemap);
+
+	palette_init_used_colors();
+	mark_sprite_colors();
+
+	if( palette_recalc() )
+	{
+		tilemap_mark_all_pixels_dirty(fg_tilemap);
+		tilemap_mark_all_pixels_dirty(bg_tilemap);
+		tilemap_mark_all_pixels_dirty(tx_tilemap);
+	}
+
+	tilemap_render(fg_tilemap);
+	tilemap_render(bg_tilemap);
+	tilemap_render(tx_tilemap);
+
 	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
-	bionicc_draw_scroll2( bitmap, 0 );      /* SCROLL2 (back) */
-	bionicc_draw_scroll1( bitmap, 2 );      /* SCROLL1 (special - appears behind background) */
-	bionicc_draw_scroll2( bitmap, 1 );      /* SCROLL2 (front) */
-	bionicc_draw_scroll1( bitmap, 0 );      /* SCROLL1 (normal)*/
-	bionicc_draw_sprites( bitmap );         /* sprites */
-	bionicc_draw_scroll1( bitmap, 1 );      /* SCROLL1 (appears in front of sprites) */
-	bionicc_draw_text( bitmap );            /* VRAM (text layer) */
+	if (fg_enable) tilemap_draw(bitmap,fg_tilemap,2);
+	if (bg_enable) tilemap_draw(bitmap,bg_tilemap,0);
+	if (fg_enable) tilemap_draw(bitmap,fg_tilemap,0);
+	bionicc_draw_sprites(bitmap);
+	if (fg_enable) tilemap_draw(bitmap,fg_tilemap,1);
+	tilemap_draw(bitmap,tx_tilemap,0);
 }
-
-

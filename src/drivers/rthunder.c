@@ -4,9 +4,6 @@ Rolling Thunder
 
 To Do:
 -----
-Fix PSG sound (some effect don't play, some where working in previous versions)
-Further optimize video (skip transparent/obscured tiles)
-Add voice (see note below)
 Add flipped and cocktail cabinet mode
 Remove sprite lag (watch the "bullets" signs on the walls during scrlling).
   Increasing vblank_duration does it but some sprites flicker.
@@ -59,6 +56,7 @@ extern void rthunder_tilebank_w( int offset, int data );
 #define MEM_GFX_SPRITES	5
 #define MEM_COLOR		6
 #define MEM_MCU			7
+#define MEM_SAMPLES		8
 
 /*******************************************************************/
 
@@ -88,27 +86,156 @@ static int cpu1_skip_r( int offs ) {
 
 /*******************************************************************/
 
+/* Sampled voices */
+
+/* signed/unsigned 8-bit conversion macros */
+#ifdef SIGNED_SAMPLES
+	#define AUDIO_CONV(A) ((A)^0x80)
+#else
+	#define AUDIO_CONV(A) ((A))
+#endif
+
+static int rt_totalsamples1;
+static int rt_totalsamples2;
+
+static int rt_decode_sample( void ) {
+	struct GameSamples *samples;
+	unsigned char *src = Machine->memory_region[MEM_SAMPLES], *scan, *dest;
+	int size, n1, n2, n;
+
+	/* get amount of samples */
+	n1 = ( ( src[0] << 8 ) + src[1] ) / 2;
+	src = Machine->memory_region[MEM_SAMPLES]+0x10000;
+	n2 = ( ( src[0] << 8 ) + src[1] ) / 2;
+
+	n = n1 + n2;
+
+	rt_totalsamples1 = n1;
+	rt_totalsamples2 = n2;
+
+	/* calculate the amount of headers needed */
+	size = sizeof( struct GameSamples ) + n * sizeof( struct GameSamples * );
+
+	/* allocate */
+	if ( ( Machine->samples = malloc( size ) ) == NULL )
+		return 1;
+
+	samples = Machine->samples;
+	samples->total = n;
+
+	for ( n = 0; n < samples->total; n++ ) {
+		int indx, start, offs;
+
+		if ( n < n1 ) {
+			src = Machine->memory_region[MEM_SAMPLES];
+			indx = n;
+		} else {
+			src = Machine->memory_region[MEM_SAMPLES]+0x10000;
+			indx = n - n1;
+		}
+
+		/* calculate header offset */
+		offs = indx * 2;
+
+		/* get sample start offset */
+		start = ( src[offs] << 8 ) + src[offs+1];
+
+		/* calculate the sample size */
+		scan = &src[start];
+		size = 0;
+
+		while ( *scan != 0xff ) {
+			if ( *scan == 0x00 ) { /* run length encoded data start tag */
+				/* get RLE size */
+				size += scan[1] + 1;
+				/* skip RLE data */
+				scan += 3;
+			} else {
+				size++;
+				scan++;
+			}
+		}
+
+		/* allocate sample */
+		if ( ( samples->sample[n] = malloc( sizeof( struct GameSample ) + size * sizeof( unsigned char ) ) ) == NULL )
+			return 1;
+
+		/* fill up the sample info */
+		samples->sample[n]->length = size;
+		samples->sample[n]->volume = 20;
+		samples->sample[n]->smpfreq = 6000;	/* 6 kHz */
+		samples->sample[n]->resolution = 8;	/* 8 bit */
+
+		/* unpack sample */
+		dest = (unsigned char *)samples->sample[n]->data;
+		scan = &src[start];
+
+		while ( *scan != 0xff ) {
+			if ( *scan == 0x00 ) { /* run length encoded data start tag */
+				int i;
+				for ( i = 0; i <= scan[1]; i++ ) /* unpack RLE */
+					*dest++ = AUDIO_CONV( scan[2] );
+
+				scan += 3;
+			} else {
+				*dest++ = AUDIO_CONV( scan[0] );
+				scan++;
+			}
+		}
+	}
+
+	return 0; /* no errors */
+}
+
 /* play voice sample */
 static int voice[2];
 
 static void namco_voice0_play_w( int offset, int data ) {
-	if ( errorlog )
-		fprintf( errorlog, "Voice 0 triggered\n" );
+
+	if ( voice[0] == -1 )
+		sample_stop( 0 );
+	else
+		sample_start( 0, voice[0], 0 );
 }
 
 static void namco_voice0_select_w( int offset, int data ) {
+
 	if ( errorlog )
 		fprintf( errorlog, "Voice 0 select: %02x\n", data );
+
+	if ( data == 0 )
+		sample_stop( 0 );
+
+	if ( data & 0x40 ) {
+		data &= 0x3f;
+		data += rt_totalsamples1;
+	}
+
+	voice[0] = data - 1;
 }
 
 static void namco_voice1_play_w( int offset, int data ) {
-	if ( errorlog )
-		fprintf( errorlog, "Voice 1 triggered\n" );
+
+	if ( voice[1] == -1 )
+		sample_stop( 1 );
+	else
+		sample_start( 1, voice[1], 0 );
 }
 
 static void namco_voice1_select_w( int offset, int data ) {
+
 	if ( errorlog )
 		fprintf( errorlog, "Voice 1 select: %02x\n", data );
+
+	if ( data == 0 )
+		sample_stop( 1 );
+
+	if ( data & 0x40 ) {
+		data &= 0x3f;
+		data += rt_totalsamples1;
+	}
+
+	voice[1] = data - 1;
 }
 
 /*******************************************************************/
@@ -585,6 +712,10 @@ static struct namco_interface namco_interface =
 	0		/* stereo */
 };
 
+static struct Samplesinterface samples_interface =
+{
+	2	/* 2 channels for voice effects */
+};
 
 static void rt_init_machine( void ) {
 	int_enabled[0] = int_enabled[1] = 1;
@@ -656,7 +787,7 @@ static struct MachineDriver machine_driver =
 	rthunder_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	0,rt_decode_sample,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -665,6 +796,10 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_NAMCO,
 			&namco_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
 		}
 	}
 };

@@ -3467,8 +3467,8 @@ ROM_START( wakuwak7_rom )
 	NEO_BIOS_SOUND_128K( "waku7_m1.rom", 0x0634bba6 )
 
 	ROM_REGION_OPTIONAL(0x800000) /* sound samples */
-	ROM_LOAD( "waku7_v1.rom", 0x000000, 0x400000, 0x00000000 )
-	ROM_LOAD( "waku7_v2.rom", 0x400000, 0x400000, 0x00000000 )
+	ROM_LOAD( "waku7_v1.rom", 0x000000, 0x400000, 0x6195c6b4 )
+	ROM_LOAD( "waku7_v2.rom", 0x400000, 0x400000, 0x6159c5fe )
 ROM_END
 
 ROM_START( samsho3_rom )
@@ -4390,7 +4390,7 @@ NEODRIVER(gowcaizr,"Voltage Fighter Gowcaizer","1995","Technos",&neogeo_mvs_mach
 
 /* Sunsoft */
 NEODRIVER(galaxyfg,"Galaxy Fight - Universal Warriors","1995","Sunsoft",&neogeo_mvs_machine_driver)
-NEODRIVER(wakuwak7,"Waku Waku 7","1996","Sunsoft",&neogeo_mvs_machine_driver)
+NEODRIVER(wakuwak7,"Waku Waku 7","1996","Sunsoft",&neogeo_mvs_16bit_machine_driver)
 
 /* Sammy */
 NEODRIVER(viewpoin,"Viewpoint","1992","Sammy",&neogeo_mvs_machine_driver)
@@ -4418,7 +4418,7 @@ NEODRIVER(kotm2,   "King of the Monsters 2","1992","SNK",&neogeo_mvs_machine_dri
 NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfursp,"Fatal Fury Special","1993","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(tophuntr,"Top Hunter","1994","SNK",&neogeo_mvs_machine_driver)
-NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(aof2,    "Art of Fighting 2 / Ryuu Ko No Ken 2","1994","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship","1994","SNK",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK",&neogeo_mvs_machine_driver)

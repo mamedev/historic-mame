@@ -71,7 +71,7 @@ int srumbler_vh_start(void)
 #define GFX_COLOR_CODES(gfxn) Machine->gfx[gfxn]->total_colors
 #define GFX_ELEM_COLORS(gfxn) Machine->gfx[gfxn]->color_granularity
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 	/* chars */
 	for (i = 0;i < GFX_COLOR_CODES(0);i++)
 	{

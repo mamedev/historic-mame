@@ -674,7 +674,7 @@ static void OKIM6295_data_w (int num, int data)
 	/* if a command is pending, process the second half */
 	if (okim6295_command[num] != -1)
 	{
-		int temp = data >> 4, i, start, stop, buffer_end,volume;
+		int temp = data >> 4, i, start, stop, buffer_end;
 		unsigned char *base;
 
 		/* determine the start/stop positions */

@@ -14,7 +14,7 @@
 unsigned char mappy_scroll;
 
 static unsigned char *transparency;
-static int motos_special_display;
+static int special_display;
 
 
 /***************************************************************************
@@ -118,13 +118,19 @@ static int common_vh_start(void)
 
 int mappy_vh_start(void)
 {
-	motos_special_display = 0;
+	special_display = 0;
 	return common_vh_start();
 }
 
 int motos_vh_start(void)
 {
-	motos_special_display = 1;
+	special_display = 1;
+	return common_vh_start();
+}
+
+int todruaga_vh_start(void)
+{
+	special_display = 2;
 	return common_vh_start();
 }
 
@@ -174,7 +180,7 @@ void mappy_scroll_w(int offset,int data)
 void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
-	if (motos_special_display) sx--;
+	if (special_display == 1) sy++;	/* Motos */
 
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
 		TRANSPARENCY_COLOR,16);
@@ -216,8 +222,9 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				int off = offs;
 
-				if (motos_special_display)
+				if (special_display == 1)
 				{
+					/* Motos */
 					if (off == 0x07d1 || off == 0x07d0 || off == 0x07f1 || off == 0x07f0)
 						off -= 0x10;
 					if (off == 0x07c1 || off == 0x07c0 || off == 0x07e1 || off == 0x07e0)
@@ -233,9 +240,20 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 			else if (offs >= videoram_size - 128)
 			{
+				int off = offs;
+
+				if (special_display == 2)
+				{
+					/* Tower of Druaga */
+					if (off == 0x0791 || off == 0x0790 || off == 0x07b1 || off == 0x07b0)
+						off -= 0x10;
+					if (off == 0x0781 || off == 0x0780 || off == 0x07a1 || off == 0x07a0)
+						off += 0x10;
+				}
+
 				/* Draw the bottom 2 lines. */
-				mx = (offs - (videoram_size - 128)) / 32;
-				my = offs % 32;
+				mx = (off - (videoram_size - 128)) / 32;
+				my = off % 32;
 
 				sx = mx + 34;
 				sy = my - 2;

@@ -225,7 +225,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			10000000,	/* 10 Mhz (?) */
+			8760000,       /* MRH - 8.76 makes gfx/adpcm samples sync better */
 			0,
 			readmem,writemem,0,0,
 			blockout_interrupt,2

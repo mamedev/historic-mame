@@ -664,7 +664,7 @@ struct GameDriver empire_driver =
 	"empire",
 	"The Empire Strikes Back",
 	"1985",
-	"Atari",
+	"Atari Games",
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	GAME_NOT_WORKING,
 	&empire_machine_driver,

@@ -15,9 +15,9 @@ void irem_sound_cmd_w(int offset,int data)
 	if ((data & 0x80) == 0)
 		soundlatch_w(0,data & 0x7f);
 	else
-		cpu_cause_interrupt(1,M6808_INT_IRQ);
+//		cpu_cause_interrupt(1,M6808_INT_IRQ);
+		cpu_set_irq_line(1,0,HOLD_LINE);
 }
-
 
 static void irem_io_w(int offset,int data)
 {
@@ -114,7 +114,8 @@ static void irem_adpcm_reset_w(int offset,int data)
 
 static void irem_adpcm_int (int data)
 {
-	cpu_cause_interrupt(1,M6808_INT_NMI);
+//	  cpu_cause_interrupt(1,M6808_INT_NMI);
+	  cpu_set_nmi_line(1,PULSE_LINE);
 }
 
 
@@ -132,7 +133,7 @@ struct AY8910interface irem_ay8910_interface =
 struct MSM5205interface irem_msm5205_interface =
 {
 	2,			/* 2 chips */
-	4000,       /* 4000Hz playback */
+	4000,		/* 4000Hz playback */
 	irem_adpcm_int,	/* interrupt function */
 	{ 80, 80 }
 };

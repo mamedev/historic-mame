@@ -146,26 +146,22 @@ static void get_bg_tile_info(int col,int row)
 void travrusa_vh_stop(void)
 {
 	tilemap_dispose(bg_tilemap);
-	tilemap_stop();
 }
 
 int travrusa_vh_start(void)
 {
-	if (tilemap_start() == 0)
+	bg_tilemap = tilemap_create(TILEMAP_SPLIT,8,8,64,32,32,0);
+
+	if (bg_tilemap)
 	{
-		bg_tilemap = tilemap_create(TILEMAP_SPLIT,8,8,64,32,32,0);
+		bg_tilemap->tile_get_info = get_bg_tile_info;
+		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
+		bg_tilemap->transmask[1] = 0x3f; /* split type 1 has pens 6 and 7 opaque - hack! */
 
-		if (bg_tilemap)
-		{
-			bg_tilemap->tile_get_info = get_bg_tile_info;
-			bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
-			bg_tilemap->transmask[1] = 0x3f; /* split type 1 has pens 6 and 7 opaque - hack! */
-
-			return 0;
-		}
-
-		travrusa_vh_stop();
+		return 0;
 	}
+
+	travrusa_vh_stop();
 
 	return 1;
 }

@@ -272,8 +272,8 @@ static void dsjs_b(void);
 static void emu(void);     /* 0100 */
 static void exgpc_a(void); /* 0120 */
 static void exgpc_b(void); /* 0130 */
-static void get_pc_a(void); /* 0140 */
-static void get_pc_b(void); /* 0150 */
+static void getpc_a(void); /* 0140 */
+static void getpc_b(void); /* 0150 */
 static void getst_a(void); /* 0180 */
 static void getst_b(void); /* 0190 */
 static void j_UC_0(void);
@@ -344,7 +344,7 @@ static void (*opcode_table[65536 >> 4])(void) =
 	unimpl,	unimpl,	rev_a,	rev_b,	unimpl,	unimpl,	unimpl,	unimpl,
 	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,
 	/* 0x0100 */
-	emu,	unimpl,	exgpc_a,	exgpc_b,	get_pc_a,	get_pc_b,	jump_a,	jump_b,
+	emu,	unimpl, exgpc_a,	exgpc_b,	getpc_a,   getpc_b,   jump_a, jump_b,
 	getst_a,	getst_b,	putst_a,	putst_b,	popst,	unimpl,	pushst,	unimpl,
 	/* 0x0200 */
 	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,

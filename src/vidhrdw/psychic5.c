@@ -560,7 +560,7 @@ void set_visible_colors(int bg_scrollx,int bg_scrolly)
 	int x,y,color,offs,lo,hi,tile,size32;
 	unsigned short colors_used[16];
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	/* visible background palette */
 	memset (colors_used, 0, sizeof (colors_used));

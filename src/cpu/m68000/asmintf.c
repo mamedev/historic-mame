@@ -43,6 +43,27 @@ typedef struct
 } m68k_cpu_context;
 
 
+static UINT8 m68k_reg_layout[] = {
+	M68K_PC, M68K_ISP, -1,
+	M68K_SR, M68K_USP, -1,
+	M68K_D0, M68K_A0, -1,
+	M68K_D1, M68K_A1, -1,
+	M68K_D2, M68K_A2, -1,
+	M68K_D3, M68K_A3, -1,
+	M68K_D4, M68K_A4, -1,
+	M68K_D5, M68K_A5, -1,
+	M68K_D6, M68K_A6, -1,
+	M68K_D7, M68K_A7, 0
+};
+
+static UINT8 m68k_win_layout[] = {
+	48, 0,32,13,	/* register window (top right) */
+	 0, 0,47,13,	/* disassembler window (top left) */
+	 0,14,47, 8,	/* memory #1 window (left, middle) */
+	48,14,32, 8,	/* memory #2 window (right, middle) */
+	 0,23,80, 1 	/* command line window (bottom rows) */
+};
+
 m68k_cpu_context regs;
 
 extern void CONVENTION M68KRUN(void);
@@ -159,29 +180,37 @@ unsigned m68000_get_reg(int regnum)
 {
     switch( regnum )
     {
-		case M68K_PC: return regs.pc; break;
-		case M68K_ISP: return regs.isp; break;
-		case M68K_USP: return regs.usp; break;
-		case M68K_SR: return regs.sr; break;
-		case M68K_VBR: return regs.vbr; break;
-		case M68K_SFC: return regs.sfc; break;
-		case M68K_DFC: return regs.dfc; break;
-		case M68K_D0: return regs.d[0]; break;
-		case M68K_D1: return regs.d[1]; break;
-		case M68K_D2: return regs.d[2]; break;
-		case M68K_D3: return regs.d[3]; break;
-		case M68K_D4: return regs.d[4]; break;
-		case M68K_D5: return regs.d[5]; break;
-		case M68K_D6: return regs.d[6]; break;
-		case M68K_D7: return regs.d[7]; break;
-		case M68K_A0: return regs.a[0]; break;
-		case M68K_A1: return regs.a[1]; break;
-		case M68K_A2: return regs.a[2]; break;
-		case M68K_A3: return regs.a[3]; break;
-		case M68K_A4: return regs.a[4]; break;
-		case M68K_A5: return regs.a[5]; break;
-		case M68K_A6: return regs.a[6]; break;
-		case M68K_A7: return regs.a[7]; break;
+		case M68K_PC: return regs.pc;
+		case M68K_ISP: return regs.isp;
+		case M68K_USP: return regs.usp;
+		case M68K_SR: return regs.sr;
+		case M68K_VBR: return regs.vbr;
+		case M68K_SFC: return regs.sfc;
+		case M68K_DFC: return regs.dfc;
+		case M68K_D0: return regs.d[0];
+		case M68K_D1: return regs.d[1];
+		case M68K_D2: return regs.d[2];
+		case M68K_D3: return regs.d[3];
+		case M68K_D4: return regs.d[4];
+		case M68K_D5: return regs.d[5];
+		case M68K_D6: return regs.d[6];
+		case M68K_D7: return regs.d[7];
+		case M68K_A0: return regs.a[0];
+		case M68K_A1: return regs.a[1];
+		case M68K_A2: return regs.a[2];
+		case M68K_A3: return regs.a[3];
+		case M68K_A4: return regs.a[4];
+		case M68K_A5: return regs.a[5];
+		case M68K_A6: return regs.a[6];
+		case M68K_A7: return regs.a[7];
+/* TODO: Verify that this is the right thing to do for the purpose? */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xfffffd )
+					return cpu_readmem24_dword( offset );
+            }
     }
     return 0;
 }
@@ -213,6 +242,14 @@ void m68000_set_reg(int regnum, unsigned val)
 		case M68K_A5: regs.a[5] = val; break;
 		case M68K_A6: regs.a[6] = val; break;
 		case M68K_A7: regs.a[7] = val; break;
+/* TODO: Verify that this is the right thing to do for the purpose? */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = regs.isp + 4 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xfffffd )
+					cpu_writemem24_dword( offset, val );
+            }
     }
 }
 
@@ -262,9 +299,11 @@ extern int m68k_disassemble(char* str_buff, int pc);
 	{
 		case CPU_INFO_NAME: return "68000";
 		case CPU_INFO_FAMILY: return "Motorola 68K";
-		case CPU_INFO_VERSION: return "0.10";
+		case CPU_INFO_VERSION: return "0.11";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 1998,99 Mike Coates, Darren Olafson. All rights reserved";
+		case CPU_INFO_REG_LAYOUT: return (const char*)m68k_reg_layout;
+        case CPU_INFO_WIN_LAYOUT: return (const char*)m68k_win_layout;
 
 		case CPU_INFO_PC: sprintf(buffer[which], "%06X:", r->pc); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->isp); break;
@@ -299,7 +338,7 @@ extern int m68k_disassemble(char* str_buff, int pc);
 				r->sr & 0x0002 ? 'V':'.',
 				r->sr & 0x0001 ? 'C':'.');
             break;
-		case CPU_INFO_REG+M68K_PC: sprintf(buffer[which], "PC:%08X", r->pc); break;
+		case CPU_INFO_REG+M68K_PC: sprintf(buffer[which], "PC:%06X", r->pc); break;
 		case CPU_INFO_REG+M68K_ISP: sprintf(buffer[which], "ISP:%08X", r->isp); break;
 		case CPU_INFO_REG+M68K_USP: sprintf(buffer[which], "USP:%08X", r->usp); break;
 		case CPU_INFO_REG+M68K_SR: sprintf(buffer[which], "SR:%08X", r->sr); break;

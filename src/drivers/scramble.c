@@ -84,11 +84,15 @@ void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 void scramble_background_w(int offset, int data);
-int scramble_vh_start(void);
-int mariner_vh_start(void);
+
+int  scramble_vh_start(void);
+int  mariner_vh_start(void);
+int  ckongs_vh_start(void);
+
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-int scramble_vh_interrupt(void);
-int mariner_vh_interrupt(void);
+
+int  scramble_vh_interrupt(void);
+int  mariner_vh_interrupt(void);
 void scramble_filter_w(int offset, int data);
 
 int scramble_portB_r(int offset);
@@ -96,7 +100,7 @@ void scramble_sh_irqtrigger_w(int offset,int data);
 
 int frogger_portB_r(int offset);
 
-/* proection stuff. in machine\scramble.c */
+/* protection stuff. in machine\scramble.c */
 int scramble_input_port_2_r(int offset);
 int scramble_protection_r(int offset);
 int scramblk_protection_r(int offset);
@@ -104,6 +108,17 @@ int mariner_protection_1_r(int offset);
 int mariner_protection_2_r(int offset);
 int mariner_pip(int offset);
 int mariner_pap(int offset);
+
+
+static int ckongs_input_port_1_r(int offset)
+{
+	return (readinputport(1) & 0xfc) | ((readinputport(2) & 0x06) >> 1);
+}
+
+static int ckongs_input_port_2_r(int offset)
+{
+	return (readinputport(2) & 0xf9) | ((readinputport(1) & 0x03) << 1);
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -117,6 +132,19 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8100, 0x8100, input_port_0_r },	/* IN0 */
 	{ 0x8101, 0x8101, input_port_1_r },	/* IN1 */
 	{ 0x8102, 0x8102, input_port_2_r },	/* IN2 */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress ckongs_readmem[] =
+{
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0x6000, 0x6bff, MRA_RAM },				/* RAM */
+	{ 0x7000, 0x7000, input_port_0_r },			/* IN0 */
+	{ 0x7001, 0x7001, ckongs_input_port_1_r },	/* IN1 */
+	{ 0x7002, 0x7002, ckongs_input_port_2_r },	/* IN2 */
+	{ 0x9000, 0x93ff, MRA_RAM },				/* Video RAM */
+	{ 0x9800, 0x987f, MRA_RAM },				/* screen attributes, sprites, bullets */
+	{ 0xb000, 0xb000, watchdog_reset_r },
 	{ -1 }	/* end of table */
 };
 
@@ -172,6 +200,24 @@ static struct MemoryWriteAddress triplep_writemem[] =
 	{ 0x6804, 0x6804, galaxian_stars_w },
 	{ 0x6806, 0x6806, galaxian_flipx_w },
 	{ 0x6807, 0x6807, galaxian_flipy_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress ckongs_writemem[] =
+{
+	{ 0x0000, 0x5fff, MWA_ROM },
+	{ 0x6000, 0x6bff, MWA_RAM },
+	{ 0x7800, 0x7800, soundlatch_w },
+	{ 0x7801, 0x7801, scramble_sh_irqtrigger_w },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0xa801, 0xa801, interrupt_enable_w },
+	{ 0xa802, 0xa802, coin_counter_w },
+	{ 0xa804, 0xa804, galaxian_stars_w },
+	{ 0xa806, 0xa806, galaxian_flipx_w },
+	{ 0xa807, 0xa807, galaxian_flipy_w },
 	{ -1 }	/* end of table */
 };
 
@@ -505,6 +551,53 @@ INPUT_PORTS_START( triplep_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ckongs_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START      /* IN1 */
+	/* the coinage dip switch is spread across bits 0/1 of port 1 and bit 3 of port 2. */
+	/* To handle that, we swap bits 0/1 of port 1 and bits 1/2 of port 2 - this is handled */
+	/* by ckongs_input_port_N_r() */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START      /* IN2 */
+	/* the coinage dip switch is spread across bits 0/1 of port 1 and bit 3 of port 2. */
+	/* To handle that, we swap bits 0/1 of port 1 and bits 1/2 of port 2 - this is handled */
+	/* by ckongs_input_port_N_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x0e, 0x0e, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -874,6 +967,51 @@ static struct MachineDriver mariner_machine_driver =
 	}
 };
 
+static struct MachineDriver ckongs_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			ckongs_readmem,ckongs_writemem,0,0,
+			scramble_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			1789750,	/* 1.78975 Mhz */
+			3,	/* memory region #2 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	mariner_gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	ckongs_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&scramble_ay8910_interface
+		}
+	}
+};
+
 
 /***************************************************************************
 
@@ -1049,6 +1187,28 @@ ROM_START( mariner_rom )
 	ROM_REGION(0x0020)      /* Color PROM */
 	ROM_LOAD( "tm.t4",        0x0000, 0x0020, 0xca42b6dd )
 ROM_END
+
+ROM_START( ckongs_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "vid_2c.bin",   0x0000, 0x1000, 0x49a8c234 )
+	ROM_LOAD( "vid_2e.bin",   0x1000, 0x1000, 0xf1b667f1 )
+	ROM_LOAD( "vid_2f.bin",   0x2000, 0x1000, 0xb194b75d )
+	ROM_LOAD( "vid_2h.bin",   0x3000, 0x1000, 0x2052ba8a )
+	ROM_LOAD( "vid_2j.bin",   0x4000, 0x1000, 0xb377afd0 )
+	ROM_LOAD( "vid_2l.bin",   0x5000, 0x1000, 0xfe65e691 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vid_5f.bin",   0x0000, 0x1000, 0x7866d2cb )
+	ROM_LOAD( "vid_5h.bin",   0x1000, 0x1000, 0x7311a101 )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "vid_6e.bin",   0x0000, 0x0020, 0x5039af97 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
+	ROM_LOAD( "snd_5d.bin",   0x1000, 0x1000, 0x892c9547 )
+ROM_END
+
 
 
 static void scramble_driver_init(void)
@@ -1250,21 +1410,67 @@ static void froggers_hisave(void)
 }
 
 
+static int ckongs_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+    /* check if the hi score table has already been initialized */
+    /* NOTE : 60b8 + 3 */
+	if (memcmp(&RAM[0x6109],"\x07\x06\x05",3) == 0 && memcmp(&RAM[0x61a0],"\xfd\xfd\xfd",3) == 0  )
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+			int hi;
+        	osd_fread(f,&RAM[0x6107],155);
+			osd_fclose(f);
+
+			hi = (RAM[0x610b] &0x0f) * 0x10 +
+				 (RAM[0x610c] &0x0f);
+			RAM[0x60b8] = hi;
+			hi = (RAM[0x6109] &0x0f) * 0x10 +
+				 (RAM[0x610a] &0x0f);
+			RAM[0x60b9] = hi;
+			hi = (RAM[0x6107] &0x0f) * 0x10 +
+				 (RAM[0x6108] &0x0f);
+			RAM[0x60ba] = hi;
+		}
+        return 1;
+    }
+    else
+        return 0;  /* we can't load the hi scores yet */
+}
+
+static void ckongs_hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+        osd_fwrite(f,&RAM[0x6107],155);
+        osd_fclose(f);
+    }
+}
+
+
 
 struct GameDriver scramble_driver =
 {
 	__FILE__,
-	0,
+	&scramble_driver,
 	"scramble",
-	"Scramble (Stern)",
+	"Scramble",
 	"1981",
-	"Stern",
+	"Konami",
 	"Nicola Salmoria",
 	0,
 	&scramble_machine_driver,
-	scramble_driver_init,
+	scramblk_driver_init,
 
-	scramble_rom,
+	scramblk_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -1277,20 +1483,20 @@ struct GameDriver scramble_driver =
 	scramble_hiload, scramble_hisave
 };
 
-struct GameDriver scramblk_driver =
+struct GameDriver scrambls_driver =
 {
 	__FILE__,
 	&scramble_driver,
-	"scramblk",
-	"Scramble (Konami)",
+	"scrambls",
+	"Scramble (Stern)",
 	"1981",
-	"Konami",
+	"[Konami] (Stern license)",
 	"Nicola Salmoria",
 	0,
 	&scramble_machine_driver,
-	scramblk_driver_init,
+	scramble_driver_init,
 
-	scramblk_rom,
+	scramble_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -1336,7 +1542,7 @@ struct GameDriver theend_driver =
 	"theend",
 	"The End",
 	"1980",
-	"Stern",
+	"[Konami] (Stern license)",
 	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
 	0,
 	&theend_machine_driver,
@@ -1459,4 +1665,31 @@ struct GameDriver mariner_driver =
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
+};
+
+extern struct GameDriver ckong_driver;
+struct GameDriver ckongs_driver =
+{
+	__FILE__,
+	&ckong_driver,
+	"ckongs",
+	"Crazy Kong (Scramble hardware)",
+	"1981",
+	"bootleg",
+	"Nicola Salmoria",
+	0,
+	&ckongs_machine_driver,
+	0,
+
+	ckongs_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	ckongs_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	ckongs_hiload, ckongs_hisave
 };

@@ -16,6 +16,20 @@
 
 extern FILE *errorlog;
 
+/* Layout of the registers in the debugger */
+static UINT8 i8039_reg_layout[] = {
+	I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 i8039_win_layout[] = {
+	 0, 0,80, 2,	/* register window (top rows) */
+	 0, 3,24,19,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
 #define M_RDMEM(A)      I8039_RDMEM(A)
 #define M_RDOP(A)       I8039_RDOP(A)
 #define M_RDOP_ARG(A)   I8039_RDOP_ARG(A)
@@ -61,7 +75,11 @@ static I8039_Regs R;
 int    i8039_ICount;
 static UINT8 Old_T1;
 
-typedef void (*opcode_fn) (void);
+/* The opcode table now is a combination of cycle counts and function pointers */
+typedef struct {
+	unsigned cycles;
+	void (*function) (void);
+}	s_opcode;
 
 #define POSITIVE_EDGE_T1  (((T1-Old_T1) > 0) ? 1 : 0)
 #define NEGATIVE_EDGE_T1  (((Old_T1-T1) > 0) ? 1 : 0)
@@ -104,15 +122,15 @@ INLINE unsigned M_RDMEM_OPCODE (void)
 INLINE void push(UINT8 d)
 {
 	intRAM[8+R.SP++] = d;
-        R.SP  = R.SP & 0x0f;
-        R.PSW = R.PSW & 0xf8;
-        R.PSW = R.PSW | (R.SP >> 1);
+    R.SP  = R.SP & 0x0f;
+    R.PSW = R.PSW & 0xf8;
+    R.PSW = R.PSW | (R.SP >> 1);
 }
 
 INLINE UINT8 pull(void) {
 	R.SP  = (R.SP + 15) & 0x0f;		/*  if (--R.SP < 0) R.SP = 15;  */
-        R.PSW = R.PSW & 0xF8;
-        R.PSW = R.PSW | (R.SP >> 1);
+    R.PSW = R.PSW & 0xf8;
+    R.PSW = R.PSW | (R.SP >> 1);
 	/* regPTR = ((M_By) ? 24 : 0);  regPTR should not change */
 	return intRAM[8+R.SP];
 }
@@ -449,60 +467,40 @@ static void xrl_a_r7(void)   { R.A ^= R7; }
 static void xrl_a_xr0(void)  { R.A ^= intRAM[R0 & 0x7f]; }
 static void xrl_a_xr1(void)  { R.A ^= intRAM[R1 & 0x7f]; }
 
-static unsigned cycles_main[256]=
+static s_opcode opcode_main[256]=
 {
-	1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 2, 2, 2, 2,
-	1, 1, 2, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 0, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 2, 1, 2, 1, 2, 1, 1, 2, 2, 1, 2, 2, 2, 2,
-	1, 1, 1, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 2, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	2, 2, 1, 0, 2, 1, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
-	1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2,
-	1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2,
-	1, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1
-};
-
-static opcode_fn opcode_main[256]=
-{
-        nop        ,illegal    ,outl_bus_a ,add_a_n   ,jmp       ,en_i      ,illegal   ,dec_a    ,
-        ins_a_bus  ,in_a_p1    ,in_a_p2    ,illegal   ,movd_a_p4 ,movd_a_p5 ,movd_a_p6 ,movd_a_p7,
-        inc_xr0    ,inc_xr1    ,jb_0       ,adc_a_n   ,call      ,dis_i     ,jtf       ,inc_a    ,
-        inc_r0     ,inc_r1     ,inc_r2     ,inc_r3    ,inc_r4    ,inc_r5    ,inc_r6    ,inc_r7   ,
-        xch_a_xr0  ,xch_a_xr1  ,illegal    ,mov_a_n   ,jmp_1     ,en_tcnti  ,jnt_0     ,clr_a    ,
-        xch_a_r0   ,xch_a_r1   ,xch_a_r2   ,xch_a_r3  ,xch_a_r4  ,xch_a_r5  ,xch_a_r6  ,xch_a_r7 ,
-        xchd_a_xr0 ,xchd_a_xr1 ,jb_1       ,illegal   ,call_1    ,dis_tcnti ,jt_0      ,cpl_a    ,
-        illegal    ,outl_p1_a  ,outl_p2_a  ,illegal   ,movd_p4_a ,movd_p5_a ,movd_p6_a ,movd_p7_a,
-        orl_a_xr0  ,orl_a_xr1  ,mov_a_t    ,orl_a_n   ,jmp_2     ,strt_cnt  ,jnt_1     ,swap_a   ,
-        orl_a_r0   ,orl_a_r1   ,orl_a_r2   ,orl_a_r3  ,orl_a_r4  ,orl_a_r5  ,orl_a_r6  ,orl_a_r7 ,
-        anl_a_xr0  ,anl_a_xr1  ,jb_2       ,anl_a_n   ,call_2    ,strt_t    ,jt_1      ,daa_a    ,
-        anl_a_r0   ,anl_a_r1   ,anl_a_r2   ,anl_a_r3  ,anl_a_r4  ,anl_a_r5  ,anl_a_r6  ,anl_a_r7 ,
-        add_a_xr0  ,add_a_xr1  ,mov_t_a    ,illegal   ,jmp_3     ,stop_tcnt ,illegal   ,rrc_a    ,
-        add_a_r0   ,add_a_r1   ,add_a_r2   ,add_a_r3  ,add_a_r4  ,add_a_r5  ,add_a_r6  ,add_a_r7 ,
-        adc_a_xr0  ,adc_a_xr1  ,jb_3       ,illegal   ,call_3    ,ento_clk  ,jf_1      ,rr_a     ,
-        adc_a_r0   ,adc_a_r1   ,adc_a_r2   ,adc_a_r3  ,adc_a_r4  ,adc_a_r5  ,adc_a_r6  ,adc_a_r7 ,
-        movx_a_xr0 ,movx_a_xr1 ,illegal    ,ret       ,jmp_4     ,clr_f0    ,jni       ,illegal  ,
-        orl_bus_n  ,orl_p1_n   ,orl_p2_n   ,illegal   ,orld_p4_a ,orld_p5_a ,orld_p6_a ,orld_p7_a,
-        movx_xr0_a ,movx_xr1_a ,jb_4       ,retr      ,call_4    ,cpl_f0    ,jnz       ,clr_c    ,
-        anl_bus_n  ,anl_p1_n   ,anl_p2_n   ,illegal   ,anld_p4_a ,anld_p5_a ,anld_p6_a ,anld_p7_a,
-        mov_xr0_a  ,mov_xr1_a  ,illegal    ,movp_a_xa ,jmp_5     ,clr_f1    ,illegal   ,cpl_c    ,
-        mov_r0_a   ,mov_r1_a   ,mov_r2_a   ,mov_r3_a  ,mov_r4_a  ,mov_r5_a  ,mov_r6_a  ,mov_r7_a ,
-        mov_xr0_n  ,mov_xr1_n  ,jb_5       ,jmpp_xa   ,call_5    ,cpl_f1    ,jf0       ,illegal  ,
-        mov_r0_n   ,mov_r1_n   ,mov_r2_n   ,mov_r3_n  ,mov_r4_n  ,mov_r5_n  ,mov_r6_n  ,mov_r7_n ,
-        illegal    ,illegal    ,illegal    ,illegal   ,jmp_6     ,sel_rb0   ,jz        ,mov_a_psw,
-        dec_r0     ,dec_r1     ,dec_r2     ,dec_r3    ,dec_r4    ,dec_r5    ,dec_r6    ,dec_r7   ,
-        xrl_a_xr0  ,xrl_a_xr1  ,jb_6       ,xrl_a_n   ,call_6    ,sel_rb1   ,illegal   ,mov_psw_a,
-        xrl_a_r0   ,xrl_a_r1   ,xrl_a_r2   ,xrl_a_r3  ,xrl_a_r4  ,xrl_a_r5  ,xrl_a_r6  ,xrl_a_r7 ,
-        illegal    ,illegal    ,illegal    ,movp3_a_xa,jmp_7     ,sel_mb0   ,jnc       ,rl_a     ,
-        djnz_r0    ,djnz_r1    ,djnz_r2    ,djnz_r3   ,djnz_r4   ,djnz_r5   ,djnz_r6   ,djnz_r7  ,
-        mov_a_xr0  ,mov_a_xr1  ,jb_7       ,illegal   ,call_7    ,sel_mb1   ,jc        ,rlc_a    ,
-        mov_a_r0   ,mov_a_r1   ,mov_a_r2   ,mov_a_r3  ,mov_a_r4  ,mov_a_r5  ,mov_a_r6  ,mov_a_r7
+	{1, nop 	   },{0, illegal	},{2, outl_bus_a },{2, add_a_n	  },{2, jmp 	   },{1, en_i		},{0, illegal	 },{1, dec_a	  },
+	{2, ins_a_bus  },{2, in_a_p1	},{2, in_a_p2	 },{0, illegal	  },{2, movd_a_p4  },{2, movd_a_p5	},{2, movd_a_p6  },{2, movd_a_p7  },
+	{1, inc_xr0    },{1, inc_xr1	},{2, jb_0		 },{2, adc_a_n	  },{2, call	   },{1, dis_i		},{2, jtf		 },{1, inc_a	  },
+	{1, inc_r0	   },{1, inc_r1 	},{1, inc_r2	 },{1, inc_r3	  },{1, inc_r4	   },{1, inc_r5 	},{1, inc_r6	 },{1, inc_r7	  },
+	{1, xch_a_xr0  },{1, xch_a_xr1	},{0, illegal	 },{2, mov_a_n	  },{2, jmp_1	   },{1, en_tcnti	},{2, jnt_0 	 },{1, clr_a	  },
+	{1, xch_a_r0   },{1, xch_a_r1	},{1, xch_a_r2	 },{1, xch_a_r3   },{1, xch_a_r4   },{1, xch_a_r5	},{1, xch_a_r6	 },{1, xch_a_r7   },
+	{1, xchd_a_xr0 },{1, xchd_a_xr1 },{2, jb_1		 },{0, illegal	  },{2, call_1	   },{1, dis_tcnti	},{2, jt_0		 },{1, cpl_a	  },
+	{0, illegal    },{2, outl_p1_a	},{2, outl_p2_a  },{0, illegal	  },{2, movd_p4_a  },{2, movd_p5_a	},{2, movd_p6_a  },{2, movd_p7_a  },
+	{1, orl_a_xr0  },{1, orl_a_xr1	},{1, mov_a_t	 },{2, orl_a_n	  },{2, jmp_2	   },{1, strt_cnt	},{2, jnt_1 	 },{1, swap_a	  },
+	{1, orl_a_r0   },{1, orl_a_r1	},{1, orl_a_r2	 },{1, orl_a_r3   },{1, orl_a_r4   },{1, orl_a_r5	},{1, orl_a_r6	 },{1, orl_a_r7   },
+	{1, anl_a_xr0  },{1, anl_a_xr1	},{2, jb_2		 },{2, anl_a_n	  },{2, call_2	   },{1, strt_t 	},{2, jt_1		 },{1, daa_a	  },
+	{1, anl_a_r0   },{1, anl_a_r1	},{1, anl_a_r2	 },{1, anl_a_r3   },{1, anl_a_r4   },{1, anl_a_r5	},{1, anl_a_r6	 },{1, anl_a_r7   },
+	{1, add_a_xr0  },{1, add_a_xr1	},{1, mov_t_a	 },{0, illegal	  },{2, jmp_3	   },{1, stop_tcnt	},{0, illegal	 },{1, rrc_a	  },
+	{1, add_a_r0   },{1, add_a_r1	},{1, add_a_r2	 },{1, add_a_r3   },{1, add_a_r4   },{1, add_a_r5	},{1, add_a_r6	 },{1, add_a_r7   },
+	{1, adc_a_xr0  },{1, adc_a_xr1	},{2, jb_3		 },{0, illegal	  },{2, call_3	   },{1, ento_clk	},{2, jf_1		 },{1, rr_a 	  },
+	{1, adc_a_r0   },{1, adc_a_r1	},{1, adc_a_r2	 },{1, adc_a_r3   },{1, adc_a_r4   },{1, adc_a_r5	},{1, adc_a_r6	 },{1, adc_a_r7   },
+	{2, movx_a_xr0 },{2, movx_a_xr1 },{0, illegal	 },{2, ret		  },{2, jmp_4	   },{1, clr_f0 	},{2, jni		 },{0, illegal	  },
+	{2, orl_bus_n  },{2, orl_p1_n	},{2, orl_p2_n	 },{0, illegal	  },{2, orld_p4_a  },{2, orld_p5_a	},{2, orld_p6_a  },{2, orld_p7_a  },
+	{2, movx_xr0_a },{2, movx_xr1_a },{2, jb_4		 },{2, retr 	  },{2, call_4	   },{1, cpl_f0 	},{2, jnz		 },{1, clr_c	  },
+	{2, anl_bus_n  },{2, anl_p1_n	},{2, anl_p2_n	 },{0, illegal	  },{2, anld_p4_a  },{2, anld_p5_a	},{2, anld_p6_a  },{2, anld_p7_a  },
+	{1, mov_xr0_a  },{1, mov_xr1_a	},{0, illegal	 },{2, movp_a_xa  },{2, jmp_5	   },{1, clr_f1 	},{0, illegal	 },{1, cpl_c	  },
+	{1, mov_r0_a   },{1, mov_r1_a	},{1, mov_r2_a	 },{1, mov_r3_a   },{1, mov_r4_a   },{1, mov_r5_a	},{1, mov_r6_a	 },{1, mov_r7_a   },
+	{2, mov_xr0_n  },{2, mov_xr1_n	},{2, jb_5		 },{2, jmpp_xa	  },{2, call_5	   },{1, cpl_f1 	},{2, jf0		 },{0, illegal	  },
+	{2, mov_r0_n   },{2, mov_r1_n	},{2, mov_r2_n	 },{2, mov_r3_n   },{2, mov_r4_n   },{2, mov_r5_n	},{2, mov_r6_n	 },{2, mov_r7_n   },
+	{0, illegal    },{0, illegal	},{0, illegal	 },{0, illegal	  },{2, jmp_6	   },{1, sel_rb0	},{2, jz		 },{1, mov_a_psw  },
+	{1, dec_r0	   },{1, dec_r1 	},{1, dec_r2	 },{1, dec_r3	  },{1, dec_r4	   },{1, dec_r5 	},{1, dec_r6	 },{1, dec_r7	  },
+	{1, xrl_a_xr0  },{1, xrl_a_xr1	},{2, jb_6		 },{2, xrl_a_n	  },{2, call_6	   },{1, sel_rb1	},{0, illegal	 },{1, mov_psw_a  },
+	{1, xrl_a_r0   },{1, xrl_a_r1	},{1, xrl_a_r2	 },{1, xrl_a_r3   },{1, xrl_a_r4   },{1, xrl_a_r5	},{1, xrl_a_r6	 },{1, xrl_a_r7   },
+	{0, illegal    },{0, illegal	},{0, illegal	 },{2, movp3_a_xa },{2, jmp_7	   },{1, sel_mb0	},{2, jnc		 },{1, rl_a 	  },
+	{2, djnz_r0    },{2, djnz_r1	},{2, djnz_r2	 },{2, djnz_r3	  },{2, djnz_r4    },{2, djnz_r5	},{2, djnz_r6	 },{2, djnz_r7	  },
+	{1, mov_a_xr0  },{1, mov_a_xr1	},{2, jb_7		 },{0, illegal	  },{2, call_7	   },{1, sel_mb1	},{2, jc		 },{1, rlc_a	  },
+	{1, mov_a_r0   },{1, mov_a_r1	},{1, mov_a_r2	 },{1, mov_a_r3   },{1, mov_a_r4   },{1, mov_a_r5	},{1, mov_a_r6	 },{1, mov_a_r7   }
 };
 
 
@@ -511,33 +509,33 @@ static opcode_fn opcode_main[256]=
  ****************************************************************************/
 static int Timer_IRQ(void)
 {
-    if (R.tirq_en && !R.irq_executing)
-    {
-        if (errorlog) fprintf(errorlog, "I8039:  TIMER INTERRUPT\n");
-        R.irq_executing = I8039_TIMER_INT;
-        push(R.PC.b.l);
-        push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
-        R.PC.w.l = 0x07;
-        /*change_pc(0x07);*/
-        R.A11ff = R.A11;
-        R.A11   = 0;
-        return 2;       /* 2 clock cycles used */
-    }
-    return 0;
+	if (R.tirq_en && !R.irq_executing)
+	{
+		if (errorlog) fprintf(errorlog, "I8039:  TIMER INTERRUPT\n");
+		R.irq_executing = I8039_TIMER_INT;
+		push(R.PC.b.l);
+		push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
+		R.PC.w.l = 0x07;
+		/*change_pc(0x07);*/
+		R.A11ff = R.A11;
+		R.A11	= 0;
+		return 2;		/* 2 clock cycles used */
+	}
+	return 0;
 }
 
 static int Ext_IRQ(void)
 {
-    if (R.xirq_en) {
+	if (R.xirq_en) {
 //if (errorlog) fprintf(errorlog, "I8039:  EXT INTERRUPT\n");
-        R.irq_executing = I8039_EXT_INT;
-        push(R.PC.b.l);
-        push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
-        R.PC.w.l = 0x03;
-        R.A11ff = R.A11;
+		R.irq_executing = I8039_EXT_INT;
+		push(R.PC.b.l);
+		push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
+		R.PC.w.l = 0x03;
+		R.A11ff = R.A11;
         R.A11   = 0;
         return 2;       /* 2 clock cycles used */
-    }
+	}
     return 0;
 }
 
@@ -602,14 +600,14 @@ int i8039_execute(int cycles)
                 if (R.timerON)  /* NS990113 */
                     R.masterClock += count;
                 break;
-        }
+		}
         R.pending_irq = I8039_IGNORE_INT;
 
         #ifdef MAME_DEBUG
         {
             extern int mame_debug;
             if (mame_debug) MAME_Debug();
-        }
+		}
         #endif
 
         opcode=M_RDOP(R.PC.w.l);
@@ -619,11 +617,11 @@ int i8039_execute(int cycles)
         {   /* NS 971024 */
             extern int previouspc;
             previouspc = R.PC.w.l;
-        }
+		}
 
         R.PC.w.l++;
-		i8039_ICount-=cycles_main[opcode];
-        (*(opcode_main[opcode]))();
+		i8039_ICount -= opcode_main[opcode].cycles;
+		(*(opcode_main[opcode].function))();
 
         if (R.countON)  /* NS990113 */
         {
@@ -634,17 +632,17 @@ int i8039_execute(int cycles)
                 if (R.timer == 0) R.pending_irq = I8039_COUNT_INT;
 
                 Old_T1 = T1;
-            }
-        }
+			}
+		}
 
         if (R.timerON) {                        /* Handle TIMER IRQs */
-            R.masterClock += cycles_main[opcode];
+			R.masterClock += opcode_main[opcode].cycles;
             if (R.masterClock >= 32) {  /* NS990113 */
                 R.masterClock -= 32;
                 R.timer++;
                 if (R.timer == 0) R.pending_irq = I8039_TIMER_INT;
-            }
-        }
+			}
+		}
    } while (i8039_ICount>0);
 
    return cycles - i8039_ICount;
@@ -724,6 +722,13 @@ unsigned i8039_get_reg (int regnum)
 		case I8039_PSW: return R.PSW;
         case I8039_A: return R.A;
 		case I8039_IRQ_STATE: return R.irq_state;
+/* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
+				return 0;
+			}
 	}
 	return 0;
 }
@@ -740,8 +745,14 @@ void i8039_set_reg (int regnum, unsigned val)
 		case I8039_SP: R.SP = val; break;
 		case I8039_PSW: R.PSW = val; break;
 		case I8039_A: R.A = val; break;
-		case I8039_IRQ_STATE: R.irq_state = val; break;
-    }
+		case I8039_IRQ_STATE: i8039_set_irq_line( 0, val ); break;
+/* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = R.SP + 2 * (REG_SP_CONTENTS - regnum);
+			}
+	}
 }
 
 
@@ -794,6 +805,8 @@ const char *i8039_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1997 by Mirko Buffoni\nBased on the original work (C) 1997 by Dan Boris";
+		case CPU_INFO_REG_LAYOUT: return (const char*)i8039_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)i8039_win_layout;
 
 		case CPU_INFO_PC: sprintf(buffer[which], "%03X:", r->PC.w.l & 0x7ff); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%02X", r->SP); break;
@@ -818,33 +831,49 @@ const char *i8039_info(void *context, int regnum)
 		case CPU_INFO_REG+I8039_PSW: sprintf(buffer[which], "PSW:%02X", r->PSW); break;
         case CPU_INFO_REG+I8039_A: sprintf(buffer[which], "A:%02X", r->A); break;
 		case CPU_INFO_REG+I8039_IRQ_STATE: sprintf(buffer[which], "A:%X", r->irq_state); break;
-    }
+	}
     return buffer[which];
 }
 
 /**************************************************************************
  * I8035 section
  **************************************************************************/
-extern void i8035_reset(void *param) { i8039_reset(param); }
-extern void i8035_exit(void) { i8039_exit(); }
-extern int i8035_execute(int cycles) { return i8039_execute(cycles); }
-extern unsigned i8035_get_context(void *dst) { return i8039_get_context(dst); }
-extern void i8035_set_context(void *src)  { i8039_set_context(src); }
-extern unsigned i8035_get_pc(void) { return i8039_get_pc(); }
-extern void i8035_set_pc(unsigned val) { i8039_set_pc(val); }
-extern unsigned i8035_get_sp(void) { return i8039_get_sp(); }
-extern void i8035_set_sp(unsigned val) { i8039_set_sp(val); }
-extern unsigned i8035_get_reg(int regnum) { return i8039_get_reg(regnum); }
-extern void i8035_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
-extern void i8035_set_nmi_line(int state) { i8039_set_nmi_line(state); }
-extern void i8035_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
-extern void i8035_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
+/* Layout of the registers in the debugger */
+static UINT8 i8035_reg_layout[] = {
+	I8035_PC, I8035_SP, I8035_PSW, I8035_A, I8035_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 i8035_win_layout[] = {
+	 0, 0,80, 2,	/* register window (top rows) */
+	 0, 3,24,19,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+void i8035_reset(void *param) { i8039_reset(param); }
+void i8035_exit(void) { i8039_exit(); }
+int i8035_execute(int cycles) { return i8039_execute(cycles); }
+unsigned i8035_get_context(void *dst) { return i8039_get_context(dst); }
+void i8035_set_context(void *src)  { i8039_set_context(src); }
+unsigned i8035_get_pc(void) { return i8039_get_pc(); }
+void i8035_set_pc(unsigned val) { i8039_set_pc(val); }
+unsigned i8035_get_sp(void) { return i8039_get_sp(); }
+void i8035_set_sp(unsigned val) { i8039_set_sp(val); }
+unsigned i8035_get_reg(int regnum) { return i8039_get_reg(regnum); }
+void i8035_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
+void i8035_set_nmi_line(int state) { i8039_set_nmi_line(state); }
+void i8035_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
+void i8035_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
 const char *i8035_info(void *context, int regnum)
 {
 	switch( regnum )
     {
 		case CPU_INFO_NAME: return "I8035";
 		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_REG_LAYOUT: return (const char*)i8035_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)i8035_win_layout;
 	}
 	return i8039_info(context,regnum);
 }
@@ -852,53 +881,86 @@ const char *i8035_info(void *context, int regnum)
 /**************************************************************************
  * I8048 section
  **************************************************************************/
-extern void i8048_reset(void *param) { i8039_reset(param); }
-extern void i8048_exit(void) { i8039_exit(); }
-extern int i8048_execute(int cycles) { return i8039_execute(cycles); }
-extern unsigned i8048_get_context(void *dst) { return i8039_get_context(dst); }
-extern void i8048_set_context(void *src)  { i8039_set_context(src); }
-extern unsigned i8048_get_pc(void) { return i8039_get_pc(); }
-extern void i8048_set_pc(unsigned val) { i8039_set_pc(val); }
-extern unsigned i8048_get_sp(void) { return i8039_get_sp(); }
-extern void i8048_set_sp(unsigned val) { i8039_set_sp(val); }
-extern unsigned i8048_get_reg(int regnum) { return i8039_get_reg(regnum); }
-extern void i8048_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
-extern void i8048_set_nmi_line(int state) { i8039_set_nmi_line(state); }
-extern void i8048_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
-extern void i8048_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
+/* Layout of the registers in the debugger */
+static UINT8 i8048_reg_layout[] = {
+	I8048_PC, I8048_SP, I8048_PSW, I8048_A, I8048_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 i8048_win_layout[] = {
+	 0, 0,80, 2,	/* register window (top rows) */
+	 0, 3,24,19,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+void i8048_reset(void *param) { i8039_reset(param); }
+void i8048_exit(void) { i8039_exit(); }
+int i8048_execute(int cycles) { return i8039_execute(cycles); }
+unsigned i8048_get_context(void *dst) { return i8039_get_context(dst); }
+void i8048_set_context(void *src)  { i8039_set_context(src); }
+unsigned i8048_get_pc(void) { return i8039_get_pc(); }
+void i8048_set_pc(unsigned val) { i8039_set_pc(val); }
+unsigned i8048_get_sp(void) { return i8039_get_sp(); }
+void i8048_set_sp(unsigned val) { i8039_set_sp(val); }
+unsigned i8048_get_reg(int regnum) { return i8039_get_reg(regnum); }
+void i8048_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
+void i8048_set_nmi_line(int state) { i8039_set_nmi_line(state); }
+void i8048_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
+void i8048_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
 const char *i8048_info(void *context, int regnum)
 {
 	switch( regnum )
     {
 		case CPU_INFO_NAME: return "I8048";
 		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_REG_LAYOUT: return (const char*)i8048_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)i8048_win_layout;
 	}
 	return i8039_info(context,regnum);
 }
 
+
 /**************************************************************************
  * N7751 section
  **************************************************************************/
-extern void n7751_reset(void *param) { i8039_reset(param); }
-extern void n7751_exit(void) { i8039_exit(); }
-extern int n7751_execute(int cycles) { return i8039_execute(cycles); }
-extern unsigned n7751_get_context(void *dst) { return i8039_get_context(dst); }
-extern void n7751_set_context(void *src)  { i8039_set_context(src); }
-extern unsigned n7751_get_pc(void) { return i8039_get_pc(); }
-extern void n7751_set_pc(unsigned val) { i8039_set_pc(val); }
-extern unsigned n7751_get_sp(void) { return i8039_get_sp(); }
-extern void n7751_set_sp(unsigned val) { i8039_set_sp(val); }
-extern unsigned n7751_get_reg(int regnum) { return i8039_get_reg(regnum); }
-extern void n7751_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
-extern void n7751_set_nmi_line(int state) { i8039_set_nmi_line(state); }
-extern void n7751_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
-extern void n7751_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
+/* Layout of the registers in the debugger */
+static UINT8 n7751_reg_layout[] = {
+	N7751_PC, N7751_SP, N7751_PSW, N7751_A, N7751_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 n7751_win_layout[] = {
+	 0, 0,80, 2,	/* register window (top rows) */
+	 0, 3,24,19,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+void n7751_reset(void *param) { i8039_reset(param); }
+void n7751_exit(void) { i8039_exit(); }
+int n7751_execute(int cycles) { return i8039_execute(cycles); }
+unsigned n7751_get_context(void *dst) { return i8039_get_context(dst); }
+void n7751_set_context(void *src)  { i8039_set_context(src); }
+unsigned n7751_get_pc(void) { return i8039_get_pc(); }
+void n7751_set_pc(unsigned val) { i8039_set_pc(val); }
+unsigned n7751_get_sp(void) { return i8039_get_sp(); }
+void n7751_set_sp(unsigned val) { i8039_set_sp(val); }
+unsigned n7751_get_reg(int regnum) { return i8039_get_reg(regnum); }
+void n7751_set_reg(int regnum, unsigned val) { i8039_set_reg(regnum,val); }
+void n7751_set_nmi_line(int state) { i8039_set_nmi_line(state); }
+void n7751_set_irq_line(int irqline, int state) { i8039_set_irq_line(irqline,state); }
+void n7751_set_irq_callback(int (*callback)(int irqline)) { i8039_set_irq_callback(callback); }
 const char *n7751_info(void *context, int regnum)
 {
 	switch( regnum )
     {
 		case CPU_INFO_NAME: return "N7751";
 		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_REG_LAYOUT: return (const char*)n7751_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)n7751_win_layout;
 	}
 	return i8039_info(context,regnum);
 }

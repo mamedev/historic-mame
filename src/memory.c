@@ -498,11 +498,13 @@ int initmemoryhandlers(void)
 		/* initialize port structures */
 		readport[cpu] = Machine->drv->cpu[cpu].port_read;
 		writeport[cpu] = Machine->drv->cpu[cpu].port_write;
-		if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80 &&
+#if HAS_Z80
+        if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80 &&
 				(Machine->drv->cpu[cpu].cpu_type & CPU_16BIT_PORT) == 0)
 			portmask[cpu] = 0xff;
 		else
-			portmask[cpu] = 0xffff;
+#endif
+            portmask[cpu] = 0xffff;
 	}
 
 	/* initialize grobal handler */
@@ -551,12 +553,14 @@ int initmemoryhandlers(void)
 		{
 			memoryreadhandler[HT_NON] = mrh_error_sparse;
 			memorywritehandler[HT_NON] = mwh_error_sparse;
-			if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK)==CPU_TMS34010)
+#if HAS_TMS34010
+            if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK)==CPU_TMS34010)
 			{
 				memoryreadhandler[HT_NON] = mrh_error_sparse_bit;
 				memorywritehandler[HT_NON] = mwh_error_sparse_bit;
 			}
-		}
+#endif
+        }
 
 	for( cpu = 0 ; cpu < cpu_gettotalcpu() ; cpu++ )
 	{

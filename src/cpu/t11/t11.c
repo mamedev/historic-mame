@@ -19,6 +19,21 @@
 #include "t11.h"
 
 
+static UINT8 t11_reg_layout[] = {
+	T11_PC,T11_SP,T11_PSW,T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5, -1,
+	T11_IRQ0_STATE,T11_IRQ1_STATE,T11_IRQ2_STATE,T11_IRQ3_STATE, -1,
+	T11_BANK0,T11_BANK1,T11_BANK2,T11_BANK3, -1,
+	T11_BANK4,T11_BANK5,T11_BANK6,T11_BANK7, 0
+};
+
+static UINT8 t11_win_layout[] = {
+	 0, 0,80, 4,	/* register window (top rows) */
+	 0, 5,31,17,	/* disassembler window (left colums) */
+	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
+	32,14,48, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
 /* T-11 Registers */
 typedef struct
 {
@@ -175,21 +190,21 @@ void t11_set_sp(unsigned val)
 }
 
 /****************************************************************************
- * Return a specific register                                               
+ * Return a specific register
  ****************************************************************************/
 unsigned t11_get_reg(int regnum)
 {
 	switch( regnum )
 	{
-		case T11_R0: return t11.reg[0].w.l;
-		case T11_R1: return t11.reg[1].w.l;
-		case T11_R2: return t11.reg[2].w.l;
-		case T11_R3: return t11.reg[3].w.l;
-		case T11_R4: return t11.reg[4].w.l;
-		case T11_R5: return t11.reg[5].w.l;
-		case T11_SP: return t11.reg[6].w.l;
-		case T11_PC: return t11.reg[7].w.l;
-		case T11_PSW: return t11.psw.b.l;
+		case T11_PC: return PCD;
+		case T11_SP: return SPD;
+		case T11_PSW: return PSW;
+		case T11_R0: return REGD(0);
+		case T11_R1: return REGD(1);
+		case T11_R2: return REGD(2);
+		case T11_R3: return REGD(3);
+		case T11_R4: return REGD(4);
+		case T11_R5: return REGD(5);
 		case T11_IRQ0_STATE: return t11.irq_state[T11_IRQ0];
 		case T11_IRQ1_STATE: return t11.irq_state[T11_IRQ1];
 		case T11_IRQ2_STATE: return t11.irq_state[T11_IRQ2];
@@ -202,30 +217,37 @@ unsigned t11_get_reg(int regnum)
 		case T11_BANK5: return (unsigned)(t11.bank[5] - ROM);
 		case T11_BANK6: return (unsigned)(t11.bank[6] - ROM);
 		case T11_BANK7: return (unsigned)(t11.bank[7] - ROM);
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = SPD + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+					return RWORD( offset );
+			}
 	}
 	return 0;
 }
 
 /****************************************************************************
- * Set a specific register                                                  
+ * Set a specific register
  ****************************************************************************/
 void t11_set_reg(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case T11_R0: t11.reg[0].w.l = val; break;
-		case T11_R1: t11.reg[1].w.l = val; break;
-		case T11_R2: t11.reg[2].w.l = val; break;
-		case T11_R3: t11.reg[3].w.l = val; break;
-		case T11_R4: t11.reg[4].w.l = val; break;
-		case T11_R5: t11.reg[5].w.l = val; break;
-		case T11_SP: t11.reg[6].w.l = val; break;
-		case T11_PC: t11.reg[7].w.l = val; break;
-		case T11_PSW: t11.psw.b.l = val; break;
-		case T11_IRQ0_STATE: t11.irq_state[T11_IRQ0] = val; break;
-		case T11_IRQ1_STATE: t11.irq_state[T11_IRQ1] = val; break;
-		case T11_IRQ2_STATE: t11.irq_state[T11_IRQ2] = val; break;
-		case T11_IRQ3_STATE: t11.irq_state[T11_IRQ3] = val; break;
+		case T11_PC: PC = val; /* change_pc not needed */ break;
+		case T11_SP: SP = val; break;
+		case T11_PSW: PSW = val; break;
+		case T11_R0: REGW(0) = val; break;
+		case T11_R1: REGW(1) = val; break;
+		case T11_R2: REGW(2) = val; break;
+		case T11_R3: REGW(3) = val; break;
+		case T11_R4: REGW(4) = val; break;
+		case T11_R5: REGW(5) = val; break;
+		case T11_IRQ0_STATE: t11_set_irq_line(T11_IRQ0,val); break;
+		case T11_IRQ1_STATE: t11_set_irq_line(T11_IRQ1,val); break;
+		case T11_IRQ2_STATE: t11_set_irq_line(T11_IRQ2,val); break;
+		case T11_IRQ3_STATE: t11_set_irq_line(T11_IRQ3,val); break;
 		case T11_BANK0: t11.bank[0] = &ROM[val]; break;
 		case T11_BANK1: t11.bank[1] = &ROM[val]; break;
 		case T11_BANK2: t11.bank[2] = &ROM[val]; break;
@@ -234,11 +256,18 @@ void t11_set_reg(int regnum, unsigned val)
 		case T11_BANK5: t11.bank[5] = &ROM[val]; break;
 		case T11_BANK6: t11.bank[6] = &ROM[val]; break;
 		case T11_BANK7: t11.bank[7] = &ROM[val]; break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = SPD + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+					WWORD( offset, val & 0xffff );
+			}
     }
 }
 
 /****************************************************************************
- * Sets the banking                                                         
+ * Sets the banking
  ****************************************************************************/
 void t11_SetBank(int offset, unsigned char *base)
 {
@@ -446,7 +475,10 @@ const char *t11_info( void *context, int regnum )
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) Aaron Giles 1998";
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->reg[7].w.l); break;
+		case CPU_INFO_REG_LAYOUT: return (const char*)t11_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)t11_win_layout;
+
+        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->reg[7].w.l); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->reg[6].w.l); break;
 #ifdef MAME_DEBUG
 		case CPU_INFO_DASM: r->reg[7].w.l += DasmT11(&ROM[r->reg[7].w.l], buffer[which], r->reg[7].w.l); break;
@@ -464,15 +496,15 @@ const char *t11_info( void *context, int regnum )
 				r->psw.b.l & 0x02 ? 'V':'.',
 				r->psw.b.l & 0x01 ? 'C':'.');
 			break;
+		case CPU_INFO_REG+T11_PC: sprintf(buffer[which], "PC:%04X", r->reg[7].w.l); break;
+		case CPU_INFO_REG+T11_SP: sprintf(buffer[which], "SP:%04X", r->reg[6].w.l); break;
+		case CPU_INFO_REG+T11_PSW: sprintf(buffer[which], "PSW:%02X", r->psw.b.l); break;
 		case CPU_INFO_REG+T11_R0: sprintf(buffer[which], "R0:%04X", r->reg[0].w.l); break;
 		case CPU_INFO_REG+T11_R1: sprintf(buffer[which], "R1:%04X", r->reg[1].w.l); break;
 		case CPU_INFO_REG+T11_R2: sprintf(buffer[which], "R2:%04X", r->reg[2].w.l); break;
 		case CPU_INFO_REG+T11_R3: sprintf(buffer[which], "R3:%04X", r->reg[3].w.l); break;
 		case CPU_INFO_REG+T11_R4: sprintf(buffer[which], "R4:%04X", r->reg[4].w.l); break;
 		case CPU_INFO_REG+T11_R5: sprintf(buffer[which], "R5:%04X", r->reg[5].w.l); break;
-		case CPU_INFO_REG+T11_SP: sprintf(buffer[which], "SP:%04X", r->reg[6].w.l); break;
-		case CPU_INFO_REG+T11_PC: sprintf(buffer[which], "PC:%04X", r->reg[7].w.l); break;
-		case CPU_INFO_REG+T11_PSW: sprintf(buffer[which], "PSW:%02X", r->psw.b.l); break;
 		case CPU_INFO_REG+T11_IRQ0_STATE: sprintf(buffer[which], "IRQ0:%X", r->irq_state[T11_IRQ0]); break;
 		case CPU_INFO_REG+T11_IRQ1_STATE: sprintf(buffer[which], "IRQ1:%X", r->irq_state[T11_IRQ1]); break;
 		case CPU_INFO_REG+T11_IRQ2_STATE: sprintf(buffer[which], "IRQ2:%X", r->irq_state[T11_IRQ2]); break;

@@ -57,7 +57,7 @@ to list them.
 | Battle-Road,The      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | battroad |
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | berzerk  |
 | Bio Attack           |   No   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
-| Bionic Commando      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | bionicc  |
+| Bionic Commando      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bionicc  |
 | Birdie King 2        |  Yes   |   No   |  Yes   |   No   |   No   | bking2   |
 | Black Tiger          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blktiger |
 | Black Widow          |  Yes   | Close  |  Yes   |  Yes   |   No   | bwidow   |
@@ -88,6 +88,7 @@ to list them.
 | Captain Silver       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csilver  |
 | Carnival             |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | carnival |
 | Carrier Air Wing     |   No   |  Yes   |  Yes   |   No   |   No   | cawing   |
+| Caveman Ninija       |  Yes   |  Yes   |  Yes   |   No   |   No   | cninja   |
 | Centipede            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | centiped |
 | Challenger           |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | challeng |
 | Champion Baseball    |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | champbas |
@@ -107,7 +108,7 @@ to list them.
 | Colony 7             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | colony7  |
 | Combat               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | combat   |
 | Commando (Capcom)    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commando |
-| Commando (Sega)      |   No   |   No   |  Yes   |  Yes   |  Yes   | commsega |
+| Commando (Sega)      |  Yes   |   No   |  Yes   |  Yes   |  Yes   | commsega |
 | Comotion             |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | comotion |
 | Congo Bongo          |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | congo    |
 | Contra               |  Yes   | Close  |  Yes   |  Yes   |   No   | contra   |
@@ -320,7 +321,7 @@ to list them.
 | MegaTack             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | megatack |
 | Mercs                |  Yes   |  Yes   |  Yes   |   No   |   No   | mercs    |
 | Midnight Resistance  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | midres   |
-| Mikie                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | mikie    |
+| Mikie                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mikie    |
 | Millipede            |  Yes   |  Yes   |   No   |  Yes   |   No   | milliped |
 | Minefield            |  Yes   |  Yes   |  Yes   |   No   |  n/a   | minefld  |
 | Missile Command      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | missile  |
@@ -386,7 +387,7 @@ to list them.
 | Polaris              |  Yes   |  b/w   |   No   |   No   |   No   | polaris  |
 | Ponpoko              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ponpoko  |
 | Pontoon              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pontoon  |
-| Pooyan               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pooyan   |
+| Pooyan               |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | pooyan   |
 | Pop Flamer           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popflame |
 | Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeye   |
 | Port Man             |  Yes   | Close  |  Yes   |   No   |  Yes   | portman  |
@@ -425,7 +426,7 @@ to list them.
 | Robotron             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | robotron |
 | Roc'n Rope           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rocnrope |
 | Rolling Crash        |  Yes   |  Yes   |   No   |   No   |   No   | rollingc |
-| Rolling Thunder      |  Yes   |  Yes   |Partial |  Yes   |   No   | rthunder |
+| Rolling Thunder      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rthunder |
 | Round-Up             |  Yes   | Close  |  Yes   |  Yes   |  Yes   | roundup  |
 | Route 16             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | route16  |
 | Rygar                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | rygar    |
@@ -479,6 +480,7 @@ to list them.
 | Space Zap            |  Yes   | Maybe  |   No   |  Yes   |   No   | spacezap |
 | Spectar              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | spectar  |
 | Speed Ball           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | speedbal |
+| Speed Coin           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | spdcoin  |
 | Speed Rumbler        |  Yes   |  Yes   |  Yes   |   No   |  Yes   | srumbler |
 | Spelunker II         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | spelunk2 |
 | Spiders              |  Yes   |  Yes   |   No   |   No   |   No   | spiders  |
@@ -561,6 +563,7 @@ to list them.
 | Trojan               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | trojan   |
 | Tron                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | tron     |
 | Tropical Angel       |  Yes   |  Yes   |  Yes   |   No   |  Yes   | troangel |
+| Tumble Pop           |  Yes   |  Yes   |Partial |   No   |   No   | tumblep  |
 | Turbo                |   No   |   No   |   No   |   No   |   No   | turbo    |
 | Turbo Force          |  Yes   |  Yes   |  Yes   |   No   |   No   | turbofrc |
 | Turkey Shoot         |   No   |  Yes   |  Yes   |  Yes   |   No   | tshoot   |
@@ -695,7 +698,7 @@ Clones supported:
   Japanese version ("amidarjp"). This version has a worse attract mode and
                                  does not display the number of jumps left.
   bootleg version called Amigo ("amigo")
-version running on Scramble hardware ("amidars")
+  version running on Scramble hardware ("amidars")
 
 
 
@@ -1777,20 +1780,6 @@ Clones supported:
 
 
 
-Lode Runner II ("ldrun2")
-=========================
-Known issues:
-- sprite/char priority is not implemented.
-
-
-
-Lode Runner III ("ldrun3")
-==========================
-Known issues:
-- sprite/char priority is not implemented.
-
-
-
 Lotto Fun ("lottofun")
 ======================
 Known issues:
@@ -2073,7 +2062,12 @@ New Zealand Story ("tnzs")
 ==========================
 Clones supported:
   bootleg, different ("tnzsb")
-  alternate, different, harder, version ("tnzs2")
+  alternate, different, harder, version. Note that this has the old Taito
+    logo while the others have the new one. ("tnzs2")
+
+The story of TNZS2 isn't exactly known. Most of the console/computer ports
+of TNZS had levels identical to TNZS, but surprisingly the Genesis TNZS
+is identical to TNZS2.
 
 
 
@@ -2350,7 +2344,6 @@ Return of the jedi ("jedi")
 Known issues:
 - background graphics are blocky because the hardware which smoothes them is
   not emulated.
-- sprite/background/text priority is not implemented
 - this game has an analog stick. Control with keyboard or mouse doesn't work
   too well.
 

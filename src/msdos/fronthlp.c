@@ -313,8 +313,8 @@ int frontend_help (int argc, char **argv)
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = LIST_LMR;
-		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;
 #endif
+		if (!stricmp(argv[i],"-wrongorientation")) list = LIST_WRONGORIENTATION;
 		if (!stricmp(argv[i],"-noclones")) listclones = 0;
 
 		/* these options REQUIRES gamename field to work */
@@ -611,6 +611,8 @@ int frontend_help (int argc, char **argv)
 						strcmp(drivers[i]->name,"mpatrol") &&
 						strcmp(drivers[i]->name,"troangel") &&
 						strcmp(drivers[i]->name,"travrusa") &&
+						strcmp(drivers[i]->name,"kungfum") &&
+						strcmp(drivers[i]->name,"battroad") &&
 						strcmp(drivers[i]->name,"vigilant") &&
 						strcmp(drivers[i]->name,"sonson") &&
 						strcmp(drivers[i]->name,"brkthru") &&
@@ -624,12 +626,16 @@ int frontend_help (int argc, char **argv)
 						strcmp(drivers[i]->name,"pepper2") &&
 						strcmp(drivers[i]->name,"hardhat") &&
 						strcmp(drivers[i]->name,"fax") &&
+						strcmp(drivers[i]->name,"circus") &&
+						strcmp(drivers[i]->name,"robotbwl") &&
+						strcmp(drivers[i]->name,"crash") &&
+						strcmp(drivers[i]->name,"ripcord") &&
 						strcmp(drivers[i]->name,"starfire") &&
 						strcmp(drivers[i]->name,"fireone") &&
 						strcmp(drivers[i]->name,"renegade") &&
 						strcmp(drivers[i]->name,"battlane") &&
 						strcmp(drivers[i]->name,"megatack") &&
-						strcmp(drivers[i]->name,"killcome") &&
+						strcmp(drivers[i]->name,"killcom") &&
 						strcmp(drivers[i]->name,"challeng") &&
 						strcmp(drivers[i]->name,"kaos") &&
 						strcmp(drivers[i]->name,"formatz") &&
@@ -637,6 +643,11 @@ int frontend_help (int argc, char **argv)
 						strcmp(drivers[i]->name,"liberatr") &&
 						strcmp(drivers[i]->name,"toki") &&
 						strcmp(drivers[i]->name,"stactics") &&
+						strcmp(drivers[i]->name,"sprint1") &&
+						strcmp(drivers[i]->name,"sprint2") &&
+						strcmp(drivers[i]->name,"nitedrvr") &&
+						strcmp(drivers[i]->name,"punchout") &&
+						strcmp(drivers[i]->name,"spnchout") &&
 						1)
 						printf("%s %dx%d\n",drivers[i]->name,
 								drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,

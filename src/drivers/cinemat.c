@@ -32,11 +32,9 @@ extern struct GameDriver demon_driver;
 to do:
 
 * Fix Tailgunner/Boxing Bugs controls
-* Fix Star Hawk controls
 * Fix Speed Freak controls
+* Fix Sundance controls
 * Find out why Demon is broken
-* Fix problem with colors in Solar Quest - overlay instead?
-* Possible overlay for Tailgunner - blue
 
 ***************************************************************************/
 
@@ -153,7 +151,8 @@ static struct Samplesinterface cinemat_samples_interface =
 	7	/* 7 channels */
 };
 
-
+/* Note: the CPU speed is somewhat arbitrary as the cycle timings in
+   the core are fixed at 1 cycle per opcode, which is probably wrong. */
 #define CINEMA_MACHINE(driver, minx, miny, maxx, maxy) \
 static struct MachineDriver driver##_machine_driver = \
 { \
@@ -161,7 +160,7 @@ static struct MachineDriver driver##_machine_driver = \
 	{ \
 		{ \
 			CPU_CCPU, \
-			1000000, \
+			5000000, \
 			0, \
 			readmem,writemem,readport,writeport, \
 			ignore_interrupt,1 \
@@ -200,7 +199,7 @@ static struct MachineDriver driver##_machine_driver = \
 	{ \
 		{ \
 			CPU_CCPU, \
-			1000000, \
+			5000000, \
 			0, \
 			readmem,writemem,driver##_readport,writeport, \
 			ignore_interrupt,1 \
@@ -283,8 +282,10 @@ void cinemat32k_rom_decode (void)
 static unsigned char color_prom_bilevel[] = { CCPU_MONITOR_BILEV };
 static unsigned char color_prom_bilevel_overlay[] = { CCPU_MONITOR_BILEV | 0x80 };
 static unsigned char color_prom_bilevel_backdrop[] = { CCPU_MONITOR_BILEV | 0x40 };
+static unsigned char color_prom_bilevel_tg[] = { CCPU_MONITOR_BILEV | 0x20 };
 
 static unsigned char color_prom_16color[] = { CCPU_MONITOR_16COL };
+static unsigned char color_prom_16color_sd[] = { CCPU_MONITOR_16COL | 0x10 };
 
 static unsigned char color_prom_64color[] = { CCPU_MONITOR_64COL };
 
@@ -803,7 +804,7 @@ struct GameDriver tgunner_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
+	GAME_NOT_WORKING,
 	&tgunner_machine_driver,
 	0,
 
@@ -814,7 +815,7 @@ struct GameDriver tgunner_driver =
 
 	tgunner_input_ports,
 
-	color_prom_bilevel, 0, 0,
+	color_prom_bilevel_tg, 0, 0,
 	ORIENTATION_FLIP_Y,
 
 	0,0
@@ -1082,7 +1083,7 @@ struct GameDriver speedfrk_driver =
 	"Vectorbeam",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
+	GAME_NOT_WORKING,
 	&speedfrk_machine_driver,
 	0,
 
@@ -1185,7 +1186,7 @@ struct GameDriver sundance_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
+	GAME_NOT_WORKING,
 	&sundance_machine_driver,
 	0,
 
@@ -1196,8 +1197,8 @@ struct GameDriver sundance_driver =
 
 	sundance_input_ports,
 
-	color_prom_16color, 0, 0,
-	ORIENTATION_DEFAULT,
+	color_prom_16color_sd, 0, 0,
+	ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X,
 
 	0,0
 };
@@ -1225,7 +1226,7 @@ INPUT_PORTS_START ( warrior_input_ports )
 	PORT_DIPNAME( SW4, SW4OFF, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING( SW4OFF, "Off" )
 	PORT_DIPSETTING( SW4ON,  "On" )
-	PORT_DIPNAME( SW3, SW3OFF, "Test Grid", IP_KEY_NONE )
+	PORT_DIPNAME( SW3, SW3ON, "Test Grid", IP_KEY_NONE )
 	PORT_DIPSETTING( SW3ON,  "Off" )
 	PORT_DIPSETTING( SW3OFF, "On" )
 	PORT_DIPNAME( SW2, SW2OFF, "Unknown", IP_KEY_NONE )
@@ -1497,7 +1498,8 @@ static const char *solarq_sample_names[] =
 
 void solarq_init_machine (void)
 {
-	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_64COL);
+//	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_64COL);
+	ccpu_Config (1, CCPU_MEMSIZE_16K, CCPU_MONITOR_BILEV);
 }
 
 
@@ -1524,7 +1526,8 @@ struct GameDriver solarq_driver =
 
 	solarq_input_ports,
 
-	color_prom_64color, 0, 0,
+//	color_prom_64color, 0, 0,
+	color_prom_bilevel_overlay, 0, 0,
 	ORIENTATION_ROTATE_180,
 
 	0,0
@@ -1847,7 +1850,7 @@ struct GameDriver boxingb_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	0,
+	GAME_NOT_WORKING,
 	&boxingb_machine_driver,
 	0,
 

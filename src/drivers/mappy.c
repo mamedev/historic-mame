@@ -76,6 +76,7 @@ int todruaga_customio_r_2(int offset);
 /* video driver data & functions */
 int mappy_vh_start(void);
 int motos_vh_start(void);
+int todruaga_vh_start(void);
 void mappy_vh_stop(void);
 void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void mappy_videoram_w(int offset,int data);
@@ -462,7 +463,8 @@ INPUT_PORTS_START( todruaga_input_ports )
 	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
-	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )	/* used on level 31 */
 
 	PORT_START      /* FAKE */
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -477,8 +479,9 @@ INPUT_PORTS_START( todruaga_input_ports )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BIT( 0x0c, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_START1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )	/* we take it from port 3 */
+//	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_START1 | IPF_IMPULSE,
+//			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_START2 | IPF_IMPULSE,
 			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -731,7 +734,7 @@ static struct MachineDriver todruaga_machine_driver =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	mappy_vh_start,
+	todruaga_vh_start,
 	mappy_vh_stop,
 	mappy_vh_screenrefresh,
 
@@ -842,6 +845,31 @@ ROM_START( todruaga_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
 	ROM_LOAD( "druaga3.bin",  0x8000, 0x4000, 0x7ab4f5b2 )
 	ROM_LOAD( "druaga1.bin",  0xc000, 0x4000, 0x8c20ef10 )
+
+	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "druaga3b.bin", 0x0000, 0x1000, 0xd32b249f )
+	ROM_LOAD( "druaga3m.bin", 0x1000, 0x2000, 0xe827e787 )
+	ROM_LOAD( "druaga3n.bin", 0x3000, 0x2000, 0x962bd060 )
+
+	ROM_REGION(0x0520)      /* color proms */
+	ROM_LOAD( "todruaga.pr1", 0x0000, 0x0020, 0x122cc395 ) /* palette */
+	ROM_LOAD( "todruaga.pr2", 0x0020, 0x0100, 0x8c661d6a ) /* characters */
+	ROM_LOAD( "todruaga.pr3", 0x0120, 0x0100, 0x5bcec186 ) /* sprites */
+	ROM_LOAD( "todruaga.pr4", 0x0220, 0x0100, 0xf029e5f5 ) /* sprites */
+	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
+	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
+
+	ROM_REGION(0x0100)      /* sound prom */
+	ROM_LOAD( "todruaga.spr", 0x0000, 0x0100, 0x07104c40 )
+ROM_END
+
+ROM_START( todruagb_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "druaga3a.bin", 0x8000, 0x4000, 0xfbf16299 )
+	ROM_LOAD( "druaga1a.bin", 0xc000, 0x4000, 0xb238d723 )
 
 	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "druaga3b.bin", 0x0000, 0x1000, 0xd32b249f )
@@ -1184,7 +1212,7 @@ struct GameDriver todruaga_driver =
 	__FILE__,
 	0,
 	"todruaga",
-	"Tower of Druaga",
+	"Tower of Druaga (set 1)",
 	"1984",
 	"Namco",
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
@@ -1193,6 +1221,32 @@ struct GameDriver todruaga_driver =
 	0,
 
 	todruaga_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	todruaga_input_ports,
+
+	PROM_MEMORY_REGION(2),0,0,
+	ORIENTATION_ROTATE_90,
+
+	todruaga_hiload, todruaga_hisave
+};
+
+struct GameDriver todruagb_driver =
+{
+	__FILE__,
+	&todruaga_driver,
+	"todruagb",
+	"Tower of Druaga (set 2)",
+	"1984",
+	"Namco",
+	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
+	0,
+	&todruaga_machine_driver,
+	0,
+
+	todruagb_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

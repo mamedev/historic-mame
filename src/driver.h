@@ -185,41 +185,109 @@ struct MachineCPU
 
 enum {
 	CPU_DUMMY,
+#if HAS_Z80
 	CPU_Z80,
-	CPU_8080,
-	CPU_8085A,
-	CPU_M6502,
-	CPU_M65C02,
-	CPU_M6510,
-	CPU_H6280,
-	CPU_I86,
-	CPU_I8035,		/* same as CPU_I8039 */
-	CPU_I8039,
-	CPU_I8048,		/* same as CPU_I8039 */
-	CPU_N7751,		/* same as CPU_I8039 */
-	CPU_M6800,		/* same as CPU_M6802/CPU_M6808 */
-	CPU_M6801,		/* same as CPU_M6803 */
-	CPU_M6802,		/* same as CPU_M6800/CPU_M6808 */
-	CPU_M6803,		/* same as CPU_M6801 */
-	CPU_M6808,		/* same as CPU_M6800/CPU_M6802 */
-	CPU_HD63701,	/* 6808 with some additional opcodes */
-	CPU_M6805,
-	CPU_M68705, 	/* same as CPU_M6805 */
-	CPU_M6309,		/* same as CPU_M6809 (actually it's not 100% compatible) */
-	CPU_M6809,
-	CPU_M68000,
-	CPU_M68010,
-	CPU_M68020,
-	CPU_T11,
-	CPU_S2650,
-	CPU_TMS34010,
-	CPU_TMS9900,
-	CPU_Z8000,
-	CPU_TMS320C10,
-	CPU_CCPU
-#ifdef MESS
-	,CPU_PDP1
 #endif
+#if HAS_8080
+	CPU_8080,
+#endif
+#if HAS_8085A
+	CPU_8085A,
+#endif
+#if HAS_M6502
+	CPU_M6502,
+#endif
+#if HAS_M65C02
+	CPU_M65C02,
+#endif
+#if HAS_M6510
+	CPU_M6510,
+#endif
+#if HAS_H6280
+	CPU_H6280,
+#endif
+#if HAS_I86
+	CPU_I86,
+#endif
+#if HAS_I8035
+	CPU_I8035,		/* same as CPU_I8039 */
+#endif
+#if HAS_I8039
+	CPU_I8039,
+#endif
+#if HAS_I8048
+	CPU_I8048,		/* same as CPU_I8039 */
+#endif
+#if HAS_N7751
+	CPU_N7751,		/* same as CPU_I8039 */
+#endif
+#if HAS_M6800
+	CPU_M6800,		/* same as CPU_M6802/CPU_M6808 */
+#endif
+#if HAS_M6801
+	CPU_M6801,		/* same as CPU_M6803 */
+#endif
+#if HAS_M6802
+	CPU_M6802,		/* same as CPU_M6800/CPU_M6808 */
+#endif
+#if HAS_M6803
+	CPU_M6803,		/* same as CPU_M6801 */
+#endif
+#if HAS_M6808
+	CPU_M6808,		/* same as CPU_M6800/CPU_M6802 */
+#endif
+#if HAS_HD63701
+	CPU_HD63701,	/* 6808 with some additional opcodes */
+#endif
+#if HAS_M6805
+	CPU_M6805,
+#endif
+#if HAS_M68705
+	CPU_M68705, 	/* same as CPU_M6805 */
+#endif
+#if HAS_HD63705
+	CPU_HD63705,	/* M6805 family but larger address space, different stack size */
+#endif
+#if HAS_M6309
+	CPU_M6309,		/* same as CPU_M6809 (actually it's not 100% compatible) */
+#endif
+#if HAS_M6809
+	CPU_M6809,
+#endif
+#if HAS_M68000
+	CPU_M68000,
+#endif
+#if HAS_M68010
+	CPU_M68010,
+#endif
+#if HAS_M68020
+	CPU_M68020,
+#endif
+#if HAS_T11
+	CPU_T11,
+#endif
+#if HAS_S2650
+	CPU_S2650,
+#endif
+#if HAS_TMS34010
+	CPU_TMS34010,
+#endif
+#if HAS_TMS9900
+	CPU_TMS9900,
+#endif
+#if HAS_Z8000
+	CPU_Z8000,
+#endif
+#if HAS_TMS320C10
+	CPU_TMS320C10,
+#endif
+#if HAS_CCPU
+	CPU_CCPU,
+#endif
+#if HAS_PDP1
+	CPU_PDP1,
+#endif
+	CPU_COUNT
 };
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */

@@ -187,6 +187,11 @@ void tutankhm_videoram_w( int offset, int data );
 void tutankhm_flipscreen_w( int offset, int data );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+/* defined in sndhrdw/timeplt.c */
+extern struct MemoryReadAddress timeplt_sound_readmem[];
+extern struct MemoryWriteAddress timeplt_sound_writemem[];
+extern struct AY8910interface timeplt_ay8910_interface;
+void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
 void tutankhm_init_machine(void)
@@ -204,61 +209,6 @@ void tutankhm_bankselect_w(int offset,int data)
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
 	cpu_setbank(1,&RAM[bankaddress]);
 }
-
-
-/* I am not 100% sure that this timer is correct, but */
-/* I'm using the Gyruss wired to the higher 4 bits    */
-/* instead of the lower ones, so there is a good      */
-/* chance it's the right one. */
-
-/* The timer clock which feeds the lower 4 bits of    */
-/* AY-3-8910 port A is based on the same clock        */
-/* feeding the sound CPU Z80.  It is a divide by      */
-/* 10240, formed by a standard divide by 1024,        */
-/* followed by a divide by 10 using a 4 bit           */
-/* bi-quinary count sequence. (See LS90 data sheet    */
-/* for an example).                                   */
-/* Bits 1-3 come directly from the upper three bits   */
-/* of the bi-quinary counter. Bit 0 comes from the    */
-/* output of the divide by 1024.                      */
-
-static int tutankhm_timer[20] = {
-0x00, 0x01, 0x00, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
-0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
-};
-
-static int tutankhm_portB_r(int offset)
-{
-	/* need to protect from totalcycles overflow */
-	static int last_totalcycles = 0;
-
-	/* number of Z80 clock cycles to count */
-	static int clock;
-
-	int current_totalcycles;
-
-	current_totalcycles = cpu_gettotalcycles();
-	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
-
-	last_totalcycles = current_totalcycles;
-
-	return tutankhm_timer[clock/512] << 4;
-}
-
-void tutankhm_sh_irqtrigger_w(int offset,int data)
-{
-	static int last;
-
-
-	if (last == 0 && data == 1)
-	{
-		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
-	}
-
-	last = data;
-}
-
 
 
 static struct MemoryReadAddress readmem[] =
@@ -286,33 +236,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8205, 0x8205, MWA_NOP },	/* ??? */
 	{ 0x8206, 0x8207, tutankhm_flipscreen_w },
 	{ 0x8300, 0x8300, tutankhm_bankselect_w },
-	{ 0x8600, 0x8600, tutankhm_sh_irqtrigger_w },
+	{ 0x8600, 0x8600, timeplt_sh_irqtrigger_w },
 	{ 0x8700, 0x8700, soundlatch_w },
 	{ 0x8800, 0x8fff, MWA_RAM },
 	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
-
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-	{ 0x6000, 0x6000, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-	{ 0x5000, 0x5000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x7000, 0x7000, AY8910_control_port_1_w },
-	{ -1 }	/* end of table */
-};
-
 
 
 INPUT_PORTS_START( input_ports )
@@ -405,21 +334,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
 	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
 	PORT_DIPSETTING(    0x00, "Disabled" )
-/* 0x00 not remmed out since the game makes the usual sound if you insert the coin */
+/* 0x00 not commented out since the game makes the usual sound if you insert the coin */
 INPUT_PORTS_END
-
-
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x20ff, 0x20ff },
-	{ soundlatch_r },
-	{ tutankhm_portB_r },
-	{ 0 },
-	{ 0 }
-};
 
 
 
@@ -436,9 +352,9 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
+			14318180/8,	/* 1.789772727 MHz */						\
+			1,	/* memory region #1 */
+			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
@@ -463,7 +379,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&timeplt_ay8910_interface
 		}
 	}
 };
@@ -487,10 +403,6 @@ ROM_START( tutankhm_rom )
 	ROM_LOAD( "j8.bin",       0x17000, 0x1000, 0xdabb609b )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
-
-	ROM_REGION_DISPOSE( 0x1000 ) /* ROM Region 1 -- discarded */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
@@ -516,10 +428,6 @@ ROM_START( tutankst_rom )
 	ROM_LOAD( "j8.bin",       0x17000, 0x1000, 0xdabb609b )
 	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
-
-	ROM_REGION_DISPOSE( 0x1000 ) /* ROM Region 1 -- discarded */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
 	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
@@ -571,7 +479,7 @@ struct GameDriver tutankhm_driver =
 	__FILE__,
 	0,
 	"tutankhm",
-	"Tutankham (Konami)",
+	"Tutankham",
 	"1982",
 	"Konami",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
@@ -599,7 +507,7 @@ struct GameDriver tutankst_driver =
 	"tutankst",
 	"Tutankham (Stern)",
 	"1982",
-	"Stern",
+	"[Konami] (Stern license)",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,

@@ -499,6 +499,51 @@ INPUT_PORTS_START( moonwar2_input_ports )
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 0, 0, 0 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( spdcoin_input_ports )
+    PORT_START      /* IN0 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+    PORT_START      /* IN1 */
+    PORT_DIPNAME( 0x01, 0x00, "Test?", IP_KEY_NONE )   /* Dip Sw #2 */
+    PORT_DIPSETTING(    0x01, "Frozen" )
+    PORT_DIPSETTING(    0x00, "Normal" )
+    PORT_DIPNAME( 0x02, 0x02, "Unknown 1", IP_KEY_NONE ) /* Dip Sw #1 */
+    PORT_DIPSETTING(    0x02, "Off" )
+    PORT_DIPSETTING(    0x00, "On" )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+    PORT_START      /* IN2 */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_DIPNAME( 0x02, 0x00, "Unknown 5", IP_KEY_NONE )    /* Dip Sw #5 */
+    PORT_DIPSETTING(    0x02, "Off" )
+    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x04, 0x00, "Unknown 4", IP_KEY_NONE )    /* Dip Sw #4 */
+    PORT_DIPSETTING(    0x04, "Off" )
+    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x08, 0x00, "Lives", IP_KEY_NONE )    /* Dip Sw #3 */
+    PORT_DIPSETTING(    0x08, "3" )
+    PORT_DIPSETTING(    0x00, "5" )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+    PORT_START      /* IN3 - dummy port for the dial */
+    PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 25, 0, 0, 0 )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( darkplnt_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1593,6 +1638,23 @@ ROM_START( monwar2a_rom )
 	ROM_LOAD( "mw2.5d",       0x0800, 0x0800, 0xbb48a646 )
 ROM_END
 
+ROM_START( spdcoin_rom )
+    ROM_REGION(0x10000) /* 64k for code */
+    ROM_LOAD( "spdcoin.2c",   0x0000, 0x1000, 0x65cf1e49 )
+    ROM_LOAD( "spdcoin.2e",   0x1000, 0x1000, 0x1ee59232 )
+
+    ROM_REGION_DISPOSE(0x1000)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "spdcoin.5f",   0x0000, 0x0800, 0xdd5f1dbc )
+    ROM_LOAD( "spdcoin.5h",   0x0800, 0x0800, 0xab1fe81b )
+
+    ROM_REGION(0x0020)    /* color prom */
+    ROM_LOAD( "spdcoin.clr",  0x0000, 0x0020, 0x1a2ccc56 )
+
+    ROM_REGION(0x10000) /* 64k for the audio CPU */
+    ROM_LOAD( "spdcoin.5c",   0x0000, 0x0800, 0xb4cf64b7 )
+    ROM_LOAD( "spdcoin.5d",   0x0800, 0x0800, 0x92304df0 )
+ROM_END
+
 ROM_START( darkplnt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "drkplt2c.dat", 0x0000, 0x1000, 0x5a0ca559 )
@@ -2230,33 +2292,7 @@ struct GameDriver scobra_driver =
 	__FILE__,
 	0,
 	"scobra",
-	"Super Cobra (Stern)",
-	"1981",
-	"Stern",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
-	0,
-	&type1_machine_driver,
-	0,
-
-	scobra_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	scobra_input_ports,
-
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	scobra_hiload, scobra_hisave
-};
-
-struct GameDriver scobrak_driver =
-{
-	__FILE__,
-	&scobra_driver,
-	"scobrak",
-	"Super Cobra (Konami)",
+	"Super Cobra",
 	"1981",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
@@ -2270,6 +2306,32 @@ struct GameDriver scobrak_driver =
 	0,	/* sound_prom */
 
 	scobrak_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	scobra_hiload, scobra_hisave
+};
+
+struct GameDriver scobras_driver =
+{
+	__FILE__,
+	&scobra_driver,
+	"scobras",
+	"Super Cobra (Stern)",
+	"1981",
+	"[Konami] (Stern license)",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	0,
+	&type1_machine_driver,
+	0,
+
+	scobra_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	scobra_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -2308,9 +2370,9 @@ struct GameDriver stratgyx_driver =
 	__FILE__,
 	0,
 	"stratgyx",
-	"Strategy X",
+	"Strategy X (Stern)",
 	"1981",
-	"Stern",
+	"[Konami] (Stern license)",
 	"Lee Taylor",
 	0,
 	&type2_machine_driver,
@@ -2455,6 +2517,32 @@ struct GameDriver monwar2a_driver =
 	ORIENTATION_ROTATE_90,
 
 	moonwar2_hiload, moonwar2_hisave
+};
+
+struct GameDriver spdcoin_driver =
+{
+    __FILE__,
+    0,
+    "spdcoin",
+    "Speed Coin (prototype)",
+    "1984",
+    "Stern",
+    "Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
+    0,
+    &type1_machine_driver,
+    0,
+
+    spdcoin_rom,
+    0, 0,
+    0,
+    0,  /* sound_prom */
+
+    spdcoin_input_ports,
+
+    PROM_MEMORY_REGION(2), 0, 0,
+    ORIENTATION_ROTATE_90,
+
+    0, 0
 };
 
 struct GameDriver darkplnt_driver =

@@ -1,13 +1,6 @@
 #include "driver.h"
 #include "info.h"
 
-/* CPU information table */
-struct cpu_desc
-{
-	int cpu_type;
-	const char* desc;
-};
-
 /* SOUND information table */
 typedef unsigned (*SOUND_clock)(const void* interface);
 typedef unsigned (*SOUND_num)(const void* interface);
@@ -20,49 +13,6 @@ struct sound_desc
 	const char* desc;
 };
 
-
-
-/* ------------------------------------------------------------------------*/
-/* CPU information */
-
-struct cpu_desc CPU_DESC[] =
-{
-	{ CPU_Z80,       "Z80"      },
-    { CPU_8085A,     "I8085"    },
-	{ CPU_8080,      "I8080"    },
-	{ CPU_M6502,     "M6502"    },
-	{ CPU_M65C02,	 "M65C02"   },
-	{ CPU_M6510,	 "M6510"    },
-	{ CPU_H6280,     "H6280"    },
-	{ CPU_I86,       "I86"      },
-	{ CPU_I8035,     "I8035"    },
-    { CPU_I8039,     "I8039"    },
-	{ CPU_I8048,	 "I8048"    },
-	{ CPU_N7751,	 "N7751"    },
-	{ CPU_M6800,	 "M6800"    },
-    { CPU_M6802,     "M6802"    },
-	{ CPU_M6803,     "M6803"    },
-	{ CPU_M6808,     "M6808"    },
-	{ CPU_HD63701,   "HD63701"  },
-	{ CPU_M6805,     "M6805"    },
-	{ CPU_M68705,	 "M68705"   },
-    { CPU_M6309,     "M6309"    },
-	{ CPU_M6809,     "M6809"    },
-	{ CPU_M68000,    "M68000"   },
-	{ CPU_M68010,	 "M68010"   },
-	{ CPU_M68020,	 "M68020"   },
-	{ CPU_T11,       "T11"      },
-	{ CPU_S2650,     "S2650"    },
-	{ CPU_TMS34010,  "TMS34010" },
-	{ CPU_TMS9900,   "TMS9900"  },
-	{ CPU_Z8000,     "Z8000"    },
-	{ CPU_TMS320C10, "TMS32010" },
-	{ CPU_CCPU, 	 "C-CPU"    },
-#ifdef MESS
-	{ CPU_PDP1, 	 "PDP1"     },
-#endif
-    { 0,0 }
-};
 
 /* ------------------------------------------------------------------------*/
 /* SOUND information */
@@ -131,19 +81,9 @@ struct sound_desc SOUND_DESC[] =
 
 const char *info_cpu_name(const struct MachineCPU *cpu)
 {
-	int k;
-
-
-	if (cpu->cpu_type == 0) return "";
-
-	k = 0;
-	while (CPU_DESC[k].cpu_type && CPU_DESC[k].cpu_type != (cpu->cpu_type & ~CPU_FLAGS_MASK))
-		k++;
-
-	if (CPU_DESC[k].cpu_type)
-		return CPU_DESC[k].desc;
-	else
-		return "unknown";
+	if( cpu->cpu_type )
+		return cputype_name(cpu->cpu_type);
+	return "";
 }
 
 const char *info_sound_name(const struct MachineSound *sound)

@@ -378,6 +378,24 @@ static struct MachineDriver machine_driver =
 ROM_START( rallyx_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
+	ROM_LOAD( "rallyxn.1e",   0x1000, 0x1000, 0xed1eba2b )
+	ROM_LOAD( "rallyxn.1h",   0x2000, 0x1000, 0x4f98dd1c )
+	ROM_LOAD( "rallyxn.1k",   0x3000, 0x1000, 0x9aacccf0 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
+
+	ROM_REGION(0x0120)	/* color proms */
+	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
+	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "im5623.3p",    0x0000, 0x0100, 0x4bad7017 )
+ROM_END
+
+ROM_START( rallyxm_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1b",           0x0000, 0x1000, 0x5882700d )
 	ROM_LOAD( "1e",           0x1000, 0x1000, 0x786585ec )
 	ROM_LOAD( "1h",           0x2000, 0x1000, 0x110d7dcd )
 	ROM_LOAD( "1k",           0x3000, 0x1000, 0x473ab447 )
@@ -467,13 +485,39 @@ struct GameDriver rallyx_driver =
 	"rallyx",
 	"Rally X",
 	"1980",
-	"[Namco] (Midway license)",
+	"Namco",
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
 	0,
 	&machine_driver,
 	rallyx_init,
 
 	rallyx_rom,
+	0, 0,
+	rallyx_sample_names,
+	0,	/* sound_prom */
+
+	rallyx_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver rallyxm_driver =
+{
+	__FILE__,
+	&rallyx_driver,
+	"rallyxm",
+	"Rally X (Midway)",
+	"1980",
+	"[Namco] (Midway license)",
+	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
+	&machine_driver,
+	rallyx_init,
+
+	rallyxm_rom,
 	0, 0,
 	rallyx_sample_names,
 	0,	/* sound_prom */

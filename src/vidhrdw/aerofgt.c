@@ -79,6 +79,12 @@ int aerofgt_vh_start(void)
 	return common_vh_start(512,512);
 }
 
+int aerofgtb_vh_start(void)
+{
+	bg2_chardisplacement = 0x4000;
+	return common_vh_start(512,512);
+}
+
 
 
 /***************************************************************************
@@ -544,7 +550,7 @@ void pspikes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 	bg_dopalette();
 	turbofrc_spr_dopalette();
 	if (palette_recalc())
@@ -635,7 +641,7 @@ static int drawbg2 = 1;
 if (osd_key_pressed_memory(OSD_KEY_SPACE))
 	drawbg2 = !drawbg2;
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 	bg_dopalette();
 	turbofrc_spr_dopalette();
 	if (palette_recalc())
@@ -696,7 +702,8 @@ if (osd_key_pressed_memory(OSD_KEY_SPACE))
 
 		scrolly = -READ_WORD(bg1scrolly)-2;
 		for (offs = 0;offs < 256;offs++)
-			scrollx[(offs - scrolly) & 0x1ff] = -READ_WORD(&aerofgt_rasterram[2*offs])+11;
+//			scrollx[(offs - scrolly) & 0x1ff] = -READ_WORD(&aerofgt_rasterram[2*offs])+11;
+scrollx[(offs - scrolly) & 0x1ff] = -READ_WORD(&aerofgt_rasterram[0xe])+11;
 		copyscrollbitmap(bitmap,tmpbitmap,512,scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
@@ -720,7 +727,7 @@ void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 	bg_dopalette();
 	aerofgt_spr_dopalette();
 	if (palette_recalc())

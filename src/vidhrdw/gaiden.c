@@ -389,35 +389,32 @@ int gaiden_vh_start(void){
 	sprite_info = (struct sprite_info *)malloc( sizeof(struct sprite_info)*NUMSPRITES );
 	if( !sprite_info ) return 1; /* error */
 
-	if( tilemap_start()==0 ){
+	text_layer = tilemap_create(
+		TILEMAP_TRANSPARENT,
+		8,8,	/* tile width, tile height */
+		32,32,	/* number of columns, number of rows */
+		1,1	/* scroll rows, scroll columns */
+	);
 
-		text_layer = tilemap_create(
-			TILEMAP_TRANSPARENT,
-			8,8,	/* tile width, tile height */
-			32,32,	/* number of columns, number of rows */
-			1,1	/* scroll rows, scroll columns */
-		);
+	foreground = tilemap_create(TILEMAP_TRANSPARENT,16,16,64,32,1,1);
 
-		foreground = tilemap_create(TILEMAP_TRANSPARENT,16,16,64,32,1,1);
+	background = tilemap_create(0,16,16,64,32,1,1);
 
-		background = tilemap_create(0,16,16,64,32,1,1);
+	if( text_layer && foreground && background ){
+		text_layer->tile_get_info = get_fg_tile_info;
+		text_layer->transparent_pen = 0;
 
-		if( text_layer && foreground && background ){
-			text_layer->tile_get_info = get_fg_tile_info;
-			text_layer->transparent_pen = 0;
+		foreground->tile_get_info = get_bg_tile_info;
+		foreground->transparent_pen = 0;
 
-			foreground->tile_get_info = get_bg_tile_info;
-			foreground->transparent_pen = 0;
+		background->tile_get_info = get_bg_tile_info;
 
-			background->tile_get_info = get_bg_tile_info;
+		palette_transparent_color = 0x200; /* background color */
 
-			palette_transparent_color = 0x200; /* background color */
-
-			return 0;
-		}
-
-		gaiden_vh_stop();
+		return 0;
 	}
+
+	gaiden_vh_stop();
 
 	return 1;
 }
@@ -427,7 +424,6 @@ void gaiden_vh_stop(void){
 	tilemap_dispose(foreground);
 	tilemap_dispose(text_layer);
 
-	tilemap_stop();
 	free( sprite_info );
 }
 
@@ -540,13 +536,13 @@ static void pre_update_text_layer( void ){
 	videoram2 = (const unsigned short *)gaiden_videoram;
 }
 
-void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
-
+void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	pre_update_background(); tilemap_update(background);
 	pre_update_foreground(); tilemap_update(foreground);
 	pre_update_text_layer(); tilemap_update(text_layer);
-	tilemap_mark_palette();
+
+	palette_init_used_colors();
 	mark_sprite_colors();
 
 	{

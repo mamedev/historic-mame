@@ -248,7 +248,7 @@ INLINE void pang_refresh_palette( void )
 
 	/* Work out what colors we are actually using */
 	memset(pang_used_colors,0, sizeof(pang_used_colors));
-	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	palette_init_used_colors();
 
 	/* Characters */
 	for (i=0; i<pang_colorram_size;i++)

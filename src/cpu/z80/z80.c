@@ -25,11 +25,7 @@
 #include "z80.h"
 #include "osd_dbg.h"
 
-#define VERBOSE 1
-
-#ifndef INLINE
-#define INLINE	static __inline__
-#endif
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
@@ -69,6 +65,21 @@ extern int previouspc;
 #undef  BIG_FLAGS_ARRAY
 #define BIG_FLAGS_ARRAY     0
 #endif
+
+static UINT8 z80_reg_layout[] = {
+	Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
+	Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
+	Z80_R,	Z80_I,	Z80_IM, Z80_IFF1,Z80_IFF2, -1,
+	Z80_NMI_STATE,Z80_IRQ_STATE,Z80_DC0,Z80_DC1,Z80_DC2,Z80_DC3, 0
+};
+
+static UINT8 z80_win_layout[] = {
+	27, 0,53, 4,	/* register window (top rows) */
+	 0, 0,26,22,	/* disassembler window (left colums) */
+	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27,14,53, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
 
 /****************************************************************************/
 /* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
@@ -3579,8 +3590,10 @@ void z80_reset(void *param)
 	_R = _R2 = 0;		/* clear refres counter(s) */
 	_IM = 0;			/* clear interrupt mode register */
 #if SP_HACK
-	_SP = 0xf000;
+	_SPD = 0xf000;
 #endif
+	_PCD = 0;
+	_IFF1 = _IFF2 = 0;
 
 	Z80.irq_max = 0;	/* clear daisy chain device count */
 	Z80.request_irq = -1;
@@ -3698,20 +3711,20 @@ unsigned z80_get_reg (int regnum)
 {
 	switch( regnum )
 	{
+		case Z80_PC: return Z80.PC.w.l;
+		case Z80_SP: return Z80.SP.w.l;
 		case Z80_AF: return Z80.AF.w.l;
 		case Z80_BC: return Z80.BC.w.l;
 		case Z80_DE: return Z80.DE.w.l;
 		case Z80_HL: return Z80.HL.w.l;
-		case Z80_SP: return Z80.SP.w.l;
-		case Z80_PC: return Z80.PC.w.l;
 		case Z80_IX: return Z80.IX.w.l;
 		case Z80_IY: return Z80.IY.w.l;
+        case Z80_R: return (Z80.R & 0x7f) | (Z80.R2 & 0x80);
+		case Z80_I: return Z80.I;
 		case Z80_AF2: return Z80.AF2.w.l;
 		case Z80_BC2: return Z80.BC2.w.l;
 		case Z80_DE2: return Z80.DE2.w.l;
 		case Z80_HL2: return Z80.HL2.w.l;
-        case Z80_R: return (Z80.R & 0x7f) | (Z80.R2 & 0x80);
-		case Z80_I: return Z80.I;
 		case Z80_IM: return Z80.IM;
 		case Z80_IFF1: return Z80.IFF1;
 		case Z80_IFF2: return Z80.IFF2;
@@ -3723,6 +3736,13 @@ unsigned z80_get_reg (int regnum)
 		case Z80_DC2: return Z80.int_state[2];
 		case Z80_DC3: return Z80.int_state[3];
 		case Z80_NMI_NESTING: return Z80.nmi_nesting;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+					return RM( offset ) | ( RM( offset + 1) << 8 );
+			}
 	}
     return 0;
 }
@@ -3734,20 +3754,20 @@ void z80_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+		case Z80_PC: Z80.PC.w.l = val; break;
+		case Z80_SP: Z80.SP.w.l = val; break;
 		case Z80_AF: Z80.AF.w.l = val; break;
 		case Z80_BC: Z80.BC.w.l = val; break;
 		case Z80_DE: Z80.DE.w.l = val; break;
 		case Z80_HL: Z80.HL.w.l = val; break;
-		case Z80_SP: Z80.SP.w.l = val; break;
-		case Z80_PC: Z80.PC.w.l = val; break;
 		case Z80_IX: Z80.IX.w.l = val; break;
 		case Z80_IY: Z80.IY.w.l = val; break;
+        case Z80_R: Z80.R = val; Z80.R2 = val & 0x80; break;
+		case Z80_I: Z80.I = val; break;
 		case Z80_AF2: Z80.AF2.w.l = val; break;
 		case Z80_BC2: Z80.BC2.w.l = val; break;
 		case Z80_DE2: Z80.DE2.w.l = val; break;
 		case Z80_HL2: Z80.HL2.w.l = val; break;
-        case Z80_R: Z80.R = val; Z80.R2 = val & 0x80; break;
-		case Z80_I: Z80.I = val; break;
 		case Z80_IM: Z80.IM = val; break;
 		case Z80_IFF1: Z80.IFF1 = val; break;
 		case Z80_IFF2: Z80.IFF2 = val; break;
@@ -3759,6 +3779,16 @@ void z80_set_reg (int regnum, unsigned val)
 		case Z80_DC2: Z80.int_state[2] = val; break;
 		case Z80_DC3: Z80.int_state[3] = val; break;
 		case Z80_NMI_NESTING: Z80.nmi_nesting = val; break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = _SPD + 2 * (REG_SP_CONTENTS - regnum);
+				if( offset < 0xffff )
+				{
+					WM( offset, val & 0xff );
+					WM( offset+1, (val >> 8) & 0xff );
+				}
+			}
     }
 }
 
@@ -3943,7 +3973,10 @@ const char *z80_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.5";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
-		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC.w.l); break;
+		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)z80_win_layout;
+
+        case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC.w.l); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%04X", r->SP.w.l); break;
 #if MAME_DEBUG
 		case CPU_INFO_DASM: r->PC.w.l += DasmZ80(buffer[which], r->PC.w.l); break;
@@ -3961,30 +3994,30 @@ const char *z80_info(void *context, int regnum)
 				r->AF.b.l & 0x02 ? 'N':'.',
 				r->AF.b.l & 0x01 ? 'C':'.');
 			break;
+		case CPU_INFO_REG+Z80_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
+		case CPU_INFO_REG+Z80_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
 		case CPU_INFO_REG+Z80_AF: sprintf(buffer[which], "AF:%04X", r->AF.w.l); break;
 		case CPU_INFO_REG+Z80_BC: sprintf(buffer[which], "BC:%04X", r->BC.w.l); break;
 		case CPU_INFO_REG+Z80_DE: sprintf(buffer[which], "DE:%04X", r->DE.w.l); break;
 		case CPU_INFO_REG+Z80_HL: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
-		case CPU_INFO_REG+Z80_SP: sprintf(buffer[which], "SP:%04X", r->SP.w.l); break;
-		case CPU_INFO_REG+Z80_PC: sprintf(buffer[which], "PC:%04X", r->PC.w.l); break;
 		case CPU_INFO_REG+Z80_IX: sprintf(buffer[which], "IX:%04X", r->IX.w.l); break;
 		case CPU_INFO_REG+Z80_IY: sprintf(buffer[which], "IY:%04X", r->IY.w.l); break;
+		case CPU_INFO_REG+Z80_R: sprintf(buffer[which], "R:%02X", (r->R & 0x7f) | (r->R2 & 0x80)); break;
+		case CPU_INFO_REG+Z80_I: sprintf(buffer[which], "I:%02X", r->I); break;
 		case CPU_INFO_REG+Z80_AF2: sprintf(buffer[which], "AF'%04X", r->AF2.w.l); break;
 		case CPU_INFO_REG+Z80_BC2: sprintf(buffer[which], "BC'%04X", r->BC2.w.l); break;
 		case CPU_INFO_REG+Z80_DE2: sprintf(buffer[which], "DE'%04X", r->DE2.w.l); break;
 		case CPU_INFO_REG+Z80_HL2: sprintf(buffer[which], "HL'%04X", r->HL2.w.l); break;
-		case CPU_INFO_REG+Z80_R: sprintf(buffer[which], "R:%02X", (r->R & 0x7f) | (r->R2 & 0x80)); break;
-		case CPU_INFO_REG+Z80_I: sprintf(buffer[which], "I:%02X", r->I); break;
 		case CPU_INFO_REG+Z80_IM: sprintf(buffer[which], "IM:%X", r->IM); break;
 		case CPU_INFO_REG+Z80_IFF1: sprintf(buffer[which], "IFF1:%X", r->IFF1); break;
 		case CPU_INFO_REG+Z80_IFF2: sprintf(buffer[which], "IFF2:%X", r->IFF2); break;
 		case CPU_INFO_REG+Z80_HALT: sprintf(buffer[which], "HALT:%X", r->HALT); break;
 		case CPU_INFO_REG+Z80_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 		case CPU_INFO_REG+Z80_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
-		case CPU_INFO_REG+Z80_DC0: sprintf(buffer[which], "DC0:%X", r->int_state[0]); break;
-		case CPU_INFO_REG+Z80_DC1: sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
-		case CPU_INFO_REG+Z80_DC2: sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
-		case CPU_INFO_REG+Z80_DC3: sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
+		case CPU_INFO_REG+Z80_DC0: if(Z80.irq_max >= 1) sprintf(buffer[which], "DC0:%X", r->int_state[0]); break;
+		case CPU_INFO_REG+Z80_DC1: if(Z80.irq_max >= 2) sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
+		case CPU_INFO_REG+Z80_DC2: if(Z80.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
+		case CPU_INFO_REG+Z80_DC3: if(Z80.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
 		case CPU_INFO_REG+Z80_NMI_NESTING: sprintf(buffer[which], "nested NMI:%X", r->nmi_nesting); break;
 	}
 	return buffer[which];

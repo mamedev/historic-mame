@@ -6,7 +6,7 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-enum { M6805_A, M6805_PC, M6805_S, M6805_X, M6805_CC, M6805_IRQ_STATE };
+enum { M6805_PC=1, M6805_S, M6805_CC, M6805_A, M6805_X, M6805_IRQ_STATE };
 
 #define M6805_INT_NONE  0           /* No interrupt required */
 #define M6805_INT_IRQ	1 			/* Standard IRQ interrupt */
@@ -17,7 +17,7 @@ extern int  m6805_ICount;
 /* PUBLIC FUNCTIONS */
 extern void m6805_reset(void *param);
 extern void m6805_exit(void);
-extern int  m6805_execute(int cycles);             /* MB */
+extern int	m6805_execute(int cycles);
 extern unsigned m6805_get_context(void *dst);
 extern void m6805_set_context(void *src);
 extern unsigned m6805_get_pc(void);
@@ -49,7 +49,7 @@ extern const char *m6805_info(void *context, int regnum);
 #define m68705_ICount				m6805_ICount
 extern void m68705_reset(void *param);
 extern void m68705_exit(void);
-extern int	m68705_execute(int cycles); 			/* MB */
+extern int	m68705_execute(int cycles);
 extern unsigned m68705_get_context(void *dst);
 extern void m68705_set_context(void *src);
 extern unsigned m68705_get_pc(void);
@@ -64,6 +64,38 @@ extern void m68705_set_irq_callback(int (*callback)(int irqline));
 extern void m68705_state_save(void *file);
 extern void m68705_state_load(void *file);
 extern const char *m68705_info(void *context, int regnum);
+
+/****************************************************************************
+ * HD63705 section
+ ****************************************************************************/
+#define HD63705_A					M6805_A
+#define HD63705_PC					M6805_PC
+#define HD63705_S					M6805_S
+#define HD63705_X					M6805_X
+#define HD63705_CC					M6805_CC
+#define HD63705_IRQ_STATE			M6805_IRQ_STATE
+
+#define HD63705_INT_NONE			M6805_INT_NONE
+#define HD63705_INT_IRQ				M6805_INT_IRQ
+
+#define hd63705_ICount				m6805_ICount
+extern void hd63705_reset(void *param);
+extern void hd63705_exit(void);
+extern int	hd63705_execute(int cycles);
+extern unsigned hd63705_get_context(void *dst);
+extern void hd63705_set_context(void *src);
+extern unsigned hd63705_get_pc(void);
+extern void hd63705_set_pc(unsigned val);
+extern unsigned hd63705_get_sp(void);
+extern void hd63705_set_sp(unsigned val);
+extern unsigned hd63705_get_reg(int regnum);
+extern void hd63705_set_reg(int regnum, unsigned val);
+extern void hd63705_set_nmi_line(int state);
+extern void hd63705_set_irq_line(int irqline, int state);
+extern void hd63705_set_irq_callback(int (*callback)(int irqline));
+extern void hd63705_state_save(void *file);
+extern void hd63705_state_load(void *file);
+extern const char *hd63705_info(void *context, int regnum);
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */

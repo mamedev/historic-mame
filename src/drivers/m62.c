@@ -1457,11 +1457,11 @@ ROM_START( ldrun2_rom )
 	ROM_LOAD( "lr2-h-1j",     0x02000, 0x2000, 0x40332bbd )
 	ROM_LOAD( "lr2-h-1h",     0x04000, 0x2000, 0x9404727d )
 	ROM_LOAD( "lr2-b-4k",     0x06000, 0x2000, 0x79909871 )	/* sprites */
-	ROM_LOAD( "lr2-b-4e",     0x08000, 0x2000, 0x75172d1f )
+	ROM_LOAD( "lr2-b-4f",     0x08000, 0x2000, 0x06ba1ef4 )
 	ROM_LOAD( "lr2-b-3n",     0x0a000, 0x2000, 0x3cc5893f )
-	ROM_LOAD( "lr2-b-4f",     0x0c000, 0x2000, 0x06ba1ef4 )
+	ROM_LOAD( "lr2-b-4n",     0x0c000, 0x2000, 0x49c12f42 )
 	ROM_LOAD( "lr2-b-4c",     0x0e000, 0x2000, 0xfbe6d24c )
-	ROM_LOAD( "lr2-b-4n",     0x10000, 0x2000, 0x49c12f42 )
+	ROM_LOAD( "lr2-b-4e",     0x10000, 0x2000, 0x75172d1f )
 
 	ROM_REGION(0x0720)	/* color proms */
 	ROM_LOAD( "lr2-h-3m",     0x0000, 0x0100, 0x2c5d834b )	/* character palette red component */

@@ -8,6 +8,21 @@ architecture.  Really, it's not so bad!
 #include "driver.h"
 #include "ccpu.h"
 
+static UINT8 ccpu_reg_layout[] = {
+	CCPU_PC, CCPU_ACC, CCPU_CMP, CCPU_PA0, CCPU_CFLAG, -1,
+	CCPU_A, CCPU_B, CCPU_I, CCPU_J, CCPU_P, CCPU_CSTATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 ccpu_win_layout[] = {
+	 0, 0,80, 2,	/* register window (top rows) */
+     0, 3,24,19,    /* disassembler window (left colums) */
+    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
+    25,13,55, 9,    /* memory #2 window (right, lower middle) */
+     0,23,80, 1,    /* command line window (bottom rows) */
+};
+
+
 /* the MAME version of the CCPU registers */
 typedef struct ccpuRegs
 {
@@ -56,8 +71,10 @@ void ccpu_exit(void)
 
 int ccpu_execute(int cycles)
 {
-	cineExec(cycles);
-	return cycles;
+	int newCycles;
+
+	newCycles = cineExec(cycles);
+	return newCycles;
 }
 
 
@@ -158,6 +175,10 @@ unsigned ccpu_get_reg(int regnum)
 		case CCPU_J: return context.eRegJ;
 		case CCPU_P: return context.eRegP;
 		case CCPU_CSTATE: return context.eCState;
+/* TODO: return contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+				return 0;
 	}
 	return 0;
 }
@@ -180,6 +201,13 @@ void ccpu_set_reg(int regnum, unsigned val)
 		case CCPU_J: context.eRegJ = val; break;
 		case CCPU_P: context.eRegP = val; break;
 		case CCPU_CSTATE: context.eCState = val; break;
+/* TODO: set contents of [SP + wordsize * (REG_SP_CONTENTS-regnum)] */
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = /* SP? + */ (REG_SP_CONTENTS-regnum);
+				(void)offset;
+			}
     }
 	cSetContext (&context);
 }
@@ -210,7 +238,7 @@ const char *ccpu_info(void *context, int regnum)
     buffer[which][0] = '\0';
 	if( !context )
 	{
-		static CONTEXTCCPU tmp;
+        static CONTEXTCCPU tmp;
 		cGetContext(&tmp);
 		r = &tmp;
 	}
@@ -222,13 +250,28 @@ const char *ccpu_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright 1997/1998 Jeff Mitchell and the Retrocade Alliance\nCopyright 1997 Zonn Moore";
+		case CPU_INFO_REG_LAYOUT: return (const char *)ccpu_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char *)ccpu_win_layout;
 
 		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->eRegPC); break;
-		case CPU_INFO_SP: /* TODO: is there something like a stack pointer? */ break;
+		case CPU_INFO_SP:
+			/* TODO: is there something like a stack pointer? */
+			break;
 #if MAME_DEBUG
-		case CPU_INFO_DASM: /* TODO: how to use the diassembler? */ sprintf(buffer[which], "$%02x", ROM[r->eRegPC]); r->eRegPC++; break;
+		case CPU_INFO_DASM:
+			/* TODO: how to use the diassembler? */
+			sprintf(buffer[which], "$%02x", ROM[r->eRegPC]);
+			r->eRegPC++;
+			if( !context )
+                cSetContext(r);
+            break;
 #else
-		case CPU_INFO_DASM: sprintf(buffer[which], "$%02x", ROM[r->eRegPC]); r->eRegPC++; break;
+		case CPU_INFO_DASM:
+			sprintf(buffer[which], "$%02x", ROM[r->eRegPC]);
+			r->eRegPC++;
+			if( !context )
+				cSetContext(r);
+			break;
 #endif
 		case CPU_INFO_FLAGS:
 			/* TODO: no idea how the flags should look like */
@@ -237,7 +280,7 @@ const char *ccpu_info(void *context, int regnum)
 		case CPU_INFO_REG+CCPU_CMP: sprintf(buffer[which], "CMP:%04X", r->cmpVal); break;
 		case CPU_INFO_REG+CCPU_PA0: sprintf(buffer[which], "PA0:%02X", r->pa0); break;
 		case CPU_INFO_REG+CCPU_CFLAG: sprintf(buffer[which], "C:%X", r->cFlag); break;
-		case CPU_INFO_REG+CCPU_PC: sprintf(buffer[which], "PC:%04X", r->eRegPC); break;
+		case CPU_INFO_REG+CCPU_PC: sprintf(buffer[which], "PC: %04X", r->eRegPC); break;
 		case CPU_INFO_REG+CCPU_A: sprintf(buffer[which], "A:%04X", r->eRegA); break;
 		case CPU_INFO_REG+CCPU_B: sprintf(buffer[which], "B:%04X", r->eRegB); break;
 		case CPU_INFO_REG+CCPU_I: sprintf(buffer[which], "I:%04X", r->eRegI); break;
@@ -415,7 +458,11 @@ void ccpu_SetInputs(int inputs, int switches)
 #define JMP() register_PC = (register_PC & 0xF000) + register_J
 
 /* Declare needed macros */
-#define UNFINISHED(x) /* fprintf (stderr, "UNFINISHED: %s\n", x); */
+#ifdef macintosh
+#define UNFINISHED(x)  { SysBeep (0); }
+#else
+#define UNFINISHED(x)  { if (errorlog) fprintf (errorlog, "UNFINISHED: %s\n", x); }
+#endif
 
 /* Handy new operators ... */
 
@@ -493,13 +540,14 @@ extern int sdwYOffset;
  * is hit, cycle count exceeded, or other happy things.
  */
 
-CINELONG cineExec (CINELONG a)
+CINELONG cineExec (CINELONG cycles)
 {
-   	while (1)
+	ccpu_ICount = cycles;
+	bailOut = FALSE;
+
+   	do
    	{
    		int opcode;
-
-		bailOut = FALSE;
 
 		/*
 		 * goto the correct piece of code
@@ -510,19 +558,24 @@ CINELONG cineExec (CINELONG a)
 		opcode = CCPU_FETCH (register_PC++);
 		state = (*cineops[state][opcode]) (opcode);
 
+#ifdef	MAME_DEBUG
+		if( mame_debug ) MAME_Debug();
+#endif
+
+        ccpu_ICount --;
+
 		/*
 		 * the opcode code has set a state and done mischief with flags and
 		 * the program counter; now jump back to the top and run through another
 		 * opcode.
 		 */
 		if (bailOut)
-			break;
+//			ccpu_ICount = 0;
+			ccpu_ICount -= 100;
 	}
+	while (ccpu_ICount > 0);
 
-	/* return control to main system */
-	elapsedTicks = 100000; /* some magic number */
-
-	return (0x80000000);
+	return cycles - ccpu_ICount;
 }
 
 
@@ -2385,3 +2438,4 @@ void cineReleaseTimeslice (void)
 {
 	bailOut = TRUE;
 }
+

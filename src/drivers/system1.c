@@ -1613,6 +1613,7 @@ static struct GfxLayout chplft_charlayout =
 };
 
 
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* sprites use colors 0-511, but are not defined here */
@@ -2989,7 +2990,6 @@ ROM_START( wbml_rom )
 ROM_END
 
 
-
 static void wbml_decode(void)
 {
 	int A;
@@ -3822,8 +3822,8 @@ struct GameDriver starjack_driver =
 	0,
 
 	starjack_rom,
-	0, 0,					/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	starjack_input_ports,
@@ -3847,8 +3847,8 @@ struct GameDriver starjacs_driver =
 	0,
 
 	starjacs_rom,
-	0, 0,					/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	starjacs_input_ports,
@@ -3872,8 +3872,8 @@ struct GameDriver regulus_driver =
 	0,
 
 	regulus_rom,
-	0, regulus_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, regulus_decode,
+	0,
 	0,
 
 	regulus_input_ports,
@@ -3897,8 +3897,8 @@ struct GameDriver regulusu_driver =
 	0,
 
 	regulusu_rom,
-	0, 0,      /* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	regulus_input_ports,
@@ -3922,8 +3922,8 @@ struct GameDriver upndown_driver =
 	0,
 
 	upndown_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	upndown_input_ports,
@@ -3947,8 +3947,8 @@ struct GameDriver mrviking_driver =
 	0,
 
 	mrviking_rom,
-	0, mrviking_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, mrviking_decode,
+	0,
 	0,
 
 	mrviking_input_ports,
@@ -3972,8 +3972,8 @@ struct GameDriver swat_driver =
 	0,
 
 	swat_rom,
-	0, swat_decode,			/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, swat_decode,
+	0,
 	0,
 
 	swat_input_ports,
@@ -3997,8 +3997,8 @@ struct GameDriver flicky_driver =
 	0,
 
 	flicky_rom,
-	0, flicky_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, flicky_decode,
+	0,
 	0,
 
 	flicky_input_ports,
@@ -4022,8 +4022,8 @@ struct GameDriver flicky2_driver =
 	0,
 
 	flicky2_rom,
-	0, flicky_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, flicky_decode,
+	0,
 	0,
 
 	flicky_input_ports,
@@ -4047,8 +4047,8 @@ struct GameDriver bullfgtj_driver =
 	0,
 
 	bullfgtj_rom,
-	0, bullfgtj_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, bullfgtj_decode,
+	0,
 	0,
 
 	bullfgtj_input_ports,
@@ -4072,8 +4072,8 @@ struct GameDriver pitfall2_driver =
 	0,
 
 	pitfall2_rom,
-	0, pitfall2_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, pitfall2_decode,
+	0,
 	0,
 
 	pitfall2_input_ports,
@@ -4097,8 +4097,8 @@ struct GameDriver pitfallu_driver =
 	0,
 
 	pitfallu_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	pitfallu_input_ports,
@@ -4122,8 +4122,8 @@ struct GameDriver seganinj_driver =
 	0,
 
 	seganinj_rom,
-	0, seganinj_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, seganinj_decode,
+	0,
 	0,
 
 	seganinj_input_ports,
@@ -4147,8 +4147,8 @@ struct GameDriver seganinu_driver =
 	0,
 
 	seganinu_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	seganinj_input_ports,
@@ -4172,8 +4172,8 @@ struct GameDriver nprinces_driver =
 	0,
 
 	nprinces_rom,
-	0, nprinces_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, nprinces_decode,
+	0,
 	0,
 
 	seganinj_input_ports,
@@ -4197,8 +4197,8 @@ struct GameDriver nprincsu_driver =
 	0,
 
 	nprincsu_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	seganinj_input_ports,
@@ -4222,8 +4222,8 @@ struct GameDriver nprincsb_driver =
 	0,
 
 	nprincsb_rom,
-	0, flicky_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, flicky_decode,
+	0,
 	0,
 
 	seganinj_input_ports,
@@ -4247,8 +4247,8 @@ struct GameDriver imsorry_driver =
 	0,
 
 	imsorry_rom,
-	0, imsorry_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, imsorry_decode,
+	0,
 	0,
 
 	imsorry_input_ports,
@@ -4272,8 +4272,8 @@ struct GameDriver imsorryj_driver =
 	0,
 
 	imsorryj_rom,
-	0, imsorry_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, imsorry_decode,
+	0,
 	0,
 
 	imsorry_input_ports,
@@ -4297,8 +4297,8 @@ struct GameDriver teddybb_driver =
 	0,
 
 	teddybb_rom,
-	0, teddybb_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, teddybb_decode,
+	0,
 	0,
 
 	teddybb_input_ports,
@@ -4322,8 +4322,8 @@ struct GameDriver hvymetal_driver =
 	0,
 
 	hvymetal_rom,
-	0, hvymetal_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, hvymetal_decode,
+	0,
 	0,
 
 	hvymetal_input_ports,
@@ -4347,8 +4347,8 @@ struct GameDriver myhero_driver =
 	0,
 
 	myhero_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	myhero_input_ports,
@@ -4372,8 +4372,8 @@ struct GameDriver myheroj_driver =
 	0,
 
 	myheroj_rom,
-	0, myheroj_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, myheroj_decode,
+	0,
 	0,
 
 	myhero_input_ports,
@@ -4397,8 +4397,8 @@ struct GameDriver chplft_driver =
 	0,
 
 	chplft_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	chplft_input_ports,
@@ -4422,8 +4422,8 @@ struct GameDriver chplftb_driver =
 	0,
 
 	chplftb_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	chplft_input_ports,
@@ -4447,8 +4447,8 @@ struct GameDriver chplftbl_driver =
 	0,
 
 	chplftbl_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	chplft_input_ports,
@@ -4472,8 +4472,8 @@ struct GameDriver fdwarrio_driver =
 	0,
 
 	fdwarrio_rom,
-	0, fdwarrio_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, fdwarrio_decode,
+	0,
 	0,
 
 	fdwarrio_input_ports,
@@ -4497,8 +4497,8 @@ struct GameDriver brain_driver =
 	0,
 
 	brain_rom,
-	0, 0,		/* ROM decode and opcode decode functions */
-	0,   		/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	brain_input_ports,
@@ -4522,8 +4522,8 @@ struct GameDriver wboy_driver =
 	0,
 
 	wboy_rom,
-	0, hvymetal_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, hvymetal_decode,
+	0,
 	0,
 
 	wboy_input_ports,
@@ -4547,8 +4547,8 @@ struct GameDriver wboy2_driver =
 	0,
 
 	wboy2_rom,
-	0, hvymetal_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, hvymetal_decode,
+	0,
 	0,
 
 	wboy_input_ports,
@@ -4572,8 +4572,8 @@ struct GameDriver wboy3_driver =
 	0,
 
 	wboy3_rom,
-	0, wboy3_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, wboy3_decode,
+	0,
 	0,
 
 	wboy_input_ports,
@@ -4597,8 +4597,8 @@ struct GameDriver wboy4_driver =
 	0,
 
 	wboy4_rom,
-	0, wboy4_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, wboy4_decode,
+	0,
 	0,
 
 	wboy_input_ports,
@@ -4622,8 +4622,8 @@ struct GameDriver wboyu_driver =
 	0,
 
 	wboyu_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	wboyu_input_ports,
@@ -4647,8 +4647,8 @@ struct GameDriver wboy4u_driver =
 	0,
 
 	wboy4u_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	wboy_input_ports,
@@ -4672,8 +4672,8 @@ struct GameDriver wbdeluxe_driver =
 	0,
 
 	wbdeluxe_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	wbdeluxe_input_ports,
@@ -4697,8 +4697,8 @@ struct GameDriver gardia_driver =
 	0,
 
 	gardia_rom,
-	0, gardia_decode,		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, gardia_decode,
+	0,
 	0,
 
 	wboy_input_ports,
@@ -4722,8 +4722,8 @@ struct GameDriver blockgal_driver =
 	0,
 
 	blockgal_rom,
-	0, 0,					/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	wboy_input_ports,
@@ -4747,8 +4747,8 @@ struct GameDriver tokisens_driver =
 	0,
 
 	tokisens_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	tokisens_input_ports,
@@ -4772,8 +4772,8 @@ struct GameDriver dakkochn_driver =
 	0,
 
 	dakkochn_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	chplft_input_ports,
@@ -4797,8 +4797,8 @@ struct GameDriver ufosensi_driver =
 	0,
 
 	ufosensi_rom,
-	0, 0,   				/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, 0,
+	0,
 	0,
 
 	chplft_input_ports,
@@ -4822,8 +4822,8 @@ struct GameDriver wbml_driver =
 	0,
 
 	wbml_rom,
-	0, wbml_decode,   		/* ROM decode and opcode decode functions */
-	0,      				/* Sample names */
+	0, wbml_decode,
+	0,
 	0,
 
 	wbml_input_ports,
@@ -4831,4 +4831,64 @@ struct GameDriver wbml_driver =
 	PROM_MEMORY_REGION(4), 0, 0,
 	ORIENTATION_DEFAULT,
 	wbml_hiload, wbml_hisave
+};
+
+
+
+
+
+
+
+/* the following is not a System 1 game, it's here only temporarily to decrypt the code */
+ROM_START( suprloco_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic37.bin",     0x0000, 0x4000, 0x57f514dd )	/* encrypted */
+	ROM_LOAD( "ic15.bin",     0x4000, 0x4000, 0x5a1d2fb0 )	/* encrypted */
+	ROM_LOAD( "ic28.bin",     0x8000, 0x4000, 0xa597828a )
+
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic61.bin",     0x0000, 0x2000, 0x3b03004e )
+							/*0x2000 empty */
+	ROM_LOAD( "ic62.bin",     0x4000, 0x2000, 0x6130f93c )
+							/*0x6000 empty */
+	ROM_LOAD( "ic63.bin",     0x8000, 0x2000, 0xe571fe81 )
+							/*0xa000 empty */
+
+	ROM_REGION(0x6000)	/* 24k for sprites data */
+	ROM_LOAD( "ic55.bin",     0x0000, 0x4000, 0xee2d3ed3 )
+	ROM_LOAD( "ic56.bin",     0x4000, 0x2000, 0xf04a4b50 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
+
+	ROM_REGION(0x0620)	/* I don't know about the following ROMs */
+	ROM_LOAD( "ic100.bin",    0x0000, 0x0200, 0x7b0c8ce5 )
+	ROM_LOAD( "ic7.bin",      0x0200, 0x0020, 0x89ba674f )
+	ROM_LOAD( "ic89.bin",     0x0220, 0x0400, 0x1d4b02cb )
+ROM_END
+
+void suprloco_decode(void);
+struct GameDriver suprloco_driver =
+{
+	__FILE__,
+	0,
+	"suprloco",
+	"Super Locomotive",
+	"1983",
+	"Sega",
+	BASE_CREDITS,
+	0,
+	&system1_small_machine_driver,
+	0,
+
+	suprloco_rom,
+	0, suprloco_decode,
+	0,
+	0,
+
+	starjack_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0, 0
 };

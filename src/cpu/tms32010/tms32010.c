@@ -58,7 +58,20 @@ typedef struct
 #define ARP_REG		0x0100	/* ARP	(Auxiliary Register Pointer) */
 #define DP_REG		0x0001	/* DP	(Data memory Pointer (bank) bit) */
 
-static UINT16	opcode=0;
+static UINT8 tms320c10_reg_layout[] = {
+	TMS320C10_PC,TMS320C10_STK3,TMS320C10_ACC,TMS320C10_PREG,TMS320C10_TREG,-1,
+	TMS320C10_AR0,TMS320C10_AR1,TMS320C10_STR,0
+};
+
+static UINT8 tms320c10_win_layout[] = {
+	 0, 0,80, 4,	/* register window (top rows) */
+	 0, 5,33,17,	/* disassembler window (left colums) */
+	34, 5,46, 8,	/* memory #1 window (right, upper middle) */
+	34,14,46, 8,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+static UINT16   opcode=0;
 static UINT8	opcode_major=0, opcode_minor, opcode_minr;	/* opcode split into MSB and LSB */
 static tms320c10_Regs R;
 INT32 tms320c10_ICount;
@@ -768,13 +781,21 @@ unsigned tms320c10_get_reg(int regnum)
 	switch( regnum )
 	{
 		case TMS320C10_PC: return R.PC;
+		/* This is actually not a stack pointer, but the stack contents */
+		case TMS320C10_STK3: return R.STACK[3];	
 		case TMS320C10_ACC: return R.ACC;
+		case TMS320C10_STR: return R.STR;
 		case TMS320C10_PREG: return R.Preg;
 		case TMS320C10_TREG: return R.Treg;
 		case TMS320C10_AR0: return R.AR[0];
 		case TMS320C10_AR1: return R.AR[1];
-		case TMS320C10_STR: return R.STR;
-		case TMS320C10_STACK3: return R.STACK[3];
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = REG_SP_CONTENTS - regnum;
+				if( offset < 4 )
+					return R.STACK[offset];
+			}
 	}
 	return 0;
 }
@@ -788,13 +809,21 @@ void tms320c10_set_reg(int regnum, unsigned val)
 	switch( regnum )
 	{
 		case TMS320C10_PC: R.PC = val; break;
+		/* This is actually not a stack pointer, but the stack contents */
+		case TMS320C10_STK3: R.STACK[3] = val; break;
+		case TMS320C10_STR: R.STR = val; break;
 		case TMS320C10_ACC: R.ACC = val; break;
 		case TMS320C10_PREG: R.Preg = val; break;
 		case TMS320C10_TREG: R.Treg = val; break;
 		case TMS320C10_AR0: R.AR[0] = val; break;
 		case TMS320C10_AR1: R.AR[1] = val; break;
-		case TMS320C10_STR: R.STR = val; break;
-		case TMS320C10_STACK3: R.STACK[3] = val; break;
+		default:
+			if( regnum < REG_SP_CONTENTS )
+			{
+				unsigned offset = REG_SP_CONTENTS - regnum;
+				if( offset < 4 )
+					R.STACK[offset] = val;
+			}
     }
 }
 
@@ -851,6 +880,9 @@ const char *tms320c10_info(void *context, int regnum)
 		case CPU_INFO_VERSION: return "1.01";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1999 by Quench";
+		case CPU_INFO_REG_LAYOUT: return (const char*)tms320c10_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)tms320c10_win_layout;
+
 		case CPU_INFO_PC: sprintf(buffer[which], "%04X:", r->PC); break;
 		case CPU_INFO_SP: sprintf(buffer[which], "%08X", r->ACC); break;
 #ifdef MAME_DEBUG
@@ -883,13 +915,13 @@ const char *tms320c10_info(void *context, int regnum)
 				r->STR & 0x0001 ? '1':'.');
             break;
 		case CPU_INFO_REG+TMS320C10_PC: sprintf(buffer[which], "PC:%04X",  r->PC); break;
+		case CPU_INFO_REG+TMS320C10_STK3: sprintf(buffer[which], "STK3:%04X", r->STACK[3]); break;
+		case CPU_INFO_REG+TMS320C10_STR: sprintf(buffer[which], "STR:%04X", r->STR); break;
 		case CPU_INFO_REG+TMS320C10_ACC: sprintf(buffer[which], "ACC:%08X", r->ACC); break;
 		case CPU_INFO_REG+TMS320C10_PREG: sprintf(buffer[which], "P:%08X",   r->Preg); break;
 		case CPU_INFO_REG+TMS320C10_TREG: sprintf(buffer[which], "T:%04X",   r->Treg); break;
 		case CPU_INFO_REG+TMS320C10_AR0: sprintf(buffer[which], "AR0:%04X", r->AR[0]); break;
 		case CPU_INFO_REG+TMS320C10_AR1: sprintf(buffer[which], "AR1:%04X", r->AR[1]); break;
-		case CPU_INFO_REG+TMS320C10_STR: sprintf(buffer[which], "STR:%04X", r->STR); break;
-		case CPU_INFO_REG+TMS320C10_STACK3: sprintf(buffer[which], "STAK3:%04X", r->STACK[3]); break;
 	}
 	return buffer[which];
 }

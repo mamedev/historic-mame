@@ -388,7 +388,7 @@ static struct MachineDriver lastduel_machine_driver =
 	0,
 
 	/* video hardware */
-	512, 256, { 63, 455, 0, 255 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
 
 	lastduel_gfxdecodeinfo,
 	1024, 1024,
@@ -434,7 +434,7 @@ static struct MachineDriver madgear_machine_driver =
 	0,
 
 	/* video hardware */
-	512, 256, { 63, 455, 0, 255 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
 
 	lastduel_gfxdecodeinfo,
 	1024, 1024,
@@ -893,7 +893,7 @@ struct GameDriver lastduel_driver =
 	__FILE__,
 	0,
 	"lastduel",
-	"Last Duel",
+	"Last Duel (US)",
 	"1988",
 	"Capcom",
 	"Bryan McPhail",
@@ -939,7 +939,7 @@ struct GameDriver madgear_driver =
 	__FILE__,
 	0,
 	"madgear",
-	"Mad Gear",
+	"Mad Gear (US)",
 	"1989",
 	"Capcom",
 	"Bryan McPhail\n\nDriver Notes: \n  Tile roms missing!\n",

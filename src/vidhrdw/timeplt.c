@@ -120,24 +120,20 @@ static void get_bg_tile_info(int col,int row)
 void timeplt_vh_stop(void)
 {
 	tilemap_dispose(bg_tilemap);
-	tilemap_stop();
 }
 
 int timeplt_vh_start(void)
 {
-	if (tilemap_start() == 0)
+	bg_tilemap = tilemap_create(0,8,8,32,32,0,0);
+
+	if (bg_tilemap)
 	{
-		bg_tilemap = tilemap_create(0,8,8,32,32,0,0);
+		bg_tilemap->tile_get_info = get_bg_tile_info;
 
-		if (bg_tilemap)
-		{
-			bg_tilemap->tile_get_info = get_bg_tile_info;
-
-			return 0;
-		}
-
-		timeplt_vh_stop();
+		return 0;
 	}
+
+	timeplt_vh_stop();
 
 	return 1;
 }
@@ -170,11 +166,11 @@ void timeplt_colorram_w(int offset,int data)
 
 void timeplt_flipscreen_w(int offset,int data)
 {
-	int attributes;
+	int attr;
 
 	flipscreen = data & 1;
-	attributes = flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0;
-	tilemap_set_attributes(bg_tilemap,attributes);
+	attr = flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0;
+	tilemap_set_attributes(bg_tilemap,attr);
 }
 
 /* Return the current video scan line */

@@ -142,28 +142,24 @@ void xevious_vh_stop(void)
 {
 	tilemap_dispose(fg_tilemap);
 	tilemap_dispose(bg_tilemap);
-	tilemap_stop();
 }
 
 int xevious_vh_start(void)
 {
-	if (tilemap_start() == 0)
+	fg_tilemap = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
+	bg_tilemap = tilemap_create(0,                  8,8,64,32,1,1);
+
+	if (fg_tilemap && bg_tilemap)
 	{
-		fg_tilemap = tilemap_create(TILEMAP_TRANSPARENT,8,8,64,32,1,1);
-		bg_tilemap = tilemap_create(0,                  8,8,64,32,1,1);
+		fg_tilemap->tile_get_info = get_fg_tile_info;
+		fg_tilemap->transparent_pen = 0;
 
-		if (fg_tilemap && bg_tilemap)
-		{
-			fg_tilemap->tile_get_info = get_fg_tile_info;
-			fg_tilemap->transparent_pen = 0;
+		bg_tilemap->tile_get_info = get_bg_tile_info;
 
-			bg_tilemap->tile_get_info = get_bg_tile_info;
-
-			return 0;
-		}
-
-		xevious_vh_stop();
+		return 0;
 	}
+
+	xevious_vh_stop();
 
 	return 1;
 }

@@ -115,13 +115,13 @@ INLINE void cba (void)
 /* $12 ILLEGAL */
 INLINE void undoc1 (void)
 {
-	X += RM( S + 1);
+	X += RM( S + 1 );
 }
 
 /* $13 ILLEGAL */
 INLINE void undoc2 (void)
 {
-	X += RM( S + 1);
+	X += RM( S + 1 );
 }
 
 
@@ -311,7 +311,7 @@ INLINE void ble( void )
 /* $30 TSX inherent ----- */
 INLINE void tsx (void)
 {
-	X=( S + 1 );
+	X = ( S + 1 );
 }
 
 /* $31 INS inherent ----- */
@@ -341,7 +341,7 @@ INLINE void des (void)
 /* $35 TXS inherent ----- */
 INLINE void txs (void)
 {
-	S=( X - 1 );
+	S = ( X - 1 );
 }
 
 /* $36 PSHA inherent ----- */
@@ -1784,7 +1784,6 @@ INLINE void ldd_di( void )
 /* $dd STD direct -**0- */
 INLINE void std_di( void )
 {
-	UINT16 t;
 	DIRECT;
 	CLR_NZV;
 	SET_NZ16(D);
@@ -1927,7 +1926,6 @@ INLINE void ldd_ix( void )
 /* $ed STD indexed -**0- */
 INLINE void std_ix( void )
 {
-	UINT16 t;
 	INDEXED;
 	CLR_NZV;
 	SET_NZ16(D);
@@ -2074,7 +2072,6 @@ INLINE void ldd_ex( void )
 /* $fd STD extended -**0- */
 INLINE void std_ex( void )
 {
-	UINT16 t;
 	EXTENDED;
 	CLR_NZV;
 	SET_NZ16(D);

@@ -5,7 +5,8 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
-enum { I86_IP, I86_AX, I86_CX, I86_DX, I86_BX, I86_SP, I86_BP, I86_SI, I86_DI,
+enum {
+	I86_IP=1, I86_AX, I86_CX, I86_DX, I86_BX, I86_SP, I86_BP, I86_SI, I86_DI,
 	I86_FLAGS, I86_ES, I86_CS, I86_SS, I86_DS,
 	I86_VECTOR, I86_NMI_STATE, I86_IRQ_STATE};
 

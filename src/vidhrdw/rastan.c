@@ -165,7 +165,7 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int scrollx,scrolly;
 
 
-memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+palette_init_used_colors();
 
 {
 	int color,code,i;
@@ -322,7 +322,7 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int scrollx,scrolly;
 
 
-memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+palette_init_used_colors();
 
 /* TODO: we are using the same table for background and foreground tiles, but this */
 /* causes the sly to be black instead of blue. */
@@ -486,7 +486,7 @@ void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 	int scrollx,scrolly;
 
-    memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+    palette_init_used_colors();
 
     /* TODO: we are using the same table for background and foreground tiles, but this */
     /* causes the sly to be black instead of blue. */

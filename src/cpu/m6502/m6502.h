@@ -23,15 +23,15 @@
 #define _M6502_H
 
 #include "osd_cpu.h"
-
-#define SUPP65C02	1		/* set to 1 to support the 65C02 opcodes */
-#define SUPP6510	1		/* set to 1 to support the 6510 opcodes */
+#include "cpuintrf.h"
 
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
 #define FAST_MEMORY 1
 
-enum { M6502_A, M6502_X, M6502_Y, M6502_S, M6502_PC, M6502_P,
-	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE };
+enum {
+	M6502_PC=1, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y,
+	M6502_EA, M6502_ZP, M6502_NMI_STATE, M6502_IRQ_STATE
+};
 
 #define M6502_INT_NONE  0
 #define M6502_INT_IRQ	1
@@ -64,7 +64,8 @@ extern const char *m6502_info(void *context, int regnum);
 /****************************************************************************
  * The 65C02
  ****************************************************************************/
-#define M65C02_A						M6502_A
+#if HAS_M65C02
+#define M65C02_A                        M6502_A
 #define M65C02_X						M6502_X
 #define M65C02_Y						M6502_Y
 #define M65C02_S						M6502_S
@@ -75,7 +76,7 @@ extern const char *m6502_info(void *context, int regnum);
 #define M65C02_NMI_STATE				M6502_NMI_STATE
 #define M65C02_IRQ_STATE				M6502_IRQ_STATE
 
-#define M65C02_INT_NONE 				M6502_INT_NONE
+#define M65C02_INT_NONE                 M6502_INT_NONE
 #define M65C02_INT_IRQ					M6502_INT_IRQ
 #define M65C02_INT_NMI					M6502_INT_NMI
 
@@ -102,11 +103,13 @@ extern void m65c02_set_irq_callback(int (*callback)(int irqline));
 extern void m65c02_state_save(void *file);
 extern void m65c02_state_load(void *file);
 extern const char *m65c02_info(void *context, int regnum);
+#endif
 
 /****************************************************************************
  * The 6510
  ****************************************************************************/
-#define M6510_A 						M6502_A
+#if HAS_M6510
+#define M6510_A                         M6502_A
 #define M6510_X 						M6502_X
 #define M6510_Y 						M6502_Y
 #define M6510_S 						M6502_S
@@ -117,7 +120,7 @@ extern const char *m65c02_info(void *context, int regnum);
 #define M6510_NMI_STATE 				M6502_NMI_STATE
 #define M6510_IRQ_STATE 				M6502_IRQ_STATE
 
-#define M6510_INT_NONE					M6502_INT_NONE
+#define M6510_INT_NONE                  M6502_INT_NONE
 #define M6510_INT_IRQ					M6502_INT_IRQ
 #define M6510_INT_NMI					M6502_INT_NMI
 
@@ -144,6 +147,7 @@ extern void m6510_set_irq_callback(int (*callback)(int irqline));
 extern void m6510_state_save(void *file);
 extern void m6510_state_load(void *file);
 extern const char *m6510_info(void *context, int regnum);
+#endif
 
 #ifdef MAME_DEBUG
 extern int mame_debug;

@@ -1,6 +1,9 @@
 /*
  * 2asm: Convert binary files to 80*86 assembler. Version 1.00
  * Adapted by Andrea Mazzoleni for use with MAME
+ * HJB 990321:
+ * Changed output of hex values from 0xxxxh to $xxxx format
+ * Removed "ptr" from "byte ptr", "word ptr" and "dword ptr"
 */
 
 /* 2asm comments
@@ -87,6 +90,8 @@ static int instruction_offset;
 
 static char* ubufs;           /* start of buffer */
 static char* ubufp;           /* last position of buffer */
+static int invalid_opcode = 0;
+static int first_space = 1;
 
 static int prefix;            /* segment override prefix byte */
 static int modrmv;            /* flag for getting modrm byte */
@@ -565,11 +570,11 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
       } else
         signchar = '+';
       if (delta || !optional)
-        uprintf("%c%0*lXh", (char)signchar, (int)(extend+1), (long)delta);
+		uprintf("%c$%0*lX", (char)signchar, (int)(extend), (long)delta);
     } else {
       if (extend==2)
         delta = (UINT16)delta;
-      uprintf("%0.*lXh", (int)(2*extend+1), (long)delta );
+	  uprintf("$%0.*lX", (int)(2*extend), (long)delta );
     }
     return;
   }
@@ -586,9 +591,9 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
        } else
          signchar = '+';
        if (sign)
-         uprintf("%c%03lXh", (char)signchar, delta & 0xFFL);
+		 uprintf("%c$%02lX", (char)signchar, delta & 0xFFL);
        else
-         uprintf("%03lXh", delta & 0xFFL);
+		 uprintf("$%02lX", delta & 0xFFL);
        break;
 
   case 2:
@@ -598,9 +603,9 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
        } else
          signchar = '+';
        if (sign)
-         uprintf("%c%05lXh", (char)signchar, delta & 0xFFFFL);
+		 uprintf("%c$%04lX", (char)signchar, delta & 0xFFFFL);
        else
-         uprintf("%05lXh", delta & 0xFFFFL);
+		 uprintf("$%04lX", delta & 0xFFFFL);
        break;
 
   case 4:
@@ -610,9 +615,9 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
        } else
          signchar = '+';
        if (sign)
-         uprintf("%c%09lXh", (char)signchar, delta & 0xFFFFFFFFL);
+		 uprintf("%c$%08lX", (char)signchar, delta & 0xFFFFFFFFL);
        else
-         uprintf("%09lXh", delta & 0xFFFFFFFFL);
+		 uprintf("$%08lX", delta & 0xFFFFFFFFL);
        break;
   }
 }
@@ -702,12 +707,12 @@ static void do_modrm(char subtype)
   if (must_do_size) {
     if (wordop) {
       if (addrsize==32 || opsize==32) {       /* then must specify size */
-        ua_str("dword ptr ");
+		ua_str("dword ");
       } else {
-        ua_str("word ptr ");
+		ua_str("word ");
       }
     } else {
-      ua_str("byte ptr ");
+	  ua_str("byte ");
     }
   }
   if ((mod == 0) && (rm == 5) && (addrsize == 32)) {/* mem operand with 32 bit ofs */
@@ -842,7 +847,7 @@ static void percent(char type, char subtype)
             break;
        }
        name = addr_to_hex(vofs+instruction_offset,1);
-       uprintf("%s", name);
+	   uprintf("$%s ($%+d)", name, vofs);
        break;
 
   case 'K':
@@ -992,7 +997,6 @@ static void percent(char type, char subtype)
    }
 }
 
-int invalid_opcode = 0;
 
 static void ua_str(char *str)
 {
@@ -1008,6 +1012,15 @@ static void ua_str(char *str)
     must_do_size = 0;
 
   while ((c = *str++) != 0) {
+	if (c == ' ' && first_space)
+	{
+		first_space = 0;
+		do
+		{
+			uputchar(' ');
+		} while ( (int)(ubufp - ubufs) < 5 );
+	}
+	else
     if (c == '%') {
       c = *str++;
       percent(c, *str++);
@@ -1029,8 +1042,9 @@ unsigned DasmI86(unsigned char* data, char* buffer, unsigned pc) {
 	/* output buffer */
 	ubufs = buffer;
 	ubufp = buffer;
+	first_space = 1;
 
-        prefix = 0;
+	prefix = 0;
 	modrmv = sibv = -1;     /* set modrm and sib flags */
 	opsize = addrsize = 16;
 	c = getbyte();

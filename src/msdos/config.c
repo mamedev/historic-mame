@@ -22,6 +22,7 @@ extern int translucency;
 extern int frameskip,autoframeskip;
 extern int scanlines, use_vesa, video_sync, wait_vsync, antialias, ntsc;
 extern int stretch, use_double;
+extern int use_artwork, use_samples;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern int beam, flicker;
 extern float gamma_correction;
@@ -301,6 +302,8 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	{
 		stretch = 0;
 	}
+        use_artwork = get_bool   ("config", "artwork",      NULL,  1);
+        use_samples = get_bool   ("config", "samples",      NULL,  1);
 	use_double  = get_bool   ("config", "double",       NULL, -1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);

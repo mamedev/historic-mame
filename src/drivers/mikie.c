@@ -20,6 +20,7 @@ MAIN BOARD:
 
 
 void mikie_palettebank_w(int offset,int data);
+void mikie_flipscreen_w(int offset,int data);
 void mikie_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mikie_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -77,9 +78,11 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x2000, 0x2001, coin_counter_w },
 	{ 0x2002, 0x2002, mikie_sh_irqtrigger_w },
+	{ 0x2006, 0x2006, mikie_flipscreen_w },
 	{ 0x2007, 0x2007, interrupt_enable_w },
-	{ 0x2100, 0x2100, MWA_NOP },		/* Watchdog */
+	{ 0x2100, 0x2100, watchdog_reset_w },
 	{ 0x2200, 0x2200, mikie_palettebank_w },
 	{ 0x2400, 0x2400, soundlatch_w },
 	{ 0x2800, 0x288f, MWA_RAM, &spriteram, &spriteram_size },
@@ -222,8 +225,8 @@ static struct GfxLayout charlayout =
 	512,    /* 512 characters */
 	4,      /* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the bitplanes are packed */
-	{ 7*4*8, 6*4*8, 5*4*8, 4*4*8, 3*4*8, 2*4*8, 1*4*8, 0*4*8 },
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*4*8, 1*4*8, 2*4*8, 3*4*8, 4*4*8, 5*4*8, 6*4*8, 7*4*8 },
 	8*4*8     /* every char takes 32 consecutive bytes */
 };
 
@@ -233,10 +236,10 @@ static struct GfxLayout spritelayout =
 	256,	        /* 256 sprites */
 	4,	           /* 4 bits per pixel */
 	{ 0, 4, 256*128*8+0, 256*128*8+4 },
-	{ 39*16, 38*16, 37*16, 36*16, 35*16, 34*16, 33*16, 32*16,
-			7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			0, 1, 2, 3, 48*8+0, 48*8+1, 48*8+2, 48*8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			32*16, 33*16, 34*16, 35*16, 36*16, 37*16, 38*16, 39*16 },
 	128*8	/* every sprite takes 64 bytes */
 };
 
@@ -284,7 +287,7 @@ static struct MachineDriver mikie_machine_driver =
 	mikie_init_machine,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,16*8*16+16*8*16,
 	mikie_vh_convert_color_prom,
@@ -456,7 +459,7 @@ struct GameDriver mikie_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
@@ -482,7 +485,7 @@ struct GameDriver mikiej_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
@@ -508,7 +511,7 @@ struct GameDriver mikiehs_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
