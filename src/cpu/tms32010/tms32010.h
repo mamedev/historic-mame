@@ -23,7 +23,7 @@
 /****************************************************************************
  * Use this in the I/O port address fields of your driver for the BIO pin
  * i.e,
- *	{ TMS32010_BIO, TMS32010_BIO, tms32010_bio_line_r },
+ *	{ TMS32010_PORT_RANGE(TMS32010_BIO, TMS32010_BIO), tms32010_bio_line_r },
  */
 
 #define TMS32010_BIO			0x100		/* BIO input */

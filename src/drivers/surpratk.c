@@ -316,4 +316,4 @@ static DRIVER_INIT( surpratk )
 
 
 
-GAME( 1990, surpratk, 0, surpratk, surpratk, surpratk, ROT0, "Konami", "Surprise Attack (Japan)" )
+GAME( 1990, surpratk, 0, surpratk, surpratk, surpratk, ROT0, "Konami", "Surprise Attack (Japan ver. M)" )

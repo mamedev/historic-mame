@@ -170,6 +170,22 @@ WRITE_HANDLER( rtype2_sample_addr_w )
 	sample_addr <<= 5;
 }
 
+WRITE_HANDLER( poundfor_sample_addr_w )
+{
+	/* poundfor writes both sample start and sample END - a first for Irem...
+	   we don't handle the end written here, 00 marks the sample end as usual. */
+	if (offset > 1) return;
+
+	sample_addr >>= 4;
+
+	if (offset == 1)
+		sample_addr = (sample_addr & 0x00ff) | ((data << 8) & 0xff00);
+	else
+		sample_addr = (sample_addr & 0xff00) | ((data << 0) & 0x00ff);
+
+	sample_addr <<= 4;
+}
+
 READ_HANDLER( m72_sample_r )
 {
 	return memory_region(REGION_SOUND1)[sample_addr];

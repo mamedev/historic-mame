@@ -149,6 +149,9 @@
 #if (HAS_DSP32C)
 #include "cpu/dsp32/dsp32.h"
 #endif
+#if (HAS_PIC16C54 || HAS_PIC16C55 || HAS_PIC16C56 || HAS_PIC16C57 || HAS_PIC16C58)
+#include "cpu/pic16c5x/pic16c5x.h"
+#endif
 
 
 #ifdef MESS
@@ -637,6 +640,21 @@ const struct cpu_interface cpuintrf[] =
 #if (HAS_DSP32C)
 	#define dsp32c_ICount dsp32_icount
 	CPU0(DSP32C,   dsp32c,   4,  0,1.00,32,24ledw, 0,24,LE,4, 4 ),
+#endif
+#if (HAS_PIC16C54)
+	CPU3(PIC16C54,pic16C54,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+#endif
+#if (HAS_PIC16C55)
+	CPU3(PIC16C55,pic16C55,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+#endif
+#if (HAS_PIC16C56)
+	CPU3(PIC16C56,pic16C56,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+#endif
+#if (HAS_PIC16C57)
+	CPU3(PIC16C57,pic16C57,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
+#endif
+#if (HAS_PIC16C58)
+	CPU3(PIC16C58,pic16C58,  0,  0,1.00,8,16lew, 0,12,LE,1, 2 ),
 #endif
 
 #ifdef MESS

@@ -350,7 +350,7 @@ enum { EEPROM_SYS32_0=0, EEPROM_ALIEN3, EEPROM_RADM, EEPROM_RADR };
 
 static unsigned char irq_status;
 static data16_t *system32_shared_ram;
-data16_t *system32_mixerregs;		// mixer registers
+data16_t *system32_mixerregs_monitor_a;		// mixer registers
 static int s32_blo, s32_bhi;		// bank high and low values
 static int s32_f1_prot;			// port f1 is used to protect the sound program on some games
 //static int s32_rand;
@@ -372,6 +372,7 @@ int system32_mixerShift;
 extern int system32_screen_mode;
 extern int system32_screen_old_mode;
 extern int system32_allow_high_resolution;
+extern int multi32;
 
 WRITE16_HANDLER( sys32_videoram_w );
 WRITE16_HANDLER ( sys32_ramtile_w );
@@ -629,7 +630,7 @@ static READ16_HANDLER(sys32_read_random)
 	return mame_rand(); // new random.c random number code, see clouds in ga2
 }
 
-extern int sys32_brightness[3];
+extern int sys32_brightness_monitor_a[3];
 
 void system32_set_colour (int offset)
 {
@@ -654,9 +655,9 @@ void system32_set_colour (int offset)
 	b = (b << 4) | (b2 << 3);
 
 	/* there might be better ways of doing this ... but for now its functional ;-) */
-	r_bright = sys32_brightness[0]; r_bright &= 0x3f;
-	g_bright = sys32_brightness[1]; b_bright &= 0x3f;
-	b_bright = sys32_brightness[2]; b_bright &= 0x3f;
+	r_bright = sys32_brightness_monitor_a[0]; r_bright &= 0x3f;
+	g_bright = sys32_brightness_monitor_a[1]; g_bright &= 0x3f; // LBO - was b_bright
+	b_bright = sys32_brightness_monitor_a[2]; b_bright &= 0x3f;
 
 	if ((r_bright & 0x20)) { r = (r * (r_bright&0x1f))>>5; } else { r = r+(((0xf8-r) * (r_bright&0x1f))>>5); }
 	if ((g_bright & 0x20)) { g = (g * (g_bright&0x1f))>>5; } else { g = g+(((0xf8-g) * (g_bright&0x1f))>>5); }
@@ -768,7 +769,7 @@ static MEMORY_WRITE16_START( system32_writemem )
 	{ 0x400000, 0x41ffff, sys32_spriteram_w, &sys32_spriteram16 }, // Sprites
 	{ 0x600000, 0x607fff, system32_paletteram16_xBBBBBGGGGGRRRRR_scrambled_word_w, &scrambled_paletteram16 },	// magic data-line-scrambled mirror of palette RAM * we need to shuffle data written then?
 	{ 0x608000, 0x60ffff, system32_paletteram16_xBGRBBBBGGGGRRRR_word_w, &paletteram16 }, // Palettes
-	{ 0x610000, 0x6100ff, MWA16_RAM, &system32_mixerregs }, // mixer chip registers
+	{ 0x610000, 0x6100ff, MWA16_RAM, &system32_mixerregs_monitor_a }, // mixer chip registers
 	{ 0x700000, 0x701fff, MWA16_RAM, &system32_shared_ram }, // Shared ram with the z80
 	{ 0xa00000, 0xa00fff, MWA16_RAM, &sys32_protram },	// protection RAM
 	{ 0xc00006, 0xc00007, system32_eeprom_w },
@@ -2164,8 +2165,8 @@ ROM_START( sonic )
 	ROM_LOAD( "epr15785.36", 0x00000, 0x40000, 0x0fe7422e )
 	ROM_RELOAD(              0x100000, 0x40000             )
 	ROM_LOAD( "mpr15784.35", 0x180000, 0x100000, 0x42f06714 )
-	ROM_LOAD( "mpr15783.34", 0x280000, 0x100000, 0xe4220eea )
-	ROM_LOAD( "mpr15782.33", 0x380000, 0x100000, 0xcf56b5a0 ) // (this is the only rom unchanged from the prototype)
+	ROM_LOAD( "mpr15782.33", 0x280000, 0x100000, 0xcf56b5a0 ) // (this is the only rom unchanged from the prototype)
+	ROM_LOAD( "mpr15783.34", 0x380000, 0x100000, 0xe4220eea )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD16_BYTE( "mpr15789.14", 0x000000, 0x100000, 0x4378f12b )
@@ -2206,8 +2207,8 @@ ROM_START( sonicp )
 	ROM_LOAD( "sonsnd0.bin", 0x00000, 0x40000, 0x569C8D4B )
 	ROM_RELOAD(              0x100000, 0x40000             )
 	ROM_LOAD( "sonsnd1.bin", 0x180000, 0x100000, 0xF4FA5A21 )
-	ROM_LOAD( "sonsnd2.bin", 0x280000, 0x100000, 0xE1BD45A5 )
-	ROM_LOAD( "sonsnd3.bin", 0x380000, 0x100000, 0xCF56B5A0 )
+	ROM_LOAD( "sonsnd3.bin", 0x280000, 0x100000, 0xCF56B5A0 )
+	ROM_LOAD( "sonsnd2.bin", 0x380000, 0x100000, 0xE1BD45A5 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD32_BYTE( "sonscl0.bin", 0x000000, 0x080000, 0x445E31B9 )
@@ -2572,6 +2573,7 @@ static DRIVER_INIT ( s32 )
 	system32_mixerShift = 4;
 
 	install_mem_write16_handler(0, 0x20f4e0, 0x20f4e1, trap_w);
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( alien3 )
@@ -2593,6 +2595,7 @@ static DRIVER_INIT ( alien3 )
 	install_mem_write16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_w);
 	install_mem_write16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_w);
 	install_mem_write16_handler(0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_w);
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( brival )
@@ -2607,6 +2610,7 @@ static DRIVER_INIT ( brival )
 
 	install_mem_read16_handler (0, 0x20ba00, 0x20ba07, brival_protection_r);
 	install_mem_write16_handler(0, 0xa000000, 0xa00fff, brival_protboard_w);
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( ga2 )
@@ -2622,7 +2626,7 @@ static DRIVER_INIT ( ga2 )
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
 	sys32_sprite_priority_kludge = 0xf;
-
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( spidey )
@@ -2632,6 +2636,7 @@ static DRIVER_INIT ( spidey )
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
 	sys32_sprite_priority_kludge = 0xf;
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( f1sl )
@@ -2641,6 +2646,7 @@ static DRIVER_INIT ( f1sl )
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
 	sys32_sprite_priority_kludge = 0xf;
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( arf )
@@ -2656,7 +2662,7 @@ static DRIVER_INIT ( arf )
 	sys32_sprite_priority_kludge = 0xf;
 
 	system32_temp_kludge = 0;
-
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( holo )
@@ -2669,6 +2675,7 @@ static DRIVER_INIT ( holo )
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( sonic )
@@ -2681,6 +2688,7 @@ static DRIVER_INIT ( sonic )
 
 	install_mem_write16_handler(0, 0xc00040, 0xc00055, sonic_track_reset_w);
 	install_mem_read16_handler (0, 0xc00040, 0xc00055, sonic_track_r);
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( driving )
@@ -2695,6 +2703,7 @@ static DRIVER_INIT ( driving )
 	install_mem_write16_handler(0, 0xc00050, 0xc00051, sys32_driving_steer_c00050_w);
 	install_mem_write16_handler(0, 0xc00052, 0xc00053, sys32_driving_accel_c00052_w);
 	install_mem_write16_handler(0, 0xc00054, 0xc00055, sys32_driving_brake_c00054_w);
+	multi32 = 0;
 }
 
 static DRIVER_INIT ( radm )
@@ -2741,6 +2750,7 @@ static DRIVER_INIT ( jpark )
 	install_mem_write16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_w);
 	install_mem_write16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_w);
 	install_mem_write16_handler(0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_w);
+	multi32 = 0;
 }
 
 

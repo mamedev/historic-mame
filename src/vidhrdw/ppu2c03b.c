@@ -104,6 +104,8 @@ static ppu2c03b_chip *chips = 0;
 
 static void scanline_callback( int num );
 
+void (*ppu_latch)( offs_t offset );
+
 
 /*************************************
  *

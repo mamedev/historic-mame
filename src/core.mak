@@ -27,6 +27,7 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/profiler.o \
 	$(OBJ)/harddisk.o $(OBJ)/md5.o $(OBJ)/machine/idectrl.o \
 	$(OBJ)/sound/wavwrite.o \
+	$(OBJ)/x86drc.o \
 	$(sort $(DBGOBJS))
 
 TOOLS = romcmp$(EXE) hdcomp$(EXE)

@@ -1353,9 +1353,9 @@ void galaxian_init_stars(void)
 	total_stars = 0;
 	generator = 0;
 
-	for (y = 255;y >= 0;y--)
+	for (y = 0;y < 256;y++)
 	{
-		for (x = 511;x >= 0;x--)
+		for (x = 0;x < 512;x++)
 		{
 			UINT32 bit0;
 

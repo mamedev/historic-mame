@@ -1000,6 +1000,11 @@ static int pick_cpu(int *cpunum, int *cycles, double end)
 	for (cpu = cpudata; cpu <= lastcpu; cpu++)
 		if (cpu->suspended && !cpu->nocount)
 		{
+			/* account for the cycles eaten */
+			int cycles_to_eat = (int)((double)(end - cpu->time) * cpu->sec_to_cycles);
+			cpu_add_to_totalcycles(cpu->index, cycles_to_eat);
+
+			/* bump forward */
 			cpu->time = end;
 			cpu->lost = 0;
 		}

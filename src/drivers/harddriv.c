@@ -598,7 +598,7 @@ static PORT_READ16_START( driversnd_readport_dsp )
 	{ TMS32010_PORT_RANGE(0, 0), hdsnddsp_rom_r },
 	{ TMS32010_PORT_RANGE(1, 1), hdsnddsp_comram_r },
 	{ TMS32010_PORT_RANGE(2, 2), hdsnddsp_compare_r },
-	{ TMS32010_BIO, TMS32010_BIO, hdsnddsp_get_bio },
+	{ TMS32010_PORT_RANGE(TMS32010_BIO, TMS32010_BIO), hdsnddsp_get_bio },
 PORT_END
 
 

@@ -628,14 +628,14 @@ static void update_palette(struct mame_display *display)
 	// loop over dirty colors in batches of 32
 	for (i = 0; i < display->game_palette_entries; i += 32)
 	{
-//		UINT32 dirtyflags = palette_lookups_invalid ? ~0 : display->game_palette_dirty[i / 32];
-		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
+		UINT32 dirtyflags = palette_lookups_invalid ? ~0 : display->game_palette_dirty[i / 32];
+//		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
 		if (dirtyflags)
 		{
 			display->game_palette_dirty[i / 32] = 0;
 
 			// loop over all 32 bits and update dirty entries
-			for (j = 0; j < 32; j++, dirtyflags >>= 1)
+			for (j = 0; (j < 32) && (i+j < display->game_palette_entries); j++, dirtyflags >>= 1)
 				if (dirtyflags & 1)
 				{
 					// extract the RGB values

@@ -152,7 +152,7 @@ MACHINE_DRIVER_START( irem_audio )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(irem_sound_readmem,irem_sound_writemem)
 	MDRV_CPU_PORTS(irem_sound_readport,irem_sound_writeport)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, irem_ay8910_interface)
 	MDRV_SOUND_ADD(MSM5205, irem_msm5205_interface)

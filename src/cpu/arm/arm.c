@@ -1,6 +1,6 @@
 /* arm.c
 
-	ARM 2/3 Emulation
+	ARM 2/3/6 Emulation
 
 	Todo:
 	Software interrupts unverified (nothing uses them so far, but they should be ok)
@@ -678,7 +678,7 @@ const char *arm_info(void *context, int regnum)
 		break;
 	case CPU_INFO_NAME: 		return "ARM";
 	case CPU_INFO_FAMILY:		return "Acorn Risc Machine";
-	case CPU_INFO_VERSION:		return "1.0";
+	case CPU_INFO_VERSION:		return "1.2";
 	case CPU_INFO_FILE: 		return __FILE__;
 	case CPU_INFO_CREDITS:		return "Copyright 2002 Bryan McPhail, bmcphail@tendril.co.uk";
 	case CPU_INFO_REG_LAYOUT:	return (const char*)arm_reg_layout;
@@ -767,9 +767,12 @@ static void HandleMemSingle( data32_t insn )
 		{
 			rnv = (GetRegister(rn) - off);
 		}
+
 		if (insn & INSN_SDT_W)
 		{
 			SetRegister(rn,rnv);
+
+	//check writeback???
 		}
 		else if (rn == eR15)
 		{
@@ -788,6 +791,7 @@ static void HandleMemSingle( data32_t insn )
 			rnv = GetRegister(rn);
 		}
 	}
+
 	/* Do the transfer */
 	rd = (insn & INSN_RD) >> INSN_RD_SHIFT;
 	if (insn & INSN_SDT_L)
@@ -830,29 +834,44 @@ static void HandleMemSingle( data32_t insn )
 			WRITE32(rnv, rd == eR15 ? R15 + 8 : GetRegister(rd));
 		}
 	}
-	/* Do post-indexing writeback */
-	if (!(insn & INSN_SDT_P)/* && (insn&INSN_SDT_W)*/)  //mish
-	{
-//		if (a && rd==rn) logerror("%08x:  Read %08x into %d then wroteback to %d\n",R15,rnv,rd,rn);
-		if (off)
-		{
 
-			if (insn & INSN_SDT_U)
-			{
+	/* Do post-indexing writeback */
+	if (!(insn & INSN_SDT_P)/* && (insn&INSN_SDT_W)*/)
+	{
+		if (insn & INSN_SDT_U)
+		{
+			/* Writeback is applied in pipeline, before value is read from mem,
+				so writeback is effectively ignored */
+			if (rd==rn) {
+				SetRegister(rn,GetRegister(rd));
+				//todo: check for offs... ?
+			}
+			else {
+
+				if ((insn&INSN_SDT_W)!=0)
+				logerror("%08x:  RegisterWritebackIncrement %d %d %d\n",R15,(insn & INSN_SDT_P)!=0,(insn&INSN_SDT_W)!=0,(insn & INSN_SDT_U)!=0);
+
 				SetRegister(rn,(rnv + off));
 			}
-			else
-			{
+		}
+		else
+		{
+			/* Writeback is applied in pipeline, before value is read from mem,
+				so writeback is effectively ignored */
+			if (rd==rn) {
+				SetRegister(rn,GetRegister(rd));
+			//	logerror("Arm %08x: LDR style with rn==rn\n",R15);
+			}
+			else {
 				SetRegister(rn,(rnv - off));
+
+				if ((insn&INSN_SDT_W)!=0)
+				logerror("%08x:  RegisterWritebackDecrement %d %d %d\n",R15,(insn & INSN_SDT_P)!=0,(insn&INSN_SDT_W)!=0,(insn & INSN_SDT_U)!=0);
 			}
 		}
-//		else
-//			logerror("Skipped writeback because of 0 off\n");
 	}
-	//else
-	//	if (a && rd==rn) logerror("%08x:  Read %08x into %d then wroteback to %d BUT writeback turned off\n",R15,rnv,rd,rn);
 
-//arm_check_irq_state()
+//	arm_check_irq_state()
 
 } /* HandleMemSingle */
 
@@ -1023,9 +1042,7 @@ static void HandleALU( data32_t insn )
 			if (rdn==eR15) {
 				if (ARM_DEBUG_CORE)
 					logerror("%08x: Setting R15 with S flag\n",R15);
-//				R15 = (rd & ADDRESS_MASK) | (R15 & PSR_MASK) | (R15 & MODE_MASK);
-//				SetRegister(rdn,(rd&ADDRESS_MASK)|(rd&PSR_MASK)|oldMode);
-				SetRegister(rdn,rd|oldMode);
+				SetRegister(rdn,rd|oldMode); /* Todo: Should mask rd?? Mode not affected by S bit? */
 
 				/* IRQ masks may have changed in this instruction */
 //				arm_check_irq_state();
@@ -1080,7 +1097,7 @@ static void HandleMul( data32_t insn)
 	}
 }
 
-static int loadInc ( data32_t pat, data32_t rbv)
+static int loadInc ( data32_t pat, data32_t rbv, data32_t s)
 {
 	int i,result;
 
@@ -1090,9 +1107,10 @@ static int loadInc ( data32_t pat, data32_t rbv)
 		if( (pat>>i)&1 )
 		{
 			if (i==15) {
-				if (ARM_DEBUG_CORE)
-					logerror("%08x: LoadInc on R15\n",R15);
-				SetRegister( i, (R15&PSR_MASK) | (R15&MODE_MASK) | ((READ32(rbv+=4))&ADDRESS_MASK) );
+				if (s) /* Pull full contents from stack */
+					SetRegister( 15, READ32(rbv+=4) );
+				else /* Pull only address, preserve mode & status flags */
+					SetRegister( 15, (R15&PSR_MASK) | (R15&MODE_MASK) | ((READ32(rbv+=4))&ADDRESS_MASK) );
 			} else
 				SetRegister( i, READ32(rbv+=4) );
 
@@ -1102,7 +1120,7 @@ static int loadInc ( data32_t pat, data32_t rbv)
 	return result;
 }
 
-static int loadDec( data32_t pat, data32_t rbv)
+static int loadDec( data32_t pat, data32_t rbv, data32_t s)
 {
 	int i,result;
 
@@ -1111,11 +1129,11 @@ static int loadDec( data32_t pat, data32_t rbv)
 	{
 		if( (pat>>i)&1 )
 		{
-			//mish CHECK - should mode bits be stored to mem and just copied here, or masked here
 			if (i==15) {
-				if (ARM_DEBUG_CORE)
-					logerror("%08x: StoreInc on R15\n",R15);
-				SetRegister( i, (R15&PSR_MASK) | (R15&MODE_MASK) | ((READ32(rbv-=4))&ADDRESS_MASK) );
+				if (s) /* Pull full contents from stack */
+					SetRegister( 15, READ32(rbv-=4) );
+				else /* Pull only address, preserve mode & status flags */
+					SetRegister( 15, (R15&PSR_MASK) | (R15&MODE_MASK) | ((READ32(rbv-=4))&ADDRESS_MASK) );
 			}
 			else
 				SetRegister( i, READ32(rbv -=4) );
@@ -1180,7 +1198,7 @@ static void HandleMemBlock( data32_t insn)
 			/* Incrementing */
 			if (!(insn & INSN_BDT_P)) rbp = rbp + (- 4);
 
-			result = loadInc( insn & 0xffff, rbp );
+			result = loadInc( insn & 0xffff, rbp, insn&INSN_BDT_S );
 
 			if (insn & 0x8000) {
 				R15-=4;
@@ -1202,7 +1220,7 @@ static void HandleMemBlock( data32_t insn)
 				rbp = rbp - (- 4);
 			}
 
-			result = loadDec( insn&0xffff, rbp );
+			result = loadDec( insn&0xffff, rbp, insn&INSN_BDT_S );
 			if (insn & 0x8000) {
 				R15-=4;
 			}
@@ -1253,7 +1271,7 @@ static void HandleMemBlock( data32_t insn)
 			}
 		}
 		if( insn & (1<<eR15) )
-		R15 -= 12;
+			R15 -= 12;
 	}
 } /* HandleMemBlock */
 

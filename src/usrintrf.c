@@ -4195,6 +4195,9 @@ void init_user_interface(void)
 
 	snapno = 0; /* reset snapshot counter */
 
+	/* clear the input memory */
+	while (code_read_async() != CODE_NONE) {};
+
 	setup_menu_init();
 	setup_selected = 0;
 

@@ -193,6 +193,174 @@ int palette_start(void)
 
 
 
+//* AAT 032803
+/*-------------------------------------------------
+	palette_set_shadow_mode(mode)
+
+		mode: 0 = use preset 0 (default shadow)
+		      1 = use preset 1 (default highlight)
+		      2 = use preset 2 *
+		      3 = use preset 3 *
+
+	* Preset 2 & 3 work independently under 32bpp,
+	  supporting up to four different types of
+	  shadows at one time. They mirror preset 1 & 2
+	  in lower depth settings to maintain
+	  compatibility.
+
+
+	palette_set_shadow_factor32(factor)
+
+		factor: 1.0(normal) to 0.0(darker)
+
+
+	palette_set_highlight_factor32(factor)
+
+		factor: 1.0(normal) to 2.0(brighter)
+
+
+	palette_set_shadow_dRGB32(mode, dr, dg, db, noclip)
+
+		mode:    0 to   3, which preset to configure
+
+		  dr: -255 to 255,   red displacement
+		  dg: -255 to 255, green displacement
+		  db: -255 to 255,  blue displacement
+
+		noclip: 0 = resultant RGB clipped at 0x00/0xff
+		        1 = resultant RGB wraparound 0x00/0xff
+
+	* Color shadows only work under 32bpp.
+	  This function has no effect in lower color
+	  depths where
+
+		palette_set_shadow_factor32() or
+		palette_set_highlight_factor32()
+
+	  should be used instead.
+
+-------------------------------------------------*/
+#define MAX_SHADOW_PRESETS 4
+
+static UINT16 *shadow_table_base[MAX_SHADOW_PRESETS];
+
+
+static void internal_set_shadow_preset(int mode, double factor, int dr, int dg, int db, int noclip, int style, int init)
+{
+	static double oldfactor[MAX_SHADOW_PRESETS] = {0,0,0,0};
+	static int oldRGB[MAX_SHADOW_PRESETS][3] = {{0,0,0},{0,0,0},{0,0,0},{0,0,0}};
+	static int oldclip;
+
+	UINT16 *table_ptr;
+	int i, r, g, b;
+
+	if (mode < 0 || mode >= MAX_SHADOW_PRESETS) return;
+
+	if ((table_ptr = shadow_table_base[mode]) == NULL) return;
+
+	if (style)
+	{
+		if (factor < 0) factor = 0;
+
+		if (!init && oldfactor[mode] == factor) return;
+
+		oldfactor[mode] = factor;
+
+		if (colormode != DIRECT_32BIT)
+		{
+			if (style == 1) palette_set_shadow_factor(factor); else
+			if (style == 2) palette_set_highlight_factor(factor);
+			return;
+		}
+
+		for (i=0; i<32768; i++)
+		{
+			r = (int)(factor * (i & 0x7c00));
+			g = (int)(factor * (i & 0x03e0));
+			b = (int)(factor * (i & 0x001f));
+
+			if (r < 0x7c00) r &= 0x7c00; else r = 0x7c00;
+			if (g < 0x03e0) g &= 0x03e0; else g = 0x03e0;
+			if (b < 0x001f) b &= 0x001f; else b = 0x001f;
+
+			table_ptr[i] = (UINT16)(r | g | b);
+		}
+	}
+	else
+	{
+		if (colormode != DIRECT_32BIT) return;
+
+		if (dr < -0xff) dr = -0xff; else if (dr > 0xff) dr = 0xff;
+		if (dg < -0xff) dg = -0xff; else if (dg > 0xff) dg = 0xff;
+		if (db < -0xff) db = -0xff; else if (db > 0xff) db = 0xff;
+		dr >>= 3; dg >>= 3; db >>= 3;
+
+		if (!init && oldclip==noclip && oldRGB[mode][0]==dr && oldRGB[mode][1]==dg && oldRGB[mode][2]==db) return;
+
+		#ifdef MAME_DEBUG
+			//usrintf_showmessage("shadow %d recalc %d %d %d %02x", mode, dr, dg, db, noclip);
+		#endif
+
+		oldclip = noclip;
+		oldRGB[mode][0] = dr; oldRGB[mode][1] = dg; oldRGB[mode][2] = db;
+
+		dr <<= 10; dg <<= 5;
+
+		if (noclip)
+		{
+			for (i=0; i<32768; i++)
+			{
+				r = (int)(dr + (i & 0x7c00));
+				g = (int)(dg + (i & 0x03e0));
+				b = (int)(db + (i & 0x001f));
+
+				table_ptr[i] = (UINT16)((r & 0x7c00) | (g & 0x03e0) | (b & 0x001f));
+			}
+		}
+		else
+		{
+			for (i=0; i<32768; i++)
+			{
+				r = (int)(dr + (i & 0x7c00));
+				g = (int)(dg + (i & 0x03e0));
+				b = (int)(db + (i & 0x001f));
+
+				if (r < 0) r = 0; else if (r > 0x7c00) r = 0x7c00;
+				if (g < 0) g = 0; else if (g > 0x03e0) g = 0x03e0;
+				if (b < 0) b = 0; else if (b > 0x001f) b = 0x001f;
+
+				table_ptr[i] = (UINT16)(r | g | b);
+			}
+		}
+	}
+}
+
+
+void palette_set_shadow_mode(int mode)
+{
+	if (mode >= 0 && mode < MAX_SHADOW_PRESETS) palette_shadow_table = shadow_table_base[mode];
+}
+
+
+void palette_set_shadow_factor32(double factor)
+{
+	internal_set_shadow_preset(0, factor, 0, 0, 0, 0, 1, 0);
+}
+
+
+void palette_set_highlight_factor32(double factor)
+{
+	internal_set_shadow_preset(1, factor, 0, 0, 0, 0, 2, 0);
+}
+
+
+void palette_set_shadow_dRGB32(int mode, int dr, int dg, int db, int noclip)
+{
+	internal_set_shadow_preset(mode, 0, dr, dg, db, noclip, 0, 0);
+}
+
+
+
 /*-------------------------------------------------
 	palette_alloc - allocate memory for palette
 	structures
@@ -278,6 +446,7 @@ static int palette_alloc(void)
 		Machine->debug_remapped_colortable[2*i+1] = i % DEBUGGER_TOTAL_COLORS;
 	}
 
+#if 0
 	/* allocate the shadow lookup table for 16bpp modes */
 	palette_shadow_table = NULL;
 	if (colormode == PALETTIZED_16BIT)
@@ -298,6 +467,61 @@ static int palette_alloc(void)
 				palette_shadow_table[i] += Machine->drv->total_colors;
 		}
 	}
+#else
+	{
+		//* AAT 032803
+		UINT16 *table_ptr;
+		int c = Machine->drv->total_colors;
+		int cx2 = c << 1;
+
+		for (i=0; i<MAX_SHADOW_PRESETS; i++) shadow_table_base[i] = NULL;
+		palette_shadow_table = NULL;
+
+		if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS)
+		{
+			shadow_table_base[0] = table_ptr = auto_malloc(65536 * sizeof(shadow_table_base[0]));
+			if (!table_ptr) return 1;
+
+			if (colormode != DIRECT_32BIT)
+			{
+				for (i=0; i<c; i++) table_ptr[i] = c + i;
+				for (i=c; i<65536; i++) table_ptr[i] = i;
+			}
+
+			if (palette_shadow_table == NULL) palette_shadow_table = table_ptr;
+
+			internal_set_shadow_preset(0, PALETTE_DEFAULT_SHADOW_FACTOR32, 0, 0, 0, 0, 1, 1);
+		}
+
+		if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS)
+		{
+			shadow_table_base[1] = table_ptr = auto_malloc(65536 * sizeof(shadow_table_base[0]));
+			if (!table_ptr) return 1;
+
+			if (colormode != DIRECT_32BIT)
+			{
+				for (i=0; i<c; i++) table_ptr[i] = cx2 + i;
+				for (i=c; i<65536; i++) table_ptr[i] = i;
+			}
+
+			if (palette_shadow_table == NULL) palette_shadow_table = table_ptr;
+
+			internal_set_shadow_preset(1, PALETTE_DEFAULT_HIGHLIGHT_FACTOR32, 0, 0, 0, 0, 2, 1);
+		}
+
+		if (colormode == DIRECT_32BIT)
+		{
+			if (shadow_table_base[0] != NULL) shadow_table_base[2] = shadow_table_base[0] + 32768;
+			if (shadow_table_base[1] != NULL) shadow_table_base[3] = shadow_table_base[1] + 32768;
+		}
+		else
+		{
+			shadow_table_base[2] = shadow_table_base[0];
+			shadow_table_base[3] = shadow_table_base[1];
+		}
+	}
+#endif
+
 	return 0;
 }
 

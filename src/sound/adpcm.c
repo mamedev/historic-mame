@@ -745,13 +745,13 @@ static void OKIM6295_data_w(int num, int data)
 
 				/* determine the start/stop positions */
 				base = &voice->region_base[ okim6295_base[num][i] + okim6295_command[num] * 8];
-				start = (base[0] << 16) + (base[1] << 8) + base[2];
-				stop = (base[3] << 16) + (base[4] << 8) + base[5];
+				start = ((base[0] << 16) + (base[1] << 8) + base[2]) & 0x3ffff;
+				stop  = ((base[3] << 16) + (base[4] << 8) + base[5]) & 0x3ffff;
 
 				/* set up the voice to play this sample */
-				if (start < 0x40000 && stop < 0x40000)
+				if (start < stop)
 				{
-					if (!voice->playing)	/* fixes Got-cha and Steel Force */
+					if (!voice->playing) /* fixes Got-cha and Steel Force */
 					{
 						voice->playing = 1;
 						voice->base = &voice->region_base[okim6295_base[num][i] + start];
@@ -765,14 +765,13 @@ static void OKIM6295_data_w(int num, int data)
 					}
 					else
 					{
-						logerror("OKIM6295: requested to play sample %02x on non-stopped voice\n",okim6295_command[num]);
+						logerror("OKIM6295:%d requested to play sample %02x on non-stopped voice\n",num,okim6295_command[num]);
 					}
 				}
-
 				/* invalid samples go here */
 				else
 				{
-					logerror("OKIM6295: requested to play invalid sample %02x\n",okim6295_command[num]);
+					logerror("OKIM6295:%d requested to play invalid sample %02x\n",num,okim6295_command[num]);
 					voice->playing = 0;
 				}
 			}
@@ -827,6 +826,11 @@ READ_HANDLER( OKIM6295_status_1_r )
 	return OKIM6295_status_r(1);
 }
 
+READ_HANDLER( OKIM6295_status_2_r )
+{
+	return OKIM6295_status_r(2);
+}
+
 READ16_HANDLER( OKIM6295_status_0_lsb_r )
 {
 	return OKIM6295_status_r(0);
@@ -837,6 +841,11 @@ READ16_HANDLER( OKIM6295_status_1_lsb_r )
 	return OKIM6295_status_r(1);
 }
 
+READ16_HANDLER( OKIM6295_status_2_lsb_r )
+{
+	return OKIM6295_status_r(2);
+}
+
 READ16_HANDLER( OKIM6295_status_0_msb_r )
 {
 	return OKIM6295_status_r(0) << 8;
@@ -845,6 +854,11 @@ READ16_HANDLER( OKIM6295_status_0_msb_r )
 READ16_HANDLER( OKIM6295_status_1_msb_r )
 {
 	return OKIM6295_status_r(1) << 8;
+}
+
+READ16_HANDLER( OKIM6295_status_2_msb_r )
+{
+	return OKIM6295_status_r(2) << 8;
 }
 
 
@@ -866,6 +880,11 @@ WRITE_HANDLER( OKIM6295_data_1_w )
 	OKIM6295_data_w(1, data);
 }
 
+WRITE_HANDLER( OKIM6295_data_2_w )
+{
+	OKIM6295_data_w(2, data);
+}
+
 WRITE16_HANDLER( OKIM6295_data_0_lsb_w )
 {
 	if (ACCESSING_LSB)
@@ -878,6 +897,12 @@ WRITE16_HANDLER( OKIM6295_data_1_lsb_w )
 		OKIM6295_data_w(1, data & 0xff);
 }
 
+WRITE16_HANDLER( OKIM6295_data_2_lsb_w )
+{
+	if (ACCESSING_LSB)
+		OKIM6295_data_w(2, data & 0xff);
+}
+
 WRITE16_HANDLER( OKIM6295_data_0_msb_w )
 {
 	if (ACCESSING_MSB)
@@ -888,4 +913,10 @@ WRITE16_HANDLER( OKIM6295_data_1_msb_w )
 {
 	if (ACCESSING_MSB)
 		OKIM6295_data_w(1, data >> 8);
+}
+
+WRITE16_HANDLER( OKIM6295_data_2_msb_w )
+{
+	if (ACCESSING_MSB)
+		OKIM6295_data_w(2, data >> 8);
 }

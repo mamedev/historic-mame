@@ -158,6 +158,12 @@ struct MachineSound
 #if (HAS_X1_010)
 #include "sound/x1_010.h"
 #endif
+#if (HAS_MULTIPCM)
+#include "sound/multipcm.h"
+#endif
+#if (HAS_C6280)
+#include "sound/c6280.h"
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -338,13 +344,19 @@ enum
 	SOUND_YMF278B,
 #endif
 #if (HAS_GAELCO_CG1V)
- SOUND_GAELCO_CG1V,
+	SOUND_GAELCO_CG1V,
 #endif
 #if (HAS_GAELCO_GAE1)
- SOUND_GAELCO_GAE1,
+	SOUND_GAELCO_GAE1,
 #endif
 #if (HAS_X1_010)
- SOUND_X1_010,
+	SOUND_X1_010,
+#endif
+#if (HAS_MULTIPCM)
+	SOUND_MULTIPCM,
+#endif
+#if (HAS_C6280)
+ SOUND_C6280,
 #endif
 
 #ifdef MESS

@@ -28,6 +28,7 @@
 	Boogie Wings				MBD		102		52,52,71,71		141, 141		104			113,99,200
 	Double Wings				MBE		102		52				141				104
 	Fighter's History			MBF		101		52,153			56,74			[Scratched]	200, 153, 170
+	Heavy Smash					MBG		156		52				141							153*3
 	Night Slashers				MBH		156		52,52,52,153,153,153	74, 141	104			99,200
 	Locked N Loaded				MBM		101		?				?				?			?
 	Joe & Mac Return			MBN		156		52				141							223,223
@@ -591,6 +592,14 @@ int deco16_2_video_init(int split) /* 2 times playfield generator chips */
 	return 0;
 }
 
+int deco_allocate_sprite_bitmap(void)
+{
+	/* Allow sprite bitmap to be used by Deco32 games as well */
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->scrbitmap->width, Machine->scrbitmap->height, -8 );
+
+	return (sprite_priority_bitmap!=0);
+}
+
 /*****************************************************************************************/
 
 static void deco16_pf_update(
@@ -783,19 +792,22 @@ void deco16_print_debug_info(void)
 	if (keyboard_pressed(KEYCODE_O))
 		return;
 
-	sprintf(buf,"%04X %04X %04X %04X",deco16_pf12_control[0],deco16_pf12_control[1],deco16_pf12_control[2],deco16_pf12_control[3]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,40,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"%04X %04X %04X %04X",deco16_pf12_control[4],deco16_pf12_control[5],deco16_pf12_control[6],deco16_pf12_control[7]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,48,0,TRANSPARENCY_NONE,0);
-
-	sprintf(buf,"%04X %04X %04X %04X",deco16_pf34_control[0],deco16_pf34_control[1],deco16_pf34_control[2],deco16_pf34_control[3]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,60,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"%04X %04X %04X %04X",deco16_pf34_control[4],deco16_pf34_control[5],deco16_pf34_control[6],deco16_pf34_control[7]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,68,0,TRANSPARENCY_NONE,0);
+	if (deco16_pf12_control) {
+		sprintf(buf,"%04X %04X %04X %04X",deco16_pf12_control[0],deco16_pf12_control[1],deco16_pf12_control[2],deco16_pf12_control[3]);
+		for (j = 0;j< 16+3;j++)
+			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,40,0,TRANSPARENCY_NONE,0);
+		sprintf(buf,"%04X %04X %04X %04X",deco16_pf12_control[4],deco16_pf12_control[5],deco16_pf12_control[6],deco16_pf12_control[7]);
+		for (j = 0;j< 16+3;j++)
+			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,48,0,TRANSPARENCY_NONE,0);
+	}
+	if (deco16_pf34_control) {
+		sprintf(buf,"%04X %04X %04X %04X",deco16_pf34_control[0],deco16_pf34_control[1],deco16_pf34_control[2],deco16_pf34_control[3]);
+		for (j = 0;j< 16+3;j++)
+			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,60,0,TRANSPARENCY_NONE,0);
+		sprintf(buf,"%04X %04X %04X %04X",deco16_pf34_control[4],deco16_pf34_control[5],deco16_pf34_control[6],deco16_pf34_control[7]);
+		for (j = 0;j< 16+3;j++)
+			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,68,0,TRANSPARENCY_NONE,0);
+	}
 	sprintf(buf,"%04X",deco16_priority);
 	for (j = 0;j< 4;j++)
 		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,80,0,TRANSPARENCY_NONE,0);

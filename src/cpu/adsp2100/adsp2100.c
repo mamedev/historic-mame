@@ -1986,10 +1986,18 @@ void adsp2105_set_tx_callback(TX_CALLBACK cb)
 void adsp2105_load_boot_data(data8_t *srcdata, data32_t *dstdata)
 {
 	/* see how many words we need to copy */
+#ifdef LSB_FIRST
+	UINT32 size = 8 * (srcdata[2] + 1), i;
+#else
 	UINT32 size = 8 * (srcdata[3] + 1), i;
+#endif
 	for (i = 0; i < size; i++)
 	{
+#ifdef LSB_FIRST
 		UINT32 opcode = (srcdata[i*4+0] << 16) | (srcdata[i*4+1] << 8) | srcdata[i*4+2];
+#else
+		UINT32 opcode = (srcdata[i*4+1] << 16) | (srcdata[i*4+0] << 8) | srcdata[i*4+3];
+#endif
 		ADSP2100_WRPGM(&dstdata[i], opcode);
 	}
 }
@@ -2094,10 +2102,18 @@ void adsp2115_set_tx_callback(TX_CALLBACK cb)
 void adsp2115_load_boot_data(data8_t *srcdata, data32_t *dstdata)
 {
 	/* see how many words we need to copy */
+#ifdef LSB_FIRST
 	UINT32 size = 8 * (srcdata[3] + 1), i;
+#else
+	UINT32 size = 8 * (srcdata[2] + 1), i;
+#endif
 	for (i = 0; i < size; i++)
 	{
+#ifdef LSB_FIRST
 		UINT32 opcode = (srcdata[i*4+0] << 16) | (srcdata[i*4+1] << 8) | srcdata[i*4+2];
+#else
+		UINT32 opcode = (srcdata[i*4+1] << 16) | (srcdata[i*4+0] << 8) | srcdata[i*4+3];
+#endif
 		ADSP2100_WRPGM(&dstdata[i], opcode);
 	}
 }

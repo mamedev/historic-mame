@@ -8,181 +8,149 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m6502/m6502.h"
 #include <stdio.h>
 
 int vb_scrollx_hi=0;
-unsigned char *vb_scrollx_lo;
+int vb_scrollx_lo=0;
+int vb_scrolly_hi=0;
+
+unsigned char *vb_scrolly_lo;
 unsigned char *vb_videoram;
-//unsigned char *spriteram;
 unsigned char *vb_attribram;
-unsigned char *vb_fgattribram;
-int vball_gfxset;
+int vball_gfxset=0;
 int vb_bgprombank=0xff;
 int vb_spprombank=0xff;
 
+static struct tilemap *bg_tilemap;
+static int scrollx[31];
+
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static UINT32 background_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5) + ((row & 0x20) <<6);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	unsigned char code = vb_videoram[tile_index];
+	unsigned char attr = vb_attribram[tile_index];
+	SET_TILE_INFO(
+			0,
+			code + ((attr & 0x1f) << 8) + (vball_gfxset<<8),
+			(attr >> 5) & 0x7,
+			0)
+}
+
+
 VIDEO_START( vb )
 {
-	dirtybuffer = auto_malloc( 0x800 );
-	if( !dirtybuffer )
+	bg_tilemap = tilemap_create(get_bg_tile_info,background_scan,TILEMAP_OPAQUE, 8, 8,64,64);
+	if( !bg_tilemap )
 		return 1;
-	memset(dirtybuffer,1, 0x800);
 
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2);
-	if( !tmpbitmap ) 
-		return 1;
+	tilemap_set_scroll_rows(bg_tilemap,32);
+
 	return 0;
 }
 
-
-void vb_bgprombank_w( int bank )
+WRITE_HANDLER( vb_videoram_w )
 {
-	int i;
-
-	unsigned char* color_prom;
-
-	if (bank==vb_bgprombank) return;
-
-	color_prom = memory_region(REGION_PROMS) + bank*0x80;
-
-	logerror("BGPROM Bank:%x, bank offset:%x\n",bank, bank*0x80);
-
-	for (i=0;i<128;i++, color_prom++)
+	if (vb_videoram[offset] != data)
 	{
-		palette_set_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
-				       (color_prom[0x800] & 0x0f) << 4);
-//		logerror("\t%d: r:%d g:%d b:%d\n",i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
-//				       (color_prom[0x800] & 0x0f) << 4);
-	}
-
-	vb_bgprombank=bank;
-
-}
-
-void vb_spprombank_w( int bank )
-{
-
-	int i;
-
-	unsigned char* color_prom;
-
-	if (bank==vb_spprombank) return;
-
-	color_prom = memory_region(REGION_PROMS)+0x400 + bank*0x80;
-
-	logerror("SPPROM Bank:%x, bank offset:%x\n",bank, 0x400 + bank*0x80);
-
-	for (i=128;i<256;i++,color_prom++)
-	{
-		palette_set_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
-				       (color_prom[0x800] & 0x0f) << 4);
-	}
-
-	vb_spprombank=bank;
-
-}
-
-READ_HANDLER( vb_foreground_r )
-{
-	return vb_videoram[offset];
-}
-
-
-WRITE_HANDLER( vb_foreground_w )
-{
-	if( vb_videoram[offset] != data ){
 		vb_videoram[offset] = data;
-		dirtybuffer[offset] = 1;
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
-
-
-READ_HANDLER( vb_fgattrib_r )
-{
-	return vb_fgattribram[offset];
-}
-
-
-WRITE_HANDLER( vb_fgattrib_w )
-{
-	if( vb_fgattribram[offset] != data ){
-		vb_fgattribram[offset] = data;
-		dirtybuffer[offset] = 1;
-	}
-}
-
 
 READ_HANDLER( vb_attrib_r )
 {
 	return vb_attribram[offset];
 }
 
-
 WRITE_HANDLER( vb_attrib_w )
 {
 	if( vb_attribram[offset] != data ){
 		vb_attribram[offset] = data;
-		dirtybuffer[offset] = 1;
+		tilemap_mark_tile_dirty(bg_tilemap,offset);
 	}
 }
 
-#if 0
-static void vb_draw_foreground( struct mame_bitmap *bitmap )
+void vb_bgprombank_w( int bank )
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
-	unsigned char *source = vb_videoram;
-	unsigned char *attrib_source = vb_fgattribram;
+	int i;
+	unsigned char* color_prom;
 
-	int sx,sy;
+	if (bank==vb_bgprombank) return;
 
-	for( sy=0; sy<256; sy+=8 ){
-		for( sx=0; sx<256; sx+=8 ){
-			int attributes = attrib_source[0];
-			int tile_number = source[0] + 256*( attributes & 0x1f );
-			int color = ( attributes >> 5 ) & 0x7;
-			if (tile_number)
-				drawgfx( bitmap,gfx, tile_number + (vball_gfxset?0:8192),
-				color,
-				0,0, /* no flip */
-				sx,sy,
-				0, /* no need to clip */
-				TRANSPARENCY_PEN,0);
-
-			source += 1;
-			attrib_source +=1;
-		}
+	color_prom = memory_region(REGION_PROMS) + bank*0x80;
+	for (i=0;i<128;i++, color_prom++) {
+		palette_set_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
+				       (color_prom[0x800] & 0x0f) << 4);
 	}
+	vb_bgprombank=bank;
 }
-#endif
+
+void vb_spprombank_w( int bank )
+{
+
+	int i;
+	unsigned char* color_prom;
+
+	if (bank==vb_spprombank) return;
+
+	color_prom = memory_region(REGION_PROMS)+0x400 + bank*0x80;
+	for (i=128;i<256;i++,color_prom++)	{
+		palette_set_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
+				       (color_prom[0x800] & 0x0f) << 4);
+	}
+	vb_spprombank=bank;
+}
+
+void vb_mark_all_dirty( void )
+{
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
+}
 
 #define DRAW_SPRITE( order, sx, sy ) drawgfx( bitmap, gfx, \
 					(which+order),color,flipx,flipy,sx,sy, \
-					clip,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
-	unsigned char *src;
+	unsigned char *src = spriteram;
 	int i;
-
-	src = spriteram;
 
 /*	240-Y    S|X|CLR|WCH WHICH    240-X
 	xxxxxxxx x|x|xxx|xxx xxxxxxxx xxxxxxxx
 */
-
-
 	for (i = 0;i < spriteram_size;i += 4)
 	{
 		int attr = src[i+1];
 		int which = src[i+2]+((attr & 0x07)<<8);
-		int sx = ((src[i+3] + 8) & 0xff) - 8;
+		int sx = ((src[i+3] + 8) & 0xff) - 7;
 		int sy = 240 - src[i];
 		int size = (attr & 0x80) >> 7;
 		int color = (attr & 0x38) >> 3;
 		int flipx = ~attr & 0x40;
 		int flipy = 0;
 		int dy = -16;
+
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+			dy = -dy;
+		}
 
 		switch (size)
 		{
@@ -200,77 +168,32 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 
 #undef DRAW_SPRITE
 
-static void vb_draw_background( struct mame_bitmap *bitmap )
-{
-	const struct GfxElement *gfx = Machine->gfx[0];
-	unsigned char *source = videoram;
-	unsigned char *attrib_source = vb_attribram;
-
-	int scrollx = vb_scrollx_hi - vb_scrollx_lo[0] -4;
-	int i,sx,sy;
-
-	for( i=0; i < 1; i++){
-		for( sy=0; sy<256; sy+=8 ){
-			for( sx=0; sx<256; sx+=8 ){
-				if ( dirtybuffer[source - videoram] ) {
-					int attributes = attrib_source[0];
-					int tile_number = source[0] + 256*( attributes & 0x1f );
-					int color = ( attributes >> 5 ) & 0x7;
-
-					drawgfx( tmpbitmap,gfx, tile_number + (vball_gfxset?8192:0),
-					color,
-					0,0, /* no flip */
-					sx,sy,
-					0, /* no need to clip */
-					TRANSPARENCY_NONE,0);
-
-					dirtybuffer[source - videoram] = 0;
-
-				}
-
-				if ( dirtybuffer[source + 0x400 - videoram] ) {
-					int attributes = attrib_source[0x400];
-					int tile_number = source[0x400] + 256*( attributes & 0x1f );
-					int color = ( attributes >> 5 ) & 0x7;
-
-					drawgfx( tmpbitmap,gfx, tile_number + (vball_gfxset?8192:0),
-					color,
-					0,0, /* no flip */
-					sx+256,sy,
-					0, /* no need to clip */
-					TRANSPARENCY_NONE,0);
-
-					dirtybuffer[source + 0x400 - videoram] = 0;
-
-				}
-
-
-				source += 1;
-				attrib_source +=1;
-			}
-		}
-	}
-
-	copyscrollbitmap(bitmap,tmpbitmap,
-			1,&scrollx,0,0,
-			&Machine->visible_area,
-			TRANSPARENCY_NONE,0);
-
-}
-
-
 VIDEO_UPDATE( vb )
 {
-//	Tripping the sprite funk-tastic. :-) PaulH
-/*	static int i=0;
+	int i;
 
-	i++;
-	i%=60;
+	tilemap_set_scrolly(bg_tilemap,0,vb_scrolly_hi + *vb_scrolly_lo);
 
-	vb_spprombank_w(i/15);
-*/
-	vb_draw_background( bitmap );
-	draw_sprites( bitmap );
-//	vb_draw_foreground( bitmap ); /* So far just hides half the game screen... */
+	/*To get linescrolling to work properly, we must ignore the 1st two scroll values, no idea why! -SJE */
+	for (i = 2;i < 32;i++) {
+		tilemap_set_scrollx(bg_tilemap,i,scrollx[i-2]);
+		//logerror("scrollx[%d] = %d\n",i,scrollx[i]);
+	}
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }
 
+
+/*I don't really understand what the proper timing of this should be,
+  but after TONS of testing, the tilemap individual line scrolling works as long as flip screen is not set -SJE
+*/
+INTERRUPT_GEN( vball_interrupt )
+{
+	int line = 31 - cpu_getiloops();
+	if (line < 13)
+		cpu_set_irq_line(0, M6502_IRQ_LINE, HOLD_LINE);
+	else if (line == 13)
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	//save the scroll x register value
+	if(line<32) scrollx[31-line] = (vb_scrollx_hi + vb_scrollx_lo+4);
+}

@@ -157,6 +157,9 @@ UINT64 activecpu_gettotalcycles64(void);
 UINT32 cpu_gettotalcycles(int cpu);
 UINT64 cpu_gettotalcycles64(int cpu);
 
+/* Account for cycles eaten by suspended CPUs */
+void cpu_add_to_totalcycles(int cpu, int cycles);
+
 /* Returns the number of CPU cycles before the next interrupt handler call */
 int activecpu_geticount(void);
 

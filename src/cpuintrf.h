@@ -276,7 +276,22 @@ enum
 	CPU_SH2,
 #endif
 #if (HAS_DSP32C)
- CPU_DSP32C,
+	CPU_DSP32C,
+#endif
+#if (HAS_PIC16C54)
+	CPU_PIC16C54,
+#endif
+#if (HAS_PIC16C55)
+	CPU_PIC16C55,
+#endif
+#if (HAS_PIC16C56)
+	CPU_PIC16C56,
+#endif
+#if (HAS_PIC16C57)
+	CPU_PIC16C57,
+#endif
+#if (HAS_PIC16C58)
+	CPU_PIC16C58,
 #endif
 
 #ifdef MESS

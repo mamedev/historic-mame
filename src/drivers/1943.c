@@ -457,4 +457,4 @@ ROM_END
 
 GAMEX( 1987, 1943,    0,    1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (US)", GAME_NO_COCKTAIL )
 GAMEX( 1987, 1943j,   1943, 1943, 1943, 0, ROT270, "Capcom", "1943 - The Battle of Midway (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai", GAME_NO_COCKTAIL )
+GAMEX( 1987, 1943kai, 0,    1943, 1943, 0, ROT270, "Capcom", "1943 Kai - Midway Kaisen", GAME_NO_COCKTAIL )

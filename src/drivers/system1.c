@@ -3456,37 +3456,6 @@ ROM_START( raflesia )
 															 /* pr-5317.106 */
 ROM_END
 
-ROM_START( raflsiau )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "epr-7433.129",	0x0000, 0x2000, 0x6f4931b0 )
-	ROM_LOAD( "epr-7434.130",	0x2000, 0x2000, 0xec46e21b )
-	ROM_LOAD( "epr-7435.131",	0x4000, 0x2000, 0xe035ff6b )
-	ROM_LOAD( "epr-7436.132",	0x6000, 0x2000, 0x6527aae7 )
-	ROM_LOAD( "epr-7437.133",	0x8000, 0x2000, 0xe13dd5e4 )
-	ROM_LOAD( "epr-7438.134",	0xa000, 0x2000, 0xa0aa4729 )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
-	ROM_LOAD( "epr-7420.120",	0x0000, 0x2000, 0x14387666 ) /* epr-7420.3 */
-
-	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "epr-7419.62",	0x0000, 0x2000, 0xbfd5f34c ) /* epr-7419.82 */
-	ROM_LOAD( "epr-7418.61",	0x2000, 0x2000, 0xf8cbc9b6 ) /* epr-7418.65 */
-	ROM_LOAD( "epr-7417.64",	0x4000, 0x2000, 0xe63501bc ) /* epr-7417.81 */
-	ROM_LOAD( "epr-7416.63",	0x6000, 0x2000, 0x093e5693 ) /* epr-7416.64 */
-	ROM_LOAD( "epr-7415.66",	0x8000, 0x2000, 0x1a8d6bd6 ) /* epr-7415.80 */
-	ROM_LOAD( "epr-7414.65",	0xa000, 0x2000, 0x5d20f218 ) /* epr-7414.63 */
-
-	ROM_REGION( 0x10000, REGION_GFX2, 0 ) /* 64k for sprites data */
-	ROM_LOAD( "epr-7407.117",	0x0000, 0x4000, 0xf09fc057 ) /* epr-7407.3 */
-	ROM_LOAD( "epr-7409.04",	0x4000, 0x4000, 0x819fedb8 ) /* epr-7409.1 */
-	ROM_LOAD( "epr-7408.110",	0x8000, 0x4000, 0x3189f33c ) /* epr-7408.4 */
-	ROM_LOAD( "epr-7410.05",	0xc000, 0x4000, 0xced74789 ) /* epr-7410.2 */
-
-	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* misc PROMs, but no color so don't use REGION_PROMS! */
-	ROM_LOAD( "pr-5317.76",		0x0000, 0x0100, 0x648350b8 ) /* timing? (not used) */
-															 /* pr-5317.106 */
-ROM_END
-
 ROM_START( spatter )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "epr-6392.116",	0x0000, 0x4000, 0x329b4506 ) /* encrypted */
@@ -4180,12 +4149,12 @@ GAME( 1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland 
 GAME( 1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (128k Ver.)" )
 GAME( 1984, flickyo,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (64k Ver.)" )
 GAME( 1984, wmatch,   0,        system1,  wmatch,   wmatch,   ROT270, "Sega", "Water Match" )
-GAME( 1984, bullfgt,  0,        system1,  bullfgt,  bullfgtj, ROT0,   "Sega / Coreland", "Bullfight" )
-GAME( 1984, thetogyu, bullfgt,  system1,  bullfgt,  bullfgtj, ROT0,   "Sega / Coreland", "The Togyu (Japan)" )
+GAME( 1984, bullfgt,  0,        system1,  bullfgt,  bullfgtj, ROT0,   "Coreland / Sega", "Bullfight" )
+GAME( 1984, thetogyu, bullfgt,  system1,  bullfgt,  bullfgtj, ROT0,   "Coreland / Sega", "The Togyu (Japan)" )
 GAME( 1984, spatter,  0,        small,    spatter,  spatter,  ROT0,   "Sega", "Spatter" )
 GAME( 1984, ssanchan, spatter,  small,    spatter,  spatter,  ROT0,   "Sega", "Sanrin San Chan (Japan)" )
-GAME( 1985, pitfall2, 0,        system1,  pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
-GAME( 1985, pitfallu, pitfall2, system1,  pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
+GAME( 1985, pitfall2, 0,        system1,  pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II - The Lost Caverns" )
+GAME( 1985, pitfallu, pitfall2, system1,  pitfallu, 0,        ROT0,   "Sega", "Pitfall II - The Lost Caverns (not encrypted)" )
 GAME( 1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja" )
 GAME( 1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Sega Ninja (not encrypted)" )
 GAME( 1985, nprinces, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (64k Ver. bootleg?)" )
@@ -4207,7 +4176,6 @@ GAME( 1985, chplftbl, chplft,   chplft,   chplft,   0,        ROT0,   "bootleg",
 GAME( 1985, 4dwarrio, 0,        system1,  4dwarrio, 4dwarrio, ROT0,   "Coreland / Sega", "4-D Warriors" )
 GAME( 1986, brain,    0,        brain,    brain,    0,        ROT0,   "Coreland / Sega", "Brain" )
 GAME( 1986, raflesia, 0,        system1,  raflesia, 4dwarrio, ROT270, "Coreland / Sega", "Rafflesia" )
-GAME( 1986, raflsiau, raflesia, system1,  raflesia, 0,        ROT270, "Coreland / Sega", "Rafflesia (not encrypted)" )
 GAME( 1986, wboy,     0,        system1,  wboy,     wboy,     ROT0,   "Sega (Escape license)", "Wonder Boy (set 1, new encryption)" )
 GAME( 1986, wboyo,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 1, old encryption)" )
 GAME( 1986, wboy2,    wboy,     system1,  wboy,     wboy2,    ROT0,   "Sega (Escape license)", "Wonder Boy (set 2)" )
@@ -4217,7 +4185,7 @@ GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Esc
 GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe" )
 GAMEX(1986, gardia,   0,        brain,    wboy,     gardia,   ROT270, "Sega / Coreland", "Gardia", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1986, gardiab,  gardia,   brain,    wboy,     gardiab,  ROT270, "bootleg", "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1986, noboranb, 0,        noboranb, noboranb, noboranb, ROT270, "bootleg", "Noboranka (Japan)" )
+GAMEX(1986, noboranb, 0,        noboranb, noboranb, noboranb, ROT270, "bootleg", "Noboranka (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX(1987, blockgal, 0,        blockgal, blockgal, 0,        ROT90,  "Sega / Vic Tokai", "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1987, blckgalb, blockgal, blockgal, blockgal, bootleg,  ROT90,  "bootleg", "Block Gal (bootleg)", GAME_NO_COCKTAIL )
 GAMEX(1987, tokisens, 0,        wbml,     tokisens, 0,        ROT90,  "Sega", "Toki no Senshi - Chrono Soldier", GAME_NO_COCKTAIL )

@@ -159,6 +159,7 @@
   317-0054      Shinobi (sound CPU)    NEC MC8123B 651
   317-0057      Fantasy Zone 2
   317-0064      Ufo Senshi Yohko Chan
+                Ninja Kid II sound program also seems to use this encryption
 
 
   Some text found in the ROMs:

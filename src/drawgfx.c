@@ -528,6 +528,7 @@ INLINE void blockmove_NtoN_transpen_noremap_flipx32(
 }
 
 
+
 static int afterdrawmask = 31;
 int pdrawgfx_shadow_lowpri = 0;
 
@@ -719,6 +720,23 @@ int pdrawgfx_shadow_lowpri = 0;
 #undef alpha_blend
 
 /* 32-bit version */
+//* AAT 032503: added limited 32-bit shadow and highlight support
+INLINE int SHADOW32(int c)
+{
+	#define RGB825(x) (((x)>>3&0x001f)|((x)>>6&0x03e0)|((x)>>9&0x7c00))
+	#define RGB528(x) (((x)<<3&0x00f8)|((x)<<6&0xf800)|((x)<<9&0xf80000))
+
+	// DEPENDENCY CHAIN!!!
+	c = RGB825(c);
+	c = palette_shadow_table[c];
+	c = RGB528(c);
+
+	return(c);
+
+	#undef RGB825
+	#undef RGB528
+}
+
 #define DATA_TYPE UINT32
 #define DEPTH 32
 #define alpha_blend_r alpha_blend_r32
@@ -737,7 +755,8 @@ int pdrawgfx_shadow_lowpri = 0;
 #define COLOR_ARG unsigned int colorbase,UINT8 *pridata,UINT32 pmask
 #define INCREMENT_DST(n) {dstdata+=(n);pridata += (n);}
 #define LOOKUP(n) (colorbase + (n))
-#define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
+//* 032903 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = SHADOW32(n);} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
+#define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(n); pridata[dest]|=0x80; } } }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_raw_pri32 args body
 #include "drawgfx.c"
 #undef DECLARE_SWAP_RAW_PRI
@@ -747,7 +766,8 @@ int pdrawgfx_shadow_lowpri = 0;
 
 #define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
-#define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = palette_shadow_table[n];} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
+//* 032903 #define SETPIXELCOLOR(dest,n) { if (((1 << (pridata[dest] & 0x1f)) & pmask) == 0) { if (pridata[dest] & 0x80) { dstdata[dest] = SHADOW32(n);} else { dstdata[dest] = (n);} } pridata[dest] = (pridata[dest] & 0x7f) | afterdrawmask; }
+#define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(n); pridata[dest]|=0x80; } } }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_pri32 args body
 #include "drawgfx.c"
 #undef DECLARE_SWAP_RAW_PRI
@@ -1337,6 +1357,7 @@ void fillbitmap(struct mame_bitmap *dest,pen_t pen,const struct rectangle *clip)
 }
 
 
+
 INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
@@ -1344,6 +1365,11 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 {
 	struct rectangle myclip;
 	int alphapen = 0;
+
+	//* AAT 032503: added limited 32-bit shadow and highlight support
+	UINT8 ah, al;
+
+	al = (pdrawgfx_shadow_lowpri) ? 0 : 0x80;
 
 	if (!scalex || !scaley) return;
 
@@ -1879,7 +1905,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 										case DRAWMODE_SHADOW:
 											if (((1 << pri[x]) & pri_mask) == 0)
 												dest[x] = palette_shadow_table[dest[x]];
-											pri[x] |= pdrawgfx_shadow_lowpri ? 0 : 0x80;
+											pri[x] |= al;
 											break;
 										}
 									}
@@ -1952,7 +1978,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 										case DRAWMODE_SHADOW:
 											if (((1 << pri[x]) & pri_mask) == 0)
 												dest[x] = palette_shadow_table[dest[x]];
-											pri[x] |= pdrawgfx_shadow_lowpri ? 0 : 0x80;
+											pri[x] |= al;
 											break;
 										}
 									}
@@ -2460,19 +2486,20 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 										switch(gfx_drawmode_table[c])
 										{
 										case DRAWMODE_SOURCE:
-											if (((1 << (pri[x] & 0x1f)) & pri_mask) == 0)
+											ah = pri[x];
+											if (((1 << (ah & 0x1f)) & pri_mask) == 0)
 											{
-												if (pri[x] & 0x80)
+												if (ah & 0x80)
 													dest[x] = palette_shadow_table[pal[c]];
 												else
 													dest[x] = pal[c];
 											}
-											pri[x] = (pri[x] & 0x7f) | 31;
+											pri[x] = (ah & 0x7f) | 31;
 											break;
 										case DRAWMODE_SHADOW:
 											if (((1 << pri[x]) & pri_mask) == 0)
 												dest[x] = palette_shadow_table[dest[x]];
-											pri[x] |= pdrawgfx_shadow_lowpri ? 0 : 0x80;
+											pri[x] |= al;
 											break;
 										}
 									}
@@ -2533,19 +2560,20 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 										switch(gfx_drawmode_table[c])
 										{
 										case DRAWMODE_SOURCE:
-											if (((1 << (pri[x] & 0x1f)) & pri_mask) == 0)
+											ah = pri[x];
+											if (((1 << (ah & 0x1f)) & pri_mask) == 0)
 											{
-												if (pri[x] & 0x80)
+												if (ah & 0x80)
 													dest[x] = palette_shadow_table[color + c];
 												else
 													dest[x] = color + c;
 											}
-											pri[x] = (pri[x] & 0x7f) | 31;
+											pri[x] = (ah & 0x7f) | 31;
 											break;
 										case DRAWMODE_SHADOW:
 											if (((1 << pri[x]) & pri_mask) == 0)
 												dest[x] = palette_shadow_table[dest[x]];
-											pri[x] |= pdrawgfx_shadow_lowpri ? 0 : 0x80;
+											pri[x] |= al;
 											break;
 										}
 									}
@@ -3105,147 +3133,147 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 					}
 
 					/* case 4: TRANSPARENCY_PEN_TABLE */
-					if (transparency == TRANSPARENCY_PEN_TABLE)
+					if (transparency == TRANSPARENCY_PEN_TABLE) //* 032903 shadow interference fix
 					{
+						UINT8 *source, *pri;
+						UINT32 *dest;
+						int c, x, x_index;
+
 						if (pri_buffer)
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								source = source_base + (y_index>>16) * gfx->line_modulo;
+								y_index += dy;
+								dest = (UINT32 *)dest_bmp->line[y];
+								pri = pri_buffer->line[y];
+								x_index = x_index_base;
 
-								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
+									int ebx = x_index;
+									x_index += dx;
+									ebx >>= 16;
+									al = pri[x];
+									c = source[ebx];
+									ah = al;
+									al &= 0x1f;
+
+									if (gfx_drawmode_table[c] == DRAWMODE_NONE) continue;
+
+									if (!(1<<al & pri_mask))
 									{
-										switch(gfx_drawmode_table[c])
+										if (gfx_drawmode_table[c] == DRAWMODE_SOURCE)
 										{
-										case DRAWMODE_SOURCE:
-											if (((1 << (pri[x] & 0x1f)) & pri_mask) == 0)
-											{
-												if (pri[x] & 0x80)
-													dest[x] = palette_shadow_table[pal[c]];
-												else
-													dest[x] = pal[c];
-											}
-											pri[x] = (pri[x] & 0x7f) | 31;
-											break;
-										case DRAWMODE_SHADOW:
-											if (((1 << pri[x]) & pri_mask) == 0)
-												dest[x] = palette_shadow_table[dest[x]];
-											pri[x] |= pdrawgfx_shadow_lowpri ? 0 : 0x80;
-											break;
+											ah &= 0x7f;
+											ebx = pal[c];
+											ah |= 0x1f;
+											dest[x] = ebx;
+											pri[x] = ah;
+										}
+										else if (!(ah & 0x80))
+										{
+											ebx = SHADOW32(dest[x]);
+											pri[x] |= 0x80;
+											dest[x] = ebx;
 										}
 									}
-									x_index += dx;
 								}
-
-								y_index += dy;
 							}
 						}
 						else
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								source = source_base + (y_index>>16) * gfx->line_modulo;
+								y_index += dy;
+								dest = (UINT32 *)dest_bmp->line[y];
+								x_index = x_index_base;
 
-								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										switch(gfx_drawmode_table[c])
-										{
-										case DRAWMODE_SOURCE:
-											dest[x] = pal[c];
-											break;
-										case DRAWMODE_SHADOW:
-											dest[x] = palette_shadow_table[dest[x]];
-											break;
-										}
-									}
+									c = source[x_index>>16];
 									x_index += dx;
-								}
 
-								y_index += dy;
+									if (gfx_drawmode_table[c] == DRAWMODE_NONE) continue;
+									if (gfx_drawmode_table[c] == DRAWMODE_SOURCE)
+										dest[x] = pal[c];
+									else
+										dest[x] = SHADOW32(dest[x]);
+								}
 							}
 						}
 					}
 
 					/* case 4b: TRANSPARENCY_PEN_TABLE_RAW */
-					if (transparency == TRANSPARENCY_PEN_TABLE_RAW)
+					if (transparency == TRANSPARENCY_PEN_TABLE_RAW) //* 032903 shadow interference fix
 					{
+						UINT8 *source, *pri;
+						UINT32 *dest;
+						int c, x, x_index;
+
 						if (pri_buffer)
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								source = source_base + (y_index>>16) * gfx->line_modulo;
+								y_index += dy;
+								dest = (UINT32 *)dest_bmp->line[y];
+								pri = pri_buffer->line[y];
+								x_index = x_index_base;
 
-								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
+									int ebx = x_index;
+									x_index += dx;
+									ebx >>= 16;
+									al = pri[x];
+									c = source[ebx];
+									ah = al;
+									al &= 0x1f;
+
+									if (gfx_drawmode_table[c] == DRAWMODE_NONE) continue;
+
+									if (!(1<<al & pri_mask))
 									{
-										switch(gfx_drawmode_table[c])
+										if (gfx_drawmode_table[c] == DRAWMODE_SOURCE)
 										{
-										case DRAWMODE_SOURCE:
-											if (((1 << (pri[x] & 0x1f)) & pri_mask) == 0)
-											{
-												if (pri[x] & 0x80)
-													dest[x] = palette_shadow_table[color + c];
-												else
-													dest[x] = color + c;
-											}
-											pri[x] = (pri[x] & 0x7f) | 31;
-											break;
-										case DRAWMODE_SHADOW:
-											if (((1 << pri[x]) & pri_mask) == 0)
-												dest[x] = palette_shadow_table[dest[x]];
-											pri[x] |= pdrawgfx_shadow_lowpri ? 0 : 0x80;
-											break;
+											ah &= 0x7f;
+											ebx = color + c;
+											ah |= 0x1f;
+											dest[x] = ebx;
+											pri[x] = ah;
+										}
+										else if (!(ah & 0x80))
+										{
+											ebx = SHADOW32(dest[x]);
+											pri[x] |= 0x80;
+											dest[x] = ebx;
 										}
 									}
-									x_index += dx;
 								}
-
-								y_index += dy;
 							}
 						}
 						else
 						{
 							for( y=sy; y<ey; y++ )
 							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								source = source_base + (y_index>>16) * gfx->line_modulo;
+								y_index += dy;
+								dest = (UINT32 *)dest_bmp->line[y];
+								x_index = x_index_base;
 
-								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
 								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										switch(gfx_drawmode_table[c])
-										{
-										case DRAWMODE_SOURCE:
-											dest[x] = color + c;
-											break;
-										case DRAWMODE_SHADOW:
-											dest[x] = palette_shadow_table[dest[x]];
-											break;
-										}
-									}
+									c = source[x_index>>16];
 									x_index += dx;
-								}
 
-								y_index += dy;
+									if (gfx_drawmode_table[c] == DRAWMODE_NONE) continue;
+									if (gfx_drawmode_table[c] == DRAWMODE_SOURCE)
+										dest[x] = color + c;
+									else
+										dest[x] = SHADOW32(dest[x]);
+								}
 							}
 						}
 					}
@@ -4271,6 +4299,8 @@ DECLARE_SWAP_RAW_PRI(blockmove_4toN_transcolor,(COMMON_ARGS,
 	}
 })
 
+#if DEPTH == 32
+//* 032903 shadow interference fix
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 		COLOR_ARG,int transcolor),
 {
@@ -4296,7 +4326,84 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 						SETPIXELCOLOR(0,LOOKUP(col))
 						break;
 					case DRAWMODE_SHADOW:
-						afterdrawmask = pdrawgfx_shadow_lowpri ? 0 : 0x80;
+						afterdrawmask = 0;
+						SETPIXELCOLOR(0,*dstdata)
+						afterdrawmask = 31;
+						break;
+					}
+				}
+				INCREMENT_DST(-HMODULO)
+			}
+
+			srcdata += srcmodulo;
+			INCREMENT_DST(ydir*VMODULO + dstwidth*HMODULO)
+			dstheight--;
+		}
+	}
+	else
+	{
+		DATA_TYPE *end;
+
+		while (dstheight)
+		{
+			end = dstdata + dstwidth*HMODULO;
+			while (dstdata < end)
+			{
+				int col;
+
+				col = *(srcdata++);
+				if (col != transcolor)
+				{
+					switch(gfx_drawmode_table[col])
+					{
+					case DRAWMODE_SOURCE:
+						SETPIXELCOLOR(0,LOOKUP(col))
+						break;
+					case DRAWMODE_SHADOW:
+						afterdrawmask = 0;
+						SETPIXELCOLOR(0,*dstdata)
+						afterdrawmask = 31;
+						break;
+					}
+				}
+				INCREMENT_DST(HMODULO)
+			}
+
+			srcdata += srcmodulo;
+			INCREMENT_DST(ydir*VMODULO - dstwidth*HMODULO)
+			dstheight--;
+		}
+	}
+})
+#else
+DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
+		COLOR_ARG,int transcolor),
+{
+	int eax = (pdrawgfx_shadow_lowpri) ? 0 : 0x80;
+
+	ADJUST_8
+
+	if (flipx)
+	{
+		DATA_TYPE *end;
+
+		while (dstheight)
+		{
+			end = dstdata - dstwidth*HMODULO;
+			while (dstdata > end)
+			{
+				int col;
+
+				col = *(srcdata++);
+				if (col != transcolor)
+				{
+					switch(gfx_drawmode_table[col])
+					{
+					case DRAWMODE_SOURCE:
+						SETPIXELCOLOR(0,LOOKUP(col))
+						break;
+					case DRAWMODE_SHADOW:
+						afterdrawmask = eax;
 						SETPIXELCOLOR(0,palette_shadow_table[*dstdata])
 						afterdrawmask = 31;
 						break;
@@ -4330,7 +4437,7 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 						SETPIXELCOLOR(0,LOOKUP(col))
 						break;
 					case DRAWMODE_SHADOW:
-						afterdrawmask = pdrawgfx_shadow_lowpri ? 0 : 0x80;
+						afterdrawmask = eax;
 						SETPIXELCOLOR(0,palette_shadow_table[*dstdata])
 						afterdrawmask = 31;
 						break;
@@ -4345,7 +4452,7 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 		}
 	}
 })
-
+#endif
 
 #if DEPTH >= 16
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_alphaone,(COMMON_ARGS,

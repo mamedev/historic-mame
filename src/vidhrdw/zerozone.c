@@ -8,49 +8,48 @@
 #include "vidhrdw/generic.h"
 
 data16_t *zerozone_videoram;
+static data16_t zerozone_tilebank;
 
+static struct tilemap *zerozone_tilemap;
 
-
-WRITE16_HANDLER( zerozone_videoram_w )
+WRITE16_HANDLER( zerozone_tilemap_w )
 {
-	int oldword = zerozone_videoram[offset];
-	COMBINE_DATA(&zerozone_videoram[offset]);
-
-	if (oldword != zerozone_videoram[offset])
-		dirtybuffer[offset] = 1;
+	if (zerozone_videoram[offset] != data)
+	{
+		COMBINE_DATA(&zerozone_videoram[offset]);
+		tilemap_mark_tile_dirty(zerozone_tilemap,offset);
+	}
 }
 
 
+WRITE16_HANDLER(zerozone_tilebank_w)
+{
+//	usrintf_showmessage	("Data %04x",data);
+	zerozone_tilebank = data & 0x3;
+	tilemap_mark_all_tiles_dirty(zerozone_tilemap);
+}
+
+static void get_zerozone_tile_info(int tile_index)
+{
+	int tileno,colour;
+	tileno = zerozone_videoram[tile_index] & 0x07ff;
+	colour = zerozone_videoram[tile_index] & 0xf000;
+
+	if (zerozone_videoram[tile_index] & 0x0800) tileno += zerozone_tilebank * 0x800;
+
+	SET_TILE_INFO(0,tileno,colour>>12,0)
+}
+
+VIDEO_START( zerozone )
+{
+	// i'm not 100% sure it should be opaque, pink title screen looks strange in las vegas girls
+	// but if its transparent other things look incorrect
+	zerozone_tilemap = tilemap_create(get_zerozone_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,      8, 8, 64,32);
+
+	return 0;
+}
 
 VIDEO_UPDATE( zerozone )
 {
-	int offs;
-
-	if (get_vh_global_attribute_changed())
-		memset(dirtybuffer,1,videoram_size/2);
-
-	for (offs = 0;offs < videoram_size/2;offs++)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-			int tile, color;
-
-			tile = zerozone_videoram[offs] & 0xfff;
-			color = (zerozone_videoram[offs] & 0xf000) >> 12;
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs / 32;
-			sy = offs % 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					tile,
-					color,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	tilemap_draw(bitmap,cliprect,zerozone_tilemap,0,0);
 }

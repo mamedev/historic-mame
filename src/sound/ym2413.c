@@ -608,7 +608,7 @@ static int num_lock = 0;
 
 /* work table */
 static void *cur_chip = NULL;	/* current chip pointer */
-OPLL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
+static OPLL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
 
 static signed int output[2];
 static signed int outchan;

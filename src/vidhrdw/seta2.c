@@ -15,16 +15,18 @@
 	Offset: 	Bits:					Value:
 
 		0.w		f--- ---- ---- ----		Last sprite
-				-edc b--- ---- ----		?
+				-edc ---- ---- ----		?
+				---c ---- ---- ----		0 = Each sprite specifies its size, 1 = use the size in the following words
+				---- b--- ---- ----		?
 				---- -a98 ---- ----		tile color depth
 				---- ---- 7654 3210		Number of sprites - 1
 
-		2.w		fedc b--- ---- ----		?
-				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1) (can also be changed per-sprite, see below)
+		2.w		fedc ---- ---- ----		Number of tiles?
+				---- ba-- ---- ----		Number of tiles along X (1 << n)
 				---- --98 7654 3210		X displacement
 
-		4.w		fedc b--- ---- ----		?
-				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1) (can also be changed per-sprite, see below)
+		4.w		fedc ---- ---- ----		Number of tiles?
+				---- ba-- ---- ----		Number of tiles along Y (1 << n)
 				---- --98 7654 3210		Y displacement
 
 		6.w		f--- ---- ---- ----		Single-sprite(s) type: tile (0) or row of tiles (1)
@@ -35,12 +37,12 @@
 
 	Tile case:
 
-		0.w		fedc b--- ---- ----
-				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1)
+		0.w		fedc ---- ---- ----		Number of tiles?
+				---- ba-- ---- ----		Number of tiles along X (1 << n)
 				---- --98 7654 3210		X
 
-		2.w		fedc b--- ---- ----
-				---- -a-- ---- ----		Size: 8 pixels (0) or 16 pixels (1)
+		2.w		fedc ---- ---- ----		Number of tiles?
+				---- ba-- ---- ----		Number of tiles along Y (1 << n)
 				---- --98 7654 3210		Y
 
 		4.w		fedc ba98 765- ----		Color code (16 color steps)
@@ -76,12 +78,34 @@ data16_t *seta2_vregs;
 
 static int yoffset;
 
-
 /***************************************************************************
 
 
 								Video Registers
 
+	Offset: 	Bits:					Value:
+
+	0/2/4/6								? Horizontal
+	8/a/c/e								? Vertical
+
+	10
+	12									Offset X?
+	14									Zoom X? low bits
+	16									Zoom X? high bits *
+
+	18
+	1a									Offset Y?
+	1c									Zoom Y? low bits
+	1e									Zoom Y? high bits
+
+	30			fedc ba98 7654 321-
+				---- ---- ---- ---0		Disable video
+
+	32..3f								?
+
+
+	* A value of 1 is means no zoom, a value of 2 will halve the size.
+	  It's unknown whether a value less than 1 means magnification (probably yes)
 
 ***************************************************************************/
 
@@ -92,17 +116,19 @@ WRITE16_HANDLER( seta2_vregs_w )
 			   myangel =  005D/01D5 (0178 visible area)
 			   pzlbowl =  0058/01D8 (0180 visible area)
 			   penbros =  0065/01A5 (0140 visible area)
+			   grdians =  0059/0188 (012f visible area)
 	   06    = horizontal total?
 	           mj4simai = 0204
 			   myangel =  0200
 			   pzlbowl =  0204
 			   penbros =  01c0
+			   grdians =  019a
 	*/
 
 	COMBINE_DATA(&seta2_vregs[offset]);
 	switch( offset*2 )
 	{
-	case 0x1c:	// FLIP SCREEN (myangel)
+	case 0x1c:	// FLIP SCREEN (myangel)	<- this is actually zoom
 		flip_screen_set( data & 1 );
 		if (data & ~1)	logerror("CPU #0 PC %06X: flip screen unknown bits %04X\n",activecpu_get_pc(),data);
 		break;
@@ -152,8 +178,10 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 		data16_t *s2 = &spriteram16[(sprite & 0x7fff) * 4];
 
 		/* Single-sprite tile size */
-		int global_sizex = xoffs & 0x0400;
-		int global_sizey = yoffs & 0x0400;
+		int global_sizex = xoffs & 0x0c00;
+		int global_sizey = yoffs & 0x0c00;
+
+		int use_global_size = num & 0x1000;
 
 		xoffs &= 0x3ff;
 		yoffs &= 0x3ff;
@@ -189,7 +217,9 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 		{
 			if (s2 >= end)	break;
 
-			if (sprite & 0x8000)		// "tilemap" sprite
+// "tilemap" sprite
+
+			if (sprite & 0x8000)
 			{
 				struct rectangle clip;
 				int dx,x,y;
@@ -269,7 +299,8 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 					}
 				}
 			}
-			else			// "normal" sprite
+			else
+// "normal" sprite
 			{
 				int sx    = s2[0];
 				int sy    = s2[1];
@@ -278,8 +309,12 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 				int flipx = (attr & 0x0010);
 				int flipy = (attr & 0x0008);
 				int color = (attr & 0xffe0) >> 5;
-				int sizex = (global_sizex | (sx & 0x0400)) >> 10;
-				int sizey = (global_sizey | (sy & 0x0400)) >> 10;
+
+				int sizex = use_global_size ? global_sizex : sx;
+				int sizey = use_global_size ? global_sizey : sy;
+				sizex = (1 << ((sizex & 0x0c00)>> 10))-1;
+				sizey = (1 << ((sizey & 0x0c00)>> 10))-1;
+
 				int x,y;
 
 				sx += xoffs;
@@ -289,15 +324,14 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 				sy &= 0x1ff;
 				sy -= yoffset;
 
-				if (sizex) code &= ~1;
-				if (sizey) code &= ~2;
+				code &= ~((sizex+1) * (sizey+1) - 1);	// see myangel, myangel2 and grdians
 
 				for (y = 0; y <= sizey; y++)
 				{
 					for (x = 0; x <= sizex; x++)
 					{
 						drawgfx(bitmap, Machine->gfx[gfx],
-								code ^ x ^ (y<<1),
+								code++,
 								color,
 								flipx, flipy,
 								sx + (flipx ? sizex-x : x) * 8, sy + (flipy ? sizey-y : y) * 8,
@@ -344,6 +378,8 @@ VIDEO_UPDATE( seta2 )
 	/* Black or pens[0]? */
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	if (!(seta2_vregs[0x30/2] & 1))	// BLANK SCREEN
-		seta2_draw_sprites(bitmap,cliprect);
+	if (seta2_vregs[0x30/2] & 1)	return;		// BLANK SCREEN
+
+	seta2_draw_sprites(bitmap,cliprect);
 }
+

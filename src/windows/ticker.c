@@ -174,7 +174,7 @@ static cycles_t init_cycle_counter(void)
 	}
 
 	// log the results
-	logerror("cycles/second = %d\n", (int)cycles_per_sec);
+	logerror("cycles/second = %u\n", (int)cycles_per_sec);
 
 	// return the current cycle count
 	return (*cycle_counter)();

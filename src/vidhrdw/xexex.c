@@ -3,393 +3,13 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
-static data8_t xexexbg_regs[8];
-static unsigned char *xexexbg_base;
-static data16_t *xexexbg_ram, *xexexbg_rammax;
-static UINT32 xexexbg_rommask;
-
-int xexexbg_vh_start(int region)
-{
-	xexexbg_base = memory_region(region);
-	xexexbg_ram = auto_malloc(0x1000);
-	xexexbg_rammax = xexexbg_ram + 0x800;
-	xexexbg_rommask = memory_region_length(region) - 1;
-
-	state_save_register_UINT16("xexexbg", 0, "memory",    xexexbg_ram,  0x800);
-	state_save_register_UINT8 ("xexexbg", 0, "registers", xexexbg_regs, 8);
-	return 0;
-}
-
-WRITE16_HANDLER( xexexbg_w )
-{
-	if(ACCESSING_LSB)
-		xexexbg_regs[offset] = data;
-}
-
-READ16_HANDLER( xexexbg_r )
-{
-	return xexexbg_regs[offset];
-}
-
-WRITE16_HANDLER( xexexbg_ram_w )
-{
-	int off1;
-	COMBINE_DATA( xexexbg_ram + offset);
-	off1 = offset & ~3;
-}
-
-READ16_HANDLER( xexexbg_ram_r )
-{
-	return xexexbg_ram[offset];
-}
-
-READ16_HANDLER( xexexbg_rom_r )
-{
-	if (!(xexexbg_regs[5] & 1))
-		logerror("Back: Reading rom memory with enable=0\n");
-	return *(xexexbg_base + 2048*xexexbg_regs[7] + (offset>>1));
-}
-
-
-#define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
-	int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);			\
-	int dyp = ((UINT8 *)bitmapp->line[1]) - ((UINT8 *)bitmapp->line[0]);	\
-	type *dsti = (type *)bitmapi->line[0] + y * dy + x;						\
-	UINT8 *dstp = (UINT8 *)bitmapp->line[0] + y * dyp + x;					\
-	int xadv = 1;															\
-	if (orientation)														\
-	{																		\
-		int tx = x, ty = y, temp;											\
-		if ((orientation) & ORIENTATION_SWAP_XY)							\
-		{																	\
-			temp = tx; tx = ty; ty = temp;									\
-			xadv = dy;														\
-		}																	\
-		if ((orientation) & ORIENTATION_FLIP_X)								\
-		{																	\
-			tx = bitmap->width - 1 - tx;									\
-			if (!((orientation) & ORIENTATION_SWAP_XY)) xadv = -xadv;		\
-		}																	\
-		if ((orientation) & ORIENTATION_FLIP_Y)								\
-		{																	\
-			ty = bitmap->height - 1 - ty;									\
-			if ((orientation) & ORIENTATION_SWAP_XY) xadv = -xadv;			\
-		}																	\
-		/* can't lookup line because it may be negative! */					\
-		dsti = ((type *)bitmapi->line[0]) + dy * ty + tx;					\
-		dstp = ((UINT8 *)bitmapp->line[0]) + dyp * ty + tx;					\
-	}
-
-static void xexex_pdraw_scanline8(
-		struct mame_bitmap *bitmap,int x,int y,int length,
-		const UINT8 *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri)
-{
-	/* 8bpp destination */
-	if (bitmap->depth == 8)
-	{
-		/* adjust in case we're oddly oriented */
-		ADJUST_FOR_ORIENTATION(UINT8, orient, bitmap, priority_bitmap, x, y);
-
-		/* with pen lookups */
-		if (pens)
-		{
-			if (transparent_pen == -1)
-				while (length--)
-				{
-					*dsti = pens[*src++];
-					*dstp = pri;
-					dsti += xadv;
-					dstp += xadv;
-				}
-			else
-				while (length--)
-				{
-					UINT32 spixel = *src++;
-					if (spixel != transparent_pen)
-					{
-						*dsti = pens[spixel];
-						*dstp = pri;
-					}
-					dsti += xadv;
-					dstp += xadv;
-				}
-		}
-
-		/* without pen lookups */
-		else
-		{
-			if (transparent_pen == -1)
-				while (length--)
-				{
-					*dsti = *src++;
-					*dstp = pri;
-					dsti += xadv;
-					dstp += xadv;
-				}
-			else
-				while (length--)
-				{
-					UINT32 spixel = *src++;
-					if (spixel != transparent_pen)
-					{
-						*dsti = spixel;
-						*dstp = pri;
-					}
-					dsti += xadv;
-					dstp += xadv;
-				}
-		}
-	}
-
-	/* 16bpp destination */
-	else if(bitmap->depth == 15 || bitmap->depth == 16)
-	{
-		/* adjust in case we're oddly oriented */
-		ADJUST_FOR_ORIENTATION(UINT16, orient, bitmap, priority_bitmap, x, y);
-		/* with pen lookups */
-		if (pens)
-		{
-			if (transparent_pen == -1)
-				while (length--)
-				{
-					*dsti = pens[*src++];
-					*dstp = pri;
-					dsti += xadv;
-					dstp += xadv;
-				}
-			else
-				while (length--)
-				{
-					UINT32 spixel = *src++;
-					if (spixel != transparent_pen)
-					{
-						*dsti = pens[spixel];
-						*dstp = pri;
-					}
-					dsti += xadv;
-					dstp += xadv;
-				}
-		}
-
-		/* without pen lookups */
-		else
-		{
-			if (transparent_pen == -1)
-				while (length--)
-				{
-					*dsti = *src++;
-					*dstp = pri;
-					dsti += xadv;
-					dstp += xadv;
-				}
-			else
-				while (length--)
-				{
-					UINT32 spixel = *src++;
-					if (spixel != transparent_pen)
-					{
-						*dsti = spixel;
-						*dstp = pri;
-					}
-					dsti += xadv;
-					dstp += xadv;
-				}
-		}
-	}
-
-	/* 32bpp destination */
-	else
-	{
-		/* adjust in case we're oddly oriented */
-		ADJUST_FOR_ORIENTATION(UINT32, orient, bitmap, priority_bitmap, x, y);
-		/* with pen lookups */
-		if (pens)
-		{
-			if (transparent_pen == -1)
-				while (length--)
-				{
-					*dsti = pens[*src++];
-					*dstp = pri;
-					dsti += xadv;
-					dstp += xadv;
-				}
-			else
-				while (length--)
-				{
-					UINT32 spixel = *src++;
-					if (spixel != transparent_pen)
-					{
-						*dsti = pens[spixel];
-						*dstp = pri;
-					}
-					dsti += xadv;
-					dstp += xadv;
-				}
-		}
-
-		/* without pen lookups */
-		else
-		{
-			if (transparent_pen == -1)
-				while (length--)
-				{
-					*dsti = *src++;
-					*dstp = pri;
-					dsti += xadv;
-					dstp += xadv;
-				}
-			else
-				while (length--)
-				{
-					UINT32 spixel = *src++;
-					if (spixel != transparent_pen)
-					{
-						*dsti = spixel;
-						*dstp = pri;
-					}
-					dsti += xadv;
-					dstp += xadv;
-				}
-		}
-	}
-}
-
-
-
-void xexexbg_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int colorbase, int pri)
-{
-	const struct rectangle area = *cliprect;
-	data16_t *line;
-	int delta, dim1, dim1_max, dim2_max;
-	UINT32 mask1, mask2;
-	int sp;
-
-	int orientation = (xexexbg_regs[4] & 8 ? ORIENTATION_FLIP_X : 0)\
-		| (xexexbg_regs[4] & 16 ? ORIENTATION_FLIP_Y : 0)
-		| (xexexbg_regs[4] & 1 ? 0 : ORIENTATION_SWAP_XY);
-
-	INT16 cur_x = (xexexbg_regs[0] << 8) | xexexbg_regs[1];
-	INT16 cur_y = (xexexbg_regs[2] << 8) | xexexbg_regs[3];
-
-	colorbase <<= 4;
-
-	if(orientation & ORIENTATION_SWAP_XY) {
-		dim1_max = area.max_x - area.min_x + 1;
-		dim2_max = area.max_y - area.min_y + 1;
-		// -358 for level 1 boss, huh?
-		delta = cur_y - 495;
-		line = xexexbg_ram + (((area.min_x + cur_x - 19) & 0x1ff) << 2);
-	} else {
-		dim1_max = area.max_y - area.min_y + 1;
-		dim2_max = area.max_x - area.min_x + 1;
-		delta = cur_x + 49;
-		line = xexexbg_ram + (((area.min_y + cur_y + 16) & 0x1ff) << 2);
-	}
-
-	switch(xexexbg_regs[4] & 0xe0) {
-	case 0x00: // Not sure.  Warp level
-		mask1 = 0xffff0000;
-		mask2 = 0x0000ffff;
-		sp = 0;
-		break;
-	case 0x20:
-		mask1 = 0xffff8000;
-		mask2 = 0x00007fff;
-		sp = 0;
-		break;
-	case 0x40:
-		mask1 = 0xffff0000;
-		mask2 = 0x0000ffff;
-		sp = 0;
-		break;
-	case 0x80:
-		mask1 = 0xffffc000;
-		mask2 = 0x00003fff;
-		sp = 0;
-		break;
-	case 0xe0:
-		mask1 = 0xffff0000;
-		mask2 = 0x0000ffff;
-		sp = 1;
-		break;
-	default:
-		logerror("Unknown mode %02x\n", xexexbg_regs[4] & 0xe0);
-		mask1 = 0xffff0000;
-		mask2 = 0x0000ffff;
-		sp = 0;
-		break;
-	}
-
-	if(xexexbg_regs[4] & 4)
-		mask1 = 0;
-
-	for(dim1 = 0; dim1 < dim1_max; dim1++) {
-		data16_t color  = *line++;
-		UINT32   start  = *line++;
-		data16_t inc    = *line++;
-		INT16    offset = *line++;
-		int dim2;
-		unsigned char *pixel;
-		UINT32 cpos;
-		unsigned char scanline[512];
-
-		if(line == xexexbg_rammax)
-			line = xexexbg_ram;
-
-		if(!color && !start)
-			continue;
-
-		pixel = scanline;
-		start <<= 7;
-		cpos = (offset + delta)*inc;
-
-		for(dim2 = 0; dim2 < dim2_max; dim2++) {
-			int romp;
-			UINT32 rcpos = cpos;
-
-			if(sp && (rcpos & mask1))
-				rcpos += inc << 9;
-
-			if(rcpos & mask1) {
-				*pixel++ = 0;
-				cpos += inc;
-				continue;
-			}
-
-			romp = xexexbg_base[(((rcpos & mask2)>>7) + start) & xexexbg_rommask];
-
-			if(rcpos & 0x40)
-				romp &= 0xf;
-			else
-				romp >>= 4;
-			*pixel++ = romp;
-			cpos += inc;
-		}
-		if(orientation & ORIENTATION_SWAP_XY)
-			xexex_pdraw_scanline8(bitmap, area.min_y, area.min_x+dim1, dim2_max, scanline,
-							Machine->pens + (colorbase | ((color & 0x0f) << 4)),
-							0, orientation, pri);
-		else
-			xexex_pdraw_scanline8(bitmap, area.min_x, area.min_y+dim1, dim2_max, scanline,
-							Machine->pens + (colorbase | ((color & 0x0f) << 4)),
-							0, orientation, pri);
-	}
-}
-
-
 static int sprite_colorbase;
 static int layer_colorbase[4], bg_colorbase, layerpri[4];
-static int cur_alpha, cur_alpha_level;
+static int cur_alpha;
 
 void xexex_set_alpha(int on)
 {
 	cur_alpha = on;
-}
-
-WRITE16_HANDLER(xexex_alpha_level_w)
-{
-	if(ACCESSING_LSB)
-		cur_alpha_level = ((data & 0x1f) << 3) | ((data & 0x1f) >> 2);
 }
 
 static void xexex_sprite_callback(int *code, int *color, int *priority_mask)
@@ -417,20 +37,19 @@ static int scrolld[2][4][2] = {
 
 VIDEO_START( xexex )
 {
+	int region = REGION_GFX3;
+
 	cur_alpha = 0;
-	cur_alpha_level = 0x1f;
 
 	K053251_vh_start();
-
-	xexexbg_vh_start(REGION_GFX3);
+	K054338_vh_start();
+	K053250_vh_start(1, &region);
 	if (K054157_vh_start(REGION_GFX1, 1, scrolld, NORMAL_PLANE_ORDER, xexex_tile_callback))
 		return 1;
 
 	if (K053247_vh_start(REGION_GFX2, -28, 32, NORMAL_PLANE_ORDER, xexex_sprite_callback))
 		return 1;
 
-	// cur_alpha is saved as part of "control2" in the main driver
-	state_save_register_int ("video", 0, "alpha", &cur_alpha_level);
 	return 0;
 }
 
@@ -458,7 +77,7 @@ VIDEO_UPDATE( xexex )
 {
 	int layer[4];
 	int plane;
-
+	int cur_alpha_level;
 	sprite_colorbase   = K053251_get_palette_index(K053251_CI0);
 	bg_colorbase       = K053251_get_palette_index(K053251_CI1);
 	layer_colorbase[0] = 0x70;
@@ -467,6 +86,8 @@ VIDEO_UPDATE( xexex )
 	layer_colorbase[3] = K053251_get_palette_index(K053251_CI4);
 
 	K054157_tilemap_update();
+
+	cur_alpha_level = ((K054338_read_register(K338_REG_PBLEND) & 0x1f) << 3) | ((K054338_read_register(K338_REG_PBLEND) & 0x1f) >> 2);
 
 	layer[0] = 1;
 	layerpri[0] = K053251_get_priority(K053251_CI2);
@@ -480,10 +101,10 @@ VIDEO_UPDATE( xexex )
 	sortlayers(layer, layerpri);
 
 	fillbitmap(priority_bitmap, 0, cliprect);
-	fillbitmap(bitmap, Machine->pens[0], cliprect);
+	K054338_fill_solid_bg(bitmap);
 	for(plane=0; plane<4; plane++)
 		if(layer[plane] < 0)
-			xexexbg_draw(bitmap,cliprect, bg_colorbase, 1<<plane);
+			K053250_draw(bitmap,cliprect, 0, bg_colorbase, 1<<plane);
 		else if(!cur_alpha || (layer[plane] != 1))
 			K054157_tilemap_draw(bitmap,cliprect, layer[plane], 0, 1<<plane);
 

@@ -12,6 +12,7 @@
 		* Kram (2 sets)
 		* The Electric Yo-Yo (2 sets)
 		* Slither (2 sets)
+		* Complex X
 
 	Known bugs:
 		* none at this time
@@ -589,6 +590,48 @@ INPUT_PORTS_START( slither )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( complexx )
+	PORT_START	/* PIA 0 Port A (Left Stick) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+/* 0x80 isn't scanned unless the difficulty in the game is below 4. I
+decided not to map this button, so if you set the difficulty that low,
+you can't fire. If I do map that button, and you set difficulty below 4
+and hit this fire button without pressing the second stick in any
+direction it fires up. If you're pressing left it fires right, press
+right it fires left and press down it fires down. That's just too wacky.
+I gotta think it's not supposed to be hooked up at all and if the
+difficulty is that low, you just can't shoot, so I think it should stay
+as-is. Tim Lindquist 1-17-03 */
+
+	PORT_START	/* PIA 0 Port B (COIN) */
+	COIN_PORT
+
+	PORT_START	/* PIA 1 Port A (SPARE) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START	/* PIA 1 Port B (PLAYER 1/2) */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* PIA 2 Port A (Right Stick) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
+INPUT_PORTS_END
+
+
 
 /*************************************
  *
@@ -1077,6 +1120,29 @@ ROM_START( slithera )
 	ROM_LOAD( "u36a.cpu",0xf800, 0x0800, 0x5ac4e244 )
 ROM_END
 
+ROM_START( complexx )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "cx14.bin", 0xa000, 0x1000, 0xf123a0de )
+	ROM_LOAD( "cx15.bin", 0xb000, 0x1000, 0x0fcb966f )
+	ROM_LOAD( "cx16.bin", 0xc000, 0x1000, 0xaa11e0e3 )
+	ROM_LOAD( "cx17.bin", 0xd000, 0x1000, 0xf610856e )
+	ROM_LOAD( "cx18.bin", 0xe000, 0x1000, 0x8f8c3984 )
+	ROM_LOAD( "cx19.bin", 0xf000, 0x1000, 0x13af3ba8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "cx5.bin",  0xa000, 0x1000, 0x62a2b87b )
+	ROM_LOAD( "cx6.bin",  0xb000, 0x1000, 0xdfa7c088 )
+	ROM_LOAD( "cx7.bin",  0xc000, 0x1000, 0xc8bd6759 )
+	ROM_LOAD( "cx8.bin",  0xd000, 0x1000, 0x14a57221 )
+	ROM_LOAD( "cx9.bin",  0xe000, 0x1000, 0xfc2d4a9f )
+	ROM_LOAD( "cx10.bin", 0xf000, 0x1000, 0x96e0c1ad )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_LOAD( "cx26.bin",    0xe000, 0x1000, 0xf4f19c9b )
+	ROM_LOAD( "cx27.bin",    0xf000, 0x1000, 0x7e177328 )
+ROM_END
+
+
 
 
 /*************************************
@@ -1128,3 +1194,4 @@ GAME( 1982, zookeep2, zookeep,  zookeep, zookeep,  zookeep,  ROT0,   "Taito Amer
 GAME( 1982, zookeep3, zookeep,  zookeep, zookeep,  zookeep,  ROT0,   "Taito America Corporation", "Zoo Keeper (set 3)" )
 GAME( 1982, slither,  0,        slither, slither,  slither,  ROT270, "Century II",                "Slither (set 1)" )
 GAME( 1982, slithera, slither,  slither, slither,  slither,  ROT270, "Century II",                "Slither (set 2)" )
+GAME( 1984, complexx, 0,        qix,     complexx, 0,        ROT270, "Taito America Corporation", "Complex X" )

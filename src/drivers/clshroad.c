@@ -397,4 +397,4 @@ ROM_END
 
 
 GAMEX( 1984, firebatl, 0, firebatl, clshroad, 0, ROT90, "Taito", "Fire Battle", GAME_NOT_WORKING | GAME_WRONG_COLORS )
-GAMEX( 1986, clshroad, 0, clshroad, clshroad, 0, ROT0,  "Woodplace Inc.", "Clash Road", GAME_WRONG_COLORS )
+GAMEX( 1986, clshroad, 0, clshroad, clshroad, 0, ROT0,  "Woodplace Inc.", "Clash-Road", GAME_WRONG_COLORS )

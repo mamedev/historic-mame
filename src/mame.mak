@@ -80,6 +80,12 @@ CPUS+=R4600@
 CPUS+=R5000@
 CPUS+=SH2@
 CPUS+=DSP32C@
+#CPUS+=PIC16C54@
+CPUS+=PIC16C55@
+#CPUS+=PIC16C56@
+CPUS+=PIC16C57@
+#CPUS+=PIC16C58@
+
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -138,6 +144,9 @@ SOUNDS+=YMF278B@
 SOUNDS+=GAELCO_CG1V@
 SOUNDS+=GAELCO_GAE1@
 SOUNDS+=X1_010@
+SOUNDS+=MULTIPCM@
+SOUNDS+=C6280@
+
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -416,7 +425,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/sndhrdw/system16.o \
 	$(OBJ)/drivers/system16.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
 	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
-	$(OBJ)/drivers/system32.o $(OBJ)/vidhrdw/system32.o \
+	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
 	$(OBJ)/drivers/stv.o \
 
@@ -542,8 +551,10 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/overdriv.o $(OBJ)/drivers/overdriv.o \
 	$(OBJ)/vidhrdw/gradius3.o $(OBJ)/drivers/gradius3.o \
 	$(OBJ)/vidhrdw/moo.o $(OBJ)/drivers/moo.o \
+	$(OBJ)/vidhrdw/mystwarr.o $(OBJ)/drivers/mystwarr.o \
 	$(OBJ)/vidhrdw/rungun.o $(OBJ)/drivers/rungun.o \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
+	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
 
 $(OBJ)/exidy.a: \
 	$(OBJ)/machine/carpolo.o $(OBJ)/vidhrdw/carpolo.o $(OBJ)/drivers/carpolo.o \
@@ -726,6 +737,7 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/machine/stfight.o $(OBJ)/vidhrdw/stfight.o $(OBJ)/drivers/stfight.o \
 	$(OBJ)/drivers/cshooter.o \
 	$(OBJ)/sndhrdw/seibu.o \
+	$(OBJ)/vidhrdw/deadang.o $(OBJ)/drivers/deadang.o \
 	$(OBJ)/vidhrdw/dynduke.o $(OBJ)/drivers/dynduke.o \
 	$(OBJ)/vidhrdw/raiden.o $(OBJ)/drivers/raiden.o \
 	$(OBJ)/vidhrdw/dcon.o $(OBJ)/drivers/dcon.o \
@@ -841,7 +853,6 @@ $(OBJ)/comad.a: \
 	$(OBJ)/vidhrdw/pushman.o $(OBJ)/drivers/pushman.o \
 	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
 	$(OBJ)/vidhrdw/galspnbl.o $(OBJ)/drivers/galspnbl.o \
-	$(OBJ)/drivers/ladyfrog.o \
 
 $(OBJ)/playmark.a: \
 	$(OBJ)/vidhrdw/sslam.o $(OBJ)/drivers/sslam.o \
@@ -875,6 +886,7 @@ $(OBJ)/fuuki.a: \
 	$(OBJ)/vidhrdw/fuuki16.o $(OBJ)/drivers/fuuki16.o \
 
 $(OBJ)/unico.a: \
+	$(OBJ)/vidhrdw/drgnmst.o $(OBJ)/drivers/drgnmst.o \
 	$(OBJ)/vidhrdw/unico16.o $(OBJ)/drivers/unico16.o \
 	$(OBJ)/vidhrdw/silkroad.o $(OBJ)/drivers/silkroad.o \
 

@@ -817,6 +817,20 @@ UINT64 cpu_gettotalcycles64(int _cpu)
 
 /*************************************
  *
+ *	Account for cycles eaten by
+ *	suspended CPUs
+ *
+ *************************************/
+
+void cpu_add_to_totalcycles(int _cpu, int cycles)
+{
+	cpu[_cpu].totalcycles += cycles;
+}
+
+
+
+/*************************************
+ *
  *	Return cycles until next interrupt
  *	handler call
  *

@@ -1096,7 +1096,7 @@ GAME ( 1981, cterrani, decocass, cterrani, decocass, decocass, ROT270, "DECO", "
 GAMEX( 1982, cexplore, decocass, cexplore, decocass, decocass, ROT270, "DECO", "Cassette: Explorer", GAME_NOT_WORKING )
 GAME ( 1981, cprogolf, decocass, cprogolf, decocass, decocass, ROT270, "DECO", "Cassette: Pro Golf" )
 GAME ( 1982, cmissnx,  decocass, cmissnx,  decocass, decocass, ROT270, "DECO", "Cassette: Mission-X" )
-GAME ( 1982, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Cassette: Disco No 1" )
+GAME ( 1982, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270, "DECO", "Cassette: Disco No.1" )
 GAME ( 1982, csweetht, cdiscon1, cdiscon1, decocass, decocass, ROT270, "DECO", "Cassette: Sweet Heart" )
 GAME ( 1982, cptennis, decocass, cptennis, decocass, decocass, ROT270, "DECO", "Cassette: Pro Tennis" )
 GAME ( 1982, ctornado, decocass, ctornado, decocass, decocass, ROT270, "DECO", "Cassette: Tornado" )

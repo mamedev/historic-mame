@@ -36,7 +36,7 @@ f000-ffff VRAM F                    R/W   closest aliens (scrolling)
 At this time, emulation is missing:
 
 Lamps (Credit, Barrier, and 5 lamps for firing from the bases)
-Sound (all discrete and a 76447)
+Sound (all discrete and a 76477)
 Verify Color PROM resistor values (Last 8 colors)
 Verify Bar graph displays
 

@@ -623,4 +623,4 @@ ROM_START( shadfrce )
 ROM_END
 
 
-GAMEX( 1993, shadfrce, 0, shadfrce, shadfrce, 0, ROT0, "Technos Japan", "Shadow Force (US)", GAME_NO_COCKTAIL )
+GAMEX( 1993, shadfrce, 0, shadfrce, shadfrce, 0, ROT0, "Technos Japan", "Shadow Force (US Version 2)", GAME_NO_COCKTAIL )

@@ -94,8 +94,9 @@ static MEMORY_READ_START( jumpcoas_readmem )
 	{ 0xd000, 0xd3ff, MRA_RAM },
 	{ 0xd800, 0xdbff, MRA_RAM },
 	{ 0xe800, 0xe800, input_port_0_r },
-	{ 0xe802, 0xe802, input_port_1_r },
-	{ 0xe803, 0xe803, input_port_2_r },
+	{ 0xe801, 0xe801, input_port_1_r },
+	{ 0xe802, 0xe802, input_port_2_r },
+	{ 0xe803, 0xe803, input_port_3_r },
 	//{ 0xf800, 0xf800, watchdog_reset_r },  // Why doesn't this work???
 	{ 0xf800, 0xf800, MRA_NOP },
 MEMORY_END
@@ -265,6 +266,8 @@ INPUT_PORTS_START( jumpcoas )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
+	PORT_START	/* DSW 1 (maybe) */
+
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -284,6 +287,77 @@ INPUT_PORTS_START( jumpcoas )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( boggy84 )
+	PORT_START      /* DSW 0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x20, "7" )
+	PORT_BITX( 0,       0x30, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START	/* DSW 1 (maybe) */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( redrobin )
@@ -405,7 +479,6 @@ static MACHINE_DRIVER_START( fastfred )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)//CLOCK/16/60,
-	MDRV_MACHINE_INIT(fastfred)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -431,8 +504,6 @@ static MACHINE_DRIVER_START( jumpcoas )
 	MDRV_CPU_MEMORY(jumpcoas_readmem,jumpcoas_writemem)
 
 	MDRV_CPU_REMOVE("audio")
-
-	MDRV_MACHINE_INIT(jumpcoas)
 
 	/* video hardware */
 	MDRV_GFXDECODE(jumpcoas_gfxdecodeinfo)
@@ -569,6 +640,24 @@ ROM_START( jumpcoas )
 	ROM_LOAD( "jumpcoas.blu", 0x0200, 0x0100, 0xf4662db7 )
 ROM_END
 
+ROM_START( boggy84 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "cpurom1.bin", 0x0000, 0x2000, 0x665266c0 )
+	ROM_LOAD( "cpurom2.bin", 0x2000, 0x2000, 0x6c096798 )
+	ROM_LOAD( "cpurom3.bin", 0x4000, 0x2000, 0x9da59104 )
+	ROM_LOAD( "cpurom4.bin", 0x6000, 0x2000, 0x73ef6807 )
+
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gfx1.bin", 0x0000, 0x1000, 0xf4238c68 )
+	ROM_LOAD( "gfx2.bin", 0x1000, 0x1000, 0xce285bd2 )
+	ROM_LOAD( "gfx3.bin", 0x2000, 0x1000, 0x02f5f4fa )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "r12e", 0x0000, 0x0100, 0xf3862912 )
+	ROM_LOAD( "g12e", 0x0100, 0x0100, 0x80b87220 )
+	ROM_LOAD( "b12e", 0x0200, 0x0100, 0x52b7f445 )
+ROM_END
+
 ROM_START( redrobin )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	ROM_LOAD( "redro01f.16d", 0x0000, 0x1000, 0x0788ce10 )
@@ -605,22 +694,38 @@ ROM_START( redrobin )
 ROM_END
 
 
+extern int fastfred_hardware_type;
+
+static DRIVER_INIT( flyboy )
+{
+	fastfred_hardware_type = 1;
+}
+
 static DRIVER_INIT( fastfred )
 {
 	install_mem_write_handler(0, 0xc800, 0xcfff, MWA_NOP );
 	install_mem_read_handler( 0, 0xc800, 0xcfff, fastfred_custom_io_r);
+	fastfred_hardware_type = 1;
 }
 
 static DRIVER_INIT( jumpcoas )
 {
 	install_mem_write_handler(0, 0xc800, 0xcfff, MWA_NOP );
 	install_mem_read_handler(0,  0xc800, 0xcfff, jumpcoas_custom_io_r);
+	fastfred_hardware_type = 0;
+}
+
+static DRIVER_INIT( boggy84 )
+{
+	install_mem_write_handler(0, 0xc800, 0xcfff, MWA_NOP );
+	install_mem_read_handler(0,  0xc800, 0xcfff, jumpcoas_custom_io_r);
+	fastfred_hardware_type = 2;
 }
 
 
-
-GAMEX(1982, flyboy,   0,      fastfred, flyboy,   0,        ROT90, "Kaneko", "Fly-Boy", GAME_NOT_WORKING )	/* protection */
-GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   0,        ROT90, "Kaneko", "Fly-Boy (bootleg)" )
+GAMEX(1982, flyboy,   0,      fastfred, flyboy,   flyboy,   ROT90, "Kaneko", "Fly-Boy", GAME_NOT_WORKING )	/* protection */
+GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   flyboy,   ROT90, "Kaneko", "Fly-Boy (bootleg)" )
 GAME( 1982, fastfred, flyboy, fastfred, fastfred, fastfred, ROT90, "Atari", "Fast Freddie" )
 GAME( 1983, jumpcoas, 0,      jumpcoas, jumpcoas, jumpcoas, ROT90, "Kaneko", "Jump Coaster" )
-GAME( 1986, redrobin, 0,      fastfred, redrobin, 0,        ROT90, "Elettronolo", "Red Robin" )
+GAME( 1983, boggy84,  0,      jumpcoas, boggy84,  boggy84,  ROT90, "bootleg", "Boggy '84" )
+GAME( 1986, redrobin, 0,      fastfred, redrobin, flyboy,   ROT90, "Elettronolo", "Red Robin" )

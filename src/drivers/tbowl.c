@@ -8,21 +8,8 @@ attractive graphics
 
 --- Current Issues
 
-Sprites Not Done
-Sound Incomplete (what plays the sample roms)
-
-Game Doesn't Behave Correctly
-  Most Inputs seem to be ignored once you start a game?
-  The Game only does one move / throw then just seems to
-  sit there counting the clock down.
-  When the clock reaches 0 the game doesn't end.
-  Not sure why this is happening, incorrect shared ram?
-  incorrect banking? (its from wc90.c / tecmo.c and seems
-  quite common to tecmo even if some bits are unused)
-  Communication Failure? Protection?  Me Missing Something
-  blindingly obvious? NMI Routine of Main CPU?
-
-NMI routine of 6206B (1st CPU) is NEVER called at the moment!
+Sound Incomplete (what plays the sample roms, like tecmo16.c? )
+Might be some priority glitches
 
 ***/
 
@@ -32,6 +19,8 @@ NMI routine of 6206B (1st CPU) is NEVER called at the moment!
 
 /* in vidhrdw/tbowl.c */
 extern data8_t *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
+extern data8_t *tbowl_spriteram;
+
 WRITE_HANDLER (tbowl_bg2videoram_w);
 WRITE_HANDLER (tbowl_bgvideoram_w);
 WRITE_HANDLER (tbowl_txvideoram_w);
@@ -151,6 +140,11 @@ static MEMORY_WRITE_START( writemem_6206B )
 MEMORY_END
 
 /* Board C */
+static WRITE_HANDLER ( tbowl_trigger_nmi )
+{
+	/* trigger NMI on 6206B's Cpu? (guess but seems to work..) */
+	cpu_set_nmi_line(0, PULSE_LINE);
+}
 
 static MEMORY_READ_START( readmem_6206C )
 	{ 0x0000, 0xbfff, MRA_ROM },
@@ -162,14 +156,14 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem_6206C )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xdfff, MWA_RAM },
-	{ 0xe000, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram },
+	{ 0xc000, 0xd7ff, MWA_RAM },
+	{ 0xd800, 0xdfff, MWA_RAM, &tbowl_spriteram },
+	{ 0xe000, 0xefff, paletteram_xxxxBBBBRRRRGGGG_swap_w, &paletteram }, // 2x palettes, one for each monitor?
 	{ 0xf000, 0xf7ff, MWA_ROM },
 	{ 0xf800, 0xfbff, shared_w },
 	{ 0xfc00, 0xfc00, tbowlc_bankswitch_w },
 	{ 0xfc01, 0xfc01, MWA_NOP }, /* ? */
-	{ 0xfc02, 0xfc02, MWA_NOP }, /* ? */
+	{ 0xfc02, 0xfc02, tbowl_trigger_nmi }, /* ? */
 	{ 0xfc03, 0xfc03, MWA_NOP }, /* ? */
 	{ 0xfc06, 0xfc06, MWA_NOP }, /* ? */
 MEMORY_END
@@ -484,7 +478,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout bgtilelayout =
 {
 	16,16,	/* tile size */
 	RGN_FRAC(1,1),	/* number of tiles */
@@ -496,13 +490,24 @@ static struct GfxLayout spritelayout =
 	128*8	/* offset to next tile */
 };
 
+static struct GfxLayout sprite8layout =
+{
+	8,8,	/* tile size */
+	RGN_FRAC(1,1),	/* number of tiles */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	8*32	/* offset to next tile */
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   256, 16 },
-	{ REGION_GFX2, 0, &spritelayout, 768, 16 },
-	{ REGION_GFX2, 0, &spritelayout, 512, 16 },
-	{ REGION_GFX3, 0, &spritelayout, 0,   16 },
+	{ REGION_GFX2, 0, &bgtilelayout, 768, 16 },
+	{ REGION_GFX2, 0, &bgtilelayout, 512, 16 },
+	{ REGION_GFX3, 0, &sprite8layout, 0,   16 },
+
 	{ -1 } /* end of array */
 };
 
@@ -564,7 +569,7 @@ static MACHINE_DRIVER_START( tbowl )
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(1024)
+	MDRV_PALETTE_LENGTH(1024*2)
 
 	MDRV_VIDEO_START(tbowl)
 	MDRV_VIDEO_UPDATE(tbowl)
@@ -674,14 +679,14 @@ ROM_START( tbowl )
 	ROM_LOAD16_BYTE( "6206b.13",    0x20000, 0x10000, 0x4ad72c16 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* SPR GFX */
-	ROM_LOAD16_BYTE( "6206c.16",	0x00001, 0x10000, 0x1a2fb925 )
-	ROM_LOAD16_BYTE( "6206c.20",	0x00000, 0x10000, 0x70bb38a3 )
-	ROM_LOAD16_BYTE( "6206c.17",	0x20001, 0x10000, 0xde16bc10 )
-	ROM_LOAD16_BYTE( "6206c.21",	0x20000, 0x10000, 0x41b2a910 )
-	ROM_LOAD16_BYTE( "6206c.18",	0x40001, 0x10000, 0x0684e188 )
-	ROM_LOAD16_BYTE( "6206c.22",	0x40000, 0x10000, 0xcf660ebc )
-	ROM_LOAD16_BYTE( "6206c.19",	0x60001, 0x10000, 0x71795604 )
-	ROM_LOAD16_BYTE( "6206c.23",	0x60000, 0x10000, 0x97fba168 )
+	ROM_LOAD16_BYTE( "6206c.16",	0x60001, 0x10000, 0x1a2fb925 )
+	ROM_LOAD16_BYTE( "6206c.20",	0x60000, 0x10000, 0x70bb38a3 )
+	ROM_LOAD16_BYTE( "6206c.17",	0x40001, 0x10000, 0xde16bc10 )
+	ROM_LOAD16_BYTE( "6206c.21",	0x40000, 0x10000, 0x41b2a910 )
+	ROM_LOAD16_BYTE( "6206c.18",	0x20001, 0x10000, 0x0684e188 )
+	ROM_LOAD16_BYTE( "6206c.22",	0x20000, 0x10000, 0xcf660ebc )
+	ROM_LOAD16_BYTE( "6206c.19",	0x00001, 0x10000, 0x71795604 )
+	ROM_LOAD16_BYTE( "6206c.23",	0x00000, 0x10000, 0x97fba168 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
 	ROM_LOAD( "6206a.2",	0x00000, 0x10000, 0x1e9e5936 )
@@ -715,19 +720,19 @@ ROM_START( tbowlj )
 	ROM_LOAD16_BYTE( "6206b.13",    0x20000, 0x10000, 0x4ad72c16 )
 
 	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* SPR GFX */
-	ROM_LOAD16_BYTE( "6206c.16",	0x00001, 0x10000, 0x1a2fb925 )
-	ROM_LOAD16_BYTE( "6206c.20",	0x00000, 0x10000, 0x70bb38a3 )
-	ROM_LOAD16_BYTE( "6206c.17",	0x20001, 0x10000, 0xde16bc10 )
-	ROM_LOAD16_BYTE( "6206c.21",	0x20000, 0x10000, 0x41b2a910 )
-	ROM_LOAD16_BYTE( "6206c.18",	0x40001, 0x10000, 0x0684e188 )
-	ROM_LOAD16_BYTE( "6206c.22",	0x40000, 0x10000, 0xcf660ebc )
-	ROM_LOAD16_BYTE( "6206c.19",	0x60001, 0x10000, 0x71795604 )
-	ROM_LOAD16_BYTE( "6206c.23",	0x60000, 0x10000, 0x97fba168 )
+	ROM_LOAD16_BYTE( "6206c.16",	0x60001, 0x10000, 0x1a2fb925 )
+	ROM_LOAD16_BYTE( "6206c.20",	0x60000, 0x10000, 0x70bb38a3 )
+	ROM_LOAD16_BYTE( "6206c.17",	0x40001, 0x10000, 0xde16bc10 )
+	ROM_LOAD16_BYTE( "6206c.21",	0x40000, 0x10000, 0x41b2a910 )
+	ROM_LOAD16_BYTE( "6206c.18",	0x20001, 0x10000, 0x0684e188 )
+	ROM_LOAD16_BYTE( "6206c.22",	0x20000, 0x10000, 0xcf660ebc )
+	ROM_LOAD16_BYTE( "6206c.19",	0x00001, 0x10000, 0x71795604 )
+	ROM_LOAD16_BYTE( "6206c.23",	0x00000, 0x10000, 0x97fba168 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
 	ROM_LOAD( "6206a.2",	0x00000, 0x10000, 0x1e9e5936 )
 	ROM_LOAD( "6206a.3",	0x10000, 0x10000, 0x3aa24744 )
 ROM_END
 
-GAME( 1987, tbowl,    0,        tbowl,    tbowl,    0, ROT0,  "Tecmo", "Tecmo Bowl (World?)" )
-GAME( 1987, tbowlj,   tbowl,    tbowl,    tbowlj,   0, ROT0,  "Tecmo", "Tecmo Bowl (Japan)" )
+GAMEX( 1987, tbowl,    0,        tbowl,    tbowl,    0, ROT0,  "Tecmo", "Tecmo Bowl (World?)", GAME_IMPERFECT_SOUND )
+GAMEX( 1987, tbowlj,   tbowl,    tbowl,    tbowlj,   0, ROT0,  "Tecmo", "Tecmo Bowl (Japan)", GAME_IMPERFECT_SOUND )

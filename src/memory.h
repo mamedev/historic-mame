@@ -790,6 +790,8 @@ extern offs_t encrypted_opcode_start[],encrypted_opcode_end[];
 
 /* ----- return a base pointer to memory ---- */
 void *		memory_find_base(int cpunum, offs_t offset);
+void *		memory_get_read_ptr(int cpunum, offs_t offset);
+void *		memory_get_write_ptr(int cpunum, offs_t offset);
 
 /* ----- dynamic memory mapping ----- */
 data8_t *	install_mem_read_handler    (int cpunum, offs_t start, offs_t end, mem_read_handler handler);

@@ -161,7 +161,7 @@ static MACHINE_DRIVER_START( mole )
 	MDRV_GFXDECODE(gfx_decode)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_COLORTABLE_LENGTH(8)
-	
+
 	MDRV_PALETTE_INIT(moleattack)
 	MDRV_VIDEO_START(moleattack)
 	MDRV_VIDEO_UPDATE(moleattack)
@@ -246,4 +246,4 @@ INPUT_PORTS_START( mole )
 INPUT_PORTS_END
 
 
-GAME( 1982, mole, 0, mole, mole, 0, ROT0, "Yachiyo Electronics, Ltd.", "Mole Attack" )
+GAMEX(1982, mole, 0, mole, mole, 0, ROT0, "Yachiyo Electronics, Ltd.", "Mole Attack", GAME_NO_COCKTAIL )

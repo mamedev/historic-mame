@@ -18,6 +18,7 @@
 static UINT8 namcond1_h8_irq5_enabled;
 static UINT8 coin_state;
 static UINT8 coin_count[4];
+int namcond1_gfxbank;
 
 MACHINE_INIT( namcond1 )
 {
@@ -145,6 +146,7 @@ READ16_HANDLER( namcond1_cuskey_r )
 
 WRITE16_HANDLER( namcond1_shared_ram_w )
 {
+
     switch( offset )
     {
         default :
@@ -161,12 +163,22 @@ WRITE16_HANDLER( namcond1_shared_ram_w )
 
 WRITE16_HANDLER( namcond1_cuskey_w )
 {
+
+//	if (offset != 0x07) logerror ("namco_cus_w %04x, %04x\n",offset,data);
+
+//	if (offset == 0x06) usrintf_showmessage ("namco_cus_w %04x, %04x",offset,data);
+
     switch( offset )
     {
         case (0x0a>>1):
             // this is a kludge until we emulate the h8
             namcond1_h8_irq5_enabled = ( data != 0x0000 );
             break;
+
+		case (0x0c>>1):
+			namcond1_gfxbank = (data & 0x0002) >>1; // i think
+			// should mark tilemaps dirty but i think they already are
+			break;
 
         default :
             break;

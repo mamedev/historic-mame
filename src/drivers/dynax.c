@@ -22,6 +22,8 @@ Year + Game					Board			Sound						Palette
 90 Mahjong Campus Hunting	D3312108L1-1	**TODO** (2)
 90 7jigen no Youseitachi	D3707198L1		**TODO** (2)
 91 Mahjong Dial Q2			D5212298L-1		              YM2413		PROM
+94 Maya						same as sprtmtch?	     YM2203				PROM
+9? The Return of Lady Frog	?					     YM2203				?
 ----------------------------------------------------------------------------------------
 
 (1) partial support, major gfx problems
@@ -222,6 +224,7 @@ static WRITE_HANDLER( hnoridur_palette_w )
 
 
 static int msm5205next;
+static int resetkludge;
 
 static void adpcm_int(int data)
 {
@@ -232,7 +235,10 @@ static void adpcm_int(int data)
 
 	toggle = 1 - toggle;
 	if (toggle)
+	{
+		if (resetkludge)	// don't know what's wrong, but NMIs when the 5205 is reset make the game crash
 		cpu_set_nmi_line(0,PULSE_LINE);
+	}
 }
 
 static WRITE_HANDLER( adpcm_data_w )
@@ -242,12 +248,14 @@ static WRITE_HANDLER( adpcm_data_w )
 
 static WRITE_HANDLER( adpcm_reset_w )
 {
+	resetkludge = data & 1;
 	MSM5205_reset_w(0,~data & 1);
 }
 
 static MACHINE_INIT( adpcm )
 {
 	/* start with the MSM5205 reset */
+	resetkludge = 0;
 	MSM5205_reset_w(0,1);
 }
 
@@ -445,6 +453,54 @@ static PORT_WRITE_START( mjfriday_writeport )
 //	{ 0x80, 0x80, IOWP_NOP					},	// IRQ ack?
 PORT_END
 
+
+/***************************************************************************
+
+Lady Frog, or is it Dragon Punch, or is Lady Frog the name of a bootleg
+Dragon Punch?
+
+The program jumps straight away to an unmapped memory address. I don't know,
+maybe there's a ROM missing.
+
+ladyfrog.001 contains
+VIDEO COMPUTER SYSTEM  (C)1989 DYNAX INC  NAGOYA JAPAN  DRAGON PUNCH  VER. 1.30
+
+***************************************************************************/
+
+static MEMORY_READ16_START( ladyfrog_readmem )
+	{ 0x000000, 0x3fffff, MRA16_ROM },
+	{ 0x881800, 0x881fff, MRA16_RAM },
+	{ 0x840000, 0x840001, input_port_0_word_r },
+	{ 0x840002, 0x840003, input_port_1_word_r },
+	{ 0x840004, 0x840005, input_port_2_word_r },
+	{ 0x840006, 0x840007, input_port_3_word_r },
+	{ 0xffc000, 0xffffff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( ladyfrog_writemem )
+	{ 0x000000, 0x3fffff, MWA16_ROM },
+	{ 0x800000, 0x83ffff, MWA16_RAM },
+	{ 0x881800, 0x881fff, MWA16_RAM },
+	{ 0xffc000, 0xffffff, MWA16_RAM },
+MEMORY_END
+
+
+static struct GfxLayout charlayout =
+{
+	8,8,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
+	{ STEP8(0,1) },
+	{ STEP8(0,8) },
+	8*8
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ REGION_GFX2, 0, &charlayout,  0, 1 },
+	{ -1 } /* end of array */
+};
 
 /***************************************************************************
 
@@ -1279,6 +1335,46 @@ static MACHINE_DRIVER_START( sprtmtch )
 MACHINE_DRIVER_END
 
 
+/***************************************************************************
+								Lady Frog
+***************************************************************************/
+
+static MACHINE_DRIVER_START( ladyfrog )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,22000000 / 4)	/* 5.5MHz */
+	MDRV_CPU_MEMORY(sprtmtch_readmem,sprtmtch_writemem)
+	MDRV_CPU_PORTS(sprtmtch_readport,sprtmtch_writeport)
+	MDRV_CPU_VBLANK_INT(sprtmtch_vblank_interrupt,1)	/* IM 0 needs an opcode on the data bus */
+
+// Until the protection on the 68000 is figured out (or it will crash)
+#if 0
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz??? */
+	MDRV_CPU_MEMORY(ladyfrog_readmem,ladyfrog_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+#endif
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 16, 256-1)
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_GFXDECODE(gfxdecodeinfo)	// has gfx
+
+	// no static palette
+	MDRV_VIDEO_START(sprtmtch)
+	MDRV_VIDEO_UPDATE(sprtmtch)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2203, sprtmtch_ym2203_interface)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 							Mahjong Friday
@@ -1511,6 +1607,90 @@ ROM_END
 
 /***************************************************************************
 
+The Return of Lady Frog
+Microhard, 1993
+
+PCB Layout
+----------
+
+
+YM2203                            68000
+YM3014    6116           **       2   6
+          6116          6116      3   7
+6264                              4   8
+1  Z80           MACH130          5   9
+                 681000        6264  6264
+
+
+DSW2              2148                10
+DSW1              2148  6264  30MHz   11
+                  2148  6264  24MHz   12
+                  2148                13
+
+Notes:
+      68000 Clock = >10MHz (my meter can only read up to 10.000MHz)
+        Z80 Clock = 3MHz
+               ** = possibly PLD (surface is scratched, type PLCC44)
+    Vertical Sync = 60Hz
+      Horiz. Sync = 15.56kHz
+
+Developers:
+           More info reqd? Email me....
+           theguru@emuunlim.com
+
+***************************************************************************/
+
+ROM_START( ladyfrog )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "ladyfrog.001", 0x00000, 0x20000, 0xba9eb1c6 )
+	ROM_RELOAD(               0x20000, 0x20000 )
+
+	ROM_REGION( 0x400000, REGION_CPU2, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "ladyfrog.002",	0x000000, 0x080000, 0x724cf022 )
+	ROM_LOAD16_BYTE( "ladyfrog.006",	0x000001, 0x080000, 0xe52a7ae2 )
+	ROM_LOAD16_BYTE( "ladyfrog.003",	0x100000, 0x080000, 0xa1d49967 )
+	ROM_LOAD16_BYTE( "ladyfrog.007",	0x100001, 0x080000, 0xe5805c4e )
+	ROM_LOAD16_BYTE( "ladyfrog.004",	0x200000, 0x080000, 0x709281f5 )
+	ROM_LOAD16_BYTE( "ladyfrog.008",	0x200001, 0x080000, 0x39adcba4 )
+	ROM_LOAD16_BYTE( "ladyfrog.005",	0x300000, 0x080000, 0xb683160c )
+	ROM_LOAD16_BYTE( "ladyfrog.009",	0x300001, 0x080000, 0xe475fb76 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, 0 )	/* blitter data ?? */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ladyfrog.010",       0x00000, 0x20000, 0x51fd0e1a )
+	ROM_LOAD( "ladyfrog.011",       0x20000, 0x20000, 0x610bf6f3 )
+	ROM_LOAD( "ladyfrog.012",       0x40000, 0x20000, 0x466ede67 )
+	ROM_LOAD( "ladyfrog.013",       0x60000, 0x20000, 0xfad3e8be )
+ROM_END
+
+ROM_START( ladyfrga )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "ladyfrog.001", 0x00000, 0x20000, 0xba9eb1c6 )
+	ROM_RELOAD(               0x20000, 0x20000 )
+
+	ROM_REGION( 0x400000, REGION_CPU2, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "ladyfrog.002",	0x000000, 0x080000, 0x724cf022 )
+	ROM_LOAD16_BYTE( "ladyfrog.006",	0x000001, 0x080000, 0xe52a7ae2 )
+	ROM_LOAD16_BYTE( "ladyfrog.003",	0x100000, 0x080000, 0xa1d49967 )
+	ROM_LOAD16_BYTE( "ladyfrog.007",	0x100001, 0x080000, 0xe5805c4e )
+	ROM_LOAD16_BYTE( "ladyfrog.004",	0x200000, 0x080000, 0x709281f5 )
+	ROM_LOAD16_BYTE( "ladyfrog.008",	0x200001, 0x080000, 0x39adcba4 )
+	ROM_LOAD16_BYTE( "ladyfrog.005",	0x300000, 0x080000, 0xb683160c )
+	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, 0xfd515b58 )	// differs with ladyfrog.009 by 1 byte
+
+	ROM_REGION( 0x10000, REGION_GFX1, 0 )	/* blitter data ?? */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ladyfrog.010",       0x00000, 0x20000, 0x51fd0e1a )
+	ROM_LOAD( "ladyfrog.011",       0x20000, 0x20000, 0x610bf6f3 )
+	ROM_LOAD( "ladyfrog.012",       0x40000, 0x20000, 0x466ede67 )
+	ROM_LOAD( "ladyfrog.013",       0x60000, 0x20000, 0xfad3e8be )
+ROM_END
+
+
+/***************************************************************************
+
 Mahjong Friday
 (c)1989 Dynax
 D2607198L1
@@ -1539,6 +1719,79 @@ ROM_START( mjfriday )
 	ROM_LOAD( "d26_2.9e", 0x000, 0x200, 0xd6db5c60 )	// FIXED BITS (0xxxxxxx)
 	ROM_LOAD( "d26_1.8e", 0x200, 0x200, 0xaf5edf32 )
 ROM_END
+
+
+/***************************************************************************
+
+Maya
+Promat, 1994
+
+PCB Layout
+----------
+
+    6845      6264   3
+ DSW1  DSW2    1     4
+   YM2203      2     5
+   3014B
+
+              Z80
+  22.1184MHz
+
+ PROM1  TPC1020  D41264
+ PROM2            (x6)
+
+
+Notes:
+      Z80 Clock: 5.522MHz
+          HSync: 15.925 kHz
+          VSync: 60Hz
+
+Developers:
+           More info reqd? Email me...
+           theguru@emuunlim.com
+
+***************************************************************************/
+
+ROM_START( maya )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "1.17e", 0x00000, 0x10000, 0x5aaa015e )
+	ROM_LOAD( "2.15e", 0x28000, 0x10000, 0x7ea5b49a )
+
+	ROM_REGION( 0xc0000, REGION_USER1, ROMREGION_DISPOSE )	/* blitter data */
+	ROM_LOAD( "3.18g", 0x00000, 0x40000, 0x8534af04 )
+	ROM_LOAD( "4.17g", 0x40000, 0x40000, 0xab85ce5e )
+	ROM_LOAD( "5.15g", 0x80000, 0x40000, 0xc4316dec )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
+	/* blitter data will be decrypted here*/
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
+	ROM_LOAD( "prom2.5b",  0x000, 0x200, 0xd276bf61 )	// FIXED BITS (0xxxxxxx)
+	ROM_LOAD( "prom1.6b",  0x200, 0x200, 0xe38eb360 )
+ROM_END
+
+static DRIVER_INIT( maya )
+{
+	/* Address lines scrambling on 1 z80 rom */
+	data8_t	*rom = memory_region(REGION_CPU1) + 0x28000,
+			*end = rom + 0x10000;
+	for (;rom < end; rom+=8)
+	{
+		data8_t temp[8];
+		temp[0] = rom[0];	temp[1] = rom[1];	temp[2] = rom[2];	temp[3] = rom[3];
+		temp[4] = rom[4];	temp[5] = rom[5];	temp[6] = rom[6];	temp[7] = rom[7];
+
+		rom[0] = temp[0];	rom[1] = temp[4];	rom[2] = temp[1];	rom[3] = temp[5];
+		rom[4] = temp[2];	rom[5] = temp[6];	rom[6] = temp[3];	rom[7] = temp[7];
+	}
+
+	/* Address lines scrambling on the blitter data roms */
+	data8_t	*gfx = memory_region(REGION_GFX1);
+	rom = memory_region(REGION_USER1);
+	int i;
+	for (i = 0; i < 0xc0000; i++)
+		gfx[i] = rom[BITSWAP24(i,23,22,21,20,19,18,14,15, 16,17,13,12,11,10,9,8, 7,6,5,4,3,2,1,0)];
+}
 
 
 /***************************************************************************
@@ -1585,10 +1838,14 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1988, hanamai,  0,        hanamai,  hanamai,  0, ROT180, "Dynax", "Hana no Mai (Japan)" )
-GAME( 1989, hnkochou, hanamai,  hanamai,  hnkochou, 0, ROT180, "Dynax", "Hana Kochou [BET] (Japan)" )
-GAMEX(1989, hnoridur, 0,        hnoridur, hnoridur, 0, ROT180, "Dynax", "Hana Oriduru (Japan)", GAME_NOT_WORKING )
-GAME( 1989, drgpunch, 0,        sprtmtch, sprtmtch, 0, ROT0,   "Dynax", "Dragon Punch (Japan)" )
-GAME( 1989, sprtmtch, drgpunch, sprtmtch, sprtmtch, 0, ROT0,   "Dynax (Fabtek license)", "Sports Match" )
-GAME( 1989, mjfriday, 0,        mjfriday, mjfriday, 0, ROT180, "Dynax", "Mahjong Friday (Japan)" )
-GAMEX(1991, mjdialq2, 0,        mjdialq2, mjdialq2, 0, ROT180, "Dynax", "Mahjong Dial Q2 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1988, hanamai,  0,        hanamai,  hanamai,  0,    ROT180, "Dynax",     "Hana no Mai (Japan)" )
+GAME( 1989, hnkochou, hanamai,  hanamai,  hnkochou, 0,    ROT180, "Dynax",     "Hana Kochou [BET] (Japan)" )
+GAMEX(1989, hnoridur, 0,        hnoridur, hnoridur, 0,    ROT180, "Dynax",     "Hana Oriduru (Japan)", GAME_NOT_WORKING )
+GAME( 1989, drgpunch, 0,        sprtmtch, sprtmtch, 0,    ROT0,   "Dynax",     "Dragon Punch (Japan)" )
+GAME( 1989, sprtmtch, drgpunch, sprtmtch, sprtmtch, 0,    ROT0,   "Dynax (Fabtek license)", "Sports Match" )
+GAME( 1989, mjfriday, 0,        mjfriday, mjfriday, 0,    ROT180, "Dynax",     "Mahjong Friday (Japan)" )
+GAMEX(1991, mjdialq2, 0,        mjdialq2, mjdialq2, 0,    ROT180, "Dynax",     "Mahjong Dial Q2 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, ladyfrog, 0,        ladyfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog", GAME_NOT_WORKING )
+GAMEX(1993, ladyfrga, ladyfrog, ladyfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog (set 2)", GAME_NOT_WORKING )
+GAME( 1994, maya,     0,        sprtmtch, sprtmtch, maya, ROT0,   "Promat",    "Maya" )
+

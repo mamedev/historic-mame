@@ -13,7 +13,7 @@
 		* Danger Zone
 		* Baseball The Season II
 		* Super Baseball Double Play Home Run Derby
-		* Strike Zone
+		* Strike Zone Baseball
 		* Redline Racer
 		* Quarterback
 		* Viper
@@ -2527,7 +2527,7 @@ GAME( 1986, dangerz,  0,       leland,  dangerz,  dangerz,  ROT0,   "Cinematroni
 /* small master banks + extra top board, small slave banks */
 GAME( 1987, basebal2, 0,       leland,  basebal2, basebal2, ROT0,   "Cinematronics", "Baseball The Season II" )
 GAME( 1987, dblplay,  0,       leland,  basebal2, dblplay,  ROT0,   "Leland Corp. / Tradewest", "Super Baseball Double Play Home Run Derby" )
-GAME( 1988, strkzone, 0,       leland,  basebal2, strkzone, ROT0,   "Leland Corp.", "Strike Zone" )
+GAME( 1988, strkzone, 0,       leland,  basebal2, strkzone, ROT0,   "Leland Corp.", "Strike Zone Baseball" )
 
 /* large master banks, small slave banks, I86 sound */
 GAME( 1987, redlin2p, 0,       redline, redline,  redlin2p, ROT270, "Cinematronics (Tradewest license)", "Redline Racer (2 players)" )

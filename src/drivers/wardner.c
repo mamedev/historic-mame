@@ -353,7 +353,7 @@ MEMORY_END
 
 static PORT_READ16_START( DSP_readport )
 	{ TMS32010_PORT_RANGE(1, 1),  twincobr_dsp_r },
-	{ TMS32010_BIO, TMS32010_BIO, twincobr_BIO_r },
+	{ TMS32010_PORT_RANGE(TMS32010_BIO, TMS32010_BIO), twincobr_BIO_r },
 PORT_END
 
 static PORT_WRITE16_START( DSP_writeport )
@@ -797,4 +797,4 @@ static DRIVER_INIT( wardner )
 
 GAME( 1987, wardner,  0,       wardner, wardner,  wardner, ROT0, "[Toaplan] Taito Corporation Japan", "Wardner (World)" )
 GAME( 1987, pyros,    wardner, wardner, pyros,    wardner, ROT0, "[Toaplan] Taito America Corporation", "Pyros (US)" )
-GAME( 1987, wardnerj, wardner, wardner, wardnerj, wardner, ROT0, "[Toaplan] Taito Corporation", "Wardna no Mori (Japan)" )
+GAME( 1987, wardnerj, wardner, wardner, wardnerj, wardner, ROT0, "[Toaplan] Taito Corporation", "Wardner no Mori (Japan)" )

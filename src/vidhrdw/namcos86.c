@@ -309,7 +309,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			color = color>>1;
 
 			if (sx>512-32) sx -= 512;
-			if (sy < -209-32) sy += 256;
+			if (sy < -209-16) sy += 256;
 
 			if (flipx && !wide) sx-=16;
 			if (!tall) sy+=16;

@@ -339,114 +339,125 @@ static void UPD7759_start_play(int chip, int length)
 
 static void UPD7759_cmd_w(int chip, UINT8 data)
 {
-	enum {
-		PARAM_8x = 1
-	};
+	enum { PARAM_8x = 1 };
 
 	struct UPD7759_chip *ch = &UPD7759_chips.chip[chip];
 
-	if(ch->play_length && UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE) {
-		if(ch->skip_last_nibble) {
+	if(ch->play_length && UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE)
+	{
+		if(ch->skip_last_nibble)
+		{
 			ch->buffer[ch->buffer_ptr-1] = (ch->buffer[ch->buffer_ptr-1] & 0xf0) | (data >> 4);
 			ch->buffer[ch->buffer_ptr++] = data << 4;
 		} else
 			ch->buffer[ch->buffer_ptr++] = data;
+
 		ch->play_length--;
-		if(!ch->play_length) {
+
+		if(!ch->play_length)
+		{
 			if(ch->skip_last_nibble && ch->next_skip_last_nibble)
 				ch->buffer_ptr--;
 			ch->skip_last_nibble ^= ch->next_skip_last_nibble;
 			ch->next_skip_last_nibble = 0;
 		}
+
 		return;
 	}
 
-	if(ch->param_mode) {
-		switch(ch->param_mode) {
-		case PARAM_8x:
-			ch->param_mode = 0;
+	if(ch->param_mode)
+	{
+		switch(ch->param_mode)
+		{
+			case PARAM_8x:
+				ch->param_mode = 0;
+				//* The "param_mode" is responsible for packets with variable length
+				//* and silence compression. While the length of a packet can be
+				//* estimated quite accurately from the first data byte, actual
+				//* length may vary between +/-2 nibbles. The inconsistency occurs
+				//* less frequently in master(stand alone) mode but very often in
+				//* slave mode.
+				//*
+				//* When length estimation overshoots it is likely to result in
+				//* memory violations and consequently crashes MAME. Until the true
+				//* calculation method is known all estimated packet lengths must
+				//* align themselves and recede two nibbles to a fail-safe boundary.
+				//*
+				//* There are two drawbacks with the proposed contingency.
+				//* First, the last data byte of a variable-length packet may be
+				//* wasted, but this byte is not known in the first place to be
+				//* sample data or some kind of control codes. Second, this byte
+				//* may fall into the command pipeline; nevertheless, it has never
+				//* been found triggering illegal playbacks in the games tested
+				//* so far.
 
-			//* The "param_mode" is responsible for packets with variable length
-			//* and silence compression. While the length of a packet can be
-			//* estimated quite accurately from the first data byte, actual
-			//* length may vary between +/-2 nibbles. The inconsistency occurs
-			//* less frequently in master(stand alone) mode but very often in
-			//* slave mode.
-			//*
-			//* When length estimation overshoots it is likely to result in
-			//* memory violations and consequently crashes MAME. Until the true
-			//* calculation method is known all estimated packet lengths must
-			//* align themselves and recede two nibbles to a fail-safe boundary.
-			//*
-			//* There are two drawbacks with the proposed contingency.
-			//* First, the last data byte of a variable-length packet may be
-			//* wasted, but this byte is not known in the first place to be
-			//* sample data or some kind of control codes. Second, this byte
-			//* may fall into the command pipeline; nevertheless, it has never
-			//* been found triggering illegal playbacks in the games tested
-			//* so far.
-
-			//UPD7759_start_play(chip, data+3);
-			UPD7759_start_play(chip, (data & ~1) + 2);
-
+				//UPD7759_start_play(chip, data+3);
+				UPD7759_start_play(chip, (data & ~1) + 2);
 			return;
-		default:
-			logerror("UPD7759.%d Unknown parameter mode %d ?\n", chip, ch->param_mode);
-			ch->param_mode = 0;
-			break;
+
+			default:
+				logerror("UPD7759.%d Unknown parameter mode %d ?\n", chip, ch->param_mode);
+				ch->param_mode = 0;
 		}
 	}
 
-	switch(data & 0xc0) {
-	case 0x80: //* variable-length packets take higher precedence
-		UPD7759_set_frequency(ch, data & 0x1f);
-		ch->param_mode = PARAM_8x;
+	switch(data & 0xc0)
+	{
+		case 0x80: //* variable-length packets take higher precedence
+			UPD7759_set_frequency(ch, data & 0x1f);
+			ch->param_mode = PARAM_8x;
 		break;
-	case 0x40:
-		UPD7759_set_frequency(ch, data & 0x1f);
-		UPD7759_start_play(chip, 256);
+
+		case 0x40:
+			UPD7759_set_frequency(ch, data & 0x1f);
+			UPD7759_start_play(chip, 256);
 		break;
-	default:
-		if (UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE)
-		{
-			//* 0xff marks the start and end of a sample in slave mode
-			if (data == 0xff)
+
+		default:
+			if (UPD7759_chips.intf->mode == UPD7759_SLAVE_MODE)
 			{
-				if(ch->started)
+				//* 0xff marks the start and end of a sample in slave mode
+				if (data == 0xff)
 				{
-					stream_update(ch->channel, 0);
-					ch->cmd_mode = 0;
-					timer_adjust(ch->timer, TIME_NEVER, 0, 0);
+					if(ch->started)
+					{
+						stream_update(ch->channel, 0);
+						ch->cmd_mode = 0;
+						timer_adjust(ch->timer, TIME_NEVER, 0, 0);
+					}
+					else
+						ch->started = 1;
+
+					return;
 				}
-				else
-					ch->started = 1;
 			}
-		}
-		else
-		{
-			//* 0x00 is likely to be the start/end marker in master mode.
-			//* Samples usually have pointer entries at the beginning of the
-			//* ROM so this is generally not needed. The only exception is the
-			//* last sample of which ending position can only be detected by
-			//* checking this marker. I'm going to make this a special case
-			//* until more tests are conducted.
-			if (data == 0x00 && ch->last_sample)
+			else
 			{
-				if (ch->started)
-					  ch->started = 0;
-				else
-					{ ch->started = 1; break; }
+				//* 0x00 is likely to be the start/end marker in master mode.
+				//* Samples usually have pointer entries at the beginning of the
+				//* ROM so this is generally not needed. The only exception is the
+				//* last sample of which ending position can only be detected by
+				//* checking this marker. I'm going to make this a special case
+				//* until more tests are conducted. 0xff should also terminate a
+				//* sound unconditionally as a safty measure.
+				if (data == 0xff || (data == 0x00 && ch->last_sample))
+				{
+					if (ch->started)
+					{
+						ch->started = 0;
+						stream_update(ch->channel, 0);
+						ch->rr_pos = ch->rr_end;
+						ch->play_length = 0;
+						timer_adjust(ch->timer, TIME_NEVER, 0, 0);
+					}
+					else
+						if (!data) ch->started = 1;
+
+					return;
+				}
 			}
-			else if (data != 0xff) break;
 
-			stream_update(ch->channel, 0);
-			ch->rr_pos = ch->rr_end;
-			ch->play_length = 0;
-			timer_adjust(ch->timer, TIME_NEVER, 0, 0);
-		}
-		//else logerror("UPD7759.%d unknown command %02x\n", chip, data);
-
-		break;
+			//logerror("UPD7759.%d unknown command %02x\n", chip, data);
 	}
 }
 

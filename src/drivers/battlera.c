@@ -13,8 +13,10 @@
 	Twice as much VRAM.
 
 	Todo:
-		Priority is wrong for the submarine at the end of level 1.
-		Music (HuC6280 sound)
+	- Priority is wrong for the submarine at the end of level 1.
+	- There seems to be a bug with a stuck note from the YM2203 FM channel
+	  at the start of scene 3 and near the ending when your characters are
+	  flying over a forest in a helicopter.
 
 **********************************************************************/
 
@@ -138,7 +140,7 @@ static MEMORY_WRITE_START( sound_writemem )
  	{ 0x000000, 0x00ffff, MWA_ROM },
 	{ 0x040000, 0x040001, YM2203_w },
 	{ 0x080000, 0x080001, battlera_adpcm_data_w },
-	{ 0x1fe800, 0x1fe807, MWA_NOP },
+	{ 0x1fe800, 0x1fe80f, C6280_0_w },
 	{ 0x1f0000, 0x1f1fff, MWA_BANK7 }, /* Main ram */
 	{ 0x1ff000, 0x1ff001, battlera_adpcm_reset_w },
 	{ 0x1ff402, 0x1ff403, H6280_irq_status_w },
@@ -270,6 +272,13 @@ static struct YM2203interface ym2203_interface =
 	{ 0 },
 };
 
+static struct C6280_interface c6280_interface =
+{
+	1,		/* 1 chip */
+	{ 60 },		/* Volume */
+	{ 21477270/6 }	/* 3.579545 MHz */
+};
+
 static struct MSM5205interface msm5205_interface =
 {
 	1,					/* 1 chip			 */
@@ -307,8 +316,10 @@ static MACHINE_DRIVER_START( battlera )
 	MDRV_VIDEO_UPDATE(battlera)
 
 	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SOUND_ADD(C6280, c6280_interface)
 MACHINE_DRIVER_END
 
 /******************************************************************************/

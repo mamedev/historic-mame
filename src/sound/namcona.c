@@ -502,8 +502,8 @@ UpdateSequence( struct sequence *pSequence )
 						{
 							struct sequence *pSequence2 = &mSequence[no];
 							data16_t *pStatus2 = GetSequenceStatusAddr(pSequence2);
-							*pStatus2 = (cod<<8)|0x0080;
 							int offs = 0x12+cod*2;
+							*pStatus2 = (cod<<8)|0x0080;
 							memset( pSequence2, 0x00, sizeof(struct sequence) );
 							pSequence2->addr = ReadMetaDataWord(offs);
 						}

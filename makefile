@@ -25,6 +25,9 @@ X86_ASM_68000 = 1
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
 
+# uncomment next line to use DRC MIPS3 engine
+X86_MIPS3_DRC = 1
+
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 

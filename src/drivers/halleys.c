@@ -17,9 +17,8 @@ Halley's Comet, 1986 Taito
 	- Blitter functions, especially those capable of screen warping, are unoptimized.
 	- The starfields can probably be represented and rendered by two simple lists
 	  instead of costly bitmaps.
-	- Collision handling is imperfect. Sometimes helper ships explode prematurely.
 	- Ben Bero Beh has collision problems with the falling fireballs and a minor
-	  priority glitch with the "Elevator Action baddies".
+	  priority glitch with the "Elevator Action" baddies.
 
 	* Halley's Comet's undocumented DIP switches only work if the player1 start button
 	  is depressed during boot-up.
@@ -275,9 +274,9 @@ static void blit(int offset)
 #define S2_REV     0x20000
 #define BACKMODE   0x40000
 #define ALPHAMODE  0x80000
+#define PPCD_ON    0x100000
 
 // hard-wired defs and interfaces
-#define BENBEROB_SPLIT  0x100
 #define HALLEYS_SPLIT   0xf4
 #define COLLISION_PORTA 0x67
 #define COLLISION_PORTB 0x8b
@@ -293,7 +292,7 @@ static void blit(int offset)
 	BYTE *param, *src_base;
 	WORD *dst_base;
 	int stptr, mode, color, code, y, x, h, w, src1, src2;
-	int status, flags, command, bank, layer, pen0, pen1;
+	int group, status, flags, command, bank, layer, pen0, pen1;
 	int yclip, xclip, src_yskip, src_xskip, dst_skip, hclip, wclip, src_dy, src_dx;
 	DWORD *pal_ptr;
 	BYTE *src1_ptr, *src2_ptr; // esi alias, ebx alias
@@ -324,11 +323,22 @@ if (0) {
 	// update sprite status
 	layer = (code>>3 & 2) | (code>>7 & 1);
 	offset >>= 4;
+	group = 0;
 	status = 0;
 	flags = mode;
 	command = code & COMMAND;
-	if (offset >= ((game_id) ? HALLEYS_SPLIT : BENBEROB_SPLIT)) flags |= AD_HIGH; else
-	if (offset & 1) { status |= (stptr) ? cpu1_base[stptr] : ACTIVE; memcpy(param-0x10,param,0x10); }
+	if (game_id == GAME_HALLEYS)
+	{
+		if (offset >= HALLEYS_SPLIT) flags |= AD_HIGH; else
+		if (offset & 1)
+		{
+			if (offset == 0x1b) flags &= ~GROUP; // HACK: Why does engine flame belong to sprite group one???
+			if (!layer) flags |= PPCD_ON;
+			status = (stptr) ? cpu1_base[stptr] : ACTIVE;
+			memcpy(param-0x10, param, 0x10);
+		}
+	}
+	else if (offset & 1) memcpy(param-0x10, param, 0x10);
 
 
 	// init draw parameters
@@ -359,24 +369,6 @@ if (0) {
 	if (flags & MIRROR_X) { flags |= FLIP_X; x -= (w - 1); }
 	if (y > VIS_MAXY || (y + h) <= VIS_MINY) return;
 	if (x > VIS_MAXX || (x + w) <= VIS_MINX) return;
-
-	/*
-	  update collision list
-
-	  Halley's Comet assumes blitter-side collisions do not occur between objects
-	  with X coordinates at or beyond the last 4 pixels to the right-screen edge.
-	  The game also throws inactive sprites to the top of the screen. These
-	  conditions should be excluded from collision or the little ships tend to
-	  explode spontaneously.
-	*/
-	if (game_id==GAME_HALLEYS && status & ACTIVE && ~mode & GROUP)
-	{
-		if (y && x < 0xfc)
-		{
-			collision_list[collision_count & (MAX_SPRITES-1)] = offset;
-			collision_count++;
-		}
-	}
 
 
 	// clip objects against the visible area
@@ -457,6 +449,9 @@ if (0) {
 		dst_ptr += wclip;
 		ecx = wclip = -wclip;
 		edx = src_dx;
+
+		if (flags & PPCD_ON) goto COLLISION_MODE;
+
 		al = ah = (BYTE)pen0;
 
 		if (!(flags & BACKMODE))
@@ -479,15 +474,63 @@ if (0) {
 			do {
 				do {
 					al |= *src1_ptr;
-					src1_ptr += src_dx;
+					src1_ptr += edx;
 					al |= *src2_ptr;
-					src2_ptr += src_dx;
+					src2_ptr += edx;
 					if (al & 0xf) { dst_ptr[ecx] = (WORD)al | SP_2BACK;  al = ah; }
 				}
 				while (++ecx);
 				ecx = wclip; src1_ptr += src_dy; src2_ptr += src_dy; dst_ptr += SCREEN_WIDTH;
 			}
 			while (--hclip);
+		}
+		return;
+
+
+		COLLISION_MODE:
+
+		// perform pixel-based collision on layer0 using the alpha blending flag as a group tag.
+		ax = 0;
+		if (flags & GROUP)
+		{
+			do {
+				do {
+					al = *src1_ptr;
+					src1_ptr += edx;
+					al |= *src2_ptr;
+					src2_ptr += edx;
+					if (al & 0xf) { dst_ptr[ecx] = (WORD)al | SP_ALPHA; }
+				}
+				while (++ecx);
+				ecx = wclip; src1_ptr += src_dy; src2_ptr += src_dy; dst_ptr += SCREEN_WIDTH;
+			}
+			while (--hclip);
+		}
+		else
+		{
+			do {
+				do {
+					al = *src1_ptr;
+					src1_ptr += edx;
+					al |= *src2_ptr;
+					src2_ptr += edx;
+					if (al & 0xf) { ax |= dst_ptr[ecx]; dst_ptr[ecx] = (WORD)al; }
+				}
+				while (++ecx);
+				ecx = wclip; src1_ptr += src_dy; src2_ptr += src_dy; dst_ptr += SCREEN_WIDTH;
+			}
+			while (--hclip);
+		}
+
+		// update collision list
+		if (status & ACTIVE && ax & SP_ALPHA)
+		{
+			collision_list[collision_count & (MAX_SPRITES-1)] = offset;
+			collision_count++;
+
+			#if HALLEYS_DEBUG
+				usrintf_showmessage("ID:%02x CC:%3d", offset, collision_count);
+			#endif
 		}
 
 	} else
@@ -967,6 +1010,8 @@ static READ_HANDLER( collision_id_r )
 	It is possible to bypass blitter-side collision altogether by feeding a redundant
 	sprite list to the main CPU, given that the processor is fast enough. This method
 	works reliably at 5MHz or above and will certainly break under 4MHz.
+
+	UPDATE: re-implemented pixel collision to accompany the hack method.
 */
 
 	if (game_id==GAME_HALLEYS && activecpu_get_pc()==0xb114) // HACK: collision detection bypass
@@ -1895,7 +1940,7 @@ static MACHINE_INIT( halleys )
 	bgcolor         = get_black_pen();
 	ffhead = fftail = 0;
 
-	memset(io_ram, 0, io_ramsize);
+	memset(io_ram, 0xff, io_ramsize);
 	memset(render_layer[0], 0, SCREEN_BYTESIZE * MAX_LAYERS);
 
 	fillbitmap(Machine->scrbitmap, bgcolor, &Machine->visible_area);

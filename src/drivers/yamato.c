@@ -449,5 +449,5 @@ static DRIVER_INIT( yamato )
 }
 
 
-GAME( 1983, yamato,  0,      yamato, yamato, yamato, ROT90, "Sega", "Yamato (set 1)" )
-GAME( 1983, yamato2, yamato, yamato, yamato, yamato, ROT90, "Sega", "Yamato (set 2)" )
+GAME( 1983, yamato,  0,      yamato, yamato, yamato, ROT90, "Sega", "Yamato (US)" )
+GAME( 1983, yamato2, yamato, yamato, yamato, yamato, ROT90, "Sega", "Yamato (World?)" )

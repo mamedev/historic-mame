@@ -1630,4 +1630,4 @@ GAME( 1989, pc_cshwk,playch10, playch10, playch10, pciboard, ROT0, "Rare (Ninten
 GAME( 1990, pc_sjetm,playch10, playch10, playch10, pciboard, ROT0, "Rare", "PlayChoice-10: Solar Jetman" )
 
 /* K-Board Games */
-GAME( 1991, pc_moglf,playch10, playch10, playch10, pckboard, ROT0, "Nintendo", "PlayChoice-10: Mario Open Golf" )
+GAME( 1991, pc_moglf,playch10, playch10, playch10, pckboard, ROT0, "Nintendo", "PlayChoice-10: Mario's Open Golf" )

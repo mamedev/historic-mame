@@ -21,6 +21,7 @@ OSC:	50.0000MHz
 -------------------------------------------------------------------------------------------
 Ordered by Board		Year	Game									By
 -------------------------------------------------------------------------------------------
+P-FG01-1				1995	Guardians / Denjin Makai II				Banpresto
 P0-123A					1996	Wakakusamonogatari Mahjong Yonshimai	Maboroshi Ware
 P0-125A ; KE (Namco)	1996	Kosodate Quiz My Angel					Namco
 P0-136A ; KL (Namco)	1997	Kosodate Quiz My Angel 2				Namco
@@ -31,7 +32,7 @@ P0-142A + extra parts	2000	Penguin Brothers						Subsino
 TODO:
 
 - Proper emulation of the TMP68301 CPU, in a core file.
-- Flip screen support.
+- Flip screen / Zooming support.
 - Fix some graphics imperfections (e.g. color depth selection,
   "tilemap" sprites) [all done? - NS]
 - I added a kludge involving a -0x10 yoffset, this fixes the lifeline in myangel.
@@ -54,6 +55,54 @@ myangel:
 myangel2:
 - before each level, the background image is shown with completely wrong colors. It
   corrects itself when the level starts.
+
+grdians:
+- the map screen after the character selection needs zooming. There is a global
+  zoom register that should affect the background map and the level picture but
+  not the frontmost frame. This latter should use color 7ff (the last one)
+  and ignore the individual color codes in the tiles data. Zooming is also
+  used briefly in pengbros.
+
+***************************************************************************/
+
+/***************************************************************************
+
+Guardians
+Banpresto, 1995
+
+This hardware is not common Banpresto hardware. Possibly licenced
+to them from another manufacturer? Or an early design that they decided
+not to use for future games? Either way, this game is _extremely_ rare :-)
+
+PCB Layout
+----------
+
+P-FG01-1
+------------------------------------------------------
+|        X1-010 6264          U32 CXK581000          |
+|                                 CXK581000      U16 |
+|                                                    |
+|                                                U20 |
+|    U3 U5 U2 U4 62256 CXK58257                      |
+|                62256 CXK58257                  U15 |
+|                                                    |
+|J                                               U19 |
+|A    TMP68301AF-16                                  |
+|M                                               U18 |
+|M                           NEC                     |
+|A          NEC              DX-101              U22 |
+|           DX-102                                   |
+|                                                U17 |
+|                   PAL   50MHz                      |
+|                                                U21 |
+|           DSW1(8)                                  |
+|           DSW2(8)                   CXK58257 NEC   |
+|                                     CXK58257 DX-102|
+------------------------------------------------------
+
+Notes:
+      HSync: 15.23kHz
+      VSync: 58.5Hz
 
 ***************************************************************************/
 
@@ -79,10 +128,6 @@ Notes:	pzlbowl PCB with extra parts:
         74HC00
 
 ***************************************************************************/
-
-
-
-
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -294,6 +339,51 @@ WRITE16_HANDLER( seta2_sound_bank_w )
 	}
 }
 
+
+/***************************************************************************
+								Guardians
+***************************************************************************/
+
+static WRITE16_HANDLER( grdians_lockout_w )
+{
+	if (ACCESSING_LSB)
+	{
+		// initially 0, then either $25 (coin 1) or $2a (coin 2)
+		coin_counter_w(0,data & 0x01);	// or 0x04
+		coin_counter_w(1,data & 0x02);	// or 0x08
+	}
+//	usrintf_showmessage("%04X", data & 0xffff);
+}
+
+static MEMORY_READ16_START( grdians_readmem )
+	{ 0x000000, 0x1fffff, MRA16_ROM					},	// ROM
+	{ 0x200000, 0x20ffff, MRA16_ROM					},	// RAM
+	{ 0x304000, 0x30ffff, MRA16_RAM					},	// ? seems tile data
+	{ 0x600000, 0x600001, input_port_0_word_r		},	// DSW 1
+	{ 0x600002, 0x600003, input_port_1_word_r		},	// DSW 2
+	{ 0x700000, 0x700001, input_port_2_word_r		},	// P1
+	{ 0x700002, 0x700003, input_port_3_word_r		},	// P2
+	{ 0x700004, 0x700005, input_port_4_word_r		},	// Coins
+	{ 0x70000c, 0x70000d, watchdog_reset16_r		},	// Watchdog
+	{ 0xb00000, 0xb03fff, seta_sound_word_r 		},	// Sound
+	{ 0xc00000, 0xc3ffff, MRA16_RAM					},	// Sprites
+	{ 0xc40000, 0xc4ffff, MRA16_RAM					},	// Palette
+	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
+MEMORY_END
+
+static MEMORY_WRITE16_START( grdians_writemem )
+	{ 0x000000, 0x1fffff, MWA16_ROM							},	// ROM
+	{ 0x200000, 0x20ffff, MWA16_RAM							},	// RAM
+	{ 0x304000, 0x30ffff, MWA16_RAM							},	// ? seems tile data
+	{ 0x800000, 0x800001, grdians_lockout_w					},
+	{ 0xb00000, 0xb03fff, seta_sound_word_w 				},	// Sound
+	{ 0xc00000, 0xc3ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
+	{ 0xc40000, 0xc4ffff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
+	{ 0xc50000, 0xc5ffff, MWA16_RAM							},	// cleared
+	{ 0xc60000, 0xc6003f, seta2_vregs_w, &seta2_vregs		},	// Video Registers
+	{ 0xe00010, 0xe0001f, seta2_sound_bank_w				},	// Samples Banks
+	{ 0xfffc00, 0xffffff, tmp68301_regs_w, &tmp68301_regs	},	// TMP68301 Registers
+MEMORY_END
 
 /***************************************************************************
                       Wakakusamonogatari Mahjong Yonshimai
@@ -510,6 +600,111 @@ MEMORY_END
 								Input Ports
 
 ***************************************************************************/
+
+/***************************************************************************
+								Guardians
+***************************************************************************/
+
+INPUT_PORTS_START( grdians )
+	PORT_START	// IN0 - $600000.w
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0002, "Easy"    )	// 0
+	PORT_DIPSETTING(      0x0003, "Normal"  )	// 1
+	PORT_DIPSETTING(      0x0001, "Hard"    )	// 2
+	PORT_DIPSETTING(      0x0000, "Hardest" )	// 3
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Title" )
+	PORT_DIPSETTING(      0x0008, "Guardians" )
+	PORT_DIPSETTING(      0x0000, "Denjin Makai II" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0020, "1" )
+	PORT_DIPSETTING(      0x0030, "2" )
+	PORT_DIPSETTING(      0x0010, "3" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+
+	PORT_BIT(     0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - $600002.w
+	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x000e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x000a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x00f0, 0x00f0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0050, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x00f0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x0070, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x00d0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x00b0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0090, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+
+	PORT_BIT(     0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - $700000.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN3 - $700002.w
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - $700004.w
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BITX( 0x0008, IP_ACTIVE_LOW,  IPT_SERVICE, "Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_BIT(  0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 /***************************************************************************
                       Wakakusamonogatari Mahjong Yonshimai
@@ -1161,6 +1356,17 @@ static MACHINE_DRIVER_START( mj4simai )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( grdians )
+
+	MDRV_IMPORT_FROM(mj4simai)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(grdians_readmem,grdians_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0x80, 0x80 + 0x130 -1, 0x80, 0x80 + 0xe8 -1)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( myangel )
 
 	/* basic machine hardware */
@@ -1219,6 +1425,39 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
+ROM_START( grdians )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
+	ROM_LOAD16_BYTE( "u2.bin", 0x000000, 0x080000, 0x36adc6f2 )
+	ROM_LOAD16_BYTE( "u3.bin", 0x000001, 0x080000, 0x2704f416 )
+	ROM_LOAD16_BYTE( "u4.bin", 0x100000, 0x080000, 0xbb52447b )
+	ROM_LOAD16_BYTE( "u5.bin", 0x100001, 0x080000, 0x9c164a3b )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE|ROMREGION_ERASE)	/* Sprites */
+	ROM_LOAD( "u16.bin",  0x0000000, 0x400000, 0x6a65f265 )
+	ROM_LOAD( "u20.bin",  0x0600000, 0x200000, 0xa7226ab7 )
+	ROM_CONTINUE(         0x0400000, 0x200000 )
+
+	ROM_LOAD( "u15.bin",  0x0800000, 0x400000, 0x01672dcd )
+	ROM_LOAD( "u19.bin",  0x0e00000, 0x200000, 0xc0c998a0 )
+	ROM_CONTINUE(         0x0c00000, 0x200000 )
+
+	ROM_LOAD( "u18.bin",  0x1000000, 0x400000, 0x967babf4 )
+	ROM_LOAD( "u22.bin",  0x1600000, 0x200000, 0x6239997a )
+	ROM_CONTINUE(         0x1400000, 0x200000 )
+
+	ROM_LOAD( "u17.bin",  0x1800000, 0x400000, 0x0fad0629 )
+	ROM_LOAD( "u21.bin",  0x1e00000, 0x200000, 0x6f95e466 )
+	ROM_CONTINUE(         0x1c00000, 0x200000 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	/* Leave 1MB empty (addressable by the chip) */
+	// u32: 3rd quarter = 4th quarter; 1st quarter = 2nd quarter = 3rd quarter with every other byte = 0
+	// but all in all the data needed by the game is there (3rd or 4th quarter)
+	ROM_LOAD( "u32.bin", 0x100000, 0x100000, 0x277ef458 )	// BADADDR  x-xxxxxxxxxxxxxxxxxxxx
+	ROM_CONTINUE(        0x100000, 0x100000 )
+	ROM_CONTINUE(        0x100000, 0x100000 )
+	ROM_CONTINUE(        0x100000, 0x100000 )
+ROM_END
 
 ROM_START( mj4simai )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* TMP68301 Code */
@@ -1312,7 +1551,7 @@ ROM_START( penbros )
 	ROM_LOAD( "u40.bin", 0x800000, 0x400000, 0xdc9e0a96 )
 	ROM_FILL(            0xc00000, 0x400000, 0 )	/* 6bpp instead of 8bpp */
 
-	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "u18.bin", 0x100000, 0x200000, 0xde4e65e2 )
 ROM_END
@@ -1328,9 +1567,10 @@ DRIVER_INIT( pzlbowl )
 }
 
 
-
+GAMEX( 1995, grdians,  0, grdians,  grdians,  0,  		ROT0, "Banpresto",           "Guardians / Denjin Makai II",                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )	// Displays (c) Winky Soft at game's end.
 GAMEX( 1996, mj4simai, 0, mj4simai, mj4simai, 0,        ROT0, "Maboroshi Ware",      "Wakakusamonogatari Mahjong Yonshimai (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1996, myangel,  0, myangel,  myangel,  0,        ROT0, "Namco",               "Kosodate Quiz My Angel (Japan)",   GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1997, myangel2, 0, myangel2, myangel2, 0,        ROT0, "Namco",               "Kosodate Quiz My Angel 2 (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1999, pzlbowl,  0, pzlbowl,  pzlbowl,  pzlbowl,  ROT0, "Nihon System / Moss", "Puzzle De Bowling (Japan)",        GAME_NO_COCKTAIL )
-GAMEX( 2000, penbros,  0, penbros,  penbros,  0,  		ROT0, "Subsino",             "Penguin Brothers (Japan)",         GAME_NO_COCKTAIL )
+GAMEX( 1996, myangel,  0, myangel,  myangel,  0,        ROT0, "Namco",               "Kosodate Quiz My Angel (Japan)",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1997, myangel2, 0, myangel2, myangel2, 0,        ROT0, "Namco",               "Kosodate Quiz My Angel 2 (Japan)",             GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1999, pzlbowl,  0, pzlbowl,  pzlbowl,  pzlbowl,  ROT0, "Nihon System / Moss", "Puzzle De Bowling (Japan)",                    GAME_NO_COCKTAIL )
+GAMEX( 2000, penbros,  0, penbros,  penbros,  0,  		ROT0, "Subsino",             "Penguin Brothers (Japan)",                     GAME_NO_COCKTAIL )
+

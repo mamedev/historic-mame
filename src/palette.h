@@ -93,6 +93,9 @@ typedef UINT32 rgb_t;
 #define PALETTE_DEFAULT_SHADOW_FACTOR (0.6)
 #define PALETTE_DEFAULT_HIGHLIGHT_FACTOR (1/PALETTE_DEFAULT_SHADOW_FACTOR)
 
+#define PALETTE_DEFAULT_SHADOW_FACTOR32 (0.7)
+#define PALETTE_DEFAULT_HIGHLIGHT_FACTOR32 (1.4)
+
 
 
 /*-------------------------------------------------
@@ -139,6 +142,10 @@ void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b);
 void palette_set_brightness(pen_t pen, double bright);
 void palette_set_shadow_factor(double factor);
 void palette_set_highlight_factor(double factor);
+void palette_set_shadow_mode(int mode); //* AAT 032803
+void palette_set_shadow_factor32(double factor);
+void palette_set_highlight_factor32(double factor);
+void palette_set_shadow_dRGB32(int mode, int dr, int dg, int db, int noclip);
 
 void palette_set_global_gamma(double _gamma);
 double palette_get_global_gamma(void);

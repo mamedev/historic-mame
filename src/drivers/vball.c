@@ -1,15 +1,37 @@
-/*
-Championship VBall
-Driver by Paul "TBBle" Hampson
+/**********************************************************************************************************************
+ Championship VBall
+ Driver by Paul "TBBle" Hampson
 
-TODO:
-Needs to be tilemapped. The background layer and sprite layer are identical to spdodgeb, except for the
- back-switched graphics roms and the size of the pallete banks.
-Someone needs to look at Naz's board, and see what PCM sound chips are present.
-And get whatever's in the dip package on Naz's board. (BG/FG Roms, I hope)
-I'd also love to know whether Naz's is a bootleg or is missing the story for a different reason (US release?)
+ TODO:
+ Needs to be tilemapped. The background layer and sprite layer are identical to spdodgeb, except for the
+  back-switched graphics roms and the size of the pallete banks.
+ Someone needs to look at Naz's board, and see what PCM sound chips are present.
+ And get whatever's in the dip package on Naz's board. (BG/FG Roms, I hope)
+ I'd also love to know whether Naz's is a bootleg or is missing the story for a different reason (US release?)
 
-*/
+ 03/28/03 - Additions by Steve Ellenoff
+ ---------------------------------------
+
+ -Corrected background tiles (tiles are really 512x512 not 256x256 as previously setup)
+ -Converted rendering to tilemap system
+ -Implemented Scroll Y registers
+ -Implemented X Line Scrolling (only seems to be used for displaying Hawaii and Airfield Map Screen)
+ -Adjusted visible screen size to match more closely the real game
+ -Added support for cocktail mode/flip screen
+ -Adjusted Difficulty Dip settings based on some game testing I did
+ -Confirmed the US version uses the oki6295 and does not display the story in attract mode like the JP version
+ -Confirmed the Background graphics are contained in that unusual looking dip package on the US board,
+  (need help figuring out the pinout so I can try and dump it)
+
+ Remaining Issues:
+ -1) IRQ & NMI code is totally guessed, and needs to be solved properly
+ -2) X Line Scrolling doesn't work 100% when Flip Screen Dip is set
+ -3) 2 Player Version - Dips for difficulty don't seem to work or just need more testing
+ -4) 2 Player Version - Can't figure out how the speech hardware is working...
+                        pretty sure it's not using an oki6295 like the US version, need confirmation from the person
+						that dumped the 2 player roms.
+ -5) YM2151 emulation is not 100% correct - this can be heard on certain sound effects during the music.
+  *********************************************************************************************************************/
 
 
 #include "driver.h"
@@ -23,23 +45,27 @@ I'd also love to know whether Naz's is a bootleg or is missing the story for a d
 extern unsigned char *vb_attribram;
 extern unsigned char *vb_spriteram;
 extern unsigned char *vb_videoram;
-extern unsigned char *vb_fgattribram;
-extern unsigned char *vb_scrollx_lo;
+extern unsigned char *vb_scrolly_lo;
 extern int vb_scrollx_hi;
+extern int vb_scrolly_hi;
+extern int vb_scrollx_lo;
 extern int vball_gfxset;
 
 VIDEO_START( vb );
 VIDEO_UPDATE( vb );
 extern void vb_bgprombank_w(int bank);
 extern void vb_spprombank_w(int bank);
-extern WRITE_HANDLER( vb_foreground_w );
 extern WRITE_HANDLER( vb_attrib_w );
-extern WRITE_HANDLER( vb_fgattrib_w );
+extern WRITE_HANDLER( vb_videoram_w );
+extern void vb_mark_all_dirty(void);
+
+INTERRUPT_GEN( vball_interrupt );
+
 /* end of extern code & data */
 
 /* private globals */
 static int sound_irq, ym_irq;
-static int adpcm_pos[2],adpcm_end[2],adpcm_idle[2];
+//static int adpcm_pos[2],adpcm_end[2],adpcm_idle[2];
 /* end of private globals */
 
 static MACHINE_INIT( vb ) {
@@ -48,6 +74,15 @@ static MACHINE_INIT( vb ) {
 
 }
 
+/* bit 0 = bank switch
+   bit 1 = ?
+   bit 2 = ?
+   bit 3 = ?
+   bit 4 = ?
+   bit 5 = graphics tile offset
+   bit 6 = scroll y hi
+   bit 7 = ?
+*/
 static WRITE_HANDLER( vb_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -55,10 +90,9 @@ static WRITE_HANDLER( vb_bankswitch_w )
 
 	if (vball_gfxset != ((data  & 0x20) ^ 0x20)) {
 		vball_gfxset = (data  & 0x20) ^ 0x20;
-		memset(dirtybuffer,1, 0x800);
+			vb_mark_all_dirty();
 	}
-
-//	logerror("CPU #0 PC %04x: warning - write %02x to bankswitch memory address 1009\n",activecpu_get_pc(),data);
+	vb_scrolly_hi = (data & 0x40)<<2;
 }
 
 /* The sound system comes all but verbatim from Double Dragon */
@@ -67,7 +101,7 @@ static WRITE_HANDLER( vb_bankswitch_w )
 WRITE_HANDLER( cpu_sound_command_w ) {
 	soundlatch_w( offset, data );
 	cpu_set_irq_line( 1, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
-	logerror("Sound_command_w\n");
+	logerror("Sound_command_w = %x\n",data);
 }
 
 #if 0
@@ -93,7 +127,6 @@ static WRITE_HANDLER( dd_adpcm_w )
 			break;
 	}
 }
-#endif
 
 static void dd_adpcm_int(int chip)
 {
@@ -117,7 +150,6 @@ static void dd_adpcm_int(int chip)
 	}
 }
 
-#if 0
 static READ_HANDLER( dd_adpcm_status_r )
 {
 //	logerror("dd_adpcm_status_r\n");
@@ -125,13 +157,22 @@ static READ_HANDLER( dd_adpcm_status_r )
 }
 #endif
 
+/* bit 0 = flip screen
+   bit 1 = scrollx hi
+   bit 2 = bg prom bank
+   bit 3 = bg prom bank
+   bit 4 = bg prom bank
+   bit 5 = sp prom bank
+   bit 6 = sp prom bank
+   bit 7 = sp prom bank
+*/
 WRITE_HANDLER( vb_scrollx_hi_w )
 {
+	flip_screen_set(~data&1);
 	vb_scrollx_hi = (data & 0x02) << 7;
 	vb_bgprombank_w((data >> 2)&0x07);
 	vb_spprombank_w((data >> 5)&0x07);
-
-//	logerror("vb_scrollx_hi %02x\n",data);
+	//logerror("%04x: vb_scrollx_hi = %d\n",activecpu_get_previouspc(), vb_scrollx_hi);
 
 }
 
@@ -155,24 +196,31 @@ static MEMORY_READ_START( vball2pj_readmem )
 	{ 0x1002, 0x1002, input_port_2_r },
 	{ 0x1003, 0x1003, input_port_3_r },
 	{ 0x1004, 0x1004, input_port_4_r },
+	{ 0x1005, 0x1005, MRA_RAM },		//Strange, that these are read!
+	{ 0x1006, 0x1006, MRA_RAM },		//Strange, that these are read!
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 MEMORY_END
 
+WRITE_HANDLER(vb_scrollx_lo_w)
+{
+	vb_scrollx_lo = data;
+	//logerror("%04x: vb_scrollx_lo =%d\n",activecpu_get_previouspc(), vb_scrollx_lo);
+}
+
+//Cheaters note: Scores are stored in ram @ 0x57-0x58 (though the space is used for other things between matches)
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x08ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1008, 0x1008, vb_scrollx_hi_w },
 	{ 0x1009, 0x1009, vb_bankswitch_w },
 	{ 0x100a, 0x100a, MWA_RAM },
-	{ 0x100b, 0x100b, MWA_RAM },
-	{ 0x100c, 0x100c, MWA_RAM, &vb_scrollx_lo },
+	{ 0x100b, 0x100b, MWA_RAM },		//Counts from 0 to 7 continuously
+	{ 0x100c, 0x100c, vb_scrollx_lo_w },
 	{ 0x100d, 0x100d, cpu_sound_command_w },
-	{ 0x100e, 0x100e, MWA_RAM },
-	{ 0x2000, 0x27ff, vb_foreground_w, &vb_videoram },
-	{ 0x2800, 0x2fff, videoram_w, &videoram },
-	{ 0x3000, 0x37ff, vb_fgattrib_w, &vb_fgattribram },
-	{ 0x3800, 0x3fff, vb_attrib_w, &vb_attribram },
+	{ 0x100e, 0x100e, MWA_RAM, &vb_scrolly_lo },
+	{ 0x2000, 0x2fff, vb_videoram_w, &vb_videoram },
+	{ 0x3000, 0x3fff, vb_attrib_w, &vb_attribram },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -268,12 +316,12 @@ INPUT_PORTS_START (vball)
 	/* Looks like the pins from the dips to the board were mixed up a little. */
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
-// This ordering is assumed. Someone has to play it a lot and find out.
-	PORT_DIPSETTING(    0x01, "Easy")
-	PORT_DIPSETTING(    0x00, "Medium")
-	PORT_DIPSETTING(    0x02, "Hard")
-	PORT_DIPSETTING(    0x03, "Very Hard")
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ))
+// I've adjusted these to what I think is correct from gameplay testing - SJE - 03/28/03
+	PORT_DIPSETTING(    0x02, "Easy")
+	PORT_DIPSETTING(    0x03, "Medium")
+	PORT_DIPSETTING(    0x01, "Hard")
+	PORT_DIPSETTING(    0x00, "Very Hard")
 	PORT_DIPNAME( 0x0c, 0x00, "Single Player Game Time")
 	PORT_DIPSETTING(    0x00, "1:15")
 	PORT_DIPSETTING(    0x04, "1:30")
@@ -325,13 +373,12 @@ INPUT_PORTS_START (vball2pj)
 	PORT_DIPSETTING(    0x01, "1:45")
 	PORT_DIPSETTING(    0x03, "2:00")
 	PORT_DIPSETTING(    0x02, "2:15")
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ))
 // This ordering is assumed. Someone has to play it a lot and find out.
 	PORT_DIPSETTING(    0x04, "Easy")
 	PORT_DIPSETTING(    0x00, "Medium")
 	PORT_DIPSETTING(    0x08, "Hard")
 	PORT_DIPSETTING(    0x0c, "Very Hard")
-
 	COMMON_PORTS_COINS
 INPUT_PORTS_END
 
@@ -388,6 +435,7 @@ static struct OKIM6295interface okim6295_interface =
 	{ 20000 }
 };
 
+#if 0
 static struct MSM5205interface msm5205_interface =
 {
 	1,					/* 2 chips             */
@@ -396,28 +444,14 @@ static struct MSM5205interface msm5205_interface =
 	{ MSM5205_S48_4B },	/* 8kHz and 6kHz      */
 	{ 40 }				/* volume */
 };
-
-INTERRUPT_GEN( vball_interrupt )
-{
-	int line = 33 - cpu_getiloops();
-
-	if (line < 30)
-	{
-//		scrollx[line] = lastscroll;
-		cpu_set_irq_line(0, M6502_IRQ_LINE, HOLD_LINE);
-	}
-	else if (line == 30)	/* vblank */
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
-		 	/* skip 31 32 33 to allow vblank to finish */
-}
-
+#endif
 
 static MACHINE_DRIVER_START( vball )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(M6502, 3579545)	/* 3.579545 MHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(vball_interrupt,34)	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
+	MDRV_CPU_VBLANK_INT(vball_interrupt,32)	/* ??1 IRQ every 8 visible scanlines, plus NMI for vblank?? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
@@ -430,8 +464,8 @@ static MACHINE_DRIVER_START( vball )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+    MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)	/* 240 x 240 */
 	MDRV_GFXDECODE(vb_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 
@@ -441,17 +475,15 @@ static MACHINE_DRIVER_START( vball )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	/* This is here purely based on what the Z80 seems to be doing. And the fact that it works */
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
-
 
 static MACHINE_DRIVER_START( vball2pj )
 
 	/* basic machine hardware */
  	MDRV_CPU_ADD(M6502, 3579545)	/* 3.579545 MHz */
 	MDRV_CPU_MEMORY(vball2pj_readmem,writemem)
-	MDRV_CPU_VBLANK_INT(vball_interrupt,34)	/* 1 IRQ every 8 visible scanlines, plus NMI for vblank */
+	MDRV_CPU_VBLANK_INT(vball_interrupt,32)	/* ??1 IRQ every 8 visible scanlines, plus NMI for vblank?? */
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
@@ -465,7 +497,7 @@ static MACHINE_DRIVER_START( vball2pj )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)	/* 240 x 240 */
 	MDRV_GFXDECODE(vb_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 
@@ -475,7 +507,8 @@ static MACHINE_DRIVER_START( vball2pj )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	//MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	//MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 
@@ -493,7 +526,7 @@ ROM_START( vball )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* region#2: music CPU, 64kb */
 	ROM_LOAD( "vball.47",  0x00000, 0x8000,  0x10ca79ad )
 
-	/* These are from the bootleg; the original doesn't seem to have them?? */
+	/* These are from the bootleg; the original has the image data stored in a special dip rom which has not been dumped */
 	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
 	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, 0xf26df8e1 ) /* 0,1,2,3 */
 	ROM_LOAD( "vball14.bin",  0x10000, 0x10000, 0xc9798d0e ) /* 0,1,2,3 */
@@ -525,6 +558,7 @@ ROM_START( vball2pj )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* region#2: music CPU, 64kb */
 	ROM_LOAD( "vball04.bin",  0x00000, 0x8000,  0x534dfbd9 )
+//	ROM_LOAD( "vball.47",  0x00000, 0x8000,  0x10ca79ad )
 
 	ROM_REGION(0x80000, REGION_GFX1, ROMREGION_DISPOSE )	 /* fg tiles */
 	ROM_LOAD( "vball13.bin",  0x00000, 0x10000, 0xf26df8e1 ) /* 0,1,2,3 */
@@ -553,5 +587,5 @@ ROM_START( vball2pj )
 ROM_END
 
 
-GAMEX( 1988, vball,    0,     vball,    vball,    0, ROT0, "Technos", "U.S. Championship V'ball (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan bootleg)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAME( 1988, vball,    0,     vball,    vball,    0, ROT0, "Technos", "U.S. Championship V'ball (set 1)" )
+GAMEX(1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan bootleg)", GAME_IMPERFECT_SOUND )

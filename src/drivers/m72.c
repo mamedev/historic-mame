@@ -36,11 +36,7 @@ TODO:
 - Maybe there is a layer enable register, e.g. nspirit shows (for an instant)
   incomplete screens with bad colors when you start a game.
 
-- Samples are missing in Gallop. The NMI handler for the sound CPU is just RETN,
-  so the hardware has to be different. Same thing with Air Duel and dkgenm72.
-
-- No samples in Pound for Pound, I haven't checked why; there are a lot of unknown
-  I/O writes.
+- A lot of unknown I/O writes from the sound CPU in Pound for Pound.
 
 - the sprite chip triggers IRQ1 when it has finished copying the sprite RAM to its
   private buffer. This isn't implemented (all games have an empty IRQ1 handler).
@@ -122,16 +118,46 @@ Sample playback
 
 In the later games, the sound CPU can program the start offset of the PCM
 samples, but it seems the earlier games have them hardcoded somewhere (maybe
-a PROM?). So, here I provided some tables with the start offset precomputed.
-They could be built automatically for the most part (00 marks the end of a
-sample), but some games have holes in the numbering so we would have to
-do some alterations anyway.
+the protection MCU?).
+So, here I provided some tables with the start offset precomputed.
+They could be built automatically in most cases (00 marks the end of a
+sample), but a couple of games (nspirit, loht) have holes in the numbering
+so we would have to do them differently anyway.
 
-Note that Gallop is wrong, and it doesn't play anything anyway, because the
-NMI handler of the sound CPU consists of just RETN - so it must be using
-different hardware.
+Also, some games (dkgenm72, poundfor, airduel, gallop) have an empty NMI
+handler, so the sample playback has to be handled entirely by external
+hardware; we work around that by using (for all games, not just the ones
+without a NMI handler) a NMI interrupt gen that mimics the behaviour of
+the NMI handler in the other games.
 
 ***************************************************************************/
+
+
+static int find_sample(int num)
+{
+	data8_t *rom = memory_region(REGION_SOUND1);
+	int len = memory_region_length(REGION_SOUND1);
+	int addr = 0;
+
+	while (num--)
+	{
+		/* find end of sample */
+		while (addr < len &&  rom[addr]) addr++;
+
+		/* skip 0 filler between samples */
+		while (addr < len && !rom[addr]) addr++;
+	}
+
+	return addr;
+}
+
+static INTERRUPT_GEN(fake_nmi)
+{
+	int sample = m72_sample_r(0);
+	if (sample)
+		m72_sample_w(0,sample);
+}
+
 
 static WRITE_HANDLER( bchopper_sample_trigger_w )
 {
@@ -174,6 +200,16 @@ static WRITE_HANDLER( airduel_sample_trigger_w )
 	int a[16] = { 0x00000, 0x00020, 0x03ec0, 0x05640, 0x06dc0, 0x083a0, 0x0c000, 0x0eb60,
 				  0x112e0, 0x13dc0, 0x16520, 0x16d60, 0x18ae0, 0x1a5a0, 0x1bf00, 0x1c340 };
 	if (data < 16) m72_set_sample_start(a[data]);
+}
+
+static WRITE_HANDLER( dkgenm72_sample_trigger_w )
+{
+	int a[28] = { 0x00000, 0x00020, 0x01800, 0x02da0, 0x03be0, 0x05ae0, 0x06100, 0x06de0,
+			      0x07260, 0x07a60, 0x08720, 0x0a5c0, 0x0c3c0, 0x0c7a0, 0x0e140, 0x0fb00,
+				  0x10fa0, 0x10fc0, 0x10fe0, 0x11f40, 0x12b20, 0x130a0, 0x13c60, 0x14740,
+				  0x153c0, 0x197e0, 0x1af40, 0x1c080 };
+
+	if (data < 28) m72_set_sample_start(a[data]);
 }
 
 static WRITE_HANDLER( gallop_sample_trigger_w )
@@ -466,9 +502,8 @@ static DRIVER_INIT( dkgenm72 )
 {
 	install_protection_handler(dkgenm72_code,dkgenm72_crc);
 
-//	install_port_write_handler(0,0xc0,0xc0,airduel_sample_trigger_w);
+	install_port_write_handler(0,0xc0,0xc0,dkgenm72_sample_trigger_w);
 }
-
 
 static DRIVER_INIT( gallop )
 {
@@ -514,7 +549,7 @@ static READ_HANDLER( poundfor_trackball_r )
 		case 0:
 			return diff[0] & 0xff;
 		case 1:
-			return 0;
+			return diff[2] & 0xff;
 		case 2:
 			return ((diff[0] >> 8) & 0x1f) | (readinputport(0) & 0xe0);
 		case 3:
@@ -804,15 +839,13 @@ PORT_END
 static PORT_READ_START( poundfor_sound_readport )
 	{ 0x41, 0x41, YM2151_status_port_0_r },
 	{ 0x42, 0x42, soundlatch_r },
-//	{ 0x84, 0x84, m72_sample_r },
 PORT_END
 
 static PORT_WRITE_START( poundfor_sound_writeport )
+	{ 0x10, 0x13, poundfor_sample_addr_w },
 	{ 0x40, 0x40, YM2151_register_port_0_w },
 	{ 0x41, 0x41, YM2151_data_port_0_w },
 	{ 0x42, 0x42, m72_sound_irq_ack_w },
-//	{ 0x80, 0x81, _sample_addr_w },
-//	{ 0x82, 0x82, m72_sample_w },
 PORT_END
 
 
@@ -1670,10 +1703,10 @@ INPUT_PORTS_START( poundfor )
 	PORT_ANALOG( 0xffff, 0x0000, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER1, 50, 30, 0, 0 )
 
 	PORT_START
-	PORT_ANALOG( 0xffff, 0x0000, IPT_TRACKBALL_X | IPF_PLAYER2, 50, 30, 0, 0 )
+	PORT_ANALOG( 0xffff, 0x0000, IPT_TRACKBALL_X | IPF_REVERSE | IPF_PLAYER2, 50, 30, 0, 0 )
 
 	PORT_START
-	PORT_ANALOG( 0xffff, 0x0000, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_PLAYER2, 50, 30, 0, 0 )
+	PORT_ANALOG( 0xffff, 0x0000, IPT_TRACKBALL_Y | IPF_PLAYER2, 50, 30, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( airduel )
@@ -2047,7 +2080,7 @@ static MACHINE_DRIVER_START( m72 )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
+	MDRV_CPU_VBLANK_INT(fake_nmi,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2084,7 +2117,7 @@ static MACHINE_DRIVER_START( dkgenm72 )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
+	MDRV_CPU_VBLANK_INT(fake_nmi,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2340,7 +2373,7 @@ static MACHINE_DRIVER_START( poundfor )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(poundfor_sound_readport,poundfor_sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
+	MDRV_CPU_VBLANK_INT(fake_nmi,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3223,10 +3256,10 @@ GAMEX( 1990, majtitle, 0,        majtitle, rtype2,   0,        ROT0,   "Irem", "
 GAMEX( 1990, hharry,   0,        hharry,   hharry,   0,        ROT0,   "Irem", "Hammerin' Harry (World)", GAME_NO_COCKTAIL )
 GAMEX( 1990, hharryu,  hharry,   hharryu,  hharry,   0,        ROT0,   "Irem America", "Hammerin' Harry (US)", GAME_NO_COCKTAIL )
 GAMEX( 1990, dkgensan, hharry,   hharryu,  hharry,   0,        ROT0,   "Irem", "Daiku no Gensan (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1990, dkgenm72, hharry,   dkgenm72, hharry,   dkgenm72, ROT0,   "Irem", "Daiku no Gensan (Japan, M72)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1990, poundfor, 0,        poundfor, poundfor, 0,        ROT270, "Irem", "Pound for Pound (World)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1990, poundfou, poundfor, poundfor, poundfor, 0,        ROT270, "Irem America", "Pound for Pound (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1990, airduel,  0,        m72,      airduel,  airduel,  ROT270, "Irem", "Air Duel (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1990, dkgenm72, hharry,   dkgenm72, hharry,   dkgenm72, ROT0,   "Irem", "Daiku no Gensan (Japan, M72)", GAME_NO_COCKTAIL )
+GAMEX( 1990, poundfor, 0,        poundfor, poundfor, 0,        ROT270, "Irem", "Pound for Pound (World)", GAME_NO_COCKTAIL )
+GAMEX( 1990, poundfou, poundfor, poundfor, poundfor, 0,        ROT270, "Irem America", "Pound for Pound (US)", GAME_NO_COCKTAIL )
+GAMEX( 1990, airduel,  0,        m72,      airduel,  airduel,  ROT270, "Irem", "Air Duel (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1991, cosmccop, 0,        kengo,    gallop,   0,        ROT0,   "Irem", "Cosmic Cop (World)", GAME_NO_COCKTAIL )
-GAMEX( 1991, gallop,   cosmccop, m72,      gallop,   gallop,   ROT0,   "Irem", "Gallop - Armed police Unit (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1991, gallop,   cosmccop, m72,      gallop,   gallop,   ROT0,   "Irem", "Gallop - Armed police Unit (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1991, kengo,    0,        kengo,    kengo,    kengo,    ROT0,   "Irem", "Ken-Go", GAME_NO_COCKTAIL )

@@ -192,6 +192,14 @@ void seibu_ym2151_irqhandler(int linestate)
 		timer_set(TIME_NOW,RST10_CLEAR,setvector_callback);
 }
 
+void seibu_ym2203_irqhandler(int linestate)
+{
+	if (linestate)
+		timer_set(TIME_NOW,RST10_ASSERT,setvector_callback);
+	else
+		timer_set(TIME_NOW,RST10_CLEAR,setvector_callback);
+}
+
 /***************************************************************************/
 
 /* Use this if the sound cpu is cpu 1 */
@@ -250,7 +258,7 @@ WRITE_HANDLER( seibu_pending_w )
 
 READ16_HANDLER( seibu_main_word_r )
 {
-			logerror("%06x: seibu_main_word_r(%x)\n",activecpu_get_pc(),offset);
+	//logerror("%06x: seibu_main_word_r(%x)\n",activecpu_get_pc(),offset);
 	switch (offset)
 	{
 		case 2:
@@ -259,14 +267,14 @@ READ16_HANDLER( seibu_main_word_r )
 		case 5:
 			return main2sub_pending ? 1 : 0;
 		default:
-			logerror("%06x: seibu_main_word_r(%x)\n",activecpu_get_pc(),offset);
+			//logerror("%06x: seibu_main_word_r(%x)\n",activecpu_get_pc(),offset);
 			return 0xffff;
 	}
 }
 
 WRITE16_HANDLER( seibu_main_word_w )
 {
-				logerror("%06x: seibu_main_word_w(%x,%02x)\n",activecpu_get_pc(),offset,data);
+	//logerror("%06x: seibu_main_word_w(%x,%02x)\n",activecpu_get_pc(),offset,data);
 	if (ACCESSING_LSB)
 	{
 		switch (offset)
@@ -284,7 +292,8 @@ WRITE16_HANDLER( seibu_main_word_w )
 				main2sub_pending = 1;
 				break;
 			default:
-				logerror("%06x: seibu_main_word_w(%x,%02x)\n",activecpu_get_pc(),offset,data);
+				//logerror("%06x: seibu_main_word_w(%x,%02x)\n",activecpu_get_pc(),offset,data);
+				break;
 		}
 	}
 }
@@ -362,5 +371,35 @@ MEMORY_WRITE_START( seibu2_sound_writemem )
 	{ 0x4018, 0x4019, seibu_main_data_w },
 	{ 0x401b, 0x401b, seibu_coin_w },
 	{ 0x6000, 0x6000, OKIM6295_data_0_w },
+	{ 0x8000, 0xffff, MWA_ROM },
+MEMORY_END
+
+MEMORY_READ_START( seibu3_sound_readmem )
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x4008, 0x4008, YM2203_status_port_0_r },
+	{ 0x4009, 0x4009, YM2203_read_port_0_r },
+	{ 0x4010, 0x4011, seibu_soundlatch_r },
+	{ 0x4012, 0x4012, seibu_main_data_pending_r },
+	{ 0x4013, 0x4013, input_port_0_r },
+	{ 0x6008, 0x6008, YM2203_status_port_1_r },
+	{ 0x6009, 0x6009, YM2203_read_port_1_r },
+	{ 0x8000, 0xffff, MRA_BANK1 },
+MEMORY_END
+
+MEMORY_WRITE_START( seibu3_sound_writemem )
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x27ff, MWA_RAM },
+	{ 0x4000, 0x4000, seibu_pending_w },
+	{ 0x4001, 0x4001, seibu_irq_clear_w },
+	{ 0x4002, 0x4002, seibu_rst10_ack_w },
+	{ 0x4003, 0x4003, seibu_rst18_ack_w },
+	{ 0x4007, 0x4007, seibu_bank_w },
+	{ 0x4008, 0x4008, YM2203_control_port_0_w },
+	{ 0x4009, 0x4009, YM2203_write_port_0_w },
+	{ 0x4018, 0x4019, seibu_main_data_w },
+	{ 0x401b, 0x401b, seibu_coin_w },
+	{ 0x6008, 0x6008, YM2203_control_port_1_w },
+	{ 0x6009, 0x6009, YM2203_write_port_1_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 MEMORY_END

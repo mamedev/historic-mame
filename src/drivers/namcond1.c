@@ -93,7 +93,7 @@ INPUT_PORTS_END
 static struct GfxLayout pts_8x8_4bits_layout =
 {
 	8,8,	      /* 8*8 pixels */
-	65536,        /* 65536 patterns */
+	RGN_FRAC(1,1),        /* 65536 patterns */
 	4,	          /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
     { STEP8( 0*256, 4 ) },
@@ -104,7 +104,7 @@ static struct GfxLayout pts_8x8_4bits_layout =
 static struct GfxLayout pts_16x16_4bits_layout =
 {
 	16,16,        /* 16*16 pixels */
-	16384,        /* 16384 patterns */
+	RGN_FRAC(1,1),        /* 16384 patterns */
 	4,	          /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
     { STEP8( 0*256, 4 ), STEP8( 1*256, 4 ) },
@@ -115,7 +115,7 @@ static struct GfxLayout pts_16x16_4bits_layout =
 static struct GfxLayout pts_32x32_4bits_layout =
 {
 	32,32,        /* 32*32 pixels */
-	4096,         /* 4096 patterns */
+	RGN_FRAC(1,1),         /* 4096 patterns */
 	4,	          /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
     { STEP8( 0*256, 4 ), STEP8( 1*256, 4 ), STEP8( 4*256, 4 ), STEP8( 5*256, 4 ) },
@@ -126,7 +126,7 @@ static struct GfxLayout pts_32x32_4bits_layout =
 static struct GfxLayout pts_64x64_4bits_layout =
 {
 	64,64,        /* 32*32 pixels */
-	1024,         /* 1024 patterns */
+	RGN_FRAC(1,1),         /* 1024 patterns */
 	4,	          /* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
     { STEP8( 0*256, 4 ), STEP8( 1*256, 4 ), STEP8( 4*256, 4 ), STEP8( 5*256, 4 ),
@@ -139,7 +139,7 @@ static struct GfxLayout pts_64x64_4bits_layout =
 static struct GfxLayout pts_8x8_8bits_layout =
 {
 	8,8,	      /* 8*8 pixels */
-	32768,        /* 32768 patterns */
+	RGN_FRAC(1,1),        /* 32768 patterns */
 	8,	          /* 8 bits per pixel */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
     { STEP8( 0*512, 8 ) },
@@ -150,7 +150,7 @@ static struct GfxLayout pts_8x8_8bits_layout =
 static struct GfxLayout pts_16x16_8bits_layout =
 {
 	16,16,        /* 16*16 pixels */
-	8192,         /* 8192 patterns */
+	RGN_FRAC(1,1),         /* 8192 patterns */
 	8,	          /* 8 bits per pixel */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
     { STEP8( 0*512, 8 ), STEP8( 1*512, 8 ) },
@@ -310,8 +310,8 @@ static void namcond1_patch( int *addr )
 #endif
 
 
-GAMEX( 1995, ncv1,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.1", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, ncv1j,  ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.1 (Japan set 1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, ncv1j2, ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.1 (Japan set 2)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, ncv2,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.2", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, ncv2j,  ncv2, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Vol.2 (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1j,  ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1 (Japan set 1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, ncv1j2, ncv1, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.1 (Japan set 2)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, ncv2,      0, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.2", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1996, ncv2j,  ncv2, namcond1, namcond1, 0, ROT90, "Namco", "Namco Classics Collection Vol.2 (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -179,13 +179,12 @@ static void dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
 		case 0x05:	sprintf(buffer, "dmtc1  %s,%s", reg[rt], cpreg[1][rd]);						break;
 		case 0x06:	sprintf(buffer, "ctc1   %s,%s", reg[rt], ccreg[1][rd]);						break;
 		case 0x08:	/* BC */
-			switch (rt)
+			switch (rt & 3)
 			{
-				case 0x00:	sprintf(buffer, "bc1f   $%08x", pc + 4 + ((INT16)op << 2));			break;
-				case 0x01:	sprintf(buffer, "bc1t   $%08x", pc + 4 + ((INT16)op << 2));			break;
-				case 0x02:	sprintf(buffer, "bc1fl  $%08x", pc + 4 + ((INT16)op << 2));			break;
-				case 0x03:	sprintf(buffer, "bc1tl  $%08x", pc + 4 + ((INT16)op << 2));			break;
-				default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);						break;
+				case 0x00:	sprintf(buffer, "bc1f   $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
+				case 0x01:	sprintf(buffer, "bc1t   $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
+				case 0x02:	sprintf(buffer, "bc1fl  $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
+				case 0x03:	sprintf(buffer, "bc1tl  $%08x,%d", pc + 4 + ((INT16)op << 2), (op >> 18) & 7);		break;
 			}
 			break;
 		default:	/* COP */
@@ -207,29 +206,92 @@ static void dasm_cop1(UINT32 pc, UINT32 op, char *buffer)
 				case 0x0d:	sprintf(buffer, "trunc.w.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
 				case 0x0e:	sprintf(buffer, "ceil.w.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
 				case 0x0f:	sprintf(buffer, "floor.w.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
+				case 0x11:	sprintf(buffer, "mov%c.%s  %s,%s,%d", ((op >> 16) & 1) ? 't' : 'f', fmt, cpreg[1][fd], cpreg[1][fs], (op >> 18) & 7);	break;
+				case 0x12:	sprintf(buffer, "movz.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
+				case 0x13:	sprintf(buffer, "movn.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
+				case 0x15:	sprintf(buffer, "recip.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
+				case 0x16:	sprintf(buffer, "rsqrt.%s  %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);				break;
 				case 0x20:	sprintf(buffer, "cvt.s.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
 				case 0x21:	sprintf(buffer, "cvt.d.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
 				case 0x24:	sprintf(buffer, "cvt.w.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
 				case 0x25:	sprintf(buffer, "cvt.l.%s %s,%s", fmt, cpreg[1][fd], cpreg[1][fs]);					break;
-				case 0x30:	sprintf(buffer, "c.f.%s  %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x31:	sprintf(buffer, "c.un.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x32:	sprintf(buffer, "c.eq.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x33:	sprintf(buffer, "c.ueq.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x34:	sprintf(buffer, "c.olt.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x35:	sprintf(buffer, "c.ult.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x36:	sprintf(buffer, "c.ole.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x37:	sprintf(buffer, "c.ule.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x38:	sprintf(buffer, "c.sf.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x39:	sprintf(buffer, "c.ngle.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);				break;
-				case 0x3a:	sprintf(buffer, "c.seq.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x3b:	sprintf(buffer, "c.ngl.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x3c:	sprintf(buffer, "c.lt.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x3d:	sprintf(buffer, "c.nge.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x3e:	sprintf(buffer, "c.le.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
-				case 0x3f:	sprintf(buffer, "c.ngt.%s %s,%s", fmt, cpreg[1][fs], cpreg[1][ft]);					break;
+				case 0x30:	sprintf(buffer, "c.f.%s  %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x31:	sprintf(buffer, "c.un.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x32:	sprintf(buffer, "c.eq.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x33:	sprintf(buffer, "c.ueq.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x34:	sprintf(buffer, "c.olt.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x35:	sprintf(buffer, "c.ult.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x36:	sprintf(buffer, "c.ole.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x37:	sprintf(buffer, "c.ule.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x38:	sprintf(buffer, "c.sf.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x39:	sprintf(buffer, "c.ngle.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);break;
+				case 0x3a:	sprintf(buffer, "c.seq.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x3b:	sprintf(buffer, "c.ngl.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x3c:	sprintf(buffer, "c.lt.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x3d:	sprintf(buffer, "c.nge.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x3e:	sprintf(buffer, "c.le.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
+				case 0x3f:	sprintf(buffer, "c.ngt.%s %s,%s,%d", fmt, cpreg[1][fs], cpreg[1][ft], (op >> 8) & 7);	break;
 				default:	sprintf(buffer, "cop1   $%07x", op & 0x01ffffff);									break;
 			}
 			break;
+	}
+}
+
+static void dasm_cop1x(UINT32 pc, UINT32 op, char *buffer)
+{
+	static const char *format3_table[] =
+	{
+		"s","d","?","?","w","l","?","?"
+	};
+	const char *fmt3 = format3_table[op & 7];
+	int fr = (op >> 21) & 31;
+	int ft = (op >> 16) & 31;
+	int fs = (op >> 11) & 31;
+	int fd = (op >> 6) & 31;
+	int rs = (op >> 21) & 31;
+	int rt = (op >> 16) & 31;
+	int rd = (op >> 11) & 31;
+
+	switch (op & 0x3f)
+	{
+		case 0x00:	sprintf(buffer, "lwxc1   %s,%s(%s)", cpreg[1][fd], reg[rt], reg[rs]);				break;
+		case 0x01:	sprintf(buffer, "ldxc1   %s,%s(%s)", cpreg[1][fd], reg[rt], reg[rs]);				break;
+		case 0x08:	sprintf(buffer, "swxc1   %s,%s(%s)", cpreg[1][fd], reg[rt], reg[rs]);				break;
+		case 0x09:	sprintf(buffer, "sdxc1   %s,%s(%s)", cpreg[1][fd], reg[rt], reg[rs]);				break;
+		case 0x0f:	sprintf(buffer, "prefx   %d,%s(%s)", rd, reg[rt], reg[rs]);							break;
+		case 0x20:
+		case 0x21:
+		case 0x22:
+		case 0x23:
+		case 0x24:
+		case 0x25:
+		case 0x26:
+		case 0x27:	sprintf(buffer, "madd.%s  %s,%s,%s,%s", fmt3, cpreg[1][fd], cpreg[1][fr], cpreg[1][fs], cpreg[1][ft]); break;
+		case 0x28:
+		case 0x29:
+		case 0x2a:
+		case 0x2b:
+		case 0x2c:
+		case 0x2d:
+		case 0x2e:
+		case 0x2f:	sprintf(buffer, "msub.%s  %s,%s,%s,%s", fmt3, cpreg[1][fd], cpreg[1][fr], cpreg[1][fs], cpreg[1][ft]); break;
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:	sprintf(buffer, "nmadd.%s %s,%s,%s,%s", fmt3, cpreg[1][fd], cpreg[1][fr], cpreg[1][fs], cpreg[1][ft]); break;
+		case 0x38:
+		case 0x39:
+		case 0x3a:
+		case 0x3b:
+		case 0x3c:
+		case 0x3d:
+		case 0x3e:
+		case 0x3f:	sprintf(buffer, "nmsub.%s %s,%s,%s,%s", fmt3, cpreg[1][fd], cpreg[1][fr], cpreg[1][fs], cpreg[1][ft]); break;
+		default:	sprintf(buffer, "cop1   $%07x", op & 0x01ffffff);									break;
 	}
 }
 
@@ -253,7 +315,7 @@ static void dasm_cop2(UINT32 pc, UINT32 op, char *buffer)
 				case 0x01:	sprintf(buffer, "bc2t   $%08x", pc + 4 + ((INT16)op << 2));		break;
 				case 0x02:	sprintf(buffer, "bc2fl [invalid]");								break;
 				case 0x03:	sprintf(buffer, "bc2tl [invalid]");								break;
-				default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);							break;
+				default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);					break;
 			}
 			break;
 		case 0x10:
@@ -295,6 +357,7 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 							sprintf(buffer, "nop");
 							else
 							sprintf(buffer, "sll    %s,%s,%d", reg[rd], reg[rt], shift);			break;
+				case 0x01:	sprintf(buffer, "mov%c   %s,%s,%d", ((op >> 16) & 1) ? 't' : 'f', reg[rd], reg[rt], (op >> 18) & 7); break;
 				case 0x02:	sprintf(buffer, "srl    %s,%s,%d", reg[rd], reg[rt], shift);			break;
 				case 0x03:	sprintf(buffer, "sra    %s,%s,%d", reg[rd], reg[rt], shift);			break;
 				case 0x04:	sprintf(buffer, "sllv   %s,%s,%s", reg[rd], reg[rt], reg[rs]);			break;
@@ -305,6 +368,8 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 							sprintf(buffer, "jalr   %s", reg[rs]);
 							else
 							sprintf(buffer, "jalr   %s,%s", reg[rs], reg[rd]);						break;
+				case 0x0a:	sprintf(buffer, "movz   %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
+				case 0x0b:	sprintf(buffer, "movn   %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
 				case 0x0c:	sprintf(buffer, "syscall");												break;
 				case 0x0d:	sprintf(buffer, "break");												break;
 				case 0x0f:	sprintf(buffer, "sync");												break;
@@ -394,6 +459,7 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 		case 0x10:	dasm_cop0(pc, op, buffer);														break;
 		case 0x11:	dasm_cop1(pc, op, buffer);														break;
 		case 0x12:	dasm_cop2(pc, op, buffer);														break;
+		case 0x13:	dasm_cop1x(pc, op, buffer);														break;
 		case 0x14:	sprintf(buffer, "beql   %s,%s,$%08x", reg[rs], reg[rt], pc + 4 + ((INT16)op << 2));break;
 		case 0x15:	sprintf(buffer, "bnel   %s,%s,$%08x", reg[rs], reg[rt], pc + 4 + ((INT16)op << 2));break;
 		case 0x16:	sprintf(buffer, "blezl  %s,%s,$%08x", reg[rs], reg[rt], pc + 4 + ((INT16)op << 2));break;
@@ -421,6 +487,7 @@ unsigned dasmmips3(char *buffer, unsigned pc)
 		case 0x30:	sprintf(buffer, "ll     %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;
 		case 0x31:	sprintf(buffer, "lwc1   %s,%s(%s)", cpreg[1][rt], signed_16bit(op), reg[rs]);	break;
 		case 0x32:	sprintf(buffer, "lwc2   %s,%s(%s)", cpreg[2][rt], signed_16bit(op), reg[rs]);	break;
+		case 0x33:	sprintf(buffer, "pref   $%x,%s(%s)", rt, signed_16bit(op), reg[rs]);			break;
 		case 0x34:	sprintf(buffer, "lld    %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;
 		case 0x35:	sprintf(buffer, "ldc1   %s,%s(%s)", cpreg[1][rt], signed_16bit(op), reg[rs]);	break;
 		case 0x36:	sprintf(buffer, "ldc2   %s,%s(%s)", cpreg[2][rt], signed_16bit(op), reg[rs]);	break;

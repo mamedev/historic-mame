@@ -50,6 +50,7 @@ SOUNDS+=OKIM6295@
 SOUNDS+=MSM5205@
 SOUNDS+=CUSTOM@
 SOUNDS+=X1_010@
+SOUNDS+=C6280@
 
 #OBJS = $(OBJ)/machine/nb1413m3.o $(OBJ)/vidhrdw/nbmj8688.o $(OBJ)/drivers/nbmj8688.o $(OBJ)/vidhrdw/nbmj8891.o $(OBJ)/drivers/nbmj8891.o
 #OBJS = $(OBJ)/vidhrdw/ms32.o $(OBJ)/drivers/ms32.o $(OBJ)/vidhrdw/tetrisp2.o $(OBJ)/drivers/tetrisp2.o

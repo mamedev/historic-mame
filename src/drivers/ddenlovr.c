@@ -1,6 +1,6 @@
 /***************************************************************************
 
-Some Dynax/Nakanihon games using the first version of their blitter
+Some Dynax/Nakanihon games using the third version of their blitter
 
 Driver by Nicola Salmoria based on preliminary work by Luca Elia
 

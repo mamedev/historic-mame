@@ -4,7 +4,7 @@
 
 	Cross Shooter    1987	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (YM2151 substituted for YM3812)
 	Cabal            1988	* "Michel/Seibu    sound 11/04/88" (YM2151 substituted for YM3812, unknown ADPCM)
-	Dead Angle       1988?	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
+	Dead Angle       1988	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC." (2xYM2203 substituted for YM3812, unknown ADPCM)
 	Dynamite Duke    1989	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 	Toki             1989	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
 	Raiden           1990	* "START UP PROGRAM V1.02 (C)1986 SEIBU KAIHATSU INC."
@@ -27,6 +27,8 @@ extern const struct Memory_ReadAddress seibu_sound_readmem[];
 extern const struct Memory_WriteAddress seibu_sound_writemem[];
 extern const struct Memory_ReadAddress seibu2_sound_readmem[];
 extern const struct Memory_WriteAddress seibu2_sound_writemem[];
+extern const struct Memory_ReadAddress seibu3_sound_readmem[];
+extern const struct Memory_WriteAddress seibu3_sound_writemem[];
 
 READ16_HANDLER( seibu_main_word_r );
 READ_HANDLER( seibu_main_v30_r );
@@ -42,6 +44,7 @@ WRITE_HANDLER( seibu_bank_w );
 WRITE_HANDLER( seibu_coin_w );
 void seibu_ym3812_irqhandler(int linestate);
 void seibu_ym2151_irqhandler(int linestate);
+void seibu_ym2203_irqhandler(int linestate);
 READ_HANDLER( seibu_soundlatch_r );
 READ_HANDLER( seibu_main_data_pending_r );
 WRITE_HANDLER( seibu_main_data_w );
@@ -55,7 +58,6 @@ void seibu_sound_decrypt(int cpu_region,int length);
 	PORT_START														\
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 4 )			\
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 4 )
-
 
 #define SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(freq1,freq2,region)		\
 																	\
@@ -93,6 +95,20 @@ static struct OKIM6295interface okim6295_interface2 =				\
 	{ 40 }															\
 }
 
+#define SEIBU_SOUND_SYSTEM_YM2203_HARDWARE(freq1)					\
+																	\
+static struct YM2203interface ym2203_interface =					\
+{																	\
+	2,																\
+	freq1,															\
+	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },						\
+	{ 0 },															\
+	{ 0 },															\
+	{ 0 },															\
+	{ 0 },															\
+	{ seibu_ym2203_irqhandler }										\
+};
+
 #define SEIBU_SOUND_SYSTEM_CPU(freq)								\
 	MDRV_CPU_ADD(Z80, freq)											\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
@@ -103,6 +119,11 @@ static struct OKIM6295interface okim6295_interface2 =				\
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
 	MDRV_CPU_MEMORY(seibu2_sound_readmem,seibu2_sound_writemem)		\
 
+#define SEIBU3_SOUND_SYSTEM_CPU(freq)								\
+	MDRV_CPU_ADD(Z80, freq)											\
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)									\
+	MDRV_CPU_MEMORY(seibu3_sound_readmem,seibu3_sound_writemem)		\
+
 #define SEIBU_SOUND_SYSTEM_YM3812_INTERFACE							\
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)						\
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)					\
@@ -110,6 +131,10 @@ static struct OKIM6295interface okim6295_interface2 =				\
 #define SEIBU_SOUND_SYSTEM_YM2151_INTERFACE							\
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)						\
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface2)					\
+
+#define SEIBU_SOUND_SYSTEM_YM2203_INTERFACE							\
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)						\
+
 
 /**************************************************************************/
 

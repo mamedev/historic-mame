@@ -52,7 +52,7 @@ void ppu2c03b_set_scanline_callback( int num, ppu2c03b_scanline_cb cb );
 void ppu2c03b_set_vidaccess_callback( int num, ppu2c03b_vidaccess_cb cb );
 
 //27/12/2002
-void (*ppu_latch)( offs_t offset );
+extern void (*ppu_latch)( offs_t offset );
 
 void ppu2c03b_w( int num, int offset, int data );
 int ppu2c03b_r( int num, int offset );

@@ -67,8 +67,8 @@ int RF5C68_sh_start( const struct MachineSound *msound )
 	reg_port = 0;
 
 	{
-		char buf[LR_PAN][40];
-		const char *name[LR_PAN];
+		char buf[RF_LR_PAN][40];
+		const char *name[RF_LR_PAN];
 		int  vol[2];
 		name[0] = buf[0];
 		name[1] = buf[1];

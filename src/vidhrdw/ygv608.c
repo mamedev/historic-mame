@@ -167,6 +167,17 @@ static void get_tile_info_A_8( int offset )
 			if( set == GFX_8X8_4BIT )
 				attr = ( j >> ( ((ygv608.regs.s.r12 & r12_apf) - 1 ) * 2 ) ) & 0x0f;
 		}
+		// banking
+		if (set == GFX_8X8_4BIT)
+		{
+			j += namcond1_gfxbank * 0x10000;
+		}
+		else // 8x8x8
+		{
+			j += namcond1_gfxbank * 0x8000;
+		}
+
+
 		SET_TILE_INFO( set, j, attr & 0x0F, 0 );
 	}
 }
@@ -246,6 +257,17 @@ static void get_tile_info_B_8( int offset )
 			/* assume 16 colour mode for now... */
 			attr = ( j >> ( (color - 1 ) * 2 ) ) & 0x0f;
 		}
+
+		// banking
+		if (set == GFX_8X8_4BIT)
+		{
+			j += namcond1_gfxbank * 0x10000;
+		}
+		else // 8x8x8
+		{
+			j += namcond1_gfxbank * 0x8000;
+		}
+
 		SET_TILE_INFO( set, j, attr, 0 );
 	}
 }
@@ -316,6 +338,17 @@ static void get_tile_info_A_16( int offset )
 			if( set == GFX_16X16_4BIT )
 				attr = ( j >> ( ((ygv608.regs.s.r12 & r12_apf)) * 2 ) ) & 0x0f;
 		}
+
+		// banking
+		if (set == GFX_16X16_4BIT)
+		{
+			j += namcond1_gfxbank * 0x4000;
+		}
+		else // 8x8x8
+		{
+			j += namcond1_gfxbank * 0x2000;
+		}
+
 
 		SET_TILE_INFO( set, j, attr, 0 );
 	}
@@ -389,6 +422,18 @@ static void get_tile_info_B_16( int offset )
 			/* assume 16 colour mode for now... */
 			attr = ( j >> (color * 2)) & 0x0f;
 		}
+
+		// banking
+		if (set == GFX_16X16_4BIT)
+		{
+			j += namcond1_gfxbank * 0x4000;
+		}
+		else // 8x8x8
+		{
+			j += namcond1_gfxbank * 0x2000;
+		}
+
+
 		SET_TILE_INFO( set, j, attr, 0 );
 	}
 }
@@ -400,6 +445,7 @@ VIDEO_START( ygv608 )
 	// flag rebuild of the tilemaps
 	ygv608.screen_resize = 1;
 	ygv608.tilemap_resize = 1;
+	namcond1_gfxbank = 0;
 
 	return 0;
 }
@@ -468,7 +514,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	    code = 0;
       }
       drawgfx( bitmap, Machine->gfx[GFX_8X8_4BIT],
-	       code,
+	       code+namcond1_gfxbank*0x10000,
 	       color,
 	       flipx,flipy,
 	       sx,sy,
@@ -476,14 +522,14 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
       // redraw with wrap-around
       if( sx > 512-8 )
         drawgfx( bitmap, Machine->gfx[GFX_8X8_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x10000,
 	        color,
 	        flipx,flipy,
 	        sx-512,sy,
 	        &spriteClip,TRANSPARENCY_PEN,0x00);
       if( sy > 512-8 )
         drawgfx( bitmap, Machine->gfx[GFX_8X8_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x10000,
 	        color,
 	        flipx,flipy,
 	        sx,sy-512,
@@ -501,7 +547,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	    code = 0;
       }
       drawgfx( bitmap, Machine->gfx[GFX_16X16_4BIT],
-	       code,
+	       code+namcond1_gfxbank*0x4000,
 	       color,
 	       flipx,flipy,
 	       sx,sy,
@@ -509,14 +555,14 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
       // redraw with wrap-around
       if( sx > 512-16 )
         drawgfx( bitmap, Machine->gfx[GFX_16X16_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x4000,
 	        color,
 	        flipx,flipy,
 	        sx-512,sy,
 	        &spriteClip,TRANSPARENCY_PEN,0x00);
       if( sy > 512-16 )
         drawgfx( bitmap, Machine->gfx[GFX_16X16_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x4000,
 	        color,
 	        flipx,flipy,
 	        sx,sy-512,
@@ -534,7 +580,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	code = 0;
       }
       drawgfx( bitmap, Machine->gfx[GFX_32X32_4BIT],
-	       code,
+	       code+namcond1_gfxbank*0x1000,
 	       color,
 	       flipx,flipy,
 	       sx,sy,
@@ -542,14 +588,14 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
       // redraw with wrap-around
       if( sx > 512-32 )
         drawgfx( bitmap, Machine->gfx[GFX_32X32_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x1000,
 	        color,
 	        flipx,flipy,
 	        sx-512,sy,
 	        &spriteClip,TRANSPARENCY_PEN,0x00);
       if( sy > 512-32 )
         drawgfx( bitmap, Machine->gfx[GFX_32X32_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x1000,
 	        color,
 	        flipx,flipy,
 	        sx,sy-512,
@@ -567,7 +613,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	    code = 0;
       }
       drawgfx( bitmap, Machine->gfx[GFX_64X64_4BIT],
-	       code,
+	       code+namcond1_gfxbank*0x400,
 	       color,
 	       flipx,flipy,
 	       sx,sy,
@@ -575,14 +621,14 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
       // redraw with wrap-around
       if( sx > 512-64 )
         drawgfx( bitmap, Machine->gfx[GFX_64X64_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x400,
 	        color,
 	        flipx,flipy,
 	        sx-512,sy,
 	        &spriteClip,TRANSPARENCY_PEN,0x00);
       if( sy > 512-64 )
         drawgfx( bitmap, Machine->gfx[GFX_64X64_4BIT],
-	        code,
+	        code+namcond1_gfxbank*0x400,
 	        color,
 	        flipx,flipy,
 	        sx,sy-512,

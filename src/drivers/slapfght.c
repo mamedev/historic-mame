@@ -1366,7 +1366,7 @@ GAME ( 1985, perfrmau, perfrman, perfrman, perfrman, 0, ROT270, "[Toaplan] Data 
 GAMEX( 1985, tigerh,   0,        tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   0, ROT270, "Taito", "Tiger Heli (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1985, tigerhb1, tigerh,   tigerh,   tigerh,   0, ROT270, "bootleg", "Tiger Heli (bootleg 1)", GAME_NO_COCKTAIL )
+GAME ( 1985, tigerhb1, tigerh,   tigerh,   tigerh,   0, ROT270, "bootleg", "Tiger Heli (bootleg 1)" )
 GAMEX( 1985, tigerhb2, tigerh,   tigerh,   tigerh,   0, ROT270, "bootleg", "Tiger Heli (bootleg 2)", GAME_NO_COCKTAIL )
 GAMEX( 1986, slapfigh, 0,        slapfigh, slapfigh, 0, ROT270, "Taito", "Slap Fight", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1986, slapbtjp, slapfigh, slapfigh, slapfigh, 0, ROT270, "bootleg", "Slap Fight (Japan bootleg)", GAME_NO_COCKTAIL )

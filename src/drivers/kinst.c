@@ -189,46 +189,6 @@ static WRITE32_HANDLER( kinst_control_w )
  *
  *************************************/
 
-static void cause_polling(offs_t pc, data32_t value)
-{
-	/* watch for code that loops on the Cause register, waiting for an interrupt */
-	switch (pc & 0x1fffffff)
-	{
-		case 0x8001408:	/* KI */
-		case 0x8001f68:	/* KI */
-		case 0x8012368:	/* KI */
-		case 0x8002360:	/* KI2 */
-		case 0x80024d4:	/* KI2 */
-		case 0x8003358:	/* KI2 */
-		case 0x801a308:	/* KI2 */
-			/* waiting for VBLANK interrupt */
-			if (!(value & 0x400))
-				cpu_spinuntil_int();
-			break;
-
-		case 0x8010340:	/* KI */
-		case 0x802d428:	/* KI */
-		case 0x801bdbc:	/* KI2 */
-			/* waiting for IDE interrupt */
-			if (!(value & 0x800))
-				cpu_spinuntil_int();
-			break;
-
-		case 0x8012354:	/* KI */
-		case 0x80263bc:	/* KI */
-		case 0x8000c8c:	/* KI2 */
-		case 0x801a2f4:	/* KI2 */
-		case 0x8023aac:	/* KI2 */
-			/* other cases */
-			break;
-
-		default:
-			printf("Hit @ %08X\n", pc);
-			break;
-	}
-}
-
-
 static void end_spin(int param)
 {
 	cpu_triggerint(0);
@@ -250,6 +210,7 @@ static READ32_HANDLER( kinst_speedup_r )
 	}
 	return *kinst_speedup;
 }
+
 
 
 
@@ -401,8 +362,7 @@ INPUT_PORTS_END
 static struct mips3_config config =
 {
 	16384,				/* code cache size */
-	16384,				/* data cache size */
-	cause_polling		/* Cause register polling callback */
+	16384				/* data cache size */
 };
 
 
@@ -521,6 +481,9 @@ static DRIVER_INIT( kinst )
 
 	/* optimize one of the non-standard loops */
 	kinst_speedup = install_mem_read32_handler(0, 0x8808f5bc, 0x8808f5bf, kinst_speedup_r);
+
+	/* set the fastest DRC options */
+	mips3drc_set_options(0, MIPS3DRC_FASTEST_OPTIONS);
 }
 
 
@@ -560,6 +523,9 @@ static DRIVER_INIT( kinst2 )
 
 	/* optimize one of the non-standard loops */
 	kinst_speedup = install_mem_read32_handler(0, 0x887ff544, 0x887ff547, kinst_speedup_r);
+
+	/* set the fastest DRC options */
+	mips3drc_set_options(0, MIPS3DRC_FASTEST_OPTIONS);
 }
 
 

@@ -35,13 +35,6 @@ VIDEO_START( xexex );
 VIDEO_UPDATE( xexex );
 void xexex_set_alpha(int on);
 
-READ16_HANDLER( xexexbg_r );
-WRITE16_HANDLER( xexexbg_w );
-READ16_HANDLER( xexexbg_ram_r );
-WRITE16_HANDLER( xexexbg_ram_w );
-READ16_HANDLER( xexexbg_rom_r );
-WRITE16_HANDLER( xexex_alpha_level_w );
-
 static data16_t cur_control2;
 static int init_eeprom_count;
 
@@ -236,8 +229,8 @@ static MEMORY_READ16_START( readmem )
 	{ 0x090000, 0x097fff, K053247_scattered_word_r },	/* Sprites */
 	{ 0x098000, 0x09ffff, K053247_scattered_word_r },	/* Sprites (mirror) */
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
-	{ 0x0c6000, 0x0c6fff, xexexbg_ram_r },			/* Background generator effects */
-	{ 0x0c8000, 0x0c800f, xexexbg_r },
+	{ 0x0c6000, 0x0c6fff, K053250_0_ram_r },			/* Background generator effects */
+	{ 0x0c8000, 0x0c800f, K053250_0_r },
 	{ 0x0d6014, 0x0d6015, sound_status_r },
 	{ 0x0da000, 0x0da001, input_port_2_word_r },
 	{ 0x0da002, 0x0da003, input_port_3_word_r },
@@ -247,7 +240,7 @@ static MEMORY_READ16_START( readmem )
 	{ 0x100000, 0x17ffff, MRA16_ROM },
 	{ 0x180000, 0x181fff, K054157_ram_word_r },		/* Graphic planes */
 	{ 0x190000, 0x191fff, K054157_rom_word_r }, 	/* Passthrough to tile roms */
-	{ 0x1a0000, 0x1a1fff, xexexbg_rom_r },
+	{ 0x1a0000, 0x1a1fff, K053250_0_rom_r },
 	{ 0x1b0000, 0x1b1fff, MRA16_RAM },
 MEMORY_END
 
@@ -258,10 +251,9 @@ static MEMORY_WRITE16_START( writemem )
 		//	{ 0x098000, 0x09ffff, K053247_scattered_word_w },/* Mirror for some buggy levels */
 	{ 0x0c0000, 0x0c003f, K054157_word_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
-	{ 0x0c6000, 0x0c6fff, xexexbg_ram_w },
-	{ 0x0c8000, 0x0c800f, xexexbg_w },
-	{ 0x0ca000, 0x0ca003, MWA16_NOP },
-	{ 0x0ca01a, 0x0ca01b, xexex_alpha_level_w },
+	{ 0x0c6000, 0x0c6fff, K053250_0_ram_w },
+	{ 0x0c8000, 0x0c800f, K053250_0_w },
+	{ 0x0ca000, 0x0ca01f, K054338_word_w },
 	{ 0x0cc000, 0x0cc01f, K053251_lsb_w },
 	{ 0x0d0000, 0x0d001d, MWA16_NOP },
 	{ 0x0d4000, 0x0d4001, sound_irq_w },
@@ -370,7 +362,7 @@ static MACHINE_DRIVER_START( xexex )
 	MDRV_NVRAM_HANDLER(xexex)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 0*8, 32*8-1 )
 	//	64*8, 64*8, { 0*8, (64-0)*8-1, 0*8, 64*8-1 },

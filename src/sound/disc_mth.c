@@ -125,7 +125,7 @@ int dst_divide_step(struct node_description *node)
 	{
 		if(node->input2==0)
 		{
-			node->output=_HUGE;	/* Max out but dont break */
+			node->output=HUGE_VAL;	/* Max out but dont break */
 			discrete_log("dst_divider_step() - Divide by Zero attempted.");
 		}
 		else

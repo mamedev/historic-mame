@@ -71,7 +71,7 @@ Or use these cheats:
 #define DUAL_SCREEN 1 /* Display both screens simultaneously if 1, change in vidhrdw too */
 #define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 
-data32_t *psikyo4_vidregs, *psh_ram, *ps4_io_select;
+data32_t *psikyo4_vidregs, *ps4_ram, *ps4_io_select;
 data32_t *bgpen_1, *bgpen_2, *screen1_brt, *screen2_brt;
 
 #define MASTER_CLOCK 57272700	// main oscillator frequency
@@ -380,7 +380,7 @@ static MEMORY_WRITE32_START( ps4_writemem )
 	{ 0x05000000, 0x05000003, psh_ymf_fm_w }, // first 2 OPL4 register banks
 	{ 0x05000004, 0x05000007, psh_ymf_pcm_w }, // third OPL4 register bank
 	{ 0x05800008, 0x0580000b, MWA32_RAM, &ps4_io_select }, // Used by Mahjong games to choose input (also maps normal loderndf inputs to offsets)
-	{ 0x06000000, 0x060fffff, MWA32_RAM, &psh_ram },	// work RAM
+	{ 0x06000000, 0x060fffff, MWA32_RAM, &ps4_ram },	// work RAM
 MEMORY_END
 
 static void irqhandler(int linestate)
@@ -826,7 +826,7 @@ PC  :00001B48: BT      $00001B3C
 */
 
 	if (activecpu_get_pc()==0x00001B3E) cpu_spinuntil_int();
-	return psh_ram[0x000020/4];
+	return ps4_ram[0x000020/4];
 }
 
 static READ32_HANDLER( loderdfa_speedup_r )
@@ -842,7 +842,7 @@ PC  :00001B54: BT      $00001B48
 */
 
 	if (activecpu_get_pc()==0x00001B4A) cpu_spinuntil_int();
-	return psh_ram[0x000020/4];
+	return ps4_ram[0x000020/4];
 }
 
 static READ32_HANDLER( hotdebut_speedup_r )
@@ -858,7 +858,7 @@ PC  :000029F8: BT      $000029EC
 */
 
 	if (activecpu_get_pc()==0x000029EE) cpu_spinuntil_int();
-	return psh_ram[0x00001c/4];
+	return ps4_ram[0x00001c/4];
 }
 
 static DRIVER_INIT( hotgmck )

@@ -388,6 +388,13 @@ int YMF278B_num(const struct MachineSound *msound) { return ((struct YMF278B_int
 #if (HAS_X1_010)
 int seta_clock(const struct MachineSound *msound) { return ((struct x1_010_interface*)msound->sound_interface)->clock; }
 #endif
+#if (HAS_MULTIPCM)
+int MultiPCM_num(const struct MachineSound *msound) { return ((struct MultiPCM_interface*)msound->sound_interface)->chips; }
+#endif
+#if (HAS_C6280)
+int c6280_clock(const struct MachineSound *msound) { return ((struct C6280_interface*)msound->sound_interface)->clock[0]; }
+int c6280_num(const struct MachineSound *msound) { return ((struct C6280_interface*)msound->sound_interface)->num; }
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -1063,6 +1070,31 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_MULTIPCM)
+	{
+		SOUND_MULTIPCM,
+		"Sega 315-5560",
+		MultiPCM_num,
+		0,
+		MultiPCM_sh_start,
+		MultiPCM_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_C6280)
+	{
+		SOUND_C6280,
+		"HuC6280",
+		0,
+		c6280_clock,
+		c6280_sh_start,
+		c6280_sh_stop,
+		0,
+		0
+	},
+#endif
+
 
 #ifdef MESS
 #if (HAS_BEEP)

@@ -490,7 +490,7 @@ MEMORY_END
 
 static PORT_READ16_START( DSP_readport )
 	{ TMS32010_PORT_RANGE(1, 1),  demonwld_dsp_r },
-	{ TMS32010_BIO, TMS32010_BIO, demonwld_BIO_r },
+	{ TMS32010_PORT_RANGE(TMS32010_BIO, TMS32010_BIO), demonwld_BIO_r },
 PORT_END
 
 static PORT_WRITE16_START( DSP_writeport )

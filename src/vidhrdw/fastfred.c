@@ -32,20 +32,9 @@ static data16_t charbank;
 static data8_t colorbank;
 static int flip_screen_x;
 static int flip_screen_y;
-static int fastfred_hardware;
+int fastfred_hardware_type;
 static const UINT8 *fastfred_color_prom;
 static struct tilemap *bg_tilemap;
-
-
-MACHINE_INIT( fastfred )
-{
-	fastfred_hardware = 1;
-}
-
-MACHINE_INIT( jumpcoas )
-{
-	fastfred_hardware = 0;
-}
 
 /***************************************************************************
 
@@ -286,7 +275,14 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		sx = fastfred_spriteram[offs + 3];
 		sy = 240 - fastfred_spriteram[offs];
 
-		if (fastfred_hardware)
+		if (fastfred_hardware_type == 2)
+		{
+			// Boggy 84
+			code  =  fastfred_spriteram[offs + 1] & 0x7f;
+			flipx =  0;
+			flipy = fastfred_spriteram[offs + 1] & 0x80;
+		}
+		else if (fastfred_hardware_type == 1)
 		{
 			// Fly-Boy/Fast Freddie/Red Robin
 			code  =  fastfred_spriteram[offs + 1] & 0x7f;

@@ -16,11 +16,6 @@
 
 
 /*###################################################################################################
-**	COMPILE-TIME DEFINITIONS
-**#################################################################################################*/
-
-
-/*###################################################################################################
 **	REGISTER ENUMERATION
 **#################################################################################################*/
 
@@ -59,6 +54,10 @@ enum
 	MIPS3_R29HI, MIPS3_R29LO, MIPS3_R29,
 	MIPS3_R30HI, MIPS3_R30LO, MIPS3_R30,
 	MIPS3_R31HI, MIPS3_R31LO, MIPS3_R31,
+	MIPS3_HIHI,  MIPS3_HILO, MIPS3_HI,
+	MIPS3_LOHI,  MIPS3_LOLO, MIPS3_LO,
+	MIPS3_EPC,   MIPS3_CAUSE,
+	MIPS3_COUNT, MIPS3_COMPARE
 };
 
 
@@ -82,7 +81,6 @@ struct mips3_config
 {
 	size_t		icache;							/* code cache size */
 	size_t		dcache;							/* data cache size */
-	void		(*causecb)(offs_t, data32_t);	/* Cause register callback */
 };
 
 
@@ -108,6 +106,7 @@ extern void mips3_set_irq_line(int irqline, int state);
 extern void mips3_set_irq_callback(int (*callback)(int irqline));
 extern unsigned mips3_dasm(char *buffer, unsigned pc);
 
+#if HAS_R4600
 extern const char *r4600_info(void *context, int regnum);
 extern void r4600be_reset(void *param);
 extern void r4600le_reset(void *param);
@@ -135,7 +134,9 @@ extern void r4600le_reset(void *param);
 #define r4600le_set_irq_callback	mips3_set_irq_callback
 #define r4600le_info 				r4600_info
 #define r4600le_dasm 				mips3_dasm
+#endif
 
+#if HAS_R5000
 extern const char *r5000_info(void *context, int regnum);
 extern void r5000be_reset(void *param);
 extern void r5000le_reset(void *param);
@@ -163,7 +164,25 @@ extern void r5000le_reset(void *param);
 #define r5000le_set_irq_callback	mips3_set_irq_callback
 #define r5000le_info 				r5000_info
 #define r5000le_dasm 				mips3_dasm
+#endif
+
+
+/*###################################################################################################
+**	COMPILER-SPECIFIC OPTIONS
+**#################################################################################################*/
+
+/* fix me -- how do we make this work?? */
+#define MIPS3DRC_STRICT_VERIFY		0x0001			/* verify all instructions */
+#define MIPS3DRC_STRICT_COP0		0x0002			/* validate all COP0 instructions */
+#define MIPS3DRC_STRICT_COP1		0x0004			/* validate all COP1 instructions */
+#define MIPS3DRC_STRICT_COP2		0x0008			/* validate all COP2 instructions */
+#define MIPS3DRC_DIRECT_RAM			0x0010			/* allow direct RAM access (no bankswitching!) */
+
+#define MIPS3DRC_COMPATIBLE_OPTIONS	(MIPS3DRC_STRICT_VERIFY | MIPS3DRC_STRICT_COP0 | MIPS3DRC_STRICT_COP1 | MIPS3DRC_STRICT_COP2)
+#define MIPS3DRC_FASTEST_OPTIONS	(MIPS3DRC_DIRECT_RAM)
+
+void mips3drc_set_options(UINT8 cpunum, UINT32 opts);
 
 
 
-#endif /* _JAGUAR_H */
+#endif /* _MIPS3_H */

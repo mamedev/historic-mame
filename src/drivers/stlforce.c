@@ -241,4 +241,4 @@ ROM_START( stlforce )
 	ROM_LOAD( "stlforce.u36", 0x00000, 0x40000, 0x037dfa9f )
 ROM_END
 
-GAME( 1994, stlforce, 0, stlforce, stlforce, 0, ROT0, "Electronic Devices (Italy) / Ecogames S.L. (Spain)", "Steel Force" )
+GAMEX(1994, stlforce, 0, stlforce, stlforce, 0, ROT0, "Electronic Devices (Italy) / Ecogames S.L. (Spain)", "Steel Force", GAME_IMPERFECT_SOUND )

@@ -45,12 +45,12 @@ III. ROM Images
    freely. Distribution of MAME on the same physical medium as illegal copies
    of ROM images is strictly forbidden.
    You are not allowed to distribute MAME in any form if you sell, advertise,
-   or publicize illegal CD-ROMs or other media containing ROM images. This
-   restriction applies even if you don't make money, directly or indirectly,
-   from those activities. You are allowed to make ROMs and MAME available for
-   download on the same website, but only if you warn users about the ROMs's
-   copyright status, and make it clear that users must not download ROMs unless
-   they are legally entitled to do so.
+   or publicize CD-ROMs or other media containing illegal copies of ROM images.
+   This restriction applies even if you don't make money, directly or
+   indirectly, from those activities. You are allowed to make ROMs and MAME
+   available for download on the same website, but only if you warn users about
+   the ROMs's copyright status, and make it clear that users must not download
+   ROMs unless they are legally entitled to do so.
 
 IV. Source Code Distribution
 ----------------------------

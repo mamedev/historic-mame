@@ -255,7 +255,7 @@ ROM_START( revx )
 	ROM_LOAD( "revx_snd.8", ADSP2100_SIZE + 0x600000, 0x80000, 0x793a7eb5 )
 	ROM_LOAD( "revx_snd.9", ADSP2100_SIZE + 0x700000, 0x80000, 0x14ddbea1 )
 
-	ROM_REGION32_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34020 code */
+	ROM_REGION16_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34020 code */
 	ROM_LOAD32_BYTE( "revx.51",  0x00000, 0x80000, 0x9960ac7c )
 	ROM_LOAD32_BYTE( "revx.52",  0x00001, 0x80000, 0xfbf55510 )
 	ROM_LOAD32_BYTE( "revx.53",  0x00002, 0x80000, 0xa045b265 )
@@ -311,4 +311,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1994, revx,   0,         midxunit, revx, revx, ROT0, "Midway",   "Revolution X" )
+GAME( 1994, revx,   0,         midxunit, revx, revx, ROT0, "Midway",   "Revolution X (Rev. 1.0 6/16/94)" )

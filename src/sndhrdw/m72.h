@@ -16,3 +16,4 @@ void m72_set_sample_start(int start);
 WRITE_HANDLER( vigilant_sample_addr_w );
 WRITE_HANDLER( shisen_sample_addr_w );
 WRITE_HANDLER( rtype2_sample_addr_w );
+WRITE_HANDLER( poundfor_sample_addr_w );

@@ -39,10 +39,9 @@ static MEMORY_READ_START( readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x4000, 0x403f, MWA_RAM, &spriteram_2 },
-	{ 0x4040, 0x43ff, MWA_RAM },
-	{ 0x4400, 0x443f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x4440, 0x47ff, MWA_RAM },
+	{ 0x4000, 0x402f, MWA_RAM, &spriteram_2 },
+	{ 0x4400, 0x442f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x4800, 0x4bff, colorram_w, &colorram },
 	{ 0x4c00, 0x4fff, videoram_w, &videoram, &videoram_size },
 	{ 0x5000, 0x5fff, MWA_RAM },
@@ -221,7 +220,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( rocnrope )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 2048000)        /* 2 MHz */
+	MDRV_CPU_ADD(M6809, 1600000)        /* 1.6 MHz??? Attract mode depends on this to work correctly */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

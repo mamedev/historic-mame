@@ -318,7 +318,7 @@ MEMORY_END
 static PORT_READ16_START( DSP_readport )
 	{ TMS32010_PORT_RANGE(1, 1),       twincobr_dsp_r },
 	{ TMS32010_PORT_RANGE(2, 2),       fsharkbt_dsp_r },
-	{ TMS32010_BIO, TMS32010_BIO, twincobr_BIO_r },
+	{ TMS32010_PORT_RANGE(TMS32010_BIO, TMS32010_BIO), twincobr_BIO_r },
 PORT_END
 
 static PORT_WRITE16_START( DSP_writeport )

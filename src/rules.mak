@@ -895,9 +895,14 @@ CPU=$(strip $(findstring R4600@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/mips
 CPUDEFS += -DHAS_R4600=1
+ifdef X86_MIPS3_DRC
+CPUOBJS += $(OBJ)/cpu/mips/mips3drc.o
+$(OBJ)/cpu/mips/mips3drc.o: mips3drc.c mips3.h
+else
 CPUOBJS += $(OBJ)/cpu/mips/mips3.o
-DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
 $(OBJ)/cpu/mips/mips3.o: mips3.c mips3.h
+endif
+DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
 else
 CPUDEFS += -DHAS_R4600=0
 endif
@@ -906,9 +911,14 @@ CPU=$(strip $(findstring R5000@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/mips
 CPUDEFS += -DHAS_R5000=1
+ifdef X86_MIPS3_DRC
+CPUOBJS += $(OBJ)/cpu/mips/mips3drc.o
+$(OBJ)/cpu/mips/mips3drc.o: mips3drc.c mips3.h
+else
 CPUOBJS += $(OBJ)/cpu/mips/mips3.o
-DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
 $(OBJ)/cpu/mips/mips3.o: mips3.c mips3.h
+endif
+DBGOBJS += $(OBJ)/cpu/mips/mips3dsm.o
 else
 CPUDEFS += -DHAS_R5000=0
 endif
@@ -934,6 +944,62 @@ $(OBJ)/cpu/dsp32/dsp32.o: dsp32.c dsp32.h
 else
 CPUDEFS += -DHAS_DSP32C=0
 endif
+
+CPU=$(strip $(findstring PIC16C54@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/pic16c5x
+CPUDEFS += -DHAS_PIC16C54=1
+CPUOBJS += $(OBJ)/cpu/pic16c5x/pic16c5x.o
+DBGOBJS += $(OBJ)/cpu/pic16c5x/16c5xdsm.o
+$(OBJ)/cpu/pic16c5x/pic16c5x.o: pic16c5x.c pic16c5x.h
+else
+CPUDEFS += -DHAS_PIC16C54=0
+endif
+
+CPU=$(strip $(findstring PIC16C55@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/pic16c5x
+CPUDEFS += -DHAS_PIC16C55=1
+CPUOBJS += $(OBJ)/cpu/pic16c5x/pic16c5x.o
+DBGOBJS += $(OBJ)/cpu/pic16c5x/16c5xdsm.o
+$(OBJ)/cpu/pic16c5x/pic16c5x.o: pic16c5x.c pic16c5x.h
+else
+CPUDEFS += -DHAS_PIC16C55=0
+endif
+
+CPU=$(strip $(findstring PIC16C56@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/pic16c5x
+CPUDEFS += -DHAS_PIC16C56=1
+CPUOBJS += $(OBJ)/cpu/pic16c5x/pic16c5x.o
+DBGOBJS += $(OBJ)/cpu/pic16c5x/16c5xdsm.o
+$(OBJ)/cpu/pic16c5x/pic16c5x.o: pic16c5x.c pic16c5x.h
+else
+CPUDEFS += -DHAS_PIC16C56=0
+endif
+
+CPU=$(strip $(findstring PIC16C57@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/pic16c5x
+CPUDEFS += -DHAS_PIC16C57=1
+CPUOBJS += $(OBJ)/cpu/pic16c5x/pic16c5x.o
+DBGOBJS += $(OBJ)/cpu/pic16c5x/16c5xdsm.o
+$(OBJ)/cpu/pic16c5x/pic16c5x.o: pic16c5x.c pic16c5x.h
+else
+CPUDEFS += -DHAS_PIC16C57=0
+endif
+
+CPU=$(strip $(findstring PIC16C58@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/pic16c5x
+CPUDEFS += -DHAS_PIC16C58=1
+CPUOBJS += $(OBJ)/cpu/pic16c5x/pic16c5x.o
+DBGOBJS += $(OBJ)/cpu/pic16c5x/16c5xdsm.o
+$(OBJ)/cpu/pic16c5x/pic16c5x.o: pic16c5x.c pic16c5x.h
+else
+CPUDEFS += -DHAS_PIC16C58=0
+endif
+
 
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
@@ -1380,4 +1446,20 @@ SOUNDDEFS += -DHAS_X1_010=1
 SOUNDOBJS += $(OBJ)/sound/x1_010.o
 else
 SOUNDDEFS += -DHAS_X1_010=0
+endif
+
+SOUND=$(strip $(findstring MULTIPCM@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_MULTIPCM=1
+SOUNDOBJS += $(OBJ)/sound/multipcm.o
+else
+SOUNDDEFS += -DHAS_MULTIPCM=0
+endif
+
+SOUND=$(strip $(findstring C6280@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_C6280=1
+SOUNDOBJS += $(OBJ)/sound/c6280.o
+else
+SOUNDDEFS += -DHAS_C6280=0
 endif

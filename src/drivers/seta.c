@@ -79,6 +79,7 @@ TODO:
   tilemaps" (made of sprites) for both the flipped and normal screen cases.
   Current issues: metafox test grid not aligned when screen flipped, madshark & utoukond
   ("floating tilemaps" sprites when flipped)
+  krzybowl not aligned vertically when screen flipped
 
 - bad sound in sokonuke?
 - in msgunda1, colors for the score display screw up after the second animation
@@ -6522,8 +6523,8 @@ static MACHINE_DRIVER_START( krzybowl )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 30*8)
-	MDRV_VISIBLE_AREA(1*8, 39*8-1, 1*8+2, 29*8+2-1)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 39*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
@@ -8034,7 +8035,7 @@ DRIVER_INIT( rezon )
 
 /* 68000 + 65C02 */
 GAME( 1987, tndrcade, 0,        tndrcade, tndrcade, 0,        ROT270, "[Seta] (Taito license)", "Thundercade / Twin Formation" ) // Title/License: DSW
-GAME( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270, "[Seta] (Taito license)", "Tokusyu Butai UAG (Japan)" ) // License: DSW
+GAME( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270, "[Seta] (Taito license)", "Tokusyu Butai U.A.G. (Japan)" ) // License: DSW
 GAME( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother" ) // Country/License: DSW
 GAME( 1989, downtown, 0,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown" ) // Country/License: DSW
 GAMEX(1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270, "Seta",                   "U.S. Classic", GAME_WRONG_COLORS ) // Country/License: DSW

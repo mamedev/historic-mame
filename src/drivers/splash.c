@@ -282,4 +282,4 @@ ROM_START( splash )
 ROM_END
 
 
-GAME( 1992, splash, 0, splash, splash, 0, ROT0, "Gaelco", "Splash!" )
+GAME( 1992, splash, 0, splash, splash, 0, ROT0, "Gaelco", "Splash! (Ver. 1.2 World)" )

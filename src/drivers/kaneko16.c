@@ -62,6 +62,7 @@ To Do:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "machine/random.h"
 #include "kaneko16.h"
 
 /* Variables only used here: */
@@ -372,7 +373,7 @@ static READ16_HANDLER( sandscrp_mcu_ram_r )
 		break;
 
 		case 0x14/2:	// Random?
-			return (rand() & 0xffff);
+			return (mame_rand() & 0xffff);
 	}
 
 	logerror("CPU #0 PC %06X : Unknown MCU word %04X read\n",activecpu_get_pc(),offset*2);
@@ -594,7 +595,7 @@ SHOGWARR_MCU_COM_W(3)
 
 READ16_HANDLER( kaneko16_rnd_r )
 {
-	return rand() & 0xffff;
+	return mame_rand() & 0xffff;
 }
 
 WRITE16_HANDLER( kaneko16_coin_lockout_w )

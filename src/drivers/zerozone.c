@@ -29,8 +29,10 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+VIDEO_START( zerozone );
 VIDEO_UPDATE( zerozone );
-WRITE16_HANDLER( zerozone_videoram_w );
+WRITE16_HANDLER( zerozone_tilemap_w );
+WRITE16_HANDLER( zerozone_tilebank_w );
 
 extern data16_t *zerozone_videoram;
 
@@ -67,17 +69,18 @@ static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x01ffff, MRA16_ROM },
 	{ 0x080000, 0x08000f, zerozone_input_r },
 	{ 0x088000, 0x0881ff, MRA16_RAM },
-//	{ 0x098000, 0x098001, MRA16_RAM }, /* watchdog? */
-	{ 0x09ce00, 0x09d9ff, MRA16_RAM },
+	{ 0x098000, 0x098001, MRA16_RAM }, /* watchdog? */
+	{ 0x09ce00, 0x09ffff, MRA16_RAM },
 	{ 0x0c0000, 0x0cffff, MRA16_RAM },
-	{ 0x0f8000, 0x0f87ff, MRA16_RAM },
+	{ 0x0f8000, 0x0f87ff, MRA16_RAM }, // never actually used
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
 	{ 0x000000, 0x01ffff, MWA16_ROM },
 	{ 0x084000, 0x084001, zerozone_sound_w },
-	{ 0x088000, 0x0881ff, paletteram16_BBBBGGGGRRRRxxxx_word_w, &paletteram16 },
-	{ 0x09ce00, 0x09d9ff, zerozone_videoram_w, &zerozone_videoram, &videoram_size },
+	{ 0x088000, 0x0881ff, paletteram16_RRRRGGGGBBBBRGBx_word_w, &paletteram16 },
+	{ 0x09ce00, 0x09ddff, zerozone_tilemap_w, &zerozone_videoram, &videoram_size },
+	{ 0x0b4000, 0x0b4001, zerozone_tilebank_w },
 	{ 0x0c0000, 0x0cffff, MWA16_RAM }, /* RAM */
 	{ 0x0f8000, 0x0f87ff, MWA16_RAM },
 MEMORY_END
@@ -182,7 +185,7 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	4096,	/* 4096 characters */
+	RGN_FRAC(1,1),	/* 4096 characters */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
 	{ 0, 4, 8+0, 8+4, 16+0, 16+4, 24+0, 24+4 },
@@ -223,12 +226,12 @@ static MACHINE_DRIVER_START( zerozone )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(48*8, 32*8)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 47*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 
-	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_START(zerozone)
 	MDRV_VIDEO_UPDATE(zerozone)
 
 	/* sound hardware */
@@ -259,6 +262,23 @@ ROM_START( zerozone )
 	ROM_LOAD( "zz-3.rom", 0x20000, 0x20000, 0xe348ff5e )
 ROM_END
 
+ROM_START( lvgirl94 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 128k for 68000 code */
+	ROM_LOAD16_BYTE( "rom4", 0x0000, 0x10000, 0xc4fb449e )
+	ROM_LOAD16_BYTE( "rom5", 0x0001, 0x10000, 0x5d446a1a )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom6", 0x00000, 0x40000, 0xeeeb94ba )
+
+	/* sound roms are the same as zerozone */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_LOAD( "rom1", 0x00000, 0x08000, 0x223ccce5 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )      /* ADPCM samples */
+	ROM_LOAD( "rom2", 0x00000, 0x20000, 0xc7551e81 )
+	ROM_LOAD( "rom3", 0x20000, 0x20000, 0xe348ff5e )
+ROM_END
 
 
 GAME( 1993, zerozone, 0, zerozone, zerozone, 0, ROT0, "Comad", "Zero Zone" )
+GAME( 1994, lvgirl94, 0, zerozone, zerozone, 0, ROT0, "Comad", "Las Vegas Girl (Girl '94)" )
