@@ -24,25 +24,4 @@ int  cps1_vh_start(void);
 void cps1_vh_stop(void);
 void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-/* Game specific data */
-struct CPS1config
-{
-        char *name;             /* game driver name */
-        int   bank_obj;
-        int   bank_scroll1;
-        int   bank_scroll2;
-        int   bank_scroll3;
-        int   alternative;      /* Game alternative */
-        int   cpsb_addr;        /* CPS board B test register address */
-        int   cpsb_value;       /* CPS board B test register expected value */
-        int   gng_sprite_kludge;  /* Ghouls n Ghosts sprite kludge */
-};
-
-extern struct CPS1config *cps1_game_config;
-
-
-/* Sound hardware */
-//extern int cps1_sh_start(void);
-//extern void cps1_sample_w(int offset, int value);
-
 #endif

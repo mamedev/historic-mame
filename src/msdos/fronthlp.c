@@ -340,7 +340,7 @@ int frontend_help (int argc, char **argv)
 	if (help)  /* brief help - useful to get current version info */
 	{
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-				"Copyright (C) 1997-98 by Nicola Salmoria and the MAME Team\n\n",mameversion);
+				"Copyright (C) 1997-99 by Nicola Salmoria and the MAME Team\n\n",mameversion);
 		showdisclaimer();
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -list      for a brief list of supported games\n"

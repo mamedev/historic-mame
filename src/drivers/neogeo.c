@@ -14,9 +14,6 @@
 
 
 	TODO :
-
-            - Properly emulate the uP4990.
-
             - What does 0x3c0006-7 *REALLY* do?
 
 =============================================================================
@@ -228,13 +225,6 @@ lastirq2line = line;
 	return 0;
 }
 
-/* Move to calendar file later */
-static void neo_pd4990a_control_w(int offset, int data)
-{
-	int a=0;
-    a++;
-}
-
 
 static int pending_command;
 static int result_code;
@@ -245,13 +235,12 @@ static int timer_r (int offset)
 	int res;
 
 
-	/* This is just for testing purposes */
-	/* not real correct code */
 	int coinflip = read_4990_testbit();
+	int databit = read_4990_databit();
 
 //	if (errorlog) fprintf(errorlog,"CPU %04x - Read timer\n",cpu_getpc());
 
-	res = readinputport(4) ^ (coinflip << 6) ^ (coinflip << 7);
+	res = readinputport(4) ^ (coinflip << 6) ^ (databit << 7);
 
 	if (Machine->sample_rate)
 	{
@@ -439,14 +428,14 @@ static struct MemoryWriteAddress neogeo_writemem[] =
 /* both games write to 0000fe before writing to 200000. The two things could be related. */
 /* sidkicks reads and writes to several addresses in this range, using this for copy */
 /* protection. Custom parts instead of the banked ROMs? */
-//	{ 0x280050, 0x280051, neo_pd4990a_control_w },
+//	{ 0x280050, 0x280051, write_4990_control },
 	{ 0x2ffff0, 0x2fffff, neo_bankswitch_w },      /* NOTE THIS CHANGE TO END AT FF !!! */
 	{ 0x300000, 0x300001, watchdog_reset_w },
 	{ 0x320000, 0x320001, neo_z80_w },	/* Sound CPU */
 	{ 0x380000, 0x380001, MWA_NOP },	/* Used by bios, unknown */
 	{ 0x380030, 0x380031, MWA_NOP },    /* Used by bios, unknown */
 	{ 0x380040, 0x380041, MWA_NOP },	/* Output leds */
-	{ 0x380050, 0x380051, neo_pd4990a_control_w },
+	{ 0x380050, 0x380051, write_4990_control },
 	{ 0x380060, 0x380063, MWA_NOP },	/* Used by bios, unknown */
 	{ 0x3800e0, 0x3800e3, MWA_NOP },	/* Used by bios, unknown */
 
@@ -3509,7 +3498,7 @@ ROM_START( samsho3_rom )
 	NEO_BIOS_SOUND_128K( "sams3_m1.rom", 0x8e6440eb )
 
 	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
-	ROM_LOAD( "sams3_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "sams3_v1.rom", 0x000000, 0x400000, 0x84bdd9a0 )
 	ROM_LOAD( "sams3_v2.rom", 0x400000, 0x200000, 0xac0f261a )
 ROM_END
 
@@ -4190,7 +4179,7 @@ ROM_END
 #define NGCRED "The Shin Emu Keikaku team"
 
 /* Inspired by the CPS1 driver, compressed version of GameDrivers */
-#define NEODRIVER(NEO_NAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_CREDIT,NEO_MACHINE) \
+#define NEODRIVER(NEO_NAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_MACHINE) \
 struct GameDriver NEO_NAME##_driver  = \
 {                               \
 	__FILE__,                   \
@@ -4213,7 +4202,7 @@ struct GameDriver NEO_NAME##_driver  = \
 	neogeo_sram_load,neogeo_sram_save  \
 };
 
-#define NEODRIVERCLONE(NEO_NAME,NEO_CLONE,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_CREDIT,NEO_MACHINE) \
+#define NEODRIVERCLONE(NEO_NAME,NEO_CLONE,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_MACHINE) \
 struct GameDriver NEO_NAME##_driver  = \
 {                               \
 	__FILE__,                   \
@@ -4237,7 +4226,7 @@ struct GameDriver NEO_NAME##_driver  = \
 };
 
 /* Use this macro when the romset name starts with a number */
-#define NEODRIVERX(NEO_NAME,NEO_ROMNAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_CREDIT,NEO_MACHINE) \
+#define NEODRIVERX(NEO_NAME,NEO_ROMNAME,NEO_REALNAME,NEO_YEAR,NEO_MANU,NEO_MACHINE) \
 struct GameDriver NEO_NAME##_driver  = \
 {                               \
 	__FILE__,                   \
@@ -4291,38 +4280,38 @@ struct GameDriver neogeo_bios =
 /* MGD2 format dumps */
 
 /* SNK */
-NEODRIVER(ridhero, "Riding Hero","1990","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(bstars,  "Baseball Stars Professional","1990","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(lbowling,"League Bowling","1990","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(superspy,"Super Spy","1990","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVERX(ttbb,   "2020bb","2020 Super Baseball","1991","SNK / Pallas","",&neogeo_mgd2_machine_driver)
-NEODRIVER(alpham2, "Alpha Mission 2 / ASD Last Guardian 2","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(eightman,"Eight Man","1991","SNK / Pallas","",&neogeo_mgd2_machine_driver)
-NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(burningf,"Burning Fight","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(kotm,    "King of the Monsters","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(gpilots, "Ghost Pilots","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(sengoku, "Sengoku","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(lresort, "Last Resort","1992","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(fbfrenzy,"Football Frenzy","1992","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(mutnat,  "Mutation Nation","1992","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(aof,     "Art of Fighting / Ryuu Ko No Ken","1992","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVERX(countb, "3countb","3 Count Bout / Fire Suplex","1993","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(sengoku2,"Sengoku 2","1993","SNK","",&neogeo_mgd2_machine_driver)
+NEODRIVER(ridhero, "Riding Hero","1990","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(bstars,  "Baseball Stars Professional","1990","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(lbowling,"League Bowling","1990","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(superspy,"Super Spy","1990","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVERX(ttbb,   "2020bb","2020 Super Baseball","1991","SNK / Pallas",&neogeo_mgd2_machine_driver)
+NEODRIVER(alpham2, "Alpha Mission 2 / ASD Last Guardian 2","1991","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(eightman,"Eight Man","1991","SNK / Pallas",&neogeo_mgd2_machine_driver)
+NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu","1991","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(burningf,"Burning Fight","1991","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(kotm,    "King of the Monsters","1991","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(gpilots, "Ghost Pilots","1991","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(sengoku, "Sengoku","1991","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(lresort, "Last Resort","1992","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(fbfrenzy,"Football Frenzy","1992","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(mutnat,  "Mutation Nation","1992","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(aof,     "Art of Fighting / Ryuu Ko No Ken","1992","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVERX(countb, "3countb","3 Count Bout / Fire Suplex","1993","SNK",&neogeo_mgd2_machine_driver)
+NEODRIVER(sengoku2,"Sengoku 2","1993","SNK",&neogeo_mgd2_machine_driver)
 
 /* Alpha Denshi Co */
-NEODRIVER(ncombat, "Ninja Combat","1990","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
-NEODRIVER(crsword, "Crossed Swords","1991","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
-NEODRIVER(trally,  "Thrash Rally","1991","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
-NEODRIVER(ncommand,"Ninja Commando","1992","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
-NEODRIVER(wh1,     "World Heroes","1992","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
+NEODRIVER(ncombat, "Ninja Combat","1990","Alpha Denshi Co",&neogeo_mgd2_machine_driver)
+NEODRIVER(crsword, "Crossed Swords","1991","Alpha Denshi Co",&neogeo_mgd2_machine_driver)
+NEODRIVER(trally,  "Thrash Rally","1991","Alpha Denshi Co",&neogeo_mgd2_machine_driver)
+NEODRIVER(ncommand,"Ninja Commando","1992","Alpha Denshi Co",&neogeo_mgd2_machine_driver)
+NEODRIVER(wh1,     "World Heroes","1992","Alpha Denshi Co",&neogeo_mgd2_machine_driver)
 
 /* Visco */
-NEODRIVER(androdun,"Andro Dunos","1992","Visco","",&neogeo_mgd2_machine_driver)
+NEODRIVER(androdun,"Andro Dunos","1992","Visco",&neogeo_mgd2_machine_driver)
 
 /* Monolith Corp. */
-NEODRIVER(minasan, "Mina Sanno Okagesama Desu! Dai Sugoroku Taikai","1990","Monolith Corp.","",&neogeo_mgd2_machine_driver)
-NEODRIVER(bakatono,"Baka Tonosama Maajan Manyuuki","1991","Monolith Corp.","",&neogeo_mgd2_machine_driver)
+NEODRIVER(minasan, "Mina Sanno Okagesama Desu! Dai Sugoroku Taikai","1990","Monolith Corp.",&neogeo_mgd2_machine_driver)
+NEODRIVER(bakatono,"Baka Tonosama Maajan Manyuuki","1991","Monolith Corp.",&neogeo_mgd2_machine_driver)
 
 /******************************************************************************/
 
@@ -4331,124 +4320,124 @@ them out of sync with the order above, but this file is so large you need to use
 function of the editor to find stuff anyway :) */
 
 /* Alpha Denshi Co */
-NEODRIVER(bjourney,"Blues Journey / Raguy","1990","Alpha Denshi Co","TJ Grant",&neogeo_mvs_machine_driver)
-NEODRIVER(maglord, "Magician Lord","1990","Alpha Denshi Co","",&neogeo_mvs_machine_driver)
-NEODRIVERCLONE(maglordh,maglord, "Magician Lord (Home version)","1990","Alpha Denshi Co","",&neogeo_mvs_machine_driver)
+NEODRIVER(bjourney,"Blues Journey / Raguy","1990","Alpha Denshi Co",&neogeo_mvs_machine_driver)
+NEODRIVER(maglord, "Magician Lord","1990","Alpha Denshi Co",&neogeo_mvs_machine_driver)
+NEODRIVERCLONE(maglordh,maglord, "Magician Lord (Home version)","1990","Alpha Denshi Co",&neogeo_mvs_machine_driver)
 
 /* Aicom */
-NEODRIVER(janshin, "Janshin Densetsu - Quest of Jongmaster","1994","Aicom","",&neogeo_mvs_machine_driver)
-NEODRIVER(pulstar, "Pulstar","1995","Aicom","",&neogeo_mvs_machine_driver)
+NEODRIVER(janshin, "Janshin Densetsu - Quest of Jongmaster","1994","Aicom",&neogeo_mvs_machine_driver)
+NEODRIVER(pulstar, "Pulstar","1995","Aicom",&neogeo_mvs_machine_driver)
 
 /* Yumekobo */
-NEODRIVER(blazstar,"Blazing Star","1998","Yumekobo","",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(blazstar,"Blazing Star","1998","Yumekobo",&neogeo_mvs_16bit_machine_driver)
 
 /* Taito */
-NEODRIVER(pbobble, "Puzzle Bobble / Bust-A-Move","1994","Taito","",&neogeo_mvs_machine_driver)
-NEODRIVER(puzzledp,"Puzzle de Pon","1995","Taito (Visco license)","",&neogeo_mvs_machine_driver)
-NEODRIVERCLONE(puzzldpr,puzzledp,"Puzzle de Pon R","1997","Taito (Visco license)","",&neogeo_mvs_machine_driver)
+NEODRIVER(pbobble, "Puzzle Bobble / Bust-A-Move","1994","Taito",&neogeo_mvs_machine_driver)
+NEODRIVER(puzzledp,"Puzzle de Pon","1995","Taito (Visco license)",&neogeo_mvs_machine_driver)
+NEODRIVERCLONE(puzzldpr,puzzledp,"Puzzle de Pon R","1997","Taito (Visco license)",&neogeo_mvs_machine_driver)
 
 /* Visco */
-NEODRIVER(pspikes2,"Power Spikes 2","1994","Video System Co.","",&neogeo_mvs_machine_driver)
-NEODRIVER(sonicwi2,"Aero Fighters 2 / Sonic Wings 2","1994","Video System Co.","Santeri Saarimaa\nAtila Mert",&neogeo_mvs_machine_driver)
-NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Video System Co.","",&neogeo_mvs_machine_driver)
-NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco","",&neogeo_mvs_machine_driver)
-NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco","Marko Pusljar (SI)",&neogeo_mvs_machine_driver)
-NEODRIVER(neomrdo, "Neo Mr Do!","1996","Visco","",&neogeo_mvs_machine_driver)
-NEODRIVER(breakers,"Breakers","1996","Visco","",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(pspikes2,"Power Spikes 2","1994","Video System Co.",&neogeo_mvs_machine_driver)
+NEODRIVER(sonicwi2,"Aero Fighters 2 / Sonic Wings 2","1994","Video System Co.",&neogeo_mvs_machine_driver)
+NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Video System Co.",&neogeo_mvs_machine_driver)
+NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco",&neogeo_mvs_machine_driver)
+NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco",&neogeo_mvs_machine_driver)
+NEODRIVER(neomrdo, "Neo Mr Do!","1996","Visco",&neogeo_mvs_machine_driver)
+NEODRIVER(breakers,"Breakers","1996","Visco",&neogeo_mvs_16bit_machine_driver)
 
 /* Data East Corporation */
-NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation","",&neogeo_mvs_machine_driver)
-NEODRIVER(karnovr, "Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(wjammers,"Wind Jammers / Flying Power Disc","1994","Data East Corporation","TJ Grant",&neogeo_mvs_machine_driver)
-NEODRIVER(strhoops,"Street Hoop / Street Slam / Dunk Dream","1994","Data East Corporation","",&neogeo_mvs_machine_driver)
-NEODRIVER(magdrop2,"Magical Drop 2 / Toretate Zoukangou 2","1996","Data East Corporation","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(magdrop3,"Magical Drop 3 / Toretate Zoukangou III","1997","Data East Corporation","",&neogeo_mvs_machine_driver)
+NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation",&neogeo_mvs_machine_driver)
+NEODRIVER(karnovr, "Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(wjammers,"Wind Jammers / Flying Power Disc","1994","Data East Corporation",&neogeo_mvs_machine_driver)
+NEODRIVER(strhoops,"Street Hoop / Street Slam / Dunk Dream","1994","Data East Corporation",&neogeo_mvs_machine_driver)
+NEODRIVER(magdrop2,"Magical Drop 2 / Toretate Zoukangou 2","1996","Data East Corporation",&neogeo_mvs_machine_driver)
+NEODRIVER(magdrop3,"Magical Drop 3 / Toretate Zoukangou III","1997","Data East Corporation",&neogeo_mvs_machine_driver)
 
 /* Nazca */
-NEODRIVER(mslug,   "Metal Slug","1996","Nazca","",&neogeo_mvs_machine_driver)
-NEODRIVER(turfmast,"Neo Turf Masters / Big Tournament Golf","1996","Nazca","",&neogeo_mvs_machine_driver)
+NEODRIVER(mslug,   "Metal Slug","1996","Nazca",&neogeo_mvs_machine_driver)
+NEODRIVER(turfmast,"Neo Turf Masters / Big Tournament Golf","1996","Nazca",&neogeo_mvs_machine_driver)
 
 /* Hudson Soft */
-NEODRIVER(panicbom,"Panic Bomber","1994","Eighting / Hudson","Rodimus Prime",&neogeo_mvs_machine_driver)
-NEODRIVER(kabukikl,"Kabuki Klash / Far East of Eden","1995","Hudson","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(neobombe,"Neo Bomberman","1997","Hudson","",&neogeo_mvs_machine_driver)
+NEODRIVER(panicbom,"Panic Bomber","1994","Eighting / Hudson",&neogeo_mvs_machine_driver)
+NEODRIVER(kabukikl,"Kabuki Klash / Far East of Eden","1995","Hudson",&neogeo_mvs_machine_driver)
+NEODRIVER(neobombe,"Neo Bomberman","1997","Hudson",&neogeo_mvs_machine_driver)
 
 /* ADK */
-NEODRIVER(wh2,     "World Heroes 2","1993","ADK","",&neogeo_mvs_machine_driver)
-NEODRIVER(wh2j,    "World Heroes 2 Jet","1994","ADK/SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(aodk,    "Aggressors of Dark Kombat / Tougai Gan San","1994","ADK/SNK","Santeri Saarimaa\nRodimus Prime",&neogeo_mvs_machine_driver)
-NEODRIVER(whp,     "World Heroes Perfect","1995","ADK/SNK","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(ninjamas,"Ninja Master's","1996","ADK/SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(overtop, "Overtop","1996","ADK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(twinspri,"Twinkle Star Sprites","1996","ADK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
+NEODRIVER(wh2,     "World Heroes 2","1993","ADK",&neogeo_mvs_machine_driver)
+NEODRIVER(wh2j,    "World Heroes 2 Jet","1994","ADK/SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(aodk,    "Aggressors of Dark Kombat / Tougai Gan San","1994","ADK/SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(whp,     "World Heroes Perfect","1995","ADK/SNK",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(ninjamas,"Ninja Master's","1996","ADK/SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(overtop, "Overtop","1996","ADK",&neogeo_mvs_machine_driver)
+NEODRIVER(twinspri,"Twinkle Star Sprites","1996","ADK",&neogeo_mvs_machine_driver)
 
 /* Saurus */
-NEODRIVER(stakwin, "Stakes Winner","1995","Saurus","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(stakwin2,"Stakes Winner 2","1996","Saurus","",&neogeo_mvs_machine_driver)
-NEODRIVER(ragnagrd,"Operation Ragnagard / Shin Oh Ken","1996","Saurus","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(shocktro,"Shock Troopers","1997","Saurus","",&neogeo_mvs_machine_driver)
+NEODRIVER(stakwin, "Stakes Winner","1995","Saurus",&neogeo_mvs_machine_driver)
+NEODRIVER(stakwin2,"Stakes Winner 2","1996","Saurus",&neogeo_mvs_machine_driver)
+NEODRIVER(ragnagrd,"Operation Ragnagard / Shin Oh Ken","1996","Saurus",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(shocktro,"Shock Troopers","1997","Saurus",&neogeo_mvs_machine_driver)
 
 /* Tecmo */
-NEODRIVER(tws96,   "Tecmo World Soccer 96","1996","Tecmo","Santeri Saarimaa",&neogeo_mvs_machine_driver)
+NEODRIVER(tws96,   "Tecmo World Soccer 96","1996","Tecmo",&neogeo_mvs_machine_driver)
 
 /* NMK */
-NEODRIVER(zedblade,"Zed Blade / Operation Ragnarok","1994","NMK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
+NEODRIVER(zedblade,"Zed Blade / Operation Ragnarok","1994","NMK",&neogeo_mvs_machine_driver)
 
 /* Technos */
-NEODRIVER(doubledr,"Double Dragon (Neo Geo)","1995","Technos","Santeri Saarimaa\nAtila Mert",&neogeo_mvs_machine_driver)
-NEODRIVER(gowcaizr,"Voltage Fighter Gowcaizer","1995","Technos","",&neogeo_mvs_machine_driver)
+NEODRIVER(doubledr,"Double Dragon (Neo Geo)","1995","Technos",&neogeo_mvs_machine_driver)
+NEODRIVER(gowcaizr,"Voltage Fighter Gowcaizer","1995","Technos",&neogeo_mvs_machine_driver)
 
 /* Sunsoft */
-NEODRIVER(galaxyfg,"Galaxy Fight - Universal Warriors","1995","Sunsoft","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(wakuwak7,"Waku Waku 7","1996","Sunsoft","",&neogeo_mvs_machine_driver)
+NEODRIVER(galaxyfg,"Galaxy Fight - Universal Warriors","1995","Sunsoft",&neogeo_mvs_machine_driver)
+NEODRIVER(wakuwak7,"Waku Waku 7","1996","Sunsoft",&neogeo_mvs_machine_driver)
 
 /* Sammy */
-NEODRIVER(viewpoin,"Viewpoint","1992","Sammy","",&neogeo_mvs_machine_driver)
+NEODRIVER(viewpoin,"Viewpoint","1992","Sammy",&neogeo_mvs_machine_driver)
 
 /* Face */
-NEODRIVER(gururin, "Gururin","1994","Face","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(miexchng,"Money Puzzle Exchanger","1997","Face","Santeri Saarimaa",&neogeo_mvs_machine_driver)
+NEODRIVER(gururin, "Gururin","1994","Face",&neogeo_mvs_machine_driver)
+NEODRIVER(miexchng,"Money Puzzle Exchanger","1997","Face",&neogeo_mvs_machine_driver)
 
 /* Takara */
-NEODRIVER(marukodq,"Maruko Deluxe Quiz","1995","Takara","",&neogeo_mvs_machine_driver)
+NEODRIVER(marukodq,"Maruko Deluxe Quiz","1995","Takara",&neogeo_mvs_machine_driver)
 
 /* SNK */
-NEODRIVER(nam1975, "NAM 1975","1990","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(mahretsu,"Mahjong Kyo Retsuden","1990","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(tpgolf,  "Top Player's Golf","1990","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(legendos,"Legend of Success Joe / Ashita No Joe Densetsu","1991","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(socbrawl,"Soccer Brawl","1991","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(roboarmy,"Robo Army","1991","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(fatfury2,"Fatal Fury 2","1992","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(bstars2, "Baseball Stars 2","1992","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(ssideki, "Super Sidekicks","1992","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kotm2,   "King of the Monsters 2","1992","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(fatfursp,"Fatal Fury Special","1993","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(tophuntr,"Top Hunter","1994","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(aof2,    "Art of Fighting 2 / Ryuu Ko No Ken 2","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory","1995","SNK","",&neogeo_mvs_raster_machine_driver)
-NEODRIVER(savagere,"Savage Reign","1995","SNK","Rodimus Prime",&neogeo_mvs_machine_driver)
-NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(fatfury3,"Fatal Fury 3","1995","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kof95,   "The King of Fighters '95","1995","SNK","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(rbff1,   "Real Bout Fatal Fury","1995","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(aof3,    "Art of Fighting 3 / Ryuu Ko No Ken 3","1996","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(samsho4, "Samurai Shodown 4 / Samurai Spirits 4","1996","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(rbffspec,"Real Bout Fatal Fury Special","1996","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kizuna,  "Kizuna Encounter Super Tag Battle","1996","SNK","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(ssideki4,"Super Sidekicks 4 - Ultimate 11","1996","SNK","Apollo69",&neogeo_mvs_raster_machine_driver)
-NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(lastblad,"Last Blade / Gekka No Kenshi","1997","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(mslug2,  "Metal Slug 2","1998","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(rbff2,   "Real Bout Fatal Fury 2 - The Newcomers","1998","SNK","",&neogeo_mvs_16bit_machine_driver)
-NEODRIVER(kof98,   "The King of Fighters '98","1998","SNK","",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(nam1975, "NAM 1975","1990","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(mahretsu,"Mahjong Kyo Retsuden","1990","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(tpgolf,  "Top Player's Golf","1990","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(legendos,"Legend of Success Joe / Ashita No Joe Densetsu","1991","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(socbrawl,"Soccer Brawl","1991","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(roboarmy,"Robo Army","1991","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(fatfury2,"Fatal Fury 2","1992","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(bstars2, "Baseball Stars 2","1992","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(ssideki, "Super Sidekicks","1992","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(kotm2,   "King of the Monsters 2","1992","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(fatfursp,"Fatal Fury Special","1993","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(tophuntr,"Top Hunter","1994","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(aof2,    "Art of Fighting 2 / Ryuu Ko No Ken 2","1994","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship","1994","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory","1995","SNK",&neogeo_mvs_raster_machine_driver)
+NEODRIVER(savagere,"Savage Reign","1995","SNK",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(fatfury3,"Fatal Fury 3","1995","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(kof95,   "The King of Fighters '95","1995","SNK",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(rbff1,   "Real Bout Fatal Fury","1995","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(aof3,    "Art of Fighting 3 / Ryuu Ko No Ken 3","1996","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(samsho4, "Samurai Shodown 4 / Samurai Spirits 4","1996","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(rbffspec,"Real Bout Fatal Fury Special","1996","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(kizuna,  "Kizuna Encounter Super Tag Battle","1996","SNK",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(ssideki4,"Super Sidekicks 4 - Ultimate 11","1996","SNK",&neogeo_mvs_raster_machine_driver)
+NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(lastblad,"Last Blade / Gekka No Kenshi","1997","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(mslug2,  "Metal Slug 2","1998","SNK",&neogeo_mvs_machine_driver)
+NEODRIVER(rbff2,   "Real Bout Fatal Fury 2 - The Newcomers","1998","SNK",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(kof98,   "The King of Fighters '98","1998","SNK",&neogeo_mvs_16bit_machine_driver)
 
 /* Note:  The information above is pretty accurate now, but they may still be
    some mistakes, check it if you have time :)

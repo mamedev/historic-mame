@@ -36,7 +36,7 @@ void troangel_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 	/* character palette */
-	for (i = 0;i < 128;i++)
+	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -61,7 +61,7 @@ void troangel_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		color_prom++;
 	}
 
-	color_prom += 128+256;
+	color_prom += 256;
 	/* color_prom now points to the beginning of the sprite palette */
 
 
@@ -97,7 +97,7 @@ void troangel_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* sprite lookup table */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
 	{
-		COLOR(1,i) = 128 + (~*color_prom & 0x0f);
+		COLOR(1,i) = 256 + (~*color_prom & 0x0f);
 		color_prom++;
 	}
 }

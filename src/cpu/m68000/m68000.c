@@ -65,6 +65,9 @@ should I implement address error for odd branch, jsr, etc?
 #define M68000_OVER_32_BIT     0
 #endif /* UINT_MAX > 0xffffffff */
 
+#ifndef QSORT_CALLBACK_DECL
+#define QSORT_CALLBACK_DECL
+#endif
 
 #undef int8
 #undef int16
@@ -444,7 +447,7 @@ INLINE void  set_pc(uint address);            /* set the program counter */
 
 /* Functions to build the opcode handler jump table */
 static void  build_opcode_table(void);
-static int   compare_nof_true_bits(const void *aptr, const void *bptr);
+static int QSORT_CALLBACK_DECL compare_nof_true_bits(const void *aptr, const void *bptr);
 
 
 
@@ -1159,6 +1162,11 @@ void m68000_pulse_irq(int int_level)
       service_interrupt();
 }
 
+/* Remove an interrupt from the pending list */
+void m68000_clear_irq(int int_level)
+{
+    g_cpu_ints_pending &= ~(1<<int_level);
+}
 
 /* Reset the M68000 */
 void m68000_pulse_reset(void)
@@ -27177,19 +27185,19 @@ static opcode_struct g_opcode_handler_table[] =
    {m68000_movem_pi_16      , 0xfff8, 0x4c98},
    {m68000_movem_pi_32      , 0xfff8, 0x4cd8},
    {m68000_movem_re_ai_16   , 0xfff8, 0x4890},
-   {m68000_movem_re_pd_16   , 0xfff8, 0x48a0},
+//   {m68000_movem_re_pd_16   , 0xfff8, 0x48a0},
    {m68000_movem_re_di_16   , 0xfff8, 0x48a8},
    {m68000_movem_re_ix_16   , 0xfff8, 0x48b0},
    {m68000_movem_re_aw_16   , 0xffff, 0x48b8},
    {m68000_movem_re_al_16   , 0xffff, 0x48b9},
    {m68000_movem_re_ai_32   , 0xfff8, 0x48d0},
-   {m68000_movem_re_pd_32   , 0xfff8, 0x48e0},
+//   {m68000_movem_re_pd_32   , 0xfff8, 0x48e0},
    {m68000_movem_re_di_32   , 0xfff8, 0x48e8},
    {m68000_movem_re_ix_32   , 0xfff8, 0x48f0},
    {m68000_movem_re_aw_32   , 0xffff, 0x48f8},
    {m68000_movem_re_al_32   , 0xffff, 0x48f9},
    {m68000_movem_er_ai_16   , 0xfff8, 0x4c90},
-   {m68000_movem_er_pi_16   , 0xfff8, 0x4c98},
+//   {m68000_movem_er_pi_16   , 0xfff8, 0x4c98},
    {m68000_movem_er_di_16   , 0xfff8, 0x4ca8},
    {m68000_movem_er_ix_16   , 0xfff8, 0x4cb0},
    {m68000_movem_er_aw_16   , 0xffff, 0x4cb8},
@@ -27197,7 +27205,7 @@ static opcode_struct g_opcode_handler_table[] =
    {m68000_movem_er_pcdi_16 , 0xffff, 0x4cba},
    {m68000_movem_er_pcix_16 , 0xffff, 0x4cbb},
    {m68000_movem_er_ai_32   , 0xfff8, 0x4cd0},
-   {m68000_movem_er_pi_32   , 0xfff8, 0x4cd8},
+//   {m68000_movem_er_pi_32   , 0xfff8, 0x4cd8},
    {m68000_movem_er_di_32   , 0xfff8, 0x4ce8},
    {m68000_movem_er_ix_32   , 0xfff8, 0x4cf0},
    {m68000_movem_er_aw_32   , 0xffff, 0x4cf8},
@@ -27853,7 +27861,7 @@ static opcode_struct g_opcode_handler_table[] =
 
 
 /* Comparison function for qsort() */
-static int compare_nof_true_bits(const void* aptr, const void* bptr)
+static int QSORT_CALLBACK_DECL compare_nof_true_bits(const void* aptr, const void* bptr)
 {
    uint a = ((opcode_struct*)aptr)->mask;
    uint b = ((opcode_struct*)bptr)->mask;

@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 z80.c
- *	 Portable Z80 emulator
+ *	 Portable Z80 emulator V1.1
  *
  *	 Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
  *
@@ -46,7 +46,6 @@ extern int mame_debug;
 extern int previouspc;
 
 #define BIG_SWITCH			1
-#define INC_R_ONCE			1	/* compatibility with old Z80 core */
 #define BUSY_LOOP_HACKS 	1
 #define BIG_FLAGS_ARRAY 	1	/* big flags array for ADD/ADC/SUB/SBC results */
 
@@ -84,10 +83,12 @@ extern int previouspc;
 #define _A      Z80.AF.B.h
 #define _F      Z80.AF.B.l
 
+#define _IXD	Z80.IX.D
 #define _IX     Z80.IX.W.l
 #define _HX     Z80.IX.B.h
 #define _LX     Z80.IX.B.l
 
+#define _IYD	Z80.IY.D
 #define _IY     Z80.IY.W.l
 #define _HY     Z80.IY.B.h
 #define _LY     Z80.IY.B.l
@@ -222,23 +223,22 @@ extern void (*Z80ed[0x100])(void);
 extern void (*Z80fd[0x100])(void);
 extern void (*Z80xxcb[0x100])(void);
 
+static void take_interrupt(void);
+
 /***************************************************************
  * define an opcode function
  ***************************************************************/
 #define OP(prefix,opcode)  INLINE void prefix##_##opcode(void)
 
 /***************************************************************
- * adjust cycle count by n T-states and R by n/4 M-cycles
+ * adjust cycle count by n T-states
  ***************************************************************/
-#if INC_R_ONCE
-/* old behaviour; cycle count independent of R register */
 #define CY(cycles) Z80_ICount -= cycles
+
+/***************************************************************
+ * increment R on every M-1 cycle
+ ***************************************************************/
 #define R_INC _R++
-#else
-/* new behaviour: R register counts T-States; get/put adjust to M-Cycles */
-#define CY(cycles) Z80_ICount -= cycles; _R += cycles
-#define R_INC
-#endif
 
 /***************************************************************
  * execute an opcode
@@ -339,22 +339,13 @@ extern void (*Z80xxcb[0x100])(void);
  * Read a byte from given memory location
  ***************************************************************/
 #define RM(Addr) (UINT8)cpu_readmem16(Addr)
-
-INLINE UINT16 RM16(unsigned Addr)
-{
-	return RM(Addr) | (RM((Addr+1) & 0xffff) << 8);
-}
+#define RM16(Addr) (UINT16)cpu_readmem16_word(Addr)
 
 /***************************************************************
  * Write a byte to given memory location
  ***************************************************************/
-#define WM(Addr,Value) cpu_writemem16(Addr,(UINT8)Value)
-
-INLINE void WM16(unsigned Addr, Z80_pair *r )
-{
-	WM( Addr, r->B.l );
-	WM( (Addr+1) & 0xffff, r->B.h );
-}
+#define WM(Addr,Value) cpu_writemem16(Addr,Value)
+#define WM16(Addr,Value) cpu_writemem16_word(Addr,Value)
 
 /***************************************************************
  * ROP() is identical to RM() except it is used for
@@ -407,12 +398,12 @@ INLINE UINT16 ARG16(void)
 /***************************************************************
  * POP
  ***************************************************************/
-#define POP(DR) { Z80.DR.D = RM16( _SPD ); _SP += 2; }
+#define POP(DR) { Z80.DR.W.l = RM16( _SPD ); _SP += 2; }
 
 /***************************************************************
  * PUSH
  ***************************************************************/
-#define PUSH(SR) { _SP -= 2; WM16( _SPD, &Z80.SR ); }
+#define PUSH(SR) { _SP -= 2; WM16( _SPD, Z80.SR.W.l ); }
 
 /***************************************************************
  * JP
@@ -434,7 +425,7 @@ INLINE UINT16 ARG16(void)
 		if (Z80_ICount > 10) Z80_ICount = 10;					\
 	} else														\
 	/* EI - JP */												\
-	if (_PCD == oldpc-1 && cpu_readop(_PCD) == 0xfb && Z80.pending_irq == 0) { \
+	if (_PCD == oldpc-1 && cpu_readop(_PCD) == 0xfb) {			\
 		if (Z80_ICount > 4) Z80_ICount = 4; 					\
 	}															\
 	change_pc16(_PCD);											\
@@ -496,25 +487,17 @@ INLINE UINT16 ARG16(void)
 /***************************************************************
  * RETN
  ***************************************************************/
-#if NEW_INTERRUPT_SYSTEM
 #define RETN	{												\
     LOG((errorlog,"Z80#%d RETN IFF1:%d IFF2:%d\n", cpu_getactivecpu(), _IFF1, _IFF2)); \
 	if (!_IFF1 && _IFF2) {										\
-        if (Z80.irq_state != CLEAR_LINE) {                      \
-			LOG((errorlog, "Z80#%d RETN sets pending irq\n", cpu_getactivecpu())); \
-            Z80.pending_irq |= INT_IRQ;                         \
+		if (Z80.irq_state != CLEAR_LINE || Z80.request_irq >= 0) { \
+			LOG((errorlog, "Z80#%d RETN takes IRQ\n", cpu_getactivecpu())); \
+			take_interrupt();									\
         }                                                       \
 	}															\
 	_IFF1 = _IFF2;												\
 	RET(1); 													\
 }
-#else
-#define RETN    {                                               \
-	LOG((errorlog,"Z80#%d RETN IFF1:%d IFF2:%d\n", cpu_getactivecpu(), _IFF1, _IFF2)); \
-    _IFF1 = _IFF2;                                              \
-	RET(1); 													\
-}
-#endif
 
 /***************************************************************
  * RETI
@@ -531,34 +514,18 @@ INLINE UINT16 ARG16(void)
 /***************************************************************
  * LD	R,A
  ***************************************************************/
-#if INC_R_ONCE
 #define LD_R_A {												\
 	_R = _A;													\
 	_R2 = _A & 0x80;				/* keep bit 7 of R */		\
 }
-#else
-#define LD_R_A {                                                \
-	/* R register counts T-States (M-cycles = T-States / 4) */	\
-    _R = _A << 2;                                               \
-	_R2 = _A & 0x80;				/* keep bit 7 of R */		\
-}
-#endif
 
 /***************************************************************
  * LD	A,R
  ***************************************************************/
-#if INC_R_ONCE
 #define LD_A_R {												\
 	_A = (_R & 0x7f) | _R2; 									\
 	_F = (_F & CF) | SZ[_A] | (_IFF2 << 2); 					\
 }
-#else
-#define LD_A_R {                                                \
-	/* our R counts T-States (M-cycles = T-States / 4) */		\
-	_A = ((_R >> 2) & 0x7f) | _R2;								\
-	_F = (_F & CF) | SZ[_A] | (_IFF2 << 2); 					\
-}
-#endif
 
 /***************************************************************
  * LD	I,A
@@ -907,8 +874,8 @@ INLINE UINT8 DEC(UINT8 Value)
  ***************************************************************/
 #define EXSP(reg) {                                             \
     Z80_pair tmp;                                               \
-	tmp.D = RM16( _SPD );										\
-	WM16( _SPD, &Z80.reg ); 									\
+	tmp.W.l = RM16( _SPD ); 									\
+	WM16( _SPD, Z80.reg.W.l );									\
 	Z80.reg = tmp;												\
 }
 
@@ -1246,7 +1213,6 @@ INLINE UINT8 SET(UINT8 bit, UINT8 Value)
 /***************************************************************
  * EI
  ***************************************************************/
-#if NEW_INTERRUPT_SYSTEM
 #define EI {													\
     /* If interrupts were disabled, execute one more            \
      * instruction and check the IRQ line.                      \
@@ -1254,31 +1220,16 @@ INLINE UINT8 SET(UINT8 bit, UINT8 Value)
      */                                                         \
     if (!_IFF1) {                                               \
         _IFF1 = _IFF2 = 1;                                      \
+        CALL_MAME_DEBUG;                                        \
         R_INC;                                                  \
-		previouspc = _PCD;										\
-/*		CALL_MAME_DEBUG;	*/									\
+        previouspc = _PCD;                                      \
 		EXEC(op,ROP()); 										\
-		if (Z80.irq_state != CLEAR_LINE) {						\
-			LOG((errorlog, "Z80#%d EI sets pending irq\n", cpu_getactivecpu())); \
-            Z80.pending_irq |= INT_IRQ;                         \
-		}														\
+		if (Z80.irq_state != CLEAR_LINE || Z80.request_irq >= 0) { \
+            LOG((errorlog, "Z80#%d EI takes irq\n", cpu_getactivecpu())); \
+            take_interrupt();                                   \
+        }                                                       \
     } else _IFF2 = 1;                                           \
 }
-#else
-#define EI {                                                    \
-    /* If interrupts were disabled, execute one more            \
-     * instruction and check the IRQ line.                      \
-     * If not, simply set interrupt flip-flop 2                 \
-     */                                                         \
-    if (!_IFF1) {                                               \
-        _IFF1 = _IFF2 = 1;                                      \
-        R_INC;                                                  \
-		previouspc = _PCD;										\
-/*		CALL_MAME_DEBUG;	*/									\
-		EXEC(op,ROP()); 										\
-    } else _IFF2 = 1;                                           \
-}
-#endif
 
 /**********************************************************
  * opcodes with CB prefix
@@ -1913,7 +1864,7 @@ OP(dd,19) { ADD16(IX,DE);											} /* ADD  IX,DE 	  */
 
 #define dd_20 illegal_1 											  /* DB   DD		  */
 OP(dd,21) { _IX = ARG16();											} /* LD   IX,w		  */
-OP(dd,22) { WM16( ARG16(), &Z80.IX );								} /* LD   (w),IX	  */
+OP(dd,22) { WM16( ARG16(), Z80.IX.D );								} /* LD   (w),IX	  */
 OP(dd,23) { _IX++;													} /* INC  IX		  */
 OP(dd,24) { _HX = INC(_HX); 										} /* INC  HX		  */
 OP(dd,25) { _HX = DEC(_HX); 										} /* DEC  HX		  */
@@ -2204,7 +2155,7 @@ OP(fd,19) { ADD16(IY,DE);											} /* ADD  IY,DE 	  */
 
 #define fd_20 illegal_1 											  /* DB   FD		  */
 OP(fd,21) { _IY = ARG16();											} /* LD   IY,w		  */
-OP(fd,22) { WM16( ARG16(), &Z80.IY );								} /* LD   (w),IY	  */
+OP(fd,22) { WM16( ARG16(), Z80.IY.D );								} /* LD   (w),IY	  */
 OP(fd,23) { _IY++;													} /* INC  IY		  */
 OP(fd,24) { _HY = INC(_HY); 										} /* INC  HY		  */
 OP(fd,25) { _HY = DEC(_HY); 										} /* DEC  HY		  */
@@ -2539,7 +2490,7 @@ OP(illegal,2)
 OP(ed,40) { _B = IN(_BC); _F = (_F & CF) | SZP[_B]; 				} /* IN   B,(C) 	  */
 OP(ed,41) { OUT(_BC,_B);											} /* OUT  (C),B 	  */
 OP(ed,42) { SBC16(_HL,_BC); 										} /* SBC  HL,BC 	  */
-OP(ed,43) { WM16( ARG16(), &Z80.BC );								} /* LD   (w),BC	  */
+OP(ed,43) { WM16( ARG16(), Z80.BC.D );								} /* LD   (w),BC	  */
 OP(ed,44) { NEG;													} /* NEG			  */
 OP(ed,45) { RETN;													} /* RETN;			  */
 OP(ed,46) { _IM = 0;												} /* IM   0 		  */
@@ -2557,7 +2508,7 @@ OP(ed,4f) { LD_R_A; 												} /* LD   R,A		  */
 OP(ed,50) { _D = IN(_BC); _F = (_F & CF) | SZP[_D]; 				} /* IN   D,(C) 	  */
 OP(ed,51) { OUT(_BC,_D);											} /* OUT  (C),D 	  */
 OP(ed,52) { SBC16(_HL,_DE); 										} /* SBC  HL,DE 	  */
-OP(ed,53) { WM16( ARG16(), &Z80.DE );								} /* LD   (w),DE	  */
+OP(ed,53) { WM16( ARG16(), Z80.DE.D );								} /* LD   (w),DE	  */
 OP(ed,54) { NEG;													} /* NEG			  */
 OP(ed,55) { RETN;													} /* RETN;			  */
 OP(ed,56) { _IM = 1;												} /* IM   1 		  */
@@ -2575,7 +2526,7 @@ OP(ed,5f) { LD_A_R; 												} /* LD   A,R		  */
 OP(ed,60) { _H = IN(_BC); _F = (_F & CF) | SZP[_H]; 				} /* IN   H,(C) 	  */
 OP(ed,61) { OUT(_BC,_H);											} /* OUT  (C),H 	  */
 OP(ed,62) { SBC16(_HL,_HL); 										} /* SBC  HL,HL 	  */
-OP(ed,63) { WM16( ARG16(), &Z80.HL );								} /* LD   (w),HL	  */
+OP(ed,63) { WM16( ARG16(), Z80.HL.D );								} /* LD   (w),HL	  */
 OP(ed,64) { NEG;													} /* NEG			  */
 OP(ed,65) { RETN;													} /* RETN;			  */
 OP(ed,66) { _IM = 0;												} /* IM   0 		  */
@@ -2593,7 +2544,7 @@ OP(ed,6f) { RLD;													} /* RLD  (HL)		  */
 OP(ed,70) { UINT8 res = IN(_BC); _F = (_F & CF) | SZP[res]; 		} /* IN   0,(C) 	  */
 OP(ed,71) { OUT(_BC,0); 											} /* OUT  (C),0 	  */
 OP(ed,72) { SBC16(_HL,_SP); 										} /* SBC  HL,SP 	  */
-OP(ed,73) { WM16( ARG16(), &Z80.SP );								} /* LD   (w),SP	  */
+OP(ed,73) { WM16( ARG16(), Z80.SP.D );								} /* LD   (w),SP	  */
 OP(ed,74) { NEG;													} /* NEG			  */
 OP(ed,75) { RETN;													} /* RETN;			  */
 OP(ed,76) { _IM = 1;												} /* IM   1 		  */
@@ -2793,7 +2744,7 @@ OP(op,1f) { RRA;													} /* RRA			  */
 
 OP(op,20) { JR(!(_F & ZF)); 										} /* JR   NZ,o		  */
 OP(op,21) { _HL = ARG16();											} /* LD   HL,w		  */
-OP(op,22) { WM16( ARG16(), &Z80.HL );								} /* LD   (w),HL	  */
+OP(op,22) { WM16( ARG16(), Z80.HL.D );								} /* LD   (w),HL	  */
 OP(op,23) { _HL++;													} /* INC  HL		  */
 OP(op,24) { _H = INC(_H);											} /* INC  H 		  */
 OP(op,25) { _H = DEC(_H);											} /* DEC  H 		  */
@@ -3159,13 +3110,8 @@ void Z80_Reset(Z80_DaisyChain *daisy_chain)
 	Z80.request_irq = Z80.service_irq = -1;
     change_pc(_PCD);
     _SPD = 0xf000;
-#if NEW_INTERRUPT_SYSTEM
 	Z80.nmi_state = CLEAR_LINE;
 	Z80.irq_state = CLEAR_LINE;
-	Z80.pending_irq = 0;
-#else
-	Z80_Clear_Pending_Interrupts();
-#endif
     if (daisy_chain) {
         while( daisy_chain->irq_param != -1 && Z80.irq_max < Z80_MAXDAISY )
         {
@@ -3180,119 +3126,69 @@ void Z80_Reset(Z80_DaisyChain *daisy_chain)
     }
 }
 
-/* search highest interrupt request device (next interrupt device) */
-/*    and highest interrupt service device (next reti      device) */
-static void check_daisy_chain(void)
+static void take_interrupt(void)
 {
-	int device;
-	Z80.request_irq = Z80.service_irq = -1;
+    if ( _IFF1 ) {
 
-	/* search higher IRQ or IEO */
-	for( device = 0 ; device < Z80.irq_max ; device ++ ) {
-        /* IEO = disable ? */
-		if( Z80.int_state[device] & Z80_INT_IEO ) {
-			/* if IEO is disable , masking lower IRQ */
-			Z80.request_irq = -1;
-			/* set highest interrupt service device */
-			Z80.service_irq = device;
-		}
-		/* IRQ = ON ? */
-		if( Z80.int_state[device] & Z80_INT_REQ )
-			Z80.request_irq = device;
-    }
-	/* set interrupt pending flag */
-	if( Z80.request_irq >= 0 )
-		Z80.pending_irq |=	INT_IRQ;
-	else
-		Z80.pending_irq &= ~INT_IRQ;
-}
+        int irq_vector;
 
-static void Interrupt(void)
-{
-	if ( (Z80.pending_irq & NMI_IRQ) || _IFF1 ) {
-
-        int irq_vector = Z80_IGNORE_INT;
-		LOG((errorlog, "Z80#%d Interrupt()\n",cpu_getactivecpu()));
-
-		/* there isn't a valid previouspc */
-		previouspc = -1;
+        /* there isn't a valid previouspc */
+        previouspc = -1;
 
         /* Check if processor was halted */
-		if (_HALT) {
-			++_PC;
-			_HALT = 0;
-		}
+        if (_HALT) {
+            ++_PC;
+            _HALT = 0;
+        }
 
-        if (Z80.pending_irq & NMI_IRQ) {
-			 LOG((errorlog, "Z80#%d NMI\n",cpu_getactivecpu()));
-			/* Save interrupt flip-flop 1 to 2 */
-			_IFF2 = _IFF1;
-			/* Clear interrupt flip-flop 1 */
-			_IFF1 = 0;
+        if( Z80.irq_max ) {     /* daisy chain mode */
+            if( Z80.request_irq >= 0 ) {
+                /* Clear interrupt flip-flop 1 */
+                _IFF1 = 0;
+                irq_vector = Z80.irq[Z80.request_irq].interrupt_entry(Z80.irq[Z80.request_irq].irq_param);
+                LOG((errorlog, "Z80#%d daisy chain irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
+                Z80.request_irq = -1;
+            } else return;
+        } else {
+            /* Clear interrupt flip-flop 1 */
+            _IFF1 = 0;
+            /* call back the cpu interface to retrieve the vector */
+            irq_vector = (*Z80.irq_callback)(0);
+            LOG((errorlog, "Z80#%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
+        }
+
+        /* Interrupt mode 2. Call [Z80.I:databyte] */
+        if( _IM == 2 ) {
+            irq_vector = (irq_vector & 0xff) | (_I << 8);
+            PUSH( PC );
+            _PCD = RM16( irq_vector );
+            LOG((errorlog, "Z80#%d Interrupt IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, _PCD));
+        } else
+        /* Interrupt mode 1. RST 38h */
+        if( _IM == 1 ) {
+            LOG((errorlog, "Z80#%d Interrupt IM1 $0038\n",cpu_getactivecpu() ));
 			PUSH( PC );
-			_PCD = 0x0066;
-			/* reset NMI interrupt request */
-			Z80.pending_irq &= ~NMI_IRQ;
-		} else {
-#if NEW_INTERRUPT_SYSTEM
-			if( !Z80.irq_max ) {  /* not daisy chain mode */
-				/* Clear interrupt flip-flop 1 */
-				_IFF1 = 0;
-                /* call back the cpu interface to retrieve the vector */
-				Z80.vector = (*Z80.irq_callback)(0);
-				LOG((errorlog, "Z80#%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
-			}
-#else
-			/* reset INT interrupt request */
-			Z80.pending_irq &= ~INT_IRQ;
-#endif
-			if ( Z80.irq_max ) {
-                if( Z80.request_irq >= 0 ) {
-					/* Clear interrupt flip-flop 1 */
-                    _IFF1 = 0;
-                    irq_vector = Z80.irq[Z80.request_irq].interrupt_entry(Z80.irq[Z80.request_irq].irq_param);
-                    LOG((errorlog, "Z80#%d daisy chain irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
-                    Z80.request_irq = -1;
-				} else return;
-            } else {
-                irq_vector = Z80.vector;
+			_PCD = 0x0038;
+        } else {
+            /* Interrupt mode 0. We check for CALL and JP instructions, */
+            /* if neither of these were found we assume a 1 byte opcode */
+            /* was placed on the databus                                */
+            LOG((errorlog, "Z80#%d Interrupt IM0 $%04x\n",cpu_getactivecpu() , irq_vector));
+            switch (irq_vector & 0xff0000) {
+                case 0xcd0000:  /* call */
+                    PUSH( PC );
+                case 0xc30000:  /* jump */
+                    _PCD = irq_vector & 0xffff;
+                    break;
+				default:		/* rst */
+					PUSH( PC );
+					_PCD = irq_vector & 0x0038;
+                    break;
             }
-            /* Interrupt mode 2. Call [Z80.I:databyte] */
-			if( _IM == 2 ) {
-				irq_vector = (irq_vector & 0xff) | (_I << 8);
-				PUSH( PC );
-				_PCD = RM16( irq_vector );
-				LOG((errorlog, "Z80#%d Interrupt IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, _PCD));
-			} else
-			/* Interrupt mode 1. RST 38h */
-			if( _IM == 1 ) {
-				LOG((errorlog, "Z80#%d Interrupt IM1 $0038\n",cpu_getactivecpu() ));
-				/* R_INC; wasn't there... */
-				EXEC(op,0xff);
-			} else {
-				/* Interrupt mode 0. We check for CALL and JP instructions, */
-				/* if neither of these were found we assume a 1 byte opcode */
-				/* was placed on the databus								*/
-				LOG((errorlog, "Z80#%d Interrupt IM0 $%04x\n",cpu_getactivecpu() , irq_vector));
-				switch (irq_vector & 0xff0000) {
-					case 0xcd0000:	/* call */
-						PUSH( PC );
-					case 0xc30000:	/* jump */
-						_PCD = irq_vector & 0xffff;
-						break;
-					default:
-						irq_vector &= 0xff;
-						/* R_INC; wasn't there... */
-						EXEC(op,irq_vector);
-						break;
-				}
-			}
-		}
+        }
+        change_pc(_PCD);
     }
-    change_pc(_PCD);
 }
-
-#if NEW_INTERRUPT_SYSTEM
 
 void Z80_set_nmi_line(int state)
 {
@@ -3301,41 +3197,58 @@ void Z80_set_nmi_line(int state)
     Z80.nmi_state = state;
 	if (state != CLEAR_LINE) {
 		LOG((errorlog, "Z80#%d set NMI_IRQ\n", cpu_getactivecpu()));
-        Z80.pending_irq |= NMI_IRQ;
-	}
+		previouspc = -1;	/* there isn't a valid previouspc */
+        /* Check if processor was halted */
+		if (_HALT) {
+			++_PC;
+			_HALT = 0;
+		}
+		_IFF2 = _IFF1;	/* Save interrupt flip-flop 1 to 2 */
+		_IFF1 = 0;		/* Clear interrupt flip-flop 1 */
+		PUSH( PC );
+		_PCD = 0x0066;
+    }
 }
 
 void Z80_set_irq_line(int irqline, int state)
 {
 	LOG((errorlog, "Z80#%d set_irq_line %d\n",cpu_getactivecpu() , state));
     Z80.irq_state = state;
-	if (state == CLEAR_LINE) {
-		if( !Z80.irq_max ) {
-			if(!_IFF1 ) 						/* if interrupts are disabled */
-				Z80.pending_irq &= ~INT_IRQ;	/* clear the pending IRQ */
-		}
-	}  else {
-		if( Z80.irq_max ) {
-			int daisychain, dc_device, dc_state;
-			daisychain = (*Z80.irq_callback)(irqline);
-			dc_device = daisychain >> 8;
-			dc_state = daisychain & 0xff;
-			LOG((errorlog, "Z80#%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, dc_device, dc_state));
-			if( Z80.int_state[dc_device] != dc_state ) {
-				LOG((errorlog, " change\n"));
-				/* set new interrupt status */
-				Z80.int_state[dc_device] = dc_state;
-				/* check interrupt status */
-				check_daisy_chain();
-				LOG((errorlog, "Z80#%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z80.service_irq, Z80.request_irq));
-			} else {
-				LOG((errorlog, " no change\n"));
+	if (state == CLEAR_LINE) return;
+
+	if( Z80.irq_max ) {
+		int daisychain, device, int_state;
+		daisychain = (*Z80.irq_callback)(irqline);
+		device = daisychain >> 8;
+		int_state = daisychain & 0xff;
+		LOG((errorlog, "Z80#%d daisy chain $%04x -> device %d, state $%02x",cpu_getactivecpu(), daisychain, device, int_state));
+
+        if( Z80.int_state[device] != int_state ) {
+			LOG((errorlog, " change\n"));
+			/* set new interrupt status */
+            Z80.int_state[device] = int_state;
+			/* check interrupt status */
+			Z80.request_irq = Z80.service_irq = -1;
+
+            /* search higher IRQ or IEO */
+            for( device = 0 ; device < Z80.irq_max ; device ++ ) {
+				/* IEO = disable ? */
+				if( Z80.int_state[device] & Z80_INT_IEO ) {
+					Z80.request_irq = -1;		/* if IEO is disable , masking lower IRQ */
+					Z80.service_irq = device;	/* set highest interrupt service device */
+				}
+				/* IRQ = request ? */
+				if( Z80.int_state[device] & Z80_INT_REQ )
+					Z80.request_irq = device;
 			}
+            LOG((errorlog, "Z80#%d daisy chain service_irq $%02x, request_irq $%02x\n", cpu_getactivecpu(), Z80.service_irq, Z80.request_irq));
+			if (Z80.request_irq < 0) return;
 		} else {
-			if( _IFF1 ) 					/* if interrupts are enabled */
-				Z80.pending_irq |= INT_IRQ; /* set the pending IRQ */
+			LOG((errorlog, " no change\n"));
+			return;
 		}
 	}
+	take_interrupt();
 }
 
 void Z80_set_irq_callback(int (*callback)(int))
@@ -3343,56 +3256,6 @@ void Z80_set_irq_callback(int (*callback)(int))
 	LOG((errorlog, "Z80#%d set_irq_callback $%08x\n",cpu_getactivecpu() , (int)callback));
     Z80.irq_callback = callback;
 }
-
-#else
-
-void Z80_Cause_Interrupt(int type)
-{
-/* type value :                                                          */
-/*  Z80_NMI_INT                      -> NMI request                      */
-/*  Z80_IGNORE_INT                   -> no request                       */
-/*  vector(0x00-0xff)                -> SINGLE interrupt request         */
-/*  Z80_VECTOR(device,status)        -> DaisyChain change interrupt status */
-/*      device : device number of daisy-chain link                       */
-/*      status : Z80_INT_REQ  -> interrupt request                       */
-/*               Z80_INT_IEO  -> interrupt disable output                */
-
-    if (type == Z80_NMI_INT) {
-        Z80.pending_irq |= NMI_IRQ;
-	} else if (type != Z80_IGNORE_INT) {
-        if( Z80.irq_max ) {   /* daisy chain mode */
-            int device = type >> 8;
-            int state  = type & 0xff;
-
-            if( Z80.int_state[device] != state ) {
-                /* set new interrupt status */
-                Z80.int_state[device] = state;
-                /* check interrupt status */
-                check_daisy_chain();
-            }
-        } else {
-            /* single int mode */
-			Z80.vector = type & 0xff;
-            Z80.pending_irq |= INT_IRQ;
-        }
-    }
-}
-
-void Z80_Clear_Pending_Interrupts(void)
-{
-    int i;
-
-    /* clear irq for all device */
-    for( i = 0 ; i < Z80_MAXDAISY ; i++ )
-    {
-        /* !!!!! shoud be clear interrupt status for daisy-chain devices !!!!! */
-        Z80.int_state[i]  = 0;
-    }
-    Z80.pending_irq = 0;
-	Z80.service_irq = -1;
-}
-
-#endif
 
 /****************************************************************************
  * Set all registers to given values
@@ -3426,9 +3289,7 @@ int Z80_Execute(int cycles)
 {
 	Z80_ICount = cycles;
 	do {
-		if (Z80.pending_irq)
-			Interrupt();
-		CALL_MAME_DEBUG;
+        CALL_MAME_DEBUG;
 		R_INC;
         previouspc = _PCD;
 		EXEC_INLINE(op,ROP());

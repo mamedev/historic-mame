@@ -516,11 +516,14 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 						osd_fread(f,&dummy,2);
 						if ((smplen != 0) && (samples->sample[i] = malloc(sizeof(struct GameSample) + (smplen)*sizeof(char))) != 0)
 						{
-						   samples->sample[i]->length = smplen;
-						   samples->sample[i]->volume = smpvol;
-						   samples->sample[i]->smpfreq = smpfrq;
-						   samples->sample[i]->resolution = smpres;
-						   osd_fread(f,samples->sample[i]->data,smplen);
+							samples->sample[i]->length = smplen;
+							samples->sample[i]->volume = smpvol;
+							samples->sample[i]->smpfreq = smpfrq;
+							samples->sample[i]->resolution = smpres;
+							if (smpres == 8)
+								osd_fread(f,samples->sample[i]->data,smplen);
+							else if (smpres == 16)
+								osd_fread_lsbfirst(f,samples->sample[i]->data,smplen);
 						}
 					}
 				}

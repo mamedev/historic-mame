@@ -1087,13 +1087,6 @@ int cpu_gethorzbeampos(void)
 }
 
 
-void cpu_seticount(int cycles)
-{
-	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	ICOUNT (cpunum) = cycles;
-}
-
-
 
 /***************************************************************************
 

@@ -986,7 +986,7 @@ static void (*opcode_table[65536 >> 4])(void) =
 	move1_a_ni_a,	move1_a_ni_b,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,
 	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,
 	/* 0xd700 */
-	exgf1_a,	exgf0_b,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,
+	exgf1_a,	exgf1_b,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,
 	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,
 	/* 0xd800 */
 	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,	unimpl,

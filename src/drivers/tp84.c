@@ -88,7 +88,6 @@ C004      76489 #4 trigger
 extern int tp84_beam_r(int offset);
 extern int tp84_interrupt(void);
 void tp84_catchloop_w(int offset,int data); /* JB 970829 */
-int tp84_catchloop_r(int offset); /* JB 970829 */
 void tp84_init_machine(void); /* JB 970829 */
 
 /* In Vidhrdw */
@@ -137,7 +136,6 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2860, 0x2860, input_port_3_r },
 	{ 0x3000, 0x3000, input_port_4_r },
 	{ 0x4000, 0x4fff, MRA_RAM },
-	{ 0x523a, 0x523a, tp84_catchloop_r }, /* JB 970829 */
 	{ 0x5000, 0x57ff, tp84_sharedram_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */

@@ -40,7 +40,7 @@
 #define GET_X(val) ((INT16) (val))
 #define GET_Y(val) ((INT16)((val) >> 16))
 #define COMBINE_XY(x,y) (((UINT32)((UINT16)(x))) | (((UINT16)(y)) << 16))
-#define XYTOL(val) ((((INT32)((UINT16)GET_Y(val)) <<state.xytolshiftcount1) | \
+#define XYTOL(val) ((((INT32)((UINT16)GET_Y(val) )<<state.xytolshiftcount1) |	\
 				    (((INT32)((UINT16)GET_X(val)))<<state.xytolshiftcount2)) + OFFSET)
 
 
@@ -54,7 +54,7 @@ static void unimpl(void)
 
 /* Graphics Instructions */
 
-static void adjust_xy_to_window(void)
+static void clip_xy_to_window(void)
 {
 	/* Window clipping mode 3 */
 	INT16  sx, sy, ex, ey;
@@ -86,7 +86,7 @@ static void pixblt_b_l(void)
 
 	if (!P_FLAG)
 	{
-		// Setup
+		/* Setup */
 		P_FLAG = 1;
 		BREG(10<<4) = (UINT16)GET_X(DYDX);
 		BREG(11<<4) = (UINT16)GET_Y(DYDX);
@@ -98,27 +98,27 @@ static void pixblt_b_l(void)
 		boundary = WPIXEL(DADDR, (rfield_z_01(SADDR) ? COLOR1 : COLOR0));
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			DADDR += IOREG(REG_PSIZE);
 			SADDR++;
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
 			SADDR = BREG(13<<4) = BREG(13<<4) + SPTCH;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_b_xy(void)
@@ -133,7 +133,7 @@ static void pixblt_b_xy(void)
 			fprintf(errorlog, "PIXBLT B,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 		}
 
-		// Setup
+		/* Setup */
 		P_FLAG = 1;
 		BREG(10<<4) = (UINT16)GET_X(DYDX);
 		BREG(11<<4) = (UINT16)GET_Y(DYDX);
@@ -145,7 +145,7 @@ static void pixblt_b_xy(void)
 		boundary = WPIXEL(XYTOL(DADDR), (rfield_z_01(SADDR) ? COLOR1 : COLOR0));
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			x = GET_X(DADDR) + 1;
 			y = GET_Y(DADDR);
 			DADDR = COMBINE_XY(x,y);
@@ -153,14 +153,14 @@ static void pixblt_b_xy(void)
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 			x = GET_X(BREG(12<<4));
 			y = GET_Y(BREG(12<<4)) + 1;
 			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
@@ -170,7 +170,7 @@ static void pixblt_b_xy(void)
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_l_l(void)
@@ -179,7 +179,7 @@ static void pixblt_l_l(void)
 
 	if (!P_FLAG)
 	{
-		// Setup
+		/* Setup */
 		P_FLAG = 1;
 
 		BREG(14<<4) = IOREG(REG_PSIZE);
@@ -200,20 +200,20 @@ static void pixblt_l_l(void)
 		boundary = WPIXEL(DADDR,RPIXEL(SADDR));
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			DADDR += BREG(14<<4);
 			SADDR += BREG(14<<4);
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 
 			if (PBV)
 			{
@@ -229,7 +229,7 @@ static void pixblt_l_l(void)
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_l_xy(void)
@@ -238,19 +238,19 @@ static void pixblt_l_xy(void)
 
 	INT16 x,y;
 
-	if ((PBH || PBV) && errorlog)
-	{
-		fprintf(errorlog, "PIXBLT L,XY  %08X - Corner Adjust not supported\n", PC);
-	}
-
 	if (!P_FLAG)
 	{
+		/* Setup */
+		if ((PBH || PBV) && errorlog)
+		{
+			fprintf(errorlog, "PIXBLT L,XY  %08X - Corner Adjust not supported\n", PC);
+		}
+
 		if (state.window_checking && errorlog)
 		{
 			fprintf(errorlog, "PIXBLT L,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 		}
 
-		// Setup
 		P_FLAG = 1;
 		BREG(10<<4) = (UINT16)GET_X(DYDX);
 		BREG(11<<4) = (UINT16)GET_Y(DYDX);
@@ -262,7 +262,7 @@ static void pixblt_l_xy(void)
 		boundary = WPIXEL(XYTOL(DADDR),RPIXEL(SADDR));
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			x = GET_X(DADDR) + 1;
 			y = GET_Y(DADDR);
 			DADDR = COMBINE_XY(x,y);
@@ -270,14 +270,14 @@ static void pixblt_l_xy(void)
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 			x = GET_X(BREG(12<<4));
 			y = GET_Y(BREG(12<<4)) + 1;
 			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
@@ -286,7 +286,7 @@ static void pixblt_l_xy(void)
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_xy_l(void)
@@ -295,14 +295,14 @@ static void pixblt_xy_l(void)
 
 	INT16 x,y;
 
-	if ((PBH || PBV) && errorlog)
-	{
-		fprintf(errorlog, "PIXBLT XY,L  %08X - Corner Adjust not supported\n", PC);
-	}
-
 	if (!P_FLAG)
 	{
-		// Setup
+		/* Setup */
+		if ((PBH || PBV) && errorlog)
+		{
+			fprintf(errorlog, "PIXBLT XY,L  %08X - Corner Adjust not supported\n", PC);
+		}
+
 		P_FLAG = 1;
 		BREG(10<<4) = (UINT16)GET_X(DYDX);
 		BREG(11<<4) = (UINT16)GET_Y(DYDX);
@@ -314,7 +314,7 @@ static void pixblt_xy_l(void)
 		boundary = WPIXEL(DADDR,RPIXEL(XYTOL(SADDR)));
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			DADDR += IOREG(REG_PSIZE);
 			x = GET_X(SADDR) + 1;
 			y = GET_Y(SADDR);
@@ -322,14 +322,14 @@ static void pixblt_xy_l(void)
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
 			x = GET_X(BREG(13<<4));
 			y = GET_Y(BREG(13<<4)) + 1;
@@ -338,7 +338,7 @@ static void pixblt_xy_l(void)
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void pixblt_xy_xy(void)
@@ -347,19 +347,19 @@ static void pixblt_xy_xy(void)
 
 	INT16 x,y;
 
-	if ((PBH || PBV) && errorlog)
-	{
-		fprintf(errorlog, "PIXBLT XY,XY  %08X - Corner Adjust not supported\n", PC);
-	}
-
 	if (!P_FLAG)
 	{
+		if ((PBH || PBV) && errorlog)
+		{
+			fprintf(errorlog, "PIXBLT XY,XY  %08X - Corner Adjust not supported\n", PC);
+		}
+
 		if (state.window_checking && errorlog)
 		{
 			fprintf(errorlog, "PIXBLT XY,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 		}
 
-		// Setup
+		/* Setup */
 		P_FLAG = 1;
 		BREG(10<<4) = (UINT16)GET_X(DYDX);
 		BREG(11<<4) = (UINT16)GET_Y(DYDX);
@@ -371,7 +371,7 @@ static void pixblt_xy_xy(void)
 		boundary = WPIXEL(XYTOL(DADDR),RPIXEL(XYTOL(SADDR)));
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			x = GET_X(DADDR) + 1;
 			y = GET_Y(DADDR);
 			DADDR = COMBINE_XY(x,y);
@@ -381,14 +381,14 @@ static void pixblt_xy_xy(void)
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 			x = GET_X(BREG(12<<4));
 			y = GET_Y(BREG(12<<4)) + 1;
 			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
@@ -399,7 +399,7 @@ static void pixblt_xy_xy(void)
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void fill_l(void)
@@ -408,7 +408,7 @@ static void fill_l(void)
 
 	if (!P_FLAG)
 	{
-		// Setup
+		/* Setup */
 		P_FLAG = 1;
 		BREG(10<<4) = (UINT16)GET_X(DYDX);
 		BREG(11<<4) = (UINT16)GET_Y(DYDX);
@@ -419,25 +419,25 @@ static void fill_l(void)
 		boundary = WPIXEL(DADDR,COLOR1);
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			DADDR += IOREG(REG_PSIZE);
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 			DADDR = BREG(12<<4) = BREG(12<<4) + DPTCH;
 		}
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void fill_xy(void)
@@ -450,13 +450,13 @@ static void fill_xy(void)
 		switch (state.window_checking)
 		{
 		case 0: break;
-		case 3: adjust_xy_to_window(); break;
+		case 3: clip_xy_to_window(); break;
 		default:
 			if (errorlog) fprintf(errorlog, "FILL XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 			break;
 		}
 
-		// Setup
+		/* Setup */
 		BREG(10<<4) = (UINT16)GET_X(DYDX);
 		BREG(11<<4) = (UINT16)GET_Y(DYDX);
 		BREG(12<<4) = DADDR;
@@ -474,21 +474,21 @@ static void fill_xy(void)
 		boundary = WPIXEL(XYTOL(DADDR),COLOR1);
 		if (--BREG(10<<4))
 		{
-			// Next column
+			/* Next column */
 			x = GET_X(DADDR) + 1;
 			y = GET_Y(DADDR);
 			DADDR = COMBINE_XY(x,y);
 		}
 		else
 		{
-			// Next row
+			/* Next row */
 			if (!--BREG(11<<4))
 			{
 				//Done
 				FINISH_PIX_OP;
 				return;
 			}
-			BREG(10<<4) = GET_X(DYDX);
+			BREG(10<<4) = (UINT16)GET_X(DYDX);
 			x = GET_X(BREG(12<<4));
 			y = GET_Y(BREG(12<<4)) + 1;
 			DADDR = BREG(12<<4) = COMBINE_XY(x,y);
@@ -496,30 +496,29 @@ static void fill_xy(void)
 	}
 	while (!boundary);
 
-	PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+	PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 }
 
 static void line(void)
 {
-	UINT32 algorithm = state.op & 0x80;
-
 	if (!P_FLAG)
 	{
 		if (state.window_checking && errorlog)
 		{
 			fprintf(errorlog, "LINE XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 		}
+
+		P_FLAG = 1;
+		TEMP = (state.op & 0x80) ? 1 : 0;  /* Boundary value depends on the algorithm */
 	}
 
-	P_FLAG = 1;
 	if (COUNT > 0)
 	{
 		INT16 x1,x2,y1,y2,newx,newy;
 
 		COUNT--;
 		WPIXEL(XYTOL(DADDR),COLOR1);
-		if (( algorithm && SADDR > 0 ) ||
-			(!algorithm && SADDR >= 0))
+		if (SADDR >= TEMP)
 		{
 			SADDR += GET_Y(DYDX)*2 - GET_X(DYDX)*2;
 			x1 = GET_X(INC1);
@@ -537,7 +536,7 @@ static void line(void)
 		newy = y1+y2;
 		DADDR = COMBINE_XY(newx,newy);
 
-		PC -= 0x10;  // Not done yet, check for interrupts and restart instruction
+		PC -= 0x10;  /* Not done yet, check for interrupts and restart instruction */
 		return;
 	}
 	FINISH_PIX_OP;
@@ -625,18 +624,14 @@ static void cvxyl_b(void) { CVXYL(B); }
 
 #define MOVX(R)										\
 {													\
-	INT16 x = GET_X(R##REG(R##SRCREG));				\
-	INT16 y = GET_Y(R##REG(R##DSTREG));				\
-	R##REG(R##DSTREG) = COMBINE_XY(x,y);			\
+	R##REG(R##DSTREG) = (R##REG(R##DSTREG) & 0xffff0000) | (UINT16)R##REG(R##SRCREG);	\
 }
 static void movx_a(void) { MOVX(A); }
 static void movx_b(void) { MOVX(B); }
 
 #define MOVY(R)										\
 {													\
-	INT16 x = GET_X(R##REG(R##DSTREG));				\
-	INT16 y = GET_Y(R##REG(R##SRCREG));				\
-	R##REG(R##DSTREG) = COMBINE_XY(x,y);			\
+	R##REG(R##DSTREG) = (R##REG(R##SRCREG) & 0xffff0000) | (UINT16)R##REG(R##DSTREG);	\
 }
 static void movy_a(void) { MOVY(A); }
 static void movy_b(void) { MOVY(B); }
@@ -968,7 +963,7 @@ static void divu_b(void) { DIVU(B,0x10); }
 static void eint(void)
 {
 	IE_FLAG = 1;
-	CHECK_IRQ_LINES(IE_FLAG,"eint");
+	check_interrupt();
 }
 
 #define EXGF(F,R)			       		       			    	\
@@ -2131,7 +2126,6 @@ static void jump_b (void) { JUMP(B); }
 static void popst(void)
 {
 	SET_ST(POP());
-	CHECK_IRQ_LINES(IE_FLAG,"popst");
 }
 
 static void pushst(void)
@@ -2142,17 +2136,15 @@ static void pushst(void)
 #define PUTST(R)												\
 {																\
 	SET_ST(R##REG(R##DSTREG));									\
-	CHECK_IRQ_LINES(IE_FLAG,"putst");                           \
 }
 static void putst_a (void) { PUTST(A); }
 static void putst_b (void) { PUTST(B); }
 
 static void reti(void)
 {
-	SET_ST(POP());
+	INT32 st = POP();
 	PC = POP();
-	SET_FW();
-	CHECK_IRQ_LINES(IE_FLAG,"reti");
+	SET_ST(st);
 }
 
 static void rets(void)

@@ -86,13 +86,20 @@ void	TMS320C10_Clear_Pending_Interrupts(void);
 /*	 Read a word from given ROM memory location
  * #define TMS320C10_ROM_RDMEM(A) READ_WORD(&ROM[(A<<1)])
  */
+#ifdef LSB_FIRST
 #define TMS320C10_ROM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1))<<8) | cpu_readmem16(((A<<1)+1)))
+#else
+#define TMS320C10_ROM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1))) | cpu_readmem16(((A<<1)+1))<<8)
+#endif
 
 /*	 Write a word to given ROM memory location
  * #define TMS320C10_ROM_WRMEM(A,V) WRITE_WORD(&ROM[(A<<1)],V)
  */
+#ifdef LSB_FIRST
 #define TMS320C10_ROM_WRMEM(A,V) { cpu_writemem16(((A<<1)+1),(V&0xff)); cpu_writemem16((A<<1),((V>>8)&0xff)); }
-
+#else
+#define TMS320C10_ROM_WRMEM(A,V) { cpu_writemem16(((A<<1)+1),((V>>8)&0xff)); cpu_writemem16((A<<1),(V&0xff)); }
+#endif
 
 /*	 Read a word from given RAM memory location
 	 The following adds 8000h to the address, since MAME doesnt support
@@ -100,8 +107,11 @@ void	TMS320C10_Clear_Pending_Interrupts(void);
 	 address 0 and are word entities.
  * #define TMS320C10_RAM_RDMEM(A) ((unsigned)cpu_readmem16lew_word(((A<<1)|0x8000)))
  */
+#ifdef LSB_FIRST
 #define TMS320C10_RAM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1)|0x8000)<<8) | cpu_readmem16(((A<<1)|0x8001)))
-
+#else
+#define TMS320C10_RAM_RDMEM(A) (unsigned)((cpu_readmem16((A<<1)|0x8000)) | cpu_readmem16(((A<<1)|0x8001))<<8)
+#endif
 
 /*	 Write a word to given RAM memory location
 	 The following adds 8000h to the address, since MAME doesnt support
@@ -109,21 +119,31 @@ void	TMS320C10_Clear_Pending_Interrupts(void);
 	 address 0 and word entities.
  * #define TMS320C10_RAM_WRMEM(A,V) (cpu_writemem16lew_word(((A<<1)|0x8000),V))
  */
+#ifdef LSB_FIRST
 #define TMS320C10_RAM_WRMEM(A,V) { cpu_writemem16(((A<<1)|0x8001),(V&0x0ff)); cpu_writemem16(((A<<1)|0x8000),((V>>8)&0x0ff)); }
-
+#else
+#define TMS320C10_RAM_WRMEM(A,V) { cpu_writemem16(((A<<1)|0x8001),((V>>8)&0x0ff)); cpu_writemem16(((A<<1)|0x8000),(V&0x0ff)); }
+#endif
 
 /*	 TMS320C10_RDOP() is identical to TMS320C10_RDMEM() except it is used for reading
  *	 opcodes. In case of system with memory mapped I/O, this function can be
  *	 used to greatly speed up emulation
  */
+#ifdef LSB_FIRST
 #define TMS320C10_RDOP(A) (unsigned)((cpu_readop((A<<1))<<8) | cpu_readop(((A<<1)+1)))
-
+#else
+#define TMS320C10_RDOP(A) (unsigned)((cpu_readop((A<<1))) | cpu_readop(((A<<1)+1))<<8)
+#endif
 
 /*	 TMS320C10_RDOP_ARG() is identical to TMS320C10_RDOP() except it is used for reading
  *	 opcode arguments. This difference can be used to support systems that
  *	 use different encoding mechanisms for opcodes and opcode arguments
  */
+#ifdef LSB_FIRST
 #define TMS320C10_RDOP_ARG(A) (unsigned)((cpu_readop_arg((A<<1))<<8) | cpu_readop_arg(((A<<1)+1)))
+#else
+#define TMS320C10_RDOP_ARG(A) (unsigned)((cpu_readop_arg((A<<1))) | cpu_readop_arg(((A<<1)+1))<<8)
+#endif
 
 #ifdef	MAME_DEBUG
 int		Dasm32010(char * dst, unsigned char* addr);

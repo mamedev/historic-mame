@@ -198,7 +198,7 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz ? */
-	{ 40 },
+	{ 30 },
 	{ input_port_0_r },
 	{ input_port_1_r },
 	{ 0 },
@@ -208,7 +208,7 @@ static struct AY8910interface ay8910_interface =
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 100 }
+	{ 70 }
 };
 
 

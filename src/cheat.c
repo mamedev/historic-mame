@@ -771,7 +771,7 @@ void xprintf(int ForEdit,int x,int y,char *fmt,...)    /* JCK 981022 */
  * if x = 0 then center the string in the screen */
 int xedit(int x,int y,char *inputs,int maxlen)
 {
-  int i, key, length;
+  int key, length;
   int done = 0;
   char *buffer;
 
@@ -1515,7 +1515,7 @@ void SearchInProgress(int ShowMsg, int yPos)
 /* Function to rename the cheatfile (returns 1 if the file has been renamed else 0)*/
 int RenameCheatFile(int merge, int DisplayFileName, char *filename)
 {
-  int i, key;
+  int key;
   int done = 0;
   int EditYPos;
   char buffer[32];
@@ -1925,8 +1925,7 @@ void StopCheat(void)
  */
 void DoCheat(void)
 {
-	int key;
-	int i,j,y;
+	int i,y;
 	char buf[80];
 	char buf2[12];    /* JCK 990115 */
 
@@ -2382,7 +2381,6 @@ void EditCheat(int CheatNo)
   int total;
   struct DisplayText dt[20];
   char str2[6][50];	/* JCK 981213 */
-  char buffer[50];	/* JCK 981022 */
   int CurrentName;
   int EditYPos;
 
@@ -2852,7 +2850,6 @@ int SelectCheatHeader(void)
 void SelectCheat(void)
 {
 	int i, x, y, highlighted, key, done, total;
-	int iWhereY = 0;
 	struct DisplayText dt[40];
 	int flag;
 	int Index;
@@ -3659,9 +3656,6 @@ int ContinueSearchMatchHeader(int count)
 
 void ContinueSearchMatchFooter(int count, int idx)
 {
-  int i = 0;
-  int FreeWatch = 0;
-
   int y = YFOOT_MATCH;
 
   y += FontHeight;
@@ -3698,7 +3692,10 @@ void ContinueSearchMatchFooter(int count, int idx)
   }
   else
   {
-	/* for (i=y; i< ( y + 3 * FontHeight + 1 ); i++) memset (Machine->scrbitmap->line[i], 0, MachWidth); */
+/*
+ *	int i = 0;
+ *	for (i=y; i< ( y + 3 * FontHeight + 1 ); i++) memset (Machine->scrbitmap->line[i], 0, MachWidth);
+ */
 	ClearArea(1, y, y + 2 * FontHeight);    /* JCK 981212 */
   }
 }
@@ -4050,9 +4047,8 @@ void StartSearch(void)
 
 void ContinueSearch(int ViewLast)    /* JCK 990115 */
 {
-  char *str;
   char str2[MAX_MATCHES+2][80];
-  int i,j,x,y,count,s,key,done;
+  int i,j,y,count,s,key,done;
   struct DisplayText dt[20];
   int total;
   int Continue;
@@ -4742,8 +4738,6 @@ int ChooseWatchHeader(void)
 
 void ChooseWatchFooter(void)
 {
-  int i = 0;
-
   int y = YFOOT_WATCH;
 
   y += FontHeight;
@@ -4759,13 +4753,8 @@ void ChooseWatch(void)
   struct DisplayText dt[20];
   char str2[MAX_WATCHES+1][15];    /* JCK 981027 */
   char buf[40];
-  char buf2[20];    /* JCK 981030 */
-
   int countAdded;    /* JCK 981022 */
-
-  char fmt[20];    /* JCK 981022 */
-
-  int j,OldCpuNo = 0;    /* JCK 981026 */
+  int OldCpuNo = 0;    /* JCK 981026 */
 
   int trueorientation;
   /* hack: force the display into standard orientation to avoid */

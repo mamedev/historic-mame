@@ -53,28 +53,6 @@ void tp84_catchloop_w(int offset,int data)
 {
 	extern unsigned char *RAM;
 
-	if( cpu_getpc()==0xe0f2 ) cpu_seticount (0);
+	if( cpu_getpc()==0xe0f2 ) cpu_spinuntil_int();
 	RAM[0x4000] = data;
-}
-
-/* JB 970829 - catch a busy loop for CPU 0
-	83AF: CLRA
-	83B0: LDX   $523A
-	83B3: LDD   ,X
-	83B5: ASLA
-	83B6: BCC   $8398
-	83B8: BRA   $83AF
-*/
-int tp84_catchloop_r(int offset)
-{
-	int data, dataw;
-
-	data = tp84_sharedram[0x23a];
-
-	if( cpu_getpc()==0x83b3 )
-	{
-		dataw = data<<8 | tp84_sharedram[0x23b];
-		if (tp84_sharedram[dataw-0x5000] & 0x80) cpu_seticount (0);
-	}
-	return data;
 }

@@ -5,6 +5,21 @@
   Functions needed to generate timing and synchronization between several
   CPUs.
 
+  Changes 2/27/99:
+  	- added some rounding to the sorting of timers so that two timers
+  		allocated to go off at the same time will go off in the order
+  		they were allocated, without concern for floating point rounding
+  		errors (thanks Juergen!)
+  	- fixed a bug where the base_time was not updated when a CPU was
+  		suspended, making subsequent calls to getabsolutetime() return an
+  		incorrect time (thanks Nicola!)
+  	- changed suspended CPUs so that they don't eat their timeslice until
+  		all other CPUs have used up theirs; this allows a slave CPU to
+  		trigger a higher priority CPU in the middle of the timeslice
+  	- added the ability to call timer_reset() on a oneshot or pulse timer
+  		from within that timer's callback; in this case, the timer won't
+  		get removed (oneshot) or won't get reprimed (pulse)
+
 ***************************************************************************/
 
 #include "cpuintrf.h"
@@ -66,18 +81,20 @@ static timer_entry *timer_free_head;
 /* other internal states */
 static double base_time;
 static double global_offset;
+static timer_entry *callback_timer;
+static int callback_timer_modified;
 
 /* prototypes */
-static int pick_cpu (int *cpu, int *cycles, double expire);
+static int pick_cpu(int *cpu, int *cycles, double expire);
 
 #if VERBOSE
-static void verbose_print (char *s, ...);
+static void verbose_print(char *s, ...);
 #endif
 
 /*
  *		return the current absolute time
  */
-INLINE double getabsolutetime (void)
+INLINE double getabsolutetime(void)
 {
 	if (activecpu)
 		return base_time - ((double)(*activecpu->icount + activecpu->lost) * activecpu->cycles_to_sec);
@@ -89,7 +106,7 @@ INLINE double getabsolutetime (void)
 /*
  *		adjust the current CPU's timer so that a new event will fire at the right time
  */
-INLINE void timer_adjust (timer_entry *timer, double time, double period)
+INLINE void timer_adjust(timer_entry *timer, double time, double period)
 {
 	int newicount, diff;
 
@@ -114,7 +131,7 @@ INLINE void timer_adjust (timer_entry *timer, double time, double period)
 /*
  *		allocate a new timer
  */
-INLINE timer_entry *timer_new (void)
+INLINE timer_entry *timer_new(void)
 {
 	timer_entry *timer;
 
@@ -131,7 +148,7 @@ INLINE timer_entry *timer_new (void)
 /*
  *		insert a new timer into the list at the appropriate location
  */
-INLINE void timer_list_insert (timer_entry *timer)
+INLINE void timer_list_insert(timer_entry *timer)
 {
 	double expire = timer->enabled ? timer->expire : TIME_NEVER;
 	timer_entry *t, *lt = NULL;
@@ -139,8 +156,11 @@ INLINE void timer_list_insert (timer_entry *timer)
 	/* loop over the timer list */
 	for (t = timer_head; t; lt = t, t = t->next)
 	{
-		/* if the expiration of this timer is less than or equal to the current list entry, insert it */
-		if (expire < t->expire)
+		/* if the current list entry expires after us, we should be inserted before it */
+		/* note that due to floating point rounding, we need to allow a bit of slop here */
+		/* because two equal entries -- within rounding precision -- need to sort in */
+		/* the order they were inserted into the list */
+		if ((t->expire - expire) > TIME_IN_NSEC(1))
 		{
 			/* link the new guy in before the current list entry */
 			timer->prev = t->prev;
@@ -168,7 +188,7 @@ INLINE void timer_list_insert (timer_entry *timer)
 /*
  *		remove a timer from the linked list
  */
-INLINE void timer_list_remove (timer_entry *timer)
+INLINE void timer_list_remove(timer_entry *timer)
 {
 	/* remove it from the list */
 	if (timer->prev)
@@ -183,20 +203,22 @@ INLINE void timer_list_remove (timer_entry *timer)
 /*
  *		initialize the timer system
  */
-void timer_init (void)
+void timer_init(void)
 {
 	cpu_entry *cpu;
 	int i;
 
 	/* keep a local copy of how many total CPU's */
-	lastcpu = cpudata + cpu_gettotalcpu () - 1;
+	lastcpu = cpudata + cpu_gettotalcpu() - 1;
 
 	/* we need to wait until the first call to timer_cyclestorun before using real CPU times */
 	base_time = 0.0;
 	global_offset = 0.0;
+	callback_timer = NULL;
+	callback_timer_modified = 0;
 
 	/* reset the timers */
-	memset (timers, 0, sizeof (timers));
+	memset(timers, 0, sizeof(timers));
 
 	/* initialize the lists */
 	timer_head = NULL;
@@ -205,7 +227,7 @@ void timer_init (void)
 		timers[i].next = &timers[i+1];
 
 	/* reset the CPU timers */
-	memset (cpudata, 0, sizeof (cpudata));
+	memset(cpudata, 0, sizeof(cpudata));
 	activecpu = NULL;
 	last_activecpu = lastcpu;
 
@@ -231,13 +253,13 @@ void timer_init (void)
 /*
  *		allocate a pulse timer, which repeatedly calls the callback using the given period
  */
-void *timer_pulse (double period, int param, void (*callback)(int))
+void *timer_pulse(double period, int param, void (*callback)(int))
 {
-	double time = getabsolutetime ();
+	double time = getabsolutetime();
 	timer_entry *timer;
 
 	/* allocate a new entry */
-	timer = timer_new ();
+	timer = timer_new();
 	if (!timer)
 		return NULL;
 
@@ -250,14 +272,14 @@ void *timer_pulse (double period, int param, void (*callback)(int))
 	/* compute the time of the next firing and insert into the list */
 	timer->start = time;
 	timer->expire = time + period;
-	timer_list_insert (timer);
+	timer_list_insert(timer);
 
 	/* if we're supposed to fire before the end of this cycle, adjust the counter */
 	if (activecpu && timer->expire < base_time)
-		timer_adjust (timer, time, period);
+		timer_adjust(timer, time, period);
 
 	#if VERBOSE
-		verbose_print ("T=%.6g: New pulse=%08X, period=%.6g\n", time + global_offset, timer, period);
+		verbose_print("T=%.6g: New pulse=%08X, period=%.6g\n", time + global_offset, timer, period);
 	#endif
 
 	/* return a handle */
@@ -268,13 +290,13 @@ void *timer_pulse (double period, int param, void (*callback)(int))
 /*
  *		allocate a one-shot timer, which calls the callback after the given duration
  */
-void *timer_set (double duration, int param, void (*callback)(int))
+void *timer_set(double duration, int param, void (*callback)(int))
 {
-	double time = getabsolutetime ();
+	double time = getabsolutetime();
 	timer_entry *timer;
 
 	/* allocate a new entry */
-	timer = timer_new ();
+	timer = timer_new();
 	if (!timer)
 		return NULL;
 
@@ -287,14 +309,14 @@ void *timer_set (double duration, int param, void (*callback)(int))
 	/* compute the time of the next firing and insert into the list */
 	timer->start = time;
 	timer->expire = time + duration;
-	timer_list_insert (timer);
+	timer_list_insert(timer);
 
 	/* if we're supposed to fire before the end of this cycle, adjust the counter */
 	if (activecpu && timer->expire < base_time)
-		timer_adjust (timer, time, duration);
+		timer_adjust(timer, time, duration);
 
 	#if VERBOSE
-		verbose_print ("T=%.6g: New oneshot=%08X, duration=%.6g\n", time + global_offset, timer, duration);
+		verbose_print("T=%.6g: New oneshot=%08X, duration=%.6g\n", time + global_offset, timer, duration);
 	#endif
 
 	/* return a handle */
@@ -305,9 +327,9 @@ void *timer_set (double duration, int param, void (*callback)(int))
 /*
  *		reset the timing on a timer
  */
-void timer_reset (void *which, double duration)
+void timer_reset(void *which, double duration)
 {
-	double time = getabsolutetime ();
+	double time = getabsolutetime();
 	timer_entry *timer = which;
 
 	/* compute the time of the next firing */
@@ -315,15 +337,19 @@ void timer_reset (void *which, double duration)
 	timer->expire = time + duration;
 
 	/* remove the timer and insert back into the list */
-	timer_list_remove (timer);
-	timer_list_insert (timer);
+	timer_list_remove(timer);
+	timer_list_insert(timer);
 
 	/* if we're supposed to fire before the end of this cycle, adjust the counter */
 	if (activecpu && timer->expire < base_time)
-		timer_adjust (timer, time, duration);
+		timer_adjust(timer, time, duration);
+
+	/* if this is the callback timer, mark it modified */
+	if (timer == callback_timer)
+		callback_timer_modified = 1;
 
 	#if VERBOSE
-		verbose_print ("T=%.6g: Reset %08X, duration=%.6g\n", time + global_offset, timer, duration);
+		verbose_print("T=%.6g: Reset %08X, duration=%.6g\n", time + global_offset, timer, duration);
 	#endif
 }
 
@@ -331,19 +357,19 @@ void timer_reset (void *which, double duration)
 /*
  *		remove a timer from the system
  */
-void timer_remove (void *which)
+void timer_remove(void *which)
 {
 	timer_entry *timer = which;
 
 	/* remove it from the list */
-	timer_list_remove (timer);
+	timer_list_remove(timer);
 
 	/* free it up by adding it back to the free list */
 	timer->next = timer_free_head;
 	timer_free_head = timer;
 
 	#if VERBOSE
-		verbose_print ("T=%.6g: Removed %08X\n", getabsolutetime() + global_offset, timer);
+		verbose_print("T=%.6g: Removed %08X\n", getabsolutetime() + global_offset, timer);
 	#endif
 }
 
@@ -351,14 +377,14 @@ void timer_remove (void *which)
 /*
  *		enable/disable a timer
  */
-int timer_enable (void *which, int enable)
+int timer_enable(void *which, int enable)
 {
 	timer_entry *timer = which;
 	int old;
 
 	#if VERBOSE
-		if (enable) verbose_print ("T=%.6g: Enabled %08X\n", getabsolutetime() + global_offset, timer);
-		else verbose_print ("T=%.6g: Disabled %08X\n", getabsolutetime() + global_offset, timer);
+		if (enable) verbose_print("T=%.6g: Enabled %08X\n", getabsolutetime() + global_offset, timer);
+		else verbose_print("T=%.6g: Disabled %08X\n", getabsolutetime() + global_offset, timer);
 	#endif
 
 	/* set the enable flag */
@@ -366,8 +392,8 @@ int timer_enable (void *which, int enable)
 	timer->enabled = enable;
 
 	/* remove the timer and insert back into the list */
-	timer_list_remove (timer);
-	timer_list_insert (timer);
+	timer_list_remove(timer);
+	timer_list_insert(timer);
 
 	return old;
 }
@@ -376,9 +402,9 @@ int timer_enable (void *which, int enable)
 /*
  *		return the time since the last trigger
  */
-double timer_timeelapsed (void *which)
+double timer_timeelapsed(void *which)
 {
-	double time = getabsolutetime ();
+	double time = getabsolutetime();
 	timer_entry *timer = which;
 
 	return time - timer->start;
@@ -388,9 +414,9 @@ double timer_timeelapsed (void *which)
 /*
  *		return the time until the next trigger
  */
-double timer_timeleft (void *which)
+double timer_timeleft(void *which)
 {
-	double time = getabsolutetime ();
+	double time = getabsolutetime();
 	timer_entry *timer = which;
 
 	return timer->expire - time;
@@ -400,16 +426,16 @@ double timer_timeleft (void *which)
 /*
  *		return the current time
  */
-double timer_get_time (void)
+double timer_get_time(void)
 {
-	return global_offset + getabsolutetime ();
+	return global_offset + getabsolutetime();
 }
 
 
 /*
  *		return the time when this timer started counting
  */
-double timer_starttime (void *which)
+double timer_starttime(void *which)
 {
 	timer_entry *timer = which;
 	return global_offset + timer->start;
@@ -419,7 +445,7 @@ double timer_starttime (void *which)
 /*
  *		return the time when this timer will fire next
  */
-double timer_firetime (void *which)
+double timer_firetime(void *which)
 {
 	timer_entry *timer = which;
 	return global_offset + timer->expire;
@@ -429,12 +455,12 @@ double timer_firetime (void *which)
 /*
  *		begin CPU execution by determining how many cycles the CPU should run
  */
-int timer_schedule_cpu (int *cpu, int *cycles)
+int timer_schedule_cpu(int *cpu, int *cycles)
 {
 	double end;
 
 	/* then see if there are any CPUs that aren't suspended and haven't yet been updated */
-	if (pick_cpu (cpu, cycles, timer_head->expire))
+	if (pick_cpu(cpu, cycles, timer_head->expire))
 		return 1;
 
 	/* everyone is up-to-date; expire any timers now */
@@ -447,8 +473,12 @@ int timer_schedule_cpu (int *cpu, int *cycles)
 		base_time = timer->expire;
 
 		#if VERBOSE
-			verbose_print ("T=%.6g: %08X fired (exp time=%.6g)\n", getabsolutetime() + global_offset, timer, timer->expire + global_offset);
+			verbose_print("T=%.6g: %08X fired (exp time=%.6g)\n", getabsolutetime() + global_offset, timer, timer->expire + global_offset);
 		#endif
+
+		/* set the global state of which callback we're in */
+		callback_timer_modified = 0;
+		callback_timer = timer;
 
 		/* call the callback */
 		if (timer->callback)
@@ -458,31 +488,37 @@ int timer_schedule_cpu (int *cpu, int *cycles)
 			osd_profiler(OSD_PROFILE_END);
 		}
 
-		/* reset or remove the timer */
-		if (timer->period)
-		{
-			timer->start = timer->expire;
-			timer->expire += timer->period;
+		/* clear the callback timer global */
+		callback_timer = NULL;
 
-			timer_list_remove (timer);
-			timer_list_insert (timer);
+		/* reset or remove the timer, but only if it wasn't modified during the callback */
+		if (!callback_timer_modified)
+		{
+			if (timer->period)
+			{
+				timer->start = timer->expire;
+				timer->expire += timer->period;
+
+				timer_list_remove(timer);
+				timer_list_insert(timer);
+			}
+			else
+				timer_remove(timer);
 		}
-		else
-			timer_remove (timer);
 	}
 
 	/* reset scheduling so it starts with CPU 0 */
 	last_activecpu = lastcpu;
 
 	/* go back to scheduling */
-	return pick_cpu (cpu, cycles, timer_head->expire);
+	return pick_cpu(cpu, cycles, timer_head->expire);
 }
 
 
 /*
  *		end CPU execution by updating the number of cycles the CPU actually ran
  */
-void timer_update_cpu (int cpunum, int ran)
+void timer_update_cpu(int cpunum, int ran)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 
@@ -494,7 +530,7 @@ void timer_update_cpu (int cpunum, int ran)
 	}
 
 	#if VERBOSE
-		verbose_print ("T=%.6g: CPU %d finished (net=%d)\n", cpu->time + global_offset, cpunum, ran - cpu->lost);
+		verbose_print("T=%.6g: CPU %d finished (net=%d)\n", cpu->time + global_offset, cpunum, ran - cpu->lost);
 	#endif
 
 	/* time to renormalize? */
@@ -505,7 +541,7 @@ void timer_update_cpu (int cpunum, int ran)
 		cpu_entry *c;
 
 		#if VERBOSE
-			verbose_print ("T=%.6g: Renormalizing\n", cpu->time + global_offset);
+			verbose_print("T=%.6g: Renormalizing\n", cpu->time + global_offset);
 		#endif
 
 		/* renormalize all the CPU timers */
@@ -532,15 +568,15 @@ void timer_update_cpu (int cpunum, int ran)
 /*
  *		suspend a CPU but continue to count time for it
  */
-void timer_suspendcpu (int cpunum, int suspend)
+void timer_suspendcpu(int cpunum, int suspend)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 	int nocount = cpu->nocount;
 	int old = cpu->suspended;
 
 	#if VERBOSE
-		if (suspend) verbose_print ("T=%.6g: Suspending CPU %d\n", getabsolutetime() + global_offset, cpunum);
-		else verbose_print ("T=%.6g: Resuming CPU %d\n", getabsolutetime() + global_offset, cpunum);
+		if (suspend) verbose_print("T=%.6g: Suspending CPU %d\n", getabsolutetime() + global_offset, cpunum);
+		else verbose_print("T=%.6g: Resuming CPU %d\n", getabsolutetime() + global_offset, cpunum);
 	#endif
 
 	/* mark the CPU */
@@ -552,11 +588,11 @@ void timer_suspendcpu (int cpunum, int suspend)
 	if (activecpu && cpu == activecpu && !old && suspend)
 	{
 		#if VERBOSE
-			verbose_print ("T=%.6g: Reset ICount\n", getabsolutetime() + global_offset);
+			verbose_print("T=%.6g: Reset ICount\n", getabsolutetime() + global_offset);
 		#endif
 
 		/* set the CPU's time to the current time */
-		cpu->time = getabsolutetime ();
+		cpu->time = base_time = getabsolutetime();	/* ASG 990225 - also set base_time */
 		cpu->lost = 0;
 
 		/* no more instructions */
@@ -566,7 +602,7 @@ void timer_suspendcpu (int cpunum, int suspend)
 	/* else if we're unsuspending a CPU, reset its time */
 	else if (old && !suspend && !nocount)
 	{
-		double time = getabsolutetime ();
+		double time = getabsolutetime();
 
 		/* only update the time if it's later than the CPU's time */
 		if (time > cpu->time)
@@ -574,7 +610,7 @@ void timer_suspendcpu (int cpunum, int suspend)
 		cpu->lost = 0;
 
 		#if VERBOSE
-			verbose_print ("T=%.6g: Resume time\n", cpu->time + global_offset);
+			verbose_print("T=%.6g: Resume time\n", cpu->time + global_offset);
 		#endif
 	}
 }
@@ -584,12 +620,12 @@ void timer_suspendcpu (int cpunum, int suspend)
 /*
  *		hold a CPU and don't count time for it
  */
-void timer_holdcpu (int cpunum, int hold)
+void timer_holdcpu(int cpunum, int hold)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 
 	/* same as suspend */
-	timer_suspendcpu (cpunum, hold);
+	timer_suspendcpu(cpunum, hold);
 
 	/* except that we don't count time */
 	if (hold)
@@ -601,7 +637,7 @@ void timer_holdcpu (int cpunum, int hold)
 /*
  *		query if a CPU is suspended or not
  */
-int timer_iscpususpended (int cpunum)
+int timer_iscpususpended(int cpunum)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 	return cpu->suspended && !cpu->nocount;
@@ -612,7 +648,7 @@ int timer_iscpususpended (int cpunum)
 /*
  *		query if a CPU is held or not
  */
-int timer_iscpuheld (int cpunum)
+int timer_iscpuheld(int cpunum)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 	return cpu->suspended && cpu->nocount;
@@ -623,16 +659,16 @@ int timer_iscpuheld (int cpunum)
 /*
  *		suspend a CPU until a specified trigger condition is met
  */
-void timer_suspendcpu_trigger (int cpunum, int trigger)
+void timer_suspendcpu_trigger(int cpunum, int trigger)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 
 	#if VERBOSE
-		verbose_print ("T=%.6g: CPU %d suspended until %d\n", getabsolutetime() + global_offset, cpunum, trigger);
+		verbose_print("T=%.6g: CPU %d suspended until %d\n", getabsolutetime() + global_offset, cpunum, trigger);
 	#endif
 
 	/* suspend the CPU immediately if it's not already */
-	timer_suspendcpu (cpunum, 1);
+	timer_suspendcpu(cpunum, 1);
 
 	/* set the trigger */
 	cpu->trigger = trigger;
@@ -643,16 +679,16 @@ void timer_suspendcpu_trigger (int cpunum, int trigger)
 /*
  *		hold a CPU and don't count time for it
  */
-void timer_holdcpu_trigger (int cpunum, int trigger)
+void timer_holdcpu_trigger(int cpunum, int trigger)
 {
 	cpu_entry *cpu = cpudata + cpunum;
 
 	#if VERBOSE
-		verbose_print ("T=%.6g: CPU %d held until %d\n", getabsolutetime() + global_offset, cpunum, trigger);
+		verbose_print("T=%.6g: CPU %d held until %d\n", getabsolutetime() + global_offset, cpunum, trigger);
 	#endif
 
 	/* suspend the CPU immediately if it's not already */
-	timer_holdcpu (cpunum, 1);
+	timer_holdcpu(cpunum, 1);
 
 	/* set the trigger */
 	cpu->trigger = trigger;
@@ -663,7 +699,7 @@ void timer_holdcpu_trigger (int cpunum, int trigger)
 /*
  *		generates a trigger to unsuspend any CPUs waiting for it
  */
-void timer_trigger (int trigger)
+void timer_trigger(int trigger)
 {
 	cpu_entry *cpu;
 
@@ -684,10 +720,10 @@ void timer_trigger (int trigger)
 		if (cpu->suspended && cpu->trigger == trigger)
 		{
 			#if VERBOSE
-				verbose_print ("T=%.6g: CPU %d triggered\n", getabsolutetime() + global_offset, cpu->index);
+				verbose_print("T=%.6g: CPU %d triggered\n", getabsolutetime() + global_offset, cpu->index);
 			#endif
 
-			timer_suspendcpu (cpu->index, 0);
+			timer_suspendcpu(cpu->index, 0);
 		}
 	}
 }
@@ -696,7 +732,7 @@ void timer_trigger (int trigger)
 /*
  *		pick the next CPU to run
  */
-static int pick_cpu (int *cpunum, int *cycles, double end)
+static int pick_cpu(int *cpunum, int *cycles, double end)
 {
 	cpu_entry *cpu = last_activecpu;
 
@@ -711,11 +747,12 @@ static int pick_cpu (int *cpunum, int *cycles, double end)
 		/* if this CPU is suspended, just bump its time */
 		if (cpu->suspended)
 		{
-			if (!cpu->nocount)
+			/* ASG 990225 - defer this update until the slice has finished */
+/*			if (!cpu->nocount)
 			{
 				cpu->time = end;
 				cpu->lost = 0;
-			}
+			}*/
 		}
 
 		/* if this CPU isn't suspended and has time left.... */
@@ -729,7 +766,7 @@ static int pick_cpu (int *cpunum, int *cycles, double end)
 			*cycles = (int)((double)(end - cpu->time) * cpu->sec_to_cycles) + 1;
 
 			#if VERBOSE
-				verbose_print ("T=%.6g: CPU %d runs %d cycles\n", cpu->time + global_offset, *cpunum, *cycles);
+				verbose_print("T=%.6g: CPU %d runs %d cycles\n", cpu->time + global_offset, *cpunum, *cycles);
 			#endif
 
 			/* remember the base time for this CPU */
@@ -740,6 +777,14 @@ static int pick_cpu (int *cpunum, int *cycles, double end)
 		}
 	}
 	while (cpu != last_activecpu);
+
+	/* ASG 990225 - bump all suspended CPU times after the slice has finished */
+	for (cpu = cpudata; cpu <= lastcpu; cpu++)
+		if (cpu->suspended && !cpu->nocount)
+		{
+			cpu->time = end;
+			cpu->lost = 0;
+		}
 
 	/* failure */
 	return 0;
@@ -756,20 +801,20 @@ static int pick_cpu (int *cpunum, int *cycles, double end)
 #undef printf
 #endif
 
-static void verbose_print (char *s, ...)
+static void verbose_print(char *s, ...)
 {
 	va_list ap;
 
-	va_start (ap, s);
+	va_start(ap, s);
 
 	#if (VERBOSE == 1)
-		if (errorlog) vfprintf (errorlog, s, ap);
+		if (errorlog) vfprintf(errorlog, s, ap);
 	#else
-		vprintf (s, ap);
-		fflush (NULL);
+		vprintf(s, ap);
+		fflush(NULL);
 	#endif
 
-	va_end (ap);
+	va_end(ap);
 }
 
 #endif

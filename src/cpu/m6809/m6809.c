@@ -18,6 +18,23 @@
 							arrays up to 65536 bytes must be supported
 							machine must be twos complement
 
+	History:
+990225 HJB:
+	Cleaned up the code here and there, added some comments.
+	Slightly changed the SAR opcodes (similiar to other CPU cores).
+	Added symbolic names for the flag bits.
+	Changed the way CWAI/Interrupt() handle CPU state saving.
+	A new flag M6809_STATE in pending_interrupts is used to determine
+	if a state save is needed on interrupt entry or already done by CWAI.
+	Added M6809_IRQ_LINE and M6809_FIRQ_LINE defines to m6809.h
+	Moved the internal interrupt_pending flags from m6809.h to m6809.c
+	Changed CWAI cycles2[0x3c] to be 2 (plus all or at least 19 if
+	CWAI actually pushes the entire state).
+	Implemented undocumented TFR/EXG for undefined source and mixed 8/16
+	bit transfers (they should transfer/exchange the constant $ff).
+	Removed unused jmp/jsr _slap functions from 6809ops.c,
+	m6809_slapstick check moved into the opcode functions.
+
 *****************************************************************************/
 
 #include <stdio.h>
@@ -37,7 +54,6 @@
 extern FILE *errorlog;
 
 INLINE UINT8 fetch_effective_address( void );
-INLINE void check_SYNC_CWAI(int type);
 
 /* 6809 registers */
 static UINT8 cc,dpreg;
@@ -58,10 +74,43 @@ static UINT16 xreg,yreg,ureg,sreg,pcreg;
 static UINT16 eaddr; /* effective address */
 
 static int pending_interrupts;	/* NS 970908 */
+#define M6809_CWAI      8   /* set when CWAI is waiting for an interrupt */ /* NS 980101 */
+#define M6809_STATE     16  /* set when CWAI is cleared (state pushed) */ /* HJB 990225 */
+#define M6809_SYNC      32  /* set when SYNC is waiting for an interrupt */
+
 #if NEW_INTERRUPT_SYSTEM
+
 static int nmi_state;
 static int irq_state[2];	/* IRQ and FIRQ lines */
 static int (*irq_callback)(int irqline);
+
+#define CHECK_IRQ_LINES() { 											\
+    if (irq_state[M6809_IRQ_LINE] != CLEAR_LINE) {                      \
+		pending_interrupts &= ~M6809_SYNC;			/* clear SYNC	  */\
+		if (!(cc & CC_II)) {						/* not inhibited? */\
+			pending_interrupts |= M6809_INT_IRQ;	/* pending IRQ	  */\
+			if (pending_interrupts & M6809_CWAI) {	/* pending CWAI ? */\
+				pending_interrupts &= ~M6809_CWAI;	/* clear CWAI	  */\
+				pending_interrupts |= M6809_STATE;	/* set state flag */\
+			}															\
+		}																\
+	}																	\
+	if (irq_state[M6809_FIRQ_LINE] != CLEAR_LINE) { 					\
+        pending_interrupts &= ~M6809_SYNC;          /* clear SYNC     */\
+        if (!(cc & CC_IF)) {                        /* not inhibited? */\
+            pending_interrupts |= M6809_INT_FIRQ;   /* pending FIRQ   */\
+			if (pending_interrupts & M6809_CWAI) {	/* pending CWAI ? */\
+                pending_interrupts &= ~M6809_CWAI;  /* clear CWAI     */\
+                pending_interrupts |= M6809_STATE;  /* set state flag */\
+            }                                                           \
+        }                                                               \
+    }                                                                   \
+}
+
+#else
+
+#define CHECK_IRQ_LINES()
+
 #endif
 
 /* public globals */
@@ -98,15 +147,14 @@ static void (*wr_s_handler_wd)(int,int);
 #define PULUBYTE(b) {b=(*rd_u_handler)(ureg);ureg++;}
 #define PULUWORD(w) {w=(*rd_u_handler_wd)(ureg);ureg+=2;}
 
-/* CC masks						  H  NZVC
-								7654 3210	*/
-#define CLR_HNZVC	cc&=0xd0
-#define CLR_NZV		cc&=0xf1
-#define CLR_HNZC	cc&=0xd2
-#define CLR_NZVC	cc&=0xf0
-#define CLR_Z		cc&=0xfb
-#define CLR_NZC		cc&=0xf2
-#define CLR_ZC		cc&=0xfa
+#define CLR_HNZVC	cc&=~(CC_H|CC_N|CC_Z|CC_V|CC_C)
+#define CLR_NZV 	cc&=~(CC_N|CC_Z|CC_V)
+#define CLR_HNZC	cc&=~(CC_H|CC_N|CC_Z|CC_C)
+#define CLR_NZVC	cc&=~(CC_N|CC_Z|CC_V|CC_C)
+#define CLR_Z		cc&=~(CC_Z)
+#define CLR_NZC 	cc&=~(CC_N|CC_Z|CC_C)
+#define CLR_ZC		cc&=~(CC_Z|CC_C)
+
 /* macros for CC -- CC bits affected should be reset before calling */
 #define SET_Z(a)		if(!a)SEZ
 #define SET_Z8(a)		SET_Z((UINT8)a)
@@ -121,7 +169,7 @@ static void (*wr_s_handler_wd)(int,int);
 
 static UINT8 flags8i[256]=	 /* increment */
 {
-0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+CC_Z,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -129,33 +177,33 @@ static UINT8 flags8i[256]=	 /* increment */
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x0a,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08
+CC_V|CC_N,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,
+CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,
+CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,
+CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,
+CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,
+CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,
+CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,
+CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V,CC_V
 };
 static UINT8 flags8d[256]= /* decrement */
 {
-0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+CC_Z,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,
-0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,CC_V,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,
+CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 };
 #define SET_FLAGS8I(a)		{cc|=flags8i[(a)&0xff];}
 #define SET_FLAGS8D(a)		{cc|=flags8d[(a)&0xff];}
@@ -180,16 +228,16 @@ static UINT8 flags8d[256]= /* decrement */
 #define EXTENDED IMMWORD(eaddr)
 
 /* macros to set status flags */
-#define SEC cc|=0x01
-#define CLC cc&=0xfe
-#define SEZ cc|=0x04
-#define CLZ cc&=0xfb
-#define SEN cc|=0x08
-#define CLN cc&=0xf7
-#define SEV cc|=0x02
-#define CLV cc&=0xfd
-#define SEH cc|=0x20
-#define CLH cc&=0xdf
+#define SEC cc|=CC_C
+#define CLC cc&=~CC_C
+#define SEZ cc|=CC_Z
+#define CLZ cc&=~CC_Z
+#define SEN cc|=CC_N
+#define CLN cc&=~CC_N
+#define SEV cc|=CC_V
+#define CLV cc&=~CC_V
+#define SEH cc|=CC_H
+#define CLH cc&=~CC_H
 
 /* macros for convenience */
 #define DIRBYTE(b) {DIRECT;b=M_RDMEM(eaddr);}
@@ -200,32 +248,41 @@ static UINT8 flags8d[256]= /* decrement */
 /* macros for branch instructions */
 #define BRANCH(f) {IMMBYTE(t);if(f){pcreg+=SIGNED(t);change_pc(pcreg);}}	/* TS 971002 */
 #define LBRANCH(f) {IMMWORD(t);if(f){pcreg+=t;change_pc(pcreg);}}	/* TS 971002 */
-#define NXORV  ((cc&0x08)^((cc&0x02)<<2))
+#define NXORV  ((cc&CC_N)^((cc&CC_V)<<2))
 
 /* macros for setting/getting registers in TFR/EXG instructions */
-#define GETREG(val,reg) switch(reg) {\
-                         case 0: val=GETDREG;break;\
-                         case 1: val=xreg;break;\
-                         case 2: val=yreg;break;\
-                    	 case 3: val=ureg;break;\
-                    	 case 4: val=sreg;break;\
-                    	 case 5: val=pcreg;break;\
-                    	 case 8: val=areg;break;\
-                    	 case 9: val=breg;break;\
-                    	 case 10: val=cc;break;\
-                    	 case 11: val=dpreg;break;}
+#define GETREG(val,reg) 			\
+	switch(reg) {					\
+	case 0: val = GETDREG;	break;	\
+	case 1: val = xreg; 	break;	\
+	case 2: val = yreg; 	break;	\
+	case 3: val = ureg; 	break;	\
+	case 4: val = sreg; 	break;	\
+	case 5: val = pcreg;	break;	\
+	case 8: val = areg; 	break;	\
+	case 9: val = breg; 	break;	\
+	case 10: val = cc;		break;	\
+	case 11: val = dpreg;	break;	\
+	default: val = 0xff; /* HJB 990225 */ \
+}
 
-#define SETREG(val,reg) switch(reg) {\
-			 case 0: SETDREG(val); break;\
-			 case 1: xreg=val;break;\
-			 case 2: yreg=val;break;\
-			 case 3: ureg=val;break;\
-			 case 4: sreg=val;break;\
-			 case 5: pcreg=val;change_pc(pcreg);break;	/* TS 971002 */ \
-			 case 8: areg=val;break;\
-			 case 9: breg=val;break;\
-			 case 10: cc=val;CHECK_IRQ_LINES(cc);break; /* HJB 990116 */\
-             case 11: dpreg=val;break;}
+#define SETREG(val,reg) 			\
+	switch(reg) {					\
+	case 0: SETDREG(val);	break;	\
+	case 1: xreg = val; 	break;	\
+	case 2: yreg = val; 	break;	\
+	case 3: ureg = val; 	break;	\
+	case 4: sreg = val; 	break;	\
+	case 5: pcreg = val;			\
+		change_pc(pcreg);			\
+		break;	/* TS 971002 */ 	\
+	case 8: areg = val; 	break;	\
+	case 9: breg = val; 	break;	\
+	case 10: cc = val;				\
+		CHECK_IRQ_LINES();			\
+		break;	/* HJB 990116 */	\
+	case 11: dpreg = val;	break;	\
+}
 
 #define EOP 0xff			/* 0xff = extend op code          */
 #define E   0x80			/* 0x80 = fetch effective address */
@@ -236,7 +293,7 @@ static unsigned char cycles1[] =
   /*0*/	  6,  0,  0,  6,  6,  0,  6,  6,  6,  6,  6,  0,  6,  6,  3,  6,
   /*1*/	255,255,  2,  2,  0,  0,  5,  9,  0,  2,  3,  0,  3,  2,  8,  6,
   /*2*/	  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
-  /*3*/	E+4,E+4,E+4,E+4,  5,  5,  5,  5,  0,  5,  3,  6,  0, 11,  0, 19,
+  /*3*/ E+4,E+4,E+4,E+4,  5,  5,  5,  5,  0,  5,  3,  6,  0, 11,  0, 19,
   /*4*/	  2,  0,  0,  2,  2,  0,  2,  2,  2,  2,  2,  0,  2,  2,  0,  2,
   /*5*/	  2,  0,  0,  2,  2,  0,  2,  2,  2,  2,  2,  0,  2,  2,  0,  2,
   /*6*/	E+6,E+0,E+0,E+6,E+6,E+0,E+6,E+6,E+6,E+6,E+6,E+0,E+6,E+6,E+3,E+6,
@@ -258,7 +315,7 @@ static unsigned char cycles2[] =
   /*0*/	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   /*1*/	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   /*2*/	  0,  5,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,
-  /*3*/	E+0,E+0,E+0,E+0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 20,
+  /*3*/ E+0,E+0,E+0,E+0,  0,  0,  0,  0,  0,  0,  0,  0,  6,  0,  0, 20,
   /*4*/	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   /*5*/	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   /*6*/	E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,E+0,
@@ -362,7 +419,7 @@ void m6809_SetRegs(m6809_Regs *Regs)
 	irq_state[0] = Regs->irq_state[0];
 	irq_state[1] = Regs->irq_state[1];
 	irq_callback = Regs->irq_callback;
-	CHECK_IRQ_LINES(cc);
+	CHECK_IRQ_LINES();
 #endif
 }
 
@@ -398,75 +455,76 @@ unsigned m6809_GetPC(void)
 	return pcreg;
 }
 
-INLINE void check_SYNC_CWAI(int type)
-{
-	if (type & (M6809_INT_NMI | M6809_INT_IRQ | M6809_INT_FIRQ)) {
-        pending_interrupts &= ~M6809_SYNC;
-        if (pending_interrupts & M6809_CWAI)
-        {
-            if ((pending_interrupts & M6809_INT_NMI) != 0)
-                pending_interrupts &= ~M6809_CWAI;
-            else if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0)
-                pending_interrupts &= ~M6809_CWAI;
-            else if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0)
-                pending_interrupts &= ~M6809_CWAI;
-        }
-    }
-}
 
 /* Generate interrupts */
 static void Interrupt(void)	/* NS 970909 */
 {
-    if ((pending_interrupts & M6809_INT_NMI) != 0) {
+	if( pending_interrupts & M6809_INT_NMI ) {
 		/* NMI */
-		cc|=0x80;	/* ASG 971016 */
-		PUSHWORD(pcreg);
-		PUSHWORD(ureg);
-		PUSHWORD(yreg);
-		PUSHWORD(xreg);
-		PUSHBYTE(dpreg);
-		PUSHBYTE(breg);
-		PUSHBYTE(areg);
-		PUSHBYTE(cc);
-		cc|=0xd0;
-        pcreg=M_RDMEM_WORD(0xfffc);change_pc(pcreg);    /* TS 971002 */
-		m6809_ICount -= 19;
+		/* HJB 990225: state not yet saved by CWAI? */
+		if( !(pending_interrupts & M6809_STATE) ) {
+			cc |= CC_E; 				/* save entire state */
+			PUSHWORD(pcreg);
+			PUSHWORD(ureg);
+			PUSHWORD(yreg);
+			PUSHWORD(xreg);
+			PUSHBYTE(dpreg);
+			PUSHBYTE(breg);
+			PUSHBYTE(areg);
+			PUSHBYTE(cc);
+			m6809_ICount -= 9;
+		}
+		cc |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
+		pcreg = M_RDMEM_WORD(0xfffc);
+		change_pc(pcreg);				/* TS 971002 */
+		m6809_ICount -= 10;
         pending_interrupts &= ~M6809_INT_NMI;
-    } else
-	if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0) {
-		/* fast IRQ */
-		PUSHWORD(pcreg);
-		cc&=0x7f;	/* ASG 971016 */
-		PUSHBYTE(cc);
-		cc|=0x50;
-		pcreg=M_RDMEM_WORD(0xfff6);change_pc(pcreg);	/* TS 971002 */
+	} else
+	if( (pending_interrupts & M6809_INT_FIRQ) && !(cc & CC_IF) ) {
+        /* fast IRQ */
+		/* HJB 990225: state not yet saved by CWAI? */
+        if( !(pending_interrupts & M6809_STATE) ) {
+			cc &= ~CC_E;					/* save 'short' state */
+			PUSHWORD(pcreg);
+			PUSHBYTE(cc);
+		}
+		cc |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
+		pcreg = M_RDMEM_WORD(0xfff6);
+		change_pc(pcreg);				/* TS 971002 */
 		m6809_ICount -= 10;
 #if NEW_INTERRUPT_SYSTEM
-		(void)(*irq_callback)(1);
+        (void)(*irq_callback)(1);
 #else
-		pending_interrupts &= ~M6809_INT_FIRQ;
+        pending_interrupts &= ~M6809_INT_FIRQ;
 #endif
 	} else
-	if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0) {
-		/* standard IRQ */
-		cc|=0x80;	/* ASG 971016 */
-		PUSHWORD(pcreg);
-		PUSHWORD(ureg);
-		PUSHWORD(yreg);
-		PUSHWORD(xreg);
-		PUSHBYTE(dpreg);
-		PUSHBYTE(breg);
-		PUSHBYTE(areg);
-		PUSHBYTE(cc);
-		cc|=0x90;
-		pcreg=M_RDMEM_WORD(0xfff8);change_pc(pcreg);	/* TS 971002 */
-		m6809_ICount -= 19;
+	if ((pending_interrupts & M6809_INT_IRQ) && !(cc & CC_II)) {
+        /* standard IRQ */
+		/* HJB 990225: state not yet saved by CWAI? */
+		if( !(pending_interrupts & M6809_STATE) ) {
+			cc |= CC_E; 				/* save entire state */
+            PUSHWORD(pcreg);
+            PUSHWORD(ureg);
+            PUSHWORD(yreg);
+            PUSHWORD(xreg);
+            PUSHBYTE(dpreg);
+            PUSHBYTE(breg);
+            PUSHBYTE(areg);
+			PUSHBYTE(cc);
+			m6809_ICount -= 9;
+        }
+		cc |= CC_II;					/* inhibit IRQ */
+		pcreg = M_RDMEM_WORD(0xfff8);
+		change_pc(pcreg);				/* TS 971002 */
+		m6809_ICount -= 10;
 #if NEW_INTERRUPT_SYSTEM
-		(void)(*irq_callback)(0);
+        (void)(*irq_callback)(0);
 #else
         pending_interrupts &= ~M6809_INT_IRQ;
 #endif
-    }
+	}
+	/* HJB 990225: remove 'state saved by CWAI' flag */
+    pending_interrupts &= ~M6809_STATE;
 }
 
 
@@ -477,8 +535,8 @@ void m6809_reset(void)
 
 	dpreg = 0x00;		/* Direct page register = 0x00 */
 	cc = 0x00;			/* Clear all flags */
-	cc |= 0x10;			/* IRQ disabled */
-	cc |= 0x40;			/* FIRQ disabled */
+	cc |= CC_II;		/* IRQ disabled */
+	cc |= CC_IF;		/* FIRQ disabled */
 	areg = 0x00;		/* clear accumulator a */
 	breg = 0x00;		/* clear accumulator b */
 #if NEW_INTERRUPT_SYSTEM
@@ -520,35 +578,31 @@ void m6809_set_nmi_line(int state)
 	if (nmi_state == state) return;
 	nmi_state = state;
 	LOG((errorlog, "M6809#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
-	if (state != CLEAR_LINE)
+	if (state != CLEAR_LINE) {
+        pending_interrupts &= ~M6809_SYNC;
 		pending_interrupts |= M6809_INT_NMI;
-	check_SYNC_CWAI(M6809_INT_NMI);
+		if (pending_interrupts & M6809_CWAI) {
+			pending_interrupts &= ~M6809_CWAI;
+			pending_interrupts |= M6809_STATE;
+		}
+	}
 }
 
 void m6809_set_irq_line(int irqline, int state)
 {
-	irq_state[irqline] = state;
-	LOG((errorlog, "M6809#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+    LOG((errorlog, "M6809#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+    irq_state[irqline] = state;
     if (state == CLEAR_LINE) {
 		switch (irqline) {
 			case 0:
-				if ((cc & 0x10) != 0) pending_interrupts &= ~M6809_INT_IRQ;
+				if (cc & CC_II) pending_interrupts &= ~M6809_INT_IRQ;
 				break;
 			case 1:
-				if ((cc & 0x40) != 0) pending_interrupts &= ~M6809_INT_FIRQ;
+				if (cc & CC_IF) pending_interrupts &= ~M6809_INT_FIRQ;
 				break;
 		}
 	} else {
-		switch (irqline) {
-			case 0:
-				if ((cc & 0x10) == 0) pending_interrupts |= M6809_INT_IRQ;
-				check_SYNC_CWAI(M6809_INT_IRQ);
-                break;
-			case 1:
-				if ((cc & 0x40) == 0) pending_interrupts |= M6809_INT_FIRQ;
-				check_SYNC_CWAI(M6809_INT_FIRQ);
-                break;
-        }
+		CHECK_IRQ_LINES();
     }
 }
 
@@ -562,7 +616,18 @@ void m6809_set_irq_callback(int (*callback)(int irqline))
 void m6809_Cause_Interrupt(int type)    /* NS 970908 */
 {
 	pending_interrupts |= type;
-	check_SYNC_CWAI(type);
+	/* handle SYNC and CWAI bits */
+	if( type & (M6809_INT_NMI | M6809_INT_IRQ | M6809_INT_FIRQ) ) {
+        pending_interrupts &= ~M6809_SYNC;
+        if( pending_interrupts & M6809_CWAI ) {
+            if( (pending_interrupts & M6809_INT_NMI) ||
+                ((pending_interrupts & M6809_INT_FIRQ) && !(cc & CC_IF)) ||
+                ((pending_interrupts & M6809_INT_IRQ) && !(cc & CC_II)) ) {
+                pending_interrupts &= ~M6809_CWAI;
+				pending_interrupts |= M6809_STATE;
+            }
+        }
+    }
 }
 
 void m6809_Clear_Pending_Interrupts(void)   /* NS 970908 */
@@ -623,7 +688,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x0b: illegal(); break;
 				case 0x0c: inc_di(); break;
 				case 0x0d: tst_di(); break;
-				case 0x0e: jmp_di(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
+				case 0x0e: jmp_di(); break;
 				case 0x0f: clr_di(); break;
 				case 0x10: illegal(); break;
 				case 0x11: illegal(); break;
@@ -719,7 +784,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x6b: illegal(); break;
 				case 0x6c: inc_ix(); break;
 				case 0x6d: tst_ix(); break;
-				case 0x6e: jmp_ix(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
+				case 0x6e: jmp_ix(); break;
 				case 0x6f: clr_ix(); break;
 				case 0x70: neg_ex(); break;
 				case 0x71: illegal(); break;
@@ -735,7 +800,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x7b: illegal(); break;
 				case 0x7c: inc_ex(); break;
 				case 0x7d: tst_ex(); break;
-				case 0x7e: jmp_ex(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
+				case 0x7e: jmp_ex(); break;
 				case 0x7f: clr_ex(); break;
 				case 0x80: suba_im(); break;
 				case 0x81: cmpa_im(); break;
@@ -766,7 +831,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0x9a: ora_di(); break;
 				case 0x9b: adda_di(); break;
 				case 0x9c: cmpx_di(); break;
-				case 0x9d: jsr_di(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
+				case 0x9d: jsr_di(); break;
 				case 0x9e: ldx_di(); break;
 				case 0x9f: stx_di(); break;
 				case 0xa0: suba_ix(); break;
@@ -782,7 +847,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0xaa: ora_ix(); break;
 				case 0xab: adda_ix(); break;
 				case 0xac: cmpx_ix(); break;
-				case 0xad: jsr_ix(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
+				case 0xad: jsr_ix(); break;
 				case 0xae: ldx_ix(); break;
 				case 0xaf: stx_ix(); break;
 				case 0xb0: suba_ex(); break;
@@ -798,7 +863,7 @@ int m6809_execute(int cycles)	/* NS 970908 */
 				case 0xba: ora_ex(); break;
 				case 0xbb: adda_ex(); break;
 				case 0xbc: cmpx_ex(); break;
-				case 0xbd: jsr_ex(); if (m6809_slapstic) cpu_setOPbase16(pcreg); break;
+				case 0xbd: jsr_ex(); break;
 				case 0xbe: ldx_ex(); break;
 				case 0xbf: stx_ex(); break;
 				case 0xc0: subb_im(); break;

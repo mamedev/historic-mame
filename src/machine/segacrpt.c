@@ -141,7 +141,7 @@
   ???-???? Gardia                 not decoded yet
 
 
-  The following games use another different encryption algorithms, much more
+  The following games use another different encryption algorithm, much more
   secure than the previous two, which has not been broken yet. It might be
   similar to the one used in System 16 games.
 
@@ -157,7 +157,6 @@
 
   Yamato        SECULITY BY M,MIZUNAGA
   Regulus       SECULITY BY SYUICHI,KATAGI
-  Regulus       CAN YOU COPY ?CAN YOU COPY ?CAN YOU [Yes I can, thank you ;-)]
   Mister Viking SECURITY BY S.KATAGI  CONTROL CHIP M140
   SWAT          SECURITY BY S.KATAGI
   Flicky        SECURITY BY S.KATAGI

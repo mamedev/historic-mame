@@ -3,4 +3,7 @@
  */
 void addretrace (void);
 int read_4990_testbit(void);
-void write_4990_control(int data);
+int read_4990_databit(void);
+void write_4990_control(int offset, int data);
+void increment_day(void);
+void increment_month(void);

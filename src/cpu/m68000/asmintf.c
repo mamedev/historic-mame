@@ -105,7 +105,7 @@ void MC68000_set_nmi_line(int state)
 
 void MC68000_set_irq_line(int irqline, int state)
 {
-	if (errorlog) fprintf(errorlog, "Set IRQ Line %x = %x\n",irqline,state);
+//	if (errorlog) fprintf(errorlog, "Set IRQ Line %x = %x\n",irqline,state);
 
 	if (state == CLEAR_LINE) {
 		regs.IRQ_level &= ~(1 << (irqline - 1));

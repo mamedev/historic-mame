@@ -33,12 +33,6 @@
 
 #define LIB_VIDEORAM_SIZE	(0x100*0x100)
 
-/* Important:
-//   These next two defines must match the ones in the
-//     driver file, or very bad things will happen.		*/
-#define LIB_ASPECTRATIO_512x384		0
-#define LIB_ASPECTRATIO_342x256		1
-
 /*
 // The following structure describes the (up to 32) line segments
 //   that make up one horizontal line (latitude) for one display frame of the planet.
@@ -144,7 +138,6 @@ void liberator_bitmap_w(int offset, int data)
 {
 	int addr;
 	int	d ;
-	int xt, yt ;
 	unsigned char tmb ;
 	/* TODO: get rid of this */
 	extern unsigned char *RAM;
@@ -160,24 +153,7 @@ void liberator_bitmap_w(int offset, int data)
 
 		tmb = Machine->pens[(d >> 5) + 0x10];
 
-#if LIB_ASPECTRATIO_512x384
-		xt = 2 * xcoor ;
-		yt = ((ycoor * 3) + 1) / 2 ;
-		tmpbitmap->line[yt][xt]   =
-		tmpbitmap->line[yt][xt+1] = tmb ;
-		if(!( ycoor & 1 ))
-		{
-			tmpbitmap->line[yt+1][xt]   =
-			tmpbitmap->line[yt+1][xt+1] = tmb ;
-		}
-#elif LIB_ASPECTRATIO_342x256
-		xt = ((xcoor * 4) + 2) / 3 ;
-		yt = ycoor ;
-		tmpbitmap->line[yt][xt] = tmb ;
-		if( (xcoor % 3) == 0 )
-			tmpbitmap->line[yt][xt+1] = tmb ;
-#endif
-
+		tmpbitmap->line[ycoor][xcoor] = tmb ;
 	}
 	else if( offset == 0x341 )		/* part of the write to clear the bitmap RAM	*/
 	{
@@ -500,19 +476,14 @@ lib_init_planet()
 			line  = &(*view).line[ vdl ] ;
 			nsegs  = (*line).nsegs ;
 			*buf++ = nsegs ;
-#if LIB_ASPECTRATIO_512x384
 			/* calculate the tmpbitmap's x coordinate for the western horizon
-			//   center of tmpbitmap - (the number of planet pixels) / 2 */
-			*buf++ = Machine->drv->screen_width/2 - (((*line).xmax) + 1) / 2 ;
-#elif LIB_ASPECTRATIO_342x256
-			/* calculate the tmpbitmap's x coordinate for the western horizon
-			//   center of tmpbitmap - (two thirds of number of planet pixels) / 2 */
-			*buf++ = Machine->drv->screen_width/2 - (((*line).xmax + 1) * 2) / 6 ;
-#endif
+			//   center of tmpbitmap - (the number of planet pixels) / 4 */
+			*buf++ = Machine->drv->screen_width/2 - (((*line).xmax) + 2) / 4 ;
+
 			for( i = 0 ; i < nsegs ; i++ )
 			{
 				*buf++ = (*line).cc_a[ i ] ;
-				*buf++ = (*line).x_a[ i ] ;
+				*buf++ = ((*line).x_a[ i ] + 1) / 2;
 			}
 
 		}
@@ -563,15 +534,7 @@ static void lib_drawplanet(int data)
 		nsegs = *buf++ ;
 		tbmX  = *buf++ ;
 
-#if LIB_ASPECTRATIO_512x384
-
-		y = ((64 + vdl) * 3 + 1) / 2 ;
-
-#elif LIB_ASPECTRATIO_342x256
-
 		y = 64 + vdl ;
-
-#endif
 
 		/*
 		// run through the segments, drawing its color
@@ -586,8 +549,6 @@ static void lib_drawplanet(int data)
 
 			while( x < xa )
 			{
-
-#if LIB_ASPECTRATIO_512x384
 				/* planet video doesn't overwrite bitmap video, so
 				//   check the tmpbitmap where we want to draw into.
 				// bitmap writes into the tmpbitmap all have bit 4 (0x10) set
@@ -596,26 +557,6 @@ static void lib_drawplanet(int data)
 				tbm = &(tmpbitmap->line[y][tbmX]) ;
 				if (reverse_map[*tbm] <= 0x10)
 					*tbm = Machine->pens[cc];
-				if( (vdl & 1) == 0 )
-				{
-					tbm = &(tmpbitmap->line[y+1][tbmX]) ;
-					if (reverse_map[*tbm] <= 0x10)
-						*tbm = Machine->pens[cc];
-				}
-
-#elif LIB_ASPECTRATIO_342x256
-				tbm = &(tmpbitmap->line[y][tbmX]) ;
-				/* Draw the planet only over itself, or over black. */
-				/* The planet uses pens 0x00-0x0f, black is 0x10 */
-				if (reverse_map[*tbm] <= 0x10)
-					*tbm = Machine->pens[cc];
-
-				/* taking two out of three of the planet pixels.  skip over
-				//   an x pixel every other tmpbitmap pixel */
-				if( tbmX & 1 )
-					x++ ;
-
-#endif
 				x++ ;
 				tbmX++ ;
 

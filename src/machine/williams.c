@@ -24,13 +24,6 @@ unsigned char *williams_video_counter;
 unsigned char *defender_bank_base;
 unsigned char *blaster_bank2_base;
 
-/* pointers to memory locations for speedup optimizations */
-unsigned char *robotron_catch;
-unsigned char *stargate_catch;
-unsigned char *defender_catch;
-unsigned char *splat_catch;
-unsigned char *blaster_catch;
-unsigned char *mayday_catch;
 
 /* internal bank switching tracks */
 int blaster_bank;
@@ -463,26 +456,6 @@ static void williams_port_select_w (int offset, int data)
 
 /***************************************************************************
 
-	Robotron-specific routines
-
-***************************************************************************/
-
-/* JB 970823 - speed up very busy loop in Robotron */
-/*    D19B: LDA   $10    ; dp=98
-      D19D: CMPA  #$02
-      D19F: BCS   $D19B  ; (BLO)   */
-int robotron_catch_loop_r (int offset)
-{
-	unsigned char t = *robotron_catch;
-	if (t < 2 && cpu_getpc () == 0xd19d)
-		cpu_seticount (0);
-	return t;
-}
-
-
-
-/***************************************************************************
-
 	Stargate-specific routines
 
 ***************************************************************************/
@@ -507,18 +480,6 @@ int stargate_input_port_0_r(int offset)
 	}
 
 	return keys;
-}
-
-
-/* JB 970823 - speed up very busy loop in Stargate */
-/*    0011: LDA   $39    ; dp=9c
-      0013: BEQ   $0011   */
-int stargate_catch_loop_r (int offset)
-{
-	unsigned char t = *stargate_catch;
-	if (t == 0 && cpu_getpc () == 0x0013)
-		cpu_seticount (0);
-	return t;
 }
 
 
@@ -625,34 +586,6 @@ void defender_io_w (int offset,int data)
 }
 
 
-/* JB 970823 - speed up very busy loop in Defender */
-/*    E7C3: LDA   $5D    ; dp=a0
-      E7C5: BEQ   $E7C3   */
-int defender_catch_loop_r(int offset)
-{
-	unsigned char t = *defender_catch;
-	if (t == 0 && cpu_getpc () == 0xe7c5)
-		cpu_seticount (0);
-	return t;
-}
-
-
-/* DW 980925 - speed up very busy loop in Mayday */
-/* There are two possible loops:
-
-   E7EA: LDA   $3A   ; 96 3A       D665: LDA   $5D   ; 96 5D
-   E7EC: BEQ   $E7EA ; 27 FC       D667: BEQ   $D66B ; 27 02
-
-   Consider the E7EA loop for the moment   */
-
-int mayday_catch_loop_r(int offset)
-{
-    unsigned char t = *mayday_catch;
-    if (t == 0 && cpu_getpc () == 0xe7ec)
-//    if (t == 0 && cpu_getpc () == 0xd667)
-		cpu_seticount (0);
-	return t;
-}
 
 /***************************************************************************
 
@@ -724,24 +657,6 @@ void defcomnd_bank_select_w (int offset,int data)
 	}
 }
 
-
-
-/***************************************************************************
-
-	Splat!-specific routines
-
-***************************************************************************/
-
-/* JB 970823 - speed up very busy loop in Splat */
-/*    D04F: LDA   $4B    ; dp=98
-      D051: BEQ   $D04F   */
-int splat_catch_loop_r(int offset)
-{
-	unsigned char t = *splat_catch;
-	if (t == 0 && cpu_getpc () == 0xd051)
-		cpu_seticount (0);
-	return t;
-}
 
 
 /***************************************************************************
@@ -846,20 +761,6 @@ void blaster_bank_select_w (int offset, int data)
 	}
 }
 
-
-#if 0 /* the fix for Blaster is more expensive than the loop */
-/* JB 970823 - speed up very busy loop in Blaster */
-/*    D184: LDA   $00    ; dp=97
-      D186: CMPA  #$02
-      D188: BCS   $D184  ; (BLO)   */
-int blaster_catch_loop_r(int offset)
-{
-	unsigned char t = *blaster_catch;
-	if (t < 2 && cpu_getpc () == 0xd186)
-		cpu_seticount (0);
-	return t;
-}
-#endif
 
 
 /***************************************************************************

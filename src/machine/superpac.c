@@ -44,8 +44,8 @@ int superpac_sharedram_r2(int offset)
 {
 	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0xfb - 0x40 && superpac_sharedram[offset] == 0)
-		cpu_seticount (0);
+//	if (offset == 0xfb - 0x40 && superpac_sharedram[offset] == 0)
+//		cpu_seticount (0);
 	return superpac_sharedram[offset];
 }
 

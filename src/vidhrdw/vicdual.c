@@ -74,10 +74,15 @@ void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	{
 		extern struct GameDriver heiankyo_driver;
+		extern struct GameDriver digger_driver;
 
 		/* Heiankyo Alien doesn't write to port 0x40, it expects it to default to 3 */
 		if (Machine->gamedrv == &heiankyo_driver)
 			palette_bank = 3;
+
+		/* and Digger expects it to default to 1 */
+		if (Machine->gamedrv == &digger_driver)
+			palette_bank = 1;
 	}
 }
 

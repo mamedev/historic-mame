@@ -17,6 +17,7 @@ to list them.
 | 1943                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 1943     |
 | 1943 Kai             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 1943kai  |
 | 4D Warriors          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | 4dwarrio |
+| 64th Street          |  Yes   |  Yes   |  Yes   |   No   |   No   | street64 |
 | 720 Degrees          |   No   |  Yes   |  Yes   |  Yes   |   No   | 720      |
 | APB                  |   No   |  Yes   |  Yes   |  Yes   |   No   | apb      |
 | Aero Fighters        |  Yes   |  Yes   |  Yes   |   No   |   No   | aerofgt  |
@@ -60,6 +61,7 @@ to list them.
 | Blaster              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blaster  |
 | Blasteroids          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blstroid |
 | Blasto               |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | blasto   |
+| Block Block          |  Yes   |  Yes   |Partial |  Yes   |   No   | block    |
 | Block Gal            |   No   |  Yes   |  Yes   |   No   |   No   | blockgal |
 | Block Out            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blockout |
 | Blockade             |  Yes   |  b/w   |Partl(1)|  n/a   |   No   | blockade |
@@ -89,13 +91,17 @@ to list them.
 | Checkman             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | checkman |
 | Cheeky Mouse         |  Yes   |   No   |Partial |   No   |  Yes   | cheekyms |
 | Chelnov              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chelnov  |
+| Cheyenne             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cheyenne |
+| Chiller              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chiller  |
 | Choplifter           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | chplft   |
 | Circus               |  Yes   |Overlay |Partial |  Yes   |   No   | circus   |
 | Circus Charlie       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | circusc  |
 | City Connection      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | citycon  |
+| Clay Pigeon          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | claypign |
 | Cloak & Dagger       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cloak    |
 | Cobra Command        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cobracom |
 | Colony 7             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | colony7  |
+| Combat               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | combat   |
 | Commando (Capcom)    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commando |
 | Commando (Sega)      |   No   |   No   |  Yes   |  Yes   |  Yes   | commsega |
 | Comotion             |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | comotion |
@@ -111,6 +117,7 @@ to list them.
 | Crazy Balloon        |  Yes   |  Yes   |   No   |  Yes   |  Yes   | crbaloon |
 | Crazy Climber        |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | cclimber |
 | Crazy Kong           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | ckong    |
+| Crossbow             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | crossbow |
 | Crystal Castles      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | ccastles |
 | Curve Ball           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | curvebal |
 | D-Day                |  Yes   |   No   |  Yes   |  Yes   |  n/a   | dday     |
@@ -129,6 +136,7 @@ to list them.
 | Diamond Run          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | diamond  |
 | Dig Dug              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | digdug   |
 | Dig Dug 2            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | digdug2  |
+| Digger               |  Yes   |  Yes   |   No   |   No   |   No   | digger   |
 | Discs of Tron        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | dotron   |
 | Domino Man           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | domino   |
 | Dominos              |  Yes   |  b/w   |   No   |   No   |   No   | dominos  |
@@ -206,10 +214,12 @@ to list them.
 | Heavy Metal          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hvymetal |
 | Heavyweight Champ    |   No   |  Yes   |   No   |   No   |   No   | hwchamp  |
 | Heiankyo Alien       |  Yes   |  Yes   |   No   |   No   |  Yes   | heiankyo |
+| Hell Fire            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hellfire |
 | Hexa                 |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | hexa     |
 | Hi Impact Football   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hiimpact |
 | HigeMaru             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | higemaru |
 | Hippodrome           |Partial.|  Yes   |  Yes   |  Yes   |   No   | hippodrm |
+| Hit 'n Miss          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hitnmiss |
 | Hustle               |  Yes   |  b/w   |   No   |   No   |   No   | hustle   |
 | Hyper Sports         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | hyperspt |
 | I'm Sorry            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | imsorry  |
@@ -257,6 +267,7 @@ to list them.
 | Lady Bug             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | ladybug  |
 | Last Duel            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lastduel |
 | Lazer Command        |  Yes   |Overlay |  Yes   |   No   |   No   | lazercmd |
+| Legend of Makaj      |  Yes   |  Yes   |  Yes   |   No   |   No   | lomakaj  |
 | Legendary Wings      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | lwings   |
 | Leprechaun           |  Yes   |  Yes?? |  Yes   |  Yes   |  Yes   | leprechn |
 | Liberator            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | liberatr |
@@ -332,11 +343,12 @@ to list them.
 | Ninja Kid 2          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ninjakd2 |
 | Nova 2001            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | nova2001 |
 | Omega Race           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | omegrace |
+| P-47                 |  Yes   |  Yes   |  Yes   |   No   |   No   | p47      |
 | Pac & Pal            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pacnpal  |
 | Pac Man              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacman   |
 | Pac Man Plus         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pacplus  |
 | Pac-Land             |  Yes   |  Yes   |   No   |  Yes   |   No   | pacland  |
-| Pang                 |  Yes   |  Yes   |No Music|  Yes   |   No   | pang     |
+| Pang                 |  Yes   |  Yes   |Partial |   No   |   No   | pang     |
 | Paper Boy            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | paperboy |
 | Passing Shot         |  Yes   |  Yes   |  Yes   |   No   |   No   | passshtb |
 | Pengo                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | pengo    |
@@ -361,6 +373,7 @@ to list them.
 | Pop Flamer           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popflame |
 | Popeye               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | popeye   |
 | Port Man             |  Yes   | Close  |  Yes   |   No   |  Yes   | portman  |
+| Power Spikes         |  Yes   |  Yes   |  Yes   |   No   |   No   | pspikes  |
 | Psychic 5            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | psychic5 |
 | Psycho-Nics Oscar    |  Yes   |  Yes   |  Yes   |   No   |   No   | oscar    |
 | Pulsar               |  Yes   |  Yes   |   No   |   No   |   No   | pulsar   |
@@ -417,6 +430,7 @@ to list them.
 | Shark Attack         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sharkatt |
 | Shinobi              |  Yes   |  Yes   |  Yes   |   No   |   No   | shinobi  |
 | Shoot Out            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shootout |
+| Showdown             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | showdown |
 | Side Pocket          |  Yes   |   No   |  Yes   |  Yes   |   No   | sidepckt |
 | Side Track           |  Yes   |   No   | Yes(1) |  Yes   |   No   | sidetrac |
 | Sidearms             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sidearms |
@@ -475,6 +489,7 @@ to list them.
 | Super Hi Impact      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shimpact |
 | Super Mouse          |  Yes   |   No   |  Yes   |  Yes   |  Yes   | suprmous |
 | Super Pac Man        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superpac |
+| Super Pang           |  Yes   |  Yes   |Partial |  Yes   |   No   | spang    |
 | Super Punch Out      |  Yes   |  Yes   |Partial |  Yes   |  n/a   | spnchout |
 | Super Qix            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | superqix |
 | Super Real Darwin    |  Yes   | Close  |  Yes   |   No   |   No   | srdarwin |
@@ -525,6 +540,7 @@ to list them.
 | Tokio                |  Yes   |  Yes   |   No   |   No   |   No   | tokio    |
 | Tomahawk 777         |  Yes   |  Yes   |   No   |  Yes   |  Yes   | tomahawk |
 | Toobin'              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | toobin   |
+| Top Secret           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | topsecex |
 | Tornado Baseball     |  Yes   |  b/w   |   No   |  n/a   |   No   | tornbase |
 | Total Carnage        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | totcarn  |
 | Tough Turf           |   No   |  Yes   |   No   |   No   |   No   | tturfbl  |
@@ -563,6 +579,7 @@ to list them.
 | Warlords             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | warlord  |
 | Warp Warp            |  Yes   |  Yes   |   No   |  Yes   |   No   | warpwarp |
 | Water Ski            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | waterski |
+| Who Dunit            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | whodunit |
 | Wild Western         |   No   |  Yes   |  Yes   |  n/a   |  Yes   | wwestern |
 | Willow               |  Yes   |  Yes   |  Yes   |   No   |   No   | willow   |
 | Wiz                  |  Yes   |   No   |  Yes   |  Yes   |  Yes   | wiz      |
@@ -579,6 +596,7 @@ to list them.
 | Yie Ar Kung Fu       |  Yes   |  Yes   |Partial |  Yes   |  Yes   | yiear    |
 | Zaxxon               |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | zaxxon   |
 | Zektor               |  Yes   | Close  |Partl(1)|  Yes   |   No   | zektor   |
+| Zero Wing            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zerowing |
 | Zero Zone            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | zerozone |
 | Zig Zag              |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zigzag   |
 | Zoar                 |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | zoar     |
@@ -641,6 +659,13 @@ Clones supported:
 
 Known issues:
 - The controller isn't emulated properly.
+
+
+
+Aero Fighters ("aerofgt")
+=========================
+Keep button 1 pressed during boot to have access to a wider range of options
+in service mode.
 
 
 
@@ -933,6 +958,13 @@ Use 1 and 2 to move the rows left and right.
 
 
 
+Cheyenne ("cheyenne")
+=====================
+Keep button 1 pressed at boot to skip the checks.
+Keep start pressed to enter service mode.
+
+
+
 Chelnov ("chelnov")
 ===================
 Clones supported:
@@ -970,6 +1002,20 @@ City Connection ("citycon")
 Known issues:
 - In cocktail mode, player 2 uses the same controls as player 1. Maybe the
   port is multiplexed.
+
+
+
+Clay Pigeon ("claypign")
+========================
+Keep button 1 pressed at boot to skip the checks.
+Keep start pressed to enter service mode.
+
+
+
+Combat ("combat")
+=================
+Keep button 1 pressed at boot to skip the checks.
+Keep start pressed to enter service mode.
 
 
 
@@ -1024,6 +1070,13 @@ Known issues:
 - music doesn't seem to work correctly in "ckongs".
 - cocktail mode doesn't work in "ckongs" - the game resets after player 1 dies.
   This is likely a bug in the game.
+
+
+
+Crossbow ("crossbow")
+=====================
+Keep button 1 pressed at boot to skip the checks.
+Keep start pressed to enter service mode.
 
 
 
@@ -2084,6 +2137,13 @@ Known issues:
 
 
 
+Power Spikes ("pspikes")
+========================
+Keep button 1 pressed during boot to have access to a wider range of options
+in service mode.
+
+
+
 Pulsar ("pulsar")
 =================
 Known issues:
@@ -2311,6 +2371,13 @@ Known issues:
 - Doesn't work well; for example, you always start with 99 lives, and coins
   are only accepted from coin C (default key: 5). It looks like there is a
   microcontroller on board, which is not emulated.
+
+
+
+Showdown ("showdown")
+=====================
+Keep button 1 pressed at boot to skip the checks.
+Keep start pressed to enter service mode.
 
 
 
@@ -2593,6 +2660,27 @@ Clones supported:
 Known issues:
 - The star background is probably not entirely accurate. Also, maybe it should
   be clipped at the top and bottom of the screen?
+
+
+
+Pang ("pang")
+====================
+Clones supported:
+  bootleg version ("pangb")
+  Buster Bros ("bbros")
+
+The bootleg version contains opcodes and data decrypted separately, plus a few
+patches here and there. They disabled sound in attract mode (there isn't a
+setting to do that, unlike Buster Bros), changed the lives option from 1,2,3,4
+to 1,3,4,6, and changed the copyright year from 1989 to 1990.
+
+
+
+Super Pang ("spang")
+====================
+The first time you start the game, keep 1 pressed until you see the "SUPER
+PANG 900914 ETC" screen, otherwise it won't initialize properly. This is
+needed only the first time, the setup is saved to the EEPROM after that.
 
 
 
@@ -2885,6 +2973,13 @@ Known issues:
 
 
 
+Who Dunit ("whodunit")
+======================
+Keep button 1 pressed at boot to skip the checks.
+Keep start pressed to enter service mode.
+
+
+
 Wild Western ("wwestern")
 =========================
 Known issues:
@@ -2985,10 +3080,3 @@ There are no dip switches, press F1 to enter the service mode, then
 The first time you run the game, it will ask the location. You can change the
 name using F5/F6 and F2, then F1 to proceed through all the configuration
 screens, or just reset (F3).
-
-Clones supported:
-  alternate version ("zookeepa")
-
-Known issues:
-- Every time you start the emulation, you get a free credit. This is due to
-  the 68705 based protection.

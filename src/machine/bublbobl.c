@@ -62,11 +62,12 @@ int tokio_fake_r(int offset)
 
 
 
-static int sound_nmi_enable;
+static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
 	if (sound_nmi_enable) cpu_cause_interrupt(2,Z80_NMI_INT);
+	else pending_nmi = 1;
 }
 
 void bublbobl_sound_command_w(int offset,int data)
@@ -83,6 +84,11 @@ void bublbobl_sh_nmi_disable_w(int offset,int data)
 void bublbobl_sh_nmi_enable_w(int offset,int data)
 {
 	sound_nmi_enable = 1;
+	if (pending_nmi)
+	{
+		cpu_cause_interrupt(2,Z80_NMI_INT);
+		pending_nmi = 0;
+	}
 }
 
 

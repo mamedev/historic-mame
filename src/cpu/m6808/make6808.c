@@ -52,7 +52,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "../cpuintrf.h"
+#include "cpuintrf.h"
 
 #define WIN32_CPU_READMEM16   "cpu_readmem16@4"
 #define WIN32_CPU_WRITEMEM16  "cpu_writemem16@8"

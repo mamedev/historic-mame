@@ -17,6 +17,12 @@
 
 #include "cps1.h"       /* External CPS1 definitions */
 
+/* in machine/kabuki.c */
+void wof_decode(void);
+void dino_decode(void);
+void punisher_decode(void);
+void slammast_decode(void);
+
 
 
 int cps1_input2_r(int offset)
@@ -52,83 +58,175 @@ int cps1_snd_fade_timer_r(int offset)
 *
 ********************************************************************/
 
-static unsigned char *cps1_qram;
+static unsigned char *qsound_sharedram;
 
-int cps1_qram_kludge_r(int offset)
+int cps1_qsound_interrupt(void)
 {
-	int value=READ_WORD(&cps1_qram[0xffe]);
-	if (value)
+	if (cpu_getiloops() == 0)
 	{
-	 return value;
+		/* kludge to pass the sound board test with sound disabled */
+		if (Machine->sample_rate == 0)
+			qsound_sharedram[0xfff] = 0x77;
+
+		return 2;
 	}
-	return 0x77;
+	else return 4;
 }
+
+static int qsound_sharedram_r(int offset)
+{
+	return qsound_sharedram[offset / 2] | 0xff00;
+}
+
+static void qsound_sharedram_w(int offset,int data)
+{
+	qsound_sharedram[offset / 2] = data;
+}
+
 
 /********************************************************************
 *
 *  EEPROM
 *  ======
 *
-*   The EEPROM appears to be accessed by a serial protocol using
-*   the register 0xf1c006
+*   The EEPROM is accessed by a serial protocol using the register
+*   0xf1c006
 *
 ********************************************************************/
 
 static unsigned char cps1_eeprom[0x40];
-static unsigned int  cps1_eeprom_register;
-static unsigned int  cps1_eeprom_index;
-static unsigned int  cps1_eeprom_shift;
+
+static int eeprom_serial_count,eeprom_serial_buffer[27];
+static unsigned char eeprom_data[0x80],eeprom_data_bits;
 
 int cps1_eeprom_port_r(int offset)
 {
-	int value;
-	if (errorlog)
-	{
-		fprintf(errorlog, "PC=%08x EEPROM Read\n", cpu_getpc());
-	}
-	value=cps1_eeprom[cps1_eeprom_index];
-	return (cps1_eeprom_register&0xfe) | 0x01;
+	int bit;
+
+//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM Read\n", cpu_getpc());
+	bit = (eeprom_data_bits & 0x80) >> 7;
+	eeprom_data_bits = (eeprom_data_bits << 1) | 1;
+	return bit;
 }
 
+/*
+bit 0 = data
+bit 6 = clock
+bit 7 = start
+*/
 void cps1_eeprom_port_w(int offset, int data)
 {
-	cps1_eeprom_register=data;
-	if (errorlog)
-	{
-		fprintf(errorlog, "PC=%08x EEPROM Write %02x\n", cpu_getpc(), data);
-	}
-}
+	static int last;
 
-static void cps1_eeprom_save (void)
-{
-	void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-	if (f)
+	if ((data & 0x40) && !(last & 0x40))
 	{
-		osd_fwrite (f, cps1_eeprom, sizeof(cps1_eeprom));
-		osd_fclose (f);
+		eeprom_data_bits = (eeprom_data_bits << 1) | 1;
+
+		if (!(data & 0x80))
+		{
+//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM reset %02x\n", cpu_getpc(), data);
+			eeprom_serial_count = 0;
+		}
+		else
+		{
+//if (errorlog) fprintf(errorlog, "PC=%08x EEPROM clock (Write %02x)\n", cpu_getpc(), data);
+			if (eeprom_serial_count < 27)
+			{
+				eeprom_serial_buffer[eeprom_serial_count++] = data & 1;
+				if (eeprom_serial_count == 11)
+				{
+					if (eeprom_serial_buffer[0] == 0x00 &&
+							eeprom_serial_buffer[1] == 0x01 &&
+							eeprom_serial_buffer[2] == 0x01 &&
+							eeprom_serial_buffer[3] == 0x00)
+					{
+						int i,address;
+
+						address = 0;
+						for (i = 4;i < 11;i++)
+						{
+							address <<= 1;
+							if (eeprom_serial_buffer[i]) address |= 1;
+						}
+if (errorlog) fprintf(errorlog,"EEPROM read %02x from address %02x\n",eeprom_data[address],address);
+						eeprom_data_bits = eeprom_data[address];
+					}
+					else if (eeprom_serial_buffer[0] == 0x00 &&
+							eeprom_serial_buffer[1] == 0x01 &&
+							eeprom_serial_buffer[2] == 0x01 &&
+							eeprom_serial_buffer[3] == 0x01)
+					{
+						int i,address;
+
+						address = 0;
+						for (i = 4;i < 11;i++)
+						{
+							address <<= 1;
+							if (eeprom_serial_buffer[i]) address |= 1;
+						}
+if (errorlog) fprintf(errorlog,"EEPROM erase(?) address %02x\n",address);
+					}
+				}
+				else if (eeprom_serial_count == 27)
+				{
+					if (eeprom_serial_buffer[0] == 0x00 &&
+							eeprom_serial_buffer[1] == 0x01 &&
+							eeprom_serial_buffer[2] == 0x00 &&
+							eeprom_serial_buffer[3] == 0x01)
+					{
+						int i,address,edata;
+
+						address = 0;
+						for (i = 4;i < 11;i++)
+						{
+							address <<= 1;
+							if (eeprom_serial_buffer[i]) address |= 1;
+						}
+						edata = 0;
+						for (i = 11;i < 27;i++)
+						{
+							edata <<= 1;
+							if (eeprom_serial_buffer[i]) edata |= 1;
+						}
+if (errorlog) fprintf(errorlog,"EEPROM write %02x to address %02x\n",edata>>8,address);
+						eeprom_data[address] = edata>>8;
+					}
+				}
+			}
+		}
 	}
+
+	last = data;
 }
 
 static int cps1_eeprom_load (void)
 {
 	void *f;
 
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-	if (f)
+
+	/* Try loading static RAM */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		osd_fread (f, cps1_eeprom, sizeof(cps1_eeprom));
-		osd_fclose (f);
+		osd_fread(f,eeprom_data,0x80);
+		osd_fclose(f);
 	}
-	else
-	{
-		memset(cps1_eeprom, 0, sizeof(cps1_eeprom));
-	}
+	/* Invalidate the static RAM to force reset to factory settings */
+	else memset(eeprom_data,0xff,0x80);
 
 	return 1;
 }
 
+static void cps1_eeprom_save (void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,eeprom_data,0x80);	/* EEPROM */
+		osd_fclose(f);
+	}
+}
 
 
 static struct MemoryReadAddress cps1_readmem[] =
@@ -141,11 +239,9 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
 	{ 0x8001fc, 0x8001fc, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
-//    { 0x860000, 0x8603ff, MRA_BANK3 },   /* EEPROM */
 	{ 0x900000, 0x92ffff, cps1_gfxram_r },
-	{ 0xf19ffe, 0xf19fff, cps1_qram_kludge_r },       /* Q RAM Kludge */
-	{ 0xf18000, 0xf19fff, MRA_BANK6 },       /* Q RAM */
-	{ 0xf1c000, 0xf1c005, MRA_NOP }, /* Unknown */
+	{ 0xf18000, 0xf19fff, qsound_sharedram_r },       /* Q RAM */
+//	{ 0xf1c000, 0xf1c003, MRA_NOP }, /* Unknown */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_r },
 	{ 0xff0000, 0xffffff, MRA_BANK2 },   /* RAM */
 	{ -1 }  /* end of table */
@@ -158,10 +254,9 @@ static struct MemoryWriteAddress cps1_writemem[] =
 	{ 0x800180, 0x800181, soundlatch_w },  /* Sound command */
 	{ 0x800188, 0x80018b, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
-//    { 0x860000, 0x8603ff, MWA_BANK3, &cps1_eeprom, &cps1_eeprom_size },   /* EEPROM */
 	{ 0x900000, 0x92ffff, cps1_gfxram_w, &cps1_gfxram, &cps1_gfxram_size },
-	{ 0xf18000, 0xf19fff, MWA_BANK6, &cps1_qram }, /* Q RAM */
-	{ 0xf1c004, 0xf1c005, MWA_NOP }, /* Unknown */
+	{ 0xf18000, 0xf19fff, qsound_sharedram_w }, /* Q RAM */
+//	{ 0xf1c004, 0xf1c005, MWA_NOP }, /* Unknown */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
 	{ 0xff0000, 0xffffff, MWA_BANK2, &cps1_ram, &cps1_ram_size },        /* RAM */
 	{ -1 }  /* end of table */
@@ -192,118 +287,21 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-
-
-/********************************************************************
-
-			Configuration table:
-
-********************************************************************/
-
-static struct CPS1config cps1_config_table[]=
+static struct MemoryReadAddress qsound_readmem[] =
 {
-	/* DRIVER    BANK   BANK    BANK    START      CPSB CPSB
-	  NAME      OBJ   SCRL1   SCRL2   SCRL3    A ADDR VAL */
-	{"forgottn",0,      0,      0,      0,       5,0x00,0x0000}, /* ??? */
-	{"ghouls",  0,      0,      0,      0,       5,0x00,0x0000, 1},
-	{"ghoulsj", 0,      0,      0,      0,       5,0x00,0x0000, 1},
-	{"strider", 0,      1,      0,      1,       4,0x00,0x0000},
-	{"striderj",0,      1,      0,      1,       4,0x00,0x0000},
-	{"dwj",     0,      0,      1,      1,       9,0x00,0x0000},
-	{"willow",  0,      0,      1,      0,       1,0x00,0x0000},
-	{"willowj", 0,      0,      1,      0,       1,0x00,0x0000},
-	{"unsquad", 0,      0,      0,      0,       0,0x00,0x0000},
-	{"area88",  0,      0,      0,      0,       0,0x00,0x0000},
-	{"ffight",  0,      0,      0,      0,       2,0x60,0x0004},
-	{"ffightu", 0,      0,      0,      0,       3,0x00,0x0000},
-	{"ffightj", 0,      0,      0,      0,       2,0x60,0x0004},
-	{"1941",    0,      0,      0,      0,      19,0x60,0x0005},
-	{"1941j",   0,      0,      0,      0,      19,0x60,0x0005},
-	{"mercs",   0,      0,      0,      0,      22,0x60,0x0402},
-	{"mercsu",  0,      0,      0,      0,      22,0x60,0x0402},
-	{"mercsj",  0,      0,      0,      0,      22,0x60,0x0402},
-	{"mtwins",  0,      0,      0,      0,      21,0x5e,0x0404},
-	{"chikij",  0,      0,      0,      0,      21,0x5e,0x0404},
-	{"msword",  0,      0,      0,      0,       7,0x00,0x0000},
-	{"mswordu", 0,      0,      0,      0,       7,0x00,0x0000},
-	{"mswordj", 0,      0,      0,      0,       7,0x00,0x0000},
-	{"cawing",  0,      0,      0,      0,      11,0x00,0x0000},
-	{"cawingj", 0,      0,      0,      0,      11,0x00,0x0000},
-	{"nemo",    0,      0,      0,      0,       8,0x4e,0x0405},
-	{"nemoj",   0,      0,      0,      0,       8,0x4e,0x0405},
-	{"sf2",     0,      2,      2,      2,      12,0x48,0x0407},
-	{"sf2a",    0,      2,      2,      2,      12,0x48,0x0407},
-	{"sf2b",    0,      2,      2,      2,      12,0x48,0x0407},
-	{"sf2e",    0,      2,      2,      2,      15,0xd0,0x0408},
-	{"sf2j",    0,      2,      2,      2,      13,0x6e,0x0403},
-	{"3wonders",0,      0,      1,      1,      16,0x72,0x0800, 2},
-	{"3wonderj",0,      0,      1,      1,      16,0x72,0x0800, 2},
-	{"kod",     0,      0,      0,      0,      10,0x00,0x0000},
-	{"kodj",    0,      0,      0,      0,      10,0x00,0x0000},
-	{"kodb",    0,      0,      0,      0,      10,0x00,0x0000},
-	{"captcomm",0,      0,      0,      0,      29,0x00,0x0000},
-	{"captcomu",0,      0,      0,      0,      29,0x00,0x0000},
-	{"captcomj",0,      0,      0,      0,      29,0x00,0x0000},
-	{"knights", 0,      0,      0,      0,       6,0x00,0x0000},
-	{"knightsj",0,      0,      0,      0,       6,0x00,0x0000},
-	{"sf2ce",   0,      2,      2,      2,      14,0x00,0x0000},
-	{"sf2cej",  0,      2,      2,      2,      14,0x00,0x0000},
-	{"sf2rb",   0,      2,      2,      2,      14,0x00,0x0000},
-	{"varth",   0,      0,      0,      0,      17,0x00,0x0000},
-	{"varthj",  0,      0,      0,      0,      18,0x00,0x0000},
-	{"cworld2j",0,      0,      0,      0,      24,0x00,0x0000},
-	{"wof",     0,      0,      0,      0,      30,0x00,0x0000},
-	{"wofj",    0,      0,      0,      0,      33,0x00,0x0000},
-	{"dino",    0,      0,      0,      0,      27,0x00,0x0000},
-	{"punisher",0,      0,      0,      0,      28,0x4e,0x0c00},
-	{"punishrj",0,      0,      0,      0,      28,0x4e,0x0c00},
-	{"slammast",0,      0,      0,      0,      31,0x6e,0x0c01},
-	{"mbomber", 0,      0,      0,      0,      32,0x5e,0x0c02},
-	{"mbomberj",0,      0,      0,      0,      32,0x5e,0x0c02},
-	{"sf2t",    0,      2,      2,      2,      14,0x00,0x0000},
-	{"sf2tj",   0,      2,      2,      2,      14,0x00,0x0000},
-	{"pnickj",  0,      0,      0,      0,      25,0x00,0x0000},
-	{"qad",     0,      0,      0,      0,      23,0x00,0x0000},
-	{"qadj",    0,      0,      0,      0,      26,0x00,0x0000},
-	{"megaman", 0,      0,      0,      0,      20,0x00,0x0000},
-	{"rockmanj",0,      0,      0,      0,      20,0x00,0x0000},
-	/* End of table (default values) */
-	{0,         0,     0,       0,      0,       0,0x00,0x0000},
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xf000, 0xffff, MRA_RAM },
+	{ -1 }  /* end of table */
 };
 
-static void cps1_init_machine(void)
+static struct MemoryWriteAddress qsound_writemem[] =
 {
-	const char *gamename = Machine->gamedrv->name;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	struct CPS1config *pCFG=&cps1_config_table[0];
-	while(pCFG->name)
-	{
-		if (strcmp(pCFG->name, gamename) == 0)
-		{
-			break;
-		}
-		pCFG++;
-	}
-	cps1_game_config=pCFG;
-
-	if (strcmp(gamename, "ghouls" )==0)
-	{
-		/* Patch out self-test... it takes forever */
-		WRITE_WORD(&RAM[0x61964+0], 0x4ef9);
-		WRITE_WORD(&RAM[0x61964+2], 0x0000);
-		WRITE_WORD(&RAM[0x61964+4], 0x0400);
-	}
-	else if (strcmp(gamename, "ghoulsj" )==0)
-	{
-		/* Patch out self-test... it takes forever */
-		WRITE_WORD(&RAM[0x61930+0], 0x4ef9);
-		WRITE_WORD(&RAM[0x61930+2], 0x0000);
-		WRITE_WORD(&RAM[0x61930+4], 0x0400);
-	}
-}
-
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xcfff, MWA_RAM, &qsound_sharedram },
+	{ 0xf000, 0xffff, MWA_RAM },
+	{ -1 }  /* end of table */
+};
 
 
 
@@ -334,20 +332,20 @@ INPUT_PORTS_START( forgottn_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* Player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
@@ -442,20 +440,20 @@ INPUT_PORTS_START( ghouls_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* Player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
@@ -997,9 +995,9 @@ INPUT_PORTS_START( ffight_input_ports )
 	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "No" )
+	PORT_DIPSETTING(    0x00, "Yes" )
 	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -1726,14 +1724,14 @@ INPUT_PORTS_START( sf2_input_ports )
 
 	PORT_START      /* DSWB */
 	PORT_DIPNAME( 0x07, 0x04, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPSETTING(    0x01, "Very Hard" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPSETTING(    0x03, "Difficult" )
-	PORT_DIPSETTING(    0x04, "Normal" )
-	PORT_DIPSETTING(    0x05, "Easy" )
-	PORT_DIPSETTING(    0x06, "Very Easy" )
 	PORT_DIPSETTING(    0x07, "Easier" )
+	PORT_DIPSETTING(    0x06, "Very Easy" )
+	PORT_DIPSETTING(    0x05, "Easy" )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x03, "Difficult" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x01, "Very Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x08, "On" )
@@ -2774,20 +2772,20 @@ INPUT_PORTS_START( pnickj_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START      /* Player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER1)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER1)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER1)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER1)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER1)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2)
@@ -3191,7 +3189,7 @@ static struct YM2151interface ym2151_interface =
 {
 	1,  /* 1 chip */
 	3579580,    /* 3.579580 MHz ? */
-	{ 60 },
+	{ 40 },
 	{ cps1_irq_handler_mus }
 };
 
@@ -3200,7 +3198,7 @@ static struct OKIM6295interface okim6295_interface =
 	1,  /* 1 chip */
 	7600,   /* hand tuned to match the real SF2 */
 	{ 3 },  /* memory region 3 */
-	{ 50 }
+	{ 25 }
 };
 
 
@@ -3273,6 +3271,13 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 			0,                                               \
 			cps1_readmem,cps1_writemem,0,0,                  \
 		CPS1_IRQ, 2  /* ??? interrupts per frame */   \
+		},                                                       \
+		{                                                        \
+			CPU_Z80 | CPU_AUDIO_CPU,                         \
+			4000000,  /* 4 Mhz ??? TODO: find real FRQ */    \
+			2,      /* memory region #2 */                   \
+			qsound_readmem,qsound_writemem,0,0,              \
+			ignore_interrupt,0                               \
 	}                                                        \
 	},                                                               \
 	60, 4000, /* wrong, but reduces jerkiness */                     \
@@ -3322,11 +3327,11 @@ MACHINE_DRIVER( captcomm,  cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( knights,   cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( varth,     cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( cworld2j,  cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
-QSOUND_MACHINE_DRIVER( wof,      cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
-QSOUND_MACHINE_DRIVER( dino,     cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
-QSOUND_MACHINE_DRIVER( punisher, cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
-QSOUND_MACHINE_DRIVER( slammast, cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
-QSOUND_MACHINE_DRIVER( mbomber,  cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
+QSOUND_MACHINE_DRIVER( wof,      cps1_qsound_interrupt, CPS1_DEFAULT_CPU_SPEED )
+QSOUND_MACHINE_DRIVER( dino,     cps1_qsound_interrupt, CPS1_DEFAULT_CPU_SPEED )
+QSOUND_MACHINE_DRIVER( punisher, cps1_qsound_interrupt, CPS1_DEFAULT_CPU_SPEED )
+QSOUND_MACHINE_DRIVER( slammast, cps1_qsound_interrupt, CPS1_DEFAULT_CPU_SPEED )
+QSOUND_MACHINE_DRIVER( mbomber,  cps1_qsound_interrupt, CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( pnickj,    cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( qad,       cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
 MACHINE_DRIVER( megaman,   cps1_interrupt2, CPS1_DEFAULT_CPU_SPEED )
@@ -3349,10 +3354,10 @@ ROM_START( forgottn_rom )
 	ROM_LOAD_ODD ( "lwu14a.13g",    0x40000, 0x20000, 0xd70ef9fd ) /* 68000 code */
 
 	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lwu.1",     0x080000, 0x80000, 0x00000000 ) /* Sprites / tiles */
-	ROM_LOAD( "lwu.3",     0x180000, 0x80000, 0x00000000 )
-	ROM_LOAD( "lwu.5",     0x280000, 0x80000, 0x00000000 )
-	ROM_LOAD( "lwu.7",     0x380000, 0x80000, 0x00000000 )
+//	ROM_LOAD( "lwu.1",     0x080000, 0x80000, 0x00000000 ) /* Sprites / tiles */
+//	ROM_LOAD( "lwu.3",     0x180000, 0x80000, 0x00000000 )
+//	ROM_LOAD( "lwu.5",     0x280000, 0x80000, 0x00000000 )
+//	ROM_LOAD( "lwu.7",     0x380000, 0x80000, 0x00000000 )
 
 	ROM_REGION(0x18000) /* 64k for the audio CPU */
 	ROM_LOAD( "lwu-00.14a",    0x000000, 0x08000, 0x59df2a63 )
@@ -3404,25 +3409,25 @@ ROM_START( ghoulsj_rom )
 
 	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD         ( "ghl6.bin",     0x000000, 0x80000, 0x4ba90b59 )
-	ROM_LOAD_GFX_EVEN( "ghl12.bin",    0x080000, 0x10000, 0xda088d61 )
-	ROM_LOAD_GFX_ODD ( "ghl21.bin",    0x080000, 0x10000, 0x17e11df0 )
-	ROM_LOAD_GFX_EVEN( "ghl11.bin",    0x0a0000, 0x10000, 0x37c9b6c6 )
-	ROM_LOAD_GFX_ODD ( "ghl20.bin",    0x0a0000, 0x10000, 0x2f1345b4 )
+	ROM_LOAD_GFX_EVEN( "ghl11.bin",    0x080000, 0x10000, 0x37c9b6c6 )
+	ROM_LOAD_GFX_ODD ( "ghl20.bin",    0x080000, 0x10000, 0x2f1345b4 )
+	ROM_LOAD_GFX_EVEN( "ghl12.bin",    0x0a0000, 0x10000, 0xda088d61 )
+	ROM_LOAD_GFX_ODD ( "ghl21.bin",    0x0a0000, 0x10000, 0x17e11df0 )
 	ROM_LOAD         ( "ghl5.bin",     0x100000, 0x80000, 0x0ba9c0b0 )
-	ROM_LOAD_GFX_EVEN( "ghl10.bin",    0x180000, 0x10000, 0xbcc0f28c )
-	ROM_LOAD_GFX_ODD ( "ghl19.bin",    0x180000, 0x10000, 0x2a40166a )
-	ROM_LOAD_GFX_EVEN( "ghl09.bin",    0x1a0000, 0x10000, 0xae24bb19 )
-	ROM_LOAD_GFX_ODD ( "ghl18.bin",    0x1a0000, 0x10000, 0xd34e271a )
+	ROM_LOAD_GFX_EVEN( "ghl09.bin",    0x180000, 0x10000, 0xae24bb19 )
+	ROM_LOAD_GFX_ODD ( "ghl18.bin",    0x180000, 0x10000, 0xd34e271a )
+	ROM_LOAD_GFX_EVEN( "ghl10.bin",    0x1a0000, 0x10000, 0xbcc0f28c )
+	ROM_LOAD_GFX_ODD ( "ghl19.bin",    0x1a0000, 0x10000, 0x2a40166a )
 	ROM_LOAD         ( "ghl8.bin",     0x200000, 0x80000, 0x4bdee9de )
-	ROM_LOAD_GFX_EVEN( "ghl16.bin",    0x280000, 0x10000, 0xf187ba1c )
-	ROM_LOAD_GFX_ODD ( "ghl25.bin",    0x280000, 0x10000, 0x29f79c78 )
-	ROM_LOAD_GFX_EVEN( "ghl15.bin",    0x2a0000, 0x10000, 0x3c2a212a )
-	ROM_LOAD_GFX_ODD ( "ghl24.bin",    0x2a0000, 0x10000, 0x889aac05 )
+	ROM_LOAD_GFX_EVEN( "ghl15.bin",    0x280000, 0x10000, 0x3c2a212a )
+	ROM_LOAD_GFX_ODD ( "ghl24.bin",    0x280000, 0x10000, 0x889aac05 )
+	ROM_LOAD_GFX_EVEN( "ghl16.bin",    0x2a0000, 0x10000, 0xf187ba1c )
+	ROM_LOAD_GFX_ODD ( "ghl25.bin",    0x2a0000, 0x10000, 0x29f79c78 )
 	ROM_LOAD         ( "ghl7.bin",     0x300000, 0x80000, 0x5d760ab9 )
-	ROM_LOAD_GFX_EVEN( "ghl14.bin",    0x380000, 0x10000, 0x20f85c03 )
-	ROM_LOAD_GFX_ODD ( "ghl23.bin",    0x380000, 0x10000, 0x8426144b )
-	ROM_LOAD_GFX_EVEN( "ghl13.bin",    0x3a0000, 0x10000, 0x3f70dd37 )
-	ROM_LOAD_GFX_ODD ( "ghl22.bin",    0x3a0000, 0x10000, 0x7e69e2e6 )
+	ROM_LOAD_GFX_EVEN( "ghl13.bin",    0x380000, 0x10000, 0x3f70dd37 )
+	ROM_LOAD_GFX_ODD ( "ghl22.bin",    0x380000, 0x10000, 0x7e69e2e6 )
+	ROM_LOAD_GFX_EVEN( "ghl14.bin",    0x3a0000, 0x10000, 0x20f85c03 )
+	ROM_LOAD_GFX_ODD ( "ghl23.bin",    0x3a0000, 0x10000, 0x8426144b )
 
 	ROM_REGION(0x18000) /* 64k for the audio CPU */
 	ROM_LOAD( "ghl26.bin",    0x000000, 0x08000, 0x3692f6e5 )
@@ -4720,12 +4725,14 @@ ROM_START( wof_rom )
 	ROM_LOAD( "tk2_gfx3.rom",   0x300000, 0x80000, 0x45227027 )
 	ROM_LOAD( "tk2_gfx7.rom",   0x380000, 0x80000, 0x3edeb949 )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "tk2_qa.rom",      0x10000, 0x20000, 0xc9183a0d )
-	ROM_LOAD( "tk2_q1.rom",      0x10000, 0x80000, 0x611268cf )
-	ROM_LOAD( "tk2_q2.rom",      0x10000, 0x80000, 0x20f55ca9 )
-	ROM_LOAD( "tk2_q3.rom",      0x10000, 0x80000, 0xbfcf6f52 )
-	ROM_LOAD( "tk2_q4.rom",      0x10000, 0x80000, 0x36642e88 )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x20000, 0xc9183a0d )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "tk2_q1.rom",      0x00000, 0x80000, 0x611268cf )
+	ROM_LOAD( "tk2_q2.rom",      0x00000, 0x80000, 0x20f55ca9 )
+	ROM_LOAD( "tk2_q3.rom",      0x00000, 0x80000, 0xbfcf6f52 )
+	ROM_LOAD( "tk2_q4.rom",      0x00000, 0x80000, 0x36642e88 )
 ROM_END
 
 ROM_START( wofj_rom )
@@ -4743,12 +4750,14 @@ ROM_START( wofj_rom )
 	ROM_LOAD( "tk2_gfx3.rom",   0x300000, 0x80000, 0x45227027 )
 	ROM_LOAD( "tk206.bin",      0x380000, 0x80000, 0x58066ba8 )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "tk2_qa.rom",      0x10000, 0x20000, 0xc9183a0d )
-	ROM_LOAD( "tk2_q1.rom",      0x10000, 0x80000, 0x611268cf )
-	ROM_LOAD( "tk2_q2.rom",      0x10000, 0x80000, 0x20f55ca9 )
-	ROM_LOAD( "tk2_q3.rom",      0x10000, 0x80000, 0xbfcf6f52 )
-	ROM_LOAD( "tk2_q4.rom",      0x10000, 0x80000, 0x36642e88 )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "tk2_qa.rom",      0x00000, 0x20000, 0xc9183a0d )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "tk2_q1.rom",      0x00000, 0x80000, 0x611268cf )
+	ROM_LOAD( "tk2_q2.rom",      0x00000, 0x80000, 0x20f55ca9 )
+	ROM_LOAD( "tk2_q3.rom",      0x00000, 0x80000, 0xbfcf6f52 )
+	ROM_LOAD( "tk2_q4.rom",      0x00000, 0x80000, 0x36642e88 )
 ROM_END
 
 ROM_START( sf2t_rom )
@@ -4825,12 +4834,14 @@ ROM_START( dino_rom )
 	ROM_LOAD( "cd_gfx03.rom",   0x300000, 0x80000, 0x6c40f603 )
 	ROM_LOAD( "cd_gfx07.rom",   0x380000, 0x80000, 0x22bfb7a3 )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "cd_q.rom",       0x10000, 0x20000, 0x605fdb0b )
-	ROM_LOAD( "cd_q1.rom",      0x10000, 0x80000, 0x60927775 )
-	ROM_LOAD( "cd_q2.rom",      0x10000, 0x80000, 0x770f4c47 )
-	ROM_LOAD( "cd_q3.rom",      0x10000, 0x80000, 0x2f273ffc )
-	ROM_LOAD( "cd_q4.rom",      0x10000, 0x80000, 0x2c67821d )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "cd_q.rom",       0x00000, 0x20000, 0x605fdb0b )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "cd_q1.rom",      0x00000, 0x80000, 0x60927775 )
+	ROM_LOAD( "cd_q2.rom",      0x00000, 0x80000, 0x770f4c47 )
+	ROM_LOAD( "cd_q3.rom",      0x00000, 0x80000, 0x2f273ffc )
+	ROM_LOAD( "cd_q4.rom",      0x00000, 0x80000, 0x2c67821d )
 ROM_END
 
 ROM_START( punisher_rom )
@@ -4855,12 +4866,14 @@ ROM_START( punisher_rom )
 	ROM_LOAD( "ps_gfx3.rom",   0x300000, 0x80000, 0x0122720b )
 	ROM_LOAD( "ps_gfx7.rom",   0x380000, 0x80000, 0x04c5acbd )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "ps_q.rom",       0x10000, 0x20000, 0x49ff4446 )
-	ROM_LOAD( "ps_q1.rom",      0x10000, 0x80000, 0x31fd8726 )
-	ROM_LOAD( "ps_q2.rom",      0x10000, 0x80000, 0x980a9eef )
-	ROM_LOAD( "ps_q3.rom",      0x10000, 0x80000, 0x0dd44491 )
-	ROM_LOAD( "ps_q4.rom",      0x10000, 0x80000, 0xbed42f03 )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "ps_q.rom",       0x00000, 0x20000, 0x49ff4446 )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "ps_q1.rom",      0x00000, 0x80000, 0x31fd8726 )
+	ROM_LOAD( "ps_q2.rom",      0x00000, 0x80000, 0x980a9eef )
+	ROM_LOAD( "ps_q3.rom",      0x00000, 0x80000, 0x0dd44491 )
+	ROM_LOAD( "ps_q4.rom",      0x00000, 0x80000, 0xbed42f03 )
 ROM_END
 
 ROM_START( punishrj_rom )
@@ -4879,12 +4892,14 @@ ROM_START( punishrj_rom )
 	ROM_LOAD( "ps_gfx3.rom",   0x300000, 0x80000, 0x0122720b )
 	ROM_LOAD( "ps_gfx7.rom",   0x380000, 0x80000, 0x04c5acbd )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "ps_q.rom",       0x10000, 0x20000, 0x49ff4446 )
-	ROM_LOAD( "ps_q1.rom",      0x10000, 0x80000, 0x31fd8726 )
-	ROM_LOAD( "ps_q2.rom",      0x10000, 0x80000, 0x980a9eef )
-	ROM_LOAD( "ps_q3.rom",      0x10000, 0x80000, 0x0dd44491 )
-	ROM_LOAD( "ps_q4.rom",      0x10000, 0x80000, 0xbed42f03 )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "ps_q.rom",       0x00000, 0x20000, 0x49ff4446 )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "ps_q1.rom",      0x00000, 0x80000, 0x31fd8726 )
+	ROM_LOAD( "ps_q2.rom",      0x00000, 0x80000, 0x980a9eef )
+	ROM_LOAD( "ps_q3.rom",      0x00000, 0x80000, 0x0dd44491 )
+	ROM_LOAD( "ps_q4.rom",      0x00000, 0x80000, 0xbed42f03 )
 ROM_END
 
 ROM_START( slammast_rom )
@@ -4911,16 +4926,18 @@ ROM_START( slammast_rom )
 	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
 	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "mb_qa.rom",      0x10000, 0x20000, 0xe21a03c4 )
-	ROM_LOAD( "mb_q1.rom",      0x10000, 0x80000, 0x0630c3ce )
-	ROM_LOAD( "mb_q2.rom",      0x10000, 0x80000, 0x354f9c21 )
-	ROM_LOAD( "mb_q3.rom",      0x10000, 0x80000, 0x7838487c )
-	ROM_LOAD( "mb_q4.rom",      0x10000, 0x80000, 0xab66e087 )
-	ROM_LOAD( "mb_q5.rom",      0x10000, 0x80000, 0xc789fef2 )
-	ROM_LOAD( "mb_q6.rom",      0x10000, 0x80000, 0xecb81b61 )
-	ROM_LOAD( "mb_q7.rom",      0x10000, 0x80000, 0x041e49ba )
-	ROM_LOAD( "mb_q8.rom",      0x10000, 0x80000, 0x59fe702a )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "mb_qa.rom",      0x00000, 0x20000, 0xe21a03c4 )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x00000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x00000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x00000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x00000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x00000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x00000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x00000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x00000, 0x80000, 0x59fe702a )
 ROM_END
 
 ROM_START( mbomber_rom )
@@ -4950,16 +4967,18 @@ ROM_START( mbomber_rom )
 	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
 	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "mb_q.rom",       0x10000, 0x20000, 0xd6fa76d1 )
-	ROM_LOAD( "mb_q1.rom",      0x10000, 0x80000, 0x0630c3ce )
-	ROM_LOAD( "mb_q2.rom",      0x10000, 0x80000, 0x354f9c21 )
-	ROM_LOAD( "mb_q3.rom",      0x10000, 0x80000, 0x7838487c )
-	ROM_LOAD( "mb_q4.rom",      0x10000, 0x80000, 0xab66e087 )
-	ROM_LOAD( "mb_q5.rom",      0x10000, 0x80000, 0xc789fef2 )
-	ROM_LOAD( "mb_q6.rom",      0x10000, 0x80000, 0xecb81b61 )
-	ROM_LOAD( "mb_q7.rom",      0x10000, 0x80000, 0x041e49ba )
-	ROM_LOAD( "mb_q8.rom",      0x10000, 0x80000, 0x59fe702a )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "mb_q.rom",       0x00000, 0x20000, 0xd6fa76d1 )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x00000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x00000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x00000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x00000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x00000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x00000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x00000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x00000, 0x80000, 0x59fe702a )
 ROM_END
 
 ROM_START( mbomberj_rom )
@@ -4989,16 +5008,18 @@ ROM_START( mbomberj_rom )
 	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
 	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
 
-	ROM_REGION(0x90000) /* QSound */
-	ROM_LOAD( "mb_q.rom",       0x10000, 0x20000, 0xd6fa76d1 )
-	ROM_LOAD( "mb_q1.rom",      0x10000, 0x80000, 0x0630c3ce )
-	ROM_LOAD( "mb_q2.rom",      0x10000, 0x80000, 0x354f9c21 )
-	ROM_LOAD( "mb_q3.rom",      0x10000, 0x80000, 0x7838487c )
-	ROM_LOAD( "mb_q4.rom",      0x10000, 0x80000, 0xab66e087 )
-	ROM_LOAD( "mb_q5.rom",      0x10000, 0x80000, 0xc789fef2 )
-	ROM_LOAD( "mb_q6.rom",      0x10000, 0x80000, 0xecb81b61 )
-	ROM_LOAD( "mb_q7.rom",      0x10000, 0x80000, 0x041e49ba )
-	ROM_LOAD( "mb_q8.rom",      0x10000, 0x80000, 0x59fe702a )
+	ROM_REGION(0x20000) /* QSound Z80 code */
+	ROM_LOAD( "mb_q.rom",       0x00000, 0x20000, 0xd6fa76d1 )
+
+	ROM_REGION(0x80000) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x00000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x00000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x00000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x00000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x00000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x00000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x00000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x00000, 0x80000, 0x59fe702a )
 ROM_END
 
 ROM_START( pnickj_rom )
@@ -5146,910 +5167,210 @@ ROM_START( rockmanj_rom )
 ROM_END
 
 
-
-/* Please include this credit for the CPS1 driver */
 #define CPS1_CREDITS "Paul Leaman"
 
-
-struct GameDriver forgottn_driver =
-{
-	__FILE__,
-	0,
-	"forgottn",
-	"Forgotten Worlds",
-	"1988",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&forgottn_machine_driver,
-	cps1_init_machine,
-
-	forgottn_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	forgottn_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
+#define GAME_DRIVER(NAME,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	0,                             \
+	#NAME,                         \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	0,                             \
+	&NAME##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, 0,                          \
+	0,                             \
+	0,                             \
+	NAME##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	0, 0                           \
 };
 
-struct GameDriver ghouls_driver =
-{
-	__FILE__,
-	0,
-	"ghouls",
-	"Ghouls'n Ghosts",
-	"1988",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&ghouls_machine_driver,
-	cps1_init_machine,
-
-	ghouls_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ghouls_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
+#define GAME_DRIVER_CLONE(NAME,MAIN,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	&MAIN##_driver,                \
+	#NAME,                         \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	0,                             \
+	&MAIN##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, 0,                          \
+	0,                             \
+	0,                             \
+	MAIN##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	0, 0                           \
 };
 
-struct GameDriver ghoulsj_driver =
-{
-	__FILE__,
-	&ghouls_driver,
-	"ghoulsj",
-	"Dai Makai-Mura",
-	"1988",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&ghouls_machine_driver,
-	cps1_init_machine,
-
-	ghoulsj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ghouls_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
+#define GAME_DRIVERX(NAME,REALNAME,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	0,                             \
+	#REALNAME,                     \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	0,                             \
+	&NAME##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, 0,                          \
+	0,                             \
+	0,                             \
+	NAME##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	0, 0                           \
 };
 
-struct GameDriver strider_driver =
-{
-	__FILE__,
-	0,
-	"strider",
-	"Strider (US)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&strider_machine_driver,
-	cps1_init_machine,
-
-	strider_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	strider_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
+#define GAME_DRIVER_CLONEX(NAME,REALNAME,MAIN,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	&MAIN##_driver,                \
+	#REALNAME,                     \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	0,                             \
+	&MAIN##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, 0,                          \
+	0,                             \
+	0,                             \
+	MAIN##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	0, 0                           \
 };
 
-struct GameDriver striderj_driver =
-{
-	__FILE__,
-	&strider_driver,
-	"striderj",
-	"Strider (Japan)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&strider_machine_driver,
-	cps1_init_machine,
-
-	striderj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	strider_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
+#define GAME_DRIVER_QSOUND(NAME,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	0,                             \
+	#NAME,                         \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	0,                             \
+	&NAME##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, NAME##_decode,              \
+	0,                             \
+	0,                             \
+	NAME##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	cps1_eeprom_load, cps1_eeprom_save \
 };
 
-struct GameDriver dwj_driver =
-{
-	__FILE__,
-	0,
-	"dwj",
-	"Tenchi o Kurau (Japan)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&dwj_machine_driver,
-	cps1_init_machine,
-
-	dwj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	dwj_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
+#define GAME_DRIVER_QSOUND_CLONE(NAME,MAIN,DESCRIPTION,YEAR,MANUFACTURER,ORIENTATION) \
+struct GameDriver NAME##_driver =  \
+{                                  \
+	__FILE__,                      \
+	&MAIN##_driver,                \
+	#NAME,                         \
+	DESCRIPTION,                   \
+	YEAR,                          \
+	MANUFACTURER,                  \
+	CPS1_CREDITS,                  \
+	0,                             \
+	&MAIN##_machine_driver,        \
+	0,                             \
+	NAME##_rom,                    \
+	0, MAIN##_decode,              \
+	0,                             \
+	0,                             \
+	MAIN##_input_ports,            \
+	0, 0, 0,                       \
+	ORIENTATION,                   \
+	cps1_eeprom_load, cps1_eeprom_save \
 };
 
-struct GameDriver willow_driver =
-{
-	__FILE__,
-	0,
-	"willow",
-	"Willow (Japan, English)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&willow_machine_driver,
-	cps1_init_machine,
 
-	willow_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
+#define sf2ce_machine_driver sf2_machine_driver
+#define sf2ce_input_ports    sf2_input_ports
+
+
+GAME_DRIVER      (forgottn,          "Forgotten Worlds",                  "1988","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (ghouls,            "Ghouls'n Ghosts (World?)",          "1988","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(ghoulsj, ghouls,   "Dai Makai-Mura (Japan)",            "1988","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (strider,           "Strider (US)",                      "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(striderj,strider,  "Strider (Japan)",                   "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (dwj,               "Tenchi o Kurau",                    "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (willow,            "Willow (Japan, English)",           "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(willowj, willow,   "Willow (Japan, Japanese)",          "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (unsquad,           "UN Squadron (US)",                  "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(area88,  unsquad,  "Area 88 (Japan)",                   "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (ffight,            "Final Fight (World)",               "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(ffightu, ffight,   "Final Fight (US)",                  "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(ffightj, ffight,   "Final Fight (Japan)",               "1989","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVERX      (c1941, 1941,       "1941 (World)",                     "1990","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER_CLONEX(c1941j,1941j,c1941,"1941 (Japan)",                     "1990","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER      (mercs,             "Mercs (World)",                     "1990","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER_CLONE(mercsu,  mercs,    "Mercs (US)",                        "1990","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER_CLONE(mercsj,  mercs,    "Senjo no Ookami II (Japan)",        "1990","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER      (mtwins,            "Mega Twins (World)",                "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(chikij,  mtwins,   "Chiki Chiki Boys (Japan)",          "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (msword,            "Magic Sword (World)",               "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(mswordu, msword,   "Magic Sword (US)",                  "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(mswordj, msword,   "Magic Sword (Japan)",               "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (cawing,            "Carrier Air Wing (World)",          "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(cawingj, cawing,   "U.S. Navy (Japan)",                 "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (nemo,              "Nemo (World)",                      "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(nemoj,   nemo,     "Nemo (Japan)",                      "1990","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (sf2,               "Street Fighter II (World rev B)",   "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2a,    sf2,      "Street Fighter II (US rev A)",      "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2b,    sf2,      "Street Fighter II (US rev B)",      "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2e,    sf2,      "Street Fighter II (US rev E)",      "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2j,    sf2,      "Street Fighter II (Japan)",         "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVERX      (c3wonders,3wonders,          "Three Wonders (US)",     "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONEX(c3wonderj,3wonderj,c3wonders,"Three Wonders (Japan)",  "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (kod,               "The King of Dragons (World)",       "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(kodj,    kod,      "The King of Dragons (Japan)",       "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (captcomm,          "Captain Commando (World)",          "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(captcomu,captcomm, "Captain Commando (US)",             "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(captcomj,captcomm, "Captain Commando (Japan)",          "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (knights,           "Knights of the Round (World)",      "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(knightsj,knights,  "Knights of the Round (Japan)",      "1991","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (sf2ce,             "Street Fighter II' - Champion Edition (World)", "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2cej,  sf2ce,    "Street Fighter II' - Champion Edition (Japan)", "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (varth,             "Varth (World)",                     "1992","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER_CLONE(varthj,  varth,    "Varth (Japan)",                     "1992","Capcom",ORIENTATION_ROTATE_270)
+GAME_DRIVER      (cworld2j,          "Capcom World 2 (Japan)",            "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND      (wof,               "Warriors of Fate (World)",        "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND_CLONE(wofj,    wof,      "Tenchi o Kurau 2 (Japan)",        "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2t,    sf2ce,    "Street Fighter II' - Hyper Fighting (US)", "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(sf2tj,   sf2ce,    "Street Fighter II Turbo (Japan)",   "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND      (dino,              "Cadillacs and Dinosaurs (World)", "1993","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND      (punisher,          "Punisher (World)",                "1993","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_QSOUND_CLONE(punishrj,punisher, "Punisher (Japan)",                "1993","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (pnickj,            "Pnickies (Japan)",                  "1994","Capcom (Compile license)",ORIENTATION_DEFAULT)
+GAME_DRIVER      (qad,               "Quiz & Dragons (US)",               "1992","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(qadj,    qad,      "Quiz & Dragons (Japan)",            "1994","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER      (megaman,           "Mega Man - The Power Battle (Asia)","1995","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(rockmanj,megaman,  "Rockman - The Power Battle (Japan)","1995","Capcom",ORIENTATION_DEFAULT)
 
-	willow_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver willowj_driver =
-{
-	__FILE__,
-	&willow_driver,
-	"willowj",
-	"Willow (Japan, Japanese)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&willow_machine_driver,
-	cps1_init_machine,
-
-	willowj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	willow_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver unsquad_driver =
-{
-	__FILE__,
-	0,
-	"unsquad",
-	"UN Squadron",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&unsquad_machine_driver,
-	cps1_init_machine,
-
-	unsquad_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	unsquad_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver area88_driver =
-{
-	__FILE__,
-	&unsquad_driver,
-	"area88",
-	"Area 88",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&unsquad_machine_driver,
-	cps1_init_machine,
-
-	area88_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	unsquad_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver ffight_driver =
-{
-	__FILE__,
-	0,
-	"ffight",
-	"Final Fight (World)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&ffight_machine_driver,
-	cps1_init_machine,
-
-	ffight_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ffight_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver ffightu_driver =
-{
-	__FILE__,
-	&ffight_driver,
-	"ffightu",
-	"Final Fight (US)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&ffight_machine_driver,
-	cps1_init_machine,
-
-	ffightu_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ffight_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver ffightj_driver =
-{
-	__FILE__,
-	&ffight_driver,
-	"ffightj",
-	"Final Fight (Japan)",
-	"1989",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&ffight_machine_driver,
-	cps1_init_machine,
-
-	ffightj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	ffight_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver c1941_driver =
-{
-	__FILE__,
-	0,
-	"1941",
-	"1941 (World)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&c1941_machine_driver,
-	cps1_init_machine,
-
-	c1941_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	c1941_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver c1941j_driver =
-{
-	__FILE__,
-	&c1941_driver,
-	"1941j",
-	"1941 (Japan)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&c1941_machine_driver,
-	cps1_init_machine,
-
-	c1941j_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	c1941_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver mercs_driver =
-{
-	__FILE__,
-	0,
-	"mercs",
-	"Mercs (World)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&mercs_machine_driver,
-	cps1_init_machine,
-
-	mercs_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	mercs_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver mercsu_driver =
-{
-	__FILE__,
-	&mercs_driver,
-	"mercsu",
-	"Mercs (US)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&mercs_machine_driver,
-	cps1_init_machine,
-
-	mercsu_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	mercs_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver mercsj_driver =
-{
-	__FILE__,
-	&mercs_driver,
-	"mercsj",
-	"Senjo no Ookami II (Japan)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&mercs_machine_driver,
-	cps1_init_machine,
-
-	mercsj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	mercs_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver mtwins_driver =
-{
-	__FILE__,
-	0,
-	"mtwins",
-	"Mega Twins / Chiki Chiki Boys (World)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&mtwins_machine_driver,
-	cps1_init_machine,
-
-	mtwins_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	mtwins_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver chikij_driver =
-{
-	__FILE__,
-	&mtwins_driver,
-	"chikij",
-	"Mega Twins / Chiki Chiki Boys (Japan)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&mtwins_machine_driver,
-	cps1_init_machine,
-
-	chikij_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	mtwins_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver msword_driver =
-{
-	__FILE__,
-	0,
-	"msword",
-	"Magic Sword (World)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&msword_machine_driver,
-	cps1_init_machine,
-
-	msword_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	msword_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver mswordu_driver =
-{
-	__FILE__,
-	&msword_driver,
-	"mswordu",
-	"Magic Sword (US)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&msword_machine_driver,
-	cps1_init_machine,
-
-	mswordu_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	msword_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver mswordj_driver =
-{
-	__FILE__,
-	&msword_driver,
-	"mswordj",
-	"Magic Sword (Japan)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&msword_machine_driver,
-	cps1_init_machine,
-
-	mswordj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	msword_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver cawing_driver =
-{
-	__FILE__,
-	0,
-	"cawing",
-	"Carrier Air Wing / U.S. Navy (World)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&cawing_machine_driver,
-	cps1_init_machine,
-
-	cawing_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	cawing_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver cawingj_driver =
-{
-	__FILE__,
-	&cawing_driver,
-	"cawingj",
-	"Carrier Air Wing / U.S. Navy (Japan)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&cawing_machine_driver,
-	cps1_init_machine,
-
-	cawingj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	cawing_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver nemo_driver =
-{
-	__FILE__,
-	0,
-	"nemo",
-	"Nemo (World)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&nemo_machine_driver,
-	cps1_init_machine,
-
-	nemo_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	nemo_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver nemoj_driver =
-{
-	__FILE__,
-	&nemo_driver,
-	"nemoj",
-	"Nemo (Japan)",
-	"1990",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&nemo_machine_driver,
-	cps1_init_machine,
-
-	nemoj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	nemo_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2_driver =
-{
-	__FILE__,
-	0,
-	"sf2",
-	"Street Fighter II (World rev B)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2a_driver =
-{
-	__FILE__,
-	&sf2_driver,
-	"sf2a",
-	"Street Fighter II (US rev A)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2a_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2b_driver =
-{
-	__FILE__,
-	&sf2_driver,
-	"sf2b",
-	"Street Fighter II (US rev B)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2b_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2e_driver =
-{
-	__FILE__,
-	&sf2_driver,
-	"sf2e",
-	"Street Fighter II (US rev E)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2e_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2j_driver =
-{
-	__FILE__,
-	&sf2_driver,
-	"sf2j",
-	"Street Fighter II (Japan)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2j_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver c3wonders_driver =
-{
-	__FILE__,
-	0,
-	"3wonders",
-	"Three Wonders (US)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&c3wonders_machine_driver,
-	cps1_init_machine,
-
-	c3wonders_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	c3wonders_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver c3wonderj_driver =
-{
-	__FILE__,
-	&c3wonders_driver,
-	"3wonderj",
-	"Three Wonders (Japan)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&c3wonders_machine_driver,
-	cps1_init_machine,
-
-	c3wonderj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	c3wonders_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver kod_driver =
-{
-	__FILE__,
-	0,
-	"kod",
-	"The King of Dragons (World)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&kod_machine_driver,
-	cps1_init_machine,
-
-	kod_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	kod_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver kodj_driver =
-{
-	__FILE__,
-	&kod_driver,
-	"kodj",
-	"The King of Dragons (Japan)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&kod_machine_driver,
-	cps1_init_machine,
-
-	kodj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	kod_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
 
 struct GameDriver kodb_driver =
 {
@@ -6062,7 +5383,7 @@ struct GameDriver kodb_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&kod_machine_driver,
-	cps1_init_machine,
+	0,
 
 	kodb_rom,
 	0, 0,
@@ -6070,181 +5391,6 @@ struct GameDriver kodb_driver =
 	0,      /* sound_prom */
 
 	kod_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver captcomm_driver =
-{
-	__FILE__,
-	0,
-	"captcomm",
-	"Captain Commando (World)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&captcomm_machine_driver,
-	cps1_init_machine,
-
-	captcomm_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	captcomm_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver captcomu_driver =
-{
-	__FILE__,
-	&captcomm_driver,
-	"captcomu",
-	"Captain Commando (US)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&captcomm_machine_driver,
-	cps1_init_machine,
-
-	captcomu_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	captcomm_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver captcomj_driver =
-{
-	__FILE__,
-	&captcomm_driver,
-	"captcomj",
-	"Captain Commando (Japan)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&captcomm_machine_driver,
-	cps1_init_machine,
-
-	captcomj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	captcomm_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver knights_driver =
-{
-	__FILE__,
-	0,
-	"knights",
-	"Knights of the Round (World)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&knights_machine_driver,
-	cps1_init_machine,
-
-	knights_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	knights_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver knightsj_driver =
-{
-	__FILE__,
-	&knights_driver,
-	"knightsj",
-	"Knights of the Round (Japan)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&knights_machine_driver,
-	cps1_init_machine,
-
-	knightsj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	knights_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2ce_driver =
-{
-	__FILE__,
-	0,
-	"sf2ce",
-	"Street Fighter II' - Champion Edition (World)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2ce_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2cej_driver =
-{
-	__FILE__,
-	&sf2ce_driver,
-	"sf2cej",
-	"Street Fighter II - Champion Edition (Japan)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2cej_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
 	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
@@ -6262,7 +5408,7 @@ struct GameDriver sf2rb_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&sf2_machine_driver,
-	cps1_init_machine,
+	0,
 
 	sf2rb_rom,
 	0, 0,
@@ -6276,257 +5422,6 @@ struct GameDriver sf2rb_driver =
 	0, 0
 };
 
-struct GameDriver varth_driver =
-{
-	__FILE__,
-	0,
-	"varth",
-	"Varth (World)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&varth_machine_driver,
-	cps1_init_machine,
-
-	varth_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	varth_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver varthj_driver =
-{
-	__FILE__,
-	&varth_driver,
-	"varthj",
-	"Varth (Japan)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&varth_machine_driver,
-	cps1_init_machine,
-
-	varthj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	varth_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver cworld2j_driver =
-{
-	__FILE__,
-	0,
-	"cworld2j",
-	"Capcom World 2 (Japan)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&cworld2j_machine_driver,
-	cps1_init_machine,
-
-	cworld2j_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	cworld2j_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver wof_driver =
-{
-	__FILE__,
-	0,
-	"wof",
-	"Warriors of Fate (World)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&wof_machine_driver,
-	cps1_init_machine,
-
-	wof_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	wof_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver wofj_driver =
-{
-	__FILE__,
-	&wof_driver,
-	"wofj",
-	"Tenchi o Kurau 2 (Japan)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&wof_machine_driver,
-	cps1_init_machine,
-
-	wofj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	wof_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2t_driver =
-{
-	__FILE__,
-	&sf2ce_driver,
-	"sf2t",
-	"Street Fighter II' - Hyper Fighting (US)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2t_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver sf2tj_driver =
-{
-	__FILE__,
-	&sf2ce_driver,
-	"sf2tj",
-	"Street Fighter II Turbo (Japan)",
-	"1991",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&sf2_machine_driver,
-	cps1_init_machine,
-
-	sf2tj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	sf2_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver dino_driver =
-{
-	__FILE__,
-	0,
-	"dino",
-	"Cadillacs and Dinosaurs (World)",
-	"1993",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&dino_machine_driver,
-	cps1_init_machine,
-
-	dino_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	dino_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-
-struct GameDriver punisher_driver =
-{
-	__FILE__,
-	0,
-	"punisher",
-	"Punisher (World)",
-	"1993",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&punisher_machine_driver,
-	cps1_init_machine,
-
-	punisher_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	punisher_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	cps1_eeprom_load, cps1_eeprom_save
-};
-
-struct GameDriver punishrj_driver =
-{
-	__FILE__,
-	&punisher_driver,
-	"punishrj",
-	"Punisher (Japan)",
-	"1993",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&punisher_machine_driver,
-	cps1_init_machine,
-
-	punishrj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	punisher_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	cps1_eeprom_load, cps1_eeprom_save
-};
-
 struct GameDriver slammast_driver =
 {
 	__FILE__,
@@ -6538,10 +5433,10 @@ struct GameDriver slammast_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&slammast_machine_driver,
-	cps1_init_machine,
+	0,
 
 	slammast_rom,
-	0, 0,
+	0, slammast_decode,
 	0,
 	0,      /* sound_prom */
 
@@ -6563,10 +5458,10 @@ struct GameDriver mbomber_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&mbomber_machine_driver,
-	cps1_init_machine,
+	0,
 
 	mbomber_rom,
-	0, 0,
+	0, slammast_decode,
 	0,
 	0,      /* sound_prom */
 
@@ -6588,10 +5483,10 @@ struct GameDriver mbomberj_driver =
 	CPS1_CREDITS,
 	GAME_NOT_WORKING,
 	&mbomber_machine_driver,
-	cps1_init_machine,
+	0,
 
 	mbomberj_rom,
-	0, 0,
+	0, slammast_decode,
 	0,
 	0,      /* sound_prom */
 
@@ -6600,129 +5495,4 @@ struct GameDriver mbomberj_driver =
 
 	ORIENTATION_DEFAULT,
 	cps1_eeprom_load, cps1_eeprom_save
-};
-
-struct GameDriver pnickj_driver =
-{
-	__FILE__,
-	0,
-	"pnickj",
-	"Pnickies (Japan)",
-	"1994",
-	"Capcom (Compile license)",
-	CPS1_CREDITS,
-	0,
-	&pnickj_machine_driver,
-	cps1_init_machine,
-
-	pnickj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	pnickj_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver qad_driver =
-{
-	__FILE__,
-	0,
-	"qad",
-	"Quiz & Dragons (US)",
-	"1992",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&qad_machine_driver,
-	cps1_init_machine,
-
-	qad_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	qad_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver qadj_driver =
-{
-	__FILE__,
-	&qad_driver,
-	"qadj",
-	"Quiz & Dragons (Japan)",
-	"1994",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&qad_machine_driver,
-	cps1_init_machine,
-
-	qadj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	qadj_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver megaman_driver =
-{
-	__FILE__,
-	0,
-	"megaman",
-	"Mega Man - The Power Battle (Asia)",
-	"1995",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&megaman_machine_driver,
-	cps1_init_machine,
-
-	megaman_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	megaman_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
-};
-
-struct GameDriver rockmanj_driver =
-{
-	__FILE__,
-	&megaman_driver,
-	"rockmanj",
-	"Rockman - The Power Battle (Japan)",
-	"1995",
-	"Capcom",
-	CPS1_CREDITS,
-	0,
-	&megaman_machine_driver,
-	cps1_init_machine,
-
-	rockmanj_rom,
-	0, 0,
-	0,
-	0,      /* sound_prom */
-
-	megaman_input_ports,
-	0, 0, 0,
-
-	ORIENTATION_DEFAULT,
-	0, 0
 };

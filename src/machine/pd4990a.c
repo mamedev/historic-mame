@@ -5,20 +5,23 @@
  *      NEO GEO and probably a couple of other machines.
  */
 
+#include "machine/pd4990a.h"
+
 /* Set the data in the chip to Monday 09/09/73 00:00:00     */
 /* If you ever read this Leejanne, you know what I mean :-) */
-static int seconds=0x00;	/* BCD */
-static int minutes=0x00;	/* BCD */
-static int hours=0x00;		/* BCD */
-static int days=0x09;		/* BCD */
-static int month=0x09;		/* Hexadecimal form */
-static int year=0x73;		/* BCD */
-static int weekday=0x01;	/* BCD */
+int seconds=0x00;		/* BCD */
+int minutes=0x00;		/* BCD */
+int hours=0x00;		/* BCD */
+int days=0x09;		/* BCD */
+int month=9;		/* Hexadecimal form */
+int year=0x73;		/* BCD */
+int weekday=1;		/* BCD */
 
-static int retraces=0;		/* Assumes 60 retraces a second */
-static int coinflip=0;		/* Pulses a bit in order to simulate */
-				/* test output */
-static int outputbit=0;
+int retraces=0;			/* Assumes 60 retraces a second */
+int coinflip=0;			/* Pulses a bit in order to simulate */
+					/* test output */
+int outputbit=0;
+int bitno=0;
 
 void addretrace (void) {
 	coinflip ^= 1;
@@ -29,21 +32,22 @@ void addretrace (void) {
 		if ((seconds & 0x0f) == 10) {
 			seconds &= 0xf0;
 			seconds += 0x10;
-			if ( (seconds & 0xf0) == 0xA0) {
-				seconds &= 0x0f;
+			if ( seconds == 0x60) {
+				seconds = 0;
 				minutes++;
 				if ( (minutes & 0x0f) == 10) {
 					minutes &= 0xf0;
 					minutes += 0x10;
-					if ((minutes & 0xf0) == 0xa0) {
-						minutes &= 0x0f;
+					if (minutes == 0x60) {
+						minutes = 0;
 						hours++;
 						if ( (hours & 0x0f) == 10 ){
 							hours &= 0xf0;
 							hours += 0x10;
-							if ((hours & 0xf0) ==  3) {
-								hours &= 0x0f;
-							}
+						}
+						if (hours == 0x24) {
+							hours = 0;
+							increment_day();
 						}
 					}
 				}
@@ -52,23 +56,98 @@ void addretrace (void) {
 	}
 }
 
+void	increment_day(void)
+{
+	int	real_year;
+
+	days++;
+	if ((days & 0x0f) == 10)
+	{
+		days &= 0xf0;
+		days += 0x10;
+	}
+
+	weekday++;
+	if (weekday==7)
+		weekday=0;
+
+	switch(month)
+	{
+	case	1:
+	case	3:
+	case	5:
+	case	7:
+	case	8:
+	case	10:
+	case	12:
+		if (days==0x32)
+		{
+			days=1;
+			increment_month();
+		}
+		break;
+	case	2:
+		real_year = (year>>4)*10 + (year&0xf);
+		if (real_year%4)	/* There are some rare exceptions, but I don't care ... */
+		{
+			if (days==0x29)
+			{
+				days=1;
+				increment_month();
+			}
+		}
+		else
+		{
+			if (days==0x30)
+			{
+				days=1;
+				increment_month();
+			}
+		}
+		break;
+	case	4:
+	case	6:
+	case	9:
+	case	11:
+		if (days==0x31)
+		{
+			days=1;
+			increment_month();
+		}
+		break;
+	}
+}
+
+void	increment_month(void)
+{
+	month++;
+	if (month==13) {
+		month=1;
+		year++;
+		if ((year & 0x0f) == 10) {
+			year &= 0xf0;
+			year += 0x10;
+		}
+		if (year == 0xA0)		/* Happy new year 2000 !!! */
+			year = 0;
+	}
+}
+
 int read_4990_testbit(void) {
 	return (coinflip);
 }
 
-void write_4990_control(int data) {
-	static int bitno=0;
+int read_4990_databit(void)
+{
+	return (outputbit);
+}
+
+void write_4990_control(int offset, int data) {
+
+	data &= 0xff;
 
 	switch (data) {
-		case 0x00:	/* Register hold, do nothing */
-				break;
-
-		case 0x04:	/* Start afresh with shifting */
-				bitno=0;
-				break;
-
-		case 0x02:	/* shift one position */
-				bitno++;
+		case 0x00:	/* Load Register */
 				switch(bitno) {
 					case 0x00:
 					case 0x01:
@@ -109,12 +188,12 @@ void write_4990_control(int data) {
 					case 0x20:
 					case 0x21:
 					case 0x22:
-					case 0x23: outputbit=(weekday >> (bitno-28)) & 0x01;
+					case 0x23: outputbit=(weekday >> (bitno-32)) & 0x01;
 						   break;
 					case 0x24:
 					case 0x25:
 					case 0x26:
-					case 0x27: outputbit=(month >> (bitno-32)) & 0x01;
+					case 0x27: outputbit=(month >> (bitno-36)) & 0x01;
 						   break;
 					case 0x28:
 					case 0x29:
@@ -127,6 +206,15 @@ void write_4990_control(int data) {
 						   break;
 
 				}
+				break;
+
+		case 0x04:	/* Start afresh with shifting */
+				bitno=0;
+				break;
+
+		case 0x02:	/* shift one position */
+				bitno++;
+
 		default:	/* Unhandled value */
 				break;
 	}

@@ -467,7 +467,7 @@ static void print_game_micro(FILE* out, const struct GameDriver* game)
 		{
 			int cpu_type = cpu[j].cpu_type & ~CPU_FLAGS_MASK;
 			fprintf(out, L1P "chip" L2B);
-			if (cpu[j].cpu_type & CPU_AUDIO_CPU)
+			if (cpu_type & CPU_AUDIO_CPU)
 				fprintf(out, L2P "type audio" L2N);
 			else
 				fprintf(out, L2P "type cpu" L2N);

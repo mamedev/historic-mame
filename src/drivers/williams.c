@@ -401,32 +401,16 @@ void lottofun_init_machine(void);
 int williams_interrupt(void);
 void williams_vram_select_w(int offset,int data);
 
-extern unsigned char *robotron_catch;
-int robotron_catch_loop_r(int offset);
-
-extern unsigned char *stargate_catch;
-int stargate_catch_loop_r(int offset);
-
-extern unsigned char *mayday_catch;
-int mayday_catch_loop_r(int offset);
-
-extern unsigned char *defender_catch;
 extern unsigned char *defender_bank_base;
-int defender_catch_loop_r(int offset);
 void defender_bank_select_w(int offset,int data);
 
 void colony7_bank_select_w(int offset,int data);
 
 extern void defcomnd_bank_select_w(int offset,int data);
 
-extern unsigned char *blaster_catch;
 extern unsigned char *blaster_bank2_base;
-int blaster_catch_loop_r(int offset);
 void blaster_bank_select_w(int offset,int data);
 void blaster_vram_select_w(int offset,int data);
-
-extern unsigned char *splat_catch;
-int splat_catch_loop_r(int offset);
 
 
 /**** from vidhrdw/williams.h ****/
@@ -472,7 +456,6 @@ static void defndjeu_decode(void);
 static struct MemoryReadAddress robotron_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
-	{ 0x9810, 0x9810, robotron_catch_loop_r, &robotron_catch },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc807, pia_1_r },
 	{ 0xc80c, 0xc80f, pia_2_r },
@@ -497,7 +480,6 @@ static struct MemoryReadAddress joust_readmem[] =
 static struct MemoryReadAddress stargate_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
-	{ 0x9c39, 0x9c39, stargate_catch_loop_r, &stargate_catch },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc807, pia_1_r },
 	{ 0xc80c, 0xc80f, pia_2_r },
@@ -543,7 +525,6 @@ static struct MemoryWriteAddress williams_writemem[] =
 static struct MemoryReadAddress splat_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
-	{ 0x984b, 0x984b, splat_catch_loop_r, &splat_catch },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc807, pia_1_r },
 	{ 0xc80c, 0xc80f, pia_2_r },
@@ -613,7 +594,6 @@ static struct MemoryReadAddress blaster_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_BANK1, &williams_bank_base },
 	{ 0x4000, 0x96ff, MRA_BANK2, &blaster_bank2_base },
-/*      { 0x9700, 0x9700, blaster_catch_loop_r, &blaster_catch },*/
 	{ 0x9700, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc807, pia_1_r },
 	{ 0xc80c, 0xc80f, pia_2_r },
@@ -652,7 +632,6 @@ static struct MemoryWriteAddress blaster_writemem[] =
 
 static struct MemoryReadAddress defender_readmem[] =
 {
-	{ 0xa05d, 0xa05d, defender_catch_loop_r, &defender_catch },
 	{ 0x0000, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xcfff, MRA_BANK1 },          /* i/o / rom */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -677,7 +656,6 @@ static struct MemoryWriteAddress defender_writemem[] =
 
 static struct MemoryReadAddress defcomnd_readmem[] =
 {
-//	{ 0xa05d, 0xa05d, defender_catch_loop_r, &defender_catch },
 	{ 0x0000, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xcfff, MRA_BANK1 },          /* i/o / rom */
 	{ 0xd000, 0xffff, MRA_ROM },
@@ -704,8 +682,6 @@ static struct MemoryWriteAddress defcomnd_writemem[] =
 
 static struct MemoryReadAddress mayday_readmem[] =
 {
-//    { 0xa03a, 0xa03a, mayday_catch_loop_r, &mayday_catch },
-//    { 0xa05d, 0xa05d, mayday_catch_loop_r, &mayday_catch },
 	{ 0x0000, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xcfff, MRA_BANK1 },          /* i/o / rom */
 	{ 0xd000, 0xffff, MRA_ROM },

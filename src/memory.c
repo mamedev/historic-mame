@@ -862,6 +862,48 @@ int cpu_readmem16 (int address)
 }
 
 
+int cpu_readmem16_word (int address)
+{
+    MHELE hw;
+    UINT8 data;
+
+    /* reads across element boundaries must be broken up */
+    if ( (address & MHMASK(ABITS2_16)) == MHMASK(ABITS2_16) )
+        return cpu_readmem16(address) | (cpu_readmem16(address + 1) << 8);
+
+    /* 1st element link */
+    hw = cur_mrhard[address >> (ABITS2_16 + ABITS_MIN_16)];
+    if( !hw )
+        return READ_WORD( &RAM[address] );
+
+    if( hw >= MH_HARDMAX ) {
+        /* 2nd element link */
+        int ele = ((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16) & MHMASK(ABITS2_16));
+        hw = readhardware[ele];
+        if( !hw && !readhardware[++ele] )
+            return READ_WORD( &RAM[address] );
+    }
+    if ( !hw )
+        data = RAM[address];
+    else
+        data = memoryreadhandler[hw](address - memoryreadoffset[hw]);
+
+    address = ++address & 0xffff;
+
+    /* 1st element link */
+    hw = cur_mrhard[address >> (ABITS2_16 + ABITS_MIN_16)];
+
+    if( hw >= MH_HARDMAX )
+        /* 2nd element link */
+        hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16) & MHMASK(ABITS2_16))];
+
+    if( !hw )
+        return data | (RAM[address] << 8);
+
+    return data | (memoryreadhandler[hw](address - memoryreadoffset[hw]) << 8);
+}
+
+
 int cpu_readmem16lew (int address)
 {
 	int shift, data;
@@ -1194,6 +1236,61 @@ void cpu_writemem16 (int address, int data)
 
 	/* fallback to handler */
 	memorywritehandler[hw](address - memorywriteoffset[hw], data);
+}
+
+
+void cpu_writemem16_word (int address, int data)
+{
+	MHELE hw;
+
+	/* writes across element boundaries must be broken up */
+	if ( (address & MHMASK(ABITS2_16)) == MHMASK(ABITS2_16) )
+	{
+		cpu_writemem16( address, data & 0xff );
+		cpu_writemem16( address + 1, data >> 8 );
+		return;
+	}
+
+    /* 1st element link */
+	hw = cur_mwhard[address >> (ABITS2_16 + ABITS_MIN_16)];
+	if( !hw ) {
+		WRITE_WORD( &RAM[address], data );
+		return;
+	}
+	if( hw >= MH_HARDMAX ) {
+        /* 2nd element link */
+		int ele = ((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16) & MHMASK(ABITS2_16));
+		hw = writehardware[ele];
+		if( !hw ) {
+			if ( !writehardware[++ele] ) {
+				WRITE_WORD( &RAM[address], data );
+				return;
+			}
+		}
+	}
+	if ( !hw )
+		RAM[address] = data;
+	else
+		memorywritehandler[hw]( address - memorywriteoffset[hw], data & 0xff );
+
+    address = ++address & 0xffff;
+	data >>= 8;
+
+	/* 1st element link */
+	hw = cur_mwhard[address >> (ABITS2_16 + ABITS_MIN_16)];
+	if( !hw ) {
+		RAM[address] = data;
+		return;
+	}
+
+    if( hw >= MH_HARDMAX )
+        /* 2nd element link */
+		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16) & MHMASK(ABITS2_16))];
+
+    if ( !hw )
+		RAM[address] = data;
+	else
+		memorywritehandler[hw]( address - memorywriteoffset[hw], data );
 }
 
 

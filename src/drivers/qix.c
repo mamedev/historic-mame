@@ -972,7 +972,7 @@ ROM_END
 
 ROM_START( zookeep_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "zb12",         0x8000, 0x1000, 0x17c02aa2 )
+	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
 	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
 	ROM_LOAD( "za15",         0xB000, 0x1000, 0xef8cd67c )
@@ -1003,7 +1003,7 @@ ROM_END
 
 ROM_START( zookeep2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "zb12",         0x8000, 0x1000, 0x17c02aa2 )
+	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
 	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
 	ROM_LOAD( "za15",         0xB000, 0x1000, 0xef8cd67c )
@@ -1034,7 +1034,7 @@ ROM_END
 
 ROM_START( zookeep3_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "zb12",         0x8000, 0x1000, 0x17c02aa2 )
+	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
 	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
 	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
 	ROM_LOAD( "za15",         0xB000, 0x1000, 0xef8cd67c )

@@ -104,7 +104,8 @@ struct GfxElement *builduifont(void)
 		0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x40,0x20,0x20,0x10,0x20,0x20,0x40,0x00,
 		0x00,0x68,0xb0,0x00,0x00,0x00,0x00,0x00,0x20,0x50,0x20,0x50,0xa8,0x50,0x00,0x00,
 	};
-	static unsigned char fontdata8x8[] =
+#if 0	   /* HJB 990215 unused!? */
+    static unsigned char fontdata8x8[] =
 	{
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -171,7 +172,8 @@ struct GfxElement *builduifont(void)
 		0x18,0x18,0x18,0x00,0x18,0x18,0x18,0x00,0x70,0x18,0x30,0x1C,0x30,0x18,0x70,0x00,
 		0x00,0x00,0x76,0xDC,0x00,0x00,0x00,0x00,0x10,0x28,0x10,0x54,0xAA,0x44,0x00,0x00,
 	};
-	static struct GfxLayout fontlayout6x8 =
+#endif
+    static struct GfxLayout fontlayout6x8 =
 	{
 		6,8,	/* 6*8 characters */
 		128,    /* 128 characters */
@@ -201,7 +203,8 @@ struct GfxElement *builduifont(void)
 		{ 0*8,0*8, 1*8,1*8, 2*8,2*8, 3*8,3*8, 4*8,4*8, 5*8,5*8, 6*8,6*8, 7*8,7*8 },
 		8*8	/* every char takes 8 consecutive bytes */
 	};
-	static struct GfxLayout fontlayout8x8 =
+#if 0	/* HJB 990215 unused!? */
+    static struct GfxLayout fontlayout8x8 =
 	{
 		8,8,	/* 8*8 characters */
 		128,    /* 128 characters */
@@ -211,7 +214,8 @@ struct GfxElement *builduifont(void)
 		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 		8*8	/* every char takes 8 consecutive bytes */
 	};
-	struct GfxElement *font;
+#endif
+    struct GfxElement *font;
 	static unsigned short colortable[2*2];	/* ASG 980209 */
 	int trueorientation;
 
@@ -378,7 +382,7 @@ int i;
 
 static void drawbox(int leftx,int topy,int width,int height)
 {
-	int x,y;
+	int y;
 	unsigned short black,white;
 
 
@@ -406,7 +410,7 @@ static void drawbox(int leftx,int topy,int width,int height)
 
 static void drawbar(int leftx,int topy,int width,int height,int percentage)
 {
-	int x,y;
+	int y;
 	unsigned short black,white;
 
 
@@ -517,8 +521,6 @@ void displaymenu(const char **items,const char **subitems,char *flag,int selecte
 		{
 			if (subitems && subitems[item])
 			{
-				int length;
-
 				dt[curr_dt].text = items[item];
 				dt[curr_dt].color = DT_COLOR_WHITE;
 				dt[curr_dt].x = leftoffs + 3*Machine->uifont->width/2;
@@ -745,6 +747,13 @@ static void showcharset(void)
 			int lastdrawn=0;
 
 			osd_clearbitmap(Machine->scrbitmap);
+
+			/* validity chack after char bank change */
+			if (firstdrawn >= Machine->drv->gfxdecodeinfo[bank].gfxlayout->total)
+			{
+				firstdrawn = Machine->drv->gfxdecodeinfo[bank].gfxlayout->total - skip_chars;
+				if (firstdrawn < 0) firstdrawn = 0;
+			}
 
 			if(bank!=2 || !game_is_neogeo)
 			{
@@ -1466,7 +1475,6 @@ static int setjoysettings(int selected)
 
 static int calibratejoysticks(int selected)
 {
-	int key;
 	char *msg;
 	char buf[2048];
 	int sel;
@@ -1859,7 +1867,6 @@ static int settraksettings(int selected)
 
 static int mame_stats(int selected)
 {
-	int key;
 	char temp[10];
 	char buf[2048];
 	int sel;
@@ -1969,7 +1976,6 @@ int showcopyright(void)
 
 static int displaycredits(int selected)
 {
-	int key;
 	char buf[2048];
 	int sel;
 
@@ -2142,7 +2148,6 @@ int showgamewarnings(void)
 	int i;
 	int counter;
 	char buf[2048];
-	struct DisplayText dt[3];
 
 	if (Machine->gamedrv->flags)
 	{
@@ -2483,7 +2488,7 @@ sel = sel & 0xff;
 static void displayosd(const char *text,int percentage)
 {
 	struct DisplayText dt[2];
-	int i,avail;
+	int avail;
 
 
 	avail = (Machine->uiwidth / Machine->uifont->width) * 19 / 20;
@@ -2532,34 +2537,81 @@ static void onscrd_volume(int increment,int arg)
 
 static void onscrd_streamvol(int increment,int arg)
 {
+	static void *driver = 0;
 	char buf[40];
 	int volume,ch;
 	int doallstreams = 0;
+	int proportional = 0;
 
 
 	if (osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT))
 		doallstreams = 1;
 	if (!osd_key_pressed(OSD_KEY_LCONTROL) && !osd_key_pressed(OSD_KEY_RCONTROL))
 		increment *= 5;
+	if (osd_key_pressed(OSD_KEY_ALT) || osd_key_pressed(OSD_KEY_ALTGR))
+		proportional = 1;
 
 	if (increment)
 	{
-		volume = stream_get_volume(arg);
-		volume += increment;
-		if (volume > 100) volume = 100;
-		if (volume < 0) volume = 0;
-
-		if (doallstreams)
+		if (proportional)
 		{
-			for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
-				stream_set_volume(ch,volume);
+			static int old_vol[MAX_STREAM_CHANNELS];
+			float ratio = 1.0;
+			int overflow = 0;
+
+			if (driver != Machine->drv)
+			{
+				driver = (void *)Machine->drv;
+				for (ch = 0; ch < MAX_STREAM_CHANNELS; ch++)
+					old_vol[ch] = stream_get_volume(ch);
+			}
+
+			volume = stream_get_volume(arg);
+			if (old_vol[arg])
+				ratio = (float)(volume + increment) / (float)old_vol[arg];
+
+			for (ch = 0; ch < MAX_STREAM_CHANNELS; ch++)
+			{
+				if (stream_get_name(ch) != 0)
+				{
+					volume = ratio * old_vol[ch];
+					if (volume < 0 || volume > 100)
+						overflow = 1;
+				}
+			}
+
+			if (!overflow)
+			{
+				for (ch = 0; ch < MAX_STREAM_CHANNELS; ch++)
+				{
+					volume = ratio * old_vol[ch];
+					stream_set_volume(ch, volume);
+				}
+			}
 		}
 		else
-			stream_set_volume(arg,volume);
+		{
+			driver = 0; /* force reset of saved volumes */
+
+			volume = stream_get_volume(arg);
+			volume += increment;
+			if (volume > 100) volume = 100;
+			if (volume < 0) volume = 0;
+
+			if (doallstreams)
+			{
+				for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
+					stream_set_volume(ch,volume);
+			}
+			else
+				stream_set_volume(arg,volume);
+		}
 	}
 	volume = stream_get_volume(arg);
 
-	if (doallstreams)
+	if (proportional)
+		sprintf(buf,"ALL CHANNELS Relative %3d%%", volume);
+	else if (doallstreams)
 		sprintf(buf,"ALL CHANNELS Volume %3d%%",volume);
 	else
 		sprintf(buf,"%s Volume %3d%%",stream_get_name(arg),volume);
@@ -2689,7 +2741,7 @@ static int on_screen_display(int selected)
 static void displaymessage(const char *text)
 {
 	struct DisplayText dt[2];
-	int i,avail;
+	int avail;
 
 
 	avail = strlen(text)+2;

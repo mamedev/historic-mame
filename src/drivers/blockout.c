@@ -203,7 +203,7 @@ static void blockout_irq_handler(void)
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
-	3582071,	/* seems to be the standard */
+	3579545,	/* 3.579545 Mhz (?) */
 	{ 60 },
 	{ blockout_irq_handler }
 };
@@ -224,14 +224,14 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			10000000,	/* 10 Mhz ??? */
+			10000000,	/* 10 Mhz (?) */
 			0,
 			readmem,writemem,0,0,
 			blockout_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz ??? */
+			3579545,	/* 3.579545 Mhz (?) */
 			2,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* NMIs are triggered by the main CPU, IRQs by the YM2151 */
@@ -274,6 +274,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
 ROM_START( blockout_rom )
 	ROM_REGION(0x40000)	/* 2*128k for 68000 code */
 	ROM_LOAD_EVEN( "bo29a0-2.bin", 0x00000, 0x20000, 0xb0103427 )

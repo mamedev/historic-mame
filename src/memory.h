@@ -175,6 +175,7 @@ void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int,
 
 /* ----- memory read /write function ----- */
 int cpu_readmem16(int address);
+int cpu_readmem16_word(int address);	/* HJB 990226 */
 int cpu_readmem16lew(int address);
 int cpu_readmem16lew_word(int address);
 int cpu_readmem20(int address);
@@ -185,6 +186,7 @@ int cpu_readmem29(int address);        /* AJP 980803 */
 int cpu_readmem29_word(int address);   /* AJP 980803 */
 int cpu_readmem29_dword(int address);  /* AJP 980803 */
 void cpu_writemem16(int address,int data);
+void cpu_writemem16_word(int address,int data); /* HJB 990226 */
 void cpu_writemem16lew(int address,int data);
 void cpu_writemem16lew_word(int address,int data);
 void cpu_writemem20(int address,int data);

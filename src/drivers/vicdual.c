@@ -812,6 +812,43 @@ INPUT_PORTS_START ( carnvckt_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( digger_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x60, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x80, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+INPUT_PORTS_END
+
 INPUT_PORTS_START ( pulsar_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -1333,6 +1370,21 @@ ROM_START( carnvckt_rom )
 
 	ROM_REGION(0x0800)	/* sound ROM */
 	ROM_LOAD( "crvl.snd",     0x0000, 0x0400, 0x0dbaa2b0 )
+ROM_END
+
+ROM_START( digger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "684.u27",      0x0000, 0x0400, 0xbba0d7c2 )
+	ROM_LOAD( "685.u26",      0x0400, 0x0400, 0x85210d8b )
+	ROM_LOAD( "686.u25",      0x0800, 0x0400, 0x2d87238c )
+	ROM_LOAD( "687.u24",      0x0c00, 0x0400, 0x0dd0604e )
+	ROM_LOAD( "688.u23",      0x1000, 0x0400, 0x2f649667 )
+	ROM_LOAD( "689.u22",      0x1400, 0x0400, 0x89fd63d9 )
+	ROM_LOAD( "690.u21",      0x1800, 0x0400, 0xa86622a6 )
+	ROM_LOAD( "691.u20",      0x1c00, 0x0400, 0x8aca72d8 )
+
+	ROM_REGION(0x0020) /* Color PROMs */
+	ROM_LOAD( "316-507",      0x0000, 0x0020, 0xfdb22e8f )
 ROM_END
 
 ROM_START( pulsar_rom )
@@ -1901,6 +1953,32 @@ struct GameDriver carnvckt_driver =
 	ORIENTATION_ROTATE_270,
 
 	carnival_hiload, carnival_hisave
+};
+
+struct GameDriver digger_driver =
+{
+	__FILE__,
+	0,
+	"digger",
+	"Digger",
+	"1980",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_3ports_machine_driver,
+	0,
+
+	digger_rom,
+	vicdual_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	digger_input_ports,
+
+	PROM_MEMORY_REGION(1), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
 };
 
 struct GameDriver pulsar_driver =

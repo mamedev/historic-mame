@@ -14,8 +14,8 @@ const int pang_paletteram_size=0x1000;
 /* Globals */
 int pang_videoram_size;
 int pang_colorram_size;
-unsigned char * pang_videoram;
-unsigned char * pang_colorram;
+unsigned char *pang_videoram;
+unsigned char *pang_colorram;
 
 /* Private */
 static struct osd_bitmap *pang_tmpbitmap;    /* Temp bitmap */
@@ -323,24 +323,23 @@ void pang_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	copybitmap(bitmap,pang_tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw sprites */
-	for (offs=0x1000-0x20; offs >=0 ; offs-=0x20)
+	/* the last entry is not a sprite, we skip it otherwise spang shows a bubble */
+	/* moving diagonally across the screen */
+	for (offs = 0x1000-0x40;offs >= 0;offs -= 0x20)
 	{
-		sy=pang_objram[offs+2];
-		if ( sy )
-		{
-			int code = pang_objram[offs];
-			int attr = pang_objram[offs+1];
-			int color=attr & 0x0f;
-			sx=pang_objram[offs+3]+((attr&0x10)<<4);
-			code+=(attr&0xe0)<<3;
-			drawgfx(bitmap,Machine->gfx[1],
-					 code,
-					 color,
-					 0,0,
-					 sx,sy,
-					 &Machine->drv->visible_area,
-					 TRANSPARENCY_PEN,15);
-		}
+		int code = pang_objram[offs];
+		int attr = pang_objram[offs+1];
+		int color = attr & 0x0f;
+		sx = pang_objram[offs+3] + ((attr & 0x10) << 4);
+		sy = ((pang_objram[offs+2] + 8) & 0xff) - 8;
+		code += (attr & 0xe0) << 3;
+		drawgfx(bitmap,Machine->gfx[1],
+				 code,
+				 color,
+				 0,0,
+				 sx,sy,
+				 &Machine->drv->visible_area,
+				 TRANSPARENCY_PEN,15);
 	}
 }
 

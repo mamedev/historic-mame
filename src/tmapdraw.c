@@ -47,7 +47,7 @@
 		y2 -= ypos;
 
 		source_baseaddr = blit.pixmap->line[y1];
-		mask_baseaddr = blit.fatmask->line[y1];
+		mask_baseaddr = blit.bitmask->line[y1];
 
 		c1 = x1/TILE_WIDTH; /* round down */
 		c2 = (x2+TILE_WIDTH-1)/TILE_WIDTH; /* round up */
@@ -85,15 +85,25 @@
 					if( x_end>x2 ) x_end = x2;
 
 					if( prev_tile_type != TILE_TRANSPARENT ){
-						int num_pixels = x_end - x_start;
-						unsigned char *dest0 = dest_baseaddr+x_start;
-						const unsigned char *source0 = source_baseaddr+x_start;
-
 						if( prev_tile_type == TILE_MASKED ){
+#if USE_FATMASKS
+							int num_pixels = x_end - x_start;
 							const unsigned char *mask0 = mask_baseaddr+x_start;
+							const unsigned char *source0 = source_baseaddr+x_start;
+							unsigned char *dest0 = dest_baseaddr+x_start;
+#else
+							int count = (x_end+7)/8 - x_start/8;
+							const unsigned char *mask0 = mask_baseaddr + x_start/8;
+							const unsigned char *source0 = source_baseaddr + (x_start&0xfff8);
+							unsigned char *dest0 = dest_baseaddr + (x_start&0xfff8);
+#endif
 							int i = y;
 							for(;;){
+#if USE_FATMASKS
 								memcpy0( dest0, source0, mask0, num_pixels );
+#else
+								memcpybitmask( dest0, source0, mask0, count );
+#endif
 								if( ++i == y_next ) break;
 
 								dest0 += blit.dest_line_offset;
@@ -102,6 +112,9 @@
 							}
 						}
 						else { /* TILE_OPAQUE */
+							int num_pixels = x_end - x_start;
+							unsigned char *dest0 = dest_baseaddr+x_start;
+							const unsigned char *source0 = source_baseaddr+x_start;
 							int i = y;
 							for(;;){
 								memcpy( dest0, source0, num_pixels );

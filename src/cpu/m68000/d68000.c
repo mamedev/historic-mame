@@ -37,6 +37,10 @@ static const char* copyright_notice =
 #undef uint
 #define uint unsigned int
 
+#ifndef QSORT_CALLBACK_DECL
+#define QSORT_CALLBACK_DECL
+#endif
+
 /* Bit Isolation Functions */
 #define BIT_0(A)  ((A) & 0x00000001)
 #define BIT_1(A)  ((A) & 0x00000002)
@@ -140,7 +144,7 @@ char* get_imm_str_s32(void);
 /* Stuff to build the opcode handler jump table */
 static void  build_opcode_table(void);
 static int   valid_ea(uint opcode, uint mask);
-static int   compare_nof_true_bits(const void *aptr, const void *bptr);
+static int QSORT_CALLBACK_DECL compare_nof_true_bits(const void *aptr, const void *bptr);
 
 
 /* used to build opcode handler jump table */
@@ -3002,7 +3006,7 @@ static int valid_ea(uint opcode, uint mask)
 }
 
 /* Used by qsort */
-static int compare_nof_true_bits(const void *aptr, const void *bptr)
+static int QSORT_CALLBACK_DECL compare_nof_true_bits(const void *aptr, const void *bptr)
 {
    uint a = ((opcode_struct*)aptr)->mask;
    uint b = ((opcode_struct*)bptr)->mask;

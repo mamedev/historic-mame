@@ -1451,7 +1451,24 @@ static int smashtv_speedup_r(int offset)
 		return value1;
 	}
 }
+static int smashtv4_speedup_r(int offset)
+{
+	if (offset)
+	{
+		UINT32 value1 = READ_WORD(&SCRATCH_RAM[TOBYTE(0x86790)]);
 
+		/* Suspend cpu if it's waiting for an interrupt */
+		if (cpu_getpc() == 0xffe0a320 && !value1)
+		{
+			DO_SPEEDUP_LOOP_1(0x1000040, 0xa0, 0x80, INT16, INT32);
+		}
+		return value1;
+	}
+	else
+	{
+		return READ_WORD(&SCRATCH_RAM[TOBYTE(0x86780)]);
+	}
+}
 static int totcarn_speedup_r(int offset)
 {
 	if (offset)
@@ -2171,6 +2188,14 @@ void smashtv_driver_init(void)
 {
 	/* set up speedup loops */
 	install_mem_read_handler(0, TOBYTE(0x01086760), TOBYTE(0x0108677f), smashtv_speedup_r);
+	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
+
+	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x01000000));
+}
+void smashtv4_driver_init(void)
+{
+	/* set up speedup loops */
+	install_mem_read_handler(0, TOBYTE(0x01086780), TOBYTE(0x0108679f), smashtv4_speedup_r);
 	install_mem_read_handler(1, 0x0218, 0x0218, smashtv_sound_speedup_r);
 
 	TMS34010_set_stack_base(0, SCRATCH_RAM, TOBYTE(0x01000000));

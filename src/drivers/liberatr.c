@@ -122,12 +122,6 @@ On   On                                  2 coins for 1 credit
 #include "driver.h"
 #include "machine/atari_vg.h"
 
-/* Important:
-//   These next two defines must match the ones in the
-//     driver file, or very bad things will happen.		*/
-#define LIB_ASPECTRATIO_512x384		0
-#define LIB_ASPECTRATIO_342x256		1
-
 /* from machine */
 void liberator_init_machine(void);
 void liberator_w(int offset, int data);
@@ -298,19 +292,14 @@ static struct MachineDriver machine_driver =
 	liberator_init_machine,	/* init_machine fcn			*/
 
 	/* video hardware */
-#if LIB_ASPECTRATIO_342x256
-	342, 256, 				/* scrn wd,ht				*/
-	{ 0, 342-1, 0, 256-1 },	/* visible area {minx, maxx, miny, maxy}	*/
-#else
-	512, 384, 				/* scrn wd,ht				*/
-	{ 0, 512-1, 0, 384-1 },	/* visible area {minx, maxx, miny, maxy}	*/
-#endif
+	256, 256, 				/* scrn wd,ht				*/
+	{ 0, 256-1, 0, 256-1 },	/* visible area {minx, maxx, miny, maxy}	*/
 	0, 						/* GfxDecodeInfo			*/
 	32, 					/* total_colors				*/
 	0,						/* length in bytes of the color lookup table (3*total_colors bytes)	*/
 	0,	/* vh_convert_color_prom()	*/
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,	/* video_attributes	*/
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_4_3,	/* video_attributes	*/
 	0,						/* vh_init()	*/
 	liberator_vh_start,		/* vh_start()	*/
 	liberator_vh_stop,		/* vh_stop()	*/

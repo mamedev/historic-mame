@@ -22,10 +22,10 @@
  *****************************************************************************/
 
 /* pointers to the registers inside the Z8000_Regs struct Z */
-#define RB(n)   *pRB[n]
-#define RW(n)	*pRW[n]
-#define RL(n)	*pRL[n]
-#define RQ(n)	*pRQ[n]
+#define RB(n)   (*pRB[n])
+#define RW(n)   (*pRW[n])
+#define RL(n)   (*pRL[n])
+#define RQ(n)   (*pRQ[n])
 
 /* the register used as stack pointer */
 #define SP      15

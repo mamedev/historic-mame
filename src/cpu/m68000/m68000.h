@@ -227,6 +227,8 @@ int m68000_execute(int num_clks);
 /* Interrupt the CPU as if you asserted the INT pins */
 void m68000_pulse_irq(int int_level);
 
+void m68000_clear_irq(int int_level);
+
 /* Halt the CPU as if you asserted the HALT pin */
 void m68000_pulse_halt(void);
 

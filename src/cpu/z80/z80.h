@@ -4,7 +4,6 @@
 #include "osd_cpu.h"
 #include "cpuintrf.h"
 
-
 /****************************************************************************/
 /* Define a Z80 word. Upper bytes are always zero                           */
 /****************************************************************************/
@@ -25,23 +24,17 @@ typedef union {
 /* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
 /****************************************************************************/
 typedef struct {
-	Z80_pair	AF,BC,DE,HL,IX,IY,PC,SP;
-	Z80_pair	AF2,BC2,DE2,HL2;
-	unsigned	R;
-	UINT8		IFF1,IFF2,HALT,IM,I,R2;
-
-	int vector; 					/* vector for SINGLE INT mode			*/
-	int pending_irq;
-	int irq_max;					/* number of daisy chain devices		*/
-	int request_irq;				/* daisy chain next request device		*/
-	int service_irq;				/* daisy chain next reti handling devicve */
-	int int_state[Z80_MAXDAISY];
-	Z80_DaisyChain irq[Z80_MAXDAISY];
-#if NEW_INTERRUPT_SYSTEM
-	int nmi_state;					/* nmi line state */
-	int irq_state;					/* irq line state */
-	int (*irq_callback)(int irqline);	/* irq callback */
-#endif
+/* 00 */	Z80_pair	AF,BC,DE,HL,IX,IY,PC,SP;
+/* 20 */	Z80_pair	AF2,BC2,DE2,HL2;
+/* 30 */	UINT8		R,R2,IFF1,IFF2,HALT,IM,I;
+/* 37 */	UINT8		irq_max;			/* number of daisy chain devices		*/
+/* 38 */	INT8		request_irq;		/* daisy chain next request device		*/
+/* 39 */	INT8		service_irq;		/* daisy chain next reti handling devicve */
+/* 3a */	UINT8		int_state[Z80_MAXDAISY];
+/* 3e */	INT8		nmi_state;			/* nmi line state */
+/* 3f */	INT8		irq_state;			/* irq line state */
+/* 40 */	Z80_DaisyChain irq[Z80_MAXDAISY];
+/* 80 */	int 		(*irq_callback)(int irqline);
 }   Z80_Regs;
 
 extern int Z80_ICount;				/* T-state count						*/
@@ -56,14 +49,9 @@ extern void Z80_SetRegs (Z80_Regs *Regs);  /* Set registers 					   */
 extern void Z80_Reset (Z80_DaisyChain *daisy_chain);
 extern int	Z80_Execute(int cycles);	   /* Execute cycles T-States - returns number of cycles actually run */
 extern int	Z80_Interrupt(void);
-#if NEW_INTERRUPT_SYSTEM
 extern void Z80_set_nmi_line(int state);
 extern void Z80_set_irq_line(int irqline, int state);
 extern void Z80_set_irq_callback(int (*irq_callback)(int));
-#else
-extern void Z80_Cause_Interrupt(int type);
-extern void Z80_Clear_Pending_Interrupts(void);
-#endif
 
 #ifdef MAME_DEBUG
 extern int DasmZ80(char *buffer, int PC);

@@ -607,7 +607,7 @@ static void nemesis_drawgfx_zoomdown(struct osd_bitmap *dest,const struct GfxEle
 }
 
 
-void draw_sprites(struct osd_bitmap *bitmap)
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	/*
 	 *	16 bytes per sprite, in memory from 56000-56fff

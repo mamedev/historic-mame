@@ -412,7 +412,7 @@ static struct MachineDriver machine_driver =
 	128+32+32,64*4+16*4+3*4,
 	mpatrol_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_3_2,
 	0,
 	mpatrol_vh_start,
 	mpatrol_vh_stop,

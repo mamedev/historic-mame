@@ -117,7 +117,6 @@ void tknight_protection_w(int offset,int data)
 		0x1b52
 	};
 
-
 	data = (data >> 8) & 0xff;
 
 //if (errorlog) fprintf(errorlog,"PC %06x: prot = %02x\n",cpu_getpc(),data);
@@ -194,8 +193,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x07a20c, 0x07a20d, gaiden_fgscrollx_w },
 	{ 0x07a304, 0x07a305, gaiden_bgscrolly_w },
 	{ 0x07a30c, 0x07a30d, gaiden_bgscrollx_w },
+	{ 0x07a800, 0x07a801, MWA_NOP },
 	{ 0x07a802, 0x07a803, gaiden_sound_command_w },
 	{ 0x07a804, 0x07a805, tknight_protection_w },
+	{ 0x07a806, 0x07a807, MWA_NOP },
 	{ -1 }  /* end of table */
 };
 
@@ -416,7 +417,7 @@ static struct GfxLayout tile2layout =
 	128*8	/* offset to next tile */
 };
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout old_spritelayout =
 {
 	8,8,	/* sprites size */
 	0x8000,	/* number of sprites */
@@ -428,6 +429,37 @@ static struct GfxLayout spritelayout =
 	},
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8	/* offset to next sprite */
+};
+
+#define OFFS (8*16)
+static struct GfxLayout spritelayout =
+{
+	64,64,	/* sprites size */
+	0x8000/64,	/* number of sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
+	{
+		0,4,0x80000*8,4+0x80000*8,8,12,8+0x80000*8,12+0x80000*8,
+		OFFS,OFFS+4,OFFS+0x80000*8,OFFS+4+0x80000*8,OFFS+2*4,OFFS+3*4,OFFS+2*4+0x80000*8,OFFS+3*4+0x80000*8,
+		OFFS*4,OFFS*4+4,OFFS*4+0x80000*8,OFFS*4+4+0x80000*8,OFFS*4+2*4,OFFS*4+3*4,OFFS*4+2*4+0x80000*8,OFFS*4+3*4+0x80000*8,
+		OFFS*5,OFFS*5+4,OFFS*5+0x80000*8,OFFS*5+4+0x80000*8,OFFS*5+2*4,OFFS*5+3*4,OFFS*5+2*4+0x80000*8,OFFS*5+3*4+0x80000*8,
+		OFFS*16,OFFS*16+4,OFFS*16+0x80000*8,OFFS*16+4+0x80000*8,OFFS*16+2*4,OFFS*16+3*4,OFFS*16+2*4+0x80000*8,OFFS*16+3*4+0x80000*8,
+		OFFS*17,OFFS*17+4,OFFS*17+0x80000*8,OFFS*17+4+0x80000*8,OFFS*17+2*4,OFFS*17+3*4,OFFS*17+2*4+0x80000*8,OFFS*17+3*4+0x80000*8,
+		OFFS*20,OFFS*20+4,OFFS*20+0x80000*8,OFFS*20+4+0x80000*8,OFFS*20+2*4,OFFS*20+3*4,OFFS*20+2*4+0x80000*8,OFFS*20+3*4+0x80000*8,
+		OFFS*21,OFFS*21+4,OFFS*21+0x80000*8,OFFS*21+4+0x80000*8,OFFS*21+2*4,OFFS*21+3*4,OFFS*21+2*4+0x80000*8,OFFS*21+3*4+0x80000*8
+	},
+	{
+		0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+		OFFS*2+0*16, OFFS*2+1*16, OFFS*2+2*16, OFFS*2+3*16, OFFS*2+4*16, OFFS*2+5*16, OFFS*2+6*16, OFFS*2+7*16,
+		OFFS*8+0*16, OFFS*8+1*16, OFFS*8+2*16, OFFS*8+3*16, OFFS*8+4*16, OFFS*8+5*16, OFFS*8+6*16, OFFS*8+7*16,
+		OFFS*10+0*16, OFFS*10+1*16, OFFS*10+2*16, OFFS*10+3*16, OFFS*10+4*16, OFFS*10+5*16, OFFS*10+6*16, OFFS*10+7*16,
+
+		OFFS*32+0*16, OFFS*32+1*16, OFFS*32+2*16, OFFS*32+3*16, OFFS*32+4*16, OFFS*32+5*16, OFFS*32+6*16, OFFS*32+7*16,
+		OFFS*34+0*16, OFFS*34+1*16, OFFS*34+2*16, OFFS*34+3*16, OFFS*34+4*16, OFFS*34+5*16, OFFS*34+6*16, OFFS*34+7*16,
+		OFFS*40+0*16, OFFS*40+1*16, OFFS*40+2*16, OFFS*40+3*16, OFFS*40+4*16, OFFS*40+5*16, OFFS*40+6*16, OFFS*40+7*16,
+		OFFS*42+0*16, OFFS*42+1*16, OFFS*42+2*16, OFFS*42+3*16, OFFS*42+4*16, OFFS*42+5*16, OFFS*42+6*16, OFFS*42+7*16
+	},
+	OFFS*64	/* offset to next sprite */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -459,6 +491,7 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
+
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
@@ -466,7 +499,6 @@ static struct OKIM6295interface okim6295_interface =
 	{ 3 },              /* memory region 3 */
 	{ 20 }
 };
-
 
 
 static struct MachineDriver machine_driver =

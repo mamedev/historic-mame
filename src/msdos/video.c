@@ -64,6 +64,8 @@ static void update_screen_dirty1_vesa_16bpp_single(void);
 static void update_screen_dirty1_vesa_16bpp_hsingle_vdouble_scanlines(void);
 static void update_screen_dirty1_vesa_16bpp_hsingle_vdouble_noscanlines(void);
 static void update_screen_dirty1_vesa_8bpp_double_scanlines(void);
+static void update_screen_dirty1_vesa_8bpp_triple_scanlines(void);
+static void update_screen_dirty1_vesa_8bpp_quadra_scanlines(void);
 static void update_screen_dirty1_vesa_8bpp_double_noscanlines(void);
 static void update_screen_dirty1_vesa_8bpp_single(void);
 static void update_screen_dirty1_vesa_8bpp_hsingle_vdouble_scanlines(void);
@@ -76,6 +78,8 @@ static void update_screen_dirty0_vesa_16bpp_single(void);
 static void update_screen_dirty0_vesa_16bpp_hsingle_vdouble_scanlines(void);
 static void update_screen_dirty0_vesa_16bpp_hsingle_vdouble_noscanlines(void);
 static void update_screen_dirty0_vesa_8bpp_double_scanlines(void);
+static void update_screen_dirty0_vesa_8bpp_triple_scanlines(void);
+static void update_screen_dirty0_vesa_8bpp_quadra_scanlines(void);
 static void update_screen_dirty0_vesa_8bpp_double_noscanlines(void);
 static void update_screen_dirty0_vesa_8bpp_single(void);
 static void update_screen_dirty0_vesa_8bpp_hsingle_vdouble_scanlines(void);
@@ -89,7 +93,8 @@ static unsigned char current_palette[256][3];
 static PALETTE adjusted_palette;
 static unsigned char dirtycolor[256];
 static int dirtypalette;
-
+static unsigned int doublepixel[256];
+static unsigned int quadpixel[256]; /* for quadring pixels */
 
 int frameskip,autoframeskip;
 #define FRAMESKIP_LEVELS 12
@@ -104,6 +109,8 @@ int skiplines;
 int skipcolumns;
 int scanlines;
 int use_double;
+int use_triple;
+int use_quadra;
 int use_vesa;
 int gfx_mode;
 float gamma_correction = 1.0;
@@ -136,6 +143,8 @@ static int gfx_display_lines;
 static int gfx_display_columns;
 static int doubling = 0;
 static int vdoubling = 0;
+static int tripling = 0;
+static int quadring = 0;
 int throttle = 1;       /* toggled by F10 */
 
 static int gone_to_gfx_mode;
@@ -195,7 +204,7 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 		int safety;
 
 
-		if (width > 32) safety = 8;
+		if (width > 64) safety = 8;
 		else safety = 0;        /* don't create the safety area for GfxElement bitmaps */
 
 		if (depth != 8 && depth != 16) depth = 8;
@@ -317,10 +326,16 @@ INLINE void swap_dirty(void)
  */
 static void select_display_mode(void)
 {
-	int width,height;
-
+	int width,height, i;
 
 	auto_resolution = 0;
+
+	/* initialise quadring table [useful for *all* doubling modes */
+	for (i = 0; i < 255; i++)
+	{
+		doublepixel[i] = i | (i<<8);
+		quadpixel[i] = i | (i<<8) | (i << 16) | (i << 24);
+	}
 
 	if (vector_game)
 	{
@@ -334,6 +349,8 @@ static void select_display_mode(void)
 	}
 
 	doubling = use_double;
+	tripling = use_triple;
+	quadring = use_quadra;
 	vdoubling = 0;
 	if ((Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -341,6 +358,42 @@ static void select_display_mode(void)
 		doubling = 0;
 		vdoubling = 1;
 		height *= 2;
+	}
+	if (use_triple ||
+		(Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+			== VIDEO_PIXEL_ASPECT_RATIO_3_2)
+	{
+		/* set vertical doubling */
+		doubling = 0;
+		tripling = 1;
+		quadring = 0;
+		vdoubling = 1;
+		height *= 2;
+
+		/* set the only useful videomode for tripling */
+		gfx_mode = GFX_VESA2L;
+		gfx_width = 800;
+		gfx_height = 600;
+		color_depth = 8;
+	}
+	if (use_quadra ||
+		(Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+			== VIDEO_PIXEL_ASPECT_RATIO_4_3)
+	{
+		/* set vertical doubling */
+		doubling = 0;
+		tripling = 0;
+		quadring = 1;
+		vdoubling = 0;
+		height *= 3;
+
+		/* set the only useful videomode for quadring */
+		gfx_mode = GFX_VESA2L;
+		gfx_width = 1024;
+		gfx_height = 768;
+		color_depth = 8;
+
+
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
@@ -402,7 +455,6 @@ static void select_display_mode(void)
 	   the screen in, otherwise use VESA */
 	if (use_vesa == 0 && !gfx_width && !gfx_height)
 	{
-		int i;
 		for (i=0; vga_tweaked[i].x != 0; i++)
 		{
 			if (width  <= vga_tweaked[i].x &&
@@ -560,17 +612,38 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 		if (gfx_display_lines > gfx_height / 2)
 			gfx_display_lines = gfx_height / 2;
 	}
+	else if (quadring)
+	{
+		gfx_yoffset = (gfx_height - visheight * 3) / 2;
+		if (gfx_display_lines > gfx_height / 3)
+			gfx_display_lines = gfx_height / 3;
+	}
 	else
 	{
 		gfx_yoffset = (gfx_height - visheight) / 2;
 		if (gfx_display_lines > gfx_height)
 			gfx_display_lines = gfx_height;
 	}
+
 	if (doubling)
 	{
 		gfx_xoffset = (gfx_width - viswidth * 2) / 2;
 		if (gfx_display_columns > gfx_width / 2)
 			gfx_display_columns = gfx_width / 2;
+	}
+	else if (tripling)
+	{
+		gfx_xoffset = (gfx_width - viswidth * 3) /2;
+		if (gfx_display_columns > gfx_width / 3)
+			gfx_display_columns = gfx_width / 3;
+
+	}
+	else if (quadring)
+	{
+		gfx_xoffset = (gfx_width - viswidth * 4) /2;
+		if (gfx_display_columns > gfx_width / 4)
+			gfx_display_columns = gfx_width / 4;
+
 	}
 	else
 	{
@@ -716,8 +789,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_double_noscanlines\n");
                 }
 			} else {
-				if (vdoubling)
-				{
+				if (vdoubling) {
 					if (scanlines) {
 						update_screen = update_screen_dirty1_vesa_16bpp_hsingle_vdouble_scanlines;
 						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_hsingle_vdouble_scanlines\n");
@@ -725,9 +797,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 						update_screen = update_screen_dirty1_vesa_16bpp_hsingle_vdouble_noscanlines;
 						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_hsingle_vdouble_noscanlines\n");
 					}
-				}
-				else
-				{
+				} else {
 					update_screen = update_screen_dirty1_vesa_16bpp_single;
 					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_16bpp_single\n");
 				}
@@ -741,9 +811,14 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					update_screen = update_screen_dirty1_vesa_8bpp_double_noscanlines;
 					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_double_noscanlines\n");
                 }
+			} else if (tripling) {
+				update_screen = update_screen_dirty1_vesa_8bpp_triple_scanlines;
+				if (errorlog) fprintf (errorlog, "update _screen_dirty1_vesa_8bpp_triple_scanlines\n");
+			} else if (quadring) {
+				update_screen = update_screen_dirty1_vesa_8bpp_quadra_scanlines;
+				if (errorlog) fprintf (errorlog, "update _screen_dirty1_vesa_8bpp_quadra_scanlines\n");
 			} else {
-				if (vdoubling)
-				{
+				if (vdoubling) {
 					if (scanlines) {
 						update_screen = update_screen_dirty1_vesa_8bpp_hsingle_vdouble_scanlines;
 						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_hsingle_vdouble_scanlines\n");
@@ -751,13 +826,11 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 						update_screen = update_screen_dirty1_vesa_8bpp_hsingle_vdouble_noscanlines;
 						if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_hsingle_vdouble_noscanlines\n");
 					}
-				}
-				else
-				{
+				} else {
 					update_screen = update_screen_dirty1_vesa_8bpp_single;
 					if (errorlog) fprintf (errorlog, "update_screen_dirty1_vesa_8bpp_single\n");
 				}
-            }
+			}
 		}
 	}
 	else	/* does not support dirty */
@@ -779,8 +852,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_double_noscanlines\n");
                 }
 			} else {
-				if (vdoubling)
-				{
+				if (vdoubling) {
 					if (scanlines) {
 						update_screen = update_screen_dirty0_vesa_16bpp_hsingle_vdouble_scanlines;
 						if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_hsingle_vdouble_scanlines\n");
@@ -788,24 +860,27 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 						update_screen = update_screen_dirty0_vesa_16bpp_hsingle_vdouble_noscanlines;
 						if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_hsingle_vdouble_noscanlines\n");
 					}
-				}
-				else
-				{
+				} else {
 					update_screen = update_screen_dirty0_vesa_16bpp_single;
 					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_16bpp_single\n");
 				}
             }
-		}
-		else
-		{
+		} else {
 			if (doubling) {
 				if (scanlines) {
 					update_screen = update_screen_dirty0_vesa_8bpp_double_scanlines;
 					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_double_scanlines\n");
-                } else {
+				} else {
 					update_screen = update_screen_dirty0_vesa_8bpp_double_noscanlines;
 					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_double_noscanlines\n");
-                }
+				}
+			} else if (tripling) {
+				update_screen = update_screen_dirty0_vesa_8bpp_triple_scanlines;
+				if (errorlog) fprintf (errorlog, "update _screen_dirty0_vesa_8bpp_triple_noscanlines\n");
+
+			} else if (quadring) {
+					update_screen = update_screen_dirty0_vesa_8bpp_quadra_scanlines;
+					if (errorlog) fprintf (errorlog, "update _screen_dirty0_vesa_8bpp_quadra_noscanlines\n");
 			} else {
 				if (vdoubling)
 				{
@@ -816,9 +891,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 						update_screen = update_screen_dirty0_vesa_8bpp_hsingle_vdouble_noscanlines;
 						if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_hsingle_vdouble_noscanlines\n");
 					}
-				}
-				else
-				{
+				} else {
 					update_screen = update_screen_dirty0_vesa_8bpp_single;
 					if (errorlog) fprintf (errorlog, "update_screen_dirty0_vesa_8bpp_single\n");
 				}
@@ -1319,8 +1392,8 @@ void my_textout(char *buf,int x,int y)
 	Machine->orientation = trueorientation;
 }
 
-
-INLINE void double_pixels(unsigned long *lb, short seg,
+#if 1 /* use the C approach instead */
+INLINE void double_pixels(unsigned char *lb, short seg,
 			  unsigned long address, int width4)
 {
 	__asm__ __volatile__ (
@@ -1348,6 +1421,24 @@ INLINE void double_pixels(unsigned long *lb, short seg,
 	"D" (address):
 	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");
 }
+#else
+INLINE void double_pixels(unsigned char *lb, short seg,
+		unsigned long address, unsigned int width)
+{
+	int i;
+
+	/* set up selector */
+	_farsetsel(seg);
+
+	for (i = width; i > 0; i--)
+	{
+		_farnspokel (address, doublepixel[*lb] | (doublepixel[*(lb+1)] << 16));
+		_farnspokel (address+4, doublepixel[*(lb+2)] | (doublepixel[*(lb+3)] << 16));
+		address+=8;
+		lb+=4;
+	}
+}
+#endif
 
 INLINE void double_pixels16(unsigned long *lb, short seg,
 			  unsigned long address, int width4)
@@ -1374,6 +1465,49 @@ INLINE void double_pixels16(unsigned long *lb, short seg,
 	"S" (lb),
 	"D" (address):
 	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");
+}
+
+INLINE void triple_pixels(unsigned char *lb, short seg,
+		unsigned long address, unsigned int width)
+{
+	int i;
+
+	/* set up selector */
+	_farsetsel(seg);
+
+	for (i = width; i > 0; i--)
+	{
+		_farnspokel (address, (quadpixel[*lb] & 0x00ffffff) | (quadpixel[*(lb+1)] & 0xff000000));
+		_farnspokel (address+4, (quadpixel[*(lb+1)] & 0x0000ffff) | (quadpixel[*(lb+2)] & 0xffff0000));
+		_farnspokel (address+8, (quadpixel[*(lb+2)] & 0x000000ff) | (quadpixel[*(lb+3)] & 0xffffff00));
+		address+=3*4;
+		lb+=4;
+	}
+}
+
+INLINE void quadra_pixels(unsigned char *lb, short seg,
+		unsigned long address, unsigned int width)
+{
+	int i;
+
+	/* set up selector */
+	_farsetsel(seg);
+
+	for (i = width; i > 0; i--)
+	{
+		_farnspokel (address, quadpixel[*lb]);
+		address+=4;
+		lb++;
+		_farnspokel (address, quadpixel[*lb]);
+		address+=4;
+		lb++;
+		_farnspokel (address, quadpixel[*lb]);
+		address+=4;
+		lb++;
+		_farnspokel (address, quadpixel[*lb]);
+		address+=4;
+		lb++;
+	}
 }
 
 
@@ -1662,7 +1796,7 @@ void update_screen_dirty1_vesa_8bpp_double_scanlines(void)
 				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
                 {
 					address = bmp_write_line (screen, vesa_line0) + xoffs + 2*x;
-					double_pixels(lb0, dest_seg, address, w/4);
+					double_pixels((unsigned char *)lb0, dest_seg, address, w/4);
 					vesa_line0 += 2;
 					lb0 += width4;
 				}
@@ -1670,6 +1804,89 @@ void update_screen_dirty1_vesa_8bpp_double_scanlines(void)
 			x += w;
 		}
 		vesa_line += 16 * 2;
+		lb += 16 * width4;
+	}
+}
+
+
+void update_screen_dirty1_vesa_8bpp_triple_scanlines(void)
+{
+	short dest_seg;
+	int x, y, vesa_line, width4, columns4;
+	unsigned long *lb, address;
+	int xoffs;
+
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
+	for (y = 0; y < gfx_display_lines; y += 16)
+	{
+		for (x = 0; x < gfx_display_columns; /* */ )
+		{
+			int w = 16;
+			if (ISDIRTY(x,y))
+			{
+				unsigned long *lb0 = lb + x/4;
+				int vesa_line0 = vesa_line, h;
+				while (x + w < gfx_display_columns && ISDIRTY(x+ w,y))
+					w += 16;
+				if (x + w > gfx_display_columns)
+					w = gfx_display_columns - x;
+				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
+				{
+					address = bmp_write_line (screen, vesa_line0) + xoffs + 3*x;
+					triple_pixels((unsigned char*)lb0, dest_seg, address, w/4);
+					vesa_line0 += 2;
+					lb0 += width4;
+				}
+			}
+			x += w;
+		}
+		vesa_line += 16 * 2;
+		lb += 16 * width4;
+	}
+}
+
+void update_screen_dirty1_vesa_8bpp_quadra_scanlines(void)
+{
+	short dest_seg;
+	int x, y, vesa_line, width4, columns4;
+	unsigned long *lb, address;
+	int xoffs;
+
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcolumns);
+	for (y = 0; y < gfx_display_lines; y += 16)
+	{
+		for (x = 0; x < gfx_display_columns; /* */ )
+		{
+			int w = 16;
+			if (ISDIRTY(x,y))
+			{
+				unsigned long *lb0 = lb + x/4;
+				int vesa_line0 = vesa_line, h;
+				while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
+					w += 16;
+				if (x + w > gfx_display_columns)
+					w = gfx_display_columns - x;
+				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
+				{
+					address = bmp_write_line (screen, vesa_line0) + xoffs + 4*x;
+					quadra_pixels((unsigned char*)lb0, dest_seg, address, w/4);
+					vesa_line0 += 3;
+					lb0 += width4;
+				}
+			}
+			x += w;
+		}
+		vesa_line += 16 * 3;
 		lb += 16 * width4;
 	}
 }
@@ -1703,9 +1920,9 @@ void update_screen_dirty1_vesa_8bpp_double_noscanlines(void)
 				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
                 {
 					address = bmp_write_line (screen, vesa_line0) + xoffs + 2*x;
-					double_pixels(lb0, dest_seg, address, w/4);
+					double_pixels((unsigned char *)lb0, dest_seg, address, w/4);
 					address = bmp_write_line (screen, vesa_line0+1) + xoffs + 2*x;
-                    double_pixels(lb0, dest_seg, address, w/4);
+                    double_pixels((unsigned char *)lb0, dest_seg, address, w/4);
 					vesa_line0 += 2;
 					lb0 += width4;
 				}
@@ -2011,9 +2228,59 @@ void update_screen_dirty0_vesa_8bpp_double_scanlines(void)
 	for (y = 0; y < gfx_display_lines; y++)
 	{
 		address = bmp_write_line (screen, vesa_line) + xoffs;
-		double_pixels(lb,dest_seg,address,columns4);
+		double_pixels((unsigned char *)lb,dest_seg,address,columns4);
 
 		vesa_line += 2;
+		lb+=width4;
+	}
+}
+
+void update_screen_dirty0_vesa_8bpp_triple_scanlines(void)
+{
+	short dest_seg;
+	int y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	skipcol2 = skipcolumns;
+
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y++)
+	{
+		address = bmp_write_line (screen, vesa_line) + xoffs;
+		triple_pixels((unsigned char*)lb,dest_seg,address, columns4);
+
+		vesa_line += 2;
+		lb+=width4;
+	}
+}
+
+void update_screen_dirty0_vesa_8bpp_quadra_scanlines(void)
+{
+	short dest_seg;
+	int y, vesa_line, width4, columns4, skipcol2;
+	unsigned long *lb, address;
+	int xoffs;
+
+	dest_seg = screen->seg;
+	vesa_line = gfx_yoffset;
+	width4 = (scrbitmap->line[1] - scrbitmap->line[0]) / 4;
+	xoffs = gfx_xoffset;
+	columns4 = gfx_display_columns/4;
+	skipcol2 = skipcolumns;
+
+	lb = (unsigned long *)(scrbitmap->line[skiplines] + skipcol2 );
+	for (y = 0; y < gfx_display_lines; y++)
+	{
+		address = bmp_write_line (screen, vesa_line) + xoffs;
+		quadra_pixels((unsigned char*)lb,dest_seg,address, columns4);
+
+		vesa_line += 3;
 		lb+=width4;
 	}
 }
@@ -2036,9 +2303,9 @@ void update_screen_dirty0_vesa_8bpp_double_noscanlines(void)
 	for (y = 0; y < gfx_display_lines; y++)
 	{
 		address = bmp_write_line (screen, vesa_line) + xoffs;
-		double_pixels(lb,dest_seg,address,columns4);
+		double_pixels((unsigned char *)lb,dest_seg,address,columns4);
 		address = bmp_write_line (screen, vesa_line+1) + xoffs;
-		double_pixels(lb,dest_seg,address,columns4);
+		double_pixels((unsigned char *)lb,dest_seg,address,columns4);
 
 		vesa_line += 2;
 		lb+=width4;
@@ -2646,3 +2913,5 @@ int osd_get_brightness(void)
 {
 	return brightness;
 }
+
+

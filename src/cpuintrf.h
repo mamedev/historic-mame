@@ -102,7 +102,6 @@ int cpu_getcurrentcycles(void);
 /* Returns the current horizontal beam position in pixels */
 int cpu_gethorzbeampos(void);
 
-void cpu_seticount(int cycles);
 /*
   Returns the number of times the interrupt handler will be called before
   the end of the current video frame. This is can be useful to interrupt

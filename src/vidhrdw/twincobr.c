@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/crtc6845.c"
+#include "vidhrdw/crtc6845.h"
 
 
 static unsigned char *twincobr_bgvideoram;

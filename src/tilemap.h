@@ -1,17 +1,5 @@
 /* tilemap.h */
 
-/*
-	"tile_index" is a number identifying a tile in a tilemap, where 0 indicates the
-	top left tile.  Tiles are numbered from left to right, wrapping down and around
-	to the next row.
-
-	Given a tile_index, the logical row and column (if they need to be computed) are
-	as follows:
-
-		row = tile_index/num_cols;
-		col = tile_index%num_rows;
-*/
-
 #define TILEMAP_TRANSPARENT		0x01
 #define TILEMAP_SPLIT			0x02
 /*
@@ -42,10 +30,10 @@ extern struct tile_info {
 
 #define SET_TILE_INFO(GFX,CODE,COLOR) { \
 	const struct GfxElement *gfx = Machine->gfx[(GFX)]; \
-	int _code = (CODE) % gfx->total_elements; \
-	tile_info.pen_data = gfx->gfxdata->line[_code*gfx->height]; \
+	int code = (CODE) % gfx->total_elements; \
+	tile_info.pen_data = gfx->gfxdata->line[code*gfx->height]; \
 	tile_info.pal_data = &gfx->colortable[gfx->color_granularity * (COLOR)]; \
-	tile_info.pen_usage = gfx->pen_usage[_code]; \
+	tile_info.pen_usage = gfx->pen_usage[code]; \
 }
 
 /* tile flags, set by get_tile_info callback */
@@ -63,18 +51,10 @@ extern struct tile_info {
 */
 
 struct tilemap {
-	int type; /* TILEMAP_SPLIT, TILEMAP_TRANSPARENT */
+	int type;
+	int transparent_pen;
+	unsigned int transmask[4];
 
-	int transparent_pen;			/* public: for TILEMAP_TRANSPARENT */
-	/* TILEMAP_SPLIT | TILEMAP_TRANSPARENT uses this, too,
-		to specify a pen that is transparent
-		in both the front and back halves */
-
-	unsigned int transmask[4];		/* public: for TILEMAP_SPLIT */
-	/* transmask describes the transparency of the front half of a tile,
-		for up to 4 TILE_SPLIT types */
-
-	/* tilemap size */
 	int num_rows, num_cols, num_tiles;
 	int tile_width, tile_height, width, height;
 
@@ -92,12 +72,14 @@ struct tilemap {
 	unsigned char *flags;
 
 	/* callback to interpret video VRAM for the tilemap */
-	void (*tile_get_info)( int tile_offset ); /* public */
+	void (*tile_get_info)( int col, int row ); /* public */
 
 	int scrolled;
 	int scroll_rows, scroll_cols;
 	int *rowscroll, *colscroll;
-	struct rectangle clip; /* public */
+
+	struct rectangle clip;
+	int clip_left,clip_right,clip_top,clip_bottom;
 
 	/* cached color data */
 	struct osd_bitmap *pixmap;
@@ -128,20 +110,13 @@ struct tilemap *tilemap_create(
 
 void tilemap_dispose( struct tilemap *tilemap );
 
-void tilemap_mark_tile_dirty( struct tilemap *tilemap, int tile_index );
-void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
+void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row );
 void tilemap_mark_all_pixels_dirty( struct tilemap *tilemap );
-/*
-	the difference between all_tiles_dirty() and all_pixels_dirty() is that
-	all_pixels_dirty() will just redraw the full bitmap, while all_tiles_dirty()
-	will also call the callback to get again the tile info. For example, if
-	some global gfx bank register changes, you'll call all_tiles_dirty().
-*/
 
-int tilemap_get_scrollx( struct tilemap *tilemap, int row );
-int tilemap_get_scrolly( struct tilemap *tilemap, int col );
 void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
 void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
+
+void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
 
 void tilemap_update( struct tilemap *tilemap );
 void tilemap_mark_palette( void );

@@ -154,8 +154,8 @@ void draw_backdrop(struct osd_bitmap *dest,const struct osd_bitmap *src,int sx,i
 	int ox,oy,ex,ey,y,start,dy;
 	const unsigned char *sd;
 	unsigned char *bm,*bme;
-	int col;
-	/*	int *sd4;
+	/*  int col;
+		int *sd4;
 		int trans4,col4;*/
 	struct rectangle myclip;
 
@@ -273,9 +273,9 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
 	int ox,oy,ex,ey,y,start,dy;
 	const unsigned char *sd;
 	unsigned char *bm,*bme;
-	int col;
-	/*int *sd4;
-	int trans4,col4;*/
+	/*int col;
+	  int *sd4;
+	  int trans4,col4;*/
 	struct rectangle myclip;
 
 	const unsigned char *sb;
@@ -522,59 +522,59 @@ void overlay_draw(struct osd_bitmap *dest,const struct artwork *overlay)
  *********************************************************************/
 static void RGBtoHSV( float r, float g, float b, float *h, float *s, float *v )
 {
-        float min, max, delta;
+	float min, max, delta;
 
-        min = MIN( r, MIN( g, b ));
-        max = MAX( r, MAX( g, b ));
-        *v = max;
+	min = MIN( r, MIN( g, b ));
+	max = MAX( r, MAX( g, b ));
+	*v = max;
 
-        delta = max - min;
+	delta = max - min;
 
-        if( max != 0 )
-                *s = delta / max;
-        else {
-                *s = 0;
-                *h = 0;
-                return;
-        }
+	if( max != 0 )
+		*s = delta / max;
+	else {
+		*s = 0;
+		*h = 0;
+		return;
+	}
 
-        if( r == max )
-                *h = ( g - b ) / delta;
-        else if( g == max )
-                *h = 2 + ( b - r ) / delta;
-        else
-                *h = 4 + ( r - g ) / delta;
+	if( r == max )
+		*h = ( g - b ) / delta;
+	else if( g == max )
+		*h = 2 + ( b - r ) / delta;
+	else
+		*h = 4 + ( r - g ) / delta;
 
-        *h *= 60;
-        if( *h < 0 )
-                *h += 360;
+	*h *= 60;
+	if( *h < 0 )
+		*h += 360;
 }
 
 static void HSVtoRGB( float *r, float *g, float *b, float h, float s, float v )
 {
-        int i;
-        float f, p, q, t;
+	int i;
+	float f, p, q, t;
 
-        if( s == 0 ) {
-                *r = *g = *b = v;
-                return;
-        }
+	if( s == 0 ) {
+		*r = *g = *b = v;
+		return;
+	}
 
-        h /= 60;
-        i = h;
-        f = h - i;
-        p = v * ( 1 - s );
-        q = v * ( 1 - s * f );
-        t = v * ( 1 - s * ( 1 - f ) );
+	h /= 60;
+	i = h;
+	f = h - i;
+	p = v * ( 1 - s );
+	q = v * ( 1 - s * f );
+	t = v * ( 1 - s * ( 1 - f ) );
 
-        switch( i ) {
+	switch( i ) {
 	case 0: *r = v; *g = t; *b = p; break;
 	case 1: *r = q; *g = v; *b = p; break;
 	case 2: *r = p; *g = v; *b = t; break;
 	case 3: *r = p; *g = q; *b = v; break;
 	case 4: *r = t; *g = p; *b = v; break;
 	default: *r = v; *g = p; *b = q; break;
-        }
+	}
 
 }
 
@@ -770,6 +770,14 @@ void overlay_remap(struct artwork *a)
 static struct artwork *allocate_artwork_mem (int width, int height)
 {
 	struct artwork *a;
+	int temp;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		temp = height;
+		height = width;
+		width = temp;
+	}
 
 	a = (struct artwork *)malloc(sizeof(struct artwork));
 	if (a == NULL)
@@ -833,29 +841,8 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 {
 	struct osd_bitmap *picture = NULL;
 	struct artwork *a = NULL;
-	int scalex, scaley;
-	int width, height;
 
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-	{
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			height = Machine->scrbitmap->width;
-			width = Machine->scrbitmap->height;
-		}
-		else
-		{
-			width = Machine->scrbitmap->width;
-			height = Machine->scrbitmap->height;
-		}
-	}
-	else
-	{
-		width = Machine->drv->screen_width;
-		height = Machine->drv->screen_height;
-	}
-
-	if ((a = allocate_artwork_mem(width, height))==NULL)
+	if ((a = allocate_artwork_mem(Machine->scrbitmap->width, Machine->scrbitmap->height))==NULL)
 		return NULL;
 
 	a->start_pen = start_pen;
@@ -880,18 +867,17 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 	}
 
 	/* Scale the original picture to be the same size as the visible area */
+	/*copybitmap(a->orig_artwork,picture,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);*/
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		scaley=(height<<16)/(picture->width);
-		scalex=(width<<16)/(picture->height);
-	}
+		copybitmapzoom(a->orig_artwork,picture,0,0,0,0,
+			       0, TRANSPARENCY_PEN, 0,
+			       (a->orig_artwork->height<<16)/picture->height,
+			       (a->orig_artwork->width<<16)/picture->width);
 	else
-	{
-		scaley=(height<<16)/(picture->height);
-		scalex=(width<<16)/(picture->width);
-	}
-	copybitmapzoom(a->orig_artwork,picture,0,0,0,0,NULL,
-		       TRANSPARENCY_PEN,0,scalex,scaley);
+		copybitmapzoom(a->orig_artwork,picture,0,0,0,0,
+			       0, TRANSPARENCY_PEN, 0,
+			       (a->orig_artwork->width<<16)/picture->width,
+			       (a->orig_artwork->height<<16)/picture->height);
 
 	/* If the game uses dynamic colors, we assume that it's safe
 	   to init the palette and remap the colors now */
@@ -904,43 +890,27 @@ struct artwork *artwork_load(const char *filename, int start_pen, int max_pens)
 	return a;
 }
 
-#if 0
 /*********************************************************************
   artwork_create
 
   This works similar to artwork_load but generates artwork from
   an array of artwork_element. This is useful for very simple artwork
-  like the overlay in the Space invaders series of games. The end of the
-  array is marked by an entry with negative coordinates. If there are
-  transparent and opaque overlay elements, the opaque ones have to
-  be at the end of the list!
+  like the overlay in the Space invaders series of games. The first
+  entry determines the size of the temp bitmap which is used to create
+  the artwork. All following entries should stay in these bounds. The
+  temp bitmap is then scaled to the final size of the artwork (screen).
+  The end of the array is marked by an entry with negative coordinates.
+  If there are transparent and opaque overlay elements, the opaque ones
+  have to be at the end of the list to stay compatible with the PNG
+  artwork.
  *********************************************************************/
 struct artwork *artwork_create(const struct artwork_element *ae, int start_pen)
 {
 	struct artwork *a;
-	int pen, x, y, width, height;
-	int orientation = Machine->orientation;
+	struct osd_bitmap *tmpbitmap=NULL;
+	int pen;
 
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-	{
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			height = Machine->scrbitmap->width;
-			width = Machine->scrbitmap->height;
-		}
-		else
-		{
-			width = Machine->scrbitmap->width;
-			height = Machine->scrbitmap->height;
-		}
-	}
-	else
-	{
-		width = Machine->drv->screen_width;
-		height = Machine->drv->screen_height;
-	}
-
-	if ((a = allocate_artwork_mem(width, height))==NULL)
+	if ((a = allocate_artwork_mem(Machine->scrbitmap->width, Machine->scrbitmap->height))==NULL)
 		return NULL;
 
 	a->start_pen = start_pen;
@@ -959,61 +929,17 @@ struct artwork *artwork_create(const struct artwork_element *ae, int start_pen)
 		return NULL;
 	}
 
-	/* Set the whole overlay to the first color in the list */
-	a->orig_palette[0]=ae->red;
-	a->orig_palette[1]=ae->green;
-	a->orig_palette[2]=ae->blue;
-	a->transparency[0]=ae->alpha;
-	ae++;
-
-	fillbitmap(a->orig_artwork,0,0);
-
-	a->num_pens_used = 1;
-	a->num_pens_trans = 1;
+	a->num_pens_used = 0;
+	a->num_pens_trans = 0;
 
 	while (ae->box.min_x >= 0)
 	{
-		int x1, y1, x2, y2, tmp;
-
-		if (orientation & ORIENTATION_SWAP_XY)
-		{
-			x1=ae->box.min_y; x2=ae->box.max_y;
-			y1=ae->box.min_x; y2=ae->box.max_x;
-		}
-		else
-		{
-			x1=ae->box.min_x; x2=ae->box.max_x;
-			y1=ae->box.min_y; y2=ae->box.max_y;
-		}
-
-		if (Machine->drv->video_attributes & VIDEO_STRETCH_2X)
-		{
-			x1*=2; x2*=2;
-		}
-		if (Machine->drv->video_attributes & VIDEO_STRETCH_2Y)
-		{
-			y1*=2; y2*=2;
-		}
-
-		if (orientation & ORIENTATION_FLIP_X)
-		{
-			tmp=x1;
-			x1=a->orig_artwork->width-x2;
-			x2=a->orig_artwork->width-tmp;
-		}
-		if (orientation & ORIENTATION_FLIP_Y)
-		{
-			tmp=y1;
-			y1=a->orig_artwork->height-y2;
-			y2=a->orig_artwork->height-tmp;
-		}
-
 		/* look if the color is already in the palette */
 		pen =0;
 		while ((pen < a->num_pens_used) &&
 		       ((ae->red != a->orig_palette[3*pen]) ||
-			(ae->green != a->orig_palette[3*pen+1]) ||
-			(ae->blue != a->orig_palette[3*pen+2])))
+				(ae->green != a->orig_palette[3*pen+1]) ||
+				(ae->blue != a->orig_palette[3*pen+2])))
 			pen++;
 
 		if (pen == a->num_pens_used)
@@ -1028,12 +954,37 @@ struct artwork *artwork_create(const struct artwork_element *ae, int start_pen)
 				a->num_pens_trans++;
 			}
 		}
-		for (y=y1; y<y2; y++)
-			for (x=x1; x<x2; x++)
-				a->orig_artwork->line[y][x]=pen;
+
+		if (!tmpbitmap)
+		{
+			/* create the bitmap with size of the first overlay element */
+			if ((tmpbitmap = osd_create_bitmap(ae->box.max_x+1, ae->box.max_y+1))
+			    == NULL)
+			{
+				if (errorlog) fprintf(errorlog,"Not enough memory for artwork!\n");
+				return NULL;
+			}
+			fillbitmap(tmpbitmap,0,0);
+		}
+		else
+			fillbitmap (tmpbitmap, pen, &ae->box);
 
 		ae++;
 	}
+
+	/* Scale the original picture to be the same size as the visible area */
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		copybitmapzoom(a->orig_artwork,tmpbitmap,0,0,0,0,
+					   0, TRANSPARENCY_PEN, 0,
+					   (a->orig_artwork->height<<16)/tmpbitmap->height,
+					   (a->orig_artwork->width<<16)/tmpbitmap->width);
+	else
+		copybitmapzoom(a->orig_artwork,tmpbitmap,0,0,0,0,
+					   0, TRANSPARENCY_PEN, 0,
+					   (a->orig_artwork->width<<16)/tmpbitmap->width,
+					   (a->orig_artwork->height<<16)/tmpbitmap->height);
+
+	osd_free_bitmap(tmpbitmap);
 
 	/* If the game uses dynamic colors, we assume that it's safe
 	   to init the palette and remap the colors now */
@@ -1042,4 +993,3 @@ struct artwork *artwork_create(const struct artwork_element *ae, int start_pen)
 
 	return a;
 }
-#endif

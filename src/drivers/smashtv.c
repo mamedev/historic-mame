@@ -135,6 +135,7 @@ void mk_sound_bank_select_w (int offset,int data);
 
 void narc_driver_init(void);
 void smashtv_driver_init(void);
+void smashtv4_driver_init(void);
 void trog_driver_init(void);
 void trog3_driver_init(void);
 void trogp_driver_init(void);
@@ -1809,10 +1810,64 @@ ROM_START( smashtv_rom )
 
 ROM_END
 
+ROM_START( smashtv6_rom )
+	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_LOAD_ODD ( "la6-u105",  0xc0000, 0x20000, 0xf1666017 ) /* even */
+	ROM_LOAD_EVEN( "la6-u89",   0xc0000, 0x20000, 0x908aca5d ) /* odd */
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+
+	ROM_REGION(0x800000)      /* graphics */
+	ROM_LOAD ( "u111.gam",  0x000000, 0x20000, 0x72f0ba84 )  /* even */
+	ROM_LOAD ( "u112.gam",  0x020000, 0x20000, 0x436f0283 )  /* even */
+	ROM_LOAD ( "u113.gam",  0x040000, 0x20000, 0x4a4b8110 )  /* even */
+
+	ROM_LOAD (  "u95.gam",  0x200000, 0x20000, 0xe864a44b )  /* odd  */
+	ROM_LOAD (  "u96.gam",  0x220000, 0x20000, 0x15555ea7 )  /* odd  */
+	ROM_LOAD (  "u97.gam",  0x240000, 0x20000, 0xccac9d9e )  /* odd  */
+
+ 	ROM_LOAD ( "u106.gam",  0x400000, 0x20000, 0x5c718361 )  /* even */
+ 	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )  /* even */
+ 	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )  /* even */
+
+	ROM_REGION(0x70000) /* sound CPU */
+	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
+	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
+	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
+
+ROM_END
+
 ROM_START( smashtv5_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
 	ROM_LOAD_ODD ( "u105-v5",  0xc0000, 0x20000, 0x81f564b9 ) /* even */
 	ROM_LOAD_EVEN( "u89-v5",   0xc0000, 0x20000, 0xe5017d25 ) /* odd */
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+
+	ROM_REGION(0x800000)      /* graphics */
+	ROM_LOAD ( "u111.gam",  0x000000, 0x20000, 0x72f0ba84 )  /* even */
+	ROM_LOAD ( "u112.gam",  0x020000, 0x20000, 0x436f0283 )  /* even */
+	ROM_LOAD ( "u113.gam",  0x040000, 0x20000, 0x4a4b8110 )  /* even */
+
+	ROM_LOAD (  "u95.gam",  0x200000, 0x20000, 0xe864a44b )  /* odd  */
+	ROM_LOAD (  "u96.gam",  0x220000, 0x20000, 0x15555ea7 )  /* odd  */
+	ROM_LOAD (  "u97.gam",  0x240000, 0x20000, 0xccac9d9e )  /* odd  */
+
+ 	ROM_LOAD ( "u106.gam",  0x400000, 0x20000, 0x5c718361 )  /* even */
+ 	ROM_LOAD ( "u107.gam",  0x420000, 0x20000, 0x0fba1e36 )  /* even */
+ 	ROM_LOAD ( "u108.gam",  0x440000, 0x20000, 0xcb0a092f )  /* even */
+
+	ROM_REGION(0x70000) /* sound CPU */
+	ROM_LOAD (  "u4.snd", 0x10000, 0x10000, 0x29d3f6c8 )
+	ROM_LOAD ( "u19.snd", 0x30000, 0x10000, 0xac5a402a )
+	ROM_LOAD ( "u20.snd", 0x50000, 0x10000, 0x875c66d9 )
+
+ROM_END
+
+ROM_START( smashtv4_rom )
+	ROM_REGION(0x100000)     /* 34010 code */
+	ROM_LOAD_ODD ( "la4-u105",  0xc0000, 0x20000, 0xa50ccb71 ) /* even */
+	ROM_LOAD_EVEN( "la4-u89",   0xc0000, 0x20000, 0xef0b0279 ) /* odd */
 
 	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 
@@ -2296,51 +2351,38 @@ ROM_START( mk2r14_rom )
 
 ROM_END
 
-ROM_START( mk2re_rom )
-	ROM_REGION(0x100000)     /* 34010 code */
-	ROM_LOAD_ODD ( "uj12.l31",  0x00000, 0x80000, 0xcf100a75 )  /* even */
-	ROM_LOAD_EVEN( "ug12.l31",  0x00000, 0x80000, 0x582c7dfd )  /* odd  */
+/*
+    equivalences for the extension board version (same contents, split in half)
 
-	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD ( "ug14.l1",   0x000000, 0x080000, 0x74f5aaf1 )
+	ROM_LOAD ( "ug16.l11",  0x080000, 0x080000, 0x1cf58c4c )
+	ROM_LOAD ( "u8.l1",     0x200000, 0x080000, 0x56e22ff5 )
+	ROM_LOAD ( "u11.l1",    0x280000, 0x080000, 0x559ca4a3 )
+	ROM_LOAD ( "ug17.l1",   0x100000, 0x080000, 0x4202d8bf )
+	ROM_LOAD ( "ug18.l1",   0x180000, 0x080000, 0xa3deab6a )
 
-	ROM_REGION(0xc00000)      /* graphics */
-	ROM_LOAD ( "ug14.l1",   0x000000, 0x080000, 0x74f5aaf1 )  /* even */
-	ROM_LOAD ( "ug16.l11",  0x080000, 0x080000, 0x1cf58c4c )  /* even */
-	ROM_LOAD ( "u8.l1",     0x200000, 0x080000, 0x56e22ff5 )  /* even */
-	ROM_LOAD ( "u11.l1",    0x280000, 0x080000, 0x559ca4a3 )  /* even */
-	ROM_LOAD ( "ug17.l1",   0x100000, 0x080000, 0x4202d8bf )  /* even */
-	ROM_LOAD ( "ug18.l1",   0x180000, 0x080000, 0xa3deab6a )  /* even */
+	ROM_LOAD ( "uj14.l1",   0x300000, 0x080000, 0x869a3c55 )
+	ROM_LOAD ( "uj16.l11",  0x380000, 0x080000, 0xc70cf053 )
+	ROM_LOAD ( "u9.l1",     0x500000, 0x080000, 0x67da0769 )
+	ROM_LOAD ( "u10.l1",    0x580000, 0x080000, 0x69000ac3 )
+	ROM_LOAD ( "uj17.l1",   0x400000, 0x080000, 0xec3e1884 )
+	ROM_LOAD ( "uj18.l1",   0x480000, 0x080000, 0xc9f5aef4 )
 
-	ROM_LOAD ( "uj14.l1",   0x300000, 0x080000, 0x869a3c55 )  /* odd  */
-	ROM_LOAD ( "uj16.l11",  0x380000, 0x080000, 0xc70cf053 )  /* odd  */
-	ROM_LOAD ( "u9.l1",     0x500000, 0x080000, 0x67da0769 )  /* odd  */
-	ROM_LOAD ( "u10.l1",    0x580000, 0x080000, 0x69000ac3 )  /* odd  */
-	ROM_LOAD ( "uj17.l1",   0x400000, 0x080000, 0xec3e1884 )  /* odd  */
-	ROM_LOAD ( "uj18.l1",   0x480000, 0x080000, 0xc9f5aef4 )  /* odd  */
+	ROM_LOAD ( "u6.l1",     0x600000, 0x080000, 0x8d4c496a )
+	ROM_LOAD ( "u13.l11",   0x680000, 0x080000, 0x7fb20a45 )
+	ROM_LOAD ( "ug19.l1",   0x800000, 0x080000, 0xd6c1f75e )
+	ROM_LOAD ( "ug20.l1",   0x880000, 0x080000, 0x19a33cff )
+	ROM_LOAD ( "ug22.l1",   0x700000, 0x080000, 0xdb6cfa45 )
+	ROM_LOAD ( "ug23.l1",   0x780000, 0x080000, 0xbfd8b656 )
 
-	ROM_LOAD ( "u6.l1",     0x600000, 0x080000, 0x8d4c496a )  /* even */
-	ROM_LOAD ( "u13.l11",   0x680000, 0x080000, 0x7fb20a45 )  /* even */
-	ROM_LOAD ( "ug19.l1",   0x800000, 0x080000, 0xd6c1f75e )  /* even */
-	ROM_LOAD ( "ug20.l1",   0x880000, 0x080000, 0x19a33cff )  /* even */
-	ROM_LOAD ( "ug22.l1",   0x700000, 0x080000, 0xdb6cfa45 )  /* even */
-	ROM_LOAD ( "ug23.l1",   0x780000, 0x080000, 0xbfd8b656 )  /* even */
+	ROM_LOAD ( "u7.l1",     0x900000, 0x080000, 0x3988aac8 )
+	ROM_LOAD ( "u12.l11",   0x980000, 0x080000, 0x2ef12cc6 )
+	ROM_LOAD ( "uj19.l1",   0xb00000, 0x080000, 0x4eed6f18 )
+	ROM_LOAD ( "uj20.l1",   0xb80000, 0x080000, 0x337b1e20 )
+	ROM_LOAD ( "uj22.l1",   0xa00000, 0x080000, 0xa6546b15 )
+	ROM_LOAD ( "uj23.l1",   0xa80000, 0x080000, 0x45867c6f )
+*/
 
-	ROM_LOAD ( "u7.l1",     0x900000, 0x080000, 0x3988aac8 )  /* odd  */
-	ROM_LOAD ( "u12.l11",   0x980000, 0x080000, 0x2ef12cc6 )  /* odd  */
-	ROM_LOAD ( "uj19.l1",   0xb00000, 0x080000, 0x4eed6f18 )  /* odd  */
-	ROM_LOAD ( "uj20.l1",   0xb80000, 0x080000, 0x337b1e20 )  /* odd  */
-	ROM_LOAD ( "uj22.l1",   0xa00000, 0x080000, 0xa6546b15 )  /* odd  */
-	ROM_LOAD ( "uj23.l1",   0xa80000, 0x080000, 0x45867c6f )  /* odd  */
-
-	ROM_REGION_OPTIONAL(0x100000) /* sound */
-	ROM_LOAD (   "su2.l1",  0x000000, 0x80000, 0x5f23d71d )
-	ROM_LOAD (   "su3.l1",  0x080000, 0x80000, 0xd6d92bf9 )
-	ROM_LOAD (   "su4.l1",  0x000000, 0x80000, 0xeebc8e0f )
-	ROM_LOAD (   "su5.l1",  0x080000, 0x80000, 0x2b0b7961 )
-	ROM_LOAD (   "su6.l1",  0x000000, 0x80000, 0xf694b27f )
-	ROM_LOAD (   "su7.l1",  0x080000, 0x80000, 0x20387e0a )
-
-ROM_END
 
 ROM_START( nbajam_rom )
 	ROM_REGION(0x100000)     /* 34010 code */
@@ -2508,6 +2550,31 @@ struct GameDriver smashtv_driver =
 	hiload, hisave
 };
 
+struct GameDriver smashtv6_driver =
+{
+	__FILE__,
+	&smashtv_driver,
+	"smashtv6",
+	"Smash TV (rev 6.00)",
+	"1990",
+	"Williams",
+	BASE_CREDITS,
+	0,
+	&smashtv_machine_driver,
+	smashtv_driver_init,
+
+	smashtv6_rom,
+	wms_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	smashtv_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
 struct GameDriver smashtv5_driver =
 {
 	__FILE__,
@@ -2522,6 +2589,31 @@ struct GameDriver smashtv5_driver =
 	smashtv_driver_init,
 
 	smashtv5_rom,
+	wms_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	smashtv_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver smashtv4_driver =
+{
+	__FILE__,
+	&smashtv_driver,
+	"smashtv4",
+	"Smash TV (rev 4.00)",
+	"1990",
+	"Williams",
+	BASE_CREDITS,
+	0,
+	&smashtv_machine_driver,
+	smashtv4_driver_init,
+
+	smashtv4_rom,
 	wms_decode, 0,
 	0,
 	0,	/* sound_prom */
@@ -2820,31 +2912,6 @@ struct GameDriver mk2r14_driver =
 	mk2r14_driver_init,
 
 	mk2r14_rom,
-	wms_decode, 0,
-	0,
-	0,	/* sound_prom */
-
-	mk2_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	hiload, hisave
-};
-
-struct GameDriver mk2re_driver =
-{
-	__FILE__,
-	&mk2_driver,
-	"mk2re",
-	"MK 2 (with ROM extension board)",
-	"1993",
-	"Midway",
-	BASE_CREDITS,
-	GAME_NOT_WORKING,
-	&mk2_machine_driver,
-	mk2_driver_init,
-
-	mk2re_rom,
 	wms_decode, 0,
 	0,
 	0,	/* sound_prom */

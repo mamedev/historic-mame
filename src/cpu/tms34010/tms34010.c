@@ -39,6 +39,8 @@ static void (*from_shiftreg[MAX_CPU])(UINT32, UINT16*) = {0,0,0,0};
 
 static void TMS34010_io_intcallback(int param);
 
+static void check_interrupt(void);
+
 static void (*wfield_functions[32]) (UINT32 bitaddr, UINT32 data) =
 {
 	wfield_32, wfield_01, wfield_02, wfield_03, wfield_04, wfield_05,
@@ -185,6 +187,9 @@ INLINE void SET_ST(UINT32 st)
 	FW(0)     =    st & 0x1f;
 	FW(1)     =   (st >> 6) & 0x1f;
 	SET_FW();
+
+	/* interrupts might have been enabled, check it */
+	check_interrupt();
 }
 
 /* shortcuts for reading opcodes */
@@ -390,7 +395,7 @@ static UINT32 write_pixel_4 (UINT32 address, UINT32 value) { WP(0x0c,0x0f); }
 static UINT32 write_pixel_8 (UINT32 address, UINT32 value) { WP(0x08,0xff); }
 static UINT32 write_pixel_16(UINT32 address, UINT32 value)
 {
-	// TODO: plane masking
+	/* TODO: plane masking */
 
 	TMS34010_WRMEM_WORD(TOBYTE(address&0xfffffff0), value);
 	return 1;
@@ -404,9 +409,9 @@ static UINT32 write_pixel_t_4 (UINT32 address, UINT32 value) { WP_T(0x0c,0x0f); 
 static UINT32 write_pixel_t_8 (UINT32 address, UINT32 value) { WP_T(0x08,0xff); }
 static UINT32 write_pixel_t_16(UINT32 address, UINT32 value)
 {
-	// TODO: plane masking
+	/* TODO: plane masking */
 
-	// Transparency checking
+	/* Transparency checking */
 	if (value)
 	{
 		TMS34010_WRMEM_WORD(TOBYTE(address&0xfffffff0), value);
@@ -423,7 +428,7 @@ static UINT32 write_pixel_r_4 (UINT32 address, UINT32 value) { WP_R(0x0c,0x0f); 
 static UINT32 write_pixel_r_8 (UINT32 address, UINT32 value) { WP_R(0x08,0xff); }
 static UINT32 write_pixel_r_16(UINT32 address, UINT32 value)
 {
-	// TODO: plane masking
+	/* TODO: plane masking */
 
 	UINT32 a = TOBYTE(address&0xfffffff0);
 
@@ -440,12 +445,12 @@ static UINT32 write_pixel_r_t_4 (UINT32 address, UINT32 value) { WP_R_T(0x0c,0x0
 static UINT32 write_pixel_r_t_8 (UINT32 address, UINT32 value) { WP_R_T(0x08,0xff); }
 static UINT32 write_pixel_r_t_16(UINT32 address, UINT32 value)
 {
-	// TODO: plane masking
+	/* TODO: plane masking */
 
 	UINT32 a = TOBYTE(address&0xfffffff0);
 	value = state.raster_op(value, TMS34010_RDMEM_WORD(a));
 
-	// Transparency checking
+	/* Transparency checking */
 	if (value)
 	{
 		TMS34010_WRMEM_WORD(a, value);
@@ -466,7 +471,7 @@ static UINT32 read_pixel_4 (UINT32 address) { RP(0x0c,0x0f) }
 static UINT32 read_pixel_8 (UINT32 address) { RP(0x08,0xff) }
 static UINT32 read_pixel_16(UINT32 address)
 {
-	// TODO: Plane masking
+	/* TODO: Plane masking */
 	return TMS34010_RDMEM_WORD(TOBYTE(address&0xfffffff0));
 }
 
@@ -638,7 +643,7 @@ void TMS34010_SetRegs(TMS34010_Regs *Regs)
 {
 	state = *Regs;
 	change_pc29(PC)
-	CHECK_IRQ_LINES(IE_FLAG,"SetRegs");   /* HJB 990125 */
+	check_interrupt();
 }
 
 /****************************************************************************/
@@ -710,17 +715,20 @@ void TMS34010_set_nmi_line(int linestate)
 void TMS34010_set_irq_line(int irqline, int linestate)
 {
 	LOG((errorlog, "TMS34010#%d set irq line %d state %d\n", cpu_getactivecpu(), irqline, linestate));
-    state.irq_state[irqline] = linestate;
-	if (linestate != CLEAR_LINE && IE_FLAG) {
-		/* if interrutps are enabled set the pending interrupt */
-		switch (irqline) {
-			case 0:
-				IOREG(REG_INTPEND) |= TMS34010_INT1;
-				break;
-			case 1:
-				IOREG(REG_INTPEND) |= TMS34010_INT2;
-				break;
+	if (linestate != CLEAR_LINE)
+	{
+		/* set the pending interrupt */
+		switch (irqline)
+		{
+		case 0:
+			IOREG(REG_INTPEND) |= TMS34010_INT1;
+			break;
+		case 1:
+			IOREG(REG_INTPEND) |= TMS34010_INT2;
+			break;
         }
+
+        check_interrupt();
 	}
 }
 
@@ -733,6 +741,7 @@ void TMS34010_internal_interrupt(int type)
 {
 	LOG((errorlog, "TMS34010#%d set internal interrupt $%04x\n", cpu_getactivecpu(), type));
     IOREG(REG_INTPEND) |= type;
+	check_interrupt();
 }
 
 #else
@@ -741,6 +750,7 @@ void TMS34010_Cause_Interrupt(int type)
 {
 	/* NONE = 0 */
 	IOREG(REG_INTPEND) |= type;
+	check_interrupt();
 }
 
 
@@ -751,21 +761,28 @@ void TMS34010_Clear_Pending_Interrupts(void)
 
 #endif
 
-/* Generate interrupts */
-static void Interrupt(void)
+
+/* Generate pending interrupts. Do NOT inline this function on DJGPP,
+   it causes a slowdown */
+static void check_interrupt(void)
 {
-	int take=0;
+	int vector=0;
 #if NEW_INTERRUPT_SYSTEM
 	int irqline = -1;
 #endif
 
+	if (!IOREG(REG_INTPEND))
+	{
+		/* No interrupts pending, get out quickly */
+		return;
+	}
 
     if (IOREG(REG_INTPEND) & TMS34010_NMI)
 	{
 		LOG((errorlog, "TMS34010#%d takes NMI\n", cpu_getactivecpu()));
         IOREG(REG_INTPEND) &= ~TMS34010_NMI;
 
-		if (!(IOREG(REG_HSTCTLH) & 0x0200))  // NMI mode bit
+		if (!(IOREG(REG_HSTCTLH) & 0x0200))  /* NMI mode bit */
 		{
 			PUSH(PC);
 			PUSH(GET_ST());
@@ -776,32 +793,38 @@ static void Interrupt(void)
     }
 	else
 	{
+		if (!IE_FLAG)
+		{
+			/* Global interrupt disable */
+			return;
+		}
+
 		if ((IOREG(REG_INTPEND) & TMS34010_HI) &&
 			(IOREG(REG_INTENB)  & TMS34010_HI))
 		{
 			LOG((errorlog, "TMS34010#%d takes HI\n", cpu_getactivecpu()));
-            take = 0xfffffec0;
+            vector = 0xfffffec0;
         }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_DI) &&
 			(IOREG(REG_INTENB)  & TMS34010_DI))
 		{
 			LOG((errorlog, "TMS34010#%d takes DI\n", cpu_getactivecpu()));
-            take = 0xfffffea0;
+            vector = 0xfffffea0;
         }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_WV) &&
 			(IOREG(REG_INTENB)  & TMS34010_WV))
 		{
 			LOG((errorlog, "TMS34010#%d takes WV\n", cpu_getactivecpu()));
-            take = 0xfffffe80;
+            vector = 0xfffffe80;
         }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_INT1) &&
 			(IOREG(REG_INTENB)	& TMS34010_INT1))
 		{
 			LOG((errorlog, "TMS34010#%d takes INT1\n", cpu_getactivecpu()));
-            take = 0xffffffc0;
+            vector = 0xffffffc0;
 #if NEW_INTERRUPT_SYSTEM
 			irqline = 0;
 #endif
@@ -811,21 +834,25 @@ static void Interrupt(void)
 			(IOREG(REG_INTENB)  & TMS34010_INT2))
 		{
 			LOG((errorlog, "TMS34010#%d takes INT2\n", cpu_getactivecpu()));
-            take = 0xffffffa0;
+            vector = 0xffffffa0;
 #if NEW_INTERRUPT_SYSTEM
 			irqline = 1;
 #endif
         }
 
-		if (take)
+		if (vector)
 		{
             PUSH(PC);
 			PUSH(GET_ST());
 			RESET_ST();
-			PC = RLONG(take);
+			PC = RLONG(vector);
             change_pc29(PC);
+
 #if NEW_INTERRUPT_SYSTEM
-			if (irqline >= 0) (void)(*state.irq_callback)(irqline);
+			if (irqline >= 0)
+			{
+				(void)(*state.irq_callback)(irqline);
+			}
 #endif
         }
 	}
@@ -849,16 +876,6 @@ int TMS34010_Execute(int cycles)
 	change_pc29(PC)
 	do
 	{
-		/* Quickly reject the cases when there are no pending interrupts
-		   or they are disabled (as in an interrupt service routine) */
-		if (IOREG(REG_INTPEND) & (IOREG(REG_INTENB) | TMS34010_NMI))
-		{
-			if (IE_FLAG || (IOREG(REG_INTPEND) & TMS34010_NMI))
-			{
-				Interrupt();
-			}
-		}
-
 		#ifdef	MAME_DEBUG
 		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
 		#endif
@@ -1014,7 +1031,7 @@ void TMS34010_io_register_w(int reg, int data)
 		break;
 
 	case REG_PMASK:
-		if (data && errorlog) fprintf(errorlog, "Plane masking NOT supported. PC=%08X\n", cpu_getpc());
+		if (data && errorlog) fprintf(errorlog, "Plane masking not supported. PC=%08X\n", cpu_getpc());
 		break;
 
 	case REG_DPYCTL:
@@ -1041,15 +1058,19 @@ void TMS34010_io_register_w(int reg, int data)
 		break;
 
 	case REG_CONVDP:
-		state.xytolshiftcount1 = ~data & 0x0f;
+		state.xytolshiftcount1 = (~data & 0x0f);
+		break;
+
+	case REG_INTENB:
+		if (IOREG(REG_INTENB) & IOREG(REG_INTPEND)) check_interrupt();
 		break;
 	}
 
-	//if (errorlog)
-	//{
-	//	fprintf(errorlog, "TMS34010 io write. Reg #%02X=%04X - PC: %04X\n",
-	//			reg, IOREG(reg), cpu_getpc());
-	//}
+	/*if (errorlog)
+	{
+		fprintf(errorlog, "TMS34010 io write. Reg #%02X=%04X - PC: %04X\n",
+				reg, IOREG(reg), cpu_getpc());
+	}*/
 }
 
 int TMS34010_io_register_r(int reg)

@@ -1,4 +1,5 @@
 #include "driver.h"
+#include <time.h>
 
 static unsigned char *biosbank;
 //static unsigned char *memcard;
@@ -7,6 +8,16 @@ unsigned char *neogeo_sram;
 
 static int sram_locked;
 static int sram_protection_hack;
+
+/* MARTINEZ.F 990209 Calendar */
+extern int seconds;
+extern int minutes;
+extern int hours;
+extern int days;
+extern int month;
+extern int year;
+extern int weekday;
+/* MARTINEZ.F 990209 Calendar End */
 
 int neogeo_game_fix;
 
@@ -18,6 +29,9 @@ static void neogeo_custom_memory(void);
 void neogeo_init_machine (void)
 {
 	int src,res;
+	time_t		ltime;
+	struct tm		*today;
+
 
 	/* Reset variables & RAM */
 	memset (neogeo_ram, 0, 0x10000);
@@ -31,6 +45,17 @@ void neogeo_init_machine (void)
 
 	/* write the ID in the system BIOS ROM */
 	WRITE_WORD(&Machine->memory_region[4][0x0400],res);
+
+	time(&ltime);
+	today = localtime(&ltime);
+
+	seconds = ((today->tm_sec/10)<<4) + (today->tm_sec%10);
+	minutes = ((today->tm_min/10)<<4) + (today->tm_min%10);
+	hours = ((today->tm_hour/10)<<4) + (today->tm_hour%10);
+	days = ((today->tm_mday/10)<<4) + (today->tm_mday%10);
+	month = (today->tm_mon + 1);
+	year = ((today->tm_year/10)<<4) + (today->tm_year%10);
+	weekday = today->tm_wday;
 }
 
 
@@ -390,6 +415,65 @@ static int maglord_cycle_sr(int offset)
 
 /******************************************************************************/
 
+static int prot_data;
+
+static int fatfury2_protection_r(int offset)
+{
+	int res = (prot_data >> 24) & 0xff;
+
+	switch (offset)
+	{
+		case 0x55550:
+		case 0xffff0:
+		case 0x00000:
+		case 0xff000:
+		case 0x36000:
+		case 0x36008:
+			return res;
+
+		case 0x36004:
+		case 0x3600c:
+			return ((res & 0xf0) >> 4) | ((res & 0x0f) << 4);
+
+		default:
+if (errorlog) fprintf(errorlog,"unknown protection read at pc %06x, offset %08x\n",cpu_getpc(),offset);
+			return 0;
+	}
+}
+
+static void fatfury2_protection_w(int offset,int data)
+{
+	switch (offset)
+	{
+		case 0x55552:	/* data == 0x5555; read back from 55550, ffff0, 00000 ,ff000 */
+			prot_data = 0xff00ff00;
+			break;
+
+		case 0x56782:	/* data == 0x1234; read back from 36000 *or* 36004 */
+			prot_data = 0xf05a3601;
+			break;
+
+		case 0x42812:	/* data == 0x1824; read back from 36008 *or* 3600c */
+			prot_data = 0x81422418;
+			break;
+
+		case 0x55550:
+		case 0xffff0:
+		case 0xff000:
+		case 0x36000:
+		case 0x36004:
+		case 0x36008:
+		case 0x3600c:
+			prot_data <<= 8;
+			break;
+
+		default:
+if (errorlog) fprintf(errorlog,"unknown protection write at pc %06x, offset %08x, data %02x\n",cpu_getpc(),offset,data);
+			break;
+	}
+}
+
+
 static void neogeo_custom_memory(void)
 {
 	/* NeoGeo intro screen cycle skip, used by all games */
@@ -570,12 +654,19 @@ static void neogeo_custom_memory(void)
 	/* otherwise at level 2 you cannot hit the opponent and other problems */
 	if (!strcmp(Machine->gamedrv->name,"fatfury2"))
 	{
+		/* there seems to also be another protection check like the countless ones */
+		/* patched above by protectiong a SRAM location, but that trick doesn't work */
+		/* here (or maybe the SRAM location to protect is different), so I patch out */
+		/* the routine which trashes memory. Without this, the game goes nuts after */
+		/* the first bonus stage. */
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		WRITE_WORD(&RAM[0xb820],0x4e71);
+		WRITE_WORD(&RAM[0xb822],0x4e71);
+
 		/* again, the protection involves reading and writing addresses in the */
 		/* 0x2xxxxx range. There are several checks all around the code. */
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-		WRITE_WORD(&RAM[0x8508],0x00ff);
-		WRITE_WORD(&RAM[0xe946],0x00ff);
-		WRITE_WORD(&RAM[0xf850],0x00ff);
+		install_mem_read_handler (0, 0x200000, 0x2fffff, fatfury2_protection_r);
+		install_mem_write_handler(0, 0x200000, 0x2fffff, fatfury2_protection_w);
 	}
 }
 

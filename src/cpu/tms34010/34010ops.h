@@ -79,23 +79,6 @@
 #define TMS34010_DI          0x0400    /* Display Interrupt */
 #define TMS34010_WV          0x0800    /* Window Violation Interrupt */
 
-#if NEW_INTERRUPT_SYSTEM
-#define CHECK_IRQ_LINES(ieflag,opcode)              \
-    if (ieflag) {                                   \
-        /* HJB 990125 check irq line states */      \
-        if (state.irq_state[0] != CLEAR_LINE) {     \
-            LOG((errorlog,"TMS34010#%d %s sets INT1\n", cpu_getactivecpu(), opcode)); \
-            IOREG(REG_INTPEND) |= TMS34010_INT1;    \
-        }                                           \
-        if (state.irq_state[1] != CLEAR_LINE) {     \
-            LOG((errorlog,"TMS34010#%d %s sets INT2\n", cpu_getactivecpu(), opcode)); \
-            IOREG(REG_INTPEND) |= TMS34010_INT2;    \
-        }                                           \
-    }
-#else
-#define CHECK_IRQ_LINES(ieflag,opcode)
-#endif /* NEW_INTERRUPT_SYSTEM */
-
 /* IO registers accessor */
 #define IOREG(reg)	     (state.IOregs[reg])
 #define SLAVE_IOREG(reg) (slavecontext->IOregs[reg])

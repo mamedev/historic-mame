@@ -20,7 +20,7 @@
 #include "inflate.h"
 
 /* These are the only two functions that should be needed */
-int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans);
+int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, UINT8 **palette, int *num_palette, UINT8 **trans, int *num_trans);
 
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
@@ -51,53 +51,53 @@ extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned 
 #define PNG_PF_Paeth    4
 
 struct png_info {
-	unsigned int width, height;
-	unsigned int xoffset, yoffset;
-	unsigned int xres, yres;
+	UINT32 width, height;
+	UINT32 xoffset, yoffset;
+	UINT32 xres, yres;
 	double xscale, yscale;
 	double source_gamma;
-	unsigned int chromaticities[8];
-	int resolution_unit, offset_unit, scale_unit;
-	unsigned char bit_depth;
-	int significant_bits[4];
-	int background_color[4];
-	unsigned char color_type;
-	unsigned char compression_method;
-	unsigned char filter_method;
-	unsigned char interlace_method;
-	unsigned int num_palette;
-	unsigned char *palette;
-	unsigned int num_trans;
-	unsigned char *trans;
-	unsigned char *image;
+	UINT32 chromaticities[8];
+	UINT32 resolution_unit, offset_unit, scale_unit;
+	UINT8 bit_depth;
+	UINT32 significant_bits[4];
+	UINT32 background_color[4];
+	UINT8 color_type;
+	UINT8 compression_method;
+	UINT8 filter_method;
+	UINT8 interlace_method;
+	UINT32 num_palette;
+	UINT8 *palette;
+	UINT32 num_trans;
+	UINT8 *trans;
+	UINT8 *image;
 
 	/* The rest is private and should not be used
 	 * by the public functions
 	 */
-	unsigned char bpp;
-	unsigned int rowbytes;
-	unsigned char *zimage;
-	unsigned int zlength;
-	unsigned char *fimage;
+	UINT8 bpp;
+	UINT32 rowbytes;
+	UINT8 *zimage;
+	UINT32 zlength;
+	UINT8 *fimage;
 };
 
 /* read_uint is here so we don't have to deal with byte-ordering issues */
-static unsigned int read_uint (void *fp)
+static UINT32 read_uint (void *fp)
 {
-	unsigned char v[4];
-	unsigned int i;
+	UINT8 v[4];
+	UINT32 i;
 
 	if (osd_fread(fp, v, 4) != 4)
         if (errorlog)
-		fprintf(errorlog,"Unexpected EOF in PNG\n");
+			fprintf(errorlog,"Unexpected EOF in PNG\n");
 	i = (v[0]<<24) | (v[1]<<16) | (v[2]<<8) | (v[3]);
 	return i;
 }
 
 /* convert_uint is here so we don't have to deal with byte-ordering issues */
-static unsigned int convert_uint (unsigned char *v)
+static UINT32 convert_uint (UINT8 *v)
 {
-	unsigned int i;
+	UINT32 i;
 
 	i = (v[0]<<24) | (v[1]<<16) | (v[2]<<8) | (v[3]);
 	return i;
@@ -105,11 +105,11 @@ static unsigned int convert_uint (unsigned char *v)
 
 static int unfilter(struct png_info *p)
 {
-	unsigned int i, j, bpp, filter;
-	int prediction, pA, pB, pC, dA, dB, dC;
-	unsigned char *src, *dst;
+	UINT32 i, j, bpp, filter;
+	INT32 prediction, pA, pB, pC, dA, dB, dC;
+	UINT8 *src, *dst;
 
-	if((p->image = (unsigned char *)malloc (p->height*p->rowbytes))==NULL)
+	if((p->image = (UINT8 *)malloc (p->height*p->rowbytes))==NULL)
 	{
 		if (errorlog)
 			fprintf(errorlog,"Out of memory\n");
@@ -172,7 +172,7 @@ static int unfilter(struct png_info *p)
 
 static int verify_signature (void *fp)
 {
-	char signature[9];
+	INT8 signature[8];
 
 	if (osd_fread (fp, signature, 8) != 8)
 	{
@@ -181,9 +181,7 @@ static int verify_signature (void *fp)
 		return 0;
 	}
 
-	signature[8]=0;
-
-	if (strcmp(signature, PNG_Signature))
+	if (memcmp(signature, PNG_Signature, 8))
 	{
 		if (errorlog)
 			fprintf(errorlog,"PNG signature mismatch found: %s expected: %s\n",
@@ -202,7 +200,7 @@ static int inflate_image (struct png_info *p)
 	p->rowbytes=(p->width*p->bit_depth*samples[p->color_type])/8
 		 + ((p->width*p->bit_depth*samples[p->color_type])%8?1:0);
 
-	if((p->fimage = (unsigned char *)malloc (p->height*(p->rowbytes+2)))==NULL)
+	if((p->fimage = (UINT8 *)malloc (p->height*(p->rowbytes+2)))==NULL)
 	{
 		if (errorlog)
 			fprintf(errorlog,"Out of memory\n");
@@ -227,11 +225,11 @@ static int inflate_image (struct png_info *p)
 
 static int read_chunks(void *fp, struct png_info *p)
 {
-	unsigned int i;
-	unsigned int chunk_length, chunk_type=0, chunk_crc, crc;
-	unsigned int tot_idat=0, num_idat=0, l_idat[256];
-	unsigned char *chunk_data, *zimage, *idat[256], *temp;
-	unsigned char str_chunk_type[5];
+	UINT32 i;
+	UINT32 chunk_length, chunk_type=0, chunk_crc, crc;
+	UINT32 tot_idat=0, num_idat=0, l_idat[256];
+	UINT8 *chunk_data, *zimage, *idat[256], *temp;
+	UINT8 str_chunk_type[5];
 
 	while (chunk_type != PNG_CN_IEND)
 	{
@@ -247,7 +245,7 @@ static int read_chunks(void *fp, struct png_info *p)
 
 		if (chunk_length)
 		{
-			if ((chunk_data = (unsigned char *)malloc(chunk_length+1))==NULL)
+			if ((chunk_data = (UINT8 *)malloc(chunk_length+1))==NULL)
 			{
 				if (errorlog)
 					fprintf(errorlog,"Out of memory\n");
@@ -327,7 +325,7 @@ static int read_chunks(void *fp, struct png_info *p)
 		case PNG_CN_tEXt:
 			if (errorlog)
 			{
-				unsigned char *text=chunk_data;
+				UINT8 *text=chunk_data;
 
 				while(*text++);
 				chunk_data[chunk_length]=0;
@@ -340,7 +338,7 @@ static int read_chunks(void *fp, struct png_info *p)
 		case PNG_CN_tIME:
 			if (errorlog)
 			{
-				unsigned char *t=chunk_data;
+				UINT8 *t=chunk_data;
 				fprintf(errorlog, "Image last-modification time: %i/%i/%i (%i:%i:%i) GMT\n",
 					((short)(*t+1) << 8)+ (short)(*(t+1)), *(t+2), *(t+3), *(t+4), *(t+5), *(t+6));
 				/* (*t+1) is _very_ strange probably a bug */
@@ -384,7 +382,7 @@ static int read_chunks(void *fp, struct png_info *p)
 			break;
 		}
 	}
-	if ((zimage = (unsigned char *)malloc(tot_idat))==NULL)
+	if ((zimage = (UINT8 *)malloc(tot_idat))==NULL)
 	{
 		if (errorlog)
 			fprintf(errorlog,"Out of memory\n");
@@ -444,7 +442,7 @@ static int read_png(const char *file_name, struct png_info *p)
 	return 1;
 }
 
-static void expand_buffer (unsigned char *inbuf, unsigned char *outbuf, int width, int height, int bit_depth)
+static void expand_buffer (UINT8 *inbuf, UINT8 *outbuf, int width, int height, int bit_depth)
 {
 	int i,j, k;
 
@@ -472,9 +470,9 @@ static void expand_buffer (unsigned char *inbuf, unsigned char *outbuf, int widt
 
 static int png_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, struct png_info *p)
 {
-	unsigned char *pixmap8, *tmp;
-	unsigned int orientation, i;
-	unsigned int j, x, y, h, w;
+	UINT8 *pixmap8, *tmp;
+	UINT32 orientation, i;
+	UINT32 j, x, y, h, w;
 
 	if (!read_png(file_name, p))
 		return 0;
@@ -499,7 +497,7 @@ static int png_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, st
 		return 0;
 	}
 
-	if ((pixmap8 = (unsigned char *)malloc(p->width*p->height))==NULL)
+	if ((pixmap8 = (UINT8 *)malloc(p->width*p->height))==NULL)
 	{
 		if (errorlog)
 			fprintf(errorlog,"Out of memory\n");
@@ -551,12 +549,55 @@ static int png_read_bitmap(const char *file_name, struct osd_bitmap **bitmap, st
 	return 1;
 }
 
-int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans)
+static void delete_unused_colors (struct png_info *p, struct osd_bitmap *bitmap)
+{
+	int i, j, tab[256], pen=0, trns=0;
+	UINT8 ptemp[3*256], ttemp[256];
+
+	memset (tab, 0, 256*sizeof(int));
+	memcpy (ptemp, p->palette, 3*p->num_palette);
+	memcpy (ttemp, p->trans, p->num_trans);
+
+	/* check which colors are actually used */
+	for ( j = 0; j < bitmap->height; j++)
+		for (i = 0; i < bitmap->width; i++)
+				tab[bitmap->line[j][i]]++;
+
+	/* shrink palette and transparency */
+	for (i = 0; i < p->num_palette; i++)
+		if (tab[i])
+		{
+			p->palette[3*pen+0]=ptemp[3*i+0];
+			p->palette[3*pen+1]=ptemp[3*i+1];
+			p->palette[3*pen+2]=ptemp[3*i+2];
+			if (i < p->num_trans)
+			{
+				p->trans[pen] = ttemp[i];
+				trns++;
+			}
+			tab[i] = pen++;
+		}
+
+	/* remap colors */
+	for ( j = 0; j < bitmap->height; j++)
+		for (i = 0; i < bitmap->width; i++)
+				bitmap->line[j][i]=tab[bitmap->line[j][i]];
+
+	if (errorlog && (p->num_palette!=pen))
+		fprintf (errorlog, "%i unused pen(s) deleted\n", p->num_palette-pen);
+
+	p->num_palette = pen;
+	p->num_trans = trns;
+}
+
+int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, UINT8 **palette, int *num_palette, UINT8 **trans, int *num_trans)
 {
 	struct png_info p;
 
 	if (!png_read_bitmap(file_name, bitmap, &p))
 		return 0;
+
+	delete_unused_colors (&p, *bitmap);
 
 	*num_palette = p.num_palette;
 	*num_trans = p.num_trans;

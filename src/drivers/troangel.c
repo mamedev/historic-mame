@@ -163,10 +163,10 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo troangel_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,      0, 32 },
-	{ 1, 0x6000, &spritelayout, 32*4, 32 },
-	{ 1, 0x7000, &spritelayout, 32*4, 32 },
-	{ 1, 0x8000, &spritelayout, 32*4, 32 },
-	{ 1, 0x9000, &spritelayout, 32*4, 32 },
+	{ 1, 0x6000, &spritelayout, 32*8, 32 },
+	{ 1, 0x7000, &spritelayout, 32*8, 32 },
+	{ 1, 0x8000, &spritelayout, 32*8, 32 },
+	{ 1, 0x9000, &spritelayout, 32*8, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -201,7 +201,7 @@ static struct MachineDriver troangel_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
 	troangel_gfxdecodeinfo,
-	32*4+16,32*4+32*4,
+	32*8+16,32*8+32*8,
 	troangel_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,

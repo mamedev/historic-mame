@@ -20,7 +20,8 @@ extern int translucency;
 
 /* from video.c */
 extern int frameskip,autoframeskip;
-extern int scanlines, use_vesa, use_double, video_sync, antialias, ntsc;
+extern int scanlines, use_vesa, video_sync, antialias, ntsc;
+extern int use_double, use_triple, use_quadra;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
 extern int beam, flicker;
 extern float gamma_correction;
@@ -282,6 +283,8 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	/* read graphic configuration */
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
 	use_double  = get_bool   ("config", "double",       NULL, -1);
+	use_triple  = get_bool   ("config", "triple",       NULL,  0);
+	use_quadra  = get_bool   ("config", "quadra",       NULL,  0);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
 	antialias   = get_bool   ("config", "antialias",    NULL,  1);
 	use_vesa    = get_bool   ("config", "vesa",         NULL,  0);

@@ -58,8 +58,6 @@ typedef struct
 	UINT8* stackbase;
 	UINT32 stackoffs;
 #if NEW_INTERRUPT_SYSTEM
-	int nmi_state;
-	int irq_state[5];
 	int (*irq_callback)(int irqline);
 #endif
 } TMS34010_Regs;

@@ -292,7 +292,7 @@ static struct MemoryReadAddress tokio_sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, soundlatch_r },
-	{ 0x9800, 0x9800, MRA_NOP },	/* ??? */
+//	{ 0x9800, 0x9800, MRA_NOP },	/* ??? */
 	{ 0xb000, 0xb000, YM2203_status_port_0_r },
 	{ 0xb001, 0xb001, YM2203_read_port_0_r },
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
@@ -303,7 +303,7 @@ static struct MemoryWriteAddress tokio_sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x9000, MWA_NOP },	/* ??? */
+//	{ 0x9000, 0x9000, MWA_NOP },	/* ??? */
 	{ 0xa000, 0xa000, bublbobl_sh_nmi_disable_w },
 	{ 0xa800, 0xa800, bublbobl_sh_nmi_enable_w },
 	{ 0xb000, 0xb000, YM2203_control_port_0_w },

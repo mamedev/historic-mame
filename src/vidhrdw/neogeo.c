@@ -377,7 +377,7 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))			// Gururin Bodge fix
 			if (sy<224)                // tidy this up later...
 			{
 				tileatr=tileatr>>8;
-		        colmask[tileatr] |= pen_usage[tileno];
+		        colmask[tileatr] |= pen_usage[tileno % no_of_tiles];
 			}
 
 			sy +=yskip;

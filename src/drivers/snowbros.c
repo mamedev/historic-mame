@@ -321,7 +321,7 @@ ROM_START( snowbros_rom )
 	ROM_LOAD( "snowbros.4",   0x0000, 0x8000, 0xe6eab4e4 )
 ROM_END
 
-ROM_START( snowbro2_rom )
+ROM_START( snowbroa_rom )
 	ROM_REGION(0x40000)	/* 6*64k for 68000 code */
 	ROM_LOAD_EVEN( "snowbros.3a",  0x00000, 0x20000, 0x10cb37e1 )
 	ROM_LOAD_ODD ( "snowbros.2a",  0x00000, 0x20000, 0xab91cc1e )
@@ -396,11 +396,11 @@ struct GameDriver snowbros_driver =
 	hiload, hisave
 };
 
-struct GameDriver snowbro2_driver =
+struct GameDriver snowbroa_driver =
 {
 	__FILE__,
 	&snowbros_driver,
-	"snowbro2",
+	"snowbroa",
 	"Snow Bros (set 2)",
 	"1990",
 	"Toaplan (Romstar license)",
@@ -409,7 +409,7 @@ struct GameDriver snowbro2_driver =
 	&machine_driver,
 	0,
 
-	snowbro2_rom,
+	snowbroa_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

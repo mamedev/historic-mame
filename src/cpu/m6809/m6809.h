@@ -28,39 +28,44 @@ typedef struct
 #define INLINE static inline
 #endif
 
+/* flag bits in the cc register */
+#define CC_C	0x01		/* Carry */
+#define CC_V	0x02		/* Overflow */
+#define CC_Z	0x04		/* Zero */
+#define CC_N	0x08		/* Negative */
+#define CC_II	0x10		/* Inhibit IRQ */
+#define CC_H	0x20		/* Half (auxiliary) carry */
+#define CC_IF	0x40		/* Inhibit FIRQ */
+#define CC_E	0x80		/* entire state pushed */
 
-#define M6809_INT_NONE  0			/* No interrupt required */
-#define M6809_INT_IRQ	1			/* Standard IRQ interrupt */
-#define M6809_INT_FIRQ  2			/* Fast IRQ */
-#define M6809_INT_NMI   4			/* NMI */	/* NS 970909 */
-#define M6809_CWAI   8				/* set when CWAI is waiting for an interrupt */	/* NS 980101 */
-#define M6809_SYNC   16				/* set when SYNC is waiting for an interrupt */
 
+#define M6809_INT_NONE	0	/* No interrupt required */
+#define M6809_INT_IRQ	1	/* Standard IRQ interrupt */
+#define M6809_INT_FIRQ	2	/* Fast IRQ */
+#define M6809_INT_NMI	4	/* NMI */	/* NS 970909 */
 /* PUBLIC FUNCTIONS */
 extern void m6809_SetRegs(m6809_Regs *Regs);
 extern void m6809_GetRegs(m6809_Regs *Regs);
 extern unsigned m6809_GetPC(void);
 extern void m6809_reset(void);
 extern int m6809_execute(int cycles);  /* NS 970908 */
+
 #if NEW_INTERRUPT_SYSTEM
+
+#define M6809_IRQ_LINE	0	/* IRQ line number */
+#define M6809_FIRQ_LINE 1   /* FIRQ line number */
+
 extern void m6809_set_nmi_line(int state);
 extern void m6809_set_irq_line(int irqline, int state);
 extern void m6809_set_irq_callback(int (*callback)(int irqline));
-#define CHECK_IRQ_LINES(cc) { \
-	if (irq_state[0] != CLEAR_LINE) { \
-		if ((cc & 0x10) == 0) pending_interrupts |= M6809_INT_IRQ; \
-        check_SYNC_CWAI(M6809_INT_IRQ); \
-	} \
-	if (irq_state[1] != CLEAR_LINE) { \
-		if ((cc & 0x40) == 0) pending_interrupts |= M6809_INT_FIRQ; \
-        check_SYNC_CWAI(M6809_INT_FIRQ); \
-    } \
-}
+
 #else
+
 extern void m6809_Cause_Interrupt(int type);   /* NS 970908 */
 extern void m6809_Clear_Pending_Interrupts(void);  /* NS 970908 */
-#define CHECK_IRQ_LINES(cc)
+
 #endif
+
 /* PUBLIC GLOBALS */
 extern int	m6809_ICount;
 

@@ -12,6 +12,7 @@ static unsigned char bg1scrolly[2],bg2scrollx[2],bg2scrolly[2];
 static struct osd_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;
 
+static int charpalettebank,spritepalettebank;
 static int bg2_chardisplacement;
 
 
@@ -21,7 +22,7 @@ static int bg2_chardisplacement;
   Start the video hardware emulation.
 
 ***************************************************************************/
-static int common_vh_start(void)
+static int common_vh_start(int width,int height)
 {
 	int i;
 
@@ -31,7 +32,7 @@ static int common_vh_start(void)
 	}
 	memset(dirtybuffer,1,aerofgt_bg1videoram_size / 2);
 
-	if ((tmpbitmap = osd_new_bitmap(512,512,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = osd_new_bitmap(width,height,Machine->scrbitmap->depth)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -45,7 +46,7 @@ static int common_vh_start(void)
 	}
 	memset(dirtybuffer2,1,aerofgt_bg2videoram_size / 2);
 
-	if ((tmpbitmap2 = osd_new_bitmap(512,512,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap2 = osd_new_bitmap(width,height,Machine->scrbitmap->depth)) == 0)
 	{
 		free(dirtybuffer);
 		osd_free_bitmap(tmpbitmap);
@@ -53,19 +54,29 @@ static int common_vh_start(void)
 		return 1;
 	}
 
+	charpalettebank = 0;
+	spritepalettebank = 0;
+
 	return 0;
 }
 
-int aerofgt_vh_start(void)
+int pspikes_vh_start(void)
 {
 	bg2_chardisplacement = 0;
-	return common_vh_start();
+	aerofgt_bg2videoram_size = 0;	/* no bg2 in this game */
+	return common_vh_start(512,256);
 }
 
 int turbofrc_vh_start(void)
 {
 	bg2_chardisplacement = 0x9c;
-	return common_vh_start();
+	return common_vh_start(512,512);
+}
+
+int aerofgt_vh_start(void)
+{
+	bg2_chardisplacement = 0;
+	return common_vh_start(512,512);
 }
 
 
@@ -143,26 +154,16 @@ void aerofgt_bg2videoram_w(int offset,int data)
 }
 
 
-void aerofgt_gfxbank_w(int offset,int data)
+void pspikes_gfxbank_w(int offset,int data)
 {
-	int oldword = READ_WORD(&gfxbank[offset]);
-	int newword;
-
-
-	/* straighten out the 16-bit word into bytes for conveniency */
-	#ifdef LSB_FIRST
-	data = ((data & 0x00ff00ff) << 8) | ((data & 0xff00ff00) >> 8);
-	#endif
-
-	newword = COMBINE_WORD(oldword,data);
-	if (oldword != newword)
-	{
-		WRITE_WORD(&gfxbank[offset],newword);
-		if (offset < 4)
-			memset(dirtybuffer,1,aerofgt_bg1videoram_size / 2);
-		else
-			memset(dirtybuffer2,1,aerofgt_bg2videoram_size / 2);
-	}
+	/* there are actually two banks in pspikes, instead of four like */
+	/* in the other games. The character code is cccBnnnnnnnnnnnn instead */
+	/* of cccBBnnnnnnnnnnn. Here I convert the data to four banks so I */
+	/* can use the same common routines as the other games. */
+	gfxbank[0] = 2*((data & 0xf0) >> 4);	/* guess */
+	gfxbank[1] = 2*((data & 0xf0) >> 4) + 1;	/* guess */
+	gfxbank[2] = 2*(data & 0x0f);
+	gfxbank[3] = 2*(data & 0x0f) + 1;
 }
 
 void turbofrc_gfxbank_w(int offset,int data)
@@ -187,6 +188,28 @@ void turbofrc_gfxbank_w(int offset,int data)
 	}
 }
 
+void aerofgt_gfxbank_w(int offset,int data)
+{
+	int oldword = READ_WORD(&gfxbank[offset]);
+	int newword;
+
+
+	/* straighten out the 16-bit word into bytes for conveniency */
+	#ifdef LSB_FIRST
+	data = ((data & 0x00ff00ff) << 8) | ((data & 0xff00ff00) >> 8);
+	#endif
+
+	newword = COMBINE_WORD(oldword,data);
+	if (oldword != newword)
+	{
+		WRITE_WORD(&gfxbank[offset],newword);
+		if (offset < 4)
+			memset(dirtybuffer,1,aerofgt_bg1videoram_size / 2);
+		else
+			memset(dirtybuffer2,1,aerofgt_bg2videoram_size / 2);
+	}
+}
+
 void aerofgt_bg1scrolly_w(int offset,int data)
 {
 	COMBINE_WORD_MEM(bg1scrolly,data);
@@ -200,6 +223,12 @@ void turbofrc_bg2scrollx_w(int offset,int data)
 void aerofgt_bg2scrolly_w(int offset,int data)
 {
 	COMBINE_WORD_MEM(bg2scrolly,data);
+}
+
+void pspikes_palette_bank_w(int offset,int data)
+{
+	spritepalettebank = data & 0x03;
+	charpalettebank = (data & 0x1c) >> 2;
 }
 
 
@@ -226,7 +255,7 @@ static void bg_dopalette(void)
 	for (offs = aerofgt_bg1videoram_size - 2;offs >= 0;offs -= 2)
 	{
 		code = READ_WORD(&aerofgt_bg1videoram[offs]);
-		color = ((code & 0xe000) >> 13);
+		color = ((code & 0xe000) >> 13) + 8 * charpalettebank;
 		code = (code & 0x07ff) + (gfxbank[0 + ((code & 0x1800) >> 11)] << 11);
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
@@ -316,7 +345,7 @@ static void turbofrc_spr_dopalette(void)
 	first = 8*READ_WORD(&spriteram_2[0x3fc + base]);
 	for (attr_start = first + base;attr_start < base + 0x0400-8;attr_start += 8)
 	{
-		color = (READ_WORD(&spriteram_2[attr_start + 4]) & 0x000f);
+		color = (READ_WORD(&spriteram_2[attr_start + 4]) & 0x000f) + 16 * spritepalettebank;
 		colmask[color] |= 0xffff;
 	}
 
@@ -330,24 +359,27 @@ static void turbofrc_spr_dopalette(void)
 	}
 
 
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-
-	base = 0x0400;
-	first = 8*READ_WORD(&spriteram_2[0x3fc + base]);
-	for (attr_start = first + base;attr_start < base + 0x0400-8;attr_start += 8)
+	if (spriteram_2_size > 0x400)	/* turbofrc, not pspikes */
 	{
-		color = (READ_WORD(&spriteram_2[attr_start + 4]) & 0x000f);
-		colmask[color] |= 0xffff;
-	}
+		for (color = 0;color < 16;color++) colmask[color] = 0;
 
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
+		pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
+
+		base = 0x0400;
+		first = 8*READ_WORD(&spriteram_2[0x3fc + base]);
+		for (attr_start = first + base;attr_start < base + 0x0400-8;attr_start += 8)
 		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+			color = (READ_WORD(&spriteram_2[attr_start + 4]) & 0x000f) + 16 * spritepalettebank;
+			colmask[color] |= 0xffff;
+		}
+
+		for (color = 0;color < 16;color++)
+		{
+			for (i = 0;i < 15;i++)
+			{
+				if (colmask[color] & (1 << i))
+					palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+			}
 		}
 	}
 }
@@ -456,7 +488,7 @@ static void turbofrc_drawsprites(struct osd_bitmap *bitmap,int priority)
 			zoomy = (READ_WORD(&spriteram_2[attr_start + 0]) & 0xf000) >> 12;
 			flipx = READ_WORD(&spriteram_2[attr_start + 4]) & 0x0800;
 			flipy = READ_WORD(&spriteram_2[attr_start + 4]) & 0x8000;
-			color = (READ_WORD(&spriteram_2[attr_start + 4]) & 0x000f);
+			color = (READ_WORD(&spriteram_2[attr_start + 4]) & 0x000f) + 16 * spritepalettebank;
 			map_start = 2 * (READ_WORD(&spriteram_2[attr_start + 6]) & 0x1fff);
 			if (attr_start >= 0x0400) map_start |= 0x4000;
 
@@ -506,17 +538,19 @@ static void turbofrc_drawsprites(struct osd_bitmap *bitmap,int priority)
 }
 
 
-void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+void pspikes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
+
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 	bg_dopalette();
-	aerofgt_spr_dopalette();
+	turbofrc_spr_dopalette();
 	if (palette_recalc())
 	{
 		memset(dirtybuffer,1,aerofgt_bg1videoram_size / 2);
-		memset(dirtybuffer2,1,aerofgt_bg2videoram_size / 2);
+//		memset(dirtybuffer2,1,aerofgt_bg2videoram_size / 2);
 	}
 
 	for (offs = aerofgt_bg1videoram_size - 2;offs >= 0;offs -= 2)
@@ -534,13 +568,14 @@ void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code = READ_WORD(&aerofgt_bg1videoram[offs]);
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					(code & 0x07ff) + (gfxbank[0 + ((code & 0x1800) >> 11)] << 11),
-					(code & 0xe000) >> 13,
+					((code & 0xe000) >> 13) + 8 * charpalettebank,
 					0,0,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
+#if 0
 	for (offs = aerofgt_bg2videoram_size - 2;offs >= 0;offs -= 2)
 	{
 		if (dirtybuffer2[offs/2])
@@ -554,6 +589,7 @@ void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = (offs/2) / 64;
 
 			code = READ_WORD(&aerofgt_bg2videoram[offs]);
+
 			drawgfx(tmpbitmap2,Machine->gfx[0],
 					bg2_chardisplacement + (code & 0x07ff) + (gfxbank[4 + ((code & 0x1800) >> 11)] << 11),
 					((code & 0xe000) >> 13) + 16,
@@ -562,30 +598,33 @@ void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
-
+#endif
 
 	/* copy the temporary bitmap to the screen */
 	{
-		int scrollx,scrolly;
+		int scrollx[256],scrolly;
 
-		scrollx = -READ_WORD(&aerofgt_rasterram[0x0000])+18;
 		scrolly = -READ_WORD(bg1scrolly);
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		for (offs = 0;offs < 256;offs++)
+			scrollx[(offs - scrolly) & 0x0ff] = -READ_WORD(&aerofgt_rasterram[2*offs]);
+		copyscrollbitmap(bitmap,tmpbitmap,256,scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	aerofgt_drawsprites(bitmap,0);
-	aerofgt_drawsprites(bitmap,1);
+	turbofrc_drawsprites(bitmap,0);
+//	turbofrc_drawsprites(bitmap,1);
 
+#if 0
 	{
 		int scrollx,scrolly;
 
-		scrollx = -READ_WORD(&aerofgt_rasterram[0x0400])+20;
-		scrolly = -READ_WORD(bg2scrolly);
+		scrollx = -READ_WORD(bg2scrollx)+7;
+		scrolly = -READ_WORD(bg2scrolly)-2;
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
+#endif
 
-	aerofgt_drawsprites(bitmap,2);
-	aerofgt_drawsprites(bitmap,3);
+	turbofrc_drawsprites(bitmap,2);
+//	turbofrc_drawsprites(bitmap,3);
 }
 
 void turbofrc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -675,4 +714,86 @@ if (drawbg2)
 
 	turbofrc_drawsprites(bitmap,2);
 	turbofrc_drawsprites(bitmap,3);
+}
+
+void aerofgt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+	memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+	bg_dopalette();
+	aerofgt_spr_dopalette();
+	if (palette_recalc())
+	{
+		memset(dirtybuffer,1,aerofgt_bg1videoram_size / 2);
+		memset(dirtybuffer2,1,aerofgt_bg2videoram_size / 2);
+	}
+
+	for (offs = aerofgt_bg1videoram_size - 2;offs >= 0;offs -= 2)
+	{
+		if (dirtybuffer[offs/2])
+		{
+			int sx,sy,code;
+
+
+			dirtybuffer[offs/2] = 0;
+
+			sx = (offs/2) % 64;
+			sy = (offs/2) / 64;
+
+			code = READ_WORD(&aerofgt_bg1videoram[offs]);
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					(code & 0x07ff) + (gfxbank[0 + ((code & 0x1800) >> 11)] << 11),
+					(code & 0xe000) >> 13,
+					0,0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	for (offs = aerofgt_bg2videoram_size - 2;offs >= 0;offs -= 2)
+	{
+		if (dirtybuffer2[offs/2])
+		{
+			int sx,sy,code;
+
+
+			dirtybuffer2[offs/2] = 0;
+
+			sx = (offs/2) % 64;
+			sy = (offs/2) / 64;
+
+			code = READ_WORD(&aerofgt_bg2videoram[offs]);
+			drawgfx(tmpbitmap2,Machine->gfx[0],
+					bg2_chardisplacement + (code & 0x07ff) + (gfxbank[4 + ((code & 0x1800) >> 11)] << 11),
+					((code & 0xe000) >> 13) + 16,
+					0,0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the temporary bitmap to the screen */
+	{
+		int scrollx,scrolly;
+
+		scrollx = -READ_WORD(&aerofgt_rasterram[0x0000])+18;
+		scrolly = -READ_WORD(bg1scrolly);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+	aerofgt_drawsprites(bitmap,0);
+	aerofgt_drawsprites(bitmap,1);
+
+	{
+		int scrollx,scrolly;
+
+		scrollx = -READ_WORD(&aerofgt_rasterram[0x0400])+20;
+		scrolly = -READ_WORD(bg2scrolly);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	}
+
+	aerofgt_drawsprites(bitmap,2);
+	aerofgt_drawsprites(bitmap,3);
 }

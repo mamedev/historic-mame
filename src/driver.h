@@ -341,11 +341,12 @@ struct MachineDriver
 #define	VIDEO_UPDATE_BEFORE_VBLANK	0x0010
 
 /* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
-/* different proportions, e.g. 1:2 for Blasteroids, 3:2 for Moon Patrol */
+/* different proportions, e.g. 1:2 for Blasteroids, 3:2 for Moon Patrol, 4:3 for Liberator */
 #define VIDEO_PIXEL_ASPECT_RATIO_MASK 0x0060
 #define VIDEO_PIXEL_ASPECT_RATIO_1_1 0x0000
 #define VIDEO_PIXEL_ASPECT_RATIO_1_2 0x0020
 #define VIDEO_PIXEL_ASPECT_RATIO_3_2 0x0040
+#define VIDEO_PIXEL_ASPECT_RATIO_4_3 0x0060
 
 
 /* flags for sound_attributes */

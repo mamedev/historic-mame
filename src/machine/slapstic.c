@@ -101,6 +101,9 @@ Chip #     Game                Bank Select Addresses      Disable Mask Ignore Ma
 137412-109 Championship Sprint $0008, $000a, $000c, $000e    $3da0        $002b        $0052   $0064, $0065, $0066, $0067
 137412-110 Road Blasters &     $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
            APB?
+137412-111 Pit Fighter
+137412-116 Hydra &
+           Cyberball 2072 Tournament
 137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002        $????   $????, $????, $????, $????
            & Rampart
 

@@ -10,7 +10,7 @@ Various Data East 8 bit games:
 	Psycho-Nics Oscar           (c) 1988 Data East USA (2*6809 + I8751)
 	Psycho-Nics Oscar (Japan)   (c) 1987 Data East Corporation (2*6809 + I8751)
 	Gondomania					(c) 1987 Data East USA (6809 + I8751)
-	Mekyo Sensi					(c) 1987 Data East Corporation (6809 + I8751)
+	Makyou Senshi				(c) 1987 Data East Corporation (6809 + I8751)
 	Last Mission (rev 6)        (c) 1986 Data East USA (2*6809 + I8751)
 	Last Mission (rev 5)        (c) 1986 Data East USA (2*6809 + I8751)
 	Shackled                    (c) 1986 Data East USA (2*6809 + I8751)
@@ -218,7 +218,7 @@ static void gondo_i8751_w(int offset, int data)
 
 	/* Work out return values */
 	if (i8751_value==0x0000) {i8751_return=0; coin1=coin2=snd=0;}
-	if (i8751_value==0x038a)  i8751_return=0x375; /* Mekyo Sensi ID */
+	if (i8751_value==0x038a)  i8751_return=0x375; /* Makyou Senshi ID */
 	if (i8751_value==0x038b)  i8751_return=0x374; /* Gondomania ID */
 	if ((i8751_value>>8)==0x04)  i8751_return=0x40f; /* Coinage settings (Not supported) */
 	if ((i8751_value>>8)==0x05) {i8751_return=0x500 | coin1;  } /* Coin 1 */
@@ -559,7 +559,8 @@ static struct MemoryReadAddress gondo_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x27ff, dec8_video_r },
-	{ 0x2800, 0x2fff, MRA_RAM },
+	{ 0x2800, 0x2bff, paletteram_r },
+	{ 0x2c00, 0x2fff, paletteram_2_r },
 	{ 0x3000, 0x37ff, MRA_RAM },          /* Sprites */
 	{ 0x3800, 0x3800, input_port_7_r },   /* Dip 1 */
 	{ 0x3801, 0x3801, input_port_8_r },   /* Dip 2 */
@@ -650,7 +651,8 @@ static struct MemoryWriteAddress oscar_sub_writemem[] =
 static struct MemoryReadAddress lastmiss_readmem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_r },
-	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1000, 0x13ff, paletteram_r },
+	{ 0x1400, 0x17ff, paletteram_2_r },
     { 0x1800, 0x1800, input_port_0_r },
 	{ 0x1801, 0x1801, input_port_1_r },
 	{ 0x1802, 0x1802, input_port_2_r },
@@ -691,6 +693,8 @@ static struct MemoryWriteAddress lastmiss_writemem[] =
 static struct MemoryReadAddress lastmiss_sub_readmem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_r },
+	{ 0x1000, 0x13ff, paletteram_r },
+	{ 0x1400, 0x17ff, paletteram_2_r },
     { 0x1800, 0x1800, input_port_0_r },
 	{ 0x1801, 0x1801, input_port_1_r },
 	{ 0x1802, 0x1802, input_port_2_r },
@@ -722,7 +726,8 @@ static struct MemoryWriteAddress lastmiss_sub_writemem[] =
 static struct MemoryReadAddress shackled_readmem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_r },
-   	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1000, 0x13ff, paletteram_r },
+	{ 0x1400, 0x17ff, paletteram_2_r },
  	{ 0x1800, 0x1800, input_port_0_r },
 	{ 0x1801, 0x1801, input_port_1_r },
 	{ 0x1802, 0x1802, input_port_2_r },
@@ -759,7 +764,8 @@ static struct MemoryWriteAddress shackled_writemem[] =
 static struct MemoryReadAddress shackled_sub_readmem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_r },
-   	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1000, 0x13ff, paletteram_r },
+	{ 0x1400, 0x17ff, paletteram_2_r },
    	{ 0x1800, 0x1800, input_port_0_r },
 	{ 0x1801, 0x1801, input_port_1_r },
 	{ 0x1802, 0x1802, input_port_2_r },
@@ -778,8 +784,8 @@ static struct MemoryReadAddress shackled_sub_readmem[] =
 static struct MemoryWriteAddress shackled_sub_writemem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_w },
-	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
-	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
+	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
+	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
    	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, MWA_NOP }, /* DMA */
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
@@ -798,7 +804,8 @@ static struct MemoryWriteAddress shackled_sub_writemem[] =
 static struct MemoryReadAddress csilver_readmem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_r },
-   	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1000, 0x13ff, paletteram_r },
+	{ 0x1400, 0x17ff, paletteram_2_r },
  //	{ 0x1800, 0x1800, input_port_0_r },
 	{ 0x1801, 0x1801, input_port_0_r },
 	{ 0x1803, 0x1803, input_port_2_r },
@@ -842,7 +849,8 @@ static struct MemoryWriteAddress csilver_writemem[] =
 static struct MemoryReadAddress csilver_sub_readmem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_r },
-	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1000, 0x13ff, paletteram_r },
+	{ 0x1400, 0x17ff, paletteram_2_r },
   // 	{ 0x1800, 0x1800, input_port_0_r },
 //	{ 0x1801, 0x1801, input_port_1_r },
 	{ 0x1803, 0x1803, input_port_2_r },
@@ -860,8 +868,8 @@ static struct MemoryReadAddress csilver_sub_readmem[] =
 static struct MemoryWriteAddress csilver_sub_writemem[] =
 {
 	{ 0x0000, 0x0fff, dec8_share_w },
-	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
-	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
+	{ 0x1000, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split1_w },
+	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
    	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, MWA_NOP }, /* DMA */
 	{ 0x180c, 0x180c, oscar_sound_w },
@@ -2940,7 +2948,7 @@ struct GameDriver mekyosen_driver =
 	__FILE__,
 	&gondo_driver,
 	"mekyosen",
-	"Mekyo Sensi",
+	"Makyou Senshi",
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",

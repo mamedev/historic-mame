@@ -31,8 +31,10 @@ void MC68000_set_nmi_line(int state)
 
 void MC68000_set_irq_line(int irqline, int state)
 {
-   if (state != CLEAR_LINE)
-	  m68000_pulse_irq(irqline);
+	if (state == CLEAR_LINE)
+		m68000_clear_irq(irqline);
+	else
+		m68000_pulse_irq(irqline);
 }
 
 void MC68000_set_irq_callback(int (*callback)(int irqline))

@@ -105,8 +105,8 @@ struct GfxLayout
 	unsigned int total; /* total numer of chars/sprites in the rom */
 	unsigned short planes; /* number of bitplanes */
 	int planeoffset[8]; /* start of every bitplane */
-	int xoffset[32]; /* coordinates of the bit corresponding to the pixel */
-	int yoffset[32]; /* of the given coordinates */
+	int xoffset[64]; /* coordinates of the bit corresponding to the pixel */
+	int yoffset[64]; /* of the given coordinates */
 	short charincrement; /* distance between two consecutive characters/sprites */
 };
 
