@@ -14,8 +14,8 @@
 unsigned char *popeye_videoram,*popeye_colorram,*popeye_backgroundram;
 unsigned char *popeye_background_pos,*popeye_palette_bank;
 
-unsigned char *dirtybuffer, *VideoChanged;
-struct osd_bitmap *tmpbitmap, *ForeBitmap;
+unsigned char *VideoChanged;
+struct osd_bitmap *ForeBitmap;
 
 /***************************************************************************
 

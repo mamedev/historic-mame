@@ -10,7 +10,6 @@
 
 #include "xmame.h"
 
-static char 	*title 		=	"X-Mame 0.20.2";
 static Screen	*screen;
 
 /*
@@ -89,7 +88,7 @@ struct osd_bitmap *osd_create_display (int width, int height)
 	Status		 result;
 	int		 xsize,ysize;
 	int		 i,j,k;
-
+	extern char 	*title;
 	/* Allocate the bitmap and set the image width and height. */
 	bitmap = malloc ( sizeof (struct osd_bitmap) +
 			  (height-1) * sizeof (unsigned char *) );
@@ -99,6 +98,7 @@ struct osd_bitmap *osd_create_display (int width, int height)
 	bitmap->height  = height;
 	xsize		= width * widthscale;
 	ysize		= height * heightscale;
+	first_free_pen  = 0;
 
 	/* Open the display. */
 
@@ -110,7 +110,6 @@ struct osd_bitmap *osd_create_display (int width, int height)
 
   	screen 	 = DefaultScreenOfDisplay (display);
 	myscreen = DefaultScreen(display);
-	colormap = DefaultColormapOfScreen (screen);
 	gc	 = DefaultGCOfScreen (screen);
 
 	/* test for available 8bit bitmaps resources */
@@ -120,6 +119,7 @@ struct osd_bitmap *osd_create_display (int width, int height)
 		fprintf(stderr,"Perhaps you'd better to restart X in -bpp 8 mode\n");
 		return (NULL);
 	}
+
 	/* look for available Mitshm extensions */
 	if (mit_shm_avail != -1 ) {
 		mit_shm_avail	= 0;
@@ -130,6 +130,7 @@ struct osd_bitmap *osd_create_display (int width, int height)
 		else 	       mit_shm_avail = 1;
 #endif
 	} else mit_shm_avail=0; /* has been user-disabled */
+
 	/* Create the window. No buttons, no fancy stuff. */
   	window = XCreateSimpleWindow (display, 
 				RootWindowOfScreen (screen), 
@@ -144,6 +145,14 @@ struct osd_bitmap *osd_create_display (int width, int height)
   	if (!window) {
   		fprintf (stderr,"OSD ERROR: failed in XCreateSimpleWindow().\n");
   		return (NULL);
+	}
+
+	/* now get a color map structure */
+	if ( ! use_private_cmap) colormap = DefaultColormapOfScreen(screen);
+	else {
+		colormap = XCreateColormap(display,window,myvisual.visual,AllocNone);
+		XSetWindowColormap(display,window,colormap);
+		fprintf(stderr,"Using private color map\n");
 	}
 
 	/*  Placement hints etc. */
@@ -224,7 +233,7 @@ struct osd_bitmap *osd_create_display (int width, int height)
   		    return (NULL);
 	    }
 	    XSync(display,False); /* be sure to get request processed */
-	    sleep(5); /* enought time to notify error if any */
+	    sleep(2); /* enought time to notify error if any */
 	    /* agh!! sleep() disables timer alarm. have to re-arm */
 	    if (play_sound) start_timer(); 
 	    XSetErrorHandler( None ); /* Restore error handler to default */
@@ -305,6 +314,7 @@ void osd_close_display (void)
       				XFreeColors (display, colormap, &l, 1, 0);
        			}
   		}
+		if (use_private_cmap) XFreeColormap(display,colormap);
   		if (display) {
   			XAutoRepeatOn (display);
   			XFlush (display); /* send all events to sync; */

@@ -23,26 +23,72 @@ static struct rectangle spritevisiblearea =
 
 
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Time Pilot has two 32x8 palette PROMs and two 256x4 lookup table PROMs
+  (one for characters, one for sprites).
+  The palette PROMs are connected to the RGB output this way:
+
+  bit 7 -- 390 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 560 ohm resistor  -- BLUE
+        -- 820 ohm resistor  -- BLUE
+        -- 1.2kohm resistor  -- BLUE
+        -- 390 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+  bit 0 -- 560 ohm resistor  -- GREEN
+
+  bit 7 -- 820 ohm resistor  -- GREEN
+        -- 1.2kohm resistor  -- GREEN
+        -- 390 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+        -- 560 ohm resistor  -- RED
+        -- 820 ohm resistor  -- RED
+        -- 1.2kohm resistor  -- RED
+  bit 0 -- not connected
+
+***************************************************************************/
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 
-	for (i = 0;i < 256;i++)
+	for (i = 0;i < 32;i++)
 	{
-		int bits;
+		int bit0,bit1,bit2,bit3,bit4;
 
 
-		bits = (i >> 5) & 0x07;
-		palette[3*i] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 2) & 0x07;
-		palette[3*i + 1] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 0) & 0x03;
-		palette[3*i + 2] = bits | (bits >> 2) | (bits << 4) | (bits << 6);
+		bit0 = (color_prom[i+32] >> 1) & 0x01;
+		bit1 = (color_prom[i+32] >> 2) & 0x01;
+		bit2 = (color_prom[i+32] >> 3) & 0x01;
+		bit3 = (color_prom[i+32] >> 4) & 0x01;
+		bit4 = (color_prom[i+32] >> 5) & 0x01;
+		palette[3*i] = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[i+32] >> 6) & 0x01;
+		bit1 = (color_prom[i+32] >> 7) & 0x01;
+		bit2 = (color_prom[i] >> 0) & 0x01;
+		bit3 = (color_prom[i] >> 1) & 0x01;
+		bit4 = (color_prom[i] >> 2) & 0x01;
+		palette[3*i + 1] = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		bit3 = (color_prom[i] >> 6) & 0x01;
+		bit4 = (color_prom[i] >> 7) & 0x01;
+		palette[3*i + 2] = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
 	}
 
-	for (i = 0;i < 384;i++)
-		colortable[i] = color_prom[i];
+
+	/* characters */
+	colortable[0] = 0x10;	/* according to the PROM this should be white, but it isn't */
+	for (i = 1;i < 32*4;i++)
+		colortable[i] = (color_prom[i + 64] & 0x0f) + 0x10;
+
+	/* sprites */
+	for (i = 32*4;i < 32*4+64*4;i++)
+		colortable[i] = color_prom[i + 64] & 0x0f;
 }
 
 
@@ -75,7 +121,7 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
-					colorram[offs] & 0x3f,
+					colorram[offs] & 0x1f,
 					colorram[offs] & 0x80,colorram[offs] & 0x40,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -87,13 +133,19 @@ void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
+	/* In Time Pilot, the characters can appear either behind or in front of the */
+	/* sprites. The priority is selected by bit 4 of the color attribute of the */
+	/* character. This feature is used to limit the sprite visibility area, and */
+	/* as a sort of copyright notice protection ("KONAMI" on the title screen */
+	/* alternates between characters and sprites, but they are both white so you */
+	/* can't see it). To speed up video refresh, we clip the sprites for ourselves. */
+
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
 	for (offs = 23*2;offs >= 0;offs -= 2)
 	{
-		if ((spriteram[offs + 1] >= 0x30 && spriteram[offs + 1] <= 0x37) ||
-				(spriteram[offs + 1] >= 0x5c && spriteram[offs + 1] <= 0x7c) ||
-				(spriteram[offs + 1] >= 0x85 && spriteram[offs + 1] <= 0x87))
+		/* handle double width sprites (clouds) */
+		if (offs <= 2*2 || offs >= 19*2)
 			drawgfx(bitmap,Machine->gfx[2],
 					spriteram[offs + 1],
 					spriteram_2[offs] & 0x3f,

@@ -17,30 +17,25 @@
 #include <audio.h>
 
 
-#define VESA_SCREEN_WIDTH 640
-#define VESA_SCREEN_HEIGHT 480
-#define VESASCAN_MAX_WIDTH 800
-#define SCREEN_MODE GFX_VESA1
-
-
 struct osd_bitmap *bitmap;
 int first_free_pen;
-int use_vesa;
-int use_vesascan;
-int use_vesaskip;
-int noscanlines;
+
 int videofreq;
 int video_sync;
 int play_sound;
 int use_joystick;
 
-int vs_width;
-int vs_height;
-int vs_skiplines;
-int vs_xoffset;
-int vs_yoffset;
-int vs_lastline;
+int use_vesa_scan;
+int use_vesa_linear;
+int vesa_mode;
+int vesa_width;
+int vesa_height;
+int vesa_skiplines;
+int vesa_xoffset;
+int vesa_yoffset;
+int vesa_display_lines;
 
+int noscanlines;
 
 /* audio related stuff */
 #define NUMVOICES 8
@@ -62,9 +57,10 @@ int osd_init(int argc,char **argv)
 
 	first_free_pen = 0;
 
-	use_vesa = 0;
-	use_vesascan = 0;
-	use_vesaskip = 0;
+	vesa_mode = 0;
+	vesa_width=0;
+	vesa_height=0;
+	vesa_skiplines=0;
 	noscanlines = 0;
 	videofreq = 0;
 	video_sync = 0;
@@ -73,19 +69,39 @@ int osd_init(int argc,char **argv)
 	soundcard = -1;
 	for (i = 1;i < argc;i++)
 	{
-		if (stricmp(argv[i],"-vesa") == 0)
-			use_vesa = 1;
+		/* The first option is obsolete */
 		if (stricmp(argv[i],"-vesascan") == 0) {
-			use_vesascan = 1;
-                        use_vesa = 0;
+			vesa_mode = GFX_VESA1;
                 }
+
+		if (stricmp(argv[i],"-vesa") == 0)
+			vesa_mode = GFX_VESA1;
+		if (stricmp(argv[i],"-vesa2b") == 0)
+			vesa_mode = GFX_VESA2B;
+		if (stricmp(argv[i],"-vesa2l") == 0)
+			vesa_mode = GFX_VESA2L;
+		if (stricmp(argv[i],"-640") == 0)
+		{
+			vesa_width = 640;
+			vesa_height = 480;
+		}
+		if (stricmp(argv[i],"-800") == 0)
+		{
+			vesa_width = 800;
+			vesa_height = 600;
+		}
+		if (stricmp(argv[i],"-1024") == 0)
+		{
+			vesa_width = 1024;
+			vesa_height = 768;
+		}
 		if (stricmp(argv[i],"-vesaskip") == 0)
 		{
-			use_vesascan = 1;
-			use_vesaskip = 1;
 			i++;
-			if (i < argc) vs_skiplines = atoi(argv[i]);
+			if (i < argc) vesa_skiplines = atoi(argv[i]);
 		}
+		
+
 		if (stricmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
@@ -377,49 +393,56 @@ struct osd_bitmap *osd_create_display(int width,int height)
 	Register *reg = 0;
 	int reglen = 0;
 
+ 	/* Check for if there exists a tweaked mode to fit
+           the screen in, otherwise use VESA */
 
 	if (!(width == 224 && height == 288) &&
             !(width == 256 && height == 256) &&
 	    !(width == 288 && height == 224) &&
 	    !(width == 320 && height == 204) &&
             !(width == 240 && height == 272))
-		use_vesa = 1;
+ 		vesa_mode = GFX_VESA1;
 
-	if (use_vesa)
-	{
-		if (set_gfx_mode(SCREEN_MODE,VESA_SCREEN_WIDTH,VESA_SCREEN_HEIGHT,0,0) != 0)
-                   return 0;
-	}
-	else if (use_vesascan)
-	{
-		/* Perhaps it fits into a 640x480 screen? No need to use 800x600 then. */
-
-		if (height <= 240 || use_vesaskip == 1)
-		{
-			vs_height = 480;
-			vs_width = 640;
-		}
-		else
-		{
-			vs_height = 600;
-			vs_width = 800;
-			vs_skiplines = 0;
-		}
-
-		if (set_gfx_mode(SCREEN_MODE,vs_width,vs_height,0,0) != 0)
-			return 0;
-
-
-		/* Calculate the offsets to center the image */
-		vs_yoffset = (vs_height - height * 2) / 2;
-		if (vs_yoffset < 0) vs_yoffset = 0;
-		vs_xoffset = (vs_width - width * 2) / 2;
-		if (vs_xoffset < 0) vs_xoffset = 0;
-
-		vs_lastline = height - vs_skiplines;
-		if (vs_height/2 < vs_lastline)
-			vs_lastline = vs_height / 2;
-	}
+ 	if (vesa_mode || vesa_skiplines || vesa_width)
+  	{
+ 		if (!vesa_mode) vesa_mode = GFX_VESA1;
+ 		if (vesa_mode == GFX_VESA2L)
+ 			use_vesa_linear = 1;
+  		else
+ 			use_vesa_linear = 0;
+ 		if (!vesa_width)
+  		{
+ 			vesa_width=800;
+ 			vesa_height=600;
+  		}
+ 		
+ 		if (set_gfx_mode(vesa_mode,vesa_width,vesa_height,0,0) != 0)
+  			return 0;
+ 	
+ 		if (noscanlines || (width > vesa_width/2))
+ 		{
+ 			use_vesa_scan = 0;
+ 			vesa_yoffset = (vesa_height - height) / 2;
+ 			vesa_xoffset = (vesa_width - width) / 2;
+ 			vesa_display_lines = height - vesa_skiplines;
+ 			if (vesa_height < vesa_display_lines)
+ 				vesa_display_lines = vesa_height;
+ 		}
+ 		else
+ 		{	
+ 			use_vesa_scan = 1; 
+ 			vesa_yoffset = (vesa_height - height * 2) / 2;
+ 			vesa_xoffset = (vesa_width - width * 2) / 2;
+ 			vesa_display_lines = height - vesa_skiplines;
+ 			if (vesa_height/2 < vesa_display_lines)
+ 				vesa_display_lines = vesa_height / 2;
+ 		}
+ 		/* Allign on a quadword !*/
+ 		vesa_xoffset -= vesa_xoffset % 4;
+ 		/* Just in case */
+ 		if (vesa_yoffset < 0) vesa_yoffset = 0;
+ 		if (vesa_xoffset < 0) vesa_xoffset = 0;
+  	}
 	else
 	{
 		/* big hack: open a mode 13h screen using Allegro, then load the custom screen */
@@ -513,6 +536,68 @@ int osd_obtain_pen(unsigned char red, unsigned char green, unsigned char blue)
 }
 
 
+inline void double_pixels(unsigned long *lb, short seg,
+			  unsigned long address, int width4)
+{
+	__asm__ __volatile__ ("
+	pushw %%es		\n
+	movw %%dx, %%es		\n
+	cld			\n
+	.align 4		\n
+	0:			\n
+	lodsw			\n
+	rorl $8, %%eax		\n
+	movb %%al, %%ah		\n
+	roll $16, %%eax		\n
+	movb %%ah, %%al		\n
+	stosl			\n
+	lodsw			\n
+	rorl $8, %%eax		\n
+	movb %%al, %%ah		\n
+	roll $16, %%eax		\n
+	movb %%ah, %%al		\n
+	stosl			\n
+	loop 0b			\n
+	popw %%ax		\n
+	movw %%ax, %%es		\n
+	"
+	::
+	"d" (seg),
+	"c" (width4),
+	"S" (lb),
+	"D" (address):
+	"ax", "bx", "cx", "dx", "si", "di", "cc", "memory");	
+}
+
+inline void update_vesa(void)
+{
+	short src_seg, dest_seg;
+	int y, vesa_line, width4;
+	unsigned long *lb, address;
+
+ 	src_seg	= _my_ds();	
+	dest_seg = screen->seg;
+	vesa_line = vesa_yoffset;
+	width4 = bitmap->width /4;
+	lb = bitmap->private + bitmap->width*vesa_skiplines/4;
+	
+	for (y = vesa_display_lines;y !=0 ; y--)
+	{
+		address = bmp_write_line (screen, vesa_line) + vesa_xoffset;
+		if (use_vesa_scan)
+		{
+			double_pixels(lb,dest_seg,address,width4);
+			vesa_line+=2;
+		}	
+		else
+		{
+			_movedatal (src_seg,(unsigned long)lb,dest_seg,address,width4);
+			vesa_line++;
+		}
+		lb += width4;
+	}
+}
+
 
 /* Update the display. */
 /* As an additional bonus, this function also saves the screen as a PCX file */
@@ -521,75 +606,19 @@ void osd_update_display(void)
 {
 	if (video_sync) vsync();
 
-	if (use_vesa)
+	if (vesa_mode)
 	{
-		int y;
-		int width4 = bitmap->width / 4;
-		unsigned long *lb = (unsigned long *)bitmap->private;
-
-
-		for (y = 0;y < bitmap->height;y++)
-		{
-			unsigned long address;
-
-
-			address = bmp_write_line(screen,y + (VESA_SCREEN_HEIGHT - bitmap->height) / 2)
-					+ (VESA_SCREEN_WIDTH - bitmap->width) / 2;
-			_dosmemputl(lb,width4,address);
-			lb += width4;
-		}
-	}
- 	else if (use_vesascan)
-   	{
-		int x,y;
-		int width4 = bitmap->width / 4;
-		unsigned char vesa_line[VESASCAN_MAX_WIDTH];
-
-		unsigned long *lb = (unsigned long *) vesa_line;
-		unsigned char *line = (unsigned char *) bitmap->private;
-		unsigned char *p;
-
-		line += bitmap->width*vs_skiplines;
-
-		for (y = 0; y < vs_lastline; y++)
-		{
-			unsigned long address;
-			register unsigned char pixel;
-
-			p = vesa_line;
-
-			/* For some strange reason, counting down and comparing
-			to zero is way faster. "Vesascan" is almost
-			as fast as tweaked modes now. Can this little
-			pixel-doubling loop be sped up some more? */
-
-			for (x = bitmap->width ; x != 0 ; x--)
-			{
-				pixel =*(line++);
-				*(p++)=pixel;
-				*(p++)=pixel;
-			}
-
-			address = bmp_write_line(screen, 2*y + vs_yoffset) + vs_xoffset;
-
-			_dosmemputl(lb,width4*2,address);
-		}
-
+		update_vesa();
 
 		/* Check for PGUP, PGDN and scroll screen */
 
-		if (osd_key_pressed(OSD_KEY_PGDN))
-		{
-			if (vs_height/2 + vs_skiplines < bitmap->height)
-				vs_skiplines++;
-		}
-
-		if (osd_key_pressed(OSD_KEY_PGUP))
-		{
-			if (vs_skiplines > 0) vs_skiplines--;
-		}
- 	}
-	else
+		if (osd_key_pressed(OSD_KEY_PGDN) &&
+			(vesa_skiplines+vesa_display_lines < bitmap->height))
+			vesa_skiplines++;
+		if (osd_key_pressed(OSD_KEY_PGUP) && (vesa_skiplines>0))
+			vesa_skiplines--;
+	}
+	else 	/* no vesa-modes */
 	{
 		/* copy the bitmap to screen memory */
 		_dosmemputl(bitmap->private,bitmap->width * bitmap->height / 4,0xa0000);
@@ -770,6 +799,14 @@ int osd_read_key(void)
         } while (key > OSD_MAX_KEY);
 
         return key;
+}
+
+
+/* Wait for a key press and return keycode.  Support repeat */
+int osd_read_keyrepeat(void)
+{
+        clear_keybuf();
+        return readkey() >> 8;
 }
 
 

@@ -1,4 +1,4 @@
-X-Mame version 0.20.0
+X-Mame version 0.20.3
 
 patched by jantonio@dit.upm.es 
 
@@ -27,6 +27,14 @@ xmame-0.20.1	Check for available 8bit depth Visual. if no, warns and quit
 xmame-0.20.2	src/unix directory structure changed
 		added a specific src/unix/Makefile
 		makefile.unix changed according to src/unix/changes
+xmame-0.20.3    Support for HP-UX and IRIX ( no sound yet )
+		XMame now reads and use MAMEDIR and DISPLAY environ variables. 
+		No more need of start game in roms directory
+		Support for ${HOME}/.xmamerc configuration file parsing
+		Keyboard remapping via .xmamerc or command line
+		Added -help command line option
+		Several bugs fixed
+xmame-0.21.1	Got sources from Mame-0.20 and patched to compile and run
 
 TODO:
 	- Sound support under SunOS ( should be easy, basically is the same

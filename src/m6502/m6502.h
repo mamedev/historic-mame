@@ -14,6 +14,8 @@
 #ifndef M6502_H
 #define M6502_H
 
+#include "cpuintrf.h"
+
                                /* Compilation options:       */
 /* #define FAST_RDOP */        /* Separate Op6502()/Rd6502() */
 /* #define DEBUG */            /* Compile debugging version  */
@@ -106,10 +108,8 @@ word Run6502(register M6502 *R);
 /** required if there is a #define FAST_RDOP.               **/
 /************************************ TO BE WRITTEN BY USER **/
 /*void Wr6502(register word Addr,register byte Value);*/
-extern void cpu_writemem(register int A,register unsigned char V);
 #define Wr6502(A,V) (cpu_writemem(A,V))
 /*byte Rd6502(register word Addr);*/
-extern int cpu_readmem(register int A);
 #define Rd6502(A) ((unsigned)cpu_readmem(A))
 /*byte Op6502(register word Addr);*/
 extern byte *RAM;

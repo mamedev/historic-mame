@@ -19,10 +19,31 @@ unsigned char *elevator_scroll1,*elevator_scroll2,*elevator_scroll3;
 unsigned char *elevator_gfxpointer,*elevator_paletteram;
 unsigned char *elevator_colorbank,*elevator_video_enable;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
+static unsigned char *dirtybuffer2,*dirtybuffer3;
 static const unsigned char *colors;
-static int dirtypalette,dirtycolor;
+static int dirtypalette;
 static unsigned char dirtycharacter[256];
 static unsigned char dirtysprite1[64],dirtysprite2[64];
+
+
+
+/* Elevator Action uses the frontmost playfield to mask a portion the play area. */
+/* To speed up the emulation, we clip it ourselves. */
+static struct rectangle spritevisiblearea =
+{
+	0*8, 32*8-1,
+	4*8, 26*8-1
+};
+static struct rectangle topvisiblearea =
+{
+	0*8, 32*8-1,
+	2*8, 4*8-1
+};
+static struct rectangle bottomvisiblearea =
+{
+	0*8, 32*8-1,
+	26*8, 30*8-1
+};
 
 
 
@@ -82,8 +103,25 @@ int elevator_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
+	if ((dirtybuffer2 = malloc(VIDEO_RAM_SIZE)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+	memset(dirtybuffer2,0,VIDEO_RAM_SIZE);
+
+	if ((dirtybuffer3 = malloc(VIDEO_RAM_SIZE)) == 0)
+	{
+		free(dirtybuffer2);
+		generic_vh_stop();
+		return 1;
+	}
+	memset(dirtybuffer3,0,VIDEO_RAM_SIZE);
+
 	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
+		free(dirtybuffer3);
+		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
@@ -91,6 +129,8 @@ int elevator_vh_start(void)
 	if ((tmpbitmap3 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		osd_free_bitmap(tmpbitmap2);
+		free(dirtybuffer3);
+		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
@@ -109,6 +149,8 @@ void elevator_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap3);
 	osd_free_bitmap(tmpbitmap2);
+	free(dirtybuffer3);
+	free(dirtybuffer2);
 	generic_vh_stop();
 }
 
@@ -135,7 +177,7 @@ void elevator_videoram2_w(int offset,int data)
 {
 	if (elevator_videoram2[offset] != data)
 	{
-		dirtybuffer[offset] = 1;
+		dirtybuffer2[offset] = 1;
 
 		elevator_videoram2[offset] = data;
 	}
@@ -147,7 +189,7 @@ void elevator_videoram3_w(int offset,int data)
 {
 	if (elevator_videoram3[offset] != data)
 	{
-		dirtybuffer[offset] = 1;
+		dirtybuffer3[offset] = 1;
 
 		elevator_videoram3[offset] = data;
 	}
@@ -171,7 +213,9 @@ extern void elevator_colorbank_w(int offset,int data)
 {
 	if (elevator_colorbank[offset] != data)
 	{
-		dirtycolor = 1;
+		memset(dirtybuffer,1,VIDEO_RAM_SIZE);
+		memset(dirtybuffer2,1,VIDEO_RAM_SIZE);
+		memset(dirtybuffer3,1,VIDEO_RAM_SIZE);
 
 		elevator_colorbank[offset] = data;
 	}
@@ -269,7 +313,9 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 
 		/* redraw everything */
-		for (offs = 0;offs < VIDEO_RAM_SIZE;offs++) dirtybuffer[offs] = 1;
+		memset(dirtybuffer,1,VIDEO_RAM_SIZE);
+		memset(dirtybuffer2,1,VIDEO_RAM_SIZE);
+		memset(dirtybuffer3,1,VIDEO_RAM_SIZE);
 	}
 
 
@@ -277,12 +323,52 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* since last time and update it accordingly. */
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 	{
-		if (dirtycolor || dirtybuffer[offs])
+		if (dirtybuffer[offs])
 		{
 			int sx,sy;
 
 
 			dirtybuffer[offs] = 0;
+
+			sx = offs % 32;
+			sy = offs / 32;
+
+			drawgfx(tmpbitmap,Machine->gfx[1],
+					videoram[offs],
+					elevator_colorbank[0] & 0x0f,
+					0,0,8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+
+	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	{
+		if (dirtybuffer2[offs])
+		{
+			int sx,sy;
+
+
+			dirtybuffer2[offs] = 0;
+
+			sx = 8 * (offs % 32);
+			sy = 8 * (offs / 32);
+
+			drawgfx(tmpbitmap2,Machine->gfx[1],
+					elevator_videoram2[offs],
+					(elevator_colorbank[0] >> 4) & 0x0f,
+					0,0,sx,sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
+	{
+		if (dirtybuffer3[offs])
+		{
+			int sx,sy;
+
+
+			dirtybuffer3[offs] = 0;
 
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
@@ -292,16 +378,8 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 					elevator_colorbank[1] & 0x0f,
 					0,0,sx,sy,
 					0,TRANSPARENCY_NONE,0);
-			drawgfx(tmpbitmap2,Machine->gfx[1],
-					elevator_videoram2[offs],
-					(elevator_colorbank[0] >> 4) & 0x0f,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
 		}
 	}
-
-
-	dirtycolor = 0;
 
 
 	/* copy the first playfield */
@@ -312,8 +390,9 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 		for (i = 0;i < 32;i++)
 			scroll[i] = -elevator_scroll3[i];
 
-		copyscrollbitmap(bitmap,tmpbitmap3,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap3,0,0,32,scroll,&spritevisiblearea,TRANSPARENCY_NONE,0);
 	}
+
 
 	/* copy the second playfield */
 	{
@@ -323,7 +402,7 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 		for (i = 0;i < 32;i++)
 			scroll[i] = -elevator_scroll2[i];
 
-		copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
+		copyscrollbitmap(bitmap,tmpbitmap2,0,0,32,scroll,&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 
 
@@ -336,11 +415,17 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 				2 * ((elevator_colorbank[1] >> 4) & 0x0f) + ((spriteram[offs + 2] >> 2) & 1),
 				spriteram[offs + 2] & 1,0,
 				((spriteram[offs]+13)&0xff)-15,240-spriteram[offs + 1],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 
 
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
+	/* draw the opaque part of the frontmost playfield */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&topvisiblearea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&bottomvisiblearea,TRANSPARENCY_NONE,0);
+
+
+	/* draw the remaining part of the frontmost playfield. */
+	/* They are characters, but draw them as sprites */
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 	{
 		if (videoram[offs])	/* don't draw spaces */
@@ -348,14 +433,14 @@ void elevator_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx,sy;
 
 
-			sx = (offs % 32);
-			sy = (8*(offs / 32) + elevator_scroll1[sx]) & 0xff;
+			sx = offs % 32;
+			sy = offs / 32;
 
 			drawgfx(bitmap,Machine->gfx[1],
 					videoram[offs],
 					elevator_colorbank[0] & 0x0f,
-					0,0,8*sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					0,0,8*sx,8*sy,
+					&spritevisiblearea,TRANSPARENCY_PEN,0);
 		}
 	}
 }

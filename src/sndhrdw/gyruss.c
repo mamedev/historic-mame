@@ -42,7 +42,6 @@ void gyruss_sh_soundfx_data_w(int offset, int data)
 static int gyruss_portA_r(int offset)
 {
 	int clockticks,clock;
-	Z80_Regs regs;
 
 #define TIMER_RATE (570)
 
@@ -51,23 +50,22 @@ static int gyruss_portA_r(int offset)
 
 	/* to speed up the emulation, detect when the program is looping waiting */
 	/* for the timer, and skip the necessary CPU cycles in that case */
-	Z80_GetRegs(&regs);
-	if (RAM[regs.SP.D] == 0x01 && RAM[regs.SP.D+1] == 0x01)
+	if (cpu_getreturnpc() == 0x0101)
 	{
 		/* wait until clock & 0x04 == 0 */
 		if ((clock & 0x04) != 0)
 		{
-			clock = clock + 4;
+			clock = clock + 0x04;
 			clockticks = clock * TIMER_RATE;
 			cpu_seticount(Z80_IPeriod - clockticks);
 		}
 	}
-	else if (RAM[regs.SP.D] == 0x08 && RAM[regs.SP.D+1] == 0x01)
+	else if (cpu_getreturnpc() == 0x0108)
 	{
 		/* wait until clock & 0x04 != 0 */
 		if ((clock & 0x04) == 0)
 		{
-			clock = (clock + 4) & ~3;
+			clock = (clock + 0x04) & ~0x03;
 			clockticks = clock * TIMER_RATE;
 			cpu_seticount(Z80_IPeriod - clockticks);
 		}

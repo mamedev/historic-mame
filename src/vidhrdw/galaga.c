@@ -144,7 +144,7 @@ int galaga_vh_start(void)
 				{
 					stars[total_stars].x = x;
 					stars[total_stars].y = y;
-					stars[total_stars].col = Machine->gfx[3]->colortable[color];
+					stars[total_stars].col = Machine->gfx[2]->colortable[color];
 
 					total_stars++;
 				}
@@ -179,12 +179,12 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 		{
 			if (spriteram_3[2*i] & 8)	/* double width */
 			{
-				drawgfx(bitmap,Machine->gfx[2],
+				drawgfx(bitmap,Machine->gfx[1],
 						spriteram[2*i]+2,spriteram[2*i+1],
 						spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
 						spriteram_2[2*i]-16,spriteram_2[2*i+1]-40 + 0x100*(spriteram_3[2*i+1] & 1),
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-				drawgfx(bitmap,Machine->gfx[2],
+				drawgfx(bitmap,Machine->gfx[1],
 						spriteram[2*i],spriteram[2*i+1],
 						spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
 						spriteram_2[2*i],spriteram_2[2*i+1]-40 + 0x100*(spriteram_3[2*i+1] & 1),
@@ -192,12 +192,12 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 				if (spriteram_3[2*i] & 4)	/* double height */
 				{
-					drawgfx(bitmap,Machine->gfx[2],
+					drawgfx(bitmap,Machine->gfx[1],
 							spriteram[2*i]+3,spriteram[2*i+1],
 							spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
 							spriteram_2[2*i]-16,spriteram_2[2*i+1]-24 + 0x100*(spriteram_3[2*i+1] & 1),
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-					drawgfx(bitmap,Machine->gfx[2],
+					drawgfx(bitmap,Machine->gfx[1],
 							spriteram[2*i]+1,spriteram[2*i+1],
 							spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
 							spriteram_2[2*i],spriteram_2[2*i+1]-24 + 0x100*(spriteram_3[2*i+1] & 1),
@@ -205,7 +205,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 				}
 			}
 			else	/* normal */
-				drawgfx(bitmap,Machine->gfx[2],
+				drawgfx(bitmap,Machine->gfx[1],
 						spriteram[2*i],spriteram[2*i+1],
 						spriteram_3[2*i] & 2,spriteram_3[2*i] & 1,
 						spriteram_2[2*i]-16,spriteram_2[2*i+1]-40 + 0x100*(spriteram_3[2*i+1] & 1),

@@ -8,6 +8,13 @@
 
 #include "driver.h"
 
+/* LBO */
+#ifdef LSB_FIRST
+#define intelLong(x) (x)
+#else
+#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 
+0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
+#endif
 
 
 /***************************************************************************
@@ -209,14 +216,13 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 					fseek(f,0,SEEK_SET);
                                         fread(buf,1,4,f);
                                         if (memcmp(buf, "MAME", 4) == 0) {
-                                           fread(&smplen,1,4,f);   /* all datas are LITTLE ENDIAN */
+                                           fread(&smplen,1,4,f);         /* all datas are LITTLE ENDIAN */
                                            fread(&smpfrq,1,4,f);
+					   smplen = intelLong (smplen);  /* so convert them in the right endian-ness */
+					   smpfrq = intelLong (smpfrq);
                                            fread(&smpres,1,1,f);
                                            fread(&smpvol,1,1,f);
                                            fread(&dummy,1,2,f);
-/*
-                                           if (errorlog) fprintf(errorlog, "len: %d  frq: %d  res: %d  vol: %d\n",smplen,smpfrq,smpres,smpvol);
-*/
 					   if ((smplen != 0) && (samples->sample[i] = malloc(sizeof(struct GameSample) + (smplen)*sizeof(char))) != 0)
 					   {
 						   samples->sample[i]->length = smplen;
@@ -1138,7 +1144,7 @@ int setdipswitches(void)
 
 		displaytext(dt,1);
 
-		key = osd_read_key();
+		key = osd_read_keyrepeat();
 
 		switch (key)
 		{
@@ -1234,7 +1240,7 @@ int setkeysettings(void)
 
 		displaytext(dt,1);
 
-		key = osd_read_key();
+		key = osd_read_keyrepeat();
 
 		switch (key)
 		{
@@ -1381,7 +1387,7 @@ int showcharset(void)
 		displaytext(dt,0);
 
 
-		key = osd_read_key();
+		key = osd_read_keyrepeat();
 
 		switch (key)
 		{

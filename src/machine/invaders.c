@@ -14,7 +14,6 @@
 static int shift_data1,shift_data2,shift_amount;
 
 
-
 int invaders_shift_data_r(int offset)
 {
 	return ((((shift_data1 << 8) | shift_data2) << shift_amount) >> 8) & 0xff;
@@ -51,7 +50,7 @@ int invaders_interrupt(void)
 
 
 		Z80_GetRegs(&R);
-		R.IFF1 = 1;	/* enable interrupts */
+		R.IFF2 = 1;	/* enable interrupts */
 		Z80_SetRegs(&R);
 
 		return 0x00d7;	/* RST 10h - 8080's NMI */

@@ -54,7 +54,7 @@ The list doesn't include variants of the same game.
 ==============================================================================
 | 1942                        |  Yes   |  Yes   |  Yes   |  Yes   | 1942     |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Amidar                      |  Yes   |  Yes   |  Yes   |   No   | amidar   |
+| Amidar                      |  Yes   |  Yes   |  Yes   |  Yes   | amidar   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Arabian                     |  Yes   | Close  |  Yes   |   No   | arabian  |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -66,7 +66,9 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Carnival                    |  Yes   | Maybe  |   No   |   No   | carnival |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Centipede                   |  Yes   |   No   |  Yes   |  Yes   | centiped |
+| Centipede                   |  Yes   |  Yes   |  Yes   |  Yes   | centiped |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Commando                    |  Yes   |  Yes   |Partial.|  Yes   | commando |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Congo Bongo                 |  Yes   |   No   |   No   |  Yes   | congo    |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -76,25 +78,29 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | Crush Roller                |  Yes   |  Yes   |  Yes   |  Yes   | crush    |
 |-----------------------------|--------|--------|--------|--------|----------|
+| Diamond Run                 |  Yes   |  Yes   |  Yes   |   No   | diamond  |
+|-----------------------------|--------|--------|--------|--------|----------|
 | Donkey Kong                 |  Yes   | Close  | Yes(1) |  Yes   | dkong    |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Donkey Kong Jr.             |  Yes   | Close  |   No   |  Yes   | dkongjr  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Donkey Kong 3               |  Yes   |   No   |   No   |  Yes   | dkong3   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Elevator Action - Bootleg   |  Yes   |  Yes   |   No   |  n/a   | elevator |
+| Elevator Action - Bootleg   |  Yes   |  Yes   |   No   |  n/a   | elevatob |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Elevator Action - Original  |   No   |   No   |   No   |   No   | elevatob |
+| Elevator Action - Original  |   No   |   No   |   No   |   No   | elevator |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Fantasy                     |   No   |   No   |   No   |   No   | fantasy  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Frogger                     |  Yes   | Close  |  Yes   |   No   | frogger  |
+| Frogger                     |  Yes   | Close  |  Yes   |  Yes   | frogger  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Galaga                      |  Yes   |  Yes   | Yes(1) |   No   | galaga   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Galaga - Bootleg            |  Yes   |  Yes   | Yes(1) |   No   | galagabl |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Galaxian                    |  Yes   |  Yes   | Limited|  Yes   | galaxian |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Ghost 'n Goblin             |  Yes   |  Yes   | Partial|   No   | gng      |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Gorf                        |   No   |   No   |   No   |  n/a   | gorf     |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -174,13 +180,15 @@ The list doesn't include variants of the same game.
 |-----------------------------|--------|--------|--------|--------|----------|
 | The End                     |  Yes   |   No   |  Yes   |   No   | theend   |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Time Pilot                  |  Yes   | Close  |  Yes   |  Yes   | timeplt  |
+| Time Pilot                  |  Yes   |  Yes   |  Yes   |  Yes   | timeplt  |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Turtles                     |  Yes   |  Yes?  |  Yes   |   No   | turtles  |
 |-----------------------------|--------|--------|--------|--------|----------|
-| Vanguard                    |  Yes   |   No   |   No   |   No   | vanguard |
+| Vanguard                    |  Yes   |  Yes   |   No   |   No   | vanguard |
 |-----------------------------|--------|--------|--------|--------|----------|
 | Venture                     |Partial.|   No   |   No   |   No   | venture  |
+|-----------------------------|--------|--------|--------|--------|----------|
+| Vulgus                      |  Yes   |   No   |  Yes   |  Yes   | vulgus   |
 |-----------------------------|--------|--------|--------|--------|----------|
 | War of the Bugs             |  Yes   |   No   | Limited|   No   | warofbug |
 |-----------------------------|--------|--------|--------|--------|----------|
@@ -243,9 +251,6 @@ bird, while DIFFICULTY 2 to the number and speed of enemies.
 SPECIAL refers to how often the (E) and (S) coins appear.
 
 Known issues:
-- Colors are accurate, but not entirely: the original machine uses 12 bits
-  (4 bits per pen), while I currently use only 8 bits (3 bits for red and
-  green, 2 bits for blue).
 - There is a bit in the sprite attributes which I don't know what means:
   it seems to be set only when the (B) materializes.
 - The INITIAL HIGH SCORE setting doesn't only set that, it does something
@@ -285,7 +290,6 @@ Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz,
   I don't know if the game runs correctly.
 - The game awards you 18 credits on startup
-- Palette is not supported
 
 
 
@@ -295,6 +299,17 @@ Runs on the same hardware as Zaxxon.
 
 Arrows  Move around
 CTRL    Jump
+
+
+
+Commando ("commando")
+=====================
+Arrows  Move around
+CTRL    Fire
+Press CTRL during the startup message to enter the test screen
+
+known issues:
+- The YM2203 sound chip is emulated as a 8910. Music is missing.
 
 
 
@@ -334,6 +349,17 @@ Pac Man board.
 
 Arrows  Move around
 F1      Skip level
+
+
+
+Diamond Run ("diamond")
+=======================
+This game is based on the same hardware as Ghost 'n Goblin
+
+Arrows  Move around
+
+Known issues:
+- Don't know if banks mode switch is correct
 
 
 
@@ -408,6 +434,7 @@ Original version with Namco copyright
 
 Arrows  Move around
 CTRL    Fire
+F1      Skip Level
 
 Clone supported:
   a version with a Z80 that emulates custom I/O chips.  However we don't
@@ -441,6 +468,24 @@ Known issues:
 
 
 
+Ghost 'n Goblin ("gng")
+=======================
+Arrows  Move around
+CTRL    Fire
+ALT     Jump
+F2      Test mode
+
+Known issues:
+- To continue a game, insert coin and keep pressed CTRL+1 (or CTRL+2)
+- Music is missing.  Maybe the original arcade uses YM2203 sound chips.
+- Original machine has 4096 colors.  We now simulate them with a palette of
+  256.  We need a skilled player, with a powerful machine (Pentium 133 or
+  better, so he doesn't have to skip frames), that can finish the game with
+  the -log option and send us the log file so we can implement 100% correct
+  colors.
+
+
+
 Gorf ("gorf")
 =============
 This game runs on the same hardware as Wizard of Wor, but doesn't work yet.
@@ -464,7 +509,7 @@ Known issues:
 
 
 Gyruss ("gyruss")
-======================
+===================
 Arrows  Move around
 CTRL    Fire
 
@@ -513,6 +558,10 @@ CTRL    Jump
 
 Clones supported:
   bootleg version called Jungle Hunt ("jhunt")
+
+Known issues:
+- Sound support implemented.  Tarzan yell sample missing.  Is the pitch of
+  sounds correct?
 
 
 
@@ -701,6 +750,7 @@ CTRL    Speed up cheat
 
 Clones supported:
   Pac Man modification ("pacmod")
+  Pac Man Plus ("pacplus")
   Namco Pac Man ("namcopac")
   Hangly Man ("hangly")
   Puck Man ("puckman")
@@ -741,6 +791,9 @@ Phoenix ("phoenix")
 Arrows  Move around
 CTRL    Fire
 ALT     Barrier
+
+Clones supported:
+  Phoenix Amstar ("phoenixa")
 
 
 
@@ -807,8 +860,9 @@ F2      Test
 
 Known issues:
 - Sprites are not turned off appropriately.
-- Cars are not displayed on the radar screen.
-- I don't know if I reproduced the layout of the screen coreectly.
+- Cars are now displayed on the radar screen, but right color mapping
+  must be done.
+- I don't know if I reproduced the layout of the screen correctly.
 
 
 
@@ -850,7 +904,8 @@ Clones supported (some of these have wrong colors, and the dip switch menu
       doesn't work):
   Super Earth Invasion ("earthinv")
   Space Attack II ("spaceatt")
-  Space Invaders Deluxe ("invdelux") (doesn't work yet)
+  Space Invaders Deluxe ("invdelux")
+  Invaders Revenge ("invrvnge")
   Galaxy Wars ("galxwars")
   Lunar Rescur ("lrescue")
   Destination Earth ("desterth")
@@ -946,10 +1001,6 @@ This runs on the same hardware as Amidar
 Arrows  Move around
 CTRL    Bomb
 
-Known issues:
-- What do the dip switches do? I'm obviously missing something, becasue the
-  game plays in unlimited lives mode.
-
 
 
 Vanguard ("vanguard")
@@ -970,6 +1021,18 @@ On startup, keep 1 or 2 pressed to proceed
 
 Known issues:
 - Collision detection doesn't work - use 7 and 8 to simulate it.
+
+
+
+Vulgus ("vulgus")
+===================
+Arrows  Move around
+CTRL    Fire
+ALT     Big Missile
+
+Known issues:
+- Colors are wrong.  Manual correction is a foolish!
+- Sound speed should be accurate.  It seems not to use FM.  Anyone confirm?
 
 
 
@@ -1048,8 +1111,9 @@ UNIX port by Allard van der Bas (avdbas@wi.leidenuniv.nl) and Dick de Ridder
 
 Phoenix driver provided by Brad Oliver (bradman@primenet.com), Mirko
    Buffoni (mix@lim.dsi.unimi.it) and Richard Davies (R.Davies@dcs.hull.ac.uk)
-Gyruss, Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers
-   provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
+1942, Commando, Elevator Action and Galaga drivers by Nicola Salmoria.
+Gyruss, Ghost 'n Goblin, Mario Bros., Vulgus, Zaxxon, Bomb Jack, Burger Time
+   and Donkey Kong 3 drivers provided by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Bomb Jack sound driver by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Arabian driver provided by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Congo Bongo and Kangaroo drivers provided by Ville Laitinen (ville@sms.fi).
@@ -1075,6 +1139,8 @@ Thanks to Paul Swan for the information on the Lady Bug sound hardware and
    Mr.Do! and Green Beret colors.
 Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
    to mention them all.
+Thanks to Paul Johnson (mayhem@cix.compulink.co.uk) for the ROM encryption
+   scheme and colors of Commando.
 Thanks to Simon Walls (wallss@ecid.cig.mot.com) for the color information
    on many games.
 Information about the Crazy Climber machine hardware (including palette)
@@ -1082,6 +1148,8 @@ Information about the Crazy Climber machine hardware (including palette)
    (lionelth@ozemail.com.au).
 Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
+Thanks to Toninho (fastwork@bios.com.br) and Paul Leaman for the information
+   on Vulgus.
 Crazy Kong emulation set up by Ville Laitinen (ville@sms.fi).
 Kevin Brisley's SUPERPAC.KEG file (for his excellent REPLAY emulator)
   provided the crucial info on Super Pacman.
@@ -1125,8 +1193,8 @@ Thanks to Mike Cuddy for Pooyan and Time pilot colors.
 Thanks to Thomas Meyer for Moon Patrol screenshots.
 Many thanks to Steve Scavone (krunch@intac.com) for his invaluable help with
    Wizard of Wor and related games.
--vesascan and -vesaskip implemented by Bernd Wiebelt
-   (bernardo@studi.mathematik.hu-berlin.de)
+Vesa 2.0 linear and banked extensions, -vesascan and -vesaskip implemented
+   by Bernd Wiebelt (bernardo@studi.mathematik.hu-berlin.de)
 Thanks to Stefano Mozzi (piu1608@cdc8g5.cdc.polimi.it) for Mario Bros. colors.
 Thanks to Matthew Hillmer (mhillmer@pop.isd.net) for Donkey Kong 3 colors.
 Thanks to Tormod Tjaberg (tormod@sn.no) and Michael Strutts for Space Invaders
@@ -1146,12 +1214,19 @@ MAME mspacman -nosound   will run Ms Pac Man without sound
 options:
 -noscanlines  use alternate video mode (not availble in all games). Use this
               if the default mode doesn't work with your monitor/video card.
--vesa         use standard 640x480x256 VESA mode instead of custom video mode.
-              Use this as a last resort if -noscanlines doesn't solve your
-              video problems.
+-vesa         use standard 640x480x256 VESA 1.2 mode instead of custom video
+              mode. Use this as a last resort if -noscanlines doesn't solve
+              your video problems.
+-vesa2b       use VESA2.0 banked mode extension
+-vesa2l       use VESA2.0 linear mode extension
+-640          tell MAME to use a vesa 640x480 video mode
+-800          same as above, video mode is 800x600
+-1024         same as above, video mode is 1024x768
+
 -vesascan     use a VESA 800x600 screen to simulate scanlines. This is much
               slower than the other video modes. Use this if you want
               scanlines and the default video mode doesn't work.
+              For frontend authors: same as '-vesa -800'.
 -vesaskip n   similar to -vesascan, but use a 640x480 screen instead of
               800x600. Since most games use a screen taller than 240 lines,
               it won't fit in the screen - n sets the initial number of lines

@@ -272,70 +272,69 @@ static unsigned char palette[] =
 
 	0xff,0xb6,0xdb,	/* PINK */
 	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,0xb6,0x49,	/* DKORANGE */
-	0x49,0xb6,0x92,	/* DKGREEN */
-	0xff,0xb6,0x92,	/* LTORANGE */
+	0xff,96,0x49,	/* DKORANGE */
+	0xff,128,0x00,	/* ORANGE */
 	0xdb,0xdb,0xdb	/* GREY */
 };
 
 enum {BLACK,RED,GREEN,BLUE,YELLOW,MAGENTA,CYAN,WHITE,LTGRAY,DKGRAY,
        BROWN,BROWN0,BROWN1,BROWN2,BROWN3,BROWN4,
-			 LTBLUE,DKGREEN,GRASSGREEN,
-            };
+	LTBLUE,DKGREEN,GRASSGREEN,PINK,DKCYAN,DKORANGE,ORANGE,GREY};
 
 static unsigned char colortable[] =
 {
 	/* chars (16) */
-        7,7,BLACK,CYAN,   /* Top line */
-        7,7,BLACK,WHITE,  /* Second line, HIGH SCORES, SEGA */
-        7,7,BLACK,YELLOW, /* CREDITS, INSERT COIN */
-        7,CYAN,BLACK,RED,    /* scores, BONUS */
-        7,7,BLACK,GREEN,  /* 1 PLAYER... */
-        1,2,BLACK,5,      /* Life */
-        3,4,BLACK,6,      /* Life */
-        7,7,7,7,
-        7,7,7,7,
-        7,7,7,7,
-        7,7,7,7,
-        7,7,7,7,
-        7,7,7,7,
-        7,7,7,7,
-        7,7,7,7,
-        7,7,7,7,
+        0,0,BLACK,CYAN,   /* Top line */
+        0,0,BLACK,WHITE,  /* Second line, HIGH SCORES, SEGA */
+        0,0,BLACK,YELLOW, /* CREDITS, INSERT COIN */
+        0,CYAN,BLACK,RED, /* scores, BONUS */
+        0,0,BLACK,GREEN,  /* 1 PLAYER... */
+        BLACK,WHITE,BLACK,BROWN,   /* Life */
+        BROWN3,BROWN2,BLACK,BLACK, /* Life */
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+        0,0,0,0,
+	0,0,0,0,
+
 
 	/* sprites (32) */
-        0,1,2,14,4,13,6,7,
-        0,2,14,4,13,6,7,8,
-        0,14,4,13,6,7,8,7,
-        0,4,13,6,7,8,17,9,
-        0,13,6,7,8,7,9,2,
-        0,6,7,8,7,9,2,5,
-        0,7,8,7,9,2,5,13,
-        0,8,7,9,2,5,13,8,
-        0,7,9,2,5,13,8,13,
-        0,9,2,5,13,8,13,7,
-        0,2,5,13,8,13,7,2,
-        0,5,13,8,13,7,2,14,
-        0,13,8,13,7,2,14,4,
-        0,8,13,7,2,14,4,5,
-        0,13,7,2,14,4,5,6,
-        0,13,7,2,14,4,5,6,
-        0,1,2,14,4,13,6,7,
-        0,2,14,4,13,6,7,8,
-        0,14,4,13,6,7,8,7,
-        0,4,13,6,7,8,17,9,
-        0,13,6,7,8,7,9,2,
-        0,6,7,8,7,9,2,5,
-        0,7,8,7,9,2,5,13,
-        0,8,7,9,2,5,13,8,
-        0,7,9,2,5,13,8,13,
-        0,9,2,5,13,8,13,7,
-        0,2,5,13,8,13,7,2,
-        0,5,13,8,13,7,2,14,
-        0,13,8,13,7,2,14,4,
-        0,8,13,7,2,14,4,5,
-        0,13,7,2,14,4,5,6,
-        0,13,7,2,14,4,5,6,
+        0,BROWN1,BLACK,BROWN,BROWN4,BROWN3,BROWN2,WHITE,   /* monkey1 */
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,BROWN4,BLACK,BROWN2,BLACK,BROWN3,BROWN4,WHITE,  /* monkey2 */
+        0,WHITE,BLACK,BROWN,BROWN0,BROWN3,BROWN1,BROWN2,  /* hero */
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,LTGRAY,LTGRAY,LTGRAY,LTGRAY,LTGRAY,LTGRAY,LTGRAY, /* stage 3: beside holes */
+        0,0,0,0,0,0,0,0,
+        0,BROWN1,BROWN3,BROWN2,BROWN2,BROWN3,BROWN3,BROWN2, /* stage 1: falling bridge */
+        0,0,0,0,0,0,0,0,
+        0,DKGRAY,LTGRAY,LTBLUE,BLUE,WHITE,BLACK,DKCYAN,     /* hippo */
+        0,RED,BROWN4,ORANGE,YELLOW,WHITE,BROWN1,BLACK,      /* scorpion */
+        0,GREEN,ORANGE,GRASSGREEN,DKGREEN,BLACK,WHITE,BROWN4, /* snake & rino1 */
+        0,RED,DKORANGE,YELLOW,ORANGE,BROWN2,BROWN3,BROWN,   /* barrels */
+        0,BROWN4,BLACK,BROWN,WHITE,BROWN1,BROWN,WHITE,      /* hero asleep in tent */
+        0,BROWN2,YELLOW,YELLOW,BLACK,WHITE,BROWN3,BROWN,    /* guy in hole */
+        0,GREEN,DKGREEN,BLACK,GRASSGREEN,WHITE,CYAN,WHITE,  /* stage 4: moving leaf */
+        0,DKGRAY,CYAN,LTBLUE,BLUE,BLACK,WHITE,BROWN4,       /* rino1 */
+        0,BROWN0,BROWN0,BROWN2,BROWN4,BROWN3,WHITE,BLACK,   /* kong */
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,DKGRAY,LTBLUE,LTGRAY,BLUE,WHITE,WHITE,BLACK,      /* whale */
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,ORANGE,DKGREEN,BLUE,YELLOW,GREEN,LTBLUE,BLACK,    /* snoring zzzzz */
 
 	/* background tiles (16) */
         0,0,0,0,0,0,0,0,  /* Score Back, all Black */
@@ -348,14 +347,13 @@ static unsigned char colortable[] =
         0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,
- BROWN4,BROWN1,BROWN2,BROWN3,BLUE,LTBLUE,WHITE,DKGREEN, /* Brown with trees */
- BROWN4,BROWN1,BROWN2,BROWN3,BLUE,BROWN0,WHITE,BROWN3, /* Brown wood:stage 1 bridge, stage 2 */
- BROWN4,BROWN1,BROWN2,BROWN3,BLUE,GRASSGREEN,LTGRAY,DKGREEN, /* stage 2 green */
- BLACK,BROWN1,BROWN2,BROWN3,BLUE,BROWN3,WHITE,LTGRAY, /* stage 1 under the skeleton, stage 3 */
+ BROWN4,BROWN1,BROWN2,BROWN3,DKCYAN,LTBLUE,WHITE,DKGREEN, /* Brown with trees */
+ BROWN4,BROWN1,BROWN2,BROWN3,DKCYAN,BROWN0,WHITE,BROWN3, /* Brown wood:stage 1 bridge, stage 2 */
+ BROWN4,BROWN1,BROWN2,BROWN3,DKCYAN,GRASSGREEN,LTGRAY,DKGREEN, /* stage 2 green */
+ BLACK,BROWN1,BROWN2,BROWN3,DKCYAN,BROWN3,WHITE,LTGRAY, /* stage 1 under the skeleton, stage 3 */
         0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,
 };
-
 
 
 static struct MachineDriver machine_driver =

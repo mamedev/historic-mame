@@ -419,7 +419,7 @@ static struct KEYSet keys[] =
         { 1, 0, "MOVE RIGHT" },
         { 1, 2, "MOVE DOWN" },
         { 1, 4, "FIRE" },
-        { 1, 5, "AIR ROUTE" },
+        { 1, 5, "ROLL" },
         { -1 }
 };
 
@@ -446,14 +446,14 @@ static struct GfxLayout charlayout =
 };
 static struct GfxLayout tilelayout =
 {
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
+	16,16,	/* 16*16 tiles */
+	256,	/* 256 tiles */
 	3,	/* 3 bits per pixel */
-	{ 0x4000*8, 0x2000*8, 0 },	/* the bitplanes are separated */
+	{ 0, 0x2000*8, 0x4000*8 },	/* the bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
+			7, 6, 5, 4, 3, 2, 1, 0 },
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -606,7 +606,7 @@ static struct MachineDriver machine_driver =
 			c1942_interrupt,2
 		},
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_AUDIO_CPU,
 			3000000,	/* 3 Mhz ??? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
@@ -654,12 +654,12 @@ ROM_START( c1942_rom )
 
 	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "1-f2.bin", 0x00000, 0x2000 )	/* characters */
-	ROM_LOAD( "2-a1.bin", 0x06000, 0x2000 )	/* tiles */
+	ROM_LOAD( "2-a1.bin", 0x02000, 0x2000 )	/* tiles */
 	ROM_LOAD( "2-a3.bin", 0x04000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a5.bin", 0x02000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a2.bin", 0x0c000, 0x2000 )	/* tiles */
+	ROM_LOAD( "2-a5.bin", 0x06000, 0x2000 )	/* tiles */
+	ROM_LOAD( "2-a2.bin", 0x08000, 0x2000 )	/* tiles */
 	ROM_LOAD( "2-a4.bin", 0x0a000, 0x2000 )	/* tiles */
-	ROM_LOAD( "2-a6.bin", 0x08000, 0x2000 )	/* tiles */
+	ROM_LOAD( "2-a6.bin", 0x0c000, 0x2000 )	/* tiles */
 	ROM_LOAD( "2-l1.bin", 0x0e000, 0x4000 )	/* sprites */
 	ROM_LOAD( "2-n1.bin", 0x12000, 0x4000 )	/* sprites */
 	ROM_LOAD( "2-l2.bin", 0x16000, 0x4000 )	/* sprites */

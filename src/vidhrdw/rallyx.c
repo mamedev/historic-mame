@@ -13,12 +13,10 @@
 
 #define VIDEO_RAM_SIZE 0x400
 
-unsigned char *rallyx_videoram1;
-unsigned char *rallyx_colorram1;
-unsigned char *rallyx_videoram2;
-unsigned char *rallyx_colorram2;
-unsigned char *rallyx_scrollx;
-unsigned char *rallyx_scrolly;
+unsigned char *rallyx_videoram1,*rallyx_colorram1;
+unsigned char *rallyx_videoram2,*rallyx_colorram2;
+unsigned char *rallyx_radarcarx,*rallyx_radarcary,*rallyx_radarcarcolor;
+unsigned char *rallyx_scrollx,*rallyx_scrolly;
 static unsigned char dirtybuffer1[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
 static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
@@ -196,5 +194,28 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap)
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				spriteram[offs + 1] - 1,224 - spriteram_2[offs],
 				&visiblearea,TRANSPARENCY_PEN,0);
+	}
+
+	/* draw the cars on the radar */
+	for (offs = 0; offs < 9; offs++)
+	{
+		int x,y;
+		int color;
+
+
+		/* TODO: map to the correct color */
+		color = Machine->gfx[0]->colortable[3+(rallyx_radarcarcolor[offs]>>1)];
+
+		x = rallyx_radarcarx[offs] + 256 * (1 - (rallyx_radarcarcolor[offs] & 1));
+		y = 238 - rallyx_radarcary[offs];
+
+		if (x >= Machine->drv->visible_area.min_x && x < Machine->drv->visible_area.max_x &&
+				y > Machine->drv->visible_area.min_y && y <= Machine->drv->visible_area.max_y)
+		{
+			bitmap->line[y-1][x] = color;
+			bitmap->line[y-1][x+1] = color;
+			bitmap->line[y][x] = color;
+			bitmap->line[y][x+1] = color;
+		}
 	}
 }

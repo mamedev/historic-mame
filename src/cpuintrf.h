@@ -8,11 +8,12 @@ void cpu_halt(int cpunum,int running);
 
 
 int cpu_getpc(void);
+int cpu_getreturnpc(void);
 int cpu_geticount(void);
 void cpu_seticount(int cycles);
 
-int cpu_readmem(register int A);
-void cpu_writemem(register int A,register unsigned char V);
+int cpu_readmem(int address);
+void cpu_writemem(int address,int data);
 
 int cpu_readport(int Port);
 void cpu_writeport(int Port,int Value);

@@ -5,12 +5,20 @@
 #define __SOUND_C_
 #include "xmame.h"
 
+static int MasterVolume=100;
+
+#define AUDIO_BUFF_SIZE 131072
+
 int start_timer() {
 	struct itimerval	timer_value ;
 	void audio_timer(int arg);
 	/* set and configure timer catcher */
 	sig_action.sa_handler = audio_timer;
+#ifdef hpux
+	sig_action.sa_flags   = SA_RESETHAND;
+#else
 	sig_action.sa_flags   = SA_RESTART;
+#endif
 
 	if(sigaction (SIGALRM, &sig_action, NULL)< 0) {
 		fprintf(stderr,"Sigaction Failed \n");
@@ -32,8 +40,8 @@ int start_timer() {
 void audio_timer (int arg) {
         static int  in = FALSE;
         int   i, j;
-        static byte buf[65536];
-        static long intbuf[65536];
+        static byte buf[AUDIO_BUFF_SIZE];
+        static long intbuf[AUDIO_BUFF_SIZE];
         int   j1, j2;
 
         if (!in) {
@@ -41,7 +49,7 @@ void audio_timer (int arg) {
                 j1 = abuf_ptr;  /* calc pointers for chunk of buffer */
                 j2 = j1 + abuf_inc; /* to be filled this time around */
                 for (i = 0; i < AUDIO_NUM_VOICES; i++) {
-                    if (audio_on[i]) {
+                    if ( (audio_on[i]) && ( audio_len[i]) ) {
                         for (j = j1; j < j2; j++) {
                             if (i != 0) intbuf[j] += (audio_vol[i]/16) * 
                                         audio_data[i][((j * audio_freq[i]) / 
@@ -75,9 +83,28 @@ void audio_timer (int arg) {
  * Audio shit.
  */
 
+int sysdep_audio_initvars(void)
+{
+	audio_sample_freq = AUDIO_SAMPLE_FREQ;
+	audio_timer_freq  = AUDIO_TIMER_FREQ;
+	return (0);
+}
+
 void osd_update_audio (void)
 {
 	/* Not used. */
+}
+
+void osd_set_mastervolume(int volume)
+{
+	int channel;
+	MasterVolume = volume;
+#if 0
+	/* not implemented yet */
+	for (channel=0; channel < AUDIO_NUM_VOICES; channel++) {
+		audio_vol[channel] *= (MasterVolume/100) ;
+	}
+#endif
 }
 
 void osd_play_sample (int channel, byte *data, int len, int freq,

@@ -180,7 +180,7 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 				drawgfx(tmpbitmap2,Machine->gfx[(c1942_backgroundram[offs + 16] & 0x80) ? 2 : 1],
 						c1942_backgroundram[offs],
 						(c1942_backgroundram[offs + 16] & 0x1f) + 32 * *c1942_palette_bank,
-						c1942_backgroundram[offs + 16] & 0x40,!(c1942_backgroundram[offs + 16] & 0x20),
+						c1942_backgroundram[offs + 16] & 0x40,(c1942_backgroundram[offs + 16] & 0x20),
 						16 * sx,16 * sy,
 						0,TRANSPARENCY_NONE,0);
 			}
@@ -233,17 +233,19 @@ void c1942_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
 	{
-		int sx,sy;
-
-
-		sx = 8 * (offs / 32);
-		sy = 8 * (31 - offs % 32);
-
 		if (videoram[offs] != 0x30)	/* don't draw spaces */
+		{
+			int sx,sy;
+
+
+			sx = 8 * (offs / 32);
+			sy = 8 * (31 - offs % 32);
+
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 2 * (colorram[offs] & 0x80),
 					colorram[offs] & 0x3f,
 					0,0,sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
 	}
 }

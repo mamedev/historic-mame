@@ -150,8 +150,9 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 	}
 
 
-	/* Draw the sprites */
-	for (offs = 0;offs < 4*8;offs += 4)
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = 7*4;offs >= 0;offs -= 4)
 	{
 		if (spriteram[offs + 3] != 0)
 		{

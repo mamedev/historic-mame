@@ -738,11 +738,11 @@ static int hiload(const char *name)
 			RAM[0x60ba] = RAM[0x611f];
 			/* also copy the high score to the screen, otherwise it won't be */
 			/* updated until a new game is started */
-			cpu_writemem(0x7621,RAM[0x6108]);
-			cpu_writemem(0x7601,RAM[0x6109]);
-			cpu_writemem(0x75e1,RAM[0x610a]);
-			cpu_writemem(0x75c1,RAM[0x610b]);
-			cpu_writemem(0x75a1,RAM[0x610c]);
+			videoram_w(0x0221,RAM[0x6108]);
+			videoram_w(0x0201,RAM[0x6109]);
+			videoram_w(0x01e1,RAM[0x610a]);
+			videoram_w(0x01c1,RAM[0x610b]);
+			videoram_w(0x01a1,RAM[0x610c]);
 			fclose(f);
 		}
 

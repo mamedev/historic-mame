@@ -315,7 +315,7 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 		scrollx = *junglek_scrollx3;
 		scrollx = -((scrollx & 0xf8) | ((scrollx-1) & 7)) - 10;
 		for (i = 0;i < 32;i++)
-//			scrolly[i] = -junglek_scrolly3[i];
+/*			scrolly[i] = -junglek_scrolly3[i];*/
 			scrolly[i] = -junglek_scrolly3[i] + 16;
 
 		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -329,7 +329,7 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 		scrollx = *junglek_scrollx2;
 		scrollx = -((scrollx & 0xf8) | ((scrollx+1) & 7)) - 10;
 		for (i = 0;i < 32;i++)
-//			scrolly[i] = -junglek_scrolly2[i];
+/*			scrolly[i] = -junglek_scrolly2[i];*/
 			scrolly[i] = -junglek_scrolly2[i] + 16;
 
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,Machine->background_pen);
@@ -359,7 +359,7 @@ void junglek_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			sx = offs % 32;
 			sy = (8*(offs / 32) + junglek_scrolly1[sx]) & 0xff;
-//			sx = (8*sx + *junglek_scrollx1) & 0xff;
+/*			sx = (8*sx + *junglek_scrollx1) & 0xff;*/
 			sx = 8*sx;
 
 			drawgfx(bitmap,Machine->gfx[3],

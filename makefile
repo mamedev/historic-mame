@@ -7,7 +7,7 @@ CFLAGS = -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/I86 -Isrc/M6809 \
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
-		 obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
+         obj/sndhrdw/psg.o obj/sndhrdw/8910intf.o obj/sndhrdw/pokey.o obj/sndhrdw/sn76496.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
@@ -32,7 +32,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/amidar.o obj/sndhrdw/amidar.o obj/drivers/amidar.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
          obj/vidhrdw/pooyan.o obj/sndhrdw/pooyan.o obj/drivers/pooyan.o \
-         obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
+         obj/sndhrdw/timeplt.o obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
          obj/machine/phoenix.o obj/vidhrdw/phoenix.o obj/sndhrdw/phoenix.o obj/drivers/phoenix.o \
          obj/machine/carnival.o obj/vidhrdw/carnival.o obj/drivers/carnival.o \
          obj/machine/invaders.o obj/vidhrdw/invaders.o obj/sndhrdw/invaders.o obj/drivers/invaders.o \
@@ -40,7 +40,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/zaxxon.o obj/vidhrdw/zaxxon.o obj/drivers/zaxxon.o \
          obj/vidhrdw/congo.o obj/drivers/congo.o \
          obj/vidhrdw/bombjack.o obj/sndhrdw/bombjack.o obj/drivers/bombjack.o \
-         obj/machine/centiped.o obj/drivers/centiped.o \
+         obj/machine/centiped.o obj/vidhrdw/centiped.o obj/drivers/centiped.o \
          obj/vidhrdw/milliped.o obj/sndhrdw/milliped.o obj/drivers/milliped.o \
          obj/machine/nibbler.o obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \
          obj/machine/mpatrol.o obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
@@ -55,7 +55,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/gottlieb.o obj/drivers/krull.o \
          obj/drivers/mplanets.o \
          obj/vidhrdw/junglek.o obj/sndhrdw/junglek.o obj/drivers/junglek.o \
-         obj/machine/elevator.o obj/vidhrdw/elevator.o obj/drivers/elevator.o \
+         obj/machine/elevator.o obj/sndhrdw/elevator.o obj/vidhrdw/elevator.o obj/drivers/elevator.o \
          obj/machine/panic.o obj/vidhrdw/panic.o obj/drivers/panic.o \
          obj/machine/arabian.o obj/vidhrdw/arabian.o obj/sndhrdw/arabian.o obj/drivers/arabian.o \
          obj/machine/1942.o obj/vidhrdw/1942.o obj/sndhrdw/1942.o obj/drivers/1942.o \
@@ -63,6 +63,9 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/superpac.o obj/vidhrdw/superpac.o obj/drivers/superpac.o \
          obj/machine/galaga.o obj/vidhrdw/galaga.o obj/drivers/galaga.o \
          obj/machine/kangaroo.o obj/sndhrdw/kangaroo.o obj/vidhrdw/kangaroo.o obj/drivers/kangaroo.o \
+         obj/vidhrdw/commando.o obj/drivers/commando.o \
+         obj/machine/gng.o obj/vidhrdw/gng.o obj/drivers/gng.o \
+         obj/machine/vulgus.o obj/sndhrdw/vulgus.o obj/vidhrdw/vulgus.o obj/drivers/vulgus.o \
          obj/Z80/Z80.o obj/M6502/M6502.o obj/I86/I86.o obj/M6809/M6809.o
 
 VPATH = src src/Z80 src/M6502 src/I86 src/M6809

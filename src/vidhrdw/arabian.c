@@ -221,22 +221,22 @@ void arabian_videoramw(int offset, int val)
      if (plane1)
      {	
 
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x80) *bm |= 8;
 	if (val & 0x08) *bm |= 4;
-
+	
 	bm = tmpbitmap->line[sy+1] + sx;
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x40) *bm |= 8;
 	if (val & 0x04) *bm |= 4;
 
 	bm = tmpbitmap->line[sy+2] + sx;
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x20) *bm |= 8;
 	if (val & 0x02) *bm |= 4;
 
 	bm = tmpbitmap->line[sy+3] + sx;
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x10) *bm |= 8;
 	if (val & 0x01) *bm |= 4;
 
@@ -245,22 +245,22 @@ void arabian_videoramw(int offset, int val)
      bm=pom;
      if (plane2)
      {	
-	*bm &= 0x0c;
+	*bm &= 0xfc;
 	if (val & 0x80) *bm |= 2;
 	if (val & 0x08) *bm |= 1;
-	bm = tmpbitmap->line[sy+1] + sx;
 
-	*bm &= 0x0c;
+	bm = tmpbitmap->line[sy+1] + sx;
+	*bm &= 0xfc;
 	if (val & 0x40) *bm |= 2;
 	if (val & 0x04) *bm |= 1;
-	bm = tmpbitmap->line[sy+2] + sx;
 
-	*bm &= 0x0c;
+	bm = tmpbitmap->line[sy+2] + sx;
+	*bm &= 0xfc;
 	if (val & 0x20) *bm |= 2;
 	if (val & 0x02) *bm |= 1;
-	bm = tmpbitmap->line[sy+3] + sx;
 
-	*bm &= 0x0c;
+	bm = tmpbitmap->line[sy+3] + sx;
+	*bm &= 0xfc;
 	if (val & 0x10) *bm |= 2;
 	if (val & 0x01) *bm |= 1;
 
@@ -273,22 +273,22 @@ void arabian_videoramw(int offset, int val)
      if (plane3)
      {	
 
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x80) *bm |= (16+8);
 	if (val & 0x08) *bm |= (16+4);
 
 	bm = tmpbitmap2->line[sy+1] + sx;
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x40) *bm |= (16+8);
 	if (val & 0x04) *bm |= (16+4);
 
 	bm = tmpbitmap2->line[sy+2] + sx;
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x20) *bm |= (16+8);
 	if (val & 0x02) *bm |= (16+4);
 
 	bm = tmpbitmap2->line[sy+3] + sx;
-	*bm &= 0x03;
+	*bm &= 0xf3;
 	if (val & 0x10) *bm |= (16+8);
 	if (val & 0x01) *bm |= (16+4);
 
@@ -298,22 +298,22 @@ void arabian_videoramw(int offset, int val)
      if (plane4)
      {	
 
-	*bm &= 0x0c;
+	*bm &= 0xfc;
 	if (val & 0x80) *bm |= (16+2);
 	if (val & 0x08) *bm |= (16+1);
 
 	bm = tmpbitmap2->line[sy+1] + sx;
-	*bm &= 0x0c;
+	*bm &= 0xfc;
 	if (val & 0x40) *bm |= (16+2);
 	if (val & 0x04) *bm |= (16+1);
 
 	bm = tmpbitmap2->line[sy+2] + sx;
-	*bm &= 0x0c;
+	*bm &= 0xfc;
 	if (val & 0x20) *bm |= (16+2);
 	if (val & 0x02) *bm |= (16+1);
 
 	bm = tmpbitmap2->line[sy+3] + sx;
-	*bm &= 0x0c;
+	*bm &= 0xfc;
 	if (val & 0x10) *bm |= (16+2);
 	if (val & 0x01) *bm |= (16+1);
 
@@ -326,6 +326,6 @@ void arabian_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+ 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 }
 

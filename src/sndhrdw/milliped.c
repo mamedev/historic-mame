@@ -48,10 +48,10 @@ void milliped_sh_update(void)
 
 	Pokey_process(buffer,buffer_len);
 	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-if (!playing)
-{
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-	osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
-	playing = 1;
-}
+        if (!playing)
+        {
+	        osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
+	        osd_play_streamed_sample(0,buffer,buffer_len,emulation_rate,255);
+	        playing = 1;
+        }
 }

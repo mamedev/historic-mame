@@ -81,6 +81,7 @@ extern int galaga_interrupt_2(void);
 extern int galaga_interrupt_3(void);
 
 extern unsigned char *galaga_starcontrol;
+extern void galaga_cpu_reset_w(int offset, int data);
 extern int galaga_vh_start(void);
 extern void galaga_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern void galaga_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -126,12 +127,12 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x6820, 0x6820, galaga_interrupt_enable_1_w },
 	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, galaga_halt_w },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram },	/* these three are here just to initialize */
 	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },	/* the pointers. The actual writes are */
 	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },	/* handled by galaga_sharedram_w() */
 	{ 0x8000, 0x83ff, MWA_RAM, &videoram },	/* dirtybuffer[] handling is not needed because */
 	{ 0x8400, 0x87ff, MWA_RAM, &colorram },	/* characters are redrawn every frame */
-	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -191,7 +192,7 @@ static struct DSW galaga_dsw[] =
 	{ 1, 0x06, "DIFFICULTY", { "MEDIUM", "HARD", "HARDEST", "EASY" }, 1 },
 	{ 1, 0x08, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
 	{ 1, 0x01, "2 CREDITS GAME", { "1 PLAYER", "2 PLAYERS" }, 1 },
-	{ 1, 0x40, "SW7B", { "ON", "OFF" }, 1 },
+	{ 1, 0x40, "CONFIGURATION", { "ON", "OFF" }, 1 },
 	{ -1 }
 };
 
@@ -213,22 +214,12 @@ static struct GfxLayout charlayout =
 	8,8,	       /* 8*8 characters */
 	128,	       /* 128 characters */
 	2,             /* 2 bits per pixel */
-	{ 0, 4},       /* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },   /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },   /* bits are packed in groups of four */
 	16*8	       /* every char takes 16 bytes */
 };
 
-static struct GfxLayout charlayout1 =
-{
-	8,8,	        /* 8*8 characters */
-	128,	        /* 128 characters */
-	2,	        /* 2 bits per pixel */
-	{ 0, 4},	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 }, /* characters are rotated 90 degrees */
-	{ 3, 2, 1, 0, 8*8+3, 8*8+2, 8*8+1, 8*8+0 }, /* bits are packed in groups of four */
-	16*8	/* every char takes 16 bytes */
-};
 static struct GfxLayout spritelayout =
 {
 	16,16,	        /* 16*16 sprites */
@@ -259,7 +250,6 @@ static struct GfxLayout starslayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,       0, 32 },
-	{ 1, 0x0000, &charlayout1,      0, 32 },
 	{ 1, 0x1000, &spritelayout,  32*4, 32 },
 	{ 0, 0,      &starslayout,   64*4, 64 },
 	{ -1 } /* end of array */

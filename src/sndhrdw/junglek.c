@@ -5,28 +5,19 @@
 
 
 
-static int junglek_portB_r(int offset)
-{
-	int clockticks,clock;
-
-#define TIMER_RATE (32)
-
-	clockticks = (Z80_IPeriod - cpu_geticount());
-
-	clock = clockticks / TIMER_RATE;
-
-	return clock;
-}
-
-
-
 int junglek_sh_interrupt(void)
 {
-	return Z80_NMI_INT;
+	static int count;
 
-/*	if (pending_commands) return 0xff;
-	else return Z80_IGNORE_INT;
-*/
+
+	count = (count + 1) % 2;
+
+	if (count) return 0xff;
+	else
+	{
+		if (pending_commands) return Z80_NMI_INT;
+		else return Z80_IGNORE_INT;
+	}
 }
 
 
@@ -34,10 +25,10 @@ int junglek_sh_interrupt(void)
 static struct AY8910interface interface =
 {
 	3,	/* 3 chips */
-	1789750000,	/* 1.78975 MHZ ?? */
+	1789750000,	/* 1.78975 MHZ ???? */
 	{ 255, 255, 255 },
-	{ }, /*sound_command_r },*/
-	{ }, /*junglek_portB_r },*/
+	{ },
+	{ },
 	{ },
 	{ }
 };

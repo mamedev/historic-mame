@@ -14,11 +14,11 @@
 #ifndef _M6809_H
 #define _M6809_H
 
+
 /****************************************************************************/
 /* sizeof(byte)=1, sizeof(word)=2, sizeof(dword)>=4                         */
 /****************************************************************************/
 #include "types.h"	/* -NS- */
-
 
 typedef byte Byte;
 typedef word Word;
@@ -57,13 +57,13 @@ extern int	m6809_IRequest;
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
 /****************************************************************************/
-extern int cpu_readmem(register int A);
+extern int cpu_readmem(int Address);
 #define M6809_RDMEM(A) ((unsigned)cpu_readmem(A))
 
 /****************************************************************************/
 /* Write a byte to given memory location                                    */
 /****************************************************************************/
-extern void cpu_writemem(register int A,register unsigned char V);
+extern void cpu_writemem(int Address, int data);
 #define M6809_WRMEM(A,V) (cpu_writemem(A,V))
 
 /****************************************************************************/

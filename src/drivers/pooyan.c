@@ -266,7 +266,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3082000,	/* 3.082 Mhz ??? (3.072 doesn't work) */
+			3072000,	/* 3.0782 Mhz (?) */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			pooyan_sh_interrupt,1

@@ -8,7 +8,6 @@ Amidar memory map (preliminary)
 9800-983f Screen attributes
 9840-985f sprites
 
-
 read:
 a800      watchdog reset
 b000      IN0
@@ -35,8 +34,8 @@ b820      DSW2 (not Turtles)
  * bit 4 : RIGHT player 2 (TABLE only)
  * bit 3 : FIRE player 2 (TABLE only)
  * bit 2 : ?
- * bit 1 : ?
- * bit 0 : ?
+ * bit 1 : \ lives
+ * bit 0 : / (turtles)
 *
  * IN2 (all bits are inverted)
  * bit 7 : ?
@@ -45,7 +44,7 @@ b820      DSW2 (not Turtles)
  * bit 4 : UP player 1
  * bit 3 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
  * bit 2 : bonus  0 = 30000 1 = 50000 (amidar)
- * bit 1 : ? (amidar)
+ * bit 1 : demo sounds (amidar)
  * bit 2 :\ coins per play
  * bit 1 :/ (turtles)
  * bit 0 : DOWN player 2 (TABLE only)
@@ -64,6 +63,8 @@ b820      DSW2 (not Turtles)
 
 write:
 a008      interrupt enable
+a010      ?
+a018      ?
 b800      To AY-3-8910 port A (commands for the audio CPU)
 b810      bit 3 = interrupt trigger on audio CPU
 
@@ -105,7 +106,7 @@ extern int amidar_sh_start(void);
 
 
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress amidar_readmem[] =
 {
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },
@@ -113,6 +114,19 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x4fff, MRA_ROM },
 	{ 0xb000, 0xb000, input_port_0_r },	/* IN0 */
 	{ 0xb010, 0xb010, input_port_1_r },	/* IN1 */
+	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
+	{ 0xb820, 0xb820, input_port_3_r },	/* DSW2 */
+	{ 0xa800, 0xa800, MRA_NOP },
+	{ -1 }	/* end of table */
+};
+static struct MemoryReadAddress turtles_readmem[] =
+{
+	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x9000, 0x93ff, MRA_RAM },
+	{ 0x9800, 0x985f, MRA_RAM },
+	{ 0x0000, 0x4fff, MRA_ROM },
+	{ 0xb000, 0xb000, input_port_0_r },	/* IN0 */
+	{ 0xb010, 0xb010, input_port_4_r },	/* IN1 */
 	{ 0xb020, 0xb020, input_port_2_r },	/* IN2 */
 	{ 0xb820, 0xb820, input_port_3_r },	/* DSW2 */
 	{ 0xa800, 0xa800, MRA_NOP },
@@ -190,11 +204,27 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
+	{	/* IN1 for Turtles (different default value) */
+		0xfd,
+		{ 0, 0, 0, 0, 0, 0, OSD_KEY_2, OSD_KEY_1 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
 	{ -1 }	/* end of table */
 };
 
 
-static struct KEYSet keys[] =
+
+static struct KEYSet amidar_keys[] =
+{
+        { 2, 4, "MOVE UP" },
+        { 0, 5, "MOVE LEFT"  },
+        { 0, 4, "MOVE RIGHT" },
+        { 2, 6, "MOVE DOWN" },
+        { 0, 3, "JUMP" },
+        { -1 }
+};
+
+static struct KEYSet turtles_keys[] =
 {
         { 2, 4, "MOVE UP" },
         { 0, 5, "MOVE LEFT"  },
@@ -208,10 +238,9 @@ static struct KEYSet keys[] =
 
 static struct DSW amidar_dsw[] =
 {
-	{ 2, 0x04, "BONUS", { "30000", "50000" } },
-	{ 2, 0x02, "SW2", { "OFF", "ON" } },
-	{ 2, 0x20, "SW6", { "OFF", "ON" } },
-	{ 2, 0x80, "SW8", { "OFF", "ON" } },
+	{ 1, 0x03, "LIVES", { "255", "5", "4", "3" }, 1 },
+	{ 2, 0x04, "BONUS", { "30000 70000", "50000 80000" } },
+	{ 2, 0x02, "DEMO SOUNDS", { "ON", "OFF" }, 1 },
 	{ -1 }
 };
 
@@ -219,8 +248,7 @@ static struct DSW amidar_dsw[] =
 
 static struct DSW turtles_dsw[] =
 {
-	{ 2, 0x20, "SW6", { "OFF", "ON" } },
-	{ 2, 0x80, "SW8", { "OFF", "ON" } },
+	{ 4, 0x03, "LIVES", { "2", "3", "4", "126" } },
 	{ -1 }
 };
 
@@ -278,7 +306,7 @@ static unsigned char turtles_color_prom[] =
 
 
 
-static struct MachineDriver machine_driver =
+static struct MachineDriver amidar_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -286,12 +314,53 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
 			0,
-			readmem,writemem,0,0,
+			amidar_readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz?????? */
+			2100000,	/* 2 Mhz?????? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			amidar_sh_interrupt,1
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	32,32,
+	amidar_vh_convert_color_prom,
+
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	amidar_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	amidar_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
+};
+
+static struct MachineDriver turtles_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz */
+			0,
+			turtles_readmem,writemem,0,0,
+			nmi_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2100000,	/* 2 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			amidar_sh_interrupt,1
@@ -379,16 +448,63 @@ ROM_END
 
 
 
+static int amidar_hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8200],"\x00\x00\x01",3) == 0 &&
+			memcmp(&RAM[0x821b],"\x00\x00\x01",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x8200],1,3*10,f);
+			RAM[0x80a8] = RAM[0x8200];
+			RAM[0x80a9] = RAM[0x8201];
+			RAM[0x80aa] = RAM[0x8202];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void amidar_hisave(const char *name)
+{
+	FILE *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8200],1,3*10,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver amidar_driver =
 {
 	"amidar",
-	&machine_driver,
+	&amidar_machine_driver,
 
 	amidar_rom,
 	0, 0,
 	0,
 
-	input_ports, amidar_dsw, keys,
+	input_ports, amidar_dsw, amidar_keys,
 
 	amidar_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -397,19 +513,19 @@ struct GameDriver amidar_driver =
 	0x06, 0x04,
 	8*13, 8*16, 0x00,
 
-	0, 0
+	amidar_hiload, amidar_hisave
 };
 
 struct GameDriver amidarjp_driver =
 {
 	"amidarjp",
-	&machine_driver,
+	&amidar_machine_driver,
 
 	amidarjp_rom,
 	0, 0,
 	0,
 
-	input_ports, amidar_dsw, keys,
+	input_ports, amidar_dsw, amidar_keys,
 
 	amidar_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */
@@ -418,19 +534,19 @@ struct GameDriver amidarjp_driver =
 	0x06, 0x04,
 	8*13, 8*16, 0x00,
 
-	0, 0
+	amidar_hiload, amidar_hisave
 };
 
 struct GameDriver turtles_driver =
 {
 	"turtles",
-	&machine_driver,
+	&turtles_machine_driver,
 
 	turtles_rom,
 	0, 0,
 	0,
 
-	input_ports, turtles_dsw, keys,
+	input_ports, turtles_dsw, turtles_keys,
 
 	turtles_color_prom, 0, 0,
 	{ 0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,	/* numbers */

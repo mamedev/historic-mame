@@ -34,6 +34,8 @@ void wow_videoram_w(int offset,int data)
 	if (wow_videoram[offset] != data)
 	{
 		int i;
+                int color;
+                const unsigned char *paldata;
 		unsigned char *bm;
 
 
@@ -52,16 +54,22 @@ void wow_videoram_w(int offset,int data)
 			bm = tmpbitmap->line[offset / 40] + 8 * (offset % 40) + 4;
 		}
 
+                paldata = &Machine->gfx[0]->colortable[0];
 		for (i = 0;i < 4;i++)
 		{
+/* Previous version
 			*bm = 0;
 
 			if (data & 0x80) *bm |= 1;
 			if (data & 0x40) *bm |= 2;
-/* TODO: remap the pixel color thru the color table */
-
+*/
+                        color = 0x00;
+                        if (data & 0x80) color |= 0x01;
+                        if (data & 0x40) color |= 0x02;
+                        *bm = paldata[color];
 			bm++;
 			data <<= 2;
+
 		}
 	}
 }

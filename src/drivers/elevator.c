@@ -2,6 +2,8 @@
 
 Elevator Action memory map (preliminary)
 
+MAIN CPU:
+
 0000-7fff ROM
 8000-87ff RAM
 9000-bfff Character generator RAM
@@ -62,15 +64,35 @@ d506      bits 0-3 = front playfield color code
 d507      bits 0-3 = back playfield color code
           bits 4-7 = sprite color bank (1 bank = 2 color codes)
 d509-d50a pointer to graphic ROM to read from d404
+d50b      command for the audio CPU
 d50d      watchdog reset ?
 d50e      bootleg version: $01 -> ROM ea54.bin is mapped at 7000-7fff
                            $81 -> ROM ea52.bin is mapped at 7000-7fff
 d600      video enable? (maybe per playfield: 0xf0 = all on, 0x00 = all off)
 
+
+SOUND CPU:
+0000-1fff ROM
+4000-43ff RAM
+e000-     additional ROM?
+
+read:
+5000      command from CPU board
+
+write:
+4800      8910 #1  control
+4801      8910 #1  write
+4802      8910 #1  control
+4803      8910 #1  write
+4804      8910 #1  control
+4805      8910 #1  write
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -94,6 +116,9 @@ extern void elevator_characterram_w(int offset,int data);
 extern int elevator_vh_start(void);
 extern void elevator_vh_stop(void);
 extern void elevator_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern int elevator_sh_interrupt(void);
+extern int elevator_sh_start(void);
 
 
 
@@ -129,10 +154,35 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd506, 0xd507, elevator_colorbank_w, &elevator_colorbank },
 	{ 0xd200, 0xd27f, elevator_paletteram_w, &elevator_paletteram },
 	{ 0x9000, 0xbfff, elevator_characterram_w, &elevator_characterram },
+	{ 0xd50b, 0xd50b, sound_command_w },
 	{ 0xd50e, 0xd50e, elevatob_bankswitch_w },
 	{ 0xd600, 0xd600, MWA_RAM, &elevator_video_enable },
 { 0x8800, 0x8800, MWA_NOP },
 	{ 0x0000, 0x7fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x5000, 0x5000, sound_command_r },
+	{ 0xe000, 0xe000, MWA_NOP },
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0x4800, 0x4800, AY8910_control_port_0_w },
+	{ 0x4801, 0x4801, AY8910_write_port_0_w },
+	{ 0x4802, 0x4802, AY8910_control_port_1_w },
+	{ 0x4803, 0x4803, AY8910_write_port_1_w },
+	{ 0x4804, 0x4804, AY8910_control_port_2_w },
+	{ 0x4805, 0x4805, AY8910_write_port_2_w },
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -158,7 +208,7 @@ static struct InputPort input_ports[] =
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
 	{	/* COIN */
-		0xff,
+		0xef,
 		{ 0, 0, 0, 0, OSD_KEY_3, 0, 0, 0 },
 		{ 0, 0, 0, 0, 0, 0, 0, 0 }
 	},
@@ -279,6 +329,13 @@ static struct MachineDriver machine_driver =
 			readmem,writemem,0,0,
 			interrupt,1
 		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,	/* 3 Mhz ??? */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,0,0,
+			elevator_sh_interrupt,2
+		}
 	},
 	60,
 	elevator_init_machine,
@@ -297,9 +354,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	elevator_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 
@@ -335,11 +392,10 @@ ROM_START( elevator_rom )
 	ROM_LOAD( "ea-ic7.bin",  0x6000, 0x1000 )
 	ROM_LOAD( "ea-ic8.bin",  0x7000, 0x1000 )
 
-#if 0
-	ROM_LOAD( "ea-ic70.bin", , 0x1000 )
-	ROM_LOAD( "ea-ic71.bin", , 0x1000 )
-	ROM_LOAD( "ee_ea10.bin", , 0x1000 )
-#endif
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ea-ic70.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "ea-ic71.bin", 0x1000, 0x1000 )
+/*	ROM_LOAD( "ee_ea10.bin", , 0x1000 ) ??? */
 ROM_END
 
 ROM_START( elevatob_rom )
@@ -356,23 +412,22 @@ ROM_START( elevatob_rom )
 	ROM_LOAD( "ea52.bin", 0xf000, 0x1000 )	/* protection crack, bank switched at 7000 */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ea04.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "ea05.bin",  0x1000, 0x1000 )
+	ROM_LOAD( "ea04.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "ea05.bin", 0x1000, 0x1000 )
 
 	ROM_REGION(0x8000)	/* graphic ROMs */
-	ROM_LOAD( "ea01.bin",  0x0000, 0x1000 )
-	ROM_LOAD( "ea02.bin",  0x1000, 0x1000 )
-	ROM_LOAD( "ea03.bin",  0x2000, 0x1000 )
-	ROM_LOAD( "ea04.bin",  0x3000, 0x1000 )
-	ROM_LOAD( "ea05.bin",  0x4000, 0x1000 )
-	ROM_LOAD( "ea06.bin",  0x5000, 0x1000 )
-	ROM_LOAD( "ea07.bin",  0x6000, 0x1000 )
-	ROM_LOAD( "ea08.bin",  0x7000, 0x1000 )
+	ROM_LOAD( "ea01.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "ea02.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "ea03.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "ea04.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "ea05.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "ea06.bin", 0x5000, 0x1000 )
+	ROM_LOAD( "ea07.bin", 0x6000, 0x1000 )
+	ROM_LOAD( "ea08.bin", 0x7000, 0x1000 )
 
-#if 0
-	ROM_LOAD( "ea70.bin", , 0x1000 )
-	ROM_LOAD( "ea71.bin", , 0x1000 )
-#endif
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ea70.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "ea71.bin", 0x1000, 0x1000 )
 ROM_END
 
 

@@ -268,7 +268,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1572750,	/* 1.57275 Mhz?????? */
+			2000000,	/* 2 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			frogger_sh_interrupt,1
@@ -339,6 +339,52 @@ ROM_END
 
 
 
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x83f1],"\x63\x04",2) == 0 &&
+			memcmp(&RAM[0x83f9],"\x27\x01",2) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x83f1],1,2*5,f);
+			RAM[0x83ef] = RAM[0x83f1];
+			RAM[0x83f0] = RAM[0x83f2];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x83f1],1,2*5,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver frogger_driver =
 {
 	"frogger",
@@ -357,7 +403,7 @@ struct GameDriver frogger_driver =
 	0x00, 0x03,
 	8*13, 8*16, 0x06,
 
-	0, 0
+	hiload, hisave
 };
 
 
@@ -380,5 +426,5 @@ struct GameDriver frogsega_driver =
 	0x00, 0x03,
 	8*13, 8*16, 0x06,
 
-	0, 0
+	hiload, hisave
 };

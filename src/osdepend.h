@@ -128,6 +128,7 @@ void osd_stop_sample(int channel);
 void osd_set_mastervolume(int volume);
 int osd_key_pressed(int keycode);
 int osd_read_key(void);
+int osd_read_keyrepeat(void);
 const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
 int osd_joy_pressed(int joycode);

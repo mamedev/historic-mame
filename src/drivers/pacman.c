@@ -514,11 +514,11 @@ static int pacman_hiload(const char *name)
 			if (hi)
 			{
 				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') cpu_writemem(0x43f2,buf[2]-'0');
-				if (buf[3] != ' ') cpu_writemem(0x43f1,buf[3]-'0');
-				if (buf[4] != ' ') cpu_writemem(0x43f0,buf[4]-'0');
-				if (buf[5] != ' ') cpu_writemem(0x43ef,buf[5]-'0');
-				if (buf[6] != ' ') cpu_writemem(0x43ee,buf[6]-'0');
+				if (buf[2] != ' ') videoram_w(0x03f2,buf[2]-'0');
+				if (buf[3] != ' ') videoram_w(0x03f1,buf[3]-'0');
+				if (buf[4] != ' ') videoram_w(0x03f0,buf[4]-'0');
+				if (buf[5] != ' ') videoram_w(0x03ef,buf[5]-'0');
+				if (buf[6] != ' ') videoram_w(0x03ee,buf[6]-'0');
 				cpu_writemem(0x43ed,buf[7]-'0');
 			}
 			fclose(f);
@@ -579,11 +579,11 @@ static int crush_hiload(const char *name)
 			if (hi)
 			{
 				sprintf(buf,"%8d",hi);
-				if (buf[2] != ' ') cpu_writemem(0x43f3,buf[2]-'0');
-				if (buf[3] != ' ') cpu_writemem(0x43f2,buf[3]-'0');
-				if (buf[4] != ' ') cpu_writemem(0x43f1,buf[4]-'0');
-				if (buf[5] != ' ') cpu_writemem(0x43f0,buf[5]-'0');
-				if (buf[6] != ' ') cpu_writemem(0x43ef,buf[6]-'0');
+				if (buf[2] != ' ') videoram_w(0x03f3,buf[2]-'0');
+				if (buf[3] != ' ') videoram_w(0x03f2,buf[3]-'0');
+				if (buf[4] != ' ') videoram_w(0x03f1,buf[4]-'0');
+				if (buf[5] != ' ') videoram_w(0x03f0,buf[5]-'0');
+				if (buf[6] != ' ') videoram_w(0x03ef,buf[6]-'0');
 				cpu_writemem(0x43ee,buf[7]-'0');
 			}
 			fclose(f);
@@ -613,6 +613,27 @@ static void crush_hisave(const char *name)
 struct GameDriver pacman_driver =
 {
 	"pacman",
+	&machine_driver,
+
+	pacman_rom,
+	0, 0,
+	0,
+
+	pacman_input_ports, pacman_dsw, keys,
+
+	pacman_color_prom, 0, 0,
+	{ 0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39,	/* numbers */
+		0x41,0x42,0x43,0x44,0x45,0x46,0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,	/* letters */
+		0x4e,0x4f,0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,0x58,0x59,0x5a },
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	pacman_hiload, pacman_hisave
+};
+
+struct GameDriver pacplus_driver =
+{
+	"pacplus",
 	&machine_driver,
 
 	pacman_rom,

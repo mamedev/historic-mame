@@ -10,19 +10,42 @@
 #include "vidhrdw/generic.h"
 
 
-
 #define VIDEO_RAM_SIZE 0x400
-static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];
 
-unsigned char *vanguard_videoram2;
+static unsigned char dirtybuffer2[VIDEO_RAM_SIZE];
 static struct osd_bitmap *tmpbitmap2;
 
+unsigned char *vanguard_videoram2;
 unsigned char *vanguard_characterram;
 static unsigned char dirtycharacter[256];
 
 static int vanguard_scrollx;
 static int vanguard_scrolly;
 
+
+
+void vanguard_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	unsigned char b = 0;
+        unsigned char intensity4[] = { 0, 127, 191, 255 };
+        unsigned char intensity8[] = { 0, 63, 95, 127, 159, 191, 223, 255 };
+
+	for (i=0; i<256; i++)
+        {
+	   palette[i*3] = intensity8[b&0x7];
+           palette[i*3+1] = intensity8[(b&0x38)>>3];
+	   palette[i*3+2] = intensity4[(b&0xc0)>>6];
+	   b++;
+        }
+        for (i=0; i<16; i++)
+        {
+                colortable[i*4] = 0;
+                colortable[i*4+1] = color_prom[i*4+1];
+                colortable[i*4+2] = color_prom[i*4+2];
+                colortable[i*4+3] = color_prom[i*4+3];
+        }
+}
 
 
 /***************************************************************************
@@ -64,17 +87,6 @@ void vanguard_vh_stop(void)
 
 
 
-void vanguard_videoram2_w(int offset,int data)
-{
-	if (vanguard_videoram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		vanguard_videoram2[offset] = data;
-	}
-}
-
-
 
 void vanguard_scrollx_w (int offset,int data)
 {
@@ -89,6 +101,15 @@ void vanguard_scrolly_w (int offset,int data)
 }
 
 
+void vanguard_vh_videoram2_w(int offset,int data)
+{
+	if (vanguard_videoram2[offset] != data)
+	{
+		dirtybuffer2[offset] = 1;
+
+		vanguard_videoram2[offset] = data;
+	}
+}
 
 void vanguard_characterram_w(int offset,int data)
 {
@@ -115,38 +136,32 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs,i;
 	int sx,sy;
 
-
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
-	{
-		/* background */
-		if (dirtybuffer2[offs])
-		{
+        for (sx = 0; sx < 32; sx++)
+        {
+           for (sy = 0; sy < 32; sy++)
+           {
+		offs = 32 * (31 - sx) + sy;
 
-			dirtybuffer2[offs] = 0;
+		dirtybuffer2[offs] = 0;
 
-			sx = (31 - offs / 32);
-			sy = (offs % 32);
-
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					vanguard_videoram2[offs],
-					colorram[offs] >> 4,
-					0,0,8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
+		drawgfx(tmpbitmap,Machine->gfx[1],
+				vanguard_videoram2[offs],
+				colorram[offs] >> 3,
+				0,0,8*sx,8*sy,
+				0,TRANSPARENCY_NONE,0);
+           }
 	}
 
-	sx = vanguard_scrollx - 2*8;
-	if (sx < 0) sx += 256;
-	sy = vanguard_scrolly /* + 2*8 */;
-	if (sy >= 256) sy -= 256;
+	/* copy the background graphics */
+        {
+            int scrollx,scrolly;
 
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,sx,-sy,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,sx,256-sy,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,sx-256,-sy,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,sx-256,256-sy,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+            scrollx = vanguard_scrollx-1;
+            scrolly = -(vanguard_scrolly);
+            copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+        }
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = 0;offs < VIDEO_RAM_SIZE;offs++)
@@ -156,12 +171,11 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 		charcode = videoram[offs];
 
 		/* background */
-/*//		if (dirtybuffer[offs] || dirtycharacter[charcode])*/
 		{
 			int sx,sy;
 
 
-		/* decode modified characters */
+                        /* decode modified characters */
 			if (dirtycharacter[charcode] == 1)
 			{
 				decodechar(Machine->gfx[0],charcode,vanguard_characterram,&vanguard_charlayout);
@@ -176,7 +190,7 @@ void vanguard_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			drawgfx(bitmap,Machine->gfx[0],
 					charcode,
-					colorram[offs] & 0x0f,
+					colorram[offs] & 0x07,
 					0,0,8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}

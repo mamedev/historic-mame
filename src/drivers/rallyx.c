@@ -53,7 +53,9 @@ a100      DSW1
 write:
 8014-801f sprites - 6 pairs: code (including flipping) and X position
 8814-881f sprites - 6 pairs: Y position and color
-a004-a00c ?
+8034-880c radar car indicators x position
+8834-883c radar car indicators y position
+a004-a00c radar car indicators color and x position MSB
 a080      watchdog reset?
 a105      sound voice 1 waveform (nibble)
 a111-a113 sound voice 1 frequency (nibble)
@@ -66,11 +68,13 @@ a11b-a11d sound voice 3 frequency (nibble)
 a11f      sound voice 3 volume (nibble)
 a130      virtual screen X scroll position
 a140      virtual screen Y scroll position
-a170      ?
+a170      ? this is written to A LOT of times every frame
 a180      ?
 a181      interrupt enable
-a182      ?
-a183-a186 coin counters (?)
+a182-a183 ?
+a184      1 player start lamp
+a185      2 players start lamp
+a186      ?
 
 I/O ports:
 OUT on port $0 sets the interrupt vector/instruction (the game uses both
@@ -87,12 +91,10 @@ extern int rallyx_sh_start(void);
 extern void pengo_sh_update(void);
 extern unsigned char *pengo_soundregs;
 
-extern unsigned char *rallyx_videoram1;
-extern unsigned char *rallyx_colorram1;
-extern unsigned char *rallyx_videoram2;
-extern unsigned char *rallyx_colorram2;
-extern unsigned char *rallyx_scrollx;
-extern unsigned char *rallyx_scrolly;
+extern unsigned char *rallyx_videoram1,*rallyx_colorram1;
+extern unsigned char *rallyx_videoram2,*rallyx_colorram2;
+extern unsigned char *rallyx_radarcarx,*rallyx_radarcary,*rallyx_radarcarcolor;
+extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 extern void rallyx_videoram1_w(int offset,int data);
 extern void rallyx_colorram1_w(int offset,int data);
 extern void rallyx_videoram2_w(int offset,int data);
@@ -124,13 +126,16 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa181, 0xa181, interrupt_enable_w },
 	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
 	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0xa004, 0xa00c, MWA_NOP },	/* ????? */
+	{ 0xa004, 0xa00c, MWA_RAM, &rallyx_radarcarcolor },
 	{ 0xa100, 0xa11f, pengo_sound_w, &pengo_soundregs },
 	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
 	{ 0xa180, 0xa180, MWA_NOP },	/* ????? */
+	{ 0xa182, 0xa186, MWA_NOP },
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8014, 0x801f, MWA_RAM, &spriteram },
-	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },
+	{ 0x8014, 0x801f, MWA_RAM, &spriteram },	/* these are here just to initialize */
+	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
+	{ 0x8034, 0x803c, MWA_RAM, &rallyx_radarcarx },	/* ditto */
+	{ 0x8834, 0x883c, MWA_RAM, &rallyx_radarcary },
 	{ -1 }	/* end of table */
 };
 

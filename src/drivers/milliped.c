@@ -61,9 +61,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x2000, 0x2000, input_port_0_r },
 	{ 0x2001, 0x2001, input_port_1_r },
 	{ 0x2010, 0x2010, input_port_2_r },
-   { 0x2011, 0x2011, input_port_3_r },
-   { 0x0408, 0x0408, input_port_4_r },
-   { 0x0808, 0x0808, input_port_5_r },
+        { 0x2011, 0x2011, input_port_3_r },
+        { 0x0408, 0x0408, input_port_4_r },
+        { 0x0808, 0x0808, input_port_5_r },
 	{ 0x40a, 0x40a, centiped_rand_r },
 	{ 0x80a, 0x80a, centiped_rand_r },
 	{ -1 }	/* end of table */
@@ -78,7 +78,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x13c0, 0x13ff, MWA_RAM, &spriteram },
 	{ 0x0400, 0x0408, milliped_pokey1_w },
 	{ 0x0800, 0x0808, milliped_pokey2_w },
-	{ 0x4000, 0x73fff, MWA_ROM },
+	{ 0x4000, 0x73ff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 

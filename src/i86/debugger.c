@@ -20,13 +20,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <signal.h>
-//#include <ctype.h>
+
+/*
+  #include <signal.h>
+  #include <ctype.h>
+*/
 
 #include "debugger.h"
 #include "i86.h"
 #include "i86dasm.h"
-//#include "vgahard.h"
+
+/*#include "vgahard.h"*/
 
 volatile int running;
 volatile int breakpoint;
@@ -853,7 +857,7 @@ static void process_input(void)
                     default:
                         return;
                     }
-                    // FALL THROUGH
+                    /* FALL THROUGH */
                 case 0x9a:
                 case 0xcc:
                 case 0xcd:
@@ -943,7 +947,7 @@ void call_debugger(int where)
 {
     if (where == D_INT)
     {
-//        printf("Interrupt!\n");
+/*        printf("Interrupt!\n");  */
         return;
     }
 

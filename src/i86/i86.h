@@ -3,6 +3,8 @@
 
 #include "mytypes.h"
 
+#include "cpuintrf.h"
+
 typedef enum { ES, CS, SS, DS } SREGS;
 typedef enum { AX, CX, DX, BX, SP, BP, SI, DI, NONE } WREGS;
 
@@ -103,6 +105,8 @@ extern BYTE CF, PF, ZF, TF, IF, DF;
 extern unsigned AF, OF, SF;
 
 extern unsigned c_cs,c_ds,c_es,c_ss,c_stack;
+
+extern unsigned char *Memory;	/* MAME kindly gives us the Memory address 8-) */
 
 extern volatile int int_pending;
 extern volatile int int_blocked;

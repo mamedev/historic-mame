@@ -2,6 +2,8 @@
 
 Jungle King / Jungle Hunt memory map (preliminary)
 
+MAIN CPU:
+
 0000-7fff ROM
 8000-87ff RAM
 9000-bfff Character generator RAM
@@ -62,13 +64,32 @@ d506      bits 0-3 = front playfield color code
 d507      bits 0-3 = back playfield color code
           bits 4-7 = sprite color bank (1 bank = 2 color codes)
 d509-d50a pointer to graphic ROM to read from d404
+d50b      command for the audio CPU
 d50d      watchdog reset ?
 d600      video enable? (maybe per playfield: 0xf0 = all on, 0x00 = all off)
+
+
+SOUND CPU:
+0000-3fff ROM (?)
+4000-43ff RAM
+
+read:
+5000      command from CPU board
+
+write:
+4800      8910 #1  control
+4801      8910 #1  write
+4802      8910 #1  control
+4803      8910 #1  write
+4804      8910 #1  control
+4805      8910 #1  write
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/generic.h"
+#include "sndhrdw/8910intf.h"
 
 
 
@@ -93,6 +114,9 @@ extern void junglek_characterram_w(int offset,int data);
 extern int junglek_vh_start(void);
 extern void junglek_vh_stop(void);
 extern void junglek_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern int junglek_sh_interrupt(void);
+extern int junglek_sh_start(void);
 
 
 
@@ -129,8 +153,32 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd506, 0xd507, junglek_colorbank_w, &junglek_colorbank },
 	{ 0xd200, 0xd27f, junglek_paletteram_w, &junglek_paletteram },
 	{ 0x9000, 0xbfff, junglek_characterram_w, &junglek_characterram },
+	{ 0xd50b, 0xd50b, sound_command_w },
 	{ 0xd600, 0xd600, MWA_RAM, &junglek_video_enable },
 	{ 0x0000, 0x7fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x5000, 0x5000, sound_command_r },
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0x4800, 0x4800, AY8910_control_port_0_w },
+	{ 0x4801, 0x4801, AY8910_write_port_0_w },
+	{ 0x4802, 0x4802, AY8910_control_port_1_w },
+	{ 0x4803, 0x4803, AY8910_write_port_1_w },
+	{ 0x4804, 0x4804, AY8910_control_port_2_w },
+	{ 0x4805, 0x4805, AY8910_write_port_2_w },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -302,6 +350,13 @@ static struct MachineDriver machine_driver =
 			readmem,writemem,0,0,
 			interrupt,1
 		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,	/* 3 Mhz ??? */
+			3,	/* memory region #3 */
+			sound_readmem,sound_writemem,0,0,
+			junglek_sh_interrupt,2
+		}
 	},
 	60,
 	0,
@@ -320,9 +375,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	junglek_sh_start,
+	AY8910_sh_stop,
+	AY8910_sh_update
 };
 
 

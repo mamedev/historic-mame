@@ -183,6 +183,8 @@ void AYWriteReg(int n, int r, int v)
 {
     AY8910 *PSG = &(AYPSG[n]);
 
+	if (r > 15) return;
+
     PSG->Regs[r] = v;
 
     switch( r ) {

@@ -3,6 +3,7 @@
 
 
 extern struct GameDriver pacman_driver;
+extern struct GameDriver pacplus_driver;
 extern struct GameDriver pacmod_driver;
 extern struct GameDriver namcopac_driver;
 extern struct GameDriver hangly_driver;
@@ -66,6 +67,7 @@ extern struct GameDriver timeplt_driver;
 extern struct GameDriver spaceplt_driver;
 extern struct GameDriver pooyan_driver;
 extern struct GameDriver phoenix_driver;
+extern struct GameDriver phoenixa_driver;
 extern struct GameDriver pleiads_driver;
 extern struct GameDriver carnival_driver;
 extern struct GameDriver invaders_driver;
@@ -114,11 +116,16 @@ extern struct GameDriver superpac_driver;
 extern struct GameDriver kangaroo_driver;
 extern struct GameDriver galaga_driver;
 extern struct GameDriver galagabl_driver;
+extern struct GameDriver commando_driver;
 
+extern struct GameDriver vulgus_driver;
+extern struct GameDriver gng_driver;
+extern struct GameDriver diamond_driver;
 
 const struct GameDriver *drivers[] =
 {
 	&pacman_driver,
+        &pacplus_driver,
 	&pacmod_driver,
 	&namcopac_driver,
 	&hangly_driver,
@@ -182,6 +189,7 @@ const struct GameDriver *drivers[] =
 	&spaceplt_driver,
 	&pooyan_driver,
 	&phoenix_driver,
+	&phoenixa_driver,
 	&pleiads_driver,
 	&carnival_driver,
 	&invaders_driver,
@@ -230,5 +238,9 @@ const struct GameDriver *drivers[] =
         &kangaroo_driver,
         &galaga_driver,
         &galagabl_driver,
+        &commando_driver,
+        &vulgus_driver,
+        &gng_driver,
+        &diamond_driver,
 	0	/* end of array */
 };

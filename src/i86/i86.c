@@ -36,12 +36,6 @@
 #	include <stdlib.h>
 #endif
 
-extern int cpu_readmem(register int A);
-extern void cpu_writemem(register int A,register unsigned char V);
-extern int cpu_readport(int Port);
-extern void cpu_writeport(int Port,int Value);
-extern BYTE I86_In(WORD port);
-extern void I86_Out(WORD port, BYTE val);
 
 static union {
 	WORD w[9];	/* native machine word order ! 8 general registers + a NONE reg*/
@@ -71,7 +65,7 @@ static WREGS ModRMRegW[256];
 static volatile int int_pending;   /* Interrupt pending */
 static volatile int int_blocked;   /* Blocked pending */
 static int init=0;		/* has the cpu started ? */
-static unsigned char *Memory;	/* MAME kindly gives us the Memory address 8-) */
+unsigned char *Memory;	/* MAME kindly gives us the Memory address 8-) */
 
 static struct
 {
@@ -270,34 +264,34 @@ void I86_Reset(unsigned char *mem,int cycles)
 {
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
-    
+
     for (i = 0; i < 4; i++)
         sregs[i] = 0;
     for (i=0; i < 8; i++)
         regs.w[i] = 0;
-    
+
     sregs[CS]=0xFFFF;
     ip = 0;
     init = 0;
 
     Memory=mem;
-    
+
     for (i = 0;i < 256; i++)
     {
         for (j = i, c = 0; j > 0; j >>= 1)
             if (j & 1) c++;
-        
+
         parity_table[i] = !(c & 1);
     }
-    
+
     CF = PF = AF = ZF = SF = TF = IF = DF = OF = 0;
-    
+
     for (i = 0; i < 256; i++)
     {
         ModRMRegB[i] = reg_name[(i & 0x38) >> 3];
         ModRMRegW[i] = (i & 0x38) >> 3;
     }
-    
+
     for (i = 0; i < 0x40; i++)
     {
         switch (i & 7)
@@ -353,7 +347,7 @@ void I86_Reset(unsigned char *mem,int cycles)
             break;
         }
     }
-    
+
     for (i = 0x40; i < 0x80; i++)
     {
         switch (i & 7)
@@ -416,7 +410,7 @@ void I86_Reset(unsigned char *mem,int cycles)
             break;
         }
     }
-    
+
     for (i = 0x80; i < 0xc0; i++)
     {
         switch (i & 7)
@@ -479,7 +473,7 @@ void I86_Reset(unsigned char *mem,int cycles)
             break;
         }
     }
-    
+
     for (i = 0xc0; i < 0x100; i++)
     {
         ModRMRMWRegs[i] = i & 7;
@@ -495,7 +489,7 @@ void loc(void)
 }
 #endif
 
-static void interrupt(unsigned int_num)
+static void I86_interrupt(unsigned int_num)
 {
     unsigned dest_seg, dest_off,tmp1;
 
@@ -529,7 +523,7 @@ static void external_int(void)
     call_debugger(D_INT);
 #endif
     D2(printf("Interrupt 0x%02X\n", int_pending););
-    interrupt(int_pending);
+    I86_interrupt(int_pending);
     int_pending = 0;
 
 /*
@@ -543,7 +537,7 @@ static void external_int(void)
 #define PutModRMRegW(ModRM,val) regs.w[ModRMRegW[ModRM]]=(val)
 #define PutModRMRegB(ModRM,val) regs.b[ModRMRegB[ModRM]]=(val)
 
-static unsigned disp; 
+static unsigned disp;
 
 static INLINE WORD GetModRMRMW(unsigned ModRM)
 {
@@ -558,7 +552,7 @@ static INLINE WORD GetModRMRMW(unsigned ModRM)
         if (ModRMRM[ModRM].offset16)
             disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
-    
+
     return GetMemW(base[ModRMRM[ModRM].segment],
                   (WORD)(regs.w[ModRMRM[ModRM].reg1] +
                    regs.w[ModRMRM[ModRM].reg2] + disp));
@@ -580,7 +574,7 @@ static INLINE void PutModRMRMW(unsigned ModRM, WORD val)
         if (ModRMRM[ModRM].offset16)
             disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
-    
+
     PutMemW(base[ModRMRM[ModRM].segment],
             (WORD)(regs.w[ModRMRM[ModRM].reg1] +
                    regs.w[ModRMRM[ModRM].reg2] + disp),
@@ -606,7 +600,7 @@ static INLINE void PutImmModRMRMW(unsigned ModRM)
         if (ModRMRM[ModRM].offset16)
             disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
-    
+
     val = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
     val = (GetMemInc(base[CS],ip) << 8) + (BYTE)val;
 
@@ -649,7 +643,7 @@ static INLINE BYTE GetModRMRMB(unsigned ModRM)
         if (ModRMRM[ModRM].offset16)
             disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
-    
+
     return GetMemB(base[ModRMRM[ModRM].segment],
                   (WORD)(regs.w[ModRMRM[ModRM].reg1] +
                          regs.w[ModRMRM[ModRM].reg2] + disp));
@@ -671,7 +665,7 @@ static INLINE void PutModRMRMB(unsigned ModRM, BYTE val)
         if (ModRMRM[ModRM].offset16)
             disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
-    
+
     PutMemB(base[ModRMRM[ModRM].segment],
             (WORD)(regs.w[ModRMRM[ModRM].reg1] +
                    regs.w[ModRMRM[ModRM].reg2] + disp),
@@ -694,7 +688,7 @@ static INLINE void PutImmModRMRMB(unsigned ModRM)
         if (ModRMRM[ModRM].offset16)
             disp = (GetMemInc(base[CS],ip) << 8) + (BYTE)disp;
     }
-    
+
     PutMemB(base[ModRMRM[ModRM].segment],
             (WORD)(regs.w[ModRMRM[ModRM].reg1] +
                    regs.w[ModRMRM[ModRM].reg2] + disp),
@@ -722,9 +716,9 @@ static INLINE2 void i_add_br8(void)
     register unsigned src = (unsigned)GetModRMRegB(ModRM);
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2 = tmp;
-    
+
     tmp += src;
-    
+
     SetCFB_Add(tmp,tmp2);
     SetOFB_Add(tmp,src,tmp2);
     SetAF(tmp,src,tmp2);
@@ -1036,7 +1030,7 @@ static INLINE2 void i_pop_ss(void)
     static int multiple = 0;
 
     PopSeg(base[SS],SS);
-    
+
     if (multiple == 0)	/* prevent unlimited recursion */
     {
         multiple = 1;
@@ -1854,37 +1848,37 @@ static INLINE2 void i_80pre(void)
     register unsigned tmp = GetModRMRMB(ModRM);
     register unsigned src = GetMemInc(base[CS],ip);
     register unsigned tmp2;
-    
-    
+
+
     switch (ModRM & 0x38)
     {
     case 0x00:  /* ADD eb,d8 */
         tmp2 = src + tmp;
-        
+
         SetCFB_Add(tmp2,tmp);
         SetOFB_Add(tmp2,src,tmp);
         SetAF(tmp2,src,tmp);
         SetZFB(tmp2);
         SetSFB(tmp2);
         SetPF(tmp2);
-        
+
         PutbackModRMRMB(ModRM,(BYTE)tmp2);
         break;
     case 0x08:  /* OR eb,d8 */
         tmp |= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
         PutbackModRMRMB(ModRM,(BYTE)tmp);
         break;
     case 0x10:  /* ADC eb,d8 */
         src += CF;
         tmp2 = src + tmp;
-        
+
         CF = tmp2 >> 8;
 /*        SetCFB_Add(tmp2,tmp); */
         SetOFB_Add(tmp2,src,tmp);
@@ -1892,14 +1886,14 @@ static INLINE2 void i_80pre(void)
         SetZFB(tmp2);
         SetSFB(tmp2);
         SetPF(tmp2);
-        
+
         PutbackModRMRMB(ModRM,(BYTE)tmp2);
         break;
     case 0x18:  /* SBB eb,b8 */
         src += CF;
         tmp2 = tmp;
         tmp -= src;
-        
+
         CF = (tmp & 0x100) == 0x100;
 
 /*        SetCFB_Sub(tmp,tmp2); */
@@ -1908,55 +1902,55 @@ static INLINE2 void i_80pre(void)
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
         PutbackModRMRMB(ModRM,(BYTE)tmp);
         break;
     case 0x20:  /* AND eb,d8 */
         tmp &= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
         PutbackModRMRMB(ModRM,(BYTE)tmp);
         break;
     case 0x28:  /* SUB eb,d8 */
         tmp2 = tmp;
         tmp -= src;
-        
+
         SetCFB_Sub(tmp,tmp2);
         SetOFB_Sub(tmp,src,tmp2);
         SetAF(tmp,src,tmp2);
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
         PutbackModRMRMB(ModRM,(BYTE)tmp);
         break;
     case 0x30:  /* XOR eb,d8 */
         tmp ^= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
         PutbackModRMRMB(ModRM,(BYTE)tmp);
         break;
     case 0x38:  /* CMP eb,d8 */
         tmp2 = tmp;
         tmp -= src;
-        
+
         SetCFB_Sub(tmp,tmp2);
         SetOFB_Sub(tmp,src,tmp2);
         SetAF(tmp,src,tmp2);
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
         break;
     }
 }
@@ -1977,31 +1971,31 @@ static INLINE2 void i_81pre(void)
     {
     case 0x00:  /* ADD ew,d16 */
         tmp2 = src + tmp;
-        
+
         SetCFW_Add(tmp2,tmp);
         SetOFW_Add(tmp2,src,tmp);
         SetAF(tmp2,src,tmp);
         SetZFW(tmp2);
         SetSFW(tmp2);
         SetPF(tmp2);
-        
+
 	PutbackModRMRMW(ModRM,tmp2);
         break;
     case 0x08:  /* OR ew,d16 */
         tmp |= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x10:  /* ADC ew,d16 */
         src += CF;
         tmp2 = src + tmp;
-        
+
         CF = tmp2 >> 16;
 /*        SetCFW_Add(tmp2,tmp); */
         SetOFW_Add(tmp2,src,tmp);
@@ -2009,14 +2003,14 @@ static INLINE2 void i_81pre(void)
         SetZFW(tmp2);
         SetSFW(tmp2);
         SetPF(tmp2);
-        
+
 	PutbackModRMRMW(ModRM,tmp2);
         break;
     case 0x18:  /* SBB ew,d16 */
         src += CF;
         tmp2 = tmp;
         tmp -= src;
-        
+
         CF = (tmp & 0x10000) == 0x10000;
 
 /*        SetCFW_Sub(tmp,tmp2); */
@@ -2025,55 +2019,55 @@ static INLINE2 void i_81pre(void)
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x20:  /* AND ew,d16 */
         tmp &= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x28:  /* SUB ew,d16 */
         tmp2 = tmp;
         tmp -= src;
-        
+
         SetCFW_Sub(tmp,tmp2);
         SetOFW_Sub(tmp,src,tmp2);
         SetAF(tmp,src,tmp2);
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x30:  /* XOR ew,d16 */
         tmp ^= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x38:  /* CMP ew,d16 */
         tmp2 = tmp;
         tmp -= src;
-        
+
         SetCFW_Sub(tmp,tmp2);
         SetOFW_Sub(tmp,src,tmp2);
         SetAF(tmp,src,tmp2);
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
         break;
     }
 }
@@ -2087,36 +2081,36 @@ static INLINE2 void i_83pre(void)
     register unsigned tmp = GetModRMRMW(ModRM);
     register unsigned src = (WORD)((INT16)((INT8)GetMemInc(base[CS],ip)));
     register unsigned tmp2;
-    
+
     switch (ModRM & 0x38)
     {
     case 0x00:  /* ADD ew,d8 */
         tmp2 = src + tmp;
-        
+
         SetCFW_Add(tmp2,tmp);
         SetOFW_Add(tmp2,src,tmp);
         SetAF(tmp2,src,tmp);
         SetZFW(tmp2);
         SetSFW(tmp2);
         SetPF(tmp2);
-        
+
 	PutbackModRMRMW(ModRM,tmp2);
         break;
     case 0x08:  /* OR ew,d8 */
         tmp |= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x10:  /* ADC ew,d8 */
         src += CF;
         tmp2 = src + tmp;
-        
+
         CF = tmp2 >> 16;
 
 /*        SetCFW_Add(tmp2,tmp); */
@@ -2125,14 +2119,14 @@ static INLINE2 void i_83pre(void)
         SetZFW(tmp2);
         SetSFW(tmp2);
         SetPF(tmp2);
-        
+
 	PutbackModRMRMW(ModRM,tmp2);
         break;
     case 0x18:  /* SBB ew,d8 */
         src += CF;
         tmp2 = tmp;
         tmp -= src;
-        
+
         CF = (tmp & 0x10000) == 0x10000;
 
 /*        SetCFW_Sub(tmp,tmp2); */
@@ -2141,56 +2135,56 @@ static INLINE2 void i_83pre(void)
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x20:  /* AND ew,d8 */
         tmp &= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x28:  /* SUB ew,d8 */
         tmp2 = tmp;
         tmp -= src;
-        
+
         SetCFW_Sub(tmp,tmp2);
         SetOFW_Sub(tmp,src,tmp2);
         SetAF(tmp,src,tmp2);
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x30:  /* XOR ew,d8 */
         tmp ^= src;
-        
+
         CF = OF = AF = 0;
-        
+
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
-        
+
     case 0x38:  /* CMP ew,d8 */
         tmp2 = tmp;
         tmp -= src;
-        
+
         SetCFW_Sub(tmp,tmp2);
         SetOFW_Sub(tmp,src,tmp2);
         SetAF(tmp,src,tmp2);
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
         break;
     }
 }
@@ -2313,7 +2307,7 @@ static INLINE2 void i_lea(void)
             src = (GetMemInc(base[CS],ip) << 8) + (BYTE)(src);
     }
 
-    src += regs.w[ModRMRM[ModRM].reg1]+regs.w[ModRMRM[ModRM].reg2];        
+    src += regs.w[ModRMRM[ModRM].reg1]+regs.w[ModRMRM[ModRM].reg2];
     PutModRMRegW(ModRM,src);
 }
 
@@ -2321,11 +2315,11 @@ static INLINE2 void i_lea(void)
 static INLINE2 void i_mov_sregw(void)
 {
     /* Opcode 0x8e */
-    
+
     static int multiple = 0;
     register unsigned ModRM = GetMemInc(base[CS],ip);
     register WORD src = GetModRMRMW(ModRM);
-    
+
     switch (ModRM & 0x38)
     {
     case 0x00:	/* mov es,... */
@@ -2339,7 +2333,7 @@ static INLINE2 void i_mov_sregw(void)
     case 0x10:	/* mov ss,... */
         sregs[SS] = src;
         base[SS] = SegToMemPtr(SS);
-        
+
         if (multiple == 0) /* Prevent unlimited recursion.. */
         {
             multiple = 1;
@@ -2351,11 +2345,11 @@ static INLINE2 void i_mov_sregw(void)
             instruction[GetMemInc(base[CS],ip)]();
             multiple = 0;
         }
-        
+
         break;
     case 0x08:	/* mov cs,... (hangs 486, but we'll let it through) */
         break;
-        
+
     }
 }
 
@@ -2363,7 +2357,7 @@ static INLINE2 void i_mov_sregw(void)
 static INLINE2 void i_popw(void)
 {
     /* Opcode 0x8f */
-    
+
     unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = regs.w[SP];
     WORD tmp2 = GetMemW(base[SS],tmp);
@@ -2433,7 +2427,7 @@ static INLINE2 void i_cbw(void)
 
     regs.b[AH] = (regs.b[AL] & 0x80) ? 0xff : 0;
 }
-        
+
 static INLINE2 void i_cwd(void)
 {
     /* Opcode 0x99 */
@@ -2469,7 +2463,7 @@ static INLINE2 void i_call_far(void)
 static INLINE2 void i_wait(void)
 {
     /* Opcode 0x9b */
-    
+
     return;
 }
 
@@ -2496,7 +2490,7 @@ static INLINE2 void i_popf(void)
     ExpandFlags(tmp2);
     tmp += 2;
     regs.w[SP]=tmp;
-    
+
     if (IF && int_blocked)
     {
         int_pending = int_blocked;
@@ -2603,7 +2597,7 @@ static INLINE2 void i_movsw(void)
 
     register unsigned di = regs.w[DI];
     register unsigned si = regs.w[SI];
-    
+
     WORD tmp = GetMemW(base[DS],si);
 
     PutMemW(base[ES],di, tmp);
@@ -2625,7 +2619,7 @@ static INLINE2 void i_cmpsb(void)
     unsigned src = GetMemB(base[ES], di);
     unsigned tmp = GetMemB(base[DS], si);
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFB_Sub(tmp,tmp2);
@@ -2652,7 +2646,7 @@ static INLINE2 void i_cmpsw(void)
     unsigned src = GetMemW(base[ES], di);
     unsigned tmp = GetMemW(base[DS], si);
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFW_Sub(tmp,tmp2);
@@ -2691,7 +2685,7 @@ static INLINE2 void i_test_axd16(void)
 
     register unsigned tmp1 = (unsigned)regs.w[AX];
     register unsigned tmp2;
-    
+
     tmp2 = (unsigned) GetMemInc(base[CS],ip);
     tmp2 += GetMemInc(base[CS],ip) << 8;
 
@@ -2747,7 +2741,7 @@ static INLINE2 void i_lodsw(void)
     regs.w[SI]=si;
     regs.w[AX]=tmp;
 }
-    
+
 static INLINE2 void i_scasb(void)
 {
     /* Opcode 0xae */
@@ -2756,7 +2750,7 @@ static INLINE2 void i_scasb(void)
     unsigned src = GetMemB(base[ES], di);
     unsigned tmp = regs.b[AL];
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFB_Sub(tmp,tmp2);
@@ -2780,7 +2774,7 @@ static INLINE2 void i_scasw(void)
     unsigned src = GetMemW(base[ES], di);
     unsigned tmp = regs.w[AX];
     unsigned tmp2 = tmp;
-    
+
     tmp -= src;
 
     SetCFW_Sub(tmp,tmp2);
@@ -3038,7 +3032,7 @@ static INLINE2 void i_int3(void)
 {
     /* Opcode 0xcc */
 
-    interrupt(3);
+    I86_interrupt(3);
 }
 
 
@@ -3048,7 +3042,7 @@ static INLINE2 void i_int(void)
 
     unsigned int_num = GetMemInc(base[CS],ip);
 
-    interrupt(int_num);
+    I86_interrupt(int_num);
 }
 
 
@@ -3057,7 +3051,7 @@ static INLINE2 void i_into(void)
     /* Opcode 0xce */
 
     if (OF)
-        interrupt(4);
+        I86_interrupt(4);
 }
 
 
@@ -3077,7 +3071,7 @@ static INLINE2 void i_iret(void)
 #ifdef DEBUGGER
     call_debugger(D_TRACE);
 #endif
-}    
+}
 
 
 static INLINE2 void i_d0pre(void)
@@ -3113,22 +3107,22 @@ static INLINE2 void i_d0pre(void)
     case 0x20:  /* SHL eb,1 */
     case 0x30:
         tmp += tmp;
-        
+
         SetCFB_Add(tmp,tmp2);
         SetOFB_Add(tmp,tmp2,tmp2);
         AF = 1;
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMB(ModRM, (BYTE)tmp);
         break;
     case 0x28:  /* SHR eb,1 */
         CF = (tmp & 0x01) != 0;
         OF = tmp & 0x80;
-        
+
         tmp2 = tmp >> 1;
-        
+
         SetSFB(tmp2);
         SetPF(tmp2);
         SetZFB(tmp2);
@@ -3138,9 +3132,9 @@ static INLINE2 void i_d0pre(void)
     case 0x38:  /* SAR eb,1 */
         CF = (tmp & 0x01) != 0;
         OF = 0;
-        
+
         tmp2 = (tmp >> 1) | (tmp & 0x80);
-        
+
         SetSFB(tmp2);
         SetPF(tmp2);
         SetZFB(tmp2);
@@ -3188,22 +3182,22 @@ static INLINE2 void i_d1pre(void)
     case 0x20:  /* SHL ew,1 */
     case 0x30:
         tmp += tmp;
-        
+
         SetCFW_Add(tmp,tmp2);
         SetOFW_Add(tmp,tmp2,tmp2);
         AF = 1;
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x28:  /* SHR ew,1 */
         CF = (tmp & 0x01) != 0;
         OF = tmp & 0x8000;
-        
+
         tmp2 = tmp >> 1;
-        
+
         SetSFW(tmp2);
         SetPF(tmp2);
         SetZFW(tmp2);
@@ -3213,9 +3207,9 @@ static INLINE2 void i_d1pre(void)
     case 0x38:  /* SAR ew,1 */
         CF = (tmp & 0x01) != 0;
         OF = 0;
-        
+
         tmp2 = (tmp >> 1) | (tmp & 0x8000);
-        
+
         SetSFW(tmp2);
         SetPF(tmp2);
         SetZFW(tmp2);
@@ -3294,12 +3288,12 @@ static INLINE2 void i_d2pre(void)
             CF = ((tmp << (count-1)) & 0x80) != 0;
             tmp <<= count;
         }
-        
+
         AF = 1;
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMB(ModRM,(BYTE)tmp);
         break;
     case 0x28:  /* SHR eb,CL */
@@ -3313,7 +3307,7 @@ static INLINE2 void i_d2pre(void)
             CF = ((tmp >> (count-1)) & 0x1) != 0;
             tmp >>= count;
         }
-        
+
         SetSFB(tmp);
         SetPF(tmp);
         SetZFB(tmp);
@@ -3322,10 +3316,10 @@ static INLINE2 void i_d2pre(void)
         break;
     case 0x38:  /* SAR eb,CL */
         tmp2 = tmp & 0x80;
-        CF = (((INT8)tmp >> (count-1)) & 0x01) != 0;        
+        CF = (((INT8)tmp >> (count-1)) & 0x01) != 0;
         for (; count > 0; count--)
             tmp = (tmp >> 1) | tmp2;
-        
+
         SetSFB(tmp);
         SetPF(tmp);
         SetZFB(tmp);
@@ -3403,12 +3397,12 @@ static INLINE2 void i_d3pre(void)
             CF = ((tmp << (count-1)) & 0x8000) != 0;
             tmp <<= count;
         }
-        
+
         AF = 1;
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x28:  /* SHR ew,CL */
@@ -3422,7 +3416,7 @@ static INLINE2 void i_d3pre(void)
             CF = ((tmp >> (count-1)) & 0x1) != 0;
             tmp >>= count;
         }
-        
+
         SetSFW(tmp);
         SetPF(tmp);
         SetZFW(tmp);
@@ -3431,10 +3425,10 @@ static INLINE2 void i_d3pre(void)
         break;
     case 0x38:  /* SAR ew,CL */
         tmp2 = tmp & 0x8000;
-        CF = (((INT16)tmp >> (count-1)) & 0x01) != 0;        
+        CF = (((INT16)tmp >> (count-1)) & 0x01) != 0;
         for (; count > 0; count--)
             tmp = (tmp >> 1) | tmp2;
-        
+
         SetSFW(tmp);
         SetPF(tmp);
         SetZFW(tmp);
@@ -3450,7 +3444,7 @@ static INLINE2 void i_aam(void)
     unsigned mult = GetMemInc(base[CS],ip);
 
 	if (mult == 0)
-        interrupt(0);
+        I86_interrupt(0);
     else
     {
         regs.b[AH] = regs.b[AL] / mult;
@@ -3481,7 +3475,7 @@ static INLINE2 void i_xlat(void)
     /* Opcode 0xd7 */
 
     unsigned dest = regs.w[BX]+regs.b[AL];
-    
+
     regs.b[AL] = GetMemB(base[DS], dest);
 }
 
@@ -3534,7 +3528,7 @@ static INLINE2 void i_jcxz(void)
     /* Opcode 0xe3 */
 
     register int disp = (int)((INT8)GetMemInc(base[CS],ip));
-    
+
     if (regs.w[CX] == 0)
         ip = (WORD)(ip+disp);
 }
@@ -3557,7 +3551,7 @@ static INLINE2 void i_inax(void)
     regs.b[AL] = read_port(port);
     regs.b[AH] = read_port(port+1);
 }
-    
+
 static INLINE2 void i_outal(void)
 {
     /* Opcode 0xe6 */
@@ -3675,7 +3669,7 @@ static INLINE2 void i_gobios(void)
 
     void (*routine)(void);
     unsigned dest;
-    
+
     if (GetMemInc(base[CS],ip) != 0xf1)
         i_notdone();
 
@@ -3776,7 +3770,7 @@ static void rep(int flagval)
         instruction[next]();
     }
 }
-            
+
 
 static INLINE2 void i_repne(void)
 {
@@ -3808,45 +3802,45 @@ static INLINE2 void i_f6pre(void)
     unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = (unsigned)GetModRMRMB(ModRM);
     register unsigned tmp2;
-    
-    
+
+
     switch (ModRM & 0x38)
     {
     case 0x00:	/* TEST Eb, data8 */
     case 0x08:  /* ??? */
         tmp &= GetMemInc(base[CS],ip);
-        
+
         CF = OF = AF = 0;
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
         break;
-        
+
     case 0x10:	/* NOT Eb */
 	PutbackModRMRMB(ModRM,~tmp);
         break;
-        
+
     case 0x18:	/* NEG Eb */
         tmp2 = tmp;
         tmp = -tmp;
-        
+
         CF = (int)tmp2 > 0;
-        
+
         SetAF(tmp,0,tmp2);
         SetZFB(tmp);
         SetSFB(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMB(ModRM,tmp);
         break;
     case 0x20:	/* MUL AL, Eb */
 	{
 	    UINT16 result;
 	    tmp2 = regs.b[AL];
-        
+
 	    SetSFB(tmp2);
 	    SetPF(tmp2);
-        
+
 	    result = (UINT16)tmp2*tmp;
 	    regs.w[AX]=(WORD)result;
 
@@ -3857,17 +3851,17 @@ static INLINE2 void i_f6pre(void)
     case 0x28:	/* IMUL AL, Eb */
 	{
 	    INT16 result;
-        
+
 	    tmp2 = (unsigned)regs.b[AL];
-        
+
 	    SetSFB(tmp2);
 	    SetPF(tmp2);
-        
+
 	    result = (INT16)((INT8)tmp2)*(INT16)((INT8)tmp);
 	    regs.w[AX]=(WORD)result;
-        
+
 	    SetZFW(regs.w[AX]);
-        
+
 	    OF = (result >> 7 != 0) && (result >> 7 != -1);
 	    CF = !(!OF);
 	}
@@ -3875,14 +3869,14 @@ static INLINE2 void i_f6pre(void)
     case 0x30:	/* DIV AL, Ew */
 	{
 	    UINT16 result;
-        
+
 	    result = regs.w[AX];
-        
+
 	    if (tmp)
 	    {
             if ((result / tmp) > 0xff)
             {
-                interrupt(0);
+                I86_interrupt(0);
                 break;
             }
             else
@@ -3890,11 +3884,11 @@ static INLINE2 void i_f6pre(void)
                 regs.b[AH] = result % tmp;
                 regs.b[AL] = result / tmp;
             }
-            
+
 	    }
 	    else
 	    {
-            interrupt(0);
+            I86_interrupt(0);
             break;
 	    }
 	}
@@ -3902,16 +3896,16 @@ static INLINE2 void i_f6pre(void)
     case 0x38:	/* IDIV AL, Ew */
 	{
 	    INT16 result;
-        
+
 	    result = regs.w[AX];
-        
+
 	    if (tmp)
 	    {
             tmp2 = result % (INT16)((INT8)tmp);
-            
+
             if ((result /= (INT16)((INT8)tmp)) > 0xff)
             {
-                interrupt(0);
+                I86_interrupt(0);
                 break;
             }
             else
@@ -3922,7 +3916,7 @@ static INLINE2 void i_f6pre(void)
 	    }
 	    else
 	    {
-            interrupt(0);
+            I86_interrupt(0);
             break;
 	    }
 	}
@@ -3937,46 +3931,46 @@ static INLINE2 void i_f7pre(void)
     unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMW(ModRM);
     register unsigned tmp2;
-    
-    
+
+
     switch (ModRM & 0x38)
     {
     case 0x00:	/* TEST Ew, data16 */
     case 0x08:  /* ??? */
         tmp2 = GetMemInc(base[CS],ip);
         tmp2 += GetMemInc(base[CS],ip) << 8;
-        
+
         tmp &= tmp2;
-        
+
         CF = OF = AF = 0;
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
         break;
-        
+
     case 0x10:	/* NOT Ew */
         tmp = ~tmp;
 	PutbackModRMRMW(ModRM,tmp);
         break;
-        
+
     case 0x18:	/* NEG Ew */
         tmp2 = tmp;
         tmp = -tmp;
-        
+
         CF = (int)tmp2 > 0;
-        
+
         SetAF(tmp,0,tmp2);
         SetZFW(tmp);
         SetSFW(tmp);
         SetPF(tmp);
-        
+
 	PutbackModRMRMW(ModRM,tmp);
         break;
     case 0x20:	/* MUL AX, Ew */
 	{
 	    UINT32 result;
 	    tmp2 = regs.w[AX];
-        
+
 	    SetSFW(tmp2);
 	    SetPF(tmp2);
 
@@ -3989,16 +3983,16 @@ static INLINE2 void i_f7pre(void)
 	    CF = OF = (regs.w[DX] != ChangeE(0));
 	}
         break;
-        
+
     case 0x28:	/* IMUL AX, Ew */
 	{
 	    INT32 result;
-        
+
 	    tmp2 = regs.w[AX];
-        
+
 	    SetSFW(tmp2);
 	    SetPF(tmp2);
-        
+
 	    result = (INT32)((INT16)tmp2)*(INT32)((INT16)tmp);
         OF = (result >> 15 != 0) && (result >> 15 != -1);
 
@@ -4007,22 +4001,22 @@ static INLINE2 void i_f7pre(void)
 	    regs.w[DX]=result;
 
 	    SetZFW(regs.w[AX] | regs.w[DX]);
-        
+
         CF = !(!OF);
 	}
         break;
     case 0x30:	/* DIV AX, Ew */
 	{
 	    UINT32 result;
-        
+
 	    result = (regs.w[DX] << 16) + regs.w[AX];
-        
+
 	    if (tmp)
 	    {
             tmp2 = result % tmp;
             if ((result / tmp) > 0xffff)
             {
-                interrupt(0);
+                I86_interrupt(0);
                 break;
             }
             else
@@ -4034,7 +4028,7 @@ static INLINE2 void i_f7pre(void)
 	    }
 	    else
 	    {
-            interrupt(0);
+            I86_interrupt(0);
             break;
 	    }
 	}
@@ -4042,16 +4036,16 @@ static INLINE2 void i_f7pre(void)
     case 0x38:	/* IDIV AX, Ew */
 	{
 	    INT32 result;
-        
+
 	    result = (regs.w[DX] << 16) + regs.w[AX];
-        
+
 	    if (tmp)
 	    {
             tmp2 = result % (INT32)((INT16)tmp);
-            
+
             if ((result /= (INT32)((INT16)tmp)) > 0xffff)
             {
-                interrupt(0);
+                I86_interrupt(0);
                 break;
             }
             else
@@ -4062,7 +4056,7 @@ static INLINE2 void i_f7pre(void)
 	    }
 	    else
 	    {
-            interrupt(0);
+            I86_interrupt(0);
             break;
 	    }
 	}
@@ -4133,7 +4127,7 @@ static INLINE2 void i_fepre(void)
     unsigned ModRM = GetMemInc(base[CS],ip);
     register unsigned tmp = GetModRMRMB(ModRM);
     register unsigned tmp1;
-    
+
     if ((ModRM & 0x38) == 0)
     {
         tmp1 = tmp+1;
@@ -4144,12 +4138,12 @@ static INLINE2 void i_fepre(void)
         tmp1 = tmp-1;
         SetOFB_Sub(tmp1,1,tmp);
     }
-    
+
     SetAF(tmp1,tmp,1);
     SetZFB(tmp1);
     SetSFB(tmp1);
     SetPF(tmp1);
-    
+
     PutbackModRMRMB(ModRM,(BYTE)tmp1);
 }
 
@@ -4167,66 +4161,66 @@ static INLINE2 void i_ffpre(void)
     case 0x00:  /* INC ew */
         tmp = GetModRMRMW(ModRM);
         tmp1 = tmp+1;
-        
+
         SetOFW_Add(tmp1,tmp,1);
         SetAF(tmp1,tmp,1);
         SetZFW(tmp1);
         SetSFW(tmp1);
         SetPF(tmp1);
-        
+
         PutbackModRMRMW(ModRM,(WORD)tmp1);
         break;
-        
+
     case 0x08:  /* DEC ew */
         tmp = GetModRMRMW(ModRM);
         tmp1 = tmp-1;
-        
+
         SetOFW_Sub(tmp1,1,tmp);
         SetAF(tmp1,tmp,1);
         SetZFW(tmp1);
         SetSFW(tmp1);
         SetPF(tmp1);
-        
+
         PutbackModRMRMW(ModRM,(WORD)tmp1);
         break;
-        
+
     case 0x10:  /* CALL ew */
         tmp = GetModRMRMW(ModRM);
         tmp1 = (WORD)(regs.w[SP]-2);
-        
+
         PutMemW(base[SS],tmp1,ip);
         regs.w[SP]=tmp1;
-        
+
         ip = (WORD)tmp;
         break;
-        
+
     case 0x18:  /* CALL FAR ea */
         tmp1 = (WORD)(regs.w[SP]-2);
-        
+
         PutMemW(base[SS],tmp1,sregs[CS]);
         tmp1 = (WORD)(tmp1-2);
         PutMemW(base[SS],tmp1,ip);
         regs.w[SP]=tmp1;
-        
+
         ip = GetModRMRMW(ModRM);
         sregs[CS] = GetnextModRMRMW(ModRM);
         base[CS] = SegToMemPtr(CS);
         break;
-        
+
     case 0x20:  /* JMP ea */
         ip = GetModRMRMW(ModRM);
         break;
-        
+
     case 0x28:  /* JMP FAR ea */
         ip = GetModRMRMW(ModRM);
         sregs[CS] = GetnextModRMRMW(ModRM);
         base[CS] = SegToMemPtr(CS);
         break;
-        
+
     case 0x30:  /* PUSH ea */
         tmp1 = (WORD)(regs.w[SP]-2);
         tmp = GetModRMRMW(ModRM);
-        
+
         PutMemW(base[SS],tmp1,tmp);
         regs.w[SP]=tmp1;
         break;
@@ -4245,7 +4239,7 @@ static INLINE2 void i_notdone(void)
 void trap(void)
 {
     instruction[GetMemInc(base[CS],ip)]();
-    interrupt(1);
+    I86_interrupt(1);
 }
 
 
@@ -4257,9 +4251,9 @@ void I86_Execute(void)
     base[DS] = SegToMemPtr(DS);
     base[ES] = SegToMemPtr(ES);
     base[SS] = SegToMemPtr(SS);
-    
-    if (init) interrupt(2); /* NMI interrupt, but let the cpu start first */
-    else init=1; 
+
+    if (init) I86_interrupt(2); /* NMI interrupt, but let the cpu start first */
+    else init=1;
 
     while(instr_count--)
     {

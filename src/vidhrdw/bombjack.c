@@ -14,6 +14,7 @@
 #define VIDEO_RAM_SIZE 0x400
 
 unsigned char *bombjack_paletteram;
+static const unsigned char *colors;
 static unsigned char dirtycolor[16];	/* keep track of modified colors */
 static int background_image;
 
@@ -29,10 +30,25 @@ static int background_image;
   Since the graphics use 3 bitplanes, hence 8 colors, this makes for 16
   different color codes.
 
-  MAME currently doesn't support dynamic palette creation. As a temporary
-  workaround, we create here a 256 colors (8 bits, vs. the original 12)
-  palette which will be static, and dynamically create a lookup table at
-  run time which approximates the original palette.
+  I don't know the exact values of the resistors between the RAM and the
+  RGB output. I assumed these values (the same as Commando)
+  bit 7 -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 2.2kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+        -- 1  kohm resistor  -- RED
+  bit 0 -- 2.2kohm resistor  -- RED
+
+  bit 7 -- unused
+        -- unused
+        -- unused
+        -- unused
+        -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 1  kohm resistor  -- BLUE
+  bit 0 -- 2.2kohm resistor  -- BLUE
 
 ***************************************************************************/
 void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -40,25 +56,40 @@ void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	int i;
 
 
-	for (i = 0;i < 256;i++)
+	colors = color_prom;	/* we'll need the colors later to dynamically remap the characters */
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bits;
+		int bit0,bit1,bit2,bit3;
 
 
-		bits = (i >> 0) & 0x07;
-		palette[3*i] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 3) & 0x07;
-		palette[3*i + 1] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 6) & 0x03;
-		palette[3*i + 2] = bits | (bits >> 2) | (bits << 4) | (bits << 6);
+		bit0 = (color_prom[2*i] >> 0) & 0x01;
+		bit1 = (color_prom[2*i] >> 1) & 0x01;
+		bit2 = (color_prom[2*i] >> 2) & 0x01;
+		bit3 = (color_prom[2*i] >> 3) & 0x01;
+		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*i] >> 4) & 0x01;
+		bit1 = (color_prom[2*i] >> 5) & 0x01;
+		bit2 = (color_prom[2*i] >> 6) & 0x01;
+		bit3 = (color_prom[2*i] >> 7) & 0x01;
+		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[2*i+1] >> 0) & 0x01;
+		bit1 = (color_prom[2*i+1] >> 1) & 0x01;
+		bit2 = (color_prom[2*i+1] >> 2) & 0x01;
+		bit3 = (color_prom[2*i+1] >> 3) & 0x01;
+		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 	}
 
-	for (i = 0;i < 256;i++)
-		colortable[i] = i;
 
-	/* provide a default palette so the ROM copyright notice at startup can be read */
-	for (i = 256;i < 256+128;i++)
-		colortable[i] = (i-256) % 8;
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		colortable[16*8 + i] = i;
+
+
+	/* set up colors for the copyright notice - the other colors will be */
+	/* set later by the game. */
+	for (i = 0;i < 16*8;i++)
+		colortable[i] = 0;
+	colortable[2*8 + 7] = 11;	/* red */
 }
 
 
@@ -99,16 +130,31 @@ void bombjack_background_w(int offset,int data)
 ***************************************************************************/
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int i,offs,col,base;
+	int i,offs,base;
 
 
 	/* rebuild the color lookup table */
-	for (i = 0;i < 128;i++)
+	for (i = 0;i < 16*8;i++)
 	{
-		col = (bombjack_paletteram[2*i] >> 1) & 0x07;	/* red component */
-		col |= (bombjack_paletteram[2*i] >> 2) & 0x38;	/* green component */
-		col |= (bombjack_paletteram[2*i + 1] << 4) & 0xc0;	/* blue component */
-		Machine->gfx[0]->colortable[i] = Machine->gfx[4]->colortable[col];
+		if (dirtycolor[i / 8])
+		{
+			offs = Machine->drv->total_colors - 1;
+			while (offs > 0)
+			{
+				if (bombjack_paletteram[2*i] == colors[2*offs] &&
+						(bombjack_paletteram[2*i+1] & 0x0f) == colors[2*offs+1])
+					break;
+
+				offs--;
+			}
+
+if (errorlog && offs == 0 &&
+				(bombjack_paletteram[2*i] || bombjack_paletteram[2*i+1]))
+		fprintf(errorlog,"warning: unknown color %02x %02x\n",
+				bombjack_paletteram[2*i],bombjack_paletteram[2*i+1]);
+
+			Machine->gfx[0]->colortable[i] = Machine->gfx[4]->colortable[offs];
+		}
 	}
 
 

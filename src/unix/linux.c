@@ -4,7 +4,9 @@
 
 #ifdef linux
 
-#define AUDIO_TIMER_FREQ 54
+#define __LINUX_C
+
+#include "xmame.h"
 
 #ifdef JOYSTICK
 
@@ -25,7 +27,6 @@ int sysdep_init ()
 	int			i;
   	int                     tmps;
 	int			dspfreq, dspbyte, dspstereo;
-	struct itimerval	timer_value;
 	/**********  initialize joystick device */
 
 #ifdef JOYSTICK
@@ -101,26 +102,6 @@ int sysdep_init ()
 
 		for (i = 0; i < AUDIO_NUM_VOICES; i++) audio_on[i] = FALSE;
 	
-		sig_action.sa_handler = audio_timer;
-
-/* I didn't have time to check this out but I get an error under FreeBSD */
-/* with this compiling. Sound is broken anyway *shrug* */
-/* Jack Patton (jpatton@intserv.com) */
-
-#ifndef FREEBSD_SOUND_WORKAROUND
-		sig_action.sa_flags   = SA_NOMASK | SA_RESTART;
-#endif
-		sigaction (SIGALRM, &sig_action, NULL);
-
-  		timer_value.it_interval.tv_sec =
- 		timer_value.it_value.tv_sec    = 0L;
-  		timer_value.it_interval.tv_usec=
-  		timer_value.it_value.tv_usec   = 1000000L / audio_timer_freq;
-
-		if (setitimer (ITIMER_REAL, &timer_value, NULL)) {
- 			printf ("Setting the timer failed.\n");
-  			return (TRUE);
-  		}
 	}
 	return (TRUE);
 }
@@ -157,11 +138,19 @@ void sysdep_poll_joystick (void)
 		joy_data.x >>=5;
 		joy_data.y >>=5;
 		/* simulate a four button joystick ( a little tricky ) */
-		xgreater = abs(joy_data.x-joy_orig.x) > abs(joy_data.y-joy_orig.y) ;
-		osd_joy_left  = (joy_data.x < joy_orig.x) && ( xgreater );
-		osd_joy_right = (joy_data.x > joy_orig.x) && ( xgreater );
-		osd_joy_up    = (joy_data.y < joy_orig.y) && ( ! xgreater );
-		osd_joy_down  = (joy_data.y > joy_orig.y) && ( ! xgreater );
+		/* patched to allow simultaneous x-y shifts 2-May-1997 */
+		if ( abs(joy_data.x-joy_orig.x) == abs(joy_data.y-joy_orig.y) ){
+		    osd_joy_left  = (joy_data.x < joy_orig.x) ;
+		    osd_joy_right = (joy_data.x > joy_orig.x) ;
+		    osd_joy_up    = (joy_data.y < joy_orig.y) ;
+		    osd_joy_down  = (joy_data.y > joy_orig.y) ;
+		} else {
+		    xgreater = abs(joy_data.x-joy_orig.x) > abs(joy_data.y-joy_orig.y) ;
+		    osd_joy_left  = (joy_data.x < joy_orig.x) && ( xgreater );
+		    osd_joy_right = (joy_data.x > joy_orig.x) && ( xgreater );
+		    osd_joy_up    = (joy_data.y < joy_orig.y) && ( ! xgreater );
+		    osd_joy_down  = (joy_data.y > joy_orig.y) && ( ! xgreater );
+		}
 	}
 #endif
 }

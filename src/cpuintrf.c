@@ -22,6 +22,12 @@ static int cpurunning[MAX_CPU];
 
 static const struct MemoryReadAddress *memoryread;
 static const struct MemoryWriteAddress *memorywrite;
+#define MH_ENTRIES 64
+#define MH_SHIFT 10	/* entry = address >> MH_SHIFT */
+static int (*memoryreadhandler[MH_ENTRIES])(int address);
+static int memoryreadoffset[MH_ENTRIES];
+static void (*memorywritehandler[MH_ENTRIES])(int address,int data);
+static int memorywriteoffset[MH_ENTRIES];
 
 
 unsigned char cpucontext[MAX_CPU][100];	/* enough to accomodate the cpu status */
@@ -44,6 +50,205 @@ struct m6809context
 	int	irq;
 };
 /* ...DS */
+
+
+
+int mrh_error(int address)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped memory address %04x\n",activecpu,cpu_getpc(),address);
+	return RAM[address];
+}
+int mrh_ram(int address)
+{
+	return RAM[address];
+}
+int mrh_nop(int address)
+{
+	return 0;
+}
+int mrh_readmem(int address)
+{
+	const struct MemoryReadAddress *mra;
+
+
+	mra = memoryread;
+	while (mra->start != -1)
+	{
+		if (address >= mra->start && address <= mra->end)
+		{
+			int (*handler)() = mra->handler;
+
+
+			if (handler == MRA_NOP) return 0;
+			else if (handler == MRA_RAM || handler == MRA_ROM) return RAM[address];
+			else return (*handler)(address - mra->start);
+		}
+
+		mra++;
+	}
+
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped memory address %04x\n",activecpu,cpu_getpc(),address);
+	return RAM[address];
+}
+
+
+void mwh_error(int address,int data)
+{
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",activecpu,cpu_getpc(),data,address);
+	RAM[address] = data;
+}
+void mwh_ram(int address,int data)
+{
+	RAM[address] = data;
+}
+void mwh_nop(int address,int data)
+{
+}
+void mwh_writemem(int address,int data)
+{
+	const struct MemoryWriteAddress *mwa;
+
+
+	mwa = memorywrite;
+	while (mwa->start != -1)
+	{
+		if (address >= mwa->start && address <= mwa->end)
+		{
+			void (*handler)() = mwa->handler;
+
+
+			if (handler == MWA_NOP) return;
+			else if (handler == MWA_RAM) RAM[address] = data;
+			else if (handler == MWA_ROM)
+			{
+				if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",activecpu,cpu_getpc(),data,address);
+			}
+			else (*handler)(address - mwa->start,data);
+
+			return;
+		}
+
+		mwa++;
+	}
+
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",activecpu,cpu_getpc(),data,address);
+	RAM[address] = data;
+}
+
+
+
+static void initmemoryhandlers(void)
+{
+	int i,s,e,a,b;
+	const struct MemoryReadAddress *mra;
+	const struct MemoryWriteAddress *mwa;
+
+
+	memoryread = Machine->drv->cpu[activecpu].memory_read;
+	memorywrite = Machine->drv->cpu[activecpu].memory_write;
+
+	for (i = 0;i < MH_ENTRIES;i++)
+	{
+		memoryreadhandler[i] = mrh_error;
+		memoryreadoffset[i] = 0;
+
+		memorywritehandler[i] = mwh_error;
+		memorywriteoffset[i] = 0;
+	}
+
+	mra = memoryread;
+	while (mra->start != -1) mra++;
+	mra--;
+
+	/* go backwards because entries up in the memory array have greater priority than */
+	/* the following ones. If an entry is duplicated, going backwards we overwrite */
+	/* the handler set by the lower priority one. */
+	while (mra >= memoryread)
+	{
+		s = mra->start >> MH_SHIFT;
+		a = mra->start ? ((mra->start-1) >> MH_SHIFT) + 1 : 0;
+		b = ((mra->end+1) >> MH_SHIFT) - 1;
+		e = mra->end >> MH_SHIFT;
+
+		/* first of all make all the entries point to the general purpose handler... */
+		for (i = s;i <= e;i++)
+		{
+			memoryreadhandler[i] = mrh_readmem;
+			memoryreadoffset[i] = 0;
+		}
+		/* ... and now make black which contain only one handler point directly to the handler */
+		for (i = a;i <= b;i++)
+		{
+			int (*handler)() = mra->handler;
+
+
+			if (handler == MRA_NOP)
+			{
+				memoryreadhandler[i] = mrh_nop;
+				memoryreadoffset[i] = 0;
+			}
+			else if (handler == MRA_RAM || handler == MRA_ROM)
+			{
+				memoryreadhandler[i] = mrh_ram;
+				memoryreadoffset[i] = 0;
+			}
+			else
+			{
+				memoryreadhandler[i] = mra->handler;
+				memoryreadoffset[i] = mra->start;
+			}
+		}
+
+		mra--;
+	}
+
+
+	mwa = memorywrite;
+	while (mwa->start != -1) mwa++;
+	mwa--;
+
+	/* go backwards because entries up in the memory array have greater priority than */
+	/* the following ones. If an entry is duplicated, going backwards we overwrite */
+	/* the handler set by the lower priority one. */
+	while (mwa >= memorywrite)
+	{
+		s = mwa->start >> MH_SHIFT;
+		a = mwa->start ? ((mwa->start-1) >> MH_SHIFT) + 1 : 0;
+		b = ((mwa->end+1) >> MH_SHIFT) - 1;
+		e = mwa->end >> MH_SHIFT;
+
+		/* first of all make all the entries point to the general purpose handler... */
+		for (i = s;i <= e;i++)
+		{
+			memorywritehandler[i] = mwh_writemem;
+			memorywriteoffset[i] = 0;
+		}
+		/* ... and now make black which contain only one handler point directly to the handler */
+		for (i = a;i <= b;i++)
+		{
+			void (*handler)() = mwa->handler;
+
+
+			if (handler == MWA_NOP)
+			{
+				memorywritehandler[i] = mwh_nop;
+				memorywriteoffset[i] = 0;
+			}
+			else if (handler == MWA_RAM)
+			{
+				memorywritehandler[i] = mwh_ram;
+				memorywriteoffset[i] = 0;
+			}
+			else if (handler != MWA_ROM)
+			{
+				memorywritehandler[i] = mwa->handler;
+				memorywriteoffset[i] = mwa->start;
+			}
+		}
+
+		mwa--;
+	}
+}
 
 
 
@@ -70,6 +275,7 @@ void cpu_run(void)
 			cpurunning[totalcpu] = 0;
 		else
 			cpurunning[totalcpu] = 1;
+
 
 		/* initialize the memory base pointers for memory hooks */
 		RAM = Machine->memory_region[Machine->drv->cpu[totalcpu].memory_region];
@@ -99,6 +305,9 @@ reset:
 		cycles = Machine->drv->cpu[activecpu].cpu_clock /
 				(Machine->drv->frames_per_second * Machine->drv->cpu[activecpu].interrupts_per_frame);
 
+		initmemoryhandlers();
+		RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
+
 		switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
 		{
 			case CPU_Z80:
@@ -120,15 +329,11 @@ reset:
 
 
 					ctxt = (M6502 *)cpucontext[activecpu];
-					/* Reset6502() needs to read memory to get the PC start address */
-					RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
-					memoryread = Machine->drv->cpu[activecpu].memory_read;
 					ctxt->IPeriod = cycles;	/* must be done before Reset6502() */
 					Reset6502(ctxt);
 				}
 				break;
 			case CPU_I86:
-				RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
 				I86_Reset(RAM,cycles);
 				break;
 			/* DS... */
@@ -137,9 +342,6 @@ reset:
 					struct m6809context *ctxt;
 
 					ctxt = (struct m6809context *)cpucontext[activecpu];
-					/* m6809_reset() needs to read memory to get the PC start address */
-					RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
-					memoryread = Machine->drv->cpu[activecpu].memory_read;
 					m6809_IPeriod = cycles;
 					m6809_reset();
 					m6809_GetRegs(&ctxt->regs);
@@ -162,9 +364,7 @@ reset:
 				int loops;
 
 
-				memoryread = Machine->drv->cpu[activecpu].memory_read;
-				memorywrite = Machine->drv->cpu[activecpu].memory_write;
-
+				initmemoryhandlers();
 				RAM = Machine->memory_region[Machine->drv->cpu[activecpu].memory_region];
 				/* opcode decryption is currently supported only for the first memory region */
 				if (activecpu == 0) ROM = ROM0;
@@ -272,6 +472,38 @@ int cpu_getpc(void)
 
 		default:
 	if (errorlog) fprintf(errorlog,"cpu_getpc: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+			return -1;
+			break;
+	}
+}
+
+
+
+/***************************************************************************
+
+  This is similar to cpu_getpc(), but instead of returning the current PC,
+  it returns the address stored on the top of the stack, which usually is
+  the address where execution will resume after the current subroutine.
+  Note that the returned value will be wrong if the program has PUSHed
+  registers on the stack.
+
+***************************************************************************/
+int cpu_getreturnpc(void)
+{
+	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
+	{
+		case CPU_Z80:
+			{
+				Z80_Regs regs;
+
+
+				Z80_GetRegs(&regs);
+				return RAM[regs.SP.D] + (RAM[regs.SP.D+1] << 8);
+			}
+			break;
+
+		default:
+	if (errorlog) fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
 			return -1;
 			break;
 	}
@@ -515,29 +747,11 @@ int nmi_interrupt(void)
   Perform a memory read. This function is called by the CPU emulation.
 
 ***************************************************************************/
-int cpu_readmem(register int A)
+int cpu_readmem(int address)
 {
-	const struct MemoryReadAddress *mra;
+	int i = address >> MH_SHIFT;
 
-
-	mra = memoryread;
-	while (mra->start != -1)
-	{
-		if (A >= mra->start && A <= mra->end)
-		{
-			int (*handler)() = mra->handler;
-
-
-			if (handler == MRA_NOP) return 0;
-			else if (handler == MRA_RAM || handler == MRA_ROM) return RAM[A];
-			else return (*handler)(A - mra->start);
-		}
-
-		mra++;
-	}
-
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped memory address %04x\n",activecpu,cpu_getpc(),A);
-	return RAM[A];
+	return (memoryreadhandler[i])(address - memoryreadoffset[i]);
 }
 
 
@@ -547,35 +761,11 @@ int cpu_readmem(register int A)
   Perform a memory write. This function is called by the CPU emulation.
 
 ***************************************************************************/
-void cpu_writemem(register int A,register unsigned char V)
+void cpu_writemem(int address,int data)
 {
-	const struct MemoryWriteAddress *mwa;
+	int i = address >> MH_SHIFT;
 
-
-	mwa = memorywrite;
-	while (mwa->start != -1)
-	{
-		if (A >= mwa->start && A <= mwa->end)
-		{
-			void (*handler)() = mwa->handler;
-
-
-			if (handler == MWA_NOP) return;
-			else if (handler == MWA_RAM) RAM[A] = V;
-			else if (handler == MWA_ROM)
-			{
-				if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",activecpu,cpu_getpc(),V,A);
-			}
-			else (*handler)(A - mwa->start,V);
-
-			return;
-		}
-
-		mwa++;
-	}
-
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",activecpu,cpu_getpc(),V,A);
-	RAM[A] = V;
+	(memorywritehandler[i])(address - memorywriteoffset[i],data);
 }
 
 

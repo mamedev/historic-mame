@@ -1,4 +1,4 @@
-# Makefile for MAME 0.20
+# Makefile for MAME 0.81
 # Configuration options can be found under lines marked with '***'
 
 # *** Choose your compiler. Make it ANSI-compatible (e.g. 'cc -ansi').
@@ -12,10 +12,10 @@ MS		= -DMITSHM
 # *** If you have the Linux joystick module, uncomment the following:
 JS		= -DJOYSTICK
 
-# *** set to aproppiate flag if want to debug
-# DBGFLAGS     = -g
+#set to aproppiate flag if want to debug
+DBGFLAGS     = -g
 
-# *** choose your OS (one of linux, FREEBSD,  sunos, solaris, irix).
+# choose your OS (one of linux, FREEBSD,  sunos, solaris, irix).
 ARCH  = linux
 
 # *** architecture.
@@ -40,22 +40,21 @@ LIBS.solaris   = -L/usr/X11/lib -lX11 -lXext -lnsl -lsocket -lm
 DEFS.irix	 = -DUNIX -Dsgi
 LIBS.irix   = -L/usr/X11/lib -lX11 -lXext -lm -laudio
 
-# *** If using IRIX native C compiler, use next line as CFLAGS
+# If using IRIX native C compiler, use next line as CFLAGS
 #CFLAGS = $(DBGFLAGS) -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/unix -DINLINE=static -O3 -w
 CFLAGS = $(DBGFLAGS) -Isrc -Isrc/Z80 -Isrc/M6502 -Isrc/unix -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -Wall
 
-###########################################################################
 # No configurable options below this line....
 
-COMMON = obj.$(ARCH)/mame.o obj.$(ARCH)/common.o \
+COMMON     = obj.$(ARCH)/mame.o obj.$(ARCH)/common.o \
 	     obj.$(ARCH)/driver.o obj.$(ARCH)/cpuintrf.o \
              obj.$(ARCH)/vidhrdw/generic.o obj.$(ARCH)/sndhrdw/generic.o \
 	     obj.$(ARCH)/sndhrdw/psg.o obj.$(ARCH)/sndhrdw/8910intf.o \
 	     obj.$(ARCH)/sndhrdw/pokey.o obj.$(ARCH)/sndhrdw/sn76496.o
 
-OBJMICROS = obj.$(ARCH)/Z80/Z80.o obj.$(ARCH)/M6502/M6502.o obj.$(ARCH)/I86/I86.o
+OBJMICROS  = obj.$(ARCH)/Z80/Z80.o obj.$(ARCH)/M6502/M6502.o obj.$(ARCH)/I86/I86.o
 
-OBJOSDEP = obj.$(ARCH)/unix/osdepend.a
+OBJOSDEP   = obj.$(ARCH)/osdepend.o
 
 OBJGAMES = obj.$(ARCH)/machine/pacman.o obj.$(ARCH)/vidhrdw/pacman.o obj.$(ARCH)/drivers/pacman.o \
          obj.$(ARCH)/vidhrdw/pengo.o obj.$(ARCH)/sndhrdw/pengo.o obj.$(ARCH)/drivers/pengo.o \
@@ -101,38 +100,36 @@ OBJGAMES = obj.$(ARCH)/machine/pacman.o obj.$(ARCH)/vidhrdw/pacman.o obj.$(ARCH)
          obj.$(ARCH)/drivers/pepper2.o \
          obj.$(ARCH)/vidhrdw/gottlieb.o obj.$(ARCH)/drivers/reactor.o \
          obj.$(ARCH)/sndhrdw/gottlieb.o obj.$(ARCH)/drivers/qbert.o \
-         obj.$(ARCH)/drivers/krull.o \
+         obj.$(ARCH)/machine/gottlieb.o obj.$(ARCH)/drivers/krull.o \
          obj.$(ARCH)/drivers/mplanets.o \
          obj.$(ARCH)/vidhrdw/junglek.o obj.$(ARCH)/sndhrdw/junglek.o obj.$(ARCH)/drivers/junglek.o \
          obj.$(ARCH)/machine/elevator.o obj.$(ARCH)/vidhrdw/elevator.o obj.$(ARCH)/drivers/elevator.o \
          obj.$(ARCH)/machine/panic.o obj.$(ARCH)/vidhrdw/panic.o obj.$(ARCH)/drivers/panic.o \
          obj.$(ARCH)/machine/arabian.o obj.$(ARCH)/vidhrdw/arabian.o obj.$(ARCH)/sndhrdw/arabian.o obj.$(ARCH)/drivers/arabian.o \
          obj.$(ARCH)/machine/1942.o obj.$(ARCH)/vidhrdw/1942.o obj.$(ARCH)/sndhrdw/1942.o obj.$(ARCH)/drivers/1942.o \
-         obj.$(ARCH)/vidhrdw/gyruss.o obj.$(ARCH)/sndhrdw/gyruss.o obj.$(ARCH)/drivers/gyruss.o
+         obj.$(ARCH)/vidhrdw/gyruss.o obj.$(ARCH)/sndhrdw/gyruss.o obj.$(ARCH)/drivers/gyruss.o \
+         obj.$(ARCH)/machine/superpac.o obj.$(ARCH)/vidhrdw/superpac.o obj.$(ARCH)/drivers/superpac.o \
+         obj.$(ARCH)/machine/galaga.o obj.$(ARCH)/vidhrdw/galaga.o obj.$(ARCH)/drivers/galaga.o \
+         obj.$(ARCH)/machine/kangaroo.o obj.$(ARCH)/vidhrdw/kangaroo.o obj.$(ARCH)/sndhrdw/kangaroo.o obj.$(ARCH)/drivers/kangaroo.o \
 
-OBJS = $(COMMON) $(OBJMACHINE) $(OBJGAMES) $(OBJMICROS) $(OBJOSDEP)
+OBJS= $(COMMON) $(OBJMACHINE) $(OBJGAMES) $(OBJMICROS) $(OBJOSDEP)
 
 VPATH = src src/Z80 src/M6502 src/I86
 
-all: objdirs xmame.$(ARCH) sndserver
+all: objdirs xmame.$(ARCH)
 
 objdirs: 
 	-mkdir obj.$(ARCH) obj.$(ARCH)/msdos obj.$(ARCH)/unix 2>/dev/null
 	-mkdir obj.$(ARCH)/I86 obj.$(ARCH)/Z80 obj.$(ARCH)/M6502 2>/dev/null
 	-mkdir obj.$(ARCH)/drivers obj.$(ARCH)/machine obj.$(ARCH)/sndhrdw obj.$(ARCH)/vidhrdw 2>/dev/null
 
-xmame.$(ARCH):	$(OBJS)
+xmame.$(ARCH):  $(OBJS)
 	$(LD) -g3 -o  xmame.$(ARCH) $(OBJS) $(LIBS.$(ARCH))
 
-obj.$(ARCH)/unix/osdepend.a:
-	 ( \
-	 cd src/unix; \
-	  make CC="$(CC)" ARCH="$(ARCH)" DEFS="$(DEFS.$(ARCH))" MS="$(MS)" JS="$(JS)" CFLAGS="$(CFLAGS)" \
-	 )
+obj.$(ARCH)/osdepend.o: src/unix/unix.c src/unix/linux.c src/unix/irix.c \
+		src/unix/sunos.c src/unix/solaris.c
+	 $(CC) $(DEFS.$(ARCH)) $(MS) $(JS) $(CFLAGS) -Isrc/unix -o $@ -c src/unix/unix.c
 
-sndserver: obj.$(ARCH)/unix/sndserver.o obj.$(ARCH)/unix/osdepend.a 
-	$(LD) -g3 -o  sndserver.$(ARCH) obj.$(ARCH)/unix/sndserver.o $(LIBS.$(ARCH))
-	
 obj.$(ARCH)/%.o: src/%.c
 	 $(CC) $(DEFS.$(ARCH)) $(MS) $(JS) $(CFLAGS) -o $@ -c $<
 
@@ -162,3 +159,5 @@ pristine:
 	rm -rf *.o */*.o */*/*.o
 	rm -rf obj.*
 	rm -f xmame.* Makefile
+
+

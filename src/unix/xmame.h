@@ -1,7 +1,6 @@
 /*
  ******************* X-Mame header file *********************
  * file "xmame.h"
- * version "0.20.2"
  *
  * by jantonio@dit.upm.es
  *
@@ -27,6 +26,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/time.h>
+#include <ctype.h>
+#include <pwd.h>
 
 #ifdef linux
 #include <sys/types.h>
@@ -85,6 +86,7 @@ EXTERN XImage 		*image;
 EXTERN GC 		 gc;
 EXTERN int 		 mit_shm_avail; /* use mitshm if available */
 EXTERN char 		*displayname; /* default is use local */
+EXTERN char		*mamedir;     /* home directory of mame tree */
 
 /* CS: scaling hack - integer factors only */
 
@@ -102,6 +104,7 @@ EXTERN int			 use_joystick;
 EXTERN int			 play_sound;
 EXTERN int			 video_sync;
 EXTERN int	 		 first_free_pen;
+EXTERN int			 use_private_cmap;
 
 EXTERN int      osd_joy_up, osd_joy_down, osd_joy_left, osd_joy_right;
 EXTERN int 	osd_joy_b1, osd_joy_b2, osd_joy_b3, osd_joy_b4;
@@ -149,12 +152,17 @@ EXTERN	int		audio_on[AUDIO_NUM_VOICES];
 EXTERN  struct sigaction sig_action;	/* used for arm alarm signal */
 
 /* system dependent functions */
+
 int sysdep_init(void);
 void sysdep_exit(void);
 void sysdep_poll_joystick(void);
 int sysdep_play_audio(byte *buf, int size);
 void sysdep_fill_audio_buffer(long *in,char *out, int start,int end);
 int start_timer();
+int sysdep_mapkey(int from, int to);
+int sysdep_keyboard_init(void);
+int sysdep_audio_initvars(void);
+int sysdep_joy_initvars(void);
 
 #endif
 

@@ -2,18 +2,17 @@
 * IRIX dependent code
 */
 #ifdef sgi
+#define __IRIX_C_
+#include "xmame.h"
 
 #include <sys/stropts.h>
 #include <dmedia/audio.h>
 #include <errno.h>
 
-#define AUDIO_TIMER_FREQ (51)
-
 ALport devAudio;
 ALconfig devAudioConfig;
 	
 int sysdep_init(void) {
-	struct itimerval timer_value;
 	long parambuf[16];
 	int i;
   
@@ -69,27 +68,8 @@ int sysdep_init(void) {
 		exit(1);
 	    }
 
-	    /* configure & initialize timer */
 	    for (i=0; i< AUDIO_NUM_VOICES; i++) audio_on[i]=0;
 
-	    timer_value.it_interval.tv_sec =
-	    timer_value.it_value.tv_sec = 0;
-	    timer_value.it_interval.tv_usec =
-	    timer_value.it_value.tv_usec = 1000000L / audio_timer_freq; 
-
-            sig_action.sa_handler = audio_timer;
-            sig_action.sa_flags   = SA_RESTART;
-
-            /* catch signals */
-            if ( sigaction (SIGALRM, &sig_action, NULL) < 0) {
-                    printf("Sigaction failed\n");
-                    return TRUE;
-            }
-            /* start the timer */
-            if (setitimer (ITIMER_REAL, &timer_value, NULL) <0 ) {
-                    printf ("Error: %d Setting the timer failed.\n",errno);
-                    return (TRUE);
-            }
 	} /* if (play_sound) */
 	return TRUE;
 }
